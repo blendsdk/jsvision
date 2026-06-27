@@ -13,5 +13,7 @@
  */
 export { createHost } from './host.js';
 export { detectTty } from './streams.js';
+export { createTerminalQuery } from './terminal-query.js';
 export type { StreamOptions } from './streams.js';
+export type { TerminalQueryOptions, ManagedTerminalQuery } from './terminal-query.js';
 export type { Host, HostOptions, ResizeEvent, RuntimeAdapter, HostSignal, TimerHandle } from './types.js';

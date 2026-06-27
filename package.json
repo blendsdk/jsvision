@@ -23,11 +23,13 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
+    "typecheck:examples": "tsc -p tsconfig.examples.json",
+    "probe": "tsx examples/capability-probe/main.ts",
     "test": "tsx --test \"test/**/*.{spec,impl}.test.ts\"",
     "lint": "eslint . && prettier --check .",
     "lint:fix": "eslint . --fix && prettier --write .",
     "check:deps": "node scripts/check-no-native-deps.mjs",
-    "verify": "npm run typecheck && npm run test && npm run build"
+    "verify": "npm run typecheck && npm run typecheck:examples && npm run test && npm run build"
   },
   "dependencies": {},
   "devDependencies": {

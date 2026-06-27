@@ -81,8 +81,8 @@ export type {
   RenderOptions,
 } from './render/index.js';
 
-// RD-07 — host & lifecycle.
-export { createHost, detectTty } from './host/index.js';
+// RD-07 — host & lifecycle. (RD-03 adds the real tty-backed TerminalQuery.)
+export { createHost, detectTty, createTerminalQuery } from './host/index.js';
 export type {
   Host,
   HostOptions,
@@ -91,6 +91,8 @@ export type {
   HostSignal,
   TimerHandle,
   StreamOptions,
+  TerminalQueryOptions,
+  ManagedTerminalQuery,
 } from './host/index.js';
 
 // RD-08 — safety (essentials gate, errors, logging, redaction, sanitizer).
