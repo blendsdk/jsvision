@@ -89,6 +89,23 @@ implement steps 1–8 only and emit **no** keyboard-protocol bytes, regardless o
 caps, so they are unaffected. Tracked as **DEF-2** below; revisit when RD-06 Phase B lands CSI-u
 decoding (the gating is already present in caps, so it is a one-line re-enable).
 
+**RT-2 (runtime) — `RuntimeAdapter.onProcessExit` returns an unsubscribe.** `restore.teardown()`
+must remove the `process.on('exit')` panic backstop (03-03), and `start()`/`stop()` cycles would
+otherwise leak an `'exit'` listener per cycle (Node warns past 10). The original 03-01 type returned
+`void`. **Decision: `onProcessExit(handler): () => void`**, mirroring `on`/`onUncaughtException`/
+`onUnhandledRejection` which already return unsubscribes. Real adapter returns
+`() => process.off('exit', handler)`; the fake splices its handler list.
+
+**RT-3 (runtime) — Suspend uses a *soft* leave, not the guarded panic restore.** The idempotent
+restore (AR-17) is guarded to run **once** so multiple termination paths don't double-restore. But
+SIGTSTP is **not** termination: it restores, suspends, and on SIGCONT re-enters — after which a later
+real exit must restore **again**. Routing suspend through the one-shot restore would leave its `done`
+guard set, suppressing the post-resume exit restore. **Decision: the `suspend` handler writes
+`leaveStr` + `setRawMode(false)` directly (soft leave) and the `continue` handler re-asserts
+`enterStr` + full repaint; the guarded restore stays reserved for true termination** (signals that
+exit, uncaught/unhandled, EPIPE, the `'exit'` backstop). Observable behaviour matches ST-5 (leave-mode
+written, raw off, `suspendSelf()`), and a SIGINT after a suspend/resume cycle still restores.
+
 ## Deferrals (DEF)
 
 | #  | Deferral | Reason | Revisit |

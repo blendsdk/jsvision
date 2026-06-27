@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 20:45
-> **Progress**: 15/25 tasks (60%)
+> **Last Updated**: 2026-06-27 21:05
+> **Progress**: 25/30 checklist items — Phases 1–4 complete; Phase 5 (public API/e2e/docs) remaining
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -130,8 +130,8 @@ backed by one thin subprocess e2e for the real signal→exit wiring (AR-13).
 | 4.1.7 | Run both spec files — verify they PASS (green); fix impl on failure | — |
 
 **Deliverables**:
-- [ ] ST-3, ST-4, ST-5, ST-6, ST-6b, ST-8, ST-9, ST-10, ST-11 green
-- [ ] `npm run verify` green
+- [x] ST-3, ST-4, ST-5, ST-6, ST-6b, ST-8, ST-9, ST-10, ST-11 green
+- [x] `npm run verify` green (273/273)
 
 **Verify**: `npm run verify`
 
@@ -146,7 +146,7 @@ backed by one thin subprocess e2e for the real signal→exit wiring (AR-13).
 | 4.2.3 | Full verification + check:deps + audit | — |
 
 **Deliverables**:
-- [ ] `npm run verify` green; `npm run check:deps` clean; `npm audit` 0 vulns
+- [x] `npm run verify` green; `npm run check:deps` clean; `npm audit` 0 vulns
 
 **Verify**: `npm run verify && npm run check:deps`
 
@@ -207,16 +207,16 @@ backed by one thin subprocess e2e for the real signal→exit wiring (AR-13).
 - [x] 3.1.7 Impl tests (ESC cancel, idempotency, cleanup, empty diff) — 2026-06-27 20:45
 
 ### Phase 4: Signals & lifecycle
-- [ ] 4.1.1 Spec tests ST-6/6b/4/5 (`host-lifecycle.spec.test.ts`)
-- [ ] 4.1.2 Spec tests ST-3/11/9/10/8 (`host-security.spec.test.ts`)
-- [ ] 4.1.3 Verify red
-- [ ] 4.1.4 Implement `createRestore` (`restore.ts`)
-- [ ] 4.1.5 Implement `installSignals` (`signals.ts`)
-- [ ] 4.1.6 Wire signals+restore+EPIPE into `createHost` (`host.ts`)
-- [ ] 4.1.7 Verify green
-- [ ] 4.2.1 Hardening impl tests (`host.impl.test.ts`)
-- [ ] 4.2.2 Platform impl tests (`host-platform.impl.test.ts`)
-- [ ] 4.2.3 Full verify + check:deps + audit
+- [x] 4.1.1 Spec tests ST-6/6b/4/5 (`host-lifecycle.spec.test.ts`) — 2026-06-27 21:05
+- [x] 4.1.2 Spec tests ST-3/11/9/10/8 (`host-security.spec.test.ts`) — 2026-06-27 21:05
+- [x] 4.1.3 Verify red — 2026-06-27 21:05
+- [x] 4.1.4 Implement `createRestore` (`restore.ts`) — 2026-06-27 21:05
+- [x] 4.1.5 Implement `installSignals` (`signals.ts`) — 2026-06-27 21:05
+- [x] 4.1.6 Wire signals+restore+EPIPE into `createHost` (`host.ts`) — 2026-06-27 21:05
+- [x] 4.1.7 Verify green — 2026-06-27 21:05
+- [x] 4.2.1 Hardening impl tests (`host.impl.test.ts`) — 2026-06-27 21:05
+- [x] 4.2.2 Platform impl tests (`host-platform.impl.test.ts`) — 2026-06-27 21:05
+- [x] 4.2.3 Full verify + check:deps + audit — 2026-06-27 21:05
 
 ### Phase 5: Public API, e2e, docs
 - [ ] 5.1.1 Barrel + `index.ts` re-exports

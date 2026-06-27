@@ -13,7 +13,7 @@
  * resolution (they resolve to the `.ts` sources during development via tsx).
  */
 import { EventEmitter } from 'node:events';
-import { Writable } from 'node:stream';
+import { Buffer } from 'node:buffer';
 import type { HostSignal, RuntimeAdapter, TimerHandle } from '../src/engine/host/types.js';
 
 /** Thrown by {@link FakeRuntimeAdapter.exit} so the `never`-typed exit unwinds the handler. */
@@ -124,8 +124,12 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
     this.timers.delete(handle as number);
   }
 
-  public onProcessExit(handler: () => void): void {
+  public onProcessExit(handler: () => void): () => void {
     this.exitHandlers.push(handler);
+    return (): void => {
+      const at = this.exitHandlers.indexOf(handler);
+      if (at >= 0) this.exitHandlers.splice(at, 1);
+    };
   }
 
   public writeSync(fd: number, data: string): void {
@@ -143,6 +147,18 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
 
   public warn(message: string): void {
     this.warnOutput += message;
+  }
+
+  /** Number of live `process.on('exit')` backstop handlers (leak check). */
+  public get pendingExitHandlers(): number {
+    return this.exitHandlers.length;
+  }
+
+  /** Number of live signal handlers across all signals (leak check). */
+  public get pendingSignalHandlers(): number {
+    let total = 0;
+    for (const set of this.signalHandlers.values()) total += set.size;
+    return total;
   }
 
   // --- test drivers -------------------------------------------------------
@@ -186,18 +202,30 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
   }
 }
 
-/** A capturing output stream collecting exact ANSI into {@link data}. */
-export class CaptureStream extends Writable {
+/**
+ * A capturing output stream collecting exact ANSI into {@link data}. Built on
+ * EventEmitter (not Writable) so `write()` captures **synchronously** and so the
+ * EPIPE path can be driven via `emit('error', …)`. The host only uses
+ * `write`/`on`/`columns`/`rows`/`fd`/`isTTY`.
+ */
+export class CaptureStream extends EventEmitter {
   /** Everything written, concatenated. */
   public data = '';
   public columns = 80;
   public rows = 24;
   public isTTY = true;
   public fd = 1;
+  /** When true, the next {@link write} throws once (simulates a setup-time crash, ST-11). */
+  public failNextWrite = false;
 
-  public override _write(chunk: Buffer | string, _encoding: BufferEncoding, callback: (error?: Error | null) => void): void {
-    this.data += chunk.toString();
-    callback();
+  /** Capture a chunk synchronously; throw once if {@link failNextWrite} is armed. */
+  public write(chunk: Uint8Array | string): boolean {
+    if (this.failNextWrite) {
+      this.failNextWrite = false;
+      throw new Error('simulated write failure');
+    }
+    this.data += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
+    return true;
   }
 
   /**

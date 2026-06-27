@@ -14,11 +14,12 @@ import assert from 'node:assert/strict';
 
 import { enterMode, leaveMode } from '../src/engine/host/modes.js';
 import { createHost } from '../src/engine/host/host.js';
+import { bindStreams } from '../src/engine/host/streams.js';
 import { ScreenBuffer } from '../src/engine/render/buffer.js';
 import { resolveCapabilities } from '../src/engine/capability/index.js';
 import type { CapabilityProfile, DeepPartial } from '../src/engine/capability/index.js';
 import type { InputEvent } from '../src/engine/input/events.js';
-import { CaptureStream, FakeInput, FakeRuntimeAdapter } from './host-doubles.js';
+import { CaptureStream, FakeInput, FakeRuntimeAdapter, expectExit } from './host-doubles.js';
 
 /** Deterministic capability profile with the given fields overridden. */
 function caps(override: DeepPartial<CapabilityProfile> = {}): CapabilityProfile {
@@ -178,7 +179,11 @@ test('orchestrator: an unchanged frame re-render writes nothing (empty diff)', a
   b.set(1, 0, 'Z', { fg: 'default', bg: 'default' });
   host.render(b); // identical content → empty diff → no write
   await host.stop();
-  assert.equal(output.data.length, afterFirst + leaveMode(caps({ altScreen: true })).length, 'second render wrote nothing (only leave-mode follows)');
+  assert.equal(
+    output.data.length,
+    afterFirst + leaveMode(caps({ altScreen: true })).length,
+    'second render wrote nothing (only leave-mode follows)',
+  );
 });
 
 test('orchestrator: render before start is a no-op (no throw, no write)', () => {
@@ -187,3 +192,89 @@ test('orchestrator: render before start is a no-op (no throw, no write)', () => 
   assert.doesNotThrow(() => host.render(buf));
   assert.equal(output.data, '', 'nothing written before start');
 });
+
+// ---------------------------------------------------------------------------
+// Signals, restore & EPIPE hardening (Phase 4)
+// ---------------------------------------------------------------------------
+
+test('hardening: restore runs once across the async signal and the sync exit backstop', async () => {
+  const { host, adapter, output } = harness();
+  await host.start();
+  expectExit(() => adapter.emit('interrupt')); // async restore + exit 130
+  adapter.emitProcessExit(); // sync backstop — must be a no-op (done guard)
+  assert.equal(occurrences(output.data, leaveMode(caps({ altScreen: true }))), 1, 'leave-mode written exactly once');
+  assert.equal(adapter.writeSyncCalls.length, 0, 'no sync restore after the async one already ran');
+  assert.deepEqual(adapter.exits, [130]);
+});
+
+test('hardening: a non-EPIPE output error routes through handleFatal (exit 1, no throw leak)', async () => {
+  const codes: number[] = [];
+  const { host, adapter, output } = harness({ onBeforeExit: (c) => codes.push(c) });
+  await host.start();
+  const err = Object.assign(new Error('disk gone'), { code: 'EACCES' });
+  expectExit(() => output.emit('error', err));
+  assert.ok(adapter.errorOutput.includes('disk gone'), 'error written to stderr channel');
+  assert.deepEqual(codes, [1], 'onBeforeExit(1)');
+  assert.deepEqual(adapter.exits, [1], 'fatal exit 1');
+  assert.ok(output.data.includes(leaveMode(caps({ altScreen: true }))), 'terminal restored');
+});
+
+test('hardening: exitOnSignal:false restores and notifies but never exits', async () => {
+  const codes: number[] = [];
+  const { host, adapter, output } = harness({ exitOnSignal: false, onBeforeExit: (c) => codes.push(c) });
+  await host.start();
+  adapter.emit('interrupt'); // no exit → no ProcessExitError to catch
+  assert.deepEqual(adapter.exits, [], 'process never exited');
+  assert.deepEqual(codes, [130], 'onBeforeExit(130) still fired');
+  assert.ok(output.data.includes(leaveMode(caps({ altScreen: true }))), 'terminal still restored');
+  await host.stop();
+});
+
+test('hardening: resize reads the final size once at immediate-drain time', async () => {
+  const sizes: { columns: number; rows: number }[] = [];
+  const { host, adapter, output } = harness({ onResize: (e) => sizes.push({ columns: e.columns, rows: e.rows }) });
+  await host.start();
+  output.columns = 50;
+  output.rows = 20;
+  adapter.emit('resize');
+  output.columns = 120; // size settles after the burst …
+  output.rows = 30;
+  adapter.emit('resize');
+  adapter.flushImmediates(); // … and is read once, here
+  await host.stop();
+  assert.deepEqual(sizes, [{ columns: 120, rows: 30 }], 'one event with the final size');
+});
+
+test('hardening: no signal/exit handler leaks across start/stop cycles', async () => {
+  const { host, adapter, input, output } = harness();
+  for (let i = 0; i < 3; i += 1) {
+    await host.start();
+    await host.stop();
+  }
+  assert.equal(input.listenerCount('data'), 0, 'no data listeners remain');
+  assert.equal(output.listenerCount('error'), 0, 'no error listeners remain');
+  assert.equal(adapter.pendingSignalHandlers, 0, 'no signal handlers remain');
+  assert.equal(adapter.pendingExitHandlers, 0, 'no exit backstop handlers remain');
+});
+
+test('hardening: bindStreams degrades gracefully with default streams (/dev/tty fallback)', () => {
+  // In a non-TTY test runner /dev/tty open fails and bindStreams falls back to
+  // the std streams; in a real terminal it binds /dev/tty. Either way: no throw.
+  assert.doesNotThrow(() => {
+    const bound = bindStreams({ caps: caps(), preferDevTty: true });
+    assert.equal(typeof bound.isTTY, 'boolean');
+    bound.dispose();
+  });
+});
+
+/** Count non-overlapping occurrences of `needle` in `haystack`. */
+function occurrences(haystack: string, needle: string): number {
+  if (needle === '') return 0;
+  let n = 0;
+  let i = haystack.indexOf(needle);
+  while (i !== -1) {
+    n += 1;
+    i = haystack.indexOf(needle, i + needle.length);
+  }
+  return n;
+}

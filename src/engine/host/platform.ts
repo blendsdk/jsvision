@@ -55,6 +55,8 @@ export interface RealRuntimeOptions {
   readonly platform?: NodeJS.Platform;
   /** VT-processing availability predicate (win32 only); defaults to "available" (real check deferred-to-runner, AR-4). */
   readonly vtAvailable?: () => boolean;
+  /** Warning sink; defaults to `process.stderr.write`. Injected so the VT-warn branch is assertable (PF-005). */
+  readonly warn?: (message: string) => void;
 }
 
 /** Narrow an arbitrary `process.platform` to the three the adapter models. */
@@ -80,6 +82,11 @@ export function realRuntime(output: NodeJS.WriteStream, options: RealRuntimeOpti
   const rawPlatform = options.platform ?? process.platform;
   const platform = normalizePlatform(rawPlatform);
   const vtAvailable = options.vtAvailable ?? ((): boolean => true);
+  const warnSink =
+    options.warn ??
+    ((message: string): void => {
+      process.stderr.write(message);
+    });
 
   /** Attach `handler` to the source's emitter; return an unsubscribe. */
   function subscribe(emitter: NodeJS.EventEmitter, name: string, handler: () => void): () => void {
@@ -91,9 +98,7 @@ export function realRuntime(output: NodeJS.WriteStream, options: RealRuntimeOpti
 
   // Win32 VT-processing check: warn once if a legacy console lacks VT (AR-4, PF-005).
   if (platform === 'win32' && !vtAvailable()) {
-    process.stderr.write(
-      'tui: virtual-terminal processing unavailable (legacy console); rendering may be degraded.\n',
-    );
+    warnSink('tui: virtual-terminal processing unavailable (legacy console); rendering may be degraded.\n');
   }
 
   return {
@@ -137,8 +142,11 @@ export function realRuntime(output: NodeJS.WriteStream, options: RealRuntimeOpti
       // The handle round-trips as the opaque TimerHandle; it is the NodeJS.Timeout setTimer returned.
       clearTimeout(handle as NodeJS.Timeout);
     },
-    onProcessExit(handler: () => void): void {
+    onProcessExit(handler: () => void): () => void {
       process.on('exit', handler);
+      return (): void => {
+        process.off('exit', handler);
+      };
     },
     writeSync(fd: number, data: string): void {
       // Synchronous so the draining 'exit' backstop actually flushes (PF-004).
@@ -151,7 +159,7 @@ export function realRuntime(output: NodeJS.WriteStream, options: RealRuntimeOpti
       process.stderr.write(message);
     },
     warn(message: string): void {
-      process.stderr.write(message);
+      warnSink(message);
     },
   };
 }

@@ -93,8 +93,8 @@ export interface RuntimeAdapter {
   setTimer(fn: () => void, ms: number): TimerHandle;
   /** Clear a timer armed by {@link setTimer} (real: clearTimeout). [AR-14] */
   clearTimer(handle: TimerHandle): void;
-  /** Register the synchronous exit backstop (real: process.on('exit')). [AR-17] */
-  onProcessExit(handler: () => void): void;
+  /** Register the synchronous exit backstop (real: process.on('exit')); returns an unsubscribe. [AR-17, RT-2] */
+  onProcessExit(handler: () => void): () => void;
   /**
    * Synchronously write to a file descriptor (real: fs.writeSync). Used only by the
    * process-'exit' restore backstop, where the event loop is draining and async writes
