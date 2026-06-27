@@ -88,12 +88,14 @@ test('default encoder emits attribute SGR codes even when mono', () => {
   assert.ok(out.includes('\x1b[1;4m'), 'bold + underline attribute SGR present');
 });
 
-test('named ANSI color resolves to truecolor via the default palette', () => {
+test('the default encoder downsamples a named color at colorDepth 256 (RD-05)', () => {
   const previous = blank(4, 1);
   const current = blank(4, 1);
   current.set(0, 0, 'a', { fg: 'brightRed', bg: 'default' });
   const out = serialize(current, previous, { caps: caps({ colorDepth: '256' }) });
-  assert.equal(count(out, '38;2;255;0;0'), 1, 'brightRed → 255;0;0');
+  // RD-05: the depth-aware default downsamples brightRed → 256 index 9 (no truecolor over-emit).
+  assert.equal(count(out, '38;5;9'), 1, 'brightRed → 256 index 9');
+  assert.equal(count(out, '38;2'), 0, 'no truecolor at 256');
 });
 
 test('an injected custom encoder is used instead of the default', () => {

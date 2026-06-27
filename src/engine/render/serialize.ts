@@ -13,111 +13,33 @@
  * PL-9 (glyph fallback), PL-13 (resize → full repaint), PL-14 (seam options).
  */
 
-import { SGR_RESET, SYNC_BEGIN, SYNC_END, cursorTo, CSI } from './ansi.js';
+import { SGR_RESET, SYNC_BEGIN, SYNC_END, cursorTo } from './ansi.js';
 import { fallbackGlyph } from './glyphs.js';
-import { Attr } from './types.js';
 import type { AttrMask, Cell, Color } from './types.js';
 import type { ScreenBuffer } from './buffer.js';
 import type { CapabilityProfile } from '../capability/index.js';
+import { encodeStyle } from '../color/index.js';
 
 /**
- * Encodes a cell style to an SGR sequence for the detected depth. RD-05 injects
- * the full depth-aware version later via {@link RenderOptions.encodeStyle}; this
- * RD ships a minimal truecolor/mono default (PL-1).
+ * Encodes a cell style to an SGR sequence for the detected depth. Defaults to the
+ * RD-05 depth-aware {@link defaultEncodeStyle}; an app may inject its own via
+ * {@link RenderOptions.encodeStyle} (PL-14).
  */
 export type StyleEncoder = (fg: Color, bg: Color, attrs: AttrMask, caps: CapabilityProfile) => string;
 
 /** Options for {@link serialize}: capabilities + the injectable encoder (PL-14). */
 export interface RenderOptions {
   readonly caps: CapabilityProfile;
-  /** Defaults to the built-in minimal truecolor/mono encoder (PL-1). */
+  /** Defaults to the RD-05 depth-aware encoder ({@link defaultEncodeStyle}). */
   readonly encodeStyle?: StyleEncoder;
 }
 
-/** RGB components, each 0–255. */
-interface Rgb {
-  readonly r: number;
-  readonly g: number;
-  readonly b: number;
-}
-
 /**
- * The 16 named ANSI colors as 24-bit RGB (common xterm palette). The minimal
- * default encoder over-emits these as truecolor; RD-05's depth-aware encoder
- * downsamples to 256/16 later.
+ * The default style encoder: the RD-05 depth-aware {@link encodeStyle}, which
+ * downsamples truecolor→256→16→mono and merges attrs + fg + bg into one SGR
+ * (AR-3/AR-4). Replaces the provisional truecolor-only encoder RD-04 shipped.
  */
-const ANSI16_RGB: Record<string, Rgb> = {
-  black: { r: 0, g: 0, b: 0 },
-  red: { r: 205, g: 0, b: 0 },
-  green: { r: 0, g: 205, b: 0 },
-  yellow: { r: 205, g: 205, b: 0 },
-  blue: { r: 0, g: 0, b: 238 },
-  magenta: { r: 205, g: 0, b: 205 },
-  cyan: { r: 0, g: 205, b: 205 },
-  white: { r: 229, g: 229, b: 229 },
-  brightBlack: { r: 127, g: 127, b: 127 },
-  brightRed: { r: 255, g: 0, b: 0 },
-  brightGreen: { r: 0, g: 255, b: 0 },
-  brightYellow: { r: 255, g: 255, b: 0 },
-  brightBlue: { r: 92, g: 92, b: 255 },
-  brightMagenta: { r: 255, g: 0, b: 255 },
-  brightCyan: { r: 0, g: 255, b: 255 },
-  brightWhite: { r: 255, g: 255, b: 255 },
-};
-
-/** SGR attribute codes, paired with their {@link Attr} bit. */
-const ATTR_SGR: readonly { readonly bit: number; readonly code: number }[] = [
-  { bit: Attr.bold, code: 1 },
-  { bit: Attr.dim, code: 2 },
-  { bit: Attr.italic, code: 3 },
-  { bit: Attr.underline, code: 4 },
-  { bit: Attr.blink, code: 5 },
-  { bit: Attr.reverse, code: 7 },
-  { bit: Attr.strike, code: 9 },
-];
-
-/** Parse a `#rgb` or `#rrggbb` color to RGB, or `null` for `'default'`/unknown. */
-function colorToRgb(color: Color): Rgb | null {
-  if (color === 'default') return null;
-  if (color.startsWith('#')) {
-    const hex = color.slice(1);
-    if (hex.length === 3) {
-      const r = parseInt(hex[0] + hex[0], 16);
-      const g = parseInt(hex[1] + hex[1], 16);
-      const b = parseInt(hex[2] + hex[2], 16);
-      return { r, g, b };
-    }
-    if (hex.length === 6) {
-      return {
-        r: parseInt(hex.slice(0, 2), 16),
-        g: parseInt(hex.slice(2, 4), 16),
-        b: parseInt(hex.slice(4, 6), 16),
-      };
-    }
-    return null;
-  }
-  return ANSI16_RGB[color] ?? null;
-}
-
-/**
- * The minimal default style encoder shipped with RD-04 (PL-1). Emits attribute
- * SGR codes always, plus 24-bit truecolor for non-`'default'` colors unless the
- * terminal is monochrome. RD-05 supersedes this with depth-aware downsampling.
- */
-export function defaultEncodeStyle(fg: Color, bg: Color, attrs: AttrMask, caps: CapabilityProfile): string {
-  const parts: number[] = [];
-  for (const { bit, code } of ATTR_SGR) {
-    if ((attrs & bit) !== 0) parts.push(code);
-  }
-  if (caps.colorDepth !== 'mono') {
-    const f = colorToRgb(fg);
-    if (f) parts.push(38, 2, f.r, f.g, f.b);
-    const b = colorToRgb(bg);
-    if (b) parts.push(48, 2, b.r, b.g, b.b);
-  }
-  if (parts.length === 0) return '';
-  return `${CSI}${parts.join(';')}m`;
-}
+export const defaultEncodeStyle: StyleEncoder = encodeStyle;
 
 /** Whether two cells are visually identical (the damage-diff comparison). */
 function cellsEqual(a: Cell, b: Cell): boolean {

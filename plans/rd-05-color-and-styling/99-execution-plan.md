@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 00:21
-> **Progress**: 16/26 tasks (62%)
+> **Last Updated**: 2026-06-28 00:32
+> **Progress**: 23/26 tasks (88%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -134,9 +134,9 @@ updates one RD-04 impl test). Phase 4 documents and finalizes.
 | 3.3.1 | Full verification — confirm no circular import; RD-02/04/06/07/08 suites green | — |
 
 **Deliverables**:
-- [ ] `serialize()` downsamples by default; seam + signature unchanged (AR-4)
-- [ ] Inline color logic removed from `serialize.ts` (DRY); only the one RD-04 impl test updated (AR-3)
-- [ ] All verification passing
+- [x] `serialize()` downsamples by default; seam + signature unchanged (AR-4)
+- [x] Inline color logic removed from `serialize.ts` (DRY); only the one RD-04 impl test updated (AR-3)
+- [x] All verification passing
 
 **Verify**: `npm run verify`
 
@@ -187,13 +187,13 @@ updates one RD-04 impl test). Phase 4 documents and finalizes.
 - [x] 2.3.2 Full verification ✅ (completed: 2026-06-28 00:21)
 
 ### Phase 3: Serializer integration
-- [ ] 3.1.1 Write `color-serialize.spec.test.ts` (ST-17)
-- [ ] 3.1.2 Run spec tests — verify FAIL (red)
-- [ ] 3.2.1 Re-point `serialize.ts` default to `encodeStyle`; remove inline color logic
-- [ ] 3.2.2 Update `render-serialize.impl.test.ts:95` (256 → `38;5;9`)
-- [ ] 3.2.3 Spec tests PASS (green); RD-04 oracles green
-- [ ] 3.2.4 Write `color-serialize.impl.test.ts`
-- [ ] 3.3.1 Full verification
+- [x] 3.1.1 Write `color-serialize.spec.test.ts` (ST-17) ✅ (completed: 2026-06-28 00:24)
+- [x] 3.1.2 Run spec tests — verify FAIL (red) ✅ (completed: 2026-06-28 00:24)
+- [x] 3.2.1 Re-point `serialize.ts` default to `encodeStyle`; remove inline color logic ✅ (completed: 2026-06-28 00:28)
+- [x] 3.2.2 Update `render-serialize.impl.test.ts:95` (256 → `38;5;9`) ✅ (completed: 2026-06-28 00:29)
+- [x] 3.2.3 Spec tests PASS (green); RD-04 oracles green ✅ (completed: 2026-06-28 00:30)
+- [x] 3.2.4 Write `color-serialize.impl.test.ts` ✅ (completed: 2026-06-28 00:31)
+- [x] 3.3.1 Full verification ✅ (completed: 2026-06-28 00:32)
 
 ### Phase 4: Documentation & finalize
 - [ ] 4.1.1 README: document the color layer
