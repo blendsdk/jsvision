@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 23:31
-> **Progress**: 28/35 tasks (80%)
+> **Last Updated**: 2026-06-27 23:42
+> **Progress**: 32/35 tasks (91%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -180,9 +180,9 @@ RD-02 and RD-07 public contracts are **not** modified (AR-2, AR-5). The `@blends
 | 4.2.1 | Full verification + explicit e2e run (`npx tsx --test test/safety-error-restore.e2e.test.ts`) | — |
 
 **Deliverables**:
-- [ ] Paste-cap boundary (cap+1 → `truncated:true`) and DoS-bounded behavior verified (AC-7, AC-8)
-- [ ] Error-through-loop restores terminal before exit (AC-6)
-- [ ] All verification passing
+- [x] Paste-cap boundary (cap+1 → `truncated:true`) and DoS-bounded behavior verified (AC-7, AC-8)
+- [x] Error-through-loop restores terminal before exit (AC-6)
+- [x] All verification passing
 
 **Verify**: `npm run verify` + explicit e2e
 
@@ -252,10 +252,10 @@ RD-02 and RD-07 public contracts are **not** modified (AR-2, AR-5). The `@blends
 - [x] 3.3.2 Full verification ✅ (completed: 2026-06-27 23:31)
 
 ### Phase 4: Acceptance — paste cap & error-restore e2e
-- [ ] 4.1.1 Write `safety-paste-cap.spec.test.ts` (ST-24, ST-25)
-- [ ] 4.1.2 Write `safety-error-restore.e2e.test.ts` (ST-26)
-- [ ] 4.1.3 Run; document any pre-existing pass with justification
-- [ ] 4.2.1 Full verification + explicit e2e run
+- [x] 4.1.1 Write `safety-paste-cap.spec.test.ts` (ST-24, ST-25) ✅ (completed: 2026-06-27 23:40)
+- [x] 4.1.2 Write `safety-error-restore.e2e.test.ts` (ST-26) ✅ (completed: 2026-06-27 23:40)
+- [x] 4.1.3 Run; document any pre-existing pass with justification ✅ (completed: 2026-06-27 23:41) — all 3 PASS pre-implementation; documented per AR-11/AR-1: enforcement already lives in the RD-06 decoder (paste cap) and the RD-07 `handleFatal` restore-before-exit path, so RD-08 adds no new runtime code (Phase 4 note). Not a spec-first violation.
+- [x] 4.2.1 Full verification + explicit e2e run ✅ (completed: 2026-06-27 23:42)
 
 ### Phase 5: Documentation & finalize
 - [ ] 5.1.1 README: document the safety subsystem + env flags
