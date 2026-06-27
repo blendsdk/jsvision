@@ -16,18 +16,18 @@ guided probe/report is RD-03, and acting on capabilities is RD-04/05/06/07.
 ## Functional Requirements
 
 ### Must Have
-- [ ] Immutable `CapabilityProfile` with the fields in [03-01](03-01-capability-model-and-types.md) (AR/RD-02).
-- [ ] Layered detection in priority order: (1) override, (2) bounded runtime query, (3) env, (4) known-terminal table, (5) conservative defaults (RD-02; PL-5 fixes colorDepth precedence).
-- [ ] Non-blocking, bounded detection: any live query uses a timeout (default ≤ 200 ms, PL-11) and never hangs on a silent terminal (AC-3).
-- [ ] Override API: callers force any field, bypassing detection; deep-partial merge (PL-7, AC-5).
-- [ ] Honor `NO_COLOR` (force mono, any value — PL-12) and `FORCE_COLOR=0|1|2|3` (off/16/256/truecolor) (AC-1, AC-2).
-- [ ] Detect tmux/screen (`$TERM` prefix `screen`/`tmux`, `$TMUX`) → conservative caps + passthrough policy flag.
-- [ ] Each foundational component can consume the profile and adapt (this RD exposes it read-only; consumption is later RDs).
-- [ ] Expose the resolved profile to the app read-only for inspection.
+- [x] Immutable `CapabilityProfile` with the fields in [03-01](03-01-capability-model-and-types.md) (AR/RD-02).
+- [x] Layered detection in priority order: (1) override, (2) bounded runtime query, (3) env, (4) known-terminal table, (5) conservative defaults (RD-02; PL-5 fixes colorDepth precedence).
+- [x] Non-blocking, bounded detection: any live query uses a timeout (default ≤ 200 ms, PL-11) and never hangs on a silent terminal (AC-3).
+- [x] Override API: callers force any field, bypassing detection; deep-partial merge (PL-7, AC-5).
+- [x] Honor `NO_COLOR` (force mono, any value — PL-12) and `FORCE_COLOR=0|1|2|3` (off/16/256/truecolor) (AC-1, AC-2).
+- [x] Detect tmux/screen (`$TERM` prefix `screen`/`tmux`, `$TMUX`) → conservative caps + passthrough policy flag.
+- [x] Each foundational component can consume the profile and adapt (this RD exposes it read-only; consumption is later RDs).
+- [x] Expose the resolved profile to the app read-only for inspection.
 
 ### Should Have
-- [ ] Per-process cache; re-resolve only on explicit `{ refresh: true }` (PL-14).
-- [ ] Reason trace explaining which layer set each field (PL-3) — required by RD-03.
+- [x] Per-process cache; re-resolve only on explicit `{ refresh: true }` (PL-14).
+- [x] Reason trace explaining which layer set each field (PL-3) — required by RD-03.
 
 ### Won't Have (Out of Scope)
 - Guided manual confirmation UI and the support-matrix report — RD-03.
@@ -54,12 +54,12 @@ guided probe/report is RD-03, and acting on capabilities is RD-04/05/06/07.
 > Mirrors RD-02's acceptance criteria; all are locally verifiable in this RD (the
 > layer-2 ACs use an injected stub stream per PL-1).
 
-1. [ ] **(AC-1)** `COLORTERM=truecolor` → `colorDepth==='truecolor'`; unset + `TERM=xterm-256color` → `'256'`; `TERM=xterm` → `'16'`; `NO_COLOR` (any value) → `'mono'` regardless of other signals.
-2. [ ] **(AC-2)** `FORCE_COLOR=0|1|2|3` → `mono|16|256|truecolor`, overriding `TERM`/`COLORTERM`.
-3. [ ] **(AC-3)** A runtime query with no response completes within `timeoutMs` (≤ 200 ms ±50 ms) and falls back; never rejects or hangs (stub stream that never replies).
-4. [ ] **(AC-4)** A query response (e.g. DA `ESC[?64;1;...c`) is consumed by detection and **not** delivered to the app input stream (passthrough contains zero response bytes).
-5. [ ] **(AC-5)** `resolveCapabilities({ override: { colorDepth: '16' } }).profile.colorDepth === '16'` even with `COLORTERM=truecolor`.
-6. [ ] **(AC-6)** Empty env (no `TERM`/`COLORTERM`) → conservative defaults (`colorDepth:'16'`, `mouse.sgr:false`, `unicode.utf8` from `LANG`), reason `'default'`.
-7. [ ] **(AC-7)** A malformed or oversized response (e.g. 64 KB, no terminator) is rejected within the 1 KB bound without crashing/blocking; detection falls back.
-8. [ ] **(AC-8)** Security verified: response parsing strict + length-bounded; no env value logged at default level; override and env precedence unit-tested.
-9. [ ] All ST-* pass; `npm run verify` exits 0 locally; `npm run lint`/`check:deps` clean; no dead code; register fully traced.
+1. [x] **(AC-1)** `COLORTERM=truecolor` → `colorDepth==='truecolor'`; unset + `TERM=xterm-256color` → `'256'`; `TERM=xterm` → `'16'`; `NO_COLOR` (any value) → `'mono'` regardless of other signals. — ST-1/2/3/4/5/7
+2. [x] **(AC-2)** `FORCE_COLOR=0|1|2|3` → `mono|16|256|truecolor`, overriding `TERM`/`COLORTERM`. — ST-6
+3. [x] **(AC-3)** A runtime query with no response completes within `timeoutMs` (≤ 200 ms ±50 ms) and falls back; never rejects or hangs (stub stream that never replies). — ST-13, parser impl (write throws)
+4. [x] **(AC-4)** A query response (e.g. DA `ESC[?64;1;...c`) is consumed by detection and **not** delivered to the app input stream (passthrough contains zero response bytes). — ST-14, parser impl (interleaved)
+5. [x] **(AC-5)** `resolveCapabilities({ override: { colorDepth: '16' } }).profile.colorDepth === '16'` even with `COLORTERM=truecolor`. — ST-8, ST-9
+6. [x] **(AC-6)** Empty env (no `TERM`/`COLORTERM`) → conservative defaults (`colorDepth:'16'`, `mouse.sgr:false`, `unicode.utf8` from `LANG`), reason `'default'`. — ST-10
+7. [x] **(AC-7)** A malformed or oversized response (e.g. 64 KB, no terminator) is rejected within the 1 KB bound without crashing/blocking; detection falls back. — ST-15, ST-16, cap-boundary impl
+8. [x] **(AC-8)** Security verified: response parsing strict + length-bounded; no env value logged at default level; override and env precedence unit-tested. — ST-20, precedence ST-*
+9. [x] All ST-* pass; `npm run verify` exits 0 locally; `npm run lint`/`check:deps` clean; no dead code; register fully traced. — verify 84/84, lint/check:deps clean, audit 0 vulns

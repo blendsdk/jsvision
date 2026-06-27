@@ -3,7 +3,8 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-06-27
-> **Progress**: 21/24 tasks (88%)
+> **Progress**: 26/26 tasks (100%)
+> *(Note: the original header said 24; the master checklist actually holds 26 items — 7+7+7+5. Denominator corrected during execution.)*
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -177,11 +178,11 @@ skill — this plan contains no raw git commands. **No new runtime dependencies.
 - [x] 3.3.2 verify + lint clean — 2026-06-27 (verify 79 tests pass, eslint+prettier clean)
 
 ### Phase 4: Security, Public API & Finalization
-- [ ] 4.1.1 Write security spec test (ST-20)
-- [ ] 4.1.2 Red/behaviour check
-- [ ] 4.2.1 Re-export public API + README section
-- [ ] 4.2.2 Green phase
-- [ ] 4.3.1 Final full gate (verify/lint/check:deps/audit)
+- [x] 4.1.1 Write security spec test (ST-20) — 2026-06-27
+- [x] 4.1.2 Red/behaviour check — 2026-06-27 (green: no env logging exists, AC-8 satisfied)
+- [x] 4.2.1 Re-export public API + README section — 2026-06-27 (resolveCapabilities + resolveCapabilitiesAsync + types from src/engine/index.ts; README "Capability detection")
+- [x] 4.2.2 Green phase — 2026-06-27 (spec suite green; added capability-public.spec.test.ts integration guard)
+- [x] 4.3.1 Final full gate (verify/lint/check:deps/audit) — 2026-06-27 (verify 84/84, lint clean, check:deps OK, audit 0 vulns; AC-1…AC-8 all covered)
 
 ---
 

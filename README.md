@@ -31,6 +31,46 @@ console.log(VERSION); // "0.1.0"
 Type declarations (`.d.ts`) and source maps ship with the package, so editors get
 full type information out of the box.
 
+### Capability detection (RD-02)
+
+`resolveCapabilities()` detects the running terminal and returns an immutable
+`CapabilityProfile` plus a per-field **reason trace** showing which layer set each
+field. Detection is layered with safe fallback — **(1)** explicit override,
+**(2)** live runtime query, **(3)** environment, **(4)** known-terminal table,
+**(5)** conservative defaults — so every later subsystem auto-configures with zero
+setup.
+
+```ts
+import { resolveCapabilities } from '@blendsdk/tui';
+
+// Zero-config: detect from env + known-terminal table + safe defaults.
+const { profile, reasons } = resolveCapabilities();
+profile.colorDepth; // 'truecolor' | '256' | '16' | 'mono'
+reasons.colorDepth; // 'override' | 'runtime' | 'env' | 'table' | 'default'
+
+// Force fields (deep partial, merged over detection).
+resolveCapabilities({ override: { mouse: { sgr: false } } }).profile.mouse.sgr; // false
+
+// Re-resolve after a detected terminal change (otherwise cached per process).
+resolveCapabilities({ refresh: true });
+```
+
+`NO_COLOR` (any value) forces `mono`; `FORCE_COLOR=0|1|2|3` selects
+`mono|16|256|truecolor`. The result is deep-frozen, and no environment value is
+ever logged.
+
+The live runtime query (layer 2) is asynchronous and bounded. RD-02 ships the
+injectable `TerminalQuery` seam and the response parser; the real input stream is
+wired in by a later milestone (RD-06). Supply a query via the async resolver:
+
+```ts
+import { resolveCapabilitiesAsync } from '@blendsdk/tui';
+
+// `query` implements TerminalQuery; resolution is bounded by `timeoutMs`
+// (default 200 ms) and never hangs on a silent terminal.
+const { profile } = await resolveCapabilitiesAsync({ query, timeoutMs: 200 });
+```
+
 ### ESM-only — `require()` is not supported
 
 The package declares no CommonJS `require` condition. Importing it from CommonJS
