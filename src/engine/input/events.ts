@@ -72,12 +72,21 @@ export interface QueryResponse {
   readonly kind: 'da1' | 'da2' | 'xtversion' | 'decrpm' | 'unknown';
 }
 
-/** The result of one {@link decode}/{@link flush} call. */
+/**
+ * The result of one {@link decode}/{@link flush} call.
+ *
+ * The host threads decoding forward with `state = result.state` (RT-1): `state`
+ * carries both the incomplete trailing bytes and any in-progress bracketed paste
+ * so a sequence or paste split across chunks survives. `rest` is retained as a
+ * convenience equal to `state.carry` (the incomplete trailing bytes).
+ */
 export interface DecodeResult {
   readonly events: InputEvent[];
   readonly queries: QueryResponse[];
-  /** Incomplete trailing bytes carried to the next decode() call. */
+  /** Incomplete trailing bytes carried to the next decode() call (=== `state.carry`). */
   readonly rest: Uint8Array;
+  /** The next decoder state to pass to the following decode() call (RT-1). */
+  readonly state: DecoderState;
 }
 
 /** Internal bracketed-paste accumulation state. */

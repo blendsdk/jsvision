@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 (Phase 1 complete)
-> **Progress**: 7/26 tasks (27%)
+> **Last Updated**: 2026-06-27 (Phase 2 complete)
+> **Progress**: 14/26 tasks (54%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -162,13 +162,13 @@ skill — this plan contains no raw git commands. **No new runtime dependencies.
 - [x] 1.3.2 verify + lint clean — 2026-06-27
 
 ### Phase 2: Keyboard Decoder Core
-- [ ] 2.1.1 Write spec tests ST-1, ST-2, ST-10
-- [ ] 2.1.2 Red phase (decoder/keys absent)
-- [ ] 2.2.1 Implement keys.ts (classic grammar)
-- [ ] 2.2.2 Implement decoder.ts (scan loop, carry bound, flush, kitty branch)
-- [ ] 2.2.3 Green phase (ST-1/2/10 pass)
-- [ ] 2.3.1 Write keyboard impl tests (nav/F-keys, modifiers, UTF-8)
-- [ ] 2.3.2 verify + lint clean
+- [x] 2.1.1 Write spec tests ST-1, ST-2, ST-10 — 2026-06-27
+- [x] 2.1.2 Red phase (decoder/keys absent) — 2026-06-27
+- [x] 2.2.1 Implement keys.ts (classic grammar) — 2026-06-27
+- [x] 2.2.2 Implement decoder.ts (scan loop, carry bound, flush, kitty branch) — 2026-06-27
+- [x] 2.2.3 Green phase (ST-1/2/10 pass) — 2026-06-27
+- [x] 2.3.1 Write keyboard impl tests (nav/F-keys, modifiers, UTF-8) — 2026-06-27
+- [x] 2.3.2 verify + lint clean — 2026-06-27
 
 ### Phase 3: Mouse, Wheel, Paste, Focus & Query Demux
 - [ ] 3.1.1 Write spec tests ST-3, ST-4, ST-5, ST-6, ST-11, ST-12

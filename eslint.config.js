@@ -10,4 +10,18 @@ export default tseslint.config(
   { ignores: ['dist', 'node_modules', '_archive', 'coverage'] },
   ...tseslint.configs.recommended,
   prettier,
+  {
+    // Honour the `_`-prefix convention for intentionally-unused, reserved
+    // parameters/variables (e.g. a param kept for a deferred branch point).
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
 );

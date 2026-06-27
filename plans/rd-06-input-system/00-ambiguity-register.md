@@ -33,6 +33,12 @@ turning RD-06 into an implementation plan. Each entry is prefixed `PL-`.
 - **PL-4 / DEF-1:** Classic xterm decoding is the go/no-go gate and covers every acceptance criterion. Full CSI-u/Kitty progressive parsing is deferred to roadmap Phase B as **DEF-1**; the `caps.keyboard.kittyFlags` branch + classic fallback are wired now so the enhancement slots in without an API change.
 - **PL-11…PL-13** are the planner's recommendations, confirmed by the user's explicit "Confirm all" (per the gate's final-confirmation rule), not by silence.
 
+### Runtime Decisions (surfaced during exec_plan)
+
+| #     | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
+|-------|----------|-----------------|-------------------|---------------|--------|
+| RT-1 (runtime) | API / State threading | The plan fixed `DecodeResult = { events, queries, rest }` and a host pattern `state = {...state, carry: rest}` that only carries `carry` — yet 03-03 requires a cross-chunk paste to persist in `state.paste`, and `PasteState.active`/`truncated` are `readonly`, so `decode()` can neither thread paste through that pattern nor mutate it while staying pure (AC-8 replayability). Surfaced writing `decoder.ts` (Phase 2.2.2). | A: `decode()`/`flush()` return the next `DecoderState` (add `readonly state: DecoderState` to `DecodeResult`; host does `state = result.state`; `rest` retained as `=== result.state.carry`) · B: mutate `state.paste` in place (impure) | **A — return the next state. `DecodeResult` gains `readonly state: DecoderState`; `rest` stays for the keyboard spec tests (equal to `result.state.carry`). `decode()` remains pure (no input mutation), so it is replayable under the fuzz corpus (AC-8), and a cross-chunk paste threads cleanly via `result.state.paste`. B rejected: mutating the input state makes re-running the same call non-deterministic, breaking AC-8.** (User-confirmed 2026-06-27 during exec_plan.) | ✅ Resolved |
+
 ### Deferred Items
 
 - **DEF-1 (Phase B):** Full CSI-u / Kitty keyboard-protocol sequence parsing. Gated on `caps.keyboard.kittyFlags`; classic xterm decoding is the fallback shipped in this RD. No API change required to add it.
