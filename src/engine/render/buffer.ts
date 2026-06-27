@@ -17,7 +17,7 @@ import { Attr } from './types.js';
 import type { Cell, Style } from './types.js';
 import { charWidth } from './width.js';
 import type { WidthMode } from './width.js';
-import { sanitize } from './sanitize.js';
+import { sanitize } from '../safety/sanitize.js';
 
 /** The box-drawing glyph set per variant (real Unicode; fallback is serialize-time). */
 const BOX = {

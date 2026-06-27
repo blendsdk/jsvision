@@ -1,28 +1,30 @@
 /**
- * The provisional shared output sanitizer — the project's primary injection
- * boundary (RD-04, AC-7/AC-8, plan doc 03-04, PL-2/PL-16).
+ * The canonical output sanitizer — the project's primary injection boundary
+ * (RD-08 §Sanitizer rule; AC-3/AC-8). Strips terminal-control bytes from
+ * untrusted text before it reaches the stream, so app- or network-supplied
+ * strings cannot open or close escape or OSC sequences.
  *
- * Strips terminal-control bytes from untrusted text before it reaches the
- * stream, so app- or network-supplied strings cannot open or close escape/OSC
- * sequences. Every text-accepting output path (buffer `text()`, the OSC
- * features, the window title) routes through this from RD-04's first line of
- * output, so the boundary exists now.
+ * Every text-accepting output path routes through this: the RD-04 buffer
+ * `text()`, the OSC features (`hyperlink`/`setClipboard`/`setTitle`/`notify`),
+ * and the window title. Strip-only and behavior-identical to the RD-04
+ * provisional version it replaces (RD-08 AR-13).
  *
- * **Provisional (PL-16):** this is real, not a stub, but RD-08 will own/relocate
- * the canonical version. Keep the rule table here in sync with RD-08's.
+ * The `.js` extension in import specifiers is required by NodeNext ESM
+ * resolution (it resolves to the `.ts` source during development via tsx).
  */
 
 /**
  * Remove ESC/BEL/ST and C0/C1 control codes from untrusted text.
  *
- * Rule table (RD-08 §Sanitizer rule; AC-7/AC-8): strip `ESC` (0x1b) — and the
+ * Rule table (RD-08 §Sanitizer rule; AC-3/AC-8): strip `ESC` (0x1b) — and the
  * two-byte `ESC \` String Terminator — `BEL` (0x07), the single-byte `ST`
  * (0x9c), all C0 controls (0x00–0x1f) **except** tab (0x09) and newline (0x0a),
- * and all C1 controls (0x80–0x9f). Printable and valid UTF-8 text passes
- * through unchanged.
+ * and all C1 controls (0x80–0x9f). Printable and valid UTF-8 text (incl. astral)
+ * passes through unchanged.
  *
  * @param text Untrusted input (app- or network-supplied).
- * @returns `text` with control bytes removed. Pure; never logs its input.
+ * @returns `text` with ESC/BEL/ST and C0/C1 control bytes removed (tab/newline
+ *          kept). Pure; never logs its input.
  */
 export function sanitize(text: string): string {
   // Iterate by code point so astral characters (emoji, CJK ext) stay intact.

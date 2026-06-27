@@ -13,7 +13,7 @@
  * (SEC-2). Bell/notification rate-limiting is the app's concern (SEC-3).
  */
 
-import { sanitize } from './sanitize.js';
+import { sanitize } from '../safety/sanitize.js';
 import type { CapabilityProfile } from '../capability/index.js';
 
 /** BEL terminator (`\x07`) used by several OSC sequences. */

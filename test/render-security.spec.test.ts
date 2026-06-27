@@ -13,7 +13,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { sanitize } from '../src/engine/render/sanitize.js';
+import { sanitize } from '../src/engine/safety/sanitize.js';
 import { notify, setTitle, hyperlink, setClipboard } from '../src/engine/render/osc.js';
 import { serialize } from '../src/engine/render/serialize.js';
 import { ScreenBuffer } from '../src/engine/render/buffer.js';

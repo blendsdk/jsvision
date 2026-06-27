@@ -1,13 +1,14 @@
 /**
- * Implementation tests — sanitizer edge cases (RD-04, PL-2/PL-16).
+ * Implementation tests — canonical sanitizer edge cases (RD-08).
  *
  * Both String Terminator forms, tab/newline preservation, the empty string,
- * and multibyte pass-through. Complements the ST-14 spec oracle.
+ * and multibyte pass-through. Complements the ST-9…ST-13 spec oracle. Relocated
+ * from `render-sanitize.impl.test.ts` when the sanitizer moved to `safety/`.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { sanitize } from '../src/engine/render/sanitize.js';
+import { sanitize } from '../src/engine/safety/sanitize.js';
 
 test('ST in single-byte C1 form (0x9c) is stripped', () => {
   assert.equal(sanitize('a\x9cb'), 'ab');
@@ -20,6 +21,14 @@ test('ST in two-byte ESC-backslash form is stripped whole', () => {
 
 test('a lone ESC drops only the ESC, keeping a following non-backslash', () => {
   assert.equal(sanitize('a\x1bXb'), 'aXb');
+});
+
+test('a lone trailing ESC is dropped with no following byte to consume', () => {
+  assert.equal(sanitize('abc\x1b'), 'abc');
+});
+
+test('mixed runs of control and printable text strip only the controls', () => {
+  assert.equal(sanitize('a\x07b\x1bc\x9cd\x01e'), 'abcde');
 });
 
 test('tab and newline are preserved; other C0 controls are stripped', () => {

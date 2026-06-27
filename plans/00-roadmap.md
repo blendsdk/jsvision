@@ -2,7 +2,7 @@
 
 > **Project**: `@blendsdk/tui` — Phase 1: terminal-aware renderer + input + host **foundation**.
 > **Created**: 2026-06-27
-> **Last Updated**: 2026-06-27 (RD-07 implemented)
+> **Last Updated**: 2026-06-27 (RD-08 plan preflighted — 8 findings resolved, fixes applied)
 > **Source**: [requirements/](../requirements/README.md) (RD-01…RD-10)
 > **CodeOps Skills Version**: 2.0.0
 
@@ -32,7 +32,7 @@ it as RDs move stages (the **roadmap** skill owns the full protocol).
 | RD-05 | [Color & Styling](../requirements/RD-05-color-and-styling.md) | RD-02 | 📝 Requirements Drafted | — |
 | RD-06 | [Input System](../requirements/RD-06-input-system.md) | RD-01 | ✅ Implemented | [rd-06-input-system](rd-06-input-system/00-index.md) |
 | RD-07 | [Host & Lifecycle](../requirements/RD-07-host-and-lifecycle.md) | RD-02, RD-04, RD-06 | ✅ Implemented | [rd-07-host-and-lifecycle](rd-07-host-and-lifecycle/00-index.md) |
-| RD-08 | [Essentials Gate, Logging, Errors & Security](../requirements/RD-08-essentials-logging-security.md) | RD-02, RD-07 | 📝 Requirements Drafted | — |
+| RD-08 | [Essentials Gate, Logging, Errors & Security](../requirements/RD-08-essentials-logging-security.md) | RD-02, RD-07 | 🔄 Executing | [rd-08-essentials-logging-security](rd-08-essentials-logging-security/00-index.md) |
 | RD-09 | [Testing Strategy & Acceptance Gate](../requirements/RD-09-testing-and-acceptance.md) | all | 📝 Requirements Drafted | — |
 | RD-10 | [Non-Functional Requirements](../requirements/RD-10-non-functional.md) | all | 📝 Requirements Drafted | — |
 

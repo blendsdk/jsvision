@@ -4,8 +4,8 @@
  * Re-exports the public API of each landed subsystem so consumers import
  * everything from `@blendsdk/tui`. Currently: the package {@link VERSION}
  * (RD-01), the capability detection core (RD-02), the input decoder
- * (RD-06), the rendering engine (RD-04), and the host & lifecycle subsystem
- * (RD-07).
+ * (RD-06), the rendering engine (RD-04), the host & lifecycle subsystem
+ * (RD-07), and the safety subsystem (RD-08).
  *
  * The `.js` extension in the import specifiers is required by NodeNext ESM
  * resolution (it resolves to the `.ts` source during development via tsx).
@@ -57,7 +57,6 @@ export {
   serialize,
   defaultEncodeStyle,
   fallbackGlyph,
-  sanitize,
   hyperlink,
   setClipboard,
   setTitle,
@@ -84,3 +83,6 @@ export type {
 // RD-07 — host & lifecycle.
 export { createHost } from './host/index.js';
 export type { Host, HostOptions, ResizeEvent, RuntimeAdapter, HostSignal, TimerHandle } from './host/index.js';
+
+// RD-08 — safety (essentials gate, errors, logging, redaction, sanitizer).
+export { sanitize } from './safety/index.js';
