@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-06-27
-> **Progress**: 14/24 tasks (58%)
+> **Progress**: 21/24 tasks (88%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -168,13 +168,13 @@ skill — this plan contains no raw git commands. **No new runtime dependencies.
 - [x] 2.3.2 verify + lint clean — 2026-06-27 (verify 64 tests pass, eslint+prettier clean)
 
 ### Phase 3: Runtime-Query Seam & Parser
-- [ ] 3.1.1 Write query spec tests (ST-13…ST-16, stub stream)
-- [ ] 3.1.2 Red phase
-- [ ] 3.2.1 Implement query.ts (bounded parser, timeout, demux)
-- [ ] 3.2.2 Integrate layer 2 into resolve
-- [ ] 3.2.3 Green phase
-- [ ] 3.3.1 Write parser impl tests (grammars, cap boundary)
-- [ ] 3.3.2 verify + lint clean
+- [x] 3.1.1 Write query spec tests (ST-13…ST-16, stub stream) — 2026-06-27 (targets resolveCapabilitiesAsync + runQueries per RT-2)
+- [x] 3.1.2 Red phase — 2026-06-27 (query.js absent)
+- [x] 3.2.1 Implement query.ts (bounded parser, timeout, demux) — 2026-06-27
+- [x] 3.2.2 Integrate layer 2 into resolve (resolveCapabilitiesAsync, RT-2) — 2026-06-27
+- [x] 3.2.3 Green phase — 2026-06-27 (4/4 query spec tests; full suite 68 pass)
+- [x] 3.3.1 Write parser impl tests (grammars, cap boundary) — 2026-06-27
+- [x] 3.3.2 verify + lint clean — 2026-06-27 (verify 79 tests pass, eslint+prettier clean)
 
 ### Phase 4: Security, Public API & Finalization
 - [ ] 4.1.1 Write security spec test (ST-20)
