@@ -13,8 +13,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { enterMode, leaveMode } from '../src/engine/host/modes.js';
+import { createHost } from '../src/engine/host/host.js';
+import { ScreenBuffer } from '../src/engine/render/buffer.js';
 import { resolveCapabilities } from '../src/engine/capability/index.js';
 import type { CapabilityProfile, DeepPartial } from '../src/engine/capability/index.js';
+import type { InputEvent } from '../src/engine/input/events.js';
+import { CaptureStream, FakeInput, FakeRuntimeAdapter } from './host-doubles.js';
 
 /** Deterministic capability profile with the given fields overridden. */
 function caps(override: DeepPartial<CapabilityProfile> = {}): CapabilityProfile {
@@ -103,4 +107,83 @@ test('modes: leave disables exactly the modes enter enabled (drag-off profile)',
     assert.ok(leave.includes(`?${mode}l`), `leave disables ?${mode}`);
   }
   assert.equal(enabled.includes('1002'), false, 'drag mode 1002 not among enabled');
+});
+
+// ---------------------------------------------------------------------------
+// Orchestrator — input pump, lifecycle, render edges (Phase 3)
+// ---------------------------------------------------------------------------
+
+/** A host wired to fresh doubles; returns the host plus its doubles for driving. */
+function harness(overrides: Partial<Parameters<typeof createHost>[0]> = {}): {
+  host: ReturnType<typeof createHost>;
+  adapter: FakeRuntimeAdapter;
+  input: FakeInput;
+  output: CaptureStream;
+  events: InputEvent[];
+} {
+  const adapter = new FakeRuntimeAdapter();
+  const input = new FakeInput(true);
+  const output = new CaptureStream();
+  const events: InputEvent[] = [];
+  const host = createHost({
+    caps: caps({ altScreen: true }),
+    runtime: adapter,
+    input: input.asInput(),
+    output: output.asOutput(),
+    onInput: (e) => events.push(e),
+    ...overrides,
+  });
+  return { host, adapter, input, output, events };
+}
+
+test('orchestrator: new bytes cancel the armed ESC timer (no spurious Escape)', async () => {
+  const { host, adapter, input, events } = harness();
+  await host.start();
+  input.feed(Uint8Array.from([0x1b])); // arm the timer
+  input.feed(Uint8Array.from([0x5b, 0x41])); // completes ESC [ A → up; cancels the timer
+  adapter.advanceTimer(100); // timer was cleared — must fire nothing
+  await host.stop();
+  assert.deepEqual(events, [{ type: 'key', key: 'up', ctrl: false, alt: false, shift: false }]);
+});
+
+test('orchestrator: stop removes the data listener; later bytes are ignored', async () => {
+  const { host, input, events } = harness();
+  await host.start();
+  assert.equal(input.listenerCount('data'), 1, 'one data listener while running');
+  await host.stop();
+  assert.equal(input.listenerCount('data'), 0, 'listener removed on stop');
+  input.feed(Uint8Array.from([0x1b, 0x5b, 0x41]));
+  assert.equal(events.length, 0, 'bytes after stop are not dispatched');
+});
+
+test('orchestrator: restart re-attaches exactly one listener (no leak across cycles)', async () => {
+  const { host, input, events } = harness();
+  await host.start();
+  await host.stop();
+  await host.start();
+  assert.equal(input.listenerCount('data'), 1, 'no listener leak after a start/stop/start cycle');
+  input.feed(Uint8Array.from([0x1b, 0x5b, 0x41]));
+  await host.stop();
+  assert.deepEqual(events, [{ type: 'key', key: 'up', ctrl: false, alt: false, shift: false }]);
+});
+
+test('orchestrator: an unchanged frame re-render writes nothing (empty diff)', async () => {
+  const { host, output } = harness();
+  await host.start();
+  const a = new ScreenBuffer(8, 2, { fg: 'default', bg: 'default' });
+  a.set(1, 0, 'Z', { fg: 'default', bg: 'default' });
+  host.render(a);
+  const afterFirst = output.data.length;
+  const b = new ScreenBuffer(8, 2, { fg: 'default', bg: 'default' });
+  b.set(1, 0, 'Z', { fg: 'default', bg: 'default' });
+  host.render(b); // identical content → empty diff → no write
+  await host.stop();
+  assert.equal(output.data.length, afterFirst + leaveMode(caps({ altScreen: true })).length, 'second render wrote nothing (only leave-mode follows)');
+});
+
+test('orchestrator: render before start is a no-op (no throw, no write)', () => {
+  const { host, output } = harness();
+  const buf = new ScreenBuffer(4, 1, { fg: 'default', bg: 'default' });
+  assert.doesNotThrow(() => host.render(buf));
+  assert.equal(output.data, '', 'nothing written before start');
 });

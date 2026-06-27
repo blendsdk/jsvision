@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 20:30
-> **Progress**: 8/25 tasks (32%)
+> **Last Updated**: 2026-06-27 20:45
+> **Progress**: 15/25 tasks (60%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -104,8 +104,8 @@ backed by one thin subprocess e2e for the real signal→exit wiring (AR-13).
 | 3.1.7 | Add impl tests: ESC timer cancel-on-new-bytes; double-start/stop; listener cleanup across cycles; render empty-diff writes nothing | `test/host.impl.test.ts` |
 
 **Deliverables**:
-- [ ] ST-7, ST-13, ST-14, ST-15, ST-16 green
-- [ ] `npm run verify` green
+- [x] ST-7, ST-13, ST-14, ST-15, ST-16 green
+- [x] `npm run verify` green (248/248)
 
 **Verify**: `npm run verify`
 
@@ -198,13 +198,13 @@ backed by one thin subprocess e2e for the real signal→exit wiring (AR-13).
 - [x] 2.1.5 Impl tests (mode gating) — 2026-06-27 20:30
 
 ### Phase 3: Orchestrator
-- [ ] 3.1.1 Spec tests ST-7/13/14/15/16 (`host.spec.test.ts`)
-- [ ] 3.1.2 Verify red
-- [ ] 3.1.3 Implement `createHost` start/stop skeleton (`host.ts`)
-- [ ] 3.1.4 Implement input pump + ESC timer (`host.ts`)
-- [ ] 3.1.5 Implement `render` (`host.ts`)
-- [ ] 3.1.6 Verify green
-- [ ] 3.1.7 Impl tests (ESC cancel, idempotency, cleanup, empty diff)
+- [x] 3.1.1 Spec tests ST-7/13/14/15/16 (`host.spec.test.ts`) — 2026-06-27 20:45
+- [x] 3.1.2 Verify red — 2026-06-27 20:45
+- [x] 3.1.3 Implement `createHost` start/stop skeleton (`host.ts`) — 2026-06-27 20:45
+- [x] 3.1.4 Implement input pump + ESC timer (`host.ts`) — 2026-06-27 20:45
+- [x] 3.1.5 Implement `render` (`host.ts`) — 2026-06-27 20:45
+- [x] 3.1.6 Verify green — 2026-06-27 20:45
+- [x] 3.1.7 Impl tests (ESC cancel, idempotency, cleanup, empty diff) — 2026-06-27 20:45
 
 ### Phase 4: Signals & lifecycle
 - [ ] 4.1.1 Spec tests ST-6/6b/4/5 (`host-lifecycle.spec.test.ts`)
