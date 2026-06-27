@@ -16,7 +16,8 @@
  * The `.js` extensions in the import specifiers are required by NodeNext ESM
  * resolution (they resolve to the `.ts` sources during development via tsx).
  */
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 import {
   createHost,
@@ -25,17 +26,40 @@ import {
   resolveCapabilities,
   ScreenBuffer,
 } from '../../src/engine/index.js';
-import type { InputEvent, Platform } from '../../src/engine/index.js';
+import type { InputEvent, Platform, TerminalQuery } from '../../src/engine/index.js';
 import { parseArgs, USAGE } from './args.js';
+import type { ProbeArgs } from './args.js';
 import { gatherEnvMeta } from './env-meta.js';
 import { runAutoProbes } from './auto-probes.js';
 import { runManualProbes } from './manual-probes.js';
 import { runLiveReadout } from './live-readout.js';
 import { MANUAL_PROBES } from './taxonomy.js';
-import type { ProbeResult } from './report.js';
+import { buildReport, deriveRecommendation, renderJson, renderTable } from './report.js';
+import type { ProbeResult, Report } from './report.js';
+import { appendToMatrix } from './matrix.js';
+import type { MatrixFs } from './matrix.js';
 
 /** Whole-step timeout for the upfront auto-probe query phase (ms). */
 const AUTO_TIMEOUT_MS = 200;
+
+/** The checked-in cross-terminal evidence matrix, at the repo root (AR-6). */
+const MATRIX_PATH = fileURLToPath(new URL('../../terminal-matrix.json', import.meta.url));
+
+/** Real-filesystem {@link MatrixFs} for production matrix appends. */
+const nodeMatrixFs: MatrixFs = {
+  readFile: (path) => (existsSync(path) ? readFileSync(path, 'utf8') : null),
+  writeFile: (path, data) => writeFileSync(path, data),
+};
+
+/** Persist optional artifacts: a standalone `--out` JSON copy and the matrix append. */
+function persist(report: Report, args: ProbeArgs): void {
+  if (args.out) {
+    writeFileSync(args.out, `${renderJson(report)}\n`);
+  }
+  if (args.matrix) {
+    appendToMatrix({ fs: nodeMatrixFs, path: MATRIX_PATH, report });
+  }
+}
 
 /** Injectable OS/process boundary for {@link main}; production uses `process.*`. [RT-2] */
 export interface ProbeDeps {
@@ -49,10 +73,10 @@ export interface ProbeDeps {
   stdout: NodeJS.WritableStream;
   /** Diagnostic stream (default `process.stderr`). */
   stderr: NodeJS.WritableStream;
-  /** Interactive input stream (default `process.stdin`); used by the live readout (Phase 4). */
-  input: NodeJS.ReadableStream;
-  /** Interactive output stream (default `process.stdout`). */
-  output: NodeJS.WritableStream;
+  /** Interactive input stream (default `process.stdin`); bound by the host + readout. */
+  input: NodeJS.ReadStream;
+  /** Interactive output stream (default `process.stdout`); bound by the host. */
+  output: NodeJS.WriteStream;
   /** Process exit (default `process.exit`); typed `void` so tests continue after a call. */
   exit: (code: number) => void;
   /** Interactive-TTY probe (default the RD-08 `detectTty`). */
@@ -105,19 +129,21 @@ export async function main(deps: Partial<ProbeDeps> = {}): Promise<void> {
   const output = deps.output ?? process.stdout;
 
   if (args.auto) {
-    // Non-interactive: run the auto-only query phase (CI-safe; no alt-screen).
-    // A piped/headless terminal simply returns no responses and the auto facts
-    // fall back to env/table evidence. The full report lands in Phase 5.
-    const query = createTerminalQuery({ input, output });
-    let auto: Record<string, ProbeResult>;
-    try {
-      auto = await runAutoProbes({ query, env, platform, timeoutMs: AUTO_TIMEOUT_MS });
-    } finally {
-      query.close();
+    // Non-interactive (CI-safe): no alt-screen, no prompts. A null query keeps
+    // query escape sequences off stdout, which carries the JSON report (RT-6);
+    // auto facts come from env/table resolution. Manual items default to null.
+    async function* noResponses(): AsyncGenerator<Uint8Array> {
+      /* a headless run has no responding terminal */
     }
-    stdout.write(
-      `capability-probe: --auto recorded ${Object.keys(auto).length} auto facts (full report in later phases).\n`,
-    );
+    const nullQuery: TerminalQuery = { write(): void {}, read: () => noResponses() };
+    const auto = await runAutoProbes({ query: nullQuery, env, platform, timeoutMs: AUTO_TIMEOUT_MS });
+    const report = buildReport({
+      meta,
+      results: auto,
+      recommendation: deriveRecommendation({ caps: profile, results: auto }),
+    });
+    stdout.write(`${renderJson(report)}\n`);
+    persist(report, args);
     return;
   }
 
@@ -161,7 +187,7 @@ export async function main(deps: Partial<ProbeDeps> = {}): Promise<void> {
   }
   const style = { fg: 'default', bg: 'default' } as const;
 
-  const host = createHost({ caps: profile, onInput: pushEvent });
+  const host = createHost({ caps: profile, input, output, onInput: pushEvent });
   let auto: Record<string, ProbeResult> = {};
   let manual: Record<string, ProbeResult> = {};
   try {
@@ -191,9 +217,17 @@ export async function main(deps: Partial<ProbeDeps> = {}): Promise<void> {
   } finally {
     await host.stop();
   }
-  stdout.write(
-    `capability-probe: ${meta.terminal} — ${Object.keys(auto).length} auto + ${Object.keys(manual).length} manual facts (report lands in Phase 5).\n`,
-  );
+
+  // After leaving the alternate screen, print the human-readable table to stdout
+  // and persist the standalone JSON (--out) + matrix append (AR-5, AR-6, AR-11).
+  const results = { ...auto, ...manual };
+  const report = buildReport({
+    meta,
+    results,
+    recommendation: deriveRecommendation({ caps: profile, results }),
+  });
+  stdout.write(`${renderTable(report)}\n`);
+  persist(report, args);
 }
 
 // Auto-run when executed directly (e.g. `npm run probe`), but not when imported by a test.

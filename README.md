@@ -301,6 +301,49 @@ and lives here. The error model is a single `TuiError` base with
 a consumer can `catch (e) { if (e instanceof TuiError) … }`. An uncaught error
 through the host's loop restores the terminal **before** the process exits.
 
+### Live terminal query (RD-03)
+
+`createTerminalQuery()` is the real, tty-backed implementation of the layer-2
+`TerminalQuery` seam — it writes query requests to the terminal and yields the
+response bytes — so `resolveCapabilitiesAsync()` can refine the profile from live
+responses (e.g. synchronized-output `?2026`), not just env/table heuristics.
+
+```ts
+import { createTerminalQuery, resolveCapabilitiesAsync } from '@blendsdk/tui';
+
+// The caller owns raw mode; the adapter only reads/writes bytes and never
+// changes terminal state. Always close() it when done to release the listener.
+const query = createTerminalQuery({ input: process.stdin, output: process.stdout });
+try {
+  const { profile } = await resolveCapabilitiesAsync({ query });
+  // profile.sync2026 etc. now reflect the terminal's actual replies
+} finally {
+  query.close();
+}
+```
+
+### Capability probe & survey harness (RD-03)
+
+A dev-only diagnostic harness lives under `examples/capability-probe/` (not part of
+the published package). It probes **every** capability the SDK cares about and
+reports what actually works on the running terminal — automatic query-based probes
+first, then guided manual confirmation (color swatches, attributes, glyphs,
+Unicode alignment, OSC notifications/hyperlinks/clipboard/title), then a live
+decoded-input readout — and emits a JSON + table report, accumulating a checked-in
+`terminal-matrix.json` evidence base. It runs non-destructively (alt-screen with
+guaranteed restore) and never stops on a missing capability.
+
+```bash
+npm run probe                       # interactive survey (table to stdout, appends the matrix)
+npm run probe -- --auto > out.json  # non-interactive: auto-detectable facts only (CI-runnable)
+npm run probe -- --out r.json --no-matrix   # standalone JSON copy; skip the matrix append
+```
+
+Flags: `--auto` (CI mode, manual items left unverified), `--out <path>` (standalone
+JSON copy), `--no-matrix` (skip the `terminal-matrix.json` append), `--help`. The
+report records only terminal/OS plus `TERM`/`COLORTERM`/`TERM_PROGRAM` — no secrets,
+and paste events report a byte length, never contents.
+
 ### ESM-only — `require()` is not supported
 
 The package declares no CommonJS `require` condition. Importing it from CommonJS
