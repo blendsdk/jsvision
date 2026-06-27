@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 (Phase 1 complete)
-> **Progress**: 7/24 tasks (29%)
+> **Last Updated**: 2026-06-27 (Phase 2 complete)
+> **Progress**: 14/24 tasks (58%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -154,13 +154,13 @@ contains no raw git commands. **No new runtime dependencies.**
 - [x] 1.3.2 verify + lint clean — 2026-06-27
 
 ### Phase 2: Serializer + Seam + Sync + Glyph Fallback
-- [ ] 2.1.1 Write spec ST-1, ST-2, ST-4, ST-5, ST-9, ST-11, ST-13
-- [ ] 2.1.2 Red phase (serializer/glyphs absent)
-- [ ] 2.2.1 Implement render/ansi.ts + render/glyphs.ts
-- [ ] 2.2.2 Implement render/serialize.ts (diff + default encoder + sync)
-- [ ] 2.2.3 Green phase (ST-1/2/4/5/9/11/13 pass)
-- [ ] 2.3.1 Write serialize + glyphs impl tests
-- [ ] 2.3.2 verify + lint clean
+- [x] 2.1.1 Write spec ST-1, ST-2, ST-4, ST-5, ST-9, ST-11, ST-13 — 2026-06-27
+- [x] 2.1.2 Red phase (serializer/glyphs absent) — 2026-06-27
+- [x] 2.2.1 Implement render/ansi.ts + render/glyphs.ts — 2026-06-27
+- [x] 2.2.2 Implement render/serialize.ts (diff + default encoder + sync) — 2026-06-27
+- [x] 2.2.3 Green phase (ST-1/2/4/5/9/11/13 pass) — 2026-06-27
+- [x] 2.3.1 Write serialize + glyphs impl tests — 2026-06-27
+- [x] 2.3.2 verify + lint clean — 2026-06-27
 
 ### Phase 3: Sanitizer + OSC + Cursor
 - [ ] 3.1.1 Write spec ST-6, ST-7, ST-8, ST-10, ST-12, ST-14
