@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 (Phase 3 complete)
-> **Progress**: 20/26 tasks (77%)
+> **Last Updated**: 2026-06-27 (Phase 4 complete — all tasks done)
+> **Progress**: 26/26 tasks (100%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -180,12 +180,12 @@ skill — this plan contains no raw git commands. **No new runtime dependencies.
 - [x] 3.3.2 verify + lint clean — 2026-06-27
 
 ### Phase 4: Keymap, Security Hardening, Public API & Finalization
-- [ ] 4.1.1 Write spec tests ST-7, ST-8, ST-9, ST-13
-- [ ] 4.1.2 Red phase (keymap absent; cap/bound assertions)
-- [ ] 4.2.1 Implement keymap.ts + enforce paste cap & carry bound
-- [ ] 4.2.2 Implement input/index.ts + re-export from engine/index.ts + README section
-- [ ] 4.2.3 Green phase (ST-7/8/9/13 + full spec suite)
-- [ ] 4.3.1 Final full gate (verify/lint/check:deps/audit); AC-1…AC-8 covered; RD-02 green
+- [x] 4.1.1 Write spec tests ST-7, ST-8, ST-9, ST-13 — 2026-06-27
+- [x] 4.1.2 Red phase (keymap absent; cap/bound assertions) — 2026-06-27
+- [x] 4.2.1 Implement keymap.ts + enforce paste cap & carry bound — 2026-06-27
+- [x] 4.2.2 Implement input/index.ts + re-export from engine/index.ts + README section — 2026-06-27
+- [x] 4.2.3 Green phase (ST-7/8/9/13 + full spec suite) — 2026-06-27
+- [x] 4.3.1 Final full gate (verify/lint/check:deps/audit); AC-1…AC-8 covered; RD-02 green — 2026-06-27
 
 ---
 

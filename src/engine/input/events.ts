@@ -105,6 +105,12 @@ export interface DecoderState {
   readonly carry: Uint8Array;
   /** In-progress bracketed-paste accumulation. */
   readonly paste: PasteState;
+  /**
+   * True while discarding the tail of an oversized, unterminated sequence after
+   * the carry bound tripped (PL-6): subsequent bytes are dropped (no events)
+   * until the next `ESC` resynchronises the stream (AC-7/AC-8).
+   */
+  readonly resync: boolean;
 }
 
 /**

@@ -71,6 +71,40 @@ import { resolveCapabilitiesAsync } from '@blendsdk/tui';
 const { profile } = await resolveCapabilitiesAsync({ query, timeoutMs: 200 });
 ```
 
+### Input decoding (RD-06)
+
+`decode()` turns raw terminal bytes into typed input events. It is a **pure**
+function of `(bytes, state)` — no timers, no I/O, no logging — so it is
+chunk-boundary-safe and replayable. Feed each chunk and thread the returned
+`state` forward; query responses (DA, `?2026`, XTVERSION) are routed to a
+**separate `queries` array** so a terminal reply can never leak as a keystroke.
+
+```ts
+import { createDecoderState, decode, flush, createKeymap } from '@blendsdk/tui';
+
+let state = createDecoderState();
+
+// A CSI sequence split across two stdin chunks decodes once, on completion.
+state = decode(Uint8Array.from([0x1b, 0x5b]), state).state; // "ESC [" — carried
+const { events } = decode(Uint8Array.from([0x41]), state); // "A" → completes
+events[0]; // { type: 'key', key: 'up', ctrl: false, alt: false, shift: false }
+```
+
+Events are a discriminated union: `key`, `mouse` (SGR, 1-based coords), `wheel`,
+`paste` (a bracketed paste delivered as one event, size-capped), and `focus`.
+A lone trailing `ESC` is held ambiguous; the host arms an `ESC_TIMEOUT_MS` (50 ms)
+timer and calls `flush(state)` to emit the Escape key if no sequence follows.
+
+An optional pluggable keymap names chords over the events you already received:
+
+```ts
+const keymap = createKeymap({ 'ctrl+s': 'save', 'alt+x': 'exit' });
+keymap.lookup({ type: 'key', key: 's', ctrl: true, alt: false, shift: false }); // 'save'
+```
+
+Classic xterm decoding ships now; CSI-u / Kitty keyboard-protocol parsing is a
+later enhancement (the `caps.keyboard.kittyFlags` branch falls back to classic).
+
 ### ESM-only — `require()` is not supported
 
 The package declares no CommonJS `require` condition. Importing it from CommonJS

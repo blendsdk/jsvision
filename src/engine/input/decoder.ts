@@ -50,9 +50,9 @@ type FocusDecode =
   | { readonly status: 'event'; readonly event: FocusEvent; readonly end: number }
   | { readonly status: 'none' };
 
-/** A fresh, empty decoder state: no carried bytes, no in-progress paste. */
+/** A fresh, empty decoder state: no carried bytes, no in-progress paste, not resyncing. */
 export function createDecoderState(): DecoderState {
-  return { carry: EMPTY, paste: { active: false, bytes: [], truncated: false } };
+  return { carry: EMPTY, paste: { active: false, bytes: [], truncated: false }, resync: false };
 }
 
 /**
@@ -65,7 +65,7 @@ export function createDecoderState(): DecoderState {
  *   bytes (`rest`), and the next `state` to pass to the following call (RT-1).
  */
 export function decode(bytes: Uint8Array, state: DecoderState, options?: DecodeOptions): DecodeResult {
-  return scan(concat(state.carry, bytes), state.paste, options);
+  return scan(concat(state.carry, bytes), state.paste, state.resync, options);
 }
 
 /**
@@ -81,9 +81,9 @@ export function decode(bytes: Uint8Array, state: DecoderState, options?: DecodeO
  */
 export function flush(state: DecoderState, options?: DecodeOptions): DecodeResult {
   const buf = state.carry;
-  if (!state.paste.active && buf.length > 0 && buf[0] === ESC) {
+  if (!state.paste.active && !state.resync && buf.length > 0 && buf[0] === ESC) {
     const escape: KeyEvent = { type: 'key', key: 'escape', ctrl: false, alt: false, shift: false };
-    const tail = scan(copyOf(buf.subarray(1)), state.paste, options);
+    const tail = scan(copyOf(buf.subarray(1)), state.paste, state.resync, options);
     return {
       events: [escape, ...tail.events],
       queries: tail.queries,
@@ -91,7 +91,7 @@ export function flush(state: DecoderState, options?: DecodeOptions): DecodeResul
       state: tail.state,
     };
   }
-  return scan(buf, state.paste, options);
+  return scan(buf, state.paste, state.resync, options);
 }
 
 /**
@@ -105,19 +105,29 @@ export function flush(state: DecoderState, options?: DecodeOptions): DecodeResul
  * physically cannot leak as a keystroke (AC-6, PL-9). The in-progress paste is
  * accumulated into local state and threaded out via the returned `state` (RT-1).
  */
-function scan(buf: Uint8Array, paste: PasteState, options?: DecodeOptions): DecodeResult {
+function scan(buf: Uint8Array, paste: PasteState, resync: boolean, options?: DecodeOptions): DecodeResult {
   const events: InputEvent[] = [];
   const queries: QueryResponse[] = [];
   const cap = options?.pasteCap ?? PASTE_CAP_BYTES;
 
-  // Local, mutable copy of the paste accumulation so decode() never mutates the
-  // caller's state (purity, AC-8).
+  // Local, mutable copies so decode() never mutates the caller's state (purity, AC-8).
   let active = paste.active;
   let pasteBytes = active ? paste.bytes.slice() : [];
   let truncated = active ? paste.truncated : false;
+  let resyncing = resync;
 
   let i = 0;
   scanLoop: while (i < buf.length) {
+    // 0. Resync after a carry-bound overflow (PL-6): drop bytes until the next
+    // ESC so an oversized unterminated sequence emits nothing (AC-7/AC-8).
+    if (resyncing) {
+      if (buf[i] !== ESC) {
+        i += 1;
+        continue;
+      }
+      resyncing = false; // reached a sequence boundary — resume normal decoding
+    }
+
     // 1. In-progress paste: every byte is content until the end marker (AC-5).
     if (active) {
       const endMarker = matchMarker(buf, i, PASTE_END);
@@ -196,18 +206,20 @@ function scan(buf: Uint8Array, paste: PasteState, options?: DecodeOptions): Deco
   }
 
   let rest = copyOf(buf.subarray(i));
+  let nextResync = resyncing;
   // Carry bound (PL-6, AC-7/AC-8): a trailing incomplete token longer than the
   // shared cap is adversarial garbage — drop it and resync rather than grow.
   // (Paste content is bounded separately by the paste cap, not carried in rest.)
   if (rest.length > RESPONSE_BUFFER_CAP) {
     rest = EMPTY;
+    nextResync = true; // discard the poisoned tail until the next ESC boundary
   }
 
   const nextPaste: PasteState = active
     ? { active: true, bytes: pasteBytes, truncated }
     : { active: false, bytes: [], truncated: false };
 
-  return { events, queries, rest, state: { carry: rest, paste: nextPaste } };
+  return { events, queries, rest, state: { carry: rest, paste: nextPaste, resync: nextResync } };
 }
 
 /**
