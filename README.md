@@ -4,8 +4,8 @@ An SDK for building **Turbo Vision-style terminal applications** in TypeScript.
 
 This package is the **foundation** of the SDK (RD-01): a clean, typed,
 tree-shakeable **ESM-only** library with **zero runtime dependencies**. The
-renderer, input, host, and capability subsystems are added by later milestones
-and re-exported from this package's single public entry point.
+capability, input, rendering, host, and safety subsystems are added by later
+milestones and re-exported from this package's single public entry point.
 
 > **Status:** `0.1.0` — pre-1.0. The public API is still being built out and may
 > change between minor versions.
@@ -196,6 +196,67 @@ tests; the real adapter is the default. A non-TTY host skips mode setup but stil
 writes frames, and exposes `isTTY` for the caller's degrade policy. On Windows the
 host uses the `stdout 'resize'` event, `SIGBREAK`, and VT processing in place of
 the POSIX signals; Windows acceptance awaits a Windows runner.
+
+### Safety: essentials gate, logging & errors (RD-08)
+
+The `safety` subsystem decides whether the SDK may run, keeps secrets out of logs,
+and owns the canonical injection boundary. Everything here is **pure and
+injectable** — no global state, disabled by default.
+
+**Essentials gate.** Before `start()`, evaluate the terminal against the runtime
+essentials. The single hard requirement is an **interactive TTY**; missing mouse,
+color, or alt-screen are **degradations** the SDK runs around, never hard stops.
+TTY facts come from the additive `detectTty()` probe (a real terminal can be
+detected even when stdout is piped, via `/dev/tty`), because `host.isTTY` is only
+valid after `start()`.
+
+```ts
+import { detectTty, assertEssentials, resolveCapabilities, createLogger } from '@blendsdk/tui';
+
+const { profile: caps } = resolveCapabilities();
+const facts = { isTTY: detectTty() };
+
+// Throws EssentialsNotMetError on a pipe (before any mode is entered — nothing
+// to restore); returns a report with any degradations otherwise.
+const report = assertEssentials(caps, facts, { logger: createLogger({ sink: 'ring' }) });
+report.degradations; // e.g. [{ cap: 'mouse', mode: 'keyboard-only', message: '…' }]
+
+// Pure variants for custom flows:
+import { evaluateEssentials, essentialsMet } from '@blendsdk/tui';
+evaluateEssentials(caps, facts); // { met, missing, degradations } — never throws
+essentialsMet(caps, facts); // boolean
+```
+
+**Screen-safe logger.** A TUI owns the screen, so the logger physically refuses
+any sink that resolves to the UI stream (throws `LoggerConfigError` at
+construction). It is **disabled by default** — a normal run writes zero bytes —
+and gated by env: set `BLENDTUI_DEBUG=1` to enable, `BLENDTUI_LOG=<path>` to write
+to a file (else stderr when it is not the UI). Levels are `error|warn|info|debug`;
+the in-memory `ring` sink is always available for tests.
+
+```ts
+const log = createLogger(); // disabled unless BLENDTUI_DEBUG=1
+log.debug('input', 'event', { count: 3 }); // no-op when disabled
+```
+
+**Redaction.** `redactEvent()` reduces an input event to a log-safe shape: a
+printable key logs only `{ printable: true, ctrl, alt, shift }` (never the
+character or codepoint), a paste logs only its length, and mouse/wheel/focus pass
+their non-secret coordinates. `dumpCaps()` renders a one-line, secret-free
+capabilities summary from the RD-02 reason trace.
+
+```ts
+import { redactEvent } from '@blendsdk/tui';
+redactEvent({ type: 'key', key: 'a', codepoint: 0x61, ctrl: false, alt: false, shift: false });
+// → { type: 'key', printable: true, ctrl: false, alt: false, shift: false }
+```
+
+**Sanitizer & errors.** `sanitize()` (the injection boundary used by every
+text-accepting render path — see _Rendering_) is the canonical safety primitive
+and lives here. The error model is a single `TuiError` base with
+`EssentialsNotMetError` (carries the unmet essentials) and `LoggerConfigError`, so
+a consumer can `catch (e) { if (e instanceof TuiError) … }`. An uncaught error
+through the host's loop restores the terminal **before** the process exits.
 
 ### ESM-only — `require()` is not supported
 

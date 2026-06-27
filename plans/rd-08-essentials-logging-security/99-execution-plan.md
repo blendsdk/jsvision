@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 23:42
-> **Progress**: 32/35 tasks (91%)
+> **Last Updated**: 2026-06-27 23:54
+> **Progress**: 35/35 tasks (100%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -199,9 +199,9 @@ RD-02 and RD-07 public contracts are **not** modified (AR-2, AR-5). The `@blends
 | 5.1.3 | Mark roadmap RD-08 → ✅ Implemented (via the roadmap skill on completion) | `plans/00-roadmap.md` |
 
 **Deliverables**:
-- [ ] README documents the safety layer and its env flags
-- [ ] All gates green (verify/lint/check:deps/audit)
-- [ ] Roadmap updated
+- [x] README documents the safety layer and its env flags
+- [x] All gates green (verify/lint/check:deps/audit)
+- [x] Roadmap updated
 
 **Verify**: `npm run verify`
 
@@ -258,9 +258,9 @@ RD-02 and RD-07 public contracts are **not** modified (AR-2, AR-5). The `@blends
 - [x] 4.2.1 Full verification + explicit e2e run ✅ (completed: 2026-06-27 23:42)
 
 ### Phase 5: Documentation & finalize
-- [ ] 5.1.1 README: document the safety subsystem + env flags
-- [ ] 5.1.2 Final full verify + lint + check:deps + audit
-- [ ] 5.1.3 Roadmap RD-08 → ✅ Implemented
+- [x] 5.1.1 README: document the safety subsystem + env flags ✅ (completed: 2026-06-27 23:50)
+- [x] 5.1.2 Final full verify + lint + check:deps + audit ✅ (completed: 2026-06-27 23:52) — verify 321/321, e2e 1/1, lint clean, check:deps OK, audit 0 vulns
+- [x] 5.1.3 Roadmap RD-08 → ✅ Implemented ✅ (completed: 2026-06-27 23:54)
 
 ---
 
