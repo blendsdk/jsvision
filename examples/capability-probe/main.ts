@@ -18,10 +18,15 @@
  */
 import { pathToFileURL } from 'node:url';
 
-import { createHost, detectTty, resolveCapabilities } from '../../src/engine/index.js';
+import { createHost, createTerminalQuery, detectTty, resolveCapabilities } from '../../src/engine/index.js';
 import type { Platform } from '../../src/engine/index.js';
 import { parseArgs, USAGE } from './args.js';
 import { gatherEnvMeta } from './env-meta.js';
+import { runAutoProbes } from './auto-probes.js';
+import type { ProbeResult } from './report.js';
+
+/** Whole-step timeout for the upfront auto-probe query phase (ms). */
+const AUTO_TIMEOUT_MS = 200;
 
 /** Injectable OS/process boundary for {@link main}; production uses `process.*`. [RT-2] */
 export interface ProbeDeps {
@@ -87,11 +92,23 @@ export async function main(deps: Partial<ProbeDeps> = {}): Promise<void> {
 
   const { profile } = resolveCapabilities({ env, platform });
   const meta = gatherEnvMeta({ env, platform, now });
+  const input = deps.input ?? process.stdin;
+  const output = deps.output ?? process.stdout;
 
   if (args.auto) {
-    // The non-interactive auto-only pipeline lands in Phase 5; the foundation
-    // acknowledges the mode without entering alt-screen (CI-safe).
-    stdout.write('capability-probe: --auto mode (auto-only report) — pending later phases.\n');
+    // Non-interactive: run the auto-only query phase (CI-safe; no alt-screen).
+    // A piped/headless terminal simply returns no responses and the auto facts
+    // fall back to env/table evidence. The full report lands in Phase 5.
+    const query = createTerminalQuery({ input, output });
+    let auto: Record<string, ProbeResult>;
+    try {
+      auto = await runAutoProbes({ query, env, platform, timeoutMs: AUTO_TIMEOUT_MS });
+    } finally {
+      query.close();
+    }
+    stdout.write(
+      `capability-probe: --auto recorded ${Object.keys(auto).length} auto facts (full report in later phases).\n`,
+    );
     return;
   }
 
@@ -105,16 +122,25 @@ export async function main(deps: Partial<ProbeDeps> = {}): Promise<void> {
   }
 
   // Interactive: enter alt-screen + raw mode via the host and guarantee restore
-  // on every exit path. Probe phases (auto → manual → readout) are inserted here
-  // in Phases 2–4.
+  // on every exit path. The dedicated auto-probe phase runs first (AR-9); manual
+  // probes + live readout are inserted after it in Phases 3–4.
   const host = createHost({ caps: profile });
+  let auto: Record<string, ProbeResult> = {};
   try {
     await host.start();
-    // (probe phases inserted here)
+    const query = createTerminalQuery({ input, output });
+    try {
+      auto = await runAutoProbes({ query, env, platform, timeoutMs: AUTO_TIMEOUT_MS });
+    } finally {
+      query.close();
+    }
+    // (manual probes + live readout inserted here in Phases 3–4)
   } finally {
     await host.stop();
   }
-  stdout.write(`capability-probe: foundation ready for ${meta.terminal} (probes land in later phases).\n`);
+  stdout.write(
+    `capability-probe: foundation ready for ${meta.terminal} — ${Object.keys(auto).length} auto facts (probes land in later phases).\n`,
+  );
 }
 
 // Auto-run when executed directly (e.g. `npm run probe`), but not when imported by a test.

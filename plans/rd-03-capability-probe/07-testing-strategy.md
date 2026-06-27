@@ -50,9 +50,9 @@ framework mocks, per the testing standards.
 
 | #    | Input / Scenario | Expected Output / Behavior | Source |
 |------|------------------|----------------------------|--------|
-| ST-16 | scripted query returns a DA/version response | `results['output.version'?]`/DA recorded `supported:true, method:'auto'` | RD §Auto / AR-9 |
-| ST-17 | scripted query returns `?2026` DECRPM "set" | `results['output.sync2026']` `supported:true, method:'auto'` | RD §Auto |
-| ST-18 | silent terminal (no bytes, timeout) | `runAutoProbes` settles; auto items `supported:false`/`null`; no throw, no hang | RD AC-3 / AR-15 |
+| ST-16 | live query (over real streams) replies to `?2026` DECRPM "supported" | `results['output.sync2026']` = `{supported:true, method:'auto'}` | RD §Auto / AR-9 / RT-3 |
+| ST-17 | env `COLORTERM='truecolor'` (auto color), query silent | `results['color.truecolor']` = `{supported:true, method:'auto'}` | RD §Auto / AR-10 / RT-3 |
+| ST-18 | silent terminal (no bytes, timeout), env `{}` | `runAutoProbes` settles (no throw, no hang); `results['output.sync2026'].supported === false`, `method:'auto'` | RD AC-3 / AR-15 / RT-3 |
 
 ### Manual probes (`manual-probes.ts`)
 

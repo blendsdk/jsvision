@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 01:30
-> **Progress**: 15/44 tasks (34%)
+> **Last Updated**: 2026-06-28 02:00
+> **Progress**: 22/44 tasks (50%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -196,13 +196,13 @@ and live-readout probes; phase 5 assembles the report/matrix/`--auto` and the e2
 - [x] 1.3.3 Full verify ✅ (371/371, lint clean, completed: 2026-06-28 01:30)
 
 ### Phase 2: Auto-probes
-- [ ] 2.1.1 Spec tests auto-probes (ST-16/17/18)
-- [ ] 2.1.2 Run spec tests — RED
-- [ ] 2.2.1 `PROBES` taxonomy registry
-- [ ] 2.2.2 `runAutoProbes` + wire upfront phase
-- [ ] 2.2.3 Run spec tests — GREEN
-- [ ] 2.3.1 Impl tests auto-probes
-- [ ] 2.3.2 Full verify
+- [x] 2.1.1 Spec tests auto-probes (ST-16/17/18) ✅ (completed: 2026-06-28 01:40)
+- [x] 2.1.2 Run spec tests — RED ✅ (module not found, completed: 2026-06-28 01:40)
+- [x] 2.2.1 `PROBES` taxonomy registry ✅ (completed: 2026-06-28 01:50)
+- [x] 2.2.2 `runAutoProbes` + wire upfront phase ✅ (completed: 2026-06-28 01:55)
+- [x] 2.2.3 Run spec tests — GREEN ✅ (3/3, completed: 2026-06-28 01:55)
+- [x] 2.3.1 Impl tests auto-probes ✅ (completed: 2026-06-28 02:00)
+- [x] 2.3.2 Full verify ✅ (378/378, lint clean, completed: 2026-06-28 02:00)
 
 ### Phase 3: Manual probes
 - [ ] 3.1.1 Spec tests manual (ST-12/12b)
