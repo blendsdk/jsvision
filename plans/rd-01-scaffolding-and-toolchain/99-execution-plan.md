@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 11:20
-> **Progress**: 12/20 tasks (60%)
+> **Last Updated**: 2026-06-27 11:35
+> **Progress**: 18/20 tasks (90%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -117,9 +117,9 @@ Commits: use **/gitcm** (or **/gitcmp**) per the exec_plan skill — this plan c
 | 2.3.2 | `npm run lint` clean; `npm run check:deps` exits 0; `npm run verify` exits 0 | — |
 
 **Deliverables**:
-- [ ] ESLint + Prettier enforced; `npm run lint` clean (PL-2)
-- [ ] `check:deps` guard works (AC-6); CI workflow authored (AC-2 deferred-to-remote)
-- [ ] commit via /gitcm
+- [x] ESLint + Prettier enforced; `npm run lint` clean (PL-2)
+- [x] `check:deps` guard works (AC-6); CI workflow authored (AC-2 deferred-to-remote)
+- [x] commit via /gitcm (at phase boundary below)
 
 **Verify**: `npm run lint && npm run check:deps && npm run verify`
 
@@ -179,12 +179,12 @@ Commits: use **/gitcm** (or **/gitcmp**) per the exec_plan skill — this plan c
 - [x] 1.3.2 `npm run verify` exits 0 (2026-06-27: typecheck + 9 tests + build all green)
 
 ### Phase 2: Toolchain — Test/Lint/CI & Dependency Guard
-- [ ] 2.1.1 Write toolchain spec tests (ST-8…ST-12)
-- [ ] 2.1.2 Red phase — spec tests fail
-- [ ] 2.2.1 Implement ESLint+Prettier, scripts, dep guard, CI workflow
-- [ ] 2.2.2 Green phase — spec tests pass
-- [ ] 2.3.1 Write dep-guard impl tests
-- [ ] 2.3.2 Lint + check:deps + verify clean
+- [x] 2.1.1 Write toolchain spec tests (ST-8…ST-12) (2026-06-27)
+- [x] 2.1.2 Red phase — spec tests fail (2026-06-27: ST-9/10/11 red — guard+workflow absent; ST-8/12 already green from Phase 1 config)
+- [x] 2.2.1 Implement ESLint+Prettier, scripts, dep guard, CI workflow (2026-06-27)
+- [x] 2.2.2 Green phase — spec tests pass (2026-06-27: ST-8…ST-12 all green)
+- [x] 2.3.1 Write dep-guard impl tests (2026-06-27)
+- [x] 2.3.2 Lint + check:deps + verify clean (2026-06-27: lint clean, check:deps OK, verify 19/19)
 
 ### Phase 3: Packaging e2e & Finalization
 - [ ] 3.1.1 Write packaging e2e spec test (ST-13/ST-14)

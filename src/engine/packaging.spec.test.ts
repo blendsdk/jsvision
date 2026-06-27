@@ -107,5 +107,8 @@ test("ST-6: exports['.'] has import + types and no require key", () => {
 // ST-7 (AC-1, AC-3): the build emits both the JS entry and its declaration.
 test('ST-7: build output contains dist/engine/index.js and index.d.ts', () => {
   assert.ok(existsSync(resolve(repoRoot, 'dist/engine/index.js')), 'dist/engine/index.js missing — run npm run build');
-  assert.ok(existsSync(resolve(repoRoot, 'dist/engine/index.d.ts')), 'dist/engine/index.d.ts missing — run npm run build');
+  assert.ok(
+    existsSync(resolve(repoRoot, 'dist/engine/index.d.ts')),
+    'dist/engine/index.d.ts missing — run npm run build',
+  );
 });

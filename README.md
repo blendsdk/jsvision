@@ -39,14 +39,14 @@ It needs an interactive terminal (a TTY).
 
 ### Keyboard
 
-| Key            | Action                                   |
-| -------------- | ---------------------------------------- |
-| `Enter` / `Space` | Press the **Hello** button → show the dialog |
-| `Alt‑F`        | Open the **File** menu                    |
-| `↑` / `↓`      | Move within the menu                      |
-| `Enter`        | Activate the highlighted menu item        |
-| `Esc`          | Close the menu or dialog                  |
-| `Alt‑X` / `Ctrl‑C` | Exit the application                  |
+| Key                | Action                                       |
+| ------------------ | -------------------------------------------- |
+| `Enter` / `Space`  | Press the **Hello** button → show the dialog |
+| `Alt‑F`            | Open the **File** menu                       |
+| `↑` / `↓`          | Move within the menu                         |
+| `Enter`            | Activate the highlighted menu item           |
+| `Esc`              | Close the menu or dialog                     |
+| `Alt‑X` / `Ctrl‑C` | Exit the application                         |
 
 ### Mouse
 
@@ -56,12 +56,12 @@ with xterm mouse reporting — most modern terminals.)
 
 ## Scripts
 
-| Command            | What it does                              |
-| ------------------ | ----------------------------------------- |
-| `npm start`        | Run the app (via `tsx`)                    |
-| `npm run build`    | Type‑check and compile to `dist/`          |
-| `npm test`         | Run the unit tests (Node test runner)      |
-| `npm run verify`   | `typecheck` + `test` + `build`             |
+| Command          | What it does                          |
+| ---------------- | ------------------------------------- |
+| `npm start`      | Run the app (via `tsx`)               |
+| `npm run build`  | Type‑check and compile to `dist/`     |
+| `npm test`       | Run the unit tests (Node test runner) |
+| `npm run verify` | `typecheck` + `test` + `build`        |
 
 ## How it works
 
