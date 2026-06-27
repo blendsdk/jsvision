@@ -19,10 +19,10 @@ import { dirname, resolve } from 'node:path';
 
 // The public entry point under test. The `.js` specifier is required by
 // NodeNext ESM resolution and is resolved to the .ts source by tsx at runtime.
-import { VERSION } from './index.js';
+import { VERSION } from '../src/engine/index.js';
 
-const here = dirname(fileURLToPath(import.meta.url)); // src/engine
-const repoRoot = resolve(here, '..', '..'); // repository root
+const here = dirname(fileURLToPath(import.meta.url)); // test/
+const repoRoot = resolve(here, '..'); // repository root
 
 /** Parse the repository's package.json fresh from disk. */
 function readPackageJson(): Record<string, unknown> {

@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { VERSION } from './version.js';
+import { VERSION } from '../src/engine/version.js';
 
 // A SemVer core version: three dot-separated numeric identifiers with no
 // leading zeros (pre-release/build metadata are out of scope for the foundation).

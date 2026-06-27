@@ -19,8 +19,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
 const require = createRequire(import.meta.url);
-const here = dirname(fileURLToPath(import.meta.url)); // src/engine
-const repoRoot = resolve(here, '..', '..');
+const here = dirname(fileURLToPath(import.meta.url)); // test/
+const repoRoot = resolve(here, '..');
 
 /** Create a fresh temp directory; the caller is responsible for cleanup. */
 function makeTempDir(prefix: string): string {

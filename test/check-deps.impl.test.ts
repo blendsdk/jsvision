@@ -13,8 +13,8 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
-const here = dirname(fileURLToPath(import.meta.url)); // src/engine
-const repoRoot = resolve(here, '..', '..');
+const here = dirname(fileURLToPath(import.meta.url)); // test/
+const repoRoot = resolve(here, '..');
 const guardScript = resolve(repoRoot, 'scripts/check-no-native-deps.mjs');
 
 /** Run the guard against a project root and return its exit status + output. */

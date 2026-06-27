@@ -23,7 +23,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test \"src/**/*.{spec,impl}.test.ts\"",
+    "test": "tsx --test \"test/**/*.{spec,impl}.test.ts\"",
     "lint": "eslint . && prettier --check .",
     "lint:fix": "eslint . --fix && prettier --write .",
     "check:deps": "node scripts/check-no-native-deps.mjs",
