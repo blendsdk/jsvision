@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 00:00
-> **Progress**: 0/24 tasks (0%)
+> **Last Updated**: 2026-06-27 20:19
+> **Progress**: 3/25 tasks (12%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -48,14 +48,14 @@ backed by one thin subprocess e2e for the real signal→exit wiring (AR-13).
 
 | #     | Task | File |
 | ----- | ---- | ---- |
-| 1.1.1 | Define `ResizeEvent`, `HostOptions`, `Host`, `RuntimeAdapter`, `HostSignal`, `TimerHandle` | `src/engine/host/types.ts` |
+| 1.1.1 | Define `ResizeEvent`, `HostOptions` (incl. `focus?`, PF-006), `Host`, `RuntimeAdapter` (incl. `suspendSelf`/`onUncaughtException`/`onUnhandledRejection`/`writeSync`/`writeError`, PF-001/002/004), `HostSignal` (payload-free set, PF-002), `TimerHandle` | `src/engine/host/types.ts` |
 | 1.1.2 | Implement `bindStreams()` → `{input,output,isTTY,dispose}`; /dev/tty bind on piped stdout (POSIX), fallback on failure | `src/engine/host/streams.ts` |
-| 1.1.3 | Implement `realRuntime(): RuntimeAdapter` — HostSignal→source map per platform, setRawMode, timers/immediate, exit, onProcessExit, warn, Windows VT check | `src/engine/host/platform.ts` |
+| 1.1.3 | Implement `realRuntime(output)` + pure `hostSignalSource(platform,signal)` (PF-005/PF-010) — per-platform source map, setRawMode, suspendSelf, timers/immediate, exit, writeSync/writeError, onProcessExit/onUncaught/onUnhandledRejection, warn, injectable Windows VT check | `src/engine/host/platform.ts` |
 
 **Deliverables**:
-- [ ] `types.ts`, `streams.ts`, `platform.ts` compile under `tsc --noEmit`
-- [ ] JSDoc on every exported symbol with AR back-references
-- [ ] `npm run typecheck` clean (no tests yet for this phase)
+- [x] `types.ts`, `streams.ts`, `platform.ts` compile under `tsc --noEmit`
+- [x] JSDoc on every exported symbol with AR back-references
+- [x] `npm run typecheck` clean (no tests yet for this phase)
 
 **Verify**: `npm run typecheck && npm run lint`
 
@@ -73,9 +73,9 @@ backed by one thin subprocess e2e for the real signal→exit wiring (AR-13).
 | ----- | ---- | ---- |
 | 2.1.1 | Write spec tests ST-1, ST-1b, ST-2 (exact enter/leave strings; gating; strict inverse) — MUST NOT read impl | `test/host-modes.spec.test.ts` |
 | 2.1.2 | Run spec tests — verify they FAIL (red) | — |
-| 2.1.3 | Implement `enterMode(caps)` / `leaveMode(caps)` per the 03-02 table | `src/engine/host/modes.ts` |
+| 2.1.3 | Implement `enterMode(caps, opts?)` / `leaveMode(caps, opts?)` per the 03-02 table (no `?1003h`; `?1002h` gated on drag; focus via `opts.focus`, PF-003/PF-006) | `src/engine/host/modes.ts` |
 | 2.1.4 | Run spec tests — verify they PASS (green); fix impl (not tests) on failure | — |
-| 2.1.5 | Add impl tests: each gate independently (mono, no-mouse, drag-only, no-paste, keyboard variants) | `test/host.impl.test.ts` (modes section) |
+| 2.1.5 | Add impl tests: each gate independently (mono, no-mouse, drag-off→no `?1002h`, no-paste, `focus:false`→no `?1004h`, keyboard variants) | `test/host.impl.test.ts` (modes section) |
 
 **Deliverables**:
 - [ ] ST-1, ST-1b, ST-2 green
@@ -124,9 +124,9 @@ backed by one thin subprocess e2e for the real signal→exit wiring (AR-13).
 | 4.1.1 | Write spec tests ST-6, ST-6b, ST-4 (resize coalesce once), ST-5 (suspend/resume) | `test/host-lifecycle.spec.test.ts` |
 | 4.1.2 | Write spec tests ST-3 (signal exits 130/143/129), ST-11 (panic restore), ST-9 (no raw-input log), ST-10 (no raw-mode on non-TTY), ST-8 (EPIPE) | `test/host-security.spec.test.ts` |
 | 4.1.3 | Run both spec files — verify they FAIL (red) | — |
-| 4.1.4 | Implement `createRestore()` — idempotent restore, sync `process.on('exit')` backstop, leave-mode + raw-off | `src/engine/host/restore.ts` |
-| 4.1.5 | Implement `installSignals()` — resize coalesce (setImmediate), interrupt/terminate/hangup→restore+exit, suspend/continue, teardown | `src/engine/host/signals.ts` |
-| 4.1.6 | Wire signals+restore+EPIPE into `createHost` (share one restore; `onBeforeExit`/`exitOnSignal`; uncaughtException/unhandledRejection→restore+print+exit1) | `src/engine/host/host.ts` |
+| 4.1.4 | Implement `createRestore()` — idempotent `run(sync?)`, sync `process.on('exit')` backstop via `writeSync` (PF-004), leave-mode + raw-off | `src/engine/host/restore.ts` |
+| 4.1.5 | Implement `installSignals()` — resize coalesce (setImmediate), interrupt/terminate/hangup→restore+exit, suspend (→`suspendSelf`, PF-001)/continue, teardown | `src/engine/host/signals.ts` |
+| 4.1.6 | Wire signals+restore+EPIPE into `createHost` (resolve adapter after bindStreams, PF-010; share one restore; `onBeforeExit`/`exitOnSignal`; shared `handleFatal` for uncaught/unhandled/non-EPIPE→restore+`writeError`+exit1, PF-002/PF-008) | `src/engine/host/host.ts` |
 | 4.1.7 | Run both spec files — verify they PASS (green); fix impl on failure | — |
 
 **Deliverables**:
@@ -141,8 +141,9 @@ backed by one thin subprocess e2e for the real signal→exit wiring (AR-13).
 
 | #     | Task | File |
 | ----- | ---- | ---- |
-| 4.2.1 | Impl tests: double-restore guard; non-EPIPE error falls through; `exitOnSignal:false` skips exit; resize reads size once; /dev/tty fallback; no listener leaks | `test/host.impl.test.ts` |
-| 4.2.2 | Full verification + check:deps + audit | — |
+| 4.2.1 | Impl tests: double-restore guard; non-EPIPE error → `handleFatal` (no throw, PF-008); `exitOnSignal:false` skips exit; resize reads size once; /dev/tty fallback; no listener leaks | `test/host.impl.test.ts` |
+| 4.2.2 | Platform impl tests: `hostSignalSource` POSIX/win32 map (suspend/continue→null on win32); win32 resize/hangup attach to provided output (PF-010); VT-warn-once via injectable predicate (PF-005) | `test/host-platform.impl.test.ts` |
+| 4.2.3 | Full verification + check:deps + audit | — |
 
 **Deliverables**:
 - [ ] `npm run verify` green; `npm run check:deps` clean; `npm audit` 0 vulns
@@ -185,9 +186,9 @@ backed by one thin subprocess e2e for the real signal→exit wiring (AR-13).
 > confirm all its tasks are `[x]`; update the Progress header after every change; never batch updates.
 
 ### Phase 1: Foundation
-- [ ] 1.1.1 Define host types (`types.ts`)
-- [ ] 1.1.2 Implement `bindStreams` (`streams.ts`)
-- [ ] 1.1.3 Implement `realRuntime` adapter (`platform.ts`)
+- [x] 1.1.1 Define host types (`types.ts`) — 2026-06-27 20:19
+- [x] 1.1.2 Implement `bindStreams` (`streams.ts`) — 2026-06-27 20:19
+- [x] 1.1.3 Implement `realRuntime` adapter (`platform.ts`) — 2026-06-27 20:19
 
 ### Phase 2: Modes
 - [ ] 2.1.1 Spec tests ST-1/1b/2 (`host-modes.spec.test.ts`)
@@ -214,7 +215,8 @@ backed by one thin subprocess e2e for the real signal→exit wiring (AR-13).
 - [ ] 4.1.6 Wire signals+restore+EPIPE into `createHost` (`host.ts`)
 - [ ] 4.1.7 Verify green
 - [ ] 4.2.1 Hardening impl tests (`host.impl.test.ts`)
-- [ ] 4.2.2 Full verify + check:deps + audit
+- [ ] 4.2.2 Platform impl tests (`host-platform.impl.test.ts`)
+- [ ] 4.2.3 Full verify + check:deps + audit
 
 ### Phase 5: Public API, e2e, docs
 - [ ] 5.1.1 Barrel + `index.ts` re-exports
@@ -245,7 +247,7 @@ Phase 5 (public API + e2e + docs)
 
 **Feature is complete when:**
 
-1. ✅ All phases complete; all 24 tasks `[x]`
+1. ✅ All phases complete; all 25 tasks `[x]`
 2. ✅ `npm run verify` green (typecheck + test + build)
 3. ✅ `npm run lint` + `npm run check:deps` clean; `npm audit` 0 vulns
 4. ✅ ST-1…ST-16 (incl. ST-12 e2e) pass; AC-1…AC-8 covered
