@@ -19,7 +19,7 @@ guarantees the terminal is restored on every exit path. It abstracts the per-pla
 - [ ] `createHost(options): Host` factory returning a stateful host object. **[AR-1]**
 - [ ] Typed event delivery via callbacks: `onInput(InputEvent)`, `onResize(ResizeEvent)`, `onSuspend()`, `onResume()`. **[AR-2]**
 - [ ] `host.render(buffer)` holds the previous frame, calls `serialize(next, prev, {caps})`, performs one coalesced write, and stores `next` as prev. **[AR-3]**
-- [ ] Enter TUI mode on `start()`: alt-screen (`?1049h`), hide cursor (`?25l`), disable wrap (`?7l`), enable mouse (SGR `?1006h` + `?1000h`/`?1002h`/`?1003h` per caps), bracketed paste (`?2004h`), focus (`?1004h`), keyboard protocol — all driven by `caps`. **[RD-07 Must]**
+- [ ] Enter TUI mode on `start()`: alt-screen (`?1049h`), hide cursor (`?25l`), disable wrap (`?7l`), enable mouse (SGR `?1006h` + `?1000h`, plus `?1002h` when `caps.mouse.drag`), bracketed paste (`?2004h`), keyboard protocol — all driven by `caps`; **focus (`?1004h`) is host policy** (no capability models focus), enabled by default and controllable via `HostOptions.focus`. Any-motion (`?1003h`) is not enabled by default; wheel rides the SGR channel (no separate enable). **[RD-07 Must, PF-003, PF-006]**
 - [ ] Raw mode on input via the runtime adapter; guaranteed cooked-mode restore on exit. **[RD-07 Must]**
 - [ ] Leave TUI mode on `stop()`: exact inverse sequences (mouse/paste/focus off, show cursor, wrap on, leave alt-screen) + raw mode off. **[RD-07 Must, AR-8]**
 - [ ] Guaranteed cleanup on every exit path — normal `stop()`, `SIGINT`, `SIGTERM`, `SIGHUP`, uncaught exception, and a synchronous crash during setup. **[AR-6, AR-17]**

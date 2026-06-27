@@ -97,12 +97,16 @@ draw(process.stdout.columns ?? 80, process.stdout.rows ?? 24);
 | ESC timer              | host-owned 50ms `flush()` timer via injectable timer source                   | AR-14 |
 | Keymap                 | out of host scope (app applies `createKeymap`)                                | AR-15 |
 | EPIPE                  | best-effort restore → clean shutdown exit 0                                   | AR-16 |
+| Focus reporting        | host policy via `HostOptions.focus` (default on; no capability models it)     | PF-006 |
+| Adapter additions      | `suspendSelf`/`onUncaughtException`/`onUnhandledRejection`/`writeSync`/`writeError`; `realRuntime(output)` + pure `hostSignalSource` | PF-001/002/004/005/010 |
 
 ## Related Files
 
 **Created** (`src/engine/host/`): `types.ts`, `host.ts`, `modes.ts`, `signals.ts`, `streams.ts`,
 `platform.ts`, `restore.ts`, `index.ts`.
-**Modified**: `src/engine/index.ts` (re-export the host public API), `README.md` (Host section),
-`CLAUDE.md` (Overview + structure), `plans/00-roadmap.md` (RD-07 → ✅ Implemented).
+**Modified**: `src/engine/index.ts` (re-export the host public API), `README.md` (Host section).
+`CLAUDE.md` (Overview + structure) and `plans/00-roadmap.md` (RD-07 → ✅ Implemented) are updated by
+exec_plan's post-completion hooks, **not** plan tasks. **[PF-009]**
 **Tests** (`test/`): `host-modes.spec.test.ts`, `host.spec.test.ts`, `host-lifecycle.spec.test.ts`,
-`host-security.spec.test.ts`, `host.impl.test.ts`, `host-signals.e2e.test.ts` (explicit).
+`host-security.spec.test.ts`, `host.impl.test.ts`, `host-platform.impl.test.ts`,
+`host-signals.e2e.test.ts` (explicit).

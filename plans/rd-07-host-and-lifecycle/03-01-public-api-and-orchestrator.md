@@ -44,6 +44,11 @@ export interface HostOptions {
   readonly onBeforeExit?: (code: number) => void;
   /** When false, the host restores but does not call process.exit on signals. Default true. [AR-6] */
   readonly exitOnSignal?: boolean;
+  /**
+   * Enable focus reporting (`?1004h`). No capability models focus, so it is host
+   * policy (not caps-gated). Default `true`. [PF-006]
+   */
+  readonly focus?: boolean;
   /** Injectable OS boundary; defaults to the real Node runtime. Tests inject a fake. [AR-13] */
   readonly runtime?: RuntimeAdapter;
 }
@@ -61,14 +66,21 @@ export interface Host {
 }
 
 /**
- * The injectable OS boundary. The real implementation (platform.ts) wraps node:tty / node:process;
- * tests inject a fake that records exit codes, captures writes, and drives signals/timers. [AR-13]
+ * The injectable OS boundary. The real implementation (platform.ts) wraps node:tty / node:process
+ * and is constructed bound to the host's output stream (so win32 `resize`/`hangup` can attach to it,
+ * PF-010); tests inject a fake that records exit codes, captures writes, and drives signals/timers. [AR-13]
  */
 export interface RuntimeAdapter {
   readonly platform: 'linux' | 'darwin' | 'win32';
   setRawMode(stream: NodeJS.ReadStream, on: boolean): void;
-  /** Subscribe to a signal/resize source; returns an unsubscribe fn. [AR-9, AR-10, AR-17] */
+  /** Subscribe to a payload-free signal/resize source; returns an unsubscribe fn. [AR-9, AR-10, AR-17] */
   on(event: HostSignal, handler: () => void): () => void;
+  /** Subscribe to an uncaught exception; handler receives the thrown value. [AR-6, AR-17, PF-002] */
+  onUncaughtException(handler: (err: unknown) => void): () => void;
+  /** Subscribe to an unhandled promise rejection; handler receives the reason. [AR-6, AR-17, PF-002] */
+  onUnhandledRejection(handler: (reason: unknown) => void): () => void;
+  /** Stop the current process with default disposition (real: process.kill(pid,'SIGSTOP')). [AR-10, PF-001] */
+  suspendSelf(): void;
   /** Schedule a coalescing callback (real: setImmediate). [AR-9] */
   scheduleImmediate(fn: () => void): void;
   /** Arm/clear the ESC disambiguation timer (real: setTimeout). [AR-14] */
@@ -76,15 +88,29 @@ export interface RuntimeAdapter {
   clearTimer(handle: TimerHandle): void;
   /** Register the synchronous exit backstop (real: process.on('exit')). [AR-17] */
   onProcessExit(handler: () => void): void;
+  /**
+   * Synchronously write to a file descriptor (real: fs.writeSync). Used only by the
+   * process-'exit' restore backstop, where the event loop is draining and async writes
+   * would not flush; uniformly synchronous on every platform. Fakes record the data. [AR-16, AR-17, PF-004]
+   */
+  writeSync(fd: number, data: string): void;
   /** Terminate the process (real: process.exit). Fakes record the code. [AR-6, AR-13] */
   exit(code: number): never;
+  /** Write a diagnostic line to stderr (real: process.stderr.write). Never receives raw input. [AR-6, PF-002] */
+  writeError(message: string): void;
   /** Best-effort warning channel (legacy conhost without VT, etc.). Never logs input. [AR-4] */
   warn(message: string): void;
 }
 
+/**
+ * Abstract, payload-free signal set; the adapter maps POSIX/Windows specifics internally
+ * (`hostSignalSource`, PF-005). Uncaught-exception / unhandled-rejection carry payloads, so they
+ * are NOT in this union — they have dedicated subscriptions (`onUncaughtException` /
+ * `onUnhandledRejection`, PF-002).
+ */
 export type HostSignal =
   | 'resize' | 'interrupt' | 'terminate' | 'hangup'
-  | 'suspend' | 'continue' | 'uncaughtException' | 'unhandledRejection';
+  | 'suspend' | 'continue';
 
 export type TimerHandle = unknown;
 ```
@@ -108,20 +134,25 @@ export function createHost(options: HostOptions): Host;
 
 ### Orchestration responsibilities
 
-`createHost` builds a closure over: the bound streams (`streams.ts`), the resolved
-`RuntimeAdapter` (`options.runtime ?? realRuntime()`), a `DecoderState`, the previous
-`ScreenBuffer | null`, the last rendered buffer (for resume repaint), an idempotent restore
-(`restore.ts`), and the set of installed unsubscribe handles.
+`createHost` returns a `Host` whose `start()` builds the running state: the bound streams
+(`streams.ts`), the resolved `RuntimeAdapter`, a `DecoderState`, the previous `ScreenBuffer | null`,
+the last rendered buffer (for resume repaint), an idempotent restore (`restore.ts`), and the set of
+installed unsubscribe handles. The adapter is resolved **inside `start()` after `bindStreams()`** —
+`adapter = options.runtime ?? realRuntime(streams.output)` — so the real adapter is bound to the
+output stream it needs for win32 `resize`/`hangup`; an injected fake is used verbatim. **[PF-010]**
 
 - **start()** *(idempotent — second call is a no-op while running, AR-8)*: bind streams + detect
-  `isTTY` (`streams.ts`); if TTY, `setRawMode(input, true)` and write the enter-mode sequence
-  (`modes.ts`, gated by `caps`); install signals + resize + suspend/resume + panic handlers
-  (`signals.ts`, `restore.ts`); attach the stdin `data` listener (the input pump) and the output
-  `'error'` (EPIPE) listener. Non-TTY: skip raw mode + enter-mode but still bind output. **[AR-11]**
+  `isTTY` (`streams.ts`); **resolve the adapter** (`options.runtime ?? realRuntime(streams.output)`,
+  PF-010); **create restore + register the `onProcessExit` panic backstop first** (so a crash mid-setup
+  still restores, AR-17); if TTY, `setRawMode(input, true)` and write the enter-mode sequence
+  (`modes.ts`, caps-gated; focus per `options.focus`, PF-006); install signals + resize +
+  suspend/resume handlers (`signals.ts`); attach the stdin `data` listener (the input pump) and the
+  output `'error'` (EPIPE) listener; register `onUncaughtException`/`onUnhandledRejection` → `handleFatal`.
+  Non-TTY: skip raw mode + enter-mode but still bind output. **[AR-11, AR-17, PF-006, PF-010]**
 - **input pump**: on `data(chunk)` → `{events, queries, state} = decode(toU8(chunk), decoderState, {caps})`;
   store `state`; deliver each event to `onInput`; **drop `queries`** from `onInput`; manage the ESC
-  timer (AR-14): clear any armed timer; if `state.carry` is a lone ESC, arm
-  `setTimer(() => dispatch(flush(state).events), ESC_TIMEOUT_MS)`. **[AR-14]**
+  timer (AR-14): clear any armed timer; if `state.carry` is a lone ESC (`carry.length === 1 &&
+  carry[0] === 0x1b`), arm `setTimer(() => dispatch(flush(state).events), ESC_TIMEOUT_MS)`. **[AR-14]**
 - **render(next)**: `const out = serialize(next, prev, { caps }); if (out) write(out); prev = next;
   lastBuffer = next;` — one coalesced write; works in non-TTY too. **[AR-3, AR-11]**
 - **stop()** *(idempotent, AR-8)*: clear the ESC timer; remove every installed handler/listener;
@@ -129,6 +160,10 @@ export function createHost(options: HostOptions): Host;
   `exit`. **[AR-8]**
 - **resize**: adapter `'resize'` → pending-flag + `scheduleImmediate` → read `output.columns/rows`
   once → `onResize({type:'resize', columns, rows})`. **[AR-9]**
+- **handleFatal(err)** *(shared crash path, PF-002/PF-008)*: `restore.run()` →
+  `adapter.writeError(formatError(err))` → `onBeforeExit?.(1)` → `adapter.exit(1)`. Wired to
+  `onUncaughtException`, `onUnhandledRejection`, and the **non-EPIPE** branch of the output `'error'`
+  listener (no `throw` inside the listener). **[AR-6, AR-16, PF-002, PF-008]**
 - **suspend/resume**, **signals/exit**, **EPIPE**, **panic restore**: delegated to `signals.ts` +
   `restore.ts` (see 03-02, 03-03) but orchestrated here so all share the one idempotent `restore`
   and the `onBeforeExit`/`exitOnSignal` policy. **[AR-6, AR-10, AR-16, AR-17]**

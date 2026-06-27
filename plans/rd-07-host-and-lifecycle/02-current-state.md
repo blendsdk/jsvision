@@ -42,9 +42,10 @@ interface CapabilityProfile {
   readonly multiplexer: boolean;
 }
 ```
-The host reads `altScreen`, `bracketedPaste`, `mouse.sgr/drag/wheel`, `keyboard.*`, and
-`platform` to choose enter/leave sequences. Focus (`?1004`) is host-gated (input/events.ts notes
-focus is "gated on ?1004 by the host").
+The host reads `altScreen`, `bracketedPaste`, `mouse.sgr` (enables `?1006h`+`?1000h`), `mouse.drag`
+(enables `?1002h`), `keyboard.*`, and `platform` to choose enter/leave sequences. `mouse.wheel` rides
+the same SGR channel and gates no bytes (PF-003). Focus (`?1004`) is host policy via `HostOptions.focus`
+(no capability models it; default on) — input/events.ts notes focus is "gated on ?1004 by the host".
 
 **Input decoder** (`src/engine/input/decoder.ts:67`):
 ```ts
@@ -111,7 +112,7 @@ RD-06's `InputEvent` union (resize is not byte-decoded).
 |------|-----------|--------|------------|
 | In-process tests can't prove real `process.exit` codes | High | High | Thin subprocess e2e sends a real SIGINT, asserts real exit code (AR-13) |
 | Windows paths unverifiable on this machine | High | Med | Implement behind the adapter; mark acceptance deferred-to-Windows-runner (AR-4) |
-| `process.on('exit')` handler can only do sync writes | Certain | Med | Restore writes raw leave-sequence bytes synchronously to the output fd (AR-17) |
+| `process.on('exit')` handler can only do sync writes | Certain | Med | `run(true)` → `adapter.writeSync(output.fd, leaveStr)` — uniformly synchronous on every platform (AR-17, PF-004) |
 | Double restore (signal + exit backstop both fire) | Med | Low | `restore()` is idempotent/guarded — runs at most once (AR-17) |
 | Real signals/timers make tests flaky | Med | Med | Inject the timer + signal source via the adapter; assert deterministically (AR-13, AR-14) |
 | Leaking listeners on repeated start/stop | Low | Med | `stop()` removes every handler it installed; idempotent (AR-8) |

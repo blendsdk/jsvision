@@ -51,8 +51,8 @@ e2e** (`host-signals.e2e.test.ts`), run explicitly like `install.e2e.test.ts`. N
 |------|------------------|----------------------------|--------|
 | ST-6 | `input.isTTY=false`; `await start()` | `host.isTTY === false`; `setRawMode` **never** called; no enter-mode written | AC-5 / AR-11 |
 | ST-6b | Non-TTY host; `render(buf)` | Frame ANSI still written to the output stream | AR-11 |
-| ST-4 | Emit adapter `resize` 3× synchronously; output reports `{columns:100,rows:40}`; run the scheduled immediate | `onResize` called **exactly once** with `{type:'resize',columns:100,rows:40}` | AC-3 / AR-9 |
-| ST-5 | Emit adapter `suspend`, then `continue`; a prior `render(buf)` set lastBuffer | suspend: `onSuspend` then restore (leave-mode written, raw off); continue: enter-mode re-asserted + full repaint (serialize vs null) + `onResume` | AC-4 / AR-10 |
+| ST-4 | Emit adapter `resize` 3× synchronously; output reports `{columns:100,rows:40}`; then drain immediates (`flushImmediates()`) | `onResize` called **exactly once** with `{type:'resize',columns:100,rows:40}` | AC-3 / AR-9 / PF-007 |
+| ST-5 | Emit adapter `suspend`, then `continue`; a prior `render(buf)` set lastBuffer | suspend: `onSuspend` then restore (leave-mode written, raw off) then `adapter.suspendSelf()` recorded; continue: enter-mode re-asserted + full repaint (serialize vs null) + `onResume` | AC-4 / AR-10 / PF-001 |
 | ST-8 | Output emits `error` with `code:'EPIPE'` | Best-effort restore (leave-mode attempted), `onBeforeExit(0)`, adapter `exit(0)`; no unhandled rejection | AC-7 / AR-16 |
 
 ### Restore & security (`host-security.spec.test.ts`)
@@ -60,8 +60,8 @@ e2e** (`host-signals.e2e.test.ts`), run explicitly like `install.e2e.test.ts`. N
 | #    | Input / Scenario | Expected Output / Behavior | Source |
 |------|------------------|----------------------------|--------|
 | ST-3 | Emit adapter `interrupt`/`terminate`/`hangup` (fake) | For each: restore runs (leave-mode written, raw off), `onBeforeExit(code)`, adapter `exit(code)` = 130/143/129 | AC-2 / AR-6 |
-| ST-11 | `start()` where enter-mode write throws midway; then trigger the `process.on('exit')` backstop | Restore still runs (leave-mode written) exactly once — panic restore | AC-8 / AR-17 |
-| ST-9 | Feed input bytes "secret\r"; inspect a captured `warn`/log channel | No raw input bytes appear in any host log/warn output at default level | AC-8 / RD-07 Security |
+| ST-11 | `start()` where enter-mode write throws midway; then trigger the `process.on('exit')` backstop | Restore still runs via `run(true)` → `adapter.writeSync(output.fd, leaveStr)` exactly once — panic restore; the `done` guard prevents a second write if a signal also fires | AC-8 / AR-17 / PF-004 |
+| ST-9 | Feed input bytes "secret\r"; inspect the captured `writeError`/`warn` channels | No raw input bytes appear in any host `writeError`/`warn` output at default level | AC-8 / RD-07 Security / PF-002 |
 | ST-10 | `input.isTTY=false`; `start()` | Raw mode never attempted (no `setRawMode(true)` recorded) | AC-8 / AR-11 |
 
 ### Real wiring (`host-signals.e2e.test.ts`, explicit subprocess)
@@ -90,15 +90,21 @@ e2e** (`host-signals.e2e.test.ts`), run explicitly like `install.e2e.test.ts`. N
 
 | Test File | Description | Priority |
 |-----------|-------------|----------|
-| `host.impl.test.ts` | ESC-timer cancel-on-new-bytes; resize reads size once; listener cleanup on stop (no leaks across start/stop cycles); /dev/tty fallback on open failure; double-restore guard; non-EPIPE error falls through; `exitOnSignal:false` skips exit | High |
+| `host.impl.test.ts` | ESC-timer cancel-on-new-bytes; resize reads size once; listener cleanup on stop (no leaks across start/stop cycles); /dev/tty fallback on open failure; double-restore guard; non-EPIPE error → `handleFatal` (restore + exit 1, no throw in listener, PF-008); `exitOnSignal:false` skips exit; mode gating — drag-off omits `?1002h` and no `?1003h` ever (PF-003), `focus:false` omits `?1004h`/`?1004l` (PF-006) | High |
+| `host-platform.impl.test.ts` | Pure `hostSignalSource(platform, signal)` map for POSIX and win32 (incl. `suspend/continue → null` on win32); win32 `resize`/`hangup` attach to the **provided output** stream (PF-010); VT-warn-once via the injectable VT-availability predicate (PF-005) | High |
 
 ### Test Doubles (real objects preferred)
-- **FakeRuntimeAdapter**: records `exit` codes, `setRawMode` calls, holds registered handlers so
-  tests `emit(signal)`; `scheduleImmediate`/`setTimer` run synchronously or via a manual clock.
-  This is the RD-mandated injectable boundary (AC-6), not a mock of internal logic.
-- **CaptureStream**: a `Writable` collecting chunks into a string; `columns`/`rows`/`isTTY`
+- **FakeRuntimeAdapter**: records `exit` codes, `setRawMode` calls, `suspendSelf()` calls (PF-001),
+  `writeSync(fd, data)` and `writeError` output (PF-002/PF-004); holds registered handlers so tests
+  `emit(signal)`, plus `emitUncaught(err)`/`emitUnhandledRejection(reason)` (PF-002). Timing:
+  `scheduleImmediate` **defers** the callback onto a pending queue drained by the test via
+  `flushImmediates()` — so a `resize` burst collapses before the immediate runs (ST-4); `setTimer`/
+  `clearTimer` use a **manual clock** the test advances past `ESC_TIMEOUT_MS` (ST-16). Neither runs
+  synchronously; both mirror real `setImmediate`/`setTimeout` (PF-007). This is the RD-mandated
+  injectable boundary (AC-6), not a mock of internal logic.
+- **CaptureStream**: a `Writable` collecting chunks into a string; `columns`/`rows`/`isTTY`/`fd`
   settable. **FakeInput**: a `Readable`-like with `isTTY`, `setRawMode`, and `emit('data', …)`.
-- `decode`/`serialize`/`enterMode`/`leaveMode` run for **real** (no doubles).
+- `decode`/`serialize`/`enterMode`/`leaveMode`/`hostSignalSource` run for **real** (no doubles).
 
 ## Verification Checklist
 - [ ] All ST cases defined with concrete input/output pairs
