@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 02:00
-> **Progress**: 22/44 tasks (50%)
+> **Last Updated**: 2026-06-28 02:30
+> **Progress**: 28/44 tasks (64%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -205,12 +205,12 @@ and live-readout probes; phase 5 assembles the report/matrix/`--auto` and the e2
 - [x] 2.3.2 Full verify ✅ (378/378, lint clean, completed: 2026-06-28 02:00)
 
 ### Phase 3: Manual probes
-- [ ] 3.1.1 Spec tests manual (ST-12/12b)
-- [ ] 3.1.2 Run spec tests — RED
-- [ ] 3.2.1 Patterns + `classifyConfirmation` + `runManualProbes` + wire
-- [ ] 3.2.2 Run spec tests — GREEN
-- [ ] 3.3.1 Impl tests manual
-- [ ] 3.3.2 Full verify
+- [x] 3.1.1 Spec tests manual (ST-12/12b) ✅ (completed: 2026-06-28 02:10)
+- [x] 3.1.2 Run spec tests — RED ✅ (completed: 2026-06-28 02:10)
+- [x] 3.2.1 Patterns + `classifyConfirmation` + `runManualProbes` + wire ✅ (completed: 2026-06-28 02:25)
+- [x] 3.2.2 Run spec tests — GREEN ✅ (2/2, completed: 2026-06-28 02:25)
+- [x] 3.3.1 Impl tests manual ✅ (completed: 2026-06-28 02:30)
+- [x] 3.3.2 Full verify ✅ (386/386, lint clean, completed: 2026-06-28 02:30)
 
 ### Phase 4: Live input/mouse readout
 - [ ] 4.1.1 Spec tests readout (ST-25/26/27)

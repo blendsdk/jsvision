@@ -19,10 +19,12 @@
 import { pathToFileURL } from 'node:url';
 
 import { createHost, createTerminalQuery, detectTty, resolveCapabilities } from '../../src/engine/index.js';
-import type { Platform } from '../../src/engine/index.js';
+import type { InputEvent, Platform } from '../../src/engine/index.js';
 import { parseArgs, USAGE } from './args.js';
 import { gatherEnvMeta } from './env-meta.js';
 import { runAutoProbes } from './auto-probes.js';
+import { runManualProbes } from './manual-probes.js';
+import { MANUAL_PROBES } from './taxonomy.js';
 import type { ProbeResult } from './report.js';
 
 /** Whole-step timeout for the upfront auto-probe query phase (ms). */
@@ -122,10 +124,35 @@ export async function main(deps: Partial<ProbeDeps> = {}): Promise<void> {
   }
 
   // Interactive: enter alt-screen + raw mode via the host and guarantee restore
-  // on every exit path. The dedicated auto-probe phase runs first (AR-9); manual
-  // probes + live readout are inserted after it in Phases 3–4.
-  const host = createHost({ caps: profile });
+  // on every exit path. The dedicated auto-probe phase runs first (AR-9), then the
+  // guided manual probes; the live readout is inserted after them in Phase 4.
+  const events: InputEvent[] = [];
+  let waiter: ((event: InputEvent) => void) | null = null;
+  const pushEvent = (event: InputEvent): void => {
+    if (waiter) {
+      const resolve = waiter;
+      waiter = null;
+      resolve(event);
+    } else {
+      events.push(event);
+    }
+  };
+  const nextEvent = (): Promise<InputEvent> => {
+    const queued = events.shift();
+    return queued ? Promise.resolve(queued) : new Promise((resolve) => (waiter = resolve));
+  };
+  const nextKey = async (): Promise<'y' | 'n' | 's'> => {
+    for (;;) {
+      const event = await nextEvent();
+      if (event.type === 'key' && (event.key === 'y' || event.key === 'n' || event.key === 's')) {
+        return event.key;
+      }
+    }
+  };
+
+  const host = createHost({ caps: profile, onInput: pushEvent });
   let auto: Record<string, ProbeResult> = {};
+  let manual: Record<string, ProbeResult> = {};
   try {
     await host.start();
     const query = createTerminalQuery({ input, output });
@@ -134,12 +161,19 @@ export async function main(deps: Partial<ProbeDeps> = {}): Promise<void> {
     } finally {
       query.close();
     }
-    // (manual probes + live readout inserted here in Phases 3–4)
+    manual = await runManualProbes({
+      render: (buffer) => host.render(buffer),
+      emit: (sequence) => void output.write(sequence),
+      nextKey,
+      probes: MANUAL_PROBES,
+      caps: profile,
+    });
+    // (live readout inserted here in Phase 4)
   } finally {
     await host.stop();
   }
   stdout.write(
-    `capability-probe: foundation ready for ${meta.terminal} — ${Object.keys(auto).length} auto facts (probes land in later phases).\n`,
+    `capability-probe: ${meta.terminal} — ${Object.keys(auto).length} auto + ${Object.keys(manual).length} manual facts (report lands in Phase 5).\n`,
   );
 }
 
