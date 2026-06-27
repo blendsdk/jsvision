@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 (Phase 2 complete)
-> **Progress**: 14/24 tasks (58%)
+> **Last Updated**: 2026-06-27 (Phase 3 complete)
+> **Progress**: 19/24 tasks (79%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -163,13 +163,13 @@ contains no raw git commands. **No new runtime dependencies.**
 - [x] 2.3.2 verify + lint clean — 2026-06-27
 
 ### Phase 3: Sanitizer + OSC + Cursor
-- [ ] 3.1.1 Write spec ST-6, ST-7, ST-8, ST-10, ST-12, ST-14
-- [ ] 3.1.2 Red phase (sanitize/osc/cursor absent)
-- [ ] 3.2.1 Implement render/sanitize.ts + render/cursor.ts
-- [ ] 3.2.2 Implement render/osc.ts (OSC features + notify ladder)
-- [ ] 3.2.3 Green phase (ST-6/7/8/10/12/14 pass)
-- [ ] 3.3.1 Write osc + sanitize impl tests
-- [ ] 3.3.2 verify + lint clean
+- [x] 3.1.1 Write spec ST-6, ST-7, ST-8, ST-10, ST-12, ST-14 — 2026-06-27
+- [x] 3.1.2 Red phase (sanitize/osc/cursor absent) — 2026-06-27
+- [x] 3.2.1 Implement render/sanitize.ts + render/cursor.ts — 2026-06-27
+- [x] 3.2.2 Implement render/osc.ts (OSC features + notify ladder) — 2026-06-27
+- [x] 3.2.3 Green phase (ST-6/7/8/10/12/14 pass) — 2026-06-27
+- [x] 3.3.1 Write osc + sanitize impl tests — 2026-06-27
+- [x] 3.3.2 verify + lint clean — 2026-06-27
 
 ### Phase 4: Public API & Finalization
 - [ ] 4.1.1 Implement render/index.ts + re-export from engine/index.ts + README

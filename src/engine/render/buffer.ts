@@ -17,6 +17,7 @@ import { Attr } from './types.js';
 import type { Cell, Style } from './types.js';
 import { charWidth } from './width.js';
 import type { WidthMode } from './width.js';
+import { sanitize } from './sanitize.js';
 
 /** The box-drawing glyph set per variant (real Unicode; fallback is serialize-time). */
 const BOX = {
@@ -146,13 +147,16 @@ export class ScreenBuffer {
    * **display width** (wide glyphs advance 2 columns, AC-2). Glyphs outside the
    * buffer are clipped.
    *
+   * The string is sanitized first (AC-8): control bytes never become cells, so
+   * untrusted text cannot inject an escape sequence at serialize time.
+   *
    * @param widthMode Width-resolution mode; defaults to RD-02's `'wcwidth'`.
    * @returns The column just past the written text (display columns, not
    *   code-point count).
    */
   public text(x: number, y: number, str: string, style: Style, widthMode: WidthMode = DEFAULT_WIDTH_MODE): number {
     let col = x;
-    for (const glyph of str) {
+    for (const glyph of sanitize(str)) {
       this.set(col, y, glyph, style, widthMode);
       const cp = glyph.codePointAt(0) ?? 0x20;
       col += charWidth(cp, widthMode);

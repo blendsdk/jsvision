@@ -69,6 +69,15 @@ implementations** that the later RDs supersede. PL-1, PL-2, and PL-14 resolve th
   rather than blocking. Additive/optional — does not change the documented call
   sites. Implemented in `src/engine/render/buffer.ts`.
 
+- **RT-2 (runtime, 2026-06-27):** ST-8 lists "text (via buffer+serialize)" as a
+  sanitized path, but the plan did not pin *where* the buffer sanitizes. The
+  faithful integration is to route the untrusted-string entry point
+  `ScreenBuffer.text()` through `sanitize()` so control bytes never become cells
+  (the serializer then emits clean glyphs). `set()` stays the trusted
+  single-glyph primitive (sanitizing one control glyph would yield an empty
+  string and break the width-1 cell contract). Recorded and applied; satisfies
+  AC-8 for the draw path. Implemented in `src/engine/render/buffer.ts`.
+
 ### Deferred Items
 
 - **DEF-1 (later):** Cursor **shape** (DECSCUSR). No capability field gates it; ship
