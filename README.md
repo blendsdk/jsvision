@@ -1,109 +1,74 @@
-# turbo-hello
+# @blendsdk/tui
 
-A tiny **Hello World** terminal UI built with [Ink](https://github.com/vadimdemedes/ink)
-and TypeScript, styled after Borland's **Turbo Vision** — the blue desktop with its
-grey `░` stipple, a light‑grey menu bar and status line, framed windows with drop
-shadows, and green push‑buttons with a thin half‑block shadow.
+An SDK for building **Turbo Vision-style terminal applications** in TypeScript.
 
-```
-  File
-░░░░░░░░░░░░░░░░░╔════════════════ Hello App ═════════════════╗░░░░░░░░░░░░░░░░░
-░░░░░░░░░░░░░░░░░║                                            ║░░░░░░░░░░░░░░░░░
-░░░░░░░░░░░░░░░░░║    Press the button to greet the world.    ║░░░░░░░░░░░░░░░░░
-░░░░░░░░░░░░░░░░░║                  Hello  ▄                  ║░░░░░░░░░░░░░░░░░
-░░░░░░░░░░░░░░░░░║                 ▀▀▀▀▀▀▀▀▀                  ║░░░░░░░░░░░░░░░░░
-░░░░░░░░░░░░░░░░░╚════════════════════════════════════════════╝░░░░░░░░░░░░░░░░░
- Alt-F Menu   Enter Hello   Esc Close   Alt-X Exit
-```
+This package is the **foundation** of the SDK (RD-01): a clean, typed,
+tree-shakeable **ESM-only** library with **zero runtime dependencies**. The
+renderer, input, host, and capability subsystems are added by later milestones
+and re-exported from this package's single public entry point.
 
-The desktop is a **uniform** `░` stipple in light grey on blue — the same glyph and
-colour in every cell, exactly like Turbo Vision's `TBackground` (no gradient).
+> **Status:** `0.1.0` — pre-1.0. The public API is still being built out and may
+> change between minor versions.
 
-## Run it
+## Install
 
 ```bash
-npm install
-npm start        # runs the source directly with tsx
+npm install @blendsdk/tui
 ```
 
-Or build and run the compiled output:
+**Requirements:** Node.js **>= 18** (active LTS: 18, 20, 22).
+
+## Usage
+
+`@blendsdk/tui` is **ESM-only**. Import it from an ES module:
+
+```ts
+import { VERSION } from '@blendsdk/tui';
+
+console.log(VERSION); // "0.1.0"
+```
+
+Type declarations (`.d.ts`) and source maps ship with the package, so editors get
+full type information out of the box.
+
+### ESM-only — `require()` is not supported
+
+The package declares no CommonJS `require` condition. Importing it from CommonJS
+fails with a clear ESM error:
+
+```js
+// ❌ throws ERR_REQUIRE_ESM
+const { VERSION } = require('@blendsdk/tui');
+```
+
+Use `import` (or a dynamic `await import('@blendsdk/tui')`) instead.
+
+## Contributing
+
+The toolchain is plain Node tooling — no test framework, just `node:test` run
+through `tsx`.
+
+| Command              | What it does                                               |
+| -------------------- | ---------------------------------------------------------- |
+| `npm run verify`     | `typecheck` + `test` + `build` — must exit 0               |
+| `npm run lint`       | ESLint + Prettier (check only)                             |
+| `npm run lint:fix`   | ESLint `--fix` + Prettier `--write`                        |
+| `npm run check:deps` | Fail if any runtime dependency requires native build steps |
+| `npm pack --dry-run` | Inspect the published file set (`dist/` + metadata only)   |
+
+Tests follow a strict split:
+
+- `*.spec.test.ts` — specification tests; an immutable oracle derived from the
+  requirements/acceptance criteria.
+- `*.impl.test.ts` — implementation/edge-case tests.
+
+Both run via `npm test`. The heavier pack-and-install end-to-end test lives in
+`test/install.e2e.test.ts` and is run explicitly:
 
 ```bash
-npm run build
-node dist/index.js
+npx tsx --test test/install.e2e.test.ts
 ```
 
-It needs an interactive terminal (a TTY).
+## License
 
-## Controls
-
-### Keyboard
-
-| Key                | Action                                       |
-| ------------------ | -------------------------------------------- |
-| `Enter` / `Space`  | Press the **Hello** button → show the dialog |
-| `Alt‑F`            | Open the **File** menu                       |
-| `↑` / `↓`          | Move within the menu                         |
-| `Enter`            | Activate the highlighted menu item           |
-| `Esc`              | Close the menu or dialog                     |
-| `Alt‑X` / `Ctrl‑C` | Exit the application                         |
-
-### Mouse
-
-Click **File** to open the menu, click an item to choose it, click the **Hello**
-button to open the dialog, and click **OK** to dismiss it. (Requires a terminal
-with xterm mouse reporting — most modern terminals.)
-
-## Scripts
-
-| Command          | What it does                          |
-| ---------------- | ------------------------------------- |
-| `npm start`      | Run the app (via `tsx`)               |
-| `npm run build`  | Type‑check and compile to `dist/`     |
-| `npm test`       | Run the unit tests (Node test runner) |
-| `npm run verify` | `typecheck` + `test` + `build`        |
-
-## How it works
-
-Ink lays its components out with flexbox and has no z‑index, so it cannot float a
-dialog with a drop shadow over a patterned desktop using components alone. Instead
-the whole screen is composited into a character buffer each frame — exactly how
-Turbo Vision drew its windows — and that buffer is painted to the terminal directly.
-
-The app drives the terminal itself and uses Ink only for the React lifecycle:
-
-- **No scrollbars** — it runs in the **alternate screen buffer** (like `vim`/`htop`),
-  which has no scrollback, with line wrap disabled so the bottom‑right cell never
-  scrolls.
-- **No flicker** — each frame is written **in place** with absolute cursor moves and
-  no erase. Because the buffer is opaque (every cell painted, full width), overwriting
-  leaves no stale characters, so there is nothing to flicker. (Ink's own renderer
-  erases and rewrites every printed line each frame, which flashes at full size.)
-- **Mouse** — xterm mouse reporting (SGR mode) is enabled and parsed alongside the
-  keyboard, so the same controls respond to clicks.
-
-All of these terminal modes are restored on exit (including `Ctrl‑C` and crashes).
-
-```
-src/
-  index.tsx            entry point: enter/leave full-screen mode, render the shell
-  tui/                 reusable, framework-level toolkit
-    theme.ts           Turbo Vision palette, semantic roles, box glyphs
-    buffer.ts          ScreenBuffer: per-cell colour grid + draw helpers
-    ansi.ts            raw ANSI/xterm control sequences (alt screen, colour, mouse)
-    color.ts           hex colour parsing for the ANSI serialiser
-    serialize.ts       ScreenBuffer → in-place ANSI frame string
-    useScreenSize.ts   live terminal size hook
-    index.ts           public API of the toolkit
-  app/                 this application
-    state.ts           UI state model + the File menu definition
-    geometry.ts        where each control sits (shared by painter and mouse)
-    reducer.ts         pure state transitions
-    paint.ts           pure: (state, size) → composited ScreenBuffer
-    input.ts           pure: parse stdin (keys + mouse) → interpret to actions
-    App.tsx            wires input to the reducer and paints the frame
-```
-
-The painter (`paint.ts`), reducer (`reducer.ts`), geometry, and input interpreter
-(`input.ts`) are pure functions with no Ink or React dependency — which is exactly
-what the unit tests exercise directly.
+[MIT](LICENSE)

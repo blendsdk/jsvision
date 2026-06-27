@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 11:35
-> **Progress**: 18/20 tasks (90%)
+> **Last Updated**: 2026-06-27 11:45
+> **Progress**: 20/20 tasks (100%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -150,10 +150,17 @@ Commits: use **/gitcm** (or **/gitcmp**) per the exec_plan skill — this plan c
 | 3.3.1 | Full gate: `npm run verify`, `npm run lint`, `npm run check:deps`, `npm audit`, `npm pack --dry-run`. Record AC-2 and AC-7(CI half) as **deferred-to-remote** (PL-3) in the register/notes. Final commit via /gitcm (or /gitcmp once a remote exists). | — |
 
 **Deliverables**:
-- [ ] e2e import/require behaviour verified (AC-1)
-- [ ] README/LICENSE finalized; `npm audit` clean (AC-7 local)
-- [ ] AC-2 / AC-7(CI) explicitly marked deferred-to-remote
-- [ ] commit via /gitcm
+- [x] e2e import/require behaviour verified (AC-1)
+- [x] README/LICENSE finalized; `npm audit` clean (AC-7 local — 0 vulnerabilities)
+- [x] AC-2 / AC-7(CI) explicitly marked deferred-to-remote (see note below)
+- [x] commit via /gitcm (at phase boundary below)
+
+> **Deferred-to-remote (PL-3):** **AC-2** (9 green CI cells: ubuntu/macos/windows ×
+> Node 18/20/22) and the **CI half of AC-7** (`npm audit` + publish dry-run running
+> inside GitHub Actions) cannot execute in this environment — no GitHub remote exists.
+> The workflow `.github/workflows/ci.yml` is authored and committed now, and every
+> step's *logic* (lint, verify, check:deps, audit, pack) has been validated locally.
+> These two criteria turn green once the repo is pushed to a remote with Actions enabled.
 
 **Verify**: `npm run verify && npm run lint && npm run check:deps && npm audit`
 
@@ -187,11 +194,11 @@ Commits: use **/gitcm** (or **/gitcmp**) per the exec_plan skill — this plan c
 - [x] 2.3.2 Lint + check:deps + verify clean (2026-06-27: lint clean, check:deps OK, verify 19/19)
 
 ### Phase 3: Packaging e2e & Finalization
-- [ ] 3.1.1 Write packaging e2e spec test (ST-13/ST-14)
-- [ ] 3.1.2 Red phase — e2e fails
-- [ ] 3.2.1 Rewrite README; finalize LICENSE/files
-- [ ] 3.2.2 Green phase — e2e passes
-- [ ] 3.3.1 Final full verification; record AC-2/AC-7(CI) deferred-to-remote
+- [x] 3.1.1 Write packaging e2e spec test (ST-13/ST-14) (2026-06-27)
+- [x] 3.1.2 Red phase — e2e (2026-06-27: passes immediately; red precondition "tarball/exports incorrect" N/A — Phases 1–2 already produced a correct package, per 07-testing-strategy note on artifact-dependent ST cases)
+- [x] 3.2.1 Rewrite README; finalize LICENSE/files (2026-06-27)
+- [x] 3.2.2 Green phase — e2e passes (2026-06-27)
+- [x] 3.3.1 Final full verification; record AC-2/AC-7(CI) deferred-to-remote (2026-06-27: verify 19/19, lint clean, check:deps OK, npm audit 0 vulns, pack OK)
 
 ---
 
