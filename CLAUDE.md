@@ -6,7 +6,7 @@
 ## Overview
 
 - **Type:** library (SDK)
-- **Description:** SDK for building Turbo Vision-style terminal (TUI) applications in TypeScript. The **foundation** package: RD-01 scaffolding, the RD-02 **capability detection core** (`resolveCapabilities`/`resolveCapabilitiesAsync` under `src/engine/capability/`), the RD-06 **input decoder** (pure byte→event `decode`/`flush`/`createDecoderState` + `createKeymap` under `src/engine/input/`), the RD-04 **rendering engine** (width-correct `ScreenBuffer` + pure damage-diff `serialize`, glyph fallback, `sanitize`, OSC features, `cursor` under `src/engine/render/`), the RD-07 **host & lifecycle** subsystem (`createHost` native `tty` host — raw mode, alt-screen, signals, suspend/resume, guaranteed restore on every exit path, behind an injectable `RuntimeAdapter`, under `src/engine/host/`), the RD-08 **safety** subsystem (the essentials gate `evaluateEssentials`/`assertEssentials` + `detectTty`, the screen-safe `createLogger`, pure `redactEvent`/`dumpCaps`, the typed `TuiError` model, and the canonical `sanitize` injection boundary, under `src/engine/safety/`), and the RD-05 **color & styling** subsystem (depth-aware `encode`/`encodeStyle` downsampling truecolor→256→16→mono via redmean `nearest256`/`nearest16`, `styleKey`, `InvalidColorError`, DOS-16 `PALETTE` + typed `defaultTheme`, under `src/engine/color/`; it is the `serialize()` default encoder). All subsystems re-export from the single public entry point.
+- **Description:** SDK for building Turbo Vision-style terminal (TUI) applications in TypeScript. The **foundation** package: RD-01 scaffolding, the RD-02 **capability detection core** (`resolveCapabilities`/`resolveCapabilitiesAsync` under `src/engine/capability/`), the RD-06 **input decoder** (pure byte→event `decode`/`flush`/`createDecoderState` + `createKeymap` under `src/engine/input/`), the RD-04 **rendering engine** (width-correct `ScreenBuffer` + pure damage-diff `serialize`, glyph fallback, `sanitize`, OSC features, `cursor` under `src/engine/render/`), the RD-07 **host & lifecycle** subsystem (`createHost` native `tty` host — raw mode, alt-screen, signals, suspend/resume, guaranteed restore on every exit path, behind an injectable `RuntimeAdapter`, under `src/engine/host/`; the RD-03 real tty-backed `createTerminalQuery` lives here too — it completes RD-02's layer-2 query wiring so `resolveCapabilitiesAsync` works against a live terminal), the RD-08 **safety** subsystem (the essentials gate `evaluateEssentials`/`assertEssentials` + `detectTty`, the screen-safe `createLogger`, pure `redactEvent`/`dumpCaps`, the typed `TuiError` model, and the canonical `sanitize` injection boundary, under `src/engine/safety/`), and the RD-05 **color & styling** subsystem (depth-aware `encode`/`encodeStyle` downsampling truecolor→256→16→mono via redmean `nearest256`/`nearest16`, `styleKey`, `InvalidColorError`, DOS-16 `PALETTE` + typed `defaultTheme`, under `src/engine/color/`; it is the `serialize()` default encoder). All subsystems re-export from the single public entry point. The RD-03 **capability probe & survey harness** is a dev-only diagnostic under `examples/capability-probe/` (run via `npm run probe`) — auto + guided-manual probes, a live input/mouse readout, a JSON + table report, and a checked-in `terminal-matrix.json` evidence base; it is **not** part of the published package.
 
 ## Toolchain
 
@@ -19,11 +19,12 @@
 
 ## Commands
 
-- **Build:** `npm run build` (`tsc` → `dist/`, emits `.js` + `.d.ts` + maps)
-- **Typecheck:** `npm run typecheck` (`tsc --noEmit`)
+- **Build:** `npm run build` (`tsc` → `dist/`, emits `.js` + `.d.ts` + maps; `src` only — `examples/` is never emitted)
+- **Typecheck:** `npm run typecheck` (`tsc --noEmit`, `src`) · **Examples typecheck:** `npm run typecheck:examples` (`tsc -p tsconfig.examples.json`, `noEmit`)
 - **Test (unit):** `npm test` (`tsx --test "test/**/*.{spec,impl}.test.ts"`)
-- **Test (e2e, explicit):** `npx tsx --test test/install.e2e.test.ts` (heavier pack+install; not in the unit glob)
-- **Verify (run before every commit):** `npm run verify` (= typecheck + test + build)
+- **Test (e2e, explicit):** `npx tsx --test test/install.e2e.test.ts` · `npx tsx --test test/probe.e2e.test.ts` (heavier; not in the unit glob)
+- **Run the probe harness (dev):** `npm run probe` (`tsx examples/capability-probe/main.ts`; `--auto`/`--out <path>`/`--no-matrix`/`--help`)
+- **Verify (run before every commit):** `npm run verify` (= typecheck + typecheck:examples + test + build)
 - **Lint:** `npm run lint` (`eslint .` + `prettier --check .`) · **Fix:** `npm run lint:fix`
 - **Dependency policy:** `npm run check:deps` (fails on any native runtime dependency)
 - **Clean:** `rm -rf dist`
@@ -35,11 +36,14 @@ src/engine/      Source. Single public entry point: src/engine/index.ts (re-expo
 src/engine/capability/   RD-02 capability detection core (profile, defaults, env, table, query, detect, index) + responses.ts (RD-06-shared query-response classifier).
 src/engine/input/        RD-06 input decoder (events, keys, decoder, mouse, paste, keymap, index).
 src/engine/render/       RD-04 rendering engine (types, width, buffer, ansi, glyphs, serialize, sanitize, cursor, osc, index).
-src/engine/host/         RD-07 host & lifecycle (types, streams, platform, modes, host, restore, signals, index) — native tty host behind an injectable RuntimeAdapter. streams.ts also exports the additive detectTty() pre-start TTY probe (RD-08 PF-001).
+src/engine/host/         RD-07 host & lifecycle (types, streams, platform, modes, host, restore, signals, index) — native tty host behind an injectable RuntimeAdapter. streams.ts also exports the additive detectTty() pre-start TTY probe (RD-08 PF-001); terminal-query.ts is the RD-03 real tty-backed createTerminalQuery (layer-2 query seam).
 src/engine/safety/       RD-08 safety (sanitize, errors, redact, logger, essentials, index) — essentials gate, screen-safe logger, redaction, typed errors, and the canonical injection boundary.
 src/engine/color/        RD-05 color & styling (color, palette, downsample, encode, theme, index) — depth-aware SGR encoding (truecolor→256→16→mono), redmean nearest-color, DOS-16 palette + theme; the serialize() default encoder.
+examples/        Dev-only examples, NOT in the published package. examples/capability-probe/ is the RD-03 probe & survey harness (main, args, taxonomy, env-meta, auto-probes, manual-probes, live-readout, report, matrix). Typechecked via tsconfig.examples.json; never emitted to dist.
 test/            ALL tests live here — never colocated with source.
 scripts/         Build/policy scripts (check-no-native-deps.mjs — the dependency-policy guard).
+tsconfig.examples.json     Extends the base config to typecheck examples/ (noEmit); wired into `verify`.
+terminal-matrix.json       RD-03 accumulated cross-terminal evidence (appended by `npm run probe`).
 .github/workflows/ci.yml   CI matrix: 3 OS × Node 18/20/22 (runs lint/verify/check:deps/audit/pack).
 dist/            Build output (gitignored). Generated by tsc.
 plans/           CodeOps implementation plans + roadmap (00-roadmap.md is the source of truth).
