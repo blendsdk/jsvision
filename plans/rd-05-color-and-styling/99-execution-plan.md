@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 00:11
-> **Progress**: 9/26 tasks (35%)
+> **Last Updated**: 2026-06-28 00:21
+> **Progress**: 16/26 tasks (62%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -99,9 +99,9 @@ updates one RD-04 impl test). Phase 4 documents and finalizes.
 | 2.3.2 | Full verification | — |
 
 **Deliverables**:
-- [ ] DOS-16 `PALETTE` (16 keys) + typed `Theme` + `defaultTheme` implemented + exported
-- [ ] Every palette value encodes without throwing; structures immutable
-- [ ] All verification passing
+- [x] DOS-16 `PALETTE` (16 keys) + typed `Theme` + `defaultTheme` implemented + exported
+- [x] Every palette value encodes without throwing; structures immutable
+- [x] All verification passing
 
 **Verify**: `npm run verify`
 
@@ -178,13 +178,13 @@ updates one RD-04 impl test). Phase 4 documents and finalizes.
 - [x] 1.3.2 Full verification ✅ (completed: 2026-06-28 00:11)
 
 ### Phase 2: Palette & theme
-- [ ] 2.1.1 Write `color-palette-theme.spec.test.ts` (ST-15, ST-16)
-- [ ] 2.1.2 Run spec tests — verify FAIL (red)
-- [ ] 2.2.1 DOS-16 `PALETTE` in `palette.ts`
-- [ ] 2.2.2 `theme.ts` (`ThemeRole`, `Theme`, `defaultTheme`)
-- [ ] 2.2.3 Re-export; spec tests PASS (green)
-- [ ] 2.3.1 Write `color-palette-theme.impl.test.ts`
-- [ ] 2.3.2 Full verification
+- [x] 2.1.1 Write `color-palette-theme.spec.test.ts` (ST-15, ST-16) ✅ (completed: 2026-06-28 00:14)
+- [x] 2.1.2 Run spec tests — verify FAIL (red) ✅ (completed: 2026-06-28 00:14)
+- [x] 2.2.1 DOS-16 `PALETTE` in `palette.ts` ✅ (completed: 2026-06-28 00:16)
+- [x] 2.2.2 `theme.ts` (`ThemeRole`, `Theme`, `defaultTheme`) ✅ (completed: 2026-06-28 00:17)
+- [x] 2.2.3 Re-export; spec tests PASS (green) ✅ (completed: 2026-06-28 00:18)
+- [x] 2.3.1 Write `color-palette-theme.impl.test.ts` ✅ (completed: 2026-06-28 00:20)
+- [x] 2.3.2 Full verification ✅ (completed: 2026-06-28 00:21)
 
 ### Phase 3: Serializer integration
 - [ ] 3.1.1 Write `color-serialize.spec.test.ts` (ST-17)

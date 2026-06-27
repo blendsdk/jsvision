@@ -9,7 +9,7 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution
  * (it resolves to the `.ts` source during development via tsx).
  */
-import type { Ansi16Name } from '../render/types.js';
+import type { Ansi16Name, Color } from '../render/types.js';
 import type { Rgb } from './color.js';
 
 /**
@@ -89,3 +89,29 @@ export function rgb256(index: number): Rgb {
   const level = 8 + (index - 232) * 10;
   return { r: level, g: level, b: level };
 }
+
+/**
+ * The classic Borland / DOS 16-color palette as app-facing `#rrggbb` colors
+ * (migrated from the prototype `theme.ts`; `brightMagenta` added — the prototype
+ * omitted it). Each value is a valid {@link Color} that encodes through the same
+ * `encode` path. This is the app-facing palette, distinct from the
+ * {@link ANSI16_REFERENCE} encoding table above. [AR-9]
+ */
+export const PALETTE = {
+  black: '#000000',
+  blue: '#0000aa',
+  green: '#00aa00',
+  cyan: '#00aaaa',
+  red: '#aa0000',
+  magenta: '#aa00aa',
+  brown: '#aa5500',
+  lightGray: '#aaaaaa',
+  darkGray: '#555555',
+  brightBlue: '#5555ff',
+  brightGreen: '#55ff55',
+  brightCyan: '#55ffff',
+  brightRed: '#ff5555',
+  brightMagenta: '#ff55ff',
+  yellow: '#ffff55',
+  white: '#ffffff',
+} as const satisfies Record<string, Color>;

@@ -119,6 +119,15 @@ export type {
   RedactedEvent,
 } from './safety/index.js';
 
-// RD-05 — color & styling (depth-aware encoding, nearest-color, style key).
-export { encode, encodeStyle, styleKey, nearest256, nearest16, InvalidColorError } from './color/index.js';
-export type { ColorRole, Rgb } from './color/index.js';
+// RD-05 — color & styling (depth-aware encoding, nearest-color, palette, theme).
+export {
+  encode,
+  encodeStyle,
+  styleKey,
+  nearest256,
+  nearest16,
+  InvalidColorError,
+  PALETTE,
+  defaultTheme,
+} from './color/index.js';
+export type { ColorRole, Rgb, Theme, ThemeRole } from './color/index.js';

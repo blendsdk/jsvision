@@ -22,3 +22,8 @@ export { nearest256, nearest16 } from './downsample.js';
 // Color validation + typed error.
 export { InvalidColorError } from './color.js';
 export type { Rgb } from './color.js';
+
+// App-facing palette + semantic theme.
+export { PALETTE } from './palette.js';
+export { defaultTheme } from './theme.js';
+export type { Theme, ThemeRole } from './theme.js';
