@@ -81,12 +81,23 @@ export type {
 } from './render/index.js';
 
 // RD-07 — host & lifecycle.
-export { createHost } from './host/index.js';
-export type { Host, HostOptions, ResizeEvent, RuntimeAdapter, HostSignal, TimerHandle } from './host/index.js';
+export { createHost, detectTty } from './host/index.js';
+export type {
+  Host,
+  HostOptions,
+  ResizeEvent,
+  RuntimeAdapter,
+  HostSignal,
+  TimerHandle,
+  StreamOptions,
+} from './host/index.js';
 
 // RD-08 — safety (essentials gate, errors, logging, redaction, sanitizer).
 export {
   sanitize,
+  evaluateEssentials,
+  essentialsMet,
+  assertEssentials,
   TuiError,
   EssentialsNotMetError,
   LoggerConfigError,
@@ -94,4 +105,15 @@ export {
   redactEvent,
   dumpCaps,
 } from './safety/index.js';
-export type { Logger, LoggerOptions, LogLevel, LogRecord, LogSink, LoggerFs, RedactedEvent } from './safety/index.js';
+export type {
+  EssentialsReport,
+  Degradation,
+  HostFacts,
+  Logger,
+  LoggerOptions,
+  LogLevel,
+  LogRecord,
+  LogSink,
+  LoggerFs,
+  RedactedEvent,
+} from './safety/index.js';

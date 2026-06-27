@@ -15,6 +15,17 @@ import { closeSync, openSync } from 'node:fs';
 import { ReadStream, WriteStream } from 'node:tty';
 import type { HostOptions } from './types.js';
 
+/**
+ * The subset of {@link HostOptions} that governs stream binding + TTY detection.
+ * `HostOptions` is structurally compatible, so the host passes itself straight
+ * through; {@link detectTty} supplies just these fields pre-start (PF-001).
+ */
+export interface StreamOptions {
+  readonly input?: NodeJS.ReadStream;
+  readonly output?: NodeJS.WriteStream;
+  readonly preferDevTty?: boolean;
+}
+
 /** The resolved streams + TTY state the host runs against. [AR-11, AR-13] */
 export interface BoundStreams {
   readonly input: NodeJS.ReadStream;
@@ -80,7 +91,7 @@ function openDevTty(): BoundStreams | null {
  * @returns the bound streams, TTY flag, and a `dispose()` that closes only what
  *   this module opened.
  */
-export function bindStreams(options: HostOptions): BoundStreams {
+function resolveStreams(options: StreamOptions): BoundStreams {
   const injected = options.input !== undefined || options.output !== undefined;
   const input = options.input ?? process.stdin;
   const output = options.output ?? process.stdout;
@@ -99,4 +110,28 @@ export function bindStreams(options: HostOptions): BoundStreams {
       /* std/injected streams are owned elsewhere — nothing to close */
     },
   };
+}
+
+export function bindStreams(options: HostOptions): BoundStreams {
+  return resolveStreams(options);
+}
+
+/**
+ * Resolve whether the SDK has an interactive TTY, ephemerally — for the RD-08
+ * essentials gate to read **before** `start()` (PF-001). `host.isTTY` is only
+ * populated inside `start()`, so a pre-start gate cannot use it; this binds the
+ * same streams `bindStreams` would, reads `isTTY`, and disposes anything it
+ * opened (e.g. a `/dev/tty` fd) so no descriptor lingers. [AR-2]
+ *
+ * @param options - injectable `input`/`output`/`preferDevTty` (defaults match
+ *   `bindStreams`: std streams, with the POSIX `/dev/tty` fallback when piped).
+ * @returns true when both ends are a real TTY (or a `/dev/tty` bind succeeded).
+ */
+export function detectTty(options: StreamOptions = {}): boolean {
+  const bound = resolveStreams(options);
+  try {
+    return bound.isTTY;
+  } finally {
+    bound.dispose();
+  }
 }

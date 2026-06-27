@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-27 23:10
-> **Progress**: 19/35 tasks (54%)
+> **Last Updated**: 2026-06-27 23:31
+> **Progress**: 28/35 tasks (80%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -147,10 +147,10 @@ RD-02 and RD-07 public contracts are **not** modified (AR-2, AR-5). The `@blends
 | 3.3.2 | Full verification | — |
 
 **Deliverables**:
-- [ ] `detectTty()` resolves authoritative TTY facts pre-start (PF-001), re-exported publicly
-- [ ] Gate refuses non-interactive terminals (AC-1) and degrades non-essentials (AC-2)
-- [ ] One-time degradation notice written via the logger (screen-safe)
-- [ ] All verification passing
+- [x] `detectTty()` resolves authoritative TTY facts pre-start (PF-001), re-exported publicly
+- [x] Gate refuses non-interactive terminals (AC-1) and degrades non-essentials (AC-2)
+- [x] One-time degradation notice written via the logger (screen-safe)
+- [x] All verification passing
 
 **Verify**: `npm run verify`
 
@@ -241,15 +241,15 @@ RD-02 and RD-07 public contracts are **not** modified (AR-2, AR-5). The `@blends
 - [x] 2.3.2 Full verification ✅ (completed: 2026-06-27 23:10)
 
 ### Phase 3: Essentials gate
-- [ ] 3.1.1 Write `safety-essentials.spec.test.ts` (ST-1…ST-8)
-- [ ] 3.1.2 Write `host-detect-tty.spec.test.ts` (ST-27, ST-28)
-- [ ] 3.1.3 Run spec tests — verify FAIL (red)
-- [ ] 3.2.1 Add `detectTty()` to `host/streams.ts` (+ re-exports)
-- [ ] 3.2.2 Implement `essentials.ts` (`evaluateEssentials`/`essentialsMet`/`assertEssentials`)
-- [ ] 3.2.3 Re-export from `safety/index.ts` + `src/engine/index.ts`
-- [ ] 3.2.4 Run spec tests — verify PASS (green)
-- [ ] 3.3.1 Write `safety-essentials.impl.test.ts`
-- [ ] 3.3.2 Full verification
+- [x] 3.1.1 Write `safety-essentials.spec.test.ts` (ST-1…ST-8) ✅ (completed: 2026-06-27 23:18)
+- [x] 3.1.2 Write `host-detect-tty.spec.test.ts` (ST-27, ST-28) ✅ (completed: 2026-06-27 23:18)
+- [x] 3.1.3 Run spec tests — verify FAIL (red) ✅ (completed: 2026-06-27 23:18)
+- [x] 3.2.1 Add `detectTty()` to `host/streams.ts` (+ re-exports) ✅ (completed: 2026-06-27 23:24)
+- [x] 3.2.2 Implement `essentials.ts` (`evaluateEssentials`/`essentialsMet`/`assertEssentials`) ✅ (completed: 2026-06-27 23:26)
+- [x] 3.2.3 Re-export from `safety/index.ts` + `src/engine/index.ts` ✅ (completed: 2026-06-27 23:27)
+- [x] 3.2.4 Run spec tests — verify PASS (green) ✅ (completed: 2026-06-27 23:28)
+- [x] 3.3.1 Write `safety-essentials.impl.test.ts` ✅ (completed: 2026-06-27 23:30)
+- [x] 3.3.2 Full verification ✅ (completed: 2026-06-27 23:31)
 
 ### Phase 4: Acceptance — paste cap & error-restore e2e
 - [ ] 4.1.1 Write `safety-paste-cap.spec.test.ts` (ST-24, ST-25)
