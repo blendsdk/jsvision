@@ -13,10 +13,10 @@
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve, join } from 'node:path';
 
-/** This file's directory: `packages/tui-core/test/`. */
+/** This file's directory: `packages/core/test/`. */
 const here = dirname(fileURLToPath(import.meta.url));
 
-/** The monorepo root — three levels up from `packages/tui-core/test/`. */
+/** The monorepo root — three levels up from `packages/core/test/`. */
 export const monorepoRoot = resolve(here, '../../..');
 
 /** Join path segments onto the monorepo root. */

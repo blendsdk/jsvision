@@ -16,19 +16,19 @@
 | 🔵 **Widget** | Reimagine as a control — Tier 1 (essential) or Tier 2 (high-value) |
 | 🟡 **Defer** | Reimagine later — large/self-contained (Tier 3) |
 | 🟣 **Relocate** | Belongs in a separate package (`@jsvision/files`), not core UI |
-| ⚫ **Replaced** | Already provided by `tui-core` or by the JS runtime/language |
+| ⚫ **Replaced** | Already provided by `core` or by the JS runtime/language |
 | 🔴 **Drop** | DOS/C++ artifact with no modern analog — do not port |
 
 Effort scale: **S** (days) · **M** (1–2 wk) · **L** (multi-week) · **XL** (the hard, risky pillars).
 
 ---
 
-## 0. Platform layer — already replaced by `tui-core`
+## 0. Platform layer — already replaced by `core`
 
 Turbo Vision's entire `source/platform/` (~280 KB) is functionally redundant with the foundation.
 **Nothing here is ported.**
 
-| Turbo Vision | Replaced by (`tui-core`) | Mark |
+| Turbo Vision | Replaced by (`core`) | Mark |
 |---|---|---|
 | `THardwareInfo`, `Platform`, console adapters (ncurses/win32/unix) | `createHost` + `RuntimeAdapter` | ⚫ |
 | `DisplayBuffer` (row damage, FPS throttle) | `ScreenBuffer` + `serialize()` damage-diff | ⚫ |
@@ -49,7 +49,7 @@ Turbo Vision's entire `source/platform/` (~280 KB) is functionally redundant wit
 | `TGroup` | `Group` | 🟢 | XL | Owns children, Z-order, draw composition into parent buffer, focus chain, lock/unlock batching. |
 | `TPoint`/`TRect` | `Point`/`Rect` | 🟢 | S | Plain geometry. Keep half-open-interval semantics. |
 | `TDrawBuffer` + `writeView`/`writeLine` | `DrawContext` | 🟢 | M | The paint API handed to `draw()`. Wraps writes into the parent buffer → `ScreenBuffer`. `ctx.text/fill/color()`. |
-| `TPalette` + `mapColor` chain | named theme roles | 🟢 | S | Replace palette-index recursion with `ctx.color('role')` over tui-core `ThemeRole`/`defaultTheme`. |
+| `TPalette` + `mapColor` chain | named theme roles | 🟢 | S | Replace palette-index recursion with `ctx.color('role')` over core `ThemeRole`/`defaultTheme`. |
 | `growMode` (anchor edges) | layout primitive | 🟢 | — | Kept as the low-level anchor under the layout engine (below). |
 | `exposed()` / clip | retained internals | 🟢 | M | Cover-detection + clipping during composition. |
 | `phaseType` (pre/focus/post) | dispatch phases | 🟢 | M | Keep the 3-phase event model — it's good middleware. |
@@ -62,7 +62,7 @@ Turbo Vision's entire `source/platform/` (~280 KB) is functionally redundant wit
 |---|---|---|---|---|
 | `TProgram` + `TApplication` (MI chain) | `Application` | 🟢 | L | Composition, not inheritance. Owns desktop/menu/status, `run()`, `execView()`, `on(command)`. |
 | event pump (`getEvent`/`waitForEvents`, blocking) | async event loop | 🟢 | L | Replace blocking poll with async pump fed by host input stream. |
-| `TEvent`/`MouseEventType`/`KeyDownEvent`/`MessageEvent` | `InputEvent` (typed union) | 🟢 | S | Reuse tui-core decoded events; add command/broadcast variants. |
+| `TEvent`/`MouseEventType`/`KeyDownEvent`/`MessageEvent` | `InputEvent` (typed union) | 🟢 | S | Reuse core decoded events; add command/broadcast variants. |
 | `TCommandSet` + `cm*` codes + `enable/disableCommand` | typed `command` strings + `app.commands` | 🟢 | M | String/const commands, no 256-bit bitmap; enable/disable still useful. |
 | `message()` / `evBroadcast` | internal dispatch / bus | 🟢 | S | Keep broadcast for cross-view signals; type it. |
 | `TTimerQueue` / `idle()` | async timers | 🟢 | S | `setInterval`/`setTimeout` on the loop; `onIdle` hook. |
@@ -192,7 +192,7 @@ File-based hypertext help — historically important, low modern demand.
 | `TCollection`/`TSortedCollection`/`TNSCollection`/`TNSSortedCollection`/`TStringCollection`/`TResourceCollection` | ⚫ Replaced | Native `Array`/`Map`/`.sort()`. |
 | `TResourceFile`/`TResourceItem`/`TStringList`/`TStrListMaker`/`TStrIndexRec` | 🔴 Drop | Resource files → ES modules / i18n map. |
 | `TVMemMgr`/`TBufListEntry` | 🔴 Drop | GC makes the safety pool meaningless. |
-| `TColorAttr`/`TColorRGB`/`TColorBIOS`/`TColorDesired`/`TAttrPair`/`TScreenCell`/`TCellChar`/`TText` | ⚫ Replaced | tui-core color + render subsystems. |
+| `TColorAttr`/`TColorRGB`/`TColorBIOS`/`TColorDesired`/`TAttrPair`/`TScreenCell`/`TCellChar`/`TText` | ⚫ Replaced | core color + render subsystems. |
 
 ---
 
@@ -202,7 +202,7 @@ File-based hypertext help — historically important, low modern demand.
 
 | Mark | Count (approx) | What |
 |---|---|---|
-| ⚫ Replaced by tui-core/runtime | ~20 | platform layer, color/cell/text, collections |
+| ⚫ Replaced by core/runtime | ~20 | platform layer, color/cell/text, collections |
 | 🔴 Drop | ~18 | streaming, resources, memmgr, TObject |
 | 🟢 Core (Tier 0) | ~22 | view/group/app/event/menu/window/scroll + **2 new pillars** (layout, reactive core) |
 | 🔵 Widget (Tier 1+2) | ~22 | controls, validators, tree, + **new**: ComboBox/Tabs/Table/Progress |

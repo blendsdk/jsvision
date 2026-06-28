@@ -50,7 +50,7 @@ function workspacePackages() {
   return out;
 }
 
-/** Rewrite `export const VERSION = '...'` in a tui-core version.ts, if present. */
+/** Rewrite `export const VERSION = '...'` in a core version.ts, if present. */
 function syncVersionConstant(pkgDir) {
   const versionFile = join(pkgDir, 'src', 'engine', 'version.ts');
   if (!existsSync(versionFile)) return false;

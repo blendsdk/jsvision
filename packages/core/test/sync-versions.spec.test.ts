@@ -8,7 +8,7 @@
  *
  * Runs the real script against a throwaway fixture workspace (testing standard:
  * prefer real objects over mocks). The script is at the MONOREPO root; this test
- * is in packages/tui-core/test/.
+ * is in packages/core/test/.
  */
 import { test, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';

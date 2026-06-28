@@ -10,7 +10,7 @@
 
 ## Toolchain
 
-- **Repo shape:** **yarn 1.x + Turborepo monorepo**. `packages/tui-core` = published `@jsvision/core` (the foundation engine, zero runtime deps); `packages/tui-examples` = private `@jsvision/examples` (dev examples + probe harness); `packages/ui` = `@jsvision/ui` (the Turbo Vision-style widget framework on `@jsvision/core` — scaffold; `private` until its first release). Future packages: `@jsvision/<name>` under `packages/<name>/`. All **public** packages share one lockstep version (`yarn sync-versions`; root `package.json#version` is the source of truth).
+- **Repo shape:** **yarn 1.x + Turborepo monorepo**. `packages/core` = published `@jsvision/core` (the foundation engine, zero runtime deps); `packages/examples` = private `@jsvision/examples` (dev examples + probe harness); `packages/ui` = `@jsvision/ui` (the Turbo Vision-style widget framework on `@jsvision/core` — scaffold; `private` until its first release). Future packages: `@jsvision/<name>` under `packages/<name>/`. All **public** packages share one lockstep version (`yarn sync-versions`; root `package.json#version` is the source of truth).
 - **Language(s):** TypeScript (ESM-only, `module`/`moduleResolution` NodeNext, `strict`); shared `tsconfig.base.json`, per-package `tsconfig.json`
 - **Framework(s):** none — Node built-ins + zero runtime dependencies
 - **Package manager:** **yarn 1.x** (`yarn.lock`, workspaces `packages/*`)
@@ -24,13 +24,13 @@
 > All commands run from the monorepo root and fan out via turbo unless noted.
 
 - **Verify (run before every commit):** `yarn verify` (= `turbo run typecheck build test` across packages)
-- **Build:** `yarn build` (`turbo run build` → each package's `tsc` → `dist/`; `tui-core` + `ui` build, examples don't)
-- **Typecheck:** `yarn typecheck` (`turbo run typecheck`; `^build` so examples typecheck against tui-core's `.d.ts`)
+- **Build:** `yarn build` (`turbo run build` → each package's `tsc` → `dist/`; `core` + `ui` build, examples don't)
+- **Typecheck:** `yarn typecheck` (`turbo run typecheck`; `^build` so examples typecheck against core's `.d.ts`)
 - **Test (unit):** `yarn test` (`turbo run test` → vitest `unit` project per package)
 - **Test (e2e):** `yarn test:e2e` (`turbo run test:e2e` → vitest `e2e` project) · or per package: `yarn workspace @jsvision/core test:e2e` (restore/signals/install) · `yarn workspace @jsvision/examples test:e2e` (probe)
 - **Run the probe harness (dev):** `yarn workspace @jsvision/examples probe` (`--auto`/`--out <path>`/`--no-matrix`/`--help`)
-- **Acceptance gate (RD-09 go/no-go):** `yarn gate` (`scripts/gate.mjs`, root) — runs `yarn verify` + tui-core e2e + examples `probe --auto`, PASS/FAIL/DEFERRED per criterion; map in `docs/acceptance-gate.md`
-- **Performance bench (RD-10, informational):** `yarn bench` (`yarn workspace @jsvision/core bench` → `tsx bench/frame-bench.mjs`); never gates (16 ms ceiling asserted off-CI by `packages/tui-core/test/perf-budget.spec.test.ts`, skipped under `CI`/`TUI_SKIP_PERF`)
+- **Acceptance gate (RD-09 go/no-go):** `yarn gate` (`scripts/gate.mjs`, root) — runs `yarn verify` + core e2e + examples `probe --auto`, PASS/FAIL/DEFERRED per criterion; map in `docs/acceptance-gate.md`
+- **Performance bench (RD-10, informational):** `yarn bench` (`yarn workspace @jsvision/core bench` → `tsx bench/frame-bench.mjs`); never gates (16 ms ceiling asserted off-CI by `packages/core/test/perf-budget.spec.test.ts`, skipped under `CI`/`TUI_SKIP_PERF`)
 - **Version sync (lockstep):** `yarn sync-versions` (write root version to public packages) · `yarn sync-versions --check` (assert lockstep, non-zero on drift)
 - **Lint:** `yarn lint` (`eslint .` + `prettier --check .`, repo-wide) · **Fix:** `yarn lint:fix`
 - **Dependency policy:** `yarn check:deps` (`turbo run check:deps`; fails on any native runtime dependency per public package)
@@ -39,12 +39,12 @@
 ## Project structure
 
 ```
-packages/tui-core/       Published @jsvision/core — holds src/engine/, bench/, and the 76 non-probe tests + fixtures. Paths below (src/engine/**, test/**) are RELATIVE TO THIS PACKAGE.
-packages/tui-examples/   Private @jsvision/examples — capability-probe/ + resize-demo/ + the 15 probe-*/probe.e2e tests; depends on @jsvision/core, imports it by name.
+packages/core/       Published @jsvision/core — holds src/engine/, bench/, and the 76 non-probe tests + fixtures. Paths below (src/engine/**, test/**) are RELATIVE TO THIS PACKAGE.
+packages/examples/   Private @jsvision/examples — capability-probe/ + resize-demo/ + the 15 probe-*/probe.e2e tests; depends on @jsvision/core, imports it by name.
 packages/ui/             @jsvision/ui — the Turbo Vision-style widget framework (retained tree + signals) on @jsvision/core. Scaffold: single public entry src/index.ts + version.ts, 2 spec tests (version + core-integration). private until first release; subsystems land per plans/tui-ui/01-component-map.md.
 tsconfig.base.json  turbo.json  vitest.config.ts(per package)  — shared TS config, turbo pipeline, vitest unit+e2e projects.
 docs/  scripts/  .github/  CHANGELOG.md  — monorepo-level docs (techdocs + acceptance-gate), scripts (gate.mjs, check-no-native-deps.mjs, sync-versions.mjs), CI, changelog.
---- (the subsystem layout below is rooted at packages/tui-core/) ---
+--- (the subsystem layout below is rooted at packages/core/) ---
 src/engine/      Source. Single public entry point: src/engine/index.ts (re-exports public API).
 src/engine/capability/   RD-02 capability detection core (profile, defaults, env, table, query, detect, index) + responses.ts (RD-06-shared query-response classifier).
 src/engine/input/        RD-06 input decoder (events, keys, decoder, mouse, paste, keymap, index).
@@ -52,9 +52,9 @@ src/engine/render/       RD-04 rendering engine (types, width, buffer, ansi, gly
 src/engine/host/         RD-07 host & lifecycle (types, streams, platform, modes, host, restore, signals, index) — native tty host behind an injectable RuntimeAdapter. streams.ts also exports the additive detectTty() pre-start TTY probe (RD-08 PF-001); terminal-query.ts is the RD-03 real tty-backed createTerminalQuery (layer-2 query seam).
 src/engine/safety/       RD-08 safety (sanitize, errors, redact, logger, essentials, index) — essentials gate, screen-safe logger, redaction, typed errors, and the canonical injection boundary.
 src/engine/color/        RD-05 color & styling (color, palette, downsample, encode, theme, index) — depth-aware SGR encoding (truecolor→256→16→mono), redmean nearest-color, DOS-16 palette + theme; the serialize() default encoder.
-bench/           (under packages/tui-core/) RD-10 frame-performance benchmark (frame-bench.mjs) behind `yarn bench` — exported pure median/p95/measureComposeDiff helpers + a main-guarded printing CLI; never emitted to dist.
-test/            (under packages/tui-core/, 76 files) RD-09 four-tier strategy: hex-in-JSON input corpus (fixtures/input-corpus/ + input-corpus.spec/impl + -helpers), golden-screen via @xterm/headless (golden-screen.spec/impl + -helpers), Tier-3 host-tier3.e2e, seeded fuzz (input-fuzz.spec/impl + -helpers), bytes∝damage (render-bytes-damage.spec), gate consistency (gate.spec). RD-10: perf-budget.spec/impl, treeshake.spec, a11y-golden.spec, api-stability.spec, docs-presence.spec. Monorepo: sync-versions.spec. Governance specs (gate/check-deps/docs-presence/api-stability/toolchain) reach the monorepo root via ../../.. (DEF-4 to extract). Shared helpers in non-test *-helpers.ts.
-packages/tui-examples/   (capability-probe/ = RD-03 probe harness: main/args/taxonomy/env-meta/auto-probes/manual-probes/live-readout/report/matrix; resize-demo/) + test/ holds the 15 probe-*/probe.e2e tests (probe.e2e child runs as .mts). Imports the engine by name (@jsvision/core); run via `yarn workspace @jsvision/examples probe`.
+bench/           (under packages/core/) RD-10 frame-performance benchmark (frame-bench.mjs) behind `yarn bench` — exported pure median/p95/measureComposeDiff helpers + a main-guarded printing CLI; never emitted to dist.
+test/            (under packages/core/, 76 files) RD-09 four-tier strategy: hex-in-JSON input corpus (fixtures/input-corpus/ + input-corpus.spec/impl + -helpers), golden-screen via @xterm/headless (golden-screen.spec/impl + -helpers), Tier-3 host-tier3.e2e, seeded fuzz (input-fuzz.spec/impl + -helpers), bytes∝damage (render-bytes-damage.spec), gate consistency (gate.spec). RD-10: perf-budget.spec/impl, treeshake.spec, a11y-golden.spec, api-stability.spec, docs-presence.spec. Monorepo: sync-versions.spec. Governance specs (gate/check-deps/docs-presence/api-stability/toolchain) reach the monorepo root via ../../.. (DEF-4 to extract). Shared helpers in non-test *-helpers.ts.
+packages/examples/   (capability-probe/ = RD-03 probe harness: main/args/taxonomy/env-meta/auto-probes/manual-probes/live-readout/report/matrix; resize-demo/) + test/ holds the 15 probe-*/probe.e2e tests (probe.e2e child runs as .mts). Imports the engine by name (@jsvision/core); run via `yarn workspace @jsvision/examples probe`.
 
 docs/            Monorepo docs (root). RD-09 acceptance-gate.md (criteria→evidence). RD-10 techdocs set (VitePress-compatible, NOT installed): index.md (techdocs:true), architecture/ (system-overview, api-design, security), decisions/ (ADR-001…007 incl. the monorepo restructure), guides/ (getting-started, development), .vitepress/config.ts.
 scripts/         (root) check-no-native-deps.mjs (dependency-policy guard, takes a package dir), gate.mjs (RD-09 aggregator behind `yarn gate`, cross-package), sync-versions.mjs (lockstep version sync behind `yarn sync-versions`).
@@ -66,7 +66,7 @@ _archive/        Archived Ink/React prototype — reference/inspiration only, no
 terminal-matrix.json       RD-03 cross-terminal evidence (appended by the probe / gate); untracked + gitignored dev-box artifact.
 ```
 
-**Test files:** under each package's `test/`. Naming: `*.spec.test.ts` (specification — immutable oracle from requirements/AC), `*.impl.test.ts` (implementation/edge cases), `*.e2e.test.ts` (end-to-end, vitest `e2e` project). tui-core tests import source via `../src/engine/...`; examples tests import the engine via `@jsvision/core`.
+**Test files:** under each package's `test/`. Naming: `*.spec.test.ts` (specification — immutable oracle from requirements/AC), `*.impl.test.ts` (implementation/edge cases), `*.e2e.test.ts` (end-to-end, vitest `e2e` project). core tests import source via `../src/engine/...`; examples tests import the engine via `@jsvision/core`.
 
 <!-- analyze_project: refreshed Overview, Toolchain, Commands, Project structure for the yarn+turbo+vitest monorepo (2026-06-28) -->
 

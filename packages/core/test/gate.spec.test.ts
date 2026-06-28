@@ -18,7 +18,7 @@ import { dirname, join, resolve } from 'node:path';
 import { STEPS, DEFERRED, CRITERIA } from '../../../scripts/gate.mjs';
 import { monorepoRoot } from './monorepo-root.js';
 
-const here = dirname(fileURLToPath(import.meta.url)); // packages/tui-core/test/
+const here = dirname(fileURLToPath(import.meta.url)); // packages/core/test/
 const GATE_DOC = join(monorepoRoot, 'docs', 'acceptance-gate.md');
 const ALL_CRITERIA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
@@ -50,8 +50,8 @@ test('ST-22: the gate doc names all 11 RD-09 criteria', () => {
 });
 
 // Evidence test files live across both package test dirs after the monorepo split
-// (engine tests in tui-core; probe tests in tui-examples).
-const TEST_DIRS = [here, resolve(here, '../../tui-examples/test')];
+// (engine tests in core; probe tests in examples).
+const TEST_DIRS = [here, resolve(here, '../../examples/test')];
 
 test('ST-23: every non-DEFERRED criterion names at least one existing test file', () => {
   for (const row of parseDocRows()) {

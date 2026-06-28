@@ -420,8 +420,8 @@ changes are recorded in [`CHANGELOG.md`](CHANGELOG.md) (Keep a Changelog format)
 This repository is a **yarn 1.x + Turborepo monorepo**:
 
 ```
-packages/tui-core/      @jsvision/core — the published foundation engine
-packages/tui-examples/  @jsvision/examples — private dev examples + probe harness
+packages/core/      @jsvision/core — the published foundation engine
+packages/examples/  @jsvision/examples — private dev examples + probe harness
 docs/  scripts/  .github/   shared docs, tooling, and CI at the root
 ```
 
@@ -444,7 +444,7 @@ The toolchain is yarn workspaces + Turborepo orchestration; tests run on **vites
 
 > **Performance (RD-10).** `yarn bench` reports the 200×50 compose+diff median/p95
 > (informational; it never fails). The 16 ms frame-budget ceiling is asserted
-> off-CI by `packages/tui-core/test/perf-budget.spec.test.ts` and auto-skips its
+> off-CI by `packages/core/test/perf-budget.spec.test.ts` and auto-skips its
 > hard assertion under `CI` or when `TUI_SKIP_PERF` is set; CI runs the bench
 > informationally on one matrix cell.
 
