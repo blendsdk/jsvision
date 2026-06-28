@@ -16,7 +16,8 @@ the deprecation policy.
   **`@jsvision/examples`** (monorepo root → `@jsvision/monorepo`); the GitHub repo
   moved to `blendsdk/jsvision`. The brand for the SDK is now **jsvision**. This
   supersedes the interim `@blendsdk/tui-core` naming noted below. Package
-  directories (`packages/tui-core/`, `packages/tui-examples/`) are unchanged.
+  directories were renamed to match: `packages/tui-core/` → `packages/core/` and
+  `packages/tui-examples/` → `packages/examples/`.
 - **Monorepo restructure.** The repository is now a yarn 1.x + Turborepo monorepo.
   The published package was **renamed `@blendsdk/tui` → `@blendsdk/tui-core`** and
   moved to `packages/tui-core/`; the dev examples + probe harness moved to the

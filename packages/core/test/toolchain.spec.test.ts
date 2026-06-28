@@ -19,8 +19,8 @@ import { dirname, join, resolve } from 'node:path';
 import { monorepoRoot } from './monorepo-root.js';
 
 const require = createRequire(import.meta.url);
-const here = dirname(fileURLToPath(import.meta.url)); // packages/tui-core/test/
-const repoRoot = resolve(here, '..'); // the tui-core package root (its tsconfig)
+const here = dirname(fileURLToPath(import.meta.url)); // packages/core/test/
+const repoRoot = resolve(here, '..'); // the core package root (its tsconfig)
 
 /** Create a fresh temp directory; the caller is responsible for cleanup. */
 function makeTempDir(prefix: string): string {

@@ -17,8 +17,8 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
-const here = dirname(fileURLToPath(import.meta.url)); // packages/tui-examples/test/
-const pkgRoot = resolve(here, '..'); // the tui-examples package root
+const here = dirname(fileURLToPath(import.meta.url)); // packages/examples/test/
+const pkgRoot = resolve(here, '..'); // the examples package root
 const monorepoRoot = resolve(here, '../../..'); // tsx is hoisted to the monorepo root .bin
 const tsxBin = join(monorepoRoot, 'node_modules', '.bin', process.platform === 'win32' ? 'tsx.cmd' : 'tsx');
 const mainPath = join(pkgRoot, 'capability-probe', 'main.ts');

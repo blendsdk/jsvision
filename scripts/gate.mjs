@@ -39,7 +39,7 @@ export const CRITERIA = {
 
 /**
  * The automatable steps, each mapped to the criteria it provides evidence for.
- * Monorepo commands (yarn workspaces + turbo); the e2e step runs tui-core's whole
+ * Monorepo commands (yarn workspaces + turbo); the e2e step runs core's whole
  * vitest e2e project (host-tier3 + host-signals + safety-error-restore + install).
  */
 export const STEPS = [
