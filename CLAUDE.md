@@ -21,7 +21,7 @@
 
 - **Build:** `npm run build` (`tsc` → `dist/`, emits `.js` + `.d.ts` + maps; `src` only — `examples/` is never emitted)
 - **Typecheck:** `npm run typecheck` (`tsc --noEmit`, `src`) · **Examples typecheck:** `npm run typecheck:examples` (`tsc -p tsconfig.examples.json`, `noEmit`)
-- **Test (unit):** `npm test` (`tsx --test "test/**/*.{spec,impl}.test.ts"`)
+- **Test (unit):** `npm test` (`node scripts/run-tests.mjs` — discovers the `*.spec.test.ts`/`*.impl.test.ts` files in pure Node and runs them via `tsx --test`; cross-OS and works on Node 18/20/22, unlike a `node --test` glob which needs Node 21+)
 - **Test (e2e, explicit):** `npx tsx --test test/install.e2e.test.ts` · `npx tsx --test test/probe.e2e.test.ts` · `npx tsx --test test/host-tier3.e2e.test.ts` (RD-09 Tier-3 restore-on-every-exit; spawns children via `node --import tsx` so SIGHUP is delivered) (heavier; not in the unit glob)
 - **Run the probe harness (dev):** `npm run probe` (`tsx examples/capability-probe/main.ts`; `--auto`/`--out <path>`/`--no-matrix`/`--help`)
 - **Acceptance gate (RD-09 go/no-go):** `npm run gate` (`scripts/gate.mjs`) — runs verify + the Tier-3/signal e2e + `probe --auto`, printing PASS/FAIL/DEFERRED per criterion; criteria→evidence map in `docs/acceptance-gate.md`
@@ -42,7 +42,7 @@ src/engine/safety/       RD-08 safety (sanitize, errors, redact, logger, essenti
 src/engine/color/        RD-05 color & styling (color, palette, downsample, encode, theme, index) — depth-aware SGR encoding (truecolor→256→16→mono), redmean nearest-color, DOS-16 palette + theme; the serialize() default encoder.
 examples/        Dev-only examples, NOT in the published package. examples/capability-probe/ is the RD-03 probe & survey harness (main, args, taxonomy, env-meta, auto-probes, manual-probes, live-readout, report, matrix). Typechecked via tsconfig.examples.json; never emitted to dist.
 test/            ALL tests live here — never colocated with source. RD-09 adds the four-tier strategy: the hex-in-JSON input corpus (test/fixtures/input-corpus/ + input-corpus.spec/impl + -helpers), golden-screen via @xterm/headless (golden-screen.spec/impl + -helpers), Tier-3 host-tier3.e2e, seeded fuzz (input-fuzz.spec/impl + -helpers), bytes∝damage (render-bytes-damage.spec), and the gate consistency spec (gate.spec). Shared helpers live in non-test *-helpers.ts modules (like host-doubles.ts) to avoid double test registration.
-scripts/         Build/policy scripts: check-no-native-deps.mjs (dependency-policy guard) and gate.mjs (RD-09 acceptance-gate aggregator behind `npm run gate`).
+scripts/         Build/policy scripts: check-no-native-deps.mjs (dependency-policy guard), gate.mjs (RD-09 acceptance-gate aggregator behind `npm run gate`), run-tests.mjs (cross-OS, Node-version-independent unit test discovery behind `npm test`).
 docs/            Checked-in living docs. docs/acceptance-gate.md is the RD-09 go/no-go criteria→evidence map mirrored by scripts/gate.mjs.
 tsconfig.examples.json     Extends the base config to typecheck examples/ (noEmit); wired into `verify`.
 terminal-matrix.json       RD-03 accumulated cross-terminal evidence (appended by `npm run probe` / the gate's probe step; untracked dev-box artifact).

@@ -1,0 +1,4 @@
+# Normalize all text files to LF in the repo and on checkout, on every OS.
+# Without this, Windows checks out CRLF (git autocrlf) and Prettier — which expects
+# LF — flags every file, breaking the Windows CI cells.
+* text=auto eol=lf
