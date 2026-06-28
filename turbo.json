@@ -8,10 +8,10 @@
       "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build", "^build"]
     },
     "test:e2e": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build", "^build"]
     },
     "check:deps": {
       "dependsOn": ["build"]
