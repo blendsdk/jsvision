@@ -7,8 +7,13 @@ tree-shakeable **ESM-only** library with **zero runtime dependencies**. The
 capability, input, rendering, host, and safety subsystems are added by later
 milestones and re-exported from this package's single public entry point.
 
-> **Status:** `0.1.0` — pre-1.0. The public API is still being built out and may
-> change between minor versions.
+> ## 🚧 Under heavy development
+>
+> **`@blendsdk/tui` is pre-1.0 (`0.1.0`) and under heavy active development.** The
+> public API is still being built out and **may change between minor versions** —
+> pin an exact version if you depend on it. Some capabilities are verified only on
+> Linux/macOS so far (see the [acceptance gate](docs/acceptance-gate.md)). **Not yet
+> recommended for production use.**
 
 ## Install
 
