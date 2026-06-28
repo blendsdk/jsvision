@@ -1,0 +1,26 @@
+[
+  {
+    "name": "wheel up at (10,5) — ESC[<64;10;5M",
+    "bytesHex": "1b5b3c36343b31303b354d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "wheel", "dir": "up", "x": 10, "y": 5 }]
+  },
+  {
+    "name": "wheel down at (10,5) — ESC[<65;10;5M",
+    "bytesHex": "1b5b3c36353b31303b354d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "wheel", "dir": "down", "x": 10, "y": 5 }]
+  },
+  {
+    "name": "wheel left at (10,5) — ESC[<66;10;5M",
+    "bytesHex": "1b5b3c36363b31303b354d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "wheel", "dir": "left", "x": 10, "y": 5 }]
+  },
+  {
+    "name": "wheel right at (10,5) — ESC[<67;10;5M",
+    "bytesHex": "1b5b3c36373b31303b354d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "wheel", "dir": "right", "x": 10, "y": 5 }]
+  }
+]

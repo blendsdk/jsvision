@@ -1,0 +1,236 @@
+[
+  {
+    "name": "printable 'a' (carries codepoint)",
+    "bytesHex": "61",
+    "chunks": null,
+    "expectedEvents": [
+      { "type": "key", "key": "a", "ctrl": false, "alt": false, "shift": false, "codepoint": 97 }
+    ]
+  },
+  {
+    "name": "printable 'Z' (carries codepoint)",
+    "bytesHex": "5a",
+    "chunks": null,
+    "expectedEvents": [
+      { "type": "key", "key": "Z", "ctrl": false, "alt": false, "shift": false, "codepoint": 90 }
+    ]
+  },
+  {
+    "name": "enter (CR)",
+    "bytesHex": "0d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "enter", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "tab",
+    "bytesHex": "09",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "tab", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "backspace (DEL)",
+    "bytesHex": "7f",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "backspace", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "space",
+    "bytesHex": "20",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "space", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "arrow up (CSI A)",
+    "bytesHex": "1b5b41",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "up", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "arrow down (CSI B)",
+    "bytesHex": "1b5b42",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "down", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "arrow right (CSI C)",
+    "bytesHex": "1b5b43",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "right", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "arrow left (CSI D)",
+    "bytesHex": "1b5b44",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "left", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "home (CSI H)",
+    "bytesHex": "1b5b48",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "home", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "end (CSI F)",
+    "bytesHex": "1b5b46",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "end", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "home (CSI 1~)",
+    "bytesHex": "1b5b317e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "home", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "insert (CSI 2~)",
+    "bytesHex": "1b5b327e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "insert", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "delete (CSI 3~)",
+    "bytesHex": "1b5b337e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "delete", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "pageup (CSI 5~)",
+    "bytesHex": "1b5b357e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "pageup", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "pagedown (CSI 6~)",
+    "bytesHex": "1b5b367e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "pagedown", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f1 (SS3 P)",
+    "bytesHex": "1b4f50",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f1", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f2 (SS3 Q)",
+    "bytesHex": "1b4f51",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f2", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f3 (SS3 R)",
+    "bytesHex": "1b4f52",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f3", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f4 (SS3 S)",
+    "bytesHex": "1b4f53",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f4", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f5 (CSI 15~)",
+    "bytesHex": "1b5b31357e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f5", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f6 (CSI 17~)",
+    "bytesHex": "1b5b31377e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f6", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f7 (CSI 18~)",
+    "bytesHex": "1b5b31387e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f7", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f8 (CSI 19~)",
+    "bytesHex": "1b5b31397e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f8", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f9 (CSI 20~)",
+    "bytesHex": "1b5b32307e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f9", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f10 (CSI 21~)",
+    "bytesHex": "1b5b32317e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f10", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f11 (CSI 23~)",
+    "bytesHex": "1b5b32337e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f11", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "f12 (CSI 24~)",
+    "bytesHex": "1b5b32347e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f12", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "ctrl-a (0x01)",
+    "bytesHex": "01",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "a", "ctrl": true, "alt": false, "shift": false }]
+  },
+  {
+    "name": "ctrl-c (0x03)",
+    "bytesHex": "03",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "c", "ctrl": true, "alt": false, "shift": false }]
+  },
+  {
+    "name": "alt-a (ESC + a)",
+    "bytesHex": "1b61",
+    "chunks": null,
+    "expectedEvents": [
+      { "type": "key", "key": "a", "ctrl": false, "alt": true, "shift": false, "codepoint": 97 }
+    ]
+  },
+  {
+    "name": "shift+up (CSI 1;2 A)",
+    "bytesHex": "1b5b313b3241",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "up", "ctrl": false, "alt": false, "shift": true }]
+  },
+  {
+    "name": "alt+up (CSI 1;3 A)",
+    "bytesHex": "1b5b313b3341",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "up", "ctrl": false, "alt": true, "shift": false }]
+  },
+  {
+    "name": "ctrl+up (CSI 1;5 A)",
+    "bytesHex": "1b5b313b3541",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "up", "ctrl": true, "alt": false, "shift": false }]
+  },
+  {
+    "name": "ctrl+shift+up (CSI 1;6 A)",
+    "bytesHex": "1b5b313b3641",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "up", "ctrl": true, "alt": false, "shift": true }]
+  },
+  {
+    "name": "ctrl+delete (CSI 3;5 ~)",
+    "bytesHex": "1b5b333b357e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "delete", "ctrl": true, "alt": false, "shift": false }]
+  },
+  {
+    "name": "arrow up split across three chunks (cross-chunk state threading)",
+    "bytesHex": "1b5b41",
+    "chunks": [1, 2],
+    "expectedEvents": [{ "type": "key", "key": "up", "ctrl": false, "alt": false, "shift": false }]
+  }
+]

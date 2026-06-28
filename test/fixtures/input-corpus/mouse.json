@@ -1,0 +1,50 @@
+[
+  {
+    "name": "left button press at (10,5) — ESC[<0;10;5M",
+    "bytesHex": "1b5b3c303b31303b354d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "mouse", "kind": "down", "button": 0, "x": 10, "y": 5 }]
+  },
+  {
+    "name": "left button release at (10,5) — ESC[<0;10;5m",
+    "bytesHex": "1b5b3c303b31303b356d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "mouse", "kind": "up", "button": 0, "x": 10, "y": 5 }]
+  },
+  {
+    "name": "middle button press at (3,3) — ESC[<1;3;3M",
+    "bytesHex": "1b5b3c313b333b334d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "mouse", "kind": "down", "button": 1, "x": 3, "y": 3 }]
+  },
+  {
+    "name": "right button press at (4,4) — ESC[<2;4;4M",
+    "bytesHex": "1b5b3c323b343b344d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "mouse", "kind": "down", "button": 2, "x": 4, "y": 4 }]
+  },
+  {
+    "name": "left-button drag at (11,6) — ESC[<32;11;6M (motion bit set)",
+    "bytesHex": "1b5b3c33323b31313b364d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "mouse", "kind": "drag", "button": 0, "x": 11, "y": 6 }]
+  },
+  {
+    "name": "motion with no button at (12,7) — ESC[<35;12;7M",
+    "bytesHex": "1b5b3c33353b31323b374d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "mouse", "kind": "move", "button": 3, "x": 12, "y": 7 }]
+  },
+  {
+    "name": "left press beyond column 223 at (300,100) — ESC[<0;300;100M",
+    "bytesHex": "1b5b3c303b3330303b3130304d",
+    "chunks": null,
+    "expectedEvents": [{ "type": "mouse", "kind": "down", "button": 0, "x": 300, "y": 100 }]
+  },
+  {
+    "name": "press split across two chunks (cross-chunk state threading)",
+    "bytesHex": "1b5b3c303b31303b354d",
+    "chunks": [5],
+    "expectedEvents": [{ "type": "mouse", "kind": "down", "button": 0, "x": 10, "y": 5 }]
+  }
+]

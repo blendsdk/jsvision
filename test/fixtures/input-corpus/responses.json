@@ -1,0 +1,30 @@
+[
+  {
+    "name": "primary DA reply — ESC[?1c (classified, not a key)",
+    "bytesHex": "1b5b3f3163",
+    "chunks": null,
+    "expectedEvents": [],
+    "expectedQueries": [{ "kind": "da1" }]
+  },
+  {
+    "name": "secondary DA reply — ESC[>0c",
+    "bytesHex": "1b5b3e3063",
+    "chunks": null,
+    "expectedEvents": [],
+    "expectedQueries": [{ "kind": "da2" }]
+  },
+  {
+    "name": "DECRPM ?2026;1$y synchronized-output report",
+    "bytesHex": "1b5b3f323032363b312479",
+    "chunks": null,
+    "expectedEvents": [],
+    "expectedQueries": [{ "kind": "decrpm" }]
+  },
+  {
+    "name": "XTVERSION DCS reply — ESC P xterm ST",
+    "bytesHex": "1b50787465726d1b5c",
+    "chunks": null,
+    "expectedEvents": [],
+    "expectedQueries": [{ "kind": "xtversion" }]
+  }
+]

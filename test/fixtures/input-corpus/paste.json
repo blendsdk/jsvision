@@ -1,0 +1,21 @@
+[
+  {
+    "name": "bracketed paste 'hi' in one chunk",
+    "bytesHex": "1b5b3230307e68691b5b3230317e",
+    "chunks": null,
+    "expectedEvents": [{ "type": "paste", "text": "hi", "truncated": false }]
+  },
+  {
+    "name": "bracketed paste 'hi' split across two chunks (state threaded)",
+    "bytesHex": "1b5b3230307e68691b5b3230317e",
+    "chunks": [8],
+    "expectedEvents": [{ "type": "paste", "text": "hi", "truncated": false }]
+  },
+  {
+    "name": "over-cap paste 'hello' with pasteCap=2 truncates to 'he'",
+    "bytesHex": "1b5b3230307e68656c6c6f1b5b3230317e",
+    "chunks": null,
+    "pasteCap": 2,
+    "expectedEvents": [{ "type": "paste", "text": "he", "truncated": true }]
+  }
+]
