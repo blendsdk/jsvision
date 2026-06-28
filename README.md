@@ -399,6 +399,21 @@ const { VERSION } = require('@blendsdk/tui');
 
 Use `import` (or a dynamic `await import('@blendsdk/tui')`) instead.
 
+## Versioning & stability
+
+`@blendsdk/tui` follows [Semantic Versioning](https://semver.org/). All notable
+changes are recorded in [`CHANGELOG.md`](CHANGELOG.md) (Keep a Changelog format).
+
+- **SemVer.** While the package is pre-1.0 it is in active development: the public
+  API may change between **minor** versions (consistent with the heavy-development
+  notice above). From 1.0 onward, breaking changes ship only in a **major** release.
+- **Public surface.** The exports of `src/engine/index.ts` (the package entry
+  point) are the contract. Everything else — any deep import into `src/engine/**`
+  internals — is **not** part of the public API and may change at any time.
+- **Deprecation policy.** A symbol slated for removal is first marked
+  `@deprecated` (JSDoc) for **at least one minor release**, then removed in the
+  next **major**. Every removal is recorded under that version in `CHANGELOG.md`.
+
 ## Contributing
 
 The toolchain is plain Node tooling — no test framework, just `node:test` run

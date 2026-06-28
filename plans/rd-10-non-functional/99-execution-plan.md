@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 (Phase 3 complete)
-> **Progress**: 18/31 tasks (58%)
+> **Last Updated**: 2026-06-28 (Phase 4 complete)
+> **Progress**: 22/31 tasks (71%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -183,11 +183,11 @@ Spec-first throughout; wall-clock assertions are skippable under CI (AR-2).
 - [x] 3.2.3 Full verify ✅ (verify 516/516, lint clean) (completed: 2026-06-28)
 
 ### Phase 4: API Stability & Supply Chain
-- [ ] 4.1.1 api-stability spec (ST-8) red
-- [ ] 4.1.2 CHANGELOG.md
-- [ ] 4.1.3 README Versioning & stability
-- [ ] 4.1.4 Spec green
-- [ ] 4.2.1 Full verify + lint
+- [x] 4.1.1 api-stability spec (ST-8) red ✅ (both red — CHANGELOG/section absent) (completed: 2026-06-28)
+- [x] 4.1.2 CHANGELOG.md ✅ (Keep-a-Changelog; Unreleased + 0.1.0) (completed: 2026-06-28)
+- [x] 4.1.3 README Versioning & stability ✅ (SemVer + public surface + deprecation) (completed: 2026-06-28)
+- [x] 4.1.4 Spec green ✅ (completed: 2026-06-28)
+- [x] 4.2.1 Full verify + lint ✅ (verify 518/518, lint clean) (completed: 2026-06-28)
 
 ### Phase 5: Documentation (techdocs)
 - [ ] 5.1.1 Invoke techdocs skill (architecture + API + ADRs)
