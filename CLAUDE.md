@@ -69,7 +69,7 @@ _archive/        Archived Ink/React prototype — reference/inspiration only, no
 ## Git conventions
 
 - **Commit scope:** the area touched — `scaffold`, `package`, `toolchain`, `packaging`, `tests`, `docs`, or the engine subsystem name in later RDs.
-- **Main branch:** `master` • **Remote:** none yet (local repo). CI cells (AC-2) and publish are deferred-to-remote until one exists.
+- **Main branch:** `master` • **Remote:** `origin` → `git@github.com:blendsdk/tui.git`. Publish (with provenance) is still deferred to a later milestone (RD-10 DEF-1).
 
 ## Special rules
 
