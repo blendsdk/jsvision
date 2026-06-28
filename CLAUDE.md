@@ -10,7 +10,7 @@
 
 ## Toolchain
 
-- **Repo shape:** **yarn 1.x + Turborepo monorepo**. `packages/tui-core` = published `@jsvision/core` (the foundation engine, zero runtime deps); `packages/tui-examples` = private `@jsvision/examples` (dev examples + probe harness). Future packages: `@jsvision/<name>` under `packages/<name>/`. All **public** packages share one lockstep version (`yarn sync-versions`; root `package.json#version` is the source of truth).
+- **Repo shape:** **yarn 1.x + Turborepo monorepo**. `packages/tui-core` = published `@jsvision/core` (the foundation engine, zero runtime deps); `packages/tui-examples` = private `@jsvision/examples` (dev examples + probe harness); `packages/ui` = `@jsvision/ui` (the Turbo Vision-style widget framework on `@jsvision/core` — scaffold; `private` until its first release). Future packages: `@jsvision/<name>` under `packages/<name>/`. All **public** packages share one lockstep version (`yarn sync-versions`; root `package.json#version` is the source of truth).
 - **Language(s):** TypeScript (ESM-only, `module`/`moduleResolution` NodeNext, `strict`); shared `tsconfig.base.json`, per-package `tsconfig.json`
 - **Framework(s):** none — Node built-ins + zero runtime dependencies
 - **Package manager:** **yarn 1.x** (`yarn.lock`, workspaces `packages/*`)
@@ -24,7 +24,7 @@
 > All commands run from the monorepo root and fan out via turbo unless noted.
 
 - **Verify (run before every commit):** `yarn verify` (= `turbo run typecheck build test` across packages)
-- **Build:** `yarn build` (`turbo run build` → each package's `tsc` → `dist/`; only `tui-core` builds)
+- **Build:** `yarn build` (`turbo run build` → each package's `tsc` → `dist/`; `tui-core` + `ui` build, examples don't)
 - **Typecheck:** `yarn typecheck` (`turbo run typecheck`; `^build` so examples typecheck against tui-core's `.d.ts`)
 - **Test (unit):** `yarn test` (`turbo run test` → vitest `unit` project per package)
 - **Test (e2e):** `yarn test:e2e` (`turbo run test:e2e` → vitest `e2e` project) · or per package: `yarn workspace @jsvision/core test:e2e` (restore/signals/install) · `yarn workspace @jsvision/examples test:e2e` (probe)
@@ -41,6 +41,7 @@
 ```
 packages/tui-core/       Published @jsvision/core — holds src/engine/, bench/, and the 76 non-probe tests + fixtures. Paths below (src/engine/**, test/**) are RELATIVE TO THIS PACKAGE.
 packages/tui-examples/   Private @jsvision/examples — capability-probe/ + resize-demo/ + the 15 probe-*/probe.e2e tests; depends on @jsvision/core, imports it by name.
+packages/ui/             @jsvision/ui — the Turbo Vision-style widget framework (retained tree + signals) on @jsvision/core. Scaffold: single public entry src/index.ts + version.ts, 2 spec tests (version + core-integration). private until first release; subsystems land per plans/tui-ui/01-component-map.md.
 tsconfig.base.json  turbo.json  vitest.config.ts(per package)  — shared TS config, turbo pipeline, vitest unit+e2e projects.
 docs/  scripts/  .github/  CHANGELOG.md  — monorepo-level docs (techdocs + acceptance-gate), scripts (gate.mjs, check-no-native-deps.mjs, sync-versions.mjs), CI, changelog.
 --- (the subsystem layout below is rooted at packages/tui-core/) ---
