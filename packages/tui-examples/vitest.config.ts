@@ -13,6 +13,8 @@ export default defineConfig({
           name: 'unit',
           include: ['test/**/*.{spec,impl}.test.ts'],
           exclude: ['test/**/*.e2e.test.ts', 'node_modules/**'],
+          // A modest floor over vitest's 5s default for slow Windows runners.
+          testTimeout: 15_000,
         },
       },
       {

@@ -20,6 +20,11 @@ export default defineConfig({
           name: 'unit',
           include: ['test/**/*.{spec,impl}.test.ts'],
           exclude: ['test/**/*.e2e.test.ts', 'node_modules/**'],
+          // node:test imposed no tight per-test timeout; vitest defaults to 5s.
+          // Some unit specs spawn subprocesses (esbuild, npm pack) that are slow
+          // on Windows runners — a modest floor avoids flaky timeouts (pack tests
+          // set their own higher per-test timeout).
+          testTimeout: 15_000,
         },
       },
       {

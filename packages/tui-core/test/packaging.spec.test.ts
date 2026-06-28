@@ -33,7 +33,11 @@ function readPackageJson(): Record<string, unknown> {
  * Run `npm pack --dry-run --json` and return the list of file paths that would
  * be published (paths are package-root-relative, forward-slashed by npm).
  */
+let cachedPackFiles: string[] | undefined;
 function packFileList(): string[] {
+  // `npm pack` is slow (seconds, esp. on Windows); memoize so the file's pack
+  // tests share one invocation.
+  if (cachedPackFiles) return cachedPackFiles;
   const isWin = process.platform === 'win32';
   const npm = isWin ? 'npm.cmd' : 'npm';
   const stdout = execFileSync(npm, ['pack', '--dry-run', '--json'], {
@@ -47,8 +51,12 @@ function packFileList(): string[] {
   // leading notice lines some npm versions emit.
   const json = stdout.slice(stdout.indexOf('['), stdout.lastIndexOf(']') + 1);
   const parsed = JSON.parse(json) as Array<{ files: Array<{ path: string }> }>;
-  return parsed.flatMap((entry) => entry.files.map((f) => f.path));
+  cachedPackFiles = parsed.flatMap((entry) => entry.files.map((f) => f.path));
+  return cachedPackFiles;
 }
+
+/** Per-test timeout for `npm pack`-backed tests — generous for slow Windows runners. */
+const PACK_TIMEOUT_MS = 60_000;
 
 // ST-1 (AC-1, PL-7): VERSION is exported and is a non-empty string.
 test('ST-1: VERSION is a non-empty string', () => {
@@ -64,25 +72,33 @@ test('ST-2: VERSION equals package.json#version', () => {
 });
 
 // ST-3 (AC-3): every packed path is under dist/ or is an allowed root file.
-test('ST-3: packed files are a subset of dist/** ∪ {package.json, README.md, LICENSE}', () => {
-  const allowedRootFiles = new Set(['package.json', 'README.md', 'LICENSE']);
-  const files = packFileList();
-  expect(files.length > 0).toBeTruthy();
-  for (const path of files) {
-    const ok = path.startsWith('dist/') || allowedRootFiles.has(path);
-    expect(ok).toBeTruthy();
-  }
-});
+test(
+  'ST-3: packed files are a subset of dist/** ∪ {package.json, README.md, LICENSE}',
+  () => {
+    const allowedRootFiles = new Set(['package.json', 'README.md', 'LICENSE']);
+    const files = packFileList();
+    expect(files.length > 0).toBeTruthy();
+    for (const path of files) {
+      const ok = path.startsWith('dist/') || allowedRootFiles.has(path);
+      expect(ok).toBeTruthy();
+    }
+  },
+  PACK_TIMEOUT_MS,
+);
 
 // ST-4 (AC-3): the package excludes sources, tests, and node_modules.
-test('ST-4: packed files exclude src/, tests, and node_modules', () => {
-  const files = packFileList();
-  for (const path of files) {
-    expect(!path.startsWith('src/')).toBeTruthy();
-    expect(!/\.test\./.test(path)).toBeTruthy();
-    expect(!path.includes('node_modules')).toBeTruthy();
-  }
-});
+test(
+  'ST-4: packed files exclude src/, tests, and node_modules',
+  () => {
+    const files = packFileList();
+    for (const path of files) {
+      expect(!path.startsWith('src/')).toBeTruthy();
+      expect(!/\.test\./.test(path)).toBeTruthy();
+      expect(!path.includes('node_modules')).toBeTruthy();
+    }
+  },
+  PACK_TIMEOUT_MS,
+);
 
 // ST-5 (AC-4): packaging fields declare an ESM, side-effect-free, dep-free package.
 test('ST-5: package.json declares the ESM packaging contract', () => {
