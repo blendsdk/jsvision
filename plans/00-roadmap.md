@@ -3,7 +3,7 @@
 > **Feature-Set**: jsvision UI
 > **Status**: In Progress
 > **Created**: 2026-06-29
-> **Last Updated**: 2026-06-29 00:16
+> **Last Updated**: 2026-06-29 00:35
 > **Progress**: 0 / 9 (0%)
 > **CodeOps Skills Version**: 2.0.0
 
@@ -25,7 +25,7 @@ foundation RDs of the same number.
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
-| RD-01 | Reactive core — `signal`/`computed`/`effect` + `Show`/`For` | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0 pillar (XL). UI-independent; every widget property binds to it. |
+| RD-01 | Reactive core — `signal`/`computed`/`effect` + `Show`/`For` | [RD-01](../requirements/RD-01-reactive-core.md) | — | RD Drafted | ✏️ | 2026-06-29 | Phase 0 pillar (XL). UI-independent; every widget property binds to it. |
 | RD-02 | Layout engine — cell-native flex `row`/`col` | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0 pillar (XL). ADR-008 Accepted; apportionment core spike **landed** (`packages/ui/src/layout/`) + golden-tested — de-risked. |
 | RD-03 | View/Group spine + `DrawContext` + theming | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0. Retained tree, draw composition into parent buffer, named theme roles. |
 | RD-04 | Event loop + focus + modality + commands | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0. Async pump, 3-phase dispatch, `await execView`. |
@@ -47,6 +47,11 @@ foundation RDs of the same number.
   cell-native layout engine, flex first / grid Tier 2, as a module in `@jsvision/ui`);
   and the **integer apportionment spike** (`apportion`/`solveTrack` + golden test) that
   de-risks RD-02's central premise. `@jsvision/ui` is scaffolded and CI-green.
-- **Recommended next:** `make_requirements` then `make_plan` for **RD-01 (reactive
-  core)** or **RD-02 (layout containers)** — the two Phase-0 pillars, both
-  self-contained and independent of the rest of the spine.
+- **2026-06-29** — **RD-01 (Reactive core) drafted** → stage `RD Drafted`. Requirements
+  set re-initialized for this feature-set: the stale foundation `requirements/` scaffolding
+  (README, ambiguity-register, _draft) was moved into `_archive/foundation/requirements/`,
+  and a fresh set authored at `requirements/` (README + `00-ambiguity-register.md` AR-01…AR-12
+  + `RD-01-reactive-core.md`). Four design decisions locked with the user: callable+methods
+  signal API, synchronous effects + `batch()`, owner-scope tree + `onCleanup`, key-function `For`.
+- **Recommended next:** `make_plan` for **RD-01** (the requirements are ready), or draft
+  **RD-02 (layout containers)** next. Optionally run `preflight` on RD-01 first (→ `RD Preflighted`).
