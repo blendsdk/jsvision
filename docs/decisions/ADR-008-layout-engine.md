@@ -1,8 +1,8 @@
 # ADR-008: Layout engine for the UI layer — build cell-native vs adopt Yoga/Taffy
 
 > **Date**: 2026-06-28
-> **Status**: 🔬 Proposed — OPEN, recorded for re-analysis when the UI/widget layer begins
-> **Source**: Design discussion (pre-`make_requirements`), captured for later review
+> **Status**: ✅ Accepted — 2026-06-28
+> **Source**: Design discussion, settled when the `@jsvision/ui` scaffold landed
 
 ## Context
 
@@ -63,22 +63,36 @@ Ratatui) — and the most-praised modern TUIs are in the build camp.
 - A strong toolkit usually offers **flex + grid + dock/anchor** (Textual's model),
   because different screens want different tools — "a layout library" ≠ "just flexbox".
 
-## Decision (tentative — DEFERRED)
+## Decision (Accepted)
 
-**Leaning: build a small cell-native layout engine** (`@jsvision/layout`) —
-flexbox subset first, grid second — rather than adopt Yoga. **Not finalized**; to be
-confirmed via `make_requirements` → `make_plan` when the UI layer starts.
+**Build a small cell-native layout engine in pure TypeScript** — not Yoga/Taffy.
+Confirmed 2026-06-28. The build-vs-buy call rests on two independent arguments that both
+point the same way: integer-cell correctness _by construction_ (apportionment, not
+float-rounding), and keeping the zero-dep, pure-JS, auditable identity that `check:deps`
+enforces (Yoga is WASM, Taffy is Rust→WASM).
 
-Two guardrails make "build" low-risk:
+Confirmed scope and shape:
 
-1. **Clean seam** — layout is a pure function `(box tree, {cols, rows}) → integer
-rects`; the renderer just paints into those rects. Small, golden-testable surface
-   (the project's sweet spot), zero new deps.
+1. **Flex first, grid later.** Phase 1 is 1-D flex — `row`/`col` with grow/shrink/basis,
+   justify/align, gap/pad. That covers the app shell (menubar/desktop/statusline as a
+   flex column) and ~80% of widgets (scrollbars, dialog forms). 2-D **grid**
+   (fixed/`fr`/auto tracks, for tables + dashboards) is **Tier 2**, added behind the same
+   interface. Edge-docking (TV `growMode`) is expressible via flex justify/align — no
+   separate dock primitive until a real need appears.
+2. **Lives as a module inside `@jsvision/ui`** (`src/layout/`), not a separate package,
+   behind the pure-function seam below. Extract to a standalone `@jsvision/layout`
+   package later only if independent reuse/versioning is ever actually needed.
+
+Two guardrails keep "build" low-risk:
+
+1. **Clean seam** — layout is a pure function `(box tree, {cols, rows}) → integer rects`;
+   the renderer just paints into those rects. Small, golden-testable surface (the
+   project's sweet spot), zero new deps.
 2. **Low lock-in** — start flex-only; if a future need outgrows it, swap in **Taffy**
    (flex + grid) behind the same interface without touching widgets.
 
-**Flip to "buy" (Taffy) only if** full CSS-spec fidelity is needed _fast_ and we don't
-want to own/maintain the engine.
+**Flip to "buy" (Taffy) only if** full CSS-spec fidelity is ever needed _fast_ and we
+don't want to own/maintain the engine.
 
 ## Consequences
 
@@ -95,11 +109,17 @@ want to own/maintain the engine.
 - Risk of scope creep toward "reimplement CSS" — mitigated by shipping a deliberate
   _subset_ and a clean swap-to-Taffy escape hatch.
 
-## To re-analyze later (open questions)
+## Resolved questions & implementation notes
 
-- Confirmed model(s): flex subset only, or flex **+** grid **+** dock from the start?
-- Is full flexbox spec fidelity ever required (→ reconsider Taffy)?
-- Spike first: the integer flex-distribution (apportionment) core — ~40 LOC + a golden
-  test — to validate the cell-native approach before committing to the full package.
-- Where the engine lives: `packages/layout` (`@jsvision/layout`) consuming
-  `@jsvision/core` geometry, consumed by the future widget package.
+- **Model** — flex subset first (`row`/`col`, grow/shrink/basis, justify/align, gap/pad);
+  grid is Tier 2; no standalone dock primitive initially. _(Resolved 2026-06-28.)_
+- **Location** — a module inside `@jsvision/ui` (`src/layout/`), consuming `@jsvision/core`
+  geometry; extractable to `@jsvision/layout` later. _(Resolved 2026-06-28.)_
+- **Full flexbox spec fidelity** (wrap, min/max, aspect-ratio, baseline) is **not** a
+  goal; ship a deliberate subset. Revisit Taffy only if that ever changes.
+- **First build step (de-risking spike)** — the integer flex-distribution (apportionment)
+  core: ~40 LOC + a golden test asserting a row of `fr` children fills _exactly_ to the
+  container edge with no gap/overlap. Validates the cell-native premise before building
+  out the full module.
+- **API flavour** (CSS-flexbox-subset vs Textual-style `fr`/`auto` sizing) is an
+  implementation detail for `make_requirements`/`make_plan`, not this ADR.
