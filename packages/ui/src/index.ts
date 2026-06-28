@@ -5,12 +5,16 @@
  * reactivity** (the "disciplined hybrid" model), built on the `@jsvision/core`
  * engine (rendering, input, host, color, capability detection).
  *
- * This package is currently a **scaffold**. Subsystems land here per the component
- * map in `plans/tui-ui/01-component-map.md` — the reactive core, the layout engine,
- * the view/group spine, then the widgets — each re-exporting its public symbols
- * through this single entry point.
+ * First subsystem landed: the cell-native **layout** core (ADR-008) — integer
+ * apportionment + a 1-D flex track solver. The reactive core, the view/group
+ * spine, and the widgets follow per `plans/tui-ui/01-component-map.md`, each
+ * re-exporting its public symbols through this single entry point.
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution
  * (it resolves to the `.ts` source during development).
  */
 export { VERSION } from './version.js';
+
+// Layout (ADR-008) — cell-native, integer-correct.
+export { apportion, solveTrack } from './layout/index.js';
+export type { TrackItem } from './layout/index.js';
