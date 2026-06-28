@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 (Phase 1 complete)
-> **Progress**: 8/31 tasks (26%)
+> **Last Updated**: 2026-06-28 (Phase 2 complete)
+> **Progress**: 12/31 tasks (39%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -169,10 +169,10 @@ Spec-first throughout; wall-clock assertions are skippable under CI (AR-2).
 - [x] 1.3.2 Full verify + bench ✅ (verify 512/512, lint clean, bench prints) (completed: 2026-06-28)
 
 ### Phase 2: Packaging & Tree-Shake
-- [ ] 2.1.1 Add esbuild dev dep (verify clean prebuilt-binary install, no node-gyp + audit)
-- [ ] 2.1.2 treeshake spec (ST-4, tune fraction)
-- [ ] 2.1.3 Spec green
-- [ ] 2.2.1 Full verify + check:deps
+- [x] 2.1.1 Add esbuild dev dep (verify clean prebuilt-binary install, no node-gyp + audit) ✅ (esbuild ^0.28.1, 0 vulns, check:deps green) (completed: 2026-06-28)
+- [x] 2.1.2 treeshake spec (ST-4, tune fraction) ✅ (platform:'node' for built-ins; fraction 0.5) (completed: 2026-06-28)
+- [x] 2.1.3 Spec green ✅ (ratio 0.001 — 30b vs 33300b, vast margin under 0.5) (completed: 2026-06-28)
+- [x] 2.2.1 Full verify + check:deps ✅ (verify 513/513, check:deps + lint clean) (completed: 2026-06-28)
 
 ### Phase 3: Accessibility & Degradation
 - [ ] 3.1.1 reverseState/isInverse adapter reader
