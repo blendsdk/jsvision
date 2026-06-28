@@ -9,8 +9,7 @@
  * The live query is a real createTerminalQuery over PassThrough streams; the DECRPM
  * response bytes are a VT protocol fact (`CSI ? 2026 ; Ps $ y`, Ps≠0 ⇒ supported).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { PassThrough } from 'node:stream';
 
 import { runAutoProbes } from '../examples/capability-probe/auto-probes.js';
@@ -44,7 +43,7 @@ test('ST-16: a ?2026 "supported" reply is recorded as output.sync2026 (auto)', a
   });
   try {
     const results = await runAutoProbes({ query, env: {}, platform: 'linux', timeoutMs: 100 });
-    assert.deepEqual(results['output.sync2026'], { supported: true, method: 'auto' });
+    expect(results['output.sync2026']).toStrictEqual({ supported: true, method: 'auto' });
   } finally {
     query.close();
   }
@@ -58,7 +57,7 @@ test('ST-17: COLORTERM=truecolor is recorded as color.truecolor (auto)', async (
     platform: 'linux',
     timeoutMs: 50,
   });
-  assert.deepEqual(results['color.truecolor'], { supported: true, method: 'auto' });
+  expect(results['color.truecolor']).toStrictEqual({ supported: true, method: 'auto' });
 });
 
 // ST-18: a silent terminal settles without hanging; sync2026 is unsupported.
@@ -69,6 +68,6 @@ test('ST-18: a silent terminal settles and records output.sync2026 false (auto)'
     platform: 'linux',
     timeoutMs: 50,
   });
-  assert.equal(results['output.sync2026'].supported, false);
-  assert.equal(results['output.sync2026'].method, 'auto');
+  expect(results['output.sync2026'].supported).toBe(false);
+  expect(results['output.sync2026'].method).toBe('auto');
 });

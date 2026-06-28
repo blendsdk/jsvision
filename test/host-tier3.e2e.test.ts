@@ -18,8 +18,7 @@
  * Heavier than the unit specs, so it lives outside the unit glob; run explicitly:
  * `npx tsx --test test/host-tier3.e2e.test.ts`.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -128,40 +127,40 @@ function runChild(
 
 /** Assert the captured output contains the full restore sequence (leave alt-screen + show cursor). */
 function assertRestored(stdout: string, context: string): void {
-  assert.ok(stdout.includes('?1049l'), `${context}: alt-screen left (?1049l)`);
-  assert.ok(stdout.includes('?25h'), `${context}: cursor shown (?25h)`);
+  expect(stdout.includes('?1049l'), context).toBeTruthy();
+  expect(stdout.includes('?25h'), context).toBeTruthy();
 }
 
 test('ST-12: alt-screen + mouse enter sequences appear during run', async () => {
   const r = await runChild('normal');
-  assert.ok(r.stdout.includes('?1049h'), 'alt-screen entered (?1049h)');
-  assert.ok(r.stdout.includes('?1006h'), 'SGR mouse enabled (?1006h)');
-  assert.ok(r.stdout.includes('?1000h'), 'button tracking enabled (?1000h)');
+  expect(r.stdout.includes('?1049h')).toBeTruthy();
+  expect(r.stdout.includes('?1006h')).toBeTruthy();
+  expect(r.stdout.includes('?1000h')).toBeTruthy();
   // Enter must precede teardown.
-  assert.ok(r.stdout.indexOf('?1049h') < r.stdout.indexOf('?1049l'), 'enter precedes leave');
+  expect(r.stdout.indexOf('?1049h') < r.stdout.indexOf('?1049l')).toBeTruthy();
 });
 
 test('ST-13: normal exit via host.stop() restores and exits 0', async () => {
   const r = await runChild('normal');
   assertRestored(r.stdout, 'normal exit');
-  assert.ok(r.stdout.includes('?1000l'), 'mouse disabled on leave (?1000l)');
-  assert.equal(r.code, 0, 'clean exit code 0');
+  expect(r.stdout.includes('?1000l')).toBeTruthy();
+  expect(r.code).toBe(0);
 });
 
 test('ST-14: a throw after start() restores and exits non-zero', async () => {
   const r = await runChild('throw');
   assertRestored(r.stdout, 'throw');
-  assert.notEqual(r.code, 0, 'non-zero exit on crash');
+  expect(r.code).not.toBe(0);
 });
 
 test('ST-15: SIGTERM restores and exits 143 (128 + SIGTERM)', async () => {
   const r = await runChild('wait', 'SIGTERM');
   assertRestored(r.stdout, 'SIGTERM');
-  assert.equal(r.code, 143, 'exit code 143');
+  expect(r.code).toBe(143);
 });
 
 test('ST-16: SIGHUP restores and exits 129 (128 + SIGHUP)', async () => {
   const r = await runChild('wait', 'SIGHUP');
   assertRestored(r.stdout, 'SIGHUP');
-  assert.equal(r.code, 129, 'exit code 129');
+  expect(r.code).toBe(129);
 });

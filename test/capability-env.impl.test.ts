@@ -6,8 +6,7 @@
  * alias. Derived from the layer-3 contract in plan doc 03-02 (these are internal
  * edges, hence impl-level, not spec-level).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { readEnv } from '../src/engine/capability/env.js';
 
@@ -17,21 +16,21 @@ import { readEnv } from '../src/engine/capability/env.js';
 
 test('readEnv: invalid FORCE_COLOR=9 is ignored, falls through to TERM', () => {
   const { colorDepth } = readEnv({ TERM: 'xterm', FORCE_COLOR: '9' });
-  assert.equal(colorDepth.forced, undefined);
-  assert.equal(colorDepth.soft, '16');
+  expect(colorDepth.forced).toBe(undefined);
+  expect(colorDepth.soft).toBe('16');
 });
 
 test('readEnv: non-numeric FORCE_COLOR is ignored', () => {
   const { colorDepth } = readEnv({ TERM: 'xterm-256color', FORCE_COLOR: 'yes' });
-  assert.equal(colorDepth.forced, undefined);
-  assert.equal(colorDepth.soft, '256');
+  expect(colorDepth.forced).toBe(undefined);
+  expect(colorDepth.soft).toBe('256');
 });
 
 test('readEnv: each valid FORCE_COLOR level maps to a forced depth', () => {
-  assert.equal(readEnv({ FORCE_COLOR: '0' }).colorDepth.forced, 'mono');
-  assert.equal(readEnv({ FORCE_COLOR: '1' }).colorDepth.forced, '16');
-  assert.equal(readEnv({ FORCE_COLOR: '2' }).colorDepth.forced, '256');
-  assert.equal(readEnv({ FORCE_COLOR: '3' }).colorDepth.forced, 'truecolor');
+  expect(readEnv({ FORCE_COLOR: '0' }).colorDepth.forced).toBe('mono');
+  expect(readEnv({ FORCE_COLOR: '1' }).colorDepth.forced).toBe('16');
+  expect(readEnv({ FORCE_COLOR: '2' }).colorDepth.forced).toBe('256');
+  expect(readEnv({ FORCE_COLOR: '3' }).colorDepth.forced).toBe('truecolor');
 });
 
 // ---------------------------------------------------------------------------
@@ -40,8 +39,8 @@ test('readEnv: each valid FORCE_COLOR level maps to a forced depth', () => {
 
 test('readEnv: NO_COLOR forces mono and outranks FORCE_COLOR', () => {
   const { colorDepth } = readEnv({ NO_COLOR: '1', FORCE_COLOR: '3' });
-  assert.equal(colorDepth.forced, 'mono');
-  assert.equal(colorDepth.soft, undefined);
+  expect(colorDepth.forced).toBe('mono');
+  expect(colorDepth.soft).toBe(undefined);
 });
 
 // ---------------------------------------------------------------------------
@@ -49,16 +48,16 @@ test('readEnv: NO_COLOR forces mono and outranks FORCE_COLOR', () => {
 // ---------------------------------------------------------------------------
 
 test('readEnv: COLORTERM=24bit is a truecolor alias', () => {
-  assert.equal(readEnv({ COLORTERM: '24bit' }).colorDepth.soft, 'truecolor');
+  expect(readEnv({ COLORTERM: '24bit' }).colorDepth.soft).toBe('truecolor');
 });
 
 test('readEnv: COLORTERM matching is case-insensitive', () => {
-  assert.equal(readEnv({ COLORTERM: 'TrueColor' }).colorDepth.soft, 'truecolor');
+  expect(readEnv({ COLORTERM: 'TrueColor' }).colorDepth.soft).toBe('truecolor');
 });
 
 test('readEnv: unknown COLORTERM falls back to TERM', () => {
   const { colorDepth } = readEnv({ COLORTERM: 'rgb', TERM: 'xterm-256color' });
-  assert.equal(colorDepth.soft, '256');
+  expect(colorDepth.soft).toBe('256');
 });
 
 // ---------------------------------------------------------------------------
@@ -66,23 +65,23 @@ test('readEnv: unknown COLORTERM falls back to TERM', () => {
 // ---------------------------------------------------------------------------
 
 test('readEnv: LANG carrying UTF-8 sets unicode.utf8', () => {
-  assert.equal(readEnv({ LANG: 'en_US.UTF-8' }).profile.unicode?.utf8, true);
+  expect(readEnv({ LANG: 'en_US.UTF-8' }).profile.unicode?.utf8).toBe(true);
 });
 
 test('readEnv: LC_ALL (no UTF-8) overrides a UTF-8 LANG', () => {
   // POSIX: LC_ALL is the effective locale; "C" carries no UTF-8 → utf8 stays off.
   const { profile } = readEnv({ LC_ALL: 'C', LANG: 'en_US.UTF-8' });
-  assert.equal(profile.unicode, undefined);
+  expect(profile.unicode).toBe(undefined);
 });
 
 test('readEnv: LC_CTYPE overrides LANG and is honored above it', () => {
-  assert.equal(readEnv({ LC_CTYPE: 'en_US.UTF-8', LANG: 'C' }).profile.unicode?.utf8, true);
+  expect(readEnv({ LC_CTYPE: 'en_US.UTF-8', LANG: 'C' }).profile.unicode?.utf8).toBe(true);
 });
 
 test('readEnv: UTF-8 detection is case-insensitive and accepts utf8', () => {
-  assert.equal(readEnv({ LANG: 'en_US.utf8' }).profile.unicode?.utf8, true);
+  expect(readEnv({ LANG: 'en_US.utf8' }).profile.unicode?.utf8).toBe(true);
 });
 
 test('readEnv: no locale vars → utf8 unset', () => {
-  assert.equal(readEnv({ TERM: 'xterm' }).profile.unicode, undefined);
+  expect(readEnv({ TERM: 'xterm' }).profile.unicode).toBe(undefined);
 });

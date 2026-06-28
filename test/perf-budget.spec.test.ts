@@ -18,8 +18,7 @@
  * imported from the main-guarded `bench/frame-bench.mjs`, which runs no CLI and
  * has no top-level side effects on import (PF-005).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { resolveCapabilitiesAsync } from '../src/engine/index.js';
 import type { TerminalQuery } from '../src/engine/index.js';
 import { measureComposeDiff, perfBudgetMode } from '../bench/frame-bench.mjs';
@@ -37,7 +36,7 @@ test('ST-1: 200x50 compose+diff median is within the 16ms frame budget', () => {
     console.log(`perf (informational): 200x50 compose+diff median ${median.toFixed(3)}ms`);
     return;
   }
-  assert.ok(median <= BUDGET_MS, `200x50 compose+diff median ${median.toFixed(3)}ms exceeds ${BUDGET_MS}ms budget`);
+  expect(median <= BUDGET_MS).toBeTruthy();
 });
 
 // ST-3 — detection budget against a genuinely non-responding seam: read() blocks
@@ -65,16 +64,13 @@ test('ST-3: detection against a non-responding query falls back within the budge
   const elapsed = performance.now() - t0;
 
   // Always: it completed via fallback rather than hanging.
-  assert.ok(profile, 'detection completed via fallback, did not hang');
+  expect(profile).toBeTruthy();
 
   // Off-CI, assert both bounds: a lower bound proves it actually waited on the
   // budget (catching a regression back to an instant-return stub) and an upper
   // bound proves it is bounded by timeoutMs + slack (the budget itself).
   if (!process.env.CI) {
-    assert.ok(
-      elapsed >= timeoutMs * 0.5,
-      `must wait on the budget, not short-circuit (elapsed ${elapsed.toFixed(1)}ms)`,
-    );
-    assert.ok(elapsed <= timeoutMs + 60, `detection is bounded by timeoutMs + slack (elapsed ${elapsed.toFixed(1)}ms)`);
+    expect(elapsed >= timeoutMs * 0.5).toBeTruthy();
+    expect(elapsed <= timeoutMs + 60).toBeTruthy();
   }
 });

@@ -21,8 +21,7 @@ export interface ProbeArgs {
 
 /** Discriminated parse result: success with options, or failure with a message. */
 export type ParseResult =
-  | { readonly ok: true; readonly args: ProbeArgs }
-  | { readonly ok: false; readonly error: string };
+  { readonly ok: true; readonly args: ProbeArgs } | { readonly ok: false; readonly error: string };
 
 /** Usage text printed by `--help` and on a parse error. */
 export const USAGE = [

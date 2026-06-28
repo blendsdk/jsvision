@@ -10,8 +10,7 @@
  * The `.js` extension in the import specifier is required by NodeNext ESM
  * resolution (it resolves to the `.ts` source during development via tsx).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { createDecoderState, decode, flush } from '../src/engine/index.js';
 import { FUZZ_OPTS, ITERATIONS, SEEDS, STATE_BOUND, makeChunk, mulberry32, stateSize } from './input-fuzz-helpers.js';
 
@@ -26,19 +25,19 @@ for (const seed of SEEDS) {
       try {
         result = decode(chunk, state, FUZZ_OPTS); // ST-17: must not throw
       } catch (err) {
-        assert.fail(`seed ${seed}, iteration ${i}: decode threw: ${String(err)}`);
+        expect.unreachable(`seed ${seed}, iteration ${i}: decode threw: ${String(err)}`);
       }
       state = result.state;
       const size = stateSize(state);
       maxSize = Math.max(maxSize, size);
-      assert.ok(size <= STATE_BOUND, `seed ${seed}, iteration ${i}: state ${size} exceeded bound ${STATE_BOUND}`); // ST-18
+      expect(size <= STATE_BOUND).toBeTruthy(); // ST-18
     }
     try {
       flush(state, FUZZ_OPTS); // ST-17: flush must not throw either
     } catch (err) {
-      assert.fail(`seed ${seed}: flush threw: ${String(err)}`);
+      expect.unreachable(`seed ${seed}: flush threw: ${String(err)}`);
     }
     // The adversarial fragments should actually drive growth — guard against a no-op fuzz.
-    assert.ok(maxSize > 0, `seed ${seed}: expected some carry/paste accumulation during the run`);
+    expect(maxSize > 0).toBeTruthy();
   });
 }

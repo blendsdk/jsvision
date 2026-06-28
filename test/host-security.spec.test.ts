@@ -6,8 +6,7 @@
  * requirements — never from reading the implementation. If a test here fails
  * after implementation, the implementation is wrong.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { createHost } from '../src/engine/host/host.js';
 import { leaveMode } from '../src/engine/host/modes.js';
@@ -50,10 +49,10 @@ for (const [signal, code] of TERMINATING) {
     await host.start();
     expectExit(() => adapter.emit(signal));
 
-    assert.ok(output.data.includes(leaveMode(RICH)), 'leave-mode written on the signal path');
-    assert.equal(adapter.rawModeCalls.at(-1), false, 'raw mode turned off');
-    assert.deepEqual(codes, [code], `onBeforeExit(${code})`);
-    assert.deepEqual(adapter.exits, [code], `process exited ${code}`);
+    expect(output.data.includes(leaveMode(RICH))).toBeTruthy();
+    expect(adapter.rawModeCalls.at(-1)).toBe(false);
+    expect(codes).toStrictEqual([code]);
+    expect(adapter.exits).toStrictEqual([code]);
   });
 }
 
@@ -74,16 +73,16 @@ test('ST-11: a crash during enter-mode still restores via the exit backstop (wri
   } catch {
     threw = true;
   }
-  assert.ok(threw, 'setup crashed before stop() could run');
+  expect(threw).toBeTruthy();
 
   adapter.emitProcessExit(); // the synchronous process.on('exit') backstop
-  assert.equal(adapter.writeSyncCalls.length, 1, 'restore ran exactly once via writeSync');
-  assert.equal(adapter.writeSyncCalls[0].data, leaveMode(RICH), 'leave-mode written synchronously');
-  assert.equal(adapter.writeSyncCalls[0].fd, 1, 'written to the output fd');
+  expect(adapter.writeSyncCalls.length).toBe(1);
+  expect(adapter.writeSyncCalls[0].data).toBe(leaveMode(RICH));
+  expect(adapter.writeSyncCalls[0].fd).toBe(1);
 
   // The done guard prevents a second sync write if a signal also fires afterwards.
   expectExit(() => adapter.emit('interrupt'));
-  assert.equal(adapter.writeSyncCalls.length, 1, 'no second sync restore (idempotent)');
+  expect(adapter.writeSyncCalls.length).toBe(1);
 });
 
 // ---------------------------------------------------------------------------
@@ -108,8 +107,8 @@ test('ST-9: raw input bytes never reach writeError/warn', async () => {
   input.feed(new TextEncoder().encode('secret\r'));
   await host.stop();
 
-  assert.equal(adapter.errorOutput.includes('secret'), false, 'no raw input in stderr channel');
-  assert.equal(adapter.warnOutput.includes('secret'), false, 'no raw input in warn channel');
+  expect(adapter.errorOutput.includes('secret')).toBe(false);
+  expect(adapter.warnOutput.includes('secret')).toBe(false);
 });
 
 // ---------------------------------------------------------------------------
@@ -125,7 +124,7 @@ test('ST-10: a non-TTY host never enables raw mode', async () => {
   await host.start();
   await host.stop();
 
-  assert.equal(adapter.rawModeCalls.includes(true), false, 'raw mode never turned on for a non-TTY');
+  expect(adapter.rawModeCalls.includes(true)).toBe(false);
 });
 
 // ---------------------------------------------------------------------------
@@ -149,7 +148,7 @@ test('ST-8: an EPIPE output error restores best-effort and exits 0', async () =>
   const epipe = Object.assign(new Error('broken pipe'), { code: 'EPIPE' });
   expectExit(() => output.emit('error', epipe));
 
-  assert.ok(output.data.includes(leaveMode(RICH)), 'best-effort restore wrote leave-mode');
-  assert.deepEqual(codes, [0], 'onBeforeExit(0) — a disconnect is an expected end');
-  assert.deepEqual(adapter.exits, [0], 'clean exit 0');
+  expect(output.data.includes(leaveMode(RICH))).toBeTruthy();
+  expect(codes).toStrictEqual([0]);
+  expect(adapter.exits).toStrictEqual([0]);
 });

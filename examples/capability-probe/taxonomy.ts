@@ -10,16 +10,7 @@
 
 /** Capability group, used to organise the human-readable table. */
 export type ProbeGroup =
-  | 'color'
-  | 'attributes'
-  | 'glyphs'
-  | 'unicode'
-  | 'output'
-  | 'osc'
-  | 'keyboard'
-  | 'mouse'
-  | 'host'
-  | 'images';
+  'color' | 'attributes' | 'glyphs' | 'unicode' | 'output' | 'osc' | 'keyboard' | 'mouse' | 'host' | 'images';
 
 /** A single probe descriptor. */
 export interface ProbeDescriptor {

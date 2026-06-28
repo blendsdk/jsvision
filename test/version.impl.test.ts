@@ -5,8 +5,7 @@
  * VERSION must be a well-formed SemVer `X.Y.Z` core string. Derived from the
  * implementation contract (PL-6: SemVer versioning), not a public AC.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { VERSION } from '../src/engine/version.js';
 
@@ -15,13 +14,13 @@ import { VERSION } from '../src/engine/version.js';
 const SEMVER_CORE = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
 test('VERSION matches the SemVer X.Y.Z core shape', () => {
-  assert.match(VERSION, SEMVER_CORE);
+  expect(VERSION).toMatch(SEMVER_CORE);
 });
 
 test('VERSION has exactly three numeric segments', () => {
   const segments = VERSION.split('.');
-  assert.equal(segments.length, 3);
+  expect(segments.length).toBe(3);
   for (const segment of segments) {
-    assert.ok(/^\d+$/.test(segment), `segment "${segment}" is not numeric`);
+    expect(/^\d+$/.test(segment)).toBeTruthy();
   }
 });

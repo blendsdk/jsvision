@@ -17,8 +17,7 @@
  * The `.js` extension on engine/helper imports is required by NodeNext ESM
  * resolution (resolved to source by tsx at run time).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { ScreenBuffer, serialize, resolveCapabilities, Attr } from '../src/engine/index.js';
 import { makeTerm, feed, readCell, reverseState } from './golden-screen-helpers.js';
 
@@ -39,14 +38,14 @@ test('ST-5: NO_COLOR mono renders without colour yet conveys focus via the inver
   const normal = readCell(term, 1, 0);
 
   // Mono: the requested 'red' is dropped — neither cell carries colour.
-  assert.equal(focused.fg.mode, 'default', 'focused cell emits no foreground colour in mono');
-  assert.equal(focused.bg.mode, 'default', 'focused cell emits no background colour in mono');
-  assert.equal(normal.fg.mode, 'default', 'normal cell emits no foreground colour in mono');
+  expect(focused.fg.mode).toBe('default');
+  expect(focused.bg.mode).toBe('default');
+  expect(normal.fg.mode).toBe('default');
 
   // Yet focus is still distinguishable — by a NON-colour attribute (no info lost).
-  assert.equal(reverseState(term, 0, 0), true, 'the focused cell is rendered inverse');
-  assert.equal(reverseState(term, 1, 0), false, 'the normal cell is not inverse');
-  assert.notEqual(reverseState(term, 0, 0), reverseState(term, 1, 0), 'focus is conveyed without colour');
+  expect(reverseState(term, 0, 0)).toBe(true);
+  expect(reverseState(term, 1, 0)).toBe(false);
+  expect(reverseState(term, 0, 0)).not.toBe(reverseState(term, 1, 0));
 });
 
 // ST-6 — glyph fallback: box-drawing degrades to legible ASCII when unavailable.
@@ -64,7 +63,7 @@ test('ST-6: boxDrawing:false renders the frame in legible ASCII (+ - |)', async 
   await feed(term, serialize(buf, null, { caps }));
 
   // Corner ┌→'+', top edge ─→'-', left edge │→'|' (RD-04 fallback contract).
-  assert.equal(readCell(term, 0, 0).char, '+', 'corner falls back to ASCII +');
-  assert.equal(readCell(term, 1, 0).char, '-', 'top edge falls back to ASCII -');
-  assert.equal(readCell(term, 0, 1).char, '|', 'side edge falls back to ASCII |');
+  expect(readCell(term, 0, 0).char).toBe('+');
+  expect(readCell(term, 1, 0).char).toBe('-');
+  expect(readCell(term, 0, 1).char).toBe('|');
 });

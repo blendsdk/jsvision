@@ -6,8 +6,7 @@
  * needs authoritative TTY facts BEFORE `start()` (host.isTTY is post-start only),
  * so `detectTty()` resolves them ephemerally and mirrors `bindStreams(...).isTTY`.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { detectTty } from '../src/engine/host/index.js';
 import { bindStreams } from '../src/engine/host/streams.js';
@@ -23,11 +22,11 @@ test('ST-27: detectTty returns false for non-TTY streams and mirrors bindStreams
   output.isTTY = false;
 
   const result = detectTty({ input: input.asInput(), output: output.asOutput() });
-  assert.equal(result, false);
+  expect(result).toBe(false);
 
   // Mirrors bindStreams' own isTTY for the same injected streams (AR-2).
   const bound = bindStreams({ caps, input: input.asInput(), output: output.asOutput() });
-  assert.equal(result, bound.isTTY);
+  expect(result).toBe(bound.isTTY);
   bound.dispose();
   // Injected streams open no fd, so detectTty's internal dispose leaves nothing
   // lingering (the /dev/tty open path is integration-only — ST-28 note).
@@ -39,9 +38,9 @@ test('ST-28: detectTty returns true for TTY streams', () => {
   const output = new CaptureStream(); // isTTY defaults to true
 
   const result = detectTty({ input: input.asInput(), output: output.asOutput() });
-  assert.equal(result, true);
+  expect(result).toBe(true);
 
   const bound = bindStreams({ caps, input: input.asInput(), output: output.asOutput() });
-  assert.equal(result, bound.isTTY);
+  expect(result).toBe(bound.isTTY);
   bound.dispose();
 });

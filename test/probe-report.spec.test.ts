@@ -5,8 +5,7 @@
  * Expectations derive from the report schema and the recommendation rule, not the
  * implementation.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { buildReport, deriveRecommendation } from '../examples/capability-probe/report.js';
 import { gatherEnvMeta } from '../examples/capability-probe/env-meta.js';
@@ -41,7 +40,7 @@ test('ST-8: buildReport produces all schema fields', () => {
     'results',
     'recommendation',
   ]) {
-    assert.ok(key in report, `report has ${key}`);
+    expect(key in report).toBeTruthy();
   }
 });
 
@@ -51,7 +50,7 @@ test('ST-9: manual probes default to supported:null when unprovided (--auto)', (
   const report = buildReport({ meta: META, results: {}, recommendation: deriveRecommendation({ caps, results: {} }) });
   for (const probe of PROBES) {
     if (probe.method === 'manual') {
-      assert.deepEqual(report.results[probe.id], { supported: null, method: 'manual' }, probe.id);
+      expect(report.results[probe.id]).toStrictEqual({ supported: null, method: 'manual' });
     }
   }
 });
@@ -60,11 +59,11 @@ test('ST-9: manual probes default to supported:null when unprovided (--auto)', (
 test('ST-10: deriveRecommendation populates the key fields from the profile', () => {
   const caps = resolveCapabilities({ env: { COLORTERM: 'truecolor' }, platform: 'linux' }).profile;
   const rec = deriveRecommendation({ caps, results: {} });
-  assert.equal(rec.colorDepth, 'truecolor');
-  assert.equal(typeof rec.mouse, 'boolean');
-  assert.equal(typeof rec.unicodeWidth, 'string');
-  assert.equal(typeof rec.altScreen, 'boolean');
-  assert.equal(typeof rec.bracketedPaste, 'boolean');
+  expect(rec.colorDepth).toBe('truecolor');
+  expect(typeof rec.mouse).toBe('boolean');
+  expect(typeof rec.unicodeWidth).toBe('string');
+  expect(typeof rec.altScreen).toBe('boolean');
+  expect(typeof rec.bracketedPaste).toBe('boolean');
 });
 
 // ST-11: COLORTERM=truecolor surfaces in the report's recommendation + color results.
@@ -77,6 +76,6 @@ test('ST-11: COLORTERM=truecolor surfaces as a truecolor recommendation', async 
     results: auto,
     recommendation: deriveRecommendation({ caps, results: auto }),
   });
-  assert.equal(report.recommendation.colorDepth, 'truecolor');
-  assert.equal(report.results['color.truecolor'].supported, true);
+  expect(report.recommendation.colorDepth).toBe('truecolor');
+  expect(report.results['color.truecolor'].supported).toBe(true);
 });

@@ -27,7 +27,8 @@
     "probe": "tsx examples/capability-probe/main.ts",
     "demo:resize": "tsx examples/resize-demo/main.ts",
     "bench": "tsx bench/frame-bench.mjs",
-    "test": "node scripts/run-tests.mjs",
+    "test": "vitest run --project unit",
+    "test:e2e": "vitest run --project e2e",
     "lint": "eslint . && prettier --check .",
     "lint:fix": "eslint . --fix && prettier --write .",
     "check:deps": "node scripts/check-no-native-deps.mjs",
@@ -43,7 +44,8 @@
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.0"
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^4.1.9"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

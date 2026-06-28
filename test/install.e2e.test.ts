@@ -12,8 +12,7 @@
  * lives in `test/` outside the `src/**` unit glob; run it explicitly via
  * `tsx --test test/install.e2e.test.ts`.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -54,22 +53,21 @@ test('ST-13/ST-14: packed tarball installs; ESM import works, CJS require fails'
 
     // ST-13: the installed package ships its declaration file.
     const installedDts = join(consumer, 'node_modules', '@blendsdk', 'tui', 'dist', 'engine', 'index.d.ts');
-    assert.ok(existsSync(installedDts), '.d.ts must be present in the installed package');
+    expect(existsSync(installedDts)).toBeTruthy();
 
     // ST-13: ESM import resolves and yields the version.
     writeFileSync(join(consumer, 'esm.mjs'), "import { VERSION } from '@blendsdk/tui';\nconsole.log(VERSION);\n");
     const esm = spawnSync(process.execPath, ['esm.mjs'], { cwd: consumer, encoding: 'utf8' });
-    assert.equal(esm.status, 0, `ESM import should succeed:\n${esm.stdout}${esm.stderr}`);
-    assert.equal(esm.stdout.trim(), '0.1.0');
+    expect(esm.status).toBe(0);
+    expect(esm.stdout.trim()).toBe('0.1.0');
 
     // ST-14: CJS require fails with an ESM-related error.
     writeFileSync(join(consumer, 'cjs.cjs'), "require('@blendsdk/tui');\n");
     const cjs = spawnSync(process.execPath, ['cjs.cjs'], { cwd: consumer, encoding: 'utf8' });
-    assert.notEqual(cjs.status, 0, 'CJS require of an ESM-only package must fail');
-    assert.ok(
+    expect(cjs.status).not.toBe(0);
+    expect(
       /ERR_REQUIRE_ESM|ERR_PACKAGE_PATH_NOT_EXPORTED|require\(\) of ES Module|Must use import/i.test(cjs.stderr),
-      `expected an ESM-related error, got:\n${cjs.stderr}`,
-    );
+    ).toBeTruthy();
   } finally {
     rmSync(work, { recursive: true, force: true });
   }

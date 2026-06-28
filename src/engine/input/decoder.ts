@@ -47,8 +47,7 @@ const EMPTY = new Uint8Array(0);
 
 /** Outcome of attempting to decode a focus report at an offset. */
 type FocusDecode =
-  | { readonly status: 'event'; readonly event: FocusEvent; readonly end: number }
-  | { readonly status: 'none' };
+  { readonly status: 'event'; readonly event: FocusEvent; readonly end: number } | { readonly status: 'none' };
 
 /** A fresh, empty decoder state: no carried bytes, no in-progress paste, not resyncing. */
 export function createDecoderState(): DecoderState {

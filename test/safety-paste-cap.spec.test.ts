@@ -7,8 +7,7 @@
  * in the RD-06 decoder; these tests own the RD-08 acceptance framing of that
  * boundary (cap+1 → truncated, and DoS-bounded behavior on a flood).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { createDecoderState, decode, PASTE_CAP_BYTES } from '../src/engine/input/index.js';
 import type { DecoderState } from '../src/engine/input/index.js';
@@ -21,9 +20,9 @@ test('ST-24: a cap+1 byte paste yields truncated:true clipped to PASTE_CAP_BYTES
   const result = decode(enc.encode(`\x1b[200~${content}\x1b[201~`), createDecoderState());
 
   const paste = result.events.find((e) => e.type === 'paste');
-  assert.ok(paste && paste.type === 'paste', 'a single paste event was emitted');
-  assert.equal(paste.truncated, true, 'the cap clipped the paste');
-  assert.equal(Buffer.byteLength(paste.text, 'utf8'), PASTE_CAP_BYTES, 'clipped to exactly the byte cap');
+  expect(paste && paste.type === 'paste').toBeTruthy();
+  expect(paste.truncated).toBe(true);
+  expect(Buffer.byteLength(paste.text, 'utf8')).toBe(PASTE_CAP_BYTES);
 });
 
 // ST-25 — a flood far over the cap stays bounded: one truncated paste, capped text.
@@ -45,9 +44,9 @@ test('ST-25: a paste far over the cap stays bounded — one truncated paste, no 
   events.push(...result.events);
 
   const pastes = events.filter((e) => e.type === 'paste');
-  assert.equal(pastes.length, 1, 'exactly one paste delivered despite the flood');
+  expect(pastes.length).toBe(1);
   const paste = pastes[0];
-  assert.ok(paste.type === 'paste');
-  assert.equal(paste.truncated, true);
-  assert.equal(Buffer.byteLength(paste.text, 'utf8'), PASTE_CAP_BYTES, 'text stayed bounded at the cap');
+  expect(paste.type === 'paste').toBeTruthy();
+  expect(paste.truncated).toBe(true);
+  expect(Buffer.byteLength(paste.text, 'utf8')).toBe(PASTE_CAP_BYTES);
 });

@@ -11,8 +11,7 @@
  *
  * Derived from RD-10 AC-8 / AR-7, never from the files' contents.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -28,12 +27,12 @@ function readRoot(name: string): string {
 // ST-8a: CHANGELOG.md exists in Keep-a-Changelog form with Unreleased + 0.1.0.
 test('ST-8: CHANGELOG.md has an Unreleased section and a 0.1.0 entry', () => {
   const changelog = readRoot('CHANGELOG.md');
-  assert.match(changelog, /##\s*\[Unreleased\]/, 'CHANGELOG must have an "## [Unreleased]" section');
-  assert.match(changelog, /##\s*\[0\.1\.0\]/, 'CHANGELOG must have a "## [0.1.0]" entry');
+  expect(changelog).toMatch(/##\s*\[Unreleased\]/);
+  expect(changelog).toMatch(/##\s*\[0\.1\.0\]/);
 });
 
 // ST-8b: README documents the versioning & stability policy.
 test('ST-8: README has a "Versioning & stability" section', () => {
   const readme = readRoot('README.md');
-  assert.match(readme, /##\s*Versioning\s*&\s*stability/i, 'README must have a "Versioning & stability" section');
+  expect(readme).toMatch(/##\s*Versioning\s*&\s*stability/i);
 });

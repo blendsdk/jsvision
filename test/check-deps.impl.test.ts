@@ -5,8 +5,7 @@
  * `dependencies` key, a benign install script (allowed), and `os`/`cpu`
  * platform constraints (rejected as native). Real fixtures, real process runs.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -41,7 +40,7 @@ function fixtureProject(
 test('guard exits 0 when the dependencies key is absent', () => {
   const dir = fixtureProject({ name: 'fixture', version: '1.0.0' });
   try {
-    assert.equal(runGuard(dir).status, 0);
+    expect(runGuard(dir).status).toBe(0);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -53,7 +52,7 @@ test('guard allows a benign install script that is not a native build', () => {
     { name: 'benign', manifest: { name: 'benign', version: '1.0.0', scripts: { postinstall: 'echo thanks' } } },
   );
   try {
-    assert.equal(runGuard(dir).status, 0, 'a non-native postinstall must be allowed');
+    expect(runGuard(dir).status).toBe(0);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -66,8 +65,8 @@ test('guard rejects a dependency with a cpu constraint', () => {
   );
   try {
     const res = runGuard(dir);
-    assert.notEqual(res.status, 0);
-    assert.ok(/archdep/.test(res.output), 'message must name the offending dependency');
+    expect(res.status).not.toBe(0);
+    expect(/archdep/.test(res.output)).toBeTruthy();
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -80,8 +79,8 @@ test('guard rejects a dependency with an os constraint', () => {
   );
   try {
     const res = runGuard(dir);
-    assert.notEqual(res.status, 0);
-    assert.ok(/osdep/.test(res.output), 'message must name the offending dependency');
+    expect(res.status).not.toBe(0);
+    expect(/osdep/.test(res.output)).toBeTruthy();
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -94,8 +93,8 @@ test('guard rejects a dependency that ships a node-gyp install script', () => {
   );
   try {
     const res = runGuard(dir);
-    assert.notEqual(res.status, 0);
-    assert.ok(/gyplib/.test(res.output), 'message must name the offending dependency');
+    expect(res.status).not.toBe(0);
+    expect(/gyplib/.test(res.output)).toBeTruthy();
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

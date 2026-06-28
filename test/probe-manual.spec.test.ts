@@ -6,8 +6,7 @@
  * confirmation keys map y→true, n→false, s→null. Expectations derive from the
  * spec, not the implementation.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { runManualProbes, classifyConfirmation } from '../examples/capability-probe/manual-probes.js';
 import type { ProbeDescriptor } from '../examples/capability-probe/taxonomy.js';
@@ -33,15 +32,15 @@ test('ST-12: a "no" answer does not stop the loop; every probe is recorded', asy
     caps: CAPS,
   });
 
-  assert.deepEqual(Object.keys(results).sort(), ['attr.bold', 'attr.italic', 'osc.bell'].sort());
-  assert.equal(results['attr.bold'].supported, true);
-  assert.equal(results['attr.italic'].supported, false, 'the "no" probe is recorded false');
-  assert.equal(results['osc.bell'].supported, true, 'the loop continued past the "no"');
+  expect(Object.keys(results).sort()).toStrictEqual(['attr.bold', 'attr.italic', 'osc.bell'].sort());
+  expect(results['attr.bold'].supported).toBe(true);
+  expect(results['attr.italic'].supported).toBe(false);
+  expect(results['osc.bell'].supported).toBe(true);
 });
 
 // ST-12b: confirmation key mapping.
 test('ST-12b: classifyConfirmation maps y/n/s to true/false/null (method manual)', () => {
-  assert.deepEqual(classifyConfirmation('y'), { supported: true, method: 'manual' });
-  assert.deepEqual(classifyConfirmation('n'), { supported: false, method: 'manual' });
-  assert.deepEqual(classifyConfirmation('s'), { supported: null, method: 'manual' });
+  expect(classifyConfirmation('y')).toStrictEqual({ supported: true, method: 'manual' });
+  expect(classifyConfirmation('n')).toStrictEqual({ supported: false, method: 'manual' });
+  expect(classifyConfirmation('s')).toStrictEqual({ supported: null, method: 'manual' });
 });

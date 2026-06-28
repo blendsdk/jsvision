@@ -11,8 +11,7 @@
  * Not in the unit glob; run explicitly:
  *   npx tsx --test test/safety-error-restore.e2e.test.ts
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { createHost } from '../src/engine/host/host.js';
 import { leaveMode } from '../src/engine/host/modes.js';
@@ -49,9 +48,9 @@ test('ST-26: an uncaught EssentialsNotMetError restores the terminal before exit
   // any restore bytes present must have been written BEFORE the recorded exit.
   expectExit(() => adapter.emitUncaught(new EssentialsNotMetError(['interactive TTY (raw-mode keyboard input)'])));
 
-  assert.ok(output.data.includes(leaveMode(RICH)), 'leave/restore sequence was written');
-  assert.ok(output.data.length > writtenBeforeCrash, 'restore wrote output during the crash path');
-  assert.equal(adapter.rawModeCalls.at(-1), false, 'raw mode turned off before exit');
-  assert.deepEqual(codes, [1], 'onBeforeExit(1) ran (before exit)');
-  assert.deepEqual(adapter.exits, [1], 'process exited 1 only after the restore');
+  expect(output.data.includes(leaveMode(RICH))).toBeTruthy();
+  expect(output.data.length > writtenBeforeCrash).toBeTruthy();
+  expect(adapter.rawModeCalls.at(-1)).toBe(false);
+  expect(codes).toStrictEqual([1]);
+  expect(adapter.exits).toStrictEqual([1]);
 });

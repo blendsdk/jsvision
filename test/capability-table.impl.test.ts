@@ -6,8 +6,7 @@
  * unrecognised terminal contributes nothing. These are internal table edges,
  * hence impl-level.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { lookupTable } from '../src/engine/capability/table.js';
 
@@ -18,20 +17,20 @@ import { lookupTable } from '../src/engine/capability/table.js';
 test('lookupTable: TERM_PROGRAM wins over WT_SESSION and TERM', () => {
   const caps = lookupTable({ TERM_PROGRAM: 'iTerm.app', WT_SESSION: 'abc', TERM: 'xterm' });
   // iTerm2's distinctive caps (truecolor + OSC hyperlink) confirm the match.
-  assert.equal(caps.colorDepth, 'truecolor');
-  assert.equal(caps.osc?.hyperlink8, true);
+  expect(caps.colorDepth).toBe('truecolor');
+  expect(caps.osc?.hyperlink8).toBe(true);
 });
 
 test('lookupTable: WT_SESSION wins over TERM', () => {
   const caps = lookupTable({ WT_SESSION: 'abc', TERM: 'xterm' });
   // Windows Terminal asserts truecolor; the bare `xterm` entry does not set colorDepth.
-  assert.equal(caps.colorDepth, 'truecolor');
+  expect(caps.colorDepth).toBe('truecolor');
 });
 
 test('lookupTable: an unknown TERM_PROGRAM falls through to the TERM family', () => {
   const caps = lookupTable({ TERM_PROGRAM: 'Unknown.app', TERM: 'xterm' });
-  assert.equal(caps.colorDepth, undefined); // xterm leaves colorDepth to env
-  assert.equal(caps.mouse?.sgr, true); // but does assert SGR mouse
+  expect(caps.colorDepth).toBe(undefined); // xterm leaves colorDepth to env
+  expect(caps.mouse?.sgr).toBe(true); // but does assert SGR mouse
 });
 
 // ---------------------------------------------------------------------------
@@ -39,23 +38,23 @@ test('lookupTable: an unknown TERM_PROGRAM falls through to the TERM family', ()
 // ---------------------------------------------------------------------------
 
 test('lookupTable: TERM=xterm-kitty matches Kitty (kittyFlags)', () => {
-  assert.equal(lookupTable({ TERM: 'xterm-kitty' }).keyboard?.kittyFlags, true);
+  expect(lookupTable({ TERM: 'xterm-kitty' }).keyboard?.kittyFlags).toBe(true);
 });
 
 test('lookupTable: TERM=screen-256color matches the multiplexer entry', () => {
-  assert.equal(lookupTable({ TERM: 'screen-256color' }).multiplexer, true);
+  expect(lookupTable({ TERM: 'screen-256color' }).multiplexer).toBe(true);
 });
 
 test('lookupTable: TERM=tmux-256color matches the multiplexer entry', () => {
-  assert.equal(lookupTable({ TERM: 'tmux-256color' }).multiplexer, true);
+  expect(lookupTable({ TERM: 'tmux-256color' }).multiplexer).toBe(true);
 });
 
 test('lookupTable: VTE_VERSION identifies a VTE terminal', () => {
-  assert.equal(lookupTable({ VTE_VERSION: '6800' }).colorDepth, 'truecolor');
+  expect(lookupTable({ VTE_VERSION: '6800' }).colorDepth).toBe('truecolor');
 });
 
 test('lookupTable: KONSOLE_VERSION identifies Konsole', () => {
-  assert.equal(lookupTable({ KONSOLE_VERSION: '220400' }).colorDepth, 'truecolor');
+  expect(lookupTable({ KONSOLE_VERSION: '220400' }).colorDepth).toBe('truecolor');
 });
 
 // ---------------------------------------------------------------------------
@@ -63,13 +62,13 @@ test('lookupTable: KONSOLE_VERSION identifies Konsole', () => {
 // ---------------------------------------------------------------------------
 
 test('lookupTable: an unrecognised TERM contributes nothing', () => {
-  assert.deepEqual(lookupTable({ TERM: 'totally-unknown-term' }), {});
+  expect(lookupTable({ TERM: 'totally-unknown-term' })).toStrictEqual({});
 });
 
 test('lookupTable: empty env contributes nothing', () => {
-  assert.deepEqual(lookupTable({}), {});
+  expect(lookupTable({})).toStrictEqual({});
 });
 
 test('lookupTable: the bare xterm entry omits colorDepth (env drives it)', () => {
-  assert.equal(lookupTable({ TERM: 'xterm-256color' }).colorDepth, undefined);
+  expect(lookupTable({ TERM: 'xterm-256color' }).colorDepth).toBe(undefined);
 });

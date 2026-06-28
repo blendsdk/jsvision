@@ -6,8 +6,7 @@
  * boundary at exactly 1024 bytes (PL-8), partial-then-complete reassembly, and
  * the `write()`-throws fallback (AC-3). High priority per the testing strategy.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { runQueries, RESPONSE_BUFFER_CAP } from '../src/engine/capability/query.js';
 import type { TerminalQuery } from '../src/engine/capability/profile.js';
@@ -37,35 +36,35 @@ function stubQuery(chunks: Uint8Array[], opts: { throwOnWrite?: boolean } = {}):
 
 test('parser: primary DA is consumed (no passthrough)', async () => {
   const { passthrough } = await runQueries(stubQuery([enc.encode('\x1b[?64;1;2c')]), 200);
-  assert.equal(passthrough.length, 0);
+  expect(passthrough.length).toBe(0);
 });
 
 test('parser: secondary DA is consumed (no passthrough)', async () => {
   const { passthrough } = await runQueries(stubQuery([enc.encode('\x1b[>0;276;0c')]), 200);
-  assert.equal(passthrough.length, 0);
+  expect(passthrough.length).toBe(0);
 });
 
 test('parser: XTVERSION DCS is consumed (no passthrough)', async () => {
   // ESC P > | foot(1.0) ESC \  (DCS … ST)
   const { passthrough } = await runQueries(stubQuery([enc.encode('\x1bP>|foot(1.0)\x1b\\')]), 200);
-  assert.equal(passthrough.length, 0);
+  expect(passthrough.length).toBe(0);
 });
 
 test('parser: ?2026 DECRPM value 1 sets sync2026 true', async () => {
   const { parsed, passthrough } = await runQueries(stubQuery([enc.encode('\x1b[?2026;1$y')]), 200);
-  assert.equal(parsed.sync2026, true);
-  assert.equal(passthrough.length, 0);
+  expect(parsed.sync2026).toBe(true);
+  expect(passthrough.length).toBe(0);
 });
 
 test('parser: ?2026 DECRPM value 2 (reset, but recognised) sets sync2026 true', async () => {
   const { parsed } = await runQueries(stubQuery([enc.encode('\x1b[?2026;2$y')]), 200);
-  assert.equal(parsed.sync2026, true);
+  expect(parsed.sync2026).toBe(true);
 });
 
 test('parser: ?2026 DECRPM value 0 (unrecognised mode) is consumed without a hint', async () => {
   const { parsed, passthrough } = await runQueries(stubQuery([enc.encode('\x1b[?2026;0$y')]), 200);
-  assert.equal(parsed.sync2026, undefined);
-  assert.equal(passthrough.length, 0); // still our query response → demuxed
+  expect(parsed.sync2026).toBe(undefined);
+  expect(passthrough.length).toBe(0); // still our query response → demuxed
 });
 
 // ---------------------------------------------------------------------------
@@ -74,7 +73,7 @@ test('parser: ?2026 DECRPM value 0 (unrecognised mode) is consumed without a hin
 
 test('parser: interleaved valid response + junk forwards only the junk', async () => {
   const { passthrough } = await runQueries(stubQuery([enc.encode('\x1b[?64;1;2chello')]), 200);
-  assert.equal(dec.decode(passthrough), 'hello');
+  expect(dec.decode(passthrough)).toBe('hello');
 });
 
 // ---------------------------------------------------------------------------
@@ -84,14 +83,14 @@ test('parser: interleaved valid response + junk forwards only the junk', async (
 test('parser: exactly 1024 passthrough bytes are retained (at the cap)', async () => {
   const atCap = new Uint8Array(RESPONSE_BUFFER_CAP).fill(0x78); // 'x'
   const { passthrough } = await runQueries(stubQuery([atCap]), 200);
-  assert.equal(passthrough.length, RESPONSE_BUFFER_CAP);
+  expect(passthrough.length).toBe(RESPONSE_BUFFER_CAP);
 });
 
 test('parser: 1025 bytes exceed the cap → discarded, falls back', async () => {
   const overCap = new Uint8Array(RESPONSE_BUFFER_CAP + 1).fill(0x78);
   const { parsed, passthrough } = await runQueries(stubQuery([overCap]), 200);
-  assert.equal(passthrough.length, 0);
-  assert.deepEqual(parsed, {});
+  expect(passthrough.length).toBe(0);
+  expect(parsed).toStrictEqual({});
 });
 
 // ---------------------------------------------------------------------------
@@ -101,7 +100,7 @@ test('parser: 1025 bytes exceed the cap → discarded, falls back', async () => 
 test('parser: a DA split across two chunks is reassembled and consumed', async () => {
   const chunks = [enc.encode('\x1b[?64;1'), enc.encode(';2c')];
   const { passthrough } = await runQueries(stubQuery(chunks), 200);
-  assert.equal(passthrough.length, 0);
+  expect(passthrough.length).toBe(0);
 });
 
 // ---------------------------------------------------------------------------
@@ -110,6 +109,6 @@ test('parser: a DA split across two chunks is reassembled and consumed', async (
 
 test('parser: a throwing write() falls back without rejecting', async () => {
   const result = await runQueries(stubQuery([], { throwOnWrite: true }), 200);
-  assert.deepEqual(result.parsed, {});
-  assert.equal(result.passthrough.length, 0);
+  expect(result.parsed).toStrictEqual({});
+  expect(result.passthrough.length).toBe(0);
 });

@@ -18,8 +18,7 @@
  * resolves this correctly. The `.js` extension on the engine import is required by
  * NodeNext ESM resolution (it resolves to the `.ts` source under tsx).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { ScreenBuffer, serialize, resolveCapabilities } from '../src/engine/index.js';
 import type { ColorDepth, RenderOptions, Style } from '../src/engine/index.js';
 import { feed, makeTerm, readCell } from './golden-screen-helpers.js';
@@ -37,13 +36,13 @@ function optsFor(depth: ColorDepth, override: Record<string, unknown> = {}): Ren
 
 /** The colour mode the render contract requires of a styled cell at each depth. */
 const COLOR_CONTRACT: Record<ColorDepth, (c: CellColor, label: string) => void> = {
-  truecolor: (c, label) => assert.equal(c.mode, 'rgb', `${label}: truecolor must render in RGB mode`),
-  '256': (c, label) => assert.equal(c.mode, 'palette', `${label}: 256 must downsample to palette mode`),
+  truecolor: (c, label) => expect(c.mode, label).toBe('rgb'),
+  '256': (c, label) => expect(c.mode, label).toBe('palette'),
   '16': (c, label) => {
-    assert.equal(c.mode, 'palette', `${label}: 16 must downsample to palette mode`);
-    assert.ok(c.value >= 0 && c.value <= 15, `${label}: 16-colour index must be 0–15 (got ${c.value})`);
+    expect(c.mode, label).toBe('palette');
+    expect(c.value >= 0 && c.value <= 15, label).toBeTruthy();
   },
-  mono: (c, label) => assert.equal(c.mode, 'default', `${label}: mono must emit no colour (terminal default)`),
+  mono: (c, label) => expect(c.mode, label).toBe('default'),
 };
 
 const DEPTHS: readonly ColorDepth[] = ['truecolor', '256', '16', 'mono'];
@@ -59,18 +58,18 @@ for (const depth of DEPTHS) {
     await feed(term, serialize(buf, null, optsFor(depth)));
 
     const x = readCell(term, 0, 0);
-    assert.equal(x.char, 'X', `${depth}: cell (0,0) char`);
-    assert.equal(x.width, 1, `${depth}: cell (0,0) width`);
+    expect(x.char).toBe('X');
+    expect(x.width).toBe(1);
     COLOR_CONTRACT[depth](x.fg, `${depth} fg`);
     COLOR_CONTRACT[depth](x.bg, `${depth} bg`);
-    assert.equal(readCell(term, 1, 0).char, 'Y', `${depth}: cell (1,0) char`);
+    expect(readCell(term, 1, 0).char).toBe('Y');
 
     // Truecolor is exact pass-through; the lower depths must NOT be raw truecolor.
     if (depth === 'truecolor') {
-      assert.equal(x.fg.value, 0x0a141e, 'truecolor fg is exact');
-      assert.equal(x.bg.value, 0x28323c, 'truecolor bg is exact');
+      expect(x.fg.value).toBe(0x0a141e);
+      expect(x.bg.value).toBe(0x28323c);
     } else {
-      assert.notEqual(x.fg.mode, 'rgb', `${depth}: fg must not be raw truecolor`);
+      expect(x.fg.mode).not.toBe('rgb');
     }
   });
 
@@ -86,9 +85,9 @@ for (const depth of DEPTHS) {
     await feed(term, serialize(prev, null, optsFor(depth))); // baseline
     await feed(term, serialize(next, prev, optsFor(depth))); // minimal diff
 
-    assert.equal(readCell(term, 2, 0).char, 'Z', `${depth}: target cell updated`);
-    assert.equal(readCell(term, 1, 0).char, 'a', `${depth}: left neighbour unchanged`);
-    assert.equal(readCell(term, 3, 0).char, 'a', `${depth}: right neighbour unchanged`);
+    expect(readCell(term, 2, 0).char).toBe('Z');
+    expect(readCell(term, 1, 0).char).toBe('a');
+    expect(readCell(term, 3, 0).char).toBe('a');
   });
 
   // ST-11: a wide CJK glyph occupies two columns; a combining mark adds none.
@@ -101,14 +100,14 @@ for (const depth of DEPTHS) {
     await feed(term, serialize(buf, null, optsFor(depth, { unicode: { utf8: true, widthMode: 'wcwidth' } })));
 
     const lead = readCell(term, 0, 0);
-    assert.equal(lead.char, '漢', `${depth}: wide glyph in the lead cell`);
-    assert.equal(lead.width, 2, `${depth}: wide glyph lead width 2`);
-    assert.equal(readCell(term, 1, 0).width, 0, `${depth}: wide glyph continuation width 0`);
+    expect(lead.char).toBe('漢');
+    expect(lead.width).toBe(2);
+    expect(readCell(term, 1, 0).width).toBe(0);
 
     const combining = readCell(term, 2, 0);
-    assert.equal(combining.width, 1, `${depth}: combining sequence occupies one column`);
-    assert.ok(combining.char.startsWith('e'), `${depth}: combining cell keeps its base char`);
+    expect(combining.width).toBe(1);
+    expect(combining.char.startsWith('e')).toBeTruthy();
     // The combining mark must NOT spill into the next column: the sentinel stays at col 3.
-    assert.equal(readCell(term, 3, 0).char, 'Q', `${depth}: combining mark added no column (sentinel intact)`);
+    expect(readCell(term, 3, 0).char).toBe('Q');
   });
 }

@@ -12,8 +12,7 @@
  * cross-platform. The async entry point is `resolveCapabilitiesAsync` (RT-2);
  * the parser contract is `runQueries`.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { resolveCapabilitiesAsync } from '../src/engine/capability/index.js';
 import { runQueries } from '../src/engine/capability/query.js';
@@ -60,12 +59,12 @@ test('ST-13: silent terminal times out, falls back, never rejects', async () => 
   });
   const elapsed = Date.now() - start;
 
-  assert.ok(elapsed <= 150, `resolve took ${elapsed}ms, expected ≤150ms`);
+  expect(elapsed <= 150).toBeTruthy();
   // Fell back to env/table/default — nothing came from the (silent) runtime.
   for (const reason of Object.values(reasons)) {
-    assert.notEqual(reason, 'runtime');
+    expect(reason).not.toBe('runtime');
   }
-  assert.ok(Object.isFrozen(profile), 'profile still frozen on fallback');
+  expect(Object.isFrozen(profile)).toBeTruthy();
 });
 
 // ---------------------------------------------------------------------------
@@ -78,9 +77,9 @@ test('ST-14: DA response is consumed; only non-response bytes pass through', asy
   const stream = concat(enc.encode('\x1b[?64;1;2c'), enc.encode('a'));
   const { passthrough } = await runQueries(stubQuery([stream]), 200);
 
-  assert.equal(dec.decode(passthrough), 'a');
+  expect(dec.decode(passthrough)).toBe('a');
   // No escape (DA) bytes leak into the passthrough stream.
-  assert.ok(!passthrough.includes(0x1b), 'no response/ESC bytes in passthrough');
+  expect(!passthrough.includes(0x1b)).toBeTruthy();
 });
 
 // ---------------------------------------------------------------------------
@@ -94,8 +93,8 @@ test('ST-15: oversized unterminated response is bounded and falls back', async (
 
   // runQueries itself must not throw and must return bounded results.
   const result = await runQueries(stubQuery([oversized]), 200);
-  assert.ok(result !== null && typeof result === 'object');
-  assert.ok(passthroughIsBounded(result.passthrough), 'passthrough stays within the 1 KB cap');
+  expect(result !== null && typeof result === 'object').toBeTruthy();
+  expect(passthroughIsBounded(result.passthrough)).toBeTruthy();
 
   // The whole resolution still completes and falls back (no runtime field).
   const { profile, reasons } = await resolveCapabilitiesAsync({
@@ -103,9 +102,9 @@ test('ST-15: oversized unterminated response is bounded and falls back', async (
     timeoutMs: 200,
     env: { TERM: 'xterm' },
   });
-  assert.ok(Object.isFrozen(profile));
+  expect(Object.isFrozen(profile)).toBeTruthy();
   for (const reason of Object.values(reasons)) {
-    assert.notEqual(reason, 'runtime');
+    expect(reason).not.toBe('runtime');
   }
 });
 
@@ -125,7 +124,7 @@ test('ST-16: malformed bytes set no capability; no field reasoned as runtime', a
   });
 
   for (const [field, reason] of Object.entries(reasons)) {
-    assert.notEqual(reason, 'runtime', `reasons.${field} must not be 'runtime'`);
+    expect(reason, field).not.toBe('runtime');
   }
 });
 

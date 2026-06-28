@@ -8,8 +8,7 @@
  * Streams are real `PassThrough`s (no mocks); the DECRPM response bytes are a VT
  * protocol fact (`CSI ? 2026 ; Ps $ y`, Ps≠0 ⇒ supported).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { PassThrough } from 'node:stream';
 
 import { createTerminalQuery } from '../src/engine/host/terminal-query.js';
@@ -23,7 +22,7 @@ test('ST-19: write() emits the request bytes to the output stream', async () => 
     const received = new Promise<Buffer>((resolve) => output.once('data', (c: Buffer) => resolve(c)));
     query.write('\x1b[c');
     const chunk = await received;
-    assert.equal(Buffer.from(chunk).toString('latin1'), '\x1b[c');
+    expect(Buffer.from(chunk).toString('latin1')).toBe('\x1b[c');
   } finally {
     query.close();
   }
@@ -37,9 +36,9 @@ test('ST-20: read() yields received input bytes as a Uint8Array', async () => {
     const iterator = query.read()[Symbol.asyncIterator]();
     input.write(Buffer.from([0x1b, 0x5b, 0x63])); // ESC [ c
     const { value, done } = await iterator.next();
-    assert.equal(done, false);
-    assert.ok(value instanceof Uint8Array, 'chunk is a Uint8Array');
-    assert.deepEqual(Array.from(value as Uint8Array), [0x1b, 0x5b, 0x63]);
+    expect(done).toBe(false);
+    expect(value instanceof Uint8Array).toBeTruthy();
+    expect(Array.from(value as Uint8Array)).toStrictEqual([0x1b, 0x5b, 0x63]);
     await iterator.return?.(undefined);
   } finally {
     query.close();
@@ -69,7 +68,7 @@ test('ST-21: a scripted ?2026 reply flows through resolveCapabilitiesAsync', asy
       timeoutMs: 100,
       refresh: true,
     });
-    assert.equal(profile.sync2026, true, 'runtime reply set sync2026');
+    expect(profile.sync2026).toBe(true);
   } finally {
     query.close();
   }

@@ -4,8 +4,7 @@
  * Edge cases beyond the ST oracle: malformed / non-array existing files recover
  * by starting fresh (never crash), and the written file ends with a newline.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { appendToMatrix } from '../examples/capability-probe/matrix.js';
 import type { MatrixFs } from '../examples/capability-probe/matrix.js';
@@ -34,17 +33,17 @@ function memFs(initial: string | null): MatrixFs & { content: () => string | nul
 test('an unparseable existing file recovers by starting fresh', () => {
   const fs = memFs('not json at all {{{');
   const result = appendToMatrix({ fs, path: 'm.json', report: REPORT });
-  assert.equal(result.length, 1, 'started fresh, did not crash');
+  expect(result.length).toBe(1);
 });
 
 test('a non-array JSON file recovers by starting fresh', () => {
   const fs = memFs('{"oops":true}');
   const result = appendToMatrix({ fs, path: 'm.json', report: REPORT });
-  assert.equal(result.length, 1);
+  expect(result.length).toBe(1);
 });
 
 test('the written matrix ends with a trailing newline', () => {
   const fs = memFs(null);
   appendToMatrix({ fs, path: 'm.json', report: REPORT });
-  assert.ok((fs.content() ?? '').endsWith('\n'), 'newline-terminated');
+  expect((fs.content() ?? '').endsWith('\n')).toBeTruthy();
 });

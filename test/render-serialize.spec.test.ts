@@ -9,8 +9,7 @@
  * Capabilities come from RD-02's `resolveCapabilities({ override })` with a
  * clean env so no real terminal is needed.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { serialize } from '../src/engine/render/serialize.js';
 import { ScreenBuffer } from '../src/engine/render/buffer.js';
@@ -54,10 +53,10 @@ test('ST-1: a single changed cell emits one cursor move, one glyph, < 32 bytes',
   const out = serialize(current, previous, { caps: caps() });
 
   // 1-based cursor move to (row 3, col 6).
-  assert.equal(count(out, '\x1b[3;6H'), 1, 'exactly one cursorTo(3,6)');
-  assert.equal(count(out, 'H'), 1, 'no other cursor move appears');
-  assert.equal(count(out, 'X'), 1, 'exactly one glyph emitted');
-  assert.ok(out.length < 32, `payload must be < 32 bytes, got ${out.length}`);
+  expect(count(out, '\x1b[3;6H')).toBe(1);
+  expect(count(out, 'H')).toBe(1);
+  expect(count(out, 'X')).toBe(1);
+  expect(out.length < 32).toBeTruthy();
 });
 
 // ---------------------------------------------------------------------------
@@ -67,13 +66,13 @@ test('ST-1: a single changed cell emits one cursor move, one glyph, < 32 bytes',
 test('ST-2: two identical frames serialize to the empty string (sync on)', () => {
   const a = blank(80, 24);
   const b = blank(80, 24);
-  assert.equal(serialize(a, b, { caps: caps({ sync2026: true }) }), '');
+  expect(serialize(a, b, { caps: caps({ sync2026: true }) })).toBe('');
 });
 
 test('ST-2: two identical frames serialize to the empty string (sync off)', () => {
   const a = blank(80, 24);
   const b = blank(80, 24);
-  assert.equal(serialize(a, b, { caps: caps({ sync2026: false }) }), '');
+  expect(serialize(a, b, { caps: caps({ sync2026: false }) })).toBe('');
 });
 
 // ---------------------------------------------------------------------------
@@ -86,8 +85,8 @@ test('ST-4: sync2026=true wraps a non-empty frame with ?2026h … ?2026l', () =>
   current.set(0, 0, 'Z', DEFAULT_STYLE);
 
   const out = serialize(current, previous, { caps: caps({ sync2026: true }) });
-  assert.ok(out.startsWith('\x1b[?2026h'), 'frame begins with sync-begin');
-  assert.ok(out.endsWith('\x1b[?2026l'), 'frame ends with sync-end');
+  expect(out.startsWith('\x1b[?2026h')).toBeTruthy();
+  expect(out.endsWith('\x1b[?2026l')).toBeTruthy();
 });
 
 test('ST-4: sync2026=false adds neither sync sequence', () => {
@@ -96,8 +95,8 @@ test('ST-4: sync2026=false adds neither sync sequence', () => {
   current.set(0, 0, 'Z', DEFAULT_STYLE);
 
   const out = serialize(current, previous, { caps: caps({ sync2026: false }) });
-  assert.equal(count(out, '\x1b[?2026h'), 0);
-  assert.equal(count(out, '\x1b[?2026l'), 0);
+  expect(count(out, '\x1b[?2026h')).toBe(0);
+  expect(count(out, '\x1b[?2026l')).toBe(0);
 });
 
 // ---------------------------------------------------------------------------
@@ -114,7 +113,7 @@ test('ST-9: three adjacent same-style changed cells emit one style SGR', () => {
 
   const out = serialize(current, previous, { caps: caps({ colorDepth: 'truecolor' }) });
   // PL-1 default encoder emits 24-bit truecolor `38;2;r;g;b` for fg.
-  assert.equal(count(out, '38;2;255;0;0'), 1, 'one fg SGR for the whole run');
+  expect(count(out, '38;2;255;0;0')).toBe(1);
 });
 
 test('ST-9: a style change mid-run breaks into two SGRs', () => {
@@ -127,8 +126,8 @@ test('ST-9: a style change mid-run breaks into two SGRs', () => {
   current.set(2, 0, 'c', green);
 
   const out = serialize(current, previous, { caps: caps({ colorDepth: 'truecolor' }) });
-  assert.equal(count(out, '38;2;255;0;0'), 1, 'red run SGR once');
-  assert.equal(count(out, '38;2;0;255;0'), 1, 'green run SGR once');
+  expect(count(out, '38;2;255;0;0')).toBe(1);
+  expect(count(out, '38;2;0;255;0')).toBe(1);
 });
 
 // ---------------------------------------------------------------------------
@@ -140,5 +139,5 @@ test('ST-13: a previous buffer of different dimensions forces a full paint', () 
   const current = new ScreenBuffer(5, 3, { fg: 'default', bg: 'default', char: 'Z' });
 
   const out = serialize(current, previous, { caps: caps() });
-  assert.equal(count(out, 'Z'), 15, 'every cell of a 5×3 buffer is emitted');
+  expect(count(out, 'Z')).toBe(15);
 });

@@ -6,8 +6,7 @@
  * implementation. If a test here fails after implementation, the implementation
  * is wrong.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { createHost } from '../src/engine/host/host.js';
 import { enterMode, leaveMode } from '../src/engine/host/modes.js';
@@ -43,9 +42,9 @@ test('ST-6: a non-TTY host skips raw mode and enter-mode', async () => {
 
   await host.start();
 
-  assert.equal(host.isTTY, false, 'isTTY reflects the non-TTY input');
-  assert.equal(adapter.rawModeCalls.length, 0, 'setRawMode never called');
-  assert.equal(output.data.includes(enterMode(RICH)), false, 'no enter-mode written');
+  expect(host.isTTY).toBe(false);
+  expect(adapter.rawModeCalls.length).toBe(0);
+  expect(output.data.includes(enterMode(RICH))).toBe(false);
   await host.stop();
 });
 
@@ -63,7 +62,7 @@ test('ST-6b: a non-TTY host still writes rendered frames', async () => {
   host.render(frame('Q'));
   await host.stop();
 
-  assert.ok(output.data.includes('Q'), 'frame glyph written even without a TTY');
+  expect(output.data.includes('Q')).toBeTruthy();
 });
 
 // ---------------------------------------------------------------------------
@@ -89,11 +88,11 @@ test('ST-4: three synchronous resizes coalesce to a single ResizeEvent', async (
   adapter.emit('resize');
   adapter.emit('resize');
   adapter.emit('resize');
-  assert.equal(resizes.length, 0, 'nothing fires before the immediate drains');
+  expect(resizes.length).toBe(0);
   adapter.flushImmediates();
   await host.stop();
 
-  assert.deepEqual(resizes, [{ type: 'resize', columns: 100, rows: 40 }], 'exactly one coalesced resize');
+  expect(resizes).toStrictEqual([{ type: 'resize', columns: 100, rows: 40 }]);
 });
 
 // ---------------------------------------------------------------------------
@@ -127,17 +126,17 @@ test('ST-5: suspend then continue restore/suspend then re-assert + repaint', asy
   const beforeSuspend = output.data.length;
 
   adapter.emit('suspend');
-  assert.ok(suspended, 'onSuspend fired');
-  assert.ok(output.data.indexOf(leave, beforeSuspend) >= 0, 'leave-mode written on suspend');
-  assert.equal(adapter.rawModeCalls.at(-1), false, 'raw mode turned off on suspend');
-  assert.equal(adapter.suspendCount, 1, 'process suspended via suspendSelf (PF-001)');
+  expect(suspended).toBeTruthy();
+  expect(output.data.indexOf(leave, beforeSuspend) >= 0).toBeTruthy();
+  expect(adapter.rawModeCalls.at(-1)).toBe(false);
+  expect(adapter.suspendCount).toBe(1);
 
   const beforeContinue = output.data.length;
   adapter.emit('continue');
-  assert.ok(output.data.indexOf(enter, beforeContinue) >= 0, 'enter-mode re-asserted on continue');
-  assert.ok(output.data.indexOf('R', beforeContinue) >= 0, 'last frame repainted on continue');
-  assert.equal(adapter.rawModeCalls.at(-1), true, 'raw mode restored on continue');
-  assert.ok(resumed, 'onResume fired');
+  expect(output.data.indexOf(enter, beforeContinue) >= 0).toBeTruthy();
+  expect(output.data.indexOf('R', beforeContinue) >= 0).toBeTruthy();
+  expect(adapter.rawModeCalls.at(-1)).toBe(true);
+  expect(resumed).toBeTruthy();
 
   await host.stop();
 });

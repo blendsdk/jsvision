@@ -13,8 +13,7 @@
  * flag is accommodated. Heavier than the unit specs, so it lives outside the
  * unit glob; run explicitly: `npx tsx --test test/host-signals.e2e.test.ts`.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -90,9 +89,9 @@ test('ST-12: a real SIGINT exits 130 and restores the terminal', async () => {
       },
     );
 
-    assert.equal(result.code, 130, 'real SIGINT produced a real exit code 130 (128 + SIGINT)');
-    assert.ok(result.stdout.includes('?1049l'), 'leave alt-screen written on the real restore path');
-    assert.ok(result.stdout.includes('?25h'), 'cursor shown again on the real restore path');
+    expect(result.code).toBe(130);
+    expect(result.stdout.includes('?1049l')).toBeTruthy();
+    expect(result.stdout.includes('?25h')).toBeTruthy();
   } finally {
     rmSync(work, { recursive: true, force: true });
   }

@@ -9,8 +9,7 @@
  * Drives the host headlessly via the injectable FakeRuntimeAdapter + CaptureStream
  * + FakeInput (AR-13); `decode`/`serialize`/`enterMode`/`leaveMode` run for real.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { createHost } from '../src/engine/host/host.js';
 import { enterMode, leaveMode } from '../src/engine/host/modes.js';
@@ -55,10 +54,10 @@ test('ST-7: start → render → stop emits enter-mode, frame ANSI, then leave-m
   const iGlyph = output.data.indexOf('X');
   const iLeave = output.data.indexOf(leave);
 
-  assert.ok(iEnter >= 0, 'enter-mode sequence written');
-  assert.ok(iGlyph > iEnter, 'frame glyph written after enter-mode');
-  assert.ok(iLeave > iGlyph, 'leave-mode sequence written after the frame');
-  assert.deepEqual(adapter.rawModeCalls, [true, false], 'raw mode on at start, off at stop');
+  expect(iEnter >= 0).toBeTruthy();
+  expect(iGlyph > iEnter).toBeTruthy();
+  expect(iLeave > iGlyph).toBeTruthy();
+  expect(adapter.rawModeCalls).toStrictEqual([true, false]);
 });
 
 // ---------------------------------------------------------------------------
@@ -78,9 +77,9 @@ test('ST-13: double start and double stop are no-ops', async () => {
 
   const enter = enterMode(RICH);
   const leave = leaveMode(RICH);
-  assert.equal(occurrences(output.data, enter), 1, 'enter-mode written exactly once');
-  assert.equal(occurrences(output.data, leave), 1, 'leave-mode written exactly once');
-  assert.deepEqual(adapter.rawModeCalls, [true, false], 'raw mode toggled once each way');
+  expect(occurrences(output.data, enter)).toBe(1);
+  expect(occurrences(output.data, leave)).toBe(1);
+  expect(adapter.rawModeCalls).toStrictEqual([true, false]);
 });
 
 // ---------------------------------------------------------------------------
@@ -103,8 +102,8 @@ test('ST-14: ESC [ A dispatches a single "up" key to onInput', async () => {
   input.feed(Uint8Array.from([0x1b, 0x5b, 0x41]));
   await host.stop();
 
-  assert.equal(events.length, 1, 'exactly one event');
-  assert.deepEqual(events[0], { type: 'key', key: 'up', ctrl: false, alt: false, shift: false });
+  expect(events.length).toBe(1);
+  expect(events[0]).toStrictEqual({ type: 'key', key: 'up', ctrl: false, alt: false, shift: false });
 });
 
 // ---------------------------------------------------------------------------
@@ -127,7 +126,7 @@ test('ST-15: a DA query reply never reaches onInput', async () => {
   input.feed(Uint8Array.from([0x1b, 0x5b, 0x3f, 0x31, 0x3b, 0x32, 0x63])); // ESC [ ? 1 ; 2 c (DA1)
   await host.stop();
 
-  assert.equal(events.length, 0, 'query reply must not be delivered as input');
+  expect(events.length).toBe(0);
 });
 
 // ---------------------------------------------------------------------------
@@ -148,12 +147,12 @@ test('ST-16: a lone ESC flushes to an Escape key once the 50ms timer fires', asy
 
   await host.start();
   input.feed(Uint8Array.from([0x1b])); // lone ESC → host arms the flush timer
-  assert.equal(events.length, 0, 'no event before the timer fires');
+  expect(events.length).toBe(0);
   adapter.advanceTimer(60); // past ESC_TIMEOUT_MS (50ms)
   await host.stop();
 
-  assert.equal(events.length, 1, 'exactly one event after the flush');
-  assert.deepEqual(events[0], { type: 'key', key: 'escape', ctrl: false, alt: false, shift: false });
+  expect(events.length).toBe(1);
+  expect(events[0]).toStrictEqual({ type: 'key', key: 'escape', ctrl: false, alt: false, shift: false });
 });
 
 /** Count non-overlapping occurrences of `needle` in `haystack`. */

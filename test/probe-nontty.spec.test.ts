@@ -5,8 +5,7 @@
  * invocation without a TTY must print a clear message and exit WITHOUT entering
  * alt-screen or raw mode. Expectations derive from AC-6, not from the implementation.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { PassThrough, Writable } from 'node:stream';
 
 import { main } from '../examples/capability-probe/main.js';
@@ -44,8 +43,8 @@ test('ST-22: non-TTY interactive invocation exits without entering alt-screen', 
     now: () => '2026-06-28T00:00:00.000Z',
   });
 
-  assert.ok(err.text().length > 0, 'a clear message is printed to stderr');
-  assert.equal(exitCode, 1, 'exits non-zero (could not run interactively)');
-  assert.ok(!out.text().includes('?1049h'), 'must NOT enter the alternate screen');
-  assert.ok(!out.text().includes('?1000'), 'must NOT enable mouse reporting');
+  expect(err.text().length > 0).toBeTruthy();
+  expect(exitCode).toBe(1);
+  expect(!out.text().includes('?1049h')).toBeTruthy();
+  expect(!out.text().includes('?1000')).toBeTruthy();
 });

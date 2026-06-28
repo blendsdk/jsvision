@@ -9,8 +9,7 @@
  * Capabilities come from RD-02's `resolveCapabilities({ override })` with a clean
  * env so no real terminal is needed (same helper style as the RD-04 suite).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { enterMode, leaveMode } from '../src/engine/host/modes.js';
 import { resolveCapabilities } from '../src/engine/capability/index.js';
@@ -26,10 +25,7 @@ function assertOrdered(haystack: string, needles: readonly string[]): void {
   let last = -1;
   for (const needle of needles) {
     const at = haystack.indexOf(needle, last + 1);
-    assert.ok(
-      at > last,
-      `expected ${JSON.stringify(needle)} after position ${last}, got ${at} in ${JSON.stringify(haystack)}`,
-    );
+    expect(at > last).toBeTruthy();
     last = at;
   }
 }
@@ -58,9 +54,9 @@ test('ST-1b: enterMode gates mouse/paste off but keeps always-on modes + focus',
   const out = enterMode(
     caps({ altScreen: true, mouse: { sgr: false, drag: false, wheel: false }, bracketedPaste: false }),
   );
-  assert.equal(out.includes('?1006'), false, 'no SGR mouse when mouse.sgr is false');
-  assert.equal(out.includes('?1000'), false, 'no basic mouse when mouse.sgr is false');
-  assert.equal(out.includes('?2004'), false, 'no bracketed paste when disabled');
+  expect(out.includes('?1006')).toBe(false);
+  expect(out.includes('?1000')).toBe(false);
+  expect(out.includes('?2004')).toBe(false);
   assertOrdered(out, ['?1049h', '?25l', '?7l', '?1004h']);
 });
 
@@ -79,8 +75,8 @@ test('ST-2: every mode enabled on enter is disabled on leave (toggles pair up)',
   const leave = leaveMode(FULL);
   // Extract every "?<n>h" enabled on enter; assert a matching "?<n>l" on leave.
   const onModes = [...enter.matchAll(/\?(\d+)h/g)].map((m) => m[1]);
-  assert.ok(onModes.length >= 6, `expected several private modes on enter, got ${onModes.length}`);
+  expect(onModes.length >= 6).toBeTruthy();
   for (const mode of onModes) {
-    assert.ok(leave.includes(`?${mode}l`), `leave must disable ?${mode} (enabled on enter)`);
+    expect(leave.includes(`?${mode}l`)).toBeTruthy();
   }
 });

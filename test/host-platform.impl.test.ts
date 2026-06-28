@@ -8,8 +8,7 @@
  * runner by injecting `platform`/`vtAvailable`/`warn` — never touching the real
  * `process` signal set for the process-sourced signals.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { hostSignalSource, realRuntime } from '../src/engine/host/platform.js';
 import { CaptureStream } from './host-doubles.js';
@@ -20,22 +19,22 @@ import { CaptureStream } from './host-doubles.js';
 
 test('hostSignalSource: POSIX maps signals to process sources', () => {
   for (const platform of ['linux', 'darwin'] as const) {
-    assert.deepEqual(hostSignalSource(platform, 'resize'), { emitter: 'process', name: 'SIGWINCH' });
-    assert.deepEqual(hostSignalSource(platform, 'interrupt'), { emitter: 'process', name: 'SIGINT' });
-    assert.deepEqual(hostSignalSource(platform, 'terminate'), { emitter: 'process', name: 'SIGTERM' });
-    assert.deepEqual(hostSignalSource(platform, 'hangup'), { emitter: 'process', name: 'SIGHUP' });
-    assert.deepEqual(hostSignalSource(platform, 'suspend'), { emitter: 'process', name: 'SIGTSTP' });
-    assert.deepEqual(hostSignalSource(platform, 'continue'), { emitter: 'process', name: 'SIGCONT' });
+    expect(hostSignalSource(platform, 'resize')).toStrictEqual({ emitter: 'process', name: 'SIGWINCH' });
+    expect(hostSignalSource(platform, 'interrupt')).toStrictEqual({ emitter: 'process', name: 'SIGINT' });
+    expect(hostSignalSource(platform, 'terminate')).toStrictEqual({ emitter: 'process', name: 'SIGTERM' });
+    expect(hostSignalSource(platform, 'hangup')).toStrictEqual({ emitter: 'process', name: 'SIGHUP' });
+    expect(hostSignalSource(platform, 'suspend')).toStrictEqual({ emitter: 'process', name: 'SIGTSTP' });
+    expect(hostSignalSource(platform, 'continue')).toStrictEqual({ emitter: 'process', name: 'SIGCONT' });
   }
 });
 
 test('hostSignalSource: win32 routes resize/hangup to the output and drops suspend/continue', () => {
-  assert.deepEqual(hostSignalSource('win32', 'resize'), { emitter: 'output', name: 'resize' });
-  assert.deepEqual(hostSignalSource('win32', 'interrupt'), { emitter: 'process', name: 'SIGINT' });
-  assert.deepEqual(hostSignalSource('win32', 'terminate'), { emitter: 'process', name: 'SIGBREAK' });
-  assert.deepEqual(hostSignalSource('win32', 'hangup'), { emitter: 'output', name: 'close' });
-  assert.equal(hostSignalSource('win32', 'suspend'), null, 'no SIGTSTP on win32');
-  assert.equal(hostSignalSource('win32', 'continue'), null, 'no SIGCONT on win32');
+  expect(hostSignalSource('win32', 'resize')).toStrictEqual({ emitter: 'output', name: 'resize' });
+  expect(hostSignalSource('win32', 'interrupt')).toStrictEqual({ emitter: 'process', name: 'SIGINT' });
+  expect(hostSignalSource('win32', 'terminate')).toStrictEqual({ emitter: 'process', name: 'SIGBREAK' });
+  expect(hostSignalSource('win32', 'hangup')).toStrictEqual({ emitter: 'output', name: 'close' });
+  expect(hostSignalSource('win32', 'suspend')).toBe(null);
+  expect(hostSignalSource('win32', 'continue')).toBe(null);
 });
 
 // ---------------------------------------------------------------------------
@@ -47,9 +46,9 @@ test('realRuntime(win32): resize attaches to the provided output and unsubscribe
   const adapter = realRuntime(output.asOutput(), { platform: 'win32' });
 
   const unsubscribe = adapter.on('resize', () => {});
-  assert.equal(output.listenerCount('resize'), 1, 'win32 resize is sourced from the output');
+  expect(output.listenerCount('resize')).toBe(1);
   unsubscribe();
-  assert.equal(output.listenerCount('resize'), 0, 'unsubscribe removes the output listener');
+  expect(output.listenerCount('resize')).toBe(0);
 });
 
 test('realRuntime(win32): hangup attaches to the output close event', () => {
@@ -57,9 +56,9 @@ test('realRuntime(win32): hangup attaches to the output close event', () => {
   const adapter = realRuntime(output.asOutput(), { platform: 'win32' });
 
   const unsubscribe = adapter.on('hangup', () => {});
-  assert.equal(output.listenerCount('close'), 1, 'win32 hangup is sourced from output close');
+  expect(output.listenerCount('close')).toBe(1);
   unsubscribe();
-  assert.equal(output.listenerCount('close'), 0);
+  expect(output.listenerCount('close')).toBe(0);
 });
 
 test('realRuntime(win32): suspend/continue are inert (no listeners, callable unsubscribe)', () => {
@@ -68,11 +67,11 @@ test('realRuntime(win32): suspend/continue are inert (no listeners, callable uns
 
   const unsubSuspend = adapter.on('suspend', () => {});
   const unsubContinue = adapter.on('continue', () => {});
-  assert.equal(output.listenerCount('resize'), 0, 'no output listeners from unsupported signals');
-  assert.doesNotThrow(() => {
+  expect(output.listenerCount('resize')).toBe(0);
+  expect(() => {
     unsubSuspend();
     unsubContinue();
-  });
+  }).not.toThrow();
 });
 
 // ---------------------------------------------------------------------------
@@ -86,8 +85,8 @@ test('realRuntime(win32): warns once when VT processing is unavailable', () => {
     vtAvailable: () => false,
     warn: (m) => warnings.push(m),
   });
-  assert.equal(warnings.length, 1, 'exactly one warning');
-  assert.match(warnings[0], /virtual-terminal/i, 'mentions VT processing');
+  expect(warnings.length).toBe(1);
+  expect(warnings[0]).toMatch(/virtual-terminal/i);
 });
 
 test('realRuntime(win32): no warning when VT processing is available', () => {
@@ -97,7 +96,7 @@ test('realRuntime(win32): no warning when VT processing is available', () => {
     vtAvailable: () => true,
     warn: (m) => warnings.push(m),
   });
-  assert.equal(warnings.length, 0);
+  expect(warnings.length).toBe(0);
 });
 
 test('realRuntime(POSIX): never runs the VT check, even if the predicate is false', () => {
@@ -107,5 +106,5 @@ test('realRuntime(POSIX): never runs the VT check, even if the predicate is fals
     vtAvailable: () => false,
     warn: (m) => warnings.push(m),
   });
-  assert.equal(warnings.length, 0, 'VT check is win32-only');
+  expect(warnings.length).toBe(0);
 });

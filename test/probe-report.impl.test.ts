@@ -4,8 +4,7 @@
  * Edge cases beyond the ST oracle: table header/markers/recommendation line,
  * JSON round-trip, and provided results overriding the null default.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { buildReport, deriveRecommendation, renderTable, renderJson } from '../examples/capability-probe/report.js';
 import { gatherEnvMeta } from '../examples/capability-probe/env-meta.js';
@@ -25,10 +24,10 @@ test('renderTable shows the terminal header, group sections, and recommendation'
     recommendation: deriveRecommendation({ caps: CAPS, results: {} }),
   });
   const table = renderTable(report);
-  assert.ok(table.includes('xterm-256color'), 'TERM in header');
-  assert.ok(table.includes('truecolor'), 'COLORTERM in header / recommendation');
-  assert.ok(table.includes('[color]') && table.includes('[osc]'), 'group sections present');
-  assert.ok(table.includes('Recommendation:'), 'recommendation line present');
+  expect(table.includes('xterm-256color')).toBeTruthy();
+  expect(table.includes('truecolor')).toBeTruthy();
+  expect(table.includes('[color]') && table.includes('[osc]')).toBeTruthy();
+  expect(table.includes('Recommendation:')).toBeTruthy();
 });
 
 test('renderTable marks yes / no / ? per result', () => {
@@ -39,9 +38,9 @@ test('renderTable marks yes / no / ? per result', () => {
   const table = renderTable(
     buildReport({ meta: META, results, recommendation: deriveRecommendation({ caps: CAPS, results }) }),
   );
-  assert.ok(table.includes('yes  bold'), 'true → yes');
-  assert.ok(table.includes('no  dim'), 'false → no');
-  assert.ok(table.includes('?  italic'), 'unprovided → ?');
+  expect(table.includes('yes  bold')).toBeTruthy();
+  expect(table.includes('no  dim')).toBeTruthy();
+  expect(table.includes('?  italic')).toBeTruthy();
 });
 
 test('renderJson round-trips to an equal object', () => {
@@ -50,12 +49,12 @@ test('renderJson round-trips to an equal object', () => {
     results: {},
     recommendation: deriveRecommendation({ caps: CAPS, results: {} }),
   });
-  assert.deepEqual(JSON.parse(renderJson(report)), report);
+  expect(JSON.parse(renderJson(report))).toStrictEqual(report);
 });
 
 test('a provided result overrides the null default', () => {
   const results = { 'attr.bold': { supported: true as const, method: 'manual' as const } };
   const report = buildReport({ meta: META, results, recommendation: deriveRecommendation({ caps: CAPS, results }) });
-  assert.equal(report.results['attr.bold'].supported, true);
-  assert.equal(report.results['attr.dim'].supported, null, 'unprovided stays null');
+  expect(report.results['attr.bold'].supported).toBe(true);
+  expect(report.results['attr.dim'].supported).toBe(null);
 });

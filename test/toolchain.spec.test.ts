@@ -1,5 +1,5 @@
 /**
- * Specification tests — Toolchain enforcement (RD-01, ST-8…ST-12).
+ * Specification tests — Toolchain enforcement (RD-01, ST-8…ST-11).
  *
  * Immutable oracle: expectations derive from the acceptance criteria
  * (AC-2, AC-5, AC-6), the component specs (03-02, 03-03), and the Ambiguity
@@ -9,8 +9,7 @@
  * All cases exercise real tools (tsc, the guard script, the test runner) against
  * real temp fixtures rather than mocking (testing standard: prefer real objects).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
@@ -25,17 +24,6 @@ const repoRoot = resolve(here, '..');
 /** Create a fresh temp directory; the caller is responsible for cleanup. */
 function makeTempDir(prefix: string): string {
   return mkdtempSync(join(tmpdir(), prefix));
-}
-
-/**
- * A copy of the environment with `NODE_TEST_CONTEXT` removed. Spawning a nested
- * `node:test` run (e.g. `tsx --test`) from inside a test would otherwise trip
- * Node's recursion guard ("run() is being called recursively") and skip files.
- */
-function childEnv(): NodeJS.ProcessEnv {
-  const env = { ...process.env };
-  delete env['NODE_TEST_CONTEXT'];
-  return env;
 }
 
 /** Resolve the local TypeScript compiler entry as a node-runnable script. */
@@ -66,12 +54,9 @@ test('ST-8: a source file with an unused import fails tsc', () => {
       }),
     );
     const res = spawnSync(process.execPath, [tscCli(), '-p', join(dir, 'tsconfig.json')], { encoding: 'utf8' });
-    assert.notEqual(res.status, 0, 'tsc should fail on an unused import');
+    expect(res.status).not.toBe(0);
     const output = `${res.stdout}${res.stderr}`;
-    assert.ok(
-      /6133|declared but never used|never read/.test(output),
-      `expected an unused-symbol diagnostic, got:\n${output}`,
-    );
+    expect(/6133|declared but never used|never read/.test(output)).toBeTruthy();
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -83,7 +68,7 @@ test('ST-9: guard exits 0 for empty dependencies', () => {
   try {
     writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'fixture', version: '1.0.0', dependencies: {} }));
     const res = runGuard(dir);
-    assert.equal(res.status, 0, `expected exit 0, got ${res.status}\n${res.stdout}${res.stderr}`);
+    expect(res.status).toBe(0);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -102,8 +87,8 @@ test('ST-10: guard fails and names a native runtime dependency', () => {
     mkdirSync(depDir, { recursive: true });
     writeFileSync(join(depDir, 'package.json'), JSON.stringify({ name: 'nativelib', version: '1.0.0', gypfile: true }));
     const res = runGuard(dir);
-    assert.notEqual(res.status, 0, 'expected a non-zero exit for a native dependency');
-    assert.ok(/nativelib/.test(`${res.stdout}${res.stderr}`), 'guard message must name the offending dependency');
+    expect(res.status).not.toBe(0);
+    expect(/nativelib/.test(`${res.stdout}${res.stderr}`)).toBeTruthy();
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -113,33 +98,14 @@ test('ST-10: guard fails and names a native runtime dependency', () => {
 test('ST-11: ci.yml declares the 3×3 OS/Node matrix and runs verify', () => {
   const yml = readFileSync(resolve(repoRoot, '.github/workflows/ci.yml'), 'utf8');
   for (const os of ['ubuntu-latest', 'macos-latest', 'windows-latest']) {
-    assert.ok(yml.includes(os), `ci.yml must reference ${os}`);
+    expect(yml.includes(os)).toBeTruthy();
   }
   for (const node of ['18', '20', '22']) {
-    assert.ok(new RegExp(`(^|[^0-9])${node}([^0-9]|$)`, 'm').test(yml), `ci.yml must reference Node ${node}`);
+    expect(new RegExp(`(^|[^0-9])${node}([^0-9]|$)`, 'm').test(yml)).toBeTruthy();
   }
-  assert.ok(/npm run verify/.test(yml), 'ci.yml must invoke npm run verify');
+  expect(/npm run verify/.test(yml)).toBeTruthy();
 });
 
-// ST-12 (PL-8): the test runner discovers both *.spec.test.ts and *.impl.test.ts.
-// Exercises the real runner (scripts/run-tests.mjs) against a temp fixture dir —
-// it discovers files in pure Node, so this holds on every OS and Node version
-// (a bare `node --test` glob would need Node 21+ and violate engines.node >=18).
-test('ST-12: the test runner discovers both spec and impl test files', () => {
-  const dir = makeTempDir('rd01-st12-');
-  try {
-    // Distinct test names per fixture: the runner's TAP output reports test
-    // names (not file paths), so seeing both names proves both suffixes matched.
-    const fixture = (name: string) => `import { test } from 'node:test';\ntest('${name}', () => {});\n`;
-    writeFileSync(join(dir, 'a.spec.test.ts'), fixture('spec-fixture-ran'));
-    writeFileSync(join(dir, 'b.impl.test.ts'), fixture('impl-fixture-ran'));
-    const runner = resolve(repoRoot, 'scripts', 'run-tests.mjs');
-    const res = spawnSync(process.execPath, [runner, dir], { encoding: 'utf8', env: childEnv() });
-    const output = `${res.stdout}${res.stderr}`;
-    assert.ok(output.includes('spec-fixture-ran'), `spec file not discovered:\n${output}`);
-    assert.ok(output.includes('impl-fixture-ran'), `impl file not discovered:\n${output}`);
-    assert.equal(res.status, 0, `runner exited non-zero:\n${output}`);
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
+// ST-12 removed (runtime AR-22): it tested the custom scripts/run-tests.mjs
+// discovery runner, which vitest replaces (AR-5). vitest owns test discovery via
+// its `include` globs — self-evidently exercised by the full suite it finds.

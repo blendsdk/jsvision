@@ -10,8 +10,7 @@
  * The `.js` extension in the import specifier is required by NodeNext ESM
  * resolution (it resolves to the `.ts` source during development via tsx).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { ScreenBuffer, serialize, resolveCapabilities } from '../src/engine/index.js';
 import type { RenderOptions, Style } from '../src/engine/index.js';
 
@@ -27,7 +26,7 @@ function filledBuffer(): ScreenBuffer {
 
 test('ST-20: serializing an unchanged buffer emits no bytes', () => {
   const base = filledBuffer();
-  assert.equal(serialize(base, base, OPTS).length, 0, 'no change → empty payload');
+  expect(serialize(base, base, OPTS).length).toBe(0);
 });
 
 test('ST-21: a single-cell change emits far fewer bytes than a full repaint', () => {
@@ -38,8 +37,8 @@ test('ST-21: a single-cell change emits far fewer bytes than a full repaint', ()
   const full = serialize(base, null, OPTS).length; // full first paint
   const single = serialize(one, base, OPTS).length; // minimal diff
 
-  assert.ok(single > 0, 'a real change must emit bytes');
-  assert.ok(single < full / 10, `single-cell diff (${single}) must be ≪ full repaint (${full})`);
+  expect(single > 0).toBeTruthy();
+  expect(single < full / 10).toBeTruthy();
 });
 
 /**
@@ -60,9 +59,5 @@ function singleCellDiffBytes(w: number, h: number): number {
 // — exact equality is the stronger, constant-free oracle (PF-003). The label is
 // namespaced to avoid colliding with this file's RD-09 ST-20/ST-21 (PF-004).
 test('RD10-ST-2: a single-cell update emits identical bytes regardless of screen area', () => {
-  assert.equal(
-    singleCellDiffBytes(8, 8),
-    singleCellDiffBytes(200, 50),
-    'single-cell update bytes are identical regardless of screen area',
-  );
+  expect(singleCellDiffBytes(8, 8)).toBe(singleCellDiffBytes(200, 50));
 });

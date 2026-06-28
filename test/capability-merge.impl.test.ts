@@ -5,8 +5,7 @@
  * replacement, `undefined`-skip, base immutability, and merging over a frozen
  * base. Derived from the deepMerge contract in plan doc 03-02.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { deepMerge } from '../src/engine/capability/detect.js';
 import { CONSERVATIVE_DEFAULTS } from '../src/engine/capability/defaults.js';
@@ -15,14 +14,14 @@ import type { CapabilityProfile } from '../src/engine/capability/profile.js';
 test('deepMerge: nested group merges leaf-by-leaf, untouched leaves retained', () => {
   const base = { sgr: true, drag: true, wheel: true };
   const merged = deepMerge(base, { sgr: false });
-  assert.deepEqual(merged, { sgr: false, drag: true, wheel: true });
+  expect(merged).toStrictEqual({ sgr: false, drag: true, wheel: true });
 });
 
 test('deepMerge: scalar partial replaces the base scalar', () => {
   const merged = deepMerge<CapabilityProfile>(CONSERVATIVE_DEFAULTS, {
     colorDepth: 'truecolor',
   });
-  assert.equal(merged.colorDepth, 'truecolor');
+  expect(merged.colorDepth).toBe('truecolor');
 });
 
 test('deepMerge: nested + scalar override in one pass', () => {
@@ -30,24 +29,24 @@ test('deepMerge: nested + scalar override in one pass', () => {
     colorDepth: '256',
     mouse: { sgr: true },
   });
-  assert.equal(merged.colorDepth, '256');
-  assert.equal(merged.mouse.sgr, true);
+  expect(merged.colorDepth).toBe('256');
+  expect(merged.mouse.sgr).toBe(true);
   // Sibling leaves in the touched group keep their base values.
-  assert.equal(merged.mouse.drag, false);
-  assert.equal(merged.mouse.wheel, false);
+  expect(merged.mouse.drag).toBe(false);
+  expect(merged.mouse.wheel).toBe(false);
 });
 
 test('deepMerge: undefined partial leaf is skipped (never clears the base)', () => {
   const base = { sgr: true, drag: true, wheel: true };
   const merged = deepMerge(base, { sgr: undefined });
-  assert.equal(merged.sgr, true);
+  expect(merged.sgr).toBe(true);
 });
 
 test('deepMerge: does not mutate the base object', () => {
   const base = { sgr: true, drag: true, wheel: true };
   const snapshot = { ...base };
   deepMerge(base, { sgr: false });
-  assert.deepEqual(base, snapshot);
+  expect(base).toStrictEqual(snapshot);
 });
 
 test('deepMerge: nested merge does not mutate the base group', () => {
@@ -55,13 +54,13 @@ test('deepMerge: nested merge does not mutate the base group', () => {
     mouse: { sgr: true },
   });
   // The shared default group must be untouched by the merge.
-  assert.equal(CONSERVATIVE_DEFAULTS.mouse.sgr, false);
-  assert.notEqual(merged.mouse, CONSERVATIVE_DEFAULTS.mouse);
+  expect(CONSERVATIVE_DEFAULTS.mouse.sgr).toBe(false);
+  expect(merged.mouse).not.toBe(CONSERVATIVE_DEFAULTS.mouse);
 });
 
 test('deepMerge: merging over a frozen base returns a new object, no throw', () => {
   const frozenBase = Object.freeze({ sgr: false, drag: false, wheel: false });
   const merged = deepMerge(frozenBase, { drag: true });
-  assert.deepEqual(merged, { sgr: false, drag: true, wheel: false });
-  assert.notEqual(merged, frozenBase);
+  expect(merged).toStrictEqual({ sgr: false, drag: true, wheel: false });
+  expect(merged).not.toBe(frozenBase);
 });

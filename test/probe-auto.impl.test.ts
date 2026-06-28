@@ -5,8 +5,7 @@
  * oversized-response bounding (delegated to RD-02's RESPONSE_BUFFER_CAP). Real
  * PassThrough streams (no mocks).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { PassThrough } from 'node:stream';
 
 import { runAutoProbes } from '../examples/capability-probe/auto-probes.js';
@@ -28,8 +27,8 @@ test('COLORTERM=truecolor maps to color.truecolor and color.256 true', async () 
     platform: 'linux',
     timeoutMs: 30,
   });
-  assert.equal(results['color.truecolor'].supported, true);
-  assert.equal(results['color.256'].supported, true);
+  expect(results['color.truecolor'].supported).toBe(true);
+  expect(results['color.256'].supported).toBe(true);
 });
 
 test('a plain xterm TERM is not reported as truecolor', async () => {
@@ -39,13 +38,13 @@ test('a plain xterm TERM is not reported as truecolor', async () => {
     platform: 'linux',
     timeoutMs: 30,
   });
-  assert.equal(results['color.truecolor'].supported, false);
+  expect(results['color.truecolor'].supported).toBe(false);
 });
 
 test('every auto result is tagged method:auto', async () => {
   const results = await runAutoProbes({ query: silentQuery(), env: {}, platform: 'linux', timeoutMs: 30 });
   for (const value of Object.values(results)) {
-    assert.equal(value.method, 'auto');
+    expect(value.method).toBe('auto');
   }
 });
 
@@ -62,7 +61,7 @@ test('an oversized response does not hang or crash the auto phase', async () => 
   });
   try {
     const results = await runAutoProbes({ query, env: {}, platform: 'linux', timeoutMs: 100 });
-    assert.equal(results['output.sync2026'].supported, false, 'oversized response is discarded → fallback');
+    expect(results['output.sync2026'].supported).toBe(false);
   } finally {
     query.close();
   }

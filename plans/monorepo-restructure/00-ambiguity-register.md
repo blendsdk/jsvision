@@ -52,6 +52,12 @@ The 692+210+92+18+15+1 = 1028 simple cases are scriptable; the 14 `throws` + 13
 `doesNotThrow` + 2 `fail` = 29 matcher-bearing cases are converted and **hand-verified**
 to preserve the exact error class/regex. Zero bare `assert(...)` calls exist.
 
+### Runtime decisions (during execution)
+
+| #  | Category | Ambiguity / Gap | Decision | Status |
+|----|----------|-----------------|----------|--------|
+| 22 (runtime) | Testing | `toolchain.spec` ST-12 tests the deleted `run-tests.mjs` custom runner (its subject is removed by AR-5) | **Remove ST-12** (and its now-unused `childEnv` helper); vitest owns discovery, self-evidently proven by the full suite it finds. Not a weakened oracle — the tested component is intentionally gone. (User-confirmed.) ST-8/ST-11 in the same file are retargeted to the new toolchain in Phases 3/5. | ✅ |
+
 ### Deferrals (DEF-n)
 
 - **DEF-1** — Changesets / automated release + per-package CHANGELOG: deferred until a real publish flow is wired (the sync script + single root CHANGELOG suffice now). [AR-8, AR-12]

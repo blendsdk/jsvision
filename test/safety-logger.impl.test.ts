@@ -7,8 +7,7 @@
  * branches use the injectable `LoggerFs` seam to observe writes deterministically
  * without capturing the process's real stderr.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -26,15 +25,15 @@ test('the file sink appends structured lines; close() is idempotent', () => {
     log.close(); // idempotent — must not throw
 
     const lines = fs.readFileSync(p, 'utf8').trim().split('\n');
-    assert.equal(lines.length, 2);
-    assert.equal(lines[0], 'info host first');
-    assert.equal(lines[1], 'warn gate second {"cap":"mouse"}');
+    expect(lines.length).toBe(2);
+    expect(lines[0]).toBe('info host first');
+    expect(lines[1]).toBe('warn gate second {"cap":"mouse"}');
 
     // Append mode: a second logger adds without truncating.
     const log2 = createLogger({ enabled: true, sink: 'file', path: p });
     log2.error('x', 'third');
     log2.close();
-    assert.equal(fs.readFileSync(p, 'utf8').trim().split('\n').length, 3);
+    expect(fs.readFileSync(p, 'utf8').trim().split('\n').length).toBe(3);
   } finally {
     fs.rmSync(p, { force: true });
   }
@@ -62,23 +61,23 @@ test('auto sink: a configured path selects the file sink', () => {
   const log = createLogger({ enabled: true, sink: 'auto', path: '/tmp/auto.log', uiFd: 1, fs: seam });
   log.info('t', 'msg');
   log.close();
-  assert.equal(writes.length, 1);
-  assert.equal(writes[0].fd, 10, 'wrote to the opened file fd');
+  expect(writes.length).toBe(1);
+  expect(writes[0].fd).toBe(10);
 });
 
 test('auto sink: no path but stderr is not the UI selects stderr (fd 2)', () => {
   const { fs: seam, writes } = capturingFs();
   const log = createLogger({ enabled: true, sink: 'auto', uiFd: 1, env: {}, fs: seam });
   log.info('t', 'msg');
-  assert.equal(writes.length, 1);
-  assert.equal(writes[0].fd, 2, 'wrote to stderr');
+  expect(writes.length).toBe(1);
+  expect(writes[0].fd).toBe(2);
 });
 
 test('auto sink: no path and stderr IS the UI selects no sink (records dropped)', () => {
   const { fs: seam, writes } = capturingFs();
   const log = createLogger({ enabled: true, sink: 'auto', uiFd: 2, env: {}, fs: seam });
   log.info('t', 'msg');
-  assert.equal(log.enabled, true);
-  assert.equal(writes.length, 0, 'no sink → nothing written');
-  assert.deepEqual(log.entries(), []);
+  expect(log.enabled).toBe(true);
+  expect(writes.length).toBe(0);
+  expect(log.entries()).toStrictEqual([]);
 });

@@ -11,8 +11,7 @@
  * The `.mjs`/`.js` extensions in the import specifiers are required by NodeNext
  * ESM resolution (the test runs under tsx).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
@@ -47,16 +46,16 @@ test('ST-22: the gate doc names all 11 RD-09 criteria', () => {
   const nums = parseDocRows()
     .map((r) => r.num)
     .sort((a, b) => a - b);
-  assert.deepEqual(nums, ALL_CRITERIA);
+  expect(nums).toStrictEqual(ALL_CRITERIA);
 });
 
 test('ST-23: every non-DEFERRED criterion names at least one existing test file', () => {
   for (const row of parseDocRows()) {
     if (isDeferred(row.status)) continue;
     const files = row.evidence.match(/[\w.-]+\.test\.ts/g) ?? [];
-    assert.ok(files.length > 0, `criterion ${row.num} (${row.status}) must name ≥1 test file`);
+    expect(files.length > 0).toBeTruthy();
     for (const f of files) {
-      assert.ok(existsSync(join(here, f)), `criterion ${row.num}: evidence file ${f} must exist`);
+      expect(existsSync(join(here, f))).toBeTruthy();
     }
   }
 });
@@ -70,14 +69,14 @@ test('ST-24: the script criteria↔step map matches the doc (no drift)', () => {
   const scriptCovered = [...new Set(STEPS.flatMap((s: { criteria: number[] }) => s.criteria))];
 
   const asc = (a: number, b: number): number => a - b;
-  assert.deepEqual(scriptDeferred.sort(asc), docDeferred.sort(asc), 'deferred criteria must match');
-  assert.deepEqual(scriptCovered.sort(asc), docRequired.sort(asc), 'script must cover the doc’s required criteria');
+  expect(scriptDeferred.sort(asc)).toStrictEqual(docDeferred.sort(asc));
+  expect(scriptCovered.sort(asc)).toStrictEqual(docRequired.sort(asc));
 
   // The CRITERIA catalogue itself must enumerate all 11.
-  assert.deepEqual(Object.keys(CRITERIA).map(Number).sort(asc), ALL_CRITERIA);
+  expect(Object.keys(CRITERIA).map(Number).sort(asc)).toStrictEqual(ALL_CRITERIA);
   // Every criterion is accounted for: either covered by a step or explicitly deferred.
   for (const n of ALL_CRITERIA) {
     const covered = scriptCovered.includes(n) || scriptDeferred.includes(n);
-    assert.ok(covered, `criterion ${n} must be covered by a step or deferred`);
+    expect(covered).toBeTruthy();
   }
 });

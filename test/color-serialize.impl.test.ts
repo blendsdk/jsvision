@@ -5,8 +5,7 @@
  * a malformed color stored in a cell must not throw inside the render loop (the
  * seam degrades). Complements the ST-17 spec oracle.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { serialize } from '../src/engine/render/serialize.js';
 import { ScreenBuffer } from '../src/engine/render/buffer.js';
@@ -26,8 +25,8 @@ test('the default encoder downsamples to a 16-color code at colorDepth 16', () =
   current.set(0, 0, 'a', { fg: 'brightRed', bg: 'default' });
   const out = serialize(current, previous, { caps: caps({ colorDepth: '16' }) });
   // brightRed → nearest16 index 9 → bright fg 90+(9-8) = 91.
-  assert.ok(out.includes('\x1b[91m'), 'brightRed → fg 91 at 16');
-  assert.ok(!out.includes('38;5') && !out.includes('38;2'), 'no 256/truecolor SGR at 16');
+  expect(out.includes('\x1b[91m')).toBeTruthy();
+  expect(!out.includes('38;5') && !out.includes('38;2')).toBeTruthy();
 });
 
 test('a malformed color in a cell does not crash serialize (seam degrades)', () => {
@@ -36,9 +35,9 @@ test('a malformed color in a cell does not crash serialize (seam degrades)', () 
   // '#zzz' satisfies the Color type (`#${string}`) but is not valid hex.
   current.set(0, 0, 'a', { fg: '#zzz', bg: 'default' });
   let out = '';
-  assert.doesNotThrow(() => {
+  expect(() => {
     out = serialize(current, previous, { caps: caps({ colorDepth: 'truecolor' }) });
-  });
-  assert.ok(!out.includes('38;2'), 'malformed color contributes no color SGR');
-  assert.ok(out.includes('a'), 'the glyph still renders');
+  }).not.toThrow();
+  expect(!out.includes('38;2')).toBeTruthy();
+  expect(out.includes('a')).toBeTruthy();
 });

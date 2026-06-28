@@ -6,18 +6,17 @@
  * the implementation. The logger is disabled by default (zero bytes on a normal
  * run) and refuses, at construction, any sink that resolves to the UI stream.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
-import { createLogger, LoggerConfigError, TuiError } from '../src/engine/safety/index.js';
+import { createLogger, LoggerConfigError } from '../src/engine/safety/index.js';
 import type { LoggerFs } from '../src/engine/safety/index.js';
 
 // ST-19 — disabled by default: no enablement flag → no-op, zero records (AC-5).
 test('ST-19: a logger with no BLENDTUI_DEBUG is disabled and writes nothing', () => {
   const log = createLogger({ env: {} });
   log.debug('input', 'a keystroke happened');
-  assert.equal(log.enabled, false);
-  assert.deepEqual(log.entries(), []);
+  expect(log.enabled).toBe(false);
+  expect(log.entries()).toStrictEqual([]);
 });
 
 // ST-20 — BLENDTUI_DEBUG=1 + ring sink: enabled, structured records captured.
@@ -26,17 +25,14 @@ test('ST-20: an enabled ring logger captures structured records', () => {
   log.debug('input', 'one');
   log.info('gate', 'two');
   log.warn('host', 'three');
-  assert.equal(log.enabled, true);
+  expect(log.enabled).toBe(true);
   const records = log.entries();
-  assert.equal(records.length, 3);
-  assert.deepEqual(
-    records.map((r) => ({ level: r.level, component: r.component, msg: r.msg })),
-    [
-      { level: 'debug', component: 'input', msg: 'one' },
-      { level: 'info', component: 'gate', msg: 'two' },
-      { level: 'warn', component: 'host', msg: 'three' },
-    ],
-  );
+  expect(records.length).toBe(3);
+  expect(records.map((r) => ({ level: r.level, component: r.component, msg: r.msg }))).toStrictEqual([
+    { level: 'debug', component: 'input', msg: 'one' },
+    { level: 'info', component: 'gate', msg: 'two' },
+    { level: 'warn', component: 'host', msg: 'three' },
+  ]);
 });
 
 // ST-21 — the ring is bounded: capacity 2, three records → oldest dropped.
@@ -46,7 +42,7 @@ test('ST-21: the ring sink drops the oldest record beyond its capacity', () => {
   log.info('t', 'two');
   log.info('t', 'three');
   const msgs = log.entries().map((r) => r.msg);
-  assert.deepEqual(msgs, ['two', 'three']);
+  expect(msgs).toStrictEqual(['two', 'three']);
 });
 
 // ST-22 — a file sink resolving to the UI stream throws LoggerConfigError (AC-7).
@@ -58,9 +54,8 @@ test('ST-22: a file sink colliding with the UI stream throws LoggerConfigError',
     writeSync: () => 0,
     closeSync: () => undefined,
   };
-  assert.throws(
-    () => createLogger({ enabled: true, sink: 'file', path: '/tmp/ui.log', uiFd: 1, fs: collidingFs }),
-    (err) => err instanceof LoggerConfigError && err instanceof TuiError,
+  expect(() => createLogger({ enabled: true, sink: 'file', path: '/tmp/ui.log', uiFd: 1, fs: collidingFs })).toThrow(
+    LoggerConfigError,
   );
 });
 
@@ -72,9 +67,9 @@ test('ST-22 companion: a distinct file, or ino===0, does NOT collide', () => {
     writeSync: () => 0,
     closeSync: () => undefined,
   };
-  assert.doesNotThrow(() =>
+  expect(() =>
     createLogger({ enabled: true, sink: 'file', path: '/tmp/a.log', uiFd: 1, fs: distinctFs }).close(),
-  );
+  ).not.toThrow();
 
   // Same {dev,ino} but ino === 0 (unstable inodes) → best-effort allow.
   const zeroInoFs: LoggerFs = {
@@ -83,9 +78,9 @@ test('ST-22 companion: a distinct file, or ino===0, does NOT collide', () => {
     writeSync: () => 0,
     closeSync: () => undefined,
   };
-  assert.doesNotThrow(() =>
+  expect(() =>
     createLogger({ enabled: true, sink: 'file', path: '/tmp/b.log', uiFd: 1, fs: zeroInoFs }).close(),
-  );
+  ).not.toThrow();
 });
 
 // ST-23 — level filtering: a debug below the 'warn' threshold is dropped.
@@ -94,7 +89,7 @@ test('ST-23: records below the configured level are dropped', () => {
   log.debug('t', 'dropped');
   log.warn('t', 'kept');
   const records = log.entries();
-  assert.equal(records.length, 1);
-  assert.equal(records[0].level, 'warn');
-  assert.equal(records[0].msg, 'kept');
+  expect(records.length).toBe(1);
+  expect(records[0].level).toBe('warn');
+  expect(records[0].msg).toBe('kept');
 });

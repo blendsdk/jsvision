@@ -7,8 +7,7 @@
  * 03-04 / 07-testing-strategy ST-7/ST-8/ST-9 — never from reading the
  * implementation.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { createDecoderState, decode, flush } from '../src/engine/input/decoder.js';
 import type { DecoderState, PasteEvent } from '../src/engine/input/events.js';
@@ -25,13 +24,13 @@ test('ST-7: a paste over the cap is truncated to the cap, truncated:true', () =>
   const content = 'X'.repeat(100);
   const r = decode(enc.encode(`\x1b[200~${content}\x1b[201~`), createDecoderState(), { pasteCap: 8 });
 
-  assert.equal(r.events.length, 1);
+  expect(r.events.length).toBe(1);
   const paste = r.events[0] as PasteEvent;
-  assert.equal(paste.type, 'paste');
-  assert.equal(paste.text.length, 8, 'text clipped to the cap');
-  assert.equal(paste.truncated, true);
+  expect(paste.type).toBe('paste');
+  expect(paste.text.length).toBe(8);
+  expect(paste.truncated).toBe(true);
   // Memory did not retain the 100 bytes: the in-progress paste reset on close.
-  assert.equal(r.state.paste.bytes.length, 0);
+  expect(r.state.paste.bytes.length).toBe(0);
 });
 
 // ---------------------------------------------------------------------------
@@ -46,8 +45,8 @@ test('ST-8: an unterminated CSI flood stays within the carry bound, no throw, no
   for (let off = 0; off < flood.length; off += 300) {
     const chunk = flood.slice(off, off + 300);
     const r = decode(enc.encode(chunk), state);
-    assert.equal(r.events.length, 0, 'no event from unterminated garbage');
-    assert.ok(r.rest.length <= RESPONSE_BUFFER_CAP, `rest ${r.rest.length} exceeded the bound`);
+    expect(r.events.length).toBe(0);
+    expect(r.rest.length <= RESPONSE_BUFFER_CAP).toBeTruthy();
     state = r.state;
   }
 });
@@ -86,7 +85,7 @@ test('ST-9: a seeded adversarial corpus is decoded safely (no throw/leak/log)', 
     consoleCalls.restore();
   }
 
-  assert.equal(consoleCalls.count(), 0, 'the decoder logged nothing at default level');
+  expect(consoleCalls.count()).toBe(0);
 });
 
 // ---------------------------------------------------------------------------
@@ -100,10 +99,10 @@ function assertSafe(
   state: DecoderState,
   pasteCap: number,
 ): void {
-  assert.ok(rest.length <= RESPONSE_BUFFER_CAP, 'rest within the carry bound');
-  assert.ok(state.paste.bytes.length <= pasteCap, 'in-progress paste within the cap');
+  expect(rest.length <= RESPONSE_BUFFER_CAP).toBeTruthy();
+  expect(state.paste.bytes.length <= pasteCap).toBeTruthy();
   for (const event of events) {
-    assert.ok(INPUT_EVENT_TYPES.has(event.type), `no query reply leaked as an event (${event.type})`);
+    expect(INPUT_EVENT_TYPES.has(event.type)).toBeTruthy();
   }
 }
 

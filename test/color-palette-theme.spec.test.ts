@@ -6,14 +6,13 @@
  * never from reading the implementation. Hex values are the documented Borland
  * palette (03-02), including the `brightMagenta` the prototype omitted.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { PALETTE, defaultTheme, encode } from '../src/engine/color/index.js';
 
 // ST-15 — the full DOS-16 palette at the documented hex; every value is a valid color.
 test('ST-15: PALETTE holds the 16 DOS colors at the documented hex', () => {
-  assert.deepEqual(PALETTE, {
+  expect(PALETTE).toStrictEqual({
     black: '#000000',
     blue: '#0000aa',
     green: '#00aa00',
@@ -31,10 +30,10 @@ test('ST-15: PALETTE holds the 16 DOS colors at the documented hex', () => {
     yellow: '#ffff55',
     white: '#ffffff',
   });
-  assert.equal(Object.keys(PALETTE).length, 16);
+  expect(Object.keys(PALETTE).length).toBe(16);
   // Every palette value is a valid color (encodes without throwing).
   for (const value of Object.values(PALETTE)) {
-    assert.doesNotThrow(() => encode(value, 'fg', 'truecolor'));
+    expect(() => encode(value, 'fg', 'truecolor')).not.toThrow();
   }
 });
 
@@ -51,9 +50,9 @@ test('ST-16: defaultTheme exposes the semantic roles', () => {
     'statusBar',
     'shadow',
   ] as const) {
-    assert.ok(role in defaultTheme, `theme has role ${role}`);
+    expect(role in defaultTheme).toBeTruthy();
   }
-  assert.equal(defaultTheme.desktop.pattern, '░');
-  assert.equal(defaultTheme.desktop.fg, PALETTE.lightGray);
-  assert.equal(defaultTheme.menuBar.bg, PALETTE.lightGray);
+  expect(defaultTheme.desktop.pattern).toBe('░');
+  expect(defaultTheme.desktop.fg).toBe(PALETTE.lightGray);
+  expect(defaultTheme.menuBar.bg).toBe(PALETTE.lightGray);
 });

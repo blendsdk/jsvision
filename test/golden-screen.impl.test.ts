@@ -10,17 +10,16 @@
  * The `.js` extension in the import specifier is required by NodeNext ESM
  * resolution (it resolves to the `.ts` source under tsx).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { makeTerm, feed, readCell, reverseState } from './golden-screen-helpers.js';
 
 test('readCell: an empty (never-written) cell is normalized to "" width 1, default colours', async () => {
   const term = makeTerm(4, 1);
   const cell = readCell(term, 0, 0);
-  assert.equal(cell.char, '');
-  assert.equal(cell.width, 1);
-  assert.equal(cell.fg.mode, 'default');
-  assert.equal(cell.bg.mode, 'default');
+  expect(cell.char).toBe('');
+  expect(cell.width).toBe(1);
+  expect(cell.fg.mode).toBe('default');
+  expect(cell.bg.mode).toBe('default');
 });
 
 test('readCell: the trailing continuation of a wide glyph is "" width 0', async () => {
@@ -28,26 +27,26 @@ test('readCell: the trailing continuation of a wide glyph is "" width 0', async 
   await feed(term, '漢');
   const lead = readCell(term, 0, 0);
   const cont = readCell(term, 1, 0);
-  assert.equal(lead.char, '漢');
-  assert.equal(lead.width, 2);
-  assert.equal(cont.char, '');
-  assert.equal(cont.width, 0);
+  expect(lead.char).toBe('漢');
+  expect(lead.width).toBe(2);
+  expect(cont.char).toBe('');
+  expect(cont.width).toBe(0);
 });
 
 test('readCell: a plain char with no SGR reports default fg/bg', async () => {
   const term = makeTerm(4, 1);
   await feed(term, 'A');
   const cell = readCell(term, 0, 0);
-  assert.equal(cell.char, 'A');
-  assert.equal(cell.width, 1);
-  assert.equal(cell.fg.mode, 'default');
-  assert.equal(cell.bg.mode, 'default');
+  expect(cell.char).toBe('A');
+  expect(cell.width).toBe(1);
+  expect(cell.fg.mode).toBe('default');
+  expect(cell.bg.mode).toBe('default');
 });
 
 test('reverseState: normalizes the inverse attribute (SGR 7) to a boolean', async () => {
   const term = makeTerm(4, 1);
   // A plain char with no SGR is not inverse; SGR 7 ("\x1b[7m") sets it.
   await feed(term, 'A\x1b[7mB');
-  assert.equal(reverseState(term, 0, 0), false, 'a plain cell is not inverse');
-  assert.equal(reverseState(term, 1, 0), true, 'a cell drawn under SGR 7 is inverse');
+  expect(reverseState(term, 0, 0)).toBe(false);
+  expect(reverseState(term, 1, 0)).toBe(true);
 });

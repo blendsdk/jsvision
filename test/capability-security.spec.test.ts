@@ -8,8 +8,7 @@
  *
  * Traceability: AC-8 / ST-20.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { resolveCapabilities, resolveCapabilitiesAsync } from '../src/engine/capability/index.js';
 import type { TerminalQuery } from '../src/engine/capability/profile.js';
@@ -73,7 +72,7 @@ test('ST-20: synchronous resolve logs no environment value', async () => {
   });
 
   for (const value of Object.values(SENTINELS)) {
-    assert.ok(!output.includes(value), `env value leaked to console: ${value}`);
+    expect(!output.includes(value)).toBeTruthy();
   }
 });
 
@@ -89,6 +88,6 @@ test('ST-20: async resolve (with query) logs no environment value', async () => 
   });
 
   for (const value of Object.values(SENTINELS)) {
-    assert.ok(!output.includes(value), `env value leaked to console: ${value}`);
+    expect(!output.includes(value)).toBeTruthy();
   }
 });

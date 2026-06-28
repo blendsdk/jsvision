@@ -10,8 +10,7 @@
  * exactly the same output as the same call with the already-control-stripped
  * string. If sanitization is missing or partial, the two diverge.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { sanitize } from '../src/engine/safety/sanitize.js';
 import { notify, setTitle, hyperlink, setClipboard } from '../src/engine/render/osc.js';
@@ -54,21 +53,21 @@ const ITERM_CAPS = caps({
 
 test('ST-14: sanitize strips ESC and BEL from an injection attempt', () => {
   const out = sanitize(MALICIOUS);
-  assert.ok(!out.includes('\x1b'), 'no ESC');
-  assert.ok(!out.includes('\x07'), 'no BEL');
+  expect(!out.includes('\x1b')).toBeTruthy();
+  expect(!out.includes('\x07')).toBeTruthy();
 });
 
 test('ST-14: sanitize preserves tab and newline in plain UTF-8', () => {
-  assert.equal(sanitize('héllo\tworld\n世'), 'héllo\tworld\n世');
+  expect(sanitize('héllo\tworld\n世')).toBe('héllo\tworld\n世');
 });
 
 test('ST-14: each control form is individually stripped', () => {
-  assert.equal(sanitize('\x1b'), '', 'ESC');
-  assert.equal(sanitize('\x07'), '', 'BEL');
-  assert.equal(sanitize('\x9c'), '', 'ST (C1 single byte)');
-  assert.equal(sanitize('a\x1b\\b'), 'ab', 'ST (ESC backslash form)');
-  assert.equal(sanitize('\x01'), '', 'C0 sample SOH');
-  assert.equal(sanitize('\x85'), '', 'C1 sample NEL');
+  expect(sanitize('\x1b')).toBe('');
+  expect(sanitize('\x07')).toBe('');
+  expect(sanitize('\x9c')).toBe('');
+  expect(sanitize('a\x1b\\b')).toBe('ab');
+  expect(sanitize('\x01')).toBe('');
+  expect(sanitize('\x85')).toBe('');
 });
 
 // ---------------------------------------------------------------------------
@@ -83,29 +82,28 @@ function paint(s: string): string {
 }
 
 test('ST-8: buffer text() path strips control bytes before serialize', () => {
-  assert.equal(paint(MALICIOUS), paint(BENIGN));
+  expect(paint(MALICIOUS)).toBe(paint(BENIGN));
   const out = paint(MALICIOUS);
-  assert.ok(!out.includes('\x07'), 'no BEL from the argument');
-  assert.ok(!out.includes('\x1b]'), 'no OSC introducer from the argument');
+  expect(!out.includes('\x07')).toBeTruthy();
+  expect(!out.includes('\x1b]')).toBeTruthy();
 });
 
 test('ST-8: notify() body path strips control bytes', () => {
-  assert.equal(notify('t', MALICIOUS, ITERM_CAPS), notify('t', BENIGN, ITERM_CAPS));
+  expect(notify('t', MALICIOUS, ITERM_CAPS)).toBe(notify('t', BENIGN, ITERM_CAPS));
 });
 
 test('ST-8: setTitle() path strips control bytes', () => {
-  assert.equal(setTitle(MALICIOUS, TITLE_CAPS), setTitle(BENIGN, TITLE_CAPS));
+  expect(setTitle(MALICIOUS, TITLE_CAPS)).toBe(setTitle(BENIGN, TITLE_CAPS));
 });
 
 test('ST-8: hyperlink() text path strips control bytes', () => {
-  assert.equal(
-    hyperlink(MALICIOUS, 'http://example.com', LINK_CAPS),
+  expect(hyperlink(MALICIOUS, 'http://example.com', LINK_CAPS)).toBe(
     hyperlink(BENIGN, 'http://example.com', LINK_CAPS),
   );
 });
 
 test('ST-8: setClipboard() path strips control bytes before base64', () => {
-  assert.equal(setClipboard(MALICIOUS, CLIP_CAPS), setClipboard(BENIGN, CLIP_CAPS));
+  expect(setClipboard(MALICIOUS, CLIP_CAPS)).toBe(setClipboard(BENIGN, CLIP_CAPS));
 });
 
 // ---------------------------------------------------------------------------
@@ -114,6 +112,6 @@ test('ST-8: setClipboard() path strips control bytes before base64', () => {
 
 test('ST-7: an injected sequence in the notify body cannot open a second OSC', () => {
   const out = notify('t', 'evil\x1b]0;pwned\x07', ITERM_CAPS);
-  assert.equal(count(out, '\x1b]'), 1, 'exactly one OSC introducer (the frame)');
-  assert.equal(count(out, '\x07'), 1, 'exactly one terminator (the frame)');
+  expect(count(out, '\x1b]')).toBe(1);
+  expect(count(out, '\x07')).toBe(1);
 });

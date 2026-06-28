@@ -5,8 +5,7 @@
  * detach on `return()`, `close()` idempotency, and graceful end on a stream error.
  * Real `PassThrough` streams (no mocks).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { PassThrough } from 'node:stream';
 
 import { createTerminalQuery } from '../src/engine/host/terminal-query.js';
@@ -21,8 +20,8 @@ test('bytes arriving between iterations are queued and delivered in order', asyn
     await new Promise((resolve) => setImmediate(resolve)); // let both 'data' events queue
     const first = await iterator.next();
     const second = await iterator.next();
-    assert.deepEqual(Array.from(first.value as Uint8Array), [1, 2]);
-    assert.deepEqual(Array.from(second.value as Uint8Array), [3, 4]);
+    expect(Array.from(first.value as Uint8Array)).toStrictEqual([1, 2]);
+    expect(Array.from(second.value as Uint8Array)).toStrictEqual([3, 4]);
   } finally {
     await iterator.return?.(undefined);
     query.close();
@@ -33,9 +32,9 @@ test('return() detaches the input listeners', async () => {
   const input = new PassThrough();
   const query = createTerminalQuery({ input });
   const iterator = query.read()[Symbol.asyncIterator]();
-  assert.equal(input.listenerCount('data'), 1);
+  expect(input.listenerCount('data')).toBe(1);
   await iterator.return?.(undefined);
-  assert.equal(input.listenerCount('data'), 0);
+  expect(input.listenerCount('data')).toBe(0);
   query.close();
 });
 
@@ -47,7 +46,7 @@ test('close() is idempotent and ends a pending read as done', async () => {
   query.close();
   query.close(); // idempotent — must not throw
   const result = await pending;
-  assert.equal(result.done, true);
+  expect(result.done).toBe(true);
 });
 
 test('a stream error ends iteration cleanly without throwing', async () => {
@@ -57,6 +56,6 @@ test('a stream error ends iteration cleanly without throwing', async () => {
   const pending = iterator.next();
   input.emit('error', new Error('boom')); // handled by the adapter, not unhandled
   const result = await pending;
-  assert.equal(result.done, true);
+  expect(result.done).toBe(true);
   query.close();
 });

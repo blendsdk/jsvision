@@ -17,8 +17,7 @@
  * The `.js` extension in the import specifier is required by NodeNext ESM
  * resolution (it resolves to the `.ts` source during development via tsx).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { createDecoderState, decode, flush } from '../src/engine/index.js';
@@ -52,8 +51,8 @@ for (const file of loadCorpusFiles(CORPUS_DIR)) {
   for (const record of file.cases) {
     test(`corpus: ${file.name} / ${record.name}`, () => {
       const { events, queries } = runRecord(record);
-      assert.deepEqual(events, record.expectedEvents);
-      assert.deepEqual(queries, record.expectedQueries ?? []);
+      expect(events).toStrictEqual(record.expectedEvents);
+      expect(queries).toStrictEqual(record.expectedQueries ?? []);
     });
   }
 }

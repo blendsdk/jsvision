@@ -6,8 +6,7 @@
  * encoder is now `serialize()`'s default, so a frame DOWNSAMPLES by default at 256
  * while still emitting full truecolor at `truecolor` depth (RD-04 oracle preserved).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { serialize } from '../src/engine/render/serialize.js';
 import { ScreenBuffer } from '../src/engine/render/buffer.js';
@@ -27,8 +26,8 @@ test('ST-17: a brightRed cell downsamples to 38;5;9 at colorDepth 256', () => {
   const current = blank(4, 1);
   current.set(0, 0, 'a', { fg: 'brightRed', bg: 'default' });
   const out = serialize(current, previous, { caps: caps({ colorDepth: '256' }) });
-  assert.ok(out.includes('38;5;9'), 'downsampled 256 index for brightRed');
-  assert.ok(!out.includes('38;2'), 'no truecolor over-emit at 256');
+  expect(out.includes('38;5;9')).toBeTruthy();
+  expect(!out.includes('38;2')).toBeTruthy();
 });
 
 test('ST-17: the same cell still emits full truecolor at colorDepth truecolor', () => {
@@ -36,5 +35,5 @@ test('ST-17: the same cell still emits full truecolor at colorDepth truecolor', 
   const current = blank(4, 1);
   current.set(0, 0, 'a', { fg: 'brightRed', bg: 'default' });
   const out = serialize(current, previous, { caps: caps({ colorDepth: 'truecolor' }) });
-  assert.ok(out.includes('38;2;255;0;0'), 'truecolor preserved (RD-04 oracle)');
+  expect(out.includes('38;2;255;0;0')).toBeTruthy();
 });

@@ -5,8 +5,7 @@
  * matrix is a JSON array of report objects; each run appends one. Expectations
  * derive from the spec, not the implementation. The fs seam is in-memory (no disk).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { appendToMatrix } from '../examples/capability-probe/matrix.js';
 import type { MatrixFs } from '../examples/capability-probe/matrix.js';
@@ -38,9 +37,9 @@ function memFs(initial: string | null): MatrixFs & { content: () => string | nul
 test('ST-13: append to an absent matrix creates a single-element array', () => {
   const fs = memFs(null);
   const result = appendToMatrix({ fs, path: 'terminal-matrix.json', report: sampleReport('xterm') });
-  assert.equal(result.length, 1);
-  assert.equal(result[0].term, 'xterm');
-  assert.ok(fs.content() !== null, 'the file was written');
+  expect(result.length).toBe(1);
+  expect(result[0].term).toBe('xterm');
+  expect(fs.content() !== null).toBeTruthy();
 });
 
 // ST-14: appending to an existing matrix preserves prior entries in order.
@@ -48,9 +47,9 @@ test('ST-14: append to an existing matrix yields N+1 preserving order', () => {
   const first = sampleReport('alacritty');
   const fs = memFs(JSON.stringify([first], null, 2));
   const result = appendToMatrix({ fs, path: 'terminal-matrix.json', report: sampleReport('kitty') });
-  assert.equal(result.length, 2);
-  assert.equal(result[0].term, 'alacritty', 'prior entry preserved first');
-  assert.equal(result[1].term, 'kitty', 'new entry appended last');
+  expect(result.length).toBe(2);
+  expect(result[0].term).toBe('alacritty');
+  expect(result[1].term).toBe('kitty');
 });
 
 // ST-15: the written content parses as a JSON array of reports.
@@ -58,6 +57,6 @@ test('ST-15: the written matrix is a JSON array', () => {
   const fs = memFs(null);
   appendToMatrix({ fs, path: 'terminal-matrix.json', report: sampleReport('xterm') });
   const parsed: unknown = JSON.parse(fs.content() ?? 'null');
-  assert.ok(Array.isArray(parsed), 'content is a JSON array');
-  assert.equal((parsed as Report[]).length, 1);
+  expect(Array.isArray(parsed)).toBeTruthy();
+  expect((parsed as Report[]).length).toBe(1);
 });

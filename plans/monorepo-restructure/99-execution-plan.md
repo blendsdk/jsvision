@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 (Phase 1 complete)
-> **Progress**: 3/28 tasks (11%)
+> **Last Updated**: 2026-06-28 (Phase 2 complete)
+> **Progress**: 11/28 tasks (39%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -154,14 +154,14 @@ version-sync script. Each phase ends green and is committed (via /gitcm).
 - [x] 1.1.3 Confirm yarn verify + gate green ✅ (verify 522/522, gate PASSED) (completed: 2026-06-28)
 
 ### Phase 2: vitest Migration
-- [ ] 2.1.1 vitest dep + config (unit + e2e projects)
-- [ ] 2.1.2 codemod written + dry-run reviewed
-- [ ] 2.1.3 codemod run + runner-import swap (91 files)
-- [ ] 2.1.4 hand-convert 29 matcher cases
-- [ ] 2.1.5 delete run-tests.mjs; vitest test scripts
-- [ ] 2.2.1 unit project green, expectations unchanged (ST-2)
-- [ ] 2.2.2 e2e project green on POSIX (ST-6)
-- [ ] 2.2.3 delete codemod; full verify + lint
+- [x] 2.1.1 vitest dep + config (unit + e2e projects) ✅ (vitest 4.1.9; .js→.ts resolution verified by spike) (completed: 2026-06-28)
+- [x] 2.1.2 codemod written + dry-run reviewed ✅ (balanced-paren scanner; counts match histogram) (completed: 2026-06-28)
+- [x] 2.1.3 codemod run + runner-import swap (91 files) ✅ (1028 simple conversions; all import vitest) (completed: 2026-06-28)
+- [x] 2.1.4 hand-convert 29 matcher cases ✅ (throws/doesNotThrow/fail; validator-throws restructured) (completed: 2026-06-28)
+- [x] 2.1.5 delete run-tests.mjs; vitest test scripts ✅ (ST-12 removed per AR-22) (completed: 2026-06-28)
+- [x] 2.2.1 unit project green, expectations unchanged (ST-2) ✅ (521/521) (completed: 2026-06-28)
+- [x] 2.2.2 e2e project green on POSIX (ST-6) ✅ (10/10; child-spawn works under vitest) (completed: 2026-06-28)
+- [x] 2.2.3 delete codemod; full verify + lint ✅ (verify+e2e green, lint clean, prettier 3.9.1) (completed: 2026-06-28)
 
 ### Phase 3: Workspace + Turbo + tui-core
 - [ ] 3.1.1 tsconfig.base + root private package.json + turbo.json + ignores

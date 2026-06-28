@@ -9,8 +9,7 @@
  * Capabilities come from RD-02's `resolveCapabilities({ override })` with a clean
  * env so no real terminal is needed.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { enterMode, leaveMode } from '../src/engine/host/modes.js';
 import { createHost } from '../src/engine/host/host.js';
@@ -32,38 +31,38 @@ function caps(override: DeepPartial<CapabilityProfile> = {}): CapabilityProfile 
 
 test('modes: altScreen off omits ?1049', () => {
   const out = enterMode(caps({ altScreen: false }));
-  assert.equal(out.includes('?1049'), false);
+  expect(out.includes('?1049')).toBe(false);
 });
 
 test('modes: mouse.sgr false omits all mouse modes', () => {
   const out = enterMode(caps({ mouse: { sgr: false, drag: true, wheel: true } }));
-  assert.equal(out.includes('?1006'), false, 'no SGR encoding');
-  assert.equal(out.includes('?1000'), false, 'no basic tracking');
-  assert.equal(out.includes('?1002'), false, 'no button-event tracking');
+  expect(out.includes('?1006')).toBe(false);
+  expect(out.includes('?1000')).toBe(false);
+  expect(out.includes('?1002')).toBe(false);
 });
 
 test('modes: drag off keeps SGR+basic mouse but omits ?1002 (PF-003)', () => {
   const out = enterMode(caps({ mouse: { sgr: true, drag: false, wheel: true } }));
-  assert.ok(out.includes('?1006h'), 'SGR encoding present');
-  assert.ok(out.includes('?1000h'), 'basic tracking present');
-  assert.equal(out.includes('?1002'), false, 'button-event (drag) omitted when drag is false');
+  expect(out.includes('?1006h')).toBeTruthy();
+  expect(out.includes('?1000h')).toBeTruthy();
+  expect(out.includes('?1002')).toBe(false);
 });
 
 test('modes: any-motion tracking ?1003 is never emitted (PF-003)', () => {
   const full = caps({ mouse: { sgr: true, drag: true, wheel: true } });
-  assert.equal(enterMode(full).includes('?1003'), false);
-  assert.equal(leaveMode(full).includes('?1003'), false);
+  expect(enterMode(full).includes('?1003')).toBe(false);
+  expect(leaveMode(full).includes('?1003')).toBe(false);
 });
 
 test('modes: bracketedPaste false omits ?2004', () => {
   const out = enterMode(caps({ bracketedPaste: false }));
-  assert.equal(out.includes('?2004'), false);
+  expect(out.includes('?2004')).toBe(false);
 });
 
 test('modes: colorDepth does not affect mode sequences', () => {
   const mono = enterMode(caps({ colorDepth: 'mono' }));
   const truecolor = enterMode(caps({ colorDepth: 'truecolor' }));
-  assert.equal(mono, truecolor, 'mode setup is independent of color depth');
+  expect(mono).toBe(truecolor);
 });
 
 // ---------------------------------------------------------------------------
@@ -71,13 +70,13 @@ test('modes: colorDepth does not affect mode sequences', () => {
 // ---------------------------------------------------------------------------
 
 test('modes: focus defaults on (?1004h present)', () => {
-  assert.ok(enterMode(caps()).includes('?1004h'));
+  expect(enterMode(caps()).includes('?1004h')).toBeTruthy();
 });
 
 test('modes: focus:false omits ?1004h on enter and ?1004l on leave (PF-006)', () => {
   const profile = caps({ altScreen: true, bracketedPaste: true });
-  assert.equal(enterMode(profile, { focus: false }).includes('?1004'), false);
-  assert.equal(leaveMode(profile, { focus: false }).includes('?1004'), false);
+  expect(enterMode(profile, { focus: false }).includes('?1004')).toBe(false);
+  expect(leaveMode(profile, { focus: false }).includes('?1004')).toBe(false);
 });
 
 // ---------------------------------------------------------------------------
@@ -89,10 +88,10 @@ test('modes: keyboard caps enabled still emit no keyboard-protocol bytes (DEF-2)
   const enter = enterMode(kb);
   const leave = leaveMode(kb);
   // No Kitty push/pop (CSI > … u / CSI < … u) and no modifyOtherKeys (CSI > 4 ; … m).
-  assert.equal(/\x1b\[>\d*u/.test(enter), false, 'no Kitty push on enter');
-  assert.equal(/\x1b\[<\d*u/.test(leave), false, 'no Kitty pop on leave');
-  assert.equal(/\x1b\[>4;\d+m/.test(enter), false, 'no modifyOtherKeys on enter');
-  assert.equal(/\x1b\[>4;\d+m/.test(leave), false, 'no modifyOtherKeys on leave');
+  expect(/\x1b\[>\d*u/.test(enter)).toBe(false);
+  expect(/\x1b\[<\d*u/.test(leave)).toBe(false);
+  expect(/\x1b\[>4;\d+m/.test(enter)).toBe(false);
+  expect(/\x1b\[>4;\d+m/.test(leave)).toBe(false);
 });
 
 // ---------------------------------------------------------------------------
@@ -105,9 +104,9 @@ test('modes: leave disables exactly the modes enter enabled (drag-off profile)',
   const leave = leaveMode(profile);
   const enabled = [...enter.matchAll(/\?(\d+)h/g)].map((m) => m[1]);
   for (const mode of enabled) {
-    assert.ok(leave.includes(`?${mode}l`), `leave disables ?${mode}`);
+    expect(leave.includes(`?${mode}l`)).toBeTruthy();
   }
-  assert.equal(enabled.includes('1002'), false, 'drag mode 1002 not among enabled');
+  expect(enabled.includes('1002')).toBe(false);
 });
 
 // ---------------------------------------------------------------------------
@@ -144,17 +143,17 @@ test('orchestrator: new bytes cancel the armed ESC timer (no spurious Escape)', 
   input.feed(Uint8Array.from([0x5b, 0x41])); // completes ESC [ A → up; cancels the timer
   adapter.advanceTimer(100); // timer was cleared — must fire nothing
   await host.stop();
-  assert.deepEqual(events, [{ type: 'key', key: 'up', ctrl: false, alt: false, shift: false }]);
+  expect(events).toStrictEqual([{ type: 'key', key: 'up', ctrl: false, alt: false, shift: false }]);
 });
 
 test('orchestrator: stop removes the data listener; later bytes are ignored', async () => {
   const { host, input, events } = harness();
   await host.start();
-  assert.equal(input.listenerCount('data'), 1, 'one data listener while running');
+  expect(input.listenerCount('data')).toBe(1);
   await host.stop();
-  assert.equal(input.listenerCount('data'), 0, 'listener removed on stop');
+  expect(input.listenerCount('data')).toBe(0);
   input.feed(Uint8Array.from([0x1b, 0x5b, 0x41]));
-  assert.equal(events.length, 0, 'bytes after stop are not dispatched');
+  expect(events.length).toBe(0);
 });
 
 test('orchestrator: restart re-attaches exactly one listener (no leak across cycles)', async () => {
@@ -162,10 +161,10 @@ test('orchestrator: restart re-attaches exactly one listener (no leak across cyc
   await host.start();
   await host.stop();
   await host.start();
-  assert.equal(input.listenerCount('data'), 1, 'no listener leak after a start/stop/start cycle');
+  expect(input.listenerCount('data')).toBe(1);
   input.feed(Uint8Array.from([0x1b, 0x5b, 0x41]));
   await host.stop();
-  assert.deepEqual(events, [{ type: 'key', key: 'up', ctrl: false, alt: false, shift: false }]);
+  expect(events).toStrictEqual([{ type: 'key', key: 'up', ctrl: false, alt: false, shift: false }]);
 });
 
 test('orchestrator: an unchanged frame re-render writes nothing (empty diff)', async () => {
@@ -179,18 +178,14 @@ test('orchestrator: an unchanged frame re-render writes nothing (empty diff)', a
   b.set(1, 0, 'Z', { fg: 'default', bg: 'default' });
   host.render(b); // identical content → empty diff → no write
   await host.stop();
-  assert.equal(
-    output.data.length,
-    afterFirst + leaveMode(caps({ altScreen: true })).length,
-    'second render wrote nothing (only leave-mode follows)',
-  );
+  expect(output.data.length).toBe(afterFirst + leaveMode(caps({ altScreen: true })).length);
 });
 
 test('orchestrator: render before start is a no-op (no throw, no write)', () => {
   const { host, output } = harness();
   const buf = new ScreenBuffer(4, 1, { fg: 'default', bg: 'default' });
-  assert.doesNotThrow(() => host.render(buf));
-  assert.equal(output.data, '', 'nothing written before start');
+  expect(() => host.render(buf)).not.toThrow();
+  expect(output.data).toBe('');
 });
 
 // ---------------------------------------------------------------------------
@@ -202,9 +197,9 @@ test('hardening: restore runs once across the async signal and the sync exit bac
   await host.start();
   expectExit(() => adapter.emit('interrupt')); // async restore + exit 130
   adapter.emitProcessExit(); // sync backstop — must be a no-op (done guard)
-  assert.equal(occurrences(output.data, leaveMode(caps({ altScreen: true }))), 1, 'leave-mode written exactly once');
-  assert.equal(adapter.writeSyncCalls.length, 0, 'no sync restore after the async one already ran');
-  assert.deepEqual(adapter.exits, [130]);
+  expect(occurrences(output.data, leaveMode(caps({ altScreen: true })))).toBe(1);
+  expect(adapter.writeSyncCalls.length).toBe(0);
+  expect(adapter.exits).toStrictEqual([130]);
 });
 
 test('hardening: a non-EPIPE output error routes through handleFatal (exit 1, no throw leak)', async () => {
@@ -213,10 +208,10 @@ test('hardening: a non-EPIPE output error routes through handleFatal (exit 1, no
   await host.start();
   const err = Object.assign(new Error('disk gone'), { code: 'EACCES' });
   expectExit(() => output.emit('error', err));
-  assert.ok(adapter.errorOutput.includes('disk gone'), 'error written to stderr channel');
-  assert.deepEqual(codes, [1], 'onBeforeExit(1)');
-  assert.deepEqual(adapter.exits, [1], 'fatal exit 1');
-  assert.ok(output.data.includes(leaveMode(caps({ altScreen: true }))), 'terminal restored');
+  expect(adapter.errorOutput.includes('disk gone')).toBeTruthy();
+  expect(codes).toStrictEqual([1]);
+  expect(adapter.exits).toStrictEqual([1]);
+  expect(output.data.includes(leaveMode(caps({ altScreen: true })))).toBeTruthy();
 });
 
 test('hardening: exitOnSignal:false restores and notifies but never exits', async () => {
@@ -224,9 +219,9 @@ test('hardening: exitOnSignal:false restores and notifies but never exits', asyn
   const { host, adapter, output } = harness({ exitOnSignal: false, onBeforeExit: (c) => codes.push(c) });
   await host.start();
   adapter.emit('interrupt'); // no exit → no ProcessExitError to catch
-  assert.deepEqual(adapter.exits, [], 'process never exited');
-  assert.deepEqual(codes, [130], 'onBeforeExit(130) still fired');
-  assert.ok(output.data.includes(leaveMode(caps({ altScreen: true }))), 'terminal still restored');
+  expect(adapter.exits).toStrictEqual([]);
+  expect(codes).toStrictEqual([130]);
+  expect(output.data.includes(leaveMode(caps({ altScreen: true })))).toBeTruthy();
   await host.stop();
 });
 
@@ -242,7 +237,7 @@ test('hardening: resize reads the final size once at immediate-drain time', asyn
   adapter.emit('resize');
   adapter.flushImmediates(); // … and is read once, here
   await host.stop();
-  assert.deepEqual(sizes, [{ columns: 120, rows: 30 }], 'one event with the final size');
+  expect(sizes).toStrictEqual([{ columns: 120, rows: 30 }]);
 });
 
 test('hardening: no signal/exit handler leaks across start/stop cycles', async () => {
@@ -251,20 +246,20 @@ test('hardening: no signal/exit handler leaks across start/stop cycles', async (
     await host.start();
     await host.stop();
   }
-  assert.equal(input.listenerCount('data'), 0, 'no data listeners remain');
-  assert.equal(output.listenerCount('error'), 0, 'no error listeners remain');
-  assert.equal(adapter.pendingSignalHandlers, 0, 'no signal handlers remain');
-  assert.equal(adapter.pendingExitHandlers, 0, 'no exit backstop handlers remain');
+  expect(input.listenerCount('data')).toBe(0);
+  expect(output.listenerCount('error')).toBe(0);
+  expect(adapter.pendingSignalHandlers).toBe(0);
+  expect(adapter.pendingExitHandlers).toBe(0);
 });
 
 test('hardening: bindStreams degrades gracefully with default streams (/dev/tty fallback)', () => {
   // In a non-TTY test runner /dev/tty open fails and bindStreams falls back to
   // the std streams; in a real terminal it binds /dev/tty. Either way: no throw.
-  assert.doesNotThrow(() => {
+  expect(() => {
     const bound = bindStreams({ caps: caps(), preferDevTty: true });
-    assert.equal(typeof bound.isTTY, 'boolean');
+    expect(typeof bound.isTTY).toBe('boolean');
     bound.dispose();
-  });
+  }).not.toThrow();
 });
 
 /** Count non-overlapping occurrences of `needle` in `haystack`. */

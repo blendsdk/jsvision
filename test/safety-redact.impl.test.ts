@@ -5,30 +5,29 @@
  * `dumpCaps` coverage across every reason layer plus the all-false group → `-`
  * rule. Complements the ST-14…ST-18 spec oracle.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { redactEvent, dumpCaps } from '../src/engine/safety/index.js';
 import type { CapabilityResolution } from '../src/engine/capability/index.js';
 
 test('a wheel event passes its direction and coordinates through', () => {
   const r = redactEvent({ type: 'wheel', dir: 'up', x: 7, y: 9 });
-  assert.deepEqual(r, { type: 'wheel', dir: 'up', x: 7, y: 9 });
+  expect(r).toStrictEqual({ type: 'wheel', dir: 'up', x: 7, y: 9 });
 });
 
 test('a focus event passes its flag through', () => {
-  assert.deepEqual(redactEvent({ type: 'focus', focused: true }), { type: 'focus', focused: true });
-  assert.deepEqual(redactEvent({ type: 'focus', focused: false }), { type: 'focus', focused: false });
+  expect(redactEvent({ type: 'focus', focused: true })).toStrictEqual({ type: 'focus', focused: true });
+  expect(redactEvent({ type: 'focus', focused: false })).toStrictEqual({ type: 'focus', focused: false });
 });
 
 test('a named key with modifiers keeps the name and the modifier flags', () => {
   const r = redactEvent({ type: 'key', key: 'tab', ctrl: true, alt: false, shift: true });
-  assert.deepEqual(r, { type: 'key', key: 'tab', ctrl: true, alt: false, shift: true });
+  expect(r).toStrictEqual({ type: 'key', key: 'tab', ctrl: true, alt: false, shift: true });
 });
 
 test('a printable key with modifiers still drops the character', () => {
   const r = redactEvent({ type: 'key', key: 'A', codepoint: 0x41, ctrl: false, alt: true, shift: true });
-  assert.deepEqual(r, { type: 'key', printable: true, ctrl: false, alt: true, shift: true });
+  expect(r).toStrictEqual({ type: 'key', printable: true, ctrl: false, alt: true, shift: true });
 });
 
 test('dumpCaps renders every reason layer name and collapses an all-false group', () => {
@@ -72,13 +71,13 @@ test('dumpCaps renders every reason layer name and collapses an all-false group'
   const out = dumpCaps(resolution);
   // Every layer name appears at least once.
   for (const layer of ['override', 'runtime', 'env', 'table', 'default']) {
-    assert.match(out, new RegExp(`\\(${layer}\\)`), `layer ${layer} present`);
+    expect(out).toMatch(new RegExp(`\\(${layer}\\)`));
   }
   // All-false group collapses to `-`.
-  assert.match(out, /mouse=- \(runtime\)/);
+  expect(out).toMatch(/mouse=- \(runtime\)/);
   // Non-boolean nested fields render name:value.
-  assert.match(out, /widthMode:ambiguous-wide/);
-  assert.match(out, /emoji:wide/);
+  expect(out).toMatch(/widthMode:ambiguous-wide/);
+  expect(out).toMatch(/emoji:wide/);
   // Exactly one `(layer)` pair per CapabilityReasons key (11 keys).
-  assert.equal(out.match(/\([a-z]+\)/g)?.length, 11);
+  expect(out.match(/\([a-z]+\)/g)?.length).toBe(11);
 });

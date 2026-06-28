@@ -16,8 +16,7 @@
  * The `.js` extension on the dist specifier is the real shipped path; esbuild
  * resolves it against `resolveDir` (the repo root).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
@@ -47,12 +46,9 @@ test('ST-4: a one-symbol import tree-shakes far smaller than the full library', 
   const full = await bundleSize(`import * as tui from './dist/engine/index.js'; console.log(tui);`);
   const one = await bundleSize(`import { VERSION } from './dist/engine/index.js'; console.log(VERSION);`);
 
-  assert.ok(full > 0 && one > 0, 'both bundles produced output');
+  expect(full > 0 && one > 0).toBeTruthy();
   // 0.5 has clear margin in practice (VERSION pulls in ~nothing; the full surface
   // pulls in every subsystem) yet still fails loudly if `sideEffects` regresses
   // and the whole library is dragged into a single-symbol import.
-  assert.ok(
-    one < full * 0.5,
-    `one-symbol import (${one}b) should be ≪ full all-exports import (${full}b) — tree-shaking failed`,
-  );
+  expect(one < full * 0.5).toBeTruthy();
 });

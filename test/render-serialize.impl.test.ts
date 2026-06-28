@@ -5,8 +5,7 @@
  * paint, the default encoder's mono vs truecolor behavior, and an injected
  * custom encoder. Complements the ST spec oracles.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { serialize } from '../src/engine/render/serialize.js';
 import type { StyleEncoder } from '../src/engine/render/serialize.js';
@@ -37,7 +36,7 @@ function count(haystack: string, needle: string): number {
 test('full first paint (previous === null) emits every cell', () => {
   const current = new ScreenBuffer(3, 2, { fg: 'default', bg: 'default', char: 'Q' });
   const out = serialize(current, null, { caps: caps() });
-  assert.equal(count(out, 'Q'), 6);
+  expect(count(out, 'Q')).toBe(6);
 });
 
 test('changed cells on two different rows each get their own cursor move', () => {
@@ -46,9 +45,9 @@ test('changed cells on two different rows each get their own cursor move', () =>
   current.set(0, 0, 'A', DEFAULT_STYLE);
   current.set(4, 2, 'B', DEFAULT_STYLE);
   const out = serialize(current, previous, { caps: caps() });
-  assert.equal(count(out, '\x1b[1;1H'), 1, 'row 1 col 1');
-  assert.equal(count(out, '\x1b[3;5H'), 1, 'row 3 col 5');
-  assert.equal(count(out, 'H'), 2, 'exactly two cursor moves');
+  expect(count(out, '\x1b[1;1H')).toBe(1);
+  expect(count(out, '\x1b[3;5H')).toBe(1);
+  expect(count(out, 'H')).toBe(2);
 });
 
 test('a run broken by an unchanged cell becomes two runs with two cursor moves', () => {
@@ -58,9 +57,9 @@ test('a run broken by an unchanged cell becomes two runs with two cursor moves',
   // (1,0) stays an unchanged space.
   current.set(2, 0, 'B', DEFAULT_STYLE);
   const out = serialize(current, previous, { caps: caps() });
-  assert.equal(count(out, '\x1b[1;1H'), 1);
-  assert.equal(count(out, '\x1b[1;3H'), 1);
-  assert.equal(count(out, 'H'), 2);
+  expect(count(out, '\x1b[1;1H')).toBe(1);
+  expect(count(out, '\x1b[1;3H')).toBe(1);
+  expect(count(out, 'H')).toBe(2);
 });
 
 test('default encoder is monochrome under colorDepth mono (no color SGR)', () => {
@@ -68,7 +67,7 @@ test('default encoder is monochrome under colorDepth mono (no color SGR)', () =>
   const current = blank(4, 1);
   current.set(0, 0, 'a', { fg: '#ff0000', bg: 'default' });
   const out = serialize(current, previous, { caps: caps({ colorDepth: 'mono' }) });
-  assert.equal(count(out, '38;2'), 0, 'mono emits no truecolor SGR');
+  expect(count(out, '38;2')).toBe(0);
 });
 
 test('default encoder emits truecolor under a color depth', () => {
@@ -76,7 +75,7 @@ test('default encoder emits truecolor under a color depth', () => {
   const current = blank(4, 1);
   current.set(0, 0, 'a', { fg: '#ff0000', bg: 'default' });
   const out = serialize(current, previous, { caps: caps({ colorDepth: 'truecolor' }) });
-  assert.equal(count(out, '38;2;255;0;0'), 1);
+  expect(count(out, '38;2;255;0;0')).toBe(1);
 });
 
 test('default encoder emits attribute SGR codes even when mono', () => {
@@ -85,7 +84,7 @@ test('default encoder emits attribute SGR codes even when mono', () => {
   current.set(0, 0, 'a', { fg: 'default', bg: 'default', attrs: Attr.bold | Attr.underline });
   const out = serialize(current, previous, { caps: caps({ colorDepth: 'mono' }) });
   // bold=1, underline=4 combined into one SGR.
-  assert.ok(out.includes('\x1b[1;4m'), 'bold + underline attribute SGR present');
+  expect(out.includes('\x1b[1;4m')).toBeTruthy();
 });
 
 test('the default encoder downsamples a named color at colorDepth 256 (RD-05)', () => {
@@ -94,8 +93,8 @@ test('the default encoder downsamples a named color at colorDepth 256 (RD-05)', 
   current.set(0, 0, 'a', { fg: 'brightRed', bg: 'default' });
   const out = serialize(current, previous, { caps: caps({ colorDepth: '256' }) });
   // RD-05: the depth-aware default downsamples brightRed → 256 index 9 (no truecolor over-emit).
-  assert.equal(count(out, '38;5;9'), 1, 'brightRed → 256 index 9');
-  assert.equal(count(out, '38;2'), 0, 'no truecolor at 256');
+  expect(count(out, '38;5;9')).toBe(1);
+  expect(count(out, '38;2')).toBe(0);
 });
 
 test('an injected custom encoder is used instead of the default', () => {
@@ -104,8 +103,8 @@ test('an injected custom encoder is used instead of the default', () => {
   current.set(0, 0, 'a', { fg: '#ff0000', bg: 'default' });
   const tag: StyleEncoder = () => '\x1b[99m';
   const out = serialize(current, previous, { caps: caps({ colorDepth: 'truecolor' }), encodeStyle: tag });
-  assert.ok(out.includes('\x1b[99m'), 'custom encoder output present');
-  assert.equal(count(out, '38;2'), 0, 'default encoder not used');
+  expect(out.includes('\x1b[99m')).toBeTruthy();
+  expect(count(out, '38;2')).toBe(0);
 });
 
 test('a wide glyph emits a single lead glyph across its two-column run', () => {
@@ -113,5 +112,5 @@ test('a wide glyph emits a single lead glyph across its two-column run', () => {
   const current = blank(6, 1);
   current.text(0, 0, '世', DEFAULT_STYLE);
   const out = serialize(current, previous, { caps: caps({ unicode: { utf8: true } }) });
-  assert.equal(count(out, '世'), 1, 'lead glyph emitted once; continuation emits nothing');
+  expect(count(out, '世')).toBe(1);
 });

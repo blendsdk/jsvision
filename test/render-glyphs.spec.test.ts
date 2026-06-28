@@ -6,8 +6,7 @@
  * the implementation. Fallback happens at serialize time, so these drive a
  * buffer through `serialize()`.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { serialize } from '../src/engine/render/serialize.js';
 import { ScreenBuffer } from '../src/engine/render/buffer.js';
@@ -33,10 +32,10 @@ test('ST-5: boxDrawing=false renders the frame in ASCII (+ - |), no Unicode box'
     caps: caps({ unicode: { utf8: true }, glyphs: { boxDrawing: false, halfBlocks: true } }),
   });
   for (const ascii of ['+', '-', '|']) {
-    assert.ok(out.includes(ascii), `expected ASCII '${ascii}'`);
+    expect(out.includes(ascii)).toBeTruthy();
   }
   for (const uni of ['┌', '─', '┐', '│', '└', '┘']) {
-    assert.ok(!out.includes(uni), `did not expect Unicode box glyph '${uni}'`);
+    expect(!out.includes(uni)).toBeTruthy();
   }
 });
 
@@ -48,10 +47,10 @@ test('ST-5: boxDrawing=true keeps the Unicode box glyphs, no ASCII substitutes',
     caps: caps({ unicode: { utf8: true }, glyphs: { boxDrawing: true, halfBlocks: true } }),
   });
   for (const uni of ['┌', '─', '┐', '│']) {
-    assert.ok(out.includes(uni), `expected Unicode box glyph '${uni}'`);
+    expect(out.includes(uni)).toBeTruthy();
   }
   for (const ascii of ['+', '-', '|']) {
-    assert.ok(!out.includes(ascii), `did not expect ASCII substitute '${ascii}'`);
+    expect(!out.includes(ascii)).toBeTruthy();
   }
 });
 
@@ -67,8 +66,8 @@ test('ST-11: halfBlocks=false maps block/shade glyphs to #', () => {
   const out = serialize(buf, null, {
     caps: caps({ unicode: { utf8: true }, glyphs: { boxDrawing: true, halfBlocks: false } }),
   });
-  assert.ok(out.includes('#'), 'block/shade glyphs render as #');
-  assert.ok(!out.includes('█') && !out.includes('░'), 'no raw block/shade glyphs');
+  expect(out.includes('#')).toBeTruthy();
+  expect(!out.includes('█') && !out.includes('░')).toBeTruthy();
 });
 
 test('ST-11: utf8=false maps a non-ASCII non-box glyph to ? and passes ASCII through', () => {
@@ -79,7 +78,7 @@ test('ST-11: utf8=false maps a non-ASCII non-box glyph to ? and passes ASCII thr
   const out = serialize(buf, null, {
     caps: caps({ unicode: { utf8: false }, glyphs: { boxDrawing: true, halfBlocks: true } }),
   });
-  assert.ok(out.includes('?'), 'é falls back to ?');
-  assert.ok(!out.includes('é'), 'no raw é');
-  assert.ok(out.includes('A'), 'ASCII passes through unchanged');
+  expect(out.includes('?')).toBeTruthy();
+  expect(!out.includes('é')).toBeTruthy();
+  expect(out.includes('A')).toBeTruthy();
 });

@@ -8,8 +8,7 @@
  * rot or go uncommitted without `verify` noticing. Pure file reads — derived from
  * RD-10 AC (docs) / AR-5, never from the docs' contents.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -19,22 +18,19 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const docs = join(root, 'docs');
 
 test('ST-9: the architecture overview is present', () => {
-  assert.ok(
-    existsSync(join(docs, 'architecture', 'system-overview.md')),
-    'docs/architecture/system-overview.md must exist',
-  );
+  expect(existsSync(join(docs, 'architecture', 'system-overview.md'))).toBeTruthy();
 });
 
 test('ST-9: the API reference is present', () => {
-  assert.ok(existsSync(join(docs, 'architecture', 'api-design.md')), 'docs/architecture/api-design.md must exist');
+  expect(existsSync(join(docs, 'architecture', 'api-design.md'))).toBeTruthy();
 });
 
 test('ST-9: at least one ADR is present', () => {
   const adrs = readdirSync(join(docs, 'decisions')).filter((f) => /^ADR-\d+.*\.md$/.test(f));
-  assert.ok(adrs.length >= 1, `docs/decisions/ must contain at least one ADR-*.md (found ${adrs.length})`);
+  expect(adrs.length >= 1).toBeTruthy();
 });
 
 test('ST-9: the techdocs entry point carries the opt-in marker', () => {
   const index = readFileSync(join(docs, 'index.md'), 'utf8');
-  assert.match(index, /techdocs:\s*true/, 'docs/index.md must carry the "techdocs: true" frontmatter marker');
+  expect(index).toMatch(/techdocs:\s*true/);
 });

@@ -4,27 +4,26 @@
  * Edge cases beyond the ST oracle: wheel/focus/multi-modifier formatting, paste
  * byte counting for multibyte text + truncation, and the run loop quitting on `q`.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { formatEventLine, runLiveReadout } from '../examples/capability-probe/live-readout.js';
 import type { InputEvent } from '../src/engine/index.js';
 
 test('wheel and focus events format with direction / state', () => {
-  assert.equal(formatEventLine({ type: 'wheel', dir: 'up', x: 3, y: 4 }), 'wheel: up @ 3,4');
-  assert.equal(formatEventLine({ type: 'focus', focused: true }), 'focus: in');
-  assert.equal(formatEventLine({ type: 'focus', focused: false }), 'focus: out');
+  expect(formatEventLine({ type: 'wheel', dir: 'up', x: 3, y: 4 })).toBe('wheel: up @ 3,4');
+  expect(formatEventLine({ type: 'focus', focused: true })).toBe('focus: in');
+  expect(formatEventLine({ type: 'focus', focused: false })).toBe('focus: out');
 });
 
 test('multiple modifiers render in ctrl+alt+shift order', () => {
   const line = formatEventLine({ type: 'key', key: 'f1', ctrl: true, alt: true, shift: true });
-  assert.equal(line, 'key: ctrl+alt+shift+f1');
+  expect(line).toBe('key: ctrl+alt+shift+f1');
 });
 
 test('paste counts UTF-8 bytes and marks truncation, never contents', () => {
-  assert.equal(formatEventLine({ type: 'paste', text: '你', truncated: false }), 'paste: 3 bytes');
+  expect(formatEventLine({ type: 'paste', text: '你', truncated: false })).toBe('paste: 3 bytes');
   const truncated = formatEventLine({ type: 'paste', text: 'hi', truncated: true });
-  assert.ok(truncated.includes('2 bytes') && truncated.includes('truncated'));
+  expect(truncated.includes('2 bytes') && truncated.includes('truncated')).toBeTruthy();
 });
 
 test('runLiveReadout stops at the quit key and renders accumulated lines', async () => {
@@ -40,6 +39,6 @@ test('runLiveReadout stops at the quit key and renders accumulated lines', async
   const renders: string[][] = [];
   await runLiveReadout({ events: stream(), render: (lines) => renders.push([...lines]) });
 
-  assert.equal(renders.length, 2, 'rendered after a and b, stopped at q (c not processed)');
-  assert.deepEqual(renders[renders.length - 1], ['key: a', 'key: b']);
+  expect(renders.length).toBe(2);
+  expect(renders[renders.length - 1]).toStrictEqual(['key: a', 'key: b']);
 });

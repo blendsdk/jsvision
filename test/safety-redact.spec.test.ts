@@ -6,8 +6,7 @@
  * the implementation. `redactEvent` is the core no-secret-logging control: a
  * printable key's character and a paste's text must never survive redaction.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { redactEvent, dumpCaps } from '../src/engine/safety/index.js';
 import type { CapabilityResolution } from '../src/engine/capability/index.js';
@@ -15,28 +14,28 @@ import type { CapabilityResolution } from '../src/engine/capability/index.js';
 // ST-14 — a printable key drops its character and codepoint (AC-4).
 test('ST-14: a printable key redacts to printable:true with no char or codepoint', () => {
   const r = redactEvent({ type: 'key', key: 'a', codepoint: 0x61, ctrl: false, alt: false, shift: false });
-  assert.deepEqual(r, { type: 'key', printable: true, ctrl: false, alt: false, shift: false });
-  assert.ok(!('key' in r), 'the character is not carried');
-  assert.ok(!('codepoint' in r), 'the codepoint is not carried');
+  expect(r).toStrictEqual({ type: 'key', printable: true, ctrl: false, alt: false, shift: false });
+  expect(!('key' in r)).toBeTruthy();
+  expect(!('codepoint' in r)).toBeTruthy();
 });
 
 // ST-15 — a named key keeps its name (no secret in a control-key name) (AC-4).
 test('ST-15: a named key keeps its name', () => {
   const r = redactEvent({ type: 'key', key: 'enter', ctrl: false, alt: false, shift: false });
-  assert.deepEqual(r, { type: 'key', key: 'enter', ctrl: false, alt: false, shift: false });
+  expect(r).toStrictEqual({ type: 'key', key: 'enter', ctrl: false, alt: false, shift: false });
 });
 
 // ST-16 — a paste yields only its length, never its text (AC-4).
 test('ST-16: a paste redacts to length+truncated with no text', () => {
   const r = redactEvent({ type: 'paste', text: 'secret-token', truncated: false });
-  assert.deepEqual(r, { type: 'paste', length: 12, truncated: false });
-  assert.ok(!JSON.stringify(r).includes('secret-token'), 'no substring of the paste text leaks');
+  expect(r).toStrictEqual({ type: 'paste', length: 12, truncated: false });
+  expect(!JSON.stringify(r).includes('secret-token')).toBeTruthy();
 });
 
 // ST-17 — mouse coordinates are non-secret and pass through (AC-4).
 test('ST-17: a mouse event passes its coordinates through unchanged', () => {
   const r = redactEvent({ type: 'mouse', kind: 'down', button: 0, x: 3, y: 5 });
-  assert.deepEqual(r, { type: 'mouse', kind: 'down', button: 0, x: 3, y: 5 });
+  expect(r).toStrictEqual({ type: 'mouse', kind: 'down', button: 0, x: 3, y: 5 });
 });
 
 // ST-18 — dumpCaps renders one secret-free `field=value (layer)` pair per
@@ -94,6 +93,6 @@ test('ST-18: dumpCaps renders the exact secret-free caps summary', () => {
     'platform=linux (runtime) ' +
     'multiplexer=false (default)';
 
-  assert.equal(dumpCaps(resolution), expected);
-  assert.ok(!dumpCaps(resolution).includes('\n'), 'single line, no newline');
+  expect(dumpCaps(resolution)).toBe(expected);
+  expect(!dumpCaps(resolution).includes('\n')).toBeTruthy();
 });

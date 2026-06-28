@@ -10,8 +10,7 @@
  * real host signal/restore path. Heavier than the unit specs — outside the unit
  * glob; run explicitly: `npx tsx --test test/probe.e2e.test.ts`.
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -46,16 +45,16 @@ test('ST-24: --auto emits schema-valid JSON and exits 0', async () => {
     child.stdin.end();
   });
 
-  assert.equal(result.code, 0, '--auto exits 0');
+  expect(result.code).toBe(0);
   const report: unknown = JSON.parse(result.stdout);
-  assert.ok(report !== null && typeof report === 'object', 'stdout is a JSON object');
+  expect(report !== null && typeof report === 'object').toBeTruthy();
   const r = report as Record<string, unknown>;
   for (const key of ['terminal', 'os', 'term', 'colorterm', 'results', 'recommendation']) {
-    assert.ok(key in r, `report has ${key}`);
+    expect(key in r).toBeTruthy();
   }
   const results = r.results as Record<string, { supported: unknown; method: unknown }>;
-  assert.equal(results['attr.bold'].supported, null, 'a manual item is unverified in --auto');
-  assert.equal(results['attr.bold'].method, 'manual');
+  expect(results['attr.bold'].supported).toBe(null);
+  expect(results['attr.bold'].method).toBe('manual');
 });
 
 const INTERACTIVE_CHILD = `
@@ -115,9 +114,9 @@ test('ST-23: a real SIGINT restores the terminal (leave alt-screen + show cursor
       });
     });
 
-    assert.equal(result.code, 130, 'real SIGINT produced exit code 130 (128 + SIGINT)');
-    assert.ok(result.stdout.includes('?1049l'), 'left the alternate screen on restore');
-    assert.ok(result.stdout.includes('?25h'), 'showed the cursor again on restore');
+    expect(result.code).toBe(130);
+    expect(result.stdout.includes('?1049l')).toBeTruthy();
+    expect(result.stdout.includes('?25h')).toBeTruthy();
   } finally {
     rmSync(work, { recursive: true, force: true });
   }

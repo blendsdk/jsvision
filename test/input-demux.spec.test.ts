@@ -11,8 +11,7 @@
  * and RD-06's decoder use (PL-2). Phase 3 adds ST-6 (decoder demux) and ST-12
  * (focus) here; Phase 1 ships ST-14 (the shared classifier).
  */
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 import { matchResponse } from '../src/engine/capability/responses.js';
 import { createDecoderState, decode } from '../src/engine/input/decoder.js';
@@ -28,44 +27,44 @@ const enc = new TextEncoder();
 test("ST-14: matchResponse classifies primary DA as 'da1'", () => {
   const bytes = enc.encode('\x1b[?64;1;2c');
   const match = matchResponse(bytes, 0);
-  assert.ok(match !== null, 'primary DA must match');
-  assert.equal(match.kind, 'da1');
-  assert.equal(match.end, bytes.length);
+  expect(match !== null).toBeTruthy();
+  expect(match.kind).toBe('da1');
+  expect(match.end).toBe(bytes.length);
 });
 
 // ST-14b: a secondary DA reply (`ESC [ > … c`) classifies as 'da2'.
 test("ST-14: matchResponse classifies secondary DA as 'da2'", () => {
   const bytes = enc.encode('\x1b[>0;276;0c');
   const match = matchResponse(bytes, 0);
-  assert.ok(match !== null, 'secondary DA must match');
-  assert.equal(match.kind, 'da2');
-  assert.equal(match.end, bytes.length);
+  expect(match !== null).toBeTruthy();
+  expect(match.kind).toBe('da2');
+  expect(match.end).toBe(bytes.length);
 });
 
 // ST-14c: a `?2026` DECRPM reply classifies as 'decrpm' and carries the sync hint.
 test("ST-14: matchResponse classifies ?2026 DECRPM as 'decrpm' with sync hint", () => {
   const bytes = enc.encode('\x1b[?2026;1$y');
   const match = matchResponse(bytes, 0);
-  assert.ok(match !== null, 'DECRPM must match');
-  assert.equal(match.kind, 'decrpm');
-  assert.equal(match.end, bytes.length);
-  assert.equal(match.hint.sync2026, true);
+  expect(match !== null).toBeTruthy();
+  expect(match.kind).toBe('decrpm');
+  expect(match.end).toBe(bytes.length);
+  expect(match.hint.sync2026).toBe(true);
 });
 
 // ST-14d: an XTVERSION DCS reply (`ESC P … ESC \`) classifies as 'xtversion'.
 test("ST-14: matchResponse classifies XTVERSION DCS as 'xtversion'", () => {
   const bytes = enc.encode('\x1bP>|foot(1.0)\x1b\\');
   const match = matchResponse(bytes, 0);
-  assert.ok(match !== null, 'XTVERSION DCS must match');
-  assert.equal(match.kind, 'xtversion');
-  assert.equal(match.end, bytes.length);
+  expect(match !== null).toBeTruthy();
+  expect(match.kind).toBe('xtversion');
+  expect(match.end).toBe(bytes.length);
 });
 
 // ST-14e: non-grammar bytes are not a response → null (so the decoder treats
 // them as input, never as a query reply).
 test('ST-14: matchResponse returns null for non-response bytes', () => {
   const bytes = enc.encode('hello');
-  assert.equal(matchResponse(bytes, 0), null);
+  expect(matchResponse(bytes, 0)).toBe(null);
 });
 
 // ---------------------------------------------------------------------------
@@ -75,9 +74,9 @@ test('ST-14: matchResponse returns null for non-response bytes', () => {
 test('ST-6: a DA reply yields one query response and zero events', () => {
   const r = decode(enc.encode('\x1b[?64;1;2c'), createDecoderState());
 
-  assert.equal(r.queries.length, 1, 'exactly one query response');
-  assert.equal(r.queries[0].kind, 'da1');
-  assert.equal(r.events.length, 0, 'zero app events — the reply cannot leak as a keystroke');
+  expect(r.queries.length).toBe(1);
+  expect(r.queries[0].kind).toBe('da1');
+  expect(r.events.length).toBe(0);
 });
 
 // ---------------------------------------------------------------------------
@@ -86,14 +85,14 @@ test('ST-6: a DA reply yields one query response and zero events', () => {
 
 test('ST-12: ESC[I → focus in, ESC[O → focus out', () => {
   const inResult = decode(enc.encode('\x1b[I'), createDecoderState());
-  assert.equal(inResult.events.length, 1);
+  expect(inResult.events.length).toBe(1);
   const focusIn = inResult.events[0] as FocusEvent;
-  assert.equal(focusIn.type, 'focus');
-  assert.equal(focusIn.focused, true);
+  expect(focusIn.type).toBe('focus');
+  expect(focusIn.focused).toBe(true);
 
   const outResult = decode(enc.encode('\x1b[O'), createDecoderState());
-  assert.equal(outResult.events.length, 1);
+  expect(outResult.events.length).toBe(1);
   const focusOut = outResult.events[0] as FocusEvent;
-  assert.equal(focusOut.type, 'focus');
-  assert.equal(focusOut.focused, false);
+  expect(focusOut.type).toBe('focus');
+  expect(focusOut.focused).toBe(false);
 });
