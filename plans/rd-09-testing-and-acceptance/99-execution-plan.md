@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 (Phase 2 complete)
-> **Progress**: 16/34 tasks (47%)
+> **Last Updated**: 2026-06-28 (Phase 3 complete)
+> **Progress**: 22/34 tasks (65%)
 >
 > **Runtime deviation (2026-06-28):** shared test helpers were extracted into
 > non-test modules — `test/input-corpus-helpers.ts` and `test/golden-screen-helpers.ts`
@@ -216,12 +216,12 @@ byte-proportionality benchmark, and the acceptance gate (`docs/acceptance-gate.m
 - [x] 2.3.2 Full verify + check:deps ✅ (2026-06-28) — 487/487, build + check:deps clean
 
 ### Phase 3: Tier-3 Integration
-- [ ] 3.1.1 e2e child scaffold (alt-screen + mouse)
-- [ ] 3.1.2 Cases ST-12…ST-16
-- [ ] 3.1.3 Confirm e2e status
-- [ ] 3.2.1 Make cases pass + leak-free cleanup
-- [ ] 3.2.2 Resolve restore gaps (fix host)
-- [ ] 3.2.3 e2e + full verify
+- [x] 3.1.1 e2e child scaffold (alt-screen + mouse) ✅ (2026-06-28) — corrected `mouse` override to a MouseCaps object (PF-003)
+- [x] 3.1.2 Cases ST-12…ST-16 ✅ (2026-06-28) — enter sequences during run; restore on normal/throw/SIGTERM/SIGHUP
+- [x] 3.1.3 Confirm e2e status ✅ (2026-06-28)
+- [x] 3.2.1 Make cases pass + leak-free cleanup (`finally` rmSync + SIGKILL guard) ✅ (2026-06-28)
+- [x] 3.2.2 Resolve restore gaps — none in the host; the host's SIGHUP path was already correct (verified identical to SIGTERM in signals.ts:87). The only fix was in the **harness**: the `tsx` bin wrapper does not forward SIGHUP, so the child is run as `node --import tsx <file>` to deliver every signal directly. ✅ (2026-06-28)
+- [x] 3.2.3 e2e (5/5) + full verify (487/487) ✅ (2026-06-28)
 
 ### Phase 4: Fuzz & Perf
 - [ ] 4.1.1 Fuzz spec (ST-17, ST-18)

@@ -3,17 +3,13 @@
     "name": "printable 'a' (carries codepoint)",
     "bytesHex": "61",
     "chunks": null,
-    "expectedEvents": [
-      { "type": "key", "key": "a", "ctrl": false, "alt": false, "shift": false, "codepoint": 97 }
-    ]
+    "expectedEvents": [{ "type": "key", "key": "a", "ctrl": false, "alt": false, "shift": false, "codepoint": 97 }]
   },
   {
     "name": "printable 'Z' (carries codepoint)",
     "bytesHex": "5a",
     "chunks": null,
-    "expectedEvents": [
-      { "type": "key", "key": "Z", "ctrl": false, "alt": false, "shift": false, "codepoint": 90 }
-    ]
+    "expectedEvents": [{ "type": "key", "key": "Z", "ctrl": false, "alt": false, "shift": false, "codepoint": 90 }]
   },
   {
     "name": "enter (CR)",
@@ -193,9 +189,7 @@
     "name": "alt-a (ESC + a)",
     "bytesHex": "1b61",
     "chunks": null,
-    "expectedEvents": [
-      { "type": "key", "key": "a", "ctrl": false, "alt": true, "shift": false, "codepoint": 97 }
-    ]
+    "expectedEvents": [{ "type": "key", "key": "a", "ctrl": false, "alt": true, "shift": false, "codepoint": 97 }]
   },
   {
     "name": "shift+up (CSI 1;2 A)",
