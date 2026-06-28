@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 (Phase 2 complete)
-> **Progress**: 11/28 tasks (39%)
+> **Last Updated**: 2026-06-28 (Phases 3+4 complete)
+> **Progress**: 22/28 tasks (79%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -163,20 +163,20 @@ version-sync script. Each phase ends green and is committed (via /gitcm).
 - [x] 2.2.2 e2e project green on POSIX (ST-6) ✅ (10/10; child-spawn works under vitest) (completed: 2026-06-28)
 - [x] 2.2.3 delete codemod; full verify + lint ✅ (verify+e2e green, lint clean, prettier 3.9.1) (completed: 2026-06-28)
 
-### Phase 3: Workspace + Turbo + tui-core
-- [ ] 3.1.1 tsconfig.base + root private package.json + turbo.json + ignores
-- [ ] 3.1.2 add turbo dev dep
-- [ ] 3.2.1 move src/bench/non-probe-test/fixtures → packages/tui-core
-- [ ] 3.2.2 tui-core package.json + tsconfig + vitest config + README
-- [ ] 3.2.3 root scripts → turbo run
-- [ ] 3.3.1 turbo verify green; packaging/treeshake/perf green (ST-3, ST-4)
-- [ ] 3.3.2 lint clean; full verify
+### Phase 3: Workspace + Turbo + tui-core (executed jointly with Phase 4 for a coherent green state)
+- [x] 3.1.1 tsconfig.base + root private package.json + turbo.json + ignores ✅ (completed: 2026-06-28)
+- [x] 3.1.2 add turbo dev dep ✅ (turbo ^2.10) (completed: 2026-06-28)
+- [x] 3.2.1 move src/bench/non-probe-test/fixtures → packages/tui-core ✅ (76 test files) (completed: 2026-06-28)
+- [x] 3.2.2 tui-core package.json + tsconfig + vitest config + README ✅ (@blendsdk/tui-core, engines>=20, README+LICENSE) (completed: 2026-06-28)
+- [x] 3.2.3 root scripts → turbo run ✅ (verify = turbo typecheck+build+test; lint root-global) (completed: 2026-06-28)
+- [x] 3.3.1 turbo verify green; packaging/treeshake/perf green (ST-3, ST-4) ✅ (packaging ST-5 →>=20 per AR-24; governance tests → monorepo root per AR-23) (completed: 2026-06-28)
+- [x] 3.3.2 lint clean; full verify ✅ (verify 5 tasks, e2e 3 tasks, check:deps 2 tasks, lint clean) (completed: 2026-06-28)
 
 ### Phase 4: tui-examples
-- [ ] 4.1.1 create tui-examples (private, workspace dep, configs)
-- [ ] 4.1.2 move examples + 15 probe tests; delete tsconfig.examples.json
-- [ ] 4.1.3 rewrite imports → @blendsdk/tui-core; rebase probe.e2e
-- [ ] 4.2.1 turbo verify + probe.e2e green (ST-6); lint
+- [x] 4.1.1 create tui-examples (private, workspace dep, configs) ✅ (@blendsdk/tui-examples private, workspace:@blendsdk/tui-core) (completed: 2026-06-28)
+- [x] 4.1.2 move examples + 15 probe tests; delete tsconfig.examples.json ✅ (completed: 2026-06-28)
+- [x] 4.1.3 rewrite imports → @blendsdk/tui-core; rebase probe.e2e ✅ (probe.e2e child → .mts for ESM exports resolution) (completed: 2026-06-28)
+- [x] 4.2.1 turbo verify + probe.e2e green (ST-6); lint ✅ (examples 51 tests; probe.e2e green) (completed: 2026-06-28)
 
 ### Phase 5: Version Sync, Gate, CI & Docs
 - [ ] 5.1.1 sync-versions spec (ST-5) — red

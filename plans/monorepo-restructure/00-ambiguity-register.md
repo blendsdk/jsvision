@@ -57,12 +57,15 @@ to preserve the exact error class/regex. Zero bare `assert(...)` calls exist.
 | #  | Category | Ambiguity / Gap | Decision | Status |
 |----|----------|-----------------|----------|--------|
 | 22 (runtime) | Testing | `toolchain.spec` ST-12 tests the deleted `run-tests.mjs` custom runner (its subject is removed by AR-5) | **Remove ST-12** (and its now-unused `childEnv` helper); vitest owns discovery, self-evidently proven by the full suite it finds. Not a weakened oracle — the tested component is intentionally gone. (User-confirmed.) ST-8/ST-11 in the same file are retargeted to the new toolchain in Phases 3/5. | ✅ |
+| 23 (runtime) | Testing | Governance tests (gate/docs-presence/api-stability/check-deps/toolchain) moved into `packages/tui-core/test/` but read MONOREPO-ROOT artifacts (scripts, ci.yml, docs, root CHANGELOG/README); "repoRoot" is now ambiguous | **Keep them in tui-core; reference monorepo root explicitly via `resolve(here, '../../..')`** (package-local refs like packaging.spec's own package.json keep `resolve(here, '..')`). Low-churn, keeps the suite green. Extracting them to a dedicated root governance-test project is **DEF-4** (future cleanup). | ✅ |
+| 24 (runtime) | Compatibility | `packaging.spec` ST-5 hardcodes `engines.node === '>=18'`, but AR-2 raised the floor to `>=20` | **Update the ST-5 expectation to `'>=20'`** — the contract legitimately changed by the user-approved AR-2 (Node-18 drop), not a weakened oracle. | ✅ |
 
 ### Deferrals (DEF-n)
 
 - **DEF-1** — Changesets / automated release + per-package CHANGELOG: deferred until a real publish flow is wired (the sync script + single root CHANGELOG suffice now). [AR-8, AR-12]
 - **DEF-2** — npm publish (with provenance) of `@blendsdk/tui-core`: out of scope here; remains RD-10 DEF-1. [AR-14]
 - **DEF-3** — Turbo remote caching: local-only now; revisit if CI cache sharing is wanted. [AR-19]
+- **DEF-4** — Extract the monorepo-governance tests (gate/docs-presence/api-stability/check-deps/toolchain) from `tui-core` into a dedicated root governance-test project, removing the `../../..` root reach. [AR-23]
 
 ### Resolution notes
 
