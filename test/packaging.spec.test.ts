@@ -35,10 +35,14 @@ function readPackageJson(): Record<string, unknown> {
  * be published (paths are package-root-relative, forward-slashed by npm).
  */
 function packFileList(): string[] {
-  const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  const isWin = process.platform === 'win32';
+  const npm = isWin ? 'npm.cmd' : 'npm';
   const stdout = execFileSync(npm, ['pack', '--dry-run', '--json'], {
     cwd: repoRoot,
     encoding: 'utf8',
+    // Node's post-CVE-2024-27980 hardening rejects execFile of a .cmd without a
+    // shell on Windows (EINVAL); run through the shell there. Args are static.
+    shell: isWin,
   });
   // --json prints a JSON array; slice from the first '[' to be robust to any
   // leading notice lines some npm versions emit.

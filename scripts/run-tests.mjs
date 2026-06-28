@@ -16,7 +16,9 @@ import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-const TEST_DIR = 'test';
+// Defaults to `test/`; an explicit dir arg lets the toolchain spec point it at a
+// temp fixture dir to prove discovery without depending on a node --test glob.
+const TEST_DIR = process.argv[2] ?? 'test';
 /** Only the unit tiers — never the explicit `*.e2e.test.ts` files. */
 const SUFFIXES = ['.spec.test.ts', '.impl.test.ts'];
 

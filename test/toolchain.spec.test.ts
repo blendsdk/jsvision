@@ -43,14 +43,6 @@ function tscCli(): string {
   return require.resolve('typescript/bin/tsc');
 }
 
-/** Resolve the local tsx CLI entry from its package manifest (cross-platform). */
-function tsxCli(): string {
-  const pkgPath = require.resolve('tsx/package.json');
-  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { bin: string | Record<string, string> };
-  const rel = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin['tsx'];
-  return resolve(dirname(pkgPath), rel);
-}
-
 /** Run the dependency-policy guard against a project root; never throws. */
 function runGuard(rootDir: string): { status: number | null; stdout: string; stderr: string } {
   const scriptPath = resolve(repoRoot, 'scripts/check-no-native-deps.mjs');
@@ -129,20 +121,23 @@ test('ST-11: ci.yml declares the 3×3 OS/Node matrix and runs verify', () => {
   assert.ok(/npm run verify/.test(yml), 'ci.yml must invoke npm run verify');
 });
 
-// ST-12 (PL-8): the test glob discovers both *.spec.test.ts and *.impl.test.ts.
-test('ST-12: the test runner discovers both spec and impl globs', () => {
+// ST-12 (PL-8): the test runner discovers both *.spec.test.ts and *.impl.test.ts.
+// Exercises the real runner (scripts/run-tests.mjs) against a temp fixture dir —
+// it discovers files in pure Node, so this holds on every OS and Node version
+// (a bare `node --test` glob would need Node 21+ and violate engines.node >=18).
+test('ST-12: the test runner discovers both spec and impl test files', () => {
   const dir = makeTempDir('rd01-st12-');
   try {
     // Distinct test names per fixture: the runner's TAP output reports test
-    // names (not file paths), so seeing both names proves both globs matched.
+    // names (not file paths), so seeing both names proves both suffixes matched.
     const fixture = (name: string) => `import { test } from 'node:test';\ntest('${name}', () => {});\n`;
     writeFileSync(join(dir, 'a.spec.test.ts'), fixture('spec-fixture-ran'));
     writeFileSync(join(dir, 'b.impl.test.ts'), fixture('impl-fixture-ran'));
-    const glob = join(dir, '**/*.{spec,impl}.test.ts');
-    const res = spawnSync(process.execPath, [tsxCli(), '--test', glob], { encoding: 'utf8', env: childEnv() });
+    const runner = resolve(repoRoot, 'scripts', 'run-tests.mjs');
+    const res = spawnSync(process.execPath, [runner, dir], { encoding: 'utf8', env: childEnv() });
     const output = `${res.stdout}${res.stderr}`;
-    assert.ok(output.includes('spec-fixture-ran'), `spec glob not discovered:\n${output}`);
-    assert.ok(output.includes('impl-fixture-ran'), `impl glob not discovered:\n${output}`);
+    assert.ok(output.includes('spec-fixture-ran'), `spec file not discovered:\n${output}`);
+    assert.ok(output.includes('impl-fixture-ran'), `impl file not discovered:\n${output}`);
     assert.equal(res.status, 0, `runner exited non-zero:\n${output}`);
   } finally {
     rmSync(dir, { recursive: true, force: true });
