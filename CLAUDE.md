@@ -10,30 +10,40 @@
 
 ## Toolchain
 
-- **Language(s):** TypeScript (ESM-only, `module`/`moduleResolution` NodeNext, `strict`)
-- **Framework(s):** none — Node built-ins only (`node:test`, `node:assert/strict`); zero runtime dependencies
-- **Package manager:** npm (`package-lock.json`)
-- **Test framework:** `node:test` run through `tsx` (no third-party test framework)
-- **Lint/format:** ESLint flat config (`typescript-eslint`) + Prettier
-- **Node:** active LTS 18 / 20 / 22 (`engines.node >= 18`)
+- **Repo shape:** **yarn 1.x + Turborepo monorepo**. `packages/tui-core` = published `@blendsdk/tui-core` (the foundation engine, zero runtime deps); `packages/tui-examples` = private `@blendsdk/tui-examples` (dev examples + probe harness). Future packages: `@blendsdk/tui-<name>` under `packages/tui-<name>/`. All **public** packages share one lockstep version (`yarn sync-versions`; root `package.json#version` is the source of truth).
+- **Language(s):** TypeScript (ESM-only, `module`/`moduleResolution` NodeNext, `strict`); shared `tsconfig.base.json`, per-package `tsconfig.json`
+- **Framework(s):** none — Node built-ins + zero runtime dependencies
+- **Package manager:** **yarn 1.x** (`yarn.lock`, workspaces `packages/*`)
+- **Orchestration:** **Turborepo** (`turbo.json`: `build`/`typecheck`/`test`/`test:e2e`/`check:deps`; `test` dependsOn `build`, `typecheck` dependsOn `^build`)
+- **Test framework:** **vitest** (two projects: `unit` = `*.{spec,impl}.test.ts`, `e2e` = `*.e2e.test.ts` single-fork). Vite resolves NodeNext `.js`→`.ts` natively. Tests use `expect()`; `tsx` is retained for bench/examples/probe + e2e child processes.
+- **Lint/format:** root-global ESLint flat config (`typescript-eslint`) + Prettier
+- **Node:** active LTS **20 / 22 / 24** (`engines.node >= 20`; Node 18 dropped, EOL)
 
 ## Commands
 
-- **Build:** `npm run build` (`tsc` → `dist/`, emits `.js` + `.d.ts` + maps; `src` only — `examples/` is never emitted)
-- **Typecheck:** `npm run typecheck` (`tsc --noEmit`, `src`) · **Examples typecheck:** `npm run typecheck:examples` (`tsc -p tsconfig.examples.json`, `noEmit`)
-- **Test (unit):** `npm test` (`node scripts/run-tests.mjs` — discovers the `*.spec.test.ts`/`*.impl.test.ts` files in pure Node and runs them via `tsx --test`; cross-OS and works on Node 18/20/22, unlike a `node --test` glob which needs Node 21+)
-- **Test (e2e, explicit):** `npx tsx --test test/install.e2e.test.ts` · `npx tsx --test test/probe.e2e.test.ts` · `npx tsx --test test/host-tier3.e2e.test.ts` (RD-09 Tier-3 restore-on-every-exit; spawns children via `node --import tsx` so SIGHUP is delivered) (heavier; not in the unit glob)
-- **Run the probe harness (dev):** `npm run probe` (`tsx examples/capability-probe/main.ts`; `--auto`/`--out <path>`/`--no-matrix`/`--help`)
-- **Acceptance gate (RD-09 go/no-go):** `npm run gate` (`scripts/gate.mjs`) — runs verify + the Tier-3/signal e2e + `probe --auto`, printing PASS/FAIL/DEFERRED per criterion; criteria→evidence map in `docs/acceptance-gate.md`
-- **Performance bench (RD-10, informational):** `npm run bench` (`tsx bench/frame-bench.mjs`) — prints median/p95 for the 200×50 compose+diff / single-cell / serialize-only; never gates (the 16 ms ceiling is asserted off-CI by `test/perf-budget.spec.test.ts`, skipped under `CI`/`TUI_SKIP_PERF`)
-- **Verify (run before every commit):** `npm run verify` (= typecheck + typecheck:examples + test + build)
-- **Lint:** `npm run lint` (`eslint .` + `prettier --check .`) · **Fix:** `npm run lint:fix`
-- **Dependency policy:** `npm run check:deps` (fails on any native runtime dependency)
-- **Clean:** `rm -rf dist`
+> All commands run from the monorepo root and fan out via turbo unless noted.
+
+- **Verify (run before every commit):** `yarn verify` (= `turbo run typecheck build test` across packages)
+- **Build:** `yarn build` (`turbo run build` → each package's `tsc` → `dist/`; only `tui-core` builds)
+- **Typecheck:** `yarn typecheck` (`turbo run typecheck`; `^build` so examples typecheck against tui-core's `.d.ts`)
+- **Test (unit):** `yarn test` (`turbo run test` → vitest `unit` project per package)
+- **Test (e2e):** `yarn test:e2e` (`turbo run test:e2e` → vitest `e2e` project) · or per package: `yarn workspace @blendsdk/tui-core test:e2e` (restore/signals/install) · `yarn workspace @blendsdk/tui-examples test:e2e` (probe)
+- **Run the probe harness (dev):** `yarn workspace @blendsdk/tui-examples probe` (`--auto`/`--out <path>`/`--no-matrix`/`--help`)
+- **Acceptance gate (RD-09 go/no-go):** `yarn gate` (`scripts/gate.mjs`, root) — runs `yarn verify` + tui-core e2e + examples `probe --auto`, PASS/FAIL/DEFERRED per criterion; map in `docs/acceptance-gate.md`
+- **Performance bench (RD-10, informational):** `yarn bench` (`yarn workspace @blendsdk/tui-core bench` → `tsx bench/frame-bench.mjs`); never gates (16 ms ceiling asserted off-CI by `packages/tui-core/test/perf-budget.spec.test.ts`, skipped under `CI`/`TUI_SKIP_PERF`)
+- **Version sync (lockstep):** `yarn sync-versions` (write root version to public packages) · `yarn sync-versions --check` (assert lockstep, non-zero on drift)
+- **Lint:** `yarn lint` (`eslint .` + `prettier --check .`, repo-wide) · **Fix:** `yarn lint:fix`
+- **Dependency policy:** `yarn check:deps` (`turbo run check:deps`; fails on any native runtime dependency per public package)
+- **Clean:** `rm -rf packages/*/dist .turbo`
 
 ## Project structure
 
 ```
+packages/tui-core/       Published @blendsdk/tui-core — holds src/engine/, bench/, and the 76 non-probe tests + fixtures. Paths below (src/engine/**, test/**) are RELATIVE TO THIS PACKAGE.
+packages/tui-examples/   Private @blendsdk/tui-examples — capability-probe/ + resize-demo/ + the 15 probe-*/probe.e2e tests; depends on @blendsdk/tui-core, imports it by name.
+tsconfig.base.json  turbo.json  vitest.config.ts(per package)  — shared TS config, turbo pipeline, vitest unit+e2e projects.
+docs/  scripts/  .github/  CHANGELOG.md  — monorepo-level docs (techdocs + acceptance-gate), scripts (gate.mjs, check-no-native-deps.mjs, sync-versions.mjs), CI, changelog.
+--- (the subsystem layout below is rooted at packages/tui-core/) ---
 src/engine/      Source. Single public entry point: src/engine/index.ts (re-exports public API).
 src/engine/capability/   RD-02 capability detection core (profile, defaults, env, table, query, detect, index) + responses.ts (RD-06-shared query-response classifier).
 src/engine/input/        RD-06 input decoder (events, keys, decoder, mouse, paste, keymap, index).

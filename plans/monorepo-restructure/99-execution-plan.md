@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 (Phases 3+4 complete)
-> **Progress**: 22/28 tasks (79%)
+> **Last Updated**: 2026-06-28 (ALL COMPLETE)
+> **Progress**: 28/28 tasks (100%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -179,14 +179,14 @@ version-sync script. Each phase ends green and is committed (via /gitcm).
 - [x] 4.2.1 turbo verify + probe.e2e green (ST-6); lint ✅ (examples 51 tests; probe.e2e green) (completed: 2026-06-28)
 
 ### Phase 5: Version Sync, Gate, CI & Docs
-- [ ] 5.1.1 sync-versions spec (ST-5) — red
-- [ ] 5.1.2 implement sync-versions.mjs (+ --check) — green
-- [ ] 5.1.3 wire sync-versions; VERSION spec green
-- [ ] 5.2.1 root gate.mjs cross-package; gate.spec + acceptance-gate.md
-- [ ] 5.2.2 root check-no-native-deps; per-package check:deps (ST-8)
-- [ ] 5.3.1 CI rewrite (yarn + turbo, 20/22/24)
-- [ ] 5.3.2 docs sync (README/CHANGELOG/docs/CLAUDE.md)
-- [ ] 5.3.3 final verify + gate + lint + audit + bench (ST-7)
+- [x] 5.1.1 sync-versions spec (ST-5) — red ✅ (completed: 2026-06-28)
+- [x] 5.1.2 implement sync-versions.mjs (+ --check) — green ✅ (root version → public packages + version.ts) (completed: 2026-06-28)
+- [x] 5.1.3 wire sync-versions; VERSION spec green ✅ (--check confirms lockstep at 0.1.0) (completed: 2026-06-28)
+- [x] 5.2.1 root gate.mjs cross-package; gate.spec + acceptance-gate.md ✅ (yarn verify + per-pkg e2e + probe; gate PASSED) (completed: 2026-06-28)
+- [x] 5.2.2 root check-no-native-deps; per-package check:deps (ST-8) ✅ (at root scripts/; turbo check:deps green) (completed: 2026-06-28)
+- [x] 5.3.1 CI rewrite (yarn + turbo, 20/22/24) ✅ (frozen-lockfile, turbo verify, POSIX e2e, sync --check, audit via package-lock) (completed: 2026-06-28)
+- [x] 5.3.2 docs sync (README/CHANGELOG/docs/CLAUDE.md) ✅ (package rename, yarn commands, monorepo note, ADR-007) (completed: 2026-06-28)
+- [x] 5.3.3 final verify + gate + lint + audit + bench (ST-7) ✅ (verify 5 tasks, gate PASSED, lint clean, audit 0, bench prints, pack OK) (completed: 2026-06-28)
 
 ---
 

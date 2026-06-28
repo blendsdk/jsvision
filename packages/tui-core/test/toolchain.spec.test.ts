@@ -101,10 +101,11 @@ test('ST-11: ci.yml declares the 3×3 OS/Node matrix and runs verify', () => {
   for (const os of ['ubuntu-latest', 'macos-latest', 'windows-latest']) {
     expect(yml.includes(os)).toBeTruthy();
   }
-  for (const node of ['18', '20', '22']) {
+  for (const node of ['20', '22', '24']) {
+    // AR-2: Node 18 dropped (EOL); the matrix moved to 20/22/24.
     expect(new RegExp(`(^|[^0-9])${node}([^0-9]|$)`, 'm').test(yml)).toBeTruthy();
   }
-  expect(/npm run verify/.test(yml)).toBeTruthy();
+  expect(/yarn verify/.test(yml)).toBeTruthy();
 });
 
 // ST-12 removed (runtime AR-22): it tested the custom scripts/run-tests.mjs

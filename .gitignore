@@ -3,3 +3,5 @@ dist/
 *.log
 .turbo/
 coverage/
+terminal-matrix.json
+**/terminal-matrix.json
