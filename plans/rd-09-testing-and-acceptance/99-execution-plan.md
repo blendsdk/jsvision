@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 (Phase 5 complete)
-> **Progress**: 37/41 tasks (90%) — denominator corrected to the actual checklist count (41, not the planner's estimate of 34)
+> **Last Updated**: 2026-06-28 (ALL PHASES COMPLETE)
+> **Progress**: 41/41 tasks (100%) — denominator corrected to the actual checklist count (41, not the planner's estimate of 34)
 >
 > **Runtime deviation (2026-06-28):** shared test helpers were extracted into
 > non-test modules — `test/input-corpus-helpers.ts` and `test/golden-screen-helpers.ts`
@@ -243,10 +243,10 @@ byte-proportionality benchmark, and the acceptance gate (`docs/acceptance-gate.m
 - [x] 5.3.2 Full verify (502/502) + gate (exit 0) ✅ (2026-06-28)
 
 ### Phase 6: Docs & Roadmap
-- [ ] 6.1.1 README RD-09 section
-- [ ] 6.1.2 CLAUDE.md update
-- [ ] 6.1.3 Roadmap → Implemented + DEF notes
-- [ ] 6.1.4 Final full verify + gate + lint + audit
+- [x] 6.1.1 README RD-09 section ✅ (2026-06-28) — "Testing & acceptance gate" tiers + `npm run gate` + deferrals; gate added to Contributing table
+- [x] 6.1.2 CLAUDE.md update ✅ (2026-06-28) — `gate` command, `docs/` + `scripts/gate.mjs` + RD-09 tests in structure, RD-09 overview
+- [x] 6.1.3 Roadmap → ✅ Implemented + DEF notes ✅ (2026-06-28) — Milestone A marked met locally
+- [x] 6.1.4 Final full verify + gate + lint + audit ✅ (2026-06-28) — gate exit 0 (9 PASS, 2 DEFERRED), verify 502/502 + e2e 5/5, lint/check:deps clean, audit 0 high
 
 ---
 

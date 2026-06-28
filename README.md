@@ -344,6 +344,44 @@ JSON copy), `--no-matrix` (skip the `terminal-matrix.json` append), `--help`. Th
 report records only terminal/OS plus `TERM`/`COLORTERM`/`TERM_PROGRAM` — no secrets,
 and paste events report a byte length, never contents.
 
+### Testing & acceptance gate (RD-09)
+
+The foundation is proven by a four-tier test strategy plus a runnable **project
+go/no-go gate**. Terminal I/O is "bytes in → bytes out", so most of the engine is
+pure functions and unusually testable.
+
+- **Tier 1 — recorded input corpus**: checked-in hex-in-JSON fixtures of
+  `bytes → expected events/queries` (`test/fixtures/input-corpus/`) drive a
+  data-driven decoder regression — keyboard, SGR mouse (incl. beyond column 223),
+  wheel, paste, and DA/DECRPM/XTVERSION replies (the last asserted on the isolated
+  `queries` channel).
+- **Tier 2 — golden-screen**: a buffer is serialized and fed to `@xterm/headless`
+  (a pure-JS emulator), then the grid is read back and asserted across all four
+  colour depths (truecolor/256/16/mono), proving the RD-05 downsample chain renders
+  correctly in a real emulator.
+- **Tier 3 — PTY-style integration** (no `node-pty`): a real child process runs the
+  real `createHost`; captured output proves alt-screen/mouse enter and full restore
+  on normal exit, `throw`, SIGTERM, and SIGHUP.
+- **Fuzz + performance**: a seeded fuzzer feeds adversarial byte streams to the
+  decoder (no throw, bounded state), and a byte-proportionality benchmark asserts
+  `serialize` output bytes track changed cells (the deterministic half of the perf
+  gate; wall-clock budgets are deferred to RD-10).
+
+The corpus, golden, fuzz, and byte-proportionality suites run under `npm run verify`;
+the Tier-3 integration lives in `test/host-tier3.e2e.test.ts` (explicit, outside the
+unit glob).
+
+```bash
+npm run gate    # the full go/no-go gate: verify + e2e + probe --auto, per-criterion verdict
+```
+
+`npm run gate` (`scripts/gate.mjs`) prints PASS/FAIL/DEFERRED for each of the 11
+RD-09 criteria and exits non-zero if any required one fails. The criteria→evidence
+map lives in [`docs/acceptance-gate.md`](docs/acceptance-gate.md). Cross-platform CI
+cells, macOS/Windows acceptance, the Tier-4 manual matrix, real-PTY SIGWINCH resize,
+and wall-clock perf budgets are recorded **DEFERRED** (DEF-1…DEF-4), pending a git
+remote, the other platforms, and RD-10.
+
 ### ESM-only — `require()` is not supported
 
 The package declares no CommonJS `require` condition. Importing it from CommonJS
@@ -361,13 +399,14 @@ Use `import` (or a dynamic `await import('@blendsdk/tui')`) instead.
 The toolchain is plain Node tooling — no test framework, just `node:test` run
 through `tsx`.
 
-| Command              | What it does                                               |
-| -------------------- | ---------------------------------------------------------- |
-| `npm run verify`     | `typecheck` + `test` + `build` — must exit 0               |
-| `npm run lint`       | ESLint + Prettier (check only)                             |
-| `npm run lint:fix`   | ESLint `--fix` + Prettier `--write`                        |
-| `npm run check:deps` | Fail if any runtime dependency requires native build steps |
-| `npm pack --dry-run` | Inspect the published file set (`dist/` + metadata only)   |
+| Command              | What it does                                                 |
+| -------------------- | ------------------------------------------------------------ |
+| `npm run verify`     | `typecheck` + `test` + `build` — must exit 0                 |
+| `npm run gate`       | The RD-09 go/no-go gate: verify + e2e + probe, per criterion |
+| `npm run lint`       | ESLint + Prettier (check only)                               |
+| `npm run lint:fix`   | ESLint `--fix` + Prettier `--write`                          |
+| `npm run check:deps` | Fail if any runtime dependency requires native build steps   |
+| `npm pack --dry-run` | Inspect the published file set (`dist/` + metadata only)     |
 
 Tests follow a strict split:
 
@@ -375,11 +414,12 @@ Tests follow a strict split:
   requirements/acceptance criteria.
 - `*.impl.test.ts` — implementation/edge-case tests.
 
-Both run via `npm test`. The heavier pack-and-install end-to-end test lives in
-`test/install.e2e.test.ts` and is run explicitly:
+Both run via `npm test`. Heavier end-to-end tests end in `*.e2e.test.ts` and are
+run explicitly (or via `npm run gate`):
 
 ```bash
-npx tsx --test test/install.e2e.test.ts
+npx tsx --test test/install.e2e.test.ts      # pack + clean-install
+npx tsx --test test/host-tier3.e2e.test.ts   # RD-09 Tier-3: restore on every exit path
 ```
 
 ## License
