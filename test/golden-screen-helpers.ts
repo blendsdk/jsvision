@@ -46,6 +46,15 @@ function colorOf(isDefault: boolean, isRgb: boolean, value: number): CellColor {
   return { mode, value };
 }
 
+/** Fetch the raw emulator cell at (col, row), throwing if it is out of range. */
+function rawCell(term: XTerm, col: number, row: number) {
+  const line = term.buffer.active.getLine(row);
+  if (!line) throw new Error(`golden: no line at row ${row}`);
+  const cell = line.getCell(col);
+  if (!cell) throw new Error(`golden: no cell at (${col}, ${row})`);
+  return cell;
+}
+
 /**
  * Read and normalize one grid cell. `getChars()` returns `''` for an empty cell
  * and for the trailing continuation of a wide glyph; `getWidth()` distinguishes
@@ -57,14 +66,26 @@ function colorOf(isDefault: boolean, isRgb: boolean, value: number): CellColor {
  * @returns The normalized cell.
  */
 export function readCell(term: XTerm, col: number, row: number): GoldenCell {
-  const line = term.buffer.active.getLine(row);
-  if (!line) throw new Error(`golden: no line at row ${row}`);
-  const cell = line.getCell(col);
-  if (!cell) throw new Error(`golden: no cell at (${col}, ${row})`);
+  const cell = rawCell(term, col, row);
   return {
     char: cell.getChars(),
     width: cell.getWidth(),
     fg: colorOf(cell.isFgDefault(), cell.isFgRGB(), cell.getFgColor()),
     bg: colorOf(cell.isBgDefault(), cell.isBgRGB(), cell.getBgColor()),
   };
+}
+
+/**
+ * Whether the cell at (col, row) carries the inverse (reverse) attribute.
+ * `@xterm/headless` exposes `isInverse()` as 0/1 on the proposed cell API; this
+ * normalizes it to a boolean. Used by the a11y golden tests to prove focus is
+ * conveyed by a non-colour attribute under NO_COLOR/mono (RD-10 AC-5).
+ *
+ * @param term The emulator.
+ * @param col Zero-based column.
+ * @param row Zero-based row.
+ * @returns `true` when the cell is rendered inverse/reverse.
+ */
+export function reverseState(term: XTerm, col: number, row: number): boolean {
+  return rawCell(term, col, row).isInverse() !== 0;
 }

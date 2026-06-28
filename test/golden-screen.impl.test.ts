@@ -12,7 +12,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeTerm, feed, readCell } from './golden-screen-helpers.js';
+import { makeTerm, feed, readCell, reverseState } from './golden-screen-helpers.js';
 
 test('readCell: an empty (never-written) cell is normalized to "" width 1, default colours', async () => {
   const term = makeTerm(4, 1);
@@ -42,4 +42,12 @@ test('readCell: a plain char with no SGR reports default fg/bg', async () => {
   assert.equal(cell.width, 1);
   assert.equal(cell.fg.mode, 'default');
   assert.equal(cell.bg.mode, 'default');
+});
+
+test('reverseState: normalizes the inverse attribute (SGR 7) to a boolean', async () => {
+  const term = makeTerm(4, 1);
+  // A plain char with no SGR is not inverse; SGR 7 ("\x1b[7m") sets it.
+  await feed(term, 'A\x1b[7mB');
+  assert.equal(reverseState(term, 0, 0), false, 'a plain cell is not inverse');
+  assert.equal(reverseState(term, 1, 0), true, 'a cell drawn under SGR 7 is inverse');
 });

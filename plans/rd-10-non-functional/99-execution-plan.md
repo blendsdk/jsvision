@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-06-28 (Phase 2 complete)
-> **Progress**: 12/31 tasks (39%)
+> **Last Updated**: 2026-06-28 (Phase 3 complete)
+> **Progress**: 18/31 tasks (58%)
 > **CodeOps Skills Version**: 2.0.0
 
 ## Overview
@@ -175,12 +175,12 @@ Spec-first throughout; wall-clock assertions are skippable under CI (AR-2).
 - [x] 2.2.1 Full verify + check:deps ✅ (verify 513/513, check:deps + lint clean) (completed: 2026-06-28)
 
 ### Phase 3: Accessibility & Degradation
-- [ ] 3.1.1 reverseState/isInverse adapter reader
-- [ ] 3.1.2 a11y-golden spec (ST-5, ST-6)
-- [ ] 3.1.3 Confirm status (ST-7 mapped)
-- [ ] 3.2.1 golden impl reverseState case
-- [ ] 3.2.2 Resolve failures (engine vs adapter)
-- [ ] 3.2.3 Full verify
+- [x] 3.1.1 reverseState/isInverse adapter reader ✅ (shared rawCell extracted) (completed: 2026-06-28)
+- [x] 3.1.2 a11y-golden spec (ST-5, ST-6) ✅ (completed: 2026-06-28)
+- [x] 3.1.3 Confirm status (ST-7 mapped) ✅ (both green — maps mono + glyph-fallback; ST-7 → RD-08, no new test) (completed: 2026-06-28)
+- [x] 3.2.1 golden impl reverseState case ✅ (completed: 2026-06-28)
+- [x] 3.2.2 Resolve failures (engine vs adapter) ✅ (no failures — engine contracts hold) (completed: 2026-06-28)
+- [x] 3.2.3 Full verify ✅ (verify 516/516, lint clean) (completed: 2026-06-28)
 
 ### Phase 4: API Stability & Supply Chain
 - [ ] 4.1.1 api-stability spec (ST-8) red
