@@ -13,7 +13,8 @@
     "test": "vitest run --project unit",
     "test:e2e": "vitest run --project e2e",
     "probe": "tsx capability-probe/main.ts",
-    "demo:resize": "tsx resize-demo/main.ts"
+    "demo:resize": "tsx resize-demo/main.ts",
+    "demo:playground": "tsx keyboard-mouse-playground/main.ts"
   },
   "dependencies": {
     "@blendsdk/tui-core": "*"
