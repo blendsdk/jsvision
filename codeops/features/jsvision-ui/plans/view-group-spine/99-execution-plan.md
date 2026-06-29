@@ -44,18 +44,18 @@ unmount via `runWithOwner`), `onMount`/`onCleanup`. Covers AC-1, AC-11, AC-15. (
 — scope/lifecycle asserted directly.)
 
 ### Session 2A — Spec tests (RED)
-- [ ] T2.1 — Add `view.tree.spec.test.ts` (**ST-01** retained identity, **ST-11** scope disposal + onCleanup, **ST-15** onEvent stub). (AC-1,11,15)
-- [ ] T2.2 — Run tests → tree specs **RED**.
+- [x] T2.1 — Add `view.tree.spec.test.ts` (**ST-01** retained identity, **ST-11** scope disposal + onCleanup, **ST-15** onEvent stub). (AC-1,11,15) — 2026-06-29
+- [x] T2.2 — Run tests → tree specs **RED**. — 2026-06-29 (`../src/view/index.js` not found → file fails to import)
 
 ### Session 2B — Implementation (GREEN)
-- [ ] T2.3 — `geometry.ts`: `Point` + `intersect`/`translate`/`contains`. `types.ts`: `ViewState`, `ThemeRoleName`, `DrawContext`/`RenderRootOptions` type stubs. (03-03, 03-02, AR-37)
-- [ ] T2.4 — `view.ts`: abstract `View` — state defaults, `bounds`, `onEvent` stub, `onMount`/`onCleanup`, `invalidate`/`invalidateLayout` (root-delegating), `bind` (throws pre-mount), scope seams. (03-02, AR-30,31,46, PA-2)
-- [ ] T2.5 — `group.ts`: `Group` — `children`, `background`, `add`/`remove`, `mountView` seam (`runWithOwner`+`createRoot` nesting), recursive mount/dispose. Barrel `view/index.ts` + explicit re-exports in `src/index.ts`. (03-02, AR-36,40,43, PA-1)
-- [ ] T2.6 — Run tests → tree specs **GREEN** (scope nesting/disposal works for imperative add/remove).
+- [x] T2.3 — `geometry.ts`: `Point` + `intersect`/`translate`/`contains`. `types.ts`: `ViewState`, `ThemeRoleName`, `DrawContext`/`RenderRootOptions` type stubs. (03-03, 03-02, AR-37) — 2026-06-29
+- [x] T2.4 — `view.ts`: abstract `View` — state defaults, `bounds`, `onEvent` stub, `onMount`/`onCleanup`, `invalidate`/`invalidateLayout` (host-delegating), `bind` (throws pre-mount), scope seams. (03-02, AR-30,31,46, PA-2) — 2026-06-29 (internal `ViewHost` seam, RT-1)
+- [x] T2.5 — `group.ts`: `Group` — `children`, `background`, `add`/`remove`, `mount` seam (`runWithOwner`+`createRoot` nesting, **methods** not free fn — RT-2), recursive mount/dispose. Barrel `view/index.ts` + explicit re-exports in `src/index.ts`. (03-02, AR-36,40,43, PA-1) — 2026-06-29
+- [x] T2.6 — Run tests → tree specs **GREEN** (scope nesting/disposal works for imperative add/remove). — 2026-06-29
 
 ### Session 2C — Impl tests & hardening
-- [ ] T2.7 — `view.tree.impl.test.ts` (add before/after mount, depth-first dispose, onMount-once, double-remove no-op). (07 §impl)
-- [ ] T2.8 — `yarn verify` + `lint` green; files ≤ 500 lines. **/gitcm** — `feat(view): View/Group retained tree + owner-scope lifecycle`.
+- [x] T2.7 — `view.tree.impl.test.ts` (add before/after mount, depth-first dispose, onMount-once via reflow drain, double-remove no-op, pre-mount `bind` throws). (07 §impl) — 2026-06-29
+- [x] T2.8 — `yarn verify` + `lint` green; files ≤ 500 lines. **/gitcmp** — `feat(view): View/Group retained tree + owner-scope lifecycle`. — 2026-06-29 (verify 8/8, ui 104 tests; view files ≤ 185 lines)
 
 ---
 
@@ -167,9 +167,9 @@ the cross-cutting guarantees. Covers AC-12, AC-17, AC-18, AC-20 (+ AC-19 e2e).
 - [x] 1C Impl tests & harden: T1.7–T1.8 ✅ commit — 2026-06-29
 
 **Phase 2 — Geometry + retained tree + lifecycle**
-- [ ] 2A Spec (RED): T2.1–T2.2
-- [ ] 2B Impl (GREEN): T2.3–T2.6
-- [ ] 2C Impl tests & harden: T2.7–T2.8 ✅ commit
+- [x] 2A Spec (RED): T2.1–T2.2 — 2026-06-29
+- [x] 2B Impl (GREEN): T2.3–T2.6 — 2026-06-29
+- [x] 2C Impl tests & harden: T2.7–T2.8 ✅ commit — 2026-06-29
 
 **Phase 3 — DrawContext + theming**
 - [ ] 3A Spec (RED): T3.1–T3.2
