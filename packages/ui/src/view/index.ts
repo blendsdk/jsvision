@@ -23,3 +23,5 @@ export type { ViewState, DrawContext, ThemeRoleName, RenderRootOptions } from '.
 export { makeDrawContext } from './draw-context.js';
 export { themeRoleToStyle } from './theme-style.js';
 export { reflow } from './reflow.js';
+export { createRenderRoot } from './render-root.js';
+export type { RenderRoot } from './render-root.js';

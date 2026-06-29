@@ -105,17 +105,17 @@ pump lands in Phase 5/6.)
 **full-compose** path first. Covers AC-5, AC-6, AC-14, AC-19, AC-16-render.
 
 ### Session 5A — Spec tests (RED)
-- [ ] T5.1 — Add `view.render.spec.test.ts` (**ST-05** back-to-front overlap, **ST-06** Group bg fill, **ST-14** draw-error isolation, **ST-19** standalone render). (AC-5,6,14,19)
-- [ ] T5.2 — Run tests → render specs **RED**.
+- [x] T5.1 — Add `view.render.spec.test.ts` (**ST-05** back-to-front overlap, **ST-06** Group bg fill, **ST-14** draw-error isolation, **ST-19** standalone render). (AC-5,6,14,19) — 2026-06-29
+- [x] T5.2 — Run tests → render specs **RED**. — 2026-06-29 (`createRenderRoot` undefined)
 
 ### Session 5B — Implementation (GREEN)
-- [ ] T5.3 — `render-root.ts`: `createRenderRoot(size, {caps,theme?,schedule?,logger?})`; persistent `current` buffer; `mount` (recursive mount + first reflow + full compose); `resize`; `serialize()` (`clone`→`serialize(current,previous,{caps})`). (03-04, AR-32,38,44, PA-8)
-- [ ] T5.4 — Compose walker: clip (`intersect`), back-to-front child recursion, `Group` bg via `draw`, per-view `try/catch`→logger + skip subtree, compose-context cache. (03-04, AR-34,38,42)
-- [ ] T5.5 — Run tests → render specs **GREEN**. Split `compose.ts` out of `render-root.ts` if nearing 500 lines (PA-4).
+- [x] T5.3 — `render-root.ts`: `createRenderRoot(size, {caps,theme?,schedule?,logger?})`; persistent `current` buffer; `mount` (recursive mount + first reflow + full compose); `resize`; `serialize()` (`clone`→`serialize(current,previous,{caps})`). (03-04, AR-32,38,44, PA-8) — 2026-06-29 (RenderRoot also exposes `buffer()` accessor for host integration + tests, RT-5)
+- [x] T5.4 — Compose walker: clip (`intersect`), back-to-front child recursion, `Group` bg via `draw`, per-view `try/catch`→logger + skip subtree. (03-04, AR-34,38,42) — 2026-06-29 (full-compose path; the per-view compose-context cache for partial recompose lands in Phase 6)
+- [x] T5.5 — Run tests → render specs **GREEN**. Split `compose.ts` out if nearing 500 (PA-4). — 2026-06-29 (render-root.ts 185 lines — no split needed)
 
 ### Session 5C — Impl tests & hardening
-- [ ] T5.6 — `view.render.impl.test.ts` (bg under overlap, error logged once + siblings continue, full-compose cache populated). (07 §impl)
-- [ ] T5.7 — `yarn verify` + `lint` green; files ≤ 500 lines. **/gitcm** — `feat(view): render root + compose walker (clip, back-to-front, bg, error isolation)`.
+- [x] T5.6 — `view.render.impl.test.ts` (bg under overlap, error logged once per throwing view + siblings continue, resize→reflow→recompose). (07 §impl) — 2026-06-29
+- [x] T5.7 — `yarn verify` + `lint` green; files ≤ 500 lines. **/gitcmp** — `feat(view): render root + compose walker (clip, back-to-front, bg, error isolation)`. — 2026-06-29 (verify 8/8, lint clean; largest view file 190 lines)
 
 ---
 
@@ -182,9 +182,9 @@ the cross-cutting guarantees. Covers AC-12, AC-17, AC-18, AC-20 (+ AC-19 e2e).
 - [x] 4C Impl tests & harden: T4.5–T4.6 ✅ commit — 2026-06-29
 
 **Phase 5 — Render root + compose walker**
-- [ ] 5A Spec (RED): T5.1–T5.2
-- [ ] 5B Impl (GREEN): T5.3–T5.5
-- [ ] 5C Impl tests & harden: T5.6–T5.7 ✅ commit
+- [x] 5A Spec (RED): T5.1–T5.2 — 2026-06-29
+- [x] 5B Impl (GREEN): T5.3–T5.5 — 2026-06-29
+- [x] 5C Impl tests & harden: T5.6–T5.7 ✅ commit — 2026-06-29
 
 **Phase 6 — Coalescing scheduler + partial recompose**
 - [ ] 6A Spec (RED): T6.1–T6.2
