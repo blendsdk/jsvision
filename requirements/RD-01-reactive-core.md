@@ -38,20 +38,21 @@ tree is the hard part; the combinators and helpers are S–M).
 - [ ] **`effect(fn)`** — runs `fn` synchronously once on creation and re-runs it when a tracked dependency changes; bound to the current owner scope and disposed with it. (AR-02, AR-03)
 - [ ] **Dynamic dependency tracking** — dependencies are re-collected on every run (a branch not taken this run does not keep its old subscription).
 - [ ] **Equality** — change detection uses `Object.is` by default; a write to an equal value notifies nothing. A per-signal/computed `equals` option overrides it; `equals: false` forces notification on every write. (AR-05)
-- [ ] **`batch(fn)`** — coalesces all writes inside `fn`; dependent effects run **once**, after `fn` returns, observing final values. (AR-02)
+- [ ] **`batch(fn)`** — coalesces all writes inside `fn`; dependent effects run **once**, after `fn` returns, observing final values. **Nested `batch` joins the outer batch** — effects flush only when the outermost `batch` returns. (AR-02, AR-16)
 - [ ] **`untrack(fn)`** — runs `fn` and returns its result without subscribing to any signal read inside it. (AR-08)
 - [ ] **`onCleanup(fn)`** — registers teardown for the current computation/owner; runs before each re-run of an effect and once when the owner is disposed. (AR-03)
 - [ ] **`createRoot(fn)`** — creates an owner scope; `fn` receives a `dispose()` that tears down every computation created under the scope (running their `onCleanup`s). (AR-03)
 - [ ] **Glitch-freedom** — when a write triggers a cascade, dependents execute in topological order; no effect/computed ever observes a partially-updated graph (e.g. a diamond dependency yields one consistent re-run). (AR-07)
-- [ ] **Runaway guard** — propagation that does not converge (an effect writing a signal it depends on) is bounded by a maximum iteration count and throws a typed error instead of hanging the event loop.
+- [ ] **Runaway guard** — propagation that does not converge (an effect writing a signal it depends on) is bounded by a **fixed maximum of 1000 propagation iterations** (not configurable in v1) and throws a typed `ReactiveCycleError` (extends `@jsvision/core`'s `TuiError`) instead of hanging the event loop. (AR-13, AR-18)
+- [ ] **Computation without an owner** — calling `effect`/`computed`/`Show`/`For` with no active owner (outside any `createRoot`) is **allowed**, but the computation is **never auto-disposed**; in dev a `console.warn` flags the potential leak. (AR-14)
+- [ ] **Error propagation in a run** — if an `effect`/`computed` `fn` throws, the current run aborts and that computation's `onCleanup` fires; the throw **propagates** to the triggering `set`/`batch` caller; already-applied signal values are **not** rolled back; sibling dependents already queued in the cascade still run. (AR-15)
 - [ ] **`Show(when, then, else?)`** — a reactive conditional combinator: yields `then`'s child when `when()` is truthy, `else`'s (or nothing) otherwise; switching branches disposes the previous branch's owner scope. (AR-11)
-- [ ] **`For(each, key, render)`** — a keyed list combinator: `render` is called once per new key; on array change, items are created/removed/reordered **by key**, reusing each surviving item's child + owner scope (no re-render on reorder), disposing removed items' scopes. (AR-04)
-- [ ] **Packaging** — pure TypeScript, zero runtime dependencies (passes `check:deps`), ESM/NodeNext, under `packages/ui/src/reactive/`, re-exported through the single `@jsvision/ui` entry point. (AR-10)
+- [ ] **`For(each, key, render)`** — a keyed list combinator: `render` is called once per new key; on array change, items are created/removed/reordered **by key**, reusing each surviving item's child + owner scope (no re-render on reorder), disposing removed items' scopes. **Keys must be unique among live items**; a duplicate key is a usage error — in dev a `console.warn` is emitted and last-writer-wins. (AR-04, AR-17)
+- [ ] **Packaging** — pure TypeScript, no third-party/native runtime dependencies (its only import beyond Node built-ins is the declared workspace dep `@jsvision/core` for `TuiError`; passes `check:deps`), ESM/NodeNext, under `packages/ui/src/reactive/`, re-exported through the single `@jsvision/ui` entry point. (AR-10, AR-13)
 
 ### Should Have
 
-- [ ] **`.peek()`** convenience on signals and computeds (equivalent to `untrack(() => s())`).
-- [ ] A typed error class for the runaway guard (e.g. `ReactiveCycleError`) carrying the iteration limit hit.
+- [ ] A typed error class for the runaway guard — `ReactiveCycleError`, **extending `@jsvision/core`'s `TuiError`** (the SDK-wide error base), carrying the iteration limit hit. (AR-13)
 - [ ] Disposal idempotency — calling a `dispose()` twice is a safe no-op.
 
 ### Won't Have (Out of Scope)
@@ -159,6 +160,12 @@ function For<T, N>(
 | Consistency | topological · ad-hoc | glitch-free topological | correctness | AR-07 |
 | Untracked read | provide · omit | provide `untrack`/`.peek` | needed for read-without-depend | AR-08 |
 | Reactive↔view seam | primitives here, binding in RD-03 · invalidation here | primitives here only | keeps reactivity UI-independent | AR-09 |
+| Error base class | extend core `TuiError` · standalone `Error` | extend `TuiError` | SDK-wide `catch (e instanceof TuiError)` contract | AR-13 |
+| No-owner computation | allow + dev-warn · throw | allow, never auto-disposed, dev-warn | matches Solid; doesn't break top-level/test setup | AR-14 |
+| Exception in a run | abort + cleanup + propagate, no rollback · swallow-and-log | abort, fire `onCleanup`, propagate, no rollback | surfaces bugs; predictable scheduler | AR-15 |
+| Nested `batch` | outermost-only flush · per-batch flush | outermost-only (inner joins outer) | one consistent flush; Solid-parity | AR-16 |
+| `For` duplicate keys | dev-warn + last-writer-wins · throw | unique required; dev-warn + last-writer-wins | a transient duplicate must not crash a valid UI | AR-17 |
+| Runaway limit | fixed 1000 (v1) · configurable knob | fixed 1000, not configurable in v1 | deterministic AC; avoid premature config | AR-18 |
 
 > **Traceability:** every decision above references its Ambiguity Register entry. See
 > `00-ambiguity-register.md`.
@@ -179,12 +186,14 @@ function For<T, N>(
 - **Injection risks**: N/A (see above).
 - **Availability / runaway protection** *(the one real concern)*: a reactive cycle
   (an effect writing a signal it depends on) must **not** hang the event loop. The
-  scheduler bounds propagation by a maximum iteration count and throws a typed
-  `ReactiveCycleError` instead of looping forever.
+  scheduler bounds propagation by a **fixed 1000-iteration** limit and throws a typed
+  `ReactiveCycleError` (extending `@jsvision/core`'s `TuiError`) instead of looping forever.
 - **Memory**: subscriptions are owned by the disposal tree — disposing a scope (e.g. a
   `Show` branch or a removed `For` item) releases all its computations and dependency
   edges. There is no unbounded global registry; long-running apps do not leak
-  computations as UI mounts/unmounts.
+  computations as UI mounts/unmounts. **One documented footgun:** a computation created
+  outside any owner (no enclosing `createRoot`) is never auto-disposed — the dev-mode
+  `console.warn` (AR-14) flags it; production code mounts every computation under a scope.
 - **Encryption / rate limiting / infrastructure**: N/A.
 
 ---
@@ -199,10 +208,15 @@ function For<T, N>(
 6. [ ] **Batch coalescing** — `batch(() => { s.set('a'); s.set('b') })` re-runs a dependent effect exactly once, and that run observes `'b'`.
 7. [ ] **Glitch-freedom (diamond)** — with `a = signal(0)`, `b = computed(() => a())`, `d = computed(() => a())`, `effect(() => sink(b() + d()))`, one `a.set(1)` re-runs the effect exactly once, observing `b` and `d` both derived from `1` (never a mixed old/new pair).
 8. [ ] **Ownership disposal** — `createRoot(dispose => { effect(() => s()); return dispose })` then calling the returned `dispose()`: a subsequent `s.set(<new>)` does NOT re-run the effect, and any `onCleanup` registered ran exactly once.
-9. [ ] **`onCleanup` ordering** — an effect registering `onCleanup(spy)` calls `spy` before each re-run and once at disposal; over N re-runs then disposal, `spy` was called N times (once per re-run after the first) + once at disposal — i.e. cleanup count equals run count.
+9. [ ] **`onCleanup` ordering** — `onCleanup(spy)` runs before every re-run and once at disposal; for an effect with 1 initial run + R re-runs, `spy` fires R+1 times, equal to the total run count (1+R).
 10. [ ] **`untrack`** — `effect(() => { a(); untrack(() => b()) })` re-runs when `a` changes but does NOT re-run when `b` changes.
 11. [ ] **Runaway guard** — an effect that writes a signal it reads throws `ReactiveCycleError` after the bounded iteration limit; the call returns control (the event loop does not hang).
 12. [ ] **`Show`** — `Show(() => cond(), A, B)` yields A's node while `cond()` is true and B's (or `undefined` with no `else`) while false; flipping `cond` disposes the previous branch's scope (its `onCleanup` fires exactly once).
 13. [ ] **`For` keyed reuse** — `For(() => items(), it => it.id, render)`: `render` is called once per distinct id; reordering `items` to a permutation of the same ids calls `render` zero additional times and the produced nodes are the same instances in the new order; removing an id disposes that item's scope (its `onCleanup` fires); the produced node order always matches `items` order.
-14. [ ] **Packaging** — the reactive subsystem imports nothing beyond the package and Node built-ins (`yarn check:deps` passes), and all public symbols (`signal`, `computed`, `effect`, `batch`, `untrack`, `onCleanup`, `createRoot`, `Show`, `For`) are importable from `@jsvision/ui`.
+14. [ ] **Packaging** — the reactive subsystem imports nothing beyond the package, its declared workspace deps (`@jsvision/core`, for `TuiError`), and Node built-ins (`yarn check:deps` passes); all public symbols (`signal`, `computed`, `effect`, `batch`, `untrack`, `onCleanup`, `createRoot`, `Show`, `For`, `ReactiveCycleError`) and types (`Signal`, `Computed`) are importable from `@jsvision/ui`.
 15. [ ] **Security verified** — no external-input/injection/auth surface exists; the runaway guard (AC-11) bounds propagation; disposal (AC-8) releases subscriptions so repeated mount/unmount does not grow live-computation count without bound.
+16. [ ] **No-owner computation** — creating an `effect`/`computed` outside any `createRoot` does NOT throw and returns a working computation; it is never auto-disposed, and in dev a `console.warn` is emitted exactly once for it. (AR-14)
+17. [ ] **Exception in a run** — given `effect(() => { s(); throw new Error('x') })`, the throw propagates out of the triggering `s.set(<new>)`; an `onCleanup` registered before the throw ran exactly once; a sibling effect on the same signal still ran; the signal retains its new value (no rollback). (AR-15)
+18. [ ] **Nested `batch`** — `batch(() => batch(() => { s.set('a'); s.set('b') }))` re-runs a dependent effect exactly once, and that run observes `'b'`. (AR-16)
+19. [ ] **`For` index reactivity** — reordering a `For` list to a permutation of the same keys updates the reactive `index()` observed by a surviving item's effect (the effect re-runs with the item's new position). (PF-008)
+20. [ ] **`For` duplicate keys** — two live items resolving to the same key emit a dev `console.warn` and do not crash (last-writer-wins); the produced node count and order remain defined. (AR-17)

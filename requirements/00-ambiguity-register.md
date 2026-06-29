@@ -8,7 +8,8 @@
 Every decision in an RD back-references its `AR #` here. AR-01…AR-04 are explicit
 user choices (offered as multiple options, user selected); AR-05…AR-11 are
 single-dominant-option decisions (no second viable alternative — recorded for
-traceability); AR-12 is a housekeeping decision.
+traceability); AR-12 is a housekeeping decision; AR-13…AR-18 resolve the under-specified
+edges surfaced by the RD-01 preflight (PF-001…PF-009) — all accepted by the user 2026-06-29.
 
 | AR # | Area | Question | Options Considered | Decision | Status |
 |------|------|----------|--------------------|----------|--------|
@@ -24,3 +25,9 @@ traceability); AR-12 is a housekeeping decision.
 | AR-10 | RD-01 · Packaging | Where does it live + dependency policy? | `packages/ui/src/reactive/`, zero deps, ESM/NodeNext, re-exported via the single `@jsvision/ui` entry (only viable per project conventions) | **As stated** — pure TS, zero runtime deps (passes `check:deps`) | ✅ Resolved |
 | AR-11 | RD-01 · `Show` semantics | What does `Show` do? | `Show(cond, then, else?)` mounts one branch, disposes the inactive branch's scope, re-evaluates on `cond` change (dominant) | **As stated** | ✅ Resolved |
 | AR-12 | Feature-set · Requirements folder | Reuse the existing `requirements/` set or start fresh? | Start fresh for the UI feature-set; archive the stale foundation scaffolding (dominant — foundation is done/archived); reuse (rejected: mixes two feature-sets, old `@blendsdk/tui` name) | **Fresh UI set; foundation README/register/_draft moved to `plans/_archive/foundation/requirements/`; RD numbering restarts at RD-01** | ✅ Resolved |
+| AR-13 | RD-01 · Error model | Does `ReactiveCycleError` extend core's `TuiError`? | (a) extend `@jsvision/core`'s `TuiError` (SDK-wide `catch (e instanceof TuiError)` convention); (b) standalone `extends Error` (rejected: fragments the error model for marginal decoupling) | **(a) extend `TuiError`** — imported from `@jsvision/core` (declared workspace dep; `check:deps` still passes) | ✅ Resolved (preflight PF-001) |
+| AR-14 | RD-01 · No-owner computation | What happens when a computation is created with no active owner? | (a) allowed but never auto-disposed + dev `console.warn` (Solid-parity); (b) throw a `TuiError` (rejected: breaks ad-hoc/test usage + top-level app setup) | **(a) allowed, never auto-disposed, dev-warned** | ✅ Resolved (preflight PF-002) |
+| AR-15 | RD-01 · Exception in a run | How is a throw inside an `effect`/`computed` run handled? | (a) abort the run, fire its `onCleanup`, propagate to the `set`/`batch` caller, no rollback, queued siblings still run; (b) swallow-and-log per effect (rejected: hides bugs, un-idiomatic) | **(a) abort + cleanup + propagate, no rollback** | ✅ Resolved (preflight PF-003) |
+| AR-16 | RD-01 · Nested `batch` | Flush at the outermost close or per nested `batch`? | (a) outermost-only — inner `batch` joins the outer, effects flush once when the outermost returns (Solid-parity); (b) per-batch flush (rejected: defeats coalescing, surprising) | **(a) outermost-only flush** | ✅ Resolved (preflight PF-006) |
+| AR-17 | RD-01 · `For` duplicate keys | What happens when `key` yields the same value for two live items? | (a) keys unique among live items; a duplicate is a usage error — dev `console.warn` + last-writer-wins; (b) throw (rejected: a transient duplicate during an in-flight data update would crash a valid UI) | **(a) dev-warn + last-writer-wins** | ✅ Resolved (preflight PF-009) |
+| AR-18 | RD-01 · Runaway limit | What is the runaway-guard iteration bound? | (a) fixed 1000 propagation iterations, not configurable in v1 (deterministic AC); (b) configurable scheduler knob (rejected: premature config) | **(a) fixed 1000, v1** | ✅ Resolved (preflight PF-004) |
