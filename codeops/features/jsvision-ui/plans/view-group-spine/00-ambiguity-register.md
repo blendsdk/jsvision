@@ -65,3 +65,15 @@ back-reference them. Not re-opened.
 > back-references a `PA-NN` (plan) or `AR-NN` (requirements) entry above. Zero items
 > deferred; the user confirmed PA-1/PA-2/PA-3 and the `clone()` decision (PA-8) on
 > 2026-06-29; PA-4…PA-7 are single-dominant-option decisions recorded for traceability.
+
+## Runtime decisions (exec_plan) — RT-NN
+
+Wiring details the plan specified at the *shape* level but left to implementation; resolved
+during `exec_plan` with sound engineering and recorded here (tag `(runtime)`), per the
+zero-ambiguity-during-execution rule. None changes a behavioral AR/PA decision.
+
+| RT # | Phase | Question | Decision | Why |
+|------|-------|----------|----------|-----|
+| RT-1 | 2 | What type does `View` hold to notify its render root of repaint/relayout? The plan wrote `root: RenderRoot` but `RenderRoot` (mount/resize/flush/serialize) is a Phase-5 public surface. | Introduce a narrow internal seam `interface ViewHost { markRepaint(view): void; markRelayout(): void }` (declared in `view.ts` to avoid a `types.ts`↔`view.ts` type cycle); `View` holds `host: ViewHost \| null`. The Phase-5 `RenderRoot` implements `ViewHost`. | A View only needs the dirty-set seam, not the whole root; narrower coupling, no forward type cycle. Refines AR-32/AR-44; behavior unchanged. |
+| RT-2 | 2 | The plan sketches `mountView(view, root, parentScope)` as a free function, but it must set `View`'s protected wiring fields (`scope`/`host`/`mounted`/`parent`/`disposeScope`). | Implement mount/unmount as **methods** — `view.mount(host, parentScope)` / `view.unmount()` — `Group` overriding `mount` to recurse into children under its own scope. `Group.add` mounts an added child immediately when the group is already mounted, else defers to the group's mount. Phase-5 `RenderRoot.mount` calls `rootView.mount(host, rootScope)`. | Free functions can't touch protected members; methods keep the wiring encapsulated and the recursion is the same scope-nesting the plan describes (child scope created under the parent via `runWithOwner`). |
+| RT-3 | 2 | On unmount, how are a disposed subtree's wiring flags (`mounted`/`scope`/`host`/`parent`) reset across all descendants? | At mount each view registers an `onCleanup` (under its own scope) that resets its wiring. Disposing any scope cascades (RD-01 `dispose` is recursive), so every descendant's flags auto-reset — no manual recursion in `unmount()`. | Leak-free + flag-correct by construction; reuses RD-01's depth-first disposal rather than re-walking the tree. |

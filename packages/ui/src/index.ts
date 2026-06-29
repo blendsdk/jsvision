@@ -33,3 +33,8 @@ export type {
 
 // Reactive core (RD-01) — fine-grained signals, effects, computeds, combinators.
 export * from './reactive/index.js';
+
+// View/Group spine (RD-03) — retained widget tree + clipped paint + theming. Explicit named
+// re-exports (not `export *`), per the layout convention (AC-18). Grows per phase.
+export { View, Group, intersect, translate, contains } from './view/index.js';
+export type { Point, ViewState, DrawContext, ThemeRoleName } from './view/index.js';
