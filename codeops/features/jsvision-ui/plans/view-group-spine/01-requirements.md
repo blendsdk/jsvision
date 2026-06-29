@@ -24,7 +24,7 @@ Lives at `packages/ui/src/view/`, re-exported through `@jsvision/ui`.
 
 - `View` (abstract): `bounds: Rect`, `state: ViewState`, `layout: LayoutProps`, optional `measure`, abstract `draw(ctx)`, `onEvent(ev)` **stub**, `invalidate()`, `invalidateLayout()`, `bind(reader, apply?, { relayout? })`, `onMount(fn)`, `onCleanup(fn)`. (AR-30, AR-31, AR-46)
 - `ViewState = { visible; disabled; focused }` — drawn-against flags; focus/disabled driven by RD-04. (AR-30)
-- `Group extends View`: `children: View[]`, `background?: ThemeRoleName`, `add(child)`, `remove(child)`, `draw(ctx)` (fills bg; the spine composites children). (AR-40, AR-38)
+- `Group extends View`: `children: View[]`, `background?: ThemeRoleName`, `add(child)`, `addDynamic(producer)` (reactive `Show`/`For` children), `remove(child)`, `draw(ctx)` (fills bg; the spine composites children). (AR-40, AR-38, AR-36)
 - `DrawContext`: `text`/`fillRect`/`fill`/`box`/`shadow`, `color(role): Style`, `readonly size: Size2D` — view-local coords, auto-clipped, out-of-clip writes dropped. (AR-39)
 - `Point` + pure helpers `intersect`/`translate`/`contains` over reused `Rect`/`Size2D`. (AR-37)
 - `RenderRoot` + `createRenderRoot(size, { caps, theme?, schedule?, logger? })`: `mount(root)`, `resize(size)`, `flush()`, `serialize(): string`. (AR-32, AR-38, AR-44)
@@ -75,6 +75,6 @@ Lives at `packages/ui/src/view/`, re-exported through `@jsvision/ui`.
 3. `yarn verify` green (typecheck + build + unit tests across packages); demo e2e green (`yarn test:e2e`).
 4. `yarn workspace @jsvision/ui check:deps` passes (no third-party/native deps).
 5. `View`, `Group`, `DrawContext`, `RenderRoot`, `createRenderRoot`, `Point`, `ViewState`, `ThemeRoleName` (+ reused `Rect`/`Size2D`) importable from `@jsvision/ui`; `runWithOwner`/`getOwner`/`Owner` from `@jsvision/ui`; `ScreenBuffer.clone()` on the core export.
-6. `runWithOwner` and `ScreenBuffer.clone()` do not regress RD-01 / RD-04 existing tests.
+6. `runWithOwner` and `ScreenBuffer.clone()` do not regress RD-01 (reactive) or core's render-engine existing tests.
 7. Every `src/view/` file ≤ 500 lines; public symbols carry JSDoc.
 8. No dead code; ESLint + Prettier clean (`yarn lint`); `demo:view` runs and prints a themed ASCII frame.

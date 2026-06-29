@@ -66,6 +66,12 @@ lastFrame = serialize(current, previous, { caps, encodeStyle? })  // cached for 
   **cached** absolute origin + clip from the last full compose. `topmostDirty` drops a dirty
   view whose ancestor is also dirty (the ancestor's subtree already covers it). Reflow
   invalidates the caches (a moved view's cached context is stale ⇒ full compose).
+  - **Assumes non-overlapping siblings.** Recomposing only a dirty subtree is correct because the
+    reflow pass derives sibling rects from RD-02 flex layout, which produces non-overlapping rects
+    by construction — a repaint never has to consider a sibling drawn on top. Overlap arises only
+    from deliberate `bounds` manipulation or **overlapping windows (RD-05)**; when RD-05 lands it
+    must recompose front-to-back over the dirty region (or re-introduce the deferred occlusion
+    pass, AR-34). Out of scope for RD-03.
 - A repainting view must fully cover its rect; a `Group` fills its `background`. A leaf that
   under-paints leaves stale cells until the next reflow — documented v1 behavior (PA-8).
 
@@ -76,7 +82,7 @@ function composeSubtree(view, absOrigin, clip): void {   // clip = view rect ∩
   if (!view.state.visible) return;                       // display:none (AR-41)
   const ctx = makeDrawContext(buffer, absOrigin, clip, theme);
   try { view.draw(ctx); }
-  catch (e) { logger.error('view.draw threw', e); return; }  // isolate + skip subtree (AR-42, AC-14)
+  catch (e) { logger.error('view', 'draw() threw', { error: String(e) }); return; }  // isolate + skip subtree (AR-42, AC-14)
   if (view is Group) {
     for (const child of view.children) {                 // array order = back-to-front (AC-5)
       const childOrigin = { x: absOrigin.x + child.bounds.x, y: absOrigin.y + child.bounds.y };
@@ -121,9 +127,11 @@ function createRenderRoot(size: Size2D, opts: RenderRootOptions): RenderRoot;
 
 ## Dynamic children — `Show`/`For` with `N=View` (AR-36, AC-12)
 
-A `Group` accepts reactive child **producers** alongside static children: `Show<View>(…)` →
-`() => View | undefined`, `For<T, View>(…)` → `() => View[]`. The Group runs a child-reconcile
-**effect under its own scope** (via `runWithOwner(group.scope, () => effect(...))`):
+A `Group` accepts reactive child **producers** alongside static children via
+`Group.addDynamic(producer)` (03-02) — distinct from `add(child: View)` because a producer is an
+accessor (`Show<View>(…)` → `() => View | undefined`, `For<T, View>(…)` → `() => View[]`), not a
+`View`. For each registered producer the Group runs a child-reconcile **effect under its own
+scope** (via `runWithOwner(group.scope, () => effect(...))`):
 
 - The effect reads the producer accessor (subscribing) and gets the current `View[]`.
 - It **diffs** against the currently-mounted dynamic children: newly-appearing views are

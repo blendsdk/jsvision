@@ -91,6 +91,7 @@ class Group extends View {
   children: View[];
   background?: ThemeRoleName;
   add(child: View): void;
+  addDynamic(producer: (() => View | undefined) | (() => View[])): void; // reactive Show/For children (AR-36)
   remove(child: View): void;
   draw(ctx: DrawContext): void;   // fills `background` role if set; children composited by the spine
 }
@@ -103,6 +104,21 @@ class Group extends View {
    `mountView(child, this.root, this.scope)` — see below — and schedule a reflow (structural
    change, AR-33). If this Group is **not** yet mounted, defer: the child's scope/root are
    created when this Group itself mounts (recursive mount).
+
+### `addDynamic(producer)` — reactive children entry (AR-36, PA-1)
+
+The registration seam for `Show`/`For` children, distinct from the static `add(child: View)`
+because a producer is an **accessor** (`() => View | undefined` for `Show<View>`, `() => View[]`
+for `For<T, View>`), not a `View`. `addDynamic` records the producer and, once this Group is
+mounted, creates the child-reconcile **effect under the Group's scope** via
+`runWithOwner(this.scope, () => effect(…))`; if the Group is not yet mounted the effect is created
+when the Group itself mounts (same deferral as `add`). The reconcile effect (full algorithm in
+[03-04](03-04-reflow-scheduler-render-root.md) §"Dynamic children") reads the accessor
+(subscribing), diffs the produced views against the currently-mounted dynamic children
+(`mountView`/`remove`), and schedules a reflow on any change. Keeping the static `View[]` path and
+the reactive-accessor path as **separate methods** keeps each call site type-explicit about
+whether it adds a fixed child or a reactive subtree (the disciplined-hybrid "structure goes
+through `Show`/`For`" framing, AR-36).
 
 ### `mountView(view, root, parentScope)` (the mount seam)
 
