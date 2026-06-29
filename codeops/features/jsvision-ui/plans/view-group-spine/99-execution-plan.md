@@ -22,18 +22,18 @@ produces files ≤ 500 lines (PA-4) with full JSDoc on public symbols.
 The two additive primitives on done subsystems (03-01). Self-contained; unblock the spine.
 
 ### Session 1A — Spec tests (RED)
-- [ ] T1.1 — Extend `reactive.ownership.spec.test.ts` with **ST-21** (`runWithOwner` nests + restores). (PA-1)
-- [ ] T1.2 — Add `packages/core/test/render-buffer-clone.spec.test.ts` with **ST-22** (`clone()` exactness incl. wide/continuation cells). (PA-8)
-- [ ] T1.3 — Run `yarn workspace @jsvision/ui test` + `@jsvision/core test` → confirm ST-21/ST-22 **fail (RED)**; all existing tests stay green.
+- [x] T1.1 — Extend `reactive.ownership.spec.test.ts` with **ST-21** (`runWithOwner` nests + restores). (PA-1) — 2026-06-29
+- [x] T1.2 — Add `packages/core/test/render-buffer-clone.spec.test.ts` with **ST-22** (`clone()` exactness incl. wide/continuation cells). (PA-8) — 2026-06-29
+- [x] T1.3 — Run `yarn workspace @jsvision/ui test` + `@jsvision/core test` → confirm ST-21/ST-22 **fail (RED)**; all existing tests stay green. — 2026-06-29 (ST-21 `getOwner is not a function`, ST-22 `buf.clone is not a function`; 4 existing ownership specs still green)
 
 ### Session 1B — Implementation (GREEN)
-- [ ] T1.4 — `reactive/owner.ts`: add `runWithOwner(owner, fn)` (try/finally `setOwner`); `reactive/index.ts`: export `runWithOwner`, `getOwner`, type `Owner`. (03-01 §1, PA-1, AR-43)
-- [ ] T1.5 — `render/buffer.ts`: add `public clone(): ScreenBuffer` (deep-copy cells). (03-01 §2, PA-8, AR-44)
-- [ ] T1.6 — Run tests → ST-21/ST-22 **GREEN**; RD-01 ownership + core render suites still green.
+- [x] T1.4 — `reactive/owner.ts`: add `runWithOwner(owner, fn)` (try/finally `setOwner`); `reactive/index.ts`: export `runWithOwner`, `getOwner`, type `Owner`. (03-01 §1, PA-1, AR-43) — 2026-06-29 (`@jsvision/ui` `export *` propagates them through the package barrel)
+- [x] T1.5 — `render/buffer.ts`: add `public clone(): ScreenBuffer` (deep-copy cells). (03-01 §2, PA-8, AR-44) — 2026-06-29
+- [x] T1.6 — Run tests → ST-21/ST-22 **GREEN**; RD-01 ownership + core render suites still green. — 2026-06-29 (ST-21: 5/5 ownership specs; ST-22: clone spec)
 
 ### Session 1C — Impl tests & hardening
-- [ ] T1.7 — Impl tests: `runWithOwner(null,…)`/nested-restore/throw-restore (reactive.ownership.impl); clone empty/box/independence (render-buffer-clone.impl). (07 §impl)
-- [ ] T1.8 — `yarn verify` + `lint` green; no file > 500 lines. **/gitcm** — `feat(reactive): runWithOwner explicit-parent scope (RD-03 AR-43)` + `feat(render): ScreenBuffer.clone() frame snapshot (RD-03 AR-44)` (two commits, per scope).
+- [x] T1.7 — Impl tests: `runWithOwner(null,…)`/nested-restore/throw-restore (reactive.ownership.impl); clone empty/box/independence (render-buffer-clone.impl). (07 §impl) — 2026-06-29
+- [x] T1.8 — `yarn verify` + `lint` green; no file > 500 lines. **/gitcm** — `feat(reactive): runWithOwner explicit-parent scope (RD-03 AR-43)` + `feat(render): ScreenBuffer.clone() frame snapshot (RD-03 AR-44)` (two commits, per scope). — 2026-06-29 (verify: 8/8 turbo tasks, core 478 + ui suites green; lint clean; owner.ts 159, buffer.ts 260 lines)
 
 ---
 
@@ -162,9 +162,9 @@ the cross-cutting guarantees. Covers AC-12, AC-17, AC-18, AC-20 (+ AC-19 e2e).
 ## Master Progress Checklist
 
 **Phase 1 — Enabling primitives**
-- [ ] 1A Spec (RED): T1.1–T1.3
-- [ ] 1B Impl (GREEN): T1.4–T1.6
-- [ ] 1C Impl tests & harden: T1.7–T1.8 ✅ commit
+- [x] 1A Spec (RED): T1.1–T1.3 — 2026-06-29
+- [x] 1B Impl (GREEN): T1.4–T1.6 — 2026-06-29
+- [x] 1C Impl tests & harden: T1.7–T1.8 ✅ commit — 2026-06-29
 
 **Phase 2 — Geometry + retained tree + lifecycle**
 - [ ] 2A Spec (RED): T2.1–T2.2

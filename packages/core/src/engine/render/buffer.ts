@@ -234,4 +234,27 @@ export class ScreenBuffer {
     }
     return out;
   }
+
+  /**
+   * Create a deep, independent copy of this buffer: same `width`/`height` and an element-wise
+   * copy of every cell — `char`, `fg`/`bg`/`attrs`, and `width` (0/1/2, so wide-lead and
+   * continuation cells are reproduced exactly). The copy shares no cell objects with the
+   * original, so mutating either one never affects the other.
+   *
+   * RD-03 snapshots the previous frame with this before a partial recompose, so
+   * `serialize(current, previous, …)` emits a true damage diff (AR-44, PA-8). A shallow or
+   * `get`/`set`-based copy could not reproduce continuation cells faithfully (`set` recomputes
+   * width from the char), which is why the exact copy lives here in the buffer that owns the
+   * cell array.
+   *
+   * @returns A new ScreenBuffer equal to this one cell-for-cell.
+   */
+  public clone(): ScreenBuffer {
+    const copy = new ScreenBuffer(this.width, this.height, { fg: 'default', bg: 'default' });
+    for (let i = 0; i < this.cells.length; i += 1) {
+      const cell = this.cells[i];
+      copy.cells[i] = { char: cell.char, fg: cell.fg, bg: cell.bg, attrs: cell.attrs, width: cell.width };
+    }
+    return copy;
+  }
 }

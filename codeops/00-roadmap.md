@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 2 ✅ Done · 1 🔬 Plan Preflighted · 6 ⬜ Backlog — RD-03 ready for exec_plan | 2 / 9 done | 🔄 | 2026-06-29 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 2 ✅ Done · 1 🔄 Executing · 6 ⬜ Backlog — RD-03 view-group-spine in progress | 2 / 9 done | 🔄 | 2026-06-29 |
 
 ## Archived
 
