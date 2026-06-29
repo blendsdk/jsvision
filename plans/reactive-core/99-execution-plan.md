@@ -73,17 +73,17 @@ glitch-freedom. Covers AC-4, AC-7.
 Covers AC-12, AC-13, AC-19, AC-20. Depends on Phases 1–2 (uses `computed`, `effect`, owner scopes).
 
 ### Session 3A — Spec tests (RED)
-- [ ] T3.1 — `reactive.combinators.spec.test.ts` (ST-12 Show, ST-13 For keyed reuse, ST-19 reactive index, ST-20 duplicate key). (AC-12,13,19,20)
-- [ ] T3.2 — Run tests → combinator specs **RED**.
+- [x] T3.1 — `reactive.combinators.spec.test.ts` (ST-12 Show, ST-13 For keyed reuse, ST-19 reactive index, ST-20 duplicate key). (AC-12,13,19,20) <!-- 2026-06-29 -->
+- [x] T3.2 — Run tests → combinator specs **RED**. <!-- 2026-06-29 -->
 
 ### Session 3B — Implementation (GREEN)
-- [ ] T3.3 — `show.ts`: memoized-boolean `Show`, per-branch scope dispose-on-flip. (AR-11)
-- [ ] T3.4 — `for.ts`: keyed `Map` reconciliation, per-item index signal, missing/new/surviving diff, duplicate-key dev-warn + last-writer-wins. (AR-04, AR-17, PA-1)
-- [ ] T3.5 — Export `Show`/`For`. Run tests → **GREEN**.
+- [x] T3.3 — `show.ts`: memoized-boolean `Show`, per-branch scope dispose-on-flip (lazy memo driver; branch built untracked). (AR-11) <!-- 2026-06-29 -->
+- [x] T3.4 — `for.ts`: keyed `Map` reconciliation, per-item index signal, missing/new/surviving diff, duplicate-key dev-warn + last-writer-wins; driven by an effect (writes index/output signals) + single `batch`. (AR-04, AR-17, PA-1) <!-- 2026-06-29 -->
+- [x] T3.5 — Export `Show`/`For`. Run tests → **GREEN** (48 passed). <!-- 2026-06-29 -->
 
 ### Session 3C — Impl tests & hardening
-- [ ] T3.6 — `reactive.combinators.impl.test.ts` (Show boolean memoization, For item-change under stable key, empty `each`, remove-then-readd key fresh scope). (07 §impl)
-- [ ] T3.7 — `yarn verify` + `lint` green; `for.ts`/`show.ts` ≤ 500 lines. **/gitcm** (`feat(reactive): Show/For structural combinators`).
+- [x] T3.6 — `reactive.combinators.impl.test.ts` (Show boolean memoization, For item-change under stable key, empty `each`, remove-then-readd key fresh scope). (07 §impl) <!-- 2026-06-29 -->
+- [x] T3.7 — `yarn verify` + `lint` green; `for.ts` (127) / `show.ts` (48) ≤ 500 lines (52 tests). **/gitcm** (`feat(reactive): Show/For structural combinators`). <!-- 2026-06-29 -->
 
 ---
 
@@ -115,9 +115,9 @@ Covers AC-14, AC-15. Validates the assembled public surface and the cross-cuttin
 - [x] 2C Impl tests & harden: T2.7–T2.8 ✅ commit
 
 **Phase 3 — Combinators**
-- [ ] 3A Spec (RED): T3.1–T3.2
-- [ ] 3B Impl (GREEN): T3.3–T3.5
-- [ ] 3C Impl tests & harden: T3.6–T3.7 ✅ commit
+- [x] 3A Spec (RED): T3.1–T3.2
+- [x] 3B Impl (GREEN): T3.3–T3.5
+- [x] 3C Impl tests & harden: T3.6–T3.7 ✅ commit
 
 **Phase 4 — Packaging & final gate**
 - [ ] 4A Spec + verification: T4.1–T4.3

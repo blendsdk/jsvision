@@ -31,4 +31,6 @@ export { batch, untrack } from './scheduler.js';
 export { createRoot, onCleanup } from './owner.js';
 export { ReactiveCycleError } from './errors.js';
 
-// Phase 3 adds `Show`/`For` — exported here as they land.
+// Structural combinators (RD-01 §combinators).
+export { Show } from './show.js';
+export { For } from './for.js';
