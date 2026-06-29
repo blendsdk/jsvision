@@ -26,7 +26,7 @@ foundation RDs of the same number.
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
 | RD-01 | Reactive core — `signal`/`computed`/`effect` + `Show`/`For` | [RD-01](../requirements/RD-01-reactive-core.md) | [reactive-core](reactive-core/00-index.md) | Done | ✅ | 2026-06-29 | Phase 0 pillar (XL). UI-independent; every widget property binds to it. **Shipped** in `packages/ui/src/reactive/` — 20 ST (ST-01…ST-20) + impl tests green (55 ui tests), `yarn verify`/`check:deps`/`lint` clean, all public symbols importable from `@jsvision/ui`, every file ≤ 500 lines w/ JSDoc. exec_plan complete (4 phases / 4 commits). |
-| RD-02 | Layout engine — cell-native flex `row`/`col` | [RD-02](../requirements/RD-02-layout-engine.md) | — | RD Drafted | ✏️ | 2026-06-29 | Phase 0 pillar (XL). ADR-008 Accepted; apportionment core spike **landed** (`packages/ui/src/layout/`) + golden-tested — de-risked. **RD authored** via add_requirement: cell-native flex `row`/`col`, `fixed`/`fr`/`auto` sizing (measure() seam), `justify`/`align`/`gap`/`padding`, pure `layout(boxTree, viewport)→parent-relative rects`. 11 decisions locked (AR-19…AR-29); grid/stack/min-max deferred. Next: make_plan. |
+| RD-02 | Layout engine — cell-native flex `row`/`col` | [RD-02](../requirements/RD-02-layout-engine.md) | [layout-engine](layout-engine/00-index.md) | Executing | 🔄 | 2026-06-29 | Phase 0 pillar (XL). ADR-008 Accepted; apportionment spike **landed** + golden-tested. RD authored (AR-19…AR-29). **Plan created**: 4 phases / 11 sessions, spec-first, 18 ST↔AC; builds on `apportion`/`solveTrack` unchanged; plan decisions PA-1…PA-5. **Preflighted** ([report](layout-engine/00-preflight-report.md)): all fixed. **Executing**: Phase 1 done (node model `types.ts`/`measure.ts`/`layout.ts`; ST-01…ST-06 green; main-axis `fixed`/`fr`/`auto` + `gap` + recursion). |
 | RD-03 | View/Group spine + `DrawContext` + theming | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0. Retained tree, draw composition into parent buffer, named theme roles. |
 | RD-04 | Event loop + focus + modality + commands | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0. Async pump, 3-phase dispatch, `await execView`. |
 | RD-05 | App shell — Window/Frame/ScrollBar/Desktop/MenuBar/StatusLine | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0 demo target: a blank windowed desktop + menu/status. |
@@ -90,6 +90,19 @@ foundation RDs of the same number.
   `justify` (start/center/end/space-between), `align` (start/center/end/stretch, default stretch),
   `gap`/`padding`, overflow extends-past-edge (no shrink). 11 decisions locked AR-19…AR-29; grid
   (Tier 2), stack/overlay, and min/max constraints deferred. 18 acceptance criteria.
-- **Recommended next:** `make_plan` for **RD-02** (then preflight → exec_plan, the RD-01 path), or
-  draft **RD-03 (view/group spine)** — the keystone that binds RD-01's `effect`→widget-dirty seam
-  (AR-09) and feeds widget `LayoutBox`es to RD-02's pass.
+- **2026-06-29** — **layout-engine plan preflighted** → stage `Plan Preflighted` 🔬. Codebase-grounded
+  audit (`plans/layout-engine/00-preflight-report.md`): 1 MAJOR + 4 MINOR + 1 OBSERVATION, all
+  resolved by applying recommended fixes — corrected the false "exports already flow to
+  `src/index.ts`" claim (layout uses explicit named re-exports, not `export *`), documented the
+  acyclic/distinct-instance input precondition RD-02 deferred to planning, specified the `measure`
+  `available` value, and clamped justify `free` to ≥ 0 so overflow extends past the far edge for
+  any `justify`. Ready for `exec_plan`.
+- **2026-06-29** — **RD-02 plan created** → stage `Plan Created` 📋. `plans/layout-engine/` written
+  (7 docs): ambiguity register (PA-1…PA-5 over inherited AR-19…AR-29), index, requirements,
+  current-state + target layout, 2 component specs (node-model-and-sizing, layout-pass), testing
+  strategy (ST-01…ST-18 ↔ AC-1…AC-18), execution plan (4 phases / 11 sessions, spec-first). Builds
+  on the `apportion`/`solveTrack` spike unchanged; geometry types defined locally (core exports
+  none); CSS-parity defaults confirmed.
+- **Recommended next:** `exec_plan` **layout-engine** (plan created + preflighted, all findings
+  resolved). Alternatively draft **RD-03 (view/group spine)** — the keystone that binds RD-01's
+  `effect`→widget-dirty seam (AR-09) and feeds widget `LayoutBox`es to RD-02's pass.
