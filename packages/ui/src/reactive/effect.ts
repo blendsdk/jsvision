@@ -7,7 +7,7 @@
  */
 import type { Computation } from './types.js';
 import { NodeState } from './types.js';
-import { runComputation } from './scheduler.js';
+import { updateIfNecessary } from './scheduler.js';
 import { attachComputation } from './owner.js';
 
 /**
@@ -25,7 +25,9 @@ export function effect(fn: () => void): void {
     owner: null,
     cleanups: [],
     isEffect: true,
+    observers: null, // an effect is a leaf sink — nothing observes it
+    recompute: null, // effects run directly; they have no memo to recompute
   };
   attachComputation(computation);
-  runComputation(computation);
+  updateIfNecessary(computation); // initial synchronous run (AC-5)
 }

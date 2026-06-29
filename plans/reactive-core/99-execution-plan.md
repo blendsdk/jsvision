@@ -53,18 +53,18 @@ Adds lazy/memoized derived nodes and the `CHECK`/lazy-pull scheduler path that g
 glitch-freedom. Covers AC-4, AC-7.
 
 ### Session 2A — Spec tests (RED)
-- [ ] T2.1 — `reactive.computed.spec.test.ts` (ST-04 — lazy + memoized). (AC-4)
-- [ ] T2.2 — Add ST-07 (diamond glitch-freedom) to `reactive.scheduling.spec.test.ts`. (AC-7)
-- [ ] T2.3 — Run tests → new computed/diamond specs **RED** (Phase-1 specs stay green).
+- [x] T2.1 — `reactive.computed.spec.test.ts` (ST-04 — lazy + memoized). (AC-4) <!-- 2026-06-29 -->
+- [x] T2.2 — Add ST-07 (diamond glitch-freedom) to `reactive.scheduling.spec.test.ts`. (AC-7) <!-- 2026-06-29 -->
+- [x] T2.3 — Run tests → new computed/diamond specs **RED** (Phase-1 specs stay green). <!-- 2026-06-29 -->
 
 ### Session 2B — Implementation (GREEN)
-- [ ] T2.4 — `computed.ts`: lazy + memoized derived node (Source + Computation). (AR-06)
-- [ ] T2.5 — Extend `scheduler.ts`: `CHECK` marking for transitive computed observers, lazy pull on read, memo-equal short-circuit (no downstream mark when recompute is `equals`). (AR-07)
-- [ ] T2.6 — Export `computed`. Run tests → **GREEN**.
+- [x] T2.4 — `computed.ts`: lazy + memoized derived node (Source + Computation; value held in closure to keep `T` exact, no placeholder cast). (AR-06) <!-- 2026-06-29 -->
+- [x] T2.5 — Extend `scheduler.ts`: `markStale` CHECK propagation for transitive computed observers, `updateIfNecessary`/`resolveCheck` lazy pull (resolve ALL sources before running → glitch-free), `pull()` source interface, memo-equal short-circuit (recompute marks observers only on a real change; first compute marks nothing). (AR-07) <!-- 2026-06-29 -->
+- [x] T2.6 — Export `computed`. Run tests → **GREEN** (40 passed). <!-- 2026-06-29 -->
 
 ### Session 2C — Impl tests & hardening
-- [ ] T2.7 — `reactive.computed.impl.test.ts` (CHECK→CLEAN demotion, nested computed, `equals:false` computed). (07 §impl)
-- [ ] T2.8 — `yarn verify` + `lint` green. **/gitcm** (`feat(reactive): lazy memoized computeds + glitch-free diamond`).
+- [x] T2.7 — `reactive.computed.impl.test.ts` (CHECK→CLEAN demotion, nested computed, `equals:false` computed). (07 §impl) <!-- 2026-06-29 -->
+- [x] T2.8 — `yarn verify` + `lint` green (43 tests, max file 280 lines). **/gitcm** (`feat(reactive): lazy memoized computeds + glitch-free diamond`). <!-- 2026-06-29 -->
 
 ---
 
@@ -110,9 +110,9 @@ Covers AC-14, AC-15. Validates the assembled public surface and the cross-cuttin
 - [x] 1C Impl tests & harden: T1.15–T1.17 ✅ commit
 
 **Phase 2 — Computeds & glitch-freedom**
-- [ ] 2A Spec (RED): T2.1–T2.3
-- [ ] 2B Impl (GREEN): T2.4–T2.6
-- [ ] 2C Impl tests & harden: T2.7–T2.8 ✅ commit
+- [x] 2A Spec (RED): T2.1–T2.3
+- [x] 2B Impl (GREEN): T2.4–T2.6
+- [x] 2C Impl tests & harden: T2.7–T2.8 ✅ commit
 
 **Phase 3 — Combinators**
 - [ ] 3A Spec (RED): T3.1–T3.2

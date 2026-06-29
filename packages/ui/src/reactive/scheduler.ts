@@ -6,8 +6,12 @@
  * dependency-edge registration, the two-phase mark/flush propagation, `batch`/`untrack`,
  * the runaway guard (AR-18), and exception draining (AR-15, PA-2).
  *
- * Phase 1 propagates to **effects only** (no computeds exist yet); the `CHECK`/lazy-pull
- * path for transitive computed observers (AR-07) is layered on in Phase 2.
+ * Propagation is the standard two-phase, glitch-free, lazy scheme (AR-07): a **mark phase**
+ * (no user code) marks a changed source's direct observers `DIRTY` and its transitive computed
+ * observers `CHECK`, queuing reached effects; a **flush phase** drains the effects, each
+ * **pulling** its `CHECK`/`DIRTY` computeds up to date on demand so it only ever observes a
+ * fully consistent graph. A computed recomputes at most once per cascade and short-circuits
+ * when its memo is unchanged, bounding diamond re-runs (AC-7).
  */
 import { NodeState } from './types.js';
 import type { Computation, Owner, Subscribable } from './types.js';
@@ -63,35 +67,37 @@ export function registerRead(source: Subscribable): void {
 }
 
 /**
- * Run a computation: fire its previous cleanups, drop its old dependency edges, then
- * execute its `fn` under tracking so it re-collects edges (dynamic dependency tracking).
+ * Run a computation's `fn` once under tracking: fire its previous cleanups, drop its old
+ * dependency edges (so it re-collects them — dynamic tracking), then execute `fn`. Returns
+ * `fn`'s result (used by `computed`; ignored for an effect).
  *
  * On a throw, the aborted run's freshly registered cleanups fire (AR-15) and the error is
  * rethrown to the caller (the flush loop, which drains the rest of the cascade). The
  * tracking context is always restored (try/finally), normal or throwing.
  *
- * @param computation The node to run.
+ * @param node The computation to run.
+ * @returns The value returned by `node.fn`.
  */
-export function runComputation(computation: Computation): void {
+export function execute(node: Computation): unknown {
   // Fire the previous run's cleanups before re-running (AC-9), then clear them.
-  runCleanups(computation.cleanups);
+  runCleanups(node.cleanups);
 
   // Drop old edges so this run re-collects its dependencies from scratch.
-  for (const source of computation.sources) {
-    source.observers.delete(computation);
+  for (const source of node.sources) {
+    source.observers.delete(node);
   }
-  computation.sources.clear();
-  computation.state = NodeState.CLEAN;
+  node.sources.clear();
+  node.state = NodeState.CLEAN;
 
   const previousObserver = currentObserver;
   const previousOwner = currentOwner;
-  currentObserver = computation;
-  currentOwner = computation.owner;
+  currentObserver = node;
+  currentOwner = node.owner;
   try {
-    computation.fn();
+    return node.fn();
   } catch (error) {
     // AR-15: abort the run → fire the onCleanups it registered before throwing.
-    runCleanups(computation.cleanups);
+    runCleanups(node.cleanups);
     throw error;
   } finally {
     currentObserver = previousObserver;
@@ -100,22 +106,84 @@ export function runComputation(computation: Computation): void {
 }
 
 /**
- * Mark phase (no user code runs): mark a changed source's observers and queue any effects.
+ * Mark phase (no user code runs): raise a computation's state and propagate.
  *
- * Phase 1 handles effects only — every observer is an effect, marked `DIRTY` and queued
- * once (the `!== DIRTY` check de-duplicates within a flush). Phase 2 extends this to mark
- * transitive computed observers `CHECK` and recurse.
+ * A direct observer of a changed source is marked `DIRTY`; a computed propagates `CHECK` to
+ * *its* observers (transitive maybe-dirty) the first time it leaves `CLEAN`. Reached effects
+ * are queued exactly once (only on the `CLEAN`→non-clean transition). State only ever rises
+ * (`CLEAN` < `CHECK` < `DIRTY`), so escalating an already-marked node does no redundant work.
  *
- * @param source The source whose value just changed.
+ * @param node The computation to mark.
+ * @param incoming The state to raise it to (`CHECK` or `DIRTY`).
  */
-function mark(source: Subscribable): void {
-  for (const observer of source.observers) {
-    if (observer.state !== NodeState.DIRTY) {
-      observer.state = NodeState.DIRTY;
-      if (observer.isEffect) {
-        pendingEffects.push(observer);
-      }
+function markStale(node: Computation, incoming: NodeState): void {
+  if (node.state >= incoming) return;
+  const wasClean = node.state === NodeState.CLEAN;
+  node.state = incoming;
+  if (node.isEffect) {
+    if (wasClean) pendingEffects.push(node); // queue once; later escalation won't re-queue
+  } else if (wasClean && node.observers !== null) {
+    for (const observer of node.observers) {
+      markStale(observer, NodeState.CHECK);
     }
+  }
+}
+
+/**
+ * Mark a computed's observers `DIRTY` because its memo just changed (called by a computed's
+ * `recompute` during a pull). No flush — the in-flight flush/pull picks the work up.
+ *
+ * @param observers The changed computed's observer set.
+ */
+export function markObserversStale(observers: Set<Computation>): void {
+  for (const observer of observers) {
+    markStale(observer, NodeState.DIRTY);
+  }
+}
+
+/**
+ * Resolve a `CHECK` (maybe-dirty) node by pulling **all** of its computed sources up to date;
+ * any that recompute to a changed value escalate this node to `DIRTY`.
+ *
+ * Every source is pulled (no early exit on the first dirty one): this is what makes the scheme
+ * glitch-free. Once all the node's computed sources are `CLEAN`, running the node reads only
+ * settled values, so no computed recomputes — and re-marks the still-running node — mid-run. An
+ * early break would leave a changed source to recompute lazily during the run and spuriously
+ * re-queue the node (a diamond would run its effect twice — AC-7). Computeds are pure (no signal
+ * writes), so pulling them cannot trigger a flush; the loop terminates on the dependency DAG.
+ *
+ * @param node The `CHECK` node to resolve.
+ */
+function resolveCheck(node: Computation): void {
+  for (const source of node.sources) {
+    source.pull(); // no-op for a signal; resolves a computed (may mark this node DIRTY)
+  }
+}
+
+/**
+ * Bring a node up to date on demand (lazy pull, AR-07). A `CHECK` node resolves its computed
+ * sources first ({@link resolveCheck}); if one changed, this node escalates to `DIRTY`. A
+ * `DIRTY` node then runs (an effect) or recomputes its memo (a computed). A `CHECK` node whose
+ * sources were all unchanged simply demotes to `CLEAN` (the memo-equal short-circuit).
+ *
+ * @param node The node to resolve.
+ */
+export function updateIfNecessary(node: Computation): void {
+  if (node.state === NodeState.CHECK) {
+    resolveCheck(node);
+  }
+  if (node.state === NodeState.DIRTY) {
+    if (node.isEffect) {
+      execute(node);
+    } else if (node.recompute !== null) {
+      node.recompute();
+    }
+    // `execute`/`recompute` set the node CLEAN at the *start* of the run; we deliberately do
+    // not force CLEAN again here. A self-writing effect re-marks itself DIRTY mid-run, and that
+    // must survive so the flush loop re-runs it into the runaway guard (AC-11).
+  } else {
+    // CHECK resolved with no changed source (or already CLEAN): settle to CLEAN.
+    node.state = NodeState.CLEAN;
   }
 }
 
@@ -143,7 +211,7 @@ export function flush(): void {
       for (const effect of batchOfEffects) {
         if (effect.state === NodeState.CLEAN) continue; // already run / disposed this drain
         try {
-          runComputation(effect);
+          updateIfNecessary(effect); // pulls its computeds, then runs if actually dirty
         } catch (error) {
           errors.push(error); // collect; keep draining siblings (AR-15)
         }
@@ -163,13 +231,16 @@ export function flush(): void {
 }
 
 /**
- * Propagate a source change: mark observers, then flush (unless batching). Called by a
- * signal write once it has confirmed the value actually changed (AR-05).
+ * Propagate a source change: mark direct observers `DIRTY` (kicking off the mark phase), then
+ * flush (unless batching). Called by a signal write once it has confirmed the value actually
+ * changed (AR-05).
  *
  * @param source The source whose value just changed.
  */
 export function notifyChanged(source: Subscribable): void {
-  mark(source);
+  for (const observer of source.observers) {
+    markStale(observer, NodeState.DIRTY);
+  }
   flush();
 }
 
