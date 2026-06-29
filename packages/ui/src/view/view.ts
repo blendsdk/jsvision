@@ -10,7 +10,7 @@
  * computations and runs their `onCleanup` — leak-free by construction.
  */
 import type { Owner } from '../reactive/index.js';
-import { runWithOwner, createRoot, effect, onCleanup, getOwner } from '../reactive/index.js';
+import { runWithOwner, untrack, createRoot, effect, onCleanup, getOwner } from '../reactive/index.js';
 import { TuiError } from '@jsvision/core';
 import type { Rect, Size2D, LayoutProps } from '../layout/index.js';
 import type { DrawContext, ViewState } from './types.js';
@@ -146,19 +146,24 @@ export abstract class View {
    * @param parentScope The owner to nest this view's scope under.
    */
   mount(host: ViewHost | null, parentScope: Owner | null): void {
+    // `untrack` so the scope setup (and its wiring-reset onCleanup) binds to THIS view's scope and
+    // never to an ambient computation — a view may be mounted from inside a reconcile effect
+    // (dynamic children), where onCleanup would otherwise attach to that effect (RT-2/RT-3).
     runWithOwner(parentScope, () => {
-      createRoot((dispose) => {
-        this.scope = getOwner();
-        this.disposeScope = dispose;
-        this.host = host;
-        this.mounted = true;
-        onCleanup(() => {
-          this.mounted = false;
-          this.scope = null;
-          this.host = null;
-          this.parent = null;
-          this.disposeScope = null;
-          this.mountFired = false;
+      untrack(() => {
+        createRoot((dispose) => {
+          this.scope = getOwner();
+          this.disposeScope = dispose;
+          this.host = host;
+          this.mounted = true;
+          onCleanup(() => {
+            this.mounted = false;
+            this.scope = null;
+            this.host = null;
+            this.parent = null;
+            this.disposeScope = null;
+            this.mountFired = false;
+          });
         });
       });
     });

@@ -144,18 +144,18 @@ compose contexts; `bind` wired to repaint. Covers AC-7, AC-8, AC-9, AC-10.
 the cross-cutting guarantees. Covers AC-12, AC-17, AC-18, AC-20 (+ AC-19 e2e).
 
 ### Session 7A — Spec tests (RED)
-- [ ] T7.1 — Add `view.dynamic.spec.test.ts` (**ST-12** Show/For N=View mount/unmount). Add `view.packaging.spec.test.ts` (**ST-17** degenerate, **ST-18** packaging/imports + check:deps, **ST-20** security/bounded). (AC-12,17,18,20)
-- [ ] T7.2 — Run tests → dynamic + packaging specs **RED**.
+- [x] T7.1 — Add `view.dynamic.spec.test.ts` (**ST-12** Show/For N=View mount/unmount). Add `view.packaging.spec.test.ts` (**ST-17** degenerate, **ST-18** packaging/imports, **ST-20** security/bounded). (AC-12,17,18,20) — 2026-06-29
+- [x] T7.2 — Run tests → dynamic specs **RED** (ST-12 `addDynamic` undefined); packaging ST-17/18/20 already green (public surface + degenerate/bounded in place). — 2026-06-29
 
 ### Session 7B — Implementation (GREEN)
-- [ ] T7.3 — `group.ts`/`render-root.ts`: `Group.addDynamic(producer)` entry + the dynamic-child reconcile effect (read the `Show`/`For` accessor under the group's scope, diff → `mountView`/`remove`, schedule reflow). (03-02, 03-04, AR-36)
-- [ ] T7.4 — Finalize the `view/index.ts` barrel + explicit re-exports in `src/index.ts` (all public symbols); degenerate-geometry hardening (zero/over-large → no-ops). (AR-37, AC-17,18)
-- [ ] T7.5 — `packages/examples/view-demo/main.ts` + `"demo:view"` script; `view-demo.e2e.test.ts`. (PA-3)
-- [ ] T7.6 — Run tests → dynamic + packaging specs **GREEN**; `demo:view` prints a themed frame.
+- [x] T7.3 — `group.ts`: `Group.addDynamic(producer)` + the dynamic-child reconcile effect (read the `Show`/`For` accessor under the group's scope, diff → mount/unmount, one reflow per reconcile). (03-02, 03-04, AR-36) — 2026-06-29 (also fixed a latent bug: `View.mount` now `untrack`s its scope setup so the wiring-reset `onCleanup` binds to the view's own scope, not an ambient reconcile effect — RT-2/RT-3)
+- [x] T7.4 — Finalize the `view/index.ts` barrel + explicit re-exports in `src/index.ts` (all public symbols); degenerate-geometry hardening (already no-op via clip/intersect). (AR-37, AC-17,18) — 2026-06-29
+- [x] T7.5 — `packages/examples/view-demo/main.ts` + `"demo:view"` script; `view-demo.e2e.test.ts`. (PA-3) — 2026-06-29
+- [x] T7.6 — Run tests → dynamic + packaging specs **GREEN**; `demo:view` prints a themed frame (+ a 107-byte reactive damage diff). — 2026-06-29
 
 ### Session 7C — Final gate
-- [ ] T7.7 — `view.dynamic.impl.test.ts` (For key reorder reuses instances, Show else-branch, removed item no work). Full `yarn verify` + `yarn test:e2e` + `check:deps` + `yarn lint` green; no dead code; no file > 500 lines.
-- [ ] T7.8 — Update `plans/00-roadmap.md` RD-03 row → stage `Done` (roadmap skill). **/gitcmp** — `feat(view): dynamic children + packaging + demo:view — RD-03 complete`.
+- [x] T7.7 — `view.dynamic.impl.test.ts` (For key reorder reuses instances, Show else-branch, dropped item runs onCleanup). Full `yarn verify` + `yarn test:e2e` + `check:deps` + `yarn lint` green; no dead code; no file > 500 lines. — 2026-06-29 (ui 142 tests; core 8 + examples 3 e2e; files ≤ 231 lines)
+- [x] T7.8 — Update the feature roadmap RD-03 row → stage `Done` (cascaded to portfolio). **/gitcmp** — `feat(view): dynamic children + packaging + demo:view — RD-03 complete`. — 2026-06-29
 
 ---
 
@@ -192,9 +192,9 @@ the cross-cutting guarantees. Covers AC-12, AC-17, AC-18, AC-20 (+ AC-19 e2e).
 - [x] 6C Impl tests & harden: T6.5–T6.6 ✅ commit — 2026-06-29
 
 **Phase 7 — Dynamic children + packaging + demo + gate**
-- [ ] 7A Spec (RED): T7.1–T7.2
-- [ ] 7B Impl (GREEN): T7.3–T7.6
-- [ ] 7C Final gate: T7.7–T7.8 ✅ commit + push
+- [x] 7A Spec (RED): T7.1–T7.2 — 2026-06-29
+- [x] 7B Impl (GREEN): T7.3–T7.6 — 2026-06-29
+- [x] 7C Final gate: T7.7–T7.8 ✅ commit + push — 2026-06-29
 
 ## Estimates
 

@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 2 ✅ Done · 1 🔄 Executing · 6 ⬜ Backlog — RD-03 view-group-spine in progress | 2 / 9 done | 🔄 | 2026-06-29 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 3 ✅ Done · 6 ⬜ Backlog — RD-04 event loop next | 3 / 9 done | 🔄 | 2026-06-29 |
 
 ## Archived
 
@@ -24,6 +24,9 @@
 ## Notes
 
 - 2026-06-29: migrated from the flat layout via setup_codeops.
+- 2026-06-29: **RD-03 view-group-spine complete** → ✅ Done (all 7 phases executed spec-first, 8
+  commits; ui 142 unit + 3 e2e green, verify/check:deps/lint clean). jsvision-ui now 3/9 done;
+  RD-04 (event loop) next. Cascaded into the **jsvision-ui** row.
 - 2026-06-29: **RD-03 view-group-spine plan preflighted** → 🔬 Plan Preflighted (1 MAJOR + 2 MINOR
   resolved, 0 CRITICAL; report in the plan folder). Cascaded into the **jsvision-ui** row.
 - 2026-06-29: update_roadmap refined the **jsvision-ui** row from disk — Stage Summary + Progress
