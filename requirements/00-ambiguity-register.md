@@ -1,15 +1,19 @@
 # Ambiguity Register: jsvision UI
 
-> **Status**: ✅ RD-01 items resolved
+> **Status**: ✅ RD-01 items resolved · ✅ RD-02 items resolved
 > **Last Updated**: 2026-06-29
 > **Scope**: The `@jsvision/ui` feature-set (reimagined Turbo Vision UI layer). This
-> register grows per RD; entries below cover **RD-01 (Reactive core)**.
+> register grows per RD; entries below cover **RD-01 (Reactive core)** and
+> **RD-02 (Layout engine)**.
 
 Every decision in an RD back-references its `AR #` here. AR-01…AR-04 are explicit
 user choices (offered as multiple options, user selected); AR-05…AR-11 are
 single-dominant-option decisions (no second viable alternative — recorded for
 traceability); AR-12 is a housekeeping decision; AR-13…AR-18 resolve the under-specified
 edges surfaced by the RD-01 preflight (PF-001…PF-009) — all accepted by the user 2026-06-29.
+AR-19…AR-29 cover **RD-02 (Layout engine)**: AR-19 inherits the architecture settled in
+**ADR-008** (dominant); AR-20…AR-29 are explicit user choices made during the RD-02
+`add_requirement` interview (2026-06-29), the subset boundary ADR-008 deferred to requirements.
 
 | AR # | Area | Question | Options Considered | Decision | Status |
 |------|------|----------|--------------------|----------|--------|
@@ -31,3 +35,14 @@ edges surfaced by the RD-01 preflight (PF-001…PF-009) — all accepted by the 
 | AR-16 | RD-01 · Nested `batch` | Flush at the outermost close or per nested `batch`? | (a) outermost-only — inner `batch` joins the outer, effects flush once when the outermost returns (Solid-parity); (b) per-batch flush (rejected: defeats coalescing, surprising) | **(a) outermost-only flush** | ✅ Resolved (preflight PF-006) |
 | AR-17 | RD-01 · `For` duplicate keys | What happens when `key` yields the same value for two live items? | (a) keys unique among live items; a duplicate is a usage error — dev `console.warn` + last-writer-wins; (b) throw (rejected: a transient duplicate during an in-flight data update would crash a valid UI) | **(a) dev-warn + last-writer-wins** | ✅ Resolved (preflight PF-009) |
 | AR-18 | RD-01 · Runaway limit | What is the runaway-guard iteration bound? | (a) fixed 1000 propagation iterations, not configurable in v1 (deterministic AC); (b) configurable scheduler knob (rejected: premature config) | **(a) fixed 1000, v1** | ✅ Resolved (preflight PF-004) |
+| AR-19 | RD-02 · Engine architecture | Build vs buy; model; location? | Settled in **ADR-008**: build cell-native pure-TS flex engine (integer apportionment, not float-round) in `packages/ui/src/layout/` on the `apportion`/`solveTrack` spike; grid is Tier 2. Buy (Yoga/Taffy) rejected (WASM, float-round gaps, breaks zero-dep identity). | **Per ADR-008** — cell-native pure-TS, flex-first, `src/layout/` | ✅ Resolved (ADR-008) |
+| AR-20 | RD-02 · Sizing model | How are main-axis box sizes expressed? | (a) `fr`/fixed/auto tokens (matches the spike's `TrackItem`; terminal-idiomatic); (b) CSS grow/shrink/basis (rejected: full-fidelity flexbox ADR-008 dropped); (c) both | **(a) fixed cells · `fr` grow-weight · `auto` (content) tokens** | ✅ Resolved (user) |
+| AR-21 | RD-02 · Content sizing | Is intrinsic/`auto` (size-to-content) in v1? | (a) include via a `measure(available) → natural size` seam on a box (keeps RD-02 view-independent; RD-03 views supply `measure`); (b) defer — fixed + `fr` only (rejected: a label/button couldn't size to content) | **(a) `auto` via a `measure()` seam** | ✅ Resolved (user) |
+| AR-22 | RD-02 · v1 primitives | Which layout containers ship in v1? | (a) `row` + `col` only (1-D flex; 2-D via nesting); (b) +`stack` (z-overlap); (c) +`grid` (ADR-008 Tier 2) | **(a) `row` + `col` only** — `grid` Tier 2, `stack`/overlay deferred until a real need | ✅ Resolved (user) |
+| AR-23 | RD-02 · Layout input | What does the layout pass operate on? | (a) a standalone `LayoutBox = { props, children, measure? }` tree (pure function; view-independent; RD-03 produces it); (b) layout props on RD-03's `ViewNode` (rejected: couples to a not-yet-existing shape) | **(a) standalone `LayoutBox` tree** | ✅ Resolved (user) |
+| AR-24 | RD-02 · Justify (main axis) | How is leftover main-axis space distributed (no `fr` present)? | (a) `start`/`center`/`end`/`space-between`; (b) full 6-value CSS set (+`space-around`/`space-evenly`); (c) `start`/`center`/`end` only | **(a) start · center · end · space-between** — around/evenly deferred | ✅ Resolved (user) |
+| AR-25 | RD-02 · Align (cross axis) | Cross-axis alignment values + default? | (a) `start`/`center`/`end`/`stretch`, default **stretch**; (b) same set, default `start`; (c) `stretch` only | **(a) start/center/end/stretch, default stretch** | ✅ Resolved (user) |
+| AR-26 | RD-02 · Min/max constraints | Per-box min/max size clamps in v1? | (a) defer (ADR-008 lists min/max outside the v1 subset; constrained apportionment is real effort); (b) include clamps now (rejected for v1: more algorithm + edge cases) | **(a) deferred** — documented limitation; revisit | ✅ Resolved (user) |
+| AR-27 | RD-02 · Coordinate space | Are computed rects parent-relative or absolute? | (a) **parent-relative** (each rect relative to its parent content box; pass given the root rect — composes with clip/scroll/nesting); (b) absolute screen rects (rejected: recompute on ancestor move, couples to origin) | **(a) parent-relative rects** | ✅ Resolved (user) |
+| AR-28 | RD-02 · Overflow | What happens when fixed/auto children exceed the container (no `fr` to absorb)? | (a) rects **extend past the edge**; renderer/clip (and later scroll) handles visibility; `fr` clamps to 0 — no shrink (shrink was dropped, AR-20); (b) clamp children into bounds (rejected: silently drops content, less predictable) | **(a) extend past edge; renderer clips** | ✅ Resolved (user) |
+| AR-29 | RD-02 · Gap & padding | Are between-children `gap` and container `padding` in v1? | (a) both (`gap` already in `solveTrack`; per-side `padding` insets the content box); (b) gap only (rejected: forms/panels need padding) | **(a) both gap and padding** | ✅ Resolved (user) |

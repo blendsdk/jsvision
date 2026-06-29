@@ -3,8 +3,8 @@
 > **Feature-Set**: jsvision UI
 > **Status**: In Progress
 > **Created**: 2026-06-29
-> **Last Updated**: 2026-06-29 00:35
-> **Progress**: 0 / 9 (0%)
+> **Last Updated**: 2026-06-29
+> **Progress**: 1 / 9 done (RD-01 ✅); RD-02 drafted
 > **CodeOps Skills Version**: 2.0.0
 
 The `@jsvision/ui` layer — a reimagined Turbo Vision widget framework on
@@ -26,7 +26,7 @@ foundation RDs of the same number.
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
 | RD-01 | Reactive core — `signal`/`computed`/`effect` + `Show`/`For` | [RD-01](../requirements/RD-01-reactive-core.md) | [reactive-core](reactive-core/00-index.md) | Done | ✅ | 2026-06-29 | Phase 0 pillar (XL). UI-independent; every widget property binds to it. **Shipped** in `packages/ui/src/reactive/` — 20 ST (ST-01…ST-20) + impl tests green (55 ui tests), `yarn verify`/`check:deps`/`lint` clean, all public symbols importable from `@jsvision/ui`, every file ≤ 500 lines w/ JSDoc. exec_plan complete (4 phases / 4 commits). |
-| RD-02 | Layout engine — cell-native flex `row`/`col` | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0 pillar (XL). ADR-008 Accepted; apportionment core spike **landed** (`packages/ui/src/layout/`) + golden-tested — de-risked. |
+| RD-02 | Layout engine — cell-native flex `row`/`col` | [RD-02](../requirements/RD-02-layout-engine.md) | — | RD Drafted | ✏️ | 2026-06-29 | Phase 0 pillar (XL). ADR-008 Accepted; apportionment core spike **landed** (`packages/ui/src/layout/`) + golden-tested — de-risked. **RD authored** via add_requirement: cell-native flex `row`/`col`, `fixed`/`fr`/`auto` sizing (measure() seam), `justify`/`align`/`gap`/`padding`, pure `layout(boxTree, viewport)→parent-relative rects`. 11 decisions locked (AR-19…AR-29); grid/stack/min-max deferred. Next: make_plan. |
 | RD-03 | View/Group spine + `DrawContext` + theming | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0. Retained tree, draw composition into parent buffer, named theme roles. |
 | RD-04 | Event loop + focus + modality + commands | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0. Async pump, 3-phase dispatch, `await execView`. |
 | RD-05 | App shell — Window/Frame/ScrollBar/Desktop/MenuBar/StatusLine | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0 demo target: a blank windowed desktop + menu/status. |
@@ -83,5 +83,13 @@ foundation RDs of the same number.
   scheduler subtleties resolved during exec (recorded in the impl): resolve **all** of a CHECK node's
   sources before running it (glitch-free diamond), and don't mark observers on a computed's first
   compute; the runaway guard relies on a self-writing effect's mid-run re-mark surviving.
-- **Recommended next:** draft **RD-02 (layout containers)** or **RD-03 (view/group spine)** — RD-03
-  binds the reactive `effect`→widget-dirty seam (AR-09) on top of this now-shipped core.
+- **2026-06-29** — **RD-02 (Layout engine) drafted** → stage `RD Drafted` ✏️. `add_requirement`
+  authored `requirements/RD-02-layout-engine.md` on top of ADR-008 + the landed apportionment
+  spike. Scope: a pure `layout(LayoutBox tree, viewport) → parent-relative integer rects` pass —
+  `row`/`col` flex containers, `fixed`/`fr`/`auto` sizing (`auto` via a `measure()` seam),
+  `justify` (start/center/end/space-between), `align` (start/center/end/stretch, default stretch),
+  `gap`/`padding`, overflow extends-past-edge (no shrink). 11 decisions locked AR-19…AR-29; grid
+  (Tier 2), stack/overlay, and min/max constraints deferred. 18 acceptance criteria.
+- **Recommended next:** `make_plan` for **RD-02** (then preflight → exec_plan, the RD-01 path), or
+  draft **RD-03 (view/group spine)** — the keystone that binds RD-01's `effect`→widget-dirty seam
+  (AR-09) and feeds widget `LayoutBox`es to RD-02's pass.

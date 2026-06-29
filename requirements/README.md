@@ -1,7 +1,7 @@
 # jsvision UI — Requirements Documents
 
 > **Project**: `@jsvision/ui` — a reimagined Turbo Vision-style widget framework for terminal (TUI) applications in TypeScript, built on the `@jsvision/core` engine.
-> **Status**: Draft (RD-01 authored; RD-02…RD-09 in backlog — see the roadmap)
+> **Status**: Draft (RD-01 shipped, RD-02 authored; RD-03…RD-09 in backlog — see the roadmap)
 > **Created**: 2026-06-29
 > **Architecture**: TypeScript (ESM-only, NodeNext, `strict`), zero runtime dependencies; the **disciplined hybrid** model — a retained widget tree with fine-grained signal reactivity (no virtual DOM). Lives in `packages/ui/`.
 > **CodeOps Skills Version**: 2.0.0
@@ -47,21 +47,25 @@ map and the programming-model decision.
 |---|----------|-------------|------------|
 | **AR** | [Ambiguity Register](00-ambiguity-register.md) | Zero-Ambiguity Gate decisions (audit trail) | — |
 | **RD-01** | [Reactive core](RD-01-reactive-core.md) | Signals, computeds, effects, ownership/disposal, `batch`/`untrack`, and the structural primitives `Show`/`For` | — |
-| RD-02…RD-09 | *(backlog — see roadmap)* | Layout engine, view/group spine, event loop, app shell, controls, etc. | per phase |
+| **RD-02** | [Layout engine](RD-02-layout-engine.md) | Cell-native flex `row`/`col` engine: `fixed`/`fr`/`auto` sizing, `justify`/`align`, `gap`/`padding`; a pure `layout(boxTree, viewport) → rects` pass on the apportionment spike (ADR-008) | — (ADR-008) |
+| RD-03…RD-09 | *(backlog — see roadmap)* | View/group spine, event loop, app shell, controls, etc. | per phase |
 
 ## Dependency Graph
 
 ```
-RD-01 Reactive core ──┐  (no dependencies; UI-independent; the reactivity layer
-                      │   every later RD binds widget properties to)
+RD-01 Reactive core ──┐   (UI-independent; the reactivity layer every later
+                      │    RD binds widget properties to)
+RD-02 Layout engine ──┤   (UI-independent; pure box-tree → integer rects, on
+                      │    ADR-008. Independent of RD-01.)
                       ▼
-            RD-03 View/Group spine (binds signals → widget invalidation)
-                      ▼
+            RD-03 View/Group spine (binds signals → widget invalidation;
+                      ▼              produces LayoutBoxes for RD-02 to size)
             … the rest of the spine + widgets …
 ```
 
-RD-01 sits at the root: it depends on nothing and is depended on by the whole widget
-layer.
+RD-01 and RD-02 are the two independent, UI-independent pillars at the root (either can
+be built first); the view/group spine (RD-03) consumes both — it binds signals to widget
+invalidation and feeds widget layout boxes to the layout pass.
 
 ## Suggested Implementation Order
 
