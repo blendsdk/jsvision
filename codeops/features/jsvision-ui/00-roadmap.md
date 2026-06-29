@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-06-29
 > **Last Updated**: 2026-06-29
-> **Progress**: 2 / 9 done (RD-01 ✅, RD-02 ✅) · RD-03 📋 Plan Created
+> **Progress**: 2 / 9 done (RD-01 ✅, RD-02 ✅) · RD-03 🔬 Plan Preflighted
 > **CodeOps Skills Version**: 2.0.0
 
 The `@jsvision/ui` layer — a reimagined Turbo Vision widget framework on
@@ -27,7 +27,7 @@ foundation RDs of the same number.
 |----|-------|----|------|-------|--------|--------------|-----------------|
 | RD-01 | Reactive core — `signal`/`computed`/`effect` + `Show`/`For` | [RD-01](../requirements/RD-01-reactive-core.md) | [reactive-core](reactive-core/00-index.md) | Done | ✅ | 2026-06-29 | Phase 0 pillar (XL). UI-independent; every widget property binds to it. **Shipped** in `packages/ui/src/reactive/` — 20 ST (ST-01…ST-20) + impl tests green (55 ui tests), `yarn verify`/`check:deps`/`lint` clean, all public symbols importable from `@jsvision/ui`, every file ≤ 500 lines w/ JSDoc. exec_plan complete (4 phases / 4 commits). |
 | RD-02 | Layout engine — cell-native flex `row`/`col` | [RD-02](../requirements/RD-02-layout-engine.md) | [layout-engine](layout-engine/00-index.md) | Done | ✅ | 2026-06-29 | Phase 0 pillar (XL). ADR-008 Accepted; built on the golden-tested `apportion`/`solveTrack` spike. **Complete**: all 4 phases / 18 spec oracles (ST-01…ST-18 ↔ AC-1…AC-18) + impl tests green. `layout(root, viewport) → parent-relative integer rects`: `row`/`col` via one axis abstraction, `fixed`/`fr`/`auto` sizing (`auto` pre-resolved via `naturalSize`), `justify`/`align`/`gap`/`padding`, overflow (extend past edge, `fr`→0), degenerate→zero rects, recursion in each box's local frame. Pure/no-mutation; `check:deps` clean; files ≤ 217 lines. Symbols re-exported from `@jsvision/ui`. |
-| RD-03 | View/Group spine + `DrawContext` + theming | [RD-03](../requirements/RD-03-view-group-spine.md) | [view-group-spine](view-group-spine/00-index.md) | Plan Created | 📋 | 2026-06-29 | Phase 0 keystone (XL). Retained `View`/`Group` tree, stateless clipped `DrawContext`, theme-role resolution. Closes the reactive seam (per-view owner scope + `bind` + injectable coalescing scheduler, AR-09/AR-02) and owns the RD-02 reflow pass. Ships the **complete** `View` shape (onEvent stub + visible/disabled/focused); dispatch/focus **logic** deferred → RD-04. 20 AC; AR-30…AR-46. **Preflighted** ([report](../requirements/00-preflight-report.md)): 2 MAJOR + 3 MINOR resolved → AR-43…AR-46. **Planned** ([plan](view-group-spine/00-index.md)): 7 phases / 21 sessions / ~29–41 h; PA-1…PA-8 + 2 additive primitives (RD-01 `runWithOwner`, core `ScreenBuffer.clone()`). |
+| RD-03 | View/Group spine + `DrawContext` + theming | [RD-03](../requirements/RD-03-view-group-spine.md) | [view-group-spine](view-group-spine/00-index.md) | Plan Preflighted | 🔬 | 2026-06-29 | Phase 0 keystone (XL). Retained `View`/`Group` tree, stateless clipped `DrawContext`, theme-role resolution. Closes the reactive seam (per-view owner scope + `bind` + injectable coalescing scheduler, AR-09/AR-02) and owns the RD-02 reflow pass. Ships the **complete** `View` shape (onEvent stub + visible/disabled/focused); dispatch/focus **logic** deferred → RD-04. 20 AC; AR-30…AR-46. **Planned** ([plan](view-group-spine/00-index.md)): 7 phases / 21 sessions / ~29–41 h; PA-1…PA-8 + 2 additive primitives (RD-01 `runWithOwner`, core `ScreenBuffer.clone()`). **Plan preflighted** ([report](view-group-spine/00-preflight-report.md)): 1 MAJOR + 2 MINOR resolved (added `Group.addDynamic`, corrected `Logger.error` call, disambiguated "RD-04"), 1 OBSERVATION recorded; every plan `file:line` claim verified against live code. Ready for `exec_plan`. |
 | RD-04 | Event loop + focus + modality + commands | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0. Async pump, 3-phase dispatch, `await execView`. |
 | RD-05 | App shell — Window/Frame/ScrollBar/Desktop/MenuBar/StatusLine | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0 demo target: a blank windowed desktop + menu/status. |
 | RD-06 | Essential controls + validators | — | — | Backlog | ⬜ | 2026-06-29 | Phase 1. Text/Label/Button/Input/Check/Radio/ListView/Dialog. Demos: `mmenu`, `palette`, `tvforms`. |
@@ -148,5 +148,18 @@ foundation RDs of the same number.
   snapshot, so the plan adds a second additive primitive **`ScreenBuffer.clone()`** on core
   `render`. Phase 1 builds both primitives first; the spine (geometry → tree → DrawContext →
   reflow → render-root → scheduler → dynamic children) follows; Phase 7 ships `demo:view`.
-- **Recommended next:** **preflight** `view-group-spine` (codebase-grounded audit of the plan),
-  then **`exec_plan` view-group-spine** — the same path RD-01 and RD-02 followed.
+- **2026-06-29** — **view-group-spine plan preflighted** → stage `Plan Preflighted` 🔬.
+  Codebase-grounded audit ([`plans/view-group-spine/00-preflight-report.md`](view-group-spine/00-preflight-report.md)):
+  all 10 plan docs across 13 dimensions; every `file:line` claim re-verified against the live code
+  (`reactive/owner.ts`/`scheduler.ts`/`for.ts`/`show.ts`, core `buffer.ts`/`serialize.ts`/
+  `theme.ts`/`logger.ts`, both barrels, the RD-03 preflight report) — all accurate. 4 findings
+  (1 MAJOR, 2 MINOR, 1 OBSERVATION; 0 CRITICAL), all resolved by applying recommended fixes:
+  **PF-001** — `Group` had no API to accept a `Show`/`For` producer (`add` takes a `View`, a
+  producer is an accessor); added `Group.addDynamic(producer)` wired through the existing
+  `runWithOwner`/`mountView` reconcile seam. **PF-002** — corrected the draw-error log call to the
+  real `Logger.error(component, msg, fields?)` signature. **PF-003** — disambiguated bare "RD-04"
+  (foundation render engine, not jsvision-ui's event loop) in DoD #6. **PF-004** — recorded that
+  partial recompose assumes non-overlapping siblings (a constraint RD-05 windows inherit). Plan is
+  feasible, spec-first, accurately grounded; ready for `exec_plan`.
+- **Recommended next:** **`exec_plan` view-group-spine** (start at Phase 1 — the two additive
+  enabling primitives `runWithOwner` + `ScreenBuffer.clone()`) — the same path RD-01 and RD-02 followed.

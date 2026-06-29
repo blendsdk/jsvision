@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 2 ✅ Done · 1 📋 Plan Created · 6 ⬜ Backlog — RD-03 view-group-spine next | 2 / 9 done | 🔄 | 2026-06-29 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 2 ✅ Done · 1 🔬 Plan Preflighted · 6 ⬜ Backlog — RD-03 ready for exec_plan | 2 / 9 done | 🔄 | 2026-06-29 |
 
 ## Archived
 
@@ -24,6 +24,8 @@
 ## Notes
 
 - 2026-06-29: migrated from the flat layout via setup_codeops.
+- 2026-06-29: **RD-03 view-group-spine plan preflighted** → 🔬 Plan Preflighted (1 MAJOR + 2 MINOR
+  resolved, 0 CRITICAL; report in the plan folder). Cascaded into the **jsvision-ui** row.
 - 2026-06-29: update_roadmap refined the **jsvision-ui** row from disk — Stage Summary + Progress
   (2/9 done) cascaded from the feature roadmap (RD-01/02 ✅, RD-03 📋 Plan Created, RD-04…09 ⬜).
 - 2026-06-29: archived the completed **monorepo-restructure** plan (30/30 tasks done; the repo is

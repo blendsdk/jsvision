@@ -148,7 +148,7 @@ the cross-cutting guarantees. Covers AC-12, AC-17, AC-18, AC-20 (+ AC-19 e2e).
 - [ ] T7.2 — Run tests → dynamic + packaging specs **RED**.
 
 ### Session 7B — Implementation (GREEN)
-- [ ] T7.3 — `group.ts`/`render-root.ts`: dynamic-child reconcile effect (read `Show`/`For` accessor under the group's scope, diff → `mountView`/`remove`, schedule reflow). (03-04, AR-36)
+- [ ] T7.3 — `group.ts`/`render-root.ts`: `Group.addDynamic(producer)` entry + the dynamic-child reconcile effect (read the `Show`/`For` accessor under the group's scope, diff → `mountView`/`remove`, schedule reflow). (03-02, 03-04, AR-36)
 - [ ] T7.4 — Finalize the `view/index.ts` barrel + explicit re-exports in `src/index.ts` (all public symbols); degenerate-geometry hardening (zero/over-large → no-ops). (AR-37, AC-17,18)
 - [ ] T7.5 — `packages/examples/view-demo/main.ts` + `"demo:view"` script; `view-demo.e2e.test.ts`. (PA-3)
 - [ ] T7.6 — Run tests → dynamic + packaging specs **GREEN**; `demo:view` prints a themed frame.
