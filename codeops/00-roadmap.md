@@ -25,3 +25,6 @@
 
 - 2026-06-29: migrated from the flat layout via setup_codeops; run /update_roadmap to refine the
   feature's stage summary and progress from disk.
+- 2026-06-29: archived the completed **monorepo-restructure** plan (30/30 tasks done; the repo is
+  now a yarn 1.x + Turborepo monorepo) → `_archive/monorepo-restructure/`. It was repo-level
+  infrastructure swept under `jsvision-ui` by the migration, never a tracked feature row.
