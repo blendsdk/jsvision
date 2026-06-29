@@ -15,9 +15,21 @@
  */
 export { VERSION } from './version.js';
 
-// Layout (ADR-008) — cell-native, integer-correct.
-export { apportion, solveTrack } from './layout/index.js';
-export type { TrackItem } from './layout/index.js';
+// Layout (ADR-008 / RD-02) — cell-native, integer-correct.
+export { apportion, solveTrack, layout } from './layout/index.js';
+export type {
+  TrackItem,
+  Align,
+  Direction,
+  Justify,
+  LayoutBox,
+  LayoutProps,
+  LayoutResult,
+  Padding,
+  Rect,
+  Size,
+  Size2D,
+} from './layout/index.js';
 
 // Reactive core (RD-01) — fine-grained signals, effects, computeds, combinators.
 export * from './reactive/index.js';
