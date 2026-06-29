@@ -6,5 +6,4 @@ coverage
 
 # CodeOps process artifacts — authored docs, not code; Prettier would churn
 # their hand-built tables. Kept out of the formatting gate.
-plans
-requirements
+codeops
