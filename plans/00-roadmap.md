@@ -25,7 +25,7 @@ foundation RDs of the same number.
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
-| RD-01 | Reactive core — `signal`/`computed`/`effect` + `Show`/`For` | [RD-01](../requirements/RD-01-reactive-core.md) | — | RD Drafted | ✏️ | 2026-06-29 | Phase 0 pillar (XL). UI-independent; every widget property binds to it. |
+| RD-01 | Reactive core — `signal`/`computed`/`effect` + `Show`/`For` | [RD-01](../requirements/RD-01-reactive-core.md) | [reactive-core](reactive-core/00-index.md) | Executing | 🔄 | 2026-06-29 | Phase 0 pillar (XL). UI-independent; every widget property binds to it. RD preflighted (AR-13…AR-18); plan = 4 phases / 11 sessions, spec-first, 20 ST↔AC. Plan preflighted ([report](reactive-core/00-preflight-report.md)): 6 findings (4 MINOR, 2 obs), all resolved; new PA-6. **exec_plan in progress** (Phase 1 — graph foundation). |
 | RD-02 | Layout engine — cell-native flex `row`/`col` | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0 pillar (XL). ADR-008 Accepted; apportionment core spike **landed** (`packages/ui/src/layout/`) + golden-tested — de-risked. |
 | RD-03 | View/Group spine + `DrawContext` + theming | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0. Retained tree, draw composition into parent buffer, named theme roles. |
 | RD-04 | Event loop + focus + modality + commands | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0. Async pump, 3-phase dispatch, `await execView`. |
@@ -53,5 +53,26 @@ foundation RDs of the same number.
   and a fresh set authored at `requirements/` (README + `00-ambiguity-register.md` AR-01…AR-12
   + `RD-01-reactive-core.md`). Four design decisions locked with the user: callable+methods
   signal API, synchronous effects + `batch()`, owner-scope tree + `onCleanup`, key-function `For`.
-- **Recommended next:** `make_plan` for **RD-01** (the requirements are ready), or draft
-  **RD-02 (layout containers)** next. Optionally run `preflight` on RD-01 first (→ `RD Preflighted`).
+- **2026-06-29** — **RD-01 preflighted** → stage `RD Preflighted`. Fresh-session audit
+  (`requirements/00-preflight-report.md`, iteration 2) surfaced 9 findings (3 MAJOR, 6 MINOR, 0
+  CRITICAL) — all under-specification at the edges, none a design flaw. User accepted every
+  recommended resolution; applied to RD-01 + new register entries AR-13…AR-18 (error base class
+  = `TuiError`, no-owner dev-warn, exception propagation, nested-`batch` outermost flush, `For`
+  duplicate-key policy, fixed 1000-iteration runaway limit). Re-scan clean.
+- **2026-06-29** — **RD-01 plan created** → stage `Plan Created`. `plans/reactive-core/` written
+  (8 docs): ambiguity register (plan decisions PA-1…PA-5 over inherited AR-01…AR-18), index,
+  requirements, current-state + target file layout, 3 component specs (reactive-graph, ownership,
+  combinators), testing strategy (ST-01…ST-20 ↔ AC-1…AC-20), execution plan (4 phases / 11 sessions,
+  spec-first). Three plan-level decisions locked with the user: dev warnings = `console.warn` gated
+  `NODE_ENV!=='production'` (PA-1), multi-throw cascade = first rethrown + rest `console.error`
+  (PA-2), granular file split (PA-3).
+- **2026-06-29** — **reactive-core plan preflighted** → stage `Plan Preflighted`. Fresh-session,
+  codebase-grounded audit (`plans/reactive-core/00-preflight-report.md`, iteration 1): all 9 plan
+  docs across 13 dimensions; every structural claim verified against the real code (`TuiError` ctor,
+  barrel/entry pattern, two-project vitest, `check:deps`, no-`console.*`-in-`src`); scheduler
+  propagation walked for glitch-freedom — no correctness defect. 6 findings (0 critical/major; 4
+  MINOR + 2 observations), all resolved: ST-15 leak check made behavioral (PF-001), `For` duplicate-key
+  output pinned via new **PA-6** (PF-002), `Show` flip driver specified (PF-003), `EqualsOption` export
+  reconciled (PF-004), 2 clarity fixes (PF-005/006).
+- **Recommended next:** `exec_plan` for **reactive-core** (Phase 1A writes the spec tests, RED-first),
+  or draft **RD-02 (layout containers)** in parallel — it shares no code with RD-01.
