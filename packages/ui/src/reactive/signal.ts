@@ -29,7 +29,13 @@ export interface SignalOptions<T> {
 export function signal<T>(initial: T, options?: SignalOptions<T>): Signal<T> {
   const equals: (a: T, b: T) => boolean = options?.equals === false ? () => false : (options?.equals ?? Object.is);
 
-  const source: Source<T> = { value: initial, equals, observers: new Set() };
+  const source: Source<T> = {
+    value: initial,
+    equals,
+    observers: new Set(),
+    // A signal is always current, so there is nothing to pull (AR-07 lazy-pull interface).
+    pull: () => undefined,
+  };
 
   /** Apply a write: no-op on an equal value (AR-05), else assign and propagate. */
   function setValue(value: T): void {

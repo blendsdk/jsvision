@@ -77,6 +77,12 @@ export type NodeState = (typeof NodeState)[keyof typeof NodeState];
 export interface Subscribable {
   /** Computations currently subscribed to this source (bidirectional with `Computation.sources`). */
   readonly observers: Set<Computation>;
+  /**
+   * Bring this source up to date before it is read (lazy pull). A no-op for a signal (always
+   * current); for a computed it resolves a `CHECK`/`DIRTY` memo (AR-07). Letting the source
+   * dispatch its own update keeps the scheduler from having to distinguish source kinds.
+   */
+  pull(): void;
 }
 
 /**
@@ -107,6 +113,18 @@ export interface Computation {
   cleanups: Array<() => void>;
   /** `true` for an effect (eager leaf sink); `false` for a computed (lazy source). */
   readonly isEffect: boolean;
+  /**
+   * For a **computed** (which is also a source): the computations observing its memo, so the
+   * mark phase can propagate `CHECK` to them transitively (AR-07). `null` for an effect, which
+   * is a leaf sink with no observers.
+   */
+  observers: Set<Computation> | null;
+  /**
+   * For a **computed**: recompute its memo, marking observers `DIRTY` only if the value changed
+   * (the memo-equal short-circuit that bounds diamond re-runs — AC-7). `null` for an effect,
+   * which the scheduler runs directly. Defined in `computed.ts` (it owns the value type `T`).
+   */
+  recompute: (() => void) | null;
 }
 
 /**

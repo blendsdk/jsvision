@@ -21,12 +21,14 @@
 // Public types (AR-01, AR-05, AR-06).
 export type { Signal, Computed, EqualsOption } from './types.js';
 
-// Reactive primitives (Phase 1): signals, effects, scheduling helpers, ownership.
+// Reactive primitives: signals, computeds, effects, scheduling helpers, ownership.
 export { signal } from './signal.js';
 export type { SignalOptions } from './signal.js';
+export { computed } from './computed.js';
+export type { ComputedOptions } from './computed.js';
 export { effect } from './effect.js';
 export { batch, untrack } from './scheduler.js';
 export { createRoot, onCleanup } from './owner.js';
 export { ReactiveCycleError } from './errors.js';
 
-// Phase 2 adds `computed`; Phase 3 adds `Show`/`For` — exported here as they land.
+// Phase 3 adds `Show`/`For` — exported here as they land.
