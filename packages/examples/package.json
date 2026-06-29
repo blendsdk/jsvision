@@ -15,7 +15,8 @@
     "probe": "tsx capability-probe/main.ts",
     "demo:resize": "tsx resize-demo/main.ts",
     "demo:playground": "tsx keyboard-mouse-playground/main.ts",
-    "demo:reactive": "tsx reactive-demo/main.ts"
+    "demo:reactive": "tsx reactive-demo/main.ts",
+    "demo:layout": "tsx layout-demo/main.ts"
   },
   "dependencies": {
     "@jsvision/core": "*",
