@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-06-29
 > **Last Updated**: 2026-06-29
-> **Progress**: 2 / 9 done (RD-01 ✅, RD-02 ✅) · RD-03 🔄 Executing
+> **Progress**: 3 / 9 done (RD-01 ✅, RD-02 ✅, RD-03 ✅) · RD-04 ⬜ Backlog next
 > **CodeOps Skills Version**: 2.0.0
 
 The `@jsvision/ui` layer — a reimagined Turbo Vision widget framework on
@@ -27,7 +27,7 @@ foundation RDs of the same number.
 |----|-------|----|------|-------|--------|--------------|-----------------|
 | RD-01 | Reactive core — `signal`/`computed`/`effect` + `Show`/`For` | [RD-01](../requirements/RD-01-reactive-core.md) | [reactive-core](reactive-core/00-index.md) | Done | ✅ | 2026-06-29 | Phase 0 pillar (XL). UI-independent; every widget property binds to it. **Shipped** in `packages/ui/src/reactive/` — 20 ST (ST-01…ST-20) + impl tests green (55 ui tests), `yarn verify`/`check:deps`/`lint` clean, all public symbols importable from `@jsvision/ui`, every file ≤ 500 lines w/ JSDoc. exec_plan complete (4 phases / 4 commits). |
 | RD-02 | Layout engine — cell-native flex `row`/`col` | [RD-02](../requirements/RD-02-layout-engine.md) | [layout-engine](layout-engine/00-index.md) | Done | ✅ | 2026-06-29 | Phase 0 pillar (XL). ADR-008 Accepted; built on the golden-tested `apportion`/`solveTrack` spike. **Complete**: all 4 phases / 18 spec oracles (ST-01…ST-18 ↔ AC-1…AC-18) + impl tests green. `layout(root, viewport) → parent-relative integer rects`: `row`/`col` via one axis abstraction, `fixed`/`fr`/`auto` sizing (`auto` pre-resolved via `naturalSize`), `justify`/`align`/`gap`/`padding`, overflow (extend past edge, `fr`→0), degenerate→zero rects, recursion in each box's local frame. Pure/no-mutation; `check:deps` clean; files ≤ 217 lines. Symbols re-exported from `@jsvision/ui`. |
-| RD-03 | View/Group spine + `DrawContext` + theming | [RD-03](../requirements/RD-03-view-group-spine.md) | [view-group-spine](view-group-spine/00-index.md) | Executing | 🔄 | 2026-06-29 | Phase 0 keystone (XL). Retained `View`/`Group` tree, stateless clipped `DrawContext`, theme-role resolution. Closes the reactive seam (per-view owner scope + `bind` + injectable coalescing scheduler, AR-09/AR-02) and owns the RD-02 reflow pass. Ships the **complete** `View` shape (onEvent stub + visible/disabled/focused); dispatch/focus **logic** deferred → RD-04. 20 AC; AR-30…AR-46. **Planned** ([plan](view-group-spine/00-index.md)): 7 phases / 21 sessions / ~29–41 h; PA-1…PA-8 + 2 additive primitives (RD-01 `runWithOwner`, core `ScreenBuffer.clone()`). **Plan preflighted** ([report](view-group-spine/00-preflight-report.md)): 1 MAJOR + 2 MINOR resolved (added `Group.addDynamic`, corrected `Logger.error` call, disambiguated "RD-04"), 1 OBSERVATION recorded; every plan `file:line` claim verified against live code. Ready for `exec_plan`. |
+| RD-03 | View/Group spine + `DrawContext` + theming | [RD-03](../requirements/RD-03-view-group-spine.md) | [view-group-spine](view-group-spine/00-index.md) | Done | ✅ | 2026-06-29 | Phase 0 keystone (XL). Retained `View`/`Group` tree, stateless clipped `DrawContext`, theme-role resolution. Closes the reactive seam (per-view owner scope + `bind` + injectable coalescing scheduler, AR-09/AR-02) and owns the RD-02 reflow pass. Ships the **complete** `View` shape (onEvent stub + visible/disabled/focused); dispatch/focus **logic** deferred → RD-04. 20 AC; AR-30…AR-46. **Planned** ([plan](view-group-spine/00-index.md)): 7 phases / 21 sessions / ~29–41 h; PA-1…PA-8 + 2 additive primitives (RD-01 `runWithOwner`, core `ScreenBuffer.clone()`). **Plan preflighted** ([report](view-group-spine/00-preflight-report.md)): 1 MAJOR + 2 MINOR resolved, 1 OBSERVATION recorded. **Complete** ✅ — executed all 7 phases spec-first (RED→GREEN→impl) across 8 commits. Lands `packages/ui/src/view/` (geometry, types, theme-style, draw-context, view, group, reflow, render-root) + 2 additive primitives (`runWithOwner` on reactive, `ScreenBuffer.clone()` on core) + `demo:view`. 22 spec oracles (ST-01…ST-20 + ST-21/22) + impl tests green (ui 142 unit, +3 e2e); `yarn verify`/`check:deps`/`lint` clean; files ≤ 231 lines. Runtime decisions RT-1…RT-5 recorded. |
 | RD-04 | Event loop + focus + modality + commands | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0. Async pump, 3-phase dispatch, `await execView`. |
 | RD-05 | App shell — Window/Frame/ScrollBar/Desktop/MenuBar/StatusLine | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0 demo target: a blank windowed desktop + menu/status. |
 | RD-06 | Essential controls + validators | — | — | Backlog | ⬜ | 2026-06-29 | Phase 1. Text/Label/Button/Input/Check/Radio/ListView/Dialog. Demos: `mmenu`, `palette`, `tvforms`. |
@@ -161,5 +161,20 @@ foundation RDs of the same number.
   (foundation render engine, not jsvision-ui's event loop) in DoD #6. **PF-004** — recorded that
   partial recompose assumes non-overlapping siblings (a constraint RD-05 windows inherit). Plan is
   feasible, spec-first, accurately grounded; ready for `exec_plan`.
-- **Recommended next:** **`exec_plan` view-group-spine** (start at Phase 1 — the two additive
-  enabling primitives `runWithOwner` + `ScreenBuffer.clone()`) — the same path RD-01 and RD-02 followed.
+- **2026-06-29** — **RD-03 (View/Group spine) complete** → stage `Done` ✅. Executed
+  `plans/view-group-spine/` across all 7 phases spec-first (RED→GREEN→impl per phase), 8 commits.
+  Phase 1 added the two enabling primitives (`runWithOwner` on RD-01 reactive, `ScreenBuffer.clone()`
+  on core render); Phases 2–7 built the spine under `packages/ui/src/view/`: the `View`/`Group`
+  retained tree + owner-scope lifecycle, the stateless clipped `DrawContext` + theme-role adapter,
+  the RD-02 reflow pass, the render root + compose walker (clip, back-to-front, bg fill, draw-error
+  isolation), the coalescing scheduler + partial recompose (repaint/relayout phases), and dynamic
+  children (`Group.addDynamic` over `Show`/`For`) + packaging + the runnable `demo:view`. 20 AC
+  realized as ST-01…ST-20 (+ ST-21/22 primitives); ui 142 unit tests + 3 e2e green;
+  `verify`/`check:deps`/`lint` clean. One latent bug fixed during exec: `View.mount` now `untrack`s
+  its scope setup so the wiring-reset `onCleanup` binds to the view's own scope, not an ambient
+  reconcile effect (would have leaked dynamic children). Runtime decisions RT-1…RT-5 recorded in the
+  plan's `00-ambiguity-register.md`.
+- **Recommended next:** **RD-04 (Event loop + focus + modality + commands)** — `add_requirement`
+  to draft the RD, then preflight → make_plan → exec_plan, the same path RD-01…RD-03 followed.
+  RD-04 extends the already-final `View` shape (implements `onEvent` dispatch, drives
+  `focused`/`disabled`, may inject its event-loop tick as the render root's scheduler).
