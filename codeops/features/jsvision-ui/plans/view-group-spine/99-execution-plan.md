@@ -64,17 +64,17 @@ unmount via `runWithOwner`), `onMount`/`onCleanup`. Covers AC-1, AC-11, AC-15. (
 The stateless clipped paint facade + the `ThemeRole→Style` adapter. Covers AC-4, AC-13, AC-16.
 
 ### Session 3A — Spec tests (RED)
-- [ ] T3.1 — Add `view.drawcontext.spec.test.ts` (**ST-04** clipped view-local paint, **ST-13** color resolution, **ST-16** output-via-core/sanitize). (AC-4,13,16)
-- [ ] T3.2 — Run tests → drawcontext specs **RED**.
+- [x] T3.1 — Add `view.drawcontext.spec.test.ts` (**ST-04** clipped view-local paint, **ST-13** color resolution, **ST-16** output-via-core/sanitize). (AC-4,13,16) — 2026-06-29
+- [x] T3.2 — Run tests → drawcontext specs **RED**. — 2026-06-29 (`makeDrawContext` undefined)
 
 ### Session 3B — Implementation (GREEN)
-- [ ] T3.3 — `theme-style.ts`: `themeRoleToStyle(role): Style` (`{fg,bg}`; ignore extras). (03-03, PA-6, AR-45)
-- [ ] T3.4 — `draw-context.ts`: `makeDrawContext(buffer, origin, clip, theme)` → `text`/`fillRect`/`fill`/`box`/`shadow`/`color`/`size`, offset+clip, all writes via `ScreenBuffer`. (03-03, AR-38,39)
-- [ ] T3.5 — Run tests → drawcontext specs **GREEN**.
+- [x] T3.3 — `theme-style.ts`: `themeRoleToStyle(role): Style` (`{fg,bg}`; ignore extras). (03-03, PA-6, AR-45) — 2026-06-29
+- [x] T3.4 — `draw-context.ts`: `makeDrawContext(buffer, viewRect, clip, theme)` → `text`/`fillRect`/`fill`/`box`/`shadow`/`color`/`size`, offset+clip, all writes via `ScreenBuffer`. (03-03, AR-38,39) — 2026-06-29 (per-glyph clipped `text` via `sanitize`+`charWidth`; `box` reimplemented with a local single-line glyph table — core's `BOX` is not exported — so it clips per cell; `shadow` clips via in-clip `get`+darken)
+- [x] T3.5 — Run tests → drawcontext specs **GREEN**. — 2026-06-29
 
 ### Session 3C — Impl tests & hardening
-- [ ] T3.6 — `view.drawcontext.impl.test.ts` (four-edge clip-drop, wide-glyph straddle dropped whole, `fill` exact, `box`/`shadow` clip, adapter ignores extras). (07 §impl)
-- [ ] T3.7 — `yarn verify` + `lint` green. **/gitcm** — `feat(view): stateless clipped DrawContext + theme-role resolution`.
+- [x] T3.6 — `view.drawcontext.impl.test.ts` (four-edge clip-drop, wide-glyph straddle dropped whole, `fill` exact, `box`/`shadow` clip, adapter ignores extras). (07 §impl) — 2026-06-29
+- [x] T3.7 — `yarn verify` + `lint` green. **/gitcmp** — `feat(view): stateless clipped DrawContext + theme-role resolution`. — 2026-06-29 (verify 8/8, lint clean)
 
 ---
 
@@ -172,9 +172,9 @@ the cross-cutting guarantees. Covers AC-12, AC-17, AC-18, AC-20 (+ AC-19 e2e).
 - [x] 2C Impl tests & harden: T2.7–T2.8 ✅ commit — 2026-06-29
 
 **Phase 3 — DrawContext + theming**
-- [ ] 3A Spec (RED): T3.1–T3.2
-- [ ] 3B Impl (GREEN): T3.3–T3.5
-- [ ] 3C Impl tests & harden: T3.6–T3.7 ✅ commit
+- [x] 3A Spec (RED): T3.1–T3.2 — 2026-06-29
+- [x] 3B Impl (GREEN): T3.3–T3.5 — 2026-06-29
+- [x] 3C Impl tests & harden: T3.6–T3.7 ✅ commit — 2026-06-29
 
 **Phase 4 — Reflow pass**
 - [ ] 4A Spec (RED): T4.1–T4.2

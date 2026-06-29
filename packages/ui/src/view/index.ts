@@ -18,3 +18,7 @@ export { Group } from './group.js';
 export { intersect, translate, contains } from './geometry.js';
 export type { Point } from './geometry.js';
 export type { ViewState, DrawContext, ThemeRoleName, RenderRootOptions } from './types.js';
+// Internal paint seams (used by the Phase-5 render root + tests): the clipped DrawContext factory
+// and the theme-role→Style adapter. Not part of the curated `@jsvision/ui` public surface.
+export { makeDrawContext } from './draw-context.js';
+export { themeRoleToStyle } from './theme-style.js';
