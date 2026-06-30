@@ -4,8 +4,9 @@
  * options (consumed by the Phase-5 render root). Internal class wiring lives with the classes
  * (`view.ts`) to avoid a type cycle (RT-1).
  */
-import type { Style, Theme, CapabilityProfile, Logger } from '@jsvision/core';
+import type { Style, Theme, CapabilityProfile, Logger, InputEvent } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
+import type { Point } from './geometry.js';
 
 /**
  * View state flags drawn-against in RD-03. `focused`/`disabled` are driven by RD-04 (the event
@@ -57,4 +58,35 @@ export interface RenderRootOptions {
   schedule?: (flush: () => void) => void;
   /** Draw-error logger; defaults to a disabled `createLogger()` (AR-42). */
   logger?: Logger;
+}
+
+// --- RD-04 event-handler contract types ---------------------------------------------------------
+// Declared here (alongside `View`) — NOT in `event/` — so `View.onEvent` can reference the dispatch
+// envelope without a `view/`→`event/` import cycle (PA-8). The `event/` module imports these and
+// re-exports them, so both `view/index.ts` and `event/index.ts` expose them through `@jsvision/ui`.
+
+/** A typed command raised within the app, routed through the 3-phase machine (AR-52). */
+export interface CommandEvent {
+  /** Discriminant tag. */
+  readonly type: 'command';
+  /** Opaque command name compared by equality, e.g. `'ok'` | `'cancel'` | `'quit'`. */
+  readonly command: string;
+  /** Optional payload carried with the command. */
+  readonly arg?: unknown;
+}
+
+/** Any event the loop dispatches: a decoded core input event or an internal command. */
+export type AppEvent = InputEvent | CommandEvent;
+
+/**
+ * The envelope the loop wraps each event in before 3-phase routing; this — not the readonly core
+ * `InputEvent` — is what `View.onEvent(ev)` receives, keeping core's event model pure (AR-60).
+ */
+export interface DispatchEvent {
+  /** The wrapped decoded input event or internal command. */
+  readonly event: AppEvent;
+  /** Set `true` by a handler to halt propagation through the remaining phases/views (AR-51). */
+  handled: boolean;
+  /** Mouse/wheel coordinates translated to view-local cells (AR-50, AR-63); absent for keys/commands. */
+  readonly local?: Point;
 }

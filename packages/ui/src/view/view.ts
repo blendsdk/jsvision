@@ -13,7 +13,7 @@ import type { Owner } from '../reactive/index.js';
 import { runWithOwner, untrack, createRoot, effect, onCleanup, getOwner } from '../reactive/index.js';
 import { TuiError } from '@jsvision/core';
 import type { Rect, Size2D, LayoutProps } from '../layout/index.js';
-import type { DrawContext, ViewState } from './types.js';
+import type { DrawContext, ViewState, DispatchEvent } from './types.js';
 
 /**
  * The internal seam a `View` uses to talk to its render root: the dirty-set scheduler (RT-1). The
@@ -41,6 +41,18 @@ export abstract class View {
   /** Optional intrinsic-size seam for `auto` sizing (AR-33). */
   measure?(available: Size2D): Size2D;
 
+  // --- RD-04 dispatch surface (additive; defaults preserve RD-03 behavior) ----------------------
+  /**
+   * Focus eligibility (TV `ofSelectable`): a view is focusable iff
+   * `visible && !disabled && focusable` AND it has no `!visible`/`disabled` ancestor (subtree
+   * semantics, AR-56/AR-65). Default `false`. Driven by the RD-04 focus manager.
+   */
+  focusable = false;
+  /** Participate in the pre-process sweep (root→down, before the focused chain) (AR-51, PA-2). */
+  preProcess = false;
+  /** Participate in the post-process sweep (after the focused chain) (AR-51, PA-2). */
+  postProcess = false;
+
   // --- Internal wiring (RT-1/RT-2/RT-3) ---------------------------------------------------------
   // Public-but-internal: it crosses the module boundary to the render root, so it is `public`
   // (project standard: prefer public/protected) and marked `@internal`. Not part of the API.
@@ -65,11 +77,14 @@ export abstract class View {
   abstract draw(ctx: DrawContext): void;
 
   /**
-   * Event hook — a **stub** in RD-03 (AR-30): present and overridable but performing no dispatch
-   * or focus logic. RD-04 extends the class to implement 3-phase dispatch.
+   * Event hook — a **stub** by default (AR-30): present and overridable but performing no dispatch
+   * or focus logic. The RD-04 event loop wraps each event in a {@link DispatchEvent} envelope and
+   * routes it 3-phase; a widget overrides this to handle input and set `ev.handled` to consume it.
+   *
+   * @param _ev The dispatch envelope (the wrapped event + the mutable `handled` flag).
    */
-  onEvent(_ev: unknown): void {
-    // intentionally empty (RD-03 ships only the stub)
+  onEvent(_ev: DispatchEvent): void {
+    // intentionally empty (the base ships only the stub; widgets override)
   }
 
   /** Schedule a repaint of this view's subtree (AR-32). No-op before mount (the first frame paints all). */
