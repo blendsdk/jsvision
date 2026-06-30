@@ -49,8 +49,12 @@ export interface RenderRoot {
  * the absolute clip rect (view rect ∩ ancestor clip). A throwing `draw()` is logged and its
  * subtree skipped (AR-42).
  */
-/** Per-view compose context cached on a full compose, reused by partial recompose. */
-type ComposeContext = { origin: Point; clip: Rect };
+/**
+ * Per-view compose context cached on a full compose, reused by partial recompose. `order` is the
+ * DFS pre-order paint index (back-to-front) — used to detect occlusion when deciding whether a
+ * partial recompose is safe.
+ */
+type ComposeContext = { origin: Point; clip: Rect; order: number };
 
 function composeView(
   buffer: ScreenBuffer,
@@ -60,9 +64,14 @@ function composeView(
   theme: Theme,
   logger: Logger,
   cache: Map<View, ComposeContext>,
+  counter: { n: number } | null,
 ): void {
   if (!view.state.visible) return;
-  cache.set(view, { origin: absOrigin, clip }); // remember where this view composed (for partial recompose)
+  // Assign a fresh paint index on a full compose (`counter` set); preserve the existing one on a
+  // partial recompose (`counter` null) so the cross-frame occlusion test stays stable — z-order only
+  // changes via reflow, which always does a full compose.
+  const order = counter !== null ? counter.n++ : (cache.get(view)?.order ?? 0);
+  cache.set(view, { origin: absOrigin, clip, order }); // where + when this view composed
 
   const viewRect: Rect = {
     x: absOrigin.x,
@@ -88,9 +97,19 @@ function composeView(
         width: child.bounds.width,
         height: child.bounds.height,
       };
-      composeView(buffer, child, childOrigin, intersect(clip, childRect), theme, logger, cache);
+      composeView(buffer, child, childOrigin, intersect(clip, childRect), theme, logger, cache, counter);
     }
   }
+}
+
+/** Whether `ancestor` is `node` itself or an ancestor of it (walks the parent chain). */
+function isAncestor(ancestor: View, node: View): boolean {
+  let cursor: View | null = node;
+  while (cursor !== null) {
+    if (cursor === ancestor) return true;
+    cursor = cursor.parent;
+  }
+  return false;
 }
 
 /**
@@ -185,28 +204,58 @@ class RenderRootImpl implements RenderRoot, ViewHost {
       // Relayout phase: reflow moves bounds, so the cached compose contexts are stale → full compose.
       reflow(this.rootView, this.viewport);
       this.needsReflow = false;
-      this.cache.clear();
-      const origin: Point = { x: this.rootView.bounds.x, y: this.rootView.bounds.y };
-      composeView(
-        this.current,
-        this.rootView,
-        origin,
-        { ...this.rootView.bounds },
-        this.theme,
-        this.logger,
-        this.cache,
-      );
+      this.fullCompose();
     } else {
-      // Repaint phase: recompose only the dirty subtrees from their cached compose contexts (AC-7).
-      for (const view of topmostDirty(this.dirty)) {
-        const ctx = this.cache.get(view);
-        if (ctx !== undefined) {
-          composeView(this.current, view, ctx.origin, ctx.clip, this.theme, this.logger, this.cache);
+      // Repaint phase: recompose only the dirty subtrees from their cached contexts (AC-7) — but
+      // partial recompose draws a subtree in isolation, which is only correct when nothing paints
+      // over it. If a dirty view is occluded by a later-painted view outside its subtree (overlapping
+      // windows), redrawing just that subtree would bleed it over its occluder, so escalate to a full
+      // z-ordered recompose for this frame. The fast-path holds for non-overlapping UIs.
+      const dirtyViews = topmostDirty(this.dirty);
+      if (this.anyOccluded(dirtyViews)) {
+        this.fullCompose();
+      } else {
+        for (const view of dirtyViews) {
+          const ctx = this.cache.get(view);
+          if (ctx !== undefined) {
+            composeView(this.current, view, ctx.origin, ctx.clip, this.theme, this.logger, this.cache, null);
+          }
         }
       }
     }
     this.dirty.clear();
     this.lastFrame = serialize(this.current, previous, { caps: this.caps });
+  }
+
+  /** Compose the whole tree from the root in z-order, refreshing the per-view context cache. */
+  private fullCompose(): void {
+    if (this.rootView === null) return;
+    this.cache.clear();
+    const origin: Point = { x: this.rootView.bounds.x, y: this.rootView.bounds.y };
+    composeView(this.current, this.rootView, origin, { ...this.rootView.bounds }, this.theme, this.logger, this.cache, {
+      n: 0,
+    });
+  }
+
+  /**
+   * Whether any dirty view is overlapped by a view painted after it (and outside its own subtree) —
+   * an occluder a partial recompose would wrongly draw under. Uses the cached paint order + origins
+   * from the last full compose; geometry and z-order are stable between reflows.
+   */
+  private anyOccluded(dirtyViews: View[]): boolean {
+    for (const view of dirtyViews) {
+      const cv = this.cache.get(view);
+      if (cv === undefined) continue;
+      const rv: Rect = { x: cv.origin.x, y: cv.origin.y, width: view.bounds.width, height: view.bounds.height };
+      for (const [other, co] of this.cache) {
+        if (other === view || co.order <= cv.order) continue; // same view, or painted before it
+        if (isAncestor(view, other)) continue; // inside the dirty subtree — recomposing `view` covers it
+        const ro: Rect = { x: co.origin.x, y: co.origin.y, width: other.bounds.width, height: other.bounds.height };
+        const overlap = intersect(rv, ro);
+        if (overlap.width > 0 && overlap.height > 0) return true;
+      }
+    }
+    return false;
   }
 
   serialize(): string {
