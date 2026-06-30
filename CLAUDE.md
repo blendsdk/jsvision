@@ -97,6 +97,30 @@ terminal-matrix.json       RD-03 cross-terminal evidence (appended by the probe 
 - **Commit scope:** the area touched — `scaffold`, `package`, `toolchain`, `packaging`, `tests`, `docs`, or the engine subsystem name in later RDs.
 - **Main branch:** `master` • **Remote:** `origin` → `git@github.com:blendsdk/tui.git`. Publish (with provenance) is still deferred to a later milestone (RD-10 DEF-1).
 
+## Turbo Vision fidelity (NON-NEGOTIABLE)
+
+> `@jsvision/ui` is a faithful re-creation of Borland Turbo Vision. **Do not reimagine the
+> drawing.** For any component, widget, or chrome that has a Turbo Vision counterpart, you MUST
+> first read the original source and replicate **their** geometry, glyphs, sizing, layout, and
+> hit-zones exactly.
+
+- **Source of truth:** the original Turbo Vision (magiblot/tvision) checked out at
+  `/home/gevik/workdir/github/tvision` — `source/tvision/t*.cpp` (drawing/sizing),
+  `source/tvision/tvtext1.cpp` (the `frameChars`/glyph tables), `include/tvision/*.h` (geometry).
+- **Process for every TV-derived component** (before writing or changing its draw/size/layout code):
+  1. Locate the original class (e.g. `TMenuBox`, `TMenuBar`, `TFrame`, `TButton`, `TScrollBar`,
+     `TWindow`, `TDialog`) and read its `draw()`, sizing (`getRect`/`sizeLimits`), `getItemRect`,
+     and the glyph tables it uses.
+  2. Replicate the **exact** column math, frame/gutter insets, padding, fill characters, markers,
+     and hit-zones. Convert CP437 byte glyphs to their Unicode equivalents (mind East-Asian
+     ambiguous-width — see the close-glyph note: prefer unambiguous-narrow code points).
+  3. Cite the original file(s) in the code's JSDoc and in the commit message.
+- **No invention.** If the original is unclear or a detail isn't covered, surface it and ask —
+  never substitute your own design for theirs. This is proven (the RD-05 menu box matched
+  `tmenubox.cpp` 1:1); every component from here on out honors the same rule.
+- This governs **drawing/geometry**. Behavior the original couldn't have (truecolor, reactive
+  binding, async modality) may extend TV, but the visual shapes/sizes must still match.
+
 ## Special rules
 
 - **Spec-first task ordering** (CodeOps): spec tests → red → implement → green → impl tests → verify. A `*.spec.test.ts` is an immutable oracle — if it fails after implementation, fix the code, not the test.
