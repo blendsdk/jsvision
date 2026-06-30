@@ -65,9 +65,10 @@ algorithms ported from a known source; each is self-contained and individually t
   item moves the highlight to it; moving off all items clears the highlight. The status
   line uses the loop's **pointer-capture** seam (`setCapture`/`releaseCapture`, AR-82) so
   it receives the move/up events even when the cursor leaves the bar. (AR-88)
-- [ ] **Emit on release** — the item's command is emitted on mouse-**up** only if the
-  cursor is still over the **same enabled** item it was pressed on; a release off the item
-  (or on a disabled item) emits nothing. This **supersedes** today's emit-on-press. (AR-88)
+- [ ] **Emit on release** — the highlight follows the cursor while held; on mouse-**up** the command
+  of the item **under the release point** is emitted if that item's command is enabled; a release off
+  all items (or on a disabled item) emits nothing — regardless of which item the press began on (TV
+  `tstatusl.cpp` `handleEvent`, corrected by plan PA-10). This **supersedes** today's emit-on-press. (AR-88)
 - [ ] **`statusSelected` theme role** — re-add the additive core `Theme` role reverted by
   the drawing pass: `statusSelected = { fg black, bg green, hotkey red }` (TV `0x20`/`0x24`),
   consumed by the held-item highlight. (AR-88)
@@ -225,8 +226,9 @@ type FrameZone = … | 'resize-left';                 // new SW-grip zone (frame
    `statusSelected` (black-on-green, red-on-green hotkey run); no command is emitted yet. (AR-88)
 2. [ ] **Status drag re-target + cancel** — while held, moving onto another item moves the highlight;
    moving off all items clears it; the status line tracks these via pointer capture. (AR-88)
-3. [ ] **Status emit-on-release** — releasing over the same enabled item emits its command exactly once;
-   releasing off the item, or on a disabled item, emits nothing. (AR-88)
+3. [ ] **Status emit-on-release** — releasing over an enabled item emits that item's command exactly
+   once (the item under the release point, per PA-10); releasing off all items, or on a disabled item,
+   emits nothing. (AR-88)
 4. [ ] **`statusSelected` role** — `defaultTheme.statusSelected` exists as `{ fg black, bg green, hotkey
    red }` and encodes without throwing; it is the only cross-package edit. (AR-88)
 5. [ ] **TV cascade** — with the desktop W×H and n windows, after `cascade` window *i* has top-left

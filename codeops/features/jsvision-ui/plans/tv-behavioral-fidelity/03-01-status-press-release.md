@@ -48,9 +48,11 @@ interface StatusLoopSeam {
   (A down on a disabled item or empty space: `pressed = null`, no capture, not handled — TV ignores it.)
 - **captured mouse-move/drag** (`kind==='move'|'drag'`): recompute the hit item; set `pressed` to it
   (only if enabled) or `null` if off the bar / over a disabled item; `invalidate()` if it changed.
-- **mouse-up** (`kind==='up'`): capture the pre-clear `pressed`; `seam.releaseCapture()`,
-  `this.pressed = null`, `invalidate()`. If the released-over item equals the pressed item **and** is
-  enabled, `seam.emitCommand(cmd)`. (Released off the item / on disabled ⇒ no emit.) `ev.handled = true`.
+- **mouse-up** (`kind==='up'`): resolve the item under the **release point** (the same hit-test as the
+  drag — this equals the current `pressed`, which tracked the cursor); `seam.releaseCapture()`,
+  `this.pressed = null`, `invalidate()`. If that item exists **and** its command is enabled,
+  `seam.emitCommand(cmd)`. (Released off all items / on a disabled item ⇒ no emit; the press-origin item
+  is irrelevant — TV `handleEvent` emits the item under the cursor at release — PA-10.) `ev.handled = true`.
 
 > The status line is `postProcess`; while captured, the loop routes move/up to it directly with
 > view-local `ev.local` (same path Desktop relies on). Each event is one coalesced tick (AR-54).

@@ -24,12 +24,16 @@ export interface StatusItem {
   key?: string;
 }
 
-/** The loop seam the status line needs for activation + greying (PA-7). */
+/** The loop seam the status line needs for activation + greying + press tracking (PA-7 / RD-10 PA-1). */
 export interface StatusLoopSeam {
   /** Raise the item's command onto the dispatch tick (AR-52). */
   emitCommand(command: string, arg?: unknown): void;
   /** Whether a command is enabled — drives greying + non-activatability (AR-72). */
   isCommandEnabled(command: string): boolean;
+  /** Capture the pointer to the status line for the duration of a press (RD-10 AR-82/AR-88). */
+  setCapture(view: View): void;
+  /** Release the pointer capture (RD-10). */
+  releaseCapture(): void;
 }
 
 /**
@@ -75,6 +79,10 @@ export class StatusLine extends View {
   items: readonly StatusItem[] = [];
   /** The loop seam; `null` until {@link attach} wires it (PA-7). */
   seam: StatusLoopSeam | null = null;
+  /** @internal The item currently under the cursor while a press is held (drawn `statusSelected`); `null` = none. */
+  protected pressed: StatusItem | null = null;
+  /** @internal Whether a mouse press is in flight (captured); gates drag re-target + release-emit (RD-10 AR-88). */
+  protected holding = false;
 
   constructor() {
     super();
@@ -103,31 +111,49 @@ export class StatusLine extends View {
     return boxes;
   }
 
-  /** Draw the row background then each item, accenting its `~hotkey~` char; disabled items grey (AR-72). */
+  /** The item box whose [x, x+width) hit-zone contains the row-local `x`, or `null`. */
+  private itemAt(x: number): ItemBox | null {
+    return this.itemBoxes().find((b) => x >= b.x && x < b.x + b.width) ?? null;
+  }
+
+  /**
+   * Draw the row background then each item (AR-72). A held item (`pressed`) paints in `statusSelected`
+   * (black on green, red-on-green hotkey) — TV's `cSelect`; a held disabled item in `cSelDisabled`
+   * (darkGray on green). Otherwise normal (black/red on lightGray) or greyed (disabled). The `~…~`
+   * accelerator run(s) take the accent color, matching TV's `moveCStr` toggle.
+   */
   draw(ctx: DrawContext): void {
-    const role = ctx.role('statusBar');
     const base = ctx.color('statusBar');
-    // TV's hotkey attribute `0x74` is plain red on the bar bg — no intensity bit.
-    const accent: Style = { fg: role.hotkey ?? base.fg, bg: base.bg };
-    const dim: Style = { fg: ctx.role('shadow').fg, bg: base.bg };
+    const selected = ctx.color('statusSelected');
+    const dimFg = ctx.role('shadow').fg; // darkGray — TV cNormDisabled/cSelDisabled fg (0x78/0x28)
+    // TV's hotkey attribute is plain red on the row bg — no intensity bit.
+    const accent: Style = { fg: ctx.role('statusBar').hotkey ?? base.fg, bg: base.bg };
+    const selAccent: Style = { fg: ctx.role('statusSelected').hotkey ?? selected.fg, bg: selected.bg };
+    const dim: Style = { fg: dimFg, bg: base.bg };
+    const selDim: Style = { fg: dimFg, bg: selected.bg }; // cSelDisabled — darkGray on green
 
     ctx.fillRect(0, 0, ctx.size.width, 1, ' ', base);
     for (const box of this.itemBoxes()) {
       const enabled = this.seam === null || this.seam.isCommandEnabled(box.item.command);
-      const style = enabled ? base : dim;
+      const isPressed = this.pressed === box.item;
+      const style = isPressed ? (enabled ? selected : selDim) : enabled ? base : dim;
+      const hotStyle = isPressed ? selAccent : accent;
       // Color the item's full span — both pad spaces included — exactly as TV's `drawSelect`.
       ctx.fillRect(box.x, 0, box.width, 1, ' ', style);
-      // Render each `~…~` run: the highlighted accelerator run(s) in red, the rest normal — TV's
-      // `moveCStr` toggles the attribute at every tilde, so a multi-char run like `~Alt-X~` is all red.
+      // Render each `~…~` run: the highlighted accelerator run(s) in the accent color, the rest normal.
       for (const seg of tildeSegments(box.item.text)) {
-        ctx.text(box.textX + seg.col, 0, seg.text, enabled && seg.hot ? accent : style);
+        ctx.text(box.textX + seg.col, 0, seg.text, enabled && seg.hot ? hotStyle : style);
       }
     }
   }
 
   /**
-   * Emit a command on a click in an item's hit-zone, or on a press of an item's accelerator (AR-72).
-   * A disabled command is non-activatable.
+   * Handle a mouse press/drag/release on the bar, or an item-accelerator key (AR-72, RD-10 AR-88).
+   * Mouse: a press captures the pointer and highlights the item under the cursor (no emit); a captured
+   * drag re-targets the highlight to the item under the cursor; a release frees the capture and emits
+   * the command of the item **under the release point** if enabled (TV `tstatusl.cpp` `handleEvent`,
+   * PA-10 — release off all items / on a disabled item emits nothing). A disabled command is
+   * non-activatable; accelerators still emit directly.
    *
    * @param ev The dispatch envelope; `ev.handled = true` consumes the event.
    */
@@ -137,12 +163,29 @@ export class StatusLine extends View {
     const inner = ev.event;
 
     if (inner.type === 'mouse') {
-      if (inner.kind === 'down' && ev.local !== undefined) {
-        const box = this.itemBoxes().find((b) => ev.local!.x >= b.x && ev.local!.x < b.x + b.width);
-        if (box !== undefined && seam.isCommandEnabled(box.item.command)) {
-          seam.emitCommand(box.item.command);
-          ev.handled = true;
+      if (ev.local === undefined) return;
+      if (inner.kind === 'down') {
+        // Capture on any press in the bar (TV tracks from the press, wherever it lands).
+        this.holding = true;
+        this.pressed = this.itemAt(ev.local.x)?.item ?? null;
+        seam.setCapture(this);
+        this.invalidate();
+        ev.handled = true;
+      } else if ((inner.kind === 'move' || inner.kind === 'drag') && this.holding) {
+        const next = this.itemAt(ev.local.x)?.item ?? null;
+        if (next !== this.pressed) {
+          this.pressed = next;
+          this.invalidate();
         }
+        ev.handled = true;
+      } else if (inner.kind === 'up' && this.holding) {
+        this.holding = false;
+        seam.releaseCapture();
+        const box = this.itemAt(ev.local.x); // the item under the RELEASE point (PA-10)
+        this.pressed = null;
+        this.invalidate();
+        if (box !== null && seam.isCommandEnabled(box.item.command)) seam.emitCommand(box.item.command);
+        ev.handled = true;
       }
       return;
     }

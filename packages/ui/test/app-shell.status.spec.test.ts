@@ -42,11 +42,12 @@ class CommandSpy extends View {
   }
 }
 
-// ST-19 / AC-19 — the status line draws its item; a click in its range OR its accelerator emits the
-// command; a disabled command greys + is non-activatable. (A custom 'help' command is used so the
-// emission is observable at the post-process spy — the standard 'quit' is consumed by the hidden
-// quit sink in pre-process before any post-process view sees it.)
-test('ST-19: status item — click + accelerator emit the command; disabled is non-activatable', () => {
+// ST-19 / AC-19 (updated for RD-10 AR-88) — the status line draws its item; a click (press + release
+// over the item) OR its accelerator emits the command; a disabled command greys + is non-activatable.
+// TV emits on RELEASE, not press (tstatusl.cpp handleEvent), so a "click" is mouse-down then -up. (A
+// custom 'help' command is used so the emission is observable at the post-process spy — 'quit' is
+// consumed by the hidden quit sink in pre-process before any post-process view sees it.)
+test('ST-19: status item — click (press+release) + accelerator emit; disabled is non-activatable', () => {
   const status = statusLine([statusItem('~H~elp', 'help', 'Alt+H')]);
   const app = createApplication({ caps, statusLine: status, viewport: { width: 40, height: 12 } });
   const spy = new CommandSpy();
@@ -55,8 +56,11 @@ test('ST-19: status item — click + accelerator emit the command; disabled is n
 
   const statusY = app.desktop.bounds.height + app.desktop.bounds.y; // the row just below the desktop
 
-  // A click inside the left-packed "Help" item (x≈2, within the margin-1 range) emits the command.
+  // A press inside "Help" (x≈2) does NOT emit yet — TV emits on release (AR-88).
   app.loop.dispatch(mouse('down', 2, statusY));
+  expect(spy.commands).not.toContain('help');
+  // Releasing over the item emits the command.
+  app.loop.dispatch(mouse('up', 2, statusY));
   expect(spy.commands).toContain('help');
 
   // The accelerator (Alt+H) emits it too.
@@ -64,11 +68,56 @@ test('ST-19: status item — click + accelerator emit the command; disabled is n
   app.loop.dispatch(key('h', { alt: true }));
   expect(spy.commands.length).toBe(beforeAccel + 1);
 
-  // A disabled command is non-activatable: a click in its range emits nothing.
+  // A disabled command is non-activatable: a full click (down+up) in its range emits nothing.
   app.loop.enableCommand('help', false);
   const before = spy.commands.length;
   app.loop.dispatch(mouse('down', 2, statusY));
+  app.loop.dispatch(mouse('up', 2, statusY));
   expect(spy.commands.length).toBe(before); // greyed ⇒ no emit
+});
+
+// RD-10 ST-01 (AR-88) — a press highlights the held item in `statusSelected` (black on green) and does
+// not emit; the hotkey run within it stays red. Source: tstatusl.cpp drawSelect (cSelect 0x20/0x24).
+test('RD-10 ST-01: a press highlights the held status item green (no emit on press)', () => {
+  const status = statusLine([statusItem('~H~elp', 'help', 'Alt+H')]);
+  const app = createApplication({ caps, statusLine: status, viewport: { width: 40, height: 12 } });
+  const spy = new CommandSpy();
+  app.desktop.add(spy);
+  app.loop.renderRoot.flush();
+  const statusY = app.desktop.bounds.height + app.desktop.bounds.y;
+
+  app.loop.dispatch(mouse('down', 2, statusY)); // press "Help" ('e' at col 2)
+  const buf = app.loop.renderRoot.buffer();
+  expect(buf.get(2, statusY)?.bg).toBe('#00aa00'); // green (statusSelected.bg)
+  expect(buf.get(2, statusY)?.fg).toBe('#000000'); // black on green
+  expect(spy.commands).not.toContain('help'); // no emit on press
+});
+
+// RD-10 ST-02/03 (AR-88, PA-10) — the highlight follows the cursor while held; on release the command
+// of the item UNDER THE RELEASE POINT emits (not the press item); releasing off all items emits nothing.
+test('RD-10 ST-02/03: drag re-targets the highlight; release emits the item under the cursor', () => {
+  // "File" span x0..5 (text 1..4), "Edit" span x6..11 (text 7..10).
+  const status = statusLine([statusItem('~F~ile', 'file'), statusItem('~E~dit', 'edit')]);
+  const app = createApplication({ caps, statusLine: status, viewport: { width: 40, height: 12 } });
+  const spy = new CommandSpy();
+  app.desktop.add(spy);
+  app.loop.renderRoot.flush();
+  const statusY = app.desktop.bounds.height + app.desktop.bounds.y;
+
+  app.loop.dispatch(mouse('down', 2, statusY)); // press "File"
+  app.loop.dispatch(mouse('drag', 8, statusY)); // drag onto "Edit"
+  const buf = app.loop.renderRoot.buffer();
+  expect(buf.get(8, statusY)?.bg).toBe('#00aa00'); // "Edit" now highlighted
+  expect(buf.get(2, statusY)?.bg).not.toBe('#00aa00'); // "File" no longer highlighted
+  expect(spy.commands).toEqual([]); // nothing emitted yet (still held)
+
+  app.loop.dispatch(mouse('up', 8, statusY)); // release over "Edit"
+  expect(spy.commands).toEqual(['edit']); // the item under the release point (PA-10), not 'file'
+
+  // A press then release off all items emits nothing.
+  app.loop.dispatch(mouse('down', 2, statusY));
+  app.loop.dispatch(mouse('up', 38, statusY)); // far past the last item
+  expect(spy.commands).toEqual(['edit']); // unchanged
 });
 
 // ST-20 / AC-20 — each single interaction (a drag step, a menu nav key, a command-cascade key)

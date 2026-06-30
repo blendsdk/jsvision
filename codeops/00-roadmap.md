@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 5 ✅ Done (RD-01…RD-05) · 1 📋 Plan Created (RD-10) · 4 ⬜ Backlog (RD-06…09) | 5 / 10 done | 🔄 | 2026-06-30 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 5 ✅ Done (RD-01…RD-05) · 1 🔄 Executing (RD-10) · 4 ⬜ Backlog (RD-06…09) | 5 / 10 done | 🔄 | 2026-06-30 |
 
 ## Archived
 

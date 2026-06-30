@@ -44,6 +44,13 @@ export interface Theme {
   readonly button: ThemeRole;
   readonly buttonFocused: ThemeRole;
   readonly statusBar: ThemeRole;
+  /**
+   * The status-line **pressed/selected** item (mouse-down feedback). Turbo Vision repaints the held
+   * item in `cSelect` = black-on-green, with a red-on-green hotkey run (`tstatusl.cpp` `drawSelect`,
+   * `0x20`/`0x24`). A sibling of {@link statusBar}, mirroring {@link menuSelected}'s relationship to
+   * {@link menuBar}. (RD-10 AR-88)
+   */
+  readonly statusSelected: ThemeRole;
   readonly shadow: ThemeRole;
 }
 
@@ -81,5 +88,6 @@ export const defaultTheme: Theme = {
   button: { fg: PALETTE.black, bg: PALETTE.green },
   buttonFocused: { fg: PALETTE.white, bg: PALETTE.green, hotkey: PALETTE.yellow },
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
+  statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },
 };

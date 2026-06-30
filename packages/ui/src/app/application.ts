@@ -169,11 +169,13 @@ export function createApplication(opts: ApplicationOptions): Application {
     });
   }
 
-  // Wire the status line's loop seam for activation + greying (PA-7).
+  // Wire the status line's loop seam for activation + greying + press-capture (PA-7 / RD-10 AR-88).
   if (opts.statusLine !== undefined) {
     opts.statusLine.attach({
       emitCommand: (command, arg) => loop.emitCommand(command, arg),
       isCommandEnabled: (command) => loop.isCommandEnabled(command),
+      setCapture: (view) => loop.setCapture(view),
+      releaseCapture: () => loop.releaseCapture(),
     });
   }
 

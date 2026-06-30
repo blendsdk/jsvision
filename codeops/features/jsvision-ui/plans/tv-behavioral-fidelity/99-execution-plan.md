@@ -3,7 +3,8 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md) · **Implements**: jsvision-ui/RD-10 · **Plan**: `plans/tv-behavioral-fidelity/`
 > **Last Updated**: 2026-06-30
-> **Progress**: 0/14 tasks (0%)
+> **Progress**: 5/14 tasks (36%) — Phase 1 ✅ complete
+> **Runtime note**: PA-10 (status release target = item under the release point, TV-exact) corrects AR-88's "same item" paraphrase — recorded in `00-ambiguity-register.md`.
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -40,23 +41,21 @@ Commits reference **/gitcm** (commit) or **/gitcmp** (commit + push) — never r
 ## Phase 1 — Status press feedback + emit-on-release  (AR-88 · spec 03-01)
 
 ### 1A — Spec tests (→ RED)
-- [ ] **1.1** Rewrite `app-shell.status.spec.test.ts` (+ `.impl`) to ST-01…ST-03 (held-highlight,
-  drag re-target/cancel, emit-on-release; remove the emit-on-down assertions) and add the core
-  ST-04 `statusSelected` test. Confirm RED. Cite AR-88/PA-9.
+- [x] **1.1** Rewrite `app-shell.status.spec.test.ts` (+ `.impl`) to ST-01…ST-03 (held-highlight,
+  drag re-target, emit on release of the item under the cursor; remove emit-on-down) and add the core
+  ST-04 `statusSelected` test. **RED confirmed** (core ST-16 + 3 ui status specs fail). Cite AR-88/PA-9/PA-10. *(2026-06-30)*
 
 ### 1B — Implementation (→ GREEN)
-- [ ] **1.2** Core: add the additive `statusSelected` role to `Theme` + `defaultTheme`
-  (`core/.../theme.ts`); update the theme spec to include it (ST-04). (scope `color`)
-- [ ] **1.3** Add `setCapture`/`releaseCapture` to `StatusLoopSeam`; wire them in
-  `app/application.ts`. (scope `status`/`app`)
-- [ ] **1.4** Implement the `pressed`-state model in `StatusLine` (down→capture+highlight,
-  captured move→re-target, up→release+emit-iff-same-enabled) + the `draw` state table
-  (`statusSelected`/`cSelDisabled`). Confirm GREEN. (scope `status`)
+- [x] **1.2** Core: added the additive `statusSelected` role to `Theme` + `defaultTheme`
+  (`core/.../theme.ts`); theme ST-16 spec includes it (ST-04). (scope `color`) *(2026-06-30)*
+- [x] **1.3** Added `setCapture`/`releaseCapture` to `StatusLoopSeam`; wired in `app/application.ts`. *(2026-06-30)*
+- [x] **1.4** Implemented the `pressed`/`holding` model in `StatusLine` (down→capture+highlight,
+  captured move→re-target, up→release+emit the item **under the release point** if enabled — PA-10) +
+  the `draw` state table (`statusSelected`/`cSelDisabled`). GREEN. (scope `status`) *(2026-06-30)*
 
 ### 1C — Impl tests & hardening
-- [ ] **1.5** Impl tests: disabled-item press shows `cSelDisabled` + no emit; bare-down-no-up no emit;
-  drag off-bar then back; one-coalesced-frame-per-tick holds. `yarn workspace @jsvision/ui test` +
-  core green. /gitcm.
+- [x] **1.5** Impl tests: held disabled item paints `cSelDisabled` + no emit; bare-down-no-up no emit;
+  updated the existing click/greying impl paths to press+release. ui status 10/10 green. *(2026-06-30)*
 
 ## Phase 2 — TV-exact cascade + tile  (AR-89/AR-90 · spec 03-02)
 
@@ -105,7 +104,7 @@ Commits reference **/gitcm** (commit) or **/gitcmp** (commit + push) — never r
 
 ## Master Progress Checklist
 
-- [ ] Phase 1 — Status press/release (1.1–1.5)
+- [x] Phase 1 — Status press/release (1.1–1.5) ✅ *(2026-06-30)*
 - [ ] Phase 2 — Cascade/tile geometry (2.1–2.4)
 - [ ] Phase 3 — Left-grow resize (3.1–3.4)
 - [ ] Phase 4 — Demos + final gate (4.1)
