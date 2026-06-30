@@ -3,8 +3,8 @@
 > **Feature-Set**: jsvision UI
 > **Status**: In Progress
 > **Created**: 2026-06-29
-> **Last Updated**: 2026-06-30 (TV drawing-fidelity pass shipped `1caa188`; RD-10 TV behavioral-fidelity drafted)
-> **Progress**: 5 / 10 done (RD-01 ✅, RD-02 ✅, RD-03 ✅, RD-04 ✅, RD-05 ✅)
+> **Last Updated**: 2026-06-30 (RD-10 TV behavioral-fidelity **shipped** — status emit-on-release, TV-exact cascade/tile, left-grow resize; `d326604`→`2aa8877`)
+> **Progress**: 6 / 10 done (RD-01 ✅, RD-02 ✅, RD-03 ✅, RD-04 ✅, RD-05 ✅, RD-10 ✅)
 > **CodeOps Skills Version**: 2.0.0
 
 The `@jsvision/ui` layer — a reimagined Turbo Vision widget framework on
@@ -34,7 +34,7 @@ foundation RDs of the same number.
 | RD-07 | High-value controls | — | — | Backlog | ⬜ | 2026-06-29 | Phase 2. History/Tree/ComboBox/Tabs/Table/Progress/Surface. Demo: **clone `tvdemo`** (north-star). |
 | RD-08 | Editor family | — | — | Backlog | ⬜ | 2026-06-29 | Phase 3 (XL gap-buffer). Editor/Memo/EditWindow/Indicator/Terminal. Demo: `tvedit`. |
 | RD-09 | Files package `@jsvision/files` | — | — | Backlog | ⬜ | 2026-06-29 | Phase R. Relocated fs-bound dialogs: FileDialog/FileList/DirList/ChDir. Demo: `tvdir`. |
-| RD-10 | TV behavioral fidelity — status press/release · cascade · tile · left-grow resize | [RD-10](requirements/RD-10-tv-behavioral-fidelity.md) | [tv-behavioral-fidelity](plans/tv-behavioral-fidelity/00-index.md) | Executing | 🔄 | 2026-06-30 | Fidelity. Completes RD-05's TV fidelity for the 4 **behaviors** the drawing pass (commit `1caa188`) deferred. **Drafted**: 5 user choices AR-88…AR-92 — status **emit-on-release** + green held-highlight (supersedes emit-on-press); **TV-exact cascade** (+1/+1, extend-to-corner) + **tile** (`mostEqualDivisors`/`dividerLoc`/`leftOver`, n=2 stacks) **superseding AR-87**; functional **left-grow resize** (`dmDragGrowLeft`); placed as RD-10 (RD-06…09 reserved for widgets). 11 AC; one additive core role (`statusSelected`). **Planned** ([plan](plans/tv-behavioral-fidelity/00-index.md)): 4 phases / 10 sessions / 14 tasks / ~12–19 h, spec-first (ST-01…ST-09 + rewritten desktop ST-11 + status emit oracles); PA-1…PA-9 (8 dominant/source-determined + 1 user — too-small-desktop ⇒ TV `tileError` no-op); GATE PASSED. Independent of the widget tiers — may run before/after RD-06. |
+| RD-10 | TV behavioral fidelity — status press/release · cascade · tile · left-grow resize | [RD-10](requirements/RD-10-tv-behavioral-fidelity.md) | [tv-behavioral-fidelity](plans/tv-behavioral-fidelity/00-index.md) | Done | ✅ | 2026-06-30 | **Shipped** — completed RD-05's TV fidelity for the 4 behaviors the drawing pass (`1caa188`) deferred. **Status** press feedback + **emit-on-release** (green held-highlight, command of the item under the release point — PA-10 corrected AR-88; additive core `statusSelected` role); **TV-exact cascade** (`doCascade` `(i,i)`/corner-pinned, supersedes AR-87) + **tile** (`iSqr`/`mostEqualDivisors`/`dividerLoc`/`calcTileRect` verbatim, n=2 stacks, supersedes AR-87) with `tileError` no-op; functional **left-grow resize** (`dmDragGrowLeft`, SW grip, PA-11 width-floor clamp). 14/14 tasks, spec-first; ST-01…ST-09 + rewritten desktop ST-05/06 + status emit oracles all green. Commits `d326604`(P1) `6874d3f`(P2) `0ab8eda`(P3) `2aa8877`(P4); `yarn gate` PASSED. |
 
 ## Notes
 
@@ -303,6 +303,17 @@ foundation RDs of the same number.
   truncation. `yarn verify` (823 tests) + `lint` clean; 3 spec/impl oracles updated to the faithful
   values. **Four behavioral items deferred** (status emit-on-release, cascade/tile geometry, left-grow
   resize) → captured as **RD-10**.
+- **2026-06-30** — **RD-10 (TV behavioral fidelity) SHIPPED** → stage `Done` ✅.
+  `exec_plan tv-behavioral-fidelity --auto-commit` ran all 4 phases spec-first (RED→GREEN→impl): **P1**
+  status press-feedback + emit-on-release with pointer capture (additive core `statusSelected` role;
+  PA-10 corrected AR-88 to TV's *item-under-release* target) `d326604`; **P2** TV-exact cascade + tile
+  — `iSqr`/`mostEqualDivisors`/`dividerLoc`/`calcTileRect` ported verbatim from `tdesktop.cpp`,
+  `tileError` no-op, ST-11 rewritten to ST-05/06 `6874d3f`; **P3** functional left-grow resize
+  (`dmDragGrowLeft`, SW grip → `resize-left` gesture/zone; PA-11 refined PA-7's clamp to a width-floor
+  mirroring the SE corner) `0ab8eda`; **P4** TV-accurate demo narration + final gate `2aa8877`. Final:
+  `yarn verify` (core 483 · ui 301 · examples 49), `check:deps`, e2e 5/5, `lint` clean, `yarn gate`
+  PASSED. One additive cross-package edit (`statusSelected`); the loop composed, not re-shaped.
+  Cascaded to the portfolio row.
 - **2026-06-30** — **RD-10 (TV behavioral fidelity) planned** → stage `Plan Created` 📋.
   `make_plan` authored [`plans/tv-behavioral-fidelity/`](plans/tv-behavioral-fidelity/00-index.md) (9
   docs): register (PA-1…PA-9 over inherited AR-88…AR-92, ✅ GATE PASSED), index, requirements

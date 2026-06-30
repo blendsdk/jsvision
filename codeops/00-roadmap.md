@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 5 ✅ Done (RD-01…RD-05) · 1 🔄 Executing (RD-10) · 4 ⬜ Backlog (RD-06…09) | 5 / 10 done | 🔄 | 2026-06-30 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 6 ✅ Done (RD-01…RD-05, RD-10) · 4 ⬜ Backlog (RD-06…09) | 6 / 10 done | 🔄 | 2026-06-30 |
 
 ## Archived
 
@@ -23,6 +23,12 @@
 
 ## Notes
 
+- 2026-06-30: **RD-10 TV behavioral-fidelity SHIPPED** → ✅ Done. All 4 phases executed spec-first via
+  `exec_plan --auto-commit`: status emit-on-release + pointer capture (additive `statusSelected` role;
+  PA-10 = item-under-release), TV-exact cascade + tile (`tdesktop.cpp` algorithms ported verbatim,
+  `tileError` no-op), functional left-grow resize (`dmDragGrowLeft` SW grip). core 483 · ui 301 ·
+  examples 49 + e2e green; `yarn gate` PASSED. Commits `d326604`→`2aa8877`. jsvision-ui now 6/10 done;
+  RD-06 (essential controls) next for the widget tiers. Cascaded from the **jsvision-ui** row.
 - 2026-06-30: **RD-10 TV behavioral-fidelity planned** → 📋 Plan Created
   ([`plans/tv-behavioral-fidelity/`](features/jsvision-ui/plans/tv-behavioral-fidelity/00-index.md)).
   4 phases / 10 sessions / 14 tasks / ~12–19 h, spec-first; PA-1…PA-9 over inherited AR-88…AR-92
