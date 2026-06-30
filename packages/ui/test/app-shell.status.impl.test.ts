@@ -48,20 +48,25 @@ function statusApp(items: ReturnType<typeof statusItem>[]) {
   return { app, status, spy, y };
 }
 
-// --- Hit-zones (left-packed from margin 1 with a 2-cell gap) -------------------------------------
+// --- Hit-zones (TV ` text ` spans that abut, pad cells included) ---------------------------------
 
-test('each item has its own click hit-zone; a click in the inter-item gap is a no-op', () => {
-  // "File" (x=1..4), gap (x=5..6), "Edit" (x=7..10).
+test('each item hit-zone spans its pad cells; adjacent items abut; clicks past the last are no-ops', () => {
+  // TV packs each item as a ` text ` span (`tstatusl.cpp` i += len+2): "File" span x=0..5 (lead 0,
+  // text 1..4, trail 5), "Edit" span x=6..11 — they abut, with no dead gap, and the pad cells are
+  // clickable parts of their item (`itemMouseIsIn` spans `[i, i+len+2)`).
   const { app, spy, y } = statusApp([statusItem('~F~ile', 'file'), statusItem('~E~dit', 'edit')]);
 
-  app.loop.dispatch(mouseDown(2, y)); // inside "File"
+  app.loop.dispatch(mouseDown(2, y)); // inside "File" text
   expect(spy.commands).toEqual(['file']);
 
-  app.loop.dispatch(mouseDown(8, y)); // inside "Edit"
+  app.loop.dispatch(mouseDown(8, y)); // inside "Edit" text
   expect(spy.commands).toEqual(['file', 'edit']);
 
-  app.loop.dispatch(mouseDown(5, y)); // the gap between the two items
-  expect(spy.commands).toEqual(['file', 'edit']); // unchanged — no item there
+  app.loop.dispatch(mouseDown(5, y)); // "File"'s trailing pad — still part of File's span (no gap)
+  expect(spy.commands).toEqual(['file', 'edit', 'file']);
+
+  app.loop.dispatch(mouseDown(30, y)); // far past the last item — no item there
+  expect(spy.commands).toEqual(['file', 'edit', 'file']); // unchanged
 });
 
 // --- Accelerator-chord matching -----------------------------------------------------------------

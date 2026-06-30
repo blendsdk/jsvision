@@ -7,6 +7,6 @@
  */
 export { MenuBar, menuBar } from './menubar.js';
 export { MenuPopup } from './popup.js';
-export { subMenu, item, separator, parseTilde, layoutTitles, titleIndexAt } from './builders.js';
-export type { MenuItem, ParsedLabel, TitleLayout } from './builders.js';
+export { subMenu, item, separator, parseTilde, tildeSegments, layoutTitles, titleIndexAt } from './builders.js';
+export type { MenuItem, ParsedLabel, TildeSegment, TitleLayout } from './builders.js';
 export type { MenuController, MenuLoopSeam } from './controller.js';

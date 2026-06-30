@@ -4,10 +4,11 @@
  * Source: RD-05 AC-14/AC-15 → ST-14, ST-15 (codeops/features/jsvision-ui/plans/app-shell/
  * 03-03-window-frame.md). Real Window/Desktop on a composed app (no mocks); the buffer is read
  * before serialize so the original chrome glyphs are asserted. The concrete frame chrome layout
- * (close `[×]` at cols 1–3, zoom `[↑]`/`[↕]` at cols w-4…w-2, SE drag grip `─┘` at (w-2,w-1) of the
- * bottom row, centered title) is the Turbo Vision `TFrame` chrome (tframe.cpp / tvtext1.cpp), which
- * the project's NON-NEGOTIABLE TV-fidelity directive (CLAUDE.md) makes authoritative: AC-14's
- * earlier `◢` corner was a non-TV invention and is superseded here.
+ * (close `[×]` at cols 2–4, zoom `[↑]`/`[↕]` at cols w-5…w-3, number at w-7, grips `└─` at (0,1) and
+ * `─┘` at (w-2,w-1) of the bottom row, centered title truncated to ≤ w-10−6−4) is the Turbo Vision
+ * `TFrame` chrome (tframe.cpp:35-124 / tvtext1.cpp:77-81), which the project's NON-NEGOTIABLE
+ * TV-fidelity directive (CLAUDE.md) makes authoritative: AC-14's earlier `◢` corner was a non-TV
+ * invention and is superseded here, and the close/zoom icons render only on the active window.
  *
  * Trace: RD-05 03-03 · AR-67/AR-73/AR-74 · ST-14, ST-15 · TV TFrame.
  */
@@ -30,27 +31,31 @@ function row(buf: ReturnType<ReturnType<typeof shellApp>['loop']['renderRoot']['
   return s;
 }
 
-// ST-14 / AC-14 — the frame chrome renders: border, centered title, number, close [×], zoom [↑], SE grip.
+// ST-14 / AC-14 — the frame chrome renders: border, centered title, number, close [×], zoom [↑], grips.
 test('ST-14: a window renders its full frame chrome', () => {
-  const app = shellApp(30, 10);
+  // Width 28 so the title still fits after TV's truncation (l = w-10 −6 boxes −4 number = 8 ≥ "Editor").
+  const app = shellApp(40, 10);
   const w = new Window('Editor');
   w.number = 1;
-  w.layout.rect = { x: 0, y: 0, width: 20, height: 6 };
+  w.layout.rect = { x: 0, y: 0, width: 28, height: 6 };
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
   const buf = app.loop.renderRoot.buffer();
 
-  // Close box [×] at the top-left (cols 1–3), zoom box [↑] at the top-right (cols w-4…w-2 = 16–18).
-  expect(buf.get(2, 0)?.char).toBe('×');
-  expect(buf.get(17, 0)?.char).toBe('↑'); // restored ⇒ the "maximize" arrow
+  // Close box [×] at cols 2–4 (TV gap at col 1); zoom box [↑] at cols w-5…w-3 (23–25), glyph at w-4=24.
+  expect(buf.get(2, 0)?.char).toBe('[');
+  expect(buf.get(3, 0)?.char).toBe('×');
+  expect(buf.get(24, 0)?.char).toBe('↑'); // restored ⇒ the "maximize" arrow
   // Centered title on the top border.
   expect(row(buf, 0)).toContain('Editor');
-  // Window number (1–9) drawn in the top border.
-  expect(row(buf, 0)).toContain('1');
-  // SE drag grip `─┘` (TV TFrame::dragIcon) on the active, resizable window: cols (w-2,w-1) = (18,19)
-  // of the bottom row (h-1 = 5). The single-line corner stands out against the double-line active border.
-  expect(buf.get(18, 5)?.char).toBe('─');
-  expect(buf.get(19, 5)?.char).toBe('┘');
+  // Window number (1–9) drawn in the top border at col w-7 = 21.
+  expect(buf.get(21, 0)?.char).toBe('1');
+  // Grips (TV dragLeftIcon `└─` + dragIcon `─┘`) on the active, resizable window: cols (0,1) and
+  // (w-2,w-1) = (26,27) of the bottom row (h-1 = 5). Single-line corners stand out on the double border.
+  expect(buf.get(0, 5)?.char).toBe('└');
+  expect(buf.get(1, 5)?.char).toBe('─');
+  expect(buf.get(26, 5)?.char).toBe('─');
+  expect(buf.get(27, 5)?.char).toBe('┘');
 });
 
 // ST-14 — a click on the close box closes the window (removed from the desktop).

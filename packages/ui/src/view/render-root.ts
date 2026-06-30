@@ -82,9 +82,13 @@ function drawDropShadow(buffer: ScreenBuffer, rect: Rect, clip: Rect, theme: The
       cell.attrs = attrs;
     }
   };
-  // Right edge (rows 0..h-1, offset down by 1) + bottom edge (cols 0..w-1, offset right by 1) — the
-  // classic 1-cell L-shaped shadow. Matches the DrawContext.shadow geometry.
-  for (let row = 0; row < rect.height; row += 1) darken(rect.x + rect.width, rect.y + row + 1);
+  // TV `shadowSize = {2,1}` (tview.cpp): a 2-column right edge (rows 0..h-1, offset down by 1) + a
+  // 1-row bottom edge (cols 0..w-1, offset right by 1) — the classic L-shaped shadow, deeper on the
+  // right than the bottom because the light is upper-left. Matches the DrawContext.shadow geometry.
+  for (let row = 0; row < rect.height; row += 1) {
+    darken(rect.x + rect.width, rect.y + row + 1);
+    darken(rect.x + rect.width + 1, rect.y + row + 1);
+  }
   for (let col = 0; col < rect.width; col += 1) darken(rect.x + col + 1, rect.y + rect.height);
 }
 

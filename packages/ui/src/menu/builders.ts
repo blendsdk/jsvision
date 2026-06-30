@@ -26,6 +26,16 @@ export interface ParsedLabel {
   hotkeyCol: number;
 }
 
+/** A run of label text sharing one color: the highlighted (`hot`) accelerator run, or normal text. */
+export interface TildeSegment {
+  /** The run's display text (no tildes). */
+  text: string;
+  /** Whether the run is the highlighted accelerator (drawn in the hotkey color). */
+  hot: boolean;
+  /** The run's starting column in the full display text. */
+  col: number;
+}
+
 /** A top-level title's placement on the menu bar. */
 export interface TitleLayout {
   index: number;
@@ -56,6 +66,41 @@ export function parseTilde(label: string): ParsedLabel {
   const hotChar = label[open + 1];
   const text = label.slice(0, open) + hotChar + label.slice(open + 3);
   return { text, hotkey: hotChar.toLowerCase(), hotkeyCol: open };
+}
+
+/**
+ * Split a label into color runs at every `~`, exactly like Turbo Vision's `moveCStr` (`tvtext1.cpp`):
+ * each `~` toggles between normal and highlighted (accelerator) text, and the tildes are removed. This
+ * supports **multi-character** highlighted runs (e.g. `~Alt-X~ Exit` → "Alt-X" hot, " Exit" normal),
+ * which the single-char {@link parseTilde} cannot — the form the status line uses (`tstatusl.cpp`).
+ *
+ * @param label A label with zero or more `~…~` highlighted runs.
+ * @returns The non-empty runs in order, each tagged `hot` and carrying its starting display column.
+ */
+export function tildeSegments(label: string): TildeSegment[] {
+  const segments: TildeSegment[] = [];
+  let hot = false;
+  let col = 0;
+  let current = '';
+  let startCol = 0;
+  const flush = (): void => {
+    if (current.length > 0) {
+      segments.push({ text: current, hot, col: startCol });
+      current = '';
+    }
+  };
+  for (const ch of label) {
+    if (ch === '~') {
+      flush();
+      hot = !hot;
+      continue;
+    }
+    if (current.length === 0) startCol = col;
+    current += ch;
+    col += 1;
+  }
+  flush();
+  return segments;
 }
 
 /** The title text of a top-level menu node (`''` for a separator, which is never a top-level title). */

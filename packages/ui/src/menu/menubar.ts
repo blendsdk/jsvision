@@ -9,7 +9,6 @@
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
-import { Attr } from '@jsvision/core';
 import type { Style } from '@jsvision/core';
 import { View } from '../view/index.js';
 import type { Group, DrawContext, DispatchEvent } from '../view/index.js';
@@ -45,20 +44,25 @@ export class MenuBar extends View {
   draw(ctx: DrawContext): void {
     const base = ctx.color('menuBar');
     const selected = ctx.color('menuSelected');
-    const accent: Style = { ...base, attrs: (base.attrs ?? Attr.none) | Attr.underline };
+    // TV draws the accelerator char in the high byte of `cNormal`/`cSelect` — red on the title's bg,
+    // ALWAYS (open or closed). It never underlines. Selected titles use the green selected palette.
+    const baseAccent: Style = { fg: ctx.role('menuBar').hotkey ?? base.fg, bg: base.bg };
+    const selAccent: Style = { fg: ctx.role('menuSelected').hotkey ?? selected.fg, bg: selected.bg };
     const open = this.controller?.isOpen() === true;
 
     const openIndex = this.controller?.openIndex() ?? null;
     ctx.fillRect(0, 0, ctx.size.width, 1, ' ', base);
     for (const title of layoutTitles(this.items)) {
-      const style = open && openIndex === title.index ? selected : base;
+      const isOpen = open && openIndex === title.index;
+      const style = isOpen ? selected : base;
+      const accent = isOpen ? selAccent : baseAccent;
       // Each title is a ` text ` button: the whole button (both pad spaces included) carries the
       // color, and the text is inset one column past the leading pad — exactly as TMenuBar::draw.
       ctx.fillRect(title.x, 0, title.width, 1, ' ', style);
       ctx.text(title.x + 1, 0, title.label.text, style);
       if (title.label.hotkeyCol >= 0) {
         const hotChar = title.label.text[title.label.hotkeyCol] ?? '';
-        ctx.text(title.x + 1 + title.label.hotkeyCol, 0, hotChar, open ? style : accent);
+        ctx.text(title.x + 1 + title.label.hotkeyCol, 0, hotChar, accent);
       }
     }
   }

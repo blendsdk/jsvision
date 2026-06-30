@@ -8,15 +8,21 @@
  * raw-role accessor), so the active (`window`) and inactive (`windowInactive`) frames differ in
  * border/title — not just fg (AR-73/PA-1).
  *
- * The chrome glyphs replicate Turbo Vision's `TFrame` exactly: the close/zoom/unzoom icons from
- * `tvtext1.cpp` (`closeIcon`/`zoomIcon`/`unZoomIcon` → `[■]`/`[↑]`/`[↕]`) and the bottom-right
- * `dragIcon = "─┘"` from `tframe.cpp` (drawn only when active + resizable — TV has no resize
- * triangle). Close uses `×` rather than TV's CP437 `■`, a deliberate exception: `■` is East-Asian
- * ambiguous-width and misaligns (see CLAUDE.md).
+ * The chrome glyphs and their columns replicate Turbo Vision's `TFrame::draw` exactly (`tframe.cpp:
+ * 35-124`, icon bytes `tvtext1.cpp:77-81`): close/zoom/unzoom icons `[■]`/`[↑]`/`[↕]`, the bottom-right
+ * `dragIcon = "─┘"` and bottom-left `dragLeftIcon = "└─"` grips. TV draws the close/zoom boxes and
+ * both grips ONLY on the active window (`sfActive`); the number is drawn for active and passive alike.
+ * The `~..~` markers in TV's icon strings toggle each icon's inner glyph (and the grip glyphs) to
+ * `cFrame`'s high byte — a brighter accent (`window.icon`, brightGreen on blue) — while the `[ ]`
+ * brackets keep the frame color. Close uses `×` rather than TV's CP437 `■`, a deliberate exception:
+ * `■` is East-Asian ambiguous-width and misaligns (see CLAUDE.md).
  *
- * Chrome layout (window-local, size w×h): close `[×]` at cols 1–3, zoom `[↑]`/`[↕]` at cols w-4…w-2,
- * number at col w-6, title centered, SE grip `─┘` at cols (w-2, w-1) of row h-1. Boxes are drawn
- * last so they overlay the title. The `.js` extension is required by NodeNext ESM resolution.
+ * Chrome layout (window-local, size w×h): close `[×]` at cols 2–4, zoom `[↑]`/`[↕]` at cols w-5…w-3,
+ * number at col w-7, title centered + truncated to ≤ w-10 (−6 for the boxes, −4 for the number), grips
+ * `└─` at cols (0,1) and `─┘` at cols (w-2, w-1) of row h-1. Boxes are drawn last so they overlay the
+ * title. NOTE: the left grip is drawn for visual fidelity; TV's left-grow resize gesture
+ * (`dmDragGrowLeft`) is not yet wired — only the SE corner resizes. The `.js` extension is required by
+ * NodeNext ESM resolution.
  */
 import type { Style } from '@jsvision/core';
 import type { DrawContext, Point } from '../view/index.js';
@@ -107,36 +113,52 @@ export function drawFrame(ctx: DrawContext, size: Size2D, state: FrameState, rol
   const theme = ctx.role(role);
   const borderStyle = { fg: theme.border, bg: theme.bg };
   const titleStyle = { fg: theme.title, bg: theme.bg };
+  // The icon accent — TV's `cFrame` high byte (`cpFrame` palette idx 5). The `[ ]` brackets keep the
+  // frame color; the inner glyph and the resize grips take this brighter color (brightGreen on blue).
+  const iconStyle = { fg: theme.icon, bg: theme.bg };
 
   // Border: a double line for the active (focused) window, single for an inactive one — the classic
   // Turbo Vision active/passive frame. Also fills the interior so content insets over an opaque field.
   drawBorder(ctx, w, h, state.active ? DOUBLE_BORDER : SINGLE_BORDER, borderStyle);
 
-  // Centered title on the top border (drawn before the boxes so the boxes overlay it).
-  if (state.title.length > 0) {
-    const label = ` ${state.title} `;
-    const tx = Math.max(1, Math.floor((w - label.length) / 2));
-    ctx.text(tx, 0, label, titleStyle);
-  }
-
-  // Window number (1–9) in the top border, left of the zoom box.
+  // Window number (1–9) at col w-7, in the FRAME color — drawn for both active and passive windows
+  // (TV draws the number outside the `sfActive` gate, via `putChar` which keeps the frame attribute).
   if (state.number !== undefined && state.number >= 1 && state.number <= 9 && w >= 8) {
-    ctx.text(w - 6, 0, String(state.number), titleStyle);
+    ctx.text(w - 7, 0, String(state.number), borderStyle);
   }
 
-  // Close box [×] top-left and zoom box [↑]/[↕] top-right (only when the affordance exists).
-  if (w >= 8) {
-    ctx.text(1, 0, `[${CLOSE_GLYPH}]`, borderStyle);
-    ctx.text(w - 4, 0, `[${state.zoomed ? RESTORE_GLYPH : MAXIMIZE_GLYPH}]`, borderStyle);
+  // Centered title, truncated so it can never overrun the icon/number zones (TV: l = width-10, then
+  // −6 for the close/zoom boxes our windows always reserve, then −4 when a number is shown). The
+  // truncated title is centered with a one-space pad on each side (TV putChar(i-1,' ')/(i+l,' ')).
+  if (state.title.length > 0) {
+    let max = w - 10 - 6; // −6: close + zoom boxes
+    if (state.number !== undefined) max -= 4; // −4: window number
+    const titleText = max > 0 ? [...state.title].slice(0, max).join('') : '';
+    if (titleText.length > 0) {
+      const i = Math.max(1, Math.floor((w - titleText.length) / 2));
+      ctx.text(i - 1, 0, ` ${titleText} `, titleStyle);
+    }
   }
 
-  // SE drag grip (TV TFrame::dragIcon): only on the active, resizable window, overlay the
-  // bottom-right corner with the single-line `─┘`, which stands out against the double-line active
-  // border. An inactive or fixed-size window keeps its plain border corner (TV gates on sfActive +
-  // wfGrow). TV draws no resize triangle.
-  if (state.active && state.resizable) {
-    ctx.text(w - 2, h - 1, SINGLE_BORDER.h, borderStyle);
-    ctx.text(w - 1, h - 1, SINGLE_BORDER.br, borderStyle);
+  // Close box [×] (cols 2–4) and zoom box [↑]/[↕] (cols w-5…w-3) — ONLY on the active window (TV gates
+  // both on `sfActive`). The brackets are frame-colored; the inner glyph takes the icon accent.
+  if (state.active && w >= 8) {
+    ctx.text(2, 0, '[', borderStyle);
+    ctx.text(3, 0, CLOSE_GLYPH, iconStyle);
+    ctx.text(4, 0, ']', borderStyle);
+    ctx.text(w - 5, 0, '[', borderStyle);
+    ctx.text(w - 4, 0, state.zoomed ? RESTORE_GLYPH : MAXIMIZE_GLYPH, iconStyle);
+    ctx.text(w - 3, 0, ']', borderStyle);
+  }
+
+  // Drag grips (TV `dragLeftIcon`/`dragIcon`): only on the active, resizable window, overlay both
+  // bottom corners with the single-line `└─` (cols 0,1) and `─┘` (cols w-2,w-1) in the icon accent —
+  // they stand out against the double-line active border. TV gates on `sfActive` + `wfGrow`.
+  if (state.active && state.resizable && w >= 4) {
+    ctx.text(0, h - 1, SINGLE_BORDER.bl, iconStyle); // └
+    ctx.text(1, h - 1, SINGLE_BORDER.h, iconStyle); // ─
+    ctx.text(w - 2, h - 1, SINGLE_BORDER.h, iconStyle); // ─
+    ctx.text(w - 1, h - 1, SINGLE_BORDER.br, iconStyle); // ┘
   }
 }
 
@@ -153,13 +175,15 @@ export function frameZoneAt(size: Size2D, local: Point, flags: WindowFlags): Fra
   const { width: w, height: h } = size;
   const { x, y } = local;
 
-  // SE resize corner takes precedence over the bottom-right border.
+  // SE resize corner takes precedence over the bottom-right border. (TV also resizes from the
+  // bottom-left grip via `dmDragGrowLeft`; that left-grow gesture is not yet wired — the left grip is
+  // drawn but its cells fall through to the `border` zone below.)
   if (flags.resizable && x === w - 1 && y === h - 1) return 'resize';
 
-  // The top border row: close box, zoom box, else the draggable title.
+  // The top border row: close box (cols 2–4), zoom box (cols w-5…w-3), else the draggable title.
   if (y === 0) {
-    if (flags.closable && x >= 1 && x <= 3) return 'close';
-    if (flags.zoomable && x >= w - 4 && x <= w - 2) return 'zoom';
+    if (flags.closable && x >= 2 && x <= 4) return 'close';
+    if (flags.zoomable && x >= w - 5 && x <= w - 3) return 'zoom';
     return 'title';
   }
 

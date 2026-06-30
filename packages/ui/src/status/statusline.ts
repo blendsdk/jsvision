@@ -9,11 +9,10 @@
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
-import { Attr } from '@jsvision/core';
 import type { Style, KeyEvent } from '@jsvision/core';
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
-import { parseTilde } from '../menu/index.js';
+import { parseTilde, tildeSegments } from '../menu/index.js';
 
 /** A status-line entry: a tilde-marked label, the command it emits, and an optional `key` accelerator. */
 export interface StatusItem {
@@ -33,18 +32,22 @@ export interface StatusLoopSeam {
   isCommandEnabled(command: string): boolean;
 }
 
-/** A laid-out item: its source entry + its [x, x+width) hit-zone on the row. */
+/**
+ * A laid-out item, exactly as Turbo Vision's `TStatusLine` packs them (`tstatusl.cpp`): a leading pad
+ * space at {@link x}, the display text at {@link textX} = `x+1`, a trailing pad space, then the next
+ * item abuts. The full ` text ` span (pads included) is both the colored region and the [x, x+width)
+ * hit-zone (`drawSelect` colors the pads; `itemMouseIsIn` spans `[i, i+len+2)`).
+ */
 interface ItemBox {
   item: StatusItem;
+  /** The item's leading-pad column (the start of its colored span + hit-zone). */
   x: number;
+  /** The display-text column (`x + 1`, one past the leading pad). */
+  textX: number;
+  /** The full span width: leading pad + text + trailing pad (`len + 2`). */
   width: number;
   text: string;
 }
-
-/** Leading margin before the first item. */
-const STATUS_MARGIN = 1;
-/** Gap (cells) between adjacent items. */
-const STATUS_GAP = 2;
 
 /**
  * Match an accelerator label (e.g. `'Alt+X'`, `'Ctrl+Q'`, `'F1'`) against a decoded key event.
@@ -87,14 +90,15 @@ export class StatusLine extends View {
     this.seam = seam;
   }
 
-  /** Lay the items left-to-right from the margin with a fixed gap; each gets a [x, x+width) hit-zone. */
+  /** Lay the items left-to-right as ` text ` spans (TV `i += len+2`); each span is its hit-zone. */
   private itemBoxes(): ItemBox[] {
     const boxes: ItemBox[] = [];
-    let x = STATUS_MARGIN;
+    let x = 0; // TV draws the first item's leading pad at column 0
     for (const item of this.items) {
       const text = parseTilde(item.text).text;
-      boxes.push({ item, x, width: text.length, text });
-      x += text.length + STATUS_GAP;
+      const width = text.length + 2; // leading + trailing pad space
+      boxes.push({ item, x, textX: x + 1, width, text });
+      x += width;
     }
     return boxes;
   }
@@ -103,17 +107,20 @@ export class StatusLine extends View {
   draw(ctx: DrawContext): void {
     const role = ctx.role('statusBar');
     const base = ctx.color('statusBar');
-    const accent: Style = { fg: role.hotkey ?? base.fg, bg: base.bg, attrs: (base.attrs ?? Attr.none) | Attr.bold };
+    // TV's hotkey attribute `0x74` is plain red on the bar bg — no intensity bit.
+    const accent: Style = { fg: role.hotkey ?? base.fg, bg: base.bg };
     const dim: Style = { fg: ctx.role('shadow').fg, bg: base.bg };
 
     ctx.fillRect(0, 0, ctx.size.width, 1, ' ', base);
     for (const box of this.itemBoxes()) {
       const enabled = this.seam === null || this.seam.isCommandEnabled(box.item.command);
       const style = enabled ? base : dim;
-      ctx.text(box.x, 0, box.text, style);
-      const col = parseTilde(box.item.text).hotkeyCol;
-      if (enabled && col >= 0) {
-        ctx.text(box.x + col, 0, box.text[col] ?? '', accent);
+      // Color the item's full span — both pad spaces included — exactly as TV's `drawSelect`.
+      ctx.fillRect(box.x, 0, box.width, 1, ' ', style);
+      // Render each `~…~` run: the highlighted accelerator run(s) in red, the rest normal — TV's
+      // `moveCStr` toggles the attribute at every tilde, so a multi-char run like `~Alt-X~` is all red.
+      for (const seg of tildeSegments(box.item.text)) {
+        ctx.text(box.textX + seg.col, 0, seg.text, enabled && seg.hot ? accent : style);
       }
     }
   }

@@ -120,7 +120,11 @@ export function makeDrawContext(buffer: ScreenBuffer, viewRect: Rect, clip: Rect
     };
     const ax = ox + x;
     const ay = oy + y;
-    for (let row = 0; row < h; row += 1) darken(ax + w, ay + row + 1);
+    // TV `shadowSize = {2,1}`: a 2-column right edge + a 1-row bottom edge (the L-shaped drop shadow).
+    for (let row = 0; row < h; row += 1) {
+      darken(ax + w, ay + row + 1);
+      darken(ax + w + 1, ay + row + 1);
+    }
     for (let col = 0; col < w; col += 1) darken(ax + col + 1, ay + h);
   }
 

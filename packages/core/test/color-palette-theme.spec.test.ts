@@ -53,6 +53,8 @@ test('ST-16: defaultTheme exposes the semantic roles', () => {
     expect(role in defaultTheme).toBeTruthy();
   }
   expect(defaultTheme.desktop.pattern).toBe('░');
-  expect(defaultTheme.desktop.fg).toBe(PALETTE.lightGray);
+  // TV `cpAppColor[1]` = 0x71 = blue ░ on a lightGray field (app.h:142) — a muted steel desktop.
+  expect(defaultTheme.desktop.fg).toBe(PALETTE.blue);
+  expect(defaultTheme.desktop.bg).toBe(PALETTE.lightGray);
   expect(defaultTheme.menuBar.bg).toBe(PALETTE.lightGray);
 });
