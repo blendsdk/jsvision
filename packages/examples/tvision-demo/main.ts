@@ -9,7 +9,7 @@
  * hotkeys, a grey status line, and framed/movable/resizable/zoomable windows with active/inactive
  * theming — and wires the host so it is fully interactive:
  *
- *   F10 / Alt-letter  open menus      drag a title   move a window     ◢ corner   resize
+ *   F10 / Alt-letter  open menus      drag a title   move a window     ─┘ grip    resize
  *   F2 zoom · F3 close · F4 tile · F5 cascade · F6 next · Tab focus · F1 about · Alt-X quit
  *
  * It also shows three things classic Turbo Vision could not: a **24-bit truecolor** gradient window

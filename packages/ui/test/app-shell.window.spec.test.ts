@@ -4,10 +4,12 @@
  * Source: RD-05 AC-14/AC-15 → ST-14, ST-15 (codeops/features/jsvision-ui/plans/app-shell/
  * 03-03-window-frame.md). Real Window/Desktop on a composed app (no mocks); the buffer is read
  * before serialize so the original chrome glyphs are asserted. The concrete frame chrome layout
- * (close `[×]` at cols 1–3, zoom `[↑]`/`[↓]` at cols w-4…w-2, SE corner at w-1,h-1, centered title)
- * is the documented 03-03 chrome — both the oracle and the impl derive from it.
+ * (close `[×]` at cols 1–3, zoom `[↑]`/`[↕]` at cols w-4…w-2, SE drag grip `─┘` at (w-2,w-1) of the
+ * bottom row, centered title) is the Turbo Vision `TFrame` chrome (tframe.cpp / tvtext1.cpp), which
+ * the project's NON-NEGOTIABLE TV-fidelity directive (CLAUDE.md) makes authoritative: AC-14's
+ * earlier `◢` corner was a non-TV invention and is superseded here.
  *
- * Trace: RD-05 03-03 · AR-67/AR-73/AR-74 · ST-14, ST-15.
+ * Trace: RD-05 03-03 · AR-67/AR-73/AR-74 · ST-14, ST-15 · TV TFrame.
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities, defaultTheme } from '@jsvision/core';
@@ -28,7 +30,7 @@ function row(buf: ReturnType<ReturnType<typeof shellApp>['loop']['renderRoot']['
   return s;
 }
 
-// ST-14 / AC-14 — the frame chrome renders: border, centered title, number, close [×], zoom [↑], SE corner.
+// ST-14 / AC-14 — the frame chrome renders: border, centered title, number, close [×], zoom [↑], SE grip.
 test('ST-14: a window renders its full frame chrome', () => {
   const app = shellApp(30, 10);
   const w = new Window('Editor');
@@ -45,8 +47,10 @@ test('ST-14: a window renders its full frame chrome', () => {
   expect(row(buf, 0)).toContain('Editor');
   // Window number (1–9) drawn in the top border.
   expect(row(buf, 0)).toContain('1');
-  // SE resize corner at (w-1, h-1) = (19, 5).
-  expect(buf.get(19, 5)?.char).toBe('◢');
+  // SE drag grip `─┘` (TV TFrame::dragIcon) on the active, resizable window: cols (w-2,w-1) = (18,19)
+  // of the bottom row (h-1 = 5). The single-line corner stands out against the double-line active border.
+  expect(buf.get(18, 5)?.char).toBe('─');
+  expect(buf.get(19, 5)?.char).toBe('┘');
 });
 
 // ST-14 — a click on the close box closes the window (removed from the desktop).

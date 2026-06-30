@@ -113,7 +113,12 @@ export class Window extends Group {
   override draw(ctx: DrawContext): void {
     const active = this.manager?.activeWindow() === this;
     const role = active ? 'window' : 'windowInactive';
-    drawFrame(ctx, ctx.size, { title: this.title(), number: this.number, active, zoomed: this.isZoomed() }, role);
+    drawFrame(
+      ctx,
+      ctx.size,
+      { title: this.title(), number: this.number, active, zoomed: this.isZoomed(), resizable: this.resizable },
+      role,
+    );
   }
 
   /**

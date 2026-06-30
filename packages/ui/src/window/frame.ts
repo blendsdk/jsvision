@@ -2,14 +2,21 @@
  * Window frame — drawing + hit-zone geometry (RD-05 AR-67/AR-74, PA-8).
  *
  * A Window-internal helper (not a `View`): `drawFrame` paints the border, centered title, window
- * number, close box `[×]`, zoom box `[↑]`/`[↓]`, and SE resize corner over a window-local rect;
- * `frameZoneAt` classifies a window-local point into the zone its mouse-down means. Border + title
- * colors come from `ctx.role(role).border`/`.title` (the Phase-0 raw-role accessor), so the active
- * (`window`) and inactive (`windowInactive`) frames differ in border/title — not just fg (AR-73/PA-1).
+ * number, close box `[×]`, zoom box `[↑]`/`[↕]`, and — on the active resizable window — the SE drag
+ * grip `─┘` over a window-local rect; `frameZoneAt` classifies a window-local point into the zone its
+ * mouse-down means. Border + title colors come from `ctx.role(role).border`/`.title` (the Phase-0
+ * raw-role accessor), so the active (`window`) and inactive (`windowInactive`) frames differ in
+ * border/title — not just fg (AR-73/PA-1).
  *
- * Chrome layout (window-local, size w×h): close `[×]` at cols 1–3, zoom `[↑]`/`[↓]` at cols w-4…w-2,
- * number at col w-6, title centered, SE corner at (w-1, h-1). Boxes are drawn last so they overlay
- * the title; absent flags omit their box. The `.js` extension is required by NodeNext ESM resolution.
+ * The chrome glyphs replicate Turbo Vision's `TFrame` exactly: the close/zoom/unzoom icons from
+ * `tvtext1.cpp` (`closeIcon`/`zoomIcon`/`unZoomIcon` → `[■]`/`[↑]`/`[↕]`) and the bottom-right
+ * `dragIcon = "─┘"` from `tframe.cpp` (drawn only when active + resizable — TV has no resize
+ * triangle). Close uses `×` rather than TV's CP437 `■`, a deliberate exception: `■` is East-Asian
+ * ambiguous-width and misaligns (see CLAUDE.md).
+ *
+ * Chrome layout (window-local, size w×h): close `[×]` at cols 1–3, zoom `[↑]`/`[↕]` at cols w-4…w-2,
+ * number at col w-6, title centered, SE grip `─┘` at cols (w-2, w-1) of row h-1. Boxes are drawn
+ * last so they overlay the title. The `.js` extension is required by NodeNext ESM resolution.
  */
 import type { Style } from '@jsvision/core';
 import type { DrawContext, Point } from '../view/index.js';
@@ -32,6 +39,8 @@ export interface FrameState {
   number?: number;
   active: boolean;
   zoomed: boolean;
+  /** Whether the window can be resized — gates the SE drag grip (TV draws it only for `wfGrow`). */
+  resizable: boolean;
 }
 
 /** The theme role the frame is drawn in. */
@@ -39,9 +48,8 @@ export type FrameRole = 'window' | 'windowInactive';
 
 /** Glyphs of the chrome affordances (stored verbatim in the buffer; serialize handles fallback). */
 const CLOSE_GLYPH = '×';
-const MAXIMIZE_GLYPH = '↑';
-const RESTORE_GLYPH = '↓';
-const RESIZE_GLYPH = '◢';
+const MAXIMIZE_GLYPH = '↑'; // TV zoomIcon (CP437 0x18)
+const RESTORE_GLYPH = '↕'; // TV unZoomIcon (CP437 0x12 / U+2195) — the restore (un-maximize) arrow
 
 /** A rectangular-border glyph set (corners + horizontal/vertical edges). */
 interface BorderGlyphs {
@@ -116,14 +124,20 @@ export function drawFrame(ctx: DrawContext, size: Size2D, state: FrameState, rol
     ctx.text(w - 6, 0, String(state.number), titleStyle);
   }
 
-  // Close box [×] top-left and zoom box [↑]/[↓] top-right (only when the affordance exists).
+  // Close box [×] top-left and zoom box [↑]/[↕] top-right (only when the affordance exists).
   if (w >= 8) {
     ctx.text(1, 0, `[${CLOSE_GLYPH}]`, borderStyle);
     ctx.text(w - 4, 0, `[${state.zoomed ? RESTORE_GLYPH : MAXIMIZE_GLYPH}]`, borderStyle);
   }
 
-  // SE resize corner.
-  ctx.text(w - 1, h - 1, RESIZE_GLYPH, borderStyle);
+  // SE drag grip (TV TFrame::dragIcon): only on the active, resizable window, overlay the
+  // bottom-right corner with the single-line `─┘`, which stands out against the double-line active
+  // border. An inactive or fixed-size window keeps its plain border corner (TV gates on sfActive +
+  // wfGrow). TV draws no resize triangle.
+  if (state.active && state.resizable) {
+    ctx.text(w - 2, h - 1, SINGLE_BORDER.h, borderStyle);
+    ctx.text(w - 1, h - 1, SINGLE_BORDER.br, borderStyle);
+  }
 }
 
 /**
