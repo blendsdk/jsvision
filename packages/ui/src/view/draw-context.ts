@@ -128,5 +128,10 @@ export function makeDrawContext(buffer: ScreenBuffer, viewRect: Rect, clip: Rect
     return themeRoleToStyle(theme[role]);
   }
 
-  return { text, fillRect, fill, box, shadow, color, size };
+  /** Raw role access (RD-05 PA-16): the full `Theme[K]` incl. role-only extras `color` drops. */
+  function role<K extends ThemeRoleName>(name: K): Theme[K] {
+    return theme[name];
+  }
+
+  return { text, fillRect, fill, box, shadow, color, role, size };
 }

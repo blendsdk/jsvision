@@ -40,6 +40,13 @@ export interface DrawContext {
   shadow(x: number, y: number, w: number, h: number, style?: Style): void;
   /** Resolve a named theme role → `Style` (AR-35). */
   color(role: ThemeRoleName): Style;
+  /**
+   * Resolve a named theme role → the **raw** `Theme[K]` role, including its role-only extras (the
+   * desktop `pattern` glyph, the window `border`/`title` colors) that {@link color} drops. Used by
+   * the RD-05 chrome (`Desktop.draw`, `drawFrame`); the generic `K` keeps `role('window').border`
+   * type-safe with no cast. (RD-05 PA-16)
+   */
+  role<K extends ThemeRoleName>(name: K): Theme[K];
   /** The view's content size, in cells. */
   readonly size: Size2D;
 }
