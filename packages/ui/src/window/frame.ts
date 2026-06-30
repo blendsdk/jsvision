@@ -11,6 +11,7 @@
  * number at col w-6, title centered, SE corner at (w-1, h-1). Boxes are drawn last so they overlay
  * the title; absent flags omit their box. The `.js` extension is required by NodeNext ESM resolution.
  */
+import type { Style } from '@jsvision/core';
 import type { DrawContext, Point } from '../view/index.js';
 import type { Size2D } from '../layout/index.js';
 
@@ -42,6 +43,47 @@ const MAXIMIZE_GLYPH = '↑';
 const RESTORE_GLYPH = '↓';
 const RESIZE_GLYPH = '◢';
 
+/** A rectangular-border glyph set (corners + horizontal/vertical edges). */
+interface BorderGlyphs {
+  readonly tl: string;
+  readonly tr: string;
+  readonly bl: string;
+  readonly br: string;
+  readonly h: string;
+  readonly v: string;
+}
+
+/** Single-line border (CP437 0xDA/C4/BF/B3/C0/D9) — the inactive/passive window, as in Turbo Vision. */
+const SINGLE_BORDER: BorderGlyphs = { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│' };
+/** Double-line border (CP437 0xC9/CD/BB/BA/C8/BC) — the active (focused) window, as in Turbo Vision. */
+const DOUBLE_BORDER: BorderGlyphs = { tl: '╔', tr: '╗', bl: '╚', br: '╝', h: '═', v: '║' };
+
+/**
+ * Draw a rectangular border with `glyphs` over a `w×h` window-local rect, filling the interior
+ * opaquely first so content children inset over a solid field.
+ *
+ * @param ctx    The window's clipped draw context.
+ * @param w      Full width (border included).
+ * @param h      Full height (border included).
+ * @param glyphs The corner/edge glyph set (single- or double-line).
+ * @param style  The border fg/bg style.
+ */
+function drawBorder(ctx: DrawContext, w: number, h: number, glyphs: BorderGlyphs, style: Style): void {
+  ctx.fillRect(0, 0, w, h, ' ', style); // opaque interior
+  ctx.text(0, 0, glyphs.tl, style);
+  ctx.text(w - 1, 0, glyphs.tr, style);
+  ctx.text(0, h - 1, glyphs.bl, style);
+  ctx.text(w - 1, h - 1, glyphs.br, style);
+  for (let col = 1; col < w - 1; col += 1) {
+    ctx.text(col, 0, glyphs.h, style);
+    ctx.text(col, h - 1, glyphs.h, style);
+  }
+  for (let row = 1; row < h - 1; row += 1) {
+    ctx.text(0, row, glyphs.v, style);
+    ctx.text(w - 1, row, glyphs.v, style);
+  }
+}
+
 /**
  * Draw the window frame chrome over its window-local rect (AR-67/AR-74). The border box also fills
  * the interior with the role background; the content children compose over that inset (PA-8).
@@ -58,8 +100,9 @@ export function drawFrame(ctx: DrawContext, size: Size2D, state: FrameState, rol
   const borderStyle = { fg: theme.border, bg: theme.bg };
   const titleStyle = { fg: theme.title, bg: theme.bg };
 
-  // Border box (also fills the interior with the role bg, so content insets over an opaque field).
-  ctx.box(0, 0, w, h, borderStyle);
+  // Border: a double line for the active (focused) window, single for an inactive one — the classic
+  // Turbo Vision active/passive frame. Also fills the interior so content insets over an opaque field.
+  drawBorder(ctx, w, h, state.active ? DOUBLE_BORDER : SINGLE_BORDER, borderStyle);
 
   // Centered title on the top border (drawn before the boxes so the boxes overlay it).
   if (state.title.length > 0) {

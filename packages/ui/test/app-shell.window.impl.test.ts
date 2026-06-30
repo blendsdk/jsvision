@@ -17,6 +17,29 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { color
 const ALL = { movable: true, resizable: true, zoomable: true, closable: true };
 const size = { width: 20, height: 6 };
 
+test('the active window draws a double-line border; the inactive a single-line one (Turbo Vision)', () => {
+  const app = createApplication({ caps, viewport: { width: 40, height: 10 } });
+  const a = new Window('A');
+  a.layout.rect = { x: 0, y: 0, width: 12, height: 5 };
+  const b = new Window('B');
+  b.layout.rect = { x: 20, y: 0, width: 12, height: 5 };
+  app.desktop.addWindow(a);
+  app.desktop.addWindow(b); // added last ⇒ active
+  app.loop.renderRoot.flush();
+  const buf = app.loop.renderRoot.buffer();
+
+  expect(buf.get(20, 0)?.char).toBe('╔'); // active: double-line corner
+  expect(buf.get(20, 2)?.char).toBe('║'); // active: double-line vertical edge
+  expect(buf.get(0, 0)?.char).toBe('┌'); // inactive: single-line corner
+  expect(buf.get(0, 2)?.char).toBe('│'); // inactive: single-line vertical edge
+
+  app.desktop.raise(a); // flip which window is active
+  app.loop.renderRoot.flush();
+  const flipped = app.loop.renderRoot.buffer();
+  expect(flipped.get(0, 0)?.char).toBe('╔'); // a now active → double
+  expect(flipped.get(20, 0)?.char).toBe('┌'); // b now inactive → single
+});
+
 test('frameZoneAt classifies each chrome zone', () => {
   expect(frameZoneAt(size, { x: 2, y: 0 }, ALL)).toBe('close'); // [■] cols 1–3
   expect(frameZoneAt(size, { x: 17, y: 0 }, ALL)).toBe('zoom'); // [↑] cols w-4…w-2 = 16–18

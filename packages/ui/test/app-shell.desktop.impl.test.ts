@@ -7,7 +7,7 @@
  * Trace: RD-05 03-02 (Error Handling table) · AR-67/AR-87 · PA-4/PA-5.
  */
 import { test, expect } from 'vitest';
-import { resolveCapabilities } from '@jsvision/core';
+import { resolveCapabilities, defaultTheme } from '@jsvision/core';
 import type { MouseEvent } from '@jsvision/core';
 import { Group } from '../src/view/index.js';
 import { createApplication } from '../src/app/index.js';
@@ -31,6 +31,25 @@ function addWindow(
   app.desktop.addWindow(w);
   return w;
 }
+
+test('Desktop.shadow (opt-in) darkens the backdrop just below/right of a window', () => {
+  const app = shellApp(40, 12);
+  app.desktop.shadow = true;
+  addWindow(app, 'W', { x: 2, y: 2, width: 10, height: 4 }); // covers x 2..11, y 2..5
+  app.loop.renderRoot.flush();
+  const buf = app.loop.renderRoot.buffer();
+
+  // The cell one column right of the window (x = 2+10 = 12, y = 3) is bare backdrop → shadowed.
+  expect(buf.get(12, 3)?.bg).toBe(defaultTheme.shadow.bg);
+  expect(buf.get(12, 3)?.fg).toBe(defaultTheme.shadow.fg);
+});
+
+test('Desktop shadows are off by default (the backdrop keeps the desktop role)', () => {
+  const app = shellApp(40, 12);
+  addWindow(app, 'W', { x: 2, y: 2, width: 10, height: 4 });
+  app.loop.renderRoot.flush();
+  expect(app.loop.renderRoot.buffer().get(12, 3)?.bg).toBe(defaultTheme.desktop.bg);
+});
 
 test('drag-move clamps the title row to the top edge', () => {
   const app = shellApp(40, 12);
