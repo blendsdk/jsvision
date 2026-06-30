@@ -9,8 +9,9 @@
  *
  * It composes an `Application` (menu bar · desktop · status line · overlay), opens three windows,
  * then: raises a background window by clicking it, drags one by its title bar, zooms one to fill the
- * desktop, tiles them into a grid, opens the Window menu with F10 and activates "Cascade", and emits
- * a status-line command — composing a fresh frame after each interaction.
+ * desktop, tiles them with Turbo Vision's no-remainder split (n=3 ⇒ a stacked column, favorY), opens
+ * the Window menu with F10 and activates "Cascade" (TV's corner-pinned +1/+1 stair-step), and emits a
+ * status-line command — composing a fresh frame after each interaction.
  *
  * Dev-only example — not part of the published package. Imported by name (`@jsvision/ui`), exactly
  * as a consumer would.
@@ -117,13 +118,20 @@ function main(): void {
 
   app.desktop.tile();
   app.loop.renderRoot.flush();
-  printFrame('Frame 5 — tile all three into a grid', app.loop.renderRoot.buffer().rows());
+  // TV `mostEqualDivisors(3)` favors the Y axis ⇒ 1 column × 3 rows: a full-width stacked column, the
+  // cells dividing the desktop with no remainder (not a 2×2 grid).
+  printFrame(
+    'Frame 5 — tile all three (TV no-remainder split ⇒ a stacked column)',
+    app.loop.renderRoot.buffer().rows(),
+  );
 
   // Open the Window menu (F10), move to "Cascade", and activate it.
   app.loop.dispatch(key('f10'));
   app.loop.dispatch(key('down')); // highlight "Cascade" (second item)
   app.loop.dispatch(key('enter')); // activate → emit Commands.cascade
-  printFrame('Frame 6 — F10 → Window ▸ Cascade applied', app.loop.renderRoot.buffer().rows());
+  // TV `doCascade`: window i steps to (i,i) with its bottom-right pinned to the desktop corner — the
+  // back window fills, each window in front offset +1/+1 and one cell smaller.
+  printFrame('Frame 6 — F10 → Window ▸ Cascade (corner-pinned +1/+1 stagger)', app.loop.renderRoot.buffer().rows());
 
   // Fire a status-line command via its accelerator (F4 → Tile).
   app.loop.dispatch(key('f4'));

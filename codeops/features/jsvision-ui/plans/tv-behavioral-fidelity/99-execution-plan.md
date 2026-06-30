@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md) · **Implements**: jsvision-ui/RD-10 · **Plan**: `plans/tv-behavioral-fidelity/`
 > **Last Updated**: 2026-06-30
-> **Progress**: 13/14 tasks (93%) — Phase 1 ✅ · Phase 2 ✅ · Phase 3 ✅ complete
+> **Progress**: 14/14 tasks (100%) — Phase 1 ✅ · Phase 2 ✅ · Phase 3 ✅ · Phase 4 ✅ COMPLETE
 > **Runtime note**: PA-10 (status release target = item under the release point, TV-exact) corrects AR-88's "same item" paraphrase — recorded in `00-ambiguity-register.md`.
 > **CodeOps Skills Version**: 3.1.0
 
@@ -97,9 +97,11 @@ Commits reference **/gitcm** (commit) or **/gitcmp** (commit + push) — never r
 
 ## Phase 4 — Demos + final gate
 
-- [ ] **4.1** Update `demo:shell` (and/or `tvision-demo`) to exercise cascade + tile so the TV geometry
-  shows in the ASCII walkthrough; re-render the `1caa188` drawing spot-checks to prove no regression.
-  Run the full gate: `yarn verify`, `yarn check:deps`, `yarn lint`. /gitcmp. (scope `examples`)
+- [x] **4.1** `demo:shell` already exercises tile (Frame 5) + cascade (Frame 6) + F4-Tile (Frame 7);
+  after the Phase-2 rebuild the ASCII frames now render the TV-exact geometry (n=3 ⇒ a stacked column;
+  cascade ⇒ corner-pinned +1/+1 stair-step). Updated the Frame 5/6 narration + header to describe the
+  TV behavior (no invented geometry). Full gate green: `yarn verify` (core 483 · ui 301 · examples 49),
+  `yarn check:deps`, examples e2e 5/5, `yarn lint` clean. (scope `examples`) *(2026-06-30)*
 
 ---
 
@@ -108,7 +110,7 @@ Commits reference **/gitcm** (commit) or **/gitcmp** (commit + push) — never r
 - [x] Phase 1 — Status press/release (1.1–1.5) ✅ *(2026-06-30)*
 - [x] Phase 2 — Cascade/tile geometry (2.1–2.4) ✅ *(2026-06-30)*
 - [x] Phase 3 — Left-grow resize (3.1–3.4) ✅ *(2026-06-30)*
-- [ ] Phase 4 — Demos + final gate (4.1)
+- [x] Phase 4 — Demos + final gate (4.1) ✅ *(2026-06-30)*
 
 **Definition of done:** RD-10 AC-1…AC-11 met; ST-01…ST-09 + the rewritten ST-11/status oracles green;
 `yarn verify`/`check:deps`/`lint` clean; one additive cross-package edit (`statusSelected`); the
