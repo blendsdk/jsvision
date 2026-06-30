@@ -26,12 +26,16 @@ pre-`serialize` for color/glyph assertions. Theme-role bytes are derived from `a
 | **ST-12** | Focus traversal | a form `Text`,`Input`,`CheckGroup`,`RadioGroup`,`Button`; Tab/Shift-Tab | focus cycles `Input`→`CheckGroup`→`RadioGroup`→`Button` (skipping `Text`); the focused control shows its `…Selected` role | AC-8 |
 | **ST-13** | Packaging | the built package | controls live in `src/controls/` with explicit named re-exports from `src/index.ts`; `yarn check:deps` passes (zero runtime deps); each control file ≤ 500 lines | AC-11 · PA-4 |
 | **ST-14** | Demo (03-07) | `demo:controls` headless | exit 0, non-empty stdout containing the Label/Button text, `[X]`/`(•)` markers, field glyphs, and a narration proving the `filter` live-reject + the `'ok'` emit | AC-12 · PA-13 |
-| **ST-15** | Deferred registered | `requirements/DEFERRED.md` | names `Input` selection+clipboard, `picture`/mask validator, `MultiCheckGroup` (→ RD-07), the modal focus-trap + multi-column cluster (→ RD-11/later), each with a target | AC-13 · PA-2/PA-6 |
+| **ST-15** | Deferred registered | `requirements/DEFERRED.md` | **verify present** (all already registered): `Input` selection+clipboard (DEF-01), `picture`/mask validator (DEF-02), `MultiCheckGroup` (DEF-03) → RD-07; modal focus-trap (DEF-16) → RD-11; multi-column cluster (DEF-17), `Text` center/right (DEF-18), hardware caret (DEF-19) — each with a target | AC-13 · PA-2/PA-6/PF-002 |
 | **ST-16** | No regression | the existing golden/spec suites | the `1caa188` drawing + RD-05/RD-10 oracles still pass after the additive theme roles + `ev.emit` envelope change | RD-06 AC |
 
 > **AUTHORING RULE:** the theme-role expectations (ST-02) are computed from `app.h` directly during spec
 > authoring (read the source, decode `cpAppColor[cpGrayDialog[slot]]`); the glyph/column expectations
 > (ST-03…ST-11) from the cited TV `t*.cpp` geometry — never from the implementation.
+>
+> **Button shadow (ST-05):** the oracle asserts TV's **full** right-column + bottom-row block-glyph
+> shadow (`tbutton.cpp:116` `shadows = "\xDC\xDB\xDF"` → `▄`/`█`/`▀`, drawn `:143-146`), not a single
+> cell — RD-06 AC-3's "one-cell drop-shadow" wording is shorthand; the TV geometry governs (PF-007).
 
 ## Test files
 

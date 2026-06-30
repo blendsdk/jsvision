@@ -44,9 +44,13 @@ export class Label extends View {
 - **onEvent():** a mouse-down on the label (delivered by hit-test — the Label is visible/enabled), or an
   `Alt-<hotkey>` key (caught in the post-process phase since the Label is not focusable), focuses the
   link via **`ev.focusView?.(this.link)`** (the additive envelope accessor, 03-01/PA-1), then sets
-  `ev.handled`. (PA-10, `tlabel.cpp:91-98`)
-- **Highlight:** `onMount(() => this.bind(() => this.link.state.focused))` repaints when the link's focus
-  flips (the link sets `state.focused` via RD-04; the Label re-reads it).
+  `ev.handled`. (PA-10; `tlabel.cpp:76-81` `focusLink` def, called from `handleEvent` `:91-98`)
+- **Highlight:** `state.focused` is a plain field (not reactive), so observe the link's focus via the
+  additive **focus-change signal** (03-01/A2/PF-009): `onMount(() => this.bind(() =>
+  this.link.focusSignal(), () => this.invalidate()))` — the link's focus tick re-runs the effect, which
+  repaints the Label (its `draw()` re-reads `link.state.focused` to pick `label`/`labelSelected`). A plain
+  `bind(() => this.link.state.focused)` would **not** work (no signal read ⇒ no subscription) and the
+  focus manager invalidates only the link, not the Label (PF-009).
 
 ### Focus-link mechanism (PA-10)
 The Label focuses its link via the **additive `ev.focusView` envelope accessor** (defined in 03-01,

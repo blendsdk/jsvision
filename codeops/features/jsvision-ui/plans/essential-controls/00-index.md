@@ -15,8 +15,9 @@ value to an RD-01 signal, and themes via named roles. Every control's drawing/ge
 Turbo Vision counterpart exactly (the **NON-NEGOTIABLE** fidelity directive): `TStaticText`, `TLabel`,
 `TButton`, `TInputLine`, `TCluster`/`TCheckBoxes`/`TRadioButtons`, and the `TValidator` family.
 
-The work adds one new package subsystem (`packages/ui/src/controls/`), one additive intra-ui primitive
-(`emit()` on the dispatch envelope, so a focused control can raise a typed command), and the faithful
+The work adds one new package subsystem (`packages/ui/src/controls/`), two additive intra-ui primitives
+(`ev.emit`/`ev.focusView` on the dispatch envelope so a focused control can raise a command / focus a
+view, and a per-view focus-change signal for cross-view focus reactivity — PF-009), and the faithful
 `cpGrayDialog` control theme roles to `@jsvision/core` (the one cross-package edit — buttons reuse the
 existing `button`/`buttonFocused`). A headless `demo:controls` walkthrough proves it.
 
@@ -67,7 +68,9 @@ form.add(new Button('~O~K', { command: 'ok', default: true }));
 
 ## Related Files
 - New: `packages/ui/src/controls/{text,label,button,input,cluster,check-group,radio-group,index}.ts` + `controls/validators/{types,filter,range,lookup,index}.ts`
-- Edited (intra-ui): `view/types.ts` + `event/dispatch.ts`/`event/types.ts` (the `emit` envelope primitive)
+- Edited (intra-ui): `view/types.ts` (`emit?`/`focusView?` on `DispatchEvent`) + `event/dispatch.ts` (`RouteContext` gains `emit`/`focusView`; `route()` enriches the envelope) + `event/event-loop.ts` (`routeContext()` sources them); see 03-01/PA-1
+- Edited (intra-ui, PF-009): `view/view.ts` (lazy `focusSignal()`) + `event/focus.ts` (`focusLeaf` pokes it) — the cross-view focus-reactivity primitive for `Label`/`Input`
+- Reused (no edit): `menu/builders.ts` `parseTilde`/`tildeSegments` + the Alt-hotkey matcher (`status` `matchesChord` / `menubar`) — `controls/`→`menu/` import edge, precedent in `status/` (PF-005)
 - Edited (core, additive): `packages/core/src/engine/color/theme.ts` (the new control roles)
 - New demo: `packages/examples/controls-demo/main.ts` + `packages/examples/test/controls-demo.e2e.test.ts`
 - New tests: `packages/ui/test/controls.*.{spec,impl}.test.ts` + `packages/core/test/color-palette-theme.spec.test.ts` (role additions)

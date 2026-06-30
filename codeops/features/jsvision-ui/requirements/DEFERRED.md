@@ -35,6 +35,7 @@ that RD (or "unassigned"), pull them into its scope, and flip the row's **Status
 | **DEF-16** | **Input modal focus-trap on invalid** (TV `valid()`-gate vetoes leaving an invalid blocking field) | RD-06 plan · PA-2 | **RD-11** (Dialog's modal `valid()` sweep) | Deferred (RD-06 exposes `valid()`+`invalid`, no trap) |
 | **DEF-17** | **Multi-column cluster layout** (TV `TCluster` flows `size.y` rows per column + `←`/`→` nav) | RD-06 plan · PA-6 | unassigned (on real need) | Deferred (RD-06 is single-column) |
 | **DEF-18** | **`Text` center/right alignment** (TV `TStaticText` leading-`0x03` center marker) | RD-06 plan · PA-14 | unassigned (optional) | Deferred (RD-06 is word-wrap left-aligned) |
+| **DEF-19** | **Hardware-caret positioning** for the focused `Input` (terminal `CSI row;col H`; needs a `View`→host caret seam — none exists today) | RD-06 plan · PF-002 | **RD-07** (host design pass) | Deferred (logical caret rendered in the buffer; no seam yet) |
 
 > `unassigned` = no gated RD owns it yet; pull it into the first RD that needs it (this register is the
 > safety net). The `RD-07`-targeted rows (DEF-01…DEF-03) are also mirrored in RD-06's Deferred table +
