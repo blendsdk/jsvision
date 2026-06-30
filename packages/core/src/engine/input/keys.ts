@@ -182,6 +182,12 @@ function classifyCsi(params: number[], final: number, end: number): KeyDecode {
     return name !== undefined ? namedKey(name, mods, end) : { status: 'drop', end };
   }
 
+  if (final === 0x5a) {
+    // 'Z' — backtab. `CSI Z` is Shift-Tab by definition: the bare form carries no modifier
+    // param, so force `shift` while preserving any ctrl/alt from the xterm-modified `CSI 1;<mod> Z`.
+    return namedKey('tab', { ...mods, shift: true }, end);
+  }
+
   const cursor = FINAL_KEYS.get(final);
   if (cursor !== undefined) {
     return namedKey(cursor, mods, end);
