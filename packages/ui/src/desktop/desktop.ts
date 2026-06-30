@@ -51,6 +51,14 @@ export class Desktop extends Group {
   /** @internal The in-flight drag/resize gesture, or `null` when none (PA-10). */
   protected gesture: Gesture | null = null;
 
+  /**
+   * When true, paint a Turbo Vision-style drop-shadow on the backdrop just below/right of each
+   * window. Off by default (golden frames stay unchanged); opt in per app. The shadow is part of the
+   * backdrop layer, so a deeply-overlapping window can clip a neighbour's shadow — fine for staggered
+   * / cascaded layouts.
+   */
+  shadow = false;
+
   /** The desktop's windows in z-order (its children are all `Window`s; the guard keeps it type-safe). */
   protected windows(): Window[] {
     return this.children.filter((c): c is Window => c instanceof Window);
@@ -60,6 +68,15 @@ export class Desktop extends Group {
   override draw(ctx: DrawContext): void {
     const role = ctx.role('desktop');
     ctx.fill(role.pattern, ctx.color('desktop'));
+    if (this.shadow) {
+      // Darken the desktop cells in the L below/right of each window (drawn before the windows
+      // compose on top, so the shadow sits on the backdrop).
+      const shadowStyle = ctx.color('shadow');
+      for (const win of this.windows()) {
+        if (!win.state.visible) continue;
+        ctx.shadow(win.bounds.x, win.bounds.y, win.bounds.width, win.bounds.height, shadowStyle);
+      }
+    }
   }
 
   /**
