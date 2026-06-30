@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-01
-> **Progress**: 12/24 tasks (50%) — Phases 1–3 (Foundation, Text+Label, Button) complete
+> **Progress**: 15/24 tasks (63%) — Phases 1–4 (Foundation, Text+Label, Button, Validators) complete
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -68,11 +68,11 @@ roles change — ui resolves core from `dist/`).
 
 ## Phase 4 — Validators  (03-04 · AC-5 · PA-12)
 ### 4.1 Spec (→ RED)
-- [ ] **4.1.1** `controls.validators.spec` (ST-07: the filter/range/lookup `isValidInput`/`isValid` table). Cite `tvalidat.cpp`. **RED**.
+- [x] **4.1.1** `controls.validators.spec` (ST-07: the filter/range/lookup `isValidInput`/`isValid` table). Cite `tvalidat.cpp`. **RED**. _(2026-07-01 — ST-07 corrected TV-faithful per **PA-15** runtime decision: unsigned range `validChars="+0123456789"`, signed `"+-0123456789"`)_
 ### 4.2 Implementation (→ GREEN)
-- [ ] **4.2.1** Implement `controls/validators/` (`types.ts` + `filter`/`range`/`lookup` factories). ST-07 GREEN. (scope `controls`)
+- [x] **4.2.1** Implement `controls/validators/` (`types.ts` + `filter`/`range`/`lookup` factories). ST-07 GREEN. (scope `controls`) _(2026-07-01 — + shared `charset.ts`)_
 ### 4.3 Impl tests
-- [ ] **4.3.1** Impl: `min<0` leading `-`; empty-string edge per validator; `range` parse of `'12x'`. Verify.
+- [x] **4.3.1** Impl: `min<0` leading `-`; empty-string edge per validator; `range` parse of `'12x'`. Verify. _(2026-07-01 — `yarn verify` 8/8 green)_
 
 ## Phase 5 — Input  (03-05 · AC-4/AC-5 · PA-2/PA-11)
 ### 5.1 Spec (→ RED)
@@ -122,9 +122,9 @@ roles change — ui resolves core from `dist/`).
 - [x] 3.2.1 `Button` _(2026-07-01)_
 - [x] 3.3.1 impl tests + verify _(2026-07-01)_
 ### Phase 4 — Validators
-- [ ] 4.1.1 Spec RED (ST-07)
-- [ ] 4.2.1 validators
-- [ ] 4.3.1 impl tests + verify
+- [x] 4.1.1 Spec RED (ST-07) _(2026-07-01)_
+- [x] 4.2.1 validators _(2026-07-01)_
+- [x] 4.3.1 impl tests + verify _(2026-07-01)_
 ### Phase 5 — Input
 - [ ] 5.1.1 Spec RED (ST-08/09)
 - [ ] 5.2.1 `Input`
