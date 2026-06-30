@@ -30,6 +30,45 @@ class HitView extends View {
   }
 }
 
+/** Records mouse-down envelopes (a stand-in for a container's onEvent). */
+class RecordGroup extends Group {
+  readonly downs: DispatchEvent[] = [];
+  override onEvent(ev: DispatchEvent): void {
+    if (ev.event.type === 'mouse' && ev.event.kind === 'down') this.downs.push(ev);
+  }
+}
+/** Records, then consumes the down (a stand-in for a Window's raise-on-click). */
+class RaiseGroup extends RecordGroup {
+  override onEvent(ev: DispatchEvent): void {
+    super.onEvent(ev);
+    if (ev.event.type === 'mouse' && ev.event.kind === 'down') ev.handled = true;
+  }
+}
+
+// A down on a stub-handler leaf bubbles up to a consuming ancestor (raise-on-content-click), then
+// stops once consumed (does not reach the root).
+test('a mouse-down bubbles from a hit leaf up to the ancestor that consumes it, then stops', () => {
+  const leaf = new HitView(); // a content view: records but never consumes
+  const container = new RaiseGroup(); // a "window": consumes the down
+  container.add(leaf);
+  const root = new RecordGroup(); // the scope root: must NOT see the consumed down
+  root.add(container);
+
+  const loop = createEventLoop({ width: 20, height: 10 }, { caps });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 10 };
+  container.bounds = { x: 2, y: 2, width: 10, height: 6 };
+  leaf.bounds = { x: 1, y: 1, width: 6, height: 3 };
+
+  // 1-based (5,5) → 0-based (4,4): inside the leaf (abs origin (3,3)).
+  loop.dispatch(mouseDown(5, 5));
+
+  expect(leaf.events.length).toBe(1); // the hit leaf got it first
+  expect(container.downs.length).toBe(1); // …and it bubbled to the consuming ancestor
+  expect(container.downs[0]?.local).toEqual({ x: 2, y: 2 }); // (4,4) − container origin (2,2)
+  expect(root.downs.length).toBe(0); // the bubble stopped at the consumer (didn't reach root)
+});
+
 // Three fully-overlapping siblings resolve to the last-added (top-most) one.
 test('reverse-z overlap resolves to the top-most sibling', () => {
   const a = new HitView();
