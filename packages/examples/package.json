@@ -20,6 +20,7 @@
     "demo:view": "tsx view-demo/main.ts",
     "demo:events": "tsx event-demo/main.ts",
     "demo:shell": "tsx shell-demo/main.ts",
+    "demo:controls": "tsx controls-demo/main.ts",
     "demo:tvision": "tsx tvision-demo/main.ts"
   },
   "dependencies": {

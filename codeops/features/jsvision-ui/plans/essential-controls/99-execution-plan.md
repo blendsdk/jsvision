@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-01
-> **Progress**: 21/24 tasks (88%) — Phases 1–6 (Foundation, Text+Label, Button, Validators, Input, Clusters) complete
+> **Progress**: 24/24 tasks (100%) — ✅ COMPLETE (all 7 phases; final gate green)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -93,12 +93,12 @@ roles change — ui resolves core from `dist/`).
 
 ## Phase 7 — Focus + demo + final gate  (03-07 · AC-8/AC-11/AC-12/AC-13)
 ### 7.1 Spec (→ RED)
-- [ ] **7.1.1** `controls.focus.spec` (ST-12 Tab cycle skipping `Text`) + `controls.packaging.spec` (ST-13). **RED** (focus) / packaging green-on-write. 
+- [x] **7.1.1** `controls.focus.spec` (ST-12 Tab cycle skipping `Text`) + `controls.packaging.spec` (ST-13). **RED** (focus) / packaging green-on-write. _(2026-07-01 — ST-12 + ST-13 green)_
 ### 7.2 Implementation + demo (→ GREEN)
-- [ ] **7.2.1** Build `controls-demo/` + `demo:controls` script + `controls-demo.e2e` (ST-14). (scope `examples`)
-- [ ] **7.2.2** Verify the RD-06 deferred items are present + correctly targeted in `requirements/DEFERRED.md` — DEF-16 (modal focus-trap), DEF-17 (multi-column cluster), DEF-18 (Text center/right), DEF-19 (hardware caret), DEF-01/02/03 (Input selection·clipboard / `picture` / `MultiCheckGroup`) (ST-15; all already registered). Confirm ST-16 (no regression) by rerunning the existing golden/spec suites.
+- [x] **7.2.1** Build `controls-demo/` + `demo:controls` script + `controls-demo.e2e` (ST-14). (scope `examples`) _(2026-07-01 — Label-linked Input + filter live-reject + CheckGroup/RadioGroup + Button emit; e2e green)_
+- [x] **7.2.2** Verify the RD-06 deferred items are present + correctly targeted in `requirements/DEFERRED.md` — DEF-16 (modal focus-trap), DEF-17 (multi-column cluster), DEF-18 (Text center/right), DEF-19 (hardware caret), DEF-01/02/03 (Input selection·clipboard / `picture` / `MultiCheckGroup`) (ST-15; all already registered). Confirm ST-16 (no regression) by rerunning the existing golden/spec suites. _(2026-07-01 — all 7 DEF rows verified present + correctly targeted; ST-16 no-regression confirmed)_
 ### 7.3 Final gate
-- [ ] **7.3.1** Full gate: `yarn verify` (core + ui + examples), `yarn check:deps`, `yarn lint`, `demo:controls` e2e. /gitcmp.
+- [x] **7.3.1** Full gate: `yarn verify` (core + ui + examples), `yarn check:deps`, `yarn lint`, `demo:controls` e2e. /gitcmp. _(2026-07-01 — verify 8/8, check:deps pass, lint clean, e2e 14/14)_
 
 ---
 
@@ -134,9 +134,9 @@ roles change — ui resolves core from `dist/`).
 - [x] 6.2.1 `Cluster` base · 6.2.2 `CheckGroup`/`RadioGroup` _(2026-07-01)_
 - [x] 6.3.1 impl tests + verify _(2026-07-01)_
 ### Phase 7 — Focus + demo + gate
-- [ ] 7.1.1 Spec RED (ST-12/13)
-- [ ] 7.2.1 demo + e2e (ST-14) · 7.2.2 DEFERRED.md + no-regression (ST-15/16)
-- [ ] 7.3.1 final gate + /gitcmp
+- [x] 7.1.1 Spec RED (ST-12/13) _(2026-07-01)_
+- [x] 7.2.1 demo + e2e (ST-14) · 7.2.2 DEFERRED.md + no-regression (ST-15/16) _(2026-07-01)_
+- [x] 7.3.1 final gate + /gitcmp _(2026-07-01)_
 
 ---
 
