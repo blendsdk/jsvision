@@ -19,7 +19,8 @@
     "demo:layout": "tsx layout-demo/main.ts",
     "demo:view": "tsx view-demo/main.ts",
     "demo:events": "tsx event-demo/main.ts",
-    "demo:shell": "tsx shell-demo/main.ts"
+    "demo:shell": "tsx shell-demo/main.ts",
+    "demo:tvision": "tsx tvision-demo/main.ts"
   },
   "dependencies": {
     "@jsvision/core": "*",
