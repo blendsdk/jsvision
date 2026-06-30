@@ -14,3 +14,5 @@ export { Text } from './text.js';
 export { Label } from './label.js';
 export { Button } from './button.js';
 export type { ButtonOptions } from './button.js';
+export { filter, range, lookup } from './validators/index.js';
+export type { Validator } from './validators/index.js';
