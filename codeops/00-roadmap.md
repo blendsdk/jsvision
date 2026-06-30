@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 3 ✅ Done · 1 🔬 Plan Preflighted (RD-04) · 5 ⬜ Backlog | 3 / 9 done | 🔄 | 2026-06-30 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 4 ✅ Done (RD-01…RD-04) · 5 ⬜ Backlog | 4 / 9 done | 🔄 | 2026-06-30 |
 
 ## Archived
 
@@ -23,6 +23,11 @@
 
 ## Notes
 
+- 2026-06-30: **RD-04 event-loop complete** → ✅ Done (all 5 phases executed spec-first; 20 spec
+  oracles ST-01…ST-20 + impl tests green; full gate clean — `yarn verify` 8/8, `test:e2e` event-demo
+  + core, `check:deps`, `lint`; every `event/` file ≤ 227 lines). Lands `packages/ui/src/event/` +
+  additive `view.ts`/`group.ts`/`view/types.ts` + `demo:events`. jsvision-ui now 4/9 done; RD-05
+  (Application/`run()`/shell) next. Cascaded into the **jsvision-ui** row.
 - 2026-06-30: **RD-04 event-loop plan preflighted** → 🔬 Plan Preflighted (codebase-grounded audit,
   every `file:line` claim verified; 2 MAJOR + 3 MINOR + 2 OBSERVATION resolved — single `runTick`
   per public mutator PA-11, modal Phase-2 bubble clamp PA-12, built-in Tab→focus PA-10; 33 tasks).
