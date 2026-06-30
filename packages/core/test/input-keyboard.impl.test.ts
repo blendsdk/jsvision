@@ -36,6 +36,18 @@ test('keys: CSI H/F → home/end', () => {
   expect(one(enc.encode('\x1b[F')).key).toBe('end');
 });
 
+test('keys: CSI Z (backtab) → Shift-Tab', () => {
+  // Bare backtab: `ESC [ Z` carries no modifier param but is Shift-Tab by definition.
+  const bare = one(enc.encode('\x1b[Z'));
+  expect(bare.key).toBe('tab');
+  expect([bare.shift, bare.alt, bare.ctrl]).toStrictEqual([true, false, false]);
+
+  // xterm-modified form `CSI 1 ; <mod> Z`: shift stays forced; extra ctrl is preserved.
+  const ctrlBacktab = one(enc.encode('\x1b[1;5Z')); // ctrl
+  expect(ctrlBacktab.key).toBe('tab');
+  expect([ctrlBacktab.shift, ctrlBacktab.alt, ctrlBacktab.ctrl]).toStrictEqual([true, false, true]);
+});
+
 test('keys: CSI ~ edit keys 1–6 → home/insert/delete/end/pageup/pagedown', () => {
   expect(one(enc.encode('\x1b[1~')).key).toBe('home');
   expect(one(enc.encode('\x1b[2~')).key).toBe('insert');
