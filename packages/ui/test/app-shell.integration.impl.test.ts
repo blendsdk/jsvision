@@ -188,7 +188,9 @@ test('F10 opens the menu and its popup composes into the frame', async () => {
     const before = output.data.length;
     input.feed(F10);
     expect(output.data.length).toBeGreaterThan(before);
-    expect(output.data).toContain('Cascade'); // the second menu item painted in the popup
+    // The popup paints "~C~ascade"; the accented hotkey `C` is now a separate SGR run, so the tail
+    // "ascade" is the contiguous substring in the escape-laden output (the menu did open).
+    expect(output.data).toContain('ascade'); // the second menu item painted in the popup
   });
 });
 

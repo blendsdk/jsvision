@@ -18,17 +18,22 @@ import { Attr } from '@jsvision/core';
 import type { Style } from '@jsvision/core';
 import { hsv } from './colors.js';
 
-/** Reusable ink colors over the light-grey window/dialog interior (classic Borland black-on-grey). */
-const INK_BLACK = '#000000';
-const INK_BLUE = '#0000aa';
-const INK_RED = '#aa0000';
-const INK_GREEN = '#00aa00';
-const INK_YELLOW = '#ffff55';
+/**
+ * Reusable ink colors. Turbo Vision's default window is **blue** (`cpBlueWindow`), so content text
+ * uses the light-on-blue convention — lightGray body, yellow/cyan highlights, bright accents — that
+ * stays legible over the blue interior. (The gray `dialog` palette keeps black-on-gray; see
+ * {@link AboutDialog}.)
+ */
+const INK_LIGHT = '#aaaaaa'; // lightGray — body text on the blue window
 const INK_WHITE = '#ffffff';
+const INK_BLACK = '#000000'; // only for the truecolor legend chip, which sits on its own black field
+const INK_YELLOW = '#ffff55';
+const INK_CYAN = '#55ffff'; // brightCyan — readable highlight on blue
+const INK_GREEN = '#55ff55'; // brightGreen — readable accent on blue
 
 /**
  * A static, themed block of help text. Lines beginning with two spaces (the key/action rows) are
- * tinted blue for a subtle two-tone, mirroring Turbo Vision's keyed help panels.
+ * tinted yellow for a subtle two-tone, mirroring Turbo Vision's keyed help panels.
  */
 export class HelpView extends View {
   /**
@@ -45,8 +50,8 @@ export class HelpView extends View {
 
   override draw(ctx: DrawContext): void {
     const bg = ctx.role('window').bg;
-    const body: Style = { fg: INK_BLACK, bg };
-    const keyed: Style = { fg: INK_BLUE, bg };
+    const body: Style = { fg: INK_LIGHT, bg };
+    const keyed: Style = { fg: INK_YELLOW, bg };
     ctx.fill(' ', body);
     this.lines.forEach((line, i) => {
       ctx.text(0, i, line, line.startsWith('  ') ? keyed : body);
@@ -142,10 +147,10 @@ export class LiveView extends View {
 
   override draw(ctx: DrawContext): void {
     const bg = ctx.role('window').bg;
-    const body: Style = { fg: INK_BLACK, bg };
+    const body: Style = { fg: INK_LIGHT, bg };
     ctx.fill(' ', body);
-    ctx.text(0, 0, 'Clock', { fg: INK_BLUE, bg, attrs: Attr.bold });
-    ctx.text(0, 1, this.time, { fg: INK_RED, bg, attrs: Attr.bold });
+    ctx.text(0, 0, 'Clock', { fg: INK_YELLOW, bg, attrs: Attr.bold });
+    ctx.text(0, 1, this.time, { fg: INK_CYAN, bg, attrs: Attr.bold });
     ctx.text(0, 3, `frame #${this.frame}`, body);
 
     const width = Math.max(1, ctx.size.width);
@@ -153,7 +158,7 @@ export class LiveView extends View {
     const phase = this.frame % period;
     const pos = phase < width ? phase : period - phase;
     if (ctx.size.height > 5) {
-      ctx.text(0, 5, '·'.repeat(width), { fg: '#5555ff', bg });
+      ctx.text(0, 5, '·'.repeat(width), { fg: INK_LIGHT, bg });
       ctx.text(Math.min(width - 1, pos), 5, '◆', { fg: INK_YELLOW, bg });
     }
     if (ctx.size.height > 7) {

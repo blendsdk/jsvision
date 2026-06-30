@@ -67,7 +67,12 @@ export class MenuPopup extends View {
     const h = ctx.size.height;
     const base = ctx.color('menuBar');
     const selected = ctx.color('menuSelected');
-    const disabled: Style = { fg: ctx.role('shadow').fg, bg: base.bg };
+    const disabledFg = ctx.role('shadow').fg; // darkGray — TV `cNormDisabled`/`cSelDisabled` fg (0x78/0x28)
+    const disabled: Style = { fg: disabledFg, bg: base.bg };
+    const selectedDisabled: Style = { fg: disabledFg, bg: selected.bg }; // TV `cSelDisabled` = darkGray on green
+    // Accelerator-char accents (TV `cNormal`/`cSelect` high byte): red on the row's bg.
+    const baseHot: Style = { fg: ctx.role('menuBar').hotkey ?? base.fg, bg: base.bg };
+    const selHot: Style = { fg: ctx.role('menuSelected').hotkey ?? selected.fg, bg: selected.bg };
 
     // Whole box in the menu base color; the outer col-0 / col-(w-1) gutters stay blank (TV inset).
     ctx.fillRect(0, 0, w, h, ' ', base);
@@ -95,11 +100,18 @@ export class MenuPopup extends View {
         continue;
       }
       const enabled = node.kind === 'item' ? this.isEnabled(node.command) : true;
-      const style = i === this.highlight ? selected : enabled ? base : disabled;
+      const highlighted = i === this.highlight;
+      // Row color: a highlighted enabled row uses the green `cSelect`; a highlighted disabled row the
+      // dimmed `cSelDisabled` (darkGray on green); otherwise normal / disabled on the menu base.
+      const style = highlighted ? (enabled ? selected : selectedDisabled) : enabled ? base : disabled;
       // Highlight fills the interior between the borders (TMenuBox getItemRect: cols 2..w-3).
-      if (i === this.highlight) ctx.fillRect(2, y, w - 4, 1, ' ', selected);
+      if (highlighted) ctx.fillRect(2, y, w - 4, 1, ' ', style);
       const label = parseTilde(node.title);
       ctx.text(3, y, label.text, style); // text inset past gutter + border + pad (TV col 3)
+      // Accelerator-char accent (red) — only on enabled rows; TV's disabled palettes have no accent.
+      if (enabled && label.hotkeyCol >= 0) {
+        ctx.text(3 + label.hotkeyCol, y, label.text[label.hotkeyCol] ?? '', highlighted ? selHot : baseHot);
+      }
       if (node.kind === 'sub') {
         ctx.text(w - 4, y, SUB_ARROW, style); // cascade marker (TV putChar size.x-4)
       } else if (node.kind === 'item' && node.key !== undefined) {

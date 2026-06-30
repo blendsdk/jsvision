@@ -5,9 +5,11 @@
  *
  *   yarn workspace @jsvision/examples demo:tvision
  *
- * It composes a full application — the classic blue patterned desktop, a grey menu bar with red
- * hotkeys, a grey status line, and framed/movable/resizable/zoomable windows with active/inactive
- * theming — and wires the host so it is fully interactive:
+ * It composes a full application faithful to Turbo Vision's default palette — the steel blue-grey
+ * patterned desktop (`cpAppColor` 0x71), a grey menu bar + status line with red hotkeys, blue
+ * (`cpBlueWindow`) windows with white active / lightGray inactive frames and brightGreen close/zoom
+ * icons, a greyed (disabled) "Save" menu item, and two-column drop-shadows — and wires the host so it
+ * is fully interactive:
  *
  *   F10 / Alt-letter  open menus      drag a title   move a window     ─┘ grip    resize
  *   F2 zoom · F3 close · F4 tile · F5 cascade · F6 next · Tab focus · F1 about · Alt-X quit
@@ -37,6 +39,8 @@ import { GradientView, LiveView, HelpView, AboutDialog, CommandSink } from './wi
 
 /** Demo-local command names (not built-in shell commands). */
 const CMD_ABOUT = 'about';
+/** A deliberately-disabled command, to show the greyed (no-accent) menu-item state for the audit. */
+const CMD_SAVE = 'save';
 /** A no-op command the animation timer emits purely to drive one coalesced frame per tick. */
 const CMD_REFRESH = '__refresh__';
 
@@ -72,7 +76,12 @@ function formatTime(date: Date): string {
 /** Build the menu bar — a system menu plus Window and Help, classic Turbo Vision layout. */
 function buildMenuBar(): ReturnType<typeof menuBar> {
   return menuBar([
-    subMenu(SYSTEM_MENU, [item('~A~bout', CMD_ABOUT, 'F1'), separator(), item('E~x~it', Commands.quit, 'Alt-X')]),
+    subMenu(SYSTEM_MENU, [
+      item('~A~bout', CMD_ABOUT, 'F1'),
+      item('~S~ave', CMD_SAVE, 'Ctrl+S'), // disabled below — shows the greyed item state
+      separator(),
+      item('E~x~it', Commands.quit, 'Alt-X'),
+    ]),
     subMenu('~W~indow', [
       item('~N~ext', Commands.next, 'F6'),
       item('~P~rev', Commands.prev),
@@ -127,6 +136,7 @@ async function main(): Promise<number> {
 
   const app = createApplication({ caps, menuBar: buildMenuBar(), statusLine: buildStatusLine() });
   app.desktop.shadow = true; // Turbo Vision-style drop-shadows under the windows
+  app.loop.enableCommand(CMD_SAVE, false); // grey out "Save" so the disabled menu-item state is visible
 
   // About modal: a hidden command sink turns the `about` command into an `execView` modal.
   const openAbout = (): void => {
