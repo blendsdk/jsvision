@@ -9,8 +9,11 @@ the TV control geometry, and the TV validators + palette.
 ## Existing Implementation
 
 ### What exists (the spine the controls build on)
-RD-01…RD-05 + RD-10 shipped. A new leaf control is an ordinary `View`/`Group` subclass — **no new
-spine work**, only the additive `ev.emit` primitive (PA-1) + the core Theme roles (PA-5).
+RD-01…RD-05 + RD-10 shipped. A new leaf control is an ordinary `View`/`Group` subclass. The spine is
+**not re-shaped**, but RD-06 adds **two additive primitives** + the core Theme roles: the `ev.emit`/
+`ev.focusView` dispatch-envelope accessors (PA-1/PA-10), the per-view **focus-change signal** for
+cross-view focus reactivity (PF-009 — needed by `Label`'s link highlight + `Input`'s blur validation),
+and the additive Theme roles (PA-5). All are additive and break no existing call site.
 
 ### Relevant files (seams to use / edit)
 
@@ -21,7 +24,8 @@ spine work**, only the additive `ev.emit` primitive (PA-1) + the core Theme role
 | `packages/ui/src/view/draw-context.ts` | `DrawContext`: `text`/`fillRect`/`fill`/`box`/`shadow`/`color(role)→Style`/`role(name)→Theme[K]`/`size` | none — paint API |
 | `packages/ui/src/view/types.ts` | `ViewState`, `DrawContext`, `ThemeRoleName=keyof Theme`, `DispatchEvent`/`AppEvent`/`CommandEvent` | **add `emit(command, arg?)` to `DispatchEvent`** (PA-1) |
 | `packages/ui/src/event/dispatch.ts` | 3-phase dispatch; `RouteContext` (`:31`) carries `emitCommand`; built-in Tab (`:103-109`); focus-on-click (`hit-test.ts:146`) | **populate `ev.emit` from `RouteContext.emitCommand`** when building the envelope (PA-1) |
-| `packages/ui/src/event/focus.ts` | `isFocusable = visible && !disabled && focusable && noBlockingAncestor` (`:54`); Tab wrap | none — controls set `focusable = true` |
+| `packages/ui/src/event/focus.ts` | `isFocusable = visible && !disabled && focusable && noBlockingAncestor` (`:54`); Tab wrap; `focusLeaf` flips the plain `state.focused` + invalidates only that view (`:99-109`) | **poke the per-view focus-change signal** in `focusLeaf` (PF-009) — additive; controls also set `focusable = true` |
+| `packages/ui/src/view/view.ts` (focus signal) | `state.focused` is a plain field; `bind` only re-fires on signal reads (`:120`) | **add the lazy `focusSignal()`** for cross-view focus reactivity (PF-009) |
 | `packages/ui/src/event/commands.ts` | `CommandRegistry.emit/enable/isEnabled` | none — reached via `ev.emit` |
 | `packages/core/src/engine/color/theme.ts` | `Theme`/`defaultTheme`; has `button`(`0x20` black/green), `buttonFocused`(`0x2F` white/green), `dialog`, `statusBar`, etc. | **add the new control roles** (PA-5); reuse `button`/`buttonFocused` |
 | `packages/ui/src/index.ts` | explicit named re-exports per subsystem | **add `controls/` re-exports** (PA-4) |
@@ -72,6 +76,12 @@ here (a recon hand-decode was wrong — proving the source-as-oracle rule).
 **Current:** only chrome (menu/status) gets an injected emit seam; a `Button` in a user `Window` cannot
 emit. **Required:** a focused control emits a typed command. **Fix:** the additive `ev.emit` primitive
 (PA-1, 03-01).
+
+### Gap 2b: focus is not cross-view observable
+**Current:** `state.focused` is a plain field; the focus manager invalidates only the focus-flipping view,
+and `bind` won't subscribe to a plain field. **Required:** `Label` repaints on its **link's** focus change
+and `Input` validates on its **own** focus-loss. **Fix:** the additive per-view focus-change signal
+(PF-009, 03-01/A2) poked by `focusLeaf`.
 
 ### Gap 3: no control theme roles
 **Current:** `Theme` has `button`/`buttonFocused`/`dialog` but no `input`/`label`/`cluster`/`staticText`
