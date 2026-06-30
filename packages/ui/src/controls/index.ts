@@ -12,3 +12,5 @@
  */
 export { Text } from './text.js';
 export { Label } from './label.js';
+export { Button } from './button.js';
+export type { ButtonOptions } from './button.js';

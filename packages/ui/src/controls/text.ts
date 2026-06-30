@@ -7,25 +7,9 @@
  * view. Center/right alignment (TV's leading `0x03`) and the hardware caret are out of v1 (PA-14;
  * DEF-18). The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
-import { charWidth } from '@jsvision/core';
-import type { WidthMode } from '@jsvision/core';
 import { View } from '../view/index.js';
 import type { DrawContext } from '../view/index.js';
-
-/** Width-resolution mode — matches `ScreenBuffer`/`DrawContext` so wrap math agrees with the buffer. */
-const WIDTH_MODE: WidthMode = 'wcwidth';
-
-/** Display width of a single glyph (wide CJK/emoji = 2, zero-width = 0). */
-function glyphWidth(ch: string): number {
-  return charWidth(ch.codePointAt(0) ?? 0, WIDTH_MODE);
-}
-
-/** Display width of a string, summed over its glyphs. */
-function stringWidth(s: string): number {
-  let w = 0;
-  for (const ch of s) w += glyphWidth(ch);
-  return w;
-}
+import { glyphWidth, stringWidth } from './measure.js';
 
 /**
  * Greedy word-wrap to `width` display columns, faithful to `TStaticText::draw` (`tstatict.cpp:74-88`):
