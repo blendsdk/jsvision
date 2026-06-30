@@ -24,6 +24,12 @@ export class Group extends View {
   readonly children: View[] = [];
   /** Optional background theme role filled before children compose (AR-38). */
   background?: ThemeRoleName;
+  /**
+   * @internal The focused child in this group's local order; `null` until focus enters this group.
+   * The RD-04 focus manager maintains it; the root→leaf path of `current` pointers is the global
+   * focus chain (AR-48).
+   */
+  current: View | null = null;
 
   /** Reactive child producers registered via {@link addDynamic} (started at mount). */
   private readonly dynamicProducers: DynamicProducer[] = [];

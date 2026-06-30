@@ -18,6 +18,8 @@ export { Group } from './group.js';
 export { intersect, translate, contains } from './geometry.js';
 export type { Point } from './geometry.js';
 export type { ViewState, DrawContext, ThemeRoleName, RenderRootOptions } from './types.js';
+// RD-04 event-handler contract types (declared here to avoid a view/↔event/ cycle, PA-8).
+export type { CommandEvent, AppEvent, DispatchEvent } from './types.js';
 // Internal paint seams (used by the Phase-5 render root + tests): the clipped DrawContext factory
 // and the theme-role→Style adapter. Not part of the curated `@jsvision/ui` public surface.
 export { makeDrawContext } from './draw-context.js';

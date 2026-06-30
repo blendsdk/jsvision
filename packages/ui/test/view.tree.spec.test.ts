@@ -91,7 +91,9 @@ test('ST-15: View.onEvent exists, is overridable, and changes no state in RD-03'
   expect(typeof v.onEvent).toBe('function');
 
   const stateBefore = { ...v.state };
-  v.onEvent({ type: 'key', value: 'x' }); // the stub must not dispatch or mutate state
+  // PF-008: the RD-04 onEvent retype narrows the base param to `DispatchEvent`, so this direct call
+  // is type-adapted to a valid envelope. The oracle (the stub mutates no state) is preserved.
+  v.onEvent({ event: { type: 'key', key: 'x', ctrl: false, alt: false, shift: false }, handled: false });
   expect({ ...v.state }).toEqual(stateBefore);
 
   // Overridable by a subclass (the custom-widget escape hatch).
