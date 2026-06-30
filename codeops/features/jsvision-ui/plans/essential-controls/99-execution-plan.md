@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-01
-> **Progress**: 15/24 tasks (63%) — Phases 1–4 (Foundation, Text+Label, Button, Validators) complete
+> **Progress**: 18/24 tasks (75%) — Phases 1–5 (Foundation, Text+Label, Button, Validators, Input) complete
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -76,11 +76,11 @@ roles change — ui resolves core from `dist/`).
 
 ## Phase 5 — Input  (03-05 · AC-4/AC-5 · PA-2/PA-11)
 ### 5.1 Spec (→ RED)
-- [ ] **5.1.1** `controls.input.spec` (ST-08 edit+two-way+maxLength+`inputSelected`; ST-09 live filter-reject + `◄`/`►` scroll + `valid()`/`invalid` no-trap). Cite `tinputli.cpp`. **RED**.
+- [x] **5.1.1** `controls.input.spec` (ST-08 edit+two-way+maxLength+`inputSelected`; ST-09 live filter-reject + `◄`/`►` scroll + `valid()`/`invalid` no-trap). Cite `tinputli.cpp`. **RED**. _(2026-07-01)_
 ### 5.2 Implementation (→ GREEN)
-- [ ] **5.2.1** Implement `Input` (cursor/`firstPos` scroll/arrows/`maxLength`/two-way `value`/validator hook/`valid()`). ST-08/09 GREEN. (scope `controls`)
+- [x] **5.2.1** Implement `Input` (cursor/`firstPos` scroll/arrows/`maxLength`/two-way `value`/validator hook/`valid()`). ST-08/09 GREEN. (scope `controls`) _(2026-07-01 — TV geometry: text@col1 width `size.x-1`, `firstPos` adjust `tinputli.cpp:460-465`; blur-validate via PF-009 focus signal)_
 ### 5.3 Impl tests
-- [ ] **5.3.1** Impl: scroll-keeps-cursor math; click-to-position; arrow-click scroll; no-validator path. Verify.
+- [x] **5.3.1** Impl: scroll-keeps-cursor math; click-to-position; arrow-click scroll; no-validator path. Verify. _(2026-07-01 — `yarn verify` 8/8 green)_
 
 ## Phase 6 — Clusters  (03-06 · AC-6/AC-7 · PA-3/PA-6/PA-9)
 ### 6.1 Spec (→ RED)
@@ -126,9 +126,9 @@ roles change — ui resolves core from `dist/`).
 - [x] 4.2.1 validators _(2026-07-01)_
 - [x] 4.3.1 impl tests + verify _(2026-07-01)_
 ### Phase 5 — Input
-- [ ] 5.1.1 Spec RED (ST-08/09)
-- [ ] 5.2.1 `Input`
-- [ ] 5.3.1 impl tests + verify
+- [x] 5.1.1 Spec RED (ST-08/09) _(2026-07-01)_
+- [x] 5.2.1 `Input` _(2026-07-01)_
+- [x] 5.3.1 impl tests + verify _(2026-07-01)_
 ### Phase 6 — Clusters
 - [ ] 6.1.1 Spec RED (ST-10/11)
 - [ ] 6.2.1 `Cluster` base · 6.2.2 `CheckGroup`/`RadioGroup`

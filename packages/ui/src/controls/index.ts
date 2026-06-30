@@ -14,5 +14,7 @@ export { Text } from './text.js';
 export { Label } from './label.js';
 export { Button } from './button.js';
 export type { ButtonOptions } from './button.js';
+export { Input } from './input.js';
+export type { InputOptions } from './input.js';
 export { filter, range, lookup } from './validators/index.js';
 export type { Validator } from './validators/index.js';
