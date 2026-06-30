@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-01
-> **Progress**: 9/24 tasks (38%) — Phases 1–2 (Foundation, Text+Label) complete
+> **Progress**: 12/24 tasks (50%) — Phases 1–3 (Foundation, Text+Label, Button) complete
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -60,11 +60,11 @@ roles change — ui resolves core from `dist/`).
 
 ## Phase 3 — Button  (03-03 · AC-3 · PA-1/PA-7/PA-8)
 ### 3.1 Spec (→ RED)
-- [ ] **3.1.1** `controls.button.spec` (ST-05 draw+shadow+state roles; ST-06 activate via click/Space/Alt-O/default-Enter + disabled inert). Cite `tbutton.cpp`. **RED**.
+- [x] **3.1.1** `controls.button.spec` (ST-05 draw+shadow+state roles; ST-06 activate via click/Space/Alt-O/default-Enter + disabled inert). Cite `tbutton.cpp`. **RED**. _(2026-07-01)_
 ### 3.2 Implementation (→ GREEN)
-- [ ] **3.2.1** Implement `Button` (`[ text ]` + `▄`/`█`/`▀` shadow, state→role, `Space`/`Alt-hotkey`, default-`Enter` postProcess, `ev.emit`+`onClick`, disabled). ST-05/06 GREEN. (scope `controls`)
+- [x] **3.2.1** Implement `Button` (`[ text ]` + `▄`/`█`/`▀` shadow, state→role, `Space`/`Alt-hotkey`, default-`Enter` postProcess, `ev.emit`+`onClick`, disabled). ST-05/06 GREEN. (scope `controls`) _(2026-07-01 — shared `measure.ts` width helper extracted; shadow uses the `shadow` role per 03-03)_
 ### 3.3 Impl tests
-- [ ] **3.3.1** Impl: release-outside cancels; both `command`+`onClick` fire; non-default ignores Enter; reactive disabled. Verify.
+- [x] **3.3.1** Impl: release-outside cancels; both `command`+`onClick` fire; non-default ignores Enter; reactive disabled. Verify. _(2026-07-01 — `yarn verify` 8/8 green)_
 
 ## Phase 4 — Validators  (03-04 · AC-5 · PA-12)
 ### 4.1 Spec (→ RED)
@@ -118,9 +118,9 @@ roles change — ui resolves core from `dist/`).
 - [x] 2.2.1 `Text` · 2.2.2 `Label` _(2026-07-01)_
 - [x] 2.3.1 impl tests + verify _(2026-07-01)_
 ### Phase 3 — Button
-- [ ] 3.1.1 Spec RED (ST-05/06)
-- [ ] 3.2.1 `Button`
-- [ ] 3.3.1 impl tests + verify
+- [x] 3.1.1 Spec RED (ST-05/06) _(2026-07-01)_
+- [x] 3.2.1 `Button` _(2026-07-01)_
+- [x] 3.3.1 impl tests + verify _(2026-07-01)_
 ### Phase 4 — Validators
 - [ ] 4.1.1 Spec RED (ST-07)
 - [ ] 4.2.1 validators
