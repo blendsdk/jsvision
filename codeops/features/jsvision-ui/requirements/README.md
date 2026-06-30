@@ -1,7 +1,7 @@
 # jsvision UI — Requirements Documents
 
 > **Project**: `@jsvision/ui` — a reimagined Turbo Vision-style widget framework for terminal (TUI) applications in TypeScript, built on the `@jsvision/core` engine.
-> **Status**: Draft (RD-01/RD-02/RD-03/RD-04 shipped, RD-05 drafted; RD-06…RD-09 in backlog — see the roadmap)
+> **Status**: Draft (RD-01…RD-05 shipped; RD-10 — TV behavioral-fidelity completion — drafted; RD-06…RD-09 widget tiers in backlog — see the roadmap)
 > **Created**: 2026-06-29
 > **Architecture**: TypeScript (ESM-only, NodeNext, `strict`), zero runtime dependencies; the **disciplined hybrid** model — a retained widget tree with fine-grained signal reactivity (no virtual DOM). Lives in `packages/ui/`.
 > **CodeOps Skills Version**: 2.0.0
@@ -57,6 +57,7 @@ map and the programming-model decision.
 | **RD-04** | [Event loop + focus + modality + commands](RD-04-event-loop.md) | The host-agnostic dispatch mechanism: `EventLoop` with pure `dispatch(event)`, faithful 3-phase dispatch, the per-group `current` focus chain (Tab/click), top-most-first mouse hit-testing, a typed command layer (registry + key→command keymap), and async modality (`execView`/`endModal`). Drives RD-03's `RenderRoot` one frame per input tick. Concrete `Application`/`run()`/shell → RD-05 | RD-03 (RD-01, RD-02) |
 | **RD-05** | [App shell](RD-05-app-shell.md) | The integration keystone: `Application`/`run()` (real `createHost` ↔ `dispatch` wiring + lifecycle, quit→exit code, guaranteed restore), the `Desktop` window manager (z-order raise · drag · free-resize · zoom · cascade/tile · Alt-N), `Window`/`Frame` (chrome + active/inactive theming), full nested `MenuBar`/`MenuPopup`, and a static `StatusLine`. Composes RD-04's `EventLoop`. `ScrollBar`/`Scroller` + leaf controls → RD-06 | RD-04 (RD-01, RD-02, RD-03) |
 | RD-06…RD-09 | *(backlog — see roadmap)* | Essential controls (+ ScrollBar/Scroller), high-value controls, editor, files package | per phase |
+| **RD-10** | [TV behavioral fidelity](RD-10-tv-behavioral-fidelity.md) | Completes RD-05's TV fidelity for the four **behaviors** the drawing pass (`1caa188`) deferred: status-line press-feedback + emit-on-release, TV-exact cascade + tile geometry (supersedes AR-87), and the functional left-grow resize gesture. Behavior-only; one additive `statusSelected` core role | RD-05 |
 
 ## Dependency Graph
 
@@ -98,6 +99,7 @@ without re-shaping it.
 | **0 — Spine pillars** | RD-01 (reactive core), RD-02 (layout engine) | The two UI-independent pillars; either can go first. |
 | **0 — Spine** | RD-03…RD-05 | View/Group, event loop/focus/modality, app shell. |
 | **1+ — Widgets** | RD-06… | Controls, then high-value, then editor/files. |
+| **Fidelity** | RD-10 | Behavior-only completion of RD-05's TV fidelity; independent of the widget tiers — may run before or after RD-06+. |
 
 (Full phasing in the [roadmap](../plans/00-roadmap.md) and [component map](../plans/tui-ui/01-component-map.md).)
 

@@ -3,8 +3,8 @@
 > **Feature-Set**: jsvision UI
 > **Status**: In Progress
 > **Created**: 2026-06-29
-> **Last Updated**: 2026-06-30 (RD-05 app-shell — exec_plan complete, Done)
-> **Progress**: 5 / 9 done (RD-01 ✅, RD-02 ✅, RD-03 ✅, RD-04 ✅, RD-05 ✅)
+> **Last Updated**: 2026-06-30 (TV drawing-fidelity pass shipped `1caa188`; RD-10 TV behavioral-fidelity drafted)
+> **Progress**: 5 / 10 done (RD-01 ✅, RD-02 ✅, RD-03 ✅, RD-04 ✅, RD-05 ✅)
 > **CodeOps Skills Version**: 2.0.0
 
 The `@jsvision/ui` layer — a reimagined Turbo Vision widget framework on
@@ -34,6 +34,7 @@ foundation RDs of the same number.
 | RD-07 | High-value controls | — | — | Backlog | ⬜ | 2026-06-29 | Phase 2. History/Tree/ComboBox/Tabs/Table/Progress/Surface. Demo: **clone `tvdemo`** (north-star). |
 | RD-08 | Editor family | — | — | Backlog | ⬜ | 2026-06-29 | Phase 3 (XL gap-buffer). Editor/Memo/EditWindow/Indicator/Terminal. Demo: `tvedit`. |
 | RD-09 | Files package `@jsvision/files` | — | — | Backlog | ⬜ | 2026-06-29 | Phase R. Relocated fs-bound dialogs: FileDialog/FileList/DirList/ChDir. Demo: `tvdir`. |
+| RD-10 | TV behavioral fidelity — status press/release · cascade · tile · left-grow resize | [RD-10](requirements/RD-10-tv-behavioral-fidelity.md) | — | RD Drafted | ✏️ | 2026-06-30 | Fidelity. Completes RD-05's TV fidelity for the 4 **behaviors** the drawing pass (commit `1caa188`) deferred. **Drafted**: 5 user choices AR-88…AR-92 — status **emit-on-release** + green held-highlight (supersedes emit-on-press); **TV-exact cascade** (+1/+1, extend-to-corner) + **tile** (`mostEqualDivisors`/`dividerLoc`/`leftOver`, n=2 stacks) **superseding AR-87**; functional **left-grow resize** (`dmDragGrowLeft`); placed as RD-10 (RD-06…09 reserved for widgets). 11 AC; one additive core role (`statusSelected`). Independent of the widget tiers — may run before/after RD-06. |
 
 ## Notes
 
@@ -292,5 +293,28 @@ foundation RDs of the same number.
   green; full gate clean (`verify` 273 ui + core · `test:e2e` 8 core + examples · `check:deps` · `lint`);
   largest new file `menu/controller.ts` 332 lines. Runtime notes: menu `→`/`←` semantics + the
   `StatusLine.itemBoxes()` rename (avoided shadowing the inherited `View.layout` property).
-- **Recommended next:** **RD-06** (essential controls + validators — Text/Label/Button/Input/Check/
-  Radio/ListView/Dialog + `ScrollBar`/`Scroller`), or refresh techdocs/`/analyze_project` for RD-05.
+- **2026-06-30** — **TV drawing-fidelity pass shipped** (commit `1caa188`). Audited every existing
+  chrome component (desktop · window/frame · menu · status) against the original `magiblot/tvision`
+  source per the NON-NEGOTIABLE fidelity directive and corrected colors/glyphs/geometry/hotkeys to
+  match: the blue `cpBlueWindow` (white active / lightGray inactive frame on blue + brightGreen icon
+  accent), the steel `0x71` desktop (blue ░ on lightGray), red menu-bar/popup/status hotkeys (incl.
+  multi-char `~…~` runs via a new `tildeSegments`), the 2-column drop shadow (`shadowSize {2,1}`),
+  active-gated frame icons, off-by-one icon columns, both resize grips, and TV-faithful title
+  truncation. `yarn verify` (823 tests) + `lint` clean; 3 spec/impl oracles updated to the faithful
+  values. **Four behavioral items deferred** (status emit-on-release, cascade/tile geometry, left-grow
+  resize) → captured as **RD-10**.
+- **2026-06-30** — **RD-10 (TV behavioral fidelity) drafted** → stage `RD Drafted` ✏️.
+  `add_requirement` authored `requirements/RD-10-tv-behavioral-fidelity.md` + register **AR-88…AR-92**
+  (all user choices). Captures the four behaviors the drawing pass deferred: (1) status-line
+  press-feedback + **emit-on-release** (TV `drawSelect`, held item black-on-green, command on mouse-up
+  if still over the enabled item) — supersedes emit-on-press, re-adds the additive `statusSelected`
+  core role; (2) **TV-exact cascade** (+1col/+1row stagger, extend to the desktop corner); (3)
+  **TV-exact tile** (`mostEqualDivisors`/`dividerLoc`/`leftOver`, n=2 stacks) — (2)+(3) **supersede
+  AR-87**'s compact preset and rewrite the ST-11 oracle; (4) **functional left-grow resize**
+  (`dmDragGrowLeft`, the already-drawn bottom-left grip). Placed as **RD-10** (RD-06…09 reserved for
+  the widget tiers — AR-92); 11 AC; M complexity. README index + dependency note synced; cascaded to
+  the portfolio roadmap.
+- **Recommended next:** **RD-10** (TV behavioral-fidelity completion — small/M, finishes the
+  just-shipped drawing pass; `make_plan` → preflight → exec_plan) **or** **RD-06** (essential controls
+  + validators — Text/Label/Button/Input/Check/Radio/ListView/Dialog + `ScrollBar`/`Scroller`). RD-10
+  and RD-06 are independent.

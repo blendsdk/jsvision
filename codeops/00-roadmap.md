@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 5 ✅ Done (RD-01…RD-05) · 4 ⬜ Backlog | 5 / 9 done | 🔄 | 2026-06-30 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 5 ✅ Done (RD-01…RD-05) · 1 ✏️ RD Drafted (RD-10) · 4 ⬜ Backlog (RD-06…09) | 5 / 10 done | 🔄 | 2026-06-30 |
 
 ## Archived
 
@@ -23,6 +23,14 @@
 
 ## Notes
 
+- 2026-06-30: **RD-10 TV behavioral-fidelity drafted** → ✏️ RD Drafted ([RD-10](features/jsvision-ui/requirements/RD-10-tv-behavioral-fidelity.md)).
+  Follows the shipped TV **drawing**-fidelity pass (commit `1caa188` — desktop/window/menu/status colors,
+  glyphs, geometry, hotkeys corrected against `magiblot/tvision`; 823 tests + lint green). RD-10 captures
+  the four **behaviors** that pass deferred: status-line press-feedback + emit-on-release (supersedes
+  emit-on-press), TV-exact cascade + tile geometry (supersede AR-87), and the functional left-grow resize
+  gesture. 5 user choices AR-88…AR-92; 11 AC; one additive `statusSelected` core role; placed as RD-10
+  since RD-06…09 are reserved for the widget tiers. jsvision-ui now 5/10 (RD-10 drafted; RD-06 still next
+  for widgets — the two are independent). Cascaded from the **jsvision-ui** row.
 - 2026-06-30: **RD-05 app-shell complete** → ✅ Done (all 6 phases executed spec-first; 22 spec oracles
   ST-01…ST-22 + impl tests green; full gate clean — `yarn verify` 273 ui + core, `test:e2e` 8 core +
   examples shell-demo, `check:deps`, `lint`; largest new file `menu/controller.ts` 332 lines). Lands
