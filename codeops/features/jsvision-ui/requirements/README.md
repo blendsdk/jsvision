@@ -51,6 +51,7 @@ map and the programming-model decision.
 | # | Document | Description | Depends On |
 |---|----------|-------------|------------|
 | **AR** | [Ambiguity Register](00-ambiguity-register.md) | Zero-Ambiguity Gate decisions (audit trail) | — |
+| **DEF** | [Deferred-Items Register](DEFERRED.md) | Consolidated index of every deferred capability (DEF-NN) + its intended owner — the safety net so nothing is lost between RDs | — |
 | **RD-01** | [Reactive core](RD-01-reactive-core.md) | Signals, computeds, effects, ownership/disposal, `batch`/`untrack`, and the structural primitives `Show`/`For` | — |
 | **RD-02** | [Layout engine](RD-02-layout-engine.md) | Cell-native flex `row`/`col` engine: `fixed`/`fr`/`auto` sizing, `justify`/`align`, `gap`/`padding`; a pure `layout(boxTree, viewport) → rects` pass on the apportionment spike (ADR-008) | — (ADR-008) |
 | **RD-03** | [View/Group spine](RD-03-view-group-spine.md) | Retained `View`/`Group` tree, stateless clipped `DrawContext`, theme-role resolution; closes the reactive seam (per-view scope + `bind` + coalescing scheduler) and owns the layout reflow pass. Logic-deferred `onEvent`/focus → RD-04 | RD-01, RD-02 |

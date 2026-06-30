@@ -348,6 +348,11 @@ foundation RDs of the same number.
   (AR-96) — recorded in RD-06's "Deferred (tracked)" table + the RD-07 row. 13 AC; new
   `packages/ui/src/controls/` subsystem. README index + dependency graph synced; cascaded to the
   portfolio roadmap.
+- **2026-06-30** — **Consolidated deferred-items register added** ([`requirements/DEFERRED.md`](requirements/DEFERRED.md)).
+  A single feature-wide index (`DEF-01…DEF-15` + whole-RD scope + non-goals + a foundation cross-ref) so
+  no intentionally-deferred capability is lost between RDs — swept from every per-RD Won't-Have/Deferred
+  table (RD-01…RD-06, RD-10). Amends AR-99 (per-RD tables stay authoritative; this aggregates them). Each
+  future `add_requirement` appends its deferrals here and flips absorbed items to `→ <RD>`.
 - **Recommended next:** **`make_plan RD-06`** — author the spec-first implementation plan (per control:
   read its TV source → spec oracles RED → implement → GREEN → impl tests); optionally `preflight` first.
   RD-11 is authored via a follow-up `add_requirement` once RD-06's control shape is settled.
