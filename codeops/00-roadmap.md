@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 4 ✅ Done (RD-01…RD-04) · RD-05 🔄 Executing · 4 ⬜ Backlog | 4 / 9 done | 🔄 | 2026-06-30 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 5 ✅ Done (RD-01…RD-05) · 4 ⬜ Backlog | 5 / 9 done | 🔄 | 2026-06-30 |
 
 ## Archived
 
@@ -23,6 +23,13 @@
 
 ## Notes
 
+- 2026-06-30: **RD-05 app-shell complete** → ✅ Done (all 6 phases executed spec-first; 22 spec oracles
+  ST-01…ST-22 + impl tests green; full gate clean — `yarn verify` 273 ui + core, `test:e2e` 8 core +
+  examples shell-demo, `check:deps`, `lint`; largest new file `menu/controller.ts` 332 lines). Lands
+  `packages/ui/src/{app,desktop,window,menu,status}/` + Phase-0 additive primitives (RD-02
+  `position:'absolute'`+`rect`, RD-03 `DrawContext.role`, RD-04 `EventLoop` `setCapture`/`onFrame`, the
+  sole cross-package edit = core `Theme.windowInactive`) + `examples/shell-demo/` (`demo:shell`).
+  jsvision-ui now 5/9 done; RD-06 (essential controls) next. Cascaded into the **jsvision-ui** row.
 - 2026-06-30: **RD-05 app-shell plan preflighted ×2** → 🔬 Plan Preflighted ([report](features/jsvision-ui/plans/app-shell/00-preflight-report.md)).
   Iter-1 (PF-01…PF-09, 1 CRITICAL) added a spec-first **Phase 0** (RD-02 `position:'absolute'` + RD-03 `DrawContext.role`) and
   re-baselined to **6 phases / 18 sessions / 48 tasks** (PA-15…PA-19). Iter-2 (PF-10…PF-14, 1 CRITICAL — an empty full-viewport

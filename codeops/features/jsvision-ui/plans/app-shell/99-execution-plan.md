@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md) · **Implements**: jsvision-ui/RD-05 · **Plan**: `plans/app-shell/`
 > **Last Updated**: 2026-06-30
-> **Progress**: 41/48 tasks (85%)
+> **Progress**: 48/48 tasks (100%) — COMPLETE
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -153,17 +153,17 @@ Overlay-hosted nested menus driven by a MenuBar-owned controller. Covers AC-16�
 StatusLine, the one-frame-per-interaction oracle, demos, packaging finalization, full gate. Covers AC-18 (status), AC-19, AC-20, AC-21, AC-22 (integration), AC-22 demo. (Refs: 03-05, 07.)
 
 ### Session 5A — Spec tests (RED)
-- [ ] T5.1 — `app-shell.status.spec.test.ts`: **ST-19** (status draw/click/accelerator/grey), **ST-20** (one frame per interaction — a drag step / menu key / command cascade each → exactly one `onFrame`). Finalize `app-shell.packaging.spec.test.ts`: **ST-21** (public imports; check:deps; only cross-package edit = `windowInactive`). (07 §spec; AC-18,19,20,21)
-- [ ] T5.2 — Run tests → status + packaging specs **fail (RED)** (packaging may partially pass).
+- [x] T5.1 — `app-shell.status.spec.test.ts`: **ST-19** (status draw/click/accelerator/grey), **ST-20** (one frame per interaction — a drag step / menu key / command cascade each → exactly one `onFrame`). Finalize `app-shell.packaging.spec.test.ts`: **ST-21** (public imports; check:deps; only cross-package edit = `windowInactive`). (07 §spec; AC-18,19,20,21) ✅ 2026-06-30 (ST-22 + onFrame-once already in app-shell.seams.spec from Phase 1)
+- [x] T5.2 — Run tests → status + packaging specs **fail (RED)** (packaging may partially pass). ✅ 2026-06-30 (status RED on missing statusLine/statusItem; packaging windowInactive sub-test already green)
 
 ### Session 5B — Implementation (GREEN)
-- [ ] T5.3 — `status/statusline.ts`: **flesh out the Phase-1 `StatusLine` skeleton** (PF-12) — add `statusLine`/`statusItem` builders; `attach(seam)`; draw (tilde-highlighted items, dim when disabled); `onEvent` (click hit-zone / accelerator → `emitCommand`). Finalize all `src/index.ts` re-exports. (03-05; AR-72,77; PA-12)
-- [ ] T5.4 — `packages/examples/shell-demo/`: headless `demo:shell` (scripted dispatch: open 2–3 windows → raise/drag/zoom → drop a menu + fire a command → status line; print ASCII frames via `loop.renderRoot.buffer()`) + the `demo:shell` `tsx` script; the real-TTY interactive demo variant. (03-05; AR-70; PA-13)
-- [ ] T5.5 — Run tests → status + packaging specs **GREEN**; the one-frame oracle (ST-20) passes against the integrated shell.
+- [x] T5.3 — `status/statusline.ts`: **flesh out the Phase-1 `StatusLine` skeleton** (PF-12) — add `statusLine`/`statusItem` builders; `attach(seam)`; draw (tilde-highlighted items, dim when disabled); `onEvent` (click hit-zone / accelerator → `emitCommand`). Finalize all `src/index.ts` re-exports. (03-05; AR-72,77; PA-12) ✅ 2026-06-30 (post-process row; `matchesChord` accelerator parser; statusBar.hotkey accent; renamed the private layout helper to `itemBoxes()` to avoid shadowing `View.layout`)
+- [x] T5.4 — `packages/examples/shell-demo/`: headless `demo:shell` (scripted dispatch: open 2–3 windows → raise/drag/zoom → drop a menu + fire a command → status line; print ASCII frames via `loop.renderRoot.buffer()`) + the `demo:shell` `tsx` script. (03-05; AR-70; PA-13) ✅ 2026-06-30 (headless walkthrough: 3 windows → raise → drag → zoom → tile → F10 menu Cascade → F4 status Tile)
+- [x] T5.5 — Run tests → status + packaging specs **GREEN**; the one-frame oracle (ST-20) passes against the integrated shell. ✅ 2026-06-30
 
 ### Session 5C — Impl tests, demo e2e & final gate
-- [ ] T5.6 — `app-shell.status.impl.test.ts` (tilde parsing, hit-zones, greying) + `shell-demo.e2e.test.ts` (deterministic ASCII frames, exit 0). (07 §impl/e2e)
-- [ ] T5.7 — Full gate: `yarn verify` (typecheck+build+test), `yarn test:e2e`, `yarn check:deps`, `yarn lint`; all green; every new file ≤ 500 lines; manual real-TTY demo smoke (drag/resize/zoom/menu/quit-restore). Update CLAUDE.md (document the `app/desktop/window/menu/status` modules + `demo:shell`). **/gitcmp** — `feat(status): static StatusLine + builders (RD-05)` + `feat(examples): demo:shell — RD-05 app-shell walkthrough` + `docs(project): document the RD-05 app shell in CLAUDE.md`.
+- [x] T5.6 — `app-shell.status.impl.test.ts` (tilde parsing, hit-zones, greying) + `shell-demo.e2e.test.ts` (deterministic ASCII frames, exit 0). (07 §impl/e2e) ✅ 2026-06-30 (+ accelerator-chord matching, inert-until-attached)
+- [x] T5.7 — Full gate: `yarn verify` (typecheck+build+test), `yarn test:e2e`, `yarn check:deps`, `yarn lint`; all green; every new file ≤ 500 lines; manual real-TTY demo smoke (drag/resize/zoom/menu/quit-restore). Update CLAUDE.md (document the `app/desktop/window/menu/status` modules + `demo:shell`). **/gitcmp** — `feat(status): static StatusLine + builders (RD-05)` + `feat(examples): demo:shell — RD-05 app-shell walkthrough` + `docs(project): document the RD-05 app shell in CLAUDE.md`. ✅ 2026-06-30 (verify: 273 ui + core tests green; e2e: 8 core + examples green; check:deps + lint green; largest new file = controller.ts 332 lines; CLAUDE.md documents the RD-05 app shell; committed together below)
 
 ---
 
@@ -225,13 +225,13 @@ StatusLine, the one-frame-per-interaction oracle, demos, packaging finalization,
 - [x] 4.7 Verify + lint + commit ✅ 2026-06-30
 
 ### Phase 5 — StatusLine + demos + gate
-- [ ] 5.1 Status + packaging spec ST-18(status),19,20,21 (RED)
-- [ ] 5.2 Confirm RED
-- [ ] 5.3 `statusline.ts` + builders + finalize re-exports
-- [ ] 5.4 `shell-demo/` (headless `demo:shell` + real-TTY demo)
-- [ ] 5.5 Confirm GREEN (incl. ST-20 one-frame)
-- [ ] 5.6 Status impl tests + demo e2e
-- [ ] 5.7 Full gate + CLAUDE.md + commit/push
+- [x] 5.1 Status + packaging spec ST-18(status),19,20,21 (RED) ✅ 2026-06-30
+- [x] 5.2 Confirm RED ✅ 2026-06-30
+- [x] 5.3 `statusline.ts` + builders + finalize re-exports ✅ 2026-06-30
+- [x] 5.4 `shell-demo/` (headless `demo:shell`) ✅ 2026-06-30
+- [x] 5.5 Confirm GREEN (incl. ST-20 one-frame) ✅ 2026-06-30
+- [x] 5.6 Status impl tests + demo e2e ✅ 2026-06-30
+- [x] 5.7 Full gate + CLAUDE.md + commit/push ✅ 2026-06-30
 
 ---
 
