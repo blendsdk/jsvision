@@ -13,9 +13,32 @@
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import type { CapabilityProfile } from '@jsvision/core';
-import { createApplication, Window, menuBar, subMenu, item, statusLine, statusItem, Commands } from '@jsvision/ui';
-import type { Application } from '@jsvision/ui';
+import {
+  createApplication,
+  View,
+  Window,
+  menuBar,
+  subMenu,
+  item,
+  statusLine,
+  statusItem,
+  Commands,
+} from '@jsvision/ui';
+import type { Application, DrawContext, Size2D } from '@jsvision/ui';
 import { FakeRuntime, CaptureStream, FakeInput } from './app-shell-host-doubles.js';
+
+/** A leaf that fills a window's interior — a stub-handler content view (does not handle clicks). */
+class Filler extends View {
+  constructor(private readonly ch: string) {
+    super();
+  }
+  override measure(available: Size2D): Size2D {
+    return available;
+  }
+  draw(ctx: DrawContext): void {
+    ctx.fill(this.ch);
+  }
+}
 
 const encoder = new TextEncoder();
 /** Encode an escape-sequence string to the raw bytes the host decodes. */
@@ -77,12 +100,14 @@ function setup(): Harness {
     viewport: { width: 60, height: 20 },
   });
 
-  // Two non-overlapping windows; the second (added last) is active/top.
+  // Two non-overlapping windows, each with a filling content child; the second (added last) is active.
   const w1 = new Window('One');
   w1.layout.rect = { x: 2, y: 2, width: 24, height: 6 };
+  w1.add(new Filler('.'));
   app.desktop.addWindow(w1);
   const w2 = new Window('Two');
   w2.layout.rect = { x: 30, y: 2, width: 24, height: 6 };
+  w2.add(new Filler('.'));
   app.desktop.addWindow(w2);
 
   return { app, input, output, runtime, w1, w2 };
@@ -143,6 +168,18 @@ test('a real SGR mouse-down raises the clicked background window', async () => {
     // interior is around absolute (10,6). SGR coords are 1-based → (11,7).
     input.feed(mouseDown(11, 7));
     expect(app.desktop.activeWindow()).toBe(w1); // raise-on-click via the real hit-test
+  });
+});
+
+test('clicking a window’s content (a stub-handler child), not just its border, raises it', async () => {
+  // The reported bug: a content click hit the child (stub onEvent) and never reached the Window, so
+  // only border clicks raised. The mouse-down must bubble from the content up to the Window.
+  await drive(({ app, input, w1, w2 }) => {
+    expect(app.desktop.activeWindow()).toBe(w2);
+
+    // Deep inside w1's interior content (well past its border): abs ~(12,6) → 1-based (13,7).
+    input.feed(mouseDown(13, 7));
+    expect(app.desktop.activeWindow()).toBe(w1); // content click bubbled to the Window → raised
   });
 });
 

@@ -137,11 +137,33 @@ export function hitTestRoute(ev: DispatchEvent, ctx: HitContext): void {
   const hit = topMost(scopeRoot, scopeRoot.bounds.x, scopeRoot.bounds.y, rootRect, x, y);
   if (hit === null) return; // empty space / outside modal → ignored no-op (PA-6)
 
-  if (inner.type === 'mouse' && inner.kind === 'down') focusOnClick(hit.view, ctx);
+  // A mouse-down focuses the nearest focusable ancestor (AC-8), then bubbles from the hit view up its
+  // ancestors until one consumes it (sets `handled`). This is what lets a click on a window's
+  // *content* (a stub-handler leaf) still reach the window's `onEvent` and raise it, exactly as a
+  // click on its border does. The walk is clamped to the dispatch scope (the modal subtree when a
+  // modal is active, PA-12) so a click can never leak to the outer tree. Other mouse kinds and wheel
+  // keep the top-most-only delivery (PF-007).
+  if (inner.type === 'mouse' && inner.kind === 'down') {
+    focusOnClick(hit.view, ctx);
+    let node: View | null = hit.view;
+    let ox = hit.absX; // absolute origin of `node`, walked up the chain (parent = child − child.bounds)
+    let oy = hit.absY;
+    while (node !== null) {
+      const envelope: DispatchEvent = { ...ev, local: { x: x - ox, y: y - oy } };
+      ctx.deliver(node, envelope);
+      if (envelope.handled) {
+        ev.handled = true; // carry the consumed flag back to the original envelope
+        break;
+      }
+      if (node === scopeRoot) break; // do not bubble past the dispatch scope (modal safety, PA-12)
+      ox -= node.bounds.x;
+      oy -= node.bounds.y;
+      node = node.parent;
+    }
+    return;
+  }
 
-  // PF-007: `{ ...ev, local }` is a NEW envelope (DispatchEvent.local is readonly). Mouse/wheel skip
-  // the 3-phase bubble, so nothing re-reads `handled` after delivery; if bubbling is ever added,
-  // carry `handled` back.
+  // Non-down mouse / wheel: deliver to the top-most hit view only (no bubble, PF-007).
   const local: Point = { x: x - hit.absX, y: y - hit.absY };
   ctx.deliver(hit.view, { ...ev, local });
 }
