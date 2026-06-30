@@ -22,6 +22,14 @@ function key(name: string, mods: Partial<KeyEvent> = {}): KeyEvent {
 function mouseDown(x: number, y: number): MouseEvent {
   return { type: 'mouse', kind: 'down', button: 0, x: x + 1, y: y + 1 };
 }
+function mouseUp(x: number, y: number): MouseEvent {
+  return { type: 'mouse', kind: 'up', button: 0, x: x + 1, y: y + 1 };
+}
+/** A full status click: press then release at the same cell (TV emits on release — RD-10 AR-88). */
+function click(app: { loop: { dispatch(ev: MouseEvent): void } }, x: number, y: number): void {
+  app.loop.dispatch(mouseDown(x, y));
+  app.loop.dispatch(mouseUp(x, y));
+}
 
 /** A post-process spy recording the command names routed to it. */
 class CommandSpy extends View {
@@ -56,16 +64,16 @@ test('each item hit-zone spans its pad cells; adjacent items abut; clicks past t
   // clickable parts of their item (`itemMouseIsIn` spans `[i, i+len+2)`).
   const { app, spy, y } = statusApp([statusItem('~F~ile', 'file'), statusItem('~E~dit', 'edit')]);
 
-  app.loop.dispatch(mouseDown(2, y)); // inside "File" text
+  click(app, 2, y); // press+release inside "File" text
   expect(spy.commands).toEqual(['file']);
 
-  app.loop.dispatch(mouseDown(8, y)); // inside "Edit" text
+  click(app, 8, y); // inside "Edit" text
   expect(spy.commands).toEqual(['file', 'edit']);
 
-  app.loop.dispatch(mouseDown(5, y)); // "File"'s trailing pad — still part of File's span (no gap)
+  click(app, 5, y); // "File"'s trailing pad — still part of File's span (no gap)
   expect(spy.commands).toEqual(['file', 'edit', 'file']);
 
-  app.loop.dispatch(mouseDown(30, y)); // far past the last item — no item there
+  click(app, 30, y); // far past the last item — release off all items emits nothing
   expect(spy.commands).toEqual(['file', 'edit', 'file']); // unchanged
 });
 
@@ -95,13 +103,37 @@ test('a disabled command is non-activatable via both click and accelerator', () 
   const { app, spy, y } = statusApp([statusItem('~H~elp', 'help', 'Alt+H')]);
   app.loop.enableCommand('help', false);
 
-  app.loop.dispatch(mouseDown(2, y)); // click the greyed item
+  click(app, 2, y); // full click on the greyed item
   app.loop.dispatch(key('h', { alt: true })); // its accelerator
   expect(spy.commands).toEqual([]); // neither path activates
 
   app.loop.enableCommand('help', true); // re-enable restores activation
   app.loop.dispatch(key('h', { alt: true }));
   expect(spy.commands).toEqual(['help']);
+});
+
+// --- Press feedback edge cases (RD-10 AR-88) -----------------------------------------------------
+
+test('a held disabled item paints cSelDisabled (darkGray on green) and emits nothing on release', () => {
+  const { app, spy, y } = statusApp([statusItem('~H~elp', 'help')]);
+  app.loop.enableCommand('help', false);
+
+  app.loop.dispatch(mouseDown(2, y)); // press the greyed item — TV still highlights it (cSelDisabled)
+  const buf = app.loop.renderRoot.buffer();
+  expect(buf.get(2, y)?.bg).toBe('#00aa00'); // green (selected bg)
+  expect(buf.get(2, y)?.fg).toBe('#555555'); // darkGray (disabled fg) — cSelDisabled
+
+  app.loop.dispatch(mouseUp(2, y));
+  expect(spy.commands).toEqual([]); // disabled ⇒ no emit
+});
+
+test('a bare press with no release holds the highlight and emits nothing', () => {
+  const { app, spy, y } = statusApp([statusItem('~H~elp', 'help')]);
+
+  app.loop.dispatch(mouseDown(2, y));
+  expect(spy.commands).toEqual([]); // TV emits on release, not press
+  const buf = app.loop.renderRoot.buffer();
+  expect(buf.get(2, y)?.bg).toBe('#00aa00'); // still highlighted while held
 });
 
 // --- Inert until attached ------------------------------------------------------------------------

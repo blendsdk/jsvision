@@ -48,6 +48,7 @@ test('ST-16: defaultTheme exposes the semantic roles', () => {
     'button',
     'buttonFocused',
     'statusBar',
+    'statusSelected',
     'shadow',
   ] as const) {
     expect(role in defaultTheme).toBeTruthy();
@@ -57,4 +58,10 @@ test('ST-16: defaultTheme exposes the semantic roles', () => {
   expect(defaultTheme.desktop.fg).toBe(PALETTE.blue);
   expect(defaultTheme.desktop.bg).toBe(PALETTE.lightGray);
   expect(defaultTheme.menuBar.bg).toBe(PALETTE.lightGray);
+  // RD-10 — the status-line pressed item (TV cSelect 0x20 / hotkey 0x24): black + red on green.
+  expect(defaultTheme.statusSelected).toStrictEqual({
+    fg: PALETTE.black,
+    bg: PALETTE.green,
+    hotkey: PALETTE.red,
+  });
 });
