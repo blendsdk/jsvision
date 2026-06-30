@@ -169,6 +169,14 @@ export function createApplication(opts: ApplicationOptions): Application {
     });
   }
 
+  // Wire the status line's loop seam for activation + greying (PA-7).
+  if (opts.statusLine !== undefined) {
+    opts.statusLine.attach({
+      emitCommand: (command, arg) => loop.emitCommand(command, arg),
+      isCommandEnabled: (command) => loop.isCommandEnabled(command),
+    });
+  }
+
   return {
     desktop,
     loop,
