@@ -3,8 +3,8 @@
 > **Feature-Set**: jsvision UI
 > **Status**: In Progress
 > **Created**: 2026-06-29
-> **Last Updated**: 2026-06-29
-> **Progress**: 3 / 9 done (RD-01 ✅, RD-02 ✅, RD-03 ✅) · RD-04 ⬜ Backlog next
+> **Last Updated**: 2026-06-30 (RD-04 plan preflighted)
+> **Progress**: 3 / 9 done (RD-01 ✅, RD-02 ✅, RD-03 ✅) · RD-04 🔬 Plan Preflighted (ready for exec_plan)
 > **CodeOps Skills Version**: 2.0.0
 
 The `@jsvision/ui` layer — a reimagined Turbo Vision widget framework on
@@ -28,7 +28,7 @@ foundation RDs of the same number.
 | RD-01 | Reactive core — `signal`/`computed`/`effect` + `Show`/`For` | [RD-01](../requirements/RD-01-reactive-core.md) | [reactive-core](reactive-core/00-index.md) | Done | ✅ | 2026-06-29 | Phase 0 pillar (XL). UI-independent; every widget property binds to it. **Shipped** in `packages/ui/src/reactive/` — 20 ST (ST-01…ST-20) + impl tests green (55 ui tests), `yarn verify`/`check:deps`/`lint` clean, all public symbols importable from `@jsvision/ui`, every file ≤ 500 lines w/ JSDoc. exec_plan complete (4 phases / 4 commits). |
 | RD-02 | Layout engine — cell-native flex `row`/`col` | [RD-02](../requirements/RD-02-layout-engine.md) | [layout-engine](layout-engine/00-index.md) | Done | ✅ | 2026-06-29 | Phase 0 pillar (XL). ADR-008 Accepted; built on the golden-tested `apportion`/`solveTrack` spike. **Complete**: all 4 phases / 18 spec oracles (ST-01…ST-18 ↔ AC-1…AC-18) + impl tests green. `layout(root, viewport) → parent-relative integer rects`: `row`/`col` via one axis abstraction, `fixed`/`fr`/`auto` sizing (`auto` pre-resolved via `naturalSize`), `justify`/`align`/`gap`/`padding`, overflow (extend past edge, `fr`→0), degenerate→zero rects, recursion in each box's local frame. Pure/no-mutation; `check:deps` clean; files ≤ 217 lines. Symbols re-exported from `@jsvision/ui`. |
 | RD-03 | View/Group spine + `DrawContext` + theming | [RD-03](../requirements/RD-03-view-group-spine.md) | [view-group-spine](view-group-spine/00-index.md) | Done | ✅ | 2026-06-29 | Phase 0 keystone (XL). Retained `View`/`Group` tree, stateless clipped `DrawContext`, theme-role resolution. Closes the reactive seam (per-view owner scope + `bind` + injectable coalescing scheduler, AR-09/AR-02) and owns the RD-02 reflow pass. Ships the **complete** `View` shape (onEvent stub + visible/disabled/focused); dispatch/focus **logic** deferred → RD-04. 20 AC; AR-30…AR-46. **Planned** ([plan](view-group-spine/00-index.md)): 7 phases / 21 sessions / ~29–41 h; PA-1…PA-8 + 2 additive primitives (RD-01 `runWithOwner`, core `ScreenBuffer.clone()`). **Plan preflighted** ([report](view-group-spine/00-preflight-report.md)): 1 MAJOR + 2 MINOR resolved, 1 OBSERVATION recorded. **Complete** ✅ — executed all 7 phases spec-first (RED→GREEN→impl) across 8 commits. Lands `packages/ui/src/view/` (geometry, types, theme-style, draw-context, view, group, reflow, render-root) + 2 additive primitives (`runWithOwner` on reactive, `ScreenBuffer.clone()` on core) + `demo:view`. 22 spec oracles (ST-01…ST-20 + ST-21/22) + impl tests green (ui 142 unit, +3 e2e); `yarn verify`/`check:deps`/`lint` clean; files ≤ 231 lines. Runtime decisions RT-1…RT-5 recorded. |
-| RD-04 | Event loop + focus + modality + commands | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0. Async pump, 3-phase dispatch, `await execView`. |
+| RD-04 | Event loop + focus + modality + commands | [RD-04](../requirements/RD-04-event-loop.md) | [event-loop](event-loop/00-index.md) | Plan Preflighted | 🔬 | 2026-06-30 | Phase 0. Host-agnostic dispatch **mechanism** (`EventLoop`/`createEventLoop`): pure `dispatch(event)`, faithful 3-phase (pre/focus/post), per-group `current` focus chain (Tab/click), top-most-first mouse hit-test, typed command layer (registry + key→command keymap), async `execView`/`endModal` modality; drives RD-03's `RenderRoot` one frame per tick. Concrete `Application`/`run()`/shell → RD-05. 20 AC; AR-47…AR-59 (8 user choices + 5 dominant). **RD preflighted** ([report](../requirements/00-preflight-report-RD-04.md)): 3 MAJOR + 4 MINOR + 1 OBSERVATION resolved (all Option A); recorded as AR-60…AR-66. **Planned** ([plan](event-loop/00-index.md)): 5 phases / 15 sessions / ~23–33 h; PA-1…PA-9 (4 user choices) + no cross-package primitive. 20 spec oracles (ST-01…ST-20 ↔ AC-1…AC-20). New `packages/ui/src/event/` (types/dispatch/commands/focus/hit-test/modal/event-loop) + additive `view.ts`/`group.ts` + `demo:events`. **Plan preflighted** ([report](event-loop/00-preflight-report.md)): 2 MAJOR + 3 MINOR + 2 OBSERVATION resolved — single `runTick` shared by every public mutator (PF-001/PA-11), Phase-2 focus-bubble clamped to the modal scope root (PF-002/PA-12), built-in `tab`/`shift+tab`→focus traversal (PF-003/PA-10), + ST-02-wiring/flush-counter/envelope-copy notes; 33 tasks. All `file:line` code claims verified against live source. |
 | RD-05 | App shell — Window/Frame/ScrollBar/Desktop/MenuBar/StatusLine | — | — | Backlog | ⬜ | 2026-06-29 | Phase 0 demo target: a blank windowed desktop + menu/status. |
 | RD-06 | Essential controls + validators | — | — | Backlog | ⬜ | 2026-06-29 | Phase 1. Text/Label/Button/Input/Check/Radio/ListView/Dialog. Demos: `mmenu`, `palette`, `tvforms`. |
 | RD-07 | High-value controls | — | — | Backlog | ⬜ | 2026-06-29 | Phase 2. History/Tree/ComboBox/Tabs/Table/Progress/Surface. Demo: **clone `tvdemo`** (north-star). |
@@ -174,7 +174,47 @@ foundation RDs of the same number.
   its scope setup so the wiring-reset `onCleanup` binds to the view's own scope, not an ambient
   reconcile effect (would have leaked dynamic children). Runtime decisions RT-1…RT-5 recorded in the
   plan's `00-ambiguity-register.md`.
-- **Recommended next:** **RD-04 (Event loop + focus + modality + commands)** — `add_requirement`
-  to draft the RD, then preflight → make_plan → exec_plan, the same path RD-01…RD-03 followed.
-  RD-04 extends the already-final `View` shape (implements `onEvent` dispatch, drives
-  `focused`/`disabled`, may inject its event-loop tick as the render root's scheduler).
+- **2026-06-29** — **RD-04 (Event loop + focus + modality + commands) drafted** → stage
+  `RD Drafted` ✏️. `add_requirement` authored `requirements/RD-04-event-loop.md` — the
+  host-agnostic dispatch **mechanism** that makes the RD-03 spine interactive. 8 design
+  decisions locked with the user (AR-47…AR-54): ships the dispatch mechanism (`EventLoop`),
+  deferring concrete `Application`/`run()`/shell to RD-05 (AR-47, mirrors the RD-03 boundary);
+  per-group `current` focus chain (AR-48); pure injectable `dispatch(event)`, host wiring
+  deferred (AR-49); top-most-first mouse hit-testing in RD-04 (AR-50); faithful 3-phase
+  pre/focus/post dispatch (AR-51); typed command layer — `CommandEvent` + registry +
+  key→command keymap (AR-52); modal stack + `endModal(result)` → `Promise` (AR-53); the loop
+  drives `RenderRoot` frames via the injected scheduler (AR-54). 5 dominant decisions recorded
+  (AR-55…AR-59): `EventLoop`/`createEventLoop` central object, additive `focusable` predicate,
+  Tab/Shift-Tab traversal, `onIdle`-only (broadcast/timers → RD-05), headless `demo:events`
+  vehicle. 20 acceptance criteria. README index + dependency graph synced.
+- **2026-06-29** — **RD-04 preflighted** → stage `RD Preflighted` 🔎. Codebase-grounded audit
+  ([report](../requirements/00-preflight-report-RD-04.md)) against the live `@jsvision/core`
+  input/host surfaces + RD-03 `View`/`RenderRoot` seams: 8 findings (3 MAJOR, 4 MINOR, 1 OBS),
+  all resolved Option A and applied to RD-04 (recorded AR-60…AR-66). Key corrections: the 3-phase
+  `handled` flag can't live on core's **readonly** `InputEvent` → a `DispatchEvent` envelope
+  (PF-401); "inject scheduler into the render root" was infeasible (construct-time/private seam) →
+  the loop now **builds** the `RenderRoot` (PF-402); the bespoke `'Ctrl-Q'` keymap duplicated/
+  conflicted with core's existing `createKeymap` (`'ctrl+q'`) → reuse it (PF-403); 1-based mouse
+  coords vs 0-based bounds (PF-404); dispatch-tick batch model (PF-405); `focusable` default-false +
+  subtree semantics (PF-406); injectable loop `logger` for AC-19 (PF-407).
+- **2026-06-30** — **RD-04 plan created** → stage `Plan Created` 📋. `make_plan` produced
+  [`plans/event-loop/`](event-loop/00-index.md): 5 phases / 15 sessions / ~23–33 h, spec-first
+  (ST-01…ST-20 ↔ AC-1…AC-20). Zero-Ambiguity Gate passed — 4 user choices (PA-1 keymap **consume**;
+  PA-2 additive `preProcess`/`postProcess` booleans; PA-3 unknown command **enabled by default**;
+  PA-4 **explicit-only** `endModal`, defaults → RD-05) + 5 dominant (PA-5…PA-9). Builds entirely on
+  the existing core + RD-03 surface — **no** cross-package primitive. New `packages/ui/src/event/`
+  (types · dispatch · commands · focus · hit-test · modal · event-loop) + additive `view.ts`/
+  `group.ts`/`view/types.ts` + `demo:events`.
+- **2026-06-30** — **RD-04 plan preflighted** → stage `Plan Preflighted` 🔬. Codebase-grounded audit
+  ([report](event-loop/00-preflight-report.md)) verified every `file:line` claim against live source
+  (View/Group/RenderRoot/geometry + core events/keymap) and re-derived the deferring-scheduler
+  frame-ownership mechanism as sound. **2 MAJOR + 3 MINOR + 2 OBSERVATION**, all resolved: **PF-001**
+  — a single internal `runTick` now drives every public mutator (not just `dispatch`/`resize`), so a
+  standalone `focusNext`/`emitCommand` paints and `emitCommand` actually drains (**PA-11**);
+  **PF-002** — the Phase-2 focused-chain bubble is clamped to the modal scope root so capture can't
+  leak to the outer tree (**PA-12**); **PF-003** — built-in `tab`/`shift+tab`→`focusNext`/`focusPrev`
+  (consumed; keymap-bound `tab` overrides), user-confirmed (**PA-10**); + ST-02 focus-wiring,
+  flush-counter, and `{...ev}` envelope-copy notes (PF-004/006/007); task denominator fixed 30→33
+  (PF-005). No CRITICAL; AC↔ST coverage complete 1:1.
+- **Recommended next:** **exec_plan** (`/codeops:exec_plan event-loop`) — execute the 5 phases
+  spec-first (RED → GREEN → impl), the same path RD-01…RD-03 followed.
