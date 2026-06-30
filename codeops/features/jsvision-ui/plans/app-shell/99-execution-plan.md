@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md) · **Implements**: jsvision-ui/RD-05 · **Plan**: `plans/app-shell/`
 > **Last Updated**: 2026-06-30
-> **Progress**: 7/48 tasks (15%)
+> **Progress**: 16/48 tasks (33%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -67,19 +67,19 @@ Additive core `windowInactive` role; additive loop `setCapture`/`releaseCapture`
 (capture), the AC-20 mechanism (one `onFrame` per flush), and seeds AC-21. (Refs: 03-05.)
 
 ### Session 1A — Spec tests (RED)
-- [ ] T1.1 — `packages/core/test/theme-windowinactive.spec.test.ts`: `defaultTheme.windowInactive` exists with `{fg,bg,border,title}`; `color('windowInactive')` resolves to a `Style`. (07 §spec; AC-15/21; PA-1)
-- [ ] T1.2 — `packages/ui/test/app-shell.seams.spec.test.ts`: **ST-22** (with a capture target set, a mouse move off the target still routes to the target, focus-on-click suppressed) + onFrame fires once per `flush`. (07 §spec; AC-22/20; PA-5,6)
-- [ ] T1.3 — Run `yarn test` → confirm the new specs **fail (RED)**; all RD-01…RD-04 + core suites stay green.
+- [x] T1.1 — `packages/core/test/theme-windowinactive.spec.test.ts`: `defaultTheme.windowInactive` exists with `{fg,bg,border,title}`; `color('windowInactive')` resolves to a `Style`. (07 §spec; AC-15/21; PA-1) ✅ 2026-06-30 (core `color()` doesn't exist → faithful core oracle: role shape + colors encode + distinct-from-active)
+- [x] T1.2 — `packages/ui/test/app-shell.seams.spec.test.ts`: **ST-22** (with a capture target set, a mouse move off the target still routes to the target, focus-on-click suppressed) + onFrame fires once per `flush`. (07 §spec; AC-22/20; PA-5,6) ✅ 2026-06-30
+- [x] T1.3 — Run `yarn test` → confirm the new specs **fail (RED)**; all RD-01…RD-04 + core suites stay green. ✅ 2026-06-30 (core 3 fail / ui 2 fail — exactly the new specs)
 
 ### Session 1B — Implementation (GREEN)
-- [ ] T1.4 — `packages/core/src/engine/color/theme.ts`: add the `windowInactive: ThemeRole & {border,title}` role + `defaultTheme.windowInactive`; CHANGELOG + README versioning note (additive, non-breaking). (03-05; AR-73; PA-1)
-- [ ] T1.5 — `packages/ui/src/event/types.ts`: add `setCapture`/`releaseCapture` **and a settable `onFrame?` member** to `EventLoop` (so `run()` can wire it after the host exists — PF-04/PA-18). `event/event-loop.ts`: capture state + the two methods + the mutable `onFrame` field; fire `this.onFrame?.(renderRoot.buffer())` at end of `runTick`, on `resize`, after `mount`. `event/hit-test.ts`: short-circuit to the capture target (target-local `ev.local`, focus-on-click suppressed). (03-05; AR-82,84; PA-5,6,18)
-- [ ] T1.6 — `packages/ui/src/status/commands.ts`: the `Commands` constants (`quit/close/zoom/next/prev/cascade/tile`). Create the `{app,desktop,window,menu,status}/` dirs and seed **minimal constructable class skeletons** so Phase 2's `createApplication` can compose + type them (PF-12): `desktop/desktop.ts` `Desktop extends Group` with only the `desktop`-pattern `draw()` override (`ctx.role('desktop').pattern`) + an `attachLoop(seam)` stub; `menu/menubar.ts` `MenuBar extends View` and `status/statusline.ts` `StatusLine extends View`, each with a no-op `draw()`. (Window stays Phase 3 — it isn't referenced by `createApplication`/ST-01.) Barrels + re-exports in `src/index.ts`. (03-05; AR-76,85; PA-11; PF-12)
-- [ ] T1.7 — Run tests → seam + theme specs **GREEN**; no RD-01…RD-04/core regressions.
+- [x] T1.4 — `packages/core/src/engine/color/theme.ts`: add the `windowInactive: ThemeRole & {border,title}` role + `defaultTheme.windowInactive`; CHANGELOG + README versioning note (additive, non-breaking). (03-05; AR-73; PA-1) ✅ 2026-06-30
+- [x] T1.5 — `packages/ui/src/event/types.ts`: add `setCapture`/`releaseCapture` **and a settable `onFrame?` member** to `EventLoop` (so `run()` can wire it after the host exists — PF-04/PA-18). `event/event-loop.ts`: capture state + the two methods + the mutable `onFrame` field; fire `this.onFrame?.(renderRoot.buffer())` at end of `runTick`, on `resize`, after `mount`. `event/hit-test.ts`: short-circuit to the capture target (target-local `ev.local`, focus-on-click suppressed). (03-05; AR-82,84; PA-5,6,18) ✅ 2026-06-30 (+ auto-release on modal open/close + target unmount)
+- [x] T1.6 — `packages/ui/src/status/commands.ts`: the `Commands` constants (`quit/close/zoom/next/prev/cascade/tile`). Create the `{app,desktop,window,menu,status}/` dirs and seed **minimal constructable class skeletons** so Phase 2's `createApplication` can compose + type them (PF-12): `desktop/desktop.ts` `Desktop extends Group` with only the `desktop`-pattern `draw()` override (`ctx.role('desktop').pattern`) + an `attachLoop(seam)` stub; `menu/menubar.ts` `MenuBar extends View` and `status/statusline.ts` `StatusLine extends View`, each with a no-op `draw()`. (Window stays Phase 3 — it isn't referenced by `createApplication`/ST-01.) Barrels + re-exports in `src/index.ts`. (03-05; AR-76,85; PA-11; PF-12) ✅ 2026-06-30 (runtime note: `desktop/menu/status/` created now with content; empty `app/`+`window/` dirs deferred to Phase 2/3 when their files land — avoids dead barrels, meets PF-12 intent)
+- [x] T1.7 — Run tests → seam + theme specs **GREEN**; no RD-01…RD-04/core regressions. ✅ 2026-06-30 (ui 210, core 482)
 
 ### Session 1C — Impl tests & hardening
-- [ ] T1.8 — `app-shell.seams.impl.test.ts`: capture release on modal open/close + on target unmount; `onFrame` after resize/mount; last-writer-wins `setCapture`; `releaseCapture` no-op. (07 §impl)
-- [ ] T1.9 — `yarn verify` + `lint` green; no file > 500 lines. **/gitcm** — `feat(color): additive windowInactive theme role (RD-05 AR-73)` + `feat(event): additive setCapture/releaseCapture + onFrame loop seams (RD-05 PF-001/PF-003)`.
+- [x] T1.8 — `app-shell.seams.impl.test.ts`: capture release on modal open/close + on target unmount; `onFrame` after resize/mount; last-writer-wins `setCapture`; `releaseCapture` no-op. (07 §impl) ✅ 2026-06-30 (6 impl tests; ui 216)
+- [x] T1.9 — `yarn verify` + `lint` green; no file > 500 lines. **/gitcm** — `feat(color): additive windowInactive theme role (RD-05 AR-73)` + `feat(event): additive setCapture/releaseCapture + onFrame loop seams (RD-05 PF-001/PF-003)`. ✅ 2026-06-30 (verify 8/8, lint + check:deps clean, files ≤ 250 lines; +`feat(app)` skeleton commit)
 
 ---
 
@@ -183,15 +183,15 @@ StatusLine, the one-frame-per-interaction oracle, demos, packaging finalization,
 - [x] 0.7 Verify + lint + commit ✅ 2026-06-30
 
 ### Phase 1 — Foundation
-- [ ] 1.1 Core theme-role spec (RED)
-- [ ] 1.2 Loop seams spec — ST-22 + onFrame (RED)
-- [ ] 1.3 Confirm RED
-- [ ] 1.4 `windowInactive` role + defaultTheme + CHANGELOG/README
-- [ ] 1.5 `setCapture`/`releaseCapture` + `onFrame` (types/event-loop/hit-test)
-- [ ] 1.6 `Commands` constants + dir skeleton + Desktop/MenuBar/StatusLine class skeletons (PF-12) + barrels
-- [ ] 1.7 Confirm GREEN
-- [ ] 1.8 Seams impl tests
-- [ ] 1.9 Verify + lint + commit
+- [x] 1.1 Core theme-role spec (RED) ✅ 2026-06-30
+- [x] 1.2 Loop seams spec — ST-22 + onFrame (RED) ✅ 2026-06-30
+- [x] 1.3 Confirm RED ✅ 2026-06-30
+- [x] 1.4 `windowInactive` role + defaultTheme + CHANGELOG/README ✅ 2026-06-30
+- [x] 1.5 `setCapture`/`releaseCapture` + `onFrame` (types/event-loop/hit-test) ✅ 2026-06-30
+- [x] 1.6 `Commands` constants + dir skeleton + Desktop/MenuBar/StatusLine class skeletons (PF-12) + barrels ✅ 2026-06-30
+- [x] 1.7 Confirm GREEN ✅ 2026-06-30
+- [x] 1.8 Seams impl tests ✅ 2026-06-30
+- [x] 1.9 Verify + lint + commit ✅ 2026-06-30
 
 ### Phase 2 — Application + run()
 - [ ] 2.1 Lifecycle spec ST-01…05 + fake runtime fixture (RED)
