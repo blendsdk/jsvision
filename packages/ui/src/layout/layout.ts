@@ -66,14 +66,22 @@ function layoutContainer(box: LayoutBox, size: Size2D, result: LayoutResult): vo
   const contentMain = mainOf(content, direction);
   const contentCross = crossOf(content, direction);
 
-  // Children are sized/measured against the container's content box.
+  // Children are sized/measured against the container's content box. Absolute children (PA-15) are
+  // removed from the flex flow: they consume no main-axis space and never shift flow siblings, so
+  // only the flow subset feeds `solveMainSizes`/`mainAxisOffsets`/`crossPlacement`.
   const childAvailable: Size2D = { width: content.width, height: content.height };
-  const mainSizes = solveMainSizes(box.children, contentMain, props, childAvailable);
+  const resolved = box.children.map((child) => ({ child, props: normalizeProps(child.props) }));
+  const flowChildren = resolved.filter((c) => c.props.position !== 'absolute').map((c) => c.child);
+  const mainSizes = solveMainSizes(flowChildren, contentMain, props, childAvailable);
   const mainOffsets = mainAxisOffsets(mainSizes, props.gap, contentMain, props.justify);
 
-  for (let i = 0; i < box.children.length; i++) {
-    const child = box.children[i];
-    const main = mainSizes[i];
+  let flowIndex = 0;
+  for (const { child, props: childProps } of resolved) {
+    if (childProps.position === 'absolute') {
+      placeAbsolute(child, childProps, content, result);
+      continue;
+    }
+    const main = mainSizes[flowIndex];
     const { size: cross, offset: crossOffset } = crossPlacement(
       child,
       childAvailable,
@@ -82,10 +90,29 @@ function layoutContainer(box: LayoutBox, size: Size2D, result: LayoutResult): vo
       contentCross,
     );
 
-    const childRect = assembleRect(content, mainOffsets[i], crossOffset, main, cross, direction);
+    const childRect = assembleRect(content, mainOffsets[flowIndex], crossOffset, main, cross, direction);
     result.set(child, childRect);
     layoutContainer(child, { width: childRect.width, height: childRect.height }, result);
+    flowIndex += 1;
   }
+}
+
+/**
+ * Place an `position:'absolute'` child (PA-15) at its content-box-relative {@link Rect}: offset by
+ * the container's content origin (so padding is honored), recorded as the child's parent-relative
+ * rect, then recursed so the child's own interior flows within that rect. Absolute children overlap
+ * freely and may overflow the parent (clipped later at compose, consistent with RD-02 AR-28).
+ */
+function placeAbsolute(child: LayoutBox, props: ResolvedProps, content: Rect, result: LayoutResult): void {
+  const rect = props.rect ?? { x: 0, y: 0, width: 0, height: 0 };
+  const childRect: Rect = {
+    x: content.x + rect.x,
+    y: content.y + rect.y,
+    width: rect.width,
+    height: rect.height,
+  };
+  result.set(child, childRect);
+  layoutContainer(child, { width: childRect.width, height: childRect.height }, result);
 }
 
 /**

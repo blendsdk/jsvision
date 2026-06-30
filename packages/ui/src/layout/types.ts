@@ -65,6 +65,18 @@ export interface LayoutProps {
   gap?: number;
   /** Content inset; a number applies to all sides (default `0`). */
   padding?: number | Padding;
+  /**
+   * Placement mode (default `'flow'`). `'flow'` joins the parent's flex flow; `'absolute'` removes
+   * the box from flow and places it at {@link rect} within the parent's content box — overlapping
+   * siblings freely and reserving no flow space (the CSS `position:absolute` analogy). (RD-05 PA-15)
+   */
+  position?: 'flow' | 'absolute';
+  /**
+   * `position:'absolute'` only — the parent-content-relative rect in cells (each side clamped to a
+   * non-negative integer via `toCells`). Ignored for `'flow'`; absent on an absolute box ⇒ a
+   * degenerate zero rect (no throw). (RD-05 PA-15)
+   */
+  rect?: Rect;
 }
 
 /**
@@ -99,6 +111,10 @@ export interface ResolvedProps {
   align: Align;
   gap: number;
   padding: Padding;
+  /** Resolved placement mode (default `'flow'`). */
+  position: 'flow' | 'absolute';
+  /** Normalized absolute rect (each side clamped via `toCells`); present only when `position` is `'absolute'`. */
+  rect?: Rect;
 }
 
 /**
@@ -153,10 +169,29 @@ export function normalizeSize(size: Size | undefined): Size {
 }
 
 /**
+ * Normalize an absolute-placement {@link Rect}, clamping each side to a non-negative integer cell
+ * count via {@link toCells}. `undefined` → a degenerate zero rect (an `'absolute'` box declared
+ * without a `rect` collapses to zero size, never throws — RD-05 PA-15).
+ */
+export function normalizeRect(rect: Rect | undefined): Rect {
+  if (rect === undefined) {
+    return { x: 0, y: 0, width: 0, height: 0 };
+  }
+  return {
+    x: toCells(rect.x),
+    y: toCells(rect.y),
+    width: toCells(rect.width),
+    height: toCells(rect.height),
+  };
+}
+
+/**
  * Apply CSS-flex-parity defaults (PA-3) and clamps to a box's props so the
- * layout pass works against a fully-resolved, branch-free shape.
+ * layout pass works against a fully-resolved, branch-free shape. An `'absolute'`
+ * box additionally carries its normalized {@link Rect}; a `'flow'` box does not.
  */
 export function normalizeProps(props: LayoutProps): ResolvedProps {
+  const position = props.position ?? 'flow';
   return {
     direction: props.direction ?? 'row',
     size: normalizeSize(props.size),
@@ -164,6 +199,8 @@ export function normalizeProps(props: LayoutProps): ResolvedProps {
     align: props.align ?? 'stretch',
     gap: toCells(props.gap ?? 0),
     padding: normalizePadding(props.padding),
+    position,
+    rect: position === 'absolute' ? normalizeRect(props.rect) : undefined,
   };
 }
 
