@@ -109,15 +109,24 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  // Auto-detect the terminal, but force SGR mouse on so the host enables mouse reporting — the demo
-  // is about interactivity, and conservative auto-detection often leaves `mouse.sgr` false.
-  const caps = resolveCapabilities({ override: { mouse: { sgr: true, drag: true, wheel: true } } }).profile;
+  // Auto-detect the terminal, but force the glyphs the Turbo Vision look needs: SGR mouse (so the
+  // host enables mouse reporting), box-drawing + half-block/shade glyphs (so the `░` desktop and the
+  // `╔═╗`/`┌─┐` frames render instead of the `#`/`+-|` ASCII fallback), and UTF-8. Conservative
+  // auto-detection often leaves these off.
+  const caps = resolveCapabilities({
+    override: {
+      mouse: { sgr: true, drag: true, wheel: true },
+      glyphs: { boxDrawing: true, halfBlocks: true },
+      unicode: { utf8: true },
+    },
+  }).profile;
 
   // Signals the animation timer drives; the reactive views bind to them.
   const frame = signal(0);
   const clock = signal(formatTime(new Date()));
 
   const app = createApplication({ caps, menuBar: buildMenuBar(), statusLine: buildStatusLine() });
+  app.desktop.shadow = true; // Turbo Vision-style drop-shadows under the windows
 
   // About modal: a hidden command sink turns the `about` command into an `execView` modal.
   const openAbout = (): void => {
