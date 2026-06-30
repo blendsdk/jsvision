@@ -9,6 +9,14 @@ the deprecation policy.
 
 ## [Unreleased]
 
+### Added
+
+- **`@jsvision/core`: additive `windowInactive` theme role.** `Theme` gains a
+  `windowInactive` role (a sibling of `window` mirroring its `fg`/`bg`/`border`/`title`
+  shape) so the UI layer's window frame can theme a background window distinctly from
+  the focused one. **Additive and non-breaking** — existing `Theme` consumers are
+  unaffected; `defaultTheme.windowInactive` is the classic dimmed (dark-gray) chrome.
+
 ### Changed
 
 - **Adopted a dedicated npm scope `@jsvision/*`.** Packages renamed
