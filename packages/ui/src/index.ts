@@ -45,7 +45,9 @@ export { createEventLoop } from './event/index.js';
 export type { EventLoop, EventLoopOptions, CommandEvent, AppEvent, DispatchEvent } from './event/index.js';
 
 // App shell (RD-05) — Application/Desktop/Window/MenuBar/StatusLine. Explicit named re-exports, per
-// the layout convention. Grows per phase (Phase 1: Commands + the Desktop/MenuBar/StatusLine skeletons).
+// the layout convention. Grows per phase (Phase 2: createApplication + run() lifecycle).
+export { createApplication } from './app/index.js';
+export type { Application, ApplicationOptions } from './app/index.js';
 export { Desktop } from './desktop/index.js';
 export type { DesktopLoopSeam } from './desktop/index.js';
 export { MenuBar } from './menu/index.js';
