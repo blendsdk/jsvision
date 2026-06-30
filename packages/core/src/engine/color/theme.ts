@@ -28,6 +28,12 @@ export interface Theme {
   readonly menuBar: ThemeRole;
   readonly menuSelected: ThemeRole;
   readonly window: ThemeRole & { readonly border: Color; readonly title: Color };
+  /**
+   * The **inactive** window chrome — a sibling of {@link window} mirroring its shape (fg/bg +
+   * border/title) so the UI layer's Frame can theme a background window distinctly from the focused
+   * one. Additive, non-breaking (RD-05 AR-73 / the sole cross-package edit).
+   */
+  readonly windowInactive: ThemeRole & { readonly border: Color; readonly title: Color };
   readonly dialog: ThemeRole & { readonly border: Color; readonly title: Color };
   readonly button: ThemeRole;
   readonly buttonFocused: ThemeRole;
@@ -45,6 +51,12 @@ export const defaultTheme: Theme = {
   menuBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   menuSelected: { fg: PALETTE.white, bg: PALETTE.green, hotkey: PALETTE.yellow },
   window: { fg: PALETTE.black, bg: PALETTE.lightGray, border: PALETTE.black, title: PALETTE.black },
+  windowInactive: {
+    fg: PALETTE.darkGray,
+    bg: PALETTE.lightGray,
+    border: PALETTE.darkGray,
+    title: PALETTE.darkGray,
+  },
   dialog: { fg: PALETTE.black, bg: PALETTE.lightGray, border: PALETTE.black, title: PALETTE.black },
   button: { fg: PALETTE.black, bg: PALETTE.green },
   buttonFocused: { fg: PALETTE.white, bg: PALETTE.green, hotkey: PALETTE.yellow },

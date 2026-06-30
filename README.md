@@ -408,6 +408,8 @@ changes are recorded in [`CHANGELOG.md`](CHANGELOG.md) (Keep a Changelog format)
 - **SemVer.** While the package is pre-1.0 it is in active development: the public
   API may change between **minor** versions (consistent with the heavy-development
   notice above). From 1.0 onward, breaking changes ship only in a **major** release.
+  **Additive** surface (e.g. a new `Theme` role such as `windowInactive`) is
+  non-breaking and ships in a **minor**; see `CHANGELOG.md` for each addition.
 - **Public surface.** The exports of `src/engine/index.ts` (the package entry
   point) are the contract. Everything else — any deep import into `src/engine/**`
   internals — is **not** part of the public API and may change at any time.
