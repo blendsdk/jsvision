@@ -16,13 +16,22 @@ import type { MenuItem } from './builders.js';
 import { parseTilde } from './builders.js';
 
 /** The sub-menu cascade indicator (Turbo Vision's CP437 0x10 `►`), drawn near a `sub` row's right border. */
-const SUB_ARROW = '►';
+const SUB_ARROW = '\u25BA'; // ►
 
 /**
  * Single-line frame glyphs — the CP437 set Turbo Vision's `TMenuBox::frameChars` uses
  * (`┌─┐ │ └┘ ├┤`). The box is inset by one blank gutter column on each side, as TV draws it.
  */
-const FRAME = { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│', lt: '├', rt: '┤' } as const;
+const FRAME = {
+  tl: '\u250C',
+  tr: '\u2510',
+  bl: '\u2514',
+  br: '\u2518',
+  h: '\u2500',
+  v: '\u2502',
+  lt: '\u251C',
+  rt: '\u2524',
+} as const; // ┌┐└┘─│├┤
 
 /** A presentational dropdown driven by the controller (mounted into the overlay). */
 export class MenuPopup extends View {

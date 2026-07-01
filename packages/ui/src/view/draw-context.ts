@@ -26,7 +26,7 @@ const WIDTH_MODE = 'wcwidth';
  * Single-line box glyphs. Core's `BOX` table is not exported, so this small set is duplicated here
  * so `box()` can clip per cell; the serializer still substitutes ASCII when `boxDrawing` is off.
  */
-const BOX_SINGLE = { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│' } as const;
+const BOX_SINGLE = { tl: '\u250C', tr: '\u2510', bl: '\u2514', br: '\u2518', h: '\u2500', v: '\u2502' } as const; // ┌┐└┘─│
 
 /**
  * Build a clipped, view-local `DrawContext` over the shared buffer for one view's compose pass.

@@ -150,7 +150,7 @@ export interface Theme {
  * gray `dialog` palette (`cpGrayDialog`, black-on-lightGray) is distinct from the blue window.
  */
 export const defaultTheme: Theme = {
-  desktop: { pattern: '░', fg: PALETTE.blue, bg: PALETTE.lightGray },
+  desktop: { pattern: '\u2591', fg: PALETTE.blue, bg: PALETTE.lightGray }, // ░
   menuBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   menuSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   window: {
