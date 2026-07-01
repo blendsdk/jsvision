@@ -19,7 +19,7 @@ import type { Logger, Keymap, ScreenBuffer } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
 import { createRenderRoot } from '../view/index.js';
 import type { View, RenderRoot, AppEvent, DispatchEvent } from '../view/index.js';
-import type { EventLoop, EventLoopOptions } from './types.js';
+import type { EventLoop, EventLoopOptions, ModalHostAware } from './types.js';
 import { createCommandRegistry } from './commands.js';
 import type { CommandRegistry } from './commands.js';
 import { route } from './dispatch.js';
@@ -128,6 +128,15 @@ class EventLoopImpl implements EventLoop {
     // Open inside a runTick so the modal paints exactly one coalesced frame on open (PA-11/PF-009);
     // the returned Promise resolves later, on endModal. The caller has added `view` to the tree.
     this.captureTarget = null; // a stale gesture must not capture across modality (PA-5)
+    // RD-11 PA-1: if the view opts into self-closing modality, hand it the modal-host seam before
+    // `modal.begin` so it can resolve this `execView` (via `endModal`) from its own event handling.
+    // Duck-typed so non-modal views (everything today) are untouched — no behaviour change.
+    if (isModalHostAware(view)) {
+      view.attachModalHost({
+        endModal: (result: unknown) => this.endModal(result),
+        isCommandEnabled: (command: string) => this.registry.isEnabled(command),
+      });
+    }
     return new Promise<R>((resolve) => {
       this.runTick(() => this.modal.begin(view, resolve));
     });
@@ -239,6 +248,17 @@ class EventLoopImpl implements EventLoop {
       this.logger.error('event', 'onEvent() threw', { error: String(error) });
     }
   }
+}
+
+/**
+ * Duck-typed guard: does `view` opt into self-closing modality (RD-11 PA-1)? True iff it exposes an
+ * `attachModalHost` method — so `execView` injects the modal-host seam only into views that want it.
+ *
+ * @param view The view being opened as a modal.
+ * @returns Whether `view` implements {@link ModalHostAware}.
+ */
+function isModalHostAware(view: View): view is View & ModalHostAware {
+  return typeof (view as Partial<ModalHostAware>).attachModalHost === 'function';
 }
 
 /**

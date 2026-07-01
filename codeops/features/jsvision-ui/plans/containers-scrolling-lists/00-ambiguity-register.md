@@ -1,0 +1,32 @@
+# Plan Ambiguity Register — Containers, Scrolling & Lists (RD-11)
+
+> **Plan**: containers-scrolling-lists · **Feature**: jsvision-ui · **Implements**: jsvision-ui/RD-11
+> **Status**: ✅ **GATE PASSED** (all items Resolved; user-confirmed 2026-07-01)
+> **CodeOps Skills Version**: 3.1.0
+
+Plan-level decisions (`PA-NN`) layered over the RD's inherited **AR-103…AR-114** (requirements gate,
+`../../requirements/00-ambiguity-register.md`). PA-1…PA-3 are explicit user choices made at plan time;
+PA-4…PA-15 are **decoded** (pinned from the TV C++ source per the NON-NEGOTIABLE fidelity directive —
+each cites `file:line` in `/home/gevik/workdir/github/tvision`) or single-dominant, recorded for
+traceability. Every design/scope claim in a plan doc back-references a `PA-` or `AR-` id.
+
+| PA # | Area | Decision | Basis |
+|------|------|----------|-------|
+| **PA-1** | Dialog self-close seam | `execView` injects an additive **`attachModalHost({ endModal, isCommandEnabled })`** into the modal view if it implements it; `Dialog` catches `ok`/`cancel`/`yes`/`no`, runs `valid()`, calls `host.endModal(command)`. One intra-package loop seam (precedent: AR-82/AR-84). | ✅ User (2026-07-01) |
+| **PA-2** | ListView tree shape | `ListView` extends **`Group`** = an internal focusable rows-renderer (virtual scroll) + an auto-owned `ScrollBar` laid out `[rows fr | bar 1]`; the bar's `value` signal is shared with `focused`/`topItem`. Reuses the real `ScrollBar` (DRY, single source for thumb drawing). | ✅ User (2026-07-01) |
+| **PA-3** | Type-ahead matching | `typeAhead` = case-insensitive **linear first-match prefix scan** over the rendered item text, reset on focus-move; works sorted or not (no comparator API). Generalizes TV's `TSortedListBox` binary search (AR-104 made `sorted`/`typeAhead` independent). | ✅ User (2026-07-01) |
+| **PA-4** | ScrollBar colour host | Resolve the scrollbar theme roles via the **gray-dialog** palette chain (AR-112 basis): `cpScrollBar[1..3]=0x04,0x05,0x05` → `cpGrayDialog[4],[5]` → `cpAppColor[35],[36]=0x13` → **cyan-on-blue** for page + controls + thumb (they share `0x13` in a gray dialog; the glyph `■` vs `▒` gives the visual distinction). | Decoded `tscrlbar.cpp:37,83` · `dialogs.h:80` · `app.h:145` |
+| **PA-5** | ListView focus indicator | Focus shown by the **`listFocused` colour only** (white-on-green); TV's secondary hardware-cursor-on-focused-row is **not** rendered (no `View`→host caret seam — consistent with DEF-19). Faithful in colour mode (colour is TV's primary focus signal). | Decoded `tlstview.cpp:77` (`setCursor` = the only caret) · [[DEF-19]] |
+| **PA-6** | Dialog window flags | `Dialog` extends `Window`, overrides `draw` to use the **`dialog`** role; defaults **movable + closable, NOT resizable/zoomable**, no number; the frame close `[×]` (TV `[~\xFE~]`) + `Esc` emit the negative terminating command (`cmCancel`, PF-002). Min size `{16,6}`. | Decoded `tdialog.cpp:25` (`wfMove\|wfClose`, `wnNoNumber`) · `twindow.cpp:30` (`minWinSize {16,6}`) |
+| **PA-7** | `valid()` bypass rules | **Only `cancel` (`cmCancel`) bypasses** the child `valid()` sweep (always closes); `ok`/`yes`/`no` run `TGroup::valid` = `firstThat(isInvalid)` over all children and close only if none report invalid, refocusing the first invalid child otherwise. Realizes **DEF-16**. | Decoded `tdialog.cpp:95` + `tgroup.cpp:566` |
+| **PA-8** | Scroller viewport model | `Scroller` is a `Group` clipping an oversized content child; scroll = offset the content child's `rect` by `-delta` (RD-03 `DrawContext` clips to the viewport). Auto-owns its bar(s); `setLimit` sets bar range `[0, limit − size]`, `pageStep = size − 1`; the bar's `value` ↔ `delta` bidirectionally (`cmScrollBarChanged`). | Decoded `tscrolle.cpp:95,131` · AR-105 |
+| **PA-9** | Phase structure | Dependency order: **Phase 0** foundations (theme roles + `Commands` + `attachModalHost` seam) → **1** `ScrollBar` → **2** `Scroller` → **3** `ListView`/`ListBox` → **4** `Dialog` + buttons → **5** kitchen-sink (stories + navigator + `demo:containers`). Each TV-derived phase carries the GATE-1 BEFORE-decode + GATE-2 AFTER-diff tasks. | Dominant (build order) |
+| **PA-10** | Theme role byte values | Decoded gray-dialog bytes → `PALETTE` names: `scrollBarPage`/`scrollBarControls` = `0x13` **cyan-on-blue** `{fg:cyan,bg:blue}`; `listNormal` = `0x30` **black-on-cyan**; `listFocused` = `0x2F` **white-on-green**; `listSelected` = `0x3E` **yellow-on-cyan**; `listDivider` = `0x31` **blue-on-cyan**. (Nibble `0xHL`: H=bg, L=fg.) | Decoded `tscrlbar.cpp` / `tlstview.cpp` palettes → `app.h:145-146` (hand-verified byte-by-byte) |
+| **PA-11** | Navigator sidebar | The kitchen-sink navigator becomes a `ListView`-in-`Scroller` **left sidebar** (stories grouped by category, selection swaps the canvas), built entirely in `packages/examples/kitchen-sink/shell.ts` — **no `Story` file changes**; the menu bar may remain as a redundant path. | Dominant (AR-110 + the CLAUDE.md Navigator-seam note) |
+| **PA-12** | `Commands` additions | Add `ok`/`cancel`/`yes`/`no` to the `Commands` set (`status/commands.ts`), values equal to their keys (the existing convention). Additive. | Decoded `views.h:44` (`cmOK=10…`) mapped to string commands · AR-109 |
+| **PA-13** | Standard-button helpers | `okButton()`/`cancelButton()`/`yesButton()`/`noButton()` + `okCancelButtons()`/`yesNoButtons()` — `Button` presets (`default:true` for OK/Yes) emitting the matching command; live in `dialog/buttons.ts`. | Dominant (AR-109) |
+| **PA-14** | ScrollBar binding + gestures | `value: Signal<number>` + `{ min, max, pageStep, arrowStep }`; arrow-click = `±arrowStep`, page-click = `±pageStep`, thumb-drag proportional (RD-05 capture seam), wheel = `±3·arrowStep`; vertical + horizontal; `pos` per `getPos()`. | Decoded `tscrlbar.cpp:60,89,148,283` · AR-111 |
+| **PA-15** | `ListBox` preset | `ListBox` = `ListView<string>` with identity `getText`, bound to `Signal<string[]>`; `newList`-style range/focus reset on the items signal changing. | Decoded `tlistbox.cpp:52,63` · AR-106 |
+
+> **Surface-during-authoring:** any new ambiguity found while writing the plan docs stops work, is added
+> here, resolved with the user, then authoring resumes. None outstanding at gate close.

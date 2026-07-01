@@ -42,7 +42,15 @@ export type { Point, ViewState, DrawContext, ThemeRoleName, RenderRoot, RenderRo
 // Event loop (RD-04) — host-agnostic dispatch mechanism. Explicit named re-exports, per the layout
 // convention. Grows per phase.
 export { createEventLoop } from './event/index.js';
-export type { EventLoop, EventLoopOptions, CommandEvent, AppEvent, DispatchEvent } from './event/index.js';
+export type {
+  EventLoop,
+  EventLoopOptions,
+  CommandEvent,
+  AppEvent,
+  DispatchEvent,
+  ModalHost,
+  ModalHostAware,
+} from './event/index.js';
 
 // App shell (RD-05) — Application/Desktop/Window/MenuBar/StatusLine. Explicit named re-exports, per
 // the layout convention. Grows per phase (Phase 2: createApplication + run() lifecycle).
@@ -61,3 +69,8 @@ export type { CommandName, StatusItem, StatusLoopSeam } from './status/index.js'
 // (Text/Label → Button → validators → Input → clusters) as each control lands.
 export { Text, Label, Button, Input, CheckGroup, RadioGroup, filter, range, lookup } from './controls/index.js';
 export type { ButtonOptions, InputOptions, Validator } from './controls/index.js';
+
+// Containers, scrolling & lists (RD-11) — `scroll/`·`list/`·`dialog/`. Explicit named re-exports,
+// per the layout convention (AC-14 / ST-15). The barrels are skeletons at Phase 0; each phase adds
+// its symbols here as it lands: Phase 1 `ScrollBar`, Phase 2 `Scroller`, Phase 3 `ListView`/
+// `ListBox`, Phase 4 `Dialog` + standard-button helpers.

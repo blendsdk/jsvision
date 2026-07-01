@@ -83,6 +83,41 @@ export interface Theme {
   readonly inputSelected: ThemeRole;
   /** Input-line `◄`/`►` scroll arrows (slot 21, `0x1A` brightGreen-on-blue). */
   readonly inputArrows: ThemeRole;
+  // --- jsvision-ui RD-11 container roles (scrollbar + list, `cpGrayDialog` palette) ---------------
+  // Faithful to Turbo Vision's gray-dialog palette; each role decodes the component's own TV palette
+  // byte through `cpGrayDialog` → `cpAppColor[N]` = `0xHL` (H=bg nibble, L=fg nibble). Bytes are
+  // pinned from source in the ST-13 spec oracle (`theme-roles.spec`). (RD-11 PA-4/PA-10)
+  /**
+   * ScrollBar track / page area (the `▒`/`▓` fill). TV `cpScrollBar[1]=0x04` → gray-dialog slot 4 →
+   * `cpAppColor[35]=0x13` = cyan-on-blue. (`tscrlbar.cpp:37`, `dialogs.h:80`, `app.h:145`)
+   */
+  readonly scrollBarPage: ThemeRole;
+  /**
+   * ScrollBar controls (the `▲▼◄►` arrows + the `■` thumb). TV `cpScrollBar[2..3]=0x05` → gray-dialog
+   * slot 5 → `cpAppColor[36]=0x13` = cyan-on-blue. Page = controls = thumb share `0x13` in a gray
+   * dialog; the glyph (`■` thumb vs `▒` track) is the visual distinction. (`tscrlbar.cpp:37`)
+   */
+  readonly scrollBarControls: ThemeRole;
+  /**
+   * ListView normal (unfocused) row. TV `cpListViewer[1]=0x1A` → gray-dialog slot 26 →
+   * `cpAppColor[57]=0x30` = black-on-cyan. (`tlstview.cpp:30`, `app.h:146`)
+   */
+  readonly listNormal: ThemeRole;
+  /**
+   * ListView focused row (the primary focus signal in colour mode; PA-5 omits the hardware caret).
+   * TV `cpListViewer[3]=0x1B` → gray-dialog slot 27 → `cpAppColor[58]=0x2F` = white-on-green.
+   */
+  readonly listFocused: ThemeRole;
+  /**
+   * ListView selected row. TV `cpListViewer[4]=0x1C` → gray-dialog slot 28 → `cpAppColor[59]=0x3E`
+   * = yellow-on-cyan.
+   */
+  readonly listSelected: ThemeRole;
+  /**
+   * ListView inter-column divider `│` (off-screen for a single column). TV `cpListViewer[5]=0x1D` →
+   * gray-dialog slot 29 → `cpAppColor[60]=0x31` = blue-on-cyan.
+   */
+  readonly listDivider: ThemeRole;
   readonly statusBar: ThemeRole;
   /**
    * The status-line **pressed/selected** item (mouse-down feedback). Turbo Vision repaints the held
@@ -143,6 +178,15 @@ export const defaultTheme: Theme = {
   inputNormal: { fg: PALETTE.white, bg: PALETTE.blue },
   inputSelected: { fg: PALETTE.white, bg: PALETTE.green },
   inputArrows: { fg: PALETTE.brightGreen, bg: PALETTE.blue },
+  // RD-11 container roles — decoded gray-dialog bytes (PA-10): scrollbar 0x13 cyan-on-blue; list
+  // normal 0x30 black-on-cyan, focused 0x2F white-on-green, selected 0x3E yellow-on-cyan, divider
+  // 0x31 blue-on-cyan.
+  scrollBarPage: { fg: PALETTE.cyan, bg: PALETTE.blue },
+  scrollBarControls: { fg: PALETTE.cyan, bg: PALETTE.blue },
+  listNormal: { fg: PALETTE.black, bg: PALETTE.cyan },
+  listFocused: { fg: PALETTE.white, bg: PALETTE.green },
+  listSelected: { fg: PALETTE.yellow, bg: PALETTE.cyan },
+  listDivider: { fg: PALETTE.blue, bg: PALETTE.cyan },
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },

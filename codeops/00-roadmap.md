@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-01 (jsvision-ui RD-11 containers/scrolling/lists → ✏️ Drafted)
+> **Last Updated**: 2026-07-01 (jsvision-ui RD-11 containers/scrolling/lists → 🔄 Executing — Phase 0 foundations complete)
 > **Features**: 0 / 1 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 7 ✅ Done (RD-01…RD-06, RD-10) · 1 ✏️ Drafted (RD-11) · 3 ⬜ Backlog (RD-07…09) | 7 / 11 done | 🔄 | 2026-07-01 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 7 ✅ Done (RD-01…RD-06, RD-10) · 1 🔄 Executing (RD-11 — Phase 0 ✓) · 3 ⬜ Backlog (RD-07…09) | 7 / 11 done | 🔄 | 2026-07-01 |
 
 ## Archived
 
@@ -23,6 +23,22 @@
 
 ## Notes
 
+- 2026-07-01: **jsvision-ui RD-11 (Containers, scrolling & lists) executing** → 🔄 Executing — Phase 0
+  (foundations) complete: six decoded core theme roles (ST-13) + `Commands.ok/cancel/yes/no` + the
+  `attachModalHost` loop seam (PA-1) + `scroll/`·`list/`·`dialog/` skeletons; verify + check:deps green.
+  Cascaded from **jsvision-ui**.
+- 2026-07-01: **jsvision-ui RD-11 (Containers, scrolling & lists) preflighted** → 🔬 Plan Preflighted
+  ([report](features/jsvision-ui/plans/containers-scrolling-lists/00-preflight-report.md)) — 8 findings
+  (1🔴 modal close/Esc bypass · 1🟠 Dialog frame reuse not additive · 4🟡 + 2🔵), **all resolved**; the
+  "additive-only" claim corrected (`frame.ts` generalized for Dialog). Cascaded from **jsvision-ui**.
+- 2026-07-01: **jsvision-ui RD-11 (Containers, scrolling & lists) planned** → 📋 Plan Created
+  ([`plans/containers-scrolling-lists/`](features/jsvision-ui/plans/containers-scrolling-lists/00-index.md)).
+  12 docs; 6 phases (0 foundations → ScrollBar → Scroller → ListView/ListBox → Dialog → kitchen-sink) / 34
+  tasks, spec-first (ST-01…ST-16 ↔ AC-1…AC-15); **PA-1…PA-15 (3 user + 12 decoded/dominant, ✅ GATE
+  PASSED)**. Grounded in 2 recon passes: UI seams (**all RD-11 changes additive**) + a hand-verified TV
+  GATE-1 decode (byte-checked `cpGrayDialog`→`cpAppColor` chain → real theme colours). One additive loop
+  seam (`attachModalHost`, PA-1); DEF-16 realized by the Dialog `valid()` gate. Next: `exec_plan
+  containers-scrolling-lists`. Cascaded from **jsvision-ui**.
 - 2026-07-01: **jsvision-ui RD-11 (Containers, scrolling & lists) drafted** → ✏️ RD Drafted
   ([RD-11](features/jsvision-ui/requirements/RD-11-containers-scrolling-lists.md)). `add_requirement`
   fleshed out the AR-93 stub (unblocked now RD-06 is settled): `ScrollBar` (two-way `value`, V+H) ·

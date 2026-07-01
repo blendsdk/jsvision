@@ -12,6 +12,29 @@ import type { CapabilityProfile, Theme, Logger, Keymap, ScreenBuffer } from '@js
 import type { Size2D } from '../layout/index.js';
 import type { View, RenderRoot, AppEvent } from '../view/index.js';
 
+/**
+ * The modal-host handle a modal view is given so it can close itself (RD-11 PA-1). One additive
+ * intra-package loop seam (precedent: the AR-82/AR-84 `setCapture`/`onFrame` seams — the loop is
+ * *composed*, not reshaped). The `Dialog` catches its terminating command, runs its `valid()` gate,
+ * then calls `endModal(command)` to resolve the `execView` promise.
+ */
+export interface ModalHost {
+  /** Resolve the active `execView` promise with `result` (the Dialog passes its terminating command). */
+  endModal(result: unknown): void;
+  /** Whether a command is currently enabled (the Dialog gates its terminating-command catch on it). */
+  isCommandEnabled(command: string): boolean;
+}
+
+/**
+ * A view opts into self-closing modality by implementing this (RD-11 PA-1). `execView` duck-types the
+ * method and, when present, injects the {@link ModalHost} before `modal.begin`. Non-modal views
+ * (everything today) never implement it and are unaffected.
+ */
+export interface ModalHostAware {
+  /** Receive the loop's modal-host handle when opened via `execView` (RD-11 PA-1). */
+  attachModalHost(host: ModalHost): void;
+}
+
 /** Construction options for {@link EventLoop}. `caps` is required; the rest are optional seams. */
 export interface EventLoopOptions {
   /** REQUIRED — depth-aware encoding, built into the loop's `RenderRoot` (AR-44, AR-61). */

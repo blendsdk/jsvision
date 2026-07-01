@@ -12,5 +12,5 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 export { createEventLoop } from './event-loop.js';
-export type { EventLoop, EventLoopOptions } from './types.js';
+export type { EventLoop, EventLoopOptions, ModalHost, ModalHostAware } from './types.js';
 export type { CommandEvent, AppEvent, DispatchEvent } from '../view/index.js';
