@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-01 (jsvision-ui RD-11 containers/scrolling/lists → ✅ Done — all 6 phases shipped, DEF-16 Shipped)
+> **Last Updated**: 2026-07-01 (jsvision-ui RD-07 essential-control-completions → 🔎 RD Preflighted — codebase-grounded, PASSED WITH NOTES: 0🔴/0🟠 + 3🟡 fixed + 2🔵; decoder-feasibility + TV citations independently verified)
 > **Features**: 0 / 1 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 8 ✅ Done (RD-01…RD-06, RD-10, RD-11) · 3 ⬜ Backlog (RD-07…09) | 8 / 11 done | 🔄 | 2026-07-01 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 8 ✅ Done (RD-01…RD-06, RD-10, RD-11) · 1 🔎 RD Preflighted (RD-07) · Backlog (RD-08/09, RD-12+) | 8 / 11 done | 🔄 | 2026-07-01 |
 
 ## Archived
 
@@ -23,6 +23,23 @@
 
 ## Notes
 
+- 2026-07-01: **jsvision-ui RD-07 (Essential-control completions) preflighted** → 🔎 RD Preflighted
+  ([report](features/jsvision-ui/requirements/00-preflight-report-RD-07.md)). Same-session codebase-grounded
+  audit (6 parallel recon agents + 1 adversarial challenger). **PASSED WITH NOTES** — 0🔴 / 0🟠 + 3🟡 + 2🔵.
+  Every infra-existence claim verified exact; the pivotal **decoder-chord feasibility** (Shift/Ctrl-Shift
+  arrows, Ctrl+A, Ctrl/Shift-Ins/Del) confirmed YES (test-backed); the hardware-caret host seam confirmed
+  **additive with no core change** (challenger REFUTED an initial MAJOR framing). 3 MINOR fixed (caret
+  suspend/resume clause · 2 drifted TV `file:line` cites corrected · "Depends On" reworded); 2 OBS carried to
+  `make_plan`. Next: `make_plan RD-07`. Cascaded from **jsvision-ui**.
+- 2026-07-01: **jsvision-ui RD-07 (Essential-control completions) drafted** → ✏️ RD Drafted
+  ([RD-07](features/jsvision-ui/requirements/RD-07-essential-control-completions.md)). `add_requirement`
+  resolved the roadmapped "high-value controls" bucket into a **thin control-completions slice** (AR-115):
+  `Input` selection + **system clipboard** (DEF-01, OSC-52 write + bracketed paste), the **`picture(mask)`**
+  validator (DEF-02, full DSL + autoFill), **`MultiCheckGroup`** (DEF-03, `Signal<number[]>`), and the
+  **visible caret** (DEF-19, logical + hardware via an additive `View`→host seam). AR-115…AR-124; 15 AC.
+  The remaining high-value controls (History/Tree/ComboBox/Tabs/Table/Progress/Surface) re-sliced to
+  **RD-12+** sibling RDs (like RD-06→RD-11). Deferred: overwrite/`Ins` (DEF-20), OSC-52 read. jsvision-ui
+  still 8/11 done (RD-07 drafted). Next: `make_plan RD-07`. Cascaded from **jsvision-ui**.
 - 2026-07-01: **jsvision-ui RD-11 (Containers, scrolling & lists) complete** → ✅ Done — all 6 phases
   shipped spec-first: `packages/ui/src/{scroll,list,dialog}/` (`ScrollBar`·`Scroller`·`ListView<T>`/
   `ListBox`·`Dialog` + OK/Cancel/Yes/No helpers), 4 Containers kitchen-sink stories + the dogfooding
