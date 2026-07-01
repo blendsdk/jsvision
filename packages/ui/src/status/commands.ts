@@ -24,6 +24,16 @@ export const Commands = {
   cascade: 'cascade',
   /** Tile all windows into a grid. */
   tile: 'tile',
+  // --- RD-11 standard dialog-terminating commands (TV `cmOK`/`cmCancel`/`cmYes`/`cmNo`,
+  // `views.h:44`; PA-12). A `Dialog` catches these to resolve its `execView` promise. -------------
+  /** Accept a dialog (TV `cmOK`); resolves the modal after the `valid()` gate passes. */
+  ok: 'ok',
+  /** Cancel a dialog (TV `cmCancel`); always closes, bypassing the `valid()` gate (PA-7). */
+  cancel: 'cancel',
+  /** Affirmative dialog answer (TV `cmYes`); gated by `valid()` like `ok`. */
+  yes: 'yes',
+  /** Negative dialog answer (TV `cmNo`); gated by `valid()` like `ok`. */
+  no: 'no',
 } as const;
 
 /** A standard shell command name (a value of {@link Commands}). */
