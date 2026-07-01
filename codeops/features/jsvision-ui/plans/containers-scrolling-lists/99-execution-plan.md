@@ -2,7 +2,7 @@
 
 > **Implements**: jsvision-ui/RD-11 · **Feature**: jsvision-ui · **Plan**: containers-scrolling-lists
 > **CodeOps Skills Version**: 3.1.0
-> **Progress**: 5 / 34 tasks (15%) · **Last Updated**: 2026-07-01 (Phase 0 complete)
+> **Progress**: 10 / 34 tasks (29%) · **Last Updated**: 2026-07-01 (Phase 1 ScrollBar complete)
 
 Spec-first per component (spec oracles RED → implement → GREEN → impl tests → verify). Every TV-derived
 component (Phases 1–4) carries the **NON-NEGOTIABLE fidelity gate**: a `[ ] BEFORE-decode` task (GATE 1,
@@ -28,11 +28,11 @@ gate also runs `yarn test:e2e` + `yarn check:deps` + `yarn lint`.
 
 
 ### Phase 1 — ScrollBar  ·  [03-02](03-02-scrollbar.md)  (TV `tscrlbar.cpp`)
-- [ ] **P1.1** `[ ] BEFORE-decode` — re-open `tscrlbar.cpp` + `tvtext1.cpp:113`; record glyphs, `drawPos`, `getPos/getSize`, hit-zones, `scrollStep`, palette in the spec/JSDoc.
-- [ ] **P1.2** (spec) `scrollbar.spec.test.ts` ST-01/ST-02 (+ ST-14 scrollbar rows) — RED.
-- [ ] **P1.3** Implement `scroll/scroll-bar.ts` (`ScrollBar`): `draw`=`drawPos(getPos())`, glyphs by orientation, roles; `onEvent` arrow/page/thumb-drag(capture)/wheel; binding+clamp. GREEN ST-01/02.
-- [ ] **P1.4** Impl tests (`scrollbar.impl.test.ts`): rounding, `getSize` floor, wheel, drag mapping, disabled zones.
-- [ ] **P1.5** `[ ] AFTER-diff` — re-open `tscrlbar.cpp`, diff cell-by-cell (glyphs, pos min/mid/max, `▓` disabled, colours); record decode in commit. Verify.
+- [x] **P1.1** `[x] BEFORE-decode` — re-open `tscrlbar.cpp` + `tvtext1.cpp:113`; record glyphs, `drawPos`, `getPos/getSize`, hit-zones, `scrollStep`, palette in the spec/JSDoc. <!-- 2026-07-01: decode confirmed vs source, recorded in scroll-bar.ts JSDoc -->
+- [x] **P1.2** (spec) `scrollbar.spec.test.ts` ST-01/ST-02 (+ ST-14 scrollbar rows) — RED. <!-- 2026-07-01; ST-14 aggregate file built at G.1 -->
+- [x] **P1.3** Implement `scroll/scroll-bar.ts` (`ScrollBar`): `draw`=`drawPos(getPos())`, glyphs by orientation, roles; `onEvent` arrow/page/thumb-drag(capture)/wheel; binding+clamp. GREEN ST-01/02. <!-- 2026-07-01; +PA-16 capture seam -->
+- [x] **P1.4** Impl tests (`scrollbar.impl.test.ts`): rounding, `getSize` floor, wheel, drag mapping, disabled zones. <!-- 2026-07-01: 11 scrollbar tests green -->
+- [x] **P1.5** `[x] AFTER-diff` — re-open `tscrlbar.cpp`, diff cell-by-cell (glyphs, pos min/mid/max, `▓` disabled, colours); record decode in commit. Verify. <!-- 2026-07-01: GATE-2 recorded in scroll-bar.ts; 2 behavioral adaptations noted -->
 
 ### Phase 2 — Scroller  ·  [03-03](03-03-scroller.md)  (TV `tscrolle.cpp`)  · depends on P1
 - [ ] **P2.1** `[ ] BEFORE-decode` — re-open `tscrolle.cpp`; record `scrollDraw`/`setLimit`/`delta`/range+`pageStep` math.
