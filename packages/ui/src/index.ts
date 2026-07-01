@@ -73,5 +73,5 @@ export type { ButtonOptions, InputOptions, Validator } from './controls/index.js
 // Containers, scrolling & lists (RD-11) — `scroll/`·`list/`·`dialog/`. Explicit named re-exports,
 // per the layout convention (AC-14 / ST-15). The barrels grow per phase: Phase 1 `ScrollBar`,
 // Phase 2 `Scroller`, Phase 3 `ListView`/`ListBox`, Phase 4 `Dialog` + standard-button helpers.
-export { ScrollBar } from './scroll/index.js';
-export type { ScrollBarOptions } from './scroll/index.js';
+export { ScrollBar, Scroller } from './scroll/index.js';
+export type { ScrollBarOptions, ScrollerOptions, ScrollbarsMode } from './scroll/index.js';

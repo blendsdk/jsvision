@@ -77,9 +77,12 @@ export class ScrollBar extends View {
   override focusable = false; // passive chrome — the owning viewer drives the keys (PA-2/PA-8)
   /** The two-way bound position (source of truth). */
   protected readonly value: Signal<number>;
-  protected readonly min: number;
-  protected readonly max: number;
-  protected readonly pageStepOpt?: number;
+  /** Range minimum (mutable — an owner `Scroller`/`ListView` re-limits via {@link setRange}, TV `setLimit`). */
+  protected min: number;
+  /** Range maximum (mutable — see {@link setRange}). */
+  protected max: number;
+  /** Explicit page step, or `undefined` for the axis-length default (mutable via {@link setRange}). */
+  protected pageStepOpt?: number;
   protected readonly arrowStep: number;
   protected readonly vertical: boolean;
   /** True while a thumb-drag gesture holds the pointer capture. */
@@ -98,6 +101,22 @@ export class ScrollBar extends View {
     this.vertical = (opts.orientation ?? 'vertical') === 'vertical';
     // Repaint when the position changes externally (the owner scrolls, or a bound signal write).
     this.onMount(() => this.bind(() => this.value(), () => undefined));
+  }
+
+  /**
+   * Re-limit the bar at runtime (TV `TScrollBar::setParams`/`setLimit`, `tscrlbar.cpp:305`) — an
+   * owning `Scroller`/`ListView` calls this when its viewport or content extent changes. The bound
+   * `value` is not written here; `readValue()` clamps it into the new range on read, matching the
+   * getPos/setValue clamp (so a shrunk range never over-scrolls or throws).
+   *
+   * @param min      New range minimum.
+   * @param max      New range maximum (raised to `min` if smaller).
+   * @param pageStep New page step, or `undefined` to keep the axis-length default.
+   */
+  setRange(min: number, max: number, pageStep?: number): void {
+    this.min = min;
+    this.max = Math.max(min, max);
+    this.pageStepOpt = pageStep;
   }
 
   /** The drawn/measured long-axis length in cells (height when vertical, else width). */

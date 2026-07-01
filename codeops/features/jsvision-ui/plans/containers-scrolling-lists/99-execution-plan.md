@@ -2,7 +2,7 @@
 
 > **Implements**: jsvision-ui/RD-11 · **Feature**: jsvision-ui · **Plan**: containers-scrolling-lists
 > **CodeOps Skills Version**: 3.1.0
-> **Progress**: 10 / 34 tasks (29%) · **Last Updated**: 2026-07-01 (Phase 1 ScrollBar complete)
+> **Progress**: 15 / 34 tasks (44%) · **Last Updated**: 2026-07-01 (Phase 2 Scroller complete)
 
 Spec-first per component (spec oracles RED → implement → GREEN → impl tests → verify). Every TV-derived
 component (Phases 1–4) carries the **NON-NEGOTIABLE fidelity gate**: a `[ ] BEFORE-decode` task (GATE 1,
@@ -35,11 +35,12 @@ gate also runs `yarn test:e2e` + `yarn check:deps` + `yarn lint`.
 - [x] **P1.5** `[x] AFTER-diff` — re-open `tscrlbar.cpp`, diff cell-by-cell (glyphs, pos min/mid/max, `▓` disabled, colours); record decode in commit. Verify. <!-- 2026-07-01: GATE-2 recorded in scroll-bar.ts; 2 behavioral adaptations noted -->
 
 ### Phase 2 — Scroller  ·  [03-03](03-03-scroller.md)  (TV `tscrolle.cpp`)  · depends on P1
-- [ ] **P2.1** `[ ] BEFORE-decode` — re-open `tscrolle.cpp`; record `scrollDraw`/`setLimit`/`delta`/range+`pageStep` math.
-- [ ] **P2.2** (spec) `scroller.spec.test.ts` ST-03/ST-04 — RED.
-- [ ] **P2.3** Implement `scroll/scroller.ts` (`Scroller`): Group clipping content child at `-delta`, auto-owned bar(s) in reserved edges, `delta↔bar.value`, `setLimit` range/`pageStep`, keyboard deltas, clamp. GREEN ST-03/04.
-- [ ] **P2.4** Impl tests: content-smaller-than-viewport disabled bar, `both` edges, clamp, `pageStep`.
-- [ ] **P2.5** `[ ] AFTER-diff` — re-open `tscrolle.cpp`, confirm delta/range/clamp; record. Verify.
+- [x] **P2.1** `[x] BEFORE-decode` — re-open `tscrolle.cpp`; record `scrollDraw`/`setLimit`/`delta`/range+`pageStep` math. <!-- 2026-07-01: confirmed vs source, recorded in scroller.ts JSDoc -->
+- [x] **P2.2** (spec) `scroller.spec.test.ts` ST-03/ST-04 — RED. <!-- 2026-07-01 -->
+- [x] **P2.3** Implement `scroll/scroller.ts` (`Scroller`): Group clipping content child at `-delta`, auto-owned bar(s) in reserved edges, `delta↔bar.value`, `setLimit` range/`pageStep`, keyboard deltas, clamp. GREEN ST-03/04. <!-- 2026-07-01; +PA-17 draw-positioning, PA-18 wheel-on-bar, ScrollBar.setRange -->
+- [x] **P2.4** Impl tests: content-smaller-than-viewport disabled bar, `both` edges, clamp, `pageStep`. <!-- 2026-07-01: 9 scroller tests green (incl. drag, wheel, horizontal) -->
+- [x] **P2.5** `[x] AFTER-diff` — re-open `tscrolle.cpp`, confirm delta/range/clamp; record. Verify. <!-- 2026-07-01: GATE-2 recorded in scroller.ts -->
+
 
 ### Phase 3 — ListView / ListBox  ·  [03-04](03-04-listview.md)  (TV `tlstview.cpp`/`tlistbox.cpp`/`stddlg.cpp`)  · depends on P1
 - [ ] **P3.1** `[ ] BEFORE-decode` — re-open `tlstview.cpp`+`tlistbox.cpp`+`stddlg.cpp`; record draw loop, getColor 1–5, `focusItem` keep-visible, mouse `newItem`, select broadcast, single-col no-divider, mono-only markers, sorted search.
