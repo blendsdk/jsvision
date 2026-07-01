@@ -25,6 +25,12 @@ export interface StoryContext {
   readonly width: number;
   /** Usable canvas height in cells. */
   readonly height: number;
+  /**
+   * Open a modal view and resolve to its terminating result (RD-11 PA-11). Populated by the live
+   * shell (wired to the loop's `execView`); **`undefined` in the headless smoke test**, so a story
+   * that hosts a modal (the Dialog story) degrades gracefully — it still renders its launch button.
+   */
+  readonly execView?: (modal: View) => Promise<unknown>;
 }
 
 /** One live demo entry in the showcase registry. */
