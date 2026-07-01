@@ -107,7 +107,7 @@ export class Button extends View {
     if (w < 2 || h < 2) return; // TV needs ≥2 rows: content row(s) + the bottom shadow row
     const s = w - 1; // last column index
     const titleRow = Math.floor(h / 2) - 1; // TV T = size.y/2 - 1
-    const bottomFill = down ? ' ' : '▀'; // shadows[2] up; blank when pressed (no shadow)
+    const bottomFill = down ? ' ' : '\u2580'; // ▀ shadows[2] up; blank when pressed (no shadow)
 
     // Content rows y = 0..h-2 (all but the bottom shadow row).
     for (let y = 0; y <= h - 2; y += 1) {
@@ -118,7 +118,7 @@ export class Button extends View {
         ctx.text(1, y, ' ', shadow); // putAttribute(1,cShadow): pressed shifts the face right one cell
         titleIndent = 2;
       } else {
-        ctx.text(s, y, y === 0 ? '▄' : '█', shadow); // shadows[0]/[1] down the right column
+        ctx.text(s, y, y === 0 ? '\u2584' : '\u2588', shadow); // ▄█ shadows[0]/[1] down the right column
         titleIndent = 1;
       }
       if (y === titleRow) this.drawTitle(ctx, y, s, titleIndent, face, accent);

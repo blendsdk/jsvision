@@ -21,8 +21,8 @@ import { sanitize } from '../safety/sanitize.js';
 
 /** The box-drawing glyph set per variant (real Unicode; fallback is serialize-time). */
 const BOX = {
-  single: { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│' },
-  double: { tl: '╔', tr: '╗', bl: '╚', br: '╝', h: '═', v: '║' },
+  single: { tl: '\u250C', tr: '\u2510', bl: '\u2514', br: '\u2518', h: '\u2500', v: '\u2502' }, // ┌┐└┘─│
+  double: { tl: '\u2554', tr: '\u2557', bl: '\u255A', br: '\u255D', h: '\u2550', v: '\u2551' }, // ╔╗╚╝═║
 } as const;
 
 /**

@@ -60,9 +60,9 @@ export interface FrameState {
 export type FrameRole = 'window' | 'windowInactive' | 'dialog';
 
 /** Glyphs of the chrome affordances (stored verbatim in the buffer; serialize handles fallback). */
-const CLOSE_GLYPH = '×';
-const MAXIMIZE_GLYPH = '↑'; // TV zoomIcon (CP437 0x18)
-const RESTORE_GLYPH = '↕'; // TV unZoomIcon (CP437 0x12 / U+2195) — the restore (un-maximize) arrow
+const CLOSE_GLYPH = '\u00D7'; // ×
+const MAXIMIZE_GLYPH = '\u2191'; // ↑ TV zoomIcon (CP437 0x18)
+const RESTORE_GLYPH = '\u2195'; // ↕ TV unZoomIcon (CP437 0x12 / U+2195) — the restore (un-maximize) arrow
 
 /** A rectangular-border glyph set (corners + horizontal/vertical edges). */
 interface BorderGlyphs {
@@ -75,9 +75,23 @@ interface BorderGlyphs {
 }
 
 /** Single-line border (CP437 0xDA/C4/BF/B3/C0/D9) — the inactive/passive window, as in Turbo Vision. */
-const SINGLE_BORDER: BorderGlyphs = { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│' };
+const SINGLE_BORDER: BorderGlyphs = {
+  tl: '\u250C',
+  tr: '\u2510',
+  bl: '\u2514',
+  br: '\u2518',
+  h: '\u2500',
+  v: '\u2502',
+}; // ┌┐└┘─│
 /** Double-line border (CP437 0xC9/CD/BB/BA/C8/BC) — the active (focused) window, as in Turbo Vision. */
-const DOUBLE_BORDER: BorderGlyphs = { tl: '╔', tr: '╗', bl: '╚', br: '╝', h: '═', v: '║' };
+const DOUBLE_BORDER: BorderGlyphs = {
+  tl: '\u2554',
+  tr: '\u2557',
+  bl: '\u255A',
+  br: '\u255D',
+  h: '\u2550',
+  v: '\u2551',
+}; // ╔╗╚╝═║
 
 /**
  * Draw a rectangular border with `glyphs` over a `w×h` window-local rect, filling the interior

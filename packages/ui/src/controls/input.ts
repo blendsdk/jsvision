@@ -18,8 +18,8 @@ import type { KeyEvent } from '@jsvision/core';
 import type { Validator } from './validators/index.js';
 
 /** Left/right scroll arrows (TV `tvtext1.cpp:106-107`, `0x11`/`0x10`), unambiguous-narrow code points. */
-const LEFT_ARROW = '◄';
-const RIGHT_ARROW = '►';
+const LEFT_ARROW = '\u25C4'; // ◄
+const RIGHT_ARROW = '\u25BA'; // ►
 
 /** Construction options for {@link Input}. */
 export interface InputOptions {

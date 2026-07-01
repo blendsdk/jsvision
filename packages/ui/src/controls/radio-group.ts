@@ -40,6 +40,6 @@ export class RadioGroup extends Cluster {
   }
 
   protected override box(): ClusterBox {
-    return { icon: ' ( ) ', on: '•', off: ' ' };
+    return { icon: ' ( ) ', on: '\u2022', off: ' ' }; // •
   }
 }

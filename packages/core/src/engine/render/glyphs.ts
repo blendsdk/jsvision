@@ -17,30 +17,39 @@ import type { CapabilityProfile } from '../capability/index.js';
  */
 const BOX_FALLBACK: ReadonlyMap<string, string> = new Map([
   // Corners (single + double).
-  ['┌', '+'],
-  ['┐', '+'],
-  ['└', '+'],
-  ['┘', '+'],
-  ['╔', '+'],
-  ['╗', '+'],
-  ['╚', '+'],
-  ['╝', '+'],
+  ['\u250C', '+'], // ┌
+  ['\u2510', '+'], // ┐
+  ['\u2514', '+'], // └
+  ['\u2518', '+'], // ┘
+  ['\u2554', '+'], // ╔
+  ['\u2557', '+'], // ╗
+  ['\u255A', '+'], // ╚
+  ['\u255D', '+'], // ╝
   // Horizontals.
-  ['─', '-'],
-  ['═', '-'],
+  ['\u2500', '-'], // ─
+  ['\u2550', '-'], // ═
   // Verticals.
-  ['│', '|'],
-  ['║', '|'],
+  ['\u2502', '|'], // │
+  ['\u2551', '|'], // ║
   // Tees / cross.
-  ['├', '+'],
-  ['┤', '+'],
-  ['┬', '+'],
-  ['┴', '+'],
-  ['┼', '+'],
+  ['\u251C', '+'], // ├
+  ['\u2524', '+'], // ┤
+  ['\u252C', '+'], // ┬
+  ['\u2534', '+'], // ┴
+  ['\u253C', '+'], // ┼
 ]);
 
 /** Block and shade glyphs that collapse to `#` when `halfBlocks` is off. */
-const BLOCK_SHADE: ReadonlySet<string> = new Set(['█', '▀', '▄', '▌', '▐', '░', '▒', '▓']);
+const BLOCK_SHADE: ReadonlySet<string> = new Set([
+  '\u2588',
+  '\u2580',
+  '\u2584',
+  '\u258C',
+  '\u2590',
+  '\u2591',
+  '\u2592',
+  '\u2593',
+]); // █▀▄▌▐░▒▓
 
 /**
  * Substitute a glyph for the terminal's capabilities (PL-9).
