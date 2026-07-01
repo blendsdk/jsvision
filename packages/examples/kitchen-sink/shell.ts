@@ -21,6 +21,9 @@ import {
   Group,
   Text,
   View,
+  Window,
+  ListBox,
+  signal,
   createRoot,
   type DispatchEvent,
   type DrawContext,
@@ -30,6 +33,27 @@ import { StoryWindow, CommandSink } from './window.js';
 import { STORIES } from './stories/index.js';
 import { at, firstFocusable } from './story.js';
 import type { Story } from './story.js';
+
+/** The persistent navigator sidebar width, in cells (the RD-11 dogfooding `ListBox`). */
+const SIDEBAR_W = 24;
+
+/** One navigator row: a non-selectable category header, or a selectable story. */
+type NavRow = { readonly header: string } | { readonly story: Story };
+
+/** Build the parallel sidebar model: interleaved category headers + story rows (PF-003). */
+function buildNavRows(cats: Map<string, Story[]>): { rows: NavRow[]; labels: string[] } {
+  const rows: NavRow[] = [];
+  const labels: string[] = [];
+  for (const [cat, list] of cats) {
+    rows.push({ header: cat });
+    labels.push(`─ ${cat} ─`);
+    for (const story of list) {
+      rows.push({ story });
+      labels.push(`  ${story.title}`);
+    }
+  }
+  return { rows, labels };
+}
 
 /** Showcase navigation command names (not built-in shell commands). */
 const CMD_HOME = 'kitchen.home';
@@ -72,6 +96,7 @@ function buildStatus(): ReturnType<typeof statusLine> {
   return statusLine([
     statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X'),
     statusItem('~F1~ Welcome', CMD_HOME, 'F1'),
+    statusItem('~Tab~ Sidebar↔Story'),
     statusItem('~^→~ Next', CMD_NEXT),
     statusItem('~^←~ Prev', CMD_PREV),
   ]);
@@ -160,9 +185,50 @@ export function createShowcase(caps: CapabilityProfile): Showcase {
 
   const dw = app.desktop.bounds.width;
   const dh = app.desktop.bounds.height;
+
+  // The story canvas — now shrunk to the right of the persistent navigator sidebar.
   const canvas = new StoryWindow('');
-  canvas.layout.rect = { x: 0, y: 0, width: dw, height: dh };
+  canvas.layout.rect = { x: SIDEBAR_W, y: 0, width: dw - SIDEBAR_W, height: dh };
   app.desktop.addWindow(canvas);
+
+  /**
+   * Open a modal view and resolve its terminating result — the `StoryContext.execView` seam (PA-11).
+   * `execView` requires the view already in the tree, so we add it to the desktop and remove it after.
+   */
+  const execModal = async (modal: View): Promise<unknown> => {
+    if (!(modal instanceof Window)) return undefined; // dialogs are Windows
+    app.desktop.addWindow(modal);
+    try {
+      return await app.loop.execView(modal);
+    } finally {
+      app.desktop.removeWindow(modal);
+    }
+  };
+
+  // The dogfooding navigator (RD-11 `ListBox`): a persistent left sidebar of category headers + story
+  // rows. Selecting a story row swaps the canvas (PF-003 — map the row index through `navRows`, never
+  // a flat `STORIES` index). Type-ahead filters as you type. Only this file changed (the Navigator seam).
+  const { rows: navRows, labels: navLabels } = buildNavRows(cats);
+  const navItems = signal(navLabels);
+  const navFocused = signal(0);
+  // The sidebar lives for the whole app lifetime; own its computeds in a persistent root so they are
+  // properly scoped (not leaked as an out-of-root computation).
+  let sidebarList!: ListBox;
+  createRoot(() => {
+    sidebarList = new ListBox({
+      items: navItems,
+      focused: navFocused,
+      typeAhead: true,
+      onSelect: (i) => {
+        const row = navRows[i];
+        if (row !== undefined && 'story' in row) showStory(row.story);
+      },
+    });
+  });
+  const sidebar = new StoryWindow('Stories');
+  sidebar.layout.rect = { x: 0, y: 0, width: SIDEBAR_W, height: dh };
+  sidebar.add(at(sidebarList, 0, 0, SIDEBAR_W - 2, dh - 2));
+  app.desktop.addWindow(sidebar);
 
   let currentIndex = -1; // -1 = the welcome screen
   // Disposes the reactive owner of the currently-shown story's build() (its signals/computeds/
@@ -202,7 +268,7 @@ export function createShowcase(caps: CapabilityProfile): Showcase {
     let body: Group;
     createRoot((dispose) => {
       disposeStory = dispose;
-      body = story.build({ caps, width: bodyW, height: bodyH });
+      body = story.build({ caps, width: bodyW, height: bodyH, execView: execModal });
     });
     holder.add(at(body!, 0, 3, bodyW, bodyH));
     showView(holder, `${story.category} / ${story.title}`);
@@ -246,6 +312,9 @@ export function createShowcase(caps: CapabilityProfile): Showcase {
   // host emits resize only on SIGWINCH, so we can't rely on a start-up resize to do this for us.
   const firstRows = app.loop.renderRoot.buffer().rows();
   app.loop.resize({ width: firstRows[0]?.length ?? dw, height: firstRows.length });
+
+  // Focus starts in the sidebar navigator (Tab moves to the story canvas and back).
+  app.loop.focusView(sidebarList.rows);
 
   return { app, run: () => app.run() };
 }

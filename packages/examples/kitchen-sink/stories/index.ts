@@ -19,8 +19,12 @@ import { buttonStory } from './button.story.js';
 import { inputStory } from './input.story.js';
 import { checkGroupStory } from './checkgroup.story.js';
 import { radioGroupStory } from './radiogroup.story.js';
+import { scrollBarStory } from './scrollbar.story.js';
+import { scrollerStory } from './scroller.story.js';
+import { listViewStory } from './listview.story.js';
+import { dialogStory } from './dialog.story.js';
 
-/** Every registered story, in navigator order (Foundations RD-01…05, then Controls RD-06). */
+/** Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers RD-11). */
 export const STORIES: readonly Story[] = [
   reactiveStory,
   layoutStory,
@@ -33,4 +37,8 @@ export const STORIES: readonly Story[] = [
   inputStory,
   checkGroupStory,
   radioGroupStory,
+  scrollBarStory,
+  scrollerStory,
+  listViewStory,
+  dialogStory,
 ];

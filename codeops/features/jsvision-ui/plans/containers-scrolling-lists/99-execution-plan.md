@@ -2,7 +2,7 @@
 
 > **Implements**: jsvision-ui/RD-11 · **Feature**: jsvision-ui · **Plan**: containers-scrolling-lists
 > **CodeOps Skills Version**: 3.1.0
-> **Progress**: 27 / 34 tasks (79%) · **Last Updated**: 2026-07-01 (Phase 4 Dialog complete)
+> **Progress**: 31 / 34 tasks (91%) · **Last Updated**: 2026-07-01 (Phase 5 kitchen-sink complete)
 
 Spec-first per component (spec oracles RED → implement → GREEN → impl tests → verify). Every TV-derived
 component (Phases 1–4) carries the **NON-NEGOTIABLE fidelity gate**: a `[ ] BEFORE-decode` task (GATE 1,
@@ -61,10 +61,11 @@ gate also runs `yarn test:e2e` + `yarn check:deps` + `yarn lint`.
 
 
 ### Phase 5 — Kitchen-sink stories + Navigator + demo  ·  [03-06](03-06-kitchen-sink.md)
-- [ ] **P5.1** Stories `containers/scrollbar`·`scroller`·`listview`·`dialog` (+ `stories/index.ts`); optional `StoryContext.execView` for the Dialog story. Smoke test (ST-16) green.
-- [ ] **P5.2** Navigator upgrade in `shell.ts` ONLY: a `ListBox`-in-`Scroller` sidebar `[sidebar | canvas]`, select→`showStory`, Tab sidebar↔canvas, type-ahead filter; menu kept as redundant path (PA-11).
-- [ ] **P5.3** `packages/examples/containers-demo/` + `demo:containers` script + `containers-demo.e2e.test.ts` (ASCII frame per step: scrollbar/scroller/listview/dialog-veto-then-ok).
-- [ ] **P5.4** Verify: smoke test all stories, e2e green.
+- [x] **P5.1** Stories `containers/scrollbar`·`scroller`·`listview`·`dialog` (+ `stories/index.ts`); optional `StoryContext.execView` for the Dialog story. Smoke test (ST-16) green. <!-- 2026-07-01: 17 smoke tests green -->
+- [x] **P5.2** Navigator upgrade in `shell.ts` ONLY: a `ListBox` sidebar `[sidebar | canvas]`, select→`showStory` (PF-003 row map), Tab sidebar↔canvas, type-ahead filter; `execView` seam wired; menu kept as redundant path (PA-11). <!-- 2026-07-01: sidebar renders headless; owned in a persistent createRoot -->
+- [x] **P5.3** `packages/examples/containers-demo/` + `demo:containers` script + `containers-demo.e2e.test.ts` (ASCII frame per step: scrollbar/scroller/listview/dialog-veto-then-ok). <!-- 2026-07-01: 7 e2e green -->
+- [x] **P5.4** Verify: smoke test all stories, e2e green. <!-- 2026-07-01 -->
+
 
 ### Final — Full acceptance gate
 - [ ] **G.1** `ST-15` packaging complete (all symbols exported, files ≤500 lines) + `fidelity.spec.test.ts` ST-14 green.
