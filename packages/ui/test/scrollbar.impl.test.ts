@@ -16,7 +16,7 @@ import { signal } from '../src/reactive/index.js';
 import { ScrollBar } from '../src/scroll/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
-const THUMB = '■';
+const THUMB = '█';
 
 function mouse(kind: 'down' | 'up' | 'move', x: number, y: number): CoreMouseEvent {
   return { type: 'mouse', kind, button: 0, x, y };

@@ -81,8 +81,19 @@ export type {
   RenderOptions,
 } from './render/index.js';
 
-// RD-07 — host & lifecycle. (RD-03 adds the real tty-backed TerminalQuery.)
-export { createHost, detectTty, createTerminalQuery } from './host/index.js';
+// RD-07 — host & lifecycle. (RD-03 adds the real tty-backed TerminalQuery;
+// the RD-11 follow-up adds the ambiguous-width startup probe & warning.)
+export {
+  createHost,
+  detectTty,
+  createTerminalQuery,
+  probeAmbiguousWidth,
+  warnIfAmbiguousWide,
+  parseCursorPosition,
+  AMBIGUOUS_PROBE_GLYPHS,
+  WIDTH_WARNING_MESSAGE,
+  DEFAULT_WIDTH_PROBE_TIMEOUT_MS,
+} from './host/index.js';
 export type {
   Host,
   HostOptions,
@@ -93,6 +104,10 @@ export type {
   StreamOptions,
   TerminalQueryOptions,
   ManagedTerminalQuery,
+  WidthProbeResult,
+  WidthProbeOptions,
+  WidthWarnOptions,
+  CursorPosition,
 } from './host/index.js';
 
 // RD-08 — safety (essentials gate, errors, logging, redaction, sanitizer).

@@ -33,22 +33,28 @@
  * here (no `evMouseAuto` timer in our model); and TV's `cmScrollBarChanged` owner **broadcast**
  * (`scrollDraw`, `:279`) is replaced by the two-way `value` signal the owner observes (PA-8).
  *
+ * **PROJECT DEVIATION (thumb glyph, 2026-07-01, user-approved):** the thumb renders `█` (U+2588 FULL
+ * BLOCK), NOT the faithful `■` (CP437 `0xFE` / U+25A0). `■` is East-Asian *Ambiguous* width and
+ * renders double-width under terminal font-fallback (e.g. Ubuntu GNOME/VTE), shifting the whole bar;
+ * `█` is a block element that always renders one cell. This is a deliberate departure from TV fidelity
+ * for width-robustness — the ST-01/ST-14 spec oracles assert `█` to match. All other glyphs stay faithful.
+ *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
-import { View } from '../view/index.js';
-import type { DrawContext, DispatchEvent } from '../view/index.js';
 import type { Signal } from '../reactive/index.js';
+import type { DispatchEvent, DrawContext } from '../view/index.js';
+import { View } from '../view/index.js';
 
 /** Vertical scroll glyphs (`tvtext1.cpp:113`): start ▲, end ▼. */
-const V_START = '▲';
-const V_END = '▼';
+const V_START = '\u25B2'; // ▲ BLACK UP-POINTING TRIANGLE
+const V_END = '\u25BC'; // ▼ BLACK DOWN-POINTING TRIANGLE
 /** Horizontal scroll glyphs (`tvtext1.cpp:114`): start ◄, end ►. */
-const H_START = '◄';
-const H_END = '►';
+const H_START = '\u25C4'; // ◄ BLACK LEFT-POINTING POINTER
+const H_END = '\u25BA'; // ► BLACK RIGHT-POINTING POINTER
 /** Shared track/thumb/disabled glyphs. */
-const TRACK = '▒';
-const THUMB = '■';
-const DISABLED = '▓';
+const TRACK = '\u2592'; // ▒ MEDIUM SHADE
+const THUMB = '\u2588'; // █ FULL BLOCK (project deviation from TV ■ 0xFE — see header)
+const DISABLED = '\u2593'; // ▓ DARK SHADE
 
 /** TV `TScrollBar` part codes (`views.h:119-127`). Vertical adds 4 to non-indicator parts. */
 const SB_LINE_BACK = 0; // sbLeftArrow / +4 sbUpArrow

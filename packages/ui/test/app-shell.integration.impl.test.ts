@@ -91,6 +91,7 @@ function setup(): Harness {
   const status = statusLine([statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X')]);
 
   const app = createApplication({
+    warnAmbiguousWidth: false, // skip the real-TTY width probe in headless tests
     caps: caps(),
     menuBar: bar,
     statusLine: status,

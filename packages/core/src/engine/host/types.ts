@@ -52,6 +52,22 @@ export interface HostOptions {
    * policy (not caps-gated). Default `true`. [PF-006]
    */
   readonly focus?: boolean;
+  /**
+   * Probe the terminal at startup for double-width chrome glyphs — East-Asian
+   * *Ambiguous* code points (e.g. `▲◄■▒`) that a font fallback or CJK locale
+   * renders two cells wide, shifting box/scroll chrome — and warn via
+   * {@link onWidthWarning} when found. Real TTY only; runs after raw mode and
+   * before the alternate screen, so the probe + its erase stay off the UI buffer.
+   * Default `false`: `createHost` is the mechanism, the `run()` app shell enables
+   * the policy. Detection is best-effort — a silent/non-TTY terminal never warns.
+   */
+  readonly warnAmbiguousWidth?: boolean;
+  /**
+   * Sink for the startup width warning (see {@link warnAmbiguousWidth}). Default:
+   * one line to `process.stderr` (never the UI output stream). Injected for tests
+   * or custom reporting.
+   */
+  readonly onWidthWarning?: (message: string) => void;
   /** Injectable OS boundary; defaults to the real Node runtime. Tests inject a fake. [AR-13] */
   readonly runtime?: RuntimeAdapter;
 }

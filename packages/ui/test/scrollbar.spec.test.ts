@@ -30,10 +30,10 @@ const DOWN = '▼';
 const LEFT = '◄';
 const RIGHT = '►';
 const TRACK = '▒';
-const THUMB = '■';
+const THUMB = '█';
 const DISABLED = '▓';
 
-// ST-01 / AC-1 — a vertical bar renders arrows at the two ends, a ▒ track between, and the ■ thumb at
+// ST-01 / AC-1 — a vertical bar renders arrows at the two ends, a ▒ track between, and the █ thumb at
 // the exact TV `getPos()` for value = min / mid / max; `max==min` fills the whole track with ▓. All
 // cells are cyan-on-blue (cpScrollBar → 0x13; controls == page in a gray dialog).
 test('ST-01: vertical ScrollBar draws arrows + track + thumb at getPos()', () => {

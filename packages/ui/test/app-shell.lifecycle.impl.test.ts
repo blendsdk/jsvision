@@ -28,6 +28,7 @@ function appWith(
 ) {
   const { output, input, runtime, ...rest } = opts;
   return createApplication({
+    warnAmbiguousWidth: false, // skip the real-TTY width probe in headless tests
     caps,
     runtime,
     input: input.asInput(),
