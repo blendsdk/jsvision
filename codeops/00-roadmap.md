@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-01 (jsvision-ui RD-06 essential controls + validators → ✅ Done)
+> **Last Updated**: 2026-07-01 (jsvision-ui RD-11 containers/scrolling/lists → ✏️ Drafted)
 > **Features**: 0 / 1 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 7 ✅ Done (RD-01…RD-06, RD-10) · 1 🟡 Stub (RD-11) · 3 ⬜ Backlog (RD-07…09) | 7 / 11 done | 🔄 | 2026-07-01 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 7 ✅ Done (RD-01…RD-06, RD-10) · 1 ✏️ Drafted (RD-11) · 3 ⬜ Backlog (RD-07…09) | 7 / 11 done | 🔄 | 2026-07-01 |
 
 ## Archived
 
@@ -23,6 +23,16 @@
 
 ## Notes
 
+- 2026-07-01: **jsvision-ui RD-11 (Containers, scrolling & lists) drafted** → ✏️ RD Drafted
+  ([RD-11](features/jsvision-ui/requirements/RD-11-containers-scrolling-lists.md)). `add_requirement`
+  fleshed out the AR-93 stub (unblocked now RD-06 is settled): `ScrollBar` (two-way `value`, V+H) ·
+  `Scroller` (auto-owned bars) · generic single-column virtual-scroll `ListView<T>` (+ sorted/type-ahead ·
+  `ListBox` preset) · rich modal+modeless `Dialog` (terminating-command result + a child `valid()`
+  close-gate that **realizes DEF-16** · OK/Cancel/Yes/No helpers). Additive `cpScrollBar` (4–5) + ListViewer
+  (26–29) core roles + `ok`/`cancel`/`yes`/`no` `Commands`; new `src/{scroll,list,dialog}/`; the kitchen-sink
+  navigator upgrades to a `ListView` sidebar (dogfooding AC). 15 AC; **AR-103…AR-114** (8 user + 4 dominant).
+  Deferred → RD-07: multi-column `ListViewer`/`Table`, `ComboBox`. jsvision-ui still 7/11 done (RD-11 now
+  drafted, not stubbed). Next: `make_plan RD-11`. Cascaded from **jsvision-ui**.
 - 2026-07-01: **jsvision-ui RD-06 (Essential controls + validators) complete** → ✅ Done. Executed all
   7 phases spec-first (RED→GREEN→impl): `packages/ui/src/controls/` = `Text`/`Label`/`Button`/`Input`/
   `CheckGroup`/`RadioGroup` (+ internal `Cluster` base) + `filter`/`range`/`lookup` validators; the
