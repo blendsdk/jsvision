@@ -2,7 +2,7 @@
 
 > **Implements**: jsvision-ui/RD-11 · **Feature**: jsvision-ui · **Plan**: containers-scrolling-lists
 > **CodeOps Skills Version**: 3.1.0
-> **Progress**: 15 / 34 tasks (44%) · **Last Updated**: 2026-07-01 (Phase 2 Scroller complete)
+> **Progress**: 21 / 34 tasks (62%) · **Last Updated**: 2026-07-01 (Phase 3 ListView/ListBox complete)
 
 Spec-first per component (spec oracles RED → implement → GREEN → impl tests → verify). Every TV-derived
 component (Phases 1–4) carries the **NON-NEGOTIABLE fidelity gate**: a `[ ] BEFORE-decode` task (GATE 1,
@@ -43,12 +43,13 @@ gate also runs `yarn test:e2e` + `yarn check:deps` + `yarn lint`.
 
 
 ### Phase 3 — ListView / ListBox  ·  [03-04](03-04-listview.md)  (TV `tlstview.cpp`/`tlistbox.cpp`/`stddlg.cpp`)  · depends on P1
-- [ ] **P3.1** `[ ] BEFORE-decode` — re-open `tlstview.cpp`+`tlistbox.cpp`+`stddlg.cpp`; record draw loop, getColor 1–5, `focusItem` keep-visible, mouse `newItem`, select broadcast, single-col no-divider, mono-only markers, sorted search.
-- [ ] **P3.2** (spec) `listview.spec.test.ts` ST-05/06/07 + `listbox.spec.test.ts` ST-08 (+ ST-14 list rows) — RED.
-- [ ] **P3.3** Implement `list/virtual.ts` (visible-window + keep-visible math) + `list/list-rows.ts` (focusable rows-renderer, colours, no focus glyph PA-5).
-- [ ] **P3.4** Implement `list/list-view.ts` (`ListView<T>` = Group[rows + owned ScrollBar], PA-2; keyboard/mouse/select, sorted display, linear type-ahead PA-3) + `list/list-box.ts` (`ListBox` string preset PA-15). GREEN ST-05/06/07/08.
-- [ ] **P3.5** Impl tests: keep-visible edges, empty `<empty>`, focused clamp on shrink, type-ahead reset/Backspace, sorted stability, virtual-row bounds (security).
-- [ ] **P3.6** `[ ] AFTER-diff` — re-open the three `.cpp`, diff row colours/`topItem`/select/no-divider/no-marker; record. Verify.
+- [x] **P3.1** `[x] BEFORE-decode` — re-open `tlstview.cpp`+`tlistbox.cpp`+`stddlg.cpp`; record draw loop, getColor 1–5, `focusItem` keep-visible, mouse `newItem`, select broadcast, single-col no-divider, mono-only markers, sorted search. <!-- 2026-07-01: decode recorded in list-rows.ts JSDoc -->
+- [x] **P3.2** (spec) `listview.spec.test.ts` ST-05/06/07 + `listbox.spec.test.ts` ST-08 (+ ST-14 list rows) — RED. <!-- 2026-07-01; ST-14 aggregate at G.1 -->
+- [x] **P3.3** Implement `list/virtual.ts` (visible-window + keep-visible math) + `list/list-rows.ts` (focusable rows-renderer, colours, no focus glyph PA-5). <!-- 2026-07-01 -->
+- [x] **P3.4** Implement `list/list-view.ts` (`ListView<T>` = Group[rows + owned ScrollBar], PA-2; keyboard/mouse/select, sorted display, linear type-ahead PA-3) + `list/list-box.ts` (`ListBox` string preset PA-15). GREEN ST-05/06/07/08. <!-- 2026-07-01 -->
+- [x] **P3.5** Impl tests: keep-visible edges, empty `<empty>`, focused clamp on shrink, type-ahead reset/Backspace, sorted stability, virtual-row bounds (security). <!-- 2026-07-01: 12 tests (virtual.impl + listview.impl) green -->
+- [x] **P3.6** `[x] AFTER-diff` — re-open the three `.cpp`, diff row colours/`topItem`/select/no-divider/no-marker; record. Verify. <!-- 2026-07-01: GATE-2 in list-rows.ts; ST-06 oracle corrected (focused>selected priority) per fidelity directive -->
+
 
 ### Phase 4 — Dialog + standard buttons  ·  [03-05](03-05-dialog.md)  (TV `tdialog.cpp`/`tgroup.cpp`)  · depends on P0 seam + RD-06
 - [ ] **P4.1** `[ ] BEFORE-decode` — re-open `tdialog.cpp`+`tgroup.cpp`; record TWindow-frame reuse, `wfMove|wfClose`, `valid()` (cmCancel bypass + child sweep), command constants.
