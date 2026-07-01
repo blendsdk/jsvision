@@ -37,7 +37,7 @@
 - **Test (unit):** `yarn test` (`turbo run test` → vitest `unit` project per package)
 - **Test (e2e):** `yarn test:e2e` (`turbo run test:e2e` → vitest `e2e` project) · or per package: `yarn workspace @jsvision/core test:e2e` (restore/signals/install) · `yarn workspace @jsvision/examples test:e2e` (probe)
 - **Run the probe harness (dev):** `yarn workspace @jsvision/examples probe` (`--auto`/`--out <path>`/`--no-matrix`/`--help`)
-- **Runnable demos (dev):** `yarn workspace @jsvision/examples <demo>` — `demo:controls` (RD-06 essential controls — headless form walkthrough: a `Label`-linked `Input` with a live `filter` reject, `CheckGroup`/`RadioGroup` toggles, and a default `Button` emitting its command via `ev.emit`, ASCII frame per step), `demo:shell` (RD-05 app shell — headless WM walkthrough: open 3 windows → raise/drag/zoom → tile → F10 menu Cascade → F4 status Tile, ASCII frame per step), `demo:events` (RD-04 event loop — headless synthetic-dispatch walkthrough: Tab focus, an `'ok'` command, an async `execView`/`endModal` modal, ASCII frame per step), `demo:view` (RD-03 view/group spine — a themed app-shell tree composed + reflowed + reactively repainted, ASCII render), `demo:layout` (RD-02 layout walkthrough + ASCII render), `demo:reactive` (RD-01 reactive core), `demo:resize` / `demo:playground` (real-TTY host demos)
+- **Runnable demos (dev):** `yarn workspace @jsvision/examples <demo>` — `demo:kitchen` (**the kitchen-sink showcase** — the live, interactive Storybook-for-TUI; every component's story, menu-driven navigator, grown as we implement; see `codeops/kitchen-sink-gate.md`), `demo:controls-live` (RD-06 live interactive controls dialog — real TTY), `demo:controls` (RD-06 essential controls — headless form walkthrough: a `Label`-linked `Input` with a live `filter` reject, `CheckGroup`/`RadioGroup` toggles, and a default `Button` emitting its command via `ev.emit`, ASCII frame per step), `demo:shell` (RD-05 app shell — headless WM walkthrough: open 3 windows → raise/drag/zoom → tile → F10 menu Cascade → F4 status Tile, ASCII frame per step), `demo:events` (RD-04 event loop — headless synthetic-dispatch walkthrough: Tab focus, an `'ok'` command, an async `execView`/`endModal` modal, ASCII frame per step), `demo:view` (RD-03 view/group spine — a themed app-shell tree composed + reflowed + reactively repainted, ASCII render), `demo:layout` (RD-02 layout walkthrough + ASCII render), `demo:reactive` (RD-01 reactive core), `demo:resize` / `demo:playground` (real-TTY host demos)
 - **Acceptance gate (RD-09 go/no-go):** `yarn gate` (`scripts/gate.mjs`, root) — runs `yarn verify` + core e2e + examples `probe --auto`, PASS/FAIL/DEFERRED per criterion; map in `docs/acceptance-gate.md`
 - **Performance bench (RD-10, informational):** `yarn bench` (`yarn workspace @jsvision/core bench` → `tsx bench/frame-bench.mjs`); never gates (16 ms ceiling asserted off-CI by `packages/core/test/perf-budget.spec.test.ts`, skipped under `CI`/`TUI_SKIP_PERF`)
 - **Version sync (lockstep):** `yarn sync-versions` (write root version to public packages) · `yarn sync-versions --check` (assert lockstep, non-zero on drift)
@@ -69,7 +69,7 @@ src/engine/safety/       RD-08 safety (sanitize, errors, redact, logger, essenti
 src/engine/color/        RD-05 color & styling (color, palette, downsample, encode, theme, index) — depth-aware SGR encoding (truecolor→256→16→mono), redmean nearest-color, DOS-16 palette + theme (incl. the jsvision-ui-RD-10 statusSelected pressed-item role); the serialize() default encoder.
 bench/           (under packages/core/) RD-10 frame-performance benchmark (frame-bench.mjs) behind `yarn bench` — exported pure median/p95/measureComposeDiff helpers + a main-guarded printing CLI; never emitted to dist.
 test/            (under packages/core/, 76 files) RD-09 four-tier strategy: hex-in-JSON input corpus (fixtures/input-corpus/ + input-corpus.spec/impl + -helpers), golden-screen via @xterm/headless (golden-screen.spec/impl + -helpers), Tier-3 host-tier3.e2e, seeded fuzz (input-fuzz.spec/impl + -helpers), bytes∝damage (render-bytes-damage.spec), gate consistency (gate.spec). RD-10: perf-budget.spec/impl, treeshake.spec, a11y-golden.spec, api-stability.spec, docs-presence.spec. Monorepo: sync-versions.spec. Governance specs (gate/check-deps/docs-presence/api-stability/toolchain) reach the monorepo root via ../../.. (DEF-4 to extract). Shared helpers in non-test *-helpers.ts.
-packages/examples/   (capability-probe/ = foundation-RD-03 probe harness: main/args/taxonomy/env-meta/auto-probes/manual-probes/live-readout/report/matrix; resize-demo/, keyboard-mouse-playground/, reactive-demo/ = RD-01 walkthrough, layout-demo/ = RD-02 walkthrough + ASCII render, view-demo/ = RD-03 view/group spine walkthrough + ASCII render, event-demo/ = RD-04 event-loop walkthrough — focus + command + modal, ASCII render, shell-demo/ = RD-05 app-shell walkthrough — windows + WM + menu + status, ASCII render, controls-demo/ = RD-06 essential-controls walkthrough — a Label-linked Input + live filter, CheckGroup/RadioGroup, default Button command, ASCII render, controls-live/ = RD-06 live interactive audit — a real-TTY grey Turbo Vision parameters Dialog hosting every leaf control (form.ts composition + a demo-local Dialog/CommandSink in dialog.ts; needs a terminal), tvision-demo/ = a live interactive Turbo Vision desktop (windows + menu + status + truecolor gradient + reactive clock)) + test/ holds the probe-*/probe.e2e tests + view-demo.e2e + event-demo.e2e + shell-demo.e2e + controls-demo.e2e (demo child runs via tsx). Imports @jsvision/core and @jsvision/ui by name; run via the demo:* / probe scripts.
+packages/examples/   (capability-probe/ = foundation-RD-03 probe harness: main/args/taxonomy/env-meta/auto-probes/manual-probes/live-readout/report/matrix; resize-demo/, keyboard-mouse-playground/, reactive-demo/ = RD-01 walkthrough, layout-demo/ = RD-02 walkthrough + ASCII render, view-demo/ = RD-03 view/group spine walkthrough + ASCII render, event-demo/ = RD-04 event-loop walkthrough — focus + command + modal, ASCII render, shell-demo/ = RD-05 app-shell walkthrough — windows + WM + menu + status, ASCII render, controls-demo/ = RD-06 essential-controls walkthrough — a Label-linked Input + live filter, CheckGroup/RadioGroup, default Button command, ASCII render, controls-live/ = RD-06 live interactive audit — a real-TTY grey Turbo Vision parameters Dialog hosting every leaf control (form.ts composition + a demo-local Dialog/CommandSink in dialog.ts; needs a terminal), kitchen-sink/ = **the live showcase** (Storybook-for-TUI, `demo:kitchen`): story.ts (the `Story` contract + `at`/`firstFocusable` helpers), stories/*.story.ts + stories/index.ts (the registry — one file per component), shell.ts (the Navigator seam — menu from the registry + grey `StoryWindow` canvas swap + nav), window.ts (StoryWindow + CommandSink), main.ts; extend it per `codeops/kitchen-sink-gate.md`, tvision-demo/ = a live interactive Turbo Vision desktop (windows + menu + status + truecolor gradient + reactive clock)) + test/ holds the probe-*/probe.e2e tests + view-demo.e2e + event-demo.e2e + shell-demo.e2e + controls-demo.e2e + kitchen-sink.smoke.spec (mounts every story headlessly) (demo child runs via tsx). Imports @jsvision/core and @jsvision/ui by name; run via the demo:* / probe scripts.
 
 docs/            Monorepo docs (root). RD-09 acceptance-gate.md (criteria→evidence). RD-10 techdocs set (VitePress-compatible, NOT installed): index.md (techdocs:true), architecture/ (system-overview, api-design, security), decisions/ (ADR-001…007 incl. the monorepo restructure), guides/ (getting-started, development), .vitepress/config.ts.
 scripts/         (root) check-no-native-deps.mjs (dependency-policy guard, takes a package dir), gate.mjs (RD-09 aggregator behind `yarn gate`, cross-package), sync-versions.mjs (lockstep version sync behind `yarn sync-versions`).
@@ -112,7 +112,7 @@ terminal-matrix.json       RD-03 cross-terminal evidence (appended by the probe 
 - **Source of truth:** the original Turbo Vision (magiblot/tvision) checked out at
   `/home/gevik/workdir/github/tvision` — `source/tvision/t*.cpp` (drawing/sizing),
   `source/tvision/tvtext1.cpp` (the `frameChars`/glyph tables + `cpAppColor`), `include/tvision/*.h`
-  + `include/tvision/app.h`/`dialogs.h` (geometry + the `cpX` palette definitions).
+  - `include/tvision/app.h`/`dialogs.h` (geometry + the `cpX` palette definitions).
 
 - **GATE 1 — BEFORE writing/changing any draw/size/layout code.** Open the original class (e.g.
   `TMenuBox`, `TFrame`, `TButton`, `TInputLine`, `TScrollBar`, `TWindow`, `TDialog`) and decode:
@@ -125,8 +125,8 @@ terminal-matrix.json       RD-03 cross-terminal evidence (appended by the probe 
      was guessed as "darkGray/black" instead of decoded to `0x70` black-on-lightGray).
   3. Watch for **mode-gated features** the color path enables/disables — e.g. `showMarkers` (the
      `[ ]` brackets) is monochrome-only; on a color palette a `TButton` has **no** brackets.
-  Convert CP437 byte glyphs to Unicode (mind East-Asian ambiguous width — prefer unambiguous-narrow
-  code points). **Cite the exact `file:line` of every decoded fact in the code's JSDoc.**
+     Convert CP437 byte glyphs to Unicode (mind East-Asian ambiguous width — prefer unambiguous-narrow
+     code points). **Cite the exact `file:line` of every decoded fact in the code's JSDoc.**
 
 - **GATE 2 — AFTER implementing (a component is NOT "done" until this passes).** Re-open the same
   `.cpp` and **diff our rendered output against the decode**, cell by cell: glyphs, column math,
@@ -134,7 +134,7 @@ terminal-matrix.json       RD-03 cross-terminal evidence (appended by the probe 
   resolution) in the code/commit. If they disagree, our code is wrong — fix it against the source.
 
 - **The C++ source outranks our own spec tests (TV-derived components only).** A `*.spec.test.ts`
-  can encode a *mis-decode* — the ST-05 button oracle asserted the phantom `[ ]` brackets. So for a
+  can encode a _mis-decode_ — the ST-05 button oracle asserted the phantom `[ ]` brackets. So for a
   TV-derived component, if a spec oracle disagrees with a faithful C++ decode, **the spec test is the
   defect**: fix it against the source (a deliberate, narrow exception to "spec tests are immutable",
   scoped to fidelity oracles). Cite the `.cpp` when correcting the oracle.
@@ -152,6 +152,36 @@ terminal-matrix.json       RD-03 cross-terminal evidence (appended by the probe 
     `99-execution-plan.md`: `[ ] BEFORE-decode …` and `[ ] AFTER-diff …`.
   - **exec_plan** MUST NOT mark a TV-derived component `[x]` until its AFTER-diff task is done and
     the decode (incl. palette resolution) is recorded in the code/commit.
+
+## Kitchen-sink showcase (NON-NEGOTIABLE)
+
+> Every user-facing component and capability MUST ship with a live demo ("story") in the
+> **kitchen-sink showcase** (`packages/examples/kitchen-sink/`, run `yarn workspace @jsvision/examples
+demo:kitchen`) — a Storybook-for-TUI that is our live selling point. **A component is not "done"
+> until its story exists and passes the headless smoke test.** As we implement, the showcase grows
+> with us. Canonical gate + plan checklist: [`codeops/kitchen-sink-gate.md`](codeops/kitchen-sink-gate.md).
+
+- **The story contract (extensibility).** Adding a component to the showcase = add ONE
+  `kitchen-sink/stories/<x>.story.ts` exporting a `Story` (`{ id, category, title, blurb, rd?,
+build(ctx) }`) + one line in `stories/index.ts`. `build(ctx)` returns a `Group` of
+  absolutely-positioned children within `ctx.width × ctx.height`; the shell owns all chrome
+  (menu / status / grey canvas / navigation). A story never touches the desktop or host.
+- **UX is a feature — it is the selling point.** Each story gets a one-line blurb, the live
+  component, a visible bound-state echo where relevant, and interaction hints. Keep it polished: no
+  clipped text, faithful TV colors, and both keyboard + mouse working.
+- **Smoke test is mandatory.** Every story must pass `test/kitchen-sink.smoke.spec.test.ts` (mounts
+  headlessly, paints something, unique id, required metadata) — the mechanical "the story exists and
+  renders" check, no TTY needed.
+- **Dogfooding / Navigator seam.** Navigation is menu-driven today (existing TV primitives, zero
+  throwaway); when RD-11 lands `ListView`/`ScrollBar` the navigator upgrades to a persistent sidebar
+  built from the very component it demos. Only `kitchen-sink/shell.ts` changes; stories stay untouched.
+- **Plan-flow enforcement (make_plan / exec_plan).** For every user-facing component:
+  - **make_plan** MUST add a story task to `99-execution-plan.md`: `[ ] Kitchen-sink story for <X>
+(+ smoke test)`.
+  - **exec_plan** MUST NOT mark the component `[x]` until its story is registered and the smoke test
+    passes.
+- **Scope.** Every _visual_ component MUST get a story; non-visual capabilities (reactivity,
+  capability detection, color downsampling) get one when it is meaningful to show.
 
 ## Special rules
 

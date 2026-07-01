@@ -22,6 +22,7 @@
     "demo:shell": "tsx shell-demo/main.ts",
     "demo:controls": "tsx controls-demo/main.ts",
     "demo:controls-live": "tsx controls-live/main.ts",
+    "demo:kitchen": "tsx kitchen-sink/main.ts",
     "demo:tvision": "tsx tvision-demo/main.ts"
   },
   "dependencies": {
