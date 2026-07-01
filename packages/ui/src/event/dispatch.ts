@@ -36,6 +36,10 @@ export interface RouteContext {
   emit(name: string, arg?: unknown): void;
   /** Focus a view from within a control's `onEvent` (RD-06 PA-10). Sourced onto `ev.focusView`. */
   focusView(view: View): void;
+  /** Capture the pointer to a view from within its `onEvent` (RD-11 PA-16). Sourced onto `ev.setCapture`. */
+  setCapture(view: View): void;
+  /** Release the pointer capture (RD-11 PA-16). Sourced onto `ev.releaseCapture`. */
+  releaseCapture(): void;
   /** Deliver an envelope to a view's `onEvent`, isolating a throwing handler (AR-66). */
   deliver(view: View, ev: DispatchEvent): void;
   /** Built-in Tab focus traversal — advance focus (PA-10; wired by Phase 3). */
@@ -115,11 +119,18 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
     return;
   }
 
-  // Single enrichment point (RD-06 PA-1/PA-10): `route()` is the one path every dispatched event
-  // passes through before reaching a view, so source `emit`/`focusView` onto ONE fresh envelope here
-  // and route the mouse branch + every sweep through it. A fresh object respects the `readonly`
-  // envelope fields; the `hit-test.ts` `{ ...ev2, local }` spread propagates both to mouse-locals.
-  const ev2: DispatchEvent = { ...ev, emit: ctx.emit, focusView: ctx.focusView };
+  // Single enrichment point (RD-06 PA-1/PA-10, RD-11 PA-16): `route()` is the one path every
+  // dispatched event passes through before reaching a view, so source `emit`/`focusView`/`setCapture`/
+  // `releaseCapture` onto ONE fresh envelope here and route the mouse branch + every sweep through it.
+  // A fresh object respects the `readonly` envelope fields; the `hit-test.ts` `{ ...ev2, local }`
+  // spread propagates all of them to mouse-locals.
+  const ev2: DispatchEvent = {
+    ...ev,
+    emit: ctx.emit,
+    focusView: ctx.focusView,
+    setCapture: ctx.setCapture,
+    releaseCapture: ctx.releaseCapture,
+  };
 
   // Mouse/wheel skip the 3-phase focus path → hit-test (03-03).
   if (inner.type === 'mouse' || inner.type === 'wheel') {

@@ -110,4 +110,12 @@ export interface DispatchEvent {
    * as {@link emit}; a non-focusable target is a no-op (the focus manager guards it).
    */
   readonly focusView?: (view: View) => void;
+  /**
+   * Capture the pointer to `view` (RD-11 PA-16) — used by `ScrollBar` for thumb-drag: while set, all
+   * mouse/wheel events route to `view` until {@link releaseCapture}. Same source/availability as
+   * {@link emit} (present during real dispatch, absent in bare unit-constructed envelopes).
+   */
+  readonly setCapture?: (view: View) => void;
+  /** Release the pointer capture (RD-11 PA-16); a no-op if none is set. Pairs with {@link setCapture}. */
+  readonly releaseCapture?: () => void;
 }

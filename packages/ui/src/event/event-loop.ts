@@ -218,6 +218,10 @@ class EventLoopImpl implements EventLoop {
       // RD-06 PA-1/PA-10 — sourced onto every routed envelope as `ev.emit` / `ev.focusView`.
       emit: (name, arg) => this.registry.emit(name, arg),
       focusView: (view) => this.focus.focusView(view),
+      // RD-11 PA-16 — pointer capture from within a view's `onEvent` (the ScrollBar thumb-drag).
+      // Pure mutations of `captureTarget` (inside the active tick), mirroring the public seams.
+      setCapture: (view) => this.setCapture(view),
+      releaseCapture: () => this.releaseCapture(),
       deliver: (view, ev) => this.deliver(view, ev),
       // The built-in Tab handler runs inside the active dispatch tick, so it calls the focus
       // manager's pure mutation directly (no nested runTick) — the tick's flush paints (PA-11).

@@ -71,6 +71,7 @@ export { Text, Label, Button, Input, CheckGroup, RadioGroup, filter, range, look
 export type { ButtonOptions, InputOptions, Validator } from './controls/index.js';
 
 // Containers, scrolling & lists (RD-11) — `scroll/`·`list/`·`dialog/`. Explicit named re-exports,
-// per the layout convention (AC-14 / ST-15). The barrels are skeletons at Phase 0; each phase adds
-// its symbols here as it lands: Phase 1 `ScrollBar`, Phase 2 `Scroller`, Phase 3 `ListView`/
-// `ListBox`, Phase 4 `Dialog` + standard-button helpers.
+// per the layout convention (AC-14 / ST-15). The barrels grow per phase: Phase 1 `ScrollBar`,
+// Phase 2 `Scroller`, Phase 3 `ListView`/`ListBox`, Phase 4 `Dialog` + standard-button helpers.
+export { ScrollBar } from './scroll/index.js';
+export type { ScrollBarOptions } from './scroll/index.js';

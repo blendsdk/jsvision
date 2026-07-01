@@ -8,4 +8,5 @@
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
-export {};
+export { ScrollBar } from './scroll-bar.js';
+export type { ScrollBarOptions } from './scroll-bar.js';
