@@ -18,6 +18,8 @@
  */
 import { bindStreams } from './streams.js';
 import type { BoundStreams } from './streams.js';
+import { createTerminalQuery } from './terminal-query.js';
+import { warnIfAmbiguousWide } from './width-probe.js';
 import { enterMode, leaveMode } from './modes.js';
 import { realRuntime } from './platform.js';
 import { createRestore } from './restore.js';
@@ -131,8 +133,25 @@ export function createHost(options: HostOptions): Host {
     }
   }
 
-  function start(): Promise<void> {
-    if (running) return Promise.resolve();
+  /**
+   * Probe the primary screen for double-width chrome glyphs and warn (best-effort).
+   * Owns the query seam's lifecycle: it always closes the seam — detaching the
+   * probe's input listener before the host's own input pump attaches — and never
+   * throws, so a detection failure can neither block nor crash startup.
+   */
+  async function probeWidthAndWarn(input: NodeJS.ReadStream, output: NodeJS.WriteStream): Promise<void> {
+    const query = createTerminalQuery({ input, output });
+    try {
+      await warnIfAmbiguousWide(query, { warn: options.onWidthWarning });
+    } catch {
+      // Best-effort: a probe failure must never block or crash startup.
+    } finally {
+      query.close();
+    }
+  }
+
+  async function start(): Promise<void> {
+    if (running) return;
     running = true;
     streams = bindStreams(options);
     isTTY = streams.isTTY;
@@ -156,6 +175,11 @@ export function createHost(options: HostOptions): Host {
 
     if (isTTY) {
       adapter.setRawMode(streams.input, true);
+      // Width probe runs in this window — raw mode on, alt-screen not yet entered —
+      // so the probe glyphs + their erase happen on the primary screen (PF: width).
+      if (options.warnAmbiguousWidth) {
+        await probeWidthAndWarn(streams.input, streams.output);
+      }
       streams.output.write(enterStr); // a throw here is caught by the 'exit' backstop (AR-17)
     }
 

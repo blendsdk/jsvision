@@ -253,6 +253,16 @@ export class FakeInput extends EventEmitter {
     this.emit('data', bytes);
   }
 
+  /** No-op flow control — `createTerminalQuery` calls `resume()` before reading. */
+  public resume(): this {
+    return this;
+  }
+
+  /** No-op flow control counterpart to {@link resume}. */
+  public pause(): this {
+    return this;
+  }
+
   /** View this double as a {@link NodeJS.ReadStream} (see {@link CaptureStream.asOutput}). */
   public asInput(): NodeJS.ReadStream {
     return this as unknown as NodeJS.ReadStream;

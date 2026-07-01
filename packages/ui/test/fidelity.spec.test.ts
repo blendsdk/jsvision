@@ -5,7 +5,7 @@
  * the decoded TV geometry/colour that each component must reproduce, checked at the composed-buffer
  * level across the whole tier:
  *   • `ScrollBar` — arrow/track/thumb glyphs (`TScrollBar::draw`, `tscrlbar.cpp`): ▲/▼ (V) · ◄/► (H) ·
- *     ▒ track · ■ thumb · ▓ when disabled (range 0).
+ *     ▒ track · █ thumb · ▓ when disabled (range 0).
  *   • `ListView` — the colour-only focus indicator (no glyph, no divider), text at column 1, and the
  *     focused > selected > normal colour priority (`TListViewer::draw`, `tlstview.cpp:66-70`).
  *   • `Dialog` — the frame in the gray-`dialog` role (white border, close box, NO zoom box; `tframe.cpp`
@@ -38,8 +38,8 @@ function allChars(buf: ReturnType<typeof render>, w: number, h: number): string 
   return s;
 }
 
-// ST-14 — ScrollBar glyphs: vertical arrows ▲/▼, a ▒ track, and a ■ thumb (TScrollBar::draw).
-test('ST-14: a vertical ScrollBar draws ▲/▼ arrows, a ▒ track, and a ■ thumb', () => {
+// ST-14 — ScrollBar glyphs: vertical arrows ▲/▼, a ▒ track, and a █ thumb (TScrollBar::draw).
+test('ST-14: a vertical ScrollBar draws ▲/▼ arrows, a ▒ track, and a █ thumb', () => {
   const g = new Group();
   const bar = new ScrollBar({ value: signal(0), min: 0, max: 100, orientation: 'vertical' });
   bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 8 } };
@@ -48,7 +48,7 @@ test('ST-14: a vertical ScrollBar draws ▲/▼ arrows, a ▒ track, and a ■ t
   expect(buf.get(0, 0)?.char).toBe('▲'); // top arrow
   expect(buf.get(0, 7)?.char).toBe('▼'); // bottom arrow
   const chars = allChars(buf, 1, 8);
-  expect(chars).toContain('■'); // the thumb
+  expect(chars).toContain('█'); // the thumb (project deviation from TV ■; see scroll-bar.ts)
   expect(chars).toContain('▒'); // the page track
 });
 

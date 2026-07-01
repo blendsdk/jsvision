@@ -33,6 +33,8 @@ export interface RunContext {
   readonly input?: NodeJS.ReadStream;
   /** Injectable output stream (default `process.stdout`). */
   readonly output?: NodeJS.WriteStream;
+  /** Warn at startup on double-width chrome glyphs (real TTY only). Default `true`; see `createHost`. */
+  readonly warnAmbiguousWidth?: boolean;
   /** The absolute overlay layer, kept full-viewport across terminal resizes. */
   readonly overlay: Group;
   /** The shared quit-resolver cell wired to the command sink. */
@@ -51,6 +53,10 @@ export async function runApplication(ctx: RunContext): Promise<number> {
     runtime: ctx.runtime,
     input: ctx.input,
     output: ctx.output,
+    // Zero-config policy: on a real TTY, warn once at startup if the terminal
+    // renders our ambiguous-width chrome glyphs double-width (alignment shift).
+    // Default on; a headless/test harness can pass `false` to skip the probe.
+    warnAmbiguousWidth: ctx.warnAmbiguousWidth ?? true,
     onInput: (event) => ctx.loop.dispatch(event),
     onResize: (event) => {
       // Keep the absolute overlay full-screen, then reflow the loop to the new viewport.

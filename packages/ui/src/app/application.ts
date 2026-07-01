@@ -48,6 +48,12 @@ export interface ApplicationOptions {
   input?: NodeJS.ReadStream;
   /** Injectable output stream forwarded to `createHost` (default `process.stdout`); see {@link input}. */
   output?: NodeJS.WriteStream;
+  /**
+   * Warn once at startup (real TTY only) when the terminal renders our ambiguous-width chrome glyphs
+   * double-width. Forwards core's `HostOptions.warnAmbiguousWidth`. Default `true` (zero-config); tests
+   * that simulate a TTY without a live terminal pass `false` to skip the probe.
+   */
+  warnAmbiguousWidth?: boolean;
 }
 
 /** The composed application (composition over inheritance, AR-75). */
@@ -189,6 +195,7 @@ export function createApplication(opts: ApplicationOptions): Application {
         runtime: opts.runtime,
         input: opts.input,
         output: opts.output,
+        warnAmbiguousWidth: opts.warnAmbiguousWidth,
         overlay,
         quitState,
       }),
