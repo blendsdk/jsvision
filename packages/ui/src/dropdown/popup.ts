@@ -37,14 +37,14 @@ export interface AnchoredPopup {
   dismiss(): void;
 }
 
-/** Options for {@link openAnchoredPopup}. */
-export interface AnchoredPopupOptions {
+/** Options for {@link openAnchoredPopup}. Generic over the hosted list's item type `T`. */
+export interface AnchoredPopupOptions<T> {
   /** The overlay host + focus save/restore seam (the app shell, or a bare `Dialog`; PA-9). */
   host: PopupHost;
   /** The anchor rect — the linked field's bounds, in overlay-local coordinates. */
   anchor: Rect;
   /** The list to host (History: `ListView<string>`; ComboBox: its `ListView<T>`). */
-  list: ListView<unknown>;
+  list: ListView<T>;
   /** Max visible rows (default {@link DEFAULT_MAX_ROWS}); the window height is `maxRows + 2`. PA-4. */
   maxRows?: number;
   /** Called on activation (Enter/Space/click) with the list's selected display index. */
@@ -112,10 +112,16 @@ class PopupFrame extends Group {
 }
 
 /**
- * Compute the TV-faithful popup rect (decode §3, generalized for `maxRows`): grow the anchor ±1 in x,
- * fix the height at `maxRows + 2`, put the top 1 row above the anchor top, then `intersect`-clamp to
- * the overlay extent — the clamp is the ONLY thing that reduces rows (truncate near the bottom edge),
- * never an upward flip (PA-15).
+ * Compute the TV-faithful popup rect — the exact `THistory::handleEvent` sequence
+ * (`thistory.cpp:90-98`, GATE-1/GATE-2 verified), generalized for `maxRows`:
+ *   `r.a.x--; r.b.x++;` — grow ±1 in x (width = field + 2).
+ *   `r.a.y--;` — top 1 row above the anchor top (never flips up).
+ *   `r.b.y += 7;` — for TV's 6 visible rows; generalized the intermediate height is `maxRows + 3`.
+ *   `r.intersect(owner->getExtent());` — clamp to the overlay (truncate near the bottom edge).
+ *   `r.b.y--;` — the final decrement, applied AFTER the clamp — so a bottom-clamped popup is
+ *     `clampedHeight − 1` tall (an unclamped popup is `maxRows + 2`). This ordering is load-bearing:
+ *     computing the height before clamping would be off-by-one at the bottom edge.
+ * The `intersect`-then-`−1` is the ONLY thing that reduces rows; there is never an upward flip (PA-15).
  *
  * @param anchor   The field bounds (overlay-local).
  * @param maxRows  Max visible list rows.
@@ -127,9 +133,10 @@ function placePopup(anchor: Rect, maxRows: number, viewport: Rect): Rect {
     x: anchor.x - 1,
     y: anchor.y - 1,
     width: anchor.width + 2,
-    height: maxRows + 2,
+    height: maxRows + 3, // TV's `r.b.y += 7` (maxRows 6 → 9); the `-1` below lands the final height
   };
-  return intersect(grown, viewport);
+  const clamped = intersect(grown, viewport);
+  return { x: clamped.x, y: clamped.y, width: clamped.width, height: Math.max(0, clamped.height - 1) };
 }
 
 /**
@@ -139,7 +146,7 @@ function placePopup(anchor: Rect, maxRows: number, viewport: Rect): Rect {
  * @param opts The host, anchor, list, `maxRows`, and the `onPick`/`onDismiss` callbacks.
  * @returns The {@link AnchoredPopup} handle (idempotent `dismiss()`).
  */
-export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
+export function openAnchoredPopup<T>(opts: AnchoredPopupOptions<T>): AnchoredPopup {
   const { host, anchor, list, onPick, onDismiss } = opts;
   const maxRows = opts.maxRows ?? DEFAULT_MAX_ROWS;
   const overlay = host.overlay;
@@ -164,6 +171,10 @@ export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
 
   const frame = new PopupFrame(dismiss);
   frame.layout = { position: 'absolute', padding: 1, rect: placePopup(anchor, maxRows, viewport) };
+  // The hosted list must FILL the frame's padded interior: `size:fr` fills the main axis (else the
+  // frame sizes it to its collapsed `auto` width), `align:stretch` (the frame default) fills the cross
+  // axis. Merge so the ListView keeps its own `direction:'row'` ([rows | bar]) split.
+  list.layout = { ...list.layout, size: { kind: 'fr', weight: 1 } };
   frame.add(list);
 
   const catcher = new PopupCatcher(dismiss);

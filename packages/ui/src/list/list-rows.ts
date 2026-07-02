@@ -25,7 +25,7 @@
  * fidelity directive (the C++ outranks a mis-decoded oracle). `.js` per NodeNext.
  */
 import { View } from '../view/index.js';
-import type { DrawContext, DispatchEvent } from '../view/index.js';
+import type { DrawContext, DispatchEvent, ThemeRoleName } from '../view/index.js';
 import { computed } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { KeyEvent } from '@jsvision/core';
@@ -34,6 +34,23 @@ import { clampIndex, keepVisible } from './virtual.js';
 
 /** The text drawn once, top-left, for an empty list (TV `emptyText`, `tvtext2.cpp:147`). */
 const EMPTY_TEXT = '<empty>';
+
+/**
+ * The theme roles a list draws its rows in. Defaults to the RD-11 `cpListViewer` roles; a caller can
+ * override them for a TV viewer with a different palette — e.g. `History` uses the `cpHistoryViewer`
+ * roles (white-on-blue / white-on-green) so its rows blend into the blue popup window (RD-14 PA-12).
+ */
+export interface ListRoles {
+  /** Unfocused / normal row (TV `cpListViewer[1]`). */
+  readonly normal: ThemeRoleName;
+  /** The focused row while the list is active (TV `cpListViewer[3]`). */
+  readonly focused: ThemeRoleName;
+  /** A selected row, or the focused row when the list is inactive (TV `cpListViewer[4]`). */
+  readonly selected: ThemeRoleName;
+}
+
+/** The default list row roles — the RD-11 `cpListViewer` decode. */
+export const DEFAULT_LIST_ROLES: ListRoles = { normal: 'listNormal', focused: 'listFocused', selected: 'listSelected' };
 
 /** Shared configuration handed from a `ListView` to its rows renderer. */
 export interface ListRowsConfig<T> {
@@ -53,6 +70,8 @@ export interface ListRowsConfig<T> {
   onSelect?: (index: number, item: T) => void;
   /** Command emitted on activation (like `Button`). */
   command?: string;
+  /** Row theme roles (default {@link DEFAULT_LIST_ROLES}); override for a different viewer palette. */
+  roles?: ListRoles;
 }
 
 /** The virtual-scroll rows renderer: draws only the visible window + owns list keyboard/mouse. */
@@ -65,6 +84,8 @@ export class ListRows<T> extends View {
   protected readonly typeAheadMode: boolean;
   protected readonly onSelect?: (index: number, item: T) => void;
   protected readonly command?: string;
+  /** The row theme roles (RD-11 `listNormal`/`listFocused`/`listSelected` by default; RD-14 override). */
+  protected readonly roles: ListRoles;
   /** The display list (source order, or a stable ascending `getText` sort when `sorted`). */
   protected readonly displayItems: () => T[];
   /** The first visible display index (TV `topItem`). */
@@ -86,6 +107,7 @@ export class ListRows<T> extends View {
     this.typeAheadMode = cfg.typeAhead;
     this.onSelect = cfg.onSelect;
     this.command = cfg.command;
+    this.roles = cfg.roles ?? DEFAULT_LIST_ROLES;
     this.displayItems = computed(() => {
       const arr = cfg.items();
       if (!this.sortedMode) return arr;
@@ -154,7 +176,7 @@ export class ListRows<T> extends View {
     // size.y - 1 so a page keeps one row of context.
     this.bar?.setRange(0, Math.max(0, range - 1), Math.max(1, rows - 1));
 
-    const normal = ctx.color('listNormal');
+    const normal = ctx.color(this.roles.normal);
     if (range === 0) {
       ctx.fill(' ', normal);
       ctx.text(1, 0, EMPTY_TEXT, normal); // HR-51: TV draws emptyText at curCol+1 (tlstview.cpp:147-148)
@@ -179,11 +201,11 @@ export class ListRows<T> extends View {
       const role =
         item === focused
           ? active
-            ? 'listFocused'
-            : 'listSelected'
+            ? this.roles.focused
+            : this.roles.selected
           : item === selected
-            ? 'listSelected'
-            : 'listNormal';
+            ? this.roles.selected
+            : this.roles.normal;
       const style = ctx.color(role);
       ctx.fillRect(0, i, ctx.size.width, 1, ' ', style); // blank the row in its colour
       const text = this.getText(display[item]).slice(0, textWidth);

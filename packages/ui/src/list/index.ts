@@ -11,6 +11,6 @@ export { ListView } from './list-view.js';
 export type { ListViewOptions } from './list-view.js';
 export { ListBox } from './list-box.js';
 export type { ListBoxOptions } from './list-box.js';
-export { ListRows } from './list-rows.js';
-export type { ListRowsConfig } from './list-rows.js';
+export { ListRows, DEFAULT_LIST_ROLES } from './list-rows.js';
+export type { ListRowsConfig, ListRoles } from './list-rows.js';
 export { clampIndex, keepVisible } from './virtual.js';
