@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-02
-> **Progress**: 105/120 tasks (88%)
+> **Progress**: 117/120 tasks (98%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -454,18 +454,18 @@ kitchen-sink story tasks are required (AC-10 only keeps the existing smoke/demos
 - [x] 8.4.4 Full verify ✅ (completed: 2026-07-02 21:40)
 
 ### Phase 9: Containers/lists minors (GATE)
-- [ ] 9.1.1 BEFORE-decode TScrollBar/TListViewer/TScroller
-- [ ] 9.1.2 ST-8.n–s specs (+ oracle corrections)
-- [ ] 9.1.3 RED run
-- [ ] 9.2.1 HR-49 jump-to-position
-- [ ] 9.2.2 HR-50 unfocused highlight
-- [ ] 9.2.3 HR-51 col 1 + HR-53 pgStep
-- [ ] 9.2.4 HR-61 corner cell
-- [ ] 9.2.5 HR-62 click clamp
-- [ ] 9.2.6 GREEN run
-- [ ] 9.3.1 AFTER-diff containers
-- [ ] 9.3.2 Phase-9 impl tests
-- [ ] 9.3.3 Full verify
+- [x] 9.1.1 BEFORE-decode TScrollBar/TListViewer/TScroller ✅ (completed: 2026-07-02 22:30)
+- [x] 9.1.2 ST-8.n–s specs (+ oracle corrections) ✅ (completed: 2026-07-02 22:30)
+- [x] 9.1.3 RED run ✅ (completed: 2026-07-02 22:30)
+- [x] 9.2.1 HR-49 jump-to-position ✅ (completed: 2026-07-02 22:30)
+- [x] 9.2.2 HR-50 unfocused highlight ✅ (completed: 2026-07-02 22:30)
+- [x] 9.2.3 HR-51 col 1 + HR-53 pgStep ✅ (completed: 2026-07-02 22:30)
+- [x] 9.2.4 HR-61 corner cell ✅ (completed: 2026-07-02 22:30)
+- [x] 9.2.5 HR-62 click clamp ✅ (completed: 2026-07-02 22:30)
+- [x] 9.2.6 GREEN run ✅ (completed: 2026-07-02 22:30)
+- [x] 9.3.1 AFTER-diff containers ✅ (completed: 2026-07-02 22:30)
+- [x] 9.3.2 Phase-9 impl tests ✅ (completed: 2026-07-02 22:30)
+- [x] 9.3.3 Full verify ✅ (completed: 2026-07-02 22:30)
 
 ### Phase 10: Governance + final gate
 - [ ] 10.1.1 CHANGELOG backfill + RD-13 entries

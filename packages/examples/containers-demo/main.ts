@@ -54,7 +54,7 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { color
 /** Step 1 — a vertical `ScrollBar` stepped by clicking its ▼ arrow + the page track. */
 function stepScrollBar(): void {
   const pos = signal(0);
-  const bar = new ScrollBar({ value: pos, min: 0, max: 100, orientation: 'vertical', pageStep: 10 });
+  const bar = new ScrollBar({ value: pos, min: 0, max: 100, orientation: 'vertical' });
   bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 8 } };
   const root = new Group();
   root.add(bar);
@@ -62,16 +62,16 @@ function stepScrollBar(): void {
   loop.mount(root);
   printFrame('Frame 1a — ScrollBar at 0 (▲ track ▼)', loop.renderRoot.buffer().rows());
 
-  // Click the ▼ arrow (bottom cell, 1-based y=8) three times → +3.
+  // Click the ▼ arrow (bottom cell, 1-based y=8) three times → +3 (arrow steps ±arrowStep).
   for (let i = 0; i < 3; i += 1) {
     loop.dispatch(mouse('down', 1, 8));
     loop.dispatch(mouse('up', 1, 8));
   }
-  // Click the page track just above the ▼ arrow → +pageStep (10).
-  loop.dispatch(mouse('down', 1, 7));
-  loop.dispatch(mouse('up', 1, 7));
-  printFrame('Frame 1b — after 3× ▼ arrow + one page click', loop.renderRoot.buffer().rows());
-  console.log(`  ScrollBar value: ${pos()} (arrow ±1, page ±10)`);
+  // Click mid-track (row 4, 1-based y=5) → the thumb JUMPS to that position (TV tscrlbar.cpp:193-207).
+  loop.dispatch(mouse('down', 1, 5));
+  loop.dispatch(mouse('up', 1, 5));
+  printFrame('Frame 1b — after 3× ▼ arrow + a mid-track click (jump-to-position)', loop.renderRoot.buffer().rows());
+  console.log(`  ScrollBar value: ${pos()} (arrow ±1; a track click jumps the thumb to that position)`);
 }
 
 /** Step 2 — a `Scroller` over oversized content, scrolled down by keyboard. */

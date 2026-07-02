@@ -47,7 +47,7 @@ test('demo:containers runs standalone, exits 0, and prints the containers walkth
   expect(result.stdout).toContain('▲'); // up arrow
   expect(result.stdout).toContain('█'); // thumb — the user-approved █ block deviation (scroll-bar.ts:36, not ■)
   expect(result.stdout).toContain('▼'); // down arrow
-  expect(result.stdout).toContain('ScrollBar value: 13'); // 3×arrow + 1×page(10)
+  expect(result.stdout).toContain('ScrollBar value: 60'); // 3×arrow then a mid-track jump (HR-49)
   // Scroller revealed lower content.
   expect(result.stdout).toContain('Line 09'); // scrolled past the first page
   // ListView type-ahead + select.

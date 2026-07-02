@@ -28,7 +28,7 @@
  * wheel lives on the scrollbar. Wheel directly over content is intentionally a no-op (PA-18). Drawing/
  * geometry stay TV-exact. `.js` specifiers per NodeNext.
  */
-import { Group } from '../view/index.js';
+import { Group, View as BaseView } from '../view/index.js';
 import type { DrawContext, DispatchEvent, View } from '../view/index.js';
 import type { Size2D } from '../layout/index.js';
 import { signal } from '../reactive/index.js';
@@ -37,6 +37,16 @@ import { ScrollBar } from './scroll-bar.js';
 
 /** Which owned scrollbars a {@link Scroller} creates (default `'vertical'`, AR-105). */
 export type ScrollbarsMode = 'vertical' | 'horizontal' | 'both' | 'none';
+
+/**
+ * The 1×1 SE corner between a Scroller's two bars (HR-61). Painted in the bar-background role and
+ * composed on top of the content so scrolled content never renders in the corner cell.
+ */
+class CornerCell extends BaseView {
+  draw(ctx: DrawContext): void {
+    ctx.fill(' ', ctx.color('scrollBarPage'));
+  }
+}
 
 /** Construction options for {@link Scroller}. */
 export interface ScrollerOptions {
@@ -63,6 +73,8 @@ export class Scroller extends Group {
   protected readonly vbar?: ScrollBar;
   /** The owned horizontal bar (bottom row), when the mode includes it. */
   protected readonly hbar?: ScrollBar;
+  /** The reserved SE corner cell between both bars (HR-61), present only in `'both'` mode. */
+  protected readonly corner?: CornerCell;
 
   // Viewport metrics cached from the last `draw()` (compose runs before events), so the keyboard/wheel
   // handlers clamp against the current viewport + extent without re-measuring.
@@ -90,6 +102,12 @@ export class Scroller extends Group {
     this.add(this.content);
     if (this.vbar !== undefined) this.add(this.vbar);
     if (this.hbar !== undefined) this.add(this.hbar);
+    // HR-61: the SE corner cell exists only when both bars reserve an edge; add it LAST so it composes
+    // above the content (which spans the full viewport) — the corner never shows scrolled content.
+    if (mode === 'both') {
+      this.corner = new CornerCell();
+      this.add(this.corner);
+    }
 
     // Repaint (⇒ re-`draw()`, re-position) whenever the scroll offset changes (a bar drag or our keys).
     this.onMount(() => {
@@ -135,6 +153,7 @@ export class Scroller extends Group {
     this.content.bounds = { x: -offX, y: -offY, width: ext.width, height: ext.height };
     if (this.vbar !== undefined) this.vbar.bounds = { x: this.vpW, y: 0, width: 1, height: this.vpH };
     if (this.hbar !== undefined) this.hbar.bounds = { x: 0, y: this.vpH, width: this.vpW, height: 1 };
+    if (this.corner !== undefined) this.corner.bounds = { x: this.vpW, y: this.vpH, width: 1, height: 1 }; // HR-61
   }
 
   /**

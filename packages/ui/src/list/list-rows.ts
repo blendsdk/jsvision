@@ -150,13 +150,14 @@ export class ListRows<T> extends View {
     const rows = ctx.size.height;
     const display = this.displayItems();
     const range = display.length;
-    // TV setRange: bar value = focused, range [0, range-1], pageStep = viewport rows.
-    this.bar?.setRange(0, Math.max(0, range - 1), Math.max(1, rows));
+    // TV setRange (tlstview.cpp:48-52): bar value = focused, range [0, range-1], HR-53 pgStep =
+    // size.y - 1 so a page keeps one row of context.
+    this.bar?.setRange(0, Math.max(0, range - 1), Math.max(1, rows - 1));
 
     const normal = ctx.color('listNormal');
     if (range === 0) {
       ctx.fill(' ', normal);
-      ctx.text(0, 0, EMPTY_TEXT, normal); // TV emptyText, getColor(1)
+      ctx.text(1, 0, EMPTY_TEXT, normal); // HR-51: TV draws emptyText at curCol+1 (tlstview.cpp:147-148)
       return;
     }
 
@@ -172,7 +173,17 @@ export class ListRows<T> extends View {
         ctx.fillRect(0, i, ctx.size.width, 1, ' ', normal); // blank trailing row
         continue;
       }
-      const role = active && item === focused ? 'listFocused' : item === selected ? 'listSelected' : 'listNormal';
+      // HR-50 (tlstview.cpp:86-130,208-211): the cursor row draws `listFocused` (bright) while the
+      // list is focused, but keeps a `listSelected` highlight when focus moves away — `listFocused` is
+      // reserved for the focused-list state. Any other selected row also draws `listSelected`.
+      const role =
+        item === focused
+          ? active
+            ? 'listFocused'
+            : 'listSelected'
+          : item === selected
+            ? 'listSelected'
+            : 'listNormal';
       const style = ctx.color(role);
       ctx.fillRect(0, i, ctx.size.width, 1, ' ', style); // blank the row in its colour
       const text = this.getText(display[item]).slice(0, textWidth);
@@ -196,8 +207,11 @@ export class ListRows<T> extends View {
     if (inner.type === 'mouse' && inner.kind === 'down') {
       const local = ev.local;
       if (local === undefined) return;
-      const newItem = this.topItem + local.y;
-      if (newItem < this.displayItems().length) {
+      const range = this.displayItems().length;
+      // HR-62 (tlstview.cpp:185-195 `focusItemNum` clamp): a click in the blank space below the last
+      // row focuses/selects the LAST item; an empty list stays a no-op.
+      if (range > 0) {
+        const newItem = Math.min(this.topItem + local.y, range - 1);
         this.typeBuffer = '';
         this.focusTo(newItem);
         this.select(newItem); // a row click focuses + selects (ST-06)

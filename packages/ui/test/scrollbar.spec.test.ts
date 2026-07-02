@@ -81,26 +81,29 @@ test('ST-01: max==min fills the track with the disabled ▓ glyph (no thumb)', (
 
 // ST-02 / AC-1 — clicking the start arrow steps −arrowStep; clicking the page area past the thumb steps
 // +pageStep; both clamp to [min,max]. A horizontal bar mirrors with ◄/►.
-test('ST-02: arrow-click steps ±arrowStep, page-click steps ±pageStep, clamped', () => {
+// HR-49 fidelity correction (tscrlbar.cpp:193-207): the `default:` (track/page) mouse branch does NOT
+// page-step — it jumps the thumb to the clicked position and follows the drag. Only the arrow ends
+// step. This oracle previously encoded the page-step mis-decode; corrected against the C++.
+test('ST-02: arrow-click steps ±arrowStep; a track click jumps the thumb to the position (HR-49)', () => {
   const value = signal(5);
   const bar = new ScrollBar({ value, min: 0, max: 10, arrowStep: 1, pageStep: 3 });
   const loop = createEventLoop({ width: 1, height: 8 }, { caps });
   loop.mount(bar);
 
-  // Click the top arrow (row 0, 1-based y=1) ⇒ value 5 → 4.
+  // Click the top arrow (row 0, 1-based y=1) ⇒ one arrowStep: value 5 → 4.
   loop.dispatch(mouse('down', 1, 1));
   loop.dispatch(mouse('up', 1, 1));
   expect(value()).toBe(4);
 
-  // Click the page area below the thumb (row 6, 1-based y=7; thumb pos ~4, s=7) ⇒ +pageStep 3 → 7.
-  loop.dispatch(mouse('down', 1, 7));
-  loop.dispatch(mouse('up', 1, 7));
-  expect(value()).toBe(7);
-
-  // Repeated page-down clamps at max=10 (7 → 10, not 13).
+  // Click low in the track (row 6, 1-based y=7; s=7) ⇒ jump proportionally: i=6 → floor((6-1)*10+2)/5 = 10.
   loop.dispatch(mouse('down', 1, 7));
   loop.dispatch(mouse('up', 1, 7));
   expect(value()).toBe(10);
+
+  // Click high in the track (row 1, 1-based y=2) ⇒ jump back: i=1 → floor((1-1)*10+2)/5 = 0.
+  loop.dispatch(mouse('down', 1, 2));
+  loop.dispatch(mouse('up', 1, 2));
+  expect(value()).toBe(0);
 });
 
 test('ST-02: horizontal ScrollBar draws ◄/► and steps on the x axis', () => {

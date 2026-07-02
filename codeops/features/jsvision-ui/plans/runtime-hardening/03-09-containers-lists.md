@@ -52,6 +52,22 @@ background role — content never renders there.
 in the blank space below the last row focuses/selects the **last** item (`tlstview.cpp:185-195`
 clamp). Empty list stays a no-op.
 
+## GATE-2 AFTER-diff (recorded 2026-07-02)
+
+Diffed the implementation against the GATE-1 decode:
+
+- **TScrollBar** — `handleDown` routes the arrow ends to `scrollStep` (one step) and the track/page to
+  `jumpTo` + captured drag (HR-49, `tscrlbar.cpp:193-207` default case); `jumpTo` reuses the exact
+  `((i-1)*(max-min)+((s-2)>>1))/(s-2)+min` mapping. The corrected ST-02 oracle asserts jump-to-position.
+  ✓ (The `scrollStep`/`pageStep`/`partCode` transcription is retained as the faithful TV function; the
+  page branch is simply unreached by the new mouse routing.)
+- **TListViewer** — the cursor row draws `listFocused` while active, `listSelected` when focus leaves
+  (HR-50, `:86-130,208-211`); `<empty>` at column 1 (HR-51, `:147-148`); the owned bar `pgStep =
+  size.y-1` (HR-53, `:48-52`); a click below the rows clamps to `range-1`, empty stays a no-op (HR-62,
+  `focusItemNum` `:185-195`). ✓
+- **TScroller** — a dedicated 1×1 `CornerCell` in `'both'` mode, composed above the content in the
+  `scrollBarPage` role, so the SE corner never shows scrolled content (HR-61). ✓
+
 ## Error Handling
 
 | Error Case | Handling Strategy | AR Ref |
