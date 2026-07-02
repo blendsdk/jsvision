@@ -4,5 +4,5 @@
  * `createApplication` composes the loop/desktop/chrome/overlay; the returned `Application.run()`
  * wires core's host and runs until `'quit'`. Re-exported through `@jsvision/ui`'s entry point.
  */
-export { createApplication } from './application.js';
+export { createApplication, syncOverlayVisible } from './application.js';
 export type { Application, ApplicationOptions } from './application.js';

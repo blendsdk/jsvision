@@ -17,7 +17,7 @@
  */
 import type { Keymap } from '@jsvision/core';
 import { View, Group } from '../view/index.js';
-import type { DispatchEvent } from '../view/index.js';
+import type { DispatchEvent, PopupHost } from '../view/index.js';
 
 /** The seams `route` needs from the loop; the loop owns the mutable focus/command/modal state. */
 export interface RouteContext {
@@ -44,6 +44,10 @@ export interface RouteContext {
   hasCapture(view: View): boolean;
   /** Write `text` to the system clipboard (RD-07 PA-5/PA-7). Sourced onto `ev.setClipboard`. */
   setClipboard(text: string): void;
+  /** The currently-focused view (RD-14 PF-002). Sourced onto `ev.getFocused`. */
+  getFocused(): View | null;
+  /** The overlay host for anchored popups (RD-14 PF-002/PA-9), or `undefined`. Sourced onto `ev.popupHost`. */
+  readonly popupHost?: PopupHost;
   /** Deliver an envelope to a view's `onEvent`, isolating a throwing handler (AR-66). */
   deliver(view: View, ev: DispatchEvent): void;
   /** Built-in Tab focus traversal — advance focus (PA-10; wired by Phase 3). */
@@ -136,6 +140,8 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
     releaseCapture: ctx.releaseCapture,
     hasCapture: ctx.hasCapture,
     setClipboard: ctx.setClipboard,
+    getFocused: ctx.getFocused,
+    popupHost: ctx.popupHost,
   };
 
   // Mouse/wheel skip the 3-phase focus path → hit-test (03-03).

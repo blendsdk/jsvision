@@ -18,7 +18,7 @@ import { createLogger, setClipboard } from '@jsvision/core';
 import type { Logger, Keymap, ScreenBuffer, CapabilityProfile } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
 import { createRenderRoot } from '../view/index.js';
-import type { View, RenderRoot, AppEvent, DispatchEvent, Point } from '../view/index.js';
+import type { View, RenderRoot, AppEvent, DispatchEvent, Point, PopupHost } from '../view/index.js';
 import type { EventLoop, EventLoopOptions, ModalHostAware } from './types.js';
 import { createCommandRegistry } from './commands.js';
 import type { CommandRegistry } from './commands.js';
@@ -74,6 +74,8 @@ class EventLoopImpl implements EventLoop {
   writeClipboard?: (seq: string) => void;
   /** Resize sink wired by the app after composition (HR-36/HR-41). @see EventLoop.onResize */
   onResize?: (size: Size2D) => void;
+  /** Popup host wired by the app after the overlay exists (RD-14 PF-002). @see EventLoop.popupHost */
+  popupHost?: PopupHost;
 
   constructor(viewport: Size2D, opts: EventLoopOptions) {
     this.logger = opts.logger ?? createLogger();
@@ -316,6 +318,10 @@ class EventLoopImpl implements EventLoop {
         const seq = setClipboard(text, this.caps);
         if (seq !== '') this.writeClipboard?.(seq);
       },
+      // RD-14 PF-002 — the focus query + overlay host a dropdown leaf reaches through its envelope to
+      // save/restore focus and mount its anchored popup. `popupHost` is `undefined` headless / no shell.
+      getFocused: () => this.focus.getFocused(),
+      popupHost: this.popupHost,
       deliver: (view, ev) => this.deliver(view, ev),
       // The built-in Tab handler runs inside the active dispatch tick, so it calls the focus
       // manager's pure mutation directly (no nested runTick) — the tick's flush paints (PA-11).

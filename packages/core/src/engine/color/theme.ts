@@ -144,6 +144,40 @@ export interface Theme {
    * gray-dialog slot 29 → `cpAppColor[60]=0x31` = blue-on-cyan.
    */
   readonly listDivider: ThemeRole;
+  // --- jsvision-ui RD-14 History dropdown roles (`cpHistory`/`cpHistoryWindow`/`cpHistoryViewer`) --
+  // Faithful to Turbo Vision's THistory chain, decoded for the gray-`TDialog` owner (this project's
+  // default). Each byte resolves through its component palette → `cpGrayDialog` → `cpAppColor` = `0xHL`
+  // (H=bg nibble, L=fg nibble). Bytes are pinned from source in the ST-32 spec oracle
+  // (`history-theme.spec`). (RD-14 PA-12; input-dropdowns/03-01-history.md §1/§4, /03-04 §3)
+  /**
+   * History button `▐`/`▌` half-blocks (the "Sides"). TV `cpHistory[2]=0x17` (`thistory.cpp:37`) →
+   * gray-dialog slot 23 → `cpAppColor[54]=0x72` = green-on-lightGray. (`dialogs.h:999-1002` layout)
+   */
+  readonly historyButtonSides: ThemeRole;
+  /**
+   * History button `↓` arrow. TV `cpHistory[1]=0x16` (`thistory.cpp:37`) → gray-dialog slot 22 →
+   * `cpAppColor[53]=0x20` = black-on-green.
+   */
+  readonly historyButtonArrow: ThemeRole;
+  /**
+   * The History popup window. Mirrors the {@link window} role shape (interior fg/bg + `border` +
+   * `icon`). TV `cpHistoryWindow="\x13\x13\x15\x18\x17\x13\x14"` (`thistwin.cpp:26`): the frame's
+   * active border → entry 1 `0x13` → gray-dialog slot 19 → `cpAppColor[50]=0x1F` white-on-blue (so
+   * the popup is a **blue** window even from a gray dialog); the icon/accent → entry 3 `0x15` →
+   * slot 21 → `cpAppColor[52]=0x1A` brightGreen-on-blue (`tframe.cpp`).
+   */
+  readonly historyWindow: ThemeRole & { readonly border: Color; readonly icon: Color };
+  /**
+   * History list normal (unfocused/selected/divider) row. TV `cpHistoryViewer[1]=0x06`
+   * (`thstview.cpp:33`) → `cpHistoryWindow[6]=0x13` → gray-dialog slot 19 → `cpAppColor[50]=0x1F` =
+   * white-on-blue. (`tlstview.cpp:88-96`)
+   */
+  readonly historyViewer: ThemeRole;
+  /**
+   * History list focused row. TV `cpHistoryViewer[3]=0x07` → `cpHistoryWindow[7]=0x14` → gray-dialog
+   * slot 20 → `cpAppColor[51]=0x2F` = white-on-green.
+   */
+  readonly historyViewerFocused: ThemeRole;
   readonly statusBar: ThemeRole;
   /**
    * The status-line **pressed/selected** item (mouse-down feedback). Turbo Vision repaints the held
@@ -223,6 +257,14 @@ export const defaultTheme: Theme = {
   listFocused: { fg: PALETTE.white, bg: PALETTE.green },
   listSelected: { fg: PALETTE.yellow, bg: PALETTE.cyan },
   listDivider: { fg: PALETTE.blue, bg: PALETTE.cyan },
+  // RD-14 History dropdown roles — decoded TV bytes (PA-12): button sides 0x72 green-on-lightGray,
+  // arrow 0x20 black-on-green; blue popup window 0x1F white-on-blue border, 0x1A brightGreen icon;
+  // viewer 0x1F white-on-blue, focused 0x2F white-on-green.
+  historyButtonSides: { fg: PALETTE.green, bg: PALETTE.lightGray },
+  historyButtonArrow: { fg: PALETTE.black, bg: PALETTE.green },
+  historyWindow: { fg: PALETTE.white, bg: PALETTE.blue, border: PALETTE.white, icon: PALETTE.brightGreen },
+  historyViewer: { fg: PALETTE.white, bg: PALETTE.blue },
+  historyViewerFocused: { fg: PALETTE.white, bg: PALETTE.green },
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },

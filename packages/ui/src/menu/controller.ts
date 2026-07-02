@@ -15,6 +15,7 @@ import type { LayoutProps, Rect } from '../layout/index.js';
 import { MenuPopup } from './popup.js';
 import type { MenuItem } from './builders.js';
 import { parseTilde, layoutTitles, titleIndexAt } from './builders.js';
+import { syncOverlayVisible } from '../app/index.js';
 
 /** The loop seam the controller needs for activation, greying, and focus save/restore (PA-7). */
 export interface MenuLoopSeam {
@@ -226,7 +227,10 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
     clearLevels();
     if (!wasOpen) mountCatcher();
     openTopIndex = index;
-    overlay.state.visible = true; // PF-10: visible BEFORE the catcher/popups are hit-testable
+    // RD-14 PA-5: derive visibility from the mounted child count (the catcher is added above) instead
+    // of an explicit toggle, so a coexisting dropdown popup isn't stomped. Still visible BEFORE the
+    // catcher/popups are hit-testable (PF-10) — the catcher is already mounted at this point.
+    syncOverlayVisible(overlay);
 
     const node = tops[index];
     if (node !== undefined && node.kind === 'sub') {
@@ -244,7 +248,9 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
       overlay.remove(catcher);
       catcher = null;
     }
-    overlay.state.visible = false;
+    // RD-14 PA-5: re-derive from the live child count — hides only if no other client (e.g. an open
+    // dropdown popup) still has a child mounted; a bare menu-close leaves the overlay empty → hidden.
+    syncOverlayVisible(overlay);
     openTopIndex = null;
     const restore = savedFocus;
     savedFocus = null;
