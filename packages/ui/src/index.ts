@@ -93,9 +93,18 @@ export { Dialog, okButton, cancelButton, yesButton, noButton, okCancelButtons, y
 export type { DialogOptions } from './dialog/index.js';
 
 // Input dropdowns (RD-14) — `dropdown/`. Explicit named re-exports; the shared `openAnchoredPopup`
-// primitive stays INTERNAL (not re-exported here). The `History` control + the global MRU store
-// functions are public; the `PopupHost` seam is public so a bare `Dialog` can host a dropdown (PA-9).
-// `ComboBox` lands in Phase 3.
-export { History, historyAdd, historyStr, historyCount, historyEntries, clearHistory, HISTORY_MAX_ENTRIES } from './dropdown/index.js';
-export type { HistoryOptions } from './dropdown/index.js';
+// primitive stays INTERNAL (not re-exported here). The `History` + `ComboBox` controls + the global
+// MRU store functions are public; the `PopupHost` seam is public so a bare `Dialog` can host a
+// dropdown (PA-9).
+export {
+  History,
+  ComboBox,
+  historyAdd,
+  historyStr,
+  historyCount,
+  historyEntries,
+  clearHistory,
+  HISTORY_MAX_ENTRIES,
+} from './dropdown/index.js';
+export type { HistoryOptions, ComboBoxOptions } from './dropdown/index.js';
 export type { PopupHost } from './view/index.js';

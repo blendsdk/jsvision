@@ -27,18 +27,12 @@
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
-import type { Rect } from '../layout/index.js';
 import { signal } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { Input } from '../controls/index.js';
 import { ListView } from '../list/index.js';
-import { openAnchoredPopup, DEFAULT_MAX_ROWS } from './popup.js';
+import { openAnchoredPopup, DEFAULT_MAX_ROWS, drawDropdownIcon, absoluteRect } from './popup.js';
 import { historyAdd, historyEntries, addEntry } from './history-store.js';
-
-/** The 3 visible cells of `THistory::icon = "\xDE~\x19~\xDD"` (decode §1). */
-const ICON_SIDE_LEFT = '▐'; // U+2590 RIGHT HALF BLOCK (CP437 0xDE)
-const ICON_ARROW = '↓'; // U+2193 DOWNWARDS ARROW (CP437 0x19; PA-3 — narrow, NOT ▼)
-const ICON_SIDE_RIGHT = '▌'; // U+258C LEFT HALF BLOCK (CP437 0xDD)
 
 /** Options for a {@link History} control. */
 export interface HistoryOptions {
@@ -74,11 +68,7 @@ export class History extends View {
 
   /** Draw the 3-cell `▐↓▌` icon (TV `b.moveCStr(0, icon, getColor(0x0102))`, decode §1). */
   override draw(ctx: DrawContext): void {
-    const sides = ctx.color('historyButtonSides');
-    const arrow = ctx.color('historyButtonArrow');
-    ctx.text(0, 0, ICON_SIDE_LEFT, sides);
-    ctx.text(1, 0, ICON_ARROW, arrow);
-    ctx.text(2, 0, ICON_SIDE_RIGHT, sides);
+    drawDropdownIcon(ctx, 0);
   }
 
   /**
@@ -157,24 +147,4 @@ export class History extends View {
     this.link.getValueSignal().set(value.slice(0, this.link.getMaxLength()));
     this.link.selectAll();
   }
-}
-
-/**
- * The absolute rect of a mounted view: the sum of parent-relative `bounds.x/y` up the tree (the root
- * bounds are absolute). Used to anchor the popup in overlay-local coordinates (the overlay is the
- * full-viewport top-z group at the origin).
- *
- * @param view The mounted view to locate.
- * @returns The view's absolute rect.
- */
-function absoluteRect(view: View): Rect {
-  let x = 0;
-  let y = 0;
-  let node: View | null = view;
-  while (node !== null) {
-    x += node.bounds.x;
-    y += node.bounds.y;
-    node = node.parent;
-  }
-  return { x, y, width: view.bounds.width, height: view.bounds.height };
 }
