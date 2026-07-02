@@ -197,7 +197,11 @@ export abstract class View {
     if (this.scope === null) {
       throw new TuiError('view.onCleanup() requires a mounted view; call it in onMount()');
     }
-    runWithOwner(this.scope, () => onCleanup(fn));
+    // HR-32: reactive `onCleanup` binds to the running observer FIRST, so calling `view.onCleanup`
+    // inside a `bind` effect body would attach `fn` to that effect and re-fire it on every re-run.
+    // `untrack` clears the observer so `onCleanup` falls through to the owner — the view scope set by
+    // `runWithOwner` — making it fire exactly once, at unmount (mirrors the `untrack` guard in mount).
+    runWithOwner(this.scope, () => untrack(() => onCleanup(fn)));
   }
 
   /**

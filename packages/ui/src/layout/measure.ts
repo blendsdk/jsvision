@@ -44,15 +44,20 @@ export function naturalSize(box: LayoutBox, available: Size2D): Size2D {
     height: toCells(available.height - padding.top - padding.bottom),
   };
 
+  // HR-33: only flow children contribute to the intrinsic size — absolute children reserve no flow
+  // space (mirrors the flow filter in layout.ts:74), so an `auto` container with a large absolute
+  // child measures to its flow content, not the overlay.
+  const flowChildren = box.children.filter((child) => normalizeProps(child.props).position !== 'absolute');
+
   let mainExtent = 0;
   let crossExtent = 0;
-  for (const child of box.children) {
+  for (const child of flowChildren) {
     const childSize = childMainAndCross(child, childAvailable, direction);
     mainExtent += childSize.main;
     crossExtent = Math.max(crossExtent, childSize.cross);
   }
 
-  const gapTotal = box.children.length > 1 ? gap * (box.children.length - 1) : 0;
+  const gapTotal = flowChildren.length > 1 ? gap * (flowChildren.length - 1) : 0;
   return sizeFromAxis(mainExtent + gapTotal + mainPad, crossExtent + crossPad, direction);
 }
 

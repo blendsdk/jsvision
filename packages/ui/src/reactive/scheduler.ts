@@ -96,13 +96,23 @@ export function execute(node: Computation): unknown {
   const previousOwner = currentOwner;
   currentObserver = node;
   currentOwner = node.owner;
+  // HR-28: mark COMPUTEDS (not effects) as on the compute stack, so a re-entrant read throws a cycle
+  // error. Effects are leaf sinks that may legitimately write a signal they also read (a self-writing
+  // effect re-enters the flush) — that convergence is the runaway guard's job, not a cycle.
+  if (!node.isEffect) node.evaluating = true;
   try {
     return node.fn();
   } catch (error) {
     // AR-15: abort the run → fire the onCleanups it registered before throwing.
     runCleanups(node.cleanups);
+    // HR-27: a throwing COMPUTED must not settle CLEAN (execute() cleared it to CLEAN above), or
+    // later reads would return its stale/uninitialized memo forever. Restore DIRTY so every read
+    // re-evaluates and re-throws. Effects keep their existing post-throw handling (the flush loop
+    // owns them and collects the error), so this is scoped to computeds.
+    if (!node.isEffect) node.state = NodeState.DIRTY;
     throw error;
   } finally {
+    if (!node.isEffect) node.evaluating = false;
     currentObserver = previousObserver;
     currentOwner = previousOwner;
   }
@@ -173,6 +183,14 @@ function resolveCheck(node: Computation): void {
  */
 export function updateIfNecessary(node: Computation): void {
   if (node.disposed) return; // disposal is final (HR-03): never resolve/run a disposed node
+  // HR-28: reading a node that is currently evaluating means it (transitively) depends on itself —
+  // a compute cycle (`a ⇄ b`). Throw the typed error rather than returning a silent `undefined`.
+  if (node.evaluating) {
+    throw new ReactiveCycleError(
+      MAX_PROPAGATION_ITERATIONS,
+      'A computed dependency cycle was detected (a computed transitively reads its own value).',
+    );
+  }
   if (node.state === NodeState.CHECK) {
     resolveCheck(node);
   }
@@ -260,11 +278,27 @@ export function notifyChanged(source: Subscribable): void {
  */
 export function batch<T>(fn: () => T): T {
   batchDepth += 1;
+  let bodyThrew = false;
   try {
     return fn();
+  } catch (error) {
+    bodyThrew = true;
+    throw error;
   } finally {
     batchDepth -= 1;
-    if (batchDepth === 0) flush();
+    if (batchDepth === 0) {
+      if (bodyThrew) {
+        // HR-29 (PA-15): the body's exception is already in flight. A closing-flush exception must
+        // not mask it — report it via the reactive multi-throw precedent (PA-2) instead of throwing.
+        try {
+          flush();
+        } catch (flushError) {
+          console.error(flushError);
+        }
+      } else {
+        flush();
+      }
+    }
   }
 }
 

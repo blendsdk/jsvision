@@ -22,6 +22,27 @@ const DEFAULT_STYLE: Style = { fg: 'default', bg: 'default' };
 /** Width-resolution mode — matches `ScreenBuffer`'s own default so clip math agrees with the buffer. */
 const WIDTH_MODE = 'wcwidth';
 
+/** Sum of the display widths of a string's code points (combining marks count 0). HR-30. */
+function displayWidth(str: string): number {
+  let total = 0;
+  for (const glyph of str) total += charWidth(glyph.codePointAt(0) ?? 0x20, WIDTH_MODE);
+  return total;
+}
+
+/** Clip `str` to at most `maxWidth` display columns without splitting a wide glyph. HR-30. */
+function clipToWidth(str: string, maxWidth: number): string {
+  if (maxWidth <= 0) return '';
+  let out = '';
+  let used = 0;
+  for (const glyph of str) {
+    const w = charWidth(glyph.codePointAt(0) ?? 0x20, WIDTH_MODE);
+    if (used + w > maxWidth) break;
+    out += glyph;
+    used += w;
+  }
+  return out;
+}
+
 /**
  * Single-line box glyphs. Core's `BOX` table is not exported, so this small set is duplicated here
  * so `box()` can clip per cell; the serializer still substitutes ASCII when `boxDrawing` is off.
@@ -63,12 +84,29 @@ export function makeDrawContext(buffer: ScreenBuffer, viewRect: Rect, clip: Rect
   function text(x: number, y: number, str: string, style: Style = DEFAULT_STYLE): void {
     const absY = oy + y;
     let absX = ox + x;
+    // HR-30: accumulate each base glyph plus its trailing combining marks into one cluster so the
+    // marks compose onto the base cell (via ScreenBuffer.set storing the whole cluster) instead of
+    // being dropped. A leading mark with no base has nothing to compose onto and is skipped.
+    let cluster = '';
+    let clusterWidth: 0 | 1 | 2 = 1;
+    let clusterX = absX;
+    const emit = (): void => {
+      if (cluster !== '') putGlyph(clusterX, absY, cluster, style, clusterWidth);
+    };
     for (const glyph of sanitize(str)) {
       const cp = glyph.codePointAt(0) ?? 0x20;
       const w = charWidth(cp, WIDTH_MODE);
-      if (w >= 1) putGlyph(absX, absY, glyph, style, w);
+      if (w === 0) {
+        if (cluster !== '') cluster += glyph;
+        continue;
+      }
+      emit();
+      cluster = glyph;
+      clusterWidth = w;
+      clusterX = absX;
       absX += w;
     }
+    emit();
   }
 
   function fillRect(x: number, y: number, w: number, h: number, char: string, style: Style = DEFAULT_STYLE): void {
@@ -100,8 +138,11 @@ export function makeDrawContext(buffer: ScreenBuffer, viewRect: Rect, clip: Rect
       putGlyph(ax + w - 1, ay + row, g.v, style, 1);
     }
     if (title !== undefined && title.length > 0) {
-      const label = ` ${title} `;
-      const tx = x + Math.max(1, Math.floor((w - [...label].length) / 2));
+      // HR-30: center by DISPLAY width (not code-point count) and clip to the interior, so a
+      // CJK/emoji title stays centered and never overruns the frame (same contract as core HR-25).
+      const interior = w - 2;
+      const label = clipToWidth(` ${title} `, interior);
+      const tx = x + 1 + Math.max(0, Math.floor((interior - displayWidth(label)) / 2));
       text(tx, y, label, style); // view-local coords → clipped like any text
     }
   }

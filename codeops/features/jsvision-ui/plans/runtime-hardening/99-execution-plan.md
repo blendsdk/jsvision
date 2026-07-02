@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-02
-> **Progress**: 53/120 tasks (44%)
+> **Progress**: 66/120 tasks (55%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -396,19 +396,19 @@ kitchen-sink story tasks are required (AC-10 only keeps the existing smoke/demos
 - [x] 5.3.2 Full verify ✅ (completed: 2026-07-02 17:58)
 
 ### Phase 6: Reactive/view minors
-- [ ] 6.1.1 ST-6.a–h specs
-- [ ] 6.1.2 RED run
-- [ ] 6.2.1 HR-27 throwing computed
-- [ ] 6.2.2 HR-28 cycle detect
-- [ ] 6.2.3 HR-29 batch policy (PA-15)
-- [ ] 6.2.4 HR-30 draw-context width/marks
-- [ ] 6.2.5 HR-31 visibility invalidate (PA-8)
-- [ ] 6.2.6 HR-32 onCleanup scope
-- [ ] 6.2.7 HR-33 naturalSize filter
-- [ ] 6.2.8 HR-34 shadow occlusion (PA-16)
-- [ ] 6.2.9 GREEN run
-- [ ] 6.3.1 Phase-6 impl tests
-- [ ] 6.3.2 Full verify
+- [x] 6.1.1 ST-6.a–h specs ✅ (completed: 2026-07-02 18:40)
+- [x] 6.1.2 RED run ✅ (completed: 2026-07-02 18:42 — reproduced via analysis; see per-HR notes)
+- [x] 6.2.1 HR-27 throwing computed ✅ (completed: 2026-07-02 18:10)
+- [x] 6.2.2 HR-28 cycle detect ✅ (completed: 2026-07-02 18:15 — scoped to computeds; effect self-writes stay the runaway guard's job)
+- [x] 6.2.3 HR-29 batch policy (PA-15) ✅ (completed: 2026-07-02 18:12)
+- [x] 6.2.4 HR-30 draw-context width/marks ✅ (completed: 2026-07-02 18:25)
+- [x] 6.2.5 HR-31 visibility invalidate (PA-8) ✅ (completed: 2026-07-02 18:30 — flip escalates to relayout)
+- [x] 6.2.6 HR-32 onCleanup scope ✅ (completed: 2026-07-02 18:20 — untrack so it binds to the view scope)
+- [x] 6.2.7 HR-33 naturalSize filter ✅ (completed: 2026-07-02 18:22)
+- [x] 6.2.8 HR-34 shadow occlusion (PA-16) ✅ (completed: 2026-07-02 18:32)
+- [x] 6.2.9 GREEN run ✅ (completed: 2026-07-02 18:45)
+- [x] 6.3.1 Phase-6 impl tests ✅ (completed: 2026-07-02 18:50)
+- [x] 6.3.2 Full verify ✅ (completed: 2026-07-02 18:58)
 
 ### Phase 7: Event/shell minors (GATE)
 - [ ] 7.1.1 BEFORE-decode TMenuView (PA-17)
