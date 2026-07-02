@@ -45,10 +45,7 @@ import { clipboardChord, clipboardCommand, applyPaste, insertFilled } from './in
 import type { ClipboardAction } from './input-clipboard.js';
 import { computeDelete } from './input-editing.js';
 import type { EditState, DeleteKind } from './input-editing.js';
-
-/** Left/right scroll arrows (TV `tvtext1.cpp:106-107`, `0x11`/`0x10`), unambiguous-narrow code points. */
-const LEFT_ARROW = '\u25C4'; // ◄
-const RIGHT_ARROW = '\u25BA'; // ►
+import { LEFT_ARROW, RIGHT_ARROW, canScrollRight, displayedPos, glyphAt } from './input-render.js';
 
 /** Construction options for {@link Input}. */
 export interface InputOptions {
@@ -102,27 +99,14 @@ export class Input extends View {
     return this.curPos;
   }
 
-  // --- RD-14 public linkage seam (PA-8) --------------------------------------------------------
-  // A `History` control links an app-created `Input` and must read + replace its text and select-all
-  // it after a pick (faithful to TV `link->data`/`link->maxLen`/`link->selectAll`,
-  // `thistory.cpp:106-107`). The backing fields stay `protected`; this is the minimal public surface.
-
-  /**
-   * Public accessor for the two-way bound text signal — the SAME signal edits write back to. A
-   * linking `History` replaces the field text through it (RD-14 PA-8).
-   *
-   * @returns The `Signal<string>` source of truth for this field.
-   */
+  // RD-14 public linkage seam (PA-8) — a linking `History` reaches the field's protected `value`/
+  // `maxLength` through these accessors (fields stay protected; faithful to TV `thistory.cpp:106-107`).
+  /** The two-way bound text signal — a linking History replaces the field text through it (RD-14 PA-8). */
   getValueSignal(): Signal<string> {
     return this.value;
   }
 
-  /**
-   * Public read of the field's max length (`Infinity` when unbounded). A linking `History` clamps a
-   * picked value to it before writing (RD-14 PA-8).
-   *
-   * @returns The stored-value length cap.
-   */
+  /** The field's max length (`Infinity` = unbounded); a linking History clamps a pick to it (RD-14 PA-8). */
   getMaxLength(): number {
     return this.maxLength;
   }
@@ -188,13 +172,13 @@ export class Input extends View {
     const { width: w, height: h } = ctx.size;
     ctx.fillRect(0, 0, w, h, ' ', style);
     if (w > 1) ctx.text(1, 0, v.slice(this.firstPos, this.firstPos + (w - 1)), style); // cols 1..w-1
-    if (this.canScrollRight(v, w)) ctx.text(w - 1, 0, RIGHT_ARROW, arrows);
+    if (canScrollRight(v, w, this.firstPos)) ctx.text(w - 1, 0, RIGHT_ARROW, arrows);
     if (this.firstPos > 0) ctx.text(0, 0, LEFT_ARROW, arrows);
     // Selection band: recolour the visible selected substring in `inputSelection` (TV `getColor(3)`
     // band `[l+1, r+1)`, `tinputli.cpp:152-157`). Only when focused with a non-empty selection.
     if (this.state.focused && this.selStart < this.selEnd) {
-      const l = Math.max(0, this.displayedPos(this.selStart) - this.firstPos);
-      const r = Math.min(w - 2, this.displayedPos(this.selEnd) - this.firstPos);
+      const l = Math.max(0, displayedPos(this.selStart) - this.firstPos);
+      const r = Math.min(w - 2, displayedPos(this.selEnd) - this.firstPos);
       if (l < r) {
         const seg = v.slice(this.firstPos + l, this.firstPos + r); // the chars under cols [l+1, r+1)
         ctx.text(l + 1, 0, seg, ctx.color('inputSelection'));
@@ -205,36 +189,12 @@ export class Input extends View {
     // Preserve the glyph already shown at that column (text char OR an edge arrow) and reverse only
     // its colours — mirroring TV's hardware cursor, which sits over a glyph without erasing it (PF-008).
     if (this.state.focused) {
-      const caretCol = this.displayedPos(this.curPos) - this.firstPos + 1;
+      const caretCol = displayedPos(this.curPos) - this.firstPos + 1;
       if (caretCol >= 0 && caretCol < w) {
         const reversed: Style = { fg: style.bg, bg: style.fg }; // field fg/bg swapped
-        ctx.text(caretCol, 0, this.glyphAt(caretCol, v, w), reversed);
+        ctx.text(caretCol, 0, glyphAt(caretCol, v, w, this.firstPos), reversed);
       }
     }
-  }
-
-  /**
-   * The glyph currently displayed at a field column — the edge arrow at col 0 / `w-1` when scrolled
-   * (matching the draw order), otherwise the value code point under that column, or a space past the
-   * end. Used to repaint the caret cell without erasing the arrow/char beneath it (PF-008).
-   *
-   * @param col The field column. @param v The current value. @param w The field width.
-   * @returns The single-glyph string at that column.
-   */
-  protected glyphAt(col: number, v: string, w: number): string {
-    if (col === 0 && this.firstPos > 0) return LEFT_ARROW;
-    if (col === w - 1 && this.canScrollRight(v, w)) return RIGHT_ARROW;
-    const idx = col - 1 + this.firstPos; // the value index shown at this column (col 1 → firstPos)
-    return idx >= 0 && idx < v.length ? (v[idx] ?? ' ') : ' ';
-  }
-
-  /**
-   * The display column of a value index (TV `displayedPos` = `strwidth(data[0..pos))`). Code-unit in
-   * v1 (PA-1); grapheme/wide-aware stepping is DEF-21 — the identity in the current slice.
-   * @param pos A JS string index into the value. @returns The display column offset from the start.
-   */
-  protected displayedPos(pos: number): number {
-    return pos;
   }
 
   /**
@@ -245,14 +205,9 @@ export class Input extends View {
    */
   override desiredCaret(): Point | null {
     if (!this.state.focused) return null;
-    const caretCol = this.displayedPos(this.curPos) - this.firstPos + 1;
+    const caretCol = displayedPos(this.curPos) - this.firstPos + 1;
     if (caretCol < 0 || caretCol >= this.bounds.width) return null;
     return { x: caretCol, y: 0 };
-  }
-
-  /** Whether text extends past the right edge of the field (TV `canScroll(1)`, `tinputli.cpp:118`). */
-  protected canScrollRight(v: string, w: number): boolean {
-    return v.length - this.firstPos + 2 > w;
   }
 
   /** Keep the cursor visible by clamping `firstPos` (TV `tinputli.cpp:460-465`). */
@@ -456,10 +411,7 @@ export class Input extends View {
 
   /**
    * Select all / clear (TV `selectAll`, `:496-508`): `selStart=0`, `curPos=selEnd=len` (or all 0).
-   * **Public** (RD-14 PA-8): a linking `History` calls `selectAll()` after a pick, faithful to TV
-   * `link->selectAll(True)` (`thistory.cpp:107`). Defaults to selecting the whole field.
-   *
-   * @param enable `true` selects the whole value; `false` collapses the selection.
+   * **Public** for a linking History (RD-14 PA-8; `thistory.cpp:107`). Defaults to select-all.
    */
   selectAll(enable = true): void {
     this.selStart = 0;
@@ -490,7 +442,7 @@ export class Input extends View {
       if (local.x === 0 && this.firstPos > 0) {
         this.firstPos -= 1; // ◄ click → scroll left
         this.lastDownX = null;
-      } else if (local.x === w - 1 && this.canScrollRight(v, w)) {
+      } else if (local.x === w - 1 && canScrollRight(v, w, this.firstPos)) {
         this.firstPos += 1; // ► click → scroll right
         this.lastDownX = null;
       } else if (this.lastDownX === local.x) {
