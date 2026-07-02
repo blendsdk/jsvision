@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-02
-> **Progress**: 66/120 tasks (55%)
+> **Progress**: 82/120 tasks (68%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -411,22 +411,22 @@ kitchen-sink story tasks are required (AC-10 only keeps the existing smoke/demos
 - [x] 6.3.2 Full verify ✅ (completed: 2026-07-02 18:58)
 
 ### Phase 7: Event/shell minors (GATE)
-- [ ] 7.1.1 BEFORE-decode TMenuView (PA-17)
-- [ ] 7.1.2 BEFORE-decode TProgram/TGroup cmQuit (PA-2)
-- [ ] 7.1.3 ST-7.a–h specs
-- [ ] 7.1.4 RED run
-- [ ] 7.2.1 HR-35 bare item emit+close
-- [ ] 7.2.2 HR-36 catcher resize
-- [ ] 7.2.3 HR-37 modalHost clear
-- [ ] 7.2.4 HR-38 cascade quit (PA-2)
-- [ ] 7.2.5 HR-39 disable evicts focus
-- [ ] 7.2.6 HR-40 one-click title switch
-- [ ] 7.2.7 HR-41 zoom/restore on resize
-- [ ] 7.2.8 HR-42 sweep mounted guard
-- [ ] 7.2.9 GREEN run
-- [ ] 7.3.1 AFTER-diff menu + quit
-- [ ] 7.3.2 Phase-7 impl tests
-- [ ] 7.3.3 Full verify
+- [x] 7.1.1 BEFORE-decode TMenuView (PA-17) ✅ (completed: 2026-07-02 20:05)
+- [x] 7.1.2 BEFORE-decode TProgram/TGroup cmQuit (PA-2) ✅ (completed: 2026-07-02 20:05)
+- [x] 7.1.3 ST-7.a–h specs ✅ (completed: 2026-07-02 20:35)
+- [x] 7.1.4 RED run ✅ (completed: 2026-07-02 20:35)
+- [x] 7.2.1 HR-35 bare item emit+close ✅ (completed: 2026-07-02 20:10)
+- [x] 7.2.2 HR-36 catcher resize ✅ (completed: 2026-07-02 20:20)
+- [x] 7.2.3 HR-37 modalHost clear ✅ (completed: 2026-07-02 20:05)
+- [x] 7.2.4 HR-38 cascade quit (PA-2) ✅ (completed: 2026-07-02 20:18)
+- [x] 7.2.5 HR-39 disable evicts focus ✅ (completed: 2026-07-02 20:05)
+- [x] 7.2.6 HR-40 one-click title switch ✅ (completed: 2026-07-02 20:12)
+- [x] 7.2.7 HR-41 zoom/restore on resize ✅ (completed: 2026-07-02 20:20)
+- [x] 7.2.8 HR-42 sweep mounted guard ✅ (completed: 2026-07-02 20:05)
+- [x] 7.2.9 GREEN run ✅ (completed: 2026-07-02 20:40)
+- [x] 7.3.1 AFTER-diff menu + quit ✅ (completed: 2026-07-02 20:30)
+- [x] 7.3.2 Phase-7 impl tests ✅ (completed: 2026-07-02 20:45)
+- [x] 7.3.3 Full verify ✅ (completed: 2026-07-02 20:55)
 
 ### Phase 8: Controls minors (GATE)
 - [ ] 8.1.1 BEFORE-decode TInputLine

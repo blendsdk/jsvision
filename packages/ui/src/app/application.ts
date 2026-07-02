@@ -166,6 +166,7 @@ export function createApplication(opts: ApplicationOptions): Application {
     logger: opts.logger,
     keymap: opts.keymap,
     commands: Object.values(Commands),
+    quitCommand: Commands.quit, // HR-38: a quit during a modal cascades top-down (PA-2)
   });
   loop.mount(root);
   desktop.attachLoop(loop);
@@ -191,6 +192,18 @@ export function createApplication(opts: ApplicationOptions): Application {
     });
   }
 
+  // HR-36 / HR-41: on a viewport resize, keep the absolute overlay full-screen, re-anchor the open
+  // menu's outside-click catcher, and re-fit the desktop's zoomed windows to the new geometry. The
+  // loop fires this after the reflow settles (so `desktop.bounds` is current), then repaints once
+  // more. Runs on BOTH the real-host resize (`run.ts` → `loop.resize`) and a headless `loop.resize`.
+  const menu = opts.menuBar;
+  loop.onResize = (size) => {
+    overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } };
+    overlay.invalidateLayout();
+    menu?.controller?.resize();
+    desktop.handleViewportResize();
+  };
+
   return {
     desktop,
     loop,
@@ -203,7 +216,6 @@ export function createApplication(opts: ApplicationOptions): Application {
         output: opts.output,
         warnAmbiguousWidth: opts.warnAmbiguousWidth,
         adaptAmbiguousWidth: opts.adaptAmbiguousWidth,
-        overlay,
         quitState,
       }),
   };

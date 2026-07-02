@@ -12,6 +12,7 @@
  */
 import { Group } from '../view/index.js';
 import type { DrawContext, DispatchEvent, View, Point } from '../view/index.js';
+import type { Size2D } from '../layout/index.js';
 import { Window } from '../window/index.js';
 import { Commands } from '../status/index.js';
 import { applyMove, applyResize, applyResizeLeft, MIN_WIDTH, MIN_HEIGHT } from './gestures.js';
@@ -71,6 +72,16 @@ export class Desktop extends Group {
   /** The desktop's windows in z-order (its children are all `Window`s; the guard keeps it type-safe). */
   protected windows(): Window[] {
     return this.children.filter((c): c is Window => c instanceof Window);
+  }
+
+  /**
+   * Re-fit every window to a resized desktop (HR-41): zoomed windows re-maximize to the new desktop
+   * rect and their `restoredRect`s clamp on-screen. Wired to {@link EventLoop.onResize} by the app,
+   * fired after the reflow settles `this.bounds` to the new desktop size.
+   */
+  handleViewportResize(): void {
+    const size: Size2D = { width: this.bounds.width, height: this.bounds.height };
+    for (const win of this.windows()) win.onDesktopResize(size);
   }
 
   /** Fill the desktop with the `desktop` role + its repeating pattern glyph (AR-80 / PF-03). */

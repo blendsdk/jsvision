@@ -10,11 +10,11 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { View } from '../view/index.js';
-import type { Group, DispatchEvent } from '../view/index.js';
+import type { Group, DispatchEvent, Point } from '../view/index.js';
 import type { LayoutProps, Rect } from '../layout/index.js';
 import { MenuPopup } from './popup.js';
 import type { MenuItem } from './builders.js';
-import { parseTilde, layoutTitles } from './builders.js';
+import { parseTilde, layoutTitles, titleIndexAt } from './builders.js';
 
 /** The loop seam the controller needs for activation, greying, and focus save/restore (PA-7). */
 export interface MenuLoopSeam {
@@ -52,6 +52,8 @@ export interface MenuController {
   topHotkey(char: string): boolean;
   /** A plain `<char>` while open: activate the deepest item whose hotkey matches; `true` if consumed. */
   itemHotkey(char: string): boolean;
+  /** Re-anchor the outside-click catcher to a resized viewport so it still covers the screen (HR-36). */
+  resize(): void;
 }
 
 /** One open level = a mounted popup over its items. The popup owns the highlight (its source of truth). */
@@ -70,7 +72,7 @@ class CatcherView extends View {
   /** Free-floating, full-viewport; the controller sets `rect`. */
   override layout: LayoutProps = { position: 'absolute' };
 
-  constructor(private readonly onOutside: () => void) {
+  constructor(private readonly onDown: (local: Point | undefined) => void) {
     super();
   }
 
@@ -79,11 +81,14 @@ class CatcherView extends View {
     // intentionally empty (transparent)
   }
 
-  /** Close the menu on a mouse-down anywhere not covered by a popup (which paints above). */
+  /**
+   * A mouse-down anywhere not covered by a popup (which paints above): hand the view-local point to
+   * the controller, which switches menus on a bar-title hit (HR-40) or closes otherwise.
+   */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type === 'mouse' && inner.kind === 'down') {
-      this.onOutside();
+      this.onDown(ev.local);
       ev.handled = true;
     }
   }
@@ -200,7 +205,17 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
   /** Mount the outside-click catcher as the overlay's first (bottom-most) child. */
   function mountCatcher(): void {
     const vp = viewport();
-    catcher = new CatcherView(() => close());
+    // HR-40: a bar-row click on a title switches menus directly (one click); any other click closes.
+    catcher = new CatcherView((local) => {
+      if (local !== undefined && local.y === 0) {
+        const index = titleIndexAt(tops, local.x);
+        if (index !== null) {
+          openTop(index);
+          return;
+        }
+      }
+      close();
+    });
     catcher.layout = { position: 'absolute', rect: { x: 0, y: 0, width: vp.width, height: vp.height } };
     overlay.add(catcher);
   }
@@ -237,13 +252,22 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
   }
 
   function closeLevel(): void {
-    if (levels.length === 0) return;
-    if (levels.length === 1) {
+    // HR-35 (PA-17): Esc ALWAYS closes, even with zero open levels (a bare top-level item is
+    // highlighted). Previously this early-returned and left the menu stuck open.
+    if (levels.length <= 1) {
       close();
       return;
     }
     const level = levels.pop();
     if (level !== undefined) overlay.remove(level.popup);
+  }
+
+  /** Update the outside-click catcher to a resized viewport so it still covers the full screen (HR-36). */
+  function resize(): void {
+    if (catcher === null) return; // no open menu → nothing to re-anchor
+    const vp = viewport();
+    catcher.layout = { position: 'absolute', rect: { x: 0, y: 0, width: vp.width, height: vp.height } };
+    catcher.invalidateLayout();
   }
 
   /** Switch the open top-level by `dir` (wrapping), re-opening at level 0. */
@@ -273,7 +297,19 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
 
   function activate(): void {
     const level = deepest();
-    if (level === null) return;
+    if (level === null) {
+      // HR-35 (PA-17): no open popup, but a bare top-level command item is highlighted — Enter emits
+      // its command (if enabled) and closes. tmnuview.cpp: `kbEnter` on a size.y==1 item → doSelect →
+      // `result = current->command` (:390) → doReturn (close), which the owner emits.
+      if (openTopIndex !== null) {
+        const top = tops[openTopIndex];
+        if (top !== undefined && top.kind === 'item') {
+          if (isEnabled(top.command)) seam.emitCommand(top.command);
+          close();
+        }
+      }
+      return;
+    }
     const node = level.items[level.popup.highlight];
     if (node === undefined) return;
     if (node.kind === 'sub') {
@@ -340,5 +376,6 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
     right,
     topHotkey,
     itemHotkey,
+    resize,
   };
 }

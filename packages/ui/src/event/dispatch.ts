@@ -146,16 +146,21 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
 
   // Phase 1 — pre-process sweep (root→down within scopeRoot).
   for (const view of collectSweep(scopeRoot, 'preProcess')) {
+    if (!view.mounted) continue; // HR-42: a prior handler may have removed this view mid-sweep
     ctx.deliver(view, ev2);
     if (ev2.handled) return;
   }
   // Phase 2 — focused leaf + chain bubble (leaf→scopeRoot, clamped).
   for (const view of focusChain(ctx.focusedLeaf, scopeRoot)) {
+    // HR-42: skip a view unmounted by an earlier delivery. HR-39: a key never reaches a disabled
+    // view — even if it is still the `current` leaf, disabling it evicts it from key delivery.
+    if (!view.mounted || view.state.disabled) continue;
     ctx.deliver(view, ev2);
     if (ev2.handled) return;
   }
   // Phase 3 — post-process sweep.
   for (const view of collectSweep(scopeRoot, 'postProcess')) {
+    if (!view.mounted) continue; // HR-42: snapshot is stale if a handler removed a later view
     ctx.deliver(view, ev2);
     if (ev2.handled) return;
   }
