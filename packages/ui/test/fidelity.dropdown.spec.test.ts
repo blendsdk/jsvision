@@ -24,7 +24,7 @@ import type { Rect } from '../src/layout/index.js';
 import { signal } from '../src/reactive/index.js';
 import { Input } from '../src/controls/index.js';
 import { createEventLoop } from '../src/event/index.js';
-import { History, historyAdd, clearHistory } from '../src/dropdown/index.js';
+import { History, ComboBox, historyAdd, clearHistory } from '../src/dropdown/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -91,4 +91,48 @@ test('ST-33: the popup rect is field±1 wide × 8 tall; rows are oldest-at-top i
   // (white-on-green). No markers/brackets — text starts at column 1.
   expect({ fg: buf.get(6, 3)?.fg, bg: buf.get(6, 3)?.bg }).toStrictEqual(defaultTheme.historyViewer);
   expect({ fg: buf.get(6, 4)?.fg, bg: buf.get(6, 4)?.bg }).toStrictEqual(defaultTheme.historyViewerFocused);
+});
+
+// ── ComboBox (GATE-2: no TV counterpart → "draws like its siblings") ──────────────────────────────
+
+test('ST-33: the ComboBox trailing button uses the SAME ▐↓▌ glyph/colors as History (shared icon)', () => {
+  const value = signal<string | null>(null);
+  const combo = new ComboBox<string>({ items: signal(['Red']), getText: (s) => s, value });
+  const rr = createRenderRoot({ width: 14, height: 1 }, { caps }); // input(fr 11) + button(fixed 3)
+  rr.mount(combo);
+  const buf = rr.buffer();
+
+  // The button occupies the trailing 3 cells (x=11..13). Same glyphs + resolved colors as ST-33 above.
+  expect(buf.get(11, 0)?.char).toBe('▐');
+  expect(buf.get(12, 0)?.char).toBe('↓');
+  expect(buf.get(13, 0)?.char).toBe('▌');
+  expect({ fg: buf.get(11, 0)?.fg, bg: buf.get(11, 0)?.bg }).toStrictEqual(defaultTheme.historyButtonSides);
+  expect({ fg: buf.get(12, 0)?.fg, bg: buf.get(12, 0)?.bg }).toStrictEqual(defaultTheme.historyButtonArrow);
+});
+
+test('ST-33: the ComboBox popup rows use the TListBox list* roles (focused = white-on-green)', () => {
+  const loop = createEventLoop({ width: 40, height: 20 }, { caps });
+  const value = signal<string | null>(null);
+  const combo = new ComboBox<string>({ items: signal(['Apple', 'Banana']), getText: (s) => s, value, editable: false });
+  combo.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 14, height: 1 } };
+  const overlay = new Group();
+  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  overlay.state.visible = false;
+  const root = new Group();
+  root.add(combo);
+  root.add(overlay);
+  loop.mount(root);
+  loop.popupHost = { overlay, focusView: (v) => loop.focusView(v), getFocused: () => loop.getFocused() };
+
+  loop.focusView(combo.input);
+  loop.dispatch({ type: 'key', key: 'down', ctrl: false, alt: false, shift: false }); // open, focus index 0
+  loop.renderRoot.flush();
+
+  const buf = loop.renderRoot.buffer();
+  // Interior origin (5,3); rows at x=6. Row 0 (Apple) is focused → listFocused (white-on-green);
+  // row 1 (Banana) is normal → listNormal (black-on-cyan). Single column, text at col 1 (like TListBox).
+  expect(buf.get(6, 3)?.char).toBe('A');
+  expect(buf.get(6, 4)?.char).toBe('B');
+  expect({ fg: buf.get(6, 3)?.fg, bg: buf.get(6, 3)?.bg }).toStrictEqual(defaultTheme.listFocused);
+  expect({ fg: buf.get(6, 4)?.fg, bg: buf.get(6, 4)?.bg }).toStrictEqual(defaultTheme.listNormal);
 });

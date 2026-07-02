@@ -28,6 +28,25 @@ export type { PopupHost } from '../view/index.js';
 /** Default max visible list rows in a popup (TV `THistoryWindow` shows 6 interior rows; PA-4). */
 export const DEFAULT_MAX_ROWS = 6;
 
+/** The 3 visible cells of the dropdown button icon `▐↓▌` (TV `THistory::icon`, decode §1). */
+export const DROPDOWN_ICON = { left: '▐', arrow: '↓', right: '▌' } as const;
+
+/**
+ * Draw the shared `▐↓▌` dropdown button icon at column `x` — `▐`/`▌` sides in `historyButtonSides`
+ * (green-on-lightGray), the `↓` arrow in `historyButtonArrow` (black-on-green). Used by the `History`
+ * button and reused by the `ComboBox` trailing button (PA-11), so the glyph/colors never drift.
+ *
+ * @param ctx The clipped, view-local paint context.
+ * @param x   The left column to draw the 3-cell icon at (default 0).
+ */
+export function drawDropdownIcon(ctx: DrawContext, x = 0): void {
+  const sides = ctx.color('historyButtonSides');
+  const arrow = ctx.color('historyButtonArrow');
+  ctx.text(x, 0, DROPDOWN_ICON.left, sides);
+  ctx.text(x + 1, 0, DROPDOWN_ICON.arrow, arrow);
+  ctx.text(x + 2, 0, DROPDOWN_ICON.right, sides);
+}
+
 /** A safe fallback viewport when the overlay has no rect yet (never reached once composed). */
 const FALLBACK_VIEWPORT: Rect = { x: 0, y: 0, width: 80, height: 24 };
 
@@ -128,6 +147,26 @@ class PopupFrame extends Group {
  * @param viewport The overlay extent to clamp within.
  * @returns The clamped popup window rect.
  */
+/**
+ * The absolute rect of a mounted view: the sum of parent-relative `bounds.x/y` up the tree (the root
+ * bounds are absolute). Used to anchor a popup in overlay-local coordinates — the overlay is the
+ * full-viewport top-z group at the origin, so overlay-local ≡ absolute.
+ *
+ * @param view The mounted view (a linked `Input` for History, the `ComboBox` field for ComboBox).
+ * @returns The view's absolute rect.
+ */
+export function absoluteRect(view: View): Rect {
+  let x = 0;
+  let y = 0;
+  let node: View | null = view;
+  while (node !== null) {
+    x += node.bounds.x;
+    y += node.bounds.y;
+    node = node.parent;
+  }
+  return { x, y, width: view.bounds.width, height: view.bounds.height };
+}
+
 function placePopup(anchor: Rect, maxRows: number, viewport: Rect): Rect {
   const grown: Rect = {
     x: anchor.x - 1,
