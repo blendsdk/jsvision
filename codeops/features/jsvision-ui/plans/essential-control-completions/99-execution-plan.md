@@ -1,7 +1,7 @@
 # 99 — Execution Plan
 
 > **Implements**: jsvision-ui/RD-07 · **CodeOps Skills Version**: 3.1.0
-> **Progress**: 8 / 32 tasks (25%) · **Last Updated**: 2026-07-02
+> **Progress**: 13 / 32 tasks (41%) · **Last Updated**: 2026-07-02
 
 Spec-first per capability: **spec tests → RED → implement → GREEN → impl tests → verify**. Every TV-derived
 component carries a **BEFORE-decode (GATE-1)** and **AFTER-diff (GATE-2)** task (fidelity directive,
@@ -56,13 +56,17 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
   erases a glyph (PF-008; the in-buffer caret is our DEF-19a extension). `yarn verify` green.
 
 ## Phase 2 — Input clipboard ✅TV
-- [ ] **P2.1** BEFORE-decode (GATE-1): re-open `tinputli.cpp:469-489` (cmCut/Copy/Paste, empty-selection).
-- [ ] **P2.2** Spec tests ST-05…ST-06 (`controls.input-clipboard.spec`) → **RED**.
-- [ ] **P2.3** Implement copy/cut (via `ev.setClipboard` → `setClipboard(text,caps)`) + paste
-  (`type==='paste'`, replace selection, char-by-char validate) + the chords Ctrl+Ins/Shift+Ins/Shift+Del +
-  `Commands.copy/cut/paste` handling → **GREEN**.
-- [ ] **P2.4** Impl tests (caps off = no-op, empty selection, paste filtering, maxLength on paste).
-- [ ] **P2.5** AFTER-diff (GATE-2) + `yarn verify`.
+- [x] **P2.1** ✅ 2026-07-02 BEFORE-decode (GATE-1): re-open `tinputli.cpp:469-489` (cmCut/Copy/Paste, empty-selection).
+- [x] **P2.2** ✅ 2026-07-02 Spec tests ST-05…ST-06 (`controls.input-clipboard.spec`) → confirmed **RED**.
+- [x] **P2.3** ✅ 2026-07-02 Implement copy/cut (via `ev.setClipboard` → `setClipboard(text,caps)`) + paste
+  (`type==='paste'` bracketed, replace selection, char-by-char validate) + the chords Ctrl+Ins/Shift+Ins/Shift+Del +
+  `Commands.copy/cut/paste` handling → **GREEN**. **PA-16**: Shift+Ins/`Commands.paste` are no-ops (clipboard
+  read deferred, **DEF-25**); real paste = the bracketed `PasteEvent`. Clipboard concern extracted to
+  `input-clipboard.ts` + more selection math to `input-selection.ts` (`input.ts` = 483 lines, ≤500).
+- [x] **P2.4** ✅ 2026-07-02 Impl tests (caps off = no-op, empty selection, paste filtering, maxLength on paste, pure helpers).
+- [x] **P2.5** ✅ 2026-07-02 AFTER-diff (GATE-2): copy = `setText(selStart..selEnd)` (`:475-478`); cut = write +
+  `deleteSelect` + collapse (`:479-485`); empty-selection cut = no-op (`:205` guard); paste = replace-selection
+  + char-by-char validate (`:418-446`). `yarn verify` + `lint` green.
 
 ## Phase 3 — picture(mask) validator ✅TV
 - [ ] **P3.1** BEFORE-decode (GATE-1): re-open `tvalidat.cpp:149-162,264-599` (state machine + autoFill +
@@ -111,14 +115,14 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
 ## Phase 6 — Final gate
 - [ ] **P6.1** Packaging spec ST-15 + security spec ST-16 green; confirm every `03-*` AFTER-diff recorded.
 - [ ] **P6.2** Full `yarn verify` + `yarn test:e2e` + `yarn check:deps` + `yarn lint` + `yarn gate`. Update
-  `DEFERRED.md` (DEF-01/02/03/19 → Shipped; add DEF-21/22) + the roadmap (RD-07 → Done).
+  `DEFERRED.md` (DEF-01/02/03/19 → Shipped; add DEF-21/22/25) + the roadmap (RD-07 → Done).
 
 ---
 
 ## Master Progress Checklist
 Phase 0: [x] P0.1 [x] P0.2 [x] P0.3
 Phase 1: [x] P1.1 [x] P1.2 [x] P1.3 [x] P1.4 [x] P1.5
-Phase 2: [ ] P2.1 [ ] P2.2 [ ] P2.3 [ ] P2.4 [ ] P2.5
+Phase 2: [x] P2.1 [x] P2.2 [x] P2.3 [x] P2.4 [x] P2.5
 Phase 3: [ ] P3.1 [ ] P3.2 [ ] P3.3 [ ] P3.4 [ ] P3.5
 Phase 4: [ ] P4.1 [ ] P4.2 [ ] P4.3a [ ] P4.3b [ ] P4.4 [ ] P4.5 [ ] P4.6 [ ] P4.7
 Phase 5: [ ] P5.1 [ ] P5.2 [ ] P5.3 [ ] P5.4

@@ -6,10 +6,63 @@
  * functions over strings/indices. The `.js` extension is required by NodeNext ESM resolution.
  */
 
+import type { KeyEvent } from '@jsvision/core';
+
 /** A half-open selection range `[start, end)` as JS string indices (`start ≤ end`). */
 export interface SelectionRange {
   readonly start: number;
   readonly end: number;
+}
+
+/** A caret motion — a TV pad-key (`tinputli.cpp:303`); Ctrl+Left/Right are word motions (PA-12). */
+export type Motion = 'left' | 'right' | 'wordLeft' | 'wordRight' | 'home' | 'end';
+
+/**
+ * Classify a key as a pad-key motion, or `null` if it is not a motion (TV `padKeys`,
+ * `tinputli.cpp:303`; Ctrl+Left/Right = word, `:368-372`).
+ *
+ * @param inner The decoded key event.
+ * @returns The motion kind, or `null`.
+ */
+export function motionOf(inner: KeyEvent): Motion | null {
+  switch (inner.key) {
+    case 'left':
+      return inner.ctrl ? 'wordLeft' : 'left';
+    case 'right':
+      return inner.ctrl ? 'wordRight' : 'right';
+    case 'home':
+      return 'home';
+    case 'end':
+      return 'end';
+    default:
+      return null;
+  }
+}
+
+/**
+ * The caret index after applying a pad-key motion (no selection side effects — the caller derives
+ * the block). Clamped to `[0, v.length]`.
+ *
+ * @param motion The motion kind.
+ * @param curPos The current caret.
+ * @param v      The value string.
+ * @returns The moved caret index.
+ */
+export function caretAfterMotion(motion: Motion, curPos: number, v: string): number {
+  switch (motion) {
+    case 'left':
+      return Math.max(0, curPos - 1);
+    case 'right':
+      return Math.min(v.length, curPos + 1);
+    case 'wordLeft':
+      return prevWord(v, curPos);
+    case 'wordRight':
+      return nextWord(v, curPos);
+    case 'home':
+      return 0;
+    case 'end':
+      return v.length;
+  }
 }
 
 /**

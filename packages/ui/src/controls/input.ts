@@ -40,7 +40,9 @@ import type { DrawContext, DispatchEvent, Point } from '../view/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { KeyEvent, MouseEvent, Style } from '@jsvision/core';
 import type { Validator } from './validators/index.js';
-import { prevWord, nextWord, selectionBlock, mousePos } from './input-selection.js';
+import { selectionBlock, mousePos, motionOf, caretAfterMotion } from './input-selection.js';
+import { clipboardChord, clipboardCommand, applyPaste } from './input-clipboard.js';
+import type { ClipboardAction } from './input-clipboard.js';
 
 /** Left/right scroll arrows (TV `tvtext1.cpp:106-107`, `0x11`/`0x10`), unambiguous-narrow code points. */
 const LEFT_ARROW = '\u25C4'; // ◄
@@ -239,13 +241,70 @@ export class Input extends View {
    */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
+    if (inner.type === 'command') {
+      const action = clipboardCommand(inner.command); // TV cmCut/cmCopy/cmPaste from menu/status/keymap
+      if (action !== null) {
+        this.runClipboard(action, ev);
+        ev.handled = true;
+      }
+      return;
+    }
+    if (inner.type === 'paste') {
+      this.pasteText(inner.text); // bracketed paste — the real paste path (PA-16)
+      ev.handled = true;
+      return;
+    }
     if (inner.type === 'mouse') {
       this.handleMouse(inner, ev);
       return;
     }
     if (inner.type !== 'key') return;
     if (inner.key === 'enter' || inner.key === 'tab') return; // pass through (PA-2)
+    const chord = clipboardChord(inner); // Ctrl+Ins / Shift+Ins / Shift+Del (PA-7), before the edit machine
+    if (chord !== null) {
+      this.runClipboard(chord, ev);
+      ev.handled = true;
+      return;
+    }
     if (this.handleKey(inner)) ev.handled = true;
+  }
+
+  /**
+   * Run a clipboard action (TV cmCut/cmCopy/cmPaste, `tinputli.cpp:469-489`; PA-7). Copy/cut write
+   * the selection via `ev.setClipboard` (empty selection = no-op, PA-9); cut then deletes + collapses.
+   * Paste is a no-op — there is no system clipboard read (PA-16); the real paste is a bracketed
+   * `PasteEvent` handled by {@link pasteText}.
+   *
+   * @param action The clipboard action.
+   * @param ev     The dispatch envelope (carries `setClipboard`).
+   */
+  protected runClipboard(action: ClipboardAction, ev: DispatchEvent): void {
+    if (action === 'paste') return; // no system read (PA-16/DEF-25)
+    const text = this.value().slice(this.selStart, this.selEnd);
+    if (text === '') return; // empty selection → no-op (deleteSelect guards cut too)
+    ev.setClipboard?.(text); // caps-gated in the loop; base64 + sanitize in core
+    if (action === 'cut') {
+      this.deleteSelect();
+      this.collapseSelection();
+      this.adjustScroll();
+      this.invalidate();
+    }
+  }
+
+  /**
+   * Insert pasted text (TV paste path, `:418-446`; PA-8): replace any selection, then insert each
+   * code point through `validator.isValidInput` + `maxLength` (invalid dropped individually).
+   *
+   * @param text The pasted text (untrusted; bounded upstream by core's `PASTE_CAP_BYTES`, AC-15).
+   */
+  protected pasteText(text: string): void {
+    this.deleteSelect(); // replace the selection first
+    const r = applyPaste(text, this.value(), this.curPos, this.maxLength, this.validator);
+    this.setValue(r.value);
+    this.curPos = r.curPos;
+    this.collapseSelection();
+    this.adjustScroll();
+    this.invalidate();
   }
 
   /**
@@ -265,7 +324,7 @@ export class Input extends View {
       return true;
     }
 
-    const motion = this.motionOf(inner);
+    const motion = motionOf(inner);
     // Shift + a pad-key motion arms the extension anchor (tinputli.cpp:346-357).
     let extend = false;
     if (motion !== null && inner.shift) {
@@ -275,7 +334,7 @@ export class Input extends View {
     }
 
     if (motion !== null) {
-      this.applyMotion(motion, v);
+      this.curPos = caretAfterMotion(motion, this.curPos, v);
     } else if (inner.key === 'backspace') {
       this.backspace();
     } else if (inner.key === 'delete') {
@@ -291,52 +350,6 @@ export class Input extends View {
     this.adjustScroll();
     this.invalidate();
     return true;
-  }
-
-  /**
-   * Classify a key as a pad-key motion, or `null` if it is not a motion (TV `padKeys`,
-   * `tinputli.cpp:303`). Ctrl+Left/Right are word motions (`:368-372`, PA-12).
-   *
-   * @param inner The decoded key event.
-   * @returns The motion kind, or `null`.
-   */
-  protected motionOf(inner: KeyEvent): 'left' | 'right' | 'wordLeft' | 'wordRight' | 'home' | 'end' | null {
-    switch (inner.key) {
-      case 'left':
-        return inner.ctrl ? 'wordLeft' : 'left';
-      case 'right':
-        return inner.ctrl ? 'wordRight' : 'right';
-      case 'home':
-        return 'home';
-      case 'end':
-        return 'end';
-      default:
-        return null;
-    }
-  }
-
-  /** Move the caret per a pad-key motion (no selection side effects — the caller derives the block). */
-  protected applyMotion(motion: 'left' | 'right' | 'wordLeft' | 'wordRight' | 'home' | 'end', v: string): void {
-    switch (motion) {
-      case 'left':
-        this.curPos = Math.max(0, this.curPos - 1);
-        break;
-      case 'right':
-        this.curPos = Math.min(v.length, this.curPos + 1);
-        break;
-      case 'wordLeft':
-        this.curPos = prevWord(v, this.curPos);
-        break;
-      case 'wordRight':
-        this.curPos = nextWord(v, this.curPos);
-        break;
-      case 'home':
-        this.curPos = 0;
-        break;
-      case 'end':
-        this.curPos = v.length;
-        break;
-    }
   }
 
   /** Backspace (TV `:380-388`): delete the selection, or the code point left of the caret. */
