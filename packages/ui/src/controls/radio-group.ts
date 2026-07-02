@@ -27,8 +27,8 @@ export class RadioGroup extends Cluster {
     this.onMount(() => this.bind(() => this.value())); // repaint when the bound index changes
   }
 
-  protected override mark(i: number): boolean {
-    return this.value() === i;
+  protected override markIndex(i: number): number {
+    return this.value() === i ? 1 : 0; // 0 = off (space), 1 = on (•)
   }
 
   protected override press(i: number): void {
@@ -40,6 +40,6 @@ export class RadioGroup extends Cluster {
   }
 
   protected override box(): ClusterBox {
-    return { icon: ' ( ) ', on: '\u2022', off: ' ' }; // •
+    return { icon: ' ( ) ', markers: ' \u2022' }; // •
   }
 }

@@ -74,12 +74,13 @@ export {
   Input,
   CheckGroup,
   RadioGroup,
+  MultiCheckGroup,
   filter,
   range,
   lookup,
   picture,
 } from './controls/index.js';
-export type { ButtonOptions, InputOptions, Validator } from './controls/index.js';
+export type { ButtonOptions, InputOptions, MultiCheckGroupOptions, Validator } from './controls/index.js';
 
 // Containers, scrolling & lists (RD-11) — `scroll/`·`list/`·`dialog/`. Explicit named re-exports,
 // per the layout convention (AC-14 / ST-15). The barrels grow per phase: Phase 1 `ScrollBar`,
