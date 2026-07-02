@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-01 (jsvision-ui RD-07 essential-control-completions → 🔎 RD Preflighted — codebase-grounded, PASSED WITH NOTES: 0🔴/0🟠 + 3🟡 fixed + 2🔵; decoder-feasibility + TV citations independently verified)
+> **Last Updated**: 2026-07-02 (jsvision-ui RD-07 essential-control-completions → 🔬 Plan Preflighted — 8 findings all resolved (2🟠 + 4🟡 + 2🔵); 7 phases / 32 tasks, spec-first, additive-only)
 > **Features**: 0 / 1 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 8 ✅ Done (RD-01…RD-06, RD-10, RD-11) · 1 🔎 RD Preflighted (RD-07) · Backlog (RD-08/09, RD-12+) | 8 / 11 done | 🔄 | 2026-07-01 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 8 ✅ Done (RD-01…RD-06, RD-10, RD-11) · 1 🔬 Plan Preflighted (RD-07) · Backlog (RD-08/09, RD-12+) | 8 / 11 done | 🔄 | 2026-07-02 |
 
 ## Archived
 
@@ -23,6 +23,21 @@
 
 ## Notes
 
+- 2026-07-02: **jsvision-ui RD-07 (Essential-control completions) plan preflighted** → 🔬 Plan Preflighted
+  ([report](features/jsvision-ui/plans/essential-control-completions/00-preflight-report.md)). Codebase-grounded
+  audit (~14 files; ~40 `file:line` refs verified; 3 TV decodes re-checked; 1 challenger). 8 findings, all
+  resolved (2🟠 + 4🟡 + 2🔵): PF-001 `Cluster` base generalized to TV's marker-string model (MultiCheckGroup
+  couldn't inherit the boolean draw seam) + PF-002 hardware caret now derived by the EventLoop from
+  `RenderRoot.originOf()` post-`flush()` (compose-walker coupling broke partial recompose); task total 34→32.
+  Next: `exec_plan essential-control-completions`. Cascaded from **jsvision-ui**.
+- 2026-07-01: **jsvision-ui RD-07 (Essential-control completions) planned** → 📋 Plan Created
+  ([`plans/essential-control-completions/`](features/jsvision-ui/plans/essential-control-completions/00-index.md)).
+  9 docs; 7 phases / 34 tasks, spec-first (ST-01…ST-16 ↔ AC-1…AC-15); PA-1…PA-13 (4 user + 9 dominant/source,
+  ✅ GATE PASSED). Grounded in 3 citation-rich GATE-1 TV decodes (`TInputLine`, `TPXPictureValidator`,
+  `TMultiCheckBoxes`). 4 user gate-choices: code-point caret unit (grapheme→DEF-21), reject-at-syntaxCheck
+  mask DoS bound, autoFill default ON, role `inputSelection`. Additive-only (core `inputSelection` role +
+  `Commands.cut/copy/paste` + caret/clipboard seams; no core host change). Next: `exec_plan
+  essential-control-completions`. Cascaded from **jsvision-ui**.
 - 2026-07-01: **jsvision-ui RD-07 (Essential-control completions) preflighted** → 🔎 RD Preflighted
   ([report](features/jsvision-ui/requirements/00-preflight-report-RD-07.md)). Same-session codebase-grounded
   audit (6 parallel recon agents + 1 adversarial challenger). **PASSED WITH NOTES** — 0🔴 / 0🟠 + 3🟡 + 2🔵.

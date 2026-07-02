@@ -35,6 +35,8 @@ export interface RunContext {
   readonly output?: NodeJS.WriteStream;
   /** Warn at startup on double-width chrome glyphs (real TTY only). Default `true`; see `createHost`. */
   readonly warnAmbiguousWidth?: boolean;
+  /** Adapt to ASCII-safe chrome when the startup probe measures wide glyphs. Default `true`; see `createHost`. */
+  readonly adaptAmbiguousWidth?: boolean;
   /** The absolute overlay layer, kept full-viewport across terminal resizes. */
   readonly overlay: Group;
   /** The shared quit-resolver cell wired to the command sink. */
@@ -57,6 +59,9 @@ export async function runApplication(ctx: RunContext): Promise<number> {
     // renders our ambiguous-width chrome glyphs double-width (alignment shift).
     // Default on; a headless/test harness can pass `false` to skip the probe.
     warnAmbiguousWidth: ctx.warnAmbiguousWidth ?? true,
+    // Zero-config policy: on a real TTY, a wide-rendering terminal automatically
+    // gets aligned ASCII chrome. Default on; mirrors warnAmbiguousWidth.
+    adaptAmbiguousWidth: ctx.adaptAmbiguousWidth ?? true,
     onInput: (event) => ctx.loop.dispatch(event),
     onResize: (event) => {
       // Keep the absolute overlay full-screen, then reflow the loop to the new viewport.

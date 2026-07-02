@@ -18,11 +18,22 @@ export {
   probeAmbiguousWidth,
   warnIfAmbiguousWide,
   parseCursorPosition,
+  degradeCapsForWidth,
+  degradeCapsFully,
+  isAsciiSafe,
   AMBIGUOUS_PROBE_GLYPHS,
+  BOX_PROBE_GLYPHS,
   WIDTH_WARNING_MESSAGE,
+  WIDTH_ADAPTED_MESSAGE,
   DEFAULT_WIDTH_PROBE_TIMEOUT_MS,
 } from './width-probe.js';
 export type { StreamOptions } from './streams.js';
 export type { TerminalQueryOptions, ManagedTerminalQuery } from './terminal-query.js';
-export type { WidthProbeResult, WidthProbeOptions, WidthWarnOptions, CursorPosition } from './width-probe.js';
+export type {
+  WidthProbeResult,
+  WidthProbeGroupResult,
+  WidthProbeOptions,
+  WidthWarnOptions,
+  CursorPosition,
+} from './width-probe.js';
 export type { Host, HostOptions, ResizeEvent, RuntimeAdapter, HostSignal, TimerHandle } from './types.js';

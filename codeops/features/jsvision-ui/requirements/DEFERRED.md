@@ -4,7 +4,7 @@
 > was intentionally deferred (cut from a v1 RD scope but meant to be revisited), so nothing is lost
 > between RDs. Created 2026-06-30 at the user's request (amends AR-99 — the per-RD "Won't Have / Deferred"
 > tables remain the **authoritative** source; this doc aggregates them and adds stable `DEF-NN` ids).
-> **Last Updated**: 2026-07-01 (RD-07 **drafted** — DEF-01/02/03/19 → RD-07; DEF-20 added; the high-value-control bucket re-sliced to RD-12+ per AR-115)
+> **Last Updated**: 2026-07-02 (DEF-21/22 backfilled from the RD-07 plan; **DEF-23/24 registered** — the `217f9ea` width-probe follow-ups; DEF-23 → the [glyph-auto-swap plan](../plans/glyph-auto-swap/00-index.md), DEF-24 stays deferred)
 > **CodeOps Skills Version**: 3.1.0
 
 **How to use:** when a future RD is drafted, scan this register for items whose **Intended owner** is
@@ -37,6 +37,10 @@ that RD (or "unassigned"), pull them into its scope, and flip the row's **Status
 | **DEF-18** | **`Text` center/right alignment** (TV `TStaticText` leading-`0x03` center marker) | RD-06 plan · PA-14 | unassigned (optional) | Deferred (RD-06 is word-wrap left-aligned) |
 | **DEF-19** | **Visible text cursor for the focused `Input`** — *no caret is shown today.* Two parts: **(a)** an in-buffer **logical** caret cell at `curPos − firstPos + 1` when focused (the RD-06 plan `03-05-input.md` specified this, but `Input.draw` renders none — implementable now, **no new infra**); **(b)** the real terminal **hardware/blinking** caret (`CSI row;col H` via `cursor.show()/to()`), which needs a `View`→host caret seam (`RenderRoot`/`EventLoop`/`host.render(buffer)` carry no caret). | RD-06 plan · PF-002 · audit 2026-07-01 | **RD-07** (host design pass); part (a) pullable sooner | **→ RD-07 (drafted, AR-121)** — both parts (a) logical + (b) hardware via an additive `View`→host caret seam |
 | **DEF-20** | `Input` **insert/overwrite mode** + `Ins` toggle (TV `sfCursorIns`) | RD-07 · AR-118 | unassigned (on real need) | Deferred — overwrite is rarely used in forms + couples to caret-shape; kept out of the RD-07 completion slice |
+| **DEF-21** | `Input` **grapheme-cluster caret stepping** (caret unit is code-point per RD-07 PA-1) | RD-07 plan · PA-1 | unassigned (on real need) | Deferred — code-point stepping ships first; grapheme segmentation is a self-contained upgrade |
+| **DEF-22** | **Cluster caret** (hardware caret on the focused `CheckGroup`/`RadioGroup` mark, TV parity) | RD-07 plan | unassigned (on real need) | Deferred — RD-07's caret seam covers `Input` only |
+| **DEF-23** | **Glyph auto-swap fallback** — probe-driven ASCII-safe chrome (`glyphs.ambiguousWide` + two-group width probe + host effective caps + `JSVISION_ASCII`) | width-probe follow-up (commit `217f9ea`) · glyph-auto-swap AR-3…AR-17 | **glyph-auto-swap plan** | **✅ Shipped (2026-07-02)** — [plan](../plans/glyph-auto-swap/00-index.md); all 4 phases / 20 tasks green (ST-01…ST-16), full verify + gate pass |
+| **DEF-24** | **In-app width-warning visibility** (the stderr warning is invisible once the alt-screen is up; surface it inside the TUI) | width-probe follow-up (commit `217f9ea`) · glyph-auto-swap AR-3 | unassigned (much less urgent once DEF-23 renders correctly) | Deferred |
 
 > `unassigned` = no gated RD owns it yet; pull it into the first RD that needs it (this register is the
 > safety net). The `RD-07`-targeted rows (DEF-01…DEF-03) are also mirrored in RD-06's Deferred table +

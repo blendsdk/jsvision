@@ -238,6 +238,15 @@ SIGTSTP/SIGCONT with an automatic full repaint on resume. The host owns
 `process.exit` on signal/crash paths (`exitOnSignal: false` opts out, with an
 `onBeforeExit(code)` hook); `stop()` restores without exiting and is idempotent.
 
+On startup (real TTY, before the alternate screen) the host can probe whether the
+terminal renders our ambiguous-width chrome glyphs double-width. With
+`adaptAmbiguousWidth` (core default `false`; `@jsvision/ui` apps default `true`) a
+wide-rendering terminal automatically gets aligned **ASCII-safe chrome** — the
+`ScreenBuffer` still stores the real Unicode, only the emitted bytes change. Set
+**`JSVISION_ASCII`** (any value, NO_COLOR-style) to force ASCII-safe chrome and skip
+the probe entirely — e.g. `JSVISION_ASCII=1 yarn workspace @jsvision/examples
+demo:kitchen` is the manual showcase for the degraded output.
+
 Every OS effect (raw mode, signals, exit, timers, the sync `'exit'` backstop) sits
 behind an injectable `RuntimeAdapter`, so an app can run the host headlessly in
 tests; the real adapter is the default. A non-TTY host skips mode setup but still

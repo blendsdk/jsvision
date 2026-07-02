@@ -90,8 +90,13 @@ export {
   probeAmbiguousWidth,
   warnIfAmbiguousWide,
   parseCursorPosition,
+  degradeCapsForWidth,
+  degradeCapsFully,
+  isAsciiSafe,
   AMBIGUOUS_PROBE_GLYPHS,
+  BOX_PROBE_GLYPHS,
   WIDTH_WARNING_MESSAGE,
+  WIDTH_ADAPTED_MESSAGE,
   DEFAULT_WIDTH_PROBE_TIMEOUT_MS,
 } from './host/index.js';
 export type {
@@ -105,6 +110,7 @@ export type {
   TerminalQueryOptions,
   ManagedTerminalQuery,
   WidthProbeResult,
+  WidthProbeGroupResult,
   WidthProbeOptions,
   WidthWarnOptions,
   CursorPosition,
