@@ -1,7 +1,7 @@
 # 99 — Execution Plan
 
 > **Implements**: jsvision-ui/RD-07 · **CodeOps Skills Version**: 3.1.0
-> **Progress**: 3 / 32 tasks (9%) · **Last Updated**: 2026-07-02
+> **Progress**: 8 / 32 tasks (25%) · **Last Updated**: 2026-07-02
 
 Spec-first per capability: **spec tests → RED → implement → GREEN → impl tests → verify**. Every TV-derived
 component carries a **BEFORE-decode (GATE-1)** and **AFTER-diff (GATE-2)** task (fidelity directive,
@@ -40,18 +40,20 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
   `DispatchEvent.setClipboard?` envelope field sourced in `routeContext` (PA-5, 03-04/03-01). Verify.
 
 ## Phase 1 — Input selection + logical caret ✅TV
-- [ ] **P1.1** BEFORE-decode (GATE-1): re-open `tinputli.cpp:203-237,341-359,456-459,64-82,152-160`; record
+- [x] **P1.1** ✅ 2026-07-02 BEFORE-decode (GATE-1): re-open `tinputli.cpp:203-237,341-359,456-459,64-82,152-160`; record
   the selection/caret decode in `input.ts` JSDoc.
-- [ ] **P1.2** Spec tests ST-01…ST-04 + ST-13 (`controls.input-selection.spec` + `controls.caret.spec`
-  logical) → confirm **RED**.
-- [ ] **P1.3** Implement selection state + keyboard (Shift/Ctrl-Shift/Home/End/Ctrl+A, collapse,
-  edit-over-selection) + mouse (press/drag/double-click) + `adjustSelectBlock`/`deleteSelect`/`prevWord`/
-  `nextWord`/`posFromMouse` (extract `input-selection.ts` if `input.ts` nears 500 lines) + selection render
+- [x] **P1.2** ✅ 2026-07-02 Spec tests ST-01…ST-04 + ST-13 (`controls.input-selection.spec` + `controls.caret.spec`
+  logical) → confirmed **RED**.
+- [x] **P1.3** ✅ 2026-07-02 Implement selection state + keyboard (Shift/Ctrl-Shift/Home/End/Ctrl+A, collapse,
+  edit-over-selection) + mouse (press/drag/double-click PA-15) + `adjustSelectBlock`/`deleteSelect`/`prevWord`/
+  `nextWord`/`posFromMouse` (extracted `input-selection.ts`, `input.ts` = 475 lines) + selection render
   (`inputSelection` role) + logical caret cell + `desiredCaret()` override → **GREEN**.
-- [ ] **P1.4** Impl tests (edges: curPos at ends, wide glyphs/wcwidth, maxLength, firstPos scroll, caret-vs-`►`
-  overlap at the right edge (PF-008)).
-- [ ] **P1.5** AFTER-diff (GATE-2): diff rendered selection band + caret cell vs `tinputli.cpp:152-160`
-  (glyphs, columns, the highlight byte). Record. `yarn verify`.
+- [x] **P1.4** ✅ 2026-07-02 Impl tests (edges: curPos at ends, wide glyphs (code-unit v1), maxLength, firstPos scroll, caret-vs-`►`
+  overlap at the right edge (PF-008), pure helpers).
+- [x] **P1.5** ✅ 2026-07-02 AFTER-diff (GATE-2): selection band cols `[l+1,r+1)` in `inputSelection` (`0x2F`
+  white-on-green = `getColor(3)`) ↔ `tinputli.cpp:152-157`; caret col `displayedPos(curPos)-firstPos+1` ↔
+  `:160`. Caret preserves the glyph beneath (arrow/char) + reverses colours — TV's hardware cursor never
+  erases a glyph (PF-008; the in-buffer caret is our DEF-19a extension). `yarn verify` green.
 
 ## Phase 2 — Input clipboard ✅TV
 - [ ] **P2.1** BEFORE-decode (GATE-1): re-open `tinputli.cpp:469-489` (cmCut/Copy/Paste, empty-selection).
@@ -115,7 +117,7 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
 
 ## Master Progress Checklist
 Phase 0: [x] P0.1 [x] P0.2 [x] P0.3
-Phase 1: [ ] P1.1 [ ] P1.2 [ ] P1.3 [ ] P1.4 [ ] P1.5
+Phase 1: [x] P1.1 [x] P1.2 [x] P1.3 [x] P1.4 [x] P1.5
 Phase 2: [ ] P2.1 [ ] P2.2 [ ] P2.3 [ ] P2.4 [ ] P2.5
 Phase 3: [ ] P3.1 [ ] P3.2 [ ] P3.3 [ ] P3.4 [ ] P3.5
 Phase 4: [ ] P4.1 [ ] P4.2 [ ] P4.3a [ ] P4.3b [ ] P4.4 [ ] P4.5 [ ] P4.6 [ ] P4.7

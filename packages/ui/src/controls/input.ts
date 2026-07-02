@@ -4,18 +4,43 @@
  *
  * Faithful to `TInputLine::draw` (`tinputli.cpp:134-160`): the value is drawn from `firstPos` at
  * column 1 (width `size.x-1`), with `◄`(0x11)/`►`(0x10) edge arrows (`tvtext1.cpp:106-107`) in the
- * `inputArrows` role when scrolled, and the field in `inputSelected` (focused) / `inputNormal`. The
- * cursor-keep-visible `firstPos` adjust mirrors `tinputli.cpp:460-465`, and the edit/scroll behavior
- * `:341-468`. A `validator` gates each keystroke live (`isValidInput`) and, on the focused→unfocused
- * transition (observed via the PF-009 focus-change signal — there is no blur event), runs the blocking
- * `isValid` to set `invalid` (no focus-trap — Tab proceeds, PA-2). Selection/clipboard (DEF-01) and the
- * hardware caret (DEF-19) are deferred. The `.js` extension is required by NodeNext resolution.
+ * `inputArrows` role when scrolled, and the field in `inputSelected` (focused) / `inputNormal` — both
+ * `0x1F` white-on-blue (TV `getColor(1)`==`getColor(2)`; PA-14). The cursor-keep-visible `firstPos`
+ * adjust mirrors `tinputli.cpp:460-465`, and the edit/scroll behavior `:341-468`. A `validator` gates
+ * each keystroke live (`isValidInput`) and, on the focused→unfocused transition (observed via the
+ * PF-009 focus-change signal — there is no blur event), runs the blocking `isValid` to set `invalid`
+ * (no focus-trap — Tab proceeds, PA-2).
+ *
+ * ## RD-07 selection + logical caret — GATE-1 decode (`tinputli.cpp`, code-point unit PA-1)
+ * - **State** `selStart`/`selEnd`/`anchor` (JS string indices; `selStart ≤ selEnd`; empty when equal).
+ * - **`adjustSelectBlock()`** (`:225-237`): `curPos < anchor ? [selStart,selEnd]=[curPos,anchor] :
+ *   [anchor,curPos]`. **`deleteSelect()`** (`:203-211`): guarded by `selStart<selEnd`, removes
+ *   `[selStart,selEnd)`, `curPos=selStart` (does not clear the selection).
+ * - **Shift-extension** (`:339-359,456-459`): on a pad-key motion (Home/Left/Right/End/Ctrl-Left/
+ *   Ctrl-Right) with Shift, set `anchor = (curPos==selEnd ? selStart : selStart==selEnd ? curPos :
+ *   selEnd)`; move `curPos`; then `adjustSelectBlock()`. A motion **without** Shift → `selStart=selEnd=0`
+ *   (collapse). **Ctrl+A** select-all is a jsvision addition mapped to `selectAll(true)` (AR-116).
+ * - **Word nav** (`:64-82`, PA-12): space-delimited — `prevWord`/`nextWord` land on the first non-space
+ *   after a space. **`selectAll(true)`** (`:496-508`): `selStart=0`, `curPos=selEnd=len`, scroll to caret.
+ * - **Mouse** (`:312-338`): press → `anchor=curPos=mousePos`; drag → `curPos=mousePos`+`adjustSelectBlock`
+ *   per move; double-click → `selectAll(true)`. `mousePos = max(0, max(mouse.x,1)+firstPos-1)` (`:186-196`).
+ * - **Edit-over-selection**: printable (`:418-446`) → `deleteSelect()` first, then insert (validate +
+ *   maxLength); Backspace (`:380-388`) → empty selection makes a 1-cp selection left then `deleteSelect`;
+ *   Delete (`:399-405`) → `deleteSelect` if any, else delete the cp under the cursor.
+ * - **Selection band draw** (`:152-157`): fill cols `[l+1, r+1)` in `getColor(3)` (`inputSelection`,
+ *   `0x2F` white-on-green) where `l=max(0, displayedPos(selStart)-firstPos)`, `r=min(size.x-2,
+ *   displayedPos(selEnd)-firstPos)`, only if `l<r`.
+ * - **Logical caret** (`:160`): TV `setCursor(displayedPos(curPos)-firstPos+1, 0)`. We additionally
+ *   paint that one buffer cell in a **reversed** field style (fg/bg swapped) so the caret shows headless
+ *   / on cursor-hidden terminals (DEF-19a); `desiredCaret()` reports the same cell for the hardware
+ *   cursor when focused. Clipboard (copy/cut/paste) lives in Phase 2. NodeNext requires the `.js`.
  */
 import { View } from '../view/index.js';
-import type { DrawContext, DispatchEvent } from '../view/index.js';
+import type { DrawContext, DispatchEvent, Point } from '../view/index.js';
 import type { Signal } from '../reactive/index.js';
-import type { KeyEvent } from '@jsvision/core';
+import type { KeyEvent, MouseEvent, Style } from '@jsvision/core';
 import type { Validator } from './validators/index.js';
+import { prevWord, nextWord, selectionBlock, mousePos } from './input-selection.js';
 
 /** Left/right scroll arrows (TV `tvtext1.cpp:106-107`, `0x11`/`0x10`), unambiguous-narrow code points. */
 const LEFT_ARROW = '\u25C4'; // ◄
@@ -40,14 +65,36 @@ export class Input extends View {
   protected readonly maxLength: number;
   /** Optional live + blocking validator. */
   protected readonly validator?: Validator;
-  /** Cursor index into the value. */
+  /** Cursor index into the value (code-point unit, PA-1). */
   protected curPos = 0;
   /** First visible character index (horizontal scroll). */
   protected firstPos = 0;
+  /** Selection start (inclusive) — a JS string index; `selStart === selEnd` ⇒ no selection. */
+  protected selStart = 0;
+  /** Selection end (exclusive) — a JS string index. Invariant `selStart ≤ selEnd`. */
+  protected selEnd = 0;
+  /** The fixed end of the selection during shift-extension (TV `anchor`, `tinputli.cpp:346-357`). */
+  protected anchor = 0;
+  /** Last mouse-down column, for double-click detection (PA-15); `null` after any non-click action. */
+  protected lastDownX: number | null = null;
   /** Set by {@link valid}/focus-leave; drives the invalid theming (exposed for the app, PA-2). */
   invalid = false;
   /** Tracks the focus edge so blocking validation runs only on the focused→unfocused transition. */
   protected wasFocused = false;
+
+  /**
+   * The current selection range as JS string indices (`start ≤ end`; empty when `start === end`).
+   *
+   * @returns The `{ start, end }` selection bounds.
+   */
+  get selection(): { start: number; end: number } {
+    return { start: this.selStart, end: this.selEnd };
+  }
+
+  /** The caret index into the value (code-point unit, PA-1). @returns The current cursor position. */
+  get caretPos(): number {
+    return this.curPos;
+  }
 
   /**
    * @param opts `value` (two-way signal) + optional `maxLength` / `validator` (see {@link InputOptions}).
@@ -106,6 +153,68 @@ export class Input extends View {
     if (w > 1) ctx.text(1, 0, v.slice(this.firstPos, this.firstPos + (w - 1)), style); // cols 1..w-1
     if (this.canScrollRight(v, w)) ctx.text(w - 1, 0, RIGHT_ARROW, arrows);
     if (this.firstPos > 0) ctx.text(0, 0, LEFT_ARROW, arrows);
+    // Selection band: recolour the visible selected substring in `inputSelection` (TV `getColor(3)`
+    // band `[l+1, r+1)`, `tinputli.cpp:152-157`). Only when focused with a non-empty selection.
+    if (this.state.focused && this.selStart < this.selEnd) {
+      const l = Math.max(0, this.displayedPos(this.selStart) - this.firstPos);
+      const r = Math.min(w - 2, this.displayedPos(this.selEnd) - this.firstPos);
+      if (l < r) {
+        const seg = v.slice(this.firstPos + l, this.firstPos + r); // the chars under cols [l+1, r+1)
+        ctx.text(l + 1, 0, seg, ctx.color('inputSelection'));
+      }
+    }
+    // Logical caret: repaint the edit cell in a reversed field style, LAST, so the caret shows even
+    // headless / on cursor-hidden terminals (DEF-19a; the hardware cursor is wired separately, P5.2).
+    // Preserve the glyph already shown at that column (text char OR an edge arrow) and reverse only
+    // its colours — mirroring TV's hardware cursor, which sits over a glyph without erasing it (PF-008).
+    if (this.state.focused) {
+      const caretCol = this.displayedPos(this.curPos) - this.firstPos + 1;
+      if (caretCol >= 0 && caretCol < w) {
+        const reversed: Style = { fg: style.bg, bg: style.fg }; // field fg/bg swapped
+        ctx.text(caretCol, 0, this.glyphAt(caretCol, v, w), reversed);
+      }
+    }
+  }
+
+  /**
+   * The glyph currently displayed at a field column — the edge arrow at col 0 / `w-1` when scrolled
+   * (matching the draw order), otherwise the value code point under that column, or a space past the
+   * end. Used to repaint the caret cell without erasing the arrow/char beneath it (PF-008).
+   *
+   * @param col The field column.
+   * @param v   The current value.
+   * @param w   The field width.
+   * @returns The single-glyph string at that column.
+   */
+  protected glyphAt(col: number, v: string, w: number): string {
+    if (col === 0 && this.firstPos > 0) return LEFT_ARROW;
+    if (col === w - 1 && this.canScrollRight(v, w)) return RIGHT_ARROW;
+    const idx = col - 1 + this.firstPos; // the value index shown at this column (col 1 → firstPos)
+    return idx >= 0 && idx < v.length ? (v[idx] ?? ' ') : ' ';
+  }
+
+  /**
+   * The display column of a value index (TV `displayedPos` = `strwidth(data[0..pos))`). Code-unit in
+   * v1 (PA-1); grapheme/wide-aware stepping is DEF-21, so this is the identity in the current slice.
+   *
+   * @param pos A JS string index into the value.
+   * @returns The display column offset from the value's start.
+   */
+  protected displayedPos(pos: number): number {
+    return pos;
+  }
+
+  /**
+   * The view-local caret cell for the hardware cursor (PA-5/PA-11): the focused edit cell, or `null`
+   * when unfocused or scrolled out of view. The event loop translates it to an absolute cell (P5.2).
+   *
+   * @returns The view-local caret `{ x, y }`, or `null`.
+   */
+  override desiredCaret(): Point | null {
+    if (!this.state.focused) return null;
+    const caretCol = this.displayedPos(this.curPos) - this.firstPos + 1;
+    if (caretCol < 0 || caretCol >= this.bounds.width) return null;
+    return { x: caretCol, y: 0 };
   }
 
   /** Whether text extends past the right edge of the field (TV `canScroll(1)`, `tinputli.cpp:118`). */
@@ -123,15 +232,15 @@ export class Input extends View {
   }
 
   /**
-   * Route a key (edit/move) or a mouse-down (cursor position / arrow scroll). Tab/Enter are not
-   * consumed — they pass through to focus traversal / the default button.
+   * Route a key (edit/move/select) or a mouse gesture (position / drag-select / scroll). Tab/Enter
+   * are not consumed — they pass through to focus traversal / the default button.
    *
    * @param ev The dispatch envelope (carries `local` during real mouse dispatch).
    */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
-    if (inner.type === 'mouse' && inner.kind === 'down') {
-      this.handleClick(ev);
+    if (inner.type === 'mouse') {
+      this.handleMouse(inner, ev);
       return;
     }
     if (inner.type !== 'key') return;
@@ -139,15 +248,87 @@ export class Input extends View {
     if (this.handleKey(inner)) ev.handled = true;
   }
 
-  /** Apply an edit/move key; returns whether it was consumed. */
+  /**
+   * Apply a key through the TV selection machine (`tinputli.cpp:341-467`): a shift + pad-key motion
+   * extends the selection (anchored per `:346-357`), a plain motion collapses it, and an edit
+   * (Backspace/Delete/printable) deletes any selection first. Returns whether the key was consumed.
+   *
+   * @param inner The decoded key event.
+   * @returns Whether the key was consumed (halts propagation).
+   */
   protected handleKey(inner: KeyEvent): boolean {
     const v = this.value();
+
+    // Ctrl+A → select all (jsvision addition AR-116; not a TV pad-key — outside the extend/collapse).
+    if (inner.ctrl && !inner.shift && inner.key === 'a') {
+      this.selectAll(true);
+      return true;
+    }
+
+    const motion = this.motionOf(inner);
+    // Shift + a pad-key motion arms the extension anchor (tinputli.cpp:346-357).
+    let extend = false;
+    if (motion !== null && inner.shift) {
+      this.anchor =
+        this.curPos === this.selEnd ? this.selStart : this.selStart === this.selEnd ? this.curPos : this.selEnd;
+      extend = true;
+    }
+
+    if (motion !== null) {
+      this.applyMotion(motion, v);
+    } else if (inner.key === 'backspace') {
+      this.backspace();
+    } else if (inner.key === 'delete') {
+      this.deleteForward(v);
+    } else {
+      return this.insertPrintable(inner); // printable owns its own selection-delete + collapse
+    }
+
+    // Derive the selection from the moved caret (extend) or collapse it (plain motion / edit),
+    // then keep the caret visible (tinputli.cpp:456-465).
+    if (extend) this.adjustSelectBlock();
+    else this.collapseSelection();
+    this.adjustScroll();
+    this.invalidate();
+    return true;
+  }
+
+  /**
+   * Classify a key as a pad-key motion, or `null` if it is not a motion (TV `padKeys`,
+   * `tinputli.cpp:303`). Ctrl+Left/Right are word motions (`:368-372`, PA-12).
+   *
+   * @param inner The decoded key event.
+   * @returns The motion kind, or `null`.
+   */
+  protected motionOf(inner: KeyEvent): 'left' | 'right' | 'wordLeft' | 'wordRight' | 'home' | 'end' | null {
     switch (inner.key) {
+      case 'left':
+        return inner.ctrl ? 'wordLeft' : 'left';
+      case 'right':
+        return inner.ctrl ? 'wordRight' : 'right';
+      case 'home':
+        return 'home';
+      case 'end':
+        return 'end';
+      default:
+        return null;
+    }
+  }
+
+  /** Move the caret per a pad-key motion (no selection side effects — the caller derives the block). */
+  protected applyMotion(motion: 'left' | 'right' | 'wordLeft' | 'wordRight' | 'home' | 'end', v: string): void {
+    switch (motion) {
       case 'left':
         this.curPos = Math.max(0, this.curPos - 1);
         break;
       case 'right':
         this.curPos = Math.min(v.length, this.curPos + 1);
+        break;
+      case 'wordLeft':
+        this.curPos = prevWord(v, this.curPos);
+        break;
+      case 'wordRight':
+        this.curPos = nextWord(v, this.curPos);
         break;
       case 'home':
         this.curPos = 0;
@@ -155,36 +336,80 @@ export class Input extends View {
       case 'end':
         this.curPos = v.length;
         break;
-      case 'backspace':
-        if (this.curPos > 0) {
-          this.setValue(v.slice(0, this.curPos - 1) + v.slice(this.curPos));
-          this.curPos -= 1;
-        }
-        break;
-      case 'delete':
-        if (this.curPos < v.length) this.setValue(v.slice(0, this.curPos) + v.slice(this.curPos + 1));
-        break;
-      default:
-        return this.insertPrintable(inner, v);
     }
+  }
+
+  /** Backspace (TV `:380-388`): delete the selection, or the code point left of the caret. */
+  protected backspace(): void {
+    if (this.selStart === this.selEnd) {
+      this.selStart = Math.max(0, this.curPos - 1);
+      this.selEnd = this.curPos;
+    }
+    this.deleteSelect();
+  }
+
+  /** Delete (TV `:399-405`): delete the selection, or the code point under the caret. */
+  protected deleteForward(v: string): void {
+    if (this.selStart === this.selEnd) {
+      if (this.curPos < v.length) this.setValue(v.slice(0, this.curPos) + v.slice(this.curPos + 1));
+    } else {
+      this.deleteSelect();
+    }
+  }
+
+  /**
+   * Insert a printable character (TV default case `:418-446`): delete any selection first, then
+   * insert at the caret, respecting `maxLength` + `validator.isValidInput`. Always collapses after.
+   *
+   * @param inner The decoded key event.
+   * @returns Whether the key was consumed.
+   */
+  protected insertPrintable(inner: KeyEvent): boolean {
+    if (inner.ctrl || inner.alt) return false;
+    const ch = inner.key === 'space' ? ' ' : [...inner.key].length === 1 ? inner.key : null;
+    if (ch === null) return false; // a non-printable named key passes through
+    this.deleteSelect(); // edit over a selection replaces it (tinputli.cpp:424)
+    const cur = this.value();
+    if (cur.length < this.maxLength) {
+      const candidate = cur.slice(0, this.curPos) + ch + cur.slice(this.curPos);
+      if (!this.validator || this.validator.isValidInput(candidate)) {
+        this.setValue(candidate);
+        this.curPos += 1;
+      }
+    }
+    this.collapseSelection();
     this.adjustScroll();
     this.invalidate();
     return true;
   }
 
-  /** Insert a printable character at the cursor, respecting `maxLength` + `validator.isValidInput`. */
-  protected insertPrintable(inner: KeyEvent, v: string): boolean {
-    if (inner.ctrl || inner.alt) return false;
-    const ch = inner.key === 'space' ? ' ' : [...inner.key].length === 1 ? inner.key : null;
-    if (ch === null) return false; // a non-printable named key passes through
-    if (v.length >= this.maxLength) return true; // capped: consume the key but insert nothing
-    const candidate = v.slice(0, this.curPos) + ch + v.slice(this.curPos);
-    if (this.validator && !this.validator.isValidInput(candidate)) return true; // rejected live
-    this.setValue(candidate);
-    this.curPos += 1;
+  /** Remove the selected range `[selStart, selEnd)` and place the caret at `selStart` (TV `:203-211`). */
+  protected deleteSelect(): void {
+    if (this.selStart < this.selEnd) {
+      const v = this.value();
+      this.setValue(v.slice(0, this.selStart) + v.slice(this.selEnd));
+      this.curPos = this.selStart;
+    }
+  }
+
+  /** Derive `[selStart, selEnd]` from the caret + anchor (TV `adjustSelectBlock`, `:225-237`). */
+  protected adjustSelectBlock(): void {
+    const { start, end } = selectionBlock(this.curPos, this.anchor);
+    this.selStart = start;
+    this.selEnd = end;
+  }
+
+  /** Clear the selection (TV `selStart = selEnd = 0` on a non-extending action, `:459`). */
+  protected collapseSelection(): void {
+    this.selStart = this.selEnd = 0;
+  }
+
+  /** Select all / clear (TV `selectAll`, `:496-508`): `selStart=0`, `curPos=selEnd=len` (or all 0). */
+  protected selectAll(enable: boolean): void {
+    this.selStart = 0;
+    this.curPos = this.selEnd = enable ? this.value().length : 0;
     this.adjustScroll();
     this.invalidate();
-    return true;
   }
 
   /** Write the bound value (two-way). */
@@ -192,21 +417,54 @@ export class Input extends View {
     this.value.set(next);
   }
 
-  /** Position the cursor at the clicked column, or scroll when an edge arrow is clicked. */
-  protected handleClick(ev: DispatchEvent): void {
+  /**
+   * Map a mouse gesture to selection/scroll (TV `:312-338`): edge-arrow click scrolls; a plain press
+   * anchors + captures the drag; a drag extends; a second press on the same cell is a double-click →
+   * select-all (PA-15, our double-click substitute); release drops the capture.
+   *
+   * @param inner The decoded mouse event.
+   * @param ev    The dispatch envelope (`local` cell + the capture seam).
+   */
+  protected handleMouse(inner: MouseEvent, ev: DispatchEvent): void {
     const local = ev.local;
     if (local === undefined) return;
     const w = this.bounds.width;
     const v = this.value();
-    if (local.x === 0 && this.firstPos > 0) {
-      this.firstPos -= 1; // ◄ click → scroll left
-    } else if (local.x === w - 1 && this.canScrollRight(v, w)) {
-      this.firstPos += 1; // ► click → scroll right
-    } else {
-      this.curPos = Math.max(0, Math.min(v.length, local.x + this.firstPos - 1)); // TV mousePos
+    if (inner.kind === 'down') {
+      if (local.x === 0 && this.firstPos > 0) {
+        this.firstPos -= 1; // ◄ click → scroll left
+        this.lastDownX = null;
+      } else if (local.x === w - 1 && this.canScrollRight(v, w)) {
+        this.firstPos += 1; // ► click → scroll right
+        this.lastDownX = null;
+      } else if (this.lastDownX === local.x) {
+        this.selectAll(true); // double-click (second down on the same cell, PA-15)
+        this.lastDownX = null;
+      } else {
+        this.curPos = this.posFromMouse(local.x);
+        this.anchor = this.curPos;
+        this.collapseSelection();
+        this.adjustScroll();
+        this.lastDownX = local.x;
+        ev.setCapture?.(this); // track the drag past the field edge (PA-5-adjacent)
+      }
+      this.invalidate();
+      ev.handled = true;
+    } else if (inner.kind === 'drag' || inner.kind === 'move') {
+      this.curPos = this.posFromMouse(local.x);
+      this.adjustSelectBlock();
       this.adjustScroll();
+      this.lastDownX = null; // a drag ends double-click candidacy
+      this.invalidate();
+      ev.handled = true;
+    } else if (inner.kind === 'up') {
+      ev.releaseCapture?.();
+      ev.handled = true;
     }
-    this.invalidate();
-    ev.handled = true;
+  }
+
+  /** Map a local mouse column to a value index (TV `mousePos`, `:186-196`; code-unit v1). */
+  protected posFromMouse(localX: number): number {
+    return mousePos(localX, this.firstPos, this.value().length);
   }
 }
