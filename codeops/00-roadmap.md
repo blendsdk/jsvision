@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-02 (jsvision-ui **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: new feature-set **bun-runtime** — RD-01 Bun runtime support & self-contained executables drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
+> **Last Updated**: 2026-07-02 (jsvision-ui **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: the **RD-12+ high-value-controls set** was opened via `make_requirements` — sliced into 6 sibling RDs by mechanism (AR-125…129), **RD-14 (Input dropdowns — History + ComboBox) drafted ✏️** (AR-130…140, GATE-1 History decode), RD-15…19 queued. And a new feature-set **bun-runtime** — RD-01 drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
 > **Features**: 0 / 2 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 10 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13) · Backlog (RD-08/09, RD-12+) | 10 / 12 done | 🔄 | 2026-07-02 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 10 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13) · RD-14 ✏️ Drafted (RD-12+ set, 1/6) · Backlog (RD-15…19, RD-08/09) | 10 / 18 done | 🔄 | 2026-07-02 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0 / 1 done | 🔄 | 2026-07-02 |
 
 ## Archived
@@ -24,6 +24,17 @@
 
 ## Notes
 
+- 2026-07-02: **jsvision-ui RD-12+ high-value-controls set opened — RD-14 (Input dropdowns) drafted**
+  → ✏️ RD Drafted ([RD-14](features/jsvision-ui/requirements/RD-14-input-dropdowns.md)). `make_requirements`
+  sliced the roadmapped high-value bucket into **6 sibling RDs by mechanism** (AR-125/126): RD-14 Input
+  dropdowns · RD-15 Tree · RD-16 Table/DataGrid · RD-17 Tabs · RD-18 ProgressBar/Spinner · RD-19 Surface —
+  full set to be drafted now, MVP = RD-14/15/16 (AR-129), contiguous numbering (AR-128), tvdemo aspirational
+  (AR-127). **RD-14** authored with its GATE-1 History decode (`THistory`/`THistoryWindow`/`THistoryViewer`/
+  `histlist.cpp`): faithful `History` over a global by-`historyId` MRU store + a `Signal<string[]>` escape
+  hatch (AR-130); the new `ComboBox<T>` (editable/filter or select-only/type-ahead, AR-131/134/136); one
+  shared **non-modal anchored-popup** primitive generalizing the RD-05 menu overlay (AR-132/137); new
+  `src/dropdown/` (AR-133); additive History theme roles at plan GATE-1 (AR-139); kitchen-sink stories +
+  headless `demo:dropdowns` (AR-140). AR-130…AR-140 recorded; 14 AC. Next: `make_plan RD-14`, then RD-15.
 - 2026-07-02: **NEW feature-set `bun-runtime` — RD-01 (Bun runtime support & self-contained
   executables) drafted** → ✏️ RD Drafted ([RD-01](features/bun-runtime/requirements/RD-01-bun-runtime-support.md)).
   `add_requirement` grounded in a same-day strict empirical analysis (Bun 1.3.14): the stack already
