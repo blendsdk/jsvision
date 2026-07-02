@@ -27,8 +27,10 @@ the deprecation policy.
   `@jsvision/ui` gains `Input.getValueSignal()`/`getMaxLength()` + public `selectAll()`,
   the `EventLoop.popupHost` + `DispatchEvent.popupHost`/`getFocused` envelope seam, the
   `syncOverlayVisible` helper, and an additive `roles` override on `ListView`/`ListRows`
-  (so the History viewer uses the `cpHistoryViewer` palette). **All additive and
-  non-breaking.**
+  (so the History viewer uses the `cpHistoryViewer` palette). The anchored popup casts the
+  TV-faithful `shadowSize {2,1}` drop shadow (`THistoryWindow` is a `TWindow`), and its hosted
+  list is built inside the popup's own reactive owner (`AnchoredPopupOptions.buildList`) so its
+  computeds are disposed with the popup and never leak. **All additive and non-breaking.**
 
 - **RD-13 runtime hardening — additive public surface.** `@jsvision/core` gains
   `KEY_NAMES` (value export) + the `PasteState` type (HR-23), and

@@ -193,19 +193,21 @@ export class ComboBox<T> extends Group {
     // Editable lists snapshot the filtered set at open (the list is focused, so the field can't be
     // re-filtered while open); select-only lists bind the live `items` so a source change re-renders.
     const listItems: Signal<T[]> = this.editable ? signal(this.filtered()) : this.items;
-    const list = new ListView<T>({
-      items: listItems,
-      getText: this.getText,
-      focused: signal(0),
-      selected: signal(-1),
-      typeAhead: !this.editable,
-      onSelect: this.onSelect,
-      command: this.command,
-    });
     openAnchoredPopup({
       host,
       anchor: absoluteRect(this),
-      list,
+      // Built inside the popup's reactive owner (never here in the handler) so the list's computeds
+      // are owned + disposed with the popup — see `openAnchoredPopup`.
+      buildList: () =>
+        new ListView<T>({
+          items: listItems,
+          getText: this.getText,
+          focused: signal(0),
+          selected: signal(-1),
+          typeAhead: !this.editable,
+          onSelect: this.onSelect,
+          command: this.command,
+        }),
       maxRows: this.maxRows,
       onPick: (index) => this.pick(listItems()[index]),
     });

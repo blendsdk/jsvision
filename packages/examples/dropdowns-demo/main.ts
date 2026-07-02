@@ -22,6 +22,7 @@ import {
   historyAdd,
   clearHistory,
   createEventLoop,
+  createRoot,
   signal,
 } from '@jsvision/ui';
 import type { EventLoop, PopupHost } from '@jsvision/ui';
@@ -164,12 +165,21 @@ function stepCancel(): void {
   console.log(`  after Esc, field unchanged: ${value()}`);
 }
 
-/** Run the walkthrough. */
+/**
+ * Run the walkthrough. The whole tree is built inside a `createRoot` (the canonical jsvision
+ * pattern — mirrors `createApplication` / the kitchen-sink shell): every signal/computed a widget
+ * creates in its constructor (e.g. `ComboBox.filtered`, the list's sorted display) is owned by this
+ * scope and disposed by `dispose()` at the end — so a headless demo never leaks a computation
+ * outside an owner (which would dev-warn and, in a live TUI, corrupt the screen).
+ */
 function main(): void {
-  stepHistory();
-  stepComboEditable();
-  stepComboSelect();
-  stepCancel();
+  createRoot((dispose) => {
+    stepHistory();
+    stepComboEditable();
+    stepComboSelect();
+    stepCancel();
+    dispose();
+  });
   console.log('\nDone — a History MRU dropdown, an editable + a select-only ComboBox, and an Esc-cancel.');
 }
 

@@ -59,7 +59,7 @@ test('the popup saves the prior focus on open and restores it on dismiss', () =>
   const h = makeHarness(['a', 'b', 'c']);
   expect(h.loop.getFocused()).toBe(h.bg);
 
-  const p = openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 3, width: 10, height: 1 }, list: h.list, onPick: () => {} });
+  const p = openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 3, width: 10, height: 1 }, buildList: () => h.list, onPick: () => {} });
   expect(h.loop.getFocused()).toBe(h.list.rows); // list focused during the popup
 
   p.dismiss();
@@ -74,7 +74,7 @@ test('Esc then focus-change does not double-dismiss (the focus watch is disposed
   openAnchoredPopup({
     host: h.host,
     anchor: { x: 5, y: 3, width: 10, height: 1 },
-    list: h.list,
+    buildList: () => h.list,
     onPick: () => {},
     onDismiss: () => {
       dismissed += 1;
@@ -96,7 +96,7 @@ test('dismissing the popup keeps the overlay visible while another client (a men
   h.overlay.add(menuChild);
   h.overlay.state.visible = true;
 
-  const p = openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 3, width: 10, height: 1 }, list: h.list, onPick: () => {} });
+  const p = openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 3, width: 10, height: 1 }, buildList: () => h.list, onPick: () => {} });
   expect(h.overlay.state.visible).toBe(true);
 
   p.dismiss(); // the popup's own children unmount, but the menu child remains
@@ -114,7 +114,7 @@ test('dismissing the popup keeps the overlay visible while another client (a men
 test('navigating past maxRows scrolls the list (focused advances, visible window stays ≤ maxRows)', () => {
   const many = Array.from({ length: 20 }, (_, i) => `item-${i}`);
   const h = makeHarness(many);
-  openAnchoredPopup({ host: h.host, anchor: { x: 2, y: 2, width: 12, height: 1 }, list: h.list, maxRows: 6, onPick: () => {} });
+  openAnchoredPopup({ host: h.host, anchor: { x: 2, y: 2, width: 12, height: 1 }, buildList: () => h.list, maxRows: 6, onPick: () => {} });
   h.loop.renderRoot.flush();
 
   expect(h.list.rows.bounds.height).toBe(6); // ≤ maxRows visible
@@ -132,7 +132,7 @@ test('Enter on a focused row fires onPick with the selected index and dismisses'
   openAnchoredPopup({
     host: h.host,
     anchor: { x: 5, y: 3, width: 10, height: 1 },
-    list: h.list,
+    buildList: () => h.list,
     onPick: (i) => {
       picked = i;
     },
@@ -156,7 +156,7 @@ test('a pre-existing selection on the hosted list does not auto-pick on open (fi
   openAnchoredPopup({
     host: h.host,
     anchor: { x: 5, y: 3, width: 10, height: 1 },
-    list: h.list,
+    buildList: () => h.list,
     onPick: (i) => {
       picked = i;
     },
@@ -164,4 +164,39 @@ test('a pre-existing selection on the hosted list does not auto-pick on open (fi
 
   expect(picked).toBe(-1); // the initial selection value is skipped — no spurious pick
   expect(h.overlay.state.visible).toBe(true);
+});
+
+// ── Drop shadow (TV fidelity: THistoryWindow is a TWindow, shadowSize {2,1}) ─────────────────────
+
+test('the popup frame casts a TV drop shadow', () => {
+  const h = makeHarness(['a', 'b', 'c']);
+  openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 3, width: 10, height: 1 }, buildList: () => h.list, onPick: () => {} });
+
+  const frame = h.overlay.children.find((c): c is Group => c instanceof Group);
+  expect(frame?.castsShadow).toBe(true); // the compose walker paints the shadowSize {2,1} L-shadow
+});
+
+// ── No reactive-owner leak (the list's computeds are built inside the popup's createRoot) ─────────
+
+test('building the hosted list inside the popup owner emits no no-owner warning', () => {
+  const h = makeHarness(['a', 'b', 'c']);
+  const warnings: string[] = [];
+  const original = console.warn;
+  console.warn = (msg?: unknown) => {
+    warnings.push(String(msg));
+  };
+  try {
+    // A FRESH ListView built by the factory — its constructor `computed` must be owned by the popup's
+    // `createRoot`, not leaked (the regression: it was previously built in the caller's click handler).
+    const p = openAnchoredPopup({
+      host: h.host,
+      anchor: { x: 5, y: 3, width: 10, height: 1 },
+      buildList: () => new ListView<string>({ items: signal(['x', 'y']), getText: (s) => s }),
+      onPick: () => {},
+    });
+    p.dismiss();
+  } finally {
+    console.warn = original;
+  }
+  expect(warnings.some((w) => w.includes('createRoot'))).toBe(false);
 });

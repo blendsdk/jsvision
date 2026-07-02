@@ -100,18 +100,20 @@ export class History extends View {
     ev.focusView?.(this.link); // TV `if (!link->focus()) return;` — focus the link first
     const entries = this.recordAndSnapshot();
     const focused = signal(entries.length > 1 ? 1 : 0); // focus index 1 when count > 1 (thstview.cpp:42-43)
-    const list = new ListView<string>({
-      items: signal(entries),
-      getText: (s) => s,
-      focused,
-      // TV `cpHistoryViewer` (decode §4): normal/selected = white-on-blue (blends into the blue popup),
-      // focused = white-on-green. Overrides the RD-11 cyan `list*` roles so the rows are faithful.
-      roles: { normal: 'historyViewer', focused: 'historyViewerFocused', selected: 'historyViewer' },
-    });
     openAnchoredPopup({
       host,
       anchor: absoluteRect(this.link),
-      list,
+      // Built inside the popup's reactive owner (never here in the handler) so the list's computeds
+      // are owned + disposed with the popup — see `openAnchoredPopup`.
+      buildList: () =>
+        new ListView<string>({
+          items: signal(entries),
+          getText: (s) => s,
+          focused,
+          // TV `cpHistoryViewer` (decode §4): normal/selected = white-on-blue (blends into the blue
+          // popup), focused = white-on-green. Overrides the RD-11 cyan `list*` roles for fidelity.
+          roles: { normal: 'historyViewer', focused: 'historyViewerFocused', selected: 'historyViewer' },
+        }),
       maxRows: this.maxRows,
       onPick: (index) => this.pick(entries[index]),
     });
