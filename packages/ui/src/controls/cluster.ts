@@ -30,6 +30,8 @@ export interface ClusterBox {
 /** A single-column cluster of selectable items (internal — `CheckGroup`/`RadioGroup` extend it). */
 export abstract class Cluster extends View {
   override focusable = true;
+  /** HR-44: post-process so Alt+hotkey is seen dialog-wide (TV `ofPostProcess`, `tcluster.cpp:46`). */
+  override postProcess = true;
   /** The focused item index. */
   protected sel = 0;
   /** The original `~X~`-marked labels (re-split per paint). */
@@ -93,11 +95,14 @@ export abstract class Cluster extends View {
           ? 'clusterSelected'
           : 'clusterNormal';
       const base = ctx.color(role);
+      // HR-52 (tcluster.cpp:95): a disabled row draws its `~hot~` run in the disabled color too — the
+      // shortcut accent only applies while the item is enabled.
+      const hotColor = this.enabled[i] ? accent : base;
       ctx.fillRect(0, i, w, 1, ' ', base);
       ctx.text(0, i, icon, base); // " [ ] " / " ( ) " at cols 0..4
       ctx.text(2, i, markers[this.markIndex(i)] ?? ' ', base); // marker glyph overwrites col 2 (TV putChar)
       for (const seg of tildeSegments(this.rawLabels[i] ?? '')) {
-        ctx.text(5 + seg.col, i, seg.text, seg.hot ? accent : base); // label from col 5
+        ctx.text(5 + seg.col, i, seg.text, seg.hot ? hotColor : base); // label from col 5
       }
     }
   }
@@ -120,6 +125,21 @@ export abstract class Cluster extends View {
       return;
     }
     if (inner.type !== 'key') return;
+    // HR-44: Alt+<hotkey> is handled dialog-wide (post-process) — select+press the item AND take
+    // focus (TV `tcluster.cpp:257-284`), whether or not this cluster is currently focused.
+    if (inner.alt && inner.key.length === 1) {
+      const i = this.parsed.findIndex((p) => p.hotkey === inner.key.toLowerCase());
+      if (i >= 0 && this.enabled[i]) {
+        this.sel = i;
+        this.press(i);
+        ev.focusView?.(this); // take focus (dialog-wide hotkey)
+        this.invalidate();
+        ev.handled = true;
+      }
+      return;
+    }
+    // Navigation only while focused — a post-process cluster must not consume another view's keys.
+    if (!this.state.focused) return;
     if (inner.key === 'up') {
       this.moveSel(-1);
       ev.handled = true;
@@ -132,14 +152,6 @@ export abstract class Cluster extends View {
         this.invalidate();
       }
       ev.handled = true;
-    } else if (inner.alt && inner.key.length === 1) {
-      const i = this.parsed.findIndex((p) => p.hotkey === inner.key.toLowerCase());
-      if (i >= 0 && this.enabled[i]) {
-        this.sel = i;
-        this.press(i);
-        this.invalidate();
-        ev.handled = true;
-      }
     }
   }
 

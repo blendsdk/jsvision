@@ -43,6 +43,8 @@ import type { Validator } from './validators/index.js';
 import { selectionBlock, mousePos, motionOf, caretAfterMotion } from './input-selection.js';
 import { clipboardChord, clipboardCommand, applyPaste, insertFilled } from './input-clipboard.js';
 import type { ClipboardAction } from './input-clipboard.js';
+import { computeDelete } from './input-editing.js';
+import type { EditState, DeleteKind } from './input-editing.js';
 
 /** Left/right scroll arrows (TV `tvtext1.cpp:106-107`, `0x11`/`0x10`), unambiguous-narrow code points. */
 const LEFT_ARROW = '\u25C4'; // ◄
@@ -79,6 +81,8 @@ export class Input extends View {
   protected anchor = 0;
   /** Last mouse-down column, for double-click detection (PA-15); `null` after any non-click action. */
   protected lastDownX: number | null = null;
+  /** True between this Input's own mouse-down and its release — the HR-46 drag guard. */
+  protected dragging = false;
   /** Set by {@link valid}/focus-leave; drives the invalid theming (exposed for the app, PA-2). */
   invalid = false;
   /** Tracks the focus edge so blocking validation runs only on the focused→unfocused transition. */
@@ -111,7 +115,13 @@ export class Input extends View {
       this.bind(
         () => this.value(),
         (v) => {
-          if (this.curPos > v.length) this.curPos = v.length;
+          // HR-59: a shorter external value must clamp the ENTIRE selection tuple, not just the
+          // caret — else selStart/selEnd/anchor dangle past the end and mis-highlight / mis-delete.
+          const len = v.length;
+          if (this.curPos > len) this.curPos = len;
+          if (this.selStart > len) this.selStart = len;
+          if (this.selEnd > len) this.selEnd = len;
+          if (this.anchor > len) this.anchor = len;
           this.adjustScroll();
         },
       );
@@ -183,9 +193,7 @@ export class Input extends View {
    * (matching the draw order), otherwise the value code point under that column, or a space past the
    * end. Used to repaint the caret cell without erasing the arrow/char beneath it (PF-008).
    *
-   * @param col The field column.
-   * @param v   The current value.
-   * @param w   The field width.
+   * @param col The field column. @param v The current value. @param w The field width.
    * @returns The single-glyph string at that column.
    */
   protected glyphAt(col: number, v: string, w: number): string {
@@ -197,10 +205,8 @@ export class Input extends View {
 
   /**
    * The display column of a value index (TV `displayedPos` = `strwidth(data[0..pos))`). Code-unit in
-   * v1 (PA-1); grapheme/wide-aware stepping is DEF-21, so this is the identity in the current slice.
-   *
-   * @param pos A JS string index into the value.
-   * @returns The display column offset from the value's start.
+   * v1 (PA-1); grapheme/wide-aware stepping is DEF-21 — the identity in the current slice.
+   * @param pos A JS string index into the value. @returns The display column offset from the start.
    */
   protected displayedPos(pos: number): number {
     return pos;
@@ -284,8 +290,7 @@ export class Input extends View {
     if (text === '') return; // empty selection → no-op (deleteSelect guards cut too)
     ev.setClipboard?.(text); // caps-gated in the loop; base64 + sanitize in core
     if (action === 'cut') {
-      this.deleteSelect();
-      this.collapseSelection();
+      this.applyDelete('selection'); // HR-47: cut re-validates the deletion + reverts if invalid
       this.adjustScroll();
       this.invalidate();
     }
@@ -298,6 +303,7 @@ export class Input extends View {
    * @param text The pasted text (untrusted; bounded upstream by core's `PASTE_CAP_BYTES`, AC-15).
    */
   protected pasteText(text: string): void {
+    this.lastDownX = null; // HR-54: a paste disarms the double-click substitute
     this.deleteSelect(); // replace the selection first
     const r = applyPaste(text, this.value(), this.curPos, this.maxLength, this.validator);
     this.setValue(r.value); // applyPaste fills each code point via insertFilled (PA-17)
@@ -317,6 +323,7 @@ export class Input extends View {
    */
   protected handleKey(inner: KeyEvent): boolean {
     const v = this.value();
+    this.lastDownX = null; // HR-54: any key edit/motion disarms the double-click substitute
 
     // Ctrl+A → select all (jsvision addition AR-116; not a TV pad-key — outside the extend/collapse).
     if (inner.ctrl && !inner.shift && inner.key === 'a') {
@@ -336,9 +343,11 @@ export class Input extends View {
     if (motion !== null) {
       this.curPos = caretAfterMotion(motion, this.curPos, v);
     } else if (inner.key === 'backspace') {
-      this.backspace();
+      // HR-48: Ctrl/Alt+Backspace deletes the previous word; plain Backspace one code point.
+      this.applyDelete(inner.ctrl || inner.alt ? 'wordLeft' : 'backspace');
     } else if (inner.key === 'delete') {
-      this.deleteForward(v);
+      // HR-48: Ctrl+Delete deletes the next word; plain Delete one code point.
+      this.applyDelete(inner.ctrl ? 'wordRight' : 'forward');
     } else {
       return this.insertPrintable(inner); // printable owns its own selection-delete + collapse
     }
@@ -352,22 +361,30 @@ export class Input extends View {
     return true;
   }
 
-  /** Backspace (TV `:380-388`): delete the selection, or the code point left of the caret. */
-  protected backspace(): void {
-    if (this.selStart === this.selEnd) {
-      this.selStart = Math.max(0, this.curPos - 1);
-      this.selEnd = this.curPos;
-    }
-    this.deleteSelect();
+  /** Snapshot the editable state (value + caret + selection) for the pure delete helpers. */
+  protected editState(): EditState {
+    return { value: this.value(), curPos: this.curPos, selStart: this.selStart, selEnd: this.selEnd };
   }
 
-  /** Delete (TV `:399-405`): delete the selection, or the code point under the caret. */
-  protected deleteForward(v: string): void {
-    if (this.selStart === this.selEnd) {
-      if (this.curPos < v.length) this.setValue(v.slice(0, this.curPos) + v.slice(this.curPos + 1));
-    } else {
-      this.deleteSelect();
-    }
+  /** Commit an {@link EditState}: write value + caret + selection back onto this Input. */
+  protected writeEditState(s: EditState): void {
+    this.setValue(s.value);
+    this.curPos = s.curPos;
+    this.selStart = s.selStart;
+    this.selEnd = s.selEnd;
+  }
+
+  /**
+   * Apply a delete gesture with TV's transient-revert (HR-47, `tinputli.cpp:307-310,380-414`): compute
+   * the post-delete state purely, then `checkValid(True)` — reject the whole edit if the result fails
+   * the live validator (a picture-mask delete that would break the mask is refused, not corrupting it).
+   *
+   * @param kind The delete gesture (backspace / forward / word / selection).
+   */
+  protected applyDelete(kind: DeleteKind): void {
+    const after = computeDelete(this.editState(), kind);
+    if (this.validator && !this.validator.isValidInput(after.value)) return; // invalid ⇒ reject (HR-47)
+    this.writeEditState(after);
   }
 
   /**
@@ -384,8 +401,8 @@ export class Input extends View {
     this.deleteSelect(); // edit over a selection replaces it (tinputli.cpp:424)
     const r = insertFilled(ch, this.value(), this.curPos, this.maxLength, this.validator);
     if (r !== null) {
-      // insertFilled applies the picture autoFill before validating, so leading/trailing mask
-      // literals auto-appear as you type (PA-17); the caret advances past them.
+      // HR-55/HR-45: insertFilled autoFills TRAILING mask literals only (TV is trailing-only; leading
+      // literals are NOT auto-inserted); the caret advances past the typed char, not the autoFill.
       this.setValue(r.value);
       this.curPos = r.curPos;
     }
@@ -395,13 +412,9 @@ export class Input extends View {
     return true;
   }
 
-  /** Remove the selected range `[selStart, selEnd)` and place the caret at `selStart` (TV `:203-211`). */
+  /** Remove the selected range, caret → `selStart` (TV `deleteSelect`, `:203-211`; via `computeDelete`). */
   protected deleteSelect(): void {
-    if (this.selStart < this.selEnd) {
-      const v = this.value();
-      this.setValue(v.slice(0, this.selStart) + v.slice(this.selEnd));
-      this.curPos = this.selStart;
-    }
+    this.writeEditState(computeDelete(this.editState(), 'selection'));
   }
 
   /** Derive `[selStart, selEnd]` from the caret + anchor (TV `adjustSelectBlock`, `:225-237`). */
@@ -458,11 +471,13 @@ export class Input extends View {
         this.collapseSelection();
         this.adjustScroll();
         this.lastDownX = local.x;
+        this.dragging = true; // HR-46: only a drag WE started may mutate the selection
         ev.setCapture?.(this); // track the drag past the field edge (PA-5-adjacent)
       }
       this.invalidate();
       ev.handled = true;
     } else if (inner.kind === 'drag' || inner.kind === 'move') {
+      if (!this.dragging) return; // HR-46: ignore a drag this Input never initiated
       this.curPos = this.posFromMouse(local.x);
       this.adjustSelectBlock();
       this.adjustScroll();
@@ -470,6 +485,7 @@ export class Input extends View {
       this.invalidate();
       ev.handled = true;
     } else if (inner.kind === 'up') {
+      this.dragging = false; // HR-46: capture released — stop tracking drags
       ev.releaseCapture?.();
       ev.handled = true;
     }

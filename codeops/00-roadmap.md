@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 9 ✅ Done (RD-01…RD-07, RD-10, RD-11) · RD-13 🔄 executing (Phase 7/10) · Backlog (RD-08/09, RD-12+) | 9 / 12 done | 🔄 | 2026-07-02 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 9 ✅ Done (RD-01…RD-07, RD-10, RD-11) · RD-13 🔄 executing (Phase 8/10) · Backlog (RD-08/09, RD-12+) | 9 / 12 done | 🔄 | 2026-07-02 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0 / 1 done | 🔄 | 2026-07-02 |
 
 ## Archived

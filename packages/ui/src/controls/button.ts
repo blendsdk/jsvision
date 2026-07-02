@@ -100,7 +100,9 @@ export class Button extends View {
           ? 'buttonDefault'
           : 'button'; // TV "normal"
     const face = ctx.color(faceRole);
-    const accent = ctx.color('buttonShortcut');
+    // HR-52 (tbutton.cpp:107-108): a disabled button resolves BOTH attribute nibbles to the disabled
+    // color — the `~hot~` run is drawn in the face role, not the bright shortcut accent.
+    const accent = disabled ? face : ctx.color('buttonShortcut');
     const shadow = ctx.color('buttonShadow'); // TV cShadow = getColor(8) = 0x70 (black-on-lightGray)
     const down = this.pressed;
     const { width: w, height: h } = ctx.size;
@@ -193,10 +195,14 @@ export class Button extends View {
     }
   }
 
-  /** Whether a view-local point lies in the clickable face (excludes the shadow column + row). */
+  /**
+   * Whether a view-local point lies in the clickable face. HR-56 (`tbutton.cpp:177-180`
+   * `clickRect.a.x++`): column 0 (the shadow-adjacent edge) is inert; the last column + last row (the
+   * drop-shadow) are excluded too.
+   */
   protected inFace(local: DispatchEvent['local']): boolean {
     if (local === undefined) return false;
-    return local.x >= 0 && local.y >= 0 && local.x < this.bounds.width - 1 && local.y < this.bounds.height - 1;
+    return local.x >= 1 && local.y >= 0 && local.x < this.bounds.width - 1 && local.y < this.bounds.height - 1;
   }
 
   /** Emit the command (if any) and fire `onClick` (PA-1). A no-op when disabled (guarded by caller). */

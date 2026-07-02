@@ -23,6 +23,34 @@
 | HR-57 | `TStaticText` draws text verbatim between breaks (no whitespace collapse) | `tstatict.cpp:44-105` |
 | HR-58 | insert clamps at `maxLen` and accepts | `tinputli.cpp:282-288` |
 
+## GATE-1 BEFORE-decode (recorded 2026-07-02, verified against `magiblot/tvision`)
+
+- **Insert + caret (HR-45/58)** — `tinputli.cpp:441-444`: insert `keyText` (`len` chars) at `curPos`,
+  then `curPos += len` (advance by the **typed** length only). `checkValid(False)` (`:445`) then runs
+  the validator's autoFill; in `checkValid` (`:302-321`) `if (newLen > maxLen) { newData[maxLen]='\0';
+  newLen = maxLen; }` (**clamp-and-accept**, not reject) and `if (curPos >= oldLen && newLen > oldLen)
+  curPos = newLen` — the caret jumps to the new end **only** when it was already at/past the post-insert
+  length (i.e. typing at the very end). So a mid-string insert whose autoFill appends **trailing**
+  literals leaves the caret just past the typed char (HR-45 repro: `'@@--'`,`"a"`,caret 0,type `b` →
+  caret 1). `oldLen` in `checkValid` is measured **post-insert, pre-fill**.
+- **Paste C0 mapping (HR-43)** — `tinputli.cpp:430-431`: `if (strchr("\t\r\n", keyText[0])) keyText[0]
+  = ' ';` — tab/CR/LF → space before insert. (Our stricter posture also drops other C0, HR-05.)
+- **Delete transient-revert (HR-47)** — every delete branch (`kbBack :380-388`, `kbCtrlBack :389-397`,
+  `kbDel :399-405`, `kbCtrlDel :406-414`) ends with `checkValid(True)`, which `restoreState()`-reverts
+  when the post-delete value fails `isValidInput` (`:307-310`).
+- **Word delete (HR-48)** — `prevWord(s,pos)` (`:64-72`): scan `i=pos-1..1`, return first `i` with
+  `s[i]!=' ' && s[i-1]==' '`, else `0`. `nextWord(s,pos)` (`:74-82`): scan `i=pos..size-2`, return
+  first `i+1` with `s[i]==' ' && s[i+1]!=' '`, else `size`. `kbCtrlBack`/`kbAltBack` set
+  `selStart=prevWord`; `kbCtrlDel` sets `selEnd=nextWord`; then `deleteSelect()`.
+- **Disabled hot run (HR-52)** — `tbutton.cpp:107-108`: `if (state & sfDisabled) cButton =
+  getColor(0x0404);` — **both** attribute nibbles resolve to palette index 4 (the disabled role), so the
+  `~hot~` run is drawn in the disabled color, not the bright shortcut color. (`tcluster.cpp:95` mirrors
+  this for cluster rows.)
+- **Button click rect (HR-56)** — `tbutton.cpp:177-180`: `clickRect = getExtent(); clickRect.a.x++;
+  clickRect.b.x--; clickRect.b.y--;` — activation excludes column 0, the last column, and the last row.
+- **Static text verbatim (HR-57)** — `tstatict.cpp:44-105`: the wrap scans for a break at a space but
+  copies the source bytes verbatim between breaks — internal whitespace runs are **not** collapsed.
+
 ## Implementation Details
 
 ### HR-43 — Bracketed paste maps control chars
@@ -102,6 +130,23 @@ selection state tuple to the new length.
 **Defect** (`multi-check-group.ts:60`: JS `%` keeps sign — a negative bound state cycles more
 negative). **Fix**: use a floored modulo (`((n % m) + m) % m`) so any external state normalizes
 into range on press.
+
+## GATE-2 AFTER-diff (recorded 2026-07-02)
+
+Diffed the implementation against the GATE-1 decode:
+
+- **TInputLine** — `insertFilled` (`input-clipboard.ts`) advances the caret by the typed length only,
+  jumping to the filled end **only** when the caret was already at/past the post-insert length (HR-45,
+  matches `:443,315-320`); clamps `filled` to `maxLength` and accepts (HR-58, `:284-287`). `applyDelete`
+  (`input.ts`) computes the delete purely then reverts on `!isValidInput` (HR-47, `:307-310`); word
+  gestures use `prevWord`/`nextWord` transcribed verbatim into `input-editing.ts` (HR-48, `:64-82`).
+  Paste maps `\t\r\n`→space + drops other C0 (HR-43, `:430-431`). ✓
+- **TButton** — the disabled face resolves the `~hot~` accent to the face role (HR-52, `:107-108`);
+  `inFace` requires `local.x ≥ 1` (HR-56, `:177-180` `clickRect.a.x++`). ✓
+- **TCluster** — `postProcess` + a dialog-wide Alt-hotkey that presses **and** `focusView`s (HR-44,
+  `:46,257-284`); a disabled row's hot run uses the face role (HR-52, `:95`). ✓
+- **TStaticText** — `wrapText` emits verbatim source substrings between break points, preserving
+  internal whitespace + leading indentation (HR-57, `:44-105`). ✓
 
 ## Error Handling
 
