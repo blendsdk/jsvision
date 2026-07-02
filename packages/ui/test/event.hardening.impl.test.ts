@@ -113,3 +113,110 @@ test('removing a focused container subtree re-homes focus to a sibling', () => {
   root.remove(panel); // remove the whole focused subtree
   expect(loop.getFocused()).toBe(sibling); // re-homed out of the removed subtree
 });
+
+// ---------------------------------------------------------------------------
+// Phase-7 impl — quit cascade / focus recovery / mid-sweep edges
+// ---------------------------------------------------------------------------
+
+function keyEvt(key: string): { type: 'key'; key: string; ctrl: boolean; alt: boolean; shift: boolean } {
+  return { type: 'key', key, ctrl: false, alt: false, shift: false };
+}
+
+/** A focusable leaf that counts events. */
+class CountLeaf extends View {
+  events = 0;
+  constructor() {
+    super();
+    this.focusable = true;
+  }
+  draw(_ctx: DrawContext): void {}
+  override onEvent(_ev: DispatchEvent): void {
+    this.events += 1;
+  }
+}
+
+// HR-38 — a veto in the MIDDLE of a 3-deep stack stops the cascade there: the un-vetoed top resolves,
+// the vetoing modal and everything beneath it stay open.
+test('HR-38 impl: a mid-stack valid() veto halts the cascade, keeping it + the base modal open', async () => {
+  class VetoModal extends Group {
+    valid(_command: string): boolean {
+      return false;
+    }
+  }
+  const root = new Group();
+  const loop = createEventLoop({ width: 20, height: 10 }, { caps, quitCommand: 'quit' });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 10 };
+
+  const base = new Group();
+  root.add(base);
+  let baseResolved = false;
+  loop.execView<string>(base).then(() => (baseResolved = true));
+  const mid = new VetoModal();
+  root.add(mid);
+  let midResolved = false;
+  loop.execView<string>(mid).then(() => (midResolved = true));
+  const top = new Group();
+  root.add(top);
+  const topPromise = loop.execView<string>(top);
+
+  loop.emitCommand('quit'); // top ends, mid vetoes → stop
+  expect(await topPromise).toBe('quit'); // the top (un-vetoed) modal resolved
+  await Promise.resolve();
+  expect(midResolved).toBe(false); // the vetoing modal stays
+  expect(baseResolved).toBe(false); // and so does the base beneath it
+});
+
+// HR-39 — focusPrev also recovers from a disabled anchor (mirror of the focusNext spec case).
+test('HR-39 impl: focusPrev recovers to the previous candidate when the anchor is disabled', () => {
+  const a = new CountLeaf();
+  const b = new CountLeaf();
+  const c = new CountLeaf();
+  const root = new Group();
+  root.add(a);
+  root.add(b);
+  root.add(c);
+  const loop = createEventLoop({ width: 30, height: 5 }, { caps });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 30, height: 5 };
+  a.bounds = { x: 0, y: 0, width: 8, height: 1 };
+  b.bounds = { x: 10, y: 0, width: 8, height: 1 };
+  c.bounds = { x: 20, y: 0, width: 8, height: 1 };
+
+  loop.focusView(b);
+  b.state.disabled = true; // disable the anchor
+  loop.focusPrev(); // must resume from the nearest earlier candidate, not snap wrong
+  expect(loop.getFocused()).toBe(a);
+});
+
+// HR-42 — mid-sweep removal in the POST-process sweep also skips the removed view.
+test('HR-42 impl: a post-process view removed mid-sweep is not delivered to', () => {
+  const root = new Group();
+  let removeB = false;
+  class Remover extends View {
+    override postProcess = true;
+    draw(_ctx: DrawContext): void {}
+    override onEvent(_ev: DispatchEvent): void {
+      if (removeB) root.remove(b);
+    }
+  }
+  class Counter extends View {
+    override postProcess = true;
+    events = 0;
+    draw(_ctx: DrawContext): void {}
+    override onEvent(_ev: DispatchEvent): void {
+      this.events += 1;
+    }
+  }
+  const a = new Remover();
+  const b = new Counter();
+  root.add(a);
+  root.add(b);
+  const loop = createEventLoop({ width: 20, height: 5 }, { caps });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 5 };
+
+  removeB = true;
+  loop.dispatch(keyEvt('x'));
+  expect(b.events).toBe(0);
+});

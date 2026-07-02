@@ -12,7 +12,7 @@
  */
 import { createHost, cursor } from '@jsvision/core';
 import type { CapabilityProfile, RuntimeAdapter } from '@jsvision/core';
-import type { Group, Point } from '../view/index.js';
+import type { Point } from '../view/index.js';
 import type { EventLoop } from '../event/index.js';
 
 /**
@@ -49,8 +49,6 @@ export interface RunContext {
   readonly warnAmbiguousWidth?: boolean;
   /** Adapt to ASCII-safe chrome when the startup probe measures wide glyphs. Default `true`; see `createHost`. */
   readonly adaptAmbiguousWidth?: boolean;
-  /** The absolute overlay layer, kept full-viewport across terminal resizes. */
-  readonly overlay: Group;
   /** The shared quit-resolver cell wired to the command sink. */
   readonly quitState: QuitState;
 }
@@ -83,11 +81,9 @@ export async function runApplication(ctx: RunContext): Promise<number> {
     adaptAmbiguousWidth: ctx.adaptAmbiguousWidth ?? true,
     onInput: (event) => ctx.loop.dispatch(event),
     onResize: (event) => {
-      // Keep the absolute overlay full-screen, then reflow the loop to the new viewport.
-      ctx.overlay.layout = {
-        position: 'absolute',
-        rect: { x: 0, y: 0, width: event.columns, height: event.rows },
-      };
+      // Reflow to the new viewport; the loop's onResize seam keeps the overlay full-screen and
+      // re-anchors the menu catcher + desktop zoom (HR-36/HR-41), so both host and headless resizes
+      // take the same path.
       ctx.loop.resize({ width: event.columns, height: event.rows });
     },
     onSuspend: () => {

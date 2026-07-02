@@ -155,13 +155,31 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
     if (candidates.length === 0) return; // nothing focusable here (AR-57)
 
     const currentChild = active.current;
-    const currentIndex = currentChild !== null ? candidates.indexOf(currentChild) : -1;
-    const nextIndex =
-      currentIndex === -1
-        ? direction === 1
-          ? 0
-          : candidates.length - 1
-        : (currentIndex + direction + candidates.length) % candidates.length;
+    const inCandidates = currentChild !== null ? candidates.indexOf(currentChild) : -1;
+    let nextIndex: number;
+    if (inCandidates !== -1) {
+      nextIndex = (inCandidates + direction + candidates.length) % candidates.length;
+    } else {
+      // HR-39: the anchor is no longer a candidate (disabled/removed, or nothing was focused). Resume
+      // from the nearest candidate by TREE order in `direction` rather than snapping to an end and
+      // skipping views; fall back to the appropriate end when the anchor is unknown or at the edge.
+      const anchorPos = currentChild !== null ? active.children.indexOf(currentChild) : -1;
+      if (anchorPos === -1) {
+        nextIndex = direction === 1 ? 0 : candidates.length - 1;
+      } else if (direction === 1) {
+        const found = candidates.findIndex((c) => active.children.indexOf(c) > anchorPos);
+        nextIndex = found === -1 ? 0 : found; // none after the anchor → wrap to the first
+      } else {
+        let found = -1;
+        for (let i = candidates.length - 1; i >= 0; i -= 1) {
+          if (active.children.indexOf(candidates[i]) < anchorPos) {
+            found = i;
+            break;
+          }
+        }
+        nextIndex = found === -1 ? candidates.length - 1 : found; // none before → wrap to the last
+      }
+    }
 
     const chosen = candidates[nextIndex];
     if (chosen !== undefined) focusInto(chosen);

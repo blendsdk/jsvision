@@ -95,6 +95,15 @@ the C++ wins (PA-17 records emit+close as the expected outcome pending the decod
 early-return is removed). Clicking a bare title emits+closes directly (matching the existing
 click-path expectations).
 
+**GATE-1/GATE-2 decode (recorded 2026-07-02, `source/tvision/tmnuview.cpp` `TMenuView::execute`):**
+`kbEnter` on a `size.y == 1` (top-level) item sets `action = doSelect` (`:303-306`). The doSelect
+block, for an item **with** a command (`else if (action == doSelect)`), sets `result =
+current->command` (`:390`); then `if (result != 0 && commandEnabled(result)) { action = doReturn;
+clearEvent(e); … }` (`:392`) → the menu execView returns the command (emit) and closes. `kbEsc` sets
+`action = doReturn` **unconditionally** (`:308-311`) → always closes. **AFTER-diff:** `activate()`
+emits + `close()`s a bare top item (cites `:390`); `closeLevel()` closes at ≤1 levels (Esc always
+closes). Matches the decode.
+
 ### HR-36 — Outside-click catcher tracks resize
 
 **Defect** (`controller.ts:201-205`; `run.ts:86-91` resizes only the overlay): catcher/popups keep

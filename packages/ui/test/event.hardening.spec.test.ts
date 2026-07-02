@@ -235,3 +235,123 @@ test('ST-3.b: focusView on a detached view is a no-op; the real focus is untouch
   expect(loop.getFocused()).toBe(a);
   expect(a.state.focused).toBe(true);
 });
+
+// ---------------------------------------------------------------------------
+// ST-7.e, ST-7.h — focus eviction + mid-sweep removal (HR-39/42)
+// ---------------------------------------------------------------------------
+
+// ST-7.e — disabling the focused child, then Tab, moves focus to the neighbor and no key reaches the
+// disabled view (HR-39).
+test('ST-7.e: disabling the focused view evicts it — Tab moves on, no key reaches it', () => {
+  const a = new FocusLeaf();
+  const b = new FocusLeaf();
+  const root = new Group();
+  root.add(a);
+  root.add(b);
+  const loop = createEventLoop({ width: 20, height: 5 }, { caps });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 5 };
+  a.bounds = { x: 0, y: 0, width: 5, height: 1 };
+  b.bounds = { x: 6, y: 0, width: 5, height: 1 };
+
+  loop.focusView(a);
+  expect(loop.getFocused()).toBe(a);
+
+  a.state.disabled = true; // disable the focused view
+  const aEventsAtDisable = a.events;
+
+  loop.focusNext(); // Tab — advance() must recover from the disabled anchor (HR-39b)
+  expect(loop.getFocused()).toBe(b); // moved to the neighbor
+
+  loop.dispatch(keyEvent('x'));
+  expect(b.events).toBeGreaterThan(0); // the key reached the enabled neighbor
+  expect(a.events).toBe(aEventsAtDisable); // no key reached the disabled view (HR-39a)
+});
+
+// ST-7.h — a sweep handler that removes a later view mid-sweep is not delivered to it (HR-42).
+test('ST-7.h: a view removed mid-sweep is not delivered to', () => {
+  let removeB = false;
+  class RemoverLeaf extends View {
+    preProcess = true;
+    draw(_ctx: DrawContext): void {}
+    override onEvent(_ev: DispatchEvent): void {
+      if (removeB) root.remove(b); // remove a LATER pre-process sibling during the sweep
+    }
+  }
+  class CountingLeaf extends View {
+    preProcess = true;
+    events = 0;
+    draw(_ctx: DrawContext): void {}
+    override onEvent(_ev: DispatchEvent): void {
+      this.events += 1;
+    }
+  }
+  const a = new RemoverLeaf();
+  const b = new CountingLeaf();
+  const root = new Group();
+  root.add(a); // swept before b
+  root.add(b);
+  const loop = createEventLoop({ width: 20, height: 5 }, { caps });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 5 };
+
+  removeB = true;
+  loop.dispatch(keyEvent('x')); // a's pre-process removes b before b's turn
+  expect(b.events).toBe(0); // the removed (unmounted) view was skipped
+});
+
+// ---------------------------------------------------------------------------
+// ST-7.d — quit cascade through a modal stack, with a valid() veto (HR-38/PA-2)
+// ---------------------------------------------------------------------------
+
+// ST-7.d (no veto) — a quit during a 2-deep modal stack resolves BOTH modals with the quit command,
+// then the stack empties (the quit proceeds to the root sink).
+test('ST-7.d: quit cascades through both modals when none vetoes', async () => {
+  const root = new Group();
+  const loop = createEventLoop({ width: 20, height: 10 }, { caps, quitCommand: 'quit' });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 10 };
+
+  const m1 = new Group();
+  root.add(m1);
+  const p1 = loop.execView<string>(m1);
+  const m2 = new Group();
+  root.add(m2);
+  const p2 = loop.execView<string>(m2);
+
+  loop.emitCommand('quit'); // cascades top-down: m2 then m1
+  const results = await Promise.all([p1, p2]);
+  expect(results).toEqual(['quit', 'quit']); // both modals resolved with the quit command
+});
+
+// ST-7.d (veto) — a top modal whose valid(quit) returns false stops the cascade: no modal resolves,
+// the app stays.
+test('ST-7.d: a valid() veto stops the quit cascade', async () => {
+  class VetoModal extends Group {
+    valid(_command: string): boolean {
+      return false; // TV valid(cmQuit) veto
+    }
+  }
+  const root = new Group();
+  const loop = createEventLoop({ width: 20, height: 10 }, { caps, quitCommand: 'quit' });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 10 };
+
+  const inner = new Group();
+  root.add(inner);
+  let innerResolved = false;
+  loop.execView<string>(inner).then(() => {
+    innerResolved = true;
+  });
+  const top = new VetoModal();
+  root.add(top);
+  let topResolved = false;
+  loop.execView<string>(top).then(() => {
+    topResolved = true;
+  });
+
+  loop.emitCommand('quit'); // top vetoes → cascade halts
+  await Promise.resolve(); // let any (erroneous) resolutions flush
+  expect(topResolved).toBe(false); // the vetoing modal stays open
+  expect(innerResolved).toBe(false); // and so does the one beneath it — app stays
+});

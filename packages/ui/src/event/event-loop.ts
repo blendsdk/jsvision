@@ -30,6 +30,20 @@ import { hitTestRoute } from './hit-test.js';
 import { createModalManager } from './modal.js';
 import type { ModalManager } from './modal.js';
 
+/** A modal view that exposes a TV-style `valid(command)` close-gate (e.g. `Dialog`). */
+interface QuitValidatable {
+  valid(command: string): boolean;
+}
+
+/**
+ * Whether a modal view vetoes a quit via its `valid()` gate (HR-38 / PA-2). Duck-typed so non-modal
+ * modal roots (which have no `valid`) never veto; a `Dialog` runs its child-sweep validation.
+ */
+function isQuitVetoed(view: View, command: string): boolean {
+  const candidate = view as Partial<QuitValidatable>;
+  return typeof candidate.valid === 'function' && !candidate.valid(command);
+}
+
 /** Concrete event loop. Builds + owns the render root; drives one coalesced frame per tick. */
 class EventLoopImpl implements EventLoop {
   readonly renderRoot: RenderRoot;
@@ -49,6 +63,8 @@ class EventLoopImpl implements EventLoop {
   private draining = false;
   /** The pointer-capture target: while set, all mouse/wheel events route here (RD-05 PA-5). */
   private captureTarget: View | null = null;
+  /** The app-terminating command; a quit while modals are open cascades top-down (HR-38/PA-2). */
+  private readonly quitCommand: string;
 
   /** Frame sink wired by `run()` after the host exists; `undefined` ⇒ flushes push nothing (PA-6). */
   onFrame?: (buffer: ScreenBuffer) => void;
@@ -56,12 +72,15 @@ class EventLoopImpl implements EventLoop {
   onCaret?: (cell: Point | null) => void;
   /** Clipboard-write sink wired by `run()` (RD-07 PA-5/PA-7). @see EventLoop.writeClipboard */
   writeClipboard?: (seq: string) => void;
+  /** Resize sink wired by the app after composition (HR-36/HR-41). @see EventLoop.onResize */
+  onResize?: (size: Size2D) => void;
 
   constructor(viewport: Size2D, opts: EventLoopOptions) {
     this.logger = opts.logger ?? createLogger();
     this.caps = opts.caps;
     this.onIdle = opts.onIdle;
     this.keymap = opts.keymap;
+    this.quitCommand = opts.quitCommand ?? 'quit';
     this.registry = createCommandRegistry({
       seed: opts.commands,
       enqueue: (ev) => this.queue.push(ev), // a command cascades onto the active tick (03-01)
@@ -101,7 +120,14 @@ class EventLoopImpl implements EventLoop {
   resize(size: Size2D): void {
     // The one path outside the queue: a reflow with no event cascade, then exactly one frame (AR-54).
     this.renderRoot.resize(size);
-    this.renderRoot.flush();
+    this.renderRoot.flush(); // reflow first, so onResize handlers see fresh desktop/overlay bounds
+    // HR-36/HR-41: only when a handler is wired, let it re-anchor viewport-sized chrome (re-zoom
+    // windows, re-anchor the menu catcher) against the new geometry, then repaint the adjustment. With
+    // no handler (the bare loop) this is a single flush — the base "exactly one frame" contract holds.
+    if (this.onResize !== undefined) {
+      this.onResize(size);
+      this.renderRoot.flush();
+    }
     this.onFrame?.(this.renderRoot.buffer()); // push the resized frame to the host sink (PA-6)
     this.emitCaret(); // the reflow may move the focused caret — re-report it (PA-5)
   }
@@ -126,7 +152,31 @@ class EventLoopImpl implements EventLoop {
   emitCommand(command: string, arg?: unknown): void {
     // Route through runTick so a standalone emitCommand drains its cascade + paints once (PA-11);
     // a re-entrant emit (from inside a handler) joins the active tick.
-    this.runTick(() => this.registry.emit(command, arg));
+    this.runTick(() => {
+      // HR-38 (PA-2): a quit while modals are open cascades top-down through the stack instead of
+      // dispatching into the top modal subtree (where the root quit sink is unreachable).
+      if (command === this.quitCommand && this.modal.isActive()) {
+        this.cascadeQuit(command, arg);
+      } else {
+        this.registry.emit(command, arg);
+      }
+    });
+  }
+
+  /**
+   * Resolve a quit against an open modal stack (HR-38 / PA-2). Walk the stack top-down: each modal's
+   * `valid(quitCommand)` gate may veto (TV `TGroup::execute`'s `while(!valid(endState))`, so `valid`
+   * is consulted per-modal at `endModal` time), stopping the cascade — the app stays and the remaining
+   * modals stay open. Otherwise `endModal(quitCommand)` resolves that modal's `execView` promise and
+   * the walk continues. When the stack empties, the quit command reaches the root sink.
+   */
+  private cascadeQuit(command: string, arg: unknown): void {
+    while (this.modal.isActive()) {
+      const top = this.modal.topView();
+      if (top !== null && isQuitVetoed(top, command)) return; // valid() veto → app stays
+      this.modal.end(command); // resolve this modal's execView with the quit command
+    }
+    this.registry.emit(command, arg); // stack empty → the root quit sink handles it
   }
 
   enableCommand(command: string, on: boolean): void {

@@ -49,6 +49,13 @@ export interface EventLoopOptions {
   commands?: Iterable<string>;
   /** Fires once when a dispatch tick's cascade queue drains (AR-58). */
   onIdle?: () => void;
+  /**
+   * The app-terminating command (default `'quit'`). A quit emitted while modals are open cascades
+   * **top-down** through the modal stack — each modal resolves via `endModal(quitCommand)`, a
+   * `Dialog.valid(quitCommand)` gate may veto and stop the cascade — before reaching the root sink
+   * (HR-38 / PA-2; TV `cmQuit` + `TGroup::execute`'s `while(!valid(endState))`).
+   */
+  quitCommand?: string;
 }
 
 /**
@@ -112,6 +119,15 @@ export interface EventLoop {
    * survives a partial recompose that skips the focused view (PF-002). `undefined` ⇒ no caret output.
    */
   onCaret?: (cell: Point | null) => void;
+  /**
+   * Resize sink (HR-36 / HR-41): fired inside {@link EventLoop.resize} **after** the reflow settles
+   * the new viewport bounds, so a handler can re-anchor viewport-sized chrome against fresh geometry —
+   * the app wires it to re-zoom desktop windows + clamp their `restoredRect` and to re-anchor the open
+   * menu's outside-click catcher. A settable member (the app sets it after composing the loop).
+   * `undefined` ⇒ resize only reflows (the base behavior). The loop repaints once more afterward so any
+   * adjustment the handler makes is composed into the resized frame.
+   */
+  onResize?: (size: Size2D) => void;
   /**
    * Re-emit the current hardware-caret cell to {@link onCaret} out of band (RD-07 PA-5). `run()` calls
    * it once after painting the first frame — which is a direct `host.render`, not a loop tick, so no

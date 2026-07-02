@@ -7,16 +7,17 @@ rationale. Most were originally captured in the per-RD ambiguity registers under
 
 ## Decision Log
 
-| #                                                | Date       | Decision                                               | Status      |
-| ------------------------------------------------ | ---------- | ------------------------------------------------------ | ----------- |
-| [ADR-001](ADR-001-esm-zero-dependency.md)        | 2026-06-28 | ESM-only, zero runtime dependencies                    | ✅ Accepted |
-| [ADR-002](ADR-002-capability-auto-config.md)     | 2026-06-28 | Capability detection as runtime auto-configuration     | ✅ Accepted |
-| [ADR-003](ADR-003-pure-core-injectable-seams.md) | 2026-06-28 | Pure core behind injectable seams                      | ✅ Accepted |
-| [ADR-004](ADR-004-no-node-pty.md)                | 2026-06-28 | No node-pty; restore proven via the RuntimeAdapter     | ✅ Accepted |
-| [ADR-005](ADR-005-sanitize-boundary.md)          | 2026-06-28 | A single canonical sanitize injection boundary         | ✅ Accepted |
-| [ADR-006](ADR-006-informational-perf-bench.md)   | 2026-06-28 | Informational perf bench + skippable ceiling           | ✅ Accepted |
-| [ADR-007](ADR-007-monorepo-restructure.md)       | 2026-06-28 | Monorepo (yarn + Turborepo), vitest, lockstep versions | ✅ Accepted |
-| [ADR-008](ADR-008-layout-engine.md)              | 2026-06-28 | Layout engine — build cell-native vs Yoga/Taffy        | 🔬 Proposed |
+| #                                                | Date       | Decision                                                        | Status      |
+| ------------------------------------------------ | ---------- | --------------------------------------------------------------- | ----------- |
+| [ADR-001](ADR-001-esm-zero-dependency.md)        | 2026-06-28 | ESM-only, zero runtime dependencies                             | ✅ Accepted |
+| [ADR-002](ADR-002-capability-auto-config.md)     | 2026-06-28 | Capability detection as runtime auto-configuration              | ✅ Accepted |
+| [ADR-003](ADR-003-pure-core-injectable-seams.md) | 2026-06-28 | Pure core behind injectable seams                               | ✅ Accepted |
+| [ADR-004](ADR-004-no-node-pty.md)                | 2026-06-28 | No node-pty; restore proven via the RuntimeAdapter              | ✅ Accepted |
+| [ADR-005](ADR-005-sanitize-boundary.md)          | 2026-06-28 | A single canonical sanitize injection boundary                  | ✅ Accepted |
+| [ADR-006](ADR-006-informational-perf-bench.md)   | 2026-06-28 | Informational perf bench + skippable ceiling                    | ✅ Accepted |
+| [ADR-007](ADR-007-monorepo-restructure.md)       | 2026-06-28 | Monorepo (yarn + Turborepo), vitest, lockstep versions          | ✅ Accepted |
+| [ADR-008](ADR-008-layout-engine.md)              | 2026-06-28 | Layout engine — build cell-native vs Yoga/Taffy                 | 🔬 Proposed |
+| [ADR-009](ADR-009-bun-runtime-support.md)        | 2026-07-02 | First-class Bun runtime support (runtime + compile target only) | 🔬 Proposed |
 
 ## How to Read ADRs
 

@@ -14,7 +14,7 @@ import { Group } from '../view/index.js';
 import type { DrawContext, DispatchEvent, Point } from '../view/index.js';
 import { signal } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
-import type { Rect, LayoutProps } from '../layout/index.js';
+import type { Rect, LayoutProps, Size2D } from '../layout/index.js';
 import { drawFrame, frameZoneAt } from './frame.js';
 
 /**
@@ -38,6 +38,18 @@ export interface WindowManager {
 
 /** Default restored size for a window with no explicit rect (degenerate guard). */
 const FALLBACK_RECT: Rect = { x: 0, y: 0, width: 10, height: 3 };
+
+/**
+ * Clamp a stored restore rect into `size` (HR-41): shrink the extent to fit, then pull the origin so
+ * the whole rect stays on-screen. Keeps a window's un-zoom target visible after the desktop shrinks.
+ */
+function clampRestoredRect(rect: Rect, size: Size2D): Rect {
+  const width = Math.min(rect.width, size.width);
+  const height = Math.min(rect.height, size.height);
+  const x = Math.max(0, Math.min(rect.x, size.width - width));
+  const y = Math.max(0, Math.min(rect.y, size.height - height));
+  return { x, y, width, height };
+}
 
 /** A titled, framed container; content children compose in the interior inset (AR-67, AR-74). */
 export class Window extends Group {
@@ -102,6 +114,20 @@ export class Window extends Group {
       this.layout.rect = { ...this.restoredRect };
       this.restoredRect = null;
     }
+    this.invalidateLayout();
+  }
+
+  /**
+   * Re-fit to a resized desktop (HR-41): a zoomed window re-maximizes to the new desktop rect, and its
+   * stored `restoredRect` is clamped so a later unzoom still lands on-screen. A non-zoomed window is
+   * left where it is (RD-02 tolerates a window overflowing the desktop edge).
+   *
+   * @param size The new desktop content size.
+   */
+  onDesktopResize(size: Size2D): void {
+    if (this.restoredRect === null) return; // not zoomed
+    this.layout.rect = { x: 0, y: 0, width: size.width, height: size.height }; // re-maximize
+    this.restoredRect = clampRestoredRect(this.restoredRect, size); // keep the un-zoom target on-screen
     this.invalidateLayout();
   }
 

@@ -147,6 +147,7 @@ export class Dialog extends Window implements ModalHostAware {
     if (!this.modalHost.isCommandEnabled(command)) return; // a disabled command is ignored (PF-007)
     if (this.valid(command)) {
       this.modalHost.endModal(command);
+      this.modalHost = null; // HR-37: the modal session ended — release the host (see resolveCancel)
     } else if (this.firstInvalid !== null) {
       ev.focusView?.(this.firstInvalid); // keep open + refocus the first invalid control (PA-7)
     }
@@ -157,6 +158,9 @@ export class Dialog extends Window implements ModalHostAware {
   protected resolveCancel(ev: DispatchEvent): void {
     if (this.modalHost === null) return;
     this.modalHost.endModal(Commands.cancel);
+    // HR-37: clear the host so a dialog left MOUNTED after its modal ends stops swallowing global Esc
+    // (and can no longer end an unrelated later modal with `cancel`); it reverts to a plain window.
+    this.modalHost = null;
     ev.handled = true;
   }
 }
