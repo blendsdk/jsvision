@@ -10,10 +10,22 @@
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
-import { createHost } from '@jsvision/core';
+import { createHost, cursor } from '@jsvision/core';
 import type { CapabilityProfile, RuntimeAdapter } from '@jsvision/core';
-import type { Group } from '../view/index.js';
+import type { Group, Point } from '../view/index.js';
 import type { EventLoop } from '../event/index.js';
+
+/**
+ * Encode a hardware-caret cell as a terminal sequence (RD-07 PA-5): show + move the cursor to the
+ * cell (converting the loop's 0-based `Point` to `cursor.to`'s 1-based row/col), or hide it when there
+ * is no caret requester. Written to the co-owned output stream right after each frame render.
+ *
+ * @param cell The absolute 0-based caret cell, or `null` for "no caret" (hide the cursor).
+ * @returns The ANSI sequence to write.
+ */
+function caretSequence(cell: Point | null): string {
+  return cell === null ? cursor.hide() : cursor.show() + cursor.to(cell.y + 1, cell.x + 1);
+}
 
 /** Shared, mutable quit-resolver cell: the command sink resolves it, `run()` assigns it (PA-12). */
 export interface QuitState {
@@ -50,6 +62,13 @@ export interface RunContext {
  * @returns The exit code resolved by the `'quit'` command (default 0).
  */
 export async function runApplication(ctx: RunContext): Promise<number> {
+  // The output stream the host writes to; run() co-writes cursor + clipboard sequences to it, ordered
+  // right after each frame render (PA-5/PA-7). Resolved the same way createHost resolves its default.
+  const output = ctx.output ?? process.stdout;
+  // The last caret cell the loop reported, re-applied verbatim after a host resume repaint (AR-83):
+  // the host re-renders the last frame but does not re-fire onCaret, so run() re-positions the cursor.
+  let lastCaret: Point | null = null;
+
   const host = createHost({
     caps: ctx.caps,
     runtime: ctx.runtime,
@@ -75,13 +94,22 @@ export async function runApplication(ctx: RunContext): Promise<number> {
       // host-owned soft restore (AR-83) — notify-only hook
     },
     onResume: () => {
-      // host already re-asserted modes + repainted (AR-83 / PF-09) — notify-only hook
+      // host already re-asserted modes + repainted (AR-83 / PF-09); re-position the hardware cursor,
+      // which the repaint does not restore (RD-07 PA-5).
+      output.write(caretSequence(lastCaret));
     },
   });
 
   // Bridge every coalesced frame to the terminal (PA-6 / PF-04): the loop's onFrame is a settable
   // member, wired only now that the host exists.
   ctx.loop.onFrame = (buffer) => host.render(buffer);
+  // Position the hardware cursor right after each frame (fired after onFrame, so it lands past the
+  // frame's writes), and stream OSC-52 clipboard sequences to the same output (RD-07 PA-5/PA-7).
+  ctx.loop.onCaret = (cell) => {
+    lastCaret = cell;
+    output.write(caretSequence(cell));
+  };
+  ctx.loop.writeClipboard = (seq) => output.write(seq);
 
   // The quit promise: resolved by the command sink (via the shared quitState cell) on `'quit'`.
   const quitPromise = new Promise<number>((resolve) => {
@@ -91,10 +119,13 @@ export async function runApplication(ctx: RunContext): Promise<number> {
   try {
     await host.start(); // raw mode + alt-screen
     host.render(ctx.loop.renderRoot.buffer()); // paint the first frame
+    ctx.loop.refreshCaret(); // position the initial cursor (the first render is not a loop tick)
     return await quitPromise;
   } finally {
     await host.stop(); // GUARANTEED restore on every path (normal / throw / signal); idempotent
     ctx.loop.onFrame = undefined;
+    ctx.loop.onCaret = undefined;
+    ctx.loop.writeClipboard = undefined;
     ctx.quitState.resolve = null;
   }
 }

@@ -46,10 +46,40 @@ export function clipboardCommand(command: string): ClipboardAction | null {
 }
 
 /**
- * Insert pasted text code point by code point (PA-8): each is checked against `validator.isValidInput`
- * and the `maxLength` cap; invalid or over-cap code points are dropped individually. The caller
- * deletes any selection first. Bounded — no unbounded growth (AC-15); the upstream `PasteEvent` is
- * already size-capped by core's `PASTE_CAP_BYTES`.
+ * Insert one code point at `pos` with picture autoFill (PA-17), then validate. The char is inserted,
+ * the validator's `fill` transform runs on the candidate — it may insert mask **literals** before
+ * and/or after the char (a leading `(`, a trailing `-`) and apply case transforms — and the FILLED
+ * candidate is checked against `isValidInput` + `maxLength`. Filling **before** validation is what
+ * lets a leading literal auto-appear as you type the first digit (TV `TPXPictureValidator` fills
+ * literals during input). A plain filter/range validator has no `fill`, so the filled candidate equals
+ * the raw candidate and behaviour is unchanged.
+ *
+ * @param ch        The code point to insert (already the single char / space).
+ * @param value     The current value.
+ * @param pos       The caret index to insert at.
+ * @param maxLength The stored-length cap.
+ * @param validator Optional live validator.
+ * @returns The new `{ value, curPos }` (caret past the char + any auto-filled literals), or `null` when rejected.
+ */
+export function insertFilled(
+  ch: string,
+  value: string,
+  pos: number,
+  maxLength: number,
+  validator?: Validator,
+): PasteResult | null {
+  const candidate = value.slice(0, pos) + ch + value.slice(pos);
+  const filled = validator?.fill?.(candidate) ?? candidate;
+  if (filled.length > maxLength) return null; // bounded (security, AC-15)
+  if (validator && !validator.isValidInput(filled)) return null; // reject an invalid keystroke
+  return { value: filled, curPos: pos + (filled.length - value.length) };
+}
+
+/**
+ * Insert pasted text code point by code point (PA-8) via {@link insertFilled}: each is filled +
+ * checked against `validator.isValidInput` and the `maxLength` cap; invalid or over-cap code points
+ * are dropped individually. The caller deletes any selection first. Bounded — no unbounded growth
+ * (AC-15); the upstream `PasteEvent` is already size-capped by core's `PASTE_CAP_BYTES`.
  *
  * @param text      The pasted text (untrusted).
  * @param value     The current value (post selection-delete).
@@ -69,10 +99,10 @@ export function applyPaste(
   let pos = curPos;
   for (const ch of text) {
     if (out.length >= maxLength) break; // bounded (security, AC-15)
-    const candidate = out.slice(0, pos) + ch + out.slice(pos);
-    if (validator && !validator.isValidInput(candidate)) continue; // drop an invalid code point
-    out = candidate;
-    pos += ch.length;
+    const r = insertFilled(ch, out, pos, maxLength, validator);
+    if (r === null) continue; // drop an invalid / over-cap code point
+    out = r.value;
+    pos = r.curPos;
   }
   return { value: out, curPos: pos };
 }
