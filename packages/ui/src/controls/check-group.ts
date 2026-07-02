@@ -24,8 +24,8 @@ export class CheckGroup extends Cluster {
     this.onMount(() => this.bind(() => this.value())); // repaint when the bound array changes
   }
 
-  protected override mark(i: number): boolean {
-    return this.value()[i] ?? false; // a missing flag reads unchecked (PA-3)
+  protected override markIndex(i: number): number {
+    return (this.value()[i] ?? false) ? 1 : 0; // 0 = off (space), 1 = on ('X'); missing reads unchecked (PA-3)
   }
 
   protected override press(i: number): void {
@@ -37,6 +37,6 @@ export class CheckGroup extends Cluster {
   }
 
   protected override box(): ClusterBox {
-    return { icon: ' [ ] ', on: 'X', off: ' ' };
+    return { icon: ' [ ] ', markers: ' X' }; // off / on
   }
 }

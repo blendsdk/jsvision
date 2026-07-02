@@ -13,14 +13,18 @@ import type { DrawContext, DispatchEvent } from '../view/index.js';
 import { parseTilde, tildeSegments } from '../menu/index.js';
 import type { ParsedLabel } from '../menu/index.js';
 
-/** The 5-cell box glyphs for a cluster item: the bracket icon + the on/off mark chars. */
+/**
+ * The box for a cluster item, Turbo Vision's marker-**string** model (`TCluster::drawMultiBox(icon,
+ * marker)`, `tcluster.cpp:87-129`): a 5-cell bracket icon + an ordered string of state glyphs. The
+ * glyph at `markers[markIndex(i)]` overwrites the icon's middle (col 2). Two-state clusters
+ * (`CheckGroup`/`RadioGroup`) pass a 2-char `markers` (off/on); `MultiCheckGroup` passes `selRange`
+ * glyphs (PF-001).
+ */
 export interface ClusterBox {
-  /** The 5-char icon (e.g. `' [ ] '` / `' ( ) '`); the mark overwrites its middle (col 2). */
+  /** The 5-char icon (e.g. `' [ ] '` / `' ( ) '`); the marker overwrites its middle (col 2). */
   readonly icon: string;
-  /** The mark glyph when the item is "on" (e.g. `'X'` / `'•'`). */
-  readonly on: string;
-  /** The mark glyph when the item is "off" (a space). */
-  readonly off: string;
+  /** Ordered state glyphs, indexed by {@link Cluster.markIndex} (e.g. `' X'` / `' •'` / a multi-state string). */
+  readonly markers: string;
 }
 
 /** A single-column cluster of selectable items (internal — `CheckGroup`/`RadioGroup` extend it). */
@@ -45,9 +49,12 @@ export abstract class Cluster extends View {
     this.enabled = labels.map(() => true);
   }
 
-  /** Whether item `i` is "on" (check: its flag; radio: it is the selected index). */
-  protected abstract mark(i: number): boolean;
-  /** Toggle/select item `i` (writes the bound signal). */
+  /**
+   * The state index of item `i` into `box().markers` (TV `multiMark`, `tcluster.cpp:87`). Two-state
+   * clusters return 0 (off) / 1 (on); `MultiCheckGroup` returns `0..selRange-1`.
+   */
+  protected abstract markIndex(i: number): number;
+  /** Toggle/select/cycle item `i` (writes the bound signal). */
   protected abstract press(i: number): void;
   /** The marker box for this cluster kind. */
   protected abstract box(): ClusterBox;
@@ -76,7 +83,7 @@ export abstract class Cluster extends View {
    * @param ctx The clipped, view-local paint context.
    */
   override draw(ctx: DrawContext): void {
-    const { icon, on, off } = this.box();
+    const { icon, markers } = this.box();
     const { width: w, height: h } = ctx.size;
     const accent = ctx.color('clusterShortcut');
     for (let i = 0; i < this.rawLabels.length && i < h; i += 1) {
@@ -88,7 +95,7 @@ export abstract class Cluster extends View {
       const base = ctx.color(role);
       ctx.fillRect(0, i, w, 1, ' ', base);
       ctx.text(0, i, icon, base); // " [ ] " / " ( ) " at cols 0..4
-      ctx.text(2, i, this.mark(i) ? on : off, base); // mark glyph overwrites col 2
+      ctx.text(2, i, markers[this.markIndex(i)] ?? ' ', base); // marker glyph overwrites col 2 (TV putChar)
       for (const seg of tildeSegments(this.rawLabels[i] ?? '')) {
         ctx.text(5 + seg.col, i, seg.text, seg.hot ? accent : base); // label from col 5
       }

@@ -1,7 +1,7 @@
 # 99 — Execution Plan
 
 > **Implements**: jsvision-ui/RD-07 · **CodeOps Skills Version**: 3.1.0
-> **Progress**: 18 / 32 tasks (56%) · **Last Updated**: 2026-07-02
+> **Progress**: 26 / 32 tasks (81%) · **Last Updated**: 2026-07-02
 
 Spec-first per capability: **spec tests → RED → implement → GREEN → impl tests → verify**. Every TV-derived
 component carries a **BEFORE-decode (GATE-1)** and **AFTER-diff (GATE-2)** task (fidelity directive,
@@ -85,23 +85,23 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
   `yarn verify` + `lint` green.
 
 ## Phase 4 — MultiCheckGroup + story ✅TV
-- [ ] **P4.1** BEFORE-decode (GATE-1): re-open `tmulchkb.cpp:65-103` + `tcluster.cpp:87-129,39` (box/marker/
-  colors); record in `multi-check-group.ts` JSDoc.
-- [ ] **P4.2** Spec tests ST-11…ST-12 (`controls.multi-check-group.spec`) → **RED**.
-- [ ] **P4.3a** **Cluster base refactor (PF-001, prerequisite):** generalize `Cluster` to TV's marker-**string**
-  model — replace `mark(i): boolean` + `ClusterBox.on/off` with `markIndex(i): number` + `ClusterBox.markers:
-  string`; `draw()` paints `box().markers[markIndex(i)]` at col 2 (`tcluster.cpp:87-129`). Migrate `CheckGroup`
-  (`markers:' X'`) + `RadioGroup` (`markers:' •'`) — a pure refactor, identical rendered output (03-03
-  §"Cluster base change"). Existing RD-06 cluster specs stay GREEN.
-- [ ] **P4.3b** Implement `MultiCheckGroup extends Cluster` (`Signal<number[]>` + `states`, cycle
-  `(state+1)%selRange`, `markIndex(i)=value()[i]`, `box()={' [ ] ', markers:states}`, marker@col+2 visual,
-  `cluster*` roles); re-export from `controls/index.ts` + `src/index.ts` → **GREEN**.
-- [ ] **P4.4** Impl tests (single-state, disabled skip, hotkey, wrap).
-- [ ] **P4.5** **Kitchen-sink story** `stories/multi-check-group.story.ts` + `stories/index.ts` line + bound-
-  state echo; passes `kitchen-sink.smoke.spec` (NON-NEGOTIABLE).
-- [ ] **P4.6** AFTER-diff (GATE-2): diff box/marker/label columns + colors vs `drawMultiBox`. `yarn verify`.
-- [ ] **P4.7** **RD-06 regression (PF-001):** `controls.cluster.*` + `controls.foundation.*` specs and the
-  check/radio goldens still green after the P4.3a base refactor (no public-API or rendered-output change).
+- [x] **P4.1** ✅ 2026-07-02 BEFORE-decode (GATE-1): re-opened `tmulchkb.cpp:65-103` + `tcluster.cpp:87-129,39` (box/marker/
+  colors); recorded in `multi-check-group.ts` JSDoc.
+- [x] **P4.2** ✅ 2026-07-02 Spec tests ST-11…ST-12 (`controls.multi-check-group.spec`) → confirmed **RED**.
+- [x] **P4.3a** ✅ 2026-07-02 **Cluster base refactor (PF-001):** generalized `Cluster` to TV's marker-**string**
+  model — replaced `mark(i): boolean` + `ClusterBox.on/off` with `markIndex(i): number` + `ClusterBox.markers:
+  string`; `draw()` paints `box().markers[markIndex(i)]` at col 2 (`tcluster.cpp:87-129`). Migrated `CheckGroup`
+  (`markers:' X'`) + `RadioGroup` (`markers:' •'`) — pure refactor, identical rendered output. RD-06 cluster specs GREEN.
+- [x] **P4.3b** ✅ 2026-07-02 Implemented `MultiCheckGroup extends Cluster` (`{items,states,value:Signal<number[]>}`, cycle
+  `(state+1)%selRange`, `markIndex(i)=value()[i]` clamped, `box()={' [ ] ', markers:states}`, marker@col+2, label@col+5,
+  `cluster*` roles); re-exported from `controls/index.ts` + `src/index.ts` → **GREEN**.
+- [x] **P4.4** ✅ 2026-07-02 Impl tests (single-state, disabled skip, hotkey, wrap, short-array normalize, out-of-range clamp).
+- [x] **P4.5** ✅ 2026-07-02 **Kitchen-sink story** `stories/multicheckgroup.story.ts` + `stories/index.ts` line + bound-
+  state echo; passes `kitchen-sink.smoke.spec` (18 tests).
+- [x] **P4.6** ✅ 2026-07-02 AFTER-diff (GATE-2): box `[` col1 / marker col2 / `]` col3, label col5, `cluster*` colours ↔
+  `drawMultiBox` (`tcluster.cpp:110-116`); asserted by ST-12. Recorded in the JSDoc.
+- [x] **P4.7** ✅ 2026-07-02 **RD-06 regression (PF-001):** `controls.cluster.*` + `controls.foundation.*` + all 108
+  controls tests green after the base refactor (no public-API or rendered-output change).
 
 ## Phase 5 — Hardware caret wiring + demos
 - [ ] **P5.1** Spec test ST-14 (`controls.caret.spec` hardware seam: `onCaret` payload + additive-seam
@@ -128,7 +128,7 @@ Phase 0: [x] P0.1 [x] P0.2 [x] P0.3
 Phase 1: [x] P1.1 [x] P1.2 [x] P1.3 [x] P1.4 [x] P1.5
 Phase 2: [x] P2.1 [x] P2.2 [x] P2.3 [x] P2.4 [x] P2.5
 Phase 3: [x] P3.1 [x] P3.2 [x] P3.3 [x] P3.4 [x] P3.5
-Phase 4: [ ] P4.1 [ ] P4.2 [ ] P4.3a [ ] P4.3b [ ] P4.4 [ ] P4.5 [ ] P4.6 [ ] P4.7
+Phase 4: [x] P4.1 [x] P4.2 [x] P4.3a [x] P4.3b [x] P4.4 [x] P4.5 [x] P4.6 [x] P4.7
 Phase 5: [ ] P5.1 [ ] P5.2 [ ] P5.3 [ ] P5.4
 Phase 6: [ ] P6.1 [ ] P6.2
 

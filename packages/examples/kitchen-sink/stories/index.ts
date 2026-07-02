@@ -19,6 +19,7 @@ import { buttonStory } from './button.story.js';
 import { inputStory } from './input.story.js';
 import { checkGroupStory } from './checkgroup.story.js';
 import { radioGroupStory } from './radiogroup.story.js';
+import { multiCheckGroupStory } from './multicheckgroup.story.js';
 import { scrollBarStory } from './scrollbar.story.js';
 import { scrollerStory } from './scroller.story.js';
 import { listViewStory } from './listview.story.js';
@@ -37,6 +38,7 @@ export const STORIES: readonly Story[] = [
   inputStory,
   checkGroupStory,
   radioGroupStory,
+  multiCheckGroupStory,
   scrollBarStory,
   scrollerStory,
   listViewStory,
