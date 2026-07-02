@@ -24,6 +24,7 @@ export function effect(fn: () => void): void {
     state: NodeState.DIRTY,
     owner: null,
     cleanups: [],
+    disposed: false,
     isEffect: true,
     observers: null, // an effect is a leaf sink — nothing observes it
     recompute: null, // effects run directly; they have no memo to recompute

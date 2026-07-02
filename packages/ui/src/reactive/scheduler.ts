@@ -79,6 +79,9 @@ export function registerRead(source: Subscribable): void {
  * @returns The value returned by `node.fn`.
  */
 export function execute(node: Computation): unknown {
+  // Disposal is final (HR-03): a disposed node never runs its `fn` or re-collects edges.
+  if (node.disposed) return undefined;
+
   // Fire the previous run's cleanups before re-running (AC-9), then clear them.
   runCleanups(node.cleanups);
 
@@ -169,6 +172,7 @@ function resolveCheck(node: Computation): void {
  * @param node The node to resolve.
  */
 export function updateIfNecessary(node: Computation): void {
+  if (node.disposed) return; // disposal is final (HR-03): never resolve/run a disposed node
   if (node.state === NodeState.CHECK) {
     resolveCheck(node);
   }
@@ -209,7 +213,9 @@ export function flush(): void {
       }
       const batchOfEffects = pendingEffects.splice(0);
       for (const effect of batchOfEffects) {
-        if (effect.state === NodeState.CLEAN) continue; // already run / disposed this drain
+        // Skip a disposed effect (HR-03) or one already run this drain — the flush loop must not
+        // resurrect a computation disposed while it was still queued DIRTY.
+        if (effect.disposed || effect.state === NodeState.CLEAN) continue;
         try {
           updateIfNecessary(effect); // pulls its computeds, then runs if actually dirty
         } catch (error) {
