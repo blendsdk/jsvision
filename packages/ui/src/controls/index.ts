@@ -18,5 +18,5 @@ export { Input } from './input.js';
 export type { InputOptions } from './input.js';
 export { CheckGroup } from './check-group.js';
 export { RadioGroup } from './radio-group.js';
-export { filter, range, lookup } from './validators/index.js';
+export { filter, range, lookup, picture } from './validators/index.js';
 export type { Validator } from './validators/index.js';
