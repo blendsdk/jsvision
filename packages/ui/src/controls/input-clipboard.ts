@@ -47,19 +47,18 @@ export function clipboardCommand(command: string): ClipboardAction | null {
 
 /**
  * Insert one code point at `pos` with picture autoFill (PA-17), then validate. The char is inserted,
- * the validator's `fill` transform runs on the candidate — it may insert mask **literals** before
- * and/or after the char (a leading `(`, a trailing `-`) and apply case transforms — and the FILLED
- * candidate is checked against `isValidInput` + `maxLength`. Filling **before** validation is what
- * lets a leading literal auto-appear as you type the first digit (TV `TPXPictureValidator` fills
- * literals during input). A plain filter/range validator has no `fill`, so the filled candidate equals
- * the raw candidate and behaviour is unchanged.
+ * the validator's `fill` transform runs on the candidate — TV `TPXPictureValidator` appends **trailing**
+ * mask literals (e.g. a `-` after a completed group) and applies case transforms (HR-55: it does NOT
+ * auto-insert leading literals) — and the FILLED candidate is checked against `isValidInput`, then
+ * clamped to `maxLength` (HR-58 clamp-and-accept). A plain filter/range validator has no `fill`, so the
+ * filled candidate equals the raw candidate and behaviour is unchanged.
  *
  * @param ch        The code point to insert (already the single char / space).
  * @param value     The current value.
  * @param pos       The caret index to insert at.
  * @param maxLength The stored-length cap.
  * @param validator Optional live validator.
- * @returns The new `{ value, curPos }` (caret past the char + any auto-filled literals), or `null` when rejected.
+ * @returns The new `{ value, curPos }` (caret past the typed char, not trailing autoFill; HR-45), or `null` when rejected.
  */
 export function insertFilled(
   ch: string,

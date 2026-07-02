@@ -11,6 +11,17 @@ the deprecation policy.
 
 ### Added
 
+- **RD-13 runtime hardening — additive public surface.** `@jsvision/core` gains
+  `KEY_NAMES` (value export) + the `PasteState` type (HR-23), and
+  `CapabilityResolution.passthrough?: Uint8Array` so a captured layer-2 query
+  passthrough can be re-injected (HR-22). `@jsvision/ui` gains
+  `EventLoop.onResize?` + `EventLoopOptions.quitCommand?` (the HR-36/HR-41 resize
+  seam + the HR-38 TV-faithful quit-cascade command), and `ScrollBar.pageStep()` is
+  now public (HR-53). Backfill of previously-unlogged core `Theme` additions across
+  RD-06/RD-10/RD-11 (`staticText`/`label*`/`button*`/`cluster*`/`input*`,
+  `statusSelected`, `scrollBar*`/`list*`/`dialog.icon`). **All additive and
+  non-breaking.**
+
 - **`@jsvision/core`: probe-driven ASCII-safe chrome (glyph auto-swap).** When the
   startup Cursor-Position-Report probe measures the terminal rendering our
   ambiguous-width chrome glyphs double-width, the host now automatically degrades
@@ -38,6 +49,20 @@ the deprecation policy.
   `defaultTheme.inputSelection` is the classic DOS selection colour.
 
 ### Changed
+
+- **RD-13: env switches renamed `BLENDTUI_*` → `JSVISION_*`.** The screen-safe
+  logger's debug/log env switches are now `JSVISION_DEBUG` / `JSVISION_LOG`
+  (was `BLENDTUI_DEBUG` / `BLENDTUI_LOG`), matching the `@jsvision` brand +
+  `JSVISION_ASCII` (HR-26). Pre-1.0/unpublished.
+- **RD-13: OSC-52 clipboard is now byte-exact base64 (PA-7).** The clipboard write
+  no longer runs the payload through the injection `sanitize()` before base64 — it
+  encodes the exact UTF-8 bytes (base64 is already injection-safe), so round-tripped
+  text is preserved verbatim (HR-21). Updated the ST-8 clipboard oracle.
+- **RD-13: `ESC ESC` decodes to Alt+Escape (PA-3), and a track click on a
+  `ScrollBar` jumps the thumb to the clicked position** instead of page-stepping
+  (TV `tscrlbar.cpp:193-207`, HR-49) — the ST-02 page-step oracle was a mis-decode,
+  corrected against the C++. `picture` autoFill is trailing-literal only (HR-55, doc
+  correction — no behavior change).
 
 - **`@jsvision/core`: `defaultTheme.inputSelected` corrected to TV-faithful (RD-07).**
   Pre-1.0 (unpublished) fix: `inputSelected` changed from white-on-green (`0x2F`) to
@@ -68,6 +93,31 @@ the deprecation policy.
   version (`yarn sync-versions`).
 - **Node floor raised to `>= 20`** (Node 18 is EOL); the CI matrix is now 20/22/24.
 - **Test runner migrated `node:test` → vitest** (two projects: `unit` + `e2e`).
+
+### Fixed
+
+- **RD-13 runtime hardening — a 5-agent audit's confirmed backlog (3 critical + 12
+  major + ~25 minor), spec-first per HR-NN, TV-derived items behind GATE-1/GATE-2
+  decodes.** Highlights:
+  - **Critical:** hostile-UTF-8 stdin no longer crashes the decoder (`RangeError`
+    DoS, HR-01); modal mouse hit-testing uses the absolute origin so dialogs mounted
+    below a `MenuBar` are no longer off-by-one (HR-02); reactive disposal neutralizes
+    queued-but-disposed effects (use-after-dispose, HR-03).
+  - **Major:** DCS/CSI replies no longer leak as keystrokes (HR-04); C0 control
+    chars are kept out of the cell grid (HR-05); the screen-safe logger guards the
+    UI stream by device identity (HR-06); a UTF-8 locale enables box/half-block
+    glyphs (HR-07); `Commands.close` closes the active window (HR-08); an inactive
+    window's close/zoom/grip zones are inert until it is raised (HR-09,
+    `tframe.cpp`); removing the focused child re-homes focus (HR-10); `isFocusable`
+    requires mounted (HR-11); `flush()` snapshots pending work first (HR-12);
+    `addDynamic` disposes its `Show`/`For` on unmount (HR-13); a stale drag gesture
+    is cleared on capture loss (HR-14).
+  - **Minor (TV fidelity + editor correctness):** host-restart baseline reset,
+    combining-mark composition, wide-glyph fallback, comprehensive EAW width table,
+    `Input` paste/caret/word-delete/transient-revert/maxLength-clamp/drag-guard, the
+    disabled-button hot-run color, `Text` verbatim whitespace, `ScrollBar`
+    jump-to-position, the list unfocused highlight + `<empty>` inset + click-clamp,
+    and the `Scroller` reserved corner. Each cites the decoded `t*.cpp` `file:line`.
 
 ## [0.1.0] — 2026-06-28
 

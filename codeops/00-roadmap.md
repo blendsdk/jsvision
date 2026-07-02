@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-02 (new feature-set **bun-runtime** — RD-01 Bun runtime support & self-contained executables drafted ✏️; Zero-Ambiguity Gate PASSED AR-1…AR-10, grounded in a same-day empirical Bun 1.3.14 analysis. Earlier today: jsvision-ui RD-13 runtime-hardening → 📋 Plan Created)
+> **Last Updated**: 2026-07-02 (jsvision-ui **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: new feature-set **bun-runtime** — RD-01 Bun runtime support & self-contained executables drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
 > **Features**: 0 / 2 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 9 ✅ Done (RD-01…RD-07, RD-10, RD-11) · RD-13 🔄 executing (Phase 9/10) · Backlog (RD-08/09, RD-12+) | 9 / 12 done | 🔄 | 2026-07-02 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 10 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13) · Backlog (RD-08/09, RD-12+) | 10 / 12 done | 🔄 | 2026-07-02 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0 / 1 done | 🔄 | 2026-07-02 |
 
 ## Archived
@@ -36,6 +36,11 @@
   e2e variants, engines/README/docs/CHANGELOG declarations, a Windows manual TTY checklist, and a
   benchmarked Bun-native spike (≥ 20% adoption bar; `bun:ffi`/Bun-test excluded). Gate AR-1…AR-10
   all user-resolved. Next: `make_plan bun-runtime RD-01` (or `preflight` the RD first).
+- 2026-07-02: **jsvision-ui RD-13 (Runtime hardening & defect remediation) DONE** → ✅ Done — all 10
+  phases / 120 tasks complete, spec-first per HR-NN (RED→GREEN→impl→verify), TV GATE-1/GATE-2 decodes
+  recorded for every fidelity item; the five-agent audit backlog (3 critical + 12 major + ~25 minor)
+  remediated; final full gate PASSED (`yarn verify`/`test:e2e`/`check:deps`/`lint`/`gate`). Additive-only
+  public surface. Committed across Phases 1–10.
 - 2026-07-02: **jsvision-ui RD-13 (Runtime hardening & defect remediation) planned** → 📋 Plan Created
   ([`plans/runtime-hardening/`](features/jsvision-ui/plans/runtime-hardening/00-index.md)). 14-doc plan over
   the five-agent deep-audit backlog (3 critical + 12 major + ~20 minor confirmed defects across core + ui):
