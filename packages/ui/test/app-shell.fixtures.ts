@@ -222,6 +222,16 @@ export class FakeInput extends EventEmitter {
     this.emit('data', bytes);
   }
 
+  /** No-op flow control — the width probe's `createTerminalQuery` calls `resume()` before reading. */
+  public resume(): this {
+    return this;
+  }
+
+  /** No-op flow control counterpart to {@link resume}. */
+  public pause(): this {
+    return this;
+  }
+
   /** View this double as a `NodeJS.ReadStream`. */
   public asInput(): NodeJS.ReadStream {
     return this as unknown as NodeJS.ReadStream;

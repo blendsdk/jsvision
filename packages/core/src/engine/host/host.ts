@@ -19,13 +19,14 @@
 import { bindStreams } from './streams.js';
 import type { BoundStreams } from './streams.js';
 import { createTerminalQuery } from './terminal-query.js';
-import { warnIfAmbiguousWide } from './width-probe.js';
+import { warnIfAmbiguousWide, degradeCapsForWidth, degradeCapsFully, isAsciiSafe } from './width-probe.js';
 import { enterMode, leaveMode } from './modes.js';
 import { realRuntime } from './platform.js';
 import { createRestore } from './restore.js';
 import type { GuaranteedRestore } from './restore.js';
 import { installSignals } from './signals.js';
 import type { Host, HostOptions, RuntimeAdapter, TimerHandle } from './types.js';
+import type { CapabilityProfile } from '../capability/profile.js';
 import { createDecoderState, decode, flush } from '../input/decoder.js';
 import { ESC_TIMEOUT_MS } from '../input/events.js';
 import type { DecoderState, InputEvent } from '../input/events.js';
@@ -51,6 +52,9 @@ function isEpipe(err: unknown): boolean {
   return typeof err === 'object' && err !== null && 'code' in err && err.code === 'EPIPE';
 }
 
+/** A warning sink that swallows the message — used when adaptation runs but warning is off. */
+const noopWarn = (): void => {};
+
 /**
  * Create a terminal host. Wires caps→modes, stdin→decode→dispatch, and
  * buffer→serialize→write, and guarantees terminal restore on every exit path. [AR-1]
@@ -61,6 +65,12 @@ function isEpipe(err: unknown): boolean {
 export function createHost(options: HostOptions): Host {
   const caps = options.caps;
   const modeOpts = { focus: options.focus };
+
+  // The EFFECTIVE serialize caps: what render() and the resume repaint emit with.
+  // `JSVISION_ASCII` (presence = on, NO_COLOR-style) forces full ASCII-safe chrome at
+  // creation and skips the probe; otherwise start()'s probe may adapt it (AR-8/AR-15).
+  const forceAscii = (options.env ?? process.env).JSVISION_ASCII !== undefined;
+  let effectiveCaps: CapabilityProfile = forceAscii ? degradeCapsFully(caps) : caps;
 
   let running = false;
   let streams: BoundStreams | null = null;
@@ -134,15 +144,27 @@ export function createHost(options: HostOptions): Host {
   }
 
   /**
-   * Probe the primary screen for double-width chrome glyphs and warn (best-effort).
+   * Probe the primary screen for double-width chrome glyphs, then adapt effective
+   * caps and/or warn (best-effort). One probe run feeds both concerns: `adapted`
+   * selects the warning variant, a disabled warning uses a no-op sink, and when
+   * adaptation is enabled the effective caps are downgraded for the wide groups.
+   *
    * Owns the query seam's lifecycle: it always closes the seam — detaching the
    * probe's input listener before the host's own input pump attaches — and never
    * throws, so a detection failure can neither block nor crash startup.
    */
-  async function probeWidthAndWarn(input: NodeJS.ReadStream, output: NodeJS.WriteStream): Promise<void> {
+  async function probeWidthAdaptAndWarn(input: NodeJS.ReadStream, output: NodeJS.WriteStream): Promise<void> {
     const query = createTerminalQuery({ input, output });
+    const adapt = options.adaptAmbiguousWidth === true;
     try {
-      await warnIfAmbiguousWide(query, { warn: options.onWidthWarning });
+      const result = await warnIfAmbiguousWide(query, {
+        // Warning off ⇒ no-op sink; on ⇒ default stderr sink unless an override is given.
+        warn: options.warnAmbiguousWidth ? options.onWidthWarning : noopWarn,
+        adapted: adapt,
+      });
+      if (adapt) {
+        effectiveCaps = degradeCapsForWidth(effectiveCaps, result);
+      }
     } catch {
       // Best-effort: a probe failure must never block or crash startup.
     } finally {
@@ -177,8 +199,10 @@ export function createHost(options: HostOptions): Host {
       adapter.setRawMode(streams.input, true);
       // Width probe runs in this window — raw mode on, alt-screen not yet entered —
       // so the probe glyphs + their erase happen on the primary screen (PF: width).
-      if (options.warnAmbiguousWidth) {
-        await probeWidthAndWarn(streams.input, streams.output);
+      // Skipped when effective caps are already fully ASCII-safe (env-forced,
+      // already-degraded, or utf8-off) — nothing to learn or swap (AR-13, PF-003).
+      if ((options.warnAmbiguousWidth || options.adaptAmbiguousWidth) && !isAsciiSafe(effectiveCaps)) {
+        await probeWidthAdaptAndWarn(streams.input, streams.output);
       }
       streams.output.write(enterStr); // a throw here is caught by the 'exit' backstop (AR-17)
     }
@@ -187,7 +211,6 @@ export function createHost(options: HostOptions): Host {
       adapter,
       output: streams.output,
       input: streams.input,
-      caps,
       restore,
       enterStr,
       leaveStr,
@@ -198,6 +221,8 @@ export function createHost(options: HostOptions): Host {
       exitOnSignal: options.exitOnSignal !== false,
       onBeforeExit: options.onBeforeExit,
       getLastBuffer: () => lastBuffer,
+      // The resume repaint must use the same (possibly adapted) caps as render() (PF-001).
+      getSerializeCaps: () => effectiveCaps,
     });
 
     dataListener = (chunk: Uint8Array | string): void => onData(chunk);
@@ -236,7 +261,8 @@ export function createHost(options: HostOptions): Host {
 
   function render(next: ScreenBuffer): void {
     if (!streams) return;
-    const out = serialize(next, prev, { caps });
+    // Effective caps swap wide chrome to ASCII when the probe/env adapted them (AR-4).
+    const out = serialize(next, prev, { caps: effectiveCaps });
     if (out) streams.output.write(out);
     // Snapshot the rendered frame: callers may pass a single LIVE buffer they keep mutating in place
     // (e.g. the UI loop's `renderRoot.buffer()`), so aliasing it as `prev` would diff the next frame

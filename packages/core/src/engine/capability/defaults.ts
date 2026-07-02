@@ -27,7 +27,7 @@ export const CONSERVATIVE_DEFAULTS: CapabilityProfile = {
   altScreen: false,
   bracketedPaste: false,
   keyboard: { kittyFlags: false, modifyOtherKeys: false },
-  glyphs: { boxDrawing: false, halfBlocks: false },
+  glyphs: { boxDrawing: false, halfBlocks: false, ambiguousWide: false },
   // Overridden by options.platform / process.platform during resolve.
   platform: 'linux',
   multiplexer: false,

@@ -22,7 +22,13 @@ import { CaptureStream, FakeInput, FakeRuntimeAdapter } from './host-doubles.js'
 function caps(override: DeepPartial<CapabilityProfile> = {}): CapabilityProfile {
   return resolveCapabilities({ env: {}, platform: 'linux', override }).profile;
 }
-const RICH = caps({ mouse: { sgr: true, drag: true, wheel: true }, altScreen: true, bracketedPaste: true });
+// utf8 on so the probe is not skipped as already-ASCII-safe (glyph-auto-swap PF-003).
+const RICH = caps({
+  mouse: { sgr: true, drag: true, wheel: true },
+  altScreen: true,
+  bracketedPaste: true,
+  unicode: { utf8: true },
+});
 
 /** Bytes for a CPR reply reporting `row;col`. */
 function cpr(row: number, col: number): Uint8Array {
@@ -50,8 +56,8 @@ test('warns once when the terminal reports double-width chrome glyphs', async ()
 
   const startP = host.start();
   await tick();
-  // 7 probe glyphs homed to col 1; a reply of col 15 ⇒ advance 14 ⇒ double-width.
-  input.feed(cpr(1, 15));
+  // Two groups of 8 glyphs, each homed to col 1; two replies of col 15 ⇒ advance 14 each ⇒ wide.
+  input.feed(new Uint8Array([...cpr(1, 15), ...cpr(1, 15)]));
   await startP;
 
   expect(output.data).toContain('\x1b[6n'); // the DSR cursor-position request was issued
@@ -75,7 +81,7 @@ test('does not warn when the terminal reports narrow (one-cell) glyphs', async (
 
   const startP = host.start();
   await tick();
-  input.feed(cpr(1, 8)); // 7 glyphs ⇒ advance 7 ⇒ exactly one cell each
+  input.feed(new Uint8Array([...cpr(1, 9), ...cpr(1, 9)])); // 8 glyphs ⇒ advance 8 ⇒ exactly one cell each
   await startP;
 
   expect(warnings).toStrictEqual([]);

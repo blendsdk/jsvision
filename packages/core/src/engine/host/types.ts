@@ -63,6 +63,24 @@ export interface HostOptions {
    */
   readonly warnAmbiguousWidth?: boolean;
   /**
+   * Adapt the host's *effective* serialize capabilities when the startup width
+   * probe measures a wide chrome group: group 1 (arrows) wide → `ambiguousWide`
+   * on; group 2 (box/shade) wide → `boxDrawing`/`halfBlocks` off — so every frame
+   * emits ASCII-safe chrome instead of shearing. Downgrade-only; decode/modes/
+   * restore keep the original caps. Real TTY only, shares the one probe run with
+   * {@link warnAmbiguousWidth}. Default `false`: `createHost` is the mechanism, the
+   * `run()` app shell enables the policy (ui default `true`). (glyph-auto-swap AR-9)
+   */
+  readonly adaptAmbiguousWidth?: boolean;
+  /**
+   * Environment for the `JSVISION_ASCII` force switch (NO_COLOR-style: presence =
+   * on, any value including empty). When set, effective serialize caps are fully
+   * degraded to ASCII-safe chrome and the probe is skipped. Default `process.env`;
+   * injected for tests. Presence-checked only — the value is never parsed or logged.
+   * (glyph-auto-swap AR-8/AR-15)
+   */
+  readonly env?: NodeJS.ProcessEnv;
+  /**
    * Sink for the startup width warning (see {@link warnAmbiguousWidth}). Default:
    * one line to `process.stderr` (never the UI output stream). Injected for tests
    * or custom reporting.

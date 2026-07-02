@@ -54,6 +54,12 @@ export interface ApplicationOptions {
    * that simulate a TTY without a live terminal pass `false` to skip the probe.
    */
   warnAmbiguousWidth?: boolean;
+  /**
+   * Adapt to ASCII-safe chrome when the terminal renders our ambiguous-width chrome glyphs
+   * double-width (real TTY only). Forwards core's `HostOptions.adaptAmbiguousWidth`. Default `true`
+   * (zero-config); tests that simulate a TTY without a live terminal pass `false` to skip the probe.
+   */
+  adaptAmbiguousWidth?: boolean;
 }
 
 /** The composed application (composition over inheritance, AR-75). */
@@ -196,6 +202,7 @@ export function createApplication(opts: ApplicationOptions): Application {
         input: opts.input,
         output: opts.output,
         warnAmbiguousWidth: opts.warnAmbiguousWidth,
+        adaptAmbiguousWidth: opts.adaptAmbiguousWidth,
         overlay,
         quitState,
       }),

@@ -39,6 +39,24 @@ const BOX_FALLBACK: ReadonlyMap<string, string> = new Map([
   ['\u253C', '+'], // ┼
 ]);
 
+/**
+ * Fallback-prone (mostly EAW-Ambiguous) chrome glyphs → ASCII when
+ * `glyphs.ambiguousWide` is set — the ncurses-ACS-style degradations (AR-7).
+ * Disjoint from {@link BOX_FALLBACK} and {@link BLOCK_SHADE}
+ * (U+25B2/25BC/25C4/25BA/2022/2191/2195/00D7), so its check ordering is
+ * collision-free.
+ */
+const AMBIGUOUS_FALLBACK: ReadonlyMap<string, string> = new Map([
+  ['▲', '^'], // ▲ scroll-up arrow
+  ['▼', 'v'], // ▼ scroll-down arrow
+  ['◄', '<'], // ◄ scroll-left / input-scroll / submenu arrow
+  ['►', '>'], // ► scroll-right / input-scroll / submenu arrow
+  ['•', '*'], // • radio mark
+  ['↑', '^'], // ↑ zoom icon
+  ['↕', 'v'], // ↕ restore icon
+  ['×', 'x'], // × close icon
+]);
+
 /** Block and shade glyphs that collapse to `#` when `halfBlocks` is off. */
 const BLOCK_SHADE: ReadonlySet<string> = new Set([
   '\u2588',
@@ -54,9 +72,11 @@ const BLOCK_SHADE: ReadonlySet<string> = new Set([
 /**
  * Substitute a glyph for the terminal's capabilities (PL-9).
  *
- * Resolution order: ASCII box fallback (when `boxDrawing` is off) → `#` for
- * block/shade glyphs (when `halfBlocks` is off) → `?` for any other code point
- * above U+007F (when `utf8` is off) → the glyph unchanged.
+ * Resolution order: ASCII ambiguous-chrome fallback (when `ambiguousWide` is on,
+ * most specific — its keys collide with no other table) → ASCII box fallback
+ * (when `boxDrawing` is off) → `#` for block/shade glyphs (when `halfBlocks` is
+ * off) → `?` for any other code point above U+007F (when `utf8` is off) → the
+ * glyph unchanged.
  *
  * @param char A single buffer glyph (a continuation cell's empty string passes
  *   straight through).
@@ -66,6 +86,10 @@ const BLOCK_SHADE: ReadonlySet<string> = new Set([
 export function fallbackGlyph(char: string, caps: CapabilityProfile): string {
   if (char === '') return char;
 
+  if (caps.glyphs.ambiguousWide) {
+    const ascii = AMBIGUOUS_FALLBACK.get(char);
+    if (ascii !== undefined) return ascii;
+  }
   if (!caps.glyphs.boxDrawing) {
     const ascii = BOX_FALLBACK.get(char);
     if (ascii !== undefined) return ascii;

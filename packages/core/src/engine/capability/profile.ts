@@ -54,6 +54,13 @@ export interface KeyboardCaps {
 export interface GlyphCaps {
   readonly boxDrawing: boolean;
   readonly halfBlocks: boolean;
+  /**
+   * True when the terminal renders the fallback-prone arrow/geometric chrome
+   * glyphs (`▲▼◄►•↑↕×` — mostly East-Asian-Ambiguous; `◄►` are EAW-Neutral but
+   * equally font-fallback-prone) double-width — the serializer then swaps them to
+   * ASCII (see `render/glyphs.ts` `AMBIGUOUS_FALLBACK`). Default `false`. (AR-5)
+   */
+  readonly ambiguousWide: boolean;
 }
 
 /** Host platform, mirroring `process.platform`'s supported values for RD-02. */

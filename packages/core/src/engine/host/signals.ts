@@ -28,7 +28,6 @@ export interface SignalContext {
   readonly adapter: RuntimeAdapter;
   readonly output: NodeJS.WriteStream;
   readonly input: NodeJS.ReadStream;
-  readonly caps: CapabilityProfile;
   /** The one idempotent restore used by the terminating-signal paths (AR-17). */
   readonly restore: GuaranteedRestore;
   /** Enter-mode string re-asserted on resume (AR-10). */
@@ -37,6 +36,13 @@ export interface SignalContext {
   readonly leaveStr: string;
   /** Whether the terminal is a TTY; gates mode writes + raw toggles (AR-11). */
   readonly isTTY: boolean;
+  /**
+   * The EFFECTIVE serialize caps for the resume full-repaint — the same caps
+   * `render()` uses, so a width-adapted host repaints ASCII-safe chrome after
+   * SIGCONT instead of un-swapped wide glyphs (glyph-auto-swap PF-001). Mirrors the
+   * {@link getLastBuffer} getter so correctness is independent of `start()` ordering.
+   */
+  getSerializeCaps(): CapabilityProfile;
   readonly onResize?: (event: ResizeEvent) => void;
   readonly onSuspend?: () => void;
   readonly onResume?: () => void;
@@ -115,7 +121,8 @@ export function installSignals(ctx: SignalContext): () => void {
         safely(() => ctx.output.write(ctx.enterStr));
         const last = ctx.getLastBuffer();
         if (last) {
-          const out = serialize(last, null, { caps: ctx.caps });
+          // Effective (possibly width-adapted) caps, matching render() (PF-001).
+          const out = serialize(last, null, { caps: ctx.getSerializeCaps() });
           if (out) safely(() => ctx.output.write(out));
         }
       }

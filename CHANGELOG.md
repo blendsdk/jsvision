@@ -11,6 +11,20 @@ the deprecation policy.
 
 ### Added
 
+- **`@jsvision/core`: probe-driven ASCII-safe chrome (glyph auto-swap).** When the
+  startup Cursor-Position-Report probe measures the terminal rendering our
+  ambiguous-width chrome glyphs double-width, the host now automatically degrades
+  its _effective_ serialize capabilities so every frame emits aligned ASCII chrome
+  (`▲▼◄►•↑↕× → ^v<>*^vx`, box → `+-|`, shades → `#`) instead of shearing — with zero
+  app-code changes (the `ScreenBuffer` still stores the real Unicode; substitution
+  is serialize-time). New additive `HostOptions.adaptAmbiguousWidth` (core default
+  `false`; `@jsvision/ui`'s `createApplication`/`run()` default `true`, mirroring
+  `warnAmbiguousWidth`). A new host-level **`JSVISION_ASCII`** env switch
+  (NO_COLOR-style: presence = on, any value) forces fully ASCII-safe chrome and
+  skips the probe. `GlyphCaps` gains `ambiguousWide: boolean` (default `false`);
+  new exports `BOX_PROBE_GLYPHS`, `WIDTH_ADAPTED_MESSAGE`, `WidthProbeGroupResult`,
+  `degradeCapsForWidth`, `degradeCapsFully`, `isAsciiSafe`. **Additive and
+  non-breaking** — the default `ambiguousWide: false` is behavior-neutral.
 - **`@jsvision/core`: additive `windowInactive` theme role.** `Theme` gains a
   `windowInactive` role (a sibling of `window` mirroring its `fg`/`bg`/`border`/`title`
   shape) so the UI layer's window frame can theme a background window distinctly from
@@ -19,6 +33,15 @@ the deprecation policy.
 
 ### Changed
 
+- **`@jsvision/core`: the ambiguous-width probe now measures two glyph groups.**
+  `probeAmbiguousWidth`/`WidthProbeResult` were amended in place (pre-1.0,
+  unpublished): the single aggregate measurement became a grouped result
+  (`{ probed, arrows, boxes }`, each a `WidthProbeGroupResult`), so arrow/geometric
+  chrome and box-drawing/shade flip only the capability flags they implicate.
+  `WidthProbeOptions.glyphs` split into `arrowGlyphs?`/`boxGlyphs?`;
+  `AMBIGUOUS_PROBE_GLYPHS` is now the 8 arrow/geometric glyphs and a new
+  `BOX_PROBE_GLYPHS` covers the box/shade sample. `warnIfAmbiguousWide` keeps its
+  signature (its `WidthWarnOptions` gains an `adapted?` message-variant flag).
 - **Adopted a dedicated npm scope `@jsvision/*`.** Packages renamed
   `@blendsdk/tui-core` → **`@jsvision/core`** and `@blendsdk/tui-examples` →
   **`@jsvision/examples`** (monorepo root → `@jsvision/monorepo`); the GitHub repo
