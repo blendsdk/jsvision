@@ -29,7 +29,8 @@ Numbering: contiguous RD-14…RD-19 (AR-128). MVP = RD-14/15/16 (AR-129).
 ## Open (next): RD numbering scheme · per-RD scope in/out · sibling dependency order · MVP phasing ·
 ## per-RD Zero-Ambiguity gates (AR-128+).
 
-## AR ledger: AR-125..150 recorded. Next free: AR-151.
+## AR ledger: AR-125..161 recorded. Next free: AR-162.
 ## RD-14 (Input dropdowns) AUTHORED ✅ → RD-14-input-dropdowns.md (AR-130..140; GATE-1 History decode).
 ## RD-15 (Tree) AUTHORED ✅ 2026-07-02 → RD-15-tree.md (AR-141..150; GATE-1 TOutlineViewer decode — graphChars "\x20\xB3\xC3\xC0\xC4\xC4+\xC4", ←→ collapse/expand override).
-## Next step: RD-16 (Table/DataGrid — multi-column TListViewer + RD-11 numCols) — GATE-1 decode + AR block (AR-151+). Then RD-17 Tabs, RD-18 Feedback, RD-19 Surface.
+## RD-16 (Table/DataGrid) AUTHORED ✅ 2026-07-02 → RD-16-table.md (AR-151..161). GATE-1 finding: TV has NO table class; TListViewer::numCols is a newspaper-flow single-field list (item=j*size.y+i+topItem), NOT a grid. RD-16 = real DataGrid<T> as a documented TV-extension on the TListViewer spine — rows/│-divider(getColor5=listDivider)/cpListViewer row colours/virtual-scroll FAITHFUL; header + heterogeneous Column<T>[] + click-sort the flagged extension. Typed Column<T> {title,accessor,width,align?,compare?}; sizing fixed|fr|auto via RD-02 solveTrack + HScroll; sticky header + ▲▼ sort (reuse RD-11 sorted); row-granular select; Signal<T[]>; new src/table/; ONE additive header theme role @ plan GATE-1 (row/divider roles already exist theme.ts:222-225). This is the LAST MVP sibling (AR-129).
+## Next step: RD-17 (Tabs — new tabbed layout container) — GATE-1 decode + AR block (AR-162+). Then RD-18 Feedback (ProgressBar+Spinner), RD-19 Surface. MVP set (RD-14/15/16) COMPLETE after RD-16; RD-17..19 are the Later phase.

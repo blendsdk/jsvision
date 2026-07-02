@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-02 (jsvision-ui **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: the **RD-12+ high-value-controls set** was opened via `make_requirements` — sliced into 6 sibling RDs by mechanism (AR-125…129), **RD-14 (Input dropdowns) + RD-15 (Tree) drafted ✏️** (AR-130…150, GATE-1 TV decodes), RD-16…19 queued. And a new feature-set **bun-runtime** — RD-01 drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
+> **Last Updated**: 2026-07-02 (jsvision-ui **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: the **RD-12+ high-value-controls set** was opened via `make_requirements` — sliced into 6 sibling RDs by mechanism (AR-125…129), **RD-14 (Input dropdowns) + RD-15 (Tree) + RD-16 (Table/DataGrid) drafted ✏️** (AR-130…161, GATE-1 TV decodes) — the **MVP set (RD-14/15/16) is now fully drafted**; RD-17…19 queued. And a new feature-set **bun-runtime** — RD-01 drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
 > **Features**: 0 / 2 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 10 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13) · RD-14 + RD-15 ✏️ Drafted (RD-12+ set, 2/6) · Backlog (RD-16…19, RD-08/09) | 10 / 18 done | 🔄 | 2026-07-02 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 10 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13) · RD-14 + RD-15 + RD-16 ✏️ Drafted (RD-12+ set — **MVP 3/3 done**, 3/6) · Backlog (RD-17…19, RD-08/09) | 10 / 18 done | 🔄 | 2026-07-02 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0 / 1 done | 🔄 | 2026-07-02 |
 
 ## Archived
@@ -24,6 +24,20 @@
 
 ## Notes
 
+- 2026-07-02: **jsvision-ui RD-16 (Table/DataGrid) drafted** → ✏️ RD Drafted
+  ([RD-16](features/jsvision-ui/requirements/RD-16-table.md)). RD-12+ set sibling 3/6, the **last MVP** RD
+  (AR-129) — the **MVP set (RD-14/15/16) is now fully drafted**. The **GATE-1 decode** surfaced the key
+  finding: **Turbo Vision has no table/grid class** — its only multi-column mechanism is `TListViewer::
+  numCols`, a **newspaper-flow single-field list** (`item = j*size.y + i + topItem`, `tlstview.cpp`), not a
+  spreadsheet. So RD-16 = a real **`DataGrid<T>`** as a **documented TV-extension** on the `TListViewer`
+  spine (AR-151): the virtual-scroll spine, the `│` divider (`getColor(5)`), and the `cpListViewer` row
+  colours are **faithful**; the header + heterogeneous `Column<T>[]` + click-sort are the flagged extension
+  (what RD-11's AR-104 meant by deferring "a real table"). Typed `Column<T>` `{title,accessor,width,align?,
+  compare?}` (AR-152); `fixed`/`fr`/`auto` widths via RD-02 `solveTrack` + horizontal scroll (AR-153);
+  sticky header + click-to-sort `▲`/`▼` reusing RD-11 `sorted` (AR-154/158); row-granular select (AR-155);
+  owned V+H `ScrollBar` (AR-156); `Signal<T[]>` (AR-157); new `src/table/` (AR-160); reuse `list*`/
+  `listDivider` roles + one additive header role at plan GATE-1 (AR-159); `DataGrid` story + `demo:table`
+  (AR-161). AR-151…AR-161 recorded; 13 AC. Next: `make_plan RD-16`, then draft the Later phase (RD-17 Tabs).
 - 2026-07-02: **jsvision-ui RD-15 (Tree) drafted** → ✏️ RD Drafted
   ([RD-15](features/jsvision-ui/requirements/RD-15-tree.md)). RD-12+ set sibling 2/6 (MVP, AR-129). A
   virtual-scroll `Tree<T>` reimagined from TV `TOutlineViewer`/`TOutline` with its GATE-1 decode recorded
