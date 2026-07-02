@@ -5,7 +5,7 @@
 > **Date**: 2026-07-02
 > **Reviewer**: preflight (CodeOps 3.1.0)
 > **Review independence**: fresh session (plan authored in a prior session) — no same-session bias.
-> **Outcome**: ✅ PASSED WITH NOTES pending decisions — 6 findings (3 MAJOR, 2 MINOR, 1 OBSERVATION)
+> **Outcome**: ✅ PASSED — all 6 findings (3 MAJOR, 2 MINOR, 1 OBSERVATION) resolved & applied 2026-07-02
 
 ## Codebase Context Summary
 
@@ -38,6 +38,8 @@ callable `DynamicProducer` thunk, so the fix is a genuine one-liner, no signatur
 - **Recommendation**: Correct the HR-24 citation to `host/host.ts:114-122` in 03-01, the
   02-current-state map, and task 5.2.2 (add `host/host.ts`, keep the timer-arming condition change
   there). One-line doc fix, no scope change.
+- **Resolution**: ✅ Applied — 03-01 §HR-24 + Files line, 02-current-state map (HR-24 moved to the
+  host.ts row, decoder.ts row now HR-04 only), and task 5.2.2 file list all point at `host/host.ts`.
 
 ### 🟠 PF-002 (MAJOR) — HR-07's glyph enablement is locale-gated, but the demos signal UTF-8 via override → the demo-golden/AC-10 assertion has no UTF-8 source
 
@@ -60,6 +62,10 @@ callable `DynamicProducer` thunk, so the fix is a genuine one-liner, no signatur
   locale-dependent glyphs. Consider whether env-layer enablement should also key off an explicit
   `unicode.utf8` signal (not just locale) so an app that forces utf8 gets glyphs — or document that it
   deliberately does not.
+- **Resolution**: ✅ Applied — 03-03 §HR-07 now states the enablement is locale-gated (not
+  `unicode.utf8`-gated), surfaces the locale-honest demo behavior change (→ CHANGELOG in Phase 10),
+  and requires the demo-golden to resolve caps with an explicit `env:{ LANG:'en_US.UTF-8' }`. Task
+  2.2.5, ST-2.4, and ST-10 updated to match. Design kept locale-only per PA-9 (env-layer only).
 
 ### 🟠 PF-003 (MAJOR) — `input.ts` (482/500 lines) will breach the AC-9 ≤500-line gate in Phase 8; no source split is budgeted
 
@@ -75,6 +81,10 @@ callable `DynamicProducer` thunk, so the fix is a genuine one-liner, no signatur
   sibling already establishes the pattern — e.g. extract the editing/deletion ops into
   `controls/input-editing.ts`). Cheap and mechanical; just needs to be planned. Spot-check `width.ts`
   (126 lines) too — HR-19's generated EAW table may want its own module rather than inlining.
+- **Resolution**: ✅ Applied (user-directed lightweight form) — Phase 8 gains a conditional
+  guard-rail note: if `input.ts` crosses 500, extract the HR-47 (transient-revert) + HR-48
+  (word-boundary) helpers into a sibling `controls/input-editing.ts`, verify green before the gate.
+  No mandatory upfront split (per user: additions expected to stay tight).
 
 ### 🟡 PF-004 (MINOR) — HR-35 GATE-1 cites a non-existent TV source file (`tmenuview.cpp`)
 
@@ -87,6 +97,8 @@ callable `DynamicProducer` thunk, so the fix is a genuine one-liner, no signatur
 - **Impact**: The GATE-1 BEFORE-decode task points an executor at a missing file; the fidelity gate
   stalls until the executor guesses the real filename.
 - **Recommendation**: Correct `tmenuview.cpp` → `tmnuview.cpp` in 03-07, task 7.1.1, and ST-7.a.
+- **Resolution**: ✅ Applied — corrected to `tmnuview.cpp` in 03-07 (×2), 99 task 7.1.1, the ambiguity
+  register PA-17, and 00-index fidelity-gate list. (ST-7.a cites PA-17, not the `.cpp`, so unchanged.)
 
 ### 🟡 PF-005 (MINOR) — HR-26 (non-fidelity env rename) must edit foundation spec oracles, which the "spec files edited only under the fidelity exception" rule doesn't authorize
 
@@ -101,6 +113,8 @@ callable `DynamicProducer` thunk, so the fix is a genuine one-liner, no signatur
 - **Recommendation**: Add a one-line carve-out: spec oracles that assert a deliberately-renamed
   contract (the `BLENDTUI_*`→`JSVISION_*` env vars, ST-19/ST-20) are updated for the rename, cited to
   PA-4 — distinct from the fidelity exception.
+- **Resolution**: ✅ Applied — testing-strategy §"Specification test files" now names two carve-outs
+  (fidelity exception + renamed-contract update); task 5.2.9 lists `test/safety-logger.spec.test.ts`.
 
 ### 🔵 PF-006 (OBSERVATION) — the kitchen-sink smoke test can't validate HR-07 (uses `env: {}`)
 
@@ -110,6 +124,8 @@ callable `DynamicProducer` thunk, so the fix is a genuine one-liner, no signatur
   renders faithfully" is not actually exercised by the smoke. Ties to PF-002.
 - **Recommendation**: Rely on the dedicated demo-golden (PF-002) for HR-07 coverage; optionally note in
   ST-10 that the smoke is a mount check, not a glyph-fidelity check.
+- **Resolution**: ✅ Applied — ST-10 now states the smoke is mount-only (`env:{}`, no glyph assertion)
+  and the HR-07 glyph coverage comes from the locale-supplied demo golden.
 
 ## Dimension scan summary
 
@@ -131,7 +147,8 @@ callable `DynamicProducer` thunk, so the fix is a genuine one-liner, no signatur
 
 ## Verdict
 
-**✅ PASSED WITH NOTES** once the findings are dispositioned. No CRITICAL. The three MAJORs are all
-doc/plan corrections (not design flaws): a mis-located citation (PF-001), an under-specified
-test/behavior mechanism (PF-002), and an unbudgeted file split (PF-003). The plan's design, scope,
-sequencing, and security posture are sound and exceptionally well-grounded.
+**✅ PASSED** — all 6 findings resolved and applied to the plan docs (2026-07-02). No CRITICAL. The
+three MAJORs were all doc/plan corrections (not design flaws): a mis-located citation (PF-001), an
+under-specified test/behavior mechanism (PF-002), and a line-budget guard-rail (PF-003, applied in
+the user-directed lightweight conditional form). The plan's design, scope, sequencing, and security
+posture are sound and exceptionally well-grounded. Ready for `exec_plan runtime-hardening`.

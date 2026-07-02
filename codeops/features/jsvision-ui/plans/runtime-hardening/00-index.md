@@ -63,7 +63,7 @@ oracles). 10 phases, ordered by blast radius per the RD's closing note (PA-19).
 
 Phases 4/7/8/9 carry BEFORE-decode / AFTER-diff task pairs per
 [`codeops/tv-fidelity-gate.md`](../../../../tv-fidelity-gate.md) against
-`/home/gevik/workdir/github/tvision` (`tframe`, `tmenuview`, `tprogram`/`tgroup`, `tinputli`,
+`/home/gevik/workdir/github/tvision` (`tframe`, `tmnuview`, `tprogram`/`tgroup`, `tinputli`,
 `tbutton`, `tcluster`, `tstatict`, `tscrlbar`, `tlstview`, `tscrolle`).
 
 ## Related Files

@@ -41,6 +41,23 @@ keep all-false. Then **all three demos** (kitchen-sink `main.ts:32`, controls-li
 tvision-demo `main.ts:128`) drop their manual glyph overrides; their rendered frames must keep
 box-drawing (AC-2/AC-10).
 
+**Locale is the trigger — not the `unicode.utf8` flag (PF-002).** The enablement fires only when
+`detectUtf8(env)` reads a UTF-8 locale (`LC_ALL > LC_CTYPE > LANG`, `env.ts:119`); an explicit
+`override.unicode.utf8 = true` does **not** set the locale, so it does **not** enable glyphs. Two
+consequences the plan must honor:
+
+1. **Demo behavior becomes locale-honest.** After dropping the glyph override, a demo run in a
+   non-UTF-8 / `C` / empty locale now renders ASCII box-drawing where it previously forced glyphs.
+   This is the intended "zero-config honest adaptation" (the whole point of HR-07), but it is a
+   real behavior change to surface in the CHANGELOG (Phase 10), not a silent no-op.
+2. **The demo-golden oracle must supply the locale explicitly.** `resolveCapabilities` defaults
+   `env = options.env ?? process.env` (`index.ts:76`), and CI/headless `process.env` may carry no
+   UTF-8 locale. The new demo-golden test therefore constructs caps with an **explicit**
+   `env: { LANG: 'en_US.UTF-8' }` (plus the demo's non-glyph overrides) so box-drawing appears
+   deterministically regardless of the runner's ambient locale. Without this the golden cannot hold
+   headlessly. (The kitchen-sink smoke uses `env: {}` and stays a mount-only check — see ST-10 /
+   PF-006; it does not exercise the glyph path.)
+
 ### HR-15 — Host restart resets the diff baseline
 
 **Defect** (`host/host.ts:79-81`): `stop()`→`start()` never resets `prev`/`lastBuffer`/

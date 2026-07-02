@@ -34,7 +34,7 @@ planning, these decision-relevant sites were **independently re-verified** in th
 | File | Defects | Changes Needed |
 |------|---------|----------------|
 | `packages/core/src/engine/input/keys.ts` | HR-01, HR-16 | UTF-8 post-assembly validation (overlong/surrogate/>U+10FFFF → drop); `ESC ESC` → Alt+Escape |
-| `packages/core/src/engine/input/decoder.ts` | HR-04, HR-24 | carry in-progress DCS; arm flush timer for any ESC-prefixed carry |
+| `packages/core/src/engine/input/decoder.ts` | HR-04 | carry in-progress DCS to the next chunk |
 | `packages/core/src/engine/capability/responses.ts` | HR-04 | `matchResponse` reports incomplete DCS distinctly from "not a response" |
 | `packages/core/src/engine/capability/{query.ts,index.ts}` | HR-22 | re-inject passthrough bytes into the decoder |
 | `packages/core/src/engine/input/index.ts` + `engine/index.ts` | HR-23 | export `KEY_NAMES`, `PasteState` |
@@ -44,7 +44,7 @@ planning, these decision-relevant sites were **independently re-verified** in th
 | `packages/core/src/engine/render/osc.ts` | HR-21 | drop pre-encode sanitize in `setClipboard` |
 | `packages/core/src/engine/safety/logger.ts` | HR-06, HR-26 | stderr sink `{dev,ino}` guard; `JSVISION_DEBUG`/`JSVISION_LOG` rename |
 | `packages/core/src/engine/capability/env.ts` | HR-07 | UTF-8 locale ⇒ `glyphs.boxDrawing`+`halfBlocks` |
-| `packages/core/src/engine/host/host.ts` | HR-15 | reset diff baseline + decoder carry on restart |
+| `packages/core/src/engine/host/host.ts` | HR-15, HR-24 | reset diff baseline + decoder carry on restart (HR-15); arm the stdin flush timer for any ESC-prefixed carry (HR-24, `host.ts:114-122` — the decoder is pure/timerless) |
 | `packages/ui/src/reactive/{owner.ts,scheduler.ts}` | HR-03, HR-27, HR-28, HR-29 | disposed flag honored by execute/flush; throwing computed re-evaluable; compute-cycle detection; batch error policy |
 | `packages/ui/src/reactive/{for.ts,show.ts}` + `view/group.ts` | HR-13 | `addDynamic` runs the combinator under the group's owner |
 | `packages/ui/src/view/render-root.ts` | HR-12, HR-31, HR-34 | snapshot-and-clear-first; visibility flips via `invalidate()`; shadow-aware occlusion |
