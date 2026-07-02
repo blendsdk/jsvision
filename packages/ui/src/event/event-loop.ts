@@ -84,6 +84,7 @@ class EventLoopImpl implements EventLoop {
     this.root = root;
     this.renderRoot.mount(root); // RenderRoot.mount flushes the initial frame once, internally
     this.onFrame?.(this.renderRoot.buffer()); // deliver the first frame to the host sink (PA-6)
+    this.emitCaret(); // report the initial hardware-caret cell (PA-5)
   }
 
   dispatch(event: AppEvent): void {
@@ -97,6 +98,7 @@ class EventLoopImpl implements EventLoop {
     this.renderRoot.resize(size);
     this.renderRoot.flush();
     this.onFrame?.(this.renderRoot.buffer()); // push the resized frame to the host sink (PA-6)
+    this.emitCaret(); // the reflow may move the focused caret — re-report it (PA-5)
   }
 
   getFocused(): View | null {
@@ -180,6 +182,26 @@ class EventLoopImpl implements EventLoop {
     this.onIdle?.(); // the cascade drained (AR-58)
     this.renderRoot.flush(); // exactly one coalesced frame for the tick (AR-54, AR-64)
     this.onFrame?.(this.renderRoot.buffer()); // deliver that one frame to the host sink (PA-6/PF-003)
+    this.emitCaret(); // re-report the hardware-caret cell after the frame (PA-5)
+  }
+
+  /**
+   * Compute the focused leaf's absolute caret cell and deliver it to the hardware-caret sink (PA-5).
+   * Queried **post-flush** from the focus manager + the leaf's `desiredCaret()` + the render root's
+   * persisted origin — never collected during compose — so it stays correct across partial recomposes
+   * (PF-002). Delivers `null` when nothing is focused or the focused view wants no caret (blur, a
+   * non-text control). A no-op when no `onCaret` sink is wired (headless).
+   */
+  refreshCaret(): void {
+    this.emitCaret(); // public out-of-band re-emit (run() uses it to position the initial cursor)
+  }
+
+  private emitCaret(): void {
+    if (this.onCaret === undefined) return;
+    const leaf = this.focus.focusedLeafIn(this.scopeRoot());
+    const local = leaf?.desiredCaret() ?? null;
+    const origin = leaf !== null && local !== null ? this.renderRoot.originOf(leaf) : null;
+    this.onCaret(origin === null || local === null ? null : { x: origin.x + local.x, y: origin.y + local.y });
   }
 
   setCapture(view: View): void {

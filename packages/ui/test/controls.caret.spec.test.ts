@@ -1,22 +1,24 @@
 /**
- * Specification tests (immutable oracles) — RD-07 logical caret (ST-13). The hardware-caret seam
- * (ST-14) is added in Phase 5.
+ * Specification tests (immutable oracles) — RD-07 logical caret (ST-13) + the hardware-caret seam
+ * (ST-14).
  *
- * Source: jsvision-ui RD-07 AC-11 → ST-13 (essential-control-completions/07). TV: `TInputLine::draw`
- * `setCursor(displayedPos(curPos)-firstPos+1, 0)` (`tinputli.cpp:160`). The logical caret is our
- * addition (DEF-19a): the focused Input repaints that one buffer cell in a **reversed** field style
- * (fg/bg swapped) so the caret shows headless / on cursor-hidden terminals. Unit = code point (PA-1),
- * so `displayedPos(pos) == pos` in v1 (wide-glyph width-awareness = DEF-21). Expectations derive from
- * TV, not the implementation.
+ * Source: jsvision-ui RD-07 AC-11/AC-12 → ST-13/ST-14 (essential-control-completions/07). TV:
+ * `TInputLine::draw` `setCursor(displayedPos(curPos)-firstPos+1, 0)` (`tinputli.cpp:160`). The logical
+ * caret is our addition (DEF-19a): the focused Input repaints that one buffer cell in a **reversed**
+ * field style (fg/bg swapped) so the caret shows headless / on cursor-hidden terminals. The hardware
+ * caret (ST-14) is the loop's `onCaret` seam: it reports the focused leaf's **absolute** cell (queried
+ * post-flush from `desiredCaret()` + the render root's persisted origin — not collected during compose,
+ * so it survives partial recomposes, PF-002). Unit = code point (PA-1), so `displayedPos(pos) == pos`
+ * in v1 (wide-glyph width-awareness = DEF-21). Expectations derive from TV + the ACs, not the impl.
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities, defaultTheme } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
 import { View, Group } from '../src/view/index.js';
-import type { DrawContext } from '../src/view/index.js';
+import type { DrawContext, Point } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { signal } from '../src/reactive/index.js';
-import { Input } from '../src/controls/index.js';
+import { Input, Text } from '../src/controls/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -82,4 +84,75 @@ test('ST-13: an unfocused Input paints no caret cell', () => {
   const buf = loop.renderRoot.buffer();
   // No reversed cell anywhere on the field row: every text cell keeps the field bg.
   for (let x = 1; x < 5; x++) expect(buf.get(x, 0)?.bg).toBe(defaultTheme.inputNormal.bg);
+});
+
+// ST-14 / AC-12 — the loop's `onCaret` seam reports the focused Input's ABSOLUTE caret cell each
+// frame, and `null` once focus leaves the Input.
+test('ST-14: onCaret reports the focused Input absolute caret cell; null when focus leaves', () => {
+  const value = signal('abcd');
+  const { loop, stub } = mountInput({ value }, 10);
+  const carets: (Point | null)[] = [];
+  loop.onCaret = (c) => carets.push(c);
+  loop.dispatch(key('right')); // curPos 1 → local caret x=2; Input origin (0,0) → absolute {x:2,y:0}
+  expect(carets.at(-1)).toEqual({ x: 2, y: 0 });
+  loop.dispatch(key('right')); // curPos 2 → absolute {x:3,y:0}
+  expect(carets.at(-1)).toEqual({ x: 3, y: 0 });
+  loop.focusView(stub); // blur the Input → no caret requester
+  expect(carets.at(-1)).toBeNull();
+});
+
+// The absolute cell folds in the Input's non-zero origin (a second row in the column layout).
+test('ST-14: onCaret adds the focused view origin to the local caret cell', () => {
+  const value = signal('abcd');
+  const stub = new FocusStub();
+  const input = new Input({ value });
+  const root = new Group();
+  root.layout = { direction: 'col' };
+  stub.layout = { size: { kind: 'fixed', cells: 1 } }; // row 0
+  input.layout = { size: { kind: 'fixed', cells: 1 } }; // row 1 → origin y=1
+  root.add(stub);
+  root.add(input);
+  const loop = createEventLoop({ width: 10, height: 3 }, { caps });
+  loop.mount(root);
+  const carets: (Point | null)[] = [];
+  loop.onCaret = (c) => carets.push(c);
+  loop.focusView(input); // curPos 0 → local {x:1,y:0}; origin (0,1) → absolute {x:1,y:1}
+  expect(carets.at(-1)).toEqual({ x: 1, y: 1 });
+});
+
+// onFrame (buffer) and onCaret (cell) are INDEPENDENT additive seams — neither changes the other.
+test('ST-14: onFrame and onCaret are independent additive seams', () => {
+  const value = signal('ab');
+  const { loop } = mountInput({ value }, 10);
+  const frames: unknown[] = [];
+  const carets: (Point | null)[] = [];
+  loop.onFrame = (buf) => frames.push(buf);
+  loop.onCaret = (c) => carets.push(c);
+  loop.dispatch(key('right'));
+  expect(frames.at(-1)).toBe(loop.renderRoot.buffer()); // the buffer seam is unchanged
+  expect(carets.length).toBeGreaterThan(0); // the caret seam fires alongside, independently
+});
+
+// PF-002 — the caret is queried post-flush from the persisted origin, so a partial recompose that
+// omits the Input still reports the Input's caret correctly.
+test('ST-14: onCaret survives a partial recompose that omits the focused Input (PF-002)', () => {
+  const value = signal('abcd');
+  const label = signal('x');
+  const input = new Input({ value });
+  const text = new Text(() => label());
+  const root = new Group();
+  root.layout = { direction: 'col' };
+  input.layout = { size: { kind: 'fixed', cells: 1 } }; // row 0
+  text.layout = { size: { kind: 'fixed', cells: 1 } }; // row 1
+  root.add(input);
+  root.add(text);
+  const loop = createEventLoop({ width: 10, height: 3 }, { caps });
+  loop.mount(root);
+  loop.focusView(input);
+  loop.dispatch(key('right')); // caret at {x:2,y:0}
+  const carets: (Point | null)[] = [];
+  loop.onCaret = (c) => carets.push(c);
+  label.set('y'); // marks only the sibling Text dirty (a partial-recompose target)
+  loop.emitCommand('noop'); // one tick → partial recompose of Text only → re-queries the caret
+  expect(carets.at(-1)).toEqual({ x: 2, y: 0 }); // still correct from the Input's persisted origin
 });

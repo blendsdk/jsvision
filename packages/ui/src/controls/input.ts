@@ -41,7 +41,7 @@ import type { Signal } from '../reactive/index.js';
 import type { KeyEvent, MouseEvent, Style } from '@jsvision/core';
 import type { Validator } from './validators/index.js';
 import { selectionBlock, mousePos, motionOf, caretAfterMotion } from './input-selection.js';
-import { clipboardChord, clipboardCommand, applyPaste } from './input-clipboard.js';
+import { clipboardChord, clipboardCommand, applyPaste, insertFilled } from './input-clipboard.js';
 import type { ClipboardAction } from './input-clipboard.js';
 
 /** Left/right scroll arrows (TV `tvtext1.cpp:106-107`, `0x11`/`0x10`), unambiguous-narrow code points. */
@@ -300,9 +300,8 @@ export class Input extends View {
   protected pasteText(text: string): void {
     this.deleteSelect(); // replace the selection first
     const r = applyPaste(text, this.value(), this.curPos, this.maxLength, this.validator);
-    this.setValue(r.value);
+    this.setValue(r.value); // applyPaste fills each code point via insertFilled (PA-17)
     this.curPos = r.curPos;
-    this.applyFill(); // autoFill mask literals + case transforms after the pasted run (PA-17)
     this.collapseSelection();
     this.adjustScroll();
     this.invalidate();
@@ -383,33 +382,17 @@ export class Input extends View {
     const ch = inner.key === 'space' ? ' ' : [...inner.key].length === 1 ? inner.key : null;
     if (ch === null) return false; // a non-printable named key passes through
     this.deleteSelect(); // edit over a selection replaces it (tinputli.cpp:424)
-    const cur = this.value();
-    if (cur.length < this.maxLength) {
-      const candidate = cur.slice(0, this.curPos) + ch + cur.slice(this.curPos);
-      if (!this.validator || this.validator.isValidInput(candidate)) {
-        this.setValue(candidate);
-        this.curPos += 1;
-        this.applyFill(); // autoFill mask literals + case transforms (PA-17)
-      }
+    const r = insertFilled(ch, this.value(), this.curPos, this.maxLength, this.validator);
+    if (r !== null) {
+      // insertFilled applies the picture autoFill before validating, so leading/trailing mask
+      // literals auto-appear as you type (PA-17); the caret advances past them.
+      this.setValue(r.value);
+      this.curPos = r.curPos;
     }
     this.collapseSelection();
     this.adjustScroll();
     this.invalidate();
     return true;
-  }
-
-  /**
-   * Apply the validator's autoFill transform after accepting input (PA-17, TV `TPXPictureValidator`):
-   * insert trailing mask literals + case transforms, when it changes the value and fits `maxLength`;
-   * the caret follows to the end when already there. A no-op for validators without `fill`.
-   */
-  protected applyFill(): void {
-    const before = this.value();
-    const filled = this.validator?.fill?.(before);
-    if (filled === undefined || filled === before || filled.length > this.maxLength) return;
-    const atEnd = this.curPos === before.length;
-    this.setValue(filled);
-    if (atEnd) this.curPos = filled.length;
   }
 
   /** Remove the selected range `[selStart, selEnd)` and place the caret at `selStart` (TV `:203-211`). */

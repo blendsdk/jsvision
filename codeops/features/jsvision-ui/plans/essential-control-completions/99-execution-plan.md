@@ -1,7 +1,7 @@
 # 99 — Execution Plan
 
 > **Implements**: jsvision-ui/RD-07 · **CodeOps Skills Version**: 3.1.0
-> **Progress**: 26 / 32 tasks (81%) · **Last Updated**: 2026-07-02
+> **Progress**: 30 / 32 tasks (94%) · **Last Updated**: 2026-07-02
 
 Spec-first per capability: **spec tests → RED → implement → GREEN → impl tests → verify**. Every TV-derived
 component carries a **BEFORE-decode (GATE-1)** and **AFTER-diff (GATE-2)** task (fidelity directive,
@@ -104,17 +104,20 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
   controls tests green after the base refactor (no public-API or rendered-output change).
 
 ## Phase 5 — Hardware caret wiring + demos
-- [ ] **P5.1** Spec test ST-14 (`controls.caret.spec` hardware seam: `onCaret` payload + additive-seam
-  oracle + `onResume` re-apply) → **RED**.
-- [ ] **P5.2** Wire the caret in the **loop, post-`flush()`** (PF-002): `EventLoop` computes the absolute cell
-  from `focus.getFocused()` + `leaf.desiredCaret()` + `RenderRoot.originOf(leaf)` and fires `onCaret` right
-  after `onFrame` (runTick/resize/mount) — no compose-time collection; + `writeClipboard` firing + `run()`
-  co-owns the stream, writes `cursor.*`/clipboard post-`host.render`, re-applies on `onResume` (03-04) →
-  **GREEN**.
-- [ ] **P5.3** Extend `examples/controls-demo/` (`demo:controls`): steps for selection→copy→paste, a
-  `picture` field rejecting/auto-filling, a `MultiCheckGroup` cycling (ASCII frame per step) + its e2e.
-- [ ] **P5.4** Extend the `Input` kitchen-sink story: selection highlight, copy/paste, a `picture` field,
-  the visible caret. Smoke passes.
+- [x] **P5.1** ✅ 2026-07-02 Spec test ST-14 (`controls.caret.spec` — loop `onCaret` payload = focused Input absolute
+  cell, null on blur, origin-fold, additive-seam oracle, PF-002 partial-recompose persistence) → confirmed **RED**.
+- [x] **P5.2** ✅ 2026-07-02 Wired the caret in the **loop, post-`flush()`** (PF-002): `EventLoop.emitCaret` computes the
+  absolute cell from `focus.focusedLeafIn(scope)` + `leaf.desiredCaret()` + `RenderRoot.originOf(leaf)` and fires
+  `onCaret` right after `onFrame` (mount/resize/runTick) — no compose-time collection; + a minimal `refreshCaret()`
+  seam positions the initial cursor after run()'s first (non-tick) render. `run()` co-owns the output stream: writes
+  `cursor.show()+cursor.to`/`cursor.hide` post-`host.render` and OSC-52 clipboard sequences, re-applies the last caret
+  on `onResume` (SIGCONT). Run-integration covered in `controls.caret.impl`. → **GREEN**.
+- [x] **P5.3** ✅ 2026-07-02 Extended `examples/controls-demo/` (`demo:controls`): steps for Shift-select + bracketed
+  paste, a `picture('###-###-####')` field auto-filling dashes, a `MultiCheckGroup` cycling (ASCII frame per step).
+- [x] **P5.4** ✅ 2026-07-02 Extended the `Input` kitchen-sink story: a `picture('###-###-####')` phone field + a
+  selection/clipboard/caret hint line; smoke (18) passes. **Refinement:** autoFill now runs *before* validation
+  (shared `insertFilled` in `input-clipboard.ts`, used by `insertPrintable` + `applyPaste`) so trailing mask literals
+  auto-appear as you type; a leading mask literal is TV-faithfully rejected (`rScan = prError`, `tvalidat.cpp:447`).
 
 ## Phase 6 — Final gate
 - [ ] **P6.1** Packaging spec ST-15 + security spec ST-16 green; confirm every `03-*` AFTER-diff recorded.
@@ -129,7 +132,7 @@ Phase 1: [x] P1.1 [x] P1.2 [x] P1.3 [x] P1.4 [x] P1.5
 Phase 2: [x] P2.1 [x] P2.2 [x] P2.3 [x] P2.4 [x] P2.5
 Phase 3: [x] P3.1 [x] P3.2 [x] P3.3 [x] P3.4 [x] P3.5
 Phase 4: [x] P4.1 [x] P4.2 [x] P4.3a [x] P4.3b [x] P4.4 [x] P4.5 [x] P4.6 [x] P4.7
-Phase 5: [ ] P5.1 [ ] P5.2 [ ] P5.3 [ ] P5.4
+Phase 5: [x] P5.1 [x] P5.2 [x] P5.3 [x] P5.4
 Phase 6: [ ] P6.1 [ ] P6.2
 
 **Totals:** 7 phases · ~18 sessions · **32 tasks** · est. **20–32 h**. Spec-first (ST-01…ST-16 ↔ AC-1…AC-15);

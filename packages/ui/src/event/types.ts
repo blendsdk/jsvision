@@ -113,6 +113,12 @@ export interface EventLoop {
    */
   onCaret?: (cell: Point | null) => void;
   /**
+   * Re-emit the current hardware-caret cell to {@link onCaret} out of band (RD-07 PA-5). `run()` calls
+   * it once after painting the first frame — which is a direct `host.render`, not a loop tick, so no
+   * `onCaret` fired yet — to position the initial cursor. A no-op when `onCaret` is unset (headless).
+   */
+  refreshCaret(): void;
+  /**
    * Clipboard-write sink (RD-07 PA-5/PA-7). Receives a fully-formed OSC-52 sequence (already
    * base64-encoded + sanitized + caps-gated by core `setClipboard`) that `run()` writes to the
    * co-owned output stream — the same stream as {@link onCaret}. Sourced onto each envelope's
