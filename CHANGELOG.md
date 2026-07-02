@@ -31,8 +31,20 @@ the deprecation policy.
   the focused one. **Additive and non-breaking** — existing `Theme` consumers are
   unaffected; `defaultTheme.windowInactive` is the classic dimmed (dark-gray) chrome.
 
+- **`@jsvision/core`: additive `inputSelection` theme role (RD-07).** `Theme` gains an
+  `inputSelection` role (white-on-green, `getColor(3)` in the `TInputLine` palette chain,
+  `tinputli.cpp:84`) so the UI layer's `Input` can paint a text selection band distinctly
+  from the field. **Additive and non-breaking** — existing `Theme` consumers are unaffected;
+  `defaultTheme.inputSelection` is the classic DOS selection colour.
+
 ### Changed
 
+- **`@jsvision/core`: `defaultTheme.inputSelected` corrected to TV-faithful (RD-07).**
+  Pre-1.0 (unpublished) fix: `inputSelected` changed from white-on-green (`0x2F`) to
+  white-on-blue (`0x1F`) — Turbo Vision draws a focused `TInputLine` identically to an
+  unfocused one (`getColor(1) == getColor(2) == 0x1F`, `tinputli.cpp:84,139`); the green was
+  a mis-decode of the text-**selection** colour, now carried by the new `inputSelection` role.
+  Focus is instead marked by the RD-07 visible caret.
 - **`@jsvision/core`: the ambiguous-width probe now measures two glyph groups.**
   `probeAmbiguousWidth`/`WidthProbeResult` were amended in place (pre-1.0,
   unpublished): the single aggregate measurement became a grouped result
