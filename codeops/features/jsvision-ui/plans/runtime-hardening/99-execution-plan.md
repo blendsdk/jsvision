@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-02
-> **Progress**: 82/120 tasks (68%)
+> **Progress**: 105/120 tasks (88%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -429,29 +429,29 @@ kitchen-sink story tasks are required (AC-10 only keeps the existing smoke/demos
 - [x] 7.3.3 Full verify ✅ (completed: 2026-07-02 20:55)
 
 ### Phase 8: Controls minors (GATE)
-- [ ] 8.1.1 BEFORE-decode TInputLine
-- [ ] 8.1.2 BEFORE-decode TButton/TCluster/TStaticText
-- [ ] 8.1.3 ST-8.a–m specs (+ oracle corrections)
-- [ ] 8.1.4 RED run
-- [ ] 8.2.1 HR-43 paste mapping
-- [ ] 8.2.2 HR-45 caret math
-- [ ] 8.2.3 HR-46 drag guard
-- [ ] 8.2.4 HR-47 delete re-validate
-- [ ] 8.2.5 HR-48 word delete
-- [ ] 8.2.6 HR-54 double-click reset
-- [ ] 8.2.7 HR-58 maxLength clamp
-- [ ] 8.2.8 HR-59 selection clamp
-- [ ] 8.2.9 HR-55 JSDoc fix
-- [ ] 8.3.1 HR-44 dialog-wide hotkeys
-- [ ] 8.3.2 HR-52 disabled hot color
-- [ ] 8.3.3 HR-56 col-0 exclusion
-- [ ] 8.3.4 HR-57 verbatim whitespace
-- [ ] 8.3.5 HR-60 floored modulo
-- [ ] 8.3.6 GREEN run
-- [ ] 8.4.1 AFTER-diff TInputLine
-- [ ] 8.4.2 AFTER-diff TButton/TCluster/TStaticText
-- [ ] 8.4.3 Phase-8 impl tests
-- [ ] 8.4.4 Full verify
+- [x] 8.1.1 BEFORE-decode TInputLine ✅ (completed: 2026-07-02 21:40)
+- [x] 8.1.2 BEFORE-decode TButton/TCluster/TStaticText ✅ (completed: 2026-07-02 21:40)
+- [x] 8.1.3 ST-8.a–m specs (+ oracle corrections) ✅ (completed: 2026-07-02 21:40)
+- [x] 8.1.4 RED run ✅ (completed: 2026-07-02 21:40)
+- [x] 8.2.1 HR-43 paste mapping ✅ (completed: 2026-07-02 21:40)
+- [x] 8.2.2 HR-45 caret math ✅ (completed: 2026-07-02 21:40)
+- [x] 8.2.3 HR-46 drag guard ✅ (completed: 2026-07-02 21:40)
+- [x] 8.2.4 HR-47 delete re-validate ✅ (completed: 2026-07-02 21:40)
+- [x] 8.2.5 HR-48 word delete ✅ (completed: 2026-07-02 21:40)
+- [x] 8.2.6 HR-54 double-click reset ✅ (completed: 2026-07-02 21:40)
+- [x] 8.2.7 HR-58 maxLength clamp ✅ (completed: 2026-07-02 21:40)
+- [x] 8.2.8 HR-59 selection clamp ✅ (completed: 2026-07-02 21:40)
+- [x] 8.2.9 HR-55 JSDoc fix ✅ (completed: 2026-07-02 21:40)
+- [x] 8.3.1 HR-44 dialog-wide hotkeys ✅ (completed: 2026-07-02 21:40)
+- [x] 8.3.2 HR-52 disabled hot color ✅ (completed: 2026-07-02 21:40)
+- [x] 8.3.3 HR-56 col-0 exclusion ✅ (completed: 2026-07-02 21:40)
+- [x] 8.3.4 HR-57 verbatim whitespace ✅ (completed: 2026-07-02 21:40)
+- [x] 8.3.5 HR-60 floored modulo ✅ (completed: 2026-07-02 21:40)
+- [x] 8.3.6 GREEN run ✅ (completed: 2026-07-02 21:40)
+- [x] 8.4.1 AFTER-diff TInputLine ✅ (completed: 2026-07-02 21:40)
+- [x] 8.4.2 AFTER-diff TButton/TCluster/TStaticText ✅ (completed: 2026-07-02 21:40)
+- [x] 8.4.3 Phase-8 impl tests ✅ (completed: 2026-07-02 21:40)
+- [x] 8.4.4 Full verify ✅ (completed: 2026-07-02 21:40)
 
 ### Phase 9: Containers/lists minors (GATE)
 - [ ] 9.1.1 BEFORE-decode TScrollBar/TListViewer/TScroller

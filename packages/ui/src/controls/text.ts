@@ -9,12 +9,15 @@
  */
 import { View } from '../view/index.js';
 import type { DrawContext } from '../view/index.js';
-import { glyphWidth, stringWidth } from './measure.js';
+import { glyphWidth } from './measure.js';
 
 /**
- * Greedy word-wrap to `width` display columns, faithful to `TStaticText::draw` (`tstatict.cpp:74-88`):
- * pack whole space-separated words onto a line until the next word would overflow, then wrap; a word
- * wider than the whole line is hard-broken at the width boundary. Explicit `\n` forces a line break.
+ * Word-wrap to `width` display columns, faithful to `TStaticText::draw` (`tstatict.cpp:44-105`): each
+ * output line is a **verbatim** source substring — TV draws `s.substr(i, p-i)` between break points,
+ * so **internal whitespace runs and leading indentation are preserved, not collapsed** (HR-57). Break
+ * after the last whole word that fits; a single word wider than the view is hard-broken at the width
+ * boundary; the break spaces are dropped from the next line's start (continuation lines are
+ * left-flush). Explicit `\n` forces a line break.
  *
  * @param content The text to wrap.
  * @param width   The view width in display columns.
@@ -24,44 +27,41 @@ function wrapText(content: string, width: number): string[] {
   const lines: string[] = [];
   if (width <= 0) return lines;
   for (const paragraph of content.split('\n')) {
-    let cur = '';
-    let curW = 0;
-    for (const word of paragraph.match(/\S+/g) ?? []) {
-      const wordW = stringWidth(word);
-      if (wordW > width) {
-        // The word alone overflows the line → hard-break it into width-sized chunks (tstatict.cpp:74).
-        if (cur !== '') {
-          lines.push(cur);
-          cur = '';
-          curW = 0;
-        }
-        let chunk = '';
-        let chunkW = 0;
-        for (const ch of word) {
-          const cw = glyphWidth(ch);
-          if (chunkW + cw > width) {
-            lines.push(chunk);
-            chunk = '';
-            chunkW = 0;
-          }
-          chunk += ch;
-          chunkW += cw;
-        }
-        cur = chunk;
-        curW = chunkW;
-        continue;
-      }
-      const sep = cur === '' ? 0 : 1; // a separating space between words
-      if (curW + sep + wordW > width) {
-        lines.push(cur);
-        cur = word;
-        curW = wordW;
-      } else {
-        cur = cur === '' ? word : `${cur} ${word}`;
-        curW += sep + wordW;
-      }
+    const n = paragraph.length;
+    if (n === 0) {
+      lines.push(''); // a blank source line stays a blank output line
+      continue;
     }
-    lines.push(cur); // flush the paragraph's last (or only/empty) line
+    let i = 0; // the start index of the current output line
+    while (i < n) {
+      let p = i;
+      let w = 0;
+      let lastWordEnd = -1; // index just past the last whole word that fits within `width`
+      let fitsAll = true;
+      while (p < n) {
+        const ch = paragraph[p] ?? ' ';
+        const cw = glyphWidth(ch);
+        if (w + cw > width) {
+          fitsAll = false;
+          break;
+        }
+        w += cw;
+        p += 1;
+        if (ch !== ' ' && (p >= n || paragraph[p] === ' ')) lastWordEnd = p; // just passed a word-end
+      }
+      let end: number; // exclusive end of this line's verbatim source
+      if (fitsAll) {
+        end = n;
+      } else if (lastWordEnd > i) {
+        end = lastWordEnd; // break after the last whole word (TV backs up to the word boundary)
+      } else {
+        end = p > i ? p : i + 1; // a single word wider than the view → hard-break at the width edge
+      }
+      lines.push(paragraph.slice(i, end)); // verbatim — whitespace between words is kept
+      let next = end;
+      while (next < n && paragraph[next] === ' ') next += 1; // drop the break spaces before the next line
+      i = fitsAll ? n : next;
+    }
   }
   return lines;
 }

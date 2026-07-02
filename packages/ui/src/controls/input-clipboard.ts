@@ -69,10 +69,34 @@ export function insertFilled(
   validator?: Validator,
 ): PasteResult | null {
   const candidate = value.slice(0, pos) + ch + value.slice(pos);
-  const filled = validator?.fill?.(candidate) ?? candidate;
-  if (filled.length > maxLength) return null; // bounded (security, AC-15)
+  let filled = validator?.fill?.(candidate) ?? candidate;
   if (validator && !validator.isValidInput(filled)) return null; // reject an invalid keystroke
-  return { value: filled, curPos: pos + (filled.length - value.length) };
+  // HR-58 (tinputli.cpp:284-287): clamp-and-accept — TV truncates `newData` at `maxLen` rather than
+  // rejecting the keystroke; still bounded (security, AC-15).
+  if (filled.length > maxLength) filled = filled.slice(0, maxLength);
+  // HR-45 (tinputli.cpp:443,315-320): the caret advances past the TYPED char only. `checkValid`'s
+  // autoFill may append TRAILING literals, but TV only jumps the caret to the new end when it was
+  // already at/past the post-insert length (typing at the very end). `candidate` = post-insert,
+  // pre-fill; so a mid-string insert whose fill appends trailing literals keeps the caret local.
+  let caret = pos + ch.length;
+  if (caret >= candidate.length && filled.length > candidate.length) caret = filled.length;
+  if (caret > filled.length) caret = filled.length; // keep the caret within a clamped result (HR-58)
+  return { value: filled, curPos: caret };
+}
+
+/**
+ * Map a pasted code point for insertion (HR-43, `tinputli.cpp:430-431`): tab/CR/LF → a single space;
+ * other C0 controls + DEL are dropped (our stricter allowlist posture + the HR-05 no-control-in-cell
+ * invariant). Any other code point passes through unchanged.
+ *
+ * @param ch A single pasted code point.
+ * @returns The mapped code point, or `null` to drop it.
+ */
+export function mapPasteChar(ch: string): string | null {
+  if (ch === '\t' || ch === '\r' || ch === '\n') return ' ';
+  const code = ch.codePointAt(0) ?? 0;
+  if (code < 0x20 || code === 0x7f) return null; // drop other C0 / DEL
+  return ch;
 }
 
 /**
@@ -99,7 +123,9 @@ export function applyPaste(
   let pos = curPos;
   for (const ch of text) {
     if (out.length >= maxLength) break; // bounded (security, AC-15)
-    const r = insertFilled(ch, out, pos, maxLength, validator);
+    const mapped = mapPasteChar(ch); // HR-43: \t\r\n→space, drop other C0/DEL before insert
+    if (mapped === null) continue;
+    const r = insertFilled(mapped, out, pos, maxLength, validator);
     if (r === null) continue; // drop an invalid / over-cap code point
     out = r.value;
     pos = r.curPos;

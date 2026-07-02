@@ -55,9 +55,12 @@ export class MultiCheckGroup extends Cluster {
 
   protected override press(i: number): void {
     // Cycle (state+1) % selRange, writing a full-length array so a short bound value is normalized.
+    // HR-60: use a FLOORED modulo — JS `%` keeps the sign, so a negative externally-bound state would
+    // cycle further negative; `((n % m) + m) % m` normalizes any state back into `[0, selRange)`.
     const cur = this.value();
     const next = this.rawLabels.map((_, idx) => cur[idx] ?? 0);
-    next[i] = (next[i] + 1) % this.selRange;
+    const m = this.selRange;
+    next[i] = (((next[i] + 1) % m) + m) % m;
     this.value.set(next);
   }
 
