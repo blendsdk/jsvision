@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-02 (Phase 3 complete)
-> **Progress**: 39/47 tasks (83%)
+> **Last Updated**: 2026-07-02 (COMPLETE — all 5 phases)
+> **Progress**: 47/47 tasks (100%) ✅
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -241,14 +241,14 @@ dismissal, generalizing the menu overlay/catcher without menu-specific state.
 - [x] 3.3.3 `yarn verify` green — 2026-07-02 (8 tasks; ui 652 tests; no regressions)
 
 ### Phase 4: Stories + demo + gate
-- [ ] 4.1.1 `History` kitchen-sink story
-- [ ] 4.1.2 `ComboBox` kitchen-sink story
-- [ ] 4.1.3 Register + smoke test (ST-36)
-- [ ] 4.2.1 `demo:dropdowns` headless walkthrough
-- [ ] 4.2.2 `dropdowns-demo.e2e.test.ts`
-- [ ] 4.3.1 Packaging + security specs + `check:deps` (ST-34/ST-35)
-- [ ] 4.3.2 Full verify + e2e + CHANGELOG + roadmap
-- [ ] 4.3.3 Commit via /gitcm
+- [x] 4.1.1 `History` kitchen-sink story — 2026-07-02 `kitchen-sink/stories/history.story.ts` (seeded MRU + live value echo)
+- [x] 4.1.2 `ComboBox` kitchen-sink story — 2026-07-02 `kitchen-sink/stories/combobox.story.ts` (both modes + bound value/text echo)
+- [x] 4.1.3 Register + smoke test (ST-36) — 2026-07-02 `stories/index.ts` (+ new "Dropdowns" category); smoke green (20/20)
+- [x] 4.2.1 `demo:dropdowns` headless walkthrough — 2026-07-02 `dropdowns-demo/main.ts` + `package.json` (History pick → editable filter/pick → select-only type-ahead/pick → Esc-cancel, ASCII frame per step; overlay+popupHost wired)
+- [x] 4.2.2 `dropdowns-demo.e2e.test.ts` — 2026-07-02 (spawns tsx, exit 0, asserts icon glyphs + all pick/type-ahead/cancel narration)
+- [x] 4.3.1 Packaging + security specs + `check:deps` (ST-34/ST-35) — 2026-07-02 `dropdown.packaging.spec.test.ts` (8/8: exports + files ≤500 (max 260) + only `@jsvision/core` dep; sanitize raw-escape/OSC + bounded/bounds-checked store + maxLength clamp). `yarn check:deps` green.
+- [x] 4.3.2 Full verify + e2e + CHANGELOG + roadmap — 2026-07-02 (`yarn verify` 8/8 + ui 660 unit; `yarn test:e2e` 5/5; CHANGELOG RD-14 entry; roadmap RD-14 → Done ✅)
+- [x] 4.3.3 Commit via /gitcm — 2026-07-02
 
 ---
 
