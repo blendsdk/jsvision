@@ -26,6 +26,14 @@ export interface ViewHost {
   markRepaint(view: View): void;
   /** Mark the tree as needing reflow and schedule a flush (AR-33). */
   markRelayout(): void;
+  /**
+   * Re-home focus after `group` lost its currently-focused child to removal (RD-13 HR-10/PA-10).
+   * Optional: wired only when an event loop is attached (it owns the focus manager). A view-only
+   * render root leaves it unset, so `Group.remove` just clears its `current` pointer.
+   *
+   * @param group The group whose focused child was removed.
+   */
+  healFocus?(group: View): void;
 }
 
 /**

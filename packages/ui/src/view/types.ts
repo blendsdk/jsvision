@@ -68,6 +68,11 @@ export interface RenderRootOptions {
   schedule?: (flush: () => void) => void;
   /** Draw-error logger; defaults to a disabled `createLogger()` (AR-42). */
   logger?: Logger;
+  /**
+   * Focus re-home seam (RD-13 HR-10/PA-10): the event loop wires this so a group removing its
+   * focused child can re-home focus through the focus manager. Unset in a view-only render root.
+   */
+  healFocus?: (group: View) => void;
 }
 
 // --- RD-04 event-handler contract types ---------------------------------------------------------
@@ -118,6 +123,14 @@ export interface DispatchEvent {
   readonly setCapture?: (view: View) => void;
   /** Release the pointer capture (RD-11 PA-16); a no-op if none is set. Pairs with {@link setCapture}. */
   readonly releaseCapture?: () => void;
+  /**
+   * Whether `view` currently holds the pointer capture (RD-13 HR-14/PA-13). A read-only query beside
+   * {@link setCapture}/{@link releaseCapture}: a view mid-gesture (Desktop drag, StatusLine press)
+   * checks this before applying a move, so a capture lost externally (a modal opened/closed mid-drag)
+   * cleanly aborts the gesture instead of teleporting to the cursor. Same source/availability as
+   * {@link emit} (present during real dispatch, absent in bare unit-constructed envelopes).
+   */
+  readonly hasCapture?: (view: View) => boolean;
   /**
    * Write UTF-8 `text` to the system clipboard (RD-07 PA-5/PA-7) — used by `Input` copy/cut. Same
    * source/availability as {@link emit} (present during real dispatch, absent in bare unit-constructed

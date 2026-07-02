@@ -50,9 +50,14 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
     return true;
   };
 
-  /** The leaf focusable predicate: `visible && !disabled && focusable` + no blocking ancestor (AR-56). */
+  /**
+   * The leaf focusable predicate: `mounted && visible && !disabled && focusable` + no blocking
+   * ancestor (AR-56). HR-11: a **detached** (unmounted) view has `parent === null`, so
+   * `noBlockingAncestor` trivially passes — requiring `mounted` makes `focusView(detachedLeaf)` a
+   * genuine no-op instead of blurring the real focus while its chain mutation silently fails.
+   */
   const isFocusable = (view: View): boolean =>
-    view.state.visible && !view.state.disabled && view.focusable && noBlockingAncestor(view);
+    view.mounted && view.state.visible && !view.state.disabled && view.focusable && noBlockingAncestor(view);
 
   /** Whether a group has at least one focusable descendant (AR-65). */
   const isFocusableContainer = (group: Group): boolean => {

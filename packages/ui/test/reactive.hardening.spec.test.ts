@@ -9,7 +9,10 @@
  * Later hardening phases append their reactive oracles (ST-3.d, ST-6.a–c) to this file.
  */
 import { test, expect } from 'vitest';
-import { signal, effect, createRoot, batch, Show } from '../src/reactive/index.js';
+import { resolveCapabilities } from '@jsvision/core';
+import { signal, effect, createRoot, batch, Show, For } from '../src/reactive/index.js';
+import { View, Group, createRenderRoot } from '../src/view/index.js';
+import type { DrawContext } from '../src/view/index.js';
 
 // ST-1.z — dispose during a batch that also wrote a tracked source: the effect never re-runs.
 test('ST-1.z: an effect disposed mid-batch is not resurrected by the closing flush', () => {
@@ -77,4 +80,42 @@ test('ST-1.z2: a Show branch effect torn down mid-flush is not resurrected', () 
   expect(innerRuns).toBe(1); // removed from s's observers — later writes reach it zero times
 
   dispose();
+});
+
+// ST-3.d — addDynamic constructs its combinator under the group scope, so the For driving effect is
+// disposed on group unmount: post-unmount writes trigger zero render calls and zero new scopes (HR-13).
+test('ST-3.d: an addDynamic For is disposed on group unmount — no post-unmount reconcile', () => {
+  const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
+
+  class Leaf extends View {
+    draw(_ctx: DrawContext): void {}
+  }
+
+  const items = signal<number[]>([1, 2]);
+  let renderCalls = 0;
+
+  const group = new Group();
+  group.layout = { direction: 'col' };
+  group.addDynamic(() =>
+    For(
+      () => items(),
+      (n) => n,
+      (_n) => {
+        renderCalls += 1;
+        return new Leaf();
+      },
+    ),
+  );
+  const outer = new Group();
+  outer.add(group);
+
+  const rr = createRenderRoot({ width: 10, height: 5 }, { caps });
+  rr.mount(outer);
+  const callsAfterMount = renderCalls;
+  expect(callsAfterMount).toBe(2); // rendered items 1 and 2 once each
+
+  outer.remove(group); // unmount the group → the For (owned by the group scope) disposes (HR-13)
+
+  items.set([1, 2, 3]); // would render item 3 if the For were still live
+  expect(renderCalls).toBe(callsAfterMount); // render fn not called again — zero new scopes
 });

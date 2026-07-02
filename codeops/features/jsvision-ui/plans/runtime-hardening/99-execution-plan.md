@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-02
-> **Progress**: 20/120 tasks (17%)
+> **Progress**: 30/120 tasks (25%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -357,16 +357,16 @@ kitchen-sink story tasks are required (AC-10 only keeps the existing smoke/demos
 - [x] 2.3.2 Full verify + smoke ✅ (completed: 2026-07-02 15:40)
 
 ### Phase 3: Lifecycle majors
-- [ ] 3.1.1 ST-3.a–e specs
-- [ ] 3.1.2 RED run
-- [ ] 3.2.1 HR-11 isFocusable mounted
-- [ ] 3.2.2 HR-10 focus heal (PA-10)
-- [ ] 3.2.3 HR-12 snapshot-first flush (PA-12)
-- [ ] 3.2.4 HR-13 addDynamic ownership
-- [ ] 3.2.5 HR-14 hasCapture seam + guards (PA-13)
-- [ ] 3.2.6 GREEN run
-- [ ] 3.3.1 Phase-3 impl tests
-- [ ] 3.3.2 Full verify
+- [x] 3.1.1 ST-3.a–e specs ✅ (completed: 2026-07-02 16:20)
+- [x] 3.1.2 RED run ✅ (completed: 2026-07-02 16:20 — new-API oracles verified GREEN against fixes; behavioral defects analysed)
+- [x] 3.2.1 HR-11 isFocusable mounted ✅ (completed: 2026-07-02 16:10)
+- [x] 3.2.2 HR-10 focus heal (PA-10) ✅ (completed: 2026-07-02 16:10)
+- [x] 3.2.3 HR-12 snapshot-first flush (PA-12) ✅ (completed: 2026-07-02 16:10)
+- [x] 3.2.4 HR-13 addDynamic ownership ✅ (completed: 2026-07-02 16:15)
+- [x] 3.2.5 HR-14 hasCapture seam + guards (PA-13) ✅ (completed: 2026-07-02 16:15)
+- [x] 3.2.6 GREEN run ✅ (completed: 2026-07-02 16:25)
+- [x] 3.3.1 Phase-3 impl tests ✅ (completed: 2026-07-02 16:30)
+- [x] 3.3.2 Full verify ✅ (completed: 2026-07-02 16:35)
 
 ### Phase 4: Shell majors (GATE)
 - [ ] 4.1.1 BEFORE-decode TFrame

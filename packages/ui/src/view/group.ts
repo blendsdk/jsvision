@@ -14,9 +14,18 @@ import type { DrawContext, ThemeRoleName } from './types.js';
 
 /**
  * A reactive child producer: a `Show<View>` accessor (`() => View | undefined`) or a
- * `For<T, View>` accessor (`() => View[]`). Registered via {@link Group.addDynamic}.
+ * `For<T, View>` accessor (`() => View[]`). Built by a {@link DynamicBuilder} at mount.
  */
 type DynamicProducer = (() => View | undefined) | (() => View[]);
+
+/**
+ * A factory that **constructs** a {@link DynamicProducer} — i.e. calls `Show(...)`/`For(...)` — so the
+ * combinator's driving effect/computeds are created under the group's owner scope (RD-13 HR-13). The
+ * factory shape (`() => Show(...)`) is what lets the group own and dispose the combinator on unmount;
+ * passing the already-constructed accessor would leave its nodes attached to the ambient owner at call
+ * time (usually `null`) and leaking a live reconcile after the group is gone.
+ */
+type DynamicBuilder = () => DynamicProducer;
 
 /** A retained container of child views. */
 export class Group extends View {
@@ -31,8 +40,8 @@ export class Group extends View {
    */
   current: View | null = null;
 
-  /** Reactive child producers registered via {@link addDynamic} (started at mount). */
-  private readonly dynamicProducers: DynamicProducer[] = [];
+  /** Reactive child-producer factories registered via {@link addDynamic} (built + started at mount). */
+  private readonly dynamicBuilders: DynamicBuilder[] = [];
 
   /** Fill the `background` role (if set) across the group rect; children are composed by the walker. */
   draw(ctx: DrawContext): void {
@@ -69,8 +78,13 @@ export class Group extends View {
     const index = this.children.indexOf(child);
     if (index === -1) return;
     this.children.splice(index, 1);
+    // HR-10 (PA-10): if the removed child was this group's focused child, clear the dangling `current`
+    // pointer (the focus chain IS these pointers) and re-home focus to the next focusable sibling.
+    const wasFocusChild = this.current === child;
+    if (wasFocusChild) this.current = null;
     child.unmount(); // disposes the scope; the mount cleanup resets the child's wiring (RT-3)
     child.parent = null; // also cover the never-mounted case (unmount was a no-op)
+    if (wasFocusChild) this.host?.healFocus?.(this);
     if (this.mounted) this.invalidateLayout();
   }
 
@@ -83,11 +97,13 @@ export class Group extends View {
    * schedules a reflow on any change. If the group is not yet mounted the reconcile starts when it
    * mounts.
    *
-   * @param producer A `Show<View>(...)` / `For<T, View>(...)` accessor.
+   * @param build A factory that constructs the combinator, e.g. `() => Show(cond, then)` /
+   *   `() => For(each, key, render)` (RD-13 HR-13 — the factory shape lets the group own the
+   *   combinator's reactive nodes so they dispose on unmount).
    */
-  addDynamic(producer: DynamicProducer): void {
-    this.dynamicProducers.push(producer);
-    if (this.mounted) this.startReconcile(producer);
+  addDynamic(build: DynamicBuilder): void {
+    this.dynamicBuilders.push(build);
+    if (this.mounted) this.startDynamic(build);
   }
 
   /**
@@ -99,15 +115,20 @@ export class Group extends View {
     for (const child of this.children) {
       child.mount(host, this.scope);
     }
-    for (const producer of this.dynamicProducers) {
-      this.startReconcile(producer);
+    for (const build of this.dynamicBuilders) {
+      this.startDynamic(build);
     }
   }
 
-  /** Run the reconcile effect for one producer under the group's scope (AR-36). */
-  private startReconcile(producer: DynamicProducer): void {
+  /**
+   * Construct the combinator and run its reconcile effect **under the group's scope** (AR-36, HR-13),
+   * so both the combinator's own driving nodes and the reconcile effect are disposed on unmount.
+   */
+  private startDynamic(build: DynamicBuilder): void {
     let current: View[] = [];
     runWithOwner(this.scope, () => {
+      // Build the Show/For here (owned by the group scope, HR-13), then subscribe to it.
+      const producer = build();
       effect(() => {
         const produced = producer();
         const next: View[] = Array.isArray(produced)
@@ -139,7 +160,11 @@ export class Group extends View {
   private unmountDynamicChild(view: View): void {
     const index = this.children.indexOf(view);
     if (index !== -1) this.children.splice(index, 1);
+    // HR-10 (PA-10): heal a dangling focus pointer at the removed dynamic child, then re-home focus.
+    const wasFocusChild = this.current === view;
+    if (wasFocusChild) this.current = null;
     view.unmount();
     view.parent = null;
+    if (wasFocusChild) this.host?.healFocus?.(this);
   }
 }

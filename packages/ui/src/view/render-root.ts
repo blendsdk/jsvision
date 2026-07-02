@@ -193,6 +193,7 @@ class RenderRootImpl implements RenderRoot, ViewHost {
   private readonly caps: CapabilityProfile;
   private readonly logger: Logger;
   private readonly scheduler: (flush: () => void) => void;
+  private readonly healFocusSeam?: (group: View) => void;
 
   private rootView: View | null = null;
   private disposeRoot: (() => void) | null = null;
@@ -208,7 +209,13 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     this.theme = opts.theme ?? defaultTheme;
     this.logger = opts.logger ?? createLogger();
     this.scheduler = opts.schedule ?? ((flush): void => queueMicrotask(flush));
+    this.healFocusSeam = opts.healFocus;
     this.current = new ScreenBuffer(size.width, size.height, BLANK);
+  }
+
+  /** @internal ViewHost — re-home focus after a group lost its focused child (RD-13 HR-10). */
+  healFocus(group: View): void {
+    this.healFocusSeam?.(group);
   }
 
   mount(root: View): void {
@@ -252,10 +259,20 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     if (this.rootView === null) return;
 
     const previous = this.current.clone(); // faithful snapshot for the damage diff (PA-8)
-    if (this.needsReflow) {
+
+    // HR-12 (PA-12): snapshot & CLEAR the pending-work flags BEFORE doing the work. `reflow()` fires
+    // `onMount` callbacks (the documented `bind()` site) — an `onMount(() => group.add(child))` sets
+    // `needsReflow`/dirty mid-flush; clearing first means those land in the now-empty live sets and
+    // schedule the NEXT tick (the coalescing scheduler drives the follow-up frame) instead of being
+    // clobbered by a trailing reset that dropped them forever.
+    const wasReflow = this.needsReflow;
+    this.needsReflow = false;
+    const dirtyViews = topmostDirty(this.dirty);
+    this.dirty.clear();
+
+    if (wasReflow) {
       // Relayout phase: reflow moves bounds, so the cached compose contexts are stale → full compose.
       reflow(this.rootView, this.viewport);
-      this.needsReflow = false;
       this.fullCompose();
     } else {
       // Repaint phase: recompose only the dirty subtrees from their cached contexts (AC-7) — but
@@ -263,7 +280,6 @@ class RenderRootImpl implements RenderRoot, ViewHost {
       // over it. If a dirty view is occluded by a later-painted view outside its subtree (overlapping
       // windows), redrawing just that subtree would bleed it over its occluder, so escalate to a full
       // z-ordered recompose for this frame. The fast-path holds for non-overlapping UIs.
-      const dirtyViews = topmostDirty(this.dirty);
       if (this.anyOccluded(dirtyViews)) {
         this.fullCompose();
       } else {
@@ -275,7 +291,6 @@ class RenderRootImpl implements RenderRoot, ViewHost {
         }
       }
     }
-    this.dirty.clear();
     this.lastFrame = serialize(this.current, previous, { caps: this.caps });
   }
 

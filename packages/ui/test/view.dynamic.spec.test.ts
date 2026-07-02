@@ -33,7 +33,7 @@ test('ST-12: Show<View> mounts/unmounts a child in a Group and runs its onCleanu
 
   const root = new Group();
   root.layout = { direction: 'col' };
-  root.addDynamic(
+  root.addDynamic(() =>
     Show(
       () => shown(),
       () => a,
@@ -60,7 +60,7 @@ test('ST-12: For<T, View> reconciles keyed children in a Group', () => {
 
   const root = new Group();
   root.layout = { direction: 'col' };
-  root.addDynamic(
+  root.addDynamic(() =>
     For(
       () => items(),
       (n) => n,

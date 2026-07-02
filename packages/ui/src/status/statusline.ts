@@ -172,6 +172,14 @@ export class StatusLine extends View {
         this.invalidate();
         ev.handled = true;
       } else if ((inner.kind === 'move' || inner.kind === 'drag') && this.holding) {
+        // HR-14 (PA-13): abandon the press tracking if the capture was lost externally (a modal
+        // opened mid-press) — otherwise a later move re-highlights from stale `holding` state.
+        if (ev.hasCapture !== undefined && !ev.hasCapture(this)) {
+          this.holding = false;
+          this.pressed = null;
+          this.invalidate();
+          return;
+        }
         const next = this.itemAt(ev.local.x)?.item ?? null;
         if (next !== this.pressed) {
           this.pressed = next;

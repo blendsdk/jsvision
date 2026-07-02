@@ -22,7 +22,7 @@ test('For key reorder reuses the same view instances (retained identity through 
   const made = new Map<number, Leaf>();
   const root = new Group();
   root.layout = { direction: 'col' };
-  root.addDynamic(
+  root.addDynamic(() =>
     For(
       () => items(),
       (n) => n,
@@ -53,7 +53,7 @@ test('Show else-branch mounts when false and swaps on flip', () => {
   const elseView = new Leaf();
   const root = new Group();
   root.layout = { direction: 'col' };
-  root.addDynamic(
+  root.addDynamic(() =>
     Show(
       () => cond(),
       () => thenView,
@@ -76,7 +76,7 @@ test('a dropped For item runs its onCleanup and no further work', () => {
   const cleanups = new Map<number, number>();
   const root = new Group();
   root.layout = { direction: 'col' };
-  root.addDynamic(
+  root.addDynamic(() =>
     For(
       () => items(),
       (n) => n,

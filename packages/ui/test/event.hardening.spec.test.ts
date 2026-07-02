@@ -11,12 +11,30 @@
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
-import type { MouseEvent } from '@jsvision/core';
+import type { KeyEvent, MouseEvent } from '@jsvision/core';
+import { For, signal } from '../src/reactive/index.js';
 import { View, Group } from '../src/view/index.js';
 import type { DrawContext, DispatchEvent, Point } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
+
+function keyEvent(key: string): KeyEvent {
+  return { type: 'key', key, ctrl: false, alt: false, shift: false };
+}
+
+/** A focusable leaf that counts the events it receives. */
+class FocusLeaf extends View {
+  events = 0;
+  constructor() {
+    super();
+    this.focusable = true;
+  }
+  draw(_ctx: DrawContext): void {}
+  override onEvent(_ev: DispatchEvent): void {
+    this.events += 1;
+  }
+}
 
 /** A 1-based SGR mouse-down at (x, y). */
 function mouseDown(x: number, y: number): MouseEvent {
@@ -123,4 +141,97 @@ test('ST-1.y-prop: modal ev.local is offset-invariant across ancestor offsets', 
     expect(child.locals.length, `offset ${offset.x},${offset.y}`).toBe(1);
     expect(child.locals[0], `offset ${offset.x},${offset.y}`).toEqual(localWanted);
   }
+});
+
+// ST-3.a — removing the focused child re-homes focus to the next focusable sibling (else null); a
+// dispatched key never reaches the removed view (HR-10/PA-10).
+test('ST-3.a: removing the focused child re-homes focus to a sibling, then to null', () => {
+  const a = new FocusLeaf();
+  const b = new FocusLeaf();
+  const root = new Group();
+  root.add(a);
+  root.add(b);
+  const loop = createEventLoop({ width: 20, height: 5 }, { caps });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 5 };
+  a.bounds = { x: 0, y: 0, width: 5, height: 1 };
+  b.bounds = { x: 5, y: 0, width: 5, height: 1 };
+
+  loop.focusView(a);
+  expect(loop.getFocused()).toBe(a);
+
+  root.remove(a); // remove the focused child
+  expect(loop.getFocused()).toBe(b); // re-homed to the sibling
+
+  const aBefore = a.events;
+  loop.dispatch(keyEvent('x'));
+  expect(a.events).toBe(aBefore); // no key reached the removed view
+  expect(b.events).toBeGreaterThan(0); // delivered to the re-homed focus
+
+  root.remove(b); // remove the last focusable child
+  expect(loop.getFocused()).toBeNull(); // nothing left → null
+});
+
+// ST-3.a — the same re-home holds for the dynamic-child (For) removal path (unmountDynamicChild).
+test('ST-3.a: removing the focused dynamic child re-homes focus (unmountDynamicChild)', () => {
+  const items = signal<number[]>([1, 2]);
+  const leaves = new Map<number, FocusLeaf>();
+  const root = new Group();
+  root.layout = { direction: 'col' };
+  root.addDynamic(() =>
+    For(
+      () => items(),
+      (n) => n,
+      (n) => {
+        const leaf = new FocusLeaf();
+        leaves.set(n, leaf);
+        return leaf;
+      },
+    ),
+  );
+  const loop = createEventLoop({ width: 20, height: 5 }, { caps });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 5 };
+
+  const one = leaves.get(1);
+  const two = leaves.get(2);
+  if (one === undefined || two === undefined) throw new Error('leaves not produced');
+  one.bounds = { x: 0, y: 0, width: 5, height: 1 };
+  two.bounds = { x: 0, y: 1, width: 5, height: 1 };
+
+  loop.focusView(one);
+  expect(loop.getFocused()).toBe(one);
+
+  items.set([2]); // drops item 1 → unmountDynamicChild(one)
+  expect(loop.getFocused()).toBe(two); // re-homed to the surviving dynamic child
+});
+
+// ST-3.b — a detached view is not focusable; focusView on it is a genuine no-op (HR-11).
+test('ST-3.b: focusView on a detached view is a no-op; the real focus is untouched', () => {
+  const a = new FocusLeaf();
+  const b = new FocusLeaf();
+  const root = new Group();
+  root.add(a);
+  root.add(b);
+  const loop = createEventLoop({ width: 20, height: 5 }, { caps });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 5 };
+  a.bounds = { x: 0, y: 0, width: 5, height: 1 };
+  b.bounds = { x: 5, y: 0, width: 5, height: 1 };
+
+  loop.focusView(a);
+  expect(loop.getFocused()).toBe(a);
+
+  // A never-mounted leaf: focusView is a genuine no-op.
+  const detached = new FocusLeaf();
+  loop.focusView(detached);
+  expect(loop.getFocused()).toBe(a); // real focus unchanged
+  expect(a.state.focused).toBe(true); // not blurred
+  expect(detached.state.focused).toBe(false);
+
+  // A mounted-then-removed leaf: also a no-op (isFocusable requires mounted).
+  root.remove(b);
+  loop.focusView(b);
+  expect(loop.getFocused()).toBe(a);
+  expect(a.state.focused).toBe(true);
 });
