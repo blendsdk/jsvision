@@ -159,8 +159,9 @@ export class ScrollBar extends View {
     return Math.min(size - 2, Math.max(1, pos));
   }
 
-  /** The effective page step (option, else the axis length − 1; TV owners set `size-1`). */
-  protected pageStep(): number {
+  /** The effective page step (option, else the axis length − 1; TV owners set `size-1`). Public so an
+   * owner/test can confirm the wired page step (HR-53). */
+  pageStep(): number {
     return this.pageStepOpt ?? Math.max(1, this.axisLen() - 1);
   }
 
@@ -221,7 +222,11 @@ export class ScrollBar extends View {
     else if (inner.kind === 'up') this.handleUp(ev);
   }
 
-  /** Mouse-down: thumb ⇒ start a captured drag; arrow/page ⇒ step once (TV `scrollStep`). */
+  /**
+   * Mouse-down: thumb ⇒ start a captured drag; an **arrow end** ⇒ step once (TV `scrollStep`); a
+   * **track/page** click ⇒ HR-49 jump the thumb to the clicked position and enter the same captured
+   * drag, so the pointer keeps driving it (`tscrlbar.cpp:193-207` default case).
+   */
   protected handleDown(ev: DispatchEvent, mark: number): void {
     const len = this.axisLen();
     const s = this.getSize(len) - 1;
@@ -229,8 +234,12 @@ export class ScrollBar extends View {
     if (mark === pos) {
       this.dragging = true;
       ev.setCapture?.(this); // PA-16 — capture so the drag tracks off the 1-cell column
+    } else if (mark <= 0 || mark >= s) {
+      this.setValue(this.readValue() + this.scrollStep(this.partCode(mark, pos, s))); // arrow: one step
     } else {
-      this.setValue(this.readValue() + this.scrollStep(this.partCode(mark, pos, s)));
+      this.jumpTo(mark, s); // HR-49: track click jumps the thumb to the position…
+      this.dragging = true;
+      ev.setCapture?.(this); // …and captures the pointer to follow the drag
     }
     ev.handled = true;
   }
@@ -238,14 +247,17 @@ export class ScrollBar extends View {
   /** Captured drag: map the axis position back to a proportional `value` (TV `:192-201`). */
   protected handleDrag(ev: DispatchEvent, mark: number): void {
     if (!this.dragging) return;
-    const len = this.axisLen();
-    const s = this.getSize(len) - 1;
+    this.jumpTo(mark, this.getSize(this.axisLen()) - 1);
+    ev.handled = true;
+  }
+
+  /** Map an axis position `mark` to a proportional `value` (TV `:196-206`), clamped between the arrows. */
+  protected jumpTo(mark: number, s: number): void {
     const i = Math.min(s - 1, Math.max(1, mark)); // keep the thumb between the arrows
     if (s > 2) {
       const span = this.max - this.min;
       this.setValue(Math.floor(((i - 1) * span + ((s - 2) >> 1)) / (s - 2)) + this.min);
     }
-    ev.handled = true;
   }
 
   /** Mouse-up: end a drag + release the capture. */

@@ -35,7 +35,9 @@ test('empty list renders <empty>', () => {
   const list = new ListView<string>({ items: signal<string[]>([]), getText: (s) => s });
   const rr = createRenderRoot({ width: 12, height: 4 }, { caps });
   rr.mount(list);
-  const row = [0, 1, 2, 3, 4, 5, 6].map((x) => rr.buffer().get(x, 0)?.char).join('');
+  // HR-51: TV draws emptyText at column 1 (the text inset), not column 0.
+  expect(rr.buffer().get(0, 0)?.char).toBe(' ');
+  const row = [1, 2, 3, 4, 5, 6, 7].map((x) => rr.buffer().get(x, 0)?.char).join('');
   expect(row).toBe('<empty>');
 });
 
