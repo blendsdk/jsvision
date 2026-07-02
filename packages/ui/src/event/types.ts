@@ -10,7 +10,7 @@
  */
 import type { CapabilityProfile, Theme, Logger, Keymap, ScreenBuffer } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
-import type { View, RenderRoot, AppEvent, Point } from '../view/index.js';
+import type { View, RenderRoot, AppEvent, Point, PopupHost } from '../view/index.js';
 
 /**
  * The modal-host handle a modal view is given so it can close itself (RD-11 PA-1). One additive
@@ -142,4 +142,12 @@ export interface EventLoop {
    * the same reason as {@link onFrame}. `undefined` ⇒ clipboard writes are dropped (headless).
    */
   writeClipboard?: (seq: string) => void;
+  /**
+   * Popup-host seam (RD-14 PF-002/PA-9): the overlay + focus host an app-created dropdown control
+   * reaches through its `ev.popupHost` to mount + focus an anchored popup. A settable member (like
+   * {@link onFrame}) because `createApplication` wires it only after the overlay + loop exist; the
+   * loop sources it onto every routed envelope. `undefined` ⇒ no host (headless / no shell), so a
+   * control's open is a safe no-op. A bare `Dialog` without an app shell can supply its own.
+   */
+  popupHost?: PopupHost;
 }

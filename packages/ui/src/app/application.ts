@@ -122,6 +122,27 @@ function streamSize(stream: { columns?: number; rows?: number } | undefined): Si
 }
 
 /**
+ * Derive the shared overlay's visibility from whether it currently hosts any child (RD-14 PA-5/PF-001).
+ *
+ * The one full-viewport overlay is shared by every top-z client (the `MenuBar`'s popups + any
+ * dropdown popup). Deriving `state.visible` from the live child count is the coexistence rule — the
+ * overlay stays visible while **any** client has a child mounted and hides only when the last
+ * unmounts, so a menu and a dropdown popup no longer stomp each other's explicit visibility flag.
+ *
+ * Computed **imperatively** (not via a reactive `effect`): `overlay.children` is a plain `View[]`
+ * (`group.ts`) and `state.visible` a plain boolean mutated in place (`view.ts`) — neither is a
+ * reactive source, so an effect reading them would subscribe to nothing. Every client already drives
+ * repaint imperatively (`overlay.add` → `invalidateLayout`), so this must too — hence the
+ * `invalidate()` after the flag flip (PF-001). Call it after each `overlay.add`/`remove`.
+ *
+ * @param overlay The shared top-z overlay group.
+ */
+export function syncOverlayVisible(overlay: Group): void {
+  overlay.state.visible = overlay.children.length > 0;
+  overlay.invalidate();
+}
+
+/**
  * Construct the application — composes the loop/desktop/chrome/overlay and registers the standard
  * commands (AR-71, AR-75). The chrome children are added to the app root before the loop mounts it,
  * so the whole tree mounts in one pass; the loop seam is injected after the loop exists (PA-7).
@@ -170,6 +191,14 @@ export function createApplication(opts: ApplicationOptions): Application {
   });
   loop.mount(root);
   desktop.attachLoop(loop);
+
+  // RD-14 PF-002/PA-9: the app shell is the default popup host — a dropdown leaf reaches this overlay
+  // + focus save/restore through its `ev.popupHost`. Wired after mount so the loop + overlay exist.
+  loop.popupHost = {
+    overlay,
+    focusView: (view) => loop.focusView(view),
+    getFocused: () => loop.getFocused(),
+  };
 
   // Wire the menu bar's controller to the overlay + loop seam (PA-7). Done after mount so the loop
   // exists and the overlay has its composed rect for popup positioning.

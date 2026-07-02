@@ -102,6 +102,31 @@ export class Input extends View {
     return this.curPos;
   }
 
+  // --- RD-14 public linkage seam (PA-8) --------------------------------------------------------
+  // A `History` control links an app-created `Input` and must read + replace its text and select-all
+  // it after a pick (faithful to TV `link->data`/`link->maxLen`/`link->selectAll`,
+  // `thistory.cpp:106-107`). The backing fields stay `protected`; this is the minimal public surface.
+
+  /**
+   * Public accessor for the two-way bound text signal — the SAME signal edits write back to. A
+   * linking `History` replaces the field text through it (RD-14 PA-8).
+   *
+   * @returns The `Signal<string>` source of truth for this field.
+   */
+  getValueSignal(): Signal<string> {
+    return this.value;
+  }
+
+  /**
+   * Public read of the field's max length (`Infinity` when unbounded). A linking `History` clamps a
+   * picked value to it before writing (RD-14 PA-8).
+   *
+   * @returns The stored-value length cap.
+   */
+  getMaxLength(): number {
+    return this.maxLength;
+  }
+
   /**
    * @param opts `value` (two-way signal) + optional `maxLength` / `validator` (see {@link InputOptions}).
    */
@@ -429,8 +454,14 @@ export class Input extends View {
     this.selStart = this.selEnd = 0;
   }
 
-  /** Select all / clear (TV `selectAll`, `:496-508`): `selStart=0`, `curPos=selEnd=len` (or all 0). */
-  protected selectAll(enable: boolean): void {
+  /**
+   * Select all / clear (TV `selectAll`, `:496-508`): `selStart=0`, `curPos=selEnd=len` (or all 0).
+   * **Public** (RD-14 PA-8): a linking `History` calls `selectAll()` after a pick, faithful to TV
+   * `link->selectAll(True)` (`thistory.cpp:107`). Defaults to selecting the whole field.
+   *
+   * @param enable `true` selects the whole value; `false` collapses the selection.
+   */
+  selectAll(enable = true): void {
     this.selStart = 0;
     this.curPos = this.selEnd = enable ? this.value().length : 0;
     this.adjustScroll();

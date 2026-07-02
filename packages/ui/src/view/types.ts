@@ -10,6 +10,8 @@ import type { Point } from './geometry.js';
 // Type-only (erased at runtime) — `DispatchEvent.focusView` targets a `View`. A type-only cycle with
 // `view.ts` (which imports the contract types here) is safe; no runtime import edge is created.
 import type { View } from './view.js';
+// Type-only (erased) — `PopupHost.overlay` is a `Group`. Same safe type-only cycle as `View` above.
+import type { Group } from './group.js';
 
 /**
  * View state flags drawn-against in RD-03. `focused`/`disabled` are driven by RD-04 (the event
@@ -140,4 +142,32 @@ export interface DispatchEvent {
    * mirrors the {@link emit}/{@link setCapture} envelope seams.
    */
   readonly setClipboard?: (text: string) => void;
+  /**
+   * The currently-focused view (RD-14 PF-002). Present during real dispatch (sourced in the loop's
+   * `routeContext`), `undefined` in bare unit-constructed envelopes — a dropdown control saves it
+   * before opening its popup and restores it on dismiss. Same source/availability as {@link emit}.
+   */
+  readonly getFocused?: () => View | null;
+  /**
+   * The overlay host a dropdown control mounts its anchored popup into (RD-14 PF-002/PA-9). Present
+   * during real dispatch when an app shell (or a bare `Dialog`) has wired one onto the loop;
+   * `undefined` otherwise (headless / no shell), so controls call it optional-chained. Same
+   * source/availability as {@link emit}.
+   */
+  readonly popupHost?: PopupHost;
+}
+
+/**
+ * The overlay host + focus seam an anchored popup needs to mount + focus its list (RD-14 PF-002/PA-9).
+ * Supplied by the app shell (the default) or a bare RD-11 `Dialog`, and reached by an app-created
+ * leaf control through the {@link DispatchEvent} envelope (`ev.popupHost`). Mirrors the subset of the
+ * loop seam a popup uses: the overlay to mount into, plus focus save/restore.
+ */
+export interface PopupHost {
+  /** The full-viewport overlay `Group` to mount the popup + its outside-click catcher into (top-z). */
+  readonly overlay: Group;
+  /** Focus a view — the popup gives its list focus on open; a non-focusable target is a no-op. */
+  focusView(view: View): void;
+  /** The currently-focused view (saved before the popup opens, restored on dismiss), or `null`. */
+  getFocused(): View | null;
 }

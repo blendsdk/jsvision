@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 10 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13) · RD-14 + RD-15 + RD-16 ✏️ Drafted (RD-12+ set — **MVP 3/3 done**, 3/6) · Backlog (RD-17…19, RD-08/09) | 10 / 18 done | 🔄 | 2026-07-02 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 10 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13) · RD-14 🔬 Plan Preflighted · RD-15 + RD-16 ✏️ Drafted (RD-12+ set — **MVP 3/3 drafted**, 3/6) · Backlog (RD-17…19, RD-08/09) | 10 / 18 done | 🔄 | 2026-07-02 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0 / 1 done | 🔄 | 2026-07-02 |
 
 ## Archived
@@ -24,6 +24,12 @@
 
 ## Notes
 
+- 2026-07-02: **jsvision-ui RD-14 (Input dropdowns) plan preflighted** → 🔬 Plan Preflighted
+  ([report](features/jsvision-ui/plans/input-dropdowns/00-preflight-report.md)). Codebase-grounded audit;
+  6 findings (3🟠+2🟡+1🔵) all resolved Option A + applied — the 3 majors caught the PA-5 overlay-visibility
+  derive assuming a non-existent reactive substrate (→ imperative helper), no leaf-control path to the
+  overlay (→ additive `DispatchEvent` popup-host seam), and a popup-height contradiction vs. the TV `+7`
+  (→ fixed `maxRows+2`). Plan now 35 tasks, exec-ready.
 - 2026-07-02: **jsvision-ui RD-16 (Table/DataGrid) drafted** → ✏️ RD Drafted
   ([RD-16](features/jsvision-ui/requirements/RD-16-table.md)). RD-12+ set sibling 3/6, the **last MVP** RD
   (AR-129) — the **MVP set (RD-14/15/16) is now fully drafted**. The **GATE-1 decode** surfaced the key
