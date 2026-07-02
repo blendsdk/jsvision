@@ -94,14 +94,15 @@ test('ST-18: opening a popup focuses the hosted list and shows the overlay (deri
 
 test('ST-19: an anchor near the bottom edge intersect-clamps the popup (fewer rows, no upward flip)', () => {
   const h = makeHarness(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']); // 8 items
-  // Anchor 1 row above the bottom of a 20-tall viewport. Unclamped rect = {x:4,y:16,w:12,h:8} (a.y=15?)
-  // grow: a.x=4, width=12, a.y = 17-1 = 16, height = maxRows+2 = 8 → bottom 24 > 20 → clamp height to 4.
+  // Anchor 1 row above the bottom of a 20-tall viewport. TV sequence (thistory.cpp:90-98): grow to the
+  // intermediate rect {x:4, y:16, w:12, h:9} (maxRows+3), intersect with [0,20) → h:4, THEN r.b.y-- → h:3.
+  // The `intersect`-then-`-1` ordering is the C++ oracle (fidelity directive); an unclamped popup is 8.
   openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 17, width: 10, height: 1 }, list: h.list, onPick: () => {} });
 
   const frame = popupFrame(h.overlay);
   const rect = frame?.layout.rect as Rect;
   expect(rect.y).toBe(16); // top stays 1 row above the anchor — NOT flipped upward (PA-15)
-  expect(rect.height).toBe(4); // intersect truncated to the space below (8 → 4)
+  expect(rect.height).toBe(3); // intersect (→4) then the trailing r.b.y-- (→3), decode §3
   expect(rect.height).toBeLessThan(8); // fewer visible rows than the fixed maxRows+2
 });
 

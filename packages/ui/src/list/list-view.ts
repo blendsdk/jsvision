@@ -10,10 +10,12 @@
  * `.js` specifiers per NodeNext.
  */
 import { Group } from '../view/index.js';
+import type { LayoutProps } from '../layout/index.js';
 import { signal } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import { ScrollBar } from '../scroll/index.js';
 import { ListRows } from './list-rows.js';
+import type { ListRoles } from './list-rows.js';
 
 /** Construction options for {@link ListView}. */
 export interface ListViewOptions<T> {
@@ -33,12 +35,14 @@ export interface ListViewOptions<T> {
   sorted?: boolean;
   /** Enable the linear case-insensitive prefix type-ahead (PA-3). */
   typeAhead?: boolean;
+  /** Row theme roles (default the RD-11 `list*` roles); override for a different viewer palette (RD-14). */
+  roles?: ListRoles;
 }
 
 /** A single-column virtual-scroll list: a rows renderer + an owned vertical scroll bar. */
 export class ListView<T> extends Group {
   /** Lay the children out horizontally: `[rows fr | bar 1]`. */
-  override layout = { direction: 'row' as const };
+  override layout: LayoutProps = { direction: 'row' };
   /** The focusable rows renderer (the focus target — a `Group` is not itself a focus leaf). */
   readonly rows: ListRows<T>;
   /** The owned vertical scroll bar (its `value` is the shared `focused` signal). */
@@ -65,6 +69,7 @@ export class ListView<T> extends Group {
       typeAhead: opts.typeAhead ?? false,
       onSelect: opts.onSelect,
       command: opts.command,
+      roles: opts.roles,
     });
     this.rows.layout = { size: { kind: 'fr', weight: 1 } };
     this.bar = new ScrollBar({ value: this.focused, orientation: 'vertical' });
