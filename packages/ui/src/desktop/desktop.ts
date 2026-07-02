@@ -228,6 +228,10 @@ export class Desktop extends Group {
    */
   protected handleCommand(command: string): boolean {
     if (command === Commands.zoom) this.active?.zoom();
+    // HR-08: close the active window (the same removal path the frame's [×] uses → removeWindow,
+    // which re-focuses the next window). Mirrors TV `cmClose` routing to the focused window
+    // (tframe.cpp:155-160). No-op when the desktop is empty, consistent with zoom/next.
+    else if (command === Commands.close) this.active?.close();
     else if (command === Commands.next) this.focusNextWindow();
     else if (command === Commands.prev) this.focusPrevWindow();
     else if (command === Commands.cascade) this.cascade();

@@ -138,6 +138,11 @@ export class Window extends Group {
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type !== 'mouse' || inner.kind !== 'down' || this.manager === null) return;
+    // HR-09 / tframe.cpp:150-193 — TFrame gates the close/zoom/resize-grip affordances on
+    // `state & sfActive`: an inactive window's first click only selects/activates it. Capture the
+    // active-ness BEFORE raising so the first click on an inactive window's affordance columns is
+    // inert (raise+activate only) and the second (now-active) click performs the action.
+    const wasActive = this.manager.activeWindow() === this;
     this.manager.raise(this); // AR-78: raise-on-click (z + focus)
 
     const local = ev.local;
@@ -149,7 +154,14 @@ export class Window extends Group {
         zoomable: this.zoomable,
         closable: this.closable,
       };
-      const zone = frameZoneAt(size, local, flags);
+      let zone = frameZoneAt(size, local, flags);
+      // Inactive: neutralize the active-gated affordances (close/zoom/grips → inert) so the first
+      // click can never close/zoom/resize — only raise+activate. (Title-drag stays live; TV's
+      // ungated `wfMove`. The close/zoom columns fall to `interior` here rather than to a move
+      // because the discrete-click model must leave no capture that swallows the second click.)
+      if (!wasActive && (zone === 'close' || zone === 'zoom' || zone === 'resize' || zone === 'resize-left')) {
+        zone = 'interior';
+      }
       if (zone === 'close') this.close();
       else if (zone === 'zoom') this.zoom();
       else if (zone === 'title' && this.movable) this.manager.beginMove(this, local);

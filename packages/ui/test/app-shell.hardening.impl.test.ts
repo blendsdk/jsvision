@@ -10,6 +10,7 @@ import type { MouseEvent } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
 import { Window } from '../src/window/index.js';
 import { Group } from '../src/view/index.js';
+import { Commands } from '../src/status/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -35,4 +36,31 @@ test('a stale gesture across two successive modals never moves the window', asyn
     app.loop.dispatch(mouse('move', 25 + i, 12));
     expect(w.layout.rect).toEqual(rectBefore); // never teleports across either cycle
   }
+});
+
+// HR-08 — closing works with a single window on the desktop (removes it; no next to focus).
+test('Commands.close removes the sole window', () => {
+  const app = createApplication({ caps, viewport: { width: 30, height: 10 } });
+  const w = new Window('Only');
+  w.layout.rect = { x: 0, y: 0, width: 20, height: 6 };
+  app.desktop.addWindow(w);
+  app.loop.renderRoot.flush();
+
+  app.loop.emitCommand(Commands.close);
+  expect(app.desktop.children.includes(w)).toBe(false);
+  expect(app.desktop.activeWindow()).toBeNull();
+});
+
+// HR-09 — control: an ACTIVE window's affordances DO act on the first click (only inactive is gated).
+test('an active window close box acts on the first click', () => {
+  const app = createApplication({ caps, viewport: { width: 30, height: 10 } });
+  const w = new Window('A');
+  w.layout.rect = { x: 0, y: 0, width: 20, height: 6 };
+  app.desktop.addWindow(w); // sole window → active
+  app.loop.renderRoot.flush();
+  expect(app.desktop.activeWindow()).toBe(w);
+
+  // Close box window-local (2,0) → abs (2,0) → 1-based (3,1). Active ⇒ closes on the first click.
+  app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 3, y: 1 });
+  expect(app.desktop.children.includes(w)).toBe(false);
 });

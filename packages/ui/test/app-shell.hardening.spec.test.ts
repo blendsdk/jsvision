@@ -14,6 +14,7 @@ import type { MouseEvent } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
 import { Window } from '../src/window/index.js';
 import { Group } from '../src/view/index.js';
+import { Commands } from '../src/status/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -49,4 +50,63 @@ test('ST-3.e: a stale gesture (capture lost via a modal) never teleports the win
   // The gesture is cleared, so a second move is also inert.
   app.loop.dispatch(mouse('move', 5, 5));
   expect(w.layout.rect).toEqual(rectBefore);
+});
+
+// ST-4.a — a `close` command removes the active window and re-focuses the next (HR-08).
+test('ST-4.a: Commands.close removes the active window and focuses the next', () => {
+  const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
+  const a = new Window('A');
+  a.layout.rect = { x: 0, y: 0, width: 18, height: 6 };
+  app.desktop.addWindow(a);
+  const b = new Window('B');
+  b.layout.rect = { x: 20, y: 0, width: 18, height: 6 };
+  app.desktop.addWindow(b); // added last → active
+  app.loop.renderRoot.flush();
+  expect(app.desktop.activeWindow()).toBe(b);
+
+  app.loop.emitCommand(Commands.close); // was dead before HR-08
+  expect(app.desktop.children.includes(b)).toBe(false); // active window removed
+  expect(app.desktop.activeWindow()).toBe(a); // next window focused
+});
+
+// ST-4.b — an inactive window's affordance columns are inert on the first click (raise+activate
+// only); the second (now-active) click performs the action (HR-09 / tframe.cpp:150-193).
+test('ST-4.b: an inactive window close box is inert on the first click, acts on the second', () => {
+  const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
+  const a = new Window('A');
+  a.layout.rect = { x: 0, y: 0, width: 14, height: 6 };
+  app.desktop.addWindow(a);
+  const b = new Window('B');
+  b.layout.rect = { x: 16, y: 0, width: 14, height: 6 };
+  app.desktop.addWindow(b);
+  app.desktop.raise(a); // A active, B inactive
+  app.loop.renderRoot.flush();
+  expect(app.desktop.activeWindow()).toBe(a);
+
+  // B's close box: window-local (2,0) → abs (16+2, 0) = (18,0) → 1-based (19,1).
+  app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 19, y: 1 });
+  expect(app.desktop.children.includes(b)).toBe(true); // first click did NOT close
+  expect(app.desktop.activeWindow()).toBe(b); // it raised+activated B
+
+  app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 19, y: 1 });
+  expect(app.desktop.children.includes(b)).toBe(false); // second click (active) closes
+});
+
+// ST-4.b — the inactive zoom column is likewise inert on the first click (raise only, no zoom).
+test('ST-4.b: an inactive window zoom box is inert on the first click', () => {
+  const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
+  const a = new Window('A');
+  a.layout.rect = { x: 0, y: 0, width: 14, height: 6 };
+  app.desktop.addWindow(a);
+  const b = new Window('B');
+  const bRect = { x: 16, y: 0, width: 14, height: 6 };
+  b.layout.rect = { ...bRect };
+  app.desktop.addWindow(b);
+  app.desktop.raise(a); // A active, B inactive
+  app.loop.renderRoot.flush();
+
+  // B's zoom box: window-local (w-3, 0) = (11,0) → abs (16+11, 0) = (27,0) → 1-based (28,1).
+  app.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 28, y: 1 });
+  expect(b.layout.rect).toEqual(bRect); // not zoomed
+  expect(app.desktop.activeWindow()).toBe(b); // only raised+activated
 });
