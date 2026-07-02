@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-02
-> **Progress**: 30/120 tasks (25%)
+> **Progress**: 39/120 tasks (33%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -369,15 +369,15 @@ kitchen-sink story tasks are required (AC-10 only keeps the existing smoke/demos
 - [x] 3.3.2 Full verify ✅ (completed: 2026-07-02 16:35)
 
 ### Phase 4: Shell majors (GATE)
-- [ ] 4.1.1 BEFORE-decode TFrame
-- [ ] 4.1.2 ST-4.a–b specs
-- [ ] 4.1.3 RED run
-- [ ] 4.2.1 HR-08 Desktop close
-- [ ] 4.2.2 HR-09 active-gated zones
-- [ ] 4.2.3 GREEN run
-- [ ] 4.3.1 AFTER-diff TFrame
-- [ ] 4.3.2 Phase-4 impl tests
-- [ ] 4.3.3 Full verify
+- [x] 4.1.1 BEFORE-decode TFrame ✅ (completed: 2026-07-02 16:50 — decode recorded in 03-07)
+- [x] 4.1.2 ST-4.a–b specs ✅ (completed: 2026-07-02 16:55)
+- [x] 4.1.3 RED run ✅ (completed: 2026-07-02 16:55 — HR-08 dead-close + HR-09 first-click-closes reproduced)
+- [x] 4.2.1 HR-08 Desktop close ✅ (completed: 2026-07-02 16:52)
+- [x] 4.2.2 HR-09 active-gated zones ✅ (completed: 2026-07-02 16:52)
+- [x] 4.2.3 GREEN run ✅ (completed: 2026-07-02 16:57)
+- [x] 4.3.1 AFTER-diff TFrame ✅ (completed: 2026-07-02 17:00 — recorded in 03-07 + window.ts JSDoc)
+- [x] 4.3.2 Phase-4 impl tests ✅ (completed: 2026-07-02 17:02)
+- [x] 4.3.3 Full verify ✅ (completed: 2026-07-02 17:05)
 
 ### Phase 5: Core engine minors
 - [ ] 5.1.1 ST-5.a–l specs
