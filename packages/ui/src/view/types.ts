@@ -118,4 +118,13 @@ export interface DispatchEvent {
   readonly setCapture?: (view: View) => void;
   /** Release the pointer capture (RD-11 PA-16); a no-op if none is set. Pairs with {@link setCapture}. */
   readonly releaseCapture?: () => void;
+  /**
+   * Write UTF-8 `text` to the system clipboard (RD-07 PA-5/PA-7) — used by `Input` copy/cut. Same
+   * source/availability as {@link emit} (present during real dispatch, absent in bare unit-constructed
+   * envelopes, so controls call it optional-chained). The loop's `routeContext` sources it to the
+   * co-owned output stream via core `setClipboard(text, caps)` (OSC-52, base64 + sanitize); a
+   * caps-gated no-op when the terminal lacks `osc.clipboard52`. The control never touches I/O — this
+   * mirrors the {@link emit}/{@link setCapture} envelope seams.
+   */
+  readonly setClipboard?: (text: string) => void;
 }

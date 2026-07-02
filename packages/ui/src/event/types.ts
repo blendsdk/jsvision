@@ -10,7 +10,7 @@
  */
 import type { CapabilityProfile, Theme, Logger, Keymap, ScreenBuffer } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
-import type { View, RenderRoot, AppEvent } from '../view/index.js';
+import type { View, RenderRoot, AppEvent, Point } from '../view/index.js';
 
 /**
  * The modal-host handle a modal view is given so it can close itself (RD-11 PA-1). One additive
@@ -102,4 +102,22 @@ export interface EventLoop {
    * set ⇒ flushes still happen but push nothing (headless tests/demos read `renderRoot.buffer()`).
    */
   onFrame?: (buffer: ScreenBuffer) => void;
+  /**
+   * Hardware-caret sink (RD-07 PA-5). A sibling of {@link onFrame}, fired right **after** it at every
+   * frame point (tick, resize, mount) with the focused view's **absolute** caret cell — computed by
+   * the loop from `getFocused()` + `leaf.desiredCaret()` + `renderRoot.originOf(leaf)` — or `null`
+   * when focus is lost / the focused view requests no caret. A settable member (not an
+   * `EventLoopOptions` field) because `run()` wires it to the real cursor only after the host exists.
+   * Independent of which views repainted this frame — it reads the persisted origin, so the caret
+   * survives a partial recompose that skips the focused view (PF-002). `undefined` ⇒ no caret output.
+   */
+  onCaret?: (cell: Point | null) => void;
+  /**
+   * Clipboard-write sink (RD-07 PA-5/PA-7). Receives a fully-formed OSC-52 sequence (already
+   * base64-encoded + sanitized + caps-gated by core `setClipboard`) that `run()` writes to the
+   * co-owned output stream — the same stream as {@link onCaret}. Sourced onto each envelope's
+   * `ev.setClipboard(text)`: the loop encodes `text`→sequence and calls this. A settable member for
+   * the same reason as {@link onFrame}. `undefined` ⇒ clipboard writes are dropped (headless).
+   */
+  writeClipboard?: (seq: string) => void;
 }

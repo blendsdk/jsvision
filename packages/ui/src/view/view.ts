@@ -14,6 +14,7 @@ import { runWithOwner, untrack, createRoot, effect, onCleanup, getOwner, signal 
 import { TuiError } from '@jsvision/core';
 import type { Rect, Size2D, LayoutProps } from '../layout/index.js';
 import type { DrawContext, ViewState, DispatchEvent } from './types.js';
+import type { Point } from './geometry.js';
 
 /**
  * The internal seam a `View` uses to talk to its render root: the dirty-set scheduler (RT-1). The
@@ -112,6 +113,19 @@ export abstract class View {
    */
   onEvent(_ev: DispatchEvent): void {
     // intentionally empty (the base ships only the stub; widgets override)
+  }
+
+  /**
+   * The **view-local** caret cell this view wants the hardware cursor placed at, or `null` for no
+   * caret (the default — most views never request one). RD-07 additive seam (PA-5/PA-11): the focused
+   * `Input` overrides this to return `{ x: displayedPos(curPos)-firstPos+1, y: 0 }`; the event loop
+   * (which owns focus) reads it after `flush()`, translates it to an absolute cell via
+   * {@link RenderRoot.originOf}, and fires `onCaret`. Mirrors TV `TView::setCursor`/`sfCursorVis`.
+   *
+   * @returns The view-local caret point (0-based, relative to this view's origin), or `null`.
+   */
+  desiredCaret(): Point | null {
+    return null;
   }
 
   /** Schedule a repaint of this view's subtree (AR-32). No-op before mount (the first frame paints all). */

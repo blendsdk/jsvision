@@ -34,6 +34,14 @@ export const Commands = {
   yes: 'yes',
   /** Negative dialog answer (TV `cmNo`); gated by `valid()` like `ok`. */
   no: 'no',
+  // --- RD-07 clipboard commands (TV `cmCut`/`cmCopy`/`cmPaste`, `tinputli.cpp:469-489`; PA-7). The
+  // focused `Input` handles these; the SIGINT-safe DOS chords Ctrl+Ins/Shift+Ins/Shift+Del map to them.
+  /** Cut the Input selection to the clipboard (TV `cmCut`; Shift+Delete). */
+  cut: 'cut',
+  /** Copy the Input selection to the clipboard (TV `cmCopy`; Ctrl+Insert). */
+  copy: 'copy',
+  /** Paste the clipboard into the focused Input (TV `cmPaste`; Shift+Insert). */
+  paste: 'paste',
 } as const;
 
 /** A standard shell command name (a value of {@link Commands}). */

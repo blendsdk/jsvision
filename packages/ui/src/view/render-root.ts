@@ -43,6 +43,19 @@ export interface RenderRoot {
   serialize(): string;
   /** The live composed buffer — for host integration and tests. */
   buffer(): ScreenBuffer;
+  /**
+   * The view's **absolute** compose origin (top-left cell) from the persisted per-view context cache,
+   * or `null` if it was never composed (unmounted / not visible). RD-07 additive read-only accessor
+   * (PA-5/PF-002): the event loop uses it to translate a focused view's `desiredCaret()` to an absolute
+   * cell **after** `flush()`. The cache is refreshed every compose and cleared only on a full compose,
+   * so an origin **survives partial recomposes** — a view unchanged this frame keeps its last origin,
+   * and the caret is never dropped just because the focused view was outside the dirty set. RenderRoot
+   * stays focus-agnostic — it does not collect the caret during compose.
+   *
+   * @param view The view to locate (typically the focused leaf).
+   * @returns The absolute origin `{ x, y }`, or `null` if never composed.
+   */
+  originOf(view: View): Point | null;
 }
 
 /**
@@ -304,6 +317,12 @@ class RenderRootImpl implements RenderRoot, ViewHost {
 
   buffer(): ScreenBuffer {
     return this.current;
+  }
+
+  /** @see RenderRoot.originOf — pure cache lookup of the view's persisted absolute compose origin. */
+  originOf(view: View): Point | null {
+    const ctx = this.cache.get(view);
+    return ctx === undefined ? null : { x: ctx.origin.x, y: ctx.origin.y };
   }
 }
 

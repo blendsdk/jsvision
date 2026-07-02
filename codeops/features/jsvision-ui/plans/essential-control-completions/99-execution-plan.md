@@ -1,7 +1,7 @@
 # 99 — Execution Plan
 
 > **Implements**: jsvision-ui/RD-07 · **CodeOps Skills Version**: 3.1.0
-> **Progress**: 0 / 32 tasks (0%) · **Last Updated**: 2026-07-02
+> **Progress**: 3 / 32 tasks (9%) · **Last Updated**: 2026-07-02
 
 Spec-first per capability: **spec tests → RED → implement → GREEN → impl tests → verify**. Every TV-derived
 component carries a **BEFORE-decode (GATE-1)** and **AFTER-diff (GATE-2)** task (fidelity directive,
@@ -23,7 +23,7 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
 ---
 
 ## Phase 0 — Foundations (additive)
-- [ ] **P0.1** BEFORE-decode (GATE-1): re-open `tinputli.cpp:84,145-161` — confirm the exact `cpInputLine`
+- [x] **P0.1** ✅ 2026-07-02 BEFORE-decode (GATE-1): re-open `tinputli.cpp:84,145-161` — confirm the exact `cpInputLine`
   bytes + the color-3 slot → resolve the `inputSelection` attribute byte through `cpGrayDialog`→`cpAppColor`
   (resolves the PA-6 ⚠). **Also resolve `getColor(1)` and `getColor(2)` for a gray-dialog-hosted input
   (PF-004):** `cpInputLine` has color-1==color-2==`0x13`, so TV appears to draw a focused and unfocused input
@@ -31,10 +31,10 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
   `theme.ts:90-91`). If confirmed, **record it and surface a scoped `inputSelected` fidelity decision** (fixing
   it may ripple into RD-06 goldens — do NOT silently change shipped color; raise it as its own choice). Record
   the full decode in the code JSDoc.
-- [ ] **P0.2** Add the additive `inputSelection` role to core `Theme` + `defaultTheme` (`color/theme.ts`)
+- [x] **P0.2** ✅ 2026-07-02 Add the additive `inputSelection` role to core `Theme` + `defaultTheme` (`color/theme.ts`)
   with the P0.1 value; add `cut`/`copy`/`paste` to `ui/status/commands.ts` (PA-4/PA-7). Verify (typecheck +
   existing golden/theme tests still green).
-- [ ] **P0.3** Add the additive seam scaffolding (no behavior yet): `View.desiredCaret(): Point|null`
+- [x] **P0.3** ✅ 2026-07-02 Add the additive seam scaffolding (no behavior yet): `View.desiredCaret(): Point|null`
   (default null); `RenderRoot.originOf(view): Point|null` (pure origin-cache lookup, PF-002 — **not** a
   compose-time caret collector); `EventLoop.onCaret?`/`writeClipboard?` options + the
   `DispatchEvent.setClipboard?` envelope field sourced in `routeContext` (PA-5, 03-04/03-01). Verify.
@@ -114,7 +114,7 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
 ---
 
 ## Master Progress Checklist
-Phase 0: [ ] P0.1 [ ] P0.2 [ ] P0.3
+Phase 0: [x] P0.1 [x] P0.2 [x] P0.3
 Phase 1: [ ] P1.1 [ ] P1.2 [ ] P1.3 [ ] P1.4 [ ] P1.5
 Phase 2: [ ] P2.1 [ ] P2.2 [ ] P2.3 [ ] P2.4 [ ] P2.5
 Phase 3: [ ] P3.1 [ ] P3.2 [ ] P3.3 [ ] P3.4 [ ] P3.5
