@@ -29,6 +29,7 @@ Numbering: contiguous RD-14…RD-19 (AR-128). MVP = RD-14/15/16 (AR-129).
 ## Open (next): RD numbering scheme · per-RD scope in/out · sibling dependency order · MVP phasing ·
 ## per-RD Zero-Ambiguity gates (AR-128+).
 
-## AR ledger: AR-125..140 recorded. Next free: AR-141.
-## RD-14 (Input dropdowns) AUTHORED ✅ 2026-07-02 → requirements/RD-14-input-dropdowns.md (AR-130..140; GATE-1 History decode done).
-## Next step: RD-15 (Tree — TOutlineViewer) — GATE-1 decode of toutline.cpp + its own AR block (AR-141+). Then RD-16 Table, RD-17 Tabs, RD-18 Feedback, RD-19 Surface.
+## AR ledger: AR-125..150 recorded. Next free: AR-151.
+## RD-14 (Input dropdowns) AUTHORED ✅ → RD-14-input-dropdowns.md (AR-130..140; GATE-1 History decode).
+## RD-15 (Tree) AUTHORED ✅ 2026-07-02 → RD-15-tree.md (AR-141..150; GATE-1 TOutlineViewer decode — graphChars "\x20\xB3\xC3\xC0\xC4\xC4+\xC4", ←→ collapse/expand override).
+## Next step: RD-16 (Table/DataGrid — multi-column TListViewer + RD-11 numCols) — GATE-1 decode + AR block (AR-151+). Then RD-17 Tabs, RD-18 Feedback, RD-19 Surface.

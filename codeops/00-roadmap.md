@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-02 (jsvision-ui **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: the **RD-12+ high-value-controls set** was opened via `make_requirements` — sliced into 6 sibling RDs by mechanism (AR-125…129), **RD-14 (Input dropdowns — History + ComboBox) drafted ✏️** (AR-130…140, GATE-1 History decode), RD-15…19 queued. And a new feature-set **bun-runtime** — RD-01 drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
+> **Last Updated**: 2026-07-02 (jsvision-ui **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: the **RD-12+ high-value-controls set** was opened via `make_requirements` — sliced into 6 sibling RDs by mechanism (AR-125…129), **RD-14 (Input dropdowns) + RD-15 (Tree) drafted ✏️** (AR-130…150, GATE-1 TV decodes), RD-16…19 queued. And a new feature-set **bun-runtime** — RD-01 drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
 > **Features**: 0 / 2 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 10 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13) · RD-14 ✏️ Drafted (RD-12+ set, 1/6) · Backlog (RD-15…19, RD-08/09) | 10 / 18 done | 🔄 | 2026-07-02 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 10 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13) · RD-14 + RD-15 ✏️ Drafted (RD-12+ set, 2/6) · Backlog (RD-16…19, RD-08/09) | 10 / 18 done | 🔄 | 2026-07-02 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0 / 1 done | 🔄 | 2026-07-02 |
 
 ## Archived
@@ -24,6 +24,15 @@
 
 ## Notes
 
+- 2026-07-02: **jsvision-ui RD-15 (Tree) drafted** → ✏️ RD Drafted
+  ([RD-15](features/jsvision-ui/requirements/RD-15-tree.md)). RD-12+ set sibling 2/6 (MVP, AR-129). A
+  virtual-scroll `Tree<T>` reimagined from TV `TOutlineViewer`/`TOutline` with its GATE-1 decode recorded
+  (`toutline.cpp` — faithful `│├└─`+`+`/`─` graph glyphs, no brackets, two-tone collapsed text; palette
+  `cpOutlineViewer`). Concrete reactive `TreeNode<T>` + view-owned expand Set (AR-141); ←collapse/→expand
+  modern override + faithful `+`/`-`/`*` (AR-142); eager children (AR-143); single-select (AR-144); reuses
+  the RD-11 virtual-scroll helpers with a Tree-specific renderer (AR-145); new `src/tree/` (AR-148);
+  additive `cpOutlineViewer` roles at plan GATE-1 (AR-149); `Tree` story + `demo:tree` (AR-150).
+  AR-141…AR-150 recorded; 13 AC. Next: `make_plan RD-15`, then draft RD-16.
 - 2026-07-02: **jsvision-ui RD-12+ high-value-controls set opened — RD-14 (Input dropdowns) drafted**
   → ✏️ RD Drafted ([RD-14](features/jsvision-ui/requirements/RD-14-input-dropdowns.md)). `make_requirements`
   sliced the roadmapped high-value bucket into **6 sibling RDs by mechanism** (AR-125/126): RD-14 Input
