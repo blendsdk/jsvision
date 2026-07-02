@@ -24,8 +24,13 @@ import { scrollBarStory } from './scrollbar.story.js';
 import { scrollerStory } from './scroller.story.js';
 import { listViewStory } from './listview.story.js';
 import { dialogStory } from './dialog.story.js';
+import { historyStory } from './history.story.js';
+import { comboBoxStory } from './combobox.story.js';
 
-/** Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers RD-11). */
+/**
+ * Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers
+ * RD-11, Dropdowns RD-14).
+ */
 export const STORIES: readonly Story[] = [
   reactiveStory,
   layoutStory,
@@ -43,4 +48,6 @@ export const STORIES: readonly Story[] = [
   scrollerStory,
   listViewStory,
   dialogStory,
+  historyStory,
+  comboBoxStory,
 ];
