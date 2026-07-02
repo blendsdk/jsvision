@@ -28,6 +28,16 @@ export interface ResponseMatch {
   readonly hint: RuntimeHint;
 }
 
+/**
+ * Outcome of a response-grammar scan (HR-04):
+ * - a {@link ResponseMatch} — a complete, recognised response;
+ * - `'incomplete'` — an opened response introducer (CSI/DCS) whose terminator has not arrived yet, so
+ *   the caller must **carry** the fragment to the next chunk rather than treat it as input (a partial
+ *   DCS reply must never fall through to the keyboard branch and leak as an `Alt`-prefixed key);
+ * - `null` — the bytes there are not a recognised response (ordinary input).
+ */
+export type ResponseScan = ResponseMatch | 'incomplete' | null;
+
 // Control-byte constants used by the grammar matchers.
 const ESC = 0x1b;
 const CSI_INTRODUCER = 0x5b; // '['
@@ -42,9 +52,9 @@ const BEL = 0x07;
  *
  * @param bytes The buffer to scan.
  * @param start The index to attempt a match at.
- * @returns A {@link ResponseMatch}, or `null` when not a complete recognised response.
+ * @returns A {@link ResponseScan}: a match, `'incomplete'` (carry), or `null` (not a response).
  */
-export function matchResponse(bytes: Uint8Array, start: number): ResponseMatch | null {
+export function matchResponse(bytes: Uint8Array, start: number): ResponseScan {
   if (bytes[start] !== ESC) {
     return null;
   }
@@ -64,7 +74,7 @@ export function matchResponse(bytes: Uint8Array, start: number): ResponseMatch |
  * DA (`…c`) and the `?2026` DECRPM (`…$y`) grammars are recognised; any other
  * CSI returns `null` (left for the caller to treat as input).
  */
-function matchCsi(bytes: Uint8Array, start: number): ResponseMatch | null {
+function matchCsi(bytes: Uint8Array, start: number): ResponseScan {
   let j = start + 2;
 
   const paramsStart = j;
@@ -80,7 +90,7 @@ function matchCsi(bytes: Uint8Array, start: number): ResponseMatch | null {
   const intermediates = decodeAscii(bytes, intermediatesStart, j);
 
   if (j >= bytes.length) {
-    return null; // incomplete: no final byte yet
+    return 'incomplete'; // opened CSI, no final byte yet — carry (HR-04)
   }
   const final = bytes[j];
   if (final < 0x40 || final > 0x7e) {
@@ -115,7 +125,7 @@ function matchCsi(bytes: Uint8Array, start: number): ResponseMatch | null {
  * Match a DCS response (XTVERSION): `ESC P … ST`, where ST is `ESC \` or BEL.
  * Recognised and consumed for demultiplexing; no concrete field is derived.
  */
-function matchDcs(bytes: Uint8Array, start: number): ResponseMatch | null {
+function matchDcs(bytes: Uint8Array, start: number): ResponseScan {
   let j = start + 2;
   while (j < bytes.length) {
     if (bytes[j] === ESC && bytes[j + 1] === ST_FINAL) {
@@ -126,7 +136,7 @@ function matchDcs(bytes: Uint8Array, start: number): ResponseMatch | null {
     }
     j += 1;
   }
-  return null; // incomplete: no terminator yet
+  return 'incomplete'; // opened DCS (ESC P), no terminator yet — carry (HR-04)
 }
 
 /** Decode a byte range as an ASCII string (response grammars are ASCII). */

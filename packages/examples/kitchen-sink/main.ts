@@ -24,12 +24,12 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  // Auto-detect, but force the glyphs the Turbo Vision look needs (SGR mouse, box-drawing,
-  // half-blocks for the desktop + button shadows, UTF-8) — conservative detection often omits these.
+  // Auto-detect, forcing only SGR mouse + UTF-8. Box-drawing / half-block glyphs are now derived
+  // from the detected UTF-8 locale (HR-07/PA-9), so a run in a non-UTF-8 locale renders the honest
+  // ASCII fallback rather than a forced glyph set.
   const caps = resolveCapabilities({
     override: {
       mouse: { sgr: true, drag: true, wheel: true },
-      glyphs: { boxDrawing: true, halfBlocks: true },
       unicode: { utf8: true },
     },
   }).profile;

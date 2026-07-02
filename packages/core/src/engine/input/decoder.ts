@@ -153,6 +153,9 @@ function scan(buf: Uint8Array, paste: PasteState, resync: boolean, options?: Dec
 
     // 2. Query-response demux → queries (never events) (AC-6, PL-9).
     const response = matchResponse(buf, i);
+    if (response === 'incomplete') {
+      break; // an opened CSI/DCS response, terminator not here yet — carry it (HR-04), never leak as keys
+    }
     if (response !== null) {
       queries.push({ raw: copyOf(buf.subarray(i, response.end)), kind: response.kind });
       i = response.end;

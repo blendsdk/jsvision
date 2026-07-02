@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-02
-> **Progress**: 10/120 tasks (8%)
+> **Progress**: 20/120 tasks (17%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -345,16 +345,16 @@ kitchen-sink story tasks are required (AC-10 only keeps the existing smoke/demos
 - [x] 1.3.2 Full verify ✅ (completed: 2026-07-02 14:45)
 
 ### Phase 2: Core majors
-- [ ] 2.1.1 ST-2.1–2.4 specs
-- [ ] 2.1.2 RED run
-- [ ] 2.2.1 HR-04 DCS carry
-- [ ] 2.2.2 HR-05 C0→space (PA-5)
-- [ ] 2.2.3 HR-06 logger guard (PA-6)
-- [ ] 2.2.4 HR-07 env glyphs (PA-9)
-- [ ] 2.2.5 demos drop overrides + golden
-- [ ] 2.2.6 GREEN run
-- [ ] 2.3.1 Phase-2 impl tests
-- [ ] 2.3.2 Full verify + smoke
+- [x] 2.1.1 ST-2.1–2.4 specs ✅ (completed: 2026-07-02 15:05)
+- [x] 2.1.2 RED run ✅ (completed: 2026-07-02 15:05)
+- [x] 2.2.1 HR-04 DCS carry ✅ (completed: 2026-07-02 15:20)
+- [x] 2.2.2 HR-05 C0→space (PA-5) ✅ (completed: 2026-07-02 15:20)
+- [x] 2.2.3 HR-06 logger guard (PA-6) ✅ (completed: 2026-07-02 15:20)
+- [x] 2.2.4 HR-07 env glyphs (PA-9) ✅ (completed: 2026-07-02 15:20)
+- [x] 2.2.5 demos drop overrides + golden ✅ (completed: 2026-07-02 15:25)
+- [x] 2.2.6 GREEN run ✅ (completed: 2026-07-02 15:25)
+- [x] 2.3.1 Phase-2 impl tests ✅ (completed: 2026-07-02 15:35)
+- [x] 2.3.2 Full verify + smoke ✅ (completed: 2026-07-02 15:40)
 
 ### Phase 3: Lifecycle majors
 - [ ] 3.1.1 ST-3.a–e specs

@@ -77,8 +77,48 @@ test('ST-1.x-fuzz: decode never throws; every emitted printable key is a Unicode
 });
 
 // ---------------------------------------------------------------------------
+// ST-2.1 — DCS incomplete carry (HR-04): a split XTVERSION reply never leaks as keys
+// ---------------------------------------------------------------------------
+
+const enc = new TextEncoder();
+
+test('ST-2.1: an XTVERSION DCS reply split at every interior offset yields one query, zero keys', () => {
+  // `ESC P > | xterm(370) ESC \` — a DCS opened with ESC P, terminated by ST (ESC \).
+  const reply = enc.encode('\x1bP>|xterm(370)\x1b\\');
+
+  for (let k = 1; k < reply.length; k += 1) {
+    const { keys, queries } = feedSplit(reply, k);
+    expect(keys.length, `split at ${k}`).toBe(0); // no fragment leaked as a keystroke
+    expect(queries.length, `split at ${k}`).toBe(1); // exactly one recognised response
+    expect(queries[0]?.kind, `split at ${k}`).toBe('xtversion');
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/** Feed `bytes` as two chunks split at `k` (threading state), then flush; collect keys + queries. */
+function feedSplit(
+  bytes: Uint8Array,
+  k: number,
+): { keys: InputEvent[]; queries: ReturnType<typeof decode>['queries'] } {
+  let state = createDecoderState();
+  const keys: InputEvent[] = [];
+  const queries: ReturnType<typeof decode>['queries'] = [];
+  const collect = (r: ReturnType<typeof decode>): void => {
+    for (const e of r.events) if (e.type === 'key') keys.push(e);
+    for (const q of r.queries) queries.push(q);
+  };
+  const r1 = decode(bytes.subarray(0, k), state);
+  collect(r1);
+  state = r1.state;
+  const r2 = decode(bytes.subarray(k), state);
+  collect(r2);
+  state = r2.state;
+  collect(flush(state));
+  return { keys, queries };
+}
 
 /** Assert every printable key event carries a Unicode scalar value (not a surrogate / out of range). */
 function assertScalarKeys(events: readonly InputEvent[]): void {

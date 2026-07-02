@@ -16,16 +16,18 @@ const enc = new TextEncoder();
 // Incomplete sequences → null (carried by the caller, never a false match)
 // ---------------------------------------------------------------------------
 
-test('responses: a CSI with no final byte yet → null', () => {
-  expect(matchResponse(enc.encode('\x1b[?64;1'), 0)).toBe(null);
+test('responses: a CSI with no final byte yet → incomplete (HR-04)', () => {
+  // HR-04: an opened-but-unterminated response is 'incomplete' (carry), not null — so the decoder
+  // carries the fragment instead of leaking it to the keyboard branch.
+  expect(matchResponse(enc.encode('\x1b[?64;1'), 0)).toBe('incomplete');
 });
 
 test('responses: a lone ESC → null', () => {
   expect(matchResponse(Uint8Array.from([0x1b]), 0)).toBe(null);
 });
 
-test('responses: a DCS with no terminator yet → null', () => {
-  expect(matchResponse(enc.encode('\x1bP>|foot(1.0)'), 0)).toBe(null);
+test('responses: a DCS with no terminator yet → incomplete (HR-04)', () => {
+  expect(matchResponse(enc.encode('\x1bP>|foot(1.0)'), 0)).toBe('incomplete');
 });
 
 test('responses: a non-ESC first byte → null', () => {

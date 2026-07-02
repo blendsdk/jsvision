@@ -7,8 +7,10 @@
  */
 import { test, expect } from 'vitest';
 
-import { createDecoderState, decode } from '../src/engine/input/decoder.js';
-import type { KeyEvent } from '../src/engine/input/events.js';
+import { createDecoderState, decode, flush } from '../src/engine/input/decoder.js';
+import type { DecoderState, KeyEvent } from '../src/engine/input/events.js';
+
+const enc = new TextEncoder();
 
 /** Decode a one-shot byte array from a fresh state. */
 function decodeOnce(bytes: readonly number[]): ReturnType<typeof decode> {
@@ -52,4 +54,33 @@ test('a hostile sequence split across chunks stays total and emits nothing', () 
   const r2 = decode(Uint8Array.of(0x80, 0x80), state); // completes the out-of-range point
   expect(r2.events.length).toBe(0);
   expect(r2.rest.length).toBe(0);
+});
+
+// HR-04 — a DCS reply split across THREE chunks still demuxes to a single query, zero keys.
+test('a DCS reply split across three chunks yields one query and no keys', () => {
+  const reply = enc.encode('\x1bP>|xterm(370)\x1b\\');
+  const cuts = [3, 9]; // two interior split points → three chunks
+  let state: DecoderState = createDecoderState();
+  let keys = 0;
+  let queries = 0;
+  let start = 0;
+  for (const cut of [...cuts, reply.length]) {
+    const r = decode(reply.subarray(start, cut), state);
+    keys += r.events.filter((e) => e.type === 'key').length;
+    queries += r.queries.length;
+    state = r.state;
+    start = cut;
+  }
+  queries += flush(state).queries.length;
+  expect(keys).toBe(0);
+  expect(queries).toBe(1);
+});
+
+// HR-04 — an ordinary CSI key sequence following a DCS still decodes (DCS carry does not stick).
+test('a complete DCS followed by an arrow key decodes the arrow', () => {
+  const bytes = enc.encode('\x1bP>|v\x1b\\\x1b[A'); // XTVERSION then CSI A (up)
+  const r = decode(bytes, createDecoderState());
+  expect(r.queries.length).toBe(1);
+  const keys = r.events.filter((e): e is KeyEvent => e.type === 'key');
+  expect(keys.map((k) => k.key)).toEqual(['up']);
 });
