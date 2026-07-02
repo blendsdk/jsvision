@@ -2,7 +2,8 @@
  * End-to-end test for the containers/scrolling/lists demo (RD-11 AC-15 → ST-16).
  *
  * Immutable oracle: the `demo:containers` walkthrough runs standalone — no real host/TTY — exits 0
- * and prints a non-empty ASCII walkthrough containing the ScrollBar glyphs (`▲`/`■`/`▼`), the
+ * and prints a non-empty ASCII walkthrough containing the ScrollBar glyphs (`▲`/`█`/`▼` — the thumb is
+ * the user-approved `█` block deviation, `scroll-bar.ts:36`, not the ambiguous-width `■`), the
  * Scroller revealing lower lines, the ListView type-ahead landing on Grape + the selection, and the
  * modal Dialog frame (`╔`/`[×]`) with the `valid()`-gate narration (vetoed → resolved: ok). Mirrors
  * the controls-demo e2e child-process spawn; heavier than the unit specs, so it lives outside the
@@ -44,7 +45,7 @@ test('demo:containers runs standalone, exits 0, and prints the containers walkth
   expect(result.stdout.length).toBeGreaterThan(0);
   // ScrollBar chrome.
   expect(result.stdout).toContain('▲'); // up arrow
-  expect(result.stdout).toContain('■'); // thumb
+  expect(result.stdout).toContain('█'); // thumb — the user-approved █ block deviation (scroll-bar.ts:36, not ■)
   expect(result.stdout).toContain('▼'); // down arrow
   expect(result.stdout).toContain('ScrollBar value: 13'); // 3×arrow + 1×page(10)
   // Scroller revealed lower content.
