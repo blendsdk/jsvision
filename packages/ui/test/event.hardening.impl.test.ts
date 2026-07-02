@@ -84,3 +84,32 @@ test('a click inside the outer modal but outside the inner (top) modal is inert'
   expect(outer.locals.length).toBe(0); // inert: the top modal scope excludes it
   expect(inner.locals.length).toBe(0);
 });
+
+// HR-10 — removing a focused CONTAINER (scope-root subtree) re-homes focus to a sibling, else null.
+test('removing a focused container subtree re-homes focus to a sibling', () => {
+  class FocusLeaf extends View {
+    draw(_ctx: DrawContext): void {}
+  }
+  const inner = new FocusLeaf();
+  inner.focusable = true;
+  const panel = new Group(); // a container holding the focused leaf
+  panel.add(inner);
+  const sibling = new FocusLeaf();
+  sibling.focusable = true;
+  const root = new Group();
+  root.add(panel);
+  root.add(sibling);
+
+  const loop = createEventLoop({ width: 20, height: 5 }, { caps });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 5 };
+  panel.bounds = { x: 0, y: 0, width: 5, height: 2 };
+  inner.bounds = { x: 0, y: 0, width: 5, height: 1 };
+  sibling.bounds = { x: 6, y: 0, width: 5, height: 1 };
+
+  loop.focusView(inner);
+  expect(loop.getFocused()).toBe(inner);
+
+  root.remove(panel); // remove the whole focused subtree
+  expect(loop.getFocused()).toBe(sibling); // re-homed out of the removed subtree
+});

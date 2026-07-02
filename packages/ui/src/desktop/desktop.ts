@@ -187,6 +187,12 @@ export class Desktop extends Group {
     const inner = ev.event;
 
     if (this.gesture !== null && inner.type === 'mouse') {
+      // HR-14 (PA-13): if the pointer capture was lost externally (a modal opened/closed mid-drag,
+      // the target unmounted), the gesture is stale — drop it and no-op so the window never teleports.
+      if (ev.hasCapture !== undefined && !ev.hasCapture(this)) {
+        this.gesture = null;
+        return;
+      }
       if ((inner.kind === 'move' || inner.kind === 'drag') && ev.local !== undefined) {
         if (this.gesture.kind === 'move') applyMove(this.gesture, ev.local, this.bounds.width, this.bounds.height);
         else if (this.gesture.kind === 'resize') applyResize(this.gesture, ev.local);

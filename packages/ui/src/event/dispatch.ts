@@ -40,6 +40,8 @@ export interface RouteContext {
   setCapture(view: View): void;
   /** Release the pointer capture (RD-11 PA-16). Sourced onto `ev.releaseCapture`. */
   releaseCapture(): void;
+  /** Whether `view` holds the pointer capture (RD-13 HR-14/PA-13). Sourced onto `ev.hasCapture`. */
+  hasCapture(view: View): boolean;
   /** Write `text` to the system clipboard (RD-07 PA-5/PA-7). Sourced onto `ev.setClipboard`. */
   setClipboard(text: string): void;
   /** Deliver an envelope to a view's `onEvent`, isolating a throwing handler (AR-66). */
@@ -132,6 +134,7 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
     focusView: ctx.focusView,
     setCapture: ctx.setCapture,
     releaseCapture: ctx.releaseCapture,
+    hasCapture: ctx.hasCapture,
     setClipboard: ctx.setClipboard,
   };
 

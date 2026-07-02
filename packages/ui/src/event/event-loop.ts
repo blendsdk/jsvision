@@ -77,6 +77,11 @@ class EventLoopImpl implements EventLoop {
       schedule: () => {
         // deferring seam — intentionally drops the flush callback (the loop drives flush itself)
       },
+      // RD-13 HR-10/PA-10 — when a group removes the currently-focused child, re-home focus through
+      // the loop's focus mutator (focusInto → first focusable descendant, else nothing), inside a
+      // tick so the focus-flip repaint + focus-change signals stay consistent. A detached view-only
+      // tree (no loop) leaves this unset and just clears its `current` pointer.
+      healFocus: (group) => this.runTick(() => this.focus.focusInto(group)),
     });
   }
 
@@ -250,6 +255,9 @@ class EventLoopImpl implements EventLoop {
       // Pure mutations of `captureTarget` (inside the active tick), mirroring the public seams.
       setCapture: (view) => this.setCapture(view),
       releaseCapture: () => this.releaseCapture(),
+      // RD-13 HR-14/PA-13 — read-only capture query. `routeContext` above already auto-released a
+      // captureTarget that has unmounted, so this reflects the live capture (false after any external loss).
+      hasCapture: (view) => this.captureTarget === view,
       // RD-07 PA-5/PA-7 — clipboard write from within a control's `onEvent` (Input copy/cut). The
       // loop encodes `text`→OSC-52 via core `setClipboard(text, caps)` (base64 + sanitize; '' when the
       // terminal lacks clipboard52) and hands the sequence to the run()-wired `writeClipboard` sink.
