@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-02 (Phase 1 complete)
-> **Progress**: 20/35 tasks (57%)
+> **Last Updated**: 2026-07-02 (Phase 2 complete)
+> **Progress**: 31/35 tasks (89%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -218,17 +218,17 @@ dismissal, generalizing the menu overlay/catcher without menu-specific state.
 - [x] 1.3.2 `yarn verify` green — 2026-07-02 (8 tasks; ui 605 tests). Runtime note PA-16 recorded (pick wired to `list.selected` change → single-click picks, no double-click in the input model).
 
 ### Phase 2: History + store (TV-derived)
-- [ ] 2.1.1 Spec: History control (ST-1…ST-11)
-- [ ] 2.1.2 Spec: History store (ST-12…ST-17)
-- [ ] 2.1.3 Verify spec FAIL (red)
-- [ ] 2.2.1 **GATE-1 BEFORE**: transcribe the 03-01 decode into draw/geometry/store (cite file:line)
-- [ ] 2.2.2 Implement the per-id MRU store
-- [ ] 2.2.3 Implement the `History` control
-- [ ] 2.2.4 Barrel + re-exports
-- [ ] 2.2.5 Verify spec PASS (green)
-- [ ] 2.3.1 **GATE-2 AFTER**: diff vs C++ + confirm oldest-at-top (ST-33)
-- [ ] 2.3.2 Impl tests (guards, auto-hide, clamp, cap, clear)
-- [ ] 2.3.3 `yarn verify` green
+- [x] 2.1.1 Spec: History control (ST-1…ST-11, +ST-17) — 2026-07-02 `history.spec.test.ts`
+- [x] 2.1.2 Spec: History store (ST-12…ST-16) — 2026-07-02 `history-store.spec.test.ts`
+- [x] 2.1.3 Verify spec FAIL (red) — 2026-07-02
+- [x] 2.2.1 **GATE-1 BEFORE**: re-read `thistory.cpp`/`thistwin.cpp`/`thstview.cpp`/`histlist.cpp`; decode transcribed with file:line into `history.ts`/`history-store.ts`/`popup.ts` — 2026-07-02 (surfaced the `intersect`-then-`r.b.y--` geometry order + skip-only-empty)
+- [x] 2.2.2 Implement the per-id MRU store — 2026-07-02 `dropdown/history-store.ts`
+- [x] 2.2.3 Implement the `History` control — 2026-07-02 `dropdown/history.ts`
+- [x] 2.2.4 Barrel + re-exports — 2026-07-02 `dropdown/index.ts` + `src/index.ts` (History + store fns + PopupHost public)
+- [x] 2.2.5 Verify spec PASS (green) — 2026-07-02 (fixed placement `r.b.y--`; corrected popup ST-19 → height 3 per the C++ oracle; ListView-fill fix)
+- [x] 2.3.1 **GATE-2 AFTER**: diff vs C++ (`fidelity.dropdown.spec` ST-33) — 2026-07-02. Surfaced + fixed the row-color fidelity gap: History rows must use `cpHistoryViewer` (white-on-blue / white-on-green), not the RD-11 cyan `list*` roles → additive `ListView`/`ListRows` `roles` override (PA-17). Oldest-at-top re-confirmed.
+- [x] 2.3.2 Impl tests (open-guard, empty popup, Infinity clamp, cap boundary, clear, injectable) — 2026-07-02 `history.impl.test.ts` + `history-store.impl.test.ts`
+- [x] 2.3.3 `yarn verify` green — 2026-07-02 (8 tasks; ui 635 tests; no RD-11 regressions)
 
 ### Phase 3: ComboBox
 - [ ] 3.1.1 Spec: ComboBox (ST-24…ST-31)
