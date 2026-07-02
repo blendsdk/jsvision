@@ -95,15 +95,6 @@ function formatLine(record: LogRecord): string {
   return `${base}${extra}\n`;
 }
 
-/** A no-op sink: drops every record (disabled logger / auto-with-no-target). */
-function createNoneSink(): Sink {
-  return {
-    write: () => undefined,
-    entries: () => [],
-    close: () => undefined,
-  };
-}
-
 /** A bounded in-memory ring sink (oldest dropped past `size`). */
 function createRingSink(size: number): Sink {
   const capacity = size > 0 ? size : DEFAULT_RING_SIZE;
@@ -164,6 +155,28 @@ function openFileSink(fs: LoggerFs, path: string, uiFd: number): Sink {
   return createFdSink(fs, fd, true);
 }
 
+/**
+ * Whether stderr (fd 2) resolves to the same terminal **device** as the UI stream (HR-06, PA-6).
+ * Interactively, stdout (fd 1) and stderr (fd 2) share one tty device, so comparing fd *numbers*
+ * (`2 === uiFd`) misses the collision and a log line scribbles the raw-mode alt-screen. This compares
+ * `{dev, ino}` device identity — the same mechanism {@link assertFileNotUiStream} uses. If either
+ * stat is unavailable (exotic runtime), it conservatively reports "same device" so the UI is never
+ * risked (PA-6 conservative reading).
+ *
+ * @param fs   The filesystem seam (injectable).
+ * @param uiFd The UI output stream fd.
+ * @returns `true` when stderr shares the UI device (or the comparison is impossible).
+ */
+function stderrSharesUiStream(fs: LoggerFs, uiFd: number): boolean {
+  try {
+    const err = fs.fstatSync(2);
+    const ui = fs.fstatSync(uiFd);
+    return err.dev === ui.dev && err.ino === ui.ino;
+  } catch {
+    return true; // cannot compare → assume shared (never write to the UI device)
+  }
+}
+
 /** Resolve the concrete sink for an enabled logger, applying the UI-stream guard. */
 function resolveSink(options: LoggerOptions, env: NodeJS.ProcessEnv): Sink {
   const fs = options.fs ?? nodeFs;
@@ -174,7 +187,10 @@ function resolveSink(options: LoggerOptions, env: NodeJS.ProcessEnv): Sink {
   if (sink === 'ring') return createRingSink(options.size ?? DEFAULT_RING_SIZE);
 
   if (sink === 'stderr') {
-    if (2 === uiFd) throw new LoggerConfigError('Refusing a stderr sink that is the UI output stream.');
+    // Explicit stderr sharing the UI device is a hard error (mirrors the file sink's contract, PA-6).
+    if (stderrSharesUiStream(fs, uiFd)) {
+      throw new LoggerConfigError('Refusing a stderr sink that is the UI output stream.');
+    }
     return createFdSink(fs, 2, false);
   }
 
@@ -183,10 +199,11 @@ function resolveSink(options: LoggerOptions, env: NodeJS.ProcessEnv): Sink {
     return openFileSink(fs, path, uiFd);
   }
 
-  // 'auto': prefer a file when a path is set, else stderr when it is not the UI.
+  // 'auto': prefer a file when a path is set; else stderr when it is a distinct device; else the ring
+  // sink — logs stay captured and dumpable while the TUI is never touched (HR-06/PA-6 degrade).
   if (path) return openFileSink(fs, path, uiFd);
-  if (2 !== uiFd) return createFdSink(fs, 2, false);
-  return createNoneSink();
+  if (!stderrSharesUiStream(fs, uiFd)) return createFdSink(fs, 2, false);
+  return createRingSink(options.size ?? DEFAULT_RING_SIZE);
 }
 
 /**

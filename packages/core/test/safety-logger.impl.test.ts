@@ -3,9 +3,9 @@
  *
  * Real-file append semantics + `close()` idempotence (a real temp file, no
  * mocks), and the `auto` sink selection across its three branches (path → file,
- * no-path-stderr-safe → stderr, no-path-stderr-is-UI → none). The fd-write
- * branches use the injectable `LoggerFs` seam to observe writes deterministically
- * without capturing the process's real stderr.
+ * no-path-stderr-distinct-device → stderr, no-path-stderr-is-UI-device → ring,
+ * HR-06/PA-6). The fd-write branches use the injectable `LoggerFs` seam to observe
+ * writes deterministically without capturing the process's real stderr.
  */
 import { test, expect } from 'vitest';
 import * as fs from 'node:fs';
@@ -46,7 +46,9 @@ function capturingFs(): { fs: LoggerFs; writes: Array<{ fd: number; data: string
     writes,
     fs: {
       openSync: () => 10,
-      fstatSync: (fd) => ({ dev: 1, ino: fd === 10 ? 50 : 60 }), // file vs UI differ → no collision
+      // Distinct device identity per fd (HR-06): file (10)→50, stderr (2)→70, UI/other→60. So stderr
+      // is a distinct device from the UI (fd 1) but shares the UI when uiFd is 2.
+      fstatSync: (fd) => ({ dev: 1, ino: fd === 10 ? 50 : fd === 2 ? 70 : 60 }),
       writeSync: (fd, data) => {
         writes.push({ fd, data });
         return data.length;
@@ -73,11 +75,13 @@ test('auto sink: no path but stderr is not the UI selects stderr (fd 2)', () => 
   expect(writes[0].fd).toBe(2);
 });
 
-test('auto sink: no path and stderr IS the UI selects no sink (records dropped)', () => {
+test('auto sink: no path and stderr IS the UI device degrades to the ring (HR-06/PA-6)', () => {
   const { fs: seam, writes } = capturingFs();
+  // uiFd 2 ⇒ the UI stream is stderr's device, so 'auto' degrades to the ring: nothing touches the
+  // UI, but the record is still captured and dumpable (HR-06/PA-6).
   const log = createLogger({ enabled: true, sink: 'auto', uiFd: 2, env: {}, fs: seam });
   log.info('t', 'msg');
   expect(log.enabled).toBe(true);
-  expect(writes.length).toBe(0);
-  expect(log.entries()).toStrictEqual([]);
+  expect(writes.length).toBe(0); // no UI writes
+  expect(log.entries().map((r) => r.msg)).toStrictEqual(['msg']); // captured in the ring
 });

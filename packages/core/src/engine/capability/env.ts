@@ -17,7 +17,7 @@
  * | `COLORTERM=truecolor\|24bit` | soft colorDepth `truecolor` |
  * | `TERM` contains `256color` | soft colorDepth `256` |
  * | `TERM` set (other) | soft colorDepth `16` |
- * | `LC_ALL`/`LC_CTYPE`/`LANG` contains `UTF-8` (ci) | `unicode.utf8 = true` |
+ * | `LC_ALL`/`LC_CTYPE`/`LANG` contains `UTF-8` (ci) | `unicode.utf8 = true` + `glyphs.boxDrawing`/`halfBlocks = true` (HR-07/PA-9) |
  * | `$TMUX` set, or `TERM` starts `screen`/`tmux` | `multiplexer = true` |
  */
 import type { ColorDepth, DeepPartial, CapabilityProfile } from './profile.js';
@@ -59,10 +59,18 @@ export interface EnvSignals {
  * @returns The determined non-colorDepth fields plus the split colorDepth signal.
  */
 export function readEnv(env: NodeJS.ProcessEnv): EnvSignals {
-  const profile: { unicode?: { utf8: boolean }; multiplexer?: boolean } = {};
+  const profile: {
+    unicode?: { utf8: boolean };
+    multiplexer?: boolean;
+    glyphs?: { boxDrawing: boolean; halfBlocks: boolean };
+  } = {};
 
   if (detectUtf8(env)) {
     profile.unicode = { utf8: true };
+    // HR-07 (PA-9): a detected UTF-8 locale additionally implies box-drawing + half-block glyph
+    // support, so `┌─│`/`▀▄` no longer degrade to ASCII. `ambiguousWide` stays false (conservative —
+    // the width probe owns that upgrade per DEF-23). The trigger is the locale, not `unicode.utf8`.
+    profile.glyphs = { boxDrawing: true, halfBlocks: true };
   }
 
   // Running under tmux/screen → flag the multiplexer (consumers apply a

@@ -132,7 +132,9 @@ function parseResponses(bytes: Uint8Array): QueryResult {
   let i = 0;
   while (i < bytes.length) {
     const match = matchResponse(bytes, i);
-    if (match === null) {
+    // `null` (not a response) and `'incomplete'` (opened-but-unterminated, HR-04) are both treated as
+    // passthrough input here — layer-2 scans a fixed captured buffer and does not thread carry state.
+    if (match === null || match === 'incomplete') {
       passthrough.push(bytes[i]);
       i += 1;
       continue;

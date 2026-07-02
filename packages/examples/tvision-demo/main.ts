@@ -118,14 +118,13 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  // Auto-detect the terminal, but force the glyphs the Turbo Vision look needs: SGR mouse (so the
-  // host enables mouse reporting), box-drawing + half-block/shade glyphs (so the `░` desktop and the
-  // `╔═╗`/`┌─┐` frames render instead of the `#`/`+-|` ASCII fallback), and UTF-8. Conservative
-  // auto-detection often leaves these off.
+  // Auto-detect the terminal, forcing only SGR mouse (so the host enables mouse reporting) + UTF-8.
+  // Box-drawing + half-block/shade glyphs now derive from the detected UTF-8 locale (HR-07/PA-9), so
+  // the `░` desktop and `╔═╗`/`┌─┐` frames render under a UTF-8 locale and honestly fall back to
+  // ASCII otherwise.
   const caps = resolveCapabilities({
     override: {
       mouse: { sgr: true, drag: true, wheel: true },
-      glyphs: { boxDrawing: true, halfBlocks: true },
       unicode: { utf8: true },
     },
   }).profile;

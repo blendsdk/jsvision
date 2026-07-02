@@ -110,6 +110,13 @@ export class ScreenBuffer {
     if (!this.inBounds(x, y)) return;
     this.clearOrphan(x, y);
     const cp = char.codePointAt(0) ?? 0x20;
+    // HR-05 (PA-5): a C0 control (incl. \t/\n) or DEL becomes a single space cell at the grid
+    // boundary. One input char = one cell, so caller column math holds and no raw control byte can
+    // reach the serializer and desync terminal column addressing.
+    if (cp < 0x20 || cp === 0x7f) {
+      this.write(this.cellAt(x, y), ' ', style, 1);
+      return;
+    }
     const w = charWidth(cp, widthMode);
     if (w === 2) {
       if (this.inBounds(x + 1, y)) {
@@ -157,9 +164,12 @@ export class ScreenBuffer {
   public text(x: number, y: number, str: string, style: Style, widthMode: WidthMode = DEFAULT_WIDTH_MODE): number {
     let col = x;
     for (const glyph of sanitize(str)) {
-      this.set(col, y, glyph, style, widthMode);
       const cp = glyph.codePointAt(0) ?? 0x20;
-      col += charWidth(cp, widthMode);
+      // HR-05 (PA-5): a C0 control / DEL that survived sanitize (\t, \n) stores as one space cell and
+      // advances exactly one column, mirroring set()'s grid-boundary replacement.
+      const isControl = cp < 0x20 || cp === 0x7f;
+      this.set(col, y, isControl ? ' ' : glyph, style, widthMode);
+      col += isControl ? 1 : charWidth(cp, widthMode);
     }
     return col;
   }
