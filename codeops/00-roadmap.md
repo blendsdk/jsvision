@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-02 (jsvision-ui **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: the **RD-12+ high-value-controls set** was opened via `make_requirements` — sliced into 6 sibling RDs by mechanism (AR-125…129), **RD-14 (Input dropdowns) + RD-15 (Tree) + RD-16 (Table/DataGrid) drafted ✏️** (AR-130…161, GATE-1 TV decodes) — the **MVP set (RD-14/15/16) is now fully drafted**; RD-17…19 queued. And a new feature-set **bun-runtime** — RD-01 drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
+> **Last Updated**: 2026-07-02 (jsvision-ui **RD-14 Input dropdowns → DONE ✅** — `exec_plan input-dropdowns` complete: `History` + `ComboBox<T>` on a shared anchored popup (5 phases / 47 tasks spec-first, TV GATE-1/2, runtime PA-16/PA-17); full `yarn verify` + `test:e2e` + `check:deps` green, kitchen-sink stories + `demo:dropdowns` shipped. Prior: **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: the **RD-12+ high-value-controls set** was opened via `make_requirements` — sliced into 6 sibling RDs by mechanism (AR-125…129), **RD-14 (Input dropdowns) + RD-15 (Tree) + RD-16 (Table/DataGrid) drafted ✏️** (AR-130…161, GATE-1 TV decodes) — the **MVP set (RD-14/15/16) is now fully drafted**; RD-17…19 queued. And a new feature-set **bun-runtime** — RD-01 drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
 > **Features**: 0 / 2 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 10 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13) · RD-14 🔬 Plan Preflighted · RD-15 + RD-16 ✏️ Drafted (RD-12+ set — **MVP 3/3 drafted**, 3/6) · Backlog (RD-17…19, RD-08/09) | 10 / 18 done | 🔄 | 2026-07-02 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 11 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13, RD-14) · RD-15 + RD-16 ✏️ Drafted (RD-12+ set — **MVP 3/3 drafted**, 3/6) · Backlog (RD-17…19, RD-08/09) | 11 / 18 done | 🔄 | 2026-07-02 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0 / 1 done | 🔄 | 2026-07-02 |
 
 ## Archived
@@ -24,6 +24,15 @@
 
 ## Notes
 
+- 2026-07-02: **jsvision-ui RD-14 (Input dropdowns) → DONE ✅** (`exec_plan input-dropdowns`). `History`
+  (TV `THistory`, faithful GATE-1/2) + fresh `ComboBox<T>` (editable filter / select-only type-ahead,
+  two-signal value⟂text bind) on a shared `openAnchoredPopup` — a new `packages/ui/src/dropdown/`
+  subsystem + additive-only seams (public `Input` linkage, `EventLoop.popupHost` envelope,
+  `syncOverlayVisible`, 5 core `history*` theme roles, `ListView` `roles` override). 5 phases / 47 tasks
+  spec-first (ST-1…ST-36 + fidelity ST-33); runtime decisions PA-16 (pick-on-`selected`) + PA-17
+  (viewer palette override). Kitchen-sink `History`+`ComboBox` stories (smoke green) + headless
+  `demo:dropdowns` (+ e2e). Full `yarn verify` (ui 660 unit) + `yarn test:e2e` + `yarn check:deps` green;
+  every dropdown file ≤ 260 lines. MVP set: RD-14 shipped, RD-15/16 drafted next.
 - 2026-07-02: **jsvision-ui RD-14 (Input dropdowns) plan preflighted** → 🔬 Plan Preflighted
   ([report](features/jsvision-ui/plans/input-dropdowns/00-preflight-report.md)). Codebase-grounded audit;
   6 findings (3🟠+2🟡+1🔵) all resolved Option A + applied — the 3 majors caught the PA-5 overlay-visibility

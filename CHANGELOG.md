@@ -11,6 +11,25 @@ the deprecation policy.
 
 ### Added
 
+- **jsvision-ui RD-14 input dropdowns — `History` + `ComboBox<T>`.** `@jsvision/ui`
+  gains a new `dropdown/` subsystem: a faithful Turbo Vision `THistory` (`History`) —
+  a `▐↓▌` button linked to an `Input` that drops that field's bounded MRU list into a
+  shared anchored popup — and a fresh `ComboBox<T>` selector (no TV counterpart, but
+  drawing like its siblings): **editable** (free text + case-insensitive filter, with
+  `value` tracking the exact match else `null`) or **select-only** (read-only field +
+  type-ahead picker), over a two-signal `value: Signal<T | null>` ⟂ `text: Signal<string>`
+  binding. New public exports: `History` + `HistoryOptions`, `ComboBox` +
+  `ComboBoxOptions`, the global MRU store functions `historyAdd`/`historyStr`/
+  `historyCount`/`historyEntries`/`clearHistory` + `HISTORY_MAX_ENTRIES`, and the
+  `PopupHost` seam (so a bare `Dialog` can host a dropdown). Additive Phase-0 seams:
+  core gains five decoded `history*` `Theme` roles (`historyButtonSides`/
+  `historyButtonArrow`/`historyWindow`/`historyViewer`/`historyViewerFocused`);
+  `@jsvision/ui` gains `Input.getValueSignal()`/`getMaxLength()` + public `selectAll()`,
+  the `EventLoop.popupHost` + `DispatchEvent.popupHost`/`getFocused` envelope seam, the
+  `syncOverlayVisible` helper, and an additive `roles` override on `ListView`/`ListRows`
+  (so the History viewer uses the `cpHistoryViewer` palette). **All additive and
+  non-breaking.**
+
 - **RD-13 runtime hardening — additive public surface.** `@jsvision/core` gains
   `KEY_NAMES` (value export) + the `PasteState` type (HR-23), and
   `CapabilityResolution.passthrough?: Uint8Array` so a captured layer-2 query
