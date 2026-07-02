@@ -1,7 +1,7 @@
 # RD-14: Input Dropdowns — History · ComboBox
 
 > **Document**: RD-14-input-dropdowns.md
-> **Status**: Draft
+> **Status**: Preflighted 🔎 (2026-07-02 — [`00-preflight-report-RD-14.md`](00-preflight-report-RD-14.md): 3 MAJOR + 3 MINOR + 2 OBS, all resolved; AR-162…AR-166)
 > **Created**: 2026-07-02 (`make_requirements` — RD-12+ high-value-controls set, sibling 1 of 6)
 > **Project**: jsvision UI (`@jsvision/ui`)
 > **Depends On**: RD-11 (Containers/lists — done; `ListView<T>` is the dropdown list, the overlay+capture seams), RD-06/RD-07 (Essential controls + completions — done; `Input` value/`maxLength`/`selectAll`, validators), RD-05 (App shell — done; the full-viewport overlay + `menu/controller.ts` outside-click catcher this generalizes, `execView`/`endModal`), RD-04/RD-03/RD-02/RD-01 (done), `@jsvision/core` (done; the additive History theme roles land here)
@@ -29,7 +29,7 @@ The components in scope:
 | Component | TV source | Role |
 |-----------|-----------|------|
 | `History` | `THistory` (`thistory.cpp`) + `THistoryWindow` (`thistwin.cpp`) + `THistoryViewer` (`thstview.cpp`) + the store `histlist.cpp` | A small `▐↓▌` button linked to an `Input`; opens a dropdown of that field's past values (a global bounded MRU store keyed by `historyId`); picking one replaces the field text. |
-| `ComboBox<T>` | **new** (TV lacks it; component map §118) | An `Input` + drop-down `ListView<T>`, **editable** (free text + filter-as-you-type) or **select-only** (pure picker + type-ahead jump); a two-way bound `value`. |
+| `ComboBox<T>` | **new** (TV lacks it; component map §118) | An `Input` + drop-down `ListView<T>`, **editable** (free text + filter-as-you-type) or **select-only** (pure picker + type-ahead jump); a two-way bound `value: Signal<T \| null>` (the selection) + the field's own `text: Signal<string>` in editable mode (AR-164/PF-003). |
 | *(internal)* anchored-popup primitive | generalized from `THistoryWindow` + RD-05 `menu/controller.ts` | The shared non-modal overlay that anchors a `ListView` below a field, clamps placement, and dismisses on outside-click/Esc/focus-loss. |
 
 **Behavior may extend TV** (reactive two-way binding, generic `ComboBox<T>`, filter-as-you-type,
@@ -41,6 +41,13 @@ rect, the list rows, hit-zones, and every resolved color).
 ## Functional Requirements
 
 ### Must Have
+
+> **Input linkage seam (AR-162/PF-003).** TV's `THistory` reaches its linked `TInputLine`'s **public**
+> `data`/`maxLen`/`selectAll` members (`thistory.cpp:106-107`). Our `Input` keeps these `protected`
+> (`controls/input.ts:56/111/433`), so `History` requires a **minimal additive PUBLIC Input linkage seam**
+> — a public `selectAll()` + a public accessor for the bound `value` signal + a `maxLength` read — added
+> intra-`@jsvision/ui` (listed in the additive surface below; non-breaking). This corrects the earlier
+> "no Input changes" framing: linking a field faithfully **does** need this small public seam.
 
 #### `History` — dropdown of past field values (TV `THistory`, AR-130/AR-135/AR-138/AR-139)
 - A `View` **linked to an `Input`** and drawn as the TV history button — icon `"\xDE~\x19~\xDD"` =
@@ -56,9 +63,11 @@ rect, the list rows, hit-zones, and every resolved color).
   `ListView` of the field's history entries with the TV `wfClose`/no-zoom framing (`THistoryWindow`,
   `wnNoNumber`). Overflowing entries scroll (owned ScrollBar, RD-11); `maxRows` is configurable (default 7).
 - **Pick / cancel (AR-138):** **Enter or double-click** a row → the pick **replaces the `Input` text**
-  (clamped to `maxLength`) and **`selectAll`s** it (`thistory.cpp` cmOK path → `link->selectAll(True)`);
-  **Esc, outside-click, or focus-loss** → cancel, leaving the field unchanged (`THistoryWindow` outside
-  mouse-down → `endModal(cmCancel)`; `THistoryViewer` Esc → cmCancel).
+  (clamped to `maxLength`) and **`selectAll`s** it — both via the AR-162 public Input linkage seam
+  (`thistory.cpp` cmOK path → `link->selectAll(True)`); **Esc or an outside-click** → cancel, leaving the
+  field unchanged (`THistoryWindow` outside mouse-down → `endModal(cmCancel)`; `THistoryViewer` Esc →
+  cmCancel). **Dismissal is dismiss-only** (AR-166/PF-005): an outside mouse-down closes the popup and is
+  **consumed** (it does not pass through to the control behind it, matching the reused menu catcher).
 
 #### History store — global bounded MRU keyed by `historyId` (TV `histlist.cpp`, AR-130)
 - A **bounded module-singleton** string store keyed by a numeric `historyId`, faithful to
@@ -71,39 +80,55 @@ rect, the list rows, hit-zones, and every resolved color).
 
 #### `ComboBox<T>` — input + drop-down list (new; AR-131/AR-134/AR-136)
 - A control composing an `Input` (RD-06/07) with a drop-down `ListView<T>` (RD-11) in the shared anchored
-  popup. **Binding (AR-136):** generic over `T` — `items: Signal<T[]>` + `getText: (item: T) => string` +
-  a two-way `value` (the selected `T`; in editable mode the field also reflects free text), mirroring
-  `ListView<T>` (AR-106) + the AR-100 two-way-signal model. Opens on the AR-135 keys (Alt+Down / Down /
-  a trailing `▐↓▌` button) into the same popup geometry as `History`.
+  popup. **Binding (AR-136/AR-164):** generic over `T` — `items: Signal<T[]>` + `getText: (item: T) =>
+  string` + **two distinct signals** (PF-003): `value: Signal<T | null>` (the current **selection**;
+  `null` while editable free text matches no item) **plus** the composed `Input`'s own `text:
+  Signal<string>` (the field text). Mirrors `ListView<T>` (AR-106) + the AR-100 two-way-signal model.
+  Opens on the AR-135 keys (Alt+Down / Down / a trailing `▐↓▌` button) into the same popup geometry as
+  `History`.
 - **Mode (AR-131) — `editable?: boolean` (default `true`):**
-  - **editable** — the `Input` accepts free text; the dropdown offers suggestions; **filter-as-you-type
-    (AR-134)** narrows the dropdown to items matching the typed text via an overridable predicate
-    (default case-insensitive substring), the modern autocomplete DX. Picking a row sets `value` + the field.
-  - **select-only** (`editable:false`) — the field is a read-only picker showing the current selection;
-    typing does **not** edit but drives **type-ahead position-jump** (TV `TListViewer`/`TSortedListBox`
+  - **editable** — the `Input` accepts free text into `text`; the dropdown offers suggestions;
+    **filter-as-you-type (AR-134)** narrows the dropdown to items matching `text` via an overridable
+    predicate (default case-insensitive substring), the modern autocomplete DX. Picking a row sets `value`
+    to the item **and** `text` to `getText(item)`; free text matching nothing leaves `value` `null`.
+  - **select-only** (`editable:false`) — the field is a read-only picker showing `getText(value)`; typing
+    does **not** edit `text` but drives **type-ahead position-jump** (TV `TListViewer`/`TSortedListBox`
     `typeAhead`, AR-104) to the first matching row; picking sets `value`.
-- Pick / cancel mirror `History` (Enter/double-click picks; Esc/outside-click/focus-loss cancels).
+- Pick / cancel mirror `History` (Enter/double-click picks; Esc / outside-click / **the popup list losing
+  focus** cancels — see the popup primitive's dismissal below).
 
 #### Shared anchored-popup primitive (AR-132/AR-137)
 - An **internal** primitive (DRY — one implementation, not one per control) generalized from the RD-05
   menu overlay + outside-click catcher (`menu/controller.ts`) and TV `THistoryWindow`: given an **anchor
-  rect** and a `ListView`, it mounts the list **top-z in the app overlay**, computes the clamped placement
-  (grow ±1, default 7 rows, `intersect` the host extent — AR-138), and routes **Enter/double-click →
-  pick, Esc/outside-click/focus-loss → dismiss** — **non-modal** (AR-132; it does not block the rest of
-  the UI, unlike TV's `execView` modal, whose modality is a construction detail the AR-105 precedent lets
-  us modernize while the drawing stays faithful).
-- It requires an **overlay host**: the RD-05 app-shell overlay (`application.ts:139`) is the default host,
-  reached via the same additive attach-seam pattern the `MenuBar` controller uses
-  (`menu/controller.ts` → `menuBar.attach(overlay, …)`, `application.ts:177`). (Providing the popup an
-  overlay host inside a bare RD-11 `Dialog` — no app shell — is a plan-level seam detail.)
+  rect** and a `ListView`, it mounts the list **top-z in the app overlay**, gives the list focus, computes
+  the clamped placement (grow ±1, default 7-row popup, `intersect` the host extent — AR-138), and routes
+  **Enter/double-click → pick, Esc / outside-click / list-focus-loss → dismiss**.
+- **Dismissal is concrete (AR-166/PF-005, PF-006):** the popup list **receives focus on open**; it
+  dismisses on (a) **Esc**, (b) an **outside mouse-down** — closed **and consumed** (dismiss-only, no
+  pass-through to the control behind, matching the reused menu catcher), or (c) the **list losing focus**
+  (e.g. Tab-away), observed via the PF-009 per-view focus-change signal. **Non-modal** (AR-132): unlike
+  TV's `execView` modal, the rest of the UI keeps updating and (after a dismissing click) is interactable
+  — a construction detail the AR-105 precedent lets us modernize while the drawing stays faithful.
+- It requires an **overlay host**: the RD-05 app-shell overlay (`application.ts:139-142`) is the default
+  host, reached via the same additive attach-seam pattern the `MenuBar` controller uses
+  (`menu/controller.ts` → `menuBar.attach(overlay, …)`, `application.ts:177`).
+- **Shared-overlay visibility (AR-163/PF-002).** The app overlay is a **single** `Group` with **one**
+  `state.visible` flag, today toggled by the menu controller (`controller.ts:229/247`). Two independent
+  clients (the `MenuBar` + a dropdown popup) driving that one flag would stomp each other — a menu
+  `close()` would hide an open dropdown, and vice versa. RD-14 therefore adds a **small additive app-shell
+  seam making overlay visibility DERIVED** — the overlay is visible while it hosts **any** mounted popup
+  child (ref-counted / any-child), so menu and dropdown coexist without stomping. This seam is listed in
+  the additive surface. (Providing the popup an overlay host inside a bare RD-11 `Dialog` — no app shell —
+  remains a plan-level seam detail.)
 
 #### Theme roles — faithful History colors (AR-139)
 - Add the additive History `cpGrayDialog`/`cpBlueWindow` roles to core `@jsvision/core` `Theme` +
   `defaultTheme`, decoded through the full `getColor` chain at **plan GATE-1**: the **button** (`cpHistory`,
   `thistory.cpp getColor(0x0102)`), the **popup window** (`cpHistoryWindow`, `thistwin.cpp`), and the
-  **viewer list** (`cpHistoryViewer`, `thstview.cpp`) — the `History 22–25` palette slots RD-11 reserved
-  (AR-112). Additive, non-breaking — the same cross-package pattern as the RD-06/07/11 control roles
-  (AR-97/112/122). `ComboBox` reuses the existing `input*`/`list*` roles + the button role.
+  **viewer list** (`cpHistoryViewer`, `thstview.cpp`) — with the exact attribute bytes decoded at plan
+  GATE-1 (no palette slots are pre-reserved in core today; PF-004). Additive, non-breaking — the same
+  cross-package pattern as the RD-06/07/11 control roles (AR-97/112/122). `ComboBox` reuses the existing
+  `input*`/`list*` roles + the button role.
 
 #### Kitchen-sink stories + headless demo (AR-140)
 - Per the **kitchen-sink showcase (NON-NEGOTIABLE)** rule, add a **story** for `History` (an `Input` + the
@@ -145,18 +170,26 @@ rect, the list rows, hit-zones, and every resolved color).
   from `src/index.ts` (the layout-convention rule, AR-81/AR-102/AR-113).
 - Pure TS, ESM/NodeNext (`.js` specifiers), zero runtime deps (`check:deps` holds).
 
-### Cross-package edits (additive only, AR-139)
-- `@jsvision/core` `Theme` + `defaultTheme` gain the additive History roles (button/window/viewer),
-  decoded from `cpAppColor` at plan GATE-1 (exact attribute bytes pinned per the fidelity directive). Same
-  additive pattern as AR-97/112/122; no existing role changes.
+### Additive surface (all non-breaking)
+- **Core (AR-139):** `@jsvision/core` `Theme` + `defaultTheme` gain the additive History roles
+  (button/window/viewer), decoded from `cpAppColor` at plan GATE-1 (exact attribute bytes pinned per the
+  fidelity directive). Same additive pattern as AR-97/112/122; no existing role changes.
+- **Intra-`@jsvision/ui` — public Input linkage seam (AR-162/PF-001):** a minimal **public** surface on
+  `controls/Input` — `selectAll()` promoted to public + a public accessor for the bound `value` signal +
+  a `maxLength` read — so `History` can faithfully replace-text-and-`selectAll` a linked field
+  (`thistory.cpp:106-107`). Additive; existing callers unaffected.
+- **Intra-`@jsvision/ui` — derived overlay-visibility seam (AR-163/PF-002):** a small app-shell change so
+  the shared overlay's `visible` is **derived from having any mounted popup child** (ref-counted), letting
+  the `MenuBar` and a dropdown popup share the overlay without stomping the single `state.visible` flag.
 
 ### Reuse (no new engine primitives)
 - **Dropdown list (RD-11):** the popup hosts a `ListView<T>` (`list/list-view.ts`) — its virtual scroll,
   owned ScrollBar, `sorted`/`typeAhead`, and `onSelect`/`command` are reused, not reimplemented.
 - **Overlay + dismissal (RD-05):** the anchored popup generalizes the `menu/controller.ts` overlay +
   outside-click catcher + the `attach(overlay, …)` seam — no new overlay mechanism.
-- **Input (RD-06/07):** `ComboBox`/`History` compose/link an `Input` via its `value`/`maxLength`/
-  `selectAll` surface (`controls/input.ts`) — no `Input` changes beyond linking.
+- **Input (RD-06/07):** `ComboBox` **composes** an `Input` (owning its `text`/`value` signals);
+  `History` **links** an app-created `Input` via the additive public linkage seam (AR-162/PF-001) — its
+  `value` signal, `selectAll()`, and `maxLength` read. No other `Input` behavior changes.
 - **Reactivity/layout/draw:** RD-01 signals + RD-03 `bind`/`invalidate`, RD-02 reflow, RD-03
   `DrawContext` (all writes via `ScreenBuffer` + `sanitize`).
 
@@ -192,6 +225,16 @@ All decisions trace to the Ambiguity Register (`00-ambiguity-register.md`):
 - **AR-138** — faithful popup geometry (grow ±1, 7-row default, clamp, scroll) + TV pick behavior (History replaces + `selectAll`; ComboBox sets `value`).
 - **AR-139** — additive faithful History theme roles, decoded at plan GATE-1.
 - **AR-140** — kitchen-sink stories (`History`, `ComboBox`) + headless `demo:dropdowns`.
+- **AR-162** (preflight PF-001) — `History` links an `Input` via a **minimal additive public Input linkage seam** (`selectAll()` + a `value`-signal accessor + `maxLength` read); corrects the earlier "no Input changes" framing.
+- **AR-163** (preflight PF-002) — the shared app overlay's visibility becomes **derived** (visible while it hosts any popup child) via a small additive app-shell seam, so `MenuBar` + dropdown share one overlay without stomping `state.visible`.
+- **AR-164** (preflight PF-003) — `ComboBox<T>` binds **two signals**: `value: Signal<T | null>` (selection) + the composed `Input`'s `text: Signal<string>` (field text); resolves the T-vs-string conflation.
+- **AR-165** (preflight PF-004) — no History palette slots are pre-reserved in core; the exact attribute bytes are decoded at plan GATE-1 (drops the phantom "slots 22–25 reserved" claim).
+- **AR-166** (preflight PF-005/PF-006) — popup dismissal is concrete: the list takes focus on open; dismiss on Esc / outside mouse-down (**consumed**, dismiss-only) / list-focus-loss (via the PF-009 signal).
+
+> **Preflight note (PF-007/PF-008, → plan GATE-1):** `r.b.y += 7` is the **popup rect** height (net +7),
+> not the visible list-row count (~5 after frame); and TV's store is **byte-bounded** (1024-byte block,
+> evict-oldest-by-bytes, `histlist.cpp:95/126-136`) — GATE-1 decides byte-block fidelity vs. a simpler
+> entry-count cap (a permitted non-visual modernization).
 
 > **Traceability:** AR-130…AR-135 are explicit user choices (RD-14 `make_requirements` gate,
 > 2026-07-02); AR-136…AR-140 are single-dominant / source-determined decisions (the AR-106 data model,
@@ -233,23 +276,29 @@ Each AC is the immutable oracle a spec test will encode (TV `thistory.cpp`/`this
   and evicts the oldest when the bounded block is full; two `History` controls with the same `historyId`
   share the list; a `History` given a `history: Signal<string[]>` uses that instead of the global store.
   *(AR-130)*
-- **AC-4** (`History` pick / cancel) — Enter/double-click on a row replaces the `Input` text (clamped to
-  `maxLength`) and `selectAll`s it; Esc, an outside-click, or focus-loss cancels and leaves the field
-  unchanged. *(AR-138)*
-- **AC-5** (`ComboBox` editable + filter) — an editable `ComboBox<T>` accepts free text in its field; typing
-  narrows the dropdown to items matching (default case-insensitive substring); picking a row sets the
-  two-way `value` and the field text. *(AR-131/AR-134/AR-136)*
+- **AC-4** (`History` pick / cancel) — Enter/double-click on a row replaces the linked `Input` text
+  (clamped to `maxLength`) and `selectAll`s it **via the public Input linkage seam** (AR-162); Esc or an
+  outside-click cancels (the outside-click consumed, not passed through) and leaves the field unchanged.
+  *(AR-138/AR-162/AR-166)*
+- **AC-5** (`ComboBox` editable + filter) — an editable `ComboBox<T>` accepts free text into its `text:
+  Signal<string>`; typing narrows the dropdown to items matching `text` (default case-insensitive
+  substring); picking a row sets `value` to the item **and** `text` to `getText(item)`; free text matching
+  no item leaves `value` `null`. *(AR-131/AR-134/AR-136/AR-164)*
 - **AC-6** (`ComboBox` select-only + type-ahead) — a `ComboBox({ editable:false })` is a read-only picker
-  showing the current selection; typing jumps `focused` to the first matching row (no field edit); picking
-  sets `value`. *(AR-131/AR-134)*
+  showing `getText(value)`; typing jumps `focused` to the first matching row (no `text` edit); picking
+  sets `value`. *(AR-131/AR-134/AR-164)*
 - **AC-7** (`ComboBox<T>` binding) — bound to `items: Signal<T[]>` + `getText`, the dropdown lists
-  `getText(item)`; updating `items` re-renders the visible rows; the two-way `value` reflects the current
-  selection. *(AR-136)*
+  `getText(item)`; updating `items` re-renders the visible rows; `value: Signal<T | null>` reflects the
+  current selection independently of the field `text`. *(AR-136/AR-164)*
 - **AC-8** (shared popup geometry) — both controls use one anchored-popup primitive: the placement grows
-  the anchor ±1, defaults to 7 rows (configurable `maxRows`), clamps to the host extent, and scrolls when
-  entries overflow (owned RD-11 ScrollBar). *(AR-137/AR-138)*
-- **AC-9** (non-modal dismissal) — the popup is non-modal (the rest of the UI is not blocked); Enter/
-  double-click picks, and Esc / outside-click / focus-loss dismisses without a pick. *(AR-132)*
+  the anchor ±1 and the **popup rect** by a default of 7 rows (`r.b.y += 7` net, `thistory.cpp:93-97`;
+  the visible **interior** list rows are ~5 after the frame + `grow(-1,-1)` — the `maxRows` popup-vs-visible
+  distinction is pinned at plan GATE-1, PF-007), clamps to the host extent, and scrolls when entries
+  overflow (owned RD-11 ScrollBar). *(AR-137/AR-138)*
+- **AC-9** (non-modal dismissal) — the popup is non-modal (the rest of the UI keeps updating); the popup
+  list takes focus on open; Enter/double-click picks; Esc, an outside mouse-down (consumed, no
+  pass-through), or the list losing focus (Tab-away, via the PF-009 signal) dismisses without a pick;
+  after a dismissing click the UI is interactable again. *(AR-132/AR-166)*
 - **AC-10** (theme roles) — `defaultTheme` exposes the additive History button/window/viewer roles with
   `cpGrayDialog`/`cpBlueWindow`-decoded colors; `encode()` of each does not throw; they are the only new
   core role symbols. *(AR-139)*
