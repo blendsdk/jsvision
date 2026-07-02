@@ -3,7 +3,7 @@
 > **Document**: 03-01-core-input-decoder.md
 > **Parent**: [Index](00-index.md)
 > **Covers**: HR-01, HR-04, HR-16, HR-22, HR-23, HR-24
-> **Files**: `packages/core/src/engine/input/{keys.ts,decoder.ts,index.ts}`, `capability/{responses.ts,query.ts,index.ts}`, `engine/index.ts`
+> **Files**: `packages/core/src/engine/input/{keys.ts,decoder.ts,index.ts}`, `capability/{responses.ts,query.ts,index.ts}`, `engine/index.ts`, `host/host.ts` (HR-24 flush timer)
 
 ## Overview
 
@@ -59,11 +59,14 @@ Notes); the invariant "zero swallowed bytes" is unchanged.
 
 ### HR-24 — Flush timer for any ESC-prefixed carry
 
-**Defect** (`decoder.ts:114-122`): the flush timer is armed only for `carry.length === 1`, so a
-carried `ESC [` (Alt+`[`) waits forever and fuses with the next keypress into a phantom CSI.
+**Defect** (`host/host.ts:114-122`, **not** `input/decoder.ts` — the decoder is pure and holds no
+timers): the host's stdin flush timer is armed only for `carry.length === 1 && carry[0] === ESC`
+(`escTimer = adapter.setTimer(…, ESC_TIMEOUT_MS)`), so a carried `ESC [` (Alt+`[`) waits forever and
+fuses with the next keypress into a phantom CSI.
 
-**Fix spec.** Arm the flush timer whenever the carry begins with `ESC` (any length), not only for
-the lone-ESC case. `flush()` on the carried `ESC [` decodes Alt+`[` (the existing Alt-prefix path).
+**Fix spec.** In `host/host.ts`, arm the flush timer whenever the carry begins with `ESC` (any
+length), not only for the lone-ESC case. `flush()` on the carried `ESC [` decodes Alt+`[` (the
+existing Alt-prefix path in `keys.ts`). This is a **host** change; the pure decoder is untouched.
 
 ### HR-22 — Passthrough re-injection
 

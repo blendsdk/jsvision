@@ -40,7 +40,7 @@ source of each oracle; the register (PA-N) supersedes it only where recorded (PA
 | ST-2.1 | an `XTVERSION` DCS reply (`ESC P > \| … ST`) split at **every** interior byte offset | each split yields the same single query result (or `incomplete` carry); **zero** key events | HR-04 |
 | ST-2.2 | `ScreenBuffer.text` writes `'a\tb'`, `'a\nb'`, lone `'\t'` | serialized bytes contain no raw `\t`/`\n`/C0; each C0 stored as one space cell; positions match the space-replaced string | HR-05 / **PA-5** |
 | ST-2.3 | fake runtime where fd1+fd2 share `{dev,ino}`: (a) sink `'auto'`; (b) explicit `sink:'stderr'`; (c) distinct devices | (a) degrades to ring sink, no UI writes; (b) throws `LoggerConfigError`; (c) stderr allowed | HR-06 / **PA-6** |
-| ST-2.4 | `resolveCapabilities({env:{TERM:'xterm-kitty',COLORTERM:'truecolor',LANG:'en_US.UTF-8'}})`; and a `TERM=dumb`/non-UTF-8 env | UTF-8: `glyphs.boxDrawing===true && halfBlocks===true`, `ambiguousWide===false`; non-UTF-8: all false. Plus: one demo minus its override still renders `┌`/`─` (not `+`/`-`) | HR-07 / **PA-9** |
+| ST-2.4 | `resolveCapabilities({env:{TERM:'xterm-kitty',COLORTERM:'truecolor',LANG:'en_US.UTF-8'}})`; and a `TERM=dumb`/non-UTF-8 env | UTF-8: `glyphs.boxDrawing===true && halfBlocks===true`, `ambiguousWide===false`; non-UTF-8: all false. Plus: one demo minus its override, caps resolved with an **explicit** `env:{ LANG:'en_US.UTF-8' }` (PF-002 — locale-gated, not `unicode.utf8`-gated), still renders `┌`/`─` (not `+`/`-`) | HR-07 / **PA-9** |
 
 ### AC-3 — Lifecycle majors (Phase 3)
 
@@ -133,7 +133,7 @@ source of each oracle; the register (PA-N) supersedes it only where recorded (PA
 | # | Input / Scenario | Expected Output / Behavior | Source |
 |---|------------------|----------------------------|--------|
 | ST-9 | per-phase: `yarn verify` + `test:e2e` + `check:deps` + `lint` + `gate` | all green; files ≤ 500 lines; JSDoc complete | AC-9 |
-| ST-10 | `kitchen-sink.smoke` + the demo goldens post-override-removal | smoke green; box-drawing (not ASCII) in the demo frames | AC-10 |
+| ST-10 | `kitchen-sink.smoke` (mount-only; uses `env:{}`, so it does **not** assert glyphs — PF-006) + the demo golden post-override-removal resolved with an explicit UTF-8 locale (PF-002) | smoke green; box-drawing (not ASCII) in the locale-supplied demo golden | AC-10 |
 
 > **⚠️ AUTHORING RULE:** expectations above come from RD-13/PA-N decisions/TV cites — never from
 > reading the implementation. Fidelity oracles (ST-4.b, ST-8.*) additionally defer to the GATE-1
@@ -159,7 +159,12 @@ source of each oracle; the register (PA-N) supersedes it only where recorded (PA
 
 Naming follows each package's existing convention (core hyphenated, ui dotted). Files exceeding
 ~300 lines split by concern at execution time (e.g. `controls.hardening-input.spec.test.ts`).
-**Existing** spec files are edited only under the fidelity exception (oracle corrections, cited).
+**Existing** spec files are edited only under two narrow carve-outs, each cited in the commit:
+(1) the **fidelity exception** (TV-derived oracle corrections against the `.cpp`, AC-8); and
+(2) a **renamed-contract update** — a spec oracle that asserts a value the plan deliberately renames
+is updated to the new value (PF-005). The only case here is HR-26/PA-4: `safety-logger.spec.test.ts`
+ST-19/ST-20 assert `BLENDTUI_DEBUG`; they are updated to `JSVISION_DEBUG`, cited to PA-4. This is a
+contract rename, not a weakening of the oracle.
 
 ### Implementation tests (AFTER each phase's implementation)
 
