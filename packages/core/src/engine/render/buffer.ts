@@ -31,6 +31,30 @@ const BOX = {
  */
 const DEFAULT_WIDTH_MODE: WidthMode = 'wcwidth';
 
+/** Sum of the display widths of a string's code points (combining marks count 0). Used by HR-25. */
+function displayWidth(str: string): number {
+  let total = 0;
+  for (const glyph of str) total += charWidth(glyph.codePointAt(0) ?? 0x20, DEFAULT_WIDTH_MODE);
+  return total;
+}
+
+/**
+ * Clip a string to at most `maxWidth` display columns without splitting a wide glyph (HR-25): a
+ * width-2 glyph that would straddle the limit is dropped whole rather than leaving a half cell.
+ */
+function clipToWidth(str: string, maxWidth: number): string {
+  if (maxWidth <= 0) return '';
+  let out = '';
+  let used = 0;
+  for (const glyph of str) {
+    const w = charWidth(glyph.codePointAt(0) ?? 0x20, DEFAULT_WIDTH_MODE);
+    if (used + w > maxWidth) break;
+    out += glyph;
+    used += w;
+  }
+  return out;
+}
+
 /** A mutable 2-D grid of styled cells. */
 export class ScreenBuffer {
   public readonly width: number;
@@ -163,15 +187,47 @@ export class ScreenBuffer {
    */
   public text(x: number, y: number, str: string, style: Style, widthMode: WidthMode = DEFAULT_WIDTH_MODE): number {
     let col = x;
+    // The lead column of the most recently written cell, so a following combining mark (HR-17) can
+    // compose onto it. -1 until the first base glyph of this write is stored.
+    let lastLeadCol = -1;
     for (const glyph of sanitize(str)) {
       const cp = glyph.codePointAt(0) ?? 0x20;
       // HR-05 (PA-5): a C0 control / DEL that survived sanitize (\t, \n) stores as one space cell and
       // advances exactly one column, mirroring set()'s grid-boundary replacement.
       const isControl = cp < 0x20 || cp === 0x7f;
-      this.set(col, y, isControl ? ' ' : glyph, style, widthMode);
-      col += isControl ? 1 : charWidth(cp, widthMode);
+      if (isControl) {
+        this.set(col, y, ' ', style, widthMode);
+        lastLeadCol = col;
+        col += 1;
+        continue;
+      }
+      // HR-17: a zero-width combining mark composes onto the preceding cell's glyph (the cluster
+      // stays one cell, width unchanged) — e.g. `e` + U+0301 → an `é` cell. A mark with no preceding
+      // cell in this write (row start) is dropped: there is nothing to compose onto.
+      if (charWidth(cp, widthMode) === 0) {
+        if (lastLeadCol >= 0) this.appendCombining(lastLeadCol, y, glyph);
+        continue;
+      }
+      this.set(col, y, glyph, style, widthMode);
+      lastLeadCol = col;
+      col += charWidth(cp, widthMode);
     }
     return col;
+  }
+
+  /**
+   * Append a zero-width combining mark to the base cell at (x, y), keeping the cell's width (HR-17).
+   * No-op when (x, y) is out of bounds or the base cell was cleared to empty (nothing to compose on).
+   *
+   * @param x Column of the base cell (a wide glyph's lead).
+   * @param y Row of the base cell.
+   * @param mark The combining mark glyph to append.
+   */
+  protected appendCombining(x: number, y: number, mark: string): void {
+    if (!this.inBounds(x, y)) return;
+    const cell = this.cellAt(x, y);
+    if (cell.char === '') return; // a continuation/empty cell is not a compose target
+    cell.char += mark;
   }
 
   /**
@@ -206,8 +262,12 @@ export class ScreenBuffer {
       this.set(x + w - 1, y + row, g.v, style);
     }
     if (title) {
-      const label = ` ${title} `;
-      const tx = x + Math.max(1, Math.floor((w - [...label].length) / 2));
+      // HR-25: center by DISPLAY width (not code-point count) and clip to the box interior, so a
+      // CJK/emoji title stays centered and never overflows the border.
+      const interior = w - 2; // columns between the two vertical borders
+      const label = clipToWidth(` ${title} `, interior);
+      const labelWidth = displayWidth(label);
+      const tx = x + 1 + Math.max(0, Math.floor((interior - labelWidth) / 2));
       this.text(tx, y, label, style);
     }
   }

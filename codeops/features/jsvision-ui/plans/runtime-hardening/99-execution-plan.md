@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-02
-> **Progress**: 39/120 tasks (33%)
+> **Progress**: 53/120 tasks (44%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -380,20 +380,20 @@ kitchen-sink story tasks are required (AC-10 only keeps the existing smoke/demos
 - [x] 4.3.3 Full verify ✅ (completed: 2026-07-02 17:05)
 
 ### Phase 5: Core engine minors
-- [ ] 5.1.1 ST-5.a–l specs
-- [ ] 5.1.2 RED run
-- [ ] 5.2.1 HR-15 restart baseline
-- [ ] 5.2.2 HR-16 Alt+Escape (PA-3) + HR-24 flush timer
-- [ ] 5.2.3 HR-17 combining + HR-25 box centering
-- [ ] 5.2.4 HR-18 `'? '` (PA-11) + HR-20 lead re-emit (PA-14)
-- [ ] 5.2.5 HR-19 EAW table (PA-18)
-- [ ] 5.2.6 HR-21 clipboard exact (PA-7)
-- [ ] 5.2.7 HR-22 passthrough re-inject
-- [ ] 5.2.8 HR-23 exports
-- [ ] 5.2.9 HR-26 JSVISION_* rename (PA-4)
-- [ ] 5.2.10 GREEN run
-- [ ] 5.3.1 Phase-5 impl tests
-- [ ] 5.3.2 Full verify
+- [x] 5.1.1 ST-5.a–l specs ✅ (completed: 2026-07-02 17:40)
+- [x] 5.1.2 RED run ✅ (completed: 2026-07-02 17:45 — HR-21 old-contract oracle + missing exports reproduced)
+- [x] 5.2.1 HR-15 restart baseline ✅ (completed: 2026-07-02 17:20)
+- [x] 5.2.2 HR-16 Alt+Escape (PA-3) + HR-24 flush timer ✅ (completed: 2026-07-02 17:20)
+- [x] 5.2.3 HR-17 combining + HR-25 box centering ✅ (completed: 2026-07-02 17:22)
+- [x] 5.2.4 HR-18 `'? '` (PA-11) + HR-20 lead re-emit (PA-14) ✅ (completed: 2026-07-02 17:15)
+- [x] 5.2.5 HR-19 EAW table (PA-18) ✅ (completed: 2026-07-02 17:25 — comprehensive table + gen-eaw-table.mjs)
+- [x] 5.2.6 HR-21 clipboard exact (PA-7) ✅ (completed: 2026-07-02 17:23)
+- [x] 5.2.7 HR-22 passthrough re-inject ✅ (completed: 2026-07-02 17:30)
+- [x] 5.2.8 HR-23 exports ✅ (completed: 2026-07-02 17:18)
+- [x] 5.2.9 HR-26 JSVISION_* rename (PA-4) ✅ (completed: 2026-07-02 17:28)
+- [x] 5.2.10 GREEN run ✅ (completed: 2026-07-02 17:48)
+- [x] 5.3.1 Phase-5 impl tests ✅ (completed: 2026-07-02 17:52)
+- [x] 5.3.2 Full verify ✅ (completed: 2026-07-02 17:58)
 
 ### Phase 6: Reactive/view minors
 - [ ] 6.1.1 ST-6.a–h specs

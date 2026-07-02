@@ -138,4 +138,13 @@ export interface ResolveOptions {
 export interface CapabilityResolution {
   readonly profile: CapabilityProfile;
   readonly reasons: CapabilityReasons;
+  /**
+   * Bytes read during an async layer-2 query that were **not** part of any recognised terminal
+   * response — genuine input the user typed while detection was in flight (HR-22, AC-4). Present only
+   * on {@link resolveCapabilitiesAsync} runs that issued a query and captured passthrough; a caller
+   * doing detection before starting its input loop must feed these into the decoder **first**, ahead
+   * of subsequent stdin, so they surface as key events in arrival order. Omitted (undefined) on the
+   * sync path and whenever no passthrough was captured.
+   */
+  readonly passthrough?: Uint8Array;
 }

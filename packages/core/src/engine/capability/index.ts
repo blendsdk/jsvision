@@ -101,12 +101,19 @@ export async function resolveCapabilitiesAsync(options: ResolveOptions = {}): Pr
   const platform = options.platform ?? toPlatform(process.platform);
 
   let runtime: DeepPartial<CapabilityProfile> | undefined;
+  let passthrough: Uint8Array | undefined;
   if (options.query !== undefined) {
-    const { parsed } = await runQueries(options.query, options.timeoutMs ?? DEFAULT_QUERY_TIMEOUT_MS);
+    const { parsed, passthrough: bytes } = await runQueries(
+      options.query,
+      options.timeoutMs ?? DEFAULT_QUERY_TIMEOUT_MS,
+    );
     runtime = parsed;
+    // HR-22: surface the non-response bytes so the caller can re-inject genuine input typed during
+    // detection into the decoder (AC-4); previously destructured away and silently dropped.
+    passthrough = bytes;
   }
 
-  return composeResolution({ env, platform, runtime, override: options.override });
+  return composeResolution({ env, platform, runtime, passthrough, override: options.override });
 }
 
 /**
@@ -117,6 +124,7 @@ function composeResolution(params: {
   env: NodeJS.ProcessEnv;
   platform: Platform;
   runtime?: DeepPartial<CapabilityProfile>;
+  passthrough?: Uint8Array;
   override?: ResolveOptions['override'];
 }): CapabilityResolution {
   const table = lookupTable(params.env);
@@ -127,7 +135,7 @@ function composeResolution(params: {
     runtime: params.runtime,
   });
   const merged = applyOverride(base, params.override);
-  return freezeResolution(merged);
+  return freezeResolution(merged, params.passthrough);
 }
 
 /**
@@ -156,15 +164,26 @@ function applyOverride(
   return { profile, reasons };
 }
 
-/** Deep-freeze both halves of the resolution before returning (PL-9). */
-function freezeResolution(resolution: {
-  profile: CapabilityProfile;
-  reasons: CapabilityReasons;
-}): CapabilityResolution {
-  return {
+/**
+ * Deep-freeze both halves of the resolution before returning (PL-9). When async detection captured
+ * genuine input bytes, attach them as `passthrough` for re-injection (HR-22) — the buffer stays
+ * unfrozen since it is meant to be consumed by the decoder.
+ */
+function freezeResolution(
+  resolution: {
+    profile: CapabilityProfile;
+    reasons: CapabilityReasons;
+  },
+  passthrough?: Uint8Array,
+): CapabilityResolution {
+  const frozen: CapabilityResolution = {
     profile: deepFreeze(resolution.profile),
     reasons: deepFreeze(resolution.reasons),
   };
+  if (passthrough !== undefined && passthrough.length > 0) {
+    return { ...frozen, passthrough };
+  }
+  return frozen;
 }
 
 /**

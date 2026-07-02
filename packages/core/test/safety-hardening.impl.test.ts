@@ -8,6 +8,9 @@ import { test, expect } from 'vitest';
 
 import { createLogger, LoggerConfigError } from '../src/engine/safety/index.js';
 import type { LoggerFs } from '../src/engine/safety/index.js';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /** A fake fs with per-fd `{dev,ino}` and a writes log. */
 function fs(identity: (fd: number) => { dev: number; ino: number }): LoggerFs & { writes: number } {
@@ -48,4 +51,26 @@ test('a failing fstat conservatively treats stderr as the UI device', () => {
   expect(log.entries().length).toBe(1);
   // explicit stderr → cannot compare → assume shared → throw.
   expect(() => createLogger({ enabled: true, sink: 'stderr', uiFd: 1, fs: f })).toThrow(LoggerConfigError);
+});
+
+// ---------------------------------------------------------------------------
+// HR-26 — no retired `BLENDTUI_` env branding remains in the source tree (PA-4)
+// ---------------------------------------------------------------------------
+
+/** Recursively collect every `.ts` source file under `dir`. */
+function collectTsFiles(dir: string): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...collectTsFiles(full));
+    else if (entry.name.endsWith('.ts')) out.push(full);
+  }
+  return out;
+}
+
+// A grep-style guard: after the rename, no `BLENDTUI_` reference may survive in the engine source.
+test('HR-26: zero BLENDTUI_ references remain in the engine source', () => {
+  const srcRoot = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'src');
+  const offenders = collectTsFiles(srcRoot).filter((file) => readFileSync(file, 'utf8').includes('BLENDTUI'));
+  expect(offenders).toStrictEqual([]);
 });

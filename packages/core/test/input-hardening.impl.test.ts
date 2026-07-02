@@ -84,3 +84,23 @@ test('a complete DCS followed by an arrow key decodes the arrow', () => {
   const keys = r.events.filter((e): e is KeyEvent => e.type === 'key');
   expect(keys.map((k) => k.key)).toEqual(['up']);
 });
+
+// ---------------------------------------------------------------------------
+// Phase-5 impl edges: HR-16 Alt-prefix regressions (ESC ESC did not break ESC x)
+// ---------------------------------------------------------------------------
+
+// HR-16 regression: ESC + a printable is still Alt+<char> (the ESC-ESC branch is additive).
+test('ESC x still decodes to Alt+x after the HR-16 change', () => {
+  const r = decode(Uint8Array.from([0x1b, 0x78]), createDecoderState()); // ESC 'x'
+  expect(r.events).toHaveLength(1);
+  expect(r.events[0]).toMatchObject({ type: 'key', key: 'x', alt: true });
+});
+
+// HR-16: ESC ESC ESC — the first pair is Alt+Escape; the trailing lone ESC is held for flush.
+test('ESC ESC ESC yields Alt+Escape plus a held trailing ESC', () => {
+  const r = decode(Uint8Array.from([0x1b, 0x1b, 0x1b]), createDecoderState());
+  expect(r.events).toHaveLength(1);
+  expect(r.events[0]).toMatchObject({ type: 'key', key: 'escape', alt: true });
+  const f = flush(r.state);
+  expect(f.events).toEqual([{ type: 'key', key: 'escape', ctrl: false, alt: false, shift: false }]);
+});

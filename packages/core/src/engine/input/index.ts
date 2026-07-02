@@ -23,6 +23,7 @@ export type {
   QueryResponse,
   DecodeResult,
   DecoderState,
+  PasteState,
   DecodeOptions,
 } from './events.js';
-export { ESC_TIMEOUT_MS, PASTE_CAP_BYTES } from './events.js';
+export { ESC_TIMEOUT_MS, PASTE_CAP_BYTES, KEY_NAMES } from './events.js';

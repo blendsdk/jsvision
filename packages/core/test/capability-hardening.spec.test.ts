@@ -9,10 +9,12 @@
  */
 import { test, expect } from 'vitest';
 
-import { resolveCapabilities } from '../src/engine/capability/index.js';
+import { resolveCapabilities, resolveCapabilitiesAsync } from '../src/engine/capability/index.js';
 import { ScreenBuffer } from '../src/engine/render/buffer.js';
 import { serialize } from '../src/engine/render/serialize.js';
 import type { Style } from '../src/engine/render/types.js';
+import type { TerminalQuery } from '../src/engine/capability/profile.js';
+import { createDecoderState, decode } from '../src/engine/input/decoder.js';
 
 const STYLE: Style = { fg: 'default', bg: 'default' };
 /** The overrides the demos keep after HR-07 (mouse + UTF-8), with NO glyph override. */
@@ -60,4 +62,39 @@ test('ST-2.4: the same overrides without a UTF-8 locale fall back to ASCII box c
   const out = renderBox({ TERM: 'xterm' }); // unicode.utf8 forced by override, but no UTF-8 locale
   expect(out.includes('+')).toBe(true); // ASCII corner fallback
   expect(out.includes('┌')).toBe(false); // no box-drawing glyph
+});
+
+// ---------------------------------------------------------------------------
+// ST-5.h — passthrough re-injection during async detection (HR-22)
+// ---------------------------------------------------------------------------
+
+/** A stub terminal-query seam that replays fixed chunks then ends the stream. */
+function stubQuery(chunks: Uint8Array[]): TerminalQuery {
+  return {
+    write() {
+      /* the queries are ignored; only the canned reply matters */
+    },
+    async *read(): AsyncIterable<Uint8Array> {
+      for (const chunk of chunks) yield chunk;
+    },
+  };
+}
+
+// ST-5.h — genuine input typed during async detection is surfaced as `passthrough` and, re-injected
+// into the decoder, becomes key events after detection completes (HR-22/AC-4).
+test('ST-5.h: input mixed into query replies surfaces as passthrough → key events', async () => {
+  const enc = new TextEncoder();
+  // A recognized Primary-DA reply (consumed) followed by two genuine keystrokes 'ab'.
+  const stream = new Uint8Array([...enc.encode('\x1b[?64;1;2c'), ...enc.encode('ab')]);
+  const res = await resolveCapabilitiesAsync({ env: {}, platform: 'linux', query: stubQuery([stream]) });
+
+  const bytes = res.passthrough;
+  expect(bytes).toBeDefined();
+  if (bytes === undefined) return;
+  expect(new TextDecoder().decode(bytes)).toBe('ab'); // no response bytes leaked
+  expect(bytes.includes(0x1b)).toBe(false);
+
+  // Re-injecting the passthrough into the decoder yields the two keystrokes in order.
+  const decoded = decode(bytes, createDecoderState());
+  expect(decoded.events.map((e) => (e.type === 'key' ? e.key : null))).toEqual(['a', 'b']);
 });
