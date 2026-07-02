@@ -13,6 +13,8 @@ import { test, expect } from 'vitest';
 
 import { createDecoderState, decode, flush } from '../src/engine/input/decoder.js';
 import type { DecoderState, InputEvent } from '../src/engine/input/events.js';
+import { KEY_NAMES } from '../src/engine/index.js';
+import type { PasteState } from '../src/engine/index.js';
 
 // ---------------------------------------------------------------------------
 // ST-1.x — hostile UTF-8 totality (HR-01)
@@ -144,3 +146,54 @@ function mulberry32(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+// ---------------------------------------------------------------------------
+// ST-5.b, ST-5.i, ST-5.j — decoder minors + public exports (HR-16/23/24)
+// ---------------------------------------------------------------------------
+
+/** All key events emitted by decoding `bytes` in one chunk (no carry follow-up). */
+function decodeKeys(bytes: readonly number[]): InputEvent[] {
+  const state = createDecoderState();
+  return decode(Uint8Array.from(bytes), state).events;
+}
+
+// ST-5.b — same-chunk ESC ESC is one Alt+Escape; flush-separated Esc/Esc is two bare escapes (HR-16/PA-3).
+test('ST-5.b: ESC ESC in one chunk is Alt+Escape; flush-separated is two bare escapes', () => {
+  const same = decodeKeys([0x1b, 0x1b]);
+  expect(same).toHaveLength(1);
+  expect(same[0]).toMatchObject({ type: 'key', key: 'escape', alt: true });
+
+  // Esc → flush → Esc: each lone ESC resolves to a bare escape (no alt).
+  const s1 = createDecoderState();
+  const r1 = decode(Uint8Array.from([0x1b]), s1); // held as incomplete carry
+  expect(r1.events).toHaveLength(0);
+  const f1 = flush(r1.state);
+  expect(f1.events).toEqual([{ type: 'key', key: 'escape', ctrl: false, alt: false, shift: false }]);
+  const r2 = decode(Uint8Array.from([0x1b]), f1.state);
+  const f2 = flush(r2.state);
+  expect(f2.events).toEqual([{ type: 'key', key: 'escape', ctrl: false, alt: false, shift: false }]);
+});
+
+// ST-5.j — a carried `ESC [` flushes to Alt+`[` (or escape then `[`), never a fused CSI with the next
+// key (HR-24). The oracle permits either form; the invariant is that the carry never lingers to fuse.
+test('ST-5.j: a carried ESC [ flushes to escape-prefixed [, not a fused CSI', () => {
+  const state = createDecoderState();
+  const r = decode(Uint8Array.from([0x1b, 0x5b]), state); // ESC [ — an incomplete CSI introducer
+  expect(r.events).toHaveLength(0); // held, not consumed as keys
+  const f = flush(r.state);
+  expect(f.state.carry.length).toBe(0); // nothing left to fuse with the next key
+  const keys = f.events.filter((e) => e.type === 'key').map((e) => (e.type === 'key' ? e.key : ''));
+  expect(keys).toContain('['); // the '[' surfaces as its own key (Alt+[ or a bare '[')
+  // No CSI cursor/named key was fabricated by fusing ESC [ with a later byte.
+  expect(keys.some((k) => ['up', 'down', 'left', 'right', 'home', 'end'].includes(k))).toBe(false);
+});
+
+// ST-5.i — the documented public surface is actually exported (HR-23).
+test('ST-5.i: KEY_NAMES and PasteState are exported from the engine entry point', () => {
+  expect(Array.isArray(KEY_NAMES)).toBe(true);
+  expect(KEY_NAMES).toContain('escape');
+  // `PasteState` is a type imported at the top of this file; typing a value as it is the compile-time
+  // proof the type is exported (this file fails to typecheck if the export is missing).
+  const paste: PasteState = { active: false, bytes: [], truncated: false };
+  expect(paste.active).toBe(false);
+});

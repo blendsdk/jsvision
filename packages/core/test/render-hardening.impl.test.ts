@@ -40,3 +40,36 @@ test('a control between wide glyphs keeps column math', () => {
   expect(buf.get(3, 0)?.width).toBe(2); // second wide lead
   expect(end).toBe(5); // 2 + 1 + 2
 });
+
+// ---------------------------------------------------------------------------
+// Phase-5 impl edges: HR-05×HR-17 ordering, mixed wide/fallback serialize, box fit (HR-17/18/25)
+// ---------------------------------------------------------------------------
+import { serialize } from '../src/engine/render/serialize.js';
+import { resolveCapabilities } from '../src/engine/capability/index.js';
+
+const implNoUtf8 = resolveCapabilities({ env: {}, platform: 'linux', override: { unicode: { utf8: false } } }).profile;
+
+// HR-05 × HR-17 ordering: a control is replaced by a space FIRST, so a following combining mark
+// composes onto that space (a valid base) rather than attaching to a raw control byte.
+test('a combining mark after a control composes onto the replacement space', () => {
+  const buf = new ScreenBuffer(4, 1, STYLE);
+  buf.text(0, 0, '\t́x', STYLE); // TAB (→ space) + combining acute + x
+  expect(buf.get(0, 0)?.char).toBe(' ́'); // the space cell carries the mark
+  expect(buf.get(0, 0)?.width).toBe(1);
+  expect(buf.get(1, 0)?.char).toBe('x');
+});
+
+// HR-18: a row mixing an ASCII run and a fallen-back wide glyph keeps column count under utf8:false.
+test('a mixed ASCII + wide-fallback row serializes without column drift', () => {
+  const buf = new ScreenBuffer(6, 1, STYLE);
+  buf.text(0, 0, 'a世b', STYLE); // a (col0) + 世 (col1-2) + b (col3)
+  const out = serialize(buf, null, { caps: implNoUtf8 });
+  expect(out).toContain('a? b'); // 世 → '? '; b stays at its column
+});
+
+// HR-25: an exact-fit title (interior width) is not clipped; a border stays intact.
+test('a box title exactly filling the interior is not clipped', () => {
+  const buf = new ScreenBuffer(7, 3, STYLE);
+  buf.box(0, 0, 7, 3, STYLE, 'single', 'abc'); // " abc " = 5 cols = interior (7-2)
+  expect(rowChars(buf, 0, 7)).toBe('┌ abc ┐'); // fills the interior exactly, corners intact
+});

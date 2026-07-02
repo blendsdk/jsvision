@@ -81,15 +81,43 @@ export function serialize(current: ScreenBuffer, previous: ScreenBuffer | null, 
         x += 1;
         continue;
       }
+
+      // HR-20 (PA-14): a changed run starting on a wide-glyph CONTINUATION (its lead unchanged) must
+      // re-emit the lead glyph with the changed style — never a zero-glyph styled run. Emit the lead
+      // glyph at the lead column with the continuation's new style, then skip the continuation.
+      if (row[x].width === 0 && x > 0 && row[x - 1].width === 2) {
+        const lead = row[x - 1];
+        const cont = row[x]; // the changed continuation carries the new style
+        const g = fallbackGlyph(lead.char, caps);
+        body.push(cursorTo(y + 1, x)); // the lead column (x-1) → 1-based x
+        body.push(encode(cont.fg, cont.bg, cont.attrs, caps));
+        body.push(g);
+        if (g.length === 1 && g !== lead.char) body.push(' '); // wide-fallback pad (HR-18/PA-11)
+        body.push(SGR_RESET);
+        x += 1;
+        continue;
+      }
+
       const runStart = x;
       const head = row[x];
       let glyphs = '';
+      // HR-18 (PA-11): a wide glyph whose fallback collapses to one narrow char needs its
+      // continuation cell emitted as a space pad, so the 2-column footprint (and column math) holds.
+      let padWide = false;
       while (x < row.length) {
         const cell = row[x];
         if (prev && cellsEqual(cell, prev[x])) break; // unchanged → run ends
         if (!sameStyle(cell, head)) break; // style change → run ends
-        // Continuation cells (width 0) already had their glyph emitted by the lead.
-        if (cell.width !== 0) glyphs += fallbackGlyph(cell.char, caps);
+        if (cell.width === 0) {
+          // Continuation: the lead already emitted the wide glyph — but if that glyph fell back to a
+          // single narrow char, emit a space pad here to preserve the two columns (HR-18).
+          if (padWide) glyphs += ' ';
+          padWide = false;
+        } else {
+          const g = fallbackGlyph(cell.char, caps);
+          glyphs += g;
+          padWide = cell.width === 2 && g.length === 1 && g !== cell.char;
+        }
         x += 1;
       }
       body.push(cursorTo(y + 1, runStart + 1));

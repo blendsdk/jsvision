@@ -13,6 +13,10 @@ import { test, expect } from 'vitest';
 
 import { createLogger, LoggerConfigError } from '../src/engine/safety/index.js';
 import type { LoggerFs } from '../src/engine/safety/index.js';
+import { createHost } from '../src/engine/host/host.js';
+import { ScreenBuffer } from '../src/engine/render/buffer.js';
+import { resolveCapabilities } from '../src/engine/capability/index.js';
+import { CaptureStream, FakeInput, FakeRuntimeAdapter } from './host-doubles.js';
 
 /**
  * A fake filesystem seam with per-fd `{dev,ino}` identity and a `writes` log, so the UI-device
@@ -60,4 +64,48 @@ test('ST-2.3: an stderr sink on a distinct device is allowed and writes to fd 2'
 
   expect(fs.writes.length).toBe(1);
   expect(fs.writes[0]?.fd).toBe(2);
+});
+
+// ---------------------------------------------------------------------------
+// ST-5.a, ST-5.l — host restart baseline + env branding (HR-15/26)
+// ---------------------------------------------------------------------------
+
+const hostCaps = resolveCapabilities({ env: {}, platform: 'linux', override: { altScreen: true } }).profile;
+
+/** A one-glyph frame. */
+function hostFrame(glyph: string): ScreenBuffer {
+  const buf = new ScreenBuffer(10, 3, { fg: 'default', bg: 'default' });
+  buf.set(1, 1, glyph, { fg: 'default', bg: 'default' });
+  return buf;
+}
+
+// ST-5.a — a stop()→start() restart resets the diff baseline: the first post-restart frame is a FULL
+// repaint, so re-rendering an identical frame still paints (a stale baseline would diff to nothing and
+// freeze the fresh alt-screen) (HR-15).
+test('ST-5.a: a restart forces a full repaint of the first frame', async () => {
+  const adapter = new FakeRuntimeAdapter();
+  const output = new CaptureStream();
+  const input = new FakeInput(false);
+  const host = createHost({ caps: hostCaps, runtime: adapter, input: input.asInput(), output: output.asOutput() });
+
+  await host.start();
+  host.render(hostFrame('X')); // establishes a baseline
+  await host.stop();
+
+  await host.start(); // restart → baseline reset
+  const mark = output.data.length;
+  host.render(hostFrame('X')); // the SAME frame — a stale baseline would emit nothing here
+  expect(output.data.slice(mark)).toContain('X'); // full repaint of the glyph
+  await host.stop();
+});
+
+// ST-5.l — the logger gates on the renamed JSVISION_DEBUG; the old BLENDTUI_DEBUG no longer enables it (HR-26/PA-4).
+test('ST-5.l: the logger honors JSVISION_DEBUG, not the retired BLENDTUI_DEBUG', () => {
+  const on = createLogger({ env: { JSVISION_DEBUG: '1' }, sink: 'ring' });
+  on.info('host', 'up');
+  expect(on.enabled).toBe(true);
+  expect(on.entries().map((r) => r.msg)).toContain('up');
+
+  const off = createLogger({ env: { BLENDTUI_DEBUG: '1' } }); // retired name → dead
+  expect(off.enabled).toBe(false);
 });

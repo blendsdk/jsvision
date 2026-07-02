@@ -45,10 +45,11 @@ export type {
   QueryResponse,
   DecodeResult,
   DecoderState,
+  PasteState,
   DecodeOptions,
   Keymap,
 } from './input/index.js';
-export { ESC_TIMEOUT_MS, PASTE_CAP_BYTES } from './input/index.js';
+export { ESC_TIMEOUT_MS, PASTE_CAP_BYTES, KEY_NAMES } from './input/index.js';
 
 // RD-04 — rendering engine.
 export {

@@ -44,13 +44,13 @@ export interface LoggerFs {
 
 /** Options for {@link createLogger}; all optional (env supplies defaults). [AR-10, AR-14] */
 export interface LoggerOptions {
-  /** Force enable/disable. Default: enabled iff `sink==='ring'` or `env.BLENDTUI_DEBUG==='1'`. */
+  /** Force enable/disable. Default: enabled iff `sink==='ring'` or `env.JSVISION_DEBUG==='1'`. */
   readonly enabled?: boolean;
   /** Minimum level emitted. Default: 'debug' when enabled. */
   readonly level?: LogLevel;
   /** Sink override. Default 'auto' (file if a path is set, else stderr-if-safe). */
   readonly sink?: LogSink;
-  /** File path for the 'file' sink. Default: `env.BLENDTUI_LOG`. */
+  /** File path for the 'file' sink. Default: `env.JSVISION_LOG`. */
   readonly path?: string;
   /** Ring capacity in entries (sink==='ring'). Default 1024. */
   readonly size?: number;
@@ -182,7 +182,7 @@ function resolveSink(options: LoggerOptions, env: NodeJS.ProcessEnv): Sink {
   const fs = options.fs ?? nodeFs;
   const uiFd = options.uiFd ?? 1;
   const sink = options.sink ?? 'auto';
-  const path = options.path ?? env.BLENDTUI_LOG;
+  const path = options.path ?? env.JSVISION_LOG;
 
   if (sink === 'ring') return createRingSink(options.size ?? DEFAULT_RING_SIZE);
 
@@ -195,7 +195,7 @@ function resolveSink(options: LoggerOptions, env: NodeJS.ProcessEnv): Sink {
   }
 
   if (sink === 'file') {
-    if (!path) throw new LoggerConfigError('The file sink requires a path (options.path or BLENDTUI_LOG).');
+    if (!path) throw new LoggerConfigError('The file sink requires a path (options.path or JSVISION_LOG).');
     return openFileSink(fs, path, uiFd);
   }
 
@@ -209,12 +209,12 @@ function resolveSink(options: LoggerOptions, env: NodeJS.ProcessEnv): Sink {
 /**
  * Create a screen-safe logger. [AR-5, AR-10, AR-14]
  *
- * Enablement: `options.enabled ?? (sink==='ring' || env.BLENDTUI_DEBUG==='1')`.
+ * Enablement: `options.enabled ?? (sink==='ring' || env.JSVISION_DEBUG==='1')`.
  * A disabled logger is a no-op (every method returns without writing;
  * `entries()` is empty) so a normal run writes zero bytes (AC-5).
  *
  * Sink selection when enabled (sink==='auto'): if a path (`options.path ??
- * env.BLENDTUI_LOG`) is set → file (append); else if stderr is not the UI stream
+ * env.JSVISION_LOG`) is set → file (append); else if stderr is not the UI stream
  * → stderr; else no sink. The 'ring' sink is always available via `sink:'ring'`
  * (used by tests) and self-enables.
  *
@@ -231,7 +231,7 @@ function resolveSink(options: LoggerOptions, env: NodeJS.ProcessEnv): Sink {
 export function createLogger(options: LoggerOptions = {}): Logger {
   const env = options.env ?? process.env;
   const sink = options.sink ?? 'auto';
-  const enabled = options.enabled ?? (sink === 'ring' || env.BLENDTUI_DEBUG === '1');
+  const enabled = options.enabled ?? (sink === 'ring' || env.JSVISION_DEBUG === '1');
 
   if (!enabled) {
     // Disabled: a pure no-op so the screen-owning library writes nothing (AC-5).

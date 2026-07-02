@@ -111,8 +111,11 @@ export function createHost(options: HostOptions): Host {
     // result.queries are intentionally dropped — routed away from onInput (AR-2).
     clearEscTimer();
     const carry = decoderState.carry;
-    if (carry.length === 1 && carry[0] === ESC) {
-      // A lone trailing ESC: arm the disambiguation timer; new bytes cancel it (AR-14).
+    // HR-24: arm the flush timer whenever the carry BEGINS with ESC (any length), not only for a
+    // lone ESC. A carried `ESC [` (Alt+`[`) or `ESC O` otherwise waits forever and fuses with the
+    // next keypress into a phantom CSI/SS3; the timer flushes it as an Alt-prefixed / bare escape.
+    if (carry.length >= 1 && carry[0] === ESC) {
+      // A trailing ESC-prefixed carry: arm the disambiguation timer; new bytes cancel it (AR-14).
       escTimer = adapter.setTimer(() => {
         escTimer = null;
         const flushed = flush(decoderState, { caps });
@@ -175,6 +178,13 @@ export function createHost(options: HostOptions): Host {
   async function start(): Promise<void> {
     if (running) return;
     running = true;
+    // HR-15: reset the render diff baseline and decoder carry on every start, so a stop()→start()
+    // restart paints a FULL first frame onto the fresh alt-screen (diffing against a stale `prev`
+    // would paint garbage) and no pre-restart ESC carry fuses into the first post-restart key.
+    // Done at start() (not stop()) so a crash between the two can never leave a half-reset state.
+    prev = null;
+    lastBuffer = null;
+    decoderState = createDecoderState();
     streams = bindStreams(options);
     isTTY = streams.isTTY;
     // Resolve the adapter after binding so the real one is bound to the output (PF-010).

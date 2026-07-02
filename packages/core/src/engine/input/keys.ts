@@ -114,6 +114,16 @@ function decodeEscape(buf: Uint8Array, i: number): KeyDecode {
   if (next === SS3_INTRODUCER) {
     return decodeSs3(buf, i);
   }
+  if (next === ESC) {
+    // HR-16 (PA-3): `ESC ESC` in the same chunk is Alt+Escape — one `escape` event with `alt:true`,
+    // consuming both bytes. A lone trailing ESC stays `incomplete` (handled above) → flush() yields a
+    // bare escape, so Esc-pause-Esc still produces two bare escapes.
+    return {
+      status: 'event',
+      event: { type: 'key', key: 'escape', ctrl: false, alt: true, shift: false },
+      end: i + 2,
+    };
+  }
   // Alt-prefixed key: ESC + a single key. Decode the inner key and set alt.
   const inner = decodeSingle(buf, i + 1);
   if (inner.status !== 'event') {

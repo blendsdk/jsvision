@@ -12,16 +12,16 @@ import { createLogger, LoggerConfigError } from '../src/engine/safety/index.js';
 import type { LoggerFs } from '../src/engine/safety/index.js';
 
 // ST-19 — disabled by default: no enablement flag → no-op, zero records (AC-5).
-test('ST-19: a logger with no BLENDTUI_DEBUG is disabled and writes nothing', () => {
+test('ST-19: a logger with no JSVISION_DEBUG is disabled and writes nothing', () => {
   const log = createLogger({ env: {} });
   log.debug('input', 'a keystroke happened');
   expect(log.enabled).toBe(false);
   expect(log.entries()).toStrictEqual([]);
 });
 
-// ST-20 — BLENDTUI_DEBUG=1 + ring sink: enabled, structured records captured.
+// ST-20 — JSVISION_DEBUG=1 + ring sink: enabled, structured records captured.
 test('ST-20: an enabled ring logger captures structured records', () => {
-  const log = createLogger({ env: { BLENDTUI_DEBUG: '1' }, sink: 'ring' });
+  const log = createLogger({ env: { JSVISION_DEBUG: '1' }, sink: 'ring' });
   log.debug('input', 'one');
   log.info('gate', 'two');
   log.warn('host', 'three');

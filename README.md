@@ -287,12 +287,12 @@ essentialsMet(caps, facts); // boolean
 **Screen-safe logger.** A TUI owns the screen, so the logger physically refuses
 any sink that resolves to the UI stream (throws `LoggerConfigError` at
 construction). It is **disabled by default** — a normal run writes zero bytes —
-and gated by env: set `BLENDTUI_DEBUG=1` to enable, `BLENDTUI_LOG=<path>` to write
+and gated by env: set `JSVISION_DEBUG=1` to enable, `JSVISION_LOG=<path>` to write
 to a file (else stderr when it is not the UI). Levels are `error|warn|info|debug`;
 the in-memory `ring` sink is always available for tests.
 
 ```ts
-const log = createLogger(); // disabled unless BLENDTUI_DEBUG=1
+const log = createLogger(); // disabled unless JSVISION_DEBUG=1
 log.debug('input', 'event', { count: 3 }); // no-op when disabled
 ```
 

@@ -37,16 +37,18 @@ export function hyperlink(text: string, url: string, caps: CapabilityProfile): s
 }
 
 /**
- * Emit an OSC 52 clipboard-write of `text` (PL-12). The text is sanitized and
- * then base64-encoded (sanitize first, then encode). Returns `''` when the
+ * Emit an OSC 52 clipboard-write of `text` (PL-12, HR-21/PA-7). The text is base64-encoded
+ * **verbatim** — no pre-encode sanitize. Base64 output (`[A-Za-z0-9+/=]`) cannot break out of the
+ * OSC 52 frame, so the sequence stays injection-safe while placing the exact input bytes on the
+ * clipboard (a prior sanitize silently stripped CR and other controls). Returns `''` when the
  * terminal lacks clipboard support.
  *
- * @param text Text to place on the clipboard.
+ * @param text Text to place on the clipboard; encoded byte-for-byte.
  * @param caps Resolved terminal capabilities.
  */
 export function setClipboard(text: string, caps: CapabilityProfile): string {
   if (!caps.osc.clipboard52) return '';
-  const b64 = Buffer.from(sanitize(text), 'utf8').toString('base64');
+  const b64 = Buffer.from(text, 'utf8').toString('base64');
   return `\x1b]52;c;${b64}${BEL}`;
 }
 

@@ -102,8 +102,20 @@ test('ST-8: hyperlink() text path strips control bytes', () => {
   );
 });
 
-test('ST-8: setClipboard() path strips control bytes before base64', () => {
-  expect(setClipboard(MALICIOUS, CLIP_CAPS)).toBe(setClipboard(BENIGN, CLIP_CAPS));
+// ST-8 (updated for RD-13 HR-21/PA-7): the clipboard contract is now **byte-exact** — the payload is
+// base64-encoded verbatim (a prior sanitize silently stripped CR/controls). Base64 output cannot break
+// out of the OSC 52 frame, so exactness and injection-safety coexist. This supersedes the former
+// sanitize-equality oracle for the clipboard path (a user-resolved RD-13 decision, PA-7).
+test('ST-8: setClipboard() encodes exact bytes and stays OSC-injection-safe (HR-21/PA-7)', () => {
+  const out = setClipboard(MALICIOUS, CLIP_CAPS);
+  const b64 = out.slice(out.indexOf(';c;') + 3, out.length - 1); // the base64 body (before the trailing BEL)
+  // Byte-exact: the body decodes back to the ORIGINAL untrusted string, control bytes intact.
+  expect(Buffer.from(b64, 'base64').toString('utf8')).toBe(MALICIOUS);
+  // Still injection-safe: the base64 alphabet carries no ESC/BEL that could terminate/hijack the frame.
+  expect(b64.includes('\x1b')).toBe(false);
+  expect(b64.includes('\x07')).toBe(false);
+  // Byte-exactness (no mutation) means a raw vs pre-stripped payload now DIFFER, unlike the old contract.
+  expect(setClipboard(MALICIOUS, CLIP_CAPS)).not.toBe(setClipboard(BENIGN, CLIP_CAPS));
 });
 
 // ---------------------------------------------------------------------------

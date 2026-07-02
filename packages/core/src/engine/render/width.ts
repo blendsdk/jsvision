@@ -41,26 +41,63 @@ const ZERO_WIDTH: readonly Range[] = [
 ];
 
 /**
- * East-Asian Wide (`W`) and Fullwidth (`F`) ranges, plus wide emoji. Each entry
- * cites its Unicode block. Notably excludes `U+4DC0–4DFF` (Yijing Hexagrams,
- * narrow) so the `U+4DFF`/`U+4E00` boundary resolves correctly. Sorted by `lo`.
+ * East-Asian Wide (`W`) and Fullwidth (`F`) code-point ranges (HR-19 / PA-18).
+ *
+ * Derived from the Unicode **15.1.0** `EastAsianWidth.txt` (`W` ∪ `F`) by the dev-only generator
+ * `packages/core/scripts/gen-eaw-table.mjs` (not shipped, not a build step), then merged with the
+ * adjacent CJK/Kana super-blocks this renderer already treats as wide. A few entries are documented
+ * **coarse over-approximations** (whole Misc-Symbols / emoji / supplementary-CJK blocks) — safe for a
+ * TUI because rendering an unassigned code point two columns wide never desyncs the grid, whereas
+ * under-counting a real wide glyph does. Sorted ascending by `lo`, non-overlapping (binary-searched).
  */
 const WIDE: readonly Range[] = [
   [0x1100, 0x115f], // Hangul Jamo
-  [0x2329, 0x232a], // Angle brackets 〈 〉
-  [0x2600, 0x26ff], // Miscellaneous Symbols (emoji presentation, PL-10)
+  [0x231a, 0x231b], // ⌚⌛ watch / hourglass
+  [0x2329, 0x232a], // 〈 〉 angle brackets
+  [0x23e9, 0x23ec], // ⏩⏪⏫⏬ media fast-forward group
+  [0x23f0, 0x23f0], // ⏰ alarm clock
+  [0x23f3, 0x23f3], // ⏳ hourglass flowing
+  [0x25fd, 0x25fe], // ◽◾ medium-small squares
+  [0x2600, 0x26ff], // Miscellaneous Symbols (coarse; emoji presentation, PL-10)
+  [0x2705, 0x2705], // ✅ check mark
+  [0x270a, 0x270b], // ✊✋ raised fist / hand
+  [0x2728, 0x2728], // ✨ sparkles
+  [0x274c, 0x274c], // ❌ cross mark
+  [0x274e, 0x274e], // ❎ negative squared cross
+  [0x2753, 0x2755], // ❓❔❕ question / exclamation ornaments
+  [0x2757, 0x2757], // ❗ exclamation mark
+  [0x2795, 0x2797], // ➕➖➗ heavy math signs
+  [0x27b0, 0x27b0], // ➰ curly loop
+  [0x27bf, 0x27bf], // ➿ double curly loop
+  [0x2b1b, 0x2b1c], // ⬛⬜ large squares
+  [0x2b50, 0x2b50], // ⭐ star
+  [0x2b55, 0x2b55], // ⭕ heavy large circle
   [0x2e80, 0x303e], // CJK Radicals .. Kangxi .. CJK Symbols & Punctuation
   [0x3041, 0x33ff], // Hiragana .. Katakana .. CJK Compatibility
   [0x3400, 0x4dbf], // CJK Unified Ideographs Extension A
   [0x4e00, 0x9fff], // CJK Unified Ideographs
   [0xa000, 0xa4cf], // Yi Syllables / Radicals
+  [0xa960, 0xa97c], // Hangul Jamo Extended-A
   [0xac00, 0xd7a3], // Hangul Syllables
   [0xf900, 0xfaff], // CJK Compatibility Ideographs
   [0xfe10, 0xfe19], // Vertical Forms
   [0xfe30, 0xfe6f], // CJK Compatibility Forms / Small Form Variants
   [0xff00, 0xff60], // Fullwidth Forms
   [0xffe0, 0xffe6], // Fullwidth signs
-  [0x1f300, 0x1faff], // Emoji: Misc Symbols & Pictographs .. Extended-A
+  [0x16fe0, 0x16fe4], // Tangut/Khitan iteration & filler marks
+  [0x16ff0, 0x16ff1], // Vietnamese reading marks
+  [0x17000, 0x187f7], // Tangut Ideographs
+  [0x18800, 0x18cd5], // Tangut Components
+  [0x18d00, 0x18d08], // Tangut Ideographs Supplement
+  [0x1aff0, 0x1affe], // Kana Extended-B (coarse)
+  [0x1b000, 0x1b2fb], // Kana Supplement / Extended-A / Small Kana Extension (coarse)
+  [0x1f004, 0x1f004], // 🀄 mahjong red dragon
+  [0x1f0cf, 0x1f0cf], // 🃏 joker
+  [0x1f18e, 0x1f18e], // 🆎 AB blood type
+  [0x1f191, 0x1f19a], // 🆑..🆚 squared latin abbreviations
+  [0x1f200, 0x1f251], // Enclosed Ideographic Supplement (coarse)
+  [0x1f260, 0x1f265], // 🉠..🉥 rounded symbols
+  [0x1f300, 0x1faff], // Emoji: Misc Symbols & Pictographs .. Symbols Extended-A (coarse)
   [0x20000, 0x3fffd], // CJK Unified Ideographs Extension B+ (supplementary)
 ];
 
