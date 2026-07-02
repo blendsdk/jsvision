@@ -92,8 +92,9 @@ test('ST-08: maxLength caps the stored value', () => {
 test('ST-08: a focused Input draws inputSelected; unfocused draws inputNormal', () => {
   const value = signal('hi');
   const { loop, stub } = mountInput({ value }, 10);
-  expect(loop.renderRoot.buffer().get(1, 0)?.bg).toBe(defaultTheme.inputSelected.bg); // focused
-  loop.focusView(stub); // move focus to the stub
+  // Col 1 is the RD-07 logical caret cell (curPos 0, reversed); probe col 2 for the field role.
+  expect(loop.renderRoot.buffer().get(2, 0)?.bg).toBe(defaultTheme.inputSelected.bg); // focused
+  loop.focusView(stub); // move focus to the stub (no caret when unfocused)
   expect(loop.renderRoot.buffer().get(1, 0)?.bg).toBe(defaultTheme.inputNormal.bg); // unfocused
 });
 

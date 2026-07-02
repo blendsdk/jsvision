@@ -56,7 +56,8 @@ test('ST-12: Tab/Shift-Tab cycle focus across the controls, skipping the non-foc
   loop.dispatch(key('tab', { shift: true }));
   expect(loop.getFocused()).toBe(button); // Shift-Tab reverses
 
-  // The focused control shows its …Selected role (Input on row 1 → inputSelected bg).
+  // The focused control shows its …Selected role (Input on row 1 → inputSelected bg). Col 1 is the
+  // RD-07 logical caret cell (curPos 0, reversed); probe col 2 — a plain focused-field cell.
   loop.focusView(input);
-  expect(loop.renderRoot.buffer().get(1, 1)?.bg).toBe(defaultTheme.inputSelected.bg);
+  expect(loop.renderRoot.buffer().get(2, 1)?.bg).toBe(defaultTheme.inputSelected.bg);
 });
