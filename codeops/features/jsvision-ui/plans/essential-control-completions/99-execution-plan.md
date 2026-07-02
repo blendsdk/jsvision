@@ -1,7 +1,7 @@
 # 99 — Execution Plan
 
 > **Implements**: jsvision-ui/RD-07 · **CodeOps Skills Version**: 3.1.0
-> **Progress**: 13 / 32 tasks (41%) · **Last Updated**: 2026-07-02
+> **Progress**: 18 / 32 tasks (56%) · **Last Updated**: 2026-07-02
 
 Spec-first per capability: **spec tests → RED → implement → GREEN → impl tests → verify**. Every TV-derived
 component carries a **BEFORE-decode (GATE-1)** and **AFTER-diff (GATE-2)** task (fidelity directive,
@@ -69,16 +69,20 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
   + char-by-char validate (`:418-446`). `yarn verify` + `lint` green.
 
 ## Phase 3 — picture(mask) validator ✅TV
-- [ ] **P3.1** BEFORE-decode (GATE-1): re-open `tvalidat.cpp:149-162,264-599` (state machine + autoFill +
-  syntaxCheck); record in `picture.ts` JSDoc.
-- [ ] **P3.2** Spec tests ST-07…ST-10 (`controls.picture.spec`) → **RED**.
-- [ ] **P3.3** Implement `picture(mask, autoFill=true)`: the `process`/`scan`/`group`/`iteration`/
-  `checkComplete` machine over JS strings + autoFill + `syntaxCheck`, **bounds-safe** (PA-2: `MAX_REPEAT`,
-  step budget, guarded indexing, advance-or-break); re-export from `validators/index.ts` + `src/index.ts` →
-  **GREEN**.
-- [ ] **P3.4** Impl tests (each special char, alternation, nested groups, `;` escape, empty/malformed masks,
-  the DoS masks terminate).
-- [ ] **P3.5** AFTER-diff (GATE-2): diff results vs `tvalidat.cpp` semantics for the ST masks. `yarn verify`.
+- [x] **P3.1** ✅ 2026-07-02 BEFORE-decode (GATE-1): re-open `tvalidat.cpp:149-162,264-599` (state machine + autoFill +
+  syntaxCheck); recorded in `picture.ts` JSDoc.
+- [x] **P3.2** ✅ 2026-07-02 Spec tests ST-07…ST-10 (`controls.picture.spec`) → written; ST-09 `[###]` oracle corrected
+  to `[(###)]` (greedy-optional-group fidelity, C++ outranks the mis-decoded cell).
+- [x] **P3.3** ✅ 2026-07-02 Implement `picture(mask, autoFill=true)`: the `process`/`scan`/`group`/`iteration`/
+  `checkComplete` machine over JS strings + autoFill + `syntaxCheck`, **bounds-safe** (PA-2: `MAX_REPEAT=1024`,
+  step budget `64*(m+i)+4096`, guarded indexing, unbounded-`*` spin-guard); re-exported from `validators/index.ts`
+  + `controls/index.ts` + `src/index.ts` → **GREEN**. autoFill delivered via the additive `Validator.fill` (PA-17),
+  wired into `Input.insertPrintable`/`pasteText`.
+- [x] **P3.4** ✅ 2026-07-02 Impl tests (each special char `#?&!@`, alternation, nested/required/optional groups, `;`
+  escape, empty/malformed masks, `*N` boundary 1024/1025, DoS masks terminate, autoFill delivery through `Input`).
+- [x] **P3.5** ✅ 2026-07-02 AFTER-diff (GATE-2): the machine mirrors `tvalidat.cpp` process/scan/group/iteration/
+  checkComplete/syntaxCheck 1:1; bounds are PA-2 additions; greedy-optional-group verified against `:322-336`.
+  `yarn verify` + `lint` green.
 
 ## Phase 4 — MultiCheckGroup + story ✅TV
 - [ ] **P4.1** BEFORE-decode (GATE-1): re-open `tmulchkb.cpp:65-103` + `tcluster.cpp:87-129,39` (box/marker/
@@ -123,7 +127,7 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
 Phase 0: [x] P0.1 [x] P0.2 [x] P0.3
 Phase 1: [x] P1.1 [x] P1.2 [x] P1.3 [x] P1.4 [x] P1.5
 Phase 2: [x] P2.1 [x] P2.2 [x] P2.3 [x] P2.4 [x] P2.5
-Phase 3: [ ] P3.1 [ ] P3.2 [ ] P3.3 [ ] P3.4 [ ] P3.5
+Phase 3: [x] P3.1 [x] P3.2 [x] P3.3 [x] P3.4 [x] P3.5
 Phase 4: [ ] P4.1 [ ] P4.2 [ ] P4.3a [ ] P4.3b [ ] P4.4 [ ] P4.5 [ ] P4.6 [ ] P4.7
 Phase 5: [ ] P5.1 [ ] P5.2 [ ] P5.3 [ ] P5.4
 Phase 6: [ ] P6.1 [ ] P6.2

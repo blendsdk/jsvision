@@ -67,7 +67,18 @@ export type { CommandName, StatusItem, StatusLoopSeam } from './status/index.js'
 // Essential controls (RD-06) — leaf widgets + validators (`src/controls/`). Explicit named
 // re-exports, per the layout convention (AC-18 / ST-13). The list grows one phase at a time
 // (Text/Label → Button → validators → Input → clusters) as each control lands.
-export { Text, Label, Button, Input, CheckGroup, RadioGroup, filter, range, lookup } from './controls/index.js';
+export {
+  Text,
+  Label,
+  Button,
+  Input,
+  CheckGroup,
+  RadioGroup,
+  filter,
+  range,
+  lookup,
+  picture,
+} from './controls/index.js';
 export type { ButtonOptions, InputOptions, Validator } from './controls/index.js';
 
 // Containers, scrolling & lists (RD-11) — `scroll/`·`list/`·`dialog/`. Explicit named re-exports,
