@@ -62,8 +62,13 @@ export interface AnchoredPopupOptions<T> {
   host: PopupHost;
   /** The anchor rect — the linked field's bounds, in overlay-local coordinates. */
   anchor: Rect;
-  /** The list to host (History: `ListView<string>`; ComboBox: its `ListView<T>`). */
-  list: ListView<T>;
+  /**
+   * Factory building the list to host (History: `ListView<string>`; ComboBox: its `ListView<T>`).
+   * Called **inside** the popup's reactive owner so the list's constructor computeds (its sorted
+   * display) are owned and disposed on dismiss — never leaked (they must NOT be created in the caller's
+   * click handler, which runs outside any `createRoot` scope).
+   */
+  buildList(): ListView<T>;
   /** Max visible rows (default {@link DEFAULT_MAX_ROWS}); the window height is `maxRows + 2`. PA-4. */
   maxRows?: number;
   /** Called on activation (Enter/Space/click) with the list's selected display index. */
@@ -106,6 +111,12 @@ class PopupCatcher extends View {
  */
 class PopupFrame extends Group {
   override layout: LayoutProps = { position: 'absolute', padding: 1 };
+  /**
+   * Cast the TV-faithful drop shadow (`shadowSize {2,1}`): `THistoryWindow`/`ComboBox` popups are
+   * `TWindow`s, which shadow like any other window. The compose walker paints the L-shaped shadow in
+   * the `shadow` role under the overlay clip (render-root.ts `drawDropShadow`).
+   */
+  override castsShadow = true;
 
   constructor(private readonly onEsc: () => void) {
     super();
@@ -186,52 +197,55 @@ function placePopup(anchor: Rect, maxRows: number, viewport: Rect): Rect {
  * @returns The {@link AnchoredPopup} handle (idempotent `dismiss()`).
  */
 export function openAnchoredPopup<T>(opts: AnchoredPopupOptions<T>): AnchoredPopup {
-  const { host, anchor, list, onPick, onDismiss } = opts;
+  const { host, anchor, onPick, onDismiss } = opts;
   const maxRows = opts.maxRows ?? DEFAULT_MAX_ROWS;
   const overlay = host.overlay;
   const viewport = overlay.layout.rect ?? FALLBACK_VIEWPORT;
 
   const savedFocus = host.getFocused();
   let dismissed = false;
-  let disposeWatch: (() => void) | null = null;
 
-  /** Idempotent teardown: unmount views, restore focus, notify — first call wins (PA-15). */
-  function dismiss(): void {
-    if (dismissed) return;
-    dismissed = true;
-    overlay.remove(frame);
-    overlay.remove(catcher);
+  // One reactive owner for the WHOLE popup: the hosted list is built inside this root so its
+  // constructor computeds (the sorted display) plus the focus-loss + pick effects all belong to a
+  // single scope that `dispose()` tears down on dismiss. Building the list here (not in the caller's
+  // click handler) is what keeps its computeds from leaking outside any `createRoot` (RD-14 defect).
+  return createRoot((dispose) => {
+    const list = opts.buildList();
+
+    /** Idempotent teardown: unmount views, dispose the scope, restore focus, notify (PA-15). */
+    function dismiss(): void {
+      if (dismissed) return;
+      dismissed = true;
+      overlay.remove(frame);
+      overlay.remove(catcher);
+      syncOverlayVisible(overlay);
+      dispose(); // dispose the list computeds + the focus-loss/pick effects BEFORE restoring focus
+      if (savedFocus !== null) host.focusView(savedFocus);
+      onDismiss?.();
+    }
+
+    const frame = new PopupFrame(dismiss);
+    frame.layout = { position: 'absolute', padding: 1, rect: placePopup(anchor, maxRows, viewport) };
+    // The hosted list must FILL the frame's padded interior: `size:fr` fills the main axis (else the
+    // frame sizes it to its collapsed `auto` width), `align:stretch` (the frame default) fills the
+    // cross axis. Merge so the ListView keeps its own `direction:'row'` ([rows | bar]) split.
+    list.layout = { ...list.layout, size: { kind: 'fr', weight: 1 } };
+    frame.add(list);
+
+    const catcher = new PopupCatcher(dismiss);
+    catcher.layout = {
+      position: 'absolute',
+      rect: { x: viewport.x, y: viewport.y, width: viewport.width, height: viewport.height },
+    };
+
+    // Mount catcher first (bottom-most, catches outside clicks) then the frame (paints/hits above it),
+    // matching the menu z-order; derive the overlay visibility from the new child count (PA-5).
+    overlay.add(catcher);
+    overlay.add(frame);
     syncOverlayVisible(overlay);
-    disposeWatch?.(); // stop the focus-loss + pick effects BEFORE restoring focus (no re-entry)
-    disposeWatch = null;
-    if (savedFocus !== null) host.focusView(savedFocus);
-    onDismiss?.();
-  }
 
-  const frame = new PopupFrame(dismiss);
-  frame.layout = { position: 'absolute', padding: 1, rect: placePopup(anchor, maxRows, viewport) };
-  // The hosted list must FILL the frame's padded interior: `size:fr` fills the main axis (else the
-  // frame sizes it to its collapsed `auto` width), `align:stretch` (the frame default) fills the cross
-  // axis. Merge so the ListView keeps its own `direction:'row'` ([rows | bar]) split.
-  list.layout = { ...list.layout, size: { kind: 'fr', weight: 1 } };
-  frame.add(list);
+    host.focusView(list.rows); // the list receives focus on open (saved prior focus above)
 
-  const catcher = new PopupCatcher(dismiss);
-  catcher.layout = {
-    position: 'absolute',
-    rect: { x: viewport.x, y: viewport.y, width: viewport.width, height: viewport.height },
-  };
-
-  // Mount catcher first (bottom-most, catches outside clicks) then the frame (paints/hits above it),
-  // matching the menu z-order; derive the overlay visibility from the new child count (PA-5).
-  overlay.add(catcher);
-  overlay.add(frame);
-  syncOverlayVisible(overlay);
-
-  host.focusView(list.rows); // the list receives focus on open (saved prior focus above)
-
-  // The reactive wiring, owned so it disposes on dismiss (no leak, no post-dismiss re-fire).
-  disposeWatch = createRoot((dispose) => {
     // Focus-loss dismissal (PF-004): `focusSignal()` is a void tick firing on both gain AND loss, and
     // this effect runs once immediately on creation — so dismiss ONLY when the list is now unfocused,
     // ignoring the open-time focus gain + the initial run (else the popup self-dismisses on open).
@@ -253,8 +267,7 @@ export function openAnchoredPopup<T>(opts: AnchoredPopupOptions<T>): AnchoredPop
         dismiss();
       }
     });
-    return dispose;
-  });
 
-  return { dismiss };
+    return { dismiss };
+  });
 }
