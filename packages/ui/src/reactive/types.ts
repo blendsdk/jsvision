@@ -111,6 +111,12 @@ export interface Computation {
   owner: Owner | null;
   /** `onCleanup` callbacks; fired before each re-run and once at disposal (AR-03). */
   cleanups: Array<() => void>;
+  /**
+   * `true` once the owning scope has disposed this computation (HR-03). Disposal is final: a
+   * disposed node is skipped by the flush loop and never runs its `fn` or re-subscribes again, so a
+   * write that dirtied it while it was still queued cannot resurrect it.
+   */
+  disposed: boolean;
   /** `true` for an effect (eager leaf sink); `false` for a computed (lazy source). */
   readonly isEffect: boolean;
   /**

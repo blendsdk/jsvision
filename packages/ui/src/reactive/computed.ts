@@ -51,6 +51,7 @@ export function computed<T>(fn: () => T, options?: ComputedOptions<T>): Computed
     state: NodeState.DIRTY, // lazy: not yet evaluated
     owner: null,
     cleanups: [],
+    disposed: false,
     isEffect: false,
     observers,
     recompute: () => {

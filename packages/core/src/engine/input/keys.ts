@@ -274,6 +274,12 @@ function decodePrintable(buf: Uint8Array, i: number): KeyDecode {
     }
   }
   const codepoint = decodeUtf8(buf, i, len);
+  if (!isWellFormedScalar(codepoint, len)) {
+    // Out-of-range, lone surrogate, or overlong form (HR-01): drop & resync at the next byte,
+    // identical to the invalid-lead path. This keeps the boundary total — no RangeError from
+    // String.fromCodePoint, and no non-scalar / C0-via-overlong byte leaks in as a printable key.
+    return { status: 'drop', end: i + 1 };
+  }
   return {
     status: 'event',
     event: {
@@ -286,6 +292,26 @@ function decodePrintable(buf: Uint8Array, i: number): KeyDecode {
     },
     end: i + len,
   };
+}
+
+/**
+ * Validate an assembled UTF-8 code point against the Unicode scalar-value rules and the minimal
+ * encoding length (HR-01). A well-formed printable requires:
+ *
+ * 1. **In range** — `cp ≤ 0x10FFFF` (else `String.fromCodePoint` throws).
+ * 2. **Not a surrogate** — outside `[0xD800, 0xDFFF]` (lone surrogates are not scalar values).
+ * 3. **Not overlong** — the value must require exactly `len` bytes (2-byte ⇒ `≥ 0x80`, 3-byte ⇒
+ *    `≥ 0x800`, 4-byte ⇒ `≥ 0x10000`), so NUL/C1 cannot smuggle in via an overlong form.
+ *
+ * @param cp The assembled code point.
+ * @param len The number of bytes it was decoded from (1–4).
+ * @returns `true` when `cp` is a well-formed Unicode scalar value at that encoding length.
+ */
+function isWellFormedScalar(cp: number, len: number): boolean {
+  if (cp > 0x10ffff) return false;
+  if (cp >= 0xd800 && cp <= 0xdfff) return false;
+  const minForLen = len === 2 ? 0x80 : len === 3 ? 0x800 : len === 4 ? 0x10000 : 0;
+  return cp >= minForLen;
 }
 
 /** Expected UTF-8 byte length from a lead byte, or 0 if the lead byte is invalid. */

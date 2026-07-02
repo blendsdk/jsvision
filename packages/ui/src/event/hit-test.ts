@@ -128,13 +128,18 @@ export function hitTestRoute(ev: DispatchEvent, ctx: HitContext): void {
 
   const scopeRoot = ctx.scopeRoot;
   if (scopeRoot === null) return;
+  // The scope root's `bounds` is parent-relative (view.ts), so its containment rect and walk origin
+  // must use the ABSOLUTE origin — mirroring the capture branch above (HR-02). Using `bounds.x/y`
+  // directly shifted every modal click by the scope root's ancestor offset (a MenuBar pushing the
+  // desktop to y≥1 dropped clicks on the dialog's real bottom row and mis-delivered `ev.local`).
+  const origin = absoluteOrigin(scopeRoot);
   const rootRect: Rect = {
-    x: scopeRoot.bounds.x,
-    y: scopeRoot.bounds.y,
+    x: origin.x,
+    y: origin.y,
     width: scopeRoot.bounds.width,
     height: scopeRoot.bounds.height,
   };
-  const hit = topMost(scopeRoot, scopeRoot.bounds.x, scopeRoot.bounds.y, rootRect, x, y);
+  const hit = topMost(scopeRoot, origin.x, origin.y, rootRect, x, y);
   if (hit === null) return; // empty space / outside modal → ignored no-op (PA-6)
 
   // A mouse-down focuses the nearest focusable ancestor (AC-8), then bubbles from the hit view up its

@@ -1,8 +1,8 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-02 (jsvision-ui RD-07 essential-control-completions → ✅ **Done** — all 7 phases executed spec-first; Input selection+clipboard+caret · `picture(mask)` · `MultiCheckGroup` · hardware caret; final gate clean)
-> **Features**: 0 / 1 done
+> **Last Updated**: 2026-07-02 (new feature-set **bun-runtime** — RD-01 Bun runtime support & self-contained executables drafted ✏️; Zero-Ambiguity Gate PASSED AR-1…AR-10, grounded in a same-day empirical Bun 1.3.14 analysis. Earlier today: jsvision-ui RD-13 runtime-hardening → 📋 Plan Created)
+> **Features**: 0 / 2 done
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -13,7 +13,8 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 9 ✅ Done (RD-01…RD-07, RD-10, RD-11) · Backlog (RD-08/09, RD-12+) | 9 / 11 done | 🔄 | 2026-07-02 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 9 ✅ Done (RD-01…RD-07, RD-10, RD-11) · RD-13 🔄 executing (Phase 1/10) · Backlog (RD-08/09, RD-12+) | 9 / 12 done | 🔄 | 2026-07-02 |
+| bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0 / 1 done | 🔄 | 2026-07-02 |
 
 ## Archived
 
@@ -23,6 +24,25 @@
 
 ## Notes
 
+- 2026-07-02: **NEW feature-set `bun-runtime` — RD-01 (Bun runtime support & self-contained
+  executables) drafted** → ✏️ RD Drafted ([RD-01](features/bun-runtime/requirements/RD-01-bun-runtime-support.md)).
+  `add_requirement` grounded in a same-day strict empirical analysis (Bun 1.3.14): the stack already
+  runs on Bun unmodified — **1,105/1,105 unit tests pass on the Bun runtime**, the interactive host
+  lifecycle was PTY-verified (raw mode, alt-screen, mouse, truecolor, SIGWINCH resize,
+  SIGSTOP/SIGCONT suspend/resume, restore-on-exit), and `bun build --compile` binaries behave
+  byte-identically (Linux executed; Windows cross-built). The RD adds **guarantees, not fixes**:
+  merge-blocking 3-OS Bun CI lane (latest stable, floor ≥ 1.3), compile smokes + 5-target
+  cross-build verification, a PTY-driven compiled-binary e2e + `yarn gate` criterion, Bun-children
+  e2e variants, engines/README/docs/CHANGELOG declarations, a Windows manual TTY checklist, and a
+  benchmarked Bun-native spike (≥ 20% adoption bar; `bun:ffi`/Bun-test excluded). Gate AR-1…AR-10
+  all user-resolved. Next: `make_plan bun-runtime RD-01` (or `preflight` the RD first).
+- 2026-07-02: **jsvision-ui RD-13 (Runtime hardening & defect remediation) planned** → 📋 Plan Created
+  ([`plans/runtime-hardening/`](features/jsvision-ui/plans/runtime-hardening/00-index.md)). 14-doc plan over
+  the five-agent deep-audit backlog (3 critical + 12 major + ~20 minor confirmed defects across core + ui):
+  Zero-Ambiguity Gate PASSED (19 decisions PA-1…PA-19 — 11 interactive user choices + 8 batch-confirmed
+  dominants), 9 component specs with GATE-1 citation indexes, per-HR spec oracles (critical trio fuzz/property-
+  locked), 10 phases / 29 sessions / 120 tasks with TV BEFORE-decode/AFTER-diff pairs for HR-09/35/38/43…62.
+  Next: preflight, then `exec_plan runtime-hardening`. Cascaded from **jsvision-ui**.
 - 2026-07-02: **jsvision-ui RD-07 (Essential-control completions) COMPLETE** → ✅ Done. Executed all 7
   phases spec-first (RED→GREEN→impl): `Input` text selection + logical caret + OSC-52 clipboard + bracketed
   paste, the `picture(mask)` validator (full DSL + autoFill via additive `Validator.fill`, bounds-safe), a

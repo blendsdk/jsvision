@@ -139,6 +139,9 @@ export function dispose(owner: Owner): void {
 
   // Release each owned computation's edges, then fire its onCleanups.
   for (const computation of owner.owned) {
+    // Mark disposed FIRST (HR-03): a computation left queued DIRTY by a write in the same
+    // batch/flush must be skipped by the flush loop rather than re-run and re-subscribed.
+    computation.disposed = true;
     for (const source of computation.sources) {
       source.observers.delete(computation);
     }
