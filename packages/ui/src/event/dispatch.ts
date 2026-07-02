@@ -40,6 +40,8 @@ export interface RouteContext {
   setCapture(view: View): void;
   /** Release the pointer capture (RD-11 PA-16). Sourced onto `ev.releaseCapture`. */
   releaseCapture(): void;
+  /** Write `text` to the system clipboard (RD-07 PA-5/PA-7). Sourced onto `ev.setClipboard`. */
+  setClipboard(text: string): void;
   /** Deliver an envelope to a view's `onEvent`, isolating a throwing handler (AR-66). */
   deliver(view: View, ev: DispatchEvent): void;
   /** Built-in Tab focus traversal — advance focus (PA-10; wired by Phase 3). */
@@ -130,6 +132,7 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
     focusView: ctx.focusView,
     setCapture: ctx.setCapture,
     releaseCapture: ctx.releaseCapture,
+    setClipboard: ctx.setClipboard,
   };
 
   // Mouse/wheel skip the 3-phase focus path → hit-test (03-03).

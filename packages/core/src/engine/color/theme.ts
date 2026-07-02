@@ -85,11 +85,29 @@ export interface Theme {
   readonly clusterShortcut: ThemeRole;
   /** Cluster disabled item (slot 31, `0x38` darkGray-on-cyan). */
   readonly clusterDisabled: ThemeRole;
-  /** Input-line field when unfocused (slot 19, `0x1F` white-on-blue). */
+  /**
+   * Input-line field. Turbo Vision's `TInputLine::draw` fills with `getColor(sfFocused ? 2 : 1)`, but
+   * `cpInputLine = "\x13\x13\x14\x15"` has **color-1 == color-2 == `0x13`** (`tinputli.cpp:84,139`) — so a
+   * focused and an unfocused input draw the **same** attribute. Resolved: `getColor(1/2)` →
+   * `cpGrayDialog[0x13]` (slot 19) → `cpAppColor[0x32]` = **`0x1F` white-on-blue**. Both {@link inputNormal}
+   * and {@link inputSelected} therefore decode to `0x1F`; focus is signalled by the caret (RD-07), not colour.
+   */
   readonly inputNormal: ThemeRole;
-  /** Input-line field when focused (slot 20, `0x2F` white-on-green). */
+  /**
+   * Input-line field when focused. **TV-faithful `0x1F` white-on-blue == {@link inputNormal}** (`getColor(2)`;
+   * `tinputli.cpp:84,139`). Corrected from RD-06's `0x2F` green (PA-14, PF-004): RD-06 mis-named
+   * `getColor(3)` — the text-**selection** colour, now {@link inputSelection} — as the focused-field colour.
+   * TV marks focus with the blinking cursor (the RD-07 visible caret), not a distinct field colour.
+   */
   readonly inputSelected: ThemeRole;
-  /** Input-line `◄`/`►` scroll arrows (slot 21, `0x1A` brightGreen-on-blue). */
+  /**
+   * Input-line text-**selection** highlight (the reverse band over selected characters). TV
+   * `TInputLine::draw` paints the selection in `getColor(3)` → `cpInputLine[3]=0x14` → `cpGrayDialog[0x14]`
+   * (slot 20) → `cpAppColor[0x33]` = **`0x2F` white-on-green** (`tinputli.cpp:84,152-157`). Distinct from the
+   * focused **field** ({@link inputSelected}); added for RD-07 Input selection (PA-4/PA-6).
+   */
+  readonly inputSelection: ThemeRole;
+  /** Input-line `◄`/`►` scroll arrows (`getColor(4)` → slot 21, `0x1A` brightGreen-on-blue). */
   readonly inputArrows: ThemeRole;
   // --- jsvision-ui RD-11 container roles (scrollbar + list, `cpGrayDialog` palette) ---------------
   // Faithful to Turbo Vision's gray-dialog palette; each role decodes the component's own TV palette
@@ -191,7 +209,10 @@ export const defaultTheme: Theme = {
   clusterShortcut: { fg: PALETTE.yellow, bg: PALETTE.cyan },
   clusterDisabled: { fg: PALETTE.darkGray, bg: PALETTE.cyan },
   inputNormal: { fg: PALETTE.white, bg: PALETTE.blue },
-  inputSelected: { fg: PALETTE.white, bg: PALETTE.green },
+  // TV-faithful: focused field == unfocused (cpInputLine color-1==color-2==0x1F); PA-14/PF-004.
+  inputSelected: { fg: PALETTE.white, bg: PALETTE.blue },
+  // getColor(3) text-selection highlight (0x2F white-on-green); was mis-named `inputSelected` in RD-06.
+  inputSelection: { fg: PALETTE.white, bg: PALETTE.green },
   inputArrows: { fg: PALETTE.brightGreen, bg: PALETTE.blue },
   // RD-11 container roles — decoded gray-dialog bytes (PA-10): scrollbar 0x13 cyan-on-blue; list
   // normal 0x30 black-on-cyan, focused 0x2F white-on-green, selected 0x3E yellow-on-cyan, divider

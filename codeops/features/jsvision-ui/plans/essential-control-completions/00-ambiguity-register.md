@@ -27,6 +27,12 @@ decision back-references a `PA-*` (or an RD `AR-*`).
 | **PA-12** | Input · **word nav** | Word-boundary rule for Ctrl+Shift+arrows? | Source-determined (`tinputli.cpp:64-82`): **space-delimited** — `prevWord`/`nextWord` jump to the first non-space after a space; no punctuation classing. | **space-delimited word jumps** | ✅ Resolved (source-determined) |
 | **PA-13** | Input · **overwrite mode** | Insert vs overwrite (`sfCursorIns`)? | Per RD AR-118: **insert-only** in RD-07; overwrite + `Ins` toggle deferred (**DEF-20**). No block/underline caret-shape distinction — the logical/hardware caret is a single cell. | **insert-only; overwrite deferred** | ✅ Resolved (AR-118) |
 
+## Runtime decisions (exec_plan)
+
+| PA # | Area | Question | Decision | Status |
+|------|------|----------|----------|--------|
+| **PA-14** (runtime) | Input · `inputSelected` fidelity (PF-004) | GATE-1 (P0.1) resolved the full `cpInputLine`→`cpGrayDialog`→`cpAppColor` chain and **confirmed** TV draws a focused Input identically to an unfocused one: `getColor(1)`==`getColor(2)`==`cpGrayDialog[0x13]`==`cpAppColor[0x32]`==**`0x1F`** white-on-blue (`tinputli.cpp:84,139`). The shipped RD-06 `inputSelected` (slot 20, `0x2F` white-on-green) is a mis-decode — its value is actually `getColor(3)` = the text-**selection** color (`cpGrayDialog[0x14]`==`cpAppColor[0x33]`==`0x2F`). RD-07 ships the visible caret TV uses to mark focus, so focused==unfocused becomes acceptable. Fix the mis-decode or keep the green affordance? | **Fix to TV-faithful**: `inputSelected` → `0x1F` white-on-blue (= `inputNormal`, = `getColor(2)`); the new `inputSelection` role takes the `0x2F` white-on-green selection color (`getColor(3)`). Update the RD-06 spec oracles (core slot map `inputSelected: 20`→`19`; `controls.input`/`controls.focus` focus oracles) citing `tinputli.cpp:84` per the NON-NEGOTIABLE "C++ outranks our spec for TV-derived components" exception. | ✅ Resolved (user, 2026-07-02) |
+
 ## New deferrals opened by this plan (append to `../../requirements/DEFERRED.md` on ship)
 
 - **DEF-21** — grapheme-cluster caret/selection stepping in `Input` (full `TText::next/prev` parity). From **PA-1**; unassigned. Rationale: the current `Input` is code-unit-indexed; a dependency-free segmenter + base retrofit is out of the completions slice.

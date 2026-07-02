@@ -97,7 +97,11 @@ const CONTROL_ROLE_SLOTS = {
   clusterShortcut: 18,
   clusterDisabled: 31,
   inputNormal: 19,
-  inputSelected: 20,
+  // TV-faithful (PA-14/PF-004): a focused TInputLine draws `getColor(2)` → `cpInputLine[2]=0x13` →
+  // cpGrayDialog slot 19, IDENTICAL to unfocused `getColor(1)`. RD-06 mis-decoded `inputSelected` as
+  // slot 20 (which is `getColor(3)` = the text-selection colour, now `inputSelection`). `tinputli.cpp:84`.
+  inputSelected: 19,
+  inputSelection: 20,
   inputArrows: 21,
 } as const;
 

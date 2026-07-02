@@ -14,11 +14,11 @@
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
-import { createLogger } from '@jsvision/core';
-import type { Logger, Keymap, ScreenBuffer } from '@jsvision/core';
+import { createLogger, setClipboard } from '@jsvision/core';
+import type { Logger, Keymap, ScreenBuffer, CapabilityProfile } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
 import { createRenderRoot } from '../view/index.js';
-import type { View, RenderRoot, AppEvent, DispatchEvent } from '../view/index.js';
+import type { View, RenderRoot, AppEvent, DispatchEvent, Point } from '../view/index.js';
 import type { EventLoop, EventLoopOptions, ModalHostAware } from './types.js';
 import { createCommandRegistry } from './commands.js';
 import type { CommandRegistry } from './commands.js';
@@ -34,6 +34,7 @@ import type { ModalManager } from './modal.js';
 class EventLoopImpl implements EventLoop {
   readonly renderRoot: RenderRoot;
   private readonly logger: Logger;
+  private readonly caps: CapabilityProfile;
   private readonly onIdle?: () => void;
   private readonly keymap?: Keymap;
   private readonly registry: CommandRegistry;
@@ -51,9 +52,14 @@ class EventLoopImpl implements EventLoop {
 
   /** Frame sink wired by `run()` after the host exists; `undefined` ⇒ flushes push nothing (PA-6). */
   onFrame?: (buffer: ScreenBuffer) => void;
+  /** Hardware-caret sink wired by `run()` after the host exists (RD-07 PA-5). @see EventLoop.onCaret */
+  onCaret?: (cell: Point | null) => void;
+  /** Clipboard-write sink wired by `run()` (RD-07 PA-5/PA-7). @see EventLoop.writeClipboard */
+  writeClipboard?: (seq: string) => void;
 
   constructor(viewport: Size2D, opts: EventLoopOptions) {
     this.logger = opts.logger ?? createLogger();
+    this.caps = opts.caps;
     this.onIdle = opts.onIdle;
     this.keymap = opts.keymap;
     this.registry = createCommandRegistry({
@@ -222,6 +228,14 @@ class EventLoopImpl implements EventLoop {
       // Pure mutations of `captureTarget` (inside the active tick), mirroring the public seams.
       setCapture: (view) => this.setCapture(view),
       releaseCapture: () => this.releaseCapture(),
+      // RD-07 PA-5/PA-7 — clipboard write from within a control's `onEvent` (Input copy/cut). The
+      // loop encodes `text`→OSC-52 via core `setClipboard(text, caps)` (base64 + sanitize; '' when the
+      // terminal lacks clipboard52) and hands the sequence to the run()-wired `writeClipboard` sink.
+      // The control never touches I/O; headless (`writeClipboard` unset) it is a safe no-op.
+      setClipboard: (text) => {
+        const seq = setClipboard(text, this.caps);
+        if (seq !== '') this.writeClipboard?.(seq);
+      },
       deliver: (view, ev) => this.deliver(view, ev),
       // The built-in Tab handler runs inside the active dispatch tick, so it calls the focus
       // manager's pure mutation directly (no nested runTick) — the tick's flush paints (PA-11).
