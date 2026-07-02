@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-02 (Phase 2 complete)
-> **Progress**: 31/35 tasks (89%)
+> **Last Updated**: 2026-07-02 (Phase 3 complete)
+> **Progress**: 39/47 tasks (83%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -231,14 +231,14 @@ dismissal, generalizing the menu overlay/catcher without menu-specific state.
 - [x] 2.3.3 `yarn verify` green — 2026-07-02 (8 tasks; ui 635 tests; no RD-11 regressions)
 
 ### Phase 3: ComboBox
-- [ ] 3.1.1 Spec: ComboBox (ST-24…ST-31)
-- [ ] 3.1.2 Verify spec FAIL (red)
-- [ ] 3.2.1 Implement `ComboBox<T>` (both modes)
-- [ ] 3.2.2 Re-exports
-- [ ] 3.2.3 Verify spec PASS (green)
-- [ ] 3.3.1 **GATE-2 AFTER**: diff popup/rows vs TListBox/History visuals
-- [ ] 3.3.2 Impl tests (filter, emit, items-change, empty)
-- [ ] 3.3.3 `yarn verify` green
+- [x] 3.1.1 Spec: ComboBox (ST-24…ST-31) — 2026-07-02 `combobox.spec.test.ts` (8 tests)
+- [x] 3.1.2 Verify spec FAIL (red) — 2026-07-02 (import of missing `ComboBox` → suite failed)
+- [x] 3.2.1 Implement `ComboBox<T>` (both modes) — 2026-07-02 `dropdown/combo-box.ts` (editable free-text+filter / select-only read-only+type-ahead; two-signal value⟂text bind; trailing ComboButton reusing the shared `▐↓▌` icon; Down/Alt+Down/button-click open). Extracted shared `drawDropdownIcon` + `absoluteRect` into `popup.ts` (DRY with History).
+- [x] 3.2.2 Re-exports — 2026-07-02 `dropdown/index.ts` + `src/index.ts` (ComboBox + ComboBoxOptions public)
+- [x] 3.2.3 Verify spec PASS (green) — 2026-07-02 (8/8, first implementation run). Widened `ListView.layout`→`LayoutProps` + made `openAnchoredPopup` generic `<T>` (protected `getText` makes `ListView<T>` invariant) so a typed list hosts cleanly.
+- [x] 3.3.1 **GATE-2 AFTER**: no TV counterpart → "draws like its siblings" — 2026-07-02 `fidelity.dropdown.spec` (2 ComboBox cases): the trailing button is cell-for-cell the History `▐↓▌` glyph/colors (shared `drawDropdownIcon`), and the popup rows use the `TListBox` `list*` roles (focused = white-on-green, normal = black-on-cyan), single column, text at col 1.
+- [x] 3.3.2 Impl tests (ci-filter, custom predicate, empty-text⇒all, onSelect, reactive items-change while open, injected text signal, no-host no-op) — 2026-07-02 `combobox.impl.test.ts` (7 tests)
+- [x] 3.3.3 `yarn verify` green — 2026-07-02 (8 tasks; ui 652 tests; no regressions)
 
 ### Phase 4: Stories + demo + gate
 - [ ] 4.1.1 `History` kitchen-sink story
