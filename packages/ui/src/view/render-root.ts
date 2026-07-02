@@ -105,6 +105,9 @@ function drawDropShadow(buffer: ScreenBuffer, rect: Rect, clip: Rect, theme: The
   for (let col = 0; col < rect.width; col += 1) darken(rect.x + col + 1, rect.y + rect.height);
 }
 
+/** TV drop-shadow margin (`shadowSize {2,1}`, tview.cpp): +2 columns right, +1 row bottom (HR-34). */
+const SHADOW_MARGIN = { width: 2, height: 1 } as const;
+
 function composeView(
   buffer: ScreenBuffer,
   view: View,
@@ -238,6 +241,16 @@ class RenderRootImpl implements RenderRoot, ViewHost {
 
   /** @internal ViewHost — mark a view's subtree for repaint and schedule a coalesced flush (AR-32). */
   markRepaint(view: View): void {
+    // HR-31 (PA-8): an `invalidate()` that coincides with a visibility flip since the last compose
+    // needs the layout path, not the partial repaint — `reflow()` omits hidden views and `fullCompose`
+    // repaints the revealed (hidden→shown) or vacated (shown→hidden) region. The compose cache is the
+    // oracle: a view present in it was visible last frame, so a flip is `visible XOR cached`. Escalate
+    // to a relayout so a bare `invalidate()` produces the correct screen in both directions (AR-41).
+    const wasVisible = this.cache.has(view);
+    if (view.state.visible !== wasVisible) {
+      this.markRelayout();
+      return;
+    }
     this.dirty.add(view);
     this.scheduleFlush();
   }
@@ -317,7 +330,16 @@ class RenderRootImpl implements RenderRoot, ViewHost {
       for (const [other, co] of this.cache) {
         if (other === view || co.order <= cv.order) continue; // same view, or painted before it
         if (isAncestor(view, other)) continue; // inside the dirty subtree — recomposing `view` covers it
-        const ro: Rect = { x: co.origin.x, y: co.origin.y, width: other.bounds.width, height: other.bounds.height };
+        // HR-34 (PA-16): a shadow-caster occludes not just its rect but its drop-shadow overhang
+        // (TV `shadowSize {2,1}` — +2 cols right, +1 row bottom). Expand the occluder's footprint by
+        // that margin so a back view overlapped only by a front view's SHADOW still escalates to a
+        // full recompose, preserving the shadow the partial path would otherwise wipe.
+        const ro: Rect = {
+          x: co.origin.x,
+          y: co.origin.y,
+          width: other.bounds.width + (other.castsShadow ? SHADOW_MARGIN.width : 0),
+          height: other.bounds.height + (other.castsShadow ? SHADOW_MARGIN.height : 0),
+        };
         const overlap = intersect(rv, ro);
         if (overlap.width > 0 && overlap.height > 0) return true;
       }

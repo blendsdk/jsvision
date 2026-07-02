@@ -52,6 +52,7 @@ export function computed<T>(fn: () => T, options?: ComputedOptions<T>): Computed
     owner: null,
     cleanups: [],
     disposed: false,
+    evaluating: false,
     isEffect: false,
     observers,
     recompute: () => {

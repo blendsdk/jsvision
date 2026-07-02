@@ -10,7 +10,7 @@
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
-import { signal, effect, createRoot, batch, Show, For } from '../src/reactive/index.js';
+import { signal, computed, effect, createRoot, batch, Show, For, ReactiveCycleError } from '../src/reactive/index.js';
 import { View, Group, createRenderRoot } from '../src/view/index.js';
 import type { DrawContext } from '../src/view/index.js';
 
@@ -118,4 +118,62 @@ test('ST-3.d: an addDynamic For is disposed on group unmount — no post-unmount
 
   items.set([1, 2, 3]); // would render item 3 if the For were still live
   expect(renderCalls).toBe(callsAfterMount); // render fn not called again — zero new scopes
+});
+
+// ---------------------------------------------------------------------------
+// ST-6.a–c — reactive error-path semantics (HR-27/28/29)
+// ---------------------------------------------------------------------------
+
+// ST-6.a — a computed whose body throws re-throws on EVERY read, never settling to a silent
+// `undefined` memo (HR-27).
+test('ST-6.a: a throwing computed re-throws on every read', () => {
+  createRoot((dispose) => {
+    const boom = new Error('compute failed');
+    const c = computed(() => {
+      throw boom;
+    });
+    expect(() => c()).toThrow(boom); // first read throws
+    expect(() => c()).toThrow(boom); // second read ALSO throws — not undefined
+    dispose();
+  });
+});
+
+// ST-6.b — a computed dependency cycle (a ⇄ b) throws ReactiveCycleError on read (HR-28).
+test('ST-6.b: a computed dependency cycle throws ReactiveCycleError', () => {
+  createRoot((dispose) => {
+    let readB: () => number = () => 0;
+    const a = computed(() => readB());
+    const b = computed(() => a());
+    readB = b; // close the loop: a → b → a
+    expect(() => a()).toThrow(ReactiveCycleError);
+    dispose();
+  });
+});
+
+// ST-6.c — when the batch body throws AND the closing flush throws, the body error propagates and
+// the flush error is reported via the multi-throw drain, not masked (HR-29/PA-15).
+test('ST-6.c: a batch body error wins; the flush error is reported', () => {
+  const reported: unknown[] = [];
+  const original = console.error;
+  console.error = (e: unknown): void => {
+    reported.push(e);
+  };
+  try {
+    createRoot((dispose) => {
+      const s = signal(0);
+      effect(() => {
+        if (s() > 0) throw new Error('E2-flush'); // throws when re-run by the closing flush
+      });
+      expect(() =>
+        batch(() => {
+          s.set(1); // queues the effect → its throw lands in the closing flush
+          throw new Error('E1-body'); // the body error must win
+        }),
+      ).toThrow('E1-body');
+      dispose();
+    });
+  } finally {
+    console.error = original;
+  }
+  expect(reported.some((e) => e instanceof Error && e.message === 'E2-flush')).toBe(true);
 });

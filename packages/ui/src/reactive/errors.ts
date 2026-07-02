@@ -19,11 +19,14 @@ export class ReactiveCycleError extends TuiError {
 
   /**
    * @param iterationLimit The propagation-iteration bound that was exceeded.
+   * @param detail Optional message override for a non-iteration cycle (HR-28's compute-cycle case);
+   *   when omitted, the default effect-write-loop message is used.
    */
-  public constructor(iterationLimit: number) {
+  public constructor(iterationLimit: number, detail?: string) {
     super(
-      `Reactive propagation did not converge within ${iterationLimit} iterations ` +
-        `(an effect likely writes a signal it depends on).`,
+      detail ??
+        `Reactive propagation did not converge within ${iterationLimit} iterations ` +
+          `(an effect likely writes a signal it depends on).`,
     );
     this.iterationLimit = iterationLimit;
   }

@@ -120,6 +120,12 @@ export interface Computation {
   /** `true` for an effect (eager leaf sink); `false` for a computed (lazy source). */
   readonly isEffect: boolean;
   /**
+   * `true` while this node's `fn` is on the compute stack (HR-28). A read of a node that is already
+   * evaluating is a dependency cycle (`a ⇄ b`) and throws {@link ReactiveCycleError} rather than
+   * silently returning `undefined`. Reset in `execute()`'s `finally`, so it clears even on throw.
+   */
+  evaluating: boolean;
+  /**
    * For a **computed** (which is also a source): the computations observing its memo, so the
    * mark phase can propagate `CHECK` to them transitively (AR-07). `null` for an effect, which
    * is a leaf sink with no observers.
