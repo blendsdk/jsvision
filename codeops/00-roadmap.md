@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-02 (jsvision-ui RD-07 essential-control-completions → 🔬 Plan Preflighted — 8 findings all resolved (2🟠 + 4🟡 + 2🔵); 7 phases / 32 tasks, spec-first, additive-only)
+> **Last Updated**: 2026-07-02 (jsvision-ui RD-07 essential-control-completions → ✅ **Done** — all 7 phases executed spec-first; Input selection+clipboard+caret · `picture(mask)` · `MultiCheckGroup` · hardware caret; final gate clean)
 > **Features**: 0 / 1 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 8 ✅ Done (RD-01…RD-06, RD-10, RD-11) · 1 🔬 Plan Preflighted (RD-07) · Backlog (RD-08/09, RD-12+) | 8 / 11 done | 🔄 | 2026-07-02 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 9 ✅ Done (RD-01…RD-07, RD-10, RD-11) · Backlog (RD-08/09, RD-12+) | 9 / 11 done | 🔄 | 2026-07-02 |
 
 ## Archived
 
@@ -23,6 +23,14 @@
 
 ## Notes
 
+- 2026-07-02: **jsvision-ui RD-07 (Essential-control completions) COMPLETE** → ✅ Done. Executed all 7
+  phases spec-first (RED→GREEN→impl): `Input` text selection + logical caret + OSC-52 clipboard + bracketed
+  paste, the `picture(mask)` validator (full DSL + autoFill via additive `Validator.fill`, bounds-safe), a
+  `MultiCheckGroup` (idiomatic `Signal<number[]>`, faithful `drawMultiBox`), and the visible hardware caret
+  (additive `EventLoop.onCaret`/`refreshCaret` + `View.desiredCaret` + `RenderRoot.originOf`, positioned by
+  `run()`). Cluster base generalized to TV's marker-string model (PF-001); caret survives partial recompose
+  (PF-002). DEF-01/02/03/19 → Shipped; DEF-21/22/25 opened. Spec ST-01…ST-16 green; final gate clean. Cascaded
+  from **jsvision-ui**.
 - 2026-07-02: **jsvision-ui RD-07 (Essential-control completions) plan preflighted** → 🔬 Plan Preflighted
   ([report](features/jsvision-ui/plans/essential-control-completions/00-preflight-report.md)). Codebase-grounded
   audit (~14 files; ~40 `file:line` refs verified; 3 TV decodes re-checked; 1 challenger). 8 findings, all

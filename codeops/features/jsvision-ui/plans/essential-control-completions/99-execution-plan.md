@@ -1,7 +1,7 @@
 # 99 — Execution Plan
 
 > **Implements**: jsvision-ui/RD-07 · **CodeOps Skills Version**: 3.1.0
-> **Progress**: 30 / 32 tasks (94%) · **Last Updated**: 2026-07-02
+> **Progress**: 32 / 32 tasks (100%) ✅ COMPLETE · **Last Updated**: 2026-07-02
 
 Spec-first per capability: **spec tests → RED → implement → GREEN → impl tests → verify**. Every TV-derived
 component carries a **BEFORE-decode (GATE-1)** and **AFTER-diff (GATE-2)** task (fidelity directive,
@@ -120,9 +120,12 @@ mode. **Verify command**: `yarn verify` (targeted: `yarn workspace @jsvision/ui 
   auto-appear as you type; a leading mask literal is TV-faithfully rejected (`rScan = prError`, `tvalidat.cpp:447`).
 
 ## Phase 6 — Final gate
-- [ ] **P6.1** Packaging spec ST-15 + security spec ST-16 green; confirm every `03-*` AFTER-diff recorded.
-- [ ] **P6.2** Full `yarn verify` + `yarn test:e2e` + `yarn check:deps` + `yarn lint` + `yarn gate`. Update
-  `DEFERRED.md` (DEF-01/02/03/19 → Shipped; add DEF-21/22/25) + the roadmap (RD-07 → Done).
+- [x] **P6.1** ✅ 2026-07-02 Packaging spec ST-15 (`controls.completions.packaging.spec`) + security spec ST-16
+  (`controls.completions.security.spec`) green; every `03-*` AFTER-diff recorded (P3.5/P4.6 + the TV decodes cited
+  in `picture.ts`/`multi-check-group.ts`/`cluster.ts` JSDoc).
+- [x] **P6.2** ✅ 2026-07-02 Full `yarn verify` + `yarn test:e2e` + `yarn check:deps` + `yarn lint` + `yarn gate` clean.
+  `DEFERRED.md` updated (DEF-01/02/03/19 → Shipped; DEF-21/22/25 registered) + roadmap (RD-07 → Done, cascaded to
+  the portfolio `codeops/00-roadmap.md`).
 
 ---
 
@@ -133,7 +136,7 @@ Phase 2: [x] P2.1 [x] P2.2 [x] P2.3 [x] P2.4 [x] P2.5
 Phase 3: [x] P3.1 [x] P3.2 [x] P3.3 [x] P3.4 [x] P3.5
 Phase 4: [x] P4.1 [x] P4.2 [x] P4.3a [x] P4.3b [x] P4.4 [x] P4.5 [x] P4.6 [x] P4.7
 Phase 5: [x] P5.1 [x] P5.2 [x] P5.3 [x] P5.4
-Phase 6: [ ] P6.1 [ ] P6.2
+Phase 6: [x] P6.1 [x] P6.2
 
 **Totals:** 7 phases · ~18 sessions · **32 tasks** · est. **20–32 h**. Spec-first (ST-01…ST-16 ↔ AC-1…AC-15);
 PA-1…PA-13 (4 user + 9 dominant/source); grounded in the RD-07 preflight recon + 3 GATE-1 TV decodes.
