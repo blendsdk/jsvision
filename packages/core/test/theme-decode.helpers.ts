@@ -53,7 +53,7 @@ export const CP_GRAY_DIALOG: readonly number[] = [
  *  window is the default `TWindow` palette — the canonical host for a `TOutlineViewer` (RD-15 PA-16). */
 export const CP_BLUE_WINDOW: readonly number[] = [
   // prettier-ignore
-  0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, // slots 1-8
+  ...[0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f], // slots 1-8
 ];
 
 /** Decode a gray-dialog slot (1-based) → the `{ fg, bg }` PALETTE pair the TV source produces. */

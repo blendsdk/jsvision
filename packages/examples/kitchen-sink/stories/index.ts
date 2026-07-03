@@ -23,6 +23,7 @@ import { multiCheckGroupStory } from './multicheckgroup.story.js';
 import { scrollBarStory } from './scrollbar.story.js';
 import { scrollerStory } from './scroller.story.js';
 import { listViewStory } from './listview.story.js';
+import { treeStory } from './tree.story.js';
 import { dialogStory } from './dialog.story.js';
 import { historyStory } from './history.story.js';
 import { comboBoxStory } from './combobox.story.js';
@@ -47,6 +48,7 @@ export const STORIES: readonly Story[] = [
   scrollBarStory,
   scrollerStory,
   listViewStory,
+  treeStory,
   dialogStory,
   historyStory,
   comboBoxStory,

@@ -256,7 +256,8 @@ export class TreeRows<T> extends View {
       const index = clampIndex(this.topItem + local.y, flat.length);
       this.focusTo(index);
       const row = flat[index];
-      if (local.x < graphWidth(row.level)) this.toggle(row.node); // graph-zone ⇒ toggle expand
+      if (local.x < graphWidth(row.level))
+        this.toggle(row.node); // graph-zone ⇒ toggle expand
       else this.select(index, ev); // text ⇒ focus + select + emit
     }
     ev.handled = true;
@@ -273,11 +274,13 @@ export class TreeRows<T> extends View {
         this.focusBy(1);
         return true;
       case 'pageup':
-        if (inner.ctrl) this.focusTo(0); // TV kbCtrlPgUp → 0
+        if (inner.ctrl)
+          this.focusTo(0); // TV kbCtrlPgUp → 0
         else this.focusBy(-page);
         return true;
       case 'pagedown':
-        if (inner.ctrl) this.focusTo(this.flatten().length - 1); // TV kbCtrlPgDn → limit.y-1
+        if (inner.ctrl)
+          this.focusTo(this.flatten().length - 1); // TV kbCtrlPgDn → limit.y-1
         else this.focusBy(page);
         return true;
       case 'home':

@@ -22,6 +22,7 @@
     "demo:shell": "tsx shell-demo/main.ts",
     "demo:controls": "tsx controls-demo/main.ts",
     "demo:containers": "tsx containers-demo/main.ts",
+    "demo:tree": "tsx tree-demo/main.ts",
     "demo:dropdowns": "tsx dropdowns-demo/main.ts",
     "demo:controls-live": "tsx controls-live/main.ts",
     "demo:kitchen": "tsx kitchen-sink/main.ts",

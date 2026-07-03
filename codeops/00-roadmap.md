@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-02 (jsvision-ui **RD-14 Input dropdowns → DONE ✅** — `exec_plan input-dropdowns` complete: `History` + `ComboBox<T>` on a shared anchored popup (5 phases / 47 tasks spec-first, TV GATE-1/2, runtime PA-16/PA-17); full `yarn verify` + `test:e2e` + `check:deps` green, kitchen-sink stories + `demo:dropdowns` shipped. Prior: **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: the **RD-12+ high-value-controls set** was opened via `make_requirements` — sliced into 6 sibling RDs by mechanism (AR-125…129), **RD-14 (Input dropdowns) + RD-15 (Tree) + RD-16 (Table/DataGrid) drafted ✏️** (AR-130…161, GATE-1 TV decodes) — the **MVP set (RD-14/15/16) is now fully drafted**; RD-17…19 queued. And a new feature-set **bun-runtime** — RD-01 drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
+> **Last Updated**: 2026-07-03 (jsvision-ui **RD-15 Tree → DONE ✅** — `exec_plan tree` complete: `Tree<T>` expandable outline (TV `TOutlineViewer`), 4 phases / 35 tasks spec-first (ST-1…ST-24), TV GATE-1 decode + GATE-2 diff; `packages/ui/src/tree/` + 4 additive `cpOutlineViewer` roles + kitchen-sink story + `demo:tree`; runtime PA-16 (blue-window outline colours, since gray-dialog degenerates Normal==Focus) + PA-17 (marker `expanded?'─':'+'`); full `yarn verify`/`test:e2e`/`check:deps`/`lint` green. jsvision-ui now 12/18. Prior: **RD-14 Input dropdowns → DONE ✅** — `exec_plan input-dropdowns` complete: `History` + `ComboBox<T>` on a shared anchored popup (5 phases / 47 tasks spec-first, TV GATE-1/2, runtime PA-16/PA-17); full `yarn verify` + `test:e2e` + `check:deps` green, kitchen-sink stories + `demo:dropdowns` shipped. Prior: **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: the **RD-12+ high-value-controls set** was opened via `make_requirements` — sliced into 6 sibling RDs by mechanism (AR-125…129), **RD-14 (Input dropdowns) + RD-15 (Tree) + RD-16 (Table/DataGrid) drafted ✏️** (AR-130…161, GATE-1 TV decodes) — the **MVP set (RD-14/15/16) is now fully drafted**; RD-17…19 queued. And a new feature-set **bun-runtime** — RD-01 drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
 > **Features**: 0 / 2 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 11 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13, RD-14) · RD-15 🔄 Executing (`exec_plan tree` — Phase 0; runtime PA-16 blue-window outline colours) · RD-16 ✏️ Drafted (RD-12+ set — MVP 3/3 drafted, 3/6) · Backlog (RD-17…19, RD-08/09) | 11 / 18 done | 🔄 | 2026-07-03 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 12 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13, RD-14, RD-15) · RD-16 ✏️ Drafted (RD-12+ set — MVP 3/3 drafted) · Backlog (RD-17…19, RD-08/09) | 12 / 18 done | 🔄 | 2026-07-03 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0 / 1 done | 🔄 | 2026-07-02 |
 
 ## Archived
@@ -24,6 +24,16 @@
 
 ## Notes
 
+- 2026-07-03: **jsvision-ui RD-15 (Tree) → DONE** ✅ (`exec_plan tree`). `Tree<T>` — a faithful Turbo
+  Vision `TOutlineViewer`/`TOutline` expandable virtual-scroll outline — on `packages/ui/src/tree/`
+  (`graph.ts` `createGraph`+`flattenVisible`, `tree-rows.ts` renderer, `tree.ts` `Tree`/`TreeNode`/
+  `TreeOptions` + view-owned expand state) + 4 additive core `cpOutlineViewer` theme roles + a
+  kitchen-sink `Tree` story + a headless `demo:tree`. 4 phases / 35 tasks spec-first (ST-1…ST-24 ↔
+  AC-1…AC-13), TV GATE-1 decode + GATE-2 cell-by-cell diff. Two exec-time fidelity decisions: **PA-16**
+  (blue-window outline colours — the gray-dialog chain degenerates to Normal==Focus==0x70, hiding focus)
+  + **PA-17** (marker `expanded?'─':'+'` per `toutline.cpp:200`, correcting the plan-03-02 `children`
+  form + the ST-4 oracle). Full `yarn verify` (8/8) + `test:e2e` (5/5) + `check:deps` + `lint` green;
+  files ≤ 380 lines; additive/non-breaking. jsvision-ui now 12/18. Cascaded from **jsvision-ui**.
 - 2026-07-03: **jsvision-ui RD-15 (Tree) planned** → 📋 Plan Created
   ([`plans/tree/`](features/jsvision-ui/plans/tree/00-index.md)). `make_plan RD-15` produced 8 docs;
   **4 phases / 35 tasks** spec-first (ST-1…ST-24 ↔ AC-1…AC-13): Phase 0 (4 core `cpOutlineViewer`
