@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 09:46
-> **Progress**: 19/28 tasks (68%)
+> **Last Updated**: 2026-07-03 09:53
+> **Progress**: 28/28 tasks (100%) — COMPLETE ✅
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -143,7 +143,7 @@ ordering (spec tests → red → implement → green → impl tests → verify).
 | 4.3.1 | Write `table-demo.e2e` (the walkthrough runs) | `packages/examples/test/table-demo.e2e.test.ts` |
 | 4.3.2 | Full `yarn verify` + `yarn test:e2e` + `yarn check:deps`; confirm no regressions | — |
 
-**Deliverables**: [ ] re-exports live · [ ] story + smoke green · [ ] `demo:table` + e2e green · [ ] full verify passing
+**Deliverables**: [x] re-exports live · [x] story + smoke green · [x] `demo:table` + e2e green · [x] full verify passing
 
 **Verify**: `yarn verify && yarn test:e2e && yarn check:deps`
 
@@ -180,15 +180,15 @@ ordering (spec tests → red → implement → green → impl tests → verify).
 - [x] 3.3.3 `yarn verify` (files ≤ 500 lines: grid-rows 443) — 2026-07-03
 
 ### Phase 4: Packaging + story + demo
-- [ ] 4.1.1 Packaging spec ST-21 (`table.packaging.spec`)
-- [ ] 4.1.2 Smoke ST-24 (`kitchen-sink.smoke`)
-- [ ] 4.1.3 Verify red
-- [ ] 4.2.1 Barrel + re-exports
-- [ ] 4.2.2 `data-grid` story + register
-- [ ] 4.2.3 `table-demo/` + `demo:table` script
-- [ ] 4.2.4 Verify green
-- [ ] 4.3.1 `table-demo.e2e`
-- [ ] 4.3.2 Full verify + e2e + check:deps
+- [x] 4.1.1 Packaging spec ST-21 (`table.packaging.spec`) — 2026-07-03
+- [x] 4.1.2 Smoke ST-24 (`kitchen-sink.smoke`) — 2026-07-03
+- [x] 4.1.3 Verify red — 2026-07-03
+- [x] 4.2.1 Barrel + re-exports — 2026-07-03
+- [x] 4.2.2 `data-grid` story + register — 2026-07-03
+- [x] 4.2.3 `table-demo/` + `demo:table` script — 2026-07-03
+- [x] 4.2.4 Verify green — 2026-07-03
+- [x] 4.3.1 `table-demo.e2e` — 2026-07-03
+- [x] 4.3.2 Full verify + e2e + check:deps — 2026-07-03
 
 ---
 
