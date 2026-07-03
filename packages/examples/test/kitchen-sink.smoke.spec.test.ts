@@ -74,6 +74,25 @@ test('ST-35: the containers/tabs story is registered with metadata and paints', 
   });
 });
 
+// ST-13 (RD-18 AC-13) — the Feedback showcase stories are registered with the required metadata
+// (unique ids `feedback/progress-bar` + `feedback/spinner`, category `Feedback`, an `rd`) and each
+// paints at least one non-blank cell headlessly.
+for (const id of ['feedback/progress-bar', 'feedback/spinner']) {
+  test(`ST-13: the ${id} story is registered with metadata and paints`, () => {
+    const story = STORIES.find((s) => s.id === id);
+    expect(story, `a story with id "${id}" is registered`).toBeTruthy();
+    expect(story!.category, 'category Feedback').toBe('Feedback');
+    expect(story!.rd, 'provenance RD chip').toBeTruthy();
+    createRoot((dispose) => {
+      const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+      const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+      rr.mount(view);
+      expect(paintedCells(rr.buffer().rows()), `the ${id} story painted nothing`).toBeGreaterThan(0);
+      dispose();
+    });
+  });
+}
+
 // The core smoke oracle: each story builds + mounts + draws without throwing, and paints something.
 for (const story of STORIES) {
   test(`story "${story.id}" mounts headlessly and paints`, () => {

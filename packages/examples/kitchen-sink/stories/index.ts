@@ -29,10 +29,12 @@ import { historyStory } from './history.story.js';
 import { comboBoxStory } from './combobox.story.js';
 import { dataGridStory } from './data-grid.story.js';
 import { tabsStory } from './tabs.story.js';
+import { progressBarStory } from './progress-bar.story.js';
+import { spinnerStory } from './spinner.story.js';
 
 /**
  * Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers
- * RD-11, Dropdowns RD-14).
+ * RD-11, Dropdowns RD-14, Feedback RD-18).
  */
 export const STORIES: readonly Story[] = [
   reactiveStory,
@@ -56,4 +58,6 @@ export const STORIES: readonly Story[] = [
   dialogStory,
   historyStory,
   comboBoxStory,
+  progressBarStory,
+  spinnerStory,
 ];

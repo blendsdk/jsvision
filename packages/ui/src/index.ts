@@ -127,3 +127,15 @@ export type { Column, ColumnWidth, ColumnAlign, SortState, ColumnGeometry, DataG
 // named re-exports (the layout-convention rule, AR-181); the renderer split + nav helpers stay internal.
 export { TabView } from './tabs/index.js';
 export type { Tab, TabViewOptions } from './tabs/index.js';
+
+// RD-18 feedback: the determinate `ProgressBar` (smooth sub-cell fill) + the indeterminate `Spinner`
+// (caller-driven) + the `runSpinner` timer helper. Documented new components (TV has no gauge/spinner
+// class, AR-186); additive surface = 2 core `progress*` theme roles + the `DrawContext.caps` seam.
+export { ProgressBar, Spinner, runSpinner, SPINNERS } from './feedback/index.js';
+export type {
+  ProgressBarOptions,
+  SpinnerOptions,
+  SpinnerName,
+  RunSpinnerOptions,
+  TimerSeam,
+} from './feedback/index.js';
