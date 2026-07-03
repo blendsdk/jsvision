@@ -57,6 +57,23 @@ test('ST-24: the data-grid story is registered and paints', () => {
   });
 });
 
+// ST-35 (RD-17 AC-13) — the Tabs showcase story is registered, carries the required metadata
+// (unique id `containers/tabs`, category `Containers`, an `rd`), and paints at least one non-blank
+// cell headlessly.
+test('ST-35: the containers/tabs story is registered with metadata and paints', () => {
+  const story = STORIES.find((s) => s.id === 'containers/tabs');
+  expect(story, 'a story with id "containers/tabs" is registered').toBeTruthy();
+  expect(story!.category, 'category Containers').toBe('Containers');
+  expect(story!.rd, 'provenance RD chip').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    expect(paintedCells(rr.buffer().rows()), 'the tabs story painted nothing').toBeGreaterThan(0);
+    dispose();
+  });
+});
+
 // The core smoke oracle: each story builds + mounts + draws without throwing, and paints something.
 for (const story of STORIES) {
   test(`story "${story.id}" mounts headlessly and paints`, () => {
