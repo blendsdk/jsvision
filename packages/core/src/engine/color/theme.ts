@@ -144,6 +144,14 @@ export interface Theme {
    * gray-dialog slot 29 → `cpAppColor[60]=0x31` = blue-on-cyan.
    */
   readonly listDivider: ThemeRole;
+  /**
+   * DataGrid header row (jsvision-ui RD-16, AR-172). A documented TV-EXTENSION colour — Turbo Vision
+   * has no table class, so this is a design choice (not a getColor decode): `0x3F` = white-on-cyan —
+   * a bright white heading on the same cyan field as the `cpListViewer` rows (cohesive, distinct
+   * from black-on-cyan normal + yellow-on-cyan selected). Additive/non-breaking, the same pattern as
+   * AR-97/112/122/139/149.
+   */
+  readonly tableHeader: ThemeRole;
   // --- jsvision-ui RD-14 History dropdown roles (`cpHistory`/`cpHistoryWindow`/`cpHistoryViewer`) --
   // Faithful to Turbo Vision's THistory chain, decoded for the gray-`TDialog` owner (this project's
   // default). Each byte resolves through its component palette → `cpGrayDialog` → `cpAppColor` = `0xHL`
@@ -285,6 +293,7 @@ export const defaultTheme: Theme = {
   listFocused: { fg: PALETTE.white, bg: PALETTE.green },
   listSelected: { fg: PALETTE.yellow, bg: PALETTE.cyan },
   listDivider: { fg: PALETTE.blue, bg: PALETTE.cyan },
+  tableHeader: { fg: PALETTE.white, bg: PALETTE.cyan }, // 0x3F white-on-cyan (RD-16, AR-172)
   // RD-14 History dropdown roles — decoded TV bytes (PA-12): button sides 0x72 green-on-lightGray,
   // arrow 0x20 black-on-green; blue popup window 0x1F white-on-blue border, 0x1A brightGreen icon;
   // viewer 0x1F white-on-blue, focused 0x2F white-on-green.

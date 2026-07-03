@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 00:00
-> **Progress**: 0/22 tasks (0%)
+> **Last Updated**: 2026-07-03 09:14
+> **Progress**: 4/22 tasks (18%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -44,7 +44,7 @@ ordering (spec tests → red → implement → green → impl tests → verify).
 | 1.1.3 | Add `tableHeader` to `Theme` interface + `defaultTheme` (`0x3F`), with the AR-172 extension JSDoc | `packages/core/src/engine/color/theme.ts` |
 | 1.1.4 | Run — verify ST-20 PASSES (green); `yarn verify` | — |
 
-**Deliverables**: [ ] `tableHeader` role live · [ ] ST-20 green · [ ] verify passing
+**Deliverables**: [x] `tableHeader` role live · [x] ST-20 green · [x] verify passing
 
 **Verify**: `yarn verify`
 
@@ -155,10 +155,10 @@ ordering (spec tests → red → implement → green → impl tests → verify).
 > Progress header after every task; never batch. Spec-first ordering is non-negotiable.
 
 ### Phase 1: Core theme role
-- [ ] 1.1.1 Spec test ST-20 (`tableHeader`)
-- [ ] 1.1.2 Verify red
-- [ ] 1.1.3 Implement `tableHeader` role (`0x3F`, AR-172)
-- [ ] 1.1.4 Verify green + `yarn verify`
+- [x] 1.1.1 Spec test ST-20 (`tableHeader`) — 2026-07-03
+- [x] 1.1.2 Verify red — 2026-07-03
+- [x] 1.1.3 Implement `tableHeader` role (`0x3F`, AR-172) — 2026-07-03
+- [x] 1.1.4 Verify green + `yarn verify` — 2026-07-03
 
 ### Phase 2: Columns module
 - [ ] 2.1.1 Spec tests ST-4/5/9/10/11 (`grid-columns.spec`)
