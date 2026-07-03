@@ -39,8 +39,19 @@ const TERMINATING = new Set<string>([Commands.ok, Commands.cancel, Commands.yes,
 export interface DialogOptions {
   /** Initial title (centered in the top border). */
   title?: string;
-  /** Optional initial absolute placement rect (the host/desktop may override). */
+  /** Optional initial absolute placement rect (the host/desktop may override). An explicit rect is a
+   * manual placement: it is honored verbatim and is NOT centered unless `centered` is set true. */
   rect?: Rect;
+  /** Dialog width in cells (alternative to a full `rect` when you want the dialog auto-centered). */
+  width?: number;
+  /** Dialog height in cells (alternative to a full `rect` when you want the dialog auto-centered). */
+  height?: number;
+  /**
+   * Center the dialog in its parent (the TV `ofCentered` option). Defaults to `true` when a size is
+   * given via `width`/`height` (no explicit `rect` position), matching every standard TV system
+   * dialog and modern convention; `false` for an explicit `rect`. Set explicitly to override either.
+   */
+  centered?: boolean;
 }
 
 /** A modal/modeless gray dialog: a `Window` in the `dialog` role with a `valid()` close-gate. */
@@ -67,7 +78,18 @@ export class Dialog extends Window implements ModalHostAware {
     // place `castsShadow` is set — so opt in here so the compose walker paints the `shadowSize {2,1}`
     // L-shadow (render-root.ts `drawDropShadow`). Mirrors the menu/dropdown popups (controller.ts:175).
     this.castsShadow = true;
-    if (opts.rect !== undefined) this.layout = { position: 'absolute', padding: 1, rect: opts.rect };
+    // TV `ofCentered` (views.h:88): standard system dialogs (file/change-dir/help/color) all center
+    // in their owner. Extend that to our default — a dialog given a size but no explicit `rect`
+    // position centers (the reflow pass applies `origin = (parent - self)/2`, tgroup.cpp:395-397).
+    // An explicit `rect` is a manual placement (honored, not centered); `centered` overrides either.
+    const width = opts.width ?? opts.rect?.width;
+    const height = opts.height ?? opts.rect?.height;
+    this.centered = opts.centered ?? (width !== undefined && height !== undefined && opts.rect === undefined);
+    if (width !== undefined && height !== undefined) {
+      const x = opts.rect?.x ?? 0;
+      const y = opts.rect?.y ?? 0;
+      this.layout = { position: 'absolute', padding: 1, rect: { x, y, width, height } };
+    }
   }
 
   /** @internal Receive the modal-host handle when opened via `execView` (PA-1). */

@@ -32,7 +32,33 @@ export function reflow(root: View, viewport: Size2D): void {
     if (view !== undefined) view.bounds = rect;
   }
 
+  applyCentering(root);
   firePendingMounts(root);
+}
+
+/**
+ * Recentre every visible `centered` view within its parent, in the same pass as layout (so the first
+ * frame is already centered — no one-frame jump). The TV `ofCentered` port: `TGroup::insertBefore`
+ * sets `origin = (ownerSize - viewSize)/2` on the flagged axes (tgroup.cpp:393-397). Runs after all
+ * `bounds` are written, so a parent's laid-out size is available; only the origin is moved (never the
+ * size), so nesting a centered view inside a centered parent stays consistent. `Math.trunc` matches
+ * C++ integer division for the normal case (view smaller than its parent).
+ *
+ * @param view The subtree root to walk.
+ */
+function applyCentering(view: View): void {
+  if (!view.state.visible) return;
+  if (view.centered && view.parent !== null) {
+    const { width: pw, height: ph } = view.parent.bounds;
+    view.bounds = {
+      ...view.bounds,
+      x: Math.trunc((pw - view.bounds.width) / 2),
+      y: Math.trunc((ph - view.bounds.height) / 2),
+    };
+  }
+  if (view instanceof Group) {
+    for (const child of view.children) applyCentering(child);
+  }
 }
 
 /**
