@@ -73,7 +73,7 @@ test('a leaf forest row is OV_LAST|OV_EXPANDED (single root, no children)', () =
   expect(rows[0].flags & OV_CHILDREN).toBeFalsy();
 });
 
-test('every leaf row carries OV_EXPANDED, so its marker is `─`, never `+` (defensive == TV)', () => {
+test('every leaf row carries OV_EXPANDED, so its marker is `─`, never `+` (toutline.cpp:200)', () => {
   const leaves = [node('a'), node('b'), node('c')];
   const parent = node('p', leaves);
   const rows = flattenVisible([parent], () => true);

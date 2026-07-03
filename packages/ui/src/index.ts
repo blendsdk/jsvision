@@ -108,3 +108,9 @@ export {
 } from './dropdown/index.js';
 export type { HistoryOptions, ComboBoxOptions } from './dropdown/index.js';
 export type { PopupHost } from './view/index.js';
+
+// Tree/outline (RD-15) — expandable virtual-scroll outline. Explicit named re-exports, per the layout
+// convention. Built on the RD-11 virtual-scroll helpers + owned-`ScrollBar` pattern; the only additive
+// surface is the 4 core `cpOutlineViewer` theme roles.
+export { Tree } from './tree/index.js';
+export type { TreeNode, TreeOptions } from './tree/index.js';
