@@ -16,9 +16,13 @@
  *   `└` U+2514 (0xC0) · `┘` U+2518 (0xD9) · **`┬` U+252C (0xC2)** the between-tabs / frame-top notch ·
  *   `┴` U+2534 (0xC1) · `├` U+251C (0xC3) · `┤` U+2524 (0xB4).
  *
- * **GATE-2 (AFTER-diff, task 3.1.1):** the rendered strip is diffed cell-by-cell against this pinned
- * set + the decoded `tab*` bytes — see `tab-strip.impl.test.ts` (glyph identity) + `tabs.spec.test.ts`
- * (ST-18/19). No TV `.cpp` is re-opened (none exists); the diff is against the GATE-1 decode itself.
+ * **GATE-2 (AFTER-diff, task 3.1.1) — ✅ matches.** The rendered strip was diffed cell-by-cell against
+ * this pinned set + the decoded `tab*` bytes and agrees exactly: `tab-strip.impl.test.ts` asserts every
+ * glyph's code point equals its CP437↔Unicode decode (`┬`=U+252C, `┴`=U+2534, `├`=U+251C, `┤`=U+2524,
+ * line/corner = the frame set), and `tabs.spec.test.ts` ST-18/19/20/21 assert the composed buffer's
+ * corners/edges/`┬` notch/`×` glyphs + the active(`tabActive`)/inactive(`tabInactive`)/disabled
+ * (`tabDisabled`) foreground bytes. No TV `.cpp` is re-opened (none exists); the diff is against the
+ * GATE-1 decode itself (AR-172/173/180/184).
  *
  * Colour: labels draw in `tabActive`/`tabInactive`/`tabDisabled` (GATE-1); the `~X~` marked letter in
  * the role's `hotkey` accent (`tildeSegments`, as `Label`/menus do). The frame chrome (corners, edges,
