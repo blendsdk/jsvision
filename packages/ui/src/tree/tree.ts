@@ -96,6 +96,12 @@ export class Tree<T> extends Group {
       selected: this.selected,
       guides: opts.guides ?? true,
       flatten: this.flattened,
+      command: this.command,
+      onSelect: this.onSelect,
+      expand: (node) => this.expand(node),
+      collapse: (node) => this.collapse(node),
+      toggle: (node) => this.toggle(node),
+      expandSubtree: (node) => this.expandSubtree(node),
     });
     this.rows.layout = { size: { kind: 'fr', weight: 1 } };
     this.bar = new ScrollBar({ value: this.focused, orientation: 'vertical' });
@@ -128,6 +134,24 @@ export class Tree<T> extends Group {
   toggle(node: TreeNode<T>): void {
     if (this.expandedSet.has(node)) this.collapse(node);
     else this.expand(node);
+  }
+
+  /** Expand every node in the forest (TV `expandAll` over all roots, PA-6); one repaint. */
+  expandAll(): void {
+    this.seedExpanded(this.roots());
+    this.bump();
+  }
+
+  /** Collapse every node (PA-6); one repaint. */
+  collapseAll(): void {
+    this.expandedSet.clear();
+    this.bump();
+  }
+
+  /** Expand `node` and its whole subtree (TV `expandAll(node)`, `toutline.cpp:106`; the `*` key); one repaint. */
+  expandSubtree(node: TreeNode<T>): void {
+    this.seedExpanded([node]);
+    this.bump();
   }
 
   /** Seed every node that has children as expanded (TV `expandedByDefault`, PA-3). Iterative. */

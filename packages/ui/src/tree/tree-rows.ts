@@ -23,8 +23,9 @@
  *     the flattened row count (H deferred, PA-5).
  *
  * Empty tree → `<empty>` at column 1, matching the sibling `ListRows` (`list-rows.ts:36`; PF-003 — TV
- * has no oracle for an empty outline). Navigation keys `+`/`-`/`*`, `←`/`→`, mouse graph-toggle vs
- * text-select, and Enter land in Phase 2; Phase 1 ships draw + vertical `↑↓`/paging/wheel.
+ * has no oracle for an empty outline). Full interaction: vertical `↑↓`/paging/`Home`/`End`/`Ctrl+Pg`/
+ * wheel, `+`/`-`/`*` expand, `←`/`→` collapse-or-parent / expand-or-child (PA-12), mouse graph-toggle
+ * vs text-select (PA-14), and Enter select — see {@link onEvent}.
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
@@ -34,13 +35,13 @@ import type { Signal } from '../reactive/index.js';
 import type { KeyEvent, Style } from '@jsvision/core';
 import type { ScrollBar } from '../scroll/index.js';
 import { clampIndex, keepVisible } from '../list/virtual.js';
-import { createGraph, graphWidth, OV_EXPANDED } from './graph.js';
-import type { FlatRow } from './graph.js';
+import { createGraph, graphWidth, OV_EXPANDED, OV_CHILDREN } from './graph.js';
+import type { FlatRow, TreeNode } from './graph.js';
 
 /** The text drawn top-left for an empty tree (matches `ListRows` `EMPTY_TEXT`, `list-rows.ts:36`; PF-003). */
 const EMPTY_TEXT = '<empty>';
 
-/** Shared configuration handed from a {@link Tree} to its rows renderer (Phase 1 render + scroll). */
+/** Shared configuration handed from a {@link Tree} to its rows renderer. */
 export interface TreeRowsConfig<T> {
   /** Render a node's value to its row text. */
   getText: (value: T) => string;
@@ -52,6 +53,18 @@ export interface TreeRowsConfig<T> {
   guides: boolean;
   /** The current flattened-visible rows (a computed reading `roots` + the expand version, from `Tree`). */
   flatten: () => FlatRow<T>[];
+  /** Command emitted on activation (Enter / text-click), TV `cmOutlineItemSelected` (PA-13). */
+  command?: string;
+  /** Activation callback (Enter / text-click); `index` is the flattened index, `node` the `TreeNode`. */
+  onSelect?: (index: number, node: TreeNode<T>) => void;
+  /** Expand a node (from the `+`/`→` keys or a graph-zone click); provided by the owning `Tree`. */
+  expand: (node: TreeNode<T>) => void;
+  /** Collapse a node (from the `-`/`←` keys or a graph-zone click). */
+  collapse: (node: TreeNode<T>) => void;
+  /** Toggle a node's expand state (a graph-zone click, PA-14). */
+  toggle: (node: TreeNode<T>) => void;
+  /** Expand a node's whole subtree (the `*` key, TV `expandAll`). */
+  expandSubtree: (node: TreeNode<T>) => void;
 }
 
 /** The virtual-scroll rows renderer: draws only the visible window + owns tree keyboard/mouse. */
@@ -63,13 +76,22 @@ export class TreeRows<T> extends View {
   protected readonly guides: boolean;
   /** The flattened-visible rows accessor (reactive; recomputes on a `roots`/expand change). */
   protected readonly flatten: () => FlatRow<T>[];
+  /** Command emitted on activation (Enter / text-click). */
+  protected readonly command?: string;
+  /** Activation callback (Enter / text-click). */
+  protected readonly onSelect?: (index: number, node: TreeNode<T>) => void;
+  /** Expand-state mutators provided by the owning `Tree` (the keys/mouse drive them). */
+  protected readonly expand: (node: TreeNode<T>) => void;
+  protected readonly collapse: (node: TreeNode<T>) => void;
+  protected readonly toggle: (node: TreeNode<T>) => void;
+  protected readonly expandSubtree: (node: TreeNode<T>) => void;
   /** The first visible flattened index (TV `topItem`/`delta.y`). */
   protected topItem = 0;
   /** The owned scroll bar, wired by the `Tree` (its `value` is the shared `focused` signal). */
   bar?: ScrollBar;
 
   /**
-   * @param cfg The shared configuration (text, signals, guides, the flatten accessor).
+   * @param cfg The shared configuration (text, signals, guides, the flatten accessor, the mutators).
    */
   constructor(cfg: TreeRowsConfig<T>) {
     super();
@@ -78,6 +100,12 @@ export class TreeRows<T> extends View {
     this.selected = cfg.selected;
     this.guides = cfg.guides;
     this.flatten = cfg.flatten;
+    this.command = cfg.command;
+    this.onSelect = cfg.onSelect;
+    this.expand = cfg.expand;
+    this.collapse = cfg.collapse;
+    this.toggle = cfg.toggle;
+    this.expandSubtree = cfg.expandSubtree;
 
     this.onMount(() => {
       // Repaint + keep the focused row visible when focus moves (a key/wheel/bar drag).
@@ -188,9 +216,14 @@ export class TreeRows<T> extends View {
   }
 
   /**
-   * Route tree keyboard/wheel. Phase 1: wheel ±3 and vertical `↑↓`/`PgUp`/`PgDn`/`Home`/`End`
-   * (TV `handleEvent` `:484-539`). The tree-specific keys (`+`/`-`/`*`, `←`/`→`, Enter) + mouse land
-   * in Phase 2.
+   * Route tree keyboard/mouse/wheel — TV `handleEvent` (`toutline.cpp:419-541`) with the PA-12/PA-14
+   * adaptations:
+   *   • **wheel** ±3 (jsvision extension, cf. `ListRows`).
+   *   • **mouse-down** (`:433-481`): focus the clicked row; a click with `mouse.x < strwidth(graph)`
+   *     toggles expand (`:472`); a text click focuses + selects + emits (PA-14, no double-click).
+   *   • **keys** (`:484-539`): `↑↓`/`PgUp`/`PgDn`/`Home`/`End`, `Ctrl+PgUp/PgDn` → ends; `+`/`-`
+   *     `adjust`, `*` `expandAll` (`:523-531`); Enter/`Ctrl+Enter` `selected` (`:515-518`). **← / →**
+   *     override TV's up/down to collapse-or-parent / expand-or-child (PA-12).
    *
    * @param ev The dispatch envelope.
    */
@@ -202,12 +235,35 @@ export class TreeRows<T> extends View {
       ev.handled = true;
       return;
     }
+    if (inner.type === 'mouse' && inner.kind === 'down') {
+      this.handleMouseDown(ev);
+      return;
+    }
     if (inner.type !== 'key') return;
-    if (this.handleKey(inner)) ev.handled = true;
+    if (this.handleKey(inner, ev)) ev.handled = true;
   }
 
-  /** Apply a vertical-navigation key; returns whether it was consumed. */
-  protected handleKey(inner: KeyEvent): boolean {
+  /**
+   * A mouse-down (TV mouse branch, PA-14): focus the clicked row, then a click within the graph-prefix
+   * width toggles expand (TV `mouse.x < strwidth(graph)`, `:472`); a click on the text focuses +
+   * selects + emits.
+   */
+  protected handleMouseDown(ev: DispatchEvent): void {
+    const local = ev.local;
+    if (local === undefined) return;
+    const flat = this.flatten();
+    if (flat.length > 0) {
+      const index = clampIndex(this.topItem + local.y, flat.length);
+      this.focusTo(index);
+      const row = flat[index];
+      if (local.x < graphWidth(row.level)) this.toggle(row.node); // graph-zone ⇒ toggle expand
+      else this.select(index, ev); // text ⇒ focus + select + emit
+    }
+    ev.handled = true;
+  }
+
+  /** Apply a navigation/expand/select key; returns whether it was consumed. */
+  protected handleKey(inner: KeyEvent, ev: DispatchEvent): boolean {
     const page = Math.max(1, this.viewportRows() - 1); // TV `size.y - 1` (toutline.cpp:498-501)
     switch (inner.key) {
       case 'up':
@@ -217,10 +273,12 @@ export class TreeRows<T> extends View {
         this.focusBy(1);
         return true;
       case 'pageup':
-        this.focusBy(-page);
+        if (inner.ctrl) this.focusTo(0); // TV kbCtrlPgUp → 0
+        else this.focusBy(-page);
         return true;
       case 'pagedown':
-        this.focusBy(page);
+        if (inner.ctrl) this.focusTo(this.flatten().length - 1); // TV kbCtrlPgDn → limit.y-1
+        else this.focusBy(page);
         return true;
       case 'home':
         this.focusTo(this.topItem); // TV kbHome = delta.y (top of view)
@@ -228,9 +286,86 @@ export class TreeRows<T> extends View {
       case 'end':
         this.focusTo(this.topItem + this.viewportRows() - 1); // TV kbEnd = delta.y + size.y - 1
         return true;
+      case 'left':
+        this.collapseOrParent(); // PA-12
+        return true;
+      case 'right':
+        this.expandOrChild(); // PA-12
+        return true;
+      case 'enter':
+        this.select(this.focused(), ev); // TV kbEnter → selected(focus)
+        return true;
+      case '+':
+        this.mutateFocused((node) => this.expand(node)); // TV `+` adjust(node, True)
+        return true;
+      case '-':
+        this.mutateFocused((node) => this.collapse(node)); // TV `-` adjust(node, False)
+        return true;
+      case '*':
+        this.mutateFocused((node) => this.expandSubtree(node)); // TV `*` expandAll(node)
+        return true;
       default:
         return false;
     }
+  }
+
+  /** The currently-focused row (clamped into range), or `undefined` for an empty tree. */
+  protected focusedRow(): FlatRow<T> | undefined {
+    const flat = this.flatten();
+    return flat[clampIndex(this.focused(), flat.length)];
+  }
+
+  /** Apply an expand-mutator to the focused node (the `+`/`-`/`*` keys). */
+  protected mutateFocused(fn: (node: TreeNode<T>) => void): void {
+    const row = this.focusedRow();
+    if (row !== undefined) fn(row.node);
+  }
+
+  /**
+   * `←` (PA-12): collapse the focused node when it is expanded-with-children; otherwise move focus to
+   * its parent (the nearest preceding row at a smaller level).
+   */
+  protected collapseOrParent(): void {
+    const flat = this.flatten();
+    const i = clampIndex(this.focused(), flat.length);
+    const row = flat[i];
+    if (row === undefined) return;
+    if ((row.flags & OV_CHILDREN) !== 0) {
+      this.collapse(row.node); // expanded-with-children ⇒ collapse
+      return;
+    }
+    for (let k = i - 1; k >= 0; k -= 1) {
+      if (flat[k].level < row.level) {
+        this.focusTo(k); // collapsed/leaf ⇒ jump to parent
+        return;
+      }
+    }
+    // a top-level node with no parent ⇒ no-op
+  }
+
+  /**
+   * `→` (PA-12): expand the focused node when it is collapsed-with-children; otherwise, when it is
+   * already expanded-with-children, descend to its first child (the next row). A leaf is a no-op.
+   */
+  protected expandOrChild(): void {
+    const flat = this.flatten();
+    const i = clampIndex(this.focused(), flat.length);
+    const row = flat[i];
+    if (row === undefined) return;
+    if ((row.flags & OV_CHILDREN) !== 0) {
+      if (i + 1 < flat.length) this.focusTo(i + 1); // expanded ⇒ descend to first child
+    } else if (row.node.children.length > 0) {
+      this.expand(row.node); // collapsed-with-children ⇒ expand
+    }
+  }
+
+  /** Select the row at `index` (TV `selected`): set `selected`, call `onSelect`, emit `command`. */
+  protected select(index: number, ev: DispatchEvent): void {
+    const flat = this.flatten();
+    if (index < 0 || index >= flat.length) return;
+    this.selected.set(index);
+    this.onSelect?.(index, flat[index].node);
+    if (this.command !== undefined) ev.emit?.(this.command);
   }
 
   /** Move focus by `delta` rows, clamped into range. */

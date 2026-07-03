@@ -12,8 +12,9 @@
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities, defaultTheme } from '@jsvision/core';
-import type { KeyEvent } from '@jsvision/core';
-import { Group } from '../src/view/index.js';
+import type { KeyEvent, MouseEvent as CoreMouseEvent } from '@jsvision/core';
+import { View, Group } from '../src/view/index.js';
+import type { DrawContext, DispatchEvent } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { signal } from '../src/reactive/index.js';
 import type { Signal } from '../src/reactive/index.js';
@@ -22,18 +23,32 @@ import type { TreeNode } from '../src/tree/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
-function key(k: string): KeyEvent {
-  return { type: 'key', key: k, ctrl: false, alt: false, shift: false };
+function key(k: string, mods: Partial<KeyEvent> = {}): KeyEvent {
+  return { type: 'key', key: k, ctrl: false, alt: false, shift: false, ...mods };
+}
+function mouse(kind: 'down' | 'up', x: number, y: number): CoreMouseEvent {
+  return { type: 'mouse', kind, button: 0, x, y };
 }
 function node<T>(value: T, children: TreeNode<T>[] = []): TreeNode<T> {
   return { value, children };
 }
 
-/** Mount a Tree filling `w×h` under a root Group and focus its rows renderer. */
-function hosted<T>(tree: Tree<T>, w: number, h: number) {
+/** A post-process spy recording every command dispatched on the tick. */
+class CommandSpy extends View {
+  override postProcess = true;
+  readonly commands: string[] = [];
+  draw(_ctx: DrawContext): void {}
+  override onEvent(ev: DispatchEvent): void {
+    if (ev.event.type === 'command') this.commands.push(ev.event.command);
+  }
+}
+
+/** Mount a Tree filling `w×h` under a root Group (+ optional command spy) and focus its rows renderer. */
+function hosted<T>(tree: Tree<T>, w: number, h: number, spy?: CommandSpy) {
   tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
   const root = new Group();
   root.add(tree);
+  if (spy) root.add(spy);
   const loop = createEventLoop({ width: w, height: h }, { caps });
   loop.mount(root);
   loop.focusView(tree.rows);
@@ -155,4 +170,169 @@ test('ST-11: row role priority is focused > selected > normal', () => {
   expect(buf().get(0, 1)?.bg).toBe(defaultTheme.outlineFocused.bg);
   // Row 2 is neither ⇒ normal.
   expect(buf().get(0, 2)?.bg).toBe(defaultTheme.outlineNormal.bg);
+});
+
+// --- Phase 2: navigation + expand/collapse + mouse + selection (ST-12…ST-19) --------------------
+
+// Small nested fixture: A ├ A1 (└ A1a) └ A2 ; used across the nav cases.
+function nested(focused?: Signal<number>, selected?: Signal<number>, command?: string) {
+  const a1a = node('A1a');
+  const a1 = node('A1', [a1a]);
+  const a2 = node('A2');
+  const a = node('A', [a1, a2]);
+  const roots = signal<TreeNode<string>[]>([a]);
+  const tree = new Tree<string>({ roots, getText: (v) => v, focused, selected, command });
+  return { tree, a, a1, a1a, a2, roots };
+}
+
+// ST-12 / AC-4 — `+` expands the focused node, `-` collapses it, `*` expands its whole subtree; the
+// flattened list grows/shrinks and `focused` stays valid (TV `+`/`-`=adjust, `*`=expandAll, :523-531).
+test('ST-12: +/-/* expand, collapse, and expand-subtree the focused node', () => {
+  const focused = signal(0);
+  const { tree } = nested(focused);
+  const loop = hosted(tree, 20, 10);
+  const buf = () => loop.renderRoot.buffer();
+
+  // Collapsed initially ⇒ only A on row 0. `+` expands A ⇒ A1 appears on row 1 (text at col 6).
+  loop.dispatch(key('+'));
+  expect(buf().get(6, 1)?.char).toBe('A'); // 'A1'
+  expect(focused()).toBe(0);
+
+  // `-` collapses A ⇒ row 1 blank again.
+  loop.dispatch(key('-'));
+  expect(buf().get(6, 1)?.char).toBe(' ');
+
+  // `*` expands A's whole subtree (A + A1) ⇒ A1a appears on row 2 (level 2, text at col 9).
+  loop.dispatch(key('*'));
+  expect(buf().get(9, 2)?.char).toBe('A'); // 'A1a'
+});
+
+// ST-13 / AC-5 — ← collapses an expanded node; on an already-collapsed node it moves focus to the
+// parent (PA-12 override of TV's ←=up).
+test('ST-13: ← collapses an expanded node, else moves focus to the parent', () => {
+  const focused = signal(0);
+  const { tree, a, a1 } = nested(focused);
+  tree.expand(a);
+  tree.expand(a1); // flatten = [A, A1, A1a, A2]
+  const loop = hosted(tree, 20, 10);
+  const buf = () => loop.renderRoot.buffer();
+  focused.set(1); // focus A1 (expanded-with-children)
+
+  // ← on the expanded A1 ⇒ collapse it (A1a disappears); focus stays on A1.
+  loop.dispatch(key('left'));
+  expect(focused()).toBe(1);
+  expect(buf().get(9, 2)?.char).toBe(' '); // A1a gone (row 2 now A2 or blank)
+
+  // ← again on the now-collapsed A1 ⇒ move focus to its parent A (index 0).
+  loop.dispatch(key('left'));
+  expect(focused()).toBe(0);
+});
+
+// ST-14 / AC-5 — → expands a collapsed node; on an already-expanded node it descends to the first
+// child (PA-12 override of TV's →=down).
+test('ST-14: → expands a collapsed node, else descends to the first child', () => {
+  const focused = signal(0);
+  const { tree, a } = nested(focused);
+  tree.expand(a); // flatten = [A, A1(collapsed), A2]
+  const loop = hosted(tree, 20, 10);
+  const buf = () => loop.renderRoot.buffer();
+  focused.set(1); // focus A1 (collapsed-with-children)
+
+  // → on the collapsed A1 ⇒ expand it (A1a appears on row 2); focus stays on A1.
+  loop.dispatch(key('right'));
+  expect(focused()).toBe(1);
+  expect(buf().get(9, 2)?.char).toBe('A'); // 'A1a' now visible
+
+  // → again on the now-expanded A1 ⇒ descend to its first child A1a (index 2).
+  loop.dispatch(key('right'));
+  expect(focused()).toBe(2);
+});
+
+// ST-15 / Should-Have — expandAll()/collapseAll() instance methods expand/collapse the whole forest.
+test('ST-15: expandAll() / collapseAll() expand and collapse the whole forest', () => {
+  const { tree } = nested();
+  const loop = hosted(tree, 20, 10);
+  const buf = () => loop.renderRoot.buffer();
+
+  tree.expandAll();
+  loop.renderRoot.flush(); // direct method call ⇒ force the deferred frame
+  // Whole forest visible ⇒ A1a on row 2 (deepest node).
+  expect(buf().get(9, 2)?.char).toBe('A');
+
+  tree.collapseAll();
+  loop.renderRoot.flush();
+  // Only the root A remains ⇒ row 1 blank.
+  expect(buf().get(6, 1)?.char).toBe(' ');
+});
+
+// ST-16 / AC-6 (corrected by PA-14) — a click within the graph-prefix width toggles expand (no
+// select); the clicked row becomes focused.
+test('ST-16: a graph-zone click toggles expand without selecting', () => {
+  const focused = signal(0);
+  const selected = signal(-1);
+  const { tree } = nested(focused, selected);
+  const loop = hosted(tree, 20, 10);
+  const buf = () => loop.renderRoot.buffer();
+
+  // Click A's graph zone — 1-based (1,1) ⇒ view-local (0,0), x=0 < graphWidth(0)=3 ⇒ toggle, NOT select.
+  loop.dispatch(mouse('down', 1, 1));
+  loop.dispatch(mouse('up', 1, 1));
+  expect(focused()).toBe(0); // clicked row is focused
+  expect(selected()).toBe(-1); // NOT selected (graph-zone click)
+  expect(buf().get(6, 1)?.char).toBe('A'); // A expanded ⇒ 'A1' on row 1
+});
+
+// ST-17 / AC-6 (corrected)+AC-7 — a click on the node text focuses + selects it and emits the command.
+test('ST-17: a text click focuses, selects, and emits the command', () => {
+  const focused = signal(0);
+  const selected = signal(-1);
+  const { tree, a } = nested(focused, selected, 'open');
+  tree.expand(a); // flatten = [A, A1, A2]; A1 text at col 6 (level 1)
+  const spy = new CommandSpy();
+  const loop = hosted(tree, 20, 10, spy);
+
+  // Click A1's text — 1-based (7,2) ⇒ view-local (6,1), x=6 ≥ graphWidth(1)=6 ⇒ focus + select + emit.
+  loop.dispatch(mouse('down', 7, 2));
+  loop.dispatch(mouse('up', 7, 2));
+  expect(focused()).toBe(1);
+  expect(selected()).toBe(1);
+  expect(spy.commands).toContain('open');
+});
+
+// ST-18 / AC-7 — Enter on the focused row selects it + emits the command (TV kbEnter ⇒ selected).
+test('ST-18: Enter selects the focused row and emits the command', () => {
+  const focused = signal(0);
+  const selected = signal(-1);
+  const { tree, a } = nested(focused, selected, 'open');
+  tree.expand(a);
+  const spy = new CommandSpy();
+  const loop = hosted(tree, 20, 10, spy);
+
+  loop.dispatch(key('down')); // focus A1 (index 1)
+  loop.dispatch(key('enter'));
+  expect(selected()).toBe(1);
+  expect(spy.commands).toContain('open');
+});
+
+// ST-19 / AC-8 — a generic TreeNode<T> renders via getText; user node data carries no reactive
+// wrapper, and updating roots/expand re-flattens + repaints.
+test('ST-19: a generic TreeNode<T> renders via getText; roots/expand updates re-flatten', () => {
+  interface Entry {
+    readonly name: string;
+    readonly id: number;
+  }
+  const child: TreeNode<Entry> = node({ name: 'child', id: 2 });
+  const root: TreeNode<Entry> = node({ name: 'parent', id: 1 }, [child]);
+  const roots = signal<TreeNode<Entry>[]>([root]);
+  const tree = new Tree<Entry>({ roots, getText: (e) => e.name });
+  const loop = hosted(tree, 20, 6);
+  const buf = () => loop.renderRoot.buffer();
+
+  // 'parent' rendered via getText at col 3 (level 0). Node data is a plain object (no wrapper).
+  expect(buf().get(3, 0)?.char).toBe('p');
+  expect(root.value).toStrictEqual({ name: 'parent', id: 1 });
+
+  // Expanding re-flattens ⇒ 'child' appears on row 1 (col 6).
+  loop.dispatch(key('right')); // → expands the collapsed-with-children root
+  expect(buf().get(6, 1)?.char).toBe('c');
 });

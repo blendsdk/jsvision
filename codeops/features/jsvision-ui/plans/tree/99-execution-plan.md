@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 (Phase 1 COMPLETE — TreeRows renderer + Tree composition, verify green)
-> **Progress**: 18/35 tasks (51%)
+> **Last Updated**: 2026-07-03 (Phase 2 COMPLETE — navigation + expand/collapse + mouse + selection)
+> **Progress**: 27/35 tasks (77%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -186,15 +186,15 @@ final gate.
 - [x] 1.3.2 `yarn verify` green — 2026-07-03 (8/8; ui 679 tests). **Fidelity fix:** marker = TV literal `expanded ? '─' : '+'` (`:200`), not the plan-03-02 `children`-based form (ovChildren is expanded-only) — corrected `graph.ts` + the ST-4 oracle
 
 ### Phase 2: Navigation + mouse + selection
-- [ ] 2.1.1 Spec: keys/arrows/expand/mouse/select (ST-12…ST-19)
-- [ ] 2.1.2 Verify spec FAIL (red)
-- [ ] 2.2.1 **GATE-1 BEFORE**: transcribe the event decode (§6) + PA-12/PA-14
-- [ ] 2.2.2 Implement keys (nav + `+`/`-`/`*` + ←/→ + clamp)
-- [ ] 2.2.3 Implement mouse (graph-toggle vs text-select)
-- [ ] 2.2.4 Implement expandAll/collapseAll + Enter select
-- [ ] 2.2.5 Verify spec PASS (green)
-- [ ] 2.3.1 Impl tests (clamp, wheel, nav-no-select, emit-once)
-- [ ] 2.3.2 `yarn verify` green
+- [x] 2.1.1 Spec: keys/arrows/expand/mouse/select (ST-12…ST-19) — 2026-07-03 (`tree.spec.test.ts` +8)
+- [x] 2.1.2 Verify spec FAIL (red) — 2026-07-03 (8 failed)
+- [x] 2.2.1 **GATE-1 BEFORE**: transcribe the event decode (§6) + PA-12/PA-14 — 2026-07-03 (`tree-rows.ts` onEvent JSDoc, cites `:419-541`/`:472`/`:523-531`)
+- [x] 2.2.2 Implement keys (nav + `+`/`-`/`*` + ←/→ + clamp) — 2026-07-03 (Ctrl+Pg, collapseOrParent/expandOrChild PA-12)
+- [x] 2.2.3 Implement mouse (graph-toggle vs text-select) — 2026-07-03 (`handleMouseDown`, `mouse.x < graphWidth` PA-14)
+- [x] 2.2.4 Implement expandAll/collapseAll + Enter select — 2026-07-03 (`Tree.expandAll/collapseAll/expandSubtree` + `select`)
+- [x] 2.2.5 Verify spec PASS (green) — 2026-07-03 (ST-12…ST-19 green; fixed test mouse coords to 1-based)
+- [x] 2.3.1 Impl tests (clamp, wheel, nav-no-select, emit-once) — 2026-07-03 (`tree.impl.test.ts` +5, incl. Ctrl+Pg)
+- [x] 2.3.2 `yarn verify` green — 2026-07-03 (8/8; ui 696 tests; eslint clean)
 
 ### Phase 3: Story + demo + fidelity + gate
 - [ ] 3.1.1 `Tree` kitchen-sink story
