@@ -240,6 +240,20 @@ export interface Theme {
    * activatable). (RD-17 AR-180)
    */
   readonly tabDisabled: ThemeRole;
+  /**
+   * Progress-bar fill (RD-18, PA-3). Documented TV-extension colour — TV has no gauge/progress
+   * palette (AR-186 whole-tree search), so there is no `getColor` chain to decode; grounded in the
+   * shipped cyan-on-blue scrollbar-gauge family as `0x1B` brightCyan-on-blue, a *brighter* sibling of
+   * {@link scrollBarPage}/{@link scrollBarControls} `0x13`. Paints the `█`/eighth-block sub-cell fill
+   * (and the whole-cell `#` ASCII fill). `0xHL`: H=bg nibble, L=fg nibble. Additive (AC-11).
+   */
+  readonly progressFill: ThemeRole;
+  /**
+   * Progress-bar track (RD-18, PA-3). `0x13` cyan-on-blue — identical to {@link scrollBarPage}, the
+   * dim shade of the same gauge family; the fill reads brighter than the track on the shared blue
+   * field. Paints the `░` track (and the whole-cell `-` ASCII track). Additive (AC-11).
+   */
+  readonly progressTrack: ThemeRole;
   readonly statusBar: ThemeRole;
   /**
    * The status-line **pressed/selected** item (mouse-down feedback). Turbo Vision repaints the held
@@ -340,6 +354,11 @@ export const defaultTheme: Theme = {
   tabActive: { fg: PALETTE.white, bg: PALETTE.green, hotkey: PALETTE.yellow },
   tabInactive: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.yellow },
   tabDisabled: { fg: PALETTE.darkGray, bg: PALETTE.green },
+  // RD-18 Feedback roles — documented TV-extension colours (TV has no gauge palette, AR-186), grounded
+  // in the cyan-on-blue scrollbar-gauge family (plans/feedback/03-03 §GATE-1, PA-3): fill 0x1B
+  // brightCyan-on-blue (brighter sibling of scrollBarPage), track 0x13 cyan-on-blue (= scrollBarPage).
+  progressFill: { fg: PALETTE.brightCyan, bg: PALETTE.blue },
+  progressTrack: { fg: PALETTE.cyan, bg: PALETTE.blue },
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },
