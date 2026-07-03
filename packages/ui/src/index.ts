@@ -134,6 +134,7 @@ export type { Tab, TabViewOptions } from './tabs/index.js';
 export { ProgressBar, Spinner, runSpinner, SPINNERS } from './feedback/index.js';
 export type {
   ProgressBarOptions,
+  LabelPosition,
   SpinnerOptions,
   SpinnerName,
   RunSpinnerOptions,

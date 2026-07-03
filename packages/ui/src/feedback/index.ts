@@ -6,7 +6,7 @@
  * NodeNext ESM resolution.
  */
 export { ProgressBar, PARTIAL, asciiOnly } from './progress-bar.js';
-export type { ProgressBarOptions } from './progress-bar.js';
+export type { ProgressBarOptions, LabelPosition } from './progress-bar.js';
 export { Spinner, SPINNERS } from './spinner.js';
 export type { SpinnerOptions, SpinnerName } from './spinner.js';
 export { runSpinner } from './run-spinner.js';

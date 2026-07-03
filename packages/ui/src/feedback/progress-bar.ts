@@ -15,11 +15,23 @@
  *   map (which lacks 6 of the 7 partials and collapses `█`/`░` to a single `#`; preflight PF-001).
  * - **Colours (PA-3)** — `progressFill` (`0x1B` brightCyan-on-blue) for `█`/partials/`#`;
  *   `progressTrack` (`0x13` cyan-on-blue = `scrollBarPage`) for `░`/`-`. Documented extension colours.
- * - **Caption (AC-4)** — an optional centred ` NN% ` overlay in the existing `staticText` role.
  *
- * **GATE-1 AFTER-diff (verified):** the composed buffer matches this decode cell-by-cell — ST-2
- * asserts `full`×`█` + `PARTIAL[6]=▊` (U+258A) + `░` at `(v=0.28,w=10)` plus the `progressFill`/
- * `progressTrack` styles pre-serialize; ST-3 asserts the distinct `#`/`-` ASCII branch. No divergence.
+ * **Caption — knockout percent (PA-12, supersedes the AC-4 staticText draft).** The optional centred
+ * `NN%` reads *on* the bar, not in a contrasting box: each digit cell's background matches what it
+ * sits on — the fill colour where the fill has swept over it, the track's background where it hasn't
+ * — and the digit's foreground inverts for contrast. This kills the "two input fields split by a
+ * number" artifact the grey `staticText` box produced. Reuses only `progressFill`/`progressTrack`.
+ *
+ * **Label — positioned text around the bar (PA-13, RD-18 extension).** An optional `label` (literal
+ * or accessor, the `Text` idiom) placed by `labelPosition`: `left`/`right` reserve columns beside the
+ * bar on the same row (the bar shrinks); `top`/`top-left` reserve row 0 above the bar (two rows;
+ * `top` centred, `top-left` flush-left). Drawn in `staticText` (dialog text). The `measure()` seam
+ * advertises height 2 for a top label so an `auto`-sized bar claims the second row. Caption + label
+ * compose freely. No TV counterpart — a modern convenience, cited as an extension (AR-186).
+ *
+ * **GATE-1 AFTER-diff (verified):** the composed bar matches this decode cell-by-cell — ST-2 asserts
+ * `full`×`█` + `PARTIAL[6]=▊` (U+258A) + `░` at `(v=0.28,w=10)` plus the `progressFill`/`progressTrack`
+ * styles pre-serialize; ST-3 asserts the distinct `#`/`-` ASCII branch; ST-4 pins the knockout caption.
  *
  * Leaf `View` (no children, no `onEvent`), caller-owned `value` signal (the `Input`/`RadioGroup`
  * idiom); `value` is clamped on every read (NaN/±∞/OOB → 0/1) so `full ∈ 0..width` and `part ∈ 0..7`
@@ -29,7 +41,9 @@
 import { View } from '../view/index.js';
 import type { DrawContext } from '../view/index.js';
 import type { Signal } from '../reactive/index.js';
-import type { CapabilityProfile } from '@jsvision/core';
+import type { Size2D } from '../layout/index.js';
+import type { CapabilityProfile, Style } from '@jsvision/core';
+import { stringWidth } from '../controls/measure.js';
 
 /** Full block (U+2588) — a fully-filled cell. */
 const FULL = '█';
@@ -62,31 +76,48 @@ export function clamp01(n: number): number {
  */
 export const asciiOnly = (caps: CapabilityProfile): boolean => !caps.unicode.utf8 || !caps.glyphs.halfBlocks;
 
+/** Where an optional {@link ProgressBarOptions.label} sits relative to the bar. */
+export type LabelPosition = 'left' | 'right' | 'top' | 'top-left';
+
 /** Construction options for {@link ProgressBar}. */
 export interface ProgressBarOptions {
   /** Reactive progress in `[0,1]` (caller-owned; clamped on read). Writing it repaints. */
   readonly value: Signal<number>;
-  /** Show a centred ` NN% ` caption over the bar. Default `false`. */
+  /** Show a centred `NN%` knockout caption over the bar (PA-12). Default `false`. */
   readonly caption?: boolean;
+  /** Optional text placed around the bar (literal or reactive accessor). Repaints on change. */
+  readonly label?: string | (() => string);
+  /** Where {@link label} sits (PA-13). Default `'left'` — the only position that fits one row. */
+  readonly labelPosition?: LabelPosition;
 }
 
 /**
  * A determinate progress bar. Non-focusable leaf; paints a proportional fill (smooth sub-cell under
- * Unicode caps, whole-cell `#`/`-` under ASCII caps) with an optional centred percent caption.
+ * Unicode caps, whole-cell `#`/`-` under ASCII caps) with an optional knockout percent caption and an
+ * optional positioned label.
  */
 export class ProgressBar extends View {
   private readonly value: Signal<number>;
   private readonly caption: boolean;
+  private readonly label?: string | (() => string);
+  private readonly labelPos: LabelPosition;
 
   /**
-   * @param opts `value` (caller-owned signal in `[0,1]`) + optional `caption`.
+   * @param opts `value` (caller-owned signal in `[0,1]`) + optional `caption`/`label`/`labelPosition`.
    */
   constructor(opts: ProgressBarOptions) {
     super();
     this.value = opts.value;
     this.caption = opts.caption === true;
-    // Repaint when the bound value changes (the `Text` idiom; canonical site: onMount, PA-2).
-    this.onMount(() => this.bind(() => this.value()));
+    this.label = opts.label;
+    this.labelPos = opts.labelPosition ?? 'left';
+    // Repaint when the bound value OR label accessor changes (the `Text` idiom; canonical site: onMount).
+    this.onMount(() =>
+      this.bind(() => {
+        this.value();
+        this.resolveLabel();
+      }),
+    );
   }
 
   /** Write the bound signal (Should-Have). Clamped on read, so any number is safe. */
@@ -99,10 +130,25 @@ export class ProgressBar extends View {
     return Math.round(clamp01(this.value()) * 100);
   }
 
+  /** Resolve the label to a string (accessor or literal); `''` when no label was given. */
+  private resolveLabel(): string {
+    if (this.label === undefined) return '';
+    return typeof this.label === 'function' ? this.label() : this.label;
+  }
+
   /**
-   * Paint the bar across the full view. Under Unicode caps: `full`×`█` + one `PARTIAL[part]` + `░`
-   * track (round-first fill). Under ASCII caps: whole-cell `#` fill + `-` track. The same row is
-   * repeated for every `y` (a taller bar repeats the row). An optional caption overlays the fill.
+   * Intrinsic-size seam (AR-33): a top label makes the bar two rows; width fills the available track.
+   * Only consulted for `auto` sizing — fixed/absolute rects are unaffected.
+   */
+  override measure(available: Size2D): Size2D {
+    const top = this.resolveLabel() !== '' && (this.labelPos === 'top' || this.labelPos === 'top-left');
+    return { width: available.width, height: top ? 2 : 1 };
+  }
+
+  /**
+   * Paint the label (if any) then the bar into the remaining sub-rect, then the optional caption over
+   * the bar. `left`/`right` reserve columns beside the bar; `top`/`top-left` reserve row 0 above it
+   * (needs `height ≥ 2` — at one row the bar wins). See the class decode for the fill algorithm.
    *
    * @param ctx The clipped, view-local paint context (carries `caps` for the glyph decision).
    */
@@ -112,36 +158,111 @@ export class ProgressBar extends View {
     const v = clamp01(this.value());
     const fillStyle = ctx.color('progressFill');
     const trackStyle = ctx.color('progressTrack');
+    const text = this.resolveLabel();
 
-    if (asciiOnly(ctx.caps)) {
-      const filled = Math.round(v * width); // whole cells only, no partials
-      for (let y = 0; y < height; y += 1) {
-        ctx.fillRect(0, y, filled, 1, '#', fillStyle);
-        ctx.fillRect(filled, y, width - filled, 1, '-', trackStyle);
-      }
-    } else {
-      const e = Math.round(v * width * 8); // width in eighths (round-first, PA-4)
-      const full = Math.floor(e / 8);
-      const part = e % 8; // 0..7
-      for (let y = 0; y < height; y += 1) {
-        ctx.fillRect(0, y, full, 1, FULL, fillStyle);
-        let x = full;
-        if (part >= 1 && part <= 7) {
-          ctx.text(x, y, PARTIAL[part] ?? '', fillStyle);
-          x += 1;
-        }
-        if (x < width) ctx.fillRect(x, y, width - x, 1, TRACK, trackStyle);
+    // Carve the view rect into a label region + the bar sub-rect.
+    let bx = 0;
+    let by = 0;
+    let bw = width;
+    let bh = height;
+    if (text !== '') {
+      const lw = stringWidth(text);
+      const labelStyle = ctx.color('staticText');
+      if (this.labelPos === 'top' || this.labelPos === 'top-left') {
+        if (height >= 2) {
+          const lx = this.labelPos === 'top' ? Math.max(0, Math.floor((width - lw) / 2)) : 0;
+          ctx.text(lx, 0, text, labelStyle); // width-clipped by ctx.text
+          by = 1;
+          bh = height - 1;
+        } // one row only → no room for a top label; the bar takes the row
+      } else if (this.labelPos === 'left') {
+        ctx.text(0, Math.floor((height - 1) / 2), text, labelStyle);
+        const reserve = Math.min(width, lw + 1); // label + a 1-col gap
+        bx = reserve;
+        bw = width - reserve;
+      } else {
+        // 'right'
+        const reserve = Math.min(width, lw + 1); // a 1-col gap + label
+        bw = Math.max(0, width - reserve);
+        ctx.text(bw + 1, Math.floor((height - 1) / 2), text, labelStyle);
       }
     }
 
-    if (this.caption) this.drawCaption(ctx, v, width, height);
+    if (bw > 0 && bh > 0) {
+      this.drawBar(ctx, bx, by, bw, bh, v, fillStyle, trackStyle);
+      if (this.caption) this.drawCaption(ctx, v, bx, by, bw, bh, fillStyle, trackStyle);
+    }
   }
 
-  /** Draw a centred ` NN% ` label over the bar in `staticText` (AC-4); width-clipped by `ctx.text`. */
-  private drawCaption(ctx: DrawContext, v: number, width: number, height: number): void {
+  /** Paint the proportional fill into the `bw×bh` sub-rect at `(bx,by)`. Smooth or ASCII per caps. */
+  private drawBar(
+    ctx: DrawContext,
+    bx: number,
+    by: number,
+    bw: number,
+    bh: number,
+    v: number,
+    fillStyle: Style,
+    trackStyle: Style,
+  ): void {
+    if (asciiOnly(ctx.caps)) {
+      const filled = Math.round(v * bw); // whole cells only, no partials
+      for (let y = 0; y < bh; y += 1) {
+        ctx.fillRect(bx, by + y, filled, 1, '#', fillStyle);
+        ctx.fillRect(bx + filled, by + y, bw - filled, 1, '-', trackStyle);
+      }
+    } else {
+      const e = Math.round(v * bw * 8); // width in eighths (round-first, PA-4)
+      const full = Math.floor(e / 8);
+      const part = e % 8; // 0..7
+      for (let y = 0; y < bh; y += 1) {
+        ctx.fillRect(bx, by + y, full, 1, FULL, fillStyle);
+        let x = full;
+        if (part >= 1 && part <= 7) {
+          ctx.text(bx + x, by + y, PARTIAL[part] ?? '', fillStyle);
+          x += 1;
+        }
+        if (x < bw) ctx.fillRect(bx + x, by + y, bw - x, 1, TRACK, trackStyle);
+      }
+    }
+  }
+
+  /**
+   * Draw a centred `NN%` knockout caption over the bar sub-rect (PA-12). Each digit's background
+   * matches what it sits on — the fill colour where the fill has swept over it, the track's background
+   * where it hasn't — and the foreground inverts for contrast. Reuses only `progressFill`/
+   * `progressTrack`; the fill boundary is computed in whole cells, consistent with the drawn bar.
+   */
+  private drawCaption(
+    ctx: DrawContext,
+    v: number,
+    bx: number,
+    by: number,
+    bw: number,
+    bh: number,
+    fillStyle: Style,
+    trackStyle: Style,
+  ): void {
     const pct = Math.round(v * 100); // 0..100 (v already clamped)
-    const label = ` ${pct}% `;
-    const lx = Math.max(0, Math.floor((width - label.length) / 2)); // ASCII label → length == display width
-    ctx.text(lx, Math.floor(height / 2), label, ctx.color('staticText'));
+    const label = `${pct}%`; // ASCII digits + '%' → display width == length
+    const start = Math.max(0, Math.floor((bw - label.length) / 2));
+    const cy = by + Math.floor(bh / 2);
+    // Fill boundary in whole cells, matching the bar drawn for these caps (round-first eighths → cell).
+    let filledCells: number;
+    if (asciiOnly(ctx.caps)) {
+      filledCells = Math.round(v * bw);
+    } else {
+      const e = Math.round(v * bw * 8);
+      filledCells = Math.floor(e / 8) + (e % 8 >= 4 ? 1 : 0); // round the sub-cell edge to a whole cell
+    }
+    for (let i = 0; i < label.length; i += 1) {
+      const cx = start + i;
+      if (cx >= bw) break; // width-clip: never overrun the bar
+      const over = cx < filledCells; // has the fill swept over this digit?
+      const style: Style = over
+        ? { fg: fillStyle.bg, bg: fillStyle.fg } // inverse video: dark digit knocked into the bright fill
+        : { fg: fillStyle.fg, bg: trackStyle.bg }; // bright digit on the track's own background
+      ctx.text(bx + cx, cy, label[i] ?? '', style);
+    }
   }
 }
