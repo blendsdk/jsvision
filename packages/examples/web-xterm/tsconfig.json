@@ -1,0 +1,11 @@
+{
+  "//": "Browser-targeted tsconfig for the web-xterm demo (IDE + Vite only; not part of the root `yarn typecheck`, whose include list omits it — matching the other demos). DOM libs, no @types/node globals.",
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": []
+  },
+  "include": [".", "vite-env.d.ts"]
+}
