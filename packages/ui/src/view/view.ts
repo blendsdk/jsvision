@@ -57,6 +57,15 @@ export abstract class View {
    */
   castsShadow = false;
 
+  /**
+   * The Turbo Vision `ofCentered` option (`ofCenterX | ofCenterY = 0x300`, views.h:86-88). When true,
+   * the reflow pass recentres this view within its parent after layout — `origin = (parent - self)/2`
+   * on both axes (integer division), mirroring `TGroup::insertBefore` (tgroup.cpp:393-397). Intended
+   * for `position:'absolute'` views (a modal `Dialog`, a message box), whose size is fixed and whose
+   * origin is otherwise placed by the caller. Default `false`. Set by `Dialog` when centered.
+   */
+  centered = false;
+
   // --- RD-04 dispatch surface (additive; defaults preserve RD-03 behavior) ----------------------
   /**
    * Focus eligibility (TV `ofSelectable`): a view is focusable iff

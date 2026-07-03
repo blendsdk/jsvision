@@ -30,7 +30,8 @@ export const dialogStory: Story = {
   category: 'Containers',
   title: 'Dialog',
   rd: 'RD-11',
-  blurb: 'TDialog: a modal form. OK is vetoed while Age is out of range (the valid() gate); Cancel/Esc/[×] close.',
+  blurb:
+    'TDialog: a modal form — opens centered with a drop-shadow. OK is vetoed while Age is out of range (the valid() gate); Cancel/Esc/[×] close.',
   build(ctx: StoryContext) {
     const age = signal('30');
     const result = signal('(not opened yet)');
@@ -42,7 +43,9 @@ export const dialogStory: Story = {
         result.set('(headless — run demo:containers for the modal)');
         return;
       }
-      const dlg = new Dialog({ title: ' Person ', rect: { x: 4, y: 2, width: 40, height: 9 } });
+      // A size (no explicit rect) ⇒ the dialog auto-centers in the viewport (TV ofCentered) and
+      // casts its drop-shadow (TV sfShadow) — the modern default.
+      const dlg = new Dialog({ title: ' Person ', width: 40, height: 9 });
       const ageInput = new Input({ value: age, validator: range(0, 120) });
       dlg.add(at(new Label('~A~ge (0–120)', ageInput), 2, 2, 14, 1));
       dlg.add(at(ageInput, 17, 2, 18, 1));

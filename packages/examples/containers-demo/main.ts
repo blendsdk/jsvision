@@ -139,8 +139,9 @@ function stepListView(): void {
 /** Step 4 — a modal `Dialog` whose `valid()` gate vetoes OK on an out-of-range Age, then resolves. */
 async function stepDialog(): Promise<void> {
   const age = signal('200'); // out of range(0,120)
-  const dlg = new Dialog({ title: ' Person ' });
-  dlg.layout = { position: 'absolute', padding: 1, rect: { x: 0, y: 0, width: 34, height: 9 } };
+  // A size (no explicit rect) ⇒ the dialog auto-centers in the viewport (TV ofCentered) and casts a
+  // drop-shadow (TV sfShadow) — the modern default; no manual placement needed.
+  const dlg = new Dialog({ title: ' Person ', width: 34, height: 9 });
   const ageInput = new Input({ value: age, validator: range(0, 120) });
   const label = new Label('~A~ge (0–120)', ageInput);
   label.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 14, height: 1 } };
@@ -163,6 +164,9 @@ async function stepDialog(): Promise<void> {
   let settled = false;
   void result.then(() => (settled = true));
 
+  console.log(
+    `  Dialog opened centered at ${JSON.stringify(dlg.bounds)} with a drop-shadow (TV ofCentered + sfShadow).`,
+  );
   printFrame('Frame 4a — modal Dialog, Age="200" (invalid)', loop.renderRoot.buffer().rows());
 
   // OK with an out-of-range Age ⇒ vetoed by valid(); the dialog stays open.
