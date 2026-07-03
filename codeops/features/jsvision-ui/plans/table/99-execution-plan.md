@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 09:30
-> **Progress**: 10/22 tasks (45%)
+> **Last Updated**: 2026-07-03 09:46
+> **Progress**: 19/28 tasks (68%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -109,7 +109,7 @@ ordering (spec tests → red → implement → green → impl tests → verify).
 | 3.3.2 | Write impl tests: indent clamp, clamp-on-shrink, header/row divider alignment, zebra+focus, click-below-last-row, Ctrl+PgUp/Dn | `packages/ui/test/datagrid.impl.test.ts` |
 | 3.3.3 | `yarn verify` (confirm `grid-rows.ts` ≤ 500 lines; split `GridHeader`→`grid-header.ts` if over) | — |
 
-**Deliverables**: [ ] DataGrid + GridRows complete · [ ] GATE-2 diff recorded · [ ] all datagrid tests green · [ ] files ≤ 500 lines · [ ] verify passing
+**Deliverables**: [x] DataGrid + GridRows complete · [x] GATE-2 diff recorded · [x] all datagrid tests green · [x] files ≤ 500 lines · [x] verify passing
 
 **Verify**: `yarn verify`
 
@@ -169,15 +169,15 @@ ordering (spec tests → red → implement → green → impl tests → verify).
 - [x] 2.3.2 `yarn verify` — 2026-07-03
 
 ### Phase 3: DataGrid + GridRows (TV-derived)
-- [ ] 3.1.1 **GATE-1 BEFORE-decode** (`tlstview.cpp`)
-- [ ] 3.1.2 Spec tests ST-1…19/22/23 (`datagrid.spec`)
-- [ ] 3.1.3 Verify red
-- [ ] 3.2.1 Implement `grid-rows.ts` (GridRows + GridHeader)
-- [ ] 3.2.2 Implement `data-grid.ts` (DataGrid Group + sortBy)
-- [ ] 3.2.3 Verify green
-- [ ] 3.3.1 **GATE-2 AFTER-diff** (record decode; fix drift)
-- [ ] 3.3.2 Impl tests (`datagrid.impl`)
-- [ ] 3.3.3 `yarn verify` (files ≤ 500 lines)
+- [x] 3.1.1 **GATE-1 BEFORE-decode** (`tlstview.cpp`) — 2026-07-03
+- [x] 3.1.2 Spec tests ST-1…19/22/23 (`datagrid.spec`) — 2026-07-03
+- [x] 3.1.3 Verify red — 2026-07-03
+- [x] 3.2.1 Implement `grid-rows.ts` (GridRows + GridHeader) — 2026-07-03
+- [x] 3.2.2 Implement `data-grid.ts` (DataGrid Group + sortBy) — 2026-07-03
+- [x] 3.2.3 Verify green — 2026-07-03
+- [x] 3.3.1 **GATE-2 AFTER-diff** (record decode; fix drift) — 2026-07-03
+- [x] 3.3.2 Impl tests (`datagrid.impl`) — 2026-07-03
+- [x] 3.3.3 `yarn verify` (files ≤ 500 lines: grid-rows 443) — 2026-07-03
 
 ### Phase 4: Packaging + story + demo
 - [ ] 4.1.1 Packaging spec ST-21 (`table.packaging.spec`)
