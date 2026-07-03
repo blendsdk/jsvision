@@ -4,7 +4,7 @@
 > **Status**: Draft
 > **Created**: 2026-07-03 (`make_requirements --continue` — RD-12+ high-value-controls set, sibling 5 of 6; **Later** phase)
 > **Project**: jsvision UI (`@jsvision/ui`)
-> **Depends On**: RD-03 (View/Group spine — done; `View`/`Group`/`DrawContext`, per-view `bind`/`invalidate`), RD-01 (Reactive core — done; `Signal`/`computed` drive the bar `value` + the spinner `frame`), RD-02 (Layout engine — done; both widgets size/place via the normal layout pass), RD-05 (App shell — done; the disabled-greying + caption conventions; a `Window`/`Dialog` hosts them), `@jsvision/core` (done; the additive feedback theme roles land here at plan GATE-1; the shipped **`fallbackGlyph`** capability path (`render/glyphs.ts`) drives the ASCII fallback; the shipped **`RuntimeAdapter.setTimer`/`clearTimer`** seam (`host/types.ts:126-128`) backs the optional spinner-timer helper)
+> **Depends On**: RD-03 (View/Group spine — done; `View`/`Group`/`DrawContext`, per-view `bind`/`invalidate`), RD-01 (Reactive core — done; `Signal`/`computed` drive the bar `value` + the spinner `frame`), RD-02 (Layout engine — done; both widgets size/place via the normal layout pass), RD-05 (App shell — done; the disabled-greying + caption conventions; a `Window`/`Dialog` hosts them), `@jsvision/core` (done; the additive feedback theme roles land here at plan GATE-1; both widgets select an ASCII fallback **at the widget level** from the resolved `caps` (RD-02 capability model — the sub-cell fill degrades to a whole-cell `#`/`-` bar, the braille spinner to the `line` preset; no `glyphs.ts` edit); the shipped **`RuntimeAdapter.setTimer`/`clearTimer`** seam (`host/types.ts:126-129`) backs the optional spinner-timer helper)
 > **Set**: RD-12+ high-value controls (AR-125…AR-129) — sliced by mechanism into 6 sibling RDs; this is **RD-18 (Feedback)**, the second **Later**-phase RD (after the RD-14/15/16 MVP, AR-129; RD-17 Tabs preceded it).
 > **CodeOps Skills Version**: 3.2.0
 
@@ -35,9 +35,9 @@ each in an already-shipped facility or the DOS-16 palette / CP437 glyph conventi
 | Piece | Grounded in |
 |-------|-------------|
 | Determinate bar glyphs — full block `█` (U+2588) + eighth-block partials `▏▎▍▌▋▊▉` (U+258F–U+2589) at the fill edge + light-shade track `░` (U+2591) | Unicode **Block Elements**; the same CP437 shade/block convention TV itself uses (`TScrollBar` `▒`/`■`, the button/window shadow `▄█▀`) |
-| ASCII fallback for the bar (`#`/`-` or `=`) **and** the spinner (braille → line `\|/-\`) | the shipped **capability glyph-fallback path** `fallbackGlyph` (`render/glyphs.ts` — RD-04 AC-4), the same mechanism every widget's non-ASCII glyph already routes through when `caps.glyphs`/`unicode` is off |
+| ASCII fallback for the bar (`#` fill / `-` or space track, whole-cell) **and** the spinner (braille `dots` → the `line` preset `\|/-\`) | a **widget-level `caps`-driven selection** — each widget reads `caps.glyphs`/`caps.unicode` and picks its ASCII form (the bar drops the sub-cell partials; the spinner swaps preset). **Not** the serialize-time per-glyph `fallbackGlyph` map (`render/glyphs.ts`), which is a 1:1 global substitution with no fill-vs-track notion (`░` is shared with `TScrollBar` → both `█` and `░` collapse to `#`) and does not carry the eighth-block partials |
 | Spinner frame sets — braille dots `⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏` (U+2800 Braille Patterns), line `\|/-\`, blocks | Unicode Braille / ASCII; the modern `ora`/Ink busy-spinner convention (no TV precedent — the extension) |
-| Optional animation timer | the shipped **`RuntimeAdapter.setTimer`/`clearTimer`** seam (`host/types.ts:126-128`) — TV had no equivalent (it repainted on its idle event); extension via the injectable timer, no new core primitive |
+| Optional animation timer | the shipped **`RuntimeAdapter.setTimer`/`clearTimer`** seam (`host/types.ts:126-129`) — TV had no equivalent (it repainted on its idle event); extension via the injectable timer, no new core primitive |
 | Fill / track / spinner colours | decoded through the **`cpAppColor`** chain at **plan GATE-1**, grounded in TV's bright-on-dim gauge-like convention; pinned to exact attribute bytes |
 
 This is exactly the extension latitude the directive permits ("behavior the original couldn't have may
@@ -69,15 +69,20 @@ GATE-1.
   signal, `RadioGroup`'s `Signal<number>`, AR-188). Writing `value` repaints the bar.
 - **Value is clamped** to `[0,1]` on read (out-of-range or `NaN` → clamped to `0`/`1`), so no caller
   input can overflow the bar or index out of range.
-- **Smooth sub-cell fill (AR-189):** the bar's pixel width in eighths is `round(value · width · 8)`;
-  each fully-covered cell draws **`█`** (U+2588), the single fractional edge cell draws the matching
-  **eighth-block partial** (`▏▎▍▌▋▊▉`, U+258F…U+2589), and the remainder draws the **`░` track**
-  (U+2591). This gives sub-cell precision at any width (grounded in the Unicode Block Elements; the
-  exact partial-glyph table + rounding pinned as a spec oracle).
-- **ASCII fallback (AR-189):** under a capability profile without Unicode/glyphs, both the fill and
-  track fall back through the shipped **`fallbackGlyph`** path to ASCII (`#`/`=` fill, `-`/space
-  track; the exact map confirmed at plan GATE-1) — the same mechanism the frame/scrollbar glyphs
-  already use. The bar renders correctly (whole-cell only) with no throw.
+- **Smooth sub-cell fill (AR-189):** clamp `value` to `[0,1]`, then let `e = round(value · width · 8)`
+  be the bar's width in eighths; it draws `floor(e / 8)` fully-covered **`█`** cells (U+2588), then —
+  when `e mod 8 ∈ 1..7` — one matching **eighth-block partial** `PARTIAL[e mod 8]` where
+  `PARTIAL = [▏,▎,▍,▌,▋,▊,▉]` (U+258F…U+2589, indexed `1..7`; no partial when `e mod 8 == 0`), then the
+  remaining cells as the **`░` track** (U+2591). This gives sub-cell precision at any width (grounded
+  in the Unicode Block Elements; the exact `round`-first formula + partial-glyph table pinned as the
+  AC-2 spec oracle).
+- **ASCII fallback (AR-189):** under a capability profile without Unicode/glyphs, the bar itself reads
+  `caps` and renders a **whole-cell** ASCII form directly — a distinct `#` fill and `-` (or space)
+  track, dropping the sub-cell partials — the same **widget-level `caps`-driven selection** the Spinner
+  uses to swap presets. It does **not** rely on the serialize-time `fallbackGlyph` per-glyph map (a 1:1
+  global substitution that collapses both `█` and `░` to `#` and does not carry the eighth-block
+  partials, `render/glyphs.ts`). The bar renders correctly (whole-cell only) with no throw. *(exact
+  ASCII fill/track chars confirmed at plan GATE-1.)*
 - **Optional percentage caption:** an opt-in centred label (e.g. ` 45% `) overlaid on the bar,
   showing `round(value·100)`; off by default. When on, the caption text is drawn over the fill/track
   in the caption role and is width-clipped.
@@ -91,11 +96,13 @@ GATE-1.
   test stepping it by hand), which repaints the next glyph. This keeps the widget deterministic and
   **fully headless-testable** with no wall-clock dependency.
 - **Selectable frame presets (AR-191):** ship named presets — **`dots`** (braille
-  `⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏`, U+2800 block), **`line`** (`| / - \`), **`blocks`** (a block-cycle set) — each a
-  documented frozen array; **default = `dots`**.
-- **ASCII fallback (AR-191):** under a capability profile without Unicode/glyphs, the braille `dots`
-  preset automatically falls back to the ASCII **`line`** preset via the same glyph-capability path,
-  so the spinner animates everywhere with no throw.
+  `⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏`, U+2800 block), **`line`** (`| / - \`), **`blocks`** (a block-cycle set, exact glyphs
+  pinned at plan GATE-1 alongside `dots`/`line`) — each a documented frozen array; **default = `dots`**.
+- **ASCII fallback (AR-191):** under a capability profile without Unicode/glyphs, **any** non-`line`
+  preset (the braille `dots`, the `blocks` set) automatically falls back to the ASCII **`line`** preset
+  — a **widget-level `caps`-driven preset swap** (the Spinner reads `caps.glyphs`/`caps.unicode` and
+  selects the `line` array), so the spinner animates everywhere with no throw and never degrades to a
+  static glyph.
 - **Optional trailing label:** an opt-in text (e.g. `Loading…`) drawn to the right of the spinner
   glyph in the spinner/label role, width-clipped and sanitized.
 
@@ -103,7 +110,7 @@ GATE-1.
 - A tiny **`runSpinner(frame, { intervalMs, timer })`** helper (name/signature confirmed at plan
   time) that advances a `frame` signal every `intervalMs` and returns a **stop handle**
   (`() => void`). It takes an **injectable timer seam** — the shipped `RuntimeAdapter` (or a minimal
-  `{ setTimer, clearTimer }` subset, `host/types.ts:126-128`) — so real apps pass the live runtime
+  `{ setTimer, clearTimer }` subset, `host/types.ts:126-129`) — so real apps pass the live runtime
   and tests pass a fake that steps time deterministically (no wall-clock in tests). The `Spinner`
   widget itself never imports a timer; the helper is a separable convenience. `stop()` clears the
   timer (no leak).
@@ -175,15 +182,18 @@ GATE-1.
 - `@jsvision/core` `Theme` + `defaultTheme` gain the additive **feedback roles** (bar fill / track,
   optionally caption + spinner), decoded from `cpAppColor` at plan GATE-1 (exact attribute bytes
   pinned per the fidelity directive). Same additive pattern as AR-97/112/122/149/159/180; **no
-  existing role changes, no new core primitive** — the `fallbackGlyph` path and `RuntimeAdapter`
-  timer seam already exist.
+  existing role changes, no new core primitive** — the ASCII fallback is a widget-level `caps`-driven
+  selection (no `glyphs.ts` edit) and the `RuntimeAdapter` timer seam already exists.
 
 ### Reuse (no new engine primitives)
-- **Glyph fallback (core RD-04):** both widgets route their non-ASCII glyphs through the shipped
-  `fallbackGlyph` capability path (`render/glyphs.ts`) — the bar's block/partials → ASCII, the
-  spinner's braille → line — exactly as the frame/scrollbar glyphs already do.
+- **Capability-driven ASCII form (core RD-02/RD-04):** both widgets read the resolved `caps` and
+  select an ASCII form at the **widget level** when Unicode/glyphs are off — the bar renders a
+  whole-cell `#`/`-` bar, the Spinner swaps to the `line` preset. This is a `caps`-driven selection,
+  **not** the serialize-time per-glyph `fallbackGlyph` map (a 1:1 global substitution with no
+  fill-vs-track notion and no eighth-block partials, `render/glyphs.ts`); no new core primitive and no
+  `glyphs.ts` edit.
 - **Timer seam (core RD-07):** the optional `runSpinner` helper builds on `RuntimeAdapter.setTimer`/
-  `clearTimer` (`host/types.ts:126-128`), the same injectable OS-timer boundary the ESC-disambiguation
+  `clearTimer` (`host/types.ts:126-129`), the same injectable OS-timer boundary the ESC-disambiguation
   timer uses; a fake runtime drives it deterministically in tests.
 - **Reactivity/draw (RD-01/RD-03):** RD-01 `Signal`/`computed` (`value`/`frame` drive repaint),
   RD-03 `bind`/`invalidate`, RD-03 `DrawContext` (all writes via `ScreenBuffer` + `sanitize`).
@@ -220,13 +230,16 @@ All decisions trace to the Ambiguity Register (`00-ambiguity-register.md`):
   `Spinner` (clean split; no marquee-bar mode). *(user choice)*
 - **AR-188** — `ProgressBar` value model = reactive **`value: Signal<number>` in `[0,1]`**, clamped;
   horizontal-only; optional centred `%` caption. *(idiom/dominant)*
-- **AR-189** — **smooth sub-cell fill** — full `█` cells + an eighth-block partial (`▏▎▍▌▋▊▉`) at the
-  edge over a `░` track; ASCII fallback via `fallbackGlyph`. *(user choice)*
+- **AR-189** — **smooth sub-cell fill** — `e = round(value·width·8)`, `floor(e/8)` full `█` cells + one
+  eighth-block partial `PARTIAL[e mod 8]` (`▏▎▍▌▋▊▉`) at the edge over a `░` track; **widget-level
+  whole-cell ASCII fallback** (`#` fill / `-` track) from `caps`, not the per-glyph `fallbackGlyph` map.
+  *(user choice)*
 - **AR-190** — `Spinner` is **caller-driven** — a pure `View` rendering `frames[frame() mod n]`, no
   internal clock; an optional `runSpinner` helper advances the signal over the injectable
   `RuntimeAdapter` timer seam (headless-testable), returning a stop handle. *(user choice)*
 - **AR-191** — **spinner glyph presets** = `dots` (braille), `line`, `blocks`; **default `dots`**
-  with automatic **ASCII fallback to `line`** via the glyph-capability path. *(user choice)*
+  with automatic **ASCII fallback to `line`** via a widget-level `caps`-driven preset swap (any
+  non-`line` preset → `line`). *(user choice)*
 - **AR-192** — additive **feedback theme roles** (bar fill/track, optionally caption + spinner),
   decoded through `cpAppColor` and pinned to exact bytes at **plan GATE-1**. *(dominant — additive-role
   fidelity pattern)*
@@ -267,13 +280,15 @@ fallback, and the `cpAppColor`-decoded bytes pinned at plan GATE-1.
 
 - **AC-1** (determinate bar) — a `ProgressBar` bound to `value: Signal<number>` renders a fractional
   fill over a track; writing `value` repaints so the filled proportion tracks the value. *(AR-187/AR-188)*
-- **AC-2** (smooth sub-cell fill, faithful glyphs) — for a given `value` and `width`, the bar draws
-  `floor(value·width·8 / 8)` full `█` cells, the correct **eighth-block partial** (`▏▎▍▌▋▊▉`) for the
-  fractional edge cell, and `░` for the remainder; asserted cell-by-cell against the buffer
-  pre-`serialize` (the fill-math oracle). *(AR-189)*
-- **AC-3** (bar ASCII fallback) — under a capability profile with Unicode/glyphs **off**, the bar
-  falls back through `fallbackGlyph` to ASCII fill/track (whole-cell), renders correctly, and does
-  **not** throw. *(AR-189)*
+- **AC-2** (smooth sub-cell fill, faithful glyphs) — for a clamped `value` and a `width`, let
+  `e = round(value·width·8)`; the bar draws `floor(e / 8)` full `█` cells, then — when `e mod 8 ∈ 1..7`
+  — one **eighth-block partial** `PARTIAL[e mod 8]` where `PARTIAL = [▏,▎,▍,▌,▋,▊,▉]` (U+258F…U+2589,
+  index `1..7`), then `░` for every remaining cell (no partial when `e mod 8 == 0`); asserted
+  cell-by-cell against the buffer pre-`serialize` (the `round`-first fill-math oracle). *(AR-189)*
+- **AC-3** (bar ASCII fallback) — under a capability profile with Unicode/glyphs **off**, the bar reads
+  `caps` and renders a **whole-cell** ASCII form directly (`#` fill / `-` or space track, distinct from
+  each other; sub-cell partials dropped) — a widget-level selection, **not** the serialize-time
+  `fallbackGlyph` map; it renders correctly and does **not** throw. *(AR-189)*
 - **AC-4** (percentage caption) — with the caption enabled, a centred ` NN% ` (= `round(value·100)`)
   is drawn over the bar in the caption role, clamped to `0..100` and width-clipped; disabled by
   default. *(AR-188)*
@@ -285,9 +300,10 @@ fallback, and the `cpAppColor`-decoded bytes pinned at plan GATE-1.
 - **AC-7** (spinner presets) — the named presets `dots` (braille), `line`, `blocks` are each a frozen
   glyph array selectable by the caller; the **default is `dots`**; a public `SPINNERS` map exposes
   them. *(AR-191)*
-- **AC-8** (spinner ASCII fallback) — under a capability profile with Unicode/glyphs **off**, the
-  braille `dots` preset falls back to the ASCII `line` preset via the glyph-capability path; the
-  spinner animates and does **not** throw. *(AR-191)*
+- **AC-8** (spinner ASCII fallback) — under a capability profile with Unicode/glyphs **off**, **any**
+  non-`line` preset (`dots`, `blocks`) falls back to the ASCII `line` preset via a widget-level
+  `caps`-driven preset swap (never degrading to a static glyph); the spinner animates and does **not**
+  throw. *(AR-191)*
 - **AC-9** (spinner label) — with a label set, it is drawn to the right of the spinner glyph in the
   spinner/label role, width-clipped and sanitized. *(AR-190)*
 - **AC-10** (timer helper, injectable + no leak) — `runSpinner(frame, { intervalMs, timer })` advances
@@ -313,9 +329,10 @@ fallback, and the `cpAppColor`-decoded bytes pinned at plan GATE-1.
 > **Next step:** run the make_plan skill on RD-18 to produce the implementation plan (spec-first: spec
 > oracles RED → implement → GREEN → impl tests). Because RD-18 has **no TV counterpart** (GATE-1), the
 > plan's GATE-1 work is narrower but still mandatory: **pin the feedback theme-role attribute bytes
-> through the `cpAppColor` chain**, **fix the eighth-block partial-glyph table + rounding** and its
-> **ASCII-fallback map**, and **fix the three spinner presets** (braille `dots` / `line` / `blocks`)
-> and the braille→line fallback, recording the decode + the two BEFORE/AFTER gate tasks in
+> through the `cpAppColor` chain**, **confirm the `round`-first eighth-block fill formula + partial-glyph
+> table (AC-2)** and the bar's **widget-level whole-cell ASCII form** (`#` fill / `-` track), and **pin
+> the three spinner presets** (braille `dots` / `line` / `blocks`; `blocks` glyphs at GATE-1) and the
+> non-`line`→`line` ASCII preset swap, recording the decode + the two BEFORE/AFTER gate tasks in
 > `99-execution-plan.md`. Optionally preflight (`preflight RD-18`), then exec_plan. RD-18 is sibling 5
 > of the RD-12+ set (AR-126) and the second **Later**-phase RD (AR-129); **RD-19 (Surface/SurfaceView)**
 > — which *does* have a TV counterpart (`include/tvision/surface.h`) — is the last in the drafting queue.
