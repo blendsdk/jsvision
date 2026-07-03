@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 09:14
-> **Progress**: 4/22 tasks (18%)
+> **Last Updated**: 2026-07-03 09:30
+> **Progress**: 10/22 tasks (45%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -75,7 +75,7 @@ ordering (spec tests → red → implement → green → impl tests → verify).
 | 2.3.1 | Write impl tests: min/max fixpoint, wide-glyph clip/align, fractional fr, zero-col/zero-row, `auto` fallback-to-title | `packages/ui/test/grid-columns.impl.test.ts` |
 | 2.3.2 | `yarn verify` | — |
 
-**Deliverables**: [ ] `columns.ts` complete + pure · [ ] all grid-columns tests green · [ ] verify passing
+**Deliverables**: [x] `columns.ts` complete + pure · [x] all grid-columns tests green · [x] verify passing
 
 **Verify**: `yarn verify`
 
@@ -161,12 +161,12 @@ ordering (spec tests → red → implement → green → impl tests → verify).
 - [x] 1.1.4 Verify green + `yarn verify` — 2026-07-03
 
 ### Phase 2: Columns module
-- [ ] 2.1.1 Spec tests ST-4/5/9/10/11 (`grid-columns.spec`)
-- [ ] 2.1.2 Verify red
-- [ ] 2.2.1 Implement `columns.ts` (measureAutoWidths/apportionColumns/alignCell/sortRows)
-- [ ] 2.2.2 Verify green
-- [ ] 2.3.1 Impl tests (`grid-columns.impl`)
-- [ ] 2.3.2 `yarn verify`
+- [x] 2.1.1 Spec tests ST-4/5/9/10/11 (`grid-columns.spec`) — 2026-07-03
+- [x] 2.1.2 Verify red — 2026-07-03
+- [x] 2.2.1 Implement `columns.ts` (measureAutoWidths/apportionColumns/alignCell/sortRows) — 2026-07-03
+- [x] 2.2.2 Verify green — 2026-07-03
+- [x] 2.3.1 Impl tests (`grid-columns.impl`) — 2026-07-03
+- [x] 2.3.2 `yarn verify` — 2026-07-03
 
 ### Phase 3: DataGrid + GridRows (TV-derived)
 - [ ] 3.1.1 **GATE-1 BEFORE-decode** (`tlstview.cpp`)
