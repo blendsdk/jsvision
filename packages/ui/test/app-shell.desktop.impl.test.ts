@@ -12,6 +12,7 @@ import type { MouseEvent } from '@jsvision/core';
 import { Group } from '../src/view/index.js';
 import { createApplication } from '../src/app/index.js';
 import { Window } from '../src/window/index.js';
+import { Dialog } from '../src/dialog/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -49,6 +50,19 @@ test('Desktop shadows are off by default (the backdrop keeps the desktop role)',
   addWindow(app, 'W', { x: 2, y: 2, width: 10, height: 4 });
   app.loop.renderRoot.flush();
   expect(app.loop.renderRoot.buffer().get(12, 3)?.bg).toBe(defaultTheme.desktop.bg);
+});
+
+// A Dialog casts its intrinsic TV shadow (sfShadow) even on a shadow-OFF desktop — `addWindow` must
+// not clobber a window's own `castsShadow`. This is the kitchen-sink path (execView → addWindow).
+test('a Dialog added to a shadow-off desktop still casts its drop-shadow (no clobber)', () => {
+  const app = shellApp(40, 12); // desktop.shadow defaults false
+  const dlg = new Dialog({ title: 'D', width: 10, height: 4 }); // centers → cols 15..24, rows 4..7
+  app.desktop.addWindow(dlg);
+  app.loop.renderRoot.flush();
+  const buf = app.loop.renderRoot.buffer();
+  // One column right of the centered dialog (x = 15+10 = 25, y = 5) is bare backdrop → shadowed.
+  expect(buf.get(25, 5)?.bg).toBe(defaultTheme.shadow.bg);
+  expect(dlg.castsShadow).toBe(true);
 });
 
 test('a front window casts its shadow ON TOP of the window behind it (z-order layering)', () => {
