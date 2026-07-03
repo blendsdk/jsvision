@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 (Phase 0 COMPLETE — theme roles + graph builder, verify green)
-> **Progress**: 9/35 tasks (26%)
+> **Last Updated**: 2026-07-03 (Phase 1 COMPLETE — TreeRows renderer + Tree composition, verify green)
+> **Progress**: 18/35 tasks (51%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -175,15 +175,15 @@ final gate.
 - [x] 0.3.2 `yarn verify` green — 2026-07-03 (8/8 turbo tasks; ui 675 tests)
 
 ### Phase 1: Renderer + composition
-- [ ] 1.1.1 Spec: render + virtual scroll (ST-8…ST-11)
-- [ ] 1.1.2 Verify spec FAIL (red)
-- [ ] 1.2.1 **GATE-1 BEFORE**: transcribe the draw decode (§4)
-- [ ] 1.2.2 Implement `TreeRows` draw
-- [ ] 1.2.3 Implement `Tree` composition + expand-state model
-- [ ] 1.2.4 Barrel + re-exports
-- [ ] 1.2.5 Verify spec PASS (green)
-- [ ] 1.3.1 Impl tests (seeding, roots swap, empty, scrollbar)
-- [ ] 1.3.2 `yarn verify` green
+- [x] 1.1.1 Spec: render + virtual scroll (ST-8…ST-11) — 2026-07-03 (`tree.spec.test.ts`)
+- [x] 1.1.2 Verify spec FAIL (red) — 2026-07-03 (Tree import error)
+- [x] 1.2.1 **GATE-1 BEFORE**: transcribe the draw decode (§4) — 2026-07-03 (`tree-rows.ts` JSDoc; row colour/graph/two-tone/setLimit)
+- [x] 1.2.2 Implement `TreeRows` draw — 2026-07-03 (virtual window + graph prefix + two-tone + role priority + vertical nav)
+- [x] 1.2.3 Implement `Tree` composition + expand-state model — 2026-07-03 (`[rows fr|bar 1]`, Set+expandVersion, isExpanded/expand/collapse/toggle, seed)
+- [x] 1.2.4 Barrel + re-exports — 2026-07-03 (`tree/index.ts` + `src/index.ts` block)
+- [x] 1.2.5 Verify spec PASS (green) — 2026-07-03 (ST-8…ST-11 green)
+- [x] 1.3.1 Impl tests (seeding, roots swap, empty, scrollbar) — 2026-07-03 (`tree.impl.test.ts`; **caught marker mis-decode**)
+- [x] 1.3.2 `yarn verify` green — 2026-07-03 (8/8; ui 679 tests). **Fidelity fix:** marker = TV literal `expanded ? '─' : '+'` (`:200`), not the plan-03-02 `children`-based form (ovChildren is expanded-only) — corrected `graph.ts` + the ST-4 oracle
 
 ### Phase 2: Navigation + mouse + selection
 - [ ] 2.1.1 Spec: keys/arrows/expand/mouse/select (ST-12…ST-19)

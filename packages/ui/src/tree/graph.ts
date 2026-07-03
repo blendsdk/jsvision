@@ -14,16 +14,15 @@
  *     fillers]`; Phase 2 emits the end graphic `[fork/corner][─][marker]` (at endWidth=3 the inner
  *     End-Filler `memset` is skipped — the third `--endWidth>0` is false, so exactly 3 columns).
  *   • **flags** `ovExpanded=0x01 · ovChildren=0x02 · ovLast=0x04` (`outline.h:27-29`); `traverseTree`
- *     (`:262-322`) sets `ovLast` for the last sibling, `ovChildren` when expanded-with-children, and
- *     `ovExpanded` when expanded OR a leaf (`!children`). The forest is the TV root + its `getNext`
- *     siblings (`:310-320`).
+ *     (`:262-322`) sets `ovLast` for the last sibling, `ovChildren` **only** when expanded-with-children
+ *     (`:282`), and `ovExpanded` when expanded OR a leaf (`!children`, `:285`). The forest is the TV
+ *     root + its `getNext` siblings (`:310-320`).
  *
- * **Marker note (fidelity-equivalent):** TV's literal marker is `expanded ? '─' : '+'` (`:200`) —
- * `'+'` whenever `ovExpanded` is unset, ignoring `ovChildren`. This builder uses the plan's defensive
- * `expanded ? '─' : (children ? '+' : '─')` (03-02), which differs only for the input
- * `(¬expanded, ¬children)` — a case the flatten NEVER produces (a childless node always carries
- * `ovExpanded`). So for every real row the rendered marker is identical to TV; the defensive form just
- * renders a stray malformed input as `─` rather than a misleading `+`. (GATE-2 diffs rendered output.)
+ * **Marker (faithful, `:200`):** `expanded ? '─' : '+'` — purely `ovExpanded`, NEVER `ovChildren`.
+ * Because `ovChildren` is set only for an EXPANDED-with-children node, a **collapsed**-with-children
+ * node carries neither `ovExpanded` nor `ovChildren` and must still show `+`; a leaf always carries
+ * `ovExpanded` and shows `─`. (TV's `ovChildren` only selects col B `chars[5]`/`chars[4]`, both `─`,
+ * so it has no visible effect in the default `graphChars` — this builder omits it.)
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
@@ -98,7 +97,6 @@ const MAX_DEPTH = 512;
  */
 export function createGraph(level: number, lines: number, flags: number, guides = true): string {
   const expanded = (flags & OV_EXPANDED) !== 0;
-  const children = (flags & OV_CHILDREN) !== 0;
   const last = (flags & OV_LAST) !== 0;
 
   let out = '';
@@ -114,9 +112,9 @@ export function createGraph(level: number, lines: number, flags: number, guides 
   // Phase 2 — the 3-column end graphic (toutline.cpp:188-201): fork/corner, End-Child `─`, then marker.
   out += guides ? (last ? GRAPH.corner : GRAPH.fork) : GRAPH.levelFiller;
   out += guides ? GRAPH.hFill : GRAPH.levelFiller;
-  // Marker column is NOT gated by `guides` (PA-6). Defensive form (see header): a real leaf always
-  // carries OV_EXPANDED, so this equals TV's `expanded ? '─' : '+'` for every flattened row.
-  out += expanded ? GRAPH.hFill : children ? GRAPH.markCollapsed : GRAPH.hFill;
+  // Marker column is NOT gated by `guides` (PA-6). Faithful TV literal (toutline.cpp:200): an
+  // expanded node/leaf ⇒ `─`, a collapsed (¬ovExpanded) node ⇒ `+`.
+  out += expanded ? GRAPH.hFill : GRAPH.markCollapsed;
   return out;
 }
 

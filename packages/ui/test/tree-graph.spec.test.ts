@@ -74,13 +74,16 @@ test('ST-3: level-1 end graphic uses `└` when last, `├` when not; ancestor c
   expect(cells(continued).slice(1, 3)).toEqual([' ', ' ']); // then 2 fillers
 });
 
-test('ST-4: a leaf (no children) shows the `─` marker column, never `+`', () => {
-  // A leaf gets ovExpanded (traverseTree: `!children` ⇒ ovExpanded) and no ovChildren.
+test('ST-4: a leaf (ovExpanded) shows the `─` marker; a collapsed node (¬ovExpanded) shows `+`', () => {
+  // A leaf always carries ovExpanded (traverseTree: `!children` ⇒ ovExpanded) ⇒ marker `─`.
   const leaf = createGraph(0, 0, OV_EXPANDED);
   expect([...leaf].at(-1)).toBe(MARK_EXPANDED);
   expect(leaf).not.toContain(MARK_COLLAPSED);
-  // Even with no flags at all, the marker is `─` (only collapsed-WITH-children shows `+`).
-  expect([...createGraph(0, 0, 0)].at(-1)).toBe(MARK_EXPANDED);
+  expect([...createGraph(0, 0, OV_EXPANDED | OV_LAST)].at(-1)).toBe(MARK_EXPANDED); // last leaf ⇒ `─`
+  // Faithful contrast (toutline.cpp:200 `expanded ? '─' : '+'`): a collapsed-with-children node
+  // carries NEITHER ovExpanded NOR ovChildren (ovChildren is set only when expanded, :282) ⇒ `+`.
+  expect([...createGraph(0, 0, 0)].at(-1)).toBe(MARK_COLLAPSED);
+  expect([...createGraph(0, 0, OV_LAST)].at(-1)).toBe(MARK_COLLAPSED);
 });
 
 test('ST-5: guides=false renders the `│├└─` connectors as spaces, keeps the marker column + total width', () => {
