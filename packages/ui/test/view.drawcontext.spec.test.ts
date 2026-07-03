@@ -24,7 +24,7 @@ function dotted(w: number, h: number): ScreenBuffer {
 test('ST-04: draw() is view-local and clipped to the view rect ∩ ancestor clip', () => {
   const buf = dotted(12, 6);
   const viewRect: Rect = { x: 5, y: 2, width: 4, height: 3 };
-  const ctx = makeDrawContext(buf, viewRect, viewRect, defaultTheme); // clip == view rect
+  const ctx = makeDrawContext(buf, viewRect, viewRect, defaultTheme, caps); // clip == view rect
 
   ctx.text(0, 0, 'X'); // local (0,0) → absolute (5,2)
   ctx.text(-1, 0, 'A'); // local x=-1 → absolute 4, before the left edge → dropped
@@ -36,7 +36,7 @@ test('ST-04: draw() is view-local and clipped to the view rect ∩ ancestor clip
 
   // Ancestor clip narrower than the view (clip width 2): a write past the clip is dropped.
   const buf2 = dotted(12, 6);
-  const clipped = makeDrawContext(buf2, viewRect, { x: 5, y: 2, width: 2, height: 3 }, defaultTheme);
+  const clipped = makeDrawContext(buf2, viewRect, { x: 5, y: 2, width: 2, height: 3 }, defaultTheme, caps);
   clipped.text(0, 0, 'Y'); // absolute 5, inside the clip → painted
   clipped.text(3, 0, 'C'); // absolute 8, past clip right (7) → dropped
   expect(buf2.get(5, 2)?.char).toBe('Y');
@@ -48,7 +48,7 @@ test('ST-04: draw() is view-local and clipped to the view rect ∩ ancestor clip
 test('ST-13: ctx.color(role) resolves defaultTheme roles to their {fg,bg} style', () => {
   const buf = dotted(4, 1);
   const rect: Rect = { x: 0, y: 0, width: 4, height: 1 };
-  const ctx = makeDrawContext(buf, rect, rect, defaultTheme);
+  const ctx = makeDrawContext(buf, rect, rect, defaultTheme, caps);
 
   expect(ctx.color('button')).toEqual({ fg: defaultTheme.button.fg, bg: defaultTheme.button.bg });
   expect(ctx.color('buttonFocused')).toEqual({
@@ -69,7 +69,7 @@ test('ST-13: ctx.color(role) resolves defaultTheme roles to their {fg,bg} style'
 test('ST-16: text routes through sanitize — control bytes never become cells', () => {
   const buf = new ScreenBuffer(10, 1, { fg: 'default', bg: 'default' });
   const rect: Rect = { x: 0, y: 0, width: 10, height: 1 };
-  const ctx = makeDrawContext(buf, rect, rect, defaultTheme);
+  const ctx = makeDrawContext(buf, rect, rect, defaultTheme, caps);
 
   ctx.text(0, 0, 'a\x1b[31mb'); // an embedded ANSI escape; sanitize must strip the ESC control byte
 

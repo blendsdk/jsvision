@@ -7,15 +7,18 @@
  * Trace: RD-05 03-00 §B · PA-16.
  */
 import { test, expect } from 'vitest';
-import { ScreenBuffer, defaultTheme } from '@jsvision/core';
+import { ScreenBuffer, defaultTheme, resolveCapabilities } from '@jsvision/core';
 import type { Theme } from '@jsvision/core';
 import type { Rect } from '../src/layout/index.js';
 import { makeDrawContext } from '../src/view/index.js';
 
+// RD-18 PA-1: makeDrawContext now requires a resolved CapabilityProfile (surfaced as ctx.caps).
+const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
+
 function ctxOver(theme: Theme = defaultTheme) {
   const buf = new ScreenBuffer(4, 1, { fg: 'default', bg: 'default' });
   const rect: Rect = { x: 0, y: 0, width: 4, height: 1 };
-  return makeDrawContext(buf, rect, rect, theme);
+  return makeDrawContext(buf, rect, rect, theme, caps);
 }
 
 test('role(name) resolves to the exact raw role object for every ThemeRoleName', () => {

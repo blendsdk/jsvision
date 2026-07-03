@@ -5,9 +5,12 @@
  * clipping, and the role→Style adapter ignoring role-only extras.
  */
 import { test, expect } from 'vitest';
-import { ScreenBuffer, defaultTheme } from '@jsvision/core';
+import { ScreenBuffer, defaultTheme, resolveCapabilities } from '@jsvision/core';
 import type { Rect } from '../src/layout/index.js';
 import { makeDrawContext, themeRoleToStyle } from '../src/view/index.js';
+
+// RD-18 PA-1: makeDrawContext now requires a resolved CapabilityProfile (surfaced as ctx.caps).
+const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
 /** Buffer pre-filled with '.' so any painted/cleared cell is visible. */
 function dotted(w: number, h: number): ScreenBuffer {
@@ -17,7 +20,7 @@ function dotted(w: number, h: number): ScreenBuffer {
 test('clip drops writes past each of the four edges; an in-clip write lands', () => {
   const buf = dotted(8, 6);
   const rect: Rect = { x: 2, y: 2, width: 3, height: 2 }; // valid local x 0..2, y 0..1
-  const ctx = makeDrawContext(buf, rect, rect, defaultTheme);
+  const ctx = makeDrawContext(buf, rect, rect, defaultTheme, caps);
 
   ctx.text(0, 0, 'I'); // inside → abs (2,2)
   ctx.text(0, -1, 'T'); // above top → abs (2,1)
@@ -37,7 +40,7 @@ test('a wide glyph straddling the clip right edge is dropped whole (no half-cell
   const rect: Rect = { x: 0, y: 0, width: 8, height: 1 };
   const clip: Rect = { x: 0, y: 0, width: 3, height: 1 }; // valid x 0..2
 
-  const ctx = makeDrawContext(buf, rect, clip, defaultTheme);
+  const ctx = makeDrawContext(buf, rect, clip, defaultTheme, caps);
   ctx.text(2, 0, '世'); // wide: abs 2..3; 3 ≥ clip right (3) → dropped whole
   expect(buf.get(2, 0)?.char).toBe('.'); // not half-painted
   expect(buf.get(3, 0)?.char).toBe('.');
@@ -50,7 +53,7 @@ test('a wide glyph straddling the clip right edge is dropped whole (no half-cell
 test('fill() covers exactly the view rect, not the whole buffer', () => {
   const buf = dotted(6, 4);
   const rect: Rect = { x: 1, y: 1, width: 3, height: 2 };
-  const ctx = makeDrawContext(buf, rect, rect, defaultTheme);
+  const ctx = makeDrawContext(buf, rect, rect, defaultTheme, caps);
 
   ctx.fill('#');
   expect(buf.get(1, 1)?.char).toBe('#'); // inside
@@ -64,7 +67,7 @@ test('box() clips its border to the clip rect', () => {
   const buf = dotted(8, 6);
   const viewRect: Rect = { x: 0, y: 0, width: 8, height: 6 };
   const clip: Rect = { x: 0, y: 0, width: 4, height: 6 }; // valid x 0..3
-  const ctx = makeDrawContext(buf, viewRect, clip, defaultTheme);
+  const ctx = makeDrawContext(buf, viewRect, clip, defaultTheme, caps);
 
   ctx.box(0, 0, 8, 4, { fg: 'white', bg: 'blue' }); // box wider than the clip
   expect(buf.get(0, 0)?.char).toBe('┌'); // left corner inside clip
@@ -77,7 +80,7 @@ test('shadow() darkens only in-clip cells', () => {
   const buf = dotted(8, 4);
   const viewRect: Rect = { x: 0, y: 0, width: 8, height: 4 };
   const clip: Rect = { x: 0, y: 0, width: 4, height: 4 }; // valid x 0..3
-  const ctx = makeDrawContext(buf, viewRect, clip, defaultTheme);
+  const ctx = makeDrawContext(buf, viewRect, clip, defaultTheme, caps);
 
   ctx.shadow(0, 0, 5, 1, { fg: 'white', bg: 'black' });
   // bottom row (y=1) col x=1..? within clip is darkened; the right-column cell at x=5 is past the clip.

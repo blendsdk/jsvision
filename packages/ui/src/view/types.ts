@@ -54,6 +54,14 @@ export interface DrawContext {
   role<K extends ThemeRoleName>(name: K): Theme[K];
   /** The view's content size, in cells. */
   readonly size: Size2D;
+  /**
+   * The resolved terminal capabilities for this frame (RD-18 PA-1). A widget selects its ASCII
+   * glyph form from `caps.glyphs`/`caps.unicode` at draw time (the `ProgressBar` whole-cell `#`/`-`
+   * form, the `Spinner` `line`-preset swap). Sourced from the render root's `caps` — the same
+   * profile `serialize()` encodes with — so a widget's glyph choice and the serializer's fallback
+   * agree. Additive; existing widgets that don't read it are unaffected.
+   */
+  readonly caps: CapabilityProfile;
 }
 
 /**
