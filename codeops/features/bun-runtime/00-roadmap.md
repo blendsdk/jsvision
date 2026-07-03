@@ -3,8 +3,8 @@
 > **Feature-Set**: Bun Runtime
 > **Status**: In Progress
 > **Created**: 2026-07-02
-> **Last Updated**: 2026-07-02 (RD-01 drafted ✏️ — Bun runtime support & self-contained executables; Zero-Ambiguity Gate PASSED, AR-1…AR-10)
-> **Progress**: 0 / 1 done
+> **Last Updated**: 2026-07-03
+> **Progress**: 0 / 1 (0%)
 > **CodeOps Skills Version**: 3.1.0
 
 First-class Bun runtime support for jsvision + the self-contained-executable shipping story
