@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 14:37
-> **Progress**: 10/21 tasks (48%)
+> **Last Updated**: 2026-07-03 14:40
+> **Progress**: 14/21 tasks (67%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -178,10 +178,10 @@ the two GATE tasks below (per the NON-NEGOTIABLE TV-fidelity directive + `codeop
 > DataGrid PF-101 inner-`col`-container idiom (keeps `TabView.layout` free for `at()`/absolute placement).
 
 ### Phase 3: GATE-1 AFTER-diff + impl tests & hardening
-- [ ] 3.1.1 [GATE-1 AFTER-diff] Cell-by-cell diff of chrome + colours vs. the decode; record
-- [ ] 3.1.2 Write `tabs.impl.test.ts` (helper edges incl. `isWithin`, all-disabled, empty, onChange, snap, read-time re-clamp)
-- [ ] 3.1.3 Write `tab-strip.impl.test.ts` (geometry edges, hitStrip boundaries, glyph identity)
-- [ ] 3.1.4 Full verification
+- [x] 3.1.1 [GATE-1 AFTER-diff] Cell-by-cell diff of chrome + colours vs. the decode; record ✅ 2026-07-03 14:40
+- [x] 3.1.2 Write `tabs.impl.test.ts` (helper edges incl. `isWithin`, all-disabled, empty, onChange, snap, read-time re-clamp) ✅ 2026-07-03 14:39
+- [x] 3.1.3 Write `tab-strip.impl.test.ts` (geometry edges, hitStrip boundaries, glyph identity) ✅ 2026-07-03 14:39
+- [x] 3.1.4 Full verification ✅ 2026-07-03 14:40
 
 ### Phase 4: Packaging, kitchen-sink story, `demo:tabs`
 - [ ] 4.1.1 Write `tabs.packaging.spec.test.ts` (ST-31, ST-32)
