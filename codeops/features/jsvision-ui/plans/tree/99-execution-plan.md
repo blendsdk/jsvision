@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 (Phase 2 COMPLETE — navigation + expand/collapse + mouse + selection)
-> **Progress**: 27/35 tasks (77%)
+> **Last Updated**: 2026-07-03 (Phase 3 COMPLETE — story + demo + GATE-2 fidelity + gate; RD-15 DONE)
+> **Progress**: 35/35 tasks (100%)
 > **CodeOps Skills Version**: 3.1.0
 
 ## Overview
@@ -197,14 +197,14 @@ final gate.
 - [x] 2.3.2 `yarn verify` green — 2026-07-03 (8/8; ui 696 tests; eslint clean)
 
 ### Phase 3: Story + demo + fidelity + gate
-- [ ] 3.1.1 `Tree` kitchen-sink story
-- [ ] 3.1.2 Register + smoke test (ST-24)
-- [ ] 3.2.1 `demo:tree` headless walkthrough
-- [ ] 3.2.2 `tree-demo.e2e.test.ts`
-- [ ] 3.3.1 **GATE-2 AFTER**: diff vs `toutline.cpp` (ST-21)
-- [ ] 3.3.2 Packaging + security + `check:deps` (ST-22/ST-23)
-- [ ] 3.3.3 Full verify + e2e + CHANGELOG + roadmap
-- [ ] 3.3.4 Commit via /gitcm
+- [x] 3.1.1 `Tree` kitchen-sink story — 2026-07-03 (`tree.story.ts`, Containers, file-tree + echo + hints)
+- [x] 3.1.2 Register + smoke test (ST-24) — 2026-07-03 (`stories/index.ts`; smoke 21 green)
+- [x] 3.2.1 `demo:tree` headless walkthrough — 2026-07-03 (`tree-demo/main.ts` + `demo:tree` script; expand→nav→collapse→select)
+- [x] 3.2.2 `tree-demo.e2e.test.ts` — 2026-07-03 (spawns tsx, exit 0, asserts graph glyphs + step narration)
+- [x] 3.3.1 **GATE-2 AFTER**: diff vs `toutline.cpp` (ST-21) — 2026-07-03 (`fidelity.tree.spec.test.ts`, cell-by-cell glyphs/widths/two-tone/4 colours)
+- [x] 3.3.2 Packaging + security + `check:deps` (ST-22/ST-23) — 2026-07-03 (`tree.packaging.spec.test.ts`; files ≤500; check:deps green)
+- [x] 3.3.3 Full verify + e2e + CHANGELOG + roadmap — 2026-07-03 (verify 8/8, e2e 5/5, lint green, CHANGELOG + roadmap)
+- [x] 3.3.4 Commit via **/gitcm** — 2026-07-03
 
 ---
 

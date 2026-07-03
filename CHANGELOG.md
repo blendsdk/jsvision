@@ -11,6 +11,26 @@ the deprecation policy.
 
 ### Added
 
+- **jsvision-ui RD-15 tree/outline — `Tree<T>`.** `@jsvision/ui` gains a new `tree/`
+  subsystem: a focusable, virtual-scrolling **`Tree<T>`** — a faithful Turbo Vision
+  `TOutlineViewer`/`TOutline` — that flattens a **forest** of expandable `TreeNode<T>`
+  (`{ value, children }`, plain data; the view owns expand state via an object-identity
+  `Set` in a version `Signal`) into an ordered row list, virtual-scrolls it (RD-11
+  `clampIndex`/`keepVisible` + an owned vertical `ScrollBar`, laid out `[rows fr | bar 1]`
+  like `ListView`), and draws each row with **faithful `│├└─`+`+`/`─` tree-line graphics**
+  (`toutline.cpp` `graphChars`, `levelWidth`=`endWidth`=3, no brackets) and **two-tone
+  collapsed text** (a collapsed node's text in `outlineNotExpanded`, the TV `color >> 8`
+  high byte). Navigation: `↑↓`/`PgUp`/`PgDn`/`Home`/`End`/`Ctrl+Pg`/wheel, `+`/`-`/`*`
+  expand/collapse/expand-subtree, and **`←`/`→` collapse-or-parent / expand-or-child**
+  (a modern override of TV's up/down); a graph-zone click toggles expand while a text
+  click (or Enter) selects and emits an optional `command` (no double-click in the input
+  model). Also `guides?` (hide the connectors) + `expandAll()`/`collapseAll()`. New public
+  exports: `Tree` + `TreeNode`/`TreeOptions`. Additive core surface: four decoded
+  `cpOutlineViewer` `Theme` roles (`outlineNormal`/`outlineFocused`/`outlineSelected`/
+  `outlineNotExpanded`) — **blue-window** resolved (`0x1E`/`0x71`/`0x1A`/`0x1F`; the
+  faithful `TOutlineViewer` host, since the gray-dialog chain degenerates to Normal==Focus).
+  Ships a kitchen-sink `Tree` story + a headless `demo:tree`. **All additive and non-breaking.**
+
 - **jsvision-ui RD-14 input dropdowns — `History` + `ComboBox<T>`.** `@jsvision/ui`
   gains a new `dropdown/` subsystem: a faithful Turbo Vision `THistory` (`History`) —
   a `▐↓▌` button linked to an `Input` that drops that field's bounded MRU list into a
