@@ -152,11 +152,11 @@ class TabBody extends Group {
     padding: { top: 0, left: 1, right: 1, bottom: 1 },
   };
 
-  /** Draw the side `│` borders + the `└─┘` bottom in the neutral frame colour, over an opaque fill. */
+  /** Draw the side `│` borders + the `└─┘` bottom in the neutral gray frame colour, over an opaque fill. */
   override draw(ctx: DrawContext): void {
     const { width: w, height: h } = ctx.size;
     if (w < 2 || h < 1) return;
-    const chrome = ctx.color('tabInactive');
+    const chrome = ctx.color('staticText'); // neutral gray line (tab* roles are now green button faces)
     ctx.fill(' ', chrome); // opaque interior so a page insets over a solid field
     for (let row = 0; row < h - 1; row += 1) {
       ctx.text(0, row, TAB_GLYPHS.v, chrome);
@@ -300,7 +300,8 @@ export class TabView extends Group {
     this.tabs.set(next);
     // Steer `active` toward the neighbour; the sync effect then re-clamps + snaps off a disabled tab.
     let na = cur;
-    if (i < cur) na = cur - 1; // a tab before the active one was removed → shift left
+    if (i < cur)
+      na = cur - 1; // a tab before the active one was removed → shift left
     else if (i === cur) na = neighbourAfterRemove(i, next.length); // the active tab was removed
     this.active.set(clampActive(na, next.length));
     this.onCloseCb?.(tab, i);

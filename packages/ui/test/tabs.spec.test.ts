@@ -11,8 +11,8 @@
 import { test, expect } from 'vitest';
 import { resolveCapabilities, defaultTheme, decode, createDecoderState } from '@jsvision/core';
 import type { KeyEvent, InputEvent } from '@jsvision/core';
-import { View, Group, createRenderRoot } from '../src/view/index.js';
-import type { DrawContext, DispatchEvent } from '../src/view/index.js';
+import { View, Group } from '../src/view/index.js';
+import type { DrawContext } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { signal } from '../src/reactive/index.js';
 import { TabView } from '../src/tabs/index.js';
@@ -289,7 +289,10 @@ test('ST-10: closing a closeable tab removes it, fires onClose, and re-renders',
   const view = new TabView({ tabs, active, onClose: (t, i) => closed.push([t.title, i]) });
   host(view, 40, 6);
   view.closeTab(1);
-  expect(tabs().map((t) => t.title), 'B removed').toEqual(['A', 'C']);
+  expect(
+    tabs().map((t) => t.title),
+    'B removed',
+  ).toEqual(['A', 'C']);
   expect(closed, 'onClose fired with (tab, index)').toEqual([['B', 1]]);
 });
 

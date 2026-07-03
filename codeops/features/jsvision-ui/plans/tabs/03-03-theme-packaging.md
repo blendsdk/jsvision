@@ -44,25 +44,29 @@ the shipped decodes; the AFTER task records the resolution in the JSDoc + commit
 > pin them. The spec test (AC-11) asserts the roles **exist** and `encode()` does not throw + no existing
 > role changed; it does **not** hard-code a byte (so a GATE-1 re-pin is not a spec violation).
 
-#### ✅ GATE-1 decode result (pinned 2026-07-03, task 1.1.1)
+#### ✅ GATE-1 decode result — ADOPTED button-face design (re-pinned 2026-07-03, tasks 1.1.1 + spike)
 
-The idiomatic `TabView` host is a gray `TDialog` (`cpGrayDialog`, black-on-lightGray field), so the three
-`tab*` roles are pinned by analogy to the **already-shipped gray-dialog decodes** in `theme.ts` (not
-re-invented): the label greying convention supplies inactive, the `labelSelected` accent supplies active,
-and the `buttonDisabled`/`clusterDisabled` convention supplies disabled. Each is a `cpAppColor` `0xHL`
-byte (H = bg nibble, L = fg nibble).
+> **Design evolution (user-directed spike):** the first cut pinned `tab*` to the gray-dialog label
+> palette (active `0x7F`/inactive `0x70`/disabled `0x78`). After a visual spike the user adopted a
+> **button-face** look for the tabs — raised **green** faces (no drop-shadow) joined by a flat `─` dash
+> instead of a `┬` notch. The `tab*` roles were therefore re-grounded in TV's **`cpButton` green
+> palette** (still a documented extension — TV has no tab class, AR-172; the spec test asserts existence
+> + `encode()` non-throw, never a literal byte, so a re-pin is not a spec violation).
+
+Each is a `cpAppColor` `0xHL` byte (H = bg nibble, L = fg nibble):
 
 | Role | Byte | Decode | Grounded in (shipped) |
 | ---- | ---- | ------ | --------------------- |
-| `tabActive` | `0x7F` | white-on-lightGray + `hotkey` yellow | `labelSelected` `getColor(8)` `0x7F` — the brighter "raised/selected" label accent (`theme.ts:62`) |
-| `tabInactive` | `0x70` | black-on-lightGray + `hotkey` yellow | `label`/`staticText` `getColor(6/7)` `0x70`; `labelShortcut` `0x7E` yellow supplies the `~X~` accent (`theme.ts:59-64`) |
-| `tabDisabled` | `0x78` | darkGray-on-lightGray, no hotkey | `buttonDisabled` `getColor(13)` `0x78` / `clusterDisabled` `0x38` greying convention (`theme.ts:68/86`) |
+| `tabActive` | `0x2F` | white-on-green + `hotkey` yellow | `buttonFocused` focused/default face `0x2F` — the brighter "raised" button face (`theme.ts` {@link buttonFocused}) |
+| `tabInactive` | `0x20` | black-on-green + `hotkey` yellow | `button` normal face `0x20` (`theme.ts` {@link button}); `0x2E` yellow shortcut shown on **every** enabled tab |
+| `tabDisabled` | `0x28` | darkGray-on-green, no hotkey | `buttonDisabled`/`clusterDisabled` `darkGray` greying, kept **on the green field** (green-dimmed) so the tab stays part of the strip |
 
-Active vs. inactive follows the TV `label` vs. `labelSelected` pattern exactly: the *selected* item takes
-the brighter **white** foreground, the normal item the **black** foreground — even though black has more
-raw contrast on lightGray, white reads as "highlighted/raised" in the DOS-16 palette (TV `cpGrayDialog`
-slots 7 vs. 8). The frame chrome (corners/edges/tees) draws in `tabInactive` (black-on-lightGray) — the
-neutral gray-dialog line colour — so the whole strip+frame reads as one cohesive gray folder.
+Active vs. inactive follows the TV `TButton` face convention: the *selected* tab takes the brighter
+**white** foreground (the focused/default face), the normal tab the **black** foreground — both on the
+green button field. The **frame chrome** (corners/edges/`─` dash gaps/arrows) draws in `staticText`
+(`0x70` black-on-lightGray) — the neutral gray line — so green button tabs sit on a gray frame bar. The
+four tees `┬┴├┤` remain decoded + retained in `TAB_GLYPHS` as the GATE-1 reference set, but the adopted
+design draws a plain `─` gap between tabs (no `┬`).
 
 #### ✅ GATE-1 tee-glyph decode (task 1.1.1)
 

@@ -13,21 +13,27 @@
  * PA-2), plus the four tab-junction tees decoded fresh — all **unambiguous-narrow** (width 1):
  *
  *   `─` U+2500 (CP437 0xC4) · `│` U+2502 (0xB3) · `┌` U+250C (0xDA) · `┐` U+2510 (0xBF) ·
- *   `└` U+2514 (0xC0) · `┘` U+2518 (0xD9) · **`┬` U+252C (0xC2)** the between-tabs / frame-top notch ·
- *   `┴` U+2534 (0xC1) · `├` U+251C (0xC3) · `┤` U+2524 (0xB4).
+ *   `└` U+2514 (0xC0) · `┘` U+2518 (0xD9). The four tab-junction tees `┬` U+252C (0xC2) · `┴` U+2534
+ *   (0xC1) · `├` U+251C (0xC3) · `┤` U+2524 (0xB4) are also decoded + retained in {@link TAB_GLYPHS}
+ *   as the GATE-1 reference set, though the adopted button-face design joins tabs with a plain `─`
+ *   dash gap rather than drawing a `┬` notch.
  *
- * **GATE-2 (AFTER-diff, task 3.1.1) — ✅ matches.** The rendered strip was diffed cell-by-cell against
- * this pinned set + the decoded `tab*` bytes and agrees exactly: `tab-strip.impl.test.ts` asserts every
- * glyph's code point equals its CP437↔Unicode decode (`┬`=U+252C, `┴`=U+2534, `├`=U+251C, `┤`=U+2524,
- * line/corner = the frame set), and `tabs.spec.test.ts` ST-18/19/20/21 assert the composed buffer's
- * corners/edges/`┬` notch/`×` glyphs + the active(`tabActive`)/inactive(`tabInactive`)/disabled
- * (`tabDisabled`) foreground bytes. No TV `.cpp` is re-opened (none exists); the diff is against the
+ * **Adopted design (post-spike):** tabs render as raised **button faces** (green, no drop-shadow) —
+ * active = `tabActive` `0x2F` white-on-green, inactive = `tabInactive` `0x20` black-on-green (both with
+ * the `0x2E` yellow `~X~` shortcut on every enabled tab), disabled = `tabDisabled` `0x28` darkGray-
+ * on-green (green-dimmed, so it stays part of the strip). The frame chrome (corners/edges/`─` gaps/
+ * arrows) draws in {@link staticText} `0x70` black-on-lightGray (the neutral gray line), NOT a tab role.
+ *
+ * **GATE-2 (AFTER-diff) — ✅ matches.** The rendered strip is diffed cell-by-cell against this decode:
+ * `tab-strip.impl.test.ts` asserts every glyph's code point equals its CP437↔Unicode decode, and
+ * `tabs.spec.test.ts`/`tab-strip.spec.test.ts` (ST-18/19/20/21) assert the composed buffer's
+ * corners/edges/`─` gap/`×` glyphs + the active(`tabActive`)/inactive(`tabInactive`)/disabled
+ * (`tabDisabled`) foregrounds. No TV `.cpp` is re-opened (none exists); the diff is against the
  * GATE-1 decode itself (AR-172/173/180/184).
  *
- * Colour: labels draw in `tabActive`/`tabInactive`/`tabDisabled` (GATE-1); the `~X~` marked letter in
- * the role's `hotkey` accent (`tildeSegments`, as `Label`/menus do). The frame chrome (corners, edges,
- * `┬` notches, arrows, `×`) draws in `tabInactive` (the neutral gray-dialog line colour). All writes
- * go through `DrawContext` → `ScreenBuffer` + core `sanitize` (the injection boundary, AC-14).
+ * Colour: labels draw in `tabActive`/`tabInactive`/`tabDisabled`; the `~X~` marked letter in the role's
+ * `hotkey` accent (`tildeSegments`, as `Label`/menus do). All writes go through `DrawContext` →
+ * `ScreenBuffer` + core `sanitize` (the injection boundary, AC-14).
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
@@ -104,9 +110,9 @@ function labelText(title: string): string {
   return parseTilde(title).text;
 }
 
-/** The full drawn width of tab `t`: leading pad + label + trailing pad + a `×` cell when closeable. */
+/** The full drawn width of tab `t`: leading pad + label + trailing pad + (`×` + one trailing pad) when closeable. */
 function slotWidth(t: Tab): number {
-  return stringWidth(labelText(t.title)) + 2 + (t.closeable === true ? 1 : 0);
+  return stringWidth(labelText(t.title)) + 2 + (t.closeable === true ? 2 : 0);
 }
 
 /** Minimal `Tab` shape the strip reads (the real {@link import('./tab-view.js').Tab}). */
@@ -213,8 +219,9 @@ function placeSlots(tabs: readonly Tab[], from: number, to: number, startX: numb
 /** Build one {@link TabSlot} for tab `t` at index `i`, leading pad at `x`. */
 function makeSlot(t: Tab, i: number, x: number): TabSlot {
   const labelW = stringWidth(labelText(t.title));
-  const width = labelW + 2 + (t.closeable === true ? 1 : 0);
-  // `×` (when closeable) is the slot's last cell: ` label ×` → close col = x + 1 + labelW + 1.
+  const width = labelW + 2 + (t.closeable === true ? 2 : 0);
+  // `×` (when closeable) sits after the trailing pad, with one more pad after it: ` label × ` →
+  // close col = x + 1 + labelW + 1.
   const closeX = t.closeable === true ? x + 1 + labelW + 1 : undefined;
   return { index: i, x, width, labelW, closeX };
 }
@@ -287,7 +294,7 @@ export class TabStrip extends View {
   override draw(ctx: DrawContext): void {
     const width = ctx.size.width;
     if (width < 2) return;
-    const chrome = ctx.color('tabInactive'); // neutral frame/line colour
+    const chrome = ctx.color('staticText'); // neutral gray frame/line colour (tab* are now green faces)
     const tabs = this.cfg.tabs();
     const active = this.cfg.active();
     const geo = this.geometry(width);
@@ -300,17 +307,18 @@ export class TabStrip extends View {
     for (let s = 0; s < geo.slots.length; s += 1) {
       const slot = geo.slots[s];
       const tab = tabs[slot.index];
-      // A `┬` notch precedes every slot except when the leading corner `┌` already sits at col 0.
-      if (slot.x - 1 > 0) ctx.text(slot.x - 1, 0, TAB_GLYPHS.tdown, chrome);
+      // Tabs abut with a plain `─` gap — the base row fill already supplies it, so no per-slot
+      // separator glyph is drawn (the button-face design uses a flat dash, not a `┬` notch).
       this.drawLabel(ctx, slot, tab, slot.index === active);
-      if (slot.closeX !== undefined) ctx.text(slot.closeX, 0, CLOSE_MARK, ctx.color(this.roleOf(tab, slot.index === active)));
+      if (slot.closeX !== undefined)
+        ctx.text(slot.closeX, 0, CLOSE_MARK, ctx.color(this.roleOf(tab, slot.index === active)));
     }
 
     if (geo.showLeftArrow) ctx.text(geo.leftArrowX, 0, OVERFLOW_LEFT, chrome);
     if (geo.showRightArrow) ctx.text(geo.rightArrowX, 0, OVERFLOW_RIGHT, chrome);
   }
 
-  /** The theme role for a tab given its active/disabled state. */
+  /** The theme role for a tab given its active/disabled state (the button-face `tab*` roles). */
   private roleOf(tab: Tab, isActive: boolean): 'tabActive' | 'tabInactive' | 'tabDisabled' {
     if (tab.disabled === true) return 'tabDisabled';
     return isActive ? 'tabActive' : 'tabInactive';
