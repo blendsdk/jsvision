@@ -84,7 +84,12 @@ function popupFrame(overlay: Group): Group | undefined {
 
 test('ST-18: opening a popup focuses the hosted list and shows the overlay (derived)', () => {
   const h = makeHarness(['a', 'b', 'c']);
-  openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 3, width: 10, height: 1 }, buildList: () => h.list, onPick: () => {} });
+  openAnchoredPopup({
+    host: h.host,
+    anchor: { x: 5, y: 3, width: 10, height: 1 },
+    buildList: () => h.list,
+    onPick: () => {},
+  });
 
   expect(h.loop.getFocused()).toBe(h.list.rows); // the list receives focus on open (PA-15)
   expect(h.overlay.state.visible).toBe(true); // derived visibility (PA-5)
@@ -97,7 +102,12 @@ test('ST-19: an anchor near the bottom edge intersect-clamps the popup (fewer ro
   // Anchor 1 row above the bottom of a 20-tall viewport. TV sequence (thistory.cpp:90-98): grow to the
   // intermediate rect {x:4, y:16, w:12, h:9} (maxRows+3), intersect with [0,20) → h:4, THEN r.b.y-- → h:3.
   // The `intersect`-then-`-1` ordering is the C++ oracle (fidelity directive); an unclamped popup is 8.
-  openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 17, width: 10, height: 1 }, buildList: () => h.list, onPick: () => {} });
+  openAnchoredPopup({
+    host: h.host,
+    anchor: { x: 5, y: 17, width: 10, height: 1 },
+    buildList: () => h.list,
+    onPick: () => {},
+  });
 
   const frame = popupFrame(h.overlay);
   const rect = frame?.layout.rect as Rect;
@@ -111,7 +121,13 @@ test('ST-19: an anchor near the bottom edge intersect-clamps the popup (fewer ro
 test('ST-20: with more entries than maxRows, at most maxRows rows are visible (list scrolls)', () => {
   const many = Array.from({ length: 20 }, (_, i) => `item-${i}`);
   const h = makeHarness(many);
-  openAnchoredPopup({ host: h.host, anchor: { x: 2, y: 2, width: 12, height: 1 }, buildList: () => h.list, maxRows: 6, onPick: () => {} });
+  openAnchoredPopup({
+    host: h.host,
+    anchor: { x: 2, y: 2, width: 12, height: 1 },
+    buildList: () => h.list,
+    maxRows: 6,
+    onPick: () => {},
+  });
   h.loop.renderRoot.flush();
 
   // Window height = maxRows + 2 = 8; interior (padding 1) = 6 = the list's visible rows.
@@ -187,7 +203,12 @@ test('ST-22b: Esc dismisses the popup (routed from the popup key handling)', () 
 
 test('ST-23: the popup is non-modal — a background pre-process view still receives events while open', () => {
   const h = makeHarness(['a', 'b', 'c']);
-  openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 3, width: 10, height: 1 }, buildList: () => h.list, onPick: () => {} });
+  openAnchoredPopup({
+    host: h.host,
+    anchor: { x: 5, y: 3, width: 10, height: 1 },
+    buildList: () => h.list,
+    onPick: () => {},
+  });
   h.bg.seen.length = 0;
 
   h.loop.dispatch(keyEvent('x')); // a non-Esc key: a modal would confine the sweep to the popup subtree
@@ -197,7 +218,12 @@ test('ST-23: the popup is non-modal — a background pre-process view still rece
 
 test('ST-23b: after an outside-click dismissal the UI is interactable (the click is consumed)', () => {
   const h = makeHarness(['a', 'b', 'c']);
-  openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 3, width: 10, height: 1 }, buildList: () => h.list, onPick: () => {} });
+  openAnchoredPopup({
+    host: h.host,
+    anchor: { x: 5, y: 3, width: 10, height: 1 },
+    buildList: () => h.list,
+    onPick: () => {},
+  });
 
   // An outside mouse-down (top-left, far from the popup at {x:4,y:2}) is caught + consumed → dismiss.
   h.loop.dispatch(mouseDown(1, 1));

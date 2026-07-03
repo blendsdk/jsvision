@@ -43,14 +43,30 @@ export const comboBoxStory: Story = {
     const g = new Group();
     g.add(at(new Label('~L~anguage', editCombo.input), 1, 0, 10, 1));
     g.add(at(editCombo, 12, 0, 18, 1));
-    g.add(at(new Text(() => `text="${langText()}"  value=${langValue() === null ? 'null' : `"${langValue()}"`}`), 1, 2, width, 1));
+    g.add(
+      at(
+        new Text(() => `text="${langText()}"  value=${langValue() === null ? 'null' : `"${langValue()}"`}`),
+        1,
+        2,
+        width,
+        1,
+      ),
+    );
 
     g.add(at(new Label('~C~olor', pickCombo.input), 1, 4, 8, 1));
     g.add(at(pickCombo, 12, 4, 18, 1));
     g.add(at(new Text(() => `value = "${colorValue() ?? ''}"`), 1, 6, width, 1));
 
     g.add(at(new Text('Editable: type to filter, ↓ / Alt+↓ / ▐↓▌ to open, Enter to pick.'), 1, 8, width, 1));
-    g.add(at(new Text('Select-only: open then type a letter to jump (type-ahead); the field is read-only.'), 1, 9, width, 1));
+    g.add(
+      at(
+        new Text('Select-only: open then type a letter to jump (type-ahead); the field is read-only.'),
+        1,
+        9,
+        width,
+        1,
+      ),
+    );
     return g;
   },
 };

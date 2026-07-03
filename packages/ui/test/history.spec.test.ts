@@ -49,7 +49,12 @@ interface App {
 
 /** Build a mounted app: an Input (link) + a History button + the shared overlay, popup host wired. */
 function makeApp(
-  opts: { fieldValue?: string; historyId?: number; maxLength?: number; history?: ReturnType<typeof signal<string[]>> } = {},
+  opts: {
+    fieldValue?: string;
+    historyId?: number;
+    maxLength?: number;
+    history?: ReturnType<typeof signal<string[]>>;
+  } = {},
 ): App {
   const viewport = { width: 40, height: 20 };
   const loop = createEventLoop(viewport, { caps });

@@ -59,7 +59,12 @@ test('the popup saves the prior focus on open and restores it on dismiss', () =>
   const h = makeHarness(['a', 'b', 'c']);
   expect(h.loop.getFocused()).toBe(h.bg);
 
-  const p = openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 3, width: 10, height: 1 }, buildList: () => h.list, onPick: () => {} });
+  const p = openAnchoredPopup({
+    host: h.host,
+    anchor: { x: 5, y: 3, width: 10, height: 1 },
+    buildList: () => h.list,
+    onPick: () => {},
+  });
   expect(h.loop.getFocused()).toBe(h.list.rows); // list focused during the popup
 
   p.dismiss();
@@ -96,7 +101,12 @@ test('dismissing the popup keeps the overlay visible while another client (a men
   h.overlay.add(menuChild);
   h.overlay.state.visible = true;
 
-  const p = openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 3, width: 10, height: 1 }, buildList: () => h.list, onPick: () => {} });
+  const p = openAnchoredPopup({
+    host: h.host,
+    anchor: { x: 5, y: 3, width: 10, height: 1 },
+    buildList: () => h.list,
+    onPick: () => {},
+  });
   expect(h.overlay.state.visible).toBe(true);
 
   p.dismiss(); // the popup's own children unmount, but the menu child remains
@@ -114,7 +124,13 @@ test('dismissing the popup keeps the overlay visible while another client (a men
 test('navigating past maxRows scrolls the list (focused advances, visible window stays ≤ maxRows)', () => {
   const many = Array.from({ length: 20 }, (_, i) => `item-${i}`);
   const h = makeHarness(many);
-  openAnchoredPopup({ host: h.host, anchor: { x: 2, y: 2, width: 12, height: 1 }, buildList: () => h.list, maxRows: 6, onPick: () => {} });
+  openAnchoredPopup({
+    host: h.host,
+    anchor: { x: 2, y: 2, width: 12, height: 1 },
+    buildList: () => h.list,
+    maxRows: 6,
+    onPick: () => {},
+  });
   h.loop.renderRoot.flush();
 
   expect(h.list.rows.bounds.height).toBe(6); // ≤ maxRows visible
@@ -170,7 +186,12 @@ test('a pre-existing selection on the hosted list does not auto-pick on open (fi
 
 test('the popup frame casts a TV drop shadow', () => {
   const h = makeHarness(['a', 'b', 'c']);
-  openAnchoredPopup({ host: h.host, anchor: { x: 5, y: 3, width: 10, height: 1 }, buildList: () => h.list, onPick: () => {} });
+  openAnchoredPopup({
+    host: h.host,
+    anchor: { x: 5, y: 3, width: 10, height: 1 },
+    buildList: () => h.list,
+    onPick: () => {},
+  });
 
   const frame = h.overlay.children.find((c): c is Group => c instanceof Group);
   expect(frame?.castsShadow).toBe(true); // the compose walker paints the shadowSize {2,1} L-shadow

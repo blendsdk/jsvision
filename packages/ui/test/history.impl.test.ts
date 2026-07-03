@@ -11,7 +11,6 @@ import { test, expect, beforeEach } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent, MouseEvent as CoreMouseEvent } from '@jsvision/core';
 import { Group } from '../src/view/index.js';
-import type { PopupHost } from '../src/view/index.js';
 import { signal } from '../src/reactive/index.js';
 import { Input } from '../src/controls/index.js';
 import { createEventLoop } from '../src/event/index.js';
