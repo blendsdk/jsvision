@@ -18,14 +18,7 @@
  * This is the whole browser port: the pure render + decode contract is the ANSI
  * byte stream, which is precisely xterm.js's input and output contract.
  */
-import {
-  serialize,
-  decode,
-  flush,
-  createDecoderState,
-  cursor,
-  ESC_TIMEOUT_MS,
-} from '@jsvision/core';
+import { serialize, decode, flush, createDecoderState, cursor, ESC_TIMEOUT_MS } from '@jsvision/core';
 import type { CapabilityProfile, ScreenBuffer, InputEvent } from '@jsvision/core';
 import type { Terminal } from '@xterm/xterm';
 
