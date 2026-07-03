@@ -178,6 +178,34 @@ export interface Theme {
    * slot 20 → `cpAppColor[51]=0x2F` = white-on-green.
    */
   readonly historyViewerFocused: ThemeRole;
+  // --- jsvision-ui RD-15 Tree/outline roles (`cpOutlineViewer` → blue-window owner) ----------------
+  // Faithful to Turbo Vision's `TOutlineViewer` palette, decoded for the blue `TWindow` owner — the
+  // canonical outline host (RD-15 PA-16, superseding PA-9's gray-dialog pin, which resolved
+  // Normal==Focus==0x70 and hid the focus row). Each byte resolves `cpOutlineViewer` slot →
+  // `cpBlueWindow` → `cpAppColor` = `0xHL` (H=bg nibble, L=fg nibble). Bytes are pinned from source in
+  // the ST-20 spec oracle (`outline-theme.spec`). (`toutline.cpp:15`, `outline.h:66-70`,
+  // `views.h:955`, `app.h:143`)
+  /**
+   * Outline/tree normal row (an expanded node's or a leaf's text). TV `cpOutlineViewer[1]=0x06` →
+   * `cpBlueWindow[6]=0x0D` → `cpAppColor[13]=0x1E` = yellow-on-blue. (`toutline.cpp:71` `getColor(0x0401)` low byte)
+   */
+  readonly outlineNormal: ThemeRole;
+  /**
+   * Outline/tree focused row. TV `cpOutlineViewer[2]=0x07` → `cpBlueWindow[7]=0x0E` →
+   * `cpAppColor[14]=0x71` = blue-on-lightGray (a distinct inverted bar). (`toutline.cpp:67` `getColor(0x0202)`)
+   */
+  readonly outlineFocused: ThemeRole;
+  /**
+   * Outline/tree selected row. TV `cpOutlineViewer[3]=0x03` → `cpBlueWindow[3]=0x0A` →
+   * `cpAppColor[10]=0x1A` = brightGreen-on-blue. (`toutline.cpp:69` `getColor(0x0303)`)
+   */
+  readonly outlineSelected: ThemeRole;
+  /**
+   * Outline/tree collapsed-node text (the two-tone `color >> 8` high byte, `toutline.cpp:82`). TV
+   * `cpOutlineViewer[4]=0x08` → `cpBlueWindow[8]=0x0F` → `cpAppColor[15]=0x1F` = white-on-blue — the
+   * high byte of the Normal pair `getColor(0x0401)`.
+   */
+  readonly outlineNotExpanded: ThemeRole;
   readonly statusBar: ThemeRole;
   /**
    * The status-line **pressed/selected** item (mouse-down feedback). Turbo Vision repaints the held
@@ -265,6 +293,12 @@ export const defaultTheme: Theme = {
   historyWindow: { fg: PALETTE.white, bg: PALETTE.blue, border: PALETTE.white, icon: PALETTE.brightGreen },
   historyViewer: { fg: PALETTE.white, bg: PALETTE.blue },
   historyViewerFocused: { fg: PALETTE.white, bg: PALETTE.green },
+  // RD-15 Tree/outline roles — decoded blue-window bytes (PA-16): normal 0x1E yellow-on-blue,
+  // focused 0x71 blue-on-lightGray, selected 0x1A brightGreen-on-blue, notExpanded 0x1F white-on-blue.
+  outlineNormal: { fg: PALETTE.yellow, bg: PALETTE.blue },
+  outlineFocused: { fg: PALETTE.blue, bg: PALETTE.lightGray },
+  outlineSelected: { fg: PALETTE.brightGreen, bg: PALETTE.blue },
+  outlineNotExpanded: { fg: PALETTE.white, bg: PALETTE.blue },
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },
