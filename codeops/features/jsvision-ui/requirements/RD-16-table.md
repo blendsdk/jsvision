@@ -1,7 +1,7 @@
 # RD-16: Table / DataGrid — multi-column data grid (TV-extension on `TListViewer`)
 
 > **Document**: RD-16-table.md
-> **Status**: Draft
+> **Status**: Draft · 🔎 **Preflighted 2026-07-03** — PASSED WITH NOTES (0🔴/0🟠 · 7🟡 all fixed · 2🔵 folded in); see [`00-preflight-report-RD-16.md`](00-preflight-report-RD-16.md). Preflight refinements = AR-167…AR-171.
 > **Created**: 2026-07-02 (`make_requirements` — RD-12+ high-value-controls set, sibling 3 of 6)
 > **Project**: jsvision UI (`@jsvision/ui`)
 > **Depends On**: RD-11 (Containers/lists — done; the virtual-scroll helpers `list/virtual.ts`, the owned-`ScrollBar` pattern, and the `sorted` computed the DataGrid reuses), RD-02 (Layout engine — done; the integer `solveTrack` apportion that sizes columns), RD-05 (App shell — done; `Desktop`/`Window`/`Dialog` host it), RD-04/RD-03/RD-01 (done), `@jsvision/core` (done; the one additive header theme role lands here; the row/divider roles already exist)
@@ -26,7 +26,7 @@ spreadsheet: it is a **newspaper-column flow of a single-field list** — `item 
 Per the **NON-NEGOTIABLE TV-fidelity directive**, RD-16 is a **documented TV-extension** (AR-151): every
 glyph, colour, and geometry that *can* be grounded in `TListViewer` **is** — the virtual-scroll spine, the
 `│` (`\xB3`) column divider in `getColor(5)`, the `cpListViewer` row colours (`focused`=`getColor(3)`,
-`selected`=`getColor(4)`, normal=`getColor(2)`), `showMarkers`, the `hScrollBar->value` indent, the item
+`selected`=`getColor(4)`, normal=`getColor(1)/(2)`), the `hScrollBar->value` indent, the item
 focus/select model — while the **header row + heterogeneous per-column accessors + sort** are the flagged
 extension. This is exactly the extension the directive permits ("behavior the original couldn't have may
 extend TV, but the visual shapes/sizes/colors must still match"), the same class as reactive binding,
@@ -39,11 +39,12 @@ The components in scope:
 |-----------|-------------------|------|
 | `DataGrid<T>` | `TListViewer` (`tlstview.cpp`) spine + documented extension (AR-151) | A focusable virtual-scroll grid: renders only the rows in view, each row = the columns' `accessor(row)` cells separated by the faithful `│` divider; ↑↓/PgUp/PgDn/Home/End row navigation, a two-way focused index + a select command, a sticky header, click-to-sort, and horizontal scroll. |
 | `Column<T>` | *(new, extension)* | The column descriptor — `{ title, accessor: (row: T) => string, width, align?, compare? }`. |
-| *(internal)* column helpers | RD-02 `solveTrack` + RD-11 `sorted` | Width apportion (`fixed`/`fr`/`auto`), cell extraction + sanitize, and the sort comparator. |
+| *(internal)* column helpers | RD-02 `solveTrack` + RD-11 `sorted`-display **pattern** | Width apportion (`fixed`/`fr`, plus `auto` pre-measured to `fixed`), cell extraction + sanitize, and a new column/dir sort comparator. |
 
 **Behavior may extend TV** (heterogeneous columns, header, sort, reactive `Signal<T[]>`) but the
 **row drawing/geometry/colour must match `TListViewer` exactly** (the `│` divider, the `cpListViewer` row
-colours, `showMarkers`, virtual scroll, the `hScrollBar` indent).
+colours, virtual scroll, the `hScrollBar` indent). *(TV's `showMarkers` markers are monochrome-only and are
+not carried on the colour-first grid — see Row rendering.)*
 
 ---
 
@@ -52,12 +53,16 @@ colours, `showMarkers`, virtual scroll, the `hScrollBar` indent).
 ### Must Have
 
 #### `DataGrid<T>` — multi-column virtual-scroll grid (TV `TListViewer` spine + extension, AR-151…AR-157)
-- A focusable `View` that **virtual-scrolls** its rows (renders only the rows visible in the viewport — the
-  `TListViewer::draw` `topItem`/`size.y` window) and **reuses the RD-11 virtual-scroll helpers**
-  (`list/virtual.ts` `clampIndex`/`keepVisible`) plus **owns a vertical `ScrollBar`** (as `ListView` does)
-  and an **owned horizontal `ScrollBar`** for column overflow (AR-156 — TV already wires `hScrollBar` with
-  `indent = hScrollBar->value`, `tlstview.cpp` `draw`). It is a **`TListViewer`-derived** concern with its
-  own multi-column row renderer, not a `ListView` (AR-160).
+- A `Group` container (**not** a bare `View` — only a `Group` owns children; the twice-shipped idiom is
+  `ListView extends Group` / `Tree extends Group`, `list/list-view.ts`, `tree/tree.ts:50`) composing a
+  **focusable multi-column rows-renderer** (a `View`, its own file — mirrors `list-rows.ts`/`tree-rows.ts`),
+  a non-scrolling **header** row, and **owned vertical + horizontal `ScrollBar`s**. The rows-renderer
+  **virtual-scrolls** (renders only the rows visible in the viewport — the `TListViewer::draw`
+  `topItem`/`size.y` window) and **reuses the RD-11 virtual-scroll helpers** (`list/virtual.ts`
+  `clampIndex`/`keepVisible`); the vertical bar is owned exactly as `ListView` does; the horizontal bar
+  handles column overflow (AR-156 — TV already wires `hScrollBar` with `indent = hScrollBar->value`,
+  `tlstview.cpp:99-102`). It is a **`TListViewer`-derived** concern with its own multi-column row renderer,
+  not a single-column `ListView` (AR-160).
 - **Data model (AR-157):** rows are a reactive **`Signal<T[]>`** over a generic row type `T`, mirroring
   `ListView<T>`'s `items` model (AR-106); updates re-render the visible window.
 - **Columns (AR-152):** `columns: Column<T>[]` where
@@ -65,44 +70,62 @@ colours, `showMarkers`, virtual scroll, the `hScrollBar` indent).
   The cell text is `accessor(row)`; it is **sanitized** to the screen like any other cell text (AR-152, the
   injection boundary). The generic keeps the grid type-safe and reactive per field.
 - **Column sizing (AR-153):** `ColumnWidth = number | \`${number}fr\` | 'auto'` — a fixed cell count, an
-  `fr`-weight share of the leftover width, or `auto` (the widest rendered cell, capped). Widths are
-  apportioned with the RD-02 layout engine's **integer `solveTrack`** (already built — the same
-  largest-remainder apportion the layout uses), so column edges are integer-correct with no rounding drift.
-  When the total exceeds the viewport the **horizontal `ScrollBar`** scrolls the columns (AR-156).
+  `fr`-weight share of the leftover width, or `auto`. **`solveTrack` itself only knows `fixed | flex`**
+  (`layout/apportion.ts:18-20,73` — there is no `auto` kind), so an `auto` column is **pre-measured** (its
+  widest cell, clamped) into a **`fixed` track item first**, then all columns are apportioned with the RD-02
+  layout engine's **integer `solveTrack`** (already built — the same largest-remainder apportion the layout
+  uses), so column edges are integer-correct with no rounding drift. **The `auto` measurement scope + cap
+  are pinned at plan GATE-1** (recommended default: widest cell over the *current rows*, clamped by the
+  Should-Have `maxWidth`, recomputed on data change — predictable, no scroll jitter). Note **`fr` ⟂ overflow**:
+  `fr` columns always fill the viewport, so horizontal scroll engages only when the columns are all
+  `fixed`/`auto` and their total exceeds the viewport — at which point the **horizontal `ScrollBar`** scrolls
+  them (AR-156).
 - **Row rendering (faithful, AR-159):** each visible row draws its column cells left-to-right, each cell
   clipped/padded to its apportioned width and aligned per `align`, **separated by the faithful `│`
   (`\xB3`) divider** drawn in the existing decoded **`listDivider`** role (`getColor(5)` of `cpListViewer`,
   shipped by RD-11). The row colour is the existing decoded **`listNormal`/`listFocused`/`listSelected`**
-  role per row state (faithful to `TListViewer`'s `getColor(2)/(3)/(4)`); `showMarkers` behaviour is
-  preserved. **No new row or divider roles** — the rows *are* `TListViewer` rows.
+  role per row state (faithful to `TListViewer`'s `getColor(2)/(3)/(4)`). *(TV's `showMarkers` `»«`/`→←`
+  markers are **monochrome-only** — `tprogram.cpp:253` forces them off in colour, and `ListRows` already
+  omits them in colour, `list-rows.ts:11` — so a colour-first grid draws no markers; they are not carried.)*
+  **No new row or divider roles** — the rows *are* `TListViewer` rows.
 - **Sticky header (AR-154):** a **non-scrolling header row** above the data draws each column's `title`
   (aligned per `align`), separated by the same `│` divider; it stays fixed while the data virtual-scrolls,
   and scrolls **horizontally** in lockstep with the data columns. The header colour uses a **new additive
   header role** decoded at **plan GATE-1** (a TV heading colour resolved through the `getColor` chain — the
   one extension role, AR-159).
 - **Click-to-sort (AR-154/AR-158):** clicking a column header sets a two-way `sort: Signal<{ col: number;
-  dir: 'asc'|'desc' } | null>`; the displayed order is a **`computed`** that reuses RD-11's `sorted`
-  machinery, sorting by that column with the column's **optional `compare`** (for numeric/typed columns) or,
-  by default, a **locale-aware string compare** of `accessor(row)`. A **`▲` (asc) / `▼` (desc)** indicator
-  is drawn next to the active column's title. Clicking the active column toggles direction; sort is a
-  documented extension (TV has no header sort).
+  dir: 'asc'|'desc' } | null>`; the displayed order is a **`computed`** that **follows the RD-11
+  sorted-display pattern** (a `computed` reordering the display) with a **new comparator parameterized by
+  `{col, dir}`** and the column's **optional `compare`** (for numeric/typed columns), defaulting to a
+  **locale-aware string compare** of `accessor(row)`. *(The existing `list-rows.ts:110-116` `sorted` is a
+  fixed ascending, single-field boolean toggle — not parameterizable by column/direction/comparator — so it
+  is the pattern, not the code, that is reused.)* A **`▲` (asc) / `▼` (desc)** indicator is drawn next to
+  the active column's title. Clicking the active column toggles direction; sort is a documented extension
+  (TV has no header sort).
 - **Navigation (AR-155, faithful `TListViewer`):** ↑↓ move the focused row ±1, PgUp/PgDn ±viewport,
   Home/End, Ctrl+PgUp/Dn to the ends (`tlstview.cpp` `handleEvent`); the focused row stays visible
   (`focusItem`/`keepVisible`). Left/Right scroll the columns horizontally when they overflow (the H-bar),
-  matching TV's `hScrollBar` model.
+  matching TV's `hScrollBar` model. *(GATE-1 reconciliation: TV pages by `±(size.y*numCols)`
+  `tlstview.cpp:309-314` because its `numCols` is the newspaper multi-column-of-one-field flow; this grid is
+  **one row per item** (`numCols`≡1 in that sense), so `±viewport rows` is the faithful decode — the plan's
+  GATE-1 must record this so a spec author doesn't transcribe `size.y*numCols`.)*
 - **Mouse (AR-155):** a click on a data row focuses it; a **double-click selects** (as Enter); a click on a
   **header** cell sorts by that column. Wheel scrolls rows (±3, as `ListView`).
 - **Selection (AR-155/AR-157):** **row-granular single-select** — a two-way `focused: Signal<number>`
-  (row index into the sorted view) + a `selected`/`onSelect`/`command` seam; **Enter/double-click emits the
-  select command** (mirroring `ListView`/`cmListItemSelected`) and sets `selected`. Cell-granular selection
-  is deferred (AR-155).
+  (row index into the sorted view) + a `selected`/`onSelect`/`command` seam; **Enter / Space / double-click
+  emits the select command** (mirroring `ListView`'s Enter/Space activation and TV `TListViewer`'s
+  Space-select `tlstview.cpp:282-286` + `cmListItemSelected`) and sets `selected`. **`focused` is a
+  *positional* index into the sorted view** — after a re-sort the same index highlights whatever row now
+  sits at that position (focus stays at the visual position, not the row identity), and it is clamped to the
+  current row count on any data/sort change (AC-9). Cell-granular selection is deferred (AR-155).
 
 #### Theme role — one additive faithful header colour (AR-159)
 - Add **one** additive header role to core `@jsvision/core` `Theme` + `defaultTheme` — the grid **header**
   colour — decoded through the `getColor` chain at **plan GATE-1** (pinned to an exact attribute byte per
   the fidelity directive). Additive, non-breaking — the same cross-package pattern as the RD-06/07/11/14/15
   control roles (AR-97/112/122/139/149). The **row + divider roles already exist** (`listNormal`/
-  `listFocused`/`listSelected`/`listDivider`, RD-11 `theme.ts:222-225`) and are reused unchanged.
+  `listFocused`/`listSelected`/`listDivider`, RD-11 — `Theme` interface `theme.ts:131-146`,
+  `defaultTheme` `theme.ts:284-287`) and are reused unchanged.
 
 #### Kitchen-sink story + headless demo (AR-161)
 - Per the **kitchen-sink showcase (NON-NEGOTIABLE)** rule, add a **`DataGrid` story** (a typed multi-column
@@ -147,17 +170,21 @@ colours, `showMarkers`, virtual scroll, the `hScrollBar` indent).
 
 ### New subsystem (AR-160)
 - One new subsystem dir `packages/ui/src/table/` (dir-per-concern, AR-133/113/148): `data-grid.ts`
-  (`DataGrid<T>` + the `Column<T>`/`ColumnWidth` types), `columns.ts` (the width apportion over RD-02
-  `solveTrack`, the cell-extract + sanitize, and the sort comparator), one barrel `index.ts`; per-file
-  ≤ 500 lines. **Explicit named re-exports** from `src/index.ts` (the layout-convention rule,
-  AR-81/AR-102/AR-113).
+  (the `DataGrid<T>` **`Group`** container + the `Column<T>`/`ColumnWidth` types), a **rows-renderer**
+  file (the focusable multi-column `View` + sticky header draw — mirrors `list-rows.ts`/`tree-rows.ts`,
+  keeps `data-grid.ts` ≤ 500), `columns.ts` (the width apportion over RD-02 `solveTrack` incl. the `auto`
+  pre-measure, the cell-extract + sanitize, and the column/dir sort comparator), one barrel `index.ts`;
+  per-file ≤ 500 lines. **Explicit named re-exports** from `src/index.ts` (the layout-convention rule,
+  AR-81/AR-102/AR-113). *(Exact file split confirmed at plan time; the renderer split follows the
+  established `ListView`/`Tree` shape.)*
 - Pure TS, ESM/NodeNext (`.js` specifiers), zero runtime deps (`check:deps` holds).
 
 ### Cross-package edits (additive only, AR-159)
 - `@jsvision/core` `Theme` + `defaultTheme` gain **one** additive header role, decoded from `cpAppColor` at
   plan GATE-1 (exact attribute byte pinned per the fidelity directive). Same additive pattern as
   AR-97/112/122/139/149; no existing role changes. The row/divider roles (`listNormal`/`listFocused`/
-  `listSelected`/`listDivider`) are **reused unchanged** (`theme.ts:222-225`).
+  `listSelected`/`listDivider`) are **reused unchanged** (interface `theme.ts:131-146`, `defaultTheme`
+  `theme.ts:284-287`).
 
 ### Reuse (no new engine primitives)
 - **Virtual scroll + bars (RD-11):** the visible-window math reuses `list/virtual.ts`
@@ -249,9 +276,10 @@ oracle; the header/columns/sort ACs encode the documented extension).
 - **AC-2** (faithful row draw) — each data row draws its cells separated by the `│` (`\xB3`) divider in the
   **`listDivider`** role, with the row colour = `listNormal`/`listFocused`/`listSelected` per state (faithful
   `TListViewer` `getColor(2)/(3)/(4)`), asserted against the buffer pre-`serialize`. *(AR-159)*
-- **AC-3** (column sizing) — `fixed`, `fr`, and `auto` column widths are apportioned via RD-02 `solveTrack`
-  so the column edges are integer-correct and sum to the content width; an `fr` column grows/shrinks with
-  the viewport while a `fixed` column does not. *(AR-153)*
+- **AC-3** (column sizing) — `fixed` and `fr` widths are apportioned via RD-02 `solveTrack` (which knows
+  only `fixed | flex`, `apportion.ts:18-20`) and an `auto` column is pre-measured to a `fixed` track item
+  first, so the column edges are integer-correct and sum to the content width; an `fr` column grows/shrinks
+  with the viewport while a `fixed` column does not. *(AR-153)*
 - **AC-4** (alignment) — a column's cells and its header render left/right/center aligned per `align` within
   the apportioned width. *(AR-152/AR-153)*
 - **AC-5** (sticky header) — a non-scrolling header row of column `title`s draws above the data (same `│`
@@ -263,9 +291,11 @@ oracle; the header/columns/sort ACs encode the documented extension).
 - **AC-7** (horizontal scroll) — when the total column width exceeds the viewport, the owned horizontal
   `ScrollBar` (and ←/→) scroll the columns; the header scrolls with them; off-screen columns are clipped
   (the `hScrollBar->value` indent). *(AR-153/AR-156)*
-- **AC-8** (row-granular select + emit) — Enter or double-click sets `selected` and emits the select command
-  (mirroring `ListView`/`cmListItemSelected`); `focused` and `selected` are two-way signals a caller can
-  bind; there is no cell cursor. *(AR-155/AR-157)*
+- **AC-8** (row-granular select + emit) — Enter, **Space**, or double-click sets `selected` and emits the
+  select command (mirroring `ListView`'s Enter/Space activation + TV `TListViewer` Space-select
+  `tlstview.cpp:282-286` / `cmListItemSelected`); `focused` and `selected` are two-way signals a caller can
+  bind; `focused` is a **positional** index into the sorted view (a re-sort keeps focus at the same visual
+  position, not the same row); there is no cell cursor. *(AR-155/AR-157)*
 - **AC-9** (reactive data) — updating the rows `Signal<T[]>` (or the `sort` signal) re-renders the visible
   window and repaints; the focused index is clamped to the new row count. *(AR-157)*
 - **AC-10** (theme role) — `defaultTheme` exposes exactly **one** new additive header role (header colour,
@@ -279,6 +309,10 @@ oracle; the header/columns/sort ACs encode the documented extension).
 - **AC-13** (security) — every cell (`accessor`) and header title is sanitized to the screen; row/window/
   focused access is bounds-checked; cells are width-clipped so no cell can overflow its column or the
   viewport. *(security standard)*
+- **AC-14** (empty state) — when the rows `Signal<T[]>` is empty the header still draws normally and the data
+  area shows an `<empty>` placeholder (matching `ListRows` `list-rows.ts:11` and the shipped `Tree`); the
+  grid does not crash or index out of range with zero rows (or zero columns). *(consistency + edge case;
+  RD-15 preflight PF-003 precedent)*
 
 ---
 
