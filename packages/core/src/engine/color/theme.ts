@@ -214,6 +214,31 @@ export interface Theme {
    * high byte of the Normal pair `getColor(0x0401)`.
    */
   readonly outlineNotExpanded: ThemeRole;
+  // --- jsvision-ui RD-17 Tabs roles (`tab*`, a documented TV-EXTENSION — gray-dialog analogy) -----
+  // Turbo Vision has NO tab/notebook class (RD-17 AR-172/GATE-1), so these three are *documented
+  // extension* colours — pinned by analogy to the shipped `cpGrayDialog` label decodes, NOT invented.
+  // The idiomatic `TabView` host is a gray `TDialog`, so a tab reads like a dialog label: normal =
+  // `label`/`staticText` `0x70`, active = `labelSelected` `0x7F` (the brighter "raised/selected"
+  // accent), disabled = `buttonDisabled` `0x78` greying. Bytes pinned at plan GATE-1 (task 1.1.1,
+  // plans/tabs/03-03 §GATE-1). `0xHL`: H=bg nibble, L=fg nibble. Additive/non-breaking (AC-11).
+  /**
+   * Active (selected) tab label — the brighter, "raised" folder tab. TV-extension colour grounded in
+   * the gray-dialog `labelSelected` accent `getColor(8)` → `cpAppColor[0x2F]=0x7F` white-on-lightGray;
+   * `hotkey` = `labelShortcut` `0x7E` yellow for the `~X~` marked letter. (`theme.ts:62`, RD-17 AR-180)
+   */
+  readonly tabActive: ThemeRole;
+  /**
+   * Inactive tab label — dimmed per the gray-dialog label convention `getColor(6/7)` →
+   * `cpAppColor[0x2E]=0x70` black-on-lightGray (same as {@link label}/{@link staticText}); `hotkey` =
+   * `labelShortcut` `0x7E` yellow. Also the frame-chrome (corner/edge/tee) colour. (RD-17 AR-180)
+   */
+  readonly tabInactive: ThemeRole;
+  /**
+   * Disabled tab label — greyed per the `buttonDisabled` `getColor(13)` → `cpAppColor` `0x78`
+   * darkGray-on-lightGray / `clusterDisabled` (`0x38`) greying convention; no hotkey accent (a
+   * disabled tab is never activatable). (`theme.ts:68/86`, RD-17 AR-180)
+   */
+  readonly tabDisabled: ThemeRole;
   readonly statusBar: ThemeRole;
   /**
    * The status-line **pressed/selected** item (mouse-down feedback). Turbo Vision repaints the held
@@ -308,6 +333,12 @@ export const defaultTheme: Theme = {
   outlineFocused: { fg: PALETTE.blue, bg: PALETTE.lightGray },
   outlineSelected: { fg: PALETTE.brightGreen, bg: PALETTE.blue },
   outlineNotExpanded: { fg: PALETTE.white, bg: PALETTE.blue },
+  // RD-17 Tabs roles — decoded gray-dialog-analogy bytes (GATE-1, plans/tabs/03-03 §GATE-1): active
+  // 0x7F white-on-lightGray (labelSelected accent), inactive 0x70 black-on-lightGray (label), disabled
+  // 0x78 darkGray-on-lightGray (buttonDisabled). Active/inactive carry the labelShortcut yellow hotkey.
+  tabActive: { fg: PALETTE.white, bg: PALETTE.lightGray, hotkey: PALETTE.yellow },
+  tabInactive: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.yellow },
+  tabDisabled: { fg: PALETTE.darkGray, bg: PALETTE.lightGray },
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },

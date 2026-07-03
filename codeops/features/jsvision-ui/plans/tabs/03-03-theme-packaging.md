@@ -44,6 +44,45 @@ the shipped decodes; the AFTER task records the resolution in the JSDoc + commit
 > pin them. The spec test (AC-11) asserts the roles **exist** and `encode()` does not throw + no existing
 > role changed; it does **not** hard-code a byte (so a GATE-1 re-pin is not a spec violation).
 
+#### ✅ GATE-1 decode result (pinned 2026-07-03, task 1.1.1)
+
+The idiomatic `TabView` host is a gray `TDialog` (`cpGrayDialog`, black-on-lightGray field), so the three
+`tab*` roles are pinned by analogy to the **already-shipped gray-dialog decodes** in `theme.ts` (not
+re-invented): the label greying convention supplies inactive, the `labelSelected` accent supplies active,
+and the `buttonDisabled`/`clusterDisabled` convention supplies disabled. Each is a `cpAppColor` `0xHL`
+byte (H = bg nibble, L = fg nibble).
+
+| Role | Byte | Decode | Grounded in (shipped) |
+| ---- | ---- | ------ | --------------------- |
+| `tabActive` | `0x7F` | white-on-lightGray + `hotkey` yellow | `labelSelected` `getColor(8)` `0x7F` — the brighter "raised/selected" label accent (`theme.ts:62`) |
+| `tabInactive` | `0x70` | black-on-lightGray + `hotkey` yellow | `label`/`staticText` `getColor(6/7)` `0x70`; `labelShortcut` `0x7E` yellow supplies the `~X~` accent (`theme.ts:59-64`) |
+| `tabDisabled` | `0x78` | darkGray-on-lightGray, no hotkey | `buttonDisabled` `getColor(13)` `0x78` / `clusterDisabled` `0x38` greying convention (`theme.ts:68/86`) |
+
+Active vs. inactive follows the TV `label` vs. `labelSelected` pattern exactly: the *selected* item takes
+the brighter **white** foreground, the normal item the **black** foreground — even though black has more
+raw contrast on lightGray, white reads as "highlighted/raised" in the DOS-16 palette (TV `cpGrayDialog`
+slots 7 vs. 8). The frame chrome (corners/edges/tees) draws in `tabInactive` (black-on-lightGray) — the
+neutral gray-dialog line colour — so the whole strip+frame reads as one cohesive gray folder.
+
+#### ✅ GATE-1 tee-glyph decode (task 1.1.1)
+
+Line/corner glyphs reuse the shipped `frame.ts` `SINGLE_BORDER` code points verbatim (identical CP437 →
+Unicode). The four tab-junction tees are the only fresh decode; all are **unambiguous-narrow** (width 1),
+so none misaligns (the `×`/`■` East-Asian-ambiguous caveat does not apply):
+
+| Glyph | CP437 | Unicode | Name |
+| ----- | ----- | ------- | ---- |
+| `─` | `0xC4` | U+2500 | box drawings light horizontal (reused) |
+| `│` | `0xB3` | U+2502 | box drawings light vertical (reused) |
+| `┌` | `0xDA` | U+250C | light down and right (reused) |
+| `┐` | `0xBF` | U+2510 | light down and left (reused) |
+| `└` | `0xC0` | U+2514 | light up and right (reused) |
+| `┘` | `0xD9` | U+2518 | light up and left (reused) |
+| `┬` | `0xC2` | U+252C | light down and horizontal — **tab/frame-top notch** (the between-tabs separator) |
+| `┴` | `0xC1` | U+2534 | light up and horizontal — GATE-1 tee |
+| `├` | `0xC3` | U+251C | light vertical and right — GATE-1 tee |
+| `┤` | `0xB4` | U+2524 | light vertical and left — GATE-1 tee |
+
 ### New Types/Interfaces
 
 ```ts
