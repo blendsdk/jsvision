@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 19:35
-> **Progress**: 2/22 tasks (9%)
+> **Last Updated**: 2026-07-03 19:53
+> **Progress**: 6/22 tasks (27%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -52,10 +52,10 @@ the NON-NEGOTIABLE TV-fidelity directive + `codeops/tv-fidelity-gate.md`).
 | 1.1.6 | Run spec tests — verify **PASS** (green); `yarn verify` | — |
 
 **Deliverables**:
-- [ ] GATE-1 decode recorded (glyphs + presets + predicate + bytes)
-- [ ] `DrawContext.caps` seam landed additively; full suite still green
-- [ ] `progress*` roles land additively; no existing role changed
-- [ ] `yarn verify` passing
+- [x] GATE-1 decode recorded (glyphs + presets + predicate + bytes)
+- [x] `DrawContext.caps` seam landed additively; full suite still green
+- [x] `progress*` roles land additively; no existing role changed
+- [x] `yarn verify` passing
 
 **Verify**: `yarn verify`
 
@@ -163,10 +163,10 @@ the NON-NEGOTIABLE TV-fidelity directive + `codeops/tv-fidelity-gate.md`).
 ### Phase 1: GATE-1 decode + `DrawContext.caps` seam + core `progress*` roles
 - [x] 1.1.1 [GATE-1 BEFORE-decode] Pin fill glyphs/partials (PA-4), presets incl. `blocks` (PA-5), ASCII form + predicate (PA-2), `progress*` bytes (PA-3); record ✅ (completed: 2026-07-03 19:29 — recorded in 03-01/03-02/03-03; echoed to code JSDoc in Phase 2/3)
 - [x] 1.1.2 Add `DrawContext.caps` seam (interface + `makeDrawContext` param + render-root + **all 12 test call sites across 5 files incl. `view.hardening.spec.test.ts:119`** — grep-enumerated); suite green ✅ (completed: 2026-07-03 19:35 — `yarn verify` green, 826 ui tests)
-- [ ] 1.1.3 Write `feedback-theme.spec.test.ts` (ST-11)
-- [ ] 1.1.4 Run spec tests — verify RED
-- [ ] 1.1.5 Implement 2 `progress*` roles in core `theme.ts` + `defaultTheme`
-- [ ] 1.1.6 Run spec tests — verify GREEN; `yarn verify`
+- [x] 1.1.3 Write `feedback-theme.spec.test.ts` (ST-11) ✅ (completed: 2026-07-03 19:38 — existence + encode-non-throw + additive-guard snapshot)
+- [x] 1.1.4 Run spec tests — verify RED ✅ (completed: 2026-07-03 19:38 — 2/3 red, roles absent)
+- [x] 1.1.5 Implement 2 `progress*` roles in core `theme.ts` + `defaultTheme` ✅ (completed: 2026-07-03 19:53 — `progressFill` 0x1B / `progressTrack` 0x13)
+- [x] 1.1.6 Run spec tests — verify GREEN; `yarn verify` ✅ (completed: 2026-07-03 19:53 — 829 ui tests green; PA-11 runtime: extended RD-17 `tabs-theme.spec` ST-30 key allowlist for the sanctioned `progress*` roles)
 
 ### Phase 2: `ProgressBar` + `Spinner` + `runSpinner`
 - [ ] 2.1.1 Write `progress-bar.spec.test.ts` (ST-1…5) + `spinner.spec.test.ts` (ST-6…9)

@@ -1,16 +1,17 @@
 /**
- * Specification test (immutable oracle) — jsvision-ui RD-17 core `tab*` theme roles (ST-29, ST-30).
+ * Specification test (immutable oracle) — jsvision-ui RD-18 core `progress*` theme roles (ST-11).
  *
- * Source: RD-17 AC-11 → ST-29/ST-30 (plans/tabs/03-03-theme-packaging.md §GATE-1, AR-180). Turbo
- * Vision has NO tab/notebook class, so `tabActive`/`tabInactive`/`tabDisabled` are *documented
- * extension* colours pinned by analogy to the shipped gray-dialog decodes — NOT frozen by this
- * oracle. Per the AUTHORING RULE + the plan (03-03 §"the spec test … does not hard-code a byte"),
- * ST-29 asserts only that the three roles **exist** as `ThemeRole`s and that `encode()` of each does
- * not throw at any colour depth; a faithful GATE-1 re-pin must never be a spec violation.
+ * Source: RD-18 AC-11 → ST-11 (plans/feedback/03-03-theme-packaging.md §GATE-1, PA-3). Turbo Vision
+ * has NO gauge/progress palette (AR-186 whole-tree search), so `progressFill`/`progressTrack` are
+ * *documented extension* colours pinned by analogy to the shipped cyan-on-blue scrollbar-gauge family
+ * (fill `0x1B` brightCyan-on-blue, brighter than track `0x13` cyan-on-blue = `scrollBarPage`) — NOT
+ * frozen by this oracle. Per the AUTHORING RULE + the plan (03-03 §"Do not hard-code a byte beyond the
+ * pinned pair"), ST-11 asserts only that the two roles **exist** as `ThemeRole`s and that `encode()`
+ * of each does not throw at any colour depth; a faithful GATE-1 re-pin must never be a spec violation.
  *
- * ST-30 is the additive-only guard: every pre-existing role is byte-for-byte unchanged (the new
- * roles must not perturb any shipped decode). The `.js` extension in import specifiers is required by
- * NodeNext ESM resolution.
+ * The additive-only guard: every pre-existing role is byte-for-byte unchanged and the two `progress*`
+ * roles are the ONLY new keys (the new roles must not perturb any shipped decode). The `.js` extension
+ * in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
 import type { ColorDepth } from '@jsvision/core';
@@ -18,11 +19,11 @@ import { defaultTheme, encode } from '@jsvision/core';
 
 const ALL_DEPTHS: readonly ColorDepth[] = ['mono', '16', '256', 'truecolor'];
 
-/** The three additive RD-17 role names (the only new keys ST-30 tolerates on `defaultTheme`). */
-const TAB_ROLES = ['tabActive', 'tabInactive', 'tabDisabled'] as const;
+/** The two additive RD-18 role names (the only new keys the additive guard tolerates). */
+const FEEDBACK_ROLES = ['progressFill', 'progressTrack'] as const;
 
-test('ST-29: the three tab* roles exist as ThemeRoles (fg/bg present)', () => {
-  for (const name of TAB_ROLES) {
+test('ST-11: the two progress* roles exist as ThemeRoles (fg/bg present)', () => {
+  for (const name of FEEDBACK_ROLES) {
     const role = defaultTheme[name];
     expect(role, `${name} exists`).toBeTruthy();
     expect(typeof role.fg, `${name}.fg`).toBe('string');
@@ -30,8 +31,8 @@ test('ST-29: the three tab* roles exist as ThemeRoles (fg/bg present)', () => {
   }
 });
 
-test('ST-29: encode() of each tab* role does not throw at any colour depth', () => {
-  for (const name of TAB_ROLES) {
+test('ST-11: encode() of each progress* role does not throw at any colour depth', () => {
+  for (const name of FEEDBACK_ROLES) {
     const role = defaultTheme[name];
     for (const depth of ALL_DEPTHS) {
       expect(() => encode(role.fg, 'fg', depth), `${name}.fg @ ${depth}`).not.toThrow();
@@ -43,11 +44,10 @@ test('ST-29: encode() of each tab* role does not throw at any colour depth', () 
   }
 });
 
-test('ST-30: the tab* roles are the ONLY additive keys — every existing role is unchanged', () => {
-  // A snapshot of the full shipped role set (each entry copied verbatim from theme.ts at RD-16 time,
-  // BEFORE RD-17). If any of these changed, the additive edit perturbed a shipped decode → defect.
-  // The bytes here are the AUTHORITATIVE pre-RD-17 values, so this is a genuine regression guard, not
-  // a mirror of the implementation.
+test('ST-11: the progress* roles are the ONLY additive keys — every existing role is unchanged', () => {
+  // A snapshot of the full shipped role set (each entry copied verbatim from theme.ts BEFORE RD-18,
+  // i.e. through RD-17's tab* roles). If any of these changed, the additive edit perturbed a shipped
+  // decode → defect. These bytes are the AUTHORITATIVE pre-RD-18 values, a genuine regression guard.
   const P = {
     black: '#000000',
     blue: '#0000aa',
@@ -61,7 +61,7 @@ test('ST-30: the tab* roles are the ONLY additive keys — every existing role i
     brightGreen: '#55ff55',
   } as const;
 
-  // Every pre-RD-17 role, byte-for-byte (the additive edit must leave all of these untouched).
+  // Every pre-RD-18 role, byte-for-byte (the additive edit must leave all of these untouched).
   const EXPECTED_UNCHANGED: Record<string, unknown> = {
     desktop: { pattern: '░', fg: P.blue, bg: P.lightGray },
     menuBar: { fg: P.black, bg: P.lightGray, hotkey: '#aa0000' },
@@ -103,6 +103,9 @@ test('ST-30: the tab* roles are the ONLY additive keys — every existing role i
     outlineFocused: { fg: P.blue, bg: P.lightGray },
     outlineSelected: { fg: P.brightGreen, bg: P.blue },
     outlineNotExpanded: { fg: P.white, bg: P.blue },
+    tabActive: { fg: P.white, bg: P.green, hotkey: P.yellow },
+    tabInactive: { fg: P.black, bg: P.green, hotkey: P.yellow },
+    tabDisabled: { fg: P.darkGray, bg: P.green },
     statusBar: { fg: P.black, bg: P.lightGray, hotkey: '#aa0000' },
     statusSelected: { fg: P.black, bg: P.green, hotkey: '#aa0000' },
     shadow: { fg: P.darkGray, bg: P.black },
@@ -112,14 +115,9 @@ test('ST-30: the tab* roles are the ONLY additive keys — every existing role i
     expect(defaultTheme[name as keyof typeof defaultTheme], `${name} unchanged`).toStrictEqual(value);
   }
 
-  // The tab* roles were the ONLY new keys at RD-17 time (additive-only surface). This inventory
-  // tripwire tolerates roles that *later, sanctioned* additive RDs legitimately add on top — each
-  // such RD's own theme spec owns the byte-for-byte guard for its roles (RD-18: feedback-theme.spec).
-  // Extending this allowlist for a legitimately-added later role does NOT weaken RD-17's guarantee:
-  // every tab* byte + every pre-existing byte above is still asserted unchanged. (RD-18 AR runtime.)
-  const LATER_ADDITIVE_ROLES = ['progressFill', 'progressTrack'] as const; // RD-18 feedback (PA-3, AC-11)
-  const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...TAB_ROLES, ...LATER_ADDITIVE_ROLES]);
+  // The progress* roles are the ONLY new keys added to the theme (additive-only surface, AC-11).
+  const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...FEEDBACK_ROLES]);
   const actualKeys = Object.keys(defaultTheme);
   const unexpected = actualKeys.filter((k) => !knownKeys.has(k));
-  expect(unexpected, 'no theme key beyond the pre-existing set + tab* + sanctioned later additive roles').toEqual([]);
+  expect(unexpected, 'no theme key beyond the pre-existing set + the 2 progress* roles').toEqual([]);
 });

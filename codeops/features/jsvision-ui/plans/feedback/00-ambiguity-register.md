@@ -36,9 +36,17 @@ PA-9). Zero items deferred.
 | **PA-9** | Config | Which command fills every plan "Verify" line? | Detected from CLAUDE.md: **`yarn verify`** (= `turbo run typecheck build test`). | **`yarn verify`** *(project CLAUDE.md — confirmed)* | ✅ Resolved (config) |
 | **PA-10** | Consistency | RD-18 AR-194 leaves the kitchen-sink **story ids** to plan time (DataGrid drifted to a bare id; tabs pinned `containers/tabs` to avoid that). | (a) **`feedback/progress-bar` + `feedback/spinner`**, category `Feedback` — the `category/name` registry convention (tabs precedent AR-185); demo script **`demo:feedback`**; (b) bare ids — rejected: repeats the DataGrid drift | **`feedback/progress-bar` + `feedback/spinner`, category `Feedback`; `demo:feedback`** *(AR-194)* | ✅ Resolved (dominant) |
 
+## Runtime decisions (added during `exec_plan`)
+
+| # | Category | Ambiguity | Decision | Status |
+|---|----------|-----------|----------|--------|
+| **PA-11** | Testability / Consistency (runtime) | Adding the 2 core `progress*` roles (PA-3, AC-11) trips RD-17's `tabs-theme.spec` **ST-30** closed-set guard, which asserts the `tab*` roles are the **ONLY** additive keys beyond the RD-16 snapshot — a tripwire that any later additive-role RD necessarily breaks. `table-theme.spec` has no such guard (no precedent). Not anticipated by the plan. | **Extend the tab guard** (user-selected, Option A): `tabs-theme.spec` ST-30's tolerated key allowlist gains `progressFill`/`progressTrack` (a `LATER_ADDITIVE_ROLES` set); **all byte-for-byte assertions — every `tab*` byte + every pre-existing byte — stay intact**, so RD-17's real guarantee is unchanged; RD-18's own `feedback-theme.spec` owns the byte guard for the new roles. A narrow, scoped exception to spec-immutability for a cross-RD inventory tripwire (not a behavioral oracle). | ✅ Resolved (user, runtime) |
+
 ## Traceability
 
 - **PA-1** is the sole **user-gated** plan decision (the caps draw-time seam; Option A `DrawContext.caps`).
+- **PA-11** *(runtime)* is the sole execution-time decision: extend RD-17's `tabs-theme.spec` ST-30 key
+  allowlist to tolerate RD-18's sanctioned `progress*` roles (byte guards preserved). User-confirmed.
 - **PA-2/PA-4/PA-5/PA-7** are **source/convention-determined** GATE-1 pins descending from AR-189/191/192
   (glyph tables, predicate, `runSpinner` signature) — decoded + recorded here + in the code JSDoc +
   the ST oracles, per the NON-NEGOTIABLE TV-fidelity directive (RD-18 has no TV component to diff, so
