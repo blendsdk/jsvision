@@ -44,10 +44,12 @@ export const progressBarStory: Story = {
     g.add(at(new ProgressBar({ value, caption: true, label: 'Copy', labelPosition: 'left' }), 1, 6, barW, 1));
     note('label: left + caption', 6);
 
-    // inline right label = live percent echo (one row).
+    // inline right label = live percent echo (one row). Padded to a fixed width (`100%` = 4 cells) so
+    // the reserved label column never changes as the number grows — otherwise the bar would reflow
+    // (shrink by a cell) crossing 9%→10% / 99%→100%.
     g.add(
       at(
-        new ProgressBar({ value, label: () => `${Math.round(value() * 100)}%`, labelPosition: 'right' }),
+        new ProgressBar({ value, label: () => `${Math.round(value() * 100)}%`.padStart(4), labelPosition: 'right' }),
         1,
         7,
         barW,
