@@ -121,3 +121,9 @@ export type { TreeNode, TreeOptions } from './tree/index.js';
 // the one core `tableHeader` theme role.
 export { DataGrid } from './table/index.js';
 export type { Column, ColumnWidth, ColumnAlign, SortState, ColumnGeometry, DataGridOptions } from './table/index.js';
+
+// RD-17 tabs: the self-contained folder-tab `TabView` container (a documented new component — TV has
+// no tab class, AR-172) over the shipped facilities + the additive core `tab*` theme roles. Explicit
+// named re-exports (the layout-convention rule, AR-181); the renderer split + nav helpers stay internal.
+export { TabView } from './tabs/index.js';
+export type { Tab, TabViewOptions } from './tabs/index.js';
