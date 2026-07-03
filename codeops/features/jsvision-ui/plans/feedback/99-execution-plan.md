@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 19:53
-> **Progress**: 6/22 tasks (27%)
+> **Last Updated**: 2026-07-03 20:00
+> **Progress**: 11/22 tasks (50%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -86,9 +86,9 @@ the NON-NEGOTIABLE TV-fidelity directive + `codeops/tv-fidelity-gate.md`).
 | 2.2.3 | Run spec tests — verify **PASS** (green). If any fails: fix the **code**, never the spec (immutable oracle). `yarn verify`. | — |
 
 **Deliverables**:
-- [ ] `progress-bar.spec` + `spinner.spec` written, red before impl, green after
-- [ ] `ProgressBar`/`Spinner`/`runSpinner` implemented; files ≤ 500 lines
-- [ ] `yarn verify` passing
+- [x] `progress-bar.spec` + `spinner.spec` written, red before impl, green after
+- [x] `ProgressBar`/`Spinner`/`runSpinner` implemented; files ≤ 500 lines
+- [x] `yarn verify` passing
 
 **Verify**: `yarn verify`
 
@@ -169,11 +169,11 @@ the NON-NEGOTIABLE TV-fidelity directive + `codeops/tv-fidelity-gate.md`).
 - [x] 1.1.6 Run spec tests — verify GREEN; `yarn verify` ✅ (completed: 2026-07-03 19:53 — 829 ui tests green; PA-11 runtime: extended RD-17 `tabs-theme.spec` ST-30 key allowlist for the sanctioned `progress*` roles)
 
 ### Phase 2: `ProgressBar` + `Spinner` + `runSpinner`
-- [ ] 2.1.1 Write `progress-bar.spec.test.ts` (ST-1…5) + `spinner.spec.test.ts` (ST-6…9)
-- [ ] 2.1.2 Run spec tests — verify RED
-- [ ] 2.2.1 Implement `progress-bar.ts` (fill math, ASCII branch, caption, clamp, `asciiOnly`, set/percent)
-- [ ] 2.2.2 Implement `spinner.ts` (`SPINNERS`, preset-swap, label) + `run-spinner.ts` + `index.ts`
-- [ ] 2.2.3 Run spec tests — verify GREEN (fix code, never the spec); `yarn verify`
+- [x] 2.1.1 Write `progress-bar.spec.test.ts` (ST-1…5) + `spinner.spec.test.ts` (ST-6…9) ✅ (completed: 2026-07-03 19:57 — render-through-loop idiom; ST-3/8 Unicode-off override; ST-2 cell-by-cell pre-serialize)
+- [x] 2.1.2 Run spec tests — verify RED ✅ (completed: 2026-07-03 19:57 — both fail on missing module)
+- [x] 2.2.1 Implement `progress-bar.ts` (fill math, ASCII branch, caption, clamp, `asciiOnly`, set/percent) ✅ (completed: 2026-07-03 20:00 — GATE-1 decode in JSDoc)
+- [x] 2.2.2 Implement `spinner.ts` (`SPINNERS`, preset-swap, label) + `run-spinner.ts` + `index.ts` ✅ (completed: 2026-07-03 20:00 — negative-safe mod, self-re-arming idempotent stop)
+- [x] 2.2.3 Run spec tests — verify GREEN (fix code, never the spec); `yarn verify` ✅ (completed: 2026-07-03 20:00 — 11 widget specs green; full verify 840 ui tests)
 
 ### Phase 3: GATE-1 AFTER-diff + impl tests & hardening
 - [ ] 3.1.1 [GATE-1 AFTER-diff] Cell-by-cell diff of fill glyphs/colours + spinner presets/fallback vs the decode; record
