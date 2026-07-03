@@ -61,6 +61,12 @@ export class Dialog extends Window implements ModalHostAware {
     // TV `wfMove | wfClose`, growMode 0: movable + closable, not resizable/zoomable (PA-6).
     this.resizable = false;
     this.zoomable = false;
+    // TV fidelity: `TDialog` is a `TWindow`, and `TWindow::TWindow` sets `state |= sfShadow`
+    // unconditionally (twindow.cpp:49) — every dialog casts a drop-shadow. A modal dialog is added
+    // to the tree by `execView` (event-loop.ts), bypassing `Desktop.addWindow` — the only other
+    // place `castsShadow` is set — so opt in here so the compose walker paints the `shadowSize {2,1}`
+    // L-shadow (render-root.ts `drawDropShadow`). Mirrors the menu/dropdown popups (controller.ts:175).
+    this.castsShadow = true;
     if (opts.rect !== undefined) this.layout = { position: 'absolute', padding: 1, rect: opts.rect };
   }
 
