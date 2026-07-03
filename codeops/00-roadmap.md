@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 14 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13, RD-14, RD-15, RD-16, RD-17) · RD-18 🔬 Plan Preflighted · Backlog (RD-19, RD-08/09) | 15/19 RDs | 🔄 | 2026-07-03 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 15 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13, RD-14, RD-15, RD-16, RD-17, RD-18) · Backlog (RD-19, RD-08/09) | 16/19 RDs | ⬜ | 2026-07-03 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 
 ## Archived
