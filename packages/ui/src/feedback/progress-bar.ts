@@ -107,7 +107,12 @@ export interface ProgressBarOptions {
   readonly value: Signal<number>;
   /** Show a centred `NN%` knockout caption over the bar (PA-12). Default `false`. */
   readonly caption?: boolean;
-  /** Optional text placed around the bar (literal or reactive accessor). Repaints on change. */
+  /**
+   * Optional text placed around the bar (literal or reactive accessor). Repaints on change. A
+   * `left`/`right` label reserves `width(label)+1` columns beside the bar, so a **variable-width**
+   * label reflows the bar as its text grows/shrinks (e.g. `9%`→`10%`→`100%` retreats the bar a cell).
+   * Pad such a label to a stable width — e.g. `` () => `${pct}%`.padStart(4) `` — to keep the bar fixed.
+   */
   readonly label?: string | (() => string);
   /** Where {@link label} sits (PA-13). Default `'left'` — the only position that fits one row. */
   readonly labelPosition?: LabelPosition;

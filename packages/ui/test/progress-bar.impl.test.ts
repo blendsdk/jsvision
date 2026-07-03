@@ -141,6 +141,17 @@ test('label top-left composes with the knockout caption on the bar row', () => {
   expect(row(1).includes('50%'), 'knockout caption on the bar row').toBe(true);
 });
 
+test('a fixed-width right label keeps the bar from reflowing across 99%→100%', () => {
+  // Padded to 4 ("100%" width) so the reserved label column is constant → bar region is stable.
+  const pct = (v: number) => () => `${Math.round(v * 100)}%`.padStart(4);
+  const at99 = renderLabelled(0.99, 28, 1, pct(0.99), 'right');
+  const at100 = renderLabelled(1.0, 28, 1, pct(1.0), 'right');
+  const fills = (r: string) => [...r].filter((c) => c === '█').length;
+  expect(fills(at100.row(0)) >= fills(at99.row(0)), '100% is at least as full as 99% (no retreat)').toBe(true);
+  // bw = 28 - (4 + 1) = 23 → the whole bar region is full blocks at 100%, no partial last cell.
+  for (let x = 0; x < 23; x += 1) expect(at100.buf.get(x, 0)?.char, `x${x} full`).toBe('█');
+});
+
 test('label longer than the view width is clipped, never overruns', () => {
   const { buf } = renderLabelled(0.5, 6, 2, 'ThisLabelIsTooLong', 'top-left');
   expect(buf.get(6, 0), 'nothing painted past the view width').toBeUndefined();
