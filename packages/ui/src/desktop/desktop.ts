@@ -106,7 +106,10 @@ export class Desktop extends Group {
 
   /** Add a window as a top-z `position:'absolute'` child, inject the WM seam, and activate it (AR-67/PA-15). */
   addWindow(w: Window): void {
-    w.castsShadow = this._shadow;
+    // The desktop-wide `shadow` opt-in only ADDS shadows to plain windows; it must never remove a
+    // window's own intrinsic shadow — a `Dialog` always casts one (TV `sfShadow`, twindow.cpp:49), and
+    // a modal dialog is hosted via `addWindow` (execView requires it in the tree). Hence `||=`, not `=`.
+    w.castsShadow ||= this._shadow;
     this.add(w);
     w.attachManager(this);
     this.raise(w);
