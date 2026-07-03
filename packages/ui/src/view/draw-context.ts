@@ -10,7 +10,7 @@
  * boundary (AC-16). RD-03 never emits raw escape sequences.
  */
 import { Attr, charWidth, sanitize } from '@jsvision/core';
-import type { Style, Theme, ScreenBuffer } from '@jsvision/core';
+import type { Style, Theme, ScreenBuffer, CapabilityProfile } from '@jsvision/core';
 import type { Rect, Size2D } from '../layout/index.js';
 import type { DrawContext, ThemeRoleName } from './types.js';
 import { themeRoleToStyle } from './theme-style.js';
@@ -56,9 +56,12 @@ const BOX_SINGLE = { tl: '\u250C', tr: '\u2510', bl: '\u2514', br: '\u2518', h: 
  * @param viewRect The view's **absolute** rect (origin + content size).
  * @param clip     The **absolute** clip rect (view rect ∩ ancestor clip); out-of-clip writes drop.
  * @param theme    The active theme, for `color(role)` resolution.
+ * @param caps     The resolved terminal capabilities for this frame (RD-18 PA-1) — surfaced on the
+ *                 context so a widget can pick its ASCII glyph form at draw time; the render root
+ *                 passes the same profile `serialize()` encodes with.
  * @returns A `DrawContext` whose writes are offset to `viewRect` and clipped to `clip`.
  */
-export function makeDrawContext(buffer: ScreenBuffer, viewRect: Rect, clip: Rect, theme: Theme): DrawContext {
+export function makeDrawContext(buffer: ScreenBuffer, viewRect: Rect, clip: Rect, theme: Theme, caps: CapabilityProfile): DrawContext {
   const ox = viewRect.x;
   const oy = viewRect.y;
   const size: Size2D = { width: viewRect.width, height: viewRect.height };
@@ -178,5 +181,5 @@ export function makeDrawContext(buffer: ScreenBuffer, viewRect: Rect, clip: Rect
     return theme[name];
   }
 
-  return { text, fillRect, fill, box, shadow, color, role, size };
+  return { text, fillRect, fill, box, shadow, color, role, size, caps };
 }

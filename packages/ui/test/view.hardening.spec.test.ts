@@ -116,7 +116,7 @@ const capsU = resolveCapabilities({ env: {}, platform: 'linux', override: { unic
 test('ST-6.d: draw-context box centers CJK by width; text composes combining marks', () => {
   const buf = new ScreenBuffer(12, 3, { fg: 'default', bg: 'default' });
   const rect = { x: 0, y: 0, width: 12, height: 3 };
-  const ctx = makeDrawContext(buf, rect, rect, defaultTheme);
+  const ctx = makeDrawContext(buf, rect, rect, defaultTheme, caps);
   ctx.box(0, 0, 12, 3, undefined, '世界'); // interior 10, label " 世界 " width 6 → tx = 3
   expect(buf.get(4, 0)?.char).toBe('世');
   expect(buf.get(6, 0)?.char).toBe('界');

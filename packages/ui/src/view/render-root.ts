@@ -114,6 +114,7 @@ function composeView(
   absOrigin: Point,
   clip: Rect,
   theme: Theme,
+  caps: CapabilityProfile,
   logger: Logger,
   cache: Map<View, ComposeContext>,
   counter: { n: number } | null,
@@ -131,7 +132,7 @@ function composeView(
     width: view.bounds.width,
     height: view.bounds.height,
   };
-  const ctx = makeDrawContext(buffer, viewRect, clip, theme);
+  const ctx = makeDrawContext(buffer, viewRect, clip, theme, caps);
   try {
     view.draw(ctx);
   } catch (error) {
@@ -152,7 +153,7 @@ function composeView(
       // Cast the child's shadow (in z-order, under the parent's clip) before painting the child, so a
       // later (front) sibling's shadow falls over the earlier (back) siblings already composed.
       if (child.castsShadow) drawDropShadow(buffer, childRect, clip, theme);
-      composeView(buffer, child, childOrigin, intersect(clip, childRect), theme, logger, cache, counter);
+      composeView(buffer, child, childOrigin, intersect(clip, childRect), theme, caps, logger, cache, counter);
     }
   }
 }
@@ -299,7 +300,7 @@ class RenderRootImpl implements RenderRoot, ViewHost {
         for (const view of dirtyViews) {
           const ctx = this.cache.get(view);
           if (ctx !== undefined) {
-            composeView(this.current, view, ctx.origin, ctx.clip, this.theme, this.logger, this.cache, null);
+            composeView(this.current, view, ctx.origin, ctx.clip, this.theme, this.caps, this.logger, this.cache, null);
           }
         }
       }
@@ -312,7 +313,7 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     if (this.rootView === null) return;
     this.cache.clear();
     const origin: Point = { x: this.rootView.bounds.x, y: this.rootView.bounds.y };
-    composeView(this.current, this.rootView, origin, { ...this.rootView.bounds }, this.theme, this.logger, this.cache, {
+    composeView(this.current, this.rootView, origin, { ...this.rootView.bounds }, this.theme, this.caps, this.logger, this.cache, {
       n: 0,
     });
   }

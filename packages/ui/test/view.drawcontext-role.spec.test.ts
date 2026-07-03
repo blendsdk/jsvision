@@ -11,15 +11,18 @@
  * Trace: RD-05 03-00 §B · PA-16 · FX-05.
  */
 import { test, expect } from 'vitest';
-import { ScreenBuffer, defaultTheme } from '@jsvision/core';
+import { ScreenBuffer, defaultTheme, resolveCapabilities } from '@jsvision/core';
 import type { Rect } from '../src/layout/index.js';
 import { makeDrawContext } from '../src/view/index.js';
+
+// RD-18 PA-1: makeDrawContext now requires a resolved CapabilityProfile (surfaced as ctx.caps).
+const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
 // FX-05 — ctx.role('desktop').pattern and ctx.role('window').border return the role-only extras.
 test('FX-05: ctx.role(name) returns the raw theme role with its role-only extras', () => {
   const buf = new ScreenBuffer(4, 1, { fg: 'default', bg: 'default' });
   const rect: Rect = { x: 0, y: 0, width: 4, height: 1 };
-  const ctx = makeDrawContext(buf, rect, rect, defaultTheme);
+  const ctx = makeDrawContext(buf, rect, rect, defaultTheme, caps);
 
   // The desktop role carries a `pattern` glyph beyond {fg,bg}.
   expect(ctx.role('desktop').pattern).toBe(defaultTheme.desktop.pattern);
