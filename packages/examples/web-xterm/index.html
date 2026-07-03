@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>jsvision on xterm.js</title>
+    <script>
+      // Minimal `process` shim: the built @jsvision/ui reads `process.env.NODE_ENV`
+      // (dev-warning gate) and, on some fallback paths, `process.platform`. Neither
+      // is exercised in this demo, but the reference must resolve in a browser. Must
+      // run BEFORE the module graph loads, hence an inline classic script here.
+      globalThis.process = globalThis.process || { env: { NODE_ENV: 'production' }, platform: 'browser' };
+    </script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #202020;
+      }
+      #terminal {
+        position: absolute;
+        inset: 0;
+        padding: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="terminal"></div>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>
