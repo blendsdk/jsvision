@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 11:53
-> **Progress**: 0/21 tasks (0%)
+> **Last Updated**: 2026-07-03 14:11
+> **Progress**: 5/21 tasks (24%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -157,11 +157,11 @@ the two GATE tasks below (per the NON-NEGOTIABLE TV-fidelity directive + `codeop
 > code is wrong — fix the code, never the spec.
 
 ### Phase 1: GATE-1 fidelity decode + core `tab*` theme roles
-- [ ] 1.1.1 [GATE-1 BEFORE-decode] Pin `tab*` bytes (cpAppColor) + decode the 4 tees `┬┴├┤`; record decode
-- [ ] 1.1.2 Write `tabs-theme.spec.test.ts` (ST-29, ST-30)
-- [ ] 1.1.3 Run spec tests — verify RED
-- [ ] 1.1.4 Implement `tab*` roles in core `theme.ts` + `defaultTheme`
-- [ ] 1.1.5 Run spec tests — verify GREEN
+- [x] 1.1.1 [GATE-1 BEFORE-decode] Pin `tab*` bytes (cpAppColor) + decode the 4 tees `┬┴├┤`; record decode ✅ 2026-07-03 14:10
+- [x] 1.1.2 Write `tabs-theme.spec.test.ts` (ST-29, ST-30) ✅ 2026-07-03 14:10
+- [x] 1.1.3 Run spec tests — verify RED ✅ 2026-07-03 14:10
+- [x] 1.1.4 Implement `tab*` roles in core `theme.ts` + `defaultTheme` ✅ 2026-07-03 14:11
+- [x] 1.1.5 Run spec tests — verify GREEN ✅ 2026-07-03 14:11
 
 ### Phase 2: TabView container + tab-strip renderer
 - [ ] 2.1.1 Write `tabs.spec.test.ts` (ST-1…17, 33, 34, **37, 38**) + `tab-strip.spec.test.ts` (ST-18…28)
