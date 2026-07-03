@@ -17,6 +17,10 @@
  *   `progressTrack` (`0x13` cyan-on-blue = `scrollBarPage`) for `░`/`-`. Documented extension colours.
  * - **Caption (AC-4)** — an optional centred ` NN% ` overlay in the existing `staticText` role.
  *
+ * **GATE-1 AFTER-diff (verified):** the composed buffer matches this decode cell-by-cell — ST-2
+ * asserts `full`×`█` + `PARTIAL[6]=▊` (U+258A) + `░` at `(v=0.28,w=10)` plus the `progressFill`/
+ * `progressTrack` styles pre-serialize; ST-3 asserts the distinct `#`/`-` ASCII branch. No divergence.
+ *
  * Leaf `View` (no children, no `onEvent`), caller-owned `value` signal (the `Input`/`RadioGroup`
  * idiom); `value` is clamped on every read (NaN/±∞/OOB → 0/1) so `full ∈ 0..width` and `part ∈ 0..7`
  * never overflow or index out of range (AC-5/AC-14). The `.js` extension in import specifiers is
@@ -36,24 +40,15 @@ const TRACK = '░';
  * Index `0` is a `''` sentinel so `PARTIAL[part]` is total over `part ∈ 0..7` and index `0` (no
  * partial) is never dereferenced. Frozen — a shared immutable table.
  */
-export const PARTIAL: readonly string[] = Object.freeze([
-  '',
-  '▏',
-  '▎',
-  '▍',
-  '▌',
-  '▋',
-  '▊',
-  '▉',
-]);
+export const PARTIAL: readonly string[] = Object.freeze(['', '▏', '▎', '▍', '▌', '▋', '▊', '▉']);
 
-/** NaN → 0 (any other number passes through). */
-function clampNaN(n: number): number {
+/** NaN → 0 (any other number passes through). Exported (module-level) for impl unit tests. */
+export function clampNaN(n: number): number {
   return Number.isNaN(n) ? 0 : n;
 }
 
-/** Clamp to `[0,1]`, mapping NaN → 0 first (so ±∞/OOB/NaN are all safe). */
-function clamp01(n: number): number {
+/** Clamp to `[0,1]`, mapping NaN → 0 first (so ±∞/OOB/NaN are all safe). Exported for impl tests. */
+export function clamp01(n: number): number {
   return Math.min(1, Math.max(0, clampNaN(n)));
 }
 
