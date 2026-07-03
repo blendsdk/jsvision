@@ -61,7 +61,13 @@ const BOX_SINGLE = { tl: '\u250C', tr: '\u2510', bl: '\u2514', br: '\u2518', h: 
  *                 passes the same profile `serialize()` encodes with.
  * @returns A `DrawContext` whose writes are offset to `viewRect` and clipped to `clip`.
  */
-export function makeDrawContext(buffer: ScreenBuffer, viewRect: Rect, clip: Rect, theme: Theme, caps: CapabilityProfile): DrawContext {
+export function makeDrawContext(
+  buffer: ScreenBuffer,
+  viewRect: Rect,
+  clip: Rect,
+  theme: Theme,
+  caps: CapabilityProfile,
+): DrawContext {
   const ox = viewRect.x;
   const oy = viewRect.y;
   const size: Size2D = { width: viewRect.width, height: viewRect.height };

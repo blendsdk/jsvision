@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-03 20:00
-> **Progress**: 11/22 tasks (50%)
+> **Last Updated**: 2026-07-03 20:06
+> **Progress**: 15/22 tasks (68%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -111,9 +111,9 @@ the NON-NEGOTIABLE TV-fidelity directive + `codeops/tv-fidelity-gate.md`).
 | 3.1.4 | Full verification | — |
 
 **Deliverables**:
-- [ ] AFTER-diff passes (rendered output matches the decode) and is recorded
-- [ ] Impl/edge tests written and passing
-- [ ] `yarn verify` passing
+- [x] AFTER-diff passes (rendered output matches the decode) and is recorded
+- [x] Impl/edge tests written and passing
+- [x] `yarn verify` passing
 
 **Verify**: `yarn verify`
 
@@ -176,10 +176,10 @@ the NON-NEGOTIABLE TV-fidelity directive + `codeops/tv-fidelity-gate.md`).
 - [x] 2.2.3 Run spec tests — verify GREEN (fix code, never the spec); `yarn verify` ✅ (completed: 2026-07-03 20:00 — 11 widget specs green; full verify 840 ui tests)
 
 ### Phase 3: GATE-1 AFTER-diff + impl tests & hardening
-- [ ] 3.1.1 [GATE-1 AFTER-diff] Cell-by-cell diff of fill glyphs/colours + spinner presets/fallback vs the decode; record
-- [ ] 3.1.2 Write `progress-bar.impl.test.ts` (clamp, rounding boundaries, percent, caption, asciiOnly)
-- [ ] 3.1.3 Write `spinner.impl.test.ts` + `run-spinner.impl.test.ts`
-- [ ] 3.1.4 Full verification
+- [x] 3.1.1 [GATE-1 AFTER-diff] Cell-by-cell diff of fill glyphs/colours + spinner presets/fallback vs the decode; record ✅ (completed: 2026-07-03 20:05 — realized by ST-2/3/6/7/8 oracles; AFTER-diff confirmation recorded in progress-bar.ts/spinner.ts JSDoc)
+- [x] 3.1.2 Write `progress-bar.impl.test.ts` (clamp, rounding boundaries, percent, caption, asciiOnly) ✅ (completed: 2026-07-03 20:05 — clampNaN/clamp01 exported module-level for unit tests)
+- [x] 3.1.3 Write `spinner.impl.test.ts` + `run-spinner.impl.test.ts` ✅ (completed: 2026-07-03 20:05 — negative mod, preset identity, swap matrix; fake TimerSeam ST-10 idempotent stop)
+- [x] 3.1.4 Full verification ✅ (completed: 2026-07-03 20:06 — `yarn verify` green, 15 new impl tests; ESLint clean on all RD-18 files)
 
 ### Phase 4: Packaging, kitchen-sink stories, `demo:feedback`
 - [ ] 4.1.1 Write `feedback.packaging.spec.test.ts` (ST-12)

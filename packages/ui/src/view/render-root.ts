@@ -313,9 +313,19 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     if (this.rootView === null) return;
     this.cache.clear();
     const origin: Point = { x: this.rootView.bounds.x, y: this.rootView.bounds.y };
-    composeView(this.current, this.rootView, origin, { ...this.rootView.bounds }, this.theme, this.caps, this.logger, this.cache, {
-      n: 0,
-    });
+    composeView(
+      this.current,
+      this.rootView,
+      origin,
+      { ...this.rootView.bounds },
+      this.theme,
+      this.caps,
+      this.logger,
+      this.cache,
+      {
+        n: 0,
+      },
+    );
   }
 
   /**

@@ -60,7 +60,11 @@ test('ST-1: value.set drives the proportion; a re-set repaints to the new value'
   expect(filledCount(row(0)), 'half → 5 full cells').toBe(5);
   v.set(0.8);
   loop.renderRoot.flush(); // force the coalesced repaint (the loop defers flush; app-shell spec idiom)
-  const row2 = loop.renderRoot.buffer().rows()[0].map((c) => c.char).join('');
+  const row2 = loop.renderRoot
+    .buffer()
+    .rows()[0]
+    .map((c) => c.char)
+    .join('');
   expect(filledCount(row2), '0.8 → 8 full cells (more than at 0.5)').toBe(8);
 });
 
@@ -112,7 +116,10 @@ test('ST-3: asciiOnly caps render whole-cell # fill and - track (no partials)', 
   for (let x = 0; x < 5; x += 1) expect(buf.get(x, 0)?.char, `x${x} #`).toBe('#');
   for (let x = 5; x < 10; x += 1) expect(buf.get(x, 0)?.char, `x${x} -`).toBe('-');
   // No sub-cell partials and no full-block glyph leaked into the ASCII branch.
-  expect([...row(0)].some((c) => c === FULL || PARTIAL.includes(c as never)), 'no block glyphs').toBe(false);
+  expect(
+    [...row(0)].some((c) => c === FULL || PARTIAL.includes(c as never)),
+    'no block glyphs',
+  ).toBe(false);
 });
 
 // ST-4 / AC-4 — optional centred percent caption over the bar, in staticText; clamped 0..100.

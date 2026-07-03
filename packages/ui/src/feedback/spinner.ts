@@ -17,6 +17,10 @@
  * - **Glyph** in `staticText`, an optional **label** at column 2 (glyph width 1 + a 1-cell gap) in the
  *   `label` role, routed through `ctx.text` → core `sanitize` + width-clip (AC-9/AC-14).
  *
+ * **GATE-1 AFTER-diff (verified):** ST-6/ST-7 assert each preset renders its exact frozen code points
+ * at successive frames (and the negative-safe wrap); ST-8 asserts every non-`line` preset yields the
+ * `line` glyphs under `asciiOnly` caps while still animating. Rendered output matches the decode.
+ *
  * The widget never imports a timer — purity (AR-190). Animation is caller-driven (advance `frame`);
  * {@link runSpinner} is the optional timer helper. The `.js` extension in import specifiers is
  * required by NodeNext ESM resolution.
