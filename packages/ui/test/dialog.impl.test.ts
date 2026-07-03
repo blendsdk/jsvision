@@ -7,7 +7,7 @@
  * NO zoom box (PF-001). Real `View`/`EventLoop`. `.js` per NodeNext.
  */
 import { test, expect } from 'vitest';
-import { resolveCapabilities } from '@jsvision/core';
+import { resolveCapabilities, defaultTheme } from '@jsvision/core';
 import type { KeyEvent, MouseEvent as CoreMouseEvent } from '@jsvision/core';
 import { Group, createRenderRoot } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
@@ -140,6 +140,27 @@ test('PF-001: the dialog frame shows the close box and no zoom box', () => {
     expect(ch).not.toBe('↑');
     expect(ch).not.toBe('↕');
   }
+});
+
+// TV fidelity: `TDialog` is a `TWindow`, whose ctor sets `state |= sfShadow` unconditionally
+// (twindow.cpp:49) — every dialog casts a drop-shadow. Our `castsShadow` flag must default true.
+test('a Dialog casts a drop-shadow by default (TV sfShadow, twindow.cpp:49)', () => {
+  expect(new Dialog({ title: 'X' }).castsShadow).toBe(true);
+});
+
+// The shadow actually paints: a modal dialog's `shadowSize {2,1}` L-shadow darkens the backdrop one
+// column right of the frame (render-root.ts drawDropShadow), even though execView bypasses addWindow.
+test('a modal dialog paints its drop-shadow on the backdrop (right edge)', () => {
+  const dlg = new Dialog({ title: 'S' });
+  dlg.layout = { position: 'absolute', padding: 1, rect: { x: 2, y: 2, width: 10, height: 4 } }; // cols 2..11
+  const root = new Group();
+  root.add(dlg);
+  const rr = createRenderRoot({ width: 40, height: 12 }, { caps });
+  rr.mount(root);
+  const buf = rr.buffer();
+  // One column right of the dialog (x = 2+10 = 12, y = 3) is bare backdrop → shadowed.
+  expect(buf.get(12, 3)?.bg).toBe(defaultTheme.shadow.bg);
+  expect(buf.get(12, 3)?.fg).toBe(defaultTheme.shadow.fg);
 });
 
 /** A small absolute Text content child. */
