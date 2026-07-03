@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-03 (jsvision-ui **RD-16 Table/DataGrid → 🔬 Plan Preflighted** — `preflight table` PASSED WITH NOTES (0🔴/1🟠/3🟡/2🔵; same-session audit); **PF-101 (MAJOR) fixed** — header/data column misalignment under `align:'stretch'` restructured to width-matched fr-bands (`topRow[header fr|corner 1] / body[rows fr|vbar 1] / botRow[hbar fr|corner 1]`); PF-102/103/104 fixed, PF-105/106 accepted; next `exec_plan table`. Prior: **RD-15 Tree → DONE ✅** — `exec_plan tree` complete: `Tree<T>` expandable outline (TV `TOutlineViewer`), 4 phases / 35 tasks spec-first (ST-1…ST-24), TV GATE-1 decode + GATE-2 diff; `packages/ui/src/tree/` + 4 additive `cpOutlineViewer` roles + kitchen-sink story + `demo:tree`; runtime PA-16 (blue-window outline colours, since gray-dialog degenerates Normal==Focus) + PA-17 (marker `expanded?'─':'+'`); full `yarn verify`/`test:e2e`/`check:deps`/`lint` green. jsvision-ui now 12/18. Prior: **RD-14 Input dropdowns → DONE ✅** — `exec_plan input-dropdowns` complete: `History` + `ComboBox<T>` on a shared anchored popup (5 phases / 47 tasks spec-first, TV GATE-1/2, runtime PA-16/PA-17); full `yarn verify` + `test:e2e` + `check:deps` green, kitchen-sink stories + `demo:dropdowns` shipped. Prior: **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: the **RD-12+ high-value-controls set** was opened via `make_requirements` — sliced into 6 sibling RDs by mechanism (AR-125…129), **RD-14 (Input dropdowns) + RD-15 (Tree) + RD-16 (Table/DataGrid) drafted ✏️** (AR-130…161, GATE-1 TV decodes) — the **MVP set (RD-14/15/16) is now fully drafted**; RD-17…19 queued. And a new feature-set **bun-runtime** — RD-01 drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
+> **Last Updated**: 2026-07-03 (jsvision-ui **RD-16 Table/DataGrid → DONE ✅** — `exec_plan table` complete: `DataGrid<T>` multi-column table (TV `TListViewer`-derived, GATE-1 decode + GATE-2 diff), 4 phases / 28 tasks spec-first (ST-1…ST-24 + impl); `packages/ui/src/table/` (`columns.ts`/`grid-rows.ts`/`data-grid.ts`) + 1 additive `tableHeader` core role + kitchen-sink `data-grid` story + `demo:table` + `table-demo.e2e`; PF-101 width-matched fr-bands inside an inner `col` container; full `yarn verify`/`test:e2e`/`check:deps`/`lint` green. jsvision-ui now 13/18. Prior: **RD-15 Tree → DONE ✅** — `exec_plan tree` complete: `Tree<T>` expandable outline (TV `TOutlineViewer`), 4 phases / 35 tasks spec-first (ST-1…ST-24), TV GATE-1 decode + GATE-2 diff; `packages/ui/src/tree/` + 4 additive `cpOutlineViewer` roles + kitchen-sink story + `demo:tree`; runtime PA-16 (blue-window outline colours, since gray-dialog degenerates Normal==Focus) + PA-17 (marker `expanded?'─':'+'`); full `yarn verify`/`test:e2e`/`check:deps`/`lint` green. jsvision-ui now 12/18. Prior: **RD-14 Input dropdowns → DONE ✅** — `exec_plan input-dropdowns` complete: `History` + `ComboBox<T>` on a shared anchored popup (5 phases / 47 tasks spec-first, TV GATE-1/2, runtime PA-16/PA-17); full `yarn verify` + `test:e2e` + `check:deps` green, kitchen-sink stories + `demo:dropdowns` shipped. Prior: **RD-13 runtime-hardening → DONE ✅** — all 10 phases / 120 tasks complete, final full gate PASSED; remediated the five-agent audit backlog spec-first with TV GATE decodes. Also today: the **RD-12+ high-value-controls set** was opened via `make_requirements` — sliced into 6 sibling RDs by mechanism (AR-125…129), **RD-14 (Input dropdowns) + RD-15 (Tree) + RD-16 (Table/DataGrid) drafted ✏️** (AR-130…161, GATE-1 TV decodes) — the **MVP set (RD-14/15/16) is now fully drafted**; RD-17…19 queued. And a new feature-set **bun-runtime** — RD-01 drafted ✏️, Zero-Ambiguity Gate PASSED AR-1…AR-10)
 > **Features**: 0 / 2 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 12 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13, RD-14, RD-15) · RD-16 🔬 Plan Preflighted ([table](features/jsvision-ui/plans/table/00-index.md) — RD-12+ MVP set) · Backlog (RD-17…19, RD-08/09) | 12 / 18 done | 🔄 | 2026-07-03 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 13 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13, RD-14, RD-15, RD-16) · Backlog (RD-17…19, RD-08/09) | 13 / 18 done | 🔄 | 2026-07-03 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0 / 1 done | 🔄 | 2026-07-02 |
 
 ## Archived
@@ -24,6 +24,16 @@
 
 ## Notes
 
+- 2026-07-03: **jsvision-ui RD-16 (Table/DataGrid) → DONE** ✅ (`exec_plan table`). `DataGrid<T>` — a
+  focusable, virtual-scrolling multi-column table, a documented Turbo Vision extension on the
+  `TListViewer` spine (GATE-1 decode + GATE-2 diff against `tlstview.cpp`). 4 phases / 28 tasks
+  spec-first (ST-1…ST-24 + impl): `packages/ui/src/table/` (`columns.ts` pure width-apportion/sort
+  math, `grid-rows.ts` GridRows body + GridHeader sticky header, `data-grid.ts` Group) + **1 additive
+  core `tableHeader` role** (`0x3F` white-on-cyan) + kitchen-sink `data-grid` story + `demo:table` +
+  `table-demo.e2e`. PF-101 width-matched fr-bands inside an inner `col` container so the parent's
+  `layout` stays free; one impl fix (rows repaint bound to the display array, not its length, so a
+  pure reorder repaints). Files ≤ 500 lines; full `yarn verify`/`test:e2e`/`check:deps`/`lint` green.
+  jsvision-ui now **13/18**. Cascaded from **jsvision-ui**. Next MVP-adjacent: RD-17…19 backlog.
 - 2026-07-03: **jsvision-ui RD-16 (Table/DataGrid) plan preflighted** → 🔬 Plan Preflighted
   ([report](features/jsvision-ui/plans/table/00-preflight-report.md)). `preflight table` PASSED WITH NOTES
   (0🔴/1🟠/3🟡/2🔵; ⚠️ same-session audit, claims re-verified `file:line`). **PF-101 (MAJOR) fixed:** the
