@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 11 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13, RD-14) · RD-15 + RD-16 ✏️ Drafted (RD-12+ set — **MVP 3/3 drafted**, 3/6) · Backlog (RD-17…19, RD-08/09) | 11 / 18 done | 🔄 | 2026-07-02 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | 11 ✅ Done (RD-01…RD-07, RD-10, RD-11, RD-13, RD-14) · RD-15 🔄 Executing (`exec_plan tree` — Phase 0; runtime PA-16 blue-window outline colours) · RD-16 ✏️ Drafted (RD-12+ set — MVP 3/3 drafted, 3/6) · Backlog (RD-17…19, RD-08/09) | 11 / 18 done | 🔄 | 2026-07-03 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0 / 1 done | 🔄 | 2026-07-02 |
 
 ## Archived
@@ -24,6 +24,21 @@
 
 ## Notes
 
+- 2026-07-03: **jsvision-ui RD-15 (Tree) planned** → 📋 Plan Created
+  ([`plans/tree/`](features/jsvision-ui/plans/tree/00-index.md)). `make_plan RD-15` produced 8 docs;
+  **4 phases / 35 tasks** spec-first (ST-1…ST-24 ↔ AC-1…AC-13): Phase 0 (4 core `cpOutlineViewer`
+  theme roles + pure `graph.ts` builder/flatten) → 1 (`TreeRows` renderer + `Tree` composition) →
+  2 (nav/mouse/select) → 3 (story + `demo:tree` + GATE-2 + gate). Built **entirely on existing
+  primitives** (RD-11 `virtual.ts`/`ScrollBar` owned-bar pattern, RD-03 `View`/`DrawContext`) — **no
+  new engine seams**; the only additive surface is the 4 core theme roles. **Full TV GATE-1 decode**
+  captured in `03-01` (`graphChars`/`getGraph`/`createGraph`/`drawTree` two-tone/palette+`getColor`
+  chain/events — every glyph, width, and colour hop cited to `toutline.cpp`/`outline.h`/`mapcolor.cpp`/
+  `palette.cpp`) with GATE-1 BEFORE/GATE-2 AFTER tasks. **PA-1…PA-15 ✅ GATE PASSED** — 4 user choices
+  (forest `roots` source · collapsed-default + `expandedByDefault?` · vertical-only scroll, H deferred
+  · both Should-Haves `guides?`+`expandAll/collapseAll`); dominant decodes for the rest (object-identity
+  expand-Set · 4-file split · `outline*` roles · colour bytes pinned at exec GATE-1 vs gray-dialog
+  owner · mouse select mirrors RD-14 PA-16 no-double-click). Next: `exec_plan tree` (or `preflight`
+  first). RD-15 = sibling 2 of the RD-12+ MVP set. Cascaded from **jsvision-ui**.
 - 2026-07-02: **jsvision-ui RD-14 (Input dropdowns) → DONE ✅** (`exec_plan input-dropdowns`). `History`
   (TV `THistory`, faithful GATE-1/2) + fresh `ComboBox<T>` (editable filter / select-only type-ahead,
   two-signal value⟂text bind) on a shared `openAnchoredPopup` — a new `packages/ui/src/dropdown/`
