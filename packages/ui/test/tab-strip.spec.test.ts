@@ -9,7 +9,7 @@
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities, defaultTheme } from '@jsvision/core';
-import { Group, createRenderRoot } from '../src/view/index.js';
+import { Group } from '../src/view/index.js';
 import { signal } from '../src/reactive/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { TabView } from '../src/tabs/index.js';
@@ -48,7 +48,7 @@ function render(tabsData: Tab[], activeInit: number, w: number, h: number) {
 // ST-18 — folder-tab chrome: corners/edges + the `┬` notch, against the pre-serialize buffer.
 // ---------------------------------------------------------------------------------------------------
 
-test('ST-18: folder-tab chrome — ┌ ┐ corners, │ sides, └ ┘ bottom, and a ┬ notch between tabs', () => {
+test('ST-18: folder-tab chrome — ┌ ┐ corners, │ sides, └ ┘ bottom, and a ─ dash gap between tabs', () => {
   const { buf, row } = render(
     [
       { title: '~G~eneral', content: page() },
@@ -61,8 +61,9 @@ test('ST-18: folder-tab chrome — ┌ ┐ corners, │ sides, └ ┘ bottom, a
   // Top border row corners.
   expect(buf.get(0, 0)?.char, 'top-left ┌').toBe(TAB_GLYPHS.tl);
   expect(buf.get(39, 0)?.char, 'top-right ┐').toBe(TAB_GLYPHS.tr);
-  // A ┬ notch separates the two abutting tabs on row 0.
-  expect(row(0).includes(TAB_GLYPHS.tdown), 'a ┬ notch between the tabs').toBe(true);
+  // The adopted button-face design joins tabs with a flat `─` dash gap — NOT a `┬` notch.
+  expect(row(0).includes(TAB_GLYPHS.tdown), 'no ┬ notch (flat dash design)').toBe(false);
+  expect(row(0).includes(TAB_GLYPHS.h), 'a ─ dash fills the gaps between tabs').toBe(true);
   // Both labels are present (tildes stripped).
   expect(row(0).includes('General')).toBe(true);
   expect(row(0).includes('Display')).toBe(true);

@@ -7,7 +7,14 @@
  * pinned CP437↔Unicode decode. `.js` per NodeNext ESM.
  */
 import { test, expect } from 'vitest';
-import { stripGeometry, hitStrip, TAB_GLYPHS, OVERFLOW_LEFT, OVERFLOW_RIGHT, CLOSE_MARK } from '../src/tabs/tab-strip.js';
+import {
+  stripGeometry,
+  hitStrip,
+  TAB_GLYPHS,
+  OVERFLOW_LEFT,
+  OVERFLOW_RIGHT,
+  CLOSE_MARK,
+} from '../src/tabs/tab-strip.js';
 
 /** A minimal tab descriptor the geometry reads. */
 function tab(title: string, closeable = false): { title: string; closeable?: boolean } {
@@ -47,7 +54,10 @@ test('stripGeometry: both-end overflow with a middle-active tab shows both arrow
   const geo = stripGeometry(many, 4, 24, 0);
   expect(geo.showLeftArrow, 'hidden tabs to the left').toBe(true);
   expect(geo.showRightArrow, 'hidden tabs to the right').toBe(true);
-  expect(geo.slots.some((s) => s.index === 4), 'active tab is visible').toBe(true);
+  expect(
+    geo.slots.some((s) => s.index === 4),
+    'active tab is visible',
+  ).toBe(true);
   expect(geo.leftArrowX).toBe(1);
   expect(geo.rightArrowX).toBe(24 - 2);
 });

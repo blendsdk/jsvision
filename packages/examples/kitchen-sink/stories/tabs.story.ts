@@ -18,7 +18,7 @@ import type { Story, StoryContext } from '../story.js';
 /** Build a page as a `Group` with a title line + body lines, positioned within the content interior. */
 function page(lines: string[]): Group {
   const g = new Group();
-  g.background = 'tabInactive'; // the lightGray content field (matches the frame chrome)
+  g.background = 'staticText'; // the neutral gray content field (the frame chrome colour)
   lines.forEach((line, i) => g.add(at(new Text(line), 1, i, Math.max(1, line.length), 1)));
   return g;
 }
@@ -32,7 +32,11 @@ export const tabsStory: Story = {
   build(ctx: StoryContext) {
     const tabs = signal<Tab[]>([
       { title: '~G~eneral', content: page(['General settings', 'Name, theme, language.']) },
-      { title: '~D~isplay', content: page(['Display options', 'Resolution, colours.', '(closeable — click ×)']), closeable: true },
+      {
+        title: '~D~isplay',
+        content: page(['Display options', 'Resolution, colours.', '(closeable — click ×)']),
+        closeable: true,
+      },
       { title: '~N~etwork', content: page(['Network', 'Proxy, timeouts, retries.']) },
       { title: '~A~dvanced', content: page(['Advanced (disabled)', 'Not activatable.']), disabled: true },
     ]);
@@ -60,7 +64,15 @@ export const tabsStory: Story = {
     const echoY = tabH + 2;
     g.add(at(new Text(() => `active: #${active()} — ${activeTitle()}`), 1, echoY, Math.max(10, ctx.width - 2), 1));
     g.add(at(new Text(() => `last closed: ${lastClosed()}`), 1, echoY + 1, Math.max(10, ctx.width - 2), 1));
-    g.add(at(new Text('Ctrl+PgUp/PgDn cycle · Alt+G/D/N jump · ←/→ on strip · click tab/×'), 1, echoY + 2, Math.max(10, ctx.width - 2), 1));
+    g.add(
+      at(
+        new Text('Ctrl+PgUp/PgDn cycle · Alt+G/D/N jump · ←/→ on strip · click tab/×'),
+        1,
+        echoY + 2,
+        Math.max(10, ctx.width - 2),
+        1,
+      ),
+    );
     return g;
   },
 };

@@ -34,7 +34,7 @@ function printFrame(title: string, rows: readonly { char: string }[][]): void {
 /** Build a page as a `Group` with a couple of text lines. */
 function page(line: string): Group {
   const g = new Group();
-  g.background = 'tabInactive';
+  g.background = 'staticText'; // neutral gray content field (tab* roles are now green button faces)
   g.add(placed(new Text(line), 1, 0));
   return g;
 }
@@ -100,7 +100,9 @@ function main(): void {
   loop.renderRoot.flush();
   frame('Frame 5 — overflow: ◄ … ► arrows, the active tab auto-scrolled into view');
 
-  console.log('\nDone — a TabView rendered, switched (Ctrl+PageDown), jumped (Alt-hotkey), closed (×), and overflow-scrolled.');
+  console.log(
+    '\nDone — a TabView rendered, switched (Ctrl+PageDown), jumped (Alt-hotkey), closed (×), and overflow-scrolled.',
+  );
 }
 
 main();

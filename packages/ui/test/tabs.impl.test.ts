@@ -8,7 +8,7 @@
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
-import { View, Group, createRenderRoot } from '../src/view/index.js';
+import { View, Group } from '../src/view/index.js';
 import type { DrawContext } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { signal } from '../src/reactive/index.js';
