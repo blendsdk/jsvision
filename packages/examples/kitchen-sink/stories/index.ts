@@ -27,6 +27,7 @@ import { treeStory } from './tree.story.js';
 import { dialogStory } from './dialog.story.js';
 import { historyStory } from './history.story.js';
 import { comboBoxStory } from './combobox.story.js';
+import { dataGridStory } from './data-grid.story.js';
 
 /**
  * Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers
@@ -49,6 +50,7 @@ export const STORIES: readonly Story[] = [
   scrollerStory,
   listViewStory,
   treeStory,
+  dataGridStory,
   dialogStory,
   historyStory,
   comboBoxStory,

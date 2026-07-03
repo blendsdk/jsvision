@@ -43,6 +43,20 @@ test('story ids are unique (the shell uses them as menu command names)', () => {
   expect(new Set(ids).size).toBe(ids.length);
 });
 
+// ST-24 (RD-16 AC-12) — the DataGrid showcase story is registered, carries a unique id, and paints
+// at least one non-blank cell headlessly.
+test('ST-24: the data-grid story is registered and paints', () => {
+  const story = STORIES.find((s) => s.id === 'data-grid');
+  expect(story, 'a story with id "data-grid" is registered').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    expect(paintedCells(rr.buffer().rows()), 'the data-grid story painted nothing').toBeGreaterThan(0);
+    dispose();
+  });
+});
+
 // The core smoke oracle: each story builds + mounts + draws without throwing, and paints something.
 for (const story of STORIES) {
   test(`story "${story.id}" mounts headlessly and paints`, () => {

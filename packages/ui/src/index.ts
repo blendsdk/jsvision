@@ -114,3 +114,10 @@ export type { PopupHost } from './view/index.js';
 // surface is the 4 core `cpOutlineViewer` theme roles.
 export { Tree } from './tree/index.js';
 export type { TreeNode, TreeOptions } from './tree/index.js';
+
+// RD-16 table: the focusable, virtual-scrolling multi-column `DataGrid<T>` — a documented Turbo
+// Vision extension on the `TListViewer` spine (sticky header + heterogeneous columns + click-to-sort
+// + H-scroll). Explicit named re-exports (the layout-convention rule); the only additive surface is
+// the one core `tableHeader` theme role.
+export { DataGrid } from './table/index.js';
+export type { Column, ColumnWidth, ColumnAlign, SortState, ColumnGeometry, DataGridOptions } from './table/index.js';
