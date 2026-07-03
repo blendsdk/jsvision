@@ -171,6 +171,20 @@ test('ST-4: a caption at a tiny width is clipped, never overruns the view', () =
   expect(buf.get(3, 0), 'nothing painted past the view width').toBeUndefined();
 });
 
+// ST-17 (bugfix, user-reported) — the visual fill agrees with the rounded percent at the boundaries:
+// a value that rounds to 100% fills the LAST cell (no lingering partial); a value that rounds to 0% is
+// completely empty. Between the boundaries the smooth sub-cell fill is unchanged.
+test('ST-17: fill agrees with the rounded percent — 100% fills the last cell, 0% is empty', () => {
+  // v=0.996 → round(99.6)=100%, but round(v·20·8)=1594/... would leave a ▉ partial without the snap.
+  const near = render(0.996, 20, 1);
+  expect(near.bar.percent, 'reads 100%').toBe(100);
+  for (let x = 0; x < 20; x += 1) expect(near.buf.get(x, 0)?.char, `x${x} full (no partial last cell)`).toBe(FULL);
+  // v=0.004 → round(0.4)=0% → completely empty (no leading sliver).
+  const bare = render(0.004, 20, 1);
+  expect(bare.bar.percent, 'reads 0%').toBe(0);
+  for (let x = 0; x < 20; x += 1) expect(bare.buf.get(x, 0)?.char, `x${x} empty track`).toBe(TRACK);
+});
+
 // ST-5 / AC-5 + ST-14 — value bounds: NaN/-1 → 0 filled; 2/Infinity → all; never OOB / overruns width.
 test('ST-5: value clamps — NaN/-1 → empty, 2/Infinity → full; never exceeds width', () => {
   const fullCount = (s: string) => [...s].filter((c) => c === FULL).length;

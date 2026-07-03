@@ -8,8 +8,11 @@
  * - **Fill glyphs** — full block `█` = U+2588; eighth-block partials `PARTIAL[1..7]` = U+258F, U+258E,
  *   U+258D, U+258C, U+258B, U+258A, U+2589 (`▏▎▍▌▋▊▉`); track `░` = U+2591. Unicode Block Elements —
  *   the same CP437 shade/block convention TV uses for `TScrollBar` (`▒`/`■`) and the `▄█▀` shadow.
- * - **Fill math (round-first, PA-4)** — `e = round(v·width·8)`, `full = floor(e/8)`, `part = e % 8`:
- *   `full` full blocks, then one `PARTIAL[part]` when `part ∈ 1..7`, then the `░` track.
+ * - **Fill math (round-first, PA-4)** — `e = fillEighths(v,width)`, `full = floor(e/8)`, `part = e%8`:
+ *   `full` full blocks, then one `PARTIAL[part]` when `part ∈ 1..7`, then the `░` track. `fillEighths`
+ *   is `round(v·width·8)` in the mid-range but **snaps the 0%/100% boundaries** so the fill agrees
+ *   with the rounded percent — a value that rounds to 100% fills the last cell completely (fixes a
+ *   bar that reads "100%" yet shows a `▉` partial), and one that rounds to 0% is completely empty.
  * - **ASCII fallback (PA-2)** — when `asciiOnly(caps)` the bar draws whole cells only: `#` fill / `-`
  *   track (distinct). Selected at draw time from `ctx.caps` — NOT the serialize-time `fallbackGlyph`
  *   map (which lacks 6 of the 7 partials and collapses `█`/`░` to a single `#`; preflight PF-001).
@@ -64,6 +67,25 @@ export function clampNaN(n: number): number {
 /** Clamp to `[0,1]`, mapping NaN → 0 first (so ±∞/OOB/NaN are all safe). Exported for impl tests. */
 export function clamp01(n: number): number {
   return Math.min(1, Math.max(0, clampNaN(n)));
+}
+
+/**
+ * Fill amount in **eighths** for a `w`-cell bar. The mid-range is the round-first `round(v·w·8)`
+ * (PA-4), but the **0%/100% boundaries are snapped** so the visual fill agrees with the rounded
+ * percent: a value that rounds to 100% fills completely — no lingering partial in the last cell
+ * (the user-reported bug: a bar driven by a real fraction reads "100%" while the final cell is a
+ * `▉`) — and one that rounds to 0% is completely empty. `v` is clamped first. Exported for impl tests.
+ *
+ * @param v Progress (clamped to `[0,1]`).
+ * @param w Bar width in cells.
+ * @returns Filled eighths in `0..w*8` (`w*8` = full, `0` = empty).
+ */
+export function fillEighths(v: number, w: number): number {
+  const c = clamp01(v);
+  const pct = Math.round(c * 100);
+  if (pct <= 0) return 0; // reads 0% ⇒ completely empty (no leading sliver)
+  if (pct >= 100) return w * 8; // reads 100% ⇒ completely full (last cell not a partial)
+  return Math.round(c * w * 8); // round-first sub-cell fill (PA-4)
 }
 
 /**
@@ -206,13 +228,13 @@ export class ProgressBar extends View {
     trackStyle: Style,
   ): void {
     if (asciiOnly(ctx.caps)) {
-      const filled = Math.round(v * bw); // whole cells only, no partials
+      const filled = Math.round(fillEighths(v, bw) / 8); // whole cells only; 0%/100% snapped (boundary fix)
       for (let y = 0; y < bh; y += 1) {
         ctx.fillRect(bx, by + y, filled, 1, '#', fillStyle);
         ctx.fillRect(bx + filled, by + y, bw - filled, 1, '-', trackStyle);
       }
     } else {
-      const e = Math.round(v * bw * 8); // width in eighths (round-first, PA-4)
+      const e = fillEighths(v, bw); // width in eighths (round-first, PA-4; 0%/100% snapped)
       const full = Math.floor(e / 8);
       const part = e % 8; // 0..7
       for (let y = 0; y < bh; y += 1) {
@@ -247,14 +269,11 @@ export class ProgressBar extends View {
     const label = `${pct}%`; // ASCII digits + '%' → display width == length
     const start = Math.max(0, Math.floor((bw - label.length) / 2));
     const cy = by + Math.floor(bh / 2);
-    // Fill boundary in whole cells, matching the bar drawn for these caps (round-first eighths → cell).
-    let filledCells: number;
-    if (asciiOnly(ctx.caps)) {
-      filledCells = Math.round(v * bw);
-    } else {
-      const e = Math.round(v * bw * 8);
-      filledCells = Math.floor(e / 8) + (e % 8 >= 4 ? 1 : 0); // round the sub-cell edge to a whole cell
-    }
+    // Fill boundary in whole cells, matching the bar drawn for these caps (shared fillEighths → cell).
+    const e = fillEighths(v, bw);
+    const filledCells = asciiOnly(ctx.caps)
+      ? Math.round(e / 8) // whole cells, same as the ASCII bar
+      : Math.floor(e / 8) + (e % 8 >= 4 ? 1 : 0); // round the sub-cell edge to a whole cell
     for (let i = 0; i < label.length; i += 1) {
       const cx = start + i;
       if (cx >= bw) break; // width-clip: never overrun the bar
