@@ -1,12 +1,13 @@
 /**
- * Specification tests (immutable oracles) — RD-18 `ProgressBar` (03-01, 07 ST-1…ST-5 + ST-14 bar part).
+ * Specification tests (immutable oracles) — RD-18 `ProgressBar` (03-01, 07 ST-1…ST-5 + ST-14 bar part;
+ * ST-15/16 = the PA-13 positioned-label extension).
  *
  * RD-18 has NO Turbo Vision counterpart (GATE-1, AR-186); the bar is a documented new component whose
  * pieces are grounded in Unicode Block Elements + the caps-driven ASCII fallback + the `progress*`
  * extension colours. These oracles derive from AC-1…AC-5 + AC-14 and the 03-01 draw algorithm:
  *   e = round(v·w·8); full = floor(e/8); part = e % 8  →  full×█(U+2588), one PARTIAL[part]
  *   (U+258F…U+2589) when part∈1..7, then ░(U+2591) track; ASCII caps → whole-cell #/- (no partials);
- *   optional centred ` NN% ` caption in staticText; value clamped (NaN/±∞/OOB → 0/1).
+ *   optional centred NN% KNOCKOUT caption (PA-12 — on the bar, not a staticText box); value clamped.
  * Widgets render the shipped way (createEventLoop + mount, the tab-strip.spec idiom) so ctx.caps flows
  * automatically. `.js` in import specifiers is required by NodeNext ESM resolution.
  */
@@ -36,9 +37,24 @@ const TRACK = '░'; // ░
 const PARTIAL = ['', '▏', '▎', '▍', '▌', '▋', '▊', '▉'] as const;
 
 /** Mount a ProgressBar filling w×h under the given caps; return the composed buffer + a row string. */
-function render(value: number, w: number, h: number, opts?: { caption?: boolean; caps?: typeof caps }) {
+function render(
+  value: number,
+  w: number,
+  h: number,
+  opts?: {
+    caption?: boolean;
+    caps?: typeof caps;
+    label?: string | (() => string);
+    labelPosition?: 'left' | 'right' | 'top' | 'top-left';
+  },
+) {
   const v = signal(value);
-  const bar = new ProgressBar({ value: v, caption: opts?.caption });
+  const bar = new ProgressBar({
+    value: v,
+    caption: opts?.caption,
+    label: opts?.label,
+    labelPosition: opts?.labelPosition,
+  });
   bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
   const root = new Group();
   root.add(bar);
@@ -122,16 +138,31 @@ test('ST-3: asciiOnly caps render whole-cell # fill and - track (no partials)', 
   ).toBe(false);
 });
 
-// ST-4 / AC-4 — optional centred percent caption over the bar, in staticText; clamped 0..100.
-test('ST-4: caption:true draws a centred NN% in staticText; omitted → none; clamped', () => {
-  const { row } = render(0.45, 10, 1, { caption: true });
-  expect(row(0).includes('45%'), 'centred 45% caption present').toBe(true);
-  // Off by default.
-  const plain = render(0.45, 10, 1);
-  expect(plain.row(0).includes('45%'), 'no caption by default').toBe(false);
-  // percent is clamped to 0..100.
+// ST-4 / AC-4 (PA-12, knockout supersedes the staticText draft) — optional centred NN% caption that
+// reads ON the bar: each digit's bg matches what it sits on (fill colour where the fill has swept over
+// it, the track's bg where it hasn't) and the fg inverts for contrast. No contrasting staticText box.
+test('ST-4: caption:true draws a centred knockout NN%; off by default; clamped; contrasts at the fill edge', () => {
+  // Present when on, absent by default, percent clamped 0..100.
+  expect(render(0.45, 10, 1, { caption: true }).row(0).includes('45%'), 'centred 45% present').toBe(true);
+  expect(render(0.45, 10, 1).row(0).includes('45%'), 'no caption by default').toBe(false);
   expect(render(2, 10, 1, { caption: true }).bar.percent).toBe(100);
   expect(render(-1, 10, 1, { caption: true }).bar.percent).toBe(0);
+
+  // v=0.5,w=10 → '50%' centred at cols 3..5; the fill boundary is 5 cells, so '5','0' sit over the
+  // fill and '%' sits over the track — the knockout must colour them differently.
+  const { buf } = render(0.5, 10, 1, { caption: true });
+  const overFill = buf.get(3, 0); // '5' — over the fill → inverse video (fill bg/fg swapped)
+  expect(overFill?.char).toBe('5');
+  expect(overFill?.fg, 'over-fill digit fg = fill bg').toBe(defaultTheme.progressFill.bg);
+  expect(overFill?.bg, 'over-fill digit bg = fill fg').toBe(defaultTheme.progressFill.fg);
+  const overTrack = buf.get(5, 0); // '%' — over the track → bright fg on the track background
+  expect(overTrack?.char).toBe('%');
+  expect(overTrack?.fg, 'over-track digit fg = fill fg (bright)').toBe(defaultTheme.progressFill.fg);
+  expect(overTrack?.bg, 'over-track digit bg = track bg').toBe(defaultTheme.progressTrack.bg);
+  // The defect is gone: no caption cell carries the staticText box background.
+  for (let x = 0; x < 10; x += 1) {
+    expect(buf.get(x, 0)?.bg, `x${x} is not the old staticText box`).not.toBe(defaultTheme.staticText.bg);
+  }
 });
 
 // ST-4 — tiny width: the caption is width-clipped, never overruns.
@@ -149,4 +180,51 @@ test('ST-5: value clamps — NaN/-1 → empty, 2/Infinity → full; never exceed
   expect(fullCount(render(Infinity, 10, 1).row(0)), 'Infinity → all filled').toBe(10);
   // Never writes past the view width (no OOB).
   expect(render(2, 10, 1).buf.get(10, 0), 'nothing at x=10').toBeUndefined();
+});
+
+// ST-15 / PA-13 — a top label occupies row 0; the bar drops to row 1 (two rows). `top` centres it,
+// `top-left` sets it flush-left.
+test('ST-15: a top label occupies row 0 and the bar drops to row 1', () => {
+  const { row } = render(0.5, 12, 2, { label: 'Copy', labelPosition: 'top-left' });
+  expect(row(0).startsWith('Copy'), 'top-left label flush-left on row 0').toBe(true);
+  expect(
+    [...row(0)].some((c) => c === FULL || c === TRACK),
+    'no bar glyphs on the label row',
+  ).toBe(false);
+  expect(
+    [...row(1)].some((c) => c === FULL || c === TRACK),
+    'the bar renders on row 1',
+  ).toBe(true);
+  const centred = render(0.5, 12, 2, { label: 'Copy', labelPosition: 'top' });
+  expect(centred.row(0).includes('Copy'), 'centred label present').toBe(true);
+  expect(centred.row(0).startsWith('Copy'), 'centred, not flush-left').toBe(false);
+});
+
+// ST-15 — a top label with only one row of space: the bar wins (a top label needs a second row).
+test('ST-15: a top label at height 1 yields the single row to the bar', () => {
+  const { row } = render(1, 10, 1, { label: 'x', labelPosition: 'top' });
+  expect(
+    [...row(0)].every((c) => c === FULL),
+    'full bar occupies the single row',
+  ).toBe(true);
+});
+
+// ST-16 / PA-13 — `left`/`right` labels reserve columns beside the bar on the same row; the bar shrinks.
+test('ST-16: a left label reserves leading columns; a right label reserves trailing columns', () => {
+  const left = render(1, 12, 1, { label: 'AB', labelPosition: 'left' });
+  expect(left.buf.get(0, 0)?.char, 'label at the start').toBe('A');
+  expect(left.buf.get(3, 0)?.char, 'bar begins after label + 1-col gap').toBe(FULL);
+  const right = render(1, 12, 1, { label: 'AB', labelPosition: 'right' });
+  expect(right.buf.get(0, 0)?.char, 'bar begins at x=0').toBe(FULL);
+  expect(right.row(0).endsWith('AB'), 'label at the trailing columns').toBe(true);
+});
+
+// ST-16 — measure(): a top label advertises 2 rows; otherwise 1; width fills the available track.
+test('ST-16: measure() reports 2 rows for a top label, 1 otherwise, filling width', () => {
+  const top = new ProgressBar({ value: signal(0.5), label: 'x', labelPosition: 'top' });
+  expect(top.measure?.({ width: 20, height: 10 })).toEqual({ width: 20, height: 2 });
+  const side = new ProgressBar({ value: signal(0.5), label: 'x', labelPosition: 'left' });
+  expect(side.measure?.({ width: 20, height: 10 })).toEqual({ width: 20, height: 1 });
+  const none = new ProgressBar({ value: signal(0.5) });
+  expect(none.measure?.({ width: 20, height: 10 })).toEqual({ width: 20, height: 1 });
 });

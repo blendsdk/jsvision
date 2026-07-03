@@ -81,14 +81,84 @@ test('percent getter: round(clamp(value)·100), clamped', () => {
   expect(new ProgressBar({ value: signal(-1) }).percent).toBe(0);
 });
 
-test('caption centring at even and odd widths', () => {
-  // width 10 (even), " 45% " is 5 wide → lx=floor((10-5)/2)=2.
+test('knockout caption centring (no padding) at even and odd widths', () => {
+  // '45%' is 3 wide (no surrounding spaces now); width 10 → start=floor((10-3)/2)=3 → cols 3..5.
   const even = render(0.45, 10, 1, true);
-  expect(even.buf.get(2, 0)?.char, 'lx=2 leading space').toBe(' ');
-  expect(even.row.slice(2, 7), 'centred label').toBe(' 45% ');
-  // width 9 (odd) → lx=floor((9-5)/2)=2 as well.
+  expect(even.row.slice(3, 6), 'centred 45%').toBe('45%');
+  // width 9 (odd) → start=floor((9-3)/2)=3 as well.
   const odd = render(0.45, 9, 1, true);
-  expect(odd.row.slice(2, 7), 'centred label (odd width)').toBe(' 45% ');
+  expect(odd.row.slice(3, 6), 'centred 45% (odd width)').toBe('45%');
+});
+
+/** Mount a labelled ProgressBar; return the buffer + a per-row string reader. */
+function renderLabelled(
+  value: number,
+  w: number,
+  h: number,
+  label: string | (() => string),
+  labelPosition: 'left' | 'right' | 'top' | 'top-left',
+  caption = false,
+) {
+  const bar = new ProgressBar({ value: signal(value), label, labelPosition, caption });
+  bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  const root = new Group();
+  root.add(bar);
+  const loop = createEventLoop({ width: w, height: h }, { caps });
+  loop.mount(root);
+  const buf = loop.renderRoot.buffer();
+  const row = (y: number) =>
+    buf
+      .rows()
+      [y].map((c) => c.char)
+      .join('');
+  return { buf, row };
+}
+
+test('label left/right: the reserved gap is exactly one column between text and bar', () => {
+  // left: 'AB' (2) + 1 gap → bar at x=3; col 2 is the gap (untouched → space).
+  const left = renderLabelled(1, 12, 1, 'AB', 'left');
+  expect(left.row(0).slice(0, 2)).toBe('AB');
+  expect(left.buf.get(2, 0)?.char, 'the 1-col gap').toBe(' ');
+  expect(left.buf.get(3, 0)?.char, 'bar after the gap').toBe('█');
+});
+
+test('label top-left composes with the knockout caption on the bar row', () => {
+  const { row } = renderLabelled(0.5, 12, 2, 'Sync', 'top-left', /* caption */ true);
+  expect(row(0).startsWith('Sync'), 'label on row 0').toBe(true);
+  expect(row(1).includes('50%'), 'knockout caption on the bar row').toBe(true);
+});
+
+test('label longer than the view width is clipped, never overruns', () => {
+  const { buf } = renderLabelled(0.5, 6, 2, 'ThisLabelIsTooLong', 'top-left');
+  expect(buf.get(6, 0), 'nothing painted past the view width').toBeUndefined();
+});
+
+test('reactive label: a function label re-reads on repaint', () => {
+  const s = signal('one');
+  const bar = new ProgressBar({ value: signal(1), label: () => s(), labelPosition: 'left' });
+  bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 1 } };
+  const root = new Group();
+  root.add(bar);
+  const loop = createEventLoop({ width: 16, height: 1 }, { caps });
+  loop.mount(root);
+  expect(
+    loop.renderRoot
+      .buffer()
+      .rows()[0]
+      .map((c) => c.char)
+      .join('')
+      .startsWith('one'),
+  ).toBe(true);
+  s.set('two');
+  loop.renderRoot.flush();
+  expect(
+    loop.renderRoot
+      .buffer()
+      .rows()[0]
+      .map((c) => c.char)
+      .join('')
+      .startsWith('two'),
+  ).toBe(true);
 });
 
 test('asciiOnly truth table: !utf8 || !halfBlocks', () => {
