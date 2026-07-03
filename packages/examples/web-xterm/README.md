@@ -3,8 +3,9 @@
 Runs the **exact same** `@jsvision/core` + `@jsvision/ui` stack that powers the native
 terminal demos, but rendered into an [xterm.js](https://xtermjs.org) terminal in a
 browser tab. It is the proof that jsvision's engine is host-agnostic: the pure render
-+ input contract is an ANSI byte stream, which is precisely xterm.js's output and
-input contract.
+
+- input contract is an ANSI byte stream, which is precisely xterm.js's output and
+  input contract.
 
 ```bash
 yarn build                                      # build @jsvision/core + @jsvision/ui first
@@ -20,12 +21,12 @@ a window, **click** to raise/focus, **F10** for the menu, **Tab** to cycle focus
 The engine is split so everything above the OS boundary is pure. This demo swaps only
 that boundary:
 
-| Concern      | Native (`@jsvision/core` `createHost`) | This demo (`browser-host.ts`)        |
-| ------------ | -------------------------------------- | ------------------------------------ |
-| **output**   | `serialize()` → `stdout.write(ansi)`   | `serialize()` → `term.write(ansi)`   |
-| **input**    | `stdin.on('data')` → `decode()`        | `term.onData()` → `decode()`         |
-| **resize**   | `SIGWINCH` → `{cols, rows}`            | `term.onResize()` → `{cols, rows}`   |
-| **caps**     | `resolveCapabilities(process.env)`     | a fixed truecolor+UTF-8 profile      |
+| Concern    | Native (`@jsvision/core` `createHost`) | This demo (`browser-host.ts`)      |
+| ---------- | -------------------------------------- | ---------------------------------- |
+| **output** | `serialize()` → `stdout.write(ansi)`   | `serialize()` → `term.write(ansi)` |
+| **input**  | `stdin.on('data')` → `decode()`        | `term.onData()` → `decode()`       |
+| **resize** | `SIGWINCH` → `{cols, rows}`            | `term.onResize()` → `{cols, rows}` |
+| **caps**   | `resolveCapabilities(process.env)`     | a fixed truecolor+UTF-8 profile    |
 
 `serialize()`, `decode()`/`flush()`, and `cursor` are reused verbatim — no fork, no
 shim. `app.ts` is 100% ordinary `@jsvision/ui`; only `main.ts` knows it's in a browser.
