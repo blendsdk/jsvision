@@ -8,7 +8,7 @@ import { resolveCapabilities } from '@jsvision/core';
 import { Group } from '../src/view/index.js';
 import { signal } from '../src/reactive/index.js';
 import { createEventLoop } from '../src/event/index.js';
-import { ProgressBar, clampNaN, clamp01, asciiOnly, PARTIAL } from '../src/feedback/progress-bar.js';
+import { ProgressBar, clampNaN, clamp01, asciiOnly, fillEighths, PARTIAL } from '../src/feedback/progress-bar.js';
 
 const caps = resolveCapabilities({
   env: {},
@@ -70,6 +70,19 @@ test('rounding boundaries — round-first e=round(v·w·8), full=floor(e/8), par
     for (let x = 0; x < 3; x += 1) expect(buf.get(x, 0)?.char, `x${x} full`).toBe(FULL);
     expect(buf.get(3, 0)?.char, 'x3 track (no partial)').toBe(TRACK);
   }
+});
+
+test('fillEighths: round-first mid-range, 0%/100% snapped, clamped', () => {
+  expect(fillEighths(0.5, 20), 'mid → round(v·w·8)').toBe(80);
+  expect(fillEighths(0.28, 10), 'mid → round(22.4)').toBe(22);
+  expect(fillEighths(0.994, 20), '99% → not snapped').toBe(Math.round(0.994 * 160)); // 159
+  expect(fillEighths(0.996, 20), 'rounds to 100% → full (snap fixes the partial last cell)').toBe(160);
+  expect(fillEighths(0.004, 20), 'rounds to 0% → empty').toBe(0);
+  expect(fillEighths(1, 20), '100% → full').toBe(160);
+  expect(fillEighths(0, 20), '0% → empty').toBe(0);
+  expect(fillEighths(2, 20), 'clamps >1 → full').toBe(160);
+  expect(fillEighths(-1, 20), 'clamps <0 → empty').toBe(0);
+  expect(fillEighths(NaN, 20), 'NaN → empty').toBe(0);
 });
 
 test('percent getter: round(clamp(value)·100), clamped', () => {
