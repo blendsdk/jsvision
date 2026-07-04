@@ -27,7 +27,7 @@
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
-import { signal } from '../reactive/index.js';
+import { signal, effect } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { Input } from '../controls/index.js';
 import { ListView } from '../list/index.js';
@@ -103,19 +103,38 @@ export class History extends View {
     openAnchoredPopup({
       host,
       anchor: absoluteRect(this.link),
-      // Built inside the popup's reactive owner (never here in the handler) so the list's computeds
-      // are owned + disposed with the popup — see `openAnchoredPopup`.
-      buildList: () =>
-        new ListView<string>({
+      // Built inside the popup's reactive owner (never here in the handler) so the list's computeds +
+      // the selected()-watch effect are owned + disposed with the popup — see `openAnchoredPopup`.
+      buildContent: (commit) => {
+        const selected = signal(-1);
+        const list = new ListView<string>({
           items: signal(entries),
           getText: (s) => s,
           focused,
+          selected,
           // TV `cpHistoryViewer` (decode §4): normal/selected = white-on-blue (blends into the blue
           // popup), focused = white-on-green. Overrides the RD-11 cyan `list*` roles for fidelity.
           roles: { normal: 'historyViewer', focused: 'historyViewerFocused', selected: 'historyViewer' },
-        }),
-      maxRows: this.maxRows,
-      onPick: (index) => this.pick(entries[index]),
+        });
+        // Pick on choice — Enter/Space (activate) AND a single row click both set `selected` (PA-16
+        // runtime: the popup no longer watches selected(), so the watch lives here). Skip the initial
+        // −1 so a pre-existing selection never auto-picks on open (the old `firstSelection` guard).
+        let first = true;
+        effect(() => {
+          const index = selected();
+          if (first) {
+            first = false;
+            return;
+          }
+          if (index >= 0) {
+            this.pick(entries[index]);
+            commit();
+          }
+        });
+        return list;
+      },
+      contentSize: { height: this.maxRows + 1 }, // reproduces the old maxRows+2 frame exactly (PA-5)
+      focusTarget: (c) => (c as ListView<string>).rows,
     });
   }
 

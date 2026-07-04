@@ -254,6 +254,40 @@ export interface Theme {
    * field. Paints the `░` track (and the whole-cell `-` ASCII track). Additive (AC-11).
    */
   readonly progressTrack: ThemeRole;
+  /**
+   * Calendar in-month day — the `Calendar` month-grid normal cell (RD-20, PA-3). **TV-decoded**
+   * through the `getColor` chain: `TCalendarView` sits in a `wpCyanWindow` window (`calendar.cpp:277`),
+   * `getColor(6)` → `cpCyanWindow[6]=0x15` → `cpAppColor[21]=0x3E` **yellow-on-cyan** (`calendar.cpp:134,163`).
+   * `0xHL`: H=bg nibble, L=fg nibble. Additive (AC-14).
+   */
+  readonly calendarNormal: ThemeRole;
+  /**
+   * Calendar "today" cell — the highlighted current date (RD-20, PA-3). **TV-decoded**: `getColor(7)`
+   * → `cpCyanWindow[7]=0x16` → `cpAppColor[22]=0x21` **blue-on-green** (`calendar.cpp:135,165`). Additive.
+   */
+  readonly calendarToday: ThemeRole;
+  /**
+   * Calendar selected day — the committed `value` cell (RD-20 extension, PA-2). `0x1F` white-on-blue:
+   * a distinct blue cell against the cyan grid; wins over `calendarToday` when they coincide (PA-4).
+   * TV has no day selection, so this is a grounded design byte (not a `getColor` decode). Additive.
+   */
+  readonly calendarSelected: ThemeRole;
+  /**
+   * Calendar focus cursor — the navigable focus cell, drawn **only while the Calendar has focus**,
+   * highest precedence (RD-20 extension, PA-1). `0x3F` white-on-cyan, kept distinct from the selected
+   * cell's blue bg. TV has no day cursor. Additive.
+   */
+  readonly calendarCursor: ThemeRole;
+  /**
+   * Calendar disabled day — a dimmed, navigable-but-non-committable day (RD-20 extension, PA-2).
+   * `0x38` darkGray-on-cyan, mirroring the shipped {@link clusterDisabled} greying family. Additive.
+   */
+  readonly calendarDisabled: ThemeRole;
+  /**
+   * Calendar ISO week-number column — the opt-in leading `NN` column (RD-20 extension, PA-2). `0x30`
+   * black-on-cyan, muted on the cyan grid. Each row labelled by its Thursday's ISO week (PA-10). Additive.
+   */
+  readonly calendarWeekNumber: ThemeRole;
   readonly statusBar: ThemeRole;
   /**
    * The status-line **pressed/selected** item (mouse-down feedback). Turbo Vision repaints the held
@@ -359,6 +393,17 @@ export const defaultTheme: Theme = {
   // brightCyan-on-blue (brighter sibling of scrollBarPage), track 0x13 cyan-on-blue (= scrollBarPage).
   progressFill: { fg: PALETTE.brightCyan, bg: PALETTE.blue },
   progressTrack: { fg: PALETTE.cyan, bg: PALETTE.blue },
+  // RD-20 Calendar roles (plans/date-family/00-ambiguity-register.md PA-2/PA-3). Two TV-decoded via
+  // wpCyanWindow → cpAppColor (calendar.cpp): normal 0x3E yellow-on-cyan (getColor(6)), today 0x21
+  // blue-on-green (getColor(7)). Four extensions (TV has no selection/cursor/disabled/week#): selected
+  // 0x1F white-on-blue, cursor 0x3F white-on-cyan, disabled 0x38 darkGray-on-cyan (clusterDisabled
+  // family), weekNumber 0x30 black-on-cyan.
+  calendarNormal: { fg: PALETTE.yellow, bg: PALETTE.cyan },
+  calendarToday: { fg: PALETTE.blue, bg: PALETTE.green },
+  calendarSelected: { fg: PALETTE.white, bg: PALETTE.blue },
+  calendarCursor: { fg: PALETTE.white, bg: PALETTE.cyan },
+  calendarDisabled: { fg: PALETTE.darkGray, bg: PALETTE.cyan },
+  calendarWeekNumber: { fg: PALETTE.black, bg: PALETTE.cyan },
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },
