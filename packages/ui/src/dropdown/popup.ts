@@ -20,7 +20,6 @@ import type { DrawContext, DispatchEvent, PopupHost } from '../view/index.js';
 import type { Rect, LayoutProps } from '../layout/index.js';
 import { effect, createRoot } from '../reactive/index.js';
 import { syncOverlayVisible } from '../app/index.js';
-import type { ListView } from '../list/index.js';
 
 /** Re-export the popup host seam (declared with the dispatch envelope, PF-002) for the dropdown API. */
 export type { PopupHost } from '../view/index.js';
@@ -56,24 +55,35 @@ export interface AnchoredPopup {
   dismiss(): void;
 }
 
-/** Options for {@link openAnchoredPopup}. Generic over the hosted list's item type `T`. */
-export interface AnchoredPopupOptions<T> {
+/**
+ * Options for {@link openAnchoredPopup} — generalized (RD-20 PA-5 / AR-204) to host any fixed-size
+ * `View` (History/ComboBox lists; the 20×8 `Calendar`), not just a `ListView`.
+ */
+export interface AnchoredPopupOptions {
   /** The overlay host + focus save/restore seam (the app shell, or a bare `Dialog`; PA-9). */
   host: PopupHost;
   /** The anchor rect — the linked field's bounds, in overlay-local coordinates. */
   anchor: Rect;
   /**
-   * Factory building the list to host (History: `ListView<string>`; ComboBox: its `ListView<T>`).
-   * Called **inside** the popup's reactive owner so the list's constructor computeds (its sorted
-   * display) are owned and disposed on dismiss — never leaked (they must NOT be created in the caller's
-   * click handler, which runs outside any `createRoot` scope).
+   * Build the hosted view **inside** the popup's reactive owner (its constructor computeds are owned +
+   * disposed on dismiss — never leaked; they must NOT be created in the caller's click handler, which
+   * runs outside any `createRoot`). The popup **injects a `commit` trigger** (PA-5): the content wires
+   * its own activation callback to it — `ListView.onSelect` (pick) / `Calendar.onChange` (day-commit) —
+   * so calling `commit()` closes the popup. This injection is the ONLY channel from content-activation
+   * to dismissal (the old `list.selected()` watch is removed); the content is built here (never in the
+   * caller's handler), so the caller cannot hold it — hence the trigger must be pushed in, not pulled.
    */
-  buildList(): ListView<T>;
-  /** Max visible rows (default {@link DEFAULT_MAX_ROWS}); the window height is `maxRows + 2`. PA-4. */
-  maxRows?: number;
-  /** Called on activation (Enter/Space/click) with the list's selected display index. */
-  onPick(index: number): void;
-  /** Called on any dismissal (Esc / outside-down / list-focus-loss). */
+  buildContent(commit: () => void): View;
+  /**
+   * The hosted content's intrinsic size. `height` = the content's VISIBLE ROW COUNT **+ 1** (the `+1`
+   * absorbs the placement formula's net `+1` border — see {@link placePopup}): a list passes
+   * `maxRows + 1`, the 8-row `Calendar` passes `9`. `width` = the content's column count (defaults to
+   * the anchor width); the frame adds its own ±1 border.
+   */
+  contentSize: { width?: number; height: number };
+  /** What receives focus on open (History/ComboBox: `list.rows`; Calendar: the calendar itself). */
+  focusTarget(content: View): View;
+  /** Called on any dismissal (Esc / outside-down / content-focus-loss). */
   onDismiss?(): void;
 }
 
@@ -143,19 +153,20 @@ class PopupFrame extends Group {
 
 /**
  * Compute the TV-faithful popup rect — the exact `THistory::handleEvent` sequence
- * (`thistory.cpp:90-98`, GATE-1/GATE-2 verified), generalized for `maxRows`:
- *   `r.a.x--; r.b.x++;` — grow ±1 in x (width = field + 2).
+ * (`thistory.cpp:90-98`, GATE-1/GATE-2 verified), generalized (RD-20 PA-5) for any `contentSize`:
+ *   `r.a.x--; r.b.x++;` — grow ±1 in x (width = `(contentSize.width ?? anchor.width) + 2`).
  *   `r.a.y--;` — top 1 row above the anchor top (never flips up).
- *   `r.b.y += 7;` — for TV's 6 visible rows; generalized the intermediate height is `maxRows + 3`.
+ *   `r.b.y += 7;` — for TV's 6 visible rows; generalized the intermediate height is `contentSize.height + 2`
+ *     (list callers pass `contentSize.height = maxRows + 1`, reproducing the old `maxRows + 3` exactly).
  *   `r.intersect(owner->getExtent());` — clamp to the overlay (truncate near the bottom edge).
  *   `r.b.y--;` — the final decrement, applied AFTER the clamp — so a bottom-clamped popup is
- *     `clampedHeight − 1` tall (an unclamped popup is `maxRows + 2`). This ordering is load-bearing:
- *     computing the height before clamping would be off-by-one at the bottom edge.
+ *     `clampedHeight − 1` tall (an unclamped popup is `contentSize.height + 1`). This ordering is
+ *     load-bearing: computing the height before clamping would be off-by-one at the bottom edge.
  * The `intersect`-then-`−1` is the ONLY thing that reduces rows; there is never an upward flip (PA-15).
  *
- * @param anchor   The field bounds (overlay-local).
- * @param maxRows  Max visible list rows.
- * @param viewport The overlay extent to clamp within.
+ * @param anchor      The field bounds (overlay-local).
+ * @param contentSize The hosted content's intrinsic size (`height` = visible rows + 1).
+ * @param viewport    The overlay extent to clamp within.
  * @returns The clamped popup window rect.
  */
 /**
@@ -178,40 +189,43 @@ export function absoluteRect(view: View): Rect {
   return { x, y, width: view.bounds.width, height: view.bounds.height };
 }
 
-function placePopup(anchor: Rect, maxRows: number, viewport: Rect): Rect {
+function placePopup(anchor: Rect, contentSize: { width?: number; height: number }, viewport: Rect): Rect {
   const grown: Rect = {
     x: anchor.x - 1,
     y: anchor.y - 1,
-    width: anchor.width + 2,
-    height: maxRows + 3, // TV's `r.b.y += 7` (maxRows 6 → 9); the `-1` below lands the final height
+    width: (contentSize.width ?? anchor.width) + 2, // grow ±1 in x (list keeps the field width)
+    // Intermediate height = contentSize.height + 2 (list callers pass `maxRows + 1` so this stays
+    // `maxRows + 3`, byte-identical to the pre-RD-20 rect); the `-1` below lands the final height.
+    height: contentSize.height + 2,
   };
   const clamped = intersect(grown, viewport);
   return { x: clamped.x, y: clamped.y, width: clamped.width, height: Math.max(0, clamped.height - 1) };
 }
 
 /**
- * Open an anchored popup hosting `list` below `anchor`. Non-modal (AR-132): the rest of the UI keeps
- * updating; after a dismissing outside-click the UI is interactable on the next event.
+ * Open an anchored popup hosting the caller's fixed-size `View` below `anchor`. Non-modal (AR-132):
+ * the rest of the UI keeps updating; after a dismissing outside-click the UI is interactable next event.
  *
- * @param opts The host, anchor, list, `maxRows`, and the `onPick`/`onDismiss` callbacks.
+ * The popup injects a `commit` trigger into `buildContent` — the content wires its own activation
+ * callback to it (`ListView.onSelect` / `Calendar.onChange`), which sets the value **then** calls
+ * `commit()` to close (PA-5). There is no content-specific watch inside the popup.
+ *
+ * @param opts The host, anchor, `buildContent(commit)`, `contentSize`, `focusTarget`, and `onDismiss`.
  * @returns The {@link AnchoredPopup} handle (idempotent `dismiss()`).
  */
-export function openAnchoredPopup<T>(opts: AnchoredPopupOptions<T>): AnchoredPopup {
-  const { host, anchor, onPick, onDismiss } = opts;
-  const maxRows = opts.maxRows ?? DEFAULT_MAX_ROWS;
+export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
+  const { host, anchor, contentSize, focusTarget, onDismiss } = opts;
   const overlay = host.overlay;
   const viewport = overlay.layout.rect ?? FALLBACK_VIEWPORT;
 
   const savedFocus = host.getFocused();
   let dismissed = false;
 
-  // One reactive owner for the WHOLE popup: the hosted list is built inside this root so its
-  // constructor computeds (the sorted display) plus the focus-loss + pick effects all belong to a
-  // single scope that `dispose()` tears down on dismiss. Building the list here (not in the caller's
-  // click handler) is what keeps its computeds from leaking outside any `createRoot` (RD-14 defect).
+  // One reactive owner for the WHOLE popup: the hosted content is built inside this root so its
+  // constructor computeds plus the focus-loss effect belong to a single scope that `dispose()` tears
+  // down on dismiss. Building the content here (not in the caller's click handler) is what keeps its
+  // computeds from leaking outside any `createRoot` (RD-14 defect).
   return createRoot((dispose) => {
-    const list = opts.buildList();
-
     /** Idempotent teardown: unmount views, dispose the scope, restore focus, notify (PA-15). */
     function dismiss(): void {
       if (dismissed) return;
@@ -219,18 +233,26 @@ export function openAnchoredPopup<T>(opts: AnchoredPopupOptions<T>): AnchoredPop
       overlay.remove(frame);
       overlay.remove(catcher);
       syncOverlayVisible(overlay);
-      dispose(); // dispose the list computeds + the focus-loss/pick effects BEFORE restoring focus
+      dispose(); // dispose the content computeds + the focus-loss effect BEFORE restoring focus
       if (savedFocus !== null) host.focusView(savedFocus);
       onDismiss?.();
     }
 
+    // Inject the commit trigger: the ONLY content→dismiss channel (the value-side effect runs in the
+    // content's own callback BEFORE this fires, so pick-then-close is preserved without the popup
+    // reading any content-specific member).
+    const content = opts.buildContent(() => {
+      if (!dismissed) dismiss();
+    });
+    const target = focusTarget(content);
+
     const frame = new PopupFrame(dismiss);
-    frame.layout = { position: 'absolute', padding: 1, rect: placePopup(anchor, maxRows, viewport) };
-    // The hosted list must FILL the frame's padded interior: `size:fr` fills the main axis (else the
-    // frame sizes it to its collapsed `auto` width), `align:stretch` (the frame default) fills the
-    // cross axis. Merge so the ListView keeps its own `direction:'row'` ([rows | bar]) split.
-    list.layout = { ...list.layout, size: { kind: 'fr', weight: 1 } };
-    frame.add(list);
+    frame.layout = { position: 'absolute', padding: 1, rect: placePopup(anchor, contentSize, viewport) };
+    // The hosted content must FILL the frame's padded interior: `size:fr` fills the main axis (else the
+    // frame sizes it to its collapsed `auto` height), `align:stretch` (the frame default) fills the
+    // cross axis. Merge so a ListView keeps its own `direction:'row'` ([rows | bar]) split.
+    content.layout = { ...content.layout, size: { kind: 'fr', weight: 1 } };
+    frame.add(content);
 
     const catcher = new PopupCatcher(dismiss);
     catcher.layout = {
@@ -244,28 +266,14 @@ export function openAnchoredPopup<T>(opts: AnchoredPopupOptions<T>): AnchoredPop
     overlay.add(frame);
     syncOverlayVisible(overlay);
 
-    host.focusView(list.rows); // the list receives focus on open (saved prior focus above)
+    host.focusView(target); // the focus target receives focus on open (saved prior focus above)
 
     // Focus-loss dismissal (PF-004): `focusSignal()` is a void tick firing on both gain AND loss, and
-    // this effect runs once immediately on creation — so dismiss ONLY when the list is now unfocused,
+    // this effect runs once immediately on creation — so dismiss ONLY when the target is now unfocused,
     // ignoring the open-time focus gain + the initial run (else the popup self-dismisses on open).
     effect(() => {
-      list.rows.focusSignal()();
-      if (!dismissed && !list.rows.state.focused) dismiss();
-    });
-    // Pick on activation: Enter/Space/click set `list.selected` (nav via arrows does not) — skip the
-    // initial value so a pre-existing selection never auto-picks on open.
-    let firstSelection = true;
-    effect(() => {
-      const index = list.selected();
-      if (firstSelection) {
-        firstSelection = false;
-        return;
-      }
-      if (!dismissed && index >= 0) {
-        onPick(index);
-        dismiss();
-      }
+      target.focusSignal()();
+      if (!dismissed && !target.state.focused) dismiss();
     });
 
     return { dismiss };

@@ -117,7 +117,16 @@ test('ST-30: the tab* roles are the ONLY additive keys — every existing role i
   // such RD's own theme spec owns the byte-for-byte guard for its roles (RD-18: feedback-theme.spec).
   // Extending this allowlist for a legitimately-added later role does NOT weaken RD-17's guarantee:
   // every tab* byte + every pre-existing byte above is still asserted unchanged. (RD-18 AR runtime.)
-  const LATER_ADDITIVE_ROLES = ['progressFill', 'progressTrack'] as const; // RD-18 feedback (PA-3, AC-11)
+  const LATER_ADDITIVE_ROLES = [
+    'progressFill',
+    'progressTrack', // RD-18 feedback (PA-3, AC-11)
+    'calendarNormal',
+    'calendarToday',
+    'calendarSelected',
+    'calendarCursor',
+    'calendarDisabled',
+    'calendarWeekNumber', // RD-20 date family (PA-3, AC-14; guarded by date-theme.spec)
+  ] as const;
   const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...TAB_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);
   const unexpected = actualKeys.filter((k) => !knownKeys.has(k));

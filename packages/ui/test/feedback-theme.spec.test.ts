@@ -115,9 +115,21 @@ test('ST-11: the progress* roles are the ONLY additive keys — every existing r
     expect(defaultTheme[name as keyof typeof defaultTheme], `${name} unchanged`).toStrictEqual(value);
   }
 
-  // The progress* roles are the ONLY new keys added to the theme (additive-only surface, AC-11).
-  const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...FEEDBACK_ROLES]);
+  // The progress* roles were the ONLY new keys at RD-18 time (additive-only surface, AC-11). This
+  // inventory tripwire tolerates roles that *later, sanctioned* additive RDs legitimately add on top —
+  // each such RD's own theme spec owns the byte-for-byte guard for its roles (RD-20: date-theme.spec).
+  // Extending this allowlist does NOT weaken RD-18's guarantee: every progress* + pre-existing byte
+  // above is still asserted unchanged. (RD-20 PA-14 runtime.)
+  const LATER_ADDITIVE_ROLES = [
+    'calendarNormal',
+    'calendarToday',
+    'calendarSelected',
+    'calendarCursor',
+    'calendarDisabled',
+    'calendarWeekNumber', // RD-20 date family (PA-3, AC-14; guarded by date-theme.spec)
+  ] as const;
+  const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...FEEDBACK_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);
   const unexpected = actualKeys.filter((k) => !knownKeys.has(k));
-  expect(unexpected, 'no theme key beyond the pre-existing set + the 2 progress* roles').toEqual([]);
+  expect(unexpected, 'no theme key beyond the pre-existing set + progress* + sanctioned later additive roles').toEqual([]);
 });
