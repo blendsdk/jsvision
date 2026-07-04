@@ -45,7 +45,7 @@ test('demo:color runs standalone, exits 0, and prints the color-family walkthrou
   expect(result.stdout).toContain('█');
   expect(result.stdout).toContain('◘');
   // Walkthrough narration.
-  expect(result.stdout).toContain('arrow-nav');
+  expect(result.stdout).toContain('selects the next cell LIVE');
   expect(result.stdout).toContain('hex field');
   expect(result.stdout).toContain('commits');
   // The swatch committed magenta (init blue → → magenta → Enter).

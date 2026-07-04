@@ -39,13 +39,7 @@ export const colorSwatchStory: Story = {
     g.add(at(swatch, 1, 1, 12, 4)); // 4 columns × 4 rows = 12 × 4
     g.add(at(new Text(() => `selected: ${value()}  ${hexOf(value())}`), 1, 6, width, 1));
     g.add(
-      at(
-        new Text('Arrows navigate (wrap-around) · Enter/Space select · click or drag to pick · the ◘ marks the value.'),
-        1,
-        8,
-        width,
-        1,
-      ),
+      at(new Text('Arrows / click / drag select live (wrap-around) · the ◘ marks the selected value.'), 1, 8, width, 1),
     );
     return g;
   },
