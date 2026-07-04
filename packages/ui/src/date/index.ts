@@ -11,6 +11,7 @@ export { Calendar } from './calendar.js';
 export type { CalendarOptions } from './calendar.js';
 export { DatePicker } from './date-picker.js';
 export type { DatePickerOptions } from './date-picker.js';
+export type { CalendarDensity } from './calendar-metrics.js';
 
 export type { CalendarDate } from './calendar-date.js';
 export {

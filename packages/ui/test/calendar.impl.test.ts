@@ -41,6 +41,7 @@ function make(opts: MakeOpts = {}) {
     max: opts.max,
     isDisabled: opts.isDisabled,
     firstDayOfWeek: opts.firstDayOfWeek,
+    density: 'compact', // these edge-case oracles use the TV-exact 20×8 grid geometry (j*3, y=2+i)
     onChange: opts.onChange,
   });
   cal.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 8 } };

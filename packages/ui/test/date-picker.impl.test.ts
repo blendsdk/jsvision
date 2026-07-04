@@ -94,9 +94,9 @@ test('open → click a day → value set + popup closed', () => {
   h.loop.dispatch(key('down', { alt: true })); // open (calendar hosted, cursor today)
   const cal = hostedCalendar(h.overlay);
   expect(cal).toBeInstanceOf(Calendar);
-  // Click today Sep 3 in the hosted calendar. The popup frame sits near the field anchor; compute the
-  // calendar's absolute origin from its bounds and click grid (row0, Thursday col j=4) → digit at
-  // calendar-local (13, 2). Use the calendar's absolute rect via its mounted bounds sum.
+  // Click today Sep 3 in the hosted (comfortable-density) calendar. The popup frame sits near the field
+  // anchor; compute the calendar's absolute origin from its bounds and click grid (row0, Thursday col
+  // j=4) → the day field at calendar-local col dayFieldX(4)=18 (digit "3" at 19), row weekRowY(0)=2.
   let ax = 0;
   let ay = 0;
   let node = cal as unknown as { bounds: { x: number; y: number }; parent: typeof node } | null;
@@ -105,8 +105,8 @@ test('open → click a day → value set + popup closed', () => {
     ay += node.bounds.y;
     node = node.parent;
   }
-  // Sep 3 at calendar-local (13, 2); 1-based dispatch → +1 on each axis.
-  h.loop.dispatch(mouseDown(ax + 13 + 1, ay + 2 + 1));
+  // Sep 3 at calendar-local (19, 2); 1-based dispatch → +1 on each axis.
+  h.loop.dispatch(mouseDown(ax + 19 + 1, ay + 2 + 1));
   expect(h.value(), 'clicking today commits it').toStrictEqual(TODAY);
   expect(popupOpen(h.overlay), 'popup closed after the day click').toBe(false);
 });

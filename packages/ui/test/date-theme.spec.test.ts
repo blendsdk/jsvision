@@ -9,7 +9,7 @@
  *   • `calendarNormal`     `0x3E` yellow-on-cyan   — TV `getColor(6)`→`cpCyanWindow[6]=0x15`→`cpAppColor[21]`
  *   • `calendarToday`      `0x21` blue-on-green     — TV `getColor(7)`→`cpCyanWindow[7]=0x16`→`cpAppColor[22]`
  *   • `calendarSelected`   `0x1F` white-on-blue     — extension (PA-2: blue-bg selection vs the cyan grid)
- *   • `calendarCursor`     `0x3F` white-on-cyan     — extension (PA-1: dedicated focus-cursor role)
+ *   • `calendarCursor`     `0xF0` black-on-white     — extension (PA-1: filled reverse focus cursor)
  *   • `calendarDisabled`   `0x38` darkGray-on-cyan  — extension (= the shipped clusterDisabled family)
  *   • `calendarWeekNumber` `0x30` black-on-cyan     — extension (PA-2: muted on-grid week number)
  *
@@ -51,7 +51,7 @@ const CALENDAR_EXPECTED: Record<(typeof CALENDAR_ROLES)[number], { fg: string; b
   calendarNormal: { fg: P.yellow, bg: P.cyan }, // 0x3E
   calendarToday: { fg: P.blue, bg: P.green }, // 0x21
   calendarSelected: { fg: P.white, bg: P.blue }, // 0x1F
-  calendarCursor: { fg: P.white, bg: P.cyan }, // 0x3F
+  calendarCursor: { fg: P.black, bg: P.white }, // 0xF0
   calendarDisabled: { fg: P.darkGray, bg: P.cyan }, // 0x38
   calendarWeekNumber: { fg: P.black, bg: P.cyan }, // 0x30
 };
