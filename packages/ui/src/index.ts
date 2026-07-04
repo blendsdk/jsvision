@@ -140,3 +140,21 @@ export type {
   RunSpinnerOptions,
   TimerSeam,
 } from './feedback/index.js';
+
+// RD-20 date family: the `Calendar` month-grid view (a faithful `TCalendarView` decode + extensions) +
+// the `DatePicker` dropdown + the `CalendarDate` civil-date value type with pure helpers. Additive
+// surface = 6 core `calendar*` theme roles + the generalized anchored popup (PA-5). Explicit named
+// re-exports (the layout-convention rule); the grid/format internals + `dateFormat()` stay internal.
+export { Calendar, DatePicker } from './date/index.js';
+export {
+  daysInMonth,
+  dayOfWeek,
+  addMonths,
+  addDays,
+  compare,
+  toISO,
+  parseISO,
+  fromDate,
+  toDate,
+} from './date/index.js';
+export type { CalendarDate, CalendarOptions, DatePickerOptions, DateFormat } from './date/index.js';
