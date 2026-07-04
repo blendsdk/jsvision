@@ -69,13 +69,20 @@ The components in scope:
   with a configurable **`columns`** (default **4**, matching `TColorSelector`); rows follow from
   `ceil(colors.length / columns)`. (TV's fg/bg-dual split is **not** built in — the fg-vs-bg distinction
   is an app concern; compose two `ColorSwatch`es if both are needed.)
+- **State model (cursor vs `value` — the extension seam):** the widget keeps an internal **cursor index**
+  as the single source of truth for keyboard/mouse navigation *and* the marker; **`value: Signal<Color>`**
+  is a **derived two-way binding**. Commit ⇒ `value = colors[cursor]`; an external `value` set ⇒
+  `cursor = indexOf(value)` (left unchanged when `value ∉ colors`). Initial `cursor = indexOf(value)` if
+  present, else **`0`**. (TV has no split — its `uchar color` is both cursor and selection; the split is
+  forced here by binding a `Color` that may be a truecolor outside `colors`, e.g. from the hex field.)
 - **Cell geometry (faithful):** each cell is **3 columns wide** (the `moveChar(j*3, …, 3)` decode),
   painted as a solid block **in that cell's own `Color`** (via a `DrawContext` custom style, not a theme
   role — the cells *are* the colors). Grid width = `columns * 3`.
-- **Selection (faithful marker):** the selected cell (the one equal to `value`) gets the **`◘` marker**
-  (U+25D8, the CP437 `8` decode) at its centre column; when the selected color is **black/dark** the
-  marker is drawn in a **forced-contrast** style (the `0x70`-on-black decode) so it stays visible. `value`
-  not present in `colors` ⇒ no marker drawn.
+- **Selection (faithful marker):** the cursor cell (`colors[cursor]`, which equals `value` whenever
+  `value ∈ colors`) gets the **`◘` marker** (U+25D8, the CP437 `8` decode) at its centre column; when that
+  color is **black/dark** the marker is drawn in a **forced-contrast** style (the `0x70`-on-black decode)
+  so it stays visible. A `value` **not present** in `colors` (e.g. a truecolor) ⇒ **no marker drawn** (the
+  cursor keeps its last index for nav, but nothing matches `value`).
 - **Keyboard (faithful wrap-around):** `←`/`→` move the selection ∓/±1 cell within `[0, colors.length-1]`
   with **wrap-around**; `↑`/`↓` move ∓/±`columns` with the edge-wrap decode (`colorsel.cpp:196-212`);
   **Enter/Space** commits the focused cell. Moving the selection updates the focused cell; **commit** sets
@@ -83,9 +90,11 @@ The components in scope:
 - **Mouse (faithful):** a **click** on a cell selects it; **drag** (mouse-move while down) tracks the
   selection across cells (the `do…while(mouseEvent(evMouseMove))` decode, `colorsel.cpp:165-177`); a click
   in a `ColorPicker` also **commits + closes** (AR-216).
-- **Framing:** the standalone `ColorSwatch` is a bare grid `View` (its host `Window`/`Dialog`/popup
-  supplies any frame), matching how `TColorSelector` is a framed view inside `TColorDialog`; the grid
-  itself draws only cells + marker.
+- **Framing (recorded deviation):** TV's `TColorSelector` sets **`ofFramed`** (`colorsel.cpp:114`) — it
+  draws its **own** frame. RD-21's `ColorSwatch` **deliberately omits** that frame and draws **only cells +
+  marker**, delegating any frame to the host `Window`/`Dialog`/popup — a **documented extension** (the
+  standalone grid is bare so it composes cleanly inside the RD-14 popup, which already frames). To be
+  re-affirmed at plan **GATE-2**.
 
 #### `ColorPicker` — the swatch dropdown (AR-213/AR-216, extension)
 - A **`Group`** composing a **trigger chip** (a small `View` showing the current `value` as a color block
@@ -97,9 +106,12 @@ The components in scope:
   via **`toRgb()`**/`HEX_RE` (`color.ts`); a complete valid `#rrggbb` sets `value` (truecolor). Set
   `allowCustom: false` for a **pure indexed picker** (grid only). The picker binds one `Signal<Color>`.
 - **Open / commit / cancel (mirrors `ComboBox`/`DatePicker`):** opens on the trigger's **Down/Alt+Down**
-  or a **click on `▼`**; the popup takes focus; a **single click on a swatch** (or **Enter** on the
-  focused cell, or a complete hex entry + Enter) **commits** the color **and closes**; **Esc**/outside
-  mouse-down cancels (value unchanged); **no `PopupHost` ⇒ decline to open** (the headless guard).
+  or a **click on `▼`**; the popup takes focus; a swatch pick **commits on mouse *release*** over a cell —
+  a **drag inside the popup previews** the cell under the pointer (the faithful `evMouseMove` track), and
+  releasing over a cell **commits the color + closes** (mouse-**down** alone does not close, so drag-preview
+  stays possible); **Enter** on the cursor cell or a **complete hex entry + Enter** also commit + close;
+  **Esc**/outside mouse-down cancels (value unchanged); **no `PopupHost` ⇒ decline to open** (the headless
+  guard).
 
 #### Theme roles — minimal, mostly reused (AR-217)
 - The swatch **cells are raw colors** (drawn in each cell's own `Color`), **not** theme roles — so RD-21
@@ -121,8 +133,10 @@ The components in scope:
 ### Should Have
 - **`ColorSwatch.select(color)`** convenience method (drives the same signal programmatically).
 - **`onChange(color)`** callback fired when `value` changes.
-- **Named swatches** — an optional `label` per cell surfaced in the chip caption / a tooltip-style echo
-  (the swatch's own draw stays a color block; the name shows in the picker chip).
+- **Named swatches** — an optional **`nameFor?: (c: Color) => string`** accessor (a pure function, **not**
+  a per-cell label baked into the palette) surfaces a color name in the chip caption / a tooltip-style echo;
+  this keeps the palette a plain `Color[]` (AR-211/AR-212 intact — no richer cell type). The swatch's own
+  draw stays a color block; the name shows in the picker chip.
 
 ### Won't Have (Out of Scope) — and Deferred (tracked)
 
@@ -158,9 +172,16 @@ The components in scope:
 - Pure TS, ESM/NodeNext (`.js` specifiers), zero runtime deps (`check:deps` holds).
 
 ### Cross-package + cross-RD edits (additive only)
-- **`@jsvision/core`**: **0 or 1** additive theme role (`colorMarker`, only if the GATE-1 decode of the
-  `0x70`-on-black marker rule needs it, AR-217) — pinned at plan GATE-1. No existing role changes; the
-  swatch cells use raw `Color`s, not roles.
+- **`@jsvision/core` theme role**: **0 or 1** additive theme role (`colorMarker`, only if the GATE-1 decode
+  of the `0x70`-on-black marker rule needs it, AR-217) — pinned at plan GATE-1. No existing role changes;
+  the swatch cells use raw `Color`s, not roles.
+- **`@jsvision/core` public re-exports (additive):** the reuse below requires symbols that are **defined
+  but not on the public `@jsvision/core` entry today** — **`ANSI16_ORDER`** (`palette.ts:43`, the default
+  palette), **`toRgb()`** (`color.ts:42`, the hex-validation boundary), and a **public hex validator**
+  (`HEX_RE`, `color.ts:32`, currently unexported — or rely on `toRgb()` throwing `InvalidColorError`).
+  Since `@jsvision/ui` imports core **by name**, RD-21 adds their **additive, non-breaking** re-exports
+  through `color/index.ts` → `engine/index.ts` (no existing export changes; `check:deps` unaffected). The
+  exact symbol set is pinned at plan GATE-1 alongside the theme role.
 - **RD-14 popup generalization (AR-204):** **already landed by RD-20** — RD-21 **consumes** the
   generalized `openAnchoredPopup` (host an arbitrary fixed-size `View`); it does **not** re-touch
   `dropdown/`. (If RD-21 is somehow implemented before RD-20, this generalization is a shared prerequisite
@@ -169,6 +190,7 @@ The components in scope:
 ### Reuse (no new engine primitives)
 - **Color model + validation (core):** the `Color` type, `ANSI16_ORDER`/`PALETTE`, `toRgb()`/`HEX_RE`,
   and the depth-aware `encode()` downsampling (`color/`) — the swatch never reimplements color math.
+  *(`ANSI16_ORDER`/`toRgb`/`HEX_RE` need the additive public re-exports noted above — reuse, not reinvent.)*
 - **Popup/overlay (RD-14/RD-05):** the `ColorPicker` reuses the generalized `openAnchoredPopup` +
   `PopupHost` + `absoluteRect` + catcher/Esc/outside-click dismissal, exactly as `DatePicker`/`ComboBox`.
 - **Hex field (RD-06):** an `Input` + the `filter` validator gate the hex entry; parsing via `toRgb()`.
@@ -266,16 +288,21 @@ plan GATE-1/GATE-2; the extension ACs encode the generic-palette / hex / picker 
 - **AC-4** (wrap-around keyboard nav) — `→` moves the selection +1 with wrap from the last cell to the
   first; `←` −1 with wrap; `↑`/`↓` move ∓/±`columns` with the edge-wrap decode; **Enter/Space** commits the
   focused cell to `value`. *(AR-215)*
-- **AC-5** (click + drag select) — a click on a cell sets `value` to it; a drag (mouse-move while down)
-  moves the selection across cells under the pointer (the `evMouseMove` track); the hit math is
-  `row*columns + floor(localX/3)`, bounds-clamped. *(AR-215)*
+- **AC-5** (click + drag select) — a click on a cell moves the cursor to it (committing per the host
+  rules); a drag (mouse-move while down) moves the cursor across cells under the pointer (the `evMouseMove`
+  track); the hit math is `row*columns + floor(localX/3)`. **Out-of-bounds (faithful vs extension):** a
+  drag whose pointer leaves the **grid** ⇒ the cursor **reverts to its pre-drag cell** (TV-faithful,
+  `colorsel.cpp:167-173`); a pointer **inside the grid but past the last cell of a partial final row** ⇒
+  the cursor **clamps** to `colors.length-1` (a generic-palette extension TV's full 4×4 never hits). Pinned
+  at plan GATE-2. *(AR-215)*
 - **AC-6** (generic palette + columns) — a custom `colors` array (e.g. 8 truecolor hex values) with
   `columns: 8` renders one row of 8 three-wide cells; `columns` defaults to 4 and `colors` to
   `ANSI16_ORDER` (16 cells, 4×4). *(AR-212)*
 - **AC-7** (`ColorPicker` chip + open/commit/cancel) — the trigger chip shows `value` as a color block (+
   optional label/hex); **Down/Alt+Down** or a click on **▼** opens the `ColorSwatch` popup (a no-op with
-  no `PopupHost`); a **single click on a swatch** (or Enter on the focused cell) sets `value` **and closes**;
-  **Esc**/outside-mouse-down closes **without** changing `value`. *(AR-213/AR-216)*
+  no `PopupHost`); a swatch pick **commits on mouse *release*** over a cell (a drag previews; mouse-**down**
+  alone does not close), or **Enter** on the cursor cell, sets `value` **and closes**; **Esc**/outside-mouse-
+  down closes **without** changing `value`. *(AR-213/AR-216)*
 - **AC-8** (optional hex entry) — with `allowCustom: true` (default) the popup shows a hex `Input`; typing
   a complete valid `#rrggbb` and committing sets `value` to that truecolor (parsed via `toRgb()`); an
   invalid hex is rejected by the `filter` validator / `toRgb` and does not change `value`. With
@@ -287,7 +314,9 @@ plan GATE-1/GATE-2; the extension ACs encode the generic-palette / hex / picker 
   existing roles; **at most one** additive `colorMarker` role exists (only if the GATE-1 decode needs it),
   `encode()` of it does not throw, and no existing role changes. *(AR-217)*
 - **AC-11** (packaging) — the color family lives in `packages/ui/src/color/` with explicit named
-  re-exports from `src/index.ts`; `yarn check:deps` passes (zero runtime deps); files ≤ 500 lines. *(AR-218)*
+  re-exports from `src/index.ts`; `yarn check:deps` passes (zero runtime deps); files ≤ 500 lines. The
+  additive core re-exports (`ANSI16_ORDER`, `toRgb`, a hex validator) are present on the public
+  `@jsvision/core` entry and **no existing core export changes**. *(AR-218)*
 - **AC-12** (stories + demo) — `ColorSwatch` and `ColorPicker` kitchen-sink stories (category **`Color`**;
   a DOS-16 grid with a selected-color echo (name + hex), the picker opening the grid + a hex field) pass
   the headless smoke test; **`demo:color`** runs headless with an ASCII frame per step (render → arrow-nav
@@ -298,6 +327,12 @@ plan GATE-1/GATE-2; the extension ACs encode the generic-palette / hex / picker 
 - **AC-14** (empty / single-color state) — an empty `colors: []` renders an empty grid with no marker and
   no crash / out-of-range indexing; a single-color palette renders one cell and arrow-nav is a no-op (no
   infinite wrap loop). *(edge case; RD-16/17 empty-state precedent)*
+- **AC-15** (cursor vs `value` state model) — the internal **cursor index** drives nav + marker; `value`
+  is a derived two-way bind. Initial `cursor = indexOf(value)` when `value ∈ colors`, else **`0`**. When
+  `value ∉ colors` (a truecolor, or after a hex commit) **no cell shows the marker**, yet arrow-nav still
+  works from the cursor's current index and **Enter/Space commits `colors[cursor]`** into `value`
+  (replacing the off-palette value). Setting `value` to a member color re-homes the cursor to its index.
+  *(AR-211/AR-215; PF-001)*
 
 ---
 
