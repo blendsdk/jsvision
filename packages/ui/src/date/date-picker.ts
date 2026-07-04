@@ -21,6 +21,8 @@ import type { Signal } from '../reactive/index.js';
 import { Input, picture } from '../controls/index.js';
 import { openAnchoredPopup, absoluteRect, drawDropdownIcon } from '../dropdown/index.js';
 import { Calendar } from './calendar.js';
+import { metricsFor } from './calendar-metrics.js';
+import type { CalendarDensity, CalendarMetrics } from './calendar-metrics.js';
 import type { CalendarDate } from './calendar-date.js';
 import { compare } from './calendar-date.js';
 import { dateFormat } from './date-format.js';
@@ -68,6 +70,8 @@ export interface DatePickerOptions {
   isDisabled?: (d: CalendarDate) => boolean;
   firstDayOfWeek?: 0 | 1;
   showWeekNumbers?: boolean;
+  /** Density of the dropdown `Calendar` (default `'comfortable'`; the popup sizes to it). */
+  density?: CalendarDensity;
 }
 
 /**
@@ -88,6 +92,9 @@ export class DatePicker extends Group {
   protected readonly isDisabled?: (d: CalendarDate) => boolean;
   protected readonly firstDayOfWeek?: 0 | 1;
   protected readonly showWeekNumbers: boolean;
+  protected readonly density: CalendarDensity;
+  /** The hosted calendar's resolved geometry (sizes the anchored popup). */
+  protected readonly metrics: CalendarMetrics;
 
   /**
    * @param opts The two-way `value` + optional `format` + the forwarded `Calendar` options (PF-008).
@@ -102,6 +109,8 @@ export class DatePicker extends Group {
     this.isDisabled = opts.isDisabled;
     this.firstDayOfWeek = opts.firstDayOfWeek;
     this.showWeekNumbers = opts.showWeekNumbers ?? false;
+    this.density = opts.density ?? 'comfortable';
+    this.metrics = metricsFor(this.density, this.showWeekNumbers);
 
     const initial = this.value();
     this.text = signal(initial !== null ? this.spec.serialize(initial) : '');
@@ -171,10 +180,11 @@ export class DatePicker extends Group {
           isDisabled: this.isDisabled,
           firstDayOfWeek: this.firstDayOfWeek,
           showWeekNumbers: this.showWeekNumbers,
+          density: this.density,
           onChange: () => commit(), // a day-commit sets `value` then closes the popup (AC-10)
         }),
-      // 8 visible rows + 1 (the placement border compensation, 03-03 Part A); width 20 (23 with week#).
-      contentSize: { width: this.showWeekNumbers ? 23 : 20, height: 9 },
+      // The popup sizes to the calendar's density (width × height) + 1 row of placement border compensation.
+      contentSize: { width: this.metrics.width, height: this.metrics.height + 1 },
       focusTarget: (c) => c, // the calendar itself is the focus target
     });
   }

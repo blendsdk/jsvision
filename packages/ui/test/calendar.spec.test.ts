@@ -26,6 +26,8 @@ import { signal } from '../src/reactive/index.js';
 import type { Signal } from '../src/reactive/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { Calendar } from '../src/date/calendar.js';
+import { metricsFor } from '../src/date/calendar-metrics.js';
+import type { CalendarDensity } from '../src/date/calendar-metrics.js';
 import type { CalendarDate } from '../src/date/calendar-date.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
@@ -58,12 +60,16 @@ function makeCal(
     isDisabled?: (d: CalendarDate) => boolean;
     firstDayOfWeek?: 0 | 1;
     showWeekNumbers?: boolean;
+    density?: CalendarDensity;
     onChange?: (d: CalendarDate) => void;
     focus?: boolean;
     width?: number;
   } = {},
 ): CalHarness {
   const value = signal<CalendarDate | null>(opts.value ?? null);
+  // The TV-geometry oracles (ST-2…ST-9) assert the faithful compact 20×8, so the harness defaults to
+  // `density: 'compact'`; comfortable/spacious cases pass `density` explicitly (their own oracles below).
+  const density = opts.density ?? 'compact';
   const cal = new Calendar({
     value,
     today: opts.today ?? TODAY,
@@ -72,13 +78,16 @@ function makeCal(
     isDisabled: opts.isDisabled,
     firstDayOfWeek: opts.firstDayOfWeek,
     showWeekNumbers: opts.showWeekNumbers,
+    density,
     onChange: opts.onChange,
   });
-  const w = opts.width ?? (opts.showWeekNumbers ? 23 : 20);
-  cal.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: 8 } };
+  const m = metricsFor(density, opts.showWeekNumbers ?? false);
+  const w = opts.width ?? m.width;
+  const h = m.height;
+  cal.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
   const root = new Group();
   root.add(cal);
-  const loop = createEventLoop({ width: w, height: 8 }, { caps });
+  const loop = createEventLoop({ width: w, height: h }, { caps });
   loop.mount(root);
   if (opts.focus) loop.focusView(cal);
   loop.renderRoot.flush();
@@ -341,4 +350,60 @@ test('ST-9: showWeekNumbers adds a leading ISO-week column; header ↑↓ hit co
   h.loop.dispatch(mouseDown(22, 1)); // local (21,0) = shifted year-next arrow
   h.loop.renderRoot.flush();
   expect(h.row(0).includes('October 2027'), 'shifted ↑ year-next advances the year').toBe(true);
+});
+
+// ── ST-10: density (compact / comfortable / spacious) sizing (PA-20-runtime, user request) ─────────
+
+test('ST-10: density sizes — compact 20×8, comfortable 28×10, spacious 35×15; measure() reflects it', () => {
+  expect(metricsFor('compact', false)).toMatchObject({ width: 20, height: 8, footer: null });
+  const comfy = metricsFor('comfortable', false);
+  expect(comfy).toMatchObject({ width: 28, height: 10 });
+  expect(comfy.footer, 'comfortable has a footer').not.toBeNull();
+  expect(metricsFor('spacious', false)).toMatchObject({ width: 35, height: 15 });
+  // measure() advertises the chosen density (comfortable is the default).
+  const value = signal<CalendarDate | null>(null);
+  expect(new Calendar({ value, today: TODAY }).measure(), 'default = comfortable').toStrictEqual({
+    width: 28,
+    height: 10,
+  });
+  expect(new Calendar({ value, today: TODAY, density: 'compact' }).measure()).toStrictEqual({ width: 20, height: 8 });
+});
+
+// ── ST-11: the comfortable footer — 3-letter labels, a divider, the selected echo + [ Today ] ──────
+
+test('ST-11: comfortable renders 3-letter weekday labels, a ─ divider, and a footer [ Today ] button', () => {
+  const h = makeCal({ value: { year: 2026, month: 9, day: 15 }, density: 'comfortable' });
+  expect(h.row(1)).toBe(' Sun Mon Tue Wed Thu Fri Sat'); // 3-letter labels, 4-wide cells
+  expect(h.row(8)).toBe('─'.repeat(28)); // the footer divider row
+  expect(h.row(9).startsWith('2026-09-15'), 'selected-date echo at the left').toBe(true);
+  expect(h.row(9).includes('[ Today ]'), '[ Today ] button at the right').toBe(true);
+});
+
+// ── ST-12: the focus cursor is a FILLED reverse cell, not a fg-only tint (issue #1) ────────────────
+
+test('ST-12: the focus cursor draws a filled reverse background (calendarCursor bg ≠ the cyan surface)', () => {
+  const h = makeCal({ value: null, focus: true, density: 'comfortable' }); // cursor inits to today Sep 3
+  // Sep 3 (Thu, j=4) at dayFieldX(4)=18 → cols 18-19, y=2; focused → the cursor role wins (PA-4).
+  expect(h.cell(19, 2)?.bg, 'cursor is a filled block').toBe(defaultTheme.calendarCursor.bg);
+  expect(
+    defaultTheme.calendarCursor.bg,
+    'the cursor bg is a genuine fill, distinct from the surface (not fg-only)',
+  ).not.toBe(defaultTheme.calendarNormal.bg);
+});
+
+// ── ST-13: a [ Today ] click and the T key jump to today (issue #2) ────────────────────────────────
+
+test('ST-13: the T key and a click on [ Today ] both jump the visible month + cursor to today', () => {
+  const h = makeCal({ value: null, focus: true, density: 'comfortable' });
+  h.loop.dispatch(mouseDown(1, 1)); // ↑ month-next (local 0,0) → visible October (cursor still on today)
+  h.loop.renderRoot.flush();
+  expect(h.row(0).includes('October 2026')).toBe(true);
+  h.loop.dispatch(keyEvent('t')); // T → back to today's month
+  h.loop.renderRoot.flush();
+  expect(h.row(0).includes('September 2026'), 'T returned to today').toBe(true);
+  h.loop.dispatch(mouseDown(1, 1)); // → October again
+  h.loop.renderRoot.flush();
+  h.loop.dispatch(mouseDown(21, 10)); // local (20,9): inside the footer [ Today ] button (cols 19-27, y9)
+  h.loop.renderRoot.flush();
+  expect(h.row(0).includes('September 2026'), '[ Today ] click returned to today').toBe(true);
 });

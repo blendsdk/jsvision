@@ -82,3 +82,18 @@ tension) and **user-confirmed** before any code changed — the zero-ambiguity +
 > These re-wrote the `calendar.spec` ST-3 header oracle + ST-7 nav oracle + ST-9 week# hit columns
 > (a legitimate requirement change by the product owner, not a spec-immutability breach) and refreshed
 > the `date-demo.e2e` + kitchen-sink story hints. verify 8/8, check:deps clean, e2e 13/13.
+
+## Post-completion enhancements — round 2 (runtime — 2026-07-04)
+
+Three more user-requested refinements to the shipped `Calendar`/`DatePicker`, raised conversationally.
+Each surfaced (grounded options + the TV-fidelity tension) and **user-confirmed** before code changed.
+
+| ID | Type | Question | Options | Decision | Status |
+|----|------|----------|---------|----------|--------|
+| **PA-19** | Design (runtime) | The selected/focused day read as "only highlighted, not filled." Root cause: `calendarCursor` was `0x3F` white-on-**cyan** — the SAME bg as the cyan surface, so the focused day changed only its fg (a tint, not a fill). Make the selection a genuine filled block? | (A) **Filled reverse cursor** — `calendarCursor` → `0xF0` black-on-white (a solid highlight block); `calendarSelected` stays `0x1F` filled-blue. Both extension roles (not `getColor`-decoded), so fidelity-safe; (B) leave subtle — rejected (the reported defect) | **(A) `calendarCursor` `0xF0` filled reverse** (owner byte guard updated in `date-theme.spec`). *(user-confirmed)* | ✅ Resolved (runtime) |
+| **PA-20** | Design + Scope (runtime) | "Modern times, we have space" — the TV-exact 20×8 grid is cramped, and there is no modern **Today** affordance. Redesign larger + add Today? | Layout: **Comfortable** (`~28×10`, 4-wide cells + 3-letter labels + a `[ Today ]` footer) chosen over Spacious / Bordered-card. Rollout: a **`density` prop** (`'compact'`=TV-exact 20×8 preserved / `'comfortable'`=new default / `'spacious'`=`~35×15`) over "replace, single size" / "opt-in, compact default". Today: a footer `[ Today ]` button **and** a `T` key. A documented deviation from the TV geometry (compact still yields the faithful decode); all geometry pure in `calendar-metrics.ts`. | **Comfortable default via a `density` prop; `[ Today ]` button + `T` key** (`DatePicker` forwards `density` + sizes its popup to the calendar's metrics). *(user-confirmed)* | ✅ Resolved (runtime) |
+
+> These rewrote the `calendar.spec` TV-geometry oracles to `density:'compact'` (still asserting the
+> faithful 20×8) + added ST-10…ST-13 (density sizing, the comfortable footer, the filled cursor, the
+> Today button/key) + a new `calendar-metrics.impl` geometry suite; refreshed `date-theme.spec` (the
+> `0xF0` cursor byte), the `date-demo(.e2e)`, and both kitchen-sink stories. verify 8/8, e2e 13/13.
