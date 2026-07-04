@@ -136,8 +136,15 @@ test('ST-14: the calendar* roles are the ONLY additive keys — every existing r
     expect(defaultTheme[name as keyof typeof defaultTheme], `${name} unchanged`).toStrictEqual(value);
   }
 
-  // The calendar* roles are the ONLY new keys added to the theme (additive-only surface, AC-14).
-  const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...CALENDAR_ROLES]);
+  // The calendar* roles were the ONLY new keys at RD-20 time (additive-only surface, AC-14). This
+  // inventory tripwire tolerates roles that *later, sanctioned* additive RDs legitimately add on top —
+  // each such RD's own theme spec owns the byte-for-byte guard for its roles (RD-21: color-theme.spec).
+  // Extending this allowlist does NOT weaken RD-20's guarantee: every calendar* + pre-existing byte
+  // above is still asserted unchanged. (RD-21 PA-14 runtime.)
+  const LATER_ADDITIVE_ROLES = [
+    'colorMarker', // RD-21 color family (PA-1, AC-10; guarded by color-theme.spec)
+  ] as const;
+  const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...CALENDAR_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);
   const unexpected = actualKeys.filter((k) => !knownKeys.has(k));
   expect(unexpected, 'no theme key beyond the pre-existing set + the 6 calendar* roles').toEqual([]);

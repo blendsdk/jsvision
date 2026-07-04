@@ -19,11 +19,11 @@ export type { ColorRole } from './encode.js';
 // Nearest-color downsampling primitives.
 export { nearest256, nearest16 } from './downsample.js';
 
-// Color validation + typed error.
-export { InvalidColorError } from './color.js';
+// Color validation + typed error. `toRgb` is the single validation boundary (RD-21 PA-3 re-export).
+export { InvalidColorError, toRgb } from './color.js';
 export type { Rgb } from './color.js';
 
-// App-facing palette + semantic theme.
-export { PALETTE } from './palette.js';
+// App-facing palette + semantic theme. `ANSI16_ORDER` is the DOS-16 default swatch palette (RD-21 PA-3).
+export { PALETTE, ANSI16_ORDER } from './palette.js';
 export { defaultTheme } from './theme.js';
 export type { Theme, ThemeRole } from './theme.js';
