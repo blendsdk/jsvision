@@ -43,7 +43,18 @@ import { signal } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import { PALETTE, ANSI16_ORDER } from '@jsvision/core';
 import type { Color, Style } from '@jsvision/core';
-import { gridDims, cellX, cellRow, hitCell, navLeft, navRight, navUp, navDown, isNearBlack, CELL_WIDTH } from './color-grid.js';
+import {
+  gridDims,
+  cellX,
+  cellRow,
+  hitCell,
+  navLeft,
+  navRight,
+  navUp,
+  navDown,
+  isNearBlack,
+  CELL_WIDTH,
+} from './color-grid.js';
 
 /** The cell block glyph — TV `icon = '\xDB'` = `█` U+2588 full block (`tvtext1.cpp:88`, PA-5). */
 const CELL_GLYPH = '█';

@@ -205,7 +205,16 @@ test('ST-5: an overshoot INSIDE a partial final row clamps to colors.length-1', 
 // ── ST-6: generic palette + defaults ──────────────────────────────────────────────────────────────
 
 test('ST-6: 8 truecolor colors × 8 columns render one row of 8 three-wide cells (width 24)', () => {
-  const eight: readonly Color[] = ['#111111', '#222222', '#333333', '#444444', '#555555', '#666666', '#777777', '#888888'];
+  const eight: readonly Color[] = [
+    '#111111',
+    '#222222',
+    '#333333',
+    '#444444',
+    '#555555',
+    '#666666',
+    '#777777',
+    '#888888',
+  ];
   const h = makeSwatch({ value: '#111111', colors: eight, columns: 8 });
   // cell 7 (#888888) at cols 21-23, row 0.
   expect(h.cell(21, 0)?.char, 'cell 7 is a █').toBe('█');
