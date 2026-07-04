@@ -21,6 +21,15 @@
  *   • **Colours** — normal `getColor(6)`→`cpCyanWindow[6]=0x15`→`cpAppColor[21]=0x3E` yellow-on-cyan;
  *     today `getColor(7)`→`cpCyanWindow[7]=0x16`→`cpAppColor[22]=0x21` blue-on-green (`calendar.cpp:134,163-166`).
  *
+ * ## GATE-2 AFTER-diff (re-verified vs `calendar.cpp:124-171`, 2026-07-04)
+ * The composed buffer matches the decode cell-by-cell (the executable oracle is `calendar.spec`
+ * ST-3/ST-4): header `September 2026` right-justified with ▲ at col 15 / ▼ at col 18; weekday row
+ * `Su Mo Tu We Th Fr Sa`; days 2-digit right-justified at col `j*3` with leading/trailing blanks; today
+ * `0x21` blue-on-green, other in-month days `0x3E` yellow-on-cyan. The only intentional deviations from
+ * the C++ are documented extensions (leap rule → full Gregorian in `daysInMonth`, AR-196; the additive
+ * selection/cursor/disabled/week# roles, which never perturb the TV cells when unfocused + `value=null`,
+ * ST-2). No mismatch found.
+ *
  * ## Extensions (no TV counterpart — spec oracles, no `.cpp` diff)
  *   selectable `value` (`calendarSelected` `0x1F`), the day-nav cursor (`calendarCursor` `0x3F`, drawn
  *   only while focused, precedence cursor > selected > today > disabled > normal, PA-4), min/max bounds,

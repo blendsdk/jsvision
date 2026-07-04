@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-04 11:11
-> **Progress**: 24/35 tasks (69%)
+> **Last Updated**: 2026-07-04 11:17
+> **Progress**: 28/35 tasks (80%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -185,9 +185,9 @@ rendered buffer cell-by-cell AFTER. The selection/nav/picker extensions get spec
 | 5.1.4 | Full verification | — |
 
 **Deliverables**:
-- [ ] AFTER-diff passes (rendered output matches `calendar.cpp`) and is recorded
-- [ ] Impl/edge tests written and passing
-- [ ] `yarn verify` passing
+- [x] AFTER-diff passes (rendered output matches `calendar.cpp`) and is recorded
+- [x] Impl/edge tests written and passing
+- [x] `yarn verify` passing
 
 **Verify**: `yarn verify`
 
@@ -266,11 +266,10 @@ rendered buffer cell-by-cell AFTER. The selection/nav/picker extensions get spec
 - [x] 4.2.2 Implement `date-picker.ts` (masked Input + ▼ + anchored Calendar popup + sync + no-host guard) — 2026-07-04 (ComboBox two-way bind idiom, untrack guard)
 - [x] 4.2.3 Run `date-picker.spec` GREEN; `yarn verify` — 2026-07-04 (9 spec green first try; full verify 8/8)
 
-### Phase 5: GATE-2 AFTER-diff + impl tests & hardening
-- [ ] 5.1.1 [GATE-2 AFTER-diff] Cell-by-cell diff of the composed Calendar vs `calendar.cpp`; record
-- [ ] 5.1.2 Write `calendar-date.impl` + `calendar-grid.impl`
-- [ ] 5.1.3 Write `calendar.impl` + `date-format.impl` + `date-picker.impl`
-- [ ] 5.1.4 Full verification
+- [x] 5.1.1 [GATE-2 AFTER-diff] Cell-by-cell diff of the composed Calendar vs `calendar.cpp`; record — 2026-07-04 (re-verified, recorded in calendar.ts JSDoc; ST-3/ST-4 are the executable oracle; no mismatch)
+- [x] 5.1.2 Write `calendar-date.impl` + `calendar-grid.impl` — 2026-07-04 (14 cases; ISO year-boundary weeks verified)
+- [x] 5.1.3 Write `calendar.impl` + `date-format.impl` + `date-picker.impl` — 2026-07-04 (21 cases; precedence matrix, format disambiguation, open/pick/cancel)
+- [x] 5.1.4 Full verification — 2026-07-04 (8/8 turbo tasks green)
 
 ### Phase 6: Packaging, kitchen-sink stories, `demo:date`
 - [ ] 6.1.1 Write `date.packaging.spec.test.ts` (ST-15)
