@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-04
-> **Progress**: 17/30 tasks (57%)
+> **Progress**: 21/30 tasks (70%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -246,10 +246,10 @@ phase; only a Phase-5 regression check).
 - [x] 4.2.2 Run `color-picker.spec` GREEN; `yarn verify` (2026-07-05 — picker 13/13, RD-14/20 suites 60/60 green, full verify 8/8)
 
 ### Phase 5: GATE-2 AFTER-diff + impl tests
-- [ ] 5.1.1 [GATE-2 AFTER-diff] Cell-by-cell diff of the composed `ColorSwatch` vs `colorsel.cpp`; record
-- [ ] 5.1.2 Write `color-grid.impl` + `color-swatch.impl`
-- [ ] 5.1.3 Write `color-picker.impl`; RD-14 History/ComboBox + RD-20 DatePicker suites GREEN (AC-9)
-- [ ] 5.1.4 Full verification
+- [x] 5.1.1 [GATE-2 AFTER-diff] Cell-by-cell diff of the composed `ColorSwatch` vs `colorsel.cpp`; record (2026-07-05 — no mismatch; recorded in `color-swatch.ts` JSDoc; PF-005 `charWidth('◘')===1`/`'█'` asserted in `color-swatch.impl`)
+- [x] 5.1.2 Write `color-grid.impl` + `color-swatch.impl` (2026-07-05)
+- [x] 5.1.3 Write `color-picker.impl`; RD-14 History/ComboBox + RD-20 DatePicker suites GREEN (AC-9) (2026-07-05 — 60/60)
+- [x] 5.1.4 Full verification (2026-07-05 — color tests 70/70; full verify 8/8)
 
 ### Phase 6: Packaging, kitchen-sink stories, `demo:color`
 - [ ] 6.1.1 Complete `color.packaging.spec` (ST-12); run RED (ui half)
