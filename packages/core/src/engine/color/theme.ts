@@ -274,8 +274,9 @@ export interface Theme {
   readonly calendarSelected: ThemeRole;
   /**
    * Calendar focus cursor — the navigable focus cell, drawn **only while the Calendar has focus**,
-   * highest precedence (RD-20 extension, PA-1). `0x3F` white-on-cyan, kept distinct from the selected
-   * cell's blue bg. TV has no day cursor. Additive.
+   * highest precedence (RD-20 extension, PA-1). `0xF0` black-on-white: a **filled reverse block** so the
+   * focused day reads as a solid highlight (not a fg-only tint) against the cyan grid — distinct from
+   * the selected cell's blue bg (PA-19-runtime, user request 2026-07-04). TV has no day cursor. Additive.
    */
   readonly calendarCursor: ThemeRole;
   /**
@@ -401,7 +402,7 @@ export const defaultTheme: Theme = {
   calendarNormal: { fg: PALETTE.yellow, bg: PALETTE.cyan },
   calendarToday: { fg: PALETTE.blue, bg: PALETTE.green },
   calendarSelected: { fg: PALETTE.white, bg: PALETTE.blue },
-  calendarCursor: { fg: PALETTE.white, bg: PALETTE.cyan },
+  calendarCursor: { fg: PALETTE.black, bg: PALETTE.white },
   calendarDisabled: { fg: PALETTE.darkGray, bg: PALETTE.cyan },
   calendarWeekNumber: { fg: PALETTE.black, bg: PALETTE.cyan },
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },

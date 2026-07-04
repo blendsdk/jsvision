@@ -44,7 +44,8 @@ test('demo:date runs standalone, exits 0, and prints the date-family walkthrough
   // Calendar geometry + month nav.
   expect(result.stdout).toContain('September 2026');
   expect(result.stdout).toContain('October 2026'); // PgDn advanced the month
-  expect(result.stdout).toContain('Su Mo Tu We Th Fr Sa');
+  expect(result.stdout).toContain('Sun Mon Tue Wed Thu Fri Sat'); // comfortable-density 3-letter labels
+  expect(result.stdout).toContain('[ Today ]'); // the footer Today button
   expect(result.stdout).toContain('↑'); // next/increment arrow (month + year)
   expect(result.stdout).toContain('↓'); // prev/decrement arrow (month + year) + the ▐↓▌ picker button
   // Walkthrough narration.

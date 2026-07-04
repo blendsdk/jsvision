@@ -37,11 +37,20 @@
  *   `↑`/`↓` (U+2191/U+2193) match the ComboBox/History dropdown `↓` (`dropdown/popup.ts:31`) so the
  *   date family shares one arrow style. Oracle: `calendar.spec` ST-3 (geometry) + ST-7 (nav + clamp).
  *
+ * ## Density (RD-20 — user request 2026-07-04, PA-20-runtime, NOT a TV decode)
+ *   A `density` option (default `'comfortable'`) selects the layout size: `'compact'` = the TV-exact
+ *   20×8 above; `'comfortable'` = 4-wide cells + 3-letter weekday labels + a divider and a footer row
+ *   hosting the selected-date echo and a `[ Today ]` button (~28×10); `'spacious'` = 5-wide cells + a
+ *   blank spacer row between weeks (~35×15). All geometry lives in `calendar-metrics.ts`; the header +
+ *   grid + colours are identical across densities. A `[ Today ]` click and the `T` key jump the cursor
+ *   + visible month to today.
+ *
  * ## Extensions (no TV counterpart — spec oracles, no `.cpp` diff)
- *   selectable `value` (`calendarSelected` `0x1F`), the day-nav cursor (`calendarCursor` `0x3F`, drawn
+ *   selectable `value` (`calendarSelected` `0x1F` filled blue), the day-nav cursor (`calendarCursor`
+ *   `0xF0` filled black-on-white reverse — a solid highlight, not a fg-only tint, PA-19-runtime; drawn
  *   only while focused, precedence cursor > selected > today > disabled > normal, PA-4), min/max bounds,
  *   disabled days (`calendarDisabled` `0x38`), week numbers (`calendarWeekNumber` `0x30`, PA-10),
- *   firstDayOfWeek. The pure grid math lives in `calendar-grid.ts` (PA-6).
+ *   firstDayOfWeek. The pure grid math lives in `calendar-grid.ts` (PA-6), the layout in `calendar-metrics.ts`.
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
@@ -51,9 +60,19 @@ import type { Size2D } from '../layout/index.js';
 import { signal } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { CalendarDate } from './calendar-date.js';
-import { addDays, addMonths, compare, dayOfWeek, fromDate } from './calendar-date.js';
-import { buildMonthGrid, dayColumn } from './calendar-grid.js';
+import { addDays, addMonths, compare, dayOfWeek, fromDate, toISO } from './calendar-date.js';
+import { buildMonthGrid } from './calendar-grid.js';
 import type { MonthGrid } from './calendar-grid.js';
+import {
+  metricsFor,
+  dayFieldX,
+  weekdayLabelX,
+  weekRowY,
+  weekdayLabels,
+  headerLine,
+  TODAY_LABEL,
+} from './calendar-metrics.js';
+import type { CalendarDensity, CalendarMetrics } from './calendar-metrics.js';
 
 /** Month names indexed 1-12 (index 0 unused), matching `TCalendarView`'s `monthNames`. */
 const MONTH_NAMES = [
@@ -72,15 +91,6 @@ const MONTH_NAMES = [
   'December',
 ] as const;
 
-/**
- * Header nav arrows — thin `↑` (U+2191, increment / next) and `↓` (U+2193, decrement / prev). An
- * RD-20 extension replacing TV's filled `▲/▼` (`calendar.cpp:141`, CP437 30/31); the `↓` matches the
- * ComboBox/History dropdown icon (`DROPDOWN_ICON.arrow`, `dropdown/popup.ts:31`) so the date family
- * shares one arrow style (user request 2026-07-04).
- */
-const ARROW_UP = '↑';
-const ARROW_DOWN = '↓';
-
 /** Options for a {@link Calendar}. (PA-8) */
 export interface CalendarOptions {
   /** Two-way selected day (`null` = no selection). */
@@ -97,6 +107,12 @@ export interface CalendarOptions {
   firstDayOfWeek?: 0 | 1;
   /** Opt-in leading ISO week-number column (default false, adds 3 cols → the view is 23×8). */
   showWeekNumbers?: boolean;
+  /**
+   * Layout density (PA-20-runtime, default `'comfortable'`): `'compact'` = the TV-exact 20×8,
+   * `'comfortable'` = the roomy default (4-wide cells + a `[ Today ]` footer, ~28×10), `'spacious'` =
+   * extra breathing room (5-wide cells + blank week spacers, ~28×15). See `calendar-metrics.ts`.
+   */
+  density?: CalendarDensity;
   /** Fired when `value` changes via a commit (Should-Have, PA-8). */
   onChange?: (date: CalendarDate) => void;
 }
@@ -119,6 +135,8 @@ export class Calendar extends View {
   protected readonly firstDayOfWeek: 0 | 1;
   protected readonly showWeekNumbers: boolean;
   protected readonly onChange?: (date: CalendarDate) => void;
+  /** Resolved layout geometry for the chosen density + week-number flag (computed once). */
+  protected readonly metrics: CalendarMetrics;
 
   /** The shown month (reactive — month nav repaints). */
   protected readonly visibleYear: Signal<number>;
@@ -140,6 +158,7 @@ export class Calendar extends View {
     this.firstDayOfWeek = opts.firstDayOfWeek ?? 0;
     this.showWeekNumbers = opts.showWeekNumbers ?? false;
     this.onChange = opts.onChange;
+    this.metrics = metricsFor(opts.density ?? 'comfortable', this.showWeekNumbers);
 
     const initial = this.clampBounds(this.value() ?? this.todayDate);
     this.visibleYear = signal(initial.year);
@@ -159,9 +178,9 @@ export class Calendar extends View {
     });
   }
 
-  /** Advertise the intrinsic 20×8 (or 23×8 with week numbers) size for `auto` sizing. */
+  /** Advertise the density's intrinsic size (width × height) for `auto` sizing. */
   override measure(): Size2D {
-    return { width: this.showWeekNumbers ? 23 : 20, height: 8 };
+    return { width: this.metrics.width, height: this.metrics.height };
   }
 
   // ── Bounds / commit helpers ─────────────────────────────────────────────────────────────────────
@@ -280,33 +299,39 @@ export class Calendar extends View {
     return 'calendarNormal';
   }
 
-  /** Paint the header, weekday row, and 6 grid rows per the decode + PA-4 precedence. */
+  /** Paint the header, weekday row, 6 grid rows, and (comfortable/spacious) the footer, per the metrics. */
   draw(ctx: DrawContext): void {
+    const m = this.metrics;
     const normal = ctx.color('calendarNormal');
     ctx.fill(' ', normal); // the whole grid background is the normal (cyan) fill (calendar.cpp:137,146,152)
-    const wkw = this.showWeekNumbers ? 3 : 0;
 
-    // Row 0 — header (RD-20 extension, module doc §Extensions): '↑↓ '+setw(9)month+' '+setw(4)year+' ↑↓'
-    // = 20 cols. LEFT ↑↓ (cols 0-1) = month ±1, RIGHT ↑↓ (cols 18-19) = year ±1 (hit-tested in handleMouse).
-    const monthName = MONTH_NAMES[this.visibleMonth()].padStart(9);
-    const yearStr = String(this.visibleYear()).padStart(4);
-    const header = `${ARROW_UP}${ARROW_DOWN} ${monthName} ${yearStr} ${ARROW_UP}${ARROW_DOWN}`;
-    ctx.text(wkw, 0, header, normal);
+    // Row 0 — header: '↑↓' + centred setw(9)month setw(4)year + '↑↓' (PA-18 flanking arrows; see metrics).
+    ctx.text(m.wkw, 0, headerLine(m, MONTH_NAMES[this.visibleMonth()], this.visibleYear()), normal);
 
-    // Row 1 — weekday labels (calendar.cpp:147), rotated by firstDayOfWeek.
+    // Weekday-label row (calendar.cpp:147), rotated by firstDayOfWeek, per this density's cell width.
+    const labels = weekdayLabels(m, this.firstDayOfWeek);
+    for (let j = 0; j < 7; j += 1) ctx.text(weekdayLabelX(m, j), m.weekdayY, labels[j], normal);
+
+    // The 6×7 day matrix; each in-month day 2-digit right-justified at the density's day column.
     const grid = this.currentGrid();
-    ctx.text(wkw, 1, grid.weekdayLabels.join(' '), normal);
-
-    // Rows 2-7 — the 6×7 day matrix; each in-month day 2-digit right-justified at dayColumn(j).
     for (let i = 0; i < 6; i += 1) {
-      const y = 2 + i;
+      const y = weekRowY(m, i);
       const wn = grid.weekNumbers[i];
       if (wn !== null) ctx.text(0, y, String(wn).padStart(2), ctx.color('calendarWeekNumber'));
       for (let j = 0; j < 7; j += 1) {
         const date = grid.rows[i][j];
         if (date === null) continue; // blank (the normal fill already covers it, PF-002)
-        ctx.text(dayColumn(j, this.showWeekNumbers), y, String(date.day).padStart(2), ctx.color(this.cellRole(date)));
+        ctx.text(dayFieldX(m, j), y, String(date.day).padStart(2), ctx.color(this.cellRole(date)));
       }
+    }
+
+    // Footer (comfortable/spacious) — a divider, the selected-date echo, and a `[ Today ]` button.
+    if (m.footer !== null) {
+      ctx.text(m.wkw, m.footer.dividerY, '─'.repeat(m.contentWidth), normal);
+      const val = this.value();
+      if (val !== null) ctx.text(m.wkw, m.footer.textY, toISO(val), normal);
+      // The Today button borrows the `calendarToday` accent so it reads as the "today" affordance.
+      ctx.text(m.footer.todayX, m.footer.textY, TODAY_LABEL, ctx.color('calendarToday'));
     }
   }
 
@@ -361,39 +386,52 @@ export class Calendar extends View {
       case '-':
         this.shiftMonth(-1);
         break;
+      case 't':
+      case 'T':
+        this.today(); // jump the cursor + visible month to today (the keyboard `[ Today ]`, AR-runtime)
+        break;
       default:
         return; // not a calendar key — leave unconsumed
     }
     ev.handled = true;
   }
 
-  /** Header month-nav hit columns (decoded, offset by the week# column) + day-click commit. */
+  /** Header ↑↓ hit columns + the footer `[ Today ]` button + day-click commit — all keyed off the metrics. */
   protected handleMouse(ev: DispatchEvent): void {
     const local = ev.local;
     if (local === undefined) return;
-    const wkw = this.showWeekNumbers ? 3 : 0;
+    const m = this.metrics;
     if (local.y === 0) {
-      // Flanking header hit columns (offset by the week# column): month ↑↓ at wkw+0/+1, year ↑↓ at
-      // wkw+18/+19 (RD-20 extension; up = next/increment, down = prev/decrement, both clamped).
-      const dx = local.x - wkw;
-      if (dx === 0) this.shiftMonth(1);
-      else if (dx === 1) this.shiftMonth(-1);
-      else if (dx === 18) this.shiftYear(1);
-      else if (dx === 19) this.shiftYear(-1);
+      // Flanking header (PA-18): month ↑↓ at the far left, year ↑↓ at the far right (up = +1, down = −1).
+      if (local.x === m.monthUpX) this.shiftMonth(1);
+      else if (local.x === m.monthDownX) this.shiftMonth(-1);
+      else if (local.x === m.yearUpX) this.shiftYear(1);
+      else if (local.x === m.yearDownX) this.shiftYear(-1);
       else return;
       ev.handled = true;
       return;
     }
-    if (local.y < 2) return;
-    const i = local.y - 2;
-    const dx = local.x - wkw;
-    if (i > 5 || dx < 0) return;
-    const j = Math.floor(dx / 3);
+    // Footer `[ Today ]` button (comfortable/spacious).
+    if (m.footer !== null && local.y === m.footer.textY) {
+      if (local.x >= m.footer.todayX && local.x < m.footer.todayX + m.footer.todayW) {
+        this.today();
+        ev.handled = true;
+      }
+      return;
+    }
+    // Day grid — find the week row whose y matches, then the cell column (blank between-week rows miss).
+    const dx = local.x - m.wkw;
+    if (dx < 0) return;
+    const j = Math.floor(dx / m.cellWidth);
     if (j > 6) return;
-    const date = this.currentGrid().rows[i][j];
-    if (date === null) return;
-    this.moveCursor(date); // a single click moves the cursor there…
-    this.commit(date); // …and commits (a no-op if disabled/out-of-range, AC-8)
-    ev.handled = true;
+    for (let i = 0; i < 6; i += 1) {
+      if (weekRowY(m, i) !== local.y) continue;
+      const date = this.currentGrid().rows[i][j];
+      if (date === null) return;
+      this.moveCursor(date); // a single click moves the cursor there…
+      this.commit(date); // …and commits (a no-op if disabled/out-of-range, AC-8)
+      ev.handled = true;
+      return;
+    }
   }
 }

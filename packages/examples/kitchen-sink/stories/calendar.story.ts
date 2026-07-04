@@ -26,8 +26,10 @@ export const calendarStory: Story = {
       showWeekNumbers: true,
     });
 
+    const size = cal.measure(); // comfortable density + a week# column (~31×10)
+
     const g = new Group();
-    g.add(at(cal, 1, 0, 23, 8)); // 23 wide (20 grid + 3 week-number column)
+    g.add(at(cal, 1, 0, size.width, size.height));
     g.add(
       at(
         new Text(() => {
@@ -35,7 +37,7 @@ export const calendarStory: Story = {
           return `selected = ${v === null ? '(none)' : toISO(v)}`;
         }),
         1,
-        9,
+        size.height + 1,
         width,
         1,
       ),
@@ -43,10 +45,10 @@ export const calendarStory: Story = {
     g.add(
       at(
         new Text(
-          'Arrows move the cursor · Enter/click selects · header ↑↓ change month (left) / year (right) · Sundays disabled.',
+          'Arrows move the cursor · Enter/click selects · header ↑↓ change month/year · [ Today ] or T jumps to today.',
         ),
         1,
-        11,
+        size.height + 2,
         width,
         1,
       ),

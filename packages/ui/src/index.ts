@@ -157,4 +157,4 @@ export {
   fromDate,
   toDate,
 } from './date/index.js';
-export type { CalendarDate, CalendarOptions, DatePickerOptions, DateFormat } from './date/index.js';
+export type { CalendarDate, CalendarOptions, DatePickerOptions, DateFormat, CalendarDensity } from './date/index.js';

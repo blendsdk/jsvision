@@ -38,11 +38,12 @@ function key(k: string, mods: Partial<KeyEvent> = {}): KeyEvent {
 /** Steps 1-4: a standalone Calendar — render → day-nav → month-nav → commit. */
 function calendarWalkthrough(): void {
   const value = signal<CalendarDate | null>(null);
-  const cal = new Calendar({ value, today: TODAY, firstDayOfWeek: 0 });
-  cal.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 8 } };
+  const cal = new Calendar({ value, today: TODAY, firstDayOfWeek: 0 }); // default comfortable density (28×10)
+  const size = cal.measure(); // 28×10
+  cal.layout = { position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } };
   const root = new Group();
   root.add(cal);
-  const loop = createEventLoop({ width: 20, height: 8 }, { caps });
+  const loop = createEventLoop({ width: size.width, height: size.height }, { caps });
   loop.mount(root);
   loop.focusView(cal);
   loop.renderRoot.flush();
@@ -67,12 +68,12 @@ function pickerWalkthrough(): void {
   const dp = new DatePicker({ value, today: TODAY });
   dp.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 16, height: 1 } };
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 16 } };
+  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
   overlay.state.visible = false;
   const root = new Group();
   root.add(dp);
   root.add(overlay);
-  const loop = createEventLoop({ width: 40, height: 16 }, { caps });
+  const loop = createEventLoop({ width: 40, height: 20 }, { caps });
   loop.mount(root);
   const host: PopupHost = { overlay, focusView: (v) => loop.focusView(v), getFocused: () => loop.getFocused() };
   loop.popupHost = host;
