@@ -131,5 +131,7 @@ test('ST-11: the progress* roles are the ONLY additive keys — every existing r
   const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...FEEDBACK_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);
   const unexpected = actualKeys.filter((k) => !knownKeys.has(k));
-  expect(unexpected, 'no theme key beyond the pre-existing set + progress* + sanctioned later additive roles').toEqual([]);
+  expect(unexpected, 'no theme key beyond the pre-existing set + progress* + sanctioned later additive roles').toEqual(
+    [],
+  );
 });

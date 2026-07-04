@@ -9,14 +9,7 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
-import {
-  daysInMonth,
-  dayOfWeek,
-  toISO,
-  parseISO,
-  fromDate,
-  toDate,
-} from '../src/date/calendar-date.js';
+import { daysInMonth, dayOfWeek, toISO, parseISO, fromDate, toDate } from '../src/date/calendar-date.js';
 
 test('ST-1: daysInMonth is Gregorian leap-correct (leap / century / normal)', () => {
   expect(daysInMonth(2024, 2)).toBe(29); // divisible by 4, not a century → leap

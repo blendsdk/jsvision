@@ -67,3 +67,18 @@ dominant-determined and recorded for traceability.
 
 > **GATE PASSED** — 14/14 items Resolved, zero deferred; user confirmed the two design forks
 > (PA-1 dedicated cursor role, PA-2 blue-bg selection byte set).
+
+## Post-completion enhancements (runtime — 2026-07-04, after RD-20 shipped)
+
+Two user-requested refinements to the shipped `Calendar`/`DatePicker`, raised conversationally after
+the plan closed. Both touch TV-decoded drawing, so each was surfaced (grounded options + the fidelity
+tension) and **user-confirmed** before any code changed — the zero-ambiguity + TV-fidelity gates.
+
+| ID | Type | Question | Options | Decision | Status |
+|----|------|----------|---------|----------|--------|
+| **PA-17** | Design (runtime) | The `DatePicker` button drew `▼` (U+25BC) via a bespoke `DateButton`, disagreeing with ComboBox/History's shared `▐↓▌` (`↓` U+2193); the `Calendar` header drew TV's `▲/▼` (`calendar.cpp:141`). Unify the arrow glyphs with the ComboBox? | (A) **Both** — `DatePicker` button → shared `drawDropdownIcon` (`↓`), AND `Calendar` header `▲/▼` → thin `↑/↓`. The button change is *more* TV-faithful (matches the THistory decode); the header change is a **deliberate, user-approved deviation** from the `calendar.cpp` `▲/▼` decode; (B) button only (keep the header faithful) — rejected by the user | **(A) Both** — one arrow style across the date family; header deviation recorded in `calendar.ts` §Header extension. *(user-confirmed)* | ✅ Resolved (runtime) |
+| **PA-18** | Behavior (runtime) | TV's header has both arrows on the right, both month nav (`calendar.cpp:185-204`); no easy year change. Add year navigation? | (A) **Flanking header** `↑↓ ⟨month⟩ ⟨year⟩ ↑↓` — LEFT `↑↓` (cols 0-1) = month ±1, RIGHT `↑↓` (cols 18-19) = year ±1, both **clamped to `[min,max]`** at month granularity (`clampVisibleMonth`); Ctrl+PgUp/Dn year keys already clamp via the cursor's `clampBounds`. A header redesign with no TV counterpart (documented extension); (B) both pairs grouped on the right — rejected (less distinct) | **(A) Flanking, clamped** — LEFT month / RIGHT year; oracle `calendar.spec` ST-7 (nav + clamp). *(user-confirmed)* | ✅ Resolved (runtime) |
+
+> These re-wrote the `calendar.spec` ST-3 header oracle + ST-7 nav oracle + ST-9 week# hit columns
+> (a legitimate requirement change by the product owner, not a spec-immutability breach) and refreshed
+> the `date-demo.e2e` + kitchen-sink story hints. verify 8/8, check:deps clean, e2e 13/13.

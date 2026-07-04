@@ -80,7 +80,7 @@ function pickerWalkthrough(): void {
   loop.renderRoot.flush();
   const frame = (t: string): void => printFrame(t, loop.renderRoot.buffer().rows());
 
-  frame('Step 5 — DatePicker field (empty), ▼ dropdown button on the right');
+  frame('Step 5 — DatePicker field (empty), ▐↓▌ dropdown button on the right');
   loop.dispatch(key('down', { alt: true }));
   loop.renderRoot.flush();
   frame('Step 5b — Alt+↓ opens the anchored Calendar popup');

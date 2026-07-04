@@ -2,12 +2,15 @@
  * Specification tests (immutable oracles) — jsvision-ui RD-20 `Calendar` view (ST-2…ST-9).
  *
  * Source: RD-20 AC-2…AC-9 (plans/date-family/03-02-calendar.md; 07-testing-strategy.md). The fidelity
- * cases (ST-3 geometry, ST-4 colours) diff cell-by-cell against the `TCalendarView` decode
+ * cases (ST-4 colours, the grid geometry) diff cell-by-cell against the `TCalendarView` decode
  * (`examples/tvdemo/calendar.cpp:124-171`, GATE-1): a **20×8** view (window `TRect(1,1,23,11)` grown
- * `-1`), header `setw(9)⟨month⟩ setw(4)⟨year⟩ ▲  ▼` (▲ col 15, ▼ col 18), weekday row
- * `Su Mo Tu We Th Fr Sa`, 6 week rows of 2-digit days right-justified at col `j*3`, leading blanks;
- * normal `calendarNormal` (`0x3E`), today `calendarToday` (`0x21`). Selection / day-cursor / bounds /
- * disabled / week# / first-day are documented extensions (spec oracles, no `.cpp` diff).
+ * `-1`), weekday row `Su Mo Tu We Th Fr Sa`, 6 week rows of 2-digit days right-justified at col
+ * `j*3`, leading blanks; normal `calendarNormal` (`0x3E`), today `calendarToday` (`0x21`). The
+ * **header is a documented RD-20 extension** (user request 2026-07-04, ambiguity register runtime
+ * notes): thin `↑↓` flanking arrows — `↑↓ September 2026 ↑↓`, LEFT pair = month ±1 (cols 0-1), RIGHT
+ * pair = year ±1 (cols 18-19), both clamped to `[min,max]` — replacing TV's right-only `▲/▼` month
+ * arrows; the `↑/↓` glyphs match the ComboBox/History dropdown `↓`. Selection / day-cursor / bounds /
+ * disabled / week# / first-day are documented extensions too (spec oracles, no `.cpp` diff).
  *
  * Rendered the shipped way (createEventLoop + mount, the tab-strip/feedback idiom); the pre-`serialize`
  * buffer is asserted cell-by-cell. A fixed `today` is injected (no real clock). Reference month is
@@ -107,12 +110,14 @@ test('ST-2: a Calendar with value=null draws no selected day (today still highli
 
 // ── ST-3: grid geometry cell-by-cell vs calendar.cpp ─────────────────────────────────────────────
 
-test('ST-3: header row — setw(9) month, setw(4) year, ▲ at col 15, ▼ at col 18 (calendar.cpp:139-144)', () => {
+test('ST-3: header — thin ↑↓ month arrows (cols 0-1), setw(9) month, setw(4) year, ↑↓ year arrows (cols 18-19)', () => {
   const h = makeCal({ value: null });
-  const header = h.row(0);
-  expect(header.startsWith('September 2026')).toBe(true); // setw(9)="September", ' ', setw(4)="2026"
-  expect(h.cell(15, 0)?.char, '▲ next-month arrow at col 15').toBe('▲');
-  expect(h.cell(18, 0)?.char, '▼ prev-month arrow at col 18').toBe('▼');
+  // Flanking layout (RD-20 extension): '↑↓ September 2026 ↑↓' — month left, year right, thin arrows.
+  expect(h.row(0)).toBe('↑↓ September 2026 ↑↓');
+  expect(h.cell(0, 0)?.char, '↑ month-next arrow at col 0').toBe('↑');
+  expect(h.cell(1, 0)?.char, '↓ month-prev arrow at col 1').toBe('↓');
+  expect(h.cell(18, 0)?.char, '↑ year-next arrow at col 18').toBe('↑');
+  expect(h.cell(19, 0)?.char, '↓ year-prev arrow at col 19').toBe('↓');
 });
 
 test('ST-3: weekday row is "Su Mo Tu We Th Fr Sa" (calendar.cpp:147)', () => {
@@ -242,18 +247,45 @@ test('ST-6: Home/End move to the first/last day of the cursor visible week', () 
   expect(cursorDay(h)).toBe(30);
 });
 
-// ── ST-7: month nav via header click + '+'/'-' preserves today/selection ─────────────────────────
+// ── ST-7: header nav — month arrows (left) + year arrows (right), clamped, value preserved ─────────
 
-test('ST-7: clicking ▲ (col 15) advances the month; ▼ (col 18) goes back; today/value preserved', () => {
+test('ST-7: ↑↓ (cols 0-1) change the month; ↑↓ (cols 18-19) change the year; value preserved', () => {
   const h = makeCal({ value: { year: 2026, month: 9, day: 10 } });
-  h.loop.dispatch(mouseDown(16, 1)); // local (15,0) = the ▲ next-month hit column
+  h.loop.dispatch(mouseDown(1, 1)); // local (0,0) = ↑ month-next
   h.loop.renderRoot.flush();
-  expect(h.row(0).includes('October 2026'), '▲ → October').toBe(true);
-  expect(h.value(), 'value unchanged by month nav').toStrictEqual({ year: 2026, month: 9, day: 10 });
-  h.loop.dispatch(mouseDown(19, 1)); // local (18,0) = the ▼ prev-month hit column
-  h.loop.dispatch(mouseDown(19, 1));
+  expect(h.row(0).includes('October 2026'), '↑ (col 0) → October').toBe(true);
+  expect(h.value(), 'value unchanged by header nav').toStrictEqual({ year: 2026, month: 9, day: 10 });
+  h.loop.dispatch(mouseDown(2, 1)); // local (1,0) = ↓ month-prev
   h.loop.renderRoot.flush();
-  expect(h.row(0).includes('August 2026'), '▼ ▼ → August').toBe(true);
+  expect(h.row(0).includes('September 2026'), '↓ (col 1) → back to September').toBe(true);
+  h.loop.dispatch(mouseDown(19, 1)); // local (18,0) = ↑ year-next
+  h.loop.renderRoot.flush();
+  expect(h.row(0).includes('September 2027'), '↑ (col 18) → 2027').toBe(true);
+  h.loop.dispatch(mouseDown(20, 1)); // local (19,0) = ↓ year-prev
+  h.loop.dispatch(mouseDown(20, 1));
+  h.loop.renderRoot.flush();
+  expect(h.row(0).includes('September 2025'), '↓↓ (col 19) → 2025').toBe(true);
+});
+
+test('ST-7: header month/year arrows clamp to [min,max] — the visible view cannot page out of range', () => {
+  const h = makeCal({
+    value: null,
+    min: { year: 2026, month: 1, day: 1 },
+    max: { year: 2026, month: 12, day: 31 },
+  });
+  // Year-next from Sep 2026 would reach 2027 > max.year → clamped to the max month, Dec 2026.
+  h.loop.dispatch(mouseDown(19, 1)); // ↑ year-next
+  h.loop.renderRoot.flush();
+  expect(h.row(0).includes('December 2026'), 'year-next clamped to max Dec 2026').toBe(true);
+  // Month-next from Dec 2026 would reach Jan 2027 > max → clamped (stays December).
+  h.loop.dispatch(mouseDown(1, 1)); // ↑ month-next
+  h.loop.renderRoot.flush();
+  expect(h.row(0).includes('December 2026'), 'month-next clamped at the max edge').toBe(true);
+  // Year-prev twice → 2024 < min → clamped to the min month, Jan 2026.
+  h.loop.dispatch(mouseDown(20, 1)); // ↓ year-prev
+  h.loop.dispatch(mouseDown(20, 1));
+  h.loop.renderRoot.flush();
+  expect(h.row(0).includes('January 2026'), 'year-prev clamped to min Jan 2026').toBe(true);
 });
 
 // ── ST-8: min/max clamp the cursor; disabled day is dimmed, navigable, non-committable ────────────
@@ -293,7 +325,7 @@ test('ST-9: firstDayOfWeek=1 starts the header at "Mo" and shifts day 1 accordin
   expect(h.cell(4, 2)?.char, 'Sep 1 ones col at Monday-first column 1').toBe('1');
 });
 
-test('ST-9: showWeekNumbers adds a leading ISO-week column; header ▲/▼ hit columns shift by 3', () => {
+test('ST-9: showWeekNumbers adds a leading ISO-week column; header ↑↓ hit columns shift by 3', () => {
   const h = makeCal({ value: null, firstDayOfWeek: 1, showWeekNumbers: true });
   // Week-number column at cols 0-1; row 0 (Mon Aug 31 … Sun Sep 6) Thursday = Sep 3 → ISO week 36.
   expect(h.cell(0, 2)?.char, 'week number tens').toBe('3');
@@ -301,8 +333,12 @@ test('ST-9: showWeekNumbers adds a leading ISO-week column; header ▲/▼ hit c
   expect(h.cell(0, 2)?.fg, 'week number fg (black)').toBe(defaultTheme.calendarWeekNumber.fg);
   // The day columns shift right by 3: Sep 1 (Monday-first col j=1) now at cols 6-7 → " 1".
   expect(h.cell(7, 2)?.char, 'Sep 1 shifted right by the week# column').toBe('1');
-  // With week numbers on, the header ▲ hit column shifts to 3+15 = 18 — a click there still navigates.
-  h.loop.dispatch(mouseDown(19, 1)); // local (18,0) = shifted next-month arrow
+  // With week numbers on, the month-next ↑ hit column shifts to 3+0 = 3 — a click there still navigates.
+  h.loop.dispatch(mouseDown(4, 1)); // local (3,0) = shifted month-next arrow
   h.loop.renderRoot.flush();
-  expect(h.row(0).includes('October 2026'), 'shifted ▲ still advances the month').toBe(true);
+  expect(h.row(0).includes('October 2026'), 'shifted ↑ month-next still advances the month').toBe(true);
+  // The year-next ↑ hit column shifts to 3+18 = 21.
+  h.loop.dispatch(mouseDown(22, 1)); // local (21,0) = shifted year-next arrow
+  h.loop.renderRoot.flush();
+  expect(h.row(0).includes('October 2027'), 'shifted ↑ year-next advances the year').toBe(true);
 });

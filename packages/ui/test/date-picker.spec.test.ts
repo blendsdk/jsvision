@@ -2,7 +2,7 @@
  * Specification tests (immutable oracles) — jsvision-ui RD-20 `DatePicker` (ST-10…ST-12).
  *
  * Source: RD-20 AC-10…AC-12 (plans/date-family/03-03-date-picker.md Part B; 07-testing-strategy.md).
- * `DatePicker` is a `Group` = a masked `Input` + a trailing `▼` button opening a `Calendar` in the
+ * `DatePicker` is a `Group` = a masked `Input` + a trailing `▐↓▌` dropdown button opening a `Calendar` in the
  * generalized anchored popup (mirrors `ComboBox`). Field format = 3 digit-reorder masks over `picture`.
  * `DatePicker` has no TV counterpart — spec oracles only. Expectations derive from the plan/AC.
  *
@@ -41,7 +41,9 @@ interface DPHarness {
   text: () => string;
 }
 
-function makeDatePicker(opts: { value?: CalendarDate | null; format?: DateFormat; withHost?: boolean } = {}): DPHarness {
+function makeDatePicker(
+  opts: { value?: CalendarDate | null; format?: DateFormat; withHost?: boolean } = {},
+): DPHarness {
   const loop = createEventLoop({ width: 40, height: 20 }, { caps });
   const value = signal<CalendarDate | null>(opts.value ?? null);
   const dp = new DatePicker({ value, format: opts.format, today: TODAY });
