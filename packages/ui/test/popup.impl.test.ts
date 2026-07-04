@@ -12,7 +12,7 @@ import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
 import { View, Group } from '../src/view/index.js';
 import type { DrawContext, PopupHost } from '../src/view/index.js';
-import { signal } from '../src/reactive/index.js';
+import { signal, effect } from '../src/reactive/index.js';
 import { ListView } from '../src/list/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { openAnchoredPopup } from '../src/dropdown/index.js';
@@ -62,8 +62,9 @@ test('the popup saves the prior focus on open and restores it on dismiss', () =>
   const p = openAnchoredPopup({
     host: h.host,
     anchor: { x: 5, y: 3, width: 10, height: 1 },
-    buildList: () => h.list,
-    onPick: () => {},
+    buildContent: () => h.list,
+    contentSize: { height: 7 }, // default maxRows 6 + 1 (byte-identical placement, PA-5)
+    focusTarget: (c) => (c as ListView<string>).rows,
   });
   expect(h.loop.getFocused()).toBe(h.list.rows); // list focused during the popup
 
@@ -79,8 +80,9 @@ test('Esc then focus-change does not double-dismiss (the focus watch is disposed
   openAnchoredPopup({
     host: h.host,
     anchor: { x: 5, y: 3, width: 10, height: 1 },
-    buildList: () => h.list,
-    onPick: () => {},
+    buildContent: () => h.list,
+    contentSize: { height: 7 }, // default maxRows 6 + 1 (byte-identical placement, PA-5)
+    focusTarget: (c) => (c as ListView<string>).rows,
     onDismiss: () => {
       dismissed += 1;
     },
@@ -104,8 +106,9 @@ test('dismissing the popup keeps the overlay visible while another client (a men
   const p = openAnchoredPopup({
     host: h.host,
     anchor: { x: 5, y: 3, width: 10, height: 1 },
-    buildList: () => h.list,
-    onPick: () => {},
+    buildContent: () => h.list,
+    contentSize: { height: 7 }, // default maxRows 6 + 1 (byte-identical placement, PA-5)
+    focusTarget: (c) => (c as ListView<string>).rows,
   });
   expect(h.overlay.state.visible).toBe(true);
 
@@ -127,9 +130,9 @@ test('navigating past maxRows scrolls the list (focused advances, visible window
   openAnchoredPopup({
     host: h.host,
     anchor: { x: 2, y: 2, width: 12, height: 1 },
-    buildList: () => h.list,
-    maxRows: 6,
-    onPick: () => {},
+    buildContent: () => h.list,
+    contentSize: { height: 7 }, // maxRows 6 + 1 → interior 6 (byte-identical placement, PA-5)
+    focusTarget: (c) => (c as ListView<string>).rows,
   });
   h.loop.renderRoot.flush();
 
@@ -141,24 +144,39 @@ test('navigating past maxRows scrolls the list (focused advances, visible window
   expect(h.list.rows.bounds.height).toBe(6); // still ≤ maxRows visible (virtual scroll)
 });
 
-test('Enter on a focused row fires onPick with the selected index and dismisses', () => {
+test('Enter on a focused row picks (caller selected-watch) and dismisses', () => {
   const h = makeHarness(['a', 'b', 'c']);
   let picked = -1;
   let dismissed = 0;
+  // The caller wires pick via a selected()-watch inside buildContent (PA-16 runtime) — the popup no
+  // longer watches selected() itself. Enter → activate → select(index) → the watch → pick + commit.
   openAnchoredPopup({
     host: h.host,
     anchor: { x: 5, y: 3, width: 10, height: 1 },
-    buildList: () => h.list,
-    onPick: (i) => {
-      picked = i;
+    buildContent: (commit) => {
+      let first = true;
+      effect(() => {
+        const i = h.list.selected();
+        if (first) {
+          first = false;
+          return;
+        }
+        if (i >= 0) {
+          picked = i;
+          commit();
+        }
+      });
+      return h.list;
     },
+    contentSize: { height: 7 },
+    focusTarget: (c) => (c as ListView<string>).rows,
     onDismiss: () => {
       dismissed += 1;
     },
   });
 
   h.loop.dispatch(keyEvent('down')); // focused 0 → 1
-  h.loop.dispatch(keyEvent('enter')); // activate → selected = 1 → onPick(1) + dismiss
+  h.loop.dispatch(keyEvent('enter')); // activate → selected = 1 → the caller watch → pick(1) + dismiss
 
   expect(picked).toBe(1);
   expect(dismissed).toBe(1);
@@ -169,13 +187,27 @@ test('a pre-existing selection on the hosted list does not auto-pick on open (fi
   const h = makeHarness(['a', 'b', 'c']);
   h.list.selected.set(2); // stale selection before the popup opens
   let picked = -1;
+  // The caller's watch (PA-16) carries the first-selection skip that used to live in the popup.
   openAnchoredPopup({
     host: h.host,
     anchor: { x: 5, y: 3, width: 10, height: 1 },
-    buildList: () => h.list,
-    onPick: (i) => {
-      picked = i;
+    buildContent: (commit) => {
+      let first = true;
+      effect(() => {
+        const i = h.list.selected();
+        if (first) {
+          first = false;
+          return;
+        }
+        if (i >= 0) {
+          picked = i;
+          commit();
+        }
+      });
+      return h.list;
     },
+    contentSize: { height: 7 },
+    focusTarget: (c) => (c as ListView<string>).rows,
   });
 
   expect(picked).toBe(-1); // the initial selection value is skipped — no spurious pick
@@ -189,8 +221,9 @@ test('the popup frame casts a TV drop shadow', () => {
   openAnchoredPopup({
     host: h.host,
     anchor: { x: 5, y: 3, width: 10, height: 1 },
-    buildList: () => h.list,
-    onPick: () => {},
+    buildContent: () => h.list,
+    contentSize: { height: 7 }, // default maxRows 6 + 1 (byte-identical placement, PA-5)
+    focusTarget: (c) => (c as ListView<string>).rows,
   });
 
   const frame = h.overlay.children.find((c): c is Group => c instanceof Group);
@@ -212,8 +245,9 @@ test('building the hosted list inside the popup owner emits no no-owner warning'
     const p = openAnchoredPopup({
       host: h.host,
       anchor: { x: 5, y: 3, width: 10, height: 1 },
-      buildList: () => new ListView<string>({ items: signal(['x', 'y']), getText: (s) => s }),
-      onPick: () => {},
+      buildContent: () => new ListView<string>({ items: signal(['x', 'y']), getText: (s) => s }),
+      contentSize: { height: 7 },
+      focusTarget: (c) => (c as ListView<string>).rows,
     });
     p.dismiss();
   } finally {
