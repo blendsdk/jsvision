@@ -151,7 +151,9 @@ export {
   nearest256,
   nearest16,
   InvalidColorError,
+  toRgb,
   PALETTE,
+  ANSI16_ORDER,
   defaultTheme,
 } from './color/index.js';
 export type { ColorRole, Rgb, Theme, ThemeRole } from './color/index.js';

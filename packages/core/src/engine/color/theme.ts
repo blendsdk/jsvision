@@ -289,6 +289,15 @@ export interface Theme {
    * black-on-cyan, muted on the cyan grid. Each row labelled by its Thursday's ISO week (PA-10). Additive.
    */
   readonly calendarWeekNumber: ThemeRole;
+  /**
+   * Color-swatch marker — the forced-contrast `◘` selection marker on a near-black cell (jsvision-ui
+   * RD-21, PA-1/PA-2). **TV-decoded**: `TColorSelector::draw()` forces the `◘` marker on a black cell
+   * to attr `0x70` (`colorsel.cpp:135-136`) so it stays visible against the black cell background.
+   * `colorMarker` pins that byte: `0x70` = black (`0`) on lightGray (`7`). RD-21 fires it on
+   * **near-black** cells (the generic extension of TV's exact `c==0`, PA-2); a normal cell's marker
+   * uses the cell's own `Color`. Additive.
+   */
+  readonly colorMarker: ThemeRole;
   readonly statusBar: ThemeRole;
   /**
    * The status-line **pressed/selected** item (mouse-down feedback). Turbo Vision repaints the held
@@ -405,6 +414,9 @@ export const defaultTheme: Theme = {
   calendarCursor: { fg: PALETTE.black, bg: PALETTE.white },
   calendarDisabled: { fg: PALETTE.darkGray, bg: PALETTE.cyan },
   calendarWeekNumber: { fg: PALETTE.black, bg: PALETTE.cyan },
+  // RD-21 Color family (plans/color-family/00-ambiguity-register.md PA-1/PA-2). TV-decoded: the `◘`
+  // marker's forced-contrast byte on a black cell (colorsel.cpp:136), fired on near-black cells.
+  colorMarker: { fg: PALETTE.black, bg: PALETTE.lightGray }, // 0x70 black-on-lightGray
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },

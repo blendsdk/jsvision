@@ -127,6 +127,7 @@ test('ST-11: the progress* roles are the ONLY additive keys — every existing r
     'calendarCursor',
     'calendarDisabled',
     'calendarWeekNumber', // RD-20 date family (PA-3, AC-14; guarded by date-theme.spec)
+    'colorMarker', // RD-21 color family (PA-1, AC-10; guarded by color-theme.spec)
   ] as const;
   const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...FEEDBACK_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);
