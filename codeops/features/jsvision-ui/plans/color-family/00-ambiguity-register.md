@@ -164,6 +164,35 @@ Commands section. Confirmed, not invented. Fills every plan Verify line.
 
 ---
 
+## PA-16 — (runtime) In-popup hex field vs `openAnchoredPopup`'s focus-loss dismiss 🟠
+
+**Discovered:** Phase 4 execution (2026-07-05). **Status:** ✅ Resolved (user decision).
+
+**Problem:** AC-8 / PF-004 place the hex `Input` **inside** the anchored popup and reach it via **Tab**
+(grid-first). But `openAnchoredPopup`'s focus-loss effect (`dropdown/popup.ts`) dismissed the popup the
+instant its single `focusTarget` (the `ColorSwatch`) lost focus — so **any** intra-popup focus change
+(Tab to the hex, or a mouse-click on it) blurred the swatch → the popup dismissed and refocused the
+picker. Verified empirically (`{open1:true, foc1:ColorSwatch, open2:false, foc2:ColorPicker}` after a
+Tab). This makes AC-8's in-popup hex field **unreachable** with `dropdown/` unchanged — a direct
+conflict with AC-9 ("RD-21 does not edit `dropdown/`"), which the RD-preflight PF-004 (Confidence Med)
+did not catch. The hex field is unreachable by **either** Tab or click, so the whole `allowCustom`
+feature is blocked, not just the Tab path.
+
+**Decision (user, 2026-07-05):** **Generalize the focus-loss dismiss to popup-subtree membership** —
+dismiss only when focus leaves the whole popup `frame` (not when the single `focusTarget` blurs). The
+effect now **follows** focus while it stays inside the popup and dismisses once it moves out. This is a
+minimal, **backward-compatible** change: for a single-focusable popup (History/ComboBox/Calendar) the
+sole focusable IS the subtree, so any blur still dismisses — their suites (60 tests) stay green and
+**guard** the change. It **supersedes AC-9's** "no `dropdown/` edit" for this one focus-loss
+generalization; the guarantee AC-9 actually protects (History/ComboBox/DatePicker behaviour unchanged)
+is preserved and asserted. **Rejected:** hex in the main field row (respects AC-9 but moves the hex out
+of the popup, deviating from AC-8's design); a single composite popup panel (more custom code, can't
+reuse the `Input`); defer `allowCustom` (loses the truecolor-hex feature). Recorded as the correct fix
+for a real latent limitation of the shared primitive that RD-21 legitimately surfaced.
+
+---
+
 > **✅ GATE PASSED** — every semantically-weighted decision is resolved with an explicit user decision
 > (PA-1…PA-4), a source-determined fidelity fact (PA-5…PA-8), an RD-preflight resolution (PA-9…PA-13),
-> or a confirmed dominant/house pattern (PA-14/PA-15). Zero items deferred.
+> a confirmed dominant/house pattern (PA-14/PA-15), or a user-decided runtime resolution (PA-16). Zero
+> items deferred.

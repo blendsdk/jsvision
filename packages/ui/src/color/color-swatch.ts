@@ -202,8 +202,11 @@ export class ColorSwatch extends View {
 
   /**
    * Mouse down → snapshot the pre-drag cursor + set from the pointer + capture; move while captured →
-   * re-track; up → release. The standalone swatch does NOT auto-commit on release (TV moves the cursor;
-   * Enter/Space commits); the `ColorPicker` layers commit-on-release via a captured up over a cell (PA-11).
+   * re-track; up → release. Down alone never commits (a drag previews via cursor tracking). **Commit
+   * on release is opt-in via `onCommit`** (PA-11): a standalone swatch with no `onCommit` moves the
+   * cursor only (TV — Enter/Space commits), while the `ColorPicker` wires `onCommit` so a release
+   * **over a real cell** commits `value` + closes. A release outside the grid (or on a partial-row
+   * overshoot) never commits — the cursor has already reverted/clamped via {@link applyHit}.
    *
    * @param ev The dispatch envelope (carries `local` + the `setCapture`/`releaseCapture` seams).
    */
@@ -220,6 +223,14 @@ export class ColorSwatch extends View {
       if (local !== undefined) this.applyHit(local.x, local.y);
       ev.handled = true;
     } else if (inner.kind === 'up') {
+      // Commit-on-release over a real cell — opt-in via `onCommit` (the ColorPicker path, PA-11).
+      if (local !== undefined && this.onCommit !== undefined) {
+        const hit = hitCell(local.x, local.y, this.colors.length, this.columns);
+        if (typeof hit === 'number') {
+          this.cursor.set(hit);
+          this.commit();
+        }
+      }
       ev.releaseCapture?.();
       ev.handled = true;
     }
