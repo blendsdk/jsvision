@@ -12,8 +12,16 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
+import { readFileSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import * as core from '@jsvision/core';
 import { ANSI16_ORDER, toRgb, PALETTE, defaultTheme, InvalidColorError } from '@jsvision/core';
+import * as ui from '../src/index.js';
+import { ColorSwatch, ColorPicker } from '../src/index.js';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const COLOR_DIR = resolve(HERE, '../src/color');
 
 // ── Core re-export half (Phase 1) ─────────────────────────────────────────────────────────────────
 
@@ -37,4 +45,22 @@ test('ST-12: no existing @jsvision/core color export changed (additive-only, AC-
   expect(defaultTheme.window, 'defaultTheme still exported').toBeTruthy();
   expect(typeof core.encode, 'encode still exported').toBe('function');
   expect(typeof core.nearest16, 'nearest16 still exported').toBe('function');
+});
+
+// ── UI re-export + line-budget half (Phase 6) ──────────────────────────────────────────────────────
+
+test('ST-12: @jsvision/ui re-exports ColorSwatch + ColorPicker (explicit named re-exports)', () => {
+  expect(typeof ColorSwatch, 'ColorSwatch re-exported').toBe('function');
+  expect(typeof ColorPicker, 'ColorPicker re-exported').toBe('function');
+  // The option types are type-only; the barrel presence is asserted via the value re-exports above.
+  expect((ui as Record<string, unknown>).ColorSwatch, 'same binding via the namespace').toBe(ColorSwatch);
+});
+
+test('ST-12: every color/ source file is ≤ 500 lines (PA-4 line budget)', () => {
+  const files = readdirSync(COLOR_DIR).filter((f) => f.endsWith('.ts'));
+  expect(files.length, 'color/ has source files').toBeGreaterThan(0);
+  for (const f of files) {
+    const lines = readFileSync(resolve(COLOR_DIR, f), 'utf8').split('\n').length;
+    expect(lines, `${f} ≤ 500 lines`).toBeLessThanOrEqual(500);
+  }
 });

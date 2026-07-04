@@ -158,3 +158,10 @@ export {
   toDate,
 } from './date/index.js';
 export type { CalendarDate, CalendarOptions, DatePickerOptions, DateFormat, CalendarDensity } from './date/index.js';
+
+// RD-21 color family: the `ColorSwatch` color-grid view (a faithful `TColorSelector` decode +
+// extensions) + the `ColorPicker` dropdown (chip + anchored swatch/hex popup). Additive surface = 1
+// core `colorMarker` theme role + 2 core re-exports (`ANSI16_ORDER`/`toRgb`) + the generalized popup
+// focus-loss dismiss (PA-16). Explicit named re-exports; the pure `color-grid.ts` helpers stay internal.
+export { ColorSwatch, ColorPicker } from './color/index.js';
+export type { ColorSwatchOptions, ColorPickerOptions } from './color/index.js';

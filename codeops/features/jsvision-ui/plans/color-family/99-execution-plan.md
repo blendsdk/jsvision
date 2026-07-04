@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-04
-> **Progress**: 21/30 tasks (70%)
+> **Progress**: 30/30 tasks (100%) ✅
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -252,12 +252,12 @@ phase; only a Phase-5 regression check).
 - [x] 5.1.4 Full verification (2026-07-05 — color tests 70/70; full verify 8/8)
 
 ### Phase 6: Packaging, kitchen-sink stories, `demo:color`
-- [ ] 6.1.1 Complete `color.packaging.spec` (ST-12); run RED (ui half)
-- [ ] 6.1.2 Add `color/index.ts` barrel + explicit re-exports in `src/index.ts`
-- [ ] 6.1.3 Run — verify GREEN
-- [ ] 6.2.1 Kitchen-sink `color/color-swatch` + `color/color-picker` stories (+ smoke, ST-13)
-- [ ] 6.2.2 `demo:color` headless walkthrough + script + e2e (ST-13)
-- [ ] 6.2.3 Full verification incl. `check:deps`; post-completion re-analysis
+- [x] 6.1.1 Complete `color.packaging.spec` (ST-12); run RED (ui half) (2026-07-05)
+- [x] 6.1.2 Add `color/index.ts` barrel + explicit re-exports in `src/index.ts` (2026-07-05)
+- [x] 6.1.3 Run — verify GREEN (2026-07-05 — packaging 5/5)
+- [x] 6.2.1 Kitchen-sink `color/color-swatch` + `color/color-picker` stories (+ smoke, ST-13) (2026-07-05 — smoke 35/35, +2)
+- [x] 6.2.2 `demo:color` headless walkthrough + script + e2e (ST-13) (2026-07-05 — e2e green; consistent with date-demo's post-dismiss buffer artifact)
+- [x] 6.2.3 Full verification incl. `check:deps`; post-completion re-analysis (2026-07-05 — verify 8/8, check:deps clean, test:e2e 5/5)
 
 ---
 
