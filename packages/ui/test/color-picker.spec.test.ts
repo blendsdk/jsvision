@@ -133,18 +133,19 @@ test('ST-8: a ▐↓▌ button click opens the popup', () => {
   expect(popupOpen(h.overlay), 'button click opened the popup').toBe(true);
 });
 
-test('ST-8: a mouse-down alone does NOT close (drag previews); releasing over a cell commits + closes', () => {
+test('ST-8: a mouse-down alone does NOT close (drag previews live, TV-faithful); releasing over a cell closes', () => {
   const h = makePicker({ value: 'black' }); // cursor inits to cell 0
   const sw = open(h);
   const a = swatchCell(sw, 2); // green
   const b = swatchCell(sw, 5); // magenta
-  h.loop.dispatch(mouse('down', a.x, a.y)); // press on cell 2 — previews, does NOT close
+  h.loop.dispatch(mouse('down', a.x, a.y)); // press on cell 2 — previews live, does NOT close
   expect(popupOpen(h.overlay), 'down alone keeps the popup open').toBe(true);
-  expect(h.value(), 'down alone does not commit').toBe('black');
-  h.loop.dispatch(mouse('move', b.x, b.y)); // drag to cell 5 — still open
+  // TV-faithful live-select (colorsel.cpp:170) — down previews cell 2 (green) into the shared value.
+  expect(h.value(), 'down previews live').toBe('green');
+  h.loop.dispatch(mouse('move', b.x, b.y)); // drag to cell 5 — still open, value tracks
   expect(popupOpen(h.overlay), 'drag keeps the popup open').toBe(true);
-  h.loop.dispatch(mouse('up', b.x, b.y)); // release over cell 5 — commit + close
-  expect(h.value(), 'release over cell 5 commits magenta').toBe('magenta');
+  h.loop.dispatch(mouse('up', b.x, b.y)); // release over cell 5 — value is magenta, closes
+  expect(h.value(), 'release over cell 5 = magenta').toBe('magenta');
   expect(popupOpen(h.overlay), 'popup closed after release').toBe(false);
 });
 

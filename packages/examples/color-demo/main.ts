@@ -1,7 +1,7 @@
 /**
  * Color-family walkthrough (RD-21) — a narrated, headless console demo of `@jsvision/ui`'s
- * `ColorSwatch` + `ColorPicker`: a DOS-16 `ColorSwatch` rendered, arrow-navigated (`→`), then a swatch
- * committed (Enter); then a `ColorPicker` whose Down opens the anchored swatch popup, Tab reaches the
+ * `ColorSwatch` + `ColorPicker`: a DOS-16 `ColorSwatch` rendered, then arrow-selected LIVE (`→` — the
+ * value + ◘ marker move immediately, TV-faithful); then a `ColorPicker` whose Down opens the anchored swatch popup, Tab reaches the
  * hex field, a `#rrggbb` is typed, and Enter commits it — all rendered through a real `RenderRoot` (no
  * TTY), printing a composed ASCII frame after each step.
  *
@@ -44,7 +44,7 @@ function hexOf(c: Color): string {
   }
 }
 
-/** Steps 1-3: a standalone ColorSwatch — render → arrow-nav → commit. */
+/** Steps 1-3: a standalone ColorSwatch — render → live arrow-select → confirm (TV-faithful, colorsel.cpp). */
 function swatchWalkthrough(): void {
   const value = signal<Color>('blue'); // cell 4
   const swatch = new ColorSwatch({ value, colors: ANSI16_ORDER as readonly Color[], columns: 4 });
@@ -61,10 +61,10 @@ function swatchWalkthrough(): void {
   frame('Step 1 — ColorSwatch (DOS-16, 4×4), ◘ marks the value (blue)');
   loop.dispatch(key('right')); // navRight(4) → 5 (magenta)
   loop.renderRoot.flush();
-  frame('Step 2 — → arrow-nav moves the cursor to the next cell (magenta)');
+  frame('Step 2 — → selects the next cell LIVE; value + ◘ marker move immediately (magenta)');
   loop.dispatch(key('enter'));
   loop.renderRoot.flush();
-  frame('Step 3 — Enter commits the cursor color; the ◘ marker follows the value');
+  frame('Step 3 — Enter confirms (value is already live; in a picker this closes the popup)');
   console.log(`  ColorSwatch value = ${value()}  ${hexOf(value())}`);
 }
 

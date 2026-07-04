@@ -192,7 +192,39 @@ for a real latent limitation of the shared primitive that RD-21 legitimately sur
 
 ---
 
+## PA-17 (runtime, post-ship fix) — `ColorSwatch` is TV-faithful live-select, not cursor-vs-value + Enter-commit
+
+**Context:** user-reported bug (2026-07-05) — "clicking/dragging a color in the swatch does nothing."
+**Root cause:** the shipped `ColorSwatch` split an internal `cursor` (nav SoT) from the committed
+`value` (PA-9) and only committed on Enter/Space or an `onCommit`-gated release (PA-11). The `◘` marker
+draws on `indexOf(value())`, so a standalone click moved the **invisible** cursor and never repainted
+the marker → "nothing happens."
+
+**Source of truth (GATE re-decode):** `TColorSelector` has a **single live `color`**. `handleEvent`
+(`colorsel.cpp:165-177`) sets `color = mouse.y*4 + mouse.x/3` on `evMouseDown` **and every drag move**,
+then `colorChanged()` + `drawView()`; arrows (`:179-217`) likewise update `color` then fall through to
+`drawView()` + `colorChanged()` (`:234-235`). There is **no cursor/value split and no Enter-to-commit**
+— selection is live on every arrow/click/drag. Requiring Enter was a **mis-decode**.
+
+**Decision (user, 2026-07-05 — "TV-faithful live-select"):** nav/mouse now set `value` **live** via
+`setLive` (the internal `cursor` is retained only as the nav origin, kept in sync with `value`); the
+`◘` marker still draws on `indexOf(value())` (so an external off-palette `value` — e.g. the picker's
+hex field — shows no marker) but tracks the cursor because `value === colors[cursor]` after any
+interaction. Enter/Space and a mouse-up **over a real cell** fire only the `onCommit` **close** hook
+(the `ColorPicker` closes its popup; the value is already live). Per the **NON-NEGOTIABLE TV-fidelity
+directive** (the C++ outranks spec oracles for TV-derived components), the swatch's cursor-based specs
+were re-verified (all still green — they assert final `value` after arrow/click **+ Enter**, which
+live-select satisfies) and the picker's one non-TV oracle ("mouse-down alone does not commit") was
+updated to "down previews live" (`colorsel.cpp:170`). **Also (bug 2):** the `ColorPicker` chip is now
+drawn as an **`Input`-style field** (the `input*` roles, `inputSelected` while focused) so the picker
+matches the `ComboBox`/`DatePicker` field, replacing the bare `staticText` caption.
+
+**Rejected:** keep the split + add a visible focus cursor (deviates from TV — TV selects on click with
+no Enter; the user chose faithful live-select).
+
+---
+
 > **✅ GATE PASSED** — every semantically-weighted decision is resolved with an explicit user decision
 > (PA-1…PA-4), a source-determined fidelity fact (PA-5…PA-8), an RD-preflight resolution (PA-9…PA-13),
-> a confirmed dominant/house pattern (PA-14/PA-15), or a user-decided runtime resolution (PA-16). Zero
-> items deferred.
+> a confirmed dominant/house pattern (PA-14/PA-15), or a user-decided runtime resolution (PA-16/PA-17).
+> Zero items deferred.

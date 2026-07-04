@@ -26,13 +26,16 @@
  * measure **width 1** under the default `wcwidth` mode (asserted in `color-swatch.impl`, PF-005), so the
  * 3-wide cell math and the centered marker hold. Documented extensions (spec oracles, no `.cpp` diff):
  * the generic `Color[]` palette + truecolor cells, the cursor-vs-`value` split (PA-9), the partial-row
- * overshoot clamp (PA-10), the opt-in commit-on-release (PA-11), and the omitted frame (PA-12).
+ * overshoot clamp (PA-10), the picker close-on-release/Enter hook (PA-11), and the omitted frame (PA-12).
  *
- * ## State model (PA-9 / AC-15)
- * The internal `cursor: Signal<number>` is the nav SoT (init `indexOf(value)` else `0`). `value` is a
- * derived two-way bind: an external member `value` re-homes the cursor (a `value ∉ colors` leaves it);
- * commit sets `value = colors[cursor]`. The **marker is drawn on `indexOf(value())`** — a `value ∉
- * colors` shows no marker, yet nav still works from the cursor and Enter/Space commits `colors[cursor]`.
+ * ## State model (PA-9 / AC-15 — RD-21 fix, TV-faithful live-select 2026-07-05)
+ * TV's `TColorSelector` has a **single live `color`** that every arrow/click/drag updates immediately
+ * (`colorChanged()` + `drawView()`, `colorsel.cpp:170-174/234-235`). To honour that (the original PA-9
+ * split required Enter to commit — a mis-decode), nav/mouse now **set `value` live** via `setLive` (the
+ * internal `cursor` is the nav origin, kept in sync). The **marker is drawn on `indexOf(value())`**, so
+ * an external off-palette `value` (e.g. the picker's hex field) shows no marker while nav still works
+ * from the cursor. Enter/Space (or a mouse-up over a cell) fire only the {@link ColorSwatch.close}
+ * picker-close hook — the value is already live.
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
@@ -73,13 +76,14 @@ export interface ColorSwatchOptions {
   onChange?: (c: Color) => void;
   /** Pure name accessor (Should-Have, PA-13) — used by the `ColorPicker` chip caption. */
   nameFor?: (c: Color) => string;
-  /** Internal hook the `ColorPicker` wires to commit+close (fired on a keyboard/`select` commit, PA-11). */
+  /** Internal close hook the `ColorPicker` wires (fired on Enter/Space or a mouse-up over a cell, PA-11). */
   onCommit?: (c: Color) => void;
 }
 
 /**
- * A focusable color-grid view. Draws the TV decode + the extensions; navigates an internal cursor by
- * keyboard/mouse; commits a color on Enter/Space or `select()`. See the module doc for the decode.
+ * A focusable color-grid view. Draws the TV decode + the extensions; **live-selects** by keyboard/mouse
+ * (TV-faithful — `value` changes on every arrow/click/drag, the ◘ marker tracks); Enter/Space or a
+ * mouse-up over a cell closes a hosting `ColorPicker`. See the module doc for the decode.
  */
 export class ColorSwatch extends View {
   /** TV `ofSelectable` — the swatch takes focus (the cursor + keymap are focus-scoped). */
@@ -94,7 +98,7 @@ export class ColorSwatch extends View {
   protected readonly columns: number;
   protected readonly onChange?: (c: Color) => void;
   protected readonly onCommit?: (c: Color) => void;
-  /** The nav cursor — the single source of truth for navigation (PA-9). */
+  /** The live-selected cell (TV `color`) — the nav origin, kept in sync with `value` on every change. */
   protected readonly cursor: Signal<number>;
   /** The cursor before the current mouse gesture (TV `oldColor`), restored on a drag-outside revert. */
   private preDrag = 0;
@@ -134,25 +138,32 @@ export class ColorSwatch extends View {
 
   // ── Public methods (Should-Have) ────────────────────────────────────────────────────────────────
 
-  /** Programmatic commit — set `value` (+ `onChange`/`onCommit`). */
+  /** Programmatic select — set `value` live (+ `onChange`) and fire the picker close hook (`onCommit`). */
   select(color: Color): void {
-    this.commitColor(color);
-  }
-
-  // ── Commit helpers ──────────────────────────────────────────────────────────────────────────────
-
-  /** Commit the cursor's color to `value` (Enter/Space); a no-op for an out-of-range cursor. */
-  protected commit(): void {
-    const idx = this.cursor();
-    if (idx < 0 || idx >= this.colors.length) return;
-    this.commitColor(this.colors[idx]);
-  }
-
-  /** Set `value` and fire the commit hooks (`onChange` public + `onCommit` picker-internal, PA-11). */
-  protected commitColor(color: Color): void {
     this.value.set(color);
     this.onChange?.(color);
     this.onCommit?.(color);
+  }
+
+  // ── Selection helpers ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Set the live selection to cell `idx` and commit `value` **immediately** — TV `color = …;
+   * colorChanged()` fires on every move/arrow (`colorsel.cpp:170-174/234-235`), so the `◘` marker
+   * (drawn on `indexOf(value())`) tracks the cursor. A no-op for an out-of-range index. This does NOT
+   * close a hosting `ColorPicker` — that is the release/Enter hook ({@link close}).
+   */
+  protected setLive(idx: number): void {
+    if (idx < 0 || idx >= this.colors.length) return;
+    this.cursor.set(idx);
+    const c = this.colors[idx];
+    this.value.set(c);
+    this.onChange?.(c);
+  }
+
+  /** Fire the picker close hook with the current `value` (Enter/Space or a mouse-up over a real cell, PA-11). */
+  protected close(): void {
+    this.onCommit?.(this.value());
   }
 
   // ── Draw ────────────────────────────────────────────────────────────────────────────────────────
@@ -193,20 +204,20 @@ export class ColorSwatch extends View {
     const n = this.colors.length;
     switch (inner.key) {
       case 'left':
-        this.cursor.set(navLeft(this.cursor(), n, this.columns));
+        this.setLive(navLeft(this.cursor(), n, this.columns));
         break;
       case 'right':
-        this.cursor.set(navRight(this.cursor(), n, this.columns));
+        this.setLive(navRight(this.cursor(), n, this.columns));
         break;
       case 'up':
-        this.cursor.set(navUp(this.cursor(), n, this.columns));
+        this.setLive(navUp(this.cursor(), n, this.columns));
         break;
       case 'down':
-        this.cursor.set(navDown(this.cursor(), n, this.columns));
+        this.setLive(navDown(this.cursor(), n, this.columns));
         break;
       case 'enter':
       case 'space':
-        this.commit();
+        this.close(); // value is already live; Enter/Space closes a hosting picker (standalone: no-op)
         break;
       default:
         return; // not a swatch key — leave unconsumed
@@ -215,12 +226,13 @@ export class ColorSwatch extends View {
   }
 
   /**
-   * Mouse down → snapshot the pre-drag cursor + set from the pointer + capture; move while captured →
-   * re-track; up → release. Down alone never commits (a drag previews via cursor tracking). **Commit
-   * on release is opt-in via `onCommit`** (PA-11): a standalone swatch with no `onCommit` moves the
-   * cursor only (TV — Enter/Space commits), while the `ColorPicker` wires `onCommit` so a release
-   * **over a real cell** commits `value` + closes. A release outside the grid (or on a partial-row
-   * overshoot) never commits — the cursor has already reverted/clamped via {@link applyHit}.
+   * Mouse down → snapshot the pre-drag cell (TV `oldColor`) + **live-select** from the pointer +
+   * capture; move while captured → re-track (live). This mirrors TV's `evMouseDown` loop
+   * (`colorsel.cpp:165-177`): `color = mouse.y*4 + mouse.x/3` on down **and every drag move**, with a
+   * pointer **outside the view** reverting to `oldColor` — every position updates `value` immediately
+   * (the ◘ marker tracks). On **up over a real cell** the {@link close} hook fires so a hosting
+   * `ColorPicker` closes (PA-11); a release outside the grid (or on a partial-row overshoot) does not
+   * close (the cell has already reverted/clamped via {@link applyHit}).
    *
    * @param ev The dispatch envelope (carries `local` + the `setCapture`/`releaseCapture` seams).
    */
@@ -237,12 +249,12 @@ export class ColorSwatch extends View {
       if (local !== undefined) this.applyHit(local.x, local.y);
       ev.handled = true;
     } else if (inner.kind === 'up') {
-      // Commit-on-release over a real cell — opt-in via `onCommit` (the ColorPicker path, PA-11).
-      if (local !== undefined && this.onCommit !== undefined) {
+      // A release over a real cell closes a hosting picker (the value is already set live via applyHit).
+      if (local !== undefined) {
         const hit = hitCell(local.x, local.y, this.colors.length, this.columns);
         if (typeof hit === 'number') {
-          this.cursor.set(hit);
-          this.commit();
+          this.setLive(hit);
+          this.close();
         }
       }
       ev.releaseCapture?.();
@@ -250,13 +262,13 @@ export class ColorSwatch extends View {
     }
   }
 
-  /** Set the cursor from a view-local pointer via the discriminated {@link hitCell} (PA-10). */
+  /** Live-select from a view-local pointer via the discriminated {@link hitCell} (PA-10). */
   protected applyHit(localX: number, localY: number): void {
     const hit = hitCell(localX, localY, this.colors.length, this.columns);
     if (hit === 'outside')
-      this.cursor.set(this.preDrag); // revert (colorsel.cpp:172-173  else color = oldColor)
+      this.setLive(this.preDrag); // revert live (colorsel.cpp:172-173  else color = oldColor)
     else if (hit === 'overshoot')
-      this.cursor.set(Math.max(0, this.colors.length - 1)); // clamp a partial-row overshoot (extension)
-    else this.cursor.set(hit);
+      this.setLive(Math.max(0, this.colors.length - 1)); // clamp a partial-row overshoot (extension)
+    else this.setLive(hit);
   }
 }

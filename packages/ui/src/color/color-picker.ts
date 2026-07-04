@@ -75,26 +75,39 @@ function rgbEqual(a: Color, b: Color): boolean {
 }
 
 /**
- * The trigger chip — a display block in the current `value`'s color + a caption (`nameFor(value)` /
- * `label` / the raw color string). A near-black block uses a lightGray bg for visibility (the
- * `colorMarker` contrast family). Display-only; not focusable (the `ColorPicker` group is the trigger).
+ * The trigger chip — drawn as an **`Input`-style field** (the `input*` roles, so the picker looks like a
+ * `ComboBox`/`DatePicker` field, not a bare `staticText` caption): the field background fills in
+ * `inputSelected` while the picker is focused / `inputNormal` otherwise, a 2-cell color-block accent
+ * sits at cols 0-1 (a near-black block gets a lightGray bg for visibility), and the caption
+ * (`nameFor(value)` / `label` / the raw color) is drawn at col 3 in the input text role. Display-only;
+ * not focusable (the `ColorPicker` group is the trigger). Repaints on `value` **and** the picker's focus
+ * change (via `focusSource.focusSignal()`, the RD-06 Label idiom).
  */
 class ColorChip extends View {
   constructor(
     private readonly value: Signal<Color>,
+    private readonly focusSource: View,
     private readonly label?: string,
     private readonly nameFor?: (c: Color) => string,
   ) {
     super();
-    this.onMount(() => this.bind(() => this.value()));
+    this.onMount(() =>
+      this.bind(() => {
+        this.value();
+        this.focusSource.focusSignal()();
+      }),
+    );
   }
 
   draw(ctx: DrawContext): void {
+    const { width: w, height: h } = ctx.size;
+    const field: Style = ctx.color(this.focusSource.state.focused ? 'inputSelected' : 'inputNormal');
+    ctx.fillRect(0, 0, w, h, ' ', field); // the input-style field background (matches ComboBox)
     const c = this.value();
-    const block: Style = isNearBlack(c) ? { fg: c, bg: PALETTE.lightGray } : { fg: c, bg: PALETTE.black };
-    ctx.fillRect(0, 0, 2, 1, '█', block); // the 2-cell color block
+    const block: Style = isNearBlack(c) ? { fg: c, bg: PALETTE.lightGray } : { fg: c, bg: field.bg };
+    ctx.fillRect(0, 0, 2, 1, '█', block); // the 2-cell color-block accent at cols 0-1
     const caption = this.nameFor?.(c) ?? this.label ?? c;
-    ctx.text(3, 0, caption, ctx.color('staticText'));
+    if (w > 3) ctx.text(3, 0, caption.slice(0, w - 3), field); // caption at col 3 in the input text role
   }
 }
 
@@ -193,7 +206,7 @@ export class ColorPicker extends Group {
     this.nameFor = opts.nameFor;
     this.onChange = opts.onChange;
     this.layout = { direction: 'row' };
-    this.chip = new ColorChip(this.value, opts.label, opts.nameFor);
+    this.chip = new ColorChip(this.value, this, opts.label, opts.nameFor);
     this.chip.layout = { size: { kind: 'fr', weight: 1 } };
     this.button = new ColorButton((ev) => this.open(ev));
     this.add(this.chip);
