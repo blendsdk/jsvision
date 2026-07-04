@@ -93,6 +93,24 @@ for (const id of ['feedback/progress-bar', 'feedback/spinner']) {
   });
 }
 
+// ST-16 (RD-20 AC-16) — the Date showcase stories are registered with the required metadata (unique
+// ids `date/calendar` + `date/date-picker`, category `Date`, an `rd`) and each paints headlessly.
+for (const id of ['date/calendar', 'date/date-picker']) {
+  test(`ST-16: the ${id} story is registered with metadata and paints`, () => {
+    const story = STORIES.find((s) => s.id === id);
+    expect(story, `a story with id "${id}" is registered`).toBeTruthy();
+    expect(story!.category, 'category Date').toBe('Date');
+    expect(story!.rd, 'provenance RD chip').toBeTruthy();
+    createRoot((dispose) => {
+      const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+      const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+      rr.mount(view);
+      expect(paintedCells(rr.buffer().rows()), `the ${id} story painted nothing`).toBeGreaterThan(0);
+      dispose();
+    });
+  });
+}
+
 // The core smoke oracle: each story builds + mounts + draws without throwing, and paints something.
 for (const story of STORIES) {
   test(`story "${story.id}" mounts headlessly and paints`, () => {
