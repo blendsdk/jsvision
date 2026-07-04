@@ -49,6 +49,16 @@ export function drawDropdownIcon(ctx: DrawContext, x = 0): void {
 /** A safe fallback viewport when the overlay has no rect yet (never reached once composed). */
 const FALLBACK_VIEWPORT: Rect = { x: 0, y: 0, width: 80, height: 24 };
 
+/** Whether `view` is `ancestor` or a descendant of it (walks the parent chain). RD-21 PA-16. */
+function isWithin(view: View, ancestor: View): boolean {
+  let node: View | null = view;
+  while (node !== null) {
+    if (node === ancestor) return true;
+    node = node.parent;
+  }
+  return false;
+}
+
 /** One open anchored popup instance — the caller's handle to dismiss it. */
 export interface AnchoredPopup {
   /** Dismiss the popup (idempotent): unmount the list + catcher, restore the saved focus, no pick. */
@@ -268,12 +278,21 @@ export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
 
     host.focusView(target); // the focus target receives focus on open (saved prior focus above)
 
-    // Focus-loss dismissal (PF-004): `focusSignal()` is a void tick firing on both gain AND loss, and
-    // this effect runs once immediately on creation — so dismiss ONLY when the target is now unfocused,
-    // ignoring the open-time focus gain + the initial run (else the popup self-dismisses on open).
+    // Focus-loss dismissal (PF-004 / RD-21 PA-16): dismiss when focus leaves the **popup subtree**, not
+    // merely when the single `focusTarget` blurs — so a multi-focusable popup (RD-21's grid + hex
+    // `Input`) can move focus internally (Tab / click) without self-dismissing. The effect watches the
+    // focusSignal of whichever popup view currently holds focus and **follows** focus while it stays
+    // inside `frame`, dismissing only once it moves out. For a single-focusable popup (History/ComboBox/
+    // Calendar) this is byte-identical to the old behaviour: the sole focusable IS the subtree, so any
+    // blur leaves it → dismiss. `focusSignal()` fires on both gain AND loss; the open-time run sees the
+    // target focused (inside) and does not dismiss.
     effect(() => {
-      target.focusSignal()();
-      if (!dismissed && !target.state.focused) dismiss();
+      const focused = host.getFocused();
+      const inside = focused !== null && isWithin(focused, frame);
+      // Subscribe to the focus ticks of the view that currently holds focus inside the popup (so its
+      // next loss re-runs this effect); fall back to `target` when focus is already outside.
+      (inside ? focused! : target).focusSignal()();
+      if (!dismissed && !inside) dismiss();
     });
 
     return { dismiss };

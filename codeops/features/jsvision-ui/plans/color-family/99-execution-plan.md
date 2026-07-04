@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-04
-> **Progress**: 13/30 tasks (43%)
+> **Progress**: 17/30 tasks (57%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -240,10 +240,10 @@ phase; only a Phase-5 regression check).
 - [x] 3.2.2 Run `color-swatch.spec` GREEN (fix code, never the spec); `yarn verify` (2026-07-05 — 13/13; full verify 8/8)
 
 ### Phase 4: `ColorPicker` + hex field
-- [ ] 4.1.1 Write `color-picker.spec` (ST-8…ST-10)
-- [ ] 4.1.2 Run — verify RED
-- [ ] 4.2.1 Implement `color-picker.ts` (chip + `▐↓▌` + anchored swatch popup + hex field + no-host guard; no `dropdown/` edit)
-- [ ] 4.2.2 Run `color-picker.spec` GREEN; `yarn verify`
+- [x] 4.1.1 Write `color-picker.spec` (ST-8…ST-10) (2026-07-05)
+- [x] 4.1.2 Run — verify RED (2026-07-05 — module not found)
+- [x] 4.2.1 Implement `color-picker.ts` (chip + `▐↓▌` + anchored swatch popup + hex field + no-host guard) (2026-07-05 — **PA-16 runtime:** the in-popup hex field required generalizing `openAnchoredPopup`'s focus-loss dismiss to popup-subtree membership, editing `dropdown/popup.ts`; user-decided, supersedes AC-9's "no dropdown/ edit" with a backward-compatible change guarded by the RD-14/20 suites. Also completed the swatch's opt-in commit-on-release (`color-swatch.ts`, gated on `onCommit`).)
+- [x] 4.2.2 Run `color-picker.spec` GREEN; `yarn verify` (2026-07-05 — picker 13/13, RD-14/20 suites 60/60 green, full verify 8/8)
 
 ### Phase 5: GATE-2 AFTER-diff + impl tests
 - [ ] 5.1.1 [GATE-2 AFTER-diff] Cell-by-cell diff of the composed `ColorSwatch` vs `colorsel.cpp`; record
