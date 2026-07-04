@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-04 11:17
-> **Progress**: 28/35 tasks (80%)
+> **Last Updated**: 2026-07-04 11:24
+> **Progress**: 35/35 tasks (100%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -219,9 +219,9 @@ rendered buffer cell-by-cell AFTER. The selection/nav/picker extensions get spec
 | 6.2.3 | Full verification incl. `yarn check:deps`; update CLAUDE.md/roadmap on completion (exec_plan post-analysis). | — |
 
 **Deliverables**:
-- [ ] Re-exports land; `check:deps` clean; files ≤ 500
-- [ ] Both stories registered + smoke passing; `demo:date` runs headless + e2e passing
-- [ ] `yarn verify` passing
+- [x] Re-exports land; `check:deps` clean; files ≤ 500
+- [x] Both stories registered + smoke passing; `demo:date` runs headless + e2e passing
+- [x] `yarn verify` passing
 
 **Verify**: `yarn verify`
 
@@ -272,13 +272,13 @@ rendered buffer cell-by-cell AFTER. The selection/nav/picker extensions get spec
 - [x] 5.1.4 Full verification — 2026-07-04 (8/8 turbo tasks green)
 
 ### Phase 6: Packaging, kitchen-sink stories, `demo:date`
-- [ ] 6.1.1 Write `date.packaging.spec.test.ts` (ST-15)
-- [ ] 6.1.2 Run — verify RED
-- [ ] 6.1.3 Add `date/index.ts` barrel + explicit re-exports in `src/index.ts`
-- [ ] 6.1.4 Run — verify GREEN
-- [ ] 6.2.1 Kitchen-sink `date/calendar` + `date/date-picker` stories (+ smoke, ST-16)
-- [ ] 6.2.2 `demo:date` headless walkthrough + script + e2e (ST-16)
-- [ ] 6.2.3 Full verification incl. `check:deps`; post-completion re-analysis
+- [x] 6.1.1 Write `date.packaging.spec.test.ts` (ST-15) — 2026-07-04
+- [x] 6.1.2 Run — verify RED — 2026-07-04 (re-exports absent)
+- [x] 6.1.3 Add `date/index.ts` barrel + explicit re-exports in `src/index.ts` — 2026-07-04
+- [x] 6.1.4 Run — verify GREEN — 2026-07-04 (3 packaging spec green; files ≤500)
+- [x] 6.2.1 Kitchen-sink `date/calendar` + `date/date-picker` stories (+ smoke, ST-16) — 2026-07-04 (33 smoke green incl. 2 ST-16)
+- [x] 6.2.2 `demo:date` headless walkthrough + script + e2e (ST-16) — 2026-07-04 (date-demo.e2e green; Calendar nav/commit + DatePicker popup)
+- [x] 6.2.3 Full verification incl. `check:deps`; post-completion re-analysis — 2026-07-04 (verify 8/8, check:deps clean, e2e 13/13)
 
 ---
 
