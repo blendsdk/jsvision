@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-04 10:52
-> **Progress**: 10/35 tasks (29%)
+> **Last Updated**: 2026-07-04 10:55
+> **Progress**: 14/35 tasks (40%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -95,9 +95,9 @@ rendered buffer cell-by-cell AFTER. The selection/nav/picker extensions get spec
 | 2.2.2 | Run `calendar-date.spec` **PASS** (green; fix code, never the spec); `yarn verify` | — |
 
 **Deliverables**:
-- [ ] `calendar-date.spec` red before impl, green after
-- [ ] `calendar-date.ts` implemented, zero-dep, `parseISO` never throws
-- [ ] `yarn verify` passing
+- [x] `calendar-date.spec` red before impl, green after
+- [x] `calendar-date.ts` implemented, zero-dep, `parseISO` never throws
+- [x] `yarn verify` passing
 
 **Verify**: `yarn verify`
 
@@ -247,10 +247,10 @@ rendered buffer cell-by-cell AFTER. The selection/nav/picker extensions get spec
 - [x] 1.2.5 Run `date-popup.spec` GREEN + RD-14 History/ComboBox suites GREEN (AC-13); `yarn verify` — 2026-07-04 (75 dropdown tests green; full verify 8/8)
 
 ### Phase 2: `CalendarDate` value + pure helpers
-- [ ] 2.1.1 Write `calendar-date.spec.test.ts` (ST-1)
-- [ ] 2.1.2 Run — verify RED
-- [ ] 2.2.1 Implement `calendar-date.ts` (helpers + interop, `parseISO` null-safe)
-- [ ] 2.2.2 Run — verify GREEN; `yarn verify`
+- [x] 2.1.1 Write `calendar-date.spec.test.ts` (ST-1) — 2026-07-04
+- [x] 2.1.2 Run — verify RED — 2026-07-04 (module absent)
+- [x] 2.2.1 Implement `calendar-date.ts` (helpers + interop, `parseISO` null-safe) — 2026-07-04 (JDN day-walk for addDays, zero-dep)
+- [x] 2.2.2 Run — verify GREEN; `yarn verify` — 2026-07-04 (6 spec green; full verify 8/8)
 
 ### Phase 3: `Calendar` view
 - [ ] 3.1.1 Write `calendar.spec.test.ts` (ST-2…ST-9; ST-3/ST-4 cell-by-cell pre-serialize)
