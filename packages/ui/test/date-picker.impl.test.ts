@@ -111,6 +111,27 @@ test('open → click a day → value set + popup closed', () => {
   expect(popupOpen(h.overlay), 'popup closed after the day click').toBe(false);
 });
 
+test('open → click the footer Today button → today selected + popup closed (PA-21)', () => {
+  const h = make();
+  h.loop.focusView(h.dp.input);
+  h.loop.dispatch(key('down', { alt: true })); // open, hosted comfortable calendar
+  const cal = hostedCalendar(h.overlay);
+  expect(cal).toBeInstanceOf(Calendar);
+  // The comfortable footer Today button spans calendar-local cols 23-27, row weekRowY(5)+2 = the footer
+  // textY = 9 (compute the calendar's absolute origin from its bounds).
+  let ax = 0;
+  let ay = 0;
+  let node = cal as unknown as { bounds: { x: number; y: number }; parent: typeof node } | null;
+  while (node) {
+    ax += node.bounds.x;
+    ay += node.bounds.y;
+    node = node.parent;
+  }
+  h.loop.dispatch(mouseDown(ax + 24 + 1, ay + 9 + 1)); // local (24,9): inside "Today"; 1-based → +1
+  expect(h.value(), 'the Today button selects today').toStrictEqual(TODAY);
+  expect(popupOpen(h.overlay), 'popup closed after the Today click').toBe(false);
+});
+
 test('Esc and outside mouse-down both cancel without changing value', () => {
   const esc = make();
   esc.loop.focusView(esc.dp.input);

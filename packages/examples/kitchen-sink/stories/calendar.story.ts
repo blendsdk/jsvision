@@ -45,7 +45,7 @@ export const calendarStory: Story = {
     g.add(
       at(
         new Text(
-          'Arrows move the cursor · Enter/click selects · header ↑↓ change month/year · [ Today ] or T jumps to today.',
+          'Arrows move the cursor · Enter/click selects · header ↑↓ change month/year · Today or T jumps to today.',
         ),
         1,
         size.height + 2,

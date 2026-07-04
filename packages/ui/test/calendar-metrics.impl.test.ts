@@ -26,12 +26,12 @@ test('compact metrics reproduce the TV-exact 20×8 (no footer, week rows packed 
   expect(m.yearDownX).toBe(19);
 });
 
-test('comfortable metrics — 28×10, 4-wide cells, a footer with a right-aligned [ Today ] button', () => {
+test('comfortable metrics — 28×10, 4-wide cells, a footer with a right-aligned Today button', () => {
   const m = metricsFor('comfortable', false);
   expect(m).toMatchObject({ width: 28, height: 10, cellWidth: 4, weekdayLen: 3 });
   expect(dayFieldX(m, 0)).toBe(2); // right-justified 2-digit within the 4-wide cell
   expect(weekdayLabelX(m, 0)).toBe(1);
-  expect(m.footer).toMatchObject({ dividerY: 8, textY: 9, todayW: 9, todayX: 19 }); // 28 − '[ Today ]'.length
+  expect(m.footer).toMatchObject({ dividerY: 8, textY: 9, todayW: 5, todayX: 23 }); // 28 − 'Today'.length
   expect(m.yearUpX).toBe(26);
   expect(m.yearDownX).toBe(27);
 });

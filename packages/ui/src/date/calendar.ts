@@ -40,9 +40,9 @@
  * ## Density (RD-20 — user request 2026-07-04, PA-20-runtime, NOT a TV decode)
  *   A `density` option (default `'comfortable'`) selects the layout size: `'compact'` = the TV-exact
  *   20×8 above; `'comfortable'` = 4-wide cells + 3-letter weekday labels + a divider and a footer row
- *   hosting the selected-date echo and a `[ Today ]` button (~28×10); `'spacious'` = 5-wide cells + a
+ *   hosting the selected-date echo and a `Today` button (~28×10); `'spacious'` = 5-wide cells + a
  *   blank spacer row between weeks (~35×15). All geometry lives in `calendar-metrics.ts`; the header +
- *   grid + colours are identical across densities. A `[ Today ]` click and the `T` key jump the cursor
+ *   grid + colours are identical across densities. A `Today` click and the `T` key jump the cursor
  *   + visible month to today.
  *
  * ## Extensions (no TV counterpart — spec oracles, no `.cpp` diff)
@@ -109,8 +109,8 @@ export interface CalendarOptions {
   showWeekNumbers?: boolean;
   /**
    * Layout density (PA-20-runtime, default `'comfortable'`): `'compact'` = the TV-exact 20×8,
-   * `'comfortable'` = the roomy default (4-wide cells + a `[ Today ]` footer, ~28×10), `'spacious'` =
-   * extra breathing room (5-wide cells + blank week spacers, ~28×15). See `calendar-metrics.ts`.
+   * `'comfortable'` = the roomy default (4-wide cells + a `Today` footer, ~28×10), `'spacious'` =
+   * extra breathing room (5-wide cells + blank week spacers, ~35×15). See `calendar-metrics.ts`.
    */
   density?: CalendarDensity;
   /** Fired when `value` changes via a commit (Should-Have, PA-8). */
@@ -325,7 +325,7 @@ export class Calendar extends View {
       }
     }
 
-    // Footer (comfortable/spacious) — a divider, the selected-date echo, and a `[ Today ]` button.
+    // Footer (comfortable/spacious) — a divider, the selected-date echo, and a Today button.
     if (m.footer !== null) {
       ctx.text(m.wkw, m.footer.dividerY, '─'.repeat(m.contentWidth), normal);
       const val = this.value();
@@ -388,7 +388,7 @@ export class Calendar extends View {
         break;
       case 't':
       case 'T':
-        this.today(); // jump the cursor + visible month to today (the keyboard `[ Today ]`, AR-runtime)
+        this.today(); // jump the cursor + visible month to today (the keyboard Today, PA-21)
         break;
       default:
         return; // not a calendar key — leave unconsumed
@@ -396,7 +396,7 @@ export class Calendar extends View {
     ev.handled = true;
   }
 
-  /** Header ↑↓ hit columns + the footer `[ Today ]` button + day-click commit — all keyed off the metrics. */
+  /** Header ↑↓ hit columns + the footer Today button + day-click commit — all keyed off the metrics. */
   protected handleMouse(ev: DispatchEvent): void {
     const local = ev.local;
     if (local === undefined) return;
@@ -411,10 +411,13 @@ export class Calendar extends View {
       ev.handled = true;
       return;
     }
-    // Footer `[ Today ]` button (comfortable/spacious).
+    // Footer `Today` button (comfortable/spacious): navigate to today AND select it (PA-21). In a
+    // `DatePicker` the commit fires `onChange` → the popup closes with today filled in; a no-op if today
+    // is disabled / out of `[min,max]` (then it just navigates there, AC-8).
     if (m.footer !== null && local.y === m.footer.textY) {
       if (local.x >= m.footer.todayX && local.x < m.footer.todayX + m.footer.todayW) {
         this.today();
+        this.commit(this.todayDate);
         ev.handled = true;
       }
       return;
