@@ -61,7 +61,8 @@ export function dayOfWeek(date: CalendarDate): number {
   const century = Math.trunc(year / 100);
   const yr = year % 100;
   let dw =
-    (Math.trunc((26 * month - 2) / 10) + date.day + yr + Math.trunc(yr / 4) + Math.trunc(century / 4) - 2 * century) % 7;
+    (Math.trunc((26 * month - 2) / 10) + date.day + yr + Math.trunc(yr / 4) + Math.trunc(century / 4) - 2 * century) %
+    7;
   if (dw < 0) dw += 7;
   return dw;
 }

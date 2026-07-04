@@ -58,7 +58,7 @@ function dayNumber(date: CalendarDate): number {
 export function isoWeek(date: CalendarDate): number {
   const thursday = addDays(date, 4 - isoDow(date)); // Thursday of this ISO week (Monday + 3)
   const jan1: CalendarDate = { year: thursday.year, month: 1, day: 1 };
-  const firstThursday = addDays(jan1, ((4 - isoDow(jan1)) + 7) % 7); // first Thursday on/after Jan 1
+  const firstThursday = addDays(jan1, (4 - isoDow(jan1) + 7) % 7); // first Thursday on/after Jan 1
   return Math.floor((dayNumber(thursday) - dayNumber(firstThursday)) / 7) + 1;
 }
 
@@ -90,7 +90,7 @@ export function buildMonthGrid(
 ): MonthGrid {
   const { firstDayOfWeek, weekNumbers } = opts;
   const firstOfMonth: CalendarDate = { year, month, day: 1 };
-  const leadingOffset = ((dayOfWeek(firstOfMonth) - firstDayOfWeek) + 7) % 7;
+  const leadingOffset = (dayOfWeek(firstOfMonth) - firstDayOfWeek + 7) % 7;
   const startDate = addDays(firstOfMonth, -leadingOffset); // the date shown in row 0, column 0
   const lastDay = daysInMonth(year, month);
 

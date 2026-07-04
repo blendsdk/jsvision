@@ -42,7 +42,9 @@ export const calendarStory: Story = {
     );
     g.add(
       at(
-        new Text('Arrows move the cursor · Enter or click selects · +/- (or ▲▼) change month · Sundays disabled.'),
+        new Text(
+          'Arrows move the cursor · Enter/click selects · header ↑↓ change month (left) / year (right) · Sundays disabled.',
+        ),
         1,
         11,
         width,

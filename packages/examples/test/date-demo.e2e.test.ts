@@ -2,7 +2,7 @@
  * End-to-end test for the date-family demo (RD-20 AC-16 → ST-16).
  *
  * Immutable oracle: the `demo:date` walkthrough runs standalone — no real host/TTY — exits 0 and prints
- * a non-empty ASCII walkthrough: the `Calendar` header (September → October 2026), the ▲/▼ month
+ * a non-empty ASCII walkthrough: the `Calendar` header (September → October 2026), the ↑↓ month/year
  * arrows, the day/month-nav + commit narration, the committed value line, and the `DatePicker` Alt+↓
  * popup-open + commit. Mirrors `feedback-demo.e2e`; heavier than the unit specs, so it lives outside
  * the unit glob. `.js` per NodeNext.
@@ -45,8 +45,8 @@ test('demo:date runs standalone, exits 0, and prints the date-family walkthrough
   expect(result.stdout).toContain('September 2026');
   expect(result.stdout).toContain('October 2026'); // PgDn advanced the month
   expect(result.stdout).toContain('Su Mo Tu We Th Fr Sa');
-  expect(result.stdout).toContain('▲'); // next-month arrow
-  expect(result.stdout).toContain('▼'); // prev-month arrow / picker button
+  expect(result.stdout).toContain('↑'); // next/increment arrow (month + year)
+  expect(result.stdout).toContain('↓'); // prev/decrement arrow (month + year) + the ▐↓▌ picker button
   // Walkthrough narration.
   expect(result.stdout).toContain('day-nav');
   expect(result.stdout).toContain('month nav to October');
