@@ -1,5 +1,5 @@
 /**
- * Story: `DatePicker` (RD-20) — a one-line masked field + a trailing `▼` opening the `Calendar` in the
+ * Story: `DatePicker` (RD-20) — a one-line masked field + a trailing `▐↓▌` dropdown opening the `Calendar` in the
  * anchored popup, in `DD/MM/YYYY` format. Shows the live bound `value` echoed as its ISO string.
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
@@ -14,7 +14,7 @@ export const datePickerStory: Story = {
   category: 'Date',
   title: 'DatePicker',
   rd: 'RD-20',
-  blurb: 'DatePicker: a masked field + ▼ opening the calendar dropdown (DD/MM/YYYY format).',
+  blurb: 'DatePicker: a masked field + ▐↓▌ opening the calendar dropdown (DD/MM/YYYY format).',
   build(ctx: StoryContext) {
     const width = Math.max(40, ctx.width - 2);
     const value = signal<CalendarDate | null>(null);
@@ -37,7 +37,9 @@ export const datePickerStory: Story = {
     );
     g.add(
       at(
-        new Text('↓ / Alt+↓ / ▼ opens the calendar · pick a day to fill the field · Esc or an outside click cancels.'),
+        new Text(
+          '↓ / Alt+↓ / the ▐↓▌ button opens the calendar · pick a day to fill the field · Esc or an outside click cancels.',
+        ),
         1,
         4,
         width,

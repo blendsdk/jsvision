@@ -1,6 +1,6 @@
 /**
  * Implementation tests (edge cases / internals) — RD-20 `DatePicker`. Companion to `date-picker.spec`:
- * the no-host guard, open→pick→close via a mouse click on a calendar day, the ▼ button draw + click-to-
+ * the no-host guard, open→pick→close via a mouse click on a calendar day, the ▐↓▌ button draw + click-to-
  * open, Alt+Down open, and Esc/outside cancel. Real loop + PopupHost (ComboBox idiom). `.js` specifiers
  * required by NodeNext ESM.
  */
@@ -54,19 +54,20 @@ function hostedCalendar(overlay: Group): Calendar | undefined {
   return frame?.children.find((c): c is Calendar => c instanceof Calendar);
 }
 
-test('the ▼ button draws a down-triangle at its centre cell', () => {
+test('the dropdown button draws the shared ▐↓▌ icon at its centre cell', () => {
   const h = make();
-  // The picker is [ input(fr) | ▼(3) ] at x=5..20; the button occupies the last 3 cols (18-20 0-based),
-  // its centre (arrow) at col 19; the field is 16 wide anchored at x=5 → 0-based cols 5..20.
+  // The picker is [ input(fr) | ▐↓▌(3) ] at x=5..20; the button occupies the last 3 cols (18-20 0-based),
+  // its centre (arrow ↓) at col 19; the field is 16 wide anchored at x=5 → 0-based cols 5..20. The button
+  // now uses the shared `drawDropdownIcon` (thin ↓ U+2193), identical to ComboBox/History.
   const buf = h.loop.renderRoot.buffer();
   const rowChars = buf
     .rows()[3]
     .map((c) => c.char)
     .join('');
-  expect(rowChars.includes('▼'), 'the ▼ arrow is drawn').toBe(true);
+  expect(rowChars.includes('↓'), 'the shared ↓ dropdown arrow is drawn').toBe(true);
 });
 
-test('a mouse-down on the ▼ button opens the popup', () => {
+test('a mouse-down on the dropdown button opens the popup', () => {
   const h = make();
   // Button centre absolute col 19 (0-based) → 1-based mouseDown(20, 4).
   h.loop.dispatch(mouseDown(20, 4));

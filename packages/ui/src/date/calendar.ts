@@ -8,11 +8,11 @@
  *   • **View size 20×8** — window `TRect(1,1,23,11)` = 22×10 (`wnNoNumber`, `flags &= ~(wfZoom|wfGrow)`),
  *     `palette = wpCyanWindow`, inset `r.grow(-1,-1)` → the view is 20×8 (`calendar.cpp:268-281`). The
  *     `22` in `draw()` is an over-allocated buffer clipped to the 20-col view (PF-001).
- *   • **Row 0 header** — `setw(9)⟨month⟩ setw(4)⟨year⟩ ▲  ▼` : month right-justified in 9, ' ', year
- *     right-justified in 4, ' ', CP437 30 = ▲ (U+25B2), '  ', CP437 31 = ▼ (U+25BC), ' ' = 20 cols;
- *     **▲ at col 15, ▼ at col 18** (`calendar.cpp:139-144`).
- *   • **Month nav (mouse)** — local `x=15,y=0 ⇒ ++month`; `x=18,y=0 ⇒ −−month` (`calendar.cpp:185-204`).
- *     With a week-number column the hit columns shift right by `weekNumberColWidth` (AR-202 / AC-9).
+ *   • **Row 0 header** — TV draws `setw(9)⟨month⟩ setw(4)⟨year⟩ ▲  ▼` (CP437 30/31 = ▲/▼ at col 15/18,
+ *     both month nav, `calendar.cpp:139-144`). **RD-20 replaces this header** — see §Header extension.
+ *   • **Month nav (mouse)** — TV: local `x=15,y=0 ⇒ ++month`; `x=18,y=0 ⇒ −−month` (`calendar.cpp:185-204`).
+ *     RD-20 re-lays the hit zones (§Header extension); with a week-number column they shift right by
+ *     `weekNumberColWidth` (AR-202 / AC-9).
  *   • **Month nav (keys)** — TV `+`/kbDown ⇒ next, `-`/kbUp ⇒ prev (`calendar.cpp:206-231`). RD-20
  *     reassigns the arrows to day-nav (AR-199) and keeps `+`/`-` for the visible month.
  *   • **Row 1 weekday** — `"Su Mo Tu We Th Fr Sa"` (`calendar.cpp:147`), rotated by `firstDayOfWeek`.
@@ -22,13 +22,20 @@
  *     today `getColor(7)`→`cpCyanWindow[7]=0x16`→`cpAppColor[22]=0x21` blue-on-green (`calendar.cpp:134,163-166`).
  *
  * ## GATE-2 AFTER-diff (re-verified vs `calendar.cpp:124-171`, 2026-07-04)
- * The composed buffer matches the decode cell-by-cell (the executable oracle is `calendar.spec`
- * ST-3/ST-4): header `September 2026` right-justified with ▲ at col 15 / ▼ at col 18; weekday row
- * `Su Mo Tu We Th Fr Sa`; days 2-digit right-justified at col `j*3` with leading/trailing blanks; today
- * `0x21` blue-on-green, other in-month days `0x3E` yellow-on-cyan. The only intentional deviations from
- * the C++ are documented extensions (leap rule → full Gregorian in `daysInMonth`, AR-196; the additive
- * selection/cursor/disabled/week# roles, which never perturb the TV cells when unfocused + `value=null`,
- * ST-2). No mismatch found.
+ * The composed **grid** matches the decode cell-by-cell (the executable oracle is `calendar.spec`
+ * ST-4 + geometry): weekday row `Su Mo Tu We Th Fr Sa`; days 2-digit right-justified at col `j*3` with
+ * leading/trailing blanks; today `0x21` blue-on-green, other in-month days `0x3E` yellow-on-cyan. The
+ * intentional deviations are documented extensions: leap rule → full Gregorian in `daysInMonth`
+ * (AR-196); the additive selection/cursor/disabled/week# roles (which never perturb the TV grid cells
+ * when unfocused + `value=null`, ST-2); and the header (§Header extension). No grid mismatch found.
+ *
+ * ## Header extension (RD-20 — user request 2026-07-04, NOT a TV decode)
+ *   TV's right-only `▲/▼` month arrows are replaced by a **flanking** header `↑↓ ⟨month⟩ ⟨year⟩ ↑↓`
+ *   (`'↑↓ '`+setw(9)month+`' '`+setw(4)year+`' ↑↓'` = 20 cols): the LEFT `↑↓` (cols 0-1) step the
+ *   visible month ±1, the RIGHT `↑↓` (cols 18-19) step the visible year ±1 — up = next/increment, down
+ *   = prev/decrement, both **clamped to `[min,max]`** at month granularity (`clampVisibleMonth`). The
+ *   `↑`/`↓` (U+2191/U+2193) match the ComboBox/History dropdown `↓` (`dropdown/popup.ts:31`) so the
+ *   date family shares one arrow style. Oracle: `calendar.spec` ST-3 (geometry) + ST-7 (nav + clamp).
  *
  * ## Extensions (no TV counterpart — spec oracles, no `.cpp` diff)
  *   selectable `value` (`calendarSelected` `0x1F`), the day-nav cursor (`calendarCursor` `0x3F`, drawn
@@ -65,9 +72,14 @@ const MONTH_NAMES = [
   'December',
 ] as const;
 
-/** CP437 30 → ▲ (U+25B2) next-month arrow, CP437 31 → ▼ (U+25BC) prev-month arrow (`calendar.cpp:141`). */
-const ARROW_NEXT = '▲';
-const ARROW_PREV = '▼';
+/**
+ * Header nav arrows — thin `↑` (U+2191, increment / next) and `↓` (U+2193, decrement / prev). An
+ * RD-20 extension replacing TV's filled `▲/▼` (`calendar.cpp:141`, CP437 30/31); the `↓` matches the
+ * ComboBox/History dropdown icon (`DROPDOWN_ICON.arrow`, `dropdown/popup.ts:31`) so the date family
+ * shares one arrow style (user request 2026-07-04).
+ */
+const ARROW_UP = '↑';
+const ARROW_DOWN = '↓';
 
 /** Options for a {@link Calendar}. (PA-8) */
 export interface CalendarOptions {
@@ -186,16 +198,42 @@ export class Calendar extends View {
     }
   }
 
-  /** Shift the visible month by `delta` (cursor + value untouched — the faithful TV `+`/`-`/▲/▼ nav). */
+  /**
+   * Clamp a visible `(year, month)` into `[min,max]` at month granularity (a bound's day is ignored):
+   * the visible view can never page earlier than `min`'s month nor later than `max`'s month (only where
+   * the respective bound is set). Returns the clamped month via a linear month index.
+   */
+  protected clampVisibleMonth(year: number, month: number): { year: number; month: number } {
+    let idx = year * 12 + (month - 1);
+    if (this.min !== undefined) idx = Math.max(idx, this.min.year * 12 + (this.min.month - 1));
+    if (this.max !== undefined) idx = Math.min(idx, this.max.year * 12 + (this.max.month - 1));
+    return { year: Math.floor(idx / 12), month: (idx % 12) + 1 };
+  }
+
+  /**
+   * Shift the visible month by `delta`, clamped to `[min,max]` (cursor + value untouched — the `+`/`-`
+   * keys and the LEFT header ↑↓ arrows). At a bound edge the shift is a no-op (AC runtime: validate nav).
+   */
   protected shiftMonth(delta: number): void {
     const d = addMonths({ year: this.visibleYear(), month: this.visibleMonth(), day: 1 }, delta);
-    this.visibleYear.set(d.year);
-    this.visibleMonth.set(d.month);
+    const { year, month } = this.clampVisibleMonth(d.year, d.month);
+    this.visibleYear.set(year);
+    this.visibleMonth.set(month);
+  }
+
+  /**
+   * Shift the visible year by `delta` (month kept), clamped to `[min,max]` (the RIGHT header ↑↓ arrows).
+   * Clamping can pull the month to the bound's month when the target year lands on a boundary year.
+   */
+  protected shiftYear(delta: number): void {
+    const { year, month } = this.clampVisibleMonth(this.visibleYear() + delta, this.visibleMonth());
+    this.visibleYear.set(year);
+    this.visibleMonth.set(month);
   }
 
   /** The first (or last) day of the cursor's displayed week (rotated by `firstDayOfWeek`). */
   protected weekBoundary(cur: CalendarDate, which: 'first' | 'last'): CalendarDate {
-    const offset = ((dayOfWeek(cur) - this.firstDayOfWeek) + 7) % 7;
+    const offset = (dayOfWeek(cur) - this.firstDayOfWeek + 7) % 7;
     const first = addDays(cur, -offset);
     return which === 'first' ? first : addDays(first, 6);
   }
@@ -248,10 +286,11 @@ export class Calendar extends View {
     ctx.fill(' ', normal); // the whole grid background is the normal (cyan) fill (calendar.cpp:137,146,152)
     const wkw = this.showWeekNumbers ? 3 : 0;
 
-    // Row 0 — header: setw(9) month, ' ', setw(4) year, ' ', ▲, '  ', ▼, ' ' (calendar.cpp:139-144).
+    // Row 0 — header (RD-20 extension, module doc §Extensions): '↑↓ '+setw(9)month+' '+setw(4)year+' ↑↓'
+    // = 20 cols. LEFT ↑↓ (cols 0-1) = month ±1, RIGHT ↑↓ (cols 18-19) = year ±1 (hit-tested in handleMouse).
     const monthName = MONTH_NAMES[this.visibleMonth()].padStart(9);
     const yearStr = String(this.visibleYear()).padStart(4);
-    const header = `${monthName} ${yearStr} ${ARROW_NEXT}  ${ARROW_PREV} `;
+    const header = `${ARROW_UP}${ARROW_DOWN} ${monthName} ${yearStr} ${ARROW_UP}${ARROW_DOWN}`;
     ctx.text(wkw, 0, header, normal);
 
     // Row 1 — weekday labels (calendar.cpp:147), rotated by firstDayOfWeek.
@@ -334,14 +373,15 @@ export class Calendar extends View {
     if (local === undefined) return;
     const wkw = this.showWeekNumbers ? 3 : 0;
     if (local.y === 0) {
-      // The hit columns track the shifted header: nextCol = wkw+15, prevCol = wkw+18 (calendar.cpp:185-204).
-      if (local.x === wkw + 15) {
-        this.shiftMonth(1);
-        ev.handled = true;
-      } else if (local.x === wkw + 18) {
-        this.shiftMonth(-1);
-        ev.handled = true;
-      }
+      // Flanking header hit columns (offset by the week# column): month ↑↓ at wkw+0/+1, year ↑↓ at
+      // wkw+18/+19 (RD-20 extension; up = next/increment, down = prev/decrement, both clamped).
+      const dx = local.x - wkw;
+      if (dx === 0) this.shiftMonth(1);
+      else if (dx === 1) this.shiftMonth(-1);
+      else if (dx === 18) this.shiftYear(1);
+      else if (dx === 19) this.shiftYear(-1);
+      else return;
+      ev.handled = true;
       return;
     }
     if (local.y < 2) return;

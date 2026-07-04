@@ -1,12 +1,12 @@
 /**
- * `DatePicker` — a `Group` = a masked `Input` + a trailing `▼` button that opens a `Calendar` in the
+ * `DatePicker` — a `Group` = a masked `Input` + a trailing `▐↓▌` dropdown button that opens a `Calendar` in the
  * RD-14 anchored popup, mirroring `ComboBox` (RD-20). It has **no** Turbo Vision counterpart (TV
  * predates date pickers); it is designed fresh but composes shipped pieces + the generalized
  * `openAnchoredPopup` (PA-5). The pure format model (mask/parse/serialize) lives in `date-format.ts`.
  *
- * Composition `[ input (fr) | ▼ button (3) ]`: the field is an `Input` gated by `picture(spec.mask)`;
+ * Composition `[ input (fr) | ▐↓▌ button (3) ]`: the field is an `Input` gated by `picture(spec.mask)`;
  * its text is `spec.serialize(value)` and a complete valid edit parses back via `spec.parse`
- * (incomplete/invalid leaves `value` unchanged, AC-11). Open on Down/Alt+Down or a `▼` click; the
+ * (incomplete/invalid leaves `value` unchanged, AC-11). Open on Down/Alt+Down or a `▐↓▌` click; the
  * hosted `Calendar` writes the **same** `value` on a day-commit and its `onChange` calls the injected
  * `commit()` to close (AC-10). No `PopupHost` ⇒ open declines (headless). Two directions of the
  * value⟷text bind each read only the OTHER signal, so there is no feedback loop (the `ComboBox` idiom).
@@ -19,20 +19,18 @@ import type { LayoutProps } from '../layout/index.js';
 import { signal, untrack } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import { Input, picture } from '../controls/index.js';
-import { openAnchoredPopup, absoluteRect } from '../dropdown/index.js';
+import { openAnchoredPopup, absoluteRect, drawDropdownIcon } from '../dropdown/index.js';
 import { Calendar } from './calendar.js';
 import type { CalendarDate } from './calendar-date.js';
 import { compare } from './calendar-date.js';
 import { dateFormat } from './date-format.js';
 import type { DateFormat, DateFormatSpec } from './date-format.js';
 
-/** The `▼` down-triangle glyph (U+25BC), matching the `Calendar` header's prev-month arrow. */
-const ARROW_DOWN = '▼';
-
 /**
- * The trailing 3-cell `▼` button (mirrors `ComboButton`, `combo-box.ts:67-88`): sides `▐`/`▌` in
- * `historyButtonSides`, the `▼` in `historyButtonArrow`. Not focusable — the field is the focus target;
- * the button is click-only.
+ * The trailing 3-cell dropdown button. Draws the **shared** `▐↓▌` icon via `drawDropdownIcon` so it is
+ * byte-identical to `ComboButton`/`History` (one glyph + colour source, never drifts; the arrow is the
+ * thin `↓` U+2193, `dropdown/popup.ts:31`). Not focusable — the field is the focus target; the button
+ * is click-only.
  */
 class DateButton extends View {
   /** Fixed 3-cell width; stretched to the field height by the row layout. */
@@ -42,13 +40,9 @@ class DateButton extends View {
     super();
   }
 
-  /** Draw `▐▼▌` (the ComboButton chrome with a down-triangle). */
+  /** Draw the shared `▐↓▌` dropdown icon (identical to ComboBox/History, PA-11). */
   override draw(ctx: DrawContext): void {
-    const sides = ctx.color('historyButtonSides');
-    const arrow = ctx.color('historyButtonArrow');
-    ctx.text(0, 0, '▐', sides);
-    ctx.text(1, 0, ARROW_DOWN, arrow);
-    ctx.text(2, 0, '▌', sides);
+    drawDropdownIcon(ctx, 0);
   }
 
   /** A mouse-down on the button opens the popup. */

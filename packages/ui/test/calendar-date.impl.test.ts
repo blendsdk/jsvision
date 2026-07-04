@@ -56,7 +56,17 @@ test('compare covers every branch (year, month, day, equal)', () => {
 });
 
 test('parseISO rejects every malformed shape (never throws)', () => {
-  for (const bad of ['', '2026', '2026-1-1', '2026/01/01', '20260101', 'abcd-ef-gh', '2026-00-10', '2026-01-00', '2026-01-32']) {
+  for (const bad of [
+    '',
+    '2026',
+    '2026-1-1',
+    '2026/01/01',
+    '20260101',
+    'abcd-ef-gh',
+    '2026-00-10',
+    '2026-01-00',
+    '2026-01-32',
+  ]) {
     expect(parseISO(bad), `parseISO(${JSON.stringify(bad)})`).toBeNull();
   }
 });
