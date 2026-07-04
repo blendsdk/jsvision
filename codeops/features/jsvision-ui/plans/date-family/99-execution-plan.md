@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-04 10:55
-> **Progress**: 14/35 tasks (40%)
+> **Last Updated**: 2026-07-04 11:06
+> **Progress**: 19/35 tasks (54%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -128,9 +128,9 @@ rendered buffer cell-by-cell AFTER. The selection/nav/picker extensions get spec
 | 3.2.3 | Run `calendar.spec` **PASS** (green; on any fidelity mismatch the **code** is wrong — fix against `calendar.cpp`); `yarn verify` | — |
 
 **Deliverables**:
-- [ ] `calendar.spec` red before impl, green after
-- [ ] `calendar-grid.ts` + `calendar.ts` implemented; GATE-1 decode in JSDoc; files ≤ 500 lines
-- [ ] `yarn verify` passing
+- [x] `calendar.spec` red before impl, green after
+- [x] `calendar-grid.ts` + `calendar.ts` implemented; GATE-1 decode in JSDoc; files ≤ 500 lines
+- [x] `yarn verify` passing
 
 **Verify**: `yarn verify`
 
@@ -253,11 +253,11 @@ rendered buffer cell-by-cell AFTER. The selection/nav/picker extensions get spec
 - [x] 2.2.2 Run — verify GREEN; `yarn verify` — 2026-07-04 (6 spec green; full verify 8/8)
 
 ### Phase 3: `Calendar` view
-- [ ] 3.1.1 Write `calendar.spec.test.ts` (ST-2…ST-9; ST-3/ST-4 cell-by-cell pre-serialize)
-- [ ] 3.1.2 Run — verify RED
-- [ ] 3.2.1 Implement `calendar-grid.ts` (buildMonthGrid, dayColumn, isoWeek — pure)
-- [ ] 3.2.2 Implement `calendar.ts` (draw+precedence, keymap, cursor, commit, bounds/disabled, week#, methods; GATE-1 decode in JSDoc)
-- [ ] 3.2.3 Run `calendar.spec` GREEN (fix code, never the spec); `yarn verify`
+- [x] 3.1.1 Write `calendar.spec.test.ts` (ST-2…ST-9; ST-3/ST-4 cell-by-cell pre-serialize) — 2026-07-04 (Sept 2026 reference; 15 cases)
+- [x] 3.1.2 Run — verify RED — 2026-07-04 (module absent)
+- [x] 3.2.1 Implement `calendar-grid.ts` (buildMonthGrid, dayColumn, isoWeek — pure) — 2026-07-04 (row-Thursday ISO week, null for all-out-of-month rows)
+- [x] 3.2.2 Implement `calendar.ts` (draw+precedence, keymap, cursor, commit, bounds/disabled, week#, methods; GATE-1 decode in JSDoc) — 2026-07-04 (~330 lines)
+- [x] 3.2.3 Run `calendar.spec` GREEN (fix code, never the spec); `yarn verify` — 2026-07-04 (15 spec green; 2 test-authoring fixes: right-justified month → `.includes`; full verify 8/8)
 
 ### Phase 4: `DatePicker` + `date-format`
 - [ ] 4.1.1 Write `date-picker.spec.test.ts` (ST-10…ST-12)
