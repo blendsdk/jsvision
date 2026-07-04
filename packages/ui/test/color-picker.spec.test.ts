@@ -36,10 +36,11 @@ function mouse(kind: MouseEvent['kind'], x: number, y: number): MouseEvent {
 /** Depth-first search for the first descendant matching `pred`. */
 function find<T extends View>(root: View, pred: (v: View) => v is T): T | undefined {
   if (pred(root)) return root;
-  if (root instanceof Group) for (const c of root.children) {
-    const hit = find(c, pred);
-    if (hit) return hit;
-  }
+  if (root instanceof Group)
+    for (const c of root.children) {
+      const hit = find(c, pred);
+      if (hit) return hit;
+    }
   return undefined;
 }
 const findSwatch = (o: View) => find(o, (v): v is ColorSwatch => v instanceof ColorSwatch);

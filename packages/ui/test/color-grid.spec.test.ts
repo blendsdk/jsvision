@@ -15,7 +15,18 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
-import { gridDims, insideGrid, hitCell, cellX, cellRow, navLeft, navRight, navUp, navDown, isNearBlack } from '../src/color/color-grid.js';
+import {
+  gridDims,
+  insideGrid,
+  hitCell,
+  cellX,
+  cellRow,
+  navLeft,
+  navRight,
+  navUp,
+  navDown,
+  isNearBlack,
+} from '../src/color/color-grid.js';
 
 // ── ST-15: gridDims + degenerate edges (n=0/n=1/columns≤0) ────────────────────────────────────────
 
