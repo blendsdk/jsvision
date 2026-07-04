@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-04
-> **Progress**: 5/30 tasks (17%)
+> **Progress**: 9/30 tasks (30%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -228,10 +228,10 @@ phase; only a Phase-5 regression check).
 - [x] 1.1.5 Run spec tests — verify GREEN; `yarn verify` (2026-07-04 — 8/8 turbo tasks, 965 ui tests green)
 
 ### Phase 2: `color-grid.ts` pure math
-- [ ] 2.1.1 Write `color-grid.spec` (ST-4/ST-5/ST-15 + near-black)
-- [ ] 2.1.2 Run — verify RED
-- [ ] 2.2.1 Implement `color-grid.ts` (dims/hit/nav/near-black; nav transcribed from `colorsel.cpp`)
-- [ ] 2.2.2 Run — verify GREEN; `yarn verify`
+- [x] 2.1.1 Write `color-grid.spec` (ST-4/ST-5/ST-15 + near-black) (2026-07-04)
+- [x] 2.1.2 Run — verify RED (2026-07-04 — module not found)
+- [x] 2.2.1 Implement `color-grid.ts` (dims/hit/nav/near-black; nav transcribed from `colorsel.cpp:196-217`) (2026-07-04)
+- [x] 2.2.2 Run — verify GREEN; `yarn verify` (2026-07-04 — color-grid.spec 15/15; full verify 8/8)
 
 ### Phase 3: `ColorSwatch` view
 - [ ] 3.1.1 Write `color-swatch.spec` (ST-1…ST-7; ST-2/ST-3 cell-by-cell pre-serialize)
