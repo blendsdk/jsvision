@@ -18,12 +18,15 @@
  *     **outside the view** reverts to the pre-drag cell (`else color=oldColor`, `:167-173`). `ofFramed`
  *     (`:114`) is **omitted** (PA-12 — the host popup/`Window` supplies the frame).
  *
- * ## GATE-2 AFTER-diff (re-verified vs `colorsel.cpp:120-237`, recorded in the commit)
- * The composed grid matches the decode cell-by-cell (executable oracle: `color-swatch.spec` ST-2/ST-3):
- * 3-wide `█` cells at `j*3` in the cell color, `◘` at `cellX+1`, near-black `0x70` marker, wrap-around
- * nav, and the `row*cols+floor(x/3)` drag hit + revert-outside. Documented extensions (spec oracles, no
- * `.cpp` diff): the generic `Color[]` palette + truecolor cells, the cursor-vs-`value` split (PA-9), the
- * partial-row overshoot clamp (PA-10), and the omitted frame (PA-12).
+ * ## GATE-2 AFTER-diff (re-verified vs `colorsel.cpp:120-237`, 2026-07-05 — no mismatch found)
+ * The composed grid matches the decode cell-by-cell (executable oracle: `color-swatch.spec` ST-2/ST-3
+ * + `color-swatch.impl` GATE-2): 3-wide `█` cells at `j*3` in the cell color (`bg` black), `◘` at
+ * `cellX+1`, the near-black `0x70` `colorMarker`, the wrap-around nav (`:196-217`), and the
+ * `row*cols+floor(x/3)` drag hit + revert-outside (`:167-173`). Both `█` (U+2588) and `◘` (U+25D8)
+ * measure **width 1** under the default `wcwidth` mode (asserted in `color-swatch.impl`, PF-005), so the
+ * 3-wide cell math and the centered marker hold. Documented extensions (spec oracles, no `.cpp` diff):
+ * the generic `Color[]` palette + truecolor cells, the cursor-vs-`value` split (PA-9), the partial-row
+ * overshoot clamp (PA-10), the opt-in commit-on-release (PA-11), and the omitted frame (PA-12).
  *
  * ## State model (PA-9 / AC-15)
  * The internal `cursor: Signal<number>` is the nav SoT (init `indexOf(value)` else `0`). `value` is a
