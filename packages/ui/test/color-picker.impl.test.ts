@@ -18,12 +18,29 @@ import { ColorSwatch } from '../src/color/color-swatch.js';
 import { Input } from '../src/controls/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
-const key = (k: string, m: Partial<KeyEvent> = {}): KeyEvent => ({ type: 'key', key: k, ctrl: false, alt: false, shift: false, ...m });
-const mouse = (kind: MouseEvent['kind'], x: number, y: number): MouseEvent => ({ type: 'mouse', kind, button: 0, x, y });
+const key = (k: string, m: Partial<KeyEvent> = {}): KeyEvent => ({
+  type: 'key',
+  key: k,
+  ctrl: false,
+  alt: false,
+  shift: false,
+  ...m,
+});
+const mouse = (kind: MouseEvent['kind'], x: number, y: number): MouseEvent => ({
+  type: 'mouse',
+  kind,
+  button: 0,
+  x,
+  y,
+});
 
 function find<T extends View>(root: View, pred: (v: View) => v is T): T | undefined {
   if (pred(root)) return root;
-  if (root instanceof Group) for (const c of root.children) { const h = find(c, pred); if (h) return h; }
+  if (root instanceof Group)
+    for (const c of root.children) {
+      const h = find(c, pred);
+      if (h) return h;
+    }
   return undefined;
 }
 const findSwatch = (o: View) => find(o, (v): v is ColorSwatch => v instanceof ColorSwatch);
@@ -42,7 +59,8 @@ function make(opts: { value?: Color; allowCustom?: boolean; nameFor?: (c: Color)
   root.add(picker);
   root.add(overlay);
   loop.mount(root);
-  if (opts.withHost !== false) loop.popupHost = { overlay, focusView: (v) => loop.focusView(v), getFocused: () => loop.getFocused() } as PopupHost;
+  if (opts.withHost !== false)
+    loop.popupHost = { overlay, focusView: (v) => loop.focusView(v), getFocused: () => loop.getFocused() } as PopupHost;
   loop.renderRoot.flush();
   return { loop, picker, overlay, value };
 }

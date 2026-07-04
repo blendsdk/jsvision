@@ -39,7 +39,9 @@ export const colorPickerStory: Story = {
     g.add(at(new Text(() => `value = ${value()}  ${hexOf(value())}`), 1, 2, width, 1));
     g.add(
       at(
-        new Text('↓ / Alt+↓ / the ▐↓▌ button opens · pick a swatch, or Tab to the hex field and type #rrggbb · Esc cancels.'),
+        new Text(
+          '↓ / Alt+↓ / the ▐↓▌ button opens · pick a swatch, or Tab to the hex field and type #rrggbb · Esc cancels.',
+        ),
         1,
         4,
         width,

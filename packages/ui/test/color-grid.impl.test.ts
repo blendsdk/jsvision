@@ -6,7 +6,18 @@
  * degenerate `columns`/`n`. The `.js` extension in import specifiers is required by NodeNext ESM.
  */
 import { test, expect } from 'vitest';
-import { gridDims, insideGrid, hitCell, cellX, cellRow, navUp, navDown, navLeft, navRight, isNearBlack } from '../src/color/color-grid.js';
+import {
+  gridDims,
+  insideGrid,
+  hitCell,
+  cellX,
+  cellRow,
+  navUp,
+  navDown,
+  navLeft,
+  navRight,
+  isNearBlack,
+} from '../src/color/color-grid.js';
 
 // ── navUp / navDown edge-wrap branches on a 6-color × 4-col grid (maxCol=5, width=4) ───────────────
 
