@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-04 11:06
-> **Progress**: 19/35 tasks (54%)
+> **Last Updated**: 2026-07-04 11:11
+> **Progress**: 24/35 tasks (69%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -160,9 +160,9 @@ rendered buffer cell-by-cell AFTER. The selection/nav/picker extensions get spec
 | 4.2.3 | Run `date-picker.spec` **PASS** (green; fix code, never the spec); `yarn verify` | — |
 
 **Deliverables**:
-- [ ] `date-picker.spec` red before impl, green after
-- [ ] `date-format.ts` + `date-picker.ts` implemented; files ≤ 500 lines
-- [ ] `yarn verify` passing
+- [x] `date-picker.spec` red before impl, green after
+- [x] `date-format.ts` + `date-picker.ts` implemented; files ≤ 500 lines
+- [x] `yarn verify` passing
 
 **Verify**: `yarn verify`
 
@@ -260,11 +260,11 @@ rendered buffer cell-by-cell AFTER. The selection/nav/picker extensions get spec
 - [x] 3.2.3 Run `calendar.spec` GREEN (fix code, never the spec); `yarn verify` — 2026-07-04 (15 spec green; 2 test-authoring fixes: right-justified month → `.includes`; full verify 8/8)
 
 ### Phase 4: `DatePicker` + `date-format`
-- [ ] 4.1.1 Write `date-picker.spec.test.ts` (ST-10…ST-12)
-- [ ] 4.1.2 Run — verify RED
-- [ ] 4.2.1 Implement `date-format.ts` (3 masks, parse/serialize — pure)
-- [ ] 4.2.2 Implement `date-picker.ts` (masked Input + ▼ + anchored Calendar popup + sync + no-host guard)
-- [ ] 4.2.3 Run `date-picker.spec` GREEN; `yarn verify`
+- [x] 4.1.1 Write `date-picker.spec.test.ts` (ST-10…ST-12) — 2026-07-04 (9 cases, ComboBox PopupHost idiom)
+- [x] 4.1.2 Run — verify RED — 2026-07-04 (modules absent)
+- [x] 4.2.1 Implement `date-format.ts` (3 masks, parse/serialize — pure) — 2026-07-04
+- [x] 4.2.2 Implement `date-picker.ts` (masked Input + ▼ + anchored Calendar popup + sync + no-host guard) — 2026-07-04 (ComboBox two-way bind idiom, untrack guard)
+- [x] 4.2.3 Run `date-picker.spec` GREEN; `yarn verify` — 2026-07-04 (9 spec green first try; full verify 8/8)
 
 ### Phase 5: GATE-2 AFTER-diff + impl tests & hardening
 - [ ] 5.1.1 [GATE-2 AFTER-diff] Cell-by-cell diff of the composed Calendar vs `calendar.cpp`; record
