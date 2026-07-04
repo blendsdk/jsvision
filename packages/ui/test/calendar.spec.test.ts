@@ -369,14 +369,15 @@ test('ST-10: density sizes — compact 20×8, comfortable 28×10, spacious 35×1
   expect(new Calendar({ value, today: TODAY, density: 'compact' }).measure()).toStrictEqual({ width: 20, height: 8 });
 });
 
-// ── ST-11: the comfortable footer — 3-letter labels, a divider, the selected echo + [ Today ] ──────
+// ── ST-11: the comfortable footer — 3-letter labels, a divider, the selected echo + Today ──────
 
-test('ST-11: comfortable renders 3-letter weekday labels, a ─ divider, and a footer [ Today ] button', () => {
+test('ST-11: comfortable renders 3-letter weekday labels, a ─ divider, and a bracket-free Today button', () => {
   const h = makeCal({ value: { year: 2026, month: 9, day: 15 }, density: 'comfortable' });
   expect(h.row(1)).toBe(' Sun Mon Tue Wed Thu Fri Sat'); // 3-letter labels, 4-wide cells
   expect(h.row(8)).toBe('─'.repeat(28)); // the footer divider row
   expect(h.row(9).startsWith('2026-09-15'), 'selected-date echo at the left').toBe(true);
-  expect(h.row(9).includes('[ Today ]'), '[ Today ] button at the right').toBe(true);
+  expect(h.row(9).includes('Today'), 'Today button at the right').toBe(true);
+  expect(h.row(9).includes('['), 'the Today button has NO brackets (PA-21)').toBe(false);
 });
 
 // ── ST-12: the focus cursor is a FILLED reverse cell, not a fg-only tint (issue #1) ────────────────
@@ -391,19 +392,21 @@ test('ST-12: the focus cursor draws a filled reverse background (calendarCursor 
   ).not.toBe(defaultTheme.calendarNormal.bg);
 });
 
-// ── ST-13: a [ Today ] click and the T key jump to today (issue #2) ────────────────────────────────
+// ── ST-13: a Today click and the T key jump to today (issue #2) ────────────────────────────────
 
-test('ST-13: the T key and a click on [ Today ] both jump the visible month + cursor to today', () => {
+test('ST-13: the T key navigates to today (no commit); a Today click navigates AND selects today', () => {
   const h = makeCal({ value: null, focus: true, density: 'comfortable' });
   h.loop.dispatch(mouseDown(1, 1)); // ↑ month-next (local 0,0) → visible October (cursor still on today)
   h.loop.renderRoot.flush();
   expect(h.row(0).includes('October 2026')).toBe(true);
-  h.loop.dispatch(keyEvent('t')); // T → back to today's month
+  h.loop.dispatch(keyEvent('t')); // T → back to today's month, but does NOT select
   h.loop.renderRoot.flush();
   expect(h.row(0).includes('September 2026'), 'T returned to today').toBe(true);
+  expect(h.value(), 'T only navigates — nothing committed').toBeNull();
   h.loop.dispatch(mouseDown(1, 1)); // → October again
   h.loop.renderRoot.flush();
-  h.loop.dispatch(mouseDown(21, 10)); // local (20,9): inside the footer [ Today ] button (cols 19-27, y9)
+  h.loop.dispatch(mouseDown(25, 10)); // local (24,9): inside the footer Today button (cols 23-27, y9)
   h.loop.renderRoot.flush();
-  expect(h.row(0).includes('September 2026'), '[ Today ] click returned to today').toBe(true);
+  expect(h.row(0).includes('September 2026'), 'Today click returned to today').toBe(true);
+  expect(h.value(), 'Today click commits today (select)').toStrictEqual(TODAY);
 });

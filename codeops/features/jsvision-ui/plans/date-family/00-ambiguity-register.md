@@ -97,3 +97,14 @@ Each surfaced (grounded options + the TV-fidelity tension) and **user-confirmed*
 > faithful 20×8) + added ST-10…ST-13 (density sizing, the comfortable footer, the filled cursor, the
 > Today button/key) + a new `calendar-metrics.impl` geometry suite; refreshed `date-theme.spec` (the
 > `0xF0` cursor byte), the `date-demo(.e2e)`, and both kitchen-sink stories. verify 8/8, e2e 13/13.
+
+## Post-completion enhancements — round 3 (runtime — 2026-07-04)
+
+| ID | Type | Question | Options | Decision | Status |
+|----|------|----------|---------|----------|--------|
+| **PA-21** | Design + Behavior (runtime) | The comfortable/spacious footer Today control (a) rendered as `[ Today ]` (brackets) and (b) only **navigated** to today. The user wants (a) no brackets and (b) a click to **select** today (and, in a `DatePicker`, close the dropdown). | Single viable — (a) `TODAY_LABEL` → plain `'Today'` (metrics recompute `todayX/todayW` from its length); (b) the footer button click does `today()` (navigate) **+** `commit(todayDate)` (select), so in a `DatePicker` the calendar's `onChange` fires → the popup closes with today filled in (a no-op if today is disabled/out-of-range). The **`T` key stays navigate-only** (a keystroke shouldn't silently commit + close a picker; the user asked only about the click). | **(a) `Today` bracket-free; (b) click = navigate + commit; T = navigate-only** *(user-confirmed)* | ✅ Resolved (runtime) |
+
+> Updated `calendar.spec` ST-11 (bracket-free) + ST-13 (T navigates without commit; a Today click
+> commits today) + `calendar-metrics.impl` (`todayW`/`todayX`) + a new `date-picker.impl` case
+> (Today click → today selected + popup closed) + `date-demo.e2e`/the calendar story hint. verify 8/8,
+> e2e 13/13.

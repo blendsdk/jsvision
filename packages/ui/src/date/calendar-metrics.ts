@@ -7,7 +7,7 @@
  *   • **compact**     — the TV-exact `TCalendarView` 20×8 (2-char weekday labels, 2-wide day cells at
  *                       `j*3`, no footer). The faithful decode (`calendar.cpp`); the geometry oracle.
  *   • **comfortable** — the modern default: 4-wide day cells, 3-letter weekday labels, a divider + a
- *                       footer row hosting the selected-date echo and a `[ Today ]` button (~28×10).
+ *                       footer row hosting the selected-date echo and a `Today` button (~28×10).
  *   • **spacious**    — comfortable + 5-wide cells and a blank spacer row between weeks (~35×15).
  *
  * The **header** is common to all densities: `↑↓` + a centred `⟨month⟩ ⟨year⟩` block + `↑↓`, exactly
@@ -25,8 +25,8 @@ export type CalendarDensity = 'compact' | 'comfortable' | 'spacious';
 export const ARROW_UP = '↑';
 export const ARROW_DOWN = '↓';
 
-/** The `[ Today ]` footer button label (comfortable / spacious only). */
-export const TODAY_LABEL = '[ Today ]';
+/** The `Today` footer button label (comfortable / spacious only) — plain text, no brackets (PA-21). */
+export const TODAY_LABEL = 'Today';
 
 /** Sunday-first weekday labels at the two supported widths; rotated by `firstDayOfWeek`. */
 const WEEKDAY_2 = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
@@ -36,11 +36,11 @@ const WEEKDAY_3 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 export interface CalendarFooter {
   /** Row `y` of the horizontal `─` divider. */
   readonly dividerY: number;
-  /** Row `y` of the selected-date echo (left) + the `[ Today ]` button (right). */
+  /** Row `y` of the selected-date echo (left) + the `Today` button (right). */
   readonly textY: number;
-  /** Start column of the `[ Today ]` button. */
+  /** Start column of the `Today` button. */
   readonly todayX: number;
-  /** Width of the `[ Today ]` button (`TODAY_LABEL.length`). */
+  /** Width of the `Today` button (`TODAY_LABEL.length`). */
   readonly todayW: number;
 }
 
