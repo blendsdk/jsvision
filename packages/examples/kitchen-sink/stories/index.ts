@@ -33,6 +33,8 @@ import { progressBarStory } from './progress-bar.story.js';
 import { spinnerStory } from './spinner.story.js';
 import { calendarStory } from './calendar.story.js';
 import { datePickerStory } from './date-picker.story.js';
+import { colorSwatchStory } from './color-swatch.story.js';
+import { colorPickerStory } from './color-picker.story.js';
 
 /**
  * Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers
@@ -64,4 +66,6 @@ export const STORIES: readonly Story[] = [
   spinnerStory,
   calendarStory,
   datePickerStory,
+  colorSwatchStory,
+  colorPickerStory,
 ];
