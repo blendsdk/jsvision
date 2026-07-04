@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-04
-> **Progress**: 9/30 tasks (30%)
+> **Progress**: 13/30 tasks (43%)
 > **CodeOps Skills Version**: 3.2.0
 
 ## Overview
@@ -234,10 +234,10 @@ phase; only a Phase-5 regression check).
 - [x] 2.2.2 Run — verify GREEN; `yarn verify` (2026-07-04 — color-grid.spec 15/15; full verify 8/8)
 
 ### Phase 3: `ColorSwatch` view
-- [ ] 3.1.1 Write `color-swatch.spec` (ST-1…ST-7; ST-2/ST-3 cell-by-cell pre-serialize)
-- [ ] 3.1.2 Run — verify RED
-- [ ] 3.2.1 Implement `color-swatch.ts` (draw + marker + nav + drag + cursor/value model; GATE-1 decode in JSDoc)
-- [ ] 3.2.2 Run `color-swatch.spec` GREEN (fix code, never the spec); `yarn verify`
+- [x] 3.1.1 Write `color-swatch.spec` (ST-1…ST-7; ST-2/ST-3 cell-by-cell pre-serialize) (2026-07-05)
+- [x] 3.1.2 Run — verify RED (2026-07-05 — module not found)
+- [x] 3.2.1 Implement `color-swatch.ts` (draw + marker + nav + drag + cursor/value model; GATE-1 decode in JSDoc) (2026-07-05)
+- [x] 3.2.2 Run `color-swatch.spec` GREEN (fix code, never the spec); `yarn verify` (2026-07-05 — 13/13; full verify 8/8)
 
 ### Phase 4: `ColorPicker` + hex field
 - [ ] 4.1.1 Write `color-picker.spec` (ST-8…ST-10)
