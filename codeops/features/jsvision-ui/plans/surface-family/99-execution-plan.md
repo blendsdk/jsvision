@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md · **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-05
-> **Progress**: 5/28 tasks (18%)
+> **Progress**: 10/28 tasks (36%)
 > **CodeOps Skills Version**: 3.3.0
 
 ## Overview
@@ -140,11 +140,11 @@ paint facade, version signal — oracle-first (AC-1/2/6/7/14).
 - [x] 1.5 Run — verify GREEN; `yarn verify` — done 2026-07-05 (spec green; full verify 179 files/1048 tests)
 
 ### Phase 2: `surface.ts`
-- [ ] 2.1 Write `surface.spec` (ST-1/2/7/14)
-- [ ] 2.2 Run — verify RED
-- [ ] 2.3 Implement `surface.ts` (wrap+resize-swap, readonly `at`+sanitizing `set`, facade, version)
-- [ ] 2.4 Run `surface.spec` — verify GREEN
-- [ ] 2.5 `yarn verify`
+- [x] 2.1 Write `surface.spec` (ST-1/2/7/14) — done 2026-07-05 (15 oracles incl. sanitize + readonly-at)
+- [x] 2.2 Run — verify RED — done 2026-07-05 (module not found)
+- [x] 2.3 Implement `surface.ts` (wrap+resize-swap, readonly `at`+sanitizing `set`, facade, version) — done 2026-07-05
+- [x] 2.4 Run `surface.spec` — verify GREEN — done 2026-07-05
+- [x] 2.5 `yarn verify` — done 2026-07-05 (ui 180 files/1063 tests)
 
 ### Phase 3: `surface-view.ts`
 - [ ] 3.1 Write `surface-view.spec` (ST-3/4/5/6/8/9/10/13)
