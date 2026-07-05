@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md · **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-05
-> **Progress**: 10/28 tasks (36%)
+> **Progress**: 15/28 tasks (54%)
 > **CodeOps Skills Version**: 3.3.0
 
 ## Overview
@@ -147,11 +147,11 @@ paint facade, version signal — oracle-first (AC-1/2/6/7/14).
 - [x] 2.5 `yarn verify` — done 2026-07-05 (ui 180 files/1063 tests)
 
 ### Phase 3: `surface-view.ts`
-- [ ] 3.1 Write `surface-view.spec` (ST-3/4/5/6/8/9/10/13)
-- [ ] 3.2 Run — verify RED
-- [ ] 3.3 Implement `surface-view.ts` (faithful draw + empty fill + passive/reactive; GATE-1 decode in JSDoc)
-- [ ] 3.4 Run `surface-view.spec` — verify GREEN (fix code, never the spec)
-- [ ] 3.5 `yarn verify`
+- [x] 3.1 Write `surface-view.spec` (ST-3/4/5/6/8/9/10/13) — done 2026-07-05 (13 oracles, cell-by-cell decode)
+- [x] 3.2 Run — verify RED — done 2026-07-05 (module not found)
+- [x] 3.3 Implement `surface-view.ts` (faithful draw + empty fill + passive/reactive; GATE-1 decode in JSDoc) — done 2026-07-05
+- [x] 3.4 Run `surface-view.spec` — verify GREEN — done 2026-07-05 (no fidelity mismatch)
+- [x] 3.5 `yarn verify` — done 2026-07-05 (ui 181 files/1075 tests)
 
 ### Phase 4: GATE-2 + Should-Haves + impl tests
 - [ ] 4.1 [GATE-2 AFTER-diff] Cell-by-cell diff vs `tsurface.cpp`; record
