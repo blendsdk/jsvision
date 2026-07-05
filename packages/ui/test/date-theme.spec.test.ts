@@ -143,6 +143,7 @@ test('ST-14: the calendar* roles are the ONLY additive keys — every existing r
   // above is still asserted unchanged. (RD-21 PA-14 runtime.)
   const LATER_ADDITIVE_ROLES = [
     'colorMarker', // RD-21 color family (PA-1, AC-10; guarded by color-theme.spec)
+    'fileInfo', // RD-09 files package (PA-6, AC-15; guarded by files-theme.spec)
   ] as const;
   const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...CALENDAR_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);

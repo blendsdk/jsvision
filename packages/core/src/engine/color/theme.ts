@@ -298,6 +298,15 @@ export interface Theme {
    * uses the cell's own `Color`. Additive.
    */
   readonly colorMarker: ThemeRole;
+  /**
+   * File-dialog info pane — the read-out strip below a `TFileDialog` showing the expanded path + the
+   * focused entry's name/size/date/time (jsvision-ui RD-09, PA-6). **TV-decoded**: `TFileInfoPane`'s
+   * `getColor(1)` resolves `cpInfoPane[1]=0x1E` (`stddlg.cpp:67`) → gray-dialog `cpGrayDialog[30]=0x3D`
+   * (`dialogs.h:80`) → `cpAppColor[0x3D=61]=0x13` (`app.h:142`) = `0x13` cyan (`3`) on blue (`1`) — TV's
+   * blue info strip under the gray dialog. `0x13` exists only as domain-alien scrollbar/progress roles,
+   * so RD-09 pins it as its own semantic role (the RD-21 `colorMarker` precedent). Additive.
+   */
+  readonly fileInfo: ThemeRole;
   readonly statusBar: ThemeRole;
   /**
    * The status-line **pressed/selected** item (mouse-down feedback). Turbo Vision repaints the held
@@ -417,6 +426,9 @@ export const defaultTheme: Theme = {
   // RD-21 Color family (plans/color-family/00-ambiguity-register.md PA-1/PA-2). TV-decoded: the `◘`
   // marker's forced-contrast byte on a black cell (colorsel.cpp:136), fired on near-black cells.
   colorMarker: { fg: PALETTE.black, bg: PALETTE.lightGray }, // 0x70 black-on-lightGray
+  // RD-09 file-dialog info pane — TV-decoded 0x13 cyan-on-blue (TFileInfoPane getColor(1):
+  // cpInfoPane[1]=0x1E → cpGrayDialog[30]=0x3D → cpAppColor[61]=0x13; stddlg.cpp:67/app.h:142). Additive.
+  fileInfo: { fg: PALETTE.cyan, bg: PALETTE.blue },
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },
