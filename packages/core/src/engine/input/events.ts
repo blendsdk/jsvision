@@ -33,12 +33,25 @@ export interface MouseEvent {
   readonly y: number;
 }
 
-/** A wheel/scroll report (SGR buttons 64–67). (AC-4) */
+/**
+ * A wheel/scroll report (SGR buttons 64–67). (AC-4)
+ *
+ * The modifier flags are the xterm SGR modifier bits OR-encoded into the button
+ * byte (Shift 0x04, Meta/Alt 0x08, Ctrl 0x10). They let a consumer distinguish,
+ * e.g., a plain vertical wheel from a Shift+wheel (a common horizontal-scroll
+ * fallback on terminals that do not remap Shift+Wheel to buttons 66/67).
+ */
 export interface WheelEvent {
   readonly type: 'wheel';
   readonly dir: 'up' | 'down' | 'left' | 'right';
   readonly x: number;
   readonly y: number;
+  /** Shift held during the wheel report (SGR modifier bit 0x04). */
+  readonly shift: boolean;
+  /** Meta/Alt held during the wheel report (SGR modifier bit 0x08). */
+  readonly alt: boolean;
+  /** Ctrl held during the wheel report (SGR modifier bit 0x10). */
+  readonly ctrl: boolean;
 }
 
 /** A completed bracketed paste. `truncated` is true when the size cap clipped it (PL-5, AC-7). */

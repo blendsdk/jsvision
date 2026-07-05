@@ -33,6 +33,42 @@ test('mouse: wheel left/right (b=66, b=67)', () => {
   expect((one('\x1b[<67;5;5M') as WheelEvent).dir).toBe('right');
 });
 
+test('mouse: a plain wheel report carries no modifiers (shift/alt/ctrl all false)', () => {
+  const up = one('\x1b[<64;5;5M') as WheelEvent;
+  expect(up.dir).toBe('up');
+  expect(up.shift).toBe(false);
+  expect(up.alt).toBe(false);
+  expect(up.ctrl).toBe(false);
+});
+
+test('mouse: wheel modifier bits decode (shift=4, alt=8, ctrl=16), dir preserved', () => {
+  // xterm SGR OR-encodes modifiers into the button byte: Shift 0x04, Meta/Alt 0x08, Ctrl 0x10.
+  const shiftUp = one('\x1b[<68;5;5M') as WheelEvent; // 64|4
+  expect(shiftUp.dir).toBe('up');
+  expect(shiftUp.shift).toBe(true);
+  expect(shiftUp.alt).toBe(false);
+  expect(shiftUp.ctrl).toBe(false);
+
+  const shiftDown = one('\x1b[<69;5;5M') as WheelEvent; // 65|4
+  expect(shiftDown.dir).toBe('down');
+  expect(shiftDown.shift).toBe(true);
+
+  const altUp = one('\x1b[<72;5;5M') as WheelEvent; // 64|8
+  expect(altUp.dir).toBe('up');
+  expect(altUp.alt).toBe(true);
+  expect(altUp.shift).toBe(false);
+
+  const ctrlDown = one('\x1b[<81;5;5M') as WheelEvent; // 65|16
+  expect(ctrlDown.dir).toBe('down');
+  expect(ctrlDown.ctrl).toBe(true);
+
+  const allMods = one('\x1b[<92;5;5M') as WheelEvent; // 64|4|8|16
+  expect(allMods.dir).toBe('up');
+  expect(allMods.shift).toBe(true);
+  expect(allMods.alt).toBe(true);
+  expect(allMods.ctrl).toBe(true);
+});
+
 test('mouse: column 223/224 boundary is reported verbatim (1-based)', () => {
   expect((one('\x1b[<0;223;1M') as MouseEvent).x).toBe(223);
   expect((one('\x1b[<0;224;1M') as MouseEvent).x).toBe(224);
