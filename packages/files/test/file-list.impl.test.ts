@@ -43,9 +43,7 @@ test('impl: getText appends the separator to every directory row, incl. ".."', (
 });
 
 test('impl: reactive re-scan on wildcard change', () => {
-  const fs = createMemoryFs(
-    dir({ home: dir({ user: dir({ 'App.ts': file(), 'readme.txt': file(), src: dir() }) }) }),
-  );
+  const fs = createMemoryFs(dir({ home: dir({ user: dir({ 'App.ts': file(), 'readme.txt': file(), src: dir() }) }) }));
   const wildcard = signal('*.*');
   const list = new FileList({ fs, directory: signal('/home/user'), wildcard });
   hosted(list, 30, 8);
@@ -84,7 +82,9 @@ test('impl: an empty listing renders "<empty>"', () => {
 });
 
 test('impl: type-ahead focuses the first getText prefix match', () => {
-  const fs = createMemoryFs(dir({ home: dir({ user: dir({ 'apple.txt': file(), 'mango.txt': file(), zebra: dir() }) }) }));
+  const fs = createMemoryFs(
+    dir({ home: dir({ user: dir({ 'apple.txt': file(), 'mango.txt': file(), zebra: dir() }) }) }),
+  );
   const list = new FileList({ fs, directory: signal('/home/user') });
   const loop = hosted(list, 30, 10);
   expect(list.focusedEntry()?.name).toBe('apple.txt'); // first row

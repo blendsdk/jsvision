@@ -73,12 +73,20 @@ export function buildDirTree(fs: FileSystem, currentPath: string): DirNode[] {
   const root = p; // '/' or 'C:\'
 
   // The ancestor chain: root (depth 0) → … → current (deepest), all `└─┬`.
-  const nodes: DirNode[] = [{ label: root, path: root, depth: 0, connector: prefix(0, PATH_DIR), isCurrent: parts.length === 0 }];
+  const nodes: DirNode[] = [
+    { label: root, path: root, depth: 0, connector: prefix(0, PATH_DIR), isCurrent: parts.length === 0 },
+  ];
   let acc = root;
   parts.forEach((part, i) => {
     acc = fs.join(acc, part);
     const depth = i + 1;
-    nodes.push({ label: part, path: acc, depth, connector: prefix(depth, PATH_DIR), isCurrent: i === parts.length - 1 });
+    nodes.push({
+      label: part,
+      path: acc,
+      depth,
+      connector: prefix(depth, PATH_DIR),
+      isCurrent: i === parts.length - 1,
+    });
   });
 
   // The current directory's subdirectories (non-dot-prefixed dirs, sorted case-sensitive).

@@ -31,7 +31,12 @@ function openChDir(dlg: ChDirDialog) {
   return { loop, promise };
 }
 
-const rectOf = (b: { x: number; y: number; width: number; height: number }) => ({ x: b.x, y: b.y, width: b.width, height: b.height });
+const rectOf = (b: { x: number; y: number; width: number; height: number }) => ({
+  x: b.x,
+  y: b.y,
+  width: b.width,
+  height: b.height,
+});
 
 // ST-10 — 48×18 composition at the decoded rects + the OK/Chdir/Revert/Help strip.
 test('ST-10: ChDirDialog composes the decoded child rects + button strip', () => {
@@ -88,7 +93,11 @@ test('ST-11: ChDirDialog descends + validates under a Windows-style seam', async
 // ST-12 — OK on a non-existent directory raises the error box + stays open.
 test('ST-12: OK on an invalid directory raises the error box and stays open', async () => {
   const errors: string[] = [];
-  const dlg = new ChDirDialog({ fs: nestedFs(), directory: signal('/home/user/proj'), showError: (m) => errors.push(m) });
+  const dlg = new ChDirDialog({
+    fs: nestedFs(),
+    directory: signal('/home/user/proj'),
+    showError: (m) => errors.push(m),
+  });
   const { loop, promise } = openChDir(dlg);
   let settled = false;
   void promise.then(() => (settled = true));

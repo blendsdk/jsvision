@@ -32,8 +32,12 @@ function hosted(list: DirList, w: number, h: number) {
   return loop;
 }
 
-const rowAt = (buf: ReturnType<ReturnType<typeof createEventLoop>['renderRoot']['buffer']>, y: number, from: number, n: number) =>
-  Array.from({ length: n }, (_, i) => buf.get(from + i, y)?.char ?? ' ').join('');
+const rowAt = (
+  buf: ReturnType<ReturnType<typeof createEventLoop>['renderRoot']['buffer']>,
+  y: number,
+  from: number,
+  n: number,
+) => Array.from({ length: n }, (_, i) => buf.get(from + i, y)?.char ?? ' ').join('');
 
 // ST-7 — the DirList renders the buildDirTree rows (connector + label) at col 1, incl. the platform root.
 test('ST-7: DirList renders the ancestor chain + subdirs with connectors (col 1)', () => {

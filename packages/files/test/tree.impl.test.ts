@@ -63,10 +63,9 @@ test('impl: depth / path / isCurrent flags along the chain and subdirs', () => {
 // —— CROSS-PLATFORM (task 7.2) ——
 
 test('impl: win32 seam — drive root, backslash paths, connector geometry preserved', () => {
-  const fs = createMemoryFs(
-    dir({ Users: dir({ user: dir({ proj: dir({ bin: dir(), src: dir() }) }) }) }),
-    { flavor: 'win32' },
-  );
+  const fs = createMemoryFs(dir({ Users: dir({ user: dir({ proj: dir({ bin: dir(), src: dir() }) }) }) }), {
+    flavor: 'win32',
+  });
   const nodes = buildDirTree(fs, 'C:\\Users\\user\\proj');
   expect(nodes.map(rowText)).toEqual([
     '└─┬C:\\',

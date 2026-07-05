@@ -15,7 +15,12 @@ import { ChDirDialog } from '../src/dialog/chdir-dialog.js';
 import { createMemoryFs, dir, file } from './helpers/memory-fs.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
-const rectOf = (b: { x: number; y: number; width: number; height: number }) => ({ x: b.x, y: b.y, width: b.width, height: b.height });
+const rectOf = (b: { x: number; y: number; width: number; height: number }) => ({
+  x: b.x,
+  y: b.y,
+  width: b.width,
+  height: b.height,
+});
 
 function mountAt<T extends FileDialog | ChDirDialog>(dlg: T, w: number, h: number): T {
   dlg.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };

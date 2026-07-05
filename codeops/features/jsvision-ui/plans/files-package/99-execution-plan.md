@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-05
-> **Progress**: 38/43 tasks (88%)
+> **Last Updated**: 2026-07-06
+> **Progress**: 43/43 tasks (100%) — ✅ COMPLETE
 > **CodeOps Skills Version**: 3.3.0
 
 ## Overview
@@ -235,11 +235,11 @@ RD-11/RD-14 unchanged. **Verify**: `yarn verify`
 - [x] 7.5 Full verification; RD-11 + RD-14 green — 2026-07-06 (verify 11/11; files 110 = 49 spec + 61 impl; ui 1117 unchanged; core 600; examples 85; typecheck clean; no source bugs)
 
 ### Phase 8: Packaging, stories, `demo:files`
-- [ ] 8.1 Write `files.packaging.spec` (ST-16); run RED
-- [ ] 8.2 Complete the barrel `src/index.ts`; run GREEN
-- [ ] 8.3 Kitchen-sink `files/file-dialog` + `files/chdir-dialog` stories — canvas-fit scenes, PF-005 (+ smoke, ST-17)
-- [ ] 8.4 `demo:files` headless + script + e2e (ST-17); examples dep
-- [ ] 8.5 Full verification incl. `check:deps` + `test:e2e`; post-completion re-analysis
+- [x] 8.1 Write `files.packaging.spec` (ST-16); run RED — 2026-07-06 (4 tests: 6 components exported classes, cores/errorBox/openers callables, files ≤500, private + deps=[core,ui])
+- [x] 8.2 Complete the barrel `src/index.ts`; run GREEN — 2026-07-06 (barrel completed in Phases 5-6; packaging spec confirms the full public surface)
+- [x] 8.3 Kitchen-sink `files/file-dialog` + `files/chdir-dialog` stories — canvas-fit scenes, PF-005 (+ smoke, ST-17) — 2026-07-06 (launch-button pattern like dialog.story: execView opens the modal live over nodeFileSystem, headless renders the button+hint — no clipped text; smoke now 38, both registered)
+- [x] 8.4 `demo:files` headless + script + e2e (ST-17); examples dep — 2026-07-06 (files-demo/main.ts renders the FileDialog faithfully over an inline in-memory fs — 2-col listing/│/History/info-pane date-time, *.ts re-filter, src/ descend, resolved path, ChDirDialog tree incl. └──nested fixup; wrapped in createRoot — no reactive leak; e2e green; @jsvision/files added to examples)
+- [x] 8.5 Full verification incl. `check:deps` + `test:e2e`; post-completion re-analysis — 2026-07-06 (verify 11/11; files 114; ui 1117; core 600; examples 87; e2e 16; check:deps clean; lint clean)
 
 ---
 
