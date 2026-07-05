@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-05
-> **Progress**: 16/43 tasks (37%)
+> **Progress**: 21/43 tasks (49%)
 > **CodeOps Skills Version**: 3.3.0
 
 ## Overview
@@ -203,11 +203,11 @@ RD-11/RD-14 unchanged. **Verify**: `yarn verify`
 - [x] 2.7 `fs/index.ts` barrel; `yarn verify` — 2026-07-05 (verify 11/11; files 19 tests; check:deps clean)
 
 ### Phase 3: Listing trio
-- [ ] 3.1 Write `file-list`/`file-input`/`file-info-pane` specs; run RED
-- [ ] 3.2 Implement `list/file-list.ts` (2-col, sort, toggle, filter, broadcasts)
-- [ ] 3.3 Implement `input/file-input.ts` (mirror-on-focus)
-- [ ] 3.4 Implement `list/file-info-pane.ts` (path/name+fields, no attrs)
-- [ ] 3.5 Three specs GREEN (fix code vs `.cpp`); `yarn verify`
+- [x] 3.1 Write `file-list`/`file-input`/`file-info-pane` specs; run RED — 2026-07-06
+- [x] 3.2 Implement `list/file-list.ts` (2-col, sort, toggle, filter, broadcasts) — 2026-07-06 (`extends ListView<DirEntry>`, `numCols:2`, trailing-sep `getText`, reactive scan bind, `focusedEntry` accessor)
+- [x] 3.3 Implement `input/file-input.ts` (mirror-on-focus) — 2026-07-06 (`stddlg.cpp:78` not-focused guard, dir→+sep+wildcard, `untrack` so only the focus broadcast re-mirrors)
+- [x] 3.4 Implement `list/file-info-pane.ts` (path/name+fields, no attrs) — 2026-07-06 (`stddlg.cpp:221-299` field offsets, 12-hour, `fileInfo` role, broken-link no-fields)
+- [x] 3.5 Three specs GREEN (fix code vs `.cpp`); `yarn verify` — 2026-07-06 (10 specs green first try, no fidelity mismatch; verify 11/11; files 29 tests; no reactive leak)
 
 ### Phase 4: `FileDialog` + error dialog
 - [ ] 4.1 Write `file-dialog.spec` (ST-8/9/11/12/19); run RED
