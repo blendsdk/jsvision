@@ -165,3 +165,11 @@ export type { CalendarDate, CalendarOptions, DatePickerOptions, DateFormat, Cale
 // focus-loss dismiss (PA-16). Explicit named re-exports; the pure `color-grid.ts` helpers stay internal.
 export { ColorSwatch, ColorPicker } from './color/index.js';
 export type { ColorSwatchOptions, ColorPickerOptions } from './color/index.js';
+
+// RD-19 surface family: the `Surface` offscreen cell buffer (a `TDrawSurface` port wrapping core
+// `ScreenBuffer`) + the passive `SurfaceView` `delta`-viewport (a faithful `TSurfaceView::draw()`
+// decode). Self-contained: 0 new core theme roles (the empty area reuses `windowInactive`), no core
+// export change. Explicit named re-exports; the pure `surface-geometry.ts` helpers stay internal, and
+// `Point` is reused from `view/geometry` (PA-13, no duplicate export).
+export { Surface, SurfaceView } from './surface/index.js';
+export type { SurfaceOptions, SurfaceViewOptions, SurfaceSource } from './surface/index.js';
