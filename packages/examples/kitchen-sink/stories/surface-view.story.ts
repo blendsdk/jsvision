@@ -2,8 +2,9 @@
  * Story: `SurfaceView` (RD-19) — a **pannable ASCII canvas**. An offscreen {@link Surface} (a labelled
  * grid, larger than its viewport) is displayed through a passive {@link SurfaceView} `delta`-window. The
  * `SurfaceView` takes no input (faithful `TSurfaceView`); a small focusable container drives `delta` —
- * arrows / PgUp / PgDn / Home / End + mouse wheel — and two `ScrollBar`s are two-way bound to `delta`
- * for click / drag / wheel-over-bar. The live `delta` is echoed so panning is visible.
+ * arrows / PgUp / PgDn / Home / End + mouse wheel (Shift+wheel pans horizontally, a fallback for devices
+ * with no native horizontal wheel) — and two `ScrollBar`s are two-way bound to `delta` for click / drag /
+ * wheel-over-bar. The live `delta` is echoed so panning is visible.
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
@@ -102,7 +103,12 @@ class PannableCanvas extends Group {
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type === 'wheel') {
-      if (inner.dir === 'up') this.view.panBy(0, -1);
+      // Shift+vertical-wheel is the horizontal-scroll fallback: many terminals/devices never emit a
+      // native horizontal wheel (SGR 66/67), but do send Shift+wheel as a vertical report with the
+      // shift bit set. Remap up→left, down→right so the canvas still pans horizontally.
+      if (inner.shift && (inner.dir === 'up' || inner.dir === 'down')) {
+        this.view.panBy(inner.dir === 'up' ? -1 : 1, 0);
+      } else if (inner.dir === 'up') this.view.panBy(0, -1);
       else if (inner.dir === 'down') this.view.panBy(0, 1);
       else if (inner.dir === 'left') this.view.panBy(-1, 0);
       else this.view.panBy(1, 0);
@@ -173,9 +179,7 @@ export const surfaceViewStory: Story = {
     );
     g.add(
       at(
-        new Text(
-          'Arrows / PgUp / PgDn / Home / End pan · mouse wheel scrolls · drag the ▓ bars. SurfaceView is passive.',
-        ),
+        new Text('Arrows / PgUp / PgDn / Home / End pan · wheel scrolls (Shift+wheel = horizontal) · drag the ▓ bars.'),
         1,
         vh + 4,
         width,
