@@ -36,3 +36,7 @@ export { ChDirDialog } from './dialog/chdir-dialog.js';
 export type { ChDirDialogOptions } from './dialog/chdir-dialog.js';
 export { errorBox } from './dialog/error-dialog.js';
 export type { ExecHost } from './dialog/error-dialog.js';
+
+// —— convenience openers ——
+export { openFile, changeDir } from './openers.js';
+export type { OpenFileOptions, ChangeDirOptions } from './openers.js';

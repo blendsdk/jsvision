@@ -13,10 +13,13 @@
  * (PA-3, like `FileDialog`); Cancel/Esc bypass. The path field reflects the current directory (a tree
  * select / Chdir / Revert updates it). `.js` per NodeNext.
  */
-import { Dialog, Button, Label, Input, signal, Commands } from '@jsvision/ui';
+import { Dialog, Button, Label, Input, History, signal, Commands } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
 import { DirList } from '../list/dir-list.js';
+
+/** Default recent-path history id (PA-9 — distinct from the file-dialog id so the MRU lists don't collide). */
+const DIR_HISTORY_ID = 0x0f12;
 
 /** Construction options for {@link ChDirDialog}. */
 export interface ChDirDialogOptions {
@@ -26,6 +29,8 @@ export interface ChDirDialogOptions {
   directory?: Signal<string>;
   /** The dialog title (default `'Change Directory'`). */
   title?: string;
+  /** The recent-path history id keying the shared MRU store (default the chdir-dialog id, PA-9). */
+  historyId?: number;
   /** Raise the local error box (PA-3 runtime seam — wired by the opener/story). */
   showError?: (message: string) => void;
   /** Called when the dialog resolves — the absolute directory, or `null` on cancel. */
@@ -42,6 +47,8 @@ export class ChDirDialog extends Dialog {
   readonly path: Signal<string>;
   /** The path input. */
   readonly pathInput: Input;
+  /** The recent-path History dropdown over the path input (`42,3,45,4`). */
+  readonly history: History;
   /** The directory tree. */
   readonly dirList: DirList;
   /** The button strip (OK/Chdir/Revert/Help). */
@@ -64,6 +71,8 @@ export class ChDirDialog extends Dialog {
 
     this.pathInput = new Input({ value: this.path });
     this.pathInput.layout = { position: 'absolute', rect: { x: 3, y: 3, width: 39, height: 1 } };
+    this.history = new History({ link: this.pathInput, historyId: opts.historyId ?? DIR_HISTORY_ID });
+    this.history.layout = { position: 'absolute', rect: { x: 42, y: 3, width: 3, height: 1 } };
     const nameLabel = new Label('~D~irectory name', this.pathInput);
     nameLabel.layout = { position: 'absolute', rect: { x: 2, y: 2, width: 14, height: 1 } };
 
@@ -76,6 +85,7 @@ export class ChDirDialog extends Dialog {
 
     this.add(nameLabel);
     this.add(this.pathInput);
+    this.add(this.history);
     this.add(treeLabel);
     this.add(this.dirList);
     for (const b of this.buttons) this.add(b);

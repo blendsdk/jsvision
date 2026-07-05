@@ -14,7 +14,7 @@
  * + close; else ⇒ the local error box + stay open. The error box is raised through the injected
  * `showError` seam (PA-3 runtime — a sync `valid()` can't itself `execView`). `.js` per NodeNext.
  */
-import { Dialog, Button, Label, ScrollBar, signal, Commands } from '@jsvision/ui';
+import { Dialog, Button, Label, ScrollBar, History, signal, Commands } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
 import { FileList } from '../list/file-list.js';
@@ -40,6 +40,8 @@ export interface FileDialogOptions {
   title?: string;
   /** A caller predicate AND-ed with the wildcard (PA-10). */
   filter?: (entry: DirEntry) => boolean;
+  /** The recent-path history id keying the shared MRU store (default the file-dialog id, PA-9). */
+  historyId?: number;
   /** Raise the local error box (PA-3 runtime seam — wired to `errorBox(host, …)` by the opener/story). */
   showError?: (message: string) => void;
   /** Called when the dialog resolves — the absolute path, or `null` on cancel. */
@@ -47,6 +49,9 @@ export interface FileDialogOptions {
 }
 
 const stripTilde = (s: string): string => s.replace(/~/g, '');
+
+/** Default recent-path history ids (PA-9 — distinct per dialog so the two MRU lists don't collide). */
+const FILE_HISTORY_ID = 0x0f11;
 
 /** The modal open/save file dialog. */
 export class FileDialog extends Dialog {
@@ -62,6 +67,8 @@ export class FileDialog extends Dialog {
   readonly fileList: FileList;
   /** The filename input. */
   readonly fileInput: FileInput;
+  /** The recent-path History dropdown over the filename input (`31,3,34,4`). */
+  readonly history: History;
   /** The read-out info pane. */
   readonly fileInfoPane: FileInfoPane;
   /** The list's horizontal-bottom scroll bar (dialog-owned sibling, PA-14). */
@@ -105,6 +112,8 @@ export class FileDialog extends Dialog {
       sep: this.fs.sep,
     });
     this.fileInput.layout = { position: 'absolute', rect: { x: 3, y: 3, width: 28, height: 1 } };
+    this.history = new History({ link: this.fileInput, historyId: opts.historyId ?? FILE_HISTORY_ID });
+    this.history.layout = { position: 'absolute', rect: { x: 31, y: 3, width: 3, height: 1 } };
 
     const inputName = opts.inputName ?? '~N~ame';
     const inputLabel = new Label(inputName, this.fileInput);
@@ -125,6 +134,7 @@ export class FileDialog extends Dialog {
     // Compose (z-order): labels + input + list + bar + info pane + buttons.
     this.add(inputLabel);
     this.add(this.fileInput);
+    this.add(this.history);
     this.add(filesLabel);
     this.add(this.fileList);
     this.add(this.listBar);
