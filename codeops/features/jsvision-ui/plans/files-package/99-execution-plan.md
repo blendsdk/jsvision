@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-05
-> **Progress**: 29/43 tasks (67%)
+> **Progress**: 33/43 tasks (77%)
 > **CodeOps Skills Version**: 3.3.0
 
 ## Overview
@@ -222,10 +222,10 @@ RD-11/RD-14 unchanged. **Verify**: `yarn verify`
 - [x] 5.4 `list`/`dialog` barrels; both specs GREEN; `yarn verify` — 2026-07-06 (single `src/index.ts` barrel wired: fs cores + listing trio + DirList + both dialogs + errorBox; 8 specs green; verify 11/11; files 43; typecheck clean)
 
 ### Phase 6: History + openers
-- [ ] 6.1 Write `history-files`/`openers` specs; run RED
-- [ ] 6.2 Wire `History` into both dialogs (decoded coords)
-- [ ] 6.3 Implement `openers.ts` (`openFile`/`changeDir`; `execView`-capable host + add/execView/remove lifecycle, PF-002)
-- [ ] 6.4 Both specs GREEN + RD-14 suites green; `yarn verify`
+- [x] 6.1 Write `history-files`/`openers` specs; run RED — 2026-07-06 (ST-18 History coords on both dialogs; ST-20 openFile/changeDir resolve+cancel+default-fs+save)
+- [x] 6.2 Wire `History` into both dialogs (decoded coords) — 2026-07-06 (FileDialog `31,3,34,4` over fileInput; ChDirDialog `42,3,45,4` over pathInput; distinct default historyIds 0x0f11/0x0f12, PA-9; no dropdown/ edit)
+- [x] 6.3 Implement `openers.ts` (`openFile`/`changeDir`; `execView`-capable host + add/execView/remove lifecycle, PF-002) — 2026-07-06 (default nodeFileSystem; errorBox wired into showError; save picks the set; resolves abs path on ok / null on cancel)
+- [x] 6.4 Both specs GREEN + RD-14 suites green; `yarn verify` — 2026-07-06 (6 specs green; files 49; ui 1117 incl. history/combo suites unchanged; verify 11/11; typecheck clean)
 
 ### Phase 7: GATE-2 AFTER-diff + impl tests & hardening
 - [ ] 7.1 [GATE-2 AFTER-diff] Cell-by-cell diff of all six draws vs the `.cpp`; record
