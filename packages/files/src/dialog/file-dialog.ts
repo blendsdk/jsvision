@@ -12,7 +12,16 @@
  * `valid()` (`:293-351`): `cmCancel` bypasses; else `isWild(name)` ⇒ split into dir + wildcard and
  * re-scan (stay open); a directory ⇒ enter it (stay open); a valid file ⇒ resolve to the absolute path
  * + close; else ⇒ the local error box + stay open. The error box is raised through the injected
- * `showError` seam (PA-3 runtime — a sync `valid()` can't itself `execView`). `.js` per NodeNext.
+ * `showError` seam (PA-3 runtime — a sync `valid()` can't itself `execView`).
+ *
+ * GATE-2 AFTER-diff (`tfildlg.cpp:8-86`): every child rect verified byte-for-byte — dialog `15,1,64,20`
+ * = 49×19; `fileName 3,3,31,4`; `inputName` label `2,2,3+cstrlen,3`; `History 31,3,34,4`; list bar
+ * `3,14,34,15`; `fileList 3,6,34,14`; `~F~iles` label `2,5,8,6`; button strip first `35,3,46,5` +3/row
+ * (open `fdOpenButton` Open`bfDefault`/Cancel/Help; save `fdOKButton` +OK/Replace/Clear); `infoPane
+ * 1,16,48,18`. One faithful adaptation: TV's primary button emits `cmFileOpen` and Replace/Clear emit
+ * `cmFileReplace`/`cmFileClear`; jsvision binds the primary to `Commands.ok` (the `Dialog` terminating
+ * machinery) and Replace/Clear to `onClick` — behaviour-equivalent (the primary drives `valid()`), the
+ * command *names* adapt to the RD-11 dialog contract. No draw mismatch. `.js` per NodeNext.
  */
 import { Dialog, Button, Label, ScrollBar, History, signal, Commands } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
@@ -117,9 +126,11 @@ export class FileDialog extends Dialog {
 
     const inputName = opts.inputName ?? '~N~ame';
     const inputLabel = new Label(inputName, this.fileInput);
-    inputLabel.layout = { position: 'absolute', rect: { x: 2, y: 2, width: Math.max(1, stripTilde(inputName).length), height: 1 } };
+    // TV TLabel(TRect(2,2,3+cstrlen(inputName),3)) — width = 3 + display length (tfildlg.cpp:20).
+    inputLabel.layout = { position: 'absolute', rect: { x: 2, y: 2, width: 3 + stripTilde(inputName).length, height: 1 } };
     const filesLabel = new Label('~F~iles', this.fileList.rows);
-    filesLabel.layout = { position: 'absolute', rect: { x: 2, y: 5, width: 5, height: 1 } };
+    // TV TLabel(TRect(2,5,8,6)) — a fixed width-6 rect (tfildlg.cpp:31).
+    filesLabel.layout = { position: 'absolute', rect: { x: 2, y: 5, width: 6, height: 1 } };
 
     this.fileInfoPane = new FileInfoPane({
       fs: this.fs,

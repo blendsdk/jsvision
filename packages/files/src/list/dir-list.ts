@@ -7,7 +7,11 @@
  * a single column owning its vertical bar. `getText(node) = connector + label` (the tree geometry lives
  * in the pure `buildDirTree`, proven cell-by-cell in `tree.spec`). Selecting a node emits its path
  * (`cmChangeDir`). The tree is a reactive derivation of `directory` — a change re-roots it. Labels are
- * sanitized at the draw boundary (`ctx.text`, AC-14). `.js` per NodeNext.
+ * sanitized at the draw boundary (`ctx.text`, AC-14).
+ *
+ * GATE-2 AFTER-diff (`tdirlist.cpp:104-186`): the drawn rows equal `buildDirTree` (verified cell-by-cell
+ * in `tree.spec` against the `└─┬`/`└┬─`/` ├─`/graphics-fixup decode) rendered at col 1 (`TListViewer`
+ * `curCol+1`). No draw mismatch. `.js` per NodeNext.
  */
 import { ListView, signal } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
