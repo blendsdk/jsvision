@@ -89,7 +89,8 @@ export class ScrollBar extends View {
   protected max: number;
   /** Explicit page step, or `undefined` for the axis-length default (mutable via {@link setRange}). */
   protected pageStepOpt?: number;
-  protected readonly arrowStep: number;
+  /** Arrow-click step (mutable — an owner viewer re-wires it via {@link setRange}, TV `setStep`). */
+  protected arrowStepVal: number;
   protected readonly vertical: boolean;
   /** True while a thumb-drag gesture holds the pointer capture. */
   protected dragging = false;
@@ -103,7 +104,7 @@ export class ScrollBar extends View {
     this.min = opts.min ?? 0;
     this.max = opts.max ?? 0;
     this.pageStepOpt = opts.pageStep;
-    this.arrowStep = opts.arrowStep ?? 1;
+    this.arrowStepVal = opts.arrowStep ?? 1;
     this.vertical = (opts.orientation ?? 'vertical') === 'vertical';
     // Repaint when the position changes externally (the owner scrolls, or a bound signal write).
     this.onMount(() =>
@@ -120,14 +121,18 @@ export class ScrollBar extends View {
    * `value` is not written here; `readValue()` clamps it into the new range on read, matching the
    * getPos/setValue clamp (so a shrunk range never over-scrolls or throws).
    *
-   * @param min      New range minimum.
-   * @param max      New range maximum (raised to `min` if smaller).
-   * @param pageStep New page step, or `undefined` to keep the axis-length default.
+   * @param min       New range minimum.
+   * @param max       New range maximum (raised to `min` if smaller).
+   * @param pageStep  New page step, or `undefined` to keep the axis-length default.
+   * @param arrowStep New arrow step (TV `setStep`'s second arg), or `undefined` to keep the current
+   *   one. A multi-column `TListViewer` wires `arStep = size.y` here (`tlstview.cpp:41`); the default
+   *   single-column owner leaves it at 1.
    */
-  setRange(min: number, max: number, pageStep?: number): void {
+  setRange(min: number, max: number, pageStep?: number, arrowStep?: number): void {
     this.min = min;
     this.max = Math.max(min, max);
     this.pageStepOpt = pageStep;
+    if (arrowStep !== undefined) this.arrowStepVal = arrowStep;
   }
 
   /** The drawn/measured long-axis length in cells (height when vertical, else width). */
@@ -163,6 +168,12 @@ export class ScrollBar extends View {
    * owner/test can confirm the wired page step (HR-53). */
   pageStep(): number {
     return this.pageStepOpt ?? Math.max(1, this.axisLen() - 1);
+  }
+
+  /** The effective arrow-click step (wheel steps `3×` this). Public so an owner/test can confirm the
+   * wired arrow step (TV `setStep`'s `arStep`; a multi-column list wires `size.y`). */
+  arrowStep(): number {
+    return this.arrowStepVal;
   }
 
   /**
@@ -208,7 +219,7 @@ export class ScrollBar extends View {
       const back = this.vertical ? inner.dir === 'up' : inner.dir === 'left';
       const fwd = this.vertical ? inner.dir === 'down' : inner.dir === 'right';
       if (back || fwd) {
-        this.setValue(this.readValue() + 3 * (back ? -this.arrowStep : this.arrowStep));
+        this.setValue(this.readValue() + 3 * (back ? -this.arrowStepVal : this.arrowStepVal));
         ev.handled = true;
       }
       return;
@@ -287,7 +298,7 @@ export class ScrollBar extends View {
 
   /** TV `scrollStep` (`tscrlbar.cpp:283`): bit1 ⇒ page vs arrow, bit0 ⇒ forward vs back. */
   protected scrollStep(part: number): number {
-    const step = part & 2 ? this.pageStep() : this.arrowStep;
+    const step = part & 2 ? this.pageStep() : this.arrowStepVal;
     return part & 1 ? step : -step;
   }
 

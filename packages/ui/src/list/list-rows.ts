@@ -2,17 +2,22 @@
  * `ListRows<T>` — the internal focusable rows-renderer of a `ListView` (RD-11, PA-2/PA-3/PA-5/PA-10).
  *
  * Faithful transcription of `TListViewer` (`source/tvision/tlstview.cpp`, GATE-1 verified + GATE-2
- * diffed) for the **single-column** case:
- *   • **`draw`** `:77` — for each visible row `i`, item `= topItem + i`; blank the row in its colour
- *     then draw `getText(item)` at column 1 (TV `curCol+1`); the focused row uses `getColor(3)` when
- *     the list is active, a selected row `getColor(4)`, else `getColor(1)`. The **colour is the only
- *     focus indicator** (PA-5 — no glyph, no hardware caret, unlike TV's `setCursor`). Single column ⇒
- *     the divider column `curCol+colWidth-1 = size.x` is off-screen, so **no divider is drawn**.
+ * diffed). Single column by default; `numCols > 1` renders TV's full **column-major** flow (the
+ * jsvision-ui/RD-09 PA-14 seam — the multi-column work RD-11 reserved for "→ RD-07, AR-104"):
+ *   • **`draw`** `:96-141` — `colWidth = size.x/numCols + 1`; for each row `i` and column `j`,
+ *     `item = j*size.y + i + topItem` (column-major); blank the cell in its colour then draw
+ *     `getText(item)` at `curCol+1`; the focused cell uses `getColor(3)` when the list is active, a
+ *     selected cell `getColor(4)`, else `getColor(1)`. The **colour is the only focus indicator**
+ *     (PA-5 — no glyph, no hardware caret, unlike TV's `setCursor`). A `│` (`0xB3`) divider is drawn at
+ *     each column's right edge `curCol+colWidth-1` in `getColor(5)` (→ `listDivider`); for a **single
+ *     column** that lands at `size.x` (off-screen) so ctx clips it ⇒ **no visible divider**.
  *     `showMarkers` (`»«`) is monochrome-only and omitted in colour. `emptyText="<empty>"` when empty.
- *   • **`focusItem`** `:159` keep-visible + **`focusItemNum`** `:175` clamp → `virtual.ts`.
- *   • **`handleEvent`** `:213` — mouse-down `newItem = mouse.y + topItem`; keys ↑↓ ±1, PgUp/PgDn
- *     ±viewportRows, Home=`topItem`, End=`topItem+rows-1`; ←/→ ignored (single column); Space/Enter
- *     activate. **Double-click** activation is deferred (the input model has no click-count).
+ *   • **`focusItem`** `:159` keep-visible (single-col via `virtual.ts`; multi-col column-aligned in
+ *     {@link computeTop}) + **`focusItemNum`** `:175` clamp.
+ *   • **`handleEvent`** `:213` — mouse-down `newItem = mouse.y + size.y*(mouse.x/colWidth) + topItem`;
+ *     keys ↑↓ ±1, PgUp/PgDn ±`size.y*numCols`, Home=`topItem`, End=`topItem+size.y*numCols-1`, ←/→
+ *     jump a column (±`size.y`) when `numCols>1` (ignored single-column); Space/Enter activate.
+ *     **Double-click** activation is deferred (the input model has no click-count).
  *   • **Palette** `cpListViewer` `:30` → `listNormal`/`listFocused`/`listSelected`/`listDivider` (PA-10).
  *
  * jsvision extensions (behaviour, not TV drawing): `sorted` display, linear `typeAhead` prefix search
@@ -72,6 +77,12 @@ export interface ListRowsConfig<T> {
   command?: string;
   /** Row theme roles (default {@link DEFAULT_LIST_ROLES}); override for a different viewer palette. */
   roles?: ListRoles;
+  /**
+   * Number of columns (default `1`). `>1` renders the faithful `TListViewer` **column-major** flow
+   * with a `│` interior divider (`getColor(5)` → `listDivider`), decoded from `tlstview.cpp:96-141`.
+   * The scroll model stays **vertical** — `numCols` only reshapes the draw + the bar's step (PA-14).
+   */
+  numCols?: number;
 }
 
 /** The virtual-scroll rows renderer: draws only the visible window + owns list keyboard/mouse. */
@@ -86,6 +97,8 @@ export class ListRows<T> extends View {
   protected readonly command?: string;
   /** The row theme roles (RD-11 `listNormal`/`listFocused`/`listSelected` by default; RD-14 override). */
   protected readonly roles: ListRoles;
+  /** Column count (TV `numCols`, `≥1`); `>1` = column-major flow + `│` dividers (PA-14). */
+  protected readonly numCols: number;
   /** The display list (source order, or a stable ascending `getText` sort when `sorted`). */
   protected readonly displayItems: () => T[];
   /** The first visible display index (TV `topItem`). */
@@ -108,6 +121,7 @@ export class ListRows<T> extends View {
     this.onSelect = cfg.onSelect;
     this.command = cfg.command;
     this.roles = cfg.roles ?? DEFAULT_LIST_ROLES;
+    this.numCols = Math.max(1, Math.floor(cfg.numCols ?? 1));
     this.displayItems = computed(() => {
       const arr = cfg.items();
       if (!this.sortedMode) return arr;
@@ -152,7 +166,23 @@ export class ListRows<T> extends View {
   protected updateTop(): void {
     const range = this.displayItems().length;
     const focused = clampIndex(this.focused(), range);
-    this.topItem = keepVisible(focused, this.topItem, this.viewportRows(), range);
+    this.topItem = this.computeTop(focused, this.viewportRows(), range);
+  }
+
+  /**
+   * The `topItem` that keeps `focused` visible. Single column delegates to the pure `keepVisible`;
+   * multi-column applies TV's column-aligned `focusItem` rules (`tlstview.cpp:168-181`): scroll so
+   * `topItem` lands on a column boundary and the focused item's column is first (scroll-up) or last
+   * (scroll-down) in the `size.y × numCols` window. The scroll model stays vertical.
+   */
+  protected computeTop(focused: number, rows: number, range: number): number {
+    if (this.numCols === 1) return keepVisible(focused, this.topItem, rows, range);
+    if (rows <= 0) return 0;
+    const cap = rows * this.numCols;
+    let top = this.topItem;
+    if (focused < top) top = focused - (focused % rows);
+    else if (focused >= top + cap) top = focused - (focused % rows) - rows * (this.numCols - 1);
+    return Math.max(0, top);
   }
 
   /** Clamp the focused signal into the current range (TV `focusItemNum`/`newList`). */
@@ -172,9 +202,11 @@ export class ListRows<T> extends View {
     const rows = ctx.size.height;
     const display = this.displayItems();
     const range = display.length;
-    // TV setRange (tlstview.cpp:48-52): bar value = focused, range [0, range-1], HR-53 pgStep =
-    // size.y - 1 so a page keeps one row of context.
-    this.bar?.setRange(0, Math.max(0, range - 1), Math.max(1, rows - 1));
+    // TV setStep (tlstview.cpp:41-52): bar value = focused, range [0, range-1]. Single column keeps
+    // HR-53 pgStep = size.y-1 (a page leaves one row of context, arStep left at 1); a multi-column
+    // list pages a full screen (size.y*numCols) and arrows one column (size.y).
+    if (this.numCols === 1) this.bar?.setRange(0, Math.max(0, range - 1), Math.max(1, rows - 1));
+    else this.bar?.setRange(0, Math.max(0, range - 1), rows * this.numCols, rows);
 
     const normal = ctx.color(this.roles.normal);
     if (range === 0) {
@@ -184,32 +216,41 @@ export class ListRows<T> extends View {
     }
 
     const focused = clampIndex(this.focused(), range);
-    this.topItem = keepVisible(focused, this.topItem, rows, range);
+    this.topItem = this.computeTop(focused, rows, range);
     const active = this.state.focused;
     const selected = this.selected();
-    const textWidth = Math.max(0, ctx.size.width - 1);
+    const divider = ctx.color('listDivider');
+    // TV colWidth = size.x/numCols + 1 (tlstview.cpp:118). Text spans curCol+1..; the `│` divider sits
+    // at curCol+colWidth-1 (= size.x for a single column ⇒ off-screen, so ctx clips it — no divider).
+    const colWidth = Math.floor(ctx.size.width / this.numCols) + 1;
+    const textWidth = Math.max(0, colWidth - 1);
 
     for (let i = 0; i < rows; i += 1) {
-      const item = this.topItem + i;
-      if (item >= range) {
-        ctx.fillRect(0, i, ctx.size.width, 1, ' ', normal); // blank trailing row
-        continue;
+      for (let j = 0; j < this.numCols; j += 1) {
+        const item = j * rows + i + this.topItem; // column-major (tlstview.cpp:120)
+        const curCol = j * colWidth;
+        if (item >= range) {
+          ctx.fillRect(curCol, i, colWidth, 1, ' ', normal); // blank the empty cell
+        } else {
+          // HR-50 (tlstview.cpp:122-141): the cursor cell draws `listFocused` (bright) while the list
+          // is focused, keeps a `listSelected` highlight when focus moves away; other selected cells
+          // draw `listSelected`; the rest `listNormal`.
+          const role =
+            item === focused
+              ? active
+                ? this.roles.focused
+                : this.roles.selected
+              : item === selected
+                ? this.roles.selected
+                : this.roles.normal;
+          const style = ctx.color(role);
+          ctx.fillRect(curCol, i, colWidth, 1, ' ', style); // blank the cell in its colour
+          const text = this.getText(display[item]).slice(0, textWidth);
+          ctx.text(curCol + 1, i, text, style); // TV draws item text at curCol+1 (sanitized by ctx.text)
+        }
+        // The `│` (`0xB3`) interior divider at each column's right edge, getColor(5) → listDivider.
+        ctx.text(curCol + colWidth - 1, i, '│', divider);
       }
-      // HR-50 (tlstview.cpp:86-130,208-211): the cursor row draws `listFocused` (bright) while the
-      // list is focused, but keeps a `listSelected` highlight when focus moves away — `listFocused` is
-      // reserved for the focused-list state. Any other selected row also draws `listSelected`.
-      const role =
-        item === focused
-          ? active
-            ? this.roles.focused
-            : this.roles.selected
-          : item === selected
-            ? this.roles.selected
-            : this.roles.normal;
-      const style = ctx.color(role);
-      ctx.fillRect(0, i, ctx.size.width, 1, ' ', style); // blank the row in its colour
-      const text = this.getText(display[item]).slice(0, textWidth);
-      ctx.text(1, i, text, style); // TV draws item text at curCol+1 (sanitized by ctx.text)
     }
   }
 
@@ -231,9 +272,14 @@ export class ListRows<T> extends View {
       if (local === undefined) return;
       const range = this.displayItems().length;
       // HR-62 (tlstview.cpp:185-195 `focusItemNum` clamp): a click in the blank space below the last
-      // row focuses/selects the LAST item; an empty list stays a no-op.
+      // row focuses/selects the LAST item; an empty list stays a no-op. Multi-column hit-test
+      // (tlstview.cpp:230): newItem = mouse.y + size.y*(mouse.x/colWidth) + topItem — the `/colWidth`
+      // term is 0 for a single column (colWidth = size.x+1 > mouse.x), so this reduces exactly.
       if (range > 0) {
-        const newItem = Math.min(this.topItem + local.y, range - 1);
+        const rows = this.viewportRows();
+        const colWidth = Math.floor(this.bounds.width / this.numCols) + 1;
+        const col = colWidth > 0 ? Math.floor(local.x / colWidth) : 0;
+        const newItem = clampIndex(this.topItem + local.y + col * rows, range);
         this.typeBuffer = '';
         this.focusTo(newItem);
         this.select(newItem); // a row click focuses + selects (ST-06)
@@ -248,6 +294,7 @@ export class ListRows<T> extends View {
   /** Apply a navigation/activation key; returns whether it was consumed. */
   protected handleKey(inner: KeyEvent, ev: DispatchEvent): boolean {
     const rows = this.viewportRows();
+    const cap = rows * this.numCols; // the on-screen item capacity (size.y × numCols)
     switch (inner.key) {
       case 'up':
         this.focusBy(-1);
@@ -255,11 +302,25 @@ export class ListRows<T> extends View {
       case 'down':
         this.focusBy(1);
         return true;
+      case 'left':
+        // TV kbLeft (tlstview.cpp:302): a multi-column list jumps one column back (−size.y); a single
+        // column ignores ←/→ (not consumed, so it can bubble).
+        if (this.numCols > 1) {
+          this.focusBy(-rows);
+          return true;
+        }
+        return false;
+      case 'right':
+        if (this.numCols > 1) {
+          this.focusBy(rows);
+          return true;
+        }
+        return false;
       case 'pageup':
-        this.focusBy(-rows);
+        this.focusBy(-cap); // TV kbPgUp: −size.y*numCols (tlstview.cpp:311)
         return true;
       case 'pagedown':
-        this.focusBy(rows);
+        this.focusBy(cap); // TV kbPgDn: +size.y*numCols (tlstview.cpp:309)
         return true;
       case 'home':
         this.typeBuffer = '';
@@ -267,7 +328,7 @@ export class ListRows<T> extends View {
         return true;
       case 'end':
         this.typeBuffer = '';
-        this.focusTo(this.topItem + rows - 1);
+        this.focusTo(this.topItem + cap - 1); // TV kbEnd: topItem + size.y*numCols − 1 (tlstview.cpp:319)
         return true;
       case 'enter':
       case 'space':
