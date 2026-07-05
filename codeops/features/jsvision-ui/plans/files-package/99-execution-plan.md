@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-05
-> **Progress**: 21/43 tasks (49%)
+> **Progress**: 25/43 tasks (58%)
 > **CodeOps Skills Version**: 3.3.0
 
 ## Overview
@@ -210,10 +210,10 @@ RD-11/RD-14 unchanged. **Verify**: `yarn verify`
 - [x] 3.5 Three specs GREEN (fix code vs `.cpp`); `yarn verify` — 2026-07-06 (10 specs green first try, no fidelity mismatch; verify 11/11; files 29 tests; no reactive leak)
 
 ### Phase 4: `FileDialog` + error dialog
-- [ ] 4.1 Write `file-dialog.spec` (ST-8/9/11/12/19); run RED
-- [ ] 4.2 Implement `dialog/error-dialog.ts`
-- [ ] 4.3 Implement `dialog/file-dialog.ts` (open+save, valid state machine)
-- [ ] 4.4 `file-dialog.spec` GREEN; `yarn verify`
+- [x] 4.1 Write `file-dialog.spec` (ST-8/9/11/12/19); run RED — 2026-07-06 (+ PA-3 runtime showError-seam decision recorded)
+- [x] 4.2 Implement `dialog/error-dialog.ts` — 2026-07-06 (`errorBox(host,msg)` + `ExecHost`; add-to-desktop→execView→remove lifecycle)
+- [x] 4.3 Implement `dialog/file-dialog.ts` (open+save, valid state machine) — 2026-07-06 (`tfildlg.cpp` 49×19 composition at decoded rects, injected horizontal-bottom bar PA-14, `valid()` wildcard/dir/file/error branches, Enter-on-list openEntry, save-mode Replace/Clear)
+- [x] 4.4 `file-dialog.spec` GREEN; `yarn verify` — 2026-07-06 (6 specs green; verify 11/11; files 35 tests; typecheck clean; no production reactive leak)
 
 ### Phase 5: `DirList` + `ChDirDialog`
 - [ ] 5.1 Write `dir-list`/`chdir-dialog` specs; run RED
