@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md · **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-05
-> **Progress**: 21/28 tasks (75%)
+> **Progress**: 28/28 tasks (100%) — ✅ COMPLETE
 > **CodeOps Skills Version**: 3.3.0
 
 ## Overview
@@ -162,13 +162,13 @@ paint facade, version signal — oracle-first (AC-1/2/6/7/14).
 - [x] 4.6 Full verification — done 2026-07-05 (ui 184 files/1105 tests)
 
 ### Phase 5: Packaging + story + demo
-- [ ] 5.1 Write `surface.packaging.spec`; run RED (ui half)
-- [ ] 5.2 Add `surface/index.ts` barrel + `src/index.ts` re-exports
-- [ ] 5.3 Run — verify GREEN
-- [ ] 5.4 Kitchen-sink `surface/surface-view` story (+ smoke)
-- [ ] 5.5 `demo:surface` headless walkthrough + script
-- [ ] 5.6 `surface-demo.e2e`
-- [ ] 5.7 Full verification incl. `check:deps` + `test:e2e`; post-completion re-analysis
+- [x] 5.1 Write `surface.packaging.spec`; run RED (ui half) — done 2026-07-05 (9 tests: barrel/internal-helpers/no-new-role)
+- [x] 5.2 Add `surface/index.ts` barrel + `src/index.ts` re-exports — done 2026-07-05 (Surface/SurfaceView + types; Point reused, PA-13)
+- [x] 5.3 Run — verify GREEN — done 2026-07-05
+- [x] 5.4 Kitchen-sink `surface/surface-view` story (+ smoke) — done 2026-07-05 (pannable canvas: focusable container + 2 ScrollBars; smoke green)
+- [x] 5.5 `demo:surface` headless walkthrough + script — done 2026-07-05 (render→pan right→pan down→past-edge empty→recentre)
+- [x] 5.6 `surface-demo.e2e` — done 2026-07-05 (asserts per-step frames + the windowInactive empty-area fill)
+- [x] 5.7 Full verification incl. `check:deps` + `test:e2e`; post-completion re-analysis — done 2026-07-05 (verify 8 tasks / ui 185 files 1113 tests; check:deps clean; test:e2e 5 tasks; lint clean)
 
 ---
 
