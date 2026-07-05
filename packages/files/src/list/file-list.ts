@@ -16,7 +16,11 @@
  *     track it, `cmFileFocused`); Enter/double-click fires `onOpenEntry` (`cmFileDoubleClicked`).
  *
  * The 2-column column-major layout + `│` divider lives in `@jsvision/ui`'s `ListRows` (PA-14), not
- * duplicated here. Names are sanitized at the draw boundary (`ctx.text`, AC-14). `.js` per NodeNext.
+ * duplicated here. Names are sanitized at the draw boundary (`ctx.text`, AC-14).
+ *
+ * GATE-2 AFTER-diff (`tfillist.cpp:98-121`): `getText` verified — `strncpy(name)` + `if(attr&FA_DIREC)
+ * strcat("\\")` ⇒ a directory (incl. `..`) gets a trailing `fs.sep`, a file the bare name; `numCols:2`
+ * matches `TSortedListBox(bounds, 2, sb)` (`:64`). No draw mismatch. `.js` per NodeNext.
  */
 import { ListView, ScrollBar, signal } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';

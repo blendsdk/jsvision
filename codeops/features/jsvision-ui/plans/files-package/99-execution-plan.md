@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-05
-> **Progress**: 33/43 tasks (77%)
+> **Progress**: 38/43 tasks (88%)
 > **CodeOps Skills Version**: 3.3.0
 
 ## Overview
@@ -228,11 +228,11 @@ RD-11/RD-14 unchanged. **Verify**: `yarn verify`
 - [x] 6.4 Both specs GREEN + RD-14 suites green; `yarn verify` — 2026-07-06 (6 specs green; files 49; ui 1117 incl. history/combo suites unchanged; verify 11/11; typecheck clean)
 
 ### Phase 7: GATE-2 AFTER-diff + impl tests & hardening
-- [ ] 7.1 [GATE-2 AFTER-diff] Cell-by-cell diff of all six draws vs the `.cpp`; record
-- [ ] 7.2 Cross-platform hardening (Windows-style seam) — ST-11
-- [ ] 7.3 Error/symlink/sanitize hardening — ST-12/13/14
-- [ ] 7.4 Write the impl-test suite (10 files)
-- [ ] 7.5 Full verification; RD-11 + RD-14 green
+- [x] 7.1 [GATE-2 AFTER-diff] Cell-by-cell diff of all six draws vs the `.cpp`; record — 2026-07-06 (re-read tfildlg/tchdrdlg/tfillist/stddlg/tdirlist; every child rect + getText + info-pane columns + connectors + colours verified; fixed FileDialog/ChDirDialog label rects to TV widths; recorded the cmFileOpen→Commands.ok binding + dirList+sb footprint reconciliations; GATE-2 notes in each component JSDoc)
+- [x] 7.2 Cross-platform hardening (Windows-style seam) — ST-11 — 2026-07-06 (win32 seams across tree/dir-list/file-info-pane/file-dialog/chdir-dialog: drive roots, backslash join/resolve)
+- [x] 7.3 Error/symlink/sanitize hardening — ST-12/13/14 — 2026-07-06 (unreadable-dir propagates a defined error caught by the FileList wrapper per ST-12; degraded per-entry seam; empty dir; control-byte names sanitize-clean across all views)
+- [x] 7.4 Write the impl-test suite (10 files) — 2026-07-06 (61 impl tests derived cell-by-cell from source; FileInfoPane column math + 12-hour midnight edge, valid() branches, openEntry, openers add→execView→remove cleanup on resolve+cancel)
+- [x] 7.5 Full verification; RD-11 + RD-14 green — 2026-07-06 (verify 11/11; files 110 = 49 spec + 61 impl; ui 1117 unchanged; core 600; examples 85; typecheck clean; no source bugs)
 
 ### Phase 8: Packaging, stories, `demo:files`
 - [ ] 8.1 Write `files.packaging.spec` (ST-16); run RED

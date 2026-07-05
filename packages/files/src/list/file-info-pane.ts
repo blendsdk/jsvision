@@ -8,7 +8,11 @@
  * **right-aligned** relative to `size.x`: size `@x-38`, month `@x-22` (3-letter `months[]`), day
  * `@x-18` (2-digit), `,` `@x-16`, year `@x-15`, hour `@x-9` (12-hour, 2-digit), `:` `@x-7`, minute
  * `@x-6`, `am`/`pm` `@x-4`. **No attributes field** (AR-247). Rows 2.. blank. A broken symlink shows the
- * name only (AC-13); every field is sanitized at the draw boundary (AC-14). `.js` per NodeNext.
+ * name only (AC-13); every field is sanitized at the draw boundary (AC-14).
+ *
+ * GATE-2 AFTER-diff (`stddlg.cpp:221-299`): the whole pane is filled with `getColor(1)` (`moveChar(0,'
+ * ',color,size.x)` per row), text at col 1, size/date/time right-aligned at the exact `size.x-N`
+ * columns (38/22/18/16/15/9/7/6/4). No attributes field. No draw mismatch. `.js` per NodeNext.
  */
 import { View } from '@jsvision/ui';
 import type { DrawContext } from '@jsvision/ui';

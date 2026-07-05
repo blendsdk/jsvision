@@ -11,7 +11,14 @@
  * Chdir descends the focused tree node (`cmChangeDir`); Revert restores the starting directory;
  * `valid(cmOK)` validates the path field as a readable directory — else the injected error box seam
  * (PA-3, like `FileDialog`); Cancel/Esc bypass. The path field reflects the current directory (a tree
- * select / Chdir / Revert updates it). `.js` per NodeNext.
+ * select / Chdir / Revert updates it).
+ *
+ * GATE-2 AFTER-diff (`tchdrdlg.cpp:37-53`): dialog `16,2,64,20` = 48×18; `dirInput 3,3,42,4`;
+ * `dirName` label `2,2,17,3` (width 15); `History 42,3,45,4`; OK `35,6,45,8` (`cmOK` → `Commands.ok`),
+ * Chdir `35,9,45,11` (`cmChangeDir` → `onClick`), Revert `35,12,45,14`, Help `35,15,45,17`. TV splits
+ * `dirList 3,6,32,16` (width 29) + a separate `TScrollBar 32,6,33,16`; jsvision's `DirList` owns its
+ * bar, so its container spans `3,6,33,16` (width 30 = 29 rows + 1 bar) — the same footprint. No draw
+ * mismatch. `.js` per NodeNext.
  */
 import { Dialog, Button, Label, Input, History, signal, Commands } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
@@ -74,12 +81,12 @@ export class ChDirDialog extends Dialog {
     this.history = new History({ link: this.pathInput, historyId: opts.historyId ?? DIR_HISTORY_ID });
     this.history.layout = { position: 'absolute', rect: { x: 42, y: 3, width: 3, height: 1 } };
     const nameLabel = new Label('~D~irectory name', this.pathInput);
-    nameLabel.layout = { position: 'absolute', rect: { x: 2, y: 2, width: 14, height: 1 } };
+    nameLabel.layout = { position: 'absolute', rect: { x: 2, y: 2, width: 15, height: 1 } };
 
     this.dirList = new DirList({ fs: this.fs, directory: this.directory, onChangeDir: (p) => this.directory.set(p) });
     this.dirList.layout = { position: 'absolute', rect: { x: 3, y: 6, width: 30, height: 10 } };
     const treeLabel = new Label('~D~irectory tree', this.dirList.rows);
-    treeLabel.layout = { position: 'absolute', rect: { x: 2, y: 5, width: 14, height: 1 } };
+    treeLabel.layout = { position: 'absolute', rect: { x: 2, y: 5, width: 15, height: 1 } };
 
     this.buildButtons();
 
