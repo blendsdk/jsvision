@@ -25,7 +25,16 @@
  * the viewport (empty clip) **undrawn** (stale cells). jsvision maps an empty clip to the null-surface
  * case → fills the whole view with `cEmpty` spaces (AC-9). A safe, deterministic extension.
  *
- * ## GATE-2 AFTER-diff — recorded in Phase 4 (`surface-view.impl` + this JSDoc), see the execution plan.
+ * ## GATE-2 AFTER-diff (re-verified vs `tsurface.cpp:93-141`, 2026-07-05 — no mismatch found)
+ * The composed `SurfaceView` buffer matches the decode cell-by-cell (executable oracle:
+ * `surface-view.spec` ST-3 + `surface-view.impl` GATE-2): the direct-copy `clip==extent` case
+ * (`:112-115`), the top/bottom full-width bands (`:120-121`), the left/right side bands within the
+ * surface rows (`:123-132`), the negative-delta inset with first cell `at(max(delta,0))` (`:111`), and
+ * the null-surface whole-view fill (`:136-140`). Documented extensions (spec oracles, no `.cpp` diff):
+ * the fully-outside all-empty fill (PA-3, where TV leaves stale cells) and the **wide-glyph edge
+ * safety** — TV memcpy's raw `TScreenCell`s (a wide glyph split by a side-margin boundary would copy a
+ * lead without its continuation), whereas jsvision's `ctx.text` drops a straddling wide glyph whole
+ * (draw-context.ts:86-91, the codebase-wide wide-glyph discipline, PA-11). Safe, never a half-cell.
  *
  * SECURITY (AC-13/AC-14): `computeClip`/`marginRects` are integer + bounds-clamped; the blit indexes
  * only `[srcX0, srcX0+clipW) × [srcY0, srcY0+clipH)`, which `computeClip` guarantees ⊆ surface. Surface

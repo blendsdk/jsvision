@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md · **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-05
-> **Progress**: 15/28 tasks (54%)
+> **Progress**: 21/28 tasks (75%)
 > **CodeOps Skills Version**: 3.3.0
 
 ## Overview
@@ -154,12 +154,12 @@ paint facade, version signal — oracle-first (AC-1/2/6/7/14).
 - [x] 3.5 `yarn verify` — done 2026-07-05 (ui 181 files/1075 tests)
 
 ### Phase 4: GATE-2 + Should-Haves + impl tests
-- [ ] 4.1 [GATE-2 AFTER-diff] Cell-by-cell diff vs `tsurface.cpp`; record
-- [ ] 4.2 Should-Haves: `scrollTo`/`panBy`/`onScroll` (+ confirm `from`/`snapshot`)
-- [ ] 4.3 Write `surface-geometry.impl`
-- [ ] 4.4 Write `surface.impl`
-- [ ] 4.5 Write `surface-view.impl`
-- [ ] 4.6 Full verification
+- [x] 4.1 [GATE-2 AFTER-diff] Cell-by-cell diff vs `tsurface.cpp`; record — done 2026-07-05 (no mismatch; recorded in surface-view.ts JSDoc + surface-view.impl GATE-2 cases)
+- [x] 4.2 Should-Haves: `scrollTo`/`panBy`/`onScroll` (+ confirm `from`/`snapshot`) — done 2026-07-05 (all present from Phases 2/3)
+- [x] 4.3 Write `surface-geometry.impl` — done 2026-07-05 (10 tests)
+- [x] 4.4 Write `surface.impl` — done 2026-07-05 (11 tests: resize/from/snapshot/version/frozen-at)
+- [x] 4.5 Write `surface-view.impl` — done 2026-07-05 (10 tests: GATE-2 diff, wide-glyph, scrollTo/panBy, onScroll, swap)
+- [x] 4.6 Full verification — done 2026-07-05 (ui 184 files/1105 tests)
 
 ### Phase 5: Packaging + story + demo
 - [ ] 5.1 Write `surface.packaging.spec`; run RED (ui half)
