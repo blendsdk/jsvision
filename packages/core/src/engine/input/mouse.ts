@@ -5,6 +5,8 @@
  * - `b` low two bits select the button (0/1/2 = left/middle/right);
  * - bit 5 (0x20) marks motion (drag/move);
  * - bit 6 (0x40) marks a wheel report (low two bits = direction 64–67);
+ * - modifier bits (Shift 0x04, Meta/Alt 0x08, Ctrl 0x10) are OR-encoded into `b`
+ *   and surfaced on a {@link WheelEvent} (they do not disturb wheel/button/motion);
  * - final `M` = press/motion, `m` = release.
  *
  * Coordinates `x`,`y` are kept **1-based exactly as received** (AC-3) — no
@@ -33,6 +35,12 @@ const WHEEL_MASK = 0xc0; // bits 6+7; a wheel report has exactly bit 6 set
 const WHEEL_FLAG = 0x40;
 const BUTTON_BITS = 0x03;
 const NO_BUTTON = 0x03; // low two bits = 3 → motion with no button held
+
+// xterm SGR modifier bits, OR-encoded into the button byte (independent of the
+// wheel/button/motion bits above, so a wheel report still classifies correctly).
+const SHIFT_BIT = 0x04;
+const ALT_BIT = 0x08; // Meta/Alt
+const CTRL_BIT = 0x10;
 
 /** Wheel direction by the low two bits of a wheel `b` value (64–67). */
 const WHEEL_DIRS = ['up', 'down', 'left', 'right'] as const;
@@ -81,7 +89,15 @@ export function decodeMouse(buf: Uint8Array, i: number): MouseDecode {
 /** Build the mouse/wheel event from the parsed button byte, coords, and final. */
 function buildEvent(b: number, x: number, y: number, final: number): MouseEvent | WheelEvent {
   if ((b & WHEEL_MASK) === WHEEL_FLAG) {
-    return { type: 'wheel', dir: WHEEL_DIRS[b & BUTTON_BITS], x, y };
+    return {
+      type: 'wheel',
+      dir: WHEEL_DIRS[b & BUTTON_BITS],
+      x,
+      y,
+      shift: (b & SHIFT_BIT) !== 0,
+      alt: (b & ALT_BIT) !== 0,
+      ctrl: (b & CTRL_BIT) !== 0,
+    };
   }
 
   const button = b & BUTTON_BITS;
