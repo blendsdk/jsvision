@@ -40,9 +40,13 @@ test('impl: focusedNode tracks the focused row', () => {
   expect(list.focusedNode()?.label).toBe('bin');
 });
 
-test('impl: onChangeDir on Enter emits the focused node\'s absolute path', () => {
+test("impl: onChangeDir on Enter emits the focused node's absolute path", () => {
   const changed: string[] = [];
-  const list = new DirList({ fs: nestedFs(), directory: signal('/home/user/proj'), onChangeDir: (p) => changed.push(p) });
+  const list = new DirList({
+    fs: nestedFs(),
+    directory: signal('/home/user/proj'),
+    onChangeDir: (p) => changed.push(p),
+  });
   const loop = hosted(list, 30, 12);
   const srcIdx = list.nodes().findIndex((n) => n.label === 'src');
   list.focused.set(srcIdx);
@@ -66,7 +70,11 @@ test('impl: reactive re-root on a directory change', () => {
 
 test('impl: win32 seam — the root node is the drive, paths use backslashes', () => {
   const changed: string[] = [];
-  const list = new DirList({ fs: nestedFs('win32'), directory: signal('C:\\home\\user\\proj'), onChangeDir: (p) => changed.push(p) });
+  const list = new DirList({
+    fs: nestedFs('win32'),
+    directory: signal('C:\\home\\user\\proj'),
+    onChangeDir: (p) => changed.push(p),
+  });
   const loop = hosted(list, 32, 12);
   expect(list.nodes()[0].label).toBe('C:\\'); // drive root
   const binIdx = list.nodes().findIndex((n) => n.label === 'bin');

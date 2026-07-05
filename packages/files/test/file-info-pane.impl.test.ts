@@ -31,10 +31,17 @@ function mount(opts: FileInfoPaneOptions, h = 2) {
 
 type Buf = ReturnType<ReturnType<typeof createEventLoop>['renderRoot']['buffer']>;
 const at = (buf: Buf, x: number, y: number) => buf.get(x, y)?.char ?? ' ';
-const span = (buf: Buf, x: number, y: number, n: number) => Array.from({ length: n }, (_, i) => at(buf, x + i, y)).join('');
+const span = (buf: Buf, x: number, y: number, n: number) =>
+  Array.from({ length: n }, (_, i) => at(buf, x + i, y)).join('');
 
 test('impl: row-0 search path = resolve(directory, wildcard); exact field columns for a known mtime', () => {
-  const entry: DirEntry = { name: 'main.cpp', kind: 'file', size: 42, mtime: new Date(2026, 11, 25, 0, 7, 0), hidden: false };
+  const entry: DirEntry = {
+    name: 'main.cpp',
+    kind: 'file',
+    size: 42,
+    mtime: new Date(2026, 11, 25, 0, 7, 0),
+    hidden: false,
+  };
   const loop = mount({
     fs: createMemoryFs(dir()),
     directory: () => '/src/lib',
@@ -62,7 +69,13 @@ test('impl: 12-hour am/pm edges — noon → 12pm, afternoon → 01pm', () => {
   expect(span(buf, W - 9, 1, 2)).toBe('12'); // 12:00 noon → 12
   expect(span(buf, W - 4, 1, 2)).toBe('pm');
 
-  const afternoon: DirEntry = { name: 'x', kind: 'file', size: 1, mtime: new Date(2026, 0, 1, 13, 30, 0), hidden: false };
+  const afternoon: DirEntry = {
+    name: 'x',
+    kind: 'file',
+    size: 1,
+    mtime: new Date(2026, 0, 1, 13, 30, 0),
+    hidden: false,
+  };
   loop = mount({ fs: createMemoryFs(dir()), directory: () => '/', wildcard: () => '*', focusedEntry: () => afternoon });
   buf = loop.renderRoot.buffer();
   expect(span(buf, W - 9, 1, 2)).toBe('01'); // 13:30 → 01
@@ -71,8 +84,20 @@ test('impl: 12-hour am/pm edges — noon → 12pm, afternoon → 01pm', () => {
 });
 
 test('impl: a broken symlink shows the name only — no size/date/time fields', () => {
-  const entry: DirEntry = { name: 'dangling', kind: 'symlink', size: 999, mtime: new Date(2026, 0, 1, 1, 1, 0), hidden: false, broken: true };
-  const loop = mount({ fs: createMemoryFs(dir()), directory: () => '/home', wildcard: () => '*', focusedEntry: () => entry });
+  const entry: DirEntry = {
+    name: 'dangling',
+    kind: 'symlink',
+    size: 999,
+    mtime: new Date(2026, 0, 1, 1, 1, 0),
+    hidden: false,
+    broken: true,
+  };
+  const loop = mount({
+    fs: createMemoryFs(dir()),
+    directory: () => '/home',
+    wildcard: () => '*',
+    focusedEntry: () => entry,
+  });
   const buf = loop.renderRoot.buffer();
   expect(span(buf, 1, 1, 8)).toBe('dangling');
   expect(at(buf, W - 38, 1)).toBe(' '); // size slot blank (fields skipped)
@@ -81,7 +106,10 @@ test('impl: a broken symlink shows the name only — no size/date/time fields', 
 
 test('impl: the whole pane is filled with the fileInfo style (uniform across rows)', () => {
   const entry: DirEntry = { name: 'a', kind: 'file', size: 1, mtime: new Date(0), hidden: false };
-  const loop = mount({ fs: createMemoryFs(dir()), directory: () => '/x', wildcard: () => '*', focusedEntry: () => entry }, 4);
+  const loop = mount(
+    { fs: createMemoryFs(dir()), directory: () => '/x', wildcard: () => '*', focusedEntry: () => entry },
+    4,
+  );
   const buf = loop.renderRoot.buffer();
   const ref = buf.get(1, 0); // a filled text cell (path char) uses the fileInfo style
   // Every blank cell (rows 0..3) carries the same fg/bg as the text region — one uniform fill.
@@ -112,8 +140,19 @@ test('impl: win32 seam — the row-0 path resolves with backslashes', () => {
 // —— SANITIZE (task 7.4) ——
 
 test('impl: control bytes in the path/name render sanitize-clean', () => {
-  const entry: DirEntry = { name: '\x1b[2Jx\x07', kind: 'file', size: 1, mtime: new Date(2026, 0, 1, 1, 1, 0), hidden: false };
-  const loop = mount({ fs: createMemoryFs(dir()), directory: () => '/\x1bd', wildcard: () => '*\x07', focusedEntry: () => entry });
+  const entry: DirEntry = {
+    name: '\x1b[2Jx\x07',
+    kind: 'file',
+    size: 1,
+    mtime: new Date(2026, 0, 1, 1, 1, 0),
+    hidden: false,
+  };
+  const loop = mount({
+    fs: createMemoryFs(dir()),
+    directory: () => '/\x1bd',
+    wildcard: () => '*\x07',
+    focusedEntry: () => entry,
+  });
   const buf = loop.renderRoot.buffer();
   for (let y = 0; y < 2; y += 1) {
     for (let x = 0; x < W; x += 1) {

@@ -50,7 +50,11 @@ test('impl: the path field reflects the directory after chdir() and revert()', (
 
 test('impl: valid(OK) on a path that is a file (not a directory) raises "Invalid directory"', async () => {
   const errors: string[] = [];
-  const dlg = new ChDirDialog({ fs: nestedFs(), directory: signal('/home/user/proj'), showError: (m) => errors.push(m) });
+  const dlg = new ChDirDialog({
+    fs: nestedFs(),
+    directory: signal('/home/user/proj'),
+    showError: (m) => errors.push(m),
+  });
   const { loop, promise } = openChDir(dlg);
   let settled = false;
   void promise.then(() => (settled = true));

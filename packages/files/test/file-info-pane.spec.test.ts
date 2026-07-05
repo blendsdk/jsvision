@@ -29,16 +29,31 @@ function mount(pane: FileInfoPane) {
 
 const at = (buf: ReturnType<ReturnType<typeof createEventLoop>['renderRoot']['buffer']>, x: number, y: number) =>
   buf.get(x, y)?.char ?? ' ';
-const span = (buf: ReturnType<ReturnType<typeof createEventLoop>['renderRoot']['buffer']>, x: number, y: number, n: number) =>
-  Array.from({ length: n }, (_, i) => at(buf, x + i, y)).join('');
+const span = (
+  buf: ReturnType<ReturnType<typeof createEventLoop>['renderRoot']['buffer']>,
+  x: number,
+  y: number,
+  n: number,
+) => Array.from({ length: n }, (_, i) => at(buf, x + i, y)).join('');
 
 // ST-6 — row 0 = the search path; row 1 = name + right-aligned size/month/day/year/time/am-pm.
 test('ST-6: FileInfoPane draws the path (row 0) + name & right-aligned fields (row 1)', () => {
   const directory = signal('/home/user');
   const wildcard = signal('*.txt');
-  const entry: DirEntry = { name: 'App.ts', kind: 'file', size: 1234, mtime: new Date(2026, 6, 4, 9, 5, 0), hidden: false };
+  const entry: DirEntry = {
+    name: 'App.ts',
+    kind: 'file',
+    size: 1234,
+    mtime: new Date(2026, 6, 4, 9, 5, 0),
+    hidden: false,
+  };
   const focused = signal<DirEntry | undefined>(entry);
-  const pane = new FileInfoPane({ fs: createMemoryFs(dir()), directory: () => directory(), wildcard: () => wildcard(), focusedEntry: () => focused() });
+  const pane = new FileInfoPane({
+    fs: createMemoryFs(dir()),
+    directory: () => directory(),
+    wildcard: () => wildcard(),
+    focusedEntry: () => focused(),
+  });
   const loop = mount(pane);
   const buf = loop.renderRoot.buffer();
 
@@ -59,7 +74,14 @@ test('ST-6: FileInfoPane draws the path (row 0) + name & right-aligned fields (r
 
 // ST-13 — a broken symlink shows the name but no size/date (unresolved).
 test('ST-13: FileInfoPane shows a broken link name with no size/date fields', () => {
-  const entry: DirEntry = { name: 'dangling', kind: 'symlink', size: 0, mtime: new Date(0), hidden: false, broken: true };
+  const entry: DirEntry = {
+    name: 'dangling',
+    kind: 'symlink',
+    size: 0,
+    mtime: new Date(0),
+    hidden: false,
+    broken: true,
+  };
   const pane = new FileInfoPane({
     fs: createMemoryFs(dir()),
     directory: () => '/home/user',
@@ -75,7 +97,13 @@ test('ST-13: FileInfoPane shows a broken link name with no size/date fields', ()
 
 // ST-14 — a control-byte directory path / name renders sanitize-clean.
 test('ST-14: FileInfoPane renders control-byte path/name sanitize-clean', () => {
-  const entry: DirEntry = { name: '\x1b[2Jx', kind: 'file', size: 1, mtime: new Date(2026, 0, 1, 1, 1, 0), hidden: false };
+  const entry: DirEntry = {
+    name: '\x1b[2Jx',
+    kind: 'file',
+    size: 1,
+    mtime: new Date(2026, 0, 1, 1, 1, 0),
+    hidden: false,
+  };
   const pane = new FileInfoPane({
     fs: createMemoryFs(dir()),
     directory: () => '/\x1b[2Jd',

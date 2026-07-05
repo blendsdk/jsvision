@@ -48,7 +48,11 @@ function hosted(list: FileList, w: number, h: number) {
 }
 
 /** The full text of buffer row `y`. */
-function rowText(buf: ReturnType<ReturnType<typeof createEventLoop>['renderRoot']['buffer']>, y: number, w: number): string {
+function rowText(
+  buf: ReturnType<ReturnType<typeof createEventLoop>['renderRoot']['buffer']>,
+  y: number,
+  w: number,
+): string {
   let s = '';
   for (let x = 0; x < w; x += 1) s += buf.get(x, y)?.char ?? ' ';
   return s;
@@ -87,7 +91,11 @@ test('ST-4: FileList re-scans on directory change, honours showHidden + a caller
   expect(list.entries().map((e) => e.name)).toEqual(['deep', '..']);
 
   // A caller filter is AND-ed (removes `deep`).
-  const filtered = new FileList({ fs: fsFixture(), directory: signal('/home/user/other'), filter: (e: DirEntry) => e.name !== 'deep' });
+  const filtered = new FileList({
+    fs: fsFixture(),
+    directory: signal('/home/user/other'),
+    filter: (e: DirEntry) => e.name !== 'deep',
+  });
   hosted(filtered, 40, 8);
   expect(filtered.entries().map((e) => e.name)).toEqual(['..']);
 });

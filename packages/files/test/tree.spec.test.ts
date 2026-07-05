@@ -62,10 +62,7 @@ test('ST-7: nodes carry depth/path/isCurrent; the current directory is flagged',
 
 // ST-7 — a single subdir gets the "└──" fixup; a directory with no subdirs fixes up its own row.
 test('ST-7: the last-row graphics fixup — single subdir "└──"; no subdirs fixes the current row', () => {
-  const single = buildDirTree(
-    createMemoryFs(dir({ home: dir({ only: dir() }) })),
-    '/home',
-  );
+  const single = buildDirTree(createMemoryFs(dir({ home: dir({ only: dir() }) })), '/home');
   // chain: /, home; subdir: only (single ⇒ "└┬─" → "└──").
   expect(single.map(rowText)).toEqual(['└─┬/', '  └─┬home', '    └──only']);
 

@@ -36,7 +36,10 @@ export async function errorBox(host: ExecHost, message: string): Promise<void> {
   const text = new Text(message);
   text.layout = { position: 'absolute', rect: { x: 2, y: 2, width: width - 4, height: 1 } };
   const ok = okButton();
-  ok.layout = { position: 'absolute', rect: { x: Math.max(2, Math.floor((width - 10) / 2)), y: height - 3, width: 10, height: 2 } };
+  ok.layout = {
+    position: 'absolute',
+    rect: { x: Math.max(2, Math.floor((width - 10) / 2)), y: height - 3, width: 10, height: 2 },
+  };
   dlg.add(text);
   dlg.add(ok);
 

@@ -44,7 +44,12 @@ function openFileDialog(dlg: FileDialog) {
   return { loop, promise };
 }
 
-const rectOf = (b: { x: number; y: number; width: number; height: number }) => ({ x: b.x, y: b.y, width: b.width, height: b.height });
+const rectOf = (b: { x: number; y: number; width: number; height: number }) => ({
+  x: b.x,
+  y: b.y,
+  width: b.width,
+  height: b.height,
+});
 
 // ST-8 — 49×19 composition at the decoded dialog-local rects; open-mode button set.
 test('ST-8: FileDialog composes the decoded child rects + the open-mode button strip', () => {

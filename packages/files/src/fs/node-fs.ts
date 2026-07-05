@@ -40,7 +40,13 @@ function entryFor(dirPath: string, name: string): DirEntry {
       return { name, kind: 'symlink', size: 0, mtime: ls.mtime, hidden, broken: true };
     }
   }
-  return { name, kind: ls.isDirectory() ? 'dir' : 'file', size: ls.isDirectory() ? 0 : ls.size, mtime: ls.mtime, hidden };
+  return {
+    name,
+    kind: ls.isDirectory() ? 'dir' : 'file',
+    size: ls.isDirectory() ? 0 : ls.size,
+    mtime: ls.mtime,
+    hidden,
+  };
 }
 
 /** The default filesystem — `node:fs`/`node:path`/`node:os` only. */

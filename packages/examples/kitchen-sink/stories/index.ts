@@ -36,6 +36,8 @@ import { datePickerStory } from './date-picker.story.js';
 import { colorSwatchStory } from './color-swatch.story.js';
 import { colorPickerStory } from './color-picker.story.js';
 import { surfaceViewStory } from './surface-view.story.js';
+import { fileDialogStory } from './file-dialog.story.js';
+import { chDirDialogStory } from './chdir-dialog.story.js';
 
 /**
  * Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers
@@ -70,4 +72,6 @@ export const STORIES: readonly Story[] = [
   colorSwatchStory,
   colorPickerStory,
   surfaceViewStory,
+  fileDialogStory,
+  chDirDialogStory,
 ];

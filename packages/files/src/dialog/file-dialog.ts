@@ -127,7 +127,10 @@ export class FileDialog extends Dialog {
     const inputName = opts.inputName ?? '~N~ame';
     const inputLabel = new Label(inputName, this.fileInput);
     // TV TLabel(TRect(2,2,3+cstrlen(inputName),3)) — width = 3 + display length (tfildlg.cpp:20).
-    inputLabel.layout = { position: 'absolute', rect: { x: 2, y: 2, width: 3 + stripTilde(inputName).length, height: 1 } };
+    inputLabel.layout = {
+      position: 'absolute',
+      rect: { x: 2, y: 2, width: 3 + stripTilde(inputName).length, height: 1 },
+    };
     const filesLabel = new Label('~F~iles', this.fileList.rows);
     // TV TLabel(TRect(2,5,8,6)) — a fixed width-6 rect (tfildlg.cpp:31).
     filesLabel.layout = { position: 'absolute', rect: { x: 2, y: 5, width: 6, height: 1 } };

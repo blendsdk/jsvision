@@ -79,7 +79,12 @@ test('impl: valid(OK) on a directory-prefixed wildcard splits into directory + p
 test('impl: valid(OK) on a name under a non-existent parent raises "Invalid drive or directory"', async () => {
   const errors: string[] = [];
   const filename = signal('');
-  const dlg = new FileDialog({ fs: fsFixture(), directory: signal('/home/user'), filename, showError: (m) => errors.push(m) });
+  const dlg = new FileDialog({
+    fs: fsFixture(),
+    directory: signal('/home/user'),
+    filename,
+    showError: (m) => errors.push(m),
+  });
   const { loop, promise } = openFileDialog(dlg);
   let settled = false;
   void promise.then(() => (settled = true));
@@ -96,7 +101,12 @@ test('impl: the defensive empty-name "Invalid file name" guard (directory not a 
   const filename = signal('');
   // directory points at a FILE, so the empty-name path skips the "enter directory" branch and reaches
   // resolveFileAt with raw="" — the defensive `raw.length === 0` guard (source line 249).
-  const dlg = new FileDialog({ fs: fsFixture(), directory: signal('/home/user/readme.txt'), filename, showError: (m) => errors.push(m) });
+  const dlg = new FileDialog({
+    fs: fsFixture(),
+    directory: signal('/home/user/readme.txt'),
+    filename,
+    showError: (m) => errors.push(m),
+  });
   const { loop, promise } = openFileDialog(dlg);
   let settled = false;
   void promise.then(() => (settled = true));
