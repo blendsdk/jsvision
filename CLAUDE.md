@@ -70,7 +70,7 @@ docs/  scripts/  .github/  CHANGELOG.md  — monorepo-level docs (techdocs + acc
 --- (the subsystem layout below is rooted at packages/core/) ---
 src/engine/      Source. Single public entry point: src/engine/index.ts (re-exports public API).
 src/engine/capability/   RD-02 capability detection core (profile, defaults, env, table, query, detect, index) + responses.ts (RD-06-shared query-response classifier).
-src/engine/input/        RD-06 input decoder (events, keys, decoder, mouse, paste, keymap, index).
+src/engine/input/        RD-06 input decoder (events, keys, decoder, mouse, paste, keymap, index). `WheelEvent` also carries `shift`/`alt`/`ctrl` modifier flags — the xterm SGR modifier bits (`0x04`/`0x08`/`0x10`) OR-encoded into the button byte, decoded in `mouse.ts` `buildEvent` without disturbing wheel/button/motion classification; lets a consumer distinguish e.g. plain vs. Shift+wheel (the terminal-independent horizontal-scroll fallback used by the surface-view kitchen-sink story). Corpus fixtures `test/fixtures/input-corpus/wheel.json` cover plain (all-false) + Shift+wheel reports.
 src/engine/render/       RD-04 rendering engine (types, width, buffer, ansi, glyphs, serialize, sanitize, cursor, osc, index).
 src/engine/host/         RD-07 host & lifecycle (types, streams, platform, modes, host, restore, signals, index) — native tty host behind an injectable RuntimeAdapter. streams.ts also exports the additive detectTty() pre-start TTY probe (RD-08 PF-001); terminal-query.ts is the RD-03 real tty-backed createTerminalQuery (layer-2 query seam).
 src/engine/safety/       RD-08 safety (sanitize, errors, redact, logger, essentials, index) — essentials gate, screen-safe logger, redaction, typed errors, and the canonical injection boundary.
@@ -200,6 +200,7 @@ build(ctx) }`) + one line in `stories/index.ts`. `build(ctx)` returns a `Group` 
 <!-- analyze_project: generated Toolchain, Commands, Project structure, Conventions, Git conventions, Special rules -->
 <!-- analyze_project: refreshed 2026-06-27 — Overview + Project structure for the RD-02 capability subsystem (src/engine/capability/). Toolchain/Commands unchanged. -->
 <!-- analyze_project: refreshed 2026-06-27 — Overview + Project structure for the RD-06 input subsystem (src/engine/input/ + capability/responses.ts). Toolchain/Commands unchanged. -->
+<!-- analyze_project: refreshed 2026-07-05 — Project structure src/engine/input/ line: WheelEvent shift/alt/ctrl modifier flags (surface-view Shift+wheel fallback). Toolchain/Commands/Conventions unchanged. -->
 <!-- analyze_project: refreshed 2026-06-27 — Overview + Project structure for the RD-04 rendering engine (src/engine/render/). Toolchain/Commands unchanged. -->
 <!-- analyze_project: refreshed 2026-06-30 — Overview + Project structure for jsvision-ui RD-10 (Turbo Vision behavioral fidelity: status emit-on-release/press-capture, TV-exact cascade/tile, left-grow resize; new statusSelected core role + tv-behavioral-fidelity plan; core tests 76→80; corrected the stale frame-chrome glyphs to [×]/[↑]|[↕]/grips). Toolchain/Commands unchanged. -->
 <!-- analyze_project: refreshed 2026-07-03 — Commands (demo:tree + demo:table) + Project structure (packages/ui/src/table/ = RD-16 DataGrid) + the RD-16 tableHeader core color role. Merge-only; all hand-authored sections preserved. -->
