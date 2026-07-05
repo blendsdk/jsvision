@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-05
-> **Progress**: 25/43 tasks (58%)
+> **Progress**: 29/43 tasks (67%)
 > **CodeOps Skills Version**: 3.3.0
 
 ## Overview
@@ -216,10 +216,10 @@ RD-11/RD-14 unchanged. **Verify**: `yarn verify`
 - [x] 4.4 `file-dialog.spec` GREEN; `yarn verify` — 2026-07-06 (6 specs green; verify 11/11; files 35 tests; typecheck clean; no production reactive leak)
 
 ### Phase 5: `DirList` + `ChDirDialog`
-- [ ] 5.1 Write `dir-list`/`chdir-dialog` specs; run RED
-- [ ] 5.2 Implement `list/dir-list.ts`
-- [ ] 5.3 Implement `dialog/chdir-dialog.ts` (Chdir/Revert/valid)
-- [ ] 5.4 `list`/`dialog` barrels; both specs GREEN; `yarn verify`
+- [x] 5.1 Write `dir-list`/`chdir-dialog` specs; run RED — 2026-07-06 (ST-7/14 + ST-10/11/12; render assertions derived from the `tree.spec` SoT, not re-hardcoded)
+- [x] 5.2 Implement `list/dir-list.ts` — 2026-07-06 (`extends ListView<DirNode>` — the faithful `TDirListBox` mapping since string `ListBox` can't carry the path; reactive `buildDirTree` re-root, `focusedNode`, `onChangeDir`)
+- [x] 5.3 Implement `dialog/chdir-dialog.ts` (Chdir/Revert/valid) — 2026-07-06 (`tchdrdlg.cpp` 48×18 composition; path field reflects `directory`; `chdir()` descends focused node, `revert()` restores start, `valid(cmOK)` validates a readable dir → error seam else)
+- [x] 5.4 `list`/`dialog` barrels; both specs GREEN; `yarn verify` — 2026-07-06 (single `src/index.ts` barrel wired: fs cores + listing trio + DirList + both dialogs + errorBox; 8 specs green; verify 11/11; files 43; typecheck clean)
 
 ### Phase 6: History + openers
 - [ ] 6.1 Write `history-files`/`openers` specs; run RED
