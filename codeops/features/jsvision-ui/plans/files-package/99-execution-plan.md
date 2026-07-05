@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-05
-> **Progress**: 9/43 tasks (21%)
+> **Progress**: 16/43 tasks (37%)
 > **CodeOps Skills Version**: 3.3.0
 
 ## Overview
@@ -194,13 +194,13 @@ RD-11/RD-14 unchanged. **Verify**: `yarn verify`
 - [x] 1.9 Update the "single column only" JSDoc in `list-view.ts`/`list-rows.ts` — 2026-07-05
 
 ### Phase 2: `FileSystem` seam + pure cores
-- [ ] 2.1 Write `memory-fs.ts` helper + `fs-seam`/`wildcard`/`scan`/`tree` specs; run RED
-- [ ] 2.2 Implement `fs/types.ts` + `fs/node-fs.ts`
-- [ ] 2.3 `fs-seam.spec` GREEN
-- [ ] 2.4 Implement `fs/wildcard.ts`; `wildcard.spec` GREEN
-- [ ] 2.5 Implement `fs/scan.ts` (+ `compareEntries`); `scan.spec` GREEN
-- [ ] 2.6 Implement `fs/tree.ts`; `tree.spec` GREEN
-- [ ] 2.7 `fs/index.ts` barrel; `yarn verify`
+- [x] 2.1 Write `memory-fs.ts` helper + `fs-seam`/`wildcard`/`scan`/`tree` specs; run RED — 2026-07-05 (+ PA-2 runtime symlink decision recorded)
+- [x] 2.2 Implement `fs/types.ts` + `fs/node-fs.ts` — 2026-07-05
+- [x] 2.3 `fs-seam.spec` GREEN — 2026-07-05
+- [x] 2.4 Implement `fs/wildcard.ts`; `wildcard.spec` GREEN — 2026-07-05 (`findfrst.cpp:173-186` recursive `?`/`*`, case-sensitive, `*.*`→`*`)
+- [x] 2.5 Implement `fs/scan.ts` (+ `compareEntries`); `scan.spec` GREEN — 2026-07-05 (`tfilecol.cpp:47-56` sort; `tfillist.cpp` hidden/dir/`..` populate)
+- [x] 2.6 Implement `fs/tree.ts`; `tree.spec` GREEN — 2026-07-05 (`tdirlist.cpp:104-186` chain+subdir connectors + graphics fixup)
+- [x] 2.7 `fs/index.ts` barrel; `yarn verify` — 2026-07-05 (verify 11/11; files 19 tests; check:deps clean)
 
 ### Phase 3: Listing trio
 - [ ] 3.1 Write `file-list`/`file-input`/`file-info-pane` specs; run RED
