@@ -103,10 +103,10 @@ test('impl: the inputName label text is forwarded and rendered', async () => {
   const fs = fsFixture();
   const { loop, host } = makeHost(49, 19);
   const p = openFile(host, { fs, directory: '/home/user', inputName: '~P~ath' });
-  // execView flushes a frame on open; the input label draws in the input-label row (tilde stripped
-  // ⇒ "Path", shifted by the 1-cell window frame). Scan the row so the assertion is offset-robust.
+  // execView flushes a frame on open; the input label draws at its decoded TV row (`TLabel
+  // TRect(2,2,…)` ⇒ row 2, tilde stripped ⇒ "Path"). Scan the row so the assertion is offset-robust.
   const buf = loop.renderRoot.buffer();
-  const row = Array.from({ length: 49 }, (_, x) => buf.get(x, 3)?.char ?? ' ').join('');
+  const row = Array.from({ length: 49 }, (_, x) => buf.get(x, 2)?.char ?? ' ').join('');
   expect(row).toContain('Path');
   loop.emitCommand(Commands.cancel);
   await expect(p).resolves.toBeNull();
