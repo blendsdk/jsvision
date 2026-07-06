@@ -103,7 +103,14 @@ export class Dialog extends Window implements ModalHostAware {
     drawFrame(
       ctx,
       ctx.size,
-      { title: this.title(), active, zoomed: false, resizable: false, closable: this.closable, zoomable: false },
+      {
+        title: this.title(),
+        active,
+        zoomed: false,
+        resizable: this.resizable,
+        closable: this.closable,
+        zoomable: false,
+      },
       'dialog',
     );
   }
@@ -158,7 +165,7 @@ export class Dialog extends Window implements ModalHostAware {
       // Frame close-box click ⇒ cancel — NOT `Window.close()` (that would hang the modal, PF-002).
       if (inner.type === 'mouse' && inner.kind === 'down' && ev.local !== undefined) {
         const size = { width: this.bounds.width, height: this.bounds.height };
-        const flags = { movable: this.movable, resizable: false, zoomable: false, closable: this.closable };
+        const flags = { movable: this.movable, resizable: this.resizable, zoomable: false, closable: this.closable };
         if (frameZoneAt(size, ev.local, flags) === 'close') {
           this.resolveCancel(ev);
           return;
