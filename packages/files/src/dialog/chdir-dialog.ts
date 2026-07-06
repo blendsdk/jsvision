@@ -69,6 +69,11 @@ export class ChDirDialog extends Dialog {
 
   constructor(opts: ChDirDialogOptions) {
     super({ title: opts.title ?? 'Change Directory', width: 48, height: 18 });
+    // TV fidelity: `TChDirDialog`'s child rects (`tchdrdlg.cpp:47-77`) are relative to the dialog's
+    // OUTER origin (frame at row/col 0). The base `Dialog`'s convenience `padding:1` would double-count
+    // the frame, pushing every absolute child +1,+1 (the same info-pane-style bleed as `FileDialog`).
+    // Zero it so the decoded TV rects land exactly, matching the source + the ST-10 oracle.
+    this.layout = { ...this.layout, padding: 0 };
     this.fs = opts.fs;
     this.directory = opts.directory ?? signal(opts.fs.resolve('.'));
     this.startDir = this.directory();

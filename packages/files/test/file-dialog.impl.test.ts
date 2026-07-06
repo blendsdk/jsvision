@@ -35,7 +35,8 @@ function fsFixture(flavor: 'posix' | 'win32' = 'posix') {
 }
 
 function openFileDialog(dlg: FileDialog) {
-  dlg.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 49, height: 19 } };
+  // Preserve the dialog's own layout (esp. `padding`) so bounds reflect production geometry.
+  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 49, height: 19 } };
   const root = new Group();
   root.add(dlg);
   const loop = createEventLoop({ width: 49, height: 19 }, { caps });
@@ -43,6 +44,27 @@ function openFileDialog(dlg: FileDialog) {
   const promise = loop.execView<string>(dlg);
   return { loop, promise };
 }
+
+// Regression: the base `Dialog`'s `padding:1` used to double-inset the TV-absolute child rects by
+// +1,+1, pushing the info pane to overwrite the right `║` and bottom `╚══╝` frame (a visible bleed).
+// The `padding:0` fix makes the decoded TV rects land flush; assert every child stays strictly inside
+// the 49×19 frame (top-left ≥ (1,1), bottom-right ≤ (47,17) — inside the border ring at 0 and 48/18).
+test('impl: no child bleeds past the frame — the info-pane double-inset regression', () => {
+  const dlg = new FileDialog({ fs: fsFixture(), directory: signal('/home/user') });
+  openFileDialog(dlg);
+  const W = 49;
+  const H = 19;
+  const children = [dlg.fileInput, dlg.history, dlg.fileList, dlg.listBar, dlg.fileInfoPane, ...dlg.buttons];
+  for (const c of children) {
+    const b = c.bounds;
+    expect(b.x, `${c.constructor.name}.x`).toBeGreaterThanOrEqual(1);
+    expect(b.y, `${c.constructor.name}.y`).toBeGreaterThanOrEqual(1);
+    expect(b.x + b.width, `${c.constructor.name} right edge`).toBeLessThanOrEqual(W - 1);
+    expect(b.y + b.height, `${c.constructor.name} bottom edge`).toBeLessThanOrEqual(H - 1);
+  }
+  // The info pane specifically must sit flush above the bottom border (rows 16–17, full inner width).
+  expect(dlg.fileInfoPane.bounds).toMatchObject({ x: 1, y: 16, width: 47, height: 2 });
+});
 
 test('impl: valid(OK) on a directory name enters it and clears the filename (stays open)', async () => {
   const filename = signal('');

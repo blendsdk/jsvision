@@ -35,7 +35,10 @@ function fsFixture(flavor: 'posix' | 'win32' = 'posix') {
 
 /** Mount a FileDialog at 49×19 and open it modally; returns the loop + the execView promise. */
 function openFileDialog(dlg: FileDialog) {
-  dlg.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 49, height: 19 } };
+  // Pin the WM rect but PRESERVE the dialog's own layout (esp. its `padding`) so the spec exercises the
+  // real production geometry — replacing the layout wholesale drops `padding` and masks a frame-inset
+  // bug (the info pane double-inset overwriting the frame). See file-dialog.ts padding note.
+  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 49, height: 19 } };
   const root = new Group();
   root.add(dlg);
   const loop = createEventLoop({ width: 49, height: 19 }, { caps });

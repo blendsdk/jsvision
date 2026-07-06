@@ -23,13 +23,13 @@
  * machinery) and Replace/Clear to `onClick` — behaviour-equivalent (the primary drives `valid()`), the
  * command *names* adapt to the RD-11 dialog contract. No draw mismatch. `.js` per NodeNext.
  */
-import { Dialog, Button, Label, ScrollBar, History, signal, Commands } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
+import { Button, Commands, Dialog, History, Label, ScrollBar, signal } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
-import { FileList } from '../list/file-list.js';
+import { isWild } from '../fs/wildcard.js';
 import { FileInput } from '../input/file-input.js';
 import { FileInfoPane } from '../list/file-info-pane.js';
-import { isWild } from '../fs/wildcard.js';
+import { FileList } from '../list/file-list.js';
 
 /** Construction options for {@link FileDialog}. */
 export interface FileDialogOptions {
@@ -92,6 +92,13 @@ export class FileDialog extends Dialog {
 
   constructor(opts: FileDialogOptions) {
     super({ title: opts.title ?? (opts.save ? 'Save File As' : 'Open a File'), width: 49, height: 19 });
+    // TV fidelity: `TFileDialog`'s child rects (`tfildlg.cpp:65-136`) are relative to the dialog's
+    // OUTER origin — the frame sits at row/col 0, so `FileInfoPane` is at `TRect(1,16,48,18)` (flush
+    // to the frame). The base `Dialog` carries `padding:1` (a convenience inset for flow/message-box
+    // dialogs); applied to these absolute rects it double-counts the frame, pushing every child +1,+1
+    // — the info pane then overwrites the right `║` and bottom `╚══╝`. Zero the padding so the decoded
+    // TV rects land exactly (frame at 0), matching the source + the ST-8 oracle.
+    this.layout = { ...this.layout, padding: 0 };
     this.fs = opts.fs;
     this.directory = opts.directory ?? signal(opts.fs.resolve('.'));
     this.wildcard = opts.wildcard ?? signal('*.*');
