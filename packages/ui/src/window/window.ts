@@ -65,6 +65,14 @@ export class Window extends Group {
   resizable = true;
   zoomable = true;
   closable = true;
+  /**
+   * Minimum resize extent (TV `TView::sizeLimits`, twindow.cpp:212 `minWinSize {16,6}` — here the WM
+   * default `{10,3}`). The drag-resize gestures floor the window to this; a subclass with a larger
+   * fixed layout (e.g. a file dialog whose child rects assume 49×19) raises it. Kept in sync with the
+   * `gestures.ts` fallback defaults (duplicated to avoid a `window`→`desktop` import cycle).
+   */
+  minWidth = 10;
+  minHeight = 3;
 
   /** @internal The desktop seam, injected by `Desktop.addWindow`; `null` before placement. */
   protected manager: WindowManager | null = null;
@@ -84,6 +92,31 @@ export class Window extends Group {
   /** @internal Inject the desktop seam (called by `Desktop.addWindow`). */
   attachManager(manager: WindowManager): void {
     this.manager = manager;
+  }
+
+  /**
+   * Hook called by the WM immediately after a drag-resize mutated `layout.rect` (TV
+   * `TGroup::changeBounds` → each child's `calcBounds`). The base window has nothing to do — its
+   * content reflows automatically. A subclass with `growMode`-anchored absolute children (the
+   * resizable file dialogs) overrides this to reposition them before the next reflow. No-op default.
+   */
+  onResized(): void {
+    /* no-op — content children reflow via RD-02 absolute placement */
+  }
+
+  /**
+   * Freeze the current on-screen rect into `layout.rect` and clear {@link View.centered}, if this
+   * window is still auto-centered. Called by the WM at the START of a move/resize gesture so the
+   * gesture reads a correct origin: a `centered` view's origin lives in `bounds` (written by the
+   * reflow pass) but NOT in `layout.rect` (which stays `{0,0,…}`), so a gesture reading `layout.rect`
+   * would otherwise snap the window to the top-left. TV centers once at insert (`ofCentered`); we
+   * center-until-touched, then the window becomes a normal manually-placed window. No-op if already
+   * placed (not `centered`).
+   */
+  commitPlacement(): void {
+    if (!this.centered) return;
+    this.layout = { ...this.layout, rect: { ...this.bounds } };
+    this.centered = false;
   }
 
   /** The window's current WM rect (the layout rect, or a degenerate fallback before placement). */

@@ -58,9 +58,10 @@ export function applyMove(g: Extract<Gesture, { kind: 'move' }>, local: Point, d
  */
 export function applyResize(g: Extract<Gesture, { kind: 'resize' }>, local: Point): void {
   const rect = rectOf(g.target);
-  const width = Math.max(MIN_WIDTH, local.x - g.originX + 1);
-  const height = Math.max(MIN_HEIGHT, local.y - g.originY + 1);
+  const width = Math.max(g.target.minWidth, local.x - g.originX + 1);
+  const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
   g.target.layout.rect = { x: rect.x, y: rect.y, width, height };
+  g.target.onResized(); // TV changeBounds → children calcBounds (before the reflow reads their rects)
   g.target.invalidateLayout();
 }
 
@@ -68,7 +69,7 @@ export function applyResize(g: Extract<Gesture, { kind: 'resize' }>, local: Poin
  * Apply a captured left-grow resize (TV `dmDragGrowLeft`, `tframe.cpp:117-122`/`193`, AR-91): the right
  * edge stays anchored at `anchorRight`, while the left edge follows the pointer and the bottom edge
  * grows like {@link applyResize}. The top edge is fixed at `originY`. The left edge is clamped only by
- * the minimum width (`x ≤ anchorRight − MIN_WIDTH + 1`, so `width ≥ MIN_WIDTH`); like {@link applyResize}
+ * the minimum width (`x ≤ anchorRight − minWidth + 1`, so `width ≥ target.minWidth`); like {@link applyResize}
  * the dragged edge is otherwise unclamped — the window may grow past the desktop edge (RD-02 overflow
  * AR-28). (The spec's lower clamp was deferred to impl; mirroring `applyResize` keeps the two corners
  * symmetric — PA-11.)
@@ -77,9 +78,10 @@ export function applyResize(g: Extract<Gesture, { kind: 'resize' }>, local: Poin
  * @param local The desktop-local pointer position.
  */
 export function applyResizeLeft(g: Extract<Gesture, { kind: 'resize-left' }>, local: Point): void {
-  const x = Math.min(local.x, g.anchorRight - MIN_WIDTH + 1);
+  const x = Math.min(local.x, g.anchorRight - g.target.minWidth + 1);
   const width = g.anchorRight - x + 1;
-  const height = Math.max(MIN_HEIGHT, local.y - g.originY + 1);
+  const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
   g.target.layout.rect = { x, y: g.originY, width, height };
+  g.target.onResized(); // TV changeBounds → children calcBounds (before the reflow reads their rects)
   g.target.invalidateLayout();
 }

@@ -49,7 +49,9 @@ export const fileDialogStory: Story = {
     g.add(at(new Text(() => result()), 1, 4, ctx.width - 2, 1));
     g.add(
       at(
-        new Text('↑↓ navigate · type *.ts + OK to re-filter · Enter a folder to descend · pick a file + OK.'),
+        new Text(
+          '↑↓ navigate · type *.ts + OK to re-filter · Enter a folder to descend · pick a file + OK · drag the ┘ corner to resize.',
+        ),
         1,
         6,
         ctx.width - 2,

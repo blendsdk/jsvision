@@ -21,12 +21,23 @@
  * 1,16,48,18`. One faithful adaptation: TV's primary button emits `cmFileOpen` and Replace/Clear emit
  * `cmFileReplace`/`cmFileClear`; jsvision binds the primary to `Commands.ok` (the `Dialog` terminating
  * machinery) and Replace/Clear to `onClick` — behaviour-equivalent (the primary drives `valid()`), the
- * command *names* adapt to the RD-11 dialog contract. No draw mismatch. `.js` per NodeNext.
+ * command *names* adapt to the RD-11 dialog contract. No draw mismatch.
+ *
+ * Resize (TV `wfGrow`, GATE-1/GATE-2): `sizeLimits` min 49×19 (`:185-189`) ⇒ `resizable`, floored at
+ * the design size, so the drag-resize delta is grow-only. Each child tracks the growing frame by its
+ * `growMode` (`:68-137`), replayed by {@link onResized} through the `growItems` table: `fileName`
+ * `gfGrowHiX`; labels `0`; `History`/buttons `gfGrowLoX|gfGrowHiX`; `fileList` `gfGrowHiX|gfGrowHiY`;
+ * the horizontal list bar `gfGrowLoY|gfGrowHiX|gfGrowHiY` (`tscrlbar.cpp:54`); `infoPane`
+ * `gfGrowAll & ~gfGrowLoX`. GATE-2 AFTER-diff (`file-dialog-resize.impl.test.ts`): every child's grown
+ * bounds match the `TView::calcBounds` decode, no bleed past the frame. `.js` per NodeNext.
  */
 import type { Signal } from '@jsvision/ui';
 import { Button, Commands, Dialog, History, Label, ScrollBar, signal } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
 import { isWild } from '../fs/wildcard.js';
+import { GrowMode } from './grow.js';
+import type { GrowItem } from './grow-dialog.js';
+import { applyGrowMode, captureGrowItems } from './grow-dialog.js';
 import { FileInput } from '../input/file-input.js';
 import { FileInfoPane } from '../list/file-info-pane.js';
 import { FileList } from '../list/file-list.js';
@@ -89,6 +100,8 @@ export class FileDialog extends Dialog {
   private readonly resultPath: Signal<string | null> = signal<string | null>(null);
   private readonly showErrorSeam?: (message: string) => void;
   private readonly onResolveCb?: (path: string | null) => void;
+  /** The `growMode` reflow table (children + design rects + flags), replayed on drag-resize. */
+  private readonly growItems: GrowItem[];
 
   constructor(opts: FileDialogOptions) {
     super({ title: opts.title ?? (opts.save ? 'Save File As' : 'Open a File'), width: 49, height: 19 });
@@ -99,6 +112,12 @@ export class FileDialog extends Dialog {
     // — the info pane then overwrites the right `║` and bottom `╚══╝`. Zero the padding so the decoded
     // TV rects land exactly (frame at 0), matching the source + the ST-8 oracle.
     this.layout = { ...this.layout, padding: 0 };
+    // TV `TFileDialog` is `wfGrow` with `sizeLimits` min 49×19 (tfildlg.cpp:185-189): drag-resizable,
+    // floored at the design size so the `growMode` delta is grow-only. The children track the growing
+    // frame via {@link onResized} (the `growItems` table below).
+    this.resizable = true;
+    this.minWidth = 49;
+    this.minHeight = 19;
     this.fs = opts.fs;
     this.directory = opts.directory ?? signal(opts.fs.resolve('.'));
     this.wildcard = opts.wildcard ?? signal('*.*');
@@ -161,6 +180,24 @@ export class FileDialog extends Dialog {
     this.add(this.listBar);
     this.add(this.fileInfoPane);
     for (const b of this.buttons) this.add(b);
+
+    // The `growMode` table (tfildlg.cpp:68-137) — captured at the design size, replayed by
+    // {@link onResized}. Labels (growMode 0, fixed) are omitted. Buttons: `gfGrowLoX|gfGrowHiX`.
+    this.growItems = captureGrowItems([
+      [this.fileInput, GrowMode.HiX], // fileName — widens
+      [this.history, GrowMode.LoX | GrowMode.HiX], // History icon — rides the input's right edge
+      [this.fileList, GrowMode.HiX | GrowMode.HiY], // list — grows both ways
+      [this.listBar, GrowMode.LoY | GrowMode.HiX | GrowMode.HiY], // horizontal bar — tracks list bottom, widens
+      [this.fileInfoPane, GrowMode.All & ~GrowMode.LoX], // info pane — pinned left, flush bottom, full width
+      ...this.buttons.map((b): [Button, number] => [b, GrowMode.LoX | GrowMode.HiX]), // pinned to the right edge
+    ]);
+  }
+
+  /** Reposition the children by `growMode` when the dialog is drag-resized (TV `changeBounds`). */
+  override onResized(): void {
+    if (this.layout.rect !== undefined) {
+      applyGrowMode(this.growItems, this.layout.rect, this.minWidth, this.minHeight);
+    }
   }
 
   /** The resolved absolute path, or `null` while unresolved / on cancel. */

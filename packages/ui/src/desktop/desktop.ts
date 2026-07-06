@@ -170,6 +170,7 @@ export class Desktop extends Group {
   /** Begin a drag-move gesture: record the grab offset and capture the pointer (PA-5/PA-10). */
   beginMove(w: Window, grabLocal: Point): void {
     if (!w.movable) return;
+    w.commitPlacement(); // freeze a still-centered window into layout.rect before dragging it
     this.gesture = { kind: 'move', target: w, grabDX: grabLocal.x, grabDY: grabLocal.y };
     this.loop?.setCapture(this);
   }
@@ -177,6 +178,7 @@ export class Desktop extends Group {
   /** Begin a drag-resize gesture: fix the window top-left and capture the pointer (PA-5/PA-10). */
   beginResize(w: Window): void {
     if (!w.resizable) return;
+    w.commitPlacement(); // freeze a still-centered window into layout.rect so originX/Y are correct
     const rect = w.layout.rect ?? { x: 0, y: 0, width: 0, height: 0 };
     this.gesture = { kind: 'resize', target: w, originX: rect.x, originY: rect.y };
     this.loop?.setCapture(this);
@@ -188,6 +190,7 @@ export class Desktop extends Group {
    */
   beginResizeLeft(w: Window): void {
     if (!w.resizable) return;
+    w.commitPlacement(); // freeze a still-centered window into layout.rect so the right edge anchors correctly
     const rect = w.layout.rect ?? { x: 0, y: 0, width: MIN_WIDTH, height: MIN_HEIGHT };
     this.gesture = { kind: 'resize-left', target: w, anchorRight: rect.x + rect.width - 1, originY: rect.y };
     this.loop?.setCapture(this);

@@ -18,11 +18,20 @@
  * Chdir `35,9,45,11` (`cmChangeDir` → `onClick`), Revert `35,12,45,14`, Help `35,15,45,17`. TV splits
  * `dirList 3,6,32,16` (width 29) + a separate `TScrollBar 32,6,33,16`; jsvision's `DirList` owns its
  * bar, so its container spans `3,6,33,16` (width 30 = 29 rows + 1 bar) — the same footprint. No draw
- * mismatch. `.js` per NodeNext.
+ * mismatch.
+ *
+ * Resize (TV `wfGrow`, GATE-1/GATE-2): `sizeLimits` min 48×18 (`:101-105`) ⇒ `resizable`, grow-only.
+ * Children track the growing frame by `growMode` (`:48-78`) via {@link onResized}: `dirInput`
+ * `gfGrowHiX`; `History`/buttons `gfGrowLoX|gfGrowHiX`; `dirList` `gfGrowHiX|gfGrowHiY` (the merged
+ * list+bar footprint grows the same as TV's split list `gfGrowHiX|gfGrowHiY` + vertical bar
+ * `gfGrowLoX|gfGrowHiX|gfGrowHiY`). `.js` per NodeNext.
  */
 import { Dialog, Button, Label, Input, History, signal, Commands } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
+import { GrowMode } from './grow.js';
+import type { GrowItem } from './grow-dialog.js';
+import { applyGrowMode, captureGrowItems } from './grow-dialog.js';
 import { DirList } from '../list/dir-list.js';
 
 /** Default recent-path history id (PA-9 — distinct from the file-dialog id so the MRU lists don't collide). */
@@ -66,9 +75,16 @@ export class ChDirDialog extends Dialog {
   private readonly resultPath: Signal<string | null> = signal<string | null>(null);
   private readonly showErrorSeam?: (message: string) => void;
   private readonly onResolveCb?: (path: string | null) => void;
+  /** The `growMode` reflow table (children + design rects + flags), replayed on drag-resize. */
+  private readonly growItems: GrowItem[];
 
   constructor(opts: ChDirDialogOptions) {
     super({ title: opts.title ?? 'Change Directory', width: 48, height: 18 });
+    // TV `TChDirDialog` is `wfGrow` with `sizeLimits` min 48×18 (tchdrdlg.cpp:101-105): drag-resizable,
+    // floored at the design size so the `growMode` delta is grow-only (see {@link onResized}).
+    this.resizable = true;
+    this.minWidth = 48;
+    this.minHeight = 18;
     // TV fidelity: `TChDirDialog`'s child rects (`tchdrdlg.cpp:47-77`) are relative to the dialog's
     // OUTER origin (frame at row/col 0). The base `Dialog`'s convenience `padding:1` would double-count
     // the frame, pushing every absolute child +1,+1 (the same info-pane-style bleed as `FileDialog`).
@@ -102,6 +118,17 @@ export class ChDirDialog extends Dialog {
     this.add(this.dirList);
     for (const b of this.buttons) this.add(b);
 
+    // The `growMode` table (tchdrdlg.cpp:48-78) — captured at the design size, replayed by
+    // {@link onResized}. Labels (growMode 0) omitted. TV's dirList (HiX|HiY) + its vertical bar
+    // (LoX|HiX|HiY) are one owned `DirList` container here; HiX|HiY grows the merged footprint the
+    // same (list widens, bar stays at the right edge). Buttons: `gfGrowLoX|gfGrowHiX`.
+    this.growItems = captureGrowItems([
+      [this.pathInput, GrowMode.HiX],
+      [this.history, GrowMode.LoX | GrowMode.HiX],
+      [this.dirList, GrowMode.HiX | GrowMode.HiY],
+      ...this.buttons.map((b): [Button, number] => [b, GrowMode.LoX | GrowMode.HiX]),
+    ]);
+
     // Reflect the current directory into the path field (a tree select / Chdir / Revert updates it).
     this.onMount(() => {
       this.bind(
@@ -114,6 +141,13 @@ export class ChDirDialog extends Dialog {
   /** The resolved absolute directory, or `null` while unresolved / on cancel. */
   result(): string | null {
     return this.resultPath();
+  }
+
+  /** Reposition the children by `growMode` when the dialog is drag-resized (TV `changeBounds`). */
+  override onResized(): void {
+    if (this.layout.rect !== undefined) {
+      applyGrowMode(this.growItems, this.layout.rect, this.minWidth, this.minHeight);
+    }
   }
 
   /** Descend into the focused tree node (the Chdir button). */
