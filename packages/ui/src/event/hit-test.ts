@@ -26,8 +26,13 @@ export interface HitContext {
   readonly captureTarget: View | null;
   /** Leaf focusable predicate — used to climb to the nearest focusable at a click (AR-56). */
   isFocusable(view: View): boolean;
-  /** Focus a (known-focusable) view — the focus manager's pure mutation (PA-5). */
-  focusView(view: View): void;
+  /**
+   * Focus **into** a (known-focusable) view — the focus manager's pure mutation (PA-5). A focusable
+   * container (e.g. a Window) descends to its inner focused leaf; a leaf focuses itself. Descending is
+   * what keeps `state.focused` on the actual leaf (the editor), so a frame click never parks the flag
+   * on the container while the caret-bearing leaf silently loses it.
+   */
+  focusInto(view: View): void;
   /** Deliver an envelope to a view's `onEvent`, isolating a throwing handler (AR-66). */
   deliver(view: View, ev: DispatchEvent): void;
 }
@@ -89,12 +94,18 @@ function absoluteOrigin(view: View): Point {
   return { x, y };
 }
 
-/** Climb from the hit view to the nearest focusable view and focus it; if none, leave focus (AC-8). */
+/**
+ * Climb from the hit view to the nearest focusable view and focus INTO it; if none, leave focus
+ * (AC-8). Focusing *into* (not just *onto*) matters when the nearest focusable is a container: a
+ * click on a Window's frame (grip/title/border) must land focus on the window's inner leaf (the
+ * editor) — the view whose `state.focused` drives the hardware caret — not on the window group,
+ * which would leave the caret-bearing leaf flagged unfocused while it stays the current-chain leaf.
+ */
 function focusOnClick(hit: View, ctx: HitContext): void {
   let node: View | null = hit;
   while (node !== null) {
     if (ctx.isFocusable(node)) {
-      ctx.focusView(node);
+      ctx.focusInto(node);
       return;
     }
     node = node.parent;

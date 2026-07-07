@@ -117,6 +117,25 @@ export function editorTrackCursor(ed: Editor, center: boolean): void {
   }
 }
 
+/**
+ * Re-fit the scroll after the editor's viewport size changed (a WM drag-resize / cascade / tile /
+ * zoom / desktop resize). TV `TEditor::changeBounds` (`teditor1.cpp:219-225`) re-clamps `delta`
+ * against the new size; we additionally `trackCursor(false)` so the hardware caret is never parked
+ * off-view after a resize (the reported "caret vanishes on resize" defect) — a behavioral extension
+ * that keeps the caret visible while `scrollTo`'s clamp still subsumes TV's `delta` clamp.
+ *
+ * Called at event time (outside compose) with the new interior size, since the reflow that writes
+ * `bounds` runs on the next flush — so `viewW()`/`viewH()` are fed explicitly here. A pre-layout /
+ * collapsed size (0×0) is a no-op (nothing to track, and it would otherwise clamp `delta` to junk).
+ *
+ * @param ed   The editor to re-fit.
+ * @param size The new content size in cells (the framed interior, `getExtent().grow(−1,−1)`).
+ */
+export function editorViewResized(ed: Editor, size: { width: number; height: number }): void {
+  ed.bounds = { ...ed.bounds, width: size.width, height: size.height };
+  if (ed.viewW() > 0 && ed.viewH() > 0) ed.trackCursor(false);
+}
+
 /** Map a view-local cell to a buffer position (`TEditor::getMousePtr`, `teditor1.cpp:487-494`). */
 export function editorMousePtr(ed: Editor, local: Point): number {
   const mx = Math.max(0, Math.min(local.x, ed.viewW() - 1));

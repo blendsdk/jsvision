@@ -8,6 +8,7 @@
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
+import type { MouseEvent } from '@jsvision/core';
 import { Group } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { createApplication } from '../src/app/index.js';
@@ -15,6 +16,7 @@ import { signal } from '../src/reactive/index.js';
 import { Editor } from '../src/editor/editor.js';
 import { EditWindow } from '../src/editor/edit-window.js';
 import { Indicator } from '../src/editor/indicator.js';
+import { Commands } from '../src/status/index.js';
 import { Memo } from '../src/editor/memo.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
@@ -115,6 +117,96 @@ test('cascade/tile re-pin the gadget rects (arrange fires onResized)', () => {
   expect(h).not.toBe(10); // cascade actually resized it
   const kids = (win as unknown as { children: { layout: { rect?: { y: number } } }[] }).children;
   expect(kids.filter((k) => k.layout.rect?.y === h - 1).length).toBeGreaterThanOrEqual(2); // hBar + ind
+});
+
+test('the hardware caret stays visible after a drag-resize (re-fit tracks the cursor)', () => {
+  // Regression: on resize the editor never re-tracked its scroll, so a caret below the new fold
+  // vanished (desiredCaret → null) and only returned on the next caret motion. onResized now
+  // re-fits the editor (TV TEditor::changeBounds + trackCursor).
+  const app = createApplication({ caps, viewport: { width: 80, height: 40 } });
+  const win = new EditWindow({ rect: { x: 2, y: 1, width: 40, height: 20 } });
+  app.desktop.addWindow(win);
+  app.loop.renderRoot.flush();
+
+  let caret: { x: number; y: number } | null = null;
+  app.loop.onCaret = (c) => (caret = c);
+  app.loop.focusView(win.editor);
+  win.editor.setText(Array.from({ length: 30 }, (_, i) => `line ${i}`).join('\n'));
+  for (let i = 0; i < 25; i++) win.editor.execute('lineDown'); // caret near the bottom
+  app.loop.refreshCaret();
+  expect(caret).not.toBeNull(); // visible before the resize
+
+  // Shrink the window so the caret would fall below the new (smaller) interior.
+  win.layout.rect = { x: 2, y: 1, width: 40, height: 8 };
+  win.onResized();
+  app.loop.renderRoot.flush();
+  app.loop.refreshCaret();
+  expect(win.editor.state.focused).toBe(true); // focus intact (not the cause)
+  expect(caret).not.toBeNull(); // the caret survives the shrink
+});
+
+test('the caret survives a real drag-resize gesture (grab the grip, drag smaller, release)', () => {
+  // Regression: grabbing the frame grip focus-on-click focused the WINDOW group, leaving the inner
+  // editor as the current-chain leaf but with state.focused=false (raise → focusInto short-circuited
+  // as "already focused" by chain), so desiredCaret() returned null. focus-on-click now focuses INTO
+  // the window (to the editor leaf); the resize re-fit keeps the caret in the smaller viewport.
+  const mouse = (kind: MouseEvent['kind'], x: number, y: number): MouseEvent => ({
+    type: 'mouse',
+    kind,
+    button: 0,
+    x: x + 1,
+    y: y + 1,
+  });
+  const app = createApplication({ caps, viewport: { width: 80, height: 40 } });
+  const win = new EditWindow({ rect: { x: 2, y: 1, width: 40, height: 20 } });
+  app.desktop.addWindow(win);
+  app.loop.renderRoot.flush();
+
+  let caret: { x: number; y: number } | null = null;
+  app.loop.onCaret = (c) => (caret = c);
+  win.editor.setText(Array.from({ length: 30 }, (_, i) => `line ${i}`).join('\n'));
+  app.loop.dispatch(mouse('down', 5, 5)); // click into the editor interior → focus it
+  app.loop.dispatch(mouse('up', 5, 5));
+  for (let i = 0; i < 25; i++) win.editor.execute('lineDown'); // caret near the bottom
+  app.loop.refreshCaret();
+  expect(caret).not.toBeNull();
+
+  const r = win.layout.rect!;
+  const grip = { x: r.x + r.width - 1, y: r.y + r.height - 1 }; // SE resize grip
+  app.loop.dispatch(mouse('down', grip.x, grip.y));
+  app.loop.dispatch(mouse('drag', grip.x - 2, grip.y - 12)); // shrink well past the caret's row
+  app.loop.dispatch(mouse('up', grip.x - 2, grip.y - 12));
+  app.loop.refreshCaret();
+
+  expect(win.editor.state.focused).toBe(true); // the editor keeps its focus flag through the gesture
+  expect(app.loop.getFocused()).toBe(win.editor);
+  expect(caret).not.toBeNull(); // the caret is still shown after the resize
+});
+
+test('switching windows (next) keeps the hardware caret — focus descends to the editor', () => {
+  // Regression: raise() focused the Window GROUP (focusView), leaving the inner editor's
+  // state.focused = false, so desiredCaret() returned null and the caret vanished on F6. raise()
+  // now focuses INTO the window (descends to the editor leaf).
+  const app = createApplication({ caps, viewport: { width: 80, height: 30 } });
+  const winA = new EditWindow({ rect: { x: 1, y: 1, width: 40, height: 12 } });
+  const winB = new EditWindow({ rect: { x: 20, y: 3, width: 40, height: 12 } });
+  app.desktop.addWindow(winA);
+  app.desktop.addWindow(winB);
+  app.loop.renderRoot.flush();
+
+  let caret: { x: number; y: number } | null = null;
+  app.loop.onCaret = (c) => (caret = c);
+  app.loop.focusView(winB.editor); // as if the user clicked into B's editor
+  winB.editor.setText('hello\nworld');
+  app.loop.refreshCaret();
+  expect(caret).not.toBeNull();
+
+  app.loop.emitCommand(Commands.next); // F6 → raise the other window
+  app.loop.refreshCaret();
+  expect(app.desktop.activeWindow()).toBe(winA);
+  expect(winA.editor.state.focused).toBe(true); // the inner editor is focused, not just the window
+  expect(app.loop.getFocused()).toBe(winA.editor);
+  expect(caret).not.toBeNull(); // the caret survives the window switch
 });
 
 test('a zoomed window re-pins its gadgets when the desktop resizes', () => {

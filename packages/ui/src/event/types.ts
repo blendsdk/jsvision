@@ -78,6 +78,8 @@ export interface EventLoop {
   focusPrev(): void;
   /** Focus exactly `view`; a no-op if `view` is non-focusable (PA-5). */
   focusView(view: View): void;
+  /** Focus **into** a container: descend to its saved `current` (restore) or first focusable leaf (AR-53). */
+  focusInto(view: View): void;
   /** The current globally-focused view (root→leaf `current` chain), or `null` (AR-48). */
   getFocused(): View | null;
   /** Raise a `CommandEvent` and route it through the 3-phase machine, unless disabled (AR-52, PA-3). */
