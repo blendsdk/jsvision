@@ -1,17 +1,13 @@
 /**
- * `DatePicker` — a `Group` = a masked `Input` + a trailing `▐↓▌` dropdown button that opens a `Calendar` in the
- * RD-14 anchored popup, mirroring `ComboBox` (RD-20). It has **no** Turbo Vision counterpart (TV
- * predates date pickers); it is designed fresh but composes shipped pieces + the generalized
- * `openAnchoredPopup` (PA-5). The pure format model (mask/parse/serialize) lives in `date-format.ts`.
+ * {@link DatePicker} — a one-line date field: a masked text {@link Input} plus a trailing `▐↓▌`
+ * dropdown button that opens a {@link Calendar} in a popup anchored to the field. The mask, parse, and
+ * serialize logic for each format lives in `date-format.ts`.
  *
- * Composition `[ input (fr) | ▐↓▌ button (3) ]`: the field is an `Input` gated by `picture(spec.mask)`;
- * its text is `spec.serialize(value)` and a complete valid edit parses back via `spec.parse`
- * (incomplete/invalid leaves `value` unchanged, AC-11). Open on Down/Alt+Down or a `▐↓▌` click; the
- * hosted `Calendar` writes the **same** `value` on a day-commit and its `onChange` calls the injected
- * `commit()` to close (AC-10). No `PopupHost` ⇒ open declines (headless). Two directions of the
- * value⟷text bind each read only the OTHER signal, so there is no feedback loop (the `ComboBox` idiom).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The field text follows the chosen `format` (default ISO `YYYY-MM-DD`); a complete valid edit updates
+ * the selection, while an incomplete or invalid edit leaves it unchanged. Open the dropdown with Down,
+ * Alt+Down, or a click on the button; picking a day in the calendar fills the field and closes the
+ * popup. The field and calendar share the picker's `value` and stay in sync. With no overlay host
+ * available (headless), opening is a no-op.
  */
 import { Group, View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -29,10 +25,8 @@ import { dateFormat } from './date-format.js';
 import type { DateFormat, DateFormatSpec } from './date-format.js';
 
 /**
- * The trailing 3-cell dropdown button. Draws the **shared** `▐↓▌` icon via `drawDropdownIcon` so it is
- * byte-identical to `ComboButton`/`History` (one glyph + colour source, never drifts; the arrow is the
- * thin `↓` U+2193, `dropdown/popup.ts:31`). Not focusable — the field is the focus target; the button
- * is click-only.
+ * The trailing 3-cell dropdown button drawing the shared `▐↓▌` icon. Not focusable — the field is the
+ * focus target; the button is click-only.
  */
 class DateButton extends View {
   /** Fixed 3-cell width; stretched to the field height by the row layout. */
@@ -42,7 +36,7 @@ class DateButton extends View {
     super();
   }
 
-  /** Draw the shared `▐↓▌` dropdown icon (identical to ComboBox/History, PA-11). */
+  /** Draw the shared `▐↓▌` dropdown icon. */
   override draw(ctx: DrawContext): void {
     drawDropdownIcon(ctx, 0);
   }
@@ -57,25 +51,46 @@ class DateButton extends View {
   }
 }
 
-/** Options for a {@link DatePicker}. (PA-8) */
+/** Options for a {@link DatePicker}. */
 export interface DatePickerOptions {
   /** Two-way selected day (`null` = none). */
   value: Signal<CalendarDate | null>;
-  /** Field format (default ISO `YYYY-MM-DD`; PA-11). */
+  /** Field format (default ISO `YYYY-MM-DD`). */
   format?: DateFormat;
-  /** Forwarded to the hosted `Calendar` (PF-008). */
+  /** The "today" day, forwarded to the dropdown `Calendar`. */
   today?: CalendarDate;
+  /** Inclusive lower bound, forwarded to the dropdown `Calendar`. */
   min?: CalendarDate;
+  /** Inclusive upper bound, forwarded to the dropdown `Calendar`. */
   max?: CalendarDate;
+  /** Disabled-day predicate, forwarded to the dropdown `Calendar`. */
   isDisabled?: (d: CalendarDate) => boolean;
+  /** First day of the week (0 = Sunday, 1 = Monday), forwarded to the dropdown `Calendar`. */
   firstDayOfWeek?: 0 | 1;
+  /** Show ISO week numbers in the dropdown `Calendar`. */
   showWeekNumbers?: boolean;
   /** Density of the dropdown `Calendar` (default `'comfortable'`; the popup sizes to it). */
   density?: CalendarDensity;
 }
 
 /**
- * A one-line date picker: a masked field opening a `Calendar` dropdown. See the module doc.
+ * A one-line date picker: a masked text field that opens a `Calendar` in a dropdown anchored to the
+ * field.
+ *
+ * @example
+ * import { Group, DatePicker, Label, signal, toISO } from '@jsvision/ui';
+ * import type { CalendarDate } from '@jsvision/ui';
+ *
+ * const g = new Group();
+ * const value = signal<CalendarDate | null>(null);
+ *
+ * const dp = new DatePicker({ value, format: 'DD/MM/YYYY' });
+ * dp.layout = { position: 'absolute', rect: { x: 10, y: 0, width: 16, height: 1 } };
+ * g.add(dp);
+ *
+ * // A Label targets the picker's inner field; Down / Alt+Down / the ▐↓▌ button opens the calendar.
+ * g.add(new Label('~D~ate', dp.input));
+ * // value() is a CalendarDate | null; toISO(value()!) serializes a selection.
  */
 export class DatePicker extends Group {
   /** Two-way selected day (`null` = none). */
@@ -97,7 +112,8 @@ export class DatePicker extends Group {
   protected readonly metrics: CalendarMetrics;
 
   /**
-   * @param opts The two-way `value` + optional `format` + the forwarded `Calendar` options (PF-008).
+   * @param opts The two-way `value` plus optional `format` and the options forwarded to the dropdown
+   *   `Calendar`.
    */
   constructor(opts: DatePickerOptions) {
     super();
@@ -124,9 +140,10 @@ export class DatePicker extends Group {
   }
 
   /**
-   * Wire the two-way value⟷text binding. `value → text` (serialize) reads only `value`; `text → value`
-   * (parse) reads only `text` (the current value is read via `untrack` for the equality guard), so
-   * neither direction subscribes to the signal it writes — no feedback loop (the `ComboBox` idiom).
+   * Wire the two-way binding between `value` and the field text. `value → text` serializes; `text →
+   * value` parses. Each direction reads only the *other* signal (the current value is read untracked
+   * for the equality guard), so neither subscribes to the signal it writes and there is no feedback
+   * loop.
    */
   protected bindValueText(): void {
     this.bind(
@@ -136,7 +153,7 @@ export class DatePicker extends Group {
     this.bind(
       () => this.spec.parse(this.text()),
       (parsed) => {
-        if (parsed === null) return; // incomplete / invalid → leave value unchanged (AC-11)
+        if (parsed === null) return; // incomplete / invalid edit → leave the value unchanged
         const cur = untrack(() => this.value());
         if (cur === null || compare(parsed, cur) !== 0) this.value.set(parsed);
       },
@@ -144,8 +161,8 @@ export class DatePicker extends Group {
   }
 
   /**
-   * Open on Down / Alt+Down while the field is focused (the picker sees the key as the Input's ancestor
-   * in the focus-chain bubble). A mouse-down on the trailing button opens via {@link DateButton}.
+   * Open on Down / Alt+Down while the field is focused. A mouse-down on the trailing button also opens
+   * the dropdown.
    *
    * @param ev The dispatch envelope.
    */
@@ -158,16 +175,15 @@ export class DatePicker extends Group {
   }
 
   /**
-   * Focus the field, then open the anchored popup hosting a `Calendar` bound to the shared `value`. The
-   * calendar's `onChange` calls the injected `commit()` to close (the value is already set). A no-op
-   * with no overlay host (headless).
+   * Focus the field, then open the anchored popup hosting a `Calendar` bound to the shared `value`.
+   * Picking a day closes the popup (the value is already set). A no-op when there is no overlay host.
    *
    * @param ev The dispatch envelope (source of the popup host + focus seam).
    */
   protected open(ev: DispatchEvent): void {
     const host = ev.popupHost;
     if (host === undefined) return; // no overlay host (headless / no shell) → decline to open
-    ev.focusView?.(this.input); // focus the field first (parallel to ComboBox)
+    ev.focusView?.(this.input); // focus the field first
     openAnchoredPopup({
       host,
       anchor: absoluteRect(this),
@@ -181,7 +197,7 @@ export class DatePicker extends Group {
           firstDayOfWeek: this.firstDayOfWeek,
           showWeekNumbers: this.showWeekNumbers,
           density: this.density,
-          onChange: () => commit(), // a day-commit sets `value` then closes the popup (AC-10)
+          onChange: () => commit(), // a day-commit sets `value` then closes the popup
         }),
       // The popup sizes to the calendar's density (width × height) + 1 row of placement border compensation.
       contentSize: { width: this.metrics.width, height: this.metrics.height + 1 },

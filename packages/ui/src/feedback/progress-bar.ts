@@ -1,45 +1,26 @@
 /**
- * `ProgressBar` — a determinate progress bar with smooth sub-cell fill (RD-18, AR-187/189).
+ * A determinate progress bar with smooth sub-cell fill.
  *
- * RD-18 has NO Turbo Vision counterpart (GATE-1, AR-186 — a whole-tree search of magiblot/tvision
- * finds no gauge/progress/meter class), so this is a *documented new component* whose pieces are
- * grounded in shipped conventions, pinned here (GATE-1 decode, plans/feedback/03-01 §PA-4/PA-2/PA-3):
+ * Rendering:
+ * - **Smooth fill (Unicode caps)** — a proportional run of full blocks `█` followed by a single
+ *   eighth-block partial (`▏▎▍▌▋▊▉`) over a light `░` track, so the bar advances a fraction of a cell
+ *   at a time rather than jumping a whole cell. The 0% and 100% boundaries are snapped so the fill
+ *   always agrees with the rounded percent — at 100% the last cell fills completely (no lingering
+ *   partial), at 0% the bar is completely empty.
+ * - **ASCII fallback** — on a terminal without the needed block glyphs the bar draws whole cells only:
+ *   `#` for fill, `-` for track. The decision is made at draw time from the live terminal caps.
  *
- * - **Fill glyphs** — full block `█` = U+2588; eighth-block partials `PARTIAL[1..7]` = U+258F, U+258E,
- *   U+258D, U+258C, U+258B, U+258A, U+2589 (`▏▎▍▌▋▊▉`); track `░` = U+2591. Unicode Block Elements —
- *   the same CP437 shade/block convention TV uses for `TScrollBar` (`▒`/`■`) and the `▄█▀` shadow.
- * - **Fill math (round-first, PA-4)** — `e = fillEighths(v,width)`, `full = floor(e/8)`, `part = e%8`:
- *   `full` full blocks, then one `PARTIAL[part]` when `part ∈ 1..7`, then the `░` track. `fillEighths`
- *   is `round(v·width·8)` in the mid-range but **snaps the 0%/100% boundaries** so the fill agrees
- *   with the rounded percent — a value that rounds to 100% fills the last cell completely (fixes a
- *   bar that reads "100%" yet shows a `▉` partial), and one that rounds to 0% is completely empty.
- * - **ASCII fallback (PA-2)** — when `asciiOnly(caps)` the bar draws whole cells only: `#` fill / `-`
- *   track (distinct). Selected at draw time from `ctx.caps` — NOT the serialize-time `fallbackGlyph`
- *   map (which lacks 6 of the 7 partials and collapses `█`/`░` to a single `#`; preflight PF-001).
- * - **Colours (PA-3)** — `progressFill` (`0x1B` brightCyan-on-blue) for `█`/partials/`#`;
- *   `progressTrack` (`0x13` cyan-on-blue = `scrollBarPage`) for `░`/`-`. Documented extension colours.
+ * Optional extras:
+ * - **caption** — a centred `NN%` percent that reads *on* the bar (knockout style): each digit's
+ *   background matches whatever it sits on (fill colour where the fill has reached it, track colour
+ *   where it hasn't) and its foreground inverts for contrast. No separate box.
+ * - **label** — free text placed beside or above the bar via `labelPosition`. `left`/`right` reserve
+ *   columns on the bar's row (the bar shrinks to fit); `top`/`top-left` reserve the row above the bar,
+ *   making the widget two rows tall. Caption and label can be combined.
  *
- * **Caption — knockout percent (PA-12, supersedes the AC-4 staticText draft).** The optional centred
- * `NN%` reads *on* the bar, not in a contrasting box: each digit cell's background matches what it
- * sits on — the fill colour where the fill has swept over it, the track's background where it hasn't
- * — and the digit's foreground inverts for contrast. This kills the "two input fields split by a
- * number" artifact the grey `staticText` box produced. Reuses only `progressFill`/`progressTrack`.
- *
- * **Label — positioned text around the bar (PA-13, RD-18 extension).** An optional `label` (literal
- * or accessor, the `Text` idiom) placed by `labelPosition`: `left`/`right` reserve columns beside the
- * bar on the same row (the bar shrinks); `top`/`top-left` reserve row 0 above the bar (two rows;
- * `top` centred, `top-left` flush-left). Drawn in `staticText` (dialog text). The `measure()` seam
- * advertises height 2 for a top label so an `auto`-sized bar claims the second row. Caption + label
- * compose freely. No TV counterpart — a modern convenience, cited as an extension (AR-186).
- *
- * **GATE-1 AFTER-diff (verified):** the composed bar matches this decode cell-by-cell — ST-2 asserts
- * `full`×`█` + `PARTIAL[6]=▊` (U+258A) + `░` at `(v=0.28,w=10)` plus the `progressFill`/`progressTrack`
- * styles pre-serialize; ST-3 asserts the distinct `#`/`-` ASCII branch; ST-4 pins the knockout caption.
- *
- * Leaf `View` (no children, no `onEvent`), caller-owned `value` signal (the `Input`/`RadioGroup`
- * idiom); `value` is clamped on every read (NaN/±∞/OOB → 0/1) so `full ∈ 0..width` and `part ∈ 0..7`
- * never overflow or index out of range (AC-5/AC-14). The `.js` extension in import specifiers is
- * required by NodeNext ESM resolution.
+ * The bar is a non-focusable leaf driven by a caller-owned `value` signal in `[0,1]`; the value is
+ * clamped on every read, so `NaN`, `±Infinity`, and out-of-range numbers are all safe and simply
+ * pin to 0 or 1.
  */
 import { View } from '../view/index.js';
 import type { DrawContext } from '../view/index.js';
@@ -53,9 +34,9 @@ const FULL = '█';
 /** Light shade (U+2591) — the empty track cell. */
 const TRACK = '░';
 /**
- * Eighth-block partials indexed by the number of filled eighths, `1..7` = U+258F…U+2589 (`▏▎▍▌▋▊▉`).
- * Index `0` is a `''` sentinel so `PARTIAL[part]` is total over `part ∈ 0..7` and index `0` (no
- * partial) is never dereferenced. Frozen — a shared immutable table.
+ * Eighth-block partials indexed by the number of filled eighths, `1..7` = `▏▎▍▌▋▊▉`. Index `0` is an
+ * empty-string sentinel so `PARTIAL[part]` is safe over the whole `0..7` range (index `0` means "no
+ * partial cell"). Frozen — a shared immutable table.
  */
 export const PARTIAL: readonly string[] = Object.freeze(['', '▏', '▎', '▍', '▌', '▋', '▊', '▉']);
 
@@ -70,11 +51,10 @@ export function clamp01(n: number): number {
 }
 
 /**
- * Fill amount in **eighths** for a `w`-cell bar. The mid-range is the round-first `round(v·w·8)`
- * (PA-4), but the **0%/100% boundaries are snapped** so the visual fill agrees with the rounded
- * percent: a value that rounds to 100% fills completely — no lingering partial in the last cell
- * (the user-reported bug: a bar driven by a real fraction reads "100%" while the final cell is a
- * `▉`) — and one that rounds to 0% is completely empty. `v` is clamped first. Exported for impl tests.
+ * Fill amount in **eighths** for a `w`-cell bar. The mid-range is `round(v·w·8)`, but the 0% and 100%
+ * boundaries are snapped so the visual fill agrees with the rounded percent: a value that rounds to
+ * 100% fills completely (no lingering partial in the last cell), and one that rounds to 0% is
+ * completely empty. `v` is clamped first.
  *
  * @param v Progress (clamped to `[0,1]`).
  * @param w Bar width in cells.
@@ -85,15 +65,15 @@ export function fillEighths(v: number, w: number): number {
   const pct = Math.round(c * 100);
   if (pct <= 0) return 0; // reads 0% ⇒ completely empty (no leading sliver)
   if (pct >= 100) return w * 8; // reads 100% ⇒ completely full (last cell not a partial)
-  return Math.round(c * w * 8); // round-first sub-cell fill (PA-4)
+  return Math.round(c * w * 8);
 }
 
 /**
- * The unified ASCII-fallback predicate (PA-2), shared with {@link Spinner}. The bar's `█`/`░`/eighth
- * blocks are Unicode Block Elements needing both `unicode.utf8` and `glyphs.halfBlocks`; the spinner's
- * braille/block presets need `utf8`. The conservative union covers both.
+ * Whether a widget must fall back to pure-ASCII glyphs on the given terminal. Shared by
+ * {@link ProgressBar} and {@link Spinner}: the block/eighth-block glyphs need both UTF-8 and
+ * half-block support, so this returns `true` unless the terminal advertises both.
  *
- * @param caps The resolved terminal capabilities (from `ctx.caps`).
+ * @param caps The resolved terminal capabilities (available from a draw context as `ctx.caps`).
  * @returns `true` when the widget must fall back to a pure-ASCII glyph form.
  */
 export const asciiOnly = (caps: CapabilityProfile): boolean => !caps.unicode.utf8 || !caps.glyphs.halfBlocks;
@@ -105,7 +85,7 @@ export type LabelPosition = 'left' | 'right' | 'top' | 'top-left';
 export interface ProgressBarOptions {
   /** Reactive progress in `[0,1]` (caller-owned; clamped on read). Writing it repaints. */
   readonly value: Signal<number>;
-  /** Show a centred `NN%` knockout caption over the bar (PA-12). Default `false`. */
+  /** Show a centred `NN%` knockout caption over the bar. Default `false`. */
   readonly caption?: boolean;
   /**
    * Optional text placed around the bar (literal or reactive accessor). Repaints on change. A
@@ -114,14 +94,30 @@ export interface ProgressBarOptions {
    * Pad such a label to a stable width — e.g. `` () => `${pct}%`.padStart(4) `` — to keep the bar fixed.
    */
   readonly label?: string | (() => string);
-  /** Where {@link label} sits (PA-13). Default `'left'` — the only position that fits one row. */
+  /** Where {@link label} sits. Default `'left'` — the only position that fits on a one-row bar. */
   readonly labelPosition?: LabelPosition;
 }
 
 /**
- * A determinate progress bar. Non-focusable leaf; paints a proportional fill (smooth sub-cell under
- * Unicode caps, whole-cell `#`/`-` under ASCII caps) with an optional knockout percent caption and an
- * optional positioned label.
+ * A determinate progress bar. Non-focusable leaf; paints a proportional fill (smooth sub-cell on a
+ * Unicode terminal, whole-cell `#`/`-` on an ASCII one) with an optional knockout percent caption and
+ * an optional positioned label.
+ *
+ * @example
+ * import { Group, Button, ProgressBar, signal } from '@jsvision/ui';
+ *
+ * const g = new Group();
+ * const value = signal(0.4); // progress in [0, 1]
+ *
+ * // A bar with a knockout percent caption and a leading label.
+ * const bar = new ProgressBar({ value, caption: true, label: 'Copying', labelPosition: 'left' });
+ * bar.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 24, height: 1 } };
+ * g.add(bar);
+ *
+ * // Advance it — the bar repaints reactively when the signal changes.
+ * const step = new Button('~S~tep', { onClick: () => value.set(Math.min(1, value() + 0.1)) });
+ * step.layout = { position: 'absolute', rect: { x: 1, y: 2, width: 10, height: 2 } };
+ * g.add(step);
  */
 export class ProgressBar extends View {
   private readonly value: Signal<number>;
@@ -138,7 +134,8 @@ export class ProgressBar extends View {
     this.caption = opts.caption === true;
     this.label = opts.label;
     this.labelPos = opts.labelPosition ?? 'left';
-    // Repaint when the bound value OR label accessor changes (the `Text` idiom; canonical site: onMount).
+    // Repaint when the bound value OR the label accessor changes. The reactive binding must be
+    // established on mount, when this view's reactive scope exists (not in the constructor).
     this.onMount(() =>
       this.bind(() => {
         this.value();
@@ -147,12 +144,12 @@ export class ProgressBar extends View {
     );
   }
 
-  /** Write the bound signal (Should-Have). Clamped on read, so any number is safe. */
+  /** Write the bound signal. Clamped on read, so any number is safe. */
   set(value: number): void {
     this.value.set(value);
   }
 
-  /** `round(clamp(value,0,1)·100)` — the integer percent (Should-Have). */
+  /** The current progress as an integer percent, `round(clamp(value, 0, 1) · 100)`. */
   get percent(): number {
     return Math.round(clamp01(this.value()) * 100);
   }
@@ -164,8 +161,8 @@ export class ProgressBar extends View {
   }
 
   /**
-   * Intrinsic-size seam (AR-33): a top label makes the bar two rows; width fills the available track.
-   * Only consulted for `auto` sizing — fixed/absolute rects are unaffected.
+   * Intrinsic size: a top label makes the bar two rows tall; otherwise one row. Width fills whatever
+   * is available. Only consulted for `auto` sizing — fixed and absolute rects are unaffected.
    */
   override measure(available: Size2D): Size2D {
     const top = this.resolveLabel() !== '' && (this.labelPos === 'top' || this.labelPos === 'top-left');
@@ -233,13 +230,13 @@ export class ProgressBar extends View {
     trackStyle: Style,
   ): void {
     if (asciiOnly(ctx.caps)) {
-      const filled = Math.round(fillEighths(v, bw) / 8); // whole cells only; 0%/100% snapped (boundary fix)
+      const filled = Math.round(fillEighths(v, bw) / 8); // whole cells only; 0%/100% boundaries snapped
       for (let y = 0; y < bh; y += 1) {
         ctx.fillRect(bx, by + y, filled, 1, '#', fillStyle);
         ctx.fillRect(bx + filled, by + y, bw - filled, 1, '-', trackStyle);
       }
     } else {
-      const e = fillEighths(v, bw); // width in eighths (round-first, PA-4; 0%/100% snapped)
+      const e = fillEighths(v, bw); // fill width in eighths (0%/100% boundaries snapped)
       const full = Math.floor(e / 8);
       const part = e % 8; // 0..7
       for (let y = 0; y < bh; y += 1) {
@@ -255,10 +252,10 @@ export class ProgressBar extends View {
   }
 
   /**
-   * Draw a centred `NN%` knockout caption over the bar sub-rect (PA-12). Each digit's background
-   * matches what it sits on — the fill colour where the fill has swept over it, the track's background
-   * where it hasn't — and the foreground inverts for contrast. Reuses only `progressFill`/
-   * `progressTrack`; the fill boundary is computed in whole cells, consistent with the drawn bar.
+   * Draw a centred `NN%` knockout caption over the bar sub-rect. Each digit's background matches what
+   * it sits on — the fill colour where the fill has swept over it, the track's background where it
+   * hasn't — and the foreground inverts for contrast. The fill boundary is computed in whole cells,
+   * consistent with the drawn bar.
    */
   private drawCaption(
     ctx: DrawContext,
