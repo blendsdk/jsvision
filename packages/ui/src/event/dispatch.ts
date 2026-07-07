@@ -1,19 +1,23 @@
 /**
- * 3-phase dispatch router (RD-04, AR-51). Turbo Vision's faithful pre/focus/post routing with a
- * `handled` short-circuit, plus the key→command consume step (PA-1), the built-in Tab/Shift-Tab
- * focus traversal (PA-10), and the mouse/wheel hit-test branch.
+ * The dispatch router: the machine that decides which view(s) an event reaches, in what order.
  *
- * `route` is decoupled from the loop via a {@link RouteContext} of seams the loop provides: the
- * scope root (the top modal subtree, or the mounted root when no modal — 03-04), the keymap, the
- * focused leaf, command emission, the error-isolating `deliver`, focus traversal (Phase 3), and the
- * hit-test branch (Phase 4). This keeps the tree walks pure and testable while the loop owns the
- * mutable focus/command/modal state.
+ * A key, paste, or command event is offered to views in three phases with a `handled` short-circuit
+ * — the first view to set `ev.handled` stops all remaining delivery:
  *
- * Order (a key/paste/command event; mouse/wheel branch off early):
- *   key→command consume → built-in Tab → [mouse/wheel → hit-test] → pre (root→down) → focused chain
- *   (leaf→scopeRoot, clamped) → post. The first handler to set `ev.handled` halts everything after.
+ *   1. **pre-process** sweep (root → down): views that opted into `preProcess` see the event first
+ *      (menu bars, tab strips, global hotkey catchers).
+ *   2. **focused chain** (focused leaf → up its ancestors): the focused view, then each ancestor
+ *      group, so a leaf can handle a key and its container can handle what the leaf ignored.
+ *   3. **post-process** sweep: `postProcess` views see whatever survived (status lines, the desktop's
+ *      window-management commands).
  *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Two steps run before the phases: a keymapped chord is converted to a command (and the raw key is
+ * swallowed), and an unbound `Tab`/`Shift-Tab` moves focus. Mouse and wheel events skip the phases
+ * entirely and go through hit-testing instead.
+ *
+ * `route` is pure with respect to loop state: everything it needs — the dispatch scope, the keymap,
+ * the focused leaf, command emission, focus traversal, hit-testing, error-isolated delivery — is
+ * supplied through a {@link RouteContext}, which keeps the tree walks testable.
  */
 import type { Keymap } from '@jsvision/core';
 import { View, Group } from '../view/index.js';
@@ -21,50 +25,44 @@ import type { DispatchEvent, PopupHost } from '../view/index.js';
 
 /** The seams `route` needs from the loop; the loop owns the mutable focus/command/modal state. */
 export interface RouteContext {
-  /** The dispatch scope: the top modal subtree, or the mounted root when no modal (03-04). */
+  /** The subtree events are confined to: the top modal's subtree while a modal is open, else the mounted root. */
   readonly scopeRoot: View | null;
-  /** Optional keymap: a bound chord converts to a command and consumes the raw key (PA-1). */
+  /** Optional keymap: a matched chord becomes a command and the raw key is swallowed. */
   readonly keymap?: Keymap;
-  /** The focused leaf at the end of the current-chain within `scopeRoot`, or `null` (AR-48). */
+  /** The currently focused leaf within `scopeRoot`, or `null`. */
   readonly focusedLeaf: View | null;
-  /** Raise a command and enqueue it onto the active tick, unless disabled (AR-52, PA-3). */
+  /** Raise a command onto the active tick, unless it is disabled. */
   emitCommand(name: string, arg?: unknown): void;
-  /**
-   * Raise a command from within a control's `onEvent` (RD-06 PA-1). Sourced onto every routed
-   * envelope as `ev.emit`; identical effect to {@link emitCommand} (enqueue onto the active tick).
-   */
+  /** Raise a command from within a view's `onEvent`. Exposed on each event as `ev.emit`; same effect as {@link emitCommand}. */
   emit(name: string, arg?: unknown): void;
-  /** Focus a view from within a control's `onEvent` (RD-06 PA-10). Sourced onto `ev.focusView`. */
+  /** Focus a view from within a view's `onEvent`. Exposed on each event as `ev.focusView`. */
   focusView(view: View): void;
-  /** Capture the pointer to a view from within its `onEvent` (RD-11 PA-16). Sourced onto `ev.setCapture`. */
+  /** Capture the pointer to a view from within its `onEvent`. Exposed as `ev.setCapture`. */
   setCapture(view: View): void;
-  /** Release the pointer capture (RD-11 PA-16). Sourced onto `ev.releaseCapture`. */
+  /** Release the pointer capture. Exposed as `ev.releaseCapture`. */
   releaseCapture(): void;
-  /** Whether `view` holds the pointer capture (RD-13 HR-14/PA-13). Sourced onto `ev.hasCapture`. */
+  /** Whether `view` currently holds the pointer capture. Exposed as `ev.hasCapture`. */
   hasCapture(view: View): boolean;
-  /** Write `text` to the system clipboard (RD-07 PA-5/PA-7). Sourced onto `ev.setClipboard`. */
+  /** Write text to the system clipboard. Exposed as `ev.setClipboard`. */
   setClipboard(text: string): void;
-  /** The currently-focused view (RD-14 PF-002). Sourced onto `ev.getFocused`. */
+  /** The currently focused view. Exposed as `ev.getFocused`. */
   getFocused(): View | null;
-  /** The overlay host for anchored popups (RD-14 PF-002/PA-9), or `undefined`. Sourced onto `ev.popupHost`. */
+  /** The host for anchored dropdown popups, or `undefined`. Exposed as `ev.popupHost`. */
   readonly popupHost?: PopupHost;
-  /** Deliver an envelope to a view's `onEvent`, isolating a throwing handler (AR-66). */
+  /** Deliver an event to a view's `onEvent`, catching and logging a throwing handler. */
   deliver(view: View, ev: DispatchEvent): void;
-  /** Built-in Tab focus traversal — advance focus (PA-10; wired by Phase 3). */
+  /** Advance focus to the next focusable view (backs the built-in `Tab`). */
   focusNext(): void;
-  /** Built-in Shift-Tab focus traversal — retreat focus (PA-10; wired by Phase 3). */
+  /** Retreat focus to the previous focusable view (backs the built-in `Shift-Tab`). */
   focusPrev(): void;
-  /** Mouse/wheel hit-test routing (wired by Phase 4). */
+  /** Route a mouse/wheel event through hit-testing. */
   hitTestRoute(ev: DispatchEvent): void;
-  // --- accelerator-overlay seams (optional; absent ⇒ the intercept is fully inert) ----------------
-  /**
-   * The accelerator-mode trigger key (accelerator-overlay AR-10), default `'f12'`. A non-`string`
-   * value (`null`/`undefined`) disables the whole feature — no toggle, no armed intercept.
-   */
+  // --- accelerator-mode seams (optional; when absent the accelerator feature is inert) -----------
+  /** The key that toggles accelerator mode (default `'f12'`). A non-string value disables the feature. */
   readonly revealKey?: string | null;
-  /** Whether accelerator mode is currently armed (accelerator-overlay FR-2/AR-1). */
+  /** Whether accelerator mode is currently armed. */
   acceleratorMode?(): boolean;
-  /** Toggle accelerator mode on/off (accelerator-overlay AR-1); called for the trigger key + dismiss. */
+  /** Toggle accelerator mode on/off. */
   toggleAcceleratorMode?(): void;
 }
 
@@ -88,12 +86,12 @@ function collectSweep(scopeRoot: View, flag: 'preProcess' | 'postProcess'): View
 }
 
 /**
- * The focus-chain path the focused phase walks: the focused leaf, then its ancestor groups up to
- * **and including** `scopeRoot`, then stop (the clamp — PA-12/PF-002 — keeps a modal's outer tree
- * inert). With no modal, `scopeRoot` is the mounted root, so this is the full leaf→root chain.
+ * The path the focused phase walks: the focused leaf, then each ancestor group up to **and
+ * including** `scopeRoot`, then stop. Stopping at `scopeRoot` keeps the tree outside an open modal
+ * inert. With no modal, `scopeRoot` is the mounted root, so this is the full leaf→root chain.
  *
  * @param leaf      The focused leaf, or `null` if there is no focus.
- * @param scopeRoot The clamp boundary (inclusive).
+ * @param scopeRoot The boundary to stop at (inclusive).
  * @returns The leaf→scopeRoot path.
  */
 function focusChain(leaf: View | null, scopeRoot: View): View[] {
@@ -102,7 +100,7 @@ function focusChain(leaf: View | null, scopeRoot: View): View[] {
   let node: View | null = leaf;
   while (node !== null) {
     chain.push(node);
-    if (node === scopeRoot) break; // clamp at the scope root (PA-12)
+    if (node === scopeRoot) break; // never bubble past the dispatch scope (keeps a modal isolating)
     node = node.parent;
   }
   return chain;
@@ -120,7 +118,7 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
 
   const inner = ev.event;
 
-  // Key→command consume: a bound chord converts to a command; the raw key is NOT dispatched (PA-1).
+  // A keymapped chord becomes a command and the raw key is swallowed — it never reaches a view.
   if (inner.type === 'key' && ctx.keymap !== undefined) {
     const name = ctx.keymap.lookup(inner);
     if (name !== undefined) {
@@ -129,19 +127,19 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
     }
   }
 
-  // Built-in Tab/Shift-Tab focus traversal for an unbound tab key — consumed, not 3-phase-dispatched
-  // (PA-10). A keymap-bound `tab` already returned above, so an app can repurpose it.
+  // An unbound Tab moves focus (Shift-Tab retreats) and is swallowed. A keymap-bound `tab` already
+  // returned above, so an app that wants Tab for something else can bind it.
   if (inner.type === 'key' && inner.key === 'tab') {
     if (inner.shift) ctx.focusPrev();
     else ctx.focusNext();
     return;
   }
 
-  // Accelerator-overlay intercept (accelerator-overlay AR-16): the trigger key toggles reveal+arm;
-  // while armed, a plain letter is re-dispatched as `Alt+letter` (so every existing accelerator fires),
-  // Esc dismisses, and any other key or a click dismisses + passes through. It sits BEFORE the `ev2`
-  // enrichment so it sees the key ahead of every view (incl. preProcess MenuBar/TabView). Fully inert
-  // unless the loop supplies the seams (`revealKey` a string ⇒ feature enabled).
+  // Accelerator-mode intercept: the reveal key toggles the mode; while armed, a plain letter is
+  // re-dispatched as `Alt+letter` (so every existing accelerator fires), Esc dismisses, and any other
+  // key or a click dismisses and passes through. It runs before the event is enriched below so it sees
+  // keys ahead of every view (including pre-process menu bars / tab strips). Inert unless the loop
+  // supplies the seams (a string `revealKey` enables the feature).
   if (
     typeof ctx.revealKey === 'string' &&
     ctx.acceleratorMode !== undefined &&
@@ -155,31 +153,30 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
       }
       if (ctx.acceleratorMode()) {
         if (inner.key === 'escape') {
-          ctx.toggleAcceleratorMode(); // Esc dismisses, consumed (AR-3)
+          ctx.toggleAcceleratorMode(); // Esc dismisses the mode
           ev.handled = true;
           return;
         }
         if (inner.key.length === 1 && !inner.alt && !inner.ctrl) {
-          // A plain accelerator letter: dismiss FIRST (sticky ends on an action), then re-dispatch a
-          // synthesized `Alt+letter` so the normal 3-phase sweep fires the match exactly like Alt.
-          // The synth event carries `alt:true`, so it can never re-enter this armed branch (IT-1).
+          // A plain accelerator letter: dismiss the mode first, then re-dispatch a synthetic
+          // `Alt+letter` so the normal sweep fires the matching accelerator exactly like Alt would.
+          // The synthetic event carries `alt:true`, so it can never re-enter this armed branch.
           ctx.toggleAcceleratorMode();
           route({ event: { ...inner, alt: true }, handled: false }, ctx);
           ev.handled = true;
           return;
         }
-        ctx.toggleAcceleratorMode(); // any other key dismisses (AR-3) and falls through to dispatch
+        ctx.toggleAcceleratorMode(); // any other key dismisses the mode and then dispatches normally
       }
     } else if (inner.type === 'mouse' && inner.kind === 'down' && ctx.acceleratorMode()) {
-      ctx.toggleAcceleratorMode(); // a click dismisses (AR-3); the click still routes below
+      ctx.toggleAcceleratorMode(); // a click dismisses the mode; the click still routes below
     }
   }
 
-  // Single enrichment point (RD-06 PA-1/PA-10, RD-11 PA-16): `route()` is the one path every
-  // dispatched event passes through before reaching a view, so source `emit`/`focusView`/`setCapture`/
-  // `releaseCapture` onto ONE fresh envelope here and route the mouse branch + every sweep through it.
-  // A fresh object respects the `readonly` envelope fields; the `hit-test.ts` `{ ...ev2, local }`
-  // spread propagates all of them to mouse-locals.
+  // Enrich the event once, here: route() is the single path every event passes through before
+  // reaching a view, so this is where the `ev.emit`/`ev.focusView`/`ev.setCapture`/etc. helpers a
+  // view calls from its `onEvent` get attached. A fresh object is used because the event's fields are
+  // readonly; the hit-test's `{ ...ev2, local }` spread carries these helpers onto mouse events too.
   const ev2: DispatchEvent = {
     ...ev,
     emit: ctx.emit,
@@ -192,29 +189,29 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
     popupHost: ctx.popupHost,
   };
 
-  // Mouse/wheel skip the 3-phase focus path → hit-test (03-03).
+  // Mouse and wheel events skip the focus phases and go through hit-testing.
   if (inner.type === 'mouse' || inner.type === 'wheel') {
     ctx.hitTestRoute(ev2);
     return;
   }
 
-  // Phase 1 — pre-process sweep (root→down within scopeRoot).
+  // Phase 1 — pre-process sweep (root → down).
   for (const view of collectSweep(scopeRoot, 'preProcess')) {
-    if (!view.mounted) continue; // HR-42: a prior handler may have removed this view mid-sweep
+    if (!view.mounted) continue; // an earlier handler may have removed this view mid-sweep
     ctx.deliver(view, ev2);
     if (ev2.handled) return;
   }
-  // Phase 2 — focused leaf + chain bubble (leaf→scopeRoot, clamped).
+  // Phase 2 — focused leaf, then up its ancestor chain.
   for (const view of focusChain(ctx.focusedLeaf, scopeRoot)) {
-    // HR-42: skip a view unmounted by an earlier delivery. HR-39: a key never reaches a disabled
-    // view — even if it is still the `current` leaf, disabling it evicts it from key delivery.
+    // Skip a view removed by an earlier delivery, and never deliver a key to a disabled view even if
+    // it is still the focused leaf — disabling a view takes it out of key handling immediately.
     if (!view.mounted || view.state.disabled) continue;
     ctx.deliver(view, ev2);
     if (ev2.handled) return;
   }
   // Phase 3 — post-process sweep.
   for (const view of collectSweep(scopeRoot, 'postProcess')) {
-    if (!view.mounted) continue; // HR-42: snapshot is stale if a handler removed a later view
+    if (!view.mounted) continue; // the snapshot is stale if a handler removed a later view
     ctx.deliver(view, ev2);
     if (ev2.handled) return;
   }

@@ -1,46 +1,45 @@
 /**
- * Focus manager (RD-04, AR-48/AR-56/AR-57/AR-65). Global focus is the **root→leaf path of
- * `Group.current` pointers** (AR-48): each group names its focused child; following `current` from
- * the root yields the focused leaf. Because focus is encoded *in* the persisted `current` pointers,
- * a group that loses then regains the active path keeps its `current` — re-entry restores the
- * previous child, not the first (save/restore, AR-48/AR-53).
+ * The focus manager backing the event loop's focus methods.
  *
- * The mutations here (`focusView`, `focusNext`/`focusPrev`) are **pure** — they set `current`, flip
- * exactly two `focused` flags, and `invalidate()`, but they do **not** flush. The loop wraps each
- * public call in a `runTick` so a standalone call paints exactly one frame (PA-11), while the
- * built-in Tab handler (`dispatch.ts`) calls them directly because it already runs inside the tick.
+ * Focus is stored *in the tree*: each group remembers which child is focused (its `current` pointer),
+ * and following those pointers from the root leads to the focused leaf. Because the pointers persist,
+ * a container that loses focus and later regains it restores the child that was focused before — not
+ * the first one. This is how focus survives switching windows or opening and closing a dialog.
  *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The mutations here set pointers and flags but do **not** repaint; the loop wraps each public call
+ * so a standalone focus change paints one frame, while the built-in Tab handler calls them directly
+ * because it already runs inside a paint cycle. This module is internal — callers use the
+ * {@link EventLoop} focus methods.
  */
 import { View, Group } from '../view/index.js';
 
-/** Loop-owned focus state machine over the mounted root view. */
+/** Tracks and moves focus over the mounted view tree. */
 export interface FocusManager {
-  /** The globally-focused leaf (root→leaf `current` chain), or `null` if none (AR-48). */
+  /** The currently focused leaf, or `null` if nothing is focused. */
   getFocused(): View | null;
-  /** The focused leaf within `scope`'s `current` chain, or `null` — used to clamp dispatch to a modal. */
+  /** The focused leaf within `scope`, or `null` — used to confine dispatch to an open modal's subtree. */
   focusedLeafIn(scope: View | null): View | null;
-  /** Focus exactly `view`; a no-op if `view` is non-focusable (PA-5). */
+  /** Focus exactly `view`; a no-op if `view` is not currently focusable. */
   focusView(view: View): void;
-  /** Focus into a container: its saved `current` (restore) or first focusable descendant (AR-53). */
+  /** Focus into a container: restore its last-focused child, else focus its first focusable descendant. */
   focusInto(view: View): void;
-  /** The leaf focusable predicate (used by focus-on-click to climb to the nearest focusable, AR-56). */
+  /** Whether `view` is a focusable leaf right now (used to climb to the nearest focusable on a click). */
   isFocusable(view: View): boolean;
-  /** Advance focus to the next focusable sibling (wrap), descending into a focusable container (AR-57). */
+  /** Move focus to the next focusable view, wrapping and descending into a focusable container. */
   focusNext(): void;
-  /** Retreat focus to the previous focusable sibling (wrap) (AR-57). */
+  /** Move focus to the previous focusable view, wrapping. */
   focusPrev(): void;
 }
 
 /**
- * Create a focus manager over the mounted root, read lazily via `getRoot` (the loop sets the root at
- * mount).
+ * Create a focus manager over the mounted root, read lazily via `getRoot` (the loop supplies the root
+ * once it is mounted).
  *
  * @param getRoot Accessor for the current mounted root view (or `null` before mount).
  * @returns A {@link FocusManager}.
  */
 export function createFocusManager(getRoot: () => View | null): FocusManager {
-  /** True if no `!visible`/`disabled` ancestor blocks `view` (subtree semantics, AR-65). */
+  // A view cannot receive focus if any ancestor is hidden or disabled, even if the view itself is fine.
   const noBlockingAncestor = (view: View): boolean => {
     let ancestor = view.parent;
     while (ancestor !== null) {
@@ -51,15 +50,15 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
   };
 
   /**
-   * The leaf focusable predicate: `mounted && visible && !disabled && focusable` + no blocking
-   * ancestor (AR-56). HR-11: a **detached** (unmounted) view has `parent === null`, so
-   * `noBlockingAncestor` trivially passes — requiring `mounted` makes `focusView(detachedLeaf)` a
-   * genuine no-op instead of blurring the real focus while its chain mutation silently fails.
+   * Whether `view` can be focused right now: it must be mounted, visible, enabled, marked focusable,
+   * and have no blocking ancestor. The `mounted` check matters — a detached view has no parent, so
+   * the ancestor check would trivially pass; requiring `mounted` makes focusing a detached view a
+   * genuine no-op instead of silently blurring the real focus.
    */
   const isFocusable = (view: View): boolean =>
     view.mounted && view.state.visible && !view.state.disabled && view.focusable && noBlockingAncestor(view);
 
-  /** Whether a group has at least one focusable descendant (AR-65). */
+  /** Whether a group contains at least one focusable descendant. */
   const isFocusableContainer = (group: Group): boolean => {
     for (const child of group.children) {
       if (isFocusable(child)) return true;
@@ -86,7 +85,7 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
 
   const getFocused = (): View | null => focusedLeafIn(getRoot());
 
-  /** Set `current` pointers along `view`'s ancestor chain so root→…→view (AR-48). */
+  /** Point every ancestor's `current` at the child on the path to `view`, so root→…→view leads to it. */
   const setCurrentChain = (view: View): void => {
     let child: View = view;
     let parent = view.parent;
@@ -98,25 +97,25 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
   };
 
   /**
-   * Focus a specific view: set its `current` chain, then flip the old/new `focused` flags and
-   * invalidate both (exactly two repaints, coalesced by the loop into one frame, AC-6).
+   * Focus a specific view: point the pointer chain at it, then clear the old view's `focused` flag
+   * and set the new one, repainting both. The two repaints coalesce into one frame.
    */
   const focusLeaf = (view: View): void => {
     const old = getFocused();
     setCurrentChain(view);
-    if (old === view) return; // idempotent — chain re-affirmed, no flag flip
+    if (old === view) return; // already focused — nothing to flip
     if (old !== null) {
       old.state.focused = false;
       old.invalidate();
-      old.focusTick?.set(undefined); // poke observers of the old view's focus (PF-009; no-op if none)
+      old.focusTick?.set(undefined); // notify anything observing the old view's focus (no-op if none)
     }
     view.state.focused = true;
     view.invalidate();
-    view.focusTick?.set(undefined); // poke observers of the new view's focus (PF-009; no-op if none)
+    view.focusTick?.set(undefined); // notify anything observing the new view's focus (no-op if none)
   };
 
   /**
-   * Focus into a target: a leaf is focused directly; a container descends to its saved `current`
+   * Focus into a target: a leaf is focused directly; a container descends to its last-focused child
    * (restore) or its first focusable child, recursing until a leaf is reached. A focusable container
    * with no focusable descendant is focused itself.
    */
@@ -135,13 +134,13 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
   };
 
   const focusView = (view: View): void => {
-    if (isFocusable(view)) focusLeaf(view); // non-focusable ⇒ no-op (PA-5)
+    if (isFocusable(view)) focusLeaf(view); // focusing a non-focusable view is a no-op
   };
 
   /**
-   * Advance/retreat focus within the active group (the focused leaf's parent, or the root when no
-   * focus). Picks the next/previous focusable child in child order, wrapping at the ends; descends
-   * into a chosen container (AR-57). With zero focusable children in the active group, a no-op.
+   * Move focus within the active group (the focused leaf's parent, or the root when nothing is
+   * focused): pick the next/previous focusable child in child order, wrapping at the ends, and
+   * descend into it if it is a container. A no-op when the active group has no focusable children.
    */
   const advance = (direction: 1 | -1): void => {
     const root = getRoot();
@@ -152,7 +151,7 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
     if (active === null) return;
 
     const candidates = active.children.filter(canReceiveFocus);
-    if (candidates.length === 0) return; // nothing focusable here (AR-57)
+    if (candidates.length === 0) return; // nothing focusable in this group
 
     const currentChild = active.current;
     const inCandidates = currentChild !== null ? candidates.indexOf(currentChild) : -1;
@@ -160,9 +159,9 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
     if (inCandidates !== -1) {
       nextIndex = (inCandidates + direction + candidates.length) % candidates.length;
     } else {
-      // HR-39: the anchor is no longer a candidate (disabled/removed, or nothing was focused). Resume
-      // from the nearest candidate by TREE order in `direction` rather than snapping to an end and
-      // skipping views; fall back to the appropriate end when the anchor is unknown or at the edge.
+      // The anchor is no longer focusable (it was disabled or removed, or nothing was focused).
+      // Resume from the nearest candidate by tree order in the travel direction rather than jumping
+      // to an end and skipping views; fall back to the appropriate end when there is nothing beyond it.
       const anchorPos = currentChild !== null ? active.children.indexOf(currentChild) : -1;
       if (anchorPos === -1) {
         nextIndex = direction === 1 ? 0 : candidates.length - 1;

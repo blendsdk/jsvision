@@ -1,40 +1,38 @@
 /**
- * Drag-move / drag-resize gesture math (RD-05 AR-67/AR-74, PA-4/PA-5/PA-10).
+ * The math behind dragging and resizing windows.
  *
- * The Desktop holds the active {@link Gesture} and, while the loop captures the pointer to it,
- * feeds each captured move/drag to {@link applyMove}/{@link applyResize}. These mutate the target
- * window's `layout.rect` (clamped) and `invalidateLayout()` so RD-02 absolute placement re-honors
- * the rect on the next reflow. Window geometry is the `layout.rect`, never `bounds` (PF-01/PA-15).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * While the desktop is tracking a drag, it feeds each pointer position to {@link applyMove} or the
+ * resize helpers, which update the target window's `layout.rect` (clamped to keep it usable) so the
+ * window moves on the next repaint. A window's position and size live in its `layout.rect`.
  */
 import type { Rect } from '../layout/index.js';
 import type { Point } from '../view/index.js';
 import type { Window } from '../window/index.js';
 
-/** Minimum window width/height the WM enforces on resize (PA-4). */
+/** The smallest width and height a window can be dragged down to. */
 export const MIN_WIDTH = 10;
 export const MIN_HEIGHT = 3;
 
-/** Active drag/resize gesture state (PA-10 · RD-10 AR-91). */
+/** An in-progress drag: moving a window, resizing its bottom-right corner, or resizing its bottom-left. */
 export type Gesture =
-  | { kind: 'move'; target: Window; grabDX: number; grabDY: number } // grab offset within the window
-  | { kind: 'resize'; target: Window; originX: number; originY: number } // SE — fixed window top-left
-  | { kind: 'resize-left'; target: Window; anchorRight: number; originY: number }; // SW — fixed right edge + top
+  | { kind: 'move'; target: Window; grabDX: number; grabDY: number } // offset of the grab point within the window
+  | { kind: 'resize'; target: Window; originX: number; originY: number } // bottom-right — top-left stays fixed
+  | { kind: 'resize-left'; target: Window; anchorRight: number; originY: number }; // bottom-left — right edge + top stay fixed
 
-/** Clamp `n` to `[lo, hi]` (`lo` wins if the range is degenerate). */
+/** Clamp `n` into `[lo, hi]` (`lo` wins if the range is empty). */
 function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, n));
 }
 
-/** The window's current WM rect (its layout rect, or a degenerate fallback). */
+/** The window's current rect, or a minimum-size fallback if it has none yet. */
 function rectOf(w: Window): Rect {
   return w.layout.rect ?? { x: 0, y: 0, width: MIN_WIDTH, height: MIN_HEIGHT };
 }
 
 /**
- * Apply a captured move: reposition the target to `pointer - grab`, clamped so the title row stays
- * on the desktop (`y ∈ [0, deskH-1]`) and ≥1 frame column stays inside (`x ∈ [1-w, deskW-1]`) (PA-4).
+ * Move the window to follow the pointer (minus the grab offset), clamped so its title row stays on
+ * the desktop and at least one frame column stays inside — so a window can never be dragged fully
+ * off-screen and lost.
  *
  * @param g       The active move gesture.
  * @param local   The desktop-local pointer position.
@@ -50,8 +48,8 @@ export function applyMove(g: Extract<Gesture, { kind: 'move' }>, local: Point, d
 }
 
 /**
- * Apply a captured resize: set the size to `pointer - origin + 1`, floored at the minimum (PA-4).
- * Content reflows live within the new interior.
+ * Resize the window's bottom-right corner: keep the top-left fixed and set the size so the corner
+ * follows the pointer, floored at the window's minimum. Contents reflow live into the new interior.
  *
  * @param g     The active resize gesture.
  * @param local The desktop-local pointer position.
@@ -61,18 +59,15 @@ export function applyResize(g: Extract<Gesture, { kind: 'resize' }>, local: Poin
   const width = Math.max(g.target.minWidth, local.x - g.originX + 1);
   const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
   g.target.layout.rect = { x: rect.x, y: rect.y, width, height };
-  g.target.onResized(); // TV changeBounds → children calcBounds (before the reflow reads their rects)
+  g.target.onResized(); // re-pin the window's children to the new size before the repaint reads them
   g.target.invalidateLayout();
 }
 
 /**
- * Apply a captured left-grow resize (TV `dmDragGrowLeft`, `tframe.cpp:117-122`/`193`, AR-91): the right
- * edge stays anchored at `anchorRight`, while the left edge follows the pointer and the bottom edge
- * grows like {@link applyResize}. The top edge is fixed at `originY`. The left edge is clamped only by
- * the minimum width (`x ≤ anchorRight − minWidth + 1`, so `width ≥ target.minWidth`); like {@link applyResize}
- * the dragged edge is otherwise unclamped — the window may grow past the desktop edge (RD-02 overflow
- * AR-28). (The spec's lower clamp was deferred to impl; mirroring `applyResize` keeps the two corners
- * symmetric — PA-11.)
+ * Resize the window's bottom-left corner: keep the right edge and top fixed while the left edge
+ * follows the pointer and the bottom edge grows like {@link applyResize}. The left edge is clamped
+ * only by the minimum width; like the bottom-right resize the dragged edge may otherwise run past the
+ * desktop edge.
  *
  * @param g     The active left-resize gesture.
  * @param local The desktop-local pointer position.
@@ -82,6 +77,6 @@ export function applyResizeLeft(g: Extract<Gesture, { kind: 'resize-left' }>, lo
   const width = g.anchorRight - x + 1;
   const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
   g.target.layout.rect = { x, y: g.originY, width, height };
-  g.target.onResized(); // TV changeBounds → children calcBounds (before the reflow reads their rects)
+  g.target.onResized(); // re-pin the window's children to the new size before the repaint reads them
   g.target.invalidateLayout();
 }

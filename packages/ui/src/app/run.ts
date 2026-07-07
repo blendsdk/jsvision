@@ -1,14 +1,11 @@
 /**
- * `runApplication` — the `run()` lifecycle (RD-05 AR-71/AR-83/AR-86).
+ * `runApplication` — connects an assembled event loop to a real terminal and runs it.
  *
- * Wires core's `createHost` to the composed `EventLoop`: `onInput → dispatch`, `onResize → resize`,
- * and the `onFrame` seam → `host.render`, then runs until the `'quit'` command resolves the exit
- * code and guarantees terminal restore on **every** exit path via `finally(host.stop())` (which is
- * idempotent with the host's own crash/signal backstop). Suspend/resume are host-owned: `onSuspend`/
- * `onResume` are notify-only (the host re-asserts modes + repaints), so the app writes no modes and
- * fires no inert flush (PF-09).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * It starts a terminal host (raw mode + alternate screen), forwards input to the loop, forwards
+ * resizes, paints every frame the loop produces, and runs until the `'quit'` command resolves the
+ * exit code. The terminal is always restored on exit — normal, thrown, or signalled. Terminal
+ * suspend/resume (Ctrl+Z) is handled by the host, which re-asserts modes and repaints; `run()` only
+ * re-positions the cursor afterward. This backs {@link Application.run}.
  */
 import { createHost, cursor } from '@jsvision/core';
 import type { CapabilityProfile, RuntimeAdapter, ScreenBuffer } from '@jsvision/core';
@@ -16,55 +13,54 @@ import type { Point } from '../view/index.js';
 import type { EventLoop } from '../event/index.js';
 
 /**
- * Encode a hardware-caret cell as a terminal sequence (RD-07 PA-5): show + move the cursor to the
- * cell (converting the loop's 0-based `Point` to `cursor.to`'s 1-based row/col), or hide it when there
- * is no caret requester. Written to the co-owned output stream right after each frame render.
+ * Encode a caret cell as a terminal sequence: show and move the cursor to the cell (converting the
+ * 0-based cell to the terminal's 1-based row/column), or hide the cursor when there is no caret.
  *
- * @param cell The absolute 0-based caret cell, or `null` for "no caret" (hide the cursor).
- * @returns The ANSI sequence to write.
+ * @param cell The absolute 0-based caret cell, or `null` to hide the cursor.
+ * @returns The terminal escape sequence to write.
  */
 function caretSequence(cell: Point | null): string {
   return cell === null ? cursor.hide() : cursor.show() + cursor.to(cell.y + 1, cell.x + 1);
 }
 
-/** Shared, mutable quit-resolver cell: the command sink resolves it, `run()` assigns it (PA-12). */
+/** A shared cell holding the `run()` promise's resolver: `run()` fills it in, the quit sink calls it. */
 export interface QuitState {
-  /** The pending `run()` promise's resolver while a run is active; `null` otherwise. */
+  /** The active `run()` promise's resolver while a run is in progress; `null` otherwise. */
   resolve: ((code: number) => void) | null;
 }
 
-/** Everything `runApplication` needs from the composed application. */
+/** Everything `runApplication` needs from the assembled application. */
 export interface RunContext {
-  /** The composed event loop. */
+  /** The assembled event loop. */
   readonly loop: EventLoop;
-  /** Capability profile for the host's encoding/modes. */
+  /** Terminal capability profile for the host's encoding and mode setup. */
   readonly caps: CapabilityProfile;
-  /** Injectable OS boundary (default real Node runtime). */
+  /** OS boundary the host runs against; defaults to the real Node runtime. */
   readonly runtime?: RuntimeAdapter;
-  /** Injectable input stream (default `process.stdin`). */
+  /** Input stream; defaults to `process.stdin`. */
   readonly input?: NodeJS.ReadStream;
-  /** Injectable output stream (default `process.stdout`). */
+  /** Output stream; defaults to `process.stdout`. */
   readonly output?: NodeJS.WriteStream;
-  /** Warn at startup on double-width chrome glyphs (real TTY only). Default `true`; see `createHost`. */
+  /** Warn at startup if the terminal renders the ambiguous-width frame glyphs double-width. Default `true`. */
   readonly warnAmbiguousWidth?: boolean;
-  /** Adapt to ASCII-safe chrome when the startup probe measures wide glyphs. Default `true`; see `createHost`. */
+  /** Switch to ASCII-safe chrome if the startup probe finds those glyphs render double-width. Default `true`. */
   readonly adaptAmbiguousWidth?: boolean;
-  /** The shared quit-resolver cell wired to the command sink. */
+  /** The shared quit-resolver cell that the app's quit sink calls. */
   readonly quitState: QuitState;
 }
 
 /**
- * Run the application against a real (or injected) terminal until `'quit'`.
+ * Run the application against a real (or injected) terminal until the `'quit'` command.
  *
- * @param ctx The composed loop + OS boundary + overlay + quit-resolver cell.
- * @returns The exit code resolved by the `'quit'` command (default 0).
+ * @param ctx The assembled loop, OS boundary, streams, and quit-resolver cell.
+ * @returns The exit code carried by the `'quit'` command (0 if none was given).
  */
 export async function runApplication(ctx: RunContext): Promise<number> {
-  // The output stream the host writes to; run() co-writes cursor + clipboard sequences to it, ordered
-  // right after each frame render (PA-5/PA-7). Resolved the same way createHost resolves its default.
+  // The stream the host and run() both write to; run() writes cursor and clipboard sequences to it
+  // right after each frame. Resolved the same way the host resolves its default.
   const output = ctx.output ?? process.stdout;
-  // The last caret cell the loop reported, re-applied verbatim after a host resume repaint (AR-83):
-  // the host re-renders the last frame but does not re-fire onCaret, so run() re-positions the cursor.
+  // The last caret cell the loop reported. After a suspend/resume the host repaints the last frame but
+  // does not re-report the caret, so run() re-applies this to re-position the cursor.
   let lastCaret: Point | null = null;
 
   const host = createHost({
@@ -81,32 +77,30 @@ export async function runApplication(ctx: RunContext): Promise<number> {
     adaptAmbiguousWidth: ctx.adaptAmbiguousWidth ?? true,
     onInput: (event) => ctx.loop.dispatch(event),
     onResize: (event) => {
-      // Reflow to the new viewport; the loop's onResize seam keeps the overlay full-screen and
-      // re-anchors the menu catcher + desktop zoom (HR-36/HR-41), so both host and headless resizes
-      // take the same path.
+      // Reflow to the new size. The loop's resize handler keeps the overlay full-screen and re-anchors
+      // the menu and maximized windows, so real and headless resizes take the same path.
       ctx.loop.resize({ width: event.columns, height: event.rows });
     },
     onSuspend: () => {
-      // host-owned soft restore (AR-83) — notify-only hook
+      // Nothing to do — the host handles the terminal restore on suspend.
     },
     onResume: () => {
-      // host already re-asserted modes + repainted (AR-83 / PF-09); re-position the hardware cursor,
-      // which the repaint does not restore (RD-07 PA-5).
+      // The host has already re-asserted modes and repainted; re-position the cursor, which the
+      // repaint does not restore.
       output.write(caretSequence(lastCaret));
     },
   });
 
-  // Bridge every coalesced frame to the terminal (PA-6 / PF-04): the loop's onFrame is a settable
-  // member, wired only now that the host exists. The frame is DEFERRED to the caret emit that the
-  // loop fires immediately after every onFrame (tick/mount/resize), so the damage and the cursor
-  // show+move go out as ONE write — a split write lets the terminal repaint in the syscall gap with
-  // the visible cursor parked at the last damage span (a bottom-row flicker while typing).
+  // Paint every frame the loop produces. The frame is held and painted together with the caret
+  // sequence the loop reports immediately afterward, so the screen update and the cursor move go out
+  // as one write — splitting them lets the terminal briefly show the cursor parked at the last
+  // updated cell, which flickers while typing.
   let pendingFrame: ScreenBuffer | null = null;
   ctx.loop.onFrame = (buffer) => {
     pendingFrame = buffer;
   };
-  // Fired right after each onFrame: render the pending frame with the caret sequence as the same
-  // write; a caret-only emit (initial refreshCaret) writes just the sequence (RD-07 PA-5/PA-7).
+  // Fired right after each frame: paint the held frame together with the caret sequence in one write.
+  // A caret-only report (the initial cursor placement) writes just the sequence.
   ctx.loop.onCaret = (cell) => {
     lastCaret = cell;
     if (pendingFrame !== null) {
@@ -119,18 +113,18 @@ export async function runApplication(ctx: RunContext): Promise<number> {
   };
   ctx.loop.writeClipboard = (seq) => output.write(seq);
 
-  // The quit promise: resolved by the command sink (via the shared quitState cell) on `'quit'`.
+  // Resolved by the app's quit sink (through the shared quitState cell) when the 'quit' command fires.
   const quitPromise = new Promise<number>((resolve) => {
     ctx.quitState.resolve = resolve;
   });
 
   try {
-    await host.start(); // raw mode + alt-screen
+    await host.start(); // enter raw mode + the alternate screen
     host.render(ctx.loop.renderRoot.buffer()); // paint the first frame
-    ctx.loop.refreshCaret(); // position the initial cursor (the first render is not a loop tick)
+    ctx.loop.refreshCaret(); // position the initial cursor (the first paint is not a loop tick)
     return await quitPromise;
   } finally {
-    await host.stop(); // GUARANTEED restore on every path (normal / throw / signal); idempotent
+    await host.stop(); // always restore the terminal — on normal exit, a throw, or a signal
     ctx.loop.onFrame = undefined;
     ctx.loop.onCaret = undefined;
     ctx.loop.writeClipboard = undefined;
