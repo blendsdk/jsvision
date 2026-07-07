@@ -1,17 +1,14 @@
 /**
- * `Button` — a focusable command button (Turbo Vision `TButton`, RD-06 AC-3/PA-1/PA-7/PA-8).
+ * A clickable command button with a raised, drop-shadowed face. Activate it by clicking, by pressing
+ * `Space` while it is focused, by its `Alt`+hotkey, or — when it is the dialog's `default` button —
+ * by pressing `Enter` anywhere the key is not already consumed.
  *
- * Draws the label with TV's block-glyph drop-shadow and activates on click / `Space` (focused) /
- * `Alt-<hotkey>`, and — when `default` — on `Enter` if unconsumed; activation emits a typed command
- * (`ev.emit`) and/or calls `onClick`. Faithful to `TButton::drawState` (`tbutton.cpp:102-165`): the
- * label is centered (no brackets — the `[ ]` `markers` only appear when `showMarkers` is on, i.e. the
- * monochrome palette, `tbutton.cpp:154-158`), with the `▄`(0xDC)/`█`(0xDB)/`▀`(0xDF) shadow
- * (`shadows = "\xDC\xDB\xDF"`, `tbutton.cpp:116/143-146`) drawn down the right column and across the
- * bottom row in the `buttonShadow` role — TV `cShadow = getColor(8)` = `cpButton[8]=0x0F` →
- * cpGrayDialog slot 15 → `cpAppColor[0x2E]=0x70` = black-on-lightGray, the dialog's own background with
- * black ink (NOT the window drop-shadow). The pressed state shifts the face right one cell and drops
- * the shadow (`down` branch, `tbutton.cpp:130-135`), and the state→role mapping is `tbutton.cpp:107-118`.
- * The hardware caret is deferred (DEF-19). The `.js` extension is required by NodeNext resolution.
+ * Activation does two things (either or both may be configured): it emits a typed command that a
+ * menu/status/app handler can react to, and it calls the optional `onClick` callback. Mark the
+ * hotkey letter by wrapping it in tildes, e.g. `'~O~K'`.
+ *
+ * A disabled button is greyed out and completely inert (and drops out of the Tab order). Pass a
+ * getter for `disabled` to make it re-evaluate reactively as your signals change.
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -19,28 +16,46 @@ import { parseTilde, tildeSegments, accentStyle } from '../menu/index.js';
 import type { ParsedLabel } from '../menu/index.js';
 import { stringWidth } from './measure.js';
 
-/** Construction options for {@link Button}. */
+/** Options for {@link Button}. */
 export interface ButtonOptions {
-  /** Command emitted via `ev.emit` on activation (PA-1). */
+  /** A command name emitted when the button is activated. Handle it from a menu/status/app handler. */
   command?: string;
-  /** Called on activation, in addition to {@link command}. */
+  /** A callback fired when the button is activated, in addition to (or instead of) {@link command}. */
   onClick?: () => void;
-  /** Also activate on `Enter` when the key is unconsumed by the focused chain (PA-7). */
+  /** Marks this as the dialog's default button: it also activates on `Enter` when the key is unconsumed. */
   default?: boolean;
-  /** Greyed + inert; a reactive getter re-greys/-enables when its signals change. */
+  /** Greyed out and inert. Pass a getter to re-evaluate reactively when the signals it reads change. */
   disabled?: boolean | (() => boolean);
 }
 
-/** A focusable command button with a TV block-glyph drop-shadow. */
+/**
+ * A focusable command button.
+ *
+ * @example
+ * import { Group, Button, signal } from '@jsvision/ui';
+ *
+ * const buttons = new Group();
+ *
+ * // A default button that emits a command (handled elsewhere, e.g. by a Dialog or the app).
+ * const ok = new Button('~O~K', { command: 'ok', default: true });
+ * ok.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 10, height: 2 } };
+ * buttons.add(ok);
+ *
+ * // A plain button that runs a callback directly.
+ * const count = signal(0);
+ * const add = new Button('~A~dd', { onClick: () => count.set(count() + 1) });
+ * add.layout = { position: 'absolute', rect: { x: 12, y: 0, width: 11, height: 2 } };
+ * buttons.add(add);
+ */
 export class Button extends View {
-  /** `Space` activates when focused. */
+  /** `Space` activates the button while it is focused. */
   override focusable = true;
-  /** Catch `Alt-<hotkey>` / (default) `Enter` after the focused chain (PA-7). */
+  /** Caught after the focused chain so `Alt`+hotkey and a default button's `Enter` are seen dialog-wide. */
   override postProcess = true;
 
-  /** The original `~X~`-marked label. */
+  /** The original tilde-marked label. */
   protected readonly raw: string;
-  /** Parsed hotkey (lowercase char + column) for `Alt-<hotkey>` matching. */
+  /** Parsed hotkey (letter + column) for `Alt`+hotkey matching. */
   protected readonly parsed: ParsedLabel;
   /** Command emitted on activation, if any. */
   protected readonly command?: string;
@@ -65,9 +80,10 @@ export class Button extends View {
     this.clickHandler = opts.onClick;
     this.isDefault = opts.default ?? false;
     this.disabledOpt = opts.disabled ?? false;
-    this.state.disabled = this.resolveDisabled(); // initial value (drives focusability)
+    this.state.disabled = this.resolveDisabled(); // initial value also controls focusability
     if (typeof this.disabledOpt === 'function') {
-      // Reflect a reactive disabled getter into `state.disabled` (focusability) + repaint (PA-1).
+      // For a reactive `disabled`, keep the flag (and thus focusability + greying) in sync with the
+      // getter's signals. Bind on mount, when this view's reactive scope exists.
       this.onMount(() =>
         this.bind(
           () => this.resolveDisabled(),
@@ -79,14 +95,14 @@ export class Button extends View {
     }
   }
 
-  /** Resolve the disabled flag (evaluating the getter if reactive). */
+  /** Resolve the disabled flag (evaluating the getter if it is reactive). */
   protected resolveDisabled(): boolean {
     return typeof this.disabledOpt === 'function' ? this.disabledOpt() : this.disabledOpt;
   }
 
   /**
-   * Paint the centered label with the state face role + the TV block-glyph drop-shadow, mirroring
-   * `TButton::drawState` for the color palette (`showMarkers` off → no `[ ]` brackets).
+   * Paint the centered label on a raised face with a block-glyph drop shadow down the right column
+   * and across the bottom row. A pressed button shifts its face right one cell and hides the shadow.
    *
    * @param ctx The clipped, view-local paint context.
    */
@@ -95,54 +111,51 @@ export class Button extends View {
     const faceRole = disabled
       ? 'buttonDisabled'
       : this.state.focused
-        ? 'buttonFocused' // TV "selected" (sfActive + sfSelected)
+        ? 'buttonFocused'
         : this.isDefault
           ? 'buttonDefault'
-          : 'button'; // TV "normal"
+          : 'button';
     const face = ctx.color(faceRole);
-    // HR-52 (tbutton.cpp:107-108): a disabled button resolves BOTH attribute nibbles to the disabled
-    // color — the `~hot~` run is drawn in the face role, not the bright shortcut accent. Only the
-    // enabled accent takes the accelerator-overlay underline (FR-6: a disabled hotkey never lights up).
+    // A disabled button draws its hotkey run in the plain face colour — a greyed hotkey never lights up.
     const accent = disabled ? face : accentStyle(ctx.color('buttonShortcut'), ctx.revealAccelerators);
-    const shadow = ctx.color('buttonShadow'); // TV cShadow = getColor(8) = 0x70 (black-on-lightGray)
+    const shadow = ctx.color('buttonShadow');
     const down = this.pressed;
     const { width: w, height: h } = ctx.size;
-    if (w < 2 || h < 2) return; // TV needs ≥2 rows: content row(s) + the bottom shadow row
+    if (w < 2 || h < 2) return; // needs at least a content row plus the bottom shadow row
     const s = w - 1; // last column index
-    const titleRow = Math.floor(h / 2) - 1; // TV T = size.y/2 - 1
-    const bottomFill = down ? ' ' : '\u2580'; // ▀ shadows[2] up; blank when pressed (no shadow)
+    const titleRow = Math.floor(h / 2) - 1; // vertically centre the label
+    const bottomFill = down ? ' ' : '\u2580'; // shadow along the bottom; blank when pressed
 
-    // Content rows y = 0..h-2 (all but the bottom shadow row).
+    // Every content row (all but the bottom shadow row).
     for (let y = 0; y <= h - 2; y += 1) {
-      ctx.fillRect(0, y, w, 1, ' ', face); // moveChar(0,' ',cButton,size.x)
-      ctx.text(0, y, ' ', shadow); // putAttribute(0,cShadow): col 0 → shadow (grey on a grey dialog)
+      ctx.fillRect(0, y, w, 1, ' ', face);
+      ctx.text(0, y, ' ', shadow); // left edge sits on the shadow colour
       let titleIndent: number;
       if (down) {
-        ctx.text(1, y, ' ', shadow); // putAttribute(1,cShadow): pressed shifts the face right one cell
+        ctx.text(1, y, ' ', shadow); // pressed: the face shifts one cell to the right
         titleIndent = 2;
       } else {
-        ctx.text(s, y, y === 0 ? '\u2584' : '\u2588', shadow); // ▄█ shadows[0]/[1] down the right column
+        ctx.text(s, y, y === 0 ? '\u2584' : '\u2588', shadow); // shadow glyphs down the right column
         titleIndent = 1;
       }
       if (y === titleRow) this.drawTitle(ctx, y, s, titleIndent, face, accent);
     }
-    // Bottom shadow row: two leading spaces then the fill across cols 2..s (tbutton.cpp:162-163).
+    // Bottom shadow row: two leading spaces, then the shadow fill across the remaining columns.
     const by = h - 1;
     ctx.fillRect(0, by, Math.min(2, w), 1, ' ', shadow);
     if (s - 1 > 0) ctx.fillRect(2, by, s - 1, 1, bottomFill, shadow);
   }
 
   /**
-   * Draw the centered label on `row` (TV `drawTitle`, `tbutton.cpp:71-99`): with `l =
-   * (s - textWidth - 1) / 2` clamped to ≥ 1, place the `~hotkey~`-accented runs starting at column
-   * `indent + l`. No brackets — TV's `[ ]` markers are `showMarkers`-only (monochrome).
+   * Draw the label centered on `row`, with the hotkey run accented. There are no `[ ]` brackets in
+   * this rendering.
    *
    * @param ctx    The clipped, view-local paint context.
    * @param row    The title row (view-local y).
    * @param s      The last column index (`width - 1`).
-   * @param indent TV's `i` — 1 normally, 2 when pressed (the face shifts right).
+   * @param indent Left indent — 1 normally, 2 when pressed (the face shifts right).
    * @param face   The resolved face style for non-hotkey glyphs.
-   * @param accent The resolved `buttonShortcut` style for the `~hotkey~` glyph.
+   * @param accent The resolved accent style for the hotkey glyph.
    */
   protected drawTitle(
     ctx: DrawContext,
@@ -160,13 +173,14 @@ export class Button extends View {
   }
 
   /**
-   * Handle activation: click (down-then-up inside the face), `Space` (focused), `Alt-<hotkey>`, and
-   * (default) unconsumed `Enter`. A disabled button is fully inert. Mirrors `TButton::handleEvent`.
+   * Handle activation: a click (press then release inside the face), `Space` while focused, this
+   * button's `Alt`+hotkey, and (for a default button) an unconsumed `Enter`. A disabled button is
+   * completely inert.
    *
    * @param ev The dispatch envelope (carries `emit`/`local` during real dispatch).
    */
   override onEvent(ev: DispatchEvent): void {
-    if (this.state.disabled) return; // greyed + inert (PA-1; also non-focusable)
+    if (this.state.disabled) return; // greyed and inert (and also non-focusable)
     const inner = ev.event;
 
     if (inner.type === 'mouse') {
@@ -197,16 +211,15 @@ export class Button extends View {
   }
 
   /**
-   * Whether a view-local point lies in the clickable face. HR-56 (`tbutton.cpp:177-180`
-   * `clickRect.a.x++`): column 0 (the shadow-adjacent edge) is inert; the last column + last row (the
-   * drop-shadow) are excluded too.
+   * Whether a view-local point lies in the clickable face. Column 0 (the shadow-adjacent edge) is
+   * inert, and the last column and last row (the drop shadow) are excluded too.
    */
   protected inFace(local: DispatchEvent['local']): boolean {
     if (local === undefined) return false;
     return local.x >= 1 && local.y >= 0 && local.x < this.bounds.width - 1 && local.y < this.bounds.height - 1;
   }
 
-  /** Emit the command (if any) and fire `onClick` (PA-1). A no-op when disabled (guarded by caller). */
+  /** Emit the command (if any) and fire `onClick`. Only ever called for an enabled button. */
   protected activate(ev: DispatchEvent): void {
     if (this.command !== undefined) ev.emit?.(this.command);
     this.clickHandler?.();

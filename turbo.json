@@ -16,6 +16,7 @@
     },
     "check:deps": {
       "dependsOn": ["build"]
-    }
+    },
+    "check:docs": {}
   }
 }

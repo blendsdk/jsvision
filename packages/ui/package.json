@@ -26,7 +26,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit",
     "test:e2e": "vitest run --project e2e --passWithNoTests",
-    "check:deps": "node ../../scripts/check-no-native-deps.mjs ."
+    "check:deps": "node ../../scripts/check-no-native-deps.mjs .",
+    "check:docs": "node ../../scripts/check-jsdoc.mjs ."
   },
   "dependencies": {
     "@jsvision/core": "*"
