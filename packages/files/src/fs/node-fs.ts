@@ -1,15 +1,23 @@
 /**
- * `nodeFileSystem` — the default {@link FileSystem} over Node built-ins (`node:fs`/`node:path`/
- * `node:os`), zero runtime deps (AC-1). Every disk read is synchronous (PA-2) and guarded so a bad
- * entry never crashes a listing (AC-12); symlinks are `lstat`-tagged with target `size`/`mtime` and a
- * `broken` flag (AC-13). `.js` specifiers per NodeNext.
+ * The default {@link FileSystem}, backed by Node's `fs`/`path`/`os` built-ins with no extra
+ * dependencies. This is what the file dialogs use when you do not inject your own filesystem.
+ *
+ * Every read is synchronous and guarded, so a single unreadable entry never crashes a listing.
+ * Symlinks are reported as symlinks, carrying their target's `size`/`mtime` and a `broken` flag when
+ * the target cannot be resolved.
+ *
+ * @example
+ * import { FileDialog, nodeFileSystem } from '@jsvision/files';
+ *
+ * // The default — passing `nodeFileSystem` explicitly is equivalent to omitting `fs`.
+ * const dlg = new FileDialog({ fs: nodeFileSystem });
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import type { DirEntry, FileStat, FileSystem } from './types.js';
 
-/** Map a Node `Stats`-like kind to our discriminated `FileStat.kind`. */
+/** Reduce a Node `Stats` to the discriminated `FileStat.kind`. */
 function kindOf(st: fs.Stats): FileStat['kind'] {
   if (st.isSymbolicLink()) return 'symlink';
   if (st.isDirectory()) return 'dir';
@@ -17,15 +25,16 @@ function kindOf(st: fs.Stats): FileStat['kind'] {
 }
 
 /**
- * Build a {@link DirEntry} for one directory child. `lstat` tags the entry (so a symlink stays a
- * symlink); for a symlink the target is `stat`-ed for `size`/`mtime`, and an unresolvable target sets
- * `broken`. Any stat failure is caught by the caller (the entry is skipped).
+ * Build a {@link DirEntry} for one directory child. `lstat` tags the entry so a symlink stays a
+ * symlink; for a symlink the target is followed for `size`/`mtime`, and an unresolvable target is
+ * flagged `broken`. A stat failure propagates so the caller can skip just this entry.
  */
 function entryFor(dirPath: string, name: string): DirEntry {
   const full = path.join(dirPath, name);
   const ls = fs.lstatSync(full);
-  const hidden = name.startsWith('.'); // dotfile (POSIX); the Windows hidden attribute isn't portably
-  // readable without a native dep, so dotfile detection is used on all platforms (seam-abstracted).
+  // The Windows hidden attribute is not portably readable without a native dependency, so dotfile
+  // detection is used on every platform; inject a custom filesystem if you need the true attribute.
+  const hidden = name.startsWith('.');
   if (ls.isSymbolicLink()) {
     try {
       const target = fs.statSync(full); // follows the link
@@ -49,17 +58,17 @@ function entryFor(dirPath: string, name: string): DirEntry {
   };
 }
 
-/** The default filesystem — `node:fs`/`node:path`/`node:os` only. */
+/** The default filesystem — Node's `fs`/`path`/`os` only. */
 export const nodeFileSystem: FileSystem = {
   sep: path.sep,
   readDir(dirPath: string): DirEntry[] {
-    const names = fs.readdirSync(dirPath); // throws if the directory itself can't be opened (AC-12)
+    const names = fs.readdirSync(dirPath); // throws if the directory itself cannot be opened
     const out: DirEntry[] = [];
     for (const name of names) {
       try {
         out.push(entryFor(dirPath, name));
       } catch {
-        // A permission/stat error on ONE entry skips it, never fails the whole listing (AC-12).
+        // A permission/stat error on a single entry skips it, never failing the whole listing.
       }
     }
     return out;
@@ -93,7 +102,7 @@ export const nodeFileSystem: FileSystem = {
     }
     return ['/'];
   },
-  // RD-08 PA-6 content methods — plain sync node:fs, UTF-8 text.
+  // File content methods — plain synchronous UTF-8 reads and writes.
   readFile: (p: string) => fs.readFileSync(p, 'utf8'),
   writeFile: (p: string, text: string) => {
     fs.writeFileSync(p, text, 'utf8');

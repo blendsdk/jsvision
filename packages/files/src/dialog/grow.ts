@@ -1,33 +1,28 @@
 /**
- * `growRect` — the Turbo Vision `growMode` edge-anchoring math, a faithful port of
- * `TView::calcBounds` (`source/tvision/tview.cpp:134-158`) and its `grow`/`fitToLimits` helpers
- * (`:117-132`). Used by the resizable file dialogs to reposition each child when the dialog grows.
+ * `growRect` — the edge-anchoring math that keeps a child in place as its container is resized. Each
+ * child declares a {@link GrowMode} (which of its four edges should follow the container's growth);
+ * this function returns the child's new rectangle after the container changed size. The resizable file
+ * dialogs use it to reflow their fields, list, and buttons on a drag-resize.
  *
- * TV decode (GATE-1):
- *   • `growMode` flags (`include/tvision/views.h:93-98`): `gfGrowLoX=0x01` (left edge follows),
- *     `gfGrowLoY=0x02` (top), `gfGrowHiX=0x04` (right), `gfGrowHiY=0x08` (bottom), `gfGrowAll=0x0f`.
- *     `gfGrowRel=0x10` (proportional, for zoom) is NOT modelled — no file-dialog child uses it.
- *   • `calcBounds` moves each flagged edge by the owner's per-axis size delta `d`
- *     (`grow(i){ i += d }`, `:130`), then `fitToLimits` clamps the extent to `[0, owner.size]`
- *     (`sizeLimits` → `min=0`, `max=owner.size` for a non-`gfFixed` view, `:829-836`).
- *   • TV rects are `TRect{a, b}` half-open (`b` exclusive); our {@link Rect} is
- *     `{x, y, width, height}`, so `a.x = x`, `b.x = x + width`.
+ * Each flagged edge moves by the container's per-axis size change, then the resulting width/height is
+ * clamped into `[0, container size]` so a child can never bleed past the frame. In practice the
+ * dialogs only ever grow (they floor their minimum at the design size), but negative deltas work too.
  *
- * Pure: no view/DOM/reactive access. `.js` per NodeNext.
+ * Pure — no view, DOM, or reactive access.
  */
 import type { Rect } from '@jsvision/ui';
 
-/** Turbo Vision `growMode` bit flags (`views.h:93-98`). */
+/** Bit flags selecting which edges of a child follow its container's size change. Combine with `|`. */
 export const GrowMode = {
-  /** The left edge follows the owner's width change (`gfGrowLoX`). */
+  /** The left edge follows the container's width change. */
   LoX: 0x01,
-  /** The top edge follows the owner's height change (`gfGrowLoY`). */
+  /** The top edge follows the container's height change. */
   LoY: 0x02,
-  /** The right edge follows the owner's width change (`gfGrowHiX`). */
+  /** The right edge follows the container's width change. */
   HiX: 0x04,
-  /** The bottom edge follows the owner's height change (`gfGrowHiY`). */
+  /** The bottom edge follows the container's height change. */
   HiY: 0x08,
-  /** All four edges follow (`gfGrowAll`). */
+  /** All four edges follow. */
   All: 0x0f,
 } as const;
 
@@ -37,17 +32,16 @@ function clamp(n: number, lo: number, hi: number): number {
 }
 
 /**
- * Reposition `base` for an owner that grew by `(deltaW, deltaH)` cells, moving each edge selected by
- * `growMode` (TV `TView::calcBounds`). Grow-only in practice (the file dialogs pin their minimum to
- * the design size), but negative deltas are handled by the same edge math + extent clamp.
+ * Reposition `base` for a container that grew by `(deltaW, deltaH)` cells, moving each edge selected
+ * by `growMode`. Grow-only in practice, but negative deltas are handled by the same math and clamp.
  *
- * @param base     The child's design-size rect (owner-relative, `padding:0`).
- * @param growMode The OR of {@link GrowMode} flags governing which edges follow.
- * @param deltaW   The owner's width change (new − design), in cells.
- * @param deltaH   The owner's height change, in cells.
- * @param ownerW   The owner's current width (the extent clamp ceiling, TV `sizeLimits` max).
- * @param ownerH   The owner's current height.
- * @returns A fresh repositioned `Rect` (never mutates `base`).
+ * @param base     The child's design-size rect, relative to the container origin.
+ * @param growMode The OR of {@link GrowMode} flags choosing which edges follow.
+ * @param deltaW   The container's width change (current − design), in cells.
+ * @param deltaH   The container's height change, in cells.
+ * @param ownerW   The container's current width (the width clamp ceiling).
+ * @param ownerH   The container's current height (the height clamp ceiling).
+ * @returns A fresh repositioned rect; `base` is never mutated.
  */
 export function growRect(
   base: Rect,
@@ -57,19 +51,19 @@ export function growRect(
   ownerW: number,
   ownerH: number,
 ): Rect {
-  // Work in half-open {a, b} edge space (TV), b exclusive.
+  // Work in edge space: track each edge's coordinate (right/bottom are exclusive).
   let ax = base.x;
   let bx = base.x + base.width;
   let ay = base.y;
   let by = base.y + base.height;
 
-  // grow(): each flagged edge moves by the owner's per-axis delta (non-gfGrowRel ⇒ `i += d`).
+  // Move each flagged edge by the container's per-axis size change.
   if (growMode & GrowMode.LoX) ax += deltaW;
   if (growMode & GrowMode.HiX) bx += deltaW;
   if (growMode & GrowMode.LoY) ay += deltaH;
   if (growMode & GrowMode.HiY) by += deltaH;
 
-  // fitToLimits: clamp the extent to [0, owner.size] (min=0, max=owner.size); the origin is preserved.
+  // Clamp the resulting extent into [0, container size] so the child never overflows the frame.
   const width = clamp(bx - ax, 0, ownerW);
   const height = clamp(by - ay, 0, ownerH);
   return { x: ax, y: ay, width, height };

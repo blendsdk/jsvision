@@ -1,6 +1,6 @@
 /**
- * Files editor barrel (RD-08 03-06) — `FileEditor`, the `openFileInEditor` factory (PF-001), and
- * the files-owned `FileCommands` (PF-004).
+ * The file-editor pieces: the file-bound {@link FileEditor}, the {@link openFileInEditor} factory that
+ * opens a file in a ready-made window, and the {@link FileCommands} names for menu/status wiring.
  */
 export { FileEditor } from './file-editor.js';
 export type { FileEditorOptions } from './file-editor.js';
