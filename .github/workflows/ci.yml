@@ -4,8 +4,9 @@
 # publish/deploy step here (publish-with-provenance comes at a later milestone).
 #
 # Cross-platform matrix: 3 OSes × 3 active-LTS Node versions = 9 cells. Every cell
-# installs the workspace (yarn), lints, and runs `turbo run typecheck build test check:docs`
-# across the packages, then guards the dependency policy, the lockstep versions, the
+# installs the workspace (yarn), typechecks each package (fail-fast), then runs
+# `yarn verify` (lint + turbo typecheck/build/unit-tests/docs-guard) across the packages,
+# then guards the dependency policy, the lockstep versions, the
 # audit, and the package file set. The end-to-end suites (restore-on-exit, signals,
 # pack-and-install, probe) run on POSIX only — their SIGTERM/SIGHUP cases are POSIX,
 # and Windows acceptance is deferred (RD-09 DEF-2). No secrets are referenced.
@@ -36,6 +37,12 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+
+      # Per-package typecheck up front (turbo builds each package's deps via `^build`, then
+      # `tsc --noEmit` per package) so a type error fails here in seconds with clear per-package
+      # attribution, before the heavier build/test in Verify. Verify re-runs it as a cache hit.
+      - name: Typecheck (per package, fail-fast)
+        run: yarn typecheck
 
       - name: 'Verify (turbo: lint + typecheck + build + unit tests + docs guard across packages)'
         run: yarn verify
