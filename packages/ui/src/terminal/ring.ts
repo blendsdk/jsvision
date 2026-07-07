@@ -1,21 +1,21 @@
 /**
- * `LineRing` — the TV terminal ring buffer's observable behavior over UTF-16 code units
- * (RD-08 03-05, AR-257/PF-007).
+ * A fixed-capacity ring of text lines that keeps only the most recent output.
  *
- * Decode (`textview.cpp`, re-verified 2026-07-07 @ 57b6f56): `bufSize = min(32000, aBufSize)`
- * (`:66`); insertion evicts whole OLDEST lines until the write fits (`while(!canInsert(count))
- * queBack = nextLine(queBack)` `:212-217` — never a partial line at the head); a single write
- * longer than the buffer keeps only its LAST `bufSize − 1` units (the `do_sputn` tail-trim,
- * `:202-206` — PF-009 anchor); `\n` completes a line (`:208-210`). The raw byte queue +
- * `bufDec`/`bufInc` pointer arithmetic (`:79-100`) becomes an array of line strings + a running
- * code-unit total — the same observable semantics without byte math. Units are UTF-16 code units
- * (PF-007): each completed line costs `length + 1` (its `\n`), an open tail costs `length`.
+ * The capacity is measured in UTF-16 code units, not lines: a completed line
+ * costs `length + 1` (it counts its trailing `\n`), and an unterminated tail
+ * costs `length`. When a write would overflow the cap, the oldest **whole** lines
+ * are dropped until it fits — the head is never left as a partial line. A single
+ * write longer than the whole buffer keeps only its last `capacity − 1` code
+ * units. `\n` completes a line.
+ *
+ * This is the storage behind {@link Terminal}; most callers use `Terminal`
+ * directly rather than a `LineRing`.
  */
 
-/** TV `bufSize` default (`textview.cpp:66`). */
+/** Default capacity in UTF-16 code units. */
 const DEFAULT_CAPACITY = 32000;
 
-/** A capacity-capped line ring with TV's whole-line eviction. */
+/** A capacity-capped ring of text lines that evicts the oldest whole lines to stay under its cap. */
 export class LineRing {
   private readonly capacity: number;
   private lines: string[] = [];
@@ -25,7 +25,7 @@ export class LineRing {
   private total = 0;
 
   /**
-   * @param capacity Code-unit cap (default 32000, AR-257; values < 1 clamp to 1 — degenerate but defined).
+   * @param capacity Code-unit cap (default 32000; values < 1 clamp to 1 — degenerate but defined).
    */
   constructor(capacity?: number) {
     this.capacity = Math.max(1, Math.trunc(capacity ?? DEFAULT_CAPACITY) || 1);
@@ -35,7 +35,8 @@ export class LineRing {
   write(text: string): void {
     let t = text;
     if (t === '') return;
-    if (t.length > this.capacity) t = t.slice(-(this.capacity - 1)); // the do_sputn tail-trim
+    // A single write bigger than the whole buffer can't fit — keep only its most recent tail.
+    if (t.length > this.capacity) t = t.slice(-(this.capacity - 1));
     while (this.lines.length > 0 && this.total + t.length > this.capacity) this.evictFirst();
 
     const segs = t.split('\n');
@@ -79,7 +80,7 @@ export class LineRing {
     this.total = 0;
   }
 
-  /** Evict the OLDEST line whole (the `nextLine(queBack)` step). */
+  /** Evict the OLDEST line whole. */
   private evictFirst(): void {
     const first = this.lines.shift();
     if (first === undefined) return;

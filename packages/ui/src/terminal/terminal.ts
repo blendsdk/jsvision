@@ -1,22 +1,18 @@
 /**
- * `Terminal` — the streaming log sink: a faithful `TTerminal` view over {@link LineRing}
- * (RD-08 03-05, AR-257).
+ * A passive, scrolling log view — a place to stream program output, log lines, or
+ * command results into. Feed it with {@link Terminal.write}/{@link Terminal.writeLine};
+ * it keeps the most recent output (backed by a fixed-capacity {@link LineRing})
+ * and shows the newest lines at the bottom.
  *
- * Decode (`textview.cpp:117-240`, re-verified 2026-07-07 @ 57b6f56): the draw walks line
- * boundaries backward from the queue front (`prevLines`, `ttprvlns.cpp:18-47`) and auto-scrolls
- * so the LAST line stays visible (`scrollTo(0, screenLines+1)` `:235` — top-anchored until the
- * content overflows, then bottom-pinned); colour `mapColor(1)` (`:125`) → `cpScroller "\x06"`
- * (`tscrolle.cpp:35`) → blue window → **`terminalNormal` `0x1E`** (PA-8). The C++
- * `streambuf`/`otstream` surface is replaced by `write()`/`writeLine()` (AR-257/AR-263).
- *
- * Reactive: a version signal bumps per write → one coalesced repaint. Content is HOSTILE — every
- * cell passes the `DrawContext` write-time sanitize (AC-17). Scroll-back is WHEEL-ONLY (PF-006:
- * key events reach only the focused chain, `dispatch.ts:13`, and this view is non-focusable —
- * TV's keyboard scrolling came from attached scrollbars our Terminal doesn't have), snapping back
- * to the bottom on the next write.
- * GATE-2 AFTER-diff (2026-07-07): rendered headlessly and diffed against the decode — bottom-anchor,
- * eviction, colour byte all match. No draw mismatch.
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Behavior worth knowing:
+ * - **Auto-scrolls to the bottom.** New lines appear at the bottom; a fresh
+ *   write always snaps the view back to the newest line.
+ * - **Scroll-back is mouse-wheel only.** The view is not focusable and takes no
+ *   keyboard input, so scroll up with the wheel to review older lines; the next
+ *   write jumps back to the bottom.
+ * - **Reactive.** Each write coalesces into a single repaint on the next frame.
+ * - **Safe with untrusted text.** Incoming text may contain control bytes; every
+ *   cell is sanitized as it is drawn, so hostile output can't corrupt the screen.
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -26,15 +22,31 @@ import { LineRing } from './ring.js';
 /** Wheel scroll-back step (the house 3-line wheel unit). */
 const WHEEL_STEP = 3;
 
-/** Construction options. */
+/** Options for {@link Terminal}. */
 export interface TerminalOptions {
-  /** Ring capacity in UTF-16 code units (default 32000, AR-257/PF-007). */
+  /** How much scroll-back to retain, in UTF-16 code units (default 32000). Older lines are dropped. */
   capacity?: number;
 }
 
-/** The passive, non-focusable streaming log sink. */
+/**
+ * A scrolling log-output view. Write text into it; it shows the newest lines,
+ * auto-scrolls to the bottom, and lets the user wheel back through history.
+ *
+ * @example
+ * import { Group, Terminal } from '@jsvision/ui';
+ *
+ * const group = new Group();
+ * const log = new Terminal({ capacity: 8000 });
+ * log.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 60, height: 10 } };
+ * group.add(log);
+ *
+ * log.writeLine('Build started...');
+ * log.write('compiling');
+ * log.write('.'.repeat(3) + '\n');
+ * log.writeLine('Done.');
+ */
 export class Terminal extends View {
-  override focusable = false; // PF-006 — a log sink never joins the Tab order
+  override focusable = false; // a passive log sink never joins the Tab order
 
   /** @internal The ring store. */
   protected readonly ring: LineRing;
@@ -46,6 +58,8 @@ export class Terminal extends View {
   constructor(options: TerminalOptions = {}) {
     super();
     this.ring = new LineRing(options.capacity);
+    // Repaint whenever content changes or the user scrolls. Bound on mount because the view's
+    // reactive scope doesn't exist yet in the constructor.
     this.onMount(() => {
       this.bind(() => [this.version(), this.scrollBack()] as const);
     });
@@ -70,7 +84,7 @@ export class Terminal extends View {
     this.version.set(this.version() + 1);
   }
 
-  /** Render the visible window: the newest lines, auto-scrolled (the `:235` decode). */
+  /** Render the visible window: the newest lines, pinned to the bottom (offset up by any scroll-back). */
   override draw(ctx: DrawContext): void {
     const style = ctx.color('terminalNormal');
     ctx.fill(' ', style);
@@ -80,11 +94,11 @@ export class Terminal extends View {
     const back = Math.min(this.scrollBack(), maxBack);
     const start = Math.max(0, total - h - back);
     for (let y = 0; y < h && start + y < total; y++) {
-      ctx.text(0, y, this.ring.line(start + y), style); // sanitized at the write boundary (AC-17)
+      ctx.text(0, y, this.ring.line(start + y), style); // ctx.text sanitizes control bytes as it writes
     }
   }
 
-  /** Wheel-only scroll-back (PF-006); mouse buttons are inert on a passive sink. */
+  /** Scroll-back is mouse-wheel only; mouse buttons are inert on this passive sink. */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type !== 'wheel') return;
@@ -102,8 +116,21 @@ export class Terminal extends View {
 }
 
 /**
- * The Should-Have logger-sink adapter (PA-4): hand this to core `createLogger`-style consumers so
- * their lines stream into the terminal view.
+ * Wrap a {@link Terminal} as a plain `(text) => void` sink, so anything that
+ * writes strings to a callback — a logger, a subprocess `stdout` handler, a
+ * progress reporter — can stream into the view.
+ *
+ * @param term The terminal view to append into.
+ * @returns A function that writes each string into `term`.
+ * @example
+ * import { Terminal, terminalWriter } from '@jsvision/ui';
+ *
+ * const log = new Terminal();
+ * const write = terminalWriter(log);
+ *
+ * // Feed it from anywhere that emits text lines.
+ * write('server listening on :8080\n');
+ * childProcess.stdout.on('data', (chunk) => write(String(chunk)));
  */
 export function terminalWriter(term: Terminal): (s: string) => void {
   return (s) => term.write(s);

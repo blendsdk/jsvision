@@ -1,11 +1,11 @@
 /**
- * Intrinsic ("natural") sizing for the layout engine (AR-21, PA-5).
+ * Intrinsic ("natural") sizing for the layout engine.
  *
- * Resolves the content size an `auto` box wants, so the layout pass can
- * pre-resolve `auto` children to a fixed cell count before the integer track
- * solve (PA-5). A box with a `measure` callback reports its own size (e.g. a
- * label measuring its text); a container without `measure` derives its size
- * from its children along its own `direction`. Pure and recursive over the tree.
+ * Resolves the content size an `auto` box wants, so the layout pass can turn
+ * `auto` children into a concrete cell count before it shares out flexible
+ * space. A box with a `measure` callback reports its own size (e.g. a label
+ * measuring its text); a container without `measure` derives its size from its
+ * children along its own `direction`. Pure and recursive over the tree.
  */
 import type { LayoutBox, Size2D } from './types.js';
 import { crossOf, mainOf, normalizeProps, sizeFromAxis, toCells } from './types.js';
@@ -13,7 +13,7 @@ import { crossOf, mainOf, normalizeProps, sizeFromAxis, toCells } from './types.
 /**
  * The natural (content) size a box wants, used to resolve `auto` sizing.
  *
- * Resolution order (AR-21):
+ * Resolution order:
  * 1. **`measure` provided** — return `box.measure(available)`, clamped to
  *    integers ≥ 0. The engine learns a widget's size without knowing about it.
  * 2. **Container, no `measure`** — derive along the box's own `direction`:
@@ -44,9 +44,9 @@ export function naturalSize(box: LayoutBox, available: Size2D): Size2D {
     height: toCells(available.height - padding.top - padding.bottom),
   };
 
-  // HR-33: only flow children contribute to the intrinsic size — absolute children reserve no flow
-  // space (mirrors the flow filter in layout.ts:74), so an `auto` container with a large absolute
-  // child measures to its flow content, not the overlay.
+  // Only flow children contribute to the intrinsic size — an absolute child is lifted out of the
+  // flow and reserves no space, so an `auto` container with a large absolute overlay still measures
+  // to its flowing content, not to the overlay.
   const flowChildren = box.children.filter((child) => normalizeProps(child.props).position !== 'absolute');
 
   let mainExtent = 0;
