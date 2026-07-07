@@ -1,49 +1,45 @@
 /**
- * Modal stack (RD-04, AR-53, PA-4). An async modal: `begin` pushes a frame, saves the outer focus,
- * and focuses into the modal subtree; `end` pops (LIFO), restores the saved focus, and resolves the
- * matching `execView` promise. While the stack is non-empty the dispatch + hit-test scope is the top
- * frame's `view` subtree, so the outer tree is inert (capture, AR-53). `endModal` is called
- * **explicitly** by app/modal handlers (PA-4) — RD-04 ships no built-in Esc/cancel wiring.
+ * The modal-window stack backing the event loop's `execView`/`endModal`.
  *
- * The modal manager mutates focus through the injected focus manager (its pure mutations); the loop
- * wraps `begin`/`end` in a `runTick` so opening/closing a modal paints exactly one frame (PA-11,
- * PF-009).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Opening a modal saves whatever was focused, pushes the modal onto the stack, and focuses into the
+ * modal's subtree. While the stack is non-empty, input is confined to the top modal's subtree, so
+ * the rest of the tree is inert. Closing pops the top modal (last-in, first-out), restores the saved
+ * focus, and resolves the promise returned by `execView`. Modals are closed explicitly (there is no
+ * built-in Esc/cancel here — a `Dialog` adds that). This module is internal to the loop.
  */
 import type { View } from '../view/index.js';
 
-/** A pushed modal: the modal subtree, the outer focus to restore, and the `execView` resolver. */
+/** One open modal: its subtree, the focus to restore when it closes, and its `execView` resolver. */
 interface ModalFrame {
   readonly view: View;
   readonly savedFocus: View | null;
-  /** The `execView<R>` resolver, stored behind `unknown` at this heterogeneous-stack boundary. */
+  /** The `execView<R>` resolver, stored as `unknown` because the stack mixes result types. */
   readonly resolve: (result: unknown) => void;
 }
 
-/** The focus seams the modal manager needs (the focus manager's pure mutations). */
+/** The focus operations the modal manager needs from the focus manager. */
 export interface ModalFocus {
   getFocused(): View | null;
   focusInto(view: View): void;
   focusView(view: View): void;
 }
 
-/** Loop-owned modal stack. `isActive()` ⇒ dispatch/hit-test confine to `topView()`. */
+/** The open-modal stack. While `isActive()`, input is confined to `topView()`. */
 export interface ModalManager {
-  /** Whether a modal is active (the stack is non-empty). */
+  /** Whether any modal is open. */
   isActive(): boolean;
-  /** The top modal subtree root (the dispatch/hit-test scope), or `null` when inactive. */
+  /** The top modal's subtree root (where input is confined), or `null` when none is open. */
   topView(): View | null;
-  /** Open `view` as a modal: save the outer focus, push the frame, and focus into the modal (AR-53). */
+  /** Open `view` as a modal: save the current focus, push it, and focus into it. */
   begin<R>(view: View, resolve: (result: R) => void): void;
-  /** Close the top modal (LIFO): restore the saved focus and resolve its promise; empty ⇒ no-op (AR-53). */
+  /** Close the top modal: restore the saved focus and resolve its promise. A no-op when none is open. */
   end<R>(result: R): void;
 }
 
 /**
- * Create a modal manager over the injected focus seams.
+ * Create a modal manager over the given focus operations.
  *
- * @param focus The focus manager's pure mutations (save/restore + focus-into).
+ * @param focus The focus operations used to save, restore, and focus into modals.
  * @returns A {@link ModalManager}.
  */
 export function createModalManager(focus: ModalFocus): ModalManager {
@@ -58,17 +54,16 @@ export function createModalManager(focus: ModalFocus): ModalManager {
 
   const begin = <R>(view: View, resolve: (result: R) => void): void => {
     const savedFocus = focus.getFocused();
-    // Heterogeneous stack: each frame carries its own R. Erase the resolver to `unknown` here;
-    // `end(result)` passes the caller-supplied result back through it (a controlled type-erasure
-    // boundary, not an `as any`/`as unknown` bypass).
+    // Each modal on the stack resolves with its own result type; erase the resolver to `unknown`
+    // here and pass the caller's result back through it in `end`.
     stack.push({ view, savedFocus, resolve: resolve as (result: unknown) => void });
-    focus.focusInto(view); // focus the modal's first focusable (or its saved current), AR-53
+    focus.focusInto(view); // focus the modal's first focusable child (or the one it last had)
   };
 
   const end = <R>(result: R): void => {
     const frame = stack.pop();
-    if (frame === undefined) return; // empty stack → no-op (AR-53)
-    // Restore the outer focus; focusView is a no-op if it is no longer focusable (AR-48, PA-5).
+    if (frame === undefined) return; // nothing open — ignore
+    // Restore the focus that was saved when this modal opened; a no-op if that view is gone.
     if (frame.savedFocus !== null) focus.focusView(frame.savedFocus);
     frame.resolve(result);
   };
