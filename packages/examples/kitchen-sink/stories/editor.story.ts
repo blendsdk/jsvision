@@ -43,7 +43,7 @@ export const editorStory: Story = {
     g.add(
       at(
         new Text(
-          () => `line:col ${ed.curPos().line}:${ed.curPos().col} · ${ed.modified() ? 'modified ☼' : 'unmodified'}`,
+          () => `line:col ${ed.curPos().line}:${ed.curPos().col} · ${ed.modified() ? 'modified *' : 'unmodified'}`,
         ),
         17,
         1 + edH,

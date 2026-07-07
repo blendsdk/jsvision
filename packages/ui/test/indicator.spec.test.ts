@@ -61,15 +61,19 @@ test('ST-24: " 1:1 " and " 12:5 " sit right-aligned with the colon at column 8',
   expect(row.slice(5, 11)).toBe(' 12:5 ');
 });
 
-test('ST-24: the modified marker ☼ paints at column 0; colours are indicatorNormal 0x1F', () => {
+test('ST-24: the modified marker paints at column 0; colours are indicatorNormal 0x1F', () => {
+  // Fidelity-oracle correction (2026-07-07): CP437 0x0F is ☼ U+263C (tvtext1.cpp / tindictr.cpp
+  // :56-57), but U+263C is EAW-ambiguous — stored 2 cells, rendered 1 by most fonts, leaving a
+  // hole in the bottom border. Per the fidelity directive's unambiguous-narrow rule the marker
+  // is `*`, one cell like TV's one DOS cell.
   const { loop, ind } = mountIndicator();
   ind.setValue({ line: 3, col: 2 }, true);
   loop.renderRoot.flush();
   const buf = loop.renderRoot.buffer();
-  expect(buf.get(0, 1)?.char).toBe('☼'); // CP437 0x0F → U+263C (EAW-ambiguous: spans cols 0-1 here)
-  expect(buf.get(2, 1)?.char).toBe('═'); // the fill resumes after the wide marker
-  expect(buf.get(2, 1)?.fg).toBe(defaultTheme.indicatorNormal.fg);
-  expect(buf.get(2, 1)?.bg).toBe(defaultTheme.indicatorNormal.bg);
+  expect(buf.get(0, 1)?.char).toBe('*'); // CP437 0x0F, narrow-substituted
+  expect(buf.get(1, 1)?.char).toBe('═'); // the fill resumes immediately — no continuation hole
+  expect(buf.get(1, 1)?.fg).toBe(defaultTheme.indicatorNormal.fg);
+  expect(buf.get(1, 1)?.bg).toBe(defaultTheme.indicatorNormal.bg);
 });
 
 // ST-25 / PA-3 — the ═↔─ drag swap bound to the window's reactive dragging signal.

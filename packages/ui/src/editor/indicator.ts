@@ -9,7 +9,8 @@
  *     brightGreen-on-blue, filled with `normalFrame` `\xC4` **─** U+2500 — bound to the PA-3
  *     reactive `Window.dragging` signal via the nearest window ancestor (structurally duck-typed
  *     so `editor/` gains no `window/` import; no ancestor ⇒ resting state, the PA-3 edge).
- *   • `modified` ⇒ `putChar(0, 15)` — CP437 `\x0F` = **☼ U+263C** at column 0 (`:56-57`).
+ *   • `modified` ⇒ `putChar(0, 15)` — CP437 `\x0F` (☼) at column 0 (`:56-57`); rendered as `*`
+     (see draw()) per the fidelity directive's unambiguous-narrow rule.
  *   • The location `" line:col "` (both 1-based) is right-aligned so the `:` sits at column 8
  *     (`moveStr(8 − colonIndex)`, `:60-63`).
  * `growMode = gfGrowLoY|gfGrowHiY` (`:34`) — the EditWindow's `onResized` re-pins the rect.
@@ -68,10 +69,11 @@ export class Indicator extends View implements IndicatorTarget {
     const style = ctx.color(dragging ? 'indicatorDragging' : 'indicatorNormal');
     const fill = dragging ? '─' : '═'; // normalFrame \xC4 while dragging, dragFrame \xCD resting
     ctx.fill(fill, style);
-    // CP437 0x0F → ☼ U+263C (:56-57). U+263C is East-Asian AMBIGUOUS width — core's wcwidth mode
-    // stores it as 2 cells, so the marker covers columns 0-1 (TV used 1 DOS cell; a recorded EAW
-    // deviation per the fidelity directive's ambiguous-width note — the DEF-23 family).
-    if (this.modified()) ctx.text(0, 0, '☼', style);
+    // CP437 0x0F is ☼ U+263C (:56-57), but U+263C is East-Asian AMBIGUOUS — core's wcwidth mode
+    // stores it as 2 cells while most terminal fonts render it 1, leaving a visible hole in the
+    // bottom border. Per the fidelity directive's unambiguous-narrow rule we substitute `*`
+    // (1 DOS cell in TV, 1 cell everywhere here — the DEF-23 family).
+    if (this.modified()) ctx.text(0, 0, '*', style);
     const { line, col } = this.pos();
     const text = ` ${line}:${col} `;
     const colonIndex = text.indexOf(':');
