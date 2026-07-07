@@ -35,6 +35,11 @@ function underlined(cell: Cell | undefined): boolean {
   return cell !== undefined && (cell.attrs & Attr.underline) !== 0;
 }
 
+/** Whether a cell exists and carries the bold attribute bit. */
+function bolded(cell: Cell | undefined): boolean {
+  return cell !== undefined && (cell.attrs & Attr.bold) !== 0;
+}
+
 // ST-1 / FR-1 / AR-2 — reveal underlines the hot glyph on a Button (`O` of `Open`) and a Label (`N`
 // of `Name`); the base runs never underline; toggling reveal off leaves no residual underline.
 test('ST-1: reveal underlines the hot glyph on Button + Label; off ⇒ none', () => {
@@ -53,12 +58,15 @@ test('ST-1: reveal underlines the hot glyph on Button + Label; off ⇒ none', ()
   expect(underlined(findChar(rr.buffer(), 'O'))).toBe(false);
   expect(underlined(findChar(rr.buffer(), 'N'))).toBe(false);
 
-  // Reveal on — the hot glyphs gain Attr.underline; base glyphs do not.
+  // Reveal on — the hot glyphs gain Attr.bold | Attr.underline; base glyphs do not.
   rr.setRevealAccelerators(true);
   rr.flush();
   expect(underlined(findChar(rr.buffer(), 'O'))).toBe(true); // Button hot glyph
+  expect(bolded(findChar(rr.buffer(), 'O'))).toBe(true); // …and bold (revised AR-2)
   expect(underlined(findChar(rr.buffer(), 'N'))).toBe(true); // Label hot glyph
+  expect(bolded(findChar(rr.buffer(), 'N'))).toBe(true);
   expect(underlined(findChar(rr.buffer(), 'p'))).toBe(false); // Button base run ("pen")
+  expect(bolded(findChar(rr.buffer(), 'p'))).toBe(false);
   expect(underlined(findChar(rr.buffer(), 'a'))).toBe(false); // Label base run ("ame")
 
   // Reveal off — no residual underline (FR-5).
