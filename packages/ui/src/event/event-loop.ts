@@ -65,6 +65,10 @@ class EventLoopImpl implements EventLoop {
   private captureTarget: View | null = null;
   /** The app-terminating command; a quit while modals are open cascades top-down (HR-38/PA-2). */
   private readonly quitCommand: string;
+  /** Whether accelerator mode is armed (accelerator-overlay AR-1) — reveal + bare-letter fire. */
+  private acceleratorMode = false;
+  /** The accelerator-mode trigger key (default `'f12'`); `null` disables the feature (AR-10). */
+  private readonly revealKey: string | null;
 
   /** Frame sink wired by `run()` after the host exists; `undefined` ⇒ flushes push nothing (PA-6). */
   onFrame?: (buffer: ScreenBuffer) => void;
@@ -83,6 +87,7 @@ class EventLoopImpl implements EventLoop {
     this.onIdle = opts.onIdle;
     this.keymap = opts.keymap;
     this.quitCommand = opts.quitCommand ?? 'quit';
+    this.revealKey = opts.revealKey === undefined ? 'f12' : opts.revealKey; // explicit null disables
     this.registry = createCommandRegistry({
       seed: opts.commands,
       enqueue: (ev) => this.queue.push(ev), // a command cascades onto the active tick (03-01)
@@ -220,6 +225,26 @@ class EventLoopImpl implements EventLoop {
     this.runTick(() => this.modal.end(result));
   }
 
+  setAcceleratorMode(on: boolean): void {
+    // Public arm/disarm seam (menu-open dismiss AR-7; the future hold-Alt path AR-13). Own a tick so
+    // the reveal repaint coalesces to one frame; re-entrant (from within a handler) it joins the tick.
+    this.runTick(() => this.applyAcceleratorMode(on));
+  }
+
+  /**
+   * Apply the accelerator-mode flag + reveal (accelerator-overlay AR-1/AR-14). Sets the loop flag and
+   * reveals/hides the overlay clamped to the current dispatch scope (`scopeRoot()`), so reveal matches
+   * the `scopeRoot()`-clamped fire. A no-op when the feature is disabled (`revealKey: null`). Must run
+   * inside a tick (the caller owns it) so `setRevealAccelerators`' recompose coalesces into that frame.
+   *
+   * @param on Whether accelerator mode is armed.
+   */
+  private applyAcceleratorMode(on: boolean): void {
+    if (this.revealKey === null) return; // feature disabled — nothing to arm
+    this.acceleratorMode = on;
+    this.renderRoot.setRevealAccelerators(on, on ? this.scopeRoot() : null);
+  }
+
   /**
    * Run one coalesced tick: do `work` (enqueue an event or mutate focus/command/modal state), drain
    * the cascade queue, fire `onIdle`, then flush exactly one frame. A re-entrant call (while already
@@ -329,6 +354,12 @@ class EventLoopImpl implements EventLoop {
       // save/restore focus and mount its anchored popup. `popupHost` is `undefined` headless / no shell.
       getFocused: () => this.focus.getFocused(),
       popupHost: this.popupHost,
+      // accelerator-overlay (AR-16): the router intercept reads these before any view. `toggleAcceleratorMode`
+      // runs inside the active dispatch tick already (route() is called during the drain), so it applies
+      // the flag directly (no nested runTick) and the tick's flush paints the reveal change (AR-14).
+      revealKey: this.revealKey,
+      acceleratorMode: () => this.acceleratorMode,
+      toggleAcceleratorMode: () => this.applyAcceleratorMode(!this.acceleratorMode),
       deliver: (view, ev) => this.deliver(view, ev),
       // The built-in Tab handler runs inside the active dispatch tick, so it calls the focus
       // manager's pure mutation directly (no nested runTick) — the tick's flush paints (PA-11).

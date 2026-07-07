@@ -56,6 +56,14 @@ export interface EventLoopOptions {
    * (HR-38 / PA-2; TV `cmQuit` + `TGroup::execute`'s `while(!valid(endState))`).
    */
   quitCommand?: string;
+  /**
+   * The accelerator-overlay trigger key (accelerator-overlay AR-10), default `'f12'`. Pressing it
+   * toggles "accelerator mode": every reachable `~X~` hotkey in the current dispatch scope lights up
+   * (underlined) and a bare letter fires the matching accelerator like `Alt+letter`. Pass `null` to
+   * disable the feature entirely (no reveal, no intercept). The trigger is a single named key so a
+   * future real hold-Alt (Kitty/CSI-u) can drive the same mode without reworking it (NFR-4/AR-13).
+   */
+  revealKey?: string | null;
 }
 
 /**
@@ -92,6 +100,14 @@ export interface EventLoop {
   execView<R>(view: View): Promise<R>;
   /** Close the top modal, restoring focus and resolving the matching `execView` promise (AR-53). */
   endModal<R>(result: R): void;
+  /**
+   * Arm or disarm accelerator mode (accelerator-overlay AR-1/AR-13). Reveals/hides the `~X~` overlay
+   * (scoped to the current dispatch scope) and enables/disables the bare-letter synth-alt fire; runs
+   * inside a coalesced tick so the reveal repaint is one frame (AR-14). The F12 trigger toggles this
+   * internally; it is also the seam a menu-open uses to dismiss the mode (AR-7) and the future hold-Alt
+   * path uses to drive it (NFR-4). A no-op when the feature is disabled (`revealKey: null`).
+   */
+  setAcceleratorMode(on: boolean): void;
 
   // --- RD-05 additive seams (the loop is composed, not re-shaped) -------------------------------
   /**

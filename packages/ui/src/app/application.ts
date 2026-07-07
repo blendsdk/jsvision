@@ -38,6 +38,11 @@ export interface ApplicationOptions {
   menuBar?: MenuBar;
   /** Optional bottom status line chrome. */
   statusLine?: StatusLine;
+  /**
+   * The accelerator-overlay trigger key (accelerator-overlay AR-10), forwarded to the loop; default
+   * `'f12'`. Pressing it reveals every `~X~` hotkey and arms bare-letter firing; `null` disables it.
+   */
+  revealKey?: string | null;
   /** Injectable OS boundary (default real Node runtime); tests inject a fake (AR-71/PA-14). */
   runtime?: RuntimeAdapter;
   /**
@@ -188,6 +193,7 @@ export function createApplication(opts: ApplicationOptions): Application {
     keymap: opts.keymap,
     commands: Object.values(Commands),
     quitCommand: Commands.quit, // HR-38: a quit during a modal cascades top-down (PA-2)
+    revealKey: opts.revealKey, // accelerator-overlay AR-10 (undefined ⇒ the loop's 'f12' default)
   });
   loop.mount(root);
   desktop.attachLoop(loop);
@@ -208,6 +214,7 @@ export function createApplication(opts: ApplicationOptions): Application {
       isCommandEnabled: (command) => loop.isCommandEnabled(command),
       focusView: (view) => loop.focusView(view),
       getFocused: () => loop.getFocused(),
+      dismissAccelerators: () => loop.setAcceleratorMode(false), // AR-7: an open menu owns plain letters
     });
   }
 
