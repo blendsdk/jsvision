@@ -1,21 +1,15 @@
 /**
- * `ColorPicker` — a `Group` = a color **chip** + a trailing `▐↓▌` dropdown button that opens a
- * `ColorSwatch` (+ an optional hex `Input`) in the RD-14 anchored popup, mirroring `DatePicker`
- * (`date-picker.ts`) one-for-one. It has **no** Turbo Vision counterpart — a documented extension that
- * compresses TV's heavy `TColorDialog` (61×18 modal editor, `colorsel.cpp:694-749`) into a compact
- * form-field dropdown. It composes shipped pieces + the generalized `openAnchoredPopup` (RD-20 PA-5)
- * and does **not** edit `dropdown/` (AC-9).
+ * {@link ColorPicker} — a compact one-line color field: a color **chip** plus a trailing `▐↓▌`
+ * dropdown button that opens a {@link ColorSwatch} (and an optional hex `Input`) in a popup anchored
+ * to the field.
  *
- * Composition `[ chip (fr) | ▐↓▌ button (3) ]`: the chip shows the current `value` as a `█` block +
- * caption; the button opens the popup on mouse-down. The popup hosts `[ ColorSwatch (fr) | hex Input
- * (1, allowCustom) ]` sharing the same `value`. Open on Down/Alt+Down or a `▐↓▌` click; a swatch
- * **release over a cell** or **Enter** commits + closes (PA-11 — down alone previews, does not close);
- * the hex field is `filter`-gated + `toRgb()`-parsed (a complete valid `#rrggbb` sets `value`, invalid
- * leaves it unchanged, AC-8). The value⟷text bind reads only the OTHER signal (the ComboBox idiom), so
- * there is no feedback loop; an RGB-equality guard preserves a named `value` against its own hex form.
- * No `PopupHost` ⇒ open declines (headless).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The chip shows the current `value` as a colored block plus a caption. Open the dropdown with Down,
+ * Alt+Down, or a click on the button. Inside the popup, picking a swatch cell (releasing over it or
+ * pressing Enter) commits the color and closes; when `allowCustom` is on, a hex field accepts any
+ * `#rrggbb` truecolor (a complete valid value updates the selection, an incomplete/invalid one is
+ * ignored). The swatch and hex field share the picker's `value` and stay in sync without churning a
+ * named color (e.g. `'red'`) into its hex form. With no overlay host available (headless), opening is
+ * a no-op.
  */
 import { Group, View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -29,9 +23,9 @@ import { openAnchoredPopup, absoluteRect, drawDropdownIcon } from '../dropdown/i
 import { ColorSwatch } from './color-swatch.js';
 import { gridDims, isNearBlack } from './color-grid.js';
 
-/** Minimum popup width when `allowCustom` is on — room for `#rrggbb` + padding (PF-006). */
+/** Minimum popup width when `allowCustom` is on — room for `#rrggbb` plus padding. */
 const HEX_MIN = 9;
-/** The hex field's allowed charset: `#` + hex digits (live-reject via the RD-06 `filter`). */
+/** The hex field's allowed charset: `#` plus hex digits (enforced live by the input filter). */
 const HEX_CHARSET = '#0-9a-fA-F';
 /** Max hex length (`#rrggbb`). */
 const HEX_MAX = 7;
@@ -75,13 +69,12 @@ function rgbEqual(a: Color, b: Color): boolean {
 }
 
 /**
- * The trigger chip — drawn as an **`Input`-style field** (the `input*` roles, so the picker looks like a
- * `ComboBox`/`DatePicker` field, not a bare `staticText` caption): the field background fills in
- * `inputSelected` while the picker is focused / `inputNormal` otherwise, a 2-cell color-block accent
- * sits at cols 0-1 (a near-black block gets a lightGray bg for visibility), and the caption
- * (`nameFor(value)` / `label` / the raw color) is drawn at col 3 in the input text role. Display-only;
- * not focusable (the `ColorPicker` group is the trigger). Repaints on `value` **and** the picker's focus
- * change (via `focusSource.focusSignal()`, the RD-06 Label idiom).
+ * The trigger chip — drawn as an input-style field so the picker looks like a text field, not a plain
+ * caption: the field background is the selected input colour while the picker is focused and the
+ * normal input colour otherwise, a 2-cell color block sits at the left (a near-black block gets a
+ * light-gray background so it stays visible), and the caption (the color's name, the `label`, or the
+ * raw color) follows. Display-only and not focusable — the `ColorPicker` group itself is the trigger.
+ * Repaints on a `value` change and on the picker gaining/losing focus.
  */
 class ColorChip extends View {
   constructor(
@@ -102,18 +95,18 @@ class ColorChip extends View {
   draw(ctx: DrawContext): void {
     const { width: w, height: h } = ctx.size;
     const field: Style = ctx.color(this.focusSource.state.focused ? 'inputSelected' : 'inputNormal');
-    ctx.fillRect(0, 0, w, h, ' ', field); // the input-style field background (matches ComboBox)
+    ctx.fillRect(0, 0, w, h, ' ', field); // the input-style field background
     const c = this.value();
     const block: Style = isNearBlack(c) ? { fg: c, bg: PALETTE.lightGray } : { fg: c, bg: field.bg };
-    ctx.fillRect(0, 0, 2, 1, '█', block); // the 2-cell color-block accent at cols 0-1
+    ctx.fillRect(0, 0, 2, 1, '█', block); // the 2-cell color block at the left
     const caption = this.nameFor?.(c) ?? this.label ?? c;
-    if (w > 3) ctx.text(3, 0, caption.slice(0, w - 3), field); // caption at col 3 in the input text role
+    if (w > 3) ctx.text(3, 0, caption.slice(0, w - 3), field); // caption after the block
   }
 }
 
 /**
- * The trailing 3-cell dropdown button — the **shared** `▐↓▌` icon via `drawDropdownIcon` (byte-identical
- * to ComboBox/DatePicker/History). Not focusable; a mouse-down opens the popup.
+ * The trailing 3-cell dropdown button drawing the shared `▐↓▌` icon. Not focusable; a mouse-down opens
+ * the popup.
  */
 class ColorButton extends View {
   override layout: LayoutProps = { size: { kind: 'fixed', cells: 3 } };
@@ -152,13 +145,13 @@ class PickerBody extends Group {
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type === 'key' && inner.key === 'enter' && this.hex !== undefined && this.hex.state.focused) {
-      this.onClose(); // value is already set by the two-way bind; Enter just closes (AC-8)
+      this.onClose(); // value is already set by the two-way bind; Enter just closes the popup
       ev.handled = true;
     }
   }
 }
 
-/** Options for a {@link ColorPicker}. (03-02) */
+/** Options for a {@link ColorPicker}. */
 export interface ColorPickerOptions {
   /** Two-way selected color (shared with the hosted swatch + hex field). */
   value: Signal<Color>;
@@ -170,17 +163,31 @@ export interface ColorPickerOptions {
   allowCustom?: boolean;
   /** Optional chip caption prefix (used when `nameFor` is absent). */
   label?: string;
-  /** Optional name accessor for the chip caption (PA-13). */
+  /** Optional name accessor for the chip caption. */
   nameFor?: (c: Color) => string;
-  /** Fired when `value` changes via a commit. */
+  /** Fired when `value` changes. */
   onChange?: (c: Color) => void;
 }
 
 /**
- * A one-line color picker: a chip opening a swatch (+ hex) dropdown. See the module doc.
+ * A one-line color picker: a color chip that opens a swatch (plus an optional hex field) in a
+ * dropdown anchored to the field.
+ *
+ * @example
+ * import { Group, ColorPicker, signal } from '@jsvision/ui';
+ * import type { Color } from '@jsvision/core';
+ *
+ * const g = new Group();
+ * const value = signal<Color>('red');
+ *
+ * // A picker with the hex field enabled so custom #rrggbb colors are allowed.
+ * const picker = new ColorPicker({ value, allowCustom: true, onChange: (c) => console.log(c) });
+ * picker.layout = { position: 'absolute', rect: { x: 10, y: 0, width: 20, height: 1 } };
+ * g.add(picker);
+ * // Down / Alt+Down / clicking the ▐↓▌ button opens the swatch; Esc or an outside click cancels.
  */
 export class ColorPicker extends Group {
-  /** The picker is the focus target (the chip is display-only); Down/Alt+Down opens. */
+  /** The picker itself takes focus (the chip is display-only); Down/Alt+Down opens the dropdown. */
   override focusable = true;
 
   /** Two-way selected color. */
@@ -254,7 +261,7 @@ export class ColorPicker extends Group {
           columns: this.columns,
           nameFor: this.nameFor,
           onChange: this.onChange,
-          onCommit: () => commit(), // a release-over-cell / Enter commit sets value then closes (PA-11)
+          onCommit: () => commit(), // a release over a cell / Enter sets the value then closes the popup
         });
         swatch.layout = { size: { kind: 'fr', weight: 1 } };
         let hex: Input | undefined;
@@ -276,11 +283,11 @@ export class ColorPicker extends Group {
   }
 
   /**
-   * Wire the two-way `value`⟷hex-text bind (the ComboBox idiom): `value → text` serializes `value` to
-   * a normalized `#rrggbb` (reading only `value`); `text → value` parses a complete valid hex and sets
-   * `value` only when its RGB differs from the current value (reading only `text`, the current value via
-   * `untrack`). Neither direction subscribes to the signal it writes → no feedback loop; the RGB guard
-   * keeps a named `value` (e.g. `'red'`) from being churned into its `#aa0000` form on open.
+   * Wire the two-way binding between `value` and the hex field's text. `value → text` serializes the
+   * color to a normalized `#rrggbb`; `text → value` parses a complete valid hex and updates `value`
+   * only when its RGB actually differs. Each direction reads only the *other* signal, so there is no
+   * feedback loop, and the RGB-equality guard keeps a named color (e.g. `'red'`) from being rewritten
+   * to its `#aa0000` form when the popup opens.
    */
   protected wireHexBind(hex: Input, hexText: Signal<string>): void {
     hex.bind(
@@ -293,7 +300,7 @@ export class ColorPicker extends Group {
     hex.bind(
       () => parseHex(hexText()),
       (parsed) => {
-        if (parsed === null) return; // incomplete / invalid → leave value unchanged (AC-8)
+        if (parsed === null) return; // incomplete / invalid hex → leave the value unchanged
         const cur = untrack(() => this.value());
         if (!rgbEqual(cur, parsed)) this.value.set(parsed);
       },

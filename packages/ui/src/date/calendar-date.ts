@@ -1,22 +1,24 @@
 /**
- * `CalendarDate` — the civil (wall-clock) date value the whole date family passes around, plus pure,
- * zero-dep helpers and `Date`/ISO interop (RD-20, AR-196 / PA-7). View-free and reactivity-free, so it
- * is unit-testable in isolation. `month` is **1-based** (1-12), TV-faithful (`TCalendarView` uses
- * 1-based months, `calendar.cpp`).
+ * The civil (wall-clock) date value the whole date family passes around — {@link CalendarDate} — plus
+ * a set of pure, dependency-free helpers and JS `Date`/ISO interop. All helpers are side-effect-free:
+ * they take and return plain `CalendarDate` values and never mutate their inputs.
  *
- * Purity: no `Date` except in the two boundary functions {@link fromDate}/{@link toDate}. Day math
- * ({@link addDays}) walks a proleptic-Gregorian day number (Julian Day Number), so it rolls across
- * month/year boundaries without a `Date`. `parseISO` is range-validated and returns `null` on any
- * malformed / out-of-range input — it never throws and never yields an invalid date (AC-1/AC-17).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Notes for callers:
+ * - `month` is **1-based** (1 = January … 12 = December).
+ * - Day math ({@link addDays}) and {@link addMonths} always return a valid date (month arithmetic
+ *   clamps the day to the target month's length).
+ * - {@link parseISO} is range-validated: it returns `null` for any malformed or out-of-range input and
+ *   never throws or yields an invalid date.
+ * - JS `Date` is touched only in {@link fromDate}/{@link toDate}, which read/write local-time fields.
  */
 
-/** A civil (wall-clock) date — no time-of-day, no timezone. `month` is 1-12, `day` is 1-31. (PA-7) */
+/** A civil (wall-clock) date — no time-of-day, no timezone. `month` is 1-12, `day` is 1-31. */
 export interface CalendarDate {
   readonly year: number;
-  readonly month: number; // 1-12 (TV-faithful: TCalendarView uses 1-based months)
-  readonly day: number; // 1-31
+  /** 1-based month: 1 = January … 12 = December. */
+  readonly month: number;
+  /** Day of the month, 1-31. */
+  readonly day: number;
 }
 
 /** Fixed month lengths (index 1-12); February is corrected for leap years by {@link daysInMonth}. */
@@ -28,13 +30,16 @@ function isLeapYear(year: number): boolean {
 }
 
 /**
- * Days in a month, Gregorian leap-correct: Feb = 29 when `year%4===0 && (year%100!==0 || year%400===0)`
- * (correcting TV's simpler `year%4==0`, `calendar.cpp:128-129`). Returns `0` for a month outside 1-12
- * (bounds-checked, AC-17) so an out-of-range parse is rejected rather than yielding `NaN`.
+ * Days in a month, Gregorian leap-year-correct. Returns `0` for a month outside 1-12, so an
+ * out-of-range value is rejected rather than yielding `NaN`.
  *
  * @param year  The full year (e.g. 2026).
  * @param month The 1-based month (1-12).
  * @returns The number of days in the month (28-31), or 0 if `month` is out of range.
+ * @example
+ * daysInMonth(2024, 2); // 29 (leap year)
+ * daysInMonth(2026, 2); // 28
+ * daysInMonth(2026, 4); // 30
  */
 export function daysInMonth(year: number, month: number): number {
   if (month < 1 || month > 12) return 0;
@@ -43,11 +48,12 @@ export function daysInMonth(year: number, month: number): number {
 }
 
 /**
- * Day of week, 0 = Sunday … 6 = Saturday — the Zeller congruence transcribed from
- * `TCalendarView`'s `dayOfWeek` (`calendar.cpp:100-121`), with Sunday = 0.
+ * Day of week for a civil date, 0 = Sunday … 6 = Saturday.
  *
  * @param date The civil date.
  * @returns 0 (Sunday) … 6 (Saturday).
+ * @example
+ * dayOfWeek({ year: 2026, month: 7, day: 8 }); // 3 (Wednesday)
  */
 export function dayOfWeek(date: CalendarDate): number {
   let month = date.month;
@@ -68,12 +74,15 @@ export function dayOfWeek(date: CalendarDate): number {
 }
 
 /**
- * Add `n` months (may be negative); the day is **clamped** to the target month's length (so
- * Jan-31 + 1 month → Feb-28/29, never an invalid date). (PA-7)
+ * Add `n` months (may be negative); the day is **clamped** to the target month's length, so the result
+ * is always a valid date.
  *
  * @param date The civil date.
  * @param n    Months to add (negative to subtract).
  * @returns A fresh, valid `CalendarDate`.
+ * @example
+ * addMonths({ year: 2026, month: 1, day: 31 }, 1);  // { year: 2026, month: 2, day: 28 } (day clamped)
+ * addMonths({ year: 2026, month: 1, day: 15 }, -2); // { year: 2025, month: 11, day: 15 }
  */
 export function addMonths(date: CalendarDate, n: number): CalendarDate {
   const total = date.year * 12 + (date.month - 1) + n;
@@ -117,22 +126,29 @@ function fromDayNumber(jdn: number): CalendarDate {
 }
 
 /**
- * Add `n` days (may be negative); rolls across month/year boundaries via a day-number walk. (PA-7)
+ * Add `n` days (may be negative); rolls across month and year boundaries.
  *
  * @param date The civil date.
  * @param n    Days to add (negative to subtract).
  * @returns A fresh, valid `CalendarDate`.
+ * @example
+ * addDays({ year: 2026, month: 1, day: 31 }, 1);  // { year: 2026, month: 2, day: 1 }
+ * addDays({ year: 2026, month: 3, day: 1 }, -1);  // { year: 2026, month: 2, day: 28 }
  */
 export function addDays(date: CalendarDate, n: number): CalendarDate {
   return fromDayNumber(toDayNumber(date) + n);
 }
 
 /**
- * Order two dates: -1 if a<b, 0 if equal, +1 if a>b (year, then month, then day).
+ * Order two dates: -1 if a<b, 0 if equal, +1 if a>b (compared by year, then month, then day).
  *
  * @param a The left date.
  * @param b The right date.
  * @returns -1 | 0 | 1.
+ * @example
+ * compare({ year: 2026, month: 7, day: 8 }, { year: 2026, month: 7, day: 9 }); // -1
+ * // Sort an array of dates ascending:
+ * dates.sort(compare);
  */
 export function compare(a: CalendarDate, b: CalendarDate): -1 | 0 | 1 {
   if (a.year !== b.year) return a.year < b.year ? -1 : 1;
@@ -151,6 +167,8 @@ function pad(value: number, width: number): string {
  *
  * @param date The civil date.
  * @returns The ISO-8601 calendar-date string.
+ * @example
+ * toISO({ year: 2026, month: 7, day: 8 }); // '2026-07-08'
  */
 export function toISO(date: CalendarDate): string {
   return `${pad(date.year, 4)}-${pad(date.month, 2)}-${pad(date.day, 2)}`;
@@ -160,11 +178,16 @@ export function toISO(date: CalendarDate): string {
 const ISO_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /**
- * Parse `"YYYY-MM-DD"` → a range-validated `CalendarDate`, or **null** on any malformed / out-of-range
- * input (bad shape, month∉1-12, day∉1-daysInMonth). Never throws, never yields an invalid date. (AC-1/AC-17)
+ * Parse `"YYYY-MM-DD"` into a range-validated `CalendarDate`, or `null` on any malformed or
+ * out-of-range input (wrong shape, month outside 1-12, or day outside the month's length). Never
+ * throws and never yields an invalid date.
  *
  * @param str The candidate string.
  * @returns A valid `CalendarDate`, or `null`.
+ * @example
+ * parseISO('2026-07-08'); // { year: 2026, month: 7, day: 8 }
+ * parseISO('2026-02-30'); // null (out of range)
+ * parseISO('nope');       // null
  */
 export function parseISO(str: string): CalendarDate | null {
   const m = ISO_RE.exec(str);
@@ -178,20 +201,24 @@ export function parseISO(str: string): CalendarDate | null {
 }
 
 /**
- * Read a JS `Date` into a civil date (getFullYear / getMonth()+1 / getDate). The `+1` lives ONLY here.
+ * Read a JS `Date`'s local-time fields into a civil date.
  *
  * @param d A JS `Date` (its local-time fields are read).
  * @returns The civil date.
+ * @example
+ * fromDate(new Date(2026, 6, 8)); // { year: 2026, month: 7, day: 8 } (JS months are 0-based)
  */
 export function fromDate(d: Date): CalendarDate {
   return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() };
 }
 
 /**
- * Materialize a JS `Date` at local midnight (`new Date(y, m-1, d)`). The `-1` lives ONLY here.
+ * Materialize a JS `Date` at local midnight.
  *
  * @param cd The civil date.
  * @returns A JS `Date` at local midnight.
+ * @example
+ * toDate({ year: 2026, month: 7, day: 8 }); // new Date(2026, 6, 8) — local midnight
  */
 export function toDate(cd: CalendarDate): Date {
   return new Date(cd.year, cd.month - 1, cd.day);

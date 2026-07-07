@@ -1,43 +1,18 @@
 /**
- * `ColorSwatch` — a focusable color-grid `View`, a **faithful decode** of Turbo Vision's
- * `TColorSelector` (`source/tvision/colorsel.cpp:120-237`) extended with a generic `Color[]` palette,
- * truecolor cells, a cursor-vs-`value` split (PA-9), and an omitted frame (PA-12). The pure geometry +
- * wrap-around nav live in `color-grid.ts`.
+ * {@link ColorSwatch} — a focusable grid of color cells the user picks from with the arrow keys or the
+ * mouse. Each color is a 3-column block; the currently-selected cell is marked with a `◘` glyph. The
+ * pure geometry and wrap-around navigation live in `color-grid.ts`.
  *
- * ## TV decode (GATE-1/GATE-2 — `TColorSelector`)
- *   • **draw()** (`colorsel.cpp:120-142`): `moveChar(0,' ',0x70,size.x)` pre-fills the row with attr
- *     `0x70` — a **no-op for a full grid** (16 cells cover all 12 columns), so RD-21 does NOT replicate
- *     it; partial-row gaps fall through to the host background (accepted extension, PF-001). Each cell
- *     `moveChar(j*3, icon, c, 3)` = `█` (U+2588, `icon='\xDB'`, `tvtext1.cpp:88`) × 3 columns at `j*3`
- *     in attribute `c` = `{ fg: cellColor, bg: black }` (TV `0x0c`, bg nibble 0). The selected cell
- *     `putChar(j*3+1, 8)` = `◘` (U+25D8, CP437 8) at the **centre** column; `if(c==0) putAttribute(
- *     j*3+1, 0x70)` forces black-on-lightGray so a black cell's marker stays visible → RD-21's
- *     `colorMarker` role, fired on **near-black** cells (the generic extension, PA-2).
- *   • **handleEvent()** (`colorsel.cpp:154-237`): wrap-around arrow nav (`:196-217`, transcribed in
- *     `color-grid.ts`); mouse `color = mouse.y*4 + mouse.x/3` on down **and while dragging**, a pointer
- *     **outside the view** reverts to the pre-drag cell (`else color=oldColor`, `:167-173`). `ofFramed`
- *     (`:114`) is **omitted** (PA-12 — the host popup/`Window` supplies the frame).
- *
- * ## GATE-2 AFTER-diff (re-verified vs `colorsel.cpp:120-237`, 2026-07-05 — no mismatch found)
- * The composed grid matches the decode cell-by-cell (executable oracle: `color-swatch.spec` ST-2/ST-3
- * + `color-swatch.impl` GATE-2): 3-wide `█` cells at `j*3` in the cell color (`bg` black), `◘` at
- * `cellX+1`, the near-black `0x70` `colorMarker`, the wrap-around nav (`:196-217`), and the
- * `row*cols+floor(x/3)` drag hit + revert-outside (`:167-173`). Both `█` (U+2588) and `◘` (U+25D8)
- * measure **width 1** under the default `wcwidth` mode (asserted in `color-swatch.impl`, PF-005), so the
- * 3-wide cell math and the centered marker hold. Documented extensions (spec oracles, no `.cpp` diff):
- * the generic `Color[]` palette + truecolor cells, the cursor-vs-`value` split (PA-9), the partial-row
- * overshoot clamp (PA-10), the picker close-on-release/Enter hook (PA-11), and the omitted frame (PA-12).
- *
- * ## State model (PA-9 / AC-15 — RD-21 fix, TV-faithful live-select 2026-07-05)
- * TV's `TColorSelector` has a **single live `color`** that every arrow/click/drag updates immediately
- * (`colorChanged()` + `drawView()`, `colorsel.cpp:170-174/234-235`). To honour that (the original PA-9
- * split required Enter to commit — a mis-decode), nav/mouse now **set `value` live** via `setLive` (the
- * internal `cursor` is the nav origin, kept in sync). The **marker is drawn on `indexOf(value())`**, so
- * an external off-palette `value` (e.g. the picker's hex field) shows no marker while nav still works
- * from the cursor. Enter/Space (or a mouse-up over a cell) fire only the {@link ColorSwatch.close}
- * picker-close hook — the value is already live.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Interaction and behaviour:
+ * - **Live selection** — every arrow key, click, and drag updates the bound `value` immediately and
+ *   the marker follows. Arrow navigation wraps around the ends of the palette.
+ * - **Marker** — drawn on the cell whose color equals `value`. If `value` is an off-palette color
+ *   (e.g. a custom hex color from a hosting {@link ColorPicker}) no marker shows, but arrow navigation
+ *   still works from the internal cursor. On a near-black cell the marker is drawn in a contrasting
+ *   colour so it stays visible.
+ * - **Commit hook** — `Enter`, `Space`, or a mouse-up over a cell fires the optional `onCommit`
+ *   callback, which a hosting `ColorPicker` uses to close its dropdown. Standalone, this is a no-op.
+ * - **No frame** — the swatch draws only its cells; a hosting popup or window supplies any border.
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -59,48 +34,66 @@ import {
   CELL_WIDTH,
 } from './color-grid.js';
 
-/** The cell block glyph — TV `icon = '\xDB'` = `█` U+2588 full block (`tvtext1.cpp:88`, PA-5). */
+/** The cell block glyph — a full block `█` filling each cell. */
 const CELL_GLYPH = '█';
-/** The selection marker — TV `putChar(j*3+1, 8)` = `◘` U+25D8 (CP437 8, `colorsel.cpp:134`, PA-6). */
+/** The selection marker `◘` drawn on the centre column of the selected cell. */
 const MARKER_GLYPH = '◘';
 
-/** Options for a {@link ColorSwatch}. (03-01) */
+/** Options for a {@link ColorSwatch}. */
 export interface ColorSwatchOptions {
   /** Two-way selected color. */
   value: Signal<Color>;
-  /** Palette (default {@link ANSI16_ORDER}, the DOS-16 grid). */
+  /** Palette to display (default {@link ANSI16_ORDER}, the DOS-16 colors). */
   colors?: readonly Color[];
-  /** Columns per row (default 4, TV `TColorSelector`). */
+  /** Columns per row (default 4). */
   columns?: number;
-  /** Fired when `value` changes via a commit (Should-Have). */
+  /** Fired when `value` changes. */
   onChange?: (c: Color) => void;
-  /** Pure name accessor (Should-Have, PA-13) — used by the `ColorPicker` chip caption. */
+  /** Pure color-name accessor — used by a hosting `ColorPicker` to caption its chip. */
   nameFor?: (c: Color) => string;
-  /** Internal close hook the `ColorPicker` wires (fired on Enter/Space or a mouse-up over a cell, PA-11). */
+  /** Close hook a hosting `ColorPicker` wires up (fired on Enter/Space or a mouse-up over a cell). */
   onCommit?: (c: Color) => void;
 }
 
 /**
- * A focusable color-grid view. Draws the TV decode + the extensions; **live-selects** by keyboard/mouse
- * (TV-faithful — `value` changes on every arrow/click/drag, the ◘ marker tracks); Enter/Space or a
- * mouse-up over a cell closes a hosting `ColorPicker`. See the module doc for the decode.
+ * A focusable grid of color cells. Selection is live — the bound `value` changes on every arrow key,
+ * click, and drag, and the `◘` marker tracks it. Enter/Space or a mouse-up over a cell fires the
+ * commit hook (used by a hosting `ColorPicker` to close its dropdown).
+ *
+ * @example
+ * import { Group, ColorSwatch, signal } from '@jsvision/ui';
+ * import { ANSI16_ORDER } from '@jsvision/core';
+ * import type { Color } from '@jsvision/core';
+ *
+ * const g = new Group();
+ * const value = signal<Color>('brightCyan');
+ *
+ * // A 4×4 grid of the 16 DOS colors, bound two-way to `value`.
+ * const swatch = new ColorSwatch({
+ *   value,
+ *   colors: ANSI16_ORDER as readonly Color[],
+ *   columns: 4,
+ *   onChange: (c) => console.log('picked', c), // arrows / click / drag all update `value` live
+ * });
+ * swatch.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 4 } };
+ * g.add(swatch);
  */
 export class ColorSwatch extends View {
-  /** TV `ofSelectable` — the swatch takes focus (the cursor + keymap are focus-scoped). */
+  /** The swatch takes focus so its arrow-key navigation is scoped to it. */
   override focusable = true;
 
   /** Two-way selected color. */
   readonly value: Signal<Color>;
-  /** Optional pure name accessor (PA-13), read by the `ColorPicker` caption. */
+  /** Optional pure color-name accessor, read by a hosting `ColorPicker` caption. */
   readonly nameFor?: (c: Color) => string;
 
   protected readonly colors: readonly Color[];
   protected readonly columns: number;
   protected readonly onChange?: (c: Color) => void;
   protected readonly onCommit?: (c: Color) => void;
-  /** The live-selected cell (TV `color`) — the nav origin, kept in sync with `value` on every change. */
+  /** The cell the arrow keys move from; kept in sync with `value` on every change. */
   protected readonly cursor: Signal<number>;
-  /** The cursor before the current mouse gesture (TV `oldColor`), restored on a drag-outside revert. */
+  /** The cursor before the current mouse gesture, restored when a drag moves outside the grid. */
   private preDrag = 0;
 
   /**
@@ -117,8 +110,9 @@ export class ColorSwatch extends View {
     const i = this.colors.indexOf(this.value());
     this.cursor = signal(i >= 0 ? i : 0);
 
-    // value → cursor re-home + marker repaint: a member `value` moves the cursor to its index; the bind
-    // effect repaints on every `value` change so the ◘ marker tracks the committed cell (PA-9).
+    // When `value` changes (from anywhere), move the cursor to its cell so arrow navigation continues
+    // from the selection, and repaint so the ◘ marker tracks it. Bound on mount, when the reactive
+    // scope exists.
     this.onMount(() => {
       this.bind(
         () => this.value(),
@@ -136,22 +130,16 @@ export class ColorSwatch extends View {
     return { width, height: Math.max(1, rows) };
   }
 
-  // ── Public methods (Should-Have) ────────────────────────────────────────────────────────────────
-
-  /** Programmatic select — set `value` live (+ `onChange`) and fire the picker close hook (`onCommit`). */
+  /** Programmatically select a color: set `value` (+ `onChange`) and fire the commit hook (`onCommit`). */
   select(color: Color): void {
     this.value.set(color);
     this.onChange?.(color);
     this.onCommit?.(color);
   }
 
-  // ── Selection helpers ─────────────────────────────────────────────────────────────────────────────
-
   /**
-   * Set the live selection to cell `idx` and commit `value` **immediately** — TV `color = …;
-   * colorChanged()` fires on every move/arrow (`colorsel.cpp:170-174/234-235`), so the `◘` marker
-   * (drawn on `indexOf(value())`) tracks the cursor. A no-op for an out-of-range index. This does NOT
-   * close a hosting `ColorPicker` — that is the release/Enter hook ({@link close}).
+   * Select cell `idx` and update `value` immediately so the `◘` marker tracks it. A no-op for an
+   * out-of-range index. This does NOT close a hosting `ColorPicker` — that is the {@link close} hook.
    */
   protected setLive(idx: number): void {
     if (idx < 0 || idx >= this.colors.length) return;
@@ -161,14 +149,12 @@ export class ColorSwatch extends View {
     this.onChange?.(c);
   }
 
-  /** Fire the picker close hook with the current `value` (Enter/Space or a mouse-up over a real cell, PA-11). */
+  /** Fire the commit hook with the current `value` (Enter/Space or a mouse-up over a cell). */
   protected close(): void {
     this.onCommit?.(this.value());
   }
 
-  // ── Draw ────────────────────────────────────────────────────────────────────────────────────────
-
-  /** Paint the 3-wide `█` cells + the `◘` marker on the `value` cell (near-black → `colorMarker`). */
+  /** Paint the color cells, then the `◘` marker on the selected cell (contrasting colour if near-black). */
   draw(ctx: DrawContext): void {
     const marked = this.colors.indexOf(this.value());
     for (let i = 0; i < this.colors.length; i += 1) {
@@ -176,21 +162,19 @@ export class ColorSwatch extends View {
       const y = cellRow(i, this.columns);
       const cellColor = this.colors[i];
       const cellStyle: Style = { fg: cellColor, bg: PALETTE.black };
-      ctx.fillRect(x, y, CELL_WIDTH, 1, CELL_GLYPH, cellStyle); // 3-wide █ block (PA-5/7)
+      ctx.fillRect(x, y, CELL_WIDTH, 1, CELL_GLYPH, cellStyle); // the cell's 3-wide colored block
       if (i === marked) {
-        // Near-black → forced-contrast colorMarker (0x70); else the cell's own color (the ◘ shows a
-        // black knockout dot). AC-3 / PA-1 / PA-2.
+        // On a near-black cell the knockout marker would be invisible, so draw it in a contrasting
+        // colour; otherwise use the cell's own colour (the ◘ punches a black dot into it).
         const markerStyle = isNearBlack(cellColor) ? ctx.color('colorMarker') : cellStyle;
         ctx.text(x + 1, y, MARKER_GLYPH, markerStyle);
       }
     }
   }
 
-  // ── Input ───────────────────────────────────────────────────────────────────────────────────────
-
   /**
-   * Wrap-around arrow nav + Enter/Space commit (keyboard) and click/drag cursor tracking (mouse). Plain
-   * arrows are always consumed so they never leave the swatch's focus (AC-4).
+   * Handle keyboard (wrap-around arrows + Enter/Space commit) and mouse (click/drag selection). Plain
+   * arrow keys are always consumed so navigation never leaves the swatch.
    *
    * @param ev The dispatch envelope.
    */
@@ -226,24 +210,22 @@ export class ColorSwatch extends View {
   }
 
   /**
-   * Mouse down → snapshot the pre-drag cell (TV `oldColor`) + **live-select** from the pointer +
-   * capture; move while captured → re-track (live). This mirrors TV's `evMouseDown` loop
-   * (`colorsel.cpp:165-177`): `color = mouse.y*4 + mouse.x/3` on down **and every drag move**, with a
-   * pointer **outside the view** reverting to `oldColor` — every position updates `value` immediately
-   * (the ◘ marker tracks). On **up over a real cell** the {@link close} hook fires so a hosting
-   * `ColorPicker` closes (PA-11); a release outside the grid (or on a partial-row overshoot) does not
-   * close (the cell has already reverted/clamped via {@link applyHit}).
+   * Mouse down snapshots the current cell (as the revert target), selects the cell under the pointer,
+   * and captures the pointer so the drag keeps tracking even off the grid. A drag selects the cell
+   * under the pointer live, reverting to the snapshot when the pointer moves outside the grid. A
+   * mouse-up over a real cell fires the {@link close} hook (so a hosting `ColorPicker` closes); a
+   * release outside the grid does not close.
    *
-   * @param ev The dispatch envelope (carries `local` + the `setCapture`/`releaseCapture` seams).
+   * @param ev The dispatch envelope (carries `local` plus the pointer-capture seams).
    */
   protected handleMouse(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type !== 'mouse') return;
     const local = ev.local;
     if (inner.kind === 'down') {
-      this.preDrag = this.cursor(); // TV oldColor — the revert target while dragging outside
+      this.preDrag = this.cursor(); // the cell to revert to if the drag moves outside the grid
       if (local !== undefined) this.applyHit(local.x, local.y);
-      ev.setCapture?.(this); // PA-16 — capture so the drag tracks off the grid
+      ev.setCapture?.(this); // capture so the drag keeps tracking off the grid
       ev.handled = true;
     } else if (inner.kind === 'move' || inner.kind === 'drag') {
       if (local !== undefined) this.applyHit(local.x, local.y);
@@ -262,13 +244,13 @@ export class ColorSwatch extends View {
     }
   }
 
-  /** Live-select from a view-local pointer via the discriminated {@link hitCell} (PA-10). */
+  /** Select the cell under a view-local pointer: revert outside the grid, clamp a partial-row overshoot. */
   protected applyHit(localX: number, localY: number): void {
     const hit = hitCell(localX, localY, this.colors.length, this.columns);
     if (hit === 'outside')
-      this.setLive(this.preDrag); // revert live (colorsel.cpp:172-173  else color = oldColor)
+      this.setLive(this.preDrag); // pointer left the grid → revert to the pre-drag cell
     else if (hit === 'overshoot')
-      this.setLive(Math.max(0, this.colors.length - 1)); // clamp a partial-row overshoot (extension)
+      this.setLive(Math.max(0, this.colors.length - 1)); // inside the grid but past the last cell → clamp
     else this.setLive(hit);
   }
 }
