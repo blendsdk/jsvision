@@ -281,7 +281,10 @@ export class ListRows<T> extends View {
         const newItem = clampIndex(this.topItem + local.y + col * rows, range);
         this.typeBuffer = '';
         this.focusTo(newItem);
-        this.select(newItem); // a row click focuses + selects (ST-06)
+        this.select(newItem); // a single click focuses + selects (ST-06)
+        // Double-click = activate (TV `tlstview.cpp:276-277`: `meDoubleClick` ⇒ `selectItem`). The
+        // loop stamps `ev.clickCount` on a mouse-`down` (double-click-activation FR-3/AR-7).
+        if (ev.clickCount === 2) this.activate(ev);
       }
       ev.handled = true;
       return;

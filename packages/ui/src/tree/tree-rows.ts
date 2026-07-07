@@ -220,7 +220,8 @@ export class TreeRows<T> extends View {
    * adaptations:
    *   • **wheel** ±3 (jsvision extension, cf. `ListRows`).
    *   • **mouse-down** (`:433-481`): focus the clicked row; a click with `mouse.x < strwidth(graph)`
-   *     toggles expand (`:472`); a text click focuses + selects + emits (PA-14, no double-click).
+   *     toggles expand (`:472`); a text **double**-click activates (`meDoubleClick ⇒ selected`, `:465`),
+   *     a single text click focuses only (double-click-activation AR-5; graph-zone double = AR-15).
    *   • **keys** (`:484-539`): `↑↓`/`PgUp`/`PgDn`/`Home`/`End`, `Ctrl+PgUp/PgDn` → ends; `+`/`-`
    *     `adjust`, `*` `expandAll` (`:523-531`); Enter/`Ctrl+Enter` `selected` (`:515-518`). **← / →**
    *     override TV's up/down to collapse-or-parent / expand-or-child (PA-12).
@@ -244,9 +245,13 @@ export class TreeRows<T> extends View {
   }
 
   /**
-   * A mouse-down (TV mouse branch, PA-14): focus the clicked row, then a click within the graph-prefix
-   * width toggles expand (TV `mouse.x < strwidth(graph)`, `:472`); a click on the text focuses +
-   * selects + emits.
+   * A mouse-down (TV `TOutlineViewer::handleEvent`, `toutline.cpp:465-472`): focus the clicked row,
+   * then a click within the graph-prefix width toggles expand (`mouse.x < strwidth(graph)`, `:472`);
+   * a **double**-click on the text activates (`meDoubleClick ⇒ selected(foc)`, `:465`). A **single**
+   * text click focuses ONLY — the port's non-TV single-click text emit is dropped
+   * (double-click-activation AR-5). A graph-zone double-click toggles twice (no activate) — the
+   * accepted AR-15 deviation: our two-down model (`clickCount` 1 then 2) already toggled on the first
+   * down, so a single `meDoubleClick` can't be reconstructed.
    */
   protected handleMouseDown(ev: DispatchEvent): void {
     const local = ev.local;
@@ -254,11 +259,14 @@ export class TreeRows<T> extends View {
     const flat = this.flatten();
     if (flat.length > 0) {
       const index = clampIndex(this.topItem + local.y, flat.length);
-      this.focusTo(index);
+      this.focusTo(index); // always focus the clicked row
       const row = flat[index];
-      if (local.x < graphWidth(row.level))
-        this.toggle(row.node); // graph-zone ⇒ toggle expand
-      else this.select(index, ev); // text ⇒ focus + select + emit
+      if (local.x < graphWidth(row.level)) {
+        this.toggle(row.node); // graph-zone ⇒ toggle expand (any click; see AR-15)
+      } else if (ev.clickCount === 2) {
+        this.select(index, ev); // text double-click ⇒ activate (select + onSelect + emit)
+      }
+      // single text click ⇒ focus only (TV-faithful, AR-5)
     }
     ev.handled = true;
   }

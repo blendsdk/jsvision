@@ -255,7 +255,10 @@ export class GridRows<T> extends View {
         // A click below the last row focuses/selects the LAST item (TV `focusItemNum` clamp).
         const newItem = Math.min(this.topItem + local.y, range - 1);
         this.focusTo(newItem);
-        this.select(newItem); // a row click focuses + selects (no emit — AR-177)
+        this.select(newItem); // a single click focuses + selects (no emit — AR-177)
+        // Double-click = activate (TV `tlstview.cpp:276-277`, on the shared `TListViewer` spine). The
+        // loop stamps `ev.clickCount` on a mouse-`down` (double-click-activation FR-4/AR-7).
+        if (ev.clickCount === 2) this.activate(ev);
       }
       ev.handled = true;
       return;

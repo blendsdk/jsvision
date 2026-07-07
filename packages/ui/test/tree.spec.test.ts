@@ -282,8 +282,12 @@ test('ST-16: a graph-zone click toggles expand without selecting', () => {
   expect(buf().get(6, 1)?.char).toBe('A'); // A expanded ⇒ 'A1' on row 1
 });
 
-// ST-17 / AC-6 (corrected)+AC-7 — a click on the node text focuses + selects it and emits the command.
-test('ST-17: a text click focuses, selects, and emits the command', () => {
+// ST-17 / AC-6 (corrected by double-click-activation AR-5) — a SINGLE click on the node text focuses
+// ONLY: no select, no emit. TV `TOutlineViewer::handleEvent` (`toutline.cpp:465-472`) activates via
+// `selected(foc)` only on `meDoubleClick`; a single text click does nothing (the port's single-click
+// text emit was non-TV and is dropped). Double-click text activation is pinned in
+// `multiclick.consumers.spec.test.ts` ST-7.
+test('ST-17: a single text click focuses only — no select, no emit (TV toutline.cpp:465)', () => {
   const focused = signal(0);
   const selected = signal(-1);
   const { tree, a } = nested(focused, selected, 'open');
@@ -291,12 +295,12 @@ test('ST-17: a text click focuses, selects, and emits the command', () => {
   const spy = new CommandSpy();
   const loop = hosted(tree, 20, 10, spy);
 
-  // Click A1's text — 1-based (7,2) ⇒ view-local (6,1), x=6 ≥ graphWidth(1)=6 ⇒ focus + select + emit.
+  // Click A1's text — 1-based (7,2) ⇒ view-local (6,1), x=6 ≥ graphWidth(1)=6 ⇒ focus only.
   loop.dispatch(mouse('down', 7, 2));
   loop.dispatch(mouse('up', 7, 2));
-  expect(focused()).toBe(1);
-  expect(selected()).toBe(1);
-  expect(spy.commands).toContain('open');
+  expect(focused()).toBe(1); // clicked row is focused
+  expect(selected()).toBe(-1); // NOT selected — a single text click never activates (AR-5)
+  expect(spy.commands).not.toContain('open'); // no command emitted
 });
 
 // ST-18 / AC-7 — Enter on the focused row selects it + emits the command (TV kbEnter ⇒ selected).
