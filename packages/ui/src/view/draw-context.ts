@@ -1,13 +1,12 @@
 /**
- * The stateless, view-local, auto-clipped paint facade (RD-03, AR-38/AR-39). `makeDrawContext`
- * builds the object handed to `View.draw(ctx)` for one compose pass, from: the shared
- * `ScreenBuffer`, the view's absolute rect (origin + size), the absolute clip rect (view rect ∩
- * ancestor clip), and the active `Theme`.
+ * The stateless, view-local, auto-clipped paint facade. `makeDrawContext` builds the object handed
+ * to `View.draw(ctx)` for one compose pass, from the shared screen buffer, the view's absolute rect,
+ * the absolute clip rect (view rect ∩ ancestor clip), and the active theme.
  *
- * Every coordinate is view-local (origin = the view's top-left). Each writer translates to
- * absolute coords, drops cells outside the clip, and routes the survivors through `ScreenBuffer`
- * — which also clips to the screen edge and runs `sanitize` on text, preserving core's injection
- * boundary (AC-16). RD-03 never emits raw escape sequences.
+ * Every coordinate a widget passes is view-local: `(0, 0)` is the view's top-left. Each writer
+ * translates to absolute coordinates, drops cells outside the clip, and routes the survivors through
+ * the screen buffer — which also clips to the screen edge and sanitizes text so no control sequence
+ * can be injected. Widgets never emit raw escape sequences.
  */
 import { Attr, charWidth, sanitize } from '@jsvision/core';
 import type { Style, Theme, ScreenBuffer, CapabilityProfile } from '@jsvision/core';
@@ -22,14 +21,14 @@ const DEFAULT_STYLE: Style = { fg: 'default', bg: 'default' };
 /** Width-resolution mode — matches `ScreenBuffer`'s own default so clip math agrees with the buffer. */
 const WIDTH_MODE = 'wcwidth';
 
-/** Sum of the display widths of a string's code points (combining marks count 0). HR-30. */
+/** Sum of the display widths of a string's code points (combining marks count as 0). */
 function displayWidth(str: string): number {
   let total = 0;
   for (const glyph of str) total += charWidth(glyph.codePointAt(0) ?? 0x20, WIDTH_MODE);
   return total;
 }
 
-/** Clip `str` to at most `maxWidth` display columns without splitting a wide glyph. HR-30. */
+/** Clip `str` to at most `maxWidth` display columns without splitting a wide glyph. */
 function clipToWidth(str: string, maxWidth: number): string {
   if (maxWidth <= 0) return '';
   let out = '';
@@ -56,13 +55,12 @@ const BOX_SINGLE = { tl: '\u250C', tr: '\u2510', bl: '\u2514', br: '\u2518', h: 
  * @param viewRect The view's **absolute** rect (origin + content size).
  * @param clip     The **absolute** clip rect (view rect ∩ ancestor clip); out-of-clip writes drop.
  * @param theme    The active theme, for `color(role)` resolution.
- * @param caps     The resolved terminal capabilities for this frame (RD-18 PA-1) — surfaced on the
- *                 context so a widget can pick its ASCII glyph form at draw time; the render root
- *                 passes the same profile `serialize()` encodes with.
- * @param revealAccelerators Whether the accelerator overlay is revealed for this view this frame
- *                 (accelerator-overlay FR-1). Optional, default `false`, so existing callers (and
- *                 bare unit-constructed contexts) are unaffected; the render root passes the
- *                 scope-clamped effective value.
+ * @param caps     The resolved terminal capabilities for this frame — surfaced on the context so a
+ *                 widget can pick its ASCII vs. Unicode glyph form at draw time; the render root
+ *                 passes the same profile it encodes the frame with.
+ * @param revealAccelerators Whether the hotkey overlay is revealed for this view this frame.
+ *                 Optional, default `false`, so callers that don't reveal accelerators (and bare
+ *                 test-constructed contexts) are unaffected.
  * @returns A `DrawContext` whose writes are offset to `viewRect` and clipped to `clip`.
  */
 export function makeDrawContext(
@@ -98,9 +96,9 @@ export function makeDrawContext(
   function text(x: number, y: number, str: string, style: Style = DEFAULT_STYLE): void {
     const absY = oy + y;
     let absX = ox + x;
-    // HR-30: accumulate each base glyph plus its trailing combining marks into one cluster so the
-    // marks compose onto the base cell (via ScreenBuffer.set storing the whole cluster) instead of
-    // being dropped. A leading mark with no base has nothing to compose onto and is skipped.
+    // Accumulate each base glyph plus its trailing combining marks into one cluster so the marks
+    // compose onto the base cell (the buffer stores the whole cluster) instead of being dropped. A
+    // leading mark with no base has nothing to compose onto and is skipped.
     let cluster = '';
     let clusterWidth: 0 | 1 | 2 = 1;
     let clusterX = absX;
@@ -152,8 +150,8 @@ export function makeDrawContext(
       putGlyph(ax + w - 1, ay + row, g.v, style, 1);
     }
     if (title !== undefined && title.length > 0) {
-      // HR-30: center by DISPLAY width (not code-point count) and clip to the interior, so a
-      // CJK/emoji title stays centered and never overruns the frame (same contract as core HR-25).
+      // Center by DISPLAY width (not code-point count) and clip to the interior, so a CJK/emoji title
+      // stays centered and never overruns the frame.
       const interior = w - 2;
       const label = clipToWidth(` ${title} `, interior);
       const tx = x + 1 + Math.max(0, Math.floor((interior - displayWidth(label)) / 2));
@@ -187,7 +185,7 @@ export function makeDrawContext(
     return themeRoleToStyle(theme[role]);
   }
 
-  /** Raw role access (RD-05 PA-16): the full `Theme[K]` incl. role-only extras `color` drops. */
+  /** Full role access: the whole `Theme[K]` object, including the role-only extras `color` drops. */
   function role<K extends ThemeRoleName>(name: K): Theme[K] {
     return theme[name];
   }

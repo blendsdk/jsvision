@@ -1,23 +1,21 @@
 /**
- * Development-only warning helper (RD-01, 03-02; PA-1).
+ * Development-only warning helper.
  *
- * The project keeps `src` free of `console.*` calls so a shipped TUI never writes to the
- * (screen-coupled) console. The reactive core needs to flag two documented footguns —
- * a no-owner computation (AR-14) and a duplicate `For` key (AR-17) — so PA-1 chose raw
- * `console.warn`, **gated on `NODE_ENV !== 'production'`**: surfaced in development, silent
- * in a shipped build. This is distinct from the (ungated) `console.error` used for surplus
- * cascade errors (PA-2), which are real errors rather than dev hints.
+ * A shipped TUI must never write to the console, because it shares the terminal with the rendered
+ * screen. The reactive core still needs to flag two footguns during development — a computation
+ * created with no owner scope (a potential leak) and a duplicate `For` key — so this helper writes
+ * `console.warn` only when `NODE_ENV !== 'production'`: visible while developing, silent in a
+ * shipped build.
  */
 
 /**
- * Emit a development-only warning, prefixed for provenance. Silenced when
+ * Emit a development-only warning, prefixed so its source is obvious. Silenced when
  * `process.env.NODE_ENV === 'production'`.
  *
- * @param message The warning text (no secrets/PII — screen-safe discipline).
+ * @param message The warning text. Keep it free of secrets/PII — it may reach a shared terminal.
  */
 export function devWarn(message: string): void {
   if (process.env.NODE_ENV !== 'production') {
-    // PA-1: prod-gated dev footgun warning (the only sanctioned console use in this subsystem).
     console.warn(`[jsvision/ui reactive] ${message}`);
   }
 }
