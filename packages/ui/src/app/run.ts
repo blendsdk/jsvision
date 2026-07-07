@@ -11,7 +11,7 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { createHost, cursor } from '@jsvision/core';
-import type { CapabilityProfile, RuntimeAdapter } from '@jsvision/core';
+import type { CapabilityProfile, RuntimeAdapter, ScreenBuffer } from '@jsvision/core';
 import type { Point } from '../view/index.js';
 import type { EventLoop } from '../event/index.js';
 
@@ -97,13 +97,25 @@ export async function runApplication(ctx: RunContext): Promise<number> {
   });
 
   // Bridge every coalesced frame to the terminal (PA-6 / PF-04): the loop's onFrame is a settable
-  // member, wired only now that the host exists.
-  ctx.loop.onFrame = (buffer) => host.render(buffer);
-  // Position the hardware cursor right after each frame (fired after onFrame, so it lands past the
-  // frame's writes), and stream OSC-52 clipboard sequences to the same output (RD-07 PA-5/PA-7).
+  // member, wired only now that the host exists. The frame is DEFERRED to the caret emit that the
+  // loop fires immediately after every onFrame (tick/mount/resize), so the damage and the cursor
+  // show+move go out as ONE write — a split write lets the terminal repaint in the syscall gap with
+  // the visible cursor parked at the last damage span (a bottom-row flicker while typing).
+  let pendingFrame: ScreenBuffer | null = null;
+  ctx.loop.onFrame = (buffer) => {
+    pendingFrame = buffer;
+  };
+  // Fired right after each onFrame: render the pending frame with the caret sequence as the same
+  // write; a caret-only emit (initial refreshCaret) writes just the sequence (RD-07 PA-5/PA-7).
   ctx.loop.onCaret = (cell) => {
     lastCaret = cell;
-    output.write(caretSequence(cell));
+    if (pendingFrame !== null) {
+      const frame = pendingFrame;
+      pendingFrame = null;
+      host.render(frame, caretSequence(cell));
+    } else {
+      output.write(caretSequence(cell));
+    }
   };
   ctx.loop.writeClipboard = (seq) => output.write(seq);
 

@@ -269,11 +269,14 @@ export function createHost(options: HostOptions): Host {
     return Promise.resolve();
   }
 
-  function render(next: ScreenBuffer): void {
+  function render(next: ScreenBuffer, trailer?: string): void {
     if (!streams) return;
     // Effective caps swap wide chrome to ASCII when the probe/env adapted them (AR-4).
     const out = serialize(next, prev, { caps: effectiveCaps });
-    if (out) streams.output.write(out);
+    // The trailer (e.g. the caret show+move) rides the SAME write as the damage: a separate write
+    // lets the terminal repaint in the gap with the visible cursor parked at the last damage span.
+    const payload = trailer === undefined ? out : out + trailer;
+    if (payload) streams.output.write(payload);
     // Snapshot the rendered frame: callers may pass a single LIVE buffer they keep mutating in place
     // (e.g. the UI loop's `renderRoot.buffer()`), so aliasing it as `prev` would diff the next frame
     // against itself — an empty diff that freezes the screen. `lastBuffer` may stay a live reference:

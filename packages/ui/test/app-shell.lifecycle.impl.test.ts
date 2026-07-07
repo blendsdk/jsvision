@@ -120,3 +120,32 @@ test('the first frame paints after start (a frame is written beyond enter-mode)'
   app.loop.emitCommand('quit');
   await runP;
 });
+
+// Regression (2026-07-07 bug report): the frame damage and the caret show+move must go out as ONE
+// write. Split writes let the terminal repaint in the syscall gap with the visible cursor parked
+// at the last damage span (a bottom-row "1:5▮" flicker while typing) and the caret intermittently
+// invisible at its own cell.
+test('a tick writes frame damage + caret positioning as one chunk', async () => {
+  const d = doubles();
+  const app = appWith({ ...d, viewport: { width: 40, height: 12 } });
+  const { Editor } = await import('../src/editor/index.js');
+  const ed = new Editor();
+  ed.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 5 } };
+  app.desktop.add(ed);
+  const runP = app.run();
+  await new Promise((r) => setImmediate(r)); // first frame + initial caret
+  app.loop.focusView(ed);
+
+  d.output.chunks.length = 0;
+  app.loop.dispatch({ type: 'key', key: 'a', ctrl: false, alt: false, shift: false });
+
+  expect(d.output.chunks).toHaveLength(1); // damage + caret in the SAME write
+  const chunk = d.output.chunks[0] ?? '';
+  expect(chunk).toContain('a'); // the typed glyph's damage
+  expect(chunk).toContain('\x1b[?25h'); // cursor show
+  expect(chunk.endsWith('H')).toBe(true); // ends with the cursor-to move — nothing written after
+  expect(chunk.indexOf('\x1b[?25h')).toBeGreaterThan(chunk.indexOf('a')); // caret AFTER the damage
+
+  app.loop.emitCommand('quit');
+  await runP;
+});

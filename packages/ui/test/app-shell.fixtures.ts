@@ -184,6 +184,8 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
 export class CaptureStream extends EventEmitter {
   /** Everything written, concatenated. */
   public data = '';
+  /** Each write() call's chunk, in order — for atomic-write assertions. */
+  public chunks: string[] = [];
   public columns = 80;
   public rows = 24;
   public isTTY = true;
@@ -191,7 +193,9 @@ export class CaptureStream extends EventEmitter {
 
   /** Capture a chunk synchronously. */
   public write(chunk: Uint8Array | string): boolean {
-    this.data += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
+    const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
+    this.data += text;
+    this.chunks.push(text);
     return true;
   }
 
