@@ -1,29 +1,27 @@
 /**
- * Public entry point of the RD-05 color & styling subsystem.
+ * Public API of the color & styling subsystem: depth-aware escape-sequence
+ * encoding, color validation, nearest-color downsampling, the DOS-16 palette,
+ * and the semantic theme.
  *
- * Re-exports the subsystem's public API so the SDK's top-level
- * `src/engine/index.ts` can surface it: depth-aware SGR encoding
- * ({@link encode}/{@link encodeStyle}), the nearest-color primitives
- * ({@link nearest256}/{@link nearest16}), the {@link styleKey} run-merge key, and
- * the {@link InvalidColorError}. The DOS-16 `PALETTE` and `Theme` constants are
- * added by Phase 2.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution
- * (it resolves to the `.ts` source during development via tsx).
+ * Re-exports: {@link encode}/{@link encodeStyle} (color + attribute encoding),
+ * {@link nearest256}/{@link nearest16} (downsampling), {@link styleKey} (a cache
+ * key), {@link toRgb}/{@link InvalidColorError} (validation), the {@link PALETTE}
+ * and {@link ANSI16_ORDER} color sets, and the {@link Theme}/{@link defaultTheme}
+ * semantic role map.
  */
 
-// SGR encoding (the StyleEncoder seam + the granular per-color encoder).
+// Color + attribute encoding to escape sequences.
 export { encode, encodeStyle, styleKey } from './encode.js';
 export type { ColorRole } from './encode.js';
 
 // Nearest-color downsampling primitives.
 export { nearest256, nearest16 } from './downsample.js';
 
-// Color validation + typed error. `toRgb` is the single validation boundary (RD-21 PA-3 re-export).
+// Color validation + typed error. `toRgb` is the single validation boundary.
 export { InvalidColorError, toRgb } from './color.js';
 export type { Rgb } from './color.js';
 
-// App-facing palette + semantic theme. `ANSI16_ORDER` is the DOS-16 default swatch palette (RD-21 PA-3).
+// App-facing palette + semantic theme. `ANSI16_ORDER` is the DOS-16 swatch order.
 export { PALETTE, ANSI16_ORDER } from './palette.js';
 export { defaultTheme } from './theme.js';
 export type { Theme, ThemeRole } from './theme.js';

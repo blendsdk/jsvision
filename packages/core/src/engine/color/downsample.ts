@@ -1,22 +1,22 @@
 /**
- * Nearest-color downsampling via redmean weighted distance (RD-05; AR-5, AR-6).
+ * Nearest-color downsampling — map a 24-bit color to the closest palette entry.
  *
- * `nearest256`/`nearest16` find the closest palette entry to an RGB color, used
- * when the terminal depth is 256 or 16. The metric is the redmean approximation
- * (a low-cost perceptual distance); selection is on squared distance (no sqrt),
- * and ties resolve to the **lowest index** so corner colors (pure black/white)
- * map exactly (AC-5).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution
- * (it resolves to the `.ts` source during development via tsx).
+ * When the terminal only supports 256 or 16 colors, a truecolor value has to be
+ * approximated by the nearest palette slot. {@link nearest256}/{@link nearest16}
+ * do that using "redmean" — a cheap, roughly perceptual color distance that
+ * weights green most and shades red/blue by overall brightness, matching human
+ * vision far better than a plain RGB distance. On a tie the lower index wins, so
+ * the corner colors (pure black → 0, pure white → 15) always map exactly.
  */
 import type { Rgb } from './color.js';
 
 import { ANSI16_ORDER, ANSI16_REFERENCE, rgb256 } from './palette.js';
 
 /**
- * Redmean weighted **squared** distance between two colors. Larger when more
- * perceptually different; comparable directly (no sqrt needed).
+ * Redmean weighted **squared** distance between two colors — larger when the
+ * colors look more different. Returned squared (no `sqrt`) because only the
+ * relative ordering matters when picking a nearest palette entry, and squaring
+ * is monotonic, so skipping the root is faster and changes nothing.
  *
  * `rmean = (a.r+b.r)/2`,
  * `d² = (2 + rmean/256)·Δr² + 4·Δg² + (2 + (255-rmean)/256)·Δb²`.
@@ -34,13 +34,20 @@ export function redmean2(a: Rgb, b: Rgb): number {
 }
 
 /**
- * Nearest xterm-256 palette index (0–255) to `rgb`.
+ * Find the xterm-256 palette index (0–255) closest to an RGB color.
  *
- * Scans all 256 reference entries; on a distance tie keeps the lower index, so
- * `#000000`→0 and `#ffffff`→15 are exact rather than mapping to the cube. [AR-6]
+ * Scans all 256 reference entries by redmean distance; on a tie the lower index
+ * wins, so `#000000` → 0 and `#ffffff` → 15 stay exact instead of drifting into
+ * the color cube.
  *
- * @param rgb The source color.
- * @returns The nearest palette index 0–255.
+ * @param rgb The source color (from {@link toRgb}).
+ * @returns The nearest palette index, 0–255.
+ * @example
+ * import { toRgb, nearest256 } from '@jsvision/core';
+ *
+ * nearest256(toRgb('#000000')!);  // → 0
+ * nearest256(toRgb('#ffffff')!);  // → 15
+ * nearest256({ r: 0x80, g: 0x80, b: 0x80 });  // → 244 (a gray-ramp slot)
  */
 export function nearest256(rgb: Rgb): number {
   let best = 0;
@@ -57,12 +64,18 @@ export function nearest256(rgb: Rgb): number {
 }
 
 /**
- * Nearest ANSI-16 palette index (0–15) to `rgb` (0–7 normal, 8–15 bright).
+ * Find the ANSI-16 palette index (0–15) closest to an RGB color, where 0–7 are
+ * the normal colors and 8–15 the bright variants.
  *
- * Same lowest-index tie rule as {@link nearest256}. [AR-6]
+ * Same lowest-index tie rule as {@link nearest256}.
  *
- * @param rgb The source color.
- * @returns The nearest ANSI-16 index 0–15.
+ * @param rgb The source color (from {@link toRgb}).
+ * @returns The nearest ANSI-16 index, 0–15.
+ * @example
+ * import { toRgb, nearest16 } from '@jsvision/core';
+ *
+ * nearest16(toRgb('#000000')!);  // → 0  (black)
+ * nearest16(toRgb('#ffffff')!);  // → 15 (bright white)
  */
 export function nearest16(rgb: Rgb): number {
   let best = 0;
