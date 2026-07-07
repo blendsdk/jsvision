@@ -169,3 +169,21 @@ test('scrollTo clamps hostile arguments', () => {
   expect(ed.delta.x()).toBe(0);
   expect(ed.delta.y()).toBe(0); // 2 lines < 3 rows → no vertical scroll possible
 });
+
+// Regression (2026-07-07 bug report): the decoder names 0x20 'space' (core keys.ts) — the typing
+// branch must map it back to ' ' (the RD-06 Input idiom), and admit astral-plane printables.
+test('the space bar types a space (decoder key name "space")', () => {
+  const { loop, ed } = mountEditor();
+  ed.setText('ab');
+  loop.dispatch(key('right'));
+  loop.dispatch(key('space'));
+  expect(ed.getText()).toBe('a b');
+  loop.dispatch(key('space', { shift: true })); // Shift+space still types (selectMode is moot mid-type)
+  expect(ed.getText()).toBe('a  b');
+});
+
+test('an astral-plane printable key types as one cluster', () => {
+  const { loop, ed } = mountEditor();
+  loop.dispatch(key('👍')); // one code point, .length 2
+  expect(ed.getText()).toBe('👍');
+});
