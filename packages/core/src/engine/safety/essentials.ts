@@ -1,24 +1,26 @@
 /**
- * The essentials gate (RD-08 §Essentials evaluation; AR-1, AR-2, AR-8).
+ * The essentials gate — decides whether the SDK may start on the current
+ * terminal, and reports which non-essential capabilities are missing so the app
+ * can run in a reduced mode instead of stopping.
  *
- * Decides whether the SDK may start on the current terminal, and classifies
- * non-essential capability gaps as degradations rather than stops. The single
- * runtime essential is an interactive TTY (which also covers raw-mode keyboard
- * input — `setRawMode` is isTTY-guarded); cursor addressing and screen clear are
- * universal on any VT/ANSI terminal and therefore implied. Color is NOT gated:
- * `ColorDepth` is a non-null union, so a "color present" check is unreachable
- * dead code (PF-007); monochrome counts and degrades instead.
+ * The single hard requirement is an interactive TTY (which also implies raw-mode
+ * keyboard input; cursor addressing and screen clear are universal on any
+ * VT/ANSI terminal). Everything else — mouse, color, the alternate screen — is a
+ * *degradation*, not a stop: without it the SDK runs keyboard-only / monochrome /
+ * inline rather than refusing to start.
  *
- * The `.js` extension in import specifiers is required by NodeNext ESM
- * resolution (it resolves to the `.ts` source during development via tsx).
+ * Typical use: call {@link assertEssentials} before starting the host (it throws
+ * when the terminal is unusable), or {@link evaluateEssentials} / {@link essentialsMet}
+ * to inspect the situation without throwing.
  */
 import type { CapabilityProfile } from '../capability/profile.js';
 
 import { EssentialsNotMetError } from './errors.js';
 import type { Logger } from './logger.js';
 
-/** A non-essential capability gap the SDK degrades around instead of stopping. [AR-8] */
+/** A non-essential capability gap the SDK runs around in a reduced mode instead of stopping. */
 export interface Degradation {
+  /** The missing capability. */
   readonly cap: 'mouse' | 'color' | 'altScreen';
   /** The reduced mode the SDK runs in for this gap. */
   readonly mode: 'keyboard-only' | 'monochrome' | 'inline';
@@ -26,7 +28,7 @@ export interface Degradation {
   readonly message: string;
 }
 
-/** Result of evaluating the runtime essentials against caps + host facts. [AR-8] */
+/** The outcome of evaluating the runtime essentials against a capability profile + TTY facts. */
 export interface EssentialsReport {
   /** True when every essential is satisfied (the SDK may start). */
   readonly met: boolean;
@@ -37,21 +39,24 @@ export interface EssentialsReport {
 }
 
 /**
- * The minimal TTY facts the gate reads. Supply these from `detectTty()` (RD-07)
- * **before** `start()`. An RD-07 `Host` is structurally compatible, but
- * `host.isTTY` is only populated inside `start()`, so do NOT pass an un-started
- * host (PF-001). [AR-2]
+ * The minimal TTY facts the gate reads. Supply these from `detectTty()` **before**
+ * starting the host.
+ *
+ * A `Host` is structurally compatible with this shape, but `host.isTTY` is only
+ * populated once `start()` has run — so do NOT pass an un-started host here. Use
+ * `detectTty()` for the pre-start check instead.
  */
 export interface HostFacts {
   readonly isTTY: boolean;
 }
 
-/** The name reported for the single runtime essential when it is unmet (AC-1). */
+/** The name reported for the single runtime essential when it is unmet. */
 const TTY_ESSENTIAL = 'interactive TTY (raw-mode keyboard input)';
 
 /**
- * Build the deterministic degradation list for a profile (mouse → color →
- * altScreen order, per AR-8). Color gating is intentionally absent (PF-007).
+ * Build the deterministic degradation list for a profile, always in mouse →
+ * color → altScreen order. Color is intentionally not treated as essential:
+ * a monochrome terminal is usable, so "no color" degrades rather than stops.
  */
 function collectDegradations(caps: CapabilityProfile): Degradation[] {
   const degradations: Degradation[] = [];
@@ -68,17 +73,22 @@ function collectDegradations(caps: CapabilityProfile): Degradation[] {
 }
 
 /**
- * Evaluate the runtime essentials. Pure — no I/O, no throw — so it is freely
- * testable. [AR-1, AR-8]
+ * Evaluate the runtime essentials against a capability profile and TTY facts,
+ * without throwing. Pure — no I/O — so it is safe to call anywhere.
  *
- * The single runtime essential is an interactive TTY (`facts.isTTY`). Supply
- * `facts` from `detectTty()` before `start()` (PF-001). Non-essentials degrade
- * (never stop): no mouse → keyboard-only; mono color → monochrome; no alt-screen
- * → inline fallback.
+ * The only essential is an interactive TTY (`facts.isTTY`). Missing
+ * non-essentials appear in `degradations` (no mouse → keyboard-only; monochrome →
+ * monochrome; no alternate screen → inline fallback) but never make `met` false.
  *
- * @param caps Resolved capability profile (RD-02).
- * @param facts TTY facts from `detectTty()` (an un-started `Host` must NOT be passed — PF-001).
- * @returns The essentials report (met flag, missing list, degradations).
+ * @param caps Resolved capability profile (from `resolveCapabilities()`).
+ * @param facts TTY facts from `detectTty()`; do not pass an un-started `Host`.
+ * @returns The report: the `met` flag, the `missing` essentials, and the `degradations`.
+ * @example
+ * import { evaluateEssentials, resolveCapabilities, detectTty } from '@jsvision/core';
+ *
+ * const report = evaluateEssentials(resolveCapabilities().profile, { isTTY: detectTty() });
+ * if (!report.met) console.error('unusable terminal:', report.missing);
+ * for (const d of report.degradations) console.warn(d.message);
  */
 export function evaluateEssentials(caps: CapabilityProfile, facts: HostFacts): EssentialsReport {
   const missing: string[] = [];
@@ -87,30 +97,44 @@ export function evaluateEssentials(caps: CapabilityProfile, facts: HostFacts): E
 }
 
 /**
- * Convenience boolean: `evaluateEssentials(caps, facts).met`. [AR-8]
+ * Convenience boolean — true when every essential is satisfied. Shorthand for
+ * `evaluateEssentials(caps, facts).met`.
  *
  * @param caps Resolved capability profile.
  * @param facts TTY facts from `detectTty()`.
- * @returns true when every essential is satisfied.
+ * @returns true when the terminal is usable (the app may start).
+ * @example
+ * import { essentialsMet, resolveCapabilities, detectTty } from '@jsvision/core';
+ *
+ * if (!essentialsMet(resolveCapabilities().profile, { isTTY: detectTty() })) {
+ *   process.exit(1);
+ * }
  */
 export function essentialsMet(caps: CapabilityProfile, facts: HostFacts): boolean {
   return evaluateEssentials(caps, facts).met;
 }
 
 /**
- * Assert the essentials, throwing `EssentialsNotMetError` when unmet so the SDK
- * does not start. [AR-1, AR-8]
+ * Assert the essentials before starting: throws {@link EssentialsNotMetError}
+ * when the terminal is unusable, otherwise returns the report. Use this as the
+ * gate right before you create and start the host.
  *
- * Side effects: when `options.logger` is provided, writes each degradation
- * **once** to the logger at `info` (a screen-safe notice — never the UI stream).
- * Does not restore the terminal itself; the caller's host owns guaranteed-restore
- * on the throw path.
+ * If you pass a `logger`, each degradation is written **once** at `info` level
+ * (a screen-safe notice — never to the terminal). This function does not touch or
+ * restore the terminal itself.
  *
  * @param caps Resolved capability profile.
- * @param facts TTY facts from `detectTty()` (see PF-001).
+ * @param facts TTY facts from `detectTty()`; do not pass an un-started `Host`.
  * @param options Optional `{ logger }` to emit the one-time degradation notices.
- * @returns The `EssentialsReport` when essentials are met (degradations included).
- * @throws EssentialsNotMetError when an essential is unmet.
+ * @returns The `EssentialsReport` (including any degradations) when essentials are met.
+ * @throws EssentialsNotMetError when the terminal lacks an essential capability.
+ * @example
+ * import { assertEssentials, resolveCapabilities, detectTty, createHost } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * assertEssentials(caps, { isTTY: detectTty() }); // throws on a non-TTY
+ * const host = createHost({ caps });
+ * await host.start();
  */
 export function assertEssentials(
   caps: CapabilityProfile,

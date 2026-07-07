@@ -1,38 +1,39 @@
 /**
- * Stream binding + TTY detection + optional `/dev/tty` (RD-07, plan doc 03-03).
+ * Stream binding and TTY detection for the host, including the POSIX `/dev/tty`
+ * fallback.
  *
- * `bindStreams()` resolves the input/output streams the host drives and reports
- * whether both ends are a real TTY. On POSIX, when stdout is piped but a
+ * The host uses this internally to resolve which input/output streams to drive
+ * and whether both ends are a real TTY. On POSIX, when stdout is piped but a
  * controlling terminal exists, it transparently binds to `/dev/tty` so a piped
- * app can still own the terminal; any failure (or Windows) degrades to the std
- * streams rather than throwing (AR-13). Injected streams are used verbatim and
- * never closed by `dispose()` — the test owns them.
- *
- * The `.js` extensions in the import specifiers are required by NodeNext ESM
- * resolution (they resolve to the `.ts` sources during development via tsx).
+ * app can still own the terminal; any failure (or Windows) falls back to the
+ * standard streams rather than throwing. The publicly useful export here is
+ * {@link detectTty}, a lightweight pre-start "is this an interactive terminal?"
+ * check.
  */
 import { closeSync, openSync } from 'node:fs';
 import { ReadStream, WriteStream } from 'node:tty';
 import type { HostOptions } from './types.js';
 
 /**
- * The subset of {@link HostOptions} that governs stream binding + TTY detection.
- * `HostOptions` is structurally compatible, so the host passes itself straight
- * through; {@link detectTty} supplies just these fields pre-start (PF-001).
+ * The stream-related subset of {@link HostOptions} — enough for {@link detectTty}
+ * to run the same binding logic the host uses, before the host is started.
  */
 export interface StreamOptions {
+  /** Input stream. Default: `process.stdin`. */
   readonly input?: NodeJS.ReadStream;
+  /** Output stream. Default: `process.stdout`. */
   readonly output?: NodeJS.WriteStream;
+  /** When true (default) and stdout is piped but a controlling terminal exists, bind to `/dev/tty`. */
   readonly preferDevTty?: boolean;
 }
 
-/** The resolved streams + TTY state the host runs against. [AR-11, AR-13] */
+/** The resolved streams and TTY state the host runs against. */
 export interface BoundStreams {
   readonly input: NodeJS.ReadStream;
   readonly output: NodeJS.WriteStream;
-  /** True only when BOTH ends are TTYs (or a `/dev/tty` bind succeeded). [AR-11] */
+  /** True only when BOTH ends are TTYs (or a `/dev/tty` bind succeeded). */
   readonly isTTY: boolean;
-  /** Close any stream this module opened (e.g. `/dev/tty` fds); no-op for injected/std streams. */
+  /** Close any stream this module opened (e.g. `/dev/tty` fds); a no-op for injected/standard streams. */
   dispose(): void;
 }
 
@@ -48,7 +49,7 @@ function safely(fn: () => void): void {
 /**
  * Attempt to bind to the controlling terminal via `/dev/tty` (POSIX only).
  * Opens separate read and write descriptors; returns `null` if either open
- * fails so the caller can degrade to the std streams. [AR-13]
+ * fails so the caller can fall back to the standard streams.
  */
 function openDevTty(): BoundStreams | null {
   let readFd: number | undefined;
@@ -85,7 +86,7 @@ function openDevTty(): BoundStreams | null {
  * Defaults `input` to `process.stdin` and `output` to `process.stdout`. When
  * neither stream is injected, `preferDevTty` is not `false`, the platform is
  * POSIX, and stdout is piped, it tries `/dev/tty`; on any failure it falls back
- * to the std streams. Injected streams are used verbatim. [AR-11, AR-13]
+ * to the standard streams. Injected streams are used verbatim.
  *
  * @param options - the host options (`input`/`output`/`preferDevTty`).
  * @returns the bound streams, TTY flag, and a `dispose()` that closes only what
@@ -117,15 +118,28 @@ export function bindStreams(options: HostOptions): BoundStreams {
 }
 
 /**
- * Resolve whether the SDK has an interactive TTY, ephemerally — for the RD-08
- * essentials gate to read **before** `start()` (PF-001). `host.isTTY` is only
- * populated inside `start()`, so a pre-start gate cannot use it; this binds the
- * same streams `bindStreams` would, reads `isTTY`, and disposes anything it
- * opened (e.g. a `/dev/tty` fd) so no descriptor lingers. [AR-2]
+ * Check whether the app has an interactive terminal, **before** starting the
+ * host. Returns true when both ends are a real TTY (or the POSIX `/dev/tty` bind
+ * succeeds).
  *
- * @param options - injectable `input`/`output`/`preferDevTty` (defaults match
- *   `bindStreams`: std streams, with the POSIX `/dev/tty` fallback when piped).
- * @returns true when both ends are a real TTY (or a `/dev/tty` bind succeeded).
+ * Use this to gate startup — a running `Host` exposes `host.isTTY`, but that is
+ * only meaningful after `start()`, so a pre-start check needs `detectTty()`
+ * instead. It is ephemeral: it binds the same streams the host would, reads the
+ * flag, and immediately disposes anything it opened (e.g. a `/dev/tty` fd), so no
+ * descriptor lingers.
+ *
+ * @param options Optional `input`/`output`/`preferDevTty`. Defaults match the
+ *   host: the standard streams, with the POSIX `/dev/tty` fallback when piped.
+ * @returns true when the terminal is interactive.
+ * @example
+ * import { detectTty, assertEssentials, resolveCapabilities } from '@jsvision/core';
+ *
+ * if (!detectTty()) {
+ *   console.error('This program must be run in an interactive terminal.');
+ *   process.exit(1);
+ * }
+ * // Or feed it straight into the essentials gate:
+ * assertEssentials(resolveCapabilities().profile, { isTTY: detectTty() });
  */
 export function detectTty(options: StreamOptions = {}): boolean {
   const bound = resolveStreams(options);
