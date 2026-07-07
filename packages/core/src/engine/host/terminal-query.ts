@@ -1,29 +1,25 @@
 /**
- * Real tty-backed {@link TerminalQuery} (RD-03, plan doc 03-01).
+ * A real, tty-backed {@link TerminalQuery} — the object that lets asynchronous
+ * capability detection talk to a live terminal.
  *
- * Completes the layer-2 query wiring RD-02 deferred: `capability/query.ts`
- * defines the *consumer* ({@link runQueries}) and `capability/profile.ts` the
- * {@link TerminalQuery} seam, but no concrete implementation shipped. This is a
- * thin, dependency-free adapter over Node streams — `write()` pushes a request
- * string to the output stream; `read()` yields each input chunk as a
- * `Uint8Array` and detaches its listener when iteration ends — so
- * `resolveCapabilitiesAsync({ query })` works against a real terminal for both
- * the RD-03 probe and production async detection (AR-3).
+ * Terminal capability detection can *ask* the terminal questions (e.g. "do you
+ * support synchronized output?") by writing a request escape sequence and reading
+ * the reply. This is a thin, dependency-free adapter over a pair of Node streams
+ * that does exactly that: `write()` sends a request to the output stream, and
+ * `read()` yields each input chunk as a `Uint8Array` (detaching its listener when
+ * you stop iterating). Pass it as `resolveCapabilitiesAsync({ query })`.
  *
- * It does NOT change terminal modes: the caller guarantees raw mode + a flowing
- * input stream before querying. This keeps the adapter free of any lifecycle of
- * its own and side-effect-free with respect to terminal state.
- *
- * The `.js` extensions in the import specifiers are required by NodeNext ESM
- * resolution (they resolve to the `.ts` sources during development via tsx).
+ * It does NOT change terminal modes — the caller must ensure the input stream is
+ * already in raw mode and flowing before querying — so it has no lifecycle of its
+ * own and no side effects on terminal state beyond the bytes it writes.
  */
 import type { TerminalQuery } from '../capability/profile.js';
 
 /**
- * Options for {@link createTerminalQuery}. The streams default to the process
- * std streams. Base stream interfaces (not the tty subtypes) are used so real
- * `PassThrough` streams can drive the adapter in tests without an unsafe cast;
- * `process.stdin`/`process.stdout` still satisfy them. [RT-1]
+ * Options for {@link createTerminalQuery}. Both streams default to the process
+ * standard streams. The plain readable/writable stream types (not the tty
+ * subtypes) are used so an in-memory stream can drive the adapter in tests;
+ * `process.stdin`/`process.stdout` satisfy them too.
  */
 export interface TerminalQueryOptions {
   /** Stream to read terminal responses from. Default: `process.stdin`. */
@@ -47,17 +43,29 @@ function toBytes(chunk: Buffer | string): Uint8Array {
 }
 
 /**
- * Create a real tty-backed {@link TerminalQuery} over Node streams (AR-3).
+ * Create a real, tty-backed {@link TerminalQuery} over a pair of Node streams.
  *
- * `write(data)` writes the request string to `output`. `read()` returns an
- * `AsyncIterable` that yields each input 'data' chunk as a `Uint8Array`; bytes
- * arriving between iterations are buffered so none are dropped, and the listener
- * is detached when the consumer stops iterating (`return()`) or {@link close} is
- * called. The caller must ensure the input stream is in raw mode and flowing;
- * this adapter does not change modes.
+ * `write(data)` sends the request string to `output`. `read()` returns an
+ * `AsyncIterable` that yields each input chunk as a `Uint8Array`; bytes arriving
+ * between iterations are buffered so none are dropped, and the input listener is
+ * detached when you stop iterating or call {@link ManagedTerminalQuery.close}.
+ * The caller must ensure the input stream is already in raw mode and flowing.
  *
- * @param options Injectable `input`/`output` streams (default: process std streams).
- * @returns A managed query seam; call {@link close} when done to release the listener.
+ * Always call `close()` when done so the input listener is released.
+ *
+ * @param options Injectable `input`/`output` streams (default: process standard streams).
+ * @returns A managed query object; feed it to `resolveCapabilitiesAsync`.
+ * @example
+ * import { createTerminalQuery, resolveCapabilitiesAsync } from '@jsvision/core';
+ *
+ * // With stdin in raw mode and flowing, detect capabilities by asking the terminal.
+ * const query = createTerminalQuery(); // defaults to process.stdin/stdout
+ * try {
+ *   const { profile } = await resolveCapabilitiesAsync({ query });
+ *   console.error('color depth:', profile.colorDepth);
+ * } finally {
+ *   query.close();
+ * }
  */
 export function createTerminalQuery(options: TerminalQueryOptions = {}): ManagedTerminalQuery {
   const input = options.input ?? process.stdin;

@@ -1,13 +1,11 @@
 /**
- * `date-format.ts` — the pure, view-free field-format model for the RD-20 `DatePicker` (PA-11). Three
- * digit-reorder formats, each mapping to a `picture`-mask + a range-validating `parse` + a zero-padding
- * `serialize`. Localized / textual month names are deferred (DEF-30). No reactivity, no drawing.
+ * The pure, view-free field-format model used by {@link DatePicker}. It maps each supported date
+ * format to an input mask, a range-validating `parse`, and a zero-padding `serialize`. No reactivity,
+ * no drawing.
  *
- * `parse` returns `null` on any incomplete / malformed / out-of-range input (never throws, never yields
- * an invalid `CalendarDate`) so an in-progress or bad field edit leaves the picker's value unchanged
- * (AC-11/AC-17).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * `parse` returns `null` on any incomplete, malformed, or out-of-range input (it never throws and
+ * never yields an invalid `CalendarDate`), so an in-progress or bad field edit leaves the picker's
+ * value unchanged.
  */
 import type { CalendarDate } from './calendar-date.js';
 import { daysInMonth } from './calendar-date.js';
@@ -15,13 +13,13 @@ import { daysInMonth } from './calendar-date.js';
 /** The supported field formats (digit reorder only; default ISO). */
 export type DateFormat = 'YYYY-MM-DD' | 'DD/MM/YYYY' | 'MM/DD/YYYY';
 
-/** A resolved format: its `picture` mask + `parse`/`serialize` pair. */
+/** A resolved format: its input mask plus a `parse`/`serialize` pair. */
 export interface DateFormatSpec {
-  /** The `picture(mask)` pattern gating the field (`#` = a digit). */
+  /** The input mask gating the field, where `#` marks a digit position (e.g. `##/##/####`). */
   readonly mask: string;
-  /** Parse the field text → a range-validated `CalendarDate`, or `null` (incomplete / invalid). */
+  /** Parse the field text into a range-validated `CalendarDate`, or `null` (incomplete / invalid). */
   parse(text: string): CalendarDate | null;
-  /** Serialize a date → the masked field text (zero-padded, in this format's order). */
+  /** Serialize a date into the masked field text (zero-padded, in this format's order). */
   serialize(date: CalendarDate): string;
 }
 

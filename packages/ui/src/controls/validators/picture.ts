@@ -1,29 +1,29 @@
 /**
- * `picture(mask)` — the Paradox picture-mask validator, a faithful port of Turbo Vision
- * `TPXPictureValidator` (`tvalidat.cpp`, `validate.h`), RD-07 (DEF-02). Implements the {@link Validator}
- * shape (+ the RD-07 additive `fill` for autoFill delivery, PA-17). The `.js` extension in import
- * specifiers is required by NodeNext ESM resolution.
+ * A formatted-mask validator: constrain input to a template such as a phone number, date, or
+ * product code, and optionally auto-fill the fixed punctuation as the user types.
  *
- * ## GATE-1 decode (`tvalidat.cpp`, code-point unit PA-1)
- * - **Result codes** (`validate.h:74-75`): complete / incomplete / empty / error / syntax / ambiguous
- *   (→ complete, `:594`) / incompNoFill (→ incomplete, `:596`).
- * - **Specials** (`scan`, `:371-463`): `#` digit · `?` letter · `&` letter→UPPER · `!` any→UPPER ·
- *   `@` any · `*N`/`*` iteration (`:264-319`) · `{ }` required group · `[ ]` optional group (`:322-336`)
- *   · `,` alternation (`process`/`skipToComma`, `:244,465-517`) · `;x` literal escape · else literal
- *   (case-insensitive; a typed space becomes the mask literal, `:438-451`).
- * - **Machine**: `picture` (`:552-599`) → `process` (alternation/backtrack, `:465-517`) → `scan`
- *   (linear match, `:371-463`) → `group`/`iteration`/`checkComplete` (`:322-368`). `consume` transforms
- *   the input in place (`:210-215`); autoFill appends **trailing non-special literals** then reprocesses
- *   (`:572-585`) — default ON (PA-3), delivered via {@link Validator.fill} (PA-17).
- * - **`isValidInput`** = `picture(s, fill) != error` (transient); **`isValid`** = `picture(s, false) ==
- *   complete` (blocking; never autoFills) (`:149-162`).
- * - **`syntaxCheck`** (`:519-550`): reject empty / trailing `;` / unbalanced `[]`/`{}`. **PA-2 bounds:**
- *   we additionally reject `*N` with `N > MAX_REPEAT` (allowlist), enforce a global step budget, and
- *   break an unbounded `*` that consumes nothing — no hostile mask can hang/overflow (AC-15).
+ * ## Mask syntax
+ * - `#` — a digit
+ * - `?` — a letter
+ * - `&` — a letter, forced to UPPER case
+ * - `!` — any character, forced to UPPER case
+ * - `@` — any character
+ * - `*N` / `*` — repeat the following element N times (or any number of times)
+ * - `{ }` — a required group · `[ ]` — an optional group
+ * - `,` — alternation between whole templates ("this OR that")
+ * - `;x` — treat the next character `x` as a literal, even if it is a special
+ * - any other character — a literal (matched case-insensitively; typing a space fills in the literal)
+ *
+ * `isValidInput` accepts a partially-typed value; `isValid` requires a value that completely fills
+ * the mask. With auto-fill on (the default), trailing literals are inserted for you — e.g. after
+ * typing `123` into `###-##` the field becomes `123-`.
+ *
+ * Malicious or malformed masks are rejected safely: a mask that is empty, ends in `;`, has unbalanced
+ * brackets, or asks for an unreasonable repeat count fails validation instead of throwing or hanging.
  */
 import type { Validator } from './types.js';
 
-/** The picture result codes (TV `TPicResult`, `validate.h:74-75`). */
+/** The internal outcome codes for running the mask machine over one input. */
 const Pr = {
   complete: 'complete',
   incomplete: 'incomplete',
@@ -35,16 +35,16 @@ const Pr = {
 } as const;
 type PicResult = (typeof Pr)[keyof typeof Pr];
 
-/** Special mask characters (autoFill stops at any of these — `tvalidat.cpp:576`). */
+/** Special mask characters; auto-fill stops as soon as it reaches any of these. */
 const SPECIALS = '#?&!@*{}[],';
-/** Hard cap on an explicit `*N` repeat count (PA-2). A mask over this fails `syntaxCheck`. */
+/** Hard cap on an explicit `*N` repeat count — a mask asking for more than this fails as unsafe. */
 const MAX_REPEAT = 1024;
 
-/** ASCII digit test (TV `isNumber`). */
+/** ASCII digit test. */
 function isNumber(ch: string): boolean {
   return ch >= '0' && ch <= '9';
 }
-/** ASCII letter test (TV `isLetter` — case-folded A–Z). */
+/** ASCII letter test (case-folded A–Z). */
 function isLetter(ch: string): boolean {
   const up = ch.toUpperCase();
   return up >= 'A' && up <= 'Z' && up.length === 1;
@@ -66,8 +66,8 @@ interface Syntax {
 }
 
 /**
- * Validate a mask's syntax + enforce the PA-2 repeat bound (TV `syntaxCheck`, `:519-550`). Rejects an
- * empty mask, a mask ending in `;`, unbalanced `[]`/`{}`, and any `*N` with `N > MAX_REPEAT`.
+ * Check that a mask is well-formed and safe to run. Rejects an empty mask, a mask ending in `;`,
+ * unbalanced `[]`/`{}`, and any `*N` whose count exceeds {@link MAX_REPEAT}.
  *
  * @param mask The picture mask.
  * @returns `{ ok, error? }`.
@@ -109,9 +109,9 @@ function syntaxCheck(mask: string): Syntax {
 }
 
 /**
- * The picture matcher — one instance per validation call. Holds the mask, a mutable input buffer (a
- * char array, so `consume` can transform in place and autoFill can append), the mask/input cursors
- * (`index`/`jndex`), and a step budget (PA-2). Faithful to the `TPXPictureValidator` members.
+ * The mask matcher — one instance per validation call. Holds the mask, a mutable input buffer (a
+ * char array, so a matched character can be transformed in place and auto-fill can append), the
+ * mask/input cursors (`index`/`jndex`), and a step budget that guarantees termination on any mask.
  */
 class PictureMachine {
   private index = 0;
@@ -129,28 +129,29 @@ class PictureMachine {
     inputStr: string,
   ) {
     this.input = [...inputStr];
-    this.maxSteps = 64 * (pic.length + this.input.length) + 4096; // PA-2 global budget
+    // Bound total work so no mask — however adversarial — can spin forever.
+    this.maxSteps = 64 * (pic.length + this.input.length) + 4096;
   }
 
-  /** The (transformed + filled) input after a run — TV's mutated `data` buffer. */
+  /** The input after a run, with matched-character transforms and any auto-fill applied. */
   result(): string {
     return this.input.join('');
   }
 
-  /** Whether the step budget is exhausted (PA-2). */
+  /** Whether the step budget is exhausted. */
   private overBudget(): boolean {
     this.steps += 1;
     return this.steps > this.maxSteps;
   }
 
-  /** Store a char at the cursor, advancing both cursors (TV `consume`, `:210-215`). */
+  /** Store a matched character at the cursor, advancing both the mask and input cursors. */
   private consume(ch: string): void {
     this.input[this.jndex] = ch;
     this.index += 1;
     this.jndex += 1;
   }
 
-  /** Skip one char or a bracketed group, returning the advanced mask index (TV `toGroupEnd`, `:222-241`). */
+  /** Skip one char or a whole bracketed group, returning the advanced mask index. */
   private toGroupEnd(start: number, termCh: number): number {
     let i = start;
     let brk = 0;
@@ -180,7 +181,7 @@ class PictureMachine {
     return i;
   }
 
-  /** Advance `index` to the next alternation comma or the group end (TV `skipToComma`, `:243-254`). */
+  /** Advance `index` to the next alternation comma or the group end. */
   private skipToComma(termCh: number): boolean {
     do {
       this.index = this.toGroupEnd(this.index, termCh);
@@ -190,12 +191,12 @@ class PictureMachine {
     return this.index < termCh;
   }
 
-  /** The mask index at the end of the current group (TV `calcTerm`, `:257-261`). */
+  /** The mask index at the end of the current group. */
   private calcTerm(termCh: number): number {
     return this.toGroupEnd(this.index, termCh);
   }
 
-  /** A `*`/`*N` iteration group (TV `iteration`, `:264-319`). */
+  /** Match a `*` / `*N` iteration group (a repeated element). */
   private iteration(inTerm: number): PicResult {
     let itr = 0;
     let rslt: PicResult = Pr.error;
@@ -223,7 +224,7 @@ class PictureMachine {
         this.index = k;
         const beforeJ = this.jndex;
         rslt = this.process(termCh);
-        if (rslt === Pr.complete && this.jndex === beforeJ) break; // no progress → stop (PA-2 spin guard)
+        if (rslt === Pr.complete && this.jndex === beforeJ) break; // consumed nothing this pass → stop, or we'd spin
       } while (rslt === Pr.complete);
       if (rslt === Pr.empty || rslt === Pr.error) {
         this.index += 1;
@@ -234,7 +235,7 @@ class PictureMachine {
     return rslt;
   }
 
-  /** A `{ }` / `[ ]` group (TV `group`, `:322-336`). */
+  /** Match a `{ }` (required) or `[ ]` (optional) group. */
   private group(inTerm: number): PicResult {
     const termCh = this.calcTerm(inTerm);
     this.index += 1;
@@ -243,7 +244,7 @@ class PictureMachine {
     return rslt;
   }
 
-  /** Resolve an incomplete result to ambiguous if only optional pieces remain (TV `checkComplete`, `:339-368`). */
+  /** Resolve an incomplete result to "ambiguous" when only optional pieces of the mask remain. */
   private checkComplete(rslt: PicResult, termCh: number): PicResult {
     if (!isIncomplete(rslt)) return rslt;
     let j = this.index;
@@ -265,7 +266,7 @@ class PictureMachine {
     return j === termCh ? Pr.ambiguous : rslt;
   }
 
-  /** Linear match of the mask against the input from the current cursors (TV `scan`, `:370-463`). */
+  /** Match the mask against the input linearly from the current cursors. */
   private scan(termCh: number): PicResult {
     let rslt: PicResult = Pr.empty;
     while (this.index !== termCh && this.pic[this.index] !== ',') {
@@ -307,7 +308,7 @@ class PictureMachine {
         default: {
           if (this.pic[this.index] === ';') this.index += 1; // escaped literal
           const lit = this.pic[this.index];
-          // Case-insensitive literal match; a typed space is replaced by the literal (:445-449).
+          // Case-insensitive literal match; typing a space here fills in the mask's literal instead.
           if (lit.toUpperCase() !== ch.toUpperCase() && ch !== ' ') return Pr.error;
           this.consume(lit);
         }
@@ -317,7 +318,7 @@ class PictureMachine {
     return rslt === Pr.incompNoFill ? Pr.ambiguous : Pr.complete;
   }
 
-  /** Try each alternation branch with backtracking (TV `process`, `:465-517`). */
+  /** Try each alternation branch (the `,`-separated templates) with backtracking. */
   private process(termCh: number): PicResult {
     let rslt: PicResult;
     let rProcess: PicResult = Pr.error;
@@ -329,7 +330,8 @@ class PictureMachine {
     do {
       if (this.overBudget()) return Pr.error;
       rslt = this.scan(termCh);
-      // Only accept a complete that made it as far as the last incomplete (:481-486).
+      // Only accept a "complete" branch if it consumed at least as much input as the furthest
+      // incomplete branch seen so far — otherwise a shorter branch could win over a better match.
       if (rslt === Pr.complete && incomp && this.jndex < incompJ) {
         rslt = Pr.incomplete;
         this.jndex = incompJ;
@@ -358,7 +360,7 @@ class PictureMachine {
     return rslt;
   }
 
-  /** Run the full machine (TV `picture`, `:552-599`); with `autoFill`, append trailing literals + reprocess. */
+  /** Run the full match; with `autoFill`, append the mask's trailing literals and re-run once. */
   run(autoFill: boolean): PicResult {
     if (this.input.length === 0) return Pr.empty;
     this.jndex = 0;
@@ -385,14 +387,21 @@ class PictureMachine {
 }
 
 /**
- * Create a Paradox picture-mask validator (TV `TPXPictureValidator`). autoFill defaults ON (PA-3),
- * delivered via {@link Validator.fill} (PA-17). A mask that fails `syntaxCheck` (empty, trailing `;`,
- * unbalanced brackets, or `*N > MAX_REPEAT`) makes both gates reject and populates `error` (allowlist,
- * PA-2) — it never throws, never hangs.
+ * Create a formatted-mask validator. Auto-fill is on by default, so fixed literals (dashes,
+ * parentheses) are inserted as the user types. A malformed mask (empty, ending in `;`, unbalanced
+ * brackets, or an unreasonable `*N` repeat) makes both gates reject and sets `error` — it never
+ * throws and never hangs.
  *
- * @param mask     The picture mask (e.g. `"(###)###-####"`).
- * @param autoFill Auto-insert trailing literals + case transforms (default `true`).
- * @returns A {@link Validator} with `isValidInput` / `isValid` / `fill` / `error`.
+ * @param mask     The mask template — see the mask-syntax list above (e.g. `'(###) ###-####'`).
+ * @param autoFill Whether to auto-insert trailing literals and apply case transforms. Default `true`.
+ * @returns A {@link Validator} you can pass to an {@link Input}.
+ * @example
+ * import { signal } from '@jsvision/ui';
+ * import { Input, picture } from '@jsvision/ui';
+ *
+ * const phone = signal('');
+ * // Typing "5551234567" fills the punctuation automatically → "(555) 123-4567".
+ * const input = new Input({ value: phone, validator: picture('(###) ###-####') });
  */
 export function picture(mask: string, autoFill = true): Validator {
   const syntax = syntaxCheck(mask);

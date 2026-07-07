@@ -1,47 +1,18 @@
 /**
- * `surface-view.ts` — the `SurfaceView`, a **passive** `View` that displays a `delta`-offset viewport
- * onto a bound {@link Surface}. Its draw geometry is a **faithful decode** of Turbo Vision's
- * `TSurfaceView::draw()` (`source/tvision/tsurface.cpp:93-141`); the pure clip/margin math lives in
- * `surface-geometry.ts`. Reactive binding (RD-01) + a two-way `delta` signal are the jsvision
- * extensions TV couldn't have.
+ * {@link SurfaceView} — a passive `View` that displays a scrollable window onto a bound
+ * {@link Surface}. It takes no input of its own; you scroll it by writing its `delta` signal (e.g.
+ * bind a `ScrollBar.value` to it). The clip/margin math lives in `surface-geometry.ts`.
  *
- * ## TV decode (GATE-1 — `TSurfaceView::draw()`, `tsurface.cpp:93-141`; palette `surface.h:56-71`)
- *   • **Degenerate view** (`:95`): `if (size.x <= 0 || size.y <= 0) return;` → draw nothing.
- *   • **Empty-area colour** (`:98`): `cEmpty = mapColor(1)` = palette entry 1 = "TWindow's and TDialog's
- *     frame passive colour" (`surface.h:71`) → jsvision **`windowInactive`** (`theme.ts:335`, `0x17`
- *     lightGray-on-blue). No new theme role (AC-10).
- *   • **Clip rect** (`:105-107`): `TRect(0,0,surface->size).move(-delta).intersect(TRect(0,0,size))`
- *     → {@link computeClip}. **Non-empty guard** (`:108-109`): `0 <= clip.a.x < clip.b.x && …y`.
- *   • **First visible cell** (`:111`): `&surface->at(max(delta.y,0), max(delta.x,0))` — negative delta
- *     clamped to 0 (the surface is inset into the view, not scrolled).
- *   • **Direct copy** (`:112-115`): when `clip == extent` (surface fills the view) copy each row
- *     straight — no margins.
- *   • **Margin bands** (`:118-132`): else fill the top rows `[0, clip.a.y)` + bottom rows `[clip.b.y,
- *     size.y)` full width with `cEmpty` spaces, then per surface row the left `[0, clip.a.x)` + right
- *     `[clip.b.x, size.x)` side bands → {@link marginRects}.
- *   • **Null surface** (`:136-140`): fill the whole view with `cEmpty` spaces.
+ * What it paints, given the surface, the scroll offset, and the viewport size:
+ * - the visible slice of the surface, positioned in the view;
+ * - the empty-area bands (top/bottom/left/right) around the surface, filled with spaces in the
+ *   inactive-window colour;
+ * - the whole view filled with that empty colour when there is no surface, or when the surface has
+ *   been scrolled entirely out of view.
  *
- * **Deviation (PA-3):** TV's non-empty guard (`:108-109`) leaves a surface scrolled **fully outside**
- * the viewport (empty clip) **undrawn** (stale cells). jsvision maps an empty clip to the null-surface
- * case → fills the whole view with `cEmpty` spaces (AC-9). A safe, deterministic extension.
- *
- * ## GATE-2 AFTER-diff (re-verified vs `tsurface.cpp:93-141`, 2026-07-05 — no mismatch found)
- * The composed `SurfaceView` buffer matches the decode cell-by-cell (executable oracle:
- * `surface-view.spec` ST-3 + `surface-view.impl` GATE-2): the direct-copy `clip==extent` case
- * (`:112-115`), the top/bottom full-width bands (`:120-121`), the left/right side bands within the
- * surface rows (`:123-132`), the negative-delta inset with first cell `at(max(delta,0))` (`:111`), and
- * the null-surface whole-view fill (`:136-140`). Documented extensions (spec oracles, no `.cpp` diff):
- * the fully-outside all-empty fill (PA-3, where TV leaves stale cells) and the **wide-glyph edge
- * safety** — TV memcpy's raw `TScreenCell`s (a wide glyph split by a side-margin boundary would copy a
- * lead without its continuation), whereas jsvision's `ctx.text` drops a straddling wide glyph whole
- * (draw-context.ts:86-91, the codebase-wide wide-glyph discipline, PA-11). Safe, never a half-cell.
- *
- * SECURITY (AC-13/AC-14): `computeClip`/`marginRects` are integer + bounds-clamped; the blit indexes
- * only `[srcX0, srcX0+clipW) × [srcY0, srcY0+clipH)`, which `computeClip` guarantees ⊆ surface. Surface
- * cells are already sanitize-clean (`Surface` write paths) and `ctx.text` re-sanitizes, so no raw
- * control byte reaches the buffer.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * A wide glyph that would be split by a viewport edge is dropped whole rather than leaving a half
+ * cell. The view is reactive: a pan, a surface swap, or a surface content change each schedule one
+ * coalesced repaint.
  */
 import { View } from '../view/index.js';
 import type { DrawContext } from '../view/index.js';
@@ -51,27 +22,44 @@ import type { Point } from '../view/geometry.js';
 import { Surface } from './surface.js';
 import { computeClip, marginRects, clampDelta } from './surface-geometry.js';
 
-/** A static surface, `null`, or a reactive accessor of either (PA-6). */
+/** A static surface, `null`, or a reactive accessor of either (so the surface can be swapped live). */
 export type SurfaceSource = Surface | null | (() => Surface | null);
 
-/** Options for a {@link SurfaceView}. (03-02, PA-6) */
+/** Options for a {@link SurfaceView}. */
 export interface SurfaceViewOptions {
   /** The bound surface (static, `null`, or a reactive accessor — swap-aware). */
   surface: SurfaceSource;
   /** Two-way scroll offset `{x,y}`; defaults to `signal({x:0,y:0})`. The caller drives it (e.g. a `ScrollBar`). */
   delta?: Signal<Point>;
-  /** Fired when `delta` changes (Should-Have, PA-9). */
+  /** Fired when `delta` changes (skips the initial value and same-coordinate no-op writes). */
   onScroll?: (delta: Point) => void;
 }
 
 /**
- * A passive `delta`-viewport onto a {@link Surface}. Not focusable and handles **no** input (TV
- * `TSurfaceView` is passive) — scroll it by writing `delta` (e.g. bind a `ScrollBar.value` to it). The
- * draw is the `tsurface.cpp` decode; see the module doc. Reactive: a pan, a surface swap, or a surface
- * content bump each schedule one coalesced repaint (AC-5/AC-6).
+ * A passive, scrollable window onto a {@link Surface}. Not focusable and handles no input — scroll it
+ * by writing its `delta` signal (for example, bind a `ScrollBar.value` to it). Reactive: a pan, a
+ * surface swap, or a surface content change each schedule one coalesced repaint.
+ *
+ * @example
+ * import { Group, Surface, SurfaceView, ScrollBar, signal } from '@jsvision/ui';
+ *
+ * const surface = Surface.from(['+----+', '| hi |', '+----+']);
+ * const delta = signal({ x: 0, y: 0 });
+ *
+ * const g = new Group();
+ * const view = new SurfaceView({ surface, delta });
+ * view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 4, height: 2 } };
+ * g.add(view);
+ *
+ * // Drive the horizontal offset from a scroll bar (or write `delta` directly).
+ * const hx = signal(0);
+ * const bar = new ScrollBar({ value: hx, min: 0, max: surface.size.x - 4, orientation: 'horizontal' });
+ * bar.layout = { position: 'absolute', rect: { x: 0, y: 2, width: 4, height: 1 } };
+ * // …bind `hx` → `delta.x` in your own handler, or use SurfaceView.scrollTo / panBy.
+ * g.add(bar);
  */
 export class SurfaceView extends View {
-  /** TV `TSurfaceView` takes no input — the view is passive (AC-8). */
+  /** The view is passive — it never takes focus or handles input. */
   override focusable = false;
 
   /** Two-way scroll offset the caller drives. */
@@ -91,14 +79,14 @@ export class SurfaceView extends View {
     this.onScroll = opts.onScroll;
 
     this.onMount(() => {
-      // Repaint on a pan (delta), a surface swap (readSurface), or a content mutation (version) — draw()
-      // is NOT auto-tracked (render-root.ts:137), so the view must bind to repaint (AC-5/AC-6).
+      // draw() is not auto-tracked, so subscribe explicitly here to repaint on a pan (delta), a surface
+      // swap (readSurface), or a content mutation (the surface's version counter).
       this.bind(() => {
         this.delta();
         const s = this.readSurface();
         if (s) s.version();
       });
-      // onScroll — change-only (skips the initial run + same-coordinate no-op sets), PA-9.
+      // onScroll — change-only (skips the initial run and same-coordinate no-op writes).
       if (this.onScroll) {
         let prev = this.delta();
         this.bind(
@@ -114,11 +102,10 @@ export class SurfaceView extends View {
     });
   }
 
-  // ── Should-Have scroll helpers (PA-9) ────────────────────────────────────────────────────────────
-
   /**
-   * Scroll so `target` becomes the top-left of the viewport, **clamped** to `[0, max(0, surface−view)]`
-   * per axis (via `clampDelta`). Raw `delta.set` stays available for the unclamped (TV-faithful) case.
+   * Scroll so `target` becomes the top-left of the viewport, **clamped** so the surface stays in view
+   * (`[0, max(0, surface − view)]` per axis). Writing the `delta` signal directly bypasses the clamp if
+   * you want to scroll past the edge.
    *
    * @param target The desired scroll offset `{x,y}`.
    */
@@ -129,37 +116,36 @@ export class SurfaceView extends View {
     this.delta.set(next);
   }
 
-  /** Pan by `(dx, dy)` from the current offset, clamped (Should-Have, PA-9). */
+  /** Pan by `(dx, dy)` from the current offset, clamped to keep the surface in view. */
   panBy(dx: number, dy: number): void {
     const d = this.delta();
     this.scrollTo({ x: d.x + dx, y: d.y + dy });
   }
 
-  // ── Draw (the tsurface.cpp:93-141 decode) ────────────────────────────────────────────────────────
-
-  /** Paint the `delta`-offset surface window + the empty-area margins (`windowInactive` spaces). */
+  /** Paint the visible surface slice plus the empty-area margins (spaces in the inactive-window colour). */
   draw(ctx: DrawContext): void {
     const V = { x: ctx.size.width, y: ctx.size.height };
-    if (V.x <= 0 || V.y <= 0) return; // degenerate view (:95)
-    const cEmpty = ctx.color('windowInactive'); // mapColor(1) (:98, AC-4/AC-10)
+    if (V.x <= 0 || V.y <= 0) return; // nothing to draw into
+    const cEmpty = ctx.color('windowInactive');
     const s = this.readSurface();
     const d = this.delta();
     const clip = s ? computeClip(s.size, d, V) : { x: 0, y: 0, width: 0, height: 0 };
     if (!s || clip.width <= 0 || clip.height <= 0) {
-      // null surface (:136-140) OR fully-outside (PA-3, the :108-109 guard failing) → whole view empty.
+      // No surface, or the surface is scrolled entirely out of view → fill the whole view empty.
       ctx.fillRect(0, 0, V.x, V.y, ' ', cEmpty);
       return;
     }
-    // Empty-area margins (:120-132) — spaces in cEmpty.
+    // Blank the empty bands around the surface.
     for (const m of marginRects(clip, V)) ctx.fillRect(m.x, m.y, m.width, m.height, ' ', cEmpty);
-    // Blit the surface cells inside clip → view-local (clip.x, clip.y) (:114 / :123-132).
-    const srcX0 = Math.max(d.x, 0); // (:111)
+    // Copy the visible surface cells into the clip region. A negative delta insets the surface into
+    // the view (the source starts at cell 0), so clamp the source origin to 0.
+    const srcX0 = Math.max(d.x, 0);
     const srcY0 = Math.max(d.y, 0);
     const buf = s.buffer;
     for (let vy = clip.y; vy < clip.y + clip.height; vy += 1) {
       for (let vx = clip.x; vx < clip.x + clip.width; vx += 1) {
         const cell = buf.get(srcX0 + (vx - clip.x), srcY0 + (vy - clip.y));
-        if (!cell || cell.width === 0) continue; // skip wide continuation — its lead drew it (PA-11)
+        if (!cell || cell.width === 0) continue; // skip a wide glyph's continuation — its lead drew it
         ctx.text(vx, vy, cell.char, { fg: cell.fg, bg: cell.bg, attrs: cell.attrs });
       }
     }

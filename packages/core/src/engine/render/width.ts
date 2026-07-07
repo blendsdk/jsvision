@@ -1,19 +1,19 @@
 /**
- * Display-width of a Unicode code point (RD-04, AC-2, plan doc 03-01, PL-10).
+ * Display width of a Unicode code point — the single source of width truth for the
+ * renderer.
  *
- * This module is the single source of width truth for the renderer: the buffer
- * advances the cursor by these widths so wide CJK/emoji occupy two columns and
- * combining marks occupy none. The ranges are derived from the Unicode
- * East-Asian Width property (`EastAsianWidth.txt`): `W`/`F` → 2, `A` → 2 only
- * under `widthMode: 'ambiguous-wide'`, combining/zero-width → 0, else 1.
+ * The buffer advances the cursor by these widths so wide CJK/emoji occupy two
+ * columns and combining marks occupy none. Widths follow the Unicode East-Asian
+ * Width property: Wide/Fullwidth → 2, Ambiguous → 2 only under
+ * `widthMode: 'ambiguous-wide'`, combining/zero-width → 0, everything else → 1.
  *
- * It is pure and capability-free: callers pass `caps.unicode.widthMode`.
+ * Pure and capability-free: pass the terminal's `unicode.widthMode`.
  */
 
 /**
- * Width-resolution mode. Mirrors `UnicodeCaps['widthMode']` from RD-02; declared
- * here so this module stays dependency-free. `'ambiguous-wide'` renders the
- * East-Asian Ambiguous (`A`) range as width 2 (CJK-context terminals).
+ * Width-resolution mode. `'ambiguous-wide'` renders the East-Asian Ambiguous range
+ * as width 2, which matches how CJK-context terminals lay it out; `'wcwidth'`
+ * treats it as width 1.
  */
 export type WidthMode = 'wcwidth' | 'ambiguous-wide';
 
@@ -22,8 +22,8 @@ type Range = readonly [number, number];
 
 /**
  * Zero-width code points: combining marks and explicit zero-width characters.
- * A documented core subset — enough for AC-2 and common scripts; not the full
- * Unicode `Mn`/`Me` set. Sorted ascending by `lo`.
+ * A documented core subset — enough for the common scripts a TUI encounters; not
+ * the full Unicode `Mn`/`Me` set. Sorted ascending by `lo`.
  */
 const ZERO_WIDTH: readonly Range[] = [
   [0x0300, 0x036f], // Combining Diacritical Marks
@@ -41,13 +41,12 @@ const ZERO_WIDTH: readonly Range[] = [
 ];
 
 /**
- * East-Asian Wide (`W`) and Fullwidth (`F`) code-point ranges (HR-19 / PA-18).
+ * East-Asian Wide (`W`) and Fullwidth (`F`) code-point ranges.
  *
- * Derived from the Unicode **15.1.0** `EastAsianWidth.txt` (`W` ∪ `F`) by the dev-only generator
- * `packages/core/scripts/gen-eaw-table.mjs` (not shipped, not a build step), then merged with the
- * adjacent CJK/Kana super-blocks this renderer already treats as wide. A few entries are documented
- * **coarse over-approximations** (whole Misc-Symbols / emoji / supplementary-CJK blocks) — safe for a
- * TUI because rendering an unassigned code point two columns wide never desyncs the grid, whereas
+ * Derived from the Unicode 15.1.0 East-Asian Width data (`W` ∪ `F`), then merged with the adjacent
+ * CJK/Kana super-blocks this renderer already treats as wide. A few entries are deliberate **coarse
+ * over-approximations** (whole Misc-Symbols / emoji / supplementary-CJK blocks) — safe for a TUI
+ * because rendering an unassigned code point two columns wide never desyncs the grid, whereas
  * under-counting a real wide glyph does. Sorted ascending by `lo`, non-overlapping (binary-searched).
  */
 const WIDE: readonly Range[] = [
@@ -58,7 +57,7 @@ const WIDE: readonly Range[] = [
   [0x23f0, 0x23f0], // ⏰ alarm clock
   [0x23f3, 0x23f3], // ⏳ hourglass flowing
   [0x25fd, 0x25fe], // ◽◾ medium-small squares
-  [0x2600, 0x26ff], // Miscellaneous Symbols (coarse; emoji presentation, PL-10)
+  [0x2600, 0x26ff], // Miscellaneous Symbols (coarse; emoji presentation)
   [0x2705, 0x2705], // ✅ check mark
   [0x270a, 0x270b], // ✊✋ raised fist / hand
   [0x2728, 0x2728], // ✨ sparkles
@@ -148,10 +147,16 @@ function inRanges(cp: number, ranges: readonly Range[]): boolean {
  * Display width of a Unicode code point.
  *
  * @param codepoint The code point (e.g. from `String.prototype.codePointAt`).
- * @param widthMode From `caps.unicode.widthMode`; `'ambiguous-wide'` widens
- *   East-Asian Ambiguous characters to 2.
+ * @param widthMode From the terminal's `unicode.widthMode`; `'ambiguous-wide'`
+ *   widens East-Asian Ambiguous characters to 2.
  * @returns 0 (C0/C1 control, combining, or zero-width), 2 (East-Asian Wide /
  *   Fullwidth / wide emoji, or Ambiguous under `'ambiguous-wide'`), else 1.
+ * @example
+ * import { charWidth } from '@jsvision/core';
+ *
+ * charWidth('A'.codePointAt(0)!, 'wcwidth'); // 1 — normal Latin letter
+ * charWidth('漢'.codePointAt(0)!, 'wcwidth'); // 2 — wide CJK ideograph
+ * charWidth(0x0301, 'wcwidth');               // 0 — combining acute accent
  */
 export function charWidth(codepoint: number, widthMode: WidthMode): 0 | 1 | 2 {
   // C0 (incl. NUL) and C1 controls have no advance.

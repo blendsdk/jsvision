@@ -1,13 +1,13 @@
 /**
- * Node model and resolved-prop helpers for the cell-native layout engine (RD-02).
+ * Node model and resolved-prop helpers for the cell-native layout engine.
  *
  * Defines the public geometry/box types the layout pass operates on and the
- * internal normalizers that fill `LayoutProps` defaults (PA-3, CSS-flex-parity)
- * and clamp every cell count to a non-negative integer — so the pass never has
- * to branch on `undefined` or guard negatives in the hot path.
+ * internal normalizers that fill `LayoutProps` defaults (matching CSS flexbox
+ * defaults) and clamp every cell count to a non-negative integer — so the pass
+ * never has to branch on `undefined` or guard negatives in the hot path.
  *
- * `Size2D`/`Rect`/`Padding` are defined here, not imported: `@jsvision/core`
- * exports no geometry type (PA-2).
+ * `Size2D`/`Rect`/`Padding` are defined here rather than imported — the engine
+ * package exposes no geometry types of its own.
  */
 
 /** Cell dimensions (width × height) in integer terminal cells. */
@@ -24,7 +24,7 @@ export interface Rect {
   height: number;
 }
 
-/** Per-side content inset, in integer cells (AR-29). */
+/** Per-side content inset, in integer cells. */
 export interface Padding {
   top: number;
   right: number;
@@ -32,23 +32,23 @@ export interface Padding {
   left: number;
 }
 
-/** How a box is sized along its parent's main axis (AR-20). */
+/** How a box is sized along its parent's main axis. */
 export type Size =
   | { kind: 'fixed'; cells: number } // exact integer cells
   | { kind: 'fr'; weight: number } // grow-weight share of leftover space
   | { kind: 'auto' }; // size to content (via measure() / children)
 
-/** Main-axis distribution of leftover space (AR-24). */
+/** Main-axis distribution of leftover space (like CSS `justify-content`). */
 export type Justify = 'start' | 'center' | 'end' | 'space-between';
 
-/** Cross-axis alignment of children (AR-25). */
+/** Cross-axis alignment of children (like CSS `align-items`). */
 export type Align = 'start' | 'center' | 'end' | 'stretch';
 
-/** The main axis of a container: `row` = horizontal, `col` = vertical (AR-22). */
+/** The main axis of a container: `row` = horizontal, `col` = vertical. */
 export type Direction = 'row' | 'col';
 
 /**
- * Layout properties of a box; all optional with CSS-flex-parity defaults (PA-3):
+ * Layout properties of a box; all optional, with defaults matching CSS flexbox:
  * `direction:'row'`, `size:'auto'`, `justify:'start'`, `align:'stretch'`,
  * `gap:0`, `padding:0`.
  */
@@ -68,26 +68,26 @@ export interface LayoutProps {
   /**
    * Placement mode (default `'flow'`). `'flow'` joins the parent's flex flow; `'absolute'` removes
    * the box from flow and places it at {@link rect} within the parent's content box — overlapping
-   * siblings freely and reserving no flow space (the CSS `position:absolute` analogy). (RD-05 PA-15)
+   * siblings freely and reserving no flow space (the CSS `position:absolute` analogy).
    */
   position?: 'flow' | 'absolute';
   /**
    * `position:'absolute'` only — the parent-content-relative rect in cells (each side clamped to a
-   * non-negative integer via `toCells`). Ignored for `'flow'`; absent on an absolute box ⇒ a
-   * degenerate zero rect (no throw). (RD-05 PA-15)
+   * non-negative integer). Ignored for `'flow'`; absent on an absolute box ⇒ a degenerate zero rect
+   * (no throw).
    */
   rect?: Rect;
 }
 
 /**
- * A node in the layout input tree (AR-23).
+ * A node in the layout input tree.
  *
  * Precondition (caller contract, not runtime-guarded): the tree is **acyclic**
  * and every box instance is **distinct** (no node reused at two positions). The
  * pass is a single bounded traversal with no cycle/visited check; a cycle would
- * recurse unboundedly and a reused instance would collide in {@link LayoutResult}
- * (keyed by box identity → last write wins). Callers (RD-03's view spine) only
- * ever build fresh trees.
+ * recurse forever and a reused instance would collide in {@link LayoutResult}
+ * (which is keyed by box identity → last write wins). Build a fresh tree for
+ * each layout rather than reusing box objects.
  */
 export interface LayoutBox {
   props: LayoutProps;
@@ -95,7 +95,7 @@ export interface LayoutBox {
   /**
    * Natural content size for an `auto` box given the available content space
    * (e.g. a label measuring its text). Omitted ⇒ the natural size is derived
-   * from `children`; an `auto` leaf with no `measure` resolves to `{0,0}`. (AR-21)
+   * from `children`; an `auto` leaf with no `measure` resolves to `{0,0}`.
    */
   measure?: (available: Size2D) => Size2D;
 }
@@ -119,8 +119,8 @@ export interface ResolvedProps {
 
 /**
  * Clamp a value to a non-negative integer cell count. Non-finite input → `0`,
- * keeping degenerate inputs from propagating `NaN`/`Infinity` into rects
- * (RD-02 §Security: degenerate inputs resolve to zero, never throw).
+ * keeping degenerate inputs from propagating `NaN`/`Infinity` into rects —
+ * a garbage size resolves to zero rather than corrupting the layout or throwing.
  *
  * @param n Raw cell count (may be fractional, negative, or non-finite).
  * @returns `max(0, floor(n))`, or `0` when `n` is not finite.
@@ -153,7 +153,7 @@ export function normalizePadding(padding: number | Padding | undefined): Padding
 
 /**
  * Normalize a {@link Size} token, clamping its magnitude to ≥ 0 (a negative
- * `fixed.cells`/`fr.weight` becomes 0). `undefined` → `{ kind:'auto' }` (PA-3).
+ * `fixed.cells`/`fr.weight` becomes 0). `undefined` → `{ kind:'auto' }`.
  */
 export function normalizeSize(size: Size | undefined): Size {
   if (size === undefined) {
@@ -171,7 +171,7 @@ export function normalizeSize(size: Size | undefined): Size {
 /**
  * Normalize an absolute-placement {@link Rect}, clamping each side to a non-negative integer cell
  * count via {@link toCells}. `undefined` → a degenerate zero rect (an `'absolute'` box declared
- * without a `rect` collapses to zero size, never throws — RD-05 PA-15).
+ * without a `rect` collapses to zero size, never throws).
  */
 export function normalizeRect(rect: Rect | undefined): Rect {
   if (rect === undefined) {
@@ -186,8 +186,8 @@ export function normalizeRect(rect: Rect | undefined): Rect {
 }
 
 /**
- * Apply CSS-flex-parity defaults (PA-3) and clamps to a box's props so the
- * layout pass works against a fully-resolved, branch-free shape. An `'absolute'`
+ * Apply the CSS-flexbox-style defaults and clamps to a box's props so the layout
+ * pass works against a fully-resolved, branch-free shape. An `'absolute'`
  * box additionally carries its normalized {@link Rect}; a `'flow'` box does not.
  */
 export function normalizeProps(props: LayoutProps): ResolvedProps {

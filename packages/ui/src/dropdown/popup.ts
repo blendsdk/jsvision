@@ -1,18 +1,14 @@
 /**
- * `openAnchoredPopup` — the shared **internal** anchored-popup primitive for `History` + `ComboBox`
- * (RD-14 AR-137, input-dropdowns/03-02-anchored-popup.md).
+ * The shared **internal** anchored-popup primitive behind the `History` and `ComboBox` dropdowns
+ * (and the anchored calendar/color popups). Not part of the public API.
  *
- * A non-modal overlay that anchors a caller-supplied `ListView` below a field: it computes the
- * TV-faithful clamped placement (grow ±1 in x, fixed height `maxRows + 2` — the entry count never
- * sizes it, PF-003 — `intersect`-clamp to the overlay the ONLY row reducer, never flip up; decode
- * `thistory.cpp:90-98` §3), mounts a lean framed popup + a generic outside-click catcher into the
- * host overlay, gives the list focus, and wires pick/dismiss. It generalizes the RD-05 menu overlay +
- * `CatcherView` **without** menu-specific state (the `y === 0` bar switch / multi-level stack).
+ * `openAnchoredPopup` mounts a caller-supplied fixed-size view in a small framed window anchored just
+ * below a field, plus a transparent full-viewport catcher that dismisses the popup on any outside
+ * click. The popup is non-modal: the rest of the UI keeps updating. It gives the content focus, wires
+ * pick/dismiss, and disposes the whole reactive scope on close.
  *
- * The popup **frame** here is a lean box in the `historyWindow` role (decoded in Phase 0); the
- * TV-faithful close box + shadow + cell-by-cell GATE-2 diff land with the History control (Phase 2).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The placement clamps the window to the overlay extent (which is the only thing that can reduce its
+ * height near the bottom edge); it never flips above the anchor.
  */
 import type { Style } from '@jsvision/core';
 import { View, Group, intersect } from '../view/index.js';
@@ -21,19 +17,19 @@ import type { Rect, LayoutProps } from '../layout/index.js';
 import { effect, createRoot } from '../reactive/index.js';
 import { syncOverlayVisible } from '../app/index.js';
 
-/** Re-export the popup host seam (declared with the dispatch envelope, PF-002) for the dropdown API. */
+/** Re-export the popup host seam (declared with the dispatch envelope) for the dropdown API. */
 export type { PopupHost } from '../view/index.js';
 
-/** Default max visible list rows in a popup (TV `THistoryWindow` shows 6 interior rows; PA-4). */
+/** Default max visible list rows in a dropdown popup. */
 export const DEFAULT_MAX_ROWS = 6;
 
-/** The 3 visible cells of the dropdown button icon `▐↓▌` (TV `THistory::icon`, decode §1). */
+/** The 3 visible cells of the dropdown button icon `▐↓▌`. */
 export const DROPDOWN_ICON = { left: '▐', arrow: '↓', right: '▌' } as const;
 
 /**
- * Draw the shared `▐↓▌` dropdown button icon at column `x` — `▐`/`▌` sides in `historyButtonSides`
- * (green-on-lightGray), the `↓` arrow in `historyButtonArrow` (black-on-green). Used by the `History`
- * button and reused by the `ComboBox` trailing button (PA-11), so the glyph/colors never drift.
+ * Draw the shared `▐↓▌` dropdown button icon at column `x` — `▐`/`▌` sides in the `historyButtonSides`
+ * role, the `↓` arrow in `historyButtonArrow`. Used by both the `History` button and the `ComboBox`
+ * trailing button, so their glyphs and colours never drift apart.
  *
  * @param ctx The clipped, view-local paint context.
  * @param x   The left column to draw the 3-cell icon at (default 0).
@@ -49,7 +45,7 @@ export function drawDropdownIcon(ctx: DrawContext, x = 0): void {
 /** A safe fallback viewport when the overlay has no rect yet (never reached once composed). */
 const FALLBACK_VIEWPORT: Rect = { x: 0, y: 0, width: 80, height: 24 };
 
-/** Whether `view` is `ancestor` or a descendant of it (walks the parent chain). RD-21 PA-16. */
+/** Whether `view` is `ancestor` or a descendant of it (walks the parent chain). */
 function isWithin(view: View, ancestor: View): boolean {
   let node: View | null = view;
   while (node !== null) {
@@ -66,41 +62,39 @@ export interface AnchoredPopup {
 }
 
 /**
- * Options for {@link openAnchoredPopup} — generalized (RD-20 PA-5 / AR-204) to host any fixed-size
- * `View` (History/ComboBox lists; the 20×8 `Calendar`), not just a `ListView`.
+ * Options for {@link openAnchoredPopup}. The primitive can host any fixed-size `View` — the dropdown
+ * lists, an anchored calendar, a colour swatch — not just a list.
  */
 export interface AnchoredPopupOptions {
-  /** The overlay host + focus save/restore seam (the app shell, or a bare `Dialog`; PA-9). */
+  /** The overlay host + focus save/restore seam (the app shell, or a bare `Dialog`). */
   host: PopupHost;
   /** The anchor rect — the linked field's bounds, in overlay-local coordinates. */
   anchor: Rect;
   /**
-   * Build the hosted view **inside** the popup's reactive owner (its constructor computeds are owned +
-   * disposed on dismiss — never leaked; they must NOT be created in the caller's click handler, which
-   * runs outside any `createRoot`). The popup **injects a `commit` trigger** (PA-5): the content wires
-   * its own activation callback to it — `ListView.onSelect` (pick) / `Calendar.onChange` (day-commit) —
-   * so calling `commit()` closes the popup. This injection is the ONLY channel from content-activation
-   * to dismissal (the old `list.selected()` watch is removed); the content is built here (never in the
-   * caller's handler), so the caller cannot hold it — hence the trigger must be pushed in, not pulled.
+   * Build the hosted view. It is built **inside** the popup's reactive owner, so any computeds/effects
+   * its constructor creates are owned by the popup and disposed on dismiss — do not build the content
+   * in the caller's click handler (which runs outside any reactive owner and would leak it). The popup
+   * passes in a `commit` trigger: the content wires its own activation callback (a list's pick, a
+   * calendar's day-commit) to call `commit()`, which is the only channel that closes the popup.
    */
   buildContent(commit: () => void): View;
   /**
-   * The hosted content's intrinsic size. `height` = the content's VISIBLE ROW COUNT **+ 1** (the `+1`
-   * absorbs the placement formula's net `+1` border — see {@link placePopup}): a list passes
-   * `maxRows + 1`, the 8-row `Calendar` passes `9`. `width` = the content's column count (defaults to
-   * the anchor width); the frame adds its own ±1 border.
+   * The hosted content's intrinsic size. `height` = the content's visible row count **+ 1** (the `+1`
+   * absorbs the placement formula's border — see {@link placePopup}): a list passes `maxRows + 1`, an
+   * 8-row calendar passes `9`. `width` = the content's column count (defaults to the anchor width);
+   * the frame adds its own ±1 border.
    */
   contentSize: { width?: number; height: number };
-  /** What receives focus on open (History/ComboBox: `list.rows`; Calendar: the calendar itself). */
+  /** What receives focus on open (for the dropdowns, the list's rows renderer). */
   focusTarget(content: View): View;
-  /** Called on any dismissal (Esc / outside-down / content-focus-loss). */
+  /** Called on any dismissal (Esc / outside click / content losing focus). */
   onDismiss?(): void;
 }
 
 /**
- * The generic outside-click catcher — the menu `CatcherView` shape minus the `y === 0` bar switch
- * (03-02). A transparent, full-viewport overlay child that dismisses on any mouse-down and **consumes**
- * it (no pass-through to the control behind — PA-15). It must stay visible to hit-test.
+ * The transparent full-viewport outside-click catcher: a child that dismisses the popup on any
+ * mouse-down and **consumes** it (so the click does not also reach the control behind it). It stays
+ * visible so it can be hit-tested.
  */
 class PopupCatcher extends View {
   /** Free-floating, full-viewport; the popup sets `rect`. */
@@ -127,22 +121,18 @@ class PopupCatcher extends View {
 
 /**
  * The framed popup window: an absolute, `padding:1` group that draws the `historyWindow` frame and
- * hosts the list inside the 1-cell inset. Catches **Esc** in the focus-chain bubble → dismiss.
+ * hosts the content inside the 1-cell inset. Catches **Esc** in the focus-chain bubble to dismiss.
  */
 class PopupFrame extends Group {
   override layout: LayoutProps = { position: 'absolute', padding: 1 };
-  /**
-   * Cast the TV-faithful drop shadow (`shadowSize {2,1}`): `THistoryWindow`/`ComboBox` popups are
-   * `TWindow`s, which shadow like any other window. The compose walker paints the L-shaped shadow in
-   * the `shadow` role under the overlay clip (render-root.ts `drawDropShadow`).
-   */
+  /** The popup casts a drop shadow, like any window. */
   override castsShadow = true;
 
   constructor(private readonly onEsc: () => void) {
     super();
   }
 
-  /** Fill the interior + draw the border box in the `historyWindow` role (blue frame; decode §4). */
+  /** Fill the interior and draw the border box in the `historyWindow` (blue-frame) role. */
   override draw(ctx: DrawContext): void {
     const role = ctx.role('historyWindow');
     const fill: Style = { fg: role.fg, bg: role.bg };
@@ -151,7 +141,7 @@ class PopupFrame extends Group {
     ctx.box(0, 0, ctx.size.width, ctx.size.height, border);
   }
 
-  /** Esc bubbles up the focus chain (the list does not consume it) → dismiss the popup. */
+  /** Esc bubbles up the focus chain (the content does not consume it) and dismisses the popup. */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type === 'key' && inner.key === 'escape') {
@@ -162,29 +152,11 @@ class PopupFrame extends Group {
 }
 
 /**
- * Compute the TV-faithful popup rect — the exact `THistory::handleEvent` sequence
- * (`thistory.cpp:90-98`, GATE-1/GATE-2 verified), generalized (RD-20 PA-5) for any `contentSize`:
- *   `r.a.x--; r.b.x++;` — grow ±1 in x (width = `(contentSize.width ?? anchor.width) + 2`).
- *   `r.a.y--;` — top 1 row above the anchor top (never flips up).
- *   `r.b.y += 7;` — for TV's 6 visible rows; generalized the intermediate height is `contentSize.height + 2`
- *     (list callers pass `contentSize.height = maxRows + 1`, reproducing the old `maxRows + 3` exactly).
- *   `r.intersect(owner->getExtent());` — clamp to the overlay (truncate near the bottom edge).
- *   `r.b.y--;` — the final decrement, applied AFTER the clamp — so a bottom-clamped popup is
- *     `clampedHeight − 1` tall (an unclamped popup is `contentSize.height + 1`). This ordering is
- *     load-bearing: computing the height before clamping would be off-by-one at the bottom edge.
- * The `intersect`-then-`−1` is the ONLY thing that reduces rows; there is never an upward flip (PA-15).
- *
- * @param anchor      The field bounds (overlay-local).
- * @param contentSize The hosted content's intrinsic size (`height` = visible rows + 1).
- * @param viewport    The overlay extent to clamp within.
- * @returns The clamped popup window rect.
- */
-/**
  * The absolute rect of a mounted view: the sum of parent-relative `bounds.x/y` up the tree (the root
  * bounds are absolute). Used to anchor a popup in overlay-local coordinates — the overlay is the
- * full-viewport top-z group at the origin, so overlay-local ≡ absolute.
+ * full-viewport top-z group at the origin, so overlay-local coordinates equal absolute coordinates.
  *
- * @param view The mounted view (a linked `Input` for History, the `ComboBox` field for ComboBox).
+ * @param view The mounted view (the field a dropdown is anchored to).
  * @returns The view's absolute rect.
  */
 export function absoluteRect(view: View): Rect {
@@ -199,13 +171,23 @@ export function absoluteRect(view: View): Rect {
   return { x, y, width: view.bounds.width, height: view.bounds.height };
 }
 
+/**
+ * Compute the popup window rect: grow the anchor by one cell on each side in x, start one row above
+ * the anchor top, size it to the content plus its border, then clamp to the overlay extent. The
+ * final `-1` is applied AFTER the clamp so a popup truncated at the bottom edge ends up one row
+ * shorter than the clamp — computing the height before clamping would be off-by-one at that edge. The
+ * clamp is the only thing that reduces the height; the popup never flips above the anchor.
+ *
+ * @param anchor      The field bounds (overlay-local).
+ * @param contentSize The hosted content's intrinsic size (`height` = visible rows + 1).
+ * @param viewport    The overlay extent to clamp within.
+ * @returns The clamped popup window rect.
+ */
 function placePopup(anchor: Rect, contentSize: { width?: number; height: number }, viewport: Rect): Rect {
   const grown: Rect = {
     x: anchor.x - 1,
     y: anchor.y - 1,
-    width: (contentSize.width ?? anchor.width) + 2, // grow ±1 in x (list keeps the field width)
-    // Intermediate height = contentSize.height + 2 (list callers pass `maxRows + 1` so this stays
-    // `maxRows + 3`, byte-identical to the pre-RD-20 rect); the `-1` below lands the final height.
+    width: (contentSize.width ?? anchor.width) + 2, // one border cell on each side
     height: contentSize.height + 2,
   };
   const clamped = intersect(grown, viewport);
@@ -213,12 +195,12 @@ function placePopup(anchor: Rect, contentSize: { width?: number; height: number 
 }
 
 /**
- * Open an anchored popup hosting the caller's fixed-size `View` below `anchor`. Non-modal (AR-132):
- * the rest of the UI keeps updating; after a dismissing outside-click the UI is interactable next event.
+ * Open an anchored popup hosting the caller's fixed-size `View` below `anchor`. Non-modal: the rest of
+ * the UI keeps updating, and after a dismissing outside-click the UI is interactable on the next event.
  *
- * The popup injects a `commit` trigger into `buildContent` — the content wires its own activation
- * callback to it (`ListView.onSelect` / `Calendar.onChange`), which sets the value **then** calls
- * `commit()` to close (PA-5). There is no content-specific watch inside the popup.
+ * The popup passes a `commit` trigger to `buildContent` — the content wires its own activation
+ * callback (a list's pick, a calendar's day-commit) to set the value and then call `commit()` to
+ * close. That trigger is the only channel the content uses to dismiss the popup.
  *
  * @param opts The host, anchor, `buildContent(commit)`, `contentSize`, `focusTarget`, and `onDismiss`.
  * @returns The {@link AnchoredPopup} handle (idempotent `dismiss()`).
@@ -231,12 +213,12 @@ export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
   const savedFocus = host.getFocused();
   let dismissed = false;
 
-  // One reactive owner for the WHOLE popup: the hosted content is built inside this root so its
-  // constructor computeds plus the focus-loss effect belong to a single scope that `dispose()` tears
-  // down on dismiss. Building the content here (not in the caller's click handler) is what keeps its
-  // computeds from leaking outside any `createRoot` (RD-14 defect).
+  // One reactive owner for the whole popup: the content is built inside this root so its constructor
+  // computeds and the focus-loss effect share a single scope that `dispose()` tears down on dismiss.
+  // Building it here (not in the caller's click handler, which runs outside any reactive owner) is what
+  // keeps those computeds from leaking.
   return createRoot((dispose) => {
-    /** Idempotent teardown: unmount views, dispose the scope, restore focus, notify (PA-15). */
+    /** Idempotent teardown: unmount the views, dispose the scope, restore focus, then notify. */
     function dismiss(): void {
       if (dismissed) return;
       dismissed = true;
@@ -248,9 +230,9 @@ export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
       onDismiss?.();
     }
 
-    // Inject the commit trigger: the ONLY content→dismiss channel (the value-side effect runs in the
-    // content's own callback BEFORE this fires, so pick-then-close is preserved without the popup
-    // reading any content-specific member).
+    // Pass the commit trigger to the content: the only channel from a content activation to dismissal.
+    // The content sets its value in its own callback before calling this, so pick-then-close is
+    // preserved without the popup needing to read anything content-specific.
     const content = opts.buildContent(() => {
       if (!dismissed) dismiss();
     });
@@ -258,9 +240,9 @@ export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
 
     const frame = new PopupFrame(dismiss);
     frame.layout = { position: 'absolute', padding: 1, rect: placePopup(anchor, contentSize, viewport) };
-    // The hosted content must FILL the frame's padded interior: `size:fr` fills the main axis (else the
-    // frame sizes it to its collapsed `auto` height), `align:stretch` (the frame default) fills the
-    // cross axis. Merge so a ListView keeps its own `direction:'row'` ([rows | bar]) split.
+    // The content must fill the frame's padded interior: `size:fr` fills the main axis (otherwise the
+    // frame collapses it to its `auto` height) and the frame's default stretch fills the cross axis.
+    // Merge rather than replace so a list keeps its own row layout ([rows | bar]).
     content.layout = { ...content.layout, size: { kind: 'fr', weight: 1 } };
     frame.add(content);
 
@@ -270,27 +252,24 @@ export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
       rect: { x: viewport.x, y: viewport.y, width: viewport.width, height: viewport.height },
     };
 
-    // Mount catcher first (bottom-most, catches outside clicks) then the frame (paints/hits above it),
-    // matching the menu z-order; derive the overlay visibility from the new child count (PA-5).
+    // Add the catcher first (bottom-most, catches outside clicks) then the frame (paints and hits above
+    // it); derive the overlay's visibility from its new child count.
     overlay.add(catcher);
     overlay.add(frame);
     syncOverlayVisible(overlay);
 
-    host.focusView(target); // the focus target receives focus on open (saved prior focus above)
+    host.focusView(target); // the focus target receives focus on open (prior focus saved above)
 
-    // Focus-loss dismissal (PF-004 / RD-21 PA-16): dismiss when focus leaves the **popup subtree**, not
-    // merely when the single `focusTarget` blurs — so a multi-focusable popup (RD-21's grid + hex
-    // `Input`) can move focus internally (Tab / click) without self-dismissing. The effect watches the
-    // focusSignal of whichever popup view currently holds focus and **follows** focus while it stays
-    // inside `frame`, dismissing only once it moves out. For a single-focusable popup (History/ComboBox/
-    // Calendar) this is byte-identical to the old behaviour: the sole focusable IS the subtree, so any
-    // blur leaves it → dismiss. `focusSignal()` fires on both gain AND loss; the open-time run sees the
-    // target focused (inside) and does not dismiss.
+    // Dismiss when focus leaves the popup SUBTREE, not merely when the initial `focusTarget` blurs — so
+    // a popup with several focusable parts (e.g. a grid plus a hex input) can move focus internally
+    // (Tab / click) without closing itself. The effect follows focus while it stays inside `frame` and
+    // dismisses only once it moves out. `focusSignal()` fires on both gain and loss; the open-time run
+    // sees the target focused (inside) and does not dismiss.
     effect(() => {
       const focused = host.getFocused();
       const inside = focused !== null && isWithin(focused, frame);
-      // Subscribe to the focus ticks of the view that currently holds focus inside the popup (so its
-      // next loss re-runs this effect); fall back to `target` when focus is already outside.
+      // Subscribe to the focus ticks of whichever popup view currently holds focus (so its next loss
+      // re-runs this effect); fall back to `target` when focus is already outside.
       (inside ? focused! : target).focusSignal()();
       if (!dismissed && !inside) dismiss();
     });

@@ -1,36 +1,24 @@
 /**
- * `TabView` — a self-contained folder-tab container (RD-17, 03-01). A `Group` (the shipped container
- * idiom, AR-169: `ListView`/`Tree`/`DataGrid` all `extends Group`) owning a focusable {@link TabStrip}
- * (the focus target) + a bordered content region, one page visible at a time. It holds the data model
- * (`tabs`/`active` signals + callbacks), the navigation/cycle/clamp logic, and the one-page-visible
- * flip. Dropping a `TabView` into any `Group`/`Window`/`Dialog` is complete — it draws both the strip
- * and the surrounding frame (AR-174).
+ * `TabView` — a self-contained, folder-tab container widget. See the {@link TabView} class for the
+ * full description and a worked example. Dropping one into any `Group`/`Window`/`Dialog` is complete:
+ * it draws both the tab strip and the surrounding content frame.
  *
- * **RD-17 has NO Turbo Vision counterpart** (GATE-1, AR-172); the fidelity work is the glyph/colour
- * decode captured in `tab-strip.ts` + core `theme.ts`. This file is the plain container behaviour.
+ * Key behaviours a caller should know:
  *
- * **Content model (AR-175, PF-001).** Every `Tab.content` is an eager child of the content region
- * (mounted up-front via a keyed `For` over `tabs`, keyed by the content `Group`'s identity so a
- * reorder/close reuses the live page). Exactly one page is visible via a reactive `effect` that sets
- * each page's `state.visible = (i === active)`; `reflow` omits the hidden pages. Switching is a
- * **visibility flip — no per-switch mount/dispose** (a widget's text/scroll/focus on an inactive page
- * survives). **Not** `Show`, which disposes the inactive branch (`reactive/show.ts`) and loses state.
- * `For` mounts/disposes only on a genuine `tabs` add/remove.
+ * **Content stays mounted.** Every `Tab.content` page is built up-front and kept mounted; switching
+ * tabs only flips which page is visible. A widget's text, scroll position, and focus on an inactive
+ * page therefore survive being switched away from and back to. Pages are keyed by content identity,
+ * so reordering or closing a tab reuses the live page rather than rebuilding it.
  *
- * **Clamp (AR-177, PF-003).** `active` is caller-owned, so clamping is **read/render-time**: a
- * self-correcting `effect` re-clamps `active` into `[0, len-1]` and snaps forward off a disabled tab
- * whenever `active` **or** `tabs` changes, from any writer (incl. a raw `active.set` bypassing
- * `select`). An all-disabled/empty set resolves to no visible page (a no-op, no infinite loop).
+ * **`active` is clamped for you.** The `active` signal is caller-owned, so the view self-corrects it
+ * at render time: it clamps `active` into range and snaps forward off a disabled tab whenever
+ * `active` or `tabs` changes, from any writer (including a raw `active.set`). An empty or all-disabled
+ * set shows no page.
  *
- * **Nav scoping (AR-179/183, PF-002).** Ctrl+PageUp/Down + the Alt-hotkey are handled in
- * `preProcess` (which fires on *every* tab view in scope, `event/dispatch.ts`), so the handler
- * consumes the chord **only when `ev.getFocused()` is `this` or a descendant** ({@link isWithin}) —
- * targeting the correct panel when two/nested `TabView`s coexist. `←`/`→` are handled by the strip
- * when it holds focus; plain Tab/Shift-Tab fall through to RD-04 content-focus traversal. Ctrl+Tab is
- * byte-identical to plain Tab on today's terminals, so `event/dispatch.ts` consumes it as focus
- * traversal before `preProcess` — it never switches tabs (the DEF-2 keyboard-protocol gate, AR-183).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * **Keyboard scoping.** Ctrl+PageUp/Down and the Alt+letter hotkeys act only on the `TabView` that
+ * currently owns focus, so two or nested tab views can coexist without stealing each other's chords.
+ * `←`/`→` cycle tabs while the strip holds focus; plain Tab/Shift-Tab move focus into and through the
+ * active page's content as usual.
  */
 import { Group, View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -41,34 +29,34 @@ import { parseTilde } from '../menu/builders.js';
 import { TabStrip, TAB_GLYPHS } from './tab-strip.js';
 
 /**
- * A single tab descriptor. `title` carries optional `~X~` hotkey markup (parsed with `parseTilde`).
- * (AR-178)
+ * A single tab descriptor. `title` carries optional `~X~` hotkey markup (e.g. `'~G~eneral'` marks
+ * `Alt+G`).
  */
 export interface Tab {
-  /** Tab label; `~X~` marks the Alt-hotkey letter. Sanitized to the screen on draw. */
+  /** Tab label; wrap the hotkey letter in tildes (`~X~`) to mark the Alt-hotkey. Sanitized on draw. */
   readonly title: string;
-  /** The page shown when this tab is active — an eager-built `Group` (all pages stay mounted, AR-175). */
+  /** The page shown when this tab is active. Built up-front and kept mounted while other tabs show. */
   readonly content: Group;
-  /** When true, drawn greyed, unactivatable, and skipped by all cycling/hotkeys (AR-176). */
+  /** When true, the tab is drawn greyed, cannot be activated, and is skipped by cycling/hotkeys. */
   readonly disabled?: boolean;
-  /** When true, the label draws a `×`; clicking it removes the tab + fires `onClose` (AR-176/178). */
+  /** When true, the label draws a `×`; clicking it removes the tab and fires `onClose`. */
   readonly closeable?: boolean;
 }
 
 /** Constructor options for {@link TabView}. */
 export interface TabViewOptions {
-  /** Caller-owned reactive tab list (AR-178). */
+  /** Caller-owned reactive tab list. */
   readonly tabs: Signal<Tab[]>;
-  /** Two-way active-index binding; clamped to the tab count at read/render-time (AR-177). */
+  /** Caller-owned active-index signal; clamped to the tab count at render time. */
   readonly active: Signal<number>;
-  /** Fired after a tab is removed via its `×` (built-in handler) (AR-178). */
+  /** Fired after a tab is removed via its `×` close mark. */
   readonly onClose?: (tab: Tab, index: number) => void;
-  /** Fired when the active index changes (Should-Have, PA-1). */
+  /** Fired when the effective active index changes. */
   readonly onChange?: (index: number) => void;
 }
 
 // ---------------------------------------------------------------------------------------------------
-// View-free helpers (unit-testable; AR-176/177). Exported for the impl tests.
+// View-free navigation helpers — pure and deterministic.
 // ---------------------------------------------------------------------------------------------------
 
 /** Clamp `i` into `[0, len-1]`; returns 0 for an empty list (callers bounds-check before indexing). */
@@ -78,7 +66,7 @@ export function clampActive(i: number, len: number): number {
   return Math.max(0, Math.min(Math.floor(i), len - 1));
 }
 
-/** Index of the first enabled tab, or -1 if none / empty (snap-to-first-enabled, PA-1). */
+/** Index of the first enabled tab, or -1 if none / empty. */
 export function firstEnabled(tabs: readonly Tab[]): number {
   for (let i = 0; i < tabs.length; i += 1) {
     if (tabs[i].disabled !== true) return i;
@@ -87,9 +75,8 @@ export function firstEnabled(tabs: readonly Tab[]): number {
 }
 
 /**
- * Next enabled index after `from` with wrap; returns `from` if it is the only enabled tab, and -1 if
- * no tab is enabled (the all-disabled no-op, AR-176 / AC-15). A disabled `from` returns the next
- * enabled tab found scanning forward (never `from`).
+ * Next enabled index after `from` with wrap-around; returns `from` if it is the only enabled tab, and
+ * -1 if no tab is enabled. A disabled `from` returns the next enabled tab found scanning forward.
  */
 export function nextEnabled(tabs: readonly Tab[], from: number): number {
   const n = tabs.length;
@@ -112,16 +99,16 @@ export function prevEnabled(tabs: readonly Tab[], from: number): number {
   return -1;
 }
 
-/** Neighbour index after removing `removedIndex` (the new length is `newLen`): prev if it was last,
- *  else the same position (the next tab shifts into the slot) (AR-177). */
+/** Neighbour index after removing `removedIndex` (the new length is `newLen`): the previous index if
+ *  the last tab was removed, else the same position (the next tab shifts into the freed slot). */
 export function neighbourAfterRemove(removedIndex: number, newLen: number): number {
   if (newLen <= 0) return 0;
   if (removedIndex >= newLen) return newLen - 1; // removed the last tab → its previous neighbour
   return removedIndex; // else the tab that shifted into the freed slot
 }
 
-/** True if `leaf` is `root` or a descendant of `root` (walks `.parent`) — the PF-002 focus-scoping
- *  predicate that gates the global chord + Alt-hotkey to the focus-owning `TabView`. */
+/** True if `leaf` is `root` or a descendant of `root` (walks `.parent`) — used to gate the global
+ *  switch chords + Alt-hotkeys to whichever `TabView` currently owns focus. */
 export function isWithin(leaf: View | null, root: View): boolean {
   let node: View | null = leaf;
   while (node !== null) {
@@ -145,7 +132,7 @@ function resolveActive(raw: number, tabs: readonly Tab[]): number {
 
 /** The bordered content region below the strip: draws the side + bottom frame; pages inset by padding. */
 class TabBody extends Group {
-  /** Column of pages; `padding` insets them inside the `│` sides + above the `└─┘` bottom (top joins the strip). */
+  /** Column of pages; padding insets them inside the `│` sides and above the `└─┘` bottom (the top joins the strip). */
   override layout: LayoutProps = {
     direction: 'col',
     size: { kind: 'fr', weight: 1 },
@@ -156,7 +143,7 @@ class TabBody extends Group {
   override draw(ctx: DrawContext): void {
     const { width: w, height: h } = ctx.size;
     if (w < 2 || h < 1) return;
-    const chrome = ctx.color('staticText'); // neutral gray line (tab* roles are now green button faces)
+    const chrome = ctx.color('staticText'); // neutral gray line colour
     ctx.fill(' ', chrome); // opaque interior so a page insets over a solid field
     for (let row = 0; row < h - 1; row += 1) {
       ctx.text(0, row, TAB_GLYPHS.v, chrome);
@@ -173,16 +160,58 @@ class TabBody extends Group {
 // TabView — the public container.
 // ---------------------------------------------------------------------------------------------------
 
-/** A tabbed layout container: a folder-tab strip over a bordered, one-page-visible content region. */
+/**
+ * A tabbed layout container: a folder-tab strip over a bordered, one-page-at-a-time content region.
+ * Each {@link Tab} pairs a title with a content `Group`; all pages stay mounted, so switching tabs
+ * preserves each page's state (see the file overview for the full behaviour notes).
+ *
+ * Keyboard: Ctrl+PageUp/Down cycle enabled tabs, Alt+letter jumps to a `~X~`-marked tab, and `←`/`→`
+ * cycle while the strip holds focus. Mouse: click a tab to activate it, click a closeable tab's `×`
+ * to remove it, or click the `◄`/`►` arrows to scroll an overflowing strip. Both `tabs` and `active`
+ * are caller-owned signals you can read and drive from outside.
+ *
+ * The strip is the focus target — focus the exposed {@link TabView.strip}, not the view.
+ *
+ * @example
+ * import { Group, Text, TabView, createEventLoop, signal } from '@jsvision/ui';
+ * import type { Tab } from '@jsvision/ui';
+ *
+ * const page = (line: string): Group => {
+ *   const g = new Group();
+ *   g.add(new Text(line));
+ *   return g;
+ * };
+ *
+ * const tabs = signal<Tab[]>([
+ *   { title: '~G~eneral', content: page('General settings') },
+ *   { title: '~D~isplay', content: page('Display options'), closeable: true },
+ *   { title: '~A~dvanced', content: page('Advanced'), disabled: true },
+ * ]);
+ * const active = signal(0);
+ *
+ * const view = new TabView({
+ *   tabs,
+ *   active,
+ *   onChange: (i) => console.log('switched to tab', i),
+ *   onClose: (tab) => console.log('closed', tab.title),
+ * });
+ * view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 10 } };
+ *
+ * const root = new Group();
+ * root.add(view);
+ * const loop = createEventLoop({ width: 40, height: 10 });
+ * loop.mount(root);
+ * loop.focusView(view.strip); // focus the strip, not the view
+ */
 export class TabView extends Group {
-  /** Consume the global switch chords in the pre-process sweep (scoped to the focused subtree). */
+  /** Handle the global switch chords in the pre-process sweep (scoped to the focus-owning tab view). */
   override preProcess = true;
 
   /** The caller-owned reactive tab list. */
   readonly tabs: Signal<Tab[]>;
-  /** The caller-owned active-index signal (clamped at read/render-time). */
+  /** The caller-owned active-index signal (clamped at render time). */
   readonly active: Signal<number>;
-  /** The focusable strip renderer — the focus target (a `Group` is not itself a focus leaf, AR-169). */
+  /** The focusable strip renderer — focus this (a plain `Group` is not itself a focus target). */
   readonly strip: TabStrip;
 
   private readonly body: TabBody;
@@ -192,7 +221,7 @@ export class TabView extends Group {
   private lastActive: number;
 
   /**
-   * @param opts `tabs` + `active` signals, plus optional `onClose`/`onChange` callbacks.
+   * @param opts The tab view configuration — see {@link TabViewOptions}.
    */
   constructor(opts: TabViewOptions) {
     super();
@@ -212,7 +241,8 @@ export class TabView extends Group {
     this.strip.layout = { size: { kind: 'fixed', cells: 1 } };
 
     this.body = new TabBody();
-    // Eager pages, keyed by the content Group identity (a reorder/close reuses the live page, PF-001).
+    // Build every page up-front, keyed by the content Group's identity so a reorder/close reuses the
+    // live page rather than tearing it down and losing its state.
     this.body.addDynamic(() =>
       For(
         () => this.tabs(),
@@ -224,17 +254,17 @@ export class TabView extends Group {
       ),
     );
 
-    // Inner column container: keeps `[strip 1 | body fr]` stacked regardless of how the parent places
-    // the TabView (an absolute rect or an `fr` flow slot both leave the TabView's own `layout` free —
-    // the DataGrid PF-101 idiom, so a caller's `at(view, …)` never clobbers the internal direction).
+    // Inner column container: keeps the strip stacked above the body regardless of how the parent
+    // places the TabView (an absolute rect or an `fr` flow slot both leave the TabView's own `layout`
+    // free, so placing the view never clobbers the internal stacking direction).
     const inner = new Group();
     inner.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
     inner.add(this.strip);
     inner.add(this.body);
     this.add(inner);
 
-    // Self-correcting clamp + one-page-visible flip + onChange (read/render-time, PF-003). Bound on
-    // mount when the scope exists; re-runs on any `active` / `tabs` change from any writer.
+    // Self-correcting clamp + one-page-visible flip + onChange. Bound on mount (when the reactive
+    // scope exists); re-runs on any `active` or `tabs` change, from any writer.
     this.onMount(() => {
       this.bind(
         () => [this.tabs(), this.active()] as const,
@@ -261,7 +291,7 @@ export class TabView extends Group {
 
   /**
    * Set the active tab to `i`, clamped into range; a disabled target is skipped forward to the next
-   * enabled tab (or left unchanged if none) (Should-Have, PA-1; AR-177).
+   * enabled tab (or left unchanged if none is enabled).
    *
    * @param i The requested tab index (clamp-checked).
    */
@@ -286,8 +316,8 @@ export class TabView extends Group {
   }
 
   /**
-   * Remove tab `i` from the `tabs` signal (the built-in `×` handler), fire `onClose(tab, i)`, and
-   * re-clamp `active` toward the neighbour (AR-176/178). Out-of-range `i` is a safe no-op.
+   * Remove tab `i` from the `tabs` signal, fire `onClose(tab, i)`, and re-clamp `active` toward the
+   * neighbouring tab. Out-of-range `i` is a safe no-op.
    *
    * @param i The tab index to close.
    */
@@ -308,15 +338,15 @@ export class TabView extends Group {
   }
 
   /**
-   * Route the global switch chords + Alt-hotkey in `preProcess`, scoped to the focus-owning `TabView`
-   * (PF-002). Ctrl+PageUp/Down cycle enabled tabs; Alt+letter jumps to a `~X~`-matching enabled tab.
+   * Handle the global switch chords + Alt-hotkey, but only when this tab view owns focus.
+   * Ctrl+PageUp/Down cycle enabled tabs; Alt+letter jumps to a `~X~`-matching enabled tab.
    *
    * @param ev The dispatch envelope.
    */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type !== 'key') return;
-    // PF-002: the pre-process sweep hits every TabView in scope; act only when focus is within THIS one.
+    // The pre-process sweep hits every TabView in scope; act only when focus is within THIS one.
     if (!isWithin(ev.getFocused?.() ?? null, this)) return;
 
     if (inner.ctrl && !inner.alt) {

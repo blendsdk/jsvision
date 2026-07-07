@@ -1,17 +1,17 @@
 /**
- * Layer-4 known-terminal table (RD-02, plan doc 03-02; PL-10).
+ * The known-terminal capability table.
  *
- * Maps a recognised terminal to the capabilities it is known to support, so
- * detection can fill fields the environment alone does not reveal. Lookup is
- * keyed in strict precedence order — `TERM_PROGRAM`, then `WT_SESSION` (Windows
- * Terminal), then `TERM` family, then the VTE/Konsole version markers — and the
- * first match wins. Unknown terminals contribute nothing and fall through to
- * env/defaults.
+ * Maps a recognised terminal to the capabilities it is known to support, filling
+ * in fields the environment alone does not reveal. Lookup is keyed in strict
+ * precedence order — `TERM_PROGRAM`, then `WT_SESSION` (Windows Terminal), then
+ * the `TERM` family, then the VTE/Konsole version markers — and the first match
+ * wins. An unknown terminal contributes nothing and falls through to the
+ * environment and the conservative defaults.
  *
  * Values are conservative-but-known: probe-dependent nuances (emoji width, some
- * OSC notifications) stay at their defaults here and are refined by RD-03 (PL-2).
- * `colorDepth` is intentionally omitted for the `xterm` family so the env signal
- * (`COLORTERM`/`TERM`) drives it; richer terminals assert their known depth.
+ * OSC notifications) stay at their defaults here and can be refined by a live
+ * probe. `colorDepth` is intentionally omitted for the `xterm` family so the
+ * env signal (`COLORTERM`/`TERM`) drives it; richer terminals assert their known depth.
  */
 import type { CapabilityProfile, DeepPartial, MouseCaps } from './profile.js';
 

@@ -1,14 +1,8 @@
 /**
- * Pure column math for the RD-16 `DataGrid<T>` — the view-free, unit-testable core: the column
- * descriptor types, width apportionment (over the RD-02 integer `solveTrack`, incl. the `auto`
- * pre-measure and the min/max clamp fixpoint), width-aware cell alignment, and the `{col,dir}` sort
- * comparator.
- *
- * Kept separate from `grid-rows.ts` so the renderer stays ≤ 500 lines (AR-178) and every piece is
- * testable without a view. No view state, no signals — callers pass snapshots. See
- * plans/table/03-02-columns.md.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Pure column math behind `DataGrid<T>` — the view-free core: the column descriptor types,
+ * integer-correct width apportionment (with the `auto` pre-measure and the min/max clamp),
+ * width-aware cell alignment, and the sort comparator. No view state and no signals; callers pass
+ * plain snapshots, so every helper here is deterministic and directly testable.
  */
 import type { TrackItem } from '../layout/apportion.js';
 import { solveTrack } from '../layout/apportion.js';
@@ -32,11 +26,11 @@ export interface Column<T> {
   readonly width: ColumnWidth;
   /** Text alignment within the column width (default `'left'`). */
   readonly align?: ColumnAlign;
-  /** Typed sort comparator; default = locale-aware string compare of `accessor` (AR-158). */
+  /** Typed sort comparator; default = locale-aware string compare of the `accessor` output. */
   readonly compare?: (a: T, b: T) => number;
-  /** Lower clamp on the resolved width (Should-Have, AR-175). */
+  /** Lower clamp on the resolved width. */
   readonly minWidth?: number;
-  /** Upper clamp on the resolved width and the `auto` measurement cap (AR-173/AR-175). */
+  /** Upper clamp on the resolved width, and the cap applied when measuring an `auto` column. */
   readonly maxWidth?: number;
 }
 
@@ -54,18 +48,18 @@ export interface ColumnGeometry {
 }
 
 /**
- * Pre-measure `auto` columns to a fixed cell width over ALL current rows — the O(rows) part (AR-173).
- * Wrap in a `computed` over the `rows` signal (in data-grid.ts) so it re-runs on data change, not per
- * frame (PF-102).
+ * Pre-measure `auto` columns to a fixed cell width across ALL current rows. This is the O(rows) pass;
+ * wrap it in a `computed` over the rows signal so it re-runs only when the data changes, not every
+ * frame.
  *
- * Per column: `null` for `number`/`fr` columns; for `auto`, the widest cell over all rows, floored to
- * the header title width (never 0 — an empty grid falls back to the title) and the `minWidth`, then
- * capped by `maxWidth` (`maxWidth` wins over `minWidth`; AR-175).
+ * Per column: `null` for `number`/`fr` columns; for `auto`, the widest cell across all rows, floored
+ * to the header title width (never 0 — an empty grid falls back to the title) and to `minWidth`, then
+ * capped by `maxWidth` (if `minWidth > maxWidth`, `maxWidth` wins).
  *
  * @param columns The column descriptors.
  * @param rows    The current (unsorted) row snapshot.
- * @param measure Display-width function (the shared `stringWidth`).
- * @returns One entry per column: the measured `auto` width, or `null`.
+ * @param measure Display-width function (measures each string in terminal cells, wide-glyph aware).
+ * @returns One entry per column: the measured `auto` width, or `null` for non-`auto` columns.
  */
 export function measureAutoWidths<T>(
   columns: Column<T>[],
@@ -94,16 +88,17 @@ function toTrackItem<T>(col: Column<T>, autoWidth: number | null, pinned: number
 }
 
 /**
- * Apportion per-column integer widths + absolute starts for a viewport — the O(cols) per-draw part.
+ * Apportion per-column integer widths and absolute start columns for a viewport — the O(cols)
+ * per-draw pass.
  *
- * Reserves one divider cell per column (apportions over `viewportWidth − numCols`, AR-179) so `fr`
- * columns fill the remaining viewport exactly, then applies the min/max clamps to `fr` results via a
- * bounded fixpoint (a clamped `fr` column is pinned as fixed and the track re-solved; ≤ numCols
- * passes). `fixed`/`auto` widths pass through `solveTrack` unchanged, so an all-fixed track that
- * overflows keeps its widths (→ H-scroll) rather than shrinking.
+ * Reserves one divider cell per column (apportions over `viewportWidth − numCols`) so `fr` columns
+ * fill the remaining viewport exactly, then applies the min/max clamps to `fr` results: a clamped
+ * `fr` column is pinned to a fixed width and the track re-solved, converging in at most `numCols`
+ * passes. Fixed and `auto` widths pass through unchanged, so an all-fixed track that overflows keeps
+ * its widths (enabling horizontal scroll) rather than shrinking.
  *
  * @param columns       The column descriptors.
- * @param autoWidths    The `measureAutoWidths` result (memoized upstream).
+ * @param autoWidths    The {@link measureAutoWidths} result (memoize it upstream).
  * @param viewportWidth The data-area width in cells.
  * @returns The resolved {@link ColumnGeometry}; empty arrays + `totalWidth 0` for zero columns.
  */
@@ -152,15 +147,16 @@ export function apportionColumns<T>(
 }
 
 /**
- * Clip `text` to exactly `width` cells (width-aware — never splits a wide/CJK glyph, PF-104), then
- * pad to the alignment: `left` pads right, `right` pads left, `center` splits the remainder (extra
- * cell to the right). The output is always exactly `width` cells (AC-4). Sanitization is the caller's
- * (`ctx.text`) — this only clips and pads.
+ * Clip `text` to exactly `width` cells (width-aware — never splits a wide/CJK glyph), then pad to the
+ * requested alignment: `left` pads on the right, `right` pads on the left, `center` splits the
+ * remainder (an odd extra cell goes to the right). The result is always exactly `width` cells. This
+ * only clips and pads; the caller is responsible for sanitizing before drawing.
  *
  * @param text    The cell text.
- * @param width   The target cell width (≤ 0 → empty string).
+ * @param width   The target cell width (≤ 0 returns an empty string).
  * @param align   The horizontal alignment.
- * @param measure Per-glyph display-width function (the shared `stringWidth`).
+ * @param measure Per-glyph display-width function (measures in terminal cells, wide-glyph aware).
+ * @returns A string that occupies exactly `width` terminal cells.
  */
 export function alignCell(text: string, width: number, align: ColumnAlign, measure: (s: string) => number): string {
   if (width <= 0) return '';
@@ -182,13 +178,14 @@ export function alignCell(text: string, width: number, align: ColumnAlign, measu
 }
 
 /**
- * A new display ordering by column + direction (the RD-11 sorted-display PATTERN, not the code —
- * AR-158). Stable (ties keep source order); the original `rows` is never mutated.
+ * Produce a new display ordering of `rows` by column + direction. Stable (ties keep source order),
+ * and the original `rows` array is never mutated.
  *
  * @param rows    The source rows.
- * @param columns The column descriptors (for the comparator / accessor).
+ * @param columns The column descriptors (supply the comparator / accessor).
  * @param sort    The active sort, or `null` for source order.
- * @returns A new array in the requested order, or `rows` unchanged when `sort` is `null` / invalid.
+ * @returns A new sorted array, or the original `rows` unchanged when `sort` is `null` or its column
+ *   index is out of range.
  */
 export function sortRows<T>(rows: T[], columns: Column<T>[], sort: SortState): T[] {
   if (sort === null || sort.col < 0 || sort.col >= columns.length) return rows;

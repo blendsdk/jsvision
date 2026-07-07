@@ -1,5 +1,5 @@
 /**
- * SGR (1006) mouse & wheel decoding (RD-06, plan doc 03-03, PL-11).
+ * SGR (1006) mouse & wheel decoding.
  *
  * Decodes one SGR mouse report `ESC [ < b ; x ; y (M|m)` at a byte offset:
  * - `b` low two bits select the button (0/1/2 = left/middle/right);
@@ -9,12 +9,8 @@
  *   and surfaced on a {@link WheelEvent} (they do not disturb wheel/button/motion);
  * - final `M` = press/motion, `m` = release.
  *
- * Coordinates `x`,`y` are kept **1-based exactly as received** (AC-3) — no
- * 0-based conversion (this differs from the archived prototype). A wheel report
- * never produces a {@link MouseEvent} (AC-4).
- *
- * The `.js` extension in the import specifier is required by NodeNext ESM
- * resolution (it resolves to the `.ts` source during development via tsx).
+ * Coordinates `x`,`y` are kept **1-based exactly as the terminal sends them** — no
+ * 0-based conversion. A wheel report never produces a {@link MouseEvent}.
  */
 import type { MouseEvent, WheelEvent } from './events.js';
 

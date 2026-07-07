@@ -1,28 +1,24 @@
 /**
- * Menu data builders + the tilde-hotkey convention (RD-05 AR-68/AR-77).
+ * Menu data builders and the tilde-hotkey convention.
  *
- * The menu tree is plain data — `subMenu`/`item`/`separator` produce {@link MenuItem} nodes; the
- * `MenuBar` (menubar.ts) and `MenuPopup` (popup.ts) render them. `~X~` marks the accelerator char:
- * `parseTilde` strips the tildes and reports the hotkey char + its display column. `layoutTitles`
- * lays the top-level titles left-to-right (shared by the bar's draw + click hit-test and the
- * controller's popup positioning).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * A menu is plain data: `subMenu`/`item`/`separator` produce {@link MenuItem} nodes that a
+ * {@link MenuBar} and its popups render. In a label, `~X~` marks the accelerator character — `X` is
+ * shown underlined and pressing `Alt+X` (on the bar) or plain `X` (in an open menu) triggers the item.
+ * `parseTilde` strips the tildes and reports the hotkey char plus its display column; `layoutTitles`
+ * places the top-level titles left-to-right.
  */
 import { Attr } from '@jsvision/core';
 import type { Style } from '@jsvision/core';
 
 /**
- * Add the accelerator-overlay reveal emphasis to a hot-glyph style (accelerator-overlay FR-1/AR-2).
- * When `reveal` is set, OR `Attr.bold | Attr.underline` onto the style's existing attributes (no
- * color/width change, no new theme role); otherwise return the base unchanged. Bold + underline was
- * chosen over underline-only (the original AR-2) because underline alone reads too faintly on many
- * terminals (user feedback 2026-07-07). Shared by every `~X~` drawer so the emphasis is identical
- * everywhere (DRY). A drawer applies it only to an **enabled** hot run, so a disabled accelerator
- * never lights up (FR-6).
+ * Emphasize an accelerator (`~X~`) glyph's style while the accelerator overlay is being revealed.
+ * When `reveal` is set, adds bold + underline to the base style (no colour or width change);
+ * otherwise returns the base unchanged. Bold and underline together are used because underline alone
+ * reads too faintly on many terminals. Every `~X~` drawer calls this so the emphasis is identical
+ * everywhere, and applies it only to an **enabled** accelerator so a greyed one never lights up.
  *
- * @param base   The hot run's resolved accent `Style`.
- * @param reveal `DrawContext.revealAccelerators` — whether the overlay is revealed this frame.
+ * @param base   The accelerator run's base style.
+ * @param reveal Whether the accelerator overlay is currently revealed (from `DrawContext.revealAccelerators`).
  * @returns The base style, bold + underlined while `reveal` is set.
  */
 export function accentStyle(base: Style, reveal: boolean): Style {
@@ -31,7 +27,7 @@ export function accentStyle(base: Style, reveal: boolean): Style {
 
 /** A node in the menu tree (plain data). */
 export type MenuItem =
-  | { kind: 'item'; title: string; command: string; key?: string } // tilde ~X~ marks the hotkey (AR-77)
+  | { kind: 'item'; title: string; command: string; key?: string } // `~X~` in the title marks the hotkey
   | { kind: 'sub'; title: string; items: MenuItem[] }
   | { kind: 'separator' };
 
@@ -58,16 +54,16 @@ export interface TildeSegment {
 /** A top-level title's placement on the menu bar. */
 export interface TitleLayout {
   index: number;
-  /** The button's left column (the leading pad space), per `TMenuBar::getItemRect`. */
+  /** The button's left column (the leading pad space). */
   x: number;
   /** The full ` text ` button width — display text + one pad column on each side. */
   width: number;
   label: ParsedLabel;
 }
 
-/** Leading blank column before the first button (`TMenuBar` starts drawing at x = 1). */
+/** Leading blank column before the first bar button (drawing starts at column 1). */
 const TITLE_MARGIN = 1;
-/** Pad columns around each bar title — one space on each side (` text `), as `TMenuBar` draws a button. */
+/** Pad columns around each bar title — one space on each side, so a title renders as ` text `. */
 const TITLE_PAD = 2;
 
 /**
@@ -88,10 +84,10 @@ export function parseTilde(label: string): ParsedLabel {
 }
 
 /**
- * Split a label into color runs at every `~`, exactly like Turbo Vision's `moveCStr` (`tvtext1.cpp`):
- * each `~` toggles between normal and highlighted (accelerator) text, and the tildes are removed. This
- * supports **multi-character** highlighted runs (e.g. `~Alt-X~ Exit` → "Alt-X" hot, " Exit" normal),
- * which the single-char {@link parseTilde} cannot — the form the status line uses (`tstatusl.cpp`).
+ * Split a label into colour runs at every `~`: each `~` toggles between normal and highlighted
+ * (accelerator) text, and the tildes are removed. Unlike {@link parseTilde}, this supports
+ * **multi-character** highlighted runs — e.g. `'~Alt-X~ Exit'` yields "Alt-X" highlighted and " Exit"
+ * normal — which is the form the status line uses.
  *
  * @param label A label with zero or more `~…~` highlighted runs.
  * @returns The non-empty runs in order, each tagged `hot` and carrying its starting display column.
@@ -128,10 +124,9 @@ function titleOf(node: MenuItem): string {
 }
 
 /**
- * Lay the top-level titles left-to-right as abutting ` text ` buttons, exactly like
- * `TMenuBar::getItemRect` / `draw` (Turbo Vision `tmenubar.cpp`): the first button starts at column
- * 1, each button spans the display text plus one pad space on each side, and the next button begins
- * where the previous ended (the pad spaces are the visible gap).
+ * Place the top-level titles left-to-right as abutting ` text ` buttons: the first starts at column
+ * 1, each spans its display text plus one pad space on each side, and the next begins where the
+ * previous ended (the pad spaces form the visible gap).
  *
  * @param tops The top-level menu nodes.
  * @returns Each title's index, button left x, full button width, and parsed label.
@@ -156,17 +151,54 @@ export function titleIndexAt(tops: readonly MenuItem[], x: number): number | nul
   return null;
 }
 
-/** Build a submenu node. */
+/**
+ * Build a submenu node — a titled entry that opens a nested list of items (or further submenus). Use
+ * these as the top-level entries passed to {@link menuBar}.
+ *
+ * @param title The submenu label; `~X~` marks its accelerator character.
+ * @param items The child items shown when it opens.
+ * @returns A submenu {@link MenuItem} node.
+ * @example
+ * import { menuBar, subMenu, item, separator, Commands } from '@jsvision/ui';
+ *
+ * const bar = menuBar([
+ *   subMenu('~F~ile', [
+ *     item('~N~ew', 'file.new'),
+ *     separator(),
+ *     item('E~x~it', Commands.quit, 'Alt+X'),
+ *   ]),
+ * ]);
+ */
 export function subMenu(title: string, items: MenuItem[]): MenuItem {
   return { kind: 'sub', title, items };
 }
 
-/** Build a command item node (`key` is a display accelerator label, e.g. `'Alt+X'`). */
+/**
+ * Build a command item — a selectable row that emits `command` when chosen. Handle the command from
+ * the status line, the app, or a `Dialog`.
+ *
+ * @param title   The item label; `~X~` marks its accelerator character.
+ * @param command The command name emitted when the item is chosen.
+ * @param key     Optional accelerator label shown right-aligned, e.g. `'Alt+X'` or `'Ctrl+S'`.
+ * @returns A command {@link MenuItem} node.
+ * @example
+ * import { item, Commands } from '@jsvision/ui';
+ *
+ * const tile = item('~T~ile', Commands.tile, 'F4');
+ */
 export function item(title: string, command: string, key?: string): MenuItem {
   return { kind: 'item', title, command, key };
 }
 
-/** Build a separator node. */
+/**
+ * Build a separator — a horizontal rule between groups of items inside a submenu.
+ *
+ * @returns A separator {@link MenuItem} node.
+ * @example
+ * import { subMenu, item, separator } from '@jsvision/ui';
+ *
+ * const file = subMenu('~F~ile', [item('~O~pen', 'file.open'), separator(), item('E~x~it', 'quit')]);
+ */
 export function separator(): MenuItem {
   return { kind: 'separator' };
 }

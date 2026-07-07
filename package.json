@@ -19,7 +19,8 @@
     "lint": "eslint . && prettier --check .",
     "lint:fix": "eslint . --fix && prettier --write .",
     "check:deps": "turbo run check:deps",
-    "verify": "turbo run typecheck build test",
+    "check:docs": "turbo run check:docs",
+    "verify": "turbo run typecheck build test check:docs",
     "gate": "node scripts/gate.mjs",
     "sync-versions": "node scripts/sync-versions.mjs",
     "bench": "yarn workspace @jsvision/core bench"

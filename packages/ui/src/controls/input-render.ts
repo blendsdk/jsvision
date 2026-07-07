@@ -1,16 +1,15 @@
 /**
- * Display-math helpers for {@link Input} (RD-06/07), extracted so `input.ts` stays under the
- * 500-line cap (packaging AC). Pure functions over the value string + the horizontal-scroll offset
- * (`firstPos`) — no instance state — faithful to Turbo Vision `TInputLine::draw` (`tinputli.cpp`).
- * The `.js` extension is required by NodeNext ESM resolution.
+ * Display-math helpers for {@link Input}: pure functions over the value string and the
+ * horizontal-scroll offset (`firstPos`). They decide when the scroll arrows appear and which glyph
+ * belongs in each visible column. No instance state, so they are easy to test in isolation.
  */
 
-/** Left/right scroll arrows (TV `tvtext1.cpp:106-107`, `0x11`/`0x10`), unambiguous-narrow code points. */
-export const LEFT_ARROW = '◄'; // ◄
-export const RIGHT_ARROW = '►'; // ►
+/** The left / right scroll arrows shown when the value is scrolled horizontally. */
+export const LEFT_ARROW = '◄';
+export const RIGHT_ARROW = '►';
 
 /**
- * Whether text extends past the right edge of the field (TV `canScroll(1)`, `tinputli.cpp:118`).
+ * Whether text extends past the right edge of the field (i.e. a `►` arrow should show).
  *
  * @param v        The value string.
  * @param w        The field width in cells.
@@ -22,10 +21,11 @@ export function canScrollRight(v: string, w: number, firstPos: number): boolean 
 }
 
 /**
- * The display column of a value index (TV `displayedPos` = `strwidth(data[0..pos))`). Code-unit in
- * v1 (PA-1); grapheme/wide-aware stepping is DEF-21 — the identity in the current slice.
+ * The display column of a value index. Currently a straight identity (one string index = one
+ * column); it exists as a seam so wide/grapheme-aware column stepping can be added later without
+ * touching callers.
  *
- * @param pos A JS string index into the value.
+ * @param pos A string index into the value.
  * @returns The display column offset from the start of the value.
  */
 export function displayedPos(pos: number): number {

@@ -1,21 +1,19 @@
 /**
- * Color reference tables for depth-aware encoding (RD-05; AR-5, AR-6).
+ * Color reference tables used by depth-aware encoding, plus the app-facing
+ * DOS-16 palette.
  *
- * Holds the ANSI-16 reference RGB (shared by nearest-16 and the 256 base colors)
- * and the xterm-256 reference (`rgb256`). The app-facing DOS-16 `PALETTE` and the
- * `Theme` constants are added by Phase 2 (see 03-02). All values here are encoding
- * internals, not app colors.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution
- * (it resolves to the `.ts` source during development via tsx).
+ * The reference tables ({@link ANSI16_REFERENCE}, {@link rgb256}) define the
+ * canonical RGB of each terminal palette slot, so downsampling can pick the
+ * nearest match. The app-facing {@link PALETTE} is the classic Borland 16-color
+ * set as ready-to-use `#rrggbb` values you assign to theme roles or cells.
  */
 import type { Ansi16Name, Color } from '../render/types.js';
 import type { Rgb } from './color.js';
 
 /**
  * The 16 named ANSI colors as 24-bit reference RGB (the common xterm palette).
- * Identical to the values RD-04 shipped, so nearest-16 and the 256 base colors
- * (indices 0–15) agree with the truecolor path.
+ * These are the targets {@link nearest16} matches against, and they seed the
+ * first 16 entries of the xterm-256 table so both depths agree.
  */
 export const ANSI16_REFERENCE: Record<Ansi16Name, Rgb> = {
   black: { r: 0, g: 0, b: 0 },
@@ -91,11 +89,18 @@ export function rgb256(index: number): Rgb {
 }
 
 /**
- * The classic Borland / DOS 16-color palette as app-facing `#rrggbb` colors
- * (migrated from the prototype `theme.ts`; `brightMagenta` added — the prototype
- * omitted it). Each value is a valid {@link Color} that encodes through the same
- * `encode` path. This is the app-facing palette, distinct from the
- * {@link ANSI16_REFERENCE} encoding table above. [AR-9]
+ * The classic Borland / DOS 16-color palette as ready-to-use `#rrggbb` colors.
+ *
+ * Each value is a valid {@link Color} you can assign directly to a cell or a
+ * theme role; it encodes through the normal {@link encode} path (and downsamples
+ * on low-color terminals). This is the palette you build UIs with — distinct from
+ * the {@link ANSI16_REFERENCE} table above, which exists only to drive matching.
+ *
+ * @example
+ * import { PALETTE } from '@jsvision/core';
+ *
+ * const titleFg = PALETTE.brightWhite;  // '#ffffff'
+ * const titleBg = PALETTE.blue;         // '#0000aa'
  */
 export const PALETTE = {
   black: '#000000',

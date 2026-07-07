@@ -1,24 +1,19 @@
 /**
- * `GapBuffer` — the RD-08 editor text store, a faithful port of TV's gap buffer cost model over
- * UTF-16 code units (AR-250).
+ * The editor's text store: a movable-gap buffer over UTF-16 code units. Edits cluster at a "gap"
+ * that tracks the cursor, so repeated typing/deleting at one spot is cheap.
  *
- * TV keeps one raw byte array with a movable gap at the cursor: `bufPtr(P) = P < curPtr ? P :
- * P + gapLen` (`edits.cpp:26-29`), moves the gap by `memmove` in `setCurPtr`/`setSelect`
- * (`teditor2.cpp:459-539`), and loads file text at the buffer END so the gap starts at the front
- * (`teditor2.cpp:423-442`, `tfiledtr.cpp:126-132`). The idiomatic JS equivalent is a string PAIR
- * split at the gap — `before` (text left of the gap) + `after` (text right of it) — where
- * `bufPtr` becomes the half-selection rule and `moveGap` a substring shuffle. Same complexity
- * class as TV: O(1)-amortized edits at the gap, O(distance) gap moves. (A `Uint16Array` backing
- * is the deferred DEF-3 future.)
+ * Implemented as a string pair split at the gap — `before` (text left of the gap) + `after` (text
+ * right of it). Editing at the gap is O(1)-amortized; moving the gap to a new position is
+ * O(distance). Content loaded at construction sits entirely in `after`, so the gap starts at the
+ * front of the buffer.
  *
- * All positions are LOGICAL UTF-16 code-unit offsets in `[0, length]`; every accessor is
- * bounds-checked and never throws (RD §Security / RD-13 HR-01).
+ * All positions are logical UTF-16 code-unit offsets in `[0, length]`. Every accessor is
+ * bounds-checked and never throws on out-of-range or hostile input.
  */
 
 /**
- * The minimal read surface the pure navigation functions need (03-01; `slice` per PF-007 so
- * cluster segmentation gets line-bounded text). Plain strings satisfy it natively, so spec
- * oracles can run on either.
+ * The minimal read surface the navigation functions need. A plain `string` satisfies it natively,
+ * so the pure navigation helpers can run against a raw string or a live {@link GapBuffer} alike.
  */
 export interface BufText {
   /** Logical length in UTF-16 code units. */
@@ -29,27 +24,27 @@ export interface BufText {
   slice(from: number, to: number): string;
 }
 
-/** A movable-gap text buffer over UTF-16 code units (the TV `bufPtr` model made two strings). */
+/** A movable-gap text buffer over UTF-16 code units, backed by a pair of strings. */
 export class GapBuffer implements BufText {
-  /** Text left of the gap (TV: `buffer[0..curPtr)`). */
+  /** Text left of the gap. */
   private before = '';
-  /** Text right of the gap (TV: `buffer[curPtr+gapLen..bufSize)`). */
+  /** Text right of the gap. */
   private after: string;
 
   /**
-   * @param text Initial content — loaded "at the buffer end" (gap at the front), the TV
-   *   `loadFile` shape (`tfiledtr.cpp:126-132`); stored VERBATIM (mixed EOLs preserved, PF-008).
+   * @param text Initial content. Stored verbatim — mixed line endings are preserved and round-trip
+   *   byte-identical. Placed entirely after the gap, so the gap starts at the front of the buffer.
    */
   constructor(text?: string) {
     this.after = text ?? '';
   }
 
-  /** Logical length in UTF-16 code units (`bufLen`). */
+  /** Logical length in UTF-16 code units. */
   get length(): number {
     return this.before.length + this.after.length;
   }
 
-  /** The code unit at logical `p`, or `''` out of range — the bounds-checked `bufChar` (`edits.cpp:21-24`). */
+  /** The code unit at logical `p`, or `''` when `p` is out of range (never throws). */
   charAt(p: number): string {
     if (!Number.isFinite(p) || p < 0 || p >= this.length) return '';
     return p < this.before.length ? this.before[p] : this.after[p - this.before.length];
@@ -67,7 +62,7 @@ export class GapBuffer implements BufText {
     return this.before.slice(f) + this.after.slice(0, t - bl);
   }
 
-  /** Move the gap to logical `p` (the `memmove` analogue, `teditor2.cpp:459-539`); O(distance). */
+  /** Move the gap to logical `p`; O(distance from the current gap). */
   moveGap(p: number): void {
     const len = this.length;
     const target = Math.min(Math.max(clampInt(p), 0), len);

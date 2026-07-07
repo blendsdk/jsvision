@@ -1,38 +1,37 @@
 /**
- * Command registry (RD-04, AR-52, PA-3). A typed command layer over the dispatch tick: `emit`
- * raises a `CommandEvent` and enqueues it onto the active tick (routed 3-phase like any event),
- * `enable`/`isEnabled` gate it. Commands are **enabled by default** — state is a single map of
- * *explicit overrides*, so an unregistered command is enabled and only an explicit `enable(name,
- * false)` drops it (PA-3). `opts.commands` seeds the map with `true` as an introspection hint;
- * absence still means enabled.
+ * The command registry backing the event loop's `emitCommand`/`enableCommand`/`isCommandEnabled`.
  *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * A command is a named intent (e.g. `'quit'`, `'save'`) that any view can raise and any view can
+ * handle. Commands are **enabled by default**: enablement is tracked as a set of explicit overrides,
+ * so a command you never registered is still enabled, and only `enable(name, false)` disables it.
+ * Emitting a disabled command is silently dropped. This module is internal to the loop — callers use
+ * it indirectly through the {@link EventLoop} methods.
  */
 import type { CommandEvent, DispatchEvent } from '../view/index.js';
 
-/** A typed command layer: raise + 3-phase route, gated by an enable/disable override map. */
+/** Raise/enable/query commands, gated by an enable-override map. */
 export interface CommandRegistry {
-  /** Raise a command and enqueue it onto the active tick, unless it is disabled (AR-52, PA-3). */
+  /** Raise a command onto the current dispatch tick, unless it is disabled. */
   emit(name: string, arg?: unknown): void;
-  /** Set an explicit enable/disable override for a command (PA-3). */
+  /** Enable or disable a command. */
   enable(name: string, on: boolean): void;
-  /** Whether a command is enabled; an unregistered command is enabled by default (PA-3). */
+  /** Whether a command is enabled. Commands are enabled by default until explicitly disabled. */
   isEnabled(name: string): boolean;
 }
 
-/** Construction options for {@link createCommandRegistry}. */
+/** Options for {@link createCommandRegistry}. */
 export interface CommandRegistryOptions {
-  /** Upfront command hint, seeded as enabled; absence still means enabled (PA-3). */
+  /** Command names to pre-register as enabled. Purely an introspection hint — unlisted commands are enabled too. */
   seed?: Iterable<string>;
-  /** Enqueue a built command envelope onto the active dispatch tick (cascade, 03-01). */
+  /** Sink that queues a built command event onto the active dispatch tick, so it routes like any other event. */
   enqueue: (ev: DispatchEvent) => void;
 }
 
 /**
- * Create a command registry backed by an explicit-override map.
+ * Create a command registry.
  *
- * @param opts `seed` (introspection hint) + the `enqueue` seam that pushes a command envelope onto
- *             the active dispatch tick.
+ * @param opts `seed` (optional up-front command names) plus the `enqueue` sink that pushes a raised
+ *             command onto the active dispatch tick.
  * @returns A {@link CommandRegistry}.
  */
 export function createCommandRegistry(opts: CommandRegistryOptions): CommandRegistry {
@@ -41,13 +40,14 @@ export function createCommandRegistry(opts: CommandRegistryOptions): CommandRegi
     for (const name of opts.seed) overrides.set(name, true);
   }
 
+  // Absence from the map means "enabled": only an explicit enable(name, false) can disable a command.
   const isEnabled = (name: string): boolean => {
     const override = overrides.get(name);
-    return override === undefined ? true : override; // unknown ⇒ enabled by default (PA-3)
+    return override === undefined ? true : override;
   };
 
   const emit = (name: string, arg?: unknown): void => {
-    if (!isEnabled(name)) return; // disabled ⇒ drop before any envelope/dispatch (AR-52, PA-3)
+    if (!isEnabled(name)) return; // drop a disabled command before it ever reaches a view
     const command: CommandEvent =
       arg === undefined ? { type: 'command', command: name } : { type: 'command', command: name, arg };
     opts.enqueue({ event: command, handled: false });

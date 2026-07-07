@@ -1,15 +1,14 @@
 /**
- * Computeds (RD-01, 03-01; AR-06, AR-07) — lazy, memoized derived nodes.
+ * Computeds — lazy, memoized derived values.
  *
- * A computed is **both** a source (others read its memo) and a computation (it reads others).
- * Its body does not run until first read (lazy); a read with no dependency change returns the
- * memo without recomputing (memoized). When a dependency changes the memo is recomputed on the
- * next read, and observers are notified only if the value actually changed — the memo-equal
- * short-circuit that bounds diamond re-runs (AC-7).
+ * A computed derives a value from other signals/computeds. It is both something you read (like a
+ * signal) and something that reads others (like an effect). Its body does not run until the first
+ * read (lazy); reading again without any dependency changing returns the cached value without
+ * re-running (memoized). When a dependency changes, the value is recomputed on the next read, and
+ * anything observing the computed re-runs only if the derived value actually changed — so a shared
+ * computed feeding several consumers never triggers redundant work.
  *
- * The memoized value lives in a closure (not a node field) so its type `T` stays exact without
- * an unsafe placeholder cast: it is assigned by the first recompute, which always runs before
- * any read (the node starts `DIRTY`).
+ * The derivation must be pure: read signals freely, but do not write them from inside a computed.
  */
 import type { Computation, Computed, EqualsOption, Subscribable } from './types.js';
 import { NodeState } from './types.js';
@@ -19,20 +18,31 @@ import { attachComputation } from './owner.js';
 /** Options for {@link computed}. */
 export interface ComputedOptions<T> {
   /**
-   * Change-equality policy (AR-05): a predicate (equal ⇒ don't notify observers), or `false`
-   * to notify on every recompute. Defaults to `Object.is`.
+   * How the computed decides whether a recompute changed the value: a predicate returning `true`
+   * when the new value counts as equal (equal ⇒ observers are not notified), or `false` to notify
+   * on every recompute. Defaults to `Object.is`.
    */
   equals?: EqualsOption<T>;
 }
 
 /**
- * Create a lazy, memoized derived value (AR-06).
+ * Create a lazy, memoized derived value.
  *
- * @param fn The derivation; its tracked reads become the computed's dependencies (re-collected
- *   each recompute). It must be pure — no signal writes.
- * @param options Optional equality policy for the derived value (AR-05).
- * @returns A read-only callable accessor: call to read (subscribes the running computation and
- *   resolves the memo); `.peek` resolves and reads the memo without subscribing.
+ * @param fn The derivation; the signals/computeds it reads become its dependencies (re-collected on
+ *   each recompute). Must be pure — no signal writes.
+ * @param options Optional equality policy for the derived value — see {@link ComputedOptions}.
+ * @returns A read-only callable accessor: call it to read (and, inside a tracked computation,
+ *   subscribe); `.peek()` reads the current value without subscribing.
+ * @example
+ * import { signal, computed, effect } from '@jsvision/ui';
+ *
+ * const price = signal(10);
+ * const qty = signal(2);
+ * const total = computed(() => price() * qty());
+ *
+ * effect(() => console.log('total:', total())); // "total: 20"
+ * qty.set(3);                                    // "total: 30"
+ * total();                                       // 30, returned from cache (not recomputed)
  */
 export function computed<T>(fn: () => T, options?: ComputedOptions<T>): Computed<T> {
   const equals: (a: T, b: T) => boolean = options?.equals === false ? () => false : (options?.equals ?? Object.is);
@@ -62,14 +72,17 @@ export function computed<T>(fn: () => T, options?: ComputedOptions<T>): Computed
       // First computation: observers are the readers triggering it — they receive the value
       // directly, so there is nothing to notify.
       if (!hadValue) return;
-      // Otherwise notify only when the value actually changed (memo-equal short-circuit, AC-7).
+      // Otherwise notify only when the value actually changed, so consumers of an unchanged
+      // derived value never re-run.
       if (equals(previous, value)) return;
       markObserversStale(observers);
     },
     pull: () => updateIfNecessary(node),
   };
 
-  attachComputation(node); // disposed with its owner; dev-warns if created with no owner (AR-14)
+  // Tie the computed to the current owner scope so it is disposed with that scope; created with no
+  // owner it still works but is never auto-disposed and emits a one-time dev warning.
+  attachComputation(node);
 
   const read = (): T => {
     registerRead(node);

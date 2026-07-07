@@ -1,8 +1,9 @@
 /**
- * Desktop subsystem barrel (RD-05) — the window-manager surface.
+ * The desktop: the window manager that hosts an application's windows.
  *
- * Phase 1 exposes the constructable `Desktop` skeleton + its loop-seam contract; Phase 3 fleshes out
- * the window-manager behavior on the same class. Re-exported through `@jsvision/ui`'s entry point.
+ * `Desktop` fills the area between the menu bar and status line, draws the patterned background, and
+ * manages the windows on it — raising on click, dragging, resizing, zooming, cascading, tiling, and
+ * switching. `createApplication` owns one; you interact with it through `app.desktop`.
  */
 export { Desktop } from './desktop.js';
 export type { DesktopLoopSeam } from './desktop.js';

@@ -1,22 +1,19 @@
 /**
- * The production RuntimeAdapter + per-OS specifics (RD-07, plan doc 03-02).
+ * The production {@link RuntimeAdapter} and its per-OS signal wiring.
  *
  * `hostSignalSource()` is a **pure** map from an abstract {@link HostSignal} to
- * the concrete OS source (a `process` signal or a stream event), so both the
- * POSIX and Windows maps are unit-testable on any host by passing a fake
- * platform (PF-005). `realRuntime()` builds the real adapter over node:process /
- * node:fs / node:tty, bound to the host's output stream so win32 `resize`/
- * `hangup` can attach to it (PF-010). The `platform`/`vtAvailable` overrides
- * exist purely so the Windows paths and the VT-warn branch are exercisable from
- * a POSIX test runner (PF-005); production passes neither.
- *
- * The `.js` extensions in the import specifiers are required by NodeNext ESM
- * resolution (they resolve to the `.ts` sources during development via tsx).
+ * its concrete OS source (a `process` signal or a stream event), so both the
+ * POSIX and Windows maps can be exercised on any host by passing a platform.
+ * `realRuntime()` builds the real adapter over `node:process` / `node:fs` /
+ * `node:tty`, bound to the host's output stream (so Windows `resize`/`hangup`
+ * can attach to it). The `platform` / `vtAvailable` overrides exist only so the
+ * Windows paths and the legacy-console warning are testable from a POSIX runner;
+ * production passes neither.
  */
 import { writeSync as fsWriteSync } from 'node:fs';
 import type { HostSignal, RuntimeAdapter, TimerHandle } from './types.js';
 
-/** Where an abstract {@link HostSignal} is sourced. `process` = a signal; `output` = a stream event. */
+/** Where an abstract {@link HostSignal} is sourced. `process` = a process signal; `output` = a stream event. */
 export interface SignalSource {
   readonly emitter: 'process' | 'output';
   readonly name: string;
@@ -25,7 +22,7 @@ export interface SignalSource {
 /**
  * Map an abstract {@link HostSignal} to its concrete OS source on `platform`.
  * Pure (no I/O); `null` means the signal is not wired on that platform (e.g.
- * suspend/continue on win32, which has no SIGTSTP/SIGCONT). [AR-4, PF-005]
+ * suspend/continue on Windows, which has no SIGTSTP/SIGCONT).
  *
  * @param platform - the OS to map for (`process.platform` shape).
  * @param signal - the abstract host signal.
@@ -51,11 +48,11 @@ export function hostSignalSource(platform: NodeJS.Platform, signal: HostSignal):
 
 /** Optional injectable overrides for {@link realRuntime} (test-only; production omits them). */
 export interface RealRuntimeOptions {
-  /** Platform to assume; defaults to `process.platform`. Lets a POSIX runner exercise win32 paths (PF-005). */
+  /** Platform to assume; defaults to `process.platform`. Lets a POSIX runner exercise the Windows paths. */
   readonly platform?: NodeJS.Platform;
-  /** VT-processing availability predicate (win32 only); defaults to "available" (real check deferred-to-runner, AR-4). */
+  /** VT-processing availability predicate (Windows only); defaults to "available". */
   readonly vtAvailable?: () => boolean;
-  /** Warning sink; defaults to `process.stderr.write`. Injected so the VT-warn branch is assertable (PF-005). */
+  /** Warning sink; defaults to `process.stderr.write`. Injected so the legacy-console warning is assertable. */
   readonly warn?: (message: string) => void;
 }
 
@@ -70,13 +67,13 @@ function normalizePlatform(platform: NodeJS.Platform): 'linux' | 'darwin' | 'win
  * Build the production {@link RuntimeAdapter} bound to `output`.
  *
  * All OS effects route through here so the host stays platform-agnostic and the
- * whole subsystem is testable by injecting a fake adapter instead. On win32, if
- * the injected `vtAvailable` predicate reports VT processing is unavailable
- * (legacy conhost), it warns once at construction (AR-4, PF-005).
+ * whole subsystem is testable by injecting a fake adapter instead. On Windows, if
+ * the `vtAvailable` predicate reports VT processing is unavailable (a legacy
+ * console), it warns once at construction.
  *
- * @param output - the bound output stream; win32 `resize`/`hangup` attach to it (PF-010).
+ * @param output - the bound output stream; Windows `resize`/`hangup` attach to it.
  * @param options - test-only platform / VT overrides; omit in production.
- * @returns a real {@link RuntimeAdapter}. [AR-13, PF-010]
+ * @returns a real {@link RuntimeAdapter}.
  */
 export function realRuntime(output: NodeJS.WriteStream, options: RealRuntimeOptions = {}): RuntimeAdapter {
   const rawPlatform = options.platform ?? process.platform;
@@ -96,7 +93,7 @@ export function realRuntime(output: NodeJS.WriteStream, options: RealRuntimeOpti
     };
   }
 
-  // Win32 VT-processing check: warn once if a legacy console lacks VT (AR-4, PF-005).
+  // Windows VT-processing check: warn once if a legacy console lacks VT support.
   if (platform === 'win32' && !vtAvailable()) {
     warnSink('tui: virtual-terminal processing unavailable (legacy console); rendering may be degraded.\n');
   }
@@ -104,12 +101,12 @@ export function realRuntime(output: NodeJS.WriteStream, options: RealRuntimeOpti
   return {
     platform,
     setRawMode(stream: NodeJS.ReadStream, on: boolean): void {
-      // Never attempt raw mode on a non-TTY (AR-11).
+      // Never attempt raw mode on a non-TTY — setRawMode does not exist there.
       if (stream.isTTY) stream.setRawMode(on);
     },
     on(event: HostSignal, handler: () => void): () => void {
       const source = hostSignalSource(rawPlatform, event);
-      // Unsupported on this platform (e.g. suspend/continue on win32) → inert.
+      // Unsupported on this platform (e.g. suspend/continue on Windows) → inert.
       if (source === null) return (): void => {};
       const emitter: NodeJS.EventEmitter = source.emitter === 'output' ? output : process;
       return subscribe(emitter, source.name, handler);
@@ -129,7 +126,7 @@ export function realRuntime(output: NodeJS.WriteStream, options: RealRuntimeOpti
       };
     },
     suspendSelf(): void {
-      // SIGSTOP is uncatchable, so this suspends without re-entering the SIGTSTP handler (AR-10, PF-001).
+      // SIGSTOP is uncatchable, so this actually suspends without re-entering the SIGTSTP handler.
       process.kill(process.pid, 'SIGSTOP');
     },
     scheduleImmediate(fn: () => void): void {
@@ -149,7 +146,7 @@ export function realRuntime(output: NodeJS.WriteStream, options: RealRuntimeOpti
       };
     },
     writeSync(fd: number, data: string): void {
-      // Synchronous so the draining 'exit' backstop actually flushes (PF-004).
+      // Synchronous so the draining on-exit restore backstop actually flushes.
       fsWriteSync(fd, data);
     },
     exit(code: number): never {

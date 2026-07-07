@@ -1,14 +1,15 @@
 /**
- * `Desktop` — the interactive window manager (RD-05 AR-67/AR-78/AR-87).
+ * `Desktop` — the interactive window manager that hosts an application's windows.
  *
- * A `Group` whose children are its windows in z-order (back-to-front), filling its area with the
- * `desktop` role + pattern (the bottom layer, AR-80). It implements raise-on-click (the piece RD-04
- * deferred), drag-move + free drag-resize (via the loop's pointer-capture seam, PA-5), zoom,
- * cascade/tile, and window switching. Gesture state lives here (PA-10); the WM `CommandEvent`s
- * (`zoom`/`next`/`prev`/`cascade`/`tile`) are handled in the post-process phase (PA-12), after the
- * focused window had its chance. `Window` is imported type-only (no runtime import cycle).
+ * It is a group whose children are its windows in back-to-front order, filling its area with the
+ * desktop background pattern. It handles raising a window to the front on click, dragging and
+ * resizing (through the loop's pointer capture), zooming, cascading and tiling, and switching windows
+ * with the `next`/`prev` commands or Alt+number. The window-management commands
+ * (`zoom`/`close`/`next`/`prev`/`cascade`/`tile`) are handled after the focused window has had its
+ * chance at the event.
  *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * `createApplication` owns the desktop; reach it as `app.desktop`. Add windows with
+ * {@link Desktop.addWindow}.
  */
 import { Group } from '../view/index.js';
 import type { DrawContext, DispatchEvent, View, Point } from '../view/index.js';
@@ -20,48 +21,71 @@ import type { Gesture } from './gestures.js';
 import { cascade, tile, nextWindow, prevWindow, windowByNumber } from './arrange.js';
 
 /**
- * The seam the Desktop needs from the composed `EventLoop` (injected by `createApplication`, PA-7).
- * A subset of the loop surface: pointer capture for drag/resize, command emit/enablement for the WM
- * commands, and focus for raise-on-click.
+ * The slice of the event loop the desktop needs, injected by `createApplication`: pointer capture for
+ * drag/resize, command emit/enablement, and focus for raise-on-click.
  */
 export interface DesktopLoopSeam {
-  /** Capture the pointer to a view for the duration of a drag/resize gesture (PA-5). */
+  /** Capture the pointer to a view for the duration of a drag or resize. */
   setCapture(view: View): void;
-  /** Release the pointer capture (PA-5). */
+  /** Release the pointer capture. */
   releaseCapture(): void;
-  /** Emit a shell command through the loop. */
+  /** Emit a command through the loop. */
   emitCommand(command: string, arg?: unknown): void;
   /** Whether a command is currently enabled. */
   isCommandEnabled(command: string): boolean;
-  /** Focus a view (raise-on-click focuses the raised window). */
+  /** Focus a view. */
   focusView(view: View): void;
-  /** Focus **into** a container, descending to its inner focusable leaf (window switch / raise, AR-53). */
+  /** Focus into a container, descending to its inner focusable view. */
   focusInto(view: View): void;
 }
 
-/** Match an Alt-`N` window accelerator key (a single digit 1–9). */
+/** Matches the Alt+digit window-switch keys (1–9). */
 const DIGIT_KEY = /^[1-9]$/;
 
-/** The window manager + desktop background (AR-67). Child-array order is z-order; bottom layer. */
+/**
+ * The window manager and desktop background. Its children are its windows, in back-to-front order.
+ *
+ * @example
+ * import { createApplication, Window } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const app = createApplication({ caps });
+ *
+ * // Open two windows on the desktop.
+ * const editor = new Window('Editor');
+ * editor.number = 1;
+ * editor.layout.rect = { x: 1, y: 1, width: 30, height: 8 };
+ * app.desktop.addWindow(editor);
+ *
+ * const output = new Window('Output');
+ * output.number = 2;
+ * output.layout.rect = { x: 10, y: 4, width: 30, height: 8 };
+ * app.desktop.addWindow(output);
+ *
+ * // Arrange them and switch between them.
+ * app.desktop.tile();
+ * app.desktop.focusNextWindow();
+ * app.desktop.shadow = true; // give every window a drop shadow
+ */
 export class Desktop extends Group {
-  /** Handle the WM `CommandEvent`s after the focused window's phase (PA-12). */
+  /** Handle the window-management commands after the focused window has had a chance at the event. */
   override postProcess = true;
 
-  /** @internal The injected loop seam; `null` until `attachLoop`. */
+  /** @internal The event-loop seam; `null` until the app attaches it. */
   protected loop: DesktopLoopSeam | null = null;
-  /** @internal The active (top-most focused) window; tracked across raise/add/remove. */
+  /** @internal The active (front-most, focused) window; tracked across raise/add/remove. */
   protected active: Window | null = null;
-  /** @internal The in-flight drag/resize gesture, or `null` when none (PA-10). */
+  /** @internal The in-flight drag/resize, or `null` when none. */
   protected gesture: Gesture | null = null;
 
   /** @internal Backing field for {@link shadow}. */
   protected _shadow = false;
 
   /**
-   * When true, each window casts a Turbo Vision-style drop-shadow. The shadow is drawn in z-order by
-   * the compose walker (per the `castsShadow` view flag), so a front window's shadow falls correctly
-   * over the windows behind it. Off by default (golden frames stay unchanged). Setting it toggles
-   * `castsShadow` on every current window; windows added later pick it up in {@link addWindow}.
+   * Whether every window casts a drop shadow. Shadows are painted in z-order, so a front window's
+   * shadow falls correctly over the windows behind it. Off by default. Setting it updates every
+   * current window, and windows added later inherit it.
    */
   get shadow(): boolean {
     return this._shadow;
@@ -71,158 +95,156 @@ export class Desktop extends Group {
     for (const win of this.windows()) win.castsShadow = on;
   }
 
-  /** The desktop's windows in z-order (its children are all `Window`s; the guard keeps it type-safe). */
+  /** The desktop's windows in z-order (every child is a `Window`; the filter keeps it type-safe). */
   protected windows(): Window[] {
     return this.children.filter((c): c is Window => c instanceof Window);
   }
 
   /**
-   * Re-fit every window to a resized desktop (HR-41): zoomed windows re-maximize to the new desktop
-   * rect and their `restoredRect`s clamp on-screen. Wired to {@link EventLoop.onResize} by the app,
-   * fired after the reflow settles `this.bounds` to the new desktop size.
+   * Re-fit every window to the desktop's new size: maximized windows re-maximize to the new area and
+   * each window's restored rect is clamped back on-screen. The app calls this on a viewport resize.
    */
   handleViewportResize(): void {
     const size: Size2D = { width: this.bounds.width, height: this.bounds.height };
     for (const win of this.windows()) win.onDesktopResize(size);
   }
 
-  /** Fill the desktop with the `desktop` role + its repeating pattern glyph (AR-80 / PF-03). */
+  /** Paint the desktop background: fill the whole area with the repeating desktop pattern. */
   override draw(ctx: DrawContext): void {
     const role = ctx.role('desktop');
     ctx.fill(role.pattern, ctx.color('desktop'));
   }
 
   /**
-   * Inject the loop seam (PA-7). Called by `createApplication` after the loop exists.
+   * Attach the event-loop seam. `createApplication` calls this after building the loop; you do not
+   * call it yourself.
    *
-   * @param seam The loop seam (capture + command + focus).
+   * @param seam The loop operations the desktop needs (capture, commands, focus).
    */
   attachLoop(seam: DesktopLoopSeam): void {
     this.loop = seam;
   }
 
-  /** The active (top-most focused) window, or `null` (AR-78). */
+  /** The active (front-most, focused) window, or `null` if there are none. */
   activeWindow(): Window | null {
     return this.active;
   }
 
-  /** Add a window as a top-z `position:'absolute'` child, inject the WM seam, and activate it (AR-67/PA-15). */
+  /** Add a window to the desktop, bring it to the front, and focus it. */
   addWindow(w: Window): void {
-    // The desktop-wide `shadow` opt-in only ADDS shadows to plain windows; it must never remove a
-    // window's own intrinsic shadow — a `Dialog` always casts one (TV `sfShadow`, twindow.cpp:49), and
-    // a modal dialog is hosted via `addWindow` (execView requires it in the tree). Hence `||=`, not `=`.
+    // The desktop-wide shadow toggle only adds shadows; it must never remove a window's own shadow
+    // (a Dialog always casts one), so OR it in rather than overwrite.
     w.castsShadow ||= this._shadow;
     this.add(w);
     w.attachManager(this);
     this.raise(w);
   }
 
-  /** Remove a window (disposes its scope → `onCleanup`, AR-71); the next top-most window becomes active. */
+  /** Remove a window from the desktop; the next window down becomes active. */
   removeWindow(w: Window): void {
     const wasActive = this.active === w;
     this.remove(w);
     if (wasActive) {
-      w.active.set(false); // the removed window loses active state (RD-08 PA-19)
+      w.active.set(false);
       const windows = this.windows();
       this.active = windows.length > 0 ? windows[windows.length - 1] : null;
       if (this.active !== null) {
         this.active.active.set(true);
-        this.loop?.focusInto(this.active); // descend to the new active window's inner view (caret)
+        this.loop?.focusInto(this.active); // focus the newly active window's inner view
       }
     }
   }
 
-  /** Raise `w` to the top of z-order, focus it, and re-theme the active/inactive frames (AR-78). */
+  /** Bring `w` to the front, focus it, and re-theme the active/inactive window frames. */
   raise(w: Window): void {
     const i = this.children.indexOf(w);
     if (i === -1) return;
     this.children.splice(i, 1);
     this.children.push(w);
-    // Maintain the reactive active-state seam (RD-08 PA-19): exactly one managed window is active.
+    // Exactly one window is active at a time: deactivate the previous one and activate this one.
     if (this.active !== null && this.active !== w) this.active.active.set(false);
     w.active.set(true);
     this.active = w;
-    // Focus INTO the window (descend to its inner view, e.g. the editor) so the focused LEAF —
-    // whose `state.focused` drives the hardware caret — is set, not just the window group. A window
-    // with no focusable child still falls back to focusing itself (focusInto's terminal case).
+    // Focus into the window so the inner view that owns the caret and highlight gets focus, not the
+    // window group itself. A window with no focusable child falls back to focusing itself.
     this.loop?.focusInto(w);
-    this.invalidateLayout(); // z-order changed → full recompose (re-themes the two frames, ST-15)
+    this.invalidateLayout(); // z-order changed — repaint so both frames re-theme
   }
 
-  /** Cascade all windows from the top-left (AR-87). */
+  /** Cascade all windows from the top-left. */
   cascade(): void {
     cascade(this.windows(), this.bounds.width, this.bounds.height);
     this.invalidateLayout();
   }
 
-  /** Tile all windows into a near-square grid (AR-87). */
+  /** Tile all windows into a grid filling the desktop. */
   tile(): void {
     tile(this.windows(), this.bounds.width, this.bounds.height);
     this.invalidateLayout();
   }
 
-  /** Activate the next window in z-order, raising it (`next` command, AR-67). */
+  /** Bring the next window in z-order to the front. */
   focusNextWindow(): void {
     const w = nextWindow(this.windows(), this.active);
     if (w !== null) this.raise(w);
   }
 
-  /** Activate the previous window in z-order, raising it (`prev` command, AR-67). */
+  /** Bring the previous window in z-order to the front. */
   focusPrevWindow(): void {
     const w = prevWindow(this.windows(), this.active);
     if (w !== null) this.raise(w);
   }
 
-  /** Focus + raise the window whose `number === n` (Alt-N, AR-67); a no-match is a no-op. */
+  /** Bring the window whose `number === n` to the front (Alt+n); a no-op if there is no such window. */
   focusWindowNumber(n: number): void {
     const w = windowByNumber(this.windows(), n);
     if (w !== null) this.raise(w);
   }
 
-  /** Begin a drag-move gesture: record the grab offset and capture the pointer (PA-5/PA-10). */
+  /** Start dragging a window: record the grab offset and capture the pointer. */
   beginMove(w: Window, grabLocal: Point): void {
     if (!w.movable) return;
-    w.commitPlacement(); // freeze a still-centered window into layout.rect before dragging it
+    w.commitPlacement(); // fix a still-centered window into its rect before dragging it
     this.gesture = { kind: 'move', target: w, grabDX: grabLocal.x, grabDY: grabLocal.y };
-    w.dragging.set(true); // RD-08 PA-3 — TV sfDragging made reactive (the Indicator's ═↔─ swap)
+    w.dragging.set(true);
     this.loop?.setCapture(this);
   }
 
-  /** Begin a drag-resize gesture: fix the window top-left and capture the pointer (PA-5/PA-10). */
+  /** Start resizing a window from its bottom-right corner: fix the top-left and capture the pointer. */
   beginResize(w: Window): void {
     if (!w.resizable) return;
-    w.commitPlacement(); // freeze a still-centered window into layout.rect so originX/Y are correct
+    w.commitPlacement(); // fix a still-centered window into its rect so the top-left is known
     const rect = w.layout.rect ?? { x: 0, y: 0, width: 0, height: 0 };
     this.gesture = { kind: 'resize', target: w, originX: rect.x, originY: rect.y };
-    w.dragging.set(true); // RD-08 PA-3
+    w.dragging.set(true);
     this.loop?.setCapture(this);
   }
 
   /**
-   * Begin a left-grow resize gesture (TV `dmDragGrowLeft`, RD-10 AR-91): anchor the right edge + top
-   * and capture the pointer, so the captured drag grows the bottom-left corner.
+   * Start resizing a window from its bottom-left corner: anchor the right edge and top and capture
+   * the pointer, so the drag grows the bottom-left corner.
    */
   beginResizeLeft(w: Window): void {
     if (!w.resizable) return;
-    w.commitPlacement(); // freeze a still-centered window into layout.rect so the right edge anchors correctly
+    w.commitPlacement(); // fix a still-centered window into its rect so the right edge is known
     const rect = w.layout.rect ?? { x: 0, y: 0, width: MIN_WIDTH, height: MIN_HEIGHT };
     this.gesture = { kind: 'resize-left', target: w, anchorRight: rect.x + rect.width - 1, originY: rect.y };
-    w.dragging.set(true); // RD-08 PA-3
+    w.dragging.set(true);
     this.loop?.setCapture(this);
   }
 
   /**
-   * Handle a captured gesture move/up (drag-move / drag-resize) and the WM `CommandEvent`s + Alt-N
-   * key (post-process). A captured event is delivered directly to this view with desktop-local coords.
+   * Handle a captured drag (move/resize), the window-management commands, and the Alt+digit
+   * window-switch keys. During a drag, mouse events arrive here directly with desktop-local coordinates.
    */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
 
     if (this.gesture !== null && inner.type === 'mouse') {
-      // HR-14 (PA-13): if the pointer capture was lost externally (a modal opened/closed mid-drag,
-      // the target unmounted), the gesture is stale — drop it and no-op so the window never teleports.
+      // If the pointer capture was lost externally mid-drag (a modal opened, the window was removed),
+      // the drag is stale — drop it so the window does not jump.
       if (ev.hasCapture !== undefined && !ev.hasCapture(this)) {
-        this.gesture.target.dragging.set(false); // clear site 2 of 2 (RD-08 PA-3, ST-27)
+        this.gesture.target.dragging.set(false);
         this.gesture = null;
         return;
       }
@@ -234,7 +256,7 @@ export class Desktop extends Group {
         return;
       }
       if (inner.kind === 'up') {
-        this.gesture.target.dragging.set(false); // clear site 1 of 2 (RD-08 PA-3, ST-27)
+        this.gesture.target.dragging.set(false);
         this.gesture = null;
         this.loop?.releaseCapture();
         ev.handled = true;
@@ -243,9 +265,9 @@ export class Desktop extends Group {
     }
 
     if (inner.type === 'command') {
-      // Mark a handled WM command consumed: the Desktop is the focused window's ancestor, so it is
-      // visited in BOTH the Phase-2 focus-chain bubble and the Phase-3 post-process sweep — without
-      // this short-circuit the action would run twice (PA-12).
+      // Mark a handled command consumed. The desktop is an ancestor of the focused window, so it is
+      // visited both in the focus chain and in the post-process sweep; without this the action would
+      // otherwise run twice.
       if (this.handleCommand(inner.command)) ev.handled = true;
       return;
     }
@@ -257,14 +279,13 @@ export class Desktop extends Group {
   }
 
   /**
-   * Dispatch a WM `CommandEvent` to its action (a disabled command never reaches here — RD-04 drops
-   * it). Returns `true` when the command was a recognized WM command (so the caller consumes it).
+   * Run a window-management command (a disabled command never reaches here). Returns `true` when the
+   * command was one the desktop handles, so the caller can mark it consumed.
    */
   protected handleCommand(command: string): boolean {
     if (command === Commands.zoom) this.active?.zoom();
-    // HR-08: close the active window (the same removal path the frame's [×] uses → removeWindow,
-    // which re-focuses the next window). Mirrors TV `cmClose` routing to the focused window
-    // (tframe.cpp:155-160). No-op when the desktop is empty, consistent with zoom/next.
+    // Close the active window through the same path its [×] button uses, which re-focuses the next
+    // window. A no-op when the desktop is empty.
     else if (command === Commands.close) this.active?.close();
     else if (command === Commands.next) this.focusNextWindow();
     else if (command === Commands.prev) this.focusPrevWindow();

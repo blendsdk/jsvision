@@ -1,38 +1,42 @@
 /**
- * The `editorDialog` seam — TV's `TEditorDialog` callback ported to a typed async discriminated
- * union (RD-08 03-03, PA-17).
+ * The `editorDialog` seam — a single async handler through which the editor asks the host to run a
+ * find/replace dialog, a save-confirmation prompt, or an error box.
  *
- * TV routes every editor prompt through one `ushort editorDialog(int dialog, ...)` hook
- * (`editors.h:86-97` — the `ed*` request codes; the default `defEditorDialog` answers `cmCancel`,
- * `editstat.cpp:18-21`). House modality is promise-based (`execView`), so the handler is async;
- * the editor awaits it without blocking the loop. The default handler answers cancel/null — every
- * `cmFind`-style action is a safe no-op until an app wires `wireEditorDialogs` (03-03).
- *
- * (File placement note: these types belong to the 03-03 concern; they land with Phase 4 because
- * the `Editor` view already carries the seam option — a mechanical phase-ordering split.)
+ * Every editor prompt is one call to an {@link EditorDialogHandler}, which returns a typed answer.
+ * Because the answer is a promise, the dialog can be a real modal window without blocking the event
+ * loop. The {@link defaultEditorDialog} answers cancel/null for everything, so an editor with no
+ * handler wired is fully safe — find/replace just do nothing. Wire a real handler with
+ * `wireEditorDialogs` to get the actual dialogs.
  */
 import type { Point } from '../view/index.js';
 
-/** Literal-search options — the TV `efCaseSensitive`/`efWholeWordsOnly` bits as booleans (`editors.h:99-103`). */
+/** Options controlling how a literal search matches. */
 export interface SearchOptions {
+  /** Match case exactly when `true`. */
   caseSensitive: boolean;
+  /** Match only whole words (a match flanked by word characters is skipped) when `true`. */
   wholeWords: boolean;
 }
 
-/** The find-dialog record (TV `TFindDialogRec`, `editors.h`). */
+/** What the user entered in the Find dialog. */
 export interface FindRec {
+  /** The text to search for. */
   find: string;
+  /** The match options. */
   options: SearchOptions;
 }
 
-/** The replace-dialog record (TV `TReplaceDialogRec`) — the `ef*` flags as booleans (AC-9). */
+/** What the user entered in the Replace dialog. */
 export interface ReplaceRec extends FindRec {
+  /** The replacement text. */
   replace: string;
+  /** Ask for confirmation before each replacement when `true`. */
   promptOnReplace: boolean;
+  /** Replace every match without stopping when `true`. */
   replaceAll: boolean;
 }
 
-/** One request through the seam — TV's `ed*` codes as a discriminated union (`editors.h:86-97`). */
+/** One request the editor sends through the seam, as a discriminated union on `kind`. */
 export type EditorDialogRequest =
   | { kind: 'find'; rec: FindRec }
   | { kind: 'replace'; rec: ReplaceRec }
@@ -43,7 +47,7 @@ export type EditorDialogRequest =
   | { kind: 'saveAs'; name: string }
   | { kind: 'readError' | 'writeError' | 'createError' | 'outOfMemory'; name?: string };
 
-/** The handler's typed answer for each request family. */
+/** The handler's typed answer, matched to the request `kind`. */
 export type EditorDialogResult =
   | { kind: 'find'; rec: FindRec | null }
   | { kind: 'replace'; rec: ReplaceRec | null }
@@ -51,12 +55,22 @@ export type EditorDialogResult =
   | { kind: 'path'; path: string | null }
   | { kind: 'ok' };
 
-/** The async seam shape (PA-17): one handler answers every editor prompt. */
+/** One async handler that answers every editor prompt. */
 export type EditorDialogHandler = (req: EditorDialogRequest) => Promise<EditorDialogResult>;
 
 /**
- * The default handler — answers cancel/null for everything (TV `defEditorDialog`,
- * `editstat.cpp:18-21`), so an editor with no seam wired is fully safe.
+ * A no-op dialog handler that cancels every prompt (find/replace return `null`, confirmations return
+ * `'cancel'`). It is the default when no handler is passed to an `Editor`, keeping the editor safe
+ * to use without any dialog wiring — find/replace simply do nothing.
+ *
+ * @param req The editor's dialog request.
+ * @returns A promise resolving to the cancel/no-op answer for that request kind.
+ * @example
+ * import { Editor, defaultEditorDialog } from '@jsvision/ui';
+ *
+ * // Passing it explicitly is the same as omitting `editorDialog` entirely.
+ * const editor = new Editor({ editorDialog: defaultEditorDialog });
+ * await editor.find(); // resolves immediately, no dialog, no match
  */
 export const defaultEditorDialog: EditorDialogHandler = (req) => {
   switch (req.kind) {

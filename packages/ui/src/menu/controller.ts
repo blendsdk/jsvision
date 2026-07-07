@@ -1,13 +1,12 @@
 /**
- * Menu navigation state machine (RD-05 AR-68, PA-9). The `MenuBar` owns one controller; it holds the
- * open-menu state (a stack of levels = nested popups), mounts/unmounts `MenuPopup`s + a full-viewport
- * outside-click **catcher** into the injected overlay, and drives highlight/activation. It performs no
- * dispatch itself — the `MenuBar.onEvent` translates keys/clicks into the method calls below.
+ * The menu navigation state machine that backs a {@link MenuBar}. It tracks which menu is open (a
+ * stack of levels, one per nested submenu), mounts and unmounts the {@link MenuPopup} boxes plus a
+ * full-viewport outside-click catcher into the app overlay, and moves the highlight and activates
+ * items. It does no event dispatch itself — the menu bar translates keys and clicks into the method
+ * calls on {@link MenuController}.
  *
- * Open flow (PF-10): `overlay.state.visible = true` BEFORE mounting the catcher + first popup; close
- * unmounts them and sets `visible = false` so an empty overlay never wins the top-z hit-test.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The overlay is made visible before the catcher and first popup are mounted, and hidden again on
+ * close, so an empty overlay never sits on top and swallows clicks.
  */
 import { View } from '../view/index.js';
 import type { Group, DispatchEvent, Point } from '../view/index.js';
@@ -17,25 +16,25 @@ import type { MenuItem } from './builders.js';
 import { parseTilde, layoutTitles, titleIndexAt } from './builders.js';
 import { syncOverlayVisible } from '../app/index.js';
 
-/** The loop seam the controller needs for activation, greying, and focus save/restore (PA-7). */
+/** The application-level operations the controller calls into for activation, greying, and focus. */
 export interface MenuLoopSeam {
-  /** Raise the activated item's command onto the dispatch tick (AR-52). */
+  /** Emit the activated item's command so the app can handle it. */
   emitCommand(command: string, arg?: unknown): void;
-  /** Whether a command is enabled — drives greying + non-activatability (AR-68). */
+  /** Whether a command is enabled — a disabled item is greyed and cannot be activated. */
   isCommandEnabled(command: string): boolean;
-  /** Focus a view — used to restore the pre-menu focus on close (PA-2). */
+  /** Focus a view — used to restore the pre-menu focus when the menu closes. */
   focusView(view: View): void;
-  /** The currently-focused view, captured on open to restore on close (PA-2). */
+  /** The currently-focused view, captured when a menu opens so it can be restored on close. */
   getFocused(): View | null;
   /**
-   * Dismiss accelerator mode when a menu opens (accelerator-overlay AR-7). Optional — a bare loop
-   * without the app-shell wiring omits it. An open menu owns plain letters (`itemHotkey`), so the
-   * F12 overlay must not also intercept them; the controller calls this from every open path.
+   * Turn off the accelerator-hint overlay when a menu opens. Optional — a bare event loop without the
+   * full app shell omits it. An open menu owns plain letter keys (for item hotkeys), so the overlay
+   * must not also intercept them; the controller calls this on every open path.
    */
   dismissAccelerators?(): void;
 }
 
-/** The public surface the `MenuBar` drives (one method per navigation action). */
+/** The navigation surface a {@link MenuBar} drives — one method per navigation action. */
 export interface MenuController {
   /** Whether a top-level menu is currently open. */
   isOpen(): boolean;
@@ -45,52 +44,52 @@ export interface MenuController {
   openTop(index: number): void;
   /** Close the deepest open popup; closing the last level closes the whole menu. */
   closeLevel(): void;
-  /** Close every level + the catcher and restore the saved focus. */
+  /** Close every level and the catcher, and restore the saved focus. */
   close(): void;
-  /** Move the deepest level's highlight, skipping separators + disabled items (AR-68). */
+  /** Move the deepest level's highlight, skipping separators and disabled items. */
   move(dir: -1 | 1): void;
-  /** Activate the deepest highlighted item: open a `sub`, or emit an enabled `item`'s command + close. */
+  /** Activate the deepest highlighted item: open a submenu, or emit an enabled item's command + close. */
   activate(): void;
-  /** `←`: close a nested level, or switch to the previous top-level when at depth 1. */
+  /** `←`: close a nested level, or (at the top level) switch to the previous top-level menu. */
   left(): void;
-  /** `→`: open a highlighted `sub`, else switch to the next top-level. */
+  /** `→`: open a highlighted submenu, else switch to the next top-level menu. */
   right(): void;
   /** `Alt+<char>`: open/switch to the top-level menu whose hotkey matches; `true` if consumed. */
   topHotkey(char: string): boolean;
   /** A plain `<char>` while open: activate the deepest item whose hotkey matches; `true` if consumed. */
   itemHotkey(char: string): boolean;
-  /** Re-anchor the outside-click catcher to a resized viewport so it still covers the screen (HR-36). */
+  /** Re-anchor the outside-click catcher after the viewport is resized so it still covers the screen. */
   resize(): void;
 }
 
-/** One open level = a mounted popup over its items. The popup owns the highlight (its source of truth). */
+/** One open level — a mounted popup over its items. The popup owns the highlight index. */
 interface Level {
   items: readonly MenuItem[];
   popup: MenuPopup;
 }
 
-/** Minimum popup width (cells) — Turbo Vision's `TMenuBox::getRect` floor (`w = 10`). */
+/** Minimum popup width in cells. */
 const POPUP_MIN_WIDTH = 10;
-/** A safe fallback viewport when the overlay has no rect yet (never reached once composed). */
+/** A safe fallback viewport used only before the overlay has a real rect. */
 const FALLBACK_VIEWPORT: Rect = { x: 0, y: 0, width: 80, height: 24 };
 
-/** A transparent full-viewport overlay child that closes the menu on any mouse-down (PF-06). */
+/** A transparent full-viewport overlay child that closes (or switches) the menu on any mouse-down. */
 class CatcherView extends View {
-  /** Free-floating, full-viewport; the controller sets `rect`. */
+  /** Absolute, full-viewport; the controller sets `rect`. */
   override layout: LayoutProps = { position: 'absolute' };
 
   constructor(private readonly onDown: (local: Point | undefined) => void) {
     super();
   }
 
-  /** Paint nothing — the catcher only intercepts outside clicks (it must stay visible to hit-test). */
+  /** Paint nothing — the catcher only intercepts outside clicks, but must stay visible to hit-test. */
   draw(): void {
     // intentionally empty (transparent)
   }
 
   /**
-   * A mouse-down anywhere not covered by a popup (which paints above): hand the view-local point to
-   * the controller, which switches menus on a bar-title hit (HR-40) or closes otherwise.
+   * A mouse-down anywhere not covered by a popup (popups paint above the catcher): hand the point to
+   * the controller, which switches menus on a bar-title hit or closes otherwise.
    */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
@@ -101,7 +100,7 @@ class CatcherView extends View {
   }
 }
 
-/** A non-separator item is selectable for navigation iff it is a `sub` or an enabled command (AR-68). */
+/** A non-separator item is selectable for navigation only if it is a submenu or an enabled command. */
 function isSelectable(node: MenuItem, isEnabled: (command: string) => boolean): boolean {
   if (node.kind === 'separator') return false;
   if (node.kind === 'sub') return true;
@@ -115,9 +114,9 @@ function firstSelectable(items: readonly MenuItem[]): number {
 }
 
 /**
- * One item's width contribution, per Turbo Vision's `TMenuBox::getRect`: the display name plus 6
- * chrome cells (outer blank gutter + border + one inner pad, on each side), plus 3 for a submenu's
- * ` ►` cascade marker or `key.length + 2` for a right-aligned shortcut. Separators contribute 0.
+ * One item's contribution to the popup width: the display name plus 6 chrome cells (outer blank
+ * gutter + border + one inner pad, on each side), plus 3 for a submenu's ` ►` cascade marker or
+ * `key.length + 2` for a right-aligned shortcut. Separators contribute 0.
  *
  * @param node A menu item.
  * @returns Its required popup width in cells.
@@ -130,7 +129,7 @@ function itemWidth(node: MenuItem): number {
   return width;
 }
 
-/** The popup width: the widest item's contribution, floored at {@link POPUP_MIN_WIDTH} (TV getRect). */
+/** The popup width: the widest item's contribution, floored at {@link POPUP_MIN_WIDTH}. */
 function popupWidth(items: readonly MenuItem[]): number {
   let max = POPUP_MIN_WIDTH;
   for (const node of items) max = Math.max(max, itemWidth(node));
@@ -138,12 +137,13 @@ function popupWidth(items: readonly MenuItem[]): number {
 }
 
 /**
- * Create the menu navigation controller.
+ * Create the menu navigation controller for a {@link MenuBar}. The bar wires this up for you; you
+ * only call this directly if you are driving a menu without the app shell.
  *
- * @param tops    The top-level menu nodes (each typically a `sub`).
- * @param overlay The app-root overlay layer the popups + catcher mount into (PA-2/PA-15).
- * @param seam    The loop seam for activation/greying/focus (PA-7).
- * @returns A {@link MenuController} the `MenuBar` drives.
+ * @param tops    The top-level menu nodes (each usually a submenu).
+ * @param overlay The app overlay layer the popups and outside-click catcher mount into.
+ * @param seam    The application operations for activation, greying, and focus save/restore.
+ * @returns A {@link MenuController} the menu bar drives.
  */
 export function createMenuController(tops: readonly MenuItem[], overlay: Group, seam: MenuLoopSeam): MenuController {
   const levels: Level[] = [];
@@ -178,7 +178,7 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
   /** Build, position, and mount a popup over `items` at the anchor; push it as the new deepest level. */
   function pushLevel(items: readonly MenuItem[], anchorX: number, anchorY: number): void {
     const popup = new MenuPopup();
-    popup.castsShadow = true; // TV sfShadow — the menu box casts a drop-shadow over what's behind it
+    popup.castsShadow = true; // the menu box casts a drop shadow over what is behind it
     popup.items = items;
     popup.highlight = firstSelectable(items);
     popup.isEnabled = isEnabled;
@@ -195,8 +195,8 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
     const node = tops[index];
     if (node === undefined || node.kind !== 'sub') return;
     const title = layoutTitles(tops)[index];
-    // TV places the box left = bar-item left, then shifts one column left for a horizontal bar
-    // (`if (size.y == 1) r.a.x--;`, tmnuview.cpp:380), and the top one row below the bar.
+    // Anchor the popup one column left of its bar title, one row below the bar, so its border aligns
+    // with the title.
     const anchorX = Math.max(0, (title?.x ?? 1) - 1);
     pushLevel(node.items, anchorX, 1);
   }
@@ -212,7 +212,7 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
   /** Mount the outside-click catcher as the overlay's first (bottom-most) child. */
   function mountCatcher(): void {
     const vp = viewport();
-    // HR-40: a bar-row click on a title switches menus directly (one click); any other click closes.
+    // A click on a bar title (row 0) switches directly to that menu; any other outside click closes.
     catcher = new CatcherView((local) => {
       if (local !== undefined && local.y === 0) {
         const index = titleIndexAt(tops, local.x);
@@ -229,16 +229,14 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
 
   function openTop(index: number): void {
     const wasOpen = isOpen();
-    // AR-7: opening a menu dismisses accelerator mode so the open menu (not the F12 overlay) owns
-    // plain letters. Belt-and-suspenders beside the router intercept — covers a programmatic open too.
+    // Opening a menu turns off the accelerator-hint overlay so the open menu owns plain letter keys.
     if (!wasOpen) seam.dismissAccelerators?.();
     if (!wasOpen) savedFocus = seam.getFocused();
     clearLevels();
     if (!wasOpen) mountCatcher();
     openTopIndex = index;
-    // RD-14 PA-5: derive visibility from the mounted child count (the catcher is added above) instead
-    // of an explicit toggle, so a coexisting dropdown popup isn't stomped. Still visible BEFORE the
-    // catcher/popups are hit-testable (PF-10) — the catcher is already mounted at this point.
+    // Derive overlay visibility from its mounted children (the catcher is already added) rather than
+    // toggling a flag, so a coexisting dropdown popup from elsewhere is not hidden.
     syncOverlayVisible(overlay);
 
     const node = tops[index];
@@ -257,8 +255,8 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
       overlay.remove(catcher);
       catcher = null;
     }
-    // RD-14 PA-5: re-derive from the live child count — hides only if no other client (e.g. an open
-    // dropdown popup) still has a child mounted; a bare menu-close leaves the overlay empty → hidden.
+    // Re-derive visibility from the live child count: the overlay hides only if nothing else still
+    // has a child mounted; closing the last menu leaves it empty, so it hides.
     syncOverlayVisible(overlay);
     openTopIndex = null;
     const restore = savedFocus;
@@ -267,8 +265,8 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
   }
 
   function closeLevel(): void {
-    // HR-35 (PA-17): Esc ALWAYS closes, even with zero open levels (a bare top-level item is
-    // highlighted). Previously this early-returned and left the menu stuck open.
+    // Esc always makes progress: at the top level (one or zero popups) it closes the whole menu,
+    // rather than leaving it stuck open.
     if (levels.length <= 1) {
       close();
       return;
@@ -277,7 +275,7 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
     if (level !== undefined) overlay.remove(level.popup);
   }
 
-  /** Update the outside-click catcher to a resized viewport so it still covers the full screen (HR-36). */
+  /** Re-anchor the outside-click catcher to a resized viewport so it still covers the full screen. */
   function resize(): void {
     if (catcher === null) return; // no open menu → nothing to re-anchor
     const vp = viewport();
@@ -313,9 +311,8 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
   function activate(): void {
     const level = deepest();
     if (level === null) {
-      // HR-35 (PA-17): no open popup, but a bare top-level command item is highlighted — Enter emits
-      // its command (if enabled) and closes. tmnuview.cpp: `kbEnter` on a size.y==1 item → doSelect →
-      // `result = current->command` (:390) → doReturn (close), which the owner emits.
+      // No popup is open, but a bare top-level command item (one with no submenu) is highlighted:
+      // Enter emits its command (if enabled) and closes.
       if (openTopIndex !== null) {
         const top = tops[openTopIndex];
         if (top !== undefined && top.kind === 'item') {
@@ -330,7 +327,7 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
     if (node.kind === 'sub') {
       openNested(level, node);
     } else if (node.kind === 'item') {
-      if (!isEnabled(node.command)) return; // disabled ⇒ no-op (AR-68)
+      if (!isEnabled(node.command)) return; // disabled item does nothing
       seam.emitCommand(node.command);
       close();
     }

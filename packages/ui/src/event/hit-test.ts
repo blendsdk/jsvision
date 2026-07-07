@@ -1,15 +1,11 @@
 /**
- * Mouse hit-testing + focus-on-click (RD-04, AR-50/AR-63). A `MouseEvent`/`WheelEvent` is routed to
- * the **top-most front-to-back** view whose ancestor-clipped absolute bounds contain the (normalized
- * 0-based) point; on a mouse-down, focus climbs to the nearest focusable view at the hit. Geometry
- * reuses RD-03's pure `intersect`/`contains` (no new geometry, AR-37).
+ * Mouse hit-testing and focus-on-click: given a mouse or wheel event, find which view was under the
+ * cursor and deliver the event to it.
  *
- * `hitTestRoute` is decoupled from the loop via a {@link HitContext} of seams: the scope root (the
- * top modal subtree, or the mounted root when no modal), the focus predicate + focus action (the
- * focus manager's pure mutations — the hit-test runs inside the dispatch tick), and the
- * error-isolating `deliver`.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The event goes to the top-most (front-most) view whose visible, clipped bounds contain the point.
+ * A mouse-down additionally moves focus to the nearest focusable view at the hit, and (before
+ * delivery) raises the clicked window to the front. Coordinates delivered to a view are made
+ * view-local via `ev.local`. This module is internal to the loop.
  */
 import type { Rect } from '../layout/index.js';
 import { View, Group, intersect, contains } from '../view/index.js';
@@ -17,23 +13,22 @@ import type { Point, DispatchEvent } from '../view/index.js';
 
 /** The seams `hitTestRoute` needs from the loop. */
 export interface HitContext {
-  /** The hit-test scope: the top modal subtree, or the mounted root when no modal (03-04). */
+  /** The subtree to hit-test within: the top modal's subtree while a modal is open, else the mounted root. */
   readonly scopeRoot: View | null;
   /**
-   * The pointer-capture target (RD-05 PA-5): when non-null, every mouse/wheel event routes here
-   * (target-local coords), bypassing the hit-test and focus-on-click. `null` ⇒ normal hit-testing.
+   * The pointer-capture target: when set, every mouse/wheel event goes straight to it (with
+   * view-local coordinates), bypassing hit-testing and focus-on-click. `null` ⇒ normal hit-testing.
    */
   readonly captureTarget: View | null;
-  /** Leaf focusable predicate — used to climb to the nearest focusable at a click (AR-56). */
+  /** Whether a view is focusable — used to climb to the nearest focusable view at a click. */
   isFocusable(view: View): boolean;
   /**
-   * Focus **into** a (known-focusable) view — the focus manager's pure mutation (PA-5). A focusable
-   * container (e.g. a Window) descends to its inner focused leaf; a leaf focuses itself. Descending is
-   * what keeps `state.focused` on the actual leaf (the editor), so a frame click never parks the flag
-   * on the container while the caret-bearing leaf silently loses it.
+   * Focus **into** a known-focusable view. A focusable container (e.g. a Window) descends to its
+   * inner focused leaf; a leaf focuses itself. Descending keeps the `focused` flag on the actual
+   * inner view, so clicking a window's frame does not steal the flag from the view that owns the caret.
    */
   focusInto(view: View): void;
-  /** Deliver an envelope to a view's `onEvent`, isolating a throwing handler (AR-66). */
+  /** Deliver an event to a view's `onEvent`, catching and logging a throwing handler. */
   deliver(view: View, ev: DispatchEvent): void;
 }
 
@@ -45,25 +40,24 @@ interface Hit {
 }
 
 /**
- * Walk the subtree rooted at `view` (children last-first = front-to-back paint Z-order) returning
- * the deepest top-most view whose absolute, ancestor-clipped bounds contain the point. A
- * `!visible`/`disabled` subtree is skipped entirely (AR-65). Returns `null` for no hit.
+ * Walk the subtree rooted at `view` and return the deepest front-most view whose visible, clipped
+ * bounds contain the point. A hidden or disabled subtree is skipped entirely. Returns `null` for no hit.
  *
  * @param view  The current view.
  * @param absX  The view's absolute x origin.
  * @param absY  The view's absolute y origin.
- * @param clip  The absolute clip rect (ancestor clip ∩ so far).
+ * @param clip  The absolute clip rect (ancestor clip so far, intersected).
  * @param x     The 0-based target x.
  * @param y     The 0-based target y.
  */
 function topMost(view: View, absX: number, absY: number, clip: Rect, x: number, y: number): Hit | null {
-  if (!view.state.visible || view.state.disabled) return null; // skip subtree (AR-65)
+  if (!view.state.visible || view.state.disabled) return null; // skip a hidden/disabled subtree
 
   const viewRect: Rect = { x: absX, y: absY, width: view.bounds.width, height: view.bounds.height };
   const clipped = intersect(clip, viewRect);
 
   if (view instanceof Group) {
-    // Reverse child order = front-to-back, so the on-top sibling wins an overlap (AR-50).
+    // Children paint back-to-front, so walk them in reverse: the front-most sibling wins an overlap.
     for (let i = view.children.length - 1; i >= 0; i -= 1) {
       const child = view.children[i];
       if (child === undefined) continue;
@@ -78,9 +72,8 @@ function topMost(view: View, absX: number, absY: number, clip: Rect, x: number, 
 }
 
 /**
- * The view's absolute top-left origin: the sum of parent-relative `bounds.x/y` from the view up
- * through every ancestor to the root (whose `bounds` is absolute). Used to translate a captured
- * pointer into the capture target's view-local coords (RD-05 PA-5).
+ * The view's absolute top-left origin, summed from its parent-relative position up through every
+ * ancestor to the root. Used to translate a captured pointer into the capture target's local coords.
  */
 function absoluteOrigin(view: View): Point {
   let x = 0;
@@ -95,11 +88,10 @@ function absoluteOrigin(view: View): Point {
 }
 
 /**
- * Climb from the hit view to the nearest focusable view and focus INTO it; if none, leave focus
- * (AC-8). Focusing *into* (not just *onto*) matters when the nearest focusable is a container: a
- * click on a Window's frame (grip/title/border) must land focus on the window's inner leaf (the
- * editor) — the view whose `state.focused` drives the hardware caret — not on the window group,
- * which would leave the caret-bearing leaf flagged unfocused while it stays the current-chain leaf.
+ * Climb from the hit view to the nearest focusable view and focus into it; if there is none, leave
+ * focus as it was. Focusing *into* (not merely *onto*) matters when the nearest focusable is a
+ * container: clicking a window's frame must land focus on the window's inner view (the one that owns
+ * the caret), not on the window group itself.
  */
 function focusOnClick(hit: View, ctx: HitContext): void {
   let node: View | null = hit;
@@ -113,13 +105,11 @@ function focusOnClick(hit: View, ctx: HitContext): void {
 }
 
 /**
- * Select + raise on a mouse-down (fix #38). Climb from the hit view to the **first** ancestor that
- * defines `selectByClick` (TV's `ofTopSelect` marker — a `Window`) and invoke it, then stop. This
- * runs BEFORE delivery, so the raise happens regardless of whether the interior view consumes the
- * click — mirroring TV, where `select()`→`makeFirst()` fires at the top of the window's
- * `handleEvent` before the event descends into the interior (`tview.cpp:553-557`/`728-733`). The
- * climb is clamped to `scopeRoot` (visited inclusively, then stop) so a click can never raise a
- * window behind an active modal — mirroring the bubble's `node === scopeRoot` clamp (PA-12).
+ * On a mouse-down, raise the clicked window. Climb from the hit view to the first ancestor that
+ * defines `selectByClick` (a `Window` marks itself select-on-click) and invoke it, then stop. This
+ * runs before the click is delivered, so the window raises even if the interior view consumes the
+ * click. The climb stops at `scopeRoot` so a click can never raise a window sitting behind an open
+ * modal.
  */
 function selectOnClick(hit: View, scopeRoot: View | null): void {
   let node: View | null = hit;
@@ -128,29 +118,29 @@ function selectOnClick(hit: View, scopeRoot: View | null): void {
       node.selectByClick();
       return;
     }
-    if (node === scopeRoot) return; // do not climb past the dispatch scope (modal safety, PA-12)
+    if (node === scopeRoot) return; // never climb past the dispatch scope (keeps a modal isolating)
     node = node.parent;
   }
 }
 
 /**
- * Route a mouse/wheel envelope: normalize 1-based→0-based (AR-63), hit-test top-most within the
- * scope, focus-on-(mouse)-click, and deliver with view-local `ev.local`. A point hitting nothing
- * (empty space / outside a modal) is a no-op (PA-6); never throws.
+ * Route a mouse or wheel event: convert the 1-based terminal coordinates to 0-based, find the
+ * top-most view under the point within the scope, move focus on a mouse-down, and deliver with
+ * view-local `ev.local`. A point over empty space (or outside an open modal) is ignored. Never throws.
  *
- * @param ev  The mouse/wheel dispatch envelope.
+ * @param ev  The mouse/wheel event.
  * @param ctx The loop-provided seams.
  */
 export function hitTestRoute(ev: DispatchEvent, ctx: HitContext): void {
   const inner = ev.event;
   if (inner.type !== 'mouse' && inner.type !== 'wheel') return;
 
-  const x = inner.x - 1; // 1-based → 0-based (AR-63)
+  const x = inner.x - 1; // terminal coordinates are 1-based; the view tree is 0-based
   const y = inner.y - 1;
 
-  // Pointer capture (PA-5): while a target is captured, every mouse/wheel event routes to it with
-  // target-local coords — the hit-test and focus-on-click are bypassed so a drag/resize keeps
-  // tracking the cursor even off the affordance / onto another view.
+  // While a target is captured, every mouse/wheel event goes to it with view-local coordinates,
+  // bypassing hit-testing and focus-on-click — so a drag or resize keeps tracking the cursor even
+  // after it leaves the affordance or moves over another view.
   if (ctx.captureTarget !== null) {
     const origin = absoluteOrigin(ctx.captureTarget);
     const local: Point = { x: x - origin.x, y: y - origin.y };
@@ -160,10 +150,9 @@ export function hitTestRoute(ev: DispatchEvent, ctx: HitContext): void {
 
   const scopeRoot = ctx.scopeRoot;
   if (scopeRoot === null) return;
-  // The scope root's `bounds` is parent-relative (view.ts), so its containment rect and walk origin
-  // must use the ABSOLUTE origin — mirroring the capture branch above (HR-02). Using `bounds.x/y`
-  // directly shifted every modal click by the scope root's ancestor offset (a MenuBar pushing the
-  // desktop to y≥1 dropped clicks on the dialog's real bottom row and mis-delivered `ev.local`).
+  // The scope root's bounds are relative to its parent, so hit-testing must start from its absolute
+  // origin — otherwise a scope root sitting below a menu bar shifts every click by that offset and
+  // mis-delivers clicks near its edges.
   const origin = absoluteOrigin(scopeRoot);
   const rootRect: Rect = {
     x: origin.x,
@@ -172,30 +161,28 @@ export function hitTestRoute(ev: DispatchEvent, ctx: HitContext): void {
     height: scopeRoot.bounds.height,
   };
   const hit = topMost(scopeRoot, origin.x, origin.y, rootRect, x, y);
-  if (hit === null) return; // empty space / outside modal → ignored no-op (PA-6)
+  if (hit === null) return; // clicked empty space (or outside an open modal) — ignore
 
-  // A mouse-down first SELECTS + raises the owning top-select container (the Window) via a
-  // pre-delivery climb (fix #38) — so the raise happens even when an interior view consumes the
-  // click — then focuses the nearest focusable ancestor (AC-8, refining focus to the exact clicked
-  // leaf after the raise focused the window's saved current), then bubbles from the hit view up its
-  // ancestors until one consumes it (sets `handled`). The Window's `onEvent` is now affordance-only
-  // (move/resize/close/zoom); it still receives the bubbled down for a frame click. Both climbs are
-  // clamped to the dispatch scope (the modal subtree when a modal is active, PA-12) so a click can
-  // never leak to the outer tree. Other mouse kinds and wheel keep the top-most-only delivery (PF-007).
+  // A mouse-down is handled in three steps: raise the owning window (so it comes to the front even if
+  // an interior view consumes the click), move focus to the nearest focusable view at the hit, then
+  // bubble the click from the hit view up its ancestors until one consumes it. This lets a leaf handle
+  // a click while its container handles clicks the leaf ignores. Both the raise climb and the bubble
+  // stop at the dispatch scope, so a click can never leak out of an open modal. Other mouse kinds and
+  // wheel events are delivered to the hit view only, without bubbling.
   if (inner.type === 'mouse' && inner.kind === 'down') {
     selectOnClick(hit.view, scopeRoot);
     focusOnClick(hit.view, ctx);
     let node: View | null = hit.view;
-    let ox = hit.absX; // absolute origin of `node`, walked up the chain (parent = child − child.bounds)
+    let ox = hit.absX; // absolute origin of `node`; subtract each view's offset as we climb to its parent
     let oy = hit.absY;
     while (node !== null) {
       const envelope: DispatchEvent = { ...ev, local: { x: x - ox, y: y - oy } };
       ctx.deliver(node, envelope);
       if (envelope.handled) {
-        ev.handled = true; // carry the consumed flag back to the original envelope
+        ev.handled = true; // report the click as consumed on the original event
         break;
       }
-      if (node === scopeRoot) break; // do not bubble past the dispatch scope (modal safety, PA-12)
+      if (node === scopeRoot) break; // never bubble past the dispatch scope
       ox -= node.bounds.x;
       oy -= node.bounds.y;
       node = node.parent;
@@ -203,7 +190,7 @@ export function hitTestRoute(ev: DispatchEvent, ctx: HitContext): void {
     return;
   }
 
-  // Non-down mouse / wheel: deliver to the top-most hit view only (no bubble, PF-007).
+  // A non-down mouse event or a wheel event goes to the top-most hit view only.
   const local: Point = { x: x - hit.absX, y: y - hit.absY };
   ctx.deliver(hit.view, { ...ev, local });
 }

@@ -1,29 +1,17 @@
 /**
- * `History` — a faithful re-creation of Turbo Vision `THistory` (RD-14, input-dropdowns/03-01): a
- * `▐↓▌` button linked to an `Input`, dropping a bounded MRU list of that field's past values into the
- * shared anchored popup. GATE-1 decode (verified + GATE-2 diffed against `source/tvision/thistory.cpp`,
- * `thistwin.cpp`, `thstview.cpp`, `histlist.cpp`):
+ * A history dropdown: a small `▐↓▌` button you place next to an {@link Input}. Opening it drops a
+ * bounded most-recently-used list of that field's past values in an anchored popup; picking one
+ * replaces the field's text.
  *
- *   • **Icon / draw** (`thistory.cpp:56-62`, `tvtext1.cpp:86`): `THistory::icon = "\xDE~\x19~\xDD"`
- *     → the 3 visible cells `▐↓▌` = U+2590 / **U+2193** (PA-3, narrow ↓, NOT ▼) / U+258C, drawn by
- *     `b.moveCStr(0, icon, getColor(0x0102))` — the `~` markers toggle the color: sides `▐`/`▌` low
- *     byte = `historyButtonSides` (green-on-lightGray `0x72`), arrow `↓` high byte =
- *     `historyButtonArrow` (black-on-green `0x20`) (`cpHistory "\x16\x17"`, `thistory.cpp:37`).
- *   • **Post-process + open triggers** (`thistory.cpp:44-83`): `options |= ofPostProcess`. Opens on
- *     **any `evMouseDown`** (unconditional), OR `evKeyDown` with `ctrlToArrow(keyCode)==kbDown` **while
- *     the link is focused** (`link->state & sfFocused`); **Alt+Down** is the modern extension (AR-135).
- *     On open: `if (!link->focus()) return;` (focus the link first), then `recordHistory(link->data)`
- *     records the current field text BEFORE the popup shows.
- *   • **Geometry** (`thistory.cpp:90-98`): the shared popup does the `±1`/`+7`/`intersect`/`-1` math
- *     (see `popup.ts` `placePopup`).
- *   • **List** (`thstview.cpp:33-45`): a single-column viewer over `historyStr(id, i)` — oldest at
- *     the top (index 0 = oldest, PA-6) — focusing item **index 1 when count > 1**.
- *   • **Pick** (`thistory.cpp:101-108`): the focused entry → `strnzcpy(link->data, rslt, link->maxLen+1)`
- *     (clamp to the field's max length) + `link->selectAll(True)`, via the public Input seam (PA-8).
- *   • **Cancel** (`thstview.cpp:76-82`, `thistwin.cpp:46-51`): Esc / outside mouse-down → the field
- *     is left unchanged (handled by the shared popup dismissal).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Behavior:
+ *   • Opens on a click of the button, or on Down / Alt+Down while the linked field is focused. On
+ *     open it focuses the field and records its current text into the store before showing the list.
+ *   • The list shows the id's entries oldest-first; when there is more than one entry it starts with
+ *     the second-oldest focused (so the newest-but-one is a single step away).
+ *   • Picking an entry copies it into the field (clamped to the field's max length) and selects all of
+ *     the text. Esc or a click outside dismisses the popup and leaves the field unchanged.
+ *   • Values are stored either in the process-global store keyed by `historyId`, or in an app-owned
+ *     `Signal<string[]>` you pass as `history`.
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -36,19 +24,39 @@ import { historyAdd, historyEntries, addEntry } from './history-store.js';
 
 /** Options for a {@link History} control. */
 export interface HistoryOptions {
-  /** The `Input` this history is linked to (drawn adjacent; its text is read/replaced). */
+  /** The `Input` this history is linked to (drawn adjacent; its text is read and replaced on pick). */
   link: Input;
-  /** Numeric id keying the shared global MRU store; two Histories with the same id share a list. */
+  /** Numeric id keying the process-global MRU store; two Histories with the same id share a list. */
   historyId?: number;
-  /** Escape hatch (AR-130): bind an app-owned list instead of the global store. */
+  /** Bind an app-owned list instead of the global store. */
   history?: Signal<string[]>;
-  /** Max visible popup rows (default 6; window height = maxRows + 2). PA-4. */
+  /** Max visible popup rows (default 6). */
   maxRows?: number;
 }
 
-/** The `▐↓▌` History button: draws the icon, opens the anchored popup on the AR-135 triggers. */
+/**
+ * The `▐↓▌` history dropdown button linked to an `Input` (see the module docs).
+ *
+ * @example
+ * import { History, Input, Group, historyAdd, createEventLoop, signal } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const value = signal('/etc/hosts');
+ * const input = new Input({ value });
+ * input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } };
+ * for (const past of ['/usr/bin', '/etc/hosts', '~/dev']) historyAdd(1, past);
+ * const history = new History({ link: input, historyId: 1 });
+ * history.layout = { position: 'absolute', rect: { x: 22, y: 1, width: 3, height: 1 } };
+ *
+ * const controls = new Group();
+ * controls.add(input);
+ * controls.add(history);
+ * // The popup needs an overlay host: build the app with a full-viewport overlay set as loop.popupHost.
+ * // Then Alt+↓ (or a click on the button) drops the field's past values; Enter fills the field.
+ */
 export class History extends View {
-  /** TV `ofPostProcess` (`thistory.cpp:46`): the button sees keys AFTER the focused link. */
+  /** Caught after the focused chain so Down/Alt+Down are seen while the linked field holds focus. */
   override postProcess = true;
   protected readonly link: Input;
   protected readonly historyId: number;
@@ -56,7 +64,7 @@ export class History extends View {
   protected readonly maxRows: number;
 
   /**
-   * @param opts The linked `Input` + optional `historyId` / injectable `history` signal / `maxRows`.
+   * @param opts The linked `Input` + optional `historyId` / app-owned `history` signal / `maxRows`.
    */
   constructor(opts: HistoryOptions) {
     super();
@@ -66,13 +74,13 @@ export class History extends View {
     this.maxRows = opts.maxRows ?? DEFAULT_MAX_ROWS;
   }
 
-  /** Draw the 3-cell `▐↓▌` icon (TV `b.moveCStr(0, icon, getColor(0x0102))`, decode §1). */
+  /** Draw the 3-cell `▐↓▌` dropdown icon. */
   override draw(ctx: DrawContext): void {
     drawDropdownIcon(ctx, 0);
   }
 
   /**
-   * Open on a mouse-down (unconditional), Down (while the link is focused), or Alt+Down (decode §2).
+   * Open on a mouse-down, on Down while the linked field is focused, or on Alt+Down from anywhere.
    *
    * @param ev The dispatch envelope (carries the popup host + focus seam during real dispatch).
    */
@@ -82,29 +90,30 @@ export class History extends View {
     const openByMouse = inner.type === 'mouse' && inner.kind === 'down';
     const openByKey = isDown && (this.link.state.focused || inner.alt);
     if (!openByMouse && !openByKey) return;
-    // TV `if (!link->focus()) { clearEvent; return; }` — a disabled link cannot take focus, so the
-    // history cannot open (decode §2). Consume the trigger either way (TV `clearEvent`).
+    // A disabled field cannot take focus, so the dropdown cannot open — but the trigger is still
+    // consumed either way so it does not fall through to another handler.
     if (!this.link.state.disabled) this.open(ev);
     ev.handled = true;
   }
 
   /**
-   * Focus the link, record its current text, then open the anchored popup over the id's entries
-   * (oldest→newest, focus index 1 when count > 1). A no-op when no overlay host is available.
+   * Focus the field, record its current text, then open the anchored popup over the id's entries
+   * (oldest→newest, starting focus on the second-oldest when there is more than one). A no-op when no
+   * overlay host is available.
    *
    * @param ev The dispatch envelope (source of the popup host + focus seam).
    */
   protected open(ev: DispatchEvent): void {
     const host = ev.popupHost;
     if (host === undefined) return; // no overlay host (headless / no shell) → decline to open
-    ev.focusView?.(this.link); // TV `if (!link->focus()) return;` — focus the link first
+    ev.focusView?.(this.link); // focus the field first
     const entries = this.recordAndSnapshot();
-    const focused = signal(entries.length > 1 ? 1 : 0); // focus index 1 when count > 1 (thstview.cpp:42-43)
+    const focused = signal(entries.length > 1 ? 1 : 0); // start on the second-oldest when count > 1
     openAnchoredPopup({
       host,
       anchor: absoluteRect(this.link),
-      // Built inside the popup's reactive owner (never here in the handler) so the list's computeds +
-      // the selected()-watch effect are owned + disposed with the popup — see `openAnchoredPopup`.
+      // The content is built inside the popup's reactive owner (never here in the handler) so the
+      // list's computeds and the selection-watch effect are owned by, and disposed with, the popup.
       buildContent: (commit) => {
         const selected = signal(-1);
         const list = new ListView<string>({
@@ -112,13 +121,12 @@ export class History extends View {
           getText: (s) => s,
           focused,
           selected,
-          // TV `cpHistoryViewer` (decode §4): normal/selected = white-on-blue (blends into the blue
-          // popup), focused = white-on-green. Overrides the RD-11 cyan `list*` roles for fidelity.
+          // Use the history-viewer roles (white-on-blue / white-on-green) so the rows blend into the
+          // blue popup window instead of the default list colours.
           roles: { normal: 'historyViewer', focused: 'historyViewerFocused', selected: 'historyViewer' },
         });
-        // Pick on choice — Enter/Space (activate) AND a single row click both set `selected` (PA-16
-        // runtime: the popup no longer watches selected(), so the watch lives here). Skip the initial
-        // −1 so a pre-existing selection never auto-picks on open (the old `firstSelection` guard).
+        // Pick on choice — Enter/Space and a single row click both set `selected`. Skip the initial
+        // −1 so a pre-existing selection never auto-picks on open.
         let first = true;
         effect(() => {
           const index = selected();
@@ -133,14 +141,14 @@ export class History extends View {
         });
         return list;
       },
-      contentSize: { height: this.maxRows + 1 }, // reproduces the old maxRows+2 frame exactly (PA-5)
+      contentSize: { height: this.maxRows + 1 }, // popup interior = maxRows visible list rows
       focusTarget: (c) => (c as ListView<string>).rows,
     });
   }
 
   /**
-   * Record the current field text (skip-empty/dedup/append/evict) into the store or the injectable
-   * signal, and return the resulting oldest→newest snapshot.
+   * Record the current field text (skip-empty/dedup/append/evict) into the store or the app-owned
+   * signal, and return the resulting oldest→newest snapshot the popup lists.
    *
    * @returns The entry snapshot the popup lists.
    */
@@ -158,8 +166,7 @@ export class History extends View {
 
   /**
    * Replace the linked field's text with the picked value (clamped to the field's max length) and
-   * select all of it — TV `strnzcpy(link->data, rslt, link->maxLen+1); link->selectAll(True)` via the
-   * public Input seam (PA-8).
+   * select all of it.
    *
    * @param value The picked entry text (undefined when the index is out of range — a no-op).
    */

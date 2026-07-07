@@ -1,9 +1,9 @@
 /**
- * Menu subsystem barrel (RD-05) — the nested MenuBar/MenuPopup menus.
+ * Menu subsystem entry point — the {@link MenuBar}, its dropdown popups, and the data builders
+ * ({@link subMenu}/{@link item}/{@link separator}) you use to describe a menu.
  *
- * Phase 1 exposes the constructable `MenuBar` skeleton; Phase 4 fleshes out the builders, the
- * navigation controller, and the overlay-hosted popups on the same class. Re-exported through
- * `@jsvision/ui`'s entry point.
+ * These are re-exported from the `@jsvision/ui` package entry point. Build a menu with the data
+ * builders and hand it to `createApplication({ menuBar })`.
  */
 export { MenuBar, menuBar } from './menubar.js';
 export { MenuPopup } from './popup.js';

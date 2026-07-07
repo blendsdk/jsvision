@@ -1,13 +1,16 @@
 /**
- * `MenuBar` — the top menu row + its navigation entry point (RD-05 AR-68/AR-77, PA-9).
+ * The application menu bar: the top row of menu titles and the entry point for keyboard/mouse menu
+ * navigation.
  *
- * A **pre-process** view (it sees keys before the focused window, AR-51): it draws the top-level
- * titles with their `~hotkey~` char accented and owns the {@link MenuController} (created in
- * {@link MenuBar.attach}). `onEvent` translates F10 / Alt+hotkey / a title click into "open", and —
- * while a menu is open — `↑↓`/`Enter`/`←→`/`Esc`/item-hotkey into navigation, consuming each via
- * `ev.handled` so it never reaches the focused window. The popups themselves live in the overlay.
+ * The bar sees keys before the focused window, so its accelerators always work. It draws the
+ * top-level titles with their `~hotkey~` character accented, and opens a menu on F10, on `Alt`+a
+ * title's hotkey, or on a title click. While a menu is open it drives navigation — `↑↓` to move,
+ * `Enter` to activate, `←→` to switch/open submenus, `Esc` to back out, and typing an item's hotkey
+ * letter — consuming those keys so they never reach the focused window. The dropdown popups are
+ * hosted in the app's overlay layer.
  *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * You normally build one with {@link menuBar} and pass it to `createApplication({ menuBar })` rather
+ * than constructing it directly.
  */
 import type { Style } from '@jsvision/core';
 import { View } from '../view/index.js';
@@ -17,36 +20,52 @@ import { layoutTitles, titleIndexAt, accentStyle } from './builders.js';
 import { createMenuController } from './controller.js';
 import type { MenuController, MenuLoopSeam } from './controller.js';
 
-/** The application menu bar: a pre-process view driving the nested-menu controller (AR-68). */
+/**
+ * The application menu bar. Build one with {@link menuBar} and give it to the application.
+ *
+ * @example
+ * import { createApplication, menuBar, subMenu, item, separator, Commands } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({
+ *   caps,
+ *   menuBar: menuBar([
+ *     subMenu('~F~ile', [item('~N~ew', 'file.new'), separator(), item('E~x~it', Commands.quit, 'Alt+X')]),
+ *     subMenu('~W~indow', [item('~T~ile', Commands.tile, 'F4'), item('~C~ascade', Commands.cascade, 'F5')]),
+ *   ]),
+ * });
+ * // Press F10, then Alt+F, or click a title to open a menu.
+ */
 export class MenuBar extends View {
-  /** The top-level menu nodes (set by the {@link menuBar} builder). */
+  /** The top-level menu nodes (usually set for you by the {@link menuBar} builder). */
   items: readonly MenuItem[] = [];
-  /** The navigation controller; `null` until {@link attach} wires the overlay + loop seam (PA-7). */
+  /** The navigation controller; `null` until the application wires it in via {@link attach}. */
   controller: MenuController | null = null;
 
   constructor() {
     super();
-    this.preProcess = true; // accelerators see events before the focused window (AR-51)
+    this.preProcess = true; // see accelerator keys before the focused window does
   }
 
   /**
-   * @internal Wire the controller (called once by `createApplication`, PA-7): the overlay that hosts
-   * the popups + outside-click catcher, and the loop seam for activation/greying/focus.
+   * @internal Wire the navigation controller. Called once by `createApplication` with the overlay
+   * layer that hosts the popups and the loop seam used for activation/greying/focus.
    *
-   * @param overlay The app-root overlay layer (top-z, absolute, full-viewport).
+   * @param overlay The app-root overlay layer (top-most, absolute, full-viewport).
    * @param seam    The loop seam (`emitCommand`/`isCommandEnabled`/`focusView`/`getFocused`).
    */
   attach(overlay: Group, seam: MenuLoopSeam): void {
     this.controller = createMenuController(this.items, overlay, seam);
   }
 
-  /** Draw the bar background then each top-level title, accenting its `~hotkey~` char (AR-77). */
+  /** Draw the bar background then each top-level title, accenting its `~hotkey~` character. */
   draw(ctx: DrawContext): void {
     const base = ctx.color('menuBar');
     const selected = ctx.color('menuSelected');
-    // TV draws the accelerator char in the high byte of `cNormal`/`cSelect` — red on the title's bg,
-    // ALWAYS (open or closed). It never underlines. Selected titles use the green selected palette.
-    // The top-level hotkey char takes the accelerator-overlay underline while reveal is on (FR-1).
+    // The accelerator character is always drawn in the hotkey accent (whether the menu is open or
+    // closed); the open title uses the selected palette. The accent also picks up an underline while
+    // the accelerator overlay is being revealed.
     const baseAccent: Style = accentStyle(
       { fg: ctx.role('menuBar').hotkey ?? base.fg, bg: base.bg },
       ctx.revealAccelerators,
@@ -64,7 +83,7 @@ export class MenuBar extends View {
       const style = isOpen ? selected : base;
       const accent = isOpen ? selAccent : baseAccent;
       // Each title is a ` text ` button: the whole button (both pad spaces included) carries the
-      // color, and the text is inset one column past the leading pad — exactly as TMenuBar::draw.
+      // colour, and the text is inset one column past the leading pad.
       ctx.fillRect(title.x, 0, title.width, 1, ' ', style);
       ctx.text(title.x + 1, 0, title.label.text, style);
       if (title.label.hotkeyCol >= 0) {
@@ -75,10 +94,10 @@ export class MenuBar extends View {
   }
 
   /**
-   * Handle a key or a title click (AR-68). Pre-process keys arrive here first; mouse-downs arrive via
-   * the hit-test when they land on the bar (the bar is the top-most view on row 0 while closed).
+   * Handle a key or a title click. Keys reach the bar before the focused window; mouse-downs arrive
+   * when they land on the bar row.
    *
-   * @param ev The dispatch envelope; `ev.handled = true` consumes the event.
+   * @param ev The dispatch envelope; setting `ev.handled = true` consumes the event.
    */
   override onEvent(ev: DispatchEvent): void {
     const controller = this.controller;
@@ -143,11 +162,19 @@ export class MenuBar extends View {
 }
 
 /**
- * Build a {@link MenuBar} from a top-level item list (AR-68). The builder only assembles data; the
- * controller is wired later by `createApplication` via {@link MenuBar.attach}.
+ * Build a {@link MenuBar} from a list of top-level menu entries. This only assembles the data; the
+ * application wires up navigation when you pass the bar to `createApplication`.
  *
- * @param items The top-level menu nodes (each typically a `subMenu`).
+ * @param items The top-level menu nodes (each usually a {@link subMenu}).
  * @returns A constructed `MenuBar`.
+ * @example
+ * import { createApplication, menuBar, subMenu, item, Commands } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const bar = menuBar([
+ *   subMenu('~W~indow', [item('~T~ile', Commands.tile, 'F4'), item('E~x~it', Commands.quit)]),
+ * ]);
+ * const app = createApplication({ caps: resolveCapabilities().profile, menuBar: bar });
  */
 export function menuBar(items: MenuItem[]): MenuBar {
   const bar = new MenuBar();

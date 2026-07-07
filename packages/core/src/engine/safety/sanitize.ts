@@ -1,30 +1,36 @@
 /**
- * The canonical output sanitizer — the project's primary injection boundary
- * (RD-08 §Sanitizer rule; AC-3/AC-8). Strips terminal-control bytes from
- * untrusted text before it reaches the stream, so app- or network-supplied
- * strings cannot open or close escape or OSC sequences.
+ * The output sanitizer — the SDK's terminal-injection boundary. Strips
+ * terminal-control bytes from untrusted text before it reaches the screen, so
+ * app- or network-supplied strings can never open or close an escape/OSC
+ * sequence and hijack the terminal.
  *
- * Every text-accepting output path routes through this: the RD-04 buffer
- * `text()`, the OSC features (`hyperlink`/`setClipboard`/`setTitle`/`notify`),
- * and the window title. Strip-only and behavior-identical to the RD-04
- * provisional version it replaces (RD-08 AR-13).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM
- * resolution (it resolves to the `.ts` source during development via tsx).
+ * Every text-accepting output path in the SDK already routes through this (the
+ * screen buffer's text writes, the OSC helpers such as `hyperlink`/`setClipboard`/
+ * `setTitle`/`notify`, and window titles), so you rarely need to call it directly —
+ * but do call it yourself on any string you write to the terminal outside those
+ * paths.
  */
 
 /**
- * Remove ESC/BEL/ST and C0/C1 control codes from untrusted text.
+ * Remove escape and other terminal-control bytes from untrusted text, returning
+ * a string that is safe to write to the terminal.
  *
- * Rule table (RD-08 §Sanitizer rule; AC-3/AC-8): strip `ESC` (0x1b) — and the
- * two-byte `ESC \` String Terminator — `BEL` (0x07), the single-byte `ST`
- * (0x9c), all C0 controls (0x00–0x1f) **except** tab (0x09) and newline (0x0a),
- * and all C1 controls (0x80–0x9f). Printable and valid UTF-8 text (incl. astral)
- * passes through unchanged.
+ * Stripped: `ESC` (0x1b) and the two-byte `ESC \` String Terminator, `BEL`
+ * (0x07), the single-byte `ST` (0x9c), all C0 controls (0x00–0x1f) **except** tab
+ * (0x09) and newline (0x0a), and all C1 controls (0x80–0x9f). Printable and valid
+ * UTF-8 text (including emoji and other astral characters) passes through
+ * unchanged. Pure — it never mutates or logs its input.
  *
  * @param text Untrusted input (app- or network-supplied).
- * @returns `text` with ESC/BEL/ST and C0/C1 control bytes removed (tab/newline
- *          kept). Pure; never logs its input.
+ * @returns `text` with control bytes removed; tab and newline are preserved.
+ * @example
+ * import { sanitize } from '@jsvision/core';
+ *
+ * // Only the control bytes are removed. The ESC that armed the color sequence is
+ * // gone, so its parameters render as harmless literal text instead of a command.
+ * sanitize('hi\x1b[31mred\x07');   // => 'hi[31mred'  (ESC + BEL stripped)
+ * sanitize('col1\tcol2\nline2');   // => 'col1\tcol2\nline2'  (tab + newline kept)
+ * sanitize('emoji 🎉 ok');         // => 'emoji 🎉 ok'  (unchanged)
  */
 export function sanitize(text: string): string {
   // Iterate by code point so astral characters (emoji, CJK ext) stay intact.

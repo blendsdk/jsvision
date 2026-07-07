@@ -1,34 +1,42 @@
 /**
- * `Memo` — the dialog-embeddable editor: a faithful `TMemo` port (RD-08 03-04).
- *
- * Decode (`tmemo.cpp:27-98`, `editors.h:363-391`, re-verified 2026-07-07 @ 57b6f56): `TEditor`
- * minus files; palette `cpMemo "\x1A\x1B"` → `cpGrayDialog[26/27]=0x39/0x3A` → `cpAppColor` =
- * **`memoNormal` `0x30` black-on-cyan / `memoSelected` `0x2F` white-on-green** (PA-8);
- * `handleEvent` drops `kbTab` entirely (`tmemo.cpp:69-73`) so dialog Tab-nav works — realized for
- * free here: the keymap never consumes `'tab'` and the loop's built-in Tab traversal runs before
- * the phases (the house Input precedent, semantically identical to TV's drop). The `ushort`-blob
- * `getData`/`setData` surface (`tmemo.cpp:38-61`) is modernized to a two-way `Signal<string>`
- * (AR-263) with the ComboBox-idiom feedback guard (each direction reads only the other side,
- * same-tick, no loop); no 64 KB cap.
- * GATE-2 AFTER-diff (2026-07-07): rendered headlessly and diffed against the decode — the gray
- * cpMemo byte pair and the Tab drop match. No draw mismatch.
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * A dialog-embeddable multiline text editor bound two-way to a `Signal<string>`. See {@link Memo}.
  */
 import type { Signal } from '../reactive/index.js';
 import { Editor } from './editor.js';
 import type { EditorOptions } from './editor.js';
 
-/** Construction options: the two-way bound value + the base editor options. */
+/** Options for {@link Memo}. */
 export interface MemoOptions extends EditorOptions {
-  /** The two-way bound content (AR-263): edits write it; external writes replace the buffer. */
+  /** The two-way bound content: edits write it; writing it from outside replaces the buffer. */
   value: Signal<string>;
 }
 
-/** The dialog-embeddable multiline editor (gray-chain colours, Tab-transparent). */
+/**
+ * A dialog-embeddable, signal-bound multiline editor.
+ *
+ * `Memo` is an `Editor` styled for the gray dialog palette and safe to place among other controls:
+ * it lets Tab pass through, so dialog focus traversal still works. Its content is bound to a signal
+ * — typing writes the signal the same tick, and writing the signal from outside replaces the
+ * buffer — so you read and write the memo's text through that signal rather than through the editor.
+ *
+ * @example
+ * import { Dialog, Memo, signal } from '@jsvision/ui';
+ *
+ * const notes = signal('initial text');
+ * const memo = new Memo({ value: notes });
+ * memo.layout = { position: 'absolute', rect: { x: 2, y: 2, width: 40, height: 8 } };
+ *
+ * const dialog = new Dialog({ title: 'Notes', width: 46, height: 14 });
+ * dialog.add(memo);
+ *
+ * // Read the bound signal (e.g. inside an effect) to observe edits; write it to replace the buffer.
+ * notes.set('replaced from outside'); // updates the memo's buffer
+ * console.log('memo text is', notes());
+ */
 export class Memo extends Editor {
   /** @internal The bound value signal. */
   protected readonly value: Signal<string>;
-  /** @internal Re-entry guard for the two-way bind (the ComboBox idiom). */
+  /** @internal Guard against the two-way bind feeding back on itself. */
   protected syncing = false;
 
   constructor(options: MemoOptions) {
@@ -37,7 +45,8 @@ export class Memo extends Editor {
     this.selectedRole = 'memoSelected';
     this.value = options.value;
     this.setText(options.value());
-    // External writes → buffer (this direction reads ONLY the signal; the guard stops feedback).
+    // Outside writes flow into the buffer. This direction reads only the signal; the guard stops
+    // it from ping-ponging with the buffer→signal mirror in update().
     this.onMount(() => {
       this.bind(
         () => this.value(),
@@ -51,10 +60,10 @@ export class Memo extends Editor {
     });
   }
 
-  /** @internal Every mutation tick also mirrors the buffer into the bound signal (same tick). */
+  /** @internal Mirror the buffer back into the bound signal after every edit. */
   override update(): void {
     super.update();
-    if (this.value === undefined) return; // the base-ctor update() runs before our fields init
+    if (this.value === undefined) return; // the base constructor's update() runs before our fields exist
     if (!this.syncing) {
       const text = this.buf.text();
       if (this.value() !== text) {

@@ -1,24 +1,11 @@
 /**
- * The decoded editor dialog builders + the PA-7 message boxes (RD-08 03-03).
+ * Ready-made dialogs and message boxes for an editor: Find, Replace, a Yes/No/Cancel confirm box,
+ * an OK info box, and the replace-confirmation prompt. {@link wireEditorDialogs} bundles them into a
+ * single handler you can hand to an `Editor` so its find/replace/save prompts just work.
  *
- * Decode (`examples/tvedit/tvedit2.cpp:55-112`, re-verified 2026-07-07 @ 57b6f56 — PF-009 path):
- *   • Find — `TDialog(0,0,38,12)` "Find", centered: input maxLen 80 at `TRect(3,3,32,4)` +
- *     `~T~ext to find` label `(2,2,15,3)` + history `(32,3,35,4)`; CheckBoxes `(3,5,35,7)`
- *     [~C~ase sensitive, ~W~hole words only]; OK `(14,9,24,11)` default, Cancel `(26,9,36,11)`.
- *   • Replace — `TDialog(0,0,40,16)` "Replace": inputs `(3,3,34,4)`/`(3,6,34,7)` + labels
- *     `~T~ext to find` `(2,2,15,3)` / `~N~ew text` `(2,5,12,6)` + histories `(34,…,37,…)`;
- *     CheckBoxes `(3,8,37,12)` [+ ~P~rompt on replace, ~R~eplace all]; OK `(17,13,27,15)`,
- *     Cancel `(28,13,38,15)`.
- *   • Replace prompt (`tvedit3.cpp:177-189`, PA-11): the 40×7 box `TRect(0,1,40,8)` h-centred at
- *     the top; when the cursor's GLOBAL y ≤ the box's global bottom + 1 (`:184-186`, PF-009) it
- *     moves so its top = `size.y − height − 2`; message "Replace this occurence?" (TV's literal,
- *     typo and all) with Yes/No/Cancel.
- * TV rects are end-exclusive → `{x:a, y:b, width:c−a, height:d−b}`, placed VERBATIM as absolute
- * dialog-relative children over `padding: 0` (the files-package double-inset fix convention).
- * `confirmBox`/`infoBox` are the PA-7 minimal helpers (NOT a `TMsgBox` cell decode — a contained
- * extension, the files `errorBox` precedent). `wireEditorDialogs` is the `doEditDialog` analogue
- * (`examples/tvedit/tvedit3.cpp:106-193`) with the faithful message strings.
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Each builder mounts a modal dialog on the desktop, awaits the user's answer, and cleans it up. You
+ * usually don't call the individual builders — pass the result of {@link wireEditorDialogs} as the
+ * editor's `editorDialog` option and it drives them for you.
  */
 import { signal } from '../reactive/index.js';
 import type { View, Point } from '../view/index.js';
@@ -37,29 +24,28 @@ import type {
 } from './editor-dialog.js';
 
 /**
- * The ui-local `execView`-capable host (plan-preflight PF-002 — files' `ExecHost` is NOT
- * importable from ui; do not re-alias it there). The `createApplication()` handle satisfies both
- * structurally; `desktop.bounds` supplies the extent `replacePrompt`'s PA-11 rect math needs.
+ * What the dialog builders need from the host to run a modal. An object from `createApplication()`
+ * satisfies it directly (pass `{ loop: app.loop, desktop: app.desktop }`).
  */
 export interface EditorDialogHost {
-  /** The loop's modal seam (`execView` resolves to the terminating command). */
+  /** Runs a view modally, resolving to the command that closed it. */
   loop: Pick<EventLoop, 'execView'>;
-  /** The desktop the modal mounts into (add → execView → remove) + its extent. */
+  /** The desktop the modal mounts into, and whose extent the replace prompt uses to position itself. */
   desktop: Pick<Desktop, 'addWindow' | 'removeWindow' | 'bounds'>;
 }
 
-/** TV end-exclusive `TRect(a,b,c,d)` → a layout rect. */
+/** Build a rect from left/top/right/bottom edges (right and bottom are exclusive). */
 function tv(a: number, b: number, c: number, d: number): Rect {
   return { x: a, y: b, width: c - a, height: d - b };
 }
 
-/** Place `view` at an absolute TV rect inside a `padding:0` dialog. */
+/** Place `view` at an absolute rect inside a dialog with no padding. */
 function at<T extends View>(view: T, rect: Rect): T {
   view.layout = { ...view.layout, position: 'absolute', rect };
   return view;
 }
 
-/** The add → execView → remove lifecycle; resolves to the terminating command. */
+/** Mount the dialog, run it modally, remove it; resolves to the command that closed it. */
 async function runDialog(host: EditorDialogHost, dlg: Dialog): Promise<string> {
   host.desktop.addWindow(dlg);
   try {
@@ -69,10 +55,22 @@ async function runDialog(host: EditorDialogHost, dlg: Dialog): Promise<string> {
   }
 }
 
-/** Open the decoded 38×12 Find dialog; resolves the record, or `null` on cancel (AC-9). */
+/**
+ * Open the Find dialog — a text field with "Case sensitive" and "Whole words only" checkboxes.
+ *
+ * @param host The modal host (`{ loop: app.loop, desktop: app.desktop }`).
+ * @param initial Optional values to pre-fill the field and checkboxes.
+ * @returns The entered search record, or `null` if the user cancels.
+ * @example
+ * const rec = await findDialog(
+ *   { loop: app.loop, desktop: app.desktop },
+ *   { find: 'fox', options: { caseSensitive: false, wholeWords: false } },
+ * );
+ * if (rec !== null) console.log('search for', rec.find);
+ */
 export async function findDialog(host: EditorDialogHost, initial?: FindRec): Promise<FindRec | null> {
   const dlg = new Dialog({ title: 'Find', width: 38, height: 12, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 }; // TV rects are dialog-relative (files convention)
+  dlg.layout = { ...dlg.layout, padding: 0 }; // children are placed at absolute rects, no auto-inset
   const find = signal(initial?.find ?? '');
   const flags = signal([initial?.options.caseSensitive ?? false, initial?.options.wholeWords ?? false]);
 
@@ -90,10 +88,28 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
   return { find: find(), options: { caseSensitive, wholeWords } };
 }
 
-/** Open the decoded 40×16 Replace dialog; resolves the record, or `null` on cancel (AC-9). */
+/**
+ * Open the Replace dialog — find + replace fields plus "Case sensitive", "Whole words only",
+ * "Prompt on replace", and "Replace all" checkboxes.
+ *
+ * @param host The modal host (`{ loop: app.loop, desktop: app.desktop }`).
+ * @param initial Optional values to pre-fill the fields and checkboxes.
+ * @returns The entered replace record, or `null` if the user cancels.
+ * @example
+ * const rec = await replaceDialog(
+ *   { loop: app.loop, desktop: app.desktop },
+ *   {
+ *     find: 'fox',
+ *     replace: 'cat',
+ *     options: { caseSensitive: false, wholeWords: false },
+ *     promptOnReplace: true,
+ *     replaceAll: false,
+ *   },
+ * );
+ */
 export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec): Promise<ReplaceRec | null> {
   const dlg = new Dialog({ title: 'Replace', width: 40, height: 16, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 };
+  dlg.layout = { ...dlg.layout, padding: 0 }; // children are placed at absolute rects, no auto-inset
   const find = signal(initial?.find ?? '');
   const replace = signal(initial?.replace ?? '');
   const flags = signal([
@@ -126,7 +142,19 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
   return { find: find(), replace: replace(), options: { caseSensitive, wholeWords }, promptOnReplace, replaceAll };
 }
 
-/** A Yes/No/Cancel confirm box (PA-7 — a minimal helper, not a `TMsgBox` decode). */
+/**
+ * Show a modal message with Yes / No / Cancel buttons.
+ *
+ * @param host The modal host (`{ loop: app.loop, desktop: app.desktop }`).
+ * @param message The message to display; the box sizes itself to fit.
+ * @returns The button the user chose (`'cancel'` also covers closing the box).
+ * @example
+ * const answer = await confirmBox(
+ *   { loop: app.loop, desktop: app.desktop },
+ *   'The file has been modified. Save?',
+ * );
+ * if (answer === 'yes') await save();
+ */
 export async function confirmBox(host: EditorDialogHost, message: string): Promise<'yes' | 'no' | 'cancel'> {
   const width = Math.min(60, Math.max(40, message.length + 6));
   const dlg = new Dialog({ width, height: 9, centered: true });
@@ -139,7 +167,15 @@ export async function confirmBox(host: EditorDialogHost, message: string): Promi
   return result === 'yes' || result === 'no' ? result : 'cancel';
 }
 
-/** An OK message box (PA-7 — the files `errorBox` shape). */
+/**
+ * Show a modal message with a single OK button.
+ *
+ * @param host The modal host (`{ loop: app.loop, desktop: app.desktop }`).
+ * @param message The message to display; the box sizes itself to fit.
+ * @returns Resolves once the user dismisses the box.
+ * @example
+ * await infoBox({ loop: app.loop, desktop: app.desktop }, 'Search string not found.');
+ */
 export async function infoBox(host: EditorDialogHost, message: string): Promise<void> {
   const width = Math.min(60, Math.max(24, message.length + 6));
   const dlg = new Dialog({ width, height: 7, centered: true });
@@ -150,17 +186,25 @@ export async function infoBox(host: EditorDialogHost, message: string): Promise<
 }
 
 /**
- * The decoded replace prompt (PA-11, `tvedit3.cpp:177-189`): the 40×7 box h-centred at row 1;
- * moved so its top = `size.y − height − 2` when the GLOBAL cursor y ≤ the box's global bottom + 1.
+ * Show the "replace this occurrence?" prompt (Yes / No / Cancel) used during an interactive
+ * replace. The box sits near the top of the desktop, but drops to the bottom when the caret is high
+ * enough that the box would otherwise cover it.
+ *
+ * @param host The modal host (`{ loop: app.loop, desktop: app.desktop }`).
+ * @param cursor The caret position in absolute (desktop) coordinates, used to avoid covering it.
+ * @returns The button the user chose.
+ * @example
+ * // Inside an editorDialog handler for a 'replacePrompt' request:
+ * const answer = await replacePrompt({ loop: app.loop, desktop: app.desktop }, req.cursor);
  */
 export async function replacePrompt(host: EditorDialogHost, cursor: Point): Promise<'yes' | 'no' | 'cancel'> {
   const desk = host.desktop.bounds;
   const x = Math.trunc((desk.width - 40) / 2);
   let y = 1;
-  if (cursor.y <= desk.y + 8 + 1) y = desk.height - 7 - 2; // the avoid-cursor drop (PF-009 trigger)
+  if (cursor.y <= desk.y + 8 + 1) y = desk.height - 7 - 2; // drop to the bottom to avoid the caret
   const dlg = new Dialog({ rect: { x, y, width: 40, height: 7 } }); // explicit rect — never centered
   dlg.layout = { ...dlg.layout, padding: 0 };
-  dlg.add(at(new Text('Replace this occurence?'), { x: 3, y: 2, width: 34, height: 1 })); // TV's literal
+  dlg.add(at(new Text('Replace this occurence?'), { x: 3, y: 2, width: 34, height: 1 }));
   dlg.add(at(yesButton(), { x: 3, y: 4, width: 10, height: 2 }));
   dlg.add(at(noButton(), { x: 15, y: 4, width: 10, height: 2 }));
   dlg.add(at(cancelButton(), { x: 27, y: 4, width: 10, height: 2 }));
@@ -169,8 +213,20 @@ export async function replacePrompt(host: EditorDialogHost, cursor: Point): Prom
 }
 
 /**
- * The full default handler — the tvedit `doEditDialog` analogue (`tvedit3.cpp:106-193`) with the
- * faithful message strings; `saveAs` is the app hook (the RD-09 `FileDialog` in the clone).
+ * Build a complete `editorDialog` handler backed by the dialogs in this module — Find, Replace, the
+ * replace prompt, "not found", the save-confirmation prompts, and file-error boxes. Pass the result
+ * as an `Editor`'s `editorDialog` option to make its find/replace/save prompts work out of the box.
+ *
+ * @param host The modal host (`{ loop: app.loop, desktop: app.desktop }`).
+ * @param opts Optional hooks; provide `saveAs` to answer "save as" requests with a file path.
+ * @returns A handler suitable for the editor's `editorDialog` option.
+ * @example
+ * import { createApplication, Editor, wireEditorDialogs } from '@jsvision/ui';
+ *
+ * const app = createApplication({ caps });
+ * const editorDialog = wireEditorDialogs({ loop: app.loop, desktop: app.desktop });
+ * const editor = new Editor({ editorDialog });
+ * await editor.find(); // now opens the real Find dialog
  */
 export function wireEditorDialogs(
   host: EditorDialogHost,

@@ -1,7 +1,10 @@
 /**
- * Editor-family barrel (RD-08) — the public surface per 03-07 §Packaging. The pure internals
- * (`buffer/*`, `format.ts` internals, the keymap tables, `undo.ts`, `search.ts` helpers) stay
- * internal; only the components, builders, commands, and option/seam types ride the package.
+ * Public surface of the editor family: the multiline `Editor` view, the dialog-embeddable `Memo`,
+ * the `EditWindow` (a blue window wrapping an editor with scroll bars + a line/column indicator),
+ * the `Indicator` strip, the find/replace/message-box dialog builders, and the option/seam types
+ * that wire them together. The buffer internals (gap buffer, grapheme segmentation, navigation),
+ * the keymap tables, the undo stack, and the search helpers are implementation detail and are not
+ * re-exported.
  */
 export { Editor } from './editor.js';
 export type { EditorOptions, IndicatorTarget, EditorCommandSeam } from './editor.js';

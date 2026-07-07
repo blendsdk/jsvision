@@ -1,97 +1,98 @@
 /**
- * `ChDirDialog` — the modal change-directory dialog (`extends Dialog`), a decode of `TChDirDialog`
- * (`tchdrdlg.cpp:37-140`).
+ * The modal change-directory dialog: a path field with a recent-paths dropdown, a directory tree, and
+ * an OK/Chdir/Revert/Help button strip. Chdir descends into the focused tree node; Revert restores the
+ * directory the dialog opened on; OK validates the path field as a readable directory (raising an
+ * error box otherwise) and closes with it. The path field always mirrors the current directory, so
+ * navigating the tree, Chdir, or Revert all keep it in sync. Cancel and Esc close without changing
+ * anything. It reads through an injectable {@link FileSystem} and is drag-resizable.
  *
- * TV decode (GATE-1): `TDialog(TRect(16,2,64,20))` = **48×18**, gray, `wfGrow`. Composition at the
- * decoded dialog-local rects: a path `Input (3,3,42,4)` + a `~D~irectory name` label `(2,2,…)`; a
- * `DirList (3,6,33,16)` owning its vertical bar + a `~D~irectory tree` label `(2,5,…)`; the button
- * strip OK(`bfDefault`) `(35,6,45,8)`, Chdir `(35,9,45,11)`, Revert `(35,12,45,14)`, Help
- * `(35,15,45,17)`.
- *
- * Chdir descends the focused tree node (`cmChangeDir`); Revert restores the starting directory;
- * `valid(cmOK)` validates the path field as a readable directory — else the injected error box seam
- * (PA-3, like `FileDialog`); Cancel/Esc bypass. The path field reflects the current directory (a tree
- * select / Chdir / Revert updates it).
- *
- * GATE-2 AFTER-diff (`tchdrdlg.cpp:37-53`): dialog `16,2,64,20` = 48×18; `dirInput 3,3,42,4`;
- * `dirName` label `2,2,17,3` (width 15); `History 42,3,45,4`; OK `35,6,45,8` (`cmOK` → `Commands.ok`),
- * Chdir `35,9,45,11` (`cmChangeDir` → `onClick`), Revert `35,12,45,14`, Help `35,15,45,17`. TV splits
- * `dirList 3,6,32,16` (width 29) + a separate `TScrollBar 32,6,33,16`; jsvision's `DirList` owns its
- * bar, so its container spans `3,6,33,16` (width 30 = 29 rows + 1 bar) — the same footprint. No draw
- * mismatch.
- *
- * Resize (TV `wfGrow`, GATE-1/GATE-2): `sizeLimits` min 48×18 (`:101-105`) ⇒ `resizable`, grow-only.
- * Children track the growing frame by `growMode` (`:48-78`) via {@link onResized}: `dirInput`
- * `gfGrowHiX`; `History`/buttons `gfGrowLoX|gfGrowHiX`; `dirList` `gfGrowHiX|gfGrowHiY` (the merged
- * list+bar footprint grows the same as TV's split list `gfGrowHiX|gfGrowHiY` + vertical bar
- * `gfGrowLoX|gfGrowHiX|gfGrowHiY`). `.js` per NodeNext.
+ * Prefer the {@link changeDir} opener for the common "prompt and get a directory" case; construct
+ * `ChDirDialog` directly only when embedding or customizing it.
  */
 import { Dialog, Button, Label, Input, History, signal, Commands } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
+import { nodeFileSystem } from '../fs/node-fs.js';
 import { GrowMode } from './grow.js';
 import type { GrowItem } from './grow-dialog.js';
 import { applyGrowMode, captureGrowItems } from './grow-dialog.js';
 import { DirList } from '../list/dir-list.js';
 
-/** Default recent-path history id (PA-9 — distinct from the file-dialog id so the MRU lists don't collide). */
+/** The default recent-path history id — distinct from the file dialog so their lists don't mix. */
 const DIR_HISTORY_ID = 0x0f12;
 
 /** Construction options for {@link ChDirDialog}. */
 export interface ChDirDialogOptions {
-  /** The filesystem seam. */
-  fs: FileSystem;
-  /** The current directory (default the seam's cwd `resolve('.')`). */
+  /** The filesystem to read through (default {@link nodeFileSystem}). */
+  fs?: FileSystem;
+  /** The current directory (default the filesystem's cwd). Shared with the tree. */
   directory?: Signal<string>;
   /** The dialog title (default `'Change Directory'`). */
   title?: string;
-  /** The recent-path history id keying the shared MRU store (default the chdir-dialog id, PA-9). */
+  /** The id keying this dialog's recent-path history (default a chdir id distinct from the file dialog). */
   historyId?: number;
-  /** Raise the local error box (PA-3 runtime seam — wired by the opener/story). */
+  /** Called to show an error (unreadable directory). Wire it to {@link errorBox} in an app. */
   showError?: (message: string) => void;
-  /** Called when the dialog resolves — the absolute directory, or `null` on cancel. */
+  /** Called when the dialog resolves — with the chosen absolute directory, or `null` on cancel. */
   onResolve?: (path: string | null) => void;
 }
 
-/** The modal change-directory dialog. */
+/**
+ * The modal change-directory dialog.
+ *
+ * @example
+ * import { createApplication, Commands } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { ChDirDialog, errorBox, nodeFileSystem } from '@jsvision/files';
+ *
+ * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const app = createApplication({ caps });
+ *
+ * const dlg = new ChDirDialog({
+ *   fs: nodeFileSystem,
+ *   showError: (msg) => void errorBox(app, msg),
+ * });
+ * app.desktop.addWindow(dlg);
+ * const command = await app.loop.execView<string>(dlg);
+ * const dir = command === Commands.ok ? dlg.result() : null;
+ * app.desktop.removeWindow(dlg);
+ */
 export class ChDirDialog extends Dialog {
-  /** The filesystem seam. */
+  /** The filesystem this dialog reads through. */
   readonly fs: FileSystem;
-  /** The current directory (shared with the tree). */
+  /** The current directory, shared with the tree. */
   readonly directory: Signal<string>;
-  /** The path field value (reflects `directory`; the source of truth for `valid(cmOK)`). */
+  /** The path field value; it mirrors {@link directory} and is what OK validates. */
   readonly path: Signal<string>;
   /** The path input. */
   readonly pathInput: Input;
-  /** The recent-path History dropdown over the path input (`42,3,45,4`). */
+  /** The recent-path history dropdown beside the path input. */
   readonly history: History;
   /** The directory tree. */
   readonly dirList: DirList;
   /** The button strip (OK/Chdir/Revert/Help). */
   readonly buttons: Button[] = [];
-  /** The button labels (parallel to {@link buttons}). */
+  /** The button labels, parallel to {@link buttons}. */
   readonly buttonLabels: string[] = [];
   private readonly startDir: string;
   private readonly resultPath: Signal<string | null> = signal<string | null>(null);
   private readonly showErrorSeam?: (message: string) => void;
   private readonly onResolveCb?: (path: string | null) => void;
-  /** The `growMode` reflow table (children + design rects + flags), replayed on drag-resize. */
+  /** The resize-reflow table (children + design rects + grow flags), replayed on drag-resize. */
   private readonly growItems: GrowItem[];
 
   constructor(opts: ChDirDialogOptions) {
     super({ title: opts.title ?? 'Change Directory', width: 48, height: 18 });
-    // TV `TChDirDialog` is `wfGrow` with `sizeLimits` min 48×18 (tchdrdlg.cpp:101-105): drag-resizable,
-    // floored at the design size so the `growMode` delta is grow-only (see {@link onResized}).
+    // Drag-resizable but floored at the design size, so children only ever grow (see onResized()).
     this.resizable = true;
     this.minWidth = 48;
     this.minHeight = 18;
-    // TV fidelity: `TChDirDialog`'s child rects (`tchdrdlg.cpp:47-77`) are relative to the dialog's
-    // OUTER origin (frame at row/col 0). The base `Dialog`'s convenience `padding:1` would double-count
-    // the frame, pushing every absolute child +1,+1 (the same info-pane-style bleed as `FileDialog`).
-    // Zero it so the decoded TV rects land exactly, matching the source + the ST-10 oracle.
+    // The children are placed at absolute rects measured from the outer frame (at row/col 0). Zero the
+    // base Dialog's padding:1 inset so they aren't pushed in by (1,1) and made to overwrite the border
+    // (see FileDialog for the same reasoning).
     this.layout = { ...this.layout, padding: 0 };
-    this.fs = opts.fs;
-    this.directory = opts.directory ?? signal(opts.fs.resolve('.'));
+    this.fs = opts.fs ?? nodeFileSystem;
+    this.directory = opts.directory ?? signal(this.fs.resolve('.'));
     this.startDir = this.directory();
     this.path = signal(this.directory());
     this.showErrorSeam = opts.showError;
@@ -118,10 +119,9 @@ export class ChDirDialog extends Dialog {
     this.add(this.dirList);
     for (const b of this.buttons) this.add(b);
 
-    // The `growMode` table (tchdrdlg.cpp:48-78) — captured at the design size, replayed by
-    // {@link onResized}. Labels (growMode 0) omitted. TV's dirList (HiX|HiY) + its vertical bar
-    // (LoX|HiX|HiY) are one owned `DirList` container here; HiX|HiY grows the merged footprint the
-    // same (list widens, bar stays at the right edge). Buttons: `gfGrowLoX|gfGrowHiX`.
+    // The resize-reflow table, captured at the design size and replayed by onResized(). Fixed-position
+    // labels are omitted. The tree (which owns its scroll bar) grows both ways; the field grows wide;
+    // the buttons stay pinned to the right edge.
     this.growItems = captureGrowItems([
       [this.pathInput, GrowMode.HiX],
       [this.history, GrowMode.LoX | GrowMode.HiX],
@@ -143,7 +143,7 @@ export class ChDirDialog extends Dialog {
     return this.resultPath();
   }
 
-  /** Reposition the children by `growMode` when the dialog is drag-resized (TV `changeBounds`). */
+  /** Reflow the children to track the frame when the dialog is drag-resized. */
   override onResized(): void {
     if (this.layout.rect !== undefined) {
       applyGrowMode(this.growItems, this.layout.rect, this.minWidth, this.minHeight);
@@ -177,17 +177,17 @@ export class ChDirDialog extends Dialog {
   }
 
   /**
-   * TV `TChDirDialog::valid` (`:112-140`): cancel bypasses; OK validates the path field as a readable
-   * directory — resolve + close, else the error box + stay open.
+   * Decide whether the dialog may close. Cancel always closes; OK validates the path field as a
+   * readable directory — resolving and closing on success, or raising the error box and staying open.
    *
-   * @param command The terminating command.
-   * @returns Whether the dialog may close.
+   * @param command The command trying to close the dialog.
+   * @returns `true` to close, `false` to stay open.
    */
   override valid(command: string): boolean {
     if (command === Commands.cancel) return true;
     if (command !== Commands.ok) return super.valid(command);
     this.firstInvalid = null;
-    if (!super.valid(Commands.ok)) return false; // the DEF-16 child sweep
+    if (!super.valid(Commands.ok)) return false; // the base dialog's field-validation sweep
     const target = this.fs.resolve(this.path());
     if (this.statKind(target) !== 'dir') {
       this.showErrorSeam?.('Invalid directory');

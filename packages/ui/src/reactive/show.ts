@@ -1,25 +1,37 @@
 /**
- * `Show` (RD-01, 03-03; AR-11) — a reactive conditional combinator.
+ * `Show` — a reactive conditional: pick one of two branches based on a live condition.
  *
- * UI-independent: generic over the rendered child type `N`, returning a reactive accessor the
- * consumer reads (inside its own effect) to attach/detach the active branch's node. The branch
- * flips only when the condition's **boolean** value transitions — not on every dependency tick —
- * and each flip disposes the previous branch's owner scope exactly once (its `onCleanup`s fire),
- * then mounts the new branch under a fresh scope.
+ * Generic over the produced node type `N`, so it works for view trees or any other value. It
+ * returns a reactive accessor you read (inside an effect, or hand to a container's dynamic-child
+ * slot) to get whichever branch is currently active. The branch swaps only when the condition's
+ * **boolean** result flips — not on every dependency change — and each swap disposes the previous
+ * branch's scope (firing its `onCleanup`s) before building the new one under a fresh scope, so
+ * branch-local reactive state is torn down cleanly.
  */
 import { computed } from './computed.js';
 import { createRoot } from './owner.js';
 import { untrack } from './scheduler.js';
 
 /**
- * Mount one of two branches based on a reactive condition (AR-11).
+ * Choose between two branches based on a reactive condition.
  *
- * @param when Reactive predicate; only its **truthiness** drives branch selection (memoized,
- *   so a flip happens once per transition regardless of how often `when`'s deps change).
+ * @param when Reactive predicate; only its **truthiness** selects the branch (memoized, so the swap
+ *   happens once per transition no matter how often the values `when` reads change).
  * @param then Builds the node shown while the condition is truthy.
- * @param else_ Builds the node shown while falsy; omitted ⇒ `undefined` when falsy.
- * @returns A reactive accessor yielding the current branch's node (or `undefined`). Reading it
- *   zero or many times between flips changes nothing.
+ * @param else_ Builds the node shown while falsy; omit it to get `undefined` when falsy.
+ * @returns A reactive accessor yielding the active branch's node (or `undefined`). Reading it zero
+ *   or many times between swaps changes nothing.
+ * @example
+ * import { signal, effect, Show } from '@jsvision/ui';
+ *
+ * const loggedIn = signal(false);
+ * const screen = Show(
+ *   () => loggedIn(),
+ *   () => 'Dashboard',
+ *   () => 'Login',
+ * );
+ * effect(() => console.log(screen())); // "Login"
+ * loggedIn.set(true);                  // "Dashboard"
  */
 export function Show<N>(when: () => boolean, then: () => N, else_?: () => N): () => N | undefined {
   // Memoized boolean: re-evaluates the branch only when the truthiness actually flips.

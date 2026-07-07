@@ -1,15 +1,19 @@
 /**
- * Public entry point of the RD-02 capability subsystem (plan doc 03-02).
+ * Terminal capability detection: figure out what the running terminal can do
+ * (color depth, mouse, Unicode, OSC features, …) so the rest of the SDK can
+ * auto-configure itself.
  *
- * Exposes two resolvers (RT-2):
- * - {@link resolveCapabilities} — **synchronous**; composes layers 1/3/4/5 and
- *   caches the ambient resolution per-process (PL-14). Cannot run a live query.
- * - {@link resolveCapabilitiesAsync} — **asynchronous**; additionally runs the
- *   layer-2 runtime query (PL-1) when a {@link TerminalQuery} seam is supplied,
- *   then delegates to the same compose → override → freeze core.
+ * Two resolvers:
+ * - {@link resolveCapabilities} — **synchronous**. Detects from environment
+ *   variables and a known-terminal table, and caches the result per process.
+ *   Cannot ask the terminal live questions.
+ * - {@link resolveCapabilitiesAsync} — **asynchronous**. Additionally probes the
+ *   terminal at runtime when you pass a {@link TerminalQuery}, for the highest
+ *   accuracy.
  *
- * Both return an immutable {@link CapabilityResolution} (`{ profile, reasons }`):
- * the layer-1 override is deep-merged (PL-7) and the result is deep-frozen (PL-9).
+ * Both return an immutable {@link CapabilityResolution} — `{ profile, reasons }`,
+ * where `profile` is the detected capabilities and `reasons` records which layer
+ * decided each field. Any fields you pass in `override` win over detection.
  */
 import type {
   CapabilityProfile,
@@ -42,29 +46,43 @@ export type {
 } from './profile.js';
 
 /**
- * Options for the synchronous {@link resolveCapabilities}. Layer 2 is async, so
- * `query`/`timeoutMs` are excluded here (RT-2) — passing a query is a compile
- * error; use {@link resolveCapabilitiesAsync} for live queries.
+ * Options for the synchronous {@link resolveCapabilities}. The live-query fields
+ * (`query`/`timeoutMs`) are excluded because a live probe is asynchronous —
+ * passing a query here is a compile error; use {@link resolveCapabilitiesAsync}.
  */
 export type SyncResolveOptions = Omit<ResolveOptions, 'query' | 'timeoutMs'>;
 
 /**
- * Per-process cache of the ambient resolution (PL-14). Holds only the result of
- * a call with no per-call inputs (no override/env/platform/query); a call with
- * any such input bypasses the cache and never poisons it.
+ * Per-process cache of the plain (no-options) resolution. Only a call with no
+ * `override`/`env`/`platform` is cached; any call that passes inputs bypasses the
+ * cache entirely, so it can never be poisoned.
  */
 let ambientCache: CapabilityResolution | undefined;
 
 /**
- * Resolve the running terminal's capabilities **synchronously** (layers 1/3/4/5).
+ * Detect the running terminal's capabilities **synchronously** from environment
+ * variables and the known-terminal table.
  *
- * Detection is fully injectable via {@link SyncResolveOptions} (env, platform)
- * so callers and tests stay hermetic. With no options the ambient resolution is
- * computed once and cached; `refresh: true` recomputes and replaces the cache.
- * For a live layer-2 query, use {@link resolveCapabilitiesAsync}.
+ * With no options, the result is computed once and cached for the process; pass
+ * `refresh: true` to recompute. Every input is injectable (`env`, `platform`,
+ * `override`) so you can force a specific configuration or keep tests hermetic.
+ * For the most accurate detection (a live terminal probe), use
+ * {@link resolveCapabilitiesAsync}.
  *
- * @param options Optional override, injected env/platform, and `refresh` flag.
- * @returns A deep-frozen `{ profile, reasons }`.
+ * @param options Optional `override` (force fields), injected `env`/`platform`,
+ *   and a `refresh` flag to bypass the cache.
+ * @returns A deep-frozen `{ profile, reasons }`. Read `.profile` for the caps.
+ * @example
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * // Ambient detection (cached per process):
+ * const caps = resolveCapabilities().profile;
+ * if (caps.colorDepth === 'truecolor') { ... }
+ *
+ * // Force a configuration (e.g. for a test or a screenshot):
+ * const forced = resolveCapabilities({
+ *   override: { colorDepth: 'truecolor', altScreen: true },
+ * }).profile;
  */
 export function resolveCapabilities(options: SyncResolveOptions = {}): CapabilityResolution {
   const isAmbient = options.override === undefined && options.env === undefined && options.platform === undefined;
@@ -85,16 +103,34 @@ export function resolveCapabilities(options: SyncResolveOptions = {}): Capabilit
 }
 
 /**
- * Resolve the running terminal's capabilities **asynchronously**, additionally
- * running the layer-2 runtime query when `options.query` is supplied (PL-1).
+ * Detect the running terminal's capabilities **asynchronously**, additionally
+ * probing the terminal live when you pass a {@link TerminalQuery} seam (the most
+ * accurate detection available).
  *
- * Always resolves, never rejects: a silent/oversized/malformed response falls
- * back to layers 3/4/5 (AC-3/AC-7). This path never reads or writes the ambient
- * cache — a query (or any injected input) is a per-call concern.
+ * Always resolves, never rejects: a terminal that stays silent, replies with too
+ * much data, or sends garbage simply falls back to environment/table detection.
+ * This path never touches the sync cache — a live probe is always a fresh, per-call
+ * result.
  *
- * @param options Override, injected env/platform, the live-query seam, and
- *   `timeoutMs`.
- * @returns A promise of a deep-frozen `{ profile, reasons }`.
+ * If the probe captured bytes the user typed while it was in flight, they are
+ * returned as `resolution.passthrough` — feed those into your input decoder first,
+ * before reading further stdin, so no keystrokes are lost.
+ *
+ * @param options `override`, injected `env`/`platform`, the live-query `query`
+ *   seam, and `timeoutMs` (the probe's whole-step timeout).
+ * @returns A promise of a deep-frozen `{ profile, reasons }` (plus optional
+ *   `passthrough`).
+ * @example
+ * import { resolveCapabilitiesAsync, createTerminalQuery } from '@jsvision/core';
+ *
+ * // Requires the input stream in raw mode and flowing.
+ * const query = createTerminalQuery(); // defaults to process std streams
+ * try {
+ *   const { profile } = await resolveCapabilitiesAsync({ query, timeoutMs: 200 });
+ *   if (profile.sync2026) { ... } // terminal supports synchronized output
+ * } finally {
+ *   query.close();
+ * }
  */
 export async function resolveCapabilitiesAsync(options: ResolveOptions = {}): Promise<CapabilityResolution> {
   const env = options.env ?? process.env;
@@ -108,8 +144,8 @@ export async function resolveCapabilitiesAsync(options: ResolveOptions = {}): Pr
       options.timeoutMs ?? DEFAULT_QUERY_TIMEOUT_MS,
     );
     runtime = parsed;
-    // HR-22: surface the non-response bytes so the caller can re-inject genuine input typed during
-    // detection into the decoder (AC-4); previously destructured away and silently dropped.
+    // Keep the bytes that were not part of a terminal response — these are real
+    // keystrokes typed during detection, which the caller re-injects into the decoder.
     passthrough = bytes;
   }
 
@@ -117,8 +153,8 @@ export async function resolveCapabilitiesAsync(options: ResolveOptions = {}): Pr
 }
 
 /**
- * Shared resolution core for both entry points: compose layers 2–5 via
- * {@link detectBase}, apply the layer-1 override, and deep-freeze the result.
+ * Shared resolution core for both entry points: run layered detection via
+ * {@link detectBase}, apply the caller's `override`, and deep-freeze the result.
  */
 function composeResolution(params: {
   env: NodeJS.ProcessEnv;
@@ -139,8 +175,8 @@ function composeResolution(params: {
 }
 
 /**
- * Apply the layer-1 override (PL-7): deep-merge it over the detected profile
- * and stamp every overridden top-level field's reason as `'override'`.
+ * Apply the caller's `override`: deep-merge it over the detected profile and mark
+ * every overridden top-level field's reason as `'override'`.
  */
 function applyOverride(
   base: { profile: CapabilityProfile; reasons: CapabilityReasons },
@@ -165,9 +201,9 @@ function applyOverride(
 }
 
 /**
- * Deep-freeze both halves of the resolution before returning (PL-9). When async detection captured
- * genuine input bytes, attach them as `passthrough` for re-injection (HR-22) — the buffer stays
- * unfrozen since it is meant to be consumed by the decoder.
+ * Deep-freeze both halves of the resolution before returning. When async
+ * detection captured real input bytes, attach them as `passthrough` — the buffer
+ * stays unfrozen because it is meant to be consumed by the decoder.
  */
 function freezeResolution(
   resolution: {
@@ -201,7 +237,7 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
-/** Narrow `process.platform` to the supported {@link Platform} set (AR-4). */
+/** Narrow `process.platform` to the supported {@link Platform} set (anything else → `'linux'`). */
 function toPlatform(platform: NodeJS.Platform): Platform {
   return platform === 'darwin' || platform === 'win32' ? platform : 'linux';
 }

@@ -1,15 +1,14 @@
 /**
- * Event loop (RD-04) — public barrel.
+ * The event loop — the host-agnostic engine that turns decoded terminal input into widget behavior.
  *
- * The host-agnostic dispatch mechanism on the RD-03 view spine: `createEventLoop` builds and owns a
- * `RenderRoot`, routes decoded input + internal commands through a 3-phase machine with focus,
- * mouse hit-test, and modality, driving exactly one coalesced frame per tick. Re-exported through
- * the single `@jsvision/ui` entry point.
+ * `createEventLoop` builds and owns a render root, then routes keyboard/mouse input and internal
+ * commands through a dispatch machine with focus management, mouse hit-testing, and modal windows,
+ * repainting exactly one coalesced frame per tick. It is the layer beneath `createApplication`: use
+ * the loop directly for a headless or embedded setup, or let `createApplication` wire it to a real
+ * terminal for you.
  *
- * The event-handler contract types (`CommandEvent`/`AppEvent`/`DispatchEvent`) are declared in
- * `../view/types.ts` (PA-8) and re-exported here so `@jsvision/ui` exposes them as RD-04 symbols.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The event-handler contract types (`CommandEvent`/`AppEvent`/`DispatchEvent`) are also re-exported
+ * here so you can import everything you need to write an `onEvent` handler from one place.
  */
 export { createEventLoop } from './event-loop.js';
 export type { EventLoop, EventLoopOptions, ModalHost, ModalHostAware } from './types.js';

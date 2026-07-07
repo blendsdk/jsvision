@@ -1,15 +1,11 @@
 /**
- * The editor draw + `doUpdate` pushes as free functions (RD-08 03-02 — the PF-011 split keeping
- * `editor.ts` ≤ 500).
+ * The editor's painting and its post-edit "update" pushes.
  *
- * Decode (re-verified 2026-07-07 @ 57b6f56): `TEditor::draw` (`teditor1.cpp:453-461`) shifts the
- * `drawPtr` anchor by `lineMove(delta.y − drawLine)` then formats exactly `size.y` rows via
- * `formatLine` (`drawLines` `:463-474`; PA-9 whole-view repaint — core's damage diff keeps
- * emitted bytes ∝ change). `doUpdate` (`:431-451`) pushes the gadget ranges (`setParams` at
- * `:442,444`), the indicator value, and the `updateCommands` greying (`teditor2.cpp:623-637`;
- * TV enables paste when `clipboard==0` — the OS-clipboard fallback — ours greys it, the
- * recorded PA-2 deviation).
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * `drawEditor` repaints the visible rows from the scroll anchor. `editorUpdate` runs after any edit
+ * or cursor move: it refreshes the reactive state signals, pushes the scroll-bar ranges and the
+ * line/column indicator, and greys out editing commands that don't apply. The remaining helpers
+ * handle clamped scrolling, keeping the caret in view, mapping a mouse cell to a buffer position,
+ * and re-fitting after a resize.
  */
 import type { DrawContext, ThemeRoleName } from '../view/index.js';
 import { Commands } from '../status/index.js';
@@ -21,10 +17,10 @@ import type { Point } from '../view/index.js';
 import { charPtr } from './buffer/index.js';
 import type { Editor } from './editor.js';
 
-/** TV `maxLineLength` — the fixed horizontal scroll extent (`editors.h:108`, `teditor2.cpp:433`). */
+/** The fixed horizontal scroll extent, in columns — how far right a line can scroll. */
 export const MAX_LINE_LENGTH = 256;
 
-/** Paint `size.y` rows from the `drawPtr` anchor (the `TEditor::draw` decode). */
+/** Paint the visible rows from the current scroll anchor, colouring selected runs. */
 export function drawEditor(ed: Editor, ctx: DrawContext, normalRole: ThemeRoleName, selectedRole: ThemeRoleName): void {
   const dy = ed.delta.y();
   if (ed.drawLine !== dy) {
@@ -58,7 +54,7 @@ export function drawEditor(ed: Editor, ctx: DrawContext, normalRole: ThemeRoleNa
   }
 }
 
-/** The `doUpdate` push: repaint + signals + gadget ranges + the indicator + command greying. */
+/** After an edit or cursor move: refresh the state signals, scroll-bar ranges, indicator, and command greying. */
 export function editorUpdate(ed: Editor): void {
   ed.invalidate();
   ed.curPos.set({ line: ed.curY + 1, col: ed.curX + 1 });
@@ -68,13 +64,13 @@ export function editorUpdate(ed: Editor): void {
   ed.canRedo.set(ed.undoStack.canRedo);
   const w = ed.viewW();
   const h = ed.viewH();
-  ed.hBar?.setRange(0, MAX_LINE_LENGTH - w, Math.trunc(w / 2), 1); // setParams (:442)
-  ed.vBar?.setRange(0, ed.limitY - h, h - 1, 1); // setParams (:444)
+  ed.hBar?.setRange(0, MAX_LINE_LENGTH - w, Math.trunc(w / 2), 1);
+  ed.vBar?.setRange(0, ed.limitY - h, h - 1, 1);
   ed.indicator?.setValue({ line: ed.curY + 1, col: ed.curX + 1 }, ed.modified());
   editorUpdateCommands(ed);
 }
 
-/** The `updateCommands` greying decode (`teditor2.cpp:623-637`) through the optional seam. */
+/** Grey out editing commands that don't currently apply, through the optional command seam. */
 export function editorUpdateCommands(ed: Editor): void {
   const seam = ed.options.commands;
   if (seam === undefined) return;
@@ -82,7 +78,7 @@ export function editorUpdateCommands(ed: Editor): void {
   if (!ed.isClipboardRole) {
     seam.enable(Commands.cut, hasSel);
     seam.enable(Commands.copy, hasSel);
-    // TV enables paste when clipboard==0 (OS fallback); ours greys it — the PA-2 deviation.
+    // Paste is enabled only when a shared clipboard editor exists and holds a selection.
     seam.enable(Commands.paste, ed.options.clipboard !== undefined && ed.options.clipboard.hasSelection());
   }
   seam.enable(Commands.undo, ed.canUndo());
@@ -93,7 +89,7 @@ export function editorUpdateCommands(ed: Editor): void {
   seam.enable(EditorCommands.searchAgain, true);
 }
 
-/** `TEditor::scrollTo` (`teditor2.cpp:377-388`) — clamped scroll + repaint on change. */
+/** Scroll to `(x, y)`, clamped to the content extent; repaints only when the offset changes. */
 export function editorScrollTo(ed: Editor, x: number, y: number): void {
   const cx = Math.max(0, Math.min(Math.trunc(x) || 0, MAX_LINE_LENGTH - ed.viewW()));
   const cy = Math.max(0, Math.min(Math.trunc(y) || 0, ed.limitY - ed.viewH()));
@@ -104,7 +100,7 @@ export function editorScrollTo(ed: Editor, x: number, y: number): void {
   }
 }
 
-/** `TEditor::trackCursor` (`teditor2.cpp:584-591`) — keep (or center) the caret in view. */
+/** Scroll so the caret is in view — nudged to the nearest edge, or centered when `center` is `true`. */
 export function editorTrackCursor(ed: Editor, center: boolean): void {
   if (center) {
     editorScrollTo(ed, ed.curX - ed.viewW() + 1, ed.curY - Math.trunc(ed.viewH() / 2));
@@ -118,25 +114,23 @@ export function editorTrackCursor(ed: Editor, center: boolean): void {
 }
 
 /**
- * Re-fit the scroll after the editor's viewport size changed (a WM drag-resize / cascade / tile /
- * zoom / desktop resize). TV `TEditor::changeBounds` (`teditor1.cpp:219-225`) re-clamps `delta`
- * against the new size; we additionally `trackCursor(false)` so the hardware caret is never parked
- * off-view after a resize (the reported "caret vanishes on resize" defect) — a behavioral extension
- * that keeps the caret visible while `scrollTo`'s clamp still subsumes TV's `delta` clamp.
+ * Re-fit the scroll after the editor's viewport size changed (a window resize, cascade, tile, zoom,
+ * or desktop resize). Re-clamps the scroll offset to the new size and keeps the caret in view, so
+ * it is never parked off-screen after a resize.
  *
- * Called at event time (outside compose) with the new interior size, since the reflow that writes
- * `bounds` runs on the next flush — so `viewW()`/`viewH()` are fed explicitly here. A pre-layout /
- * collapsed size (0×0) is a no-op (nothing to track, and it would otherwise clamp `delta` to junk).
+ * Called at event time with the new interior size, because the layout pass that writes the view's
+ * real bounds only runs on the next frame — so the new size is passed in explicitly here. A
+ * pre-layout or collapsed (0×0) size is a no-op.
  *
  * @param ed   The editor to re-fit.
- * @param size The new content size in cells (the framed interior, `getExtent().grow(−1,−1)`).
+ * @param size The new content size in cells (the framed interior of the window).
  */
 export function editorViewResized(ed: Editor, size: { width: number; height: number }): void {
   ed.bounds = { ...ed.bounds, width: size.width, height: size.height };
   if (ed.viewW() > 0 && ed.viewH() > 0) ed.trackCursor(false);
 }
 
-/** Map a view-local cell to a buffer position (`TEditor::getMousePtr`, `teditor1.cpp:487-494`). */
+/** Map a view-local cell (row/column) to the buffer position under it. */
 export function editorMousePtr(ed: Editor, local: Point): number {
   const mx = Math.max(0, Math.min(local.x, ed.viewW() - 1));
   const my = Math.max(0, Math.min(local.y, ed.viewH() - 1));

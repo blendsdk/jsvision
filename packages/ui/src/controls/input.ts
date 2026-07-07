@@ -1,39 +1,19 @@
 /**
- * `Input` — a lean single-line text editor bound to a two-way signal (Turbo Vision `TInputLine`,
- * RD-06 AC-4/AC-5/PA-2/PA-11).
+ * A single-line text editor bound two-way to a `Signal<string>`. Reading the signal renders the
+ * field; editing it writes back — so the signal is always the source of truth for the field's text.
  *
- * Faithful to `TInputLine::draw` (`tinputli.cpp:134-160`): the value is drawn from `firstPos` at
- * column 1 (width `size.x-1`), with `◄`(0x11)/`►`(0x10) edge arrows (`tvtext1.cpp:106-107`) in the
- * `inputArrows` role when scrolled, and the field in `inputSelected` (focused) / `inputNormal` — both
- * `0x1F` white-on-blue (TV `getColor(1)`==`getColor(2)`; PA-14). The cursor-keep-visible `firstPos`
- * adjust mirrors `tinputli.cpp:460-465`, and the edit/scroll behavior `:341-468`. A `validator` gates
- * each keystroke live (`isValidInput`) and, on the focused→unfocused transition (observed via the
- * PF-009 focus-change signal — there is no blur event), runs the blocking `isValid` to set `invalid`
- * (no focus-trap — Tab proceeds, PA-2).
+ * Supports the usual line-editor gestures: typing, `Backspace`/`Delete` (and `Ctrl`+those to delete
+ * a whole word), `Home`/`End`, `Left`/`Right` (and `Ctrl`+arrows to move by word), `Shift`+any of
+ * those to extend a selection, `Ctrl+A` to select all, mouse click/drag to position and select, and
+ * clipboard cut/copy/paste. When the value is longer than the field, it scrolls horizontally and
+ * shows `◄`/`►` edge arrows.
  *
- * ## RD-07 selection + logical caret — GATE-1 decode (`tinputli.cpp`, code-point unit PA-1)
- * - **State** `selStart`/`selEnd`/`anchor` (JS string indices; `selStart ≤ selEnd`; empty when equal).
- * - **`adjustSelectBlock()`** (`:225-237`): `curPos < anchor ? [selStart,selEnd]=[curPos,anchor] :
- *   [anchor,curPos]`. **`deleteSelect()`** (`:203-211`): guarded by `selStart<selEnd`, removes
- *   `[selStart,selEnd)`, `curPos=selStart` (does not clear the selection).
- * - **Shift-extension** (`:339-359,456-459`): on a pad-key motion (Home/Left/Right/End/Ctrl-Left/
- *   Ctrl-Right) with Shift, set `anchor = (curPos==selEnd ? selStart : selStart==selEnd ? curPos :
- *   selEnd)`; move `curPos`; then `adjustSelectBlock()`. A motion **without** Shift → `selStart=selEnd=0`
- *   (collapse). **Ctrl+A** select-all is a jsvision addition mapped to `selectAll(true)` (AR-116).
- * - **Word nav** (`:64-82`, PA-12): space-delimited — `prevWord`/`nextWord` land on the first non-space
- *   after a space. **`selectAll(true)`** (`:496-508`): `selStart=0`, `curPos=selEnd=len`, scroll to caret.
- * - **Mouse** (`:312-338`): press → `anchor=curPos=mousePos`; drag → `curPos=mousePos`+`adjustSelectBlock`
- *   per move; double-click → `selectAll(true)`. `mousePos = max(0, max(mouse.x,1)+firstPos-1)` (`:186-196`).
- * - **Edit-over-selection**: printable (`:418-446`) → `deleteSelect()` first, then insert (validate +
- *   maxLength); Backspace (`:380-388`) → empty selection makes a 1-cp selection left then `deleteSelect`;
- *   Delete (`:399-405`) → `deleteSelect` if any, else delete the cp under the cursor.
- * - **Selection band draw** (`:152-157`): fill cols `[l+1, r+1)` in `getColor(3)` (`inputSelection`,
- *   `0x2F` white-on-green) where `l=max(0, displayedPos(selStart)-firstPos)`, `r=min(size.x-2,
- *   displayedPos(selEnd)-firstPos)`, only if `l<r`.
- * - **Logical caret** (`:160`): TV `setCursor(displayedPos(curPos)-firstPos+1, 0)`. We additionally
- *   paint that one buffer cell in a **reversed** field style (fg/bg swapped) so the caret shows headless
- *   / on cursor-hidden terminals (DEF-19a); `desiredCaret()` reports the same cell for the hardware
- *   cursor when focused. Clipboard (copy/cut/paste) lives in Phase 2. NodeNext requires the `.js`.
+ * Pass an optional `validator` to constrain input: it filters each keystroke live and, when the
+ * field loses focus, checks the completed value and sets {@link Input.invalid} if it fails.
+ * Validation never traps focus — Tab still moves on — so you decide how to surface an invalid field.
+ *
+ * A `maxLength` caps the stored length. A visible caret is drawn even on terminals that hide the
+ * hardware cursor.
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent, Point } from '../view/index.js';
@@ -47,17 +27,37 @@ import { computeDelete } from './input-editing.js';
 import type { EditState, DeleteKind } from './input-editing.js';
 import { LEFT_ARROW, RIGHT_ARROW, canScrollRight, displayedPos, glyphAt } from './input-render.js';
 
-/** Construction options for {@link Input}. */
+/** Options for {@link Input}. */
 export interface InputOptions {
-  /** Two-way value binding: reading renders, edits write back (PA-3/AR-100). */
+  /** The two-way bound text. Reading it renders the field; editing writes back. Required. */
   value: Signal<string>;
-  /** Cap on the stored value length (default: unbounded). */
+  /** Maximum stored length. Default: unbounded. */
   maxLength?: number;
-  /** Filters keystrokes live (`isValidInput`) + blocks on focus-leave (`isValid`) — 03-04. */
+  /** A rule that filters keystrokes live and validates the completed value on focus-leave. */
   validator?: Validator;
 }
 
-/** A focusable single-line text editor with horizontal scroll + edge arrows. */
+/**
+ * A focusable single-line text editor.
+ *
+ * @example
+ * import { Group, Input, signal } from '@jsvision/ui';
+ *
+ * // Plain field: `name` mirrors what the user types, and setting it updates the field.
+ * const name = signal('');
+ * const input = new Input({ value: name });
+ * input.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 24, height: 1 } };
+ *
+ * const form = new Group();
+ * form.add(input);
+ *
+ * @example
+ * import { Input, range, signal } from '@jsvision/ui';
+ *
+ * // Constrained field: only integers, flagged invalid on focus-leave if out of 0..120.
+ * const age = signal('');
+ * const ageInput = new Input({ value: age, validator: range(0, 120), maxLength: 3 });
+ */
 export class Input extends View {
   override focusable = true;
   /** The two-way bound value signal (source of truth). */
@@ -66,23 +66,23 @@ export class Input extends View {
   protected readonly maxLength: number;
   /** Optional live + blocking validator. */
   protected readonly validator?: Validator;
-  /** Cursor index into the value (code-point unit, PA-1). */
+  /** The caret index into the value. */
   protected curPos = 0;
-  /** First visible character index (horizontal scroll). */
+  /** First visible character index (the horizontal-scroll offset). */
   protected firstPos = 0;
-  /** Selection start (inclusive) — a JS string index; `selStart === selEnd` ⇒ no selection. */
+  /** Selection start (inclusive) as a string index; `selStart === selEnd` means no selection. */
   protected selStart = 0;
-  /** Selection end (exclusive) — a JS string index. Invariant `selStart ≤ selEnd`. */
+  /** Selection end (exclusive) as a string index. Invariant: `selStart ≤ selEnd`. */
   protected selEnd = 0;
-  /** The fixed end of the selection during shift-extension (TV `anchor`, `tinputli.cpp:346-357`). */
+  /** The fixed end of the selection while extending it with Shift. */
   protected anchor = 0;
-  /** Last mouse-down column, for double-click detection (PA-15); `null` after any non-click action. */
+  /** Last mouse-down column, used to detect a double-click; `null` after any non-click action. */
   protected lastDownX: number | null = null;
-  /** True between this Input's own mouse-down and its release — the HR-46 drag guard. */
+  /** True between this field's own mouse-down and its release, so it only extends drags it started. */
   protected dragging = false;
-  /** Set by {@link valid}/focus-leave; drives the invalid theming (exposed for the app, PA-2). */
+  /** Set by {@link valid} / focus-leave; drives the invalid styling. Read it to react to validity. */
   invalid = false;
-  /** Tracks the focus edge so blocking validation runs only on the focused→unfocused transition. */
+  /** Tracks the focus edge so the blocking validator runs only when focus actually leaves the field. */
   protected wasFocused = false;
 
   /**
@@ -94,19 +94,19 @@ export class Input extends View {
     return { start: this.selStart, end: this.selEnd };
   }
 
-  /** The caret index into the value (code-point unit, PA-1). @returns The current cursor position. */
+  /** The caret index into the value. @returns The current caret position. */
   get caretPos(): number {
     return this.curPos;
   }
 
-  // RD-14 public linkage seam (PA-8) — a linking `History` reaches the field's protected `value`/
-  // `maxLength` through these accessors (fields stay protected; faithful to TV `thistory.cpp:106-107`).
-  /** The two-way bound text signal — a linking History replaces the field text through it (RD-14 PA-8). */
+  // These accessors let a companion widget (such as a dropdown/history control) read and replace the
+  // field's text and length cap without exposing the underlying protected fields.
+  /** The two-way bound text signal, so a companion control can replace the field's text. */
   getValueSignal(): Signal<string> {
     return this.value;
   }
 
-  /** The field's max length (`Infinity` = unbounded); a linking History clamps a pick to it (RD-14 PA-8). */
+  /** The field's maximum length (`Infinity` when unbounded), so a companion control can clamp a value to it. */
   getMaxLength(): number {
     return this.maxLength;
   }
@@ -119,13 +119,14 @@ export class Input extends View {
     this.value = opts.value;
     this.maxLength = opts.maxLength ?? Number.POSITIVE_INFINITY;
     this.validator = opts.validator;
+    // Bind on mount, when this view's reactive scope exists (it does not in the constructor).
     this.onMount(() => {
-      // Two-way: repaint + clamp the cursor when the value changes externally.
+      // Repaint on any external change to the value, and clamp our cursor/selection back into range.
       this.bind(
         () => this.value(),
         (v) => {
-          // HR-59: a shorter external value must clamp the ENTIRE selection tuple, not just the
-          // caret — else selStart/selEnd/anchor dangle past the end and mis-highlight / mis-delete.
+          // A shorter external value must clamp the WHOLE selection tuple, not just the caret —
+          // otherwise selStart/selEnd/anchor dangle past the end and mis-highlight or mis-delete.
           const len = v.length;
           if (this.curPos > len) this.curPos = len;
           if (this.selStart > len) this.selStart = len;
@@ -134,7 +135,8 @@ export class Input extends View {
           this.adjustScroll();
         },
       );
-      // Blocking validation on the focused→unfocused transition (PF-009; no blur event exists).
+      // There is no blur event, so watch the focus signal and run the blocking validator exactly
+      // once, on the transition from focused to unfocused.
       this.bind(
         () => this.focusSignal()(),
         () => {
@@ -147,8 +149,8 @@ export class Input extends View {
   }
 
   /**
-   * Run the blocking validator over the current value, set {@link invalid}, and return the result.
-   * Also the explicit ST-09 entry point. With no validator, always valid.
+   * Run the blocking validator over the current value, update {@link invalid}, and return the
+   * result. Call it to validate on demand. With no validator, always valid.
    *
    * @returns Whether the current value passes the blocking validator.
    */
@@ -171,23 +173,22 @@ export class Input extends View {
     const arrows = ctx.color('inputArrows');
     const { width: w, height: h } = ctx.size;
     ctx.fillRect(0, 0, w, h, ' ', style);
-    if (w > 1) ctx.text(1, 0, v.slice(this.firstPos, this.firstPos + (w - 1)), style); // cols 1..w-1
+    if (w > 1) ctx.text(1, 0, v.slice(this.firstPos, this.firstPos + (w - 1)), style); // text starts at column 1
     if (canScrollRight(v, w, this.firstPos)) ctx.text(w - 1, 0, RIGHT_ARROW, arrows);
     if (this.firstPos > 0) ctx.text(0, 0, LEFT_ARROW, arrows);
-    // Selection band: recolour the visible selected substring in `inputSelection` (TV `getColor(3)`
-    // band `[l+1, r+1)`, `tinputli.cpp:152-157`). Only when focused with a non-empty selection.
+    // Highlight the visible part of the selection, only when focused with a non-empty selection.
     if (this.state.focused && this.selStart < this.selEnd) {
       const l = Math.max(0, displayedPos(this.selStart) - this.firstPos);
       const r = Math.min(w - 2, displayedPos(this.selEnd) - this.firstPos);
       if (l < r) {
-        const seg = v.slice(this.firstPos + l, this.firstPos + r); // the chars under cols [l+1, r+1)
+        const seg = v.slice(this.firstPos + l, this.firstPos + r); // the characters inside the band
         ctx.text(l + 1, 0, seg, ctx.color('inputSelection'));
       }
     }
-    // Logical caret: repaint the edit cell in a reversed field style, LAST, so the caret shows even
-    // headless / on cursor-hidden terminals (DEF-19a; the hardware cursor is wired separately, P5.2).
-    // Preserve the glyph already shown at that column (text char OR an edge arrow) and reverse only
-    // its colours — mirroring TV's hardware cursor, which sits over a glyph without erasing it (PF-008).
+    // Draw a visible caret LAST by repainting the edit cell with the field colours reversed, so the
+    // caret shows even on terminals that hide the hardware cursor (and in headless/test rendering).
+    // Reuse whatever glyph already sits there (a character or an edge arrow) so the caret overlays
+    // it rather than erasing it.
     if (this.state.focused) {
       const caretCol = displayedPos(this.curPos) - this.firstPos + 1;
       if (caretCol >= 0 && caretCol < w) {
@@ -198,8 +199,8 @@ export class Input extends View {
   }
 
   /**
-   * The view-local caret cell for the hardware cursor (PA-5/PA-11): the focused edit cell, or `null`
-   * when unfocused or scrolled out of view. The event loop translates it to an absolute cell (P5.2).
+   * The view-local caret cell for the hardware cursor: the focused edit cell, or `null` when
+   * unfocused or scrolled out of view. The event loop translates it to an absolute screen cell.
    *
    * @returns The view-local caret `{ x, y }`, or `null`.
    */
@@ -210,7 +211,7 @@ export class Input extends View {
     return { x: caretCol, y: 0 };
   }
 
-  /** Keep the cursor visible by clamping `firstPos` (TV `tinputli.cpp:460-465`). */
+  /** Keep the caret on screen by clamping the horizontal-scroll offset. */
   protected adjustScroll(): void {
     const w = this.bounds.width;
     if (this.firstPos > this.curPos) this.firstPos = this.curPos;
@@ -220,15 +221,16 @@ export class Input extends View {
   }
 
   /**
-   * Route a key (edit/move/select) or a mouse gesture (position / drag-select / scroll). Tab/Enter
-   * are not consumed — they pass through to focus traversal / the default button.
+   * Route a key (edit / move / select) or a mouse gesture (position / drag-select / scroll).
+   * `Tab` and `Enter` are deliberately not consumed — they pass through to focus traversal and the
+   * dialog's default button.
    *
    * @param ev The dispatch envelope (carries `local` during real mouse dispatch).
    */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type === 'command') {
-      const action = clipboardCommand(inner.command); // TV cmCut/cmCopy/cmPaste from menu/status/keymap
+      const action = clipboardCommand(inner.command); // cut/copy/paste raised from a menu/status/keymap
       if (action !== null) {
         this.runClipboard(action, ev);
         ev.handled = true;
@@ -236,7 +238,7 @@ export class Input extends View {
       return;
     }
     if (inner.type === 'paste') {
-      this.pasteText(inner.text); // bracketed paste — the real paste path (PA-16)
+      this.pasteText(inner.text); // a bracketed-paste event is the real paste path
       ev.handled = true;
       return;
     }
@@ -245,8 +247,8 @@ export class Input extends View {
       return;
     }
     if (inner.type !== 'key') return;
-    if (inner.key === 'enter' || inner.key === 'tab') return; // pass through (PA-2)
-    const chord = clipboardChord(inner); // Ctrl+Ins / Shift+Ins / Shift+Del (PA-7), before the edit machine
+    if (inner.key === 'enter' || inner.key === 'tab') return; // let these pass through
+    const chord = clipboardChord(inner); // Ctrl+Ins / Shift+Ins / Shift+Del, before normal editing
     if (chord !== null) {
       this.runClipboard(chord, ev);
       ev.handled = true;
@@ -256,37 +258,37 @@ export class Input extends View {
   }
 
   /**
-   * Run a clipboard action (TV cmCut/cmCopy/cmPaste, `tinputli.cpp:469-489`; PA-7). Copy/cut write
-   * the selection via `ev.setClipboard` (empty selection = no-op, PA-9); cut then deletes + collapses.
-   * Paste is a no-op — there is no system clipboard read (PA-16); the real paste is a bracketed
-   * `PasteEvent` handled by {@link pasteText}.
+   * Run a clipboard action. Copy and cut write the current selection to the clipboard; an empty
+   * selection is a no-op. Cut then deletes the selection. Paste here is a no-op — a real paste
+   * arrives as a paste event handled by {@link pasteText}, since there is no synchronous system
+   * clipboard read.
    *
    * @param action The clipboard action.
    * @param ev     The dispatch envelope (carries `setClipboard`).
    */
   protected runClipboard(action: ClipboardAction, ev: DispatchEvent): void {
-    if (action === 'paste') return; // no system read (PA-16/DEF-25)
+    if (action === 'paste') return; // handled via the paste event, not here
     const text = this.value().slice(this.selStart, this.selEnd);
-    if (text === '') return; // empty selection → no-op (deleteSelect guards cut too)
-    ev.setClipboard?.(text); // caps-gated in the loop; base64 + sanitize in core
+    if (text === '') return; // nothing selected
+    ev.setClipboard?.(text); // the event loop sanitizes and gates this by capability
     if (action === 'cut') {
-      this.applyDelete('selection'); // HR-47: cut re-validates the deletion + reverts if invalid
+      this.applyDelete('selection'); // deletes through the validator, reverting if the result is invalid
       this.adjustScroll();
       this.invalidate();
     }
   }
 
   /**
-   * Insert pasted text (TV paste path, `:418-446`; PA-8): replace any selection, then insert each
-   * code point through `validator.isValidInput` + `maxLength` (invalid dropped individually).
+   * Insert pasted text: replace any current selection, then insert each code point through the
+   * validator and the length cap (invalid or over-cap characters are dropped individually).
    *
-   * @param text The pasted text (untrusted; bounded upstream by core's `PASTE_CAP_BYTES`, AC-15).
+   * @param text The pasted text (untrusted; its size is already bounded upstream).
    */
   protected pasteText(text: string): void {
-    this.lastDownX = null; // HR-54: a paste disarms the double-click substitute
+    this.lastDownX = null; // a paste cancels any pending double-click
     this.deleteSelect(); // replace the selection first
     const r = applyPaste(text, this.value(), this.curPos, this.maxLength, this.validator);
-    this.setValue(r.value); // applyPaste fills each code point via insertFilled (PA-17)
+    this.setValue(r.value);
     this.curPos = r.curPos;
     this.collapseSelection();
     this.adjustScroll();
@@ -294,25 +296,24 @@ export class Input extends View {
   }
 
   /**
-   * Apply a key through the TV selection machine (`tinputli.cpp:341-467`): a shift + pad-key motion
-   * extends the selection (anchored per `:346-357`), a plain motion collapses it, and an edit
-   * (Backspace/Delete/printable) deletes any selection first. Returns whether the key was consumed.
+   * Apply an editing/motion key. `Shift` + a motion key extends the selection; a plain motion
+   * collapses it; an edit (`Backspace`/`Delete`/a printable character) deletes any selection first.
    *
    * @param inner The decoded key event.
    * @returns Whether the key was consumed (halts propagation).
    */
   protected handleKey(inner: KeyEvent): boolean {
     const v = this.value();
-    this.lastDownX = null; // HR-54: any key edit/motion disarms the double-click substitute
+    this.lastDownX = null; // any key edit or motion cancels a pending double-click
 
-    // Ctrl+A → select all (jsvision addition AR-116; not a TV pad-key — outside the extend/collapse).
+    // Ctrl+A selects all — it is neither a motion nor an edit, so handle it before the rest.
     if (inner.ctrl && !inner.shift && inner.key === 'a') {
       this.selectAll(true);
       return true;
     }
 
     const motion = motionOf(inner);
-    // Shift + a pad-key motion arms the extension anchor (tinputli.cpp:346-357).
+    // Shift + a motion begins/continues a selection: anchor the fixed end before the caret moves.
     let extend = false;
     if (motion !== null && inner.shift) {
       this.anchor =
@@ -323,17 +324,17 @@ export class Input extends View {
     if (motion !== null) {
       this.curPos = caretAfterMotion(motion, this.curPos, v);
     } else if (inner.key === 'backspace') {
-      // HR-48: Ctrl/Alt+Backspace deletes the previous word; plain Backspace one code point.
+      // Ctrl/Alt+Backspace deletes the previous word; plain Backspace deletes one character.
       this.applyDelete(inner.ctrl || inner.alt ? 'wordLeft' : 'backspace');
     } else if (inner.key === 'delete') {
-      // HR-48: Ctrl+Delete deletes the next word; plain Delete one code point.
+      // Ctrl+Delete deletes the next word; plain Delete deletes one character.
       this.applyDelete(inner.ctrl ? 'wordRight' : 'forward');
     } else {
-      return this.insertPrintable(inner); // printable owns its own selection-delete + collapse
+      return this.insertPrintable(inner); // a printable character handles its own selection-delete
     }
 
-    // Derive the selection from the moved caret (extend) or collapse it (plain motion / edit),
-    // then keep the caret visible (tinputli.cpp:456-465).
+    // After a motion, either extend the selection to the new caret or collapse it, then keep the
+    // caret on screen.
     if (extend) this.adjustSelectBlock();
     else this.collapseSelection();
     this.adjustScroll();
@@ -346,7 +347,7 @@ export class Input extends View {
     return { value: this.value(), curPos: this.curPos, selStart: this.selStart, selEnd: this.selEnd };
   }
 
-  /** Commit an {@link EditState}: write value + caret + selection back onto this Input. */
+  /** Commit an {@link EditState}: write value + caret + selection back onto this field. */
   protected writeEditState(s: EditState): void {
     this.setValue(s.value);
     this.curPos = s.curPos;
@@ -355,21 +356,21 @@ export class Input extends View {
   }
 
   /**
-   * Apply a delete gesture with TV's transient-revert (HR-47, `tinputli.cpp:307-310,380-414`): compute
-   * the post-delete state purely, then `checkValid(True)` — reject the whole edit if the result fails
-   * the live validator (a picture-mask delete that would break the mask is refused, not corrupting it).
+   * Apply a delete gesture, but reject it if the result would fail the live validator. This keeps a
+   * masked field from being corrupted — e.g. a delete that would break a picture mask is refused
+   * rather than left in an invalid state.
    *
    * @param kind The delete gesture (backspace / forward / word / selection).
    */
   protected applyDelete(kind: DeleteKind): void {
     const after = computeDelete(this.editState(), kind);
-    if (this.validator && !this.validator.isValidInput(after.value)) return; // invalid ⇒ reject (HR-47)
+    if (this.validator && !this.validator.isValidInput(after.value)) return; // reject an invalid result
     this.writeEditState(after);
   }
 
   /**
-   * Insert a printable character (TV default case `:418-446`): delete any selection first, then
-   * insert at the caret, respecting `maxLength` + `validator.isValidInput`. Always collapses after.
+   * Insert a printable character: delete any selection first, then insert at the caret, respecting
+   * the length cap and the validator. Always collapses the selection afterwards.
    *
    * @param inner The decoded key event.
    * @returns Whether the key was consumed.
@@ -377,12 +378,12 @@ export class Input extends View {
   protected insertPrintable(inner: KeyEvent): boolean {
     if (inner.ctrl || inner.alt) return false;
     const ch = inner.key === 'space' ? ' ' : [...inner.key].length === 1 ? inner.key : null;
-    if (ch === null) return false; // a non-printable named key passes through
-    this.deleteSelect(); // edit over a selection replaces it (tinputli.cpp:424)
+    if (ch === null) return false; // a named non-printable key passes through
+    this.deleteSelect(); // typing over a selection replaces it
     const r = insertFilled(ch, this.value(), this.curPos, this.maxLength, this.validator);
     if (r !== null) {
-      // HR-55/HR-45: insertFilled autoFills TRAILING mask literals only (TV is trailing-only; leading
-      // literals are NOT auto-inserted); the caret advances past the typed char, not the autoFill.
+      // A masked validator may auto-fill trailing punctuation, but the caret advances only past the
+      // character the user actually typed, not past that fill.
       this.setValue(r.value);
       this.curPos = r.curPos;
     }
@@ -392,26 +393,27 @@ export class Input extends View {
     return true;
   }
 
-  /** Remove the selected range, caret → `selStart` (TV `deleteSelect`, `:203-211`; via `computeDelete`). */
+  /** Remove the selected range and move the caret to its start. */
   protected deleteSelect(): void {
     this.writeEditState(computeDelete(this.editState(), 'selection'));
   }
 
-  /** Derive `[selStart, selEnd]` from the caret + anchor (TV `adjustSelectBlock`, `:225-237`). */
+  /** Order the selection range from the current caret and anchor. */
   protected adjustSelectBlock(): void {
     const { start, end } = selectionBlock(this.curPos, this.anchor);
     this.selStart = start;
     this.selEnd = end;
   }
 
-  /** Clear the selection (TV `selStart = selEnd = 0` on a non-extending action, `:459`). */
+  /** Clear the selection. */
   protected collapseSelection(): void {
     this.selStart = this.selEnd = 0;
   }
 
   /**
-   * Select all / clear (TV `selectAll`, `:496-508`): `selStart=0`, `curPos=selEnd=len` (or all 0).
-   * **Public** for a linking History (RD-14 PA-8; `thistory.cpp:107`). Defaults to select-all.
+   * Select the entire value (or, with `enable === false`, clear the selection) and move the caret to
+   * the end. Public so a companion control can select-all before replacing the text. Defaults to
+   * select-all.
    */
   selectAll(enable = true): void {
     this.selStart = 0;
@@ -426,12 +428,13 @@ export class Input extends View {
   }
 
   /**
-   * Map a mouse gesture to selection/scroll (TV `:312-338`): edge-arrow click scrolls; a plain press
-   * anchors + captures the drag; a drag extends; a second press on the same cell is a double-click →
-   * select-all (PA-15, our double-click substitute); release drops the capture.
+   * Handle a mouse gesture: clicking an edge arrow scrolls; a plain press positions the caret and
+   * begins a drag-selection (capturing the pointer so the drag continues past the field edge); a
+   * drag extends the selection; a second press on the same cell is a double-click that selects all;
+   * releasing ends the drag.
    *
    * @param inner The decoded mouse event.
-   * @param ev    The dispatch envelope (`local` cell + the capture seam).
+   * @param ev    The dispatch envelope (`local` cell + the pointer-capture seam).
    */
   protected handleMouse(inner: MouseEvent, ev: DispatchEvent): void {
     const local = ev.local;
@@ -440,13 +443,13 @@ export class Input extends View {
     const v = this.value();
     if (inner.kind === 'down') {
       if (local.x === 0 && this.firstPos > 0) {
-        this.firstPos -= 1; // ◄ click → scroll left
+        this.firstPos -= 1; // clicked the left arrow: scroll left
         this.lastDownX = null;
       } else if (local.x === w - 1 && canScrollRight(v, w, this.firstPos)) {
-        this.firstPos += 1; // ► click → scroll right
+        this.firstPos += 1; // clicked the right arrow: scroll right
         this.lastDownX = null;
       } else if (this.lastDownX === local.x) {
-        this.selectAll(true); // double-click (second down on the same cell, PA-15)
+        this.selectAll(true); // a second press on the same cell is a double-click
         this.lastDownX = null;
       } else {
         this.curPos = this.posFromMouse(local.x);
@@ -454,27 +457,27 @@ export class Input extends View {
         this.collapseSelection();
         this.adjustScroll();
         this.lastDownX = local.x;
-        this.dragging = true; // HR-46: only a drag WE started may mutate the selection
-        ev.setCapture?.(this); // track the drag past the field edge (PA-5-adjacent)
+        this.dragging = true; // only a drag this field started may change the selection
+        ev.setCapture?.(this); // capture the pointer so the drag continues past the field edge
       }
       this.invalidate();
       ev.handled = true;
     } else if (inner.kind === 'drag' || inner.kind === 'move') {
-      if (!this.dragging) return; // HR-46: ignore a drag this Input never initiated
+      if (!this.dragging) return; // ignore a drag this field never initiated
       this.curPos = this.posFromMouse(local.x);
       this.adjustSelectBlock();
       this.adjustScroll();
-      this.lastDownX = null; // a drag ends double-click candidacy
+      this.lastDownX = null; // a drag cancels double-click candidacy
       this.invalidate();
       ev.handled = true;
     } else if (inner.kind === 'up') {
-      this.dragging = false; // HR-46: capture released — stop tracking drags
+      this.dragging = false; // drag finished; release the pointer capture
       ev.releaseCapture?.();
       ev.handled = true;
     }
   }
 
-  /** Map a local mouse column to a value index (TV `mousePos`, `:186-196`; code-unit v1). */
+  /** Map a view-local mouse column to a value index. */
   protected posFromMouse(localX: number): number {
     return mousePos(localX, this.firstPos, this.value().length);
   }

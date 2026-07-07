@@ -1,49 +1,44 @@
 /**
- * Window arrangement + switching (RD-05 AR-67 · RD-10 AR-89/AR-90, supersedes RD-05 AR-87/PA-4).
+ * Arranging and switching the windows on a desktop.
  *
- * Pure helpers over a desktop's window list (children order = z-order, `i=0` = back): `cascade`/`tile`
- * set each window's `layout.rect` exactly as Turbo Vision's `TDeskTop` does (`tdesktop.cpp`);
- * `nextWindow`/`prevWindow`/`windowByNumber` pick a switch target the Desktop then raises. Both
- * arrangers un-zoom a window before repositioning it (AR-87) and refuse (no-op) when the desktop is too
- * small to honor the layout (TV `tileError`, AR-91 / PA-6).
+ * These are pure helpers over a desktop's window list (list order is z-order, first = back):
+ * `cascade` and `tile` reposition every window by setting its `layout.rect`, and
+ * `nextWindow`/`prevWindow`/`windowByNumber` pick which window to switch to (the desktop then raises
+ * it). Both arrangers un-maximize a window before moving it, and both do nothing when the desktop is
+ * too small to fit the arrangement.
  *
- * The desktop rect is `(0,0)`–`(deskW,deskH)` with an exclusive bottom-right, matching TV's `TRect`.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The desktop area spans `(0,0)` to `(deskW,deskH)` with an exclusive bottom-right edge.
  */
 import type { Window } from '../window/index.js';
 import { MIN_WIDTH, MIN_HEIGHT } from './gestures.js';
 
-/** Set a window's rect and schedule its reflow, un-zooming it first (AR-87). */
+/** Un-maximize a window, set its rect, re-pin its children, and schedule a repaint. */
 function place(w: Window, x: number, y: number, width: number, height: number): void {
   w.resetZoom();
   w.layout.rect = { x, y, width, height };
-  w.onResized(); // TV changeBounds → children calcBounds (growMode re-pin — the gestures.ts idiom)
+  w.onResized(); // re-pin children to the new size before the repaint reads them
   w.invalidateLayout();
 }
 
 /**
- * Cascade the windows exactly as TV's `doCascade` (`tdesktop.cpp:67-78`, AR-89): window `i` (back→front)
- * lands at `(i, i)` with its bottom-right pinned to the desktop corner, so the back window fills and
- * each window in front is offset one cell down-right and one cell smaller. `n===0` is a no-op; the
- * arrangement is refused (no-op, TV `tileError`) when the smallest window would fall below the minimum.
+ * Cascade the windows from the top-left: window `i` (back to front) lands at `(i, i)` with its
+ * bottom-right pinned to the desktop corner, so the back window fills the desktop and each window in
+ * front is offset one cell down-right and one cell smaller. Does nothing with no windows, or when the
+ * front-most window would end up smaller than the minimum size.
  *
- * @param windows The desktop's windows in z-order (`i=0` = back).
+ * @param windows The desktop's windows in z-order (first = back).
  * @param deskW   Desktop width in cells.
  * @param deskH   Desktop height in cells.
  */
 export function cascade(windows: readonly Window[], deskW: number, deskH: number): void {
   const n = windows.length;
   if (n === 0) return;
-  // tileError (PA-6): the front window has offset n−1; refuse if its remaining size is below the minimum.
+  // The front window has the largest offset (n−1); refuse if that would shrink it below the minimum.
   if (MIN_WIDTH > deskW - (n - 1) || MIN_HEIGHT > deskH - (n - 1)) return;
   windows.forEach((w, i) => place(w, i, i, deskW - i, deskH - i));
 }
 
-/**
- * TV integer square root (`tdesktop.cpp:139` `iSqr`) — the largest `r` with `r*r ≤ i`, by integer
- * Newton iteration.
- */
+/** Integer square root: the largest `r` with `r*r ≤ i`, via integer Newton iteration. */
 function iSqr(i: number): number {
   let r1 = 2;
   let r2 = Math.floor(i / r1);
@@ -55,25 +50,25 @@ function iSqr(i: number): number {
 }
 
 /**
- * Split `n` into the most-equal pair of divisors (`tdesktop.cpp:153` `mostEqualDivisors`), favoring the
- * Y axis (`favorY=true`, i.e. `tileColumnsFirst=false`): `rows ≥ cols`, e.g. `n=2 ⇒ 1×2` (stacked).
+ * Split `n` into the most-equal pair of divisors, favoring more rows than columns, so e.g. two
+ * windows stack (1 column × 2 rows) rather than sit side by side.
  *
  * @param n The window count.
- * @returns `{ cols, rows }` with `cols·rows ≥ n` and the pair as equal as possible.
+ * @returns `{ cols, rows }` with `cols·rows ≥ n` and the two as close to equal as possible.
  */
 function mostEqualDivisors(n: number): { cols: number; rows: number } {
   let i = iSqr(n);
   if (n % i !== 0 && n % (i + 1) === 0) i++;
   if (i < Math.floor(n / i)) i = Math.floor(n / i);
-  return { cols: Math.floor(n / i), rows: i }; // favorY ⇒ x = n/i, y = i
+  return { cols: Math.floor(n / i), rows: i };
 }
 
-/** Proportional divider position (`tdesktop.cpp:171` `dividerLoc`) — the `pos`-th of `num` even splits of `[lo,hi)`. */
+/** The `pos`-th of `num` even divider positions across `[lo, hi)`. */
 function dividerLoc(lo: number, hi: number, num: number, pos: number): number {
   return Math.trunc(((hi - lo) * pos) / num) + lo;
 }
 
-/** A window's tile rect for slot `pos`, exactly as TV's `calcTileRect` (`tdesktop.cpp:177-211`). */
+/** The tile rect for the window in grid slot `pos`. */
 function calcTileRect(
   pos: number,
   deskW: number,
@@ -102,13 +97,12 @@ function calcTileRect(
 }
 
 /**
- * Tile the windows into a no-remainder grid exactly as TV's `doTile`/`calcTileRect`
- * (`tdesktop.cpp:162-214`, AR-90): `mostEqualDivisors(n)` columns×rows, the trailing `leftOver`
- * columns taking one extra row each, the cells dividing the desktop with no leftover strip. `n===2`
- * stacks (1 col × 2 rows). `n===0` no-op; `n===1` fills; the arrangement is refused (no-op) when a cell
- * would collapse to zero width/height (TV `tileError`).
+ * Tile the windows into a grid that divides the desktop with no leftover gaps: `mostEqualDivisors(n)`
+ * columns × rows, with the trailing `leftOver` columns each taking one extra row. Two windows stack;
+ * one window fills the desktop. Does nothing with no windows, or when the desktop is too small to
+ * give every cell at least one cell of width and height.
  *
- * @param windows The desktop's windows in z-order (`i=0` = back ⇒ tile slot `i`).
+ * @param windows The desktop's windows in z-order (first = back, taking tile slot 0).
  * @param deskW   Desktop width in cells.
  * @param deskH   Desktop height in cells.
  */
@@ -116,7 +110,7 @@ export function tile(windows: readonly Window[], deskW: number, deskH: number): 
   const n = windows.length;
   if (n === 0) return;
   const { cols, rows } = mostEqualDivisors(n);
-  // tileError (PA-6): refuse when the desktop is too small for one cell per column/row.
+  // Refuse when the desktop is too small for even one cell per column or row.
   if (Math.floor(deskW / cols) === 0 || Math.floor(deskH / rows) === 0) return;
   const leftOver = n % cols;
   windows.forEach((w, i) => {
@@ -135,7 +129,7 @@ export function prevWindow(windows: readonly Window[], active: Window | null): W
   return cycle(windows, active, -1);
 }
 
-/** The window whose `number === n`, or `null` (out-of-range = no match → clamped no-op, AR-67). */
+/** The window whose `number === n`, or `null` if there is no such window. */
 export function windowByNumber(windows: readonly Window[], n: number): Window | null {
   return windows.find((w) => w.number === n) ?? null;
 }

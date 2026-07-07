@@ -1,26 +1,18 @@
 /**
- * The editor mouse model — the `evMouseDown` drag loop of `TEditor::handleEvent`
- * (`teditor1.cpp:521-584`, re-verified 2026-07-07 @ 57b6f56) mapped onto the house
- * capture-per-event dispatch. Multi-click reads the loop-owned `DispatchEvent.clickCount` — the
- * framework's single multi-click source of truth (converged 2026-07-07, discharging AR-6's editor
- * half; the former editor-local detector + injectable clock is gone).
+ * The editor's mouse and wheel handling.
  *
- * TV's modal `do…while(mouseEvent(...))` loop becomes: DOWN captures the pointer + places the
- * caret; each captured DRAG re-places it with `smExtend`; edge crossings scroll one step per
- * event (the `evMouseAuto` decode `:560-573`); UP releases. Multi-click: the loop stamps a
- * consecutive same-cell count on each `down` (`DispatchEvent.clickCount`, unbounded 1,2,3,4…); the
- * editor re-wraps it to its caret→word→line cycle `((clickCount-1)%3)+1` — count 2 → `smDouble`
- * word snap, 3 → `smTriple` line snap (`:553-556`). Wheel: TV routes the wheel to the attached
- * scrollbars (`:574-579`, arrow
- * step 1, wheel = 3·arrowStep) — ours scrolls the same 3 cells directly. Shift-click extension
- * is unavailable (core's `MouseEvent` carries no modifier flags — a decoder limitation; the
- * armed `selecting` mode still extends).
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Mouse-down places the caret and captures the pointer; each captured drag re-places it and extends
+ * the selection; crossing an edge scrolls one step per event; mouse-up releases the capture. A
+ * double-click selects the word under the caret and a triple-click selects the line, using the
+ * consecutive-click count the event loop provides. The wheel scrolls three cells at a time.
+ *
+ * Note: Shift-click to extend a selection is not currently available (the mouse event carries no
+ * modifier flags); the persistent select mode still extends normally.
  */
 import type { DispatchEvent } from '../view/index.js';
 import { Editor, SM_EXTEND, SM_DOUBLE, SM_TRIPLE } from './editor.js';
 
-/** Wheel scroll step — TV's `3 · arrowStep(1)` through the editor bars (`teditor1.cpp:574-579`). */
+/** Rows/columns scrolled per wheel notch. */
 const WHEEL_STEP = 3;
 
 /**
@@ -45,26 +37,26 @@ export function handleEditorMouse(ed: Editor, ev: DispatchEvent): void {
   const local = ev.local;
 
   if (inner.kind === 'down') {
-    // Read the loop-owned multi-click count and re-wrap it to the editor's caret→word→line cycle
-    // (D2): the loop's `clickCount` is unbounded (1,2,3,4…), the editor cycles every 3. `undefined`
-    // (a bare envelope / loop-less editor) ⇒ 1 (single caret), the AR-14 contract.
+    // The event loop reports an unbounded consecutive-click count (1, 2, 3, 4…); cycle it every
+    // three so a click selects the caret, then the word, then the line, then back to the caret.
+    // No count (a bare event, or an editor with no loop) means a single click.
     const count = ev.clickCount === undefined ? 1 : ((ev.clickCount - 1) % 3) + 1;
 
     let selectMode = ed.selecting ? SM_EXTEND : 0;
     if (count === 2) selectMode |= SM_DOUBLE;
     else if (count === 3) selectMode |= SM_TRIPLE;
 
-    ev.setCapture?.(ed); // the TV modal drag loop becomes a pointer capture
+    ev.setCapture?.(ed); // capture the pointer so the whole drag routes to this editor
     ed.setCurPtr(ed.getMousePtr(local), selectMode);
-    ed.dragSelectMode = selectMode | SM_EXTEND; // every subsequent drag extends (decode :580)
+    ed.dragSelectMode = selectMode | SM_EXTEND; // every subsequent drag extends the selection
     ev.handled = true;
     return;
   }
 
   if (inner.kind === 'drag' || inner.kind === 'move') {
-    if (ev.hasCapture !== undefined && !ev.hasCapture(ed)) return; // stale capture — no gesture
-    if (ed.dragSelectMode === 0) return; // no live drag
-    // The evMouseAuto edge scroll (one step per event, decode :560-573).
+    if (ev.hasCapture !== undefined && !ev.hasCapture(ed)) return; // not our capture — ignore
+    if (ed.dragSelectMode === 0) return; // no drag in progress
+    // Scroll one step per event when the pointer is dragged past an edge.
     let dx = ed.delta.x();
     let dy = ed.delta.y();
     if (local.x < 0) dx--;

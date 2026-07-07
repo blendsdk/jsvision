@@ -1,12 +1,8 @@
 /**
- * Convenience openers `openFile` / `changeDir` (03-05, PF-002) — the one-call façade over the modal
- * dialogs.
- *
- * Each constructs the dialog over a default `nodeFileSystem` (overridable via `fs`), wires the local
- * `errorBox` into the dialog's `showError` seam (PA-3), then runs the shipped modal lifecycle against
- * an **`execView`-capable host** (the `createApplication` handle `{ loop, desktop }` — NOT a bare
- * `ModalHost`, PF-002): **add-to-desktop → `execView` → remove-in-`finally`**. Resolves to the absolute
- * path on OK, or `null` on cancel. `.js` per NodeNext.
+ * One-call wrappers over the modal file dialogs. Each builds the dialog (over {@link nodeFileSystem}
+ * unless you inject a filesystem), shows it modally on the given host, and resolves to the chosen
+ * absolute path — or `null` if the user cancels. Errors during browsing surface in a built-in error
+ * box. This is the easiest way to ask the user for a file or directory.
  */
 import { signal, Commands } from '@jsvision/ui';
 import { nodeFileSystem } from './fs/node-fs.js';
@@ -18,43 +14,51 @@ import type { DirEntry, FileSystem } from './fs/types.js';
 
 /** Options for {@link openFile}. */
 export interface OpenFileOptions {
-  /** The filesystem seam (default `nodeFileSystem`). */
+  /** The filesystem to read through (default {@link nodeFileSystem}). */
   fs?: FileSystem;
-  /** The initial directory (default the seam's cwd `resolve('.')`). */
+  /** The starting directory (default the filesystem's cwd). */
   directory?: string;
-  /** The initial wildcard (default `'*.*'`). */
+  /** The starting wildcard (default `'*.*'`). */
   wildcard?: string;
-  /** Save mode — the OK/Replace/Clear button set (default open mode). */
+  /** Show save mode — the OK/Replace/Clear button set — instead of open mode. */
   save?: boolean;
   /** The dialog title. */
   title?: string;
-  /** The filename input label (default `'~N~ame'`). */
+  /** The filename input label (default `'~N~ame'`; wrap the hotkey letter in tildes). */
   inputName?: string;
-  /** A caller predicate AND-ed with the wildcard (PA-10). */
+  /** An extra predicate AND-ed with the wildcard when listing files. */
   filter?: (entry: DirEntry) => boolean;
 }
 
 /** Options for {@link changeDir}. */
 export interface ChangeDirOptions {
-  /** The filesystem seam (default `nodeFileSystem`). */
+  /** The filesystem to read through (default {@link nodeFileSystem}). */
   fs?: FileSystem;
-  /** The initial directory (default the seam's cwd `resolve('.')`). */
+  /** The starting directory (default the filesystem's cwd). */
   directory?: string;
   /** The dialog title. */
   title?: string;
 }
 
 /**
- * Open a modal file dialog and resolve to the chosen absolute path, or `null` on cancel.
+ * Show a modal file dialog and resolve to the chosen absolute path, or `null` if the user cancels.
  *
- * @param host The `execView`-capable app handle (`{ loop, desktop }`).
- * @param opts Filesystem seam + initial directory/wildcard + open/save mode.
+ * @param host A host that can run a view modally — the `createApplication` result works directly.
+ * @param opts Filesystem, starting directory/wildcard, open/save mode, and title.
+ * @returns The chosen absolute path, or `null` on cancel.
+ * @example
+ * import { createApplication } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { openFile } from '@jsvision/files';
+ *
+ * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const app = createApplication({ caps });
+ *
+ * const path = await openFile(app, { directory: '/home/user', wildcard: '*.ts' });
+ * if (path !== null) console.log('chosen', path);
  */
 export async function openFile(host: ExecHost, opts: OpenFileOptions = {}): Promise<string | null> {
   const fs = opts.fs ?? nodeFileSystem;
-  // A bare `new FileDialog(...)` is leak-free: the widget's constructor-time computeds now self-own
-  // via `View.derived()` (jsvision-ui #37), building lazily under each view's own mount-time scope
-  // (freed by `removeWindow`). No caller-side `createRoot` mitigation is needed.
   const dlg = new FileDialog({
     fs,
     directory: signal(opts.directory ?? fs.resolve('.')),
@@ -75,16 +79,25 @@ export async function openFile(host: ExecHost, opts: OpenFileOptions = {}): Prom
 }
 
 /**
- * Open a modal change-directory dialog and resolve to the chosen absolute directory, or `null` on cancel.
+ * Show a modal change-directory dialog and resolve to the chosen absolute directory, or `null` if the
+ * user cancels.
  *
- * @param host The `execView`-capable app handle (`{ loop, desktop }`).
- * @param opts Filesystem seam + initial directory.
+ * @param host A host that can run a view modally — the `createApplication` result works directly.
+ * @param opts Filesystem, starting directory, and title.
+ * @returns The chosen absolute directory, or `null` on cancel.
+ * @example
+ * import { createApplication } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { changeDir } from '@jsvision/files';
+ *
+ * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const app = createApplication({ caps });
+ *
+ * const dir = await changeDir(app, { directory: '/home/user' });
+ * if (dir !== null) console.log('changed to', dir);
  */
 export async function changeDir(host: ExecHost, opts: ChangeDirOptions = {}): Promise<string | null> {
   const fs = opts.fs ?? nodeFileSystem;
-  // See openFile: leak-free without a caller-side `createRoot`. `ChDirDialog` → `DirList extends
-  // ListView<DirNode>`, so its constructor-time computed is the inherited `displayItems` (the
-  // `ListView`→`ListRows` spine) — self-owned via `View.derived()` (#37), not a `Tree.flattened`.
   const dlg = new ChDirDialog({
     fs,
     directory: signal(opts.directory ?? fs.resolve('.')),

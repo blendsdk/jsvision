@@ -1,13 +1,10 @@
 /**
- * `createApplication` — the app-shell composition root (RD-05 AR-71/AR-75).
+ * `createApplication` — the top-level entry point that assembles a complete terminal app.
  *
- * Composes the RD-04 `EventLoop`, an owned `Desktop`, optional `MenuBar`/`StatusLine`, an absolute
- * full-viewport `overlay` layer, and a quit-command sink into the full-screen column layout, then
- * registers the standard commands and returns an {@link Application}. `run()` (in `run.ts`) wires the
- * real terminal to the composed loop. Composition over inheritance (AR-75): the loop is composed,
- * not re-shaped.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * It lays out, top to bottom, an optional menu bar, a desktop window manager that fills the middle,
+ * an optional status line, and a full-screen popup overlay on top, all driven by an event loop, and
+ * registers the standard window-management commands. The returned {@link Application} exposes the
+ * `desktop` and `loop` for you to populate, and a `run()` that connects everything to a real terminal.
  */
 import type { CapabilityProfile, Theme, Logger, Keymap, RuntimeAdapter } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
@@ -22,58 +19,55 @@ import type { StatusLine } from '../status/index.js';
 import { runApplication } from './run.js';
 import type { QuitState } from './run.js';
 
-/** Options for the application: loop/render config + optional chrome + the injectable OS boundary. */
+/** Options for {@link createApplication}. Only `caps` is required. */
 export interface ApplicationOptions {
-  /** REQUIRED — depth-aware encoding for the loop-built RenderRoot's `serialize()` (AR-44). */
+  /** Required. Terminal capability profile that drives color-depth encoding for every painted frame. */
   caps: CapabilityProfile;
-  /** Initial viewport; default = the output stream's `columns`×`rows`, else 80×24 (PA-3). */
+  /** Initial viewport size in cells. Defaults to the output terminal's size, or 80×24 if unknown. */
   viewport?: Size2D;
-  /** Active theme; defaults to core's `defaultTheme` (incl. the `windowInactive` role, AR-73). */
+  /** Color/style theme applied to every view; defaults to the built-in `defaultTheme`. */
   theme?: Theme;
-  /** Screen-safe logger for `draw()`/`onEvent()` errors (AR-42/AR-66). */
+  /** Logger that receives errors thrown from a view's `draw()`/`onEvent()`; defaults to a no-op logger. */
   logger?: Logger;
-  /** Key-chord → command keymap (core `createKeymap`, AR-62). */
+  /** Key-chord → command map (from core's `createKeymap`) applied across the whole app. */
   keymap?: Keymap;
-  /** Optional top menu bar chrome. */
+  /** Optional menu bar shown as the top row. Build one with `menuBar(...)`. */
   menuBar?: MenuBar;
-  /** Optional bottom status line chrome. */
+  /** Optional status line shown as the bottom row. Build one with `statusLine(...)`. */
   statusLine?: StatusLine;
   /**
-   * The accelerator-overlay trigger key (accelerator-overlay AR-10), forwarded to the loop; default
-   * `'f12'`. Pressing it reveals every `~X~` hotkey and arms bare-letter firing; `null` disables it.
+   * The key that toggles accelerator mode (default `'f12'`): while on, every `~X~` hotkey is
+   * underlined and a bare letter fires the matching accelerator. Pass `null` to disable the feature.
    */
   revealKey?: string | null;
-  /** Injectable OS boundary (default real Node runtime); tests inject a fake (AR-71/PA-14). */
+  /** OS boundary the host runs against; defaults to the real Node runtime. Inject a fake in tests. */
   runtime?: RuntimeAdapter;
-  /**
-   * Injectable input stream forwarded to `createHost` (default `process.stdin`). Tests inject a fake
-   * TTY stream so `run()` is exercised headlessly (PA-14). Intra-package — forwards an existing core
-   * `HostOptions` field; AC-21 (only cross-package edit = `windowInactive`) holds.
-   */
+  /** Input stream to read from; defaults to `process.stdin`. Inject a fake TTY stream to run headlessly. */
   input?: NodeJS.ReadStream;
-  /** Injectable output stream forwarded to `createHost` (default `process.stdout`); see {@link input}. */
+  /** Output stream to write to; defaults to `process.stdout`. */
   output?: NodeJS.WriteStream;
   /**
-   * Warn once at startup (real TTY only) when the terminal renders our ambiguous-width chrome glyphs
-   * double-width. Forwards core's `HostOptions.warnAmbiguousWidth`. Default `true` (zero-config); tests
-   * that simulate a TTY without a live terminal pass `false` to skip the probe.
+   * On a real terminal, warn once at startup if the terminal renders the ambiguous-width frame glyphs
+   * double-width (which shifts alignment). Default `true`; pass `false` to skip the probe in tests.
    */
   warnAmbiguousWidth?: boolean;
   /**
-   * Adapt to ASCII-safe chrome when the terminal renders our ambiguous-width chrome glyphs
-   * double-width (real TTY only). Forwards core's `HostOptions.adaptAmbiguousWidth`. Default `true`
-   * (zero-config); tests that simulate a TTY without a live terminal pass `false` to skip the probe.
+   * On a real terminal, automatically switch to ASCII-safe frame chrome if the startup probe finds
+   * the ambiguous-width glyphs render double-width. Default `true`; pass `false` to skip the probe.
    */
   adaptAmbiguousWidth?: boolean;
 }
 
-/** The composed application (composition over inheritance, AR-75). */
+/** A ready-to-run terminal application. Populate `desktop`/`loop`, then call `run()`. */
 export interface Application {
-  /** The owned window-manager desktop. */
+  /** The desktop window manager. Add windows with `desktop.addWindow(...)`. */
   readonly desktop: Desktop;
-  /** The composed event loop driving dispatch + frames. */
+  /** The underlying event loop. Use it to emit commands, manage focus, or run modals. */
   readonly loop: EventLoop;
-  /** Wire `createHost` → dispatch, run until `'quit'`, resolve the exit code; restore on every path (AR-71). */
+  /**
+   * Connect to the terminal and run until the `'quit'` command, resolving to the exit code. The
+   * terminal is always restored on exit — normal, thrown, or signalled.
+   */
   run(): Promise<number>;
 }
 
@@ -81,9 +75,9 @@ export interface Application {
 const CHROME_ROW_HEIGHT = 1;
 
 /**
- * A hidden, pre-process command handler that terminates `run()` on the `'quit'` command (PA-12). It
- * is `visible:false` — omitted from reflow/paint/hit-test — yet still swept in the pre-process phase
- * (the sweep does not gate on visibility), so it catches `'quit'` before any view consumes it.
+ * A hidden view that ends `run()` when it sees the `'quit'` command. It is invisible (never painted
+ * or hit-tested) but still participates in the pre-process phase, so it catches `'quit'` before any
+ * other view could consume it.
  */
 class QuitCommandSink extends View {
   constructor(private readonly onQuit: (code: number) => void) {
@@ -99,7 +93,7 @@ class QuitCommandSink extends View {
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type === 'command' && inner.command === Commands.quit) {
-      // Coerce the exit code: a numeric arg is the code, otherwise default 0 (AR-86).
+      // The exit code is the command's numeric argument, or 0 if none was given.
       const code = typeof inner.arg === 'number' ? inner.arg : 0;
       this.onQuit(code);
       ev.handled = true;
@@ -108,9 +102,8 @@ class QuitCommandSink extends View {
 }
 
 /**
- * Resolve the initial viewport (PA-3): explicit `opts.viewport`, else the output stream's
- * `columns`×`rows` (real or injected), else `process.stdout`, else `80×24`. The host's first
- * `onResize` corrects it against the live terminal.
+ * Resolve the initial viewport: an explicit `opts.viewport`, else the output terminal's size, else
+ * 80×24. The terminal's first resize event corrects it to the live size.
  */
 function resolveViewport(opts: ApplicationOptions): Size2D {
   if (opts.viewport !== undefined) return opts.viewport;
@@ -127,20 +120,26 @@ function streamSize(stream: { columns?: number; rows?: number } | undefined): Si
 }
 
 /**
- * Derive the shared overlay's visibility from whether it currently hosts any child (RD-14 PA-5/PF-001).
+ * Show the shared popup overlay while it hosts any popup, and hide it once empty.
  *
- * The one full-viewport overlay is shared by every top-z client (the `MenuBar`'s popups + any
- * dropdown popup). Deriving `state.visible` from the live child count is the coexistence rule — the
- * overlay stays visible while **any** client has a child mounted and hides only when the last
- * unmounts, so a menu and a dropdown popup no longer stomp each other's explicit visibility flag.
+ * The single full-screen overlay is shared by every popup client (menu popups, dropdown popups). Its
+ * visibility is derived from whether it currently has any child, so two clients cannot fight over an
+ * explicit visible/hidden flag — it stays visible while any popup is mounted and hides only when the
+ * last one is removed. Call it after adding to or removing from the overlay. The child list and the
+ * visible flag are plain (non-reactive) values, so the update is done imperatively, including the
+ * `invalidate()` that schedules the repaint.
  *
- * Computed **imperatively** (not via a reactive `effect`): `overlay.children` is a plain `View[]`
- * (`group.ts`) and `state.visible` a plain boolean mutated in place (`view.ts`) — neither is a
- * reactive source, so an effect reading them would subscribe to nothing. Every client already drives
- * repaint imperatively (`overlay.add` → `invalidateLayout`), so this must too — hence the
- * `invalidate()` after the flag flip (PF-001). Call it after each `overlay.add`/`remove`.
+ * @param overlay The shared popup overlay group.
+ * @example
+ * import { Group } from '@jsvision/ui';
+ * import { syncOverlayVisible } from '@jsvision/ui';
  *
- * @param overlay The shared top-z overlay group.
+ * const overlay = new Group();
+ * overlay.add(myPopup);
+ * syncOverlayVisible(overlay); // overlay becomes visible
+ *
+ * overlay.remove(myPopup);
+ * syncOverlayVisible(overlay); // overlay hides again now that it is empty
  */
 export function syncOverlayVisible(overlay: Group): void {
   overlay.state.visible = overlay.children.length > 0;
@@ -148,12 +147,33 @@ export function syncOverlayVisible(overlay: Group): void {
 }
 
 /**
- * Construct the application — composes the loop/desktop/chrome/overlay and registers the standard
- * commands (AR-71, AR-75). The chrome children are added to the app root before the loop mounts it,
- * so the whole tree mounts in one pass; the loop seam is injected after the loop exists (PA-7).
+ * Create a terminal application: assemble the event loop, desktop, optional menu bar/status line, and
+ * popup overlay, register the standard window-management commands, and return an {@link Application}.
  *
- * @param opts Required `caps` + optional viewport/theme/logger/keymap/chrome/runtime/streams.
- * @returns The composed {@link Application}.
+ * The whole view tree is built and mounted in one pass; the menu bar and status line are wired to the
+ * loop after it exists. Populate the returned `desktop` with windows and call `run()` to start.
+ *
+ * @param opts Required `caps`, plus optional viewport/theme/logger/keymap/menu/status/runtime/streams.
+ * @returns The assembled {@link Application}.
+ * @example
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { createApplication, Window, menuBar, subMenu, item, statusLine, statusItem, Commands } from '@jsvision/ui';
+ *
+ * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ *
+ * const bar = menuBar([
+ *   subMenu('~W~indow', [item('~T~ile', Commands.tile), item('~C~ascade', Commands.cascade), item('E~x~it', Commands.quit)]),
+ * ]);
+ * const status = statusLine([statusItem('~T~ile', Commands.tile, 'F4'), statusItem('~Q~uit', Commands.quit, 'Alt+X')]);
+ *
+ * const app = createApplication({ caps, menuBar: bar, statusLine: status });
+ *
+ * const win = new Window('Editor');
+ * win.layout.rect = { x: 1, y: 2, width: 30, height: 8 };
+ * app.desktop.addWindow(win);
+ *
+ * const code = await app.run(); // runs until the 'quit' command; restores the terminal on exit
+ * process.exit(code);
  */
 export function createApplication(opts: ApplicationOptions): Application {
   const viewport = resolveViewport(opts);
@@ -162,12 +182,14 @@ export function createApplication(opts: ApplicationOptions): Application {
   const desktop = new Desktop();
   desktop.layout = { size: { kind: 'fr', weight: 1 } };
 
-  // The absolute, full-viewport overlay: top-z, paint/hit-inert until a popup mounts (PF-10).
+  // The full-screen overlay popups mount into. It sits on top and stays hidden (so it neither paints
+  // nor intercepts clicks) until a popup is added.
   const overlay = new Group();
   overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } };
   overlay.state.visible = false;
 
-  // The app root: a column of [sink, menuBar?, desktop, statusLine?, overlay] (overlay paints last).
+  // The app root is a top-to-bottom column: [quit sink, menu bar?, desktop, status line?, overlay].
+  // The overlay is added last so it paints over everything else.
   const root = new Group();
   root.layout = { direction: 'col' };
 
@@ -185,40 +207,42 @@ export function createApplication(opts: ApplicationOptions): Application {
   }
   root.add(overlay);
 
-  // Build the loop, mount the composed tree, then inject the loop seam into the desktop (PA-7).
+  // Build the loop and mount the tree, then wire the parts that need the loop to exist first.
   const loop = createEventLoop(viewport, {
     caps: opts.caps,
     theme: opts.theme,
     logger: opts.logger,
     keymap: opts.keymap,
     commands: Object.values(Commands),
-    quitCommand: Commands.quit, // HR-38: a quit during a modal cascades top-down (PA-2)
-    revealKey: opts.revealKey, // accelerator-overlay AR-10 (undefined ⇒ the loop's 'f12' default)
+    quitCommand: Commands.quit, // a quit while a dialog is open cascades top-down through the modals
+    revealKey: opts.revealKey, // undefined leaves the loop's F12 default in place
   });
   loop.mount(root);
   desktop.attachLoop(loop);
 
-  // RD-14 PF-002/PA-9: the app shell is the default popup host — a dropdown leaf reaches this overlay
-  // + focus save/restore through its `ev.popupHost`. Wired after mount so the loop + overlay exist.
+  // The app is the default popup host: a dropdown control mounts its popup into this overlay and
+  // saves/restores focus through the loop. Wired after mount so the loop and overlay both exist.
   loop.popupHost = {
     overlay,
     focusView: (view) => loop.focusView(view),
     getFocused: () => loop.getFocused(),
   };
 
-  // Wire the menu bar's controller to the overlay + loop seam (PA-7). Done after mount so the loop
-  // exists and the overlay has its composed rect for popup positioning.
+  // Connect the menu bar to the overlay (where its popups mount) and the loop (to emit commands, move
+  // focus, and dismiss accelerator mode when a menu opens). Done after mount so the overlay has a
+  // laid-out rect for positioning popups.
   if (opts.menuBar !== undefined) {
     opts.menuBar.attach(overlay, {
       emitCommand: (command, arg) => loop.emitCommand(command, arg),
       isCommandEnabled: (command) => loop.isCommandEnabled(command),
       focusView: (view) => loop.focusView(view),
       getFocused: () => loop.getFocused(),
-      dismissAccelerators: () => loop.setAcceleratorMode(false), // AR-7: an open menu owns plain letters
+      dismissAccelerators: () => loop.setAcceleratorMode(false), // an open menu owns plain letters
     });
   }
 
-  // Wire the status line's loop seam for activation + greying + press-capture (PA-7 / RD-10 AR-88).
+  // Connect the status line to the loop so its items can emit commands, grey out when disabled, and
+  // capture the pointer for press-and-release feedback.
   if (opts.statusLine !== undefined) {
     opts.statusLine.attach({
       emitCommand: (command, arg) => loop.emitCommand(command, arg),
@@ -228,10 +252,9 @@ export function createApplication(opts: ApplicationOptions): Application {
     });
   }
 
-  // HR-36 / HR-41: on a viewport resize, keep the absolute overlay full-screen, re-anchor the open
-  // menu's outside-click catcher, and re-fit the desktop's zoomed windows to the new geometry. The
-  // loop fires this after the reflow settles (so `desktop.bounds` is current), then repaints once
-  // more. Runs on BOTH the real-host resize (`run.ts` → `loop.resize`) and a headless `loop.resize`.
+  // On resize, keep the overlay full-screen, re-anchor the open menu's outside-click catcher, and
+  // re-fit maximized windows to the new size. The loop fires this after the reflow settles the
+  // desktop bounds, then repaints once more, on both real and headless resizes.
   const menu = opts.menuBar;
   loop.onResize = (size) => {
     overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } };

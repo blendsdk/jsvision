@@ -1,10 +1,7 @@
 /**
- * `surface/` barrel — RD-19 Surface family. Re-exports the public `Surface` (offscreen cell buffer,
- * a `TDrawSurface` port wrapping core `ScreenBuffer`) + `SurfaceView` (the passive `delta`-viewport,
- * a `TSurfaceView::draw()` decode) and their option types. The pure `surface-geometry.ts` helpers
- * stay INTERNAL (mirroring `color-grid.ts`); `Point`/`Rect` are reused from `view`/`layout` (PA-13).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Public surface of the surface family: {@link Surface}, an offscreen cell buffer you draw into once,
+ * and {@link SurfaceView}, a passive scrollable viewport that pans over a `Surface` without redrawing
+ * its contents. The internal clip/margin geometry helpers stay private to this package.
  */
 export { Surface } from './surface.js';
 export type { SurfaceOptions } from './surface.js';

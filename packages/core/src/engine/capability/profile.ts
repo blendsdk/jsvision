@@ -1,22 +1,25 @@
 /**
- * Capability data model (RD-02 §CapabilityProfile, plan doc 03-01).
+ * The capability data model — the immutable description of a terminal that the
+ * rest of the SDK (color, input, rendering, host) reads to auto-configure.
  *
- * Defines the public, immutable contract every later subsystem (color, input,
- * rendering, host) reads to auto-configure: the {@link CapabilityProfile}, the
- * per-field {@link CapabilityReasons} trace, the resolve {@link ResolveOptions},
- * and the frozen {@link CapabilityResolution} return shape. The full shape is
- * defined now even where some fields are populated from the table/defaults until
- * RD-03 refines them (PL-2), so the type stays stable for RD-04+.
+ * Defines {@link CapabilityProfile} (the detected capabilities), the per-field
+ * {@link CapabilityReasons} trace (which detection layer decided each field), the
+ * {@link ResolveOptions} you pass to the resolvers, and the frozen
+ * {@link CapabilityResolution} they return.
  *
- * All fields are `readonly`; {@link CapabilityResolution} is additionally
- * deep-frozen at runtime (PL-9) so mutation fails both at compile time and at
- * runtime.
+ * Every field is `readonly`, and {@link CapabilityResolution} is additionally
+ * deep-frozen at runtime, so mutation fails at both compile time and run time —
+ * treat a resolved profile as read-only.
  */
 
 /** Color rendering depth, coarsest to richest. */
 export type ColorDepth = 'mono' | '16' | '256' | 'truecolor';
 
-/** The layer that determined a given field (the "reason trace", PL-3). */
+/**
+ * Which detection layer decided a given field, from highest precedence to
+ * lowest: an explicit `override`, a live `runtime` probe, an `env` variable, the
+ * known-terminal `table`, or the conservative `default`.
+ */
 export type ReasonLayer = 'override' | 'runtime' | 'env' | 'table' | 'default';
 
 /** Mouse-reporting capabilities. */
@@ -56,17 +59,16 @@ export interface GlyphCaps {
   readonly halfBlocks: boolean;
   /**
    * True when the terminal renders the fallback-prone arrow/geometric chrome
-   * glyphs (`▲▼◄►•↑↕×` — mostly East-Asian-Ambiguous; `◄►` are EAW-Neutral but
-   * equally font-fallback-prone) double-width — the serializer then swaps them to
-   * ASCII (see `render/glyphs.ts` `AMBIGUOUS_FALLBACK`). Default `false`. (AR-5)
+   * glyphs (`▲▼◄►•↑↕×`) as double-width. When true, the renderer swaps those
+   * glyphs for ASCII equivalents so the layout stays intact. Default `false`.
    */
   readonly ambiguousWide: boolean;
 }
 
-/** Host platform, mirroring `process.platform`'s supported values for RD-02. */
+/** Host platform, mirroring the supported values of `process.platform`. */
 export type Platform = 'linux' | 'darwin' | 'win32';
 
-/** Immutable description of the running terminal (RD-02 §CapabilityProfile). */
+/** The immutable, detected description of the running terminal. */
 export interface CapabilityProfile {
   readonly colorDepth: ColorDepth;
   readonly mouse: MouseCaps;
@@ -83,8 +85,9 @@ export interface CapabilityProfile {
 }
 
 /**
- * Per-field reason trace, mirroring the profile's top-level fields (one
- * {@link ReasonLayer} per field group, PL-3 — not every nested boolean).
+ * Which detection layer decided each capability — one {@link ReasonLayer} per
+ * top-level field of {@link CapabilityProfile} (per field group, not per nested
+ * boolean). Useful for debugging why a capability came out the way it did.
  */
 export interface CapabilityReasons {
   readonly colorDepth: ReasonLayer;
@@ -100,16 +103,16 @@ export interface CapabilityReasons {
   readonly multiplexer: ReasonLayer;
 }
 
-/** Recursive partial used by the override API (PL-7). */
+/** Recursive partial: every field (nested included) becomes optional. Used by the `override` API. */
 export type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
 };
 
 /**
- * Minimal byte-stream seam for layer-2 runtime queries (PL-1).
- *
- * Implemented by RD-06's input decoder later; RD-02 ships only the seam and a
- * stub-driven parser. When `options.query` is absent, layer 2 is skipped.
+ * A minimal byte-stream seam for probing the terminal at runtime. Pass an
+ * implementation as `options.query` to {@link resolveCapabilitiesAsync} to enable
+ * live detection; omit it and the probe is skipped. Use `createTerminalQuery()`
+ * for a ready-made adapter over Node streams.
  */
 export interface TerminalQuery {
   /** Write a query request (e.g. a DA request) to the terminal. */
@@ -118,33 +121,35 @@ export interface TerminalQuery {
   read(): AsyncIterable<Uint8Array>;
 }
 
-/** Options for {@link resolveCapabilities}; every input is injectable for tests. */
+/** Options for the capability resolvers; every input is injectable. */
 export interface ResolveOptions {
-  /** Force any subset of fields, bypassing detection (deep-merged, PL-7). */
+  /** Force any subset of fields, bypassing detection (deep-merged over the result). */
   readonly override?: DeepPartial<CapabilityProfile>;
-  /** Environment to read from; defaults to `process.env`. (Injectable for tests.) */
+  /** Environment to read from; defaults to `process.env`. */
   readonly env?: NodeJS.ProcessEnv;
   /** Platform to assume; defaults to `process.platform`. */
   readonly platform?: Platform;
-  /** Optional live-query seam; when absent, layer 2 is skipped (PL-1). */
+  /** Live-query seam for runtime probing; when absent, the live probe is skipped. */
   readonly query?: TerminalQuery;
-  /** Live-query timeout in ms (default 200, PL-11). */
+  /** Live-query timeout in milliseconds (default 200). */
   readonly timeoutMs?: number;
-  /** Force re-resolution, ignoring the per-process cache (PL-14). */
+  /** Force re-detection, ignoring the per-process cache. */
   readonly refresh?: boolean;
 }
 
-/** Frozen result returned by {@link resolveCapabilities} (PL-6, PL-9). */
+/** The frozen result returned by the capability resolvers. */
 export interface CapabilityResolution {
+  /** The detected capabilities. */
   readonly profile: CapabilityProfile;
+  /** Which detection layer decided each field of {@link profile}. */
   readonly reasons: CapabilityReasons;
   /**
-   * Bytes read during an async layer-2 query that were **not** part of any recognised terminal
-   * response — genuine input the user typed while detection was in flight (HR-22, AC-4). Present only
-   * on {@link resolveCapabilitiesAsync} runs that issued a query and captured passthrough; a caller
-   * doing detection before starting its input loop must feed these into the decoder **first**, ahead
-   * of subsequent stdin, so they surface as key events in arrival order. Omitted (undefined) on the
-   * sync path and whenever no passthrough was captured.
+   * Real input bytes the user typed while a live probe was in flight (not part of
+   * any terminal response). Present only on {@link resolveCapabilitiesAsync} runs
+   * that issued a query and captured such bytes. If you detect before starting
+   * your input loop, feed these into the decoder **first**, ahead of further
+   * stdin, so the keystrokes surface as events in arrival order. Omitted on the
+   * sync path and whenever nothing was captured.
    */
   readonly passthrough?: Uint8Array;
 }
