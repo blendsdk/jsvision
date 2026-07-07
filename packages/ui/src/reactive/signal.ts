@@ -1,9 +1,10 @@
 /**
- * Signals (RD-01, 03-01; AR-01, AR-05) — the writable leaf sources of the graph.
+ * Signals — the writable, reactive values at the leaves of the graph.
  *
- * A signal is a callable accessor with `.set`/`.update`/`.peek`. Reading inside a tracked
- * computation subscribes it; writing notifies observers only when the value actually
- * changes under the signal's equality policy.
+ * A signal is a callable accessor with `.set`/`.update`/`.peek`. Reading it inside a tracked
+ * computation (an `effect` or `computed`) subscribes that computation, so it re-runs whenever the
+ * value changes. Writing notifies subscribers only when the value actually changes under the
+ * signal's equality policy — an equal write is a no-op.
  */
 import type { EqualsOption, Signal, Source } from './types.js';
 import { registerRead, notifyChanged } from './scheduler.js';
@@ -11,20 +12,30 @@ import { registerRead, notifyChanged } from './scheduler.js';
 /** Options for {@link signal}. */
 export interface SignalOptions<T> {
   /**
-   * Change-equality policy (AR-05): a predicate (equal ⇒ notify nothing), or `false` to
-   * notify on every write. Defaults to `Object.is`.
+   * How the signal decides whether a write changed the value: a predicate returning `true` when the
+   * new value counts as equal to the old (equal ⇒ nothing is notified), or `false` to treat every
+   * write as a change (always notify). Defaults to `Object.is`.
    */
   equals?: EqualsOption<T>;
 }
 
 /**
- * Create a writable reactive signal (AR-01).
+ * Create a writable reactive value.
  *
  * @param initial The initial value.
- * @param options Optional equality policy (AR-05).
- * @returns A callable accessor: call to read (subscribes the running computation); `.set`
- *   replaces the value; `.update` derives the next value from the previous; `.peek` reads
- *   without subscribing.
+ * @param options Optional equality policy — see {@link SignalOptions}.
+ * @returns A callable accessor: call it to read (and, inside a tracked computation, subscribe);
+ *   `.set(v)` replaces the value; `.update(fn)` derives the next value from the previous; `.peek()`
+ *   reads the current value without subscribing.
+ * @example
+ * import { signal, effect } from '@jsvision/ui';
+ *
+ * const count = signal(0);
+ * effect(() => console.log('count is', count())); // logs 0, then re-runs on each change
+ * count.set(1);                 // effect re-runs → "count is 1"
+ * count.update((n) => n + 10);  // effect re-runs → "count is 11"
+ * count.set(11);                // equal value → no re-run
+ * count.peek();                 // 11, read without subscribing
  */
 export function signal<T>(initial: T, options?: SignalOptions<T>): Signal<T> {
   const equals: (a: T, b: T) => boolean = options?.equals === false ? () => false : (options?.equals ?? Object.is);
@@ -33,11 +44,11 @@ export function signal<T>(initial: T, options?: SignalOptions<T>): Signal<T> {
     value: initial,
     equals,
     observers: new Set(),
-    // A signal is always current, so there is nothing to pull (AR-07 lazy-pull interface).
+    // A signal always holds its current value, so there is nothing to lazily recompute on read.
     pull: () => undefined,
   };
 
-  /** Apply a write: no-op on an equal value (AR-05), else assign and propagate. */
+  /** Apply a write: no-op on an equal value, else assign and notify subscribers. */
   function setValue(value: T): void {
     if (source.equals(source.value, value)) return;
     source.value = value;

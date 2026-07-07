@@ -1,9 +1,13 @@
 /**
- * Effects (RD-01, 03-01; AR-02, AR-03) — the eager leaf sinks of the graph.
+ * Effects — reactive side effects that run when their dependencies change.
  *
- * An effect runs once on creation and re-runs whenever a tracked dependency changes. It has
- * no memoized value and no observers. Disposal is owner-scoped only (PA-5): there is no
- * per-effect disposer handle; an effect is torn down when its owner scope is disposed.
+ * An effect runs its body once immediately, then re-runs whenever any signal/computed it read
+ * changes. Use it for the imperative edges of a reactive app: logging, syncing external state, or
+ * driving a redraw. It produces no value.
+ *
+ * There is no per-effect disposer handle — an effect lives until the owner scope it was created in
+ * is disposed. Create effects inside a {@link createRoot} (or a view's mount scope) so they are torn
+ * down automatically; one created with no owner keeps running forever and dev-warns.
  */
 import type { Computation } from './types.js';
 import { NodeState } from './types.js';
@@ -11,11 +15,20 @@ import { updateIfNecessary } from './scheduler.js';
 import { attachComputation } from './owner.js';
 
 /**
- * Create a side-effecting computation and run it once synchronously (AC-5). It re-runs on
- * every tracked-dependency change and is disposed with its owner scope (AR-03); created
- * outside any `createRoot`, it works but is never auto-disposed and dev-warns (AR-14).
+ * Register a reactive side effect and run it once immediately. It re-runs on every change to a
+ * signal or computed it read, and is disposed with its owner scope.
  *
- * @param fn The effect body; its tracked reads become its dependencies (re-collected each run).
+ * @param fn The effect body; the signals/computeds it reads become its dependencies (re-collected
+ *   on each run, so conditional branches only subscribe what they actually read).
+ * @example
+ * import { signal, effect, createRoot } from '@jsvision/ui';
+ *
+ * const name = signal('Ada');
+ * createRoot((dispose) => {
+ *   effect(() => console.log('hello', name())); // "hello Ada", then re-runs on change
+ *   name.set('Grace');                          // "hello Grace"
+ *   dispose();                                  // effect stops re-running
+ * });
  */
 export function effect(fn: () => void): void {
   const computation: Computation = {
@@ -28,8 +41,8 @@ export function effect(fn: () => void): void {
     evaluating: false,
     isEffect: true,
     observers: null, // an effect is a leaf sink — nothing observes it
-    recompute: null, // effects run directly; they have no memo to recompute
+    recompute: null, // effects run directly; they have no cached value to recompute
   };
   attachComputation(computation);
-  updateIfNecessary(computation); // initial synchronous run (AC-5)
+  updateIfNecessary(computation); // initial synchronous run
 }

@@ -1,22 +1,29 @@
 /**
- * Geometry helpers for the view spine (RD-03, AR-37). Reuses RD-02's public `Rect`/`Size2D`
- * interfaces and adds a `Point` plus the pure clip primitives the `DrawContext` needs. All
- * functions are pure (no mutation), integer-in / integer-out.
+ * Pure geometry helpers for terminal-cell rectangles and points. Reuses the layout engine's
+ * `Rect`/`Size2D` shapes and adds a `Point` plus the clip primitives a `DrawContext` needs. Every
+ * function is pure (no mutation) and works in integer cell coordinates.
  */
 import type { Rect } from '../layout/index.js';
 
-/** A point in integer terminal cells. */
+/** A point in integer terminal cells (column `x`, row `y`). */
 export interface Point {
   readonly x: number;
   readonly y: number;
 }
 
 /**
- * The overlap of two rects — the clip primitive (a view rect ∩ its ancestor clip). A
- * non-overlapping pair yields a zero-size rect (`width`/`height` clamped to 0), which downstream
- * resolves to clipped no-op draws (AC-17). Never returns negative dimensions.
+ * Compute the overlapping region of two rects — the clip operation (a view rect ∩ its ancestor's
+ * clip). When the two do not overlap, the result has `width`/`height` of `0` (never negative), which
+ * downstream code treats as "draw nothing".
  *
+ * @param a First rect.
+ * @param b Second rect.
  * @returns The intersection rect; zero-size when the inputs do not overlap.
+ * @example
+ * import { intersect } from '@jsvision/ui';
+ *
+ * intersect({ x: 0, y: 0, width: 10, height: 4 }, { x: 5, y: 1, width: 10, height: 10 });
+ * // → { x: 5, y: 1, width: 5, height: 3 }
  */
 export function intersect(a: Rect, b: Rect): Rect {
   const x = Math.max(a.x, b.x);
@@ -27,19 +34,37 @@ export function intersect(a: Rect, b: Rect): Rect {
 }
 
 /**
- * Offset a rect by `(dx, dy)`, keeping its size (e.g. view-local → absolute coordinates).
+ * Offset a rect by `(dx, dy)`, keeping its size — e.g. to convert view-local coordinates to absolute
+ * screen coordinates.
  *
- * @returns A new translated rect.
+ * @param r The rect to move.
+ * @param dx Horizontal offset in cells.
+ * @param dy Vertical offset in cells.
+ * @returns A new translated rect (the input is not mutated).
+ * @example
+ * import { translate } from '@jsvision/ui';
+ *
+ * translate({ x: 2, y: 3, width: 8, height: 2 }, 10, 0);
+ * // → { x: 12, y: 3, width: 8, height: 2 }
  */
 export function translate(r: Rect, dx: number, dy: number): Rect {
   return { x: r.x + dx, y: r.y + dy, width: r.width, height: r.height };
 }
 
 /**
- * Whether a point lies inside a rect, using half-open bounds
- * (`x ≤ p.x < x + width`, `y ≤ p.y < y + height`) so adjacent rects never both contain a cell.
+ * Test whether a point lies inside a rect. Bounds are half-open (`x ≤ p.x < x + width`,
+ * `y ≤ p.y < y + height`), so two edge-adjacent rects never both contain the same cell — handy for
+ * hit-testing tiled regions.
  *
+ * @param r The rect.
+ * @param p The point to test.
  * @returns `true` when `p` is inside `r`.
+ * @example
+ * import { contains } from '@jsvision/ui';
+ *
+ * const rect = { x: 0, y: 0, width: 4, height: 4 };
+ * contains(rect, { x: 3, y: 3 }); // true
+ * contains(rect, { x: 4, y: 0 }); // false — right edge is exclusive
  */
 export function contains(r: Rect, p: Point): boolean {
   return p.x >= r.x && p.x < r.x + r.width && p.y >= r.y && p.y < r.y + r.height;

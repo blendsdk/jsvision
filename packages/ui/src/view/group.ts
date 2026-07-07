@@ -1,10 +1,14 @@
 /**
- * `Group` (RD-03) — the one concrete RD-03 container. It owns ordered `children` (array order =
- * z-order, back-to-front, AR-38), fills an optional `background` theme role so overlap never
- * leaks stale cells (AR-38), and wires each added child's owner scope **under its own** scope at
- * mount (AR-36, AR-43). The render root's compose walker (Phase 5) draws the background then
- * recurses into children; `Group.draw` itself only fills the background (child iteration stays
- * centralized in the walker, keeping clip/offset in one place).
+ * `Group` — a container view that holds and stacks child views.
+ *
+ * Children are kept in an ordered `children` array, and that order is the paint order:
+ * back-to-front, so a later child draws over an earlier one. Set an optional `background` theme role
+ * to fill the group's rect before children paint, so overlapping windows never leak stale cells.
+ * Each child added to a mounted group gets its reactive scope nested under the group's, so unmounting
+ * the group (or removing the child) tears the child's effects down automatically.
+ *
+ * Use {@link add}/{@link remove} for static children, and {@link addDynamic} to drive children
+ * reactively from a `Show`/`For` accessor.
  */
 import type { Owner } from '../reactive/index.js';
 import { runWithOwner, effect } from '../reactive/index.js';
@@ -13,37 +17,61 @@ import type { ViewHost } from './view.js';
 import type { DrawContext, ThemeRoleName } from './types.js';
 
 /**
- * A reactive child producer: a `Show<View>` accessor (`() => View | undefined`) or a
- * `For<T, View>` accessor (`() => View[]`). Built by a {@link DynamicBuilder} at mount.
+ * A reactive child producer: a `Show<View>` accessor (`() => View | undefined`) or a `For<T, View>`
+ * accessor (`() => View[]`). Built by a {@link DynamicBuilder} at mount.
  */
 type DynamicProducer = (() => View | undefined) | (() => View[]);
 
 /**
- * A factory that **constructs** a {@link DynamicProducer} — i.e. calls `Show(...)`/`For(...)` — so the
- * combinator's driving effect/computeds are created under the group's owner scope (RD-13 HR-13). The
- * factory shape (`() => Show(...)`) is what lets the group own and dispose the combinator on unmount;
- * passing the already-constructed accessor would leave its nodes attached to the ambient owner at call
- * time (usually `null`) and leaking a live reconcile after the group is gone.
+ * A factory that **constructs** a {@link DynamicProducer} — i.e. it calls `Show(...)`/`For(...)`
+ * inside itself. The factory shape (`() => Show(...)`) is what lets the group create the combinator
+ * under its own scope and dispose it on unmount; passing an already-constructed accessor would leave
+ * the combinator's reactive nodes attached to whatever scope was active at call time (usually none),
+ * leaking a live reconcile after the group is gone.
  */
 type DynamicBuilder = () => DynamicProducer;
 
-/** A retained container of child views. */
+/**
+ * A retained container of child views.
+ *
+ * @example
+ * import { Group, View, createRenderRoot, type DrawContext } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
+ *
+ * const root = new Group();
+ * root.layout = { direction: 'row', gap: 1, padding: 1 };
+ * root.background = 'desktop';
+ *
+ * const left = new Panel('left');
+ * left.layout = { size: { kind: 'fr', weight: 1 } };
+ * const right = new Panel('right');
+ * right.layout = { size: { kind: 'fr', weight: 1 } };
+ * root.add(left);   // added back-to-front: `left` then `right`
+ * root.add(right);
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * createRenderRoot({ width: 40, height: 8 }, { caps }).mount(root);
+ */
 export class Group extends View {
-  /** Ordered children; array order is paint order (back-to-front, AR-38). */
+  /** Ordered children; array order is paint order (back-to-front). */
   readonly children: View[] = [];
-  /** Optional background theme role filled before children compose (AR-38). */
+  /** Optional background theme role filled before children compose, so overlap never leaks cells. */
   background?: ThemeRoleName;
   /**
    * @internal The focused child in this group's local order; `null` until focus enters this group.
-   * The RD-04 focus manager maintains it; the root→leaf path of `current` pointers is the global
-   * focus chain (AR-48).
+   * The focus manager maintains it; the root→leaf path of `current` pointers is the global focus chain.
    */
   current: View | null = null;
 
   /** Reactive child-producer factories registered via {@link addDynamic} (built + started at mount). */
   private readonly dynamicBuilders: DynamicBuilder[] = [];
 
-  /** Fill the `background` role (if set) across the group rect; children are composed by the walker. */
+  /** Fill the `background` role (if set) across the group rect; children are composed by the render root. */
   draw(ctx: DrawContext): void {
     if (this.background !== undefined) {
       ctx.fill(' ', ctx.color(this.background));
@@ -51,10 +79,9 @@ export class Group extends View {
   }
 
   /**
-   * Add a child: set its parent and append it (z-order = array order). If this group is already
-   * mounted, mount the child subtree immediately (its scope nests under this group's, AR-43) and
-   * schedule a reflow for the structural change (AR-33); otherwise the child mounts when this
-   * group itself mounts.
+   * Add a child, appending it on top (later in the array draws in front). If this group is already
+   * mounted, the child mounts immediately — its scope nested under this group's — and a reflow is
+   * scheduled for the new layout; otherwise the child mounts when this group itself mounts.
    *
    * @param child The view to append.
    */
@@ -68,9 +95,9 @@ export class Group extends View {
   }
 
   /**
-   * Remove a child: dispose its scope (recursively disposing descendants and running their
-   * `onCleanup`, AR-36), detach it, and schedule a reflow. Removing a non-child (or removing
-   * twice) is a safe no-op.
+   * Remove a child: dispose its scope (recursively disposing its descendants and running their
+   * `onCleanup`), detach it, and schedule a reflow. Removing a non-child (or removing twice) is a
+   * safe no-op.
    *
    * @param child The view to remove.
    */
@@ -78,28 +105,32 @@ export class Group extends View {
     const index = this.children.indexOf(child);
     if (index === -1) return;
     this.children.splice(index, 1);
-    // HR-10 (PA-10): if the removed child was this group's focused child, clear the dangling `current`
-    // pointer (the focus chain IS these pointers) and re-home focus to the next focusable sibling.
+    // If the removed child held this group's focus, clear the dangling `current` pointer (the focus
+    // chain IS these pointers) and re-home focus to the next focusable sibling.
     const wasFocusChild = this.current === child;
     if (wasFocusChild) this.current = null;
-    child.unmount(); // disposes the scope; the mount cleanup resets the child's wiring (RT-3)
-    child.parent = null; // also cover the never-mounted case (unmount was a no-op)
+    child.unmount(); // disposes the scope; the mount cleanup resets the child's wiring
+    child.parent = null; // also covers the never-mounted case (unmount was a no-op)
     if (wasFocusChild) this.host?.healFocus?.(this);
     if (this.mounted) this.invalidateLayout();
   }
 
   /**
-   * Register a reactive child producer — a `Show<View>` or `For<T, View>` accessor — distinct from
-   * the static {@link add} because a producer is an accessor, not a `View` (AR-36, PF-001). When
-   * this group is mounted a reconcile **effect** runs under the group's scope: it reads the
-   * accessor (subscribing), diffs the produced views against the currently-mounted dynamic
-   * children, mounts the new ones and unmounts the gone ones (their `onCleanup` fires), and
-   * schedules a reflow on any change. If the group is not yet mounted the reconcile starts when it
-   * mounts.
+   * Add children reactively from a `Show`/`For` accessor, so the set of children updates itself as
+   * signals change. When the group is mounted, an effect reads the accessor, mounts any newly
+   * produced views, unmounts any that disappeared (firing their `onCleanup`), and schedules a
+   * reflow on change. Pass a factory that *builds* the combinator inside itself, not an
+   * already-built accessor — this lets the group own and dispose the combinator's reactive nodes on
+   * unmount.
    *
-   * @param build A factory that constructs the combinator, e.g. `() => Show(cond, then)` /
-   *   `() => For(each, key, render)` (RD-13 HR-13 — the factory shape lets the group own the
-   *   combinator's reactive nodes so they dispose on unmount).
+   * @param build A factory that constructs the combinator, e.g. `() => Show(cond, then)` or
+   *   `() => For(each, key, render)`.
+   * @example
+   * import { Group, signal, Show } from '@jsvision/ui';
+   *
+   * const open = signal(false);
+   * const group = new Group();
+   * group.addDynamic(() => Show(() => open(), () => new Panel())); // Panel appears when `open` is true
    */
   addDynamic(build: DynamicBuilder): void {
     this.dynamicBuilders.push(build);
@@ -108,7 +139,7 @@ export class Group extends View {
 
   /**
    * @internal Mount the group, then mount every static child **under the group's scope** and start
-   * each registered dynamic-child reconcile (AR-36, AR-43).
+   * each registered dynamic-child reconcile.
    */
   override mount(host: ViewHost | null, parentScope: Owner | null): void {
     super.mount(host, parentScope);
@@ -121,13 +152,13 @@ export class Group extends View {
   }
 
   /**
-   * Construct the combinator and run its reconcile effect **under the group's scope** (AR-36, HR-13),
-   * so both the combinator's own driving nodes and the reconcile effect are disposed on unmount.
+   * Construct the combinator and run its reconcile effect **under the group's scope**, so both the
+   * combinator's own driving nodes and the reconcile effect are disposed on unmount.
    */
   private startDynamic(build: DynamicBuilder): void {
     let current: View[] = [];
     runWithOwner(this.scope, () => {
-      // Build the Show/For here (owned by the group scope, HR-13), then subscribe to it.
+      // Build the Show/For here so it is owned by the group scope, then subscribe to it.
       const producer = build();
       effect(() => {
         const produced = producer();
@@ -160,7 +191,7 @@ export class Group extends View {
   private unmountDynamicChild(view: View): void {
     const index = this.children.indexOf(view);
     if (index !== -1) this.children.splice(index, 1);
-    // HR-10 (PA-10): heal a dangling focus pointer at the removed dynamic child, then re-home focus.
+    // Heal a dangling focus pointer at the removed dynamic child, then re-home focus.
     const wasFocusChild = this.current === view;
     if (wasFocusChild) this.current = null;
     view.unmount();

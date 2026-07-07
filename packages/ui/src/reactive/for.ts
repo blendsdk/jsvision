@@ -1,15 +1,11 @@
 /**
- * `For` (RD-01, 03-03; AR-04, AR-17) — a keyed list combinator.
+ * `For` — a reactive keyed list: map a reactive array of items to a reactive array of nodes.
  *
- * UI-independent: generic over item type `T` and rendered child type `N`, returning a reactive
- * accessor yielding the current node array. Items are reconciled **by key** so a reorder reuses
- * existing node instances (no re-render) and a removed key disposes its scope. Each item carries
- * its own reactive `index`, so `render`'s `index()` re-runs an item effect when the item moves.
- *
- * It is driven by an internal **effect** (not a pure computed): reconciliation writes the
- * per-item index signals and the output signal, and this scheduler requires computeds to be
- * side-effect-free. The whole diff runs in a single `batch` so one list change coalesces to one
- * flush and no item effect observes an intermediate index.
+ * Generic over the item type `T` and produced node type `N`. It returns a reactive accessor
+ * yielding the current node array (view trees, or any value). Items are reconciled **by key**, so
+ * reordering the list reuses the existing node instances (no rebuild) and only removed keys have
+ * their scope disposed. Each item is given its own reactive `index`, so an item that reads
+ * `index()` re-runs just that item's effect when it moves — the rest of the list is untouched.
  */
 import { signal } from './signal.js';
 import { effect } from './effect.js';
@@ -30,15 +26,26 @@ interface ForEntry<T, N> {
 }
 
 /**
- * Render a keyed, reconciled list (AR-04).
+ * Map a reactive list of items to a reconciled, keyed list of nodes.
  *
  * @param each Reactive source of the item array.
- * @param key Stable identity per item (used directly as a `Map` key); keys should be unique
- *   among live items — duplicates dev-warn and resolve last-writer-wins (AR-17).
- * @param render Builds a node for an item; receives a reactive `index` accessor (AC-19). Called
- *   once per distinct key — never again for a surviving key on reorder (AC-13).
- * @returns A reactive accessor yielding the node array, always in `each()` order and of the same
- *   length as `each()`.
+ * @param key Returns a stable identity for an item (used directly as a map key). Keys must be unique
+ *   among the live items — a duplicate dev-warns and resolves last-writer-wins.
+ * @param render Builds a node for an item, receiving a reactive `index` accessor. Called once per
+ *   distinct key — never again for a surviving key when the list reorders.
+ * @returns A reactive accessor yielding the node array, always in `each()` order and the same length
+ *   as `each()`.
+ * @example
+ * import { signal, For } from '@jsvision/ui';
+ *
+ * type Task = { id: number; title: string };
+ * const tasks = signal<Task[]>([{ id: 1, title: 'write' }, { id: 2, title: 'ship' }]);
+ * const rows = For(
+ *   () => tasks(),
+ *   (task) => task.id,               // stable key → reorder reuses nodes
+ *   (task, index) => ({ label: `${index()}: ${task.title}` }),
+ * );
+ * rows(); // [{ label: '0: write' }, { label: '1: ship' }]
  */
 export function For<T, N>(
   each: () => readonly T[],
@@ -69,7 +76,7 @@ export function For<T, N>(
   function reconcile(items: readonly T[]): N[] {
     const keys = items.map((item, index) => key(item, index));
 
-    // Duplicate-key guard (AR-17, PA-1): warn once per reconcile if a key repeats among items.
+    // Duplicate-key guard: warn once per reconcile if a key repeats among items.
     const liveKeys = new Set<unknown>();
     let warned = false;
     for (const k of keys) {
@@ -80,7 +87,7 @@ export function For<T, N>(
       liveKeys.add(k);
     }
 
-    // Remove entries whose key is absent now (dispose scope → its onCleanups fire — AC-13).
+    // Remove entries whose key is gone now (dispose scope → its onCleanups fire).
     for (const [k, entry] of entries) {
       if (!liveKeys.has(k)) {
         entry.dispose();
@@ -97,12 +104,12 @@ export function For<T, N>(
         entries.set(k, createEntry(items[i], i));
       } else {
         existing.item = items[i]; // refresh item under the stable key (last-writer-wins)
-        existing.setIndex(i); // reactive index update (AC-19); render is not re-called (AC-13)
+        existing.setIndex(i); // reactive index update; render is NOT re-called for a surviving key
       }
     }
 
     // Output in item order: each position resolves to its (deduped) entry node, so the length
-    // always equals items.length and a duplicate key repeats its node (PA-6).
+    // always equals items.length and a duplicate key repeats its node.
     const nodes: N[] = [];
     for (let i = 0; i < items.length; i += 1) {
       const entry = entries.get(keys[i]);
