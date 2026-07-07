@@ -301,7 +301,7 @@ export class TabStrip extends View {
     const style = ctx.color(roleName);
     const raw = ctx.role(roleName);
     // Only an enabled tab reaches the `tildeSegments` accent path below; take the accelerator-overlay
-    // underline there while reveal is on (a disabled tab draws its plain label with no accent, FR-6).
+    // underline there while reveal is on (a disabled tab draws its plain label with no accent).
     const hotStyle = accentStyle({ fg: raw.hotkey ?? style.fg, bg: style.bg }, ctx.revealAccelerators);
     // Blank the whole slot in the role colour (pads + label field), then draw the label segments.
     ctx.fillRect(slot.x, 0, slot.width, 1, ' ', style);

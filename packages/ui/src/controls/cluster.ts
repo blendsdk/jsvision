@@ -82,7 +82,7 @@ export abstract class Cluster extends View {
   override draw(ctx: DrawContext): void {
     const { icon, markers } = this.box();
     const { width: w, height: h } = ctx.size;
-    // Only an enabled item's accent takes the accelerator-overlay underline (FR-6); `hotColor` below
+    // Only an enabled item's accent takes the accelerator-overlay underline; `hotColor` below
     // already collapses a disabled row's hot run to its base color.
     const accent = accentStyle(ctx.color('clusterShortcut'), ctx.revealAccelerators);
     for (let i = 0; i < this.rawLabels.length && i < h; i += 1) {

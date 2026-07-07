@@ -127,7 +127,7 @@ export class ScreenBuffer {
   /**
    * Before overwriting (x, y), repair any wide glyph this write would split: if
    * the existing cell is a wide lead, blank its continuation; if it is a
-   * continuation, blank its lead. Prevents a stale half-glyph (PL-17).
+   * continuation, blank its lead. Prevents a stale half-glyph.
    */
   protected clearOrphan(x: number, y: number): void {
     const cell = this.cellAt(x, y);

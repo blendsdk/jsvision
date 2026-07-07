@@ -7,7 +7,7 @@
  * build on two classes of violation:
  *
  *   Check A — BANNED references in any comment (JSDoc or `//` / block):
- *     - CodeOps process IDs: RD- PA- AR- PF- HR- GATE- AC- ST- ADR- DEF-
+ *     - CodeOps process IDs: RD- PA- AR- PF- HR- GATE- AC- ST- ADR- DEF- FR- RT- PL-
  *     - Repo doc paths:      codeops/…  plans/…  requirements/…
  *     - Turbo Vision / C++ provenance: *.cpp / *.h refs, getColor(…), cpXxx palette names,
  *       and T…::method C++ scope citations.
@@ -49,7 +49,7 @@ function findBarrel(pkgDir) {
 
 /** Banned comment patterns, each with a human label for the report. */
 const BAN_RULES = [
-  { name: 'codeops-id', re: /\b(?:RD|PA|AR|PF|HR|GATE|AC|ST|ADR|DEF)-\d+/g },
+  { name: 'codeops-id', re: /\b(?:RD|PA|AR|PF|HR|GATE|AC|ST|ADR|DEF|FR|RT|PL)-\d+/g },
   { name: 'repo-doc-path', re: /\b(?:codeops|plans|requirements)\/[\w./-]*/g },
   { name: 'cpp-source-ref', re: /\b[\w.-]+\.(?:cpp|h)\b/g },
   { name: 'tv-palette', re: /\bgetColor\s*\(|\bcp[A-Z][A-Za-z]{2,}\b/g },

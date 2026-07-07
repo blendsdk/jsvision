@@ -1,19 +1,17 @@
 /**
  * `@jsvision/core` — public entry point of the SDK foundation.
  *
- * Re-exports the public API of each landed subsystem so consumers import
- * everything from `@jsvision/core`. Currently: the package {@link VERSION}
- * (RD-01), the capability detection core (RD-02), the input decoder
- * (RD-06), the rendering engine (RD-04), the host & lifecycle subsystem
- * (RD-07), the safety subsystem (RD-08), and the color & styling subsystem
- * (RD-05).
+ * Re-exports the public API of each subsystem so consumers import everything from
+ * `@jsvision/core`: the package {@link VERSION}, terminal capability detection, the input
+ * decoder, the rendering engine, the host & lifecycle subsystem, the safety subsystem, and the
+ * color & styling subsystem.
  *
- * The `.js` extension in the import specifiers is required by NodeNext ESM
- * resolution (it resolves to the `.ts` source during development via tsx).
+ * The `.js` extension in the import specifiers is required by NodeNext ESM resolution (it
+ * resolves to the `.ts` source during development).
  */
 export { VERSION } from './version.js';
 
-// RD-02 — capability detection core.
+// Capability detection — resolve the terminal's features (color depth, unicode, mouse, keyboard, OSC).
 export { resolveCapabilities, resolveCapabilitiesAsync } from './capability/index.js';
 export type {
   CapabilityProfile,
@@ -33,7 +31,7 @@ export type {
   UnicodeCaps,
 } from './capability/index.js';
 
-// RD-06 — input decoder.
+// Input decoder — turn raw terminal bytes into typed key/mouse/paste/focus events, plus a chord keymap.
 export { createDecoderState, decode, flush, createKeymap } from './input/index.js';
 export type {
   KeyEvent,
@@ -51,7 +49,7 @@ export type {
 } from './input/index.js';
 export { ESC_TIMEOUT_MS, PASTE_CAP_BYTES, KEY_NAMES } from './input/index.js';
 
-// RD-04 — rendering engine.
+// Rendering engine — width-correct ScreenBuffer, damage-diff serialize, glyph fallback, OSC, and cursor.
 export {
   ScreenBuffer,
   Attr,
@@ -82,8 +80,8 @@ export type {
   RenderOptions,
 } from './render/index.js';
 
-// RD-07 — host & lifecycle. (RD-03 adds the real tty-backed TerminalQuery;
-// the RD-11 follow-up adds the ambiguous-width startup probe & warning.)
+// Host & lifecycle — the native tty host (raw mode, alt-screen, signals, guaranteed restore on every
+// exit), the real terminal query, and the ambiguous-width startup probe & warning.
 export {
   createHost,
   detectTty,
@@ -117,7 +115,7 @@ export type {
   CursorPosition,
 } from './host/index.js';
 
-// RD-08 — safety (essentials gate, errors, logging, redaction, sanitizer).
+// Safety — essentials gate, typed errors, screen-safe logging, redaction, and the sanitizer.
 export {
   sanitize,
   evaluateEssentials,
@@ -143,7 +141,7 @@ export type {
   RedactedEvent,
 } from './safety/index.js';
 
-// RD-05 — color & styling (depth-aware encoding, nearest-color, palette, theme).
+// Color & styling — depth-aware SGR encoding, nearest-color downsampling, the palette, and the theme.
 export {
   encode,
   encodeStyle,
