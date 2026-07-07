@@ -1,12 +1,9 @@
 /**
- * `Cluster` — the internal base for `CheckGroup`/`RadioGroup` (Turbo Vision `TCluster`, RD-06 PA-3/PA-6).
- *
- * A vertical column of selectable items, faithful to `TCluster::drawMultiBox` (`tcluster.cpp:87-129`):
- * each row is a 5-cell box (the icon `" [ ] "`/`" ( ) "` at cols 0..4 with the mark glyph overwriting
- * col 2) then the `~hotkey~` label from col 5. Single-column only in v1 (multi-column flow deferred,
- * DEF-17). Subclasses supply the marker box, the `mark` predicate, and the `press` mutation — exactly
- * how TV's `TCheckBoxes`/`TRadioButtons` are thin overrides of `TCluster`. The `.js` extension in import
- * specifiers is required by NodeNext ESM resolution.
+ * Internal base class for the check/radio groups. A `Cluster` is a vertical column of selectable
+ * items: each row shows a 5-cell marker box (`" [ ] "` / `" ( ) "`, with the state glyph in the
+ * middle) followed by the item's label. Subclasses ({@link CheckGroup}, {@link RadioGroup},
+ * `MultiCheckGroup`) supply the marker box, decide each item's state glyph, and define what pressing
+ * an item does. Not exported — construct one of the concrete groups instead.
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -14,29 +11,27 @@ import { parseTilde, tildeSegments, accentStyle } from '../menu/index.js';
 import type { ParsedLabel } from '../menu/index.js';
 
 /**
- * The box for a cluster item, Turbo Vision's marker-**string** model (`TCluster::drawMultiBox(icon,
- * marker)`, `tcluster.cpp:87-129`): a 5-cell bracket icon + an ordered string of state glyphs. The
- * glyph at `markers[markIndex(i)]` overwrites the icon's middle (col 2). Two-state clusters
- * (`CheckGroup`/`RadioGroup`) pass a 2-char `markers` (off/on); `MultiCheckGroup` passes `selRange`
- * glyphs (PF-001).
+ * Describes how a cluster row's marker box is drawn: a 5-cell bracket icon plus an ordered string of
+ * state glyphs. The glyph at `markers[markIndex(i)]` overwrites the icon's middle cell. Two-state
+ * groups pass a 2-char `markers` (off/on); a multi-state group passes one glyph per state.
  */
 export interface ClusterBox {
-  /** The 5-char icon (e.g. `' [ ] '` / `' ( ) '`); the marker overwrites its middle (col 2). */
+  /** The 5-char icon (e.g. `' [ ] '` / `' ( ) '`); the state glyph overwrites its middle cell. */
   readonly icon: string;
   /** Ordered state glyphs, indexed by {@link Cluster.markIndex} (e.g. `' X'` / `' •'` / a multi-state string). */
   readonly markers: string;
 }
 
-/** A single-column cluster of selectable items (internal — `CheckGroup`/`RadioGroup` extend it). */
+/** A single-column group of selectable items. Internal — the concrete check/radio groups extend it. */
 export abstract class Cluster extends View {
   override focusable = true;
-  /** HR-44: post-process so Alt+hotkey is seen dialog-wide (TV `ofPostProcess`, `tcluster.cpp:46`). */
+  /** Post-process so an `Alt`+hotkey is seen dialog-wide, even when this group isn't focused. */
   override postProcess = true;
   /** The focused item index. */
   protected sel = 0;
-  /** The original `~X~`-marked labels (re-split per paint). */
+  /** The original tilde-marked labels. */
   protected readonly rawLabels: readonly string[];
-  /** Parsed hotkeys (lowercase char + column) for `Alt-<hotkey>` matching. */
+  /** Parsed hotkeys (letter + column) for `Alt`+hotkey matching. */
   protected readonly parsed: readonly ParsedLabel[];
   /** Per-item enabled flags (all enabled by default). */
   protected readonly enabled: boolean[];
@@ -52,22 +47,22 @@ export abstract class Cluster extends View {
   }
 
   /**
-   * The state index of item `i` into `box().markers` (TV `multiMark`, `tcluster.cpp:87`). Two-state
-   * clusters return 0 (off) / 1 (on); `MultiCheckGroup` returns `0..selRange-1`.
+   * The state index of item `i` into `box().markers`. Two-state groups return 0 (off) / 1 (on); a
+   * multi-state group returns `0..states-1`.
    */
   protected abstract markIndex(i: number): number;
-  /** Toggle/select/cycle item `i` (writes the bound signal). */
+  /** Toggle / select / cycle item `i`, writing the bound signal. */
   protected abstract press(i: number): void;
-  /** The marker box for this cluster kind. */
+  /** The marker box for this group kind. */
   protected abstract box(): ClusterBox;
-  /** Hook fired when `↑/↓` moves the selection — radio selects on move; check is a no-op (TV `movedTo`). */
+  /** Fired when `↑`/`↓` moves the selection. A radio group selects on move; a check group does nothing. */
   protected movedTo(_i: number): void {
-    // default: moving focus does not change the value (TCheckBoxes); TRadioButtons overrides this.
+    // Default: moving focus does not change the value. RadioGroup overrides this to select on move.
   }
 
   /**
-   * Enable/disable an item (TV `enableMask`). A disabled item is skipped by `↑/↓`, inert to
-   * `Space`/click, and drawn in `clusterDisabled`.
+   * Enable or disable an item. A disabled item is skipped by `↑`/`↓`, is inert to `Space`/click, and
+   * is drawn greyed.
    *
    * @param i  The item index.
    * @param on Whether the item is enabled.
@@ -97,20 +92,19 @@ export abstract class Cluster extends View {
           ? 'clusterSelected'
           : 'clusterNormal';
       const base = ctx.color(role);
-      // HR-52 (tcluster.cpp:95): a disabled row draws its `~hot~` run in the disabled color too — the
-      // shortcut accent only applies while the item is enabled.
+      // A disabled row draws its hotkey run in the greyed colour too — only an enabled hotkey accents.
       const hotColor = this.enabled[i] ? accent : base;
       ctx.fillRect(0, i, w, 1, ' ', base);
-      ctx.text(0, i, icon, base); // " [ ] " / " ( ) " at cols 0..4
-      ctx.text(2, i, markers[this.markIndex(i)] ?? ' ', base); // marker glyph overwrites col 2 (TV putChar)
+      ctx.text(0, i, icon, base); // the bracket box at columns 0..4
+      ctx.text(2, i, markers[this.markIndex(i)] ?? ' ', base); // state glyph overwrites the middle cell
       for (const seg of tildeSegments(this.rawLabels[i] ?? '')) {
-        ctx.text(5 + seg.col, i, seg.text, seg.hot ? hotColor : base); // label from col 5
+        ctx.text(5 + seg.col, i, seg.text, seg.hot ? hotColor : base); // label starts at column 5
       }
     }
   }
 
   /**
-   * Keyboard (`↑`/`↓` move, `Space` press, `Alt-<hotkey>` select) + mouse (click a row to focus + press).
+   * Keyboard (`↑`/`↓` move, `Space` press, `Alt`+hotkey select) and mouse (click a row to focus and press).
    *
    * @param ev The dispatch envelope (carries `local` during real mouse dispatch).
    */
@@ -127,20 +121,20 @@ export abstract class Cluster extends View {
       return;
     }
     if (inner.type !== 'key') return;
-    // HR-44: Alt+<hotkey> is handled dialog-wide (post-process) — select+press the item AND take
-    // focus (TV `tcluster.cpp:257-284`), whether or not this cluster is currently focused.
+    // An Alt+hotkey is handled dialog-wide (this view is post-process): it selects and presses the
+    // item AND takes focus, whether or not this group is currently focused.
     if (inner.alt && inner.key.length === 1) {
       const i = this.parsed.findIndex((p) => p.hotkey === inner.key.toLowerCase());
       if (i >= 0 && this.enabled[i]) {
         this.sel = i;
         this.press(i);
-        ev.focusView?.(this); // take focus (dialog-wide hotkey)
+        ev.focusView?.(this); // a dialog-wide hotkey also moves focus here
         this.invalidate();
         ev.handled = true;
       }
       return;
     }
-    // Navigation only while focused — a post-process cluster must not consume another view's keys.
+    // Navigation keys are handled only while focused — a post-process view must not steal another view's keys.
     if (!this.state.focused) return;
     if (inner.key === 'up') {
       this.moveSel(-1);

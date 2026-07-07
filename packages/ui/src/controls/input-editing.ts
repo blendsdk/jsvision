@@ -1,14 +1,14 @@
 /**
- * Word-boundary helpers for {@link Input} (RD-13 HR-48), extracted so `input.ts` stays under the
- * 500-line cap (AC-9). Faithful to Turbo Vision `TInputLine`'s file-static `prevWord`/`nextWord`
- * (`tinputli.cpp:64-82`) — space-delimited word runs. Pure functions over strings. The `.js`
- * extension is required by NodeNext ESM resolution.
+ * Deletion helpers for {@link Input}: word-boundary scans plus a pure `computeDelete` that turns a
+ * delete gesture (backspace, forward-delete, delete-word, delete-selection) into the resulting edit
+ * state. Words are space-delimited. Pure functions over strings — the caller re-validates and
+ * commits the result.
  */
 
 /**
- * The previous word boundary from `pos` (TV `prevWord`, `tinputli.cpp:64-72`): scan left from
- * `pos-1` to index 1, returning the first non-space code point immediately preceded by a space; `0`
- * when none. Used by Ctrl/Alt+Backspace to delete the word to the caret's left.
+ * The start of the word to the left of `pos`: scanning left, the first non-space immediately
+ * preceded by a space; `0` when none. Used by `Ctrl`/`Alt`+`Backspace` to delete the word to the
+ * caret's left.
  *
  * @param s   The value.
  * @param pos The caret index.
@@ -22,9 +22,9 @@ export function prevWord(s: string, pos: number): number {
 }
 
 /**
- * The next word boundary from `pos` (TV `nextWord`, `tinputli.cpp:74-82`): scan right from `pos`,
- * returning the first index after a space→non-space transition; the string length when none. Used by
- * Ctrl+Delete to delete the word to the caret's right.
+ * The start of the word to the right of `pos`: scanning right, the first index after a
+ * space-then-non-space transition; the string length when none. Used by `Ctrl`+`Delete` to delete
+ * the word to the caret's right.
  *
  * @param s   The value.
  * @param pos The caret index.
@@ -37,7 +37,7 @@ export function nextWord(s: string, pos: number): number {
   return s.length;
 }
 
-/** The editable state a deletion transforms (JS string indices; `selStart ≤ selEnd`). */
+/** The editable state a deletion transforms (string indices; `selStart ≤ selEnd`). */
 export interface EditState {
   readonly value: string;
   readonly curPos: number;
@@ -45,10 +45,10 @@ export interface EditState {
   readonly selEnd: number;
 }
 
-/** The delete gestures TV recognizes (`tinputli.cpp:380-414`); `selection` deletes the current range. */
+/** The delete gestures a text field recognizes; `selection` deletes the current selection range. */
 export type DeleteKind = 'backspace' | 'forward' | 'wordLeft' | 'wordRight' | 'selection';
 
-/** Remove `[selStart, selEnd)` when non-empty; caret → `selStart` (TV `deleteSelect`, `:203-211`). */
+/** Remove `[selStart, selEnd)` when non-empty and put the caret at `selStart`. */
 function deleteRange(s: EditState): EditState {
   if (s.selStart >= s.selEnd) return s;
   const value = s.value.slice(0, s.selStart) + s.value.slice(s.selEnd);
@@ -56,9 +56,9 @@ function deleteRange(s: EditState): EditState {
 }
 
 /**
- * Compute the post-delete state for a delete gesture (TV `:380-414`). An existing selection is
- * removed for every kind; otherwise the gesture selects its target range (one code point, or a word
- * via {@link prevWord}/{@link nextWord}) and removes it. Pure — the caller re-validates + commits.
+ * Compute the state after a delete gesture. If there is a selection, every gesture just removes it;
+ * otherwise the gesture selects its own target (one character, or a word via {@link prevWord} /
+ * {@link nextWord}) and removes that. Pure — the caller re-validates and commits.
  *
  * @param s    The current edit state.
  * @param kind The delete gesture.

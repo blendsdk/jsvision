@@ -1,13 +1,12 @@
 /**
- * Display-width helpers shared by the controls (RD-06). Wraps core's `charWidth` with the same
- * `wcwidth` mode `ScreenBuffer`/`DrawContext` use, so control wrap/centering math agrees with the
- * buffer (wide CJK/emoji = 2 columns, zero-width = 0). The `.js` extension in import specifiers is
- * required by NodeNext ESM resolution.
+ * Display-width helpers shared by the controls. These measure how many terminal columns a glyph or
+ * string occupies, using the same width rules the screen buffer uses, so wrapping and centering math
+ * agrees with what actually gets drawn (wide CJK/emoji = 2 columns, zero-width combining marks = 0).
  */
 import { charWidth } from '@jsvision/core';
 import type { WidthMode } from '@jsvision/core';
 
-/** Width-resolution mode — matches `ScreenBuffer`/`DrawContext` so control math agrees with the buffer. */
+/** Width-resolution mode — matches the screen buffer so control math agrees with what is drawn. */
 export const WIDTH_MODE: WidthMode = 'wcwidth';
 
 /**

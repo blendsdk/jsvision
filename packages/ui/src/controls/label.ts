@@ -1,16 +1,10 @@
 /**
- * `Label` — a single-line `~hotkey~` caption linked to a control (Turbo Vision `TLabel`,
- * RD-06 AR-103/PA-10).
+ * A single-line caption that is wired to another control. Clicking the label, or pressing its
+ * `Alt`+hotkey, moves focus to the linked control; the label highlights while that control is
+ * focused. Mark the hotkey letter by wrapping it in tildes — `'~N~ame'` makes `N` the accelerator.
  *
- * Clicking the label or pressing its `Alt-<hotkey>` focuses the linked control, and the label
- * highlights (`labelSelected`) while that control is focused. Faithful to `TLabel::draw`
- * (`tlabel.cpp:45-74` — `moveCStr` hotkey accenting, whole-label color swap on link focus) and
- * `focusLink` (`tlabel.cpp:76-81`, called from `handleEvent` `:91-98`).
- *
- * Two RD-06 primitives make this work on the spine: `ev.focusView` focuses the link from `onEvent`
- * (PA-10), and the per-view focus-change signal (PF-009) lets the label observe the *link's* focus —
- * a plain `link.state.focused` read would not subscribe, and the focus manager invalidates only the
- * link, not the label. The `.js` extension in import specifiers is required by NodeNext resolution.
+ * A `Label` is not focusable itself and is never in the Tab order — it exists to give another
+ * control a clickable, keyboard-reachable caption.
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -18,37 +12,50 @@ import { parseTilde, tildeSegments, accentStyle } from '../menu/index.js';
 import type { ParsedLabel } from '../menu/index.js';
 
 /**
- * A focus-linking caption. Not focusable itself; `postProcess` so its `Alt-<hotkey>` is caught after
- * the focused chain (the label is never in the focus chain).
+ * A caption linked to a control. Construct it with the control it should focus.
+ *
+ * @example
+ * import { Group, Label, Input, signal } from '@jsvision/ui';
+ *
+ * const name = signal('');
+ * const input = new Input({ value: name });
+ * const label = new Label('~N~ame', input); // Alt+N or a click focuses `input`
+ *
+ * label.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 6, height: 1 } };
+ * input.layout = { position: 'absolute', rect: { x: 8, y: 0, width: 20, height: 1 } };
+ *
+ * const form = new Group();
+ * form.add(label);
+ * form.add(input);
  */
 export class Label extends View {
-  /** Catch `Alt-<hotkey>` in the post-process sweep (the label is not focusable). */
+  /** Caught in the post-process sweep so its `Alt`+hotkey works even though the label is not focusable. */
   override postProcess = true;
-  /** The original `~X~`-marked text (re-split per paint via {@link tildeSegments}). */
+  /** The original tilde-marked caption text. */
   protected readonly raw: string;
-  /** The linked control focused on click / hotkey. */
+  /** The control focused on click / hotkey. */
   protected readonly link: View;
-  /** Parsed hotkey (lowercase char + column), for `Alt-<hotkey>` matching. */
+  /** Parsed hotkey (letter + column), for `Alt`+hotkey matching. */
   protected readonly parsed: ParsedLabel;
 
   /**
    * @param text A caption, optionally marking its hotkey with `~X~` (e.g. `'~N~ame'`).
-   * @param link The control focused when the label is clicked or its `Alt-<hotkey>` is pressed.
+   * @param link The control focused when the label is clicked or its `Alt`+hotkey is pressed.
    */
   constructor(text: string, link: View) {
     super();
     this.raw = text;
     this.link = link;
     this.parsed = parseTilde(text);
-    // Repaint when the LINK's focus flips (PF-009): read its focus-change signal so the bound effect
-    // re-runs on every flip; `draw()` then re-reads `link.state.focused` to pick label/labelSelected.
+    // The label must repaint when the LINKED control's focus flips (to swap its highlight). Reading
+    // the link's focus-change signal here subscribes to it; a plain `link.state.focused` read would
+    // not, and the framework only invalidates the link on a focus change, not this label.
     this.onMount(() => this.bind(() => this.link.focusSignal()()));
   }
 
   /**
-   * Paint the caption: the base text in `label` (or `labelSelected` while the link is focused), the
-   * `~hotkey~` run accented in `labelShortcut` — TV swaps the whole label color on link focus and
-   * always accents the hotkey.
+   * Paint the caption: base text (highlighted while the linked control is focused) with the hotkey
+   * letter accented.
    *
    * @param ctx The clipped, view-local paint context.
    */
@@ -63,8 +70,8 @@ export class Label extends View {
   }
 
   /**
-   * Focus the link on a mouse-down (delivered by hit-test) or an `Alt-<hotkey>` key (caught in the
-   * post-process phase). Mirrors `TLabel::handleEvent` (`tlabel.cpp:91-98`).
+   * Focus the linked control on a click, or on this label's `Alt`+hotkey (caught in the post-process
+   * phase since the label is not in the focus chain).
    *
    * @param ev The dispatch envelope (carries `focusView`/`local` during real dispatch).
    */
@@ -75,7 +82,7 @@ export class Label extends View {
       ev.handled = true;
       return;
     }
-    // Alt-<hotkey> → focus the link (single-char Alt match, mirroring menubar's Alt-hotkey logic).
+    // Alt+hotkey (a single-character key with the Alt modifier) focuses the linked control.
     if (
       inner.type === 'key' &&
       inner.alt &&

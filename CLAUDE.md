@@ -107,59 +107,99 @@ terminal-matrix.json       RD-03 cross-terminal evidence (appended by the probe 
 - **Commit scope:** the area touched — `scaffold`, `package`, `toolchain`, `packaging`, `tests`, `docs`, or the engine subsystem name in later RDs.
 - **Main branch:** `master` • **Remote:** `origin` → `git@github.com:blendsdk/tui.git`. Publish (with provenance) is still deferred to a later milestone (RD-10 DEF-1).
 
-## Turbo Vision fidelity (NON-NEGOTIABLE)
+## Documentation for users & AI agents (NON-NEGOTIABLE)
 
-> `@jsvision/ui` is a faithful re-creation of Borland Turbo Vision. **Do not reimagine the
-> drawing. Decode, don't design.** These components already exist in C++ — the job is careful
-> transcription + verification, **not** invention. For any component, widget, or chrome with a Turbo
-> Vision counterpart you MUST review and decode the original C++ **BOTH BEFORE AND AFTER**
-> implementing it, and replicate **their** geometry, glyphs, sizing, layout, hit-zones, and colors
-> exactly. The canonical gate + copy-paste plan checklist live in
-> [`codeops/tv-fidelity-gate.md`](codeops/tv-fidelity-gate.md).
+> Every JSDoc comment on a public or exported symbol is written for the people and agents that
+> **use** this framework — never for its maintainers. The doc a consumer (or an AI agent) reads on
+> hover **is** the API contract. **Decode-the-code archaeology, plan/requirement IDs, and internal
+> process notes never appear in shipped code.** Canonical worklist + guard: `JSDOC-CLEANUP-PLAN.md`.
 
-- **Source of truth:** the original Turbo Vision (magiblot/tvision) checked out at
-  `/home/gevik/workdir/github/tvision` — `source/tvision/t*.cpp` (drawing/sizing),
+- **Audience.** Public JSDoc explains, to someone who has never seen the source, *what a symbol is,
+  what it does, how to use it, and what to watch out for*. AI agents feed directly on these docs and
+  their `@example`s — treat every example as executable spec: realistic, correct, copy-pasteable.
+
+- **BANNED in all shipped code (`packages/*/src`), in JSDoc _and_ code comments:**
+  - CodeOps process IDs — `RD-`, `PA-`, `AR-`, `PF-`, `HR-`, `GATE-`, `AC-`, `ST-`, `ADR-`, `DEF-`,
+    and any `codeops/…`, `plans/…`, `requirements/…` path. These reference files that are being
+    removed; a reference to a deleted file is worse than no reference.
+  - Turbo Vision / C++ provenance — `t*.cpp`/`*.h` citations, `getColor(N)` palette-chain
+    archaeology, "faithful to `TButton::draw`" notes. Fidelity is a **build-time** discipline (see
+    the TV porting guideline below), not a shipped-code artifact; the SDK will diverge from TV over
+    time and these notes will only mislead.
+  - This is a **semantic rewrite, not a delete**: keep the _behavior_ an ID annotated ("enabled by
+    default"), drop the _code_ ("(PA-3)").
+
+- **REQUIRED on every public / exported symbol** (anything re-exported from a package `index.ts`):
+  1. A lead sentence stating what it is / does, in plain language.
+  2. The behaviors, constraints, and gotchas a caller must know (ordering rules, reactive-vs-
+     imperative seams, footguns such as a missing `measure()` collapsing a view to `{0,0}`).
+  3. `@param` / `@returns` for every parameter and return value.
+  4. An **`@example`** with real, copy-pasteable usage. Examples are for AI consumption first — make
+     them correct enough to paste and run.
+
+- **Code comments — comment _why_, not _what_, and proactively explain anything above a junior
+  developer's level.** Non-obvious algorithms, invariants, subtle ordering/lifecycle dependencies,
+  and "why it is done this way" decisions get a short comment so a junior can follow the code.
+  Trivial lines get nothing. No maintainer traceability — a note useful only to a maintainer belongs
+  in the commit message, not the code.
+
+- **Enforcement.** `scripts/check-jsdoc.mjs` (wired into `yarn verify` + CI) fails on any banned
+  reference and on any public export missing an `@example`. Guard-first: it is the objective
+  done-criterion for the cleanup and the regression gate afterward. The build is not green while it
+  fails.
+
+- **Scope.** Shipped source only (`packages/*/src`). Out of scope: this `CLAUDE.md`, `codeops/`, and
+  test files (their own conventions). Example/demo code (`packages/examples/`) follows the spirit —
+  it is already user-facing and is itself agent-training material.
+
+- **Plan-flow enforcement (make_plan / exec_plan).** A component is NOT `[x]` done until its public
+  JSDoc carries an `@example`, its above-junior logic is commented, and `check-jsdoc.mjs` passes for
+  its files.
+
+## Turbo Vision fidelity (porting guideline)
+
+> When you port a component that **already exists** in Borland Turbo Vision, decode the original
+> first and match its geometry, glyphs, sizing, layout, hit-zones, and colors — don't reimagine a
+> shape TV already defined. This is a **build-time discipline for faithful ports only**. It is _not_
+> a shipped-code contract: per the documentation directive above, **no TV/C++ provenance is recorded
+> in JSDoc or code comments.** New components, and any deliberate divergence from TV, carry no
+> fidelity obligation.
+
+- **Source of truth (for the decode, at porting time):** the original Turbo Vision (magiblot/tvision)
+  checked out at `/home/gevik/workdir/github/tvision` — `source/tvision/t*.cpp` (drawing/sizing),
   `source/tvision/tvtext1.cpp` (the `frameChars`/glyph tables + `cpAppColor`), `include/tvision/*.h`
   - `include/tvision/app.h`/`dialogs.h` (geometry + the `cpX` palette definitions).
 
-- **GATE 1 — BEFORE writing/changing any draw/size/layout code.** Open the original class (e.g.
+- **DECODE BEFORE (when porting an existing TV component).** Open the original class (e.g.
   `TMenuBox`, `TFrame`, `TButton`, `TInputLine`, `TScrollBar`, `TWindow`, `TDialog`) and decode:
   1. Its `draw()` + sizing (`getRect`/`sizeLimits`/`getItemRect`) — the exact column math, frame/gutter
      insets, padding, fill characters, `markers`/`shadows`/`specialChars`, and hit-zones.
   2. **Every color via the full `getColor(N)` palette chain** — resolve `N` through the view's local
      palette (`cpButton`/`cpInputLine`/…) → owner palette (`cpGrayDialog`/…) → `cpAppColor` → the
      attribute byte `0xHL` (high nibble = bg, low nibble = fg). Color indirection — not glyphs — is
-     where fidelity silently breaks (the RD-06 `TButton` shadow shipped wrong because `getColor(8)`
-     was guessed as "darkGray/black" instead of decoded to `0x70` black-on-lightGray).
+     where fidelity silently breaks (a `TButton` shadow shipped wrong once because `getColor(8)` was
+     guessed as "darkGray/black" instead of decoded to `0x70` black-on-lightGray).
   3. Watch for **mode-gated features** the color path enables/disables — e.g. `showMarkers` (the
      `[ ]` brackets) is monochrome-only; on a color palette a `TButton` has **no** brackets.
      Convert CP437 byte glyphs to Unicode (mind East-Asian ambiguous width — prefer unambiguous-narrow
-     code points). **Cite the exact `file:line` of every decoded fact in the code's JSDoc.**
+     code points).
 
-- **GATE 2 — AFTER implementing (a component is NOT "done" until this passes).** Re-open the same
-  `.cpp` and **diff our rendered output against the decode**, cell by cell: glyphs, column math,
-  hit-zones, and every resolved color. Record the decode (especially any `getColor` palette
-  resolution) in the code/commit. If they disagree, our code is wrong — fix it against the source.
+- **DIFF AFTER.** Re-open the same `.cpp` and **diff the rendered output against the decode**, cell by
+  cell: glyphs, column math, hit-zones, and every resolved color. If they disagree, the code is wrong
+  — fix it against the source. **The decode is a working step, not shipped-code content** — it is not
+  written into JSDoc or code comments (per the documentation directive above). If an audit trail is
+  wanted, put the decode in the commit message.
 
-- **The C++ source outranks our own spec tests (TV-derived components only).** A `*.spec.test.ts`
-  can encode a _mis-decode_ — the ST-05 button oracle asserted the phantom `[ ]` brackets. So for a
-  TV-derived component, if a spec oracle disagrees with a faithful C++ decode, **the spec test is the
-  defect**: fix it against the source (a deliberate, narrow exception to "spec tests are immutable",
-  scoped to fidelity oracles). Cite the `.cpp` when correcting the oracle.
+- **The C++ source outranks a spec test (TV-derived components only).** A `*.spec.test.ts` can encode
+  a _mis-decode_ (a button oracle once asserted phantom `[ ]` brackets). So for a TV-derived
+  component, if a spec oracle disagrees with a faithful C++ decode, **the spec test is the defect**:
+  fix it against the source (a deliberate, narrow exception to "spec tests are immutable", scoped to
+  fidelity oracles).
 
-- **No invention.** If the original is unclear or a detail isn't covered, surface it and ask —
-  never substitute your own design for theirs. This is proven (the RD-05 menu box matched
-  `tmenubox.cpp` 1:1).
-- This governs **drawing/geometry/color**. Behavior the original couldn't have (truecolor, reactive
-  binding, async modality) may extend TV, but the visual shapes/sizes/colors must still match.
-
-- **Plan-flow enforcement (make_plan / exec_plan).** For every TV-derived component:
-  - **make_plan** MUST give the component's spec doc (`03-NN-*.md`) a "TV decode (GATE 1)" section
-    citing the original `file:line` (draw + sizing + the `getColor` chain), and MUST add the two
-    gate tasks from [`codeops/tv-fidelity-gate.md`](codeops/tv-fidelity-gate.md) to
-    `99-execution-plan.md`: `[ ] BEFORE-decode …` and `[ ] AFTER-diff …`.
-  - **exec_plan** MUST NOT mark a TV-derived component `[x]` until its AFTER-diff task is done and
-    the decode (incl. palette resolution) is recorded in the code/commit.
+- **No invention for ports.** If the original is unclear or a detail isn't covered, surface it and
+  ask — never substitute your own design for theirs. This governs **drawing/geometry/color** for
+  components TV actually had; behavior the original couldn't have (truecolor, reactive binding, async
+  modality) freely extends TV, and entirely new components have no TV counterpart to match.
 
 ## Kitchen-sink showcase (NON-NEGOTIABLE)
 

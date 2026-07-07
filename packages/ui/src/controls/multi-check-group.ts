@@ -1,40 +1,48 @@
 /**
- * `MultiCheckGroup` — a column of multi-state checkboxes (Turbo Vision `TMultiCheckBoxes`, RD-07
- * AC-9/AC-10, PA-10). Extends the internal {@link Cluster} base. The `.js` extension in import
- * specifiers is required by NodeNext ESM resolution.
- *
- * ## GATE-1 decode (`tmulchkb.cpp`, `tcluster.cpp`)
- * - **Draw** (`tmulchkb.cpp:65-68`): `drawMultiBox(" [ ] ", states)` — the 5-cell `" [ ] "` icon, the
- *   marker `states[multiMark(item)]` at **col+2** (box centre), the label at **col+5**
- *   (`tcluster.cpp:110-116`). Colours: normal `getColor(0x0301)` → `clusterNormal`; selected
- *   `getColor(0x0402)` → `clusterSelected`; disabled `getColor(0x0505)` → `clusterDisabled`
- *   (`tcluster.cpp:39,93-105`). Nav (↑↓/Space/click/hotkey/disabled-skip) is inherited from `Cluster`.
- * - **Press** (`tmulchkb.cpp:88-103`): `curState++; if (curState >= selRange) curState = 0;` — cycle
- *   `(state+1) % selRange`.
- * - **Binding** (PA-10, idiomatic — not TV's packed `uint32`): `{ items, states, value: Signal<number[]> }`;
- *   `selRange = states.length`; each item's state index is `value()[i]`, drawn as `states[value()[i]]`.
+ * A column of multi-state checkboxes: like {@link CheckGroup}, but each item cycles through more than
+ * two states instead of just on/off. You supply the ordered marker glyphs (e.g. `' xX'` for
+ * off / partly / fully), and pressing an item advances it to the next state, wrapping around at the
+ * end. Bound two-way to a `Signal<number[]>` holding one state index per item.
  */
 import { Cluster } from './cluster.js';
 import type { ClusterBox } from './cluster.js';
 import type { Signal } from '../reactive/index.js';
 
-/** Construction options for {@link MultiCheckGroup} (PA-10). */
+/** Options for {@link MultiCheckGroup}. */
 export interface MultiCheckGroupOptions {
-  /** One label per item; each may mark its hotkey with `~X~` (Cluster). */
+  /** One label per item; each may mark its hotkey with `~X~`. */
   readonly items: readonly string[];
-  /** The ordered marker glyphs, one per state (e.g. `' xX'`); `selRange = states.length`. */
+  /** The ordered marker glyphs, one per state (e.g. `' xX'`). The number of states is this string's length. */
   readonly states: string;
-  /** Two-way binding: one state index (`0..states.length-1`) per item. */
+  /** Two-way binding: one state index (`0`..states-1) per item, in item order. */
   readonly value: Signal<number[]>;
 }
 
-/** A column of multi-state checkboxes bound to a `Signal<number[]>` (one state index per item). */
+/**
+ * A multi-state checkbox group bound to a `number[]` signal (one state index per item).
+ *
+ * @example
+ * import { Group, MultiCheckGroup, signal } from '@jsvision/ui';
+ *
+ * // Three states per item: ' ' (off), 'x' (some), 'X' (all).
+ * const levels = signal([0, 2]); // Volume off, Treble full
+ * const group = new MultiCheckGroup({
+ *   items: ['~V~olume', '~T~reble'],
+ *   states: ' xX',
+ *   value: levels,
+ * });
+ * group.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 20, height: 2 } };
+ *
+ * const panel = new Group();
+ * panel.add(group);
+ * // Pressing Space on Volume cycles it 0 -> 1 -> 2 -> 0.
+ */
 export class MultiCheckGroup extends Cluster {
-  /** The ordered marker glyphs; `markers[value()[i]]` is drawn at col 2. */
+  /** The ordered marker glyphs; `states[value()[i]]` is drawn for item `i`. */
   protected readonly states: string;
-  /** The number of states (`states.length`); `press` cycles `(state+1) % selRange`. */
+  /** The number of states; pressing an item advances by one and wraps at this count. */
   protected readonly selRange: number;
-  /** One state index per item; the source of truth (two-way). */
+  /** One state index per item; the two-way source of truth. */
   protected readonly value: Signal<number[]>;
 
   /**
@@ -45,18 +53,19 @@ export class MultiCheckGroup extends Cluster {
     this.states = opts.states;
     this.selRange = [...opts.states].length;
     this.value = opts.value;
-    this.onMount(() => this.bind(() => this.value())); // repaint when the bound array changes
+    // Repaint when the bound array changes. Bind on mount, when this view's reactive scope exists.
+    this.onMount(() => this.bind(() => this.value()));
   }
 
   protected override markIndex(i: number): number {
     const s = this.value()[i] ?? 0;
-    return s >= 0 && s < this.selRange ? s : 0; // clamp to a valid state (PA-10)
+    return s >= 0 && s < this.selRange ? s : 0; // clamp an out-of-range state to the first one
   }
 
   protected override press(i: number): void {
-    // Cycle (state+1) % selRange, writing a full-length array so a short bound value is normalized.
-    // HR-60: use a FLOORED modulo — JS `%` keeps the sign, so a negative externally-bound state would
-    // cycle further negative; `((n % m) + m) % m` normalizes any state back into `[0, selRange)`.
+    // Advance to the next state, wrapping at the end, and write back a full-length array so a bound
+    // value shorter than the label list is normalized. A floored modulo is used deliberately: JS `%`
+    // keeps the sign, so a negative externally-bound state would otherwise cycle further negative.
     const cur = this.value();
     const next = this.rawLabels.map((_, idx) => cur[idx] ?? 0);
     const m = this.selRange;

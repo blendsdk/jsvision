@@ -1,23 +1,20 @@
 /**
- * `Text` — a non-focusable static label (Turbo Vision `TStaticText`, RD-06 AR-100/PA-14).
+ * A non-focusable block of static text — a caption, paragraph, or a live read-out of some state.
+ * Tab skips it. Content is word-wrapped to the view's width and left-aligned.
  *
- * Renders a string or a reactive getter, word-wrapped on spaces and left-aligned, in the
- * `staticText` theme role. The wrap replicates `TStaticText::draw` (`tstatict.cpp:44-105`): greedily
- * fit whole words within the view width, hard-breaking a single word that is itself wider than the
- * view. Center/right alignment (TV's leading `0x03`) and the hardware caret are out of v1 (PA-14;
- * DEF-18). The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Give it a plain string, or a getter (`() => string`) to make it reactive: when a signal the getter
+ * reads changes, the text repaints automatically.
  */
 import { View } from '../view/index.js';
 import type { DrawContext } from '../view/index.js';
 import { glyphWidth } from './measure.js';
 
 /**
- * Word-wrap to `width` display columns, faithful to `TStaticText::draw` (`tstatict.cpp:44-105`): each
- * output line is a **verbatim** source substring — TV draws `s.substr(i, p-i)` between break points,
- * so **internal whitespace runs and leading indentation are preserved, not collapsed** (HR-57). Break
- * after the last whole word that fits; a single word wider than the view is hard-broken at the width
- * boundary; the break spaces are dropped from the next line's start (continuation lines are
- * left-flush). Explicit `\n` forces a line break.
+ * Word-wrap `content` to `width` display columns. Each output line is a verbatim slice of the
+ * source, so whitespace *between* words and leading indentation are preserved, not collapsed. The
+ * wrap breaks after the last whole word that fits; a single word wider than the view is hard-broken
+ * at the width boundary; the spaces at a break are dropped from the start of the next line. An
+ * explicit `\n` always forces a line break.
  *
  * @param content The text to wrap.
  * @param width   The view width in display columns.
@@ -53,9 +50,9 @@ function wrapText(content: string, width: number): string[] {
       if (fitsAll) {
         end = n;
       } else if (lastWordEnd > i) {
-        end = lastWordEnd; // break after the last whole word (TV backs up to the word boundary)
+        end = lastWordEnd; // back up to break after the last whole word that fit
       } else {
-        end = p > i ? p : i + 1; // a single word wider than the view → hard-break at the width edge
+        end = p > i ? p : i + 1; // one word wider than the view: hard-break at the width edge
       }
       lines.push(paragraph.slice(i, end)); // verbatim — whitespace between words is kept
       let next = end;
@@ -67,8 +64,27 @@ function wrapText(content: string, width: number): string[] {
 }
 
 /**
- * A static text view. Non-focusable (Tab skips it); paints word-wrapped, left-aligned text in the
- * `staticText` role.
+ * A static, non-focusable text view. Paints word-wrapped, left-aligned text; give it a getter for a
+ * value that updates itself reactively.
+ *
+ * Note: like every view, `Text` only occupies the bounds its parent lays out for it — give it a
+ * width and height in your container so it has room to draw.
+ *
+ * @example
+ * import { Group, Text, signal } from '@jsvision/ui';
+ *
+ * const count = signal(0);
+ * const panel = new Group();
+ *
+ * // A fixed caption.
+ * const caption = new Text('Press + to increment.');
+ * caption.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 30, height: 1 } };
+ * panel.add(caption);
+ *
+ * // A live read-out that repaints whenever `count` changes.
+ * const readout = new Text(() => `Count: ${count()}`);
+ * readout.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 30, height: 1 } };
+ * panel.add(readout);
  */
 export class Text extends View {
   /** The literal text, or a reactive getter that repaints the view when its signals change. */
@@ -81,14 +97,15 @@ export class Text extends View {
     super();
     this.content = content;
     if (typeof content === 'function') {
-      // Subscribe to the getter's signals so a change repaints (PA-14). Canonical site: onMount (PA-2).
+      // Subscribe on mount, not in the constructor: the reactive scope that owns this view's
+      // subscriptions only exists once the view is mounted into a live tree.
       this.onMount(() => this.bind(content));
     }
   }
 
   /**
-   * Paint the (resolved) content word-wrapped to the view width in the `staticText` role; rows beyond
-   * the view height are clipped.
+   * Paint the (resolved) content word-wrapped to the view width; rows beyond the view height are
+   * clipped.
    *
    * @param ctx The clipped, view-local paint context.
    */
@@ -96,7 +113,7 @@ export class Text extends View {
     const content = typeof this.content === 'function' ? this.content() : this.content;
     const style = ctx.color('staticText');
     const { width, height } = ctx.size;
-    ctx.fillRect(0, 0, width, height, ' ', style); // fill the field (TV moveChar ' ' per row)
+    ctx.fillRect(0, 0, width, height, ' ', style); // clear the whole field first
     const lines = wrapText(content, width);
     for (let y = 0; y < height && y < lines.length; y += 1) {
       const line = lines[y];

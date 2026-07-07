@@ -19,6 +19,7 @@
     "lint": "eslint . && prettier --check .",
     "lint:fix": "eslint . --fix && prettier --write .",
     "check:deps": "turbo run check:deps",
+    "check:docs": "turbo run check:docs",
     "verify": "turbo run typecheck build test",
     "gate": "node scripts/gate.mjs",
     "sync-versions": "node scripts/sync-versions.mjs",

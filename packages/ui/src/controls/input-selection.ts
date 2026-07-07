@@ -1,25 +1,23 @@
 /**
- * Pure selection math for {@link Input} (RD-07), extracted so `input.ts` stays under the 500-line
- * cap (AC-13). Faithful to Turbo Vision `TInputLine` (`tinputli.cpp`): space-delimited word nav
- * (`:64-82`, PA-12), the `adjustSelectBlock` range derivation (`:225-237`), and the `mousePos`
- * column→index map (`:186-196`). Code-point unit (PA-1). No `View`/reactive dependency — plain
- * functions over strings/indices. The `.js` extension is required by NodeNext ESM resolution.
+ * Pure selection math for {@link Input}: classifying caret-motion keys, mapping a motion to a new
+ * caret index, finding word boundaries, ordering a selection range, and turning a mouse column into
+ * a value index. Plain functions over strings and indices — no view or reactive dependency.
  */
 
 import type { KeyEvent } from '@jsvision/core';
 
-/** A half-open selection range `[start, end)` as JS string indices (`start ≤ end`). */
+/** A half-open selection range `[start, end)` as string indices (`start ≤ end`). */
 export interface SelectionRange {
   readonly start: number;
   readonly end: number;
 }
 
-/** A caret motion — a TV pad-key (`tinputli.cpp:303`); Ctrl+Left/Right are word motions (PA-12). */
+/** A caret motion. `Ctrl+Left`/`Ctrl+Right` move by whole words; the rest by one position/edge. */
 export type Motion = 'left' | 'right' | 'wordLeft' | 'wordRight' | 'home' | 'end';
 
 /**
- * Classify a key as a pad-key motion, or `null` if it is not a motion (TV `padKeys`,
- * `tinputli.cpp:303`; Ctrl+Left/Right = word, `:368-372`).
+ * Classify a key as a caret motion, or `null` if it is not one. `Ctrl+Left`/`Ctrl+Right` become
+ * word motions.
  *
  * @param inner The decoded key event.
  * @returns The motion kind, or `null`.
@@ -66,8 +64,8 @@ export function caretAfterMotion(motion: Motion, curPos: number, v: string): num
 }
 
 /**
- * The index of the first non-space that follows a space, scanning left from `pos` (TV `prevWord`,
- * `tinputli.cpp:64-72`, space-delimited PA-12). Returns 0 when none.
+ * The start of the word to the left of `pos`: the first non-space that immediately follows a space,
+ * scanning left. Returns 0 when there is no earlier word boundary. Words are space-delimited.
  *
  * @param s   The value string.
  * @param pos The caret index to scan left from.
@@ -81,8 +79,8 @@ export function prevWord(s: string, pos: number): number {
 }
 
 /**
- * The index of the first non-space that follows a space, scanning right from `pos` (TV `nextWord`,
- * `tinputli.cpp:74-82`, space-delimited PA-12). Returns `s.length` when none.
+ * The start of the word to the right of `pos`: the first non-space that follows a space, scanning
+ * right. Returns `s.length` when there is no later word boundary. Words are space-delimited.
  *
  * @param s   The value string.
  * @param pos The caret index to scan right from.
@@ -96,8 +94,8 @@ export function nextWord(s: string, pos: number): number {
 }
 
 /**
- * Derive the ordered selection range from the caret + anchor (TV `adjustSelectBlock`, `:225-237`):
- * the lower of the two is `start`, the higher is `end`.
+ * Order a selection range from the moving caret and the fixed anchor: the lower of the two is
+ * `start`, the higher is `end`.
  *
  * @param curPos The moved caret.
  * @param anchor The fixed selection end.
@@ -108,9 +106,8 @@ export function selectionBlock(curPos: number, anchor: number): SelectionRange {
 }
 
 /**
- * Map a local mouse column to a value index (TV `mousePos`, `:186-196`; code-unit v1). Column 0 is
- * the left-arrow gutter, so the column is clamped to ≥1 before the map, and the result is clamped to
- * the value bounds.
+ * Map a view-local mouse column to a value index. Column 0 is the left-arrow gutter, so the column
+ * is clamped to ≥1 before the map, and the result is clamped to the value's bounds.
  *
  * @param localX   The view-local mouse column.
  * @param firstPos The current horizontal scroll offset.
