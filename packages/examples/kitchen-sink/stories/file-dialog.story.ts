@@ -23,7 +23,7 @@ export const fileDialogStory: Story = {
   title: 'File Dialog',
   rd: 'RD-09',
   blurb:
-    'TFileDialog: a modal open file picker — 2-col listing + filename input + History + a live info pane; valid() re-filters on a wildcard, descends a directory, or resolves a file.',
+    'TFileDialog: a modal open file picker — 2-col listing + filename input + History + a live info pane; double-click a folder to enter it or a file to open · valid() re-filters on a wildcard, descends a directory, or resolves a file.',
   build(ctx: StoryContext) {
     const result = signal('(not opened yet)');
     const g = new Group();

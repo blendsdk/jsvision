@@ -62,7 +62,8 @@ export const listViewStory: Story = {
   category: 'Containers',
   title: 'ListView',
   rd: 'RD-11',
-  blurb: 'TListBox: ↑↓/PgDn move · Enter/click select · type a prefix to jump (type-ahead). The bar tracks focus.',
+  blurb:
+    'TListBox: ↑↓/PgDn move · click selects, Enter or double-click activates · type a prefix to jump (type-ahead). The bar tracks focus.',
   build(ctx: StoryContext) {
     const items = signal([...ITEMS]);
     const focused = signal(0);

@@ -47,7 +47,8 @@ export const dataGridStory: Story = {
   category: 'Containers',
   title: 'DataGrid',
   rd: 'RD-16',
-  blurb: 'Multi-column table: sticky header · click a header to sort (▲/▼) · fixed/fr/auto widths · H-scroll · zebra.',
+  blurb:
+    'Multi-column table: sticky header · click a header to sort (▲/▼) · Enter or double-click a row to activate · fixed/fr/auto widths · H-scroll · zebra.',
   build(ctx: StoryContext) {
     const rows = signal([...PEOPLE]);
     const focused = signal(0);
