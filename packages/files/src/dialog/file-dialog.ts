@@ -18,6 +18,7 @@
 import type { Signal } from '@jsvision/ui';
 import { Button, Commands, Dialog, History, Label, ScrollBar, signal } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
+import { nodeFileSystem } from '../fs/node-fs.js';
 import { isWild } from '../fs/wildcard.js';
 import { GrowMode } from './grow.js';
 import type { GrowItem } from './grow-dialog.js';
@@ -28,8 +29,8 @@ import { FileList } from '../list/file-list.js';
 
 /** Construction options for {@link FileDialog}. */
 export interface FileDialogOptions {
-  /** The filesystem to read and write through. */
-  fs: FileSystem;
+  /** The filesystem to read and write through (default {@link nodeFileSystem}). */
+  fs?: FileSystem;
   /** The current directory (default the filesystem's cwd). Shared with the listing and info pane. */
   directory?: Signal<string>;
   /** The file wildcard (default `'*.*'`). */
@@ -118,7 +119,7 @@ export class FileDialog extends Dialog {
     this.resizable = true;
     this.minWidth = 49;
     this.minHeight = 19;
-    this.fs = opts.fs;
+    this.fs = opts.fs ?? nodeFileSystem;
     this.directory = opts.directory ?? signal(opts.fs.resolve('.'));
     this.wildcard = opts.wildcard ?? signal('*.*');
     this.filename = opts.filename ?? signal('');
