@@ -25,6 +25,7 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { Window } from '../window/index.js';
+import type { Rect } from '../layout/index.js';
 import { ScrollBar } from '../scroll/index.js';
 import { Editor } from './editor.js';
 import type { EditorDialogHandler } from './editor-dialog.js';
@@ -32,6 +33,13 @@ import { Indicator } from './indicator.js';
 
 /** Construction options (03-04 as respec'd by plan-preflight PF-001 — no `fs`/`fileName`). */
 export interface EditWindowOptions {
+  /**
+   * The initial window rect, applied BEFORE the first gadget pin. Prefer this over assigning
+   * `layout.rect` after construction: a post-construction assignment leaves the constructor-time
+   * pin on the fallback rect, and the mount-time reflow can compose that stale geometry once
+   * before the `onMount` re-pin takes effect (the "1:1 mid-window until the first click" defect).
+   */
+  rect?: Rect;
   /** The hosted editor (a files `FileEditor`, the shared clipboard editor, …); absent ⇒ a bare `Editor`. */
   editor?: Editor;
   /** The shared clipboard editor — wired into a default-constructed editor + the title identity check. */
@@ -61,6 +69,7 @@ export class EditWindow extends Window {
     this.minWidth = MIN_W;
     this.minHeight = MIN_H;
     this.layout = { ...this.layout, padding: 0 }; // gadgets sit ON the frame — TV rects verbatim
+    if (options.rect !== undefined) this.layout.rect = { ...options.rect }; // before the first pin
     this.editor = editor;
 
     this.hBar = new ScrollBar({ value: editor.delta.x, orientation: 'horizontal' });
@@ -93,6 +102,11 @@ export class EditWindow extends Window {
   /** @internal Pin the TV rects for the current size (the growMode re-pin; files wfGrow idiom). */
   protected layoutGadgets(): void {
     const { width: w, height: h } = this.currentRect();
+    // The mount-time reflow may already have assigned bounds from the constructor-era fallback
+    // rect (the caller sets layout.rect between construction and addWindow — the WM idiom), so
+    // every re-pin must schedule a reflow or the gadgets keep painting at the stale bounds
+    // (the "1:1 in the middle of the window until the first click" defect). Idempotent + cheap.
+    this.invalidateLayout();
     this.editor.layout = {
       position: 'absolute',
       rect: { x: 1, y: 1, width: Math.max(0, w - 2), height: Math.max(0, h - 2) },

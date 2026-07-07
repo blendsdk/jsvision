@@ -147,8 +147,7 @@ async function main(): Promise<number> {
       keymap: buildKeymap(),
     });
     const clipboard = new Editor();
-    const clipWin = new EditWindow({ editor: clipboard, clipboard });
-    clipWin.layout.rect = { x: 40, y: 12, width: 36, height: 9 };
+    const clipWin = new EditWindow({ editor: clipboard, clipboard, rect: { x: 40, y: 12, width: 36, height: 9 } });
     app.desktop.addWindow(clipWin);
     openFileInEditor(app, { fs, clipboard, rect: { x: 2, y: 1, width: 44, height: 14 } });
     app.loop.renderRoot.flush();
@@ -185,8 +184,7 @@ async function main(): Promise<number> {
 
   // The shared clipboard editor, hosted in its own window (title "Clipboard" via the identity check).
   const clipboard = new Editor();
-  const clipWin = new EditWindow({ editor: clipboard, clipboard });
-  clipWin.layout.rect = { x: 42, y: 12, width: 36, height: 9 };
+  const clipWin = new EditWindow({ editor: clipboard, clipboard, rect: { x: 42, y: 12, width: 36, height: 9 } });
   app.desktop.addWindow(clipWin);
 
   let untitledCount = 0;
