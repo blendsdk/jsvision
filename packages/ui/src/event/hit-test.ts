@@ -113,6 +113,27 @@ function focusOnClick(hit: View, ctx: HitContext): void {
 }
 
 /**
+ * Select + raise on a mouse-down (fix #38). Climb from the hit view to the **first** ancestor that
+ * defines `selectByClick` (TV's `ofTopSelect` marker — a `Window`) and invoke it, then stop. This
+ * runs BEFORE delivery, so the raise happens regardless of whether the interior view consumes the
+ * click — mirroring TV, where `select()`→`makeFirst()` fires at the top of the window's
+ * `handleEvent` before the event descends into the interior (`tview.cpp:553-557`/`728-733`). The
+ * climb is clamped to `scopeRoot` (visited inclusively, then stop) so a click can never raise a
+ * window behind an active modal — mirroring the bubble's `node === scopeRoot` clamp (PA-12).
+ */
+function selectOnClick(hit: View, scopeRoot: View | null): void {
+  let node: View | null = hit;
+  while (node !== null) {
+    if (node.selectByClick !== undefined) {
+      node.selectByClick();
+      return;
+    }
+    if (node === scopeRoot) return; // do not climb past the dispatch scope (modal safety, PA-12)
+    node = node.parent;
+  }
+}
+
+/**
  * Route a mouse/wheel envelope: normalize 1-based→0-based (AR-63), hit-test top-most within the
  * scope, focus-on-(mouse)-click, and deliver with view-local `ev.local`. A point hitting nothing
  * (empty space / outside a modal) is a no-op (PA-6); never throws.
@@ -153,13 +174,16 @@ export function hitTestRoute(ev: DispatchEvent, ctx: HitContext): void {
   const hit = topMost(scopeRoot, origin.x, origin.y, rootRect, x, y);
   if (hit === null) return; // empty space / outside modal → ignored no-op (PA-6)
 
-  // A mouse-down focuses the nearest focusable ancestor (AC-8), then bubbles from the hit view up its
-  // ancestors until one consumes it (sets `handled`). This is what lets a click on a window's
-  // *content* (a stub-handler leaf) still reach the window's `onEvent` and raise it, exactly as a
-  // click on its border does. The walk is clamped to the dispatch scope (the modal subtree when a
-  // modal is active, PA-12) so a click can never leak to the outer tree. Other mouse kinds and wheel
-  // keep the top-most-only delivery (PF-007).
+  // A mouse-down first SELECTS + raises the owning top-select container (the Window) via a
+  // pre-delivery climb (fix #38) — so the raise happens even when an interior view consumes the
+  // click — then focuses the nearest focusable ancestor (AC-8, refining focus to the exact clicked
+  // leaf after the raise focused the window's saved current), then bubbles from the hit view up its
+  // ancestors until one consumes it (sets `handled`). The Window's `onEvent` is now affordance-only
+  // (move/resize/close/zoom); it still receives the bubbled down for a frame click. Both climbs are
+  // clamped to the dispatch scope (the modal subtree when a modal is active, PA-12) so a click can
+  // never leak to the outer tree. Other mouse kinds and wheel keep the top-most-only delivery (PF-007).
   if (inner.type === 'mouse' && inner.kind === 'down') {
+    selectOnClick(hit.view, scopeRoot);
     focusOnClick(hit.view, ctx);
     let node: View | null = hit.view;
     let ox = hit.absX; // absolute origin of `node`, walked up the chain (parent = child − child.bounds)

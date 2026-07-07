@@ -133,6 +133,18 @@ export abstract class View {
   }
 
   /**
+   * The click-select boundary (TV's `ofTopSelect` marker, fix #38). **Undefined on the base** — a
+   * plain view is not a select/raise target. A container that owns z-order (a `Window`) overrides it
+   * to select+raise itself. The hit-test invokes the **first** such ancestor of a clicked view
+   * BEFORE delivering the mouse-down, so the raise runs regardless of whether the interior consumes
+   * the click (`hit-test.ts`) — mirroring TV, where `TView::handleEvent` calls `focus()`→`select()`
+   * →`makeFirst()` at the TOP of the window's own `handleEvent`, before the event descends into the
+   * interior (`tview.cpp:553-557`/`452-466`/`728-733`). Keeping it an optional marker (not a
+   * `Window` import) keeps `hit-test.ts` window-agnostic.
+   */
+  selectByClick?(): void;
+
+  /**
    * The **view-local** caret cell this view wants the hardware cursor placed at, or `null` for no
    * caret (the default — most views never request one). RD-07 additive seam (PA-5/PA-11): the focused
    * `Input` overrides this to return `{ x: displayedPos(curPos)-firstPos+1, y: 0 }`; the event loop

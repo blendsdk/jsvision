@@ -92,6 +92,13 @@ export class Window extends Group {
   protected manager: WindowManager | null = null;
   /** @internal The restored rect saved while zoomed; `null` when not zoomed (PA-10/PA-15). */
   protected restoredRect: Rect | null = null;
+  /**
+   * @internal Whether this window was already active when the current mouse-down selected it —
+   * recorded by {@link selectByClick} in the hit-test's pre-delivery select pass (fix #38), read by
+   * {@link onEvent} to gate the HR-09 first-click affordances. A frame click runs both (select pass
+   * records + raises, then `onEvent` acts); an interior-consumed click runs only the select pass.
+   */
+  protected wasActiveOnPress = false;
 
   /**
    * @param title Initial window title (default empty).
@@ -211,18 +218,43 @@ export class Window extends Group {
   }
 
   /**
-   * Raise the window on a mouse-down and map the frame hit-zone to move/resize/close/zoom (AR-67/78).
+   * Select + raise the window on a mouse-down (TV `select()`→`makeFirst()` at the top of
+   * `handleEvent`, `tview.cpp:452-466`/`728-733` — fix #38). Invoked by the hit-test's pre-delivery
+   * pass BEFORE the event descends into the interior, so the raise runs even when an interior view
+   * consumes the click. Records {@link wasActiveOnPress} first so {@link onEvent}'s HR-09 gate reads
+   * the pre-raise active-ness (an inactive window's first click only raises+activates). A
+   * manager-less (standalone) window is a safe no-op. Idempotent — re-selecting the active window
+   * just re-raises it (a no-op splice in the Desktop).
+   *
+   * TV fidelity GATE-2 (AFTER-diff, verified against `/home/gevik/workdir/github/tvision`): TGroup
+   * routes a positional event to the subview under the mouse (`tgroup.cpp:377-380`), whose
+   * `TView::handleEvent` calls `focus()` on a mouse-down for an unselected `ofSelectable` view
+   * (`tview.cpp:552-558`) → `focus()` calls `select()` (`tview.cpp:452-466`) → `select()` calls
+   * `makeFirst()` for an `ofTopSelect` window (`tview.cpp:728-736`) — all at the TOP of `handleEvent`,
+   * before the event descends into the interior. Our pre-delivery select pass is the faithful port;
+   * no mismatch.
+   */
+  override selectByClick(): void {
+    if (this.manager === null) return;
+    this.wasActiveOnPress = this.manager.activeWindow() === this;
+    this.manager.raise(this); // AR-78: raise-on-click (z + focus)
+  }
+
+  /**
+   * Map the frame hit-zone to move/resize/close/zoom on a mouse-down (AR-67/78). The raise already
+   * happened in {@link selectByClick} (the hit-test's pre-delivery select pass), so `onEvent` is
+   * affordance-only and reads the recorded {@link wasActiveOnPress} for the HR-09 first-click gate.
    * Non-down mouse events and non-mouse events are ignored (the captured drag is handled by the Desktop).
    */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type !== 'mouse' || inner.kind !== 'down' || this.manager === null) return;
     // HR-09 / tframe.cpp:150-193 — TFrame gates the close/zoom/resize-grip affordances on
-    // `state & sfActive`: an inactive window's first click only selects/activates it. Capture the
-    // active-ness BEFORE raising so the first click on an inactive window's affordance columns is
-    // inert (raise+activate only) and the second (now-active) click performs the action.
-    const wasActive = this.manager.activeWindow() === this;
-    this.manager.raise(this); // AR-78: raise-on-click (z + focus)
+    // `state & sfActive`: an inactive window's first click only selects/activates it. `selectByClick`
+    // (run before delivery) captured the pre-raise active-ness into `wasActiveOnPress`, so the first
+    // click on an inactive window's affordance columns is inert (raise+activate only, done in the
+    // select pass) and the second (now-active) click performs the action.
+    const wasActive = this.wasActiveOnPress;
 
     const local = ev.local;
     if (local !== undefined) {
