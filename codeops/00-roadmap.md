@@ -77,7 +77,9 @@
   4 phases / 22 tasks spec-first (ST-1…ST-24); ✅ GATE PASSED (AR-172…AR-182). Header role `tableHeader`
   white-on-cyan `0x3F` (documented TV-extension — no table class in TV); `auto` pre-measured to `fixed`;
   layout `[header 1][body fr][hbar 1]`; all 3 Should-Haves in; zebra reuses `staticText 0x70`; mouse-select
-  mirrors `ListRows` (double-click deferred — core input has no click-count). TV GATE-1/GATE-2 tasks in
+  mirrors `ListRows` (double-click was deferred here — core input has no click-count — and was later
+  delivered framework-wide by `double-click-activation`/GH #39, DONE 2026-07-07, via a loop-owned
+  `DispatchEvent.clickCount`; `GridRows` now activates on `clickCount === 2`). TV GATE-1/GATE-2 tasks in
   Phase 3; only additive surface = 1 core role. RD-16 = the **last MVP** RD of the RD-12+ set. Next:
   `preflight table` (optional) → `exec_plan table`. Cascaded from **jsvision-ui**.
 - 2026-07-03: **jsvision-ui RD-15 (Tree) → DONE** ✅ (`exec_plan tree`). `Tree<T>` — a faithful Turbo
