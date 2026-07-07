@@ -111,3 +111,25 @@ test('impl: the inputName label text is forwarded and rendered', async () => {
   loop.emitCommand(Commands.cancel);
   await expect(p).resolves.toBeNull();
 });
+
+test('impl: opening a dialog emits no unowned-computation (createRoot leak) warning', async () => {
+  // Regression: the dialog's constructor-time computeds (FileList `displayItems`, DirList
+  // `flattened`) were created outside any owner scope → a per-open leak + a console.warn that
+  // corrupts a live TTY. The openers now construct the dialog under a `createRoot` disposed on close.
+  const fs = fsFixture();
+  const { loop, host } = makeHost(49, 19);
+  const warnings: string[] = [];
+  const original = console.warn;
+  console.warn = (...args: unknown[]): void => void warnings.push(String(args[0]));
+  try {
+    const p = openFile(host, { fs, directory: '/home/user' });
+    loop.emitCommand(Commands.cancel);
+    await p;
+    const p2 = changeDir(host, { fs, directory: '/home/user' });
+    loop.emitCommand(Commands.cancel);
+    await p2;
+  } finally {
+    console.warn = original;
+  }
+  expect(warnings.filter((m) => m.includes('auto-disposed'))).toEqual([]);
+});
