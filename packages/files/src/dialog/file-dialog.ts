@@ -120,7 +120,7 @@ export class FileDialog extends Dialog {
     this.minWidth = 49;
     this.minHeight = 19;
     this.fs = opts.fs ?? nodeFileSystem;
-    this.directory = opts.directory ?? signal(opts.fs.resolve('.'));
+    this.directory = opts.directory ?? signal(this.fs.resolve('.'));
     this.wildcard = opts.wildcard ?? signal('*.*');
     this.filename = opts.filename ?? signal('');
     this.showErrorSeam = opts.showError;

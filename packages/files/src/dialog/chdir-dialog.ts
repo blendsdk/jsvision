@@ -92,7 +92,7 @@ export class ChDirDialog extends Dialog {
     // (see FileDialog for the same reasoning).
     this.layout = { ...this.layout, padding: 0 };
     this.fs = opts.fs ?? nodeFileSystem;
-    this.directory = opts.directory ?? signal(opts.fs.resolve('.'));
+    this.directory = opts.directory ?? signal(this.fs.resolve('.'));
     this.startDir = this.directory();
     this.path = signal(this.directory());
     this.showErrorSeam = opts.showError;
