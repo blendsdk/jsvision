@@ -2,7 +2,7 @@
 
 > **Feature**: jsvision-ui / accelerator-overlay · **CodeOps Skills Version**: 3.3.0
 > **Implements**: jsvision-ui/#40 (reliability remainder) + #41 (discoverability) — no RD (AR-6)
-> **Progress**: 7/19 tasks (37%) · **Last Updated**: 2026-07-07
+> **Progress**: 13/19 tasks (68%) · **Last Updated**: 2026-07-07
 > **Gate**: ✅ Zero-Ambiguity PASSED (00-ambiguity-register.md)
 
 Spec-first ordering per phase: **spec tests → red → implement → green → impl tests → verify**. Specs
@@ -41,28 +41,28 @@ derive from [07-testing-strategy.md](07-testing-strategy.md); design in
 ## Phase 2 — Armed mode + synth-alt fire (FR-2…FR-5, FR-7, FR-8)
 
 **Spec tests (red):**
-- [ ] P2.1 Write `accelerator-fire.spec.test.ts` — **ST-2** (arm→plain letter fires like Alt),
+- [x] P2.1 Write `accelerator-fire.spec.test.ts` — **ST-2** (arm→plain letter fires like Alt),
       **ST-3** (F12 toggles), **ST-4** (modal scope), **ST-5** (dismiss: Esc/other-key/click, no
       residual), **ST-7** (menu precedence), **ST-8** (`revealKey` null/override), **ST-9**
       (collision = Alt order), **ST-10** (StatusLine Alt-item fires, Ctrl-chord does not).
-- [ ] P2.2 Run red — confirm all fail (no mode/intercept yet).
+- [x] P2.2 Run red — confirm all fail (no mode/intercept yet).
 
 **Implement (green):**
-- [ ] P2.3 `event/types.ts`: `EventLoopOptions.revealKey?: string \| null` (default `'f12'`, `null`
+- [x] P2.3 `event/types.ts`: `EventLoopOptions.revealKey?: string \| null` (default `'f12'`, `null`
       disables).
-- [ ] P2.4 `event/event-loop.ts`: `acceleratorMode` + `revealKey` state; `setAcceleratorMode(on)`
+- [x] P2.4 `event/event-loop.ts`: `acceleratorMode` + `revealKey` state; `setAcceleratorMode(on)`
       (flips flag + `renderRoot.setRevealAccelerators`, inside `runTick`, AR-14); supply
       `acceleratorMode`/`toggleAcceleratorMode` in `routeContext()` (`:299-346`).
-- [ ] P2.5 `event/dispatch.ts`: add the two optional `RouteContext` fields (`:22-59`) and the
+- [x] P2.5 `event/dispatch.ts`: add the two optional `RouteContext` fields (`:22-59`) and the
       intercept step at `:129` — toggle on `revealKey`; when armed, Esc dismisses, a plain single
       letter dismisses-then-re-dispatches as `{...inner, alt:true}` (03-02), any other key dismisses
       and passes through. Add mouse-branch dismiss (`:147-151`).
-- [ ] P2.6 Menu precedence (AR-7): `setAcceleratorMode(false)` when a MenuBar menu opens
+- [x] P2.6 Menu precedence (AR-7): `setAcceleratorMode(false)` when a MenuBar menu opens
       (`menu/controller.ts` open path or the app wiring).
-- [ ] P2.7 Run green — all Phase-2 specs pass; full `packages/ui` unit suite green.
+- [x] P2.7 Run green — all Phase-2 specs pass; full `packages/ui` unit suite green.
 
 **Impl tests:**
-- [ ] P2.8 `accelerator-fire.impl.test.ts` — **IT-1** (re-entrancy: synth-alt can't re-arm),
+- [x] P2.8 `accelerator-fire.impl.test.ts` — **IT-1** (re-entrancy: synth-alt can't re-arm),
       **IT-5** (armed `f` opens the File menu + dismisses), **IT-6** (no-match letter dismisses,
       no change).
 

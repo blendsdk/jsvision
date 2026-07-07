@@ -56,6 +56,16 @@ export interface RouteContext {
   focusPrev(): void;
   /** Mouse/wheel hit-test routing (wired by Phase 4). */
   hitTestRoute(ev: DispatchEvent): void;
+  // --- accelerator-overlay seams (optional; absent ⇒ the intercept is fully inert) ----------------
+  /**
+   * The accelerator-mode trigger key (accelerator-overlay AR-10), default `'f12'`. A non-`string`
+   * value (`null`/`undefined`) disables the whole feature — no toggle, no armed intercept.
+   */
+  readonly revealKey?: string | null;
+  /** Whether accelerator mode is currently armed (accelerator-overlay FR-2/AR-1). */
+  acceleratorMode?(): boolean;
+  /** Toggle accelerator mode on/off (accelerator-overlay AR-1); called for the trigger key + dismiss. */
+  toggleAcceleratorMode?(): void;
 }
 
 /**
@@ -125,6 +135,40 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
     if (inner.shift) ctx.focusPrev();
     else ctx.focusNext();
     return;
+  }
+
+  // Accelerator-overlay intercept (accelerator-overlay AR-16): the trigger key toggles reveal+arm;
+  // while armed, a plain letter is re-dispatched as `Alt+letter` (so every existing accelerator fires),
+  // Esc dismisses, and any other key or a click dismisses + passes through. It sits BEFORE the `ev2`
+  // enrichment so it sees the key ahead of every view (incl. preProcess MenuBar/TabView). Fully inert
+  // unless the loop supplies the seams (`revealKey` a string ⇒ feature enabled).
+  if (typeof ctx.revealKey === 'string' && ctx.acceleratorMode !== undefined && ctx.toggleAcceleratorMode !== undefined) {
+    if (inner.type === 'key') {
+      if (inner.key === ctx.revealKey) {
+        ctx.toggleAcceleratorMode(); // toggle whether currently on or off
+        ev.handled = true;
+        return;
+      }
+      if (ctx.acceleratorMode()) {
+        if (inner.key === 'escape') {
+          ctx.toggleAcceleratorMode(); // Esc dismisses, consumed (AR-3)
+          ev.handled = true;
+          return;
+        }
+        if (inner.key.length === 1 && !inner.alt && !inner.ctrl) {
+          // A plain accelerator letter: dismiss FIRST (sticky ends on an action), then re-dispatch a
+          // synthesized `Alt+letter` so the normal 3-phase sweep fires the match exactly like Alt.
+          // The synth event carries `alt:true`, so it can never re-enter this armed branch (IT-1).
+          ctx.toggleAcceleratorMode();
+          route({ event: { ...inner, alt: true }, handled: false }, ctx);
+          ev.handled = true;
+          return;
+        }
+        ctx.toggleAcceleratorMode(); // any other key dismisses (AR-3) and falls through to dispatch
+      }
+    } else if ((inner.type === 'mouse' && inner.kind === 'down') && ctx.acceleratorMode()) {
+      ctx.toggleAcceleratorMode(); // a click dismisses (AR-3); the click still routes below
+    }
   }
 
   // Single enrichment point (RD-06 PA-1/PA-10, RD-11 PA-16): `route()` is the one path every

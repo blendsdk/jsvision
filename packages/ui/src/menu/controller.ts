@@ -27,6 +27,12 @@ export interface MenuLoopSeam {
   focusView(view: View): void;
   /** The currently-focused view, captured on open to restore on close (PA-2). */
   getFocused(): View | null;
+  /**
+   * Dismiss accelerator mode when a menu opens (accelerator-overlay AR-7). Optional — a bare loop
+   * without the app-shell wiring omits it. An open menu owns plain letters (`itemHotkey`), so the
+   * F12 overlay must not also intercept them; the controller calls this from every open path.
+   */
+  dismissAccelerators?(): void;
 }
 
 /** The public surface the `MenuBar` drives (one method per navigation action). */
@@ -223,6 +229,9 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
 
   function openTop(index: number): void {
     const wasOpen = isOpen();
+    // AR-7: opening a menu dismisses accelerator mode so the open menu (not the F12 overlay) owns
+    // plain letters. Belt-and-suspenders beside the router intercept — covers a programmatic open too.
+    if (!wasOpen) seam.dismissAccelerators?.();
     if (!wasOpen) savedFocus = seam.getFocused();
     clearLevels();
     if (!wasOpen) mountCatcher();
