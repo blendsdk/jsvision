@@ -1,15 +1,15 @@
 /**
- * Bracketed-paste markers & assembly helpers (RD-06, plan doc 03-03, PL-5).
+ * Bracketed-paste markers & assembly helpers.
  *
  * Bracketed paste wraps pasted content between `ESC [ 200 ~` and `ESC [ 201 ~`.
  * Between the markers every byte is paste content — including bytes that would
  * otherwise be keys or escape sequences — so the decoder accumulates them and
- * emits a single {@link PasteEvent} (AC-5), never per-key events. This module
- * provides the marker matcher (chunk-boundary-safe) and the content decoder; the
+ * emits a single {@link PasteEvent}, never per-key events. This module provides
+ * the chunk-boundary-safe marker matcher and the content decoder; the
  * accumulation, size cap, and state threading live in the decoder scan loop.
  *
- * Security: paste content is bounded by the size cap (PL-5) and is never logged
- * or retained beyond the emitted event (AC-8).
+ * Paste content is bounded by the size cap and is never logged or retained beyond
+ * the emitted event.
  */
 
 /** The bracketed-paste start marker `ESC [ 200 ~`. */

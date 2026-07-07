@@ -1,14 +1,11 @@
 /**
- * Public entry point of the RD-06 input subsystem (plan doc 03-04).
+ * Public entry point of the input subsystem.
  *
- * Exposes the pure byte→event decoder ({@link decode}/{@link flush}/
- * {@link createDecoderState}), the pluggable keymap ({@link createKeymap}), and
- * the event/result/option types. The decoder is pure and host-agnostic: the
- * RD-07 host wires the real stdin stream, raw mode, mode-enable sequences, and
- * the lone-ESC `flush()` timer later.
- *
- * The `.js` extensions in the import specifiers are required by NodeNext ESM
- * resolution (they resolve to the `.ts` sources during development via tsx).
+ * Exposes the pure byte-to-event decoder ({@link decode}/{@link flush}/
+ * {@link createDecoderState}), the pluggable {@link createKeymap}, and the
+ * event/result/option types. The decoder is pure and host-agnostic — it never
+ * touches `stdin` or timers, so you wire it to your own byte source (the SDK's
+ * host does this for you).
  */
 export { createDecoderState, decode, flush } from './decoder.js';
 export { createKeymap } from './keymap.js';

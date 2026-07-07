@@ -1,11 +1,11 @@
 /**
- * Capability-driven ASCII glyph fallback (RD-04, AC-4, plan doc 03-03, PL-9).
+ * Capability-driven ASCII glyph fallback.
  *
- * The `ScreenBuffer` always stores the real Unicode glyph; the serializer passes
- * each emitted glyph through {@link fallbackGlyph} so the same buffer renders
- * Unicode on a capable terminal and ASCII on a minimal one — no second buffer.
- * Substitution is a serialize-time concern, driven entirely by RD-02's
- * `glyphs`/`unicode` capability fields.
+ * The {@link ScreenBuffer} always stores the real Unicode glyph; the serializer
+ * passes each emitted glyph through {@link fallbackGlyph} so the same buffer
+ * renders Unicode on a capable terminal and ASCII on a minimal one — you never
+ * keep a second buffer. Substitution is a paint-time concern, driven entirely by
+ * the terminal's resolved `glyphs`/`unicode` capabilities.
  */
 
 import type { CapabilityProfile } from '../capability/index.js';
@@ -40,9 +40,9 @@ const BOX_FALLBACK: ReadonlyMap<string, string> = new Map([
 ]);
 
 /**
- * Fallback-prone (mostly EAW-Ambiguous) chrome glyphs → ASCII when
- * `glyphs.ambiguousWide` is set — the ncurses-ACS-style degradations (AR-7).
- * Disjoint from {@link BOX_FALLBACK} and {@link BLOCK_SHADE}
+ * Fallback-prone (mostly East-Asian-Ambiguous) chrome glyphs → ASCII when
+ * `glyphs.ambiguousWide` is set — ncurses-ACS-style degradations. Disjoint from
+ * {@link BOX_FALLBACK} and {@link BLOCK_SHADE}
  * (U+25B2/25BC/25C4/25BA/2022/2191/2195/00D7), so its check ordering is
  * collision-free.
  */
@@ -70,7 +70,7 @@ const BLOCK_SHADE: ReadonlySet<string> = new Set([
 ]); // █▀▄▌▐░▒▓
 
 /**
- * Substitute a glyph for the terminal's capabilities (PL-9).
+ * Substitute a glyph for the terminal's capabilities.
  *
  * Resolution order: ASCII ambiguous-chrome fallback (when `ambiguousWide` is on,
  * most specific — its keys collide with no other table) → ASCII box fallback
@@ -82,6 +82,12 @@ const BLOCK_SHADE: ReadonlySet<string> = new Set([
  *   straight through).
  * @param caps The resolved terminal capabilities.
  * @returns The original glyph when supported, else its ASCII fallback.
+ * @example
+ * import { fallbackGlyph, resolveCapabilities } from '@jsvision/core';
+ * const caps = resolveCapabilities().profile;
+ *
+ * fallbackGlyph('│', caps); // '│' on a UTF-8 terminal; '|' when box-drawing is unavailable
+ * fallbackGlyph('█', caps); // '█' normally; '#' when half/solid blocks are unavailable
  */
 export function fallbackGlyph(char: string, caps: CapabilityProfile): string {
   if (char === '') return char;

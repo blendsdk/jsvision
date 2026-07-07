@@ -1,16 +1,11 @@
 /**
- * Classic xterm keyboard grammar (RD-06, plan doc 03-02, PL-4/PL-11).
+ * The classic xterm keyboard grammar: decodes one keyboard token at a byte offset.
  *
- * A pure, allowlist-only decoder for one keyboard token at a byte offset: single
- * control/printable bytes, CSI/SS3 cursor & function keys, xterm `CSI 1;<mod>`
- * modifier encodings, Alt-prefixed printables, and UTF-8 multibyte printables.
- * No `eval`, no dynamic dispatch — every sequence is matched against explicit
- * tables (AC-8). The CSI-u/Kitty branch is reserved for Phase B (DEF-1): when
- * `caps.keyboard.kittyFlags` is set the decoder still falls through to classic
- * decoding here, so the enhancement slots in later without an API change (PL-4).
- *
- * The `.js` extensions in the import specifiers are required by NodeNext ESM
- * resolution (they resolve to the `.ts` sources during development via tsx).
+ * A pure, allowlist-only decoder covering single control/printable bytes, CSI/SS3
+ * cursor & function keys, xterm `CSI 1;<mod>` modifier encodings, Alt-prefixed
+ * printables, and UTF-8 multibyte printables. Every sequence is matched against
+ * explicit tables — no `eval`, no dynamic dispatch — so untrusted input can only
+ * ever produce a recognised event, a drop, or an incomplete carry.
  */
 import type { DecodeOptions, KeyEvent } from './events.js';
 
@@ -89,10 +84,10 @@ const NO_MODS: Modifiers = { ctrl: false, alt: false, shift: false };
  *
  * @param buf The working buffer (carry + new bytes).
  * @param i The offset to decode at.
- * @param _options Decode options; the `kittyFlags` branch is reserved for Phase B (PL-4).
+ * @param _options Decode options (currently unused by this branch).
  * @returns A complete `event`, a `drop` (recognised shape but no emitted key, e.g.
  *   an unknown CSI final or invalid UTF-8 byte — advance past `end`), or
- *   `incomplete` when the buffer ends mid-token (carry it forward, AC-2).
+ *   `incomplete` when the buffer ends mid-token (carry it forward).
  */
 export function decodeKey(buf: Uint8Array, i: number, _options?: DecodeOptions): KeyDecode {
   const b = buf[i];
@@ -105,7 +100,7 @@ export function decodeKey(buf: Uint8Array, i: number, _options?: DecodeOptions):
 /** Decode an `ESC`-introduced token: CSI, SS3, Alt-prefixed key, or a held lone ESC. */
 function decodeEscape(buf: Uint8Array, i: number): KeyDecode {
   if (i + 1 >= buf.length) {
-    return { status: 'incomplete' }; // lone trailing ESC — held for flush() (PL-3)
+    return { status: 'incomplete' }; // lone trailing ESC — held for flush() to resolve on timeout
   }
   const next = buf[i + 1];
   if (next === CSI_INTRODUCER) {
@@ -115,9 +110,9 @@ function decodeEscape(buf: Uint8Array, i: number): KeyDecode {
     return decodeSs3(buf, i);
   }
   if (next === ESC) {
-    // HR-16 (PA-3): `ESC ESC` in the same chunk is Alt+Escape — one `escape` event with `alt:true`,
-    // consuming both bytes. A lone trailing ESC stays `incomplete` (handled above) → flush() yields a
-    // bare escape, so Esc-pause-Esc still produces two bare escapes.
+    // `ESC ESC` in one chunk is Alt+Escape — a single `escape` event with `alt:true`, consuming both
+    // bytes. (A lone trailing ESC instead stays `incomplete` above, so Esc-pause-Esc, where the timer
+    // fires between the two presses, still produces two separate bare escapes.)
     return {
       status: 'event',
       event: { type: 'key', key: 'escape', ctrl: false, alt: true, shift: false },
@@ -285,9 +280,9 @@ function decodePrintable(buf: Uint8Array, i: number): KeyDecode {
   }
   const codepoint = decodeUtf8(buf, i, len);
   if (!isWellFormedScalar(codepoint, len)) {
-    // Out-of-range, lone surrogate, or overlong form (HR-01): drop & resync at the next byte,
-    // identical to the invalid-lead path. This keeps the boundary total — no RangeError from
-    // String.fromCodePoint, and no non-scalar / C0-via-overlong byte leaks in as a printable key.
+    // Out-of-range, lone surrogate, or overlong form: drop & resync at the next byte, identical to the
+    // invalid-lead path. This keeps decoding total — no RangeError from String.fromCodePoint, and no
+    // non-scalar / C0-via-overlong byte can leak in as a printable key.
     return { status: 'drop', end: i + 1 };
   }
   return {
@@ -306,7 +301,7 @@ function decodePrintable(buf: Uint8Array, i: number): KeyDecode {
 
 /**
  * Validate an assembled UTF-8 code point against the Unicode scalar-value rules and the minimal
- * encoding length (HR-01). A well-formed printable requires:
+ * encoding length. A well-formed printable requires:
  *
  * 1. **In range** — `cp ≤ 0x10FFFF` (else `String.fromCodePoint` throws).
  * 2. **Not a surrogate** — outside `[0xD800, 0xDFFF]` (lone surrogates are not scalar values).
