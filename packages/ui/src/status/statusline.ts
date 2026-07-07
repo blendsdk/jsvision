@@ -1,54 +1,52 @@
 /**
- * `StatusLine` — the static bottom command row (RD-05 AR-72/AR-77).
+ * The application status line: the bottom row of command shortcuts.
  *
- * A static, left-packed row of command-bound items. Each item draws its label with the `~hotkey~`
- * char accented; a click in the item's hit-zone, or a press of its `key` accelerator (e.g. `Alt+X`),
- * emits the item's command via the loop seam; a disabled command greys + is non-activatable. The row
- * is **post-process** so an accelerator fires only when the focused view did not consume the key
- * (AR-51). The item list is static — help-context ranges are out of scope (AR-72).
+ * It shows a left-packed row of items, each a label with its `~hotkey~` character accented. Clicking
+ * an item, or pressing its accelerator key (e.g. `Alt+X` or `F4`), emits that item's command; a
+ * disabled command is greyed and does nothing. Accelerators fire only when the focused view did not
+ * already consume the key, so a status shortcut never overrides a control's own key handling.
  *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * You normally build one with {@link statusLine} and pass it to `createApplication({ statusLine })`.
  */
 import type { Style, KeyEvent } from '@jsvision/core';
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
 import { parseTilde, tildeSegments, accentStyle } from '../menu/index.js';
 
-/** A status-line entry: a tilde-marked label, the command it emits, and an optional `key` accelerator. */
+/** A status-line entry: a tilde-marked label, the command it emits, and an optional accelerator key. */
 export interface StatusItem {
-  /** Display label; `~X~` marks the accent char (AR-77). */
+  /** Display label; `~X~` marks the accent character. */
   text: string;
-  /** The command emitted on click / accelerator. */
+  /** The command emitted when the item is clicked or its accelerator is pressed. */
   command: string;
-  /** Optional accelerator label, e.g. `'Alt+X'` / `'Ctrl+Q'` / `'F1'` (matched in `onEvent`). */
+  /** Optional accelerator label, e.g. `'Alt+X'`, `'Ctrl+Q'`, or `'F1'`. */
   key?: string;
 }
 
-/** The loop seam the status line needs for activation + greying + press tracking (PA-7 / RD-10 PA-1). */
+/** The application operations the status line calls into for activation, greying, and press capture. */
 export interface StatusLoopSeam {
-  /** Raise the item's command onto the dispatch tick (AR-52). */
+  /** Emit the item's command so the app can handle it. */
   emitCommand(command: string, arg?: unknown): void;
-  /** Whether a command is enabled — drives greying + non-activatability (AR-72). */
+  /** Whether a command is enabled — a disabled item is greyed and cannot be activated. */
   isCommandEnabled(command: string): boolean;
-  /** Capture the pointer to the status line for the duration of a press (RD-10 AR-82/AR-88). */
+  /** Capture the pointer to the status line for the duration of a press. */
   setCapture(view: View): void;
-  /** Release the pointer capture (RD-10). */
+  /** Release the pointer capture. */
   releaseCapture(): void;
 }
 
 /**
- * A laid-out item, exactly as Turbo Vision's `TStatusLine` packs them (`tstatusl.cpp`): a leading pad
- * space at {@link x}, the display text at {@link textX} = `x+1`, a trailing pad space, then the next
- * item abuts. The full ` text ` span (pads included) is both the colored region and the [x, x+width)
- * hit-zone (`drawSelect` colors the pads; `itemMouseIsIn` spans `[i, i+len+2)`).
+ * A laid-out item: a leading pad space at {@link x}, the display text at {@link textX} (`x + 1`), a
+ * trailing pad space, then the next item abuts. The full ` text ` span (pads included) is both the
+ * coloured region and the `[x, x + width)` hit-zone.
  */
 interface ItemBox {
   item: StatusItem;
-  /** The item's leading-pad column (the start of its colored span + hit-zone). */
+  /** The item's leading-pad column (the start of its coloured span and hit-zone). */
   x: number;
   /** The display-text column (`x + 1`, one past the leading pad). */
   textX: number;
-  /** The full span width: leading pad + text + trailing pad (`len + 2`). */
+  /** The full span width: leading pad + text + trailing pad. */
   width: number;
   text: string;
 }
@@ -73,35 +71,51 @@ function matchesChord(label: string, ev: KeyEvent): boolean {
   return ev.key.toLowerCase() === keyToken;
 }
 
-/** The application status line: a static command-bound bottom row (AR-72). */
+/**
+ * The application status line. Build one with {@link statusLine} and give it to the application.
+ *
+ * @example
+ * import { createApplication, statusLine, statusItem, Commands } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const app = createApplication({
+ *   caps: resolveCapabilities().profile,
+ *   statusLine: statusLine([
+ *     statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X'),
+ *     statusItem('~F4~ Tile', Commands.tile, 'F4'),
+ *     statusItem('~F5~ Cascade', Commands.cascade, 'F5'),
+ *   ]),
+ * });
+ * // Click "Exit", or press Alt+X, to emit the quit command.
+ */
 export class StatusLine extends View {
-  /** The status entries (set by the {@link statusLine} builder). */
+  /** The status entries (usually set for you by the {@link statusLine} builder). */
   items: readonly StatusItem[] = [];
-  /** The loop seam; `null` until {@link attach} wires it (PA-7). */
+  /** The loop seam; `null` until the application wires it in via {@link attach}. */
   seam: StatusLoopSeam | null = null;
-  /** @internal The item currently under the cursor while a press is held (drawn `statusSelected`); `null` = none. */
+  /** @internal The item under the cursor while a press is held (drawn selected); `null` = none. */
   protected pressed: StatusItem | null = null;
-  /** @internal Whether a mouse press is in flight (captured); gates drag re-target + release-emit (RD-10 AR-88). */
+  /** @internal Whether a mouse press is currently held (captured); gates drag re-target and release-emit. */
   protected holding = false;
 
   constructor() {
     super();
-    this.postProcess = true; // accelerators fire only if the focused view didn't consume the key (AR-51)
+    this.postProcess = true; // an accelerator fires only if the focused view didn't consume the key
   }
 
   /**
-   * @internal Wire the loop seam (called once by `createApplication`, PA-7).
+   * @internal Wire the loop seam. Called once by `createApplication`.
    *
-   * @param seam The loop seam (`emitCommand`/`isCommandEnabled`).
+   * @param seam The application operations (`emitCommand`/`isCommandEnabled`/capture).
    */
   attach(seam: StatusLoopSeam): void {
     this.seam = seam;
   }
 
-  /** Lay the items left-to-right as ` text ` spans (TV `i += len+2`); each span is its hit-zone. */
+  /** Lay the items left-to-right as ` text ` spans; each span is that item's hit-zone. */
   private itemBoxes(): ItemBox[] {
     const boxes: ItemBox[] = [];
-    let x = 0; // TV draws the first item's leading pad at column 0
+    let x = 0; // the first item's leading pad sits at column 0
     for (const item of this.items) {
       const text = parseTilde(item.text).text;
       const width = text.length + 2; // leading + trailing pad space
@@ -117,18 +131,17 @@ export class StatusLine extends View {
   }
 
   /**
-   * Draw the row background then each item (AR-72). A held item (`pressed`) paints in `statusSelected`
-   * (black on green, red-on-green hotkey) — TV's `cSelect`; a held disabled item in `cSelDisabled`
-   * (darkGray on green). Otherwise normal (black/red on lightGray) or greyed (disabled). The `~…~`
-   * accelerator run(s) take the accent color, matching TV's `moveCStr` toggle.
+   * Draw the row background then each item. A held item is drawn selected; a held disabled item is
+   * greyed on the selected background. Otherwise items are drawn normally, or greyed if disabled. The
+   * `~…~` accelerator run(s) take the accent colour.
    */
   draw(ctx: DrawContext): void {
     const base = ctx.color('statusBar');
     const selected = ctx.color('statusSelected');
-    const dimFg = ctx.role('shadow').fg; // darkGray — TV cNormDisabled/cSelDisabled fg (0x78/0x28)
-    // TV's hotkey attribute is plain red on the row bg — no intensity bit. The accent takes the
-    // accelerator-overlay underline while reveal is on; the draw below applies it only to an enabled
-    // item's hot run (`enabled && seg.hot`), so a disabled item never lights up (FR-6).
+    const dimFg = ctx.role('shadow').fg; // darkGray — the greyed foreground for disabled items
+    // The accelerator accent also picks up an underline while the accelerator overlay is revealed;
+    // the loop below applies it only to an enabled item's accelerator run, so a greyed one never
+    // lights up.
     const accent: Style = accentStyle(
       { fg: ctx.role('statusBar').hotkey ?? base.fg, bg: base.bg },
       ctx.revealAccelerators,
@@ -138,7 +151,7 @@ export class StatusLine extends View {
       ctx.revealAccelerators,
     );
     const dim: Style = { fg: dimFg, bg: base.bg };
-    const selDim: Style = { fg: dimFg, bg: selected.bg }; // cSelDisabled — darkGray on green
+    const selDim: Style = { fg: dimFg, bg: selected.bg }; // greyed on the selected bg
 
     ctx.fillRect(0, 0, ctx.size.width, 1, ' ', base);
     for (const box of this.itemBoxes()) {
@@ -146,9 +159,9 @@ export class StatusLine extends View {
       const isPressed = this.pressed === box.item;
       const style = isPressed ? (enabled ? selected : selDim) : enabled ? base : dim;
       const hotStyle = isPressed ? selAccent : accent;
-      // Color the item's full span — both pad spaces included — exactly as TV's `drawSelect`.
+      // Colour the item's full span, both pad spaces included.
       ctx.fillRect(box.x, 0, box.width, 1, ' ', style);
-      // Render each `~…~` run: the highlighted accelerator run(s) in the accent color, the rest normal.
+      // Draw each `~…~` run: the accelerator run(s) in the accent colour, the rest in the row colour.
       for (const seg of tildeSegments(box.item.text)) {
         ctx.text(box.textX + seg.col, 0, seg.text, enabled && seg.hot ? hotStyle : style);
       }
@@ -156,14 +169,13 @@ export class StatusLine extends View {
   }
 
   /**
-   * Handle a mouse press/drag/release on the bar, or an item-accelerator key (AR-72, RD-10 AR-88).
-   * Mouse: a press captures the pointer and highlights the item under the cursor (no emit); a captured
-   * drag re-targets the highlight to the item under the cursor; a release frees the capture and emits
-   * the command of the item **under the release point** if enabled (TV `tstatusl.cpp` `handleEvent`,
-   * PA-10 — release off all items / on a disabled item emits nothing). A disabled command is
-   * non-activatable; accelerators still emit directly.
+   * Handle a mouse press/drag/release on the bar, or an item accelerator key. A press captures the
+   * pointer and highlights the item under the cursor (nothing is emitted yet); dragging re-targets
+   * the highlight to the item under the cursor; releasing frees the capture and emits the command of
+   * the item **under the release point**, if enabled — so releasing off every item, or on a disabled
+   * one, emits nothing. A disabled command cannot be activated; accelerator keys emit directly.
    *
-   * @param ev The dispatch envelope; `ev.handled = true` consumes the event.
+   * @param ev The dispatch envelope; setting `ev.handled = true` consumes the event.
    */
   override onEvent(ev: DispatchEvent): void {
     const seam = this.seam;
@@ -173,15 +185,15 @@ export class StatusLine extends View {
     if (inner.type === 'mouse') {
       if (ev.local === undefined) return;
       if (inner.kind === 'down') {
-        // Capture on any press in the bar (TV tracks from the press, wherever it lands).
+        // Capture on any press in the bar, wherever it lands.
         this.holding = true;
         this.pressed = this.itemAt(ev.local.x)?.item ?? null;
         seam.setCapture(this);
         this.invalidate();
         ev.handled = true;
       } else if ((inner.kind === 'move' || inner.kind === 'drag') && this.holding) {
-        // HR-14 (PA-13): abandon the press tracking if the capture was lost externally (a modal
-        // opened mid-press) — otherwise a later move re-highlights from stale `holding` state.
+        // Abandon the press if the capture was taken away (e.g. a modal opened mid-press), so a later
+        // move does not re-highlight from stale press state.
         if (ev.hasCapture !== undefined && !ev.hasCapture(this)) {
           this.holding = false;
           this.pressed = null;
@@ -197,7 +209,7 @@ export class StatusLine extends View {
       } else if (inner.kind === 'up' && this.holding) {
         this.holding = false;
         seam.releaseCapture();
-        const box = this.itemAt(ev.local.x); // the item under the RELEASE point (PA-10)
+        const box = this.itemAt(ev.local.x); // the item under the release point
         this.pressed = null;
         this.invalidate();
         if (box !== null && seam.isCommandEnabled(box.item.command)) seam.emitCommand(box.item.command);
@@ -218,11 +230,20 @@ export class StatusLine extends View {
 }
 
 /**
- * Build a {@link StatusLine} from an item list (AR-72). The builder only assembles data; the loop
- * seam is wired later by `createApplication` via {@link StatusLine.attach}.
+ * Build a {@link StatusLine} from a list of items. This only assembles the data; the application
+ * wires up behaviour when you pass the line to `createApplication`.
  *
- * @param items The status entries (left-packed in order).
+ * @param items The status entries, left-packed in order.
  * @returns A constructed `StatusLine`.
+ * @example
+ * import { createApplication, statusLine, statusItem, Commands } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const status = statusLine([
+ *   statusItem('~T~ile', Commands.tile, 'F4'),
+ *   statusItem('~Q~uit', Commands.quit, 'Alt+X'),
+ * ]);
+ * const app = createApplication({ caps: resolveCapabilities().profile, statusLine: status });
  */
 export function statusLine(items: StatusItem[]): StatusLine {
   const line = new StatusLine();
@@ -231,12 +252,16 @@ export function statusLine(items: StatusItem[]): StatusLine {
 }
 
 /**
- * Build a {@link StatusItem} (AR-72/AR-77).
+ * Build a single {@link StatusItem} for a {@link statusLine}.
  *
- * @param text    The display label; `~X~` marks the accent char.
- * @param command The command emitted on click / accelerator.
- * @param key     Optional accelerator label, e.g. `'Alt+X'`.
+ * @param text    The display label; `~X~` marks the accent character.
+ * @param command The command emitted when the item is clicked or its accelerator is pressed.
+ * @param key     Optional accelerator label, e.g. `'Alt+X'` or `'F4'`.
  * @returns A status entry.
+ * @example
+ * import { statusItem, Commands } from '@jsvision/ui';
+ *
+ * const exit = statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X');
  */
 export function statusItem(text: string, command: string, key?: string): StatusItem {
   return key === undefined ? { text, command } : { text, command, key };

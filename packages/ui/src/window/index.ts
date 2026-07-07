@@ -1,8 +1,9 @@
 /**
- * Window subsystem barrel (RD-05) — the titled, framed window + its frame helper.
+ * Window subsystem entry point — the titled, framed {@link Window} plus its frame drawing/geometry
+ * helpers.
  *
- * `Window` is public (re-exported through `@jsvision/ui`); the `frame.ts` drawing/geometry helper is
- * internal to the package (PA-8) — exported here for the desktop + tests, not from the entry point.
+ * `Window` is part of the public `@jsvision/ui` API. The `drawFrame`/`frameZoneAt` helpers are used
+ * internally by the desktop and are exported here for that, not from the package entry point.
  */
 export { Window } from './window.js';
 export type { WindowManager } from './window.js';
