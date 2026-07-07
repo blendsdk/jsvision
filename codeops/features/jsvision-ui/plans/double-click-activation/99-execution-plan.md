@@ -2,7 +2,7 @@
 
 > **Feature**: jsvision-ui / double-click-activation · Tracks GH [#39](https://github.com/blendsdk/jsvision/issues/39)
 > **CodeOps Skills Version**: 3.3.0
-> **Progress**: 0/14 tasks (0%) · **Last Updated**: 2026-07-07
+> **Progress**: 3/14 tasks (21%) · **Last Updated**: 2026-07-07 18:51
 
 **Verify command (every phase):** `TUI_SKIP_PERF=1 yarn verify` then `yarn lint` (AR-12).
 
@@ -12,17 +12,17 @@ GATE-1 BEFORE decode (done in [02-current-state.md](02-current-state.md)) + a GA
 
 ## Phase 1 — The multi-click primitive (03-01)
 
-- [ ] **1.1** Spec tests (RED): add `event.multiclick.spec.test.ts` with ST-1…ST-4 — loop with
+- [x] **1.1** Spec tests (RED): add `event.multiclick.spec.test.ts` with ST-1…ST-4 — loop with
       injected `now`, two/three `down`s, assert `clickCount` increments on same-cell-within-500ms and
       resets on time-elapsed / different-cell. Also ST-2 (propagation to a leaf's `onEvent`). Run;
-      confirm RED.
-- [ ] **1.2** Implement the primitive: add `DispatchEvent.clickCount` (`view/types.ts`) +
+      confirm RED. ✅ (completed: 2026-07-07 18:47 — 4/4 RED then GREEN)
+- [x] **1.2** Implement the primitive: add `DispatchEvent.clickCount` (`view/types.ts`) +
       `EventLoopOptions.now` (`event/types.ts`) + the loop state (`clock`/`lastClickTime`/
       `lastClickCell`/`clickCount`) and the compute-on-mouse-`down` wrap in `event-loop.ts` (per
-      03-01). No `@jsvision/core` change. Verify ST-1…ST-4 GREEN.
-- [ ] **1.3** Impl tests + hardening (`event.multiclick.impl.test.ts`): count wraps past 3;
+      03-01). No `@jsvision/core` change. Verify ST-1…ST-4 GREEN. ✅ (completed: 2026-07-07 18:47)
+- [x] **1.3** Impl tests + hardening (`event.multiclick.impl.test.ts`): count wraps past 3;
       move/drag/up/wheel/key carry `undefined`; captured-target down still carries the count; `now`
-      defaults to `Date.now`. Full verify + lint.
+      defaults to `Date.now`. Full verify + lint. ✅ (completed: 2026-07-07 18:51 — 5/5 pass; full verify 1324 ui + all pkgs green, lint clean)
 
 ## Phase 2 — Row consumers + TV fidelity (03-02)
 
@@ -58,9 +58,9 @@ GATE-1 BEFORE decode (done in [02-current-state.md](02-current-state.md)) + a GA
 
 | # | Task | Status | Implemented | Verified |
 |---|------|--------|-------------|----------|
-| 1.1 | Primitive spec tests (RED) | [ ] | | |
-| 1.2 | Implement `clickCount` + `now` + loop compute | [ ] | | |
-| 1.3 | Primitive impl tests + hardening | [ ] | | |
+| 1.1 | Primitive spec tests (RED) | [x] | 2026-07-07 18:47 | 2026-07-07 18:47 |
+| 1.2 | Implement `clickCount` + `now` + loop compute | [x] | 2026-07-07 18:47 | 2026-07-07 18:47 |
+| 1.3 | Primitive impl tests + hardening | [x] | 2026-07-07 18:47 | 2026-07-07 18:51 |
 | 2.1 | Consumer spec tests (RED) | [ ] | | |
 | 2.2 | `ListRows` + `GridRows` double-click | [ ] | | |
 | 2.3 | `TreeRows` fidelity fix (drop emit + double-click) | [ ] | | |

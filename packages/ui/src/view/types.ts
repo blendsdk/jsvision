@@ -125,6 +125,14 @@ export interface DispatchEvent {
   /** Mouse/wheel coordinates translated to view-local cells (AR-50, AR-63); absent for keys/commands. */
   readonly local?: Point;
   /**
+   * The consecutive same-cell click count for a mouse-`down` (1 = single, 2 = double, 3 = triple…),
+   * computed once by the loop (double-click-activation FR-1/AR-3). Present only on a mouse-`down`
+   * envelope during real dispatch; `undefined` for move/drag/up, wheel, keys, and bare
+   * unit-constructed envelopes — so consumers read it optional (`ev.clickCount === 2`). A row widget
+   * activates on `=== 2` (AR-7). Same source/availability discipline as {@link emit}.
+   */
+  readonly clickCount?: number;
+  /**
    * Raise a typed command onto the current dispatch tick (RD-06 PA-1). Present when a `RouteContext`
    * is active (always, during real dispatch); `undefined` only in bare unit-constructed envelopes, so
    * controls call it optional-chained (`ev.emit?.(…)`).
