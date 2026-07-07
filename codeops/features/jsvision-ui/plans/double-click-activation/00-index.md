@@ -2,7 +2,7 @@
 
 > **Feature-set**: jsvision-ui · **Type**: Follow-up task (GH-tracked, no RD) · **CodeOps Skills Version**: 3.3.0
 > **Tracks**: GH [#39](https://github.com/blendsdk/jsvision/issues/39)
-> **Status**: 📋 Plan Created (2026-07-07)
+> **Status**: ✅ DONE (executed 2026-07-07 — 14/14 tasks, full verify + lint + check:deps green)
 
 ## What this is
 

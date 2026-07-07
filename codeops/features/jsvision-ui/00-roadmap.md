@@ -49,8 +49,9 @@ foundation RDs of the same number.
 
 ## Notes
 
-- **2026-07-07** — **Follow-up task `double-click-activation` 📋 Plan Created** (GH #39; no RD — the
-  21/21 RD set stays complete). A **framework-wide multi-click primitive**: the UI event loop computes
+- **2026-07-07** — **Follow-up task `double-click-activation` DONE** ✅ (GH #39; no RD — the
+  21/21 RD set stays complete). Preflighted (5 findings resolved) then executed (14 tasks, spec-first).
+  A **framework-wide multi-click primitive**: the UI event loop computes
   a consecutive same-cell click-count once, at the single `route()` envelope-enrichment seam, and
   exposes it as `DispatchEvent.clickCount` (1/2/3…) so **every** component reads it — not just list
   types (the "enhance the framework" goal). **Zero `@jsvision/core` change** (core `MouseEvent` stays
@@ -62,10 +63,13 @@ foundation RDs of the same number.
   `clickCount === 2`; the **Tree drops its non-TV single-click text emit** (TV fidelity,
   `toutline.cpp:465`). File dialog gets double-click-folder-enter / double-click-file-choose free via
   the existing `openEntry`. Plan [`double-click-activation`](plans/double-click-activation/00-index.md):
-  3 phases / 14 tasks spec-first (ST-1…ST-9), GATE-1 decode done ([02](plans/double-click-activation/02-current-state.md),
-  `tlstview.cpp:271-277` + `toutline.cpp:465-480`) + GATE-2 AFTER task. **OUT of scope:** editor/input
-  local detectors converge onto `ev.clickCount` later (AR-6); no `activateOnClick` flag (AR-8). Next:
-  `exec_plan double-click-activation`.
+  3 phases / 14 tasks spec-first (ST-1…ST-9), GATE-1 + GATE-2 diff recorded (`tlstview.cpp:276-277`
+  clean text match; `toutline.cpp:465` — a graph-zone double-click toggles-not-activates = the accepted
+  **AR-15 deviation**, our two-down model can't reconstruct a single `meDoubleClick`). Additive UI
+  surface only (`DispatchEvent.clickCount` + `EventLoopOptions.now`), **zero `@jsvision/core` change**;
+  full verify + lint + check:deps green (core 604 / ui 1333 / files 148 / examples 92). **OUT of scope:**
+  editor/input local detectors converge onto `ev.clickCount` later (AR-6); no `activateOnClick` flag
+  (AR-8).
 - **2026-07-07** — **Follow-up task `accelerator-overlay` DONE** ✅ (GH #40 reliability remainder +
   #41 discoverability; no RD per AR-6 — the 21/21 RD set stays complete). An **F12 accelerator mode**
   for `@jsvision/ui`: while armed, every reachable `~X~` accelerator in the current dispatch scope

@@ -31,7 +31,8 @@ export const treeStory: Story = {
   category: 'Containers',
   title: 'Tree',
   rd: 'RD-15',
-  blurb: 'TOutlineViewer: ↑↓ move · →/← expand/collapse · +/-/* · graph-click toggles, text-click selects.',
+  blurb:
+    'TOutlineViewer: ↑↓ move · →/← expand/collapse · +/-/* · graph-click toggles · single text click focuses, double-click (or Enter) activates.',
   build(ctx: StoryContext) {
     const roots = signal<TreeNode<string>[]>([...FOREST]);
     const focused = signal(0);

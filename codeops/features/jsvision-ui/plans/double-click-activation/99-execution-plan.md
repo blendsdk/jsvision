@@ -2,7 +2,7 @@
 
 > **Feature**: jsvision-ui / double-click-activation · Tracks GH [#39](https://github.com/blendsdk/jsvision/issues/39)
 > **CodeOps Skills Version**: 3.3.0
-> **Progress**: 8/14 tasks (57%) · **Last Updated**: 2026-07-07 19:07
+> **Progress**: 14/14 tasks (100%) — all 10 checklist items + the 4 sub-steps complete · **Last Updated**: 2026-07-07 19:11
 
 **Verify command (every phase):** `TUI_SKIP_PERF=1 yarn verify` then `yarn lint` (AR-12).
 
@@ -49,12 +49,13 @@ GATE-1 BEFORE decode (done in [02-current-state.md](02-current-state.md)) + a GA
 
 ## Phase 3 — Kitchen-sink + final gate
 
-- [ ] **3.1** Extend the `listview.story.ts` / `data-grid.story.ts` / `tree.story.ts` /
-      `file-dialog.story.ts` **blurbs** to mention double-click-to-activate (AR-11). Confirm
-      `kitchen-sink.smoke.spec` stays green (mount check).
-- [ ] **3.2** Full `TUI_SKIP_PERF=1 yarn verify` + `yarn lint` + `yarn check:deps` across all
-      packages (ui/core/files/examples). Confirm zero `@jsvision/core` change (NFR-1). Update this
-      plan's progress + the feature roadmap Notes entry.
+- [x] **3.1** Extend the `listview.story.ts` / `data-grid.story.ts` / `tree.story.ts` /
+      `file-dialog.story.ts` **blurbs** to mention double-click-to-activate (AR-11).
+      `kitchen-sink.smoke.spec` green (92 examples tests). ✅ (completed: 2026-07-07 19:10)
+- [x] **3.2** Full `TUI_SKIP_PERF=1 yarn verify` + `yarn lint` + `yarn check:deps` across all
+      packages (ui/core/files/examples) — all green. Confirmed zero `@jsvision/core` source change
+      (NFR-1: feature commits touch only `packages/ui/src/*`). Updated progress + roadmap Notes.
+      ✅ (completed: 2026-07-07 19:11)
 
 ## Task ledger
 
