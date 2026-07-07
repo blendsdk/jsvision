@@ -98,8 +98,14 @@ export interface Host {
   start(): Promise<void>;
   /** Leave modes, restore cooked/main-screen/cursor, remove handlers. Idempotent; no exit. [AR-8] */
   stop(): Promise<void>;
-  /** Diff against the previous frame, write one coalesced string, keep as new prev. [AR-3] */
-  render(buffer: ScreenBuffer): void;
+  /**
+   * Diff against the previous frame, write one coalesced string, keep as new prev. [AR-3]
+   * `trailer` (additive) is appended to that SAME write — e.g. the hardware-caret show+move
+   * sequence — so the terminal never repaints between the damage and the cursor positioning
+   * (a split write parks the visible cursor at the last damage span for one paint: flicker).
+   * A trailer with an empty diff is still written.
+   */
+  render(buffer: ScreenBuffer, trailer?: string): void;
 }
 
 /**
