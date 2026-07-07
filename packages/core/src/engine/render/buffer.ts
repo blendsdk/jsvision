@@ -1,16 +1,16 @@
 /**
- * The width-correct cell buffer apps draw into (RD-04, plan doc 03-01).
+ * The width-correct cell buffer your app draws into.
  *
- * A per-cell-object 2-D grid (migrated and extended from the archived prototype
- * `tui/buffer.ts`): each {@link Cell} now carries an attribute mask and a
- * display `width` (PL-3, PL-17). Drawing helpers (`set`/`text`/`fillRect`/`box`/
- * `shadow`) keep wide glyphs (CJK/emoji) occupying two columns — a lead cell
- * (`width: 2`) plus a continuation cell (`width: 0`, empty char) — so the
- * serializer paints them correctly (AC-2).
+ * A 2-D grid of styled {@link Cell}s, each carrying a glyph, foreground/background
+ * color, an attribute mask, and a display `width`. The drawing helpers
+ * (`set`/`text`/`fillRect`/`box`/`shadow`) keep wide glyphs (CJK/emoji) occupying
+ * two columns — a lead cell (`width: 2`) plus a continuation cell (`width: 0`,
+ * empty char) — so the terminal's column addressing stays in sync.
  *
  * The buffer is pure data + geometry: it knows display width but not terminal
- * capabilities. Capability-driven behavior (color depth, glyph fallback, sync)
- * lives in the serializer (03-02) and glyph layer (03-03).
+ * capabilities. Capability-driven behavior (color depth, glyph fallback,
+ * synchronized output) is applied later by {@link serialize} and the glyph
+ * fallback layer.
  */
 
 import { Attr } from './types.js';
@@ -26,12 +26,12 @@ const BOX = {
 } as const;
 
 /**
- * Default width-resolution mode for writes that do not specify one. Matches
- * RD-02's default `unicode.widthMode`; `text()` threads the caller's mode in.
+ * Default width-resolution mode for writes that do not specify one. Matches the
+ * capability layer's default `unicode.widthMode`.
  */
 const DEFAULT_WIDTH_MODE: WidthMode = 'wcwidth';
 
-/** Sum of the display widths of a string's code points (combining marks count 0). Used by HR-25. */
+/** Sum of the display widths of a string's code points (combining marks count 0). */
 function displayWidth(str: string): number {
   let total = 0;
   for (const glyph of str) total += charWidth(glyph.codePointAt(0) ?? 0x20, DEFAULT_WIDTH_MODE);
@@ -39,8 +39,8 @@ function displayWidth(str: string): number {
 }
 
 /**
- * Clip a string to at most `maxWidth` display columns without splitting a wide glyph (HR-25): a
- * width-2 glyph that would straddle the limit is dropped whole rather than leaving a half cell.
+ * Clip a string to at most `maxWidth` display columns without splitting a wide glyph: a width-2
+ * glyph that would straddle the limit is dropped whole rather than leaving a half cell.
  */
 function clipToWidth(str: string, maxWidth: number): string {
   if (maxWidth <= 0) return '';
@@ -55,7 +55,25 @@ function clipToWidth(str: string, maxWidth: number): string {
   return out;
 }
 
-/** A mutable 2-D grid of styled cells. */
+/**
+ * A mutable 2-D grid of styled cells — the surface you draw a frame onto before
+ * handing it to {@link serialize} for painting.
+ *
+ * Fill it at construction with a background style, then draw with `set` (one
+ * glyph), `text` (a left-aligned string), `fillRect`, `box`, and `shadow`. All
+ * writes are width-correct and clipped to the buffer bounds, and every string is
+ * sanitized so untrusted text cannot inject an escape sequence at paint time.
+ *
+ * @example
+ * import { ScreenBuffer, serialize, resolveCapabilities } from '@jsvision/core';
+ *
+ * const buf = new ScreenBuffer(20, 3, { fg: 'white', bg: 'blue' });
+ * buf.box(0, 0, 20, 3, { fg: 'white', bg: 'blue' }, 'single', 'Title');
+ * buf.text(2, 1, 'Hello, 世界', { fg: 'brightWhite', bg: 'blue' });
+ *
+ * const caps = resolveCapabilities().profile;
+ * process.stdout.write(serialize(buf, null, { caps })); // full first paint
+ */
 export class ScreenBuffer {
   public readonly width: number;
   public readonly height: number;
@@ -128,15 +146,15 @@ export class ScreenBuffer {
    * (x+1, y) as a `width: 0` continuation; a wide glyph in the last column has
    * no room for its continuation and clips to a space (never a half glyph).
    *
-   * @param widthMode Width-resolution mode; defaults to RD-02's `'wcwidth'`.
+   * @param widthMode Width-resolution mode; defaults to `'wcwidth'`.
    */
   public set(x: number, y: number, char: string, style: Style, widthMode: WidthMode = DEFAULT_WIDTH_MODE): void {
     if (!this.inBounds(x, y)) return;
     this.clearOrphan(x, y);
     const cp = char.codePointAt(0) ?? 0x20;
-    // HR-05 (PA-5): a C0 control (incl. \t/\n) or DEL becomes a single space cell at the grid
-    // boundary. One input char = one cell, so caller column math holds and no raw control byte can
-    // reach the serializer and desync terminal column addressing.
+    // A C0 control (including \t/\n) or DEL becomes a single space cell. One input char = one cell,
+    // so your column math holds and no raw control byte can reach the serializer and desync the
+    // terminal's column addressing.
     if (cp < 0x20 || cp === 0x7f) {
       this.write(this.cellAt(x, y), ' ', style, 1);
       return;
@@ -175,25 +193,25 @@ export class ScreenBuffer {
 
   /**
    * Draw a left-aligned string starting at (x, y), advancing by each glyph's
-   * **display width** (wide glyphs advance 2 columns, AC-2). Glyphs outside the
-   * buffer are clipped.
+   * **display width** (wide glyphs advance 2 columns). Glyphs outside the buffer
+   * are clipped.
    *
-   * The string is sanitized first (AC-8): control bytes never become cells, so
-   * untrusted text cannot inject an escape sequence at serialize time.
+   * The string is sanitized first: control bytes never become cells, so untrusted
+   * text cannot inject an escape sequence at serialize time.
    *
-   * @param widthMode Width-resolution mode; defaults to RD-02's `'wcwidth'`.
+   * @param widthMode Width-resolution mode; defaults to `'wcwidth'`.
    * @returns The column just past the written text (display columns, not
    *   code-point count).
    */
   public text(x: number, y: number, str: string, style: Style, widthMode: WidthMode = DEFAULT_WIDTH_MODE): number {
     let col = x;
-    // The lead column of the most recently written cell, so a following combining mark (HR-17) can
-    // compose onto it. -1 until the first base glyph of this write is stored.
+    // The lead column of the most recently written cell, so a following combining mark can compose
+    // onto it. -1 until the first base glyph of this write is stored.
     let lastLeadCol = -1;
     for (const glyph of sanitize(str)) {
       const cp = glyph.codePointAt(0) ?? 0x20;
-      // HR-05 (PA-5): a C0 control / DEL that survived sanitize (\t, \n) stores as one space cell and
-      // advances exactly one column, mirroring set()'s grid-boundary replacement.
+      // A C0 control / DEL that survived sanitize (\t, \n) stores as one space cell and advances
+      // exactly one column, mirroring set()'s replacement.
       const isControl = cp < 0x20 || cp === 0x7f;
       if (isControl) {
         this.set(col, y, ' ', style, widthMode);
@@ -201,9 +219,9 @@ export class ScreenBuffer {
         col += 1;
         continue;
       }
-      // HR-17: a zero-width combining mark composes onto the preceding cell's glyph (the cluster
-      // stays one cell, width unchanged) — e.g. `e` + U+0301 → an `é` cell. A mark with no preceding
-      // cell in this write (row start) is dropped: there is nothing to compose onto.
+      // A zero-width combining mark composes onto the preceding cell's glyph (the cluster stays one
+      // cell, width unchanged) — e.g. `e` + U+0301 → an `é` cell. A mark with no preceding cell in
+      // this write (at the row start) is dropped: there is nothing to compose onto.
       if (charWidth(cp, widthMode) === 0) {
         if (lastLeadCol >= 0) this.appendCombining(lastLeadCol, y, glyph);
         continue;
@@ -216,7 +234,7 @@ export class ScreenBuffer {
   }
 
   /**
-   * Append a zero-width combining mark to the base cell at (x, y), keeping the cell's width (HR-17).
+   * Append a zero-width combining mark to the base cell at (x, y), keeping the cell's width.
    * No-op when (x, y) is out of bounds or the base cell was cleared to empty (nothing to compose on).
    *
    * @param x Column of the base cell (a wide glyph's lead).
@@ -233,7 +251,7 @@ export class ScreenBuffer {
   /**
    * Draw a framed box with an opaque interior fill and an optional centered
    * title. The real Unicode box glyphs are stored; the serializer substitutes
-   * ASCII when `caps.glyphs.boxDrawing` is false (PL-9).
+   * ASCII (`+`, `-`, `|`) when the terminal lacks box-drawing support.
    *
    * @param variant `'double'` for ╔═╗ frames or `'single'` for ┌─┐.
    */
@@ -262,8 +280,8 @@ export class ScreenBuffer {
       this.set(x + w - 1, y + row, g.v, style);
     }
     if (title) {
-      // HR-25: center by DISPLAY width (not code-point count) and clip to the box interior, so a
-      // CJK/emoji title stays centered and never overflows the border.
+      // Center by DISPLAY width (not code-point count) and clip to the box interior, so a CJK/emoji
+      // title stays centered and never overflows the border.
       const interior = w - 2; // columns between the two vertical borders
       const label = clipToWidth(` ${title} `, interior);
       const labelWidth = displayWidth(label);
@@ -311,13 +329,22 @@ export class ScreenBuffer {
    * continuation cells are reproduced exactly). The copy shares no cell objects with the
    * original, so mutating either one never affects the other.
    *
-   * RD-03 snapshots the previous frame with this before a partial recompose, so
-   * `serialize(current, previous, …)` emits a true damage diff (AR-44, PA-8). A shallow or
-   * `get`/`set`-based copy could not reproduce continuation cells faithfully (`set` recomputes
-   * width from the char), which is why the exact copy lives here in the buffer that owns the
-   * cell array.
+   * Use it to snapshot the previous frame before drawing the next, then pass both to
+   * `serialize(current, previous, …)` for a minimal damage diff. An exact clone is required here
+   * because a `get`/`set`-based copy would recompute each cell's width from its char and so could
+   * not reproduce continuation cells faithfully.
    *
    * @returns A new ScreenBuffer equal to this one cell-for-cell.
+   * @example
+   * import { ScreenBuffer, serialize, resolveCapabilities } from '@jsvision/core';
+   * const caps = resolveCapabilities().profile;
+   *
+   * let previous = new ScreenBuffer(10, 1, { fg: 'default', bg: 'default' });
+   * const next = previous.clone();
+   * next.set(2, 0, 'Z', { fg: 'red', bg: 'default' });
+   *
+   * const diff = serialize(next, previous, { caps }); // emits only the one changed cell
+   * previous = next; // snapshot becomes the baseline for the following frame
    */
   public clone(): ScreenBuffer {
     const copy = new ScreenBuffer(this.width, this.height, { fg: 'default', bg: 'default' });

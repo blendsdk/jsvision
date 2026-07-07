@@ -1,7 +1,6 @@
 /**
- * The minimal ANSI control-sequence vocabulary the serializer emits (RD-04,
- * plan doc 03-02). A clean re-derivation of the archived prototype's `ansi.ts`
- * with **no** hardcoded color — color encoding is the `StyleEncoder` seam's job.
+ * The minimal ANSI control-sequence vocabulary the serializer emits. Deliberately
+ * carries **no** hardcoded color — color encoding is the `StyleEncoder` seam's job.
  *
  * `ESC` = `\x1b`, `CSI` = `ESC [`.
  */
@@ -23,6 +22,10 @@ export const SYNC_END = `${CSI}?2026l`;
  *
  * @param row 1-based row (top is 1).
  * @param col 1-based column (left is 1).
+ * @returns The ANSI escape string to write to the terminal.
+ * @example
+ * import { cursorTo } from '@jsvision/core';
+ * process.stdout.write(cursorTo(1, 1) + 'top-left corner');
  */
 export function cursorTo(row: number, col: number): string {
   return `${CSI}${row};${col}H`;

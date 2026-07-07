@@ -1,26 +1,26 @@
 /**
- * Pure byte→event input decoder core (RD-06, plan doc 03-02).
+ * The pure byte-to-event input decoder: turns raw terminal bytes into typed input
+ * events (keys, mouse, wheel, paste, focus) and isolates capability-query replies
+ * onto a separate channel.
  *
- * `decode(bytes, state, options?)` is a pure function of its inputs: it never
- * owns a timer, performs I/O, or logs bytes (AC-8), so the same input always
- * yields the same output (replayable under a fuzz corpus). It concatenates the
- * carried bytes with the new chunk, scans left-to-right consuming complete
- * tokens, and carries any incomplete trailing token forward in the returned
- * state (chunk-boundary safety, AC-2).
+ * `decode(bytes, state, options?)` is a pure function of its inputs — it never
+ * owns a timer, performs I/O, or logs bytes, so the same input always yields the
+ * same output. It prepends any bytes carried from the previous call, scans
+ * left-to-right consuming whole tokens, and carries an incomplete trailing token
+ * forward in the returned `state`, so a sequence split across two chunks still
+ * decodes correctly.
  *
- * The single genuinely time-dependent decision — a lone trailing `ESC` (Escape
- * key vs the start of a CSI/SS3 sequence) — is externalised to `flush()`, driven
- * by the RD-07 host's `ESC_TIMEOUT_MS` timer (PL-3). The host threads decoding
- * forward with `state = result.state` (RT-1), which carries both the incomplete
- * bytes and any in-progress bracketed paste.
+ * The one genuinely time-dependent decision — a lone trailing `ESC` (was it the
+ * Escape key, or the start of a longer arrow/function-key sequence?) — is
+ * externalised to `flush()`, which the host calls when its inter-byte timer
+ * (`ESC_TIMEOUT_MS`) fires with no further bytes. Always thread decoding forward
+ * with `state = result.state` after every call: the state carries both the
+ * incomplete bytes and any in-progress bracketed paste.
  *
- * At each scan position the decoder tries token types in priority order (03-03):
- * in-progress paste, query-response demux, mouse/wheel, focus, bracketed-paste
- * start, then the keyboard fallback — so query replies, mouse, and paste are
- * never misread as keys.
- *
- * The `.js` extensions in the import specifiers are required by NodeNext ESM
- * resolution (they resolve to the `.ts` sources during development via tsx).
+ * At each scan position the decoder tries token types in priority order:
+ * in-progress paste, capability-query reply, mouse/wheel, focus, bracketed-paste
+ * start, then the keyboard fallback — so query replies, mouse, and paste are never
+ * misread as keystrokes.
  */
 import type {
   DecodeOptions,
@@ -41,7 +41,7 @@ import { RESPONSE_BUFFER_CAP } from '../capability/query.js';
 
 const ESC = 0x1b;
 const CSI_INTRODUCER = 0x5b; // '['
-const SS3_INTRODUCER = 0x4f; // 'O' — `ESC O <final>` (also the Alt+Shift+O collision, #40)
+const SS3_INTRODUCER = 0x4f; // 'O' — `ESC O <final>` (also collides with an Alt+Shift+O accelerator)
 const FOCUS_IN = 0x49; // 'I'
 const FOCUS_OUT = 0x4f; // 'O'
 const EMPTY = new Uint8Array(0);
@@ -50,7 +50,19 @@ const EMPTY = new Uint8Array(0);
 type FocusDecode =
   { readonly status: 'event'; readonly event: FocusEvent; readonly end: number } | { readonly status: 'none' };
 
-/** A fresh, empty decoder state: no carried bytes, no in-progress paste, not resyncing. */
+/**
+ * Create a fresh, empty decoder state to pass into the first {@link decode} call:
+ * no carried bytes, no in-progress paste, not resyncing.
+ *
+ * @returns A new, empty {@link DecoderState}.
+ * @example
+ * import { createDecoderState, decode } from '@jsvision/core';
+ *
+ * let state = createDecoderState();
+ * const enc = new TextEncoder();
+ * const result = decode(enc.encode('\x1b[C'), state); // right-arrow: ESC [ C
+ * state = result.state; // thread the state forward for the next chunk
+ */
 export function createDecoderState(): DecoderState {
   return { carry: EMPTY, paste: { active: false, bytes: [], truncated: false }, resync: false };
 }
@@ -58,36 +70,67 @@ export function createDecoderState(): DecoderState {
 /**
  * Decode a chunk of terminal bytes into input events.
  *
- * @param bytes The newly received bytes.
- * @param state The carry from the previous call (or `createDecoderState()`).
+ * Always feed the returned `state` back into the next call — it carries an
+ * incomplete trailing sequence (or an in-progress paste) so a token split across
+ * two chunks is not lost. Capability-query replies are returned on the separate
+ * `queries` channel, never mixed into `events`.
+ *
+ * @param bytes The newly received bytes (e.g. a `stdin` `'data'` chunk).
+ * @param state The state returned by the previous call, or `createDecoderState()`.
  * @param options Optional capability profile and paste-cap override.
- * @returns The decoded events, isolated query responses, the incomplete trailing
- *   bytes (`rest`), and the next `state` to pass to the following call (RT-1).
+ * @returns The decoded `events`, isolated query replies (`queries`), the incomplete
+ *   trailing bytes (`rest`), and the next `state` to pass to the following call.
+ * @example
+ * import { createDecoderState, decode } from '@jsvision/core';
+ *
+ * const enc = new TextEncoder();
+ * let state = createDecoderState();
+ *
+ * // A modified arrow key arriving split across two chunks. The partial CSI in the
+ * // first chunk is carried; the second chunk completes it into one Ctrl+Right key.
+ * let r = decode(enc.encode('\x1b[1'), state);
+ * state = r.state; // r.events is empty — the sequence is not complete yet
+ * r = decode(enc.encode(';5C'), state);
+ * for (const ev of r.events) {
+ *   if (ev.type === 'key') console.log(ev.key, ev.ctrl); // 'right' true
+ * }
  */
 export function decode(bytes: Uint8Array, state: DecoderState, options?: DecodeOptions): DecodeResult {
   return scan(concat(state.carry, bytes), state.paste, state.resync, options);
 }
 
 /**
- * Force out a held ambiguous trailing `ESC` as a standalone Escape key (PL-3).
+ * Resolve a held, ambiguous trailing `ESC` as a standalone Escape keypress.
  *
- * Called by the host when its `ESC_TIMEOUT_MS` timer fires with no further bytes.
- * A leading lone `ESC` in the carry becomes `KeyEvent{ key:'escape' }`; any bytes
- * after it are decoded normally. With no held `ESC`, this just re-scans the carry.
+ * A lone `ESC` at the end of a chunk could be the Escape key or the first byte of
+ * a longer sequence, so {@link decode} holds it rather than guess. The host calls
+ * `flush()` when its inter-byte timer (`ESC_TIMEOUT_MS`) fires with no more bytes:
+ * a leading lone `ESC` in the carry then becomes a `key: 'escape'` event, and any
+ * bytes after it decode normally. With no held `ESC`, this simply re-scans the
+ * carry and typically returns nothing.
  *
  * @param state The current decoder state (its `carry` may hold the lone `ESC`).
  * @param options Optional decode options.
  * @returns The decode result, including the emitted Escape key when applicable.
+ * @example
+ * import { createDecoderState, decode, flush } from '@jsvision/core';
+ *
+ * // A bare ESC arrives with nothing after it.
+ * let r = decode(Uint8Array.from([0x1b]), createDecoderState());
+ * // r.events is empty — the ESC is held in r.state.carry.
+ *
+ * // Later, the host's timer fires with no further bytes:
+ * r = flush(r.state);
+ * console.log(r.events[0]); // { type: 'key', key: 'escape', ctrl: false, ... }
  */
 export function flush(state: DecoderState, options?: DecodeOptions): DecodeResult {
   const buf = state.carry;
   if (!state.paste.active && !state.resync && buf.length > 0 && buf[0] === ESC) {
-    // #40: an introducer that never completed within the disambiguation window is an Alt+letter
-    // accelerator, not the start of an SS3/CSI sequence. `ESC O` (Alt+Shift+O) and `ESC [` (Alt+[)
-    // collide with the SS3/CSI introducers, so a lone 2-byte hold that timed out is the accelerator.
-    // Decode the letter exactly as a standalone printable and set `alt` — byte-identical to every
-    // other Alt+<char> (keys.ts `decodeEscape`). Strictly length 2: a longer carry (`ESC [ 1 ;`) is
-    // a real in-progress CSI/modified key and must be left to the escape-prefixed path below.
+    // A two-byte `ESC O` / `ESC [` that never completed within the disambiguation window is an
+    // Alt+letter accelerator (Alt+Shift+O / Alt+[), not the start of an SS3/CSI sequence — those
+    // introducer bytes are ambiguous. Decode the letter as a standalone printable and set `alt`, so
+    // it is byte-identical to any other Alt+<char>. This applies only at length 2: a longer carry
+    // (e.g. `ESC [ 1 ;`) is a real in-progress sequence and must fall through to the escape path.
     if (buf.length === 2 && (buf[1] === SS3_INTRODUCER || buf[1] === CSI_INTRODUCER)) {
       const letter = decodeKey(copyOf(buf.subarray(1)), 0, options);
       if (letter.status === 'event') {
@@ -113,21 +156,21 @@ export function flush(state: DecoderState, options?: DecodeOptions): DecodeResul
 
 /**
  * The core scan loop over a working buffer. At each position it tries the token
- * types in priority order (03-03): in-progress paste, query-response demux,
- * mouse/wheel, focus, bracketed-paste start, then the keyboard fallback. A
- * complete token is consumed and appended; an incomplete trailing token stops
- * the scan (carried in `rest`); a recognised-but-unmapped token is dropped.
+ * types in priority order: in-progress paste, query-response demux, mouse/wheel,
+ * focus, bracketed-paste start, then the keyboard fallback. A complete token is
+ * consumed and appended; an incomplete trailing token stops the scan (carried in
+ * `rest`); a recognised-but-unmapped token is dropped.
  *
  * Query responses are pushed to `queries`, never `events`, so a terminal reply
- * physically cannot leak as a keystroke (AC-6, PL-9). The in-progress paste is
- * accumulated into local state and threaded out via the returned `state` (RT-1).
+ * physically cannot leak as a keystroke. The in-progress paste is accumulated into
+ * local state and threaded out via the returned `state`.
  */
 function scan(buf: Uint8Array, paste: PasteState, resync: boolean, options?: DecodeOptions): DecodeResult {
   const events: InputEvent[] = [];
   const queries: QueryResponse[] = [];
   const cap = options?.pasteCap ?? PASTE_CAP_BYTES;
 
-  // Local, mutable copies so decode() never mutates the caller's state (purity, AC-8).
+  // Local, mutable copies so decode() never mutates the caller's state (it stays pure).
   let active = paste.active;
   let pasteBytes = active ? paste.bytes.slice() : [];
   let truncated = active ? paste.truncated : false;
@@ -135,8 +178,8 @@ function scan(buf: Uint8Array, paste: PasteState, resync: boolean, options?: Dec
 
   let i = 0;
   scanLoop: while (i < buf.length) {
-    // 0. Resync after a carry-bound overflow (PL-6): drop bytes until the next
-    // ESC so an oversized unterminated sequence emits nothing (AC-7/AC-8).
+    // 0. Resync after a carry-bound overflow: drop bytes until the next ESC so an
+    // oversized unterminated sequence (adversarial or corrupt) emits nothing.
     if (resyncing) {
       if (buf[i] !== ESC) {
         i += 1;
@@ -145,7 +188,7 @@ function scan(buf: Uint8Array, paste: PasteState, resync: boolean, options?: Dec
       resyncing = false; // reached a sequence boundary — resume normal decoding
     }
 
-    // 1. In-progress paste: every byte is content until the end marker (AC-5).
+    // 1. In-progress paste: every byte is content until the end marker.
     if (active) {
       const endMarker = matchMarker(buf, i, PASTE_END);
       if (endMarker === 'incomplete') {
@@ -159,7 +202,7 @@ function scan(buf: Uint8Array, paste: PasteState, resync: boolean, options?: Dec
         i = endMarker;
         continue;
       }
-      // Accumulate one content byte under the size cap (PL-5, AC-7).
+      // Accumulate one content byte under the size cap; once exceeded, flag truncated.
       if (pasteBytes.length < cap) {
         pasteBytes.push(buf[i]);
       } else {
@@ -169,10 +212,11 @@ function scan(buf: Uint8Array, paste: PasteState, resync: boolean, options?: Dec
       continue;
     }
 
-    // 2. Query-response demux → queries (never events) (AC-6, PL-9).
+    // 2. Query-response demux → queries (never events), so a terminal reply cannot
+    // be delivered as a keystroke.
     const response = matchResponse(buf, i);
     if (response === 'incomplete') {
-      break; // an opened CSI/DCS response, terminator not here yet — carry it (HR-04), never leak as keys
+      break; // an opened CSI/DCS response whose terminator has not arrived — carry it, never leak as keys
     }
     if (response !== null) {
       queries.push({ raw: copyOf(buf.subarray(i, response.end)), kind: response.kind });
@@ -227,9 +271,9 @@ function scan(buf: Uint8Array, paste: PasteState, resync: boolean, options?: Dec
 
   let rest = copyOf(buf.subarray(i));
   let nextResync = resyncing;
-  // Carry bound (PL-6, AC-7/AC-8): a trailing incomplete token longer than the
-  // shared cap is adversarial garbage — drop it and resync rather than grow.
-  // (Paste content is bounded separately by the paste cap, not carried in rest.)
+  // Carry bound: a trailing incomplete token longer than the shared cap is
+  // adversarial garbage — drop it and resync rather than let the carry grow without
+  // limit. (Paste content is bounded separately by the paste cap, not carried here.)
   if (rest.length > RESPONSE_BUFFER_CAP) {
     rest = EMPTY;
     nextResync = true; // discard the poisoned tail until the next ESC boundary
@@ -243,9 +287,9 @@ function scan(buf: Uint8Array, paste: PasteState, resync: boolean, options?: Dec
 }
 
 /**
- * Decode a focus in/out report: `ESC [ I` → focused, `ESC [ O` → unfocused
- * (PL-7). Returns `none` when the bytes are not a focus report (the decoder then
- * tries the bracketed-paste start and keyboard fallbacks).
+ * Decode a focus in/out report: `ESC [ I` → focused, `ESC [ O` → unfocused.
+ * Returns `none` when the bytes are not a focus report (the decoder then tries the
+ * bracketed-paste start and keyboard fallbacks).
  */
 function decodeFocus(buf: Uint8Array, i: number): FocusDecode {
   if (buf[i] !== ESC || buf[i + 1] !== CSI_INTRODUCER) {

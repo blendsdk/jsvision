@@ -1,16 +1,15 @@
 /**
- * OSC (Operating System Command) feature surface (RD-04, AC-5/AC-7/AC-8, plan
- * doc 03-04, PL-11/PL-12).
+ * OSC (Operating System Command) feature surface: hyperlinks, clipboard, window
+ * title, bell, and desktop notifications.
  *
- * Hyperlinks, clipboard, window title, bell, and desktop notifications. Each
- * function is pure (returns the ANSI string for the host to write, like
- * `serialize`) and routes every text/url argument through {@link sanitize}
- * first, so embedded escape/OSC sequences cannot break out (SEC-1, AC-8). Each
- * feature is gated on the relevant RD-02 `osc` capability; unsupported features
- * degrade gracefully (plain text or empty string).
+ * Each function is pure — it returns the ANSI string for you to write to the
+ * terminal (like {@link serialize}) — and routes every text/url argument through
+ * {@link sanitize} first, so embedded escape/OSC sequences cannot break out. Each
+ * feature is gated on the relevant terminal `osc` capability; an unsupported
+ * feature degrades gracefully to plain text or an empty string.
  *
- * Security: this module never logs app-provided clipboard/notify/title text
- * (SEC-2). Bell/notification rate-limiting is the app's concern (SEC-3).
+ * These functions never log the text you pass. Debounce/rate-limiting of bells and
+ * notifications is your app's responsibility.
  */
 
 import { sanitize } from '../safety/sanitize.js';
@@ -22,12 +21,18 @@ const BEL = '\x07';
 const ST = '\x1b\\';
 
 /**
- * Emit an OSC 8 hyperlink wrapping `text` with `url` (PL-12). When the terminal
- * lacks hyperlink support, returns the sanitized text as plain text.
+ * Emit an OSC 8 hyperlink wrapping `text` with `url`. When the terminal lacks
+ * hyperlink support, returns the sanitized text as plain text (so it still reads
+ * correctly, just without the clickable link).
  *
  * @param text Visible link text (sanitized).
  * @param url Target URL (sanitized).
  * @param caps Resolved terminal capabilities.
+ * @returns The ANSI string to write to the terminal.
+ * @example
+ * import { hyperlink, resolveCapabilities } from '@jsvision/core';
+ * const caps = resolveCapabilities().profile;
+ * process.stdout.write(hyperlink('jsvision docs', 'https://example.com', caps));
  */
 export function hyperlink(text: string, url: string, caps: CapabilityProfile): string {
   const t = sanitize(text);
@@ -37,14 +42,18 @@ export function hyperlink(text: string, url: string, caps: CapabilityProfile): s
 }
 
 /**
- * Emit an OSC 52 clipboard-write of `text` (PL-12, HR-21/PA-7). The text is base64-encoded
- * **verbatim** — no pre-encode sanitize. Base64 output (`[A-Za-z0-9+/=]`) cannot break out of the
- * OSC 52 frame, so the sequence stays injection-safe while placing the exact input bytes on the
- * clipboard (a prior sanitize silently stripped CR and other controls). Returns `''` when the
- * terminal lacks clipboard support.
+ * Emit an OSC 52 clipboard-write of `text`. The text is base64-encoded **verbatim**
+ * (no sanitize) so the exact bytes — including newlines — land on the clipboard;
+ * base64 output cannot break out of the OSC 52 frame, so the sequence stays
+ * injection-safe regardless. Returns `''` when the terminal lacks clipboard support.
  *
  * @param text Text to place on the clipboard; encoded byte-for-byte.
  * @param caps Resolved terminal capabilities.
+ * @returns The ANSI string to write to the terminal, or `''` if unsupported.
+ * @example
+ * import { setClipboard, resolveCapabilities } from '@jsvision/core';
+ * const caps = resolveCapabilities().profile;
+ * process.stdout.write(setClipboard('copied from my TUI', caps));
  */
 export function setClipboard(text: string, caps: CapabilityProfile): string {
   if (!caps.osc.clipboard52) return '';
@@ -53,31 +62,48 @@ export function setClipboard(text: string, caps: CapabilityProfile): string {
 }
 
 /**
- * Emit an OSC 0/2 window-title set (PL-12). Returns `''` when unsupported.
+ * Emit an OSC 0/2 window-title set. Returns `''` when the terminal does not
+ * support setting the title.
  *
  * @param text New window title (sanitized).
  * @param caps Resolved terminal capabilities.
+ * @returns The ANSI string to write to the terminal, or `''` if unsupported.
+ * @example
+ * import { setTitle, resolveCapabilities } from '@jsvision/core';
+ * const caps = resolveCapabilities().profile;
+ * process.stdout.write(setTitle('My App — editing report.txt', caps));
  */
 export function setTitle(text: string, caps: CapabilityProfile): string {
   if (!caps.osc.title) return '';
   return `\x1b]0;${sanitize(text)}${BEL}`;
 }
 
-/** Emit a literal bell (`\x07`). The app owns debounce/rate-limit policy (SEC-3). */
+/**
+ * Emit a literal terminal bell (`\x07`). You own any debounce/rate-limit policy.
+ *
+ * @returns The BEL byte to write to the terminal.
+ * @example
+ * import { bell } from '@jsvision/core';
+ * process.stdout.write(bell());
+ */
 export function bell(): string {
   return BEL;
 }
 
 /**
- * Emit a desktop notification via the first supported protocol (the capability
- * ladder, PL-11, AC-5): Kitty OSC 99 → iTerm2 OSC 9 → urxvt OSC 777 → WT/ConEmu
- * progress OSC 9;4 → a single BEL fallback. Title and body are sanitized, so an
- * embedded escape cannot open a second sequence (AC-7). Payloads are minimal
- * (title + body only).
+ * Emit a desktop notification via the first protocol the terminal supports (Kitty,
+ * iTerm2, urxvt, or Windows Terminal/ConEmu), falling back to a single bell when
+ * none is available. Title and body are sanitized, so an embedded escape cannot
+ * open a second sequence.
  *
  * @param title Notification title (sanitized).
  * @param body Notification body (sanitized).
  * @param caps Resolved terminal capabilities.
+ * @returns The ANSI string to write to the terminal.
+ * @example
+ * import { notify, resolveCapabilities } from '@jsvision/core';
+ * const caps = resolveCapabilities().profile;
+ * process.stdout.write(notify('Build finished', 'All tests passed', caps));
  */
 export function notify(title: string, body: string, caps: CapabilityProfile): string {
   const t = sanitize(title);
