@@ -17,7 +17,7 @@
  */
 import { Group } from '../view/index.js';
 import type { LayoutProps } from '../layout/index.js';
-import { signal, computed } from '../reactive/index.js';
+import { signal } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import { ScrollBar } from '../scroll/index.js';
 import { stringWidth } from '../controls/measure.js';
@@ -91,8 +91,8 @@ export class DataGrid<T> extends Group {
 
     // The O(rows) auto measure re-runs only on a data change (PF-102); the sorted display re-runs on
     // a data or sort change (AR-158). Both are shared by the header and the rows.
-    const autoWidths = computed(() => measureAutoWidths(columns, opts.rows(), stringWidth));
-    const display = computed(() => sortRows(opts.rows(), columns, this.sort()));
+    const autoWidths = this.derived(() => measureAutoWidths(columns, opts.rows(), stringWidth));
+    const display = this.derived(() => sortRows(opts.rows(), columns, this.sort()));
 
     this.header = new GridHeader<T>({ columns, autoWidths, indent: this.indent, sort: this.sort });
     this.rows = new GridRows<T>({

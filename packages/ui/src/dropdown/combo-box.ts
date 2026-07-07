@@ -23,7 +23,7 @@
 import { Group, View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
 import type { LayoutProps } from '../layout/index.js';
-import { computed, signal, effect } from '../reactive/index.js';
+import { signal, effect } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import { Input } from '../controls/index.js';
 import type { Validator } from '../controls/index.js';
@@ -128,7 +128,7 @@ export class ComboBox<T> extends Group {
     this.text = opts.text ?? signal('');
 
     // Candidates: all items (select-only) or the substring-filtered set (editable). Empty text ⇒ all.
-    this.filtered = computed(() => {
+    this.filtered = this.derived(() => {
       if (!this.editable) return this.items();
       const t = this.text();
       return this.items().filter((item) => this.filterFn(item, t));
