@@ -37,10 +37,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Lint (ESLint + Prettier)
-        run: yarn lint
-
-      - name: 'Verify (turbo: typecheck + build + unit tests + docs guard across packages)'
+      - name: 'Verify (turbo: lint + typecheck + build + unit tests + docs guard across packages)'
         run: yarn verify
 
       # Informational only (RD-10 AR-9): prints median/p95, never gates. Scoped to a
