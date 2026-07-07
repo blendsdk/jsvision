@@ -1,11 +1,7 @@
 /**
- * `src/tabs/` barrel — the RD-17 `TabView` folder-tab container (a self-contained `Group` over the
- * shipped RD-01…RD-05 facilities + the additive core `tab*` theme roles). The renderer split
- * (`tab-strip.ts`) and the view-free nav helpers stay internal; the public surface is the container
- * class + its two option/descriptor types, re-exported by name from `src/index.ts` per the
- * layout-convention rule (AR-181).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Public entry for the tabs widget — the self-contained `TabView` folder-tab container plus its
+ * `Tab` descriptor and `TabViewOptions` types. The strip renderer and the view-free navigation
+ * helpers are internal implementation details and are not exported here.
  */
 export { TabView } from './tab-view.js';
 export type { Tab, TabViewOptions } from './tab-view.js';
