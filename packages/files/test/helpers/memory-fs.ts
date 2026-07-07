@@ -9,15 +9,22 @@ import type { DirEntry, FileStat, FileSystem } from '../../src/fs/types.js';
 
 /** A node in the in-memory tree. */
 export type MemNode =
-  | { kind: 'file'; size: number; mtime: Date; hidden: boolean }
+  | { kind: 'file'; size: number; mtime: Date; hidden: boolean; content: string }
   | { kind: 'dir'; children: Record<string, MemNode>; hidden: boolean }
   | { kind: 'symlink'; target: string; hidden: boolean };
 
 const DEFAULT_MTIME = new Date('2026-07-04T09:05:00Z');
 
-/** Build a file node. */
-export function file(opts: { size?: number; mtime?: Date; hidden?: boolean } = {}): MemNode {
-  return { kind: 'file', size: opts.size ?? 0, mtime: opts.mtime ?? DEFAULT_MTIME, hidden: opts.hidden ?? false };
+/** Build a file node (RD-08 PA-6: `content` backs the readFile/writeFile seam methods). */
+export function file(opts: { size?: number; mtime?: Date; hidden?: boolean; content?: string } = {}): MemNode {
+  const content = opts.content ?? '';
+  return {
+    kind: 'file',
+    size: opts.size ?? content.length,
+    mtime: opts.mtime ?? DEFAULT_MTIME,
+    hidden: opts.hidden ?? false,
+    content,
+  };
 }
 
 /** Build a directory node from a `{ name: MemNode }` map. */
@@ -128,6 +135,40 @@ export function createMemoryFs(root: MemNode, opts: MemoryFsOptions = {}): FileS
     basename: (path: string) => p.basename(path),
     homedir: () => home,
     roots: () => [...roots],
+    // --- RD-08 PA-6 content methods (mirror node-fs; AC-13 runs disk-free) ---------------------
+    readFile(path: string): string {
+      const node = follow(nodeAt(path) ?? throwEnoent(path));
+      if (node === undefined || node.kind !== 'file') throw new Error(`ENOENT: ${path}`);
+      return node.content;
+    },
+    writeFile(path: string, text: string): void {
+      const parent = follow(nodeAt(p.dirname(p.resolve(rootPath, path))) ?? throwEnoent(path));
+      if (parent === undefined || parent.kind !== 'dir') throw new Error(`ENOENT: ${path}`);
+      parent.children[p.basename(path)] = {
+        kind: 'file',
+        size: text.length,
+        mtime: DEFAULT_MTIME,
+        hidden: false,
+        content: text,
+      };
+    },
+    rename(from: string, to: string): void {
+      const fromParent = follow(nodeAt(p.dirname(p.resolve(rootPath, from))) ?? throwEnoent(from));
+      const toParent = follow(nodeAt(p.dirname(p.resolve(rootPath, to))) ?? throwEnoent(to));
+      if (fromParent?.kind !== 'dir' || toParent?.kind !== 'dir') throw new Error(`ENOENT: ${from}`);
+      const name = p.basename(from);
+      const node = fromParent.children[name];
+      if (node === undefined) throw new Error(`ENOENT: ${from}`);
+      delete fromParent.children[name];
+      toParent.children[p.basename(to)] = node;
+    },
+    unlink(path: string): void {
+      const parent = follow(nodeAt(p.dirname(p.resolve(rootPath, path))) ?? throwEnoent(path));
+      if (parent?.kind !== 'dir' || parent.children[p.basename(path)] === undefined) {
+        throw new Error(`ENOENT: ${path}`);
+      }
+      delete parent.children[p.basename(path)];
+    },
   };
 }
 

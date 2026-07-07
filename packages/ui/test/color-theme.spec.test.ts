@@ -114,8 +114,21 @@ test('ST-11: colorMarker is the ONLY additive key — every existing role is byt
 
   // colorMarker is the ONLY new key added to the theme (additive-only surface, AC-10).
   // 'fileInfo' is the RD-09 files-package additive role (PA-6, AC-15; guarded by files-theme.spec).
-  const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), 'colorMarker', 'fileInfo']);
+  // The editor*/memo*/indicator*/terminal* roles are the RD-08 editor-family additive set (PA-8;
+  // guarded byte-for-byte by editor-theme.spec).
+  const knownKeys = new Set([
+    ...Object.keys(EXPECTED_UNCHANGED),
+    'colorMarker',
+    'fileInfo',
+    'editorNormal',
+    'editorSelected',
+    'memoNormal',
+    'memoSelected',
+    'indicatorNormal',
+    'indicatorDragging',
+    'terminalNormal',
+  ]);
   const actualKeys = Object.keys(defaultTheme);
   const unexpected = actualKeys.filter((k) => !knownKeys.has(k));
-  expect(unexpected, 'no theme key beyond the pre-existing set + colorMarker + fileInfo').toEqual([]);
+  expect(unexpected, 'no theme key beyond the pre-existing set + the sanctioned additive roles').toEqual([]);
 });

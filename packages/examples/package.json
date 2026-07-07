@@ -35,7 +35,9 @@
     "demo:kitchen": "tsx kitchen-sink/main.ts",
     "demo:tvision": "tsx tvision-demo/main.ts",
     "demo:amiga-clock": "tsx amiga-clock/main.ts",
-    "demo:web": "vite --config web-xterm/vite.config.ts"
+    "demo:web": "vite --config web-xterm/vite.config.ts",
+    "demo:editor": "tsx editor-demo/main.ts",
+    "demo:tvedit": "tsx tvedit-demo/main.ts"
   },
   "dependencies": {
     "@jsvision/core": "*",

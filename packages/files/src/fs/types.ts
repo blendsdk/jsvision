@@ -65,4 +65,15 @@ export interface FileSystem {
   homedir(): string;
   /** Filesystem roots — `['/']` on POSIX; drive letters on Windows (AC-11). */
   roots(): string[];
+  // --- RD-08 PA-6 content methods (additive) — the TV save sequence transcribes 1:1 over these
+  // (`unlink(bak)` ignore-missing → `rename(file, bak)` → `writeFile(file, text)`,
+  // `tfiledtr.cpp:186-193`); no platform-dependent rename-overwrite semantics hide in the seam. --
+  /** Read a file as UTF-8 text (throws on missing/unreadable — the caller routes to the seam). */
+  readFile(path: string): string;
+  /** Write (create or replace) a file with UTF-8 text. */
+  writeFile(path: string, text: string): void;
+  /** Rename/move a file (throws on a missing source). */
+  rename(from: string, to: string): void;
+  /** Delete a file (throws on missing — the first-save `.bak` case is swallowed by the caller). */
+  unlink(path: string): void;
 }

@@ -120,9 +120,13 @@ export class Desktop extends Group {
     const wasActive = this.active === w;
     this.remove(w);
     if (wasActive) {
+      w.active.set(false); // the removed window loses active state (RD-08 PA-19)
       const windows = this.windows();
       this.active = windows.length > 0 ? windows[windows.length - 1] : null;
-      if (this.active !== null) this.loop?.focusView(this.active);
+      if (this.active !== null) {
+        this.active.active.set(true);
+        this.loop?.focusView(this.active);
+      }
     }
   }
 
@@ -132,6 +136,9 @@ export class Desktop extends Group {
     if (i === -1) return;
     this.children.splice(i, 1);
     this.children.push(w);
+    // Maintain the reactive active-state seam (RD-08 PA-19): exactly one managed window is active.
+    if (this.active !== null && this.active !== w) this.active.active.set(false);
+    w.active.set(true);
     this.active = w;
     this.loop?.focusView(w);
     this.invalidateLayout(); // z-order changed → full recompose (re-themes the two frames, ST-15)
@@ -172,6 +179,7 @@ export class Desktop extends Group {
     if (!w.movable) return;
     w.commitPlacement(); // freeze a still-centered window into layout.rect before dragging it
     this.gesture = { kind: 'move', target: w, grabDX: grabLocal.x, grabDY: grabLocal.y };
+    w.dragging.set(true); // RD-08 PA-3 — TV sfDragging made reactive (the Indicator's ═↔─ swap)
     this.loop?.setCapture(this);
   }
 
@@ -181,6 +189,7 @@ export class Desktop extends Group {
     w.commitPlacement(); // freeze a still-centered window into layout.rect so originX/Y are correct
     const rect = w.layout.rect ?? { x: 0, y: 0, width: 0, height: 0 };
     this.gesture = { kind: 'resize', target: w, originX: rect.x, originY: rect.y };
+    w.dragging.set(true); // RD-08 PA-3
     this.loop?.setCapture(this);
   }
 
@@ -193,6 +202,7 @@ export class Desktop extends Group {
     w.commitPlacement(); // freeze a still-centered window into layout.rect so the right edge anchors correctly
     const rect = w.layout.rect ?? { x: 0, y: 0, width: MIN_WIDTH, height: MIN_HEIGHT };
     this.gesture = { kind: 'resize-left', target: w, anchorRight: rect.x + rect.width - 1, originY: rect.y };
+    w.dragging.set(true); // RD-08 PA-3
     this.loop?.setCapture(this);
   }
 
@@ -207,6 +217,7 @@ export class Desktop extends Group {
       // HR-14 (PA-13): if the pointer capture was lost externally (a modal opened/closed mid-drag,
       // the target unmounted), the gesture is stale — drop it and no-op so the window never teleports.
       if (ev.hasCapture !== undefined && !ev.hasCapture(this)) {
+        this.gesture.target.dragging.set(false); // clear site 2 of 2 (RD-08 PA-3, ST-27)
         this.gesture = null;
         return;
       }
@@ -218,6 +229,7 @@ export class Desktop extends Group {
         return;
       }
       if (inner.kind === 'up') {
+        this.gesture.target.dragging.set(false); // clear site 1 of 2 (RD-08 PA-3, ST-27)
         this.gesture = null;
         this.loop?.releaseCapture();
         ev.handled = true;

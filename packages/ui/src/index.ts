@@ -173,3 +173,41 @@ export type { ColorSwatchOptions, ColorPickerOptions } from './color/index.js';
 // `Point` is reused from `view/geometry` (PA-13, no duplicate export).
 export { Surface, SurfaceView } from './surface/index.js';
 export type { SurfaceOptions, SurfaceViewOptions, SurfaceSource } from './surface/index.js';
+
+// RD-08 editor family: the gap-buffer `Editor` (WordStar keymap, selection/mouse, undo/redo stack,
+// clipboard seam, literal search via the async `editorDialog` seam), the dialog-embeddable `Memo`,
+// the blue `EditWindow` (PF-001 caller-supplied `editor`), the `line:col` `Indicator`, the decoded
+// find/replace dialog builders + PA-7 message boxes, and the `Terminal` streaming log sink.
+// Explicit named re-exports; the pure cores (buffer/format/keymap/undo/search) stay internal.
+export {
+  Editor,
+  Memo,
+  EditWindow,
+  Indicator,
+  EditorCommands,
+  defaultEditorDialog,
+  findDialog,
+  replaceDialog,
+  confirmBox,
+  infoBox,
+  replacePrompt,
+  wireEditorDialogs,
+} from './editor/index.js';
+export type {
+  EditorOptions,
+  MemoOptions,
+  EditWindowOptions,
+  IndicatorTarget,
+  EditorCommandSeam,
+  EditorAction,
+  EditorDialogHandler,
+  EditorDialogRequest,
+  EditorDialogResult,
+  EditorDialogHost,
+  FindRec,
+  ReplaceRec,
+  SearchOptions,
+  LineEnding,
+} from './editor/index.js';
+export { Terminal, terminalWriter } from './terminal/index.js';
+export type { TerminalOptions } from './terminal/index.js';
