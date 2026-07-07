@@ -1,35 +1,19 @@
 /**
- * `FileDialog` — the modal open/save file dialog (`extends Dialog`), a decode of `TFileDialog`
- * (`tfildlg.cpp:58-351`).
+ * The classic modal open/save file dialog: a filename field with a recent-paths dropdown, a
+ * two-column file listing with a scroll bar, a `Files` label, a read-out info pane, and a button strip
+ * (Open/Cancel/Help, or OK/Replace/Clear/Cancel/Help in save mode). It reads and writes through an
+ * injectable {@link FileSystem}, so it runs against real disk or a virtual tree.
  *
- * TV decode (GATE-1): `getRect TRect(15,1,64,20)` = **49×19**, `ofCentered | wfGrow`, min 49×19, the
- * gray dialog palette. Composition at the decoded dialog-local rects: `FileInput (3,3,31,4)` + a
- * caller `inputName` label `(2,2,…)`; `FileList (3,6,34,14)` (2-col, PA-14) handed its
- * **horizontal-bottom** list `ScrollBar (3,14,34,15)`; a `~F~iles` label `(2,5,…)`; the button strip
- * first at `(35,3,46,5)` each **+3 rows**; `FileInfoPane (1,16,48,18)`. Open-mode strip =
- * Open(`bfDefault`)/Cancel/Help; save-mode adds OK/Replace/Clear (PA-1).
+ * How it resolves — driven by {@link valid} when OK is pressed:
+ *   - a wildcard (e.g. `*.ts`) re-filters the listing and the dialog stays open;
+ *   - a directory name descends into it and stays open;
+ *   - a valid filename resolves to its absolute path and the dialog closes;
+ *   - anything else raises an error box (via the {@link FileDialogOptions.showError} callback) and
+ *     stays open.
  *
- * `valid()` (`:293-351`): `cmCancel` bypasses; else `isWild(name)` ⇒ split into dir + wildcard and
- * re-scan (stay open); a directory ⇒ enter it (stay open); a valid file ⇒ resolve to the absolute path
- * + close; else ⇒ the local error box + stay open. The error box is raised through the injected
- * `showError` seam (PA-3 runtime — a sync `valid()` can't itself `execView`).
- *
- * GATE-2 AFTER-diff (`tfildlg.cpp:8-86`): every child rect verified byte-for-byte — dialog `15,1,64,20`
- * = 49×19; `fileName 3,3,31,4`; `inputName` label `2,2,3+cstrlen,3`; `History 31,3,34,4`; list bar
- * `3,14,34,15`; `fileList 3,6,34,14`; `~F~iles` label `2,5,8,6`; button strip first `35,3,46,5` +3/row
- * (open `fdOpenButton` Open`bfDefault`/Cancel/Help; save `fdOKButton` +OK/Replace/Clear); `infoPane
- * 1,16,48,18`. One faithful adaptation: TV's primary button emits `cmFileOpen` and Replace/Clear emit
- * `cmFileReplace`/`cmFileClear`; jsvision binds the primary to `Commands.ok` (the `Dialog` terminating
- * machinery) and Replace/Clear to `onClick` — behaviour-equivalent (the primary drives `valid()`), the
- * command *names* adapt to the RD-11 dialog contract. No draw mismatch.
- *
- * Resize (TV `wfGrow`, GATE-1/GATE-2): `sizeLimits` min 49×19 (`:185-189`) ⇒ `resizable`, floored at
- * the design size, so the drag-resize delta is grow-only. Each child tracks the growing frame by its
- * `growMode` (`:68-137`), replayed by {@link onResized} through the `growItems` table: `fileName`
- * `gfGrowHiX`; labels `0`; `History`/buttons `gfGrowLoX|gfGrowHiX`; `fileList` `gfGrowHiX|gfGrowHiY`;
- * the horizontal list bar `gfGrowLoY|gfGrowHiX|gfGrowHiY` (`tscrlbar.cpp:54`); `infoPane`
- * `gfGrowAll & ~gfGrowLoX`. GATE-2 AFTER-diff (`file-dialog-resize.impl.test.ts`): every child's grown
- * bounds match the `TView::calcBounds` decode, no bleed past the frame. `.js` per NodeNext.
+ * The dialog is drag-resizable but never smaller than its design size; its children reflow as it
+ * grows. Prefer the {@link openFile} opener for the common "prompt and get a path" case; construct
+ * `FileDialog` directly only when you need to embed or customize it.
  */
 import type { Signal } from '@jsvision/ui';
 import { Button, Commands, Dialog, History, Label, ScrollBar, signal } from '@jsvision/ui';
@@ -44,77 +28,93 @@ import { FileList } from '../list/file-list.js';
 
 /** Construction options for {@link FileDialog}. */
 export interface FileDialogOptions {
-  /** The filesystem seam. */
+  /** The filesystem to read and write through. */
   fs: FileSystem;
-  /** The current directory (default the seam's cwd `resolve('.')`). */
+  /** The current directory (default the filesystem's cwd). Shared with the listing and info pane. */
   directory?: Signal<string>;
   /** The file wildcard (default `'*.*'`). */
   wildcard?: Signal<string>;
   /** The filename field value (default an internal empty signal). */
   filename?: Signal<string>;
-  /** Save mode — the OK/Replace/Clear/Cancel/Help strip (default open mode: Open/Cancel/Help). */
+  /** Save mode — shows the OK/Replace/Clear/Cancel/Help strip instead of Open/Cancel/Help. */
   save?: boolean;
-  /** The input label text (default `'~N~ame'`, caller-supplied per PF-004). */
+  /** The filename label text (default `'~N~ame'`; wrap the hotkey letter in tildes). */
   inputName?: string;
-  /** The dialog title (default `'Open a File'` / `'Save File As'`). */
+  /** The dialog title (default `'Open a File'`, or `'Save File As'` in save mode). */
   title?: string;
-  /** A caller predicate AND-ed with the wildcard (PA-10). */
+  /** An extra predicate AND-ed with the wildcard when listing files. */
   filter?: (entry: DirEntry) => boolean;
-  /** The recent-path history id keying the shared MRU store (default the file-dialog id, PA-9). */
+  /** The id keying this dialog's recent-path history (default a file-dialog id distinct from chdir). */
   historyId?: number;
-  /** Raise the local error box (PA-3 runtime seam — wired to `errorBox(host, …)` by the opener/story). */
+  /** Called to show an error (bad filename / directory). Wire it to {@link errorBox} in an app. */
   showError?: (message: string) => void;
-  /** Called when the dialog resolves — the absolute path, or `null` on cancel. */
+  /** Called when the dialog resolves — with the chosen absolute path, or `null` on cancel. */
   onResolve?: (path: string | null) => void;
 }
 
 const stripTilde = (s: string): string => s.replace(/~/g, '');
 
-/** Default recent-path history ids (PA-9 — distinct per dialog so the two MRU lists don't collide). */
+/** The default recent-path history id — distinct from the chdir dialog so their lists don't mix. */
 const FILE_HISTORY_ID = 0x0f11;
 
-/** The modal open/save file dialog. */
+/**
+ * The modal open/save file dialog.
+ *
+ * @example
+ * import { createApplication, Commands } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { FileDialog, errorBox, nodeFileSystem } from '@jsvision/files';
+ *
+ * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const app = createApplication({ caps });
+ *
+ * const dlg = new FileDialog({
+ *   fs: nodeFileSystem,
+ *   showError: (msg) => void errorBox(app, msg),
+ * });
+ * app.desktop.addWindow(dlg);
+ * const command = await app.loop.execView<string>(dlg);
+ * const path = command === Commands.ok ? dlg.result() : null;
+ * app.desktop.removeWindow(dlg);
+ */
 export class FileDialog extends Dialog {
-  /** The filesystem seam. */
+  /** The filesystem this dialog reads and writes through. */
   readonly fs: FileSystem;
-  /** The current directory (shared with the list + info pane). */
+  /** The current directory, shared with the listing and info pane. */
   readonly directory: Signal<string>;
   /** The active file wildcard. */
   readonly wildcard: Signal<string>;
-  /** The filename field value (shared with the `FileInput`). */
+  /** The filename field value, shared with {@link fileInput}. */
   readonly filename: Signal<string>;
-  /** The 2-column file listing. */
+  /** The two-column file listing. */
   readonly fileList: FileList;
   /** The filename input. */
   readonly fileInput: FileInput;
-  /** The recent-path History dropdown over the filename input (`31,3,34,4`). */
+  /** The recent-path history dropdown beside the filename input. */
   readonly history: History;
-  /** The read-out info pane. */
+  /** The read-out info pane below the listing. */
   readonly fileInfoPane: FileInfoPane;
-  /** The list's horizontal-bottom scroll bar (dialog-owned sibling, PA-14). */
+  /** The listing's horizontal scroll bar (owned by the dialog, placed under the list). */
   readonly listBar: ScrollBar;
   /** The button strip (open- or save-mode set). */
   readonly buttons: Button[] = [];
-  /** The button labels (parallel to {@link buttons}), for composition assertions. */
+  /** The button labels, parallel to {@link buttons}. */
   readonly buttonLabels: string[] = [];
   private readonly resultPath: Signal<string | null> = signal<string | null>(null);
   private readonly showErrorSeam?: (message: string) => void;
   private readonly onResolveCb?: (path: string | null) => void;
-  /** The `growMode` reflow table (children + design rects + flags), replayed on drag-resize. */
+  /** The resize-reflow table (children + design rects + grow flags), replayed on drag-resize. */
   private readonly growItems: GrowItem[];
 
   constructor(opts: FileDialogOptions) {
     super({ title: opts.title ?? (opts.save ? 'Save File As' : 'Open a File'), width: 49, height: 19 });
-    // TV fidelity: `TFileDialog`'s child rects (`tfildlg.cpp:65-136`) are relative to the dialog's
-    // OUTER origin — the frame sits at row/col 0, so `FileInfoPane` is at `TRect(1,16,48,18)` (flush
-    // to the frame). The base `Dialog` carries `padding:1` (a convenience inset for flow/message-box
-    // dialogs); applied to these absolute rects it double-counts the frame, pushing every child +1,+1
-    // — the info pane then overwrites the right `║` and bottom `╚══╝`. Zero the padding so the decoded
-    // TV rects land exactly (frame at 0), matching the source + the ST-8 oracle.
+    // The children below are placed at absolute rects measured from the dialog's outer frame (which
+    // sits at row/col 0). The base Dialog defaults to a padding:1 inset (handy for message-box style
+    // dialogs); applied here it would double-count the frame and push every child in by (1,1), so the
+    // info pane would overwrite the right and bottom border. Zero it so the rects land exactly.
     this.layout = { ...this.layout, padding: 0 };
-    // TV `TFileDialog` is `wfGrow` with `sizeLimits` min 49×19 (tfildlg.cpp:185-189): drag-resizable,
-    // floored at the design size so the `growMode` delta is grow-only. The children track the growing
-    // frame via {@link onResized} (the `growItems` table below).
+    // Drag-resizable but floored at the design size, so children only ever grow (never shrink below
+    // the layout below). They track the growing frame in onResized() via the growItems table.
     this.resizable = true;
     this.minWidth = 49;
     this.minHeight = 19;
@@ -126,7 +126,7 @@ export class FileDialog extends Dialog {
     this.onResolveCb = opts.onResolve;
 
     const focused = signal(0);
-    // The list's bar — a dialog-owned absolute sibling, horizontal-rendered at the bottom (PA-14).
+    // The listing's scroll bar is owned by the dialog and placed as a horizontal bar under the list.
     this.listBar = new ScrollBar({ value: focused, orientation: 'horizontal' });
     this.listBar.layout = { position: 'absolute', rect: { x: 3, y: 14, width: 31, height: 1 } };
     this.fileList = new FileList({
@@ -152,13 +152,12 @@ export class FileDialog extends Dialog {
 
     const inputName = opts.inputName ?? '~N~ame';
     const inputLabel = new Label(inputName, this.fileInput);
-    // TV TLabel(TRect(2,2,3+cstrlen(inputName),3)) — width = 3 + display length (tfildlg.cpp:20).
+    // Width = the label's display length plus 3 (a trailing gap before the field).
     inputLabel.layout = {
       position: 'absolute',
       rect: { x: 2, y: 2, width: 3 + stripTilde(inputName).length, height: 1 },
     };
     const filesLabel = new Label('~F~iles', this.fileList.rows);
-    // TV TLabel(TRect(2,5,8,6)) — a fixed width-6 rect (tfildlg.cpp:31).
     filesLabel.layout = { position: 'absolute', rect: { x: 2, y: 5, width: 6, height: 1 } };
 
     this.fileInfoPane = new FileInfoPane({
@@ -181,19 +180,19 @@ export class FileDialog extends Dialog {
     this.add(this.fileInfoPane);
     for (const b of this.buttons) this.add(b);
 
-    // The `growMode` table (tfildlg.cpp:68-137) — captured at the design size, replayed by
-    // {@link onResized}. Labels (growMode 0, fixed) are omitted. Buttons: `gfGrowLoX|gfGrowHiX`.
+    // The resize-reflow table, captured at the design size and replayed by onResized(). Fixed-position
+    // labels are omitted (they never move).
     this.growItems = captureGrowItems([
-      [this.fileInput, GrowMode.HiX], // fileName — widens
-      [this.history, GrowMode.LoX | GrowMode.HiX], // History icon — rides the input's right edge
-      [this.fileList, GrowMode.HiX | GrowMode.HiY], // list — grows both ways
-      [this.listBar, GrowMode.LoY | GrowMode.HiX | GrowMode.HiY], // horizontal bar — tracks list bottom, widens
+      [this.fileInput, GrowMode.HiX], // filename field — widens
+      [this.history, GrowMode.LoX | GrowMode.HiX], // history icon — rides the field's right edge
+      [this.fileList, GrowMode.HiX | GrowMode.HiY], // listing — grows both ways
+      [this.listBar, GrowMode.LoY | GrowMode.HiX | GrowMode.HiY], // bar — tracks the list bottom, widens
       [this.fileInfoPane, GrowMode.All & ~GrowMode.LoX], // info pane — pinned left, flush bottom, full width
       ...this.buttons.map((b): [Button, number] => [b, GrowMode.LoX | GrowMode.HiX]), // pinned to the right edge
     ]);
   }
 
-  /** Reposition the children by `growMode` when the dialog is drag-resized (TV `changeBounds`). */
+  /** Reflow the children to track the frame when the dialog is drag-resized. */
   override onResized(): void {
     if (this.layout.rect !== undefined) {
       applyGrowMode(this.growItems, this.layout.rect, this.minWidth, this.minHeight);
@@ -250,25 +249,27 @@ export class FileDialog extends Dialog {
     const full = this.fs.resolve(this.directory(), entry.name);
     if (this.resolveFileAt(full, entry.name) && this.modalHost !== null) {
       const host = this.modalHost;
-      this.modalHost = null; // HR-37: release the host, mirroring Dialog.handleTerminating
+      this.modalHost = null; // release the host before ending the modal, so it isn't ended twice
       host.endModal(Commands.ok);
     }
   }
 
   /**
-   * TV `TFileDialog::valid` (`:293-351`): cancel bypasses; OK runs the filename state machine.
+   * Decide whether the dialog may close for a terminating command. Cancel always closes; OK runs the
+   * filename state machine (wildcard re-filters, a directory descends, a valid file resolves, an
+   * invalid entry raises the error box). Other commands defer to the base dialog.
    *
-   * @param command The terminating command.
-   * @returns Whether the dialog may close.
+   * @param command The command trying to close the dialog.
+   * @returns `true` to close, `false` to stay open.
    */
   override valid(command: string): boolean {
     if (command === Commands.cancel) return true;
     if (command !== Commands.ok) return super.valid(command);
-    this.firstInvalid = null; // reset before the branches that don't run the child sweep
+    this.firstInvalid = null; // reset before the branches that skip the field-validation sweep
     return this.resolveOrNavigate();
   }
 
-  /** The wildcard / directory / valid-file / error branches of `valid(cmOK)`. */
+  /** The wildcard / directory / valid-file / error branches taken when OK is pressed. */
   private resolveOrNavigate(): boolean {
     const raw = this.filename();
     const full = this.fs.resolve(this.directory(), raw);
@@ -285,19 +286,19 @@ export class FileDialog extends Dialog {
       this.filename.set('');
       return false;
     }
-    // 3. A hosted control invalid ⇒ veto + refocus (the DEF-16 child sweep).
+    // 3. A hosted field is invalid ⇒ veto and refocus it (the base dialog's field-validation sweep).
     if (!super.valid(Commands.ok)) return false;
     // 4. A valid filename ⇒ resolve + close.
     return this.resolveFileAt(full, raw);
   }
 
-  /** Resolve `full` to the result path, or raise the error box (stay open). */
+  /** Resolve `full` to the result path, or raise the error box and stay open. */
   private resolveFileAt(full: string, raw: string): boolean {
     if (raw.length === 0) {
       this.showErrorSeam?.(`Invalid file name: '${raw}'`);
       return false;
     }
-    // checkDirectory — the parent must exist and be a directory (`tfildlg.cpp:345`).
+    // The parent directory must exist and be a directory for the path to be valid.
     if (this.statKind(this.fs.dirname(full)) !== 'dir') {
       this.showErrorSeam?.('Invalid drive or directory');
       return false;

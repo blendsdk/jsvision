@@ -1,41 +1,53 @@
 /**
- * `FileInfoPane` — the passive read-out below a file dialog (`extends View`), a decode of
- * `TFileInfoPane::draw` (`stddlg.cpp:221-299`).
+ * A passive, two-row read-out that sits below a file dialog's listing. The first row shows the current
+ * search path (directory joined with the active wildcard); the second shows the focused entry's name
+ * on the left and its size, date, and 12-hour time right-aligned. A broken symlink shows only its
+ * name. It draws nothing else and takes no input — it just reflects whatever the three accessors
+ * return, repainting whenever they change.
  *
- * TV decode (GATE-1): rect `(1,16,48,18)` = **47×2**, colour `getColor(1)` = the `fileInfo` role
- * (`0x13` cyan-on-blue; the full palette chain is recorded in the core theme + PA-6). Row 0 = the
- * expanded `directory + wildCard` search path at col 1. Row 1 = the focused entry name at col 1, then
- * **right-aligned** relative to `size.x`: size `@x-38`, month `@x-22` (3-letter `months[]`), day
- * `@x-18` (2-digit), `,` `@x-16`, year `@x-15`, hour `@x-9` (12-hour, 2-digit), `:` `@x-7`, minute
- * `@x-6`, `am`/`pm` `@x-4`. **No attributes field** (AR-247). Rows 2.. blank. A broken symlink shows the
- * name only (AC-13); every field is sanitized at the draw boundary (AC-14).
- *
- * GATE-2 AFTER-diff (`stddlg.cpp:221-299`): the whole pane is filled with `getColor(1)` (`moveChar(0,'
- * ',color,size.x)` per row), text at col 1, size/date/time right-aligned at the exact `size.x-N`
- * columns (38/22/18/16/15/9/7/6/4). No attributes field. No draw mismatch. `.js` per NodeNext.
+ * This is the info pane embedded in {@link FileDialog}; use it directly only when composing a custom
+ * file picker.
  */
 import { View } from '@jsvision/ui';
 import type { DrawContext } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
 
-/** 3-letter month names (0-indexed, matching `Date.getMonth()`; TV `months[]` `stddlg.cpp:230`). */
+/** 3-letter month names, 0-indexed to match `Date.getMonth()`. */
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-/** Two-digit, zero-padded (TV pads a value < 10 with a leading `'0'`). */
+/** Two-digit, zero-padded. */
 const pad2 = (n: number): string => (n < 10 ? `0${n}` : String(n));
 
 /** Construction options for {@link FileInfoPane}. */
 export interface FileInfoPaneOptions {
-  /** The filesystem seam (for `resolve`). */
+  /** The filesystem to read through (used to expand the search path). */
   fs: FileSystem;
-  /** The current directory (row 0, with the wildcard). */
+  /** The current directory shown, with the wildcard, on row 0. */
   directory: () => string;
-  /** The active wildcard (appended to the row-0 search path). */
+  /** The active wildcard, appended to the row-0 search path. */
   wildcard: () => string;
-  /** The focused entry (row 1), or `undefined` when the list is empty. */
+  /** The focused entry shown on row 1, or `undefined` when the list is empty. */
   focusedEntry: () => DirEntry | undefined;
 }
 
-/** The file-info read-out pane (path + focused-entry name/size/date/time). */
+/**
+ * The file-info read-out pane (search path + focused-entry name/size/date/time).
+ *
+ * @example
+ * import { Group, signal } from '@jsvision/ui';
+ * import { FileInfoPane, nodeFileSystem } from '@jsvision/files';
+ * import type { DirEntry } from '@jsvision/files';
+ *
+ * const directory = signal('/home/user');
+ * const focused = signal<DirEntry | undefined>(undefined);
+ * const pane = new FileInfoPane({
+ *   fs: nodeFileSystem,
+ *   directory: () => directory(),
+ *   wildcard: () => '*.ts',
+ *   focusedEntry: () => focused(),
+ * });
+ * pane.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 47, height: 2 } };
+ * new Group().add(pane);
+ */
 export class FileInfoPane extends View {
   private readonly fsSeam: FileSystem;
   private readonly directory: () => string;
@@ -71,7 +83,7 @@ export class FileInfoPane extends View {
     const entry = this.focusedEntry();
     if (entry !== undefined && entry.name.length > 0) {
       ctx.text(1, 1, entry.name, style);
-      // A broken link shows the name only (AC-13); the fields need room (bounds-check, AC/security).
+      // A broken link shows only its name; the size/date/time fields also need enough width to fit.
       if (!entry.broken && w >= 39) {
         const d = entry.mtime;
         ctx.text(w - 38, 1, String(entry.size), style);
@@ -90,7 +102,7 @@ export class FileInfoPane extends View {
       }
     }
 
-    // Rows 2.. — blank-filled (TV `writeLine(0, 2, size.x, size.y-2)`).
+    // Any rows below the first two are blank-filled.
     for (let y = 2; y < ctx.size.height; y += 1) ctx.fillRect(0, y, w, 1, ' ', style);
   }
 }

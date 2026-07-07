@@ -1,44 +1,42 @@
 /**
- * Directory-tree geometry for `DirList` (AC-7) — pure, view-free, golden-testable against the decode.
+ * Builds the indented directory-tree rows that {@link DirList} (the change-directory dialog's tree)
+ * displays. Pure and view-free, so the geometry can be unit-tested on its own.
  *
- * TV decode (GATE-1) — `TDirListBox::showDirs` (`tdirlist.cpp:104-186`), glyphs `tvtext1.cpp:119-124`.
- * The tree = the **ancestor path chain** (root → … → current), each `└─┬` (`pathDir`) indented
- * `indentSize=2` per depth, then the current directory's **subdirs** (`indent = (curDepth+1)*2`): the
- * first `└┬─` (`firstDir`), the rest ` ├─` (`middleDir`). The **last row** is fixed up by
- * `graphics="└├─"` (`:178-186`): a trailing `└─┬`/`└┬─` → `└──`, a ` ├─` → ` └─` (`lastDir`). A platform
- * root (`roots()`) replaces TV's non-Unix `"Drives"` node (AR-237). CP437 → unambiguous-narrow Unicode,
- * pinned at GATE-1. `.js` specifiers per NodeNext.
+ * The tree is the ancestor chain from the filesystem root down to the current directory (each node
+ * drawn as `└─┬`, indented two columns per level), followed by the current directory's immediate
+ * subdirectories (the first drawn `└┬─`, the rest ` ├─`). The very last row is blunted to `└──`/`└─`
+ * so the branch closes cleanly. On Windows the root node shows the drive; on POSIX it shows `/`.
  */
 import type { FileSystem } from './types.js';
 
-/** Connector glyphs (CP437 `\xC0\xC4\xC2` … → Unicode, `tvtext1.cpp:119-124`). */
+/** Box-drawing connectors for each kind of tree row. */
 const PATH_DIR = '└─┬'; // an ancestor-chain node
 const FIRST_DIR = '└┬─'; // the first subdirectory
 const MIDDLE_DIR = ' ├─'; // a middle subdirectory (leading space aligns ├ under the ┬)
 const INDENT_SIZE = 2;
 
-/** A tree row: the connector prefix (indent + glyphs) + label, its path, depth, and current flag. */
+/** One row of the directory tree: what to draw, where it points, and how deep it sits. */
 export interface DirNode {
-  /** The directory basename (root shows the root path, e.g. `/` or `C:\`). */
+  /** The directory basename (the root node shows the root path itself, e.g. `/` or `C:\`). */
   label: string;
-  /** The absolute path this node changes to when selected (`cmChangeDir`). */
+  /** The absolute path this node navigates to when activated. */
   path: string;
-  /** Depth from the root (root = 0). */
+  /** Depth from the root (the root is `0`). */
   depth: number;
-  /** The full connector prefix (indent spaces + tree glyphs); the drawn row = `connector + label`. */
+  /** The connector prefix (indent spaces + box glyphs); the drawn row is `connector + label`. */
   connector: string;
-  /** True for the current directory (the deepest ancestor node). */
+  /** `true` for the current directory (the deepest node in the ancestor chain). */
   isCurrent: boolean;
 }
 
-/** `indent` leading spaces + the connector glyphs. */
+/** `depth`-proportional leading spaces followed by the connector glyphs. */
 function prefix(depth: number, glyphs: string): string {
   return ' '.repeat(depth * INDENT_SIZE) + glyphs;
 }
 
 /**
- * The last-row graphics fixup (`tdirlist.cpp:178-186`): if the row's glyphs contain `└`, blunt the two
- * glyphs after it to `─` (`└─┬`/`└┬─` → `└──`); else turn a `├` into `└` (` ├─` → ` └─`).
+ * Blunt the final row so the branch terminates: if it contains a `└`, replace the two glyphs after it
+ * with `─` (`└─┬`/`└┬─` → `└──`); otherwise turn its `├` into `└` (` ├─` → ` └─`).
  */
 function fixupLast(connector: string): string {
   const chars = [...connector];
@@ -54,11 +52,22 @@ function fixupLast(connector: string): string {
 }
 
 /**
- * Build the `DirList` tree for `currentPath`: the ancestor chain + the current directory's subdirs.
+ * Build the directory-tree rows for a current path: the ancestor chain from the root down to it,
+ * followed by its immediate subdirectories.
  *
- * @param fs          The filesystem seam.
- * @param currentPath The directory the tree is rooted at (its subdirs are shown).
- * @returns The ordered tree rows (top to bottom).
+ * @param fs          The filesystem to read through.
+ * @param currentPath The directory the tree is centred on (its subdirectories are listed).
+ * @returns The ordered tree rows, top to bottom.
+ * @example
+ * import { buildDirTree, nodeFileSystem } from '@jsvision/files';
+ *
+ * const rows = buildDirTree(nodeFileSystem, '/home/user/project');
+ * for (const r of rows) console.log(r.connector + r.label);
+ * // → /
+ * //   └─┬home
+ * //     └─┬user
+ * //       └─┬project
+ * //         └──src
  */
 export function buildDirTree(fs: FileSystem, currentPath: string): DirNode[] {
   const abs = fs.resolve(currentPath);
