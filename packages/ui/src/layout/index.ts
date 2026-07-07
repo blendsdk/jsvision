@@ -1,6 +1,7 @@
 /**
- * Layout subsystem (ADR-008 / RD-02) — a cell-native, integer-correct layout
- * engine.
+ * The cell-native, integer-correct layout engine — a flexbox-style layout solver
+ * that works in whole terminal cells, so laid-out boxes always fill their
+ * container exactly with no rounding gaps.
  *
  * Public surface, re-exported through the package entry point:
  * - the integer apportionment core + 1-D flex track solver (`apportion`,
