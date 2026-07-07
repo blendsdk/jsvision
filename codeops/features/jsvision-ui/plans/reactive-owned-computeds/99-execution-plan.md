@@ -129,6 +129,6 @@ caller-side `createRoot` mitigation in `@jsvision/files`.
 - [x] T-01.9 Full `yarn verify` green across all packages (ui + core + files + examples) + no new
       lint findings; then `/gitcm`.
       *(2026-07-07: `yarn verify` 11/11 turbo tasks green; `yarn lint` (eslint + prettier) clean.
-      Commit pending user confirmation.)*
+      Committed + pushed as `fd6ed07` (closes #37).)*
 
 **Verify**: `yarn verify`
