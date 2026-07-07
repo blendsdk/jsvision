@@ -12,6 +12,7 @@
 import { Dialog, Button, Label, Input, History, signal, Commands } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
+import { nodeFileSystem } from '../fs/node-fs.js';
 import { GrowMode } from './grow.js';
 import type { GrowItem } from './grow-dialog.js';
 import { applyGrowMode, captureGrowItems } from './grow-dialog.js';
@@ -22,8 +23,8 @@ const DIR_HISTORY_ID = 0x0f12;
 
 /** Construction options for {@link ChDirDialog}. */
 export interface ChDirDialogOptions {
-  /** The filesystem to read through. */
-  fs: FileSystem;
+  /** The filesystem to read through (default {@link nodeFileSystem}). */
+  fs?: FileSystem;
   /** The current directory (default the filesystem's cwd). Shared with the tree. */
   directory?: Signal<string>;
   /** The dialog title (default `'Change Directory'`). */
@@ -90,7 +91,7 @@ export class ChDirDialog extends Dialog {
     // base Dialog's padding:1 inset so they aren't pushed in by (1,1) and made to overwrite the border
     // (see FileDialog for the same reasoning).
     this.layout = { ...this.layout, padding: 0 };
-    this.fs = opts.fs;
+    this.fs = opts.fs ?? nodeFileSystem;
     this.directory = opts.directory ?? signal(opts.fs.resolve('.'));
     this.startDir = this.directory();
     this.path = signal(this.directory());
