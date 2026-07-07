@@ -177,6 +177,7 @@ export class Window extends Group {
     if (this.restoredRect === null) return; // not zoomed
     this.layout.rect = { x: 0, y: 0, width: size.width, height: size.height }; // re-maximize
     this.restoredRect = clampRestoredRect(this.restoredRect, size); // keep the un-zoom target on-screen
+    this.onResized(); // TV changeBounds → children calcBounds (growMode re-pin)
     this.invalidateLayout();
   }
 

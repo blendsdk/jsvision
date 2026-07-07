@@ -18,6 +18,7 @@ import { MIN_WIDTH, MIN_HEIGHT } from './gestures.js';
 function place(w: Window, x: number, y: number, width: number, height: number): void {
   w.resetZoom();
   w.layout.rect = { x, y, width, height };
+  w.onResized(); // TV changeBounds → children calcBounds (growMode re-pin — the gestures.ts idiom)
   w.invalidateLayout();
 }
 

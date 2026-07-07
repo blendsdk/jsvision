@@ -34,8 +34,14 @@ export function openFileInEditor(
 ): { window: EditWindow; editor: FileEditor } {
   const editor = new FileEditor(opts);
   editor.loadFile();
-  const window = new EditWindow({ editor, clipboard: opts.clipboard, editorDialog: opts.editorDialog });
-  if (opts.rect !== undefined) window.layout.rect = { ...opts.rect };
+  // The rect rides the constructor (not a post-construction layout.rect assignment) so the very
+  // first gadget pin uses it — a post-set leaves one stale-geometry compose before the mount re-pin.
+  const window = new EditWindow({
+    editor,
+    clipboard: opts.clipboard,
+    editorDialog: opts.editorDialog,
+    rect: opts.rect,
+  });
   // The reactive title bind (PF-013): fileName → title, 'Untitled' fallback.
   window.onMount(() => {
     window.bind(
