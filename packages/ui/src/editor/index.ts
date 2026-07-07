@@ -11,7 +11,7 @@ export { EditWindow } from './edit-window.js';
 export type { EditWindowOptions } from './edit-window.js';
 export { Indicator } from './indicator.js';
 export { EditorCommands } from './editor-actions.js';
-export type { EditorAction } from './keymap.js';
+export type { EditorAction, EditorKeyBindings } from './keymap.js';
 export { defaultEditorDialog } from './editor-dialog.js';
 export type {
   EditorDialogHandler,

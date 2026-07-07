@@ -5,6 +5,7 @@
  */
 import type { View } from '../view/index.js';
 import type { EditorDialogHandler } from './editor-dialog.js';
+import type { EditorKeyBindings } from './keymap.js';
 import type { Editor } from './editor.js';
 
 /** The structural indicator seam (plan-preflight PF-003) — the Phase-7 `Indicator` satisfies it. */
@@ -33,6 +34,8 @@ export interface EditorOptions {
   overwrite?: boolean;
   /** Command-greying seam (the `updateCommands` decode; default no-op). */
   commands?: EditorCommandSeam;
+  /** Editor key set — `'modern'` (default) overlays Ctrl+X/C/V/A; `'wordstar'` = the faithful TV decode. */
+  keyBindings?: EditorKeyBindings;
 }
 
 /** The minimal scroll-bar surface the gadget pushes need (a structural `ScrollBar` subset). */

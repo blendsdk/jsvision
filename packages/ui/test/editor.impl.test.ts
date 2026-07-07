@@ -97,6 +97,95 @@ test('multi-click: a different cell resets the count', () => {
   expect(ed.hasSelection()).toBe(false);
 });
 
+// --- Modern Ctrl+X/C/V/A overlay (default binding set) ------------------------------------------
+test('modern default: Ctrl+A selects all, Ctrl+C copies to the clipboard editor', () => {
+  const clipboard = new Editor();
+  const { loop, ed } = mountEditor({ clipboard });
+  ed.setText('hello');
+  loop.dispatch(key('a', { ctrl: true }));
+  expect(ed.selectionText()).toBe('hello');
+  loop.dispatch(key('c', { ctrl: true }));
+  expect(clipboard.getText()).toBe('hello');
+});
+
+test('modern default: Ctrl+X cuts the selection out of the editor', () => {
+  const clipboard = new Editor();
+  const { loop, ed } = mountEditor({ clipboard });
+  ed.setText('hello');
+  loop.dispatch(key('a', { ctrl: true }));
+  loop.dispatch(key('x', { ctrl: true }));
+  expect(ed.getText()).toBe('');
+  expect(clipboard.getText()).toBe('hello');
+});
+
+test('modern default: Ctrl+V pastes the clipboard selection at the caret', () => {
+  const clipboard = new Editor();
+  clipboard.setText('world');
+  clipboard.setSelect(0, 5, false); // the clipboard holds 'world' selected (the copy invariant)
+  const { loop, ed } = mountEditor({ clipboard });
+  ed.setText('');
+  loop.dispatch(key('v', { ctrl: true }));
+  expect(ed.getText()).toBe('world');
+});
+
+test('modern default: Ctrl+Shift+C also copies (kitty-protocol alias)', () => {
+  const clipboard = new Editor();
+  const { loop, ed } = mountEditor({ clipboard });
+  ed.setText('hey');
+  loop.dispatch(key('a', { ctrl: true }));
+  loop.dispatch(key('c', { ctrl: true, shift: true }));
+  expect(clipboard.getText()).toBe('hey');
+});
+
+test('modern default: Ctrl+Z undoes and Ctrl+Y redoes an edit', () => {
+  const { loop, ed } = mountEditor();
+  ed.setText('');
+  loop.dispatch(key('h')); // type one char = one undo step
+  expect(ed.getText()).toBe('h');
+  loop.dispatch(key('z', { ctrl: true })); // undo
+  expect(ed.getText()).toBe('');
+  loop.dispatch(key('y', { ctrl: true })); // redo
+  expect(ed.getText()).toBe('h');
+});
+
+test("keyBindings:'wordstar': Ctrl+Y deletes the line (not redo), Ctrl+U undoes", () => {
+  const { loop, ed } = mountEditor({ keyBindings: 'wordstar' });
+  ed.setText('one\ntwo');
+  loop.dispatch(key('y', { ctrl: true })); // WordStar cmDelLine
+  expect(ed.getText()).toBe('two');
+  loop.dispatch(key('u', { ctrl: true })); // WordStar cmUndo restores the line
+  expect(ed.getText()).toBe('one\ntwo');
+});
+
+test("keyBindings:'wordstar' keeps the faithful decode (Ctrl+C = pageDown, not copy)", () => {
+  const clipboard = new Editor();
+  const { loop, ed } = mountEditor({ clipboard, keyBindings: 'wordstar' }, 12, 3);
+  ed.setText('a\nb\nc\nd\ne');
+  loop.dispatch(key('a', { ctrl: true })); // WordStar: selectAll (same in both sets)
+  loop.dispatch(key('c', { ctrl: true })); // WordStar: cmPageDown — must NOT copy
+  expect(clipboard.getText()).toBe('');
+});
+
+test("keyBindings:'wordstar' Ctrl+K K still copies (the block prefix is never overlaid)", () => {
+  const clipboard = new Editor();
+  const { loop, ed } = mountEditor({ clipboard, keyBindings: 'wordstar' });
+  ed.setText('block');
+  loop.dispatch(key('a', { ctrl: true }));
+  loop.dispatch(key('k', { ctrl: true })); // arm Ctrl-K
+  loop.dispatch(key('k')); // block copy
+  expect(clipboard.getText()).toBe('block');
+});
+
+test('modern default: Ctrl-K prefix survives (overlay is idle-only)', () => {
+  const clipboard = new Editor();
+  const { loop, ed } = mountEditor({ clipboard });
+  ed.setText('kept');
+  loop.dispatch(key('a', { ctrl: true }));
+  loop.dispatch(key('k', { ctrl: true })); // arm Ctrl-K even in modern mode
+  loop.dispatch(key('c')); // Ctrl-K then 'c' = block paste (prefix not overlaid) — no crash, prefix cleared
+  expect(ed.keyState).toBe(0);
+});
+
 test('overwrite replaces a WIDE cluster whole and never splits it', () => {
   const { loop, ed } = mountEditor();
   ed.setText('漢x');

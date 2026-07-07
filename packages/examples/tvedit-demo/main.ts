@@ -52,12 +52,12 @@ function buildMenuBar() {
       item('E~x~it', CMD_EXIT_REQUEST, 'Alt-X'), // TV shows Ctrl-Q — the PF-001 deviation
     ]),
     subMenu('~E~dit', [
-      item('~U~ndo', Commands.undo),
-      item('~R~edo', Commands.redo), // the AR-253/PA-1 extension row
+      item('~U~ndo', Commands.undo, 'Ctrl-Z'),
+      item('~R~edo', Commands.redo, 'Ctrl-Y'), // the AR-253/PA-1 extension row
       separator(),
-      item('Cu~t~', Commands.cut, 'Shift-Del'),
-      item('~C~opy', Commands.copy, 'Ctrl-Ins'),
-      item('~P~aste', Commands.paste, 'Shift-Ins'),
+      item('Cu~t~', Commands.cut, 'Ctrl-X'),
+      item('~C~opy', Commands.copy, 'Ctrl-C'),
+      item('~P~aste', Commands.paste, 'Ctrl-V'),
       separator(),
       item('C~l~ear', EditorCommands.clear, 'Ctrl-Del'), // label per decode; the chord runs delWord (PF-005)
     ]),
