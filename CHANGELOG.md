@@ -184,5 +184,5 @@ the deprecation policy.
   NO_COLOR/ASCII-fallback golden tests, this changelog, and the versioning &
   deprecation policy.
 
-[Unreleased]: https://github.com/blendsdk/tui/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/blendsdk/tui/releases/tag/v0.1.0
+[Unreleased]: https://github.com/blendsdk/jsvision/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/blendsdk/jsvision/releases/tag/v0.1.0

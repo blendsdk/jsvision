@@ -105,7 +105,7 @@ terminal-matrix.json       RD-03 cross-terminal evidence (appended by the probe 
 ## Git conventions
 
 - **Commit scope:** the area touched — `scaffold`, `package`, `toolchain`, `packaging`, `tests`, `docs`, or the engine subsystem name in later RDs.
-- **Main branch:** `master` • **Remote:** `origin` → `git@github.com:blendsdk/tui.git`. Publish (with provenance) is still deferred to a later milestone (RD-10 DEF-1).
+- **Main branch:** `master` • **Remote:** `origin` → `git@github.com:blendsdk/jsvision.git`. Publish (with provenance) is still deferred to a later milestone.
 
 ## Documentation for users & AI agents (NON-NEGOTIABLE)
 
