@@ -142,7 +142,11 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
   // Esc dismisses, and any other key or a click dismisses + passes through. It sits BEFORE the `ev2`
   // enrichment so it sees the key ahead of every view (incl. preProcess MenuBar/TabView). Fully inert
   // unless the loop supplies the seams (`revealKey` a string ⇒ feature enabled).
-  if (typeof ctx.revealKey === 'string' && ctx.acceleratorMode !== undefined && ctx.toggleAcceleratorMode !== undefined) {
+  if (
+    typeof ctx.revealKey === 'string' &&
+    ctx.acceleratorMode !== undefined &&
+    ctx.toggleAcceleratorMode !== undefined
+  ) {
     if (inner.type === 'key') {
       if (inner.key === ctx.revealKey) {
         ctx.toggleAcceleratorMode(); // toggle whether currently on or off
@@ -166,7 +170,7 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
         }
         ctx.toggleAcceleratorMode(); // any other key dismisses (AR-3) and falls through to dispatch
       }
-    } else if ((inner.type === 'mouse' && inner.kind === 'down') && ctx.acceleratorMode()) {
+    } else if (inner.type === 'mouse' && inner.kind === 'down' && ctx.acceleratorMode()) {
       ctx.toggleAcceleratorMode(); // a click dismisses (AR-3); the click still routes below
     }
   }

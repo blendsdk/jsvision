@@ -129,7 +129,10 @@ export class StatusLine extends View {
     // TV's hotkey attribute is plain red on the row bg — no intensity bit. The accent takes the
     // accelerator-overlay underline while reveal is on; the draw below applies it only to an enabled
     // item's hot run (`enabled && seg.hot`), so a disabled item never lights up (FR-6).
-    const accent: Style = accentStyle({ fg: ctx.role('statusBar').hotkey ?? base.fg, bg: base.bg }, ctx.revealAccelerators);
+    const accent: Style = accentStyle(
+      { fg: ctx.role('statusBar').hotkey ?? base.fg, bg: base.bg },
+      ctx.revealAccelerators,
+    );
     const selAccent: Style = accentStyle(
       { fg: ctx.role('statusSelected').hotkey ?? selected.fg, bg: selected.bg },
       ctx.revealAccelerators,

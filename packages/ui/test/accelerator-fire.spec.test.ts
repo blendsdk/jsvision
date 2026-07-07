@@ -86,10 +86,7 @@ function fireApp(revealKey?: string | null): {
   root.add(btn);
   root.add(spy);
   root.add(keySpy);
-  const loop = createEventLoop(
-    { width: 12, height: 4 },
-    revealKey === undefined ? { caps } : { caps, revealKey },
-  );
+  const loop = createEventLoop({ width: 12, height: 4 }, revealKey === undefined ? { caps } : { caps, revealKey });
   loop.mount(root);
   return { loop, spy, keySpy };
 }
