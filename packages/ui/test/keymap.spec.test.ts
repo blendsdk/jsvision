@@ -14,7 +14,7 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
-import { resolveKey } from '../src/editor/keymap.js';
+import { resolveKey, resolveModernKey } from '../src/editor/keymap.js';
 import type { KeyState } from '../src/editor/keymap.js';
 
 /** Build the resolver's key-event shape (core decoder naming: lowercase letters + named specials). */
@@ -107,4 +107,27 @@ test('ST-8: an unmapped idle key is not consumed (falls through to typing)', () 
   expect(res.action).toBeUndefined();
   expect(res.consumed).toBe(false);
   expect(res.nextState).toBe(0);
+});
+
+// The modern Ctrl+X/C/V/A + Ctrl+Z/Y overlay (the default binding set) — an intentional,
+// user-sanctioned break from the WordStar decode above (which remains the untouched `resolveKey`
+// result). Ctrl+letter with Alt up; Shift ignored so a kitty-protocol Ctrl+Shift+C alias also copies.
+test('modern overlay: Ctrl+X/C/V/A/Z/Y resolve to cut/copy/paste/selectAll/undo/redo', () => {
+  expect(resolveModernKey(k('x', { ctrl: true }))).toBe('cut');
+  expect(resolveModernKey(k('c', { ctrl: true }))).toBe('copy');
+  expect(resolveModernKey(k('v', { ctrl: true }))).toBe('paste');
+  expect(resolveModernKey(k('a', { ctrl: true }))).toBe('selectAll');
+  expect(resolveModernKey(k('z', { ctrl: true }))).toBe('undo');
+  expect(resolveModernKey(k('y', { ctrl: true }))).toBe('redo');
+});
+
+test('modern overlay: Shift is ignored (Ctrl+Shift+C aliases copy)', () => {
+  expect(resolveModernKey(k('c', { ctrl: true, shift: true }))).toBe('copy');
+  expect(resolveModernKey(k('x', { ctrl: true, shift: true }))).toBe('cut');
+});
+
+test('modern overlay: no match without Ctrl, with Alt, or on a non-overlay letter', () => {
+  expect(resolveModernKey(k('c'))).toBeUndefined(); // plain c types
+  expect(resolveModernKey(k('c', { ctrl: true, alt: true }))).toBeUndefined(); // Alt up required
+  expect(resolveModernKey(k('s', { ctrl: true }))).toBeUndefined(); // stays WordStar charLeft
 });

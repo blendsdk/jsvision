@@ -33,7 +33,7 @@ import {
   prevLine as prevLineB,
 } from './buffer/index.js';
 import type { LineEnding } from './buffer/index.js';
-import type { EditorAction, KeyState } from './keymap.js';
+import type { EditorAction, EditorKeyBindings, KeyState } from './keymap.js';
 import { applyAction } from './editor-actions.js';
 import { handleEditorEvent } from './editor-events.js';
 import { defaultEditorDialog, type EditorDialogHandler, type SearchOptions } from './editor-dialog.js';
@@ -110,6 +110,8 @@ export class Editor extends View {
   limitY = 1;
   /** @internal The WordStar prefix state (TV's `0xFF01`/`0xFF02` escapes). */
   keyState: KeyState = 0;
+  /** @internal The active key set — `'modern'` overlays Ctrl+X/C/V/A (default), `'wordstar'` = faithful TV. */
+  readonly keyBindings: EditorKeyBindings;
   /** @internal Marks the app's clipboard editor (TV `isClipboard()`); its edits never set `modified`. */
   isClipboardRole = false;
   /** @internal The selectMode carried through the live drag (down sets it, drag extends). */
@@ -140,6 +142,7 @@ export class Editor extends View {
     this.dialog = options.editorDialog ?? defaultEditorDialog;
     this.overwrite = options.overwrite ?? false;
     this.autoIndentOn = options.autoIndent ?? false;
+    this.keyBindings = options.keyBindings ?? 'modern';
     this.modified = signal(false);
     this.curPos = signal({ line: 1, col: 1 });
     this.hasSelection = signal(false);

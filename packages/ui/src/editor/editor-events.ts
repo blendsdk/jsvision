@@ -12,7 +12,8 @@
  */
 import type { DispatchEvent } from '../view/index.js';
 import { Commands } from '../status/index.js';
-import { resolveKey } from './keymap.js';
+import { resolveKey, resolveModernKey } from './keymap.js';
+import type { KeyResolution } from './keymap.js';
 import { applyAction, EditorCommands } from './editor-actions.js';
 import { handleEditorMouse } from './editor-mouse.js';
 import { isWithin } from './editor-types.js';
@@ -32,7 +33,14 @@ export function handleEditorEvent(ed: Editor, ev: DispatchEvent): void {
     if (!active) return;
     const selectMode = ed.selecting || inner.shift ? SM_EXTEND : 0;
     const centerCursor = !ed.isCursorVisible();
-    const res = resolveKey(ed.keyState, inner);
+    // The modern Ctrl+X/C/V/A + Ctrl+Z/Y overlay (default binding set) wins over the WordStar table,
+    // but ONLY when idle — an armed Ctrl-K/Ctrl-Q prefix keeps its faithful sequence intact.
+    const modern =
+      ed.keyBindings === 'modern' && ed.keyState === 0 ? resolveModernKey(inner) : undefined;
+    const res: KeyResolution =
+      modern !== undefined
+        ? { action: modern, nextState: 0, consumed: true }
+        : resolveKey(ed.keyState, inner);
     ed.keyState = res.nextState;
     if (res.action !== undefined) {
       applyAction(ed, res.action, selectMode, centerCursor);

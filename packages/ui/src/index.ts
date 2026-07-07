@@ -200,6 +200,7 @@ export type {
   IndicatorTarget,
   EditorCommandSeam,
   EditorAction,
+  EditorKeyBindings,
   EditorDialogHandler,
   EditorDialogRequest,
   EditorDialogResult,

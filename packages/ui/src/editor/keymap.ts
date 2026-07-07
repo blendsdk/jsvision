@@ -66,6 +66,16 @@ export type EditorAction =
 /** The prefix state: idle, or holding TV's `0xFF01`/`0xFF02` escape after Ctrl-Q / Ctrl-K. */
 export type KeyState = 0 | 'ctrlQ' | 'ctrlK';
 
+/**
+ * Which editor key set is active. `'modern'` (the default) overlays the universal Ctrl+X/C/V/A
+ * (cut/copy/paste/selectAll) + Ctrl+Z/Y (undo/redo) keys on top of the WordStar table; `'wordstar'`
+ * keeps the faithful Turbo Vision decode verbatim (Ctrl-C = pageDown, Ctrl-V = insert-mode,
+ * Ctrl-X = lineDown, Ctrl-Y = delLine, Ctrl-U = undo). A deliberate, user-sanctioned break from TV
+ * fidelity (30 years on, no one reaches for the WordStar diamond) — the faithful table is preserved
+ * and still fully reachable, just no longer the default.
+ */
+export type EditorKeyBindings = 'modern' | 'wordstar';
+
 /** The resolver's verdict for one key event. */
 export interface KeyResolution {
   /** The action to execute, when the key (or prefix follow-up) mapped to one. */
@@ -165,6 +175,37 @@ const BLOCK_KEYS: Readonly<Record<string, EditorAction>> = {
   K: 'copy', // :106
   Y: 'cut', // :107
 };
+
+/**
+ * The modern key overrides (the default {@link EditorKeyBindings}) — universal Ctrl+X/C/V/A
+ * (cut/copy/paste/selectAll) + Ctrl+Z/Y (undo/redo). NOT a TV decode: an intentional modernization.
+ * Each shadows a WordStar meaning whose function survives elsewhere (Ctrl-C→PgDn, Ctrl-V→Insert,
+ * Ctrl-X→↓, Ctrl-Y→delLine is dropped in modern mode; Ctrl-A already selectAll, Ctrl-U still undo).
+ * Ctrl-Z had no WordStar binding at all.
+ */
+const MODERN_KEYS: Readonly<Record<string, EditorAction>> = {
+  x: 'cut',
+  c: 'copy',
+  v: 'paste',
+  a: 'selectAll',
+  z: 'undo',
+  y: 'redo',
+};
+
+/**
+ * Resolve the modern Ctrl+X/C/V/A + Ctrl+Z/Y overlay for one key event — the default binding set's
+ * addition over the WordStar table. Matches Ctrl+letter with **Alt up** and **Shift ignored**: a
+ * terminal that surfaces `Ctrl+Shift+C` distinctly (kitty / modifyOtherKeys) still copies; one that
+ * grabs it for its own copy simply never delivers it, so the alias is harmless. Callers consult this
+ * ONLY when idle (no WordStar prefix armed), leaving Ctrl-K / Ctrl-Q sequences untouched.
+ *
+ * @param ev The key event (core decoder shape).
+ * @returns The overriding action, or `undefined` to fall through to the faithful WordStar table.
+ */
+export function resolveModernKey(ev: KeymapKeyEvent): EditorAction | undefined {
+  if (!ev.ctrl || ev.alt || ev.key.length !== 1) return undefined;
+  return MODERN_KEYS[ev.key.toLowerCase()];
+}
 
 /** Whether a `firstKeys` entry matches the event (case-insensitive letters; Shift per the entry). */
 function matches(e: FirstKeyEntry, ev: KeymapKeyEvent): boolean {
