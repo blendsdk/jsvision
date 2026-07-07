@@ -39,9 +39,15 @@ export function handleEditorEvent(ed: Editor, ev: DispatchEvent): void {
       ev.handled = true;
     } else if (res.consumed) {
       ev.handled = true; // a prefix arm, or an unknown follow-up clearing it (no edit)
-    } else if (inner.key.length === 1 && !inner.ctrl && !inner.alt) {
-      ed.typeText(inner.key, centerCursor);
-      ev.handled = true;
+    } else if (!inner.ctrl && !inner.alt) {
+      // The decoder names 0x20 'space' (core keys.ts) — map it back to the character, exactly
+      // like the RD-06 Input; the spread-length also admits astral-plane printables (👍 = one
+      // code point but .length 2).
+      const ch = inner.key === 'space' ? ' ' : [...inner.key].length === 1 ? inner.key : null;
+      if (ch !== null) {
+        ed.typeText(ch, centerCursor);
+        ev.handled = true;
+      }
     }
     return;
   }
