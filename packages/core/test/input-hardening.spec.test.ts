@@ -188,6 +188,34 @@ test('ST-5.j: a carried ESC [ flushes to escape-prefixed [, not a fused CSI', ()
   expect(keys.some((k) => ['up', 'down', 'left', 'right', 'home', 'end'].includes(k))).toBe(false);
 });
 
+// ST-5.k — a held introducer that never completes flushes to its Alt+letter accelerator, not a
+// swallowed escape (#40). `ESC O` (Alt+Shift+O) and `ESC [` (Alt+[) collide with the SS3/CSI
+// introducers; on the 50 ms disambiguation flush the exactly-2-byte carry must surface as the same
+// `{alt:true}` event every other Alt+<char> produces — so a `~O~pen`-style accelerator fires.
+test('ST-5.k: a flushed bare ESC O / ESC [ decodes as Alt+letter, not a swallowed escape', () => {
+  // ESC O = Alt+Shift+O.
+  const s0 = createDecoderState();
+  const rO = decode(Uint8Array.from([0x1b, 0x4f]), s0); // held — an incomplete SS3 introducer
+  expect(rO.events).toHaveLength(0);
+  const fO = flush(rO.state);
+  expect(fO.state.carry.length).toBe(0);
+  // Byte-identical to every other Alt+<printable> (carries the same `codepoint` field).
+  expect(fO.events).toEqual([{ type: 'key', key: 'O', ctrl: false, alt: true, shift: false, codepoint: 0x4f }]);
+
+  // ESC [ = Alt+[.
+  const s1 = createDecoderState();
+  const rB = decode(Uint8Array.from([0x1b, 0x5b]), s1); // held — an incomplete CSI introducer
+  expect(rB.events).toHaveLength(0);
+  const fB = flush(rB.state);
+  expect(fB.state.carry.length).toBe(0);
+  expect(fB.events).toEqual([{ type: 'key', key: '[', ctrl: false, alt: true, shift: false, codepoint: 0x5b }]);
+
+  // Neither flush leaks a bare escape or fabricates a CSI/SS3 named key.
+  const keys = [...fO.events, ...fB.events].filter((e) => e.type === 'key').map((e) => e.key);
+  expect(keys).not.toContain('escape');
+  expect(keys.some((k) => ['up', 'down', 'left', 'right', 'home', 'end', 'f1', 'f2'].includes(k))).toBe(false);
+});
+
 // ST-5.i — the documented public surface is actually exported (HR-23).
 test('ST-5.i: KEY_NAMES and PasteState are exported from the engine entry point', () => {
   expect(Array.isArray(KEY_NAMES)).toBe(true);

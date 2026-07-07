@@ -104,3 +104,33 @@ test('ESC ESC ESC yields Alt+Escape plus a held trailing ESC', () => {
   const f = flush(r.state);
   expect(f.events).toEqual([{ type: 'key', key: 'escape', ctrl: false, alt: false, shift: false }]);
 });
+
+// ---------------------------------------------------------------------------
+// #40 impl edges: the introducer flush is strictly flush-scoped (Alt+letter on timeout only)
+// ---------------------------------------------------------------------------
+
+// A complete `ESC O P` in one window is still F1 — the fix touches only the timed-out bare hold.
+test('#40: an in-window ESC O P still decodes as F1 (not Alt+O)', () => {
+  const r = decodeOnce([0x1b, 0x4f, 0x50]); // ESC O P — SS3 F1
+  expect(r.events).toEqual([{ type: 'key', key: 'f1', ctrl: false, alt: false, shift: false }]);
+  expect(r.rest.length).toBe(0);
+});
+
+// The accepted tradeoff: an F1 whose final byte lags past the flush surfaces Alt+O then a bare P.
+test('#40: a >window-split ESC O … P flushes to Alt+O then a bare P (documented tradeoff)', () => {
+  const held = decode(Uint8Array.from([0x1b, 0x4f]), createDecoderState()); // ESC O held
+  expect(held.events).toHaveLength(0);
+  const f = flush(held.state); // the 50 ms timer fires before P arrives
+  expect(f.events).toEqual([{ type: 'key', key: 'O', ctrl: false, alt: true, shift: false, codepoint: 0x4f }]);
+  const late = decode(Uint8Array.from([0x50]), f.state); // the late 'P' is its own key
+  expect(late.events).toEqual([{ type: 'key', key: 'P', ctrl: false, alt: false, shift: false, codepoint: 0x50 }]);
+});
+
+// A longer held CSI (params in progress) is NOT reinterpreted — only the exact 2-byte introducer is.
+test('#40: a held ESC [ 1 ; is a real in-progress CSI, not Alt+[ (length guard)', () => {
+  const r = decode(Uint8Array.from([0x1b, 0x5b, 0x31, 0x3b]), createDecoderState()); // ESC [ 1 ;
+  expect(r.events).toHaveLength(0); // held, waiting for the final byte
+  const f = flush(r.state);
+  // Not an Alt+[ accelerator: the flush falls through to the escape-prefixed path (no fused key).
+  expect(f.events.some((e) => e.type === 'key' && e.key === '[' && e.alt)).toBe(false);
+});
