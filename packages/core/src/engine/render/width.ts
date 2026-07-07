@@ -57,7 +57,7 @@ const WIDE: readonly Range[] = [
   [0x23f0, 0x23f0], // ⏰ alarm clock
   [0x23f3, 0x23f3], // ⏳ hourglass flowing
   [0x25fd, 0x25fe], // ◽◾ medium-small squares
-  [0x2600, 0x26ff], // Miscellaneous Symbols (coarse; emoji presentation, PL-10)
+  [0x2600, 0x26ff], // Miscellaneous Symbols (coarse; emoji presentation)
   [0x2705, 0x2705], // ✅ check mark
   [0x270a, 0x270b], // ✊✋ raised fist / hand
   [0x2728, 0x2728], // ✨ sparkles

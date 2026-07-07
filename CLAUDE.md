@@ -114,14 +114,14 @@ terminal-matrix.json       RD-03 cross-terminal evidence (appended by the probe 
 > hover **is** the API contract. **Decode-the-code archaeology, plan/requirement IDs, and internal
 > process notes never appear in shipped code.** Canonical worklist + guard: `JSDOC-CLEANUP-PLAN.md`.
 
-- **Audience.** Public JSDoc explains, to someone who has never seen the source, *what a symbol is,
-  what it does, how to use it, and what to watch out for*. AI agents feed directly on these docs and
+- **Audience.** Public JSDoc explains, to someone who has never seen the source, _what a symbol is,
+  what it does, how to use it, and what to watch out for_. AI agents feed directly on these docs and
   their `@example`s — treat every example as executable spec: realistic, correct, copy-pasteable.
 
 - **BANNED in all shipped code (`packages/*/src`), in JSDoc _and_ code comments:**
   - CodeOps process IDs — `RD-`, `PA-`, `AR-`, `PF-`, `HR-`, `GATE-`, `AC-`, `ST-`, `ADR-`, `DEF-`,
-    and any `codeops/…`, `plans/…`, `requirements/…` path. These reference files that are being
-    removed; a reference to a deleted file is worse than no reference.
+    `FR-`, `RT-`, `PL-`, and any `codeops/…`, `plans/…`, `requirements/…` path. These reference files
+    that are being removed; a reference to a deleted file is worse than no reference.
   - Turbo Vision / C++ provenance — `t*.cpp`/`*.h` citations, `getColor(N)` palette-chain
     archaeology, "faithful to `TButton::draw`" notes. Fidelity is a **build-time** discipline (see
     the TV porting guideline below), not a shipped-code artifact; the SDK will diverge from TV over

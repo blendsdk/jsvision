@@ -21,7 +21,7 @@
  */
 import type { ColorDepth, DeepPartial, CapabilityProfile } from './profile.js';
 
-/** FORCE_COLOR numeric level → colorDepth (PL-5); other values are invalid. */
+/** FORCE_COLOR numeric level → colorDepth; other values are invalid. */
 const FORCE_COLOR_LEVELS: Readonly<Record<string, ColorDepth>> = {
   '0': 'mono',
   '1': '16',
@@ -34,7 +34,7 @@ const TRUECOLOR_COLORTERMS: ReadonlySet<string> = new Set(['truecolor', '24bit']
 
 /**
  * The colorDepth signals derived from the environment, split by precedence band
- * so the resolver can slot each at the correct rank relative to layer 2 (PL-5).
+ * so the resolver can slot each at the correct rank relative to layer 2.
  */
 export interface ColorDepthSignal {
   /** From `NO_COLOR`/`FORCE_COLOR` — outranks the runtime query. */

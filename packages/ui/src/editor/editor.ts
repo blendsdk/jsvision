@@ -1,10 +1,7 @@
 /**
  * The multiline text editor view — a focusable, scrollable code/text editor with a WordStar-style
- * keymap, multi-level undo/redo, cut/copy/paste through a shared clipboard, and find/replace.
- *
- * `Editor` is the engine class. The behaviour is spread across a handful of sibling modules
- * (painting, events, mouse, the action switch, search, clipboard/undo) that all drive this view's
- * state, but as a caller you interact only with the public methods and reactive signals here.
+ * keymap, multi-level undo/redo, cut/copy/paste through a shared clipboard, and find/replace. The
+ * behaviour lives in sibling modules (paint, events, mouse, actions, search, clipboard/undo).
  */
 import { View, type DrawContext, type DispatchEvent, type Point, type ThemeRoleName } from '../view/index.js';
 import { signal } from '../reactive/index.js';
@@ -50,39 +47,23 @@ export const SM_DOUBLE = 0x02;
 export const SM_TRIPLE = 0x04;
 
 /**
- * A focusable, scrollable multiline text editor.
- *
- * Add it to any `Group` and give it a size, then drive it with the keyboard/mouse via the event
- * loop, or programmatically through {@link setText}/{@link getText}/{@link insertText} and
- * {@link execute}. The reactive signals ({@link curPos}, {@link modified}, {@link hasSelection},
- * {@link canUndo}, …) let you wire up a status line or indicator that updates as the user edits.
- *
- * Cut/copy/paste between editors requires a shared clipboard editor — pass the same `Editor`
- * instance as `clipboard` to each editor that should share one (see {@link EditorOptions}). For a
- * complete window with scroll bars and a line/column indicator, use `EditWindow` instead of wiring
- * one up by hand.
+ * A focusable, scrollable multiline text editor. Add it to a `Group`, give it a size, and drive it
+ * via the event loop or programmatically ({@link setText}/{@link getText}/{@link insertText}/
+ * {@link execute}). The reactive signals ({@link curPos}, {@link modified}, {@link canUndo}, …)
+ * drive a status line/indicator. Share Cut/Copy/Paste by passing one `Editor` as the `clipboard` of
+ * each (see {@link EditorOptions}); for scroll bars + a line/column indicator use `EditWindow`.
  *
  * @example
- * import { resolveCapabilities } from '@jsvision/core';
  * import { Group, Editor, createEventLoop, effect } from '@jsvision/ui';
  *
- * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
- *
- * // A shared clipboard editor lets Cut/Copy/Paste work across editors.
- * const clipboard = new Editor();
- * const editor = new Editor({ clipboard });
- * editor.layout = { size: { kind: 'fr', weight: 1 } };
- *
+ * const editor = new Editor({ clipboard: new Editor() });
  * const root = new Group();
- * root.layout = { direction: 'col' };
  * root.add(editor);
  *
- * const loop = createEventLoop({ width: 60, height: 20 }, { caps });
+ * const loop = createEventLoop({ width: 60, height: 20 }, {});
  * loop.mount(root);
  * loop.focusView(editor);
- *
  * editor.setText('The quick brown fox\nSecond line.');
- * // Read the caret signal inside an effect to react whenever it changes.
  * effect(() => {
  *   const { line, col } = editor.curPos();
  *   console.log(`caret at ${line}:${col}`);
@@ -104,57 +85,39 @@ export class Editor extends View {
   readonly insertMode: Signal<boolean>;
   /** The number of lines in the buffer. */
   readonly lineCount: Signal<number>;
-  /** Whether an undo step is available. */
+  /** Whether an undo / redo step is available. */
   readonly canUndo: Signal<boolean>;
-  /** Whether a redo step is available. */
   readonly canRedo: Signal<boolean>;
-  /**
-   * The scroll offset, as a pair of signals. These double as the value channel for scroll bars:
-   * construct a scroll bar bound to `delta.x`/`delta.y` and any write scrolls the editor (clamped
-   * to the content). `EditWindow` wires this up for you.
-   */
+  /** The scroll offset, as a pair of signals — also the value channel for scroll bars: a bar bound to `delta.x`/`delta.y` scrolls the editor on any write (clamped to the content). */
   readonly delta: { readonly x: Signal<number>; readonly y: Signal<number> };
 
   // --- Internal editing state (public for the sibling modules, not part of the API) -------------
-  /** @internal The text buffer. */
+  /** @internal The text buffer, its line-ending kind, and the caret as a buffer offset. */
   buf = new GapBuffer();
-  /** @internal The buffer's line-ending kind. */
   eolKind: LineEnding = 'lf';
-  /** @internal The caret position, as a buffer offset. */
   curPtr = 0;
-  /** @internal Selection start (inclusive). */
+  /** @internal Selection range — start (inclusive), end (exclusive); `selecting` is persistent-select mode (Ctrl-K B arms it so motions extend). */
   selStartP = 0;
-  /** @internal Selection end (exclusive). */
   selEndP = 0;
-  /** @internal Persistent-select mode; Ctrl-K B arms it so motions extend the selection. */
   selecting = false;
-  /** @internal Overwrite mode. */
   overwrite: boolean;
-  /** @internal Auto-indent mode. */
   autoIndentOn: boolean;
-  /** @internal The caret's visual column. */
+  /** @internal Caret geometry: visual column, 0-based line index, then the paint anchor (its line + line-start offset) and the total line count. */
   curX = 0;
-  /** @internal The caret's line index, 0-based. */
   curY = 0;
-  /** @internal The paint anchor's line index. */
   drawLine = 0;
-  /** @internal The paint anchor position — a line start. */
   drawPtrP = 0;
-  /** @internal The line count. */
   limitY = 1;
-  /** @internal The WordStar prefix state (idle, or armed after Ctrl-Q / Ctrl-K). */
+  /** @internal The WordStar prefix state (idle, or armed after Ctrl-Q / Ctrl-K), and the active key set (`'modern'` default / `'wordstar'`). */
   keyState: KeyState = 0;
-  /** @internal The active key set — `'modern'` (default) or `'wordstar'`. */
   readonly keyBindings: EditorKeyBindings;
   /** @internal Marks this as the shared clipboard editor; its edits never set `modified`. */
   isClipboardRole = false;
   /** @internal The select mode carried through a live drag (mouse-down sets it, drag extends). */
   dragSelectMode = 0;
-  /** @internal The construction options. */
   readonly options: EditorOptions;
   /** @internal The dialog handler for find/replace/save prompts. */
   readonly dialog: EditorDialogHandler;
-  /** @internal The undo/redo stack. */
   readonly undoStack: UndoStack;
   /** @internal Set by single-character typing/deleting so the next edit merges into one undo step. */
   coalesceNextEdit = false;
@@ -186,9 +149,8 @@ export class Editor extends View {
     this.canRedo = signal(false);
     this.undoStack = new UndoStack(options.undoDepth ?? 1000);
     this.delta = { x: signal(0), y: signal(0) };
-    // Any write to the scroll signals — from a bound scroll bar, or an external set — routes
-    // through scrollTo, which clamps to the content and repaints. Internal scrolls re-enter here
-    // harmlessly, since scrollTo only acts when the offset actually changes.
+    // Any write to the scroll signals routes through scrollTo (clamps + repaints); internal
+    // scrolls re-enter harmlessly, since scrollTo only acts when the offset actually changes.
     this.onMount(() => {
       this.bind(
         () => [this.delta.x(), this.delta.y()] as const,
@@ -200,15 +162,14 @@ export class Editor extends View {
   // --- Text access -------------------------------------------------------------------------------
 
   /**
-   * Replace the entire content. Text is stored verbatim (mixed line endings are preserved), the
-   * line-ending kind is re-detected, and the cursor, selection, scroll, and undo history are reset.
-   *
+   * Replace the entire content (verbatim, mixed line endings preserved); the line-ending kind is
+   * re-detected and cursor/selection/scroll/undo history are reset.
    * @param text The new buffer content.
    */
   setText(text: string): void {
     this.buf = new GapBuffer(text);
     this.eolKind = detectEol(text);
-    // Reset all cursor/selection/scroll state to the top of the fresh document.
+    // Reset cursor/selection/scroll state to the top of the fresh document.
     this.curPtr = 0;
     this.selStartP = 0;
     this.selEndP = 0;
@@ -227,9 +188,7 @@ export class Editor extends View {
   }
 
   /**
-   * The full buffer content, or the text in a `[from, to)` range. Returned verbatim, with any mixed
-   * line endings intact.
-   *
+   * The full buffer content, or the text in a `[from, to)` range — returned verbatim.
    * @param range Optional half-open buffer-offset range; omit for the whole buffer.
    * @returns The requested text.
    */
@@ -238,9 +197,8 @@ export class Editor extends View {
   }
 
   /**
-   * Insert text at the caret, replacing any selection. Line endings are normalized to the buffer's
-   * kind, exactly as if the text had been typed.
-   *
+   * Insert text at the caret, replacing any selection; line endings are normalized to the buffer's
+   * kind, as if typed.
    * @param text The text to insert.
    */
   insertText(text: string): void {
@@ -255,12 +213,10 @@ export class Editor extends View {
 
   /**
    * Run one editor action programmatically — the same operations the keymap triggers.
-   *
    * @param action The action to run (e.g. `'lineDown'`, `'undo'`, `'textEnd'`, `'selectAll'`).
    * @example
    * editor.setText('hello world');
-   * editor.execute('textEnd');   // caret to end of buffer
-   * editor.execute('wordLeft');  // back one word
+   * editor.execute('textEnd'); // caret to end of buffer
    */
   execute(action: EditorAction): void {
     applyAction(this, action, this.selecting ? SM_EXTEND : 0, false);
@@ -308,12 +264,10 @@ export class Editor extends View {
     return editorDoSearchReplace(this);
   }
 
-  /** @internal Perform one search step against the stored search state. */
   searchOnce(): boolean {
     return editorSearchOnce(this);
   }
 
-  /** @internal Run the search/replace loop with the stored state. */
   doSearchReplace(): Promise<number> {
     return editorDoSearchReplace(this);
   }
@@ -345,11 +299,10 @@ export class Editor extends View {
 
   // --- Editing core (@internal; driven by the sibling modules) -----------------------------------
 
-  /** @internal View width in cells (0 before the first layout). */
+  /** @internal View width/height in cells (0 before the first layout). */
   viewW(): number {
     return this.bounds.width;
   }
-  /** @internal View height in cells (0 before the first layout). */
   viewH(): number {
     return this.bounds.height;
   }
@@ -361,10 +314,7 @@ export class Editor extends View {
     return this.curX >= dx && this.curX < dx + this.viewW() && this.curY >= dy && this.curY < dy + this.viewH();
   }
 
-  /**
-   * @internal Move the caret to buffer position `p`. When `selectMode` has the extend bit, the
-   * selection grows from its far end; the double/triple bits snap the range to whole words/lines.
-   */
+  /** @internal Move the caret to `p`; extend grows the selection from its far end, double/triple snap it to whole words/lines. */
   setCurPtr(p: number, selectMode: number): void {
     let anchor: number;
     if ((selectMode & SM_EXTEND) === 0) anchor = p;
@@ -392,14 +342,11 @@ export class Editor extends View {
     }
   }
 
-  /**
-   * @internal Set the selection to `[newStart, newEnd)` and place the caret at one end
-   * (`curStart ? newStart : newEnd`). Keeps the line index and paint anchor in sync with the caret.
-   */
+  /** @internal Set the selection to `[newStart, newEnd)`, caret at `curStart ? newStart : newEnd`, keeping the line index + paint anchor in sync. */
   setSelect(newStart: number, newEnd: number, curStart: boolean): void {
     const p = curStart ? newStart : newEnd;
     if (p !== this.curPtr) {
-      // Adjust the caret's line index by the number of line breaks between the old and new caret.
+      // Adjust the caret's line index by the line breaks between the old and new caret.
       const lo = Math.min(p, this.curPtr);
       const hi = Math.max(p, this.curPtr);
       const crossed = countBreaks(this.buf.slice(lo, hi));
@@ -416,10 +363,8 @@ export class Editor extends View {
   }
 
   /**
-   * @internal The edit primitive: replace the current selection `[selStart, selEnd)` with `text`
-   * (already line-ending-converted) and land the caret after it. When `selectText` is `true` the
-   * inserted range stays selected (used by paste and undo to leave the affected range highlighted).
-   *
+   * @internal The edit primitive: replace the selection `[selStart, selEnd)` with the already-
+   * converted `text` and land the caret after it. `selectText` keeps the inserted range selected.
    * @param text The already-converted text to insert.
    * @param selectText Keep the inserted range selected.
    * @param markModified Mark the buffer modified (skip for internal, non-user edits).
@@ -430,9 +375,8 @@ export class Editor extends View {
     const selLen = this.selEndP - this.selStartP;
     if (selLen === 0 && text.length === 0) return;
 
-    // Record the inverse-applicable step. Consecutive single-character edits coalesce into one
-    // undo step (the flag is armed by typing and by the backspace/delete actions); applying an
-    // undo/redo step passes recordUndo=false so it is not re-recorded.
+    // Record the inverse step. Consecutive single-character edits coalesce into one undo step (the
+    // flag is armed by typing/backspace/delete); an undo/redo step passes recordUndo=false.
     if (recordUndo) {
       const step = { at: this.selStartP, removed: this.buf.slice(this.selStartP, this.selEndP), inserted: text };
       if (this.coalesceNextEdit) this.undoStack.coalesce(step);
@@ -467,15 +411,11 @@ export class Editor extends View {
     this.update();
   }
 
-  /** @internal Delete the current selection (replace it with nothing). */
   deleteSelect(): void {
     this.insertRaw('', false);
   }
 
-  /**
-   * @internal Delete the range `[startPtr, endPtr)`. When a selection exists and `delSelect` is
-   * `true`, the selection is deleted instead.
-   */
+  /** @internal Delete the range `[startPtr, endPtr)`; with a live selection and `delSelect`, delete the selection instead. */
   deleteRange(startPtr: number, endPtr: number, delSelect: boolean): void {
     if (this.selStartP !== this.selEndP && delSelect) {
       this.deleteSelect();
@@ -497,7 +437,7 @@ export class Editor extends View {
     if (this.autoIndentOn && i > p) this.insertRaw(this.buf.slice(p, i), false);
   }
 
-  /** @internal Insert typed text at the caret; in overwrite mode it replaces the character under the caret. */
+  /** @internal Insert typed text at the caret; overwrite mode replaces the character under it. */
   typeText(text: string, centerCursor: boolean): void {
     if (this.overwrite && this.selStartP === this.selEndP) {
       if (this.curPtr !== lineEnd(this.buf, this.curPtr)) {
@@ -509,14 +449,12 @@ export class Editor extends View {
     this.trackCursor(centerCursor);
   }
 
-  /** @internal Toggle insert/overwrite mode. */
   toggleInsMode(): void {
     this.overwrite = !this.overwrite;
     this.insertMode.set(!this.overwrite);
     this.update();
   }
 
-  /** @internal Scroll to `(x, y)`, clamped to the content. */
   scrollTo(x: number, y: number): void {
     editorScrollTo(this, x, y);
   }
@@ -526,7 +464,6 @@ export class Editor extends View {
     editorTrackCursor(this, center);
   }
 
-  /** @internal Map a view-local cell to the buffer position under it. */
   getMousePtr(local: Point): number {
     return editorMousePtr(this, local);
   }
