@@ -1,15 +1,16 @@
 /**
- * Layer-5 conservative defaults (RD-02, plan doc 03-02; PL-13).
+ * The conservative fallback capabilities.
  *
- * The lowest-precedence layer: every field a higher layer did not determine
- * falls back to a safe, minimal-assumption value. `colorDepth` is `'16'` (the
- * widely-safe baseline), all capability booleans are `false`, unicode width is
- * `wcwidth`, and `emoji` is `unknown`. `platform` here is a placeholder; the
- * resolver always replaces it with `options.platform ?? process.platform`.
+ * These are the lowest-precedence values: any field that no stronger signal
+ * (override, live probe, environment, or known-terminal table) determines falls
+ * back to a safe, minimal assumption. `colorDepth` is `'16'` (the widely-safe
+ * baseline), all capability booleans are `false`, Unicode width is `wcwidth`, and
+ * `emoji` is `unknown`. `platform` here is a placeholder — the resolver always
+ * replaces it with the real platform.
  */
 import type { CapabilityProfile } from './profile.js';
 
-/** Conservative defaults used when no higher layer determines a field (PL-13). */
+/** Conservative defaults used when no stronger signal determines a field. */
 export const CONSERVATIVE_DEFAULTS: CapabilityProfile = {
   colorDepth: '16',
   mouse: { sgr: false, drag: false, wheel: false },

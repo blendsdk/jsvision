@@ -1,19 +1,19 @@
 /**
- * Shared query-response grammar classifier (RD-02 + RD-06, PL-2).
+ * Recognise terminal query-response escape sequences.
  *
- * One implementation of the terminal query-response grammars, used by two
- * callers so the grammar lives in a single place (DRY):
- * - RD-02's layer-2 parser ({@link ../capability/query.js}) consumes recognised
- *   responses into capability hints and forwards everything else as input.
- * - RD-06's input decoder routes recognised responses to its `queries` channel
- *   (never `events`) so a terminal reply cannot leak as a keystroke (AC-6, PL-9).
+ * A single implementation of the reply grammars, shared by two callers so the
+ * grammar lives in one place:
+ * - The capability probe ({@link ../capability/query.js}) turns recognised
+ *   replies into capability hints and forwards everything else as input.
+ * - The input decoder routes recognised replies to its query channel (never the
+ *   key-event stream), so a terminal reply can never surface as a keystroke.
  *
- * Security posture: responses are untrusted data. Only exact, fully-terminated
+ * Security posture: replies are untrusted data. Only exact, fully-terminated
  * grammar matches are recognised; partial or malformed bytes return `null` so
- * the caller treats them as ordinary input. No `eval`, no code execution.
+ * the caller treats them as ordinary input. Replies are parsed, never evaluated.
  */
 
-/** The capability hints a recognised response can contribute (RD-02 layer 2). */
+/** The capability hints a recognised reply can contribute. */
 export interface RuntimeHint {
   sync2026?: boolean;
 }
@@ -29,12 +29,13 @@ export interface ResponseMatch {
 }
 
 /**
- * Outcome of a response-grammar scan (HR-04):
- * - a {@link ResponseMatch} — a complete, recognised response;
- * - `'incomplete'` — an opened response introducer (CSI/DCS) whose terminator has not arrived yet, so
- *   the caller must **carry** the fragment to the next chunk rather than treat it as input (a partial
- *   DCS reply must never fall through to the keyboard branch and leak as an `Alt`-prefixed key);
- * - `null` — the bytes there are not a recognised response (ordinary input).
+ * The outcome of scanning for a reply grammar:
+ * - a {@link ResponseMatch} — a complete, recognised reply;
+ * - `'incomplete'` — an opened introducer (CSI/DCS) whose terminator has not
+ *   arrived yet, so the caller must **carry** the fragment to the next chunk
+ *   rather than treat it as input (a partial reply must never fall through to the
+ *   keyboard branch and leak as an `Alt`-prefixed key);
+ * - `null` — the bytes there are not a recognised reply (ordinary input).
  */
 export type ResponseScan = ResponseMatch | 'incomplete' | null;
 
@@ -90,7 +91,7 @@ function matchCsi(bytes: Uint8Array, start: number): ResponseScan {
   const intermediates = decodeAscii(bytes, intermediatesStart, j);
 
   if (j >= bytes.length) {
-    return 'incomplete'; // opened CSI, no final byte yet — carry (HR-04)
+    return 'incomplete'; // opened CSI, no final byte yet — carry to the next chunk
   }
   const final = bytes[j];
   if (final < 0x40 || final > 0x7e) {
@@ -98,8 +99,8 @@ function matchCsi(bytes: Uint8Array, start: number): ResponseScan {
   }
   const end = j + 1;
 
-  // Primary DA (`?…c`) / Secondary DA (`>…c`): recognised and consumed for
-  // demultiplexing; no concrete capability field is derived (refined by RD-03).
+  // Primary DA (`?…c`) / Secondary DA (`>…c`): recognised and consumed so they
+  // don't leak as input; no concrete capability field is derived from them.
   if (final === 0x63 && params.startsWith('?')) {
     return { end, kind: 'da1', hint: {} };
   }
@@ -136,7 +137,7 @@ function matchDcs(bytes: Uint8Array, start: number): ResponseScan {
     }
     j += 1;
   }
-  return 'incomplete'; // opened DCS (ESC P), no terminator yet — carry (HR-04)
+  return 'incomplete'; // opened DCS (ESC P), no terminator yet — carry to the next chunk
 }
 
 /** Decode a byte range as an ASCII string (response grammars are ASCII). */

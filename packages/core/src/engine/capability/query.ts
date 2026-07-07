@@ -1,30 +1,29 @@
 /**
- * Layer-2 runtime-query seam & bounded response parser (RD-02, plan doc 03-03).
+ * The live terminal probe: ask the terminal what it supports and parse its replies.
  *
- * Writes the terminal capability queries through an injected {@link TerminalQuery}
- * seam (PL-1), then reads the responses under a single bounded timeout (PL-11)
- * into a length-bounded buffer (PL-8). Recognised response sequences are parsed
- * into a capability partial and consumed; every other byte is returned as
- * `passthrough` so RD-06 can deliver genuine input to the app while query
- * responses never leak as keystrokes (AC-4).
+ * Writes the capability query sequences through an injected {@link TerminalQuery},
+ * then reads the replies under a single timeout into a length-bounded buffer.
+ * Recognised replies become capability hints; every other byte is returned as
+ * `passthrough` (real input the user typed during the probe) so the caller can
+ * hand it to the input decoder — a query reply never leaks as a keystroke.
  *
- * Security posture (AC-7): responses are untrusted. The buffer never grows past
+ * Security posture: replies are untrusted. The buffer never grows past
  * {@link RESPONSE_BUFFER_CAP}; on overflow it is discarded and detection falls
- * back. Only exact, fully-terminated grammar matches become capabilities;
- * partial or malformed bytes are treated as passthrough, never as capabilities.
- * Responses are parsed as data only — no `eval`, no code execution (AC-8).
+ * back to the other sources. Only exact, fully-terminated grammar matches become
+ * capabilities; partial or malformed bytes are treated as passthrough. Replies
+ * are parsed as data only — never evaluated.
  */
 import type { CapabilityProfile, DeepPartial, TerminalQuery } from './profile.js';
 import { matchResponse } from './responses.js';
 import type { RuntimeHint } from './responses.js';
 
-/** Default layer-2 timeout in milliseconds (PL-11). */
+/** Default probe timeout in milliseconds. */
 export const DEFAULT_QUERY_TIMEOUT_MS = 200;
 
-/** Maximum retained response buffer in bytes (PL-8). */
+/** Maximum retained reply buffer in bytes; a reply larger than this is discarded. */
 export const RESPONSE_BUFFER_CAP = 1024;
 
-/** The capability queries issued when a seam is provided (03-03). */
+/** The capability query sequences sent to the terminal. */
 const QUERY_REQUESTS: readonly string[] = [
   '\x1b[c', // Primary DA
   '\x1b[>c', // Secondary DA
@@ -32,24 +31,23 @@ const QUERY_REQUESTS: readonly string[] = [
   '\x1b[?2026$p', // Synchronized-output mode (DECRQM ?2026)
 ];
 
-/** The result of a layer-2 run: parsed capabilities + bytes to forward. */
+/** The result of a probe: parsed capabilities + bytes to forward as input. */
 export interface QueryResult {
-  /** Capabilities parsed from recognised responses (reason `'runtime'`). */
+  /** Capabilities parsed from recognised terminal replies. */
   readonly parsed: DeepPartial<CapabilityProfile>;
-  /** Unrecognised bytes to forward to the app input stream (AC-4). */
+  /** Unrecognised bytes to forward to the app's input stream (real keystrokes). */
   readonly passthrough: Uint8Array;
 }
 
-/** Empty result used whenever layer 2 yields nothing usable. */
+/** Empty result used whenever the probe yields nothing usable. */
 const EMPTY_RESULT: QueryResult = { parsed: {}, passthrough: new Uint8Array(0) };
 
 /**
- * Run the capability queries against a {@link TerminalQuery} seam and parse the
- * responses.
+ * Send the capability queries to a {@link TerminalQuery} and parse the replies.
  *
- * Always resolves, never rejects (AC-3): a silent terminal hits the timeout, an
- * oversized response hits the cap, and a throwing `write()`/`read()` falls back
- * — each returns whatever was parsed plus the passthrough bytes.
+ * Always resolves, never rejects: a silent terminal hits the timeout, an
+ * oversized reply hits the cap, and a throwing `write()`/`read()` falls back —
+ * each simply returns whatever was parsed plus the passthrough bytes.
  *
  * @param query The injected terminal stream seam.
  * @param timeoutMs Whole-step timeout in ms (default {@link DEFAULT_QUERY_TIMEOUT_MS}).
@@ -64,13 +62,13 @@ export async function runQueries(
       query.write(request);
     }
   } catch {
-    // A failing write means we cannot query; skip layer 2 entirely (AC-3).
+    // A failing write means we cannot query; skip the probe entirely.
     return EMPTY_RESULT;
   }
 
   const collected = await collectBytes(query, timeoutMs);
   if (collected === null) {
-    // Oversized: the buffer was discarded at the cap; fall back (AC-7).
+    // Oversized reply: the buffer was discarded at the cap; fall back.
     return EMPTY_RESULT;
   }
   return parseResponses(collected);
@@ -90,7 +88,7 @@ async function collectBytes(query: TerminalQuery, timeoutMs: number): Promise<Ui
   });
 
   // The read loop never rejects: a throwing stream resolves to 'error' so the
-  // race always settles and we fall back gracefully (AC-3).
+  // race always settles and we fall back gracefully.
   const readLoop: Promise<'cap' | 'end' | 'error'> = (async () => {
     try {
       for await (const chunk of query.read()) {
@@ -110,11 +108,11 @@ async function collectBytes(query: TerminalQuery, timeoutMs: number): Promise<Ui
   try {
     const outcome = await Promise.race([readLoop, timeout]);
     if (outcome === 'cap') {
-      return null; // oversized → discard (AC-7)
+      return null; // oversized → discard
     }
   } finally {
     if (timer !== undefined) {
-      clearTimeout(timer); // the timer is always cleared (PL-11)
+      clearTimeout(timer); // always clear the timer, even on the timeout path
     }
   }
 
@@ -122,8 +120,8 @@ async function collectBytes(query: TerminalQuery, timeoutMs: number): Promise<Ui
 }
 
 /**
- * Scan a byte buffer, consuming recognised response grammars into `parsed` and
- * forwarding every other byte to `passthrough` (the demultiplexer, AC-4).
+ * Scan a byte buffer, consuming recognised reply grammars into `parsed` and
+ * forwarding every other byte to `passthrough` (splitting replies from input).
  */
 function parseResponses(bytes: Uint8Array): QueryResult {
   const parsed: RuntimeHint = {};
@@ -132,8 +130,9 @@ function parseResponses(bytes: Uint8Array): QueryResult {
   let i = 0;
   while (i < bytes.length) {
     const match = matchResponse(bytes, i);
-    // `null` (not a response) and `'incomplete'` (opened-but-unterminated, HR-04) are both treated as
-    // passthrough input here — layer-2 scans a fixed captured buffer and does not thread carry state.
+    // Both `null` (not a reply) and `'incomplete'` (an opened-but-unterminated
+    // sequence) are treated as passthrough input here, because this scans one
+    // fixed captured buffer and does not carry a partial reply across chunks.
     if (match === null || match === 'incomplete') {
       passthrough.push(bytes[i]);
       i += 1;
