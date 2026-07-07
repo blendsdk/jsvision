@@ -49,6 +49,22 @@ foundation RDs of the same number.
 
 ## Notes
 
+- **2026-07-07** — **Follow-up task `accelerator-overlay` DONE** ✅ (GH #40 reliability remainder +
+  #41 discoverability; no RD per AR-6 — the 21/21 RD set stays complete). An **F12 accelerator mode**
+  for `@jsvision/ui`: while armed, every reachable `~X~` accelerator in the current dispatch scope
+  lights up (the hot glyph gains `Attr.underline` on its existing accent) and a **bare letter fires**
+  the matching accelerator (router synth-alt — the always-works path on terminals that mangle Alt).
+  One flag/one state, F12 toggles (configurable via `EventLoopOptions.revealKey`/`ApplicationOptions.revealKey`,
+  `null` disables); sticky until an accelerator fires / Esc / F12 / a click / a non-accelerator key /
+  a menu opens. Shipped in `packages/ui/` only — **zero `@jsvision/core` change** (underline is the
+  existing `Attr.underline`; the reveal flag + `DrawContext.revealAccelerators` are UI-owned). New
+  seams: `RenderRoot.setRevealAccelerators(on, scope?)`, `EventLoop.setAcceleratorMode(on)` (also the
+  AR-13 Kitty/hold-Alt upgrade seam), `MenuLoopSeam.dismissAccelerators`. Plan
+  [`accelerator-overlay`](plans/accelerator-overlay/00-index.md); 3 phases / 19 tasks spec-first
+  (ST-1…ST-11 + IT-1…IT-6); full `yarn verify` + `yarn lint` green (ui 1315). Kitchen-sink story
+  `controls/accelerators`. **OUT of scope (follow-ups):** real hold-Alt (Kitty/CSI-u, DEF-1 — seam
+  only); firing StatusLine non-Alt **chord** items (`Ctrl+Q`/`F1` — reveal shows them, arm can't fire
+  them, AR-9); duplicate-accelerator authoring warnings (separate GH #6).
 - **2026-07-07** — **RD-08 (Editor family) DONE** ✅ → stage `Done` — **jsvision-ui 21/21 COMPLETE**.
   `exec_plan editor-family` finished in one session: 11 phases / 59 tasks spec-first, GATE-1
   re-verified + GATE-2 recorded for all six TV decodes, full gate green (`yarn verify` 11/11 —

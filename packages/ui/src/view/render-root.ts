@@ -179,7 +179,19 @@ function composeView(
       // Cast the child's shadow (in z-order, under the parent's clip) before painting the child, so a
       // later (front) sibling's shadow falls over the earlier (back) siblings already composed.
       if (child.castsShadow) drawDropShadow(buffer, childRect, clip, theme);
-      composeView(buffer, child, childOrigin, intersect(clip, childRect), theme, caps, reveal, nowInside, logger, cache, counter);
+      composeView(
+        buffer,
+        child,
+        childOrigin,
+        intersect(clip, childRect),
+        theme,
+        caps,
+        reveal,
+        nowInside,
+        logger,
+        cache,
+        counter,
+      );
     }
   }
 }
@@ -343,7 +355,19 @@ class RenderRootImpl implements RenderRoot, ViewHost {
             // is at/below the reveal scope (an ancestor-or-self test); the recursion flips it for any
             // descendant that crosses the scope root.
             const insideScope = reveal.scope !== null && isAncestor(reveal.scope, view);
-            composeView(this.current, view, ctx.origin, ctx.clip, this.theme, this.caps, reveal, insideScope, this.logger, this.cache, null);
+            composeView(
+              this.current,
+              view,
+              ctx.origin,
+              ctx.clip,
+              this.theme,
+              this.caps,
+              reveal,
+              insideScope,
+              this.logger,
+              this.cache,
+              null,
+            );
           }
         }
       }

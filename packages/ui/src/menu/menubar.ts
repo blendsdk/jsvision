@@ -47,7 +47,10 @@ export class MenuBar extends View {
     // TV draws the accelerator char in the high byte of `cNormal`/`cSelect` — red on the title's bg,
     // ALWAYS (open or closed). It never underlines. Selected titles use the green selected palette.
     // The top-level hotkey char takes the accelerator-overlay underline while reveal is on (FR-1).
-    const baseAccent: Style = accentStyle({ fg: ctx.role('menuBar').hotkey ?? base.fg, bg: base.bg }, ctx.revealAccelerators);
+    const baseAccent: Style = accentStyle(
+      { fg: ctx.role('menuBar').hotkey ?? base.fg, bg: base.bg },
+      ctx.revealAccelerators,
+    );
     const selAccent: Style = accentStyle(
       { fg: ctx.role('menuSelected').hotkey ?? selected.fg, bg: selected.bg },
       ctx.revealAccelerators,

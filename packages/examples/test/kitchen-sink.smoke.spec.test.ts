@@ -12,7 +12,7 @@
  * internals. The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
-import { resolveCapabilities } from '@jsvision/core';
+import { resolveCapabilities, Attr } from '@jsvision/core';
 import { createRenderRoot, createRoot } from '@jsvision/ui';
 import { STORIES } from '../kitchen-sink/stories/index.js';
 import { at } from '../kitchen-sink/story.js';
@@ -110,6 +110,32 @@ for (const id of ['date/calendar', 'date/date-picker']) {
     });
   });
 }
+
+// AR-11 (accelerator-overlay) — the accelerator-overlay story is registered with metadata, and when
+// its RenderRoot arms reveal (`setRevealAccelerators(true)`) at least one hot glyph gains
+// `Attr.underline`. This is the showcase's live proof that the F12 overlay lights up hotkeys.
+test('the controls/accelerators story reveals underlined hotkeys on arm', () => {
+  const story = STORIES.find((s) => s.id === 'controls/accelerators');
+  expect(story, 'a story with id "controls/accelerators" is registered').toBeTruthy();
+  expect(story!.category, 'category Controls').toBe('Controls');
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    // No underline at rest.
+    const anyUnderlined = (): boolean =>
+      rr
+        .buffer()
+        .rows()
+        .some((row) => row.some((cell) => (cell.attrs & Attr.underline) !== 0));
+    expect(anyUnderlined(), 'no underline before reveal').toBe(false);
+    // Arm reveal → at least one hot glyph is underlined.
+    rr.setRevealAccelerators(true);
+    rr.flush();
+    expect(anyUnderlined(), 'a hot glyph underlines on reveal').toBe(true);
+    dispose();
+  });
+});
 
 // The core smoke oracle: each story builds + mounts + draws without throwing, and paints something.
 for (const story of STORIES) {

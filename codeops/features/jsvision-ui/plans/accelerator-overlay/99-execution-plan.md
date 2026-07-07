@@ -2,7 +2,7 @@
 
 > **Feature**: jsvision-ui / accelerator-overlay · **CodeOps Skills Version**: 3.3.0
 > **Implements**: jsvision-ui/#40 (reliability remainder) + #41 (discoverability) — no RD (AR-6)
-> **Progress**: 13/19 tasks (68%) · **Last Updated**: 2026-07-07
+> **Progress**: 16/19 tasks (84%) · **Last Updated**: 2026-07-07
 > **Gate**: ✅ Zero-Ambiguity PASSED (00-ambiguity-register.md)
 
 Spec-first ordering per phase: **spec tests → red → implement → green → impl tests → verify**. Specs
@@ -68,13 +68,13 @@ derive from [07-testing-strategy.md](07-testing-strategy.md); design in
 
 ## Phase 3 — Kitchen-sink story, docs, issue sync, verify
 
-- [ ] P3.1 Kitchen-sink story (AR-11): a dialog with `~O~pen`/`~C~ancel` buttons + a `~N~ame` Label +
+- [x] P3.1 Kitchen-sink story (AR-11): a dialog with `~O~pen`/`~C~ancel` buttons + a `~N~ame` Label +
       a small menu; blurb explains F12; register in `stories/index.ts`. Extend
       `kitchen-sink.smoke.spec.test.ts` to arm reveal and assert a hot glyph gains `Attr.underline`.
-- [ ] P3.2 Packaging spec **ST-11** — `DrawContext.revealAccelerators` + `EventLoopOptions.revealKey`
+- [x] P3.2 Packaging spec **ST-11** — `DrawContext.revealAccelerators` + `EventLoopOptions.revealKey`
       exist; assert **no** new `@jsvision/core` export (AR-15).
-- [ ] P3.3 Full **`yarn verify` + `yarn lint`** (AR-12).
-- [ ] P3.4 Update GH #41 (reveal shipped) and #40 (reliability path shipped via arm-to-fire); close if
+- [x] P3.3 Full **`yarn verify` + `yarn lint`** (AR-12).
+- [~] P3.4 Update GH #41 (reveal shipped) and #40 (reliability path shipped via arm-to-fire); close if
       appropriate. Add a follow-up roadmap note (AR-6). Note the OUT-of-scope items (Kitty hold-Alt
       DEF-1; StatusLine Ctrl-chord fire; #6 duplicate warning).
 
