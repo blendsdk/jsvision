@@ -12,7 +12,7 @@
 import type { Style, KeyEvent } from '@jsvision/core';
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
-import { parseTilde, tildeSegments } from '../menu/index.js';
+import { parseTilde, tildeSegments, accentStyle } from '../menu/index.js';
 
 /** A status-line entry: a tilde-marked label, the command it emits, and an optional `key` accelerator. */
 export interface StatusItem {
@@ -126,9 +126,14 @@ export class StatusLine extends View {
     const base = ctx.color('statusBar');
     const selected = ctx.color('statusSelected');
     const dimFg = ctx.role('shadow').fg; // darkGray — TV cNormDisabled/cSelDisabled fg (0x78/0x28)
-    // TV's hotkey attribute is plain red on the row bg — no intensity bit.
-    const accent: Style = { fg: ctx.role('statusBar').hotkey ?? base.fg, bg: base.bg };
-    const selAccent: Style = { fg: ctx.role('statusSelected').hotkey ?? selected.fg, bg: selected.bg };
+    // TV's hotkey attribute is plain red on the row bg — no intensity bit. The accent takes the
+    // accelerator-overlay underline while reveal is on; the draw below applies it only to an enabled
+    // item's hot run (`enabled && seg.hot`), so a disabled item never lights up (FR-6).
+    const accent: Style = accentStyle({ fg: ctx.role('statusBar').hotkey ?? base.fg, bg: base.bg }, ctx.revealAccelerators);
+    const selAccent: Style = accentStyle(
+      { fg: ctx.role('statusSelected').hotkey ?? selected.fg, bg: selected.bg },
+      ctx.revealAccelerators,
+    );
     const dim: Style = { fg: dimFg, bg: base.bg };
     const selDim: Style = { fg: dimFg, bg: selected.bg }; // cSelDisabled — darkGray on green
 

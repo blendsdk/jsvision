@@ -9,6 +9,23 @@
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
+import { Attr } from '@jsvision/core';
+import type { Style } from '@jsvision/core';
+
+/**
+ * Add the accelerator-overlay reveal emphasis to a hot-glyph style (accelerator-overlay FR-1/AR-2).
+ * When `reveal` is set, OR `Attr.underline` onto the style's existing attributes (no color/width
+ * change, no new theme role); otherwise return the base unchanged. Shared by every `~X~` drawer so
+ * the emphasis is identical everywhere (DRY). A drawer applies it only to an **enabled** hot run, so
+ * a disabled accelerator never lights up (FR-6).
+ *
+ * @param base   The hot run's resolved accent `Style`.
+ * @param reveal `DrawContext.revealAccelerators` — whether the overlay is revealed this frame.
+ * @returns The base style, underlined while `reveal` is set.
+ */
+export function accentStyle(base: Style, reveal: boolean): Style {
+  return reveal ? { ...base, attrs: (base.attrs ?? Attr.none) | Attr.underline } : base;
+}
 
 /** A node in the menu tree (plain data). */
 export type MenuItem =

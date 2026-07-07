@@ -10,7 +10,7 @@
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
-import { parseTilde, tildeSegments } from '../menu/index.js';
+import { parseTilde, tildeSegments, accentStyle } from '../menu/index.js';
 import type { ParsedLabel } from '../menu/index.js';
 
 /**
@@ -87,7 +87,9 @@ export abstract class Cluster extends View {
   override draw(ctx: DrawContext): void {
     const { icon, markers } = this.box();
     const { width: w, height: h } = ctx.size;
-    const accent = ctx.color('clusterShortcut');
+    // Only an enabled item's accent takes the accelerator-overlay underline (FR-6); `hotColor` below
+    // already collapses a disabled row's hot run to its base color.
+    const accent = accentStyle(ctx.color('clusterShortcut'), ctx.revealAccelerators);
     for (let i = 0; i < this.rawLabels.length && i < h; i += 1) {
       const role = !this.enabled[i]
         ? 'clusterDisabled'

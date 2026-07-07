@@ -59,6 +59,10 @@ const BOX_SINGLE = { tl: '\u250C', tr: '\u2510', bl: '\u2514', br: '\u2518', h: 
  * @param caps     The resolved terminal capabilities for this frame (RD-18 PA-1) — surfaced on the
  *                 context so a widget can pick its ASCII glyph form at draw time; the render root
  *                 passes the same profile `serialize()` encodes with.
+ * @param revealAccelerators Whether the accelerator overlay is revealed for this view this frame
+ *                 (accelerator-overlay FR-1). Optional, default `false`, so existing callers (and
+ *                 bare unit-constructed contexts) are unaffected; the render root passes the
+ *                 scope-clamped effective value.
  * @returns A `DrawContext` whose writes are offset to `viewRect` and clipped to `clip`.
  */
 export function makeDrawContext(
@@ -67,6 +71,7 @@ export function makeDrawContext(
   clip: Rect,
   theme: Theme,
   caps: CapabilityProfile,
+  revealAccelerators = false,
 ): DrawContext {
   const ox = viewRect.x;
   const oy = viewRect.y;
@@ -187,5 +192,5 @@ export function makeDrawContext(
     return theme[name];
   }
 
-  return { text, fillRect, fill, box, shadow, color, role, size, caps };
+  return { text, fillRect, fill, box, shadow, color, role, size, caps, revealAccelerators };
 }

@@ -56,6 +56,18 @@ export interface RenderRoot {
    * @returns The absolute origin `{ x, y }`, or `null` if never composed.
    */
   originOf(view: View): Point | null;
+  /**
+   * Reveal (or hide) the accelerator overlay for the next frame (accelerator-overlay FR-1/FR-4).
+   * While `on`, each `~X~` drawer under the reveal scope underlines its hot glyph (via
+   * `DrawContext.revealAccelerators`). `scope` clamps the reveal to the active dispatch subtree (a
+   * modal `Dialog`); `null`/omitted reveals the whole tree. A change forces one coalesced full
+   * recompose on the next flush (`markRelayout`, AR-14) so the underlines paint/clear atomically.
+   * Underline is width-neutral, so the relayout drifts no geometry.
+   *
+   * @param on    Whether the overlay is revealed.
+   * @param scope The dispatch-scope subtree to clamp reveal to, or `null` for the whole tree.
+   */
+  setRevealAccelerators(on: boolean, scope?: View | null): void;
 }
 
 /**
@@ -69,6 +81,14 @@ export interface RenderRoot {
  * partial recompose is safe.
  */
 type ComposeContext = { origin: Point; clip: Rect; order: number };
+
+/**
+ * The accelerator-overlay reveal state threaded through the compose walk (accelerator-overlay
+ * FR-1/FR-4). `on` is the root flag; `scope` clamps reveal to the active dispatch subtree — `null`
+ * reveals the whole tree. The walk carries an `insideScope` boolean alongside this (flipped true when
+ * it reaches `scope`); the value handed to each `DrawContext` is `on && (scope === null || insideScope)`.
+ */
+type RevealState = { readonly on: boolean; readonly scope: View | null };
 
 /**
  * Paint a Turbo Vision-style drop-shadow on the cells just below and to the right of `rect`
@@ -115,6 +135,8 @@ function composeView(
   clip: Rect,
   theme: Theme,
   caps: CapabilityProfile,
+  reveal: RevealState,
+  insideScope: boolean,
   logger: Logger,
   cache: Map<View, ComposeContext>,
   counter: { n: number } | null,
@@ -132,7 +154,11 @@ function composeView(
     width: view.bounds.width,
     height: view.bounds.height,
   };
-  const ctx = makeDrawContext(buffer, viewRect, clip, theme, caps);
+  // Reveal is modal-scoped: `insideScope` flips true once the walk reaches the scope root, so a
+  // background view (outside the modal subtree) composes with reveal off and never underlines (FR-4).
+  const nowInside = insideScope || view === reveal.scope;
+  const revealHere = reveal.on && (reveal.scope === null || nowInside);
+  const ctx = makeDrawContext(buffer, viewRect, clip, theme, caps, revealHere);
   try {
     view.draw(ctx);
   } catch (error) {
@@ -153,7 +179,7 @@ function composeView(
       // Cast the child's shadow (in z-order, under the parent's clip) before painting the child, so a
       // later (front) sibling's shadow falls over the earlier (back) siblings already composed.
       if (child.castsShadow) drawDropShadow(buffer, childRect, clip, theme);
-      composeView(buffer, child, childOrigin, intersect(clip, childRect), theme, caps, logger, cache, counter);
+      composeView(buffer, child, childOrigin, intersect(clip, childRect), theme, caps, reveal, nowInside, logger, cache, counter);
     }
   }
 }
@@ -206,6 +232,10 @@ class RenderRootImpl implements RenderRoot, ViewHost {
   private lastFrame = '';
   private readonly dirty = new Set<View>();
   private readonly cache = new Map<View, ComposeContext>();
+  /** Accelerator-overlay reveal flag (mutable, unlike `caps`) — a change forces a full recompose. */
+  private revealAccelerators = false;
+  /** The dispatch-scope subtree reveal is clamped to (a modal), or `null` for the whole tree. */
+  private revealScope: View | null = null;
 
   constructor(size: Size2D, opts: RenderRootOptions) {
     this.viewport = size;
@@ -256,6 +286,14 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     this.scheduleFlush();
   }
 
+  /** @see RenderRoot.setRevealAccelerators — store the flag + scope; a change forces one recompose. */
+  setRevealAccelerators(on: boolean, scope: View | null = null): void {
+    if (this.revealAccelerators === on && this.revealScope === scope) return; // no change → no work
+    this.revealAccelerators = on;
+    this.revealScope = scope;
+    this.markRelayout(); // AR-14: one coalesced full recompose paints/clears every underline atomically
+  }
+
   /** @internal ViewHost — schedule a reflow + recompose. */
   markRelayout(): void {
     this.needsReflow = true;
@@ -297,10 +335,15 @@ class RenderRootImpl implements RenderRoot, ViewHost {
       if (this.anyOccluded(dirtyViews)) {
         this.fullCompose();
       } else {
+        const reveal: RevealState = { on: this.revealAccelerators, scope: this.revealScope };
         for (const view of dirtyViews) {
           const ctx = this.cache.get(view);
           if (ctx !== undefined) {
-            composeView(this.current, view, ctx.origin, ctx.clip, this.theme, this.caps, this.logger, this.cache, null);
+            // A partial recompose starts mid-tree, so seed `insideScope` from whether this dirty view
+            // is at/below the reveal scope (an ancestor-or-self test); the recursion flips it for any
+            // descendant that crosses the scope root.
+            const insideScope = reveal.scope !== null && isAncestor(reveal.scope, view);
+            composeView(this.current, view, ctx.origin, ctx.clip, this.theme, this.caps, reveal, insideScope, this.logger, this.cache, null);
           }
         }
       }
@@ -320,11 +363,11 @@ class RenderRootImpl implements RenderRoot, ViewHost {
       { ...this.rootView.bounds },
       this.theme,
       this.caps,
+      { on: this.revealAccelerators, scope: this.revealScope },
+      false, // the root is outside any modal scope until the walk reaches `revealScope`
       this.logger,
       this.cache,
-      {
-        n: 0,
-      },
+      { n: 0 },
     );
   }
 
