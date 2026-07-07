@@ -1,70 +1,38 @@
 /**
- * `ScrollBar` — a Turbo Vision `TScrollBar` (RD-11 AC-1, PA-14/PA-4/PA-10/PA-16).
+ * A scroll bar: two end arrows, a shaded page track, and a proportional thumb, driven entirely by the
+ * mouse. Its position is a two-way `Signal<number>` clamped to `[min, max]` — reading it renders the
+ * thumb, and gestures write it back.
  *
- * Faithful transcription of `source/tvision/tscrlbar.cpp` (decode recorded here per the fidelity
- * directive — GATE-1 verified against the source, GATE-2 diffed after):
- *
- *   • **Glyphs** `tvtext1.cpp:113-114` (`TScrollChars`, positional): vertical `{▲0x1E,▼0x1F,▒0xB1,
- *     ■0xFE,▓0xB2}`, horizontal `{◄0x11,►0x10,▒,■,▓}`. CP437 → unambiguous-narrow Unicode.
- *   • **`drawPos(pos)`** `:65` (from `draw()` `:60`): along the long axis, `s=getSize()-1`; col 0 =
- *     start arrow `getColor(2)`; cols `1..s-1` = track `▒` `getColor(1)` (or all `▓` `getColor(1)` when
- *     `maxVal==minVal`); thumb `■` `getColor(3)` overwrites the track at `pos`; col `s` = end arrow
- *     `getColor(2)`.
- *   • **`getSize()`** `:97` = `max(3, len)`; **`getPos()`** `:89` =
- *     `((value-min)*(getSize()-3) + (r>>1)) / r + 1`, `r=max-min` (`r==0 ⇒ 1`) ⇒ `pos ∈ [1,getSize()-2]`.
- *   • **`getPartCode()`** `:114` (extent grown by (1,1)): axis coord `mark` → `mark==pos` thumb;
- *     `mark<1` line-back arrow; `1≤mark<pos` page-back; `pos<mark<s` page-fwd; `mark≥s` line-fwd arrow;
- *     vertical adds 4 to non-indicator parts. **`scrollStep(part)`** `:283`: bit1 = page(`pgStep`) vs
- *     arrow(`arStep`), bit0 = fwd(+) vs back(−).
- *   • **Thumb drag** `:192-201`: `i=clamp(mark,1,s-1)`; if `s>2`,
- *     `value = ((i-1)*(max-min) + ((s-2)>>1)) / (s-2) + min`. **Wheel** `:148/:169`: `value ± 3·arStep`.
- *   • **Palette** `cpScrollBar="\x04\x05\x05"` `:37` → in a gray dialog all three resolve to `0x13`
- *     **cyan-on-blue**: track/disabled `getColor(1)` → `scrollBarPage`; arrows + thumb `getColor(2/3)`
- *     → `scrollBarControls`. Page == controls in colour; the glyph (`■` vs `▒`) is the distinction.
- *
- * The bar is passive chrome (`focusable=false`): a `Scroller`/`ListView` owns the keyboard and drives
- * `value`; the bar owns only mouse (arrow/page/thumb-drag/wheel).
- *
- * **GATE-2 (AFTER-diff, verified against `tscrlbar.cpp`):** every drawn fact matches cell-by-cell —
- * glyphs, the `drawPos` column math, the `getColor(1/2/3)` role resolution, `getPos`/`getSize`,
- * `getPartCode`, `scrollStep`, wheel `3·arStep`, and the thumb-drag mapping. Two **behavioral**
- * adaptations to our reactive event model (the gate governs drawing/geometry/colour, all matching):
- * TV's arrow **auto-repeat** (`while mouseEvent(event, evMouseAuto)`, `:190`) is one step per click
- * here (no `evMouseAuto` timer in our model); and TV's `cmScrollBarChanged` owner **broadcast**
- * (`scrollDraw`, `:279`) is replaced by the two-way `value` signal the owner observes (PA-8).
- *
- * **PROJECT DEVIATION (thumb glyph, 2026-07-01, user-approved):** the thumb renders `█` (U+2588 FULL
- * BLOCK), NOT the faithful `■` (CP437 `0xFE` / U+25A0). `■` is East-Asian *Ambiguous* width and
- * renders double-width under terminal font-fallback (e.g. Ubuntu GNOME/VTE), shifting the whole bar;
- * `█` is a block element that always renders one cell. This is a deliberate departure from TV fidelity
- * for width-robustness — the ST-01/ST-14 spec oracles assert `█` to match. All other glyphs stay faithful.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The bar is **passive chrome** (`focusable = false`): it owns only the mouse — click an arrow to
+ * step, click the track to jump the thumb there and drag, wheel to step by `3 × arrowStep`. It does
+ * **not** handle the keyboard; a container such as {@link Scroller} or `ListView` owns the keys and
+ * drives the same `value` signal. When `max === min` the bar is disabled and the whole track draws
+ * with the disabled glyph.
  */
 import type { Signal } from '../reactive/index.js';
 import type { DispatchEvent, DrawContext } from '../view/index.js';
 import { View } from '../view/index.js';
 
-/** Vertical scroll glyphs (`tvtext1.cpp:113`): start ▲, end ▼. */
+/** Vertical scroll glyphs: start ▲, end ▼. */
 const V_START = '\u25B2'; // ▲ BLACK UP-POINTING TRIANGLE
 const V_END = '\u25BC'; // ▼ BLACK DOWN-POINTING TRIANGLE
-/** Horizontal scroll glyphs (`tvtext1.cpp:114`): start ◄, end ►. */
+/** Horizontal scroll glyphs: start ◄, end ►. */
 const H_START = '\u25C4'; // ◄ BLACK LEFT-POINTING POINTER
 const H_END = '\u25BA'; // ► BLACK RIGHT-POINTING POINTER
 /** Shared track/thumb/disabled glyphs. */
 const TRACK = '\u2592'; // ▒ MEDIUM SHADE
-const THUMB = '\u2588'; // █ FULL BLOCK (project deviation from TV ■ 0xFE — see header)
+const THUMB = '\u2588'; // █ FULL BLOCK — not ■, which is Ambiguous-width and can render double-wide, shifting the whole bar
 const DISABLED = '\u2593'; // ▓ DARK SHADE
 
-/** TV `TScrollBar` part codes (`views.h:119-127`). Vertical adds 4 to non-indicator parts. */
-const SB_LINE_BACK = 0; // sbLeftArrow / +4 sbUpArrow
-const SB_PAGE_BACK = 2; // sbPageLeft / +4 sbPageUp
-const SB_PAGE_FWD = 3; // sbPageRight / +4 sbPageDown
-const SB_INDICATOR = 8;
+/** Mouse part codes along the bar. Vertical adds 4 to the non-indicator (arrow/page) parts. */
+const SB_LINE_BACK = 0; // start arrow (step back one line)
+const SB_PAGE_BACK = 2; // page track between the start arrow and the thumb
+const SB_PAGE_FWD = 3; // page track between the thumb and the end arrow
+const SB_INDICATOR = 8; // the thumb itself
 
 /** Construction options for {@link ScrollBar}. */
 export interface ScrollBarOptions {
-  /** Two-way position binding (AR-111); reading renders, gestures write back, clamped to `[min,max]`. */
+  /** Two-way position binding: reading renders the thumb, gestures write back, clamped to `[min,max]`. */
   value: Signal<number>;
   /** Range minimum (default 0). */
   min?: number;
@@ -78,18 +46,35 @@ export interface ScrollBarOptions {
   orientation?: 'vertical' | 'horizontal';
 }
 
-/** A Turbo Vision scroll bar: arrows + a page track + a proportional thumb, driven by mouse. */
+/**
+ * A scroll bar: arrows + a page track + a proportional thumb, driven by mouse (see the module docs).
+ *
+ * @example
+ * import { ScrollBar, Group, createEventLoop, signal } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const pos = signal(0);
+ * const bar = new ScrollBar({ value: pos, min: 0, max: 100, orientation: 'vertical' });
+ * bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 8 } };
+ *
+ * const root = new Group();
+ * root.add(bar);
+ * const loop = createEventLoop({ width: 1, height: 8 }, { caps });
+ * loop.mount(root);
+ * pos.set(50); // scroll externally — the thumb re-renders halfway down
+ */
 export class ScrollBar extends View {
-  override focusable = false; // passive chrome — the owning viewer drives the keys (PA-2/PA-8)
+  override focusable = false; // passive chrome — the owning viewer drives the keys
   /** The two-way bound position (source of truth). */
   protected readonly value: Signal<number>;
-  /** Range minimum (mutable — an owner `Scroller`/`ListView` re-limits via {@link setRange}, TV `setLimit`). */
+  /** Range minimum (mutable — an owner `Scroller`/`ListView` re-limits via {@link setRange}). */
   protected min: number;
   /** Range maximum (mutable — see {@link setRange}). */
   protected max: number;
   /** Explicit page step, or `undefined` for the axis-length default (mutable via {@link setRange}). */
   protected pageStepOpt?: number;
-  /** Arrow-click step (mutable — an owner viewer re-wires it via {@link setRange}, TV `setStep`). */
+  /** Arrow-click step (mutable — an owner viewer re-wires it via {@link setRange}). */
   protected arrowStepVal: number;
   protected readonly vertical: boolean;
   /** True while a thumb-drag gesture holds the pointer capture. */
@@ -116,17 +101,15 @@ export class ScrollBar extends View {
   }
 
   /**
-   * Re-limit the bar at runtime (TV `TScrollBar::setParams`/`setLimit`, `tscrlbar.cpp:305`) — an
-   * owning `Scroller`/`ListView` calls this when its viewport or content extent changes. The bound
-   * `value` is not written here; `readValue()` clamps it into the new range on read, matching the
-   * getPos/setValue clamp (so a shrunk range never over-scrolls or throws).
+   * Re-limit the bar at runtime — an owning `Scroller`/`ListView` calls this when its viewport or
+   * content extent changes. The bound `value` is not written here; it is clamped into the new range on
+   * read, so a shrunk range never over-scrolls or throws.
    *
    * @param min       New range minimum.
    * @param max       New range maximum (raised to `min` if smaller).
    * @param pageStep  New page step, or `undefined` to keep the axis-length default.
-   * @param arrowStep New arrow step (TV `setStep`'s second arg), or `undefined` to keep the current
-   *   one. A multi-column `TListViewer` wires `arStep = size.y` here (`tlstview.cpp:41`); the default
-   *   single-column owner leaves it at 1.
+   * @param arrowStep New arrow step, or `undefined` to keep the current one. A multi-column list wires
+   *   this to its row count so an arrow-click jumps a whole column; a single-column owner leaves it at 1.
    */
   setRange(min: number, max: number, pageStep?: number, arrowStep?: number): void {
     this.min = min;
@@ -140,7 +123,7 @@ export class ScrollBar extends View {
     return this.vertical ? this.bounds.height : this.bounds.width;
   }
 
-  /** TV `getSize()` — the effective bar length, never below 3 (`tscrlbar.cpp:97`). */
+  /** The effective bar length, never below 3 (an arrow at each end plus at least one track/thumb cell). */
   protected getSize(len: number): number {
     return Math.max(3, len);
   }
@@ -151,7 +134,8 @@ export class ScrollBar extends View {
   }
 
   /**
-   * TV `getPos()` (`tscrlbar.cpp:89`) — the thumb cell along the axis, in `[1, getSize()-2]`.
+   * The thumb cell along the axis, in `[1, getSize()-2]` — the position mapped proportionally from
+   * `value` within `[min, max]` and pinned between the two end arrows.
    *
    * @param len The long-axis length in cells.
    * @returns The 0-based thumb index.
@@ -164,22 +148,19 @@ export class ScrollBar extends View {
     return Math.min(size - 2, Math.max(1, pos));
   }
 
-  /** The effective page step (option, else the axis length − 1; TV owners set `size-1`). Public so an
-   * owner/test can confirm the wired page step (HR-53). */
+  /** The effective page step (the configured `pageStep`, else the axis length − 1). */
   pageStep(): number {
     return this.pageStepOpt ?? Math.max(1, this.axisLen() - 1);
   }
 
-  /** The effective arrow-click step (wheel steps `3×` this). Public so an owner/test can confirm the
-   * wired arrow step (TV `setStep`'s `arStep`; a multi-column list wires `size.y`). */
+  /** The effective arrow-click step; the wheel steps `3×` this. */
   arrowStep(): number {
     return this.arrowStepVal;
   }
 
   /**
-   * Paint the bar exactly as TV `drawPos` (`tscrlbar.cpp:65`): arrows at the two ends in
-   * `scrollBarControls`, a `▒` track (or full `▓` when disabled) in `scrollBarPage`, and the `■` thumb
-   * in `scrollBarControls` at `getPos()`.
+   * Paint the bar: an arrow at each end in the `scrollBarControls` role, a `▒` track (or a full `▓`
+   * fill when disabled) in `scrollBarPage`, and the thumb in `scrollBarControls` at its current cell.
    *
    * @param ctx The clipped, view-local paint context.
    */
@@ -191,14 +172,14 @@ export class ScrollBar extends View {
     const startGlyph = this.vertical ? V_START : H_START;
     const endGlyph = this.vertical ? V_END : H_END;
 
-    this.put(ctx, 0, startGlyph, controls); // start arrow (getColor 2)
+    this.put(ctx, 0, startGlyph, controls); // start arrow
     if (this.max === this.min) {
-      for (let i = 1; i < s; i += 1) this.put(ctx, i, DISABLED, page); // disabled fill (getColor 1)
+      for (let i = 1; i < s; i += 1) this.put(ctx, i, DISABLED, page); // disabled: fill the whole track
     } else {
-      for (let i = 1; i < s; i += 1) this.put(ctx, i, TRACK, page); // track (getColor 1)
-      this.put(ctx, this.getPos(len), THUMB, controls); // thumb (getColor 3)
+      for (let i = 1; i < s; i += 1) this.put(ctx, i, TRACK, page); // track
+      this.put(ctx, this.getPos(len), THUMB, controls); // thumb overwrites the track at its position
     }
-    this.put(ctx, s, endGlyph, controls); // end arrow (getColor 2)
+    this.put(ctx, s, endGlyph, controls); // end arrow
   }
 
   /** Write one glyph at axis index `i` (col 0 / row 0 on the cross axis). */
@@ -234,9 +215,9 @@ export class ScrollBar extends View {
   }
 
   /**
-   * Mouse-down: thumb ⇒ start a captured drag; an **arrow end** ⇒ step once (TV `scrollStep`); a
-   * **track/page** click ⇒ HR-49 jump the thumb to the clicked position and enter the same captured
-   * drag, so the pointer keeps driving it (`tscrlbar.cpp:193-207` default case).
+   * Mouse-down: on the thumb ⇒ start a captured drag; on an **end arrow** ⇒ step once; on the
+   * **track** ⇒ jump the thumb to the clicked position and enter the same captured drag, so the
+   * pointer keeps driving it.
    */
   protected handleDown(ev: DispatchEvent, mark: number): void {
     const len = this.axisLen();
@@ -244,25 +225,25 @@ export class ScrollBar extends View {
     const pos = this.getPos(len);
     if (mark === pos) {
       this.dragging = true;
-      ev.setCapture?.(this); // PA-16 — capture so the drag tracks off the 1-cell column
+      ev.setCapture?.(this); // capture the pointer so the drag tracks off the 1-cell-wide bar column
     } else if (mark <= 0 || mark >= s) {
       this.setValue(this.readValue() + this.scrollStep(this.partCode(mark, pos, s))); // arrow: one step
     } else {
-      this.jumpTo(mark, s); // HR-49: track click jumps the thumb to the position…
+      this.jumpTo(mark, s); // track click jumps the thumb to the clicked position…
       this.dragging = true;
-      ev.setCapture?.(this); // …and captures the pointer to follow the drag
+      ev.setCapture?.(this); // …and captures the pointer so it can be dragged from there
     }
     ev.handled = true;
   }
 
-  /** Captured drag: map the axis position back to a proportional `value` (TV `:192-201`). */
+  /** Captured drag: map the axis position back to a proportional `value`. */
   protected handleDrag(ev: DispatchEvent, mark: number): void {
     if (!this.dragging) return;
     this.jumpTo(mark, this.getSize(this.axisLen()) - 1);
     ev.handled = true;
   }
 
-  /** Map an axis position `mark` to a proportional `value` (TV `:196-206`), clamped between the arrows. */
+  /** Map an axis position `mark` to a proportional `value`, clamped between the two end arrows. */
   protected jumpTo(mark: number, s: number): void {
     const i = Math.min(s - 1, Math.max(1, mark)); // keep the thumb between the arrows
     if (s > 2) {
@@ -280,11 +261,12 @@ export class ScrollBar extends View {
   }
 
   /**
-   * TV `getPartCode` (`tscrlbar.cpp:114`) — the axis coord `mark` → a part code, vertical parts +4.
+   * Classify a clicked cell into a part code (start/end arrow, page-back/-forward, or the thumb).
+   * Vertical parts add 4 so the same code space distinguishes the two orientations.
    *
    * @param mark The along-axis click cell.
    * @param pos  The current thumb cell.
-   * @param s    `getSize()-1` (the last cell index).
+   * @param s    The last cell index (`getSize()-1`).
    */
   protected partCode(mark: number, pos: number, s: number): number {
     if (mark === pos) return SB_INDICATOR;
@@ -292,11 +274,11 @@ export class ScrollBar extends View {
     if (mark < 1) part = SB_LINE_BACK;
     else if (mark < pos) part = SB_PAGE_BACK;
     else if (mark < s) part = SB_PAGE_FWD;
-    else part = SB_LINE_BACK + 1; // line-fwd (sbRightArrow/+4 sbDownArrow)
+    else part = SB_LINE_BACK + 1; // end arrow (step forward one line)
     return this.vertical ? part + 4 : part;
   }
 
-  /** TV `scrollStep` (`tscrlbar.cpp:283`): bit1 ⇒ page vs arrow, bit0 ⇒ forward vs back. */
+  /** The signed step for a part code: bit 1 selects page vs arrow step, bit 0 selects forward vs back. */
   protected scrollStep(part: number): number {
     const step = part & 2 ? this.pageStep() : this.arrowStepVal;
     return part & 1 ? step : -step;

@@ -1,24 +1,17 @@
 /**
- * `ComboBox<T>` — a dropdown selector combining an `Input` field with a trailing `▐↓▌` button that
- * opens the shared anchored popup over a `ListView<T>` (RD-14, input-dropdowns/03-03-combobox.md).
+ * A dropdown selector combining a text field with a trailing `▐↓▌` button that opens a scrollable list
+ * of items of any type `T`. It binds two signals — `value` (the selected item, or `null`) and `text`
+ * (the field text) — and works in two modes:
  *
- * ComboBox has **no** Turbo Vision counterpart (TV predates the combo box) — it is designed fresh, but
- * **draws like its siblings**: the button reuses the History glyph/colors (`drawDropdownIcon`, PA-11)
- * and the popup rows use the RD-11 `list*` roles (like `TListBox`, decode in the fidelity spec). Two
- * modes over a two-signal binding (`value: Signal<T | null>` ⟂ `text: Signal<string>`):
+ *   • **editable** (default): the field accepts free text; the list is `items` narrowed by
+ *     `filter(item, text)` (default: case-insensitive substring). `value` tracks the item whose
+ *     `getText` exactly equals `text`, else `null`, so free text matching nothing leaves `value` null.
+ *     Picking a row sets the field text to that item's text.
+ *   • **select-only** (`editable: false`): the field is read-only and mirrors the selected item's
+ *     text; the open list has type-ahead so typing jumps the focused row. Picking a row sets `value`.
  *
- *   • **editable** (default): the field accepts free text into `text`; the candidate list is `items`
- *     narrowed by `filter(item, text)` (default case-insensitive substring, PA-13). `value` tracks the
- *     item whose `getText` exactly equals `text`, else `null` (PA-14) — so free text matching nothing
- *     leaves `value` null. Picking a row sets `text = getText(item)` (⇒ `value = item` via the bind).
- *   • **select-only** (`editable: false`): the field is read-only (a reject-all validator blocks
- *     keystrokes) and mirrors `getText(value)`; the open list has `typeAhead` so typing jumps the
- *     focused row. Picking a row sets `value` directly (⇒ `text = getText(value)` via the bind).
- *
- * Opens on the trailing button's mouse-down, or **Down / Alt+Down** while the field is focused (the
- * ComboBox catches the key as the focused Input's ancestor in the bubble; PA-12 of the event loop).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Opens on a click of the trailing button, or on Down / Alt+Down while the field is focused. Opening
+ * requires an overlay host (the app shell provides one); with none it is a no-op.
  */
 import { Group, View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -33,7 +26,7 @@ import { openAnchoredPopup, DEFAULT_MAX_ROWS, drawDropdownIcon, absoluteRect } f
 /** A reject-all validator — makes a select-only ComboBox field read-only (blocks every keystroke). */
 const REJECT_ALL: Validator = { isValidInput: () => false, isValid: () => true };
 
-/** The default candidate filter: case-insensitive substring of the item's display text (PA-13). */
+/** The default candidate filter: case-insensitive substring of the item's display text. */
 function defaultFilter<T>(getText: (item: T) => string): (item: T, text: string) => boolean {
   return (item, text) => getText(item).toLowerCase().includes(text.toLowerCase());
 }
@@ -52,17 +45,17 @@ export interface ComboBoxOptions<T> {
   editable?: boolean;
   /** Candidate predicate for editable mode (default case-insensitive substring). */
   filter?: (item: T, text: string) => boolean;
-  /** App callback on pick, with the list's display index + the item (TV `onSelect`). */
+  /** App callback on pick, with the list's display index + the item. */
   onSelect?: (index: number, item: T) => void;
   /** Typed command emitted on pick (via the list's activation). */
   command?: string;
-  /** Max visible popup rows (default 6; window height = maxRows + 2). PA-4. */
+  /** Max visible popup rows (default 6). */
   maxRows?: number;
 }
 
 /**
- * The trailing `▐↓▌` ComboBox button: draws the shared dropdown icon and opens the popup on a
- * mouse-down. Not focusable — the field is the focus target; the button is click-only.
+ * The trailing `▐↓▌` ComboBox button: draws the dropdown icon and opens the popup on a mouse-down. Not
+ * focusable — the field is the focus target; the button is click-only.
  */
 class ComboButton extends View {
   /** Fixed 3-cell width (the icon), stretched to the field height by the row layout. */
@@ -72,7 +65,7 @@ class ComboButton extends View {
     super();
   }
 
-  /** Draw the `▐↓▌` icon (shared with History, so the glyph/colors never drift; PA-11). */
+  /** Draw the `▐↓▌` icon (shared with History, so the glyph and colours never drift). */
   override draw(ctx: DrawContext): void {
     drawDropdownIcon(ctx, 0);
   }
@@ -88,8 +81,25 @@ class ComboButton extends View {
 }
 
 /**
- * A dropdown selector: an `Input` field + a trailing `▐↓▌` button opening a `ListView<T>` popup.
- * Editable (free text + filter) or select-only (read-only picker + type-ahead). See the module doc.
+ * A dropdown selector: a text field + a trailing `▐↓▌` button opening a `ListView<T>` popup. Editable
+ * (free text + filter) or select-only (read-only picker + type-ahead). See the module docs.
+ *
+ * @example
+ * import { ComboBox, Group, createEventLoop, signal } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const items = signal(['TypeScript', 'JavaScript', 'Python', 'Rust', 'Go']);
+ * const value = signal<string | null>(null);
+ * const combo = new ComboBox<string>({ items, getText: (s) => s, value, editable: true });
+ * combo.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } };
+ *
+ * const controls = new Group();
+ * controls.add(combo);
+ * const loop = createEventLoop({ width: 40, height: 12 }, { caps });
+ * loop.mount(controls);
+ * loop.focusView(combo.input); // the field is the focus target
+ * // Typing filters the candidates; Alt+↓ opens the list; Enter picks (sets value + text).
  */
 export class ComboBox<T> extends Group {
   /** The source items. */
@@ -145,8 +155,8 @@ export class ComboBox<T> extends Group {
   }
 
   /**
-   * Wire the mode-specific one-way binding between `value` and `text` (PA-14). Editable: `value` tracks
-   * the exact `getText`-match of `text` among `items` (else `null`). Select-only: `text` mirrors
+   * Wire the mode-specific one-way binding between `value` and `text`. Editable: `value` tracks the
+   * exact `getText`-match of `text` among `items` (else `null`). Select-only: `text` mirrors
    * `getText(value)`. Each direction reads only the OTHER signal, so there is no feedback loop.
    */
   protected bindValueText(): void {
@@ -167,8 +177,8 @@ export class ComboBox<T> extends Group {
   }
 
   /**
-   * Open on Down / Alt+Down while the field is focused (the ComboBox sees the key as the Input's
-   * ancestor in the focus-chain bubble). A mouse-down on the trailing button opens via {@link ComboButton}.
+   * Open on Down / Alt+Down while the field is focused (the ComboBox sees the key because the focused
+   * field is its descendant). A mouse-down on the trailing button opens via {@link ComboButton}.
    *
    * @param ev The dispatch envelope.
    */
@@ -189,15 +199,15 @@ export class ComboBox<T> extends Group {
   protected open(ev: DispatchEvent): void {
     const host = ev.popupHost;
     if (host === undefined) return; // no overlay host (headless / no shell) → decline to open
-    ev.focusView?.(this.input); // focus the field first (parallel to History focusing its link)
+    ev.focusView?.(this.input); // focus the field first
     // Editable lists snapshot the filtered set at open (the list is focused, so the field can't be
     // re-filtered while open); select-only lists bind the live `items` so a source change re-renders.
     const listItems: Signal<T[]> = this.editable ? signal(this.filtered()) : this.items;
     openAnchoredPopup({
       host,
       anchor: absoluteRect(this),
-      // Built inside the popup's reactive owner (never here in the handler) so the list's computeds +
-      // the selected()-watch effect are owned + disposed with the popup — see `openAnchoredPopup`.
+      // The content is built inside the popup's reactive owner (never here in the handler) so the
+      // list's computeds and the selection-watch effect are owned by, and disposed with, the popup.
       buildContent: (commit) => {
         const selected = signal(-1);
         const list = new ListView<T>({
@@ -206,11 +216,10 @@ export class ComboBox<T> extends Group {
           focused: signal(0),
           selected,
           typeAhead: !this.editable,
-          onSelect: this.onSelect, // the app callback + command still fire on keyboard activate (unchanged)
+          onSelect: this.onSelect, // the app callback + command still fire on keyboard activate
           command: this.command,
         });
-        // Pick on choice — Enter/Space (activate) AND a single row click both set `selected` (PA-16
-        // runtime: the popup no longer watches selected(), so the watch lives here). Skip the initial
+        // Pick on choice — Enter/Space and a single row click both set `selected`. Skip the initial
         // −1 so a pre-existing selection never auto-picks on open.
         let first = true;
         effect(() => {
@@ -226,7 +235,7 @@ export class ComboBox<T> extends Group {
         });
         return list;
       },
-      contentSize: { height: this.maxRows + 1 }, // reproduces the old maxRows+2 frame exactly (PA-5)
+      contentSize: { height: this.maxRows + 1 }, // popup interior = maxRows visible list rows
       focusTarget: (c) => (c as ListView<T>).rows,
     });
   }

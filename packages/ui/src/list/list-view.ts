@@ -1,17 +1,16 @@
 /**
- * `ListView<T>` — a Turbo Vision `TListViewer` as a `Group` = a focusable rows-renderer + an
- * auto-owned vertical `ScrollBar`, laid out `[rows fr | bar 1]` (RD-11 AC-4/AC-5/AC-6, PA-2).
+ * A virtual-scroll list of items of any type `T`, laid out as a focusable rows renderer beside an
+ * owned vertical scroll bar. It draws only the visible window, so it stays fast for large lists, and
+ * supports keyboard navigation (↑↓/PgUp/PgDn/Home/End), mouse selection, the wheel, optional
+ * ascending-`getText` sorting, and optional case-insensitive type-ahead.
  *
- * Single column by default; `numCols > 1` renders TV's `TListViewer` **column-major** flow with a `│`
- * interior divider (the jsvision-ui/RD-09 PA-14 seam — the multi-column work RD-11 reserved for
- * "→ RD-07, AR-104" now lands here). The heavy lifting (drawing, keyboard/mouse, virtual scroll,
- * sorted/type-ahead) lives in the internal {@link ListRows}; this class just composes it with the
- * shared `focused` signal (also the bar's `value`, so the bar reflects the focused item — TV
- * `focusItem → vScrollBar.value`, `tlstview.cpp:161`). The `ScrollBar` is normally **owned** (a
- * vertical right-edge bar in `[rows fr | bar 1]`), but a caller may **inject** an externally-owned bar
- * via `bar` (e.g. `FileDialog`'s horizontal-bottom bar, PA-14) — then this view holds only the rows and
- * the caller places the bar. Expose {@link rows} as the focus target (a plain `Group` is not itself
- * focusable; Tab/click descend to the rows renderer). `.js` specifiers per NodeNext.
+ * Bind `items` (a `Signal<T[]>`) and a `getText` to render each row. The `focused` (highlighted) and
+ * `selected` (chosen) indices are exposed as signals you can read or drive; the owned bar shares the
+ * `focused` signal so it always reflects the current row.
+ *
+ * A plain group is not itself a focus leaf, so focus and clicks descend to {@link rows} — focus that
+ * view (`loop.focusView(list.rows)`), not the `ListView` group. Multi-column mode (`numCols > 1`)
+ * lays the items out column-major with a `│` divider between columns while keeping vertical scrolling.
  */
 import { Group } from '../view/index.js';
 import type { LayoutProps } from '../layout/index.js';
@@ -31,33 +30,55 @@ export interface ListViewOptions<T> {
   focused?: Signal<number>;
   /** The selected (chosen) display index (default an internal signal at -1). */
   selected?: Signal<number>;
-  /** Activation callback (Enter/Space); `index` is DISPLAY order, `item` the `T` (PF-003). */
+  /** Activation callback (Enter/Space or double-click); `index` is display order, `item` the value. */
   onSelect?: (index: number, item: T) => void;
   /** Command emitted on activation (like `Button`). */
   command?: string;
-  /** Display items in ascending `getText` order (stable) — the `focused`/`selected` index the display. */
+  /** Display items in ascending `getText` order (stable); `focused`/`selected` index the display. */
   sorted?: boolean;
-  /** Enable the linear case-insensitive prefix type-ahead (PA-3). */
+  /** Enable the linear case-insensitive prefix type-ahead. */
   typeAhead?: boolean;
-  /** Row theme roles (default the RD-11 `list*` roles); override for a different viewer palette (RD-14). */
+  /** Row theme roles (default the standard `list*` roles); override for a different palette. */
   roles?: ListRoles;
   /**
-   * Number of columns (default `1`). `>1` renders TV's `TListViewer` **column-major** flow with a `│`
-   * interior divider (`listDivider`); the scroll model stays vertical (PA-14, `tlstview.cpp:96-141`).
+   * Number of columns (default `1`). `>1` lays the items out column-major with a `│` divider between
+   * columns; the scroll model stays vertical.
    */
   numCols?: number;
   /**
-   * Inject an externally-owned/placed `ScrollBar` to bind to (default: this view **owns** a vertical
-   * right-edge bar in `[rows fr | bar 1]`). When provided, `ListView` does **not** create/lay-out a bar
-   * — the caller owns + places it (e.g. `FileDialog` hands `FileList` its horizontal-bottom bar exactly
-   * as TV's dialog hands `sb` to `TFileList`); this view only wires the rows renderer to drive it. The
-   * bar must share this view's `focused` signal (construct it with `value: <the focused signal>`) so it
-   * acts as the vScrollBar. PA-14.
+   * Inject an externally owned + placed `ScrollBar` to bind to, instead of this view owning a vertical
+   * right-edge bar. When provided, `ListView` does not create or lay out a bar — the caller owns and
+   * places it (e.g. a horizontal bottom bar) and this view only wires the rows renderer to drive it.
+   * The injected bar must share this view's `focused` signal (construct it with `value: <that signal>`).
    */
   bar?: ScrollBar;
 }
 
-/** A single-column virtual-scroll list: a rows renderer + an owned vertical scroll bar. */
+/**
+ * A single-column virtual-scroll list: a rows renderer + an owned vertical scroll bar.
+ *
+ * @example
+ * import { ListView, Group, createEventLoop, signal } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * interface Person { name: string; age: number; }
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const people = signal<Person[]>([{ name: 'Ada', age: 36 }, { name: 'Alan', age: 41 }]);
+ * const selected = signal(-1);
+ * const list = new ListView<Person>({
+ *   items: people,
+ *   getText: (p) => `${p.name} (${p.age})`,
+ *   selected,
+ *   onSelect: (index, person) => console.log('chose', person.name),
+ * });
+ * list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 8 } };
+ *
+ * const root = new Group();
+ * root.add(list);
+ * const loop = createEventLoop({ width: 24, height: 8 }, { caps });
+ * loop.mount(root);
+ * loop.focusView(list.rows); // focus the rows renderer, not the group
+ */
 export class ListView<T> extends Group {
   /** Lay the children out horizontally: `[rows fr | bar 1]`. */
   override layout: LayoutProps = { direction: 'row' };
@@ -92,7 +113,7 @@ export class ListView<T> extends Group {
     });
     this.rows.layout = { size: { kind: 'fr', weight: 1 } };
     this.bar = opts.bar ?? new ScrollBar({ value: this.focused, orientation: 'vertical' });
-    this.rows.bar = this.bar; // the rows renderer re-limits the bar each draw (TV setStep)
+    this.rows.bar = this.bar; // the rows renderer re-limits the bar's range on each draw
 
     if (opts.bar === undefined) {
       // Default: this view owns + lays out the vertical right-edge bar as a `[rows fr | bar 1]` child.
@@ -100,8 +121,8 @@ export class ListView<T> extends Group {
       this.add(this.rows); // z-order: rows (left) then bar (right)
       this.add(this.bar);
     } else {
-      // Injected: the caller owns + places the bar as an absolute sibling (TV hands `sb` to `TFileList`);
-      // this view only holds the rows, which fill it. The bar is added to the tree by the caller.
+      // Injected bar: the caller owns and places it as an absolute sibling; this view only holds the
+      // rows, which fill it. The bar is added to the tree by the caller.
       this.add(this.rows);
     }
   }

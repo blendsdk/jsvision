@@ -1,24 +1,15 @@
 /**
- * `Dialog` — a Turbo Vision `TDialog` (RD-11 AC-8/AC-9/AC-10, PA-1/PA-6/PA-7; realizes DEF-16).
+ * A modal or modeless dialog window — a movable, closable {@link Window} painted in the gray `dialog`
+ * frame role (title + close box, but no zoom box and not resizable). Host form controls in it
+ * (`Input`, `CheckGroup`, buttons, …); their bound signals hold the form data.
  *
- * TV decode (`source/tvision/tdialog.cpp`, GATE-1 + GATE-2):
- *   • **is-a `TWindow`** (`:25`) drawing the standard `TFrame` chrome in the gray-dialog palette;
- *     `flags = wfMove | wfClose` (movable + closable, **NOT** resizable/zoomable), `growMode = 0`,
- *     `wnNoNumber`, min `{16,6}`. Here: `Dialog extends Window`, `resizable=false`, `zoomable=false`,
- *     and `draw()` uses the `dialog` frame role (white lines/title + brightGreen icon, PA-19) with the
- *     close box present and no zoom box (the `frame.ts` gating, PF-001).
- *   • **`valid(command)`** (`:95`) — `cmCancel ⇒ True` (bypass), else `TGroup::valid` = `firstThat
- *     (isInvalid)` over all children (`tgroup.cpp:566`): closes only if no hosted control reports
- *     invalid, else refocuses the first invalid child (PA-7). This is the DEF-16 close-gate.
- *   • **Close triggers** (`:57-89`) — Esc ⇒ `cmCancel`, the frame `[×]` ⇒ `cmCancel`; on
- *     `cmOK/cmCancel/cmYes/cmNo` while modal ⇒ `endModal(command)`. Commands `cmOK=10…cmNo=13`.
+ * Show it **modally** with the event loop's `execView(dialog)`, which returns a promise that resolves
+ * to the terminating command string (`'ok'` / `'cancel'` / `'yes'` / `'no'`) once the dialog closes.
+ * Add it to a desktop instead (`desktop.add(dialog)`) to show it **modeless**, as an ordinary window.
  *
- * A modal `Dialog` is shown via `execView(dialog)` (resolves to the terminating command string, AR-108);
- * form data lives in the hosted controls' bound signals (AR-100). Shown modeless via `desktop.add` it
- * is an ordinary window (AC-10). It implements {@link ModalHostAware} so `execView` hands it the modal
- * host (PA-1). It is `postProcess` to catch the buttons' command events, and overrides `onEvent` so the
- * frame-close/Esc path resolves the modal to `cancel` (PF-002) rather than `Window.close()` — which
- * would remove the view without ending modality and hang the `execView` promise. `.js` per NodeNext.
+ * Closing is gated by `valid()`: `cancel` (Esc, the frame close-box, or a Cancel button) always
+ * closes, while `ok` / `yes` / `no` close only if every hosted control's own `valid()` passes —
+ * otherwise the dialog stays open and focus jumps to the first invalid control.
  */
 import { Group, View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -27,7 +18,7 @@ import type { Rect } from '../layout/index.js';
 import type { ModalHost, ModalHostAware } from '../event/index.js';
 import { Commands } from '../status/index.js';
 
-/** A view that exposes a zero-arg blocking `valid()` (the RD-06 `Input`), for the child sweep. */
+/** A view that exposes a zero-arg blocking `valid()` (such as an `Input`), for the child sweep. */
 interface Validatable {
   valid(): boolean;
 }
@@ -47,41 +38,64 @@ export interface DialogOptions {
   /** Dialog height in cells (alternative to a full `rect` when you want the dialog auto-centered). */
   height?: number;
   /**
-   * Center the dialog in its parent (the TV `ofCentered` option). Defaults to `true` when a size is
-   * given via `width`/`height` (no explicit `rect` position), matching every standard TV system
-   * dialog and modern convention; `false` for an explicit `rect`. Set explicitly to override either.
+   * Center the dialog in its parent. Defaults to `true` when a size is given via `width`/`height`
+   * (with no explicit `rect` position) — the modern convention; `false` for an explicit `rect`. Set
+   * explicitly to override either.
    */
   centered?: boolean;
 }
 
-/** A modal/modeless gray dialog: a `Window` in the `dialog` role with a `valid()` close-gate. */
+/**
+ * A modal/modeless gray dialog: a `Window` in the `dialog` role with a `valid()` close-gate.
+ *
+ * @example
+ * import { Dialog, Input, Label, okButton, cancelButton, createEventLoop, signal, range } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const age = signal('42');
+ * // A width/height with no explicit rect auto-centers the dialog and casts a drop-shadow.
+ * const dialog = new Dialog({ title: ' Person ', width: 34, height: 9 });
+ * const input = new Input({ value: age, validator: range(0, 120) });
+ * const label = new Label('~A~ge (0–120)', input);
+ * label.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 14, height: 1 } };
+ * input.layout = { position: 'absolute', rect: { x: 16, y: 1, width: 14, height: 1 } };
+ * const ok = okButton();
+ * ok.layout = { position: 'absolute', rect: { x: 6, y: 4, width: 10, height: 2 } };
+ * dialog.add(label);
+ * dialog.add(input);
+ * dialog.add(ok);
+ * dialog.add(cancelButton());
+ *
+ * const loop = createEventLoop({ width: 40, height: 12 }, { caps });
+ * loop.mount(dialog);
+ * // Resolves to 'ok' only once Age validates; an out-of-range Age keeps the dialog open.
+ * const command = await loop.execView<string>(dialog);
+ */
 export class Dialog extends Window implements ModalHostAware {
-  /** Catch the buttons' command events in the post-sweep (PA-1). */
+  /** Caught after the focused chain so the hosted buttons' command events are seen dialog-wide. */
   override postProcess = true;
 
-  /** @internal The modal host injected by `execView` (PA-1); `null` when modeless. */
+  /** @internal The modal host injected by `execView`; `null` when modeless. */
   protected modalHost: ModalHost | null = null;
   /** @internal The first child that failed the last `valid()` sweep (for refocus). */
   protected firstInvalid: View | null = null;
 
   /**
-   * @param opts `title` + optional initial `rect`.
+   * @param opts `title`, plus either an explicit `rect` or a `width`/`height` (which auto-centers).
    */
   constructor(opts: DialogOptions = {}) {
     super(opts.title);
-    // TV `wfMove | wfClose`, growMode 0: movable + closable, not resizable/zoomable (PA-6).
+    // Movable + closable, but not resizable or zoomable.
     this.resizable = false;
     this.zoomable = false;
-    // TV fidelity: `TDialog` is a `TWindow`, and `TWindow::TWindow` sets `state |= sfShadow`
-    // unconditionally (twindow.cpp:49) — every dialog casts a drop-shadow. A modal dialog is added
-    // to the tree by `execView` (event-loop.ts), bypassing `Desktop.addWindow` — the only other
-    // place `castsShadow` is set — so opt in here so the compose walker paints the `shadowSize {2,1}`
-    // L-shadow (render-root.ts `drawDropShadow`). Mirrors the menu/dropdown popups (controller.ts:175).
+    // Every dialog casts a drop-shadow. A modal dialog is added to the tree by `execView` (which
+    // bypasses the desktop's window-registration path, the only other place a shadow is enabled), so
+    // opt in here to guarantee the compose walker paints it.
     this.castsShadow = true;
-    // TV `ofCentered` (views.h:88): standard system dialogs (file/change-dir/help/color) all center
-    // in their owner. Extend that to our default — a dialog given a size but no explicit `rect`
-    // position centers (the reflow pass applies `origin = (parent - self)/2`, tgroup.cpp:395-397).
-    // An explicit `rect` is a manual placement (honored, not centered); `centered` overrides either.
+    // A dialog given a size but no explicit `rect` position centers in its parent (the reflow pass
+    // applies `origin = (parent - self) / 2`). An explicit `rect` is a manual placement (honored, not
+    // centered); an explicit `centered` overrides either default.
     const width = opts.width ?? opts.rect?.width;
     const height = opts.height ?? opts.rect?.height;
     this.centered = opts.centered ?? (width !== undefined && height !== undefined && opts.rect === undefined);
@@ -92,12 +106,12 @@ export class Dialog extends Window implements ModalHostAware {
     }
   }
 
-  /** @internal Receive the modal-host handle when opened via `execView` (PA-1). */
+  /** @internal Receive the modal-host handle when opened via `execView`. */
   attachModalHost(host: ModalHost): void {
     this.modalHost = host;
   }
 
-  /** Paint the frame in the `dialog` role — close box, no zoom box (PA-6/PA-19). Modal ⇒ always active. */
+  /** Paint the frame in the `dialog` role — close box, no zoom box. A modal dialog always draws active. */
   override draw(ctx: DrawContext): void {
     const active = this.manager !== null ? this.manager.activeWindow() === this : true;
     drawFrame(
@@ -116,15 +130,15 @@ export class Dialog extends Window implements ModalHostAware {
   }
 
   /**
-   * TV `TDialog::valid` — `cancel` bypasses (always closes); any other terminating command runs the
-   * `TGroup::valid` child sweep (DEF-16): return `false` on the first hosted control whose `valid()`
-   * is `false`, remembering it in {@link firstInvalid} for refocus.
+   * The close-gate: `cancel` always closes; any other terminating command runs a depth-first sweep of
+   * the hosted controls, returning `false` on the first one whose own `valid()` is `false` and
+   * remembering it in {@link firstInvalid} so it can be refocused.
    *
    * @param command The terminating command being validated.
    * @returns Whether the dialog may close for this command.
    */
   valid(command: string): boolean {
-    if (command === Commands.cancel) return true; // cmCancel ⇒ True (bypass)
+    if (command === Commands.cancel) return true; // cancel bypasses the sweep — it always closes
     this.firstInvalid = this.firstInvalidChild(this);
     return this.firstInvalid === null;
   }
@@ -142,9 +156,9 @@ export class Dialog extends Window implements ModalHostAware {
   }
 
   /**
-   * Route events: catch the terminating command (post-sweep) → `valid()` gate → `endModal`; and (when
-   * modal) route the frame close-zone + Esc to the `cancel` path (PF-002). Everything else delegates
-   * to `Window` (raise/move for a modeless dialog).
+   * Route events: catch a terminating command → `valid()` gate → close; and (when modal) route the
+   * frame close-box + Esc to the `cancel` path. Everything else delegates to `Window` (raise/move for
+   * a modeless dialog).
    *
    * @param ev The dispatch envelope.
    */
@@ -157,12 +171,13 @@ export class Dialog extends Window implements ModalHostAware {
     }
 
     if (this.modalHost !== null) {
-      // Esc ⇒ cancel (PF-002; TV `tdialog.cpp:60`).
+      // Esc closes a modal dialog as `cancel`.
       if (inner.type === 'key' && inner.key === 'escape') {
         this.resolveCancel(ev);
         return;
       }
-      // Frame close-box click ⇒ cancel — NOT `Window.close()` (that would hang the modal, PF-002).
+      // A frame close-box click resolves the modal to `cancel` — NOT `Window.close()`, which would
+      // remove the view without ending modality and leave the `execView` promise hanging forever.
       if (inner.type === 'mouse' && inner.kind === 'down' && ev.local !== undefined) {
         const size = { width: this.bounds.width, height: this.bounds.height };
         const flags = { movable: this.movable, resizable: this.resizable, zoomable: false, closable: this.closable };
@@ -176,25 +191,26 @@ export class Dialog extends Window implements ModalHostAware {
     super.onEvent(ev); // modeless: raise/move/close via the Window/WM path
   }
 
-  /** Apply a terminating command: `cancel` bypasses; ok/yes/no run the `valid()` gate (PF-007 guard). */
+  /** Apply a terminating command: `cancel` bypasses; `ok`/`yes`/`no` run the `valid()` gate first. */
   protected handleTerminating(command: string, ev: DispatchEvent): void {
-    if (this.modalHost === null) return; // modeless: the app decides — no modal to end
-    if (!this.modalHost.isCommandEnabled(command)) return; // a disabled command is ignored (PF-007)
+    if (this.modalHost === null) return; // modeless: there is no modal to end — the app decides
+    if (!this.modalHost.isCommandEnabled(command)) return; // a disabled command is ignored
     if (this.valid(command)) {
       this.modalHost.endModal(command);
-      this.modalHost = null; // HR-37: the modal session ended — release the host (see resolveCancel)
+      // The modal session ended — release the host so this view reverts to a plain window.
+      this.modalHost = null;
     } else if (this.firstInvalid !== null) {
-      ev.focusView?.(this.firstInvalid); // keep open + refocus the first invalid control (PA-7)
+      ev.focusView?.(this.firstInvalid); // vetoed: keep open and refocus the first invalid control
     }
     ev.handled = true;
   }
 
-  /** Resolve the modal to `cancel` (bypasses `valid()`), for the frame close-box + Esc (PF-002). */
+  /** Resolve the modal to `cancel` (bypasses `valid()`), for the frame close-box and Esc. */
   protected resolveCancel(ev: DispatchEvent): void {
     if (this.modalHost === null) return;
     this.modalHost.endModal(Commands.cancel);
-    // HR-37: clear the host so a dialog left MOUNTED after its modal ends stops swallowing global Esc
-    // (and can no longer end an unrelated later modal with `cancel`); it reverts to a plain window.
+    // Clear the host so a dialog left mounted after its modal ends stops swallowing global Esc (and
+    // can no longer end an unrelated later modal); it reverts to a plain window.
     this.modalHost = null;
     ev.handled = true;
   }
