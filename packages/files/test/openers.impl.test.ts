@@ -112,10 +112,12 @@ test('impl: the inputName label text is forwarded and rendered', async () => {
   await expect(p).resolves.toBeNull();
 });
 
-test('impl: opening a dialog emits no unowned-computation (createRoot leak) warning', async () => {
-  // Regression: the dialog's constructor-time computeds (FileList `displayItems`, DirList
-  // `flattened`) were created outside any owner scope → a per-open leak + a console.warn that
-  // corrupts a live TTY. The openers now construct the dialog under a `createRoot` disposed on close.
+test('impl: opening a dialog emits no unowned-computation warning (fix #37)', async () => {
+  // Regression: the dialog's constructor-time computed — the inherited `displayItems` from the
+  // `ListView`→`ListRows` spine (both `FileList` and `DirList` extend `ListView`) — was created
+  // outside any owner scope → a per-open leak + a console.warn that corrupts a live TTY. The widgets
+  // now self-own that computed via `View.derived()` (jsvision-ui #37), so a bare construction (no
+  // caller-side `createRoot`) is leak-free. This is the end-to-end integration guard for #37.
   const fs = fsFixture();
   const { loop, host } = makeHost(49, 19);
   const warnings: string[] = [];

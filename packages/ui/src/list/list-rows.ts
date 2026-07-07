@@ -31,7 +31,6 @@
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent, ThemeRoleName } from '../view/index.js';
-import { computed } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { KeyEvent } from '@jsvision/core';
 import type { ScrollBar } from '../scroll/index.js';
@@ -122,7 +121,7 @@ export class ListRows<T> extends View {
     this.command = cfg.command;
     this.roles = cfg.roles ?? DEFAULT_LIST_ROLES;
     this.numCols = Math.max(1, Math.floor(cfg.numCols ?? 1));
-    this.displayItems = computed(() => {
+    this.displayItems = this.derived(() => {
       const arr = cfg.items();
       if (!this.sortedMode) return arr;
       // Stable ascending, case-insensitive by rendered text (JS sort is stable).

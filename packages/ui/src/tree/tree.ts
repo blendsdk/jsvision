@@ -16,7 +16,7 @@
  */
 import { Group } from '../view/index.js';
 import type { LayoutProps } from '../layout/index.js';
-import { signal, computed } from '../reactive/index.js';
+import { signal } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import { ScrollBar } from '../scroll/index.js';
 import { TreeRows } from './tree-rows.js';
@@ -85,7 +85,7 @@ export class Tree<T> extends Group {
     if (opts.expandedByDefault ?? false) this.seedExpanded(opts.roots());
 
     // The visible-row list: subscribe to the expand version + the roots, then flatten by identity.
-    this.flattened = computed(() => {
+    this.flattened = this.derived(() => {
       this.expandVersion();
       return flattenVisible(this.roots(), (node) => this.expandedSet.has(node));
     });

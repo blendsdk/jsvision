@@ -8,7 +8,7 @@
  * `ModalHost`, PF-002): **add-to-desktop → `execView` → remove-in-`finally`**. Resolves to the absolute
  * path on OK, or `null` on cancel. `.js` per NodeNext.
  */
-import { signal, Commands, createRoot } from '@jsvision/ui';
+import { signal, Commands } from '@jsvision/ui';
 import { nodeFileSystem } from './fs/node-fs.js';
 import { FileDialog } from './dialog/file-dialog.js';
 import { ChDirDialog } from './dialog/chdir-dialog.js';
@@ -52,24 +52,18 @@ export interface ChangeDirOptions {
  */
 export async function openFile(host: ExecHost, opts: OpenFileOptions = {}): Promise<string | null> {
   const fs = opts.fs ?? nodeFileSystem;
-  // Construct under a `createRoot` scope so the dialog's constructor-time computeds (the FileList's
-  // `displayItems`, etc.) are OWNED and disposed on close — a bare `new FileDialog()` would leave
-  // them unowned (a per-open leak + a console-warning that corrupts a live TTY). The dialog's own
-  // view-tree scopes nest under the desktop at mount and are freed by `removeWindow`; this root owns
-  // only the pre-mount computeds, released by `dispose()` in the `finally`.
-  let dispose = (): void => {};
-  const dlg = createRoot((d) => {
-    dispose = d;
-    return new FileDialog({
-      fs,
-      directory: signal(opts.directory ?? fs.resolve('.')),
-      wildcard: opts.wildcard !== undefined ? signal(opts.wildcard) : undefined,
-      save: opts.save,
-      title: opts.title,
-      inputName: opts.inputName,
-      filter: opts.filter,
-      showError: (message) => void errorBox(host, message),
-    });
+  // A bare `new FileDialog(...)` is leak-free: the widget's constructor-time computeds now self-own
+  // via `View.derived()` (jsvision-ui #37), building lazily under each view's own mount-time scope
+  // (freed by `removeWindow`). No caller-side `createRoot` mitigation is needed.
+  const dlg = new FileDialog({
+    fs,
+    directory: signal(opts.directory ?? fs.resolve('.')),
+    wildcard: opts.wildcard !== undefined ? signal(opts.wildcard) : undefined,
+    save: opts.save,
+    title: opts.title,
+    inputName: opts.inputName,
+    filter: opts.filter,
+    showError: (message) => void errorBox(host, message),
   });
   host.desktop.addWindow(dlg);
   try {
@@ -77,7 +71,6 @@ export async function openFile(host: ExecHost, opts: OpenFileOptions = {}): Prom
     return command === Commands.ok ? dlg.result() : null;
   } finally {
     host.desktop.removeWindow(dlg);
-    dispose();
   }
 }
 
@@ -89,17 +82,14 @@ export async function openFile(host: ExecHost, opts: OpenFileOptions = {}): Prom
  */
 export async function changeDir(host: ExecHost, opts: ChangeDirOptions = {}): Promise<string | null> {
   const fs = opts.fs ?? nodeFileSystem;
-  // See openFile: own the dialog's constructor-time computeds (the DirList's `flattened`) so they
-  // are disposed on close instead of leaking + warning to a live TTY.
-  let dispose = (): void => {};
-  const dlg = createRoot((d) => {
-    dispose = d;
-    return new ChDirDialog({
-      fs,
-      directory: signal(opts.directory ?? fs.resolve('.')),
-      title: opts.title,
-      showError: (message) => void errorBox(host, message),
-    });
+  // See openFile: leak-free without a caller-side `createRoot`. `ChDirDialog` → `DirList extends
+  // ListView<DirNode>`, so its constructor-time computed is the inherited `displayItems` (the
+  // `ListView`→`ListRows` spine) — self-owned via `View.derived()` (#37), not a `Tree.flattened`.
+  const dlg = new ChDirDialog({
+    fs,
+    directory: signal(opts.directory ?? fs.resolve('.')),
+    title: opts.title,
+    showError: (message) => void errorBox(host, message),
   });
   host.desktop.addWindow(dlg);
   try {
@@ -107,6 +97,5 @@ export async function changeDir(host: ExecHost, opts: ChangeDirOptions = {}): Pr
     return command === Commands.ok ? dlg.result() : null;
   } finally {
     host.desktop.removeWindow(dlg);
-    dispose();
   }
 }

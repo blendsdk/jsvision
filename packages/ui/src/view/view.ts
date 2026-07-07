@@ -10,7 +10,7 @@
  * computations and runs their `onCleanup` — leak-free by construction.
  */
 import type { Owner, Signal } from '../reactive/index.js';
-import { runWithOwner, untrack, createRoot, effect, onCleanup, getOwner, signal } from '../reactive/index.js';
+import { runWithOwner, untrack, createRoot, effect, onCleanup, getOwner, signal, computed } from '../reactive/index.js';
 import { TuiError } from '@jsvision/core';
 import type { Rect, Size2D, LayoutProps } from '../layout/index.js';
 import type { DrawContext, ViewState, DispatchEvent } from './types.js';
@@ -180,6 +180,44 @@ export abstract class View {
         else this.invalidate();
       });
     });
+  }
+
+  /**
+   * Create a **stable derived accessor** owned by this view's mount-time scope (fix #37). The
+   * returned `() => T` identity is fixed for the life of the view, so it is safe to build in a
+   * constructor and hand to child views before mount — while the backing `computed(fn)` is created
+   * **lazily, under this view's own owner scope**, so it is always owned and auto-disposed at unmount
+   * (a constructor-time bare `computed()` runs before the scope exists → an unowned leak + a dev
+   * warning that can corrupt a live TTY, AR-14). The sibling of `bind()`/`onCleanup()` as an
+   * owner-scope helper — but for a *derived value* handed out at construction rather than an effect.
+   *
+   * Lifecycle:
+   * - **Pre-mount read** (`this.scope === null`): evaluate `fn()` directly — the correct current
+   *   value, with **no** persisted computed (nothing to leak). Fits a pre-mount natural-size measure.
+   * - **First post-mount read:** build + memoize `computed(fn)` under `this.scope` (owned).
+   * - **After unmount→remount** (scope-keyed): the memo is keyed to the scope it was built under.
+   *   A remounted view holds a *fresh* scope (`mount()` runs `createRoot` again), so the next read
+   *   **re-derives** under the new scope instead of returning the previous mount's *disposed* computed
+   *   — which would read frozen and has no signal edges (`owner.ts` dispose clears them,
+   *   `scheduler.ts` `updateIfNecessary` skips a disposed node). Keeps a `Show`/`For`-remounted
+   *   widget reactive, matching `bind()`'s per-mount effect.
+   *
+   * @param fn The derivation (pure; its tracked reads become the computed's dependencies).
+   * @returns A stable accessor; call it to read the derived value.
+   */
+  protected derived<T>(fn: () => T): () => T {
+    let memo: (() => T) | null = null;
+    let memoScope: Owner | null = null;
+    return (): T => {
+      // Pre-mount: no owner scope yet — return the value directly rather than leak an unowned computed.
+      if (this.scope === null) return fn();
+      // Build lazily under the current scope; re-derive if the scope changed since (unmount→remount).
+      if (memo === null || memoScope !== this.scope) {
+        memoScope = this.scope;
+        memo = runWithOwner(this.scope, () => computed(fn));
+      }
+      return memo();
+    };
   }
 
   /**
