@@ -1,41 +1,16 @@
 /**
- * `TabStrip` — the focusable `View` that draws the folder-tab strip + the top frame border and
- * hit-tests strip clicks (RD-17, 03-02). The renderer-split sibling of `tab-view.ts` (PA-4),
- * mirroring `ListRows`/`GridRows`/`GridHeader`: keeping the notched-label draw, the overflow
- * `◄`/`►` arrows + auto-scroll, the per-tab `×`, and the click→(tab/close/arrow) hit-test here keeps
- * `tab-view.ts` ≤ 500 (AC-12).
+ * `TabStrip` — the internal, focusable renderer that draws a {@link TabView}'s folder-tab strip and
+ * the top frame border, and hit-tests strip clicks. Construct a `TabView` rather than using this
+ * directly.
  *
- * **RD-17 has NO Turbo Vision counterpart** (GATE-1, AR-172) — TV had no tab/notebook class. This is
- * a *documented new component* under the extension latitude of the fidelity directive; every *piece*
- * is grounded in a shipped, already-decoded facility. The glyphs are pinned at plan GATE-1
- * (`plans/tabs/03-03-theme-packaging.md §GATE-1`, task 1.1.1): the line/corner code points are
- * identical to `window/frame.ts`'s `SINGLE_BORDER` (which ships no tee and keeps its consts private,
- * PA-2), plus the four tab-junction tees decoded fresh — all **unambiguous-narrow** (width 1):
+ * Design: tabs render as raised green button faces — the active tab in white-on-green, inactive tabs
+ * in black-on-green (both with a yellow accent on the `~X~` hotkey letter of every enabled tab), and
+ * disabled tabs green-dimmed so they stay part of the strip. The frame chrome (corners, edges, the
+ * `─` gaps between tabs, and the overflow arrows) draws in the neutral gray line colour, not a tab
+ * colour. Closeable tabs carry a trailing `×`; when the tabs don't all fit, `◄`/`►` arrows appear and
+ * the strip auto-scrolls to keep the active tab visible.
  *
- *   `─` U+2500 (CP437 0xC4) · `│` U+2502 (0xB3) · `┌` U+250C (0xDA) · `┐` U+2510 (0xBF) ·
- *   `└` U+2514 (0xC0) · `┘` U+2518 (0xD9). The four tab-junction tees `┬` U+252C (0xC2) · `┴` U+2534
- *   (0xC1) · `├` U+251C (0xC3) · `┤` U+2524 (0xB4) are also decoded + retained in {@link TAB_GLYPHS}
- *   as the GATE-1 reference set, though the adopted button-face design joins tabs with a plain `─`
- *   dash gap rather than drawing a `┬` notch.
- *
- * **Adopted design (post-spike):** tabs render as raised **button faces** (green, no drop-shadow) —
- * active = `tabActive` `0x2F` white-on-green, inactive = `tabInactive` `0x20` black-on-green (both with
- * the `0x2E` yellow `~X~` shortcut on every enabled tab), disabled = `tabDisabled` `0x28` darkGray-
- * on-green (green-dimmed, so it stays part of the strip). The frame chrome (corners/edges/`─` gaps/
- * arrows) draws in {@link staticText} `0x70` black-on-lightGray (the neutral gray line), NOT a tab role.
- *
- * **GATE-2 (AFTER-diff) — ✅ matches.** The rendered strip is diffed cell-by-cell against this decode:
- * `tab-strip.impl.test.ts` asserts every glyph's code point equals its CP437↔Unicode decode, and
- * `tabs.spec.test.ts`/`tab-strip.spec.test.ts` (ST-18/19/20/21) assert the composed buffer's
- * corners/edges/`─` gap/`×` glyphs + the active(`tabActive`)/inactive(`tabInactive`)/disabled
- * (`tabDisabled`) foregrounds. No TV `.cpp` is re-opened (none exists); the diff is against the
- * GATE-1 decode itself (AR-172/173/180/184).
- *
- * Colour: labels draw in `tabActive`/`tabInactive`/`tabDisabled`; the `~X~` marked letter in the role's
- * `hotkey` accent (`tildeSegments`, as `Label`/menus do). All writes go through `DrawContext` →
- * `ScreenBuffer` + core `sanitize` (the injection boundary, AC-14).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The box-drawing glyphs used are all single-width so column math stays exact — see {@link TAB_GLYPHS}.
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -44,29 +19,25 @@ import type { Signal } from '../reactive/index.js';
 import { parseTilde, tildeSegments, accentStyle } from '../menu/builders.js';
 import { stringWidth } from '../controls/measure.js';
 
-/**
- * Folder-tab box glyphs (GATE-1 decode, task 1.1.1). Line/corner code points match
- * `window/frame.ts`'s `SINGLE_BORDER` verbatim (kept local per PA-2 — frame.ts's consts are
- * module-private and ship no tee). The four tab-junction tees are the only fresh decode.
- */
+/** The single-width box-drawing glyphs used to draw the tab strip frame and tab junctions. */
 export const TAB_GLYPHS = {
-  h: '─', // ─  CP437 0xC4
-  v: '│', // │  CP437 0xB3
-  tl: '┌', // ┌  CP437 0xDA
-  tr: '┐', // ┐  CP437 0xBF
-  bl: '└', // └  CP437 0xC0
-  br: '┘', // ┘  CP437 0xD9
-  tdown: '┬', // ┬  CP437 0xC2 — tab/frame-top notch (between-tabs separator)   [GATE-1 tee]
-  tup: '┴', // ┴  CP437 0xC1                                                    [GATE-1 tee]
-  tright: '├', // ├  CP437 0xC3                                                 [GATE-1 tee]
-  tleft: '┤', // ┤  CP437 0xB4                                                  [GATE-1 tee]
+  h: '─', // horizontal edge
+  v: '│', // vertical edge
+  tl: '┌', // top-left corner
+  tr: '┐', // top-right corner
+  bl: '└', // bottom-left corner
+  br: '┘', // bottom-right corner
+  tdown: '┬', // downward tee
+  tup: '┴', // upward tee
+  tright: '├', // rightward tee
+  tleft: '┤', // leftward tee
 } as const;
 
 /** Overflow-scroll left arrow (shown only while the strip overflows). */
 export const OVERFLOW_LEFT = '◄'; // ◄
 /** Overflow-scroll right arrow. */
 export const OVERFLOW_RIGHT = '►'; // ►
-/** Closeable-tab mark (`×`; `×`, unambiguous-narrow — same choice as the window close box). */
+/** Closeable-tab mark (single-width — the same glyph as the window close box). */
 export const CLOSE_MARK = '×'; // ×
 
 /** A visible tab's on-strip placement (0-based strip-local columns). */
@@ -83,7 +54,7 @@ export interface TabSlot {
   readonly closeX?: number;
 }
 
-/** The strip's laid-out geometry — shared by `draw` + `hitStrip` so they never disagree (03-02). */
+/** The strip's laid-out geometry — shared by `draw` and `hitStrip` so they never disagree. */
 export interface StripGeometry {
   /** The visible tab slots (off-strip tabs are clipped/omitted under overflow). */
   readonly slots: readonly TabSlot[];
@@ -124,7 +95,7 @@ interface Tab {
 
 /**
  * Compute the visible slots + overflow arrows for the current tabs/active/width, auto-scrolling so
- * the active tab is fully on-strip (AR-176). Pure — shared by `draw` and `hitStrip`.
+ * the active tab is fully on-strip. Pure — shared by `draw` and `hitStrip`.
  *
  * Layout (no overflow): `┌` at col 0, then abutting ` label ` slots separated by `┬`, then `─` fill
  * and `┐` at col `width-1`. Under overflow the interior window is `[2, width-3]` with `◄` at col 1
@@ -346,8 +317,8 @@ export class TabStrip extends View {
   }
 
   /**
-   * Hit-test strip clicks and handle `←`/`→` cycling while focused (AR-179). Ctrl+PageUp/Down and the
-   * Alt-hotkey are handled at the `TabView` level (global via `preProcess`), not here.
+   * Hit-test strip clicks and handle `←`/`→` cycling while focused. Ctrl+PageUp/Down and the
+   * Alt-hotkeys are handled at the `TabView` level, not here.
    *
    * @param ev The dispatch envelope.
    */

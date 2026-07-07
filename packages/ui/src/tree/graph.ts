@@ -1,35 +1,22 @@
 /**
- * `graph.ts` — the pure, view-independent core of the RD-15 Tree: the faithful Turbo Vision tree-line
- * prefix builder (`createGraph`), the flatten-visible walk (`flattenVisible`), and the `TreeNode<T>`
- * data model + `FlatRow<T>`/`OV_*` shapes they share. No `View`, no signals — directly unit-testable
- * (the fidelity oracle diffs the produced strings) and keeps `tree-rows.ts` within budget (PA-7).
+ * The pure, view-independent core of the {@link Tree} widget: the tree-line prefix builder
+ * ({@link createGraph}), the flatten-visible walk ({@link flattenVisible}), and the
+ * {@link TreeNode} data model plus the {@link FlatRow} / `OV_*` flag shapes they share. No `View` and
+ * no signals, so every function here is deterministic and directly testable.
  *
- * **TV GATE-1 decode** (`magiblot/tvision` `source/tvision/toutline.cpp`, the fidelity oracle):
- *   • **`graphChars = "\x20\xB3\xC3\xC0\xC4\xC4+\xC4"`** (`:367`), CP437 → unambiguous-narrow Unicode
- *     (all width-1, avoiding EAW-ambiguous code points, per the project block-glyph convention):
- *     `0x20` space · `0xB3 │` U+2502 · `0xC3 ├` U+251C · `0xC0 └` U+2514 · `0xC4 ─` U+2500 (×2) ·
- *     `0x2B +` U+002B · `0xC4 ─` U+2500.
- *   • **`levelWidth = 3`, `endWidth = 3`** (`:366`) — 3 columns per ancestor level; a 3-column end graphic.
- *   • **`createGraph`** (`:165-205`): Phase 1 emits, per ancestor level, `[│ or space][levelWidth-1
- *     fillers]`; Phase 2 emits the end graphic `[fork/corner][─][marker]` (at endWidth=3 the inner
- *     End-Filler `memset` is skipped — the third `--endWidth>0` is false, so exactly 3 columns).
- *   • **flags** `ovExpanded=0x01 · ovChildren=0x02 · ovLast=0x04` (`outline.h:27-29`); `traverseTree`
- *     (`:262-322`) sets `ovLast` for the last sibling, `ovChildren` **only** when expanded-with-children
- *     (`:282`), and `ovExpanded` when expanded OR a leaf (`!children`, `:285`). The forest is the TV
- *     root + its `getNext` siblings (`:310-320`).
- *
- * **Marker (faithful, `:200`):** `expanded ? '─' : '+'` — purely `ovExpanded`, NEVER `ovChildren`.
- * Because `ovChildren` is set only for an EXPANDED-with-children node, a **collapsed**-with-children
- * node carries neither `ovExpanded` nor `ovChildren` and must still show `+`; a leaf always carries
- * `ovExpanded` and shows `─`. (TV's `ovChildren` only selects col B `chars[5]`/`chars[4]`, both `─`,
- * so it has no visible effect in the default `graphChars` — this builder omits it.)
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Each row's prefix is built from box-drawing glyphs, all chosen to be single-width (width 1) so
+ * column math is exact:
+ *   `│` U+2502 · `├` U+251C · `└` U+2514 · `─` U+2500 · `+` U+002B · space.
+ * Each ancestor level occupies 3 columns; the row's own end graphic occupies another 3 columns
+ * (fork/corner, a horizontal fill, then the expand marker). The marker is `─` when the node is
+ * expanded or is a leaf, and `+` when it is a collapsed node with children.
  */
 
 /**
- * A plain, reactive-friendly tree node. Expand state is owned by the **view**, not the node
- * (AR-141) — a `TreeNode<T>` is just `{ value, children }`; a leaf is `children: []`.
+ * A plain, reactive-friendly tree node. Expand state is owned by the {@link Tree} view, not the node
+ * — a `TreeNode<T>` is just `{ value, children }`, and a leaf is `children: []`. This keeps the node
+ * data immutable and shareable; the same node can appear in multiple trees with independent expand
+ * state.
  */
 export interface TreeNode<T> {
   /** The user payload rendered via `getText`. */
@@ -39,8 +26,8 @@ export interface TreeNode<T> {
 }
 
 /**
- * The per-row inputs `createGraph` needs — computed once by the flatten walk (mirrors the TV
- * `drawTree` args `level`/`lines`/`flags`, `toutline.cpp:54`).
+ * One flattened, visible tree row — the per-row inputs {@link createGraph} needs, computed once by
+ * the flatten walk.
  */
 export interface FlatRow<T> {
   /** The node shown on this row. */
@@ -49,58 +36,55 @@ export interface FlatRow<T> {
   readonly level: number;
   /** Bitmask: bit L set ⇒ ancestor level L still has a continued sibling below (draw its `│`). */
   readonly lines: number;
-  /** `OV_EXPANDED | OV_CHILDREN | OV_LAST`. */
+  /** Node state bitmask: `OV_EXPANDED | OV_CHILDREN | OV_LAST`. */
   readonly flags: number;
 }
 
-/** TV `ovExpanded` (`outline.h:27`) — the node is expanded, or is a leaf. */
+/** Flag: the node is expanded, or is a leaf (draws the `─` marker). */
 export const OV_EXPANDED = 0x01;
-/** TV `ovChildren` (`outline.h:28`) — the node is expanded AND has children. */
+/** Flag: the node is expanded AND has children. */
 export const OV_CHILDREN = 0x02;
-/** TV `ovLast` (`outline.h:29`) — the node is the last child of its parent (draw `└`, not `├`). */
+/** Flag: the node is the last child of its parent (draw `└`, not `├`). */
 export const OV_LAST = 0x04;
 
-/**
- * TV `graphChars` (`toutline.cpp:367`), CP437 → unambiguous-narrow Unicode. Index roles per the
- * GATE-1 decode above.
- */
+/** The box-drawing glyphs used to build a row's tree-line prefix (all single-width). */
 const GRAPH = {
-  /** 0x20 — ancestor level with no continued sibling. */
+  /** Ancestor level with no continued sibling. */
   levelFiller: ' ',
-  /** 0xB3 U+2502 `│` — ancestor level with a continued sibling below. */
+  /** `│` — ancestor level with a continued sibling below. */
   levelMark: '│',
-  /** 0xC3 U+251C `├` — end fork, non-last child. */
+  /** `├` — end fork, non-last child. */
   fork: '├',
-  /** 0xC0 U+2514 `└` — end corner, last child. */
+  /** `└` — end corner, last child. */
   corner: '└',
-  /** 0xC4 U+2500 `─` — horizontal fill / End-Child column / expanded marker. */
+  /** `─` — horizontal fill and the expanded marker. */
   hFill: '─',
-  /** 0x2B `+` — collapsed-with-children marker. */
+  /** `+` — collapsed-with-children marker. */
   markCollapsed: '+',
 } as const;
 
-/** TV `levelWidth` (`toutline.cpp:366`) — columns per ancestor level. */
+/** Columns per ancestor level (also the width of the row's own end graphic). */
 const LEVEL_WIDTH = 3;
-/** Depth cap for `flattenVisible` — a caller-built cycle can't drive an unbounded walk (AC-13). */
+/** Depth cap for {@link flattenVisible}, so a caller-built cycle can't drive an unbounded walk. */
 const MAX_DEPTH = 512;
 
 /**
- * Build a row's tree-line prefix, faithful to TV `createGraph` (`toutline.cpp:165-205`) for the
- * default `levelWidth = endWidth = 3` (`getGraph`, `:364-370`).
+ * Build one row's tree-line prefix: the ancestor `│`/space guides, then the node's fork/corner and
+ * expand marker.
  *
- * @param level  0-based depth (number of ancestor levels to indent).
+ * @param level  0-based depth (the number of ancestor levels to indent).
  * @param lines  Bitmask of ancestor levels with a continued sibling below (bit L → level L draws `│`).
- * @param flags  `OV_EXPANDED | OV_CHILDREN | OV_LAST`.
- * @param guides When `false`, the `│├└─` connectors render as spaces (PA-6, flat-indent look); the
- *               marker column (`+`/`─`) and the total width are unchanged, so hit-testing stays stable.
- * @returns The prefix string; width = `level * 3 + 3` (all glyphs are width-1).
+ * @param flags  Node state: `OV_EXPANDED | OV_CHILDREN | OV_LAST`.
+ * @param guides When `false`, the `│├└─` connectors render as spaces (a flat-indent look); the marker
+ *               column (`+`/`─`) and the total width are unchanged, so hit-testing stays stable.
+ * @returns The prefix string; its width is `level * 3 + 3` cells (every glyph is width 1).
  */
 export function createGraph(level: number, lines: number, flags: number, guides = true): string {
   const expanded = (flags & OV_EXPANDED) !== 0;
   const last = (flags & OV_LAST) !== 0;
 
   let out = '';
-  // Phase 1 — ancestor level marks (toutline.cpp:181-186): `│`/space + (levelWidth-1) fillers per level.
+  // Phase 1 — ancestor level marks: `│`/space + filler columns, one group per ancestor level.
   let bits = lines;
   for (let lv = 0; lv < level; lv += 1) {
     const continued = (bits & 1) === 1;
@@ -109,21 +93,21 @@ export function createGraph(level: number, lines: number, flags: number, guides 
     bits >>= 1;
   }
 
-  // Phase 2 — the 3-column end graphic (toutline.cpp:188-201): fork/corner, End-Child `─`, then marker.
+  // Phase 2 — the node's own end graphic: fork/corner, a horizontal fill, then the expand marker.
   out += guides ? (last ? GRAPH.corner : GRAPH.fork) : GRAPH.levelFiller;
   out += guides ? GRAPH.hFill : GRAPH.levelFiller;
-  // Marker column is NOT gated by `guides` (PA-6). Faithful TV literal (toutline.cpp:200): an
-  // expanded node/leaf ⇒ `─`, a collapsed (¬ovExpanded) node ⇒ `+`.
+  // The marker column is drawn regardless of `guides`: `─` for an expanded node or a leaf, `+` for a
+  // collapsed node with children.
   out += expanded ? GRAPH.hFill : GRAPH.markCollapsed;
   return out;
 }
 
-/** The graph-prefix width (in cells) for a row at `level` — `level * 3 + 3`, guides-independent. */
+/** The prefix width (in cells) for a row at `level` — `level * 3 + 3`, independent of `guides`. */
 export function graphWidth(level: number): number {
   return level * LEVEL_WIDTH + LEVEL_WIDTH;
 }
 
-/** A pending node to visit, carrying its display context (TV `traverseTree` args). */
+/** A pending node to visit during the flatten walk, carrying its display context. */
 interface Frame<T> {
   readonly node: TreeNode<T>;
   readonly level: number;
@@ -133,7 +117,7 @@ interface Frame<T> {
 
 /**
  * Push a sibling list onto the stack in reverse, so they pop in display (top-to-bottom) order; the
- * last sibling is flagged so its end graphic draws `└` (TV `Boolean(!next)`, `toutline.cpp:304`).
+ * last sibling is flagged so its end graphic draws `└` instead of `├`.
  */
 function pushSiblings<T>(stack: Frame<T>[], nodes: TreeNode<T>[], level: number, lines: number): void {
   for (let i = nodes.length - 1; i >= 0; i -= 1) {
@@ -144,15 +128,12 @@ function pushSiblings<T>(stack: Frame<T>[], nodes: TreeNode<T>[], level: number,
 /**
  * Flatten a forest into the ordered list of currently-visible rows — each root plus its
  * recursively-expanded descendants — computing every row's `level`/`lines`/`flags` for
- * {@link createGraph}. Iterative (explicit stack) + `MAX_DEPTH`-guarded (AC-13): the eager,
- * caller-bounded tree can't drive unbounded recursion, and a caller-built cycle stops at the guard.
+ * {@link createGraph}. A node descends only when it is expanded; a non-last node keeps its ancestor
+ * `│` alive down its subtree. The walk is iterative (explicit stack) and depth-guarded, so a
+ * caller-built cycle stops at the depth cap rather than looping forever.
  *
- * Faithful to TV `traverseTree` (`toutline.cpp:262-322`): the forest is the root + its `getNext`
- * siblings; a node descends only when expanded; a non-last node keeps its ancestor `│` alive for its
- * subtree (`childLines |= 1 << level`).
- *
- * @param roots      The forest (PA-2) — display order, top to bottom.
- * @param isExpanded Predicate over node identity (the view's expand `Set`, PA-4).
+ * @param roots      The forest, in display order (top to bottom); a single-root tree is the 1-element case.
+ * @param isExpanded Predicate over node identity (typically the view's expand `Set`'s `has`).
  * @returns The visible rows in display order.
  */
 export function flattenVisible<T>(roots: TreeNode<T>[], isExpanded: (node: TreeNode<T>) => boolean): FlatRow<T>[] {
