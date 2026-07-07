@@ -32,8 +32,9 @@ import type { ModalManager } from './modal.js';
 
 /**
  * The multi-click window in milliseconds (double-click-activation AR-4). Two same-cell mouse-`down`s
- * within this span count as a double-click. Framework-wide constant; the editor keeps its own equal
- * `MULTI_CLICK_MS` (`editor-mouse.ts:22`) pending a later convergence (AR-6). Both are 500.
+ * within this span count as a double-click. The framework-wide constant and single source of truth:
+ * the editor converged onto this `clickCount` (AR-6 editor half discharged), reading it off the
+ * envelope rather than re-detecting on its own clock.
  */
 const MULTI_CLICK_MS = 500;
 

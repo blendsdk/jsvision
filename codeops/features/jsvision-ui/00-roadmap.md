@@ -49,6 +49,29 @@ foundation RDs of the same number.
 
 ## Notes
 
+- **2026-07-07** — **Follow-up task `multiclick-convergence` (T-04) DONE** ✅ (no RD; discharges
+  `double-click-activation` **AR-6**, editor half). An **internal DRY refactor, no behavior change**:
+  delete the editor's private 500 ms multi-click detector + its injectable clock and read the loop-owned
+  `DispatchEvent.clickCount` instead (one framework-wide source of truth). User-gated decisions:
+  **editor only** (input's untimed/HR-54 detector stays — converting it would change behavior, tracked
+  as a separate follow-up); **preserve the cyclic wrap** via `((clickCount-1)%3)+1` (4th→single,
+  5th→word, 6th→line, byte-identical); **remove** the now-dead `EditorOptions.now` + `ed.clock`/
+  `lastClick*`/`clickCount`. 5 tasks, spec-first (the `editor.spec` ST-10 word/line oracle is the
+  preserved invariant). Lightweight mini-plan
+  [`multiclick-convergence`](plans/multiclick-convergence/99-execution-plan.md). **Plan preflighted** 🔬
+  ([report](plans/multiclick-convergence/00-preflight-report.md), fresh-session, all `file:line` claims
+  re-verified + the D2 wrap-equivalence independently re-derived exact): **PASSED — 0🔴 / 0🟠 + 2🟡 + 1🔵
+  (all resolved, Option A)**. PF-001 the `@jsvision/files` `FileEditorOptions extends EditorOptions` reach
+  added to the D3 impact note (verified safe — no `now` caller — + `packages/*` verify-covered); PF-002
+  the two stale `event/` JSDoc cross-refs (`event-loop.ts` "pending AR-6" + `types.ts` "mirrors
+  `EditorOptions.now`") named as explicit T-04.3 edits; PF-003 the symmetric interleaved-click
+  false-negative documented as an accepted equivalence. **Executed** ✅ (2026-07-07, 5/5 tasks,
+  spec-first): `editor-mouse.ts` now reads `ev.clickCount` re-wrapped `((cc-1)%3)+1` (D2); the
+  `EditorOptions.now` field + `ed.clock`/`lastClick*`/`clickCount` state deleted (D3); the two stale
+  `event/` JSDoc cross-refs refreshed; the test harnesses inject `now` into `createEventLoop` (only
+  the injection point moves — the ST-10 word/line oracle is unchanged) + a new `editor.impl`
+  assertion pins the 5th-click→word wrap. Full verify 11/11 + lint clean + 42 editor tests GREEN
+  (was 41) + no `EditorOptions.now` residuals; behavior byte-identical, one multi-click source of truth.
 - **2026-07-07** — **Follow-up task `double-click-activation` DONE** ✅ (GH #39; no RD — the
   21/21 RD set stays complete). Preflighted (5 findings resolved) then executed (14 tasks, spec-first).
   A **framework-wide multi-click primitive**: the UI event loop computes

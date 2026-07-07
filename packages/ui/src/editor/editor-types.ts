@@ -31,8 +31,6 @@ export interface EditorOptions {
   autoIndent?: boolean;
   /** Start in overwrite mode (TV `cmInsMode` toggles; default false = insert). */
   overwrite?: boolean;
-  /** Multi-click clock (PA-18; default `Date.now`) — injectable for deterministic tests. */
-  now?: () => number;
   /** Command-greying seam (the `updateCommands` decode; default no-op). */
   commands?: EditorCommandSeam;
 }

@@ -37,18 +37,24 @@ function mouse(kind: MouseEvent['kind'], x: number, y: number): MouseEvent {
   return { type: 'mouse', kind, button: 0, x: x + 1, y: y + 1 };
 }
 
-/** Mount one editor filling a `w`×`h` loop viewport and focus it. */
+/**
+ * Mount one editor filling a `w`×`h` loop viewport and focus it. The multi-click clock now lives on
+ * the loop (the framework's single source of truth); the harness accepts `now` and injects it into
+ * `createEventLoop` so the same-cell double-click window stays deterministic (AR-14 — only the
+ * injection point moves; the oracle's assertions are unchanged).
+ */
 function mountEditor(
-  opts: ConstructorParameters<typeof Editor>[0] = {},
+  opts: ConstructorParameters<typeof Editor>[0] & { now?: () => number } = {},
   w = 20,
   h = 5,
 ): { loop: ReturnType<typeof createEventLoop>; ed: Editor } {
-  const ed = new Editor(opts);
+  const { now, ...editorOpts } = opts;
+  const ed = new Editor(editorOpts);
   const root = new Group();
   root.layout = { direction: 'col' };
   ed.layout = { size: { kind: 'fr', weight: 1 } };
   root.add(ed);
-  const loop = createEventLoop({ width: w, height: h }, { caps });
+  const loop = createEventLoop({ width: w, height: h }, { caps, now });
   loop.mount(root);
   loop.renderRoot.flush(); // settle bounds — hit-testing and the size.x/size.y math need them
   loop.focusView(ed);

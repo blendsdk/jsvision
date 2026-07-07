@@ -27,13 +27,17 @@ function wheel(dir: WheelEvent['dir'], x: number, y: number): WheelEvent {
   return { type: 'wheel', dir, x: x + 1, y: y + 1, shift: false, alt: false, ctrl: false };
 }
 
-function mountEditor(opts: ConstructorParameters<typeof Editor>[0] = {}, w = 12, h = 3) {
-  const ed = new Editor(opts);
+// The multi-click clock now lives on the loop (the framework's single source of truth); the harness
+// accepts `now` and injects it into `createEventLoop` so the same-cell double-click window stays
+// deterministic (AR-14 — only the injection point moves; assertions are unchanged).
+function mountEditor(opts: ConstructorParameters<typeof Editor>[0] & { now?: () => number } = {}, w = 12, h = 3) {
+  const { now, ...editorOpts } = opts;
+  const ed = new Editor(editorOpts);
   const root = new Group();
   root.layout = { direction: 'col' };
   ed.layout = { size: { kind: 'fr', weight: 1 } };
   root.add(ed);
-  const loop = createEventLoop({ width: w, height: h }, { caps });
+  const loop = createEventLoop({ width: w, height: h }, { caps, now });
   loop.mount(root);
   loop.renderRoot.flush();
   loop.focusView(ed);
@@ -65,6 +69,20 @@ test('multi-click: a fourth click cycles back to a plain click', () => {
   loop.dispatch(mouse('down', 4, 0)); // fourth
   loop.dispatch(mouse('up', 4, 0));
   expect(ed.hasSelection()).toBe(false); // cycled back to single
+});
+
+test('multi-click: a fifth consecutive same-cell click wraps to word again (((cc-1)%3)+1)', () => {
+  let t = 0;
+  const { loop, ed } = mountEditor({ now: () => t });
+  ed.setText('foo bar\nsecond');
+  // Five same-cell downs each within the window → loop clickCount 1..5; the editor's wrap maps
+  // cc=5 → ((5-1)%3)+1 = 2 → word snap, proving the cyclic re-wrap (D2), not a raw pass-through.
+  for (let i = 0; i < 5; i++) {
+    loop.dispatch(mouse('down', 4, 0));
+    loop.dispatch(mouse('up', 4, 0));
+    t += 100;
+  }
+  expect(ed.selectionText()).toBe('bar'); // 5th → word again
 });
 
 test('multi-click: a different cell resets the count', () => {
