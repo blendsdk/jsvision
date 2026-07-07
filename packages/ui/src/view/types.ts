@@ -62,6 +62,16 @@ export interface DrawContext {
    * agree. Additive; existing widgets that don't read it are unaffected.
    */
   readonly caps: CapabilityProfile;
+  /**
+   * Whether this frame is drawing with the accelerator overlay revealed (accelerator-overlay FR-1).
+   * A scope-wide boolean threaded exactly like {@link caps} (a plain re-read field, no Signal): while
+   * `true`, each `~X~` accelerator drawer adds `Attr.underline` to its hot-glyph accent so every
+   * reachable hotkey lights up at once. The render root flips it via `setRevealAccelerators` (forcing
+   * one coalesced recompose) and clamps it to the active dispatch scope in the compose walk, so a
+   * background window outside a modal composes with it `false`. Default `false`; additive — drawers
+   * that ignore it (and bare unit-constructed contexts) are unaffected.
+   */
+  readonly revealAccelerators: boolean;
 }
 
 /**

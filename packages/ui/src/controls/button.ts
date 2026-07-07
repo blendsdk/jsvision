@@ -15,7 +15,7 @@
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
-import { parseTilde, tildeSegments } from '../menu/index.js';
+import { parseTilde, tildeSegments, accentStyle } from '../menu/index.js';
 import type { ParsedLabel } from '../menu/index.js';
 import { stringWidth } from './measure.js';
 
@@ -101,8 +101,9 @@ export class Button extends View {
           : 'button'; // TV "normal"
     const face = ctx.color(faceRole);
     // HR-52 (tbutton.cpp:107-108): a disabled button resolves BOTH attribute nibbles to the disabled
-    // color — the `~hot~` run is drawn in the face role, not the bright shortcut accent.
-    const accent = disabled ? face : ctx.color('buttonShortcut');
+    // color — the `~hot~` run is drawn in the face role, not the bright shortcut accent. Only the
+    // enabled accent takes the accelerator-overlay underline (FR-6: a disabled hotkey never lights up).
+    const accent = disabled ? face : accentStyle(ctx.color('buttonShortcut'), ctx.revealAccelerators);
     const shadow = ctx.color('buttonShadow'); // TV cShadow = getColor(8) = 0x70 (black-on-lightGray)
     const down = this.pressed;
     const { width: w, height: h } = ctx.size;

@@ -41,7 +41,7 @@ import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
 import { signal } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
-import { parseTilde, tildeSegments } from '../menu/builders.js';
+import { parseTilde, tildeSegments, accentStyle } from '../menu/builders.js';
 import { stringWidth } from '../controls/measure.js';
 
 /**
@@ -329,7 +329,9 @@ export class TabStrip extends View {
     const roleName = this.roleOf(tab, isActive);
     const style = ctx.color(roleName);
     const raw = ctx.role(roleName);
-    const hotStyle = { fg: raw.hotkey ?? style.fg, bg: style.bg };
+    // Only an enabled tab reaches the `tildeSegments` accent path below; take the accelerator-overlay
+    // underline there while reveal is on (a disabled tab draws its plain label with no accent, FR-6).
+    const hotStyle = accentStyle({ fg: raw.hotkey ?? style.fg, bg: style.bg }, ctx.revealAccelerators);
     // Blank the whole slot in the role colour (pads + label field), then draw the label segments.
     ctx.fillRect(slot.x, 0, slot.width, 1, ' ', style);
     const labelStart = slot.x + 1; // after the leading pad

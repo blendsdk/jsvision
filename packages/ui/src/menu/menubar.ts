@@ -13,7 +13,7 @@ import type { Style } from '@jsvision/core';
 import { View } from '../view/index.js';
 import type { Group, DrawContext, DispatchEvent } from '../view/index.js';
 import type { MenuItem } from './builders.js';
-import { layoutTitles, titleIndexAt } from './builders.js';
+import { layoutTitles, titleIndexAt, accentStyle } from './builders.js';
 import { createMenuController } from './controller.js';
 import type { MenuController, MenuLoopSeam } from './controller.js';
 
@@ -46,8 +46,12 @@ export class MenuBar extends View {
     const selected = ctx.color('menuSelected');
     // TV draws the accelerator char in the high byte of `cNormal`/`cSelect` — red on the title's bg,
     // ALWAYS (open or closed). It never underlines. Selected titles use the green selected palette.
-    const baseAccent: Style = { fg: ctx.role('menuBar').hotkey ?? base.fg, bg: base.bg };
-    const selAccent: Style = { fg: ctx.role('menuSelected').hotkey ?? selected.fg, bg: selected.bg };
+    // The top-level hotkey char takes the accelerator-overlay underline while reveal is on (FR-1).
+    const baseAccent: Style = accentStyle({ fg: ctx.role('menuBar').hotkey ?? base.fg, bg: base.bg }, ctx.revealAccelerators);
+    const selAccent: Style = accentStyle(
+      { fg: ctx.role('menuSelected').hotkey ?? selected.fg, bg: selected.bg },
+      ctx.revealAccelerators,
+    );
     const open = this.controller?.isOpen() === true;
 
     const openIndex = this.controller?.openIndex() ?? null;

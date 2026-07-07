@@ -14,7 +14,7 @@
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
-import { parseTilde, tildeSegments } from '../menu/index.js';
+import { parseTilde, tildeSegments, accentStyle } from '../menu/index.js';
 import type { ParsedLabel } from '../menu/index.js';
 
 /**
@@ -54,7 +54,7 @@ export class Label extends View {
    */
   override draw(ctx: DrawContext): void {
     const base = ctx.color(this.link.state.focused ? 'labelSelected' : 'label');
-    const accent = ctx.color('labelShortcut');
+    const accent = accentStyle(ctx.color('labelShortcut'), ctx.revealAccelerators);
     const { width, height } = ctx.size;
     ctx.fillRect(0, 0, width, height, ' ', base);
     for (const seg of tildeSegments(this.raw)) {
