@@ -1,17 +1,11 @@
 /**
- * Search/replace operations over the `Editor` (RD-08 03-03 — the PF-011 split pattern: free
- * functions driving the editor's @internal search state, keeping `editor.ts` ≤ 500).
+ * Find and replace operations over an {@link Editor}.
  *
- * Decode (re-verified 2026-07-07 @ 57b6f56): `TEditor::find` (`teditor1.cpp:476-485`) and
- * `replace` (`teditor2.cpp:364-375`) round-trip their record through the seam, then run
- * `doSearchReplace` (`teditor1.cpp:400-429`): search → optionally prompt (`edReplacePrompt`
- * carries the GLOBAL cursor point, `:415-419`) → replace; `replaceAll` loops until a cancel or a
- * miss; the failure box is suppressed only when BOTH replaceAll and doReplace (`:405-408`). One
- * search step (`TEditor::search`, `teditor2.cpp:389-421`) scans from the caret and applies the
- * whole-words boundary test with the search-side `isWordChar` (`:61-64`), retrying past embedded
- * matches. Replace-all returns its COUNT (the PF-009 documented extension); an empty needle is a
- * no-op WITHOUT a seam round-trip (03-03 §Error Handling).
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * `editorFind`/`editorReplace` ask the dialog handler for the search parameters, then run the
+ * search/replace loop: find the next match, optionally prompt before replacing, then replace.
+ * Replace-all loops until it is cancelled or runs out of matches, and returns the number of
+ * replacements made. A "not found" message is shown except during a silent replace-all. An empty
+ * search string is a no-op and does not even open a dialog.
  */
 import type { Point } from '../view/index.js';
 import { convertNewEdit } from './buffer/index.js';
@@ -19,7 +13,7 @@ import { scan, isWordChar } from './search.js';
 import type { FindRec, ReplaceRec } from './editor-dialog.js';
 import type { Editor } from './editor.js';
 
-/** `TEditor::find` — seam round-trip → search (`& ~efDoReplace`). */
+/** Open the Find dialog, then search for the first match from the caret. */
 export async function editorFind(ed: Editor): Promise<void> {
   const rec: FindRec = { find: ed.findStr, options: { ...ed.searchOpts } };
   const res = await ed.dialog({ kind: 'find', rec });
@@ -31,7 +25,7 @@ export async function editorFind(ed: Editor): Promise<void> {
   }
 }
 
-/** `TEditor::replace` — seam round-trip → the replace loop (`| efDoReplace`); returns the count. */
+/** Open the Replace dialog, then run the replace loop; returns the number of replacements made. */
 export async function editorReplace(ed: Editor): Promise<number> {
   const rec: ReplaceRec = {
     find: ed.findStr,
@@ -67,7 +61,7 @@ export function editorSearchOnce(ed: Editor): boolean {
         (i + len !== ed.buf.length && isWordChar(ed.buf.charAt(i + len)))
       )
     ) {
-      ed.setSelect(i, i + len, false); // the caret lands AFTER the match (curStart=false)
+      ed.setSelect(i, i + len, false); // select the match, caret landing at its end
       ed.trackCursor(!ed.isCursorVisible());
       return true;
     }
@@ -75,7 +69,7 @@ export function editorSearchOnce(ed: Editor): boolean {
   }
 }
 
-/** The `doSearchReplace` loop; returns the replacement count (PF-009). */
+/** The search/replace loop; returns the number of replacements made. */
 export async function editorDoSearchReplace(ed: Editor): Promise<number> {
   if (ed.findStr === '') return 0;
   let count = 0;
@@ -100,7 +94,7 @@ export async function editorDoSearchReplace(ed: Editor): Promise<number> {
   return count;
 }
 
-/** The caret as a GLOBAL point (TV `makeGlobal(cursor)` — the replace-prompt request payload). */
+/** The caret's position in absolute (screen-wide) coordinates. */
 export function globalCaret(ed: Editor): Point {
   let x = ed.bounds.x + (ed.curX - ed.delta.x());
   let y = ed.bounds.y + (ed.curY - ed.delta.y());

@@ -1,14 +1,14 @@
 /**
- * The editor's 3-phase event handling as a free function (RD-08 03-02 §Event routing — the
- * PF-011 split keeping `editor.ts` ≤ 500).
+ * The editor's event handling: keys, mouse/wheel, bracketed paste, and command events.
  *
- * Decode: the pre visit claims ONLY the WordStar chords, scoped by
- * `isWithin(ev.getFocused?.() ?? null, this)` (PF-001 — apps must NOT bind Ctrl-Q/Ctrl-K in the
- * app keymap; the pre sweep runs root→down so ancestor containers keep their priority); mouse
- * arrives only via hit-test/capture (`editor-mouse.ts`); typing per the `evKeyDown` branch
- * (`teditor1.cpp:586-616`); a bracketed paste is ONE insertion/one undo step (AC-5); command
- * events (`Commands.cut/copy/paste/undo/redo` + `EditorCommands.*`) handle when focused (PA-15).
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Keys are resolved through the editor's keymap when the editor (or a focused descendant) owns
+ * focus. A bracketed paste is inserted as one edit / one undo step. Command events — Cut, Copy,
+ * Paste, Undo, Redo, and the find/replace/clear editor commands — are handled while the editor is
+ * focused, so menus and the status line can drive it.
+ *
+ * A note for app authors: the editor claims the WordStar prefixes (Ctrl-Q, Ctrl-K) before the rest
+ * of the app sees them, so do not also bind Ctrl-Q or Ctrl-K in your app keymap — the focused
+ * editor needs them.
  */
 import type { DispatchEvent } from '../view/index.js';
 import { Commands } from '../status/index.js';
@@ -34,7 +34,7 @@ export function handleEditorEvent(ed: Editor, ev: DispatchEvent): void {
     const selectMode = ed.selecting || inner.shift ? SM_EXTEND : 0;
     const centerCursor = !ed.isCursorVisible();
     // The modern Ctrl+X/C/V/A + Ctrl+Z/Y overlay (default binding set) wins over the WordStar table,
-    // but ONLY when idle — an armed Ctrl-K/Ctrl-Q prefix keeps its faithful sequence intact.
+    // but ONLY when idle — an armed Ctrl-K/Ctrl-Q prefix keeps its WordStar sequence intact.
     const modern =
       ed.keyBindings === 'modern' && ed.keyState === 0 ? resolveModernKey(inner) : undefined;
     const res: KeyResolution =
@@ -48,9 +48,8 @@ export function handleEditorEvent(ed: Editor, ev: DispatchEvent): void {
     } else if (res.consumed) {
       ev.handled = true; // a prefix arm, or an unknown follow-up clearing it (no edit)
     } else if (!inner.ctrl && !inner.alt) {
-      // The decoder names 0x20 'space' (core keys.ts) — map it back to the character, exactly
-      // like the RD-06 Input; the spread-length also admits astral-plane printables (👍 = one
-      // code point but .length 2).
+      // The Space key arrives named 'space' — map it back to a literal space. The spread-length
+      // check also admits astral-plane printables (e.g. 👍 is one code point but string length 2).
       const ch = inner.key === 'space' ? ' ' : [...inner.key].length === 1 ? inner.key : null;
       if (ch !== null) {
         ed.typeText(ch, centerCursor);
@@ -61,7 +60,7 @@ export function handleEditorEvent(ed: Editor, ev: DispatchEvent): void {
   }
   if (inner.type === 'paste') {
     if (ed.state.focused) {
-      ed.insertText(inner.text); // ONE insertion, ONE undo step (AC-5)
+      ed.insertText(inner.text); // one insertion, one undo step
       ev.handled = true;
     }
     return;
