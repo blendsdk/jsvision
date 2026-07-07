@@ -50,6 +50,12 @@ export interface EventLoopOptions {
   /** Fires once when a dispatch tick's cascade queue drains (AR-58). */
   onIdle?: () => void;
   /**
+   * Multi-click clock (double-click-activation AR-4), default `Date.now`. Injected so headless tests
+   * drive exact timestamps for the same-cell double-click window; mirrors `EditorOptions.now`. The
+   * loop uses it to compute `DispatchEvent.clickCount` on each mouse-`down` (FR-1/FR-2).
+   */
+  now?: () => number;
+  /**
    * The app-terminating command (default `'quit'`). A quit emitted while modals are open cascades
    * **top-down** through the modal stack — each modal resolves via `endModal(quitCommand)`, a
    * `Dialog.valid(quitCommand)` gate may veto and stop the cascade — before reaching the root sink

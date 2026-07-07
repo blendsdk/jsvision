@@ -30,6 +30,13 @@ import { hitTestRoute } from './hit-test.js';
 import { createModalManager } from './modal.js';
 import type { ModalManager } from './modal.js';
 
+/**
+ * The multi-click window in milliseconds (double-click-activation AR-4). Two same-cell mouse-`down`s
+ * within this span count as a double-click. Framework-wide constant; the editor keeps its own equal
+ * `MULTI_CLICK_MS` (`editor-mouse.ts:22`) pending a later convergence (AR-6). Both are 500.
+ */
+const MULTI_CLICK_MS = 500;
+
 /** A modal view that exposes a TV-style `valid(command)` close-gate (e.g. `Dialog`). */
 interface QuitValidatable {
   valid(command: string): boolean;
@@ -70,6 +77,16 @@ class EventLoopImpl implements EventLoop {
   /** The accelerator-mode trigger key (default `'f12'`); `null` disables the feature (AR-10). */
   private readonly revealKey: string | null;
 
+  // --- Multi-click state (double-click-activation FR-1/FR-2, AR-2/AR-4/AR-13) --------------------
+  /** The injectable multi-click clock; `opts.now ?? Date.now`. Set in the constructor. */
+  private readonly clock: () => number;
+  /** Timestamp of the previous mouse-`down` (for the 500ms window). */
+  private lastClickTime = Number.NEGATIVE_INFINITY;
+  /** Screen cell of the previous mouse-`down` (raw 1-based coords; sameness = screen-cell sameness). */
+  private lastClickCell: Point = { x: -1, y: -1 };
+  /** The running consecutive same-cell click count (1 = single, 2 = double, …). */
+  private clickCount = 0;
+
   /** Frame sink wired by `run()` after the host exists; `undefined` ⇒ flushes push nothing (PA-6). */
   onFrame?: (buffer: ScreenBuffer) => void;
   /** Hardware-caret sink wired by `run()` after the host exists (RD-07 PA-5). @see EventLoop.onCaret */
@@ -88,6 +105,7 @@ class EventLoopImpl implements EventLoop {
     this.keymap = opts.keymap;
     this.quitCommand = opts.quitCommand ?? 'quit';
     this.revealKey = opts.revealKey === undefined ? 'f12' : opts.revealKey; // explicit null disables
+    this.clock = opts.now ?? Date.now; // multi-click clock (AR-4); tests inject a controlled now
     this.registry = createCommandRegistry({
       seed: opts.commands,
       enqueue: (ev) => this.queue.push(ev), // a command cascades onto the active tick (03-01)
@@ -120,7 +138,21 @@ class EventLoopImpl implements EventLoop {
 
   dispatch(event: AppEvent): void {
     this.runTick(() => {
-      this.queue.push({ event, handled: false });
+      // Compute the consecutive same-cell click-count for a mouse-`down` and stamp it on the enqueued
+      // envelope (double-click-activation FR-1/FR-2, AR-2/AR-4/AR-13). Only `down` carries it; move/
+      // drag/up, wheel, and keys enqueue with `clickCount` undefined. Stamping at construction here
+      // satisfies the `readonly clickCount` field; `route()`'s `{ ...ev }` spread and `hit-test.ts`'s
+      // `{ ...ev, local }` spreads then carry it to the delivered envelope for free.
+      let clickCount: number | undefined;
+      if (event.type === 'mouse' && event.kind === 'down') {
+        const t = this.clock();
+        const sameCell = event.x === this.lastClickCell.x && event.y === this.lastClickCell.y;
+        this.clickCount = sameCell && t - this.lastClickTime <= MULTI_CLICK_MS ? this.clickCount + 1 : 1;
+        this.lastClickTime = t;
+        this.lastClickCell = { x: event.x, y: event.y };
+        clickCount = this.clickCount;
+      }
+      this.queue.push({ event, handled: false, clickCount });
     });
   }
 
