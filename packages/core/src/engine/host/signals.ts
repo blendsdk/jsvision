@@ -1,21 +1,20 @@
 /**
- * Signal install/teardown, resize coalescing, suspend/resume (RD-07, plan doc 03-02).
+ * Terminal signal handling — resize coalescing, terminating-signal exit, and
+ * suspend/resume (Ctrl+Z) for the host.
  *
- * Pure orchestration over the injected {@link RuntimeAdapter} (`adapter.on(...)`
- * returns an unsubscribe). `installSignals()` wires:
- * - **resize** — pending-flag + one `scheduleImmediate` collapses a SIGWINCH
- *   burst to a single {@link ResizeEvent} (AR-9);
- * - **interrupt/terminate/hangup** — guaranteed restore then exit 130/143/129 (AR-6);
- * - **suspend** — `onSuspend` then a *soft* leave (leave-mode + raw off) then
- *   `suspendSelf()` (RT-3, PF-001); the guarded panic restore is left untouched
- *   so a later real exit still restores;
- * - **continue** — re-assert enter-mode, full repaint of the last buffer, `onResume` (AR-10).
+ * `installSignals()` wires, over the injected {@link RuntimeAdapter}:
+ * - **resize** — a pending flag plus one deferred callback collapses a burst of
+ *   resize signals into a single {@link ResizeEvent};
+ * - **interrupt/terminate/hangup** — restore the terminal, then exit with the
+ *   conventional code (130/143/129);
+ * - **suspend** — run `onSuspend`, do a *soft* leave (leave-mode + raw off), then
+ *   suspend the process; the guaranteed on-exit restore is deliberately left
+ *   armed so a later real exit still restores;
+ * - **continue** — re-assert the terminal modes, fully repaint the last frame,
+ *   then run `onResume`.
  *
  * On Windows the adapter never emits `suspend`/`continue`, so those handlers are
- * inert and the same code runs unchanged (AR-4).
- *
- * The `.js` extensions in the import specifiers are required by NodeNext ESM
- * resolution (they resolve to the `.ts` sources during development via tsx).
+ * simply inert and the same code runs unchanged.
  */
 import { serialize } from '../render/serialize.js';
 import type { CapabilityProfile } from '../capability/profile.js';
@@ -23,37 +22,37 @@ import type { ScreenBuffer } from '../render/buffer.js';
 import type { GuaranteedRestore } from './restore.js';
 import type { ResizeEvent, RuntimeAdapter } from './types.js';
 
-/** Inputs the signal handlers need; orchestrated by `host.ts` so all share one restore. */
+/** Inputs the signal handlers need; assembled by the host so every path shares one restore. */
 export interface SignalContext {
   readonly adapter: RuntimeAdapter;
   readonly output: NodeJS.WriteStream;
   readonly input: NodeJS.ReadStream;
-  /** The one idempotent restore used by the terminating-signal paths (AR-17). */
+  /** The one idempotent restore used by the terminating-signal paths. */
   readonly restore: GuaranteedRestore;
-  /** Enter-mode string re-asserted on resume (AR-10). */
+  /** Enter-mode string re-asserted on resume. */
   readonly enterStr: string;
-  /** Leave-mode string written on the suspend soft-leave (RT-3). */
+  /** Leave-mode string written on the suspend soft-leave. */
   readonly leaveStr: string;
-  /** Whether the terminal is a TTY; gates mode writes + raw toggles (AR-11). */
+  /** Whether the terminal is a TTY; gates mode writes and raw-mode toggles. */
   readonly isTTY: boolean;
   /**
-   * The EFFECTIVE serialize caps for the resume full-repaint — the same caps
-   * `render()` uses, so a width-adapted host repaints ASCII-safe chrome after
-   * SIGCONT instead of un-swapped wide glyphs (glyph-auto-swap PF-001). Mirrors the
-   * {@link getLastBuffer} getter so correctness is independent of `start()` ordering.
+   * Getter for the effective serialize caps used by the resume repaint — the same
+   * caps `render()` uses, so a width-adapted host repaints ASCII-safe chrome after
+   * resume instead of un-swapped wide glyphs. A getter (rather than a value) so it
+   * is correct regardless of when `start()` adapted the caps.
    */
   getSerializeCaps(): CapabilityProfile;
   readonly onResize?: (event: ResizeEvent) => void;
   readonly onSuspend?: () => void;
   readonly onResume?: () => void;
-  /** When false, terminating signals restore but do not exit (AR-6). */
+  /** When false, terminating signals restore the terminal but do not exit the process. */
   readonly exitOnSignal: boolean;
   readonly onBeforeExit?: (code: number) => void;
-  /** The last rendered buffer, for the resume full repaint (AR-10). */
+  /** Getter for the last rendered frame, used by the resume full repaint. */
   getLastBuffer(): ScreenBuffer | null;
 }
 
-/** Exit codes for the terminating signals (128 + signal number). [AR-6] */
+/** Exit codes for the terminating signals (128 + the signal number). */
 const EXIT_CODES = { interrupt: 130, terminate: 143, hangup: 129 } as const;
 
 /** Run a handler step, swallowing any failure — a signal handler must never throw. */
@@ -69,12 +68,12 @@ function safely(fn: () => void): void {
  * Install resize/signal/suspend/resume handlers over the adapter.
  *
  * @param ctx - the adapter, bound streams, shared restore, mode strings, and callbacks.
- * @returns a teardown that removes every handler installed here. [AR-8]
+ * @returns a teardown that removes every handler installed here.
  */
 export function installSignals(ctx: SignalContext): () => void {
   const unsubscribes: (() => void)[] = [];
 
-  // resize — collapse a burst to a single coalesced event (AR-9).
+  // resize — collapse a burst of resize signals into a single coalesced event.
   let resizePending = false;
   unsubscribes.push(
     ctx.adapter.on('resize', () => {
@@ -89,7 +88,7 @@ export function installSignals(ctx: SignalContext): () => void {
     }),
   );
 
-  // interrupt/terminate/hangup — restore then exit with the right code (AR-6).
+  // interrupt/terminate/hangup — restore the terminal, then exit with the conventional code.
   for (const signal of ['interrupt', 'terminate', 'hangup'] as const) {
     const code = EXIT_CODES[signal];
     unsubscribes.push(
@@ -101,7 +100,7 @@ export function installSignals(ctx: SignalContext): () => void {
     );
   }
 
-  // suspend — soft leave (RT-3) then stop the process (PF-001); inert on win32.
+  // suspend — soft leave (restore modes without disarming the exit backstop) then stop the process; inert on Windows.
   unsubscribes.push(
     ctx.adapter.on('suspend', () => {
       ctx.onSuspend?.();
@@ -113,7 +112,7 @@ export function installSignals(ctx: SignalContext): () => void {
     }),
   );
 
-  // continue — re-assert modes + full repaint, then notify (AR-10).
+  // continue — re-assert the terminal modes + full repaint, then notify.
   unsubscribes.push(
     ctx.adapter.on('continue', () => {
       if (ctx.isTTY) {
@@ -121,7 +120,7 @@ export function installSignals(ctx: SignalContext): () => void {
         safely(() => ctx.output.write(ctx.enterStr));
         const last = ctx.getLastBuffer();
         if (last) {
-          // Effective (possibly width-adapted) caps, matching render() (PF-001).
+          // Use the effective (possibly width-adapted) caps, matching render().
           const out = serialize(last, null, { caps: ctx.getSerializeCaps() });
           if (out) safely(() => ctx.output.write(out));
         }

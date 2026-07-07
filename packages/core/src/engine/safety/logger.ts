@@ -1,23 +1,24 @@
 /**
- * The screen-safe logger (RD-08 §Logging; AR-5, AR-10, AR-14).
+ * A screen-safe logger for TUI apps.
  *
- * A TUI library owns the screen, so it can never log to the UI stream.
- * {@link createLogger} returns a {@link Logger} over three sinks — file, stderr,
- * and an in-memory ring — env-gated and disabled by default (a normal run writes
- * zero bytes, AC-5). Construction throws {@link LoggerConfigError} when a
- * resolved sink would target the UI output stream (AC-7).
+ * A terminal app owns the whole screen, so an ordinary `console.log` would
+ * scribble over your UI. {@link createLogger} gives you a {@link Logger} that
+ * writes only to safe destinations — a file, stderr (when it is a different
+ * device from the screen), or an in-memory ring buffer — never to the terminal.
  *
- * The `.js` extension in import specifiers is required by NodeNext ESM
- * resolution (it resolves to the `.ts` source during development via tsx).
+ * It is disabled by default, so a normal run writes zero bytes; enable it with
+ * `{ enabled: true }`, the `JSVISION_DEBUG=1` env var, or by choosing the `ring`
+ * sink. Construction throws {@link LoggerConfigError} if the configured sink
+ * would resolve to the terminal's own output stream.
  */
 import * as nodeFs from 'node:fs';
 
 import { LoggerConfigError } from './errors.js';
 
-/** Severity levels, coarsest to finest. [AR-10] */
+/** Severity levels, coarsest to finest. */
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 
-/** A structured log record (Should-Have structured format). [AR-6] */
+/** A single structured log record. */
 export interface LogRecord {
   readonly level: LogLevel;
   /** Subsystem tag, e.g. 'input' | 'gate' | 'host'. */
@@ -27,13 +28,19 @@ export interface LogRecord {
   readonly fields?: Readonly<Record<string, unknown>>;
 }
 
-/** Where log records go. [AR-10] */
+/**
+ * Where log records go:
+ * - `auto` — a file if a path is set, else stderr when it is a distinct device, else the ring.
+ * - `file` — append to `path` (or the `JSVISION_LOG` env var).
+ * - `stderr` — write to fd 2 (rejected if it is the same device as the screen).
+ * - `ring` — an in-memory buffer readable via {@link Logger.entries} (also self-enables).
+ */
 export type LogSink = 'auto' | 'file' | 'stderr' | 'ring';
 
 /**
- * The minimal filesystem seam the logger needs, injectable so the UI-stream
- * guard (ST-22) is deterministically testable without touching real devices.
- * Defaults to `node:fs`.
+ * The minimal filesystem interface the logger uses. Injectable so the
+ * screen-safety guard can be tested without touching real devices; defaults to
+ * `node:fs`, so you normally never set this.
  */
 export interface LoggerFs {
   openSync(path: string, flags: string): number;
@@ -42,7 +49,7 @@ export interface LoggerFs {
   closeSync(fd: number): void;
 }
 
-/** Options for {@link createLogger}; all optional (env supplies defaults). [AR-10, AR-14] */
+/** Options for {@link createLogger}; every field is optional (env supplies the defaults). */
 export interface LoggerOptions {
   /** Force enable/disable. Default: enabled iff `sink==='ring'` or `env.JSVISION_DEBUG==='1'`. */
   readonly enabled?: boolean;
@@ -62,7 +69,7 @@ export interface LoggerOptions {
   readonly fs?: LoggerFs;
 }
 
-/** The screen-safe logger. Returned by {@link createLogger}. [AR-14] */
+/** A screen-safe logger, returned by {@link createLogger}. */
 export interface Logger {
   readonly enabled: boolean;
   debug(component: string, msg: string, fields?: Record<string, unknown>): void;
@@ -156,16 +163,17 @@ function openFileSink(fs: LoggerFs, path: string, uiFd: number): Sink {
 }
 
 /**
- * Whether stderr (fd 2) resolves to the same terminal **device** as the UI stream (HR-06, PA-6).
- * Interactively, stdout (fd 1) and stderr (fd 2) share one tty device, so comparing fd *numbers*
- * (`2 === uiFd`) misses the collision and a log line scribbles the raw-mode alt-screen. This compares
- * `{dev, ino}` device identity — the same mechanism {@link assertFileNotUiStream} uses. If either
- * stat is unavailable (exotic runtime), it conservatively reports "same device" so the UI is never
- * risked (PA-6 conservative reading).
+ * Whether stderr (fd 2) resolves to the same terminal **device** as the screen's
+ * output stream. Interactively, stdout (fd 1) and stderr (fd 2) usually share one
+ * tty device, so comparing fd *numbers* (`2 === uiFd`) would miss the collision and
+ * a log line would scribble over the raw-mode alternate screen. This compares
+ * `{dev, ino}` device identity instead — the same mechanism {@link assertFileNotUiStream}
+ * uses. If either stat is unavailable (an exotic runtime), it conservatively reports
+ * "same device" so the screen is never risked.
  *
- * @param fs   The filesystem seam (injectable).
- * @param uiFd The UI output stream fd.
- * @returns `true` when stderr shares the UI device (or the comparison is impossible).
+ * @param fs   The filesystem interface (injectable).
+ * @param uiFd The screen's output stream fd.
+ * @returns `true` when stderr shares the screen's device (or the comparison is impossible).
  */
 function stderrSharesUiStream(fs: LoggerFs, uiFd: number): boolean {
   try {
@@ -187,7 +195,8 @@ function resolveSink(options: LoggerOptions, env: NodeJS.ProcessEnv): Sink {
   if (sink === 'ring') return createRingSink(options.size ?? DEFAULT_RING_SIZE);
 
   if (sink === 'stderr') {
-    // Explicit stderr sharing the UI device is a hard error (mirrors the file sink's contract, PA-6).
+    // An explicit stderr sink that shares the screen's device is a hard error
+    // (mirrors the file sink's contract) — never risk painting over the UI.
     if (stderrSharesUiStream(fs, uiFd)) {
       throw new LoggerConfigError('Refusing a stderr sink that is the UI output stream.');
     }
@@ -200,33 +209,42 @@ function resolveSink(options: LoggerOptions, env: NodeJS.ProcessEnv): Sink {
   }
 
   // 'auto': prefer a file when a path is set; else stderr when it is a distinct device; else the ring
-  // sink — logs stay captured and dumpable while the TUI is never touched (HR-06/PA-6 degrade).
+  // sink — logs stay captured and readable via entries() while the screen is never touched.
   if (path) return openFileSink(fs, path, uiFd);
   if (!stderrSharesUiStream(fs, uiFd)) return createFdSink(fs, 2, false);
   return createRingSink(options.size ?? DEFAULT_RING_SIZE);
 }
 
 /**
- * Create a screen-safe logger. [AR-5, AR-10, AR-14]
+ * Create a screen-safe logger.
  *
- * Enablement: `options.enabled ?? (sink==='ring' || env.JSVISION_DEBUG==='1')`.
- * A disabled logger is a no-op (every method returns without writing;
- * `entries()` is empty) so a normal run writes zero bytes (AC-5).
+ * **Enablement.** Off unless you pass `enabled: true`, set `JSVISION_DEBUG=1`, or
+ * choose `sink: 'ring'`. A disabled logger is a pure no-op (every method returns
+ * without writing and `entries()` is empty), so a normal run writes nothing.
  *
- * Sink selection when enabled (sink==='auto'): if a path (`options.path ??
- * env.JSVISION_LOG`) is set → file (append); else if stderr is not the UI stream
- * → stderr; else no sink. The 'ring' sink is always available via `sink:'ring'`
- * (used by tests) and self-enables.
+ * **Sink selection** (`sink: 'auto'`, the default): a file if a path is set
+ * (`options.path` or the `JSVISION_LOG` env var); else stderr when it is a
+ * different device from the screen; else the in-memory ring buffer.
  *
- * Screen-safety (AC-7): construction throws {@link LoggerConfigError} when a
- * resolved sink targets the UI stream — stderr by fd-number compare, file by
- * `{dev,ino}` equality with an `ino !== 0` guard (best-effort where inodes are
- * unstable). The `fs` seam is injectable so the guard is deterministically
- * testable (ST-22).
+ * **Screen safety.** Construction throws {@link LoggerConfigError} if the chosen
+ * sink would resolve to the terminal's own output stream, so a misconfigured
+ * logger can never corrupt your rendered UI.
  *
- * @param options Optional configuration; env supplies defaults.
- * @returns A `Logger`. Disabled when not gated on.
- * @throws LoggerConfigError when a resolved sink targets the UI stream.
+ * @param options Optional configuration; env vars supply the defaults.
+ * @returns A `Logger`. It is a no-op when not enabled.
+ * @throws LoggerConfigError when the resolved sink targets the terminal's output stream.
+ * @example
+ * import { createLogger } from '@jsvision/core';
+ *
+ * // Enable via env (JSVISION_DEBUG=1) and log to a file (JSVISION_LOG=/tmp/app.log):
+ * const log = createLogger();
+ * log.info('host', 'started', { cols: 120, rows: 40 });
+ *
+ * // Or capture in memory for a diagnostics dump (always enabled):
+ * const ring = createLogger({ sink: 'ring' });
+ * ring.debug('input', 'key pressed');
+ * console.error(ring.entries());
+ * ring.close();
  */
 export function createLogger(options: LoggerOptions = {}): Logger {
   const env = options.env ?? process.env;
@@ -234,7 +252,7 @@ export function createLogger(options: LoggerOptions = {}): Logger {
   const enabled = options.enabled ?? (sink === 'ring' || env.JSVISION_DEBUG === '1');
 
   if (!enabled) {
-    // Disabled: a pure no-op so the screen-owning library writes nothing (AC-5).
+    // Disabled: a pure no-op so a normal run of the screen-owning app writes nothing.
     return {
       enabled: false,
       debug: () => undefined,
