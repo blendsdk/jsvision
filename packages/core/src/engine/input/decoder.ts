@@ -41,6 +41,7 @@ import { RESPONSE_BUFFER_CAP } from '../capability/query.js';
 
 const ESC = 0x1b;
 const CSI_INTRODUCER = 0x5b; // '['
+const SS3_INTRODUCER = 0x4f; // 'O' — `ESC O <final>` (also the Alt+Shift+O collision, #40)
 const FOCUS_IN = 0x49; // 'I'
 const FOCUS_OUT = 0x4f; // 'O'
 const EMPTY = new Uint8Array(0);
@@ -81,6 +82,23 @@ export function decode(bytes: Uint8Array, state: DecoderState, options?: DecodeO
 export function flush(state: DecoderState, options?: DecodeOptions): DecodeResult {
   const buf = state.carry;
   if (!state.paste.active && !state.resync && buf.length > 0 && buf[0] === ESC) {
+    // #40: an introducer that never completed within the disambiguation window is an Alt+letter
+    // accelerator, not the start of an SS3/CSI sequence. `ESC O` (Alt+Shift+O) and `ESC [` (Alt+[)
+    // collide with the SS3/CSI introducers, so a lone 2-byte hold that timed out is the accelerator.
+    // Decode the letter exactly as a standalone printable and set `alt` — byte-identical to every
+    // other Alt+<char> (keys.ts `decodeEscape`). Strictly length 2: a longer carry (`ESC [ 1 ;`) is
+    // a real in-progress CSI/modified key and must be left to the escape-prefixed path below.
+    if (buf.length === 2 && (buf[1] === SS3_INTRODUCER || buf[1] === CSI_INTRODUCER)) {
+      const letter = decodeKey(copyOf(buf.subarray(1)), 0, options);
+      if (letter.status === 'event') {
+        return {
+          events: [{ ...letter.event, alt: true }],
+          queries: [],
+          rest: EMPTY,
+          state: { carry: EMPTY, paste: state.paste, resync: false },
+        };
+      }
+    }
     const escape: KeyEvent = { type: 'key', key: 'escape', ctrl: false, alt: false, shift: false };
     const tail = scan(copyOf(buf.subarray(1)), state.paste, state.resync, options);
     return {
