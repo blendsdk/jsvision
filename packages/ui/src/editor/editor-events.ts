@@ -35,12 +35,9 @@ export function handleEditorEvent(ed: Editor, ev: DispatchEvent): void {
     const centerCursor = !ed.isCursorVisible();
     // The modern Ctrl+X/C/V/A + Ctrl+Z/Y overlay (default binding set) wins over the WordStar table,
     // but ONLY when idle — an armed Ctrl-K/Ctrl-Q prefix keeps its WordStar sequence intact.
-    const modern =
-      ed.keyBindings === 'modern' && ed.keyState === 0 ? resolveModernKey(inner) : undefined;
+    const modern = ed.keyBindings === 'modern' && ed.keyState === 0 ? resolveModernKey(inner) : undefined;
     const res: KeyResolution =
-      modern !== undefined
-        ? { action: modern, nextState: 0, consumed: true }
-        : resolveKey(ed.keyState, inner);
+      modern !== undefined ? { action: modern, nextState: 0, consumed: true } : resolveKey(ed.keyState, inner);
     ed.keyState = res.nextState;
     if (res.action !== undefined) {
       applyAction(ed, res.action, selectMode, centerCursor);
