@@ -2,7 +2,7 @@
 
 > **Feature**: jsvision-ui / double-click-activation · Tracks GH [#39](https://github.com/blendsdk/jsvision/issues/39)
 > **CodeOps Skills Version**: 3.3.0
-> **Progress**: 3/14 tasks (21%) · **Last Updated**: 2026-07-07 18:51
+> **Progress**: 8/14 tasks (57%) · **Last Updated**: 2026-07-07 19:07
 
 **Verify command (every phase):** `TUI_SKIP_PERF=1 yarn verify` then `yarn lint` (AR-12).
 
@@ -26,24 +26,26 @@ GATE-1 BEFORE decode (done in [02-current-state.md](02-current-state.md)) + a GA
 
 ## Phase 2 — Row consumers + TV fidelity (03-02)
 
-- [ ] **2.1** Spec tests (RED): ST-5 (`ListRows`), ST-6 (`GridRows`), ST-7 (`TreeRows` — single text
-      click no emit / double-click activate / graph single-click toggle), ST-8 (File dialog
-      double-click enter/resolve), ST-9 (`ComboBox` no regression). Bare-widget envelopes set
-      `clickCount` directly (AR-14). Run; confirm RED (ST-7's "single text click does not emit" fails
-      against today's emit).
-- [ ] **2.2** Implement `ListRows` (`list-rows.ts`) + `GridRows` (`grid-rows.ts`): `if (ev.clickCount
-      === 2) this.activate(ev)` after the existing focus+select. Verify ST-5/ST-6/ST-8/ST-9 GREEN
-      (File dialog + ComboBox cascade automatically).
-- [ ] **2.3** Implement `TreeRows` (`tree-rows.ts`): drop the single-click text emit; focus always,
-      graph-zone toggles, `clickCount === 2` on text → activate. Update the class JSDoc (`:223`).
-      Verify ST-7 GREEN.
-- [ ] **2.4** **GATE-2 AFTER-diff**: re-open `tlstview.cpp:271-277` + `toutline.cpp:465-472`, diff
-      branch-for-branch against the implemented behavior, record the decode in the `ListRows`/`TreeRows`
-      JSDoc + the commit body — **list text path ✅; graph-zone double-click = accepted AR-15 deviation**
-      (do not certify a clean match; document the deviation per AR-15).
-- [ ] **2.5** Impl tests (`*.impl.test.ts`) for the three consumers: different-cell 2nd click does
-      not activate; a 3rd click (`clickCount === 3`) does not re-fire; single-click focus+select
-      intact. Full verify + lint.
+- [x] **2.1** Spec tests (RED): ST-5 (`ListRows`), ST-6 (`GridRows`), ST-7 (`TreeRows` — single text
+      click no emit / double-click activate / graph single-click toggle / graph double-click toggle =
+      AR-15), ST-8 (File dialog double-click enter/resolve), ST-9 (`ComboBox` no regression). Bare-widget
+      envelopes set `clickCount` directly (AR-14); ST-8 in `packages/files`. Also corrected the
+      mis-decoded tree ST-17 oracle (single text click = focus only, `toutline.cpp:465`, AR-5). Run;
+      confirmed RED (5 new-behavior oracles fail against today's emit). ✅ (completed: 2026-07-07 19:05)
+- [x] **2.2** Implement `ListRows` (`list-rows.ts`) + `GridRows` (`grid-rows.ts`): `if (ev.clickCount
+      === 2) this.activate(ev)` after the existing focus+select. ST-5/ST-6/ST-8/ST-9 GREEN (File dialog
+      + ComboBox cascade automatically). ✅ (completed: 2026-07-07 19:05)
+- [x] **2.3** Implement `TreeRows` (`tree-rows.ts`): drop the single-click text emit; focus always,
+      graph-zone toggles, `clickCount === 2` on text → activate. Updated the mouse-down JSDoc + the
+      `onEvent` JSDoc (`:223`). ST-7 + corrected ST-17 GREEN. ✅ (completed: 2026-07-07 19:05)
+- [x] **2.4** **GATE-2 AFTER-diff**: re-opened `tlstview.cpp:255-278` + `toutline.cpp:455-478`, diffed
+      branch-for-branch against the implemented behavior; decode cited in the `ListRows`/`GridRows`/
+      `TreeRows` JSDoc + the commit body — **list/grid text path ✅ (`range > newItem` = `index <
+      display.length`); tree text ✅ + graph single ✅; graph-zone double-click = accepted AR-15
+      deviation** (documented, not certified clean). ✅ (completed: 2026-07-07 19:05)
+- [x] **2.5** Impl tests (`multiclick.consumers.impl.test.ts`) for the three consumers: `clickCount === 3`
+      does not re-fire; single-click focus+select intact; only `=== 2` activates. Full verify + lint
+      green (core 604 + ui 1333 + files 148 + examples 92; lint clean). ✅ (completed: 2026-07-07 19:07)
 
 ## Phase 3 — Kitchen-sink + final gate
 
@@ -61,11 +63,11 @@ GATE-1 BEFORE decode (done in [02-current-state.md](02-current-state.md)) + a GA
 | 1.1 | Primitive spec tests (RED) | [x] | 2026-07-07 18:47 | 2026-07-07 18:47 |
 | 1.2 | Implement `clickCount` + `now` + loop compute | [x] | 2026-07-07 18:47 | 2026-07-07 18:47 |
 | 1.3 | Primitive impl tests + hardening | [x] | 2026-07-07 18:47 | 2026-07-07 18:51 |
-| 2.1 | Consumer spec tests (RED) | [ ] | | |
-| 2.2 | `ListRows` + `GridRows` double-click | [ ] | | |
-| 2.3 | `TreeRows` fidelity fix (drop emit + double-click) | [ ] | | |
-| 2.4 | GATE-2 AFTER-diff recorded | [ ] | | |
-| 2.5 | Consumer impl tests | [ ] | | |
+| 2.1 | Consumer spec tests (RED) | [x] | 2026-07-07 19:05 | 2026-07-07 19:05 |
+| 2.2 | `ListRows` + `GridRows` double-click | [x] | 2026-07-07 19:05 | 2026-07-07 19:07 |
+| 2.3 | `TreeRows` fidelity fix (drop emit + double-click) | [x] | 2026-07-07 19:05 | 2026-07-07 19:07 |
+| 2.4 | GATE-2 AFTER-diff recorded | [x] | 2026-07-07 19:05 | 2026-07-07 19:07 |
+| 2.5 | Consumer impl tests | [x] | 2026-07-07 19:05 | 2026-07-07 19:07 |
 | 3.1 | Kitchen-sink blurbs + smoke | [ ] | | |
 | 3.2 | Final full verify + roadmap sync | [ ] | | |
 
