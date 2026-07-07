@@ -151,6 +151,13 @@ class EventLoopImpl implements EventLoop {
     this.runTick(() => this.focus.focusView(view));
   }
 
+  focusInto(view: View): void {
+    // Descend to the deepest focusable leaf so a focusable CONTAINER (e.g. a Window) hands focus to
+    // its inner view — the leaf whose `state.focused` drives the caret/highlight — instead of parking
+    // it on the container itself (the "caret vanishes on F6 window switch" defect).
+    this.runTick(() => this.focus.focusInto(view));
+  }
+
   emitCommand(command: string, arg?: unknown): void {
     // Route through runTick so a standalone emitCommand drains its cascade + paints once (PA-11);
     // a re-entrant emit (from inside a handler) joins the active tick.
@@ -332,7 +339,7 @@ class EventLoopImpl implements EventLoop {
           scopeRoot: scope,
           captureTarget: this.captureTarget, // RD-05 PA-5: short-circuit to the capture target
           isFocusable: (view) => this.focus.isFocusable(view),
-          focusView: (view) => this.focus.focusView(view), // pure mutation (inside the active tick)
+          focusInto: (view) => this.focus.focusInto(view), // descend to the inner leaf (pure, in-tick)
           deliver: (view, mouseEv) => this.deliver(view, mouseEv),
         }),
     };

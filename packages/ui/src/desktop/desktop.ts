@@ -35,6 +35,8 @@ export interface DesktopLoopSeam {
   isCommandEnabled(command: string): boolean;
   /** Focus a view (raise-on-click focuses the raised window). */
   focusView(view: View): void;
+  /** Focus **into** a container, descending to its inner focusable leaf (window switch / raise, AR-53). */
+  focusInto(view: View): void;
 }
 
 /** Match an Alt-`N` window accelerator key (a single digit 1–9). */
@@ -125,7 +127,7 @@ export class Desktop extends Group {
       this.active = windows.length > 0 ? windows[windows.length - 1] : null;
       if (this.active !== null) {
         this.active.active.set(true);
-        this.loop?.focusView(this.active);
+        this.loop?.focusInto(this.active); // descend to the new active window's inner view (caret)
       }
     }
   }
@@ -140,7 +142,10 @@ export class Desktop extends Group {
     if (this.active !== null && this.active !== w) this.active.active.set(false);
     w.active.set(true);
     this.active = w;
-    this.loop?.focusView(w);
+    // Focus INTO the window (descend to its inner view, e.g. the editor) so the focused LEAF —
+    // whose `state.focused` drives the hardware caret — is set, not just the window group. A window
+    // with no focusable child still falls back to focusing itself (focusInto's terminal case).
+    this.loop?.focusInto(w);
     this.invalidateLayout(); // z-order changed → full recompose (re-themes the two frames, ST-15)
   }
 

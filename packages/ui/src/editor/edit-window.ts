@@ -28,6 +28,7 @@ import { Window } from '../window/index.js';
 import type { Rect } from '../layout/index.js';
 import { ScrollBar } from '../scroll/index.js';
 import { Editor } from './editor.js';
+import { editorViewResized } from './editor-draw.js';
 import type { EditorDialogHandler } from './editor-dialog.js';
 import { Indicator } from './indicator.js';
 
@@ -116,14 +117,28 @@ export class EditWindow extends Window {
     this.ind.layout = { position: 'absolute', rect: { x: 2, y: h - 1, width: 14, height: 1 } };
   }
 
-  /** Re-pin the gadget rects after a WM drag-resize (TV `growMode` anchors). */
+  /** Re-pin the gadget rects + re-fit the editor scroll after a WM drag-resize (TV `growMode` anchors). */
   override onResized(): void {
     this.layoutGadgets();
+    this.refitEditor();
   }
 
-  /** Zoom also re-pins (TV growMode fires on any bounds change). */
+  /** Zoom also re-pins + re-fits (TV growMode fires on any bounds change). */
   override zoom(): void {
     super.zoom();
     this.layoutGadgets();
+    this.refitEditor();
+  }
+
+  /**
+   * Re-clamp the editor scroll to the new interior size + keep the caret visible (TV
+   * `TEditor::changeBounds`; {@link editorViewResized}). Runs at event time — the gadget reflow
+   * scheduled by {@link layoutGadgets} hasn't written `bounds` yet, so the editor is fed its new
+   * interior size (`getExtent().grow(−1,−1)`) explicitly. Without this a shrink/grow parks the
+   * hardware caret off-view until the next caret motion (the reported "caret vanishes on resize").
+   */
+  protected refitEditor(): void {
+    const { width: w, height: h } = this.currentRect();
+    editorViewResized(this.editor, { width: Math.max(0, w - 2), height: Math.max(0, h - 2) });
   }
 }
