@@ -1,6 +1,7 @@
 /**
- * Terminal barrel (RD-08 03-05) — `Terminal` + `terminalWriter` are the API; `LineRing` stays
- * internal (03-07 §Packaging).
+ * The streaming log-sink widget: `Terminal` (the view) and `terminalWriter` (a callback adapter for
+ * feeding it from a logger). `LineRing` is exported for its own tests but is not part of the public
+ * package API.
  */
 export { Terminal, terminalWriter } from './terminal.js';
 export type { TerminalOptions } from './terminal.js';

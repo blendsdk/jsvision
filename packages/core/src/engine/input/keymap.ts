@@ -1,19 +1,16 @@
 /**
- * Pluggable keymap — a pure, stateless convenience over decoded keys (RD-06,
- * plan doc 03-04, PL-10).
+ * A pluggable keymap — a pure, stateless lookup from a decoded key to a command
+ * name of your choosing.
  *
  * `createKeymap({ 'ctrl+s': 'save', … })` compiles chord→name bindings once into
- * a canonical lookup. `lookup(event)` canonicalises a {@link KeyEvent} the same
- * way and returns the bound name (or `undefined`). The keymap never consumes or
- * alters the event stream — apps call it on events they already received.
+ * a canonical table. `lookup(event)` canonicalises a {@link KeyEvent} the same way
+ * and returns the bound name (or `undefined`). The keymap never consumes or alters
+ * the event stream — you call it on events you have already decoded.
  *
- * Chord grammar: `'+'`-joined, lowercased — zero or more modifiers (`ctrl`,
- * `alt`, `shift`) followed by exactly one key (a named key from {@link KEY_NAMES}
- * or a single character). Invalid bindings (no key, unknown modifier, unknown
- * key name) throw at build time — fail fast, input validation.
- *
- * The `.js` extension in the import specifier is required by NodeNext ESM
- * resolution (it resolves to the `.ts` source during development via tsx).
+ * Chord grammar: `'+'`-joined and case-insensitive — zero or more modifiers
+ * (`ctrl`, `alt`, `shift`) followed by exactly one key (a named key from
+ * {@link KEY_NAMES} or a single character). A malformed binding (no key, unknown
+ * modifier, or unknown key name) throws at build time so mistakes surface early.
  */
 import type { KeyEvent } from './events.js';
 import { KEY_NAMES } from './events.js';
@@ -33,9 +30,22 @@ const NAMED_KEYS: ReadonlySet<string> = new Set(KEY_NAMES);
 /**
  * Build a keymap from chord→name bindings.
  *
- * @param bindings A map of chord strings (e.g. `'ctrl+s'`) to names (e.g. `'save'`).
+ * @param bindings A map of chord strings (e.g. `'ctrl+s'`) to command names (e.g. `'save'`).
  * @returns A compiled {@link Keymap} with a pure `lookup`.
  * @throws If any binding is malformed (no key, unknown modifier, or unknown key name).
+ * @example
+ * import { createKeymap, createDecoderState, decode } from '@jsvision/core';
+ *
+ * const keymap = createKeymap({ 'ctrl+s': 'save', 'escape': 'cancel' });
+ *
+ * // Ctrl+S arrives as the control byte 0x13.
+ * const { events } = decode(Uint8Array.from([0x13]), createDecoderState());
+ * for (const ev of events) {
+ *   if (ev.type === 'key') {
+ *     const command = keymap.lookup(ev); // 'save'
+ *     if (command) console.log('run command:', command);
+ *   }
+ * }
  */
 export function createKeymap(bindings: Readonly<Record<string, string>>): Keymap {
   const table = new Map<string, string>();

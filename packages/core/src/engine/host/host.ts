@@ -1,20 +1,14 @@
 /**
- * The `createHost` orchestrator (RD-07, plan doc 03-01).
+ * The terminal host — the object that takes over a real terminal and runs your
+ * app's render/input loop, then guarantees the terminal is handed back.
  *
- * Ties the bound streams, the resolved runtime adapter, RD-06's `decode()`, and
- * RD-04's `serialize()` into a running terminal application: `start()` takes over
- * the terminal (raw mode + enter-mode), the input pump turns stdin bytes into
- * `onInput` events (routing query replies away and owning the lone-ESC flush
- * timer, AR-14), `render()` diffs each frame to a single coalesced write (AR-3),
- * and signals/restore/EPIPE guarantee the terminal is restored on **every** exit
- * path (AR-6, AR-16, AR-17). `stop()` restores without exiting (AR-8).
- *
- * All exit paths funnel through one idempotent restore plus a shared
- * {@link handleFatal} crash path (PF-002/PF-008), and the adapter is resolved
- * after `bindStreams()` so the real one is bound to the output (PF-010).
- *
- * The `.js` extensions in the import specifiers are required by NodeNext ESM
- * resolution (they resolve to the `.ts` sources during development via tsx).
+ * {@link createHost} ties together stream binding, input decoding, and frame
+ * serialization: `start()` enters raw mode and full-screen mode, the input pump
+ * turns stdin bytes into decoded `onInput` events (handling terminal query
+ * replies and the lone-ESC disambiguation timer for you), `render()` diffs each
+ * frame down to a single coalesced write, and the signal/crash/EPIPE handlers
+ * restore the terminal on **every** exit path — normal, thrown, or signalled.
+ * `stop()` restores the terminal without exiting the process.
  */
 import { bindStreams } from './streams.js';
 import type { BoundStreams } from './streams.js';
@@ -41,13 +35,13 @@ function toBytes(chunk: Uint8Array | string): Uint8Array {
   return chunk; // Buffer is a Uint8Array.
 }
 
-/** Render an unknown thrown value to a stderr-safe diagnostic line (never raw input, PF-002). */
+/** Render an unknown thrown value to a stderr-safe diagnostic line (never raw input). */
 function formatError(err: unknown): string {
   if (err instanceof Error) return `${err.stack ?? err.message}\n`;
   return `${String(err)}\n`;
 }
 
-/** Whether a thrown value is an EPIPE error (a pipe disconnect, AR-16). */
+/** Whether a thrown value is an EPIPE error (the output pipe was disconnected). */
 function isEpipe(err: unknown): boolean {
   return typeof err === 'object' && err !== null && 'code' in err && err.code === 'EPIPE';
 }
@@ -56,11 +50,32 @@ function isEpipe(err: unknown): boolean {
 const noopWarn = (): void => {};
 
 /**
- * Create a terminal host. Wires caps→modes, stdin→decode→dispatch, and
- * buffer→serialize→write, and guarantees terminal restore on every exit path. [AR-1]
+ * Create a terminal host. It wires the capability profile to the terminal modes
+ * it enables, stdin to the input decoder, and each frame to a diffed write, and
+ * it guarantees the terminal is restored on every exit path.
  *
- * @param options - host configuration; only `caps` is required.
- * @returns a {@link Host}; call `start()` to take over the terminal.
+ * The returned host is idle until you `await host.start()`. Only `caps` is
+ * required; pass `onInput`/`onResize` to receive events, and drive the screen by
+ * building a {@link ScreenBuffer} and calling `host.render(buffer)`.
+ *
+ * @param options Host configuration; see {@link HostOptions}. Only `caps` is required.
+ * @returns A {@link Host}; call `start()` to take over the terminal and `stop()` to give it back.
+ * @example
+ * import { createHost, resolveCapabilities, ScreenBuffer } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const host = createHost({
+ *   caps,
+ *   onInput: (event) => {
+ *     if (event.type === 'key' && event.key === 'q') void host.stop();
+ *   },
+ *   onResize: (size) => console.error(`resized to ${size.columns}x${size.rows}`),
+ * });
+ *
+ * await host.start(); // raw mode + alternate screen; terminal restored on any exit
+ * const frame = new ScreenBuffer(20, 1, { fg: 'default', bg: 'default' });
+ * frame.set(0, 0, 'Hello — press q', { fg: 'white', bg: 'default' });
+ * host.render(frame);
  */
 export function createHost(options: HostOptions): Host {
   const caps = options.caps;
@@ -68,7 +83,7 @@ export function createHost(options: HostOptions): Host {
 
   // The EFFECTIVE serialize caps: what render() and the resume repaint emit with.
   // `JSVISION_ASCII` (presence = on, NO_COLOR-style) forces full ASCII-safe chrome at
-  // creation and skips the probe; otherwise start()'s probe may adapt it (AR-8/AR-15).
+  // creation and skips the probe; otherwise start()'s probe may adapt it.
   const forceAscii = (options.env ?? process.env).JSVISION_ASCII !== undefined;
   let effectiveCaps: CapabilityProfile = forceAscii ? degradeCapsFully(caps) : caps;
 
@@ -102,20 +117,20 @@ export function createHost(options: HostOptions): Host {
     }
   }
 
-  /** The input pump: bytes → decode → dispatch, managing the lone-ESC timer (AR-14). */
+  /** The input pump: bytes → decode → dispatch, managing the lone-ESC disambiguation timer. */
   function onData(chunk: Uint8Array | string): void {
     if (!adapter) return;
     const result = decode(toBytes(chunk), decoderState, { caps });
     decoderState = result.state;
     dispatch(result.events);
-    // result.queries are intentionally dropped — routed away from onInput (AR-2).
+    // Terminal query replies are intentionally dropped here — they never reach onInput.
     clearEscTimer();
     const carry = decoderState.carry;
-    // HR-24: arm the flush timer whenever the carry BEGINS with ESC (any length), not only for a
-    // lone ESC. A carried `ESC [` (Alt+`[`) or `ESC O` otherwise waits forever and fuses with the
-    // next keypress into a phantom CSI/SS3; the timer flushes it as an Alt-prefixed / bare escape.
+    // Arm the flush timer whenever the leftover bytes BEGIN with ESC (any length), not only for a
+    // lone ESC. A carried `ESC [` (Alt+`[`) or `ESC O` would otherwise wait forever and fuse with the
+    // next keypress into a phantom control sequence; the timer flushes it as an Alt-prefixed / bare escape.
     if (carry.length >= 1 && carry[0] === ESC) {
-      // A trailing ESC-prefixed carry: arm the disambiguation timer; new bytes cancel it (AR-14).
+      // A trailing ESC-prefixed carry: arm the disambiguation timer; new bytes cancel it.
       escTimer = adapter.setTimer(() => {
         escTimer = null;
         const flushed = flush(decoderState, { caps });
@@ -125,7 +140,7 @@ export function createHost(options: HostOptions): Host {
     }
   }
 
-  /** Shared crash path: restore → print error → onBeforeExit(1) → exit 1 (PF-002/PF-008). */
+  /** Shared crash path: restore the terminal → print the error → onBeforeExit(1) → exit 1. */
   function handleFatal(err: unknown): void {
     if (!adapter) return;
     restore?.run();
@@ -134,7 +149,7 @@ export function createHost(options: HostOptions): Host {
     adapter.exit(1);
   }
 
-  /** The bound output's `'error'` handler: EPIPE is a clean end, everything else is fatal (AR-16). */
+  /** The bound output's `'error'` handler: an EPIPE disconnect is a clean end, everything else is fatal. */
   function onOutputError(err: unknown): void {
     if (!adapter) return;
     if (isEpipe(err)) {
@@ -142,7 +157,7 @@ export function createHost(options: HostOptions): Host {
       options.onBeforeExit?.(0);
       adapter.exit(0); // a disconnect is an expected end
     } else {
-      handleFatal(err); // no throw inside the listener (PF-008)
+      handleFatal(err); // never throw out of an error listener
     }
   }
 
@@ -178,22 +193,23 @@ export function createHost(options: HostOptions): Host {
   async function start(): Promise<void> {
     if (running) return;
     running = true;
-    // HR-15: reset the render diff baseline and decoder carry on every start, so a stop()→start()
-    // restart paints a FULL first frame onto the fresh alt-screen (diffing against a stale `prev`
-    // would paint garbage) and no pre-restart ESC carry fuses into the first post-restart key.
-    // Done at start() (not stop()) so a crash between the two can never leave a half-reset state.
+    // Reset the render diff baseline and decoder carry on every start, so a stop()→start()
+    // restart paints a FULL first frame onto the fresh alternate screen (diffing against a stale
+    // `prev` would paint garbage) and no leftover ESC bytes from before the restart fuse into the
+    // first key after it. Done here (not in stop()) so a crash between the two can never leave a
+    // half-reset state.
     prev = null;
     lastBuffer = null;
     decoderState = createDecoderState();
     streams = bindStreams(options);
     isTTY = streams.isTTY;
-    // Resolve the adapter after binding so the real one is bound to the output (PF-010).
+    // Resolve the adapter after binding so the real one is bound to the actual output stream.
     adapter = options.runtime ?? realRuntime(streams.output);
 
     const enterStr = enterMode(caps, modeOpts);
     const leaveStr = leaveMode(caps, modeOpts);
 
-    // Create restore + register the panic backstop FIRST, so a crash mid-setup still restores (AR-17).
+    // Create restore + register the on-exit backstop FIRST, so a crash mid-setup still restores.
     restore = createRestore({
       adapter,
       output: streams.output,
@@ -207,14 +223,14 @@ export function createHost(options: HostOptions): Host {
 
     if (isTTY) {
       adapter.setRawMode(streams.input, true);
-      // Width probe runs in this window — raw mode on, alt-screen not yet entered —
-      // so the probe glyphs + their erase happen on the primary screen (PF: width).
-      // Skipped when effective caps are already fully ASCII-safe (env-forced,
-      // already-degraded, or utf8-off) — nothing to learn or swap (AR-13, PF-003).
+      // Run the width probe in this window — raw mode on, alternate screen not yet entered —
+      // so the probe glyphs and their erase land on the primary screen, never the UI.
+      // Skipped when the effective caps are already fully ASCII-safe (env-forced, already
+      // degraded, or non-UTF-8) — there is nothing to learn or swap.
       if ((options.warnAmbiguousWidth || options.adaptAmbiguousWidth) && !isAsciiSafe(effectiveCaps)) {
         await probeWidthAdaptAndWarn(streams.input, streams.output);
       }
-      streams.output.write(enterStr); // a throw here is caught by the 'exit' backstop (AR-17)
+      streams.output.write(enterStr); // a throw here is still caught by the on-exit restore backstop
     }
 
     signalsTeardown = installSignals({
@@ -231,7 +247,7 @@ export function createHost(options: HostOptions): Host {
       exitOnSignal: options.exitOnSignal !== false,
       onBeforeExit: options.onBeforeExit,
       getLastBuffer: () => lastBuffer,
-      // The resume repaint must use the same (possibly adapted) caps as render() (PF-001).
+      // The resume repaint must use the same (possibly width-adapted) caps as render().
       getSerializeCaps: () => effectiveCaps,
     });
 
@@ -271,7 +287,7 @@ export function createHost(options: HostOptions): Host {
 
   function render(next: ScreenBuffer, trailer?: string): void {
     if (!streams) return;
-    // Effective caps swap wide chrome to ASCII when the probe/env adapted them (AR-4).
+    // The effective caps swap wide chrome to ASCII when the probe or env forced adaptation.
     const out = serialize(next, prev, { caps: effectiveCaps });
     // The trailer (e.g. the caret show+move) rides the SAME write as the damage: a separate write
     // lets the terminal repaint in the gap with the visible cursor parked at the last damage span.

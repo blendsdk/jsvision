@@ -1,8 +1,9 @@
 /**
- * App subsystem barrel (RD-05) — the composition root + the `run()` lifecycle.
+ * The application shell: the top-level entry point for a full terminal app.
  *
- * `createApplication` composes the loop/desktop/chrome/overlay; the returned `Application.run()`
- * wires core's host and runs until `'quit'`. Re-exported through `@jsvision/ui`'s entry point.
+ * `createApplication` assembles the event loop, a desktop window manager, an optional menu bar and
+ * status line, and a popup overlay into one ready-to-run app. The returned `Application.run()`
+ * connects it to a real terminal and runs until the `'quit'` command.
  */
 export { createApplication, syncOverlayVisible } from './application.js';
 export type { Application, ApplicationOptions } from './application.js';

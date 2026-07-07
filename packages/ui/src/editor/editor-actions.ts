@@ -1,39 +1,43 @@
 /**
- * The editor action dispatch — a faithful transcription of `TEditor::handleEvent`'s `evCommand`
- * switch (`teditor1.cpp:625-736`, re-verified 2026-07-07 @ 57b6f56) over the PA-15 internal
- * `EditorAction` ids (PF-011 decided split from editor.ts).
+ * Runs one internal editor action against an {@link Editor} — the single switch that turns an
+ * {@link EditorAction} id (a resolved keystroke, or a call to `Editor.execute`) into a cursor move,
+ * a mutation, or a find/replace.
  *
- * TV wraps the motion/edit block in `lock() … trackCursor(centerCursor) … unlock()`; the dialog
- * actions (`cmFind`/`cmReplace`/`cmSearchAgain`) sit OUTSIDE that wrap (no cursor tracking) —
- * transcribed 1:1. `cmLineStart` honors autoIndent via `indentedLineStart`
- * (`teditor2.cpp:354-362`); `cmSelectAll` is the two-step `setCurPtr(0) → setCurPtr(bufLen,
- * smExtend)` (`:723-727`).
- *
- * Also home to `EditorCommands` — the ui-side registry-level command names (PA-15 as amended by
- * PF-004/PF-005: find/replace/searchAgain/clear; `save`/`saveAs` are files-owned `FileCommands`).
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Most actions run the caret motion/edit and then keep the caret in view; the find/replace actions
+ * do not track the cursor (they open a dialog instead). Also the home of {@link EditorCommands},
+ * the app-level command names that menus and the status line bind to. (Save/Save-as are not here;
+ * they belong to the file-backed editor in `@jsvision/files`.)
  */
 import { lineStart, lineEnd, nextChar, prevChar, nextWord, prevWord, nextLine, lineMove } from './buffer/index.js';
 import type { EditorAction } from './keymap.js';
 import { Editor, SM_EXTEND } from './editor.js';
 
 /**
- * The registry-level editor commands (PA-15, PF-004/PF-005 amendment): menus/status bind these;
- * the focused `Editor` handles them. `save`/`saveAs` live in `@jsvision/files`' `FileCommands`
- * (the TV decode places both in `TFileEditor`, `tfiledtr.cpp:257-262`).
+ * The app-level editor command names. Bind these from a menu or the status line; the focused
+ * `Editor` handles them. Save and Save-as are not here — they belong to the file-backed editor in
+ * `@jsvision/files`.
+ *
+ * @example
+ * import { menuBar, subMenu, item, EditorCommands } from '@jsvision/ui';
+ *
+ * const search = subMenu('~S~earch', [
+ *   item('~F~ind...', EditorCommands.find),
+ *   item('~R~eplace...', EditorCommands.replace),
+ *   item('~S~earch again', EditorCommands.searchAgain),
+ * ]);
  */
 export const EditorCommands = {
-  /** Open the find dialog (TV `cmFind`). */
+  /** Open the Find dialog. */
   find: 'find',
-  /** Open the replace dialog (TV `cmReplace`). */
+  /** Open the Replace dialog. */
   replace: 'replace',
-  /** Repeat the last search (TV `cmSearchAgain`). */
+  /** Repeat the last search. */
   searchAgain: 'searchAgain',
-  /** Delete the selection (TV `cmClear`, `teditor2.cpp:633` — PF-005; menu-reached, no live chord). */
+  /** Delete the current selection. */
   clear: 'clear',
 } as const;
 
-/** `TEditor::indentedLineStart` (`teditor2.cpp:354-362`) — Home lands after the indent first. */
+/** Home lands after the leading indent first (then, on a second press, at the true line start). */
 function indentedLineStart(ed: Editor, p: number): number {
   const startPtr = lineStart(ed.buf, p);
   let destPtr = startPtr;
@@ -43,18 +47,20 @@ function indentedLineStart(ed: Editor, p: number): number {
 }
 
 /**
- * Apply one action — the `evCommand` switch transcription. Motion/edit actions end with the TV
- * `trackCursor(centerCursor)`; the dialog actions return without tracking (decode).
+ * Apply one action to the editor. Motion and edit actions finish by keeping the caret in view;
+ * the find/replace actions open a dialog and do not move the caret.
  *
- * @param ed The editor.
+ * @param ed The editor to act on.
  * @param action The internal action id.
- * @param selectMode The ambient TV selectMode bits (shift/selecting → `smExtend`).
- * @param centerCursor TV's `!cursorVisible()` — center the viewport instead of nudging it.
+ * @param selectMode Selection bits: pass a non-zero value (with the `SM_EXTEND` bit) to extend the
+ *   selection with the motion instead of collapsing it — set when Shift is held or select mode is on.
+ * @param centerCursor When `true`, re-center the viewport on the caret rather than nudging it into
+ *   view; typically passed when the caret was scrolled off-screen before the action.
  */
 export function applyAction(ed: Editor, action: EditorAction, selectMode: number, centerCursor = false): void {
   switch (action) {
-    // Outside the tracked block (teditor1.cpp:625-636). The seam is async (PA-17) — dispatch
-    // never blocks on it; the fire-and-forget is deliberate.
+    // Find/replace open an async dialog; dispatch must not block on it, so fire-and-forget and
+    // return without the cursor-tracking the motion/edit actions do.
     case 'find':
       void ed.find();
       return;
@@ -64,7 +70,7 @@ export function applyAction(ed: Editor, action: EditorAction, selectMode: number
     case 'searchAgain':
       void ed.searchAgain();
       return;
-    // The tracked block (teditor1.cpp:637-733).
+    // Everything below runs the edit/motion and then tracks the cursor at the end of the switch.
     case 'cut':
       ed.cut();
       break;
@@ -77,7 +83,7 @@ export function applyAction(ed: Editor, action: EditorAction, selectMode: number
     case 'undo':
       ed.undo();
       break;
-    case 'redo': // RD-08 extension (PA-1) — rides the same tracked block as undo
+    case 'redo':
       ed.redo();
       break;
     case 'clear':
@@ -123,7 +129,7 @@ export function applyAction(ed: Editor, action: EditorAction, selectMode: number
       ed.newLine();
       break;
     case 'backSpace':
-      ed.coalesceNextEdit = true; // single-cluster deletes coalesce (AR-253)
+      ed.coalesceNextEdit = true; // consecutive single-char deletes merge into one undo step
       ed.deleteRange(prevChar(ed.buf, ed.curPtr), ed.curPtr, true);
       break;
     case 'delChar':
@@ -149,13 +155,13 @@ export function applyAction(ed: Editor, action: EditorAction, selectMode: number
       ed.toggleInsMode();
       break;
     case 'startSelect':
-      // TV startSelect (teditor2.cpp:562-566): collapse, then arm persistent select.
+      // Collapse any selection, then arm persistent-select so subsequent motions extend it.
       ed.selecting = false;
       ed.setSelect(ed.curPtr, ed.curPtr, false);
       ed.selecting = true;
       break;
     case 'hideSelect':
-      // TV hideSelect (teditor2.cpp:86-90).
+      // Turn off persistent-select and collapse the selection to the caret.
       ed.selecting = false;
       ed.setSelect(ed.curPtr, ed.curPtr, false);
       break;

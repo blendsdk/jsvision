@@ -1,18 +1,15 @@
 /**
- * RD-06 input event model & decoder types (plan doc 03-01).
+ * The typed input-event model the decoder emits, plus the decoder state and
+ * per-decode options.
  *
- * Defines the public, typed event model the decoder emits plus the internal
- * decoder/paste state and per-decode options. All event types are `readonly`
- * plain data (no behaviour). Query responses are deliberately NOT part of the
- * {@link InputEvent} union (PL-9): they are routed through a separate `queries`
- * channel so a terminal reply physically cannot leak as a keystroke (AC-6).
- *
- * The `.js` extension in the import specifier is required by NodeNext ESM
- * resolution (it resolves to the `.ts` source during development via tsx).
+ * Every event type is `readonly` plain data (no behaviour). Capability-query
+ * replies are deliberately NOT part of the {@link InputEvent} union: they are
+ * returned on a separate `queries` channel so a terminal reply cannot leak into
+ * your app as a keystroke.
  */
 import type { CapabilityProfile } from '../capability/profile.js';
 
-/** A printable or named key press. (AC-1) */
+/** A printable character or named key press. */
 export interface KeyEvent {
   readonly type: 'key';
   /** Printable → the character; named key → a lowercase name (see {@link KEY_NAMES}). */
@@ -24,7 +21,7 @@ export interface KeyEvent {
   readonly codepoint?: number;
 }
 
-/** An SGR (1006) mouse report. Coordinates are 1-based as the terminal sends them (PL-11, AC-3). */
+/** A mouse button/motion report. Coordinates are 1-based, exactly as the terminal sends them. */
 export interface MouseEvent {
   readonly type: 'mouse';
   readonly kind: 'down' | 'up' | 'move' | 'drag';
@@ -34,71 +31,71 @@ export interface MouseEvent {
 }
 
 /**
- * A wheel/scroll report (SGR buttons 64–67). (AC-4)
+ * A wheel/scroll report. A wheel report is never delivered as a {@link MouseEvent}.
  *
- * The modifier flags are the xterm SGR modifier bits OR-encoded into the button
- * byte (Shift 0x04, Meta/Alt 0x08, Ctrl 0x10). They let a consumer distinguish,
- * e.g., a plain vertical wheel from a Shift+wheel (a common horizontal-scroll
- * fallback on terminals that do not remap Shift+Wheel to buttons 66/67).
+ * The `shift`/`alt`/`ctrl` flags report the modifiers held during the scroll. They
+ * let you distinguish, e.g., a plain vertical wheel from a Shift+wheel (a common
+ * horizontal-scroll fallback on terminals that do not send dedicated left/right
+ * wheel reports).
  */
 export interface WheelEvent {
   readonly type: 'wheel';
   readonly dir: 'up' | 'down' | 'left' | 'right';
   readonly x: number;
   readonly y: number;
-  /** Shift held during the wheel report (SGR modifier bit 0x04). */
+  /** Shift held during the wheel report. */
   readonly shift: boolean;
-  /** Meta/Alt held during the wheel report (SGR modifier bit 0x08). */
+  /** Meta/Alt held during the wheel report. */
   readonly alt: boolean;
-  /** Ctrl held during the wheel report (SGR modifier bit 0x10). */
+  /** Ctrl held during the wheel report. */
   readonly ctrl: boolean;
 }
 
-/** A completed bracketed paste. `truncated` is true when the size cap clipped it (PL-5, AC-7). */
+/** A completed bracketed paste. `truncated` is true when the paste size cap clipped the text. */
 export interface PasteEvent {
   readonly type: 'paste';
   readonly text: string;
   readonly truncated: boolean;
 }
 
-/** A focus in/out report (`CSI I` / `CSI O`), gated on `?1004` by the host (PL-7). */
+/** A terminal focus-gained / focus-lost report (emitted only when the host enables focus reporting). */
 export interface FocusEvent {
   readonly type: 'focus';
   readonly focused: boolean;
 }
 
-/** Any app-facing decoded event. Query responses are NOT in this union (PL-9). */
+/** Any app-facing decoded event. Capability-query replies are NOT part of this union. */
 export type InputEvent = KeyEvent | MouseEvent | WheelEvent | PasteEvent | FocusEvent;
 
 /**
- * A recognised terminal query reply, routed to the RD-02 capability channel only.
+ * A recognised terminal query reply (device attributes, version, mode report),
+ * used by capability detection.
  *
  * Never part of {@link InputEvent}; returned in {@link DecodeResult.queries} so a
- * reply cannot be delivered as a keystroke (AC-6). `kind` mirrors the shared
- * classifier ({@link ../capability/responses.js}); `'unknown'` is reserved for
- * future grammars the decoder may route without classifying.
+ * reply cannot be delivered as a keystroke. `'unknown'` is reserved for reply
+ * shapes the decoder routes here without classifying.
  */
 export interface QueryResponse {
-  /** The raw recognised bytes (for RD-02 to parse further). */
+  /** The raw recognised bytes, for the capability layer to parse further. */
   readonly raw: Uint8Array;
-  /** Classification from the shared responses classifier (`capability/responses.ts`). */
+  /** The reply classification. */
   readonly kind: 'da1' | 'da2' | 'xtversion' | 'decrpm' | 'unknown';
 }
 
 /**
  * The result of one {@link decode}/{@link flush} call.
  *
- * The host threads decoding forward with `state = result.state` (RT-1): `state`
- * carries both the incomplete trailing bytes and any in-progress bracketed paste
- * so a sequence or paste split across chunks survives. `rest` is retained as a
- * convenience equal to `state.carry` (the incomplete trailing bytes).
+ * Thread decoding forward with `state = result.state`: it carries both the
+ * incomplete trailing bytes and any in-progress bracketed paste, so a sequence or
+ * paste split across chunks survives. `rest` is a convenience equal to
+ * `state.carry` (the incomplete trailing bytes).
  */
 export interface DecodeResult {
   readonly events: InputEvent[];
   readonly queries: QueryResponse[];
   /** Incomplete trailing bytes carried to the next decode() call (=== `state.carry`). */
   readonly rest: Uint8Array;
-  /** The next decoder state to pass to the following decode() call (RT-1). */
+  /** The next decoder state to pass to the following decode() call. */
   readonly state: DecoderState;
 }
 
@@ -110,42 +107,42 @@ export interface PasteState {
 }
 
 /**
- * Opaque carry between {@link decode} calls. Created by `createDecoderState()`.
- * The host carries `rest` forward as the next call's `carry`.
+ * The opaque carry threaded between {@link decode} calls. Create the first one
+ * with `createDecoderState()`, then feed each call's `result.state` into the next.
  */
 export interface DecoderState {
-  /** Incomplete trailing bytes from the previous call (bounded by RESPONSE_BUFFER_CAP, PL-6). */
+  /** Incomplete trailing bytes from the previous call (bounded, so a runaway sequence cannot grow it). */
   readonly carry: Uint8Array;
   /** In-progress bracketed-paste accumulation. */
   readonly paste: PasteState;
   /**
-   * True while discarding the tail of an oversized, unterminated sequence after
-   * the carry bound tripped (PL-6): subsequent bytes are dropped (no events)
-   * until the next `ESC` resynchronises the stream (AC-7/AC-8).
+   * True while discarding the tail of an oversized, unterminated sequence: after
+   * the carry bound trips, subsequent bytes are dropped (no events) until the next
+   * `ESC` resynchronises the stream.
    */
   readonly resync: boolean;
 }
 
 /**
- * Per-decode configuration. All optional; sensible defaults applied. `options`
- * is read-only and never mutated.
+ * Per-decode configuration. All fields optional; `options` is read-only and never
+ * mutated.
  */
 export interface DecodeOptions {
-  /** Capability profile; selects classic vs CSI-u branch (PL-4) and informs the host's focus gating (PL-7). */
+  /** Resolved terminal capabilities; informs which keyboard grammar to use and focus handling. */
   readonly caps?: CapabilityProfile;
-  /** Override the paste size cap (default {@link PASTE_CAP_BYTES}, PL-5). */
+  /** Override the bracketed-paste size cap in bytes (default {@link PASTE_CAP_BYTES}). */
   readonly pasteCap?: number;
 }
 
-/** Lone-ESC disambiguation window in ms — shipped for the RD-07 host's timer (PL-3). */
+/** Lone-`ESC` disambiguation window, in milliseconds — the recommended delay before calling `flush()`. */
 export const ESC_TIMEOUT_MS = 50;
 
-/** Default bracketed-paste size cap in bytes (PL-5). Configurable via {@link DecodeOptions}. */
+/** Default bracketed-paste size cap in bytes. Override per call via {@link DecodeOptions.pasteCap}. */
 export const PASTE_CAP_BYTES = 1_048_576; // 1 MiB
 
 /**
- * The named (non-printable) keys the decoder can emit, all lowercase (PL-11).
- * A printable key instead sets `key` to the decoded character plus `codepoint`.
+ * The named (non-printable) keys the decoder can emit, all lowercase. A printable
+ * key instead sets `key` to the decoded character plus its `codepoint`.
  */
 export const KEY_NAMES = [
   'up',

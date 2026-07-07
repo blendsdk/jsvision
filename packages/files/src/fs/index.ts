@@ -1,6 +1,7 @@
 /**
- * The `fs/` barrel — the `FileSystem` seam + its `node:fs` default + the pure cores
- * (wildcard / scan+sort / tree). View-free, TTY-free, zero runtime deps. `.js` per NodeNext.
+ * Filesystem building blocks: the injectable {@link FileSystem} interface, its Node-backed default
+ * {@link nodeFileSystem}, and the pure helpers the dialogs build on — wildcard matching, directory
+ * scanning/sorting, and directory-tree geometry. All view-free and terminal-free.
  */
 export type { DirEntry, FileStat, FileSystem } from './types.js';
 export { nodeFileSystem } from './node-fs.js';

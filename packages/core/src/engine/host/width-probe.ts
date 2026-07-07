@@ -1,37 +1,35 @@
 /**
- * Ambiguous-width startup probe & warning (RD-11 follow-up; two-group amendment
- * per glyph-auto-swap AR-16).
+ * Startup probe that detects when the terminal renders the SDK's box/scroll
+ * chrome glyphs at double width, and helpers to warn or adapt when it does.
  *
- * The chrome glyphs jsvision draws — scroll arrows/thumbs and box-drawing frames —
- * render one cell on most terminals but TWO cells when the emulator falls back to
- * a wide font for a missing glyph, or under a CJK/ambiguous-width locale. There is
- * no way to query a terminal's font, so this measures the only thing that matters:
- * how many columns the glyphs actually advance.
+ * The chrome glyphs the SDK draws — scroll arrows/thumbs and box-drawing frames —
+ * render one cell wide on most terminals but TWO cells when the emulator falls
+ * back to a wide font for a missing glyph, or under a CJK/ambiguous-width locale.
+ * A double-wide glyph shears the layout. There is no way to query a terminal's
+ * font, so this measures the only thing that matters: how many columns the glyphs
+ * actually advance.
  *
- * The technique is a Cursor-Position-Report (CPR) probe: home the cursor to column
- * 1, print the probe glyphs, request the cursor position (DSR `ESC[6n`), and read
- * the terminal's `ESC[<row>;<col>R` reply. The advance is `col - 1`; if it exceeds
- * the probe's code-point count, at least one glyph rendered wide.
+ * The technique is a Cursor-Position-Report probe: home the cursor to column 1,
+ * print the probe glyphs, ask the terminal where the cursor is now, and read its
+ * `ESC[<row>;<col>R` reply. The advance is `col - 1`; if it exceeds the number of
+ * glyphs printed, at least one rendered wide.
  *
- * TWO groups are measured in ONE pass (AR-6), each re-homed to column 1 so their
- * advances are independent: group 1 = the fallback-prone arrow/geometric chrome
- * set (flips `glyphs.ambiguousWide`), group 2 = a box-drawing + shade sample
- * (flips `glyphs.boxDrawing`/`halfBlocks` off). Both CPR requests are written up
- * front and both replies parsed from the same byte stream under one shared timeout
- * — functionally identical to a real terminal processing the writes in order.
+ * Two groups are measured in one pass, each re-homed to column 1 so their
+ * advances are independent: the fallback-prone arrow/geometric set (which, when
+ * wide, turns on the `ambiguousWide` glyph flag) and a box-drawing + shade sample
+ * (which turns `boxDrawing`/`halfBlocks` off).
  *
- * This runs over the same injectable {@link TerminalQuery} seam the layer-2
- * capability probe uses, so it is fully testable without a real terminal and
- * shares the bounded-timeout, untrusted-response posture: replies are parsed as
- * data only (no code execution), under a byte cap and a single timeout, and any
- * failure degrades to "not probed" rather than throwing.
+ * This runs over the same injectable {@link TerminalQuery} the async capability
+ * detection uses, so it is fully testable without a real terminal, and it is
+ * robust to a hostile or silent terminal: replies are parsed as data only, under
+ * a byte cap and a single timeout, and any failure degrades to "not probed"
+ * rather than throwing.
  *
- * The caller must run this on a real interactive TTY in raw mode, BEFORE entering
- * the alternate screen (so the probe glyphs + their erase happen on the normal
- * screen and never corrupt the UI). On a non-TTY / silent terminal the probe
- * simply reports `probed:false` and no warning is emitted.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Run it on a real interactive TTY in raw mode, BEFORE entering the alternate
+ * screen, so the probe glyphs and their erase land on the normal screen and never
+ * corrupt your UI. On a non-TTY or silent terminal it simply reports
+ * `probed: false` and emits no warning. (The host does all this for you when you
+ * pass `warnAmbiguousWidth` / `adaptAmbiguousWidth`.)
  */
 import type { CapabilityProfile, TerminalQuery } from '../capability/profile.js';
 
@@ -62,19 +60,17 @@ const HOME_COLUMN = '\r';
 const CLEANUP = '\r\x1b[2K';
 
 /**
- * Group 1 — the fallback-prone arrow/geometric chrome set jsvision draws (scroll
- * arrows, submenu/input arrows, radio mark, zoom/restore/close icons). Mostly
- * East-Asian-Ambiguous (`◄►` are EAW-Neutral but equally font-fallback-prone).
- * Flips `glyphs.ambiguousWide` when it renders wide. (AR-6)
+ * The arrow/geometric probe group: the fallback-prone chrome the SDK draws
+ * (scroll arrows, submenu/input arrows, radio mark, zoom/restore/close icons).
+ * When this group renders wide, the `ambiguousWide` glyph flag is turned on.
  */
-export const AMBIGUOUS_PROBE_GLYPHS = '▲▼◄►•↑↕×'; // ▲▼◄►•↑↕×
+export const AMBIGUOUS_PROBE_GLYPHS = '▲▼◄►•↑↕×';
 
 /**
- * Group 2 — a box-drawing + shade sample (corners, edges, shades). East-Asian
- * Ambiguous too, so under an ambiguous-wide locale frames shear like arrows.
- * Flips `glyphs.boxDrawing`/`halfBlocks` off when it renders wide. (AR-6)
+ * The box-drawing + shade probe group (corners, edges, shades). When this group
+ * renders wide, the `boxDrawing` and `halfBlocks` glyph flags are turned off.
  */
-export const BOX_PROBE_GLYPHS = '┌┐└┘─│▒█'; // ┌┐└┘─│▒█
+export const BOX_PROBE_GLYPHS = '┌┐└┘─│▒█';
 
 /** The one-line console warning emitted when a wide group is found but NOT adapted. */
 export const WIDTH_WARNING_MESSAGE =
@@ -104,13 +100,13 @@ export interface WidthProbeGroupResult {
   readonly wide: boolean;
 }
 
-/** The outcome of a two-group ambiguous-width probe (AR-16 in-place evolution). */
+/** The outcome of a two-group ambiguous-width probe. */
 export interface WidthProbeResult {
-  /** True iff the terminal answered BOTH groups with usable CPRs. */
+  /** True only when the terminal answered BOTH groups with usable position reports. */
   readonly probed: boolean;
-  /** Group 1 — arrow/geometric chrome. */
+  /** The arrow/geometric chrome group. */
   readonly arrows: WidthProbeGroupResult;
-  /** Group 2 — box-drawing + shade. */
+  /** The box-drawing + shade group. */
   readonly boxes: WidthProbeGroupResult;
 }
 
@@ -154,11 +150,18 @@ function findCursorPosition(buf: Uint8Array, from: number): { position: CursorPo
 }
 
 /**
- * Parse the first well-formed Cursor-Position-Report out of a byte buffer,
- * ignoring any surrounding bytes.
+ * Parse the first Cursor-Position-Report (`ESC [ <row> ; <col> R`) out of a byte
+ * buffer, ignoring any surrounding bytes. Rows and columns are 1-based, as the
+ * terminal reports them.
  *
  * @param buf Raw bytes received from the terminal.
  * @returns The parsed 1-based {@link CursorPosition}, or `null` if none is present.
+ * @example
+ * import { parseCursorPosition } from '@jsvision/core';
+ *
+ * const reply = new TextEncoder().encode('\x1b[12;40R');
+ * parseCursorPosition(reply); // => { row: 12, col: 40 }
+ * parseCursorPosition(new TextEncoder().encode('no report here')); // => null
  */
 export function parseCursorPosition(buf: Uint8Array): CursorPosition | null {
   const found = findCursorPosition(buf, 0);
@@ -208,9 +211,22 @@ function notProbed(arrowsExpected: number, boxesExpected: number): WidthProbeRes
  * a throwing `write`/`read`, a silent terminal (timeout), a single-group reply, or
  * an oversized reply all yield `probed:false` with both groups unmeasured.
  *
- * @param query The injected terminal stream seam (real TTY or a test double).
+ * @param query The terminal to probe (a real TTY-backed query or a test double).
  * @param options Per-group probe strings + shared timeout overrides.
- * @returns The {@link WidthProbeResult}.
+ * @returns The {@link WidthProbeResult}; `probed: false` if the terminal did not answer.
+ * @example
+ * import { createTerminalQuery, probeAmbiguousWidth } from '@jsvision/core';
+ *
+ * // On a real TTY in raw mode, before entering the alternate screen:
+ * const query = createTerminalQuery();
+ * try {
+ *   const result = await probeAmbiguousWidth(query);
+ *   if (result.probed && (result.arrows.wide || result.boxes.wide)) {
+ *     console.error('terminal renders chrome glyphs double-width');
+ *   }
+ * } finally {
+ *   query.close();
+ * }
  */
 export async function probeAmbiguousWidth(
   query: TerminalQuery,
@@ -298,13 +314,21 @@ async function readBothCprs(query: TerminalQuery, timeoutMs: number): Promise<[C
 }
 
 /**
- * Pure: apply a probe outcome to caps — downgrade only, never upgrade (AR-6).
- * Group 1 wide → `glyphs.ambiguousWide = true`; group 2 wide → `glyphs.boxDrawing`
- * and `glyphs.halfBlocks` off. Returns the same reference when nothing changed.
+ * Apply a probe outcome to a capability profile — downgrade only, never upgrade.
+ * A wide arrow group turns `ambiguousWide` on; a wide box group turns
+ * `boxDrawing` and `halfBlocks` off. Returns the same object reference when
+ * nothing changed. Pure.
  *
- * @param caps The effective caps to degrade.
+ * @param caps The capability profile to degrade.
  * @param result A completed {@link WidthProbeResult}.
- * @returns A new caps object with the implicated glyph flags degraded, or `caps` unchanged.
+ * @returns A new profile with the affected glyph flags degraded, or `caps` unchanged.
+ * @example
+ * import { probeAmbiguousWidth, degradeCapsForWidth, serialize } from '@jsvision/core';
+ *
+ * // Adapt your render caps so every subsequent frame emits aligned chrome.
+ * const result = await probeAmbiguousWidth(query);
+ * const renderCaps = degradeCapsForWidth(caps, result);
+ * // ... serialize(frame, prev, { caps: renderCaps }) ...
  */
 export function degradeCapsForWidth(caps: CapabilityProfile, result: WidthProbeResult): CapabilityProfile {
   let glyphs = caps.glyphs;
@@ -314,27 +338,37 @@ export function degradeCapsForWidth(caps: CapabilityProfile, result: WidthProbeR
 }
 
 /**
- * Pure: fully ASCII-safe caps — the `JSVISION_ASCII` / force-degrade shape (AR-15).
- * Box-drawing and half-blocks off, ambiguous-wide on, so every chrome glyph maps
- * to ASCII at serialize time.
+ * Force a capability profile fully ASCII-safe: box-drawing and half-blocks off,
+ * ambiguous-wide on, so every chrome glyph maps to plain ASCII when rendered.
+ * This is the shape the host uses when `JSVISION_ASCII` is set. Pure.
  *
- * @param caps The caps to degrade.
- * @returns A new caps object with all three glyph flags at their ASCII-safe polarity.
+ * @param caps The capability profile to degrade.
+ * @returns A new profile with all three glyph flags at their ASCII-safe setting.
+ * @example
+ * import { resolveCapabilities, degradeCapsFully, serialize } from '@jsvision/core';
+ *
+ * const caps = degradeCapsFully(resolveCapabilities().profile);
+ * // serialize(frame, prev, { caps }) now emits ASCII box/scroll chrome.
  */
 export function degradeCapsFully(caps: CapabilityProfile): CapabilityProfile {
   return { ...caps, glyphs: { ...caps.glyphs, boxDrawing: false, halfBlocks: false, ambiguousWide: true } };
 }
 
 /**
- * Pure: is there nothing left to probe or swap? (AR-13, PF-003)
+ * Whether a capability profile already renders as pure ASCII, so the width probe
+ * can be skipped with nothing to learn or swap. Pure.
  *
- * True when `unicode.utf8` is off — every glyph above U+007F already emits `?`, so
- * output is fully ASCII regardless of the glyph flags, and probing would only write
- * raw UTF-8 bytes to a non-UTF-8 terminal — OR when the glyph flags are already at
- * their fully-degraded polarity (box/half off, ambiguous-wide on).
+ * True when UTF-8 output is off (every glyph above U+007F already becomes `?`,
+ * and probing would only write raw UTF-8 to a non-UTF-8 terminal), or when the
+ * glyph flags are already fully degraded (box/half off, ambiguous-wide on).
  *
- * @param caps The effective caps to test.
- * @returns True when the probe can be skipped with no loss.
+ * @param caps The capability profile to test.
+ * @returns True when the probe can be skipped with no loss of fidelity.
+ * @example
+ * import { resolveCapabilities, isAsciiSafe, degradeCapsFully } from '@jsvision/core';
+ *
+ * isAsciiSafe(resolveCapabilities().profile);         // typically false on a UTF-8 terminal
+ * isAsciiSafe(degradeCapsFully(resolveCapabilities().profile)); // => true
  */
 export function isAsciiSafe(caps: CapabilityProfile): boolean {
   return !caps.unicode.utf8 || (!caps.glyphs.boxDrawing && !caps.glyphs.halfBlocks && caps.glyphs.ambiguousWide);
@@ -346,14 +380,26 @@ function defaultWarn(message: string): void {
 }
 
 /**
- * Probe the terminal for double-width chrome glyphs and, if a group is wide, emit a
- * single warning. Intended to run once at startup (real TTY, raw mode, before the
- * alternate screen). Silent/non-TTY terminals produce no warning.
+ * Probe the terminal for double-width chrome glyphs and, if a group is wide, emit
+ * one warning line. Meant to run once at startup on a real TTY in raw mode,
+ * before entering the alternate screen. A silent or non-TTY terminal produces no
+ * warning. Returns the probe result too, so you can also adapt your render caps.
  *
- * @param query The injected terminal stream seam.
- * @param options Probe overrides, an optional `warn` sink (default: stderr), and the
- *   `adapted` flag selecting the message variant.
- * @returns The {@link WidthProbeResult} (so the caller can also act on it).
+ * @param query The terminal to probe.
+ * @param options Probe overrides, an optional `warn` sink (default: one line to stderr),
+ *   and the `adapted` flag, which selects the "adapted automatically" wording.
+ * @returns The {@link WidthProbeResult}.
+ * @example
+ * import { createTerminalQuery, warnIfAmbiguousWide, degradeCapsForWidth } from '@jsvision/core';
+ *
+ * const query = createTerminalQuery();
+ * try {
+ *   // Warn the user, and adapt render caps in one probe run.
+ *   const result = await warnIfAmbiguousWide(query, { adapted: true });
+ *   const renderCaps = degradeCapsForWidth(caps, result);
+ * } finally {
+ *   query.close();
+ * }
  */
 export async function warnIfAmbiguousWide(
   query: TerminalQuery,

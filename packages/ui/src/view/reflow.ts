@@ -1,13 +1,12 @@
 /**
- * The reflow pass (RD-03, AR-33 / AR-41 / PA-7) — the RD-02 ↔ RD-03 seam. It builds a **fresh**
- * `LayoutBox` tree from the live (visible) view tree each pass, keeping a per-pass
- * `Map<LayoutBox, View>`, calls RD-02 `layout(rootBox, viewport)`, and writes each resulting
- * parent-relative integer `Rect` back onto the corresponding `view.bounds`. A `visible:false` view
- * (and its subtree) is omitted, so its siblings reflow to fill the freed space (`display:none`).
+ * The reflow pass — the bridge between the widget tree and the layout engine. Each pass builds a
+ * fresh layout-box tree from the currently-visible views, runs the layout engine over the viewport,
+ * and writes each computed parent-relative rect back onto the corresponding `view.bounds`. A view
+ * with `visible: false` (and its whole subtree) is left out, so its siblings reflow to fill the
+ * freed space — the equivalent of CSS `display: none`.
  *
- * RD-02's "fresh tree, distinct instances" precondition holds by construction (a new box per view
- * per pass). Pure with respect to the view tree except the intended `bounds` writes (+ firing
- * pending `onMount` callbacks once the views have bounds).
+ * The pass is pure with respect to the view tree apart from the intended `bounds` writes, and it
+ * fires any pending `onMount` callbacks once the views finally have bounds.
  */
 import { layout } from '../layout/index.js';
 import type { LayoutBox, Size2D } from '../layout/index.js';
@@ -15,8 +14,8 @@ import { View } from './view.js';
 import { Group } from './group.js';
 
 /**
- * Reflow the view tree into the viewport: compute every visible view's parent-relative `bounds`
- * via RD-02 `layout()`, then fire pending `onMount` callbacks for newly-laid-out views (AR-36).
+ * Reflow the view tree into the viewport: compute every visible view's parent-relative `bounds`,
+ * then fire pending `onMount` callbacks for the views that just received bounds.
  *
  * @param root     The root view of the tree to lay out.
  * @param viewport The available size in cells.
@@ -37,12 +36,11 @@ export function reflow(root: View, viewport: Size2D): void {
 }
 
 /**
- * Recentre every visible `centered` view within its parent, in the same pass as layout (so the first
- * frame is already centered — no one-frame jump). The TV `ofCentered` port: `TGroup::insertBefore`
- * sets `origin = (ownerSize - viewSize)/2` on the flagged axes (tgroup.cpp:393-397). Runs after all
- * `bounds` are written, so a parent's laid-out size is available; only the origin is moved (never the
- * size), so nesting a centered view inside a centered parent stays consistent. `Math.trunc` matches
- * C++ integer division for the normal case (view smaller than its parent).
+ * Recentre every visible `centered` view within its parent, in the same pass as layout, so the first
+ * frame is already centered with no one-frame jump. It sets `origin = (parentSize - viewSize) / 2`
+ * on both axes. It runs after all `bounds` are written (so each parent's laid-out size is known) and
+ * moves only the origin, never the size, so a centered view nested inside a centered parent stays
+ * consistent. Integer-truncated for the normal case where the view is smaller than its parent.
  *
  * @param view The subtree root to walk.
  */
@@ -62,8 +60,8 @@ function applyCentering(view: View): void {
 }
 
 /**
- * Build a `LayoutBox` for a view (depth-first), recording the box→view mapping. Returns `null` for
- * a `visible:false` view so it (and its subtree) is omitted from the layout tree (AR-41).
+ * Build a `LayoutBox` for a view (depth-first), recording the box→view mapping. Returns `null` for a
+ * `visible: false` view so it (and its subtree) is omitted from the layout tree entirely.
  */
 function buildBox(view: View, map: Map<LayoutBox, View>): LayoutBox | null {
   if (!view.state.visible) return null;

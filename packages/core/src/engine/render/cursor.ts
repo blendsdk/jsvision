@@ -1,14 +1,20 @@
 /**
- * Cursor control sequences (RD-04, M7, plan doc 03-04, PL-8).
- *
- * Show/hide and absolute move are capability-independent and always safe.
- * Cursor **shape** (DECSCUSR) is deferred (DEF-1) — no capability field gates
- * it — so it is intentionally absent here.
+ * Cursor control sequences. Show/hide and absolute move are capability-independent
+ * and safe on every terminal. Cursor shape (DECSCUSR) is intentionally not offered.
  */
 
 import { CSI, cursorTo } from './ansi.js';
 
-/** Capability-independent cursor controls (show/hide/absolute move). */
+/**
+ * Capability-independent cursor controls (show/hide/absolute move). Each method
+ * returns an ANSI string for you to write to the terminal.
+ *
+ * @example
+ * import { cursor } from '@jsvision/core';
+ * process.stdout.write(cursor.hide());      // hide during a repaint
+ * process.stdout.write(cursor.to(5, 10));   // move to row 5, column 10 (1-based)
+ * process.stdout.write(cursor.show());      // show it again
+ */
 export const cursor = {
   /** Show the text cursor (`CSI ?25 h`). */
   show(): string {

@@ -1,13 +1,14 @@
 /**
- * The retained-tree base node (RD-03). A `View` is a persistent object that keeps identity
- * between frames: a parent-relative `bounds`, `state` flags, RD-02 `layout` props, an overridable
- * `draw(ctx)`, an `onEvent` stub (dispatch logic is RD-04, AR-30), the reactive `bind` helper
- * (AR-31/AR-46), the two dirty-phase invalidators (AR-32/AR-33), and owner-scope lifecycle
- * (AR-36). Subclass + override `draw()` for custom widgets (the disciplined-hybrid escape hatch).
+ * `View` — the base class for every widget in the tree.
  *
- * Owner-scope wiring uses RD-01's additive `runWithOwner` (AR-43, PA-1): a view's scope is created
- * **under its parent's** scope at mount, so disposing any subtree disposes every descendant's
- * computations and runs their `onCleanup` — leak-free by construction.
+ * A view is a persistent object that keeps its identity across frames. It carries a parent-relative
+ * `bounds`, a small set of `state` flags, layout props, an overridable `draw(ctx)`, an `onEvent`
+ * hook, the reactive `bind` helper for binding signals to redraws, invalidation methods to request a
+ * repaint or reflow, and a per-view reactive scope that is created at mount and disposed at unmount.
+ *
+ * Subclass `View` and override `draw()` (and optionally `onEvent`) to build a custom widget. Because
+ * each view's scope is created **under its parent's** scope, unmounting any part of the tree disposes
+ * every descendant's effects and runs their `onCleanup` — so views never leak.
  */
 import type { Owner, Signal } from '../reactive/index.js';
 import { runWithOwner, untrack, createRoot, effect, onCleanup, getOwner, signal, computed } from '../reactive/index.js';
@@ -17,19 +18,19 @@ import type { DrawContext, ViewState, DispatchEvent } from './types.js';
 import type { Point } from './geometry.js';
 
 /**
- * The internal seam a `View` uses to talk to its render root: the dirty-set scheduler (RT-1). The
- * Phase-5 `RenderRoot` implements this. Declared here (not in `types.ts`) so the method signatures
- * can reference `View` without a type cycle.
+ * The internal seam a `View` uses to talk to its render root — how a view requests a repaint or
+ * reflow. The `RenderRoot` implements this. Declared here (not in `types.ts`) so the method
+ * signatures can reference `View` without a type cycle.
  */
 export interface ViewHost {
-  /** Mark a view as needing repaint and schedule a flush (AR-32). */
+  /** Mark a view as needing a repaint and schedule a frame. */
   markRepaint(view: View): void;
-  /** Mark the tree as needing reflow and schedule a flush (AR-33). */
+  /** Mark the tree as needing a reflow and schedule a frame. */
   markRelayout(): void;
   /**
-   * Re-home focus after `group` lost its currently-focused child to removal (RD-13 HR-10/PA-10).
-   * Optional: wired only when an event loop is attached (it owns the focus manager). A view-only
-   * render root leaves it unset, so `Group.remove` just clears its `current` pointer.
+   * Re-home focus after `group` lost its currently-focused child to removal. Optional: wired only
+   * when an event loop is attached (it owns the focus manager). A standalone render root leaves it
+   * unset, so `Group.remove` just clears its focus pointer.
    *
    * @param group The group whose focused child was removed.
    */
@@ -37,75 +38,95 @@ export interface ViewHost {
 }
 
 /**
- * Abstract retained-tree node. Concrete views subclass this and implement `draw`; `Group`
- * (the one RD-03 container) is the only built-in concrete subclass.
+ * Abstract widget base. Subclass it and implement `draw`; `Group` (the built-in container) is the
+ * only concrete subclass shipped here.
+ *
+ * @example
+ * import { View, Group, createRenderRoot, type DrawContext } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * class Clock extends View {
+ *   constructor(private readonly read: () => string) { super(); }
+ *   draw(ctx: DrawContext): void {
+ *     ctx.fill(' ', ctx.color('statusBar'));
+ *     ctx.text(1, 0, this.read(), ctx.color('statusBar'));
+ *   }
+ * }
+ *
+ * const clock = new Clock(() => new Date().toLocaleTimeString());
+ * const root = new Group();
+ * root.add(clock);
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * createRenderRoot({ width: 40, height: 3 }, { caps }).mount(root);
  */
 export abstract class View {
-  /** Parent-relative integer rect; written by the reflow pass (AR-33). */
+  /** Parent-relative integer rect; written by the layout pass — read it in `draw`/hit-testing. */
   bounds: Rect = { x: 0, y: 0, width: 0, height: 0 };
-  /** Draw-against flags (AR-30). The reference is fixed; fields mutate (e.g. RD-04 sets `focused`). */
+  /** Draw-against flags. The object reference is fixed; individual fields mutate (e.g. `focused`). */
   readonly state: ViewState = { visible: true, disabled: false, focused: false };
-  /** RD-02 layout props for this view (AR-33). */
+  /** Layout props for this view (direction, size, padding, absolute placement, …). */
   layout: LayoutProps = {};
-  /** Optional intrinsic-size seam for `auto` sizing (AR-33). */
+  /** Optional intrinsic-size hook for `auto` sizing — return the size this view wants for `available`. */
   measure?(available: Size2D): Size2D;
 
   /**
-   * When true, the compose walker paints a Turbo Vision-style drop-shadow on the cells just
-   * below and to the right of this view's rect, in z-order (a later sibling's shadow falls over an
-   * earlier one). Default `false`. The `Desktop` sets it per-window from its `shadow` flag.
+   * When true, the renderer paints a drop shadow on the cells just below and to the right of this
+   * view, in paint order (a later sibling's shadow falls over an earlier one). Default `false`. The
+   * `Desktop` sets it per window.
    */
   castsShadow = false;
 
   /**
-   * The Turbo Vision `ofCentered` option (`ofCenterX | ofCenterY = 0x300`, views.h:86-88). When true,
-   * the reflow pass recentres this view within its parent after layout — `origin = (parent - self)/2`
-   * on both axes (integer division), mirroring `TGroup::insertBefore` (tgroup.cpp:393-397). Intended
-   * for `position:'absolute'` views (a modal `Dialog`, a message box), whose size is fixed and whose
-   * origin is otherwise placed by the caller. Default `false`. Set by `Dialog` when centered.
+   * When true, the layout pass recentres this view within its parent after layout —
+   * `origin = (parent - self) / 2` on both axes. Intended for absolutely-placed views (a modal
+   * dialog, a message box) whose size is fixed and whose origin would otherwise be placed by the
+   * caller. Default `false`; `Dialog` sets it when centered.
    */
   centered = false;
 
-  // --- RD-04 dispatch surface (additive; defaults preserve RD-03 behavior) ----------------------
+  // --- Input/focus surface (defaults keep a plain view inert) -----------------------------------
   /**
-   * Focus eligibility (TV `ofSelectable`): a view is focusable iff
-   * `visible && !disabled && focusable` AND it has no `!visible`/`disabled` ancestor (subtree
-   * semantics, AR-56/AR-65). Default `false`. Driven by the RD-04 focus manager.
+   * Whether this view can receive keyboard focus. Effective focusability also requires the view to be
+   * visible and enabled with no hidden/disabled ancestor. Default `false`; the focus manager drives
+   * the `state.focused` flag.
    */
   focusable = false;
-  /** Participate in the pre-process sweep (root→down, before the focused chain) (AR-51, PA-2). */
+  /** Take part in the pre-process sweep (root→down, before the focused view sees the event). */
   preProcess = false;
-  /** Participate in the post-process sweep (after the focused chain) (AR-51, PA-2). */
+  /** Take part in the post-process sweep (after the focused view sees the event). */
   postProcess = false;
 
   /**
-   * @internal Reactive focus-change tick (RD-06 PF-009). Lazily created by {@link focusSignal} the
-   * first time a view's focus is observed; the focus manager pokes it on every focus flip. Stays
-   * `undefined` (zero cost) for views nobody observes.
+   * @internal Reactive focus-change tick. Lazily created by {@link focusSignal} the first time a
+   * view's focus is observed; the focus manager pokes it on every focus flip. Stays `undefined`
+   * (zero cost) for views nobody observes.
    */
   focusTick?: Signal<void>;
 
   /**
-   * Subscribe to this view's focus changes (RD-06 PF-009). Reading the returned signal inside a
-   * `bind`/`effect` re-runs that effect on every focus flip (the manager pokes `focusTick`), letting
-   * one view react to **another** view's focus — `Label` repaints on its link's focus, `Input` runs
-   * its blocking validator on its own focus-loss. The signal uses `equals: () => false`, so even a
-   * same-value poke notifies. Lazy: the backing signal is created on first call.
+   * Subscribe to this view's focus changes. Reading the returned signal inside a `bind`/`effect`
+   * re-runs that effect whenever this view gains or loses focus — including from *another* view (e.g.
+   * a `Label` repainting when the control it labels is focused). The signal notifies on every poke
+   * even without a value change. Lazy: the backing signal is created on first call.
    *
    * @returns A signal that ticks whenever this view gains or loses focus.
+   * @example
+   * // Inside a widget's onMount, repaint whenever `other` view's focus changes:
+   * this.onMount(() => this.bind(() => other.focusSignal()()));
    */
   focusSignal(): Signal<void> {
     return (this.focusTick ??= signal(undefined, { equals: () => false }));
   }
 
-  // --- Internal wiring (RT-1/RT-2/RT-3) ---------------------------------------------------------
-  // Public-but-internal: it crosses the module boundary to the render root, so it is `public`
-  // (project standard: prefer public/protected) and marked `@internal`. Not part of the API.
+  // --- Internal wiring --------------------------------------------------------------------------
+  // These cross the module boundary to the render root, so they are `public` but marked `@internal`
+  // — not part of the widget-author API.
   /** @internal The parent view, or `null` at the root / before wiring. */
   parent: View | null = null;
-  /** @internal This view's RD-01 owner scope, created at mount; `null` before mount. */
+  /** @internal This view's reactive owner scope, created at mount; `null` before mount. */
   scope: Owner | null = null;
-  /** @internal Disposes this view's scope (the `createRoot` handle). */
+  /** @internal Disposes this view's scope. */
   disposeScope: (() => void) | null = null;
   /** @internal The render-root seam; `null` until mounted by a render root. */
   host: ViewHost | null = null;
@@ -116,40 +137,37 @@ export abstract class View {
   private mountFired = false;
 
   /**
-   * Paint this view through a clipped, view-local context. Overridden by every widget; this is
-   * the custom-widget escape hatch (AR-40).
+   * Paint this view through a clipped, view-local context. Every widget overrides this to draw
+   * itself; the base declares it abstract so a subclass must supply it.
+   *
+   * @param ctx The view-local, auto-clipped paint API (see {@link DrawContext}).
    */
   abstract draw(ctx: DrawContext): void;
 
   /**
-   * Event hook — a **stub** by default (AR-30): present and overridable but performing no dispatch
-   * or focus logic. The RD-04 event loop wraps each event in a {@link DispatchEvent} envelope and
-   * routes it 3-phase; a widget overrides this to handle input and set `ev.handled` to consume it.
+   * Handle an input event — a no-op by default. The event loop wraps each event in a
+   * {@link DispatchEvent} envelope and routes it to the views; override this to react to keys/mouse
+   * and set `ev.handled = true` to consume the event so it does not propagate further.
    *
-   * @param _ev The dispatch envelope (the wrapped event + the mutable `handled` flag).
+   * @param _ev The dispatch envelope (the wrapped event plus the mutable `handled` flag).
    */
   onEvent(_ev: DispatchEvent): void {
-    // intentionally empty (the base ships only the stub; widgets override)
+    // intentionally empty (the base is inert; widgets override to handle input)
   }
 
   /**
-   * The click-select boundary (TV's `ofTopSelect` marker, fix #38). **Undefined on the base** — a
-   * plain view is not a select/raise target. A container that owns z-order (a `Window`) overrides it
-   * to select+raise itself. The hit-test invokes the **first** such ancestor of a clicked view
-   * BEFORE delivering the mouse-down, so the raise runs regardless of whether the interior consumes
-   * the click (`hit-test.ts`) — mirroring TV, where `TView::handleEvent` calls `focus()`→`select()`
-   * →`makeFirst()` at the TOP of the window's own `handleEvent`, before the event descends into the
-   * interior (`tview.cpp:553-557`/`452-466`/`728-733`). Keeping it an optional marker (not a
-   * `Window` import) keeps `hit-test.ts` window-agnostic.
+   * Optional "select + raise on click" hook. Left undefined on the base, so a plain view is not a
+   * select/raise target. A container that owns z-order (a `Window`) overrides it to select and raise
+   * itself. The hit-test invokes the first ancestor that defines this — *before* delivering the
+   * mouse-down — so a click always raises the window even if the interior also consumes the click.
    */
   selectByClick?(): void;
 
   /**
-   * The **view-local** caret cell this view wants the hardware cursor placed at, or `null` for no
-   * caret (the default — most views never request one). RD-07 additive seam (PA-5/PA-11): the focused
-   * `Input` overrides this to return `{ x: displayedPos(curPos)-firstPos+1, y: 0 }`; the event loop
-   * (which owns focus) reads it after `flush()`, translates it to an absolute cell via
-   * {@link RenderRoot.originOf}, and fires `onCaret`. Mirrors TV `TView::setCursor`/`sfCursorVis`.
+   * Where this view wants the hardware text cursor, in view-local cells, or `null` for no cursor (the
+   * default — most views never show one). A focused text input overrides this to place the caret at
+   * the edit position; the event loop reads it after each frame, converts it to an absolute cell, and
+   * moves the terminal cursor there.
    *
    * @returns The view-local caret point (0-based, relative to this view's origin), or `null`.
    */
@@ -157,28 +175,37 @@ export abstract class View {
     return null;
   }
 
-  /** Schedule a repaint of this view's subtree (AR-32). No-op before mount (the first frame paints all). */
+  /** Request a repaint of this view. A no-op before the view is mounted (the first frame paints everything). */
   invalidate(): void {
     this.host?.markRepaint(this);
   }
 
-  /** Schedule a reflow (AR-33). Relayout and repaint are distinct dirty-phases. */
+  /** Request a reflow (re-run layout, then repaint). Use this when a change affects size/position, not just pixels. */
   invalidateLayout(): void {
     this.host?.markRelayout();
   }
 
   /**
-   * Bind a reactive property: create an `effect` under this view's scope that reads `reader()`
-   * (subscribing to its signals), runs `apply(value)`, then schedules a frame — a repaint by
-   * default, or a reflow when `{ relayout: true }` (AR-31, AR-46). Auto-disposed on unmount.
+   * Bind a reactive value to a redraw. Creates an effect (owned by this view's scope) that reads
+   * `reader()` — subscribing to whatever signals it touches — runs the optional `apply(value)`, then
+   * requests a frame: a repaint by default, or a reflow when `{ relayout: true }`. It re-runs
+   * automatically whenever those signals change, and is disposed when the view unmounts.
    *
-   * Requires a mounted view (its scope exists): per PA-2 the canonical call site is `onMount`.
-   * A pre-mount `bind` throws (fail-fast — a silently-dropped bind would leave the UI never
-   * updating).
+   * Call it from {@link onMount}, not the constructor — the view's scope only exists once mounted, so
+   * a pre-mount `bind` throws rather than silently dropping the binding.
    *
-   * @param reader  Reads the reactive source (its signal reads subscribe the effect).
-   * @param apply   Applies the read value to the widget (optional).
-   * @param opts    `{ relayout: true }` to reflow instead of repaint (layout-affecting props).
+   * @param reader  Reads the reactive source; the signals it reads become dependencies.
+   * @param apply   Optional: apply the read value to the widget (e.g. store it in a field).
+   * @param opts    Pass `{ relayout: true }` when the change affects layout, so it reflows instead of
+   *   just repainting.
+   * @example
+   * import { signal } from '@jsvision/ui';
+   *
+   * const count = signal(0);
+   * // `status` is a View whose draw() reads count():
+   * status.onMount(() => {
+   *   status.bind(() => count()); // repaint the status line whenever `count` changes
+   * });
    */
   bind<T>(reader: () => T, apply?: (v: T) => void, opts?: { relayout?: boolean }): void {
     if (this.scope === null) {
@@ -195,35 +222,31 @@ export abstract class View {
   }
 
   /**
-   * Create a **stable derived accessor** owned by this view's mount-time scope (fix #37). The
-   * returned `() => T` identity is fixed for the life of the view, so it is safe to build in a
-   * constructor and hand to child views before mount — while the backing `computed(fn)` is created
-   * **lazily, under this view's own owner scope**, so it is always owned and auto-disposed at unmount
-   * (a constructor-time bare `computed()` runs before the scope exists → an unowned leak + a dev
-   * warning that can corrupt a live TTY, AR-14). The sibling of `bind()`/`onCleanup()` as an
-   * owner-scope helper — but for a *derived value* handed out at construction rather than an effect.
+   * Create a **stable derived accessor** owned by this view's scope. The returned `() => T` keeps the
+   * same identity for the life of the view, so it is safe to build in the constructor and hand to
+   * child views before this view mounts. The backing `computed` is created lazily under the view's
+   * own scope, so it is always owned and disposed at unmount — unlike a bare `computed()` in the
+   * constructor, which would run before any scope exists, leak, and warn.
    *
-   * Lifecycle:
-   * - **Pre-mount read** (`this.scope === null`): evaluate `fn()` directly — the correct current
-   *   value, with **no** persisted computed (nothing to leak). Fits a pre-mount natural-size measure.
-   * - **First post-mount read:** build + memoize `computed(fn)` under `this.scope` (owned).
-   * - **After unmount→remount** (scope-keyed): the memo is keyed to the scope it was built under.
-   *   A remounted view holds a *fresh* scope (`mount()` runs `createRoot` again), so the next read
-   *   **re-derives** under the new scope instead of returning the previous mount's *disposed* computed
-   *   — which would read frozen and has no signal edges (`owner.ts` dispose clears them,
-   *   `scheduler.ts` `updateIfNecessary` skips a disposed node). Keeps a `Show`/`For`-remounted
-   *   widget reactive, matching `bind()`'s per-mount effect.
+   * Reads behave sensibly across the lifecycle:
+   * - **Before mount:** evaluates `fn()` directly (correct current value, nothing persisted). Good
+   *   for a pre-mount natural-size measure.
+   * - **After mount:** builds and memoizes a `computed(fn)` under the view's scope.
+   * - **After an unmount→remount:** the memo is keyed to the scope it was built under, so a remounted
+   *   view (which gets a fresh scope) re-derives under the new scope instead of returning the
+   *   previous mount's disposed, now-frozen computed — keeping a `Show`/`For`-remounted widget
+   *   reactive.
    *
-   * @param fn The derivation (pure; its tracked reads become the computed's dependencies).
+   * @param fn The derivation (pure; the signals it reads become the computed's dependencies).
    * @returns A stable accessor; call it to read the derived value.
    */
   protected derived<T>(fn: () => T): () => T {
     let memo: (() => T) | null = null;
     let memoScope: Owner | null = null;
     return (): T => {
-      // Pre-mount: no owner scope yet — return the value directly rather than leak an unowned computed.
+      // Pre-mount: no scope yet — evaluate directly rather than leak an unowned computed.
       if (this.scope === null) return fn();
-      // Build lazily under the current scope; re-derive if the scope changed since (unmount→remount).
+      // Build lazily under the current scope; re-derive if the scope changed (unmount→remount).
       if (memo === null || memoScope !== this.scope) {
         memoScope = this.scope;
         memo = runWithOwner(this.scope, () => computed(fn));
@@ -233,10 +256,11 @@ export abstract class View {
   }
 
   /**
-   * Register a callback to fire once when the view becomes live (after its first reflow gives it
-   * bounds, AR-36). Registering after the view is already live runs the callback immediately.
+   * Register a callback to run once when the view becomes live (after its first layout gives it
+   * bounds). This is where to call {@link bind}, since the view's reactive scope exists by then.
+   * Registering after the view is already live runs the callback immediately.
    *
-   * @param fn Post-mount setup (the canonical site for `bind`).
+   * @param fn Post-mount setup.
    */
   onMount(fn: () => void): void {
     if (this.mountFired) {
@@ -247,8 +271,9 @@ export abstract class View {
   }
 
   /**
-   * Register a teardown callback on this view's scope; it fires once when the scope is disposed
-   * (unmount). Requires a mounted view.
+   * Register a teardown callback that runs once when this view unmounts. Requires a mounted view — so
+   * call it from within {@link onMount}. Use it to release anything the view acquired (a timer, an
+   * external subscription).
    *
    * @param fn The teardown callback.
    */
@@ -256,26 +281,24 @@ export abstract class View {
     if (this.scope === null) {
       throw new TuiError('view.onCleanup() requires a mounted view; call it in onMount()');
     }
-    // HR-32: reactive `onCleanup` binds to the running observer FIRST, so calling `view.onCleanup`
-    // inside a `bind` effect body would attach `fn` to that effect and re-fire it on every re-run.
-    // `untrack` clears the observer so `onCleanup` falls through to the owner — the view scope set by
-    // `runWithOwner` — making it fire exactly once, at unmount (mirrors the `untrack` guard in mount).
+    // A reactive `onCleanup` binds to the running effect first, so calling this inside a `bind` body
+    // would attach `fn` to that effect and re-fire it on every re-run. `untrack` clears the running
+    // effect so the cleanup falls through to the view scope, firing exactly once at unmount.
     runWithOwner(this.scope, () => untrack(() => onCleanup(fn)));
   }
 
   /**
-   * @internal Mount this view: create its owner scope **under `parentScope`** via `runWithOwner`
-   * (AR-43, RT-2) and wire the host. A cleanup registered on the scope resets this view's wiring
-   * when the scope is disposed, so an unmount cascade auto-clears every descendant (RT-3).
-   * `Group` overrides this to recurse into its children under the new scope.
+   * @internal Mount this view: create its reactive scope **under `parentScope`** and wire the host. A
+   * cleanup on the scope resets this view's wiring when disposed, so an unmount cascade auto-clears
+   * every descendant. `Group` overrides this to recurse into its children under the new scope.
    *
    * @param host        The render-root seam (or `null` in lifecycle-only contexts).
-   * @param parentScope The owner to nest this view's scope under.
+   * @param parentScope The scope to nest this view's scope under.
    */
   mount(host: ViewHost | null, parentScope: Owner | null): void {
-    // `untrack` so the scope setup (and its wiring-reset onCleanup) binds to THIS view's scope and
-    // never to an ambient computation — a view may be mounted from inside a reconcile effect
-    // (dynamic children), where onCleanup would otherwise attach to that effect (RT-2/RT-3).
+    // `untrack` so the scope setup (and its wiring-reset cleanup) binds to THIS view's scope, never to
+    // an ambient effect — a view may be mounted from inside a reconcile effect (dynamic children),
+    // where the cleanup would otherwise attach to that effect and fire at the wrong time.
     runWithOwner(parentScope, () => {
       untrack(() => {
         createRoot((dispose) => {
@@ -297,8 +320,8 @@ export abstract class View {
   }
 
   /**
-   * @internal Fire the pending `onMount` callbacks exactly once, after the first reflow gives the
-   * view bounds (called by the reflow pass for newly-mounted views, AR-36). Idempotent.
+   * @internal Fire the pending `onMount` callbacks exactly once, after the first layout gives the view
+   * bounds (called by the layout pass for newly-mounted views). Idempotent.
    */
   runPendingMounts(): void {
     if (this.mountFired) return;
@@ -308,8 +331,8 @@ export abstract class View {
   }
 
   /**
-   * @internal Unmount this view: dispose its owner scope, which recursively disposes descendant
-   * scopes and runs their `onCleanup` (RD-01 `dispose`). Idempotent.
+   * @internal Unmount this view: dispose its scope, which recursively disposes descendant scopes and
+   * runs their `onCleanup`. Idempotent.
    */
   unmount(): void {
     this.disposeScope?.();

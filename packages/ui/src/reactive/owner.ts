@@ -1,11 +1,10 @@
 /**
- * Ownership & disposal tree (RD-01, 03-02; AR-03, AR-14) — what makes the memory-safety
- * guarantee real. An owner holds the computations and child scopes created under it;
- * disposing it tears them all down, depth-first.
+ * Ownership & disposal — how the reactive core stays leak-free.
  *
- * This module depends only on the scheduler's tracking-context accessors (one-directional:
- * owner → scheduler), keeping the two free of a concrete import cycle (02-current-state
- * §Layering).
+ * An owner scope holds the effects, computeds, and child scopes created inside it. Disposing the
+ * scope tears them all down (depth-first) and fires their cleanups, so you never have to manually
+ * unsubscribe. Everything reactive should live inside a scope: {@link createRoot} opens one, and a
+ * mounted view provides one for its own lifetime.
  */
 import type { Computation, Owner } from './types.js';
 import { runCleanups } from './cleanup.js';
@@ -18,10 +17,9 @@ function createOwner(parent: Owner | null): Owner {
 }
 
 /**
- * Attach a freshly created computation (effect or computed) to the current owner scope so
- * it is disposed with that scope. With no current owner (AR-14) the computation is left
- * unowned — fully functional but never auto-disposed — and a one-time dev warning flags the
- * leak risk (PA-1).
+ * Attach a freshly created computation (effect or computed) to the current owner scope so it is
+ * disposed with that scope. With no current owner the computation is left unowned — fully functional
+ * but never auto-disposed — and a one-time dev warning flags the leak risk.
  *
  * @param computation The computation to attach.
  */
@@ -54,11 +52,23 @@ export function createChildScope(): Owner {
 }
 
 /**
- * Create a root owner scope and run `fn` under it, passing `fn` a `dispose()` bound to that
- * scope (AR-03). The previous owner is restored afterwards (try/finally).
+ * Open a root reactive scope and run `fn` inside it. Every effect, computed, and nested scope
+ * created during `fn` (or later, by callbacks that run in this scope) belongs to this scope, and
+ * `dispose()` tears them all down at once. This is the top-level entry point for any reactive work
+ * that owns its own lifetime.
  *
- * @param fn Receives the scope's `dispose`; its return value is returned by `createRoot`.
- * @returns `fn`'s return value.
+ * @param fn Receives the scope's `dispose` callback; its return value becomes `createRoot`'s.
+ * @returns Whatever `fn` returns.
+ * @example
+ * import { createRoot, signal, effect } from '@jsvision/ui';
+ *
+ * const stop = createRoot((dispose) => {
+ *   const n = signal(0);
+ *   effect(() => console.log('n =', n()));
+ *   n.set(1); // effect re-runs
+ *   return dispose;
+ * });
+ * stop(); // disposes the scope: the effect and its subscriptions are gone
  */
 export function createRoot<T>(fn: (dispose: () => void) => T): T {
   const scope = createChildScope();
@@ -72,21 +82,31 @@ export function createRoot<T>(fn: (dispose: () => void) => T): T {
 }
 
 /**
- * Run `fn` with `owner` as the ambient owner scope, restoring the previous owner afterwards
- * (try/finally; re-entrant and nestable). Unlike {@link createRoot} this creates **no** new
- * scope — it re-parents creation onto a *chosen, already-existing* owner, so a `createRoot`,
- * `effect`, `computed`, or `signal` created inside `fn` attaches to `owner` and is disposed with
- * it (AR-43, PA-1). This is the seam RD-03 needs to nest an imperatively-added child view's scope
- * under its parent — `createRoot` alone would nest under the *ambient* owner, which is `null` for a
- * `new View()` constructed outside any scope.
+ * Run `fn` with `owner` as the active scope, then restore the previous scope. Re-entrant and
+ * nestable. Unlike {@link createRoot}, this opens **no** new scope — it re-parents creation onto an
+ * *existing* owner you already hold, so any effect/computed/nested-`createRoot` created inside `fn`
+ * attaches to `owner` and is disposed with it.
  *
- * Sets the **owner** only, not a tracking (observer) context — reads inside `fn` do not subscribe;
+ * This is the tool for attaching new reactive work to a lifetime you don't currently sit inside —
+ * e.g. building a child's effects under its parent's scope so the child is torn down with the
+ * parent, even though the child was constructed outside any scope.
+ *
+ * It sets the owner only, not a tracking context: reads inside `fn` do **not** subscribe anything;
  * an `effect` created inside still tracks normally when it runs. With `owner === null`, created
- * computations are unowned and dev-warn, consistent with the no-owner policy (AR-14).
+ * computations are unowned and dev-warn.
  *
- * @param owner The owner to make ambient for the duration of `fn` (or `null` for unowned).
- * @param fn The function to run; its return value is returned by `runWithOwner`.
- * @returns `fn`'s return value.
+ * @param owner The scope to make active for the duration of `fn` (or `null` for unowned).
+ * @param fn The function to run.
+ * @returns Whatever `fn` returns.
+ * @example
+ * import { createRoot, runWithOwner, effect, getOwner } from '@jsvision/ui';
+ *
+ * const scope = createRoot((_dispose) => getOwner()); // capture a scope to reuse later
+ * const label = signal('hi');
+ * // ...elsewhere, attach a new effect to that captured scope:
+ * runWithOwner(scope, () => {
+ *   effect(() => render(label())); // runs now, and is disposed when `scope` is disposed
+ * });
  */
 export function runWithOwner<T>(owner: Owner | null, fn: () => T): T {
   const previousOwner = getOwner();
@@ -99,12 +119,24 @@ export function runWithOwner<T>(owner: Owner | null, fn: () => T): T {
 }
 
 /**
- * Register a teardown callback (AR-03). Inside a running computation it joins that
- * computation's cleanups (fired before each re-run and once at disposal); otherwise it joins
- * the current owner's cleanups (fired once at disposal). Outside any computation *and* any
- * owner it cannot ever run, so it is a no-op with a dev warning.
+ * Register a teardown callback that runs when the surrounding reactive lifetime ends. Called inside
+ * an effect/computed body, it fires before each re-run and once at disposal (use it to release what
+ * that run acquired — a timer, a subscription). Called directly inside a scope, it fires once when
+ * the scope is disposed. Called outside any computation *and* any scope it can never run, so it is a
+ * no-op with a dev warning.
  *
  * @param cb The teardown callback.
+ * @example
+ * import { createRoot, signal, effect, onCleanup } from '@jsvision/ui';
+ *
+ * createRoot((dispose) => {
+ *   const ms = signal(1000);
+ *   effect(() => {
+ *     const id = setInterval(tick, ms());
+ *     onCleanup(() => clearInterval(id)); // clears before each re-run and at dispose()
+ *   });
+ *   dispose(); // fires the pending cleanup → clearInterval
+ * });
  */
 export function onCleanup(cb: () => void): void {
   const observer = getObserver();
@@ -121,10 +153,10 @@ export function onCleanup(cb: () => void): void {
 }
 
 /**
- * Dispose an owner scope (AR-03), idempotently. Depth-first: dispose child scopes, then
- * release each owned computation's dependency edges and fire its cleanups, then fire the
- * owner's own cleanups. After disposal a subsequent signal write reaches none of the
- * disposed computations (AC-8), and each `onCleanup` has run exactly once (AC-8, AC-9).
+ * Dispose an owner scope, idempotently. Depth-first: dispose child scopes, then release each owned
+ * computation's dependency subscriptions and fire its cleanups, then fire the owner's own cleanups.
+ * After disposal a later signal write reaches none of the disposed computations, and each
+ * `onCleanup` has run exactly once.
  *
  * @param owner The owner to dispose. Disposing an already-disposed owner is a safe no-op.
  */
@@ -139,8 +171,8 @@ export function dispose(owner: Owner): void {
 
   // Release each owned computation's edges, then fire its onCleanups.
   for (const computation of owner.owned) {
-    // Mark disposed FIRST (HR-03): a computation left queued DIRTY by a write in the same
-    // batch/flush must be skipped by the flush loop rather than re-run and re-subscribed.
+    // Mark disposed FIRST: a computation left queued for re-run by a write in the same batch/flush
+    // must be skipped by the flush loop rather than re-run and re-subscribed after teardown.
     computation.disposed = true;
     for (const source of computation.sources) {
       source.observers.delete(computation);

@@ -1,22 +1,21 @@
 /**
- * The recursive two-axis layout pass (RD-02).
+ * The recursive two-axis layout pass.
  *
  * Turns a {@link LayoutBox} tree + viewport into a {@link LayoutResult} of
- * parent-relative integer rectangles. Built on the node model + intrinsic
- * sizing (`measure.ts`) and the spike's `solveTrack`: each container resolves
- * its children's main-axis cell counts (`auto` pre-resolved via `naturalSize`,
- * then `solveTrack`), places them along the main axis, sizes/aligns them on the
- * cross axis, and recurses.
+ * parent-relative integer rectangles. Each container resolves its children's
+ * main-axis cell counts (`auto` children sized to their content first, then the
+ * flexible track solved), places them along the main axis, sizes and aligns them
+ * on the cross axis, and recurses.
  *
  * Covers main-axis sizing + `gap` + `padding` content-box inset, `justify`
- * main-axis placement, cross-axis sizing + `align`, `row`/`col` via the axis
+ * main-axis placement, cross-axis sizing + `align`, `row`/`col` via a shared axis
  * abstraction, overflow (fixed/auto extend past the edge, `fr` → 0), degenerate
  * viewports (zero-size rects, no throw), and recursion.
  *
  * Each container lays out its children in its **own local coordinate frame**
- * (box origin `(0,0)`), so every child rect is **parent-relative** — relative
- * to its parent's content-box origin, padding included (AR-27). Absolute screen
- * coordinates are reconstructed by the renderer summing ancestor origins.
+ * (box origin `(0,0)`), so every child rect is **parent-relative** — relative to
+ * its parent's content-box origin, padding included. A renderer reconstructs
+ * absolute screen coordinates by summing ancestor origins down the tree.
  */
 import { apportion, solveTrack, type TrackItem } from './apportion.js';
 import { naturalSize } from './measure.js';
@@ -27,11 +26,26 @@ import { crossOf, mainOf, normalizeProps, sizeFromAxis, toCells } from './types.
  * Lay out a box tree within a viewport. Pure: mutates neither `root` nor
  * anything reachable from it; returns a fresh map with one entry per box.
  *
+ * The result maps each box to a **parent-relative** rect (relative to its
+ * parent's content-box origin). To get absolute screen coordinates, sum the
+ * origins of a box's ancestors as you walk down the tree.
+ *
  * @param root The root of the layout input tree.
  * @param viewport The available area; clamped to integers ≥ 0. The root is
  *   placed at origin `(0,0)` with this size (its own `size` prop is not used —
- *   the root always fills the viewport). (AR-27)
+ *   the root always fills the viewport).
  * @returns A {@link LayoutResult} mapping every box to its parent-relative rect.
+ * @example
+ * import { layout, type LayoutBox } from '@jsvision/ui';
+ *
+ * // A classic sidebar + main split across an 80×24 terminal, 1 cell of gap.
+ * const sidebar: LayoutBox = { props: { size: { kind: 'fixed', cells: 20 } }, children: [] };
+ * const main: LayoutBox = { props: { size: { kind: 'fr', weight: 1 } }, children: [] };
+ * const root: LayoutBox = { props: { direction: 'row', gap: 1 }, children: [sidebar, main] };
+ *
+ * const rects = layout(root, { width: 80, height: 24 });
+ * rects.get(sidebar); // → { x: 0,  y: 0, width: 20, height: 24 }
+ * rects.get(main);    // → { x: 21, y: 0, width: 59, height: 24 }  (fills the rest exactly)
  */
 export function layout(root: LayoutBox, viewport: Size2D): LayoutResult {
   const result: LayoutResult = new Map();
@@ -54,7 +68,7 @@ export function layout(root: LayoutBox, viewport: Size2D): LayoutResult {
  * @param box The container being laid out.
  * @param size The container's own width/height (its rect's extent); its position
  *   within its parent is not needed here — children are placed relative to this
- *   box's origin, keeping every rect parent-relative (AR-27).
+ *   box's origin, keeping every rect parent-relative.
  */
 function layoutContainer(box: LayoutBox, size: Size2D, result: LayoutResult): void {
   if (box.children.length === 0) {
@@ -66,9 +80,9 @@ function layoutContainer(box: LayoutBox, size: Size2D, result: LayoutResult): vo
   const contentMain = mainOf(content, direction);
   const contentCross = crossOf(content, direction);
 
-  // Children are sized/measured against the container's content box. Absolute children (PA-15) are
-  // removed from the flex flow: they consume no main-axis space and never shift flow siblings, so
-  // only the flow subset feeds `solveMainSizes`/`mainAxisOffsets`/`crossPlacement`.
+  // Children are sized/measured against the container's content box. Absolute children are removed
+  // from the flex flow: they consume no main-axis space and never shift flow siblings, so only the
+  // flow subset feeds `solveMainSizes`/`mainAxisOffsets`/`crossPlacement`.
   const childAvailable: Size2D = { width: content.width, height: content.height };
   const resolved = box.children.map((child) => ({ child, props: normalizeProps(child.props) }));
   const flowChildren = resolved.filter((c) => c.props.position !== 'absolute').map((c) => c.child);
@@ -98,10 +112,10 @@ function layoutContainer(box: LayoutBox, size: Size2D, result: LayoutResult): vo
 }
 
 /**
- * Place an `position:'absolute'` child (PA-15) at its content-box-relative {@link Rect}: offset by
- * the container's content origin (so padding is honored), recorded as the child's parent-relative
- * rect, then recursed so the child's own interior flows within that rect. Absolute children overlap
- * freely and may overflow the parent (clipped later at compose, consistent with RD-02 AR-28).
+ * Place a `position:'absolute'` child at its content-box-relative {@link Rect}: offset by the
+ * container's content origin (so padding is honored), recorded as the child's parent-relative rect,
+ * then recursed so the child's own interior flows within that rect. Absolute children overlap freely
+ * and may overflow the parent (any overflow is clipped later, when the tree is composed).
  */
 function placeAbsolute(child: LayoutBox, props: ResolvedProps, content: Rect, result: LayoutResult): void {
   const rect = props.rect ?? { x: 0, y: 0, width: 0, height: 0 };
@@ -132,8 +146,8 @@ function contentBox(size: Size2D, props: ResolvedProps): Rect {
 
 /**
  * Resolve each child's main-axis cell count: `fixed` → its cells, `auto` →
- * pre-resolved natural main extent, `fr` → flex share — then distribute via the
- * integer-exact `solveTrack` (PA-5).
+ * natural content extent measured first, `fr` → flex share — then distribute via
+ * the integer-exact `solveTrack`.
  */
 function solveMainSizes(
   children: readonly LayoutBox[],
@@ -150,7 +164,7 @@ function solveMainSizes(
     if (size.kind === 'fr') {
       return { kind: 'flex', weight: size.weight };
     }
-    // auto → pre-resolve to a fixed natural main extent (PA-5).
+    // auto → measure the child's natural content extent and treat it as fixed.
     return { kind: 'fixed', size: mainOf(naturalSize(child, available), direction) };
   });
   return solveTrack(contentMain, items, props.gap);
@@ -158,11 +172,10 @@ function solveMainSizes(
 
 /**
  * Compute each child's main-axis offset from the run of main sizes, honoring
- * `justify` (AR-24). `free = max(0, contentMain − used)` is the leftover space
- * when no `fr` child absorbed it; the `max(0, …)` clamp is load-bearing for
- * overflow (AR-28): when children overflow, `free` is 0 and every `justify`
- * runs from offset 0, so children extend past the far edge — never a negative
- * offset past the near edge.
+ * `justify`. `free = max(0, contentMain − used)` is the leftover space when no
+ * `fr` child absorbed it; the `max(0, …)` clamp is load-bearing for overflow:
+ * when children overflow, `free` is 0 and every `justify` runs from offset 0, so
+ * children extend past the far edge — never a negative offset past the near edge.
  *
  * - `start` → run at 0; `end` → run at `free`; `center` → run at `floor(free/2)`;
  * - `space-between` → distribute `free` into the inter-child gaps (integer-exact
@@ -194,8 +207,8 @@ function mainAxisOffsets(mainSizes: readonly number[], gap: number, contentMain:
 }
 
 /**
- * Resolve a child's cross-axis size and offset for the container's `align`
- * (AR-25). `stretch` (default) fills the content cross extent at offset 0; the
+ * Resolve a child's cross-axis size and offset for the container's `align`.
+ * `stretch` (default) fills the content cross extent at offset 0; the
  * others take the child's natural cross size (clamped to the content cross
  * extent) positioned at the near edge / centered / far edge.
  */
@@ -223,7 +236,7 @@ function crossPlacement(
 /**
  * Build a child's parent-relative rect from its main/cross offsets and sizes,
  * mapped back to `(x,y,width,height)` for the container's direction. Offsets are
- * relative to the content-box origin, so the rect already includes padding (AR-27).
+ * relative to the content-box origin, so the rect already includes padding.
  */
 function assembleRect(
   content: Rect,

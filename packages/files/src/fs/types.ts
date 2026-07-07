@@ -1,33 +1,36 @@
 /**
- * The `FileSystem` seam (AC-1, PA-2) — the injectable interface every disk-touching component goes
- * through, so the whole family runs headless against an in-memory adapter in tests + the kitchen-sink
- * story. The default `nodeFileSystem` ({@link ./node-fs.ts}) implements it over `node:fs`/`node:path`/
- * `node:os` (zero runtime deps). **Full synchronous surface** (PA-2). No TV counterpart — extension.
+ * The `FileSystem` seam — the injectable interface that every disk-touching component in this package
+ * goes through. Pass your own implementation to run the whole file-dialog family headless (in tests, a
+ * demo, or against a virtual tree); pass nothing and the dialogs default to {@link nodeFileSystem},
+ * which is backed by Node's `fs`/`path`/`os` built-ins.
  *
- * `.js` specifiers per NodeNext.
+ * All methods are **synchronous** by design, so a directory listing or stat never yields mid-render.
  */
 
-/** A single directory entry (basename + resolved metadata). Names are sanitized at draw-time (AC-14). */
+/**
+ * A single directory entry: its basename plus the metadata the listing and info pane display. Names
+ * are stored raw and only sanitized when drawn, so it is safe to hand entries straight to the widgets.
+ */
 export interface DirEntry {
-  /** The basename (NOT sanitized here — the draw boundary sanitizes, AC-14). */
+  /** The basename (e.g. `'readme.txt'` or `'src'`), stored raw; the draw boundary sanitizes it. */
   name: string;
   /**
-   * The entry's own type. A symlink keeps `kind:'symlink'` as its display tag; its `size`/`mtime` come
-   * from the resolved target, and `scanDirectory` categorizes it (file- vs dir-like) by following the
-   * link (PA-2 runtime).
+   * The entry's own type. A symlink keeps `kind:'symlink'` as its display tag, but its `size`/`mtime`
+   * reflect the resolved target, and the directory scan treats it as file- or directory-like by
+   * following the link.
    */
   kind: 'file' | 'dir' | 'symlink';
-  /** `stat().size` — the target size for a resolved symlink; `0` for a directory / broken link. */
+  /** File size in bytes (the target's size for a resolved symlink; `0` for a directory or broken link). */
   size: number;
-  /** `stat().mtime` — the target mtime for a resolved symlink. */
+  /** Last-modified time (the target's time for a resolved symlink). */
   mtime: Date;
-  /** Dotfile (POSIX) or hidden attribute (Windows). */
+  /** Whether the entry is hidden — a dotfile on POSIX, the hidden attribute on Windows. */
   hidden: boolean;
-  /** A symlink whose target does not resolve (AC-13); `kind` stays `'symlink'`. */
+  /** Set when a symlink's target cannot be resolved; `kind` still reads `'symlink'`. */
   broken?: boolean;
 }
 
-/** A stat result (`stat` follows symlinks; `lstat` does not). */
+/** A single stat result. `stat` follows symlinks to their target; `lstat` describes the link itself. */
 export interface FileStat {
   kind: 'file' | 'dir' | 'symlink';
   size: number;
@@ -35,45 +38,43 @@ export interface FileStat {
 }
 
 /**
- * The injectable filesystem seam. All methods are **synchronous** (PA-2; async → DEF-32). Path methods
- * mirror `node:path`; `readDir`/`stat`/`lstat` mirror `node:fs`; `roots`/`homedir` abstract the platform.
+ * The injectable filesystem the dialogs read and write through. Implement it to point the family at a
+ * virtual or remote tree; the path methods mirror `node:path`, the read methods mirror `node:fs`, and
+ * `roots`/`homedir` abstract over the platform. Every method is synchronous.
  */
 export interface FileSystem {
   /**
-   * List a directory. Each entry is `lstat`-tagged; a symlink's target is `stat`-ed for `size`/`mtime`
-   * and `broken`. A permission error on **one** entry skips it, never throws the whole call (AC-12); a
-   * failure to open the directory itself throws (the caller surfaces the error box).
+   * List one directory. Each entry is tagged by its own type (a symlink stays a symlink, with its
+   * target's `size`/`mtime` and a `broken` flag). A permission error on a *single* entry skips just
+   * that entry; a failure to open the directory itself throws (the dialog turns that into an error box).
    */
   readDir(path: string): DirEntry[];
-  /** Stat following symlinks (throws on a missing / unreadable target). */
+  /** Describe a path, following symlinks to their target. Throws if the target is missing or unreadable. */
   stat(path: string): FileStat;
-  /** Stat WITHOUT following symlinks (detects the link itself). */
+  /** Describe a path *without* following symlinks, so a link is reported as a link. */
   lstat(path: string): FileStat;
-  /** `node:path.resolve` — absolutize + normalize. */
+  /** Absolutize and normalize the joined segments (like `node:path.resolve`). */
   resolve(...segments: string[]): string;
-  /** `node:path.isAbsolute`. */
+  /** Whether the path is absolute (like `node:path.isAbsolute`). */
   isAbsolute(path: string): boolean;
-  /** `node:path.join`. */
+  /** Join path segments (like `node:path.join`). */
   join(...segments: string[]): string;
-  /** `node:path.dirname`. */
+  /** The parent directory of a path (like `node:path.dirname`). */
   dirname(path: string): string;
-  /** `node:path.basename`. */
+  /** The final segment of a path (like `node:path.basename`). */
   basename(path: string): string;
-  /** The path separator (`'/'` POSIX, `'\\'` Windows). */
+  /** The platform path separator (`'/'` on POSIX, `'\\'` on Windows). */
   readonly sep: string;
-  /** `os.homedir()`. */
+  /** The user's home directory (like `os.homedir()`). */
   homedir(): string;
-  /** Filesystem roots — `['/']` on POSIX; drive letters on Windows (AC-11). */
+  /** The filesystem roots — `['/']` on POSIX; the available drive letters on Windows. */
   roots(): string[];
-  // --- RD-08 PA-6 content methods (additive) — the TV save sequence transcribes 1:1 over these
-  // (`unlink(bak)` ignore-missing → `rename(file, bak)` → `writeFile(file, text)`,
-  // `tfiledtr.cpp:186-193`); no platform-dependent rename-overwrite semantics hide in the seam. --
-  /** Read a file as UTF-8 text (throws on missing/unreadable — the caller routes to the seam). */
+  /** Read a file as UTF-8 text. Throws if the file is missing or unreadable. */
   readFile(path: string): string;
-  /** Write (create or replace) a file with UTF-8 text. */
+  /** Write UTF-8 text to a file, creating or replacing it. */
   writeFile(path: string, text: string): void;
-  /** Rename/move a file (throws on a missing source). */
+  /** Rename or move a file. Throws if the source is missing. */
   rename(from: string, to: string): void;
-  /** Delete a file (throws on missing — the first-save `.bak` case is swallowed by the caller). */
+  /** Delete a file. Throws if it is missing (the editor swallows this on a first-time `.bak`). */
   unlink(path: string): void;
 }

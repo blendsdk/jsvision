@@ -1,9 +1,7 @@
 /**
- * Barrel for the RD-21 color family: the `ColorSwatch` color-grid view (a faithful `TColorSelector`
- * decode + extensions) + the `ColorPicker` dropdown (chip + anchored swatch/hex popup). The pure
- * `color-grid.ts` geometry/nav helpers stay internal (mirroring `calendar-grid`).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Public surface of the color family: the {@link ColorSwatch} color-grid view and the
+ * {@link ColorPicker} dropdown (a color chip plus an anchored swatch/hex popup). The grid geometry
+ * and navigation helpers stay internal to this package.
  */
 export { ColorSwatch } from './color-swatch.js';
 export type { ColorSwatchOptions } from './color-swatch.js';

@@ -1,55 +1,55 @@
 /**
- * Host public type surface (RD-07, plan doc 03-01).
+ * The host's public type surface — the contract for {@link createHost} and the
+ * objects it works with.
  *
- * Declares the host's contract: the {@link ResizeEvent} it delivers, the
- * {@link HostOptions} that configure {@link createHost}, the running {@link Host}
- * object, the injectable {@link RuntimeAdapter} OS boundary (the testing seam),
- * and the abstract {@link HostSignal} set the adapter maps onto real
- * POSIX/Windows specifics. Pure declarations — no behavior, hence no spec test
- * of its own (AR-13); the modules built on it are proven by Phases 2–4.
- *
- * The `.js` extensions in the import specifiers are required by NodeNext ESM
- * resolution (they resolve to the `.ts` sources during development via tsx).
+ * Declares the {@link ResizeEvent} the host delivers, the {@link HostOptions}
+ * that configure it, the running {@link Host}, the injectable
+ * {@link RuntimeAdapter} OS boundary (for headless testing), and the abstract
+ * {@link HostSignal} set the adapter maps onto real POSIX/Windows specifics.
  */
 import type { CapabilityProfile } from '../capability/profile.js';
 import type { InputEvent } from '../input/events.js';
 import type { ScreenBuffer } from '../render/buffer.js';
 
-/** A terminal resize, delivered via SIGWINCH (POSIX) or stdout 'resize' (Windows). [AR-7] */
+/** A terminal resize, delivered via SIGWINCH (POSIX) or a stdout 'resize' event (Windows). */
 export interface ResizeEvent {
   readonly type: 'resize';
+  /** New terminal width in columns. */
   readonly columns: number;
+  /** New terminal height in rows. */
   readonly rows: number;
 }
 
 /**
  * Options for {@link createHost}. Only `caps` is required; every OS-touching
- * input is injectable so the host is driven headlessly in tests (AR-13).
+ * input is injectable, so the same host can be driven against real streams or
+ * fakes in tests.
  */
 export interface HostOptions {
-  /** The detected capability profile; gates every mode the host enables (AR-1). */
+  /** The detected capability profile; gates every terminal mode the host enables. */
   readonly caps: CapabilityProfile;
-  /** Injectable input stream; defaults to process.stdin (or /dev/tty when piped). [AR-13] */
+  /** Input stream to read from. Default: `process.stdin` (or `/dev/tty` when stdout is piped). */
   readonly input?: NodeJS.ReadStream;
-  /** Injectable output stream; defaults to process.stdout (or /dev/tty when piped). [AR-13] */
+  /** Output stream to render to. Default: `process.stdout` (or `/dev/tty` when piped). */
   readonly output?: NodeJS.WriteStream;
-  /** When true (default) and stdout is piped but a TTY exists, bind to /dev/tty. [AR-13] */
+  /** When true (default) and stdout is piped but a controlling terminal exists, bind to `/dev/tty`. */
   readonly preferDevTty?: boolean;
-  /** Raw decoded input events (queries are routed away). [AR-2] */
+  /** Called with each decoded input event. Terminal query replies are handled internally and never delivered here. */
   readonly onInput?: (event: InputEvent) => void;
-  /** Coalesced terminal resize. [AR-2, AR-9] */
+  /** Called with a terminal resize, coalesced so a burst of SIGWINCH yields a single event. */
   readonly onResize?: (event: ResizeEvent) => void;
-  /** POSIX SIGTSTP, fired before the terminal is restored + suspended. [AR-10] */
+  /** POSIX Ctrl+Z (SIGTSTP): fired just before the terminal is restored and the process suspends. */
   readonly onSuspend?: () => void;
-  /** POSIX SIGCONT, fired after modes are re-asserted + full repaint. [AR-10] */
+  /** POSIX resume (SIGCONT): fired after modes are re-asserted and the last frame is repainted. */
   readonly onResume?: () => void;
-  /** Runs before the host calls process.exit on a signal/crash path. [AR-6] */
+  /** Runs just before the host calls `process.exit` on a signal or crash path (receives the exit code). */
   readonly onBeforeExit?: (code: number) => void;
-  /** When false, the host restores but does not call process.exit on signals. Default true. [AR-6] */
+  /** When false, terminating signals restore the terminal but do not call `process.exit`. Default true. */
   readonly exitOnSignal?: boolean;
   /**
-   * Enable focus reporting (`?1004h`). No capability models focus, so it is host
-   * policy (not caps-gated). Default `true`. [PF-006]
+   * Enable focus reporting (the terminal reports when it gains/loses focus). No
+   * capability models this, so it is a host policy rather than caps-gated.
+   * Default `true`.
    */
   readonly focus?: boolean;
   /**
@@ -57,104 +57,109 @@ export interface HostOptions {
    * *Ambiguous* code points (e.g. `▲◄■▒`) that a font fallback or CJK locale
    * renders two cells wide, shifting box/scroll chrome — and warn via
    * {@link onWidthWarning} when found. Real TTY only; runs after raw mode and
-   * before the alternate screen, so the probe + its erase stay off the UI buffer.
-   * Default `false`: `createHost` is the mechanism, the `run()` app shell enables
-   * the policy. Detection is best-effort — a silent/non-TTY terminal never warns.
+   * before the alternate screen, so the probe and its erase stay off your UI.
+   * Default `false` (the higher-level app runner turns this on). Detection is
+   * best-effort — a silent or non-TTY terminal never warns.
    */
   readonly warnAmbiguousWidth?: boolean;
   /**
-   * Adapt the host's *effective* serialize capabilities when the startup width
-   * probe measures a wide chrome group: group 1 (arrows) wide → `ambiguousWide`
-   * on; group 2 (box/shade) wide → `boxDrawing`/`halfBlocks` off — so every frame
-   * emits ASCII-safe chrome instead of shearing. Downgrade-only; decode/modes/
-   * restore keep the original caps. Real TTY only, shares the one probe run with
-   * {@link warnAmbiguousWidth}. Default `false`: `createHost` is the mechanism, the
-   * `run()` app shell enables the policy (ui default `true`). (glyph-auto-swap AR-9)
+   * Automatically switch to ASCII-safe chrome when the startup width probe finds
+   * that box/scroll glyphs render two cells wide: wide arrows turn on the
+   * `ambiguousWide` glyph flag, wide box/shade glyphs turn `boxDrawing`/`halfBlocks`
+   * off — so every frame stays aligned instead of shearing. Downgrade-only; the
+   * original caps are still used for input decoding, mode setup, and restore.
+   * Real TTY only, and it shares the single probe run with {@link warnAmbiguousWidth}.
+   * Default `false` (the higher-level app runner turns this on).
    */
   readonly adaptAmbiguousWidth?: boolean;
   /**
-   * Environment for the `JSVISION_ASCII` force switch (NO_COLOR-style: presence =
-   * on, any value including empty). When set, effective serialize caps are fully
-   * degraded to ASCII-safe chrome and the probe is skipped. Default `process.env`;
-   * injected for tests. Presence-checked only — the value is never parsed or logged.
-   * (glyph-auto-swap AR-8/AR-15)
+   * Environment to read the `JSVISION_ASCII` force switch from (NO_COLOR-style:
+   * its mere presence, with any value, turns it on). When set, the host renders
+   * fully ASCII-safe chrome and skips the width probe entirely. Default
+   * `process.env`. Presence-checked only — the value is never parsed or logged.
    */
   readonly env?: NodeJS.ProcessEnv;
   /**
-   * Sink for the startup width warning (see {@link warnAmbiguousWidth}). Default:
-   * one line to `process.stderr` (never the UI output stream). Injected for tests
-   * or custom reporting.
+   * Where the startup width warning goes (see {@link warnAmbiguousWidth}).
+   * Default: one line to `process.stderr` (never the terminal's output stream).
+   * Provide your own to route it into a logger or custom reporting.
    */
   readonly onWidthWarning?: (message: string) => void;
-  /** Injectable OS boundary; defaults to the real Node runtime. Tests inject a fake. [AR-13] */
+  /** The OS boundary the host runs against. Defaults to the real Node runtime; inject a fake to test headlessly. */
   readonly runtime?: RuntimeAdapter;
 }
 
-/** The running host. Returned by {@link createHost}. [AR-1] */
+/** A running terminal host, returned by {@link createHost}. */
 export interface Host {
-  /** True when the bound output (and input) is a real TTY. [AR-11] */
+  /** True when both the bound output and input are a real TTY. */
   readonly isTTY: boolean;
-  /** Bind, raw mode, enter modes, install handlers. Idempotent. [AR-8] */
+  /** Take over the terminal: bind streams, enter raw mode + the configured screen modes, install handlers. Idempotent. */
   start(): Promise<void>;
-  /** Leave modes, restore cooked/main-screen/cursor, remove handlers. Idempotent; no exit. [AR-8] */
+  /** Give the terminal back: leave modes, restore cooked mode / main screen / cursor, remove handlers. Idempotent; does not exit. */
   stop(): Promise<void>;
   /**
-   * Diff against the previous frame, write one coalesced string, keep as new prev. [AR-3]
-   * `trailer` (additive) is appended to that SAME write — e.g. the hardware-caret show+move
-   * sequence — so the terminal never repaints between the damage and the cursor positioning
-   * (a split write parks the visible cursor at the last damage span for one paint: flicker).
-   * A trailer with an empty diff is still written.
+   * Paint a frame. Diffs `buffer` against the previously rendered frame and
+   * writes only the changed cells as one coalesced write.
+   *
+   * `trailer` (optional) is appended to that same write — typically the
+   * show-and-move-cursor sequence — so the terminal never repaints between the
+   * damage and the cursor move (a separate write would flash the cursor at the
+   * last damaged cell for one frame). A trailer is written even when the diff is
+   * empty.
+   *
+   * @param buffer The frame to render.
+   * @param trailer Extra bytes to append to the same write (e.g. a cursor move).
    */
   render(buffer: ScreenBuffer, trailer?: string): void;
 }
 
 /**
- * The injectable OS boundary. The real implementation (platform.ts) wraps
- * node:tty / node:process / node:os and is constructed bound to the host's output
- * stream (so win32 `resize`/`hangup` can attach to it, PF-010); tests inject a
- * fake that records exit codes, captures writes, and drives signals/timers. [AR-13]
+ * The injectable OS boundary the host runs against. The real implementation
+ * wraps `node:tty` / `node:process` / `node:fs`; tests inject a fake that records
+ * exit codes, captures writes, and drives signals and timers on demand. You only
+ * touch this when driving the host headlessly — normal apps let it default.
  */
 export interface RuntimeAdapter {
-  /** The OS the adapter targets; selects the per-OS signal source map (PF-005). */
+  /** The OS the adapter targets; selects the per-OS signal source map. */
   readonly platform: 'linux' | 'darwin' | 'win32';
-  /** Put the input stream in/out of raw mode (real: stream.setRawMode). Guarded by isTTY. [AR-11] */
+  /** Put the input stream in or out of raw mode. Guarded so it is a no-op on a non-TTY. */
   setRawMode(stream: NodeJS.ReadStream, on: boolean): void;
-  /** Subscribe to a payload-free signal/resize source; returns an unsubscribe fn. [AR-9, AR-10, AR-17] */
+  /** Subscribe to a payload-free signal/resize source; returns an unsubscribe function. */
   on(event: HostSignal, handler: () => void): () => void;
-  /** Subscribe to an uncaught exception; handler receives the thrown value. [AR-6, AR-17, PF-002] */
+  /** Subscribe to an uncaught exception; the handler receives the thrown value. */
   onUncaughtException(handler: (err: unknown) => void): () => void;
-  /** Subscribe to an unhandled promise rejection; handler receives the reason. [AR-6, AR-17, PF-002] */
+  /** Subscribe to an unhandled promise rejection; the handler receives the reason. */
   onUnhandledRejection(handler: (reason: unknown) => void): () => void;
-  /** Stop the current process with default disposition (real: process.kill(pid,'SIGSTOP')). [AR-10, PF-001] */
+  /** Suspend the current process (real: `process.kill(pid, 'SIGSTOP')`), used for Ctrl+Z. */
   suspendSelf(): void;
-  /** Schedule a coalescing callback (real: setImmediate). [AR-9] */
+  /** Schedule a callback to run after the current turn (real: `setImmediate`), used to coalesce resizes. */
   scheduleImmediate(fn: () => void): void;
-  /** Arm the ESC disambiguation timer (real: setTimeout); returns a clearable handle. [AR-14] */
+  /** Arm a timer (real: `setTimeout`), used for the lone-ESC disambiguation window; returns a clearable handle. */
   setTimer(fn: () => void, ms: number): TimerHandle;
-  /** Clear a timer armed by {@link setTimer} (real: clearTimeout). [AR-14] */
+  /** Clear a timer previously armed by {@link setTimer} (real: `clearTimeout`). */
   clearTimer(handle: TimerHandle): void;
-  /** Register the synchronous exit backstop (real: process.on('exit')); returns an unsubscribe. [AR-17, RT-2] */
+  /** Register a last-resort restore to run on process exit (real: `process.on('exit')`); returns an unsubscribe. */
   onProcessExit(handler: () => void): () => void;
   /**
-   * Synchronously write to a file descriptor (real: fs.writeSync). Used only by the
-   * process-'exit' restore backstop, where the event loop is draining and async writes
-   * would not flush; uniformly synchronous on every platform. Fakes record the data. [AR-16, AR-17, PF-004]
+   * Synchronously write to a file descriptor (real: `fs.writeSync`). Used only by
+   * the on-exit restore backstop, where the event loop is draining and an async
+   * write would never flush. Synchronous on every platform.
    */
   writeSync(fd: number, data: string): void;
-  /** Terminate the process (real: process.exit). Fakes record the code. [AR-6, AR-13] */
+  /** Terminate the process (real: `process.exit`). */
   exit(code: number): never;
-  /** Write a diagnostic line to stderr (real: process.stderr.write). Never receives raw input. [AR-6, PF-002] */
+  /** Write a diagnostic line to stderr (real: `process.stderr.write`). Never receives raw input. */
   writeError(message: string): void;
-  /** Best-effort warning channel (legacy conhost without VT, etc.). Never logs input. [AR-4] */
+  /** Best-effort warning channel (e.g. a legacy Windows console without VT processing). Never logs input. */
   warn(message: string): void;
 }
 
 /**
- * Abstract, payload-free signal set; the adapter maps POSIX/Windows specifics
- * internally (`hostSignalSource`, PF-005), keeping `host.ts` platform-agnostic
- * (AR-4). Uncaught-exception / unhandled-rejection carry payloads, so they are
- * NOT in this union — they have dedicated subscriptions
- * (`onUncaughtException` / `onUnhandledRejection`, PF-002).
+ * The abstract, payload-free signal set the host reacts to. The adapter maps
+ * these onto the concrete POSIX/Windows sources internally, keeping the host
+ * platform-agnostic. Uncaught exceptions and unhandled rejections carry a payload
+ * and so are NOT in this set — they have their own subscriptions
+ * ({@link RuntimeAdapter.onUncaughtException} / {@link RuntimeAdapter.onUnhandledRejection}).
  */
 export type HostSignal = 'resize' | 'interrupt' | 'terminate' | 'hangup' | 'suspend' | 'continue';
 

@@ -1,13 +1,17 @@
 /**
- * `@jsvision/files` — the Turbo Vision file-system dialog family on `@jsvision/ui`.
+ * `@jsvision/files` — the file-system dialog family for `@jsvision/ui`.
  *
- * Public API (explicit named re-exports; `export type` for type-only symbols per the ESM
- * `verbatimModuleSyntax` convention shared with `@jsvision/ui`):
- *   • the `FileSystem` seam + `node:fs` default + pure cores (`fs/`);
- *   • the listing trio `FileList`/`FileInput`/`FileInfoPane` + the `DirList` tree;
- *   • the `FileDialog`/`ChDirDialog` modals + the local `errorBox`.
+ * What's here:
+ *   - `FileDialog` / `ChDirDialog` — the modal open/save and change-directory dialogs, plus the
+ *     one-call `openFile` / `changeDir` openers that prompt and resolve to a path;
+ *   - `FileEditor` and `openFileInEditor` — a file-bound text editor and a factory to host it;
+ *   - `FileList` / `FileInput` / `FileInfoPane` / `DirList` — the widgets the dialogs are built from,
+ *     for composing your own pickers;
+ *   - the injectable `FileSystem` (default `nodeFileSystem`) and pure helpers (`scanDirectory`,
+ *     `buildDirTree`, `wildcardMatch`, `isWild`).
  *
- * `.js` specifiers per NodeNext ESM resolution.
+ * Everything reads and writes through the {@link FileSystem}, so the whole family runs against a
+ * virtual tree in tests or a demo, not just real disk.
  */
 
 // —— fs/ seam + pure cores ——
@@ -41,9 +45,7 @@ export type { ExecHost } from './dialog/error-dialog.js';
 export { openFile, changeDir } from './openers.js';
 export type { OpenFileOptions, ChangeDirOptions } from './openers.js';
 
-// RD-08 editor family (files side): the `FileEditor` file binding over the `FileSystem` seam
-// (load/save/`.bak`/prompts), the `openFileInEditor` hosting factory (plan-preflight PF-001 —
-// composes FileEditor + EditWindow with the reactive fileName→title bind), and the files-owned
-// `FileCommands` (PF-004: save/saveAs live HERE, per the TFileEditor decode).
+// The editor family: the file-bound editor, the factory that opens a file in a window, and the
+// command names for wiring a File menu (save/save-as behaviour lives here, not in the base editor).
 export { FileEditor, openFileInEditor, FileCommands } from './editor/index.js';
 export type { FileEditorOptions, OpenFileInEditorOptions } from './editor/index.js';

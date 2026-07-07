@@ -1,12 +1,10 @@
 /**
- * Grapheme-cluster boundary primitives over `Intl.Segmenter` (RD-08 PA-5 — a pure, ui-local
- * module; promotion to `@jsvision/core` waits for a second consumer, RD-08 PF-002).
+ * Grapheme-cluster boundary primitives over `Intl.Segmenter`, so the caret steps over a whole
+ * user-perceived character (an emoji, a base + combining marks, a CJK glyph) as one unit.
  *
- * These generalize TV's double-byte `TText::next`/`TText::prev` stepping (`edits.cpp:130-159`) to
- * Unicode grapheme clusters (AR-251). Inputs are LINE-BOUNDED slices (the navigate.ts callers pass
- * `lineStart(p)…lineEnd(p)`, PF-007) so the segmenter never scans a whole buffer. Malformed input
- * must never throw: `Intl.Segmenter` treats a lone surrogate as its own 1-unit cluster (the RD-13
- * HR-01 rule, asserted by ST-4).
+ * Callers pass line-bounded slices (a single line's text, not the whole buffer), so the segmenter
+ * never scans more than one line at a time. Malformed input never throws: a lone surrogate is
+ * treated as its own one-unit cluster.
  */
 
 /** One module-level segmenter, reused across calls (locale-independent grapheme granularity). */

@@ -1,16 +1,13 @@
 /**
- * Cell and style types for the rendering engine (RD-04, plan doc 03-01).
+ * Cell and style types for the rendering engine.
  *
- * The buffer stores app-specified colors and an attribute bitmask per cell;
- * encoding `Color` + `AttrMask` to an SGR sequence is the `StyleEncoder` seam's
- * job (03-02 / RD-05), not the cell's. Keeping `Color` a string union keeps
- * cells small and makes run-merge comparisons cheap (string equality).
- *
- * Decisions: PL-7 (`Color` string union), PL-15 (`AttrMask` ownership),
- * PL-17 (`Cell.width` semantics).
+ * The buffer stores your colors and an attribute bitmask per cell; turning a
+ * `Color` + `AttrMask` into an SGR escape sequence is the {@link StyleEncoder}'s
+ * job, not the cell's. Keeping `Color` a string union keeps cells small and makes
+ * the serializer's run-merge comparisons cheap (plain string equality).
  */
 
-/** The 16 named ANSI colors (the encoder maps these per depth in RD-05). */
+/** The 16 named ANSI colors; the style encoder maps each to the terminal's actual color depth. */
 export type Ansi16Name =
   | 'black'
   | 'red'
@@ -32,12 +29,13 @@ export type Ansi16Name =
 /** An app-specified color: a 24-bit hex, a named ANSI-16 color, or the terminal default. */
 export type Color = `#${string}` | Ansi16Name | 'default';
 
-/** Text-attribute bitmask (PL-15). One bit per attribute; combinable with `|`. */
+/** Text-attribute bitmask. One bit per attribute; combine several with bitwise `|`. */
 export type AttrMask = number;
 
 /**
- * Attribute bit constants (PL-15). RD-05 encodes these to SGR; RD-04 only
- * stores them. One bit per attribute so they combine with bitwise OR.
+ * Attribute bit constants. Combine them with bitwise OR, e.g.
+ * `Attr.bold | Attr.underline`. The buffer stores them; the style encoder turns
+ * them into SGR at serialize time.
  */
 export const Attr = {
   none: 0,
@@ -60,7 +58,7 @@ export interface Style {
 
 /**
  * A single screen cell. `width` distinguishes normal (1), wide-lead (2), and
- * continuation (0) cells (PL-17). A continuation cell emits no glyph.
+ * continuation (0) cells. A continuation cell emits no glyph.
  */
 export interface Cell {
   char: string;

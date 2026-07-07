@@ -1,39 +1,24 @@
 /**
- * `GridRows<T>` + `GridHeader<T>` — the RD-16 `DataGrid` renderers: a focusable multi-column
- * virtual-scroll body and its non-scrolling sticky header. A faithful extension of Turbo Vision
- * `TListViewer` (`source/tvision/tlstview.cpp`, GATE-1 decoded + GATE-2 diffed) to N heterogeneous
- * columns.
+ * `GridRows<T>` + `GridHeader<T>` — the two renderers behind `DataGrid`: a focusable, multi-column,
+ * virtual-scrolling body and its non-scrolling sticky header. Both are internal; construct a
+ * {@link DataGrid} rather than using these directly.
  *
- * **TV decode (the faithful row spine):**
- *   • **`draw`** `:76-152` — for each visible row `i`, `item = topItem + i` (single column ⇒
- *     `numCols≡1`, so TV's `j*size.y` term is 0); blank the row in its colour then draw each cell's
- *     text. Row colour when the list is `(sfSelected|sfActive)`: `focused=getColor(3)`,
- *     `selected=getColor(4)`, else `normal=getColor(1)` (`:83-98`) → our `listFocused`/`listSelected`/
- *     `listNormal`. **Priority focused > selected > normal** (`:112-124` tests focus before select;
- *     the shipped `list-rows.ts:21` GATE-2 note). The colour is the ONLY focus indicator (no caret).
- *   • **`indent = hScrollBar->value`** (`:99-102`) — the horizontal cell offset. TV skips the first
- *     `indent` chars of each *cell*; our documented extension pans the whole column layout left
- *     (`x = starts[c] − indent`) so heterogeneous columns scroll as a unit (RD AR-156).
- *   • **Divider** `moveChar(curCol+colWidth-1,'\xB3',getColor(5),1)` (`:130`, AR-179) — a `│` (U+2502)
- *     in `getColor(5)`=`listDivider` at the right edge of EVERY column, drawn over the row colour.
- *   • **`emptyText`** at `curCol+1` when the list is empty (`:127-128`) → `<empty>` (AC-14).
- *   • **`handleEvent`** `:213-320` — Space→`selectItem(focused)` (`:282`); ↑↓ ±1; PgUp/PgDn
- *     `±size.y` (numCols≡1, AR-182); Home=`topItem`, End=`topItem+size.y-1`; Ctrl+PgUp=`0`,
- *     Ctrl+PgDn=`range-1` (`:308-317`). ←/→ drive the horizontal `indent` (our extension; TV uses
- *     them for `numCols>1` newspaper columns, `:302-307`).
+ * How the body draws each frame:
+ *   • Only the visible window of rows is painted (virtual scroll), so a grid over thousands of rows
+ *     stays cheap.
+ *   • Each row is blanked in its resolved colour, then every column's aligned cell is drawn, then a
+ *     `│` divider at the column's right edge. Row colour priority is focused > selected > zebra
+ *     stripe > normal; colour is the only focus indicator (there is no caret).
+ *   • Horizontal scroll pans the whole column layout left as a unit (`x = starts[c] − indent`), so
+ *     heterogeneous columns scroll together and stay aligned.
+ *   • An empty grid shows `<empty>` at the top-left.
  *
- * **jsvision extensions (behaviour + the header, not TV drawing):** the sticky `GridHeader` (TV has
- * no table class), heterogeneous per-column accessors, `{col,dir}` sort with a `▲`/`▼` indicator,
- * whole-grid H-scroll, and mouse-wheel (`±3`).
+ * Keyboard (body): ↑↓ move focus ±1, PgUp/PgDn page by the viewport height, Home/End jump within the
+ * visible window, Ctrl+PgUp/PgDn jump to the first/last row, ←→ scroll horizontally, Enter/Space
+ * activate. Mouse: click focuses + selects a row, double-click activates, wheel scrolls ±3.
  *
- * **GATE-2 (AFTER-diff, verified against `tlstview.cpp`):** the faithful row spine matches cell by
- * cell — the row-colour selection + focus>select>normal priority (`:83-124`), the `│` divider glyph
- * (`\xB3`→U+2502) at each column's right edge in `getColor(5)`=`listDivider` (`:130`), the `emptyText`
- * at `curCol+1` (`:127-128`), `indent=hScrollBar->value` (`:99-102`), and the `handleEvent` key math
- * (`±size.y` paging, Ctrl+PgUp/Dn, Home/End, Space-select; `:296-317`). Two documented departures,
- * both flagged extensions (TV has no table class, RD AR-151), NOT drift: the whole-grid H-scroll
- * (`x=starts[c]−indent`, vs TV's per-cell char skip) and the sticky header. The `.js` extension is
- * required by NodeNext ESM.
+ * The header draws the column titles, a `▲`/`▼` sort indicator on the active sort column, and toggles
+ * that column's sort on click.
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -45,11 +30,11 @@ import { clampIndex, keepVisible } from '../list/virtual.js';
 import type { Column, SortState, ColumnGeometry } from './columns.js';
 import { apportionColumns, alignCell } from './columns.js';
 
-/** The text drawn once, top-left, for an empty grid (TV `emptyText`, `tlstview.cpp:127-128`). */
+/** The text drawn once, top-left, for an empty grid. */
 const EMPTY_TEXT = '<empty>';
-/** The inter-column divider `│` (TV `\xB3`, `tlstview.cpp:130`). */
+/** The inter-column divider `│` drawn at each column's right edge. */
 const DIVIDER = '│';
-/** Ascending / descending sort indicators drawn in the header (jsvision extension). */
+/** Ascending / descending sort indicators drawn in the active header column. */
 const SORT_ASC = '▲'; // ▲ BLACK UP-POINTING TRIANGLE
 const SORT_DESC = '▼'; // ▼ BLACK DOWN-POINTING TRIANGLE
 
@@ -71,19 +56,19 @@ export interface GridRowsConfig<T> {
   display: () => T[];
   /** The heterogeneous columns. */
   columns: Column<T>[];
-  /** The memoized `auto` measurement (a `computed` over the source rows, PF-102). */
+  /** The memoized `auto`-width measurement (a `computed` over the source rows). */
   autoWidths: () => (number | null)[];
-  /** The horizontal cell offset (shared with the owned horizontal `ScrollBar.value`). */
+  /** The horizontal cell offset (shared with the owned horizontal scroll bar's value). */
   indent: Signal<number>;
-  /** The focused (highlighted) display index (shared with the vertical `ScrollBar.value`). */
+  /** The focused (highlighted) display index (shared with the vertical scroll bar's value). */
   focused: Signal<number>;
   /** The selected (chosen) display index (`-1` = none). */
   selected: Signal<number>;
-  /** Stripe odd rows in `staticText` (below focus/selection in priority, AR-176). */
+  /** Stripe odd rows for readability (below focus/selection in priority). */
   zebra: boolean;
-  /** Activation callback (Enter/Space); `index` is DISPLAY order, `row` the `T`. */
+  /** Activation callback (Enter/Space or double-click); `index` is display order, `row` the value. */
   onSelect?: (index: number, row: T) => void;
-  /** Command emitted on activation (like `Button`). */
+  /** Command name emitted on activation, handled elsewhere. */
   command?: string;
 }
 
@@ -99,11 +84,11 @@ export class GridRows<T> extends View {
   protected readonly zebra: boolean;
   protected readonly onSelect?: (index: number, row: T) => void;
   protected readonly command?: string;
-  /** The first visible display index (TV `topItem`). */
+  /** The display index of the first visible row. */
   protected topItem = 0;
-  /** The owned vertical scroll bar (its `value` is the shared `focused`); re-limited each draw. */
+  /** The owned vertical scroll bar (its `value` is the shared `focused`); its range is re-limited each draw. */
   vbar?: ScrollBar;
-  /** The owned horizontal scroll bar (its `value` is the shared `indent`); re-limited each draw. */
+  /** The owned horizontal scroll bar (its `value` is the shared `indent`); its range is re-limited each draw. */
   hbar?: ScrollBar;
 
   /**
@@ -128,8 +113,8 @@ export class GridRows<T> extends View {
         () => this.updateTop(),
       );
       // On a rows/sort change (the display array is a fresh reference on any reorder OR length
-      // change): clamp focused into the new range (TV `newList`), keep it visible, and repaint — a
-      // pure reorder keeps the length but must still repaint the reordered rows.
+      // change): clamp focused into the new range, keep it visible, and repaint — a pure reorder
+      // keeps the same length but must still repaint the reordered rows.
       this.bind(
         () => this.display(),
         () => {
@@ -166,7 +151,7 @@ export class GridRows<T> extends View {
     this.topItem = keepVisible(focused, this.topItem, this.viewportRows(), range);
   }
 
-  /** Clamp the focused signal into the current range (TV `focusItemNum`/`newList`). */
+  /** Clamp the focused signal into the current range after the row set changes. */
   protected clampFocusedToRange(): void {
     const range = this.display().length;
     const clamped = clampIndex(this.focused(), range);
@@ -174,8 +159,8 @@ export class GridRows<T> extends View {
   }
 
   /**
-   * Paint the visible window (TV `draw`): re-limit both bars, keep the focus visible, then draw each
-   * row in its resolved colour with every column's aligned cell + a right-edge divider.
+   * Paint the visible window: re-limit both scroll bars, keep the focused row visible, then draw each
+   * row in its resolved colour with every column's aligned cell and a right-edge divider.
    *
    * @param ctx The clipped, view-local paint context.
    */
@@ -185,7 +170,7 @@ export class GridRows<T> extends View {
     const display = this.display();
     const range = display.length;
     const geom = this.geometry(width);
-    // TV setRange: vbar value = focused, range [0, range-1], page keeps one row of context.
+    // Vertical bar: value = focused, range [0, range-1], page keeps one row of context.
     this.vbar?.setRange(0, Math.max(0, range - 1), Math.max(1, rows - 1));
     const maxIndent = Math.max(0, geom.totalWidth - width);
     this.hbar?.setRange(0, maxIndent, Math.max(1, width - 1));
@@ -194,7 +179,7 @@ export class GridRows<T> extends View {
     const normal = ctx.color('listNormal');
     if (range === 0) {
       ctx.fill(' ', normal);
-      ctx.text(1, 0, EMPTY_TEXT, normal); // TV emptyText at curCol+1 (tlstview.cpp:127-128)
+      ctx.text(1, 0, EMPTY_TEXT, normal); // <empty> placeholder, one cell in from the left
       return;
     }
 
@@ -210,7 +195,7 @@ export class GridRows<T> extends View {
         ctx.fillRect(0, i, width, 1, ' ', normal); // blank trailing row
         continue;
       }
-      // Priority focused > selected > zebra > normal (TV draw tests focus before select, :112-124).
+      // Row colour priority: focused > selected > zebra stripe > normal.
       const roleName =
         item === focused
           ? active
@@ -219,7 +204,7 @@ export class GridRows<T> extends View {
           : item === selected
             ? 'listSelected'
             : this.zebra && (item & 1) === 1
-              ? 'staticText' // AR-176 odd-row stripe
+              ? 'staticText' // odd-row stripe
               : 'listNormal';
       const style = ctx.color(roleName);
       ctx.fillRect(0, i, width, 1, ' ', style); // blank the row in its colour
@@ -235,7 +220,7 @@ export class GridRows<T> extends View {
   }
 
   /**
-   * Route grid keyboard/mouse/wheel (TV `handleEvent` + the jsvision extensions).
+   * Route grid keyboard, mouse, and wheel events.
    *
    * @param ev The dispatch envelope.
    */
@@ -252,12 +237,11 @@ export class GridRows<T> extends View {
       if (local === undefined) return;
       const range = this.display().length;
       if (range > 0) {
-        // A click below the last row focuses/selects the LAST item (TV `focusItemNum` clamp).
+        // A click below the last row focuses/selects the last item.
         const newItem = Math.min(this.topItem + local.y, range - 1);
         this.focusTo(newItem);
-        this.select(newItem); // a single click focuses + selects (no emit — AR-177)
-        // Double-click = activate (TV `tlstview.cpp:276-277`, on the shared `TListViewer` spine). The
-        // loop stamps `ev.clickCount` on a mouse-`down` (double-click-activation FR-4/AR-7).
+        this.select(newItem); // a single click focuses + selects (does not activate)
+        // Double-click activates. The event loop stamps `ev.clickCount` on the mouse-down.
         if (ev.clickCount === 2) this.activate(ev);
       }
       ev.handled = true;
@@ -344,7 +328,7 @@ export class GridRows<T> extends View {
 export interface GridHeaderConfig<T> {
   /** The heterogeneous columns. */
   columns: Column<T>[];
-  /** The memoized `auto` measurement (shared with {@link GridRows} — identical geometry, PF-101). */
+  /** The memoized `auto`-width measurement (shared with {@link GridRows} so both use identical geometry). */
   autoWidths: () => (number | null)[];
   /** The horizontal cell offset (shared with the rows — the header pans in lockstep). */
   indent: Signal<number>;
@@ -387,9 +371,9 @@ export class GridHeader<T> extends View {
   }
 
   /**
-   * Draw the header row: blank in `tableHeader`, each title left-aligned with a right-edge `│`
-   * divider; the active sort column reserves its last content cell for the `▲`/`▼` indicator (so the
-   * arrow is visible even when the column width equals the title width, PF-103).
+   * Draw the header row: blank it in the header colour, each title left-aligned with a right-edge `│`
+   * divider. The active sort column reserves its last content cell for the `▲`/`▼` indicator, so the
+   * arrow stays visible even when the column width equals the title width.
    *
    * @param ctx The clipped, view-local paint context.
    */
@@ -408,7 +392,7 @@ export class GridHeader<T> extends View {
       const w = geom.widths[c];
       const x = geom.starts[c] - indent;
       if (sort !== null && sort.col === c && w > 0) {
-        // Reserve the last content cell for the arrow; clip the title to width−1 (PF-103).
+        // Reserve the last content cell for the arrow; clip the title to width−1.
         ctx.text(x, 0, alignCell(col.title, w - 1, 'left', stringWidth), header);
         ctx.text(x + w - 1, 0, sort.dir === 'asc' ? SORT_ASC : SORT_DESC, header);
       } else {
@@ -419,8 +403,8 @@ export class GridHeader<T> extends View {
   }
 
   /**
-   * A header click maps `local.x` (+ the H-indent) to a column and toggles its sort: a fresh column
-   * sorts ascending; re-clicking the active column flips asc↔desc (AC-6, AR-158).
+   * A header click maps the click column (plus the horizontal offset) to a column and toggles its
+   * sort: clicking a new column sorts ascending; re-clicking the active column flips asc↔desc.
    *
    * @param ev The dispatch envelope.
    */

@@ -1,31 +1,26 @@
 /**
- * `calendar-metrics.ts` — pure, view-free layout geometry for the RD-20 `Calendar` at three densities
- * (PA-20-runtime, user request 2026-07-04). Split out of `calendar.ts` so that file stays ≤ 500 lines
- * and the geometry is unit-testable in isolation. No reactivity, no drawing.
+ * Pure, view-free layout geometry for {@link Calendar} at three densities. No reactivity, no drawing;
+ * it resolves the exact rows, columns, and hit-zones the calendar draws for a given density and
+ * week-number setting.
  *
  * A `density` selects how much room the month grid gets:
- *   • **compact**     — the TV-exact `TCalendarView` 20×8 (2-char weekday labels, 2-wide day cells at
- *                       `j*3`, no footer). The faithful decode (`calendar.cpp`); the geometry oracle.
- *   • **comfortable** — the modern default: 4-wide day cells, 3-letter weekday labels, a divider + a
+ *   • **compact**     — a tight 20×8 grid (2-char weekday labels, 2-wide day cells, no footer).
+ *   • **comfortable** — the default: 4-wide day cells, 3-letter weekday labels, a divider, and a
  *                       footer row hosting the selected-date echo and a `Today` button (~28×10).
- *   • **spacious**    — comfortable + 5-wide cells and a blank spacer row between weeks (~35×15).
+ *   • **spacious**    — comfortable plus 5-wide cells and a blank spacer row between weeks (~35×15).
  *
- * The **header** is common to all densities: `↑↓` + a centred `⟨month⟩ ⟨year⟩` block + `↑↓`, exactly
- * `width` wide. The `↑↓` flanking arrows (PA-18) sit at the far left (month ±1) and far right (year ±1);
- * `compact` is byte-identical to the shipped header (the centred right-justified `setw(9)`/`setw(4)`
- * block reproduces `↑↓ September 2026 ↑↓`).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The **header** is common to all densities: `↑↓` at the far left (change month), a centred
+ * `⟨month⟩ ⟨year⟩` block, and `↑↓` at the far right (change year), spanning exactly the content width.
  */
 
-/** How much room the month grid gets. `compact` = the TV-exact 20×8; `comfortable` = the default. */
+/** How much room the month grid gets. `compact` is tightest; `comfortable` is the default. */
 export type CalendarDensity = 'compact' | 'comfortable' | 'spacious';
 
 /** Header nav arrows — thin `↑` (increment / next) / `↓` (decrement / prev), matching the dropdown `↓`. */
 export const ARROW_UP = '↑';
 export const ARROW_DOWN = '↓';
 
-/** The `Today` footer button label (comfortable / spacious only) — plain text, no brackets (PA-21). */
+/** The `Today` footer button label (comfortable / spacious only) — plain text, no brackets. */
 export const TODAY_LABEL = 'Today';
 
 /** Sunday-first weekday labels at the two supported widths; rotated by `firstDayOfWeek`. */
@@ -171,8 +166,8 @@ function centre(s: string, width: number): string {
 }
 
 /**
- * The full `width`-wide header line: `↑↓` + a centred right-justified `setw(9)⟨month⟩ setw(4)⟨year⟩`
- * block + `↑↓`. `compact` reproduces the shipped `↑↓ September 2026 ↑↓` byte-for-byte.
+ * The full content-width header line: `↑↓` at the left, a centred `⟨month⟩ ⟨year⟩` block (month
+ * right-justified to 9 columns, year to 4), and `↑↓` at the right — e.g. `↑↓ September 2026 ↑↓`.
  *
  * @param m         The metrics (supplies `contentWidth`).
  * @param monthName The full month name (e.g. `"September"`).

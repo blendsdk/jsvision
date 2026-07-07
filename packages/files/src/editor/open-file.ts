@@ -1,32 +1,42 @@
 /**
- * `openFileInEditor` — the files-side hosting factory (RD-08 03-06, plan-preflight PF-001).
+ * Opens (or creates) a file in a new editor window on a desktop, wiring everything up in one call:
+ * it builds a {@link FileEditor}, loads the file, wraps it in an `EditWindow`, keeps the window title
+ * in sync with the file name (falling back to `'Untitled'`, so a later "save as" retitles the window
+ * automatically), adds the window to the desktop, and hands back both objects.
  *
- * TV always `new`s a `TFileEditor` inside `TEditWindow` (`teditwnd.cpp:58`); with PF-001 the ui
- * `EditWindow` takes a caller-supplied `editor` instead, and THIS factory composes the pair —
- * ui never sees `FileSystem`/`FileEditor`, so no dependency cycle. It constructs the
- * `FileEditor` (+ `loadFile()`), news `EditWindow({ editor })`, binds
- * `fileName → window.title` with `?? 'Untitled'` (reactive — a `saveAs` retitles, PF-013 — the
- * `cmUpdateTitle` broadcast made a signal), adds the window to the host desktop, and returns
- * both.
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Use this rather than assembling a `FileEditor` and window by hand.
  */
 import { EditWindow } from '@jsvision/ui';
 import type { Desktop, Rect } from '@jsvision/ui';
 import { FileEditor } from './file-editor.js';
 import type { FileEditorOptions } from './file-editor.js';
 
-/** The factory options — the `FileEditor` options verbatim (clipboard/editorDialog ride `EditorOptions`). */
+/** Options for {@link openFileInEditor} — every {@link FileEditorOptions} field, plus an initial rect. */
 export interface OpenFileInEditorOptions extends FileEditorOptions {
-  /** Optional initial window rect, applied BEFORE mounting (the WM set-rect-then-add idiom). */
+  /** The window's initial rectangle, applied before it is mounted. */
   rect?: Rect;
 }
 
 /**
- * Open (or create) a file in a new `EditWindow` on the host desktop.
+ * Open (or create) a file in a new editor window on the desktop.
  *
- * @param host The app handle (the `createApplication` result satisfies this structurally).
- * @param opts The `FileEditor` options (`fs` required; `fileName` optional ⇒ untitled).
- * @returns The mounted window and its hosted editor.
+ * @param host An object with a `desktop` to add the window to — the `createApplication` result works.
+ * @param opts The editor options (`fs` required; omit `fileName` for an untitled buffer) plus `rect`.
+ * @returns The mounted window and its editor.
+ * @example
+ * import { createApplication } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { openFileInEditor, nodeFileSystem } from '@jsvision/files';
+ *
+ * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const app = createApplication({ caps });
+ *
+ * const { window, editor } = openFileInEditor(app, {
+ *   fs: nodeFileSystem,
+ *   fileName: '/home/user/notes.txt',   // omit for an untitled buffer
+ *   rect: { x: 2, y: 2, width: 60, height: 20 },
+ * });
+ * await editor.save();
  */
 export function openFileInEditor(
   host: { desktop: Pick<Desktop, 'addWindow'> },
@@ -34,15 +44,15 @@ export function openFileInEditor(
 ): { window: EditWindow; editor: FileEditor } {
   const editor = new FileEditor(opts);
   editor.loadFile();
-  // The rect rides the constructor (not a post-construction layout.rect assignment) so the very
-  // first gadget pin uses it — a post-set leaves one stale-geometry compose before the mount re-pin.
+  // Pass the rect through the constructor so the very first paint uses it; setting layout.rect after
+  // construction would leave one frame drawn at stale geometry before the mount re-pins it.
   const window = new EditWindow({
     editor,
     clipboard: opts.clipboard,
     editorDialog: opts.editorDialog,
     rect: opts.rect,
   });
-  // The reactive title bind (PF-013): fileName → title, 'Untitled' fallback.
+  // Keep the window title in sync with the file name, defaulting to 'Untitled'.
   window.onMount(() => {
     window.bind(
       () => editor.fileName(),

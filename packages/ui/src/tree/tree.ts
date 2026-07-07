@@ -1,18 +1,11 @@
 /**
- * `Tree<T>` — a Turbo Vision `TOutlineViewer`/`TOutline` (RD-15): a focusable, virtual-scrolling
- * expandable outline. A `Group` laid out `[rows fr | vertical-bar 1]` (mirrors `ListView`) that
- * flattens the visible (expanded) nodes of a **forest** of roots into an ordered row list,
- * virtual-scrolls it via {@link TreeRows}, and owns a vertical `ScrollBar`.
+ * `Tree<T>` — a focusable, virtual-scrolling, expandable outline widget. See the {@link Tree} class
+ * for the full description and a worked example.
  *
- * The **drawing/geometry/glyphs match TV exactly** (the `graph.ts` `│├└─`+`+`/`─` builder, the
- * two-tone collapsed text, the `cpOutlineViewer` colours — GATE-1 decoded in `tree-rows.ts`/`graph.ts`),
- * while the **data model + behaviour modernise**: a plain reactive `TreeNode<T>` (`{ value, children }`,
- * AR-141), **view-owned** expand state (an object-identity `Set` in a version `Signal`, PA-4; the node
- * data stays plain), and `←`/`→` collapse/expand (PA-12). Built entirely on existing primitives — no
- * new engine seams; the only additive surface is the 4 core `cpOutlineViewer` theme roles.
- *
- * Expose {@link rows} as the focus target (a plain `Group` is not itself focusable; Tab/click descend
- * to the rows renderer), like `ListView.rows`. `.js` specifiers per NodeNext.
+ * It takes a forest of {@link TreeNode} roots, flattens the currently-visible (expanded) nodes into
+ * an ordered row list, virtual-scrolls it, and owns a vertical scroll bar. Nodes carry `│├└─`
+ * connector guides and a `+`/`─` expand marker. Expand state is owned by the view (not by the node
+ * data), so the node objects stay plain and immutable.
  */
 import { Group } from '../view/index.js';
 import type { LayoutProps } from '../layout/index.js';
@@ -28,7 +21,7 @@ export type { TreeNode } from './graph.js';
 
 /** Construction options for {@link Tree}. */
 export interface TreeOptions<T> {
-  /** The forest of root nodes (PA-2); a single-root tree is the 1-element case. */
+  /** The reactive forest of root nodes; a single-root tree is the 1-element case. */
   roots: Signal<TreeNode<T>[]>;
   /** Render a node's value to its row text. */
   getText: (value: T) => string;
@@ -36,21 +29,64 @@ export interface TreeOptions<T> {
   focused?: Signal<number>;
   /** The selected (chosen) flattened-visible index (default an internal signal at -1). */
   selected?: Signal<number>;
-  /** Activation callback (Enter / text-click); `index` is the flattened index, `node` the `TreeNode` (PA-13). */
+  /** Activation callback (Enter / text double-click); `index` is the flattened index, `node` the node. */
   onSelect?: (index: number, node: TreeNode<T>) => void;
-  /** Command emitted on activation (TV `cmOutlineItemSelected`); no built-in default (PA-13). */
+  /** Command name emitted on activation, handled elsewhere; no built-in default. */
   command?: string;
-  /** Seed every node with children as expanded at construction (default false = all collapsed, PA-3). */
+  /** Seed every node that has children as expanded at construction (default false = all collapsed). */
   expandedByDefault?: boolean;
-  /** Draw the `│├└─` connectors (default true); false = flat indent, markers unchanged (PA-6). */
+  /** Draw the `│├└─` connectors (default true); false = flat indent, markers unchanged. */
   guides?: boolean;
 }
 
-/** A focusable, virtual-scrolling expandable outline: a rows renderer + an owned vertical scroll bar. */
+/**
+ * A focusable, virtual-scrolling, expandable outline (file tree, nav tree, etc.). It renders a forest
+ * of {@link TreeNode} roots as indented rows with `│├└─` connector guides and a `+`/`─` marker, and
+ * only paints its visible window, so it stays fast over large trees.
+ *
+ * Expand state is owned by the tree, keyed on node object identity — the node data stays plain, and
+ * the same node can live in more than one tree with independent expand state. Mutate it with
+ * {@link expand}/{@link collapse}/{@link toggle}/{@link expandAll}/{@link collapseAll}/
+ * {@link expandSubtree}; each re-flattens and repaints.
+ *
+ * Keyboard: ↑↓ move focus, PgUp/PgDn page, Home/End, Ctrl+PgUp/PgDn jump to ends, `+`/`-` expand or
+ * collapse the focused node, `*` expand its whole subtree, ←/→ collapse-or-parent / expand-or-child,
+ * Enter activate. Mouse: click a node's guide zone to toggle it, double-click its text to activate.
+ *
+ * Because a plain `Group` is not itself a focus target, focus the exposed {@link Tree.rows} renderer,
+ * not the tree.
+ *
+ * @example
+ * import { Group, Tree, createEventLoop, signal } from '@jsvision/ui';
+ * import type { TreeNode } from '@jsvision/ui';
+ *
+ * // A leaf is `children: []`.
+ * const n = (value: string, children: TreeNode<string>[] = []): TreeNode<string> => ({ value, children });
+ *
+ * const roots = signal<TreeNode<string>[]>([
+ *   n('src', [n('index.ts'), n('engine', [n('buffer.ts')])]),
+ *   n('README.md'),
+ * ]);
+ *
+ * const tree = new Tree<string>({
+ *   roots,
+ *   getText: (name) => name,
+ *   command: 'open',
+ *   onSelect: (_i, node) => console.log('opened', node.value),
+ * });
+ * tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 } };
+ *
+ * const root = new Group();
+ * root.add(tree);
+ * const loop = createEventLoop({ width: 28, height: 10 });
+ * loop.mount(root);
+ * loop.focusView(tree.rows); // focus the rows renderer, not the tree
+ * tree.expandAll();
+ */
 export class Tree<T> extends Group {
-  /** Lay the children out horizontally: `[rows fr | bar 1]`. */
+  /** Lay the children out horizontally: rows on the left, the scroll bar on the right. */
   override layout: LayoutProps = { direction: 'row' };
-  /** The focusable rows renderer (the focus target — a `Group` is not itself a focus leaf). */
+  /** The focusable rows renderer — focus this (a plain `Group` is not itself a focus target). */
   readonly rows: TreeRows<T>;
   /** The owned vertical scroll bar (its `value` is the shared `focused` signal). */
   protected readonly bar: ScrollBar;
@@ -60,20 +96,19 @@ export class Tree<T> extends Group {
   readonly selected: Signal<number>;
   /** The forest of roots. */
   protected readonly roots: Signal<TreeNode<T>[]>;
-  /** Command emitted on activation (consumed by the Phase-2 select wiring). */
+  /** Command name emitted on activation. */
   protected readonly command?: string;
-  /** Activation callback (consumed by the Phase-2 select wiring). */
+  /** Activation callback. */
   protected readonly onSelect?: (index: number, node: TreeNode<T>) => void;
-  /** View-owned expand state: object-identity node set (PA-4), observed via {@link expandVersion}. */
+  /** View-owned expand state: a set of expanded nodes keyed on object identity. */
   protected readonly expandedSet = new Set<TreeNode<T>>();
-  /** Bumped on every expand-state mutation so the flatten computed re-runs (PA-4). */
+  /** Bumped on every expand-state mutation so the flatten computed re-runs (the set itself is untracked). */
   protected readonly expandVersion: Signal<number> = signal(0);
-  /** The flattened-visible rows (recomputes on a `roots` or expand change). */
+  /** The flattened-visible rows (recomputes on a `roots` or expand-state change). */
   protected readonly flattened: () => FlatRow<T>[];
 
   /**
-   * @param opts `roots` + `getText` + optional `focused`/`selected` signals, `onSelect`/`command`,
-   *   `expandedByDefault`, `guides`.
+   * @param opts The tree configuration — see {@link TreeOptions}.
    */
   constructor(opts: TreeOptions<T>) {
     super();
@@ -106,13 +141,13 @@ export class Tree<T> extends Group {
     this.rows.layout = { size: { kind: 'fr', weight: 1 } };
     this.bar = new ScrollBar({ value: this.focused, orientation: 'vertical' });
     this.bar.layout = { size: { kind: 'fixed', cells: 1 } };
-    this.rows.bar = this.bar; // the rows renderer re-limits the bar each draw (TV setLimit)
+    this.rows.bar = this.bar; // the rows renderer re-limits the bar's range on every draw
 
     this.add(this.rows); // z-order: rows (left) then bar (right)
     this.add(this.bar);
   }
 
-  /** Whether `node` is currently expanded (object identity, PA-4). */
+  /** Whether `node` is currently expanded (matched by object identity). */
   isExpanded(node: TreeNode<T>): boolean {
     return this.expandedSet.has(node);
   }
@@ -136,25 +171,25 @@ export class Tree<T> extends Group {
     else this.expand(node);
   }
 
-  /** Expand every node in the forest (TV `expandAll` over all roots, PA-6); one repaint. */
+  /** Expand every node in the whole forest; one repaint. */
   expandAll(): void {
     this.seedExpanded(this.roots());
     this.bump();
   }
 
-  /** Collapse every node (PA-6); one repaint. */
+  /** Collapse every node; one repaint. */
   collapseAll(): void {
     this.expandedSet.clear();
     this.bump();
   }
 
-  /** Expand `node` and its whole subtree (TV `expandAll(node)`, `toutline.cpp:106`; the `*` key); one repaint. */
+  /** Expand `node` and its entire subtree (the `*` key); one repaint. */
   expandSubtree(node: TreeNode<T>): void {
     this.seedExpanded([node]);
     this.bump();
   }
 
-  /** Seed every node that has children as expanded (TV `expandedByDefault`, PA-3). Iterative. */
+  /** Add every node with children (reachable from `nodes`) to the expanded set. Iterative. */
   protected seedExpanded(nodes: TreeNode<T>[]): void {
     const stack = [...nodes];
     while (stack.length > 0) {
@@ -167,7 +202,7 @@ export class Tree<T> extends Group {
     }
   }
 
-  /** Bump the expand version so the flatten computed re-runs (PA-4). */
+  /** Bump the expand version so the flatten computed re-runs (the expand set is not itself reactive). */
   protected bump(): void {
     this.expandVersion.set(this.expandVersion() + 1);
   }

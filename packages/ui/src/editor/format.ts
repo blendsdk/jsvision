@@ -1,26 +1,19 @@
 /**
- * `formatLine` — the faithful TV editor row renderer, pure (RD-08 03-02).
+ * Turn one logical line of the buffer into the sequence of visual cells to paint on one screen row.
+ * Pure — it reads the buffer and the selection range, and returns cells; it never writes anything.
  *
- * Decode (`TEditor::formatLine`, `edits.cpp:38-92`, re-verified 2026-07-07 @ 57b6f56):
- *   • Per-position colour split via `getColorAt` (`edits.cpp:31-36`): `selStart ≤ P < selEnd` →
- *     the selected attr, else normal — here the boolean `selected` role selector (the byte pair
- *     `0x1E`/`0x71` is pinned by the `editorNormal`/`editorSelected` theme roles, PA-8).
- *   • Steps by `nextCharAndPos` (`teditor1.cpp:240-268`): a tab advances one unit to the next
- *     8-column stop `(pos|7)+1`; any other glyph by its display width — TV's multibyte step
- *     generalized to grapheme clusters (AR-251).
- *   • The width break happens BEFORE drawing: `x > width || (x == width && pos < nextPos)` — so a
- *     combining mark in the last column still joins its base, and a wide glyph may straddle the
- *     right edge (the caller's `DrawContext`/`ScreenBuffer` clips it).
- *   • Stops at `\r`/`\n` (the line-bounded slice realizes TV's explicit break check).
- *   • Only text past `hScroll` is emitted; an INCOMPLETE tab or wide glyph at the left edge
- *     (`buf[0] == '\t' || pos < hScroll`) renders as SPACES for its visible width — never a
- *     split cell.
- *   • The remainder pads with spaces in the colour of the position AFTER the text (the break's —
- *     so a selection that includes the line break paints the padding).
+ * What it handles for you:
+ *   • Selection colouring: each cell is flagged `selected` when its position falls in the selection
+ *     range, so the caller can paint runs in the normal vs. selected theme colours.
+ *   • Tabs expand to the next 8-column stop; every other cluster advances by its display width.
+ *   • Horizontal scroll: only text past `hScroll` is emitted. A tab or wide glyph straddling the
+ *     left edge renders as spaces for its visible width — never a split cell.
+ *   • A wide glyph straddling the right edge is emitted whole; the caller's screen buffer clips it.
+ *   • The row is padded with spaces out to `width`; the padding takes the colour of the position
+ *     just past the text, so a selection that runs through the line break paints the padding too.
  *
- * Sanitization is NOT this function's job: cells pass raw and become inert at the write-time
- * boundary (`DrawContext`/`ScreenBuffer.set` — AC-17).
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Cell contents are passed through raw; control characters are made inert later, at the point where
+ * the row is written to the screen — that is not this function's concern.
  */
 import { stringWidth } from '../controls/measure.js';
 import { nextClusterEnd } from './buffer/segment.js';
@@ -31,14 +24,14 @@ import type { BufText } from './buffer/gap.js';
 export interface FormatCell {
   /** The cluster to draw (`' '` for tab fills, h-scroll stubs, and padding). */
   ch: string;
-  /** `true` → `editorSelected` (`0x71`), else `editorNormal` (`0x1E`) — the getColorAt split. */
+  /** `true` when this cell falls within the selection (paint it in the selected colour). */
   selected: boolean;
   /** Display width in columns (a wide CJK/emoji cluster is 2). */
   width: 1 | 2;
 }
 
 /**
- * Format one visual row: TV `formatLine` over the buffer, hScroll-clipped, padded to `width`.
+ * Format one visual row from the buffer, horizontally scrolled and padded to `width`.
  *
  * @param b The buffer (or any `BufText`).
  * @param lineStartP Buffer position of the line's first unit.
@@ -46,7 +39,7 @@ export interface FormatCell {
  * @param width Row width in columns (clamped ≥ 0).
  * @param sel The absolute selection range `[start, end)`, or `null` for none.
  * @returns The row's cells, in order; total width = `width` (a straddling trailing wide glyph may
- *   exceed it by 1 — the decode draws it and the buffer clips).
+ *   exceed it by 1 — it is emitted whole and the screen buffer clips it).
  */
 export function formatLine(
   b: BufText,
@@ -59,7 +52,7 @@ export function formatLine(
   const w = Math.max(0, Math.trunc(width) || 0);
   const len = b.length;
   const ls = Math.max(0, Math.min(Math.trunc(lineStartP) || 0, len));
-  const text = b.slice(ls, lineEnd(b, ls)); // the line-bounded slice (stops at \r/\n, PF-007)
+  const text = b.slice(ls, lineEnd(b, ls)); // one line's text, stopping at the next \r/\n
   const selectedAt = (p: number): boolean => sel !== null && sel.start <= p && p < sel.end;
 
   const cells: FormatCell[] = [];
@@ -74,14 +67,15 @@ export function formatLine(
       nextPos = (pos | 7) + 1;
     } else {
       const cp0 = text.codePointAt(i) ?? 0x20;
-      // A C0 control / DEL steps as ONE column: the write-time boundary stores exactly one space
-      // cell per control char (ScreenBuffer.set HR-05), so the column math must agree — never
-      // treat it as a zero-width cluster.
+      // A C0 control / DEL steps as ONE column: when the row is written to the screen each control
+      // char becomes exactly one space cell, so the column math here must agree — never treat it as
+      // a zero-width cluster.
       const w = cp0 < 0x20 || cp0 === 0x7f ? 1 : stringWidth(text.slice(i, nextI));
       nextPos = pos + w;
     }
 
-    // The decode's pre-draw break: past the width, or a width-boundary glyph that would extend.
+    // Stop before drawing past the row width, or at a glyph on the boundary that would extend past
+    // it — checked before emitting so a combining mark in the last column still joins its base.
     if (x > w || (x === w && pos < nextPos)) break;
 
     if (nextPos > h) {
@@ -89,14 +83,14 @@ export function formatLine(
       const charWidth = nextPos - Math.max(pos, h);
       const cp0v = text.codePointAt(i) ?? 0x20;
       if (isTab || pos < h || cp0v < 0x20 || cp0v === 0x7f) {
-        // A tab, the visible remainder of a glyph cut by hScroll, or a C0/DEL control — spaces,
-        // never a split cell. Emitting the control as its own SPACE keeps the row's column math
-        // identical to the write boundary (DrawContext/sanitize would otherwise DROP it and shift
-        // every later cell left); the one-char-one-cell rule mirrors ScreenBuffer.set HR-05.
+        // A tab, the visible remainder of a glyph cut off by the horizontal scroll, or a C0/DEL
+        // control — emit spaces, never a split cell. Emitting the control as its own space keeps
+        // the row's column math identical to the write boundary (which would otherwise drop the
+        // control and shift every later cell one column left).
         for (let s = 0; s < charWidth; s++) cells.push({ ch: ' ', selected, width: 1 });
       } else if (charWidth === 0) {
-        // A zero-width cluster (lone combining mark) — join it to the previous cell, mirroring
-        // terminal behavior; degenerate at row start → a width-1 cell (the ScreenBuffer rule).
+        // A zero-width cluster (a lone combining mark) — join it to the previous cell, mirroring
+        // terminal behavior; if it lands at the row start it becomes a width-1 cell of its own.
         const prev = cells[cells.length - 1];
         if (prev !== undefined) prev.ch += text.slice(i, nextI);
         else cells.push({ ch: text.slice(i, nextI), selected, width: 1 });
@@ -109,7 +103,8 @@ export function formatLine(
     pos = nextPos;
   }
 
-  // EOL padding in the trailing position's colour (`colorAfter` at P — the break/EOB position).
+  // Pad the rest of the row in the colour of the position just past the text (the line break, or
+  // end of buffer), so a selection running through the break also colours the padding.
   if (x < w) {
     const selected = selectedAt(ls + i);
     for (let s = x; s < w; s++) cells.push({ ch: ' ', selected, width: 1 });

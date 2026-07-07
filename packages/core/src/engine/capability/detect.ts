@@ -1,16 +1,15 @@
 /**
- * Per-field layered resolution + reason recording (RD-02, plan doc 03-02).
+ * Layered capability detection with a per-field reason trace.
  *
- * Composes the detection layers below the override (layer 1, applied by
- * {@link ./index.js}): runtime query (layer 2), environment (layer 3), the
- * known-terminal table (layer 4), and conservative defaults (layer 5). Each
- * top-level field group records the single highest-precedence layer that
- * contributed to it (the reason trace, PL-3). `colorDepth` uses the special
- * banded precedence of PL-5; `platform` is always taken from the resolved
- * platform input.
+ * Combines the detection sources, from strongest to weakest: the live runtime
+ * probe, environment variables, the known-terminal table, and the conservative
+ * defaults. (The caller's `override` is applied on top of this, in `index.ts`.)
+ * Each top-level field records the single strongest source that set it — the
+ * reason trace. `colorDepth` uses a special precedence (see
+ * {@link resolveColorDepth}); `platform` always comes straight from the input.
  *
- * Layers 2 (`runtime`) and 4 (`table`) are injected by later phases; when
- * absent they contribute nothing and fields fall through to env/default.
+ * The `runtime` and `table` sources are optional; when absent they contribute
+ * nothing and fields fall through to the environment or the defaults.
  */
 import type {
   CapabilityProfile,
@@ -23,15 +22,15 @@ import type {
 import { CONSERVATIVE_DEFAULTS } from './defaults.js';
 import { readEnv, type ColorDepthSignal } from './env.js';
 
-/** Inputs to {@link detectBase}: the ambient signals plus optional layers 2/4. */
+/** Inputs to {@link detectBase}: the ambient signals plus the optional runtime/table sources. */
 export interface DetectInputs {
-  /** Environment map for layer 3 (injected; never mutated or logged). */
+  /** Environment map to read (injected; never mutated or logged). */
   readonly env: NodeJS.ProcessEnv;
   /** Resolved host platform (always wins for the `platform` field). */
   readonly platform: Platform;
-  /** Layer-2 runtime-query partial (phase 3); absent → skipped. */
+  /** Capabilities from a live runtime probe; absent → skipped. */
   readonly runtime?: DeepPartial<CapabilityProfile>;
-  /** Layer-4 known-terminal partial (phase 2); absent → skipped. */
+  /** Capabilities from the known-terminal table; absent → skipped. */
   readonly table?: DeepPartial<CapabilityProfile>;
 }
 
@@ -134,10 +133,11 @@ function resolveField<K extends keyof CapabilityProfile>(
 }
 
 /**
- * Resolve `colorDepth` under the PL-5 banded precedence (override excluded —
- * applied later by the resolver):
- * `NO_COLOR/FORCE_COLOR (env.forced) > runtime > COLORTERM/TERM (env.soft) >
- * table > default`.
+ * Resolve `colorDepth` with its special precedence (the caller's override is
+ * applied later, on top of this):
+ * `NO_COLOR/FORCE_COLOR (forced) > runtime probe > COLORTERM/TERM (soft) >
+ * table > default`. The forced env signals deliberately outrank a live probe,
+ * because a user setting `NO_COLOR` must always win.
  */
 function resolveColorDepth(
   signal: ColorDepthSignal,
@@ -166,10 +166,9 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 /**
  * Immutably deep-merge a {@link DeepPartial} over a full base value, leaf by
- * leaf (PL-7). Plain objects recurse; every other value (primitive/array) is a
- * leaf the partial replaces when present. `undefined` partial values are
- * ignored so an explicitly-absent key never clears a base value. Never mutates
- * `base`.
+ * leaf. Plain objects recurse; every other value (primitive/array) is a leaf the
+ * partial replaces when present. `undefined` partial values are ignored, so an
+ * explicitly-absent key never clears a base value. Never mutates `base`.
  *
  * @param base Full base value (e.g. a resolved field or the whole profile).
  * @param partial Partial overlay whose set leaves win.

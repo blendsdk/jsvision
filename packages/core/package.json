@@ -26,6 +26,7 @@
     "test": "vitest run --project unit",
     "test:e2e": "vitest run --project e2e",
     "check:deps": "node ../../scripts/check-no-native-deps.mjs .",
+    "check:docs": "node ../../scripts/check-jsdoc.mjs .",
     "bench": "tsx bench/frame-bench.mjs"
   },
   "devDependencies": {

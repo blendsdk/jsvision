@@ -1,24 +1,29 @@
 /**
- * The `Validator` shape (RD-06 PA-12, mirroring TV `validate.h`). A composable, typed unit attachable
- * to an `Input`: `isValidInput` is the transient per-keystroke gate (allows partial values mid-edit),
- * `isValid` the blocking on-completion gate (run on focus-leave / `valid()`). The `.js` extension in
- * import specifiers is required by NodeNext ESM resolution.
+ * A rule that constrains what an {@link Input} accepts. Attach one via the `Input`'s `validator`
+ * option.
+ *
+ * A validator has two gates that fire at different moments:
+ * - `isValidInput` runs live on every keystroke and must accept *partial* values that are still
+ *   being typed (e.g. `"12"` while typing an age). Rejecting here blocks the keystroke.
+ * - `isValid` runs once the user leaves the field (or when you call `Input.valid()`) and checks the
+ *   *complete* value. Failing here does not trap focus — it flags the field as invalid so you can
+ *   show feedback.
+ *
+ * Use the built-in factories ({@link filter}, {@link range}, {@link lookup}, {@link picture}) or
+ * implement this shape yourself for a custom rule.
  */
-
-/** A composable input validator (TV `TValidator` reframed as a plain object — PA-12). */
 export interface Validator {
-  /** Transient, per-keystroke: may this candidate string exist mid-edit? (TV `isValidInput`). */
+  /** Live per-keystroke gate: may this string exist mid-edit? Must accept partial input. */
   isValidInput(s: string): boolean;
-  /** Blocking, on completion/focus-leave: is the complete value acceptable? (TV `isValid`). */
+  /** Blocking gate run on completion / focus-leave: is the finished value acceptable? */
   isValid(s: string): boolean;
   /**
-   * Optional post-keystroke transform (RD-07 PA-17, TV `TPXPictureValidator` autoFill): return `s`
-   * rewritten with mask literals auto-inserted + case transforms applied (e.g. `123` → `123-` for
-   * `###-##`, `abc` → `ABC` for `&&&`), or `s` unchanged when nothing applies. `Input` calls it after
-   * accepting input and applies the result (bounded by `maxLength`). Only `picture` implements it;
-   * other validators leave it undefined (a no-op). Never throws.
+   * Optional post-keystroke rewrite. After accepting a keystroke, `Input` calls this and stores the
+   * returned string, letting a validator auto-insert formatting (e.g. `123` → `123-` for a
+   * `###-##` mask) or apply case transforms (`abc` → `ABC`). Return `s` unchanged when nothing
+   * applies. Only {@link picture} implements it; the other validators omit it. Never throws.
    */
   fill?(s: string): string;
-  /** Optional message for the invalid state, consumed by `Input`'s invalid feedback (PA-2). */
+  /** Optional message describing the invalid state, for you to surface to the user. */
   readonly error?: string;
 }

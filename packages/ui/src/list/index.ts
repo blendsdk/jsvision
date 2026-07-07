@@ -1,11 +1,7 @@
 /**
- * `list/` barrel (RD-11) — the list-container subsystem.
- *
- * Public symbols land in Phase 3 and are re-exported through `@jsvision/ui`'s single entry point
- * (`src/index.ts`, explicit named re-exports per the AR-102 convention): `ListView<T>` +
- * `ListBox` (TV `tlstview.cpp`/`tlistbox.cpp`), over the internal `virtual`/`list-rows` helpers.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The list-container subsystem: {@link ListView} (a virtual-scroll list of any item type with an
+ * owned scroll bar) and {@link ListBox} (its string-list preset), over the shared virtual-scroll
+ * helpers. All public symbols are re-exported through `@jsvision/ui`'s single entry point.
  */
 export { ListView } from './list-view.js';
 export type { ListViewOptions } from './list-view.js';

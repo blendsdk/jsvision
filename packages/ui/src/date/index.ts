@@ -1,11 +1,8 @@
 /**
- * `date/` barrel — the RD-20 date family public surface (re-exported by the ui entry `src/index.ts`):
- * the `Calendar` month-grid view, the `DatePicker` dropdown, the `CalendarDate` value type + its pure
- * helpers, and the `DateFormat` field-format model. The pure grid/format internals + `dateFormat()` are
- * exported here for intra-`date/` use but are NOT part of the curated public surface (`src/index.ts`
- * re-exports only the plan-listed symbols).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Public surface of the date family: the {@link Calendar} month-grid view, the {@link DatePicker}
+ * dropdown, the {@link CalendarDate} civil-date value plus its pure helpers, and the field-format
+ * model. The grid/format helpers exported here are for building custom date widgets; the curated
+ * package entry point re-exports only the widgets and value type.
  */
 export { Calendar } from './calendar.js';
 export type { CalendarOptions } from './calendar.js';

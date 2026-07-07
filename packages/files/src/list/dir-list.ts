@@ -1,17 +1,11 @@
 /**
- * `DirList` — the directory-tree list (`extends ListView<DirNode>`), a decode of `TDirListBox`
- * (`tdirlist.cpp`, extends the `TListViewer` spine).
+ * A single-column list that renders a directory tree — the ancestor chain from the filesystem root
+ * down to the current directory, plus that directory's immediate subdirectories, drawn with box
+ * connectors. Activating a node (Enter or double-click) reports its absolute path so the caller can
+ * change directory. The tree re-roots reactively whenever its `directory` signal changes.
  *
- * TV decode (GATE-1): `TDirListBox : TListBox` holds `TDirEntry` items, not strings — so the faithful
- * jsvision mapping is `ListView<DirNode>` (the string `ListBox` preset can't carry the per-node path),
- * a single column owning its vertical bar. `getText(node) = connector + label` (the tree geometry lives
- * in the pure `buildDirTree`, proven cell-by-cell in `tree.spec`). Selecting a node emits its path
- * (`cmChangeDir`). The tree is a reactive derivation of `directory` — a change re-roots it. Labels are
- * sanitized at the draw boundary (`ctx.text`, AC-14).
- *
- * GATE-2 AFTER-diff (`tdirlist.cpp:104-186`): the drawn rows equal `buildDirTree` (verified cell-by-cell
- * in `tree.spec` against the `└─┬`/`└┬─`/` ├─`/graphics-fixup decode) rendered at col 1 (`TListViewer`
- * `curCol+1`). No draw mismatch. `.js` per NodeNext.
+ * This is the tree embedded in {@link ChDirDialog}; use it directly only when composing a custom
+ * directory picker.
  */
 import { ListView, signal } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
@@ -21,51 +15,66 @@ import type { DirNode } from '../fs/tree.js';
 
 /** Construction options for {@link DirList}. */
 export interface DirListOptions {
-  /** The filesystem seam. */
+  /** The filesystem to read through. */
   fs: FileSystem;
-  /** The current directory (shared with the owning dialog; the tree re-roots on change). */
+  /** The current directory; the tree re-roots whenever it changes. */
   directory: Signal<string>;
   /** The focused display index (default an internal signal at 0). */
   focused?: Signal<number>;
   /** The selected display index (default an internal signal at -1). */
   selected?: Signal<number>;
-  /** Fired when a node is activated (Enter/double-click) with its absolute path (`cmChangeDir`). */
+  /** Fired on Enter/double-click with the activated node's absolute path. */
   onChangeDir?: (path: string) => void;
-  /** A command emitted on activation (like `Button`). */
+  /** A command name emitted on activation, handled elsewhere (like {@link Button}). */
   command?: string;
 }
 
-/** The directory-tree list over a reactive `buildDirTree` derivation. */
+/**
+ * The directory-tree list, driven reactively by the current directory.
+ *
+ * @example
+ * import { Group, signal } from '@jsvision/ui';
+ * import { DirList, nodeFileSystem } from '@jsvision/files';
+ *
+ * const directory = signal('/home/user');
+ * const tree = new DirList({
+ *   fs: nodeFileSystem,
+ *   directory,
+ *   onChangeDir: (path) => directory.set(path), // navigate on activation
+ * });
+ * tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 10 } };
+ * new Group().add(tree);
+ */
 export class DirList extends ListView<DirNode> {
-  /** The current directory (the tree re-roots on change). */
+  /** The current directory; changing it re-roots the tree. */
   readonly directory: Signal<string>;
-  /** The tree nodes (a writable signal kept in sync with `buildDirTree`). */
+  /** The tree rows currently displayed. */
   readonly nodes: Signal<DirNode[]>;
-  /** The currently-focused node, or `undefined` when empty. */
+  /** The node under the focus cursor, or `undefined` when the tree is empty. Reactive. */
   readonly focusedNode: () => DirNode | undefined;
   private readonly fsSeam: FileSystem;
 
   constructor(opts: DirListOptions) {
     const nodes = signal<DirNode[]>([]);
-    const onChange = opts.onChangeDir; // capture before super() (no `this` pre-super)
+    const onChange = opts.onChangeDir; // capture before super() — `this` isn't available yet
     super({
       items: nodes,
       getText: (n) => n.connector + n.label,
       focused: opts.focused,
       selected: opts.selected,
       typeAhead: true,
-      sorted: false, // buildDirTree order is the tree order, not ascending getText
+      sorted: false, // buildDirTree already emits rows in tree order
       command: opts.command,
-      onSelect: (_index, node) => onChange?.(node.path), // cmChangeDir
+      onSelect: (_index, node) => onChange?.(node.path),
     });
     this.fsSeam = opts.fs;
     this.directory = opts.directory;
     this.nodes = nodes;
-    // A plain reactive accessor (not a `computed` — no owner-less computation), mirroring FileList.
+    // Plain reactive accessor, mirroring FileList.focusedEntry.
     this.focusedNode = () => this.nodes()[this.focused()];
 
-    // Reactive re-root: a `directory` change re-derives the tree. The owned `bind` reader runs
-    // immediately on mount + on change; an unreadable directory yields an empty tree.
+    // Re-root reactively: a directory change re-derives the tree. Bound on mount, it runs once
+    // immediately and on every change; an unreadable directory yields an empty tree.
     this.onMount(() => {
       this.bind(
         () => {

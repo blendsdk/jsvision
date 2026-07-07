@@ -1,19 +1,28 @@
 /**
- * The files-owned registry-level file commands (RD-08 03-06; PA-15 as amended by plan-preflight
- * PF-004): the TV decode places `cmSave`/`cmSaveAs` handling + greying in `TFileEditor`
- * (`tfiledtr.cpp:257-262`), and the fs-free ui `Editor` has no save behavior to bind — so the
- * constants live HERE, not in ui's `EditorCommands`. The tvedit clone binds its File menu to
- * them; greying rides the `updateCommands` decode (PA-4: always enabled while active).
+ * The command names for the file operations, for wiring a menu or status bar to a file editor. Save
+ * behaviour lives on {@link FileEditor} (the base editor package is filesystem-free), so these names
+ * are defined here alongside it. Bind your File menu items to these and handle them in your app.
+ *
+ * @example
+ * import { menuBar, subMenu, item } from '@jsvision/ui';
+ * import { FileCommands } from '@jsvision/files';
+ *
+ * const bar = menuBar([
+ *   subMenu('~F~ile', [
+ *     item('~N~ew', FileCommands.new),
+ *     item('~O~pen', FileCommands.open),
+ *     item('~S~ave', FileCommands.save),
+ *     item('Save ~a~s', FileCommands.saveAs),
+ *   ]),
+ * ]);
  */
-
-/** The registry-level file command names. */
 export const FileCommands = {
-  /** Save the focused file editor (TV `cmSave`; F2 in the tvedit clone). */
+  /** Save the focused file editor. */
   save: 'save',
-  /** Save under a new name via `edSaveAs` (TV `cmSaveAs`). */
+  /** Save the focused file editor under a new name (prompts for a path). */
   saveAs: 'saveAs',
-  /** Open a file (TV `cmOpen`; F3). */
+  /** Open an existing file. */
   open: 'open',
-  /** New untitled editor window (TV `cmNew`). */
+  /** Create a new untitled editor window. */
   new: 'new',
 } as const;

@@ -1,15 +1,14 @@
 /**
- * Public entry point of the RD-07 host subsystem.
+ * Public entry point of the host & lifecycle subsystem — everything needed to
+ * take over a real terminal and give it safely back.
  *
- * Re-exports the host's public API so the SDK's top-level `src/engine/index.ts`
- * can surface it: the {@link createHost} factory, the additive
- * {@link detectTty} pre-start TTY probe (PF-001), and the public type surface
+ * Re-exports: the {@link createHost} factory (raw mode, alternate screen,
+ * signals, and guaranteed restore on every exit path), the {@link detectTty}
+ * pre-start TTY check, the {@link createTerminalQuery} response seam, the
+ * ambiguous-width startup probe helpers, and the public type surface
  * ({@link Host}, {@link HostOptions}, {@link ResizeEvent}, {@link RuntimeAdapter},
- * {@link HostSignal}, {@link TimerHandle}). The modes/signals/platform/restore
- * modules — and the rest of `streams` — are internal and not re-exported.
- *
- * The `.js` extension in the import specifiers is required by NodeNext ESM
- * resolution (it resolves to the `.ts` source during development via tsx).
+ * and friends). All of these are re-exported again from `@jsvision/core`, so
+ * import them from there. The mode/signal/restore internals are not exported.
  */
 export { createHost } from './host.js';
 export { detectTty } from './streams.js';

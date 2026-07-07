@@ -1,15 +1,12 @@
 /**
- * Public entry point of the RD-08 safety subsystem.
+ * Public entry point of the safety subsystem — the SDK's guardrails against
+ * corrupting the terminal or leaking secrets into logs.
  *
- * Re-exports the subsystem's public API so the SDK's top-level
- * `src/engine/index.ts` can surface it: the canonical {@link sanitize} injection
- * boundary (relocated from RD-04's render module, AR-3/AR-13), the typed
- * {@link TuiError} model, the screen-safe {@link createLogger}, and the pure
+ * Re-exports: the {@link sanitize} terminal-injection boundary, the typed
+ * {@link TuiError} model, the screen-safe {@link createLogger}, the pure
  * {@link redactEvent}/{@link dumpCaps} redaction helpers, and the essentials gate
  * ({@link evaluateEssentials}/{@link essentialsMet}/{@link assertEssentials}).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM
- * resolution (it resolves to the `.ts` source during development via tsx).
+ * These are all re-exported again from `@jsvision/core`, so import them from there.
  */
 
 // Canonical output sanitizer — the primary injection boundary.

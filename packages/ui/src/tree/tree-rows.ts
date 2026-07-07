@@ -1,33 +1,20 @@
 /**
- * `TreeRows<T>` — the internal focusable rows-renderer of a {@link Tree} (RD-15). The Tree-specific
- * sibling of `ListRows`: it draws each visible row as a faithful Turbo Vision tree-line **graph
- * prefix** + the node text (two-tone for a collapsed node), virtual-scrolls a `flatten()`ed row list,
- * and owns tree keyboard/mouse. Built on the RD-11 virtual-scroll helpers (`clampIndex`/`keepVisible`)
- * + the owned-`ScrollBar` pattern; the graph/flatten math is the pure `graph.ts`.
+ * `TreeRows<T>` — the internal, focusable rows renderer of a {@link Tree}. Construct a `Tree` rather
+ * than using this directly. It draws each visible row as a tree-line graph prefix followed by the
+ * node text, virtual-scrolls a flattened row list, and owns the tree's keyboard/mouse handling.
  *
- * **TV GATE-1 decode — `drawTree` (`source/tvision/toutline.cpp:54-102`), the fidelity oracle:**
- *   • **row colour** (`:66-71`): `foc && sfFocused → getColor(0x0202)` (focused) `else isSelected →
- *     getColor(0x0303)` (selected) `else getColor(0x0401)` (normal). Priority focused > selected >
- *     normal → `outlineFocused` / `outlineSelected` / `outlineNormal` (RD-15 PA-8/PA-16).
- *   • **clear + graph** (`:72-79`): `moveChar(0,' ',color,size.x)` clears the row in the row colour,
- *     then the graph prefix is drawn in that same colour at `x = strwidth(graph)` (col 0 here — no
- *     horizontal scroll, PA-5).
- *   • **two-tone text** (`:80-84`): `TColorAttr c = (flags & ovExpanded) ? color : (color >> 8)`. The
- *     Normal pair `getColor(0x0401)` has low byte = slot 1 (`outlineNormal`) and high byte = slot 4
- *     (`outlineNotExpanded`), so a **collapsed** normal node's text draws in `outlineNotExpanded` and an
- *     **expanded/leaf** normal node's in `outlineNormal`. Focus/select pairs (`0x0202`/`0x0303`) have
- *     equal bytes ⇒ single-tone. Both outline-normal bytes share the blue bg, so the two-tone changes
- *     only the fg — no background seam over the row clear.
- *   • **fill remainder** (`draw`, `:93-102`): rows past the last node are blanked in the normal colour.
- *   • **sizing** (`:587-594`): `setLimit(updateMaxX, updateCount)` → the owned vertical bar range =
- *     the flattened row count (H deferred, PA-5).
+ * How each row draws:
+ *   • Row colour priority is focused > selected > normal, and colour is the only focus indicator.
+ *   • The row is cleared in its colour, the graph prefix (`│├└─` + `+`/`─` marker) is drawn in that
+ *     colour, then the node text is drawn after it.
+ *   • A collapsed node draws its text two-tone (a dimmer foreground) to signal there is more beneath
+ *     it; expanded nodes and leaves draw single-tone.
+ *   • Rows past the last node are blanked; an empty tree shows `<empty>` at column 1.
  *
- * Empty tree → `<empty>` at column 1, matching the sibling `ListRows` (`list-rows.ts:36`; PF-003 — TV
- * has no oracle for an empty outline). Full interaction: vertical `↑↓`/paging/`Home`/`End`/`Ctrl+Pg`/
- * wheel, `+`/`-`/`*` expand, `←`/`→` collapse-or-parent / expand-or-child (PA-12), mouse graph-toggle
- * vs text-select (PA-14), and Enter select — see {@link onEvent}.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Interaction: ↑↓ move focus, PgUp/PgDn page, Home/End, Ctrl+PgUp/PgDn jump to ends, wheel scrolls
+ * ±3, `+`/`-`/`*` expand/collapse/expand-subtree the focused node, ←/→ collapse-or-parent /
+ * expand-or-child, Enter activates. A mouse click in the graph zone toggles the node; a double-click
+ * on the text activates it. See {@link onEvent}.
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent, ThemeRoleName } from '../view/index.js';
@@ -38,7 +25,7 @@ import { clampIndex, keepVisible } from '../list/virtual.js';
 import { createGraph, graphWidth, OV_EXPANDED, OV_CHILDREN } from './graph.js';
 import type { FlatRow, TreeNode } from './graph.js';
 
-/** The text drawn top-left for an empty tree (matches `ListRows` `EMPTY_TEXT`, `list-rows.ts:36`; PF-003). */
+/** The text drawn top-left for an empty tree. */
 const EMPTY_TEXT = '<empty>';
 
 /** Shared configuration handed from a {@link Tree} to its rows renderer. */
@@ -49,21 +36,21 @@ export interface TreeRowsConfig<T> {
   focused: Signal<number>;
   /** The selected (chosen) flattened-visible index (`-1` = none). */
   selected: Signal<number>;
-  /** Draw the `│├└─` connectors (default true); false = flat indent, markers unchanged (PA-6). */
+  /** Draw the `│├└─` connectors (default true); false = flat indent, markers unchanged. */
   guides: boolean;
-  /** The current flattened-visible rows (a computed reading `roots` + the expand version, from `Tree`). */
+  /** The current flattened-visible rows (a computed reading `roots` + the expand state, from `Tree`). */
   flatten: () => FlatRow<T>[];
-  /** Command emitted on activation (Enter / text-click), TV `cmOutlineItemSelected` (PA-13). */
+  /** Command name emitted on activation (Enter / text double-click). */
   command?: string;
-  /** Activation callback (Enter / text-click); `index` is the flattened index, `node` the `TreeNode`. */
+  /** Activation callback (Enter / text double-click); `index` is the flattened index, `node` the node. */
   onSelect?: (index: number, node: TreeNode<T>) => void;
   /** Expand a node (from the `+`/`→` keys or a graph-zone click); provided by the owning `Tree`. */
   expand: (node: TreeNode<T>) => void;
   /** Collapse a node (from the `-`/`←` keys or a graph-zone click). */
   collapse: (node: TreeNode<T>) => void;
-  /** Toggle a node's expand state (a graph-zone click, PA-14). */
+  /** Toggle a node's expand state (a graph-zone click). */
   toggle: (node: TreeNode<T>) => void;
-  /** Expand a node's whole subtree (the `*` key, TV `expandAll`). */
+  /** Expand a node's whole subtree (the `*` key). */
   expandSubtree: (node: TreeNode<T>) => void;
 }
 
@@ -85,7 +72,7 @@ export class TreeRows<T> extends View {
   protected readonly collapse: (node: TreeNode<T>) => void;
   protected readonly toggle: (node: TreeNode<T>) => void;
   protected readonly expandSubtree: (node: TreeNode<T>) => void;
-  /** The first visible flattened index (TV `topItem`/`delta.y`). */
+  /** The flattened index of the first visible row. */
   protected topItem = 0;
   /** The owned scroll bar, wired by the `Tree` (its `value` is the shared `focused` signal). */
   bar?: ScrollBar;
@@ -144,7 +131,7 @@ export class TreeRows<T> extends View {
     this.topItem = keepVisible(clampIndex(this.focused(), range), this.topItem, this.viewportRows(), range);
   }
 
-  /** Clamp the focused signal into the current flattened range (TV `adjustFocus`, `toutline.cpp:35`). */
+  /** Clamp the focused signal into the current flattened range after the row set changes. */
   protected clampFocusedToRange(): void {
     const range = this.flatten().length;
     const clamped = clampIndex(this.focused(), range);
@@ -152,8 +139,8 @@ export class TreeRows<T> extends View {
   }
 
   /**
-   * Paint the visible window (TV `draw`/`drawTree`): re-limit the owned bar, keep the focus visible,
-   * then draw each visible row = clear + graph prefix (row colour) + two-tone node text.
+   * Paint the visible window: re-limit the owned scroll bar, keep the focused row visible, then draw
+   * each visible row as clear + graph prefix (in the row colour) + two-tone node text.
    *
    * @param ctx The clipped, view-local paint context.
    */
@@ -161,13 +148,13 @@ export class TreeRows<T> extends View {
     const rows = ctx.size.height;
     const flat = this.flatten();
     const range = flat.length;
-    // TV setLimit(updateMaxX, updateCount): bar range = flattened count; pgStep = size.y-1 (HR-53 parity).
+    // Bar range = flattened row count; page step keeps one row of context.
     this.bar?.setRange(0, Math.max(0, range - 1), Math.max(1, rows - 1));
 
     const normal = ctx.color('outlineNormal');
     if (range === 0) {
       ctx.fill(' ', normal);
-      ctx.text(1, 0, EMPTY_TEXT, normal); // <empty> at column 1 (ListRows parity, PF-003)
+      ctx.text(1, 0, EMPTY_TEXT, normal); // <empty> placeholder, one cell in from the left
       return;
     }
 
@@ -186,7 +173,7 @@ export class TreeRows<T> extends View {
       const row = flat[index];
       const roleName = this.rowRole(index, focused, selected, active);
       const rowStyle = ctx.color(roleName);
-      ctx.fillRect(0, i, width, 1, ' ', rowStyle); // clear the row in its colour (TV moveChar)
+      ctx.fillRect(0, i, width, 1, ' ', rowStyle); // clear the row in its colour
 
       const graph = createGraph(row.level, row.lines, row.flags, this.guides);
       ctx.text(0, i, graph, rowStyle); // graph prefix in the row colour
@@ -199,7 +186,7 @@ export class TreeRows<T> extends View {
     }
   }
 
-  /** The row's theme role: focused > selected > normal (TV `drawTree` `:66-71`). */
+  /** The row's theme role, by priority: focused > selected > normal. */
   protected rowRole(index: number, focused: number, selected: number, active: boolean): ThemeRoleName {
     if (index === focused) return active ? 'outlineFocused' : 'outlineSelected';
     if (index === selected) return 'outlineSelected';
@@ -207,8 +194,8 @@ export class TreeRows<T> extends View {
   }
 
   /**
-   * The node-text colour, two-tone (TV `:82`): a **collapsed** normal node's text draws in the high
-   * byte of the Normal pair (`outlineNotExpanded`); everything else is single-tone (the row colour).
+   * The node-text colour: a collapsed normal node's text draws in the dimmer `outlineNotExpanded`
+   * role (a hint that it has hidden children); everything else is single-tone (the row colour).
    */
   protected textStyle(ctx: DrawContext, roleName: ThemeRoleName, expanded: boolean): Style {
     if (roleName === 'outlineNormal' && !expanded) return ctx.color('outlineNotExpanded');
@@ -216,15 +203,12 @@ export class TreeRows<T> extends View {
   }
 
   /**
-   * Route tree keyboard/mouse/wheel — TV `handleEvent` (`toutline.cpp:419-541`) with the PA-12/PA-14
-   * adaptations:
-   *   • **wheel** ±3 (jsvision extension, cf. `ListRows`).
-   *   • **mouse-down** (`:433-481`): focus the clicked row; a click with `mouse.x < strwidth(graph)`
-   *     toggles expand (`:472`); a text **double**-click activates (`meDoubleClick ⇒ selected`, `:465`),
-   *     a single text click focuses only (double-click-activation AR-5; graph-zone double = AR-15).
-   *   • **keys** (`:484-539`): `↑↓`/`PgUp`/`PgDn`/`Home`/`End`, `Ctrl+PgUp/PgDn` → ends; `+`/`-`
-   *     `adjust`, `*` `expandAll` (`:523-531`); Enter/`Ctrl+Enter` `selected` (`:515-518`). **← / →**
-   *     override TV's up/down to collapse-or-parent / expand-or-child (PA-12).
+   * Route tree keyboard, mouse, and wheel events:
+   *   • wheel scrolls focus ±3.
+   *   • mouse-down focuses the clicked row; a click within the graph-prefix width toggles the node's
+   *     expand state, while a double-click on the text activates it (a single text click only focuses).
+   *   • keys: ↑↓, PgUp/PgDn, Home/End, Ctrl+PgUp/PgDn jump to ends; `+`/`-` expand/collapse, `*`
+   *     expand the subtree; Enter activates; ←/→ collapse-or-parent / expand-or-child.
    *
    * @param ev The dispatch envelope.
    */
@@ -245,13 +229,12 @@ export class TreeRows<T> extends View {
   }
 
   /**
-   * A mouse-down (TV `TOutlineViewer::handleEvent`, `toutline.cpp:465-472`): focus the clicked row,
-   * then a click within the graph-prefix width toggles expand (`mouse.x < strwidth(graph)`, `:472`);
-   * a **double**-click on the text activates (`meDoubleClick ⇒ selected(foc)`, `:465`). A **single**
-   * text click focuses ONLY — the port's non-TV single-click text emit is dropped
-   * (double-click-activation AR-5). A graph-zone double-click toggles twice (no activate) — the
-   * accepted AR-15 deviation: our two-down model (`clickCount` 1 then 2) already toggled on the first
-   * down, so a single `meDoubleClick` can't be reconstructed.
+   * Handle a mouse-down: focus the clicked row, then a click within the graph-prefix width toggles
+   * the node's expand state, while a double-click on the node text activates it. A single click on
+   * the text only focuses the row.
+   *
+   * Note: because a double-click arrives as two mouse-downs, a graph-zone double-click toggles the
+   * node twice (a net no-op) rather than activating — the first down already toggled it.
    */
   protected handleMouseDown(ev: DispatchEvent): void {
     const local = ev.local;
@@ -262,18 +245,18 @@ export class TreeRows<T> extends View {
       this.focusTo(index); // always focus the clicked row
       const row = flat[index];
       if (local.x < graphWidth(row.level)) {
-        this.toggle(row.node); // graph-zone ⇒ toggle expand (any click; see AR-15)
+        this.toggle(row.node); // graph zone ⇒ toggle expand (on any click)
       } else if (ev.clickCount === 2) {
         this.select(index, ev); // text double-click ⇒ activate (select + onSelect + emit)
       }
-      // single text click ⇒ focus only (TV-faithful, AR-5)
+      // single text click ⇒ focus only
     }
     ev.handled = true;
   }
 
   /** Apply a navigation/expand/select key; returns whether it was consumed. */
   protected handleKey(inner: KeyEvent, ev: DispatchEvent): boolean {
-    const page = Math.max(1, this.viewportRows() - 1); // TV `size.y - 1` (toutline.cpp:498-501)
+    const page = Math.max(1, this.viewportRows() - 1); // page by one screen, keeping a row of context
     switch (inner.key) {
       case 'up':
         this.focusBy(-1);
@@ -283,37 +266,37 @@ export class TreeRows<T> extends View {
         return true;
       case 'pageup':
         if (inner.ctrl)
-          this.focusTo(0); // TV kbCtrlPgUp → 0
+          this.focusTo(0); // Ctrl+PgUp → first row
         else this.focusBy(-page);
         return true;
       case 'pagedown':
         if (inner.ctrl)
-          this.focusTo(this.flatten().length - 1); // TV kbCtrlPgDn → limit.y-1
+          this.focusTo(this.flatten().length - 1); // Ctrl+PgDn → last row
         else this.focusBy(page);
         return true;
       case 'home':
-        this.focusTo(this.topItem); // TV kbHome = delta.y (top of view)
+        this.focusTo(this.topItem); // top of the visible window
         return true;
       case 'end':
-        this.focusTo(this.topItem + this.viewportRows() - 1); // TV kbEnd = delta.y + size.y - 1
+        this.focusTo(this.topItem + this.viewportRows() - 1); // bottom of the visible window
         return true;
       case 'left':
-        this.collapseOrParent(); // PA-12
+        this.collapseOrParent();
         return true;
       case 'right':
-        this.expandOrChild(); // PA-12
+        this.expandOrChild();
         return true;
       case 'enter':
-        this.select(this.focused(), ev); // TV kbEnter → selected(focus)
+        this.select(this.focused(), ev); // activate the focused row
         return true;
       case '+':
-        this.mutateFocused((node) => this.expand(node)); // TV `+` adjust(node, True)
+        this.mutateFocused((node) => this.expand(node));
         return true;
       case '-':
-        this.mutateFocused((node) => this.collapse(node)); // TV `-` adjust(node, False)
+        this.mutateFocused((node) => this.collapse(node));
         return true;
       case '*':
-        this.mutateFocused((node) => this.expandSubtree(node)); // TV `*` expandAll(node)
+        this.mutateFocused((node) => this.expandSubtree(node)); // expand the whole subtree
         return true;
       default:
         return false;
@@ -333,8 +316,8 @@ export class TreeRows<T> extends View {
   }
 
   /**
-   * `←` (PA-12): collapse the focused node when it is expanded-with-children; otherwise move focus to
-   * its parent (the nearest preceding row at a smaller level).
+   * `←`: collapse the focused node when it is expanded-with-children; otherwise move focus to its
+   * parent (the nearest preceding row at a smaller level).
    */
   protected collapseOrParent(): void {
     const flat = this.flatten();
@@ -355,8 +338,8 @@ export class TreeRows<T> extends View {
   }
 
   /**
-   * `→` (PA-12): expand the focused node when it is collapsed-with-children; otherwise, when it is
-   * already expanded-with-children, descend to its first child (the next row). A leaf is a no-op.
+   * `→`: expand the focused node when it is collapsed-with-children; otherwise, when it is already
+   * expanded-with-children, descend to its first child (the next row). A leaf is a no-op.
    */
   protected expandOrChild(): void {
     const flat = this.flatten();
@@ -370,7 +353,7 @@ export class TreeRows<T> extends View {
     }
   }
 
-  /** Select the row at `index` (TV `selected`): set `selected`, call `onSelect`, emit `command`. */
+  /** Activate the row at `index`: set `selected`, call `onSelect`, and emit `command` if set. */
   protected select(index: number, ev: DispatchEvent): void {
     const flat = this.flatten();
     if (index < 0 || index >= flat.length) return;

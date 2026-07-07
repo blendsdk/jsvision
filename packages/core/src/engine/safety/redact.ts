@@ -1,18 +1,16 @@
 /**
- * Pure redaction helpers — the no-secret-logging controls (RD-08; AR-9, AR-6).
+ * Redaction helpers for safe logging — so you never accidentally write a user's
+ * keystrokes, pasted text, or clipboard contents into a log.
  *
  * {@link redactEvent} reduces a decoded input event to a log-safe shape that can
  * never carry a typed character or pasted text. {@link dumpCaps} renders a
- * one-line, secret-free capabilities summary from the RD-02 reason trace for
- * debug logs. Both are pure: no I/O, no logging, no mutation of their arguments.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM
- * resolution (it resolves to the `.ts` source during development via tsx).
+ * one-line, secret-free summary of a resolved capability profile for debug logs.
+ * Both are pure: no I/O, no logging, and they never mutate their arguments.
  */
 import type { InputEvent } from '../input/events.js';
 import type { CapabilityProfile, CapabilityResolution } from '../capability/profile.js';
 
-/** A redacted, log-safe view of an input event — never carries raw content. [AR-9] */
+/** A redacted, log-safe view of an input event — carries modifiers and coordinates, never raw content. */
 export type RedactedEvent =
   | {
       readonly type: 'key';
@@ -28,24 +26,35 @@ export type RedactedEvent =
   | { readonly type: 'focus'; readonly focused: boolean };
 
 /**
- * Reduce an input event to a log-safe shape — the core no-secret-logging control.
- * [AR-9]
+ * Reduce a decoded input event to a shape that is safe to log — drops any raw
+ * content while keeping the structural facts (modifiers, coordinates, lengths)
+ * useful for debugging. Log the result of this, never a raw event.
  *
- * Keys: a printable key (`codepoint` present) becomes `{type:'key',
- * printable:true, ctrl,alt,shift}` — the character and codepoint are dropped. A
- * named key (no `codepoint`) keeps its name: `{type:'key', key:'enter',
- * ctrl,alt,shift}`. A paste yields only `{type:'paste', length, truncated}` —
- * never its text. Mouse/wheel/focus carry no secrets and pass their
- * coordinates/direction/flag through.
+ * - **Printable key** (a character was typed): becomes `{type:'key',
+ *   printable:true, ctrl, alt, shift}` — the character itself is dropped.
+ * - **Named key** (e.g. Enter, arrows): keeps its name, e.g. `{type:'key',
+ *   key:'enter', ctrl, alt, shift}`.
+ * - **Paste**: yields only `{type:'paste', length, truncated}` — never the text.
+ * - **Mouse / wheel / focus**: carry no secrets, so coordinates, direction, and
+ *   the focus flag pass through.
  *
- * @param event Any decoded input event (RD-06).
- * @returns The redacted, log-safe view. Pure; never logs; never mutates `event`.
+ * @param event Any decoded input event.
+ * @returns The redacted, log-safe view. Pure; never mutates `event`.
+ * @example
+ * import { redactEvent } from '@jsvision/core';
+ *
+ * // A typed 'a' — the character is stripped, only the modifiers survive.
+ * redactEvent({ type: 'key', key: 'a', codepoint: 97, ctrl: false, alt: false, shift: false });
+ * // => { type: 'key', printable: true, ctrl: false, alt: false, shift: false }
+ *
+ * // Safe to log inside your input handler:
+ * // logger.debug('input', 'event', redactEvent(event));
  */
 export function redactEvent(event: InputEvent): RedactedEvent {
   switch (event.type) {
     case 'key':
-      // `codepoint` is present iff the key is printable (RD-06 KeyEvent): drop
-      // the character and codepoint for printable keys; keep the name otherwise.
+      // `codepoint` is present only for printable keys: drop the character and
+      // codepoint for those; keep the symbolic name (enter, arrows, ...) otherwise.
       if (event.codepoint !== undefined) {
         return { type: 'key', printable: true, ctrl: event.ctrl, alt: event.alt, shift: event.shift };
       }
@@ -55,7 +64,7 @@ export function redactEvent(event: InputEvent): RedactedEvent {
     case 'wheel':
       return { type: 'wheel', dir: event.dir, x: event.x, y: event.y };
     case 'paste':
-      // Only the length survives — never the pasted text.
+      // Only the length survives — never the pasted text itself.
       return { type: 'paste', length: event.text.length, truncated: event.truncated };
     case 'focus':
       return { type: 'focus', focused: event.focused };
@@ -86,16 +95,24 @@ function renderField(value: unknown): string {
 }
 
 /**
- * Render a one-line, secret-free capabilities summary from the RD-02 reason
- * trace. [AR-6]
+ * Render a one-line, secret-free summary of a resolved capability profile —
+ * handy for a single debug log line explaining what the SDK detected and *why*
+ * (which resolution layer decided each value).
  *
- * Emits exactly one `field=value (layer)` pair per `CapabilityReasons` key, in
- * declaration order, space-separated. See {@link renderField} for the per-field
- * rules. Contains no input/clipboard/title text — only profile values and the
- * resolution-layer names.
+ * Emits one `field=value (layer)` pair per capability, space-separated, e.g.
+ * `colorDepth=truecolor (env) mouse=sgr,wheel (query) ...`. Contains no
+ * input/clipboard/title text — only capability values and layer names.
  *
- * @param resolution The RD-02 `CapabilityResolution` (`{ profile, reasons }`).
+ * @param resolution A `CapabilityResolution` (`{ profile, reasons }`), as returned
+ *   by `resolveCapabilities()`.
  * @returns A single screen-safe summary string.
+ * @example
+ * import { dumpCaps, resolveCapabilities, createLogger } from '@jsvision/core';
+ *
+ * const resolution = resolveCapabilities();
+ * const log = createLogger({ sink: 'ring' });
+ * log.debug('caps', dumpCaps(resolution));
+ * // e.g. "colorDepth=truecolor (env) unicode=utf8 (env) mouse=sgr,wheel (default) ..."
  */
 export function dumpCaps(resolution: CapabilityResolution): string {
   const { profile, reasons } = resolution;

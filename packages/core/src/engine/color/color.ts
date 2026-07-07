@@ -1,13 +1,11 @@
 /**
- * Color parsing, validation, and the typed color error (RD-05; AR-7, AR-8).
+ * Color parsing and validation for the rendering pipeline.
  *
- * `toRgb()` is the single validation boundary: it accepts only `default`, a named
- * ANSI-16 color, or a `#rgb`/`#rrggbb` hex string, and throws `InvalidColorError`
- * on anything malformed — never returning a partial value, so a bad color can
- * never leak arbitrary bytes into the SGR stream (RD-05 §Security; AC-6/AC-7).
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution
- * (it resolves to the `.ts` source during development via tsx).
+ * `toRgb()` is the single point where a color string is validated and turned
+ * into RGB. It accepts only three forms — `'default'`, one of the 16 named ANSI
+ * colors, or a `#rgb`/`#rrggbb` hex string — and throws {@link InvalidColorError}
+ * on anything else. It never returns a partial value, so a malformed color can
+ * never leak arbitrary bytes into the escape-sequence stream.
  */
 import type { Color } from '../render/types.js';
 import { TuiError } from '../safety/errors.js';
@@ -22,9 +20,24 @@ export interface Rgb {
 }
 
 /**
- * Thrown when a color string is not a valid `#rgb`/`#rrggbb`/named/`default`
- * value. Extends the RD-08 `TuiError` so consumers catch all SDK errors uniformly.
- * [AR-8]
+ * Thrown when a color string is not a valid `#rgb`/`#rrggbb`, named, or
+ * `'default'` value.
+ *
+ * Extends {@link TuiError}, so a single `catch (e) { if (e instanceof TuiError) }`
+ * handles this alongside every other SDK error. Thrown by {@link toRgb} and
+ * {@link encode}; note that {@link encodeStyle} deliberately swallows it and
+ * degrades to no-color so a bad cell can never crash the render loop.
+ *
+ * @example
+ * import { toRgb, InvalidColorError } from '@jsvision/core';
+ *
+ * try {
+ *   toRgb('#zzz');
+ * } catch (e) {
+ *   if (e instanceof InvalidColorError) {
+ *     console.error('bad color:', e.message);
+ *   }
+ * }
  */
 export class InvalidColorError extends TuiError {}
 
@@ -32,12 +45,23 @@ export class InvalidColorError extends TuiError {}
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 /**
- * Validate + parse a `Color` to RGB.
+ * Validate a `Color` and parse it to RGB components.
  *
- * @param color A `Color`: `'default'`, a named ANSI-16 color, or a hex string.
- * @returns The RGB components, or `null` for `'default'` (the terminal default).
- * @throws InvalidColorError when `color` is a malformed hex string or an unknown
- *         name — no partial value is ever returned (AC-6/AC-7).
+ * `'default'` returns `null` (meaning "leave the terminal's own default color"),
+ * a named ANSI-16 color returns its reference RGB, and a `#rgb`/`#rrggbb` hex
+ * string is parsed (the 3-digit form expands each nibble, so `#f00` === `#ff0000`).
+ * Anything else throws — the value is never partially parsed.
+ *
+ * @param color The color to parse: `'default'`, a named ANSI-16 color (e.g.
+ *   `'red'`, `'brightBlue'`), or a hex string.
+ * @returns The `{ r, g, b }` components (each 0–255), or `null` for `'default'`.
+ * @throws InvalidColorError when `color` is a malformed hex string or an unknown name.
+ * @example
+ * import { toRgb } from '@jsvision/core';
+ *
+ * toRgb('#ff0000');  // → { r: 255, g: 0, b: 0 }
+ * toRgb('#f00');     // → { r: 255, g: 0, b: 0 }  (shorthand expands)
+ * toRgb('default');  // → null  (keep the terminal default)
  */
 export function toRgb(color: Color): Rgb | null {
   if (color === 'default') return null;

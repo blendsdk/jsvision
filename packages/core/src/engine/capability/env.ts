@@ -1,28 +1,27 @@
 /**
- * Layer-3 environment-signal reader (RD-02, plan doc 03-02).
+ * Detect terminal capabilities from environment variables.
  *
- * Pure function over an injected {@link NodeJS.ProcessEnv}. Reads only the
- * non-sensitive variables listed below and never logs their values (AC-8). It
- * returns the fields the environment determines plus the split colorDepth
- * signal, because colorDepth has a special precedence (PL-5): `NO_COLOR` and
- * `FORCE_COLOR` outrank the layer-2 runtime query, whereas `COLORTERM`/`TERM`
- * rank below it. The resolver ({@link ./detect.js}) wires these into the
- * per-field precedence; this module makes no precedence decision beyond the
- * env-internal `NO_COLOR > FORCE_COLOR > COLORTERM > TERM` order.
+ * A pure function over an injected environment map. It reads only the
+ * non-sensitive variables listed below and never logs their values. It returns
+ * the fields the environment determines plus a split `colorDepth` signal:
+ * `NO_COLOR`/`FORCE_COLOR` are "forced" (they outrank even a live terminal
+ * probe), while `COLORTERM`/`TERM` are "soft" (a probe outranks them). This
+ * module only applies the env-internal order `NO_COLOR > FORCE_COLOR > COLORTERM
+ * > TERM`; the resolver decides how these slot against the other sources.
  *
  * | Var(s) | Effect |
  * | ------ | ------ |
- * | `NO_COLOR` (present, any value, PL-12) | forced colorDepth `mono` |
+ * | `NO_COLOR` (present, any value) | forced colorDepth `mono` |
  * | `FORCE_COLOR=0\|1\|2\|3` | forced colorDepth `mono\|16\|256\|truecolor` |
  * | `COLORTERM=truecolor\|24bit` | soft colorDepth `truecolor` |
  * | `TERM` contains `256color` | soft colorDepth `256` |
  * | `TERM` set (other) | soft colorDepth `16` |
- * | `LC_ALL`/`LC_CTYPE`/`LANG` contains `UTF-8` (ci) | `unicode.utf8 = true` + `glyphs.boxDrawing`/`halfBlocks = true` (HR-07/PA-9) |
+ * | `LC_ALL`/`LC_CTYPE`/`LANG` contains `UTF-8` (ci) | `unicode.utf8 = true` + `glyphs.boxDrawing`/`halfBlocks = true` |
  * | `$TMUX` set, or `TERM` starts `screen`/`tmux` | `multiplexer = true` |
  */
 import type { ColorDepth, DeepPartial, CapabilityProfile } from './profile.js';
 
-/** FORCE_COLOR numeric level → colorDepth (PL-5); other values are invalid. */
+/** FORCE_COLOR numeric level → colorDepth; other values are invalid. */
 const FORCE_COLOR_LEVELS: Readonly<Record<string, ColorDepth>> = {
   '0': 'mono',
   '1': '16',
@@ -35,7 +34,7 @@ const TRUECOLOR_COLORTERMS: ReadonlySet<string> = new Set(['truecolor', '24bit']
 
 /**
  * The colorDepth signals derived from the environment, split by precedence band
- * so the resolver can slot each at the correct rank relative to layer 2 (PL-5).
+ * so the resolver can slot each at the correct rank relative to layer 2.
  */
 export interface ColorDepthSignal {
   /** From `NO_COLOR`/`FORCE_COLOR` — outranks the runtime query. */
@@ -67,9 +66,9 @@ export function readEnv(env: NodeJS.ProcessEnv): EnvSignals {
 
   if (detectUtf8(env)) {
     profile.unicode = { utf8: true };
-    // HR-07 (PA-9): a detected UTF-8 locale additionally implies box-drawing + half-block glyph
-    // support, so `┌─│`/`▀▄` no longer degrade to ASCII. `ambiguousWide` stays false (conservative —
-    // the width probe owns that upgrade per DEF-23). The trigger is the locale, not `unicode.utf8`.
+    // A UTF-8 locale also implies box-drawing + half-block glyph support, so
+    // `┌─│`/`▀▄` render instead of degrading to ASCII. `ambiguousWide` stays
+    // false here (conservative); a live width probe is what upgrades that.
     profile.glyphs = { boxDrawing: true, halfBlocks: true };
   }
 
@@ -84,12 +83,12 @@ export function readEnv(env: NodeJS.ProcessEnv): EnvSignals {
 
 /**
  * Resolve the colorDepth signal with the env-internal precedence
- * `NO_COLOR > FORCE_COLOR > COLORTERM > TERM` (PL-5). `NO_COLOR` and
- * `FORCE_COLOR` produce a `forced` value; `COLORTERM`/`TERM` produce a `soft`
- * value. An invalid `FORCE_COLOR` (e.g. `9`) is ignored and falls through.
+ * `NO_COLOR > FORCE_COLOR > COLORTERM > TERM`. `NO_COLOR` and `FORCE_COLOR`
+ * produce a `forced` value; `COLORTERM`/`TERM` produce a `soft` value. An
+ * invalid `FORCE_COLOR` (e.g. `9`) is ignored and falls through.
  */
 function readColorDepth(env: NodeJS.ProcessEnv): ColorDepthSignal {
-  // NO_COLOR: presence with any value (including empty string) forces mono (PL-12).
+  // NO_COLOR: its mere presence (even as an empty string) forces mono.
   if (env.NO_COLOR !== undefined) {
     return { forced: 'mono' };
   }

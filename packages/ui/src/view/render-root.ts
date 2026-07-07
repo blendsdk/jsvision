@@ -1,15 +1,16 @@
 /**
- * Render root + compose walker (RD-03, AR-32/AR-38/AR-42/AR-44). The `RenderRoot` owns the shared
- * `ScreenBuffer`, the viewport, the theme, the capabilities, the draw-error logger, and the
- * (injectable) flush scheduler. It mounts the view tree (scopes nested under a root scope via
- * `runWithOwner`/`createRoot`), runs the reflow pass, composes the tree into the buffer, and emits
- * a damage diff via core's `serialize()` against a `clone()` snapshot of the previous frame (PA-8).
+ * The render root — what turns a view tree into terminal output.
  *
- * The compose walker draws each view through a clipped `DrawContext`, recurses into a `Group`'s
- * children back-to-front (array order, AR-38), and isolates a throwing `draw()` — logging it and
- * skipping that subtree so one crashing widget never blanks the app (AR-42).
+ * A `RenderRoot` owns the screen buffer, the viewport size, the theme, the terminal capabilities,
+ * the draw-error logger, and the frame scheduler. It mounts a view tree, runs layout, composes the
+ * tree into the buffer, and produces a damage diff (the minimal escape-sequence output) between the
+ * new frame and the previous one.
  *
- * Phase 5 composes the **full** tree each flush; the dirty set + partial recompose land in Phase 6.
+ * Composing walks the tree: it draws each view through a clipped `DrawContext`, recurses into a
+ * group's children back-to-front, and isolates a throwing `draw()` — logging it and skipping that
+ * subtree, so one crashing widget never blanks the whole screen. It repaints only what changed where
+ * it safely can, and falls back to a full z-ordered recompose when overlapping views make a partial
+ * repaint unsafe.
  */
 import { ScreenBuffer, serialize, defaultTheme, createLogger, Attr } from '@jsvision/core';
 import type { Theme, CapabilityProfile, Logger } from '@jsvision/core';
@@ -29,72 +30,62 @@ import type { RenderRootOptions } from './types.js';
 const BLANK = { fg: 'default', bg: 'default' } as const;
 
 /**
- * Owns the buffer/viewport/theme/scheduler and makes the spine independently renderable (the
- * Phase-0 demo target) and the injection point RD-04/RD-05 wire to the host.
+ * Mounts a view tree and renders it to a screen buffer. This is the seam a host (or the higher-level
+ * app shell / event loop) wires the terminal to.
  */
 export interface RenderRoot {
-  /** Mount a view tree: wire scopes, run the first reflow, and compose the first frame. */
+  /** Mount a view tree: wire its scopes, run the first layout, and compose the first frame. */
   mount(root: View): void;
-  /** Resize the viewport (triggers a reflow + full recompose). */
+  /** Resize the viewport, triggering a full re-layout and recompose. */
   resize(size: Size2D): void;
-  /** Force a synchronous frame now (drains any pending scheduled flush). */
+  /** Force a synchronous frame now, running any pending scheduled repaint immediately. */
   flush(): void;
-  /** The last flushed frame's damage-diff bytes (core `serialize()`); forces a flush if one is pending. */
+  /** The last frame's damage-diff output (the escape sequences to apply); forces a flush if one is pending. */
   serialize(): string;
-  /** The live composed buffer — for host integration and tests. */
+  /** The live composed screen buffer — for host integration and tests. */
   buffer(): ScreenBuffer;
   /**
-   * The view's **absolute** compose origin (top-left cell) from the persisted per-view context cache,
-   * or `null` if it was never composed (unmounted / not visible). RD-07 additive read-only accessor
-   * (PA-5/PF-002): the event loop uses it to translate a focused view's `desiredCaret()` to an absolute
-   * cell **after** `flush()`. The cache is refreshed every compose and cleared only on a full compose,
-   * so an origin **survives partial recomposes** — a view unchanged this frame keeps its last origin,
-   * and the caret is never dropped just because the focused view was outside the dirty set. RenderRoot
-   * stays focus-agnostic — it does not collect the caret during compose.
+   * The view's **absolute** top-left cell as of the last time it was composed, or `null` if it was
+   * never composed (unmounted / not visible). The event loop uses this to translate a focused view's
+   * `desiredCaret()` into an absolute terminal cell. An origin survives partial repaints — a view
+   * unchanged this frame keeps its last origin — so the caret is never lost just because the focused
+   * view was outside the changed region.
    *
    * @param view The view to locate (typically the focused leaf).
    * @returns The absolute origin `{ x, y }`, or `null` if never composed.
    */
   originOf(view: View): Point | null;
   /**
-   * Reveal (or hide) the accelerator overlay for the next frame (accelerator-overlay FR-1/FR-4).
-   * While `on`, each `~X~` drawer under the reveal scope underlines its hot glyph (via
-   * `DrawContext.revealAccelerators`). `scope` clamps the reveal to the active dispatch subtree (a
-   * modal `Dialog`); `null`/omitted reveals the whole tree. A change forces one coalesced full
-   * recompose on the next flush (`markRelayout`, AR-14) so the underlines paint/clear atomically.
-   * Underline is width-neutral, so the relayout drifts no geometry.
+   * Reveal (or hide) the hotkey-accelerator overlay for the next frame. While `on`, every widget that
+   * draws a `~X~` hotkey underlines its hot glyph. `scope` limits the reveal to a subtree (e.g. the
+   * active modal dialog); `null`/omitted reveals the whole tree. A change forces one coalesced full
+   * recompose on the next frame so the underlines appear/disappear together. Underlining does not
+   * change any cell width, so geometry never shifts.
    *
    * @param on    Whether the overlay is revealed.
-   * @param scope The dispatch-scope subtree to clamp reveal to, or `null` for the whole tree.
+   * @param scope The subtree to limit the reveal to, or `null` for the whole tree.
    */
   setRevealAccelerators(on: boolean, scope?: View | null): void;
 }
 
 /**
- * Compose a view subtree into the buffer. `absOrigin` is the view's absolute top-left; `clip` is
- * the absolute clip rect (view rect ∩ ancestor clip). A throwing `draw()` is logged and its
- * subtree skipped (AR-42).
- */
-/**
- * Per-view compose context cached on a full compose, reused by partial recompose. `order` is the
- * DFS pre-order paint index (back-to-front) — used to detect occlusion when deciding whether a
- * partial recompose is safe.
+ * Per-view compose record cached on a full compose and reused by a partial repaint. `order` is the
+ * depth-first paint index (back-to-front) — used to detect when a view is occluded by a later-painted
+ * one, which decides whether a partial repaint is safe.
  */
 type ComposeContext = { origin: Point; clip: Rect; order: number };
 
 /**
- * The accelerator-overlay reveal state threaded through the compose walk (accelerator-overlay
- * FR-1/FR-4). `on` is the root flag; `scope` clamps reveal to the active dispatch subtree — `null`
- * reveals the whole tree. The walk carries an `insideScope` boolean alongside this (flipped true when
- * it reaches `scope`); the value handed to each `DrawContext` is `on && (scope === null || insideScope)`.
+ * The hotkey-overlay reveal state threaded through the compose walk. `on` is the root flag; `scope`
+ * limits the reveal to a subtree — `null` reveals the whole tree. The walk tracks whether it is
+ * inside `scope` yet, and the value handed to each `DrawContext` is `on && (scope === null || inside)`.
  */
 type RevealState = { readonly on: boolean; readonly scope: View | null };
 
 /**
- * Paint a Turbo Vision-style drop-shadow on the cells just below and to the right of `rect`
- * (absolute), clipped to `clip`. Only the cell colors change (the glyph + its width are preserved),
- * matching core's shadow. Drawn in z-order by the compose walker — a later sibling's shadow falls
- * over an earlier one — so a front window's shadow lands correctly on the windows behind it.
+ * Paint a drop shadow on the cells just below and to the right of `rect` (absolute), clipped to
+ * `clip`. Only the cell colors change — the glyph and its width are preserved. Drawn in paint order,
+ * so a front window's shadow lands correctly over the windows behind it.
  *
  * @param buffer The shared compose buffer.
  * @param rect   The shadow-caster's absolute rect.
@@ -115,9 +106,9 @@ function drawDropShadow(buffer: ScreenBuffer, rect: Rect, clip: Rect, theme: The
       cell.attrs = attrs;
     }
   };
-  // TV `shadowSize = {2,1}` (tview.cpp): a 2-column right edge (rows 0..h-1, offset down by 1) + a
-  // 1-row bottom edge (cols 0..w-1, offset right by 1) — the classic L-shaped shadow, deeper on the
-  // right than the bottom because the light is upper-left. Matches the DrawContext.shadow geometry.
+  // The drop shadow is an L shape: a 2-column band on the right (rows offset down by 1) plus a 1-row
+  // band along the bottom (columns offset right by 1). It is deeper on the right than the bottom, as
+  // if lit from the upper-left. Matches the DrawContext.shadow geometry.
   for (let row = 0; row < rect.height; row += 1) {
     darken(rect.x + rect.width, rect.y + row + 1);
     darken(rect.x + rect.width + 1, rect.y + row + 1);
@@ -125,7 +116,7 @@ function drawDropShadow(buffer: ScreenBuffer, rect: Rect, clip: Rect, theme: The
   for (let col = 0; col < rect.width; col += 1) darken(rect.x + col + 1, rect.y + rect.height);
 }
 
-/** TV drop-shadow margin (`shadowSize {2,1}`, tview.cpp): +2 columns right, +1 row bottom (HR-34). */
+/** How far a drop shadow extends past its caster: +2 columns right, +1 row bottom. */
 const SHADOW_MARGIN = { width: 2, height: 1 } as const;
 
 function composeView(
@@ -154,8 +145,8 @@ function composeView(
     width: view.bounds.width,
     height: view.bounds.height,
   };
-  // Reveal is modal-scoped: `insideScope` flips true once the walk reaches the scope root, so a
-  // background view (outside the modal subtree) composes with reveal off and never underlines (FR-4).
+  // Reveal is scope-limited: `insideScope` flips true once the walk reaches the scope root, so a
+  // background view (outside the modal subtree) composes with reveal off and never underlines.
   const nowInside = insideScope || view === reveal.scope;
   const revealHere = reveal.on && (reveal.scope === null || nowInside);
   const ctx = makeDrawContext(buffer, viewRect, clip, theme, caps, revealHere);
@@ -163,12 +154,12 @@ function composeView(
     view.draw(ctx);
   } catch (error) {
     logger.error('view', 'draw() threw', { error: String(error) });
-    return; // isolate + skip this subtree (AR-42)
+    return; // isolate the failure: skip this subtree so one bad widget can't blank the screen
   }
 
   if (view instanceof Group) {
     for (const child of view.children) {
-      if (!child.state.visible) continue; // display:none (AR-41)
+      if (!child.state.visible) continue; // skipped entirely, like display:none
       const childOrigin: Point = { x: absOrigin.x + child.bounds.x, y: absOrigin.y + child.bounds.y };
       const childRect: Rect = {
         x: childOrigin.x,
@@ -259,20 +250,20 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     this.current = new ScreenBuffer(size.width, size.height, BLANK);
   }
 
-  /** @internal ViewHost — re-home focus after a group lost its focused child (RD-13 HR-10). */
+  /** @internal ViewHost — re-home focus after a group lost its focused child. */
   healFocus(group: View): void {
     this.healFocusSeam?.(group);
   }
 
   mount(root: View): void {
-    this.disposeRoot?.(); // re-mount safe: dispose a previously-mounted tree first
+    this.disposeRoot?.(); // safe to re-mount: dispose any previously-mounted tree first
     this.rootView = root;
     createRoot((dispose) => {
       this.disposeRoot = dispose;
-      root.mount(this, getOwner()); // scopes nest under the root scope; this is the ViewHost
+      root.mount(this, getOwner()); // view scopes nest under this root scope; `this` is the host
     });
     this.needsReflow = true;
-    this.flush(); // first reflow + full compose
+    this.flush(); // first layout + full compose
   }
 
   resize(size: Size2D): void {
@@ -282,13 +273,12 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     this.scheduleFlush();
   }
 
-  /** @internal ViewHost — mark a view's subtree for repaint and schedule a coalesced flush (AR-32). */
+  /** @internal ViewHost — mark a view for repaint and schedule a coalesced frame. */
   markRepaint(view: View): void {
-    // HR-31 (PA-8): an `invalidate()` that coincides with a visibility flip since the last compose
-    // needs the layout path, not the partial repaint — `reflow()` omits hidden views and `fullCompose`
-    // repaints the revealed (hidden→shown) or vacated (shown→hidden) region. The compose cache is the
-    // oracle: a view present in it was visible last frame, so a flip is `visible XOR cached`. Escalate
-    // to a relayout so a bare `invalidate()` produces the correct screen in both directions (AR-41).
+    // A repaint that coincides with a visibility change needs the layout path, not a partial repaint:
+    // layout omits hidden views, and a full compose repaints the region that was revealed or vacated.
+    // The compose cache tells us the last state — a view in it was visible last frame — so a change is
+    // `visible XOR cached`. Escalate to a relayout so a bare `invalidate()` is correct either way.
     const wasVisible = this.cache.has(view);
     if (view.state.visible !== wasVisible) {
       this.markRelayout();
@@ -298,22 +288,22 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     this.scheduleFlush();
   }
 
-  /** @see RenderRoot.setRevealAccelerators — store the flag + scope; a change forces one recompose. */
+  /** @see RenderRoot.setRevealAccelerators */
   setRevealAccelerators(on: boolean, scope: View | null = null): void {
     if (this.revealAccelerators === on && this.revealScope === scope) return; // no change → no work
     this.revealAccelerators = on;
     this.revealScope = scope;
-    this.markRelayout(); // AR-14: one coalesced full recompose paints/clears every underline atomically
+    this.markRelayout(); // one coalesced full recompose paints/clears every underline together
   }
 
-  /** @internal ViewHost — schedule a reflow + recompose. */
+  /** @internal ViewHost — schedule a re-layout + recompose. */
   markRelayout(): void {
     this.needsReflow = true;
     this.scheduleFlush();
   }
 
   private scheduleFlush(): void {
-    if (this.scheduled) return; // coalesce — one flush per tick (AR-32)
+    if (this.scheduled) return; // coalesce — at most one frame per tick
     this.scheduled = true;
     this.scheduler(() => this.flush());
   }
@@ -322,28 +312,27 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     this.scheduled = false;
     if (this.rootView === null) return;
 
-    const previous = this.current.clone(); // faithful snapshot for the damage diff (PA-8)
+    const previous = this.current.clone(); // exact snapshot of the last frame, for the damage diff
 
-    // HR-12 (PA-12): snapshot & CLEAR the pending-work flags BEFORE doing the work. `reflow()` fires
-    // `onMount` callbacks (the documented `bind()` site) — an `onMount(() => group.add(child))` sets
-    // `needsReflow`/dirty mid-flush; clearing first means those land in the now-empty live sets and
-    // schedule the NEXT tick (the coalescing scheduler drives the follow-up frame) instead of being
-    // clobbered by a trailing reset that dropped them forever.
+    // Snapshot and CLEAR the pending-work flags BEFORE doing the work. Layout fires `onMount`
+    // callbacks — a common site for `bind()` — and an `onMount(() => group.add(child))` sets the
+    // reflow/dirty flags mid-frame. Clearing first means that new work lands in the now-empty sets and
+    // schedules the NEXT frame, instead of being wiped by a trailing reset and lost forever.
     const wasReflow = this.needsReflow;
     this.needsReflow = false;
     const dirtyViews = topmostDirty(this.dirty);
     this.dirty.clear();
 
     if (wasReflow) {
-      // Relayout phase: reflow moves bounds, so the cached compose contexts are stale → full compose.
+      // Layout changed, so every view's cached position may be stale → recompose the whole tree.
       reflow(this.rootView, this.viewport);
       this.fullCompose();
     } else {
-      // Repaint phase: recompose only the dirty subtrees from their cached contexts (AC-7) — but
-      // partial recompose draws a subtree in isolation, which is only correct when nothing paints
-      // over it. If a dirty view is occluded by a later-painted view outside its subtree (overlapping
-      // windows), redrawing just that subtree would bleed it over its occluder, so escalate to a full
-      // z-ordered recompose for this frame. The fast-path holds for non-overlapping UIs.
+      // Repaint only the changed subtrees from their cached positions — but a partial repaint draws a
+      // subtree in isolation, which is only correct when nothing paints over it. If a changed view is
+      // overlapped by a later-painted view outside its own subtree (overlapping windows), repainting
+      // just that subtree would bleed it over the thing in front, so fall back to a full z-ordered
+      // recompose for this frame. The fast path holds for non-overlapping UIs.
       if (this.anyOccluded(dirtyViews)) {
         this.fullCompose();
       } else {
@@ -351,9 +340,8 @@ class RenderRootImpl implements RenderRoot, ViewHost {
         for (const view of dirtyViews) {
           const ctx = this.cache.get(view);
           if (ctx !== undefined) {
-            // A partial recompose starts mid-tree, so seed `insideScope` from whether this dirty view
-            // is at/below the reveal scope (an ancestor-or-self test); the recursion flips it for any
-            // descendant that crosses the scope root.
+            // A partial repaint starts mid-tree, so seed `insideScope` from whether this view is at or
+            // below the reveal scope; the recursion flips it for any descendant that crosses the scope.
             const insideScope = reveal.scope !== null && isAncestor(reveal.scope, view);
             composeView(
               this.current,
@@ -408,10 +396,10 @@ class RenderRootImpl implements RenderRoot, ViewHost {
       for (const [other, co] of this.cache) {
         if (other === view || co.order <= cv.order) continue; // same view, or painted before it
         if (isAncestor(view, other)) continue; // inside the dirty subtree — recomposing `view` covers it
-        // HR-34 (PA-16): a shadow-caster occludes not just its rect but its drop-shadow overhang
-        // (TV `shadowSize {2,1}` — +2 cols right, +1 row bottom). Expand the occluder's footprint by
-        // that margin so a back view overlapped only by a front view's SHADOW still escalates to a
-        // full recompose, preserving the shadow the partial path would otherwise wipe.
+        // A shadow-caster occludes not just its own rect but the cells its drop shadow overhangs
+        // (+2 cols right, +1 row bottom). Expand the occluder's footprint by that margin so a back
+        // view overlapped only by a front view's SHADOW still forces a full recompose, preserving the
+        // shadow a partial repaint would otherwise wipe.
         const ro: Rect = {
           x: co.origin.x,
           y: co.origin.y,
@@ -434,7 +422,7 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     return this.current;
   }
 
-  /** @see RenderRoot.originOf — pure cache lookup of the view's persisted absolute compose origin. */
+  /** @see RenderRoot.originOf */
   originOf(view: View): Point | null {
     const ctx = this.cache.get(view);
     return ctx === undefined ? null : { x: ctx.origin.x, y: ctx.origin.y };
@@ -442,11 +430,24 @@ class RenderRootImpl implements RenderRoot, ViewHost {
 }
 
 /**
- * Create a render root over a `size`-cell buffer.
+ * Create a render root over a `size`-cell buffer, ready to mount and render a view tree.
  *
  * @param size The viewport size in cells.
- * @param opts Required `caps` (depth-aware encoding) + optional `theme`/`schedule`/`logger`.
- * @returns A `RenderRoot` ready to `mount` a view tree.
+ * @param opts Required `caps` (the terminal capability profile) plus optional `theme`, `schedule`,
+ *   and `logger` — see {@link RenderRootOptions}.
+ * @returns A {@link RenderRoot}; call `mount(root)` then read `serialize()`/`buffer()`.
+ * @example
+ * import { Group, View, createRenderRoot } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const root = new Group();
+ * root.background = 'desktop';
+ * // ...root.add(...) your widgets...
+ *
+ * const render = createRenderRoot({ width: 80, height: 24 }, { caps });
+ * render.mount(root);       // lays out + composes the first frame
+ * const bytes = render.serialize(); // the escape sequences to write to the terminal
  */
 export function createRenderRoot(size: Size2D, opts: RenderRootOptions): RenderRoot {
   return new RenderRootImpl(size, opts);

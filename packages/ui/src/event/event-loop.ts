@@ -1,18 +1,12 @@
 /**
- * `createEventLoop` — the host-agnostic dispatch mechanism (RD-04, AR-47/AR-49/AR-54/AR-61).
+ * The event loop implementation — see {@link createEventLoop} for the public entry point.
  *
- * The loop **builds and owns** a `RenderRoot`, constructing it with a **deferring** `schedule` seam
- * so the root never self-flushes; the loop drives `renderRoot.flush()` itself exactly once per
- * dispatch tick (AR-61/AR-64). Every public mutator that can change focus/command/modal state and
- * the buffer routes through the single internal `runTick`, so each produces exactly one coalesced
- * frame (PA-11): do work → drain the cascade queue → `onIdle?.()` → one `flush()`. A re-entrant call
- * (e.g. `emitCommand` from inside a handler) joins the active tick rather than starting a new one.
- *
- * The full 3-phase router (`dispatch.ts`), command registry (`commands.ts`), and focus manager
- * (`focus.ts`) are wired in below; the mouse hit-test (Phase 4) and modal stack (Phase 5) plug into
- * the marked seams.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The loop builds and owns its render root and controls exactly when the screen repaints. Every
+ * public method that can change what is on screen runs through one internal `runTick`, so a single
+ * user action produces a single coalesced frame: it does the work, drains any commands the work
+ * cascaded, calls `onIdle`, then repaints once. A method called from inside an event handler (e.g.
+ * `emitCommand` from within `onEvent`) joins the tick already in progress instead of starting a new
+ * one, so nested actions still collapse into one frame.
  */
 import { createLogger, setClipboard } from '@jsvision/core';
 import type { Logger, Keymap, ScreenBuffer, CapabilityProfile } from '@jsvision/core';
@@ -31,28 +25,26 @@ import { createModalManager } from './modal.js';
 import type { ModalManager } from './modal.js';
 
 /**
- * The multi-click window in milliseconds (double-click-activation AR-4). Two same-cell mouse-`down`s
- * within this span count as a double-click. The framework-wide constant and single source of truth:
- * the editor converged onto this `clickCount` (AR-6 editor half discharged), reading it off the
- * envelope rather than re-detecting on its own clock.
+ * The double-click window, in milliseconds. Two mouse-downs on the same cell within this span are
+ * reported as a double-click via `DispatchEvent.clickCount`.
  */
 const MULTI_CLICK_MS = 500;
 
-/** A modal view that exposes a TV-style `valid(command)` close-gate (e.g. `Dialog`). */
+/** A modal view that can veto its own close via a `valid(command)` gate (e.g. `Dialog`). */
 interface QuitValidatable {
   valid(command: string): boolean;
 }
 
 /**
- * Whether a modal view vetoes a quit via its `valid()` gate (HR-38 / PA-2). Duck-typed so non-modal
- * modal roots (which have no `valid`) never veto; a `Dialog` runs its child-sweep validation.
+ * Whether a modal view vetoes a quit. A view with a `valid` method (a dialog) can refuse to close on
+ * quit (e.g. because a field is invalid); a modal without one never vetoes.
  */
 function isQuitVetoed(view: View, command: string): boolean {
   const candidate = view as Partial<QuitValidatable>;
   return typeof candidate.valid === 'function' && !candidate.valid(command);
 }
 
-/** Concrete event loop. Builds + owns the render root; drives one coalesced frame per tick. */
+/** Concrete event loop: owns the render root and paints one coalesced frame per tick. */
 class EventLoopImpl implements EventLoop {
   readonly renderRoot: RenderRoot;
   private readonly logger: Logger;
@@ -63,40 +55,40 @@ class EventLoopImpl implements EventLoop {
   private readonly focus: FocusManager;
   private readonly modal: ModalManager;
 
-  /** The mounted root view, for focus/hit-test walks; `null` until `mount`. */
+  /** The mounted root view; `null` until `mount` is called. */
   private root: View | null = null;
-  /** The tick's cascade queue: events (and the commands they raise) drained in one tick (AR-64). */
+  /** Events queued during the current tick — commands a handler raises land here and drain in the same tick. */
   private readonly queue: DispatchEvent[] = [];
-  /** True while a tick is draining; a re-entrant `runTick` joins the active tick instead (PA-11). */
+  /** True while a tick is draining, so a re-entrant call joins it instead of starting a new one. */
   private draining = false;
-  /** The pointer-capture target: while set, all mouse/wheel events route here (RD-05 PA-5). */
+  /** The pointer-capture target: while set, all mouse/wheel events go here. */
   private captureTarget: View | null = null;
-  /** The app-terminating command; a quit while modals are open cascades top-down (HR-38/PA-2). */
+  /** The command that terminates the app; a quit while modals are open cascades top-down. */
   private readonly quitCommand: string;
-  /** Whether accelerator mode is armed (accelerator-overlay AR-1) — reveal + bare-letter fire. */
+  /** Whether accelerator mode is armed (hotkeys revealed, bare letters fire accelerators). */
   private acceleratorMode = false;
-  /** The accelerator-mode trigger key (default `'f12'`); `null` disables the feature (AR-10). */
+  /** The key that toggles accelerator mode (default `'f12'`); `null` disables the feature. */
   private readonly revealKey: string | null;
 
-  // --- Multi-click state (double-click-activation FR-1/FR-2, AR-2/AR-4/AR-13) --------------------
-  /** The injectable multi-click clock; `opts.now ?? Date.now`. Set in the constructor. */
+  // --- Double-click tracking --------------------------------------------------------------------
+  /** Clock for timing double-clicks (`opts.now ?? Date.now`). */
   private readonly clock: () => number;
-  /** Timestamp of the previous mouse-`down` (for the 500ms window). */
+  /** Timestamp of the previous mouse-down. */
   private lastClickTime = Number.NEGATIVE_INFINITY;
-  /** Screen cell of the previous mouse-`down` (raw 1-based coords; sameness = screen-cell sameness). */
+  /** Cell of the previous mouse-down; a repeat here within the window counts as a multi-click. */
   private lastClickCell: Point = { x: -1, y: -1 };
-  /** The running consecutive same-cell click count (1 = single, 2 = double, …). */
+  /** Consecutive same-cell click count (1 = single, 2 = double, …). */
   private clickCount = 0;
 
-  /** Frame sink wired by `run()` after the host exists; `undefined` ⇒ flushes push nothing (PA-6). */
+  /** Called with the composed frame after each tick; wired to the host by `run()`. See {@link EventLoop.onFrame}. */
   onFrame?: (buffer: ScreenBuffer) => void;
-  /** Hardware-caret sink wired by `run()` after the host exists (RD-07 PA-5). @see EventLoop.onCaret */
+  /** Called with the caret cell after each frame; wired to the host by `run()`. See {@link EventLoop.onCaret}. */
   onCaret?: (cell: Point | null) => void;
-  /** Clipboard-write sink wired by `run()` (RD-07 PA-5/PA-7). @see EventLoop.writeClipboard */
+  /** Called with a clipboard sequence on copy/cut; wired to the host by `run()`. See {@link EventLoop.writeClipboard}. */
   writeClipboard?: (seq: string) => void;
-  /** Resize sink wired by the app after composition (HR-36/HR-41). @see EventLoop.onResize */
+  /** Called on resize after reflow; wired by the app. See {@link EventLoop.onResize}. */
   onResize?: (size: Size2D) => void;
-  /** Popup host wired by the app after the overlay exists (RD-14 PF-002). @see EventLoop.popupHost */
+  /** Host for anchored dropdown popups; wired by the app. See {@link EventLoop.popupHost}. */
   popupHost?: PopupHost;
 
   constructor(viewport: Size2D, opts: EventLoopOptions) {
@@ -105,45 +97,42 @@ class EventLoopImpl implements EventLoop {
     this.onIdle = opts.onIdle;
     this.keymap = opts.keymap;
     this.quitCommand = opts.quitCommand ?? 'quit';
-    this.revealKey = opts.revealKey === undefined ? 'f12' : opts.revealKey; // explicit null disables
-    this.clock = opts.now ?? Date.now; // multi-click clock (AR-4); tests inject a controlled now
+    this.revealKey = opts.revealKey === undefined ? 'f12' : opts.revealKey; // an explicit null disables it
+    this.clock = opts.now ?? Date.now;
     this.registry = createCommandRegistry({
       seed: opts.commands,
-      enqueue: (ev) => this.queue.push(ev), // a command cascades onto the active tick (03-01)
+      enqueue: (ev) => this.queue.push(ev), // a raised command cascades onto the active tick
     });
     this.focus = createFocusManager(() => this.root);
     this.modal = createModalManager(this.focus);
-    // Build the render root with a DEFERRING schedule: the callback is dropped, so the root never
-    // self-flushes; the loop owns frame timing and calls `renderRoot.flush()` once per tick (AR-61).
+    // Build the render root with a no-op schedule so it never repaints on its own; the loop decides
+    // when to repaint and calls `renderRoot.flush()` exactly once per tick.
     this.renderRoot = createRenderRoot(viewport, {
       caps: opts.caps,
       theme: opts.theme,
       logger: this.logger,
       schedule: () => {
-        // deferring seam — intentionally drops the flush callback (the loop drives flush itself)
+        // intentionally empty — the loop drives flush itself, so the render root must not self-repaint
       },
-      // RD-13 HR-10/PA-10 — when a group removes the currently-focused child, re-home focus through
-      // the loop's focus mutator (focusInto → first focusable descendant, else nothing), inside a
-      // tick so the focus-flip repaint + focus-change signals stay consistent. A detached view-only
-      // tree (no loop) leaves this unset and just clears its `current` pointer.
+      // When a group removes the currently focused child, move focus into that group (to its first
+      // focusable descendant, or nowhere) inside a tick, so the focus change and its repaint stay
+      // consistent. A view tree used without a loop leaves this unset and just clears its pointer.
       healFocus: (group) => this.runTick(() => this.focus.focusInto(group)),
     });
   }
 
   mount(root: View): void {
     this.root = root;
-    this.renderRoot.mount(root); // RenderRoot.mount flushes the initial frame once, internally
-    this.onFrame?.(this.renderRoot.buffer()); // deliver the first frame to the host sink (PA-6)
-    this.emitCaret(); // report the initial hardware-caret cell (PA-5)
+    this.renderRoot.mount(root); // paints the initial frame internally
+    this.onFrame?.(this.renderRoot.buffer()); // hand the first frame to the host
+    this.emitCaret(); // position the initial caret
   }
 
   dispatch(event: AppEvent): void {
     this.runTick(() => {
-      // Compute the consecutive same-cell click-count for a mouse-`down` and stamp it on the enqueued
-      // envelope (double-click-activation FR-1/FR-2, AR-2/AR-4/AR-13). Only `down` carries it; move/
-      // drag/up, wheel, and keys enqueue with `clickCount` undefined. Stamping at construction here
-      // satisfies the `readonly clickCount` field; `route()`'s `{ ...ev }` spread and `hit-test.ts`'s
-      // `{ ...ev, local }` spreads then carry it to the delivered envelope for free.
+      // Compute the consecutive same-cell click count for a mouse-down and attach it to the event as
+      // `clickCount`, so a view can tell a single click from a double-click. Only mouse-downs carry
+      // it; every other event queues with `clickCount` undefined.
       let clickCount: number | undefined;
       if (event.type === 'mouse' && event.kind === 'down') {
         const t = this.clock();
@@ -158,18 +147,18 @@ class EventLoopImpl implements EventLoop {
   }
 
   resize(size: Size2D): void {
-    // The one path outside the queue: a reflow with no event cascade, then exactly one frame (AR-54).
+    // Resize reflows and repaints without going through the event queue.
     this.renderRoot.resize(size);
-    this.renderRoot.flush(); // reflow first, so onResize handlers see fresh desktop/overlay bounds
-    // HR-36/HR-41: only when a handler is wired, let it re-anchor viewport-sized chrome (re-zoom
-    // windows, re-anchor the menu catcher) against the new geometry, then repaint the adjustment. With
-    // no handler (the bare loop) this is a single flush — the base "exactly one frame" contract holds.
+    this.renderRoot.flush(); // reflow first, so an onResize handler sees the settled new geometry
+    // If a resize handler is wired, let it re-anchor viewport-sized chrome (re-fit maximized windows,
+    // re-anchor the open menu) against the new geometry, then repaint the adjustment. Without one,
+    // this is a single repaint.
     if (this.onResize !== undefined) {
       this.onResize(size);
       this.renderRoot.flush();
     }
-    this.onFrame?.(this.renderRoot.buffer()); // push the resized frame to the host sink (PA-6)
-    this.emitCaret(); // the reflow may move the focused caret — re-report it (PA-5)
+    this.onFrame?.(this.renderRoot.buffer());
+    this.emitCaret(); // the reflow may have moved the focused view, so re-report the caret
   }
 
   getFocused(): View | null {
@@ -177,7 +166,6 @@ class EventLoopImpl implements EventLoop {
   }
 
   focusNext(): void {
-    // Standalone traversal owns a tick so the focus-flip repaint paints exactly one frame (PA-11).
     this.runTick(() => this.focus.focusNext());
   }
 
@@ -190,18 +178,15 @@ class EventLoopImpl implements EventLoop {
   }
 
   focusInto(view: View): void {
-    // Descend to the deepest focusable leaf so a focusable CONTAINER (e.g. a Window) hands focus to
-    // its inner view — the leaf whose `state.focused` drives the caret/highlight — instead of parking
-    // it on the container itself (the "caret vanishes on F6 window switch" defect).
+    // Descend to the innermost focusable view so a focusable container (e.g. a Window) hands focus to
+    // the inner view that owns the caret and highlight, rather than parking focus on the container.
     this.runTick(() => this.focus.focusInto(view));
   }
 
   emitCommand(command: string, arg?: unknown): void {
-    // Route through runTick so a standalone emitCommand drains its cascade + paints once (PA-11);
-    // a re-entrant emit (from inside a handler) joins the active tick.
     this.runTick(() => {
-      // HR-38 (PA-2): a quit while modals are open cascades top-down through the stack instead of
-      // dispatching into the top modal subtree (where the root quit sink is unreachable).
+      // A quit while modals are open cascades top-down through the stack rather than being dispatched
+      // into the top modal (where the app's quit handler would be unreachable).
       if (command === this.quitCommand && this.modal.isActive()) {
         this.cascadeQuit(command, arg);
       } else {
@@ -211,23 +196,22 @@ class EventLoopImpl implements EventLoop {
   }
 
   /**
-   * Resolve a quit against an open modal stack (HR-38 / PA-2). Walk the stack top-down: each modal's
-   * `valid(quitCommand)` gate may veto (TV `TGroup::execute`'s `while(!valid(endState))`, so `valid`
-   * is consulted per-modal at `endModal` time), stopping the cascade — the app stays and the remaining
-   * modals stay open. Otherwise `endModal(quitCommand)` resolves that modal's `execView` promise and
-   * the walk continues. When the stack empties, the quit command reaches the root sink.
+   * Resolve a quit against an open modal stack. Walk the stack top-down: a modal may veto (e.g. a
+   * dialog whose validation fails), which stops the cascade and keeps the app and the remaining
+   * modals open. Otherwise each modal closes (resolving its `execView` with the quit command) and the
+   * walk continues; once the stack is empty the quit reaches the app's quit handler.
    */
   private cascadeQuit(command: string, arg: unknown): void {
     while (this.modal.isActive()) {
       const top = this.modal.topView();
-      if (top !== null && isQuitVetoed(top, command)) return; // valid() veto → app stays
-      this.modal.end(command); // resolve this modal's execView with the quit command
+      if (top !== null && isQuitVetoed(top, command)) return; // a modal vetoed — the app stays open
+      this.modal.end(command); // close this modal, resolving its execView with the quit command
     }
-    this.registry.emit(command, arg); // stack empty → the root quit sink handles it
+    this.registry.emit(command, arg); // stack empty — hand the quit to the app's quit handler
   }
 
   enableCommand(command: string, on: boolean): void {
-    this.registry.enable(command, on); // toggling enablement changes no visual state — no tick
+    this.registry.enable(command, on); // enablement is not on screen, so no repaint is needed
   }
 
   isCommandEnabled(command: string): boolean {
@@ -235,12 +219,11 @@ class EventLoopImpl implements EventLoop {
   }
 
   execView<R>(view: View): Promise<R> {
-    // Open inside a runTick so the modal paints exactly one coalesced frame on open (PA-11/PF-009);
-    // the returned Promise resolves later, on endModal. The caller has added `view` to the tree.
-    this.captureTarget = null; // a stale gesture must not capture across modality (PA-5)
-    // RD-11 PA-1: if the view opts into self-closing modality, hand it the modal-host seam before
-    // `modal.begin` so it can resolve this `execView` (via `endModal`) from its own event handling.
-    // Duck-typed so non-modal views (everything today) are untouched — no behaviour change.
+    // The caller has already added `view` to the tree. Open the modal inside a tick so it paints one
+    // frame on open; the returned promise resolves later, when endModal is called.
+    this.captureTarget = null; // drop any in-flight drag so it cannot capture across the modal boundary
+    // If the view opts into closing itself (a Dialog does), hand it the modal-host handle before it
+    // opens so it can resolve this execView from its own event handling. Other views are untouched.
     if (isModalHostAware(view)) {
       view.attachModalHost({
         endModal: (result: unknown) => this.endModal(result),
@@ -253,42 +236,38 @@ class EventLoopImpl implements EventLoop {
   }
 
   endModal<R>(result: R): void {
-    // Close inside a runTick so the restore-focus repaint paints one frame (PA-11).
-    this.captureTarget = null; // release any capture as modality changes (PA-5)
+    this.captureTarget = null; // release any capture as the modal boundary changes
     this.runTick(() => this.modal.end(result));
   }
 
   setAcceleratorMode(on: boolean): void {
-    // Public arm/disarm seam (menu-open dismiss AR-7; the future hold-Alt path AR-13). Own a tick so
-    // the reveal repaint coalesces to one frame; re-entrant (from within a handler) it joins the tick.
     this.runTick(() => this.applyAcceleratorMode(on));
   }
 
   /**
-   * Apply the accelerator-mode flag + reveal (accelerator-overlay AR-1/AR-14). Sets the loop flag and
-   * reveals/hides the overlay clamped to the current dispatch scope (`scopeRoot()`), so reveal matches
-   * the `scopeRoot()`-clamped fire. A no-op when the feature is disabled (`revealKey: null`). Must run
-   * inside a tick (the caller owns it) so `setRevealAccelerators`' recompose coalesces into that frame.
+   * Turn accelerator mode on or off: set the flag and reveal (or hide) the underlined hotkeys within
+   * the current dispatch scope, so what is revealed matches what a bare letter would fire. A no-op
+   * when the feature is disabled. Runs inside the caller's tick so the reveal repaints in one frame.
    *
    * @param on Whether accelerator mode is armed.
    */
   private applyAcceleratorMode(on: boolean): void {
-    if (this.revealKey === null) return; // feature disabled — nothing to arm
+    if (this.revealKey === null) return; // feature disabled — nothing to do
     this.acceleratorMode = on;
     this.renderRoot.setRevealAccelerators(on, on ? this.scopeRoot() : null);
   }
 
   /**
-   * Run one coalesced tick: do `work` (enqueue an event or mutate focus/command/modal state), drain
-   * the cascade queue, fire `onIdle`, then flush exactly one frame. A re-entrant call (while already
-   * draining) just contributes its `work` to the active tick and returns (PA-11). The `draining`
-   * flag is reset in a `finally` so a throw can never wedge the loop.
+   * Run one coalesced tick: do `work`, drain any events it queued, call `onIdle`, then repaint once.
+   * A call made while a tick is already draining just contributes its `work` to that tick and returns,
+   * so nested actions collapse into a single frame. The draining flag is cleared in a `finally`, so a
+   * thrown handler can never leave the loop stuck.
    *
-   * @param work A thunk that enqueues an event or performs a focus/command/modal mutation.
+   * @param work Queues an event or performs a focus/command/modal change.
    */
   private runTick(work: () => void): void {
     if (this.draining) {
-      work(); // join the active tick; the owner drains + flushes
+      work(); // join the active tick; the outer call drains and repaints
       return;
     }
     this.draining = true;
@@ -301,25 +280,26 @@ class EventLoopImpl implements EventLoop {
     } finally {
       this.draining = false;
     }
-    this.onIdle?.(); // the cascade drained (AR-58)
-    this.renderRoot.flush(); // exactly one coalesced frame for the tick (AR-54, AR-64)
-    this.onFrame?.(this.renderRoot.buffer()); // deliver that one frame to the host sink (PA-6/PF-003)
-    this.emitCaret(); // re-report the hardware-caret cell after the frame (PA-5)
+    this.onIdle?.(); // everything queued this tick has drained
+    this.renderRoot.flush(); // one coalesced frame for the whole tick
+    this.onFrame?.(this.renderRoot.buffer());
+    this.emitCaret();
   }
 
   /**
-   * Compute the focused leaf's absolute caret cell and deliver it to the hardware-caret sink (PA-5).
-   * Queried **post-flush** from the focus manager + the leaf's `desiredCaret()` + the render root's
-   * persisted origin — never collected during compose — so it stays correct across partial recomposes
-   * (PF-002). Delivers `null` when nothing is focused or the focused view wants no caret (blur, a
-   * non-text control). A no-op when no `onCaret` sink is wired (headless).
+   * Re-send the current caret cell out of band. `run()` uses it to position the initial cursor,
+   * because the first frame is painted directly rather than through a tick. A no-op when `onCaret`
+   * is unset.
    */
   refreshCaret(): void {
-    this.emitCaret(); // public out-of-band re-emit (run() uses it to position the initial cursor)
+    this.emitCaret();
   }
 
   private emitCaret(): void {
     if (this.onCaret === undefined) return;
+    // Read the caret position after the frame, from the focused view's requested caret plus its
+    // persisted screen origin — never during compose — so it stays correct even on a partial repaint
+    // that skipped the focused view. `null` when nothing is focused or the view wants no caret.
     const leaf = this.focus.focusedLeafIn(this.scopeRoot());
     const local = leaf?.desiredCaret() ?? null;
     const origin = leaf !== null && local !== null ? this.renderRoot.originOf(leaf) : null;
@@ -327,7 +307,7 @@ class EventLoopImpl implements EventLoop {
   }
 
   setCapture(view: View): void {
-    this.captureTarget = view; // last-writer-wins; routed in `routeContext` → `hitTestRoute` (PA-5)
+    this.captureTarget = view; // a later setCapture replaces this one
   }
 
   releaseCapture(): void {
@@ -335,27 +315,25 @@ class EventLoopImpl implements EventLoop {
   }
 
   /**
-   * Route one dispatch envelope through the full 3-phase machine (`dispatch.ts`): keymap consume →
-   * built-in Tab → mouse/wheel hit-test → pre/focus/post sweeps with `handled` short-circuit.
+   * Route one event through the dispatch machine.
    *
-   * @param ev The dispatch envelope to route.
+   * @param ev The event to route.
    */
   private route(ev: DispatchEvent): void {
     route(ev, this.routeContext());
   }
 
   /**
-   * The dispatch/hit-test scope: the top modal subtree when a modal is active (capture, AR-53), else
-   * the mounted root. Confining all phases to this subtree — including the Phase-2 focused-chain
-   * bubble clamp (PA-12) — keeps the outer tree inert while a modal is open.
+   * The subtree input is confined to: the top modal's subtree while a modal is open, otherwise the
+   * mounted root. Confining every phase here keeps the tree outside an open modal inert.
    */
   private scopeRoot(): View | null {
     return this.modal.isActive() ? this.modal.topView() : this.root;
   }
 
-  /** Build the {@link RouteContext} of seams the 3-phase router needs from this loop. */
+  /** Build the {@link RouteContext} of operations the dispatch machine needs from this loop. */
   private routeContext(): RouteContext {
-    // PA-5: never route to a detached capture target — auto-release if it has unmounted.
+    // Never route to a capture target that has been removed — drop it first.
     if (this.captureTarget !== null && !this.captureTarget.mounted) {
       this.captureTarget = null;
     }
@@ -365,56 +343,51 @@ class EventLoopImpl implements EventLoop {
       keymap: this.keymap,
       focusedLeaf: this.focus.focusedLeafIn(scope),
       emitCommand: (name, arg) => this.registry.emit(name, arg),
-      // RD-06 PA-1/PA-10 — sourced onto every routed envelope as `ev.emit` / `ev.focusView`.
+      // Exposed on each event as `ev.emit` / `ev.focusView` for a view to call from its onEvent.
       emit: (name, arg) => this.registry.emit(name, arg),
       focusView: (view) => this.focus.focusView(view),
-      // RD-11 PA-16 — pointer capture from within a view's `onEvent` (the ScrollBar thumb-drag).
-      // Pure mutations of `captureTarget` (inside the active tick), mirroring the public seams.
+      // Pointer capture a view requests from within its own onEvent (e.g. a scrollbar thumb-drag).
       setCapture: (view) => this.setCapture(view),
       releaseCapture: () => this.releaseCapture(),
-      // RD-13 HR-14/PA-13 — read-only capture query. `routeContext` above already auto-released a
-      // captureTarget that has unmounted, so this reflects the live capture (false after any external loss).
+      // A view checks this to detect that its capture was lost externally (a modal opened, the target
+      // unmounted). The stale-target release above means this reflects the live capture.
       hasCapture: (view) => this.captureTarget === view,
-      // RD-07 PA-5/PA-7 — clipboard write from within a control's `onEvent` (Input copy/cut). The
-      // loop encodes `text`→OSC-52 via core `setClipboard(text, caps)` (base64 + sanitize; '' when the
-      // terminal lacks clipboard52) and hands the sequence to the run()-wired `writeClipboard` sink.
-      // The control never touches I/O; headless (`writeClipboard` unset) it is a safe no-op.
+      // Clipboard write a control requests from its onEvent (Input copy/cut). The loop encodes and
+      // sanitizes the text for the terminal and hands it to the host writer; a no-op headlessly.
       setClipboard: (text) => {
         const seq = setClipboard(text, this.caps);
         if (seq !== '') this.writeClipboard?.(seq);
       },
-      // RD-14 PF-002 — the focus query + overlay host a dropdown leaf reaches through its envelope to
-      // save/restore focus and mount its anchored popup. `popupHost` is `undefined` headless / no shell.
+      // The focus query + popup host a dropdown control reaches through to save/restore focus and
+      // mount its anchored popup. `popupHost` is undefined headlessly, so opening a dropdown no-ops.
       getFocused: () => this.focus.getFocused(),
       popupHost: this.popupHost,
-      // accelerator-overlay (AR-16): the router intercept reads these before any view. `toggleAcceleratorMode`
-      // runs inside the active dispatch tick already (route() is called during the drain), so it applies
-      // the flag directly (no nested runTick) and the tick's flush paints the reveal change (AR-14).
+      // The accelerator-mode intercept reads these before any view. It already runs inside the active
+      // tick, so it toggles the flag directly and the tick's repaint shows the reveal change.
       revealKey: this.revealKey,
       acceleratorMode: () => this.acceleratorMode,
       toggleAcceleratorMode: () => this.applyAcceleratorMode(!this.acceleratorMode),
       deliver: (view, ev) => this.deliver(view, ev),
-      // The built-in Tab handler runs inside the active dispatch tick, so it calls the focus
-      // manager's pure mutation directly (no nested runTick) — the tick's flush paints (PA-11).
+      // Tab traversal runs inside the active tick, so it calls the focus manager directly.
       focusNext: () => this.focus.focusNext(),
       focusPrev: () => this.focus.focusPrev(),
       hitTestRoute: (ev) =>
         hitTestRoute(ev, {
           scopeRoot: scope,
-          captureTarget: this.captureTarget, // RD-05 PA-5: short-circuit to the capture target
+          captureTarget: this.captureTarget, // when set, mouse events short-circuit to it
           isFocusable: (view) => this.focus.isFocusable(view),
-          focusInto: (view) => this.focus.focusInto(view), // descend to the inner leaf (pure, in-tick)
+          focusInto: (view) => this.focus.focusInto(view),
           deliver: (view, mouseEv) => this.deliver(view, mouseEv),
         }),
     };
   }
 
   /**
-   * Deliver an envelope to a view's `onEvent`, isolating a throwing handler: the error is logged via
-   * the injected logger and the loop continues to the next phase/event (AR-66).
+   * Deliver an event to a view's `onEvent`, catching a throwing handler: the error is logged and the
+   * loop moves on to the next view/event instead of crashing.
    *
    * @param view The target view.
-   * @param ev   The dispatch envelope.
+   * @param ev   The event.
    */
   private deliver(view: View, ev: DispatchEvent): void {
     try {
@@ -426,8 +399,8 @@ class EventLoopImpl implements EventLoop {
 }
 
 /**
- * Duck-typed guard: does `view` opt into self-closing modality (RD-11 PA-1)? True iff it exposes an
- * `attachModalHost` method — so `execView` injects the modal-host seam only into views that want it.
+ * Whether `view` opts into closing itself (implements {@link ModalHostAware}) — so `execView` only
+ * hands the modal-host handle to views that asked for it.
  *
  * @param view The view being opened as a modal.
  * @returns Whether `view` implements {@link ModalHostAware}.
@@ -437,11 +410,45 @@ function isModalHostAware(view: View): view is View & ModalHostAware {
 }
 
 /**
- * Create a host-agnostic {@link EventLoop} over a `viewport`-cell render root.
+ * Create an event loop over a viewport of the given size.
+ *
+ * The loop is host-agnostic: you drive it by feeding decoded input to {@link EventLoop.dispatch} and
+ * reading `loop.renderRoot.buffer()` for the composed frame — no terminal required, which is what
+ * makes it usable headlessly and in tests. To connect it to a real terminal, wire the `onFrame`/
+ * `onCaret`/`writeClipboard` sinks to a host, or use `createApplication`, which does that for you.
  *
  * @param viewport The initial viewport size in cells.
- * @param opts     Required `caps` + optional `theme`/`logger`/`keymap`/`commands`/`onIdle` seams.
- * @returns An `EventLoop` ready to `mount` a view tree and be driven via `dispatch`.
+ * @param opts     Required `caps`, plus optional `theme`/`logger`/`keymap`/`commands`/`onIdle` and more.
+ * @returns An `EventLoop` ready to `mount` a view tree and be driven with `dispatch`.
+ * @example
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { View, Group, createEventLoop, type DrawContext, type DispatchEvent } from '@jsvision/ui';
+ *
+ * // A minimal focusable widget that reacts to Enter.
+ * class Button extends View {
+ *   focusable = true;
+ *   constructor(private label: string, private onEnter: () => void) { super(); }
+ *   draw(ctx: DrawContext) {
+ *     ctx.text(1, 0, `${this.state.focused ? '>' : ' '} ${this.label}`, ctx.color('button'));
+ *   }
+ *   override onEvent(ev: DispatchEvent) {
+ *     if (ev.event.type === 'key' && ev.event.key === 'enter') { this.onEnter(); ev.handled = true; }
+ *   }
+ * }
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+ *
+ * const root = new Group();
+ * root.add(new Button('OK', () => loop.emitCommand('ok')));
+ * loop.mount(root);
+ *
+ * // Feed input: focus the button, then press Enter to emit the 'ok' command.
+ * loop.focusNext();
+ * loop.dispatch({ type: 'key', key: 'enter', ctrl: false, alt: false, shift: false });
+ *
+ * // Read the composed frame (headless — no terminal needed).
+ * const rows = loop.renderRoot.buffer().rows();
  */
 export function createEventLoop(viewport: Size2D, opts: EventLoopOptions): EventLoop {
   return new EventLoopImpl(viewport, opts);

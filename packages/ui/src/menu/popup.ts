@@ -1,12 +1,11 @@
 /**
- * `MenuPopup` — a presentational dropdown (RD-05 AR-68).
+ * A single dropdown menu box — the visual list of items that appears when a menu opens.
  *
- * A `View` rendered from the controller's per-level state: a bordered list of item rows where the
- * highlighted row uses the `menuSelected` role, a disabled item is greyed, a `sub` item shows a `▸`,
- * and a separator is a horizontal rule. It owns no navigation state — the `MenuBar`-owned controller
- * (controller.ts) drives `items`/`highlight` and positions it (`layout.rect`) in the overlay.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * A `MenuPopup` is purely presentational: a bordered list of item rows where the highlighted row is
+ * shown selected, disabled items are greyed, a submenu row shows a `►` cascade marker, and a
+ * separator is a horizontal rule. It holds no navigation state of its own — the menu bar's controller
+ * sets its `items`, `highlight`, and screen position and mounts it into the app overlay. You don't
+ * construct these directly; a {@link MenuBar} creates them as menus open.
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
@@ -15,12 +14,11 @@ import type { LayoutProps } from '../layout/index.js';
 import type { MenuItem } from './builders.js';
 import { parseTilde } from './builders.js';
 
-/** The sub-menu cascade indicator (Turbo Vision's CP437 0x10 `►`), drawn near a `sub` row's right border. */
+/** The submenu cascade indicator (`►`), drawn near a submenu row's right border. */
 const SUB_ARROW = '\u25BA'; // ►
 
 /**
- * Single-line frame glyphs — the CP437 set Turbo Vision's `TMenuBox::frameChars` uses
- * (`┌─┐ │ └┘ ├┤`). The box is inset by one blank gutter column on each side, as TV draws it.
+ * Single-line frame glyphs (`┌─┐ │ └┘ ├┤`). The box is inset by one blank gutter column on each side.
  */
 const FRAME = {
   tl: '\u250C',
@@ -33,23 +31,34 @@ const FRAME = {
   rt: '\u2524',
 } as const; // ┌┐└┘─│├┤
 
-/** A presentational dropdown driven by the controller (mounted into the overlay). */
+/**
+ * A single dropdown menu box, driven by the menu bar's controller and mounted into the app overlay.
+ * You do not create these yourself — build a menu with {@link menuBar} and the bar produces its
+ * popups as menus open.
+ *
+ * @example
+ * import { menuBar, subMenu, item } from '@jsvision/ui';
+ *
+ * // A MenuBar renders MenuPopup boxes for you when a menu opens:
+ * const bar = menuBar([subMenu('~F~ile', [item('~O~pen', 'file.open'), item('E~x~it', 'quit')])]);
+ * // Pass `bar` to createApplication; opening "File" shows its MenuPopup.
+ */
 export class MenuPopup extends View {
-  /** The level's items. */
+  /** The items shown in this box. */
   items: readonly MenuItem[] = [];
   /** The highlighted row index. */
   highlight = 0;
-  /** Whether a command is currently enabled (for greying). */
+  /** Predicate for whether a command is enabled — a disabled item is greyed and non-selectable. */
   isEnabled: (command: string) => boolean = () => true;
-  /** Controller callback for a mouse-down on a content row (0-based item index). */
+  /** Called when a content row is clicked, with the 0-based item index. */
   onPick?: (row: number) => void;
-  /** Free-floating placement in the overlay; the controller sets `rect`. */
+  /** Absolute placement in the overlay; the controller sets `rect`. */
   override layout: LayoutProps = { position: 'absolute' };
 
   /**
-   * Route a mouse-down on an item row to the controller (AR-68). The top border is row 0 and the
-   * bottom border the last row; an interior `y` maps to item index `y - 1`. Out-of-range clicks are
-   * ignored. (Columns are irrelevant to which item a row click selects.)
+   * Route a mouse-down on an item row to {@link onPick}. Row 0 is the top border and the last row the
+   * bottom border, so an interior click at view-local `y` selects item `y - 1`; clicks outside the
+   * item range are ignored. The clicked column does not matter.
    *
    * @param ev The dispatch envelope (mouse coords are view-local in `ev.local`).
    */
@@ -64,29 +73,28 @@ export class MenuPopup extends View {
   }
 
   /**
-   * Draw the menu box exactly as Turbo Vision's `TMenuBox`: a single-line frame inset by one blank
-   * gutter column on each side, item text padded one cell past the border (col 3), the highlighted
-   * row's interior filled with `menuSelected`, disabled items greyed, separators joined with `├─┤`,
-   * a `sub` row's `►` cascade marker near the right border, and an `item`'s `key` shortcut
-   * right-aligned. Column layout (width `w`): gutter 0 · border 1 · pad 2 · text 3 … · border `w-2`
-   * · gutter `w-1`.
+   * Draw the menu box: a single-line frame inset by one blank gutter column on each side, item text
+   * padded one cell past the border, the highlighted row filled with the selected colour, disabled
+   * items greyed, separators joined with `├─┤`, a submenu row's `►` cascade marker near the right
+   * border, and an item's shortcut key right-aligned. Column layout (width `w`): gutter 0 · border 1
+   * · pad 2 · text 3 … · border `w-2` · gutter `w-1`.
    */
   draw(ctx: DrawContext): void {
     const w = ctx.size.width;
     const h = ctx.size.height;
     const base = ctx.color('menuBar');
     const selected = ctx.color('menuSelected');
-    const disabledFg = ctx.role('shadow').fg; // darkGray — TV `cNormDisabled`/`cSelDisabled` fg (0x78/0x28)
+    const disabledFg = ctx.role('shadow').fg; // darkGray — the greyed foreground for disabled rows
     const disabled: Style = { fg: disabledFg, bg: base.bg };
-    const selectedDisabled: Style = { fg: disabledFg, bg: selected.bg }; // TV `cSelDisabled` = darkGray on green
-    // Accelerator-char accents (TV `cNormal`/`cSelect` high byte): red on the row's bg.
+    const selectedDisabled: Style = { fg: disabledFg, bg: selected.bg }; // greyed on the selected bg
+    // Accelerator-character accent colours on each row background.
     const baseHot: Style = { fg: ctx.role('menuBar').hotkey ?? base.fg, bg: base.bg };
     const selHot: Style = { fg: ctx.role('menuSelected').hotkey ?? selected.fg, bg: selected.bg };
 
-    // Whole box in the menu base color; the outer col-0 / col-(w-1) gutters stay blank (TV inset).
+    // Whole box in the menu base colour; the outer col-0 / col-(w-1) gutters stay blank (the inset).
     ctx.fillRect(0, 0, w, h, ' ', base);
 
-    // Single-line frame inset by the gutter: corners + edges + side verticals (TMenuBox::frameLine).
+    // Single-line frame inset by the gutter: corners + edges + side verticals.
     ctx.text(1, 0, FRAME.tl, base);
     ctx.text(w - 2, 0, FRAME.tr, base);
     ctx.text(1, h - 1, FRAME.bl, base);
@@ -102,7 +110,7 @@ export class MenuPopup extends View {
       const node = this.items[i];
       const y = i + 1;
       if (node.kind === 'separator') {
-        // A separator joins the side borders with ├───┤ (frameChars n=15).
+        // A separator joins the side borders with ├───┤.
         ctx.text(1, y, FRAME.lt, base);
         ctx.fillRect(2, y, w - 4, 1, FRAME.h, base);
         ctx.text(w - 2, y, FRAME.rt, base);
@@ -110,21 +118,21 @@ export class MenuPopup extends View {
       }
       const enabled = node.kind === 'item' ? this.isEnabled(node.command) : true;
       const highlighted = i === this.highlight;
-      // Row color: a highlighted enabled row uses the green `cSelect`; a highlighted disabled row the
-      // dimmed `cSelDisabled` (darkGray on green); otherwise normal / disabled on the menu base.
+      // Row colour: a highlighted enabled row is selected; a highlighted disabled row is greyed on
+      // the selected background; otherwise normal / greyed on the menu base.
       const style = highlighted ? (enabled ? selected : selectedDisabled) : enabled ? base : disabled;
-      // Highlight fills the interior between the borders (TMenuBox getItemRect: cols 2..w-3).
+      // The highlight fills the interior between the borders.
       if (highlighted) ctx.fillRect(2, y, w - 4, 1, ' ', style);
       const label = parseTilde(node.title);
-      ctx.text(3, y, label.text, style); // text inset past gutter + border + pad (TV col 3)
-      // Accelerator-char accent (red) — only on enabled rows; TV's disabled palettes have no accent.
+      ctx.text(3, y, label.text, style); // text inset past gutter + border + pad
+      // Accelerator-character accent — only on enabled rows; a greyed row has no accent.
       if (enabled && label.hotkeyCol >= 0) {
         ctx.text(3 + label.hotkeyCol, y, label.text[label.hotkeyCol] ?? '', highlighted ? selHot : baseHot);
       }
       if (node.kind === 'sub') {
-        ctx.text(w - 4, y, SUB_ARROW, style); // cascade marker (TV putChar size.x-4)
+        ctx.text(w - 4, y, SUB_ARROW, style); // submenu cascade marker
       } else if (node.kind === 'item' && node.key !== undefined) {
-        ctx.text(w - 3 - node.key.length, y, node.key, style); // right-aligned shortcut (TV size.x-3-len)
+        ctx.text(w - 3 - node.key.length, y, node.key, style); // right-aligned shortcut key
       }
     }
   }

@@ -1,8 +1,7 @@
 /**
- * Character-set helpers shared by the `filter` and `range` validators (RD-06). `expandCharSet` parses
- * a compact range spec (`'0-9A-Za-z '`) like a regex character class without the brackets — `X-Y`
- * expands to the inclusive code-point range, every other character is literal. The `.js` extension in
- * import specifiers is required by NodeNext ESM resolution.
+ * Character-set helpers shared by the `filter` and `range` validators. `expandCharSet` parses a
+ * compact range spec (`'0-9A-Za-z '`) like a regex character class without the brackets — `X-Y`
+ * expands to the inclusive code-point range, and every other character is a literal member.
  */
 
 /**
@@ -35,7 +34,7 @@ export function expandCharSet(spec: string): Set<string> {
 }
 
 /**
- * Whether every character of `s` is in `set` (TV `strspn(s, validChars) == strlen(s)`).
+ * Whether every character of `s` is in `set`.
  *
  * @param s   The candidate string.
  * @param set The allowed-character set.

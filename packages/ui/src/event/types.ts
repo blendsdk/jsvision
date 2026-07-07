@@ -1,178 +1,169 @@
 /**
- * Event-loop public types (RD-04). The `EventLoop` facade and its construction `EventLoopOptions`.
- *
- * The event-handler **contract types** (`CommandEvent`/`AppEvent`/`DispatchEvent`) are declared in
- * `../view/types.ts` (PA-8 — alongside `View`, to avoid a `view/`→`event/` import cycle) and
- * re-exported through this module's barrel (`event/index.ts`), so `@jsvision/ui` exposes them as
- * RD-04 symbols.
- *
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Public types for the event loop: the `EventLoop` handle and its `EventLoopOptions`, plus the
+ * modal-host seam a self-closing modal view (e.g. a `Dialog`) opts into.
  */
 import type { CapabilityProfile, Theme, Logger, Keymap, ScreenBuffer } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
 import type { View, RenderRoot, AppEvent, Point, PopupHost } from '../view/index.js';
 
 /**
- * The modal-host handle a modal view is given so it can close itself (RD-11 PA-1). One additive
- * intra-package loop seam (precedent: the AR-82/AR-84 `setCapture`/`onFrame` seams — the loop is
- * *composed*, not reshaped). The `Dialog` catches its terminating command, runs its `valid()` gate,
- * then calls `endModal(command)` to resolve the `execView` promise.
+ * The handle a self-closing modal view receives so it can close itself from its own event handling.
+ *
+ * When you open a view with {@link EventLoop.execView} and that view implements
+ * {@link ModalHostAware}, the loop hands it a `ModalHost` before the modal opens. A `Dialog` uses it
+ * to catch its terminating command (OK/Cancel), run its validation gate, then call `endModal` to
+ * resolve the `execView` promise. You rarely implement this yourself — `Dialog` already does.
  */
 export interface ModalHost {
-  /** Resolve the active `execView` promise with `result` (the Dialog passes its terminating command). */
+  /** Resolve the active `execView` promise with `result` (e.g. the command that closed the dialog). */
   endModal(result: unknown): void;
-  /** Whether a command is currently enabled (the Dialog gates its terminating-command catch on it). */
+  /** Whether a command is currently enabled (a dialog gates its close-on-command on this). */
   isCommandEnabled(command: string): boolean;
 }
 
 /**
- * A view opts into self-closing modality by implementing this (RD-11 PA-1). `execView` duck-types the
- * method and, when present, injects the {@link ModalHost} before `modal.begin`. Non-modal views
- * (everything today) never implement it and are unaffected.
+ * Implement this on a view to opt into self-closing modality. When such a view is opened with
+ * {@link EventLoop.execView}, the loop injects a {@link ModalHost} via {@link attachModalHost}
+ * before the modal opens, so the view can later close itself. Views that do not implement it (the
+ * common case) are opened as plain modals and closed by an external `endModal` call.
  */
 export interface ModalHostAware {
-  /** Receive the loop's modal-host handle when opened via `execView` (RD-11 PA-1). */
+  /** Receive the loop's modal-host handle when this view is opened via `execView`. */
   attachModalHost(host: ModalHost): void;
 }
 
-/** Construction options for {@link EventLoop}. `caps` is required; the rest are optional seams. */
+/** Options for {@link createEventLoop}. Only `caps` is required; everything else is optional. */
 export interface EventLoopOptions {
-  /** REQUIRED — depth-aware encoding, built into the loop's `RenderRoot` (AR-44, AR-61). */
+  /** Required. Terminal capability profile that drives color-depth encoding for every painted frame. */
   caps: CapabilityProfile;
-  /** Active theme forwarded to the `RenderRoot`; defaults to core's `defaultTheme` (AR-35). */
+  /** Color/style theme applied to every view; defaults to the built-in `defaultTheme`. */
   theme?: Theme;
-  /** Logger for `onEvent()` (and `draw()`) errors; defaults to a disabled logger (AR-66). */
+  /** Logger that receives errors thrown from a view's `onEvent()`/`draw()`; defaults to a no-op logger. */
   logger?: Logger;
-  /** Core `createKeymap` result: bound chords convert to commands (consume, AR-62, PA-1). */
+  /** Key-chord → command map (from core's `createKeymap`): a matched chord fires the command and swallows the key. */
   keymap?: Keymap;
-  /** Upfront command hint; an unlisted command is still enabled by default (PA-3). */
+  /** Optional list of command names known up front. Commands are enabled by default whether listed or not. */
   commands?: Iterable<string>;
-  /** Fires once when a dispatch tick's cascade queue drains (AR-58). */
+  /** Called once per dispatch tick after all cascaded events drain, just before the frame is painted. */
   onIdle?: () => void;
   /**
-   * Multi-click clock (double-click-activation AR-4), default `Date.now`. Injected so headless tests
-   * drive exact timestamps for the same-cell double-click window. The loop uses it to compute
-   * `DispatchEvent.clickCount` on each mouse-`down` (FR-1/FR-2) — the framework's single multi-click
-   * source of truth, which the editor also reads (AR-6 convergence).
+   * Clock used to time double-clicks (defaults to `Date.now`). Two mouse-downs on the same cell
+   * within the multi-click window are reported as a double-click via `DispatchEvent.clickCount`.
+   * Inject a controllable clock in headless tests to drive exact timestamps.
    */
   now?: () => number;
   /**
-   * The app-terminating command (default `'quit'`). A quit emitted while modals are open cascades
-   * **top-down** through the modal stack — each modal resolves via `endModal(quitCommand)`, a
-   * `Dialog.valid(quitCommand)` gate may veto and stop the cascade — before reaching the root sink
-   * (HR-38 / PA-2; TV `cmQuit` + `TGroup::execute`'s `while(!valid(endState))`).
+   * The command that terminates the app (default `'quit'`). If a quit is emitted while modal windows
+   * are open, it cascades top-down through the modal stack: each modal is asked to close, and a
+   * modal that vetoes (e.g. a dialog whose validation fails) stops the cascade and keeps the app
+   * running. Once the stack is empty the quit reaches the app's quit handler.
    */
   quitCommand?: string;
   /**
-   * The accelerator-overlay trigger key (accelerator-overlay AR-10), default `'f12'`. Pressing it
-   * toggles "accelerator mode": every reachable `~X~` hotkey in the current dispatch scope lights up
-   * (underlined) and a bare letter fires the matching accelerator like `Alt+letter`. Pass `null` to
-   * disable the feature entirely (no reveal, no intercept). The trigger is a single named key so a
-   * future real hold-Alt (Kitty/CSI-u) can drive the same mode without reworking it (NFR-4/AR-13).
+   * The key that toggles "accelerator mode" (default `'f12'`). While it is on, every reachable
+   * `~X~` hotkey in the current scope is underlined and pressing a bare letter fires the matching
+   * accelerator as if you had pressed `Alt`+letter. Pass `null` to disable the feature entirely.
    */
   revealKey?: string | null;
 }
 
 /**
- * The host-agnostic dispatch mechanism (AR-47). It builds and owns a `RenderRoot`, routes events
- * through the 3-phase machine, manages focus/commands/modality, and drives exactly one coalesced
- * frame per tick. Real host/`run()` wiring is RD-05; RD-04 is driven purely via `dispatch()`.
+ * The event loop: a host-agnostic engine that owns a render root, routes input and commands, manages
+ * focus, commands, and modal windows, and paints exactly one coalesced frame per dispatch tick.
+ *
+ * You drive it entirely through `dispatch()` (decoded input) and the imperative methods below — no
+ * terminal is required, which is what makes it testable and embeddable. To connect it to a real
+ * terminal, either wire the `on*`/`write*` sinks to a host yourself, or use `createApplication`,
+ * which does that wiring for you. Create one with {@link createEventLoop}.
  */
 export interface EventLoop {
-  /** The loop-built render root (host integration + tests, AR-61). */
+  /** The render root the loop builds and owns — read `renderRoot.buffer()` to inspect the composed frame. */
   readonly renderRoot: RenderRoot;
-  /** Mount a view tree into the loop's render root. */
+  /** Mount a view tree as the loop's root and paint the first frame. Call once before dispatching. */
   mount(root: View): void;
-  /** The single pure input entry: wrap `event` in a `DispatchEvent` and route it 3-phase (AR-49). */
+  /** Feed one decoded input event (key/mouse/wheel/paste) into the loop; it routes and repaints in one tick. */
   dispatch(event: AppEvent): void;
-  /** Resize the viewport: reflow + exactly one frame (AR-54). */
+  /** Resize the viewport: reflow the tree and paint exactly one frame. */
   resize(size: Size2D): void;
-  /** Advance focus to the next focusable view in traversal order (wrap, AR-57). */
+  /** Move focus to the next focusable view in traversal order, wrapping at the end. */
   focusNext(): void;
-  /** Move focus to the previous focusable view in traversal order (wrap, AR-57). */
+  /** Move focus to the previous focusable view in traversal order, wrapping at the start. */
   focusPrev(): void;
-  /** Focus exactly `view`; a no-op if `view` is non-focusable (PA-5). */
+  /** Focus exactly `view`. A no-op if `view` is not currently focusable. */
   focusView(view: View): void;
-  /** Focus **into** a container: descend to its saved `current` (restore) or first focusable leaf (AR-53). */
+  /** Focus **into** a container: restore its last-focused child, or focus its first focusable descendant. */
   focusInto(view: View): void;
-  /** The current globally-focused view (root→leaf `current` chain), or `null` (AR-48). */
+  /** The currently focused view, or `null` if nothing is focused. */
   getFocused(): View | null;
-  /** Raise a `CommandEvent` and route it through the 3-phase machine, unless disabled (AR-52, PA-3). */
+  /** Emit a command, routing it to any handler. Dropped silently if the command is disabled. */
   emitCommand(command: string, arg?: unknown): void;
-  /** Enable/disable a command; a disabled command's `emitCommand` is dropped (PA-3). */
+  /** Enable or disable a command. While disabled, `emitCommand` for it is dropped. */
   enableCommand(command: string, on: boolean): void;
-  /** Whether a command is currently enabled (unregistered ⇒ enabled by default, PA-3). */
+  /** Whether a command is currently enabled. Commands are enabled by default until disabled. */
   isCommandEnabled(command: string): boolean;
-  /** Open `view` as a modal, capturing input to its subtree; resolves when `endModal` is called (AR-53). */
+  /**
+   * Open `view` as a modal: input is captured to its subtree until it closes. Returns a promise that
+   * resolves with the value passed to {@link endModal}. `await` it to run a dialog and read its result.
+   */
   execView<R>(view: View): Promise<R>;
-  /** Close the top modal, restoring focus and resolving the matching `execView` promise (AR-53). */
+  /** Close the top-most modal, restore the previously focused view, and resolve its `execView` promise with `result`. */
   endModal<R>(result: R): void;
   /**
-   * Arm or disarm accelerator mode (accelerator-overlay AR-1/AR-13). Reveals/hides the `~X~` overlay
-   * (scoped to the current dispatch scope) and enables/disables the bare-letter synth-alt fire; runs
-   * inside a coalesced tick so the reveal repaint is one frame (AR-14). The F12 trigger toggles this
-   * internally; it is also the seam a menu-open uses to dismiss the mode (AR-7) and the future hold-Alt
-   * path uses to drive it (NFR-4). A no-op when the feature is disabled (`revealKey: null`).
+   * Turn accelerator mode on or off. When on, every reachable `~X~` hotkey is underlined and a bare
+   * letter fires the matching accelerator like `Alt`+letter. The reveal key (default `F12`) toggles
+   * this for you; call it directly to arm/dismiss the mode programmatically. A no-op when the feature
+   * is disabled (`revealKey: null`).
    */
   setAcceleratorMode(on: boolean): void;
 
-  // --- RD-05 additive seams (the loop is composed, not re-shaped) -------------------------------
+  // --- Host-integration sinks -------------------------------------------------------------------
   /**
-   * Pointer capture (RD-05 PA-5 / AR-82): while a target is set, **all** mouse/wheel events route to
-   * `view` (target-local `ev.local`) until {@link releaseCapture}, bypassing the hit-test and
-   * suppressing focus-on-click — so a drag/resize keeps tracking past the affordance. Last-writer-
-   * wins if a capture is already set; auto-released when a modal opens/closes or the target unmounts.
+   * Capture the pointer to `view`: while captured, **all** mouse/wheel events go to `view` (with
+   * view-local `ev.local` coordinates), bypassing hit-testing and focus-on-click — this is how a
+   * drag or resize keeps tracking even after the cursor leaves the affordance. Setting a new target
+   * replaces any current one; capture is released automatically when a modal opens/closes or the
+   * target unmounts.
    */
   setCapture(view: View): void;
-  /** Clear the pointer-capture target; a no-op if none is set (RD-05 PA-5). */
+  /** Release the pointer capture. A no-op if nothing is captured. */
   releaseCapture(): void;
   /**
-   * Frame sink (RD-05 PA-6 / AR-84): when set, fired after every coalesced flush (end of a dispatch
-   * tick, on resize, after mount) with the live composed buffer so the host can paint. A **settable
-   * member** (not an `EventLoopOptions` field) because `run()` wires it to `host.render` only after
-   * the host exists — `createApplication` builds the loop first (PA-18 / PF-04). `undefined` until
-   * set ⇒ flushes still happen but push nothing (headless tests/demos read `renderRoot.buffer()`).
+   * Called with the composed buffer after every frame (each dispatch tick, resize, and mount) so a
+   * host can paint it. Set this to `host.render` (or your own writer) after the host exists;
+   * `createApplication` wires it for you. While unset, frames are still composed but not pushed —
+   * headless tests read `renderRoot.buffer()` directly.
    */
   onFrame?: (buffer: ScreenBuffer) => void;
   /**
-   * Hardware-caret sink (RD-07 PA-5). A sibling of {@link onFrame}, fired right **after** it at every
-   * frame point (tick, resize, mount) with the focused view's **absolute** caret cell — computed by
-   * the loop from `getFocused()` + `leaf.desiredCaret()` + `renderRoot.originOf(leaf)` — or `null`
-   * when focus is lost / the focused view requests no caret. A settable member (not an
-   * `EventLoopOptions` field) because `run()` wires it to the real cursor only after the host exists.
-   * Independent of which views repainted this frame — it reads the persisted origin, so the caret
-   * survives a partial recompose that skips the focused view (PF-002). `undefined` ⇒ no caret output.
+   * Called right after {@link onFrame} at every frame with the focused view's absolute caret cell,
+   * or `null` when nothing is focused or the focused view wants no visible caret. Wire it to move the
+   * terminal's hardware cursor. It reads the persisted view origin, so the caret position stays
+   * correct even on a partial repaint that skips the focused view. `undefined` ⇒ no caret output.
    */
   onCaret?: (cell: Point | null) => void;
   /**
-   * Resize sink (HR-36 / HR-41): fired inside {@link EventLoop.resize} **after** the reflow settles
-   * the new viewport bounds, so a handler can re-anchor viewport-sized chrome against fresh geometry —
-   * the app wires it to re-zoom desktop windows + clamp their `restoredRect` and to re-anchor the open
-   * menu's outside-click catcher. A settable member (the app sets it after composing the loop).
-   * `undefined` ⇒ resize only reflows (the base behavior). The loop repaints once more afterward so any
-   * adjustment the handler makes is composed into the resized frame.
+   * Called inside {@link resize} after the reflow settles the new geometry, so a handler can
+   * re-anchor viewport-sized chrome against fresh bounds (the app uses it to re-fit maximized windows
+   * and re-anchor the open menu). The loop repaints once more afterward so the adjustment is visible.
+   * `undefined` ⇒ resize only reflows.
    */
   onResize?: (size: Size2D) => void;
   /**
-   * Re-emit the current hardware-caret cell to {@link onCaret} out of band (RD-07 PA-5). `run()` calls
-   * it once after painting the first frame — which is a direct `host.render`, not a loop tick, so no
-   * `onCaret` fired yet — to position the initial cursor. A no-op when `onCaret` is unset (headless).
+   * Re-send the current caret cell to {@link onCaret} out of band. `run()` calls it once after the
+   * first frame (which is painted directly, not through a tick) to position the initial cursor. A
+   * no-op when `onCaret` is unset.
    */
   refreshCaret(): void;
   /**
-   * Clipboard-write sink (RD-07 PA-5/PA-7). Receives a fully-formed OSC-52 sequence (already
-   * base64-encoded + sanitized + caps-gated by core `setClipboard`) that `run()` writes to the
-   * co-owned output stream — the same stream as {@link onCaret}. Sourced onto each envelope's
-   * `ev.setClipboard(text)`: the loop encodes `text`→sequence and calls this. A settable member for
-   * the same reason as {@link onFrame}. `undefined` ⇒ clipboard writes are dropped (headless).
+   * Called with a ready-to-write terminal clipboard sequence when a control copies/cuts text (the
+   * loop encodes and sanitizes it for you). Wire it to your output stream. `undefined` ⇒ clipboard
+   * writes are dropped, so copy/cut is a safe no-op headlessly.
    */
   writeClipboard?: (seq: string) => void;
   /**
-   * Popup-host seam (RD-14 PF-002/PA-9): the overlay + focus host an app-created dropdown control
-   * reaches through its `ev.popupHost` to mount + focus an anchored popup. A settable member (like
-   * {@link onFrame}) because `createApplication` wires it only after the overlay + loop exist; the
-   * loop sources it onto every routed envelope. `undefined` ⇒ no host (headless / no shell), so a
-   * control's open is a safe no-op. A bare `Dialog` without an app shell can supply its own.
+   * The host that anchored dropdown popups (menus, combo boxes, date/color pickers) mount into.
+   * `createApplication` wires it to the app's overlay + focus. `undefined` ⇒ no host, so opening a
+   * dropdown is a safe no-op; a standalone `Dialog` can supply its own.
    */
   popupHost?: PopupHost;
 }
