@@ -93,4 +93,15 @@ export const nodeFileSystem: FileSystem = {
     }
     return ['/'];
   },
+  // RD-08 PA-6 content methods — plain sync node:fs, UTF-8 text.
+  readFile: (p: string) => fs.readFileSync(p, 'utf8'),
+  writeFile: (p: string, text: string) => {
+    fs.writeFileSync(p, text, 'utf8');
+  },
+  rename: (from: string, to: string) => {
+    fs.renameSync(from, to);
+  },
+  unlink: (p: string) => {
+    fs.unlinkSync(p);
+  },
 };

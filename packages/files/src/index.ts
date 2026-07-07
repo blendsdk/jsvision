@@ -40,3 +40,10 @@ export type { ExecHost } from './dialog/error-dialog.js';
 // —— convenience openers ——
 export { openFile, changeDir } from './openers.js';
 export type { OpenFileOptions, ChangeDirOptions } from './openers.js';
+
+// RD-08 editor family (files side): the `FileEditor` file binding over the `FileSystem` seam
+// (load/save/`.bak`/prompts), the `openFileInEditor` hosting factory (plan-preflight PF-001 —
+// composes FileEditor + EditWindow with the reactive fileName→title bind), and the files-owned
+// `FileCommands` (PF-004: save/saveAs live HERE, per the TFileEditor decode).
+export { FileEditor, openFileInEditor, FileCommands } from './editor/index.js';
+export type { FileEditorOptions, OpenFileInEditorOptions } from './editor/index.js';

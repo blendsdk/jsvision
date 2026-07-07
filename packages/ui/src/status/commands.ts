@@ -42,6 +42,13 @@ export const Commands = {
   copy: 'copy',
   /** Paste the clipboard into the focused Input (TV `cmPaste`; Shift+Insert). */
   paste: 'paste',
+  // --- RD-08 editor-family undo/redo (PF-003; register PA-1/PA-15). The focused `Editor` handles
+  // both; redo is COMMAND-ONLY by design — TV has no redo and every WordStar Ctrl-letter is taken,
+  // so no default editor-keymap chord exists (menus/status/app keymaps bind it). ---------------
+  /** Undo the focused editor's last coalesced edit step (TV `cmUndo`). */
+  undo: 'undo',
+  /** Redo the focused editor's last undone step (RD-08 extension — command-only, PA-1). */
+  redo: 'redo',
 } as const;
 
 /** A standard shell command name (a value of {@link Commands}). */

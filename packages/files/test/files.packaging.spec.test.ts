@@ -88,3 +88,12 @@ test('ST-16: @jsvision/files declares only the workspace runtime deps and is pri
   expect(pkg.private).toBe(true);
   expect(Object.keys(pkg.dependencies ?? {}).sort()).toEqual(['@jsvision/core', '@jsvision/ui']);
 });
+
+// --- RD-08 editor-family additions (ST-33, files side) -------------------------------------------
+test('RD-08 ST-33: FileEditor, openFileInEditor, FileCommands re-export by name from @jsvision/files', async () => {
+  const files = await import('@jsvision/files');
+  expect(typeof files.FileEditor).toBe('function');
+  expect(typeof files.openFileInEditor).toBe('function');
+  expect(files.FileCommands.save).toBe('save');
+  expect(files.FileCommands.saveAs).toBe('saveAs');
+});

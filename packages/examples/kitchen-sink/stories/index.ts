@@ -37,6 +37,9 @@ import { colorSwatchStory } from './color-swatch.story.js';
 import { colorPickerStory } from './color-picker.story.js';
 import { surfaceViewStory } from './surface-view.story.js';
 import { fileDialogStory } from './file-dialog.story.js';
+import { editorStory } from './editor.story.js';
+import { memoStory } from './memo.story.js';
+import { terminalStory } from './terminal.story.js';
 import { chDirDialogStory } from './chdir-dialog.story.js';
 
 /**
@@ -74,4 +77,7 @@ export const STORIES: readonly Story[] = [
   surfaceViewStory,
   fileDialogStory,
   chDirDialogStory,
+  editorStory,
+  memoStory,
+  terminalStory,
 ];

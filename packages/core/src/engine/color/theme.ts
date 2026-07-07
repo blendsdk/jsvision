@@ -307,6 +307,52 @@ export interface Theme {
    * so RD-09 pins it as its own semantic role (the RD-21 `colorMarker` precedent). Additive.
    */
   readonly fileInfo: ThemeRole;
+  // --- jsvision-ui RD-08 editor family (register PA-8; all seven TV-decoded, re-verified at exec
+  // GATE-1 2026-07-07 vs magiblot/tvision @ 57b6f56; distinct roles pinned even where bytes
+  // coincide — the fileInfo precedent). Bytes hold under the color palette `cpAppColor`
+  // (`app.h:142`); B/W-monochrome palettes are out of scope. ---
+  /**
+   * Editor text — the `Editor`/`Memo`-family normal cell (jsvision-ui RD-08, PA-8). **TV-decoded**:
+   * `cpEditor "\x06"` (`teditor1.cpp:171,496-500`) → `cpBlueWindow[6]=0x0D` (`views.h:955`) →
+   * `cpAppColor[13]` = **`0x1E` yellow-on-blue** (`app.h:143`). Additive.
+   */
+  readonly editorNormal: ThemeRole;
+  /**
+   * Editor selected text (jsvision-ui RD-08, PA-8). **TV-decoded**: `cpEditor "\x07"` →
+   * `cpBlueWindow[7]=0x0E` → `cpAppColor[14]` = **`0x71` blue-on-lightGray** — the reverse-video
+   * selection band `drawLines` fetches via `getColor(0x0201)` (`teditor1.cpp:466`). Additive.
+   */
+  readonly editorSelected: ThemeRole;
+  /**
+   * Memo normal cell — the dialog-embedded editor (jsvision-ui RD-08, PA-8). **TV-decoded**:
+   * `cpMemo "\x1A"` (`tmemo.cpp:27`) → `cpGrayDialog[26]=0x39` (`dialogs.h:80-82`) →
+   * `cpAppColor[57]` = **`0x30` black-on-cyan** (`app.h:146`). Additive.
+   */
+  readonly memoNormal: ThemeRole;
+  /**
+   * Memo selected text (jsvision-ui RD-08, PA-8). **TV-decoded**: `cpMemo "\x1B"` →
+   * `cpGrayDialog[27]=0x3A` → `cpAppColor[58]` = **`0x2F` white-on-green**. Additive.
+   */
+  readonly memoSelected: ThemeRole;
+  /**
+   * Indicator resting state — the `line:col` strip in an `EditWindow`'s bottom border (jsvision-ui
+   * RD-08, PA-8). **TV-decoded**: `cpIndicator "\x02"` (`tindictr.cpp:27`) → `cpBlueWindow[2]=0x09`
+   * → `cpAppColor[9]` = **`0x1F` white-on-blue**; drawn with the `═` (`dragFrame` `\xCD`) fill
+   * while NOT dragging (`tindictr.cpp:44-53`, `tvtext1.cpp:83-84`). Additive.
+   */
+  readonly indicatorNormal: ThemeRole;
+  /**
+   * Indicator while its window drags (jsvision-ui RD-08, PA-8). **TV-decoded**: `cpIndicator
+   * "\x03"` → `cpBlueWindow[3]=0x0A` → `cpAppColor[10]` = **`0x1A` brightGreen-on-blue**; drawn
+   * with the `─` (`normalFrame` `\xC4`) fill while `sfDragging` (`tindictr.cpp:44-53`). Additive.
+   */
+  readonly indicatorDragging: ThemeRole;
+  /**
+   * Terminal text — the streaming log sink (jsvision-ui RD-08, PA-8). **TV-decoded**: `TTerminal`
+   * draws via `mapColor(1)` (`textview.cpp:125`) through `cpScroller "\x06"` (`tscrolle.cpp:35`) →
+   * `cpBlueWindow[6]=0x0D` → `cpAppColor[13]` = **`0x1E` yellow-on-blue**. Additive.
+   */
+  readonly terminalNormal: ThemeRole;
   readonly statusBar: ThemeRole;
   /**
    * The status-line **pressed/selected** item (mouse-down feedback). Turbo Vision repaints the held
@@ -429,6 +475,16 @@ export const defaultTheme: Theme = {
   // RD-09 file-dialog info pane — TV-decoded 0x13 cyan-on-blue (TFileInfoPane getColor(1):
   // cpInfoPane[1]=0x1E → cpGrayDialog[30]=0x3D → cpAppColor[61]=0x13; stddlg.cpp:67/app.h:142). Additive.
   fileInfo: { fg: PALETTE.cyan, bg: PALETTE.blue },
+  // --- jsvision-ui RD-08 editor family — TV-decoded bytes (PA-8, exec GATE-1 re-verified): editor
+  // 0x1E/0x71 (cpEditor→cpBlueWindow→cpAppColor), memo 0x30/0x2F (cpMemo→cpGrayDialog), indicator
+  // 0x1F resting ═ / 0x1A dragging ─ (cpIndicator→cpBlueWindow), terminal 0x1E (cpScroller). ---
+  editorNormal: { fg: PALETTE.yellow, bg: PALETTE.blue }, // 0x1E
+  editorSelected: { fg: PALETTE.blue, bg: PALETTE.lightGray }, // 0x71
+  memoNormal: { fg: PALETTE.black, bg: PALETTE.cyan }, // 0x30
+  memoSelected: { fg: PALETTE.white, bg: PALETTE.green }, // 0x2F
+  indicatorNormal: { fg: PALETTE.white, bg: PALETTE.blue }, // 0x1F
+  indicatorDragging: { fg: PALETTE.brightGreen, bg: PALETTE.blue }, // 0x1A
+  terminalNormal: { fg: PALETTE.yellow, bg: PALETTE.blue }, // 0x1E
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },

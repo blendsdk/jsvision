@@ -59,6 +59,20 @@ export class Window extends Group {
   override layout: LayoutProps = { position: 'absolute', padding: 1 };
   /** Reactive title centered in the top border (repaints on change). */
   readonly title: Signal<string>;
+  /**
+   * Reactive drag state — TV's `sfDragging` made a signal (RD-08 PA-3). The Desktop gesture
+   * lifecycle writes it: `true` in `beginMove`/`beginResize`/`beginResizeLeft`, `false` at BOTH
+   * clear sites (mouse-up and the stale-capture abort). Consumers (the RD-08 `Indicator`'s ═↔─
+   * swap) bind it; a manager-less window stays `false`.
+   */
+  readonly dragging: Signal<boolean>;
+  /**
+   * Reactive active state — TV's `sfActive` made a signal (RD-08 PA-19), Desktop-maintained on
+   * raise/focus-change/add/remove. {@link draw} and the RD-08 EditWindow gadget visibility share
+   * this one source. Defaults `true` so a manager-less (standalone) window renders active and
+   * hosts visible gadgets.
+   */
+  readonly active: Signal<boolean>;
   /** 1–9, shown in the frame for Alt-N; `undefined` = no accelerator. */
   number?: number;
   movable = true;
@@ -85,6 +99,8 @@ export class Window extends Group {
   constructor(title?: string) {
     super();
     this.title = signal(title ?? '');
+    this.dragging = signal(false);
+    this.active = signal(true); // manager-less default (RD-08 PA-19); the Desktop maintains it
     // Repaint when the reactive title changes (bound on mount, when the scope exists — PA-2).
     this.onMount(() => this.bind(() => this.title()));
   }
@@ -172,7 +188,10 @@ export class Window extends Group {
 
   /** Paint the frame chrome in the active (`window`) or inactive (`windowInactive`) role. */
   override draw(ctx: DrawContext): void {
-    const active = this.manager?.activeWindow() === this;
+    // The reactive `active` signal is the ONE active-state source (RD-08 PA-19): the Desktop
+    // maintains it at raise/add/remove, so frame chrome and the RD-08 EditWindow gadgets can never
+    // disagree. Repaint on raise rides the Desktop's invalidateLayout (unchanged).
+    const active = this.active();
     const role = active ? 'window' : 'windowInactive';
     drawFrame(
       ctx,
