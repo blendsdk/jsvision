@@ -1,8 +1,8 @@
 /**
- * Buffer-core barrel (RD-08 03-01) — the view-free pure core of the editor family: the gap
- * buffer, grapheme segmentation, TV-transcribed navigation, and the EOL policy. INTERNAL to
- * `@jsvision/ui` — none of these symbols ride the package barrel (03-07 §Packaging); the public
- * `LineEnding` type re-exports from the editor surface.
+ * The view-free text core of the editor family: the gap buffer, grapheme-cluster segmentation,
+ * cursor/word/line navigation, and the line-ending policy. Everything here is internal to
+ * `@jsvision/ui`; the only symbol that reaches consumers is the `LineEnding` type, re-exported from
+ * the editor's public surface.
  */
 export { GapBuffer } from './gap.js';
 export type { BufText } from './gap.js';

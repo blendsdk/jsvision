@@ -1,19 +1,10 @@
 /**
- * `Editor` — the focusable multiline text view: a faithful `TEditor` port over the Phase-2 gap
- * buffer (RD-08 03-02; GATE-1 decodes re-verified 2026-07-07 @ 57b6f56).
+ * The multiline text editor view — a focusable, scrollable code/text editor with a WordStar-style
+ * keymap, multi-level undo/redo, cut/copy/paste through a shared clipboard, and find/replace.
  *
- * The TV core lives HERE: cursor/selection (`setCurPtr`/`setSelect`, `teditor2.cpp:459-539`),
- * mutation (`insertBuffer`, `teditor2.cpp:156-247` — TV's single-level undo counters superseded
- * by the AR-253 stack), deletion (`deleteRange`, `teditor1.cpp:374-388`), scrolling
- * (`scrollTo`/`trackCursor`, `teditor2.cpp:377-388,584-591`) and typing/`newLine`
- * (`teditor1.cpp:586-616`, `teditor2.cpp:288-301`). The PF-011 ≤500-line splits carry the rest,
- * each with its own decode JSDoc: draw + `doUpdate` pushes (`editor-draw.ts`), events/PF-001
- * prefix claim (`editor-events.ts`), mouse (`editor-mouse.ts`), the action switch
- * (`editor-actions.ts`), search (`editor-search.ts`), clipboard/undo (`editor-clipboard.ts`),
- * option/seam types (`editor-types.ts`).
- * GATE-2 AFTER-diff (2026-07-07): rendered headlessly and diffed cell-by-cell against the decode
- * — no draw mismatch; recorded deviations: PA-2 paste-greying, the shift-click decoder gap.
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * `Editor` is the engine class. The behaviour is spread across a handful of sibling modules
+ * (painting, events, mouse, the action switch, search, clipboard/undo) that all drive this view's
+ * state, but as a caller you interact only with the public methods and reactive signals here.
  */
 import { View, type DrawContext, type DispatchEvent, type Point, type ThemeRoleName } from '../view/index.js';
 import { signal } from '../reactive/index.js';
@@ -52,87 +43,130 @@ export type { EditorOptions, IndicatorTarget, EditorCommandSeam } from './editor
 import { editorCopy, editorCut, editorPaste, editorUndo, editorRedo } from './editor-clipboard.js';
 import { UndoStack } from './undo.js';
 
-export const SM_EXTEND = 0x01; // TV selection-mode bits (`editors.h:44-47`)
+// Selection-mode bits combined into the `selectMode` passed around internally: extend the current
+// selection, snap to whole words (double-click), snap to whole lines (triple-click).
+export const SM_EXTEND = 0x01;
 export const SM_DOUBLE = 0x02;
 export const SM_TRIPLE = 0x04;
 
-/** The focusable multiline editor view (TV `TEditor` — colours `editorNormal`/`editorSelected`, PA-8). */
+/**
+ * A focusable, scrollable multiline text editor.
+ *
+ * Add it to any `Group` and give it a size, then drive it with the keyboard/mouse via the event
+ * loop, or programmatically through {@link setText}/{@link getText}/{@link insertText} and
+ * {@link execute}. The reactive signals ({@link curPos}, {@link modified}, {@link hasSelection},
+ * {@link canUndo}, …) let you wire up a status line or indicator that updates as the user edits.
+ *
+ * Cut/copy/paste between editors requires a shared clipboard editor — pass the same `Editor`
+ * instance as `clipboard` to each editor that should share one (see {@link EditorOptions}). For a
+ * complete window with scroll bars and a line/column indicator, use `EditWindow` instead of wiring
+ * one up by hand.
+ *
+ * @example
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { Group, Editor, createEventLoop, effect } from '@jsvision/ui';
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ *
+ * // A shared clipboard editor lets Cut/Copy/Paste work across editors.
+ * const clipboard = new Editor();
+ * const editor = new Editor({ clipboard });
+ * editor.layout = { size: { kind: 'fr', weight: 1 } };
+ *
+ * const root = new Group();
+ * root.layout = { direction: 'col' };
+ * root.add(editor);
+ *
+ * const loop = createEventLoop({ width: 60, height: 20 }, { caps });
+ * loop.mount(root);
+ * loop.focusView(editor);
+ *
+ * editor.setText('The quick brown fox\nSecond line.');
+ * // Read the caret signal inside an effect to react whenever it changes.
+ * effect(() => {
+ *   const { line, col } = editor.curPos();
+ *   console.log(`caret at ${line}:${col}`);
+ * });
+ */
 export class Editor extends View {
   override focusable = true;
-  /** PF-001 — claim the WordStar prefixes before app chrome, scoped to the focused editor. */
+  /** Sees keys before app chrome so the focused editor can claim the WordStar Ctrl-Q/Ctrl-K prefixes. */
   override preProcess = true;
 
-  // --- Reactive state (03-02; external observers bind these) ------------------------------------
-  /** Whether the buffer changed since load/save (TV `modified`). */
+  // --- Reactive state — subscribe or bind these to reflect the editor in your UI ----------------
+  /** Whether the buffer has unsaved changes since it was last loaded or saved. */
   readonly modified: Signal<boolean>;
-  /** The caret as 1-based `{line, col}` (visual column) — the Indicator's format (AC-11). */
+  /** The caret as 1-based `{line, col}` (col is the visual column). */
   readonly curPos: Signal<{ line: number; col: number }>;
-  /** Whether a selection exists (`selStart != selEnd`). */
+  /** Whether any text is currently selected. */
   readonly hasSelection: Signal<boolean>;
-  /** `true` = insert, `false` = overwrite (TV `!overwrite`; Ins toggles). */
+  /** `true` = insert mode, `false` = overwrite mode; the Insert key toggles it. */
   readonly insertMode: Signal<boolean>;
-  /** The buffer's line count (TV `limit.y`). */
+  /** The number of lines in the buffer. */
   readonly lineCount: Signal<number>;
-  /** Whether an undo step exists (the AR-253 stack). */
+  /** Whether an undo step is available. */
   readonly canUndo: Signal<boolean>;
-  /** Whether a redo step exists. */
+  /** Whether a redo step is available. */
   readonly canRedo: Signal<boolean>;
-  /** The scroll offset — the SHARED gadget value channel (ST-13): construct the EditWindow bars
-   * with these signals; any write scrolls the editor (clamped, the `checkScrollBar` decode). */
+  /**
+   * The scroll offset, as a pair of signals. These double as the value channel for scroll bars:
+   * construct a scroll bar bound to `delta.x`/`delta.y` and any write scrolls the editor (clamped
+   * to the content). `EditWindow` wires this up for you.
+   */
   readonly delta: { readonly x: Signal<number>; readonly y: Signal<number> };
 
-  // --- Internal TV state (public-but-@internal: editor-actions/-mouse drive these) --------------
-  /** @internal The gap buffer. */
+  // --- Internal editing state (public for the sibling modules, not part of the API) -------------
+  /** @internal The text buffer. */
   buf = new GapBuffer();
-  /** @internal The buffer's line-ending kind (AR-252). */
+  /** @internal The buffer's line-ending kind. */
   eolKind: LineEnding = 'lf';
-  /** @internal The caret position (TV `curPtr`). */
+  /** @internal The caret position, as a buffer offset. */
   curPtr = 0;
-  /** @internal Selection `[selStartP, selEndP)`. */
+  /** @internal Selection start (inclusive). */
   selStartP = 0;
   /** @internal Selection end (exclusive). */
   selEndP = 0;
-  /** @internal Persistent-select mode (TV `selecting`; Ctrl-K B arms it). */
+  /** @internal Persistent-select mode; Ctrl-K B arms it so motions extend the selection. */
   selecting = false;
-  /** @internal Overwrite mode (TV `overwrite`). */
+  /** @internal Overwrite mode. */
   overwrite: boolean;
-  /** @internal AutoIndent mode (TV `autoIndent`). */
+  /** @internal Auto-indent mode. */
   autoIndentOn: boolean;
-  /** @internal The caret's visual column (TV `curPos.x`). */
+  /** @internal The caret's visual column. */
   curX = 0;
-  /** @internal The caret's line index, 0-based (TV `curPos.y`). */
+  /** @internal The caret's line index, 0-based. */
   curY = 0;
-  /** @internal The draw anchor's line index (TV `drawLine`). */
+  /** @internal The paint anchor's line index. */
   drawLine = 0;
-  /** @internal The draw anchor position — a line start (TV `drawPtr`). */
+  /** @internal The paint anchor position — a line start. */
   drawPtrP = 0;
-  /** @internal The line count (TV `limit.y`). */
+  /** @internal The line count. */
   limitY = 1;
-  /** @internal The WordStar prefix state (TV's `0xFF01`/`0xFF02` escapes). */
+  /** @internal The WordStar prefix state (idle, or armed after Ctrl-Q / Ctrl-K). */
   keyState: KeyState = 0;
-  /** @internal The active key set — `'modern'` overlays Ctrl+X/C/V/A (default), `'wordstar'` = faithful TV. */
+  /** @internal The active key set — `'modern'` (default) or `'wordstar'`. */
   readonly keyBindings: EditorKeyBindings;
-  /** @internal Marks the app's clipboard editor (TV `isClipboard()`); its edits never set `modified`. */
+  /** @internal Marks this as the shared clipboard editor; its edits never set `modified`. */
   isClipboardRole = false;
-  /** @internal The selectMode carried through the live drag (down sets it, drag extends). */
+  /** @internal The select mode carried through a live drag (mouse-down sets it, drag extends). */
   dragSelectMode = 0;
-  /** @internal The injected options (clipboard/dialog/undo depth read by later phases). */
+  /** @internal The construction options. */
   readonly options: EditorOptions;
-  /** @internal The dialog seam. */
+  /** @internal The dialog handler for find/replace/save prompts. */
   readonly dialog: EditorDialogHandler;
-  /** @internal The AR-253 undo/redo stack (Phase 5). */
+  /** @internal The undo/redo stack. */
   readonly undoStack: UndoStack;
-  /** @internal Set by single-cluster typing/deleting so the NEXT insertRaw coalesces (AR-253). */
+  /** @internal Set by single-character typing/deleting so the next edit merges into one undo step. */
   coalesceNextEdit = false;
-  /** @internal The envelope's OSC-52 mirror, captured per dispatch (copy/cut write through it). */
+  /** @internal Sink that mirrors copied/cut text to the OS clipboard, captured per event. */
   mirrorSink: ((text: string) => void) | undefined;
 
-  /** @internal Attached gadgets (03-04 `attachGadgets`). */
+  /** @internal Attached scroll bars + indicator (see {@link attachGadgets}). */
   hBar: GadgetBar | null = null;
   vBar: GadgetBar | null = null;
   indicator: IndicatorTarget | null = null;
 
-  /** Theme roles — `Memo` overrides to the gray-dialog pair (03-04). */
+  /** The normal/selected theme roles; `Memo` overrides them to the gray-dialog palette. */
   protected normalRole: ThemeRoleName = 'editorNormal';
   protected selectedRole: ThemeRoleName = 'editorSelected';
 
@@ -152,9 +186,9 @@ export class Editor extends View {
     this.canRedo = signal(false);
     this.undoStack = new UndoStack(options.undoDepth ?? 1000);
     this.delta = { x: signal(0), y: signal(0) };
-    // The checkScrollBar write-back (decode): any delta write — a shared-signal bar drag, or an
-    // external set — routes through scrollTo, which clamps and repaints. Internal scrolls re-enter
-    // here as no-ops (scrollTo only acts on change).
+    // Any write to the scroll signals — from a bound scroll bar, or an external set — routes
+    // through scrollTo, which clamps to the content and repaints. Internal scrolls re-enter here
+    // harmlessly, since scrollTo only acts when the offset actually changes.
     this.onMount(() => {
       this.bind(
         () => [this.delta.x(), this.delta.y()] as const,
@@ -163,13 +197,18 @@ export class Editor extends View {
     });
   }
 
-  // --- Text surface (03-02; PA-4 Should-Haves) ---------------------------------------------------
+  // --- Text access -------------------------------------------------------------------------------
 
-  /** Replace the whole content VERBATIM + re-detect the EOL kind (AR-252); resets cursor/scroll state. */
+  /**
+   * Replace the entire content. Text is stored verbatim (mixed line endings are preserved), the
+   * line-ending kind is re-detected, and the cursor, selection, scroll, and undo history are reset.
+   *
+   * @param text The new buffer content.
+   */
   setText(text: string): void {
     this.buf = new GapBuffer(text);
     this.eolKind = detectEol(text);
-    // The setBufLen reset (teditor2.cpp:423-442).
+    // Reset all cursor/selection/scroll state to the top of the fresh document.
     this.curPtr = 0;
     this.selStartP = 0;
     this.selEndP = 0;
@@ -187,28 +226,47 @@ export class Editor extends View {
     this.update();
   }
 
-  /** The buffer content (or a `[from, to)` slice) — verbatim, mixed EOLs intact (PF-008). */
+  /**
+   * The full buffer content, or the text in a `[from, to)` range. Returned verbatim, with any mixed
+   * line endings intact.
+   *
+   * @param range Optional half-open buffer-offset range; omit for the whole buffer.
+   * @returns The requested text.
+   */
   getText(range?: { from: number; to: number }): string {
     return range === undefined ? this.buf.text() : this.buf.slice(range.from, range.to);
   }
 
-  /** Insert at the caret (replacing any selection), converted like typed input (AR-252). */
+  /**
+   * Insert text at the caret, replacing any selection. Line endings are normalized to the buffer's
+   * kind, exactly as if the text had been typed.
+   *
+   * @param text The text to insert.
+   */
   insertText(text: string): void {
     this.insertRaw(convertNewEdit(text, this.eolKind), false);
     this.trackCursor(false);
   }
 
-  /** The selected text (`[selStart, selEnd)`), or `''` (03-03 — the clipboard channel reads this). */
+  /** The currently selected text, or `''` when there is no selection. */
   selectionText(): string {
     return this.buf.slice(this.selStartP, this.selEndP);
   }
 
-  /** Execute an internal editor action (PA-15 — the public action entry). */
+  /**
+   * Run one editor action programmatically — the same operations the keymap triggers.
+   *
+   * @param action The action to run (e.g. `'lineDown'`, `'undo'`, `'textEnd'`, `'selectAll'`).
+   * @example
+   * editor.setText('hello world');
+   * editor.execute('textEnd');   // caret to end of buffer
+   * editor.execute('wordLeft');  // back one word
+   */
   execute(action: EditorAction): void {
     applyAction(this, action, this.selecting ? SM_EXTEND : 0, false);
   }
 
-  /** Attach the EditWindow gadgets (03-04): setRange pushes + the indicator; values ride {@link delta}. */
+  /** Wire up the scroll bars and line/column indicator that display and drive this editor. */
   attachGadgets(h?: GadgetBar, v?: GadgetBar, ind?: IndicatorTarget): void {
     this.hBar = h ?? null;
     this.vBar = v ?? null;
@@ -216,7 +274,7 @@ export class Editor extends View {
     this.update();
   }
 
-  /** The view-local caret cell while focused (PF-004 — position only; shape = DEF-36), else `null`. */
+  /** The hardware-caret cell (view-local) while focused and in view, else `null`. */
   override desiredCaret(): Point | null {
     if (!this.state.focused) return null;
     const x = this.curX - this.delta.x();
@@ -225,78 +283,78 @@ export class Editor extends View {
     return { x, y };
   }
 
-  // --- Search + clipboard + undo (delegates — the bodies live in editor-search.ts /
-  // editor-clipboard.ts, the PF-011 split pattern keeping this file ≤ 500 lines) ------------------
+  // --- Search + clipboard + undo (thin wrappers over the sibling modules) ------------------------
 
-  /** @internal Persistent search state (TV `findStr`/`replaceStr`/`editorFlags`). */
+  /** @internal Persisted search state (last find/replace strings, options, and flags). */
   findStr = '';
   replaceStr = '';
   searchOpts: SearchOptions = { caseSensitive: false, wholeWords: false };
-  promptOnReplace = true; // TV default efPromptOnReplace ON (editstat.cpp:24)
+  promptOnReplace = true;
   replaceAllFlag = false;
   doReplace = false;
 
-  /** @internal `TEditor::find` — see editor-search.ts. */
+  /** Open the Find dialog and search for the first match. Resolves when the interaction is done. */
   find(): Promise<void> {
     return editorFind(this);
   }
 
-  /** @internal `TEditor::replace` — returns the replacement count (PF-009). */
+  /** Open the Replace dialog and run the replace loop; resolves with the number of replacements made. */
   replace(): Promise<number> {
     return editorReplace(this);
   }
 
-  /** @internal `cmSearchAgain` — rerun with the stored state. */
+  /** Repeat the last search/replace with the stored parameters; resolves with the replacement count. */
   searchAgain(): Promise<number> {
     return editorDoSearchReplace(this);
   }
 
-  /** @internal One search step — see editor-search.ts. */
+  /** @internal Perform one search step against the stored search state. */
   searchOnce(): boolean {
     return editorSearchOnce(this);
   }
 
-  /** @internal The `doSearchReplace` loop — see editor-search.ts. */
+  /** @internal Run the search/replace loop with the stored state. */
   doSearchReplace(): Promise<number> {
     return editorDoSearchReplace(this);
   }
 
-  /** @internal `clipCopy` — see editor-clipboard.ts. */
+  /** Copy the selection to the shared clipboard editor (and the OS clipboard when supported). */
   copy(): void {
     editorCopy(this);
   }
 
-  /** @internal `clipCut` — see editor-clipboard.ts. */
+  /** Cut the selection to the shared clipboard editor, as one undo step. */
   cut(): void {
     editorCut(this);
   }
 
-  /** @internal `clipPaste` — see editor-clipboard.ts (PA-2/PA-16). */
+  /** Paste the shared clipboard editor's selection at the caret, as one undo step. */
   paste(): void {
     editorPaste(this);
   }
 
-  /** @internal Undo the newest step — see editor-clipboard.ts. */
+  /** Undo the most recent edit. */
   undo(): void {
     editorUndo(this);
   }
 
-  /** @internal Redo the newest undone step — see editor-clipboard.ts. */
+  /** Redo the most recently undone edit. */
   redo(): void {
     editorRedo(this);
   }
 
-  // --- The TV core (@internal; editor-actions/-mouse call these) ---------------------------------
+  // --- Editing core (@internal; driven by the sibling modules) -----------------------------------
 
-  /** @internal View width/height in cells (0 pre-reflow). */
+  /** @internal View width in cells (0 before the first layout). */
   viewW(): number {
     return this.bounds.width;
   }
+  /** @internal View height in cells (0 before the first layout). */
   viewH(): number {
     return this.bounds.height;
   }
 
-  /** @internal TV `cursorVisible()` — is the caret inside the scrolled viewport? */
+  /** @internal Whether the caret is inside the scrolled viewport. */
   isCursorVisible(): boolean {
     const dx = this.delta.x();
     const dy = this.delta.y();
@@ -304,9 +362,8 @@ export class Editor extends View {
   }
 
   /**
-   * @internal Move the caret with selection semantics (`TEditor::setCurPtr`,
-   * `teditor2.cpp:459-497`): compute the anchor (the selection's far end under `smExtend`), apply
-   * the word/line snap under `smDouble`/`smTriple`, and hand both to {@link setSelect}.
+   * @internal Move the caret to buffer position `p`. When `selectMode` has the extend bit, the
+   * selection grows from its far end; the double/triple bits snap the range to whole words/lines.
    */
   setCurPtr(p: number, selectMode: number): void {
     let anchor: number;
@@ -336,19 +393,19 @@ export class Editor extends View {
   }
 
   /**
-   * @internal Set the selection + caret (`TEditor::setSelect`, `teditor2.cpp:499-539`): the caret
-   * lands on `curStart ? newStart : newEnd`; `curPos.y` adjusts by the breaks crossed (TV's
-   * incremental `countLines` bookkeeping); the draw anchor re-homes to the caret's line.
+   * @internal Set the selection to `[newStart, newEnd)` and place the caret at one end
+   * (`curStart ? newStart : newEnd`). Keeps the line index and paint anchor in sync with the caret.
    */
   setSelect(newStart: number, newEnd: number, curStart: boolean): void {
     const p = curStart ? newStart : newEnd;
     if (p !== this.curPtr) {
+      // Adjust the caret's line index by the number of line breaks between the old and new caret.
       const lo = Math.min(p, this.curPtr);
       const hi = Math.max(p, this.curPtr);
       const crossed = countBreaks(this.buf.slice(lo, hi));
       this.curY += p > this.curPtr ? crossed : -crossed;
       this.curPtr = p;
-      this.undoStack.seal(); // a cursor move seals the open coalescing step (AR-253)
+      this.undoStack.seal(); // a cursor move ends the current run of coalescing edits
     }
     this.drawLine = this.curY;
     this.drawPtrP = lineStart(this.buf, p);
@@ -359,19 +416,23 @@ export class Editor extends View {
   }
 
   /**
-   * @internal The mutation core (`TEditor::insertBuffer`, `teditor2.cpp:156-247`, minus the TV
-   * undo counters — Phase 5's stack supersedes them): replace `[selStart, selEnd)` with `text`
-   * (already EOL-converted), land the caret after it; `selectText` keeps the inserted range
-   * selected (the clipboard `insertFrom` semantics, PA-16).
+   * @internal The edit primitive: replace the current selection `[selStart, selEnd)` with `text`
+   * (already line-ending-converted) and land the caret after it. When `selectText` is `true` the
+   * inserted range stays selected (used by paste and undo to leave the affected range highlighted).
+   *
+   * @param text The already-converted text to insert.
+   * @param selectText Keep the inserted range selected.
+   * @param markModified Mark the buffer modified (skip for internal, non-user edits).
+   * @param recordUndo Push this edit onto the undo stack (skip when applying an undo/redo step).
    */
   insertRaw(text: string, selectText: boolean, markModified = true, recordUndo = true): void {
     this.selecting = false;
     const selLen = this.selEndP - this.selStartP;
     if (selLen === 0 && text.length === 0) return;
 
-    // The AR-253 step (supersedes TV's delCount/insCount): the buffer will hold `text` at
-    // selStart where `removed` was. Single-cluster typing/deleting coalesces (the flag is armed
-    // by typeText and the backSpace/delChar actions); undo/redo application skips recording.
+    // Record the inverse-applicable step. Consecutive single-character edits coalesce into one
+    // undo step (the flag is armed by typing and by the backspace/delete actions); applying an
+    // undo/redo step passes recordUndo=false so it is not re-recorded.
     if (recordUndo) {
       const step = { at: this.selStartP, removed: this.buf.slice(this.selStartP, this.selEndP), inserted: text };
       if (this.coalesceNextEdit) this.undoStack.coalesce(step);
@@ -381,7 +442,7 @@ export class Editor extends View {
 
     const selLines = countBreaks(this.buf.slice(this.selStartP, this.selEndP));
     if (this.curPtr === this.selEndP) this.curY -= selLines; // caret was at the selection end
-    // The delta.y visual-stability adjust (decode).
+    // Keep the vertical scroll stable when the removed selection was above the viewport.
     let dy = this.delta.y();
     if (dy > this.curY) {
       dy -= selLines;
@@ -406,14 +467,14 @@ export class Editor extends View {
     this.update();
   }
 
-  /** @internal Delete the selection (TV `deleteSelect` = insert-nothing, `teditor1.cpp:390-393`). */
+  /** @internal Delete the current selection (replace it with nothing). */
   deleteSelect(): void {
     this.insertRaw('', false);
   }
 
   /**
-   * @internal Delete `[startPtr, endPtr)` — or the selection when one exists and `delSelect`
-   * (`TEditor::deleteRange`, `teditor1.cpp:374-388`).
+   * @internal Delete the range `[startPtr, endPtr)`. When a selection exists and `delSelect` is
+   * `true`, the selection is deleted instead.
    */
   deleteRange(startPtr: number, endPtr: number, delSelect: boolean): void {
     if (this.selStartP !== this.selEndP && delSelect) {
@@ -426,7 +487,7 @@ export class Editor extends View {
     }
   }
 
-  /** @internal `TEditor::newLine` (`teditor2.cpp:288-301`) — Enter + the autoIndent prefix copy. */
+  /** @internal Insert a line break; with auto-indent on, copy the current line's leading whitespace. */
   newLine(): void {
     const p = lineStart(this.buf, this.curPtr);
     let i = p;
@@ -436,58 +497,58 @@ export class Editor extends View {
     if (this.autoIndentOn && i > p) this.insertRaw(this.buf.slice(p, i), false);
   }
 
-  /** @internal Typed input (the `evKeyDown` branch, `teditor1.cpp:596-616`) incl. the overwrite pre-step. */
+  /** @internal Insert typed text at the caret; in overwrite mode it replaces the character under the caret. */
   typeText(text: string, centerCursor: boolean): void {
     if (this.overwrite && this.selStartP === this.selEndP) {
       if (this.curPtr !== lineEnd(this.buf, this.curPtr)) {
-        this.selEndP = nextChar(this.buf, this.curPtr); // replace the cluster under the caret
+        this.selEndP = nextChar(this.buf, this.curPtr); // replace the character under the caret
       }
     }
-    this.coalesceNextEdit = true; // single-cluster typing coalesces (AR-253)
+    this.coalesceNextEdit = true; // consecutive single-character typing merges into one undo step
     this.insertRaw(convertNewEdit(text, this.eolKind), false);
     this.trackCursor(centerCursor);
   }
 
-  /** @internal Toggle insert/overwrite (TV `toggleInsMode`; cursor SHAPE is DEF-36). */
+  /** @internal Toggle insert/overwrite mode. */
   toggleInsMode(): void {
     this.overwrite = !this.overwrite;
     this.insertMode.set(!this.overwrite);
     this.update();
   }
 
-  /** @internal `TEditor::scrollTo` — see editor-draw.ts. */
+  /** @internal Scroll to `(x, y)`, clamped to the content. */
   scrollTo(x: number, y: number): void {
     editorScrollTo(this, x, y);
   }
 
-  /** @internal `TEditor::trackCursor` — see editor-draw.ts. */
+  /** @internal Scroll the caret into view (or center it when `center` is `true`). */
   trackCursor(center: boolean): void {
     editorTrackCursor(this, center);
   }
 
-  /** @internal `TEditor::getMousePtr` — see editor-draw.ts. */
+  /** @internal Map a view-local cell to the buffer position under it. */
   getMousePtr(local: Point): number {
     return editorMousePtr(this, local);
   }
 
-  /** @internal The `doUpdate` push — see editor-draw.ts. */
+  /** @internal Repaint and refresh the reactive state, scroll ranges, indicator, and command greying. */
   update(): void {
     editorUpdate(this);
   }
 
-  /** @internal The `updateCommands` greying — see editor-draw.ts. */
+  /** @internal Refresh only the command-greying seam. */
   updateCommands(): void {
     editorUpdateCommands(this);
   }
 
   // --- Draw + events ------------------------------------------------------------------------------
 
-  /** Paint `size.y` rows from the `drawPtr` anchor (`TEditor::draw` — see editor-draw.ts; PA-9). */
+  /** Paint the visible rows. */
   override draw(ctx: DrawContext): void {
     drawEditor(this, ctx, this.normalRole, this.selectedRole);
   }
 
-  /** 3-phase handling — see editor-events.ts (PF-001 prefix claim, typing, paste, commands). */
+  /** Handle a dispatched event (keys, mouse/wheel, paste, and editing commands). */
   override onEvent(ev: DispatchEvent): void {
     handleEditorEvent(this, ev);
   }

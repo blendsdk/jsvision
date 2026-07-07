@@ -1,33 +1,29 @@
 /**
- * Clipboard + undo/redo operations over the `Editor` (RD-08 03-03 §Clipboard wiring — the PF-011
- * split pattern: free functions driving the editor's @internal core, keeping `editor.ts` ≤ 500).
+ * Clipboard (cut/copy/paste) and undo/redo operations over an {@link Editor}.
  *
- * Decode (`teditor1.cpp:297-331`, re-verified 2026-07-07 @ 57b6f56): `clipCopy` fills the
- * clipboard editor which then holds EXACTLY the copied text, selected (the PA-16 `insertFrom`
- * selection semantics); `clipCut` = copy + delete-as-one-step (`:316-320`); `clipPaste` inserts
- * the clipboard's SELECTION. With no clipboard injected, paste is a no-op — the recorded PA-2
- * deviation (magiblot falls back to the OS clipboard `:322-331`; system paste reaches us as a
- * bracketed `PasteEvent`). Copy/cut also mirror ONE OSC-52 write through the envelope sink
- * (AC-5). Undo/redo apply the AR-253 stack's inverse-applicable steps.
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * The clipboard is itself an `Editor` — Copy fills it with exactly the copied text (left selected),
+ * Cut is a copy plus a delete recorded as one undo step, and Paste inserts whatever is selected in
+ * the clipboard editor. With no clipboard editor injected, in-app Paste is a no-op; system paste
+ * still arrives separately as a bracketed paste event. Copy/Cut also mirror one write to the host's
+ * OS clipboard when the terminal supports it. Undo/redo apply the undo stack's inverse steps.
  */
 import { convertNewEdit } from './buffer/index.js';
 import type { Editor } from './editor.js';
 
-/** `clipCopy`: fill the clipboard editor (selected, PA-16) + ONE OSC-52 mirror. No selection ⇒ no-op. */
+/** Copy the selection into the clipboard editor (left selected) and mirror it to the OS clipboard. No selection is a no-op. */
 export function editorCopy(ed: Editor): void {
   if (ed.selStartP === ed.selEndP) return;
   const text = ed.selectionText();
   const clip = ed.options.clipboard;
   if (clip !== undefined && clip !== ed) {
-    clip.isClipboardRole = true; // TV isClipboard(): the clipboard's own edits never set modified
+    clip.isClipboardRole = true; // the clipboard editor's own edits never mark it modified
     clip.setText(text);
-    clip.setSelect(0, text.length, false); // holds the copied range selected (PA-16)
+    clip.setSelect(0, text.length, false); // hold the copied range selected so Paste can read it
   }
-  ed.mirrorSink?.(text); // the OSC-52 mirror (event-loop.ts sinks it caps-gated)
+  ed.mirrorSink?.(text); // mirror to the OS clipboard when the host/terminal supports it
 }
 
-/** `clipCut` = copy + delete-as-ONE-step (`teditor1.cpp:316-320`). */
+/** Cut = copy the selection, then delete it, recorded as a single undo step. No selection is a no-op. */
 export function editorCut(ed: Editor): void {
   if (ed.selStartP === ed.selEndP) return;
   editorCopy(ed);
@@ -35,10 +31,10 @@ export function editorCut(ed: Editor): void {
   ed.trackCursor(false);
 }
 
-/** `clipPaste`: insert the clipboard's SELECTION (PA-16), replacing any selection, as ONE step. */
+/** Paste the clipboard editor's selection at the caret, replacing any selection, as one undo step. */
 export function editorPaste(ed: Editor): void {
   const clip = ed.options.clipboard;
-  if (clip === undefined || clip === ed) return; // PA-2 — no clipboard ⇒ internal no-op
+  if (clip === undefined || clip === ed) return; // no clipboard editor ⇒ in-app paste is a no-op
   const text = clip.selectionText();
   if (text === '') return;
   ed.insertRaw(convertNewEdit(text, ed.eolKind), false);

@@ -1,12 +1,11 @@
 /**
- * `UndoStack` — the bounded multi-level undo/redo stack (RD-08 AR-253, PA-1), pure.
+ * A bounded, multi-level undo/redo stack, pure and view-free.
  *
- * A documented BEHAVIOR EXTENSION superseding TV's single-level `delCount`/`insCount` counters
- * (`teditor2.cpp:169-237,593-604`) — kept only as the semantic reference for what counts as one
- * coalesced step: consecutive single-cluster typing (or deleting) at the caret merges into the
- * OPEN step; any cursor move seals it; any fresh edit clears the redo branch; past `depth` the
- * OLDEST WHOLE steps evict (never partial). Each step is inverse-applicable: the buffer holds
- * `inserted` at `at` after the edit, `removed` before it.
+ * How steps coalesce (this is what a user perceives as "one undo"): consecutive single-character
+ * typing — or deleting — at the caret merges into the currently open step; any cursor move seals
+ * that step; any fresh edit clears the redo branch. Past `depth`, the oldest whole steps are
+ * evicted (never a partial step). Each step is inverse-applicable — after the edit the buffer holds
+ * `inserted` at `at`; before it, `removed`.
  */
 
 /** One inverse-applicable edit: `[at, at+removed.length)` became `inserted`. */
@@ -16,14 +15,14 @@ export interface EditStep {
   inserted: string;
 }
 
-/** The bounded undo/redo stack (PA-1 default depth 1000; whole-step eviction). */
+/** The bounded undo/redo stack (whole-step eviction once `depth` is exceeded). */
 export class UndoStack {
   private steps: EditStep[] = [];
   private redoSteps: EditStep[] = [];
   private open = false;
 
   /**
-   * @param depth Maximum retained steps (PA-1; values < 1 clamp to 1).
+   * @param depth Maximum retained steps; values below 1 clamp to 1.
    */
   constructor(private readonly depth: number) {
     this.depth = Math.max(1, Math.trunc(depth) || 1);

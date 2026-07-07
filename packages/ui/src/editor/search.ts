@@ -1,20 +1,21 @@
 /**
- * Pure literal search (RD-08 03-03).
+ * Pure literal (non-regex) text search, scanning forward from a given position.
  *
- * TV scans with `scan`/`iScan` (asm/C fallbacks) from the caret forward — literal, no regex
- * (regex = DEF-35). Case-insensitivity lowercases both sides (`iScan`). The whole-words test uses
- * the SEARCH-side `isWordChar` (`teditor2.cpp:61-64` — distinct from the editor word-hop classes
- * `getCharType`/`isWordBoundary` `:45-59`, PF-014/PF-009): a char is a word char unless it is
- * space, ASCII punctuation, or NUL — faithfully, tabs/newlines COUNT as word chars in this test
- * (the TV set simply omits them).
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Case-insensitivity lowercases both the haystack and the needle. The whole-words test uses its own
+ * notion of "word char": a character is a word char unless it is a space, ASCII punctuation, or the
+ * empty string — so, unlike the cursor word-hop classifier, tabs and newlines count as word
+ * characters here.
  */
 import type { BufText } from './buffer/gap.js';
 import type { SearchOptions } from './editor-dialog.js';
 
 /**
- * Find the next literal occurrence of `needle` at/after `from` — TV `scan`/`iScan`.
+ * Find the next literal occurrence of `needle` at or after `from`.
  *
+ * @param b The text to search.
+ * @param from The position to start scanning from (clamped into range).
+ * @param needle The literal string to find.
+ * @param o Search options; only `caseSensitive` affects this scan.
  * @returns The match position, or `-1` on miss (an empty needle always misses).
  */
 export function scan(b: BufText, from: number, needle: string, o: SearchOptions): number {
@@ -25,7 +26,7 @@ export function scan(b: BufText, from: number, needle: string, o: SearchOptions)
   return idx === -1 ? -1 : start + idx;
 }
 
-/** The TV search whole-words class (`teditor2.cpp:61-64`): NOT space/punctuation/NUL (out-of-range `''` = NUL). */
+/** The whole-words classifier: a word char unless it is a space, ASCII punctuation, or `''`. */
 export function isWordChar(ch: string): boolean {
   if (ch === '' || ch === ' ') return false;
   return !'!"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~'.includes(ch);

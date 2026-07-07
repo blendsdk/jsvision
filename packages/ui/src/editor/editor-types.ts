@@ -1,49 +1,52 @@
 /**
- * Editor option/seam types + tiny shared helpers (RD-08 03-02 — split from `editor.ts` per the
- * PF-011 ≤500-line rule; re-exported through the editor barrel unchanged).
- * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
+ * Editor option/seam types and a couple of small shared helpers, re-exported through the editor's
+ * public surface.
  */
 import type { View } from '../view/index.js';
 import type { EditorDialogHandler } from './editor-dialog.js';
 import type { EditorKeyBindings } from './keymap.js';
 import type { Editor } from './editor.js';
 
-/** The structural indicator seam (plan-preflight PF-003) — the Phase-7 `Indicator` satisfies it. */
+/** What the editor needs from a line/column indicator; the `Indicator` view satisfies it. */
 export interface IndicatorTarget {
-  /** The `doUpdate` push: 1-based `line:col` + the modified flag. */
+  /** Push the caret position (1-based `line`/`col`) and the modified flag to display. */
   setValue(pos: { line: number; col: number }, modified: boolean): void;
 }
 
-/** The optional command-greying seam (the `updateCommands` decode, PA-4; DesktopLoopSeam idiom). */
+/** Optional hook for greying out menu/status commands (Cut, Copy, Paste, …) as the editor's state changes. */
 export interface EditorCommandSeam {
-  /** Enable/disable a registry command (wired to `EventLoop.enableCommand` by the app). */
+  /** Enable or disable a command by name; wire this to your app's command registry. */
   enable(command: string, enabled: boolean): void;
 }
 
-/** Construction options (03-02; every field optional — a bare `new Editor()` is fully usable). */
+/** Construction options for {@link Editor}. Every field is optional — a bare `new Editor()` is fully usable. */
 export interface EditorOptions {
-  /** The shared clipboard editor (PA-2 — injectable, NO implicit default; TV null-clipboard semantics). */
+  /**
+   * The shared clipboard editor. There is no implicit default: without one, in-app Cut/Copy/Paste
+   * between editors is a no-op. Pass the same `Editor` instance to every editor that should share a
+   * clipboard (typically a single hidden editor).
+   */
   clipboard?: Editor;
-  /** The dialog seam (03-03); default answers cancel (`defEditorDialog`). */
+  /** Handler for find/replace/save prompts. Defaults to a handler that cancels every prompt. */
   editorDialog?: EditorDialogHandler;
-  /** Undo-stack depth (PA-1; default 1000). */
+  /** Maximum retained undo steps (default 1000). */
   undoDepth?: number;
-  /** Copy the previous line's leading whitespace on Enter (TV `cmIndentMode`; default false). */
+  /** Copy the previous line's leading whitespace when pressing Enter (default false). */
   autoIndent?: boolean;
-  /** Start in overwrite mode (TV `cmInsMode` toggles; default false = insert). */
+  /** Start in overwrite mode; Insert toggles it (default false = insert mode). */
   overwrite?: boolean;
-  /** Command-greying seam (the `updateCommands` decode; default no-op). */
+  /** Hook for greying out editing commands as selection/undo state changes (default: none). */
   commands?: EditorCommandSeam;
-  /** Editor key set — `'modern'` (default) overlays Ctrl+X/C/V/A; `'wordstar'` = the faithful TV decode. */
+  /** Editor key set — `'modern'` (default) overlays Ctrl+X/C/V/A; `'wordstar'` = the classic WordStar layout. */
   keyBindings?: EditorKeyBindings;
 }
 
-/** The minimal scroll-bar surface the gadget pushes need (a structural `ScrollBar` subset). */
+/** The minimal scroll-bar surface the editor pushes ranges to (a subset of `ScrollBar`). */
 export interface GadgetBar {
   setRange(min: number, max: number, pageStep?: number, arrowStep?: number): void;
 }
 
-/** Walk `v`'s parent chain to decide whether it sits within (or is) `root` (the TabView idiom). */
+/** Whether `v` is `root` or a descendant of it (walks the parent chain). */
 export function isWithin(v: View | null, root: View): boolean {
   let cur: View | null = v;
   while (cur !== null) {
@@ -53,7 +56,7 @@ export function isWithin(v: View | null, root: View): boolean {
   return false;
 }
 
-/** Count line breaks in `text` (CRLF = one) — TV `countLines` made a regex scan. */
+/** Count line breaks in `text`, counting a `\r\n` pair as one. */
 export function countBreaks(text: string): number {
   const m = text.match(/\r\n|\r|\n/g);
   return m === null ? 0 : m.length;
