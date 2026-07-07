@@ -59,10 +59,6 @@ async function main(): Promise<void> {
   const ed = new Editor({
     clipboard,
     editorDialog: scriptedDialog,
-    now: (() => {
-      let t = 0;
-      return () => (t += 100); // a deterministic clock: consecutive clicks land in the 500 ms window
-    })(),
   });
   const ind = new Indicator();
   ed.attachGadgets(undefined, undefined, ind);
@@ -73,7 +69,18 @@ async function main(): Promise<void> {
   ind.layout = { size: { kind: 'fixed', cells: 1 } };
   root.add(ed);
   root.add(ind);
-  const loop = createEventLoop({ width: WIDTH, height: HEIGHT }, { caps });
+  const loop = createEventLoop(
+    { width: WIDTH, height: HEIGHT },
+    {
+      caps,
+      // The multi-click clock lives on the loop (the framework's single source of truth); a
+      // deterministic step keeps consecutive demo clicks inside the 500 ms window.
+      now: (() => {
+        let t = 0;
+        return () => (t += 100);
+      })(),
+    },
+  );
   loop.mount(root);
   loop.renderRoot.flush();
   loop.focusView(ed);

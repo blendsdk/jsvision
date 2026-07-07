@@ -51,8 +51,9 @@ export interface EventLoopOptions {
   onIdle?: () => void;
   /**
    * Multi-click clock (double-click-activation AR-4), default `Date.now`. Injected so headless tests
-   * drive exact timestamps for the same-cell double-click window; mirrors `EditorOptions.now`. The
-   * loop uses it to compute `DispatchEvent.clickCount` on each mouse-`down` (FR-1/FR-2).
+   * drive exact timestamps for the same-cell double-click window. The loop uses it to compute
+   * `DispatchEvent.clickCount` on each mouse-`down` (FR-1/FR-2) — the framework's single multi-click
+   * source of truth, which the editor also reads (AR-6 convergence).
    */
   now?: () => number;
   /**

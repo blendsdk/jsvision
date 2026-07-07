@@ -112,12 +112,6 @@ export class Editor extends View {
   keyState: KeyState = 0;
   /** @internal Marks the app's clipboard editor (TV `isClipboard()`); its edits never set `modified`. */
   isClipboardRole = false;
-  /** @internal The PA-18 multi-click clock. */
-  readonly clock: () => number;
-  /** @internal Multi-click state (PA-18): last down time/cell + the consecutive same-cell count. */
-  lastClickTime = Number.NEGATIVE_INFINITY;
-  lastClickCell: Point = { x: -1, y: -1 };
-  clickCount = 0;
   /** @internal The selectMode carried through the live drag (down sets it, drag extends). */
   dragSelectMode = 0;
   /** @internal The injected options (clipboard/dialog/undo depth read by later phases). */
@@ -146,7 +140,6 @@ export class Editor extends View {
     this.dialog = options.editorDialog ?? defaultEditorDialog;
     this.overwrite = options.overwrite ?? false;
     this.autoIndentOn = options.autoIndent ?? false;
-    this.clock = options.now ?? Date.now;
     this.modified = signal(false);
     this.curPos = signal({ line: 1, col: 1 });
     this.hasSelection = signal(false);

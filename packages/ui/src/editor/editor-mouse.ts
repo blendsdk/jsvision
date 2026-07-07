@@ -1,15 +1,17 @@
 /**
  * The editor mouse model — the `evMouseDown` drag loop of `TEditor::handleEvent`
  * (`teditor1.cpp:521-584`, re-verified 2026-07-07 @ 57b6f56) mapped onto the house
- * capture-per-event dispatch, plus the PA-18 editor-local multi-click detector (PF-011 decided
- * split from editor.ts).
+ * capture-per-event dispatch. Multi-click reads the loop-owned `DispatchEvent.clickCount` — the
+ * framework's single multi-click source of truth (converged 2026-07-07, discharging AR-6's editor
+ * half; the former editor-local detector + injectable clock is gone).
  *
  * TV's modal `do…while(mouseEvent(...))` loop becomes: DOWN captures the pointer + places the
  * caret; each captured DRAG re-places it with `smExtend`; edge crossings scroll one step per
- * event (the `evMouseAuto` decode `:560-573`); UP releases. Multi-click: core's decoder carries
- * no click count (`input/mouse.ts`), so consecutive DOWNs on the same cell within 500 ms count
- * up over the injectable clock (PA-18) — count 2 → `smDouble` word snap, 3 → `smTriple` line
- * snap (`:553-556`). Wheel: TV routes the wheel to the attached scrollbars (`:574-579`, arrow
+ * event (the `evMouseAuto` decode `:560-573`); UP releases. Multi-click: the loop stamps a
+ * consecutive same-cell count on each `down` (`DispatchEvent.clickCount`, unbounded 1,2,3,4…); the
+ * editor re-wraps it to its caret→word→line cycle `((clickCount-1)%3)+1` — count 2 → `smDouble`
+ * word snap, 3 → `smTriple` line snap (`:553-556`). Wheel: TV routes the wheel to the attached
+ * scrollbars (`:574-579`, arrow
  * step 1, wheel = 3·arrowStep) — ours scrolls the same 3 cells directly. Shift-click extension
  * is unavailable (core's `MouseEvent` carries no modifier flags — a decoder limitation; the
  * armed `selecting` mode still extends).
@@ -17,9 +19,6 @@
  */
 import type { DispatchEvent } from '../view/index.js';
 import { Editor, SM_EXTEND, SM_DOUBLE, SM_TRIPLE } from './editor.js';
-
-/** The PA-18 multi-click window in milliseconds. */
-const MULTI_CLICK_MS = 500;
 
 /** Wheel scroll step — TV's `3 · arrowStep(1)` through the editor bars (`teditor1.cpp:574-579`). */
 const WHEEL_STEP = 3;
@@ -46,16 +45,14 @@ export function handleEditorMouse(ed: Editor, ev: DispatchEvent): void {
   const local = ev.local;
 
   if (inner.kind === 'down') {
-    // PA-18 — consecutive same-cell downs within the window bump the count (2=word, 3=line).
-    const t = ed.clock();
-    const sameCell = local.x === ed.lastClickCell.x && local.y === ed.lastClickCell.y;
-    ed.clickCount = sameCell && t - ed.lastClickTime <= MULTI_CLICK_MS ? (ed.clickCount % 3) + 1 : 1;
-    ed.lastClickTime = t;
-    ed.lastClickCell = { x: local.x, y: local.y };
+    // Read the loop-owned multi-click count and re-wrap it to the editor's caret→word→line cycle
+    // (D2): the loop's `clickCount` is unbounded (1,2,3,4…), the editor cycles every 3. `undefined`
+    // (a bare envelope / loop-less editor) ⇒ 1 (single caret), the AR-14 contract.
+    const count = ev.clickCount === undefined ? 1 : ((ev.clickCount - 1) % 3) + 1;
 
     let selectMode = ed.selecting ? SM_EXTEND : 0;
-    if (ed.clickCount === 2) selectMode |= SM_DOUBLE;
-    else if (ed.clickCount === 3) selectMode |= SM_TRIPLE;
+    if (count === 2) selectMode |= SM_DOUBLE;
+    else if (count === 3) selectMode |= SM_TRIPLE;
 
     ev.setCapture?.(ed); // the TV modal drag loop becomes a pointer capture
     ed.setCurPtr(ed.getMousePtr(local), selectMode);
