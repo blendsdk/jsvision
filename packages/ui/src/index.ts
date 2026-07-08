@@ -98,6 +98,9 @@ export { ListView, ListBox } from './list/index.js';
 export type { ListViewOptions, ListBoxOptions } from './list/index.js';
 export { Dialog, okButton, cancelButton, yesButton, noButton, okCancelButtons, yesNoButtons } from './dialog/index.js';
 export type { DialogOptions } from './dialog/index.js';
+// Async modal helpers over `Dialog` — show a message, ask yes/no, or prompt for one line of text.
+export { messageBox, confirm, inputBox } from './dialog/index.js';
+export type { ModalDialogHost, MessageBoxOptions, InputBoxOptions } from './dialog/index.js';
 
 // Input dropdowns — a `History` field (recall previously entered values) and a
 // `ComboBox` (an input paired with a drop-down list), plus the shared

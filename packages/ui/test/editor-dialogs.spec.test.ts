@@ -22,7 +22,7 @@ import type { KeyEvent } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
 import { Input, CheckGroup, Button } from '../src/controls/index.js';
 import type { View } from '../src/view/index.js';
-import { findDialog, replaceDialog, replacePrompt } from '../src/editor/dialogs.js';
+import { findDialog, replaceDialog, replacePrompt, infoBox, confirmBox } from '../src/editor/dialogs.js';
 import type { EditorDialogHost } from '../src/editor/dialogs.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
@@ -138,4 +138,24 @@ test('ST-21: replacePrompt sits at top rows 1-8 h-centred, or drops to the botto
   expect(moved!.bounds.y).toBe(20 - 7 - 2); // 11
   b.app.loop.emitCommand('cancel');
   expect(await p2).toBe('cancel');
+});
+
+// ST-19 — after the delegation refactor the editor helpers keep their exact return contracts:
+// infoBox resolves void on OK; confirmBox resolves 'yes' | 'no' | 'cancel'.
+test('ST-19: infoBox resolves void when OK is activated', async () => {
+  const { app, host } = makeHost();
+  const p = infoBox(host, 'Search string not found.');
+  app.loop.renderRoot.flush();
+  app.loop.emitCommand('ok');
+  await expect(p).resolves.toBeUndefined();
+});
+
+test('ST-19: confirmBox resolves yes / no / cancel per the chosen button', async () => {
+  for (const command of ['yes', 'no', 'cancel'] as const) {
+    const { app, host } = makeHost();
+    const p = confirmBox(host, `${command} the file has been modified. Save?`);
+    app.loop.renderRoot.flush();
+    app.loop.emitCommand(command);
+    expect(await p).toBe(command);
+  }
 });
