@@ -49,6 +49,29 @@ foundation RDs of the same number.
 
 ## Notes
 
+- **2026-07-08** — **Follow-up task `dx-consistency-and-essentials-gate` DONE** ✅ (no RD — the 21/21
+  RD set stays complete). A **backward-incompatible-but-pre-release DX pass** for `@jsvision/ui` from
+  the outside-evangelist audit (`DX-ASSESSMENT.md` Proposals 6 + 7) — 2 phases / 15 tasks, spec-first;
+  **zero `@jsvision/core` change** (the gate reuses the existing `assertEssentials`/`detectTty` public
+  surface). Preflighted 🔬 ([report](plans/dx-consistency-and-essentials-gate/00-preflight-report.md),
+  2026-07-08): 4 findings (1🟠 the `ColorPicker` callback-wiring gap → a full `onInput`/`onChange`
+  forward, + 3🟡) all resolved & applied. **Phase 1 (P6)** — API-shape consistency: `RadioGroup`/
+  `CheckGroup` normalized to the options-object constructor (`new RadioGroup({ labels, value })`) +
+  exported `RadioGroupOptions`/`CheckGroupOptions` (matching `MultiCheckGroup`); the color
+  value-callback taxonomy unified so `onChange` = committed framework-wide (`ColorSwatch`/`ColorPicker`
+  `onCommit`→`onChange`, live `onChange`→`onInput`; the picker exposes + forwards both, no dead
+  callback). Hard-replace, no deprecated overloads (pre-release); all 21 internal call sites migrated
+  (source · examples · kitchen-sink stories · spec/impl tests, assertions preserved per AR-5). **Phase 2
+  (P7)** — essentials gate in `run()`: new `ApplicationOptions.requireTty?` (default `true`) threads to
+  `RunContext`; `run()` calls `assertEssentials(caps, { isTTY: detectTty({ input, output }) })` before
+  `host.start()`, so a launch with **no interactive terminal at all** throws `EssentialsNotMetError` (a
+  cron/CI job, a container with no tty, or stdin+stdout both redirected with no `/dev/tty`) rather than
+  silently starting keyboard-less; piped output backed by a controlling terminal still runs. **AR-6
+  (runtime)** — plan task 2.3 (opt out the headless harness) was verified a **no-op**: the app-shell
+  doubles report `isTTY:true`, so the default gate passes and every `run()`-driving suite stays green
+  with no `requireTty:false` added. Landed as two per-phase commits (`7bb703c` P6 · `7c72a55` P7) on
+  branch `feat/dx-consistency-and-essentials-gate` (PR pending). Verify: `yarn verify` (14 tasks) +
+  `yarn lint` (eslint + prettier) + `check:docs` all green; ST-1…ST-9 + IT-1…IT-4 pass.
 - **2026-07-08** — **Follow-up task `dx-ergonomics` DONE** ✅ (GH #45; no RD — the 21/21 RD set
   stays complete). An **additive, backward-compatible DX pass** for `@jsvision/ui` — 4 phases / 26
   tasks, spec-first; **zero `@jsvision/core` change** (all new surface is UI-owned). **Phase 1** —
