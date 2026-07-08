@@ -158,5 +158,7 @@ export {
   darken,
   mix,
   contrastRatio,
+  createTheme,
+  rolesFromAliases,
 } from './color/index.js';
-export type { ColorRole, Rgb, Theme, ThemeRole, ThemeColors } from './color/index.js';
+export type { ColorRole, Rgb, Theme, ThemeRole, ThemeColors, ThemeOptions } from './color/index.js';
