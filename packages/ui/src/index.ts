@@ -88,7 +88,14 @@ export {
   lookup,
   picture,
 } from './controls/index.js';
-export type { ButtonOptions, InputOptions, MultiCheckGroupOptions, Validator } from './controls/index.js';
+export type {
+  ButtonOptions,
+  InputOptions,
+  MultiCheckGroupOptions,
+  RadioGroupOptions,
+  CheckGroupOptions,
+  Validator,
+} from './controls/index.js';
 
 // Containers, scrolling, and lists — scroll bars, a scrollable viewport, single-
 // column list boxes, and modal dialogs with standard OK/Cancel/Yes/No buttons.

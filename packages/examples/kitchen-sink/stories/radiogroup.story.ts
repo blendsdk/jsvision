@@ -18,7 +18,7 @@ export const radioGroupStory: Story = {
   build(ctx: StoryContext) {
     const w = ctx.width;
     const sel = signal(0);
-    const radio = new RadioGroup(['~L~eft', '~C~enter', '~R~ight'], sel);
+    const radio = new RadioGroup({ labels: ['~L~eft', '~C~enter', '~R~ight'], value: sel });
     const g = new Group();
     g.add(at(radio, 1, 0, 18, 3));
     g.add(at(new Text(() => `Selected: index ${sel()} (${OPTIONS[sel()]})`), 1, 4, w, 1));

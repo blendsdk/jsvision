@@ -23,8 +23,8 @@ function key(k: string, mods: Partial<Pick<KeyEvent, 'alt' | 'ctrl' | 'shift'>> 
 test('ST-12: Tab/Shift-Tab cycle focus across the controls, skipping the non-focusable Text', () => {
   const text = new Text('label:');
   const input = new Input({ value: signal('') });
-  const check = new CheckGroup(['~B~old'], signal([false]));
-  const radio = new RadioGroup(['~L~eft'], signal(0));
+  const check = new CheckGroup({ labels: ['~B~old'], value: signal([false]) });
+  const radio = new RadioGroup({ labels: ['~L~eft'], value: signal(0) });
   const button = new Button('~O~K');
   const form = new Group();
   form.layout = { direction: 'col' };

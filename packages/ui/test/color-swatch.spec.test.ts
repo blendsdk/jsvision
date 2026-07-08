@@ -41,7 +41,7 @@ interface SwatchHarness {
   loop: ReturnType<typeof createEventLoop>;
   value: Signal<Color>;
   commits: Color[];
-  changes: Color[];
+  inputs: Color[];
   cell: (x: number, y: number) => { char: string; fg: string; bg: string } | undefined;
   markers: () => { x: number; y: number }[];
 }
@@ -58,14 +58,14 @@ function makeSwatch(
   const colors = opts.colors ?? DOS16;
   const columns = opts.columns ?? 4;
   const value = signal<Color>(opts.value ?? colors[0]);
-  const commits: Color[] = [];
-  const changes: Color[] = [];
+  const commits: Color[] = []; // the discrete commit callback — `onChange` under the new taxonomy
+  const inputs: Color[] = []; // the live callback — `onInput` (arrow / click / drag)
   const swatch = new ColorSwatch({
     value,
     colors,
     columns,
-    onChange: (c) => changes.push(c),
-    onCommit: (c) => commits.push(c),
+    onInput: (c) => inputs.push(c),
+    onChange: (c) => commits.push(c),
   });
   const { width, rows } = gridDims(colors.length, columns);
   const h = Math.max(1, rows);
@@ -86,7 +86,7 @@ function makeSwatch(
     for (let y = 0; y < h; y += 1) for (let x = 0; x < width; x += 1) if (cell(x, y)?.char === '◘') out.push({ x, y });
     return out;
   };
-  return { swatch, loop, value, commits, changes, cell, markers };
+  return { swatch, loop, value, commits, inputs, cell, markers };
 }
 
 // ── ST-2: grid geometry cell-by-cell vs colorsel.cpp (█ ×3 cells, fg=cellColor/bg=black, 4 rows) ────
@@ -152,7 +152,7 @@ test('ST-4: → wraps last→first, ← wraps first→last; Enter commits colors
   h.loop.dispatch(keyEvent('left')); // navLeft(0)=15
   h.loop.dispatch(keyEvent('enter'));
   expect(h.value(), '← from first wraps to last (brightWhite)').toBe('brightWhite');
-  expect(h.commits.at(-1), 'onCommit fired with the committed color').toBe('brightWhite');
+  expect(h.commits.at(-1), 'onChange (commit) fired with the committed color').toBe('brightWhite');
   // from cell 15, → wraps to 0.
   const h2 = makeSwatch({ value: 'brightWhite', focus: true }); // cursor = 15
   h2.loop.dispatch(keyEvent('right')); // navRight(15)=0
@@ -170,6 +170,24 @@ test('ST-4: ↓/↑ move by ±columns with the edge-wrap decode; plain arrows ne
   h2.loop.dispatch(keyEvent('up')); // navUp(0,16,4)=15 → brightWhite
   h2.loop.dispatch(keyEvent('enter'));
   expect(h2.value(), '↑ from 0 wraps to cell 15 (brightWhite)').toBe('brightWhite');
+});
+
+// ── DX taxonomy (ST-4): onInput = live (arrow/click/drag), onChange = commit (Enter/Space/mouse-up) ─
+
+test('DX ST-4: arrow nav fires onInput (not onChange); Enter over a cell fires onChange', () => {
+  const h = makeSwatch({ value: 'black', focus: true }); // cursor 0
+  h.loop.dispatch(keyEvent('right')); // navRight(0)=1 → live select
+  expect(h.inputs.at(-1), 'arrow fired onInput (live)').toBe('red');
+  expect(h.commits, 'arrow did NOT fire onChange (commit)').toEqual([]);
+  h.loop.dispatch(keyEvent('enter')); // commit at the cursor
+  expect(h.commits.at(-1), 'Enter fired onChange (commit)').toBe('red');
+});
+
+test('DX ST-4: select(color) fires both onInput (live) and onChange (commit)', () => {
+  const h = makeSwatch({ value: 'black' });
+  h.swatch.select('green');
+  expect(h.inputs.at(-1), 'select fired onInput').toBe('green');
+  expect(h.commits.at(-1), 'select fired onChange').toBe('green');
 });
 
 // ── ST-5: mouse down/drag sets the cursor (row*cols+floor(x/3)); revert-outside vs clamp-overshoot ──

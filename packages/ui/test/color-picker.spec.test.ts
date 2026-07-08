@@ -52,6 +52,8 @@ interface PHarness {
   picker: ColorPicker;
   overlay: Group;
   value: Signal<Color>;
+  inputs: Color[]; // the picker's own onInput fires (live: arrow / click / drag)
+  commits: Color[]; // the picker's own onChange fires (commit: Enter / Space / mouse-up)
 }
 
 function makePicker(
@@ -59,7 +61,16 @@ function makePicker(
 ): PHarness {
   const loop = createEventLoop({ width: 40, height: 20 }, { caps });
   const value = signal<Color>(opts.value ?? 'red');
-  const picker = new ColorPicker({ value, colors: opts.colors, columns: opts.columns, allowCustom: opts.allowCustom });
+  const inputs: Color[] = [];
+  const commits: Color[] = [];
+  const picker = new ColorPicker({
+    value,
+    colors: opts.colors,
+    columns: opts.columns,
+    allowCustom: opts.allowCustom,
+    onInput: (c) => inputs.push(c),
+    onChange: (c) => commits.push(c),
+  });
   picker.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } };
   const overlay = new Group();
   overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
@@ -73,7 +84,7 @@ function makePicker(
     loop.popupHost = host;
   }
   loop.renderRoot.flush();
-  return { loop, picker, overlay, value };
+  return { loop, picker, overlay, value, inputs, commits };
 }
 
 /** Open the popup by focusing the picker and pressing Down; return the hosted swatch. */
@@ -172,6 +183,20 @@ test('ST-8: an outside mouse-down dismisses without changing value', () => {
   h.loop.dispatch(mouse('down', 39, 20)); // far corner, outside the popup
   expect(h.value(), 'value unchanged on outside-down').toBe('red');
   expect(popupOpen(h.overlay)).toBe(false);
+});
+
+// ── DX taxonomy (ST-5): the picker exposes its own onInput (live) / onChange (commit) split ─────────
+
+test('DX ST-5: arrow nav fires the picker onInput and keeps the popup open; Enter fires onChange once + closes', () => {
+  const h = makePicker({ value: 'black' }); // swatch cursor inits to cell 0
+  open(h);
+  h.loop.dispatch(keyEvent('right')); // swatch cursor → cell 1 (red), live
+  expect(h.inputs.at(-1), "the picker's onInput fired on live arrow nav").toBe('red');
+  expect(h.commits, 'live nav did NOT commit').toEqual([]);
+  expect(popupOpen(h.overlay), 'popup stays open during live nav').toBe(true);
+  h.loop.dispatch(keyEvent('enter')); // commit at the cursor
+  expect(h.commits, "the picker's onChange fired exactly once, with the committed value").toEqual(['red']);
+  expect(popupOpen(h.overlay), 'popup closed on commit').toBe(false);
 });
 
 // ── ST-9: hex entry + allowCustom ─────────────────────────────────────────────────────────────────

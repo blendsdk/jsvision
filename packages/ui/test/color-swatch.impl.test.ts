@@ -22,7 +22,8 @@ interface H {
   swatch: ColorSwatch;
   loop: ReturnType<typeof createEventLoop>;
   value: Signal<Color>;
-  changes: Color[];
+  changes: Color[]; // commit callback (onChange)
+  inputs: Color[]; // live callback (onInput)
   cell: (x: number, y: number) => { char: string; fg: string; bg: string } | undefined;
   markers: () => { x: number; y: number }[];
 }
@@ -31,7 +32,14 @@ function make(opts: { value?: Color; colors?: readonly Color[]; columns?: number
   const columns = opts.columns ?? 4;
   const value = signal<Color>(opts.value ?? colors[0]);
   const changes: Color[] = [];
-  const swatch = new ColorSwatch({ value, colors, columns, onChange: (c) => changes.push(c) });
+  const inputs: Color[] = [];
+  const swatch = new ColorSwatch({
+    value,
+    colors,
+    columns,
+    onInput: (c) => inputs.push(c),
+    onChange: (c) => changes.push(c),
+  });
   const { width, rows } = gridDims(colors.length, columns);
   const h = Math.max(1, rows);
   swatch.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height: h } };
@@ -50,7 +58,7 @@ function make(opts: { value?: Color; colors?: readonly Color[]; columns?: number
     for (let y = 0; y < h; y += 1) for (let x = 0; x < width; x += 1) if (cell(x, y)?.char === '◘') out.push({ x, y });
     return out;
   };
-  return { swatch, loop, value, changes, cell, markers };
+  return { swatch, loop, value, changes, inputs, cell, markers };
 }
 const key = (k: string) => ({ type: 'key' as const, key: k, ctrl: false, alt: false, shift: false });
 
@@ -79,13 +87,37 @@ test('an off-palette value leaves the cursor where it is (re-home only on a memb
   expect(h.value(), 'cursor stayed at 2 despite the off-palette set → committed yellow').toBe('yellow');
 });
 
-// ── select() / onChange ────────────────────────────────────────────────────────────────────────────
+// ── select() / onInput / onChange ─────────────────────────────────────────────────────────────────
 
-test('select() drives the value + fires onChange', () => {
+test('select() drives the value + fires both onInput (live) and onChange (commit)', () => {
   const h = make({ value: 'red' });
   h.swatch.select('blue');
   expect(h.value()).toBe('blue');
+  expect(h.inputs.at(-1)).toBe('blue');
   expect(h.changes.at(-1)).toBe('blue');
+});
+
+// ── IT-2: the live/commit split under the pointer ───────────────────────────────────────────────────
+
+test('IT-2: a drag across cells fires onInput per cell; onChange fires once, only on the release', () => {
+  const h = make({ value: 'black', columns: 4, focus: true }); // 8 colors, cursor 0
+  // Press cell 0, drag through cell 1 (red) to cell 2 (green), release over cell 2. Row 0: cols 0-2 / 3-5 / 6-8.
+  h.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 1, y: 1 }); // cell 0 (black)
+  h.loop.dispatch({ type: 'mouse', kind: 'move', button: 0, x: 4, y: 1 }); // cell 1 (red)
+  h.loop.dispatch({ type: 'mouse', kind: 'move', button: 0, x: 7, y: 1 }); // cell 2 (green)
+  expect(h.changes, 'no commit fires during the drag — only live previews').toEqual([]);
+  expect(h.inputs, 'each cell under the pointer fired a live onInput').toContain('red');
+  expect(h.inputs.at(-1), 'the last live preview is the cell under the pointer (green)').toBe('green');
+  h.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, x: 7, y: 1 }); // release over cell 2
+  expect(h.changes, 'the release fires onChange exactly once, with the committed color').toEqual(['green']);
+  expect(h.value(), 'value committed to green').toBe('green');
+});
+
+test('IT-2: a mouse-up over a cell fires onChange once (a single click-commit)', () => {
+  const h = make({ value: 'black', columns: 4, focus: true });
+  h.loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: 4, y: 1 }); // cell 1 (red)
+  h.loop.dispatch({ type: 'mouse', kind: 'up', button: 0, x: 4, y: 1 });
+  expect(h.changes, 'onChange fired exactly once on the release').toEqual(['red']);
 });
 
 // ── near-black marker on a custom palette ────────────────────────────────────────────────────────
