@@ -34,6 +34,18 @@ the deprecation policy.
     `Application.setTheme` replace the active theme and repaint in one coalesced frame from any call
     site. A live `demo:themes` designer + a kitchen-sink `Theming` story demonstrate it.
 
+- **`Slider` control + the `@jsvision/theme-designer` app.** `@jsvision/ui` gains **`Slider`** — a
+  horizontal/vertical value slider (keyboard/mouse/drag/wheel, `onInput`/`onChange`) that shares its
+  value↔position math with `ScrollBar` (extracted to an internal shared helper; `ScrollBar` behavior
+  is unchanged). `@jsvision/core` gains two derived theme roles `sliderTrack`/`sliderThumb`
+  (byte-frozen in `defaultTheme`, attribute-driven in `monochromeTheme`) plus three additive exports
+  the app needs — `aliasesFromSeeds`, a re-exported `rgb256`, and the `PRESET_SEEDS` data. A new
+  private **`@jsvision/theme-designer`** application authors `@jsvision/core` themes end-to-end: a
+  three-pane designer (roles rail · live preview · inspector) with R/G/B sliders + a `#rrggbb` hex
+  field + a DOS-16 swatch, live WCAG contrast + color-depth readouts, the 7 presets, and JSON
+  import/export via a real file dialog. It dogfoods `@jsvision/ui`/`@jsvision/files`; piped, it runs a
+  narrated headless walkthrough.
+
 - **Declarative layout builders + engine `position:'fill'`.** `@jsvision/ui` gains an
   expression-oriented layer over the view tree so a whole screen composes in one nested
   call instead of imperative `new`/`.add()`/`.layout =` mutations: **`col`**/**`row`**

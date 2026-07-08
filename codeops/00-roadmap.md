@@ -14,7 +14,7 @@
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
 | jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | **22 ✅ Done (RD-01…RD-22)** — Theming completes the set | 22/22 RDs | ✅ | 2026-07-08 |
-| theme-designer | [→](features/theme-designer/00-roadmap.md) | PL-01 🔄 Executing — standalone theme-designer app + reusable `Slider` (Phase 2/4 done: Slider, core roles, package + pure DesignerModel) | 0/1 plans | 🔄 | 2026-07-09 |
+| theme-designer | [→](features/theme-designer/00-roadmap.md) | PL-01 ✅ Done — standalone `@jsvision/theme-designer` app + reusable `Slider` (all 4 phases / 40 tasks) | 1/1 plans | ✅ | 2026-07-09 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 
 ## Archived
@@ -25,6 +25,15 @@
 
 ## Notes
 
+- 2026-07-09: **theme-designer PL-01 → DONE ✅ (Phases 3 & 4 complete, 40/40 tasks).** Phase 3 built
+  the interactive three-pane app (`createDesignerApp`: roles rail · live preview · inspector over the
+  pure model; menu/status commands with an injectable file/modal seam layer so the app-core is
+  headless-testable; R/G/B sliders ↔ hex ↔ DOS-16 swatch in one `untrack`-guarded reactive owner +
+  live contrast/depth readouts). Phase 4 added the `main.ts` TTY split + `host/walkthrough.ts`
+  narrated headless tour (ST-23 e2e), retired the `demo:themes` live-TTY branch (now walkthrough-only;
+  interactive designer lives in `@jsvision/theme-designer`), and wired CI/`yarn designer`/docs
+  (CHANGELOG, CLAUDE.md, README). Spec-first throughout (ST-24…ST-29 + ST-23; +impl). `yarn verify`
+  (16/16) + `yarn test:e2e` (8/8) + `yarn gate` all green. Portfolio: all 3 features now Done.
 - 2026-07-09: **theme-designer Phase 2/4 DONE** (23/40 tasks). New private package `@jsvision/theme-designer` scaffolded (app shape; deps core+ui+files) + the pure headless `DesignerModel` (two-mode `roleSnapshot` derive/roles state, `createTheme` derivation + role overrides, preset mapping, `contrastRows`, `depthSamples`, serialize round-trip, import validation, dirty lifecycle) + the `#rrggbb` `hexValidator`. Spec-first (ST-12…ST-22, ST-31). Runtime decision AR-26: the 16-color depth swatch uses the Borland DOS-16 hex for the emitted slot (the plan's `PALETTE[ANSI16_ORDER[…]]` was key-mismatched). `yarn verify` green (16/16); sync-versions green.
 - 2026-07-09: **theme-designer PL-01 → EXECUTING 🔄** (`exec_plan`). **Phase 1/4 DONE** (14/35 tasks): the reusable `Slider` (both orientations; keyboard/mouse/drag/wheel; `onInput`/`onChange`) landed in `@jsvision/ui` on an extracted pure `track.ts` value↔position helper `ScrollBar` now shares (its suite + ST-10 pin the math unchanged); `@jsvision/core` gained the `sliderTrack`/`sliderThumb` roles (byte-frozen, derived in `rolesFromAliases`, attr-driven in `monochromeTheme`) + the 3 additive exports the model needs (`aliasesFromSeeds`, `rgb256`, `PRESET_SEEDS` — per-preset seed consts preserve tree-shaking). Kitchen-sink `controls/slider` story added. Full `yarn verify` green (core 688 · ui 1456 · smoke 49). Spec-first (ST-1…ST-11).
 - 2026-07-08: **theme-designer PL-01 → PLAN PREFLIGHTED 🔬** ([report](features/theme-designer/plans/theme-designer/00-preflight-report.md)) — `preflight theme-designer`, codebase-grounded 13-dimension scan. **PASSED — 10 findings (4🟠 / 5🟡 / 1🔵), all accepted & applied.** Root cause of the 4 majors: the model's alias-centric state outran the core theming API (you can go seeds→`Theme`, never `Theme`→aliases; `defaultTheme` is a hand-authored DOS-16 literal with no alias form). **Unified Resolution:** a **two-mode `DesignerState`** (`roleSnapshot` null⇒derive / non-null⇒roles; first alias edit transitions, no reverse-map, no import-masking bug) + **3 additive core exports** (`aliasesFromSeeds`, `rgb256`, the 5 derived presets' seed sets) beyond the `sliderTrack`/`sliderThumb` roles. **PF-004:** R7 depth scoped to a display-only sample strip (the app's single `RenderRoot.caps` is immutable). **PF-007:** file I/O reuses `openFile`/`errorBox`. Minors: `rgb256` export, additive-surface wording, phantom test path (`scrollbar.impl`), `PresetName` self-defined, `check:docs` no-op clarified (barrel-less packages are skipped by `check-jsdoc`). Now **4 phases / 35 tasks** (ST-1…ST-31). Fixes landed across all 8 plan docs + the AR (AR-15/16/25 revised). Next: `exec_plan theme-designer`.

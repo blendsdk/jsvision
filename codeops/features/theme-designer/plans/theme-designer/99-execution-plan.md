@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 01:00
-> **Progress**: 34/40 tasks (85%)
+> **Last Updated**: 2026-07-09 01:05
+> **Progress**: 40/40 tasks (100%) ✅
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -132,15 +132,15 @@ the walkthrough e2e, retires the old live demo, and wires CI/docs.
 
 **Reference**: [03-03](03-03-designer-app.md) · [03-04](03-04-packaging.md) · ST-23 · AR-6/11/22
 
-- [ ] 4.1.1 Walkthrough e2e spec (piped renders a non-empty frame per step) — `packages/theme-designer/test/walkthrough.e2e.test.ts` (ST-23); verify RED
-- [ ] 4.1.2 `main.ts` (TTY split) + `host/walkthrough.ts` (narrated frames) — `packages/theme-designer/src/main.ts`, `src/host/walkthrough.ts`; verify GREEN
-- [ ] 4.1.3 Retire the `demo:themes` live-TTY branch (keep the headless walkthrough + its e2e) — `packages/examples/themes-demo/main.ts` (AR-6)
+- [x] 4.1.1 Walkthrough e2e spec (piped renders a non-empty frame per step) — `packages/theme-designer/test/walkthrough.e2e.test.ts` (ST-23); verify RED — 2026-07-09 01:05
+- [x] 4.1.2 `main.ts` (TTY split) + `host/walkthrough.ts` (narrated frames) — `packages/theme-designer/src/main.ts`, `src/host/walkthrough.ts`; verify GREEN — 2026-07-09 01:05
+- [x] 4.1.3 Retire the `demo:themes` live-TTY branch (keep the headless walkthrough + its e2e) — `packages/examples/themes-demo/main.ts` (AR-6) — 2026-07-09 01:05
 
 ### Step 4.2: Wiring & docs
 
-- [ ] 4.2.1 CI: add `yarn workspace @jsvision/theme-designer test:e2e` to the POSIX e2e block — `.github/workflows/ci.yml`; add the root convenience passthrough script — root `package.json`
-- [ ] 4.2.2 Docs: `CHANGELOG.md` `[Unreleased]` (Slider + roles + app); update the `demo:themes` description in `CLAUDE.md`; new package `README.md`
-- [ ] 4.2.3 Full gate: `yarn verify` + `yarn lint` + per-package `typecheck` + `check:docs` + `yarn workspace @jsvision/theme-designer test:e2e` + examples e2e (walkthrough-only `demo:themes`) all green
+- [x] 4.2.1 CI: add `yarn workspace @jsvision/theme-designer test:e2e` to the POSIX e2e block — `.github/workflows/ci.yml`; add the root convenience passthrough script — root `package.json` — 2026-07-09 01:05
+- [x] 4.2.2 Docs: `CHANGELOG.md` `[Unreleased]` (Slider + roles + app); update the `demo:themes` description in `CLAUDE.md`; new package `README.md` — 2026-07-09 01:05
+- [x] 4.2.3 Full gate: `yarn verify` + `yarn lint` + per-package `typecheck` + `check:docs` + `yarn workspace @jsvision/theme-designer test:e2e` + examples e2e (walkthrough-only `demo:themes`) all green — 2026-07-09 01:05
 
 **Verify**: `yarn verify` (+ `yarn lint`, per-package `typecheck`, `test:e2e` for theme-designer & examples)
 
