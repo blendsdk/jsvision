@@ -3,7 +3,7 @@
 > **Feature-Set**: jsvision UI
 > **Status**: In Progress
 > **Created**: 2026-06-29
-> **Last Updated**: 2026-07-07
+> **Last Updated**: 2026-07-08
 > **Progress**: 21 / 21 (100%) — ✅ COMPLETE
 > **CodeOps Skills Version**: 2.0.0
 
@@ -49,6 +49,30 @@ foundation RDs of the same number.
 
 ## Notes
 
+- **2026-07-08** — **Follow-up task `dx-ergonomics` DONE** ✅ (GH #45; no RD — the 21/21 RD set
+  stays complete). An **additive, backward-compatible DX pass** for `@jsvision/ui` — 4 phases / 26
+  tasks, spec-first; **zero `@jsvision/core` change** (all new surface is UI-owned). **Phase 1** —
+  zero-config caps + single-package imports: `ApplicationOptions.caps` is now optional (`'auto'`
+  default → resolved once via `resolveCapabilities().profile`), and the `@jsvision/ui` barrel
+  re-exports the seven `@jsvision/core` essentials a hello-world app needs
+  (`resolveCapabilities`/`resolveCapabilitiesAsync`/`createKeymap`/`Attr` +
+  `CapabilityProfile`/`Style`/`Keymap`). **Phase 2** — first-class command handling:
+  `EventLoop.onCommand(name, handler)` + `Application.onCommand(...)` (many per command, each
+  isolated, a handled command consumed, returns an unsubscribe), served by a loop-owned
+  `CommandSink` swept **directly in the private `route()`** gated on `!modal.isActive()` — runtime
+  **AR-14** (never mounted into the caller's tree, so general handlers stay dormant while a modal
+  owns the scope; the abandoned placement-(a) mounted it and broke the `@jsvision/files`
+  empty-root invariant). Built-in quit = one internal registration through the same sink via the
+  new `EventLoopOptions.onQuit` seam; the bespoke `QuitCommandSink` is gone. **Phase 3** — async
+  modal helpers `messageBox`/`confirm`/`inputBox` over `Dialog` on a minimal `ModalDialogHost`
+  seam (an `Application` satisfies it directly) + a shared module-internal `runDialog` engine; the
+  editor's `infoBox`/`confirmBox` now delegate to it and `EditorDialogHost` aliases
+  `ModalDialogHost`. **Phase 4** — flagship proof: `tvision-demo` rewired to showcase all three
+  (zero-config caps, single-package imports, `app.onCommand`, `messageBox` About box) + a
+  CHANGELOG entry. Landed as four per-phase commits + a doc follow-up correcting the `commandSink`
+  field comment to match the direct-sweep; merged in **GH #45**, plan folder removed in **GH #46**.
+  Verify: ui `typecheck` + `build` + `lint` (eslint + prettier) + the DX suite (app-caps ·
+  ui-reexports · event.oncommand · app-oncommand · message-box · editor-dialogs) all green.
 - **2026-07-07** — **Follow-up task `multiclick-convergence` (T-04) DONE** ✅ (no RD; discharges
   `double-click-activation` **AR-6**, editor half). An **internal DRY refactor, no behavior change**:
   delete the editor's private 500 ms multi-click detector + its injectable clock and read the loop-owned
