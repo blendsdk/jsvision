@@ -65,6 +65,12 @@ export interface EventLoopOptions {
    * accelerator as if you had pressed `Alt`+letter. Pass `null` to disable the feature entirely.
    */
   revealKey?: string | null;
+  /**
+   * Called when the {@link quitCommand} is emitted, with the exit code carried by the command (0 when
+   * none was given). This is how the loop terminates: `createApplication` wires it to resolve `run()`.
+   * When unset (a bare loop), the quit command is a plain command with no special termination.
+   */
+  onQuit?: (code: number) => void;
 }
 
 /**
@@ -115,6 +121,21 @@ export interface EventLoop {
    * is disabled (`revealKey: null`).
    */
   setAcceleratorMode(on: boolean): void;
+  /**
+   * Register a handler for a named command; returns a function that unregisters it. Every handler
+   * registered for a command runs (in registration order) when that command is emitted, and a handled
+   * command is consumed there — a downstream view matching the same command does not also receive it.
+   *
+   * Handlers run in the pre-process phase, so an `onCommand` handler fires before a focused view could
+   * handle the same command. One exception: while a modal (e.g. a `Dialog`) owns the dispatch scope,
+   * commands are confined to the modal subtree, so a general `onCommand` handler does not fire until
+   * the modal closes.
+   *
+   * @param command The command name to handle.
+   * @param handler Called when the command is emitted.
+   * @returns A function that unregisters this handler (idempotent).
+   */
+  onCommand(command: string, handler: () => void): () => void;
 
   // --- Host-integration sinks -------------------------------------------------------------------
   /**

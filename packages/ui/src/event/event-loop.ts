@@ -11,8 +11,8 @@
 import { createLogger, setClipboard } from '@jsvision/core';
 import type { Logger, Keymap, ScreenBuffer, CapabilityProfile } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
-import { createRenderRoot } from '../view/index.js';
-import type { View, RenderRoot, AppEvent, DispatchEvent, Point, PopupHost } from '../view/index.js';
+import { createRenderRoot, View } from '../view/index.js';
+import type { RenderRoot, AppEvent, DispatchEvent, Point, PopupHost } from '../view/index.js';
 import type { EventLoop, EventLoopOptions, ModalHostAware } from './types.js';
 import { createCommandRegistry } from './commands.js';
 import type { CommandRegistry } from './commands.js';
@@ -44,6 +44,75 @@ function isQuitVetoed(view: View, command: string): boolean {
   return typeof candidate.valid === 'function' && !candidate.valid(command);
 }
 
+/**
+ * Holds the loop's command handlers, keyed by command name. The loop delivers every command event to
+ * it first (before the tree's own dispatch), so a command with handlers runs them all and is marked
+ * handled — stopping there. Each handler runs in its own try/catch, so one throwing handler neither
+ * skips its siblings nor leaves the command unconsumed. It extends `View` only so the loop's
+ * error-isolating `deliver` can hand it an event; it is never mounted, painted, or hit-tested.
+ */
+class CommandSink extends View {
+  // Handlers are stored arg-aware so the built-in quit registration can read the numeric exit-code
+  // argument; the public `register` wraps a zero-arg handler and drops the arg, so the exposed
+  // `onCommand` contract never widens.
+  private readonly handlers = new Map<string, Set<(arg?: unknown) => void>>();
+
+  constructor(private readonly logger: Logger) {
+    super();
+  }
+
+  draw(): void {
+    // intentionally empty — the sink is never mounted or painted
+  }
+
+  /**
+   * Add a handler and return an idempotent unsubscribe. The unsubscribe prunes the command's empty
+   * entry only when it still holds this exact set, so a stale unsubscribe cannot drop a command that
+   * was unregistered to empty and then registered afresh.
+   */
+  private addHandler(command: string, handler: (arg?: unknown) => void): () => void {
+    let set = this.handlers.get(command);
+    if (set === undefined) {
+      set = new Set();
+      this.handlers.set(command, set);
+    }
+    const target = set;
+    target.add(handler);
+    return () => {
+      target.delete(handler);
+      if (target.size === 0 && this.handlers.get(command) === target) this.handlers.delete(command);
+    };
+  }
+
+  /** The public contract: register a zero-arg handler for a named command. */
+  register(command: string, handler: () => void): () => void {
+    return this.addHandler(command, () => handler());
+  }
+
+  /** Internal: register a handler that also receives the command event's argument (built-in quit only). */
+  registerInternal(command: string, handler: (arg?: unknown) => void): () => void {
+    return this.addHandler(command, handler);
+  }
+
+  override onEvent(ev: DispatchEvent): void {
+    const inner = ev.event;
+    if (inner.type !== 'command') return;
+    const set = this.handlers.get(inner.command);
+    if (set === undefined || set.size === 0) return;
+    // Snapshot so a handler may unsubscribe itself (or a sibling) mid-fire without corrupting the walk.
+    // Each handler is isolated: a throwing one is logged and the rest still fire, and the command is
+    // consumed regardless — a handled command must never fall through to the focus/post-process phases.
+    for (const fn of [...set]) {
+      try {
+        fn(inner.arg);
+      } catch (error) {
+        this.logger.error('command', 'onCommand handler threw', { error: String(error) });
+      }
+    }
+    ev.handled = true;
+  }
+}
+
 /** Concrete event loop: owns the render root and paints one coalesced frame per tick. */
 class EventLoopImpl implements EventLoop {
   readonly renderRoot: RenderRoot;
@@ -54,6 +123,8 @@ class EventLoopImpl implements EventLoop {
   private readonly registry: CommandRegistry;
   private readonly focus: FocusManager;
   private readonly modal: ModalManager;
+  /** The loop-owned command handlers, swept directly in `route` before the tree; never mounted. */
+  private readonly commandSink: CommandSink;
 
   /** The mounted root view; `null` until `mount` is called. */
   private root: View | null = null;
@@ -105,6 +176,14 @@ class EventLoopImpl implements EventLoop {
     });
     this.focus = createFocusManager(() => this.root);
     this.modal = createModalManager(this.focus);
+    this.commandSink = new CommandSink(this.logger);
+    // The quit command terminates the loop through the one command sink: register it internally so it
+    // can read the numeric exit-code argument (the public `onCommand` handler is arg-less). A bare loop
+    // with no `onQuit` leaves quit as an ordinary command with no special termination.
+    if (opts.onQuit !== undefined) {
+      const onQuit = opts.onQuit;
+      this.commandSink.registerInternal(this.quitCommand, (arg) => onQuit(typeof arg === 'number' ? arg : 0));
+    }
     // Build the render root with a no-op schedule so it never repaints on its own; the loop decides
     // when to repaint and calls `renderRoot.flush()` exactly once per tick.
     this.renderRoot = createRenderRoot(viewport, {
@@ -126,6 +205,10 @@ class EventLoopImpl implements EventLoop {
     this.renderRoot.mount(root); // paints the initial frame internally
     this.onFrame?.(this.renderRoot.buffer()); // hand the first frame to the host
     this.emitCaret(); // position the initial caret
+  }
+
+  onCommand(command: string, handler: () => void): () => void {
+    return this.commandSink.register(command, handler);
   }
 
   dispatch(event: AppEvent): void {
@@ -317,9 +400,18 @@ class EventLoopImpl implements EventLoop {
   /**
    * Route one event through the dispatch machine.
    *
+   * The loop-owned command sink sees command events first — before the tree's own pre-process sweep —
+   * so an `onCommand` handler fires ahead of any view. It is skipped while a modal owns the dispatch
+   * scope, so general handlers stay dormant during a modal (the quit cascade re-emits quit once the
+   * modals close, at which point the sink catches it). A consumed command stops here.
+   *
    * @param ev The event to route.
    */
   private route(ev: DispatchEvent): void {
+    if (ev.event.type === 'command' && !this.modal.isActive()) {
+      this.deliver(this.commandSink, ev);
+      if (ev.handled) return;
+    }
     route(ev, this.routeContext());
   }
 

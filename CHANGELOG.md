@@ -11,6 +11,35 @@ the deprecation policy.
 
 ### Added
 
+- **DX ergonomics — zero-config caps, `onCommand`, and async modal helpers.** Three
+  additive, backward-compatible convenience-layer improvements to `@jsvision/ui`:
+  - **Zero-config capabilities + single-package imports.** `ApplicationOptions.caps`
+    is now optional (`caps?: CapabilityProfile | 'auto'`, default `'auto'`):
+    `createApplication({ menuBar })` starts with no capability plumbing —
+    `createApplication` resolves the profile once via `resolveCapabilities().profile`
+    and threads the concrete profile to the loop and `run()`. An explicit profile is
+    still honored verbatim. The `@jsvision/ui` barrel now re-exports the seven
+    `@jsvision/core` essentials a UI developer needs so a hello-world app imports from
+    one package: `resolveCapabilities`, `resolveCapabilitiesAsync`, `createKeymap`,
+    `Attr` (values) and `CapabilityProfile`, `Style`, `Keymap` (types).
+  - **First-class command handling.** `EventLoop.onCommand(name, handler)` and the
+    forwarding `Application.onCommand(name, handler)` register a handler for a named
+    command and return an unsubscribe function — no more hand-rolling an invisible
+    `View`. Many handlers may register for one command; all fire (in registration
+    order, each isolated in its own try/catch), and a handled command is consumed. The
+    framework's own quit is now one internal registration through the same mechanism
+    (the bespoke quit sink is gone); the numeric exit code and the open-modal quit
+    cascade are preserved. General handlers run in pre-process and stay dormant while a
+    modal owns the dispatch scope.
+  - **Async modal helpers.** New `messageBox`/`confirm`/`inputBox` over the existing
+    `Dialog`, taking the minimal `{ loop, desktop }` host (an `Application` satisfies it
+    directly): `messageBox` → `'ok' | 'cancel'`, `confirm` → `boolean`, `inputBox` →
+    `string | null` (honoring an optional validator via the dialog's `valid()` gate).
+    New public exports: `messageBox`/`confirm`/`inputBox` + `ModalDialogHost`/
+    `MessageBoxOptions`/`InputBoxOptions`. The editor's `infoBox`/`confirmBox` now
+    delegate to the shared engine (no behavior change; `confirmBox` keeps its
+    three-button contract). **All additive and non-breaking.**
+
 - **jsvision-ui RD-15 tree/outline — `Tree<T>`.** `@jsvision/ui` gains a new `tree/`
   subsystem: a focusable, virtual-scrolling **`Tree<T>`** — a faithful Turbo Vision
   `TOutlineViewer`/`TOutline` — that flattens a **forest** of expandable `TreeNode<T>`
