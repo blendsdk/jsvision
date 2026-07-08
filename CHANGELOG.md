@@ -11,6 +11,29 @@ the deprecation policy.
 
 ### Added
 
+- **Theming — a tiered color theme system for `@jsvision/core`.** A layer below the flat 63-role
+  `Theme` so a whole coherent theme falls out of a handful of seeds, plus lossless serialization and
+  runtime hot-swap. All additive — the flat `Theme` stays the widget contract and `defaultTheme` is
+  byte-unchanged. New public `@jsvision/core` exports:
+  - **Perceptual color math** — `ramp`, `lighten`, `darken`, `mix` (OKLab; throw on an unresolvable
+    `'default'` seed) and `contrastRatio` (WCAG 2.x; `NaN`, never a throw, when a color is
+    unresolvable).
+  - **The semantic alias tier** — the `ThemeColors` type (16 tokens) plus `createTheme(options)`
+    (required `mode` + `accent`, optional neutral/status seeds, alias-level `overrides`, and
+    role-level `roleOverrides`) and `rolesFromAliases(colors)` (the canonical 16-alias → 63-role
+    expansion). `ThemeOptions` type.
+  - **An optional `ThemeRole.attrs` axis** — a per-role text-attribute mask (dim/bold/italic/…),
+    passed through `themeRoleToStyle`; absent on every `defaultTheme` role.
+  - **Serialization** — `serializeTheme`/`parseTheme` (a versioned `{ version, roles }` envelope,
+    field-kind validation, single-printable-cell pattern check, no partial theme, pure `JSON.parse`,
+    no filesystem) and `InvalidThemeError`.
+  - **7 tree-shakeable presets** — `turboVisionTheme` (= `defaultTheme`), the attribute-driven
+    `monochromeTheme`, `slateTheme`, and the curated `nordTheme`/`draculaTheme`/`solarizedDarkTheme`/
+    `gruvboxDarkTheme`.
+  - **Runtime hot-swap** (`@jsvision/ui`) — `RenderRoot.setTheme`, `EventLoop.setTheme`, and
+    `Application.setTheme` replace the active theme and repaint in one coalesced frame from any call
+    site. A live `demo:themes` designer + a kitchen-sink `Theming` story demonstrate it.
+
 - **Declarative layout builders + engine `position:'fill'`.** `@jsvision/ui` gains an
   expression-oriented layer over the view tree so a whole screen composes in one nested
   call instead of imperative `new`/`.add()`/`.layout =` mutations: **`col`**/**`row`**

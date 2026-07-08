@@ -163,5 +163,12 @@ export {
   serializeTheme,
   parseTheme,
   InvalidThemeError,
+  turboVisionTheme,
+  monochromeTheme,
+  slateTheme,
+  nordTheme,
+  draculaTheme,
+  solarizedDarkTheme,
+  gruvboxDarkTheme,
 } from './color/index.js';
 export type { ColorRole, Rgb, Theme, ThemeRole, ThemeColors, ThemeOptions } from './color/index.js';

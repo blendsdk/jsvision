@@ -38,3 +38,14 @@ export type { ThemeOptions } from './create-theme.js';
 
 // Lossless, injection-safe theme serialization.
 export { serializeTheme, parseTheme, InvalidThemeError } from './serialize.js';
+
+// Shipped theme presets (tree-shakeable named exports).
+export {
+  turboVisionTheme,
+  monochromeTheme,
+  slateTheme,
+  nordTheme,
+  draculaTheme,
+  solarizedDarkTheme,
+  gruvboxDarkTheme,
+} from './presets.js';
