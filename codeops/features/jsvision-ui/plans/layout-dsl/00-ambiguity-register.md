@@ -26,6 +26,9 @@ of truth. Preflight (see `00-preflight-report.md`) revised AR-5, AR-10, and AR-1
 | AR-12 | API | The public export surface. | which names ship. | Values: `col`, `row`, `stack`, `grow`, `fixed`, `spacer`, `place`, `centered`, `topRight`, `bottomRight`, `topLeft`. Types: `Flex`, `Placement`. (`toLayout` stays internal.) The standalone `fill(view)` helper is **dropped** — it was identical to `grow(view)` and its name collided with the engine `position:'fill'` overlay mode and the `{ fill: true }` container prop; `grow(view)` covers it. `fill` survives only as a `Flex` prop key and the engine placement value. | Preflight PF-002 |
 | AR-13 | Behavior | `fill`'s interaction with `justify`/`align`. | — | A `fill` child is outside the flow, so `justify` never positions it and it fills regardless of `align`; it always maps to the full content box. | Derived from AR-1 |
 
+| AR-14 | Testing (runtime) | ST-15's oracle text reads `col([ fixed(sidebar,20), grow(main) ])` but its assertions (`main.bounds.width === 40` at width 60, `=== 20` at width 40, `=== 30` after sidebar→`fixed:10`) describe a **horizontal** sidebar+main split. In this engine a `col` stretches children to the full cross-axis width (both would be 60), so the width assertions are unsatisfiable by a `col`. | (a) honor the `col` text (assertions become impossible — non-viable); (b) honor the numeric assertions → `row`. | **(b) `row`** — the numbers are the real oracle; `col` is a transcription slip. Also: the doc's `col([…])` array notation is prose for the variadic `col(…children)` builder; the written test uses variadic form. | Exec runtime |
+
 **Gate check:** every row Status = ✅; AR-1…AR-4 carry explicit user decisions; AR-5…AR-13 are
 direct derivations of AR-1 or self-contained design decisions transcribed in 03-01/03-02 (AR-5/10/12
-revised by preflight). Zero items deferred. **Gate is OPEN.**
+revised by preflight); AR-14 is an exec-time correction of a self-contradictory oracle. Zero items
+deferred. **Gate is OPEN.**

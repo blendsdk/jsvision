@@ -22,3 +22,6 @@ export { themeRoleToStyle } from './theme-style.js';
 export { reflow } from './reflow.js';
 export { createRenderRoot } from './render-root.js';
 export type { RenderRoot } from './render-root.js';
+// Declarative layout builders — expression-oriented sugar over Group/View + layout props.
+export { col, row, grow, fixed, spacer } from './dsl.js';
+export type { Flex } from './dsl.js';
