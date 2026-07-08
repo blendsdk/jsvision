@@ -26,6 +26,17 @@ orientations), sharing its value-track math with `ScrollBar`. Standalone plan (n
 
 ## Notes
 
+- 2026-07-09: **Phase 2 DONE** (23/40 tasks). New private package `@jsvision/theme-designer` scaffolded
+  (app shape: `tsx start`, no build/barrel; deps core+ui+files; workspace linked). The pure, headless
+  `DesignerModel` landed — two-mode state (`roleSnapshot` null⇒derive / non-null⇒roles; first alias/seed
+  edit transitions), `createTheme`-based derivation + last-applied role overrides, `resolvedAliases`,
+  preset mapping (5 derived→derive, 2 literal→roles), `contrastRows`, `depthSamples`, serialize
+  round-trip, import validation, dirty lifecycle — plus the `#rrggbb` `hexValidator`. Spec-first
+  (ST-12…ST-22, ST-31; +9 impl). **Runtime decision AR-26:** the 16-color depth swatch draws the
+  Borland/DOS-16 hex for the emitted slot (fixed CGA reindex of `PALETTE`) — the plan's
+  `PALETTE[ANSI16_ORDER[…]]` was invalid (key-set mismatch). `yarn verify` green (16/16); `sync-versions
+  --check` green (private skipped). _Note: the plan's task counts were off (preflight drift); corrected to
+  40 total._
 - 2026-07-09: **PL-01 → EXECUTING** 🔄 (`exec_plan`). **Phase 1 DONE** (14/35 tasks): the reusable
   `Slider` (both orientations, keyboard/mouse/drag/wheel, `onInput`/`onChange`) landed in `@jsvision/ui`
   on an extracted pure `track.ts` value↔position helper that `ScrollBar` now shares (its suite + new
