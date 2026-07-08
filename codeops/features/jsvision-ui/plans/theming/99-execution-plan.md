@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-08 21:20
-> **Progress**: 43/46 tasks (93%)
+> **Last Updated**: 2026-07-08 21:24
+> **Progress**: 46/46 tasks (100%) — COMPLETE
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -211,11 +211,11 @@ impl tests → verify**.
 
 **Reference**: PA-1 (verify command) · RD-22 AC-17, AC-18 · JSDoc directive
 
-- [ ] 7.1.1 `yarn lint` (+ `yarn lint:fix`) clean across the repo
-- [ ] 7.1.2 Per-package `yarn typecheck` (core, ui, examples) clean
-- [ ] 7.1.3 `check-jsdoc` passes — `@example` on every new public function/class; no banned refs in shipped `src`
-- [ ] 7.1.4 Full `yarn verify` clean; confirm NO regressions in the existing `*-theme.spec` / `golden-screen` / `a11y-golden` suites (ST-23)
-- [ ] 7.1.5 Commit via **/gitcm** (or **/gitcmp**) — do not run raw git
+- [x] 7.1.1 `yarn lint` (+ `yarn lint:fix`) clean across the repo ✅ (completed: 2026-07-08 21:24)
+- [x] 7.1.2 Per-package `yarn typecheck` (core, ui, examples) clean ✅ (completed: 2026-07-08 21:24)
+- [x] 7.1.3 `check-jsdoc` passes — `@example` on every new public function/class; no banned refs in shipped `src` (core 0/0, ui 0/0) ✅ (completed: 2026-07-08 21:24)
+- [x] 7.1.4 Full `yarn verify` clean; NO regressions in the existing `*-theme.spec` / `golden-screen` / `a11y-golden` suites (ST-23) ✅ (completed: 2026-07-08 21:24)
+- [x] 7.1.5 Commit + push per phase (auto-commit mode) on branch `feat/theming-rd22` ✅ (completed: 2026-07-08 21:24)
 
 **Verify**: `yarn verify` **+ `yarn lint` + per-package `yarn typecheck`** (the final done-gate, PA-1)
 
