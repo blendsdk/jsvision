@@ -120,6 +120,26 @@ the deprecation policy.
 
 ### Changed
 
+- **`@jsvision/ui`: `RadioGroup`/`CheckGroup` now take an options object.** Breaking
+  (pre-1.0, unpublished): `new RadioGroup(labels, value)` → `new RadioGroup({ labels,
+  value })`, and the same for `CheckGroup`. New exported option types `RadioGroupOptions`
+  / `CheckGroupOptions`, matching the sibling `MultiCheckGroup`'s options-object shape.
+  No positional overload is kept.
+- **`@jsvision/ui`: color callbacks unified to `onInput` (live) / `onChange` (commit).**
+  Breaking (pre-1.0): `ColorSwatch`/`ColorPicker` retire `onCommit`. `onChange` now means
+  the discrete commit (Enter / Space / mouse-up) framework-wide, and the former live
+  `onChange` is renamed `onInput` (fires on every arrow / click / drag) — matching the
+  text `Input` convention. `ColorPicker` exposes both and forwards them to its hosted
+  swatch (a commit fires the picker's `onChange` and then closes the popup; no callback is
+  left unwired).
+- **`@jsvision/ui`: `run()` requires an interactive TTY by default.** New
+  `ApplicationOptions.requireTty?: boolean` (default `true`): `run()` asserts the terminal
+  essentials before taking over the screen and throws `EssentialsNotMetError` when there
+  is no interactive terminal at all — a cron/CI job, a container with no tty, or stdin and
+  stdout both redirected with no controlling terminal — instead of silently starting a
+  keyboard-less app. Piped output backed by a controlling terminal still runs (the host
+  binds `/dev/tty`). Pass `requireTty: false` for headless/automated runs that drive the
+  loop without a real terminal.
 - **RD-13: env switches renamed `BLENDTUI_*` → `JSVISION_*`.** The screen-safe
   logger's debug/log env switches are now `JSVISION_DEBUG` / `JSVISION_LOG`
   (was `BLENDTUI_DEBUG` / `BLENDTUI_LOG`), matching the `@jsvision` brand +
