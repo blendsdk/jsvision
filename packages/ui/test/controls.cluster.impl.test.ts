@@ -34,7 +34,7 @@ function mount(cluster: Cluster, rows: number): ReturnType<typeof createEventLoo
 
 test('↓ skips a disabled item (RadioGroup selects on move)', () => {
   const value = signal(0);
-  const rg = new RadioGroup(['~A~', '~B~', '~C~'], value);
+  const rg = new RadioGroup({ labels: ['~A~', '~B~', '~C~'], value: value });
   rg.setItemEnabled(1, false); // disable the middle item
   const loop = mount(rg, 3);
   loop.dispatch(key('down')); // from item 0, skip the disabled item 1 → item 2
@@ -43,7 +43,7 @@ test('↓ skips a disabled item (RadioGroup selects on move)', () => {
 
 test('click-to-item toggles the clicked CheckGroup row', () => {
   const value = signal([false, false]);
-  const cg = new CheckGroup(['~A~', '~B~'], value);
+  const cg = new CheckGroup({ labels: ['~A~', '~B~'], value: value });
   const loop = mount(cg, 2);
   loop.dispatch(mouseDown(1, 2)); // 1-based (1,2) → absolute (0,1) → item 1
   expect(value()).toEqual([false, true]);
@@ -51,7 +51,7 @@ test('click-to-item toggles the clicked CheckGroup row', () => {
 
 test('a short CheckGroup value reads missing flags as false and press writes a full-length array', () => {
   const value = signal([true]); // length 1, but two items
-  const cg = new CheckGroup(['~A~', '~B~'], value);
+  const cg = new CheckGroup({ labels: ['~A~', '~B~'], value: value });
   const loop = mount(cg, 2);
   loop.dispatch(mouseDown(1, 2)); // toggle item 1 (currently missing → false → true)
   expect(value()).toEqual([true, true]); // normalized to full length
@@ -59,7 +59,7 @@ test('a short CheckGroup value reads missing flags as false and press writes a f
 
 test('an out-of-range RadioGroup index marks nothing until a valid press', () => {
   const value = signal(5); // no item has index 5
-  const rg = new RadioGroup(['~A~', '~B~', '~C~'], value);
+  const rg = new RadioGroup({ labels: ['~A~', '~B~', '~C~'], value: value });
   const loop = mount(rg, 3);
   const buf = loop.renderRoot.buffer();
   expect(buf.get(2, 0)?.char).toBe(' '); // nothing marked
@@ -70,7 +70,7 @@ test('an out-of-range RadioGroup index marks nothing until a valid press', () =>
 
 test('Alt-<hotkey> selects the matching item', () => {
   const value = signal([false, false]);
-  const cg = new CheckGroup(['~B~old', '~I~talic'], value);
+  const cg = new CheckGroup({ labels: ['~B~old', '~I~talic'], value: value });
   const loop = mount(cg, 2);
   loop.dispatch(key('i', { alt: true })); // matches item 1's hotkey
   expect(value()).toEqual([false, true]);

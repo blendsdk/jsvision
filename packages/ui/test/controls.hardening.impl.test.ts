@@ -130,7 +130,7 @@ test('HR-58 impl: paste clamps at maxLength', () => {
 // HR-52 — a disabled CheckGroup row draws its ~hot~ run in the disabled color (matches a plain cell).
 test('HR-52 impl: a disabled CheckGroup row draws its hot run in the disabled color', () => {
   const flags = signal([false]);
-  const group = new CheckGroup(['~A~pple'], flags);
+  const group = new CheckGroup({ labels: ['~A~pple'], value: flags });
   group.setItemEnabled(0, false);
   const root = new Group();
   group.layout = { size: { kind: 'fixed', cells: 1 } };

@@ -8,6 +8,14 @@ import { Cluster } from './cluster.js';
 import type { ClusterBox } from './cluster.js';
 import type { Signal } from '../reactive/index.js';
 
+/** Options for a {@link RadioGroup}. */
+export interface RadioGroupOptions {
+  /** One label per option; each may mark its hotkey letter with `~X~` (e.g. `'~L~eft'`). */
+  readonly labels: readonly string[];
+  /** Two-way binding to the selected option index. */
+  readonly value: Signal<number>;
+}
+
 /**
  * A radio-button group bound to a `number` signal (the selected index).
  *
@@ -15,7 +23,7 @@ import type { Signal } from '../reactive/index.js';
  * import { Group, RadioGroup, signal } from '@jsvision/ui';
  *
  * const align = signal(0); // 0 = Left
- * const group = new RadioGroup(['~L~eft', '~C~enter', '~R~ight'], align);
+ * const group = new RadioGroup({ labels: ['~L~eft', '~C~enter', '~R~ight'], value: align });
  * group.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 20, height: 3 } };
  *
  * const panel = new Group();
@@ -27,13 +35,13 @@ export class RadioGroup extends Cluster {
   protected readonly value: Signal<number>;
 
   /**
-   * @param labels One label per item (each may mark its hotkey with `~X~`).
-   * @param value  A `Signal<number>` — the selected index.
+   * @param opts The `labels` (one per option, each optionally marking a `~X~` hotkey) and the
+   *             two-way `value` signal holding the selected index.
    */
-  constructor(labels: readonly string[], value: Signal<number>) {
-    super(labels);
-    this.value = value;
-    this.sel = value(); // start the highlight on the currently-selected item
+  constructor(opts: RadioGroupOptions) {
+    super(opts.labels);
+    this.value = opts.value;
+    this.sel = opts.value(); // start the highlight on the currently-selected item
     // Repaint when the bound index changes. Bind on mount, when this view's reactive scope exists.
     this.onMount(() => this.bind(() => this.value()));
   }

@@ -60,8 +60,8 @@ export function buildDialog(): BuiltDialog {
   const ageLabel = new Label('~A~ge', ageInput);
 
   // Clusters bound to their signals.
-  const check = new CheckGroup(STYLE_LABELS.map(withHotkey), styleFlags);
-  const radio = new RadioGroup(ALIGN_LABELS.map(withHotkey), align);
+  const check = new CheckGroup({ labels: STYLE_LABELS.map(withHotkey), value: styleFlags });
+  const radio = new RadioGroup({ labels: ALIGN_LABELS.map(withHotkey), value: align });
 
   // Buttons — every face state on screen at once (default / normal / normal / disabled).
   const ok = new Button('~O~K', { command: CMD_OK, default: true });
