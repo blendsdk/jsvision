@@ -12,6 +12,14 @@
  */
 export { VERSION } from './version.js';
 
+// Core essentials — the handful of `@jsvision/core` symbols a UI developer needs, re-exported so a
+// hello-world app imports from one package: terminal capability detection (`createApplication`
+// auto-detects, but a power user can resolve a profile to override it), the chord `createKeymap`
+// builder, and the `Attr` style-attribute constants (a runtime object used by value in a custom
+// `draw()`), plus the `CapabilityProfile`/`Style`/`Keymap` types.
+export { resolveCapabilities, resolveCapabilitiesAsync, createKeymap, Attr } from '@jsvision/core';
+export type { CapabilityProfile, Style, Keymap } from '@jsvision/core';
+
 // Layout engine — flexbox-style layout that works in whole terminal cells, so
 // boxes always fill their container exactly with no rounding gaps.
 export { apportion, solveTrack, layout } from './layout/index.js';
@@ -90,6 +98,9 @@ export { ListView, ListBox } from './list/index.js';
 export type { ListViewOptions, ListBoxOptions } from './list/index.js';
 export { Dialog, okButton, cancelButton, yesButton, noButton, okCancelButtons, yesNoButtons } from './dialog/index.js';
 export type { DialogOptions } from './dialog/index.js';
+// Async modal helpers over `Dialog` — show a message, ask yes/no, or prompt for one line of text.
+export { messageBox, confirm, inputBox } from './dialog/index.js';
+export type { ModalDialogHost, MessageBoxOptions, InputBoxOptions } from './dialog/index.js';
 
 // Input dropdowns — a `History` field (recall previously entered values) and a
 // `ComboBox` (an input paired with a drop-down list), plus the shared

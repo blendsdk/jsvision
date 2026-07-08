@@ -6,10 +6,10 @@
  * registers the standard window-management commands. The returned {@link Application} exposes the
  * `desktop` and `loop` for you to populate, and a `run()` that connects everything to a real terminal.
  */
+import { resolveCapabilities } from '@jsvision/core';
 import type { CapabilityProfile, Theme, Logger, Keymap, RuntimeAdapter } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
-import { Group, View } from '../view/index.js';
-import type { DispatchEvent } from '../view/index.js';
+import { Group } from '../view/index.js';
 import { createEventLoop } from '../event/index.js';
 import type { EventLoop } from '../event/index.js';
 import { Desktop } from '../desktop/index.js';
@@ -19,10 +19,14 @@ import type { StatusLine } from '../status/index.js';
 import { runApplication } from './run.js';
 import type { QuitState } from './run.js';
 
-/** Options for {@link createApplication}. Only `caps` is required. */
+/** Options for {@link createApplication}. Everything is optional — an app starts with no arguments. */
 export interface ApplicationOptions {
-  /** Required. Terminal capability profile that drives color-depth encoding for every painted frame. */
-  caps: CapabilityProfile;
+  /**
+   * Terminal capability profile that drives color-depth encoding for every painted frame. Defaults to
+   * `'auto'`, which detects the running terminal's capabilities via `resolveCapabilities()`. Pass an
+   * explicit profile to override the detection (used verbatim, no re-resolution).
+   */
+  caps?: CapabilityProfile | 'auto';
   /** Initial viewport size in cells. Defaults to the output terminal's size, or 80×24 if unknown. */
   viewport?: Size2D;
   /** Color/style theme applied to every view; defaults to the built-in `defaultTheme`. */
@@ -65,6 +69,20 @@ export interface Application {
   /** The underlying event loop. Use it to emit commands, manage focus, or run modals. */
   readonly loop: EventLoop;
   /**
+   * Register an app-wide handler for a named command; returns a function that unregisters it. Every
+   * handler registered for a command runs when that command is emitted, and a handled command is
+   * consumed there. Forwards to `loop.onCommand` — see it for the pre-process ordering and the
+   * modal-open caveat.
+   *
+   * @param command The command name to handle (e.g. a menu/status item's command).
+   * @param handler Called when the command is emitted.
+   * @returns A function that unregisters this handler (idempotent).
+   * @example
+   * const off = app.onCommand('about', () => messageBox(app, { title: 'About', text: '…' }));
+   * // later: off(); // stop handling 'about'
+   */
+  onCommand(command: string, handler: () => void): () => void;
+  /**
    * Connect to the terminal and run until the `'quit'` command, resolving to the exit code. The
    * terminal is always restored on exit — normal, thrown, or signalled.
    */
@@ -75,30 +93,12 @@ export interface Application {
 const CHROME_ROW_HEIGHT = 1;
 
 /**
- * A hidden view that ends `run()` when it sees the `'quit'` command. It is invisible (never painted
- * or hit-tested) but still participates in the pre-process phase, so it catches `'quit'` before any
- * other view could consume it.
+ * Resolve the capability option to a concrete profile: when it is absent or `'auto'`, detect the
+ * running terminal's capabilities; an explicit profile is returned unchanged. Called once at the top
+ * of {@link createApplication}, so `'auto'` never reaches the loop or `run()`.
  */
-class QuitCommandSink extends View {
-  constructor(private readonly onQuit: (code: number) => void) {
-    super();
-    this.preProcess = true;
-    this.state.visible = false;
-  }
-
-  draw(): void {
-    // intentionally empty — the sink never paints (visible:false)
-  }
-
-  override onEvent(ev: DispatchEvent): void {
-    const inner = ev.event;
-    if (inner.type === 'command' && inner.command === Commands.quit) {
-      // The exit code is the command's numeric argument, or 0 if none was given.
-      const code = typeof inner.arg === 'number' ? inner.arg : 0;
-      this.onQuit(code);
-      ev.handled = true;
-    }
-  }
+function resolveCaps(caps: ApplicationOptions['caps']): CapabilityProfile {
+  return caps === undefined || caps === 'auto' ? resolveCapabilities().profile : caps;
 }
 
 /**
@@ -153,20 +153,18 @@ export function syncOverlayVisible(overlay: Group): void {
  * The whole view tree is built and mounted in one pass; the menu bar and status line are wired to the
  * loop after it exists. Populate the returned `desktop` with windows and call `run()` to start.
  *
- * @param opts Required `caps`, plus optional viewport/theme/logger/keymap/menu/status/runtime/streams.
+ * @param opts All optional: `caps` (auto-detected by default), viewport/theme/logger/keymap/menu/status/runtime/streams.
  * @returns The assembled {@link Application}.
  * @example
- * import { resolveCapabilities } from '@jsvision/core';
  * import { createApplication, Window, menuBar, subMenu, item, statusLine, statusItem, Commands } from '@jsvision/ui';
  *
- * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
- *
+ * // Zero-config: capabilities are auto-detected and everything imports from one package.
  * const bar = menuBar([
  *   subMenu('~W~indow', [item('~T~ile', Commands.tile), item('~C~ascade', Commands.cascade), item('E~x~it', Commands.quit)]),
  * ]);
  * const status = statusLine([statusItem('~T~ile', Commands.tile, 'F4'), statusItem('~Q~uit', Commands.quit, 'Alt+X')]);
  *
- * const app = createApplication({ caps, menuBar: bar, statusLine: status });
+ * const app = createApplication({ menuBar: bar, statusLine: status });
  *
  * const win = new Window('Editor');
  * win.layout.rect = { x: 1, y: 2, width: 30, height: 8 };
@@ -176,6 +174,7 @@ export function syncOverlayVisible(overlay: Group): void {
  * process.exit(code);
  */
 export function createApplication(opts: ApplicationOptions): Application {
+  const caps = resolveCaps(opts.caps); // a concrete profile from here down — 'auto' never leaks past this
   const viewport = resolveViewport(opts);
 
   // The owned desktop fills the column below the menu and above the status row.
@@ -193,9 +192,8 @@ export function createApplication(opts: ApplicationOptions): Application {
   const root = new Group();
   root.layout = { direction: 'col' };
 
+  // The shared cell the loop's built-in quit registration resolves through; `run()` fills it in.
   const quitState: QuitState = { resolve: null };
-  const sink = new QuitCommandSink((code) => quitState.resolve?.(code));
-  root.add(sink);
   if (opts.menuBar !== undefined) {
     opts.menuBar.layout = { size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
     root.add(opts.menuBar);
@@ -209,12 +207,13 @@ export function createApplication(opts: ApplicationOptions): Application {
 
   // Build the loop and mount the tree, then wire the parts that need the loop to exist first.
   const loop = createEventLoop(viewport, {
-    caps: opts.caps,
+    caps,
     theme: opts.theme,
     logger: opts.logger,
     keymap: opts.keymap,
     commands: Object.values(Commands),
     quitCommand: Commands.quit, // a quit while a dialog is open cascades top-down through the modals
+    onQuit: (code) => quitState.resolve?.(code), // the loop registers quit through its command sink
     revealKey: opts.revealKey, // undefined leaves the loop's F12 default in place
   });
   loop.mount(root);
@@ -266,10 +265,11 @@ export function createApplication(opts: ApplicationOptions): Application {
   return {
     desktop,
     loop,
+    onCommand: (command, handler) => loop.onCommand(command, handler),
     run: () =>
       runApplication({
         loop,
-        caps: opts.caps,
+        caps,
         runtime: opts.runtime,
         input: opts.input,
         output: opts.output,
