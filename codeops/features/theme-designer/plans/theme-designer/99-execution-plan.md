@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 00:38
-> **Progress**: 23/40 tasks (58%)
+> **Last Updated**: 2026-07-09 01:00
+> **Progress**: 34/40 tasks (85%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -102,25 +102,25 @@ the walkthrough e2e, retires the old live demo, and wires CI/docs.
 
 **Reference**: [03-03](03-03-designer-app.md) · [07](07-testing-strategy.md) ST-24…ST-29 · AR-5/12/13/14/15/20/21/24
 
-- [ ] 3.1.1 App-core spec tests on a headless `Application` (injected input/output, `requireTty:false`): select→picker (ST-24), slider edit→setTheme (ST-25), dirty guard (ST-26), open/cancel via a fake FileDialog/FileSystem (ST-27), save (ST-28), invalid import→error+unchanged (ST-29) — `packages/theme-designer/test/app.spec.test.ts`
-- [ ] 3.1.2 Verify RED
+- [x] 3.1.1 App-core spec tests on a headless `Application` (injected input/output, `requireTty:false`): select→picker (ST-24), slider edit→setTheme (ST-25), dirty guard (ST-26), open/cancel via a fake FileDialog/FileSystem (ST-27), save (ST-28), invalid import→error+unchanged (ST-29) — `packages/theme-designer/test/app.spec.test.ts` — 2026-07-09 01:00
+- [x] 3.1.2 Verify RED — 2026-07-09 01:00
 
 ### Step 3.2: Implementation (GREEN)
 
 **Reference**: [03-03](03-03-designer-app.md)
 
-- [ ] 3.2.1 `gallery.ts` — the curated live-preview widget scene (AR-5) — `packages/theme-designer/src/view/gallery.ts`
-- [ ] 3.2.2 `preview-panel.ts` — hosts the gallery; repaints on `model.theme()` via `setTheme`; honors preview depth — `packages/theme-designer/src/view/preview-panel.ts`
-- [ ] 3.2.3 `roles-panel.ts` — 16 aliases + Advanced-roles list; selects the edit target (AR-13) — `packages/theme-designer/src/view/roles-panel.ts`
-- [ ] 3.2.4 `inspector-panel.ts` — R/G/B `Slider`s + hex `Input` + `ColorSwatch` (synced, loop-guarded), contrast rows, depth **sample strip** (display-only via `depthSamples`; no gallery re-render, PF-004) — `packages/theme-designer/src/view/inspector-panel.ts`
-- [ ] 3.2.5 `host/file-io.ts` — open/save via `@jsvision/files` **`openFile(host,{save})`** + read/write; import error→`errorBox`/`messageBox`; `markSaved` (AR-4/20/21, PF-007) — `packages/theme-designer/src/host/file-io.ts`
-- [ ] 3.2.6 `app.ts` — compose menu bar + 3-pane workspace + status line; wire commands (presets/reset/open/save/quit/depth) + the dirty-guard `confirm` (AR-12/24) — `packages/theme-designer/src/app.ts`
-- [ ] 3.2.7 Verify GREEN
+- [x] 3.2.1 `gallery.ts` — the curated live-preview widget scene (AR-5) — `packages/theme-designer/src/view/gallery.ts` — 2026-07-09 01:00
+- [x] 3.2.2 `preview-panel.ts` — hosts the gallery; repaints on `model.theme()` via `setTheme`; honors preview depth — `packages/theme-designer/src/view/preview-panel.ts` — 2026-07-09 01:00
+- [x] 3.2.3 `roles-panel.ts` — 16 aliases + Advanced-roles list; selects the edit target (AR-13) — `packages/theme-designer/src/view/roles-panel.ts` — 2026-07-09 01:00
+- [x] 3.2.4 `inspector-panel.ts` — R/G/B `Slider`s + hex `Input` + `ColorSwatch` (synced, loop-guarded), contrast rows, depth **sample strip** (display-only via `depthSamples`; no gallery re-render, PF-004) — `packages/theme-designer/src/view/inspector-panel.ts` — 2026-07-09 01:00
+- [x] 3.2.5 `host/file-io.ts` — open/save via `@jsvision/files` **`openFile(host,{save})`** + read/write; import error→`errorBox`/`messageBox`; `markSaved` (AR-4/20/21, PF-007) — `packages/theme-designer/src/host/file-io.ts` — 2026-07-09 01:00
+- [x] 3.2.6 `app.ts` — compose menu bar + 3-pane workspace + status line; wire commands (presets/reset/open/save/quit/depth) + the dirty-guard `confirm` (AR-12/24) — `packages/theme-designer/src/app.ts` — 2026-07-09 01:00
+- [x] 3.2.7 Verify GREEN — 2026-07-09 01:00
 
 ### Step 3.3: Impl tests & hardening
 
-- [ ] 3.3.1 Impl tests: menu/command wiring, depth toggle re-renders preview, save-error path — `packages/theme-designer/test/app.impl.test.ts`
-- [ ] 3.3.2 Verify: `yarn verify` + ui/core/theme-designer `typecheck` + lint green
+- [x] 3.3.1 Impl tests: menu/command wiring, depth toggle re-renders preview, save-error path — `packages/theme-designer/test/app.impl.test.ts` — 2026-07-09 01:00
+- [x] 3.3.2 Verify: `yarn verify` + ui/core/theme-designer `typecheck` + lint green — 2026-07-09 01:00
 
 **Verify**: `yarn verify` (+ per-package `typecheck`)
 
