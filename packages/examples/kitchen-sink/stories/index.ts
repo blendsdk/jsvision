@@ -43,6 +43,7 @@ import { editorStory } from './editor.story.js';
 import { memoStory } from './memo.story.js';
 import { terminalStory } from './terminal.story.js';
 import { chDirDialogStory } from './chdir-dialog.story.js';
+import { themingStory } from './theming.story.js';
 
 /**
  * Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers
@@ -84,4 +85,5 @@ export const STORIES: readonly Story[] = [
   editorStory,
   memoStory,
   terminalStory,
+  themingStory,
 ];
