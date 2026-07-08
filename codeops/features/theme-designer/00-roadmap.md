@@ -3,7 +3,7 @@
 > **Feature-Set**: Theme Designer
 > **Status**: In Progress
 > **Created**: 2026-07-08
-> **Last Updated**: 2026-07-08
+> **Last Updated**: 2026-07-09
 > **Progress**: 0 / 1 (0%)
 > **CodeOps Skills Version**: 3.3.2
 
@@ -22,10 +22,20 @@ orientations), sharing its value-track math with `ScrollBar`. Standalone plan (n
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
-| PL-01 | Theme designer app + reusable `Slider` | — (standalone plan) | [theme-designer](plans/theme-designer/00-index.md) | Executing | 🔄 | 2026-07-09 | 4 phases / 35 tasks, spec-first (ST-1…ST-31). Zero-Ambiguity Gate PASSED (AR-1…AR-25); **Preflight PASSED** — 10 findings applied (see `plans/theme-designer/00-preflight-report.md`): two-mode model (`roleSnapshot` derive/roles) replaces the single alias-set; +3 additive core exports (`aliasesFromSeeds`, `rgb256`, preset seed sets) beyond the `sliderTrack`/`sliderThumb` roles; R7 depth scoped to a display-only sample strip (app `RenderRoot.caps` immutable); file I/O reuses `openFile`/`errorBox`. New private package `@jsvision/theme-designer` (deps core+ui+files; publish deferred while ui is private). Additive ui: `Slider` (H+V) on an extracted shared track-math helper (ScrollBar refactored, its tests guard it). Deferred v1: HSL · undo/redo · draggable splitters · custom-preset library. Next: `exec_plan theme-designer`. |
+| PL-01 | Theme designer app + reusable `Slider` | — (standalone plan) | [theme-designer](plans/theme-designer/00-index.md) | Executing | 🔄 | 2026-07-09 | 4 phases / 40 tasks (34/40 done — Phases 1–3), spec-first (ST-1…ST-31). Zero-Ambiguity Gate PASSED (AR-1…AR-25); **Preflight PASSED** — 10 findings applied (see `plans/theme-designer/00-preflight-report.md`): two-mode model (`roleSnapshot` derive/roles) replaces the single alias-set; +3 additive core exports (`aliasesFromSeeds`, `rgb256`, preset seed sets) beyond the `sliderTrack`/`sliderThumb` roles; R7 depth scoped to a display-only sample strip (app `RenderRoot.caps` immutable); file I/O reuses `openFile`/`errorBox`. New private package `@jsvision/theme-designer` (deps core+ui+files; publish deferred while ui is private). Additive ui: `Slider` (H+V) on an extracted shared track-math helper (ScrollBar refactored, its tests guard it). Deferred v1: HSL · undo/redo · draggable splitters · custom-preset library. Next: `exec_plan theme-designer`. |
 
 ## Notes
 
+- 2026-07-09: **Phase 3 DONE** (34/40 tasks). The interactive three-pane app: `app.ts`
+  (`createDesignerApp`) composes the menu/status shell + a workspace row (roles rail · live preview ·
+  inspector) over the pure model, wiring commands (open/save/save-as/presets/reset/depth/quit) with an
+  injectable file/modal seam layer (`host/file-io.ts` reusing `openFile`/`errorBox`) so the whole
+  app-core is headless-testable. The inspector syncs R/G/B `Slider`s ↔ a `#rrggbb` `Input` ↔ a DOS-16
+  `ColorSwatch` (a single reactive owner, `untrack`-guarded to break the read/write cycle) and shows
+  live contrast + depth readouts; the gallery repaints on every edit via `app.setTheme`. Spec-first
+  (ST-24…ST-29; +4 impl). `yarn verify` green (16/16). Runtime note: the rail/slider/hex effects wrap
+  their model reads/writes in `untrack` to avoid a `ReactiveCycleError` (an effect must not depend on a
+  signal it writes).
 - 2026-07-09: **Phase 2 DONE** (23/40 tasks). New private package `@jsvision/theme-designer` scaffolded
   (app shape: `tsx start`, no build/barrel; deps core+ui+files; workspace linked). The pure, headless
   `DesignerModel` landed — two-mode state (`roleSnapshot` null⇒derive / non-null⇒roles; first alias/seed
