@@ -122,7 +122,7 @@ the deprecation policy.
 
 - **`@jsvision/ui`: `RadioGroup`/`CheckGroup` now take an options object.** Breaking
   (pre-1.0, unpublished): `new RadioGroup(labels, value)` → `new RadioGroup({ labels,
-  value })`, and the same for `CheckGroup`. New exported option types `RadioGroupOptions`
+value })`, and the same for `CheckGroup`. New exported option types `RadioGroupOptions`
   / `CheckGroupOptions`, matching the sibling `MultiCheckGroup`'s options-object shape.
   No positional overload is kept.
 - **`@jsvision/ui`: color callbacks unified to `onInput` (live) / `onChange` (commit).**
