@@ -12,8 +12,19 @@
  * internals. The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
-import { resolveCapabilities, Attr } from '@jsvision/core';
-import { createRenderRoot, createRoot } from '@jsvision/ui';
+import {
+  resolveCapabilities,
+  Attr,
+  turboVisionTheme,
+  monochromeTheme,
+  slateTheme,
+  nordTheme,
+  draculaTheme,
+  solarizedDarkTheme,
+  gruvboxDarkTheme,
+  type Theme,
+} from '@jsvision/core';
+import { createRenderRoot, createRoot, Group, Button, Text } from '@jsvision/ui';
 import { STORIES } from '../kitchen-sink/stories/index.js';
 import { at } from '../kitchen-sink/story.js';
 
@@ -150,6 +161,48 @@ test('the controls/accelerators story reveals underlined hotkeys on arm', () => 
     expect(anyUnderlined(), 'a hot glyph underlines on reveal').toBe(true);
     dispose();
   });
+});
+
+// ST-35 (RD-22 AC-16) — the Theming showcase story is registered with the required metadata (unique
+// id `theming/presets`, category `Theming`, an `rd`) and paints headlessly.
+test('ST-35: the theming/presets story is registered with metadata and paints', () => {
+  const story = STORIES.find((s) => s.id === 'theming/presets');
+  expect(story, 'a story with id "theming/presets" is registered').toBeTruthy();
+  expect(story!.category, 'category Theming').toBe('Theming');
+  expect(story!.rd, 'provenance RD chip').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    expect(paintedCells(rr.buffer().rows()), 'the theming story painted nothing').toBeGreaterThan(0);
+    dispose();
+  });
+});
+
+// ST-35 (RD-22 AC-16) — every shipped preset renders a representative widget set to a non-empty
+// buffer, so a hot-swap to any preset paints (the render root is themed with the preset directly).
+test('ST-35: every preset renders a representative widget set to a non-empty buffer', () => {
+  const presets: Record<string, Theme> = {
+    turboVisionTheme,
+    monochromeTheme,
+    slateTheme,
+    nordTheme,
+    draculaTheme,
+    solarizedDarkTheme,
+    gruvboxDarkTheme,
+  };
+  for (const [name, theme] of Object.entries(presets)) {
+    createRoot((dispose) => {
+      const g = new Group();
+      g.background = 'window';
+      g.add(at(new Text('Themed widgets'), 1, 0, 20, 1));
+      g.add(at(new Button('~O~K', { onClick: () => {} }), 1, 2, 8, 2));
+      const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps, theme });
+      rr.mount(at(g, 0, 0, WIDTH, HEIGHT));
+      expect(paintedCells(rr.buffer().rows()), `${name} painted nothing`).toBeGreaterThan(0);
+      dispose();
+    });
+  }
 });
 
 // The core smoke oracle: each story builds + mounts + draws without throwing, and paints something.

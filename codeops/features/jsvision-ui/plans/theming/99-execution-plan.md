@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-08 21:10
-> **Progress**: 36/46 tasks (78%)
+> **Last Updated**: 2026-07-08 21:20
+> **Progress**: 43/46 tasks (93%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -185,23 +185,23 @@ impl tests → verify**.
 ### Step 6.1: Spec tests (red)
 **Reference**: `03-06` · ST-30…ST-35 · AR-278, AR-273, AR-283, Kitchen-sink gate
 
-- [ ] 6.1.1 Write pure-designer spec (ST-30…ST-33) — `packages/examples/test/themes-designer.spec.test.ts`
-- [ ] 6.1.2 Extend the kitchen-sink smoke for the `Theming` story + every-preset mount (ST-35) — `packages/examples/test/kitchen-sink.smoke.spec.test.ts`
-- [ ] 6.1.3 Verify FAIL (red)
+- [x] 6.1.1 Write pure-designer spec (ST-30…ST-33) — `packages/examples/test/themes-designer.spec.test.ts` ✅ (completed: 2026-07-08 21:16)
+- [x] 6.1.2 Extend the kitchen-sink smoke for the `Theming` story + every-preset mount (ST-35) — `packages/examples/test/kitchen-sink.smoke.spec.test.ts` ✅ (completed: 2026-07-08 21:16)
+- [x] 6.1.3 Verify FAIL (red) ✅ (completed: 2026-07-08 21:16)
 
 ### Step 6.2: Implement (green)
 **Reference**: `03-06 §Implementation Details`
 
-- [ ] 6.2.1 Pure `designer.ts` — state machine + `currentTheme`/`exportJson`/`contrastWarnings`/cycles — `packages/examples/themes-demo/designer.ts`
-- [ ] 6.2.2 Real-TTY `main.ts` (`createApplication` + `app.setTheme` live repaint + export panel + depth toggle + `loadTheme`) — `packages/examples/themes-demo/main.ts`
-- [ ] 6.2.3 `theming.story.ts` + registry line + `"demo:themes"` script — `kitchen-sink/stories/{theming.story,index}.ts`, `packages/examples/package.json`
+- [x] 6.2.1 Pure `designer.ts` — state machine + `currentTheme`/`exportJson`/`contrastWarnings`/cycles — `packages/examples/themes-demo/designer.ts` ✅ (completed: 2026-07-08 21:20)
+- [x] 6.2.2 `main.ts` — headless walkthrough branch (e2e-tested) + live-TTY `createApplication` designer (`app.setTheme` live repaint, status-line cycles, JSON export, `loadTheme`) — `packages/examples/themes-demo/main.ts` ✅ (completed: 2026-07-08 21:20)
+- [x] 6.2.3 `theming.story.ts` (preset palette swatches) + registry line + `"demo:themes"` script — `kitchen-sink/stories/{theming.story,index}.ts`, `packages/examples/package.json` ✅ (completed: 2026-07-08 21:20)
 
 **Deliverables**:
-- [ ] ST-30…ST-33, ST-35 pass (green)
+- [x] ST-30…ST-33, ST-35 pass (green) ✅ (completed: 2026-07-08 21:20)
 
 ### Step 6.3: Impl tests & verify
 
-- [ ] 6.3.1 Designer walkthrough e2e (ST-34) — `packages/examples/test/themes-demo.e2e.test.ts`
+- [x] 6.3.1 Designer walkthrough e2e (ST-34) — `packages/examples/test/themes-demo.e2e.test.ts` ✅ (completed: 2026-07-08 21:20)
 
 **Verify**: `yarn verify` (+ `yarn workspace @jsvision/examples test:e2e`)
 
