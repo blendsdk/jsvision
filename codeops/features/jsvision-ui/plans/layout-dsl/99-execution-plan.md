@@ -1,7 +1,7 @@
 # Execution Plan — layout-dsl
 
 > **Feature**: jsvision-ui · **Implements**: jsvision-ui/DX-P8 · **CodeOps Skills Version**: 3.3.2
-> **Progress**: 9/23 tasks (39%) · **Last Updated**: 2026-07-08
+> **Progress**: 13/23 tasks (57%) · **Last Updated**: 2026-07-08
 
 Spec-first per phase: spec tests → red → implement → green → impl tests → verify. `[ ]` todo ·
 `[~]` implemented (unverified) · `[x]` verified. A task is `[x]` only after its verify passes.
@@ -38,13 +38,14 @@ typecheck build test check:docs`); no separate manual lint/typecheck/docs steps 
 
 ## Phase 3 — Overlays: stack + placement (→ 03-01, FR-5/6/8)
 
-- [ ] 3.1 Write `test/layout-dsl-stack.spec.test.ts` — ST-11…ST-14; confirm **red**.
-- [ ] 3.2 `src/view/dsl.ts`: `Placement`, `stack`/`Stack` (fills → `position:'fill'`; centered box →
-  `absolute` + `View.centered`; corner/edge → `absolute` + `tracked` self-correct on draw),
-  `place`/`centered`/`topRight`/`bottomRight`/`topLeft`; `layerRect`. Add to barrels.
-- [ ] 3.3 Verify ST-11…ST-14 **green** (ST-12/14 assert lag-free = single flush; ST-13 may settle).
-- [ ] 3.4 Write `test/layout-dsl-stack.impl.test.ts` — only-absolute stack sizes by own `fr`, corner
-  clamp when box > stack, `place` re-tag; verify. **Check `dsl.ts` ≤ 500 lines; split per 03-01 if not.**
+- [x] 3.1 Write `test/layout-dsl-stack.spec.test.ts` — ST-11…ST-14; confirm **red**. _(2026-07-08)_
+- [x] 3.2 `src/view/dsl.ts`: `Placement`, `stack`/`Stack` (fills → `position:'fill'`; centered box →
+  `absolute` + `View.centered`; corner/edge → `absolute` + `tracked` change-gated self-correct on
+  draw), `place`/`centered`/`topRight`/`bottomRight`/`topLeft`; `layerRect`. Added to barrels. _(2026-07-08)_
+- [x] 3.3 Verify ST-11…ST-14 **green** (ST-12/14 assert lag-free = single frame; ST-13 settles in 2
+  frames and the drain guard proves convergence). _(2026-07-08)_
+- [x] 3.4 Write `test/layout-dsl-stack.impl.test.ts` — only-non-fill stack sizes by own `fr`, corner
+  clamp when box > stack, `place` re-tag; verify. **`dsl.ts` = 432 lines (≤ 500) — no split.** _(2026-07-08)_
 
 ## Phase 4 — Docs, exports, kitchen-sink, hardening (→ FR-10/11)
 

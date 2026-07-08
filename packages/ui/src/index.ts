@@ -47,9 +47,10 @@ export { View, Group, intersect, translate, contains, createRenderRoot } from '.
 export type { Point, ViewState, DrawContext, ThemeRoleName, RenderRoot, RenderRootOptions } from './view/index.js';
 
 // Declarative layout builders — compose a screen as one nested expression (`col`/`row` containers,
-// `grow`/`fixed` size shorthands, `spacer` gaps) instead of imperative `new`/`.add()`/`.layout =`.
-export { col, row, grow, fixed, spacer } from './view/index.js';
-export type { Flex } from './view/index.js';
+// `grow`/`fixed` size shorthands, `spacer` gaps, and a `stack` z-overlay with `place`/`centered`/
+// corner helpers) instead of imperative `new`/`.add()`/`.layout =`.
+export { col, row, grow, fixed, spacer, stack, place, centered, topRight, bottomRight, topLeft } from './view/index.js';
+export type { Flex, Placement } from './view/index.js';
 
 // The event loop — routes keyboard and mouse input to views, manages focus, and
 // drives one render per tick. Host-agnostic: you supply the input source.
