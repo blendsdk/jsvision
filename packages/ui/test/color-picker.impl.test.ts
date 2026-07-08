@@ -132,3 +132,33 @@ test('the chip caption uses nameFor(value)', () => {
   for (let x = 8; x < 8 + 5; x += 1) caption += buffer.get(x, 3)?.char ?? '';
   expect(caption, 'chip caption via nameFor').toBe('N-red');
 });
+
+// ── IT-1: the picker forwards its own onInput (live) / onChange (commit) through the hosted swatch ──
+
+test('IT-1: live nav forwards the picker onInput; a commit forwards onChange exactly once + closes', () => {
+  const loop = createEventLoop({ width: 40, height: 20 }, { caps });
+  const value = signal<Color>('black'); // swatch cursor inits to cell 0
+  const inputs: Color[] = [];
+  const commits: Color[] = [];
+  const picker = new ColorPicker({ value, onInput: (c) => inputs.push(c), onChange: (c) => commits.push(c) });
+  picker.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } };
+  const overlay = new Group();
+  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  overlay.state.visible = false;
+  const root = new Group();
+  root.add(picker);
+  root.add(overlay);
+  loop.mount(root);
+  loop.popupHost = { overlay, focusView: (v) => loop.focusView(v), getFocused: () => loop.getFocused() } as PopupHost;
+  loop.renderRoot.flush();
+
+  loop.focusView(picker);
+  loop.dispatch(key('down')); // open the popup
+  loop.renderRoot.flush();
+  loop.dispatch(key('right')); // live nav → cell 1 (red)
+  expect(inputs.at(-1), 'live nav forwarded the picker onInput').toBe('red');
+  expect(commits, 'no onChange fires during live nav').toEqual([]);
+  loop.dispatch(key('enter')); // commit at the cursor
+  expect(commits, 'the commit forwarded the picker onChange exactly once').toEqual(['red']);
+  expect(popupOpen(overlay), 'the popup closed on commit').toBe(false);
+});

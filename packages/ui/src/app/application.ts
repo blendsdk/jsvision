@@ -60,6 +60,20 @@ export interface ApplicationOptions {
    * the ambiguous-width glyphs render double-width. Default `true`; pass `false` to skip the probe.
    */
   adaptAmbiguousWidth?: boolean;
+  /**
+   * Require an interactive TTY at startup. When `true` (the default), `run()` asserts the terminal
+   * essentials before taking over the screen and throws `EssentialsNotMetError` when there is no
+   * interactive terminal at all — a cron/CI job, a container with no tty, or stdin and stdout both
+   * redirected with no controlling terminal — instead of silently starting a keyboard-less app.
+   * (Piping output while a controlling terminal exists still works: the host binds `/dev/tty`.) Set
+   * `false` for headless/automated runs that drive the loop without a real terminal.
+   *
+   * @example
+   * // A headless integration test drives run() without a terminal:
+   * const app = createApplication({ caps, requireTty: false });
+   * const exit = app.run(); // starts against injected streams; no EssentialsNotMetError
+   */
+  requireTty?: boolean;
 }
 
 /** A ready-to-run terminal application. Populate `desktop`/`loop`, then call `run()`. */
@@ -275,6 +289,7 @@ export function createApplication(opts: ApplicationOptions): Application {
         output: opts.output,
         warnAmbiguousWidth: opts.warnAmbiguousWidth,
         adaptAmbiguousWidth: opts.adaptAmbiguousWidth,
+        requireTty: opts.requireTty,
         quitState,
       }),
   };

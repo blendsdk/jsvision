@@ -4,14 +4,16 @@
  * pure geometry and wrap-around navigation live in `color-grid.ts`.
  *
  * Interaction and behaviour:
- * - **Live selection** — every arrow key, click, and drag updates the bound `value` immediately and
- *   the marker follows. Arrow navigation wraps around the ends of the palette.
+ * - **Live selection** — every arrow key, click, and drag updates the bound `value` immediately, the
+ *   marker follows, and the optional `onInput` callback fires. Arrow navigation wraps around the ends
+ *   of the palette.
  * - **Marker** — drawn on the cell whose color equals `value`. If `value` is an off-palette color
  *   (e.g. a custom hex color from a hosting {@link ColorPicker}) no marker shows, but arrow navigation
  *   still works from the internal cursor. On a near-black cell the marker is drawn in a contrasting
  *   colour so it stays visible.
- * - **Commit hook** — `Enter`, `Space`, or a mouse-up over a cell fires the optional `onCommit`
- *   callback, which a hosting `ColorPicker` uses to close its dropdown. Standalone, this is a no-op.
+ * - **Commit** — `Enter`, `Space`, or a mouse-up over a cell fires the optional `onChange` callback
+ *   (the discrete commit), which a hosting `ColorPicker` uses to close its dropdown. Standalone, this
+ *   is a no-op.
  * - **No frame** — the swatch draws only its cells; a hosting popup or window supplies any border.
  */
 import { View } from '../view/index.js';
@@ -47,18 +49,19 @@ export interface ColorSwatchOptions {
   colors?: readonly Color[];
   /** Columns per row (default 4). */
   columns?: number;
-  /** Fired when `value` changes. */
+  /** Fired on every live value change (arrow / click / drag). */
+  onInput?: (c: Color) => void;
+  /** Fired on the discrete commit gesture — Enter, Space, or a mouse-up over a cell. */
   onChange?: (c: Color) => void;
   /** Pure color-name accessor — used by a hosting `ColorPicker` to caption its chip. */
   nameFor?: (c: Color) => string;
-  /** Close hook a hosting `ColorPicker` wires up (fired on Enter/Space or a mouse-up over a cell). */
-  onCommit?: (c: Color) => void;
 }
 
 /**
  * A focusable grid of color cells. Selection is live — the bound `value` changes on every arrow key,
- * click, and drag, and the `◘` marker tracks it. Enter/Space or a mouse-up over a cell fires the
- * commit hook (used by a hosting `ColorPicker` to close its dropdown).
+ * click, and drag (each firing `onInput`), and the `◘` marker tracks it. Enter/Space or a mouse-up
+ * over a cell is the discrete commit and fires `onChange` (used by a hosting `ColorPicker` to close
+ * its dropdown).
  *
  * @example
  * import { Group, ColorSwatch, signal } from '@jsvision/ui';
@@ -73,7 +76,8 @@ export interface ColorSwatchOptions {
  *   value,
  *   colors: ANSI16_ORDER as readonly Color[],
  *   columns: 4,
- *   onChange: (c) => console.log('picked', c), // arrows / click / drag all update `value` live
+ *   onInput: (c) => console.log('previewing', c), // arrows / click / drag update `value` live
+ *   onChange: (c) => console.log('committed', c), // Enter / Space / mouse-up commits
  * });
  * swatch.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 4 } };
  * g.add(swatch);
@@ -89,23 +93,23 @@ export class ColorSwatch extends View {
 
   protected readonly colors: readonly Color[];
   protected readonly columns: number;
+  protected readonly onInput?: (c: Color) => void;
   protected readonly onChange?: (c: Color) => void;
-  protected readonly onCommit?: (c: Color) => void;
   /** The cell the arrow keys move from; kept in sync with `value` on every change. */
   protected readonly cursor: Signal<number>;
   /** The cursor before the current mouse gesture, restored when a drag moves outside the grid. */
   private preDrag = 0;
 
   /**
-   * @param opts The two-way `value` + optional `colors`/`columns`/`onChange`/`nameFor`/`onCommit`.
+   * @param opts The two-way `value` + optional `colors`/`columns`/`onInput`/`onChange`/`nameFor`.
    */
   constructor(opts: ColorSwatchOptions) {
     super();
     this.value = opts.value;
     this.colors = opts.colors ?? (ANSI16_ORDER as readonly Color[]);
     this.columns = opts.columns ?? 4;
+    this.onInput = opts.onInput;
     this.onChange = opts.onChange;
-    this.onCommit = opts.onCommit;
     this.nameFor = opts.nameFor;
     const i = this.colors.indexOf(this.value());
     this.cursor = signal(i >= 0 ? i : 0);
@@ -130,11 +134,11 @@ export class ColorSwatch extends View {
     return { width, height: Math.max(1, rows) };
   }
 
-  /** Programmatically select a color: set `value` (+ `onChange`) and fire the commit hook (`onCommit`). */
+  /** Programmatically select a color: set `value` and fire both the live `onInput` and commit `onChange`. */
   select(color: Color): void {
     this.value.set(color);
+    this.onInput?.(color);
     this.onChange?.(color);
-    this.onCommit?.(color);
   }
 
   /**
@@ -146,12 +150,12 @@ export class ColorSwatch extends View {
     this.cursor.set(idx);
     const c = this.colors[idx];
     this.value.set(c);
-    this.onChange?.(c);
+    this.onInput?.(c);
   }
 
-  /** Fire the commit hook with the current `value` (Enter/Space or a mouse-up over a cell). */
+  /** Fire the commit callback (`onChange`) with the current `value` (Enter/Space or a mouse-up over a cell). */
   protected close(): void {
-    this.onCommit?.(this.value());
+    this.onChange?.(this.value());
   }
 
   /** Paint the color cells, then the `◘` marker on the selected cell (contrasting colour if near-black). */

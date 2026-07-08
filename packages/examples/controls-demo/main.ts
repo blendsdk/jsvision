@@ -84,8 +84,8 @@ function main(): void {
   const label = new Label('~N~ame', input);
   const phoneInput = new Input({ value: phone, validator: picture('###-###-####') });
   const phoneLabel = new Label('~P~hone', phoneInput);
-  const check = new CheckGroup(['~B~old', '~I~talic'], styleFlags);
-  const radio = new RadioGroup(['~L~eft', '~C~enter', '~R~ight'], align);
+  const check = new CheckGroup({ labels: ['~B~old', '~I~talic'], value: styleFlags });
+  const radio = new RadioGroup({ labels: ['~L~eft', '~C~enter', '~R~ight'], value: align });
   const multi = new MultiCheckGroup({ items: ['~V~olume', '~T~reble'], states: ' xX', value: levels });
   const button = new Button('~O~K', { command: 'ok', default: true });
   const spy = new CommandSpy();

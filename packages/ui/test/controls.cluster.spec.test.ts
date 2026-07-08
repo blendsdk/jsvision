@@ -41,7 +41,7 @@ function mouseDown(x: number, y: number): CoreMouseEvent {
 // ST-10 / AC-6 — CheckGroup renders ` [ ] `/` [X] ` per the bound boolean[]; Space/click toggles.
 test('ST-10: CheckGroup draws the [ ]/[X] box, toggles on Space/click, writes the bound array', () => {
   const value = signal([false, false]);
-  const cg = new CheckGroup(['~B~old', '~I~talic'], value);
+  const cg = new CheckGroup({ labels: ['~B~old', '~I~talic'], value: value });
   const loop = mountCluster(cg, 12, 2);
 
   const buf = loop.renderRoot.buffer();
@@ -70,7 +70,7 @@ test('ST-10: CheckGroup draws the [ ]/[X] box, toggles on Space/click, writes th
 // ST-11 / AC-7 — RadioGroup renders ` ( ) `/` (•) `; ↓ moves selection (exclusive), writes the index.
 test('ST-11: RadioGroup draws the ( )/(•) box, ↓ moves the exclusive selection, writes the index', () => {
   const value = signal(0);
-  const rg = new RadioGroup(['~L~eft', '~C~enter', '~R~ight'], value);
+  const rg = new RadioGroup({ labels: ['~L~eft', '~C~enter', '~R~ight'], value: value });
   const loop = mountCluster(rg, 12, 3);
 
   const buf = loop.renderRoot.buffer();

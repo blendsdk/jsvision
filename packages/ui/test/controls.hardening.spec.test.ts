@@ -61,7 +61,7 @@ test('ST-8.a: paste maps \\t\\r\\n to spaces (no control chars in the value) —
 // ST-8.b — Alt+hotkey while another control is focused: the cluster selects+presses and takes focus.
 test('ST-8.b: Alt+hotkey toggles a non-focused CheckGroup and gives it focus — HR-44', () => {
   const flags = signal([false, false]);
-  const group = new CheckGroup(['~A~pple', '~B~anana'], flags);
+  const group = new CheckGroup({ labels: ['~A~pple', '~B~anana'], value: flags });
   const loop = mount(group, 20, 2, true); // focus the stub, NOT the group
   loop.dispatch(key('b', { alt: true })); // dialog-wide Alt+B
   expect(flags()[1]).toBe(true); // Banana toggled on

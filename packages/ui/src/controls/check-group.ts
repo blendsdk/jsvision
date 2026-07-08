@@ -8,6 +8,14 @@ import { Cluster } from './cluster.js';
 import type { ClusterBox } from './cluster.js';
 import type { Signal } from '../reactive/index.js';
 
+/** Options for a {@link CheckGroup}. */
+export interface CheckGroupOptions {
+  /** One label per checkbox; each may mark its hotkey letter with `~X~` (e.g. `'~B~old'`). */
+  readonly labels: readonly string[];
+  /** Two-way binding: one boolean flag per item, in label order. */
+  readonly value: Signal<boolean[]>;
+}
+
 /**
  * A checkbox group bound to a `boolean[]` signal.
  *
@@ -16,7 +24,7 @@ import type { Signal } from '../reactive/index.js';
  *
  * // One flag per label; the array reflects (and is updated by) the group.
  * const styles = signal([true, false]); // Bold on, Italic off
- * const group = new CheckGroup(['~B~old', '~I~talic'], styles);
+ * const group = new CheckGroup({ labels: ['~B~old', '~I~talic'], value: styles });
  * group.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 20, height: 2 } };
  *
  * const panel = new Group();
@@ -28,12 +36,12 @@ export class CheckGroup extends Cluster {
   protected readonly value: Signal<boolean[]>;
 
   /**
-   * @param labels One label per item (each may mark its hotkey with `~X~`).
-   * @param value  A `Signal<boolean[]>` — one flag per item, in label order.
+   * @param opts The `labels` (one per checkbox, each optionally marking a `~X~` hotkey) and the
+   *             two-way `value` signal — one boolean flag per item, in label order.
    */
-  constructor(labels: readonly string[], value: Signal<boolean[]>) {
-    super(labels);
-    this.value = value;
+  constructor(opts: CheckGroupOptions) {
+    super(opts.labels);
+    this.value = opts.value;
     // Repaint when the bound array changes. Bind on mount, when this view's reactive scope exists.
     this.onMount(() => this.bind(() => this.value()));
   }
