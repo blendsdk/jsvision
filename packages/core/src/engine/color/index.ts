@@ -30,3 +30,8 @@ export type { Theme, ThemeRole } from './theme.js';
 export { ramp, lighten, darken, mix } from './ramp.js';
 export { contrastRatio } from './contrast.js';
 export type { ThemeColors } from './aliases.js';
+
+// Theme builder — seeds → 16 aliases → 63 roles.
+export { createTheme } from './create-theme.js';
+export { rolesFromAliases } from './roles.js';
+export type { ThemeOptions } from './create-theme.js';

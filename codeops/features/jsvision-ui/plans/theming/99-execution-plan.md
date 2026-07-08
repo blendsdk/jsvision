@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-08 20:20
-> **Progress**: 9/46 tasks (20%)
+> **Last Updated**: 2026-07-08 20:44
+> **Progress**: 15/46 tasks (33%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -77,21 +77,21 @@ impl tests → verify**.
 ### Step 2.1: Spec tests (red)
 **Reference**: `03-02` · ST-7…ST-11 · AR-267, AR-269, PA-2
 
-- [ ] 2.1.1 Write builder + 63-role mapping spec (ST-7…ST-11) — `packages/core/test/create-theme.spec.test.ts`
-- [ ] 2.1.2 Verify FAIL (red)
+- [x] 2.1.1 Write builder + 63-role mapping spec (ST-7…ST-11) — `packages/core/test/create-theme.spec.test.ts` ✅ (completed: 2026-07-08 20:24)
+- [x] 2.1.2 Verify FAIL (red) ✅ (completed: 2026-07-08 20:24)
 
 ### Step 2.2: Implement (green)
 **Reference**: `03-02 §Implementation Details` (the full 63-role mapping table)
 
-- [ ] 2.2.1 `ThemeOptions` + `createTheme` (`@example`) + `rolesFromAliases` (`@example`) — the 63-role semantic-collapse map — `packages/core/src/engine/color/create-theme.ts` (split `rolesFromAliases` → `roles.ts` if nearing 500 lines, PA-8)
-- [ ] 2.2.2 Re-export `createTheme`/`rolesFromAliases` + type `ThemeOptions` — `color/index.ts` + `engine/index.ts`
+- [x] 2.2.1 `ThemeOptions` + `createTheme` (`@example`) + `rolesFromAliases` (`@example`) — the 63-role semantic-collapse map — `packages/core/src/engine/color/create-theme.ts` (split `rolesFromAliases` → `roles.ts` per PA-8) ✅ (completed: 2026-07-08 20:44)
+- [x] 2.2.2 Re-export `createTheme`/`rolesFromAliases` + type `ThemeOptions` — `color/index.ts` + `engine/index.ts` ✅ (completed: 2026-07-08 20:44)
 
 **Deliverables**:
-- [ ] ST-7…ST-11 pass (green)
+- [x] ST-7…ST-11 pass (green) ✅ (completed: 2026-07-08 20:44)
 
 ### Step 2.3: Impl tests & verify
 
-- [ ] 2.3.1 Impl tests (neutral-omitted default per mode, `overrides` alias-step merge, `roleOverrides` deep-merge depth) — `*.impl.test.ts`
+- [x] 2.3.1 Impl tests (neutral-omitted default per mode, `overrides` alias-step merge, `roleOverrides` deep-merge depth) — `*.impl.test.ts` ✅ (completed: 2026-07-08 20:44)
 
 **Verify**: `yarn verify`
 
