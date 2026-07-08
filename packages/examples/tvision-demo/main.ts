@@ -16,13 +16,16 @@
  *
  * It also shows three things classic Turbo Vision could not: a **24-bit truecolor** gradient window
  * (the engine downsamples to your terminal's depth), a **live, signal-driven** clock + animation
- * that repaints with no manual redraw, and an **About** modal via `execView`/`endModal`.
+ * that repaints with no manual redraw, and a zero-ceremony **About** box via `messageBox`.
+ *
+ * It doubles as the flagship proof of the convenience layer: zero-config capabilities (no `caps`
+ * prologue), a single-package import surface (everything from `@jsvision/ui`), `app.onCommand` for the
+ * About command (no invisible view), and `messageBox` for the About box (no manual modal ceremony).
  *
  * Dev-only example — not part of the published package. Imported by name (`@jsvision/ui`), exactly
  * as a consumer would. The `.js` extension in import specifiers is required by NodeNext ESM
  * resolution.
  */
-import { resolveCapabilities } from '@jsvision/core';
 import {
   createApplication,
   Window,
@@ -34,8 +37,9 @@ import {
   statusItem,
   Commands,
   signal,
+  messageBox,
 } from '@jsvision/ui';
-import { GradientView, LiveView, HelpView, AboutDialog, CommandSink } from './widgets.js';
+import { GradientView, LiveView, HelpView } from './widgets.js';
 
 /** Demo-local command names (not built-in shell commands). */
 const CMD_ABOUT = 'about';
@@ -118,49 +122,22 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  // Auto-detect the terminal, forcing only SGR mouse (so the host enables mouse reporting) + UTF-8.
-  // Box-drawing + half-block/shade glyphs now derive from the detected UTF-8 locale (HR-07/PA-9), so
-  // the `░` desktop and `╔═╗`/`┌─┐` frames render under a UTF-8 locale and honestly fall back to
-  // ASCII otherwise.
-  const caps = resolveCapabilities({
-    override: {
-      mouse: { sgr: true, drag: true, wheel: true },
-      unicode: { utf8: true },
-    },
-  }).profile;
-
   // Signals the animation timer drives; the reactive views bind to them.
   const frame = signal(0);
   const clock = signal(formatTime(new Date()));
 
-  const app = createApplication({ caps, menuBar: buildMenuBar(), statusLine: buildStatusLine() });
+  // Zero-config: capabilities are auto-detected from the terminal — no `caps` prologue, and every
+  // symbol imports from the single `@jsvision/ui` package. The `░` desktop and `╔═╗`/`┌─┐` frames
+  // render under a UTF-8 locale and honestly fall back to ASCII otherwise.
+  const app = createApplication({ menuBar: buildMenuBar(), statusLine: buildStatusLine() });
   app.desktop.shadow = true; // Turbo Vision-style drop-shadows under the windows
   app.loop.enableCommand(CMD_SAVE, false); // grey out "Save" so the disabled menu-item state is visible
 
-  // About modal: a hidden command sink turns the `about` command into an `execView` modal.
-  const openAbout = (): void => {
-    const dialogWidth = 46;
-    const dialogHeight = 9;
-    const dw = app.desktop.bounds.width;
-    const dh = app.desktop.bounds.height;
-    const width = Math.min(dialogWidth, dw);
-    const height = Math.min(dialogHeight, dh);
-    const rect = {
-      x: Math.max(0, Math.floor((dw - width) / 2)),
-      y: Math.max(0, Math.floor((dh - height) / 2)),
-      width,
-      height,
-    };
-    const dialog = new AboutDialog(() => {
-      app.loop.endModal(undefined);
-      app.desktop.remove(dialog);
-      app.loop.emitCommand(CMD_REFRESH); // reflect the removal in the next coalesced frame
-    });
-    dialog.layout = { position: 'absolute', rect };
-    app.desktop.add(dialog);
-    void app.loop.execView(dialog).catch(() => undefined);
-  };
-  app.desktop.add(new CommandSink({ [CMD_ABOUT]: openAbout }));
+  // About box: `app.onCommand` handles the `about` command directly (no invisible sink view), and
+  // `messageBox` runs the modal — sizing, centering, and teardown are all handled for you.
+  app.onCommand(CMD_ABOUT, () => {
+    void messageBox(app, { title: 'About', text: 'jsvision — Turbo Vision, reimagined' });
+  });
 
   // Three staggered windows: help, a truecolor gradient, and a live reactive gadget.
   const help = new Window('Welcome');

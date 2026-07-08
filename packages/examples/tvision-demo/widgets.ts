@@ -12,17 +12,14 @@
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
-import { View } from '@jsvision/ui';
-import type { DrawContext, DispatchEvent, Size2D, LayoutProps } from '@jsvision/ui';
-import { Attr } from '@jsvision/core';
-import type { Style } from '@jsvision/core';
+import { View, Attr } from '@jsvision/ui';
+import type { DrawContext, Size2D, Style } from '@jsvision/ui';
 import { hsv } from './colors.js';
 
 /**
  * Reusable ink colors. Turbo Vision's default window is **blue** (`cpBlueWindow`), so content text
  * uses the light-on-blue convention — lightGray body, yellow/cyan highlights, bright accents — that
- * stays legible over the blue interior. (The gray `dialog` palette keeps black-on-gray; see
- * {@link AboutDialog}.)
+ * stays legible over the blue interior.
  */
 const INK_LIGHT = '#aaaaaa'; // lightGray — body text on the blue window
 const INK_WHITE = '#ffffff';
@@ -163,84 +160,6 @@ export class LiveView extends View {
     }
     if (ctx.size.height > 7) {
       ctx.text(0, 7, 'live · signals repaint', { fg: INK_GREEN, bg, attrs: Attr.bold });
-    }
-  }
-}
-
-/**
- * A centered modal dialog opened via the loop's `execView`/`endModal` modality. It is both
- * `focusable` (so the modal manager can focus it) and `preProcess` (so it receives keys regardless
- * of the focus chain), closing on Enter or Esc.
- */
-export class AboutDialog extends View {
-  override focusable = true;
-  override preProcess = true;
-  override layout: LayoutProps = { position: 'absolute' };
-
-  /**
-   * @param onClose Invoked on Enter/Esc to dismiss the modal (the caller ends modality + removes it).
-   */
-  constructor(private readonly onClose: () => void) {
-    super();
-  }
-
-  override draw(ctx: DrawContext): void {
-    const role = ctx.role('dialog');
-    const body: Style = { fg: role.fg, bg: role.bg };
-    const border: Style = { fg: role.border, bg: role.bg };
-    ctx.fill(' ', body);
-    ctx.box(0, 0, ctx.size.width, ctx.size.height, border, ' About ');
-
-    const lines = [
-      'jsvision — Turbo Vision, reimagined',
-      '',
-      'Retained tree · fine-grained signals',
-      '24-bit color · live reactive repaint',
-      '',
-      'Press Enter or Esc to close',
-    ];
-    lines.forEach((line, i) => {
-      const x = Math.max(1, Math.floor((ctx.size.width - line.length) / 2));
-      ctx.text(x, 2 + i, line, body);
-    });
-  }
-
-  override onEvent(ev: DispatchEvent): void {
-    const inner = ev.event;
-    if (inner.type === 'key' && (inner.key === 'enter' || inner.key === 'escape')) {
-      ev.handled = true;
-      this.onClose();
-    }
-  }
-}
-
-/**
- * An invisible post-process command sink — the demo's hook for app-level commands the shell does not
- * itself handle (here, `about`). It mirrors the app's internal quit sink: it never draws, and maps a
- * `CommandEvent` whose name is registered to its handler, consuming it.
- */
-export class CommandSink extends View {
-  override postProcess = true;
-
-  /**
-   * @param handlers Map of command name → handler invoked (and the event consumed) when it routes.
-   */
-  constructor(private readonly handlers: Readonly<Record<string, () => void>>) {
-    super();
-    this.state.visible = false;
-  }
-
-  override draw(_ctx: DrawContext): void {
-    // intentionally empty — the sink is invisible (state.visible = false)
-  }
-
-  override onEvent(ev: DispatchEvent): void {
-    const inner = ev.event;
-    if (inner.type !== 'command') return;
-    const handler = this.handlers[inner.command];
-    if (handler !== undefined) {
-      handler();
-      ev.handled = true;
     }
   }
 }
