@@ -9,9 +9,9 @@
  */
 import { signal } from '../reactive/index.js';
 import type { View, Point } from '../view/index.js';
-import type { EventLoop } from '../event/index.js';
-import type { Desktop } from '../desktop/index.js';
 import { Dialog, okButton, cancelButton, yesButton, noButton } from '../dialog/index.js';
+import { runDialog, messageBox } from '../dialog/message-box.js';
+import type { ModalDialogHost } from '../dialog/message-box.js';
 import { Input, CheckGroup, Label, Text } from '../controls/index.js';
 import { History } from '../dropdown/index.js';
 import type { Rect } from '../layout/index.js';
@@ -24,15 +24,10 @@ import type {
 } from './editor-dialog.js';
 
 /**
- * What the dialog builders need from the host to run a modal. An object from `createApplication()`
- * satisfies it directly (pass `{ loop: app.loop, desktop: app.desktop }`).
+ * What the dialog builders need from the host to run a modal — the shared `{ loop, desktop }` seam. An
+ * object from `createApplication()` satisfies it directly (pass `{ loop: app.loop, desktop: app.desktop }`).
  */
-export interface EditorDialogHost {
-  /** Runs a view modally, resolving to the command that closed it. */
-  loop: Pick<EventLoop, 'execView'>;
-  /** The desktop the modal mounts into, and whose extent the replace prompt uses to position itself. */
-  desktop: Pick<Desktop, 'addWindow' | 'removeWindow' | 'bounds'>;
-}
+export type EditorDialogHost = ModalDialogHost;
 
 /** Build a rect from left/top/right/bottom edges (right and bottom are exclusive). */
 function tv(a: number, b: number, c: number, d: number): Rect {
@@ -43,16 +38,6 @@ function tv(a: number, b: number, c: number, d: number): Rect {
 function at<T extends View>(view: T, rect: Rect): T {
   view.layout = { ...view.layout, position: 'absolute', rect };
   return view;
-}
-
-/** Mount the dialog, run it modally, remove it; resolves to the command that closed it. */
-async function runDialog(host: EditorDialogHost, dlg: Dialog): Promise<string> {
-  host.desktop.addWindow(dlg);
-  try {
-    return await host.loop.execView<string>(dlg as unknown as View);
-  } finally {
-    host.desktop.removeWindow(dlg);
-  }
 }
 
 /**
@@ -177,12 +162,8 @@ export async function confirmBox(host: EditorDialogHost, message: string): Promi
  * await infoBox({ loop: app.loop, desktop: app.desktop }, 'Search string not found.');
  */
 export async function infoBox(host: EditorDialogHost, message: string): Promise<void> {
-  const width = Math.min(60, Math.max(24, message.length + 6));
-  const dlg = new Dialog({ width, height: 7, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 };
-  dlg.add(at(new Text(message), { x: 3, y: 2, width: width - 6, height: 1 }));
-  dlg.add(at(okButton(), { x: Math.max(2, Math.trunc((width - 10) / 2)), y: 4, width: 10, height: 2 }));
-  await runDialog(host, dlg);
+  // Delegates to the general OK-only message box (same geometry, no title) — one modal engine.
+  await messageBox(host, { title: '', text: message, buttons: 'ok' });
 }
 
 /**
