@@ -111,6 +111,21 @@ for (const id of ['date/calendar', 'date/date-picker']) {
   });
 }
 
+// ST-17 (layout-dsl) — the Layout DSL showcase story is registered with the required metadata
+// (unique id `layout/dsl`, category `Foundations`) and paints at least one non-blank cell headlessly.
+test('ST-17: the layout/dsl story is registered with metadata and paints', () => {
+  const story = STORIES.find((s) => s.id === 'layout/dsl');
+  expect(story, 'a story with id "layout/dsl" is registered').toBeTruthy();
+  expect(story!.category, 'category Foundations').toBe('Foundations');
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    expect(paintedCells(rr.buffer().rows()), 'the layout/dsl story painted nothing').toBeGreaterThan(0);
+    dispose();
+  });
+});
+
 // AR-11 (accelerator-overlay) — the accelerator-overlay story is registered with metadata, and when
 // its RenderRoot arms reveal (`setRevealAccelerators(true)`) at least one hot glyph gains
 // `Attr.underline`. This is the showcase's live proof that the F12 overlay lights up hotkeys.

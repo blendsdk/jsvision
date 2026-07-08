@@ -49,6 +49,46 @@ foundation RDs of the same number.
 
 ## Notes
 
+- **2026-07-08** — **Follow-up plan `layout-dsl` PLAN CREATED** 📋 ([plan](plans/layout-dsl/00-index.md))
+  (no RD — the 21/21 RD set stays complete). Promotes the session-validated prototype into a real
+  feature: **DX-ASSESSMENT.md Proposal 8** (a builder for declarative composition), also lifting the
+  two weakest DX dimensions — **11 Layout ergonomics** (raw-pixel window placement) and **14
+  Composition model** (imperative-only `new`/`.add()`/mutate). A declarative flex layer over the
+  existing view/layout API: `col`/`row` containers, `grow`/`fixed` size shorthands, `spacer`,
+  and a `stack` z-overlay with `place`/`centered`/`topRight`/`bottomRight`/`topLeft`. **8 docs, 4
+  phases / 23 tasks**, spec-first (ST-1…ST-17). **AR-1…AR-13 ✅ GATE PASSED** — 4 user decisions:
+  the one non-user-land piece is a small engine **`position:'fill'`** mode (a child takes the parent's
+  full content box, ~15 lines in `layout.ts`/`types.ts`/`measure.ts`) so overlay fills re-solve
+  **lag-free** on resize · corner/edge overlays ship with a documented **one-frame settle** ·
+  placement helper named **`place`** (avoids the kitchen-sink `at(x,y,w,h)` collision) · the 38
+  existing `fr`-token call sites' **migration deferred**. Purely additive — no existing public API
+  behavior changes; the engine change is a new `position` value only. Resize is free: the reflow
+  already re-solves the whole flex from the live tree on every invalidation
+  (`render-root.ts:326-329` → `reflow.ts:23-36`), verified this session. Kitchen-sink `layout/dsl`
+  story + smoke required (FR-11). A visual showcase of the prototype was published as an Artifact.
+  **Plan preflighted** 🔬 (2026-07-08, [report](plans/layout-dsl/00-preflight-report.md)) — 5 findings,
+  all resolved & fixes applied: **1🟠 PF-001** the DSL module was placed in `layout/` but builds
+  `Group`/`View` (a `view/` value) → it inverted the strict view→layout layering and risked a
+  `layout/index → dsl → view → reflow → layout/index` import cycle; **relocated to
+  `packages/ui/src/view/dsl.ts`** (engine `position:'fill'` stays in `layout/`). **3🟡** — dropped
+  the standalone **`fill(view)`** helper (redundant with `grow(view)`, name-collides with the engine
+  `position:'fill'` mode; `fill` remains a `Flex` prop + engine value); corrected the stale
+  `yarn verify` characterization (it already runs lint + typecheck + build + test + check:docs);
+  neutralized references to the ephemeral session prototype (03-01/03-02 are self-contained).
+  **1🔵** hardened into the plan (corner-settle recompute change-gated for convergence; centering
+  ignores parent padding — documented). Every `file:line` reference verified accurate.
+  **DONE** ✅ (`exec_plan layout-dsl` 2026-07-08, 4 phases / 23 tasks, spec-first). Ships the engine
+  **`position:'fill'`** overlay mode (`layout/` — a child takes the parent's whole content box,
+  overlaps siblings, reserves no flow space, excluded from intrinsic size; generalized
+  `placeOutOfFlow`) + the declarative builders in **`packages/ui/src/view/dsl.ts`** (432 lines):
+  `col`/`row`/`grow`/`fixed`/`spacer` + a `stack` z-overlay with `place`/`centered`/`topRight`/
+  `bottomRight`/`topLeft` (+ `Flex`/`Placement` types), re-exported through `view/index.ts` → the
+  package barrel. Fill/centered layers re-solve lag-free (1 frame); corner layers settle in 2 via a
+  **change-gated** self-correct that provably converges (asserted). Additive only — no existing
+  public API behavior changed. 23 new tests (ST-1…ST-17 + impl), kitchen-sink `layout/dsl` story +
+  smoke, `CHANGELOG` entry. Full `yarn verify` green (1426 ui unit + examples smoke). One exec-time
+  fix: ST-15's self-contradictory `col`/`row` oracle corrected to `row` (register AR-14). Commits
+  `3340264`(P1) `7b6d2d7`(P2) `d978613`(P3) + P4.
 - **2026-07-08** — **Follow-up task `dx-consistency-and-essentials-gate` DONE** ✅ (no RD — the 21/21
   RD set stays complete). A **backward-incompatible-but-pre-release DX pass** for `@jsvision/ui` from
   the outside-evangelist audit (`DX-ASSESSMENT.md` Proposals 6 + 7) — 2 phases / 15 tasks, spec-first;
