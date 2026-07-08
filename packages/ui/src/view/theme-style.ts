@@ -7,11 +7,16 @@
 import type { Style, ThemeRole } from '@jsvision/core';
 
 /**
- * Adapt a theme role to a paint `Style` (foreground/background only; role-only extras ignored).
+ * Adapt a theme role to a paint `Style` (foreground/background, plus attributes
+ * when the role carries them; role-only extras ignored).
+ *
+ * A role's optional `attrs` mask is copied through **only when present**, so an
+ * attribute-free role returns exactly `{ fg, bg }` — no stray `attrs` key. That
+ * keeps an untouched role's paint identical to before the attribute axis existed.
  *
  * @param role A resolved theme role.
- * @returns A `Style` carrying the role's foreground and background.
+ * @returns A `Style` with the role's foreground/background, and `attrs` iff the role set one.
  */
 export function themeRoleToStyle(role: ThemeRole): Style {
-  return { fg: role.fg, bg: role.bg };
+  return role.attrs === undefined ? { fg: role.fg, bg: role.bg } : { fg: role.fg, bg: role.bg, attrs: role.attrs };
 }

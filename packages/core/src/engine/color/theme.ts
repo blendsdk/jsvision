@@ -7,7 +7,7 @@
  * blue window" look, ready to use out of the box. Assign a role's colors to the
  * cells you draw; the theme itself has no view-tree or inheritance behavior.
  */
-import type { Color } from '../render/types.js';
+import type { AttrMask, Color } from '../render/types.js';
 
 import { PALETTE } from './palette.js';
 
@@ -17,6 +17,13 @@ export interface ThemeRole {
   readonly bg: Color;
   /** Accent color for a highlighted hotkey character, when the role has one. */
   readonly hotkey?: Color;
+  /**
+   * Optional text-attribute mask (dim/bold/italic/underline/…) applied when the
+   * role is painted. Omitted on every {@link defaultTheme} role; an
+   * attribute-driven theme (e.g. a monochrome preset) uses it to distinguish
+   * states without color. Attributes render even at `mono` depth.
+   */
+  readonly attrs?: AttrMask;
 }
 
 /** Named semantic UI roles mapped to colors. See {@link defaultTheme}. */
