@@ -123,7 +123,7 @@ class EventLoopImpl implements EventLoop {
   private readonly registry: CommandRegistry;
   private readonly focus: FocusManager;
   private readonly modal: ModalManager;
-  /** The loop-owned command handlers; mounted into the root tree so its handlers run in pre-process. */
+  /** The loop-owned command handlers, swept directly in `route` before the tree; never mounted. */
   private readonly commandSink: CommandSink;
 
   /** The mounted root view; `null` until `mount` is called. */
