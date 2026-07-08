@@ -63,7 +63,7 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
   dlg.add(input);
   dlg.add(at(new Label('~T~ext to find', input), tv(2, 2, 15, 3)));
   dlg.add(at(new History({ link: input }), tv(32, 3, 35, 4)));
-  dlg.add(at(new CheckGroup(['~C~ase sensitive', '~W~hole words only'], flags), tv(3, 5, 35, 7)));
+  dlg.add(at(new CheckGroup({ labels: ['~C~ase sensitive', '~W~hole words only'], value: flags }), tv(3, 5, 35, 7)));
   dlg.add(at(okButton(), tv(14, 9, 24, 11)));
   dlg.add(at(cancelButton(), tv(26, 9, 36, 11)));
 
@@ -114,7 +114,10 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
   dlg.add(at(new History({ link: newInput }), tv(34, 6, 37, 7)));
   dlg.add(
     at(
-      new CheckGroup(['~C~ase sensitive', '~W~hole words only', '~P~rompt on replace', '~R~eplace all'], flags),
+      new CheckGroup({
+        labels: ['~C~ase sensitive', '~W~hole words only', '~P~rompt on replace', '~R~eplace all'],
+        value: flags,
+      }),
       tv(3, 8, 37, 12),
     ),
   );

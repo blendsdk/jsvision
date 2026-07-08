@@ -42,7 +42,7 @@ function page(): Group {
 // a redundant flip to the same value is a no-op (no extra schedule) and clears no underline.
 test('IT-2: one coalesced recompose per flag flip; a redundant flip is a no-op', () => {
   let scheduled = 0;
-  const cg = new CheckGroup(['~Y~es'], signal([false]));
+  const cg = new CheckGroup({ labels: ['~Y~es'], value: signal([false]) });
   cg.layout = { direction: 'col' };
   const rr = createRenderRoot(
     { width: 12, height: 1 },
@@ -90,8 +90,8 @@ test('IT-3: a TabView tab hotkey underlines on reveal', () => {
 
 // IT-4 — the Cluster family (CheckGroup + RadioGroup) hot labels underline on reveal.
 test('IT-4: CheckGroup + RadioGroup hot labels underline on reveal', () => {
-  const cg = new CheckGroup(['~Y~es'], signal([false]));
-  const rg = new RadioGroup(['~R~ed', '~G~reen'], signal(0));
+  const cg = new CheckGroup({ labels: ['~Y~es'], value: signal([false]) });
+  const rg = new RadioGroup({ labels: ['~R~ed', '~G~reen'], value: signal(0) });
   const root = new Group();
   root.layout = { direction: 'col' };
   cg.layout = { size: { kind: 'fixed', cells: 1 } };

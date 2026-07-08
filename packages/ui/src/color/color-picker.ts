@@ -130,7 +130,7 @@ class ColorButton extends View {
 
 /**
  * The popup body group `[ ColorSwatch (fr) | hex Input (1) ]`. Catches **Enter** in the focus-chain
- * bubble when the hex `Input` holds focus (the swatch handles its own Enter via `onCommit`) → close.
+ * bubble when the hex `Input` holds focus (the swatch handles its own Enter via `onChange`) → close.
  */
 class PickerBody extends Group {
   override layout: LayoutProps = { direction: 'col' };
@@ -165,7 +165,9 @@ export interface ColorPickerOptions {
   label?: string;
   /** Optional name accessor for the chip caption. */
   nameFor?: (c: Color) => string;
-  /** Fired when `value` changes. */
+  /** Fired on every live value change in the popup (arrow / click / drag). */
+  onInput?: (c: Color) => void;
+  /** Fired on the discrete commit gesture (Enter / Space / mouse-up), which also closes the popup. */
   onChange?: (c: Color) => void;
 }
 
@@ -197,12 +199,14 @@ export class ColorPicker extends Group {
   protected readonly columns: number;
   protected readonly allowCustom: boolean;
   protected readonly nameFor?: (c: Color) => string;
+  protected readonly onInput?: (c: Color) => void;
   protected readonly onChange?: (c: Color) => void;
   protected readonly chip: ColorChip;
   protected readonly button: ColorButton;
 
   /**
-   * @param opts The two-way `value` + optional `colors`/`columns`/`allowCustom`/`label`/`nameFor`/`onChange`.
+   * @param opts The two-way `value` + optional `colors`/`columns`/`allowCustom`/`label`/`nameFor`/
+   *             `onInput`/`onChange`.
    */
   constructor(opts: ColorPickerOptions) {
     super();
@@ -211,6 +215,7 @@ export class ColorPicker extends Group {
     this.columns = opts.columns ?? 4;
     this.allowCustom = opts.allowCustom ?? true;
     this.nameFor = opts.nameFor;
+    this.onInput = opts.onInput;
     this.onChange = opts.onChange;
     this.layout = { direction: 'row' };
     this.chip = new ColorChip(this.value, this, opts.label, opts.nameFor);
@@ -236,8 +241,8 @@ export class ColorPicker extends Group {
 
   /**
    * Focus the picker, then open the anchored popup hosting a `ColorSwatch` (+ hex `Input`) bound to the
-   * shared `value`. The swatch's `onCommit` closes the popup (the value is already set). A no-op with no
-   * overlay host (headless).
+   * shared `value`. The swatch's `onChange` (commit) fires the picker's `onChange` and closes the popup
+   * (the value is already set). A no-op with no overlay host (headless).
    *
    * @param ev The dispatch envelope (source of the popup host + focus seam).
    */
@@ -260,8 +265,11 @@ export class ColorPicker extends Group {
           colors: this.colors,
           columns: this.columns,
           nameFor: this.nameFor,
-          onChange: this.onChange,
-          onCommit: () => commit(), // a release over a cell / Enter sets the value then closes the popup
+          onInput: this.onInput, // live: forward the picker's onInput on every arrow / click / drag
+          onChange: (c) => {
+            this.onChange?.(c); // commit: fire the picker's onChange…
+            commit(); // …then close the popup (the value is already set live)
+          },
         });
         swatch.layout = { size: { kind: 'fr', weight: 1 } };
         let hex: Input | undefined;

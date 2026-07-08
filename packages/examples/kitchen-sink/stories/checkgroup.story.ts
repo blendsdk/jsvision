@@ -16,7 +16,7 @@ export const checkGroupStory: Story = {
   build(ctx: StoryContext) {
     const w = ctx.width;
     const flags = signal([false, false, false]);
-    const check = new CheckGroup(['~B~old', '~I~talic', '~U~nderline'], flags);
+    const check = new CheckGroup({ labels: ['~B~old', '~I~talic', '~U~nderline'], value: flags });
     const g = new Group();
     g.add(at(check, 1, 0, 18, 3));
     g.add(
