@@ -1,12 +1,11 @@
 /**
- * `demo:themes` — the theme designer for `@jsvision/core`'s theming system.
+ * `demo:themes` — a narrated headless walkthrough of `@jsvision/core`'s theming system.
  *
- * On a real terminal it runs a live {@link createApplication} designer: a window of representative
- * widgets over a status line whose items cycle the accent, light/dark mode, and preview color depth,
- * calling `app.setTheme` on each change so everything repaints live; it can also export the current
- * theme to JSON. Piped (no TTY), it runs a narrated headless walkthrough instead — the same pure
- * {@link DesignerState} machine driven through a theme switch, a depth change, and a JSON export,
- * printing a composed ASCII frame after each step.
+ * It drives the pure {@link DesignerState} machine through a theme switch (accent cycle), a mode
+ * toggle, a depth change, a contrast check, and a JSON export, composing and printing a representative
+ * widget frame after each step. The full interactive theme designer now lives in its own app,
+ * `@jsvision/theme-designer` (`yarn workspace @jsvision/theme-designer start`); this demo is the
+ * headless tour that runs anywhere.
  *
  * Run it:
  *
@@ -16,22 +15,8 @@
  * `@jsvision/core`), exactly as a consumer would. The `.js` extension in import specifiers is
  * required by NodeNext ESM resolution.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
-import { resolveCapabilities, parseTheme, type CapabilityProfile, type ColorDepth, type Theme } from '@jsvision/core';
-import {
-  createApplication,
-  createRenderRoot,
-  createRoot,
-  statusLine,
-  statusItem,
-  Commands,
-  Window,
-  Group,
-  Button,
-  Text,
-  Input,
-  signal,
-} from '@jsvision/ui';
+import { resolveCapabilities, type CapabilityProfile, type ColorDepth } from '@jsvision/core';
+import { createRenderRoot, createRoot, Group, Button, Text, Input, signal } from '@jsvision/ui';
 import {
   currentTheme,
   cycleAccent,
@@ -42,16 +27,8 @@ import {
   type DesignerState,
 } from './designer.js';
 
-/** Where the live designer writes an exported theme. */
-const EXPORT_PATH = 'theme.json';
-
 /** The designer's starting seeds. */
 const INITIAL: DesignerState = { mode: 'dark', accent: '#3b82f6', status: {}, depth: 'truecolor' };
-
-/** Load a theme from a JSON file (examples-layer fs; the core stays pure). */
-export function loadTheme(path: string): Theme {
-  return parseTheme(readFileSync(path, 'utf8'));
-}
 
 /** A representative widget set (window bg + header + buttons + an input) for previewing a theme. */
 function previewWidgets(label: string): Group {
@@ -124,59 +101,5 @@ function runWalkthrough(): void {
   console.log('\nDone.');
 }
 
-/** The live, interactive designer on a real terminal. */
-async function runLive(): Promise<number> {
-  let state = INITIAL;
-  const status = statusLine([
-    statusItem('~A~ccent', 'theme:accent', 'Alt+A'),
-    statusItem('~M~ode', 'theme:mode', 'Alt+M'),
-    statusItem('~D~epth', 'theme:depth', 'Alt+D'),
-    statusItem('~E~xport', 'theme:export', 'Alt+E'),
-    statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X'),
-  ]);
-  const app = createApplication({ statusLine: status });
-  app.desktop.shadow = true;
-
-  const win = new Window('Theme designer');
-  const preview = previewWidgets('Live preview — cycle the theme from the status line');
-  preview.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 34, height: 7 } };
-  win.add(preview);
-  win.layout.rect = { x: 2, y: 1, width: 40, height: 12 };
-  app.desktop.addWindow(win);
-
-  const apply = (): void => {
-    app.setTheme(currentTheme(state));
-    win.title.set(`Theme designer — ${state.mode} · ${state.accent} · ${state.depth}`);
-  };
-  app.onCommand('theme:accent', () => {
-    state = cycleAccent(state, +1);
-    apply();
-  });
-  app.onCommand('theme:mode', () => {
-    state = cycleMode(state);
-    apply();
-  });
-  app.onCommand('theme:depth', () => {
-    state = cycleDepth(state);
-    apply();
-  });
-  app.onCommand('theme:export', () => {
-    writeFileSync(EXPORT_PATH, exportJson(state));
-  });
-  apply();
-
-  return app.run();
-}
-
-async function main(): Promise<number> {
-  if (process.stdout.isTTY === true) return runLive();
-  runWalkthrough();
-  return 0;
-}
-
-main()
-  .then((code) => process.exit(code))
-  .catch((error: unknown) => {
-    process.stderr.write(`${String(error)}\n`);
-    process.exit(1);
-  });
+runWalkthrough();
+process.exit(0);

@@ -1,10 +1,10 @@
 # Roadmap: Theme Designer
 
 > **Feature-Set**: Theme Designer
-> **Status**: In Progress
+> **Status**: Done
 > **Created**: 2026-07-08
 > **Last Updated**: 2026-07-09
-> **Progress**: 0 / 1 (0%)
+> **Progress**: 1 / 1 (100%)
 > **CodeOps Skills Version**: 3.3.2
 
 A standalone, "pro" terminal application (`@jsvision/theme-designer`) for authoring `@jsvision/core`
@@ -22,10 +22,18 @@ orientations), sharing its value-track math with `ScrollBar`. Standalone plan (n
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
-| PL-01 | Theme designer app + reusable `Slider` | — (standalone plan) | [theme-designer](plans/theme-designer/00-index.md) | Executing | 🔄 | 2026-07-09 | 4 phases / 40 tasks (34/40 done — Phases 1–3), spec-first (ST-1…ST-31). Zero-Ambiguity Gate PASSED (AR-1…AR-25); **Preflight PASSED** — 10 findings applied (see `plans/theme-designer/00-preflight-report.md`): two-mode model (`roleSnapshot` derive/roles) replaces the single alias-set; +3 additive core exports (`aliasesFromSeeds`, `rgb256`, preset seed sets) beyond the `sliderTrack`/`sliderThumb` roles; R7 depth scoped to a display-only sample strip (app `RenderRoot.caps` immutable); file I/O reuses `openFile`/`errorBox`. New private package `@jsvision/theme-designer` (deps core+ui+files; publish deferred while ui is private). Additive ui: `Slider` (H+V) on an extracted shared track-math helper (ScrollBar refactored, its tests guard it). Deferred v1: HSL · undo/redo · draggable splitters · custom-preset library. Next: `exec_plan theme-designer`. |
+| PL-01 | Theme designer app + reusable `Slider` | — (standalone plan) | [theme-designer](plans/theme-designer/00-index.md) | Done | ✅ | 2026-07-09 | **DONE — 40/40 tasks, all 4 phases**, spec-first (ST-1…ST-31 + ST-23 e2e). `yarn verify` + all e2e + `yarn gate` green. Zero-Ambiguity Gate PASSED (AR-1…AR-25); **Preflight PASSED** — 10 findings applied (see `plans/theme-designer/00-preflight-report.md`): two-mode model (`roleSnapshot` derive/roles) replaces the single alias-set; +3 additive core exports (`aliasesFromSeeds`, `rgb256`, preset seed sets) beyond the `sliderTrack`/`sliderThumb` roles; R7 depth scoped to a display-only sample strip (app `RenderRoot.caps` immutable); file I/O reuses `openFile`/`errorBox`. New private package `@jsvision/theme-designer` (deps core+ui+files; publish deferred while ui is private). Additive ui: `Slider` (H+V) on an extracted shared track-math helper (ScrollBar refactored, its tests guard it). Deferred v1: HSL · undo/redo · draggable splitters · custom-preset library. Next: `exec_plan theme-designer`. |
 
 ## Notes
 
+- 2026-07-09: **Phase 4 DONE — PL-01 COMPLETE (40/40 tasks)** ✅. Integration: `src/main.ts` (TTY
+  split — live app vs. piped walkthrough) + `host/walkthrough.ts` (a narrated headless tour composing
+  the preview gallery under each theme + depth into a `ScreenBuffer`, the deterministic e2e oracle;
+  ST-23). Retired the `demo:themes` live-TTY branch — `themes-demo` is now the headless walkthrough
+  only (its e2e unchanged), the interactive designer having moved to `@jsvision/theme-designer`. Wired
+  CI (`test:e2e` for the new package in the POSIX block) + a root `yarn designer` script; docs
+  (CHANGELOG `[Unreleased]`, `CLAUDE.md` `demo:themes` description, package README). Full gate green:
+  `yarn verify` (16/16) + `yarn test:e2e` (8/8) + `yarn gate` PASSED.
 - 2026-07-09: **Phase 3 DONE** (34/40 tasks). The interactive three-pane app: `app.ts`
   (`createDesignerApp`) composes the menu/status shell + a workspace row (roles rail · live preview ·
   inspector) over the pure model, wiring commands (open/save/save-as/presets/reset/depth/quit) with an
