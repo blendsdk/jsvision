@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 00:09
-> **Progress**: 14/35 tasks (40%)
+> **Last Updated**: 2026-07-09 00:38
+> **Progress**: 23/40 tasks (58%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -21,12 +21,12 @@ the walkthrough e2e, retires the old live demo, and wires CI/docs.
 
 | Phase | Title | Tasks |
 | ----- | ----- | ----- |
-| 1 | `Slider` widget + shared track math + core roles & exports | 11 |
-| 2 | Package scaffold + pure `DesignerModel` | 8 |
-| 3 | The designer app (view · inspector · preview · file I/O) | 10 |
+| 1 | `Slider` widget + shared track math + core roles & exports | 14 |
+| 2 | Package scaffold + pure `DesignerModel` | 9 |
+| 3 | The designer app (view · inspector · preview · file I/O) | 11 |
 | 4 | Integration, e2e, `demo:themes` retire, CI & docs | 6 |
 
-**Total: 35 tasks across 4 phases.**
+**Total: 40 tasks across 4 phases.**
 
 > **⚠️ EXECUTION RULE:** the task checkboxes below are the single source of truth for progress. Mark `[~]`
 > with a timestamp on implementation, promote to `[x]` only after its verify passes, and update the Progress
@@ -74,23 +74,23 @@ the walkthrough e2e, retires the old live demo, and wires CI/docs.
 
 **Reference**: [03-02](03-02-designer-model.md) · [03-04](03-04-packaging.md) · [07](07-testing-strategy.md) ST-12…ST-22 · AR-10/11/23
 
-- [ ] 2.1.1 Scaffold `packages/theme-designer/` — `package.json` (private, deps core+ui+files), `tsconfig.json`, `vitest.config.ts`, `README.md` (03-04)
-- [ ] 2.1.2 Spec tests for `DesignerModel` — derive, role override + last-wins, clear, preset (derived→derive mode / literal→roles mode), contrast, depth, serialize round-trip, import valid/invalid, dirty, roles→derive transition-is-visible — `packages/theme-designer/test/model.spec.test.ts` (ST-12…ST-21, ST-31)
-- [ ] 2.1.3 Spec tests for the `#rrggbb` hex validator — `packages/theme-designer/test/hex-validator.spec.test.ts` (ST-22)
-- [ ] 2.1.4 Verify RED
+- [x] 2.1.1 Scaffold `packages/theme-designer/` — `package.json` (private, deps core+ui+files), `tsconfig.json`, `vitest.config.ts`, `README.md` (03-04) — 2026-07-09 00:38
+- [x] 2.1.2 Spec tests for `DesignerModel` — derive, role override + last-wins, clear, preset (derived→derive mode / literal→roles mode), contrast, depth, serialize round-trip, import valid/invalid, dirty, roles→derive transition-is-visible — `packages/theme-designer/test/model.spec.test.ts` (ST-12…ST-21, ST-31) — 2026-07-09 00:38
+- [x] 2.1.3 Spec tests for the `#rrggbb` hex validator — `packages/theme-designer/test/hex-validator.spec.test.ts` (ST-22) — 2026-07-09 00:38
+- [x] 2.1.4 Verify RED — 2026-07-09 00:38
 
 ### Step 2.2: Implementation (GREEN)
 
 **Reference**: [03-02](03-02-designer-model.md)
 
-- [ ] 2.2.1 `hex-validator.ts` (`#rrggbb`/`#rgb` well-formed `Validator`) — `packages/theme-designer/src/model/hex-validator.ts`
-- [ ] 2.2.2 `DesignerModel` — two-mode state (`roleSnapshot` null⇒derive / non-null⇒roles), `theme()` derivation (derive: `createTheme({...seeds, overrides: aliasOverrides, roleOverrides})`; roles: `applyRoleOverrides(roleSnapshot, roleOverrides)`), roles→derive transition on first alias/seed edit, `resolvedAliases`, own `PresetName` registry + preset mapping, `contrastRows`, `depthSamples` (uses `rgb256`), export/import/dirty — `packages/theme-designer/src/model/`
-- [ ] 2.2.3 Verify GREEN
+- [x] 2.2.1 `hex-validator.ts` (`#rrggbb`/`#rgb` well-formed `Validator`) — `packages/theme-designer/src/model/hex-validator.ts` — 2026-07-09 00:38
+- [x] 2.2.2 `DesignerModel` — two-mode state (`roleSnapshot` null⇒derive / non-null⇒roles), `theme()` derivation (derive: `createTheme({...seeds, overrides: aliasOverrides, roleOverrides})`; roles: `applyRoleOverrides(roleSnapshot, roleOverrides)`), roles→derive transition on first alias/seed edit, `resolvedAliases`, own `PresetName` registry + preset mapping, `contrastRows`, `depthSamples` (uses `rgb256`), export/import/dirty — `packages/theme-designer/src/model/` — 2026-07-09 00:38
+- [x] 2.2.3 Verify GREEN — 2026-07-09 00:38
 
 ### Step 2.3: Impl tests & hardening
 
-- [ ] 2.3.1 Impl tests: roles↔derive transitions (`roleSnapshot` lifecycle, user role edits surviving), light/dark derivation, preset↔dirty edges, `resolvedAliases` in both modes — `packages/theme-designer/test/model.impl.test.ts`
-- [ ] 2.3.2 Verify: `yarn verify` picks up the new package; `sync-versions --check` still green (private skipped)
+- [x] 2.3.1 Impl tests: roles↔derive transitions (`roleSnapshot` lifecycle, user role edits surviving), light/dark derivation, preset↔dirty edges, `resolvedAliases` in both modes — `packages/theme-designer/test/model.impl.test.ts` — 2026-07-09 00:38
+- [x] 2.3.2 Verify: `yarn verify` picks up the new package; `sync-versions --check` still green (private skipped) — 2026-07-09 00:38
 
 **Verify**: `yarn verify` (+ `yarn workspace @jsvision/theme-designer typecheck`)
 

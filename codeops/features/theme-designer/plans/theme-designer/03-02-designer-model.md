@@ -134,8 +134,11 @@ export interface DepthSample { readonly depth: ColorDepth; readonly hex: string;
 export function depthSamples(color: Color): DepthSample[];    // AR-15
 ```
 
-`truecolor` = the color as-is; `256` = `rgb256(nearest256(rgb))`; `16` = `PALETTE[ANSI16_ORDER[nearest16(rgb)]]`;
-`mono` = luminance-threshold black/white. A `'default'`/unresolvable color yields a single "n/a" row.
+`truecolor` = the color as-is; `256` = `rgb256(nearest256(rgb))`; `16` = the Borland DOS-16 hex for the
+slot `nearest16(rgb)` emits — `PALETTE[DOS16_BY_SLOT[nearest16(rgb)]]`, a fixed 16-entry CGA reindex of
+`PALETTE` (AR-26 runtime — the naïve `PALETTE[ANSI16_ORDER[nearest16(rgb)]]` is invalid: `PALETTE` is
+keyed by Borland names, `ANSI16_ORDER` yields ANSI names); `mono` = luminance-threshold black/white. A
+`'default'`/unresolvable color yields a single "n/a" row.
 
 > **Additive core export:** `rgb256` is not currently re-exported from `@jsvision/core`'s public barrel (it
 > lives in `palette.ts`); this feature adds it (additive, no behavior change). `depthSamples` is
