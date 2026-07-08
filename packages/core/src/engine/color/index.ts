@@ -25,3 +25,8 @@ export type { Rgb } from './color.js';
 export { PALETTE, ANSI16_ORDER } from './palette.js';
 export { defaultTheme } from './theme.js';
 export type { Theme, ThemeRole } from './theme.js';
+
+// Perceptual OKLab color math + the WCAG contrast helper, and the semantic alias tier.
+export { ramp, lighten, darken, mix } from './ramp.js';
+export { contrastRatio } from './contrast.js';
+export type { ThemeColors } from './aliases.js';

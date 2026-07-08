@@ -153,5 +153,10 @@ export {
   PALETTE,
   ANSI16_ORDER,
   defaultTheme,
+  ramp,
+  lighten,
+  darken,
+  mix,
+  contrastRatio,
 } from './color/index.js';
-export type { ColorRole, Rgb, Theme, ThemeRole } from './color/index.js';
+export type { ColorRole, Rgb, Theme, ThemeRole, ThemeColors } from './color/index.js';
