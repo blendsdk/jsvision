@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-07
+> **Last Updated**: 2026-07-08
 > **Features**: 1 / 2 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -13,7 +13,7 @@
 
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
-| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | **21 ✅ Done (RD-01…RD-21) — COMPLETE** | 21/21 RDs | ✅ | 2026-07-07 |
+| jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | **21 ✅ Done (RD-01…RD-21) — COMPLETE** | 21/21 RDs | ✅ | 2026-07-08 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 
 ## Archived
@@ -24,6 +24,7 @@
 
 ## Notes
 
+- 2026-07-08: **jsvision-ui follow-up `dx-ergonomics` → DONE ✅** (GH #45; no RD — the 21/21 RD set stays COMPLETE). Additive, backward-compatible DX pass for `@jsvision/ui` (4 phases / 26 tasks, spec-first; **zero `@jsvision/core` change**): optional `'auto'` caps + seven `@jsvision/core` essentials re-exported from the `@jsvision/ui` barrel (single-package imports); first-class `EventLoop.onCommand`/`Application.onCommand` served by a loop-owned `CommandSink` swept directly in the private `route()` gated on `!modal.isActive()` (runtime **AR-14**, never tree-mounted) + the `EventLoopOptions.onQuit` seam (bespoke `QuitCommandSink` removed); async modal helpers `messageBox`/`confirm`/`inputBox` over `Dialog` on a minimal `ModalDialogHost` seam (editor `infoBox`/`confirmBox` delegate to the shared `runDialog`); `tvision-demo` reworked as the flagship proof + CHANGELOG. Merged #45, plan folder removed #46; ui `typecheck`/`build`/`lint` + the DX suite green. Cascaded from **jsvision-ui**.
 - 2026-07-07: **jsvision-ui RD-08 (Editor family) → DONE ✅ — the jsvision-ui feature-set is COMPLETE (21/21)**. `exec_plan editor-family` finished: 11 phases / 59 tasks spec-first; GATE-1 recon-re-verified + GATE-2 recorded for all six TV decodes (Editor/Memo/EditWindow/Indicator/Terminal/FileEditor); additive-only cross-package surface (7 theme roles, `Commands.undo/redo`, `Window.dragging`/`active`, 4 `FileSystem` content methods); full gate green — `yarn verify` 11/11 (ui 1266 · core 600 · files 145 · examples 90 tests, smoke 41), examples e2e 18 (incl. `demo:editor` + the live `demo:tvedit` clone — the shipped acceptance oracle), lint + `check:deps` clean. Cascaded from **jsvision-ui**.
 - 2026-07-07: **jsvision-ui RD-08 (Editor family) → EXECUTING** 🔄 ([plan](features/jsvision-ui/plans/editor-family/00-index.md)). `exec_plan editor-family` started; the 12 accepted plan-preflight fixes (PF-001…PF-012) applied to the plan docs first (register PA-2/PA-6/PA-14/PA-15 amended; 03-01…03-07, 07, 99, 00-index respec'd; report marked applied). 11 phases / 59 tasks, spec-first; Phase 1 = cross-package seams + GATE-1 BEFORE-decode + the 7 theme roles. Cascaded from **jsvision-ui**.
 - 2026-07-07: **jsvision-ui RD-08 (Editor family) → PLAN PREFLIGHTED** 🔬 ([report](features/jsvision-ui/plans/editor-family/00-preflight-report.md), `preflight editor-family` run 2026-07-06). ⚠️ Same-day, codebase-grounded 13-dimension audit (2 recon agents + 1 independent challenger): ~40 jsvision `file:line` claims + **27 TV citation clusters re-verified against the C++** — all four palette byte chains re-derived (`0x1E`/`0x71`, `0x30`/`0x2F`, `0x1F`/`0x1A`, terminal `0x1E`), the Indicator ═/─ state mapping, triple-click (`smTriple`), `firstKeys` (41 entries; Ctrl-N/Ctrl-W absent → the clone's app-keymap chords conflict-free), dialog/window rects, `.bak` sequence, tvedit menu/status bindings all confirmed — **no substantive mis-decode**. **PASSED — 12 findings (1🟠/8🟡/3🔵), all resolved per recommendation (bulk accept); document fixes PENDING application.** PF-001 (MAJOR, challenger-confirmed): `EditWindowOptions.fs`/"hosts a `FileEditor`" is a **ui→files circular dependency** (files depends on ui) → caller-supplied `editor?: Editor` + a files-side `openFileInEditor(host, opts)` factory + the TV `editor === clipboard` title check (`teditwnd.cpp:70-78`). Minors: ui-local `{loop, desktop}` host type (files' `ExecHost` unimportable; `replacePrompt` needs desktop extent) · Phase-4 `IndicatorTarget` seam · `save`/`saveAs` → files `FileCommands` only · missing `'clear'` action (+ `kbCtrlDel` first-match duplicate) · Terminal wheel-only scroll-back · `BufText.slice` · `color-theme.spec` inline `knownKeys` closed-set · 8 TV citation-anchor corrections. Next: **apply the preflight fixes** → `exec_plan editor-family`. Cascaded from **jsvision-ui**.
