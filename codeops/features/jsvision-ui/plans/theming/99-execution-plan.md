@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-08 21:02
-> **Progress**: 30/46 tasks (65%)
+> **Last Updated**: 2026-07-08 21:10
+> **Progress**: 36/46 tasks (78%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -158,23 +158,23 @@ impl tests → verify**.
 ### Step 5.1: Spec tests (red)
 **Reference**: `03-05` · ST-28, ST-29 · AR-276, AR-279, PA-3
 
-- [ ] 5.1.1 Write `RenderRoot.setTheme` spec (ST-28) — `packages/ui/test/render-theme-swap.spec.test.ts`
-- [ ] 5.1.2 Write `EventLoop`/`Application.setTheme` out-of-tick push spec (ST-29) — `packages/ui/test/app-theme-swap.spec.test.ts`
-- [ ] 5.1.3 Verify FAIL (red)
+- [x] 5.1.1 Write `RenderRoot.setTheme` spec (ST-28) — `packages/ui/test/render-theme-swap.spec.test.ts` ✅ (completed: 2026-07-08 21:08)
+- [x] 5.1.2 Write `EventLoop`/`Application.setTheme` out-of-tick push spec (ST-29) — `packages/ui/test/app-theme-swap.spec.test.ts` ✅ (completed: 2026-07-08 21:08)
+- [x] 5.1.3 Verify FAIL (red) ✅ (completed: 2026-07-08 21:08)
 
 ### Step 5.2: Implement (green)
 **Reference**: `03-05 §Implementation Details`
 
-- [ ] 5.2.1 `RenderRoot.setTheme` — mutable `theme` field + `markRelayout()`; add to the `RenderRoot` interface (`@example`) — `packages/ui/src/view/render-root.ts`
-- [ ] 5.2.2 `EventLoop.setTheme` (runTick-wrapped) on the interface + impl — `packages/ui/src/event/{types,event-loop}.ts`
-- [ ] 5.2.3 `Application.setTheme` forwards to `loop.setTheme` (interface + returned object) — `packages/ui/src/app/application.ts`
+- [x] 5.2.1 `RenderRoot.setTheme` — mutable `theme` field + `markRelayout()`; add to the `RenderRoot` interface (`@example`) — `packages/ui/src/view/render-root.ts` ✅ (completed: 2026-07-08 21:10)
+- [x] 5.2.2 `EventLoop.setTheme` (runTick-wrapped) on the interface + impl — `packages/ui/src/event/{types,event-loop}.ts` ✅ (completed: 2026-07-08 21:10)
+- [x] 5.2.3 `Application.setTheme` forwards to `loop.setTheme` (interface + returned object) — `packages/ui/src/app/application.ts` ✅ (completed: 2026-07-08 21:10)
 
 **Deliverables**:
-- [ ] ST-28, ST-29 pass (green)
+- [x] ST-28, ST-29 pass (green) ✅ (completed: 2026-07-08 21:10)
 
 ### Step 5.3: Impl tests & verify
 
-- [ ] 5.3.1 Impl test (re-entrant `setTheme` from an `onCommand` handler coalesces to one frame) — `*.impl.test.ts`
+- [x] 5.3.1 Impl test (re-entrant `setTheme` from an `onCommand` handler coalesces to one frame) — `*.impl.test.ts` ✅ (completed: 2026-07-08 21:10)
 
 **Verify**: `yarn verify`
 

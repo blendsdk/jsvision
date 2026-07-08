@@ -97,6 +97,16 @@ export interface Application {
    */
   onCommand(command: string, handler: () => void): () => void;
   /**
+   * Replace the active theme at runtime and repaint every view with the new colors in one coalesced
+   * frame. Forwards to `loop.setTheme`, so it is safe to call from a command handler or a bare
+   * imperative call — the repainted frame reaches the terminal even outside an input tick.
+   *
+   * @param theme The theme to switch to (a preset, a `createTheme` result, or a `parseTheme` result).
+   * @example
+   * app.onCommand('theme:nord', () => app.setTheme(nordTheme));
+   */
+  setTheme(theme: Theme): void;
+  /**
    * Connect to the terminal and run until the `'quit'` command, resolving to the exit code. The
    * terminal is always restored on exit — normal, thrown, or signalled.
    */
@@ -280,6 +290,7 @@ export function createApplication(opts: ApplicationOptions): Application {
     desktop,
     loop,
     onCommand: (command, handler) => loop.onCommand(command, handler),
+    setTheme: (theme) => loop.setTheme(theme), // forwards to the loop seam so the swap repaints from any call site
     run: () =>
       runApplication({
         loop,
