@@ -11,6 +11,22 @@ the deprecation policy.
 
 ### Added
 
+- **Declarative layout builders + engine `position:'fill'`.** `@jsvision/ui` gains an
+  expression-oriented layer over the view tree so a whole screen composes in one nested
+  call instead of imperative `new`/`.add()`/`.layout =` mutations: **`col`**/**`row`**
+  flex containers (optional `Flex` props then children), **`grow`**/**`fixed`** size
+  shorthands (mutate + return the view for inline chaining), **`spacer`** (a flexible or
+  `{ fixed: n }` gap), and a **`stack`** z-overlay with **`place`**/**`centered`**/
+  **`topRight`**/**`bottomRight`**/**`topLeft`** placement helpers. New public exports:
+  `col`, `row`, `grow`, `fixed`, `spacer`, `stack`, `place`, `centered`, `topRight`,
+  `bottomRight`, `topLeft` + the `Flex`/`Placement` types. Fill and centered overlay
+  layers re-solve lag-free on resize; corner/edge layers self-correct in one extra frame
+  (a change-gated recompute that always converges). Backing this is one additive layout-
+  engine change: a new **`position: 'fill'`** mode — a child takes its parent's whole
+  content box, overlaps siblings, reserves no flow space, and is excluded from the
+  parent's intrinsic size. **All additive and non-breaking** (existing `'flow'`/
+  `'absolute'` behavior is unchanged).
+
 - **DX ergonomics — zero-config caps, `onCommand`, and async modal helpers.** Three
   additive, backward-compatible convenience-layer improvements to `@jsvision/ui`:
   - **Zero-config capabilities + single-package imports.** `ApplicationOptions.caps`
@@ -122,7 +138,7 @@ the deprecation policy.
 
 - **`@jsvision/ui`: `RadioGroup`/`CheckGroup` now take an options object.** Breaking
   (pre-1.0, unpublished): `new RadioGroup(labels, value)` → `new RadioGroup({ labels,
-  value })`, and the same for `CheckGroup`. New exported option types `RadioGroupOptions`
+value })`, and the same for `CheckGroup`. New exported option types `RadioGroupOptions`
   / `CheckGroupOptions`, matching the sibling `MultiCheckGroup`'s options-object shape.
   No positional overload is kept.
 - **`@jsvision/ui`: color callbacks unified to `onInput` (live) / `onChange` (commit).**
