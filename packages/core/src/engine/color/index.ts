@@ -35,3 +35,6 @@ export type { ThemeColors } from './aliases.js';
 export { createTheme } from './create-theme.js';
 export { rolesFromAliases } from './roles.js';
 export type { ThemeOptions } from './create-theme.js';
+
+// Lossless, injection-safe theme serialization.
+export { serializeTheme, parseTheme, InvalidThemeError } from './serialize.js';

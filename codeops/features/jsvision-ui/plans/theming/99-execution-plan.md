@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-08 20:44
-> **Progress**: 15/46 tasks (33%)
+> **Last Updated**: 2026-07-08 20:53
+> **Progress**: 22/46 tasks (48%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -102,24 +102,24 @@ impl tests → verify**.
 ### Step 3.1: Spec tests (red)
 **Reference**: `03-03` · ST-12…ST-20 · AR-271, AR-281, AR-282, PA-4, PA-5
 
-- [ ] 3.1.1 Write `themeRoleToStyle` attrs + attr-free-invariance spec (ST-12) — `packages/ui/test/theme-style.spec.test.ts`
-- [ ] 3.1.2 Write serialize/parse spec incl. the rejection matrix (ST-13…ST-20) — `packages/core/test/serialize-theme.spec.test.ts`
-- [ ] 3.1.3 Verify FAIL (red)
+- [x] 3.1.1 Write `themeRoleToStyle` attrs + attr-free-invariance spec (ST-12) — `packages/ui/test/theme-style.spec.test.ts` ✅ (completed: 2026-07-08 20:47)
+- [x] 3.1.2 Write serialize/parse spec incl. the rejection matrix (ST-13…ST-20) — `packages/core/test/serialize-theme.spec.test.ts` ✅ (completed: 2026-07-08 20:47)
+- [x] 3.1.3 Verify FAIL (red) ✅ (completed: 2026-07-08 20:47)
 
 ### Step 3.2: Implement (green)
 **Reference**: `03-03 §Implementation Details`
 
-- [ ] 3.2.1 Add optional `attrs?: AttrMask` to `ThemeRole` (`Theme`/`defaultTheme` untouched) — `packages/core/src/engine/color/theme.ts`
-- [ ] 3.2.2 `themeRoleToStyle` copies `attrs` only when present (attr-free → exactly `{fg,bg}`) — `packages/ui/src/view/theme-style.ts`
-- [ ] 3.2.3 `serializeTheme`/`parseTheme`/`InvalidThemeError` (`@example`; `{version,roles}` envelope; field-kind validation; single-cell `pattern` per PA-5; shape derived from `defaultTheme`) — `packages/core/src/engine/color/serialize.ts`
-- [ ] 3.2.4 Re-export `serializeTheme`/`parseTheme`/`InvalidThemeError` — `color/index.ts` + `engine/index.ts`
+- [x] 3.2.1 Add optional `attrs?: AttrMask` to `ThemeRole` (`Theme`/`defaultTheme` untouched) — `packages/core/src/engine/color/theme.ts` ✅ (completed: 2026-07-08 20:53)
+- [x] 3.2.2 `themeRoleToStyle` copies `attrs` only when present (attr-free → exactly `{fg,bg}`) — `packages/ui/src/view/theme-style.ts` ✅ (completed: 2026-07-08 20:53)
+- [x] 3.2.3 `serializeTheme`/`parseTheme`/`InvalidThemeError` (`@example`; `{version,roles}` envelope; field-kind validation; single-cell `pattern` per PA-5; shape derived from `defaultTheme`) — `packages/core/src/engine/color/serialize.ts` ✅ (completed: 2026-07-08 20:53)
+- [x] 3.2.4 Re-export `serializeTheme`/`parseTheme`/`InvalidThemeError` — `color/index.ts` + `engine/index.ts` ✅ (completed: 2026-07-08 20:53)
 
 **Deliverables**:
-- [ ] ST-12…ST-20 pass (green)
+- [x] ST-12…ST-20 pass (green) ✅ (completed: 2026-07-08 20:53)
 
 ### Step 3.3: Impl tests & verify
 
-- [ ] 3.3.1 Impl tests (serialize key-order stability; round-trip on a `createTheme` output) — `*.impl.test.ts`
+- [x] 3.3.1 Impl tests (serialize key-order stability; round-trip on a `createTheme` output) — `*.impl.test.ts` ✅ (completed: 2026-07-08 20:53)
 
 **Verify**: `yarn verify`
 

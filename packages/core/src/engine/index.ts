@@ -160,5 +160,8 @@ export {
   contrastRatio,
   createTheme,
   rolesFromAliases,
+  serializeTheme,
+  parseTheme,
+  InvalidThemeError,
 } from './color/index.js';
 export type { ColorRole, Rgb, Theme, ThemeRole, ThemeColors, ThemeOptions } from './color/index.js';
