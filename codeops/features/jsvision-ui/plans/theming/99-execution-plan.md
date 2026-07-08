@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-08 20:53
-> **Progress**: 22/46 tasks (48%)
+> **Last Updated**: 2026-07-08 21:02
+> **Progress**: 30/46 tasks (65%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -130,24 +130,24 @@ impl tests → verify**.
 ### Step 4.1: Spec tests (red)
 **Reference**: `03-04` · ST-21…ST-27 · AR-270, AR-272, PA-4, PA-6
 
-- [ ] 4.1.1 Write presets spec (ST-21, ST-22, ST-24) + `defaultTheme`-invariance reference (ST-23) — `packages/core/test/presets.spec.test.ts`
-- [ ] 4.1.2 Write depth-robustness golden (ST-25) — `packages/core/test/presets-depth.spec.test.ts`
-- [ ] 4.1.3 Write `theme-packaging.spec` (ST-27) + extend `treeshake.spec` for preset absence (ST-26) — `packages/core/test/theme-packaging.spec.test.ts`, `treeshake.spec.test.ts`
-- [ ] 4.1.4 Verify FAIL (red)
+- [x] 4.1.1 Write presets spec (ST-21, ST-22, ST-24) + `defaultTheme`-invariance reference (ST-23) — `packages/core/test/presets.spec.test.ts` ✅ (completed: 2026-07-08 20:58)
+- [x] 4.1.2 Write depth-robustness golden (ST-25) — `packages/core/test/presets-depth.spec.test.ts` ✅ (completed: 2026-07-08 20:58)
+- [x] 4.1.3 Write `theme-packaging.spec` (ST-27) + preset-absence tree-shake sibling (ST-26) — `packages/core/test/theme-packaging.spec.test.ts`, `theme-treeshake.spec.test.ts` ✅ (completed: 2026-07-08 20:58)
+- [x] 4.1.4 Verify FAIL (red) ✅ (completed: 2026-07-08 20:58)
 
 ### Step 4.2: Implement (green)
 **Reference**: `03-04 §Implementation Details`
 
-- [ ] 4.2.1 7 presets — `monochrome` (hand-authored, attr-driven), `turboVision` (= `defaultTheme`), `slate` (generated), `nord`/`dracula`/`solarizedDark`/`gruvboxDark` (generated + canonical-hex overrides) — `packages/core/src/engine/color/presets.ts`
-- [ ] 4.2.2 Re-export the 7 presets — `color/index.ts` + `engine/index.ts`
-- [ ] 4.2.3 CHANGELOG `[Unreleased]` entry naming the new exports — root `CHANGELOG.md`
+- [x] 4.2.1 7 presets — `monochrome` (hand-authored, attr-driven), `turboVision` (= `defaultTheme`), `slate` (generated), `nord`/`dracula`/`solarizedDark`/`gruvboxDark` (generated + canonical-hex overrides + `/* @__PURE__ */` for tree-shaking) — `packages/core/src/engine/color/presets.ts` ✅ (completed: 2026-07-08 21:02)
+- [x] 4.2.2 Re-export the 7 presets — `color/index.ts` + `engine/index.ts` ✅ (completed: 2026-07-08 21:02)
+- [x] 4.2.3 CHANGELOG `[Unreleased]` entry naming the new exports — root `CHANGELOG.md` ✅ (completed: 2026-07-08 21:02)
 
 **Deliverables**:
-- [ ] ST-21…ST-27 pass (green); existing `*-theme.spec` oracles still pass (ST-23)
+- [x] ST-21…ST-27 pass (green); existing `*-theme.spec` oracles still pass (ST-23) ✅ (completed: 2026-07-08 21:02)
 
 ### Step 4.3: Impl tests & verify
 
-- [ ] 4.3.1 Impl tests (each curated preset round-trips; `monochrome` state-distinction-by-attrs matrix) — `*.impl.test.ts`
+- [x] 4.3.1 Impl tests (each curated preset round-trips; `monochrome` state-distinction-by-attrs matrix) — `*.impl.test.ts` ✅ (completed: 2026-07-08 21:02)
 
 **Verify**: `yarn verify`
 
