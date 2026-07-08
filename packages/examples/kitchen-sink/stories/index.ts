@@ -18,6 +18,7 @@ import { textStory } from './text.story.js';
 import { labelStory } from './label.story.js';
 import { buttonStory } from './button.story.js';
 import { inputStory } from './input.story.js';
+import { sliderStory } from './slider.story.js';
 import { checkGroupStory } from './checkgroup.story.js';
 import { radioGroupStory } from './radiogroup.story.js';
 import { multiCheckGroupStory } from './multicheckgroup.story.js';
@@ -60,6 +61,7 @@ export const STORIES: readonly Story[] = [
   labelStory,
   buttonStory,
   inputStory,
+  sliderStory,
   checkGroupStory,
   radioGroupStory,
   multiCheckGroupStory,

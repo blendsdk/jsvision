@@ -46,8 +46,27 @@ function foregroundOn(bg: Color): Color {
   return contrastRatio(bg, '#ffffff') >= contrastRatio(bg, '#000000') ? '#ffffff' : '#000000';
 }
 
-/** Derive the 16 aliases from the seeds, before any override merge. */
-function aliasesFromSeeds(options: ThemeOptions): ThemeColors {
+/**
+ * Derive the 16 semantic {@link ThemeColors} aliases from a set of seeds — the step {@link createTheme}
+ * runs before it merges `overrides` and expands the roles.
+ *
+ * Give it the same `mode`/`accent`/neutral/status seeds you would pass to {@link createTheme} and it
+ * returns the resolved alias palette: a perceptual neutral ramp yields the surfaces and text, the
+ * accent yields the focus/selection colors, and the status seeds fill the rest. Any `overrides` or
+ * `roleOverrides` on the options are ignored here — this is purely the seed→alias derivation, exposed
+ * so a tool (e.g. a theme editor) can show the aliases a given seed set produces without building the
+ * full theme.
+ *
+ * @param options Seeds (`mode`, `accent`, optional `neutral`/status). `overrides`/`roleOverrides` are ignored.
+ * @returns The 16 resolved aliases, before any override merge.
+ * @throws InvalidColorError when a seed is `'default'` or otherwise unresolvable.
+ * @example
+ * import { aliasesFromSeeds } from '@jsvision/core';
+ *
+ * const aliases = aliasesFromSeeds({ mode: 'dark', accent: '#3b82f6' });
+ * aliases.accent; // '#3b82f6' — the seed, surfaced as the accent alias
+ */
+export function aliasesFromSeeds(options: ThemeOptions): ThemeColors {
   const neutral = ramp(options.neutral ?? '#808080', RAMP_STEPS);
   const accent = options.accent;
   const dark = options.mode === 'dark';

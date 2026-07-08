@@ -136,6 +136,8 @@ test('ST-11: the progress* roles are the ONLY additive keys — every existing r
     'indicatorNormal',
     'indicatorDragging',
     'terminalNormal', // RD-08 editor family (PA-8; guarded by editor-theme.spec)
+    'sliderTrack',
+    'sliderThumb', // theme-designer Slider control (guarded by slider-theme.spec)
   ] as const;
   const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...FEEDBACK_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);

@@ -152,6 +152,7 @@ export {
   toRgb,
   PALETTE,
   ANSI16_ORDER,
+  rgb256,
   defaultTheme,
   ramp,
   lighten,
@@ -159,6 +160,7 @@ export {
   mix,
   contrastRatio,
   createTheme,
+  aliasesFromSeeds,
   rolesFromAliases,
   serializeTheme,
   parseTheme,
@@ -170,5 +172,6 @@ export {
   draculaTheme,
   solarizedDarkTheme,
   gruvboxDarkTheme,
+  PRESET_SEEDS,
 } from './color/index.js';
 export type { ColorRole, Rgb, Theme, ThemeRole, ThemeColors, ThemeOptions } from './color/index.js';
