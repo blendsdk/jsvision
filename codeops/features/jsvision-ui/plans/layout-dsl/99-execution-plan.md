@@ -1,7 +1,7 @@
 # Execution Plan — layout-dsl
 
 > **Feature**: jsvision-ui · **Implements**: jsvision-ui/DX-P8 · **CodeOps Skills Version**: 3.3.2
-> **Progress**: 13/23 tasks (57%) · **Last Updated**: 2026-07-08
+> **Progress**: 23/23 tasks (100%) · **Last Updated**: 2026-07-08
 
 Spec-first per phase: spec tests → red → implement → green → impl tests → verify. `[ ]` todo ·
 `[~]` implemented (unverified) · `[x]` verified. A task is `[x]` only after its verify passes.
@@ -49,17 +49,18 @@ typecheck build test check:docs`); no separate manual lint/typecheck/docs steps 
 
 ## Phase 4 — Docs, exports, kitchen-sink, hardening (→ FR-10/11)
 
-- [ ] 4.1 JSDoc every public export: lead sentence + gotcha (corners settle; fill/centered do not) +
-  `@param`/`@returns` + copy-pasteable `@example`. No banned CodeOps/TV IDs.
-- [ ] 4.2 Write `test/layout-dsl.packaging.spec.test.ts` — ST-16 (barrel re-exports + banned-ID grep);
-  verify.
-- [ ] 4.3 Kitchen-sink: `packages/examples/kitchen-sink/stories/layout-dsl.story.ts` (a resizable
-  shell showcasing col/row/stack/grow/fixed/spacer) + register in `stories/index.ts`; confirm ST-17
-  via `kitchen-sink.smoke.spec.test.ts`.
-- [ ] 4.4 Full verify: `yarn verify` (runs lint + typecheck + build + test + check:docs) green,
-  including the existing `layout.*`/`view.*`/`kitchen-sink.smoke` suites.
-- [ ] 4.5 `CHANGELOG.md` entry (Added: declarative layout builders + `position:'fill'`); roadmap sync
-  via the roadmap skill.
+- [x] 4.1 JSDoc every public export: lead sentence + gotcha (corners settle; fill/centered do not) +
+  `@param`/`@returns` + copy-pasteable `@example`. No banned CodeOps/TV IDs. (Written up-front per
+  phase — the `check:docs` gate enforces it on export, not deferred.) _(2026-07-08)_
+- [x] 4.2 Write `test/layout-dsl.packaging.spec.test.ts` — ST-16 (barrel re-exports, no standalone
+  `fill`, comment-scoped banned-ID grep, ≤500-line budget); verify. _(2026-07-08)_
+- [x] 4.3 Kitchen-sink: `packages/examples/kitchen-sink/stories/layout-dsl.story.ts` (a resizable
+  frame showcasing col/row/stack/grow/fixed/spacer + a corner overlay) + registered in
+  `stories/index.ts`; ST-17 confirmed via `kitchen-sink.smoke.spec.test.ts` (dedicated + generic). _(2026-07-08)_
+- [x] 4.4 Full verify: `yarn verify` (lint + typecheck + build + test + check:docs) green — 1426 ui
+  unit tests + examples smoke (45); existing `layout.*`/`view.*`/`kitchen-sink.smoke` suites green. _(2026-07-08)_
+- [x] 4.5 `CHANGELOG.md` entry (Added: declarative layout builders + `position:'fill'`); roadmap
+  synced to Done. _(2026-07-08)_
 
 ## Notes
 

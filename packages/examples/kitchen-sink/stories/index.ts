@@ -10,6 +10,7 @@
 import type { Story } from '../story.js';
 import { reactiveStory } from './reactive.story.js';
 import { layoutStory } from './layout.story.js';
+import { layoutDslStory } from './layout-dsl.story.js';
 import { viewStory } from './view.story.js';
 import { eventsStory } from './events.story.js';
 import { shellStory } from './shell.story.js';
@@ -50,6 +51,7 @@ import { chDirDialogStory } from './chdir-dialog.story.js';
 export const STORIES: readonly Story[] = [
   reactiveStory,
   layoutStory,
+  layoutDslStory,
   viewStory,
   eventsStory,
   shellStory,

@@ -77,7 +77,18 @@ foundation RDs of the same number.
   neutralized references to the ephemeral session prototype (03-01/03-02 are self-contained).
   **1🔵** hardened into the plan (corner-settle recompute change-gated for convergence; centering
   ignores parent padding — documented). Every `file:line` reference verified accurate.
-  **EXECUTING** 🔄 (`exec_plan layout-dsl` started 2026-07-08).
+  **DONE** ✅ (`exec_plan layout-dsl` 2026-07-08, 4 phases / 23 tasks, spec-first). Ships the engine
+  **`position:'fill'`** overlay mode (`layout/` — a child takes the parent's whole content box,
+  overlaps siblings, reserves no flow space, excluded from intrinsic size; generalized
+  `placeOutOfFlow`) + the declarative builders in **`packages/ui/src/view/dsl.ts`** (432 lines):
+  `col`/`row`/`grow`/`fixed`/`spacer` + a `stack` z-overlay with `place`/`centered`/`topRight`/
+  `bottomRight`/`topLeft` (+ `Flex`/`Placement` types), re-exported through `view/index.ts` → the
+  package barrel. Fill/centered layers re-solve lag-free (1 frame); corner layers settle in 2 via a
+  **change-gated** self-correct that provably converges (asserted). Additive only — no existing
+  public API behavior changed. 23 new tests (ST-1…ST-17 + impl), kitchen-sink `layout/dsl` story +
+  smoke, `CHANGELOG` entry. Full `yarn verify` green (1426 ui unit + examples smoke). One exec-time
+  fix: ST-15's self-contradictory `col`/`row` oracle corrected to `row` (register AR-14). Commits
+  `3340264`(P1) `7b6d2d7`(P2) `d978613`(P3) + P4.
 - **2026-07-08** — **Follow-up task `dx-consistency-and-essentials-gate` DONE** ✅ (no RD — the 21/21
   RD set stays complete). A **backward-incompatible-but-pre-release DX pass** for `@jsvision/ui` from
   the outside-evangelist audit (`DX-ASSESSMENT.md` Proposals 6 + 7) — 2 phases / 15 tasks, spec-first;
