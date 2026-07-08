@@ -6,6 +6,7 @@
  * registers the standard window-management commands. The returned {@link Application} exposes the
  * `desktop` and `loop` for you to populate, and a `run()` that connects everything to a real terminal.
  */
+import { resolveCapabilities } from '@jsvision/core';
 import type { CapabilityProfile, Theme, Logger, Keymap, RuntimeAdapter } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
 import { Group, View } from '../view/index.js';
@@ -19,10 +20,14 @@ import type { StatusLine } from '../status/index.js';
 import { runApplication } from './run.js';
 import type { QuitState } from './run.js';
 
-/** Options for {@link createApplication}. Only `caps` is required. */
+/** Options for {@link createApplication}. Everything is optional — an app starts with no arguments. */
 export interface ApplicationOptions {
-  /** Required. Terminal capability profile that drives color-depth encoding for every painted frame. */
-  caps: CapabilityProfile;
+  /**
+   * Terminal capability profile that drives color-depth encoding for every painted frame. Defaults to
+   * `'auto'`, which detects the running terminal's capabilities via `resolveCapabilities()`. Pass an
+   * explicit profile to override the detection (used verbatim, no re-resolution).
+   */
+  caps?: CapabilityProfile | 'auto';
   /** Initial viewport size in cells. Defaults to the output terminal's size, or 80×24 if unknown. */
   viewport?: Size2D;
   /** Color/style theme applied to every view; defaults to the built-in `defaultTheme`. */
@@ -102,6 +107,15 @@ class QuitCommandSink extends View {
 }
 
 /**
+ * Resolve the capability option to a concrete profile: when it is absent or `'auto'`, detect the
+ * running terminal's capabilities; an explicit profile is returned unchanged. Called once at the top
+ * of {@link createApplication}, so `'auto'` never reaches the loop or `run()`.
+ */
+function resolveCaps(caps: ApplicationOptions['caps']): CapabilityProfile {
+  return caps === undefined || caps === 'auto' ? resolveCapabilities().profile : caps;
+}
+
+/**
  * Resolve the initial viewport: an explicit `opts.viewport`, else the output terminal's size, else
  * 80×24. The terminal's first resize event corrects it to the live size.
  */
@@ -153,20 +167,18 @@ export function syncOverlayVisible(overlay: Group): void {
  * The whole view tree is built and mounted in one pass; the menu bar and status line are wired to the
  * loop after it exists. Populate the returned `desktop` with windows and call `run()` to start.
  *
- * @param opts Required `caps`, plus optional viewport/theme/logger/keymap/menu/status/runtime/streams.
+ * @param opts All optional: `caps` (auto-detected by default), viewport/theme/logger/keymap/menu/status/runtime/streams.
  * @returns The assembled {@link Application}.
  * @example
- * import { resolveCapabilities } from '@jsvision/core';
  * import { createApplication, Window, menuBar, subMenu, item, statusLine, statusItem, Commands } from '@jsvision/ui';
  *
- * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
- *
+ * // Zero-config: capabilities are auto-detected and everything imports from one package.
  * const bar = menuBar([
  *   subMenu('~W~indow', [item('~T~ile', Commands.tile), item('~C~ascade', Commands.cascade), item('E~x~it', Commands.quit)]),
  * ]);
  * const status = statusLine([statusItem('~T~ile', Commands.tile, 'F4'), statusItem('~Q~uit', Commands.quit, 'Alt+X')]);
  *
- * const app = createApplication({ caps, menuBar: bar, statusLine: status });
+ * const app = createApplication({ menuBar: bar, statusLine: status });
  *
  * const win = new Window('Editor');
  * win.layout.rect = { x: 1, y: 2, width: 30, height: 8 };
@@ -176,6 +188,7 @@ export function syncOverlayVisible(overlay: Group): void {
  * process.exit(code);
  */
 export function createApplication(opts: ApplicationOptions): Application {
+  const caps = resolveCaps(opts.caps); // a concrete profile from here down — 'auto' never leaks past this
   const viewport = resolveViewport(opts);
 
   // The owned desktop fills the column below the menu and above the status row.
@@ -209,7 +222,7 @@ export function createApplication(opts: ApplicationOptions): Application {
 
   // Build the loop and mount the tree, then wire the parts that need the loop to exist first.
   const loop = createEventLoop(viewport, {
-    caps: opts.caps,
+    caps,
     theme: opts.theme,
     logger: opts.logger,
     keymap: opts.keymap,
@@ -269,7 +282,7 @@ export function createApplication(opts: ApplicationOptions): Application {
     run: () =>
       runApplication({
         loop,
-        caps: opts.caps,
+        caps,
         runtime: opts.runtime,
         input: opts.input,
         output: opts.output,
