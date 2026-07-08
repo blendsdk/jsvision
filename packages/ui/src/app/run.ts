@@ -7,7 +7,7 @@
  * suspend/resume (Ctrl+Z) is handled by the host, which re-asserts modes and repaints; `run()` only
  * re-positions the cursor afterward. This backs {@link Application.run}.
  */
-import { createHost, cursor } from '@jsvision/core';
+import { createHost, cursor, assertEssentials, detectTty } from '@jsvision/core';
 import type { CapabilityProfile, RuntimeAdapter, ScreenBuffer } from '@jsvision/core';
 import type { Point } from '../view/index.js';
 import type { EventLoop } from '../event/index.js';
@@ -45,6 +45,8 @@ export interface RunContext {
   readonly warnAmbiguousWidth?: boolean;
   /** Switch to ASCII-safe chrome if the startup probe finds those glyphs render double-width. Default `true`. */
   readonly adaptAmbiguousWidth?: boolean;
+  /** Assert an interactive TTY before starting (default `true`). See {@link ApplicationOptions.requireTty}. */
+  readonly requireTty?: boolean;
   /** The shared quit-resolver cell that the app's quit sink calls. */
   readonly quitState: QuitState;
 }
@@ -117,6 +119,15 @@ export async function runApplication(ctx: RunContext): Promise<number> {
   const quitPromise = new Promise<number>((resolve) => {
     ctx.quitState.resolve = resolve;
   });
+
+  // Fail fast on an unusable terminal: a launch with no interactive terminal at all would otherwise
+  // take over the screen with no way to receive keyboard input. This runs BEFORE host.start(), so
+  // nothing is ever entered on the failing path — there is no terminal state to restore. `detectTty`
+  // reads the injected streams (honest under test doubles) and honours the POSIX `/dev/tty` fallback,
+  // so piped output backed by a controlling terminal still passes. Opt out with `requireTty: false`.
+  if (ctx.requireTty ?? true) {
+    assertEssentials(ctx.caps, { isTTY: detectTty({ input: ctx.input, output: ctx.output }) });
+  }
 
   try {
     await host.start(); // enter raw mode + the alternate screen
