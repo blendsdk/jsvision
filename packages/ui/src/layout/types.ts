@@ -68,13 +68,16 @@ export interface LayoutProps {
   /**
    * Placement mode (default `'flow'`). `'flow'` joins the parent's flex flow; `'absolute'` removes
    * the box from flow and places it at {@link rect} within the parent's content box — overlapping
-   * siblings freely and reserving no flow space (the CSS `position:absolute` analogy).
+   * siblings freely and reserving no flow space (the CSS `position:absolute` analogy); `'fill'` is a
+   * self-sizing overlay that takes the parent's **whole content box**, overlaps siblings, reserves no
+   * flow space, and is excluded from the parent's intrinsic size — so it needs no `rect` and
+   * re-solves for free when the parent resizes. Several `'fill'` children stack in the same box.
    */
-  position?: 'flow' | 'absolute';
+  position?: 'flow' | 'absolute' | 'fill';
   /**
    * `position:'absolute'` only — the parent-content-relative rect in cells (each side clamped to a
-   * non-negative integer). Ignored for `'flow'`; absent on an absolute box ⇒ a degenerate zero rect
-   * (no throw).
+   * non-negative integer). Ignored for `'flow'` and `'fill'` (a `'fill'` box always takes the full
+   * content box); absent on an absolute box ⇒ a degenerate zero rect (no throw).
    */
   rect?: Rect;
 }
@@ -112,7 +115,7 @@ export interface ResolvedProps {
   gap: number;
   padding: Padding;
   /** Resolved placement mode (default `'flow'`). */
-  position: 'flow' | 'absolute';
+  position: 'flow' | 'absolute' | 'fill';
   /** Normalized absolute rect (each side clamped via `toCells`); present only when `position` is `'absolute'`. */
   rect?: Rect;
 }
@@ -188,7 +191,8 @@ export function normalizeRect(rect: Rect | undefined): Rect {
 /**
  * Apply the CSS-flexbox-style defaults and clamps to a box's props so the layout
  * pass works against a fully-resolved, branch-free shape. An `'absolute'`
- * box additionally carries its normalized {@link Rect}; a `'flow'` box does not.
+ * box additionally carries its normalized {@link Rect}; `'flow'` and `'fill'`
+ * boxes do not (a `'fill'` box always resolves to the parent's content box).
  */
 export function normalizeProps(props: LayoutProps): ResolvedProps {
   const position = props.position ?? 'flow';
