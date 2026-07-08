@@ -122,6 +122,17 @@ export interface EventLoop {
    */
   setAcceleratorMode(on: boolean): void;
   /**
+   * Replace the active theme and repaint every view with the new colors in one coalesced frame.
+   * Safe to call from anywhere — a command handler, an async callback, or a bare imperative call
+   * between input ticks — because the swap runs inside the loop's own tick and reuses its trailing
+   * flush + `onFrame`, so the repainted frame reaches the host even outside a dispatch.
+   *
+   * @param theme The theme to switch to.
+   * @example
+   * loop.setTheme(nordTheme); // repaints immediately, from any call context
+   */
+  setTheme(theme: Theme): void;
+  /**
    * Register a handler for a named command; returns a function that unregisters it. Every handler
    * registered for a command runs (in registration order) when that command is emitted, and a handled
    * command is consumed there — a downstream view matching the same command does not also receive it.

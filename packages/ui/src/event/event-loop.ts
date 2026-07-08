@@ -9,7 +9,7 @@
  * one, so nested actions still collapse into one frame.
  */
 import { createLogger, setClipboard } from '@jsvision/core';
-import type { Logger, Keymap, ScreenBuffer, CapabilityProfile } from '@jsvision/core';
+import type { Logger, Keymap, ScreenBuffer, CapabilityProfile, Theme } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
 import { createRenderRoot, View } from '../view/index.js';
 import type { RenderRoot, AppEvent, DispatchEvent, Point, PopupHost } from '../view/index.js';
@@ -325,6 +325,14 @@ class EventLoopImpl implements EventLoop {
 
   setAcceleratorMode(on: boolean): void {
     this.runTick(() => this.applyAcceleratorMode(on));
+  }
+
+  setTheme(theme: Theme): void {
+    // The render root is built with a no-op schedule, so a bare renderRoot.setTheme() would only mark
+    // the frame dirty. Wrapping it in a tick reuses the trailing flush() + onFrame() push, so the swap
+    // repaints immediately from any call context (a command handler, an async callback, a bare call
+    // between ticks). A re-entrant call from inside a handler joins the active tick — still one frame.
+    this.runTick(() => this.renderRoot.setTheme(theme));
   }
 
   /**
