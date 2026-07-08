@@ -1,7 +1,7 @@
 # Execution Plan — layout-dsl
 
 > **Feature**: jsvision-ui · **Implements**: jsvision-ui/DX-P8 · **CodeOps Skills Version**: 3.3.2
-> **Progress**: 5/23 tasks (22%) · **Last Updated**: 2026-07-08
+> **Progress**: 9/23 tasks (39%) · **Last Updated**: 2026-07-08
 
 Spec-first per phase: spec tests → red → implement → green → impl tests → verify. `[ ]` todo ·
 `[~]` implemented (unverified) · `[x]` verified. A task is `[x]` only after its verify passes.
@@ -25,14 +25,16 @@ typecheck build test check:docs`); no separate manual lint/typecheck/docs steps 
 
 ## Phase 2 — Builders: col/row/grow/fixed/spacer (→ 03-01, FR-1…FR-4)
 
-- [ ] 2.1 Write `test/layout-dsl.spec.test.ts` — ST-6…ST-10 + ST-15; confirm **red**.
-- [ ] 2.2 `src/view/dsl.ts`: `Flex`, `toLayout`, `container`/`col`/`row`, `grow`/`fixed`,
-  `spacer`, `Empty` (no standalone `fill` helper — AR-12). Import `View`/`Group`/`ThemeRoleName`
-  from the sibling view modules. Explicit named re-exports `view/dsl.ts` → `view/index.ts` →
-  `src/index.ts`.
-- [ ] 2.3 Verify ST-6…ST-10 + ST-15 **green**.
-- [ ] 2.4 Write `test/layout-dsl.impl.test.ts` — `Flex` precedence matrix, `spacer(0)`, variadic
-  children without props; verify.
+- [x] 2.1 Write `test/layout-dsl.spec.test.ts` — ST-6…ST-10 + ST-15; confirm **red**. _(2026-07-08)_
+- [x] 2.2 `src/view/dsl.ts`: `Flex`, `toLayout`, `container`/`col`/`row`, `grow`/`fixed`,
+  `spacer`, `Empty` (no standalone `fill` helper). Imports `View`/`Group`/`ThemeRoleName` from the
+  sibling view modules. Explicit named re-exports `view/dsl.ts` → `view/index.ts` → `src/index.ts`.
+  Public builder JSDoc + `@example` written up-front (the phase `check:docs` gate enforces it);
+  `col`/`row`/`spacer` use single union-tuple-rest signatures so the doc guard sees one declaration
+  per public function. _(2026-07-08)_
+- [x] 2.3 Verify ST-6…ST-10 + ST-15 **green**. _(2026-07-08)_
+- [x] 2.4 Write `test/layout-dsl.impl.test.ts` — `Flex` precedence matrix, `spacer(0)`, variadic
+  children without props; verify (full `yarn verify` green). _(2026-07-08)_
 
 ## Phase 3 — Overlays: stack + placement (→ 03-01, FR-5/6/8)
 
