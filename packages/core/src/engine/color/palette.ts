@@ -71,8 +71,15 @@ const CUBE_LEVELS: readonly number[] = [0, 95, 135, 175, 215, 255];
  * Reference RGB for xterm-256 palette index `n` (0–255): the 16 base colors
  * (0–15), the 6×6×6 cube (16–231), then the 24-step gray ramp (232–255).
  *
+ * Pair it with {@link nearest256} to preview how a truecolor value looks once
+ * downsampled to the 256-color palette.
+ *
  * @param index An integer 0–255.
  * @returns The reference RGB for that palette entry.
+ * @example
+ * import { rgb256, nearest256 } from '@jsvision/core';
+ *
+ * const rgb = rgb256(nearest256({ r: 59, g: 130, b: 246 })); // the 256-color stand-in for #3b82f6
  */
 export function rgb256(index: number): Rgb {
   if (index < 16) return ANSI16_REFERENCE[ANSI16_ORDER[index]];

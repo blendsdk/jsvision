@@ -11,7 +11,7 @@
  */
 import type { AttrMask } from '../render/types.js';
 
-import { createTheme } from './create-theme.js';
+import { createTheme, type ThemeOptions } from './create-theme.js';
 import { defaultTheme, type Theme } from './theme.js';
 import { Attr } from '../render/types.js';
 
@@ -94,6 +94,8 @@ export const monochromeTheme: Theme = {
   tabDisabled: { fg: G, bg: B, attrs: DIM },
   progressFill: { fg: W, bg: B, attrs: REV },
   progressTrack: { fg: G, bg: B },
+  sliderTrack: { fg: G, bg: B },
+  sliderThumb: { fg: W, bg: B, attrs: REV },
   calendarNormal: { fg: W, bg: B },
   calendarToday: { fg: W, bg: B, attrs: UL },
   calendarSelected: { fg: W, bg: B, attrs: REV },
@@ -114,6 +116,35 @@ export const monochromeTheme: Theme = {
   shadow: { fg: G, bg: B },
 };
 
+// The five curated palettes' seed sets. Each theme references ONLY its own seed const, so importing
+// one preset still lets a bundler drop the other four (their seeds and initializers tree-shake out);
+// `PRESET_SEEDS` gathers all five as reusable data without breaking that isolation.
+const slateSeeds: ThemeOptions = { mode: 'dark', accent: '#5b7a99', neutral: '#64748b' };
+const nordSeeds: ThemeOptions = {
+  mode: 'dark',
+  accent: '#88c0d0',
+  neutral: '#4c566a',
+  overrides: { background: '#2e3440', foreground: '#d8dee9', accent: '#88c0d0' },
+};
+const draculaSeeds: ThemeOptions = {
+  mode: 'dark',
+  accent: '#bd93f9',
+  neutral: '#44475a',
+  overrides: { background: '#282a36', foreground: '#f8f8f2', accent: '#bd93f9' },
+};
+const solarizedDarkSeeds: ThemeOptions = {
+  mode: 'dark',
+  accent: '#268bd2',
+  neutral: '#586e75',
+  overrides: { background: '#002b36', foreground: '#839496', accent: '#268bd2' },
+};
+const gruvboxDarkSeeds: ThemeOptions = {
+  mode: 'dark',
+  accent: '#d79921',
+  neutral: '#928374',
+  overrides: { background: '#282828', foreground: '#ebdbb2', accent: '#d79921' },
+};
+
 /**
  * An enterprise muted blue-gray theme — a calm, low-saturation dark scheme
  * generated from a slate accent and neutral.
@@ -123,11 +154,7 @@ export const monochromeTheme: Theme = {
  *
  * slateTheme.button.bg; // the slate accent
  */
-export const slateTheme: Theme = /* @__PURE__ */ createTheme({
-  mode: 'dark',
-  accent: '#5b7a99',
-  neutral: '#64748b',
-});
+export const slateTheme: Theme = /* @__PURE__ */ createTheme(slateSeeds);
 
 /**
  * The Nord palette — a cool arctic dark theme, with its canonical `nord0`
@@ -138,12 +165,7 @@ export const slateTheme: Theme = /* @__PURE__ */ createTheme({
  *
  * nordTheme.desktop.bg; // '#2e3440'
  */
-export const nordTheme: Theme = /* @__PURE__ */ createTheme({
-  mode: 'dark',
-  accent: '#88c0d0',
-  neutral: '#4c566a',
-  overrides: { background: '#2e3440', foreground: '#d8dee9', accent: '#88c0d0' },
-});
+export const nordTheme: Theme = /* @__PURE__ */ createTheme(nordSeeds);
 
 /**
  * The Dracula palette — a dark theme with its signature purple accent and
@@ -154,12 +176,7 @@ export const nordTheme: Theme = /* @__PURE__ */ createTheme({
  *
  * draculaTheme.desktop.bg; // '#282a36'
  */
-export const draculaTheme: Theme = /* @__PURE__ */ createTheme({
-  mode: 'dark',
-  accent: '#bd93f9',
-  neutral: '#44475a',
-  overrides: { background: '#282a36', foreground: '#f8f8f2', accent: '#bd93f9' },
-});
+export const draculaTheme: Theme = /* @__PURE__ */ createTheme(draculaSeeds);
 
 /**
  * The Solarized Dark palette — a low-contrast dark theme with its `base03`
@@ -170,12 +187,7 @@ export const draculaTheme: Theme = /* @__PURE__ */ createTheme({
  *
  * solarizedDarkTheme.desktop.bg; // '#002b36'
  */
-export const solarizedDarkTheme: Theme = /* @__PURE__ */ createTheme({
-  mode: 'dark',
-  accent: '#268bd2',
-  neutral: '#586e75',
-  overrides: { background: '#002b36', foreground: '#839496', accent: '#268bd2' },
-});
+export const solarizedDarkTheme: Theme = /* @__PURE__ */ createTheme(solarizedDarkSeeds);
 
 /**
  * The Gruvbox Dark palette — a warm retro dark theme with its `bg0` background
@@ -186,9 +198,28 @@ export const solarizedDarkTheme: Theme = /* @__PURE__ */ createTheme({
  *
  * gruvboxDarkTheme.desktop.bg; // '#282828'
  */
-export const gruvboxDarkTheme: Theme = /* @__PURE__ */ createTheme({
-  mode: 'dark',
-  accent: '#d79921',
-  neutral: '#928374',
-  overrides: { background: '#282828', foreground: '#ebdbb2', accent: '#d79921' },
-});
+export const gruvboxDarkTheme: Theme = /* @__PURE__ */ createTheme(gruvboxDarkSeeds);
+
+/**
+ * The seed sets behind the five {@link createTheme}-generated presets, keyed by name — the same
+ * `{ mode, accent, neutral, overrides }` options each curated theme is built from, exposed as data so
+ * a tool (e.g. a theme editor) can load a preset as an *editable* starting point rather than an opaque
+ * finished {@link Theme}. The two literal presets ({@link turboVisionTheme}, {@link monochromeTheme})
+ * are hand-authored and have no seed form, so they are intentionally absent here.
+ *
+ * Importing `PRESET_SEEDS` pulls in all five seed sets; importing a single preset theme does not pull
+ * in this map, so per-preset tree-shaking is preserved.
+ *
+ * @example
+ * import { PRESET_SEEDS, createTheme } from '@jsvision/core';
+ *
+ * // Rebuild the Nord theme from its seeds, then tweak the accent.
+ * const myNord = createTheme({ ...PRESET_SEEDS.nord, overrides: { accent: '#8fbcbb' } });
+ */
+export const PRESET_SEEDS: Record<'slate' | 'nord' | 'dracula' | 'solarized-dark' | 'gruvbox-dark', ThemeOptions> = {
+  slate: slateSeeds,
+  nord: nordSeeds,
+  dracula: draculaSeeds,
+  'solarized-dark': solarizedDarkSeeds,
+  'gruvbox-dark': gruvboxDarkSeeds,
+};

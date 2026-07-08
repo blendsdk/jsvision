@@ -88,6 +88,8 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     tabDisabled: { fg: c.foregroundDisabled, bg: c.accentMuted },
     progressFill: { fg: c.foregroundOnAccent, bg: c.accent },
     progressTrack: { fg: c.foregroundMuted, bg: c.backgroundSunken },
+    sliderTrack: { fg: c.borderMuted, bg: c.backgroundRaised },
+    sliderThumb: { fg: c.accent, bg: c.backgroundRaised },
     calendarNormal: { fg: c.foreground, bg: c.backgroundRaised },
     calendarToday: { fg: c.foregroundOnAccent, bg: c.info },
     calendarSelected: { fg: c.foregroundOnAccent, bg: c.accent },
