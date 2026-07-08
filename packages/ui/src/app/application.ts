@@ -9,8 +9,7 @@
 import { resolveCapabilities } from '@jsvision/core';
 import type { CapabilityProfile, Theme, Logger, Keymap, RuntimeAdapter } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
-import { Group, View } from '../view/index.js';
-import type { DispatchEvent } from '../view/index.js';
+import { Group } from '../view/index.js';
 import { createEventLoop } from '../event/index.js';
 import type { EventLoop } from '../event/index.js';
 import { Desktop } from '../desktop/index.js';
@@ -70,6 +69,20 @@ export interface Application {
   /** The underlying event loop. Use it to emit commands, manage focus, or run modals. */
   readonly loop: EventLoop;
   /**
+   * Register an app-wide handler for a named command; returns a function that unregisters it. Every
+   * handler registered for a command runs when that command is emitted, and a handled command is
+   * consumed there. Forwards to `loop.onCommand` — see it for the pre-process ordering and the
+   * modal-open caveat.
+   *
+   * @param command The command name to handle (e.g. a menu/status item's command).
+   * @param handler Called when the command is emitted.
+   * @returns A function that unregisters this handler (idempotent).
+   * @example
+   * const off = app.onCommand('about', () => messageBox(app, { title: 'About', text: '…' }));
+   * // later: off(); // stop handling 'about'
+   */
+  onCommand(command: string, handler: () => void): () => void;
+  /**
    * Connect to the terminal and run until the `'quit'` command, resolving to the exit code. The
    * terminal is always restored on exit — normal, thrown, or signalled.
    */
@@ -78,33 +91,6 @@ export interface Application {
 
 /** Fixed cell height of the menu/status chrome rows. */
 const CHROME_ROW_HEIGHT = 1;
-
-/**
- * A hidden view that ends `run()` when it sees the `'quit'` command. It is invisible (never painted
- * or hit-tested) but still participates in the pre-process phase, so it catches `'quit'` before any
- * other view could consume it.
- */
-class QuitCommandSink extends View {
-  constructor(private readonly onQuit: (code: number) => void) {
-    super();
-    this.preProcess = true;
-    this.state.visible = false;
-  }
-
-  draw(): void {
-    // intentionally empty — the sink never paints (visible:false)
-  }
-
-  override onEvent(ev: DispatchEvent): void {
-    const inner = ev.event;
-    if (inner.type === 'command' && inner.command === Commands.quit) {
-      // The exit code is the command's numeric argument, or 0 if none was given.
-      const code = typeof inner.arg === 'number' ? inner.arg : 0;
-      this.onQuit(code);
-      ev.handled = true;
-    }
-  }
-}
 
 /**
  * Resolve the capability option to a concrete profile: when it is absent or `'auto'`, detect the
@@ -206,9 +192,8 @@ export function createApplication(opts: ApplicationOptions): Application {
   const root = new Group();
   root.layout = { direction: 'col' };
 
+  // The shared cell the loop's built-in quit registration resolves through; `run()` fills it in.
   const quitState: QuitState = { resolve: null };
-  const sink = new QuitCommandSink((code) => quitState.resolve?.(code));
-  root.add(sink);
   if (opts.menuBar !== undefined) {
     opts.menuBar.layout = { size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
     root.add(opts.menuBar);
@@ -228,6 +213,7 @@ export function createApplication(opts: ApplicationOptions): Application {
     keymap: opts.keymap,
     commands: Object.values(Commands),
     quitCommand: Commands.quit, // a quit while a dialog is open cascades top-down through the modals
+    onQuit: (code) => quitState.resolve?.(code), // the loop registers quit through its command sink
     revealKey: opts.revealKey, // undefined leaves the loop's F12 default in place
   });
   loop.mount(root);
@@ -279,6 +265,7 @@ export function createApplication(opts: ApplicationOptions): Application {
   return {
     desktop,
     loop,
+    onCommand: (command, handler) => loop.onCommand(command, handler),
     run: () =>
       runApplication({
         loop,
