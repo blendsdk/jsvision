@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 16:19
-> **Progress**: 5/25 tasks (20%)
+> **Last Updated**: 2026-07-09 16:25
+> **Progress**: 9/25 tasks (36%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -55,14 +55,14 @@ lands at Phase 2 and grows).
 **Reference**: [03-02](03-02-deploy-pipeline.md) · [07](07-testing-strategy.md) ST-3, ST-14 · AR-1
 
 ### Step 2.1: Spec (RED)
-- [ ] 2.1.1 Extend `check-docs-build.mjs` (or a small companion) to assert **ST-14**: `.github/workflows/docs.yml` parses, triggers on the site paths, declares `permissions: contents:write` + `pull-requests:write`, and uses only `GITHUB_TOKEN` (no stored secret). Verify RED (no workflow yet).
+- [x] 2.1.1 Extend `check-docs-build.mjs` (or a small companion) to assert **ST-14**: `.github/workflows/docs.yml` parses, triggers on the site paths, declares `permissions: contents:write` + `pull-requests:write`, and uses only `GITHUB_TOKEN` (no stored secret). Verify RED (no workflow yet). _(2026-07-09 16:25 — added ST-14 (js-yaml devDep); RED confirmed: "docs.yml is missing")_
 
 ### Step 2.2: Implementation (GREEN)
-- [ ] 2.2.1 Add `.github/workflows/docs.yml`: **production** job on `master` (checkout → setup-node 22 → `yarn install --frozen-lockfile` → `yarn docs:build` → `peaceiris/actions-gh-pages@v4` publish `dist` to `gh-pages` root, `keep_files:true`, PF-006); **preview** job on `pull_request` (build with `DOCS_BASE=/jsvision/pr-preview/pr-<N>/` per PF-002 → `rossjrw/pr-preview-action@v1` to `/pr-preview/pr-N/`, comment URL, cleanup on close); **shared** `concurrency: docs-gh-pages` (PF-005); triggers on `packages/docs-site/**` + the workflow file, **not** `docs/**` (PF-009). Do **not** modify `ci.yml`.
-- [ ] 2.2.2 Document the one-time Pages prerequisite (Settings → Pages → Deploy from branch `gh-pages`/root, enforce HTTPS) in the workspace README + the deploy checklist below.
+- [x] 2.2.1 Add `.github/workflows/docs.yml`: **production** job on `master` (checkout → setup-node 22 → `yarn install --frozen-lockfile` → `yarn docs:build` → `peaceiris/actions-gh-pages@v4` publish `dist` to `gh-pages` root, `keep_files:true`, PF-006); **preview** job on `pull_request` (build with `DOCS_BASE=/jsvision/pr-preview/pr-<N>/` per PF-002 → `rossjrw/pr-preview-action@v1` to `/pr-preview/pr-N/`, comment URL, cleanup on close); **shared** `concurrency: docs-gh-pages` (PF-005); triggers on `packages/docs-site/**` + the workflow file, **not** `docs/**` (PF-009). Do **not** modify `ci.yml`. _(2026-07-09 16:25 — ci.yml untouched; ST-14 green)_
+- [x] 2.2.2 Document the one-time Pages prerequisite (Settings → Pages → Deploy from branch `gh-pages`/root, enforce HTTPS) in the workspace README + the deploy checklist below. _(2026-07-09 16:25 — `packages/docs-site/README.md` added; Deploy checklist below)_
 
 ### Step 2.3: Green + manual acceptance
-- [ ] 2.3.1 ST-14 passes. **Manual acceptance (ST-3)** after Pages is enabled: merge to `master` → site 200 at `https://blendsdk.github.io/jsvision/`; open a PR → preview URL commented + serves the changed page. Record the result here. _(This is the deployable-slice checkpoint — the user can test live.)_
+- [x] 2.3.1 ST-14 passes. **Manual acceptance (ST-3)** after Pages is enabled: merge to `master` → site 200 at `https://blendsdk.github.io/jsvision/`; open a PR → preview URL commented + serves the changed page. Record the result here. _(This is the deployable-slice checkpoint — the user can test live.)_ _(2026-07-09 16:25 — **ST-14 ✅ automated (green)**. **ST-3 live acceptance ⛳ PENDING USER** — requires enabling GitHub Pages (gh-pages/root) then a `master` merge + a test PR; tracked as the unchecked Deploy-checklist items below. Cannot be run from here.)_
 
 ---
 

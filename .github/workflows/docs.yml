@@ -1,0 +1,98 @@
+# Documentation website delivery — GitHub Pages (separate from ci.yml).
+#
+# Pages serves from the `gh-pages` branch: production is published to the branch
+# root, and each pull request gets a live preview under `/pr-preview/pr-<N>/`
+# that is removed when the PR closes. Both jobs share one concurrency group so
+# they never push `gh-pages` at the same time. No stored secret is used — only
+# the ephemeral GITHUB_TOKEN. One-time setup: repo Settings → Pages → Deploy
+# from branch `gh-pages` / root, Enforce HTTPS.
+name: Docs
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'packages/docs-site/**'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    paths:
+      - 'packages/docs-site/**'
+      - '.github/workflows/docs.yml'
+
+permissions:
+  contents: write # push the gh-pages branch
+  pull-requests: write # comment the preview URL
+
+# Shared across both jobs so production and preview never push gh-pages
+# concurrently; the actions' git-push retry is the backstop.
+concurrency:
+  group: docs-gh-pages
+  cancel-in-progress: true
+
+jobs:
+  production:
+    name: Deploy production to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build site (base /jsvision/)
+        run: yarn docs:build
+
+      - name: Publish to gh-pages root
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: packages/docs-site/.vitepress/dist
+          publish_branch: gh-pages
+          # Keep existing /pr-preview/* dirs when a production deploy overwrites
+          # the root. Trade-off: a page removed from the site lingers until a
+          # future clean deploy prunes it (a post-Phase-A Should-Have).
+          keep_files: true
+
+  preview:
+    name: Deploy PR preview
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node 22
+        if: github.event.action != 'closed'
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        if: github.event.action != 'closed'
+        run: yarn install --frozen-lockfile
+
+      # VitePress bakes `base` into absolute asset/page-data URLs, so a preview
+      # must be built with its own subpath or it would load production assets.
+      - name: Build site (preview base)
+        if: github.event.action != 'closed'
+        run: yarn docs:build
+        env:
+          DOCS_BASE: /jsvision/pr-preview/pr-${{ github.event.number }}/
+
+      # Deploys on open/synchronize/reopen, removes the preview dir on close.
+      - name: Deploy / clean up preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: packages/docs-site/.vitepress/dist
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
