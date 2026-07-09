@@ -3,8 +3,8 @@
 > **Feature-Set**: Docs Website
 > **Status**: In Progress
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-09 16:45
-> **Progress**: 0 / 10 (0%) — RD-01 executing (Phase 4/5 done)
+> **Last Updated**: 2026-07-09 16:54
+> **Progress**: 1 / 10 (10%) — RD-01 implementation ✅ (all 25 tasks; live deploy acceptance pending user)
 > **CodeOps Skills Version**: 3.3.2
 
 A professional, DX/UX-first **VitePress** documentation & showcase website for JSVision — the
@@ -23,7 +23,7 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
-| RD-01 | Site foundation & delivery pipeline | [RD-01](requirements/RD-01-site-foundation.md) | [site-foundation](plans/site-foundation/00-index.md) · [preflight](plans/site-foundation/00-preflight-report.md) | Executing | 🔄 | 2026-07-09 | Phase A. `packages/docs-site` VitePress app · GitHub Pages (gh-pages model: peaceiris prod + live PR previews) · `base:'/jsvision/'` · IA/nav · local search · SEO/OG/CSP/404 · absorbs root `docs/` (keeps `acceptance-gate.md`) · isolated from `yarn verify`. **5 phases / 25 tasks, spec-first.** Preflight ✅ PASSED (9 findings applied). **🔄 Executing: Phases 1–4 ✅ (20/25) — scaffold + `gh-pages` delivery + IA/nav/search/theme/code-UX + SEO/OG/sitemap/robots/favicon/404 + strict meta-CSP (per-build hashes, headless-validated 0 violations, AR-12 runtime). ST-1/2/4/5/6/7/8/9/10/13/14 automated-green. Phase 5 (content migration) next. ST-3 live deploy pending user (enable Pages).** |
+| RD-01 | Site foundation & delivery pipeline | [RD-01](requirements/RD-01-site-foundation.md) | [site-foundation](plans/site-foundation/00-index.md) · [preflight](plans/site-foundation/00-preflight-report.md) | Done (impl) | ✅ | 2026-07-09 | Phase A. `packages/docs-site` VitePress app · GitHub Pages (gh-pages model: peaceiris prod + live PR previews) · `base:'/jsvision/'` · IA/nav · local search · SEO/OG/CSP/404 · absorbs root `docs/` (keeps `acceptance-gate.md`) · isolated from `yarn verify`. **5 phases / 25 tasks, spec-first — ALL DONE.** Preflight ✅ PASSED (9 findings applied). **✅ All automated STs green (12/12 build checks + check:deps + `yarn verify`); strict meta-CSP validated 0-violations headless; AR-12 runtime = per-build CSP hashes. ⛳ Outstanding (user-owned): enable GitHub Pages (gh-pages/root) then verify live ST-3 (prod URL + a PR preview).** |
 | RD-02 | `@jsvision/web` browser runtime | [RD-02](requirements/RD-02-web-runtime.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase A. Extract the web-xterm host → tested package · virtual FileSystem · key-chord reclaim · clipboard bridge · node-builtin stubs. |
 | RD-03 | Live-example system | [RD-03](requirements/RD-03-live-example-system.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase A. Example-module contract · Play-button live dialog · snippet embed · DemoShell (About + theme switch) · headless smoke · a11y source-beside · no-keyboard fallback. Depends RD-01, RD-02. |
 | RD-04 | Landing / pitch surface | [RD-04](requirements/RD-04-landing-pitch.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase A(partial). Hero + live proof · Getting Started · Core Concepts · Why/comparison · degit starter. Depends RD-01, RD-03. |
@@ -46,6 +46,20 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 
 ## Notes
 
+- 2026-07-09: **RD-01 → IMPLEMENTATION DONE** ✅ via `exec_plan site-foundation` (all 5 phases / 25
+  tasks, spec-first, committed per-phase). `packages/docs-site` (VitePress 1.6.4, dev-only, isolated
+  from `yarn verify`) · `.github/workflows/docs.yml` (gh-pages prod + live PR previews, per-PR
+  `DOCS_BASE`) · IA/nav/local-search/brand-theme/code-UX · SEO (og/twitter/sitemap/robots/favicon/
+  404) · **strict meta-CSP with per-build inline-script hashes** (AR-12 runtime — supersedes PF-003's
+  hard-coded hashes because `__VP_HASH_MAP__` is content-dependent; headless-validated **0 CSP
+  violations**) · absorbed root `docs/` website content into `/reference/` (16 pages, redirects.md
+  map, `acceptance-gate.md` kept in place). All automated STs green; `yarn verify` + `gate.spec` +
+  `check:deps` green. **⛳ Outstanding (user-owned): enable GitHub Pages (Settings → Pages → Deploy
+  from branch `gh-pages` / root, Enforce HTTPS) then verify live ST-3 (prod URL + a PR preview).**
+  - **PF-004 techdocs supersession (accepted):** moving `docs/index.md` (which carried
+    `techdocs:true`) means the techdocs skill's auto-update hook no longer fires. This is intentional
+    — **the docs-website now owns the architecture/ADR/guide content** (RD-08 expands it); no stub is
+    left in `docs/`. Recorded here so it is not a silent behavior change.
 - 2026-07-09: **RD-01 → PLAN PREFLIGHTED** 🔬 ([report](plans/site-foundation/00-preflight-report.md))
   via `preflight` (same-session, codebase-grounded, 13 dimensions). **✅ PASSED — 9 findings, all
   resolved + applied.** Verified core repo claims (gate.spec reads `docs/acceptance-gate.md`; moving

@@ -17,7 +17,7 @@
 | theme-designer | [→](features/theme-designer/00-roadmap.md) | PL-01 ✅ Done — standalone `@jsvision/theme-designer` app + reusable `Slider` (all 4 phases / 40 tasks) | 1/1 plans | ✅ | 2026-07-09 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 ✅ Done — UI small batch: Tree markers (#17) · duplicate-accelerator warning (#6) · Switch (#11) | 1/1 plans | ✅ | 2026-07-09 |
-| docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 🔄 Executing** (site-foundation, Phase 1/5 done — VitePress scaffold + buildable skeleton) · RD-02…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 0/10 RDs | 🔄 | 2026-07-09 |
+| docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — all 5 phases/25 tasks: VitePress site + gh-pages CI (prod+PR previews) + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · RD-02…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 1/10 RDs | 🔄 | 2026-07-09 |
 
 ## Archived
 

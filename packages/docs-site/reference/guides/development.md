@@ -8,7 +8,7 @@ Conventions are defined in the project's `CLAUDE.md` and the global CodeOps codi
 standards. Highlights specific to this codebase:
 
 - **ESM-only, zero runtime dependencies** — pure-JS only; the `check:deps` guard
-  fails any native runtime dep ([ADR-001](/decisions/ADR-001-esm-zero-dependency)).
+  fails any native runtime dep ([ADR-001](/reference/decisions/ADR-001-esm-zero-dependency)).
 - **Foundation-first layering** with a single public entry point
   (`src/engine/index.ts`); every subsystem re-exports its public symbols there.
   Target 200–500 lines per file.
@@ -59,7 +59,7 @@ immutable oracle; do not weaken it to match broken code.
 Rendering, decoding, and colour encoding are pure functions; side effects live
 behind a seam (`RuntimeAdapter`, `TerminalQuery`, `StyleEncoder`). When adding
 behaviour, prefer a pure function plus a seam over reaching for a Node API directly
-([ADR-003](/decisions/ADR-003-pure-core-injectable-seams)).
+([ADR-003](/reference/decisions/ADR-003-pure-core-injectable-seams)).
 
 ### Capability-driven rendering
 
@@ -72,7 +72,7 @@ terminal.
 
 Any text derived from untrusted input must reach cells only through `sanitize`
 (`ScreenBuffer.text` already does this). Never write raw untrusted bytes to the
-terminal ([ADR-005](/decisions/ADR-005-sanitize-boundary)).
+terminal ([ADR-005](/reference/decisions/ADR-005-sanitize-boundary)).
 
 ## Pre-Commit Checklist
 

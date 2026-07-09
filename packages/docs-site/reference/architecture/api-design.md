@@ -7,7 +7,7 @@
 `@jsvision/core` is an **ESM-only TypeScript library**. The public contract is the
 set of exports of `src/engine/index.ts` — the single entry point. Everything else
 under `src/engine/**` is internal and may change without a major bump (see the
-README "Versioning & stability" policy and [ADR-001](/decisions/ADR-001-esm-zero-dependency)).
+README "Versioning & stability" policy and [ADR-001](/reference/decisions/ADR-001-esm-zero-dependency)).
 
 - **Module system**: ESM only; `require()` is unsupported (no CommonJS condition).
 - **Import specifiers**: NodeNext — `.js` extensions on source imports.

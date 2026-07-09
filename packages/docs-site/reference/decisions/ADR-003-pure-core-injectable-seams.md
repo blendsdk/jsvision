@@ -39,7 +39,7 @@ Purity makes the bulk of the engine testable as plain functions: golden-screen
 tests drive a headless emulator, decoding is fuzzed, and byte-proportionality is
 asserted deterministically. The seams concentrate the untestable parts into small,
 mockable surfaces — the host's restore guarantee is proven with a fake adapter
-(see [ADR-004](/decisions/ADR-004-no-node-pty)), and `serialize` defaults to the
+(see [ADR-004](/reference/decisions/ADR-004-no-node-pty)), and `serialize` defaults to the
 RD-05 `encodeStyle` but accepts any encoder.
 
 ## Consequences

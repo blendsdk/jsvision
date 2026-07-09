@@ -85,7 +85,7 @@ plans/ requirements/   CodeOps implementation plans + requirements.
 
 ## Next Steps
 
-- Read the [System Overview](/architecture/system-overview) for the architecture.
-- Skim the [API Reference](/architecture/api-design) for the public surface.
-- Review the [Architecture Decisions](/decisions/) to understand why things are built this way.
-- Check the [Development Workflow](/guides/development) for conventions and the test split.
+- Read the [System Overview](/reference/architecture/system-overview) for the architecture.
+- Skim the [API Reference](/reference/architecture/api-design) for the public surface.
+- Review the [Architecture Decisions](/reference/decisions/) to understand why things are built this way.
+- Check the [Development Workflow](/reference/guides/development) for conventions and the test split.

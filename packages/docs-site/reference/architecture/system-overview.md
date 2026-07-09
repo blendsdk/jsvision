@@ -16,8 +16,8 @@ only stateful, side-effecting layer (the host) is isolated behind an injectable
 `RuntimeAdapter`. This was chosen so the entire engine is testable without a real
 terminal — golden-screen tests drive a headless emulator, restore-on-exit is
 proven with a fake adapter, and decoding is fuzzed as a pure transform. See
-[ADR-003](/decisions/ADR-003-pure-core-injectable-seams) and
-[ADR-004](/decisions/ADR-004-no-node-pty).
+[ADR-003](/reference/decisions/ADR-003-pure-core-injectable-seams) and
+[ADR-004](/reference/decisions/ADR-004-no-node-pty).
 
 ## Component Architecture
 
@@ -57,7 +57,7 @@ graph TB
 
 - **Purpose**: Resolve a frozen `CapabilityProfile` (colour depth, glyphs, mouse,
   keyboard, OSC, sync) from environment, a static table, and an optional bounded
-  live terminal query. Doubles as runtime auto-configuration ([ADR-002](/decisions/ADR-002-capability-auto-config)).
+  live terminal query. Doubles as runtime auto-configuration ([ADR-002](/reference/decisions/ADR-002-capability-auto-config)).
 - **Inputs**: `env`, `platform`, optional `TerminalQuery` seam, `timeoutMs`.
 - **Outputs**: `resolveCapabilities` (sync) / `resolveCapabilitiesAsync` (with layer-2 query).
 - **Dependencies**: safety (sanitize/redaction); the host supplies the real `TerminalQuery`.
@@ -83,7 +83,7 @@ graph TB
 
 - **Purpose**: Depth-aware SGR encoding — downsample truecolor→256→16→mono via a
   redmean nearest-colour search; merge attrs + fg + bg into one SGR. It is the
-  default encoder `serialize` injects ([ADR-006 references the seam](/decisions/ADR-003-pure-core-injectable-seams)).
+  default encoder `serialize` injects ([ADR-006 references the seam](/reference/decisions/ADR-003-pure-core-injectable-seams)).
 - **Outputs**: `encode`, `encodeStyle`, `nearest256`, `nearest16`, `PALETTE`, `defaultTheme`.
 
 ### Host & lifecycle (`host/`, RD-07)
@@ -98,7 +98,7 @@ graph TB
 
 - **Purpose**: The essentials gate (`evaluateEssentials`/`assertEssentials`), the
   screen-safe logger, `redactEvent`/`dumpCaps`, the typed `TuiError` model, and the
-  canonical `sanitize` injection boundary ([ADR-005](/decisions/ADR-005-sanitize-boundary)).
+  canonical `sanitize` injection boundary ([ADR-005](/reference/decisions/ADR-005-sanitize-boundary)).
 
 ## Communication Patterns
 

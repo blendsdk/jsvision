@@ -10,7 +10,7 @@ The host's most important guarantee is that the terminal is **restored on every
 exit path** — normal return, thrown error, and `SIGINT`/`SIGTERM`/`SIGHUP`. The
 obvious way to test this is to drive the program under a real pseudo-terminal via
 `node-pty`. But `node-pty` is a **native** dependency requiring node-gyp builds,
-which conflicts with the zero-native-dependency stance ([ADR-001](/decisions/ADR-001-esm-zero-dependency)).
+which conflicts with the zero-native-dependency stance ([ADR-001](/reference/decisions/ADR-001-esm-zero-dependency)).
 
 ## Options Considered
 

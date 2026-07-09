@@ -92,7 +92,46 @@ export default defineConfig({
       '/components/': [{ text: 'Components', items: [{ text: 'Overview', link: '/components/' }] }],
       '/apps/': [{ text: 'Apps', items: [{ text: 'Overview', link: '/apps/' }] }],
       '/api/': [{ text: 'API Reference', items: [{ text: 'Overview', link: '/api/' }] }],
-      '/reference/': [{ text: 'Reference', items: [{ text: 'Overview', link: '/reference/' }] }],
+      '/reference/': [
+        { text: 'Reference', items: [{ text: 'Overview', link: '/reference/' }] },
+        {
+          text: 'Architecture',
+          items: [
+            { text: 'Overview', link: '/reference/architecture/' },
+            { text: 'System Overview', link: '/reference/architecture/system-overview' },
+            { text: 'API Design', link: '/reference/architecture/api-design' },
+            { text: 'Security', link: '/reference/architecture/security' },
+          ],
+        },
+        {
+          text: 'Decisions (ADRs)',
+          items: [
+            { text: 'Decision Log', link: '/reference/decisions/' },
+            { text: 'ADR-001: ESM-only, zero deps', link: '/reference/decisions/ADR-001-esm-zero-dependency' },
+            { text: 'ADR-002: Capability auto-config', link: '/reference/decisions/ADR-002-capability-auto-config' },
+            {
+              text: 'ADR-003: Pure core, injectable seams',
+              link: '/reference/decisions/ADR-003-pure-core-injectable-seams',
+            },
+            { text: 'ADR-004: No node-pty', link: '/reference/decisions/ADR-004-no-node-pty' },
+            { text: 'ADR-005: Sanitize boundary', link: '/reference/decisions/ADR-005-sanitize-boundary' },
+            {
+              text: 'ADR-006: Informational perf bench',
+              link: '/reference/decisions/ADR-006-informational-perf-bench',
+            },
+            { text: 'ADR-007: Monorepo restructure', link: '/reference/decisions/ADR-007-monorepo-restructure' },
+            { text: 'ADR-008: Layout engine', link: '/reference/decisions/ADR-008-layout-engine' },
+            { text: 'ADR-009: Bun runtime support', link: '/reference/decisions/ADR-009-bun-runtime-support' },
+          ],
+        },
+        {
+          text: 'Guides',
+          items: [
+            { text: 'Getting Started', link: '/reference/guides/getting-started' },
+            { text: 'Development', link: '/reference/guides/development' },
+          ],
+        },
+      ],
     },
     socialLinks: [
       { icon: 'github', link: GITHUB_URL },
