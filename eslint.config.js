@@ -7,7 +7,17 @@ import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '_archive', '**/coverage/**', '**/.turbo/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '_archive',
+      '**/coverage/**',
+      '**/.turbo/**',
+      '**/.vitepress/dist/**',
+      '**/.vitepress/cache/**',
+    ],
+  },
   ...tseslint.configs.recommended,
   prettier,
   {
