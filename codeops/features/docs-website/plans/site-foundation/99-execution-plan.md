@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 16:45
-> **Progress**: 20/25 tasks (80%)
+> **Last Updated**: 2026-07-09 16:54
+> **Progress**: 25/25 tasks (100%) — all automated STs green; live ST-3 deploy acceptance pending user (enable GitHub Pages)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -104,15 +104,15 @@ lands at Phase 2 and grows).
 **Reference**: [03-03](03-03-content-migration.md) · [07](07-testing-strategy.md) ST-11, ST-12 · AR-2
 
 ### Step 5.1: Spec (RED)
-- [ ] 5.1.1 Extend `check-docs-build.mjs`: **ST-11** (every former `docs/` website page has a `redirects.md` row **and** a rendered page in `dist`) + confirm **ST-12** baseline (`gate.spec` currently green, `docs/acceptance-gate.md` present). Verify RED for ST-11 (not migrated yet).
+- [x] 5.1.1 Extend `check-docs-build.mjs`: **ST-11** (every former `docs/` website page has a `redirects.md` row **and** a rendered page in `dist`) + confirm **ST-12** baseline (`gate.spec` currently green, `docs/acceptance-gate.md` present). Verify RED for ST-11 (not migrated yet). _(2026-07-09 16:54 — ST-11 RED confirmed, ST-12 already green)_
 
 ### Step 5.2: Implementation (GREEN)
-- [ ] 5.2.1 Move website content (preserve history): `docs/architecture/` → `reference/architecture/`, `docs/decisions/` → `reference/decisions/`, `docs/guides/` → `reference/guides/`, fold `docs/index.md` into the Architecture landing. **Leave `docs/acceptance-gate.md` in place.** Retire the old `docs/.vitepress/config.ts` (superseded). Record the techdocs auto-update **supersession** in the roadmap note (PF-004 — moving `docs/index.md` disables the techdocs hook; accepted).
-- [ ] 5.2.2 Wire the Reference sidebar to the migrated pages; add `packages/docs-site/redirects.md` (old→new mapping); update the lone stale ref in `JSDOC-CLEANUP-PLAN.md` (non-blocking note).
+- [x] 5.2.1 Move website content (preserve history): `docs/architecture/` → `reference/architecture/`, `docs/decisions/` → `reference/decisions/`, `docs/guides/` → `reference/guides/`, fold `docs/index.md` into the Architecture landing. **Leave `docs/acceptance-gate.md` in place.** Retire the old `docs/.vitepress/config.ts` (superseded). Record the techdocs auto-update **supersession** in the roadmap note (PF-004 — moving `docs/index.md` disables the techdocs hook; accepted). _(2026-07-09 16:54 — `git mv` (history preserved); internal link prefixes rewritten to `/reference/…`; folded index frontmatter → `title: Architecture`; docs/ now holds only acceptance-gate.md)_
+- [x] 5.2.2 Wire the Reference sidebar to the migrated pages; add `packages/docs-site/redirects.md` (old→new mapping); update the lone stale ref in `JSDOC-CLEANUP-PLAN.md` (non-blocking note). _(2026-07-09 16:54 — full Architecture/Decisions(9 ADRs)/Guides sidebar; redirects.md 16-row map; Reference landing hub; JSDOC-CLEANUP ref updated)_
 
 ### Step 5.3: Green + harden
-- [ ] 5.3.1 ST-11 passes; **ST-12**: `docs/acceptance-gate.md` byte-unchanged, `packages/core/test/gate.spec.test.ts` passes, `yarn verify` (shipped packages) green.
-- [ ] 5.3.2 Full `check-docs-build.mjs` (ST-1…ST-13 automated) green + `yarn docs:build` green — the complete Phase-A site. Final live re-verify (ST-3) on the deployed site.
+- [x] 5.3.1 ST-11 passes; **ST-12**: `docs/acceptance-gate.md` byte-unchanged, `packages/core/test/gate.spec.test.ts` passes, `yarn verify` (shipped packages) green. _(2026-07-09 16:54 — acceptance-gate.md untouched (git clean); gate.spec 3/3; `yarn verify` exit 0, 16/16 turbo tasks)_
+- [x] 5.3.2 Full `check-docs-build.mjs` (ST-1…ST-13 automated) green + `yarn docs:build` green — the complete Phase-A site. Final live re-verify (ST-3) on the deployed site. _(2026-07-09 16:54 — **12/12 checks green + check:deps green (ST-13) + docs:build green**. Final live ST-3 re-verify ⛳ PENDING USER — deployed-site check after Pages is enabled; see Deploy checklist.)_
 
 ---
 

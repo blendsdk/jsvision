@@ -40,7 +40,7 @@ public packages on the root `package.json#version` in lockstep.
 ## Rationale
 
 The split cleanly separates the published contract (tui-core, still ESM-only /
-zero-runtime-dep — [ADR-001](/decisions/ADR-001-esm-zero-dependency)) from dev-only
+zero-runtime-dep — [ADR-001](/reference/decisions/ADR-001-esm-zero-dependency)) from dev-only
 example code, and opens room for the widget/app packages the foundation exists to
 support. Turborepo caches and orders cross-package tasks (`^build` so consumers
 typecheck against built `.d.ts`). vitest replaces the bespoke Node-version-dependent

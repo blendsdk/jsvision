@@ -32,6 +32,30 @@ const SECTIONS = {
   Reference: 'reference/index.html',
 };
 
+/**
+ * Every former repo-root `docs/` website page, at its new site route. Each must
+ * render in `dist` and have a row in `redirects.md` (ST-11). The Technical
+ * Architecture landing (`docs/index.md`) folds into `/reference/architecture/`.
+ */
+const MIGRATED_ROUTES = [
+  '/reference/architecture/',
+  '/reference/architecture/system-overview',
+  '/reference/architecture/api-design',
+  '/reference/architecture/security',
+  '/reference/decisions/',
+  '/reference/decisions/ADR-001-esm-zero-dependency',
+  '/reference/decisions/ADR-002-capability-auto-config',
+  '/reference/decisions/ADR-003-pure-core-injectable-seams',
+  '/reference/decisions/ADR-004-no-node-pty',
+  '/reference/decisions/ADR-005-sanitize-boundary',
+  '/reference/decisions/ADR-006-informational-perf-bench',
+  '/reference/decisions/ADR-007-monorepo-restructure',
+  '/reference/decisions/ADR-008-layout-engine',
+  '/reference/decisions/ADR-009-bun-runtime-support',
+  '/reference/guides/getting-started',
+  '/reference/guides/development',
+];
+
 // --- tiny check harness ---------------------------------------------------
 
 const results = [];
@@ -358,6 +382,32 @@ check('ST-10', 'Static SEO assets present (sitemap.xml, robots.txt, favicon, 404
   if (!['favicon.ico', 'favicon.svg'].some((f) => existsSync(join(distDir, f)))) missing.push('favicon.ico/svg');
   if (missing.length) fail(`missing static asset(s): ${missing.join(', ')}`);
   return 'sitemap.xml, robots.txt, favicon, 404.html all present';
+});
+
+// --- ST-11: docs/ migration completeness ----------------------------------
+
+check('ST-11', 'Every former docs/ page renders in dist and has a redirects.md row', () => {
+  const redirectsPath = join(siteRoot, 'redirects.md');
+  if (!existsSync(redirectsPath)) fail('redirects.md is missing');
+  const redirects = readFileSync(redirectsPath, 'utf8');
+
+  const keys = new Set(htmlPages().map(pageKey));
+  const problems = [];
+  for (const route of MIGRATED_ROUTES) {
+    if (!keys.has(pageKey(route.replace(/^\//, '')))) problems.push(`not rendered in dist: ${route}`);
+    if (!redirects.includes(route)) problems.push(`no redirects.md row: ${route}`);
+  }
+  if (problems.length) fail(`${problems.length} migration gap(s):\n    ${problems.slice(0, 12).join('\n    ')}`);
+  return `${MIGRATED_ROUTES.length} migrated pages rendered + mapped in redirects.md`;
+});
+
+// --- ST-12: the load-bearing spec-test oracle stays in place --------------
+
+check('ST-12', 'docs/acceptance-gate.md kept in place (spec-test oracle intact)', () => {
+  const gate = join(repoRoot, 'docs', 'acceptance-gate.md');
+  if (!existsSync(gate)) fail('docs/acceptance-gate.md was moved/removed — it is the gate.spec oracle and must stay');
+  if (readFileSync(gate, 'utf8').trim().length === 0) fail('docs/acceptance-gate.md is empty');
+  return 'docs/acceptance-gate.md present (gate.spec oracle preserved)';
 });
 
 // --- ST-14: deploy workflow is well-formed and secret-safe ----------------

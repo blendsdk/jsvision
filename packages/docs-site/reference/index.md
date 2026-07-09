@@ -1,12 +1,24 @@
 ---
 title: Reference
-description: Architecture, design decisions (ADRs), and guides for JSVision.
+description: Architecture, design decisions (ADRs), and developer guides for JSVision.
 ---
 
 # Reference
 
-Architecture notes, the architecture decision records (ADRs), and in-depth guides.
+Background material for people working on or with JSVision.
 
-> **Placeholder.** The architecture, decisions, and guides are absorbed here from the repository's
-> techdocs in a later step of this milestone. This page exists so the navigation skeleton has no dead
-> links.
+## Architecture
+
+How the engine fits together — [Architecture overview](/reference/architecture/),
+[System Overview](/reference/architecture/system-overview),
+[API Design](/reference/architecture/api-design), and [Security](/reference/architecture/security).
+
+## Decisions (ADRs)
+
+The [Architecture Decision Records](/reference/decisions/) capturing the rationale behind the major
+design choices.
+
+## Guides
+
+[Getting Started](/reference/guides/getting-started) and the
+[Development](/reference/guides/development) workflow.

@@ -35,7 +35,7 @@ invoking program.
 ## Input Validation & Injection Prevention
 
 The **canonical injection boundary** is `sanitize` (see
-[ADR-005](/decisions/ADR-005-sanitize-boundary)). All text that becomes screen
+[ADR-005](/reference/decisions/ADR-005-sanitize-boundary)). All text that becomes screen
 cells passes through it (e.g. `ScreenBuffer.text`), so control bytes in untrusted
 input can never reach the terminal as live escape sequences at serialize time.
 
@@ -46,7 +46,7 @@ passthrough input, never executed.
 
 ## Infrastructure & Supply-Chain Security
 
-- **Zero runtime dependencies** ([ADR-001](/decisions/ADR-001-esm-zero-dependency)) —
+- **Zero runtime dependencies** ([ADR-001](/reference/decisions/ADR-001-esm-zero-dependency)) —
   the runtime attack surface is the Node standard library only. Enforced by
   `npm run check:deps` (fails on any native runtime dep).
 - **Dependency audit** — `npm audit --audit-level=high` runs in CI; the dev

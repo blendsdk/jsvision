@@ -1,5 +1,6 @@
 ---
-techdocs: true
+title: Architecture
+description: How the JSVision engine fits together — its subsystems, data flow, and the decisions behind them.
 ---
 
 # jsvision — Technical Architecture
@@ -48,23 +49,23 @@ graph TB
 
 ## Key Components
 
-| Component            | Module                   | Purpose                                           | Documentation                                    |
-| -------------------- | ------------------------ | ------------------------------------------------- | ------------------------------------------------ |
-| Capability detection | `src/engine/capability/` | Detect terminal capabilities; auto-configure      | [API Design](/architecture/api-design)           |
-| Input decoder        | `src/engine/input/`      | Pure byte→event decoding (keys, mouse, paste)     | [API Design](/architecture/api-design)           |
-| Rendering engine     | `src/engine/render/`     | Width-correct buffer + pure damage-diff serialize | [API Design](/architecture/api-design)           |
-| Color & styling      | `src/engine/color/`      | Depth-aware SGR encoding (truecolor→256→16→mono)  | [API Design](/architecture/api-design)           |
-| Host & lifecycle     | `src/engine/host/`       | Raw mode, alt-screen, signals, guaranteed restore | [System Overview](/architecture/system-overview) |
-| Safety               | `src/engine/safety/`     | Essentials gate, sanitize boundary, typed errors  | [Security](/architecture/security)               |
+| Component            | Module                   | Purpose                                           | Documentation                                              |
+| -------------------- | ------------------------ | ------------------------------------------------- | ---------------------------------------------------------- |
+| Capability detection | `src/engine/capability/` | Detect terminal capabilities; auto-configure      | [API Design](/reference/architecture/api-design)           |
+| Input decoder        | `src/engine/input/`      | Pure byte→event decoding (keys, mouse, paste)     | [API Design](/reference/architecture/api-design)           |
+| Rendering engine     | `src/engine/render/`     | Width-correct buffer + pure damage-diff serialize | [API Design](/reference/architecture/api-design)           |
+| Color & styling      | `src/engine/color/`      | Depth-aware SGR encoding (truecolor→256→16→mono)  | [API Design](/reference/architecture/api-design)           |
+| Host & lifecycle     | `src/engine/host/`       | Raw mode, alt-screen, signals, guaranteed restore | [System Overview](/reference/architecture/system-overview) |
+| Safety               | `src/engine/safety/`     | Essentials gate, sanitize boundary, typed errors  | [Security](/reference/architecture/security)               |
 
 ## Technology Decisions
 
-See [Architecture Decision Records](/decisions/) for the rationale behind the major
+See [Architecture Decision Records](/reference/decisions/) for the rationale behind the major
 design choices (ESM-only zero-dep, capability auto-config, pure core behind
 injectable seams, no node-pty, the canonical sanitize boundary, and the
 informational performance bench).
 
 ## Getting Started
 
-New to the project? Start with the [Getting Started Guide](/guides/getting-started),
-then read the [System Overview](/architecture/system-overview).
+New to the project? Start with the [Getting Started Guide](/reference/guides/getting-started),
+then read the [System Overview](/reference/architecture/system-overview).
