@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 20:07
-> **Progress**: 3/17 tasks (18%)
+> **Last Updated**: 2026-07-09 20:28
+> **Progress**: 7/17 tasks (41%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -61,14 +61,14 @@ dogfood it back into the spike. Five phases; each is spec-first and leaves a **v
 **Reference**: [03-02](03-02-browser-host.md) · [07](07-testing-strategy.md) ST-2, ST-3, ST-7, ST-10 · AR-3, AR-4
 
 ### Step 2.1: Spec (RED)
-- [ ] 2.1.1 Write `test/host.spec.test.ts` (**ST-2** bytes-written === `serialize(buffer, null, {caps})` over an `@xterm/headless` term; **ST-3** `\x1b[A` → one `up` key, lone `ESC` flushes only after `ESC_TIMEOUT_MS` via the injected timer), `test/caps.spec.test.ts` (**ST-7** `colorDepth:'16'` downsamples a truecolor style), `test/mount.spec.test.ts` (**ST-10** `mountApp` paints a first frame + routes a key). Verify RED.
+- [x] 2.1.1 Write `test/host.spec.test.ts` (**ST-2** bytes-written === `serialize(buffer, null, {caps})` over an `@xterm/headless` term; **ST-3** `\x1b[A` → one `up` key, lone `ESC` flushes only after `ESC_TIMEOUT_MS` via the injected timer), `test/caps.spec.test.ts` (**ST-7** `colorDepth:'16'` downsamples a truecolor style), `test/mount.spec.test.ts` (**ST-10** `mountApp` paints a first frame + routes a key). Verify RED. — done 2026-07-09 20:28 (RED: 6 failing on missing exports; + `test/helpers/fake-terminal.ts` controllable terminal + fake timer)
 
 ### Step 2.2: Implementation (GREEN)
-- [ ] 2.2.1 `src/host.ts` — promote `browser-host.ts` **behavior verbatim**, add the injectable `timer` seam (AR-4), rewrite JSDoc + `@example`; re-export from the barrel. Green ST-2, ST-3.
-- [ ] 2.2.2 `src/caps.ts` (`buildBrowserCaps`, `colorDepth` overridable) + `src/mount.ts` (`mountApp` distilled from `main.ts`, DOM-light, headless-testable); re-export both. Green ST-7, ST-10.
+- [x] 2.2.1 `src/host.ts` — promote `browser-host.ts` **behavior verbatim**, add the injectable `timer` seam (AR-4), rewrite JSDoc + `@example`; re-export from the barrel. Green ST-2, ST-3. — done 2026-07-09 20:28 (`TerminalLike` structural interface + opaque `TimerHandle` seam mirroring core's `clearTimeout(h as NodeJS.Timeout)`; headless term satisfies `TerminalLike` structurally, so ST-2 spies on `write`)
+- [x] 2.2.2 `src/caps.ts` (`buildBrowserCaps`, `colorDepth` overridable) + `src/mount.ts` (`mountApp` distilled from `main.ts`, DOM-light, headless-testable); re-export both. Green ST-7, ST-10. — done 2026-07-09 20:28 (`mountApp` takes a caller-supplied `term`/`createTerminal`, never imports `@xterm/xterm`; `term.focus?.()` optional so headless mounts; `element` = narrow `HostElement`)
 
 ### Step 2.3: Green + harden
-- [ ] 2.3.1 ST-2/3/7/10 pass; add `host.impl.test.ts` edges (multi-byte chunk decode, caret show/hide/position, `render` no-op when the diff is empty); `yarn verify` green; `check:docs` green.
+- [x] 2.3.1 ST-2/3/7/10 pass; add `host.impl.test.ts` edges (multi-byte chunk decode, caret show/hide/position, `render` no-op when the diff is empty); `yarn verify` green; `check:docs` green. — done 2026-07-09 20:28 (13/13 web tests; full `yarn verify` 20/20; check:docs 5 files 0 banned 0 missing)
 
 ---
 
