@@ -1,18 +1,17 @@
 /**
- * `demo:web` browser entry — mounts the jsvision Turbo Vision app (`app.ts`) into
- * an [xterm.js](https://xtermjs.org) terminal via the browser host (`browser-host.ts`).
+ * `demo:web` browser entry — mounts the jsvision app (`app.ts`) into an
+ * [xterm.js](https://xtermjs.org) terminal via `@jsvision/web`'s `mountApp`.
  *
- * The wiring is the browser mirror of `@jsvision/ui`'s native `run()` (`app/run.ts`):
- * point the loop's frame/caret sinks at the host, feed host input into `loop.dispatch`,
- * and map terminal resize to `loop.resize`. The event loop is fully synchronous
- * (`runTick` drains + flushes inline per dispatch), so no Node event-loop primitive
- * is involved — a browser `setInterval` drives the clock.
+ * `mountApp` is the browser mirror of `@jsvision/ui`'s native `run()`: it wires the loop's
+ * frame/caret/clipboard sinks to the terminal, starts the host, paints the first frame, maps terminal
+ * resize to `loop.resize`, and focuses. The demo keeps only the browser-specific niceties `mountApp`
+ * deliberately leaves to the caller — the WebGL renderer, the fit addon, and the `setInterval` clock.
  */
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebglAddon } from '@xterm/addon-webgl';
 import '@xterm/xterm/css/xterm.css';
-import { createBrowserHost } from './browser-host.js';
+import { mountApp } from '@jsvision/web';
 import { buildApp, formatTime, WEB_CAPS, CMD_TICK } from './app.js';
 
 /**
@@ -57,36 +56,20 @@ function boot(): void {
 
   // Compose the app at xterm's measured grid; the first host resize corrects any drift.
   const { app, clock } = buildApp({ width: term.cols, height: term.rows });
-  const loop = app.loop;
 
-  const host = createBrowserHost({
-    term,
-    caps: WEB_CAPS,
-    onInput: (event) => loop.dispatch(event),
-  });
+  // Wire the app to the terminal in one call: host, sinks, first frame, resize→loop, and focus.
+  mountApp({ element: mount, app, caps: WEB_CAPS, term });
 
-  // Point the loop's output sinks at the host (the browser mirror of run.ts).
-  loop.onFrame = (buffer) => host.render(buffer);
-  loop.onCaret = (cell) => host.setCaret(cell);
-  loop.writeClipboard = (seq) => term.write(seq);
-
-  host.start();
-  host.render(loop.renderRoot.buffer()); // paint the first frame
-  loop.refreshCaret(); // position the initial caret (the first render is not a loop tick)
-
-  // Terminal → app resize, and window → terminal refit.
-  term.onResize(({ cols, rows }) => loop.resize({ width: cols, height: rows }));
+  // Window → terminal refit (the fit addon then fires term.onResize → loop.resize, handled by mountApp).
   window.addEventListener('resize', () => fit.fit());
 
   // The live clock: update the signal, then emit a no-op command so the loop paints one frame.
   const tick = (): void => {
     clock.set(formatTime(new Date()));
-    loop.emitCommand(CMD_TICK);
+    app.loop.emitCommand(CMD_TICK);
   };
   tick();
   window.setInterval(tick, 1000);
-
-  term.focus();
 }
 
 boot();
