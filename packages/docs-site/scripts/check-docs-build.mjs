@@ -9,6 +9,7 @@
 //
 // Usage:  node packages/docs-site/scripts/check-docs-build.mjs
 
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -169,6 +170,30 @@ function cssToken(block, name) {
   return m ? m[1].trim() : null;
 }
 
+/** Bodies of every inline `<script>` (no `src`) on a page — the CSP-hashable code. */
+function inlineScripts(html) {
+  return [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)]
+    .filter((m) => !/\bsrc=/i.test(m[1]))
+    .map((m) => m[2]);
+}
+
+/** The `'sha256-…'` CSP source expression for an inline script body. */
+function scriptHash(body) {
+  return `'sha256-${createHash('sha256').update(body, 'utf8').digest('base64')}'`;
+}
+
+/** Return the value of a `<meta ... {keyAttr}="{keyVal}" ... content="…">` tag, or null. */
+function metaContent(html, keyAttr, keyVal) {
+  for (const m of html.matchAll(/<meta\b[^>]*>/g)) {
+    const tag = m[0];
+    if (tag.includes(`${keyAttr}="${keyVal}"`)) {
+      const c = /content="([^"]*)"/.exec(tag);
+      if (c) return c[1];
+    }
+  }
+  return null;
+}
+
 // --- ST-1: build produced a homepage with base-prefixed assets ------------
 
 check('ST-1', 'Build output present + every root-absolute asset URL is base-prefixed', () => {
@@ -267,6 +292,72 @@ check('ST-7', 'Light + dark schemes defined; body-text contrast ≥ 4.5:1 in eac
     if (ratio < 4.5) fail(`${scheme} body contrast ${ratio.toFixed(2)}:1 < 4.5:1 (${fg} on ${bg})`);
   }
   return 'both schemes defined; body-text contrast ≥ 4.5:1';
+});
+
+// --- ST-8: per-page SEO meta ----------------------------------------------
+
+check('ST-8', 'Unique <title> + og:title/description/image + twitter:card per page', () => {
+  const pages = htmlPages();
+  const seenTitles = new Map();
+  const problems = [];
+
+  for (const page of pages) {
+    const html = readFileSync(join(distDir, page), 'utf8');
+
+    const title = (/<title>([^<]*)<\/title>/.exec(html)?.[1] ?? '').trim();
+    if (!title) problems.push(`${page}: no <title>`);
+    else if (seenTitles.has(title)) problems.push(`${page}: <title> "${title}" duplicates ${seenTitles.get(title)}`);
+    else seenTitles.set(title, page);
+
+    for (const [attr, val] of [
+      ['property', 'og:title'],
+      ['property', 'og:description'],
+      ['property', 'og:image'],
+      ['name', 'twitter:card'],
+    ]) {
+      if (!metaContent(html, attr, val)) problems.push(`${page}: missing ${val}`);
+    }
+  }
+  if (problems.length) fail(`${problems.length} SEO issue(s):\n    ${problems.slice(0, 10).join('\n    ')}`);
+  return `${pages.length} pages: unique titles + og:* + twitter:card`;
+});
+
+// --- ST-9: meta CSP present, safe, and honestly enforced ------------------
+
+check('ST-9', 'Meta CSP on every page: no unsafe-eval, strict script-src hashes all inline scripts', () => {
+  const problems = [];
+  for (const page of htmlPages()) {
+    const html = readFileSync(join(distDir, page), 'utf8');
+    const csp = metaContent(html, 'http-equiv', 'Content-Security-Policy');
+    if (!csp) {
+      problems.push(`${page}: no <meta http-equiv="Content-Security-Policy">`);
+      continue;
+    }
+    if (/unsafe-eval/.test(csp)) problems.push(`${page}: CSP allows unsafe-eval`);
+
+    const scriptSrc = /script-src\b([^;]*)/.exec(csp)?.[1] ?? '';
+    if (/'unsafe-inline'/.test(scriptSrc)) problems.push(`${page}: script-src allows 'unsafe-inline'`);
+
+    // Every inline script VitePress emits must be covered by a hash, or the
+    // strict policy would block it at runtime (the PF-003 concern).
+    for (const body of inlineScripts(html)) {
+      if (!body.trim()) continue;
+      const hash = scriptHash(body);
+      if (!scriptSrc.includes(hash))
+        problems.push(`${page}: inline script not hashed in script-src (${hash.slice(0, 24)}…)`);
+    }
+  }
+  if (problems.length) fail(`${problems.length} CSP issue(s):\n    ${problems.slice(0, 10).join('\n    ')}`);
+  return 'meta CSP present; no unsafe-eval; strict script-src hashes every inline script';
+});
+
+// --- ST-10: static SEO assets ---------------------------------------------
+
+check('ST-10', 'Static SEO assets present (sitemap.xml, robots.txt, favicon, 404.html)', () => {
+  const missing = ['sitemap.xml', 'robots.txt', '404.html'].filter((f) => !existsSync(join(distDir, f)));
+  if (!['favicon.ico', 'favicon.svg'].some((f) => existsSync(join(distDir, f)))) missing.push('favicon.ico/svg');
+  if (missing.length) fail(`missing static asset(s): ${missing.join(', ')}`);
+  return 'sitemap.xml, robots.txt, favicon, 404.html all present';
 });
 
 // --- ST-14: deploy workflow is well-formed and secret-safe ----------------

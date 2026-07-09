@@ -19,7 +19,17 @@
 | 10 | Process | Content authoring | Agents draft → user reviews | Agents draft → user reviews | ✅ Resolved — imported (requirements AR-21) |
 | 11 | UX/Non-functional | Phase-A hero/OG image (real assets come from RD-09 Playwright later) | Static placeholder now / block on RD-09 | Static placeholder OG/hero image in Phase A; replaced by the generated asset in RD-09 | ✅ Resolved — obvious sequencing (RD-09 owns generation); low-stakes |
 
+| 12 | Technical/Security (runtime) | PF-003's "hard-code the SHA-256 hashes of VitePress's inline scripts into the meta-CSP" is fragile: VitePress emits a `window.__VP_HASH_MAP__` inline script whose content (and thus its hash) changes whenever **any** page's content changes, and differs across builds — a hard-coded hash would go stale and break the site's own CSP on the next content edit and on PR-preview builds (different `base`). | (a) auto-inject per-build via a VitePress `transformHtml` hook that computes each page's inline-script hashes and writes them into that page's meta-CSP `script-src` / (b) hard-code the current build's hashes (plan literal) / (c) allow `'unsafe-inline'` for scripts | **(a) Auto-inject per build** — always self-consistent, preview-safe, and future-proof; honors PF-003's goal (strict CSP, no `'unsafe-inline'`, honest) without the staleness footgun. User-decided 2026-07-09. | ✅ Resolved (runtime) |
+
 ### Resolution Notes
+
+**AR-12 (runtime, 2026-07-09):** discovered during Phase 4 execution. The strict-CSP DECISION (PF-003 /
+AR-9) is unchanged — only the mechanism for supplying the inline-script hashes is refined from
+"hard-code" to "compute at build time in `transformHtml`", because the `__VP_HASH_MAP__` inline
+script's hash is content-dependent. `ST-9` asserts the end state (every inline script's hash present
+in `script-src`, no `'unsafe-inline'`, no `unsafe-eval`) so it validates either mechanism; (a) makes
+it pass sustainably.
+
 
 **AR-1..3:** New plan-level decisions, user-chosen this session (2026-07-09) after current-state
 analysis (root `@jsvision/monorepo`, yarn 1.22 `workspaces:packages/*`, `verify = yarn lint && turbo
