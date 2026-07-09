@@ -47,6 +47,22 @@ test('ST-12: the barrel does not re-export the node-builtin stubs', () => {
   }
 });
 
+// ST-12 (full) — every planned public runtime symbol is reachable from the `.` barrel.
+test('ST-12: the barrel exposes every public runtime symbol', () => {
+  const barrel = web as Record<string, unknown>;
+  for (const name of [
+    'createBrowserHost',
+    'buildBrowserCaps',
+    'mountApp',
+    'createBrowserFileSystem',
+    'attachKeyReclaim',
+    'setClipboard',
+  ]) {
+    expect(typeof barrel[name], name).toBe('function');
+  }
+  expect(Array.isArray(barrel.UNRECLAIMABLE_CHORDS)).toBe(true);
+});
+
 // ST-12 — the version is static at the root 0.1.0 (AR-2: sync-versions skips private packages).
 test('ST-12: package.json version is static at the root 0.1.0', () => {
   const pkg = JSON.parse(readFileSync(join(pkgRoot, 'package.json'), 'utf8')) as { version?: string };

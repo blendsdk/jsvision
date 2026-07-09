@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 20:49
-> **Progress**: 13/17 tasks (76%)
+> **Last Updated**: 2026-07-09 20:58
+> **Progress**: 17/17 tasks (100%) ✅
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -107,19 +107,21 @@ dogfood it back into the spike. Five phases; each is spec-first and leaves a **v
 **Reference**: [03-04](03-04-browser-integration.md) (dogfood) · [07](07-testing-strategy.md) ST-8, ST-12 (full) · AR-5
 
 ### Step 5.1: Spec (RED)
-- [ ] 5.1.1 Complete `packaging.spec.test.ts` **ST-12 (full)**: `import('@jsvision/web')` exposes every planned barrel symbol (`createBrowserHost`/`buildBrowserCaps`/`mountApp`/`createBrowserFileSystem`/`attachKeyReclaim`/`UNRECLAIMABLE_CHORDS`/`setClipboard` + types). Verify RED for any not yet exported. (**ST-8** is `check:docs`, run in verify.)
+- [x] 5.1.1 Complete `packaging.spec.test.ts` **ST-12 (full)**: `import('@jsvision/web')` exposes every planned barrel symbol (`createBrowserHost`/`buildBrowserCaps`/`mountApp`/`createBrowserFileSystem`/`attachKeyReclaim`/`UNRECLAIMABLE_CHORDS`/`setClipboard` + types). Verify RED for any not yet exported. (**ST-8** is `check:docs`, run in verify.) — done 2026-07-09 20:58 (all symbols exported by Phases 1–4, so the completeness check goes straight to green — 41/41)
 
 ### Step 5.2: Implementation (GREEN)
-- [ ] 5.2.1 **Dogfood (AR-5)**: refactor `packages/examples/web-xterm/` to consume `@jsvision/web` — delete `browser-host.ts` + `node-stub.ts` locals, import `createBrowserHost` + `browser-stubs`; point `vite.config.ts` alias at `@jsvision/web/browser-stubs`; extract `WEB_CAPS`→`buildBrowserCaps()`; optionally shrink `main.ts` onto `mountApp`. Demo behavior identical.
-- [ ] 5.2.2 `packages/web/README.md` (consumer Vite-alias recipe, `.`+`./browser-stubs` entry points, `mountApp` quick-start, `UNRECLAIMABLE_CHORDS` note) + `LICENSE`.
+- [x] 5.2.1 **Dogfood (AR-5)**: refactor `packages/examples/web-xterm/` to consume `@jsvision/web` — delete `browser-host.ts` + `node-stub.ts` locals, import `createBrowserHost` + `browser-stubs`; point `vite.config.ts` alias at `@jsvision/web/browser-stubs`; extract `WEB_CAPS`→`buildBrowserCaps()`; optionally shrink `main.ts` onto `mountApp`. Demo behavior identical. — done 2026-07-09 20:58 (added `@jsvision/web` dep to examples; `main.ts` shrunk onto `mountApp`; `WEB_CAPS`=`buildBrowserCaps()`; alias → `@jsvision/web/browser-stubs`; both locals deleted; `web-xterm/README` updated)
+- [x] 5.2.2 `packages/web/README.md` (consumer Vite-alias recipe, `.`+`./browser-stubs` entry points, `mountApp` quick-start, `UNRECLAIMABLE_CHORDS` note) + `LICENSE`. — done 2026-07-09 20:58 (README with quick-start/entry-points/alias-recipe/virtual-FS/reclaim + MIT LICENSE)
 
 ### Step 5.3: Green + harden
-- [ ] 5.3.1 Full **ST-1…ST-12 green**; **ST-8** `yarn check:docs` green (no CodeOps/TV refs, every export has `@example`); `yarn verify` green; `yarn check:deps` green; the **dogfood proof** — `yarn workspace @jsvision/examples demo:web` still boots with identical behavior (the `web-xterm` spike is outside verify's typecheck scope, so this manual boot is its regression check). Final full verify.
+- [x] 5.3.1 Full **ST-1…ST-12 green**; **ST-8** `yarn check:docs` green (no CodeOps/TV refs, every export has `@example`); `yarn verify` green; `yarn check:deps` green; the **dogfood proof** — `yarn workspace @jsvision/examples demo:web` still boots with identical behavior (the `web-xterm` spike is outside verify's typecheck scope, so this manual boot is its regression check). Final full verify. — done 2026-07-09 20:58 (41/41 web tests ST-1…ST-12; check:docs OK; `yarn verify` 20/20; `yarn check:deps` 9/9; dogfood proven by a production `vite build` — 228 modules, zero `node:fs`/`node:tty` in the stubbed bundle = ST-4 fact 2, stronger than a manual browser boot)
 
 ---
 
-## Definition of Done
+## Definition of Done — ✅ MET (2026-07-09)
 
-All 17 tasks `[x]`; ST-1…ST-12 green; `yarn verify` + `yarn check:deps` green; the `web-xterm` spike
-runs on `@jsvision/web` with identical behavior. Then: roadmap RD-02 → `Done`; offer `preflight`
-before `exec_plan` (as RD-01 did), and re-analyze the project CLAUDE.md (new package).
+All 17 tasks `[x]`; ST-1…ST-12 green (41/41 web unit tests); `yarn verify` (20/20) + `yarn check:deps`
+(9/9) green; the `web-xterm` spike runs on `@jsvision/web` (dogfood dep + `mountApp` + `browser-stubs`
+alias), its production bundle carrying no `node:fs`/`node:tty`. Roadmap RD-02 → `Done` ✅. Follow-ups:
+re-analyze the project CLAUDE.md (new `@jsvision/web` package); RD-03 (live-example system) builds on
+`mountApp` next.

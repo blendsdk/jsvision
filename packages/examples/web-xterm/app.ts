@@ -7,7 +7,7 @@
  * over the event loop, exactly as the native `demo:tvision` does. `main.ts` is the
  * only file that swaps the OS boundary (native host → xterm.js browser host).
  */
-import { resolveCapabilities } from '@jsvision/core';
+import { buildBrowserCaps } from '@jsvision/web';
 import type { CapabilityProfile } from '@jsvision/core';
 import {
   createApplication,
@@ -25,19 +25,12 @@ import {
 import type { Application, Signal, Size2D, DrawContext } from '@jsvision/ui';
 
 /**
- * A browser-fixed capability profile: xterm.js is a truecolor terminal with SGR
- * mouse, drag tracking, and bracketed paste, so we inject those directly instead
- * of sniffing `process.env` (which does not exist in a browser). The synthetic
- * `LANG=…UTF-8` is what flips `unicode.utf8` + `glyphs.boxDrawing`/`halfBlocks`
- * on (capability `env.ts` HR-07/PA-9), so `serialize()` emits real box-drawing
- * (`┌─┐│└┘`) and block/icon glyphs instead of the ASCII fallback (`+-|`, `?`).
- * `serialize()` still downsamples correctly if you dial `colorDepth` down.
+ * The browser capability profile, built by `@jsvision/web`'s `buildBrowserCaps()`: a truecolor,
+ * UTF-8 terminal with SGR mouse, drag tracking, and bracketed paste — so `serialize()` emits real
+ * box-drawing (`┌─┐│└┘`) and block glyphs (`█▄▀▒`) instead of the ASCII fallback. Pass
+ * `{ colorDepth: '16' }` to exercise the downsample chain.
  */
-export const WEB_CAPS: CapabilityProfile = resolveCapabilities({
-  env: { COLORTERM: 'truecolor', TERM: 'xterm-256color', LANG: 'en_US.UTF-8' },
-  platform: 'linux',
-  override: { colorDepth: 'truecolor' },
-}).profile;
+export const WEB_CAPS: CapabilityProfile = buildBrowserCaps();
 
 /**
  * A window-content panel: fills the window's blue interior and draws its lines in

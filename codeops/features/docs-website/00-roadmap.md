@@ -3,8 +3,8 @@
 > **Feature-Set**: Docs Website
 > **Status**: In Progress
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-09 19:02
-> **Progress**: 1 / 10 (10%) — RD-01 implementation ✅ (all 25 tasks; live deploy acceptance pending user) · RD-02 executing 🔄 (Phases 1–4 ✅ scaffold + browser-stubs + host/caps/mountApp + virtual FileSystem + key-reclaim/clipboard/security; 13/17 tasks)
+> **Last Updated**: 2026-07-09 20:58
+> **Progress**: 2 / 10 (20%) — RD-01 implementation ✅ (all 25 tasks; live deploy acceptance pending user) · RD-02 ✅ Done (all 17 tasks; `@jsvision/web` shipped — 41 tests ST-1…ST-12, dogfooded into web-xterm)
 > **CodeOps Skills Version**: 3.3.2
 
 A professional, DX/UX-first **VitePress** documentation & showcase website for JSVision — the
@@ -24,7 +24,7 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
 | RD-01 | Site foundation & delivery pipeline | [RD-01](requirements/RD-01-site-foundation.md) | [site-foundation](plans/site-foundation/00-index.md) · [preflight](plans/site-foundation/00-preflight-report.md) | Done (impl) | ✅ | 2026-07-09 | Phase A. `packages/docs-site` VitePress app · GitHub Pages (gh-pages model: peaceiris prod + live PR previews) · `base:'/jsvision/'` · IA/nav · local search · SEO/OG/CSP/404 · absorbs root `docs/` (keeps `acceptance-gate.md`) · isolated from `yarn verify`. **5 phases / 25 tasks, spec-first — ALL DONE.** Preflight ✅ PASSED (9 findings applied). **✅ All automated STs green (12/12 build checks + check:deps + `yarn verify`); strict meta-CSP validated 0-violations headless; AR-12 runtime = per-build CSP hashes. ⛳ Outstanding (user-owned): enable GitHub Pages (gh-pages/root) then verify live ST-3 (prod URL + a PR preview).** |
-| RD-02 | `@jsvision/web` browser runtime | [RD-02](requirements/RD-02-web-runtime.md) | [web-runtime](plans/web-runtime/00-index.md) · [preflight](plans/web-runtime/00-preflight-report.md) | Executing | 🔄 | 2026-07-09 | Phase A. Extract the web-xterm host → tested package · virtual FileSystem · key-chord reclaim · clipboard bridge · node-builtin stubs. **Plan: 5 phases / 17 tasks, spec-first — executing (Phases 1–4 ✅ scaffold + browser-stubs + host/caps/mountApp + virtual FileSystem + key-reclaim/clipboard/security, 13/17).** Zero-Ambiguity Gate PASSED (8/8). **Preflight ✅ PASSED — 7 findings resolved (2 MAJOR: dogfood proven by `demo:web` boot not verify-typecheck; host/mountApp typed against a local `TerminalLike` so `@xterm/headless` is a valid arg + `focus?()` optional + no `@xterm/xterm` value-import; 4 MINOR + 1 OBS).** Grounded in the behavior-complete `packages/examples/web-xterm/` spike. |
+| RD-02 | `@jsvision/web` browser runtime | [RD-02](requirements/RD-02-web-runtime.md) | [web-runtime](plans/web-runtime/00-index.md) · [preflight](plans/web-runtime/00-preflight-report.md) | Done | ✅ | 2026-07-09 | Phase A. **✅ SHIPPED** `@jsvision/web` — browser host (`createBrowserHost`/`mountApp`) · `buildBrowserCaps` · in-memory virtual `FileSystem` · key-chord reclaim · outbound clipboard · `browser-stubs` subpath. **5 phases / 17 tasks, spec-first, all `[x]`; 41 unit tests ST-1…ST-12; `yarn verify` 20/20 + `check:deps` 9/9 green.** Dogfooded into `web-xterm` (`mountApp` + `browser-stubs` alias; production bundle carries no `node:fs`/`node:tty`). Zero-Ambiguity Gate 8/8 + runtime item 9. Preflight ✅ (7 findings resolved). Next: RD-03 live-example system builds on `mountApp`. |
 | RD-03 | Live-example system | [RD-03](requirements/RD-03-live-example-system.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase A. Example-module contract · Play-button live dialog · snippet embed · DemoShell (About + theme switch) · headless smoke · a11y source-beside · no-keyboard fallback. Depends RD-01, RD-02. |
 | RD-04 | Landing / pitch surface | [RD-04](requirements/RD-04-landing-pitch.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase A(partial). Hero + live proof · Getting Started · Core Concepts · Why/comparison · degit starter. Depends RD-01, RD-03. |
 | RD-05 | Component documentation system | [RD-05](requirements/RD-05-component-docs.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase B. Per-component page template + full ~40 coverage · hierarchy · status badges · `components.json`. Depends RD-03. |
@@ -46,6 +46,15 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 
 ## Notes
 
+- 2026-07-09: **RD-02 → DONE** ✅ ([plan](plans/web-runtime/99-execution-plan.md)) via `exec_plan
+  web-runtime`. Shipped `@jsvision/web` in 5 spec-first phases / 17 tasks: the `browser-stubs` subpath
+  (throwing `node:fs`/`node:tty` placeholders); `createBrowserHost` (promoted verbatim from the spike
+  behind a local `TerminalLike` + injectable timer seam); `buildBrowserCaps`; `mountApp`; an in-memory
+  virtual `FileSystem` with hand-rolled POSIX path ops (zero `node:` imports); `attachKeyReclaim` +
+  `UNRECLAIMABLE_CHORDS`; the outbound-only `setClipboard`. **41 unit tests (ST-1…ST-12)**, `yarn
+  verify` 20/20 + `check:deps` 9/9 green, `check:docs` clean. Dogfooded back into `web-xterm` (`mountApp`
+  + `browser-stubs` alias) — a production `vite build` (228 modules) carries **no** `node:fs`/`node:tty`
+  specifier. Runtime item 9 (injectable `target?` reclaim seam) recorded in the register.
 - 2026-07-09: **RD-02 → PLAN PREFLIGHTED** 🔬 ([report](plans/web-runtime/00-preflight-report.md)) via
   `preflight web-runtime`. 13-dimension codebase-grounded scan → **7 findings, all resolved in-plan**:
   2 MAJOR — (1) the plan claimed `yarn verify` typechecks the dogfooded `web-xterm` spike, but the
