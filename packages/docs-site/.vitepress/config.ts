@@ -1,8 +1,18 @@
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, type HeadConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
 
 const BASE = process.env.DOCS_BASE ?? '/jsvision/';
+
+// The shipped version, injected into the client bundle as __JSVISION_VERSION__ so the demo
+// shell's About box always matches the monorepo root package.json.
+const ROOT_VERSION = (
+  JSON.parse(readFileSync(fileURLToPath(new URL('../../../package.json', import.meta.url)), 'utf8')) as {
+    version: string;
+  }
+).version;
 
 // Canonical production origin — used for absolute SEO URLs (og:url, canonical,
 // sitemap, og:image) regardless of which base a given build is served under, so
@@ -69,6 +79,12 @@ function contentSecurityPolicy(scriptHashes: string[]): string {
 export default withMermaid(
   defineConfig({
     base: BASE,
+    vite: {
+      // Build-time constant for the demo shell's About box.
+      define: {
+        __JSVISION_VERSION__: JSON.stringify(ROOT_VERSION),
+      },
+    },
     lang: 'en-US',
     title: 'JSVision',
     description: DEFAULT_DESCRIPTION,

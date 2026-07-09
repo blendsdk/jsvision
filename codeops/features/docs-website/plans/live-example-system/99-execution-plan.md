@@ -2,7 +2,7 @@
 
 > **Implements**: docs-website/RD-03 · **Feature**: docs-website
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 9/40 tasks (23%) · **Last Updated**: 2026-07-09 23:37
+> **Progress**: 14/40 tasks (35%) · **Last Updated**: 2026-07-09 23:58
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Each phase is a
 testable slice. **Verify** = `yarn verify` (AR-21) unless a phase names a faster inner loop.
@@ -40,11 +40,11 @@ Ref: 03-01 · AR-5/6/14.
 ## Phase 2 — DemoShell (minimal + full)
 Ref: 03-02 · AR-7/8/9/17.
 
-- [ ] 2.1 Spec: write ST-4 (minimal centers a component + compact status w/ Theme/Depth/About), ST-5 (full menu bar + View→Theme/Depth + status), ST-9 (live `setTheme` repaint, default Turbo Vision) — run red.
-- [ ] 2.2 Implement `src/site-meta.ts` (name/links + version injected from root `package.json` via a Vite `define`) + an ambient `declare const __JSVISION_VERSION__: string;` in the tsconfig `include` so `docs-site#typecheck` resolves the define global.
-- [ ] 2.3 Implement `src/demo-shell.ts`: `View|Application` normalization, the shared About/Theme/Depth builder, and the `full` chrome (menu bar + status) — green ST-5, ST-9.
-- [ ] 2.4 Implement the `minimal` chrome (centered content + compact status line with Theme/Depth/About) — green ST-4.
-- [ ] 2.5 Impl tests: About opens a dialog with name/version/links; Depth item invokes `onDepthChange` (no caps mutation in DemoShell).
+- [x] 2.1 Spec: write ST-4 (minimal centers a component + compact status w/ Theme/Depth/About), ST-5 (full menu bar + View→Theme/Depth + status), ST-9 (live `setTheme` repaint, default Turbo Vision) — run red. ✅ (completed: 2026-07-09 23:58 — red confirmed on missing `demo-shell.js`)
+- [x] 2.2 Implement `src/site-meta.ts` (name/links + version injected from root `package.json` via a Vite `define`) + an ambient `declare const __JSVISION_VERSION__: string;` in the tsconfig `include` so `docs-site#typecheck` resolves the define global. ✅ (completed: 2026-07-09 23:58 — `define` added to BOTH the VitePress config and the vitest project (root-only define doesn't reach projects); `src/env.d.ts` holds the ambient decl; site-meta has a `0.0.0` fallback)
+- [x] 2.3 Implement `src/demo-shell.ts`: `View|Application` normalization, the shared About/Theme/Depth builder, and the `full` chrome (menu bar + status) — green ST-5, ST-9. ✅ (completed: 2026-07-09 23:58 — View → owned app w/ chrome; Application → wire shared handlers + return as-is (brings own chrome); nested View→Theme/Depth submenus over the 13 presets)
+- [x] 2.4 Implement the `minimal` chrome (centered content + compact status line with Theme/Depth/About) — green ST-4. ✅ (completed: 2026-07-09 23:58 — content centered from its intended size; compact Theme(cycle)/Depth(cycle)/About status, no menu bar)
+- [x] 2.5 Impl tests: About opens a dialog with name/version/links; Depth item invokes `onDepthChange` (no caps mutation in DemoShell). ✅ (completed: 2026-07-09 23:58 — + `SITE_META.version` == root package.json version)
 
 **Verify**: `yarn verify`
 
