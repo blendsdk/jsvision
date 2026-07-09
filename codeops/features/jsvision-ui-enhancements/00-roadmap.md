@@ -23,6 +23,12 @@ source. All work here is **additive-only** to the shipped packages.
 
 ## Notes
 
+- 2026-07-09: **B-01 Phase 2 complete** (Duplicate-accelerator warning, GH #6) — 17/27 tasks. Pure
+  `findDuplicateAccelerators()` + a shared internal `devWarn(scope, msg)`; an additive `View.accelerators()`
+  seam + `acceleratorScope` boundary flag with `Button`/`Label`/`Cluster` overrides; dev-gated checks
+  wired at `subMenu()`/`menuBar()` (build-time), `Dialog` mount (subtree walk stopping at nested scopes),
+  and `TabView` mount (data-level over `tabs()`, strip only). New `accelerators.{spec,impl}` (ST-9…ST-18 +
+  edges). Runtime notes AR-25 (ST consolidation) / AR-26 (`devWarn` internal). Full `yarn verify` green.
 - 2026-07-09: **B-01 → EXECUTING** 🔄 (`exec_plan`). Phase 1 (Tree `markerStyle`, GH #17) complete —
   8/27 tasks. `MarkerStyle` (`'tv'`/`'brackets'`/`'triangle'`) added to `TreeOptions`, style-aware
   `createGraph`/`graphWidth`, caps-driven `triangle`→`brackets` fallback with a cached effective style

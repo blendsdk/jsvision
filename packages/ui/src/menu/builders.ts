@@ -9,6 +9,7 @@
  */
 import { Attr } from '@jsvision/core';
 import type { Style } from '@jsvision/core';
+import { reportDuplicateAccelerators } from './accelerators.js';
 
 /**
  * Emphasize an accelerator (`~X~`) glyph's style while the accelerator overlay is being revealed.
@@ -123,6 +124,16 @@ function titleOf(node: MenuItem): string {
   return node.kind === 'separator' ? '' : node.title;
 }
 
+/** A menu node's `~X~` accelerator char (lowercase), or `''` when it has none (separators, no `~X~`). */
+export function menuItemHotkey(node: MenuItem): string {
+  return node.kind === 'separator' ? '' : (parseTilde(node.title).hotkey ?? '');
+}
+
+/** A menu node's display label (tildes stripped), or `''` for a separator — used to name a collision. */
+export function menuItemLabel(node: MenuItem): string {
+  return node.kind === 'separator' ? '' : parseTilde(node.title).text;
+}
+
 /**
  * Place the top-level titles left-to-right as abutting ` text ` buttons: the first starts at column
  * 1, each spans its display text plus one pad space on each side, and the next begins where the
@@ -170,6 +181,9 @@ export function titleIndexAt(tops: readonly MenuItem[], x: number): number | nul
  * ]);
  */
 export function subMenu(title: string, items: MenuItem[]): MenuItem {
+  // Dev-only: flag two items in this submenu that claim the same `~X~` accelerator (only the first is
+  // reachable). Nested submenus are built innermost-first, so each level is checked exactly once.
+  reportDuplicateAccelerators('menu', items.map(menuItemHotkey), items.map(menuItemLabel));
   return { kind: 'sub', title, items };
 }
 

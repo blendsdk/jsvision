@@ -47,6 +47,18 @@ export abstract class Cluster extends View {
   }
 
   /**
+   * Every item's `~X~` Alt-hotkey char (lowercase), for duplicate-accelerator detection. A disabled
+   * item still contributes — its `Alt`+hotkey still registers and would shadow a later item.
+   *
+   * @returns The claimed accelerator chars across all items (unmarked items omitted).
+   */
+  override accelerators(): readonly string[] {
+    const out: string[] = [];
+    for (const p of this.parsed) if (p.hotkey !== null) out.push(p.hotkey);
+    return out;
+  }
+
+  /**
    * The state index of item `i` into `box().markers`. Two-state groups return 0 (off) / 1 (on); a
    * multi-state group returns `0..states-1`.
    */

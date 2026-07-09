@@ -75,6 +75,8 @@ export type { DesktopLoopSeam } from './desktop/index.js';
 export { Window } from './window/index.js';
 export { MenuBar, MenuPopup, menuBar, subMenu, item, separator } from './menu/index.js';
 export type { MenuItem, ParsedLabel, TitleLayout, MenuController, MenuLoopSeam } from './menu/index.js';
+export { findDuplicateAccelerators, reportDuplicateAccelerators } from './menu/index.js';
+export type { DuplicateAccelerator } from './menu/index.js';
 export { Commands, StatusLine, statusLine, statusItem } from './status/index.js';
 export type { CommandName, StatusItem, StatusLoopSeam } from './status/index.js';
 

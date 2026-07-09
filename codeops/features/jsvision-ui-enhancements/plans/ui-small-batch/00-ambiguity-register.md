@@ -47,3 +47,13 @@ the plan in the real source. See `00-preflight-report.md` (PF-003/004/005/006).
 | AR-22 | AR-7, AR-10 | **Tab scope = strip tabs only.** Checked at the data level over `tabs()` on `TabView` (which owns the tab data + Alt-dispatch); the mount walk does **not** descend into page contents, and tabs need no `View.accelerators()` override. A page-content accelerator sharing a tab's char does not warn in v1. |
 | AR-23 | AR-9 | **Dialog scope-root walk sees only static (`add()`) children** present at mount; reactively-inserted (`addDynamic`/`Show`/`For`) accelerator views are not re-checked. Acceptable — dialog chrome is statically composed. |
 | AR-24 | AR-20 | **`yarn verify` already runs `yarn lint`** (`package.json`: `yarn lint && turbo run typecheck build test check:docs`). Per-task verify therefore lints and runs `check:docs`; the "also run lint at the gate" reminder is redundant, not required. |
+
+## Runtime decisions (exec_plan, 2026-07-09)
+
+Decisions made during execution where a detail wasn't fully pinned by the plan docs; recorded per the
+zero-ambiguity mandate.
+
+| # | Category | Decision |
+|---|----------|----------|
+| AR-25 (runtime) | Testing (#6) | **The scope-warning oracles ST-14…ST-18 live in the new `accelerators.spec.test.ts`, not the existing menu/dialog/tabs specs.** Grounding the plan's "menu/dialog/tabs spec files" against the real suites showed a hard ST-ID collision (`app-shell.menu.spec` uses ST-16…18, `dialog.spec` ST-09…12, `tabs.spec` ST-14…18). Consolidating all #6 oracles (ST-9…ST-18) in one new file is the exact isolation PF-002 established for the tree markers — no renumber churn, 1:1 ST↔oracle preserved. |
+| AR-26 (runtime) | API (#6) | **`devWarn` stays internal (not re-exported from the package barrel).** `reactive/warnings.ts` already defines a `devWarn`; exporting the new shared `devWarn` makes the name public and `check-jsdoc` (which resolves public names across files) then flags the reactive definition for a missing `@example`. `devWarn` is framework-internal plumbing — the public GH #6 surface is `findDuplicateAccelerators` + `reportDuplicateAccelerators`. Keeping it internal avoids the duplicate-public-name collision and needs no change to the reactive file. |

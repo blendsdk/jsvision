@@ -98,6 +98,24 @@ export abstract class View {
   postProcess = false;
 
   /**
+   * @internal When true, this view roots its own accelerator scope, so an enclosing scope's
+   * duplicate-accelerator check stops descending here (a nested `Dialog`/`TabView` owns its own
+   * check). Default `false`; scope-owning containers set it in their constructor.
+   */
+  acceleratorScope = false;
+
+  /**
+   * The `Alt`+hotkey accelerator characters (lowercase) this view claims in its focus scope, for
+   * duplicate-accelerator detection. The base returns none; accelerator-bearing widgets
+   * (`Button`/`Label`/`CheckGroup`/`RadioGroup`) override it to report their `~X~` hotkey(s).
+   *
+   * @returns The claimed accelerator chars, or an empty list when the view claims none.
+   */
+  accelerators(): readonly string[] {
+    return [];
+  }
+
+  /**
    * @internal Reactive focus-change tick. Lazily created by {@link focusSignal} the first time a
    * view's focus is observed; the focus manager pokes it on every focus flip. Stays `undefined`
    * (zero cost) for views nobody observes.

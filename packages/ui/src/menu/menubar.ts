@@ -16,7 +16,8 @@ import type { Style } from '@jsvision/core';
 import { View } from '../view/index.js';
 import type { Group, DrawContext, DispatchEvent } from '../view/index.js';
 import type { MenuItem } from './builders.js';
-import { layoutTitles, titleIndexAt, accentStyle } from './builders.js';
+import { layoutTitles, titleIndexAt, accentStyle, menuItemHotkey, menuItemLabel } from './builders.js';
+import { reportDuplicateAccelerators } from './accelerators.js';
 import { createMenuController } from './controller.js';
 import type { MenuController, MenuLoopSeam } from './controller.js';
 
@@ -177,6 +178,9 @@ export class MenuBar extends View {
  * const app = createApplication({ caps: resolveCapabilities().profile, menuBar: bar });
  */
 export function menuBar(items: MenuItem[]): MenuBar {
+  // Dev-only: flag two top-level titles that claim the same `Alt`+hotkey (this is the bar scope; each
+  // submenu's own items were already checked when `subMenu` built them).
+  reportDuplicateAccelerators('menu', items.map(menuItemHotkey), items.map(menuItemLabel));
   const bar = new MenuBar();
   bar.items = items;
   return bar;
