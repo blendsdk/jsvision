@@ -1,34 +1,36 @@
 /**
- * Techdocs output-presence guard (RD-10 FR-12/FR-14, plan doc 03-05; ST-9, PF-009).
+ * Techdocs output-presence guard.
  *
- * Specification oracle (ST-9): after the techdocs set is generated, `docs/` must
- * contain the architecture overview, the API reference, and at least one ADR, and
- * the entry point must carry the techdocs opt-in marker. This mirrors how
- * `gate.spec` guards the acceptance-gate doc, so the generated set cannot silently
- * rot or go uncommitted without `verify` noticing. Pure file reads — derived from
- * RD-10 AC (docs) / AR-5, never from the docs' contents.
+ * Specification oracle: the architecture overview, the API reference, at least
+ * one ADR, and the architecture landing must all be present and committed, so
+ * the docs set cannot silently rot or go uncommitted without `verify` noticing.
+ * This mirrors how `gate.spec` guards the acceptance-gate doc. Pure file reads.
+ *
+ * The docs website (`@jsvision/docs-site`) absorbed the former repo-root `docs/`
+ * techdocs into `packages/docs-site/reference/`, so this guard tracks them at
+ * their new home. (The load-bearing `docs/acceptance-gate.md` stayed put and is
+ * guarded separately by `gate.spec`.)
  */
 import { test, expect } from 'vitest';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { repoPath } from './monorepo-root.js';
 
-const docs = repoPath('docs');
+const reference = repoPath('packages', 'docs-site', 'reference');
 
-test('ST-9: the architecture overview is present', () => {
-  expect(existsSync(join(docs, 'architecture', 'system-overview.md'))).toBeTruthy();
+test('the architecture overview is present', () => {
+  expect(existsSync(join(reference, 'architecture', 'system-overview.md'))).toBeTruthy();
 });
 
-test('ST-9: the API reference is present', () => {
-  expect(existsSync(join(docs, 'architecture', 'api-design.md'))).toBeTruthy();
+test('the API design reference is present', () => {
+  expect(existsSync(join(reference, 'architecture', 'api-design.md'))).toBeTruthy();
 });
 
-test('ST-9: at least one ADR is present', () => {
-  const adrs = readdirSync(join(docs, 'decisions')).filter((f) => /^ADR-\d+.*\.md$/.test(f));
+test('at least one ADR is present', () => {
+  const adrs = readdirSync(join(reference, 'decisions')).filter((f) => /^ADR-\d+.*\.md$/.test(f));
   expect(adrs.length >= 1).toBeTruthy();
 });
 
-test('ST-9: the techdocs entry point carries the opt-in marker', () => {
-  const index = readFileSync(join(docs, 'index.md'), 'utf8');
-  expect(index).toMatch(/techdocs:\s*true/);
+test('the architecture landing is present', () => {
+  expect(existsSync(join(reference, 'architecture', 'index.md'))).toBeTruthy();
 });

@@ -4,4 +4,4 @@
  * implementation details and are not exported here.
  */
 export { Tree } from './tree.js';
-export type { TreeNode, TreeOptions } from './tree.js';
+export type { TreeNode, TreeOptions, MarkerStyle } from './tree.js';

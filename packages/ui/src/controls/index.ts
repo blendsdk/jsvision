@@ -16,6 +16,8 @@ export { Input } from './input.js';
 export type { InputOptions } from './input.js';
 export { Slider } from './slider.js';
 export type { SliderOptions } from './slider.js';
+export { Switch } from './switch.js';
+export type { SwitchOptions } from './switch.js';
 export { CheckGroup } from './check-group.js';
 export type { CheckGroupOptions } from './check-group.js';
 export { RadioGroup } from './radio-group.js';

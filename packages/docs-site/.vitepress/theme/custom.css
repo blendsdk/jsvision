@@ -1,0 +1,35 @@
+/**
+ * JSVision brand tokens, layered over the VitePress default theme.
+ *
+ * Two schemes are defined: `:root` (light) and `.dark`. Body-text colour
+ * (`--vp-c-text-1`) is held well above the WCAG AA 4.5:1 ratio against the page
+ * background (`--vp-c-bg`) in both. The accent is a terminal cyan, a nod to the
+ * retro-desktop aesthetic of the framework.
+ */
+
+:root {
+  --vp-c-bg: #ffffff;
+  --vp-c-bg-alt: #f6f8fa;
+  --vp-c-text-1: #1c2530;
+
+  --vp-c-brand-1: #0e7490;
+  --vp-c-brand-2: #155e75;
+  --vp-c-brand-3: #0891b2;
+  --vp-c-brand-soft: rgba(14, 116, 144, 0.14);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #0e7490 30%, #0891b2);
+}
+
+.dark {
+  --vp-c-bg: #14181f;
+  --vp-c-bg-alt: #1b212b;
+  --vp-c-text-1: #e6edf3;
+
+  --vp-c-brand-1: #22d3ee;
+  --vp-c-brand-2: #67e8f9;
+  --vp-c-brand-3: #0891b2;
+  --vp-c-brand-soft: rgba(34, 211, 238, 0.16);
+
+  --vp-home-hero-name-background: linear-gradient(120deg, #22d3ee 30%, #67e8f9);
+}

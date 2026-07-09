@@ -26,6 +26,7 @@ import { For } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { LayoutProps } from '../layout/index.js';
 import { parseTilde } from '../menu/builders.js';
+import { reportDuplicateAccelerators } from '../menu/accelerators.js';
 import { TabStrip, TAB_GLYPHS } from './tab-strip.js';
 
 /**
@@ -206,6 +207,8 @@ class TabBody extends Group {
 export class TabView extends Group {
   /** Handle the global switch chords in the pre-process sweep (scoped to the focus-owning tab view). */
   override preProcess = true;
+  /** Roots its own accelerator scope — an enclosing Dialog's duplicate check stops at the strip. */
+  override acceleratorScope = true;
 
   /** The caller-owned reactive tab list. */
   readonly tabs: Signal<Tab[]>;
@@ -270,6 +273,14 @@ export class TabView extends Group {
         () => [this.tabs(), this.active()] as const,
         () => this.syncActive(),
         { relayout: true },
+      );
+      // Dev-only: flag two tabs whose `~X~` hotkeys collide (strip tabs only — page contents are a
+      // separate focus interaction and are not walked). Checked once against the initial tab set.
+      const list = this.tabs();
+      reportDuplicateAccelerators(
+        'tabs',
+        list.map((t) => parseTilde(t.title).hotkey ?? ''),
+        list.map((t) => parseTilde(t.title).text),
       );
     });
   }

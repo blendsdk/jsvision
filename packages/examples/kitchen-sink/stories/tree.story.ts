@@ -32,7 +32,7 @@ export const treeStory: Story = {
   title: 'Tree',
   rd: 'RD-15',
   blurb:
-    'TOutlineViewer: ↑↓ move · →/← expand/collapse · +/-/* · graph-click toggles · single text click focuses, double-click (or Enter) activates.',
+    'Expandable outline: ↑↓ move · →/← expand/collapse · +/-/* · graph-click toggles · single text click focuses, double-click (or Enter) activates. This one uses markerStyle: "brackets".',
   build(ctx: StoryContext) {
     const roots = signal<TreeNode<string>[]>([...FOREST]);
     const focused = signal(0);
@@ -44,6 +44,8 @@ export const treeStory: Story = {
       focused,
       selected,
       command: 'open',
+      // Show off the opt-in marker style: `[+]`/`[-]` instead of the default `+`/`─`.
+      markerStyle: 'brackets',
       onSelect: (_index, node) => selectedName.set(node.value),
     });
     // Open the top of the tree so the outline graphics are visible on first paint.
@@ -61,6 +63,7 @@ export const treeStory: Story = {
     g.add(at(new Text(() => `selected: ${selectedName()}`), echoX, 3, echoW, 1));
     g.add(at(new Text('→ expand · ← collapse'), echoX, 5, echoW, 1));
     g.add(at(new Text('+ / - / *  ·  click to toggle/select'), echoX, 6, echoW, 1));
+    g.add(at(new Text('markerStyle: brackets  [+]/[-]'), echoX, 8, echoW, 1));
     return g;
   },
 };
