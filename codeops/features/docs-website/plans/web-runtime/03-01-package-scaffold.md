@@ -52,17 +52,19 @@ Mirror `packages/files/package.json` (02-current-state), changing name/descripti
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@xterm/headless": "^5.5.0",
-    "@xterm/xterm": "^5.5.0",
     "vitest": "^4.1.9"
   }
 }
 ```
 
 - **`@jsvision/files`** is a real dependency (the virtual FS implements its `FileSystem` type).
-- **`@xterm/xterm`** is a **peer + optional** dependency (types for `Terminal`; the consumer pins the
-  real runtime version) and a devDep so the package typechecks in isolation. `@xterm/headless` is a
-  devDep for the AC-2/AC-3 golden host/decode tests. Neither is a native dep, so **`check:deps` stays
-  green** (it flags native runtime deps only; both are pure JS and are dev/peer, not bundled).
+- **`@xterm/xterm`** is an **optional peer** dependency — the consumer pins the real runtime version.
+  The package **source imports neither its value nor its types**: the host/`mountApp` are typed
+  against a local `TerminalLike` structural interface (03-02), so the browser-only, CommonJS-default
+  `@xterm/xterm` never enters `@jsvision/web`'s graph (hence it is not even a devDep). `@xterm/headless`
+  is a devDep whose `Terminal` satisfies `TerminalLike` and drives the AC-2/AC-3 golden host/decode +
+  the ST-10 mount tests. Neither is a native dep, so **`check:deps` stays green** (it flags native
+  runtime deps only; both are pure JS and are peer/dev, not bundled).
 
 ## `packages/web/tsconfig.json` + `vitest.config.ts`
 

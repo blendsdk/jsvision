@@ -31,12 +31,16 @@ the bytes the host writes **equal** `serialize(buffer, null, { caps })` — the 
 reimplemented. `sanitize()` (also core) is the injection boundary that makes untrusted file/paste
 content safe to render (AC-9).
 
-The only Node built-ins the core graph statically imports are `node:fs` + `node:tty`, both from the
-native `host/` subsystem (`streams.ts`, `platform.ts`) that the browser never calls — hence the stub.
+The only Node built-ins the core graph statically imports are `node:fs` + `node:tty`. `node:tty` and
+two `node:fs` sites live in the native `host/` subsystem (`streams.ts`, `platform.ts`); a third
+`node:fs` site is `safety/logger.ts` — a barrel-reachable `import * as nodeFs from 'node:fs'` used
+only as the screen-safe logger's default filesystem (load-safe: the namespace is dereferenced lazily
+and the logger is off by default). The browser calls none of them — hence the stub.
 
 ## The `FileSystem` seam (`@jsvision/files`)
 
-`packages/files/src/fs/types.ts` defines the injectable `FileSystem` — **18 synchronous methods**:
+`packages/files/src/fs/types.ts` defines the injectable `FileSystem` — **14 synchronous methods + the
+`sep` property** (15 members):
 `readDir`, `stat`, `lstat`, `resolve`, `isAbsolute`, `join`, `dirname`, `basename`, `sep` (property),
 `homedir`, `roots`, `readFile`, `writeFile`, `rename`, `unlink` (+ the `DirEntry`/`FileStat` shapes).
 `nodeFileSystem` (`fs/node-fs.ts`) is the default Node implementation; the whole dialog family
