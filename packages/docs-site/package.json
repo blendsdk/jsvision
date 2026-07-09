@@ -8,12 +8,24 @@
   "scripts": {
     "dev": "vitepress dev",
     "vp:build": "vitepress build",
-    "preview": "vitepress preview"
+    "preview": "vitepress preview",
+    "test": "vitest run --project unit",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
+    "@jsvision/core": "*",
+    "@jsvision/files": "*",
+    "@jsvision/ui": "*",
+    "@jsvision/web": "*",
+    "@types/node": "^22.10.0",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/addon-webgl": "^0.18.0",
+    "@xterm/headless": "^5.5.0",
+    "@xterm/xterm": "^5.5.0",
     "js-yaml": "^4.1.0",
     "mermaid": "^11.4.1",
     "vitepress": "^1.6.3",
-    "vitepress-plugin-mermaid": "^2.0.17"
+    "vitepress-plugin-mermaid": "^2.0.17",
+    "vitest": "^4.1.9"
   }
 }
