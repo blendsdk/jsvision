@@ -23,7 +23,7 @@ import type { KeyEvent, Style } from '@jsvision/core';
 import type { ScrollBar } from '../scroll/index.js';
 import { clampIndex, keepVisible } from '../list/virtual.js';
 import { createGraph, graphWidth, OV_EXPANDED, OV_CHILDREN } from './graph.js';
-import type { FlatRow, TreeNode } from './graph.js';
+import type { FlatRow, MarkerStyle, TreeNode } from './graph.js';
 
 /** The text drawn top-left for an empty tree. */
 const EMPTY_TEXT = '<empty>';
@@ -38,6 +38,8 @@ export interface TreeRowsConfig<T> {
   selected: Signal<number>;
   /** Draw the `│├└─` connectors (default true); false = flat indent, markers unchanged. */
   guides: boolean;
+  /** The expand-marker style (`'tv'` default). `'triangle'` falls back to `'brackets'` without Unicode. */
+  markerStyle: MarkerStyle;
   /** The current flattened-visible rows (a computed reading `roots` + the expand state, from `Tree`). */
   flatten: () => FlatRow<T>[];
   /** Command name emitted on activation (Enter / text double-click). */
@@ -61,6 +63,14 @@ export class TreeRows<T> extends View {
   protected readonly focused: Signal<number>;
   protected readonly selected: Signal<number>;
   protected readonly guides: boolean;
+  /** The configured marker style; the effective style is resolved per frame from the caps. */
+  protected readonly markerStyle: MarkerStyle;
+  /**
+   * The marker style actually drawn last frame (the `triangle`→`brackets` no-Unicode fallback
+   * resolved). Cached from `draw()` so the mouse hit-zone can size its graph-zone to the glyphs on
+   * screen — `draw()` always runs before a click can land, so this is current at interaction time.
+   */
+  protected effectiveStyle: MarkerStyle;
   /** The flattened-visible rows accessor (reactive; recomputes on a `roots`/expand change). */
   protected readonly flatten: () => FlatRow<T>[];
   /** Command emitted on activation (Enter / text-click). */
@@ -86,6 +96,8 @@ export class TreeRows<T> extends View {
     this.focused = cfg.focused;
     this.selected = cfg.selected;
     this.guides = cfg.guides;
+    this.markerStyle = cfg.markerStyle;
+    this.effectiveStyle = cfg.markerStyle;
     this.flatten = cfg.flatten;
     this.command = cfg.command;
     this.onSelect = cfg.onSelect;
@@ -163,6 +175,11 @@ export class TreeRows<T> extends View {
     const active = this.state.focused;
     const selected = this.selected();
     const width = ctx.size.width;
+    // Resolve the effective marker style once per frame: `triangle` needs Unicode, else use brackets
+    // (an ASCII-safe superset of the same collapsed/expanded/leaf cues). Cache it for the hit-zone.
+    const style: MarkerStyle =
+      this.markerStyle === 'triangle' && !ctx.caps.unicode.utf8 ? 'brackets' : this.markerStyle;
+    this.effectiveStyle = style;
 
     for (let i = 0; i < rows; i += 1) {
       const index = this.topItem + i;
@@ -175,12 +192,12 @@ export class TreeRows<T> extends View {
       const rowStyle = ctx.color(roleName);
       ctx.fillRect(0, i, width, 1, ' ', rowStyle); // clear the row in its colour
 
-      const graph = createGraph(row.level, row.lines, row.flags, this.guides);
+      const graph = createGraph(row.level, row.lines, row.flags, this.guides, style);
       ctx.text(0, i, graph, rowStyle); // graph prefix in the row colour
 
       const expanded = (row.flags & OV_EXPANDED) !== 0;
       const textStyle = this.textStyle(ctx, roleName, expanded);
-      const gw = graphWidth(row.level);
+      const gw = graphWidth(row.level, style);
       const text = this.getText(row.node.value).slice(0, Math.max(0, width - gw));
       ctx.text(gw, i, text, textStyle); // node text at the post-graph column, two-tone
     }
@@ -244,7 +261,7 @@ export class TreeRows<T> extends View {
       const index = clampIndex(this.topItem + local.y, flat.length);
       this.focusTo(index); // always focus the clicked row
       const row = flat[index];
-      if (local.x < graphWidth(row.level)) {
+      if (local.x < graphWidth(row.level, this.effectiveStyle)) {
         this.toggle(row.node); // graph zone ⇒ toggle expand (on any click)
       } else if (ev.clickCount === 2) {
         this.select(index, ev); // text double-click ⇒ activate (select + onSelect + emit)

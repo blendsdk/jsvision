@@ -19,3 +19,5 @@ export {
 } from './builders.js';
 export type { MenuItem, ParsedLabel, TildeSegment, TitleLayout } from './builders.js';
 export type { MenuController, MenuLoopSeam } from './controller.js';
+export { findDuplicateAccelerators, reportDuplicateAccelerators } from './accelerators.js';
+export type { DuplicateAccelerator } from './accelerators.js';

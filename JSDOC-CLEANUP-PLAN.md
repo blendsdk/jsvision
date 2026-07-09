@@ -125,7 +125,7 @@ what makes examples trustworthy for agents. Can start as a warning, become an er
 
 ### 3.3 Establish the shared assets
 
-- Commit the JSDoc template (§2.2) into `docs/guides/development.md` (or a short `CONTRIBUTING` note).
+- Commit the JSDoc template (§2.2) into `packages/docs-site/reference/guides/development.md` (or a short `CONTRIBUTING` note).
 - Run `node scripts/check-jsdoc.mjs --summary` and capture the baseline counts per package — the
   burn-down target.
 

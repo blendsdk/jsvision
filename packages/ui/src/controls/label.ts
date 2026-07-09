@@ -53,6 +53,11 @@ export class Label extends View {
     this.onMount(() => this.bind(() => this.link.focusSignal()()));
   }
 
+  /** The label's `~X~` Alt-hotkey char (lowercase), for duplicate-accelerator detection; none if unmarked. */
+  override accelerators(): readonly string[] {
+    return this.parsed.hotkey !== null ? [this.parsed.hotkey] : [];
+  }
+
   /**
    * Paint the caption: base text (highlighted while the linked control is focused) with the hotkey
    * letter accented.

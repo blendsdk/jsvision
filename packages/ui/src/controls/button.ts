@@ -95,6 +95,11 @@ export class Button extends View {
     }
   }
 
+  /** The button's `~X~` Alt-hotkey char (lowercase), for duplicate-accelerator detection; none if unmarked. */
+  override accelerators(): readonly string[] {
+    return this.parsed.hotkey !== null ? [this.parsed.hotkey] : [];
+  }
+
   /** Resolve the disabled flag (evaluating the getter if it is reactive). */
   protected resolveDisabled(): boolean {
     return typeof this.disabledOpt === 'function' ? this.disabledOpt() : this.disabledOpt;

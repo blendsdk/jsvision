@@ -1,8 +1,8 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-08
-> **Features**: 1 / 3 done
+> **Last Updated**: 2026-07-09
+> **Features**: 2 / 5 done
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -16,6 +16,8 @@
 | jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | **22 ✅ Done (RD-01…RD-22)** — Theming completes the set | 22/22 RDs | ✅ | 2026-07-08 |
 | theme-designer | [→](features/theme-designer/00-roadmap.md) | PL-01 ✅ Done — standalone `@jsvision/theme-designer` app + reusable `Slider` (all 4 phases / 40 tasks) | 1/1 plans | ✅ | 2026-07-09 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
+| jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 ✅ Done — UI small batch: Tree markers (#17) · duplicate-accelerator warning (#6) · Switch (#11) | 1/1 plans | ✅ | 2026-07-09 |
+| docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — all 5 phases/25 tasks: VitePress site + gh-pages CI (prod+PR previews) + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · RD-02…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 1/10 RDs | 🔄 | 2026-07-09 |
 
 ## Archived
 
@@ -25,6 +27,46 @@
 
 ## Notes
 
+- 2026-07-09: **New feature `docs-website` + all 10 RDs → RD DRAFTED** ✏️ ([roadmap](features/docs-website/00-roadmap.md))
+  via `make_requirements`. The JSVision documentation & showcase website ("the pitch"): a VitePress
+  static site on GitHub Pages where **every example runs live client-side in xterm.js** (no backend),
+  proven by the in-repo `web-xterm` spike (pure byte-in/byte-out engine) and extracted into a new
+  first-class `@jsvision/web` runtime; browser file dialogs via a virtual `FileSystem`. 10 RDs
+  (site foundation · `@jsvision/web` · live-example system · landing/pitch · component docs (~40) ·
+  TypeDoc API ref · sample apps [Todo/tvedit/polished kitchen-sink/file-data browser] · reference &
+  trust · anti-drift gate · non-functional). Zero-Ambiguity Gate PASSED (33/33). Portfolio now 5
+  features. Next: `make_plan RD-01` (Phase A). Docs examples kept separate from the kitchen-sink but
+  snippet-embedded + smoke-tested; hard-fail `check:docs-site` CI gate; Playwright-on-live-page
+  screenshots. (Requirements authored on `feat/ui-small-batch`; belongs on a `feat/docs-website`
+  branch before any commit.)
+- 2026-07-09: **jsvision-ui-enhancements B-01 → DONE ✅** (`exec_plan`, 27 tasks / 4 phases, one commit
+  per phase on `feat/ui-small-batch`). Tree `markerStyle` (#17) + duplicate-accelerator dev-warning (#6)
+  + the `Switch` control (#11) + docs. Additive-only: zero `@jsvision/core` API/theme-role change, the
+  tree `'tv'` path byte-unchanged. `yarn verify` green (incl. check:docs + kitchen-sink smoke). Cascaded
+  from **jsvision-ui-enhancements**. (Unpushed; no PR yet — commit mode was ask-before-push.)
+- 2026-07-09: **B-01 Phase 3 of 4 done** (`exec_plan`): the `Switch` toggle control (GH #11) — a
+  `View`-based on/off bound to a `Signal<boolean>`, role-reuse render (no new core role), caps knob
+  fallback, `measure()`, `accelerators()`; `switch.{spec,impl}` + a `controls/switch` story. `yarn verify` green.
+- 2026-07-09: **B-01 Phase 2 of 4 done** (`exec_plan`): duplicate-accelerator dev-warning (GH #6) —
+  pure `findDuplicateAccelerators` + a `View.accelerators()`/`acceleratorScope` seam, dev-gated checks on
+  submenus/menu-bar (build-time) + Dialog/TabView (mount, strip-only for tabs). `yarn verify` green.
+- 2026-07-09: **B-01 → EXECUTING** 🔄 (`exec_plan`). Phase 1 of 4 done (Tree `markerStyle`, GH #17):
+  opt-in `'tv'`/`'brackets'`/`'triangle'` markers with a caps-driven `triangle`→`brackets` fallback,
+  `'tv'` path byte-unchanged; new `tree-markers.{spec,impl}` + kitchen-sink story on `brackets`. Full
+  `yarn verify` green. Cascaded from **jsvision-ui-enhancements**.
+- 2026-07-09: **B-01 → PLAN PREFLIGHTED** 🔬 (`preflight`, fresh session). PASSED with 6 findings
+  (4 minor + 2 observation), all resolved: tree markers isolated in a new `tree-markers.spec` (ST-ID
+  collision avoided), bar-title accelerator check relocated to `menu/menubar.ts`, tab scope narrowed to
+  strip-tabs-only, and the stale "verify excludes lint" framing corrected. See the feature roadmap +
+  `plans/ui-small-batch/00-preflight-report.md`.
+- 2026-07-09: **New feature `jsvision-ui-enhancements` + B-01 → PLAN CREATED** 📋 (`make_plan`). A
+  rolling home for GitHub-issue-driven `@jsvision/ui` polish. First batch `ui-small-batch` plans three
+  additive-only enhancements — Tree `markerStyle` (GH #17, opt-in `tv`/`brackets`/`triangle`, default
+  stays TV-faithful), a duplicate-accelerator dev-warning across all `~X~` tilde scopes (GH #6, via an
+  additive `View.accelerators()` seam + a pure `findDuplicateAccelerators()`; StatusLine chords
+  deferred), and a `Switch`/toggle over `View` (GH #11, no new core role). Recon-grounded; Zero-Ambiguity
+  Gate PASSED (AR-1…AR-20); user took the broader #6 all-scopes option. Next: `preflight ui-small-batch`
+  (or `exec_plan ui-small-batch`).
 - 2026-07-09: **theme-designer PL-01 → DONE ✅ (Phases 3 & 4 complete, 40/40 tasks).** Phase 3 built
   the interactive three-pane app (`createDesignerApp`: roles rail · live preview · inspector over the
   pure model; menu/status commands with an injectable file/modal seam layer so the app-core is

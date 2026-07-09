@@ -68,10 +68,14 @@ jobs:
       - name: Lockstep versions (public packages share the root version)
         run: yarn sync-versions --check
 
-      - name: Security audit (high/critical)
+      # Audit PRODUCTION dependencies only: the shipped packages carry zero
+      # runtime deps (the whole guarantee), so this is the surface that matters.
+      # Dev-only build tooling (VitePress/Vite/esbuild/mermaid for the docs site,
+      # Vite/xterm for the examples) never ships and is out of scope here.
+      - name: Security audit (high/critical, production deps)
         run: |
           npm install --package-lock-only --ignore-scripts
-          npm audit --audit-level=high
+          npm audit --omit=dev --audit-level=high
 
       - name: Packaging sanity (file allowlist, no publish)
         run: npm pack --dry-run --workspace @jsvision/core

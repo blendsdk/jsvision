@@ -75,6 +75,8 @@ export type { DesktopLoopSeam } from './desktop/index.js';
 export { Window } from './window/index.js';
 export { MenuBar, MenuPopup, menuBar, subMenu, item, separator } from './menu/index.js';
 export type { MenuItem, ParsedLabel, TitleLayout, MenuController, MenuLoopSeam } from './menu/index.js';
+export { findDuplicateAccelerators, reportDuplicateAccelerators } from './menu/index.js';
+export type { DuplicateAccelerator } from './menu/index.js';
 export { Commands, StatusLine, statusLine, statusItem } from './status/index.js';
 export type { CommandName, StatusItem, StatusLoopSeam } from './status/index.js';
 
@@ -87,6 +89,7 @@ export {
   Button,
   Input,
   Slider,
+  Switch,
   CheckGroup,
   RadioGroup,
   MultiCheckGroup,
@@ -99,6 +102,7 @@ export type {
   ButtonOptions,
   InputOptions,
   SliderOptions,
+  SwitchOptions,
   MultiCheckGroupOptions,
   RadioGroupOptions,
   CheckGroupOptions,
@@ -137,7 +141,7 @@ export type { PopupHost } from './view/index.js';
 // Tree / outline — an expandable, scrollable outline view for hierarchical data
 // (file trees, nested records, and the like).
 export { Tree } from './tree/index.js';
-export type { TreeNode, TreeOptions } from './tree/index.js';
+export type { TreeNode, TreeOptions, MarkerStyle } from './tree/index.js';
 
 // Data table — a scrollable, multi-column `DataGrid<T>` with a sticky header,
 // per-column widths and alignment, click-to-sort, and horizontal scrolling.
