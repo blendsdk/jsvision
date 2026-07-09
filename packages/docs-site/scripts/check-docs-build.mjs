@@ -12,8 +12,10 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import yaml from 'js-yaml';
 
 const siteRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+const repoRoot = join(siteRoot, '..', '..');
 const distDir = join(siteRoot, '.vitepress', 'dist');
 
 /** GitHub Pages project-site base — every root-absolute asset URL must carry it. */
@@ -115,6 +117,58 @@ check('ST-2', 'Every nav section has a built HTML page', () => {
     .map(([id, path]) => `${id} (${path})`);
   if (missing.length) fail(`missing section page(s): ${missing.join(', ')}`);
   return `all ${Object.keys(SECTIONS).length} section pages built`;
+});
+
+// --- ST-14: deploy workflow is well-formed and secret-safe ----------------
+
+check('ST-14', 'docs.yml parses, triggers on site paths, safe permissions, only GITHUB_TOKEN', () => {
+  const wfPath = join(repoRoot, '.github', 'workflows', 'docs.yml');
+  if (!existsSync(wfPath)) fail('.github/workflows/docs.yml is missing');
+  const raw = readFileSync(wfPath, 'utf8');
+
+  let doc;
+  try {
+    doc = yaml.load(raw);
+  } catch (err) {
+    fail(`.github/workflows/docs.yml does not parse: ${err.message}`);
+  }
+
+  // YAML 1.1 folds a bare `on:` key to boolean true; js-yaml v4 keeps it a
+  // string, but read both so the check is parser-agnostic.
+  const on = doc?.on ?? doc?.[true];
+  if (!on || typeof on !== 'object') fail('no `on:` trigger block');
+  if (!on.push) fail('missing `push` trigger (production deploy)');
+  if (!on.pull_request) fail('missing `pull_request` trigger (PR preview)');
+
+  const pushBranches = [].concat(on.push.branches ?? []);
+  if (!pushBranches.includes('master')) fail('`push` does not target `master`');
+
+  // Both triggers must scope to the site inputs and NOT to docs/** (PF-009):
+  // after migration docs/ holds only the non-website acceptance-gate.
+  const required = ['packages/docs-site/**', '.github/workflows/docs.yml'];
+  for (const [name, trig] of [
+    ['push', on.push],
+    ['pull_request', on.pull_request],
+  ]) {
+    const paths = [].concat(trig.paths ?? []);
+    for (const need of required) {
+      if (!paths.includes(need)) fail(`\`${name}\` paths missing ${need}`);
+    }
+    if (paths.some((p) => p.startsWith('docs/'))) {
+      fail(`\`${name}\` still triggers on docs/** (should be packages/docs-site/**)`);
+    }
+  }
+
+  const perms = doc.permissions ?? {};
+  if (perms.contents !== 'write') fail('permissions.contents must be `write` (push gh-pages)');
+  if (perms['pull-requests'] !== 'write') fail('permissions.pull-requests must be `write` (comment preview URL)');
+
+  // No stored secret may be used; the ephemeral GITHUB_TOKEN is the only one allowed.
+  const secretRefs = [...raw.matchAll(/secrets\.([A-Za-z0-9_]+)/g)].map((m) => m[1]);
+  const forbidden = secretRefs.filter((s) => s !== 'GITHUB_TOKEN');
+  if (forbidden.length) fail(`uses stored secret(s): ${[...new Set(forbidden)].join(', ')}`);
+
+  return 'workflow valid: push@master + pull_request on site paths, contents+PR write, GITHUB_TOKEN only';
 });
 
 // --- report + exit --------------------------------------------------------
