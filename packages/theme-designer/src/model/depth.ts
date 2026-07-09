@@ -1,36 +1,13 @@
 /**
  * Color-depth preview — how a single color renders once downsampled to each terminal depth. The
  * designer shows this as a small swatch strip beside the inspector so an author can see, e.g., what a
- * truecolor accent collapses to on a 16-color terminal.
+ * truecolor accent collapses to on a 16-color terminal. The per-depth conversion is shared with the
+ * whole-theme preview transform in {@link colorAtDepth}.
  */
-import { nearest256, nearest16, rgb256, toRgb, PALETTE } from '@jsvision/core';
-import type { Color, ColorDepth, Rgb } from '@jsvision/core';
+import { toRgb } from '@jsvision/core';
+import type { Color, ColorDepth } from '@jsvision/core';
 
-/**
- * The 16 terminal color slots (in `nearest16`'s index order) mapped to the Borland/DOS-16 `PALETTE`
- * keys — the canonical CGA correspondence. `PALETTE` *is* the Borland palette in this order under DOS
- * names: ANSI "yellow" is dark yellow (brown), low-intensity "white" is lightGray, "brightBlack" is
- * darkGray, "brightYellow" is yellow, "brightWhite" is white. Drawing the preview with these keeps the
- * depth strip in the same DOS-16 vocabulary as the rest of the designer.
- */
-const DOS16_BY_SLOT: readonly (keyof typeof PALETTE)[] = [
-  'black',
-  'red',
-  'green',
-  'brown',
-  'blue',
-  'magenta',
-  'cyan',
-  'lightGray',
-  'darkGray',
-  'brightRed',
-  'brightGreen',
-  'yellow',
-  'brightBlue',
-  'brightMagenta',
-  'brightCyan',
-  'white',
-];
+import { colorAtDepth } from './downsample.js';
 
 /** One depth's stand-in for a color: the depth, the resulting `#rrggbb`, and a short label. */
 export interface DepthSample {
@@ -39,17 +16,13 @@ export interface DepthSample {
   readonly label: string;
 }
 
-/** `#rrggbb` for an Rgb. */
-function hexOf(rgb: Rgb): string {
-  const h = (n: number): string => n.toString(16).padStart(2, '0');
-  return `#${h(rgb.r)}${h(rgb.g)}${h(rgb.b)}`;
-}
-
-/** Black or white, whichever a simple luminance threshold picks for `rgb` at mono depth. */
-function monoOf(rgb: Rgb): string {
-  const luma = 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b;
-  return luma >= 128 ? '#ffffff' : '#000000';
-}
+/** The four terminal depths in preview order, each with its display label. */
+const DEPTHS: readonly { depth: ColorDepth; label: string }[] = [
+  { depth: 'truecolor', label: 'truecolor' },
+  { depth: '256', label: '256-color' },
+  { depth: '16', label: '16-color' },
+  { depth: 'mono', label: 'mono' },
+];
 
 /**
  * Compute how `color` looks at each terminal color depth: the color as-is (truecolor), its nearest
@@ -65,13 +38,6 @@ function monoOf(rgb: Rgb): string {
  * // e.g. ['truecolor:#3b82f6', '256:#5f87ff', '16:#5555ff', 'mono:#000000']
  */
 export function depthSamples(color: Color): DepthSample[] {
-  const rgb = toRgb(color);
-  if (rgb === null) return [{ depth: 'truecolor', hex: '', label: 'n/a' }];
-  return [
-    { depth: 'truecolor', hex: hexOf(rgb), label: 'truecolor' },
-    { depth: '256', hex: hexOf(rgb256(nearest256(rgb))), label: '256-color' },
-    // The DOS-16 color for the slot the downsampler emits (kept in the designer's Borland palette).
-    { depth: '16', hex: PALETTE[DOS16_BY_SLOT[nearest16(rgb)]], label: '16-color' },
-    { depth: 'mono', hex: monoOf(rgb), label: 'mono' },
-  ];
+  if (toRgb(color) === null) return [{ depth: 'truecolor', hex: '', label: 'n/a' }];
+  return DEPTHS.map(({ depth, label }) => ({ depth, hex: colorAtDepth(color, depth), label }));
 }

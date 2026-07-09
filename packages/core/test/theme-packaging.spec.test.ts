@@ -41,7 +41,16 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const COLOR_DIR = resolve(HERE, '../src/engine/color');
 
 // New source files this feature adds under color/.
-const NEW_FILES = ['aliases.ts', 'ramp.ts', 'contrast.ts', 'create-theme.ts', 'roles.ts', 'serialize.ts', 'presets.ts'];
+const NEW_FILES = [
+  'aliases.ts',
+  'ramp.ts',
+  'contrast.ts',
+  'create-theme.ts',
+  'roles.ts',
+  'serialize.ts',
+  'presets.ts',
+  'preset-seeds.ts',
+];
 
 test('ST-27: every new theming function/class is importable from @jsvision/core', () => {
   for (const fn of [

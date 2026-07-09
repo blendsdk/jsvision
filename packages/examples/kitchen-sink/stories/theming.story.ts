@@ -16,6 +16,12 @@ import {
   draculaTheme,
   solarizedDarkTheme,
   gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
   type Theme,
 } from '@jsvision/core';
 import { Group, View, Text, Button, Input, signal } from '@jsvision/ui';
@@ -32,6 +38,12 @@ const PRESETS: readonly [string, Theme][] = [
   ['dracula', draculaTheme],
   ['solarized', solarizedDarkTheme],
   ['gruvbox', gruvboxDarkTheme],
+  ['janus', janusTheme],
+  ['warp', warpTheme],
+  ['solstice', solsticeTheme],
+  ['platinum', platinumTheme],
+  ['workbench', workbenchTheme],
+  ['horizon', horizonTheme],
 ];
 
 /** Draws one labelled swatch strip per preset using each preset's own colors (theme-independent). */
@@ -55,26 +67,36 @@ export const themingStory: Story = {
   category: 'Theming',
   title: 'Theme presets',
   rd: 'RD-22',
-  blurb: '7 presets as palette swatches · createTheme → 16 aliases → 63 roles · serialize · setTheme hot-swap.',
+  blurb: '13 presets as palette swatches · createTheme → 16 aliases → 63 roles · serialize · setTheme hot-swap.',
   build(ctx: StoryContext) {
     const g = new Group();
+    const swatchY = 2;
+    const afterSwatches = swatchY + PRESETS.length + 1;
     g.add(
       at(
-        new Text('The 7 built-in presets — swatches: window · button · focus · menu · status. Live: demo:themes.'),
+        new Text('The 13 built-in presets — swatches: window · button · focus · menu · status. Live: demo:themes.'),
         1,
         0,
         Math.max(10, ctx.width - 2),
         1,
       ),
     );
-    g.add(at(new PaletteView(), 1, 2, Math.min(ctx.width - 2, 40), PRESETS.length));
-    g.add(at(new Input({ value: signal('editable — themed by the app') }), 1, 11, Math.min(30, ctx.width - 2), 1));
-    g.add(at(new Button('~O~K', { onClick: () => {} }), 1, 13, 8, 2));
+    g.add(at(new PaletteView(), 1, swatchY, Math.min(ctx.width - 2, 40), PRESETS.length));
+    g.add(
+      at(
+        new Input({ value: signal('editable — themed by the app') }),
+        1,
+        afterSwatches,
+        Math.min(30, ctx.width - 2),
+        1,
+      ),
+    );
+    g.add(at(new Button('~O~K', { onClick: () => {} }), 1, afterSwatches + 2, 8, 2));
     g.add(
       at(
         new Text('createTheme(seeds) → 16 aliases → 63 roles · serializeTheme/parseTheme · setTheme hot-swaps live.'),
         1,
-        15,
+        afterSwatches + 5,
         Math.max(10, ctx.width - 2),
         1,
       ),

@@ -11,9 +11,24 @@
  */
 import type { AttrMask } from '../render/types.js';
 
-import { createTheme, type ThemeOptions } from './create-theme.js';
+import { createTheme } from './create-theme.js';
+import {
+  slateSeeds,
+  nordSeeds,
+  draculaSeeds,
+  solarizedDarkSeeds,
+  gruvboxDarkSeeds,
+  janusSeeds,
+  warpSeeds,
+  solsticeSeeds,
+  platinumSeeds,
+  workbenchSeeds,
+  horizonSeeds,
+} from './preset-seeds.js';
 import { defaultTheme, type Theme } from './theme.js';
 import { Attr } from '../render/types.js';
+
+export { PRESET_SEEDS } from './preset-seeds.js';
 
 /**
  * The classic Borland / Turbo Vision "gray dialog / blue window" theme — an alias
@@ -50,7 +65,7 @@ const UL: AttrMask = Attr.underline;
  */
 export const monochromeTheme: Theme = {
   desktop: { fg: G, bg: B, pattern: '░' },
-  menuBar: { fg: B, bg: W, hotkey: B, attrs: UL },
+  menuBar: { fg: B, bg: W, hotkey: B },
   menuSelected: { fg: B, bg: W, hotkey: B, attrs: REV },
   window: { fg: W, bg: B, border: W, title: W, icon: W },
   windowInactive: { fg: G, bg: B, border: G, title: G, icon: G },
@@ -111,38 +126,9 @@ export const monochromeTheme: Theme = {
   indicatorNormal: { fg: G, bg: B },
   indicatorDragging: { fg: W, bg: B, attrs: BLD },
   terminalNormal: { fg: W, bg: B },
-  statusBar: { fg: B, bg: W, hotkey: B, attrs: UL },
+  statusBar: { fg: B, bg: W, hotkey: B },
   statusSelected: { fg: B, bg: W, hotkey: B, attrs: REV },
   shadow: { fg: G, bg: B },
-};
-
-// The five curated palettes' seed sets. Each theme references ONLY its own seed const, so importing
-// one preset still lets a bundler drop the other four (their seeds and initializers tree-shake out);
-// `PRESET_SEEDS` gathers all five as reusable data without breaking that isolation.
-const slateSeeds: ThemeOptions = { mode: 'dark', accent: '#5b7a99', neutral: '#64748b' };
-const nordSeeds: ThemeOptions = {
-  mode: 'dark',
-  accent: '#88c0d0',
-  neutral: '#4c566a',
-  overrides: { background: '#2e3440', foreground: '#d8dee9', accent: '#88c0d0' },
-};
-const draculaSeeds: ThemeOptions = {
-  mode: 'dark',
-  accent: '#bd93f9',
-  neutral: '#44475a',
-  overrides: { background: '#282a36', foreground: '#f8f8f2', accent: '#bd93f9' },
-};
-const solarizedDarkSeeds: ThemeOptions = {
-  mode: 'dark',
-  accent: '#268bd2',
-  neutral: '#586e75',
-  overrides: { background: '#002b36', foreground: '#839496', accent: '#268bd2' },
-};
-const gruvboxDarkSeeds: ThemeOptions = {
-  mode: 'dark',
-  accent: '#d79921',
-  neutral: '#928374',
-  overrides: { background: '#282828', foreground: '#ebdbb2', accent: '#d79921' },
 };
 
 /**
@@ -201,25 +187,67 @@ export const solarizedDarkTheme: Theme = /* @__PURE__ */ createTheme(solarizedDa
 export const gruvboxDarkTheme: Theme = /* @__PURE__ */ createTheme(gruvboxDarkSeeds);
 
 /**
- * The seed sets behind the five {@link createTheme}-generated presets, keyed by name — the same
- * `{ mode, accent, neutral, overrides }` options each curated theme is built from, exposed as data so
- * a tool (e.g. a theme editor) can load a preset as an *editable* starting point rather than an opaque
- * finished {@link Theme}. The two literal presets ({@link turboVisionTheme}, {@link monochromeTheme})
- * are hand-authored and have no seed form, so they are intentionally absent here.
- *
- * Importing `PRESET_SEEDS` pulls in all five seed sets; importing a single preset theme does not pull
- * in this map, so per-preset tree-shaking is preserved.
+ * A retro PC-desktop theme — a teal field, silver 3D chrome, black text, and a navy highlight for
+ * the primary button, focus, and selection. High-contrast and easy to read.
  *
  * @example
- * import { PRESET_SEEDS, createTheme } from '@jsvision/core';
+ * import { janusTheme } from '@jsvision/core';
  *
- * // Rebuild the Nord theme from its seeds, then tweak the accent.
- * const myNord = createTheme({ ...PRESET_SEEDS.nord, overrides: { accent: '#8fbcbb' } });
+ * janusTheme.desktop.bg; // '#008080' — the teal desktop
  */
-export const PRESET_SEEDS: Record<'slate' | 'nord' | 'dracula' | 'solarized-dark' | 'gruvbox-dark', ThemeOptions> = {
-  slate: slateSeeds,
-  nord: nordSeeds,
-  dracula: draculaSeeds,
-  'solarized-dark': solarizedDarkSeeds,
-  'gruvbox-dark': gruvboxDarkSeeds,
-};
+export const janusTheme: Theme = /* @__PURE__ */ createTheme(janusSeeds);
+
+/**
+ * A Workplace-Shell-style theme — cool steel-blue surfaces over a mid steel field, with a deep
+ * corporate blue accent for the primary button, focus, and selection.
+ *
+ * @example
+ * import { warpTheme } from '@jsvision/core';
+ *
+ * warpTheme.desktop.bg; // '#567089' — the steel field
+ */
+export const warpTheme: Theme = /* @__PURE__ */ createTheme(warpSeeds);
+
+/**
+ * A Unix-workstation theme in the CDE / OpenWindows spirit — a sage field, warm putty chrome, and a
+ * teal accent for the primary button, focus, and selection.
+ *
+ * @example
+ * import { solsticeTheme } from '@jsvision/core';
+ *
+ * solsticeTheme.button.bg; // '#2a7d7d' — the teal accent
+ */
+export const solsticeTheme: Theme = /* @__PURE__ */ createTheme(solsticeSeeds);
+
+/**
+ * A classic-Mac Platinum theme — crisp grayscale surfaces with a restrained highlight blue for the
+ * primary button, focus, and selection. Very high legibility.
+ *
+ * @example
+ * import { platinumTheme } from '@jsvision/core';
+ *
+ * platinumTheme.button.bg; // '#3355bb' — the highlight blue
+ */
+export const platinumTheme: Theme = /* @__PURE__ */ createTheme(platinumSeeds);
+
+/**
+ * An Amiga-Workbench 1.x theme — an unmistakable blue field with white windows, black text, and an
+ * orange accent for the primary button, focus, and selection.
+ *
+ * @example
+ * import { workbenchTheme } from '@jsvision/core';
+ *
+ * workbenchTheme.desktop.bg; // '#0055aa' — the Workbench blue
+ */
+export const workbenchTheme: Theme = /* @__PURE__ */ createTheme(workbenchSeeds);
+
+/**
+ * A modern enterprise-software theme — a dark-blue shell field, white cards, and a clear corporate
+ * blue accent for the primary button, focus, and selection.
+ *
+ * @example
+ * import { horizonTheme } from '@jsvision/core';
+ *
+ * horizonTheme.button.bg; // '#0a6ed1' — the corporate blue
+ */
+export const horizonTheme: Theme = /* @__PURE__ */ createTheme(horizonSeeds);

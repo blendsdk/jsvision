@@ -27,3 +27,12 @@ export function normalizeHex(c: Color): string {
   const rgb = toRgb(c);
   return rgb ? composeHex(rgb.r, rgb.g, rgb.b) : String(c);
 }
+
+/**
+ * Whether two colors are visually the same, compared by their normalized `#rrggbb` form so `'blue'`
+ * and `'#0000aa'` (or two spellings of the same hex) compare equal. Used to make a model commit
+ * idempotent: merely loading a target's current color into the inspector must not write it back.
+ */
+export function sameColor(a: Color, b: Color): boolean {
+  return a === b || normalizeHex(a) === normalizeHex(b);
+}

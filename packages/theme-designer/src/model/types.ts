@@ -56,4 +56,16 @@ export interface DesignerState {
 
 /** The designer's own preset registry (core exposes presets as `Theme`s, not by a name type). */
 export type PresetName =
-  'turbo-vision' | 'monochrome' | 'slate' | 'nord' | 'dracula' | 'solarized-dark' | 'gruvbox-dark';
+  | 'turbo-vision'
+  | 'monochrome'
+  | 'slate'
+  | 'nord'
+  | 'dracula'
+  | 'solarized-dark'
+  | 'gruvbox-dark'
+  | 'janus'
+  | 'warp'
+  | 'solstice'
+  | 'platinum'
+  | 'workbench'
+  | 'horizon';

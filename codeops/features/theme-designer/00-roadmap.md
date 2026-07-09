@@ -26,6 +26,55 @@ orientations), sharing its value-track math with `ScrollBar`. Standalone plan (n
 
 ## Notes
 
+- 2026-07-09: **Inspector color swatch + preview blink** (user-requested, 2 items). (1) The inspector
+  now paints a solid block of the *exact* edited color directly under the hex field — the true
+  truecolor value, distinct from the DOS-16 `ColorSwatch` picker below it (a tiny reactive `ColorBlock`
+  bound to the color signal so a bare rail selection, which swaps the color without swapping the theme,
+  still repaints it). (2) Selecting a role/alias briefly **flashes every cell painted in that color**
+  across the live preview so the affected widgets stand out. Chosen mechanism: a pure, spec-tested
+  `flashColor(theme, from, to)` (+ `flashColorFor` photonegative) recolor toggled on/off by an
+  injectable timer (default `setTimeout`) through the existing `setTheme` repaint path — no overlay/
+  compositor hazard, and it covers *all* roles rather than a brittle hand-kept role→widget map (the
+  option the user picked; I flagged the map's infeasibility and delivered this instead). Honest scope:
+  one app theme means the flash is app-wide by color (overwhelmingly the preview; shared colors in
+  chrome flash too). Spec-first (new `flash.spec` 5 + `inspector-panel.spec` 2 + an `app.impl` blink
+  test with a fake timer). Full turbo verify (16/16) + designer e2e green; additive-only (no
+  `@jsvision/core`/`@jsvision/ui` API change — reuses the public `TimerSeam`).
+- 2026-07-09: **Preset overhaul + 6 new themes** (user-requested). (A) The curated dark presets
+  (Nord/Dracula/Solarized/Gruvbox) are re-authored to override all 16 aliases from each palette's
+  published spec — authentic surfaces/borders/status, not a generic ramp of one neutral (they only
+  pinned bg/fg/accent before). (B) `createTheme` dark-mode surfaces now sit near the ramp floor (was
+  mid-gray), so generated themes + `slate` stop looking washed-out. (C) Six new tree-shakeable
+  retro-desktop presets faithful to each palette: `janus` (early-90s PC — teal/silver/navy), `warp`
+  (OS/2 steel blue-gray), `solstice` (Sun CDE/OpenWindows — sage/putty/teal), `platinum` (classic Mac
+  grayscale + blue), `workbench` (Amiga 1.x blue/white/black/orange), `horizon` (enterprise
+  dark-blue/white/blue). Trademark-safe codenames chosen for the published package. Seed sets extracted
+  to `preset-seeds.ts` (500-line guard). Wired end-to-end: core exports + `PRESET_SEEDS`, extended spec
+  oracles (13 presets, bg/accent pins, depth-at-all-4 coverage), the designer's `PresetName` + preset
+  menu, and the kitchen-sink `theming` story + smoke. Full `yarn verify` pipeline (16/16) + all e2e
+  (8/8) green; contrast-checked (all widget pairs ≥3:1). Additive-only — no `@jsvision/core` API
+  removal.
+- 2026-07-09: **Follow-up fix** (user-reported) — loading the monochrome preset underlined the
+  *whole* application menu bar (and status bar): a continuous thin line under every item. Cause was
+  in `@jsvision/core` — `monochromeTheme.menuBar`/`.statusBar` carried `underline` as their base
+  attribute, which paints under every fill cell (not TV-faithful; TV reserves underline for the
+  accelerator letter). Dropped the base underline from both bars — they still stand out by inverted
+  colors, selection stays `reverse`, and the meaningful underlines (`*Shortcut` roles, calendar
+  today) are untouched. Regression test added (presets.impl); ST-24 still green (`reverse !==
+  undefined`). Additive-safe: no golden/serialize snapshot encodes those bars.
+- 2026-07-09: **Post-ship bug-fix pass** (user-reported, 5 issues) — all fixed with regression tests,
+  full `yarn verify` (16/16) + all e2e (8/8) green. (1) The workspace now sizes to the *real* mounted
+  viewport (was the 80×24 fallback until a manual terminal resize) and *chains* rather than replaces
+  the app shell's `onResize`. (2) The **View menu** now downsamples the *whole* live preview to the
+  chosen depth (new pure `downsampleTheme`/`colorAtDepth` in the model; the export stays authored
+  truecolor) with the depth shown in the preview title — previously nothing read `state.depth`. (3)
+  Selecting a rail item no longer re-commits its just-loaded color (an idempotent `sameColor` guard in
+  the app's `applyToModel`): a bare selection under a loaded preset was dropping the role snapshot and
+  reverting the theme. The synchronous `syncing` flag was insufficient because the commit effects run
+  later in the same re-entrant flush. (4/5) The preview is now a **broad, scrollable gallery**
+  (tabs/grid/tree/calendar/scroll bar/slider/spinner added, wrapped in a `Scroller`) and the inspector
+  edits a role's **fg as well as bg** (a bg/fg toggle; `colorOf` gained an optional field arg) so far
+  more role edits are visible. Additive-only; no `@jsvision/core`/`@jsvision/ui` API change.
 - 2026-07-09: **Phase 4 DONE — PL-01 COMPLETE (40/40 tasks)** ✅. Integration: `src/main.ts` (TTY
   split — live app vs. piped walkthrough) + `host/walkthrough.ts` (a narrated headless tour composing
   the preview gallery under each theme + depth into a `ScreenBuffer`, the deterministic e2e oracle;
