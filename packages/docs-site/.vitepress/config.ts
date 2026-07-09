@@ -119,10 +119,23 @@ export default withMermaid(
         '/guide/': [{ text: 'Guide', items: [{ text: 'Introduction', link: '/guide/' }] }],
         '/components/': [
           { text: 'Components', items: [{ text: 'Overview', link: '/components/' }] },
-          { text: 'Controls', items: [{ text: 'Button', link: '/components/controls/button' }] },
+          {
+            text: 'Controls',
+            items: [
+              { text: 'Button', link: '/components/controls/button' },
+              { text: 'Input', link: '/components/controls/input' },
+              { text: 'Form dialog', link: '/components/controls/form-dialog' },
+            ],
+          },
+          { text: 'Containers', items: [{ text: 'List box', link: '/components/containers/list-box' }] },
+          { text: 'Table', items: [{ text: 'Data grid', link: '/components/table/data-grid' }] },
           { text: 'Files', items: [{ text: 'File dialog', link: '/components/files/file-dialog' }] },
+          { text: 'Theming', items: [{ text: 'Theme gallery', link: '/components/theming/preset-gallery' }] },
         ],
-        '/apps/': [{ text: 'Apps', items: [{ text: 'Overview', link: '/apps/' }] }],
+        '/apps/': [
+          { text: 'Apps', items: [{ text: 'Overview', link: '/apps/' }] },
+          { text: 'Examples', items: [{ text: 'Turbo Vision desktop', link: '/apps/desktop' }] },
+        ],
         '/api/': [{ text: 'API Reference', items: [{ text: 'Overview', link: '/api/' }] }],
         '/reference/': [
           { text: 'Reference', items: [{ text: 'Overview', link: '/reference/' }] },

@@ -1,0 +1,18 @@
+---
+title: Form dialog
+description: A modal form dialog with a valid() close-gate — a live, in-browser JSVision example.
+---
+
+# Form dialog
+
+A modal form dialog hosting an **age** input (0–120), a **checkbox group**, and a **radio group**,
+with OK / Cancel. **OK is vetoed** while the age is out of range — the `valid()` gate refuses to
+close and returns focus to the offending field; Cancel, Esc, or **[×]** always close.
+
+<PlayExample id="controls/form-dialog" title="Form dialog" blurb="A modal form — input + checks + radios with OK/Cancel; OK is vetoed while Age is out of range." />
+
+## Source
+
+The code below is the exact module the live example above runs — shown code is running code.
+
+<<< @/examples/controls/form-dialog.ts

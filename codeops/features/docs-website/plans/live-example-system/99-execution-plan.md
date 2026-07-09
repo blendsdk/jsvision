@@ -2,7 +2,7 @@
 
 > **Implements**: docs-website/RD-03 · **Feature**: docs-website
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 30/40 tasks (75%) · **Last Updated**: 2026-07-10 00:56
+> **Progress**: 36/40 tasks (90%) · **Last Updated**: 2026-07-10 01:07
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Each phase is a
 testable slice. **Verify** = `yarn verify` (AR-21) unless a phase names a faster inner loop.
@@ -93,12 +93,12 @@ Ref: 03-05 · AR-18/20, AC-9.
 ## Phase 5b — Seed examples: breadth
 Ref: 03-05 · AR-20. (Droppable under time pressure: input / list-box / data-grid / preset-gallery.)
 
-- [ ] 5b.1 `controls/input` (minimal) — module + page + registry; paint-smoke green.
-- [ ] 5b.2 `controls/form-dialog` (full) — module + page + registry; paint-smoke green.
-- [ ] 5b.3 `containers/list-box` (minimal) — module + page + registry; paint-smoke green.
-- [ ] 5b.4 `table/data-grid` (full) — module + page + registry; paint-smoke green.
-- [ ] 5b.5 `apps/desktop` (full) — re-author from `web-xterm/app.ts` `buildApp`; module + page + registry; paint-smoke green (RD-04 hero).
-- [ ] 5b.6 `theming/preset-gallery` (full) — module + page + registry; paint-smoke green (theme+depth showcase).
+- [x] 5b.1 `controls/input` (minimal) — module + page + registry; paint-smoke green. ✅ (completed: 2026-07-10 01:06 — Input filter/range/picture validators + Label + echo)
+- [x] 5b.2 `controls/form-dialog` (full) — module + page + registry; paint-smoke green. ✅ (completed: 2026-07-10 01:06 — modal Dialog: Input(range 0–120) + CheckGroup + RadioGroup + OK/Cancel, opened via demoApp + execView on start)
+- [x] 5b.3 `containers/list-box` (minimal) — module + page + registry; paint-smoke green. ✅ (completed: 2026-07-10 01:06 — ListBox over 28 fruits, type-ahead + focused/selected echo)
+- [x] 5b.4 `table/data-grid` (full) — module + page + registry; paint-smoke green. ✅ (completed: 2026-07-10 01:06 — DataGrid<Person>: auto/fixed/fr cols, numeric Age sort, zebra, H-scroll)
+- [x] 5b.5 `apps/desktop` (full) — re-author from `web-xterm/app.ts` `buildApp`; module + page + registry; paint-smoke green (RD-04 hero). ✅ (completed: 2026-07-10 01:06 — self-contained WM app: ≡/Window menu + status + 2 framed windows + about messageBox; dropped buildBrowserCaps (caps via ctx) + the timer-driven clock (leak-free))
+- [x] 5b.6 `theming/preset-gallery` (full) — module + page + registry; paint-smoke green (theme+depth showcase). ✅ (completed: 2026-07-10 01:06 — a panel of app-themed widgets (buttons/input/checks/radios) that repaint on the View→Theme/Depth controls)
 
 **Verify**: `yarn verify`
 
