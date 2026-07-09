@@ -11,6 +11,27 @@ the deprecation policy.
 
 ### Added
 
+- **`Switch` — an on/off toggle control (`@jsvision/ui`).** A focusable single-boolean control bound
+  two-way to a `Signal<boolean>` (the `Slider` idiom): `new Switch({ value, label?, onLabel?,
+offLabel?, disabled? })`. Toggle it with `Space`/`Enter`, a click, or — when `label` marks a `~X~`
+  letter — that `Alt`+hotkey from anywhere in the dialog. It draws a bracketed 4-cell track with a
+  sliding `●` knob (ASCII `o` fallback), green when on / dim when off, reusing existing theme roles
+  (**no new `@jsvision/core` role**). A `controls/switch` kitchen-sink story ships with it.
+
+- **`Tree` marker styles (`@jsvision/ui`).** `TreeOptions` gains `markerStyle?: 'tv' | 'brackets' |
+'triangle'` (new public `MarkerStyle` type). The default `'tv'` (`+`/`─`) is **byte-unchanged**;
+  `'brackets'` draws `[+]`/`[-]` (pure ASCII, most legible) and `'triangle'` draws `▸`/`▾`, degrading
+  to `'brackets'` on a terminal without Unicode. The mouse toggle hit-zone tracks the wider bracket
+  graphic automatically.
+
+- **Duplicate-accelerator dev-warning (`@jsvision/ui`).** A new public pure validator
+  `findDuplicateAccelerators(chars)` (+ `DuplicateAccelerator` type and the
+  `reportDuplicateAccelerators` reporter) flags two widgets that claim the same `~X~` `Alt`+hotkey
+  within one focus scope — where only the first is reachable. It runs automatically (development-only,
+  silent under `NODE_ENV=production`) over submenu items and menu-bar titles at build time, a
+  `Dialog`'s controls on mount (via an additive `View.accelerators()` seam), and a `TabView`'s tab
+  strip on mount. `StatusLine` chord collisions remain a documented fast-follow.
+
 - **Theming — a tiered color theme system for `@jsvision/core`.** A layer below the flat 63-role
   `Theme` so a whole coherent theme falls out of a handful of seeds, plus lossless serialization and
   runtime hot-swap. All additive — the flat `Theme` stays the widget contract and `defaultTheme` is
