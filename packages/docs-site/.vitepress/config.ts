@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { defineConfig, type HeadConfig } from 'vitepress';
+import { withMermaid } from 'vitepress-plugin-mermaid';
 
 const BASE = process.env.DOCS_BASE ?? '/jsvision/';
 
@@ -65,107 +66,109 @@ function contentSecurityPolicy(scriptHashes: string[]): string {
  * VitePress bakes `base` into absolute asset and page-data URLs, so a preview
  * must be built with its own subpath or it would load production assets.
  */
-export default defineConfig({
-  base: BASE,
-  lang: 'en-US',
-  title: 'JSVision',
-  description: DEFAULT_DESCRIPTION,
-  sitemap: { hostname: SITE_URL },
-  head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: `${BASE}favicon.svg` }],
-    ['meta', { name: 'theme-color', content: '#0e7490' }],
-  ],
-  themeConfig: {
-    // Client-side search — the index is baked into the build; no external service.
-    search: { provider: 'local' },
-    nav: [
-      { text: 'Guide', link: '/guide/', activeMatch: '^/guide/' },
-      { text: 'Components', link: '/components/', activeMatch: '^/components/' },
-      { text: 'Apps', link: '/apps/', activeMatch: '^/apps/' },
-      { text: 'API', link: '/api/', activeMatch: '^/api/' },
-      { text: 'Reference', link: '/reference/', activeMatch: '^/reference/' },
+export default withMermaid(
+  defineConfig({
+    base: BASE,
+    lang: 'en-US',
+    title: 'JSVision',
+    description: DEFAULT_DESCRIPTION,
+    sitemap: { hostname: SITE_URL },
+    head: [
+      ['link', { rel: 'icon', type: 'image/svg+xml', href: `${BASE}favicon.svg` }],
+      ['meta', { name: 'theme-color', content: '#0e7490' }],
     ],
-    // One sidebar per section. Every link targets an existing page (no dead
-    // links); the trees fill out as later milestones add content.
-    sidebar: {
-      '/guide/': [{ text: 'Guide', items: [{ text: 'Introduction', link: '/guide/' }] }],
-      '/components/': [{ text: 'Components', items: [{ text: 'Overview', link: '/components/' }] }],
-      '/apps/': [{ text: 'Apps', items: [{ text: 'Overview', link: '/apps/' }] }],
-      '/api/': [{ text: 'API Reference', items: [{ text: 'Overview', link: '/api/' }] }],
-      '/reference/': [
-        { text: 'Reference', items: [{ text: 'Overview', link: '/reference/' }] },
-        {
-          text: 'Architecture',
-          items: [
-            { text: 'Overview', link: '/reference/architecture/' },
-            { text: 'System Overview', link: '/reference/architecture/system-overview' },
-            { text: 'API Design', link: '/reference/architecture/api-design' },
-            { text: 'Security', link: '/reference/architecture/security' },
-          ],
-        },
-        {
-          text: 'Decisions (ADRs)',
-          items: [
-            { text: 'Decision Log', link: '/reference/decisions/' },
-            { text: 'ADR-001: ESM-only, zero deps', link: '/reference/decisions/ADR-001-esm-zero-dependency' },
-            { text: 'ADR-002: Capability auto-config', link: '/reference/decisions/ADR-002-capability-auto-config' },
-            {
-              text: 'ADR-003: Pure core, injectable seams',
-              link: '/reference/decisions/ADR-003-pure-core-injectable-seams',
-            },
-            { text: 'ADR-004: No node-pty', link: '/reference/decisions/ADR-004-no-node-pty' },
-            { text: 'ADR-005: Sanitize boundary', link: '/reference/decisions/ADR-005-sanitize-boundary' },
-            {
-              text: 'ADR-006: Informational perf bench',
-              link: '/reference/decisions/ADR-006-informational-perf-bench',
-            },
-            { text: 'ADR-007: Monorepo restructure', link: '/reference/decisions/ADR-007-monorepo-restructure' },
-            { text: 'ADR-008: Layout engine', link: '/reference/decisions/ADR-008-layout-engine' },
-            { text: 'ADR-009: Bun runtime support', link: '/reference/decisions/ADR-009-bun-runtime-support' },
-          ],
-        },
-        {
-          text: 'Guides',
-          items: [
-            { text: 'Getting Started', link: '/reference/guides/getting-started' },
-            { text: 'Development', link: '/reference/guides/development' },
-          ],
-        },
+    themeConfig: {
+      // Client-side search — the index is baked into the build; no external service.
+      search: { provider: 'local' },
+      nav: [
+        { text: 'Guide', link: '/guide/', activeMatch: '^/guide/' },
+        { text: 'Components', link: '/components/', activeMatch: '^/components/' },
+        { text: 'Apps', link: '/apps/', activeMatch: '^/apps/' },
+        { text: 'API', link: '/api/', activeMatch: '^/api/' },
+        { text: 'Reference', link: '/reference/', activeMatch: '^/reference/' },
       ],
+      // One sidebar per section. Every link targets an existing page (no dead
+      // links); the trees fill out as later milestones add content.
+      sidebar: {
+        '/guide/': [{ text: 'Guide', items: [{ text: 'Introduction', link: '/guide/' }] }],
+        '/components/': [{ text: 'Components', items: [{ text: 'Overview', link: '/components/' }] }],
+        '/apps/': [{ text: 'Apps', items: [{ text: 'Overview', link: '/apps/' }] }],
+        '/api/': [{ text: 'API Reference', items: [{ text: 'Overview', link: '/api/' }] }],
+        '/reference/': [
+          { text: 'Reference', items: [{ text: 'Overview', link: '/reference/' }] },
+          {
+            text: 'Architecture',
+            items: [
+              { text: 'Overview', link: '/reference/architecture/' },
+              { text: 'System Overview', link: '/reference/architecture/system-overview' },
+              { text: 'API Design', link: '/reference/architecture/api-design' },
+              { text: 'Security', link: '/reference/architecture/security' },
+            ],
+          },
+          {
+            text: 'Decisions (ADRs)',
+            items: [
+              { text: 'Decision Log', link: '/reference/decisions/' },
+              { text: 'ADR-001: ESM-only, zero deps', link: '/reference/decisions/ADR-001-esm-zero-dependency' },
+              { text: 'ADR-002: Capability auto-config', link: '/reference/decisions/ADR-002-capability-auto-config' },
+              {
+                text: 'ADR-003: Pure core, injectable seams',
+                link: '/reference/decisions/ADR-003-pure-core-injectable-seams',
+              },
+              { text: 'ADR-004: No node-pty', link: '/reference/decisions/ADR-004-no-node-pty' },
+              { text: 'ADR-005: Sanitize boundary', link: '/reference/decisions/ADR-005-sanitize-boundary' },
+              {
+                text: 'ADR-006: Informational perf bench',
+                link: '/reference/decisions/ADR-006-informational-perf-bench',
+              },
+              { text: 'ADR-007: Monorepo restructure', link: '/reference/decisions/ADR-007-monorepo-restructure' },
+              { text: 'ADR-008: Layout engine', link: '/reference/decisions/ADR-008-layout-engine' },
+              { text: 'ADR-009: Bun runtime support', link: '/reference/decisions/ADR-009-bun-runtime-support' },
+            ],
+          },
+          {
+            text: 'Guides',
+            items: [
+              { text: 'Getting Started', link: '/reference/guides/getting-started' },
+              { text: 'Development', link: '/reference/guides/development' },
+            ],
+          },
+        ],
+      },
+      socialLinks: [
+        { icon: 'github', link: GITHUB_URL },
+        { icon: { svg: NPM_ICON }, link: NPM_URL, ariaLabel: 'npm' },
+      ],
+      editLink: {
+        pattern: `${GITHUB_URL}/edit/master/packages/docs-site/:path`,
+        text: 'Edit this page on GitHub',
+      },
     },
-    socialLinks: [
-      { icon: 'github', link: GITHUB_URL },
-      { icon: { svg: NPM_ICON }, link: NPM_URL, ariaLabel: 'npm' },
-    ],
-    editLink: {
-      pattern: `${GITHUB_URL}/edit/master/packages/docs-site/:path`,
-      text: 'Edit this page on GitHub',
+    // Per-page Open Graph + Twitter card metadata for link previews and SEO.
+    transformHead({ pageData }) {
+      const url = `${SITE_URL}${routeOf(pageData.relativePath)}`;
+      const title = pageData.title || 'JSVision';
+      const description = pageData.description || pageData.frontmatter?.description || DEFAULT_DESCRIPTION;
+      const head: HeadConfig[] = [
+        ['meta', { property: 'og:type', content: 'website' }],
+        ['meta', { property: 'og:site_name', content: 'JSVision' }],
+        ['meta', { property: 'og:title', content: title }],
+        ['meta', { property: 'og:description', content: description }],
+        ['meta', { property: 'og:image', content: OG_IMAGE }],
+        ['meta', { property: 'og:url', content: url }],
+        ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+        ['meta', { name: 'twitter:title', content: title }],
+        ['meta', { name: 'twitter:description', content: description }],
+        ['meta', { name: 'twitter:image', content: OG_IMAGE }],
+        ['link', { rel: 'canonical', href: url }],
+      ];
+      return head;
     },
-  },
-  // Per-page Open Graph + Twitter card metadata for link previews and SEO.
-  transformHead({ pageData }) {
-    const url = `${SITE_URL}${routeOf(pageData.relativePath)}`;
-    const title = pageData.title || 'JSVision';
-    const description = pageData.description || pageData.frontmatter?.description || DEFAULT_DESCRIPTION;
-    const head: HeadConfig[] = [
-      ['meta', { property: 'og:type', content: 'website' }],
-      ['meta', { property: 'og:site_name', content: 'JSVision' }],
-      ['meta', { property: 'og:title', content: title }],
-      ['meta', { property: 'og:description', content: description }],
-      ['meta', { property: 'og:image', content: OG_IMAGE }],
-      ['meta', { property: 'og:url', content: url }],
-      ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-      ['meta', { name: 'twitter:title', content: title }],
-      ['meta', { name: 'twitter:description', content: description }],
-      ['meta', { name: 'twitter:image', content: OG_IMAGE }],
-      ['link', { rel: 'canonical', href: url }],
-    ];
-    return head;
-  },
-  // Inject the meta-CSP as the first thing in <head> so it governs the inline
-  // scripts that follow, with each inline script admitted by its own hash.
-  transformHtml(code) {
-    const meta = `<meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy(inlineScriptHashes(code))}">`;
-    return code.replace('<head>', `<head>${meta}`);
-  },
-});
+    // Inject the meta-CSP as the first thing in <head> so it governs the inline
+    // scripts that follow, with each inline script admitted by its own hash.
+    transformHtml(code) {
+      const meta = `<meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy(inlineScriptHashes(code))}">`;
+      return code.replace('<head>', `<head>${meta}`);
+    },
+  }),
+);
