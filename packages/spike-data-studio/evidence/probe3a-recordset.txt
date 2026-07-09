@@ -1,0 +1,25 @@
+=== Probe 3a: RecordSet spine + reactivity ===
+loaded 4 customers; PK=id
+
+1. cursor move repaints the SAME mounted controls (no re-wire):
+   pos 0 → [ Ada Lovelace |  2500.00]
+   pos 1 → [ Alan Turing |  9000.00]
+   pos 2 → [ Grace Hopper |  0.00]
+   pos 3 → [ Edsger Dijkstra |  750.00]
+
+2. edit a bound field → dirty → commit (xmin) → persists → dirty clears:
+   current id=1 name="Ada Lovelace" balance=2500.00 dirty=false
+   after edit → buffer balance="1234.50" dirty=true dirtyFields=["balance"]
+   composed form now shows: [ Ada Lovelace |  1234.50]
+   commit() → ok new balance=1234.50 new xmin=778
+   after commit dirty=false
+   independent read → balance=1234.50 (persisted ✓)
+
+3. rollback() restores the buffer from the committed row:
+   after edit → name buffer="EDITED-NOT-SAVED" dirty=true
+   after rollback → name buffer="Ada Lovelace" dirty=false
+
+   restored balance=2500.00 for id=1 — seed pristine.
+
+Probe 3a verdict: 🟢 cursor-move repaints bound controls with zero re-wire; edit→commit→persist
+   and rollback both work through plain signal bindings. Reactivity fit is IDIOMATIC.
