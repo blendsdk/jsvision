@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 20:28
-> **Progress**: 7/17 tasks (41%)
+> **Last Updated**: 2026-07-09 20:37
+> **Progress**: 10/17 tasks (59%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -77,13 +77,13 @@ dogfood it back into the spike. Five phases; each is spec-first and leaves a **v
 **Reference**: [03-03](03-03-virtual-filesystem.md) · [07](07-testing-strategy.md) ST-4, ST-9 (path), ST-11 · AR-6
 
 ### Step 3.1: Spec (RED)
-- [ ] 3.1.1 Write `test/virtual-fs.spec.test.ts`: **ST-4** (a real `@jsvision/files` `FileList`/`FileDialog` over a virtual FS seeded `{ '/home/demo': { 'a.txt':'…', 'sub': { 'b.txt':'…' } } }` lists `a.txt`+`sub`, entering `sub` lists `b.txt`; `web/src` imports no `node:fs`/`node:tty`, and a stubbed build emits no `node:fs` specifier) + **ST-11** (the full `FileSystem` interface — 14 methods + the `sep` property — per 03-03) + the **ST-9 path half** (`resolve('/home/demo','../x')` → `/home/x` lexically). Verify RED.
+- [x] 3.1.1 Write `test/virtual-fs.spec.test.ts`: **ST-4** (a real `@jsvision/files` `FileList`/`FileDialog` over a virtual FS seeded `{ '/home/demo': { 'a.txt':'…', 'sub': { 'b.txt':'…' } } }` lists `a.txt`+`sub`, entering `sub` lists `b.txt`; `web/src` imports no `node:fs`/`node:tty`, and a stubbed build emits no `node:fs` specifier) + **ST-11** (the full `FileSystem` interface — 14 methods + the `sep` property — per 03-03) + the **ST-9 path half** (`resolve('/home/demo','../x')` → `/home/x` lexically). Verify RED. — done 2026-07-09 20:37 (RED: 5/6 fail on missing export; import-graph scan already green; `..`-clamps-at-root + no-real-fs-touch asserted)
 
 ### Step 3.2: Implementation (GREEN)
-- [ ] 3.2.1 `src/virtual-fs.ts` — `createBrowserFileSystem({ tree, home, mtime })`: in-memory node tree, `seed(FileTree)`, all `FileSystem` members — 14 methods + `sep` (03-03 map), deterministic mtime, pure-POSIX path ops, `@jsvision/files`-compatible error shapes; re-export from the barrel.
+- [x] 3.2.1 `src/virtual-fs.ts` — `createBrowserFileSystem({ tree, home, mtime })`: in-memory node tree, `seed(FileTree)`, all `FileSystem` members — 14 methods + `sep` (03-03 map), deterministic mtime, pure-POSIX path ops, `@jsvision/files`-compatible error shapes; re-export from the barrel. — done 2026-07-09 20:37 (hand-rolled POSIX resolve/join/dirname/basename/normalize — zero `node:` imports, confirmed @jsvision/files widgets go through the fs seam so the browser graph stays node:path-free; Map-backed tree; ENOENT errors with `code`)
 
 ### Step 3.3: Green + harden
-- [ ] 3.3.1 ST-4, ST-11, ST-9(path) pass; add `virtual-fs.impl.test.ts` edges (hidden dotfiles, missing-path error shape matches `node-fs`, nested-seed depth, `writeFile`→`readFile` round-trip, `rename`/`unlink` mutate); `yarn verify` green; `check:docs` green.
+- [x] 3.3.1 ST-4, ST-11, ST-9(path) pass; add `virtual-fs.impl.test.ts` edges (hidden dotfiles, missing-path error shape matches `node-fs`, nested-seed depth, `writeFile`→`readFile` round-trip, `rename`/`unlink` mutate); `yarn verify` green; `check:docs` green. — done 2026-07-09 20:37 (26/26 web tests; +byte-length sizing, deterministic mtime, missing-parent write, POSIX root/trailing-slash edges; full `yarn verify` 20/20; check:docs 6 files clean)
 
 ---
 
