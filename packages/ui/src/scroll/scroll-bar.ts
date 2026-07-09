@@ -12,6 +12,7 @@
 import type { Signal } from '../reactive/index.js';
 import type { DispatchEvent, DrawContext } from '../view/index.js';
 import { View } from '../view/index.js';
+import { valueToOffset, offsetToValue } from '../controls/track.js';
 
 /** Vertical scroll glyphs: start ▲, end ▼. */
 const V_START = '\u25B2'; // ▲ BLACK UP-POINTING TRIANGLE
@@ -141,11 +142,10 @@ export class ScrollBar extends View {
    * @returns The 0-based thumb index.
    */
   protected getPos(len: number): number {
-    const r = this.max - this.min;
     const size = this.getSize(len);
-    if (r === 0) return 1;
-    const pos = Math.floor(((this.readValue() - this.min) * (size - 3) + (r >> 1)) / r) + 1;
-    return Math.min(size - 2, Math.max(1, pos));
+    // The groove is the cells between the two end arrows (length = size-2, one-cell thumb); the shared
+    // track math maps the value into it, then +1 shifts past the start arrow into an absolute cell.
+    return valueToOffset({ min: this.min, max: this.max, length: size - 2, thumbSize: 1 }, this.readValue()) + 1;
   }
 
   /** The effective page step (the configured `pageStep`, else the axis length − 1). */
@@ -245,11 +245,10 @@ export class ScrollBar extends View {
 
   /** Map an axis position `mark` to a proportional `value`, clamped between the two end arrows. */
   protected jumpTo(mark: number, s: number): void {
-    const i = Math.min(s - 1, Math.max(1, mark)); // keep the thumb between the arrows
-    if (s > 2) {
-      const span = this.max - this.min;
-      this.setValue(Math.floor(((i - 1) * span + ((s - 2) >> 1)) / (s - 2)) + this.min);
-    }
+    const length = s - 1; // groove cells between the two arrows (size-2)
+    if (length <= 1) return; // a single thumb cell: nothing to map (matches the original s>2 guard)
+    const offset = Math.min(length, Math.max(1, mark)) - 1; // clicked cell → 0-based groove offset
+    this.setValue(offsetToValue({ min: this.min, max: this.max, length, thumbSize: 1 }, offset));
   }
 
   /** Mouse-up: end a drag + release the capture. */

@@ -86,6 +86,7 @@ export {
   Label,
   Button,
   Input,
+  Slider,
   CheckGroup,
   RadioGroup,
   MultiCheckGroup,
@@ -97,6 +98,7 @@ export {
 export type {
   ButtonOptions,
   InputOptions,
+  SliderOptions,
   MultiCheckGroupOptions,
   RadioGroupOptions,
   CheckGroupOptions,

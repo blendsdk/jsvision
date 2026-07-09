@@ -1,0 +1,74 @@
+=== Probe 1: introspection & type mapping ===
+objects in app: big(table), customer(table), order(table), order_item(table), tag(table), customer_summary(view)
+
+■ app.big  [table]  updatable=true  PK: id
+   id             integer              → input-int      [trivial]  NOT NULL def=nextval('app.big_id_seq'::regclass)
+   label          text                 → input-text     [trivial]  NOT NULL
+   amount         numeric(12,2)        → input-decimal  [trivial]  NOT NULL
+   flag           boolean              → checkbox       [trivial]  NOT NULL
+   made_on        date                 → datepicker     [trivial]  NOT NULL
+
+■ app.customer  [table]  updatable=true  PK: id
+   id             integer              → input-int      [trivial]  NOT NULL def=nextval('app.customer_id_seq'::regclass)
+   name           text                 → input-text     [trivial]  NOT NULL
+   email          text                 → input-text     [trivial]  nullable
+   tier           app.customer_tier    → dropdown-enum  [trivial]  NOT NULL enum{bronze|silver|gold|platinum} def='bronze'::app.customer_tier
+   is_active      boolean              → checkbox       [trivial]  NOT NULL def=true
+   credit_limit   numeric(12,2)        → input-decimal  [trivial]  NOT NULL def=0
+   balance        numeric(12,2)        → input-decimal  [trivial]  NOT NULL def=0
+   available      numeric(12,2)        → read-only      [read-only]  nullable GENERATED def=(credit_limit - balance)
+   external_id    uuid                 → input-text     [needs-work]  nullable def=gen_random_uuid()
+   tags           integer[]            → text-raw       [needs-work]  nullable def='{}'::integer[]
+   metadata       jsonb                → text-raw       [needs-work]  nullable def='{}'::jsonb
+   created_at     timestamp with time zone → datetime       [needs-work]  NOT NULL def=now()
+   CHECK customer_credit_limit_check: CHECK ((credit_limit >= (0)::numeric))
+
+■ app.order  [table]  updatable=true  PK: id
+   id             integer              → input-int      [trivial]  NOT NULL def=nextval('app.order_id_seq'::regclass)
+   customer_id    integer              → dropdown-fk    [needs-work]  NOT NULL
+   ordered_on     date                 → datepicker     [trivial]  NOT NULL def=CURRENT_DATE
+   status         text                 → input-text     [trivial]  NOT NULL def='open'::text
+   total          numeric(12,2)        → input-decimal  [trivial]  NOT NULL def=0
+   FK customer_id → app.customer(id)
+   CHECK order_status_check: CHECK ((status = ANY (ARRAY['open'::text, 'paid'::text, 'shipped'::text, 'cancelled'::text])))
+
+■ app.order_item  [table]  updatable=true  PK: order_id, line_no
+   order_id       integer              → dropdown-fk    [needs-work]  NOT NULL
+   line_no        integer              → input-int      [trivial]  NOT NULL
+   product        text                 → input-text     [trivial]  NOT NULL
+   qty            integer              → input-int      [trivial]  NOT NULL
+   unit_price     numeric(12,2)        → input-decimal  [trivial]  NOT NULL
+   FK order_id → app.order(id)
+   CHECK order_item_qty_check: CHECK ((qty > 0))
+
+■ app.tag  [table]  updatable=true  PK: (none)
+   label          text                 → input-text     [trivial]  NOT NULL
+   color          text                 → input-text     [trivial]  nullable
+
+■ app.customer_summary  [view]  updatable=false  PK: (none)
+   id             integer              → input-int      [trivial]  nullable
+   name           text                 → input-text     [trivial]  nullable
+   tier           app.customer_tier    → dropdown-enum  [trivial]  nullable enum{bronze|silver|gold|platinum}
+   order_count    bigint               → input-int      [trivial]  nullable
+   lifetime_total numeric              → input-decimal  [trivial]  nullable
+
+=== TYPE → EDITOR verdict (distinct types across the seed) ===
+  PG type               editor          verdict     sample column
+  app.customer_tier     dropdown-enum   trivial     customer.tier
+  bigint                input-int       trivial     customer_summary.order_count
+  boolean               checkbox        trivial     big.flag
+  date                  datepicker      trivial     big.made_on
+  integer               input-int       trivial     big.id
+  integer[]             text-raw        needs-work  customer.tags
+  jsonb                 text-raw        needs-work  customer.metadata
+  numeric               input-decimal   trivial     customer_summary.lifetime_total
+  numeric(12,2)         input-decimal   trivial     big.amount
+  text                  input-text      trivial     big.label
+  timestamp with time zonedatetime        needs-work  customer.created_at
+  uuid                  input-text      needs-work  customer.external_id
+
+verdict tally: {"trivial":8,"needs-work":4}
+
+What the catalog canNOT tell us: intended display labels for FK values (needs a lookup
+  query per FK), human field captions/help, business validation beyond CHECK, and the
+  semantic meaning of jsonb/array contents (only that they are json/array).

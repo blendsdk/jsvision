@@ -11,6 +11,55 @@ the deprecation policy.
 
 ### Added
 
+- **Theming — a tiered color theme system for `@jsvision/core`.** A layer below the flat 63-role
+  `Theme` so a whole coherent theme falls out of a handful of seeds, plus lossless serialization and
+  runtime hot-swap. All additive — the flat `Theme` stays the widget contract and `defaultTheme` is
+  byte-unchanged. New public `@jsvision/core` exports:
+  - **Perceptual color math** — `ramp`, `lighten`, `darken`, `mix` (OKLab; throw on an unresolvable
+    `'default'` seed) and `contrastRatio` (WCAG 2.x; `NaN`, never a throw, when a color is
+    unresolvable).
+  - **The semantic alias tier** — the `ThemeColors` type (16 tokens) plus `createTheme(options)`
+    (required `mode` + `accent`, optional neutral/status seeds, alias-level `overrides`, and
+    role-level `roleOverrides`) and `rolesFromAliases(colors)` (the canonical 16-alias → 63-role
+    expansion). `ThemeOptions` type.
+  - **An optional `ThemeRole.attrs` axis** — a per-role text-attribute mask (dim/bold/italic/…),
+    passed through `themeRoleToStyle`; absent on every `defaultTheme` role.
+  - **Serialization** — `serializeTheme`/`parseTheme` (a versioned `{ version, roles }` envelope,
+    field-kind validation, single-printable-cell pattern check, no partial theme, pure `JSON.parse`,
+    no filesystem) and `InvalidThemeError`.
+  - **13 tree-shakeable presets** — `turboVisionTheme` (= `defaultTheme`), the attribute-driven
+    `monochromeTheme`, `slateTheme`, the curated `nordTheme`/`draculaTheme`/`solarizedDarkTheme`/
+    `gruvboxDarkTheme`, and six retro-desktop themes: `janusTheme` (early-90s PC), `warpTheme` (OS/2
+    Workplace Shell), `solsticeTheme` (Unix CDE/OpenWindows), `platinumTheme` (classic Mac),
+    `workbenchTheme` (Amiga Workbench 1.x), and `horizonTheme` (enterprise). The curated palettes now
+    override all 16 aliases from each palette's published spec (authentic surfaces/borders/status, not
+    a generic ramp); the seed sets live in a tree-shakeable `preset-seeds.ts`.
+  - **Runtime hot-swap** (`@jsvision/ui`) — `RenderRoot.setTheme`, `EventLoop.setTheme`, and
+    `Application.setTheme` replace the active theme and repaint in one coalesced frame from any call
+    site. A live `demo:themes` designer + a kitchen-sink `Theming` story demonstrate it.
+
+- **`Slider` control + the `@jsvision/theme-designer` app.** `@jsvision/ui` gains **`Slider`** — a
+  horizontal/vertical value slider (keyboard/mouse/drag/wheel, `onInput`/`onChange`) that shares its
+  value↔position math with `ScrollBar` (extracted to an internal shared helper; `ScrollBar` behavior
+  is unchanged). `@jsvision/core` gains two derived theme roles `sliderTrack`/`sliderThumb`
+  (byte-frozen in `defaultTheme`, attribute-driven in `monochromeTheme`) plus three additive exports
+  the app needs — `aliasesFromSeeds`, a re-exported `rgb256`, and the `PRESET_SEEDS` data. A new
+  private **`@jsvision/theme-designer`** application authors `@jsvision/core` themes end-to-end: a
+  three-pane designer (roles rail · live preview · inspector) with R/G/B sliders + a `#rrggbb` hex
+  field + a DOS-16 swatch, live WCAG contrast + color-depth readouts, the 7 presets, and JSON
+  import/export via a real file dialog. The inspector edits both a role's **background and
+  foreground** (a bg/fg toggle); the **View menu previews the whole theme at a chosen color depth**
+  (the live preview is downsampled via the nearest-256/DOS-16 mapping while the exported theme keeps
+  its authored truecolor); and the live preview is a **broad, scrollable gallery** — buttons, input,
+  check/radio groups, a list + scroll bar, progress/spinner/slider, tabs, a data grid, a tree, and a
+  calendar — so most theme roles show a visible change as they are edited. The inspector shows a
+  **solid swatch of the exact edited color** directly under the hex field (the true truecolor value,
+  not just its DOS-16 approximation in the picker grid), and **selecting a role/alias briefly flashes
+  every cell painted in that color** across the live preview, so the widgets it affects stand out
+  (implemented as a pure `flashColor` recolor toggled by an injectable timer; the flash is app-wide by
+  color, most visible in the preview). It dogfoods `@jsvision/ui`/`@jsvision/files`; piped, it runs a
+  narrated headless walkthrough.
+
 - **Declarative layout builders + engine `position:'fill'`.** `@jsvision/ui` gains an
   expression-oriented layer over the view tree so a whole screen composes in one nested
   call instead of imperative `new`/`.add()`/`.layout =` mutations: **`col`**/**`row`**
@@ -201,6 +250,18 @@ value })`, and the same for `CheckGroup`. New exported option types `RadioGroupO
 - **Test runner migrated `node:test` → vitest** (two projects: `unit` + `e2e`).
 
 ### Fixed
+
+- **`createTheme` dark-mode surfaces sit deeper on the ramp.** A generated dark theme took its
+  background from the ramp's mid-gray, so it read washed-out and flat. The dark surfaces now sit near
+  the ramp floor (background one step up, the input/editor well at the floor) for a genuinely dark
+  backdrop with clear raised/sunken separation. Affects generated themes and `slateTheme`; the curated
+  presets pin their own surfaces and are unaffected.
+
+- **`monochromeTheme` no longer underlines the whole menu/status bar.** `menuBar` and
+  `statusBar` had `underline` as their base attribute, which painted under every fill cell
+  and read as a continuous thin line beneath every item. Underline is now reserved for the
+  accelerator-letter convention (the `*Shortcut` roles) and the calendar-today marker; the
+  bars stand out by their inverted colors and selection still shows via `reverse`.
 
 - **RD-13 runtime hardening — a 5-agent audit's confirmed backlog (3 critical + 12
   major + ~25 minor), spec-first per HR-NN, TV-derived items behind GATE-1/GATE-2

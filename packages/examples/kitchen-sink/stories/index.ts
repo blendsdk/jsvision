@@ -18,6 +18,7 @@ import { textStory } from './text.story.js';
 import { labelStory } from './label.story.js';
 import { buttonStory } from './button.story.js';
 import { inputStory } from './input.story.js';
+import { sliderStory } from './slider.story.js';
 import { checkGroupStory } from './checkgroup.story.js';
 import { radioGroupStory } from './radiogroup.story.js';
 import { multiCheckGroupStory } from './multicheckgroup.story.js';
@@ -43,6 +44,7 @@ import { editorStory } from './editor.story.js';
 import { memoStory } from './memo.story.js';
 import { terminalStory } from './terminal.story.js';
 import { chDirDialogStory } from './chdir-dialog.story.js';
+import { themingStory } from './theming.story.js';
 
 /**
  * Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers
@@ -59,6 +61,7 @@ export const STORIES: readonly Story[] = [
   labelStory,
   buttonStory,
   inputStory,
+  sliderStory,
   checkGroupStory,
   radioGroupStory,
   multiCheckGroupStory,
@@ -84,4 +87,5 @@ export const STORIES: readonly Story[] = [
   editorStory,
   memoStory,
   terminalStory,
+  themingStory,
 ];
