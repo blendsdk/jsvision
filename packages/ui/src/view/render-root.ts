@@ -66,6 +66,18 @@ export interface RenderRoot {
    * @param scope The subtree to limit the reveal to, or `null` for the whole tree.
    */
   setRevealAccelerators(on: boolean, scope?: View | null): void;
+  /**
+   * Replace the active theme and force one coalesced full recompose, so every view repaints with the
+   * new colors on the next frame. A theme swap changes no geometry, so origins are preserved and the
+   * caret is not lost. Under the event loop's no-op schedule this only marks the frame dirty — call it
+   * through `EventLoop.setTheme` (or `flush()` directly) to actually push the frame.
+   *
+   * @param theme The theme to switch to.
+   * @example
+   * renderRoot.setTheme(nordTheme);
+   * renderRoot.flush(); // push the repainted frame
+   */
+  setTheme(theme: Theme): void;
 }
 
 /**
@@ -222,7 +234,7 @@ function topmostDirty(dirty: Set<View>): View[] {
 class RenderRootImpl implements RenderRoot, ViewHost {
   private current: ScreenBuffer;
   private viewport: Size2D;
-  private readonly theme: Theme;
+  private theme: Theme; // mutable so setTheme can hot-swap it (a swap forces one full recompose)
   private readonly caps: CapabilityProfile;
   private readonly logger: Logger;
   private readonly scheduler: (flush: () => void) => void;
@@ -294,6 +306,15 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     this.revealAccelerators = on;
     this.revealScope = scope;
     this.markRelayout(); // one coalesced full recompose paints/clears every underline together
+  }
+
+  /** @see RenderRoot.setTheme */
+  setTheme(theme: Theme): void {
+    this.theme = theme;
+    // A theme swap changes a compose input (colors) but no geometry, so a relayout is a harmless
+    // deterministic no-op on positions; it drives the same single full recompose the accelerator
+    // overlay already relies on.
+    this.markRelayout();
   }
 
   /** @internal ViewHost — schedule a re-layout + recompose. */

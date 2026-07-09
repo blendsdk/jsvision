@@ -60,6 +60,7 @@ jobs:
         run: |
           yarn workspace @jsvision/core test:e2e
           yarn workspace @jsvision/examples test:e2e
+          yarn workspace @jsvision/theme-designer test:e2e
 
       - name: Dependency policy guard (no native runtime deps)
         run: yarn check:deps

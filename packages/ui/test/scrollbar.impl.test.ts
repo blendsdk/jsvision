@@ -14,6 +14,7 @@ import { createRenderRoot } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { signal } from '../src/reactive/index.js';
 import { ScrollBar } from '../src/scroll/index.js';
+import { valueToOffset } from '../src/controls/track.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 const THUMB = '█';
@@ -89,6 +90,21 @@ test('disabled bar (max==min) — clicks and drags are no-ops', () => {
   loop.dispatch(mouse('down', 1, 4)); // page area
   loop.dispatch(mouse('up', 1, 4));
   expect(value()).toBe(0);
+});
+
+// ST-10: after the value↔position math is extracted into the shared `track.ts`, ScrollBar's thumb
+// lands at the exact same cell it did before. The bar's groove is the cells between the two end arrows
+// (length = getSize()-2, one-cell thumb), so the absolute thumb row is `valueToOffset(...) + 1`. This
+// pins the shared helper as ScrollBar's regression oracle. H=20 ⇒ getSize=20, groove length 18; value
+// 50 of [0,100] ⇒ offset 9 ⇒ thumb at row 10 (matching the original `getPos` +r/2 rounding).
+test('ST-10: ScrollBar thumb position equals the shared track math (value↔thumb unchanged)', () => {
+  const value = signal(50);
+  const bar = new ScrollBar({ value, min: 0, max: 100 });
+  const rr = createRenderRoot({ width: 1, height: 20 }, { caps });
+  rr.mount(bar);
+  const expectedRow = valueToOffset({ min: 0, max: 100, length: 18 }, 50) + 1; // groove + arrow offset
+  expect(expectedRow).toBe(10); // the pre-extraction getPos result for this exact case
+  expect(rr.buffer().get(0, expectedRow)?.char).toBe(THUMB);
 });
 
 // Security: a forced out-of-range `value` is clamped on read — the thumb never leaves `[1,getSize-2]`.

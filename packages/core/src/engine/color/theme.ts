@@ -7,7 +7,7 @@
  * blue window" look, ready to use out of the box. Assign a role's colors to the
  * cells you draw; the theme itself has no view-tree or inheritance behavior.
  */
-import type { Color } from '../render/types.js';
+import type { AttrMask, Color } from '../render/types.js';
 
 import { PALETTE } from './palette.js';
 
@@ -17,6 +17,13 @@ export interface ThemeRole {
   readonly bg: Color;
   /** Accent color for a highlighted hotkey character, when the role has one. */
   readonly hotkey?: Color;
+  /**
+   * Optional text-attribute mask (dim/bold/italic/underline/…) applied when the
+   * role is painted. Omitted on every {@link defaultTheme} role; an
+   * attribute-driven theme (e.g. a monochrome preset) uses it to distinguish
+   * states without color. Attributes render even at `mono` depth.
+   */
+  readonly attrs?: AttrMask;
 }
 
 /** Named semantic UI roles mapped to colors. See {@link defaultTheme}. */
@@ -164,6 +171,16 @@ export interface Theme {
    * `░` track (and the whole-cell `-` track in ASCII mode).
    */
   readonly progressTrack: ThemeRole;
+  /**
+   * A slider's groove — the `─`/`│` rule the thumb travels along: a dim
+   * darkGray-on-lightGray line on the gray dialog field where sliders live.
+   */
+  readonly sliderTrack: ThemeRole;
+  /**
+   * A slider's thumb — the `█` block marking the current value: a solid
+   * blue-on-lightGray block, brighter than the {@link sliderTrack} groove.
+   */
+  readonly sliderThumb: ThemeRole;
   /** A calendar's in-month day cell (normal): yellow on cyan. */
   readonly calendarNormal: ThemeRole;
   /** A calendar's "today" cell — the highlighted current date: blue on green. */
@@ -312,6 +329,8 @@ export const defaultTheme: Theme = {
   tabDisabled: { fg: PALETTE.darkGray, bg: PALETTE.green },
   progressFill: { fg: PALETTE.brightCyan, bg: PALETTE.blue },
   progressTrack: { fg: PALETTE.cyan, bg: PALETTE.blue },
+  sliderTrack: { fg: PALETTE.darkGray, bg: PALETTE.lightGray },
+  sliderThumb: { fg: PALETTE.blue, bg: PALETTE.lightGray },
   calendarNormal: { fg: PALETTE.yellow, bg: PALETTE.cyan },
   calendarToday: { fg: PALETTE.blue, bg: PALETTE.green },
   calendarSelected: { fg: PALETTE.white, bg: PALETTE.blue },

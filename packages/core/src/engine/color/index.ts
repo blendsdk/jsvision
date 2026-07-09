@@ -21,7 +21,39 @@ export { nearest256, nearest16 } from './downsample.js';
 export { InvalidColorError, toRgb } from './color.js';
 export type { Rgb } from './color.js';
 
-// App-facing palette + semantic theme. `ANSI16_ORDER` is the DOS-16 swatch order.
-export { PALETTE, ANSI16_ORDER } from './palette.js';
+// App-facing palette + semantic theme. `ANSI16_ORDER` is the DOS-16 swatch order; `rgb256` gives the
+// reference RGB of an xterm-256 palette index (used to preview a downsampled color).
+export { PALETTE, ANSI16_ORDER, rgb256 } from './palette.js';
 export { defaultTheme } from './theme.js';
 export type { Theme, ThemeRole } from './theme.js';
+
+// Perceptual OKLab color math + the WCAG contrast helper, and the semantic alias tier.
+export { ramp, lighten, darken, mix } from './ramp.js';
+export { contrastRatio } from './contrast.js';
+export type { ThemeColors } from './aliases.js';
+
+// Theme builder — seeds → 16 aliases → 63 roles. `aliasesFromSeeds` exposes the seed→alias step alone.
+export { createTheme, aliasesFromSeeds } from './create-theme.js';
+export { rolesFromAliases } from './roles.js';
+export type { ThemeOptions } from './create-theme.js';
+
+// Lossless, injection-safe theme serialization.
+export { serializeTheme, parseTheme, InvalidThemeError } from './serialize.js';
+
+// Shipped theme presets (tree-shakeable named exports) + the derived presets' seed sets as data.
+export {
+  turboVisionTheme,
+  monochromeTheme,
+  slateTheme,
+  nordTheme,
+  draculaTheme,
+  solarizedDarkTheme,
+  gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
+  PRESET_SEEDS,
+} from './presets.js';

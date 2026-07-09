@@ -1,0 +1,45 @@
+=== Probe 6: scripting / event model (BeforeSave veto) ===
+
+current id=1 name="Ada Lovelace" balance=2500.00 credit_limit=10000.00
+
+A. edit balance ABOVE the credit limit → BeforeSave veto:
+   commit() → vetoed : "Balance 999999 exceeds the credit limit 10000."
+   DB balance still = 2500.00 (no write — veto blocked it ✓)
+
+B. edit balance within limit + a messy name → handler normalises, then persists:
+   commit() → ok : name="Ada Lovelace" balance=1500.00
+   DB now → name="Ada Lovelace" balance=1500.00 (normalised name persisted ✓)
+
+   lifecycle events observed:
+     • AfterUpdate → balance=1500.00
+     • OnCurrent → id=2
+     • OnCurrent → id=1
+
+   restored name/balance for id=1 — seed pristine.
+
+--- UNTRUSTED-SANDBOX ASSESSMENT (assessed, NOT built) ---
+  TRUSTED handlers (dev-authored): essentially FREE — they are plain functions over a
+  curated API (ctx.get/set/veto + parameterized queries only). Demonstrated above. This is the
+  "VBA problem" solved by the host language being the scripting language.
+
+  UNTRUSTED handlers (end-user-authored) need isolation. Options:
+    • node:vm — same heap, weak isolation. A determined script can escape (prototype/constructor
+      reach) and there is no CPU/memory bound. NOT safe for hostile input. Cheap to wire; fine only
+      for semi-trusted power users. Verdict: insufficient alone.
+    • isolated-vm — a separate V8 isolate: real memory/CPU limits, no shared heap. Strong isolation,
+      the industry default. BUT it is a NATIVE addon — it violates the zero-native-dep ethos, though
+      only in the Data Studio APP package (the check:deps guard hits published packages only, so it
+      is ALLOWED here). Verdict: the right tool IF untrusted scripting is a real requirement.
+    • Restricted DSL / expression language — a small, purpose-built evaluator (field refs, arithmetic,
+      comparisons, a whitelist of functions) with no host reach at all. Safest and dependency-free,
+      but limited expressiveness and it is real language-design work. Verdict: good for validation/
+      calculated-field expressions; not a general event language.
+
+  RECOMMENDATION: ship TRUSTED TS handlers first (near-zero cost, covers the dev-facing v1). DEFER the
+  untrusted sandbox. If/when end-user scripting is required, reach for isolated-vm in the app package,
+  and expose ONLY a capability-limited API (parameterized queries, no fs/net; @jsvision/core already
+  ships redactEvent/sanitize DNA for the boundary). A restricted DSL is the fallback for
+  calculated-field / validation expressions where full scripting is overkill.
+
+Probe 6 verdict: 🟢 trusted BeforeSave veto + mutate works end-to-end (near-zero cost);
+   untrusted sandbox assessed → isolated-vm (app-package, allowed) or a DSL, both DEFERRABLE.
