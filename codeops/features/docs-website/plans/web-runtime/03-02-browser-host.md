@@ -34,8 +34,25 @@ The spike uses `window.setTimeout`. To test the lone-ESC path deterministically 
 timer** in `BrowserHostOptions` defaulting to the global timers:
 
 ```ts
+/**
+ * The narrow slice of an xterm.js terminal the host + mountApp actually touch — declared as a local
+ * structural interface (NO `@xterm/xterm` import) so BOTH a real `@xterm/xterm` terminal AND an
+ * `@xterm/headless` terminal satisfy it. This is what makes the host headless-testable: the concrete
+ * `@xterm/xterm` `Terminal` type carries DOM-only members (`focus`/`blur`/`element`/`textarea`/…)
+ * that `@xterm/headless` lacks, so annotating against it would reject the headless test terminal
+ * (it is not structurally assignable) and force an `as unknown` cast the standards forbid.
+ */
+interface TerminalLike {
+  write(data: string): void;
+  onData(handler: (data: string) => void): { dispose(): void };
+  onResize(handler: (size: { cols: number; rows: number }) => void): { dispose(): void };
+  /** Present on a DOM terminal, absent on `@xterm/headless` — always call it optionally. */
+  focus?(): void;
+  dispose?(): void;
+}
+
 interface BrowserHostOptions {
-  readonly term: Terminal;
+  readonly term: TerminalLike;
   readonly caps: CapabilityProfile;
   readonly onInput: (event: InputEvent) => void;
   /** Timer seam (defaults to setTimeout/clearTimeout) so the lone-ESC flush is testable headlessly. */
@@ -43,7 +60,11 @@ interface BrowserHostOptions {
 }
 ```
 
-This is the only structural change from the spike; the default preserves the browser behavior exactly.
+The injectable timer and the `term` type narrowing (from `@xterm/xterm`'s concrete `Terminal` to the
+local `TerminalLike` above) are the only structural changes from the spike — the runtime **logic** is
+promoted byte-for-byte, and both defaults preserve the browser behavior exactly. As a result
+`@jsvision/web`'s source imports **no** `@xterm/xterm` value or type; consumers pin the real xterm as
+an optional peer.
 
 ## `src/caps.ts` — `buildBrowserCaps`
 
@@ -80,25 +101,40 @@ export interface MountAppOptions {
   readonly element: HTMLElement;   // the mount point (narrow local type; no DOM lib needed)
   readonly app: Application;       // a composed @jsvision/ui application
   readonly caps: CapabilityProfile;
-  readonly term?: Terminal;        // inject a pre-made terminal (tests pass @xterm/headless); else created
+  /**
+   * The terminal to drive. Either inject a ready terminal (tests pass an `@xterm/headless`
+   * `Terminal`; a browser app passes an opened `@xterm/xterm` one) OR pass `createTerminal`.
+   */
+  readonly term?: TerminalLike;
+  /**
+   * A factory used when `term` is omitted, e.g. `() => { const t = new Terminal({…}); t.open(el);
+   * return t; }` in a browser app. `mountApp` NEVER constructs a terminal itself — it does not import
+   * `@xterm/xterm` (a browser-only, CommonJS-default package), so that value-import stays in the
+   * caller's bundle where it belongs.
+   */
+  readonly createTerminal?: () => TerminalLike;
 }
 export interface MountedApp {
-  readonly term: Terminal;
+  readonly term: TerminalLike;
   readonly host: BrowserHost;
   dispose(): void;                 // tear down listeners + terminal
 }
+/** Requires `term` or `createTerminal`; throws a clear error if neither is supplied. */
 export function mountApp(options: MountAppOptions): MountedApp { /* … */ }
 ```
 
-Wiring (verbatim from `main.ts`, minus the demo clock): create/accept the terminal, build the host,
-point `loop.onFrame`/`loop.onCaret`/`loop.writeClipboard` at it, `host.start()`, paint the first
-frame + `loop.refreshCaret()`, map `term.onResize` → `loop.resize`, `term.focus()`. `dispose()`
-disposes the xterm listeners/terminal. Attaching `attachKeyReclaim` (03-04) and WebGL are the
-**caller's** choice (kept out so `mountApp` stays DOM-light and headless-testable).
+Wiring (distilled from `main.ts`, minus the demo clock): resolve the terminal
+(`options.term ?? options.createTerminal?.()`; throw if neither), build the host, point
+`loop.onFrame`/`loop.onCaret`/`loop.writeClipboard` at it, `host.start()`, paint the first frame +
+`loop.refreshCaret()`, map `term.onResize` → `loop.resize`, then `term.focus?.()` — **optional**,
+because an `@xterm/headless` terminal has no `focus()` (calling it unconditionally would throw in the
+ST-10 headless test). `dispose()` tears down the terminal's listeners + terminal. Attaching
+`attachKeyReclaim` (03-04) and WebGL are the **caller's** choice (kept out so `mountApp` stays
+DOM-light and headless-testable).
 
-**ST-10**: `mountApp` over an `@xterm/headless` terminal + a trivial `@jsvision/ui` app renders a
-first frame (the terminal buffer is non-empty) and a dispatched key reaches the app — the convenience
-boots end-to-end headlessly.
+**ST-10**: `mountApp` over an `@xterm/headless` terminal (injected as `term`) + a trivial
+`@jsvision/ui` app renders a first frame (the terminal buffer is non-empty) and a dispatched key
+reaches the app — the convenience boots end-to-end headlessly.
 
 ## Verify (this component)
 

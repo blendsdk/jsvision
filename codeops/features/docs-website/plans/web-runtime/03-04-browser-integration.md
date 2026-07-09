@@ -14,10 +14,15 @@ instead of the browser. Returns an unsubscribe.
 export interface KeyReclaimOptions {
   /** Extra chords to reclaim beyond the defaults, or ['*'] to attempt every non-plain-text chord. */
   readonly also?: readonly string[];
-  /** Predicate for "is the terminal focused"; defaults to checking the term's textarea has focus. */
+  /**
+   * Predicate for "is the terminal focused". Defaults to a DOM focus check on a real terminal's
+   * textarea; a headless terminal has none, so headless runs and tests inject this predicate.
+   */
   readonly isFocused?: () => boolean;
 }
-export function attachKeyReclaim(term: Terminal, options?: KeyReclaimOptions): () => void;
+// `term` is the same local `TerminalLike` the host uses (03-02) — no `@xterm/xterm` import; the
+// capture-phase keydown listener is added on the document, so a minimal terminal handle is enough.
+export function attachKeyReclaim(term: TerminalLike, options?: KeyReclaimOptions): () => void;
 ```
 
 **Default reclaim set** (RD minimum): F1–F12, `Ctrl+W`, `Ctrl+N`, `Ctrl+T`, `Ctrl+S`, `Ctrl+P`,
@@ -65,8 +70,13 @@ read is ever issued).
 
 Promote the spike's `node-stub.ts`: throwing placeholders for the `node:fs`
 (`writeSync`/`openSync`/`closeSync`) + `node:tty` (`ReadStream`/`WriteStream`) named imports the
-`@jsvision/core` barrel statically pulls from its native `host/` (never called in the browser). Each
-throws a loud, clear error if ever invoked (it would mean the app reached into the native TTY host).
+`@jsvision/core` barrel statically pulls in. **Three** sites import these: `host/streams.ts` +
+`host/platform.ts` (the native TTY host, never called in the browser) and `safety/logger.ts` — a
+barrel-reachable `import * as nodeFs from 'node:fs'` used lazily as the screen-safe logger's default
+filesystem. Each stub export throws a loud, clear error if ever invoked (it would mean the app reached
+into a native facility). The logger site stays safe: it is off by default (writes zero bytes), the
+namespace is only dereferenced if a consumer enables the file sink without injecting an `fs`, and its
+first call (`openSync`) hits the stub and throws — so the boundary still fails loud, not silently.
 
 Exported via the **`@jsvision/web/browser-stubs` subpath only** — never from the `.` barrel — so
 importing `@jsvision/web` doesn't drag the stubs into a consumer's graph. Consumers alias the two
@@ -79,9 +89,12 @@ const stub = fileURLToPath(new URL('@jsvision/web/browser-stubs', import.meta.ur
 export default defineConfig({ resolve: { alias: { 'node:fs': stub, 'node:tty': stub } } });
 ```
 
-**ST-6 note / import-graph (ST-1 companion):** the AC-4 virtual-FS test additionally asserts no
-`node:fs` specifier is reachable from the browser entry (a source-graph scan / a build with the
-stubs), proving the boundary holds.
+**Import-graph boundary (ST-4 companion to ST-1):** because `@jsvision/core` legitimately imports
+`node:fs` (the three sites above), the boundary is NOT "no `node:fs` in the transitive graph" — it
+holds only once the consumer's alias replaces the specifier. So the AC-4 test asserts the two
+**satisfiable** facts: (1) `@jsvision/web`'s **own source** imports no `node:fs`/`node:tty`, and (2) a
+**stubbed build** of the demo emits no `node:fs` specifier (core's sites resolve to `browser-stubs`).
+Together these prove the boundary holds for a real consumer.
 
 ## Security seam — `sanitize()` (ST-9 / AC-9)
 
@@ -108,5 +121,7 @@ Rewire `packages/examples/web-xterm/` to consume `@jsvision/web`:
 
 ## Verify (this component)
 
-`yarn verify` green (incl. the refactored spike typechecks against the built `@jsvision/web`); ST-5,
-ST-6, ST-9 pass; `check:docs` green.
+`yarn verify` green; ST-5, ST-6, ST-9 pass; `check:docs` green. Note the refactored `web-xterm` spike
+is **not** in verify's typecheck scope — the examples `tsconfig.json` `include` omits it, as it does
+every browser demo — so the dogfood's correctness against the built `@jsvision/web` is proven by the
+live `demo:web` boot (above), not by `yarn verify`.

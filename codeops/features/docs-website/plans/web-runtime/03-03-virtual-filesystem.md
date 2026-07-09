@@ -7,8 +7,9 @@
 ## Goal
 
 `src/virtual-fs.ts` — `createBrowserFileSystem(tree?)`: an in-memory implementation of
-`@jsvision/files`' `FileSystem` (all 18 methods, `packages/files/src/fs/types.ts:45-80`) so the whole
-file-dialog family + editor run in the browser unchanged, with **no `node:fs` import**.
+`@jsvision/files`' `FileSystem` (the full interface — 14 methods + the `sep` property,
+`packages/files/src/fs/types.ts:44-80`) so the whole file-dialog family + editor run in the browser
+unchanged, with **no `node:fs` import**.
 
 ## Seed format
 
@@ -21,7 +22,7 @@ export interface BrowserFileSystemOptions {
   readonly tree?: FileTree;
   /** The home directory the dialogs open at. Default '/home/demo'. */
   readonly home?: string;
-  /** The deterministic mtime for every seeded entry (AR-6). Default a fixed epoch. */
+  /** The deterministic mtime for every seeded entry (keeps golden output stable). Default a fixed epoch. */
   readonly mtime?: Date;
 }
 export function createBrowserFileSystem(options?: BrowserFileSystemOptions): FileSystem;
@@ -36,7 +37,7 @@ An in-memory node tree: `{ kind:'file', content:string, mtime:Date } | { kind:'d
 `seed()` walks the `FileTree` building it. Writes (for tvedit) mutate this tree only — nothing leaves
 the browser (AR-6 / security).
 
-## Method map (18 methods)
+## Method map (14 methods + the `sep` property)
 
 | Method | Implementation |
 |--------|----------------|
@@ -69,8 +70,8 @@ is skipped (per the interface contract); a failure to open the directory itself 
 
 - **ST-4 / AC-4**: mount a real `FileList` (or `FileDialog`) from `@jsvision/files` against a virtual
   FS seeded `{ '/home/demo': { 'a.txt':'…', 'sub': { 'b.txt':'…' } } }`; assert it lists `a.txt` +
-  `sub`, and entering `sub` lists `b.txt`. The import-graph assertion (no `node:fs`) is ST-1's
-  companion in packaging.
+  `sub`, and entering `sub` lists `b.txt`. The import-graph assertion (`web/src` imports no `node:fs`;
+  a stubbed build emits none — see 03-04) is ST-1's companion in packaging.
 - **ST-11 / AC-9 (path)**: every method behaves per the table; `resolve('/home/demo', '../x')` →
   `/home/x` (lexical, no fs touch); `readDir` on a file throws; `writeFile` then `readFile`
   round-trips; `rename`/`unlink` mutate; a missing path throws the dialog-compatible error.

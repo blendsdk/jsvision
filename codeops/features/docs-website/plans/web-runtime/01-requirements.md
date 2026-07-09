@@ -28,7 +28,7 @@ needs (virtual FS, key-chord reclaim, clipboard bridge).
    `LANG=…UTF-8` flips `glyphs.boxDrawing`/`halfBlocks` on), `colorDepth` overridable to exercise
    downsampling.
 5. **Browser virtual FileSystem** — an in-memory implementation of `@jsvision/files`' injectable
-   `FileSystem` (all 18 methods), seedable from a plain object, so the file-dialog family + editor
+   `FileSystem` (the full interface — 14 methods + the `sep` property), seedable from a plain object, so the file-dialog family + editor
    run unchanged. Never imports `node:fs`. Files + dirs only, deterministic mtime (AR-6).
 6. **Key-chord reclaim** — `attachKeyReclaim(term)` that, while the terminal is focused,
    `preventDefault()`s browser-hijacked chords (≥ F1–F12, `Ctrl+W/N/T/S/P`, `Tab`/`Shift+Tab`,
