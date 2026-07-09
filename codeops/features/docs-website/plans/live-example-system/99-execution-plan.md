@@ -2,7 +2,7 @@
 
 > **Implements**: docs-website/RD-03 · **Feature**: docs-website
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 14/40 tasks (35%) · **Last Updated**: 2026-07-09 23:58
+> **Progress**: 21/40 tasks (53%) · **Last Updated**: 2026-07-10 00:14
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Each phase is a
 testable slice. **Verify** = `yarn verify` (AR-21) unless a phase names a faster inner loop.
@@ -53,13 +53,13 @@ Ref: 03-02 · AR-7/8/9/17.
 ## Phase 3 — Play component (controller + client-only Vue)
 Ref: 03-03, 03-06 · AR-10/11/15/16, C4.
 
-- [ ] 3.1 Spec: write ST-6/ST-7 (open paints first frame + full chrome via `@xterm/headless`), ST-8 (20× no leak), ST-10 (F10 reclaim `defaultPrevented` while focused; not when closed), and the ST-14 error-panel + one-dialog assertions — run red.
-- [ ] 3.2 Implement `src/play/play-controller.ts`: lazy `open` (load → DemoShell → `mountApp`), `close` (reverse dispose + null refs), `remount` (shared Reset/size/depth seam), the module-level one-dialog singleton — green ST-6/ST-7/ST-8.
-- [ ] 3.3 Implement the error panel (AR-15) + wire key-reclaim attach/detach around open/close — green ST-10 + ST-14 (error/cap halves).
-- [ ] 3.4 Implement `.vitepress/theme/components/PlayExample.vue` (client-only: dynamic `import()` of xterm + controller in `onMounted`; Play button + focus hint; modal + × + backdrop; **Escape → TUI**, not the modal) and register it via `enhanceApp`.
-- [ ] 3.5 Add the `node:fs`/`node:tty` → `@jsvision/web/browser-stubs` alias + `define NODE_ENV` to `.vitepress/config.ts`.
-- [ ] 3.6 CSP-compat check: build a page hosting `<PlayExample>` and assert 0 CSP violations under the existing strict policy (AR-16); if xterm trips it, STOP and raise a new AR before loosening.
-- [ ] 3.7 Impl tests: `remount` param-merge; double-`close` no-op; singleton closes the prior dialog.
+- [x] 3.1 Spec: write ST-6/ST-7 (open paints first frame + full chrome via `@xterm/headless`), ST-8 (20× no leak), ST-10 (F10 reclaim `defaultPrevented` while focused; not when closed), and the ST-14 error-panel + one-dialog assertions — run red. ✅ (completed: 2026-07-10 00:14 — synthetic `ExampleEntry` fixtures + a counting `@xterm/headless` factory + a hand-mocked keydown target in `test/helpers/play-harness.ts`; seed examples land in Phase 5)
+- [x] 3.2 Implement `src/play/play-controller.ts`: lazy `open` (load → DemoShell → `mountApp`), `close` (reverse dispose + null refs), `remount` (shared Reset/size/depth seam), the module-level one-dialog singleton — green ST-6/ST-7/ST-8. ✅ (completed: 2026-07-10 00:14 — local structural `HostElement`/`TerminalLike` (not barrel-exported by web); `ColorDepth` derived from `BrowserCapsOptions`)
+- [x] 3.3 Implement the error panel (AR-15) + wire key-reclaim attach/detach around open/close — green ST-10 + ST-14 (error/cap halves). ✅ (completed: 2026-07-10 00:14 — error surfaced via an injectable `onError` seam (the Vue renders the DOM panel); reclaim attaches on open, detaches on close, injectable `reclaimTarget`/`isFocused` for headless tests)
+- [x] 3.4 Implement `.vitepress/theme/components/PlayExample.vue` (client-only: dynamic `import()` of xterm + controller in `onMounted`; Play button + focus hint; modal + × + backdrop; **Escape → TUI**, not the modal) and register it via `enhanceApp`. ✅ (completed: 2026-07-10 00:14 — dynamic imports in the Play handler (SSR-safe + code-split); registered globally in `theme/index.ts`; VitePress build green)
+- [x] 3.5 Add the `node:fs`/`node:tty` → `@jsvision/web/browser-stubs` alias + `define NODE_ENV` to `.vitepress/config.ts`. ✅ (completed: 2026-07-10 00:14 — under the `vite` block alongside the version define)
+- [x] 3.6 CSP-compat check: build a page hosting `<PlayExample>` and assert 0 CSP violations under the existing strict policy (AR-16); if xterm trips it, STOP and raise a new AR before loosening. ✅ (completed: 2026-07-10 00:14 — VitePress build + `check-docs-build.mjs` 13/13 incl. the CSP gate: no `unsafe-eval`, every inline script hashed; xterm bundles as an external `'self'` code-split chunk — no relaxation needed)
+- [x] 3.7 Impl tests: `remount` param-merge; double-`close` no-op; singleton closes the prior dialog. ✅ (completed: 2026-07-10 00:14)
 
 **Verify**: `yarn verify` (+ a manual `yarn docs:dev` Play smoke)
 
