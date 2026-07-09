@@ -3,8 +3,8 @@
 > **Feature-Set**: Docs Website
 > **Status**: In Progress
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-09 20:58
-> **Progress**: 2 / 10 (20%) — RD-01 implementation ✅ (all 25 tasks; live deploy acceptance pending user) · RD-02 ✅ Done (all 17 tasks; `@jsvision/web` shipped — 41 tests ST-1…ST-12, dogfooded into web-xterm)
+> **Last Updated**: 2026-07-09 22:55
+> **Progress**: 2 / 10 (20%) — RD-01 implementation ✅ (all 25 tasks; live deploy acceptance pending user) · RD-02 ✅ Done (all 17 tasks; `@jsvision/web` shipped — 41 tests ST-1…ST-12, dogfooded into web-xterm) · RD-03 🔬 Plan Preflighted (7 phases / 40 tasks; preflight ✅ 7 findings resolved)
 > **CodeOps Skills Version**: 3.3.2
 
 A professional, DX/UX-first **VitePress** documentation & showcase website for JSVision — the
@@ -25,7 +25,7 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 |----|-------|----|------|-------|--------|--------------|-----------------|
 | RD-01 | Site foundation & delivery pipeline | [RD-01](requirements/RD-01-site-foundation.md) | [site-foundation](plans/site-foundation/00-index.md) · [preflight](plans/site-foundation/00-preflight-report.md) | Done (impl) | ✅ | 2026-07-09 | Phase A. `packages/docs-site` VitePress app · GitHub Pages (gh-pages model: peaceiris prod + live PR previews) · `base:'/jsvision/'` · IA/nav · local search · SEO/OG/CSP/404 · absorbs root `docs/` (keeps `acceptance-gate.md`) · isolated from `yarn verify`. **5 phases / 25 tasks, spec-first — ALL DONE.** Preflight ✅ PASSED (9 findings applied). **✅ All automated STs green (12/12 build checks + check:deps + `yarn verify`); strict meta-CSP validated 0-violations headless; AR-12 runtime = per-build CSP hashes. ⛳ Outstanding (user-owned): enable GitHub Pages (gh-pages/root) then verify live ST-3 (prod URL + a PR preview).** |
 | RD-02 | `@jsvision/web` browser runtime | [RD-02](requirements/RD-02-web-runtime.md) | [web-runtime](plans/web-runtime/00-index.md) · [preflight](plans/web-runtime/00-preflight-report.md) | Done | ✅ | 2026-07-09 | Phase A. **✅ SHIPPED** `@jsvision/web` — browser host (`createBrowserHost`/`mountApp`) · `buildBrowserCaps` · in-memory virtual `FileSystem` · key-chord reclaim · outbound clipboard · `browser-stubs` subpath. **5 phases / 17 tasks, spec-first, all `[x]`; 41 unit tests ST-1…ST-12; `yarn verify` 20/20 + `check:deps` 9/9 green.** Dogfooded into `web-xterm` (`mountApp` + `browser-stubs` alias; production bundle carries no `node:fs`/`node:tty`). Zero-Ambiguity Gate 8/8 + runtime item 9. Preflight ✅ (7 findings resolved). Next: RD-03 live-example system builds on `mountApp`. |
-| RD-03 | Live-example system | [RD-03](requirements/RD-03-live-example-system.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase A. Example-module contract · Play-button live dialog · snippet embed · DemoShell (About + theme switch) · headless smoke · a11y source-beside · no-keyboard fallback. Depends RD-01, RD-02. |
+| RD-03 | Live-example system | [RD-03](requirements/RD-03-live-example-system.md) | [live-example-system](plans/live-example-system/00-index.md) · [register](plans/live-example-system/00-ambiguity-register.md) · [preflight](plans/live-example-system/00-preflight-report.md) | Plan Preflighted | 🔬 | 2026-07-09 | Phase A. **🔬 PLAN PREFLIGHTED** (2026-07-09): 7 findings (3 major / 3 minor / 1 obs) — **all resolved & applied**; one hardening challenger converged on all 3 majors. Majors: Tier-1 paint-smoke reads `app.loop.renderRoot.buffer()` (not `createRenderRoot().mount()` on an Application); depth type = the real `buildBrowserCaps` union `'truecolor'|'256'|'16'|'mono'`; `files/file-dialog` allow-lists `@jsvision/web`'s pure `createBrowserFileSystem` (scan scoped to `@xterm/*`+DOM), with relocating that FS to `@jsvision/files` recorded as a deferral. **📋 PLAN CREATED** ([grill_me](plans/_draft/grill-notes-live-example-system.md) → make_plan). **7 phases / 40 tasks, spec-first.** Zero-Ambiguity Gate PASSED (AR-1…AR-21; grill pre-resolved the architecture, 4 new plan-depth decisions + verify-cmd added). Key calls: examples in docs-site + a vitest `test`/`typecheck` joining `yarn verify` (vp:build stays isolated); **two-tier smoke** (cheap `createRenderRoot` paint-smoke for all + `@xterm/headless` leak-smoke for one); DemoShell **minimal/full** chrome; client-only `PlayController` (SSR-safe, ×/backdrop close, Esc→TUI, error panel, one-dialog cap); hand-authored registry + parity + whole-file `<<<` drift check; live `setTheme`, depth via re-mount; a11y source-beside + no-kbd fallback slot; all 3 should-haves (Reset/size/deep-link, deep-link no-auto-focus); **8 seed examples phased** (2 prove the mechanism → 6 breadth). Depends RD-01, RD-02. Next: `exec_plan live-example-system` (optionally `preflight` first). |
 | RD-04 | Landing / pitch surface | [RD-04](requirements/RD-04-landing-pitch.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase A(partial). Hero + live proof · Getting Started · Core Concepts · Why/comparison · degit starter. Depends RD-01, RD-03. |
 | RD-05 | Component documentation system | [RD-05](requirements/RD-05-component-docs.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase B. Per-component page template + full ~40 coverage · hierarchy · status badges · `components.json`. Depends RD-03. |
 | RD-06 | API reference (TypeDoc) | [RD-06](requirements/RD-06-api-reference.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase C. TypeDoc → markdown → VitePress · CI regen · public-surface scoping · cross-links. Depends RD-01. |
@@ -46,6 +46,25 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 
 ## Notes
 
+- 2026-07-09: **RD-03 → PLAN CREATED** 📋 ([plan](plans/live-example-system/00-index.md)) via `grill_me`
+  → `make_plan`. 12 docs (00-index · 00-ambiguity-register AR-1…AR-21 · 01-requirements · 02-current-state
+  · 03-01 contract+registry · 03-02 demoshell · 03-03 play-component · 03-04 a11y+fallback · 03-05 seed
+  examples · 03-06 testing+CI · 07-testing-strategy ST-1…ST-14 · 99-execution-plan). **7 phases / 40 tasks,
+  spec-first.** Zero-Ambiguity Gate PASSED (grill_me pre-resolved the architecture; make_plan added 4
+  plan-depth decisions — example-module contract shape, in-dialog error panel, minimal-shell About via a
+  compact status line, keep-strict-CSP — + the verify command). Architecture: examples live in
+  `packages/docs-site/examples/`, and docs-site gains a **vitest `test` + scoped `typecheck`** that join
+  `yarn verify` (its `vp:build` stays isolated from the build phase); a **two-tier** harness (cheap
+  `createRenderRoot` paint-smoke for every example + a single `@xterm/headless` leak-smoke) keeps the
+  per-example cost tiny so breadth scales to RD-05's ~40. A **client-only** `PlayController` (SSR-safe +
+  code-split) does lazy-create/full-dispose with an in-dialog error panel and a one-dialog cap; close is
+  ×/backdrop with **Escape passed to the TUI**; live theme via `setTheme`, depth via re-mount. DemoShell
+  has **minimal/full** chrome so a lone widget is not buried. All 3 should-haves land (Reset/size/deep-link;
+  deep-link opens without auto-focusing). **8 seed examples, phased** — `controls/button` + `files/file-dialog`
+  prove the mechanism, then 6 add breadth (`apps/desktop` doubles as RD-04's hero). Grounded in the shipped
+  `@jsvision/web` (`mountApp`/`buildBrowserCaps`/virtual FS/reclaim) + the `web-xterm` boot precedent + the
+  verified `Application.setTheme` hot-swap (`RenderRoot.caps` is readonly → depth re-mounts). Next:
+  `exec_plan live-example-system` (optionally `preflight` first).
 - 2026-07-09: **RD-02 → DONE** ✅ ([plan](plans/web-runtime/99-execution-plan.md)) via `exec_plan
   web-runtime`. Shipped `@jsvision/web` in 5 spec-first phases / 17 tasks: the `browser-stubs` subpath
   (throwing `node:fs`/`node:tty` placeholders); `createBrowserHost` (promoted verbatim from the spike

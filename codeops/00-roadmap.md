@@ -17,7 +17,7 @@
 | theme-designer | [→](features/theme-designer/00-roadmap.md) | PL-01 ✅ Done — standalone `@jsvision/theme-designer` app + reusable `Slider` (all 4 phases / 40 tasks) | 1/1 plans | ✅ | 2026-07-09 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 ✅ Done — UI small batch: Tree markers (#17) · duplicate-accelerator warning (#6) · Switch (#11) | 1/1 plans | ✅ | 2026-07-09 |
-| docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — VitePress site + gh-pages CI + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · **RD-02 ✅ Done** (web-runtime — `@jsvision/web` shipped: browser host/`mountApp` · caps · virtual FileSystem · key-reclaim · clipboard · `browser-stubs`; 17/17 tasks, 41 tests ST-1…ST-12, dogfooded into web-xterm) · RD-03…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 2/10 RDs | 🔄 | 2026-07-09 |
+| docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — VitePress site + gh-pages CI + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · **RD-02 ✅ Done** (web-runtime — `@jsvision/web` shipped: browser host/`mountApp` · caps · virtual FileSystem · key-reclaim · clipboard · `browser-stubs`; 17/17 tasks, 41 tests ST-1…ST-12, dogfooded into web-xterm) · **RD-03 🔬 Plan Preflighted** (live-example-system — grill_me→make_plan→preflight ✅ 7 findings resolved; 7 phases / 40 tasks; two-tier headless harness, client-only PlayController, minimal/full DemoShell, 8 seed examples) · RD-04…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 2/10 RDs · RD-03 🔬 | 🔄 | 2026-07-09 |
 
 ## Archived
 
@@ -27,6 +27,7 @@
 
 ## Notes
 
+- 2026-07-09: **docs-website RD-03 (live-example-system) plan preflighted** → 🔬 Plan Preflighted ([report](features/docs-website/plans/live-example-system/00-preflight-report.md)). 7 findings (3 major / 3 minor / 1 obs), all resolved & applied; one hardening challenger converged on all majors. Key fixes: Tier-1 paint-smoke reads `app.loop.renderRoot.buffer()`; depth type = the real `buildBrowserCaps` union; `files/file-dialog` allow-lists `@jsvision/web`'s pure `createBrowserFileSystem` (relocating it to `@jsvision/files` recorded as a deferral).
 - 2026-07-09: **New feature `docs-website` + all 10 RDs → RD DRAFTED** ✏️ ([roadmap](features/docs-website/00-roadmap.md))
   via `make_requirements`. The JSVision documentation & showcase website ("the pitch"): a VitePress
   static site on GitHub Pages where **every example runs live client-side in xterm.js** (no backend),
