@@ -121,8 +121,13 @@ test('ST-11/ST-9: path ops are pure POSIX and never escape to a real fs', () => 
   expect(fs.homedir()).toBe('/home/demo');
   expect(fs.roots()).toEqual(['/']);
 
-  // Proof it never touches disk: '/etc/passwd' exists on the host, yet reading it through the virtual
-  // FS throws (there is no such node), so a `..` walk cannot exfiltrate a real file.
-  expect(statSync('/etc/passwd').isFile()).toBe(true);
-  expect(() => fs.readFile('/etc/passwd')).toThrow();
+  // Proof it never touches disk: a file that provably exists on this host — this very test's source —
+  // is invisible through the virtual FS, so a `..` walk can never exfiltrate a real file. (This probes
+  // the test source rather than '/etc/passwd' because that path is absent on Windows CI, where it would
+  // resolve to a non-existent 'D:\etc\passwd'; the invariant under test is "a real on-disk file is
+  // unreachable", not the specific path.)
+  const realHostFile = fileURLToPath(import.meta.url);
+  expect(statSync(realHostFile).isFile()).toBe(true); // really exists on disk
+  expect(() => fs.readFile(realHostFile)).toThrow(); // yet the virtual FS has no such node
+  expect(() => fs.readFile('/etc/passwd')).toThrow(); // and a classic sensitive path is equally absent
 });
