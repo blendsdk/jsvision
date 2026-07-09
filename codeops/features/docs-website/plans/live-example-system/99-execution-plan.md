@@ -2,7 +2,7 @@
 
 > **Implements**: docs-website/RD-03 · **Feature**: docs-website
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 4/40 tasks (10%) · **Last Updated**: 2026-07-09 23:27
+> **Progress**: 9/40 tasks (23%) · **Last Updated**: 2026-07-09 23:37
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Each phase is a
 testable slice. **Verify** = `yarn verify` (AR-21) unless a phase names a faster inner loop.
@@ -27,11 +27,11 @@ Ref: 03-06 · AR-2/4, C1/C2.
 ## Phase 1 — Example contract, registry & snippet-drift
 Ref: 03-01 · AR-5/6/14.
 
-- [ ] 1.1 Spec: write ST-1 (registry parity + metadata hygiene) and ST-3 (whole-file `<<<` directive + no pasted block) — run red.
-- [ ] 1.2 Implement `examples/_contract.ts` (`defineExample` + `ExampleContext`/`ExampleDefinition`).
-- [ ] 1.3 Implement `examples/index.ts` (`ExampleEntry` + hand-authored `EXAMPLES`) and the parity logic ST-1 targets; green ST-1.
-- [ ] 1.4 Implement the snippet convention + the drift directive-check ST-3 targets (page-text scan); green ST-3.
-- [ ] 1.5 Impl tests: `load()` returns a `default` `ExampleDefinition`; a static scan asserts no example module imports `@xterm/*` or uses DOM globals (`document`/`window`) — allow-listing `@jsvision/web`'s pure `createBrowserFileSystem`.
+- [x] 1.1 Spec: write ST-1 (registry parity + metadata hygiene) and ST-3 (whole-file `<<<` directive + no pasted block) — run red. ✅ (completed: 2026-07-09 23:37 — red confirmed: ST-1 failed on the missing `_contract.js`; ST-3 vacuous at 0 examples by design)
+- [x] 1.2 Implement `examples/_contract.ts` (`defineExample` + `ExampleContext`/`ExampleDefinition`). ✅ (completed: 2026-07-09 23:37)
+- [x] 1.3 Implement `examples/index.ts` (`ExampleEntry` + hand-authored `EXAMPLES`) and the parity logic ST-1 targets; green ST-1. ✅ (completed: 2026-07-09 23:37 — `EXAMPLES` empty until seed examples land; parity/hygiene loops engage as entries are added)
+- [x] 1.4 Implement the snippet convention + the drift directive-check ST-3 targets (page-text scan); green ST-3. ✅ (completed: 2026-07-09 23:37 — page-agnostic `<<< @/<sourcePath>` scan across all docs `.md`; no-pasted-block guard via `defineExample(` in a fenced ts block)
+- [x] 1.5 Impl tests: `load()` returns a `default` `ExampleDefinition`; a static scan asserts no example module imports `@xterm/*` or uses DOM globals (`document`/`window`) — allow-listing `@jsvision/web`'s pure `createBrowserFileSystem`. ✅ (completed: 2026-07-09 23:37 — import-specifier + `@jsvision/web`-binding allow-list + `document.`/`window.` property-access scan)
 
 **Verify**: `yarn verify`
 
