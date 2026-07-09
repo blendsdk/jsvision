@@ -7,3 +7,6 @@ terminal-matrix.json
 **/terminal-matrix.json
 # demo:themes designer export output (dev artifact)
 packages/examples/theme.json
+# VitePress build output + cache (docs-site)
+**/.vitepress/dist/
+**/.vitepress/cache/

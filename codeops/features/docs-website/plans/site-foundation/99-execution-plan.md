@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09
-> **Progress**: 0/25 tasks (0%)
+> **Last Updated**: 2026-07-09 16:19
+> **Progress**: 5/25 tasks (20%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -38,15 +38,15 @@ lands at Phase 2 and grows).
 **Reference**: [03-01](03-01-workspace-and-vitepress.md) · [07](07-testing-strategy.md) ST-1, ST-2, ST-13 · AR-3, AR-5, AR-7
 
 ### Step 1.1: Spec (RED)
-- [ ] 1.1.1 Write `packages/docs-site/scripts/check-docs-build.mjs` asserting **ST-1** (build exits 0, `dist/index.html` exists, all asset URLs `/jsvision/`-prefixed) and **ST-2** (each nav-section page built). Assertions read the built `dist`.
-- [ ] 1.1.2 Verify RED: the script fails (no `packages/docs-site` / no `dist` yet).
+- [x] 1.1.1 Write `packages/docs-site/scripts/check-docs-build.mjs` asserting **ST-1** (build exits 0, `dist/index.html` exists, all asset URLs `/jsvision/`-prefixed) and **ST-2** (each nav-section page built). Assertions read the built `dist`. _(2026-07-09 16:14)_
+- [x] 1.1.2 Verify RED: the script fails (no `packages/docs-site` / no `dist` yet). _(2026-07-09 16:14 — exit 1, both ST-1/ST-2 fail as expected)_
 
 ### Step 1.2: Implementation (GREEN)
-- [ ] 1.2.1 Scaffold `packages/docs-site`: `package.json` (`@jsvision/docs-site`, private, `type:module`, scripts `dev`/**`vp:build`**/`preview` — build script deliberately **not** named `build`, and **no** `check:deps`/`test`/`typecheck` scripts, so turbo/verify skip it, PF-001/PF-008; VitePress 1.x **devDependency only**) + placeholder `index.md` and one placeholder page per section (guide/components/apps/api/reference).
-- [ ] 1.2.2 Minimal `.vitepress/config.ts` (`base: process.env.DOCS_BASE ?? '/jsvision/'` per PF-002, title, nav skeleton) + root `docs:dev`/`docs:build` (→ workspace `vp:build`) scripts. **No `turbo.json` change** — isolation (AR-3) comes from the non-`build` script name (PF-001).
+- [x] 1.2.1 Scaffold `packages/docs-site`: `package.json` (`@jsvision/docs-site`, private, `type:module`, scripts `dev`/**`vp:build`**/`preview` — build script deliberately **not** named `build`, and **no** `check:deps`/`test`/`typecheck` scripts, so turbo/verify skip it, PF-001/PF-008; VitePress 1.x **devDependency only**) + placeholder `index.md` and one placeholder page per section (guide/components/apps/api/reference). _(2026-07-09 16:19 — vitepress 1.6.4 installed)_
+- [x] 1.2.2 Minimal `.vitepress/config.ts` (`base: process.env.DOCS_BASE ?? '/jsvision/'` per PF-002, title, nav skeleton) + root `docs:dev`/`docs:build` (→ workspace `vp:build`) scripts. **No `turbo.json` change** — isolation (AR-3) comes from the non-`build` script name (PF-001). _(2026-07-09 16:19; also gitignore/eslint/prettier-ignore `.vitepress/dist`+`cache`)_
 
 ### Step 1.3: Green + harden
-- [ ] 1.3.1 `yarn docs:build` green; `check-docs-build.mjs` passes ST-1/ST-2; **ST-13** `yarn check:deps` green for all shipped packages (no toolchain leak).
+- [x] 1.3.1 `yarn docs:build` green; `check-docs-build.mjs` passes ST-1/ST-2; **ST-13** `yarn check:deps` green for all shipped packages (no toolchain leak). _(2026-07-09 16:19 — turbo `build` command for docs-site = `<NONEXISTENT>`, isolation verified; check:deps exit 0; lint/prettier clean)_
 
 ---
 
