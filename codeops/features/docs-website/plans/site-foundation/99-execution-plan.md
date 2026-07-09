@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 16:25
-> **Progress**: 9/25 tasks (36%)
+> **Last Updated**: 2026-07-09 16:32
+> **Progress**: 14/25 tasks (56%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -71,14 +71,14 @@ lands at Phase 2 and grows).
 **Reference**: [03-01](03-01-workspace-and-vitepress.md) · [07](07-testing-strategy.md) ST-4, ST-5, ST-6, ST-7 · AR-8
 
 ### Step 3.1: Spec (RED)
-- [ ] 3.1.1 Extend `check-docs-build.mjs`: **ST-4** (link-check over `dist`, nav/sidebar skeleton present), **ST-5** (local search index emitted), **ST-6** (a TS block has Shiki markup + copy button), **ST-7** (both color schemes defined, body contrast ≥ 4.5:1). Verify RED.
+- [x] 3.1.1 Extend `check-docs-build.mjs`: **ST-4** (link-check over `dist`, nav/sidebar skeleton present), **ST-5** (local search index emitted), **ST-6** (a TS block has Shiki markup + copy button), **ST-7** (both color schemes defined, body contrast ≥ 4.5:1). Verify RED. _(2026-07-09 16:32 — ST-5/6/7 RED as expected; ST-4 already satisfied by the minimal nav)_
 
 ### Step 3.2: Implementation (GREEN)
-- [ ] 3.2.1 Full `themeConfig.nav` + `sidebar` (Home · Guide · Components · Apps · API · Reference) with placeholder routes (no dead links), GitHub/npm social links, and `search:{provider:'local'}`.
-- [ ] 3.2.2 Brand theme: `theme/index.ts` extends DefaultTheme + `custom.css` brand tokens for light **and** dark (contrast-checked); confirm Shiki TS highlight + copy button; a sample TS snippet page.
+- [x] 3.2.1 Full `themeConfig.nav` + `sidebar` (Home · Guide · Components · Apps · API · Reference) with placeholder routes (no dead links), GitHub/npm social links, and `search:{provider:'local'}`. _(2026-07-09 16:32 — per-section sidebars link only to existing pages; npm via inline-SVG icon; editLink added)_
+- [x] 3.2.2 Brand theme: `theme/index.ts` extends DefaultTheme + `custom.css` brand tokens for light **and** dark (contrast-checked); confirm Shiki TS highlight + copy button; a sample TS snippet page. _(2026-07-09 16:32 — terminal-cyan accent; body contrast 15.5:1/15.1:1; TS snippet in guide/)_
 
 ### Step 3.3: Green + harden
-- [ ] 3.3.1 ST-4/5/6/7 pass; `yarn docs:build` green; dark/light toggle verified.
+- [x] 3.3.1 ST-4/5/6/7 pass; `yarn docs:build` green; dark/light toggle verified. _(2026-07-09 16:32 — 7/7 checks green; `VPSwitchAppearance` toggle rendered in built HTML; appearance default on)_
 
 ---
 
