@@ -1,11 +1,11 @@
 ---
 layout: home
 title: JSVision
-titleTemplate: Turbo Vision-style terminal UIs in TypeScript
-description: JSVision is a TypeScript SDK for building Turbo Vision-style terminal (TUI) applications — a pure, zero-dependency engine plus a full widget framework.
+titleTemplate: Classic Terminal UI in TypeScript
+description: JSVision is a TypeScript SDK for building classic terminal (TUI) applications — a pure, zero-dependency engine plus a full widget framework.
 hero:
   name: JSVision
-  text: Turbo Vision-style terminal UIs in TypeScript
+  text: Classic Terminal UI in TypeScript
   tagline: A pure, zero-dependency rendering engine and a full retro-desktop widget framework — for the terminal.
   actions:
     - theme: brand
@@ -18,7 +18,7 @@ features:
   - title: Pure engine
     details: Byte-in / byte-out capability detection, input decoding, and width-correct rendering with zero runtime dependencies.
   - title: Retro-desktop widgets
-    details: Windows, menus, dialogs, and ~40 controls faithful to Borland Turbo Vision — reactive and themeable.
+    details: Windows, menus, dialogs, and ~40 controls in the classic text-mode desktop tradition — reactive and themeable.
   - title: Runs anywhere a terminal does
     details: Native TTY today; the same pure core drives the browser via xterm.js — every example on this site runs live.
 ---
