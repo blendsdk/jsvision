@@ -2,7 +2,7 @@
 
 > **Implements**: docs-website/RD-03 · **Feature**: docs-website
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 0/40 tasks (0%) · **Last Updated**: 2026-07-09
+> **Progress**: 4/40 tasks (10%) · **Last Updated**: 2026-07-09 23:27
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Each phase is a
 testable slice. **Verify** = `yarn verify` (AR-21) unless a phase names a faster inner loop.
@@ -15,10 +15,10 @@ Marks are two-stage: `[ ]` → `[~]` (implemented, unverified) → `[x]` (verifi
 ## Phase 0 — docs-site becomes a verify participant (scaffolding)
 Ref: 03-06 · AR-2/4, C1/C2.
 
-- [ ] 0.1 Add docs-site dev-deps (`vitest`, `@jsvision/core`/`ui`/`web`/`files`, `@xterm/xterm`, `@xterm/addon-fit`, `@xterm/addon-webgl`, `@xterm/headless`) + `test`/`typecheck` scripts; keep `vp:build` unchanged.
-- [ ] 0.2 Add `packages/docs-site/vitest.config.ts` (unit project, Windows-safe timeout) + `tsconfig.json` `include` = `examples/**` + `src/**` (DemoShell/PlayController/site-meta) — Vue SFC excluded.
-- [ ] 0.3 Confirm turbo ordering (C1): the existing `test: dependsOn ["build","^build"]` + the Phase-0.1 workspace deps already build `core`/`ui`/`web`/`files` before `docs-site#test` (no no-op `build` script — keeps C2); add a placeholder `examples/index.ts` (empty `EXAMPLES`) + one trivial example so the harness has something to iterate.
-- [ ] 0.4 Verify: from a clean `dist/`, `yarn verify` runs `docs-site#typecheck` + `docs-site#test` green and they resolve fresh built dist (guards cross-package staleness).
+- [x] 0.1 Add docs-site dev-deps (`vitest`, `@jsvision/core`/`ui`/`web`/`files`, `@xterm/xterm`, `@xterm/addon-fit`, `@xterm/addon-webgl`, `@xterm/headless`) + `test`/`typecheck` scripts; keep `vp:build` unchanged. ✅ (completed: 2026-07-09 23:27)
+- [x] 0.2 Add `packages/docs-site/vitest.config.ts` (unit project, Windows-safe timeout) + `tsconfig.json` `include` = `examples/**` + `src/**` (DemoShell/PlayController/site-meta) — Vue SFC excluded. ✅ (completed: 2026-07-09 23:27)
+- [x] 0.3 Confirm turbo ordering (C1): the existing `test: dependsOn ["build","^build"]` + the Phase-0.1 workspace deps already build `core`/`ui`/`web`/`files` before `docs-site#test` (no no-op `build` script — keeps C2); add a placeholder `examples/index.ts` (empty `EXAMPLES`) + one trivial example so the harness has something to iterate. ✅ (completed: 2026-07-09 23:27 — placeholder = empty `EXAMPLES` + a `plumbing.impl.test.ts` dist-freshness guard; a standalone trivial example module is deferred to the contract phase to avoid a parity-test orphan)
+- [x] 0.4 Verify: from a clean `dist/`, `yarn verify` runs `docs-site#typecheck` + `docs-site#test` green and they resolve fresh built dist (guards cross-package staleness). ✅ (completed: 2026-07-09 23:27 — verify exit 0, 22/22 turbo tasks; `docs-site:typecheck` green, `docs-site:test` 2 passed)
 
 **Verify**: `yarn verify`
 
