@@ -2,7 +2,7 @@
 
 > **Status**: Active
 > **Last Updated**: 2026-07-09
-> **Features**: 2 / 4 done
+> **Features**: 2 / 5 done
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -17,6 +17,7 @@
 | theme-designer | [→](features/theme-designer/00-roadmap.md) | PL-01 ✅ Done — standalone `@jsvision/theme-designer` app + reusable `Slider` (all 4 phases / 40 tasks) | 1/1 plans | ✅ | 2026-07-09 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 ✅ Done — UI small batch: Tree markers (#17) · duplicate-accelerator warning (#6) · Switch (#11) | 1/1 plans | ✅ | 2026-07-09 |
+| docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 📋 Plan Created** (site-foundation, 5 phases/24 tasks) · RD-02…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 0/10 RDs | 🔄 | 2026-07-09 |
 
 ## Archived
 
@@ -26,6 +27,18 @@
 
 ## Notes
 
+- 2026-07-09: **New feature `docs-website` + all 10 RDs → RD DRAFTED** ✏️ ([roadmap](features/docs-website/00-roadmap.md))
+  via `make_requirements`. The JSVision documentation & showcase website ("the pitch"): a VitePress
+  static site on GitHub Pages where **every example runs live client-side in xterm.js** (no backend),
+  proven by the in-repo `web-xterm` spike (pure byte-in/byte-out engine) and extracted into a new
+  first-class `@jsvision/web` runtime; browser file dialogs via a virtual `FileSystem`. 10 RDs
+  (site foundation · `@jsvision/web` · live-example system · landing/pitch · component docs (~40) ·
+  TypeDoc API ref · sample apps [Todo/tvedit/polished kitchen-sink/file-data browser] · reference &
+  trust · anti-drift gate · non-functional). Zero-Ambiguity Gate PASSED (33/33). Portfolio now 5
+  features. Next: `make_plan RD-01` (Phase A). Docs examples kept separate from the kitchen-sink but
+  snippet-embedded + smoke-tested; hard-fail `check:docs-site` CI gate; Playwright-on-live-page
+  screenshots. (Requirements authored on `feat/ui-small-batch`; belongs on a `feat/docs-website`
+  branch before any commit.)
 - 2026-07-09: **jsvision-ui-enhancements B-01 → DONE ✅** (`exec_plan`, 27 tasks / 4 phases, one commit
   per phase on `feat/ui-small-batch`). Tree `markerStyle` (#17) + duplicate-accelerator dev-warning (#6)
   + the `Switch` control (#11) + docs. Additive-only: zero `@jsvision/core` API/theme-role change, the
