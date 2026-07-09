@@ -49,5 +49,11 @@ export {
   draculaTheme,
   solarizedDarkTheme,
   gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
   PRESET_SEEDS,
 } from './presets.js';

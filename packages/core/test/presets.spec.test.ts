@@ -17,6 +17,12 @@ import {
   draculaTheme,
   solarizedDarkTheme,
   gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
   defaultTheme,
   toRgb,
   type Theme,
@@ -31,6 +37,12 @@ const PRESETS: Record<string, Theme> = {
   draculaTheme,
   solarizedDarkTheme,
   gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
 };
 
 /** Every color-valued field on a role (fg/bg + optional hotkey + structural color extras). */
@@ -46,7 +58,7 @@ function colorFields(role: ThemeRole): string[] {
 // ── ST-21: all 7 presets are valid themes; turboVision is the default ──────────────────────────────
 
 test('ST-21: every preset is a full, resolvable Theme and turboVision is defaultTheme', () => {
-  expect(Object.keys(PRESETS).length, '7 presets').toBe(7);
+  expect(Object.keys(PRESETS).length, '13 presets').toBe(13);
   expect(turboVisionTheme, 'turboVision === defaultTheme').toBe(defaultTheme);
   for (const [name, theme] of Object.entries(PRESETS)) {
     for (const key of Object.keys(defaultTheme)) {
@@ -67,6 +79,19 @@ test('ST-22: curated presets pin their canonical background hex', () => {
   expect(draculaTheme.desktop.bg, 'Dracula background').toBe('#282a36');
   expect(solarizedDarkTheme.desktop.bg, 'Solarized base03').toBe('#002b36');
   expect(gruvboxDarkTheme.desktop.bg, 'Gruvbox bg0').toBe('#282828');
+});
+
+test('ST-22: retro presets pin their signature backdrop and accent', () => {
+  // The era backdrop (desktop) and the signature accent (the primary button face) are the fixed points.
+  expect(janusTheme.desktop.bg, 'teal PC desktop').toBe('#008080');
+  expect(janusTheme.button.bg, 'navy highlight').toBe('#000080');
+  expect(warpTheme.desktop.bg, 'steel field').toBe('#567089');
+  expect(solsticeTheme.button.bg, 'CDE teal').toBe('#2a7d7d');
+  expect(platinumTheme.button.bg, 'Platinum highlight blue').toBe('#3355bb');
+  expect(workbenchTheme.desktop.bg, 'Workbench blue').toBe('#0055aa');
+  expect(workbenchTheme.button.bg, 'Workbench orange').toBe('#ff8800');
+  expect(horizonTheme.desktop.bg, 'enterprise shell blue').toBe('#354a5f');
+  expect(horizonTheme.button.bg, 'corporate blue').toBe('#0a6ed1');
 });
 
 // ── ST-23: the defaultTheme-invariance reference (the real oracles are the *-theme.spec files) ──────

@@ -172,6 +172,12 @@ export {
   draculaTheme,
   solarizedDarkTheme,
   gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
   PRESET_SEEDS,
 } from './color/index.js';
 export type { ColorRole, Rgb, Theme, ThemeRole, ThemeColors, ThemeOptions } from './color/index.js';

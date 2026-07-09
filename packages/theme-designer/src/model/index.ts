@@ -8,5 +8,7 @@ export { contrastRows } from './contrast.js';
 export type { ContrastRow } from './contrast.js';
 export { depthSamples } from './depth.js';
 export type { DepthSample } from './depth.js';
+export { colorAtDepth, downsampleTheme } from './downsample.js';
+export { flashColor, flashColorFor } from './flash.js';
 export { hexValidator } from './hex-validator.js';
 export type { DesignerState, EditTarget, PresetName, RoleOverrides, ThemeSeeds } from './types.js';

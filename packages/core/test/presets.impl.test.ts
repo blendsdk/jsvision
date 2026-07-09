@@ -15,6 +15,13 @@ import {
   draculaTheme,
   solarizedDarkTheme,
   gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
+  Attr,
   type Theme,
 } from '../src/engine/index.js';
 
@@ -26,6 +33,12 @@ const PRESETS: Record<string, Theme> = {
   draculaTheme,
   solarizedDarkTheme,
   gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
 };
 
 test('every preset round-trips losslessly through serialize/parse', () => {
@@ -55,4 +68,16 @@ test('monochrome distinguishes many states by attrs while sharing surface colors
     expect(active.bg, `${activeKey}.bg matches ${normalKey}`).toBe(normal.bg);
     expect(active.attrs, `${activeKey} sets a distinguishing attr`).not.toBe(normal.attrs);
   }
+});
+
+test('monochrome full-width bars carry no base underline (only accelerator runs are underlined)', () => {
+  // A whole-bar `underline` base attr paints under every fill cell, producing a continuous line
+  // under the menu/status strip. The bars stand out by their inverted colors; underline is reserved
+  // for the accelerator convention (the *Shortcut roles) and the calendar-today marker.
+  const hasUnderline = (n: number | undefined): boolean => ((n ?? 0) & Attr.underline) !== 0;
+  expect(hasUnderline(monochromeTheme.menuBar.attrs), 'menuBar not underlined').toBe(false);
+  expect(hasUnderline(monochromeTheme.statusBar.attrs), 'statusBar not underlined').toBe(false);
+  // The accelerator convention is preserved where it belongs.
+  expect(hasUnderline(monochromeTheme.buttonShortcut.attrs), 'buttonShortcut underlined').toBe(true);
+  expect(hasUnderline(monochromeTheme.clusterShortcut.attrs), 'clusterShortcut underlined').toBe(true);
 });

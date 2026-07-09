@@ -33,8 +33,11 @@ export interface DesignerModel {
 
   /** Point the inspector at an alias or role. */
   select(target: EditTarget): void;
-  /** The current color for a target (an alias color, or a role's background). */
-  colorOf(target: EditTarget): Color;
+  /**
+   * The current color for a target. An alias target has a single color (the `field` is ignored); a
+   * role target has both a background and a foreground — `field` selects which (default `'bg'`).
+   */
+  colorOf(target: EditTarget, field?: 'fg' | 'bg'): Color;
   /** The 16 resolved aliases (seed-derived + overrides) — for the rail's alias chips. */
   resolvedAliases(): ThemeColors;
 
@@ -144,9 +147,9 @@ export function createDesignerModel(): DesignerModel {
       set({ ...stateSig(), selected: target });
     },
 
-    colorOf(target) {
+    colorOf(target, field = 'bg') {
       if (target.kind === 'alias') return resolvedAliases()[target.name];
-      return theme()[target.name].bg;
+      return theme()[target.name][field];
     },
 
     setAlias(name, color) {

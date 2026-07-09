@@ -22,6 +22,12 @@ import {
   draculaTheme,
   solarizedDarkTheme,
   gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
   type Theme,
 } from '@jsvision/core';
 import { createRenderRoot, createRoot, Group, Button, Text } from '@jsvision/ui';
@@ -190,6 +196,12 @@ test('ST-35: every preset renders a representative widget set to a non-empty buf
     draculaTheme,
     solarizedDarkTheme,
     gruvboxDarkTheme,
+    janusTheme,
+    warpTheme,
+    solsticeTheme,
+    platinumTheme,
+    workbenchTheme,
+    horizonTheme,
   };
   for (const [name, theme] of Object.entries(presets)) {
     createRoot((dispose) => {

@@ -19,6 +19,12 @@ import {
   draculaTheme,
   solarizedDarkTheme,
   gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
 } from '../src/engine/index.js';
 
 const PRESETS: Record<string, Theme> = {
@@ -29,6 +35,12 @@ const PRESETS: Record<string, Theme> = {
   draculaTheme,
   solarizedDarkTheme,
   gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
 };
 
 const DEPTHS: readonly ColorDepth[] = ['truecolor', '256', '16', 'mono'];

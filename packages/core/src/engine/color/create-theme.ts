@@ -72,12 +72,14 @@ export function aliasesFromSeeds(options: ThemeOptions): ThemeColors {
   const dark = options.mode === 'dark';
 
   // Dark mode reads text off the light end of the ramp and surfaces off the dark end; light inverts.
+  // The dark surfaces sit near the ramp floor (bg at step 1, the well at step 0) so a generated dark
+  // theme reads as genuinely dark with a clear raised/sunken separation, rather than a flat mid-gray.
   const surface = dark
     ? {
-        bg: neutral[2],
-        raised: neutral[3],
-        sunken: neutral[1],
-        selected: neutral[4],
+        bg: neutral[1],
+        raised: neutral[2],
+        sunken: neutral[0],
+        selected: neutral[3],
         border: neutral[4],
         borderMuted: neutral[3],
       }
