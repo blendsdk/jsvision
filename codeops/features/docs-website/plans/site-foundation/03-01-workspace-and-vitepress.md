@@ -25,17 +25,23 @@ public/                # favicon.ico, robots.txt, og-placeholder.png, 404 assets
 ```
 
 - `package.json`: `"private": true`, `"type": "module"`, scripts `dev: vitepress dev`,
-  `build: vitepress build`, `preview: vitepress preview`. VitePress (latest stable **1.x**) as a
-  **devDependency of this package only**. No `dependencies` (nothing shipped).
+  **`vp:build: vitepress build`** (deliberately **not** named `build` — see the isolation note),
+  `preview: vitepress preview`. VitePress (latest stable **1.x**) as a **devDependency of this
+  package only**. No `dependencies` (nothing shipped). It defines **no** `build`/`check:deps`/`test`/
+  `typecheck` scripts, so `turbo run build/test/typecheck/check:deps` (and thus `yarn verify`) skip it
+  entirely — turbo only runs a task in a package that declares it (PF-001, PF-008).
 - Root scripts (add to root `package.json`): `"docs:dev": "yarn workspace @jsvision/docs-site dev"`,
-  `"docs:build": "yarn workspace @jsvision/docs-site build"`.
-- `turbo.json`: add `docs-site#build` with `"outputs": [".vitepress/dist/**"]` and no `dependsOn`
-  (RD-01 has no cross-package build input). It is **not** in the default `build` fan-out that
-  `yarn verify` runs (AR-3) — invoked only by `yarn docs:build` and the docs CI job.
+  `"docs:build": "yarn workspace @jsvision/docs-site vp:build"`.
+- **No `turbo.json` change** (PF-001): a `pkg#task` config entry would **not** exclude a `build`-named
+  script from `turbo run build` — it only configures that task. Isolation (AR-3) is achieved by
+  **not naming the script `build`**; the site builds only via `yarn docs:build` (→ the workspace's
+  `vp:build`) and the docs CI job.
 
 ## VitePress config essentials
 
-- `base: '/jsvision/'` (AR-7) — every asset URL is prefixed (ST-1).
+- `base: process.env.DOCS_BASE ?? '/jsvision/'` (AR-7) — every asset URL is prefixed (ST-1).
+  Production builds with `/jsvision/`; the **PR-preview build sets `DOCS_BASE=/jsvision/pr-preview/pr-<N>/`**
+  so a preview's absolute asset/page-data URLs resolve under its own subpath, not production's (PF-002).
 - `title`, `description`, `lang: 'en-US'`.
 - `themeConfig.nav` + `themeConfig.sidebar` = the IA skeleton (Home · Guide · Components · Apps · API
   · Reference) with placeholder routes so there are **no dead links** (ST-4). Social links: GitHub, npm.
@@ -71,6 +77,12 @@ object-src 'none'
 
 No `unsafe-eval` on content pages (ST-9). The later live-demo/REPL sandbox (RD-03/RD-08) will scope
 any relaxation to an isolated worker/iframe context — out of scope here.
+
+> **VitePress inline scripts (PF-003):** VitePress injects an inline appearance/hydration `<script>`;
+> a bare `script-src 'self'` blocks it (a CSP console violation + a theme flash). A Phase-4 validation
+> task loads the **built** site, asserts **zero CSP violations**, and adds the SHA-256 **hashes** of
+> VitePress's inline scripts to `script-src` — keeping the policy strict (no `'unsafe-inline'` for
+> scripts) and honest with the Security page's claim.
 
 ## Theme / branding
 

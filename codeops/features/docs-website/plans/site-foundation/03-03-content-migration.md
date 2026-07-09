@@ -24,6 +24,14 @@ surfaced in the new site via an external/relative link, but the **file does not 
 > After the move, `docs/` retains only `acceptance-gate.md` (plus whatever tooling references). Do
 > **not** delete the `docs/` directory.
 
+### Techdocs auto-update supersession (PF-004)
+
+Moving `docs/index.md` (which carries `techdocs:true`) means the techdocs skill's auto-update hook —
+which keys on that file — stops firing. This is a **conscious, accepted** change: the docs-website
+**supersedes** the old techdocs auto-update role (RD-08 owns the architecture/ADR content now). Record
+the supersession in the feature roadmap note so it is not a silent behavior change; no stub is left
+behind in `docs/`.
+
 ## Redirect / mapping table
 
 A checked-in `packages/docs-site/redirects.md` (or a small `_redirects`/meta-refresh data file) maps

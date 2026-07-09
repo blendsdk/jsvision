@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-09
-> **Progress**: 0/24 tasks (0%)
+> **Progress**: 0/25 tasks (0%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -18,10 +18,10 @@ lands at Phase 2 and grows).
 | 1 | Workspace scaffold + buildable skeleton | 5 |
 | 2 | GitHub Pages delivery (prod + live PR previews) | 4 |
 | 3 | IA / nav / theme / search / code-UX | 5 |
-| 4 | SEO + CSP + static assets | 5 |
+| 4 | SEO + CSP + static assets | 6 |
 | 5 | Content migration (absorb `docs/`) | 5 |
 
-**Total: 24 tasks across 5 phases.**
+**Total: 25 tasks across 5 phases.** (Preflight PF-001…009 applied — see [00-preflight-report.md](00-preflight-report.md).)
 
 > **⚠️ EXECUTION RULE:** the task checkboxes are the single source of truth for progress. Mark `[~]`
 > with a timestamp on implementation, promote to `[x]` only after its verify passes, update the
@@ -42,8 +42,8 @@ lands at Phase 2 and grows).
 - [ ] 1.1.2 Verify RED: the script fails (no `packages/docs-site` / no `dist` yet).
 
 ### Step 1.2: Implementation (GREEN)
-- [ ] 1.2.1 Scaffold `packages/docs-site`: `package.json` (`@jsvision/docs-site`, private, `type:module`, scripts dev/build/preview, VitePress 1.x **devDependency only**) + placeholder `index.md` and one placeholder page per section (guide/components/apps/api/reference).
-- [ ] 1.2.2 Minimal `.vitepress/config.ts` (`base:'/jsvision/'`, title, nav skeleton) + root `docs:dev`/`docs:build` scripts + `turbo.json` `docs-site#build` (`outputs:['.vitepress/dist/**']`, no `dependsOn`, **isolated** from the default build/verify per AR-3).
+- [ ] 1.2.1 Scaffold `packages/docs-site`: `package.json` (`@jsvision/docs-site`, private, `type:module`, scripts `dev`/**`vp:build`**/`preview` — build script deliberately **not** named `build`, and **no** `check:deps`/`test`/`typecheck` scripts, so turbo/verify skip it, PF-001/PF-008; VitePress 1.x **devDependency only**) + placeholder `index.md` and one placeholder page per section (guide/components/apps/api/reference).
+- [ ] 1.2.2 Minimal `.vitepress/config.ts` (`base: process.env.DOCS_BASE ?? '/jsvision/'` per PF-002, title, nav skeleton) + root `docs:dev`/`docs:build` (→ workspace `vp:build`) scripts. **No `turbo.json` change** — isolation (AR-3) comes from the non-`build` script name (PF-001).
 
 ### Step 1.3: Green + harden
 - [ ] 1.3.1 `yarn docs:build` green; `check-docs-build.mjs` passes ST-1/ST-2; **ST-13** `yarn check:deps` green for all shipped packages (no toolchain leak).
@@ -58,7 +58,7 @@ lands at Phase 2 and grows).
 - [ ] 2.1.1 Extend `check-docs-build.mjs` (or a small companion) to assert **ST-14**: `.github/workflows/docs.yml` parses, triggers on the site paths, declares `permissions: contents:write` + `pull-requests:write`, and uses only `GITHUB_TOKEN` (no stored secret). Verify RED (no workflow yet).
 
 ### Step 2.2: Implementation (GREEN)
-- [ ] 2.2.1 Add `.github/workflows/docs.yml`: **production** job on `master` (checkout → setup-node 22 → `yarn install --frozen-lockfile` → `yarn docs:build` → `peaceiris/actions-gh-pages@v4` publish `dist` to `gh-pages` root, `keep_files:true`); **preview** job on `pull_request` (build → `rossjrw/pr-preview-action@v1` to `/pr-preview/pr-N/`, comment URL, cleanup on close); concurrency + path filters. Do **not** modify `ci.yml`.
+- [ ] 2.2.1 Add `.github/workflows/docs.yml`: **production** job on `master` (checkout → setup-node 22 → `yarn install --frozen-lockfile` → `yarn docs:build` → `peaceiris/actions-gh-pages@v4` publish `dist` to `gh-pages` root, `keep_files:true`, PF-006); **preview** job on `pull_request` (build with `DOCS_BASE=/jsvision/pr-preview/pr-<N>/` per PF-002 → `rossjrw/pr-preview-action@v1` to `/pr-preview/pr-N/`, comment URL, cleanup on close); **shared** `concurrency: docs-gh-pages` (PF-005); triggers on `packages/docs-site/**` + the workflow file, **not** `docs/**` (PF-009). Do **not** modify `ci.yml`.
 - [ ] 2.2.2 Document the one-time Pages prerequisite (Settings → Pages → Deploy from branch `gh-pages`/root, enforce HTTPS) in the workspace README + the deploy checklist below.
 
 ### Step 2.3: Green + manual acceptance
@@ -92,6 +92,7 @@ lands at Phase 2 and grows).
 ### Step 4.2: Implementation (GREEN)
 - [ ] 4.2.1 SEO: per-page description + a `transformPageData`/`transformHead` emitting `og:*`/`twitter:card` with `public/og-placeholder.png` (AR-11); enable the VitePress `sitemap` (hostname = the Pages URL).
 - [ ] 4.2.2 `public/robots.txt` (+ sitemap link), `public/favicon.ico`, custom `404.md`, and the `<meta http-equiv="Content-Security-Policy">` (Phase-A policy from 03-01, no `unsafe-eval`).
+- [ ] 4.2.3 **CSP validation (PF-003)**: load the built site headless, assert **zero CSP violations**, and add the SHA-256 hashes of VitePress's inline scripts to `script-src` so the strict policy (no `'unsafe-inline'` for scripts) holds — turns ST-9's runtime half green.
 
 ### Step 4.3: Green + harden
 - [ ] 4.3.1 ST-8/9/10 pass; `yarn docs:build` green.
@@ -106,7 +107,7 @@ lands at Phase 2 and grows).
 - [ ] 5.1.1 Extend `check-docs-build.mjs`: **ST-11** (every former `docs/` website page has a `redirects.md` row **and** a rendered page in `dist`) + confirm **ST-12** baseline (`gate.spec` currently green, `docs/acceptance-gate.md` present). Verify RED for ST-11 (not migrated yet).
 
 ### Step 5.2: Implementation (GREEN)
-- [ ] 5.2.1 Move website content (preserve history): `docs/architecture/` → `reference/architecture/`, `docs/decisions/` → `reference/decisions/`, `docs/guides/` → `reference/guides/`, fold `docs/index.md` into the Architecture landing. **Leave `docs/acceptance-gate.md` in place.** Retire the old `docs/.vitepress/config.ts` (superseded).
+- [ ] 5.2.1 Move website content (preserve history): `docs/architecture/` → `reference/architecture/`, `docs/decisions/` → `reference/decisions/`, `docs/guides/` → `reference/guides/`, fold `docs/index.md` into the Architecture landing. **Leave `docs/acceptance-gate.md` in place.** Retire the old `docs/.vitepress/config.ts` (superseded). Record the techdocs auto-update **supersession** in the roadmap note (PF-004 — moving `docs/index.md` disables the techdocs hook; accepted).
 - [ ] 5.2.2 Wire the Reference sidebar to the migrated pages; add `packages/docs-site/redirects.md` (old→new mapping); update the lone stale ref in `JSDOC-CLEANUP-PLAN.md` (non-blocking note).
 
 ### Step 5.3: Green + harden

@@ -23,7 +23,7 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
-| RD-01 | Site foundation & delivery pipeline | [RD-01](requirements/RD-01-site-foundation.md) | [site-foundation](plans/site-foundation/00-index.md) | Plan Created | 📋 | 2026-07-09 | Phase A. `packages/docs-site` VitePress app · GitHub Pages (gh-pages model: peaceiris prod + live PR previews) · `base:'/jsvision/'` · IA/nav · local search · SEO/OG/CSP/404 · absorbs root `docs/` (keeps `acceptance-gate.md`) · isolated from `yarn verify`. **5 phases / 24 tasks, spec-first.** Next: `exec_plan site-foundation` (or `preflight` first). |
+| RD-01 | Site foundation & delivery pipeline | [RD-01](requirements/RD-01-site-foundation.md) | [site-foundation](plans/site-foundation/00-index.md) · [preflight](plans/site-foundation/00-preflight-report.md) | Plan Preflighted | 🔬 | 2026-07-09 | Phase A. `packages/docs-site` VitePress app · GitHub Pages (gh-pages model: peaceiris prod + live PR previews) · `base:'/jsvision/'` · IA/nav · local search · SEO/OG/CSP/404 · absorbs root `docs/` (keeps `acceptance-gate.md`) · isolated from `yarn verify`. **5 phases / 25 tasks, spec-first.** Preflight ✅ PASSED (9 findings; 3 MAJOR delivery-mechanism fixes applied: `vp:build` isolation, dynamic PR-preview base, CSP hashes). Next: `exec_plan site-foundation`. |
 | RD-02 | `@jsvision/web` browser runtime | [RD-02](requirements/RD-02-web-runtime.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase A. Extract the web-xterm host → tested package · virtual FileSystem · key-chord reclaim · clipboard bridge · node-builtin stubs. |
 | RD-03 | Live-example system | [RD-03](requirements/RD-03-live-example-system.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase A. Example-module contract · Play-button live dialog · snippet embed · DemoShell (About + theme switch) · headless smoke · a11y source-beside · no-keyboard fallback. Depends RD-01, RD-02. |
 | RD-04 | Landing / pitch surface | [RD-04](requirements/RD-04-landing-pitch.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase A(partial). Hero + live proof · Getting Started · Core Concepts · Why/comparison · degit starter. Depends RD-01, RD-03. |
@@ -46,6 +46,16 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 
 ## Notes
 
+- 2026-07-09: **RD-01 → PLAN PREFLIGHTED** 🔬 ([report](plans/site-foundation/00-preflight-report.md))
+  via `preflight` (same-session, codebase-grounded, 13 dimensions). **✅ PASSED — 9 findings, all
+  resolved + applied.** Verified core repo claims (gate.spec reads `docs/acceptance-gate.md`; moving
+  the other `docs/` content is safe; turbo `build` semantics). 3 MAJOR delivery-mechanism fixes:
+  **PF-001** the docs-site build script must be named `vp:build` (not `build`) or `turbo run build`/
+  `yarn verify` would build it (defeating AR-3); **PF-002** live PR previews need a dynamic per-PR
+  `DOCS_BASE` or they load production assets and 404 the changed pages; **PF-003** the strict meta-CSP
+  is violated by VitePress's inline scripts → add SHA-256 hashes (Phase-4 validation task). 6 minors
+  accepted (techdocs supersession, shared gh-pages concurrency, keep_files note, ST-7 wording,
+  no-check:deps, trigger paths). Task count 24→25. Next: `exec_plan site-foundation`.
 - 2026-07-09: **RD-01 → PLAN CREATED** 📋 ([plan](plans/site-foundation/00-index.md)) via `make_plan`.
   9 docs (00-index · 01-requirements · 02-current-state · 03-01 workspace+VitePress · 03-02 deploy
   pipeline · 03-03 content migration · 07-testing-strategy ST-1…ST-14 · 99-execution-plan · register).
