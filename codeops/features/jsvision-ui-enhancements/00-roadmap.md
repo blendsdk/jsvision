@@ -1,10 +1,10 @@
 # Roadmap: jsvision-ui Enhancements
 
 > **Feature-Set**: jsvision-ui Enhancements
-> **Status**: Executing
+> **Status**: Done
 > **Created**: 2026-07-09
 > **Last Updated**: 2026-07-09
-> **Progress**: 0 / 1 (0%)
+> **Progress**: 1 / 1 (100%)
 > **CodeOps Skills Version**: 3.3.2
 
 A rolling home for small, GitHub-issue-driven enhancements to `@jsvision/ui` that are issue-sized
@@ -19,10 +19,16 @@ source. All work here is **additive-only** to the shipped packages.
 
 | ID | Title | Source | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|--------|------|-------|--------|--------------|-----------------|
-| B-01 | UI small batch — Tree markers · duplicate-accelerator warning · Switch | GH #17 · #6 · #11 | [ui-small-batch](plans/ui-small-batch/00-index.md) | Executing | 🔄 | 2026-07-09 | Batch of three S/M enhancements. #17 opt-in `markerStyle` (`tv`/`brackets`/`triangle`, default `tv`). #6 duplicate-accelerator dev-warn across **all tilde scopes** (submenus + menu-bar titles + Dialog focus scope + TabView strip-only; StatusLine chord-collision deferred) via an additive `View.accelerators()` seam + a pure `findDuplicateAccelerators()`. #11 `Switch` over `View` (Slider idiom), no new core role. Additive-only. Preflight PASSED (6 findings resolved, AR-21…AR-24). Next: `exec_plan ui-small-batch`. |
+| B-01 | UI small batch — Tree markers · duplicate-accelerator warning · Switch | GH #17 · #6 · #11 | [ui-small-batch](plans/ui-small-batch/00-index.md) | Done | ✅ | 2026-07-09 | Batch of three S/M enhancements. #17 opt-in `markerStyle` (`tv`/`brackets`/`triangle`, default `tv`). #6 duplicate-accelerator dev-warn across **all tilde scopes** (submenus + menu-bar titles + Dialog focus scope + TabView strip-only; StatusLine chord-collision deferred) via an additive `View.accelerators()` seam + a pure `findDuplicateAccelerators()`. #11 `Switch` over `View` (Slider idiom), no new core role. Additive-only. Preflight PASSED (6 findings resolved, AR-21…AR-24). Next: `exec_plan ui-small-batch`. |
 
 ## Notes
 
+- 2026-07-09: **B-01 → DONE ✅** (`exec_plan`, all 27 tasks / 4 phases). Three additive `@jsvision/ui`
+  enhancements shipped spec-first, one commit per phase, on branch `feat/ui-small-batch`: Tree
+  `markerStyle` (#17), the duplicate-accelerator dev-warning (#6), and the `Switch` control (#11), plus
+  docs (CHANGELOG + a CLAUDE.md note). Zero `@jsvision/core` API/theme-role change; the tree `'tv'` path
+  and all prior behaviour byte-unchanged. Full `yarn verify` green (16/16 turbo tasks incl. check:docs +
+  kitchen-sink smoke). Not yet pushed / no PR (per commit mode: ask before pushing).
 - 2026-07-09: **B-01 Phase 3 complete** (`Switch` toggle, GH #11) — 25/27 tasks. `Switch extends View`
   (Slider idiom) bound two-way to a `Signal<boolean>`; `SwitchOptions` (label/onLabel/offLabel/disabled),
   Space/Enter/click/Alt-hotkey toggle, green-on vs dim-off bracketed track with a sliding `●`/`o` knob,

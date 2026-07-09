@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-09
-> **Progress**: 25/27 tasks (93%) — Phases 1–3 complete
+> **Progress**: 27/27 tasks (100%) — ✅ COMPLETE
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -105,9 +105,9 @@ independent and may ship in separate commits.
 
 ## Phase 4: Docs, CHANGELOG & final gate
 
-- [ ] 4.1 Update `CHANGELOG.md` `[Unreleased]` (three additive entries) + `CLAUDE.md` component notes where relevant
-- [ ] 4.2 Roadmap: set B-01 → Done via the roadmap skill; cascade to the portfolio roadmap
-- [ ] 4.3 Final gate: full `yarn verify` — which already runs `yarn lint` (eslint + prettier) then `turbo run typecheck build test check:docs` — plus the kitchen-sink smoke suite, all green
+- [x] 4.1 Updated `CHANGELOG.md` `[Unreleased]` (three additive entries: Switch, Tree markerStyle, duplicate-accelerator warning) + a `CLAUDE.md` `switch.ts` note on the controls line (the structure block is otherwise stale pre-tree/table — a full refresh is deferred to `/analyze_project`) _(2026-07-09 14:14)_
+- [x] 4.2 Roadmap: B-01 → Done; cascaded to the portfolio roadmap _(2026-07-09 14:15)_
+- [x] 4.3 Final gate: full `yarn verify` green (16/16 turbo tasks; lint + typecheck + build + test + check:docs + kitchen-sink smoke) _(2026-07-09 14:15)_
 
 ---
 

@@ -16,7 +16,7 @@
 | jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | **22 ✅ Done (RD-01…RD-22)** — Theming completes the set | 22/22 RDs | ✅ | 2026-07-08 |
 | theme-designer | [→](features/theme-designer/00-roadmap.md) | PL-01 ✅ Done — standalone `@jsvision/theme-designer` app + reusable `Slider` (all 4 phases / 40 tasks) | 1/1 plans | ✅ | 2026-07-09 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
-| jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 🔄 Executing — UI small batch: Tree markers (#17) ✅ · duplicate-accelerator warning (#6) ✅ · Switch (#11) ✅ · docs/gate pending | 0/1 plans | 🔄 | 2026-07-09 |
+| jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 ✅ Done — UI small batch: Tree markers (#17) · duplicate-accelerator warning (#6) · Switch (#11) | 1/1 plans | ✅ | 2026-07-09 |
 
 ## Archived
 
@@ -26,6 +26,11 @@
 
 ## Notes
 
+- 2026-07-09: **jsvision-ui-enhancements B-01 → DONE ✅** (`exec_plan`, 27 tasks / 4 phases, one commit
+  per phase on `feat/ui-small-batch`). Tree `markerStyle` (#17) + duplicate-accelerator dev-warning (#6)
+  + the `Switch` control (#11) + docs. Additive-only: zero `@jsvision/core` API/theme-role change, the
+  tree `'tv'` path byte-unchanged. `yarn verify` green (incl. check:docs + kitchen-sink smoke). Cascaded
+  from **jsvision-ui-enhancements**. (Unpushed; no PR yet — commit mode was ask-before-push.)
 - 2026-07-09: **B-01 Phase 3 of 4 done** (`exec_plan`): the `Switch` toggle control (GH #11) — a
   `View`-based on/off bound to a `Signal<boolean>`, role-reuse render (no new core role), caps knob
   fallback, `measure()`, `accelerators()`; `switch.{spec,impl}` + a `controls/switch` story. `yarn verify` green.
