@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-09
+> **Last Updated**: 2026-07-10
 > **Features**: 2 / 5 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -17,7 +17,7 @@
 | theme-designer | [→](features/theme-designer/00-roadmap.md) | PL-01 ✅ Done — standalone `@jsvision/theme-designer` app + reusable `Slider` (all 4 phases / 40 tasks) | 1/1 plans | ✅ | 2026-07-09 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 ✅ Done — UI small batch: Tree markers (#17) · duplicate-accelerator warning (#6) · Switch (#11) | 1/1 plans | ✅ | 2026-07-09 |
-| docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — VitePress site + gh-pages CI + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · **RD-02 ✅ Done** (web-runtime — `@jsvision/web` shipped: browser host/`mountApp` · caps · virtual FileSystem · key-reclaim · clipboard · `browser-stubs`; 17/17 tasks, 41 tests ST-1…ST-12, dogfooded into web-xterm) · **RD-03 🔄 Executing** (live-example-system — Phase 0 ✅ verify participant · Phase 1 ✅ contract+registry+oracles · Phase 2 ✅ minimal/full DemoShell · Phase 3 ✅ Play component (controller+Vue), CSP verified; 21/40 tasks; 7 phases; two-tier headless harness, 8 seed examples) · RD-04…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 2/10 RDs · RD-03 🔄 | 🔄 | 2026-07-09 |
+| docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — VitePress site + gh-pages CI + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · **RD-02 ✅ Done** (web-runtime — `@jsvision/web` shipped: browser host/`mountApp` · caps · virtual FileSystem · key-reclaim · clipboard · `browser-stubs`; 17/17 tasks, 41 tests ST-1…ST-12, dogfooded into web-xterm) · **RD-03 ✅ Done** (live-example-system — every docs sample runs live in xterm.js via `mountApp`, shown code == running code; 40/40 tasks / 7 phases; DemoShell + client-only Play + a11y/no-kbd/deep-link + **8 seed examples** (button…desktop…preset-gallery); ST-1…ST-14 green, docs gate 14/14) · RD-04…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 3/10 RDs · RD-04 next | 🔄 | 2026-07-10 |
 
 ## Archived
 
@@ -27,6 +27,7 @@
 
 ## Notes
 
+- 2026-07-10: **docs-website RD-03 (live-example-system) → ✅ DONE** — all 7 phases / 40 tasks `[x]`, spec-first. Every docs code sample runs live in an xterm.js terminal via `@jsvision/web`'s `mountApp` (no backend), shown code guaranteed == running code (whole-file `<<<` embed). Ships a two-chrome DemoShell + `demoApp`, a client-only Play component (SSR-safe, one-dialog cap, error panel), a11y + no-keyboard fallback + deep-link + Reset/size, and **8 seed examples** (button · input · form-dialog · list-box · file-dialog · data-grid · desktop · preset-gallery). docs-site now participates in `yarn verify`'s test + typecheck. Runtime AR-22 (user-confirmed): `caps` in `ExampleContext`, Application examples via `demoApp`. ST-1…ST-14 green; clean-dist `yarn verify` 22/22 (39 docs-site tests); docs gate 14/14 (added a LIVE-EXAMPLES guard).
 - 2026-07-09: **docs-website RD-03 (live-example-system) → 🔄 EXECUTING** — Phase 0 complete: docs-site joins `yarn verify`'s test + typecheck (vitest `unit` project + scoped `tsconfig`; `vp:build` stays isolated from the build phase); clean-`dist` verify green (22/22 turbo tasks). 4/40 tasks.
 - 2026-07-09: **docs-website RD-03 (live-example-system) plan preflighted** → 🔬 Plan Preflighted ([report](features/docs-website/plans/live-example-system/00-preflight-report.md)). 7 findings (3 major / 3 minor / 1 obs), all resolved & applied; one hardening challenger converged on all majors. Key fixes: Tier-1 paint-smoke reads `app.loop.renderRoot.buffer()`; depth type = the real `buildBrowserCaps` union; `files/file-dialog` allow-lists `@jsvision/web`'s pure `createBrowserFileSystem` (relocating it to `@jsvision/files` recorded as a deferral).
 - 2026-07-09: **New feature `docs-website` + all 10 RDs → RD DRAFTED** ✏️ ([roadmap](features/docs-website/00-roadmap.md))

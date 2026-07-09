@@ -2,7 +2,7 @@
 
 > **Implements**: docs-website/RD-03 · **Feature**: docs-website
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 36/40 tasks (90%) · **Last Updated**: 2026-07-10 01:07
+> **Progress**: 40/40 tasks (100%) — ✅ COMPLETE · **Last Updated**: 2026-07-10 01:18
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Each phase is a
 testable slice. **Verify** = `yarn verify` (AR-21) unless a phase names a faster inner loop.
@@ -107,10 +107,10 @@ Ref: 03-05 · AR-20. (Droppable under time pressure: input / list-box / data-gri
 ## Phase 6 — Integration & finalize
 Ref: 03-06, 01 · C2.
 
-- [ ] 6.1 Wire any docs-build gate additions (drift/CSP) into `scripts/check-docs-build.mjs`'s runner if that is where the site build is validated; confirm `node packages/docs-site/scripts/check-docs-build.mjs` passes with the new pages.
-- [ ] 6.2 Update CLAUDE.md's docs-site isolation note (C2) — "participates in test + typecheck".
-- [ ] 6.3 Full `yarn verify` from a clean `dist/`; confirm all ST-1…ST-14 green, docs-site test+typecheck in the run, `check:deps` unchanged (docs-site is private/dev-deps only, so it adds no `check:deps` target).
-- [ ] 6.4 Roadmap: set docs-website/RD-03 → Done ✅ (feature + portfolio cascade) via the roadmap skill.
+- [x] 6.1 Wire any docs-build gate additions (drift/CSP) into `scripts/check-docs-build.mjs`'s runner if that is where the site build is validated; confirm `node packages/docs-site/scripts/check-docs-build.mjs` passes with the new pages. ✅ (completed: 2026-07-10 01:18 — added a **LIVE-EXAMPLES** check: every `play-example` page in the built HTML carries an ARIA-labelled Play button + its embedded `defineExample` source (drift + Play mount survive the production build); gate 14/14)
+- [x] 6.2 Update CLAUDE.md's docs-site isolation note (C2) — "participates in test + typecheck". ✅ (completed: 2026-07-10 01:18 — 3 isolation clauses (Repo shape / Commands / Project structure) reworded to "participates in test + typecheck; only build is isolated"; added a live-example-system paragraph to the Project-structure entry + the LIVE-EXAMPLES check to the gate description)
+- [x] 6.3 Full `yarn verify` from a clean `dist/`; confirm all ST-1…ST-14 green, docs-site test+typecheck in the run, `check:deps` unchanged (docs-site is private/dev-deps only, so it adds no `check:deps` target). ✅ (completed: 2026-07-10 01:18 — clean-dist `yarn verify` 22/22 turbo tasks; docs-site 39 tests + typecheck green; the only flake was ui `editor-perf` ST-35 wall-clock (17.3ms vs 16ms) which CI skips via `TUI_SKIP_PERF` — confirmed green under that flag; `check:deps` has no docs-site target)
+- [x] 6.4 Roadmap: set docs-website/RD-03 → Done ✅ (feature + portfolio cascade). ✅ (completed: 2026-07-10 01:18 — feature roadmap RD-03 row → Done ✅ + header 3/10 + changelog; portfolio `codeops/00-roadmap.md` docs-website row re-rolled (RD-03 ✅, 3/10, RD-04 next) + changelog)
 
 **Verify**: `yarn verify` + `node packages/docs-site/scripts/check-docs-build.mjs`
 

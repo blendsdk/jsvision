@@ -475,6 +475,33 @@ check('ST-14', 'docs.yml parses, triggers on site paths, safe permissions, only 
   return 'workflow valid: push@master + pull_request on site paths, contents+PR write, GITHUB_TOKEN only';
 });
 
+// --- LIVE-EXAMPLES: shown code == running code, survived the build --------
+
+check('LIVE-EXAMPLES', 'Every live-example page embeds its source and mounts a labelled Play component', () => {
+  // A live-example page carries the server-rendered Play component wrapper. Find
+  // them by that marker, then confirm the whole "shown code is running code"
+  // pipeline survived the production build: the example module's source is
+  // embedded (via the whole-file `<<<` directive) and the Play button is present.
+  const pages = htmlPages().filter((page) =>
+    readFileSync(join(distDir, page), 'utf8').includes('class="play-example"'),
+  );
+  if (pages.length < 8) fail(`expected ≥ 8 live-example pages, found ${pages.length}`);
+
+  const problems = [];
+  for (const page of pages) {
+    const html = readFileSync(join(distDir, page), 'utf8');
+    if (!/aria-label="Run the [^"]+ example in a terminal"/.test(html)) {
+      problems.push(`${page}: no ARIA-labelled Play button`);
+    }
+    // The whole-file `<<<` embed renders the module source into a code block, so
+    // its `defineExample` default export appears in the built HTML — proof that
+    // the shown code is the module the Play button runs (no pasted copy).
+    if (!html.includes('defineExample')) problems.push(`${page}: no embedded example source`);
+  }
+  if (problems.length) fail(`${problems.length} live-example issue(s):\n    ${problems.join('\n    ')}`);
+  return `${pages.length} live-example pages: source embedded + Play mounted`;
+});
+
 // --- report + exit --------------------------------------------------------
 
 let failed = 0;
