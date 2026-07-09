@@ -69,19 +69,19 @@ export class WindowedSource {
   }
 
   private makeProxy(): Row[] {
-    const self = this;
+    // Arrow handlers capture `this` lexically (no `self` alias needed).
     return new Proxy<Row[]>([], {
-      get(target, prop, recv) {
-        if (prop === 'length') return self.total;
+      get: (target, prop, recv) => {
+        if (prop === 'length') return this.total;
         if (typeof prop === 'string' && /^\d+$/.test(prop)) {
-          self.accesses += 1;
-          return self.rowAt(Number(prop));
+          this.accesses += 1;
+          return this.rowAt(Number(prop));
         }
         return Reflect.get(target, prop, recv);
       },
-      has(target, prop) {
+      has: (target, prop) => {
         if (prop === 'length') return true;
-        if (typeof prop === 'string' && /^\d+$/.test(prop)) return Number(prop) < self.total;
+        if (typeof prop === 'string' && /^\d+$/.test(prop)) return Number(prop) < this.total;
         return Reflect.has(target, prop);
       },
     });

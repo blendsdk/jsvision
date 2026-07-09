@@ -5,12 +5,7 @@
  */
 import { introspect } from './introspect.js';
 import type { TableMeta } from './introspect.js';
-import {
-  deleteByKey,
-  insertReturning,
-  selectPage,
-  updateOptimistic,
-} from './crud.js';
+import { deleteByKey, insertReturning, selectPage, updateOptimistic } from './crud.js';
 
 /** A row plus its `xmin` version token (for optimistic concurrency). */
 export type MetaRow = Record<string, unknown> & { xmin: string };

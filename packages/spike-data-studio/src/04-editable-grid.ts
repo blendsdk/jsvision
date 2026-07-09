@@ -5,7 +5,7 @@
  * to the DB inside the RecordSet transaction and the grid repaints with the new value; Escape reverts.
  */
 import { Group, createEventLoop, effect, createRoot, signal, filter } from '@jsvision/ui';
-import type { Column, Signal, SortState } from '@jsvision/ui';
+import type { Column } from '@jsvision/ui';
 import { pool } from './db.js';
 import { pgSource } from './data-source.js';
 import { RecordSet } from './record-set.js';
@@ -120,10 +120,17 @@ async function main(): Promise<void> {
     const lines = loop.renderRoot
       .buffer()
       .rows()
-      .map((row) => row.map((c) => c.char).join('').trimEnd());
+      .map((row) =>
+        row
+          .map((c) => c.char)
+          .join('')
+          .trimEnd(),
+      );
     console.log(`\n${title}`);
     for (const l of lines) if (l.length) console.log(`  ${l}`);
-    console.log(`  [cursor: row ${rs.position()} col ${grid.focusedCol()} "${FIELD[grid.focusedCol()]}"  focus=${loop.getFocused() === editor ? 'EDITOR' : 'grid'}]`);
+    console.log(
+      `  [cursor: row ${rs.position()} col ${grid.focusedCol()} "${FIELD[grid.focusedCol()]}"  focus=${loop.getFocused() === editor ? 'EDITOR' : 'grid'}]`,
+    );
   };
 
   frame('① initial — cell cursor at (row 0, col 0=id)');
@@ -152,7 +159,9 @@ async function main(): Promise<void> {
   loop.dispatch(key('enter')); // commit
   const result = await pendingCommit;
   frame('⑥ Enter → committed; editor gone; grid shows the new balance');
-  console.log(`   commit result: ${result?.status}` + (result?.status === 'ok' ? ` → balance=${result.row.balance}` : ''));
+  console.log(
+    `   commit result: ${result?.status}` + (result?.status === 'ok' ? ` → balance=${result.row.balance}` : ''),
+  );
   const check = await pool.query('SELECT balance FROM app.customer WHERE id=$1', [target?.id]);
   console.log(`   independent DB read → balance=${check.rows[0].balance} (persisted ✓)`);
 
