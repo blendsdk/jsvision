@@ -297,6 +297,19 @@ check('ST-6', 'A TS code block renders with Shiki markup and a copy button', () 
   return `Shiki TS highlight + copy button on ${hit}`;
 });
 
+// --- MERMAID: fenced ```mermaid diagrams become diagrams, not code blocks ---
+
+check('MERMAID', '```mermaid fences render as diagrams (mermaid plugin active)', () => {
+  const pages = htmlPages();
+  // A regression would leave the fence as a highlighted code block.
+  const rawFallback = pages.find((page) => /language-mermaid\b/.test(readFileSync(join(distDir, page), 'utf8')));
+  if (rawFallback) fail(`\`\`\`mermaid fell back to a code block on ${rawFallback} (mermaid plugin not active)`);
+
+  const withDiagram = pages.find((page) => /class="mermaid"/.test(readFileSync(join(distDir, page), 'utf8')));
+  if (!withDiagram) fail('no rendered mermaid diagram container found (expected on the Architecture page)');
+  return `mermaid diagram container on ${withDiagram}; no raw fallbacks`;
+});
+
 // --- ST-7: both colour schemes defined + body contrast ≥ 4.5:1 ------------
 
 check('ST-7', 'Light + dark schemes defined; body-text contrast ≥ 4.5:1 in each', () => {
