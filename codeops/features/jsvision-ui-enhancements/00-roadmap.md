@@ -23,6 +23,12 @@ source. All work here is **additive-only** to the shipped packages.
 
 ## Notes
 
+- 2026-07-09: **B-01 Phase 3 complete** (`Switch` toggle, GH #11) — 25/27 tasks. `Switch extends View`
+  (Slider idiom) bound two-way to a `Signal<boolean>`; `SwitchOptions` (label/onLabel/offLabel/disabled),
+  Space/Enter/click/Alt-hotkey toggle, green-on vs dim-off bracketed track with a sliding `●`/`o` knob,
+  role reuse (no new core role), `measure()`, and an `accelerators()` override so a labelled switch
+  joins the #6 duplicate check. New `switch.{spec,impl}` (ST-19…ST-26 + edges) + a `controls/switch`
+  kitchen-sink story (ST-27). Full `yarn verify` green. Only Phase 4 (docs/CHANGELOG/final gate) remains.
 - 2026-07-09: **B-01 Phase 2 complete** (Duplicate-accelerator warning, GH #6) — 17/27 tasks. Pure
   `findDuplicateAccelerators()` + a shared internal `devWarn(scope, msg)`; an additive `View.accelerators()`
   seam + `acceleratorScope` boundary flag with `Button`/`Label`/`Cluster` overrides; dev-gated checks

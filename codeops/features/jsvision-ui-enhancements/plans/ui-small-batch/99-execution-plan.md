@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-09
-> **Progress**: 17/27 tasks (63%) — Phases 1–2 complete
+> **Progress**: 25/27 tasks (93%) — Phases 1–3 complete
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -86,20 +86,20 @@ independent and may ship in separate commits.
 
 ### Step 3.1: Spec tests (RED)
 
-- [ ] 3.1.1 Spec tests — toggle via Space/Enter/click/Alt-hotkey, on/off/focus/disabled render, caps fallback, `measure()` (ST-19…ST-26) — `packages/ui/test/switch.spec.test.ts`
-- [ ] 3.1.2 Verify RED
+- [x] 3.1.1 Spec tests — toggle via Space/Enter/click/Alt-hotkey, on/off/focus/disabled render, caps fallback, `measure()` (ST-19…ST-26) — `packages/ui/test/switch.spec.test.ts` _(impl 2026-07-09 14:08)_
+- [x] 3.1.2 Verify RED _(Switch not exported → import fails)_
 
 ### Step 3.2: Implementation (GREEN)
 
-- [ ] 3.2.1 Implement `Switch extends View` + `SwitchOptions` (bind, keyboard/click/Alt-hotkey, track+knob draw with role reuse, caps fallback, `measure()`) with `@example` — `packages/ui/src/controls/switch.ts`
-- [ ] 3.2.2 Export `Switch` + `SwitchOptions` from `controls/index.ts` + `packages/ui/src/index.ts`
-- [ ] 3.2.3 Verify GREEN: ST-19…ST-26 pass (no new `@jsvision/core` role)
+- [x] 3.2.1 Implement `Switch extends View` + `SwitchOptions` (bind, keyboard/click/Alt-hotkey, track+knob draw with role reuse, caps fallback, `measure()`, `accelerators()` override for #6 consistency) with `@example` — `packages/ui/src/controls/switch.ts` _(impl 2026-07-09 14:08)_
+- [x] 3.2.2 Export `Switch` + `SwitchOptions` from `controls/index.ts` + `packages/ui/src/index.ts` _(impl 2026-07-09 14:08)_
+- [x] 3.2.3 Verify GREEN: ST-19…ST-26 pass (no new `@jsvision/core` role) _(1496 ui tests; typecheck clean)_
 
 ### Step 3.3: Impl tests & story
 
-- [ ] 3.3.1 Impl tests — wheel/ignore-when-disabled, `onLabel`/`offLabel` omission, hotkey focus-move — `packages/ui/test/switch.impl.test.ts`
-- [ ] 3.3.2 Kitchen-sink `controls/switch` story + register in `stories/index.ts`; smoke green (ST-27) — `packages/examples/kitchen-sink/stories/switch.story.ts`
-- [ ] 3.3.3 Full `yarn verify` green for Phase 3
+- [x] 3.3.1 Impl tests — Enter toggle, disabled ignores click/Alt-hotkey, wheel ignored, `onLabel`/`offLabel` omission, `accelerators()`, `select()` — `packages/ui/test/switch.impl.test.ts` _(impl 2026-07-09 14:09; 7 tests pass)_
+- [x] 3.3.2 Kitchen-sink `controls/switch` story (Wi-Fi/Sound/Locked, hotkeys + disabled, bound echo) + registered in `stories/index.ts`; smoke green (ST-27) — `packages/examples/kitchen-sink/stories/switch.story.ts` _(impl 2026-07-09 14:10)_
+- [x] 3.3.3 Full `yarn verify` green for Phase 3 _(16/16 turbo tasks; 1503 ui tests incl. the `controls/switch` smoke story; check:docs clean)_
 
 ---
 
