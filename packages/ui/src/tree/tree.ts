@@ -14,10 +14,10 @@ import type { Signal } from '../reactive/index.js';
 import { ScrollBar } from '../scroll/index.js';
 import { TreeRows } from './tree-rows.js';
 import { flattenVisible } from './graph.js';
-import type { FlatRow, TreeNode } from './graph.js';
+import type { FlatRow, MarkerStyle, TreeNode } from './graph.js';
 
-// Re-export the node model so `Tree` + `TreeNode` come from one place (the barrel also re-exports it).
-export type { TreeNode } from './graph.js';
+// Re-export the node model + marker style so they come from one place (the barrel re-exports both).
+export type { TreeNode, MarkerStyle } from './graph.js';
 
 /** Construction options for {@link Tree}. */
 export interface TreeOptions<T> {
@@ -37,6 +37,13 @@ export interface TreeOptions<T> {
   expandedByDefault?: boolean;
   /** Draw the `│├└─` connectors (default true); false = flat indent, markers unchanged. */
   guides?: boolean;
+  /**
+   * The expand-marker style (default `'tv'` — a faithful single `+`/`─`). `'brackets'` draws
+   * `[+]`/`[-]` (pure ASCII, the most legible); `'triangle'` draws `▸`/`▾` and falls back to
+   * `'brackets'` on a terminal without Unicode. Only the marker column changes — indentation and
+   * connectors are identical across styles.
+   */
+  markerStyle?: MarkerStyle;
 }
 
 /**
@@ -72,6 +79,7 @@ export interface TreeOptions<T> {
  *   roots,
  *   getText: (name) => name,
  *   command: 'open',
+ *   markerStyle: 'brackets', // `[+]`/`[-]` expand markers instead of the default `+`/`─`
  *   onSelect: (_i, node) => console.log('opened', node.value),
  * });
  * tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 } };
@@ -130,6 +138,7 @@ export class Tree<T> extends Group {
       focused: this.focused,
       selected: this.selected,
       guides: opts.guides ?? true,
+      markerStyle: opts.markerStyle ?? 'tv',
       flatten: this.flattened,
       command: this.command,
       onSelect: this.onSelect,
