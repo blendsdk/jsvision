@@ -9,7 +9,7 @@ const BASE = process.env.DOCS_BASE ?? '/jsvision/';
 // PR-preview builds still advertise the stable production URLs to crawlers.
 const SITE_URL = 'https://blendsdk.github.io/jsvision/';
 const OG_IMAGE = `${SITE_URL}og-placeholder.png`;
-const DEFAULT_DESCRIPTION = 'A TypeScript SDK for building Turbo Vision-style terminal (TUI) applications.';
+const DEFAULT_DESCRIPTION = 'A TypeScript SDK for building classic terminal (TUI) applications.';
 
 const GITHUB_URL = 'https://github.com/blendsdk/jsvision';
 const NPM_URL = 'https://www.npmjs.com/package/@jsvision/core';

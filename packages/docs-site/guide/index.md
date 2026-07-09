@@ -5,7 +5,7 @@ description: Learn JSVision — installation, core concepts, and building your f
 
 # Guide
 
-The JSVision guide walks you from a first install to a full Turbo Vision-style application.
+The JSVision guide walks you from a first install to a full classic terminal-UI application.
 
 > **Placeholder.** The Getting Started walkthrough, core concepts, and tutorials land in a later
 > milestone. This page exists so the navigation skeleton has no dead links.
