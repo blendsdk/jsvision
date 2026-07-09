@@ -118,6 +118,47 @@ export function demoShell(opts: DemoShellOptions): Application {
   return opts.content;
 }
 
+/**
+ * Build a demo-chromed, caps-correct application for an example that returns a
+ * whole `Application` (a modal dialog host, a desktop, and so on).
+ *
+ * It bundles `createApplication` with the shared demo menu bar / status line and
+ * the example's own capability profile, so the example only has to populate the
+ * desktop — open its dialog, add its windows — and return the app. The demo shell
+ * then wires the shared About / Theme / Depth handlers when it receives the
+ * returned application, so those controls work without the example repeating them.
+ *
+ * @param ctx - the example context: the terminal `caps` plus the cell grid.
+ * @param chrome - `'full'` (menu bar + status line) or `'minimal'` (status line only).
+ * @returns a mountable {@link Application} with the demo chrome already in place.
+ * @example
+ * import { defineExample } from '../_contract.js';
+ * import { openFile } from '@jsvision/files';
+ * import { demoApp } from '../../src/demo-shell.js';
+ *
+ * export default defineExample({
+ *   title: 'File dialog',
+ *   blurb: 'Browse a virtual file tree in a modal dialog.',
+ *   build: (ctx) => {
+ *     const app = demoApp(ctx, 'full');
+ *     void openFile(app, { fs, directory: '/home/demo' });
+ *     return app;
+ *   },
+ * });
+ */
+export function demoApp(
+  ctx: { readonly caps: CapabilityProfile; readonly width: number; readonly height: number },
+  chrome: 'minimal' | 'full',
+): Application {
+  return createApplication({
+    caps: ctx.caps,
+    viewport: { width: ctx.width, height: ctx.height },
+    theme: turboVisionTheme,
+    menuBar: chrome === 'full' ? buildMenuBar() : undefined,
+    statusLine: buildStatusLine(chrome),
+  });
+}
+
 /** Build an owned application with the demo chrome and place the content in it. */
 function shellForView(opts: DemoShellOptions, view: View): Application {
   const app = createApplication({

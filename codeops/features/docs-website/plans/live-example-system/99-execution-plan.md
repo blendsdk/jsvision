@@ -2,7 +2,7 @@
 
 > **Implements**: docs-website/RD-03 · **Feature**: docs-website
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 26/40 tasks (65%) · **Last Updated**: 2026-07-10 00:25
+> **Progress**: 30/40 tasks (75%) · **Last Updated**: 2026-07-10 00:56
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Each phase is a
 testable slice. **Verify** = `yarn verify` (AR-21) unless a phase names a faster inner loop.
@@ -81,10 +81,10 @@ Ref: 03-04, 03-03 · AR-12/13/19.
 ## Phase 5a — Seed examples: prove the mechanism
 Ref: 03-05 · AR-18/20, AC-9.
 
-- [ ] 5a.1 Spec: write ST-13 (`files/file-dialog` lists the seeded tree + navigates a subdir) and the ST-2 coverage for these two — run red.
-- [ ] 5a.2 Implement `examples/controls/button.ts` (minimal) + its page (blurb, `<<<`, `<PlayExample>`, a11y region); register it.
-- [ ] 5a.3 Implement `examples/files/file-dialog.ts` (full; seeds a virtual tree incl. a raw-`ESC` file for ST-14) + its page; register it — green ST-13 + ST-2 (both).
-- [ ] 5a.4 Green the remaining ST-14 half (sanitize strips the raw `ESC` in the painted frame; source rendered escaped).
+- [x] 5a.1 Spec: write ST-13 (`files/file-dialog` lists the seeded tree + navigates a subdir) and the ST-2 coverage for these two — run red. ✅ (completed: 2026-07-10 00:52 — `paint-smoke.spec` (ST-2), `file-dialog.spec` (ST-13), `security.spec` (ST-14 a/c); red confirmed — empty registry + missing `files/file-dialog` module)
+- [x] 5a.2 Implement `examples/controls/button.ts` (minimal) + its page (blurb, `<<<`, `<PlayExample>`, a11y region); register it. ✅ (completed: 2026-07-10 00:55 — `Button` bound to a click-count `signal` + `Text` echo; page `components/controls/button.md` + sidebar entry)
+- [x] 5a.3 Implement `examples/files/file-dialog.ts` (full; seeds a virtual tree incl. a raw-`ESC` file for ST-14) + its page; register it — green ST-13 + ST-2 (both). ✅ (completed: 2026-07-10 00:55 — resolves AR-22: `caps` added to `ExampleContext`, `demoApp(ctx,chrome)` exported from demo-shell, play-controller threads caps; example returns an `Application` opening its `FileDialog` via `openFile`/`execView` in `build()`; exports `HOME`/`FILE_TREE`/`seedFs`; page + sidebar)
+- [x] 5a.4 Green the remaining ST-14 half (sanitize strips the raw `ESC` in the painted frame; source rendered escaped). ✅ (completed: 2026-07-10 00:55 — ST-14(a) reads `seedFs()` notes.txt (raw ESC content), paints via `Text` through the real path → no control byte; ST-14(c) static: `PlayExample.vue` binds blurb `{{ }}`, no `v-html`)
 
 **Verify**: `yarn verify`
 
