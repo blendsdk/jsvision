@@ -80,9 +80,19 @@ export default withMermaid(
   defineConfig({
     base: BASE,
     vite: {
-      // Build-time constant for the demo shell's About box.
       define: {
+        // Build-time constant for the demo shell's About box.
         __JSVISION_VERSION__: JSON.stringify(ROOT_VERSION),
+        // The engine's dev-warning gate reads process.env.NODE_ENV; pin it for the browser bundle.
+        'process.env.NODE_ENV': JSON.stringify('production'),
+      },
+      resolve: {
+        // The only two Node built-ins in the @jsvision/core graph (the native tty host + the logger's
+        // file sink) — aliased to throwing browser stubs the live demos never call.
+        alias: {
+          'node:fs': '@jsvision/web/browser-stubs',
+          'node:tty': '@jsvision/web/browser-stubs',
+        },
       },
     },
     lang: 'en-US',
