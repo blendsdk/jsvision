@@ -25,10 +25,13 @@ permissions:
   pull-requests: write # comment the preview URL
 
 # Shared across both jobs so production and preview never push gh-pages
-# concurrently; the actions' git-push retry is the backstop.
+# concurrently. Do NOT cancel in progress: on a merge, the production deploy
+# (push to master) and the preview cleanup (pull_request: closed) both land in
+# this group at once — cancelling would silently drop the production deploy.
+# Serializing lets both complete; the actions' git-push retry is the backstop.
 concurrency:
   group: docs-gh-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   production:
