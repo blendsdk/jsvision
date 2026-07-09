@@ -1725,6 +1725,11 @@
   resolved "https://registry.yarnpkg.com/@xterm/addon-webgl/-/addon-webgl-0.18.0.tgz#9e927cee10af971595fb2a72fd4c3bc2819f0096"
   integrity sha512-xCnfMBTI+/HKPdRnSOHaJDRqEpq2Ugy8LEj9GiY4J3zJObo3joylIFaMvzBwbYRg8zLtkO0KQaStCeSfoaI2/w==
 
+"@xterm/headless@^5.5.0":
+  version "5.5.0"
+  resolved "https://registry.yarnpkg.com/@xterm/headless/-/headless-5.5.0.tgz#823e76994b01cc5bfe69f2c2cba08095ee928aa0"
+  integrity sha512-5xXB7kdQlFBP82ViMJTwwEc3gKCLGKR/eoxQm4zge7GPBl86tCdI0IdPJjoKd8mUSFXz5V7i/25sfsEkP4j46g==
+
 "@xterm/headless@^6.0.0":
   version "6.0.0"
   resolved "https://registry.npmjs.org/@xterm/headless/-/headless-6.0.0.tgz"

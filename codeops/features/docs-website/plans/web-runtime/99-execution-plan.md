@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 19:02
-> **Progress**: 0/17 tasks (0%)
+> **Last Updated**: 2026-07-09 20:07
+> **Progress**: 3/17 tasks (18%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -46,13 +46,13 @@ dogfood it back into the spike. Five phases; each is spec-first and leaves a **v
 **Reference**: [03-01](03-01-package-scaffold.md) · [07](07-testing-strategy.md) ST-1, ST-12 · AR-1, AR-2
 
 ### Step 1.1: Spec (RED)
-- [ ] 1.1.1 Write `packages/web/test/packaging.spec.test.ts`: **ST-1** (build emits `dist/index.js` + `dist/index.d.ts` + `dist/browser-stubs.js`) + **ST-12** (the `@jsvision/web/browser-stubs` subpath resolves and each stub **throws** when invoked; the `.` barrel does **not** re-export the stubs; `package.json#version === '0.1.0'`). Verify RED (no package yet). _(the full barrel-symbol presence assertion is completed in Phase 5 as modules land)_
+- [x] 1.1.1 Write `packages/web/test/packaging.spec.test.ts`: **ST-1** (build emits `dist/index.js` + `dist/index.d.ts` + `dist/browser-stubs.js`) + **ST-12** (the `@jsvision/web/browser-stubs` subpath resolves and each stub **throws** when invoked; the `.` barrel does **not** re-export the stubs; `package.json#version === '0.1.0'`). Verify RED (no package yet). _(the full barrel-symbol presence assertion is completed in Phase 5 as modules land)_ — done 2026-07-09 20:07 (RED confirmed: `@jsvision/web` unresolvable pre-build)
 
 ### Step 1.2: Implementation (GREEN)
-- [ ] 1.2.1 Scaffold `packages/web`: `package.json` (03-01 — private, ESM, exports `.`+`./browser-stubs`, deps core/ui/files, peer+dev `@xterm/xterm`, dev `@xterm/headless`), `tsconfig.json` + `vitest.config.ts` (copy `packages/files/`), `src/browser-stubs.ts` (promote `node-stub.ts`, JSDoc rewritten + `@example`), initial `src/index.ts` (barrel — grows per phase). Run `yarn install` (workspace symlink + new devDeps).
+- [x] 1.2.1 Scaffold `packages/web`: `package.json` (03-01 — private, ESM, exports `.`+`./browser-stubs`, deps core/ui/files, peer+dev `@xterm/xterm`, dev `@xterm/headless`), `tsconfig.json` + `vitest.config.ts` (copy `packages/files/`), `src/browser-stubs.ts` (promote `node-stub.ts`, JSDoc rewritten + `@example`), initial `src/index.ts` (barrel — grows per phase). Run `yarn install` (workspace symlink + new devDeps). — done 2026-07-09 20:07
 
 ### Step 1.3: Green + harden
-- [ ] 1.3.1 `yarn workspace @jsvision/web build` green; ST-1 + ST-12 (stubs/version) pass; `yarn check:deps` green (no native dep); `yarn check:docs` green for `browser-stubs.ts`.
+- [x] 1.3.1 `yarn workspace @jsvision/web build` green; ST-1 + ST-12 (stubs/version) pass; `yarn check:deps` green (no native dep); `yarn check:docs` green for `browser-stubs.ts`. — done 2026-07-09 20:07 (build emits all 3 dist artifacts; 4/4 spec tests pass; check:deps + check:docs green)
 
 ---
 
@@ -77,10 +77,10 @@ dogfood it back into the spike. Five phases; each is spec-first and leaves a **v
 **Reference**: [03-03](03-03-virtual-filesystem.md) · [07](07-testing-strategy.md) ST-4, ST-9 (path), ST-11 · AR-6
 
 ### Step 3.1: Spec (RED)
-- [ ] 3.1.1 Write `test/virtual-fs.spec.test.ts`: **ST-4** (a real `@jsvision/files` `FileList`/`FileDialog` over a virtual FS seeded `{ '/home/demo': { 'a.txt':'…', 'sub': { 'b.txt':'…' } } }` lists `a.txt`+`sub`, entering `sub` lists `b.txt`; no `node:fs` reachable) + **ST-11** (all 18 `FileSystem` methods per 03-03) + the **ST-9 path half** (`resolve('/home/demo','../x')` → `/home/x` lexically). Verify RED.
+- [ ] 3.1.1 Write `test/virtual-fs.spec.test.ts`: **ST-4** (a real `@jsvision/files` `FileList`/`FileDialog` over a virtual FS seeded `{ '/home/demo': { 'a.txt':'…', 'sub': { 'b.txt':'…' } } }` lists `a.txt`+`sub`, entering `sub` lists `b.txt`; `web/src` imports no `node:fs`/`node:tty`, and a stubbed build emits no `node:fs` specifier) + **ST-11** (the full `FileSystem` interface — 14 methods + the `sep` property — per 03-03) + the **ST-9 path half** (`resolve('/home/demo','../x')` → `/home/x` lexically). Verify RED.
 
 ### Step 3.2: Implementation (GREEN)
-- [ ] 3.2.1 `src/virtual-fs.ts` — `createBrowserFileSystem({ tree, home, mtime })`: in-memory node tree, `seed(FileTree)`, all 18 methods (03-03 map), deterministic mtime, pure-POSIX path ops, `@jsvision/files`-compatible error shapes; re-export from the barrel.
+- [ ] 3.2.1 `src/virtual-fs.ts` — `createBrowserFileSystem({ tree, home, mtime })`: in-memory node tree, `seed(FileTree)`, all `FileSystem` members — 14 methods + `sep` (03-03 map), deterministic mtime, pure-POSIX path ops, `@jsvision/files`-compatible error shapes; re-export from the barrel.
 
 ### Step 3.3: Green + harden
 - [ ] 3.3.1 ST-4, ST-11, ST-9(path) pass; add `virtual-fs.impl.test.ts` edges (hidden dotfiles, missing-path error shape matches `node-fs`, nested-seed depth, `writeFile`→`readFile` round-trip, `rename`/`unlink` mutate); `yarn verify` green; `check:docs` green.
@@ -114,7 +114,7 @@ dogfood it back into the spike. Five phases; each is spec-first and leaves a **v
 - [ ] 5.2.2 `packages/web/README.md` (consumer Vite-alias recipe, `.`+`./browser-stubs` entry points, `mountApp` quick-start, `UNRECLAIMABLE_CHORDS` note) + `LICENSE`.
 
 ### Step 5.3: Green + harden
-- [ ] 5.3.1 Full **ST-1…ST-12 green**; **ST-8** `yarn check:docs` green (no CodeOps/TV refs, every export has `@example`); `yarn verify` green (incl. the refactored spike typechecking against built `@jsvision/web`); `yarn check:deps` green; `yarn workspace @jsvision/examples build`/`demo:web` still boots. Final full verify.
+- [ ] 5.3.1 Full **ST-1…ST-12 green**; **ST-8** `yarn check:docs` green (no CodeOps/TV refs, every export has `@example`); `yarn verify` green; `yarn check:deps` green; the **dogfood proof** — `yarn workspace @jsvision/examples demo:web` still boots with identical behavior (the `web-xterm` spike is outside verify's typecheck scope, so this manual boot is its regression check). Final full verify.
 
 ---
 

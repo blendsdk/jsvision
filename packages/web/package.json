@@ -1,0 +1,54 @@
+{
+  "name": "@jsvision/web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Run any JSVision app in a browser xterm.js terminal — a browser host over the reused pure engine, a virtual FileSystem, key-chord reclaim, and a clipboard bridge. Private until first release.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./browser-stubs": {
+      "types": "./dist/browser-stubs.d.ts",
+      "import": "./dist/browser-stubs.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --project unit",
+    "test:e2e": "vitest run --project e2e --passWithNoTests",
+    "check:deps": "node ../../scripts/check-no-native-deps.mjs .",
+    "check:docs": "node ../../scripts/check-jsdoc.mjs ."
+  },
+  "dependencies": {
+    "@jsvision/core": "*",
+    "@jsvision/ui": "*",
+    "@jsvision/files": "*"
+  },
+  "peerDependencies": {
+    "@xterm/xterm": "^5.5.0"
+  },
+  "peerDependenciesMeta": {
+    "@xterm/xterm": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@xterm/headless": "^5.5.0",
+    "vitest": "^4.1.9"
+  }
+}
