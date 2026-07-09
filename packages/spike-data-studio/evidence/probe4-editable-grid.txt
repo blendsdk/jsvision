@@ -1,0 +1,58 @@
+=== Probe 4: editable grid + in-cell editor overlay ===
+
+① initial — cell cursor at (row 0, col 0=id)
+     1│Ada Lovelace    │ada@example.com   │gold     │   2500.00│
+     2│Alan Turing     │alan@example.com  │platinum │   9000.00│
+     3│Grace Hopper    │                  │silver   │      0.00│
+     4│Edsger Dijkstra │edsger@example.com│bronze   │    750.00│
+  [cursor: row 0 col 0 "id"  focus=grid]
+
+② →→ moved the CELL cursor to col 2 (email), same row
+     1│Ada Lovelace    │ada@example.com   │gold     │   2500.00│
+     2│Alan Turing     │alan@example.com  │platinum │   9000.00│
+     3│Grace Hopper    │                  │silver   │      0.00│
+     4│Edsger Dijkstra │edsger@example.com│bronze   │    750.00│
+  [cursor: row 0 col 2 "email"  focus=grid]
+
+③ ↓ moved the ROW cursor to row 1 (buffers follow the row)
+     1│Ada Lovelace    │ada@example.com   │gold     │   2500.00│
+     2│Alan Turing     │alan@example.com  │platinum │   9000.00│
+     3│Grace Hopper    │                  │silver   │      0.00│
+     4│Edsger Dijkstra │edsger@example.com│bronze   │    750.00│
+  [cursor: row 1 col 2 "email"  focus=grid]
+
+   editing balance of id=2 (Alan Turing), current="9000.00"
+
+④ Enter → in-cell editor mounted over the balance cell, focused
+     1│Ada Lovelace    │ada@example.com   │gold     │   2500.00│
+     2│Alan Turing     │alan@example.com  │platinum │ 9000.00  │
+     3│Grace Hopper    │                  │silver   │      0.00│
+     4│Edsger Dijkstra │edsger@example.com│bronze   │    750.00│
+  [cursor: row 1 col 4 "balance"  focus=EDITOR]
+   getFocused() is the editor? true
+
+⑤ typed "4321.00" — keystrokes routed to the overlay editor
+     1│Ada Lovelace    │ada@example.com   │gold     │   2500.00│
+     2│Alan Turing     │alan@example.com  │platinum │ 4321.00  │
+     3│Grace Hopper    │                  │silver   │      0.00│
+     4│Edsger Dijkstra │edsger@example.com│bronze   │    750.00│
+  [cursor: row 1 col 4 "balance"  focus=EDITOR]
+
+⑥ Enter → committed; editor gone; grid shows the new balance
+     1│Ada Lovelace    │ada@example.com   │gold     │   2500.00│
+     2│Alan Turing     │alan@example.com  │platinum │   4321.00│
+     3│Grace Hopper    │                  │silver   │      0.00│
+     4│Edsger Dijkstra │edsger@example.com│bronze   │    750.00│
+  [cursor: row 1 col 4 "balance"  focus=grid]
+   commit result: ok → balance=4321.00
+   independent DB read → balance=4321.00 (persisted ✓)
+
+   typed junk into an editor; buffer="zzz" dirty=true
+   Escape → buffer reverted="platinum" dirty=false
+
+   restored balance=9000.00 for id=2 — seed pristine.
+
+Probe 4 verdict: 🟢 cell cursor is an ADDITIVE SUBCLASS of GridRows (row-focus model does not
+   fight it); the editor overlay mounts at a computed cell rect, dispatch/focus route to it,
+   and Enter commits transactionally. Caveat: reuse needs @jsvision/ui to EXPORT GridRows +
+   the columns helpers (spike used a dist relative-path bypass).
