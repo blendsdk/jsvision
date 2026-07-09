@@ -6,7 +6,7 @@
  *   • a single-row edit commit round-trip.
  * Rough numbers, not a benchmark suite — enough for a usable / marginal / not-usable call.
  */
-import { DataGrid, createRenderRoot, createRoot, signal } from '@jsvision/ui';
+import { DataGrid, createRenderRoot, createRoot } from '@jsvision/ui';
 import type { Column } from '@jsvision/ui';
 import { pool } from './db.js';
 import { selectPage, updateOptimistic } from './crud.js';
@@ -71,10 +71,14 @@ async function main(): Promise<void> {
     await src.settle(); // let the touched page(s) load before the next jump (not timed)
   }
   const c = stats(composeSamples);
-  console.log(`\n1. compose+diff/frame while scrolling (${composeSamples.length} deep jumps, ${GRID_W}×${GRID_H} grid):`);
+  console.log(
+    `\n1. compose+diff/frame while scrolling (${composeSamples.length} deep jumps, ${GRID_W}×${GRID_H} grid):`,
+  );
   console.log(`   median ${ms(c.median)} · p95 ${ms(c.p95)} · max ${ms(c.max)}  (frame budget = 16ms)`);
   console.log(`   → ${c.p95 < 16 ? 'WELL within budget ✓' : c.p95 < 33 ? 'marginal' : 'over budget'}`);
-  console.log(`   pages materialized after 200 deep jumps: ${src.pagesInMemory} of ${Math.ceil(total / PAGE)} (no eviction — a real window would LRU-cap this)`);
+  console.log(
+    `   pages materialized after 200 deep jumps: ${src.pagesInMemory} of ${Math.ceil(total / PAGE)} (no eviction — a real window would LRU-cap this)`,
+  );
   disposeRoot.dispose();
 
   // 2) Page fetch round-trip (server → window).

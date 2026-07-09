@@ -21,10 +21,15 @@ export function caps(): CapabilityProfile {
 export function composeToLines(view: View, size: { width: number; height: number }): string[] {
   return createRoot((dispose) => {
     // Merge (don't clobber) so a `direction:'col'`/padding set by the caller survives.
-    view.layout = { ...view.layout, position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } };
+    view.layout = {
+      ...view.layout,
+      position: 'absolute',
+      rect: { x: 0, y: 0, width: size.width, height: size.height },
+    };
     const rr = createRenderRoot(size, { caps: caps() });
     rr.mount(view);
-    const lines = rr.buffer()
+    const lines = rr
+      .buffer()
       .rows()
       .map((row) => row.map((cell) => cell.char).join(''));
     dispose();
@@ -54,7 +59,11 @@ export function liveRoot(
   const dispose = createRoot((d) => {
     view = build();
     // Merge (don't clobber) so a `direction:'col'`/padding set by `build()` survives.
-    view.layout = { ...view.layout, position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } };
+    view.layout = {
+      ...view.layout,
+      position: 'absolute',
+      rect: { x: 0, y: 0, width: size.width, height: size.height },
+    };
     root = createRenderRoot(size, { caps: caps() });
     root.mount(view);
     return d;

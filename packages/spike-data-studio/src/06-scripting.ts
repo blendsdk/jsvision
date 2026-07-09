@@ -35,7 +35,9 @@ async function main(): Promise<void> {
   });
 
   const target = rs.current();
-  console.log(`\ncurrent id=${target?.id} name="${target?.name}" balance=${target?.balance} credit_limit=${target?.credit_limit}`);
+  console.log(
+    `\ncurrent id=${target?.id} name="${target?.name}" balance=${target?.balance} credit_limit=${target?.credit_limit}`,
+  );
 
   // Scenario A — a rule violation is VETOED end-to-end; no DB write occurs.
   console.log('\nA. edit balance ABOVE the credit limit → BeforeSave veto:');
@@ -51,9 +53,13 @@ async function main(): Promise<void> {
   rs.field('balance').set('1500.00');
   rs.field('name').set('  Ada   Lovelace  ');
   const ok = await rs.commit();
-  console.log(`   commit() → ${ok.status}` + (ok.status === 'ok' ? ` : name="${ok.row.name}" balance=${ok.row.balance}` : ''));
+  console.log(
+    `   commit() → ${ok.status}` + (ok.status === 'ok' ? ` : name="${ok.row.name}" balance=${ok.row.balance}` : ''),
+  );
   const afterOk = await pool.query('SELECT name, balance FROM app.customer WHERE id=$1', [target?.id]);
-  console.log(`   DB now → name="${afterOk.rows[0].name}" balance=${afterOk.rows[0].balance} (normalised name persisted ✓)`);
+  console.log(
+    `   DB now → name="${afterOk.rows[0].name}" balance=${afterOk.rows[0].balance} (normalised name persisted ✓)`,
+  );
 
   // Move the cursor to show the OnCurrent event fires.
   rs.next();
@@ -63,7 +69,11 @@ async function main(): Promise<void> {
   for (const e of log) console.log(`     • ${e}`);
 
   // Restore the seed.
-  await pool.query('UPDATE app.customer SET name=$1, balance=$2 WHERE id=$3', [target?.name, target?.balance, target?.id]);
+  await pool.query('UPDATE app.customer SET name=$1, balance=$2 WHERE id=$3', [
+    target?.name,
+    target?.balance,
+    target?.id,
+  ]);
   console.log(`\n   restored name/balance for id=${target?.id} — seed pristine.`);
 
   console.log('\n--- UNTRUSTED-SANDBOX ASSESSMENT (assessed, NOT built) ---');

@@ -22,21 +22,27 @@ async function main(): Promise<void> {
   console.log(`loaded ${window.length} customers; PK=${source.meta.primaryKey.join(',')}`);
 
   // Build a persistent 2-field form bound to the SAME field signals for the whole session.
-  const live = liveRoot(() => {
-    const form = new Group();
-    form.layout = { direction: 'col' };
-    const nameIn = new Input({ value: rs.field('name') });
-    const balIn = new Input({ value: rs.field('balance'), validator: range(0, 1e9) });
-    nameIn.layout = { size: { kind: 'fixed', cells: 1 } };
-    balIn.layout = { size: { kind: 'fixed', cells: 1 } };
-    form.add(nameIn);
-    form.add(balIn);
-    return form;
-  }, { width: W, height: 2 });
+  const live = liveRoot(
+    () => {
+      const form = new Group();
+      form.layout = { direction: 'col' };
+      const nameIn = new Input({ value: rs.field('name') });
+      const balIn = new Input({ value: rs.field('balance'), validator: range(0, 1e9) });
+      nameIn.layout = { size: { kind: 'fixed', cells: 1 } };
+      balIn.layout = { size: { kind: 'fixed', cells: 1 } };
+      form.add(nameIn);
+      form.add(balIn);
+      return form;
+    },
+    { width: W, height: 2 },
+  );
 
   const frame = (): string => {
     live.root.flush();
-    return live.text().map((l) => l.trimEnd()).join(' | ');
+    return live
+      .text()
+      .map((l) => l.trimEnd())
+      .join(' | ');
   };
 
   console.log('\n1. cursor move repaints the SAME mounted controls (no re-wire):');
@@ -55,10 +61,15 @@ async function main(): Promise<void> {
   console.log(`   current id=${before?.id} name="${before?.name}" balance=${before?.balance} dirty=${rs.dirty()}`);
   // Simulate a user edit by writing the bound signal (what the Input does on keystroke).
   rs.field('balance').set('1234.50');
-  console.log(`   after edit → buffer balance="${rs.field('balance')()}" dirty=${rs.dirty()} dirtyFields=${JSON.stringify(rs.dirtyFields())}`);
+  console.log(
+    `   after edit → buffer balance="${rs.field('balance')()}" dirty=${rs.dirty()} dirtyFields=${JSON.stringify(rs.dirtyFields())}`,
+  );
   console.log(`   composed form now shows: [${frame()}]`);
   const result = await rs.commit();
-  console.log(`   commit() → ${result.status}` + (result.status === 'ok' ? ` new balance=${result.row.balance} new xmin=${result.row.xmin}` : ''));
+  console.log(
+    `   commit() → ${result.status}` +
+      (result.status === 'ok' ? ` new balance=${result.row.balance} new xmin=${result.row.xmin}` : ''),
+  );
   console.log(`   after commit dirty=${rs.dirty()}`);
   // Confirm persistence with an independent read.
   const check = await pool.query('SELECT balance FROM app.customer WHERE id=$1', [before?.id]);

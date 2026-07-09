@@ -50,7 +50,12 @@ function composeGrid(
     const lines = rr
       .buffer()
       .rows()
-      .map((row) => row.map((c) => c.char).join('').trimEnd());
+      .map((row) =>
+        row
+          .map((c) => c.char)
+          .join('')
+          .trimEnd(),
+      );
     dispose();
     return { lines, grid };
   });
@@ -58,10 +63,7 @@ function composeGrid(
 
 async function main(): Promise<void> {
   console.log('=== Probe 3b: PAGING VERDICT (windowed Proxy vs the real DataGrid) ===');
-  const total = Math.min(
-    Number((await pool.query('SELECT count(*)::int AS n FROM app.big')).rows[0].n),
-    TOTAL_LIMIT,
-  );
+  const total = Math.min(Number((await pool.query('SELECT count(*)::int AS n FROM app.big')).rows[0].n), TOTAL_LIMIT);
   console.log(`app.big total rows: ${total}, page size: ${PAGE}`);
 
   // Scenario 1 — FIXED columns, NO sort: scroll deep, then let the window page in. This is the real
@@ -70,13 +72,17 @@ async function main(): Promise<void> {
   const src = mkSource(total);
   src.resetCounters();
   let out = composeGrid(src, FIXED_COLS, 50000, undefined);
-  console.log(`   first compose at focus=50000 → index accesses=${src.accesses}, pages fetched(so far)=${src.pagesFetched}`);
+  console.log(
+    `   first compose at focus=50000 → index accesses=${src.accesses}, pages fetched(so far)=${src.pagesFetched}`,
+  );
   await src.settle();
   // Recompose so the freshly-paged rows are shown.
   out = composeGrid(src, FIXED_COLS, 50000, undefined);
   await src.settle();
   out = composeGrid(src, FIXED_COLS, 50000, undefined);
-  console.log(`   pages materialized total: ${src.pagesInMemory} of ${Math.ceil(total / PAGE)} (${((src.pagesInMemory / Math.ceil(total / PAGE)) * 100).toFixed(2)}%)`);
+  console.log(
+    `   pages materialized total: ${src.pagesInMemory} of ${Math.ceil(total / PAGE)} (${((src.pagesInMemory / Math.ceil(total / PAGE)) * 100).toFixed(2)}%)`,
+  );
   console.log('   composed frame around row 50000:');
   for (const l of out.lines.filter((l) => l.length)) console.log(`     ${l}`);
 
@@ -85,9 +91,14 @@ async function main(): Promise<void> {
   const src2 = mkSource(total);
   src2.fetchOnMiss = false; // just measure the scan; do not fire 500 fetches
   src2.resetCounters();
-  const autoCols: Column<Row>[] = [...FIXED_COLS.slice(0, 4), { title: 'made_on', accessor: (r) => String(r.made_on ?? ''), width: 'auto' }];
+  const autoCols: Column<Row>[] = [
+    ...FIXED_COLS.slice(0, 4),
+    { title: 'made_on', accessor: (r) => String(r.made_on ?? ''), width: 'auto' },
+  ];
   composeGrid(src2, autoCols, 0, undefined);
-  console.log(`   index accesses in ONE compose: ${src2.accesses}  → ${src2.accesses >= total ? 'FULL SCAN (auto measures every row) ✗' : 'windowed ✓'}`);
+  console.log(
+    `   index accesses in ONE compose: ${src2.accesses}  → ${src2.accesses >= total ? 'FULL SCAN (auto measures every row) ✗' : 'windowed ✓'}`,
+  );
 
   // Scenario 3 — a client-side sort forces sortRows to spread the whole array.
   console.log('\n③ FIXED columns + CLIENT sort — one compose:');
@@ -96,7 +107,9 @@ async function main(): Promise<void> {
   src3.resetCounters();
   const sort = signal<import('@jsvision/ui').SortState>({ col: 0, dir: 'asc' });
   composeGrid(src3, FIXED_COLS, 0, sort);
-  console.log(`   index accesses in ONE compose: ${src3.accesses}  → ${src3.accesses >= total ? 'FULL SCAN (client sort spreads the array) ✗' : 'windowed ✓'}`);
+  console.log(
+    `   index accesses in ONE compose: ${src3.accesses}  → ${src3.accesses >= total ? 'FULL SCAN (client sort spreads the array) ✗' : 'windowed ✓'}`,
+  );
 
   console.log('\nPAGING VERDICT:');
   console.log('  🟡 A windowed Proxy dense-array feeds the UNMODIFIED DataGrid — BUT only with');

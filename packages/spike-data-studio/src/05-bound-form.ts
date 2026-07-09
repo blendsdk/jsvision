@@ -6,7 +6,18 @@
  *   • a `CheckGroup` (bool) binds through a small typed adapter over the string buffer;
  *   • Save is gated by validation — the same `Input.valid()` sweep `Dialog.valid()` runs.
  */
-import { Group, Text, Input, CheckGroup, createEventLoop, effect, untrack, createRoot, signal, filter } from '@jsvision/ui';
+import {
+  Group,
+  Text,
+  Input,
+  CheckGroup,
+  createEventLoop,
+  effect,
+  untrack,
+  createRoot,
+  signal,
+  filter,
+} from '@jsvision/ui';
 import type { Column, Signal, Validator, View } from '@jsvision/ui';
 import { pool } from './db.js';
 import { pgSource } from './data-source.js';
@@ -19,7 +30,11 @@ const W = 46;
 const H = 11;
 
 /** A "required" validator: any keystroke allowed, but the completed value must be non-empty. */
-const required = (): Validator => ({ isValidInput: () => true, isValid: (s) => s.trim().length > 0, error: 'required' });
+const required = (): Validator => ({
+  isValidInput: () => true,
+  isValid: (s) => s.trim().length > 0,
+  error: 'required',
+});
 
 /** Absolute-place a child in a parent group. */
 function at(parent: Group, child: View, x: number, y: number, w: number, h: number): void {
@@ -118,7 +133,15 @@ async function main(): Promise<void> {
 
   const frame = (title: string): void => {
     loop.renderRoot.flush();
-    const lines = loop.renderRoot.buffer().rows().map((row) => row.map((c) => c.char).join('').trimEnd());
+    const lines = loop.renderRoot
+      .buffer()
+      .rows()
+      .map((row) =>
+        row
+          .map((c) => c.char)
+          .join('')
+          .trimEnd(),
+      );
     console.log(`\n${title}`);
     for (const l of lines) if (l.length) console.log(`  ${l}`);
   };
@@ -150,16 +173,23 @@ async function main(): Promise<void> {
   rs.field('name').set('');
   const sweep = (): { ok: boolean; firstInvalid?: string } => {
     // Exactly what Dialog.valid() does: depth-first, return the first control whose valid() fails.
-    for (const [label, ctrl] of [['name', nameIn], ['balance', balIn]] as const) {
+    for (const [label, ctrl] of [
+      ['name', nameIn],
+      ['balance', balIn],
+    ] as const) {
       if (!ctrl.valid()) return { ok: false, firstInvalid: label };
     }
     return { ok: true };
   };
   const g1 = sweep();
-  console.log(`   name empty → gate: ${g1.ok ? 'OK' : `BLOCKED (refocus "${g1.firstInvalid}")`}  [name.invalid=${nameIn.invalid}]`);
+  console.log(
+    `   name empty → gate: ${g1.ok ? 'OK' : `BLOCKED (refocus "${g1.firstInvalid}")`}  [name.invalid=${nameIn.invalid}]`,
+  );
   rs.field('name').set('Alan Turing');
   const g2 = sweep();
-  console.log(`   name restored → gate: ${g2.ok ? 'OK → commit allowed' : 'BLOCKED'}  [name.invalid=${nameIn.invalid}]`);
+  console.log(
+    `   name restored → gate: ${g2.ok ? 'OK → commit allowed' : 'BLOCKED'}  [name.invalid=${nameIn.invalid}]`,
+  );
 
   rs.rollback();
   console.log('\n   (no DB writes in this probe — seed already pristine.)');

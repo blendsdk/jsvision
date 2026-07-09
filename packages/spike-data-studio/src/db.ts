@@ -12,8 +12,7 @@ import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
   throw new Error(
-    'DATABASE_URL is not set. Example:\n' +
-      "  export DATABASE_URL='postgres://postgres:spike@localhost:5433/postgres'",
+    'DATABASE_URL is not set. Example:\n' + "  export DATABASE_URL='postgres://postgres:spike@localhost:5433/postgres'",
   );
 }
 

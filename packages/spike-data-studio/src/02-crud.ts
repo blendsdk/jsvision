@@ -69,21 +69,43 @@ async function main(): Promise<void> {
   }).catch((e) => console.log(`   txn threw: ${(e as Error).message}`));
   await pool
     .query('SELECT balance, credit_limit FROM app.customer WHERE id=$1', [inserted.id])
-    .then((r) => console.log(`   after rollback: balance=${r.rows[0].balance} credit_limit=${r.rows[0].credit_limit} (reverted ✓)`));
+    .then((r) =>
+      console.log(
+        `   after rollback: balance=${r.rows[0].balance} credit_limit=${r.rows[0].credit_limit} (reverted ✓)`,
+      ),
+    );
 
   // 4. Optimistic concurrency via xmin — two connections, second write conflicts.
   console.log('\n4. optimistic concurrency (xmin), two connections:');
   const a = await pool.connect();
   const b = await pool.connect();
   try {
-    const read = (await a.query('SELECT *, xmin::text AS xmin FROM app.customer WHERE id=$1', [inserted.id])).rows[0] as Customer;
+    const read = (await a.query('SELECT *, xmin::text AS xmin FROM app.customer WHERE id=$1', [inserted.id]))
+      .rows[0] as Customer;
     console.log(`   A reads id=${inserted.id}, xmin=${read.xmin}`);
     const bWrite = await updateByKey<Customer>('app', 'customer', { id: inserted.id }, { balance: 100 }, b);
     console.log(`   B commits a change → new xmin=${bWrite?.xmin}`);
-    const aWrite = await updateOptimistic<Customer>('app', 'customer', { id: inserted.id }, { balance: 200 }, read.xmin, a);
-    console.log(`   A optimistic update with STALE xmin → ${aWrite.ok ? 'wrote (BUG)' : 'CONFLICT DETECTED ✓ (0 rows)'}`);
-    const fresh = (await a.query('SELECT xmin::text AS xmin FROM app.customer WHERE id=$1', [inserted.id])).rows[0] as Customer;
-    const aRetry = await updateOptimistic<Customer>('app', 'customer', { id: inserted.id }, { balance: 200 }, fresh.xmin, a);
+    const aWrite = await updateOptimistic<Customer>(
+      'app',
+      'customer',
+      { id: inserted.id },
+      { balance: 200 },
+      read.xmin,
+      a,
+    );
+    console.log(
+      `   A optimistic update with STALE xmin → ${aWrite.ok ? 'wrote (BUG)' : 'CONFLICT DETECTED ✓ (0 rows)'}`,
+    );
+    const fresh = (await a.query('SELECT xmin::text AS xmin FROM app.customer WHERE id=$1', [inserted.id]))
+      .rows[0] as Customer;
+    const aRetry = await updateOptimistic<Customer>(
+      'app',
+      'customer',
+      { id: inserted.id },
+      { balance: 200 },
+      fresh.xmin,
+      a,
+    );
     console.log(`   A re-reads fresh xmin then retries → ${aRetry.ok ? 'wrote ✓' : 'still conflict (BUG)'}`);
   } finally {
     a.release();
@@ -102,12 +124,14 @@ async function main(): Promise<void> {
 
   // 6. No-PK table (app.tag): what identifies a row? Decision → read-only.
   console.log('\n6. no-PK table (app.tag) — row identity:');
-  const dupCheck = await pool.query(
-    `SELECT count(*) - count(DISTINCT (label, color)) AS dup_rows FROM app.tag`,
+  const dupCheck = await pool.query(`SELECT count(*) - count(DISTINCT (label, color)) AS dup_rows FROM app.tag`);
+  console.log(
+    `   full-row-match UPDATE is ambiguous when duplicate rows exist (dup rows now: ${dupCheck.rows[0].dup_rows}).`,
   );
-  console.log(`   full-row-match UPDATE is ambiguous when duplicate rows exist (dup rows now: ${dupCheck.rows[0].dup_rows}).`);
   const ctid = await pool.query(`SELECT ctid::text, label FROM app.tag LIMIT 1`);
-  console.log(`   ctid gives a physical row id (${ctid.rows[0].ctid} → ${ctid.rows[0].label}) but it CHANGES on UPDATE/VACUUM.`);
+  console.log(
+    `   ctid gives a physical row id (${ctid.rows[0].ctid} → ${ctid.rows[0].label}) but it CHANGES on UPDATE/VACUUM.`,
+  );
   console.log('   DECISION: a no-PK table is READ-ONLY in the editor (or require the user to add a PK). ✓');
 
   // 7. Constraint errors → structured, user-presentable.
@@ -119,15 +143,17 @@ async function main(): Promise<void> {
   await tryMapped('CHECK (order_item.qty>0)', () =>
     updateByKey('app', 'order_item', { order_id: 1, line_no: 1 }, { qty: 0 }),
   );
-  await tryMapped('FK (order.customer_id)', () =>
-    insertReturning('app', 'order', { customer_id: 999999, total: 1 }),
+  await tryMapped('FK (order.customer_id)', () => insertReturning('app', 'order', { customer_id: 999999, total: 1 }));
+  await tryMapped('bad numeric input', () =>
+    updateByKey('app', 'customer', { id: inserted.id }, { balance: 'not-a-number' }),
   );
-  await tryMapped('bad numeric input', () => updateByKey('app', 'customer', { id: inserted.id }, { balance: 'not-a-number' }));
 
   // Cleanup: remove the scratch customer so the seed stays pristine.
   const del = await deleteByKey('app', 'customer', { id: inserted.id });
   console.log(`\ncleanup: deleted scratch customer id=${inserted.id} (${del} row) — seed pristine.`);
-  console.log('\nProbe 2 verdict: 🟢 parameterized CRUD, txn rollback, xmin conflict detection, composite-PK all work;');
+  console.log(
+    '\nProbe 2 verdict: 🟢 parameterized CRUD, txn rollback, xmin conflict detection, composite-PK all work;',
+  );
   console.log('   no-PK → read-only; constraint errors map to structured, user-presentable messages.');
 }
 
