@@ -128,7 +128,7 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
         const def = (await opts.entry.load()).default;
         const caps = buildBrowserCaps({ colorDepth: depth });
         const app = demoShell({
-          content: def.build({ width: size.width, height: size.height }),
+          content: def.build({ width: size.width, height: size.height, caps }),
           caps,
           viewport: size,
           chrome: opts.entry.chrome,

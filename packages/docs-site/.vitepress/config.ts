@@ -117,7 +117,11 @@ export default withMermaid(
       // links); the trees fill out as later milestones add content.
       sidebar: {
         '/guide/': [{ text: 'Guide', items: [{ text: 'Introduction', link: '/guide/' }] }],
-        '/components/': [{ text: 'Components', items: [{ text: 'Overview', link: '/components/' }] }],
+        '/components/': [
+          { text: 'Components', items: [{ text: 'Overview', link: '/components/' }] },
+          { text: 'Controls', items: [{ text: 'Button', link: '/components/controls/button' }] },
+          { text: 'Files', items: [{ text: 'File dialog', link: '/components/files/file-dialog' }] },
+        ],
         '/apps/': [{ text: 'Apps', items: [{ text: 'Overview', link: '/apps/' }] }],
         '/api/': [{ text: 'API Reference', items: [{ text: 'Overview', link: '/api/' }] }],
         '/reference/': [

@@ -12,13 +12,21 @@
  * by the file-dialog example to seed a virtual tree.
  */
 import type { Application, View } from '@jsvision/ui';
+import type { CapabilityProfile } from '@jsvision/core';
 
-/** What an example's `build()` receives: the cell grid it should compose into. */
+/** What an example's `build()` receives: the cell grid and terminal profile to compose into. */
 export interface ExampleContext {
   /** Available width in cells. */
   readonly width: number;
   /** Available height in cells. */
   readonly height: number;
+  /**
+   * The terminal capability profile (colour depth, Unicode, etc.). A single-`View`
+   * example can ignore it — the demo shell builds its app. An example that returns
+   * a whole `Application` must thread it into `createApplication({ caps })` (use the
+   * `demoApp(ctx, chrome)` helper) so colours and the Depth control resolve correctly.
+   */
+  readonly caps: CapabilityProfile;
 }
 
 /**

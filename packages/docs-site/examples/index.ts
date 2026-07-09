@@ -28,4 +28,19 @@ export interface ExampleEntry {
  * the example modules land. Each `load()` is a dynamic `import()` so the example
  * is code-split out of the initial page bundle.
  */
-export const EXAMPLES: readonly ExampleEntry[] = [];
+export const EXAMPLES: readonly ExampleEntry[] = [
+  {
+    id: 'controls/button',
+    category: 'controls',
+    chrome: 'minimal',
+    sourcePath: 'examples/controls/button.ts',
+    load: () => import('./controls/button.js'),
+  },
+  {
+    id: 'files/file-dialog',
+    category: 'files',
+    chrome: 'full',
+    sourcePath: 'examples/files/file-dialog.ts',
+    load: () => import('./files/file-dialog.js'),
+  },
+];
