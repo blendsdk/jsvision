@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-09
-> **Progress**: 8/27 tasks (30%) — Phase 1 complete
+> **Progress**: 17/27 tasks (63%) — Phases 1–2 complete
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -61,22 +61,22 @@ independent and may ship in separate commits.
 
 ### Step 2.1: Spec tests (RED)
 
-- [ ] 2.1.1 Spec tests for pure `findDuplicateAccelerators()` (ST-9…ST-13) — `packages/ui/test/accelerators.spec.test.ts`
-- [ ] 2.1.2 Spec tests for scope warnings: menu build (ST-14…ST-16), Dialog mount (ST-17), TabView mount (ST-18) — `menu`/`dialog`/`tabs` spec files
-- [ ] 2.1.3 Verify RED
+- [x] 2.1.1 Spec tests for pure `findDuplicateAccelerators()` (ST-9…ST-13) — `packages/ui/test/accelerators.spec.test.ts` _(impl 2026-07-09 13:50)_
+- [x] 2.1.2 Spec tests for scope warnings (ST-14…ST-18) — **consolidated into the new `accelerators.spec.test.ts`** (the existing menu/dialog/tabs specs already use ST-16…18 / ST-09…12 / ST-14…18, so folding these in would collide — same isolation as PF-002; AR-25 runtime note) _(impl 2026-07-09 13:50)_
+- [x] 2.1.3 Verify RED _(module missing → import fails, no tests run)_
 
 ### Step 2.2: Implementation (GREEN)
 
-- [ ] 2.2.1 Pure `findDuplicateAccelerators()` + `DuplicateAccelerator` — `packages/ui/src/menu/accelerators.ts`; export from barrel with `@example`
-- [ ] 2.2.2 Shared scope-tagged `devWarn(scope, message)` — `packages/ui/src/shared/warnings.ts` (reactive keeps its `reactive` prefix); no other `console.*` in `src`
-- [ ] 2.2.3 Additive `View.accelerators()` seam (default `[]`) + overrides on `Button`/`Label`/`Cluster` (the Dialog-scope walk) — `view/view.ts`, `controls/*`. Tabs need **no** view override: their accelerators come from the data-level `tabs()` check on `TabView`.
-- [ ] 2.2.4 Wire the auto (dev-gated) checks: **submenu items** at `subMenu()` build-time in `menu/builders.ts`; **bar titles** at `menuBar()` build-time in `menu/menubar.ts`; **Dialog** focus scope via a scope-root mount walk (stop at nested `Dialog`/`TabView`); **TabView** via a data-level check over `tabs()` (strip tabs only — no descent into page contents)
-- [ ] 2.2.5 Verify GREEN: ST-9…ST-18 pass; menu/dialog/tabs suites unchanged; production-silent
+- [x] 2.2.1 Pure `findDuplicateAccelerators()` + `DuplicateAccelerator` + `reportDuplicateAccelerators()` — `packages/ui/src/menu/accelerators.ts`; exported from barrel with `@example` _(impl 2026-07-09 13:58)_
+- [x] 2.2.2 Shared scope-tagged `devWarn(scope, message)` — `packages/ui/src/shared/warnings.ts` (reactive keeps its own `reactive`-prefixed devWarn, untouched); exported from barrel with `@example` _(impl 2026-07-09 13:58)_
+- [x] 2.2.3 Additive `View.accelerators()` seam (default `[]`) + `acceleratorScope` boundary flag + overrides on `Button`/`Label`/`Cluster` — `view/view.ts`, `controls/*`. Tabs use the data-level `tabs()` check (no view override) _(impl 2026-07-09 13:58)_
+- [x] 2.2.4 Wired the auto (dev-gated) checks: **submenu items** at `subMenu()` in `menu/builders.ts`; **bar titles** at `menuBar()` in `menu/menubar.ts`; **Dialog** focus scope via a mount-time `collectAccelerators` walk stopping at `acceleratorScope` boundaries; **TabView** via a mount-time data-level check over `tabs()` (strip only) _(impl 2026-07-09 13:58)_
+- [x] 2.2.5 Verify GREEN: ST-9…ST-18 pass; 1480 ui tests pass; typecheck clean; production-silent (ST-15) _(2026-07-09 13:59)_
 
 ### Step 2.3: Impl tests & hardening
 
-- [ ] 2.3.1 Impl tests — validator ordering/dedup, disabled-cluster-item counts, separator skip, nested-scope isolation, no cross-scope false positive — `packages/ui/test/accelerators.impl.test.ts`
-- [ ] 2.3.2 Full `yarn verify` green for Phase 2
+- [x] 2.3.1 Impl tests — validator multi-group ordering, disabled-cluster-item counts, nested-`Dialog`/`TabView` scope isolation, real within-dialog Label+Button collision — `packages/ui/test/accelerators.impl.test.ts` _(impl 2026-07-09 14:00; 8 tests pass)_
+- [x] 2.3.2 Full `yarn verify` green for Phase 2 _(16/16 turbo tasks; 1488 ui tests; check:docs clean — `devWarn` kept internal to avoid a public duplicate-name collision with the reactive `devWarn`)_
 
 ---
 

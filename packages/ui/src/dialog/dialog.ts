@@ -17,6 +17,7 @@ import { Window, drawFrame, frameZoneAt } from '../window/index.js';
 import type { Rect } from '../layout/index.js';
 import type { ModalHost, ModalHostAware } from '../event/index.js';
 import { Commands } from '../status/index.js';
+import { reportDuplicateAccelerators } from '../menu/accelerators.js';
 
 /** A view that exposes a zero-arg blocking `valid()` (such as an `Input`), for the child sweep. */
 interface Validatable {
@@ -75,6 +76,8 @@ export interface DialogOptions {
 export class Dialog extends Window implements ModalHostAware {
   /** Caught after the focused chain so the hosted buttons' command events are seen dialog-wide. */
   override postProcess = true;
+  /** Roots the dialog's accelerator scope — its mount-time duplicate check stops at nested scopes. */
+  override acceleratorScope = true;
 
   /** @internal The modal host injected by `execView`; `null` when modeless. */
   protected modalHost: ModalHost | null = null;
@@ -103,6 +106,27 @@ export class Dialog extends Window implements ModalHostAware {
       const x = opts.rect?.x ?? 0;
       const y = opts.rect?.y ?? 0;
       this.layout = { position: 'absolute', padding: 1, rect: { x, y, width, height } };
+    }
+    // Dev-only: on mount, flag two controls in this dialog's focus scope that claim the same
+    // `Alt`+hotkey. The walk sees statically-added children present at mount; a reactively-inserted
+    // (addDynamic/Show/For) control is not re-checked — acceptable, dialog chrome is composed statically.
+    this.onMount(() => {
+      const chars: string[] = [];
+      this.collectAccelerators(this, chars);
+      reportDuplicateAccelerators('dialog', chars);
+    });
+  }
+
+  /**
+   * Depth-first collect of the accelerator chars claimed within this dialog's focus scope. Descends
+   * the tree from `view`, gathering each view's `accelerators()`, but stops at a nested accelerator
+   * scope boundary (another `Dialog` or a `TabView`) — that scope runs its own check.
+   */
+  private collectAccelerators(view: View, out: string[]): void {
+    if (view !== this && view.acceleratorScope) return; // nested scope owns its own check
+    for (const char of view.accelerators()) out.push(char);
+    if (view instanceof Group) {
+      for (const child of view.children) this.collectAccelerators(child, out);
     }
   }
 

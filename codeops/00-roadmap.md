@@ -16,7 +16,7 @@
 | jsvision-ui | [→](features/jsvision-ui/00-roadmap.md) | **22 ✅ Done (RD-01…RD-22)** — Theming completes the set | 22/22 RDs | ✅ | 2026-07-08 |
 | theme-designer | [→](features/theme-designer/00-roadmap.md) | PL-01 ✅ Done — standalone `@jsvision/theme-designer` app + reusable `Slider` (all 4 phases / 40 tasks) | 1/1 plans | ✅ | 2026-07-09 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
-| jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 🔄 Executing — UI small batch: Tree markers (#17) ✅ · duplicate-accelerator warning (#6) · Switch (#11) | 0/1 plans | 🔄 | 2026-07-09 |
+| jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 🔄 Executing — UI small batch: Tree markers (#17) ✅ · duplicate-accelerator warning (#6) ✅ · Switch (#11) | 0/1 plans | 🔄 | 2026-07-09 |
 
 ## Archived
 
@@ -26,6 +26,9 @@
 
 ## Notes
 
+- 2026-07-09: **B-01 Phase 2 of 4 done** (`exec_plan`): duplicate-accelerator dev-warning (GH #6) —
+  pure `findDuplicateAccelerators` + a `View.accelerators()`/`acceleratorScope` seam, dev-gated checks on
+  submenus/menu-bar (build-time) + Dialog/TabView (mount, strip-only for tabs). `yarn verify` green.
 - 2026-07-09: **B-01 → EXECUTING** 🔄 (`exec_plan`). Phase 1 of 4 done (Tree `markerStyle`, GH #17):
   opt-in `'tv'`/`'brackets'`/`'triangle'` markers with a caps-driven `triangle`→`brackets` fallback,
   `'tv'` path byte-unchanged; new `tree-markers.{spec,impl}` + kitchen-sink story on `brackets`. Full
