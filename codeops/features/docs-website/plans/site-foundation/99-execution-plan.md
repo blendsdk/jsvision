@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 16:32
-> **Progress**: 14/25 tasks (56%)
+> **Last Updated**: 2026-07-09 16:45
+> **Progress**: 20/25 tasks (80%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -87,15 +87,15 @@ lands at Phase 2 and grows).
 **Reference**: [03-01](03-01-workspace-and-vitepress.md) · [07](07-testing-strategy.md) ST-8, ST-9, ST-10 · AR-9, AR-11
 
 ### Step 4.1: Spec (RED)
-- [ ] 4.1.1 Extend `check-docs-build.mjs`: **ST-8** (unique title + OG/Twitter meta per page), **ST-9** (meta-CSP present, no `unsafe-eval`), **ST-10** (`sitemap.xml`, `robots.txt`, favicon, `404.html` in `dist`). Verify RED.
+- [x] 4.1.1 Extend `check-docs-build.mjs`: **ST-8** (unique title + OG/Twitter meta per page), **ST-9** (meta-CSP present, no `unsafe-eval`), **ST-10** (`sitemap.xml`, `robots.txt`, favicon, `404.html` in `dist`). Verify RED. _(2026-07-09 16:45 — ST-8/9/10 RED confirmed; ST-9 additionally asserts strict script-src hash coverage of every inline script)_
 
 ### Step 4.2: Implementation (GREEN)
-- [ ] 4.2.1 SEO: per-page description + a `transformPageData`/`transformHead` emitting `og:*`/`twitter:card` with `public/og-placeholder.png` (AR-11); enable the VitePress `sitemap` (hostname = the Pages URL).
-- [ ] 4.2.2 `public/robots.txt` (+ sitemap link), `public/favicon.ico`, custom `404.md`, and the `<meta http-equiv="Content-Security-Policy">` (Phase-A policy from 03-01, no `unsafe-eval`).
-- [ ] 4.2.3 **CSP validation (PF-003)**: load the built site headless, assert **zero CSP violations**, and add the SHA-256 hashes of VitePress's inline scripts to `script-src` so the strict policy (no `'unsafe-inline'` for scripts) holds — turns ST-9's runtime half green.
+- [x] 4.2.1 SEO: per-page description + a `transformPageData`/`transformHead` emitting `og:*`/`twitter:card` with `public/og-placeholder.png` (AR-11); enable the VitePress `sitemap` (hostname = the Pages URL). _(2026-07-09 16:45 — `transformHead` og+twitter+canonical (canonical prod URLs even on previews); 1200×630 branded placeholder PNG; sitemap.xml emitted)_
+- [x] 4.2.2 `public/robots.txt` (+ sitemap link), `public/favicon.ico`, custom `404.md`, and the `<meta http-equiv="Content-Security-Policy">` (Phase-A policy from 03-01, no `unsafe-eval`). _(2026-07-09 16:45 — favicon.svg + head link, base-prefixed; robots.txt; custom 404.md; CSP injected via transformHtml)_
+- [x] 4.2.3 **CSP validation (PF-003)**: load the built site headless, assert **zero CSP violations**, and add the SHA-256 hashes of VitePress's inline scripts to `script-src` so the strict policy (no `'unsafe-inline'` for scripts) holds — turns ST-9's runtime half green. _(2026-07-09 16:45 — **mechanism refined → auto-inject per-build hashes (AR-12 runtime), the `__VP_HASH_MAP__` script is content-dependent so static hashes are unsafe**. Static ST-9 proves every inline script is hash-covered; **headless Chrome load of home+guide+search = ZERO CSP violations** — connect/style/font/img all clean)_
 
 ### Step 4.3: Green + harden
-- [ ] 4.3.1 ST-8/9/10 pass; `yarn docs:build` green.
+- [x] 4.3.1 ST-8/9/10 pass; `yarn docs:build` green. _(2026-07-09 16:45 — 10/10 checks green; docs:build green; lint/prettier clean)_
 
 ---
 
