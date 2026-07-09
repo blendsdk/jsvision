@@ -1,0 +1,117 @@
+# Execution Plan: UI Small Batch
+
+> **Document**: 99-execution-plan.md
+> **Parent**: [Index](00-index.md)
+> **Last Updated**: 2026-07-09
+> **Progress**: 8/27 tasks (30%) — Phase 1 complete
+> **CodeOps Skills Version**: 3.3.2
+
+## Overview
+
+Three additive `@jsvision/ui` enhancements, spec-first, one phase each, plus a docs/gate phase.
+Phase 1 = Tree `markerStyle` (GH #17). Phase 2 = duplicate-accelerator dev-warning across all tilde
+scopes (GH #6). Phase 3 = the `Switch` control (GH #11). Phase 4 = docs + full gate. The phases are
+independent and may ship in separate commits.
+
+**🚨 Update this document after EACH completed task!**
+
+| Phase | Title | Tasks |
+| ----- | ----- | ----- |
+| 1 | Tree markers — `markerStyle` (GH #17) | 7 |
+| 2 | Duplicate-accelerator warning (GH #6) | 9 |
+| 3 | `Switch` / toggle control (GH #11) | 8 |
+| 4 | Docs, CHANGELOG & final gate | 3 |
+
+**Total: 27 tasks across 4 phases.**
+
+> **⚠️ EXECUTION RULE:** the task checkboxes are the single source of truth for progress. Mark `[~]`
+> with a timestamp on implementation, promote to `[x]` only after its verify passes, update the Progress
+> header after every task. Resume at the first `[~]` then the first `[ ]`. Timestamps via `date '+%Y-%m-%d %H:%M'`.
+> Specification-first: spec tests → red → implement → green → impl tests → verify.
+> **Verify** (every task): `yarn verify`. **Never** put raw git in this doc — commit via `/gitcm` / `/gitcmp`.
+
+---
+
+## Phase 1: Tree markers (GH #17)
+
+**Reference**: [03-01](03-01-tree-markers.md) · [07](07-testing-strategy.md) ST-1…ST-8 · AR-2…AR-6
+
+### Step 1.1: Spec tests (RED)
+
+- [x] 1.1.1 Spec tests for `createGraph`/`graphWidth` per style + no-Unicode fallback + `Tree` render — a **new** `packages/ui/test/tree-markers.spec.test.ts` (own ST-1…ST-8; kept separate so its ST IDs don't collide with the existing `tree-graph.spec` ST-1…ST-7). The `'tv'` oracles in `tree-graph.spec.test.ts` + `fidelity.tree.spec.test.ts` stay byte-unchanged. _(impl 2026-07-09 13:33)_
+- [x] 1.1.2 Verify RED: new cases fail; the existing `'tv'` oracle still passes _(RED confirmed: 7 fail, ST-1 tv-default passes)_
+
+### Step 1.2: Implementation (GREEN)
+
+- [x] 1.2.1 Add `MarkerStyle` + style-aware marker/`endWidth` in `createGraph`/`graphWidth` (default `'tv'`) — `packages/ui/src/tree/graph.ts` _(impl 2026-07-09 13:36)_
+- [x] 1.2.2 Add `TreeOptions.markerStyle` (default `'tv'`); thread the effective style (caps fallback for `triangle`) through `tree.ts` → `tree-rows.ts` for both draw + `graphWidth` hit-zone; export `MarkerStyle` from `tree/index.ts` + `packages/ui/src/index.ts` _(impl 2026-07-09 13:36)_
+- [x] 1.2.3 Verify GREEN: ST-1…ST-8 pass; existing Tree fidelity + golden/a11y suites unchanged _(1464 ui tests pass; typecheck clean)_
+
+### Step 1.3: Impl tests & story
+
+- [x] 1.3.1 Impl tests — deep-level bracket geometry, alignment, leaf blanks, mouse toggle at the 5-cell graphic — `packages/ui/test/tree-markers.impl.test.ts` _(impl 2026-07-09 13:38; 5 tests pass)_
+- [x] 1.3.2 Update the kitchen-sink `tree` story to show a non-`tv` `markerStyle`; smoke green — `packages/examples/kitchen-sink/stories/tree.story.ts` _(markerStyle: 'brackets')_
+- [x] 1.3.3 Full `yarn verify` green for Phase 1 _(16/16 turbo tasks; 1469 ui tests; the flaky off-CI editor-perf wall-clock assertion passes in isolation)_
+
+---
+
+## Phase 2: Duplicate-accelerator warning (GH #6)
+
+**Reference**: [03-02](03-02-duplicate-accelerators.md) · [07](07-testing-strategy.md) ST-9…ST-18 · AR-7…AR-13
+
+### Step 2.1: Spec tests (RED)
+
+- [ ] 2.1.1 Spec tests for pure `findDuplicateAccelerators()` (ST-9…ST-13) — `packages/ui/test/accelerators.spec.test.ts`
+- [ ] 2.1.2 Spec tests for scope warnings: menu build (ST-14…ST-16), Dialog mount (ST-17), TabView mount (ST-18) — `menu`/`dialog`/`tabs` spec files
+- [ ] 2.1.3 Verify RED
+
+### Step 2.2: Implementation (GREEN)
+
+- [ ] 2.2.1 Pure `findDuplicateAccelerators()` + `DuplicateAccelerator` — `packages/ui/src/menu/accelerators.ts`; export from barrel with `@example`
+- [ ] 2.2.2 Shared scope-tagged `devWarn(scope, message)` — `packages/ui/src/shared/warnings.ts` (reactive keeps its `reactive` prefix); no other `console.*` in `src`
+- [ ] 2.2.3 Additive `View.accelerators()` seam (default `[]`) + overrides on `Button`/`Label`/`Cluster` (the Dialog-scope walk) — `view/view.ts`, `controls/*`. Tabs need **no** view override: their accelerators come from the data-level `tabs()` check on `TabView`.
+- [ ] 2.2.4 Wire the auto (dev-gated) checks: **submenu items** at `subMenu()` build-time in `menu/builders.ts`; **bar titles** at `menuBar()` build-time in `menu/menubar.ts`; **Dialog** focus scope via a scope-root mount walk (stop at nested `Dialog`/`TabView`); **TabView** via a data-level check over `tabs()` (strip tabs only — no descent into page contents)
+- [ ] 2.2.5 Verify GREEN: ST-9…ST-18 pass; menu/dialog/tabs suites unchanged; production-silent
+
+### Step 2.3: Impl tests & hardening
+
+- [ ] 2.3.1 Impl tests — validator ordering/dedup, disabled-cluster-item counts, separator skip, nested-scope isolation, no cross-scope false positive — `packages/ui/test/accelerators.impl.test.ts`
+- [ ] 2.3.2 Full `yarn verify` green for Phase 2
+
+---
+
+## Phase 3: `Switch` / toggle (GH #11)
+
+**Reference**: [03-03](03-03-switch-toggle.md) · [07](07-testing-strategy.md) ST-19…ST-27 · AR-14…AR-19
+
+### Step 3.1: Spec tests (RED)
+
+- [ ] 3.1.1 Spec tests — toggle via Space/Enter/click/Alt-hotkey, on/off/focus/disabled render, caps fallback, `measure()` (ST-19…ST-26) — `packages/ui/test/switch.spec.test.ts`
+- [ ] 3.1.2 Verify RED
+
+### Step 3.2: Implementation (GREEN)
+
+- [ ] 3.2.1 Implement `Switch extends View` + `SwitchOptions` (bind, keyboard/click/Alt-hotkey, track+knob draw with role reuse, caps fallback, `measure()`) with `@example` — `packages/ui/src/controls/switch.ts`
+- [ ] 3.2.2 Export `Switch` + `SwitchOptions` from `controls/index.ts` + `packages/ui/src/index.ts`
+- [ ] 3.2.3 Verify GREEN: ST-19…ST-26 pass (no new `@jsvision/core` role)
+
+### Step 3.3: Impl tests & story
+
+- [ ] 3.3.1 Impl tests — wheel/ignore-when-disabled, `onLabel`/`offLabel` omission, hotkey focus-move — `packages/ui/test/switch.impl.test.ts`
+- [ ] 3.3.2 Kitchen-sink `controls/switch` story + register in `stories/index.ts`; smoke green (ST-27) — `packages/examples/kitchen-sink/stories/switch.story.ts`
+- [ ] 3.3.3 Full `yarn verify` green for Phase 3
+
+---
+
+## Phase 4: Docs, CHANGELOG & final gate
+
+- [ ] 4.1 Update `CHANGELOG.md` `[Unreleased]` (three additive entries) + `CLAUDE.md` component notes where relevant
+- [ ] 4.2 Roadmap: set B-01 → Done via the roadmap skill; cascade to the portfolio roadmap
+- [ ] 4.3 Final gate: full `yarn verify` — which already runs `yarn lint` (eslint + prettier) then `turbo run typecheck build test check:docs` — plus the kitchen-sink smoke suite, all green
+
+---
+
+## Notes / deviations
+
+- Record any runtime ambiguity here with an `AR-NN (runtime)` row added to [00-ambiguity-register.md](00-ambiguity-register.md).
+- StatusLine chord-collision (GH #6 fast-follow) and a Tree per-node marker override are explicitly out of scope.
