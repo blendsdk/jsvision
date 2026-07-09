@@ -24,9 +24,9 @@ exists yet), then implement each phase to turn them green.
 | ST-4 | No dead links | A link-check over `dist` finds zero broken internal links; the nav/sidebar skeleton is present | RD-01 AC-4 | ✅ |
 | ST-5 | Local search, no 3rd-party | The local search index is emitted into `dist`; loading a page issues **no** network request to a non-`self` host for search | RD-01 AC-5 · AR-8 | ✅ (index) / ⛳ (network) |
 | ST-6 | Code UX | A TS code block renders with Shiki highlight markup and a copy-button element | RD-01 AC-7 | ✅ |
-| ST-7 | Dark/light + contrast | Both color schemes are defined; body-text contrast ≥ 4.5:1 in each (brand tokens checked) | RD-01 AC-6 | ✅ (tokens) |
+| ST-7 | Dark/light + contrast | Both color schemes defined; body-text contrast ≥ 4.5:1 **computed from the brand tokens** in each (tokens-level or manual for RD-01; full axe a11y is RD-10, PF-007) | RD-01 AC-6 | ✅ (tokens) |
 | ST-8 | SEO meta | Every built page has a unique `<title>` + `og:title`/`og:description`/`og:image` + `twitter:card` | RD-01 AC-8 | ✅ |
-| ST-9 | CSP present, safe | Every built page has `<meta http-equiv="Content-Security-Policy">`; the policy contains **no** `unsafe-eval` | RD-01 AC-8, AC-11 · AR-9 | ✅ |
+| ST-9 | CSP present, safe, honored | Every built page has `<meta http-equiv="Content-Security-Policy">` with **no** `unsafe-eval`; loading the **built** site produces **zero CSP violations** (VitePress inline scripts covered by SHA-256 hashes in `script-src`, PF-003) | RD-01 AC-8, AC-11 · AR-9 | ✅ (meta) / ⛳ (runtime) |
 | ST-10 | Static SEO assets | `dist/sitemap.xml`, `dist/robots.txt`, a favicon, and a `dist/404.html` all exist | RD-01 AC-8 | ✅ |
 | ST-11 | Migration completeness | Every former `docs/` website page (architecture/decisions/guides/index) has a row in `redirects.md` **and** a rendered page in `dist` | RD-01 AC-9 · AR-2 | ✅ |
 | ST-12 | Spec-oracle integrity | `docs/acceptance-gate.md` is byte-unchanged; `packages/core/test/gate.spec.test.ts` passes; `yarn verify` is green | RD-01 AC-9 · AR-2 | ✅ |

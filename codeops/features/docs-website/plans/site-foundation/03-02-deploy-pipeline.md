@@ -20,38 +20,46 @@ the workflow uses the ephemeral `GITHUB_TOKEN`.)
 
 Does **not** touch the existing `ci.yml`.
 
-**Triggers**
-- `push` to `master` on site inputs (`packages/docs-site/**`, `docs/**`, `.github/workflows/docs.yml`)
-  → production deploy.
+**Triggers** (PF-009)
+- `push` to `master` on site inputs (`packages/docs-site/**`, `.github/workflows/docs.yml`) →
+  production deploy. **Not** `docs/**` — after Phase 5 that dir holds only the non-website
+  `acceptance-gate.md`, so triggering on it would be noise.
 - `pull_request` (opened/synchronize/reopened/closed) on the same paths → preview deploy / cleanup.
 
 **Permissions**: `contents: write` (to push the `gh-pages` branch), `pull-requests: write` (to comment
 the preview URL). No stored secret; `GITHUB_TOKEN` only (ST — security).
 
-**Concurrency**: `group: pages-${{ github.ref }}`, cancel superseded runs.
+**Concurrency** (PF-005): a **shared** `group: docs-gh-pages` across **both** jobs so production and
+preview never push `gh-pages` concurrently; cancel superseded runs. (The actions' git-push retry is
+the backstop.)
 
 ### Production job (on `master`)
 1. `actions/checkout`.
 2. `actions/setup-node` (Node 22) + yarn cache; `yarn install --frozen-lockfile`.
-3. `yarn docs:build` → `packages/docs-site/.vitepress/dist`.
+3. `yarn docs:build` → `packages/docs-site/.vitepress/dist` (base `/jsvision/`).
 4. `peaceiris/actions-gh-pages@v4` (pinned): publish `dist` to the `gh-pages` branch **root**,
-   `keep_files: true` so it does not delete existing `/pr-preview/*` dirs.
+   `keep_files: true` so it does not delete existing `/pr-preview/*` dirs. Caveat (PF-006):
+   `keep_files` also means a page **removed** from the site lingers on `gh-pages`; a periodic clean
+   deploy to prune stale pages is a post-Phase-A Should-Have.
 
 ### PR preview job (on `pull_request`)
-1–3. checkout / node / install / `yarn docs:build` (only when the event is not `closed`).
+1–3. checkout / node / install / build **with a preview base** (PF-002):
+   `DOCS_BASE=/jsvision/pr-preview/pr-${{ github.event.number }}/ yarn docs:build` — only when the
+   event is not `closed` — so preview asset/page-data URLs resolve under the preview subpath.
 4. `rossjrw/pr-preview-action@v1` (pinned): deploy `dist` to `/pr-preview/pr-${{ number }}/` on the
    `gh-pages` branch and comment the live URL on the PR; on `closed`, remove that dir.
 
 > Note: for a fork PR the `GITHUB_TOKEN` is read-only, so preview deploy/comment is skipped for
 > forks (documented limitation — internal branches get previews). Acceptable for this repo's flow.
 
-## Base-path correctness
+## Base-path correctness (PF-002)
 
-Because production lives at `…/jsvision/` and previews at `…/jsvision/pr-preview/pr-N/`, `base` must
-resolve correctly in both. `base:'/jsvision/'` is correct for production; the pr-preview-action serves
-the built site under the preview subpath and VitePress's relative asset resolution handles the
-nested path. Verified by opening a preview URL (deploy-phase acceptance, ST-2/ST-3 are the local
-build-output proxies).
+VitePress bakes `base` into **absolute** asset/page-data URLs, so a single `/jsvision/` build served
+under a deeper preview path would load **production** assets and 404 the changed pages' data. Each
+build therefore sets `base` to match where it is served: production `= /jsvision/`, preview
+`= /jsvision/pr-preview/pr-N/` (via the `DOCS_BASE` env the config reads). Verified by opening a
+preview URL and confirming the changed page renders with its own assets (deploy-phase acceptance;
+ST-1 asserts production base-prefixing locally).
 
 ## Verification
 
