@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-09 20:37
-> **Progress**: 10/17 tasks (59%)
+> **Last Updated**: 2026-07-09 20:49
+> **Progress**: 13/17 tasks (76%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -92,13 +92,13 @@ dogfood it back into the spike. Five phases; each is spec-first and leaves a **v
 **Reference**: [03-04](03-04-browser-integration.md) · [07](07-testing-strategy.md) ST-5, ST-6, ST-9 · AR-4
 
 ### Step 4.1: Spec (RED)
-- [ ] 4.1.1 Write `test/key-reclaim.spec.test.ts` (**ST-5** focused `F1` keydown → `defaultPrevented`, decoded `f1` reaches `onInput`, `UNRECLAIMABLE_CHORDS` non-empty), `test/clipboard.spec.test.ts` (**ST-6** `setClipboard('copied',…)` → exactly one `writeText`, `readText` never called), `test/security.spec.test.ts` (**ST-9** untrusted `ESC` content stripped by `sanitize()` before the terminal write; virtual-FS open/save makes no network request). Verify RED.
+- [x] 4.1.1 Write `test/key-reclaim.spec.test.ts` (**ST-5** focused `F1` keydown → `defaultPrevented`, decoded `f1` reaches `onInput`, `UNRECLAIMABLE_CHORDS` non-empty), `test/clipboard.spec.test.ts` (**ST-6** `setClipboard('copied',…)` → exactly one `writeText`, `readText` never called), `test/security.spec.test.ts` (**ST-9** untrusted `ESC` content stripped by `sanitize()` before the terminal write; virtual-FS open/save makes no network request). Verify RED. — done 2026-07-09 20:49 (RED: key-reclaim + clipboard fail on missing exports; ST-9 already green — asserts existing sanitize + in-memory-FS invariants, "no new code")
 
 ### Step 4.2: Implementation (GREEN)
-- [ ] 4.2.1 `src/key-reclaim.ts` (`attachKeyReclaim` capture-phase, focus-gated `preventDefault`; curated `UNRECLAIMABLE_CHORDS`) + `src/clipboard.ts` (`setClipboard` outbound-only, injectable clipboard, no reads); re-export both. Green ST-5, ST-6.
+- [x] 4.2.1 `src/key-reclaim.ts` (`attachKeyReclaim` capture-phase, focus-gated `preventDefault`; curated `UNRECLAIMABLE_CHORDS`) + `src/clipboard.ts` (`setClipboard` outbound-only, injectable clipboard, no reads); re-export both. Green ST-5, ST-6. — done 2026-07-09 20:49 (narrow local DOM interfaces + no-cast `globalThis` accessors; injectable `target?`/`isFocused` seams for hand-mocked tests — recorded as runtime item 9; reserved `_term`/`_caps` params per the repo `_`-prefix convention)
 
 ### Step 4.3: Green + harden
-- [ ] 4.3.1 ST-5/6/9 pass; add impl edges (`Alt+<letter>` + `Shift+Tab` matching, unsubscribe stops reclaiming, `also:['*']` broad mode, gesture-gated write rejects gracefully); `yarn verify` green; `check:docs` green.
+- [x] 4.3.1 ST-5/6/9 pass; add impl edges (`Alt+<letter>` + `Shift+Tab` matching, unsubscribe stops reclaiming, `also:['*']` broad mode, gesture-gated write rejects gracefully); `yarn verify` green; `check:docs` green. — done 2026-07-09 20:49 (40/40 web tests; +wildcard, plain-text-never-reclaimed, no-op-when-absent-clipboard; full `yarn verify` 20/20; check:docs 8 files clean)
 
 ---
 
