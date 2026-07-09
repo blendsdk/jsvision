@@ -2,7 +2,7 @@
 
 > **Implements**: docs-website/RD-03 · **Feature**: docs-website
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 21/40 tasks (53%) · **Last Updated**: 2026-07-10 00:14
+> **Progress**: 26/40 tasks (65%) · **Last Updated**: 2026-07-10 00:25
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Each phase is a
 testable slice. **Verify** = `yarn verify` (AR-21) unless a phase names a faster inner loop.
@@ -68,11 +68,11 @@ Ref: 03-03, 03-06 · AR-10/11/15/16, C4.
 ## Phase 4 — Accessibility, fallback, deep-link & controls
 Ref: 03-04, 03-03 · AR-12/13/19.
 
-- [ ] 4.1 Spec: write ST-11 (DOM source+blurb+labelled Play), ST-12 (no-keyboard fallback slot+note; missing-asset degrade) — run red.
-- [ ] 4.2 Implement `src/play/no-keyboard.ts` (`isNoKeyboardDevice`) + the fallback slot in `PlayExample.vue` (note + `/screenshots/<id>.gif`, degrade to note+source) — green ST-12.
-- [ ] 4.3 Implement the always-in-DOM a11y region (blurb `<p>`, ARIA-labelled `<button>`, `role="dialog"` focus move/return) — green ST-11.
-- [ ] 4.4 Implement deep-link (`?example=<id>` → scroll+highlight+open **without auto-focusing**; no-keyboard ⇒ fallback) + the Reset control + the size selector (80×24 / 100×30 via `remount`).
-- [ ] 4.5 Impl tests: deep-link parser (match / unknown no-op / no-keyboard opens no terminal).
+- [x] 4.1 Spec: write ST-11 (DOM source+blurb+labelled Play), ST-12 (no-keyboard fallback slot+note; missing-asset degrade) — run red. ✅ (completed: 2026-07-10 00:25 — red confirmed: `no-keyboard.js`/`deep-link.js` missing + the ST-11 blurb assertion failed pre-impl; the button + vacuous-page loops passed)
+- [x] 4.2 Implement `src/play/no-keyboard.ts` (`isNoKeyboardDevice`) + the fallback slot in `PlayExample.vue` (note + `/screenshots/<id>.gif`, degrade to note+source) — green ST-12. ✅ (completed: 2026-07-10 00:25 — SSR-safe typed `globalThis.matchMedia` probe over `(hover: none) and (pointer: coarse)`; `<img @error>` degrades to note-only, source stays on the page; `fallbackDecision` interactive/screenshot/note-only)
+- [x] 4.3 Implement the always-in-DOM a11y region (blurb `<p>`, ARIA-labelled `<button>`, `role="dialog"` focus move/return) — green ST-11. ✅ (completed: 2026-07-10 00:25 — server-rendered blurb `<p>` + `aria-label`led Play button; on open focus moves to the × (not the terminal — no focus trap), on close returns to Play; `role="dialog" aria-modal`)
+- [x] 4.4 Implement deep-link (`?example=<id>` → scroll+highlight+open **without auto-focusing**; no-keyboard ⇒ fallback) + the Reset control + the size selector (80×24 / 100×30 via `remount`). ✅ (completed: 2026-07-10 00:25 — `deepLinkTarget` in `onMounted` scrolls+highlights+opens (focus stays on the ×); Reset = `remount({})`, size toggle = `remount({size})`; `MountedApp.dispose()` disposes the terminal so remount never stacks)
+- [x] 4.5 Impl tests: deep-link parser (match / unknown no-op / no-keyboard opens no terminal). ✅ (completed: 2026-07-10 00:25 — `deep-link.impl.test.ts`: match / unknown+missing-param no-op / no-keyboard returns null)
 
 **Verify**: `yarn verify`
 
