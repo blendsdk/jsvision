@@ -12,6 +12,12 @@ A push button bound to a click counter, with a live count echo. Focus it with **
 
 ## Source
 
-The code below is the exact module the live example above runs — shown code is running code.
+The composition running above — the exact `build()` from the module:
+
+<<< @/examples/controls/button.ts#example{ts}
+
+::: details Full module (imports, JSDoc, data)
 
 <<< @/examples/controls/button.ts
+
+:::

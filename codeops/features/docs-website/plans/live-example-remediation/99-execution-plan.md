@@ -2,7 +2,7 @@
 
 > **Feature**: docs-website · **Type**: Remediation (post-ship follow-up to RD-03)
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 17/27 `[x]` · 1 `[~]` (Phases 1–3 done + `yarn verify` green; browser-confirmed M1/M2/M4/M5/M6/M7 + fixed a real wheel-fix defect; M3 hardware eyeball residual) — **Last Updated**: 2026-07-10
+> **Progress**: 22/27 `[x]` · 1 `[~]` (Phases 1–4 done + `yarn verify` + `check-docs-build` green; browser-confirmed M1/M2/M4/M5/M6/M7/M8 + fixed a real wheel-fix defect; M3 hardware eyeball residual — Phase 5 finalize next) — **Last Updated**: 2026-07-10
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Phase order
 per AR-7 (Resize → Shell → Reopen → Source). **Verify** = `yarn verify` (AR-15) unless a task names a
@@ -122,16 +122,26 @@ Ref: 03-03 · AR-3/14 · bug #7. Depends on Phase 2.
 ## Phase 4 — Source framing (build()-first)
 Ref: 03-04 · AR-4/9 · bug #2.
 
-- [ ] 4.1 Spec: update the drift oracle → ST-D1 (region + full-file embeds, no pasted block) and add
-  ST-D2 (region-pair per module) in `packages/docs-site/test/*`. Run red.
-- [ ] 4.2 Impl: add `// #region example` / `// #endregion example` to all 8 modules; update each
-  page (region embed + `::: details` full module); extend `check-docs-build.mjs` LIVE-EXAMPLES guard
-  (ST-D3). Green ST-D1/D2.
-- [ ] 4.3 Verify the build gate (ST-D3): `yarn docs:build` then
-  `node packages/docs-site/scripts/check-docs-build.mjs` — both snippets present in built HTML
-  (fall back to a `### Full module` sub-section if `<<<` doesn't process inside `::: details`).
-- [ ] 4.4 Verify: `yarn verify` green.
-- [ ] 4.5 Manual browser check M8 (Source shows build() by default; full module in details); record.
+- [x] 4.1 Spec: update the drift oracle → ST-D1 (region + full-file embeds, no pasted block) and add
+  ST-D2 (region-pair per module). ✅ (2026-07-10 — `snippet-drift.spec` rewritten: ST-D1 asserts each
+  page embeds `<<< …#example` AND the exact whole-file `<<< …` on one page; ST-D2 asserts each module
+  has the `// #region example`/`// #endregion example` pair; the no-pasted-`defineExample(` check kept.
+  Red before impl.)
+- [x] 4.2 Impl: add `// #region example` / `// #endregion example` to all 8 modules; update each page
+  (region embed + `::: details` full module); extend `check-docs-build.mjs` LIVE-EXAMPLES guard (ST-D3).
+  ✅ (2026-07-10 — region markers inserted after the imports (helpers/data/export inside), 8 pages
+  rewritten to a `build()`-first region embed + a collapsed "Full module" `::: details`, and the build
+  gate now requires the details block + no unresolved `&lt;&lt;&lt;`. Green ST-D1/D2.)
+- [x] 4.3 Verify the build gate (ST-D3): `yarn docs:build` then `check-docs-build.mjs`. ✅ (2026-07-10
+  — **`<<<` DOES process inside `::: details`**; 0 unresolved embeds; the `<details>`+"Full module"
+  summary rendered; imports appear only in the details. 14/14 checks passed — no `### Full module`
+  fallback needed.)
+- [x] 4.4 Verify: `yarn verify` green. ✅ (2026-07-10 — 22/22 turbo tasks; docs-site 48 tests; lint fix
+  applied to check-docs-build.mjs.)
+- [x] 4.5 Manual browser check M8 (Source shows build() by default; full module in details). ✅
+  (2026-07-10, live — the Source section's default code block is the `#example` region, starting at
+  `interface Person {` (data + `build()`), with NO leading JSDoc/imports; the full module sits in a
+  COLLAPSED "Full module (imports, JSDoc, data)" details block.)
 
 **Verify**: `yarn verify`
 

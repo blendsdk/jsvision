@@ -14,6 +14,12 @@ resize, **F5** / **F4** to cascade / tile, **F6** for the next window, and **Tab
 
 ## Source
 
-The code below is the exact module the live example above runs — shown code is running code.
+The composition running above — the exact `build()` from the module:
+
+<<< @/examples/apps/desktop.ts#example{ts}
+
+::: details Full module (imports, JSDoc, data)
 
 <<< @/examples/apps/desktop.ts
+
+:::

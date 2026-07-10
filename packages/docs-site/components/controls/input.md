@@ -13,6 +13,12 @@ picture mask. Tab moves between fields and the echo below tracks the bound value
 
 ## Source
 
-The code below is the exact module the live example above runs — shown code is running code.
+The composition running above — the exact `build()` from the module:
+
+<<< @/examples/controls/input.ts#example{ts}
+
+::: details Full module (imports, JSDoc, data)
 
 <<< @/examples/controls/input.ts
+
+:::
