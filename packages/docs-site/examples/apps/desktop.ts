@@ -9,6 +9,7 @@ import { Window, View } from '@jsvision/ui';
 import type { Size2D, DrawContext } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
+// #region example
 
 /**
  * A window-content panel: it fills the framed interior with the `window` theme
@@ -79,3 +80,4 @@ export default defineExample({
     return app;
   },
 });
+// #endregion example

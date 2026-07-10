@@ -14,6 +14,12 @@ recompose, a depth change re-mounts to downsample the palette (truecolor → 256
 
 ## Source
 
-The code below is the exact module the live example above runs — shown code is running code.
+The composition running above — the exact `build()` from the module:
+
+<<< @/examples/theming/preset-gallery.ts#example{ts}
+
+::: details Full module (imports, JSDoc, data)
 
 <<< @/examples/theming/preset-gallery.ts
+
+:::

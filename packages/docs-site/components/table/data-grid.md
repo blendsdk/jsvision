@@ -14,6 +14,12 @@ horizontally when the columns overflow.
 
 ## Source
 
-The code below is the exact module the live example above runs — shown code is running code.
+The composition running above — the exact `build()` from the module:
+
+<<< @/examples/table/data-grid.ts#example{ts}
+
+::: details Full module (imports, JSDoc, data)
 
 <<< @/examples/table/data-grid.ts
+
+:::
