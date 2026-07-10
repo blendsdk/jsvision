@@ -2,7 +2,7 @@
 
 > **Feature**: docs-website · **Type**: Remediation (post-ship follow-up to RD-03)
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 13/27 `[x]` · 1 `[~]` (Phases 1–2 done + `yarn verify` green; browser-confirmed M1/M2/M4/M5/M6 + fixed a real wheel-fix defect; M3 hardware eyeball residual) — **Last Updated**: 2026-07-10
+> **Progress**: 17/27 `[x]` · 1 `[~]` (Phases 1–3 done + `yarn verify` green; browser-confirmed M1/M2/M4/M5/M6/M7 + fixed a real wheel-fix defect; M3 hardware eyeball residual) — **Last Updated**: 2026-07-10
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Phase order
 per AR-7 (Resize → Shell → Reopen → Source). **Verify** = `yarn verify` (AR-15) unless a task names a
@@ -100,12 +100,20 @@ Ref: 03-02 · AR-1/5/12/13/17 · bugs #4, #5, #6.
 ## Phase 3 — Dialog reopen
 Ref: 03-03 · AR-3/14 · bug #7. Depends on Phase 2.
 
-- [ ] 3.1 Spec: ST-C1 (after build a modal is active; ending it keeps the stage Window + Open button;
-  `demo.openDialog` re-activates a modal) for both dialog examples. Run red.
-- [ ] 3.2 Impl: `controls/form-dialog.ts` + `files/file-dialog.ts` — stage `Window` + "Open the dialog"
-  Button + `openTheDialog()` closure bound to `demo.openDialog`; start open once. Green ST-C1.
-- [ ] 3.3 Impl tests + Verify: `yarn verify` green.
-- [ ] 3.4 Manual browser check M7 (close → reopen works, repeatable); record.
+- [x] 3.1 Spec: ST-C1 (after build a modal is active; ending it keeps the stage Window + Open button;
+  `demo.openDialog` re-activates a modal) for both dialog examples. ✅ (2026-07-10 —
+  `test/dialog-reopen.spec.test.ts`; observes dialog presence via `desktop.children` filtered to
+  `Dialog` (`FileDialog extends Dialog`), stage = the plain non-`Dialog` `Window`; drives
+  build→`emitCommand(cancel)`→`emitCommand('demo.openDialog')` with microtask ticks. Red before impl.)
+- [x] 3.2 Impl: `controls/form-dialog.ts` + `files/file-dialog.ts` — stage `Window` + "Open the dialog"
+  Button + `openTheDialog()` closure bound to `demo.openDialog`; start open once. ✅ (2026-07-10 —
+  form-dialog rebuilds a FRESH `Dialog` per open (fresh signals reset the fields) + `execView().finally(removeWindow)`;
+  file-dialog reuses `openFile` (already add→execView→remove-on-close). Both add a centered
+  non-closable stage `Window` with the default "Open the dialog" `Button` + a hint. Green ST-C1.)
+- [x] 3.3 Impl tests + Verify: `yarn verify` green. ✅ (2026-07-10 — 22/22 turbo tasks; docs-site 47 tests.)
+- [x] 3.4 Manual browser check M7 (close → reopen works, repeatable). ✅ (2026-07-10, live — form-dialog
+  opens on load → Escape closes → the "Form dialog" stage window with the green "Open the dialog" button
+  is revealed → Enter (default button) reopens a fresh Person dialog (Age reset to 30); repeatable.)
 
 **Verify**: `yarn verify`
 
