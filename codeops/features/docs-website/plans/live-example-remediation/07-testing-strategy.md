@@ -63,7 +63,7 @@ FR / AR and the home doc.
 | M4 | #3 | The DataGrid does not garble at any size or during nav/sort. | ✅ 2026-07-10 — crisp at 80×24 and 100×30, no garble |
 | M5 | #4 | A Button demo's flat block-shadow reads correctly on the window surface (not on the desktop dots). | ✅ 2026-07-10 — button in a titled non-closable Window, block-shadow on the clean window surface, component centered |
 | M6 | #6 | Every example (incl. `apps/desktop`) shows the same System/View menu; Theme + Depth switch works everywhere, desktop included. | ✅ 2026-07-10 — consistent `≡ View` menu + hints-only status everywhere; desktop app now shows `≡ View Window` (Theme reachable; ST-B3 confirms the command repaints) |
-| M7 | #7 | Close a dialog (OK/Cancel/Esc), then click "Open the dialog" — it reopens; repeat. | ⏳ Phase 3 |
+| M7 | #7 | Close a dialog (OK/Cancel/Esc), then click "Open the dialog" — it reopens; repeat. | ✅ 2026-07-10 — form-dialog: Esc closes → "Form dialog" stage window + green "Open the dialog" button revealed → Enter reopens a fresh Person dialog (fields reset) |
 | M8 | #2 | The Source section shows `build()` by default; the full module is in the collapsible details. | ⏳ Phase 4 |
 
 ## Notes
