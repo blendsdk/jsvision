@@ -7,7 +7,6 @@
  */
 import { Group, Input, Label, Text, signal, filter, range, picture, View } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
-// #region example
 
 const WIDTH = 56;
 const HEIGHT = 8;
@@ -43,4 +42,3 @@ export default defineExample({
     return group;
   },
 });
-// #endregion example

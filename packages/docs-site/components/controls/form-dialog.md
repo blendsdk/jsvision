@@ -10,15 +10,3 @@ with OK / Cancel. **OK is vetoed** while the age is out of range — the `valid(
 close and returns focus to the offending field; Cancel, Esc, or **[×]** always close.
 
 <PlayExample id="controls/form-dialog" title="Form dialog" blurb="A modal form — input + checks + radios with OK/Cancel; OK is vetoed while Age is out of range." />
-
-## Source
-
-The composition running above — the exact `build()` from the module:
-
-<<< @/examples/controls/form-dialog.ts#example{ts}
-
-::: details Full module (imports, JSDoc, data)
-
-<<< @/examples/controls/form-dialog.ts
-
-:::
