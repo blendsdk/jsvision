@@ -50,9 +50,15 @@ export function fakeEntry(
 
 /** The narrow terminal shape `mountApp` needs (structurally an `@xterm/web` TerminalLike). */
 export interface HarnessTerminal {
+  /** Current column count (delegates to the real emulator) — the controller reads this to size the app. */
+  readonly cols: number;
+  /** Current row count (delegates to the real emulator). */
+  readonly rows: number;
   write(data: string): void;
   onData(handler: (data: string) => void): { dispose(): void };
   onResize(handler: (size: { cols: number; rows: number }) => void): { dispose(): void };
+  /** Resize the emulator (fires `onResize`) — drives the live-resize path in tests. */
+  resize(cols: number, rows: number): void;
   dispose(): void;
 }
 
@@ -75,9 +81,16 @@ export function headlessFactory(cols = 80, rows = 24): HeadlessFactory {
       last = real;
       count += 1;
       return {
+        get cols() {
+          return real.cols;
+        },
+        get rows() {
+          return real.rows;
+        },
         write: (data) => real.write(data),
         onData: (handler) => real.onData(handler),
         onResize: (handler) => real.onResize(handler),
+        resize: (c, r) => real.resize(c, r),
         dispose: () => {
           count -= 1;
           real.dispose();

@@ -2,7 +2,7 @@
 
 > **Feature**: docs-website · **Type**: Remediation (post-ship follow-up to RD-03)
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 0/27 tasks (0%) — **Last Updated**: 2026-07-10
+> **Progress**: 6/27 `[x]` · 2 `[~]` (Phase 1 code done + `yarn verify` green; M1–M4 manual browser pending) — **Last Updated**: 2026-07-10 09:17
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Phase order
 per AR-7 (Resize → Shell → Reopen → Source). **Verify** = `yarn verify` (AR-15) unless a task names a
@@ -15,23 +15,37 @@ browser checklist (07 §Manual) — its execution is a task, not an afterthought
 ## Phase 1 — Play resize (terminal-driven) + wheel-leak + GridRows H-scroll golden
 Ref: 03-01 · AR-2/6/8/10/11 · bugs #1, #3, wheel-leak.
 
-- [ ] 1.1 Spec: ST-A1 (controller viewport tracks the terminal — harness real-emulator resize) in
+- [x] 1.1 Spec: ST-A1 (controller viewport tracks the terminal — harness real-emulator resize) in
   `packages/docs-site/test/*`; add `cols/rows` + `resize` to `test/helpers/play-harness.ts`
-  `HarnessTerminal`. Run red.
-- [ ] 1.2 Spec: ST-A2/A3/A4 (GridRows overflow render at `indent>0`, wide-glyph left-clip, header
-  lockstep) in `packages/ui/test/datagrid.hscroll.spec.test.ts`. Run (record red or green).
-- [ ] 1.3 Impl: extend `TerminalLike` with `readonly cols/rows`; reorder `play-controller.ts` `open()`
-  to create the terminal first and build the app at `term.cols × term.rows`. Green ST-A1.
-- [ ] 1.4 Impl: `PlayExample.vue` — resizable terminal container (CSS `resize`+`min` ≥ 40×12) +
+  `HarnessTerminal`. Run red. ✅ (implemented: 2026-07-10 02:57 — `play-resize.spec.test.ts`: ST-A1 red→green after 1.3; a grow-resize guard confirms live `onResize→loop.resize` tracking stays green)
+- [x] 1.2 Spec: ST-A2/A3/A4 (GridRows overflow render at `indent>0`, wide-glyph left-clip, header
+  lockstep) in `packages/ui/test/datagrid.hscroll.spec.test.ts`. Run (record red or green). ✅
+  (implemented: 2026-07-10 09:17 — 3 fixed 10-wide columns scrolled to `indent 5`: cells pan + `│`
+  dividers at column right edges; a wide glyph whose lead hits `x=−1` drops whole (blank col 0);
+  header pans in lockstep. **Green as written** — no `grid-rows.ts` fix needed, confirming #3 is
+  downstream of #1/wheel)
+- [x] 1.3 Impl: extend `TerminalLike` with `readonly cols/rows`; reorder `play-controller.ts` `open()`
+  to create the terminal first and build the app at `term.cols × term.rows`. Green ST-A1. ✅
+  (implemented: 2026-07-10 02:57 — terminal-driven `open()` with error-safe orphan-terminal disposal
+  so the throwing-example leak oracle stays green; `size` demoted to a fallback; migrated the
+  `remount` impl test to terminal-driven; controller suite 11/11 green)
+- [~] 1.4 Impl: `PlayExample.vue` — resizable terminal container (CSS `resize`+`min` ≥ 40×12) +
   `ResizeObserver → fit.fit()`; repurpose the size button to container-resize (no remount); wheel
-  `preventDefault` while focused (AR-11).
-- [ ] 1.5 Impl: if ST-A2/A3/A4 went red, fix `grid-rows.ts` `GridRows`/`GridHeader` draw; green. If
-  green as written, record #3 as downstream of #1/wheel (confirmed by M4 in 1.8).
-- [ ] 1.6 Impl tests: controller edges (min-size floor; remount preserves the current size, resets
-  state). Verify.
-- [ ] 1.7 Verify: `yarn verify` green.
-- [ ] 1.8 Manual browser check M1–M4 (resize keeps input+alignment; preset live; wheel no page-scroll;
-  no grid garble); record results in the checklist.
+  `preventDefault` while focused (AR-11). ✅ (implemented: 2026-07-10 09:17 — fit lifted to component
+  scope, container frozen then `resize:both` + observer refit, size button resizes the container via
+  the measured cell size, wheel `preventDefault` on the terminal host. **Browser-only → verified by
+  M1–M4, not headless.**)
+- [x] 1.5 Impl: if ST-A2/A3/A4 went red, fix `grid-rows.ts` `GridRows`/`GridHeader` draw; green. If
+  green as written, record #3 as downstream of #1/wheel (confirmed by M4 in 1.8). ✅ (2026-07-10 09:17
+  — golden green as written; no `grid-rows.ts` change; #3 attributed to #1/wheel, to confirm via M4)
+- [x] 1.6 Impl tests: controller edges (min-size floor; remount preserves the current size, resets
+  state). Verify. ✅ (2026-07-10 09:17 — `remount` impl test migrated to terminal-driven; min-size
+  floor enforced via CSS `min-width/height` on `.play-term`; controller suite 11/11)
+- [x] 1.7 Verify: `yarn verify` green. ✅ (2026-07-10 09:17 — 22/22 turbo tasks; ui 1506 tests incl.
+  the new golden; docs-site 41 tests + typecheck; lint + check:docs green)
+- [~] 1.8 Manual browser check M1–M4 (resize keeps input+alignment; preset live; wheel no page-scroll;
+  no grid garble); record results in the checklist. ⏳ (browser verification pending — code committed
+  verify-green; run in `yarn docs:dev`)
 
 **Verify**: `yarn verify`
 
