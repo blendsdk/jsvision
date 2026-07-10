@@ -11,15 +11,3 @@ colour **Depth** from the **View** menu and every widget repaints live: theme sw
 recompose, a depth change re-mounts to downsample the palette (truecolor → 256 → 16 → mono).
 
 <PlayExample id="theming/preset-gallery" title="Theme gallery" blurb="A panel of themed widgets — switch Theme or Depth from the View menu to watch them repaint." />
-
-## Source
-
-The composition running above — the exact `build()` from the module:
-
-<<< @/examples/theming/preset-gallery.ts#example{ts}
-
-::: details Full module (imports, JSDoc, data)
-
-<<< @/examples/theming/preset-gallery.ts
-
-:::

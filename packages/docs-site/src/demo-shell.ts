@@ -4,9 +4,11 @@
  * returns the mountable `Application`.
  *
  * There is a single chrome for every example: a desktop with a menu bar
- * (`System ▸ About`, `View ▸ Theme / Depth`, and — for windowing apps — a
- * `Window` menu) and a hints-only status line. The primary Theme/Depth/About
- * controls live in the menu, never the footer.
+ * (`System ▸ About / Exit`, `View ▸ Theme / Depth`, and — for windowing apps — a
+ * `Window` menu) and a minimal status line whose only item is `Alt+X Exit`. Every
+ * primary control (About, Theme, Depth, window management) lives in the menu, never
+ * the footer. `Exit` emits the quit command; a host (the Play modal) observes it via
+ * `onClose` to dismiss itself.
  *
  * An example is one of two kinds:
  *  - `component` — its `build()` returns a bare `View`; the shell wraps it in a
@@ -79,6 +81,11 @@ export interface DemoShellOptions {
   readonly theme?: Theme;
   /** Called when the Depth control changes — the Play layer turns this into a re-mount. */
   readonly onDepthChange?: (depth: Depth) => void;
+  /**
+   * Called when the in-app Exit is chosen (it emits the quit command). The Play layer uses this to
+   * dismiss the host modal, so the terminal app can close itself — not only the modal's × button.
+   */
+  readonly onClose?: () => void;
 }
 
 /** A named preset for the Theme menu. */
@@ -180,7 +187,7 @@ export function demoApp(
     viewport: { width: ctx.width, height: ctx.height },
     theme: turboVisionTheme,
     menuBar: buildMenuBar({ windowMenu }),
-    statusLine: buildStatusLine({ windowMenu }),
+    statusLine: buildStatusLine(),
   });
 }
 
@@ -191,7 +198,7 @@ function shellForView(opts: DemoShellOptions): Application {
     viewport: opts.viewport,
     theme: opts.theme ?? turboVisionTheme,
     menuBar: buildMenuBar({ windowMenu: false }),
-    statusLine: buildStatusLine({ windowMenu: false }),
+    statusLine: buildStatusLine(),
   });
   // The stage window fills the desktop minus a 1-cell margin, so the desktop pattern frames it.
   const { width: dw, height: dh } = app.desktop.bounds;
@@ -241,7 +248,7 @@ function intendedSize(view: View): { width: number; height: number } {
 /** The shared menu bar: System (About) + View (Theme + Depth) + (optionally) a Window menu. */
 function buildMenuBar({ windowMenu }: { windowMenu: boolean }): ReturnType<typeof menuBar> {
   const menus = [
-    subMenu('≡', [item('~A~bout', CMD_ABOUT, 'F1')]),
+    subMenu('≡', [item('~A~bout', CMD_ABOUT, 'F1'), separator(), item('E~x~it', Commands.quit, 'Alt+X')]),
     subMenu('~V~iew', [
       subMenu(
         '~T~heme',
@@ -269,17 +276,13 @@ function buildMenuBar({ windowMenu }: { windowMenu: boolean }): ReturnType<typeo
   return menuBar(menus);
 }
 
-/** The shared status line: hotkey hints only (no primary Theme/Depth controls). */
-function buildStatusLine({ windowMenu }: { windowMenu: boolean }): ReturnType<typeof statusLine> {
-  const items = [statusItem('~F1~ About', CMD_ABOUT, 'F1'), statusItem('~F10~ Menu', 'menu', 'F10')];
-  if (windowMenu) {
-    items.push(
-      statusItem('~F5~ Cascade', Commands.cascade, 'F5'),
-      statusItem('~F4~ Tile', Commands.tile, 'F4'),
-      statusItem('~F6~ Next', Commands.next, 'F6'),
-    );
-  }
-  return statusLine(items);
+/**
+ * The shared status line: a single Exit affordance. `Alt+X` emits the quit command, which the shell
+ * forwards to `onClose` so the host (the Play modal) dismisses itself. Everything else — About,
+ * Theme, Depth, window management — lives in the menu bar, reached via F10 / Alt+hotkey / click.
+ */
+function buildStatusLine(): ReturnType<typeof statusLine> {
+  return statusLine([statusItem('~Alt+X~ Exit', Commands.quit, 'Alt+X')]);
 }
 
 /** Wire the shared About/Theme/Depth command handlers onto an application's loop. */
@@ -294,6 +297,9 @@ function wireCommands(app: Application, opts: DemoShellOptions): void {
   DEPTHS.forEach((depth) => {
     app.onCommand(depthCmd(depth), () => opts.onDepthChange?.(depth));
   });
+  // Exit emits the standard quit command; the shell forwards it to the host so the terminal app can
+  // dismiss its own Play modal. Harmless when unwired (no host modal) — the callback is optional.
+  app.onCommand(Commands.quit, () => opts.onClose?.());
 }
 
 /** The About dialog body: name + version + links. */

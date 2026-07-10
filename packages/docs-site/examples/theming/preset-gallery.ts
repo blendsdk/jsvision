@@ -7,7 +7,6 @@
  */
 import { Group, Button, Input, Label, CheckGroup, RadioGroup, Text, signal, View } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
-// #region example
 
 /** Absolutely place a view within the example's box. */
 function at<V extends View>(view: V, x: number, y: number, width: number, height: number): V {
@@ -40,4 +39,3 @@ export default defineExample({
     return group;
   },
 });
-// #endregion example

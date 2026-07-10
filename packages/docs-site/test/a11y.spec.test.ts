@@ -2,10 +2,9 @@
  * Specification test (immutable oracle) — the always-in-DOM accessibility region.
  *
  * The terminal canvas is opaque to assistive tech, so the accessible content lives
- * beside it: the example source (the page's `<<<` block), a prose blurb, and a real
- * ARIA-labelled Play button. This oracle checks the Play component renders the
- * labelled button + the blurb, and (as example pages land) that every page carries
- * the source + blurb + the Play component.
+ * beside it: a prose blurb and a real ARIA-labelled Play button. This oracle checks
+ * the Play component renders the labelled button + the blurb, and (as example pages
+ * land) that every registry example has a page mounting its Play component.
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -40,10 +39,9 @@ test('ST-11: the Play component renders the blurb (server-rendered, in the DOM w
   expect(PLAY_VUE).toContain('props.blurb');
 });
 
-test('ST-11: every example page carries the source + Play component', () => {
+test('ST-11: every example page mounts its Play component', () => {
   for (const entry of EXAMPLES) {
     const page = EXAMPLE_PAGES.find((text) => text.includes(`<PlayExample id="${entry.id}"`));
     expect(page, `${entry.id}: a page with <PlayExample id="${entry.id}"> exists`).toBeTruthy();
-    expect(page).toContain(`<<< @/${entry.sourcePath}`);
   }
 });

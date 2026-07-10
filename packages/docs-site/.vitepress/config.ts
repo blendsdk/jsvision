@@ -124,11 +124,65 @@ export default withMermaid(
             items: [
               { text: 'Button', link: '/components/controls/button' },
               { text: 'Input', link: '/components/controls/input' },
+              { text: 'Text', link: '/components/controls/text' },
+              { text: 'Label', link: '/components/controls/label' },
+              { text: 'Check group', link: '/components/controls/check-group' },
+              { text: 'Radio group', link: '/components/controls/radio-group' },
+              { text: 'Slider', link: '/components/controls/slider' },
+              { text: 'Switch', link: '/components/controls/switch' },
               { text: 'Form dialog', link: '/components/controls/form-dialog' },
             ],
           },
-          { text: 'Containers', items: [{ text: 'List box', link: '/components/containers/list-box' }] },
+          {
+            text: 'Containers',
+            items: [
+              { text: 'List box', link: '/components/containers/list-box' },
+              { text: 'Scroller', link: '/components/containers/scroller' },
+              { text: 'Scroll bar', link: '/components/containers/scroll-bar' },
+              { text: 'Tree', link: '/components/containers/tree' },
+              { text: 'Tabs', link: '/components/containers/tabs' },
+              { text: 'Dialog', link: '/components/containers/dialog' },
+            ],
+          },
           { text: 'Table', items: [{ text: 'Data grid', link: '/components/table/data-grid' }] },
+          {
+            text: 'Feedback',
+            items: [
+              { text: 'Progress bar', link: '/components/feedback/progress-bar' },
+              { text: 'Spinner', link: '/components/feedback/spinner' },
+            ],
+          },
+          {
+            text: 'Date',
+            items: [
+              { text: 'Calendar', link: '/components/date/calendar' },
+              { text: 'Date picker', link: '/components/date/date-picker' },
+            ],
+          },
+          {
+            text: 'Color',
+            items: [
+              { text: 'Color swatch', link: '/components/color/color-swatch' },
+              { text: 'Color picker', link: '/components/color/color-picker' },
+            ],
+          },
+          { text: 'Surface', items: [{ text: 'Surface view', link: '/components/surface/surface-view' }] },
+          {
+            text: 'Editor',
+            items: [
+              { text: 'Editor', link: '/components/editor/editor' },
+              { text: 'Memo', link: '/components/editor/memo' },
+              { text: 'Edit window', link: '/components/editor/edit-window' },
+            ],
+          },
+          { text: 'Terminal', items: [{ text: 'Terminal', link: '/components/terminal/terminal' }] },
+          {
+            text: 'Dropdown',
+            items: [
+              { text: 'Combo box', link: '/components/dropdown/combo-box' },
+              { text: 'History', link: '/components/dropdown/history' },
+            ],
+          },
           { text: 'Files', items: [{ text: 'File dialog', link: '/components/files/file-dialog' }] },
           { text: 'Theming', items: [{ text: 'Theme gallery', link: '/components/theming/preset-gallery' }] },
         ],

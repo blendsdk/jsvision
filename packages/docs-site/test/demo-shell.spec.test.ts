@@ -132,6 +132,27 @@ test('ST-B4: the status line carries hint items only — no Theme/Depth primary 
   });
 });
 
+test('ST-B6: an in-app Exit emits quit, which the shell forwards to the host-close callback', () => {
+  createRoot((dispose) => {
+    let closed = 0;
+    const app = demoShell({
+      build: () => marker(),
+      title: 'Widget Demo',
+      kind: 'component',
+      caps,
+      viewport: VP,
+      onClose: () => {
+        closed += 1;
+      },
+    });
+    // The System ▸ Exit item emits Commands.quit; the shell forwards it to the injected host-close
+    // callback so the terminal app can dismiss its own Play modal (the × button is no longer the only way out).
+    app.loop.emitCommand('quit');
+    expect(closed).toBe(1);
+    dispose();
+  });
+});
+
 test('ST-5: the shell shows the shared menu bar (≡ / View) and a status line', () => {
   createRoot((dispose) => {
     const app = demoShell({ build: () => marker(), title: 'Widget Demo', kind: 'component', caps, viewport: VP });

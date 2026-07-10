@@ -6,7 +6,6 @@
  */
 import { Group, Button, Text, signal, View } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
-// #region example
 
 const WIDTH = 44;
 const HEIGHT = 6;
@@ -29,4 +28,3 @@ export default defineExample({
     return group;
   },
 });
-// #endregion example

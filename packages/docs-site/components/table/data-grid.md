@@ -11,15 +11,3 @@ its header is clicked (▲/▼), rows zebra-stripe under a sticky header, and th
 horizontally when the columns overflow.
 
 <PlayExample id="table/data-grid" title="Data grid" blurb="A sortable multi-column table: click a header to sort (▲/▼), zebra striping, sticky header, H-scroll." />
-
-## Source
-
-The composition running above — the exact `build()` from the module:
-
-<<< @/examples/table/data-grid.ts#example{ts}
-
-::: details Full module (imports, JSDoc, data)
-
-<<< @/examples/table/data-grid.ts
-
-:::

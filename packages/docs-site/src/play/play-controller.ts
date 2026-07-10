@@ -77,6 +77,12 @@ export interface PlayControllerOptions {
   readonly reclaimTarget?: KeyEventTarget;
   /** Called when loading/mounting throws — the component renders a readable error panel. */
   readonly onError?: (message: string) => void;
+  /**
+   * Called when the hosted app requests its own close — its `System ▸ Exit` emits the quit command,
+   * which the demo shell forwards here. The Play component wires this to closing the modal, so the
+   * terminal app can dismiss itself (not only the modal's × button).
+   */
+  readonly onClose?: () => void;
 }
 
 /** The controller handle. */
@@ -145,6 +151,7 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
           caps,
           viewport: dims,
           onDepthChange: (nextDepth) => void controller.remount({ depth: nextDepth }),
+          onClose: opts.onClose,
         });
         mounted = mountApp({ element: el, app, caps, term });
         term = null; // ownership transferred to `mounted` (its dispose() disposes the terminal)

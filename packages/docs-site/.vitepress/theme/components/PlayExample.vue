@@ -6,13 +6,19 @@
  * and xterm is code-split out of the initial page bundle.
  *
  * Accessibility: the blurb and Play button are server-rendered (in the DOM without
- * JS); the example source lives on the page as a `<<<` block. On open, focus moves
- * into the dialog (the × button) rather than the terminal, so keyboard users are not
- * trapped; on close it returns to the Play button. A touch device with no keyboard
- * is shown a recorded screenshot (or, until that asset exists, a note + the source).
+ * JS). On open, focus moves into the dialog (the × button) rather than the terminal,
+ * so keyboard users are not trapped; on close it returns to the Play button. A touch
+ * device with no keyboard is shown a recorded screenshot (or, until that asset
+ * exists, a short note).
  *
- * Closing: the × button and a backdrop click close the dialog. Escape is deliberately
- * NOT bound here — it flows into the terminal so the hosted TUI keeps its own Escape.
+ * Sizing: the modal opens at a comfortable default and is user-resizable (drag the
+ * bottom-right corner). The chosen size is remembered (in cells, via localStorage) and
+ * restored on the next open; Reset returns it to the default.
+ *
+ * Closing: only the × button closes the dialog. A backdrop (outside) click does NOT —
+ * that would interrupt dragging the modal's resize handle, and the × is always present.
+ * Escape is deliberately NOT bound here — it flows into the terminal so the hosted TUI
+ * keeps its own Escape.
  */
 import { ref, onBeforeUnmount, onMounted, nextTick } from 'vue';
 import { isNoKeyboardDevice, screenshotPath } from '../../../src/play/no-keyboard';
@@ -28,7 +34,6 @@ const closeButton = ref<HTMLButtonElement | null>(null);
 const root = ref<HTMLElement | null>(null);
 const noKeyboard = ref(false);
 const screenshotMissing = ref(false);
-const size = ref<'80×24' | '100×30'>('80×24');
 const highlighted = ref(false);
 
 type SizeSpec = { width: number; height: number };
@@ -41,7 +46,7 @@ let controller: Controller | null = null;
 let focused = false;
 
 // Resize wiring: the fit addon (lifted out of createTerminal so the observer can drive it), the
-// container observer, the measured cell size (for the preset buttons), and a rAF debounce guard.
+// container observer, the measured cell size (to persist the size in cells), and a rAF debounce guard.
 let currentFit: { fit(): void } | null = null;
 let resizeObserver: ResizeObserver | null = null;
 let cellW = 0;
@@ -56,10 +61,55 @@ let prevHtmlOverflow = '';
 // not xterm's own handling — the terminal still receives the wheel and the app still scrolls.
 const preventWheel = (e: WheelEvent): void => e.preventDefault();
 
-const SIZES: Record<'80×24' | '100×30', SizeSpec> = {
-  '80×24': { width: 80, height: 24 },
-  '100×30': { width: 100, height: 30 },
-};
+/** The modal's default cell grid — comfortably larger than a bare 80×24, and still fits a laptop screen. */
+const DEFAULT_CELLS: SizeSpec = { width: 120, height: 36 };
+
+// The modal is user-resizable (CSS `resize: both`); we persist the resulting size in cells so the next
+// open restores it. Cells (not pixels) survive font/zoom changes. Reset clears it back to the default.
+const SIZE_KEY = 'jsvision:play-modal-size';
+
+/** The remembered modal size in cells, or null when none is saved or storage is unavailable. */
+function loadRememberedSize(): SizeSpec | null {
+  try {
+    const raw = localStorage.getItem(SIZE_KEY);
+    if (raw === null) return null;
+    const parsed = JSON.parse(raw) as Partial<SizeSpec>;
+    if (typeof parsed.width === 'number' && typeof parsed.height === 'number') {
+      return { width: parsed.width, height: parsed.height };
+    }
+  } catch {
+    /* storage blocked (private mode) or malformed JSON — fall back to the default */
+  }
+  return null;
+}
+
+/** Persist the modal size (in cells) so the next open restores it. Best-effort — storage may be blocked. */
+function saveRememberedSize(cells: SizeSpec): void {
+  try {
+    localStorage.setItem(SIZE_KEY, JSON.stringify(cells));
+  } catch {
+    /* storage blocked — remembering is best-effort */
+  }
+}
+
+/** Forget the remembered size so the next open falls back to {@link DEFAULT_CELLS}. */
+function clearRememberedSize(): void {
+  try {
+    localStorage.removeItem(SIZE_KEY);
+  } catch {
+    /* storage blocked — nothing to clear */
+  }
+}
+
+/** Save the modal's current cell grid, derived from the host's pixel size and the measured cell size. */
+function rememberCurrentSize(): void {
+  const host = termHost.value;
+  if (host === null || cellW <= 0 || cellH <= 0) return;
+  saveRememberedSize({
+    width: Math.max(1, Math.round(host.clientWidth / cellW)),
+    height: Math.max(1, Math.round(host.clientHeight / cellH)),
+  });
+}
 
 async function buildController(): Promise<Controller | null> {
   const [xterm, fitAddon, webglAddon, playController, registry] = await Promise.all([
@@ -79,9 +129,18 @@ async function buildController(): Promise<Controller | null> {
 
   return playController.createPlayController({
     entry,
-    size: SIZES[size.value],
+    size: DEFAULT_CELLS,
     createTerminal: (el: HTMLElement) => {
-      const term = new xterm.Terminal({ allowProposedApi: true, cursorBlink: true, fontSize: 14 });
+      // Open at the remembered size (or the default) so the modal restores whatever the user last
+      // dragged it to. The fit addon then trims it to the viewport if it is larger than the screen.
+      const preset = loadRememberedSize() ?? DEFAULT_CELLS;
+      const term = new xterm.Terminal({
+        cols: preset.width,
+        rows: preset.height,
+        allowProposedApi: true,
+        cursorBlink: true,
+        fontSize: 14,
+      });
       const fit = new fitAddon.FitAddon();
       term.loadAddon(fit);
       term.open(el);
@@ -91,7 +150,7 @@ async function buildController(): Promise<Controller | null> {
         /* no WebGL — the DOM renderer still draws Unicode */
       }
       fit.fit();
-      // Lift the fit addon + measure the cell size so the observer and the preset buttons can drive resize.
+      // Lift the fit addon + measure the cell size so the observer can refit and persist the size in cells.
       currentFit = fit;
       cellW = el.clientWidth / Math.max(1, term.cols);
       cellH = el.clientHeight / Math.max(1, term.rows);
@@ -104,6 +163,8 @@ async function buildController(): Promise<Controller | null> {
     onError: (message: string) => {
       errorMessage.value = message;
     },
+    // The hosted app's own Exit (System ▸ Exit → quit) dismisses the modal, just like the × button.
+    onClose: () => close(),
   });
 }
 
@@ -129,6 +190,7 @@ async function open(): Promise<void> {
     requestAnimationFrame(() => {
       rafPending = false;
       currentFit?.fit();
+      rememberCurrentSize(); // persist the dragged size so the next open restores it
     });
   });
   resizeObserver.observe(host);
@@ -166,18 +228,8 @@ function close(): void {
 }
 
 async function reset(): Promise<void> {
+  clearRememberedSize(); // Reset restores the default size too, not just the app state
   await controller?.remount({});
-}
-
-function toggleSize(): void {
-  size.value = size.value === '80×24' ? '100×30' : '80×24';
-  const target = SIZES[size.value];
-  const host = termHost.value;
-  if (!host || cellW === 0) return;
-  // Resize the container to the preset's pixel size; the ResizeObserver refits the terminal, which
-  // drives loop.resize. A convenience over the drag handle — same live path, no remount.
-  host.style.width = `${Math.round(target.width * cellW)}px`;
-  host.style.height = `${Math.round(target.height * cellH)}px`;
 }
 
 onMounted(() => {
@@ -224,7 +276,7 @@ onBeforeUnmount(close);
       ▶ Play
     </button>
 
-    <div v-if="isOpen" class="play-backdrop" @click.self="close">
+    <div v-if="isOpen" class="play-backdrop">
       <div
         class="play-modal"
         role="dialog"
@@ -232,12 +284,11 @@ onBeforeUnmount(close);
         :aria-label="`${props.title ?? props.id} — live terminal`"
       >
         <div class="play-modal-bar">
-          <span class="play-hint">Terminal focused — click × or outside to exit; Escape goes to the app.</span>
+          <span class="play-hint"
+            >Drag the bottom-right corner to resize. Click × (or press Alt+X) to exit; Escape goes to the app.</span
+          >
           <span class="play-controls">
             <button class="play-ctl" type="button" @click="reset">Reset</button>
-            <button class="play-ctl" type="button" aria-label="Toggle terminal size" @click="toggleSize">
-              {{ size }}
-            </button>
             <button ref="closeButton" class="play-close" type="button" aria-label="Close the example" @click="close">
               ×
             </button>

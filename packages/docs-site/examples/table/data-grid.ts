@@ -8,7 +8,6 @@
 import { Group, DataGrid, Text, signal, View } from '@jsvision/ui';
 import type { Column, SortState } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
-// #region example
 
 interface Person {
   readonly name: string;
@@ -73,4 +72,3 @@ export default defineExample({
     return group;
   },
 });
-// #endregion example
