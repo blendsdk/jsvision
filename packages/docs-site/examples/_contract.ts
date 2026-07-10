@@ -24,7 +24,7 @@ export interface ExampleContext {
    * The terminal capability profile (colour depth, Unicode, etc.). A single-`View`
    * example can ignore it — the demo shell builds its app. An example that returns
    * a whole `Application` must thread it into `createApplication({ caps })` (use the
-   * `demoApp(ctx, chrome)` helper) so colours and the Depth control resolve correctly.
+   * `demoApp(ctx)` helper) so colours and the Depth control resolve correctly.
    */
   readonly caps: CapabilityProfile;
 }

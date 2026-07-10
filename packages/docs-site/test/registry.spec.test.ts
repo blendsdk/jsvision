@@ -3,7 +3,7 @@
  *
  * Derives from the live-example requirements: an example module exports
  * `defineExample({ title, blurb, build })`, and the hand-authored `EXAMPLES`
- * registry is the single source of each example's id/category/chrome/sourcePath.
+ * registry is the single source of each example's id/category/kind/sourcePath.
  * Two guarantees are asserted here:
  *
  *  - **Parity** — every example module file on disk has exactly one registry
@@ -68,6 +68,13 @@ test('ST-1: every example file has exactly one registry entry, and vice-versa', 
   }
   // Bijection: same count on both sides.
   expect(sourcePaths.slice().sort()).toEqual(files);
+});
+
+test('ST-B5: every registry entry declares a valid kind (component | app)', () => {
+  expect(EXAMPLES.length).toBeGreaterThan(0);
+  for (const entry of EXAMPLES) {
+    expect(['component', 'app'], `${entry.id} has an invalid kind: ${String(entry.kind)}`).toContain(entry.kind);
+  }
 });
 
 test('ST-1: entry ids are unique and every module carries a non-empty title + blurb', async () => {

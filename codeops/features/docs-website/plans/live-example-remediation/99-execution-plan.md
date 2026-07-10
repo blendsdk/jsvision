@@ -2,7 +2,7 @@
 
 > **Feature**: docs-website · **Type**: Remediation (post-ship follow-up to RD-03)
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 7/27 `[x]` · 1 `[~]` (Phase 1 done + `yarn verify` green; browser check confirmed M1/M2/M4 + fixed a real wheel-fix defect; M3 hardware eyeball residual) — **Last Updated**: 2026-07-10
+> **Progress**: 13/27 `[x]` · 1 `[~]` (Phases 1–2 done + `yarn verify` green; browser-confirmed M1/M2/M4/M5/M6 + fixed a real wheel-fix defect; M3 hardware eyeball residual) — **Last Updated**: 2026-07-10
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Phase order
 per AR-7 (Resize → Shell → Reopen → Source). **Verify** = `yarn verify` (AR-15) unless a task names a
@@ -64,24 +64,34 @@ Ref: 03-01 · AR-2/6/8/10/11 · bugs #1, #3, wheel-leak.
 ## Phase 2 — Unify the demo shell (draggable-Window)
 Ref: 03-02 · AR-1/5/12/13/17 · bugs #4, #5, #6.
 
-- [ ] 2.1 Spec (AR-19): rewrite the superseded RD-03 oracles to the unified shell — **supersede
-  `demo-shell.spec` ST-4**, rewrite ST-5/ST-9 + `play-controller.spec` ST-7 (03-02 §Test migration) —
-  and write new **ST-B1…ST-B5** (component in a non-closable titled Window; interior on the window
-  surface; desktop uses the shared menu + reachable Theme/Depth; status = hints only; registry `kind`
-  parity) in `packages/docs-site/test/*`. Run red.
-- [ ] 2.2 Impl: registry — `ExampleEntry.chrome` → `kind: 'component'|'app'` (8 entries + type +
-  parity test); `play-controller.ts:134` reads `entry.kind`; harness `fakeEntry` param `chrome` →
-  `kind`. (`PlayExample.vue` is untouched — it never reads `chrome`.) Green ST-B5.
-- [ ] 2.3 Impl: `demo-shell.ts` — defer building (`build`+`title`+`kind`); `demoApp(ctx,{windowMenu})`;
-  `shellForView` wraps the component in a non-closable `Window` at the interior size; `buildMenuBar`
-  (System/View[/Window]) + `buildStatusLine` (hints); remove `placeContent`/`intendedSize`. Migrate
-  the signature-broken tests to `build`/`title`/`kind` (`paint-smoke.spec:37`, `demo-shell.impl:43/59`,
-  `security.spec:34` — 03-02 §Test migration). Green ST-B1/B2/B4 + the rewritten ST-5/ST-9/ST-7.
-- [ ] 2.4 Impl: `examples/apps/desktop.ts` → `demoApp(ctx,{windowMenu:true})`; drop its self-built
-  menu/status + own `about`. Green ST-B3.
-- [ ] 2.5 Impl tests + Verify: `yarn verify` green.
-- [ ] 2.6 Manual browser check M5–M6 (flat shadow on window surface; consistent menu + Theme/Depth
-  everywhere incl. desktop); record.
+- [x] 2.1 Spec (AR-19): rewrite the superseded RD-03 oracles to the unified shell — **supersede
+  `demo-shell.spec` ST-4**, rewrite ST-5/ST-9 + `play-controller.spec` ST-7 — and write new
+  **ST-B1…ST-B5**. ✅ (2026-07-10 — demo-shell.spec rewritten to ST-B1/B2/B3/B4 + ST-5/ST-9;
+  registry.spec gained ST-B5; harness `fakeEntry` param `chrome`→`kind`. ST-B1/B2 reach the stage
+  window via public `desktop.children`+`Window`; ST-B2 samples the interior centre ≠
+  `turboVisionTheme.desktop.pattern`; ST-B3 drives the real desktop example + `emitCommand`. Red first.)
+- [x] 2.2 Impl: registry — `ExampleEntry.chrome` → `kind: 'component'|'app'`; `play-controller.ts`
+  passes `kind`; harness `fakeEntry` param `kind`. ✅ (2026-07-10 — the 8 entries mapped by their real
+  `build()` return: button/input/list-box/data-grid/preset-gallery=`component`,
+  form-dialog/file-dialog/desktop=`app` — NOT a mechanical `chrome` rename (data-grid + preset-gallery
+  were `chrome:'full'` but return Views). `PlayExample.vue` untouched. Green ST-B5.)
+- [x] 2.3 Impl: `demo-shell.ts` — defer building (`build`+`title`+`kind`); `demoApp(ctx,{windowMenu?})`;
+  `shellForView` wraps the component in a non-closable `Window`; `buildMenuBar`/`buildStatusLine`;
+  migrate the signature-broken tests. ✅ (2026-07-10 — `demoShell` branches on `opts.kind` (`instanceof
+  View` guard, no unsafe cast); `shellForView` `winRect {x:1,y:0,w:dw-2,h:dh-1}`, builds at the interior
+  and **centers via `centerInInterior`** (reused `intendedSize`, retargeted desktop→window; handles
+  fixed-size (button, centered) + ctx-sized (data-grid, fills) — runtime note AR-13). `placeContent`
+  removed; `intendedSize` kept; unused theme/depth-cycle commands dropped. Migrated
+  paint-smoke/security/demo-shell.impl to `build`/`title`/`kind`. Green ST-B1/B2/B4 + ST-5/9/7.)
+- [x] 2.4 Impl: `examples/apps/desktop.ts` → `demoApp(ctx,{windowMenu:true})`; drop its self-built
+  menu/status + own `about`. ✅ (2026-07-10 — kept `desktop.shadow` + Welcome/Tips windows. Green ST-B3.)
+- [x] 2.5 Impl tests + Verify: `yarn verify` green. ✅ (2026-07-10 — 22/22 turbo tasks; docs-site 45
+  tests; lint + typecheck + check:docs green.)
+- [x] 2.6 Manual browser check M5–M6. ✅ (2026-07-10, live in `yarn docs:dev` — **M5 ✅** the button's
+  flat block-shadow reads on the clean blue window surface (not the dots); data-grid + button in titled
+  non-closable Windows (title + zoom box, no `[×]`), component centered on the surface; **M6 ✅** every
+  example shows the same `≡ View` menu + hints-only status; the desktop app now shows `≡ View Window`
+  (was its own menu without View) — Theme reachable there (ST-B3 confirms the command repaints).)
 
 **Verify**: `yarn verify`
 

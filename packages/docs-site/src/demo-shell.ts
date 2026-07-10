@@ -1,25 +1,39 @@
 /**
  * The demo shell: wraps every live example — a single component or a whole app —
- * into a mountable `Application` with a consistent chrome and a live
- * Theme / Depth / About affordance.
+ * in ONE consistent chrome and a live Theme / Depth / About affordance, then
+ * returns the mountable `Application`.
  *
- * Two chrome modes:
- *  - `minimal` — the component centered in the viewport with a compact status
- *    line exposing Theme (cycle), Depth (cycle), and About. No menu bar.
- *  - `full` — a menu bar (a system menu with About + a View menu offering Theme
- *    and Depth over the 13 presets) plus a status line. For multi-widget demos
- *    and full apps.
+ * There is a single chrome for every example: a desktop with a menu bar
+ * (`System ▸ About`, `View ▸ Theme / Depth`, and — for windowing apps — a
+ * `Window` menu) and a hints-only status line. The primary Theme/Depth/About
+ * controls live in the menu, never the footer.
  *
- * Content normalization: a bare `View` is placed into a shell the demo owns; an
- * `Application` (a full app that brings its own menu/status, e.g. a desktop demo)
- * is returned as-is with the shared About/Theme/Depth handlers wired onto its
- * loop. Either way the result is the `Application` that `mountApp` mounts.
+ * An example is one of two kinds:
+ *  - `component` — its `build()` returns a bare `View`; the shell wraps it in a
+ *    titled, non-closable `Window` on the desktop so the component sits on the
+ *    window's clean interior surface (never the desktop pattern) and can never
+ *    vanish to an empty desktop.
+ *  - `app` — its `build()` returns a whole `Application` (it owns its desktop
+ *    content: a desktop demo, a modal-dialog host). The shell only wires the
+ *    shared About / Theme / Depth handlers onto it.
  *
  * Theme switches use the app's own `setTheme` (a live recompose, no re-mount).
  * Depth is only *signalled* via `onDepthChange` — the caps profile is readonly,
  * so a depth change is a re-mount the Play layer performs, not a mutation here.
  */
-import { createApplication, menuBar, subMenu, item, statusLine, statusItem, messageBox, View } from '@jsvision/ui';
+import {
+  createApplication,
+  menuBar,
+  subMenu,
+  item,
+  separator,
+  statusLine,
+  statusItem,
+  messageBox,
+  Window,
+  View,
+  Commands,
+} from '@jsvision/ui';
 import type { Application } from '@jsvision/ui';
 import {
   turboVisionTheme,
@@ -37,21 +51,30 @@ import {
   horizonTheme,
 } from '@jsvision/core';
 import type { CapabilityProfile, Theme } from '@jsvision/core';
+import type { ExampleContext } from '../examples/_contract.js';
 import { SITE_META } from './site-meta.js';
 
 /** The colour depths the Depth control offers (matches `buildBrowserCaps`'s union). */
 export type Depth = 'truecolor' | '256' | '16' | 'mono';
 
+/** Whether an example builds a bare component (`View`) or a whole `Application`. */
+export type ExampleKind = 'component' | 'app';
+
 /** Options for {@link demoShell}. */
 export interface DemoShellOptions {
-  /** The example's built content — a bare component (`View`) or a whole `Application`. */
-  readonly content: Application | View;
+  /**
+   * Compose the example for a given cell grid. A `component` build receives the
+   * stage window's interior size; an `app` build receives the full viewport.
+   */
+  readonly build: (ctx: ExampleContext) => Application | View;
+  /** The example title — used as the stage window's title for a `component`. */
+  readonly title: string;
+  /** Whether `build` returns a bare `View` (`component`) or an `Application` (`app`). */
+  readonly kind: ExampleKind;
   /** Terminal capability profile driving colour-depth encoding. */
   readonly caps: CapabilityProfile;
   /** Initial viewport in cells. */
   readonly viewport: { width: number; height: number };
-  /** Which chrome wraps the content. */
-  readonly chrome: 'minimal' | 'full';
   /** Initial theme; defaults to Turbo Vision. */
   readonly theme?: Theme;
   /** Called when the Depth control changes — the Play layer turns this into a re-mount. */
@@ -85,15 +108,13 @@ const DEPTHS: readonly Depth[] = ['truecolor', '256', '16', 'mono'];
 
 // Internal command names the chrome emits and the shared wiring handles.
 const CMD_ABOUT = 'demo.about';
-const CMD_THEME_CYCLE = 'demo.theme.cycle';
-const CMD_DEPTH_CYCLE = 'demo.depth.cycle';
 const themeCmd = (index: number): string => `demo.theme.${index}`;
 const depthCmd = (depth: Depth): string => `demo.depth.${depth}`;
 
 /**
- * Wrap an example's content in a demo shell and return the mountable application.
+ * Wrap an example's build in the demo shell and return the mountable application.
  *
- * @param opts - the content, caps, viewport, chrome mode, and optional theme / depth hook.
+ * @param opts - the deferred build, title, kind, caps, viewport, and optional theme / depth hook.
  * @returns the `Application` to hand `mountApp`.
  * @example
  * import { demoShell } from '../src/demo-shell.js';
@@ -101,21 +122,24 @@ const depthCmd = (depth: Depth): string => `demo.depth.${depth}`;
  *
  * const caps = buildBrowserCaps();
  * const app = demoShell({
- *   content: def.build({ width: 80, height: 24 }),
+ *   build: (ctx) => def.build(ctx),
+ *   title: def.title,
+ *   kind: 'component',
  *   caps,
  *   viewport: { width: 80, height: 24 },
- *   chrome: 'minimal',
  *   onDepthChange: (depth) => remountAt(depth),
  * });
  * // mountApp({ element, app, caps, term });
  */
 export function demoShell(opts: DemoShellOptions): Application {
-  if (opts.content instanceof View) {
-    return shellForView(opts, opts.content);
+  if (opts.kind === 'app') {
+    // An `app` example builds its own chrome (via demoApp) at the full viewport; only wire commands.
+    const built = opts.build({ width: opts.viewport.width, height: opts.viewport.height, caps: opts.caps });
+    if (built instanceof View) throw new Error("an 'app' example must build an Application, not a View");
+    wireCommands(built, opts);
+    return built;
   }
-  // An Application brings its own chrome; wire the shared handlers onto its loop.
-  wireCommands(opts.content, opts);
-  return opts.content;
+  return shellForView(opts);
 }
 
 /**
@@ -125,11 +149,11 @@ export function demoShell(opts: DemoShellOptions): Application {
  * It bundles `createApplication` with the shared demo menu bar / status line and
  * the example's own capability profile, so the example only has to populate the
  * desktop — open its dialog, add its windows — and return the app. The demo shell
- * then wires the shared About / Theme / Depth handlers when it receives the
- * returned application, so those controls work without the example repeating them.
+ * then wires the shared About / Theme / Depth handlers onto the returned
+ * application, so those controls work without the example repeating them.
  *
  * @param ctx - the example context: the terminal `caps` plus the cell grid.
- * @param chrome - `'full'` (menu bar + status line) or `'minimal'` (status line only).
+ * @param opts - optional flags; `windowMenu` adds the `Window` menu + window hints for a windowing app.
  * @returns a mountable {@link Application} with the demo chrome already in place.
  * @example
  * import { defineExample } from '../_contract.js';
@@ -140,7 +164,7 @@ export function demoShell(opts: DemoShellOptions): Application {
  *   title: 'File dialog',
  *   blurb: 'Browse a virtual file tree in a modal dialog.',
  *   build: (ctx) => {
- *     const app = demoApp(ctx, 'full');
+ *     const app = demoApp(ctx);
  *     void openFile(app, { fs, directory: '/home/demo' });
  *     return app;
  *   },
@@ -148,47 +172,63 @@ export function demoShell(opts: DemoShellOptions): Application {
  */
 export function demoApp(
   ctx: { readonly caps: CapabilityProfile; readonly width: number; readonly height: number },
-  chrome: 'minimal' | 'full',
+  opts?: { readonly windowMenu?: boolean },
 ): Application {
+  const windowMenu = opts?.windowMenu ?? false;
   return createApplication({
     caps: ctx.caps,
     viewport: { width: ctx.width, height: ctx.height },
     theme: turboVisionTheme,
-    menuBar: chrome === 'full' ? buildMenuBar() : undefined,
-    statusLine: buildStatusLine(chrome),
+    menuBar: buildMenuBar({ windowMenu }),
+    statusLine: buildStatusLine({ windowMenu }),
   });
 }
 
-/** Build an owned application with the demo chrome and place the content in it. */
-function shellForView(opts: DemoShellOptions, view: View): Application {
+/** Build an owned application with the shared chrome and host the component in a stage Window. */
+function shellForView(opts: DemoShellOptions): Application {
   const app = createApplication({
     caps: opts.caps,
     viewport: opts.viewport,
     theme: opts.theme ?? turboVisionTheme,
-    menuBar: opts.chrome === 'full' ? buildMenuBar() : undefined,
-    statusLine: buildStatusLine(opts.chrome),
+    menuBar: buildMenuBar({ windowMenu: false }),
+    statusLine: buildStatusLine({ windowMenu: false }),
   });
-  placeContent(app, view, opts.chrome);
+  // The stage window fills the desktop minus a 1-cell margin, so the desktop pattern frames it.
+  const { width: dw, height: dh } = app.desktop.bounds;
+  const winRect = { x: 1, y: 0, width: dw - 2, height: dh - 1 };
+  // The window frame + padding eat one cell on each side, leaving this interior for the component.
+  const interiorW = winRect.width - 2;
+  const interiorH = winRect.height - 2;
+
+  const built = opts.build({ width: interiorW, height: interiorH, caps: opts.caps });
+  if (!(built instanceof View)) throw new Error("a 'component' example must build a View, not an Application");
+  centerInInterior(built, interiorW, interiorH);
+
+  const win = new Window(opts.title);
+  win.closable = false; // a demo can never be closed away to an empty desktop
+  win.layout.rect = winRect;
+  win.add(built);
+  app.desktop.addWindow(win);
+
   wireCommands(app, opts);
-  // The content is added after mount, so force one reflow to settle + paint it.
+  // The window is added after mount, so force one reflow to settle + paint it.
   app.loop.resize(opts.viewport);
   return app;
 }
 
-/** Place the content: centered (minimal) or filling the desktop (full). */
-function placeContent(app: Application, view: View, chrome: 'minimal' | 'full'): void {
-  const { width: dw, height: dh } = app.desktop.bounds;
-  if (chrome === 'minimal') {
-    const { width, height } = intendedSize(view);
-    const cw = Math.min(width, dw);
-    const ch = Math.min(height, dh);
-    const x = Math.max(0, Math.floor((dw - cw) / 2));
-    const y = Math.max(0, Math.floor((dh - ch) / 2));
-    view.layout = { position: 'absolute', rect: { x, y, width: cw, height: ch } };
-  } else {
-    view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: dw, height: dh } };
-  }
-  app.desktop.add(view);
+/**
+ * Center the component within the window interior, clamped to fit. A fixed-size
+ * component (its own small rect) is centered; a component built to the interior
+ * size fills it. The rect is window-interior-local — the window's `padding: 1`
+ * places `{0,0}` just inside the border, so no extra margin is added.
+ */
+function centerInInterior(view: View, interiorW: number, interiorH: number): void {
+  const { width, height } = intendedSize(view);
+  const cw = Math.min(width, interiorW);
+  const ch = Math.min(height, interiorH);
+  const x = Math.max(0, Math.floor((interiorW - cw) / 2));
+  const y = Math.max(0, Math.floor((interiorH - ch) / 2));
+  view.layout = { position: 'absolute', rect: { x, y, width: cw, height: ch } };
 }
 
 /** The content's intended size (from its absolute rect, or a modest default box). */
@@ -198,9 +238,9 @@ function intendedSize(view: View): { width: number; height: number } {
   return { width: 40, height: 10 };
 }
 
-/** The full-chrome menu bar: a system menu (About) + a View menu (Theme + Depth). */
-function buildMenuBar(): ReturnType<typeof menuBar> {
-  return menuBar([
+/** The shared menu bar: System (About) + View (Theme + Depth) + (optionally) a Window menu. */
+function buildMenuBar({ windowMenu }: { windowMenu: boolean }): ReturnType<typeof menuBar> {
+  const menus = [
     subMenu('≡', [item('~A~bout', CMD_ABOUT, 'F1')]),
     subMenu('~V~iew', [
       subMenu(
@@ -212,19 +252,34 @@ function buildMenuBar(): ReturnType<typeof menuBar> {
         DEPTHS.map((d) => item(d, depthCmd(d))),
       ),
     ]),
-  ]);
+  ];
+  if (windowMenu) {
+    menus.push(
+      subMenu('~W~indow', [
+        item('~N~ext', Commands.next, 'F6'),
+        item('~Z~oom', Commands.zoom, 'F2'),
+        separator(),
+        item('~C~ascade', Commands.cascade, 'F5'),
+        item('~T~ile', Commands.tile, 'F4'),
+        separator(),
+        item('~C~lose', Commands.close, 'F3'),
+      ]),
+    );
+  }
+  return menuBar(menus);
 }
 
-/** The status line: a compact Theme/Depth/About row (minimal) or a hotkey row (full). */
-function buildStatusLine(chrome: 'minimal' | 'full'): ReturnType<typeof statusLine> {
-  if (chrome === 'minimal') {
-    return statusLine([
-      statusItem('~T~heme', CMD_THEME_CYCLE),
-      statusItem('~D~epth', CMD_DEPTH_CYCLE),
-      statusItem('~A~bout', CMD_ABOUT, 'F1'),
-    ]);
+/** The shared status line: hotkey hints only (no primary Theme/Depth controls). */
+function buildStatusLine({ windowMenu }: { windowMenu: boolean }): ReturnType<typeof statusLine> {
+  const items = [statusItem('~F1~ About', CMD_ABOUT, 'F1'), statusItem('~F10~ Menu', 'menu', 'F10')];
+  if (windowMenu) {
+    items.push(
+      statusItem('~F5~ Cascade', Commands.cascade, 'F5'),
+      statusItem('~F4~ Tile', Commands.tile, 'F4'),
+      statusItem('~F6~ Next', Commands.next, 'F6'),
+    );
   }
-  return statusLine([statusItem('~F1~ About', CMD_ABOUT, 'F1'), statusItem('~F10~ Menu', 'menu', 'F10')]);
+  return statusLine(items);
 }
 
 /** Wire the shared About/Theme/Depth command handlers onto an application's loop. */
@@ -238,17 +293,6 @@ function wireCommands(app: Application, opts: DemoShellOptions): void {
   });
   DEPTHS.forEach((depth) => {
     app.onCommand(depthCmd(depth), () => opts.onDepthChange?.(depth));
-  });
-  // The minimal chrome cycles rather than listing every option.
-  let themeIndex = 0;
-  app.onCommand(CMD_THEME_CYCLE, () => {
-    themeIndex = (themeIndex + 1) % PRESETS.length;
-    app.setTheme(PRESETS[themeIndex].theme);
-  });
-  let depthIndex = 0;
-  app.onCommand(CMD_DEPTH_CYCLE, () => {
-    depthIndex = (depthIndex + 1) % DEPTHS.length;
-    opts.onDepthChange?.(DEPTHS[depthIndex]);
   });
 }
 

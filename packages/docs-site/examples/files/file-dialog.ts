@@ -39,7 +39,7 @@ export default defineExample({
   title: 'File dialog',
   blurb: 'Browse a virtual file tree in a modal dialog — no backend, entirely in-memory.',
   build: (ctx) => {
-    const app = demoApp(ctx, 'full');
+    const app = demoApp(ctx);
     // Open the dialog on start; a bare-placed dialog would not be modal.
     void openFile(app, { fs: seedFs(), directory: HOME, title: 'Open a file' });
     return app;

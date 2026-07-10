@@ -9,10 +9,10 @@ import { fakeEntry, headlessFactory, markerContent } from './helpers/play-harnes
 
 const EL = { tagName: 'div' };
 
-test('the app is built at the terminal size (terminal-driven), not the size fallback', async () => {
+test('the app viewport is terminal-driven (derived from the real cols/rows), not the size fallback', async () => {
   const f = headlessFactory(100, 30); // the terminal is 100×30
   const built: { width: number; height: number }[] = [];
-  const entry = fakeEntry('minimal', (ctx: ExampleContext) => {
+  const entry = fakeEntry('component', (ctx: ExampleContext) => {
     built.push({ width: ctx.width, height: ctx.height });
     return markerContent();
   });
@@ -20,11 +20,16 @@ test('the app is built at the terminal size (terminal-driven), not the size fall
   const controller = createPlayController({ entry, createTerminal: f.createTerminal, size: { width: 80, height: 24 } });
 
   await controller.open(EL);
-  expect(built.at(-1), 'built at the terminal 100×30, not the 80×24 fallback').toEqual({ width: 100, height: 30 });
+  // A component is built at its stage-window interior, which is derived from the terminal's real
+  // 100×30 (interior ≈ 96×25). That interior is wider/taller than the whole 80×24 fallback viewport,
+  // so exceeding it proves the terminal drove the size — not the hardcoded fallback (interior ≈ 76×19).
+  expect(built.at(-1)!.width, 'terminal-driven (100-col terminal), not the 80-col fallback').toBeGreaterThan(80);
+  expect(built.at(-1)!.height, 'terminal-driven (30-row terminal), not the 24-row fallback').toBeGreaterThan(24);
 
   // Re-mount (Reset / depth change) rebuilds at the terminal's current size, preserving the depth merge.
   await controller.remount({ depth: '16' });
-  expect(built.at(-1)).toEqual({ width: 100, height: 30 });
+  expect(built.at(-1)!.width).toBeGreaterThan(80);
+  expect(built.at(-1)!.height).toBeGreaterThan(24);
 
   controller.close();
 });
@@ -32,7 +37,7 @@ test('the app is built at the terminal size (terminal-driven), not the size fall
 test('double close is a no-op', async () => {
   const f = headlessFactory();
   const controller = createPlayController({
-    entry: fakeEntry('minimal', () => markerContent()),
+    entry: fakeEntry('component', () => markerContent()),
     createTerminal: f.createTerminal,
   });
   await controller.open(EL);
@@ -46,11 +51,11 @@ test('double close is a no-op', async () => {
 test('the singleton disposes the previously-active controller on a new open', async () => {
   const f = headlessFactory();
   const c1 = createPlayController({
-    entry: fakeEntry('minimal', () => markerContent()),
+    entry: fakeEntry('component', () => markerContent()),
     createTerminal: f.createTerminal,
   });
   const c2 = createPlayController({
-    entry: fakeEntry('minimal', () => markerContent()),
+    entry: fakeEntry('component', () => markerContent()),
     createTerminal: f.createTerminal,
   });
   await c1.open(EL);
