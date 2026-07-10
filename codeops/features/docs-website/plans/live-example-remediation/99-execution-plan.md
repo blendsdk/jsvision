@@ -2,7 +2,7 @@
 
 > **Feature**: docs-website · **Type**: Remediation (post-ship follow-up to RD-03)
 > **CodeOps Skills Version**: 3.3.2
-> **Progress**: 6/27 `[x]` · 2 `[~]` (Phase 1 code done + `yarn verify` green; M1–M4 manual browser pending) — **Last Updated**: 2026-07-10 09:17
+> **Progress**: 7/27 `[x]` · 1 `[~]` (Phase 1 done + `yarn verify` green; browser check confirmed M1/M2/M4 + fixed a real wheel-fix defect; M3 hardware eyeball residual) — **Last Updated**: 2026-07-10
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Phase order
 per AR-7 (Resize → Shell → Reopen → Source). **Verify** = `yarn verify` (AR-15) unless a task names a
@@ -29,12 +29,17 @@ Ref: 03-01 · AR-2/6/8/10/11 · bugs #1, #3, wheel-leak.
   (implemented: 2026-07-10 02:57 — terminal-driven `open()` with error-safe orphan-terminal disposal
   so the throwing-example leak oracle stays green; `size` demoted to a fallback; migrated the
   `remount` impl test to terminal-driven; controller suite 11/11 green)
-- [~] 1.4 Impl: `PlayExample.vue` — resizable terminal container (CSS `resize`+`min` ≥ 40×12) +
+- [x] 1.4 Impl: `PlayExample.vue` — resizable terminal container (CSS `resize`+`min` ≥ 40×12) +
   `ResizeObserver → fit.fit()`; repurpose the size button to container-resize (no remount); wheel
-  `preventDefault` while focused (AR-11). ✅ (implemented: 2026-07-10 09:17 — fit lifted to component
-  scope, container frozen then `resize:both` + observer refit, size button resizes the container via
-  the measured cell size, wheel `preventDefault` on the terminal host. **Browser-only → verified by
-  M1–M4, not headless.**)
+  `preventDefault` (AR-11). ✅ (implemented 2026-07-10; browser-verified 2026-07-10 via HMR — fit
+  lifted to component scope, container frozen then `resize:both` + observer refit, preset button
+  resizes the container by the measured cell size. **Wheel fix corrected mid-check (AR-11 runtime):
+  the bubble-phase listener never fired — xterm `stopPropagation()`s the wheel in the target phase —
+  so it is now a CAPTURE-phase `preventDefault` + a background scroll-lock (`<html>` overflow while
+  open, restored on close).** Verified live: the capture listener fires (a child-dispatched cancelable
+  wheel returns `defaultPrevented`), the app still receives the wheel (grid scrolled), the scroll-lock
+  sets on open + restores on close, and the preset grows the app live 80×24→100×30 with no remount.
+  Browser-only → not headless.)
 - [x] 1.5 Impl: if ST-A2/A3/A4 went red, fix `grid-rows.ts` `GridRows`/`GridHeader` draw; green. If
   green as written, record #3 as downstream of #1/wheel (confirmed by M4 in 1.8). ✅ (2026-07-10 09:17
   — golden green as written; no `grid-rows.ts` change; #3 attributed to #1/wheel, to confirm via M4)
@@ -44,8 +49,13 @@ Ref: 03-01 · AR-2/6/8/10/11 · bugs #1, #3, wheel-leak.
 - [x] 1.7 Verify: `yarn verify` green. ✅ (2026-07-10 09:17 — 22/22 turbo tasks; ui 1506 tests incl.
   the new golden; docs-site 41 tests + typecheck; lint + check:docs green)
 - [~] 1.8 Manual browser check M1–M4 (resize keeps input+alignment; preset live; wheel no page-scroll;
-  no grid garble); record results in the checklist. ⏳ (browser verification pending — code committed
-  verify-green; run in `yarn docs:dev`)
+  no grid garble); record results in the checklist. ◑ (2026-07-10, live in `yarn docs:dev` on the
+  data-grid Play — see 07 §Manual: **M1 ✅** resize keeps input+alignment (grid stays aligned, app
+  functional after grow); **M2 ✅** preset live 80×24→100×30, no remount blank; **M4 ✅** grid renders
+  crisp at both sizes, no garble; **M3 ◑** wiring verified (capture wheel listener fires, app still
+  scrolls, scroll-lock cycles on open/close) — the one residual is the page-scroll-STOP under a REAL
+  hardware wheel, which automation can't assert (CDP force-scrolls past both `preventDefault` and CSS
+  `overflow`); left as a human eyeball, carried into Phase 5.2.)
 
 **Verify**: `yarn verify`
 
