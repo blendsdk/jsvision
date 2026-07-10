@@ -21,7 +21,7 @@ const EL = { tagName: 'div' };
 test('ST-A1: the app viewport matches the terminal size on open (not a hardcoded preset)', async () => {
   const f = headlessFactory(100, 30); // larger than the legacy 80×24 default
   const controller = createPlayController({
-    entry: fakeEntry('full', () => markerContent()),
+    entry: fakeEntry('component', () => markerContent()),
     createTerminal: f.createTerminal,
   });
   await controller.open(EL);
@@ -36,7 +36,7 @@ test('ST-A1: the app viewport matches the terminal size on open (not a hardcoded
 test('ST-A1 (resize): a terminal resize repaints the app at the new size, live', async () => {
   const f = headlessFactory(80, 24);
   const controller = createPlayController({
-    entry: fakeEntry('full', () => markerContent()),
+    entry: fakeEntry('component', () => markerContent()),
     createTerminal: f.createTerminal,
   });
   await controller.open(EL);

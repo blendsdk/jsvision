@@ -40,7 +40,7 @@ function frameText(app: { loop: { renderRoot: { buffer(): { rows(): readonly { c
 
 test('the About command opens a dialog showing the site name and version', () => {
   createRoot((dispose) => {
-    const app = demoShell({ content: content(), caps, viewport: VP, chrome: 'full' });
+    const app = demoShell({ build: () => content(), title: 'Demo', kind: 'component', caps, viewport: VP });
     app.loop.emitCommand('demo.about');
     const text = frameText(app);
     expect(text).toContain(SITE_META.name);
@@ -53,10 +53,11 @@ test('the Depth command signals onDepthChange and never mutates caps', () => {
   createRoot((dispose) => {
     let got: string | undefined;
     const app = demoShell({
-      content: content(),
+      build: () => content(),
+      title: 'Demo',
+      kind: 'component',
       caps,
       viewport: VP,
-      chrome: 'full',
       onDepthChange: (d) => {
         got = d;
       },

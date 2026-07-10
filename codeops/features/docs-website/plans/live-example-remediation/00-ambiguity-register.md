@@ -67,3 +67,15 @@ deliberate, narrow exception to spec-test immutability (the requirement changed)
   regardless of both `preventDefault` and CSS `overflow` — so that final confirmation stays in the
   manual checklist (M3). The scroll-lock run+restore and the capture listener firing WERE verified
   live. AR-11's *intent* (wheel over the terminal never scrolls/zooms the page) is unchanged.
+
+- **AR-13 (runtime) — the component is *centered* within the window interior, not stretched to fill.**
+  03-02 step 4 assumed every component is built to the interior size and fills `{0,0,interiorW,
+  interiorH}`. In reality the component examples split two ways: **fixed-size** (button 44×6, input
+  56×8, list-box 40×12 — ignore `ctx` and set their own small rect) and **ctx-sized** (data-grid,
+  preset-gallery — fill `ctx`). A fixed-size component stretched to the full interior would be wrong.
+  So `shellForView` **centers** the built component within the interior (clamped to fit) — reusing the
+  retired `placeContent`/`intendedSize` centering logic, retargeted from the desktop to the window
+  interior. A fixed component is centered on the window surface (matching the old centre-on-desktop
+  look); a ctx-sized component built at the interior fills it. Verified live (button centered; data-grid
+  fills) + by ST-B2 (interior centre is on the window surface). AR-13's intent (component on the clean
+  window surface) is unchanged.

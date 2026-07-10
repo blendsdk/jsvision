@@ -1,19 +1,24 @@
 /**
- * Specification test (immutable oracle) — the demo shell that wraps every
- * example into a mountable application with two chrome modes.
+ * Specification test (immutable oracle) — the unified demo shell.
  *
- *  - **minimal** centers a single component and exposes Theme / Depth / About on
- *    a compact status line, with no menu bar.
- *  - **full** shows a menu bar (a system menu with About + a View menu offering
- *    Theme and Depth) plus a status line.
- *  - A theme switch repaints live (via the app's `setTheme`) with no re-mount,
- *    and the default open theme is Turbo Vision.
+ * Every live example runs inside ONE consistent chrome: a desktop with a menu
+ * bar (System ▸ About, View ▸ Theme/Depth, and a Window menu for windowing
+ * apps) and a hints-only status line. A `component` example is wrapped in a
+ * titled, non-closable `Window` on the desktop (its cells sit on the window
+ * surface, not the desktop pattern); an `app` example brings its own desktop
+ * content and only has the shared commands wired onto it. A theme switch
+ * repaints live (via `setTheme`) with no re-mount; the default theme is Turbo
+ * Vision.
+ *
+ * (Supersedes the retired two-chrome-mode oracle: the old ST-4 "minimal chrome,
+ * no menu bar, Theme/Depth in the status line" no longer describes the shell.)
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities, turboVisionTheme, nordTheme } from '@jsvision/core';
 import type { DrawContext } from '@jsvision/ui';
-import { View, createRoot } from '@jsvision/ui';
+import { View, Window, createRoot } from '@jsvision/ui';
 import { demoShell } from '../src/demo-shell.js';
+import desktopExample from '../examples/apps/desktop.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 const VP = { width: 80, height: 24 };
@@ -31,11 +36,9 @@ class Marker extends View {
   }
 }
 
-/** A sized content view (an example's `build()` returns something like this). */
-function content(label = 'DEMOBODY', w = 24, h = 4): Marker {
-  const m = new Marker(label);
-  m.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
-  return m;
+/** A sized content view — a component example's `build()` returns something like this. */
+function marker(label = 'DEMOBODY'): Marker {
+  return new Marker(label);
 }
 
 /** The composed frame as an array of row strings. */
@@ -44,6 +47,15 @@ function rowsOf(app: { loop: { renderRoot: { buffer(): { rows(): readonly { char
     .buffer()
     .rows()
     .map((r) => r.map((c) => c.char).join(''));
+}
+
+/** A per-cell char accessor over the composed frame. */
+function cellCharAt(
+  app: { loop: { renderRoot: { buffer(): { get(x: number, y: number): { char: string } | undefined } } } },
+  x: number,
+  y: number,
+): string | undefined {
+  return app.loop.renderRoot.buffer().get(x, y)?.char;
 }
 
 /** A colour-aware signature of the whole frame (char + fg + bg + attrs per cell). */
@@ -59,49 +71,90 @@ function signatureOf(app: {
     .join('\n');
 }
 
-test('ST-4: minimal chrome centers the component with a compact Theme/Depth/About status and no menu bar', () => {
+/** The stage windows the shell placed on the desktop (public `children`, filtered to `Window`). */
+function stageWindows(app: { desktop: { children: readonly View[] } }): Window[] {
+  return app.desktop.children.filter((c): c is Window => c instanceof Window);
+}
+
+test('ST-B1: a component example is wrapped in a titled, non-closable Window on the desktop', () => {
   createRoot((dispose) => {
-    const app = demoShell({ content: content('CENTERME', 20, 3), caps, viewport: VP, chrome: 'minimal' });
-    const rows = rowsOf(app);
-    const status = rows[rows.length - 1];
-    expect(status).toContain('Theme');
-    expect(status).toContain('Depth');
-    expect(status).toContain('About');
-    // No menu bar in minimal mode.
-    expect(rows[0]).not.toContain('≡');
-    // The component sits in the interior (centered), not on the top edge or the status row.
-    const markerRow = rows.findIndex((r) => r.includes('CENTERME'));
-    expect(markerRow).toBeGreaterThan(0);
-    expect(markerRow).toBeLessThan(rows.length - 1);
+    const app = demoShell({ build: () => marker(), title: 'Widget Demo', kind: 'component', caps, viewport: VP });
+    const wins = stageWindows(app);
+    expect(wins.length).toBe(1);
+    expect(wins[0].closable).toBe(false); // a demo can never vanish to an empty desktop
+    expect(wins[0].title()).toBe('Widget Demo'); // titled with the example title
     dispose();
   });
 });
 
-test('ST-5: full chrome shows a menu bar (≡ / View) and a status line', () => {
+test('ST-B2: a component demo renders on the window surface, not the desktop pattern', () => {
   createRoot((dispose) => {
-    const app = demoShell({ content: content(), caps, viewport: VP, chrome: 'full' });
-    const rows = rowsOf(app);
-    // Menu bar on the top row: the system menu (≡) and the View menu.
-    expect(rows[0]).toContain('≡');
-    expect(rows[0]).toContain('View');
-    // A status line on the bottom row.
-    expect(rows[rows.length - 1].trim().length).toBeGreaterThan(0);
+    const app = demoShell({ build: () => marker(), title: 'Widget Demo', kind: 'component', caps, viewport: VP });
+    const pattern = turboVisionTheme.desktop.pattern; // ░ — tiled across the desktop background
+    // Dead-centre sits inside the near-full-desktop stage window → the window's clean interior surface.
+    expect(cellCharAt(app, Math.floor(VP.width / 2), Math.floor(VP.height / 2))).not.toBe(pattern);
+    // The desktop still patterns its margin left of the inset window — proving the sample discriminates.
+    expect(cellCharAt(app, 0, Math.floor(VP.height / 2))).toBe(pattern);
     dispose();
   });
 });
 
-test('ST-9: the default open theme is Turbo Vision and setTheme repaints live without a re-mount', () => {
+test('ST-B3: the desktop app carries the shared menu + a reachable Theme control', () => {
   createRoot((dispose) => {
-    const dflt = demoShell({ content: content(), caps, viewport: VP, chrome: 'full' });
-    const tv = demoShell({ content: content(), caps, viewport: VP, chrome: 'full', theme: turboVisionTheme });
+    const app = demoShell({
+      build: (ctx) => desktopExample.build(ctx),
+      title: desktopExample.title,
+      kind: 'app',
+      caps,
+      viewport: VP,
+    });
+    const menuRow = rowsOf(app)[0];
+    expect(menuRow).toContain('View'); // the shared View menu (Theme/Depth)
+    expect(menuRow).toContain('Window'); // the Window menu (windowMenu app)
+    // Theme is now reachable (the #6 unreachable-handler defect is gone): emitting a preset repaints.
+    const before = signatureOf(app);
+    app.loop.emitCommand('demo.theme.3'); // a non-default preset (Nord)
+    expect(signatureOf(app)).not.toEqual(before);
+    dispose();
+  });
+});
+
+test('ST-B4: the status line carries hint items only — no Theme/Depth primary control', () => {
+  createRoot((dispose) => {
+    const app = demoShell({ build: () => marker(), title: 'Widget Demo', kind: 'component', caps, viewport: VP });
+    const status = rowsOf(app).at(-1) ?? '';
+    // Theme/Depth are primary controls in the View menu now, not footer items (#5).
+    expect(status).not.toContain('Theme');
+    expect(status).not.toContain('Depth');
+    // It is still a real hint row (About / Menu affordances).
+    expect(status.trim().length).toBeGreaterThan(0);
+    dispose();
+  });
+});
+
+test('ST-5: the shell shows the shared menu bar (≡ / View) and a status line', () => {
+  createRoot((dispose) => {
+    const app = demoShell({ build: () => marker(), title: 'Widget Demo', kind: 'component', caps, viewport: VP });
+    const rows = rowsOf(app);
+    expect(rows[0]).toContain('≡'); // the System menu
+    expect(rows[0]).toContain('View'); // the View menu
+    expect((rows.at(-1) ?? '').trim().length).toBeGreaterThan(0); // a status line
+    dispose();
+  });
+});
+
+test('ST-9: the default theme is Turbo Vision and setTheme repaints live without a re-mount', () => {
+  createRoot((dispose) => {
+    const opts = { build: () => marker(), title: 'Widget Demo', kind: 'component' as const, caps, viewport: VP };
+    const dflt = demoShell(opts);
+    const tv = demoShell({ ...opts, theme: turboVisionTheme });
     // Default (no theme option) renders identically to an explicit Turbo Vision theme.
     expect(signatureOf(dflt)).toEqual(signatureOf(tv));
 
     const before = signatureOf(dflt);
     dflt.setTheme(nordTheme);
-    const after = signatureOf(dflt);
     // The same app repainted in the new preset's colours — a live swap, not a rebuild.
-    expect(after).not.toEqual(before);
+    expect(signatureOf(dflt)).not.toEqual(before);
     dispose();
   });
 });

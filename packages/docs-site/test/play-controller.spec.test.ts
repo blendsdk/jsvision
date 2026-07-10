@@ -3,7 +3,7 @@
  * lifecycle behind the client-only Play component.
  *
  *  - `open` lazily loads the example, builds it in the demo shell, mounts it onto
- *    a terminal, and paints a non-empty first frame (with chrome in full mode).
+ *    a terminal, and paints a non-empty first frame (with the shared chrome).
  *  - 20× open/close leaks no terminal instances (every terminal is disposed).
  *  - Key-reclaim is attached while open (F10 reaches the TUI) and detached on
  *    close (F10 returns to the browser).
@@ -28,7 +28,7 @@ const EL = { tagName: 'div' };
 test('ST-6: open paints a non-empty first frame to the terminal', async () => {
   const f = headlessFactory();
   const controller = createPlayController({
-    entry: fakeEntry('minimal', () => markerContent()),
+    entry: fakeEntry('component', () => markerContent()),
     createTerminal: f.createTerminal,
   });
   await controller.open(EL);
@@ -40,24 +40,24 @@ test('ST-6: open paints a non-empty first frame to the terminal', async () => {
   controller.close();
 });
 
-test('ST-7: open with full chrome paints a menu bar and a status line', async () => {
+test('ST-7: open paints the shared menu bar and a status line', async () => {
   const f = headlessFactory();
   const controller = createPlayController({
-    entry: fakeEntry('full', () => markerContent()),
+    entry: fakeEntry('component', () => markerContent()),
     createTerminal: f.createTerminal,
   });
   await controller.open(EL);
   const real = f.lastReal()!;
   await flushTerminal(real);
-  expect(rowText(real, 0)).toContain('View'); // the menu bar's View menu
-  expect(rowText(real, real.rows - 1).trim().length).toBeGreaterThan(0); // a status line
+  expect(rowText(real, 0)).toContain('View'); // the shared View menu (Theme/Depth)
+  expect(rowText(real, real.rows - 1).trim().length).toBeGreaterThan(0); // a hints status line
   controller.close();
 });
 
 test('ST-8: open/close 20 times leaks no terminal instances', async () => {
   const f = headlessFactory();
   const controller = createPlayController({
-    entry: fakeEntry('full', () => markerContent()),
+    entry: fakeEntry('component', () => markerContent()),
     createTerminal: f.createTerminal,
   });
   for (let i = 0; i < 20; i += 1) {
@@ -73,7 +73,7 @@ test('ST-10: F10 is reclaimed while open+focused and released after close', asyn
   const f = headlessFactory();
   const target = fakeKeyTarget();
   const controller = createPlayController({
-    entry: fakeEntry('full', () => markerContent()),
+    entry: fakeEntry('component', () => markerContent()),
     createTerminal: f.createTerminal,
     reclaimTarget: target,
     isFocused: () => controller.isOpen,
@@ -92,11 +92,11 @@ test('ST-10: F10 is reclaimed while open+focused and released after close', asyn
 test('ST-14: opening a second controller closes the first (at most one live terminal)', async () => {
   const f = headlessFactory();
   const c1 = createPlayController({
-    entry: fakeEntry('full', () => markerContent()),
+    entry: fakeEntry('component', () => markerContent()),
     createTerminal: f.createTerminal,
   });
   const c2 = createPlayController({
-    entry: fakeEntry('full', () => markerContent()),
+    entry: fakeEntry('component', () => markerContent()),
     createTerminal: f.createTerminal,
   });
   await c1.open(EL);
@@ -112,7 +112,7 @@ test('ST-14: a throwing example signals an error panel, stays closed, and cleans
   const f = headlessFactory();
   const errors: string[] = [];
   const controller = createPlayController({
-    entry: fakeEntry('minimal', () => {
+    entry: fakeEntry('component', () => {
       throw new Error('boom');
     }),
     createTerminal: f.createTerminal,
@@ -121,7 +121,7 @@ test('ST-14: a throwing example signals an error panel, stays closed, and cleans
   await controller.open(EL);
   expect(controller.isOpen).toBe(false);
   expect(errors).toContain('boom');
-  expect(f.live()).toBe(0); // build() threw before any terminal was created
+  expect(f.live()).toBe(0); // the terminal created before build() is disposed when build() throws
   expect(() => controller.close()).not.toThrow();
   expect(controller.isOpen).toBe(false);
 });
