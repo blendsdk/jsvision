@@ -11,6 +11,7 @@ import { createBrowserFileSystem, type FileTree } from '@jsvision/web';
 import { Button, Text, Window, View } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
+// #region example
 
 /** Absolutely place a view within its parent's interior. */
 function at<V extends View>(view: V, x: number, y: number, width: number, height: number): V {
@@ -75,3 +76,4 @@ export default defineExample({
     return app;
   },
 });
+// #endregion example

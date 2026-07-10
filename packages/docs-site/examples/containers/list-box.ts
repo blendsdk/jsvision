@@ -6,6 +6,7 @@
  */
 import { Group, ListBox, Text, signal, View } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
+// #region example
 
 const FRUITS = [
   'Apple',
@@ -74,3 +75,4 @@ export default defineExample({
     return group;
   },
 });
+// #endregion example
