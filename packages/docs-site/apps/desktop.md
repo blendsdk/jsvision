@@ -11,15 +11,3 @@ in the browser. Press **F10** for the menu, drag a title bar to move a window, d
 resize, **F5** / **F4** to cascade / tile, **F6** for the next window, and **Tab** to cycle focus.
 
 <PlayExample id="apps/desktop" title="Turbo Vision desktop" blurb="A full windowing app — menu bar, status line, movable/resizable windows — running in the browser." />
-
-## Source
-
-The composition running above — the exact `build()` from the module:
-
-<<< @/examples/apps/desktop.ts#example{ts}
-
-::: details Full module (imports, JSDoc, data)
-
-<<< @/examples/apps/desktop.ts
-
-:::
