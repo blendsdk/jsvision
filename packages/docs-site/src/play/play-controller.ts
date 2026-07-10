@@ -33,6 +33,10 @@ export interface HostElement {
 
 /** The narrow terminal surface `mountApp` drives (a real `@xterm/xterm` or an `@xterm/headless` terminal). */
 export interface TerminalLike {
+  /** Current column count — the terminal is the source of viewport truth; the app is built at this size. */
+  readonly cols: number;
+  /** Current row count. */
+  readonly rows: number;
   write(data: string): void;
   onData(handler: (data: string) => void): { dispose(): void };
   onResize(handler: (size: { cols: number; rows: number }) => void): { dispose(): void };
@@ -124,25 +128,34 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
       if (activeController !== null && activeController !== controller) activeController.close();
       activeController = controller;
       element = el;
+      // Held outside the try so a failure after createTerminal but before mountApp still disposes it.
+      let term: TerminalLike | null = null;
       try {
+        // Create (and, in the browser, fit) the terminal first: it is the single source of viewport
+        // truth. Building the app at the terminal's real cols/rows — not a hardcoded preset — keeps
+        // the composed frame and the terminal grid from ever desyncing (the resize bug).
+        term = opts.createTerminal(el);
+        const dims = { width: term.cols || size.width, height: term.rows || size.height };
         const def = (await opts.entry.load()).default;
         const caps = buildBrowserCaps({ colorDepth: depth });
         const app = demoShell({
-          content: def.build({ width: size.width, height: size.height, caps }),
+          content: def.build({ width: dims.width, height: dims.height, caps }),
           caps,
-          viewport: size,
+          viewport: dims,
           chrome: opts.entry.chrome,
           onDepthChange: (nextDepth) => void controller.remount({ depth: nextDepth }),
         });
-        const term = opts.createTerminal(el);
         mounted = mountApp({ element: el, app, caps, term });
-        detachReclaim = attachKeyReclaim(term, {
+        term = null; // ownership transferred to `mounted` (its dispose() disposes the terminal)
+        detachReclaim = attachKeyReclaim(mounted.term, {
           isFocused: opts.isFocused ?? (() => open),
           target: opts.reclaimTarget,
         });
         open = true;
       } catch (error) {
-        // Never leave a blank/half-painted terminal: tear down, then surface a readable message.
+        // Never leave a blank/half-painted terminal: dispose the orphan terminal (if mountApp did not
+        // take ownership), tear down, then surface a readable message.
+        term?.dispose?.();
         controller.close();
         const message = error instanceof Error ? error.message : String(error);
         opts.onError?.(message);

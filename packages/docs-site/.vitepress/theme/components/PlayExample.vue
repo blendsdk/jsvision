@@ -40,6 +40,16 @@ type Controller = {
 let controller: Controller | null = null;
 let focused = false;
 
+// Resize wiring: the fit addon (lifted out of createTerminal so the observer can drive it), the
+// container observer, the measured cell size (for the preset buttons), and a rAF debounce guard.
+let currentFit: { fit(): void } | null = null;
+let resizeObserver: ResizeObserver | null = null;
+let cellW = 0;
+let cellH = 0;
+let rafPending = false;
+/** Stop the wheel from scrolling/zooming the page under the modal; xterm still forwards it to the app. */
+const preventWheel = (e: WheelEvent): void => e.preventDefault();
+
 const SIZES: Record<'80×24' | '100×30', SizeSpec> = {
   '80×24': { width: 80, height: 24 },
   '100×30': { width: 100, height: 30 },
@@ -75,6 +85,10 @@ async function buildController(): Promise<Controller | null> {
         /* no WebGL — the DOM renderer still draws Unicode */
       }
       fit.fit();
+      // Lift the fit addon + measure the cell size so the observer and the preset buttons can drive resize.
+      currentFit = fit;
+      cellW = el.clientWidth / Math.max(1, term.cols);
+      cellH = el.clientHeight / Math.max(1, term.rows);
       term.textarea?.addEventListener('focus', () => (focused = true));
       term.textarea?.addEventListener('blur', () => (focused = false));
       return term;
@@ -97,6 +111,23 @@ async function open(): Promise<void> {
   controller = await buildController();
   if (!controller) return;
   await controller.open(host);
+
+  // Freeze the fitted box as the resize handle's starting size, then make it genuinely resizable:
+  // a ResizeObserver refits the terminal on every drag, and mountApp routes the terminal's onResize
+  // to loop.resize, so the app tracks any size live — no remount, no viewport/terminal desync.
+  host.style.width = `${host.clientWidth}px`;
+  host.style.height = `${host.clientHeight}px`;
+  resizeObserver = new ResizeObserver(() => {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(() => {
+      rafPending = false;
+      currentFit?.fit();
+    });
+  });
+  resizeObserver.observe(host);
+  host.addEventListener('wheel', preventWheel, { passive: false });
+
   // Move focus into the dialog (not the terminal) so keyboard users are not trapped.
   closeButton.value?.focus();
 }
@@ -104,6 +135,16 @@ async function open(): Promise<void> {
 function close(): void {
   controller?.close();
   controller = null;
+  // Tear down the resize wiring while the terminal host is still mounted (before the v-if unmounts it).
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+  currentFit = null;
+  const host = termHost.value;
+  if (host) {
+    host.removeEventListener('wheel', preventWheel);
+    host.style.width = '';
+    host.style.height = '';
+  }
   isOpen.value = false;
   focused = false;
   playButton.value?.focus(); // return focus to the trigger
@@ -113,9 +154,15 @@ async function reset(): Promise<void> {
   await controller?.remount({});
 }
 
-async function toggleSize(): Promise<void> {
+function toggleSize(): void {
   size.value = size.value === '80×24' ? '100×30' : '80×24';
-  await controller?.remount({ size: SIZES[size.value] });
+  const target = SIZES[size.value];
+  const host = termHost.value;
+  if (!host || cellW === 0) return;
+  // Resize the container to the preset's pixel size; the ResizeObserver refits the terminal, which
+  // drives loop.resize. A convenience over the drag handle — same live path, no remount.
+  host.style.width = `${Math.round(target.width * cellW)}px`;
+  host.style.height = `${Math.round(target.height * cellH)}px`;
 }
 
 onMounted(() => {
@@ -291,6 +338,11 @@ onBeforeUnmount(close);
 }
 .play-term {
   overflow: hidden;
+  /* Genuinely resizable: a drag handle in the corner; the ResizeObserver refits the terminal. The
+     min floors the terminal near 40×12 so a tiny drag can't collapse the app. */
+  resize: both;
+  min-width: 360px;
+  min-height: 200px;
 }
 .play-error {
   max-width: 60ch;
