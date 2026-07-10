@@ -50,3 +50,20 @@ Likewise (AR-19), the unified draggable-Window shell (AR-1) contradicts RD-03's 
 two-chrome-mode design. ST-4 is superseded and ST-5/ST-9/ST-7 rewritten to the unified behaviour.
 Both are scoped, user-authorized changes to shipped oracles, recorded here for traceability — the
 deliberate, narrow exception to spec-test immutability (the requirement changed).
+
+## Runtime notes (exec-time discoveries — goal unchanged, mechanism corrected)
+
+- **AR-11 (runtime) — the wheel fix must be a *capture-phase* listener + a background scroll-lock.**
+  During the Phase-1 manual browser check, the first implementation (a **bubble-phase** `wheel`
+  `preventDefault` on the terminal host) was found to **never fire**: xterm.js calls
+  `stopPropagation()` on the wheel in the target phase, so the event never reaches a bubble listener
+  on the ancestor host (instrumented: a bubble probe recorded zero events; a capture probe fired).
+  Corrected to a **capture-phase** listener (`{ capture: true, passive: false }`) — it runs before
+  xterm, `preventDefault`s the browser's scroll/zoom, and still lets xterm forward the wheel to the
+  app (verified live: the grid still scrolled). Added a **background scroll-lock** (`<html>`
+  `overflow: hidden` while the modal is open, restored on close) as conventional modal behaviour and
+  a routing-independent second line of defence. Note: the actual page-scroll-STOP under a **real
+  hardware wheel** can't be asserted via browser automation — CDP's synthetic `scroll` force-scrolls
+  regardless of both `preventDefault` and CSS `overflow` — so that final confirmation stays in the
+  manual checklist (M3). The scroll-lock run+restore and the capture listener firing WERE verified
+  live. AR-11's *intent* (wheel over the terminal never scrolls/zooms the page) is unchanged.

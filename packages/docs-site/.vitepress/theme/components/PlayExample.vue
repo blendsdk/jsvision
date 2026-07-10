@@ -47,7 +47,13 @@ let resizeObserver: ResizeObserver | null = null;
 let cellW = 0;
 let cellH = 0;
 let rafPending = false;
-/** Stop the wheel from scrolling/zooming the page under the modal; xterm still forwards it to the app. */
+// The <html> overflow we swap for a scroll-lock while the modal is open (restored verbatim on close).
+let prevHtmlOverflow = '';
+// Stop the wheel over the terminal from scrolling the page or triggering ctrl+wheel browser zoom,
+// while still letting xterm forward it to the app. This MUST be a capture-phase listener: xterm
+// calls stopPropagation() on the wheel in the target phase, so a bubble-phase listener on this host
+// never sees the event. preventDefault here cancels only the browser's default action (scroll/zoom),
+// not xterm's own handling — the terminal still receives the wheel and the app still scrolls.
 const preventWheel = (e: WheelEvent): void => e.preventDefault();
 
 const SIZES: Record<'80×24' | '100×30', SizeSpec> = {
@@ -126,7 +132,13 @@ async function open(): Promise<void> {
     });
   });
   resizeObserver.observe(host);
-  host.addEventListener('wheel', preventWheel, { passive: false });
+  // Capture phase (see preventWheel) so the listener runs before xterm stops the event's propagation.
+  host.addEventListener('wheel', preventWheel, { capture: true, passive: false });
+
+  // Lock the page scroll behind the modal — conventional modal behaviour, and a robust second line
+  // of defence for the wheel: the background cannot scroll no matter how the wheel event is routed.
+  prevHtmlOverflow = document.documentElement.style.overflow;
+  document.documentElement.style.overflow = 'hidden';
 
   // Move focus into the dialog (not the terminal) so keyboard users are not trapped.
   closeButton.value?.focus();
@@ -139,9 +151,12 @@ function close(): void {
   resizeObserver?.disconnect();
   resizeObserver = null;
   currentFit = null;
+  // Restore the page scroll-lock unconditionally (even if the terminal host is already gone).
+  document.documentElement.style.overflow = prevHtmlOverflow;
   const host = termHost.value;
   if (host) {
-    host.removeEventListener('wheel', preventWheel);
+    // The capture flag must match the addEventListener call for removal to take effect.
+    host.removeEventListener('wheel', preventWheel, { capture: true });
     host.style.width = '';
     host.style.height = '';
   }
