@@ -35,14 +35,14 @@ export function markerContent(): View {
 
 /** Build a synthetic registry entry backed by an inline `defineExample`. */
 export function fakeEntry(
-  chrome: 'minimal' | 'full',
+  kind: 'component' | 'app',
   build: (ctx: ExampleContext) => Application | View,
   id = 'test/example',
 ): ExampleEntry {
   return {
     id,
     category: 'test',
-    chrome,
+    kind,
     sourcePath: `examples/${id}.ts`,
     load: () => Promise.resolve({ default: defineExample({ title: 'Test', blurb: 'A synthetic example.', build }) }),
   };

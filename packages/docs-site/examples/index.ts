@@ -1,8 +1,8 @@
 /**
  * The live-example registry: one entry per runnable example module under
  * `examples/<category>/<name>.ts`. Hand-authored — the single source of truth
- * for each example's id, category, chrome mode, and source path. A parity test
- * keeps it honest: every module file must have exactly one entry and vice-versa.
+ * for each example's id, category, kind, and source path. A parity test keeps
+ * it honest: every module file must have exactly one entry and vice-versa.
  *
  * The module itself owns only `title`/`blurb`/`build` (the example contract);
  * everything about placement lives here.
@@ -15,8 +15,11 @@ export interface ExampleEntry {
   readonly id: string;
   /** Category grouping (`'controls'`). */
   readonly category: string;
-  /** Which demo-shell chrome wraps this example when it runs. */
-  readonly chrome: 'minimal' | 'full';
+  /**
+   * What the example's `build()` returns, which selects how the demo shell hosts it:
+   * `'component'` (a bare `View`, wrapped in a stage window) or `'app'` (a whole `Application`).
+   */
+  readonly kind: 'component' | 'app';
   /** Package-root-relative path to the module (`'examples/controls/button.ts'`) — the `<<<` embed + parity target. */
   readonly sourcePath: string;
   /** Lazy dynamic import so each example is a separate code-split chunk (never in the initial bundle). */
@@ -32,56 +35,56 @@ export const EXAMPLES: readonly ExampleEntry[] = [
   {
     id: 'controls/button',
     category: 'controls',
-    chrome: 'minimal',
+    kind: 'component',
     sourcePath: 'examples/controls/button.ts',
     load: () => import('./controls/button.js'),
   },
   {
     id: 'controls/input',
     category: 'controls',
-    chrome: 'minimal',
+    kind: 'component',
     sourcePath: 'examples/controls/input.ts',
     load: () => import('./controls/input.js'),
   },
   {
     id: 'controls/form-dialog',
     category: 'controls',
-    chrome: 'full',
+    kind: 'app',
     sourcePath: 'examples/controls/form-dialog.ts',
     load: () => import('./controls/form-dialog.js'),
   },
   {
     id: 'containers/list-box',
     category: 'containers',
-    chrome: 'minimal',
+    kind: 'component',
     sourcePath: 'examples/containers/list-box.ts',
     load: () => import('./containers/list-box.js'),
   },
   {
     id: 'files/file-dialog',
     category: 'files',
-    chrome: 'full',
+    kind: 'app',
     sourcePath: 'examples/files/file-dialog.ts',
     load: () => import('./files/file-dialog.js'),
   },
   {
     id: 'table/data-grid',
     category: 'table',
-    chrome: 'full',
+    kind: 'component',
     sourcePath: 'examples/table/data-grid.ts',
     load: () => import('./table/data-grid.js'),
   },
   {
     id: 'apps/desktop',
     category: 'apps',
-    chrome: 'full',
+    kind: 'app',
     sourcePath: 'examples/apps/desktop.ts',
     load: () => import('./apps/desktop.js'),
   },
   {
     id: 'theming/preset-gallery',
     category: 'theming',
-    chrome: 'full',
+    kind: 'component',
     sourcePath: 'examples/theming/preset-gallery.ts',
     load: () => import('./theming/preset-gallery.js'),
   },

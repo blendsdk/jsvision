@@ -30,7 +30,7 @@ export default defineExample({
   title: 'Form dialog',
   blurb: 'A modal form — input + checks + radios with OK/Cancel; OK is vetoed while Age is out of range.',
   build: (ctx) => {
-    const app = demoApp(ctx, 'full');
+    const app = demoApp(ctx);
     const age = signal('30');
     const styles = signal([true, false]);
     const size = signal(1);

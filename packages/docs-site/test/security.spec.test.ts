@@ -31,7 +31,7 @@ test('ST-14(a): a raw ESC byte in seeded file content is stripped when painted',
   createRoot((dispose) => {
     const view = new Text(raw);
     view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 60, height: 6 } };
-    const app = demoShell({ content: view, caps, viewport: VP, chrome: 'minimal' });
+    const app = demoShell({ build: () => view, title: 'Security', kind: 'component', caps, viewport: VP });
     const frame = app.loop.renderRoot
       .buffer()
       .rows()

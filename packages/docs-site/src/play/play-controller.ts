@@ -139,10 +139,11 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
         const def = (await opts.entry.load()).default;
         const caps = buildBrowserCaps({ colorDepth: depth });
         const app = demoShell({
-          content: def.build({ width: dims.width, height: dims.height, caps }),
+          build: (ctx) => def.build(ctx),
+          title: def.title,
+          kind: opts.entry.kind,
           caps,
           viewport: dims,
-          chrome: opts.entry.chrome,
           onDepthChange: (nextDepth) => void controller.remount({ depth: nextDepth }),
         });
         mounted = mountApp({ element: el, app, caps, term });

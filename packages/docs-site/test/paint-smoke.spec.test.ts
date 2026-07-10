@@ -31,12 +31,13 @@ test('ST-2: every seed example paints a non-empty frame', async () => {
     const def = (await entry.load()).default;
     createRoot((dispose) => {
       const app = demoShell({
-        content: def.build({ width: VP.width, height: VP.height, caps }),
+        build: (ctx) => def.build(ctx),
+        title: def.title,
+        kind: entry.kind,
         caps,
         viewport: VP,
-        chrome: entry.chrome,
       });
-      // An Application content is returned by the shell as-is (never resized) — force one compose
+      // An `app`-kind example is returned by the shell as-is (never resized) — force one compose
       // so its first frame settles before we read it.
       app.loop.resize(VP);
       expect(paintedCells(app), `${entry.id} paints something`).toBeGreaterThan(0);

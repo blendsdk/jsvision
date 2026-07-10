@@ -5,21 +5,10 @@
  * menu, drag a title bar to move a window, drag a corner to resize, F5 / F4 to
  * cascade / tile, F6 for the next window, and Tab to cycle focus.
  */
-import {
-  createApplication,
-  Window,
-  View,
-  menuBar,
-  subMenu,
-  item,
-  separator,
-  statusLine,
-  statusItem,
-  messageBox,
-  Commands,
-} from '@jsvision/ui';
+import { Window, View } from '@jsvision/ui';
 import type { Size2D, DrawContext } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
+import { demoApp } from '../../src/demo-shell.js';
 
 /**
  * A window-content panel: it fills the framed interior with the `window` theme
@@ -70,38 +59,10 @@ export default defineExample({
   title: 'Turbo Vision desktop',
   blurb: 'A full windowing app — menu bar, status line, movable/resizable windows — running in the browser.',
   build: (ctx) => {
-    const app = createApplication({
-      caps: ctx.caps,
-      viewport: { width: ctx.width, height: ctx.height },
-      menuBar: menuBar([
-        subMenu('≡', [item('~A~bout', 'about', 'F1')]),
-        subMenu('~W~indow', [
-          item('~N~ext', Commands.next, 'F6'),
-          item('~Z~oom', Commands.zoom, 'F2'),
-          separator(),
-          item('~C~ascade', Commands.cascade, 'F5'),
-          item('~T~ile', Commands.tile, 'F4'),
-          separator(),
-          item('~C~lose', Commands.close, 'F3'),
-        ]),
-      ]),
-      statusLine: statusLine([
-        statusItem('~F10~ Menu', 'menu', 'F10'),
-        statusItem('~F5~ Cascade', Commands.cascade, 'F5'),
-        statusItem('~F4~ Tile', Commands.tile, 'F4'),
-        statusItem('~F6~ Next', Commands.next, 'F6'),
-        statusItem('~F3~ Close', Commands.close, 'F3'),
-      ]),
-    });
+    // The shared chrome supplies the System/View menu, the Window menu, the status line, and the
+    // About / Theme / Depth commands — the same menu every example shows (Theme/Depth work here too).
+    const app = demoApp(ctx, { windowMenu: true });
     app.desktop.shadow = true; // Turbo Vision drop-shadows under the windows.
-    app.onCommand(
-      'about',
-      () =>
-        void messageBox(
-          { loop: app.loop, desktop: app.desktop },
-          { title: 'About', text: 'JSVision desktop\n\nA full windowing app running on the browser terminal host.' },
-        ),
-    );
 
     const welcome = new Window('Welcome');
     welcome.number = 1;
