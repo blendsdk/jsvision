@@ -55,16 +55,16 @@ FR / AR and the home doc.
 
 ## Manual browser checklist (AR-6) — run in `yarn docs:dev`, record pass/fail
 
-| # | Bug | Check |
-|---|-----|-------|
-| M1 | #1 | Open the DataGrid Play; drag-resize the modal small→large; input works + the grid stays aligned at each size (no desync). |
-| M2 | #1 | The size preset button changes size live — no blank/half-painted frame, input still works after. |
-| M3 | wheel | Mouse-wheel over the terminal does NOT scroll or zoom the underlying doc page. |
-| M4 | #3 | The DataGrid does not garble at any size or during nav/sort. |
-| M5 | #4 | A Button demo's flat block-shadow reads correctly on the window surface (not on the desktop dots). |
-| M6 | #6 | Every example (incl. `apps/desktop`) shows the same System/View menu; Theme + Depth switch works everywhere, desktop included. |
-| M7 | #7 | Close a dialog (OK/Cancel/Esc), then click "Open the dialog" — it reopens; repeat. |
-| M8 | #2 | The Source section shows `build()` by default; the full module is in the collapsible details. |
+| # | Bug | Check | Result |
+|---|-----|-------|--------|
+| M1 | #1 | Open the DataGrid Play; drag-resize the modal small→large; input works + the grid stays aligned at each size (no desync). | ✅ 2026-07-10 — grid stays aligned, app functional after grow |
+| M2 | #1 | The size preset button changes size live — no blank/half-painted frame, input still works after. | ✅ 2026-07-10 — 80×24→100×30 live, no remount blank |
+| M3 | wheel | Mouse-wheel over the terminal does NOT scroll or zoom the underlying doc page. | ◑ 2026-07-10 — wiring verified live (capture wheel listener fires, app still scrolls, `<html>` scroll-lock sets on open + restores on close); the page-scroll-STOP under a **real hardware wheel** still needs a human eyeball (CDP force-scrolls past `preventDefault` + `overflow`, so automation can't assert it) |
+| M4 | #3 | The DataGrid does not garble at any size or during nav/sort. | ✅ 2026-07-10 — crisp at 80×24 and 100×30, no garble |
+| M5 | #4 | A Button demo's flat block-shadow reads correctly on the window surface (not on the desktop dots). | ⏳ Phase 2 |
+| M6 | #6 | Every example (incl. `apps/desktop`) shows the same System/View menu; Theme + Depth switch works everywhere, desktop included. | ⏳ Phase 2 |
+| M7 | #7 | Close a dialog (OK/Cancel/Esc), then click "Open the dialog" — it reopens; repeat. | ⏳ Phase 3 |
+| M8 | #2 | The Source section shows `build()` by default; the full module is in the collapsible details. | ⏳ Phase 4 |
 
 ## Notes
 
