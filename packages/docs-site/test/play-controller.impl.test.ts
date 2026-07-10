@@ -9,22 +9,20 @@ import { fakeEntry, headlessFactory, markerContent } from './helpers/play-harnes
 
 const EL = { tagName: 'div' };
 
-test('remount merges size/depth and preserves unspecified params', async () => {
-  const f = headlessFactory(100, 30);
+test('the app is built at the terminal size (terminal-driven), not the size fallback', async () => {
+  const f = headlessFactory(100, 30); // the terminal is 100×30
   const built: { width: number; height: number }[] = [];
   const entry = fakeEntry('minimal', (ctx: ExampleContext) => {
     built.push({ width: ctx.width, height: ctx.height });
     return markerContent();
   });
+  // The 80×24 `size` is only a fallback for a terminal that reports no cols/rows; the real terminal wins.
   const controller = createPlayController({ entry, createTerminal: f.createTerminal, size: { width: 80, height: 24 } });
 
   await controller.open(EL);
-  expect(built.at(-1)).toEqual({ width: 80, height: 24 });
+  expect(built.at(-1), 'built at the terminal 100×30, not the 80×24 fallback').toEqual({ width: 100, height: 30 });
 
-  await controller.remount({ size: { width: 100, height: 30 } });
-  expect(built.at(-1)).toEqual({ width: 100, height: 30 });
-
-  // A depth-only re-mount preserves the previously-set size (param merge, not replace).
+  // Re-mount (Reset / depth change) rebuilds at the terminal's current size, preserving the depth merge.
   await controller.remount({ depth: '16' });
   expect(built.at(-1)).toEqual({ width: 100, height: 30 });
 
