@@ -17,7 +17,7 @@
 | theme-designer | [→](features/theme-designer/00-roadmap.md) | PL-01 ✅ Done — standalone `@jsvision/theme-designer` app + reusable `Slider` (all 4 phases / 40 tasks) | 1/1 plans | ✅ | 2026-07-09 |
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 ✅ Done — UI small batch: Tree markers (#17) · duplicate-accelerator warning (#6) · Switch (#11) | 1/1 plans | ✅ | 2026-07-09 |
-| docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — VitePress site + gh-pages CI + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · **RD-02 ✅ Done** (web-runtime — `@jsvision/web` shipped: browser host/`mountApp` · caps · virtual FileSystem · key-reclaim · clipboard · `browser-stubs`; 17/17 tasks, 41 tests ST-1…ST-12, dogfooded into web-xterm) · **RD-03 ✅ Done** (live-example-system — every docs sample runs live in xterm.js via `mountApp`, shown code == running code; 40/40 tasks / 7 phases; DemoShell + client-only Play + a11y/no-kbd/deep-link + **8 seed examples** (button…desktop…preset-gallery); ST-1…ST-14 green, docs gate 14/14; **↳ remediation ✅ 2026-07-10** — 7 post-ship bugs fixed: terminal-driven Play resize, unified draggable-Window shell, reopenable dialogs, build()-first Source; 22/27 tasks, verify 22/22 + gate 14/14, browser-confirmed M1/M2/M4–M8) · **RD-06 🔄 Executing** (api-reference — TypeDoc→md→VitePress, 4 public barrels, gitignored+regen, bidirectional cross-links, drift-gated; 4 phases/16 tasks; preflight PASSED 7 findings — helpers as plain-ESM `.mjs` for the `node` gate, defensive sidebar fs-read; compatible trio verified installable) · RD-04/05/07…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 3/10 RDs · RD-06 🔄 executing | 🔄 | 2026-07-11 |
+| docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — VitePress site + gh-pages CI + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · **RD-02 ✅ Done** (web-runtime — `@jsvision/web` shipped: browser host/`mountApp` · caps · virtual FileSystem · key-reclaim · clipboard · `browser-stubs`; 17/17 tasks, 41 tests ST-1…ST-12, dogfooded into web-xterm) · **RD-03 ✅ Done** (live-example-system — every docs sample runs live in xterm.js via `mountApp`, shown code == running code; 40/40 tasks / 7 phases; DemoShell + client-only Play + a11y/no-kbd/deep-link + **8 seed examples** (button…desktop…preset-gallery); ST-1…ST-14 green, docs gate 14/14; **↳ remediation ✅ 2026-07-10** — 7 post-ship bugs fixed: terminal-driven Play resize, unified draggable-Window shell, reopenable dialogs, build()-first Source; 22/27 tasks, verify 22/22 + gate 14/14, browser-confirmed M1/M2/M4–M8) · **RD-06 ✅ Done** (api-reference — generated TypeDoc→md→VitePress reference for the 4 public barrels, gitignored+regen per-package for clean `/api/<pkg>/…` URLs, **bidirectional** cross-links via a 29-row symbol↔page map, drift-gated (6 `API-*` checks → docs gate 20/20; pure `.mjs` helpers in `yarn verify`); 4 phases/16 tasks all `[x]`; barrelExports == generated set per pkg (0 missing/leaked); clean-dist verify 22/22 + gate 20/20; TypeDoc devDeps only) · RD-04/05/07…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 4/10 RDs · RD-06 ✅ done | 🔄 | 2026-07-11 |
 
 ## Archived
 
@@ -27,6 +27,16 @@
 
 ## Notes
 
+- 2026-07-11: **docs-website RD-06 (api-reference) → ✅ DONE** — via `exec_plan`. All 4 phases / 16 tasks `[x]`,
+  spec-first. A generated TypeDoc→md→VitePress API reference for the 4 public barrels (core `src/engine/index.ts`;
+  ui/files/web `src/index.ts`, badged pre-release), gitignored + regenerated before every build (per-package runs
+  for clean `/api/<pkg>/<kind>/<Symbol>` URLs), **bidirectional** component↔reference cross-links via a 29-row
+  `src/api/api-map.mjs`, drift-gated by pure `.mjs` helpers in `yarn verify` + 6 `API-*` checks in
+  `check-docs-build.mjs` (gate now 20/20). Runtime AR-22 (per-package invocation) + AR-23 (package-qualified titles
+  for cross-package re-export uniqueness). `barrelExports` == the generated set per package (0 missing/leaked);
+  determinism byte-identical; TypeDoc devDeps only (`check:deps` green). **✅ clean-dist `yarn verify` 22/22 + API
+  gate chain 20/20.** Commits `d66f474` (P1 pipeline) · `00c21e8` (P2 cross-links) · P3/P4 pending. Cascaded from
+  **docs-website**.
 - 2026-07-11: **docs-website RD-06 (api-reference) → 🔄 EXECUTING** — via `exec_plan`. The plan's top risk
   (typedoc/plugin/theme version skew) is de-risked: `typedoc@0.28.20` ← `typedoc-plugin-markdown@4.12.0` ←
   `typedoc-vitepress-theme@1.1.3` form a peer-compatible trio and repo TS 5.9.3 sits in typedoc's peer range.
