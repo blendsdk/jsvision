@@ -81,6 +81,9 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 - **MenuBar** — the top menu bar with nested pop-up menus (`menuBar([...])` builders).
 - **MenuPopup** — a single pop-up menu panel (used by `MenuBar`; rarely constructed directly).
 - **StatusLine** — the bottom status/command row (`statusLine([statusItem(...)])`).
+- **StatusItemView** — a single status-row entry, built with `statusItem(text, command?, key?)`: an
+  interactive command shortcut (label + emitted command + accelerator) or a passive live label
+  (accessor text, no command). Drop it into `statusLine([...])`; `StatusLine` drives its interaction.
 
 ## The escape hatch
 
