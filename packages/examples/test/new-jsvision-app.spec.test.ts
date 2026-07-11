@@ -116,7 +116,4 @@ test('ST-6: a generated app is structurally valid and paints headlessly', async 
     rmSync(tmpRoot, { recursive: true, force: true });
     expect(existsSync(tmpRoot)).toBe(false);
   }
-  // Generous timeout: on a cold Windows CI worker, the first dynamic import that pulls in the whole
-  // @jsvision/ui module graph can exceed the 15s default. buildApp() is synchronous and cannot hang,
-  // so a longer budget is safe — it only absorbs one-time transform/resolution cost.
-}, 45_000);
+});
