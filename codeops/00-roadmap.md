@@ -18,7 +18,7 @@
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 ✅ Done — UI small batch: Tree markers (#17) · duplicate-accelerator warning (#6) · Switch (#11) | 1/1 plans | ✅ | 2026-07-09 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — VitePress site + gh-pages CI + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · **RD-02 ✅ Done** (web-runtime — `@jsvision/web` shipped: browser host/`mountApp` · caps · virtual FileSystem · key-reclaim · clipboard · `browser-stubs`; 17/17 tasks, 41 tests ST-1…ST-12, dogfooded into web-xterm) · **RD-03 ✅ Done** (live-example-system — every docs sample runs live in xterm.js via `mountApp`, shown code == running code; 40/40 tasks / 7 phases; DemoShell + client-only Play + a11y/no-kbd/deep-link + **8 seed examples** (button…desktop…preset-gallery); ST-1…ST-14 green, docs gate 14/14; **↳ remediation ✅ 2026-07-10** — 7 post-ship bugs fixed: terminal-driven Play resize, unified draggable-Window shell, reopenable dialogs, build()-first Source; 22/27 tasks, verify 22/22 + gate 14/14, browser-confirmed M1/M2/M4–M8) · **RD-06 ✅ Done** (api-reference — generated TypeDoc→md→VitePress reference for the 4 public barrels, gitignored+regen per-package for clean `/api/<pkg>/…` URLs, **bidirectional** cross-links via a 29-row symbol↔page map, drift-gated (6 `API-*` checks → docs gate 20/20; pure `.mjs` helpers in `yarn verify`); 4 phases/16 tasks all `[x]`; barrelExports == generated set per pkg (0 missing/leaked); clean-dist verify 22/22 + gate 20/20; TypeDoc devDeps only) · RD-04/05/07…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 4/10 RDs · RD-06 ✅ done | 🔄 | 2026-07-11 |
-| jsvision-plugin | [→](features/jsvision-plugin/00-roadmap.md) | **PL-01 ✅ Done** (37/37 tasks, 5 phases, spec-first) — Claude Code plugin shipped: `jsvision` skill (8 references incl. the 12 gotchas) + `jsvision-new-app` scaffolder + 4 verified recipes + widget authoring + a `check-plugin.mjs` Tier-0 gate in `yarn verify` · **PL-02 ⬜** self-sync (AI auto-updates the plugin on SDK change, backlog) | 1/1 plans | ✅ | 2026-07-11 |
+| jsvision-plugin | [→](features/jsvision-plugin/00-roadmap.md) | **PL-01 ✅ Done** (Claude Code plugin: `jsvision` skill + `jsvision-new-app` scaffolder + 4 recipes + `check-plugin.mjs` gate) · **PL-02 📋 Plan Created** (`plugin-self-sync` — deterministic `detectDrift()` + a deterministic snippet `--fix` + an AI catalog-entry draft via a local skill **and** an injected-client API script; verify-gated, nothing auto-commits, CI scaffolded disabled/secret-free; 30 tasks/4 phases) | 1/2 plans | 🔄 | 2026-07-11 |
 
 ## Archived
 
@@ -28,6 +28,14 @@
 
 ## Notes
 
+- 2026-07-11: **jsvision-plugin PL-02 `plugin-self-sync` → 📋 PLAN CREATED** (`make_plan`) — an
+  AI-assisted self-updater for the plugin's SDK-drift loop. Structured `detectDrift()` extending
+  `check-plugin.mjs`; a deterministic snippet `--fix` (no AI); an AI catalog-entry draft grounded in a
+  widget's JSDoc via **both** a manual `jsvision-plugin-sync` skill (no key) and a `yarn plugin:sync`
+  API script (injected client, tests never touch the network); every output `yarn verify`-gated and
+  human-reviewed, nothing auto-commits; CI scaffolded **disabled** (`workflow_dispatch`-only, no
+  secret) so `ci.yml` stays secret-free. Zero-Ambiguity Gate 16/16; 30 tasks / 4 phases. Cascaded from
+  **jsvision-plugin**. Next: `preflight`/`exec_plan plugin-self-sync`.
 - 2026-07-11: **jsvision-plugin PL-01 → ✅ DONE** (`exec_plan`) — Claude Code plugin complete, 37/37
   tasks / 5 phases, spec-first. `tools/claude-plugin/` (manifest + marketplace + the `jsvision`
   knowledge skill: router + 8 references incl. the 12 real-code gotchas + the `jsvision-new-app`

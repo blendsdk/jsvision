@@ -1,10 +1,10 @@
 # Roadmap: jsvision-plugin
 
 > **Feature-Set**: jsvision-plugin
-> **Status**: Done
+> **Status**: Executing
 > **Created**: 2026-07-11
 > **Last Updated**: 2026-07-11
-> **Progress**: 1 / 1 plans (PL-02 self-sync in backlog — not yet planned)
+> **Progress**: 1 / 2 plans (PL-01 done; PL-02 plugin-self-sync plan created)
 > **CodeOps Skills Version**: 3.3.2
 
 A Claude Code plugin that makes Claude an expert jsvision TUI application developer — able to
@@ -26,10 +26,22 @@ plan (no upstream RD); the plan's `01-requirements.md` owns the requirements.
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
 | PL-01 | jsvision Claude Code plugin (skill + scaffolder + recipes + widget authoring) | — (standalone plan) | [plugin-v1](plans/plugin-v1/00-index.md) | Done | ✅ | 2026-07-11 | **✅ DONE (2026-07-11)** — `exec_plan` complete, 37/37 tasks / 5 phases, spec-first. Ships `tools/claude-plugin/` (`plugin.json` + `marketplace.json` + the `jsvision` knowledge skill with 8 references incl. the 12 gotchas + the `jsvision-new-app` scaffolder skill + templates), 4 verified recipe modules + an example custom widget in `packages/examples/recipes/`, and `scripts/check-plugin.mjs` (manifest schema · link-graph · snippet-drift · gotchas completeness · `@jsvision/ui` barrel-coverage) wired into `yarn verify`. Full `yarn verify` green (22/22, `check-plugin: PASS`); ST-17 acceptance proven (scaffold `packages/sample/` → `tsc --noEmit` 0 + smoke 1/1 → `claude plugin validate`). Commits 8fea5e4 · 4bf7f5f · 28286df · c93437d · ce9acd6. — — — **Plan created — 37 tasks / 5 phases, spec-first.** Zero-Ambiguity Gate PASSED (19/19); includes a Tier-0 **barrel-coverage** drift gate so a new/changed SDK widget turns `yarn verify` red until documented (AR-18). Decisions: apps + widget authoring (AR-3); in-repo, publish-agnostic (AR-2); all four recipe archetypes (AR-4); recipe code = real smoke-tested modules in `packages/examples/`, quoted by the plugin docs (AR-5); scaffolder = deterministic Node script wrapped by a manual skill (AR-8); `check-plugin.mjs` invoked directly by `yarn verify` (AR-10); plugin at `tools/claude-plugin/` (AR-13); `jsvision-builder` subagent + hooks deferred (AR-6/AR-7). **Preflight ✅ PASSED (2026-07-11)** — 7 findings (3🟠/3🟡/1🔵), all applied: `marketplace.json` schema corrected per live docs (PF-001), recipe embedding = a literal drift-checked copy not a VitePress `<<<` transclusion (PF-002), barrel-coverage scoped to class exports (PF-003), + minors; the plugin/skill format was validated against the live docs. See `plans/plugin-v1/00-preflight-report.md`. Next: `exec_plan plugin-v1`. |
-| PL-02 | Plugin self-sync — AI auto-updates stale plugin content on SDK change | — (to be planned) | — | Backlog | ⬜ | 2026-07-11 | Deterministic detect (barrel diff / snippet hash / compiler — exact + free) → AI-generate only the delta (a catalog entry from the widget's JSDoc+`@example`; a snippet re-sync; a capped agentic recipe repair) → `yarn verify` gate → **open a PR a human approves** (AR-19). AI never on the blocking verify path; runs in CI on SDK change; low token cost (delta-scoped, deterministic pre-filter). Prereq: PL-01's Tier-0 gate (AR-18). Next: `make_plan` this as `plugin-self-sync`. |
+| PL-02 | Plugin self-sync — AI-assisted auto-update of stale plugin content on SDK change | — (standalone plan) | [plugin-self-sync](plans/plugin-self-sync/00-index.md) | Plan Created | 📋 | 2026-07-11 | **Plan created — 30 tasks / 4 phases, spec-first** (`make_plan`). Zero-Ambiguity Gate PASSED (16/16). Deterministic `detectDrift()` (extends `check-plugin.mjs`) → a **deterministic** snippet `--fix` (copy source region; no AI) + an **AI** catalog-entry draft for an undocumented widget (grounded in its JSDoc+`@example`) via **both** a manual `jsvision-plugin-sync` Claude skill (local, no key) and a `yarn plugin:sync` Anthropic-API script (injected client seam, tests never hit the network). `yarn verify` gates every output; nothing auto-commits; a `plugin-self-sync.yml` workflow is scaffolded **disabled** (`workflow_dispatch`-only, no secret). Hybrid "local now, CI-ready" (AR-1); agentic recipe repair + prose refresh deferred (AR-15). Next: `preflight plugin-self-sync` (optional) or `exec_plan plugin-self-sync`. |
 
 ## Notes
 
+- 2026-07-11: **PL-02 `plugin-self-sync` → 📋 PLAN CREATED** (`make_plan`, on `feat/plugin-self-sync`
+  after PL-01 merged to master). An AI-assisted self-updater that removes manual authoring from the
+  drift loop PL-01 made loud. Design (Zero-Ambiguity Gate 16/16): a structured `detectDrift()`
+  extending `check-plugin.mjs` → a **deterministic** snippet `--fix` (copy the source `#region`; no
+  AI, AR-3) + an **AI** catalog-entry draft for an undocumented widget grounded in its JSDoc+`@example`
+  (AR-14), reachable via **both** a manual `jsvision-plugin-sync` skill (local, no API key) and a
+  `yarn plugin:sync` Anthropic-API script behind an injected client seam so tests never hit the network
+  (AR-4/AR-7/AR-10). Every output is `yarn verify`-gated and human-reviewed; nothing auto-commits
+  (AR-13). CI is scaffolded **disabled** — `plugin-self-sync.yml` is `workflow_dispatch`-only and
+  references no secret (AR-8), keeping `ci.yml` secret-free; `@anthropic-ai/sdk` is a tooling devDep
+  only (AR-9). Deferred: agentic recipe repair + prose refresh (AR-15). 30 tasks / 4 phases, spec-first.
+  Next: `preflight plugin-self-sync` (optional) or `exec_plan plugin-self-sync`.
 - 2026-07-11: **PL-01 → ✅ DONE** (`exec_plan plugin-v1 --ask-commit`). All 37 tasks / 5 phases
   complete, spec-first. Delivered: the `jsvision` knowledge skill (router + 8 references: lifecycle ·
   reactivity · layout · component catalog (all 38 widget classes) · the 12 gotchas · run/verify loop ·
