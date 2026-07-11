@@ -9,7 +9,12 @@ import { join } from 'node:path';
 import { afterAll, expect, test } from 'vitest';
 
 import { DEFAULT_ROOTS, detectDrift } from '../../../scripts/check-plugin.mjs';
-import { fixSnippetDrift, replaceFencedBlock } from '../../../scripts/plugin-sync.mjs';
+import {
+  fixSnippetDrift,
+  fixUndocumentedWidgets,
+  normalizeBullet,
+  replaceFencedBlock,
+} from '../../../scripts/plugin-sync.mjs';
 import {
   applyCatalogEntry,
   buildCatalogEntryRequest,
@@ -147,4 +152,45 @@ test('applyCatalogEntry inserts under the holding heading, creating it when abse
   const out2 = applyCatalogEntry(noHeading, '- **Ghost** — a widget.', NEEDS_CATEGORISATION);
   expect(out2).toContain(`## ${NEEDS_CATEGORISATION}`);
   expect(out2).toContain('- **Ghost** — a widget.');
+});
+
+test('fixUndocumentedWidgets documents the widget so detectDrift stops reporting it (idempotent)', async () => {
+  const roots = seededRoots();
+  removeBullet(roots, 'Button');
+  expect(detectDrift(roots)).toContainEqual({ kind: 'undocumented-widget', name: 'Button' });
+
+  const fake = { draft: async () => '- **Button** — a command button.' };
+  const undocumented = detectDrift(roots).filter((f) => f.kind === 'undocumented-widget');
+  expect(await fixUndocumentedWidgets(undocumented, fake, roots)).toContain('Button');
+
+  // Documented now → no finding; a second run over the fresh findings drafts nothing.
+  const after = detectDrift(roots);
+  expect(after.some((f) => f.kind === 'undocumented-widget' && f.name === 'Button')).toBe(false);
+  expect(await fixUndocumentedWidgets(after, fake, roots)).toEqual([]);
+});
+
+test('the drafted bullet lands under the holding heading', async () => {
+  const roots = seededRoots();
+  removeBullet(roots, 'Button');
+  const fake = { draft: async () => '- **Button** — a command button.' };
+  await fixUndocumentedWidgets([{ kind: 'undocumented-widget', name: 'Button' }], fake, roots);
+
+  const catalog = readFileSync(roots.catalogPath, 'utf8');
+  expect(catalog).toContain(`## ${NEEDS_CATEGORISATION}`);
+  expect(catalog.indexOf(`## ${NEEDS_CATEGORISATION}`)).toBeLessThan(catalog.lastIndexOf('**Button**'));
+});
+
+test('fixUndocumentedWidgets is a no-op for empty or non-widget findings', async () => {
+  const roots = seededRoots();
+  const fake = { draft: async () => '- **X** — y.' };
+  const before = readFileSync(roots.catalogPath, 'utf8');
+  expect(await fixUndocumentedWidgets([], fake, roots)).toEqual([]);
+  expect(await fixUndocumentedWidgets([{ kind: 'snippet-drift', module: 'data-grid' }], fake, roots)).toEqual([]);
+  expect(readFileSync(roots.catalogPath, 'utf8')).toBe(before); // catalog untouched
+});
+
+test('normalizeBullet reduces a model reply to a single leading-dash bullet', () => {
+  expect(normalizeBullet('\n- **Ghost** — a widget.\n')).toBe('- **Ghost** — a widget.');
+  expect(normalizeBullet('**Ghost** — a widget.')).toBe('- **Ghost** — a widget.');
+  expect(normalizeBullet('Here you go:\n- **Ghost** — a widget.\nthanks')).toBe('- **Ghost** — a widget.');
 });

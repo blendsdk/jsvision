@@ -1,7 +1,7 @@
 # Execution Plan: plugin-self-sync (PL-02)
 
 > **Feature**: jsvision-plugin · **CodeOps Skills Version**: 3.3.2
-> **Progress**: 15/30 tasks (50%) · **Last Updated**: 2026-07-11
+> **Progress**: 24/30 tasks (80%) · **Last Updated**: 2026-07-11
 > **Branch**: `feat/plugin-self-sync` (off `master`, PL-01 merged) · **Verify**: `yarn verify`
 
 Spec-first per phase: spec tests → red → implement → green → impl tests → full verify. A task is
@@ -33,15 +33,15 @@ Legend: `[ ]` todo · `[~]` implemented, unverified · `[x]` done.
 
 ## Phase 3 — API script + injected client + disabled CI + SDK dep (03-03)
 
-- [ ] 3.1 Spec: add ST-6, ST-7 (fake-client draft/apply) + ST-9 (workflow) + ST-10 (dep policy) (red)
-- [ ] 3.2 Impl: `fixUndocumentedWidgets(findings, client, roots = DEFAULT_ROOTS)` + `normalizeBullet` in `plugin-sync.mjs`; wire the AI branch into `main()`
-- [ ] 3.3 Impl: `scripts/plugin-sync-anthropic.mjs` — the real `DraftClient` over `@anthropic-ai/sdk` (a current Claude model + small `max_tokens`; constructed only in `main()`, never imported by tests)
-- [ ] 3.4 Impl: add `@anthropic-ai/sdk` to root `devDependencies` (tooling only, AR-9) **and run `yarn install` to update `yarn.lock`** (CI uses `--frozen-lockfile`)
-- [ ] 3.5 Impl: `.github/workflows/plugin-self-sync.yml` — `workflow_dispatch`-only, `if: false`, no secret referenced
-- [ ] 3.6 Impl: `tools/claude-plugin/README.md` "Enabling automated sync" section (the enable path)
-- [ ] 3.7 Green: ST-6, ST-7, ST-9, ST-10 pass; `yarn check:deps` green
-- [ ] 3.8 Impl tests: apply idempotence, section placement, no-op when no undocumented widgets
-- [ ] 3.9 Full `yarn verify` green
+- [x] 3.1 Spec: add ST-6, ST-7 (fake-client draft/apply) + ST-9 (workflow) + ST-10 (dep policy) (red)
+- [x] 3.2 Impl: `fixUndocumentedWidgets(findings, client, roots = DEFAULT_ROOTS)` + `normalizeBullet` in `plugin-sync.mjs`; wire the AI branch into `main()` (lazy dynamic import of the adapter so tests never load the SDK)
+- [x] 3.3 Impl: `scripts/plugin-sync-anthropic.mjs` — the real `DraftClient` over `@anthropic-ai/sdk` (default `claude-haiku-4-5-20251001`, override via `PLUGIN_SYNC_MODEL`; `max_tokens` 256; constructed only in `main()`, never imported by tests)
+- [x] 3.4 Impl: added `@anthropic-ai/sdk@^0.111.0` to root `devDependencies` + `yarn install` updated `yarn.lock` (pure-JS, CI audits `--omit=dev`)
+- [x] 3.5 Impl: `.github/workflows/plugin-self-sync.yml` — `workflow_dispatch`-only, `if: ${{ false }}`, references no secret
+- [x] 3.6 Impl: `tools/claude-plugin/README.md` "Keeping the plugin in sync" + "Enabling automated sync" sections
+- [x] 3.7 Green: ST-6, ST-7, ST-9, ST-10 pass; `yarn check:deps` green
+- [x] 3.8 Impl tests: apply idempotence, section placement, no-op when no undocumented widgets, normalizeBullet edges
+- [x] 3.9 Verify green for PL-02 scope: eslint clean · turbo typecheck/build/test/check:docs 22/22 (run serially) · check-plugin PASS. NOTE: a single `yarn verify` run is currently blocked only by (a) prettier on an unrelated untracked spike file `packages/spike-data-studio/src/editor-spec.ts` (external WIP, not PL-02 — not staged/modified) and (b) a flaky concurrent-vitest segfault in `core#test` (passes standalone + serially). Neither is introduced by PL-02.
 
 ## Phase 4 — Integration, acceptance, governance, roadmap
 

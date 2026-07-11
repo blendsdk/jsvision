@@ -14,10 +14,12 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { DEFAULT_ROOTS, detectDrift, DRIFT_PAIRS, readRegion } from './check-plugin.mjs';
+import { applyCatalogEntry, buildCatalogEntryRequest } from './plugin-sync-request.mjs';
 
 /**
  * @typedef {import('./check-plugin.mjs').DriftFinding} DriftFinding
  * @typedef {import('./check-plugin.mjs').DriftRoots} DriftRoots
+ * @typedef {{ draft(request: { system: string, user: string }): Promise<string> }} DraftClient
  */
 
 /** The recipe/authoring page a module's snippet is embedded in. */
@@ -75,7 +77,55 @@ export function fixSnippetDrift(findings, roots = DEFAULT_ROOTS) {
   return fixed;
 }
 
-function main(argv = process.argv.slice(2)) {
+/**
+ * Trim a model's reply down to a single catalog-style bullet line. The request asks for only the
+ * bullet, but this defends against stray whitespace or a leading blank line and guarantees the
+ * `- ` prefix the catalog style requires.
+ *
+ * @param {string} text The raw model reply.
+ * @returns {string} A single `- ...` bullet line.
+ * @example
+ * normalizeBullet('\n- **Ghost** — a widget.\n'); // → '- **Ghost** — a widget.'
+ */
+export function normalizeBullet(text) {
+  const lines = String(text)
+    .trim()
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  const first = lines.find((l) => l.startsWith('-')) ?? lines[0] ?? '';
+  return `- ${first.replace(/^-\s*/, '')}`;
+}
+
+/**
+ * Draft + apply a `component-catalog.md` bullet for each undocumented-widget finding, via an injected
+ * model client (never the SDK directly). Each bullet is grounded in the widget's real JSDoc, drafted
+ * by `client.draft`, normalized, and spliced under the holding heading. Non-widget findings are
+ * ignored. The barrel-coverage gate then confirms the entry exists; a human confirms it is accurate.
+ *
+ * @param {DriftFinding[]} findings The drift set (typically from `detectDrift()`).
+ * @param {DraftClient} client Injected — the real Anthropic client in prod, a fake in tests.
+ * @param {DriftRoots} [roots] Defaults to the real tree; a test passes a temp-dir catalog so the
+ *   write lands in a fixture, not the repo (the filesystem analogue of the injected client).
+ * @returns {Promise<string[]>} The widget names whose entries were drafted + written.
+ * @example
+ * const client = { draft: async () => '- **Ghost** — a widget.' };
+ * await fixUndocumentedWidgets(detectDrift(), client);
+ */
+export async function fixUndocumentedWidgets(findings, client, roots = DEFAULT_ROOTS) {
+  const done = [];
+  for (const f of findings) {
+    if (f.kind !== 'undocumented-widget') continue;
+    const req = buildCatalogEntryRequest(f.name); // grounded in the real widget's JSDoc + @example
+    const bullet = normalizeBullet(await client.draft(req));
+    const md = readFileSync(roots.catalogPath, 'utf8');
+    writeFileSync(roots.catalogPath, applyCatalogEntry(md, bullet, req.target.afterHeading));
+    done.push(f.name);
+  }
+  return done;
+}
+
+async function main(argv = process.argv.slice(2)) {
   if (argv.includes('--detect')) {
     process.stdout.write(`${JSON.stringify(detectDrift(), null, 2)}\n`);
     return;
@@ -87,10 +137,32 @@ function main(argv = process.argv.slice(2)) {
     );
     return;
   }
-  // No flag → the AI path (draft catalog entries for undocumented widgets). Wired in a later step.
-  process.stdout.write('plugin:sync — pass --fix to re-sync drifted recipe snippets deterministically.\n');
+
+  // No flag → full sync: deterministic snippet fixes first, then AI-drafted catalog entries via the
+  // real Anthropic client (imported lazily so importing this module — as tests do — never loads the
+  // SDK and never needs a key).
+  const findings = detectDrift();
+  const fixedSnippets = fixSnippetDrift(findings);
+  if (fixedSnippets.length > 0) {
+    process.stdout.write(`synced ${fixedSnippets.length} snippet(s): ${fixedSnippets.join(', ')}\n`);
+  }
+
+  const undocumented = findings.filter((f) => f.kind === 'undocumented-widget');
+  if (undocumented.length === 0) {
+    process.stdout.write('no undocumented widgets to draft\n');
+  } else {
+    const { createAnthropicClient } = await import('./plugin-sync-anthropic.mjs');
+    const drafted = await fixUndocumentedWidgets(undocumented, createAnthropicClient());
+    process.stdout.write(
+      `drafted ${drafted.length} catalog entr${drafted.length === 1 ? 'y' : 'ies'}: ${drafted.join(', ')}\n`,
+    );
+  }
+  process.stdout.write('review the unstaged changes, then run `yarn verify` before committing.\n');
 }
 
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main();
+  main().catch((err) => {
+    process.stderr.write(`plugin:sync failed: ${err?.message ?? err}\n`);
+    process.exitCode = 1;
+  });
 }

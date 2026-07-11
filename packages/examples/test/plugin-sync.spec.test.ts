@@ -8,16 +8,23 @@
 // deterministic --fix re-syncs a drifted snippet with no AI. Every mutating path takes an injectable
 // `roots` object so these tests run against a temp-dir copy and never touch the real repo.
 
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { afterAll, expect, test } from 'vitest';
 
-import { DEFAULT_ROOTS, detectDrift, checkDrift, runAllChecks } from '../../../scripts/check-plugin.mjs';
-import { fixSnippetDrift, replaceFencedBlock } from '../../../scripts/plugin-sync.mjs';
-import { buildCatalogEntryRequest, readWidgetDoc } from '../../../scripts/plugin-sync-request.mjs';
+import {
+  CATALOG_DENYLIST,
+  DEFAULT_ROOTS,
+  detectDrift,
+  checkBarrelCoverage,
+  checkDrift,
+  runAllChecks,
+} from '../../../scripts/check-plugin.mjs';
+import { fixSnippetDrift, fixUndocumentedWidgets, replaceFencedBlock } from '../../../scripts/plugin-sync.mjs';
+import { applyCatalogEntry, buildCatalogEntryRequest, readWidgetDoc } from '../../../scripts/plugin-sync-request.mjs';
 
 // A distinctive widget whose class name appears exactly once in the catalog (its own bullet), so
 // deleting that bullet is a clean, unambiguous "undocumented widget" seed.
@@ -134,4 +141,85 @@ test('ST-8: the jsvision-plugin-sync skill exists with manual-only frontmatter',
   expect(fm).toMatch(/^name:\s*jsvision-plugin-sync/m);
   expect(fm).toMatch(/^description:\s*\S/m);
   expect(fm).toMatch(/^disable-model-invocation:\s*true/m);
+});
+
+// ST-6 — the API path drafts via the INJECTED client (never the network), builds the grounded
+// request, and writes the bullet to the injectable catalog (a temp copy), not the repo.
+test('ST-6: fixUndocumentedWidgets drafts via the injected client and writes to the temp catalog', async () => {
+  const roots = seededRoots();
+  // Seed: remove a real widget's bullet from the temp catalog so it is "undocumented" there.
+  const catalog = readFileSync(roots.catalogPath, 'utf8');
+  writeFileSync(
+    roots.catalogPath,
+    catalog
+      .split('\n')
+      .filter((l) => !/\*\*Button\*\*/.test(l))
+      .join('\n'),
+  );
+
+  let received = null;
+  const fake = {
+    draft: async (req) => {
+      received = req;
+      return '- **Button** — a command button; `new Button("~O~K")`.';
+    },
+  };
+  const realBefore = readFileSync(DEFAULT_ROOTS.catalogPath, 'utf8');
+
+  const done = await fixUndocumentedWidgets([{ kind: 'undocumented-widget', name: 'Button' }], fake, roots);
+
+  expect(done).toEqual(['Button']);
+  expect(received?.user).toContain('Button'); // the grounded request reached the client
+  const tempCatalog = readFileSync(roots.catalogPath, 'utf8');
+  expect(tempCatalog).toContain('**Button**'); // the drafted bullet was written to the temp catalog
+  expect(readFileSync(DEFAULT_ROOTS.catalogPath, 'utf8')).toBe(realBefore); // repo untouched
+  // Barrel-coverage no longer reports Button on the temp catalog.
+  const gaps = checkBarrelCoverage(roots.listClassExports(), tempCatalog, CATALOG_DENYLIST);
+  expect(gaps.some((e) => /"Button"/.test(e))).toBe(false);
+});
+
+// ST-7 — applyCatalogEntry inserts under the holding heading (creating it) and closes the gap.
+test('ST-7: applyCatalogEntry inserts under the holding heading and clears the coverage gap', () => {
+  const catalog = '# Component catalog\n\n## Controls\n\n- **Button** — a button.\n';
+  const bullet = '- **Ghost** — a test widget; `new Ghost()`.';
+  const result = applyCatalogEntry(catalog, bullet, 'New — needs categorization');
+
+  expect(result).toContain('## New — needs categorization');
+  expect(result).toContain(bullet);
+  // Ghost was missing before, present after.
+  expect(checkBarrelCoverage(['Button', 'Ghost'], catalog, []).some((e) => /"Ghost"/.test(e))).toBe(true);
+  expect(checkBarrelCoverage(['Button', 'Ghost'], result, []).some((e) => /"Ghost"/.test(e))).toBe(false);
+});
+
+// ST-9 — the CI workflow is workflow_dispatch-only, references no secret, and the README documents
+// how to enable it.
+test('ST-9: the CI workflow is workflow_dispatch-only + secret-free and the README documents enabling', () => {
+  const wf = fileURLToPath(new URL('../../../.github/workflows/plugin-self-sync.yml', import.meta.url));
+  expect(existsSync(wf)).toBe(true);
+  const yml = readFileSync(wf, 'utf8');
+  expect(yml).toMatch(/workflow_dispatch/);
+  expect(yml).not.toMatch(/^\s*(push|pull_request|schedule)\s*:/m); // no auto-firing trigger
+  expect(yml).not.toMatch(/secrets\./); // references no secret
+
+  const readme = readFileSync(
+    fileURLToPath(new URL('../../../tools/claude-plugin/README.md', import.meta.url)),
+    'utf8',
+  );
+  expect(readme).toMatch(/Enabling automated sync/i);
+});
+
+// ST-10 — @anthropic-ai/sdk is a ROOT devDependency only; it is in no published/SDK package.
+test('ST-10: @anthropic-ai/sdk is a root devDependency and appears in no packages/* manifest', () => {
+  const rootPkg = JSON.parse(readFileSync(fileURLToPath(new URL('../../../package.json', import.meta.url)), 'utf8'));
+  expect(rootPkg.devDependencies?.['@anthropic-ai/sdk']).toBeDefined();
+  expect(rootPkg.dependencies?.['@anthropic-ai/sdk']).toBeUndefined();
+
+  const pkgsDir = fileURLToPath(new URL('../../../packages', import.meta.url));
+  for (const name of readdirSync(pkgsDir)) {
+    const p = join(pkgsDir, name, 'package.json');
+    if (!existsSync(p)) continue;
+    const pkg = JSON.parse(readFileSync(p, 'utf8'));
+    expect(pkg.dependencies?.['@anthropic-ai/sdk']).toBeUndefined();
+    expect(pkg.devDependencies?.['@anthropic-ai/sdk']).toBeUndefined();
+  }
 });
