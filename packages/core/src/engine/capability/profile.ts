@@ -18,7 +18,10 @@ export type ColorDepth = 'mono' | '16' | '256' | 'truecolor';
 /**
  * Which detection layer decided a given field, from highest precedence to
  * lowest: an explicit `override`, a live `runtime` probe, an `env` variable, the
- * known-terminal `table`, or the conservative `default`.
+ * known-terminal `table`, or the `default` baseline. The `default` baseline is
+ * platform-aware — on Windows it is the modern-console baseline (24-bit color,
+ * Unicode, mouse, alternate screen), not the bare conservative fallback — so a
+ * field can read `'default'` yet still carry a rich value on that platform.
  */
 export type ReasonLayer = 'override' | 'runtime' | 'env' | 'table' | 'default';
 
