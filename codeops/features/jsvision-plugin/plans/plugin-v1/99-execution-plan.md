@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-11 14:07
-> **Progress**: 23/37 tasks (62%)
+> **Last Updated**: 2026-07-11 14:20
+> **Progress**: 30/37 tasks (81%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -133,17 +133,17 @@ the AI-driven self-update pipeline is a separate follow-on plan (`plugin-self-sy
 **Objective**: The concise router + progressive-disclosure references; recipe pages quote the
 Phase-3 modules. (Prose — no spec-test step; integrity is enforced by `check-plugin.mjs` in Phase 5.)
 
-- [ ] 4.1.1 Write the router — `tools/claude-plugin/skills/jsvision/SKILL.md` (mental model + non-negotiables + routing table + auto-invoke `description`)
-- [ ] 4.1.2 Write `app-lifecycle.md`, `reactivity.md`, `layout.md` — `…/skills/jsvision/references/`
-- [ ] 4.1.3 Write `component-catalog.md`, `theming.md` — `…/references/`
-- [ ] 4.1.4 Write `gotchas.md` — all 12 footguns with fixes (FR-3) — `…/references/`
-- [ ] 4.1.5 Write `running-and-testing.md` — three run modes + the headless-verify loop (FR-4) — `…/references/`
-- [ ] 4.1.6 Write `widget-authoring.md` — subclass `View`; draw/measure/onEvent; conventions; link the example widget (FR-7) — `…/references/`
-- [ ] 4.1.7 Write `recipes/index.md` + `recipes/<archetype>.md` embedding a literal, drift-checked copy of the Phase-3 modules' `#region example` blocks — `…/references/recipes/`
+- [x] 4.1.1 Write the router — `tools/claude-plugin/skills/jsvision/SKILL.md` (mental model + non-negotiables + routing table + auto-invoke `description`) ✅ (completed: 2026-07-11 14:20)
+- [x] 4.1.2 Write `app-lifecycle.md`, `reactivity.md`, `layout.md` — `…/skills/jsvision/references/` ✅ (completed: 2026-07-11 14:20)
+- [x] 4.1.3 Write `component-catalog.md`, `theming.md` — `…/references/` ✅ catalog covers all 38 widget classes (barrel-coverage ready) (completed: 2026-07-11 14:20)
+- [x] 4.1.4 Write `gotchas.md` — all 12 footguns with fixes (FR-3) — `…/references/` ✅ 12 numbered footguns (completed: 2026-07-11 14:20)
+- [x] 4.1.5 Write `running-and-testing.md` — three run modes + the headless-verify loop (FR-4) — `…/references/` ✅ (completed: 2026-07-11 14:20)
+- [x] 4.1.6 Write `widget-authoring.md` — subclass `View`; draw/measure/onEvent; conventions; link the example widget (FR-7) — `…/references/` ✅ embeds the custom-widget region (completed: 2026-07-11 14:20)
+- [x] 4.1.7 Write `recipes/index.md` + `recipes/<archetype>.md` embedding a literal, drift-checked copy of the Phase-3 modules' `#region example` blocks — `…/references/recipes/` ✅ 4 archetype pages, embeds byte-identical to source (verified) (completed: 2026-07-11 14:20)
 
 **Deliverables**:
-- [ ] Every reference link resolves; every recipe page quotes its real module
-- [ ] All verification passing
+- [x] Every reference link resolves; every recipe page quotes its real module ✅ (link + drift checks pass)
+- [x] All verification passing ✅ `yarn verify` green; plugin re-validates
 
 **Verify**: `yarn verify`
 
