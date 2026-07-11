@@ -10,3 +10,6 @@ packages/examples/theme.json
 # VitePress build output + cache (docs-site)
 **/.vitepress/dist/
 **/.vitepress/cache/
+# Scaffolder integration-test scratch dirs (created + removed within a test run)
+**/.scaffold-tmp/
+**/.scaffold-probe/

@@ -1,0 +1,31 @@
+import { defineConfig } from 'vitest/config';
+
+/**
+ * Vitest configuration for the __SLUG__ app: a fast `unit` project (spec / impl / smoke tests) and a
+ * single-fork `e2e` project for any child-spawning walkthroughs. Mirrors the monorepo's shape so a
+ * scaffolded app plugs straight into `yarn verify`.
+ */
+export default defineConfig({
+  test: {
+    projects: [
+      {
+        test: {
+          name: 'unit',
+          include: ['test/**/*.{spec,impl,smoke}.test.ts'],
+          exclude: ['test/**/*.e2e.test.ts', 'node_modules/**'],
+          testTimeout: 15_000,
+        },
+      },
+      {
+        test: {
+          name: 'e2e',
+          include: ['test/**/*.e2e.test.ts'],
+          pool: 'forks',
+          singleFork: true,
+          fileParallelism: false,
+          testTimeout: 30_000,
+        },
+      },
+    ],
+  },
+});

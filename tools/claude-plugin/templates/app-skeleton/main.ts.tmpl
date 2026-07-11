@@ -1,0 +1,41 @@
+import { pathToFileURL } from 'node:url';
+
+import { Commands, createApplication, statusItem, statusLine, Text, Window, type Application } from '@jsvision/ui';
+
+/**
+ * Build the __SLUG__ application: a desktop hosting one starter window with a greeting. Returns the
+ * assembled application *without* connecting to a terminal, so it can be mounted headlessly in a
+ * test. Wire your real UI here — add windows, controls, menus, and command handlers.
+ *
+ * @returns The ready-to-run application.
+ * @example
+ * const app = buildApp();
+ * await app.run(); // on an interactive terminal
+ */
+export function buildApp(): Application {
+  const app = createApplication({
+    statusLine: statusLine([statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X')]),
+  });
+
+  const win = new Window('__SLUG__');
+  win.layout.rect = { x: 2, y: 2, width: 44, height: 12 };
+  win.add(new Text('Hello from __SLUG__ — edit src/main.ts to build your app.'));
+  app.desktop.addWindow(win);
+
+  return app;
+}
+
+/** Connect to the terminal and run until quit, unless there is no interactive TTY. */
+async function run(): Promise<number> {
+  if (process.stdout.isTTY !== true) {
+    process.stdout.write('This app needs an interactive terminal (TTY).\n');
+    return 0;
+  }
+  return buildApp().run();
+}
+
+// Auto-run only when this file is executed directly (e.g. `tsx src/main.ts`), never when imported by
+// a test — importing must not connect to a terminal or exit the process.
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  void run().then((code) => process.exit(code));
+}
