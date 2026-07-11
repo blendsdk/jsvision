@@ -73,7 +73,7 @@ async function main(): Promise<number> {
   const status = statusLine([
     statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X'),
     spacer(),
-    fixed(new ProgressBar({ value, caption: true }), 16),
+    fixed(new ProgressBar({ value, caption: true }), 36),
     statusItem(() => clock()),
   ]);
 
