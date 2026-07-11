@@ -27,6 +27,17 @@ test('lookupTable: WT_SESSION wins over TERM', () => {
   expect(caps.colorDepth).toBe('truecolor');
 });
 
+test('lookupTable: WT_SESSION asserts Unicode + box-drawing/half-block glyphs', () => {
+  // Windows does not export a POSIX UTF-8 locale (`LC_*`/`LANG`), so the env layer
+  // never flags Unicode there. Windows Terminal is nonetheless fully UTF-8 capable,
+  // so its table entry must assert Unicode + glyph support itself — otherwise box
+  // drawing degrades to ASCII on every Windows Terminal session.
+  const caps = lookupTable({ WT_SESSION: 'abc' });
+  expect(caps.unicode?.utf8).toBe(true);
+  expect(caps.glyphs?.boxDrawing).toBe(true);
+  expect(caps.glyphs?.halfBlocks).toBe(true);
+});
+
 test('lookupTable: an unknown TERM_PROGRAM falls through to the TERM family', () => {
   const caps = lookupTable({ TERM_PROGRAM: 'Unknown.app', TERM: 'xterm' });
   expect(caps.colorDepth).toBe(undefined); // xterm leaves colorDepth to env
