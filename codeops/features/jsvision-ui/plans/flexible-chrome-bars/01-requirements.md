@@ -30,8 +30,10 @@ spacer capability on the menu bar.
   submenu popups anchor under the moved title (controller reads the flex-computed x).
 - **F-7** **Backward compatibility** (AR-10): every existing call site and every immutable oracle
   (status + menu + packaging) keeps compiling and passing **unmodified**.
-- **F-8** **Demo + tooling** (AR-14): a live clock + `ProgressBar` in `examples/playground/main.ts`,
-  and `"playground"` added to `packages/examples/tsconfig.json` `include`.
+- **F-8** **Demo + tooling** (AR-14): a live clock + `ProgressBar` in a new
+  `examples/chrome-bars-demo/main.ts` (preflight PF-001 decision B — the plan's original
+  `playground/main.ts` exists only in Ink and `demo:playground` is taken), a `demo:chrome-bars`
+  script, and `"chrome-bars-demo"` added to `packages/examples/tsconfig.json` `include`.
 - **F-9** **Kitchen-sink** (AR-15): a "rich status bar" story + smoke test.
 
 ## Out of scope
@@ -60,6 +62,6 @@ spacer capability on the menu bar.
 3. `statusLine`/`statusItem`/`menuBar`/`menuSpacer` public surface documented with `@example`;
    `check-jsdoc.mjs` green.
 4. The kitchen-sink "rich status bar" story renders in the smoke test.
-5. `packages/examples/playground/main.ts` shows `<Exit><spacer fill><progress><clock>` and is now in
-   the examples typecheck scope.
+5. `packages/examples/chrome-bars-demo/main.ts` shows `<Exit><spacer fill><progress><clock>` and is now
+   in the examples typecheck scope (via `"chrome-bars-demo"` in the tsconfig `include`).
 6. `yarn verify` is green.
