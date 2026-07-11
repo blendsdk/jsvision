@@ -3,8 +3,8 @@
 > **Feature-Set**: jsvision UI
 > **Status**: In Progress
 > **Created**: 2026-06-29
-> **Last Updated**: 2026-07-08
-> **Progress**: 22 / 22 (100%) — all RDs shipped; RD-22 (Theming) done 2026-07-08 (7 phases, spec-first) on branch `feat/theming-rd22`
+> **Last Updated**: 2026-07-11
+> **Progress**: 22 / 22 (100%) — all RDs shipped; RD-22 (Theming) done 2026-07-08 (7 phases, spec-first) on branch `feat/theming-rd22`. Follow-up plan `flexible-chrome-bars` DONE ✅ 2026-07-11 (no RD; additive app-shell chrome-bar layout).
 > **CodeOps Skills Version**: 2.0.0
 
 The `@jsvision/ui` layer — a reimagined Turbo Vision widget framework on
@@ -50,6 +50,25 @@ foundation RDs of the same number.
 
 ## Notes
 
+- **2026-07-11** — **Follow-up plan `flexible-chrome-bars` DONE ✅** ([plan](plans/flexible-chrome-bars/00-index.md))
+  (no RD — the 22/22 RD set stays complete). Refactors the app-shell chrome bars onto the layout
+  engine so both bars support right-alignment / flexible gaps. **StatusLine** becomes a general
+  child-view container (`extends Group`, `direction:'row'`, `statusBar` background): a caller can now
+  place any fitting 1-row view on the status row — an embedded `ProgressBar`/`Spinner`/`Text`, a
+  `spacer()` fill, and command-less accessor-text labels (e.g. a live clock) — via the new
+  `StatusItemView` + accessor/optional-command `statusItem(text, command?, key?)`. **MenuBar** gains
+  the same capability: `menuSpacer(weight?)` right-aligns titles, `layoutTitles`/`titleIndexAt` are
+  width-aware over a shared internal `packRow` helper (`layout/pack-row.ts`), and nav / popup-anchor /
+  hit-test follow the moved titles. **Additive-only** public surface (`StatusItemView`, accessor/
+  optional-command `statusItem`, `menuSpacer`, width-aware `layoutTitles`/`titleIndexAt`) — **no
+  breaking changes**; every preserved status/menu/packaging/app-shell oracle stays green **unmodified**.
+  10 new spec oracles (ST-01…ST-10) + impl tests + the `pack-row` helper suite; a `demo:chrome-bars`
+  example and an `app-shell/status-bar` kitchen-sink story. **25/25 tasks, 5 phases, spec-first,
+  `--auto-commit`.** Full `yarn verify` green — **22/22 turbo tasks** (core 706 · ui 1532 ·
+  docs-site 53 · examples 110 · files 148 · web 41 · theme-designer 52; the two off-CI wall-clock perf
+  asserts pass under the documented `TUI_SKIP_PERF`). Branch `feat/flexible-chrome-bars`, commits
+  `0ea7c6d`(status) → `144c5b6`(menu) → `880cd5c`(examples) → `0d0442e`(plan). **Follow-up (deferred):**
+  embedded passive widgets in the menu bar; a `ToolBar` component.
 - **2026-07-08** — **Follow-up plan `layout-dsl` PLAN CREATED** 📋 ([plan](plans/layout-dsl/00-index.md))
   (no RD — the 21/21 RD set stays complete). Promotes the session-validated prototype into a real
   feature: **DX-ASSESSMENT.md Proposal 8** (a builder for declarative composition), also lifting the
