@@ -1,7 +1,7 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-10
+> **Last Updated**: 2026-07-11
 > **Features**: 2 / 5 done
 > **CodeOps Skills Version**: 3.0.0
 
@@ -27,6 +27,20 @@
 
 ## Notes
 
+- 2026-07-11: **jsvision-ui follow-up `flexible-chrome-bars` → ✅ DONE** — via `exec_plan --auto-commit`
+  (no RD — the jsvision-ui 22/22 RD set stays complete). Refactors the app-shell chrome bars onto the
+  layout engine: **StatusLine** becomes a general child-view container (`extends Group`, `direction:'row'`,
+  `statusBar` background) hosting any fitting 1-row view — an embedded `ProgressBar`/`Spinner`/`Text`, a
+  `spacer()` fill, command-less accessor-text labels — via new `StatusItemView` + accessor/optional-command
+  `statusItem`; **MenuBar** gains `menuSpacer(weight?)` right-aligned titles with width-aware
+  `layoutTitles`/`titleIndexAt` over a shared internal `packRow` helper (nav/popup-anchor/hit-test follow
+  moved titles). **Additive-only** public surface — **no breaking changes**; every preserved
+  status/menu/packaging/app-shell oracle stays green **unmodified**. 10 new spec oracles (ST-01…ST-10) +
+  impl + `pack-row` suite; `demo:chrome-bars` example + `app-shell/status-bar` kitchen-sink story.
+  **25/25 tasks, 5 phases, spec-first.** Full `yarn verify` green — **22/22 turbo tasks** (the two off-CI
+  wall-clock perf asserts pass under the documented `TUI_SKIP_PERF`). Branch `feat/flexible-chrome-bars`,
+  commits `0ea7c6d`→`0d0442e` (pushed; no PR yet). Cascaded from **jsvision-ui**. **Deferred follow-up:**
+  embedded passive widgets in the menu bar; a `ToolBar` component.
 - 2026-07-11: **docs-website RD-06 (api-reference) → ✅ DONE** — via `exec_plan`. All 4 phases / 16 tasks `[x]`,
   spec-first. A generated TypeDoc→md→VitePress API reference for the 4 public barrels (core `src/engine/index.ts`;
   ui/files/web `src/index.ts`, badged pre-release), gitignored + regenerated before every build (per-package runs
