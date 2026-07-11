@@ -206,6 +206,10 @@ offLabel?, disabled? })`. Toggle it with `Space`/`Enter`, a click, or — when `
 
 ### Changed
 
+- **Minimum Node version raised to 22 (`engines.node: ">=22"`).** Node 20 "Iron" reached
+  end-of-life on 2026-04-30, so it is dropped from the supported set and the CI matrix (now
+  Node 22 + 24 across all three OSes). Supported runtimes are the maintenance LTS (22) and the
+  active LTS (24); consumers still on Node 20 should upgrade.
 - **`@jsvision/ui`: `RadioGroup`/`CheckGroup` now take an options object.** Breaking
   (pre-1.0, unpublished): `new RadioGroup(labels, value)` → `new RadioGroup({ labels,
 value })`, and the same for `CheckGroup`. New exported option types `RadioGroupOptions`
