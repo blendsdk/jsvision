@@ -1,8 +1,8 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-10
-> **Features**: 2 / 5 done
+> **Last Updated**: 2026-07-11
+> **Features**: 3 / 6 done
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -18,6 +18,7 @@
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 ✅ Done — UI small batch: Tree markers (#17) · duplicate-accelerator warning (#6) · Switch (#11) | 1/1 plans | ✅ | 2026-07-09 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — VitePress site + gh-pages CI + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · **RD-02 ✅ Done** (web-runtime — `@jsvision/web` shipped: browser host/`mountApp` · caps · virtual FileSystem · key-reclaim · clipboard · `browser-stubs`; 17/17 tasks, 41 tests ST-1…ST-12, dogfooded into web-xterm) · **RD-03 ✅ Done** (live-example-system — every docs sample runs live in xterm.js via `mountApp`, shown code == running code; 40/40 tasks / 7 phases; DemoShell + client-only Play + a11y/no-kbd/deep-link + **8 seed examples** (button…desktop…preset-gallery); ST-1…ST-14 green, docs gate 14/14; **↳ remediation ✅ 2026-07-10** — 7 post-ship bugs fixed: terminal-driven Play resize, unified draggable-Window shell, reopenable dialogs, build()-first Source; 22/27 tasks, verify 22/22 + gate 14/14, browser-confirmed M1/M2/M4–M8) · **RD-06 ✅ Done** (api-reference — generated TypeDoc→md→VitePress reference for the 4 public barrels, gitignored+regen per-package for clean `/api/<pkg>/…` URLs, **bidirectional** cross-links via a 29-row symbol↔page map, drift-gated (6 `API-*` checks → docs gate 20/20; pure `.mjs` helpers in `yarn verify`); 4 phases/16 tasks all `[x]`; barrelExports == generated set per pkg (0 missing/leaked); clean-dist verify 22/22 + gate 20/20; TypeDoc devDeps only) · RD-04/05/07…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 4/10 RDs · RD-06 ✅ done | 🔄 | 2026-07-11 |
+| jsvision-plugin | [→](features/jsvision-plugin/00-roadmap.md) | **PL-01 🔬 Plan Preflighted** (✅ passed, 7 fixes applied) — Claude Code plugin: `jsvision` skill + `jsvision-new-app` scaffolder + 4 verified recipes + widget authoring + a Tier-0 barrel-coverage drift gate in `yarn verify` · **PL-02 ⬜** self-sync (AI auto-updates the plugin on SDK change, backlog) | 0/1 plans | 🔄 | 2026-07-11 |
 
 ## Archived
 
@@ -27,6 +28,23 @@
 
 ## Notes
 
+- 2026-07-11: **jsvision-plugin PL-01 → PLAN PREFLIGHTED** 🔬 (`preflight`) — **✅ PASSED, 7 findings applied.**
+  Format re-verified against the live Claude Code docs (skill design validated); corrected the `marketplace.json`
+  schema (PF-001), recipe embedding = a literal drift-checked copy not a VitePress `<<<` transclusion (PF-002),
+  barrel-coverage scoped to class exports (PF-003), + 4 minors. Report in the plan folder. Next: `exec_plan plugin-v1`.
+- 2026-07-11: **jsvision-plugin — SDK-drift strategy decided; PL-02 `plugin-self-sync` added (backlog).**
+  v1 gains a **Tier-0 deterministic barrel-coverage gate** (a new/changed `@jsvision/ui` widget turns
+  `yarn verify` red until documented — AR-18). The zero-manual-authoring self-updater is scoped as its own
+  follow-on plan **PL-02 `plugin-self-sync`**: deterministic detect → AI-generate the delta (gated by
+  `yarn verify`, never on the blocking path) → **auto-PR a human approves** (AR-19). Keeps token cost low
+  (delta-scoped, deterministic pre-filter) and runs in CI on SDK change. Next for PL-02: `make_plan plugin-self-sync`.
+- 2026-07-11: **New feature `jsvision-plugin` + PL-01 → PLAN CREATED** 📋 ([roadmap](features/jsvision-plugin/00-roadmap.md))
+  via `make_plan`. A Claude Code plugin (`tools/claude-plugin/`) making Claude an expert jsvision app developer:
+  the `jsvision` knowledge skill (mental model + 8 references incl. the ~12 gotchas + the headless-verify loop),
+  the `jsvision-new-app` deterministic scaffolder, four verified recipe apps (data-driven · forms · files ·
+  live/dashboard) as real smoke-tested modules in `packages/examples/`, an example custom widget + widget-authoring
+  guide, and a `check-plugin.mjs` integrity gate in `yarn verify`. In-repo, publish-agnostic. Zero-Ambiguity Gate
+  PASSED (17/17). Portfolio now 6 features. Next: `exec_plan plugin-v1` (optionally `preflight plugin-v1`).
 - 2026-07-11: **docs-website RD-06 (api-reference) → ✅ DONE** — via `exec_plan`. All 4 phases / 16 tasks `[x]`,
   spec-first. A generated TypeDoc→md→VitePress API reference for the 4 public barrels (core `src/engine/index.ts`;
   ui/files/web `src/index.ts`, badged pre-release), gitignored + regenerated before every build (per-package runs
