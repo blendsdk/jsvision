@@ -1,7 +1,7 @@
 # Execution Plan — Flexible Chrome Bars
 
 > **Feature**: jsvision-ui / flexible-chrome-bars · **CodeOps Skills Version**: 3.3.2
-> **Progress**: 17/25 tasks (68%) · Last updated: 2026-07-11 14:44
+> **Progress**: 21/25 tasks (84%) · Last updated: 2026-07-11 14:52
 > Single source of truth for progress — each task appears once. Spec-first ordering per feature phase
 > (Spec Tests → red → Implementation → green → Impl Tests & Hardening). Commit via **/gitcm** (or
 > **/gitcmp**) per the exec_plan commit mode — never raw git.
@@ -124,10 +124,11 @@ Spec 03-04.
   `demo:playground` name is already taken by `keyboard-mouse-playground`). (AR-14)
 - [ ] **T-4.3** Add `"chrome-bars-demo"` to `packages/examples/tsconfig.json` `include`; confirm
   `yarn workspace @jsvision/examples typecheck` now covers it. (AR-14)
-- [ ] **T-4.4** Add `kitchen-sink/stories/status-bar.story.ts` (id `app-shell/status-bar`: spacer
-  right-align + embedded `ProgressBar` + live clock + blurb/hint) and register it in
-  `stories/index.ts`. (AR-15)
-- [ ] **T-4.5** Green: `kitchen-sink.smoke.spec` picks up + renders the story; examples typecheck passes.
+- [x] ✅ (completed: 2026-07-11 14:52) **T-4.4** Add `kitchen-sink/stories/status-bar.story.ts` (id `app-shell/status-bar`,
+  category `App Shell`: spacer right-align + embedded `ProgressBar` + live clock + blurb/hint) and
+  register it in `stories/index.ts`. (AR-15)
+- [x] ✅ (completed: 2026-07-11 14:52) **T-4.5** Green: `kitchen-sink.smoke.spec` picks up + renders the story (51 passed);
+  examples typecheck passes (chrome-bars-demo now in scope); examples unit 110 passed.
 
 **Verify:** `yarn build` then `yarn workspace @jsvision/examples test` + `typecheck` green.
 
