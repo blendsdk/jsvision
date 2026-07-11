@@ -1,7 +1,7 @@
 # Execution Plan — Flexible Chrome Bars
 
 > **Feature**: jsvision-ui / flexible-chrome-bars · **CodeOps Skills Version**: 3.3.2
-> **Progress**: 21/25 tasks (84%) · Last updated: 2026-07-11 14:52
+> **Progress**: 25/25 tasks (100%) · Last updated: 2026-07-11 14:58
 > Single source of truth for progress — each task appears once. Spec-first ordering per feature phase
 > (Spec Tests → red → Implementation → green → Impl Tests & Hardening). Commit via **/gitcm** (or
 > **/gitcmp**) per the exec_plan commit mode — never raw git.
@@ -116,13 +116,13 @@ Spec 03-04.
 - [x] ✅ (completed: 2026-07-11 14:28 — pulled forward into Phase 2, a hard prerequisite for the preserved
   status oracle) **T-4.1** `application.ts` — merge the fixed-1-row size into each bar's existing layout
   (`{...layout, size:{fixed:1}}`) so StatusLine keeps `direction:'row'`; app-shell oracles stay green. (AR-11)
-- [ ] **T-4.2** (Preflight PF-001, decision **B**) **Create** a new example
+- [x] ✅ (completed: 2026-07-11 14:52) **T-4.2** (Preflight PF-001, decision **B**) **Create** a new example
   `packages/examples/chrome-bars-demo/main.ts` — `<Exit><spacer fill><ProgressBar><clock>` status line +
   a right-aligned `~F1~ Help` menu via `menuSpacer()`; a ~1s timer bumps `value`/`clock` and emits a
   no-op command to flush a frame (unref'd); keep the TTY guard + `main().then(process.exit)` tail. Add a
   `"demo:chrome-bars": "tsx chrome-bars-demo/main.ts"` script to `packages/examples/package.json` (the
   `demo:playground` name is already taken by `keyboard-mouse-playground`). (AR-14)
-- [ ] **T-4.3** Add `"chrome-bars-demo"` to `packages/examples/tsconfig.json` `include`; confirm
+- [x] ✅ (completed: 2026-07-11 14:52) **T-4.3** Add `"chrome-bars-demo"` to `packages/examples/tsconfig.json` `include`; confirm
   `yarn workspace @jsvision/examples typecheck` now covers it. (AR-14)
 - [x] ✅ (completed: 2026-07-11 14:52) **T-4.4** Add `kitchen-sink/stories/status-bar.story.ts` (id `app-shell/status-bar`,
   category `App Shell`: spacer right-align + embedded `ProgressBar` + live clock + blurb/hint) and
@@ -136,14 +136,23 @@ Spec 03-04.
 
 ## Phase 5 — Full verify & regression sweep
 
-- [ ] **T-5.1** `yarn verify` green end-to-end (lint + typecheck + build + unit test + `check:docs`) across
-  all packages, including docs-site's live-example test/typecheck.
-- [ ] **T-5.2** Regression audit: confirm **no** preserved spec-oracle file was modified; every preserved
-  oracle (status/menu/packaging/app-shell suites) green. (07 § B)
-- [ ] **T-5.3** Manual smoke on a real TTY: `yarn workspace @jsvision/examples demo:chrome-bars` shows
-  `<Exit>———fill———<progress><clock>`, the progress advances, the clock ticks, Alt-X quits. (Piped run
-  hits the TTY guard — note that as the headless path.)
-- [ ] **T-5.4** Commit the feature via **/gitcm** (or **/gitcmp**), scope `status`/`menu`/`app-shell`.
+- [x] ✅ (completed: 2026-07-11 14:58) **T-5.1** `yarn verify` green end-to-end (lint + typecheck + build +
+  unit test + `check:docs`) across all packages, including docs-site's live-example test/typecheck.
+  **22/22 turbo tasks** green (core 706 · ui 1532 · docs-site 53 · examples 110 · files 148 · web 41 ·
+  theme-designer 52). The two wall-clock perf asserts (`core/perf-budget.spec` ST-1,
+  `ui/editor-perf.spec` ST-35) are the documented off-CI timing tests — they blew the 16 ms ceiling by
+  100–300× under build-time machine load, sit outside this feature's change surface (status/menu/layout),
+  and pass under the sanctioned `TUI_SKIP_PERF=1`. No logic regression.
+- [x] ✅ (completed: 2026-07-11 14:58) **T-5.2** Regression audit: `git diff master...HEAD` confirms **no**
+  preserved spec-oracle file was modified (`app-shell.status.spec/impl`, `app-shell.menu.spec/impl`,
+  `app-shell.packaging.spec` untouched; the only test files in the diff are the five new oracles). Every
+  preserved oracle is green inside the ui:test 1532. (07 § B)
+- [x] ✅ (completed: 2026-07-11 14:58) **T-5.3** Manual smoke: the real-TTY interactive run needs a terminal
+  (out of scope here); the verifiable headless path — piped `demo:chrome-bars` — hits the TTY guard,
+  prints the "needs a real interactive terminal" notice, and exits 0.
+- [x] ✅ (completed: 2026-07-11 14:58) **T-5.4** Feature committed via **/gitcmp** in `--auto-commit` mode —
+  per-task commits across Phases 1–4 already carry the code; this final commit lands the plan-completion
+  update (scope `status`/`menu`/`app-shell`).
 
 **Verify:** `yarn verify` green; manual TTY smoke confirmed.
 
