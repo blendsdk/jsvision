@@ -194,3 +194,22 @@ test('normalizeBullet reduces a model reply to a single leading-dash bullet', ()
   expect(normalizeBullet('**Ghost** — a widget.')).toBe('- **Ghost** — a widget.');
   expect(normalizeBullet('Here you go:\n- **Ghost** — a widget.\nthanks')).toBe('- **Ghost** — a widget.');
 });
+
+// A-1 acceptance — the full loop end to end over a seeded temp copy, with a FAKE client and NO
+// network: seed both drift kinds, run the deterministic + AI fixes, and prove the gate's own checkers
+// then report no drift (detectDrift === [] is the barrel-coverage + snippet-drift gate passing for
+// this tree). Zero repo mutation, zero network.
+test('A-1 acceptance: seeded drift → --fix + fake-client AI path → gate reports clean, no network', async () => {
+  const roots = seededRoots();
+  removeBullet(roots, 'Button'); // seed: undocumented widget
+  driftPage(roots, join('references', 'recipes', 'data-driven.md')); // seed: snippet drift
+
+  expect(detectDrift(roots)).toHaveLength(2);
+
+  expect(fixSnippetDrift(detectDrift(roots), roots)).toEqual(['data-grid']);
+  const fake = { draft: async () => '- **Button** — a command button; `new Button("~O~K")`.' };
+  expect(await fixUndocumentedWidgets(detectDrift(roots), fake, roots)).toEqual(['Button']);
+
+  // Loop closed: the same checkers the gate runs now report nothing to sync.
+  expect(detectDrift(roots)).toEqual([]);
+});
