@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-11 14:20
-> **Progress**: 30/37 tasks (81%)
+> **Last Updated**: 2026-07-11 16:43
+> **Progress**: 37/37 tasks (100%) ✅ COMPLETE
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -156,23 +156,23 @@ Phase-3 modules. (Prose — no spec-test step; integrity is enforced by `check-p
 **Reference**: 07 ST-12…ST-16 · 03-01 §check-plugin.mjs
 **Objective**: Lock the gate's behavior with good + seeded-broken fixtures before implementing it.
 
-- [ ] 5.1.1 Create fixtures + write gate spec tests from ST-12…ST-16, ST-18 — `packages/examples/test/check-plugin.spec.test.ts` (+ `test/fixtures/plugin-*/`)
-- [ ] 5.1.2 Run spec tests — verify they FAIL (red phase)
+- [x] 5.1.1 Create fixtures + write gate spec tests from ST-12…ST-16, ST-18 — `packages/examples/test/check-plugin.spec.test.ts` (+ `test/fixtures/plugin-deadlink/`) ✅ (completed: 2026-07-11 16:35)
+- [x] 5.1.2 Run spec tests — verify they FAIL (red phase) ✅ RED: `Cannot find module '.../check-plugin.mjs'` (completed: 2026-07-11 16:35)
 
 ### Step 5.2: Implementation
 
 **Reference**: 03-01 §check-plugin.mjs / §Root verify wiring · AR-10, FR-8
-- [ ] 5.2.1 Implement the gate (manifest schema · link-graph · snippet-drift · gotchas completeness · **barrel-coverage** vs the `@jsvision/ui` barrel, AR-18), exporting pure check fns — `scripts/check-plugin.mjs`
-- [ ] 5.2.2 Run spec tests — verify they PASS (green phase)
-- [ ] 5.2.3 Wire `node scripts/check-plugin.mjs` into the root `verify` script — `package.json`
+- [x] 5.2.1 Implement the gate (manifest schema · link-graph · snippet-drift · gotchas completeness · **barrel-coverage** vs the `@jsvision/ui` barrel, AR-18), exporting pure check fns — `scripts/check-plugin.mjs` ✅ 5 checks + TS-checker class-export extraction (completed: 2026-07-11 16:38)
+- [x] 5.2.2 Run spec tests — verify they PASS (green phase) ✅ 6/6 green; gate passes on the real tree (exit 0) (completed: 2026-07-11 16:38)
+- [x] 5.2.3 Wire `node scripts/check-plugin.mjs` into the root `verify` script — `package.json` ✅ (completed: 2026-07-11 16:39)
 
 ### Step 5.3: Acceptance & hardening
 
 **Reference**: 07 ST-17 · 01 §Acceptance Criteria
-- [ ] 5.3.1 Run the acceptance flow: load via `--plugin-dir`, `/jsvision-new-app sample`, confirm the generated app typechecks + smoke passes, then remove the sample (ST-17)
-- [ ] 5.3.2 Full verification — `yarn verify` green including the new gate; no regressions
+- [x] 5.3.1 Run the acceptance flow: load via `--plugin-dir`, `/jsvision-new-app sample`, confirm the generated app typechecks + smoke passes, then remove the sample (ST-17) ✅ scaffolded `packages/sample/` → `tsc --noEmit` exit 0 + smoke 1/1 pass (via root workspace symlink, no lockfile churn) → removed; `claude plugin validate` passes (completed: 2026-07-11 16:42)
+- [x] 5.3.2 Full verification — `yarn verify` green including the new gate; no regressions ✅ 22/22 turbo tasks + `check-plugin: PASS`; 134 examples tests green (completed: 2026-07-11 16:43)
 
-**Verify**: `yarn verify`
+**Verify**: `yarn verify` ✅ PASS (incl. `check-plugin.mjs`) (2026-07-11 16:43)
 
 ---
 
