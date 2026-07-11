@@ -1,0 +1,17 @@
+import { expect, test } from 'vitest';
+
+import { buildApp } from '../src/main.js';
+
+/** Count cells that were actually painted (an empty view leaves only spaces). */
+function paintedCells(rows: readonly { char: string }[][]): number {
+  let n = 0;
+  for (const row of rows) for (const cell of row) if (cell.char !== ' ') n += 1;
+  return n;
+}
+
+test('__SLUG__ paints its starter window headlessly', () => {
+  const app = buildApp();
+  // A window added after mount needs a reflow; resize() reflows and flushes one frame.
+  app.loop.resize({ width: 80, height: 24 });
+  expect(paintedCells(app.loop.renderRoot.buffer().rows())).toBeGreaterThan(0);
+});

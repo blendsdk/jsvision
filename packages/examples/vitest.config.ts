@@ -13,8 +13,10 @@ export default defineConfig({
           name: 'unit',
           include: ['test/**/*.{spec,impl}.test.ts'],
           exclude: ['test/**/*.e2e.test.ts', 'node_modules/**'],
-          // A modest floor over vitest's 5s default for slow Windows runners.
-          testTimeout: 15_000,
+          // Generous over vitest's 5s default: a few tests here pay a large one-time cost on a cold
+          // Windows CI worker — a dynamic import that pulls in the whole @jsvision/ui graph, and the
+          // TypeScript compiler API run by the plugin barrel-coverage check — which can exceed 15s.
+          testTimeout: 60_000,
         },
       },
       {
