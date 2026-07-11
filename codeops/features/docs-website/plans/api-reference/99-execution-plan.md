@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-11 11:24
-> **Progress**: 10/16 tasks (63%)
+> **Last Updated**: 2026-07-11 11:40
+> **Progress**: 16/16 tasks (100%) ✅
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -89,15 +89,16 @@ Reference: [03-02](03-02-integration-cross-linking.md) · AR-4/6/13/18/19/20 · 
 ## Phase 3 — Anti-drift gate & CI
 Reference: [03-03](03-03-gating-anti-drift.md) · AR-15/16/18 · ST-3…ST-6, ST-8…ST-11, ST-13
 
-- [ ] 3.1 Impl: append the six API checks to `check-docs-build.mjs`, `import`ing `barrelExports` /
-  `validateApiMap` / `API_MAP` from `src/api/*.mjs` (AR-18) — `API-COVERAGE` (ST-3), `API-LEAKAGE`
-  (ST-4), `API-SYMBOL` (ST-5, `createApplication`), `API-LINKS` (ST-11), `API-DETERMINISM` (ST-6),
-  `API-SEARCH` (ST-8/9). Demonstrate each can fail (point once at an empty tree). — `packages/docs-site/scripts/check-docs-build.mjs`
-- [ ] 3.2 Impl: fix anything the checks surface (determinism-flag corrections, coverage gaps, map path
-  mismatches, ST-10 chain). — pipeline/config/map files as needed
-- [ ] 3.3 Verify: the full API gate `yarn docs:api && yarn docs:build && node
+- [x] 3.1 Impl: append the six API checks to `check-docs-build.mjs`, `import`ing `barrelExports` /
+  `validateApiMap` / `API_MAP` (+ a new shared `packages.mjs` list, DRY with `gen-api.mjs`) from
+  `src/api/*.mjs` (AR-18) — `API-COVERAGE` (ST-3), `API-LEAKAGE` (ST-4), `API-SYMBOL` (ST-5,
+  `createApplication`), `API-LINKS` (ST-11), `API-DETERMINISM` (ST-6, re-runs `gen-api.mjs` + diffs),
+  `API-SEARCH` (ST-8/9). Demonstrated red (removed `api/ui` → API-COVERAGE + API-SYMBOL failed). — `packages/docs-site/scripts/check-docs-build.mjs`, `packages/docs-site/src/api/packages.mjs` (implemented: 2026-07-11 11:34 · completed: 2026-07-11 11:37 — 6 checks green, red-demonstrated)
+- [x] 3.2 Impl: fix anything the checks surface (determinism-flag corrections, coverage gaps, map path
+  mismatches, ST-10 chain). — pipeline/config/map files as needed (implemented: 2026-07-11 11:34 · completed: 2026-07-11 11:37 — **no-op: nothing surfaced.** barrelExports exactly equals the generated set per package (core 152/ui 234/files 34/web 17; 0 missing, 0 leaked); determinism byte-identical)
+- [x] 3.3 Verify: the full API gate `yarn docs:api && yarn docs:build && node
   packages/docs-site/scripts/check-docs-build.mjs` green; `yarn check:deps` green (ST-13); `yarn verify`
-  green. — **Verify**: `yarn verify` + the API gate chain (AR-16)
+  green. — **Verify**: `yarn verify` + the API gate chain (AR-16) (implemented: 2026-07-11 11:37 · completed: 2026-07-11 11:37 — ✅ gate chain exit 0 (20/20); `yarn check:deps` green; `yarn verify` 22/22)
 
 **Deliverables**: coverage/leakage/determinism/link/search all hard-gated; `check:deps` intact.
 
@@ -106,11 +107,11 @@ Reference: [03-03](03-03-gating-anti-drift.md) · AR-15/16/18 · ST-3…ST-6, ST
 ## Phase 4 — Finalize
 Reference: [01 §Acceptance](01-requirements.md) · [00-index](00-index.md)
 
-- [ ] 4.1 Full clean-dist (`rm -rf packages/*/dist .turbo`) `yarn verify` + the API gate green. — **Verify**: `yarn verify` + API gate chain
-- [ ] 4.2 Update the docs-site note in `CLAUDE.md` (the `docs:api` generation, gitignored `api/<pkg>/`,
-  `src/api/*.mjs` incl. `api-map.mjs`, the bidirectional cross-link mechanism) + the live-example/docs memory. — `CLAUDE.md`
-- [ ] 4.3 Roadmap sync: RD-06 → Done via the roadmap skill; cascade to the portfolio
-  `codeops/00-roadmap.md`. — feature + portfolio roadmaps
+- [x] 4.1 Full clean-dist (`rm -rf packages/*/dist .turbo`) `yarn verify` + the API gate green. — **Verify**: `yarn verify` + API gate chain (implemented: 2026-07-11 11:37 · completed: 2026-07-11 11:39 — ✅ clean `yarn verify` 22/22 (0 cached) + API gate chain 20/20 + `check:deps` green, all from clean)
+- [x] 4.2 Update the docs-site note in `CLAUDE.md` (the `docs:api` generation, gitignored `api/<pkg>/`,
+  `src/api/*.mjs` incl. `api-map.mjs`, the bidirectional cross-link mechanism) + the live-example/docs memory. — `CLAUDE.md` (implemented: 2026-07-11 11:40 · completed: 2026-07-11 11:40 — Commands + docs-site structure entry updated; live-example memory note added)
+- [x] 4.3 Roadmap sync: RD-06 → Done via the roadmap skill; cascade to the portfolio
+  `codeops/00-roadmap.md`. — feature + portfolio roadmaps (implemented: 2026-07-11 11:40 · completed: 2026-07-11 11:40)
 
 **Deliverables**: green from clean, docs current, roadmap advanced.
 
