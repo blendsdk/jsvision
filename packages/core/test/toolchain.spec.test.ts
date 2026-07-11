@@ -96,13 +96,14 @@ test('ST-10: guard fails and names a native runtime dependency', () => {
 });
 
 // ST-11 (AC-2 structure, AR-4, AR-23): the CI workflow covers the full matrix.
-test('ST-11: ci.yml declares the 3×3 OS/Node matrix and runs verify', () => {
+test('ST-11: ci.yml declares the 3×2 OS/Node matrix and runs verify', () => {
   const yml = readFileSync(resolve(monorepoRoot, '.github/workflows/ci.yml'), 'utf8');
   for (const os of ['ubuntu-latest', 'macos-latest', 'windows-latest']) {
     expect(yml.includes(os)).toBeTruthy();
   }
-  for (const node of ['20', '22', '24']) {
-    // AR-2: Node 18 dropped (EOL); the matrix moved to 20/22/24.
+  for (const node of ['22', '24']) {
+    // Node 20 dropped (EOL 2026-04); the supported matrix is the maintenance
+    // LTS (22) and the active LTS (24).
     expect(new RegExp(`(^|[^0-9])${node}([^0-9]|$)`, 'm').test(yml)).toBeTruthy();
   }
   expect(/yarn verify/.test(yml)).toBeTruthy();

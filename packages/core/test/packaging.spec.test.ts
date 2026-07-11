@@ -106,7 +106,7 @@ test('ST-5: package.json declares the ESM packaging contract', () => {
   expect(pkg['type']).toBe('module');
   expect(pkg['sideEffects']).toBe(false);
   const engines = pkg['engines'] as Record<string, unknown> | undefined;
-  expect(engines?.['node']).toBe('>=20'); // AR-2: Node floor raised (18 dropped, EOL)
+  expect(engines?.['node']).toBe('>=22'); // Node floor: 20 dropped (EOL 2026-04), 18 earlier
   const exportsMap = pkg['exports'] as Record<string, unknown> | undefined;
   expect(exportsMap?.['.']).toBeTruthy();
   const deps = pkg['dependencies'] as Record<string, unknown> | undefined;
