@@ -41,7 +41,8 @@ async function main(): Promise<void> {
   let grid!: EditableGridRows<Row>;
   let overlay!: Group;
   let editor: CellEditor | null = null;
-  let pendingCommit: Promise<CommitResult> | null = null;
+  // A holder (not a bare `let`) so its type survives being assigned inside the editor's Enter closure.
+  const pc: { pending: Promise<CommitResult> | null } = { pending: null };
 
   const loop = createRoot(() => {
     const root = new Group();
@@ -100,7 +101,7 @@ async function main(): Promise<void> {
       { value: rs.field(FIELD[col]), validator: FIELD[col] === 'balance' ? filter('0-9.') : undefined },
       () => {
         // Enter in the editor: kick the transactional commit, then close + refocus the grid.
-        pendingCommit = rs.commit();
+        pc.pending = rs.commit();
         closeEditor();
       },
       () => {
@@ -157,7 +158,7 @@ async function main(): Promise<void> {
   frame('⑤ typed "4321.00" — keystrokes routed to the overlay editor');
 
   loop.dispatch(key('enter')); // commit
-  const result = await pendingCommit;
+  const result = pc.pending ? await pc.pending : null;
   frame('⑥ Enter → committed; editor gone; grid shows the new balance');
   console.log(
     `   commit result: ${result?.status}` + (result?.status === 'ok' ? ` → balance=${result.row.balance}` : ''),

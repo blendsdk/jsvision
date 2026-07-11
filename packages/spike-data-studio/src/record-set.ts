@@ -123,8 +123,12 @@ export class RecordSet {
     return out;
   }
 
-  /** Overwrite every bound buffer from the current row, coalesced into one frame. */
-  private syncBuffers(): void {
+  /**
+   * Overwrite every bound buffer from the current row, coalesced into one frame. Public because the
+   * grid path drives the cursor directly (the grid's `focused` signal is the RecordSet position), so a
+   * cursor-watch effect calls this to keep the edit buffers following the row.
+   */
+  syncBuffers(): void {
     batch(() => {
       for (const [field, sig] of this.buffers) sig.set(this.committedText(field));
     });
