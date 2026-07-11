@@ -2,7 +2,9 @@
 
 > **Artifact**: `codeops/features/jsvision-plugin/plans/plugin-v1/` (implementation plan)
 > **Date**: 2026-07-11
-> **Status**: ✅ PASSED — all 7 findings resolved (fixes applied to the plan 2026-07-11)
+> **Status**: ✅ PASSED — all 7 findings resolved (fixes applied to the plan 2026-07-11) ·
+> **🎯 EXECUTION CLOSED 2026-07-11** — plan shipped 37/37; every finding's fix confirmed in the
+> shipped code (see [Post-Execution Outcome](#post-execution-outcome-2026-07-11))
 > **⚠️ SAME-SESSION REVIEW** — the plan was authored in this session. To counteract same-agent
 > bias, every format claim was re-verified against the **live Claude Code docs** (code.claude.com,
 > fetched 2026-07-11) and every codebase claim against the real code via an independent recon pass.
@@ -77,3 +79,27 @@ plan documents: register (AR-5/AR-18 refined + new AR-20), `01`, `02`, `03-01`, 
 independent recon. **Hardening:** external-standard claims were verified against live documentation
 rather than memory; the plan's own author-session bias was countered by independent verification of
 every load-bearing claim.
+
+## Post-Execution Outcome (2026-07-11)
+
+The plan executed to completion via `exec_plan plugin-v1 --ask-commit` — **37/37 tasks, 5 phases,
+spec-first** (commits `8fea5e4` · `4bf7f5f` · `28286df` · `c93437d` · `ce9acd6`). Full `yarn verify`
+is green (22/22 turbo tasks, 134 examples tests, `check-plugin: PASS`), and **ST-17 acceptance**
+passed end-to-end (scaffolded `packages/sample/` → `tsc --noEmit` exit 0 + smoke 1/1 → removed;
+`claude plugin validate` passed). This section closes the preflight loop: each finding's fix is
+confirmed **realized in the shipped code**, not just in the plan.
+
+| Finding | Fix as executed | Shipped evidence |
+|---|---|---|
+| 🟠 PF-001 | Marketplace at repo-root `.claude-plugin/`, correct schema (`name`/`owner`/`plugins`; entry `name` + string `source`) | `.claude-plugin/marketplace.json` (tracked): `"source": "./tools/claude-plugin"`, no root `version`, `owner` object |
+| 🟠 PF-002 | Recipes = literal drift-checked copies, not `<<<` transclusion; gate extracts a comment-delimited region and asserts equality | `scripts/check-plugin.mjs` `checkDrift`/`DRIFT_PAIRS` (5 md↔module pairs) parsing `// #region example`; `packages/examples/recipes/data-grid.ts:11` carries the region |
+| 🟠 PF-003 | Barrel-coverage scoped to **class value exports** via the TS checker + a tiny denylist | `check-plugin.mjs` `extractUiClassExports()` + `CATALOG_DENYLIST = ['View', 'ReactiveCycleError']`; forward+reverse checks (spec `ST-18`) |
+| 🟡 PF-004 | Recipe modules brought into the examples typecheck scope | `packages/examples/tsconfig.json:7` include adds `"recipes"` |
+| 🟡 PF-005 | `license` dropped from `plugin.json` (unrecognized field ⇒ warning) | `tools/claude-plugin/.claude-plugin/plugin.json` = `name`/`description`/`version`/`author` only |
+| 🟡 PF-006 | Primary dev/use path documented as `claude --plugin-dir` (marketplace secondary; recipes live outside the plugin dir) | `tools/claude-plugin/README.md:21` `claude --plugin-dir tools/claude-plugin` |
+| 🔵 PF-007 | Gate runs outside turbo via the `gate.mjs` pattern (append to `verify`), not the in-turbo `check:docs` | `package.json:23` `verify` ends `&& node scripts/check-plugin.mjs`, mirroring `gate` on line 24 |
+
+**No preflight concern regressed or resurfaced during execution.** The one item the preflight
+explicitly left to the runtime — a scaffolded `packages/<slug>/` resolving `@jsvision/ui` without a
+fresh `yarn install` — was validated by ST-6 (in-process paint) and ST-17 (real `tsc` + `claude
+plugin validate`), both green. Preflight → execution loop **closed**.
