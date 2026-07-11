@@ -1,7 +1,7 @@
 # Execution Plan — Flexible Chrome Bars
 
 > **Feature**: jsvision-ui / flexible-chrome-bars · **CodeOps Skills Version**: 3.3.2
-> **Progress**: 0/25 tasks (0%)
+> **Progress**: 2/25 tasks (8%) · Last updated: 2026-07-11 14:07
 > Single source of truth for progress — each task appears once. Spec-first ordering per feature phase
 > (Spec Tests → red → Implementation → green → Impl Tests & Hardening). Commit via **/gitcm** (or
 > **/gitcmp**) per the exec_plan commit mode — never raw git.
@@ -14,11 +14,13 @@
 
 Internal-only (no user-facing oracle → impl-first, validated through the bar oracles later). Spec 03-01.
 
-- [ ] **T-1.1** Add the pure `packRow(segments, total, startX?)` helper over the layout engine's
-  `solveTrack`/apportion (`packages/ui/src/layout/apportion.ts`); co-locate in `menu/builders.ts` or a
-  new `layout/pack-row.ts`. No barrel export. (AR-6, AR-7)
-- [ ] **T-1.2** Impl tests `pack-row.impl.test.ts` — empty, all-fixed (== left-pack), one flex, multi-flex
-  (integer largest-remainder, exact sum), fixed-overflow (flex→0), non-zero `startX`. (07 § C)
+- [x] **T-1.1** Add the pure `packRow(segments, total, startX?)` helper over the layout engine's
+  `solveTrack`/apportion (`packages/ui/src/layout/apportion.ts`); implemented as a dedicated
+  `layout/pack-row.ts` module (one of the two locations 03-01 offers). No barrel export. (AR-6, AR-7)
+  ✅ (completed: 2026-07-11 14:07)
+- [x] **T-1.2** Impl tests `pack-row.impl.test.ts` — empty, all-fixed (== left-pack), one flex, multi-flex
+  (integer largest-remainder, exact sum), fixed-overflow (flex→0), non-zero `startX`. (07 § C) — 8 tests.
+  ✅ (completed: 2026-07-11 14:07)
 
 **Verify:** `yarn workspace @jsvision/ui test` green for `pack-row`.
 
