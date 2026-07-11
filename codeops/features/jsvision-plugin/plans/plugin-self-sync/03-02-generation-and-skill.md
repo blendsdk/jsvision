@@ -23,23 +23,35 @@ export function buildCatalogEntryRequest(name) {
       'JSDoc and example. Do not invent behavior. Match the existing bullet style: ' +
       '"- **Name** — one sentence; a short usage hint.".',
     user: `Widget: ${name}\nJSDoc: ${lead}\nExample:\n${example}\n\nReturn only the bullet line.`,
-    target: { file: CATALOG, afterHeading: sectionFor(name) }, // where the bullet is inserted
+    target: { file: CATALOG, afterHeading: NEEDS_CATEGORISATION }, // deterministic holding area
   };
 }
 ```
 
-- `readWidgetDoc(name)` reuses the TS-compiler machinery behind `extractUiClassExports` to pull the
-  class's leading JSDoc + its `@example` from `@jsvision/ui`'s source. (AR-7)
+- `readWidgetDoc(name)` runs over the **same** TypeScript `Program` as `extractUiClassExports`, but
+  **adds** doc extraction: it follows the export alias to the class declaration (`getAliasedSymbol`)
+  and reads the lead sentence via `getDocumentationComment(checker)` + the `@example` via
+  `getJsDocTags(checker)`. This is a genuinely new code path, not just a call into the name extractor.
+  The `@example` is guaranteed present — `check:docs` fails `yarn verify` on any public export missing
+  one — so the grounding data always exists. (AR-7)
 - The request is **data**; neither the skill nor the script embeds prompt text of its own — they both
   call `buildCatalogEntryRequest`, so the drafting spec has one home and one test (ST-5).
-- `applyCatalogEntry(mdText, bullet, section)` is a pure splice inserting the bullet under the right
-  `##` section — the write side, shared with 03-03 and asserted by ST-7.
+- **Section placement is human editorial judgment**, not derivable from code: nothing maps a widget to
+  a catalog section, and the barrel-coverage gate only checks the bullet *exists somewhere*. So the
+  draft lands deterministically under a fixed `## New — needs categorization` heading
+  (`NEEDS_CATEGORISATION`), and the reviewer re-files it into its real section during the human review
+  step (AR-13). `applyCatalogEntry(mdText, bullet, heading)` is a pure splice inserting the bullet
+  under `heading` (creating the heading at the end of the file if absent) — the write side, shared
+  with 03-03 and asserted by ST-7.
 
 ## The `jsvision-plugin-sync` Claude Code skill (FR-3a, AR-4)
 
 A **manual** skill (`disable-model-invocation: true`) under
-`tools/claude-plugin/skills/jsvision-plugin-sync/SKILL.md`. It carries no code of its own; it drives
-the developer's in-session model through the shared machinery:
+`tools/claude-plugin/skills/jsvision-plugin-sync/SKILL.md`. It is a **maintainer-facing** tool that
+operates on *this* repo (it invokes repo-root `scripts/plugin-sync.mjs` and reads `packages/ui`), and
+it co-locates inside the distributed plugin like `jsvision-new-app` — an accepted trade-off while the
+plugin is pre-release; being manual-only, it never auto-fires in a consumer's project. It carries no
+code of its own; it drives the developer's in-session model through the shared machinery:
 
 SKILL.md instructs the agent to:
 1. Run `node scripts/plugin-sync.mjs --detect` (a read-only JSON dump of `detectDrift()`).

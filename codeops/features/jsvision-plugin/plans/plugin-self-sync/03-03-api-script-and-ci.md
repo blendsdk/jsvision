@@ -15,24 +15,34 @@
  * Draft + apply catalog entries for undocumented widgets.
  * @param {DriftFinding[]} findings
  * @param {DraftClient} client  injected — the real Anthropic client in prod, a fake in tests
+ * @param {DriftRoots} [roots]  defaults to the real tree; a test passes a temp-dir catalog so the
+ *   write lands in the fixture, not the repo (the filesystem seam, mirroring the injected client)
  */
-export async function fixUndocumentedWidgets(findings, client) {
+export async function fixUndocumentedWidgets(findings, client, roots = DEFAULT_ROOTS) {
   const done = [];
   for (const f of findings) {
     if (f.kind !== 'undocumented-widget') continue;
-    const req = buildCatalogEntryRequest(f.name);
+    const req = buildCatalogEntryRequest(f.name);            // grounded in the real widget's JSDoc
     const bullet = normalizeBullet(await client.draft(req)); // trim to one grounded bullet line
-    writeFileSync(CATALOG, applyCatalogEntry(readFileSync(CATALOG, 'utf8'), bullet, req.target.afterHeading));
+    const md = readFileSync(roots.catalogPath, 'utf8');
+    writeFileSync(roots.catalogPath, applyCatalogEntry(md, bullet, req.target.afterHeading));
     done.push(f.name);
   }
   return done;
 }
 ```
 
+The write target is `roots.catalogPath` (injectable), while `buildCatalogEntryRequest` still reads the
+real, read-only `@jsvision/ui` source for grounding — so ST-6 seeds a temp catalog missing a **real**
+widget's bullet (e.g. `Button`), drafts via the fake client, writes the bullet to the temp catalog,
+and barrel-coverage then passes there — with zero repo mutation and zero network.
+
 - **Real client** (`scripts/plugin-sync-anthropic.mjs`): a thin adapter wrapping `@anthropic-ai/sdk`
   (`new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })`) that maps `{system,user}` → a
-  `messages.create` call and returns the text. Constructed only in the guarded `main()` when the AI
-  path runs — never imported by tests.
+  `messages.create` call and returns the text. It passes a current Claude model — default
+  `claude-haiku-4-5-20251001` (this is a small, grounded, low-volume draft; override via env for
+  higher-quality prose, e.g. `claude-sonnet-5`) — and a small `max_tokens` (~256; one bullet is tiny).
+  Constructed only in the guarded `main()` when the AI path runs — never imported by tests.
 - **Fake client** (test): `{ draft: async () => '- **Ghost** — a test widget; `new Ghost()`.' }` →
   the spec asserts the entry is written and barrel-coverage passes, with zero network. (ST-6, ST-7)
 - After drafting, `main()` runs (or instructs) `yarn verify`; on green it leaves the change unstaged
@@ -83,5 +93,6 @@ Local script and CI both stop at a reviewable artifact — an unstaged diff or a
   wire the AI branch into `main()` behind the real adapter.
 - **New** `scripts/plugin-sync-anthropic.mjs` — the real `DraftClient` adapter over `@anthropic-ai/sdk`.
 - **New** `.github/workflows/plugin-self-sync.yml` — the disabled, secret-free workflow.
-- **Edit** root `package.json` — add `@anthropic-ai/sdk` to `devDependencies`.
+- **Edit** root `package.json` **+ `yarn.lock`** — add `@anthropic-ai/sdk` to `devDependencies` and
+  run `yarn install` to update the lockfile (CI's `yarn install --frozen-lockfile` fails on drift).
 - **Edit** `tools/claude-plugin/README.md` — the "Enabling automated sync" section.

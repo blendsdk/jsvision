@@ -12,26 +12,41 @@ It reuses the existing checkers so there is one source of truth.
 /**
  * @typedef {{ kind: 'undocumented-widget', name: string }
  *          | { kind: 'snippet-drift', module: string }} DriftFinding
+ * @typedef {{ catalogPath: string, recipeDir: string, skillRoot: string,
+ *             listClassExports: () => string[] }} DriftRoots
  */
 
-/** @returns {DriftFinding[]} the machine-readable drift set (a superset-free view of runAllChecks). */
-export function detectDrift() {
-  const findings = [];
+/** The real plugin tree — the default target for `detectDrift` and the fixers. */
+export const DEFAULT_ROOTS = {
+  catalogPath: CATALOG,
+  recipeDir: RECIPE_DIR,
+  skillRoot: SKILL_ROOT,
+  listClassExports: extractUiClassExports,
+};
 
-  // Undocumented widgets: the class exports not present in the catalog and not denylisted.
-  const catalog = readFileSync(CATALOG, 'utf8');
-  for (const name of extractUiClassExports()) {
-    if (CATALOG_DENYLIST.includes(name)) continue;
-    if (!new RegExp(`\\*\\*${name}\\*\\*`).test(catalog)) {
-      findings.push({ kind: 'undocumented-widget', name });
-    }
+/**
+ * @param {DriftRoots} [roots] defaults to the real plugin tree; a spec test passes a temp-dir roots
+ *   object so it observes seeded drift without touching (or mutating) the repo.
+ * @returns {DriftFinding[]} the machine-readable drift set — exactly the findings `runAllChecks`
+ *   raises for these two kinds (undocumented widget, snippet drift), no more, no fewer.
+ */
+export function detectDrift(roots = DEFAULT_ROOTS) {
+  const findings = [];
+  const catalog = readFileSync(roots.catalogPath, 'utf8');
+
+  // Undocumented widgets: REUSE the gate's own checker and map its "missing entry" errors back to
+  // findings, so the finding set is — by construction — identical to what barrel-coverage reports.
+  // One predicate, one source of truth (AR-6); no second hand-rolled regex to drift from the gate.
+  for (const err of checkBarrelCoverage(roots.listClassExports(), catalog, CATALOG_DENYLIST)) {
+    const m = err.match(/missing entry for exported class "(.+)"/);
+    if (m) findings.push({ kind: 'undocumented-widget', name: m[1] });
   }
 
   // Drifted snippets: a recipe module whose #region differs from the embedded block in its .md.
   for (const { md, module } of DRIFT_PAIRS) {
-    const region = extractRegion(readFileSync(join(RECIPE_DIR, `${module}.ts`), 'utf8'));
+    const region = extractRegion(readFileSync(join(roots.recipeDir, `${module}.ts`), 'utf8'));
     if (region === null) continue; // absent-region is a runAllChecks error, not a syncable delta
-    if (checkDrift(readFileSync(join(SKILL_ROOT, md), 'utf8'), region).length > 0) {
+    if (checkDrift(readFileSync(join(roots.skillRoot, md), 'utf8'), region).length > 0) {
       findings.push({ kind: 'snippet-drift', module });
     }
   }
@@ -40,11 +55,12 @@ export function detectDrift() {
 ```
 
 Notes:
-- The undocumented-widget branch mirrors `checkBarrelCoverage`'s **forward** direction exactly (a
-  catalog-name-not-exported *reverse* gap is a `runAllChecks` error, not an auto-syncable delta — you
-  cannot invent a widget, so it is out of `detectDrift`).
-- `extractRegion` is currently module-internal; export it (or a small `readRegion(module)` helper) so
-  the fixer and the request builder (03-02) share it. (AR-6)
+- The undocumented-widget branch is the gate's `checkBarrelCoverage` **forward** direction verbatim —
+  `detectDrift` calls the checker rather than re-deriving the predicate, so a `detectDrift` finding is
+  always a real gate finding (the catalog-name-not-exported *reverse* gap stays a `runAllChecks`
+  error, not an auto-syncable delta — you cannot invent a widget). (AR-6)
+- `extractRegion` is currently module-internal; export it (or a small `readRegion(module, roots)`
+  helper) so the fixer and the request builder (03-02) share it. Export `DEFAULT_ROOTS` too. (AR-6)
 
 ## Deterministic snippet fix — `plugin-sync.mjs --fix` (FR-2, AR-3)
 
@@ -53,20 +69,24 @@ A new root CLI `scripts/plugin-sync.mjs` (sibling of `check-plugin.mjs`/`gate.mj
 
 ```js
 // scripts/plugin-sync.mjs (sketch)
-import { detectDrift, /* path consts + */ syncSnippet } from './check-plugin.mjs';
+import { detectDrift, DEFAULT_ROOTS, /* path consts + */ readRegion } from './check-plugin.mjs';
 
-export function fixSnippetDrift(findings) {
+export function fixSnippetDrift(findings, roots = DEFAULT_ROOTS) {
   const fixed = [];
   for (const f of findings) {
     if (f.kind !== 'snippet-drift') continue;
-    const region = readRegion(f.module);                 // source of truth
-    const md = join(SKILL_ROOT, driftMdFor(f.module));   // DRIFT_PAIRS lookup
+    const region = readRegion(f.module, roots);              // source of truth
+    const md = join(roots.skillRoot, driftMdFor(f.module));  // DRIFT_PAIRS lookup
     writeFileSync(md, replaceFencedBlock(readFileSync(md, 'utf8'), region)); // deterministic splice
     fixed.push(f.module);
   }
   return fixed;
 }
 ```
+
+The `roots` param (default = the real tree) is the injectable filesystem seam the specs need: a test
+passes a temp-dir `roots` so `fixSnippetDrift`/`detectDrift` run against a seeded copy and never write
+to the repo. It is the filesystem analogue of the injected model client (AR-10).
 
 - `replaceFencedBlock(mdText, region)` is a **pure** function: it locates the existing embedded
   ```ts fenced block that check-plugin compares and replaces its body with `region`, byte-for-byte.
@@ -87,8 +107,9 @@ pathToFileURL(process.argv[1]).href`), so it is importable by the spec tests wit
 
 ## Files
 
-- **Edit** `scripts/check-plugin.mjs` — add `detectDrift`; export `extractRegion`/`readRegion` +
-  needed path consts; no behavior change to `runAllChecks`/`check-plugin: PASS`.
+- **Edit** `scripts/check-plugin.mjs` — add `detectDrift(roots)` (reusing `checkBarrelCoverage`);
+  export `extractRegion`/`readRegion`, `DEFAULT_ROOTS` + needed path consts; no behavior change to
+  `runAllChecks`/`check-plugin: PASS`.
 - **New** `scripts/plugin-sync.mjs` — `fixSnippetDrift` + `replaceFencedBlock` (pure) + a guarded
   `main()` handling `--fix` (this phase) and, in 03-03, the AI path.
 - **Edit** root `package.json` — add `"plugin:sync": "node scripts/plugin-sync.mjs"`.
