@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-11 13:21
-> **Progress**: 5/37 tasks (14%)
+> **Last Updated**: 2026-07-11 13:47
+> **Progress**: 13/37 tasks (35%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -66,26 +66,26 @@ the AI-driven self-update pipeline is a separate follow-on plan (`plugin-self-sy
 **Reference**: 07 ST-1…ST-6 · 03-04
 **Objective**: Lock the generator's behavior before implementing it.
 
-- [ ] 2.1.1 Write scaffolder spec tests from ST-1…ST-6 — `packages/examples/test/new-jsvision-app.spec.test.ts` (imports the generator by relative path)
-- [ ] 2.1.2 Run spec tests — verify they FAIL (red phase)
+- [x] 2.1.1 Write scaffolder spec tests from ST-1…ST-6 — `packages/examples/test/new-jsvision-app.spec.test.ts` (imports the generator by relative path) ✅ (completed: 2026-07-11 13:37)
+- [x] 2.1.2 Run spec tests — verify they FAIL (red phase) ✅ RED confirmed: `Cannot find module '.../new-jsvision-app.mjs'` (completed: 2026-07-11 13:37)
 
 ### Step 2.2: Implementation
 
 **Reference**: 03-04 §Implementation Details · AR-8, AR-15, AR-17
 **Objective**: The deterministic generator + its skill wrapper + templates.
 
-- [ ] 2.2.1 Implement the generator (`slugify`, `uiDependency`, pure `buildAppFiles`, fs wrapper with no-overwrite + path-safety) — `tools/claude-plugin/skills/jsvision-new-app/scripts/new-jsvision-app.mjs`
-- [ ] 2.2.2 Implement the app-skeleton templates (package.json, tsconfig, vitest.config, main.ts, smoke test) — `tools/claude-plugin/templates/app-skeleton/`
-- [ ] 2.2.3 Implement the scaffolder skill wrapper (manual, `argument-hint`) — `tools/claude-plugin/skills/jsvision-new-app/SKILL.md`
-- [ ] 2.2.4 Run spec tests — verify they PASS (green phase); fix the implementation (never the test) on mismatch
+- [x] 2.2.1 Implement the generator (`slugify`, `uiDependency`, pure `buildAppFiles`, fs wrapper with no-overwrite + path-safety) — `tools/claude-plugin/skills/jsvision-new-app/scripts/new-jsvision-app.mjs` ✅ (completed: 2026-07-11 13:44)
+- [x] 2.2.2 Implement the app-skeleton templates (package.json, tsconfig, vitest.config, main.ts, smoke test) — `tools/claude-plugin/templates/app-skeleton/` (5 `.tmpl` files, single-source loaded at module init) ✅ (completed: 2026-07-11 13:44)
+- [x] 2.2.3 Implement the scaffolder skill wrapper (manual, `argument-hint`) — `tools/claude-plugin/skills/jsvision-new-app/SKILL.md` ✅ (completed: 2026-07-11 13:44)
+- [x] 2.2.4 Run spec tests — verify they PASS (green phase); fix the implementation (never the test) on mismatch ✅ 6/6 green; emitted files + generator lint-clean; plugin re-validates (completed: 2026-07-11 13:44)
 
 ### Step 2.3: Implementation tests & hardening
 
 **Reference**: 07 §Implementation Tests
-- [ ] 2.3.1 Write impl tests (existing-package refusal, unicode/edge names, repeat-collapse, `uiDependency` seam) — `packages/examples/test/new-jsvision-app.impl.test.ts`
-- [ ] 2.3.2 Full verification
+- [x] 2.3.1 Write impl tests (existing-package refusal, unicode/edge names, repeat-collapse, `uiDependency` seam) — `packages/examples/test/new-jsvision-app.impl.test.ts` ✅ 8/8 green (completed: 2026-07-11 13:47)
+- [x] 2.3.2 Full verification ✅ `yarn verify` green — 22/22 turbo tasks, 0 cached; no regressions (completed: 2026-07-11 13:47)
 
-**Verify**: `yarn verify`
+**Verify**: `yarn verify` ✅ PASS (2026-07-11 13:47)
 
 ---
 

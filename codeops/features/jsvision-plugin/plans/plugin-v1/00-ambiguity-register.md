@@ -100,3 +100,20 @@ key on `name`, not `id`. The primary dev/use path is `claude --plugin-dir tools/
 in place); a marketplace install copies only the plugin dir to the cache (PF-006). The skill format
 itself (`disable-model-invocation`, `argument-hint`, `allowed-tools`, `${CLAUDE_PLUGIN_ROOT}`,
 `claude plugin validate`, `--plugin-dir`) was verified correct against the same docs.
+
+**AR-21 (ST-6 mechanism — runtime, decided during execution):** A scaffolded `packages/<slug>/` is a
+new yarn workspace, and a *full* workspace typecheck+smoke on it from inside the examples vitest is
+awkward (it depends on `yarn install`/lockfile state — options B/C were mutate-the-lockfile or
+structural-only). Chosen (user, option **A — hybrid**): ST-6 generates into a throwaway dir under
+`packages/examples/`, **imports the emitted `main.ts`'s `buildApp()` in-process and asserts it paints**
+(`paintedCells(app.loop.renderRoot.buffer().rows()) > 0`, after `app.loop.resize(...)` reflows the
+late-added window — gotcha #7), plus structural checks (each config `JSON.parse`s, the full file set
+is present), then removes the dir. This resolves the real "the scaffolded app runs" proof cheaply and
+deterministically, with **no** `yarn install`/lockfile churn. The end-to-end generate→install→`yarn
+verify` remains proven once by the ST-17 acceptance (Phase 5). To make in-process import safe, the
+emitted `main.ts` **exports `buildApp()`** and gates its auto-run behind a direct-execution check
+(`import.meta.url === pathToFileURL(process.argv[1]).href`) so importing it never calls
+`process.exit`. Grounded: `Application` exposes `readonly loop`/`readonly desktop`
+(`packages/ui/src/app/application.ts:80-114`); `createApplication` mounts + paints the first frame
+(`:243`); `EventLoop.resize(Size2D)` reflows+flushes (`event-loop.ts:232`); cross-root `.mjs` test
+imports are established here (`packages/core/test/gate.spec.test.ts:18`).
