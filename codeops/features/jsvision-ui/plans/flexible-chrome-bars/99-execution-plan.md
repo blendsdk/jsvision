@@ -1,7 +1,7 @@
 # Execution Plan — Flexible Chrome Bars
 
 > **Feature**: jsvision-ui / flexible-chrome-bars · **CodeOps Skills Version**: 3.3.2
-> **Progress**: 2/25 tasks (8%) · Last updated: 2026-07-11 14:07
+> **Progress**: 10/25 tasks (40%) · Last updated: 2026-07-11 14:28
 > Single source of truth for progress — each task appears once. Spec-first ordering per feature phase
 > (Spec Tests → red → Implementation → green → Impl Tests & Hardening). Commit via **/gitcm** (or
 > **/gitcmp**) per the exec_plan commit mode — never raw git.
@@ -31,11 +31,12 @@ Internal-only (no user-facing oracle → impl-first, validated through the bar o
 Spec 03-02. Oracles ST-01…ST-07 + preserved status oracles.
 
 ### Session 1 — Spec tests (red)
-- [ ] **T-2.1** Write `packages/ui/test/status-bar.spec.test.ts` with ST-01…ST-07 (07 § A). Run — they
-  fail (red). Do **not** touch `app-shell.status.spec.test.ts` (preserved).
+- [x] **T-2.1** Write `packages/ui/test/status-bar.spec.test.ts` with ST-01…ST-07 (07 § A). Run — they
+  fail (red: 6 failed, ST-06 parity green). Do **not** touch `app-shell.status.spec.test.ts` (preserved).
+  ✅ (completed: 2026-07-11 14:28)
 
 ### Session 2 — Implementation (green)
-- [ ] **T-2.2** Add `StatusItemView` + `statusItem(text, command?, key?)` in
+- [x] ✅ (completed: 2026-07-11 14:28) **T-2.2** Add `StatusItemView` + `statusItem(text, command?, key?)` in
   `packages/ui/src/status/status-item.ts`: accessor text (`string | () => string`), optional command,
   faithful per-item render (pressed/enabled style matrix, `~…~` accent), `measure()` → `{width, height:1}`,
   `focusable=false`. Retain the public `StatusItem` **type** so `StatusItemView` satisfies it and
@@ -43,7 +44,7 @@ Spec 03-02. Oracles ST-01…ST-07 + preserved status oracles.
   - **Preflight PF-004:** an accessor-text change must trigger `invalidateLayout()` (not just
     `invalidate()`) so a widened string re-measures the row and shifts neighbours (ST-04). Bind the
     accessor on **mount** (like `Text`) so eager construction at the 18 call sites needs no reactive owner.
-- [ ] **T-2.3** Rewrite `StatusLine` as `extends Group` (`direction:'row'`, `postProcess`), owning
+- [x] ✅ (completed: 2026-07-11 14:28) **T-2.3** Rewrite `StatusLine` as `extends Group` (`direction:'row'`, `postProcess`), owning
   interaction: `itemAt(x)` over command-item children only, press/drag/release + accelerator sweep +
   capture via the unchanged seam; `statusLine(children: View[])`. Passive segments (spacer/widget/
   command-less) are skipped by hit-test + accelerators. (AR-4, AR-5, AR-12, AR-20)
@@ -52,15 +53,18 @@ Spec 03-02. Oracles ST-01…ST-07 + preserved status oracles.
     otherwise ST-01's empty-gap assertion + the preserved trailing-cell pixel oracles regress.
   - **Preflight (safe):** no external code reads `StatusLine.items` — back the accelerator sweep with
     the command-item children instead.
-- [ ] **T-2.4** Update `packages/ui/src/status/index.ts` — add `StatusItemView` (additive); keep
-  `StatusLine`/`statusLine`/`statusItem`/`StatusItem`/`StatusLoopSeam`.
-- [ ] **T-2.5** Green: ST-01…ST-07 pass **and** `app-shell.status.spec` + `app-shell.packaging.spec`
-  pass unmodified. Fix code until green (spec-first).
+- [x] ✅ (completed: 2026-07-11 14:28) **T-2.4** Update `packages/ui/src/status/index.ts` — add `StatusItemView` (additive); keep
+  `StatusLine`/`statusLine`/`statusItem`/`StatusItem`/`StatusLoopSeam`. Also added `StatusItemView` to the
+  package barrel `src/index.ts`.
+- [x] ✅ (completed: 2026-07-11 14:28) **T-2.5** Green: ST-01…ST-07 pass **and** every preserved oracle
+  (`app-shell.status.spec` + `app-shell.menu` + `app-shell.packaging.spec`) passes unmodified — full ui
+  unit suite 1521 passed. Required pulling **T-4.1** (the `application.ts` layout merge) forward, since the
+  status line now carries an internal `direction:'row'`.
 
 ### Session 3 — Impl tests & hardening
-- [ ] **T-2.6** `status-bar.impl.test.ts` — `measure()` width (static+accessor), pressed/enabled style
-  matrix, command-less skip in `itemAt`, accelerator sweep skipping passive. (07 § C)
-- [ ] **T-2.7** JSDoc: `@example` on `statusLine`/`statusItem`/`StatusItemView` (user-facing, no TV/C++
+- [x] ✅ (completed: 2026-07-11 14:28) **T-2.6** `status-bar.impl.test.ts` — `measure()` width (static+accessor), pressed/enabled style
+  matrix, command-less skip in `itemAt`, accelerator sweep skipping passive. (07 § C) — 4 tests.
+- [x] ✅ (completed: 2026-07-11 14:28) **T-2.7** JSDoc: `@example` on `statusLine`/`statusItem`/`StatusItemView` (user-facing, no TV/C++
   or CodeOps IDs); `yarn workspace @jsvision/ui check:docs` green. (AR-13)
 
 **Verify:** `yarn workspace @jsvision/ui test` + `check:docs` green.
@@ -102,7 +106,8 @@ Spec 03-03. Oracles ST-08…ST-10 + preserved menu oracles.
 
 Spec 03-04.
 
-- [ ] **T-4.1** `application.ts` — merge the fixed-1-row size into each bar's existing layout
+- [x] ✅ (completed: 2026-07-11 14:28 — pulled forward into Phase 2, a hard prerequisite for the preserved
+  status oracle) **T-4.1** `application.ts` — merge the fixed-1-row size into each bar's existing layout
   (`{...layout, size:{fixed:1}}`) so StatusLine keeps `direction:'row'`; app-shell oracles stay green. (AR-11)
 - [ ] **T-4.2** (Preflight PF-001, decision **B**) **Create** a new example
   `packages/examples/chrome-bars-demo/main.ts` — `<Exit><spacer fill><ProgressBar><clock>` status line +

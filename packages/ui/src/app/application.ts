@@ -219,12 +219,14 @@ export function createApplication(opts: ApplicationOptions): Application {
   // The shared cell the loop's built-in quit registration resolves through; `run()` fills it in.
   const quitState: QuitState = { resolve: null };
   if (opts.menuBar !== undefined) {
-    opts.menuBar.layout = { size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
+    // Merge, not replace: keep any internal layout (e.g. a bar's own `direction`) and only pin the height.
+    opts.menuBar.layout = { ...opts.menuBar.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
     root.add(opts.menuBar);
   }
   root.add(desktop);
   if (opts.statusLine !== undefined) {
-    opts.statusLine.layout = { size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
+    // Merge so the status line keeps its internal `direction: 'row'` — it lays its children out itself.
+    opts.statusLine.layout = { ...opts.statusLine.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
     root.add(opts.statusLine);
   }
   root.add(overlay);
