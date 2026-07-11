@@ -76,6 +76,10 @@ export function fixSnippetDrift(findings, roots = DEFAULT_ROOTS) {
 }
 
 function main(argv = process.argv.slice(2)) {
+  if (argv.includes('--detect')) {
+    process.stdout.write(`${JSON.stringify(detectDrift(), null, 2)}\n`);
+    return;
+  }
   if (argv.includes('--fix')) {
     const fixed = fixSnippetDrift(detectDrift());
     process.stdout.write(

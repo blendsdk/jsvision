@@ -8,14 +8,16 @@
 // deterministic --fix re-syncs a drifted snippet with no AI. Every mutating path takes an injectable
 // `roots` object so these tests run against a temp-dir copy and never touch the real repo.
 
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { afterAll, expect, test } from 'vitest';
 
 import { DEFAULT_ROOTS, detectDrift, checkDrift, runAllChecks } from '../../../scripts/check-plugin.mjs';
 import { fixSnippetDrift, replaceFencedBlock } from '../../../scripts/plugin-sync.mjs';
+import { buildCatalogEntryRequest, readWidgetDoc } from '../../../scripts/plugin-sync-request.mjs';
 
 // A distinctive widget whose class name appears exactly once in the catalog (its own bullet), so
 // deleting that bullet is a clean, unambiguous "undocumented widget" seed.
@@ -105,4 +107,31 @@ test('ST-4: fixSnippetDrift(detectDrift()) is a no-op on the clean tree', () => 
 // ST-11 — detectDrift is purely additive: PL-01's gate still passes on the real tree.
 test('ST-11: runAllChecks() still passes on the real tree (detectDrift is additive)', () => {
   expect(runAllChecks().ok).toBe(true);
+});
+
+// ST-5 — the request builder grounds its prompt in the widget's real JSDoc + @example and targets
+// the deterministic holding heading; it invents no behavior.
+test('ST-5: buildCatalogEntryRequest grounds the request in the widget doc + targets the holding heading', () => {
+  const { lead, example } = readWidgetDoc('Button');
+  // Independent reality anchors: the real Button doc says "command button" and shows `new Button`.
+  expect(lead.toLowerCase()).toContain('command button');
+  expect(example).toContain('new Button');
+
+  const req = buildCatalogEntryRequest('Button');
+  expect(req.target.afterHeading).toBe('New — needs categorization');
+  expect(req.user).toContain('Button');
+  expect(req.user).toContain(lead); // grounded in the real lead sentence
+  expect(req.user).toContain(example); // grounded in the real @example
+});
+
+// ST-8 — the manual sync skill exists with valid, manual-only frontmatter.
+test('ST-8: the jsvision-plugin-sync skill exists with manual-only frontmatter', () => {
+  const skill = fileURLToPath(
+    new URL('../../../tools/claude-plugin/skills/jsvision-plugin-sync/SKILL.md', import.meta.url),
+  );
+  expect(existsSync(skill)).toBe(true);
+  const fm = readFileSync(skill, 'utf8').split('---')[1] ?? '';
+  expect(fm).toMatch(/^name:\s*jsvision-plugin-sync/m);
+  expect(fm).toMatch(/^description:\s*\S/m);
+  expect(fm).toMatch(/^disable-model-invocation:\s*true/m);
 });

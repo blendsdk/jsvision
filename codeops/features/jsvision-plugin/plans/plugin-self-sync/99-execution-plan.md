@@ -1,7 +1,7 @@
 # Execution Plan: plugin-self-sync (PL-02)
 
 > **Feature**: jsvision-plugin · **CodeOps Skills Version**: 3.3.2
-> **Progress**: 7/30 tasks (23%) · **Last Updated**: 2026-07-11
+> **Progress**: 15/30 tasks (50%) · **Last Updated**: 2026-07-11
 > **Branch**: `feat/plugin-self-sync` (off `master`, PL-01 merged) · **Verify**: `yarn verify`
 
 Spec-first per phase: spec tests → red → implement → green → impl tests → full verify. A task is
@@ -22,14 +22,14 @@ Legend: `[ ]` todo · `[~]` implemented, unverified · `[x]` done.
 
 ## Phase 2 — Catalog-entry request builder + the `jsvision-plugin-sync` skill (03-02)
 
-- [ ] 2.1 Spec: add ST-5 (request builder) + ST-8 (skill exists/validates) to the spec file (red)
-- [ ] 2.2 Impl: `scripts/plugin-sync-request.mjs` — `readWidgetDoc` (lead + `@example` via `getDocumentationComment`/`getJsDocTags` over the extractor's `Program`), `buildCatalogEntryRequest` (targets the `New — needs categorization` holding heading), pure `applyCatalogEntry`
-- [ ] 2.3 Impl: `--detect` JSON mode in `plugin-sync.mjs` (read-only `detectDrift()` dump)
-- [ ] 2.4 Impl: `tools/claude-plugin/skills/jsvision-plugin-sync/SKILL.md` (manual, `disable-model-invocation`, the detect→draft→review→verify loop; grounded-only drafting per AR-14)
-- [ ] 2.5 Impl: register the skill in `plugin.json`/marketplace as needed (match `jsvision-new-app`)
-- [ ] 2.6 Green: ST-5, ST-8 pass; `claude plugin validate` passes with both skills
-- [ ] 2.7 Impl tests: request-builder edge cases (missing `@example`, denylisted name never requested)
-- [ ] 2.8 Full `yarn verify` green
+- [x] 2.1 Spec: add ST-5 (request builder) + ST-8 (skill exists/validates) to the spec file (red)
+- [x] 2.2 Impl: `scripts/plugin-sync-request.mjs` — `readWidgetDoc` (lead + `@example` via `extractUiClassDoc`, a new `getDocumentationComment`/`getJsDocTags` extractor added to `check-plugin.mjs` sharing one `buildUiProgram()`), `buildCatalogEntryRequest` (targets the `New — needs categorization` holding heading), pure `applyCatalogEntry`
+- [x] 2.3 Impl: `--detect` JSON mode in `plugin-sync.mjs` (read-only `detectDrift()` dump)
+- [x] 2.4 Impl: `tools/claude-plugin/skills/jsvision-plugin-sync/SKILL.md` (manual, `disable-model-invocation`, the detect→draft→review→verify loop; grounded-only drafting)
+- [x] 2.5 Impl: skill registration = directory presence (plugin.json has no skills array; matches `jsvision-new-app`) — no manifest edit
+- [x] 2.6 Green: ST-5, ST-8 pass; `claude plugin validate` passed with both skills
+- [x] 2.7 Impl tests: request-builder edge cases (unknown name throws, denylisted name never requested, real widget grounds, applyCatalogEntry placement)
+- [x] 2.8 Full `yarn verify` green (22/22 turbo, check-plugin: PASS)
 
 ## Phase 3 — API script + injected client + disabled CI + SDK dep (03-03)
 

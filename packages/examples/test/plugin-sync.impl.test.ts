@@ -10,6 +10,12 @@ import { afterAll, expect, test } from 'vitest';
 
 import { DEFAULT_ROOTS, detectDrift } from '../../../scripts/check-plugin.mjs';
 import { fixSnippetDrift, replaceFencedBlock } from '../../../scripts/plugin-sync.mjs';
+import {
+  applyCatalogEntry,
+  buildCatalogEntryRequest,
+  NEEDS_CATEGORISATION,
+  readWidgetDoc,
+} from '../../../scripts/plugin-sync-request.mjs';
 
 const tmpDirs: string[] = [];
 
@@ -104,4 +110,41 @@ test('fixSnippetDrift ignores non-snippet findings and unknown modules', () => {
 test('replaceFencedBlock returns the text unchanged when there is no ```ts block', () => {
   const md = '# Page\n\njust prose, no code block\n';
   expect(replaceFencedBlock(md, 'const x = 1;')).toBe(md);
+});
+
+test('denylisted base classes are never emitted as undocumented-widget findings', () => {
+  const roots = seededRoots();
+  // Remove the abstract View base's catalog bullet. Because View is denylisted, barrel-coverage never
+  // requires it, so detectDrift emits no finding for it (you would never ask an AI to draft its entry).
+  removeBullet(roots, 'View');
+  const findings = detectDrift(roots);
+  expect(findings.some((f) => f.kind === 'undocumented-widget' && f.name === 'View')).toBe(false);
+});
+
+test('the request builder throws on a name that is not a @jsvision/ui class export', () => {
+  // A real widget always has a lead + @example (check:docs guarantees the @example), so the failure
+  // mode worth guarding is an unknown/removed name — it must throw, not draft from empty grounding.
+  expect(() => readWidgetDoc('DefinitelyNotARealWidget')).toThrow(/no @jsvision\/ui class export/);
+  expect(() => buildCatalogEntryRequest('DefinitelyNotARealWidget')).toThrow();
+});
+
+test('a real widget yields a grounded, non-empty request', () => {
+  const { lead, example } = readWidgetDoc('ProgressBar');
+  expect(lead.length).toBeGreaterThan(0);
+  expect(example.length).toBeGreaterThan(0);
+  const req = buildCatalogEntryRequest('ProgressBar');
+  expect(req.user).toContain('ProgressBar');
+  expect(req.target.afterHeading).toBe(NEEDS_CATEGORISATION);
+});
+
+test('applyCatalogEntry inserts under the holding heading, creating it when absent', () => {
+  const withHeading = `# Cat\n\n## ${NEEDS_CATEGORISATION}\n\n- **Existing** — x.\n`;
+  const out1 = applyCatalogEntry(withHeading, '- **Ghost** — a widget.', NEEDS_CATEGORISATION);
+  expect(out1).toContain('- **Ghost** — a widget.');
+  expect(out1.indexOf(`## ${NEEDS_CATEGORISATION}`)).toBeLessThan(out1.indexOf('- **Ghost**'));
+
+  const noHeading = '# Cat\n\n## Controls\n\n- **Button** — a button.\n';
+  const out2 = applyCatalogEntry(noHeading, '- **Ghost** — a widget.', NEEDS_CATEGORISATION);
+  expect(out2).toContain(`## ${NEEDS_CATEGORISATION}`);
+  expect(out2).toContain('- **Ghost** — a widget.');
 });

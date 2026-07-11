@@ -229,7 +229,8 @@ export function checkBarrelCoverage(classNames, catalogText, denylist) {
  *
  * @returns {string[]} Sorted class export names.
  */
-export function extractUiClassExports() {
+/** Build a TypeScript program over the `@jsvision/ui` barrel and return its checker + module symbol. */
+function buildUiProgram() {
   const program = ts.createProgram([UI_BARREL], {
     moduleResolution: ts.ModuleResolutionKind.NodeNext,
     module: ts.ModuleKind.NodeNext,
@@ -239,8 +240,12 @@ export function extractUiClassExports() {
     skipLibCheck: true,
   });
   const checker = program.getTypeChecker();
-  const source = program.getSourceFile(UI_BARREL);
-  const moduleSymbol = checker.getSymbolAtLocation(source);
+  const moduleSymbol = checker.getSymbolAtLocation(program.getSourceFile(UI_BARREL));
+  return { checker, moduleSymbol };
+}
+
+export function extractUiClassExports() {
+  const { checker, moduleSymbol } = buildUiProgram();
   const names = [];
   for (const exported of checker.getExportsOfModule(moduleSymbol)) {
     let sym = exported;
@@ -248,6 +253,39 @@ export function extractUiClassExports() {
     if (sym.flags & ts.SymbolFlags.Class) names.push(exported.getName());
   }
   return names.sort();
+}
+
+/**
+ * Extract one `@jsvision/ui` class export's JSDoc lead sentence + `@example`, via the TypeScript
+ * checker (following the barrel's re-export alias to the class declaration). This is the grounding
+ * data for an AI-drafted catalog entry; the `@example` is always present because `check:docs` fails
+ * `yarn verify` on any public export missing one.
+ *
+ * @param {string} name The exported class name.
+ * @returns {{ lead: string, example: string } | null} The doc, or `null` when no such class export.
+ * @example
+ * const { lead, example } = extractUiClassDoc('Button');
+ */
+export function extractUiClassDoc(name) {
+  const { checker, moduleSymbol } = buildUiProgram();
+  for (const exported of checker.getExportsOfModule(moduleSymbol)) {
+    if (exported.getName() !== name) continue;
+    let sym = exported;
+    if (sym.flags & ts.SymbolFlags.Alias) sym = checker.getAliasedSymbol(sym);
+    const lead = ts.displayPartsToString(sym.getDocumentationComment(checker)).trim();
+    let example = '';
+    for (const tag of sym.getJsDocTags(checker)) {
+      if (tag.name === 'example') {
+        example = (tag.text ?? [])
+          .map((part) => part.text)
+          .join('')
+          .trim();
+        break;
+      }
+    }
+    return { lead, example };
+  }
+  return null;
 }
 
 /**
