@@ -3,7 +3,7 @@
 > **Feature-Set**: Docs Website
 > **Status**: In Progress
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-10
+> **Last Updated**: 2026-07-11
 > **Progress**: 3 / 10 (30%) — RD-01 implementation ✅ (all 25 tasks; live deploy acceptance pending user) · RD-02 ✅ Done (all 17 tasks; `@jsvision/web` shipped — 41 tests ST-1…ST-12, dogfooded into web-xterm) · RD-03 ✅ Done (7 phases / 40 tasks; live-example system shipped — 8 seed examples, ST-1…ST-14 green, `yarn verify` 22/22, docs gate 14/14)
 > **CodeOps Skills Version**: 3.3.2
 
@@ -28,7 +28,7 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 | RD-03 | Live-example system | [RD-03](requirements/RD-03-live-example-system.md) | [live-example-system](plans/live-example-system/00-index.md) · [register](plans/live-example-system/00-ambiguity-register.md) · [preflight](plans/live-example-system/00-preflight-report.md) | Done | ✅ | 2026-07-10 | Phase A. **✅ DONE** (2026-07-10): every docs code sample runs live in the browser (`@jsvision/web` `mountApp` + xterm.js, no backend), shown code guaranteed == running code. **7 phases / 40 tasks, spec-first, all `[x]`.** Phase 0 docs-site joins `yarn verify`'s test + typecheck (vitest `unit` + scoped `tsconfig`; `vp:build` stays build-isolated). Phase 1 `defineExample` contract + hand-authored registry + ST-1 parity / ST-3 whole-file-`<<<` drift oracles. Phase 2 DemoShell `minimal`/`full` chrome + About/Theme/Depth over the 13 presets (live `setTheme`, depth via re-mount) + `demoApp(ctx,chrome)`. Phase 3 client-only `PlayController` + `PlayExample.vue` (dynamic xterm, ×/backdrop close, Esc→TUI, one-dialog cap, error panel), CSP verified. Phase 4 a11y (source+blurb+ARIA-labelled Play, focus move/return), no-keyboard fallback, deep-link (scroll+highlight, no auto-focus), Reset + size selector. Phases 5a/5b **8 seed examples**: `controls/button`·`input`·`form-dialog`, `containers/list-box`, `files/file-dialog`, `table/data-grid`, `apps/desktop` (flagship WM), `theming/preset-gallery` — each a module + a `<<<`-embedded page + `<PlayExample>`. Phase 6 `check-docs-build.mjs` **LIVE-EXAMPLES** guard + CLAUDE.md C2 note + clean-dist verify. **Runtime AR-22** (user-confirmed): `caps` threaded into `ExampleContext`; Application examples build via `demoApp`. **✅ ST-1…ST-14 green; clean-dist `yarn verify` 22/22 (39 docs-site tests); docs gate 14/14.** Depends RD-01, RD-02. Unblocks RD-04/05/07/09. **↳ Remediation follow-up (7 post-ship bugs) — ✅ Done (2026-07-10):** [live-example-remediation](plans/live-example-remediation/00-index.md) · [preflight](plans/live-example-remediation/00-preflight-report.md) — terminal-driven resize (#1/#3), the unified draggable-Window shell (#4/#5/#6), reopenable dialogs (#7), and build()-first Source (#2). **5 phases / 27 tasks (22 `[x]`, 1 `[~]`), spec-first.** The wheel-leak fix was corrected mid-execution to a CAPTURE-phase `preventDefault` + a background scroll-lock (a bubble listener never fired under xterm's `stopPropagation` — caught by the manual browser check). Clean-dist `yarn verify` 22/22 + docs gate 14/14; browser-confirmed **M1/M2/M4–M8**; the one residual is **M3**'s page-scroll-STOP under a REAL hardware wheel (automation can't assert it — CDP force-scrolls past `preventDefault`/`overflow`). Preflight ✅ PASSED (4 findings applied); Zero-Ambiguity Gate 19/19 + runtime AR-11/AR-13. |
 | RD-04 | Landing / pitch surface | [RD-04](requirements/RD-04-landing-pitch.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase A(partial). Hero + live proof · Getting Started · Core Concepts · Why/comparison · degit starter. Depends RD-01, RD-03. |
 | RD-05 | Component documentation system | [RD-05](requirements/RD-05-component-docs.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase B. Per-component page template + full ~40 coverage · hierarchy · status badges · `components.json`. Depends RD-03. |
-| RD-06 | API reference (TypeDoc) | [RD-06](requirements/RD-06-api-reference.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase C. TypeDoc → markdown → VitePress · CI regen · public-surface scoping · cross-links. Depends RD-01. |
+| RD-06 | API reference (TypeDoc) | [RD-06](requirements/RD-06-api-reference.md) | [api-reference](plans/api-reference/00-index.md) | Executing | 🔄 | 2026-07-11 | Phase C. TypeDoc → `typedoc-plugin-markdown` + `typedoc-vitepress-theme`; 4 public barrels (core `src/engine/index.ts`; ui/files/web `src/index.ts`, badged pre-release) → **gitignored** `api/<pkg>/` regenerated before build; **bidirectional** component↔reference via a symbol↔page map; determinism + coverage/leakage gates in `check-docs-build.mjs`, pure helpers in `yarn verify`; TypeDoc devDeps only (`check:deps` unaffected). **4 phases / 16 tasks, spec-first.** Zero-Ambiguity Gate PASSED (21/21, incl. 4 preflight AR-18…21). Preflight ✅ PASSED (7 findings applied: pure helpers as plain-ESM `.mjs` for the plain-`node` gate + defensive `config.ts` sidebar fs-read). **🔄 Executing** (started 2026-07-11) — compatible trio verified installable (typedoc 0.28.20 · plugin-markdown 4.12.0 · vitepress-theme 1.1.3; TS 5.9.3 peer-ok). Depends RD-01. |
 | RD-07 | Sample applications | [RD-07](requirements/RD-07-sample-apps.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase D. Todo · tvedit (virtual FS + local files) · polished kitchen-sink (live navigator) · file/data browser — each in DemoShell. Depends RD-02, RD-03. |
 | RD-08 | Reference & trust content | [RD-08](requirements/RD-08-reference-trust.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase C/E. Architecture · guides/cookbook · best-practices · FAQ · a11y · security · perf · compat matrix · theming gallery + token ref + embedded designer · versioning/changelog/roadmap · contributing. Absorbs `docs/` techdocs; ADRs authored here. Depends RD-03, RD-05. |
 | RD-09 | Anti-drift governance & automation | [RD-09](requirements/RD-09-anti-drift-governance.md) | — | RD Drafted | ✏️ | 2026-07-09 | Phase E. CLAUDE.md prime directive · hard-fail `check:docs-site` gate · example compile/smoke in CI · Playwright screenshots/OG · README rewrite · `llms.txt`. Depends RD-03, RD-05. |
@@ -46,6 +46,38 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 
 ## Notes
 
+- 2026-07-11: **RD-06 (api-reference) → 🔄 EXECUTING** via `exec_plan`. Recon de-risked the plan's top
+  risk (plugin/theme version skew): the compatible trio is on npm — `typedoc@0.28.20` ← `typedoc-plugin-markdown@4.12.0`
+  (peer `typedoc 0.28.x`) ← `typedoc-vitepress-theme@1.1.3` (peer `plugin-markdown >=4.11.0`); repo TS 5.9.3
+  is inside typedoc's `5.0.x…6.0.x` peer range. Starting Phase 1 (generation pipeline + the pure `barrelExports`
+  extractor), spec-first. Cascaded to the portfolio row.
+- 2026-07-10: **RD-06 (api-reference) → 🔬 PLAN PREFLIGHTED** ([report](plans/api-reference/00-preflight-report.md))
+  via `preflight` (⚠️ same-session, so every claim was re-grounded in real code + each MAJOR self-challenged).
+  **PASSED — 7 findings (2🟠 / 2🟡 / 3🔵), all resolved per recommendation (user accepted all).** Both majors
+  were wiring-layer gaps the recon surfaced, not design flaws: **PF-001** — the plan's shared `barrelExports`
+  /`injectBackLink`/`validateApiMap`/`API_MAP` were `.ts`, but `check-docs-build.mjs` + `gen-api.mjs` are
+  **plain `node`** and cannot `import` a `.ts` file (verified: the gate imports only `node:*`+`js-yaml`; AR-16
+  runs `node …mjs`) → authored as plain-ESM **`.mjs`** (one shared impl, no loader; `barrelExports` uses the
+  `typescript` package, now an explicit docs-site devDep; `ApiLink` → JSDoc `@typedef`) — AR-18. **PF-002** —
+  `config.ts` statically imported the gitignored, `docs:api`-generated `typedoc-sidebar.json`, but `docs:dev`
+  = bare `vitepress dev` (no `docs:api`), so a fresh checkout couldn't start the dev server → defensive
+  `existsSync ? JSON.parse(readFileSync) : []` fs-read, AR-19. Minors: **PF-003** `api-map` co-located under
+  `src/api/` (AR-20); **PF-004** AC-1's "`src/index.ts`" read as "public entry" since core has none (AR-21).
+  Obs: `browser-stubs` exclusion is moot (unreachable from the barrel); a clean→generate→inject determinism
+  note added. Fixes landed across 00-index/01/03-01/03-02/03-03/99 + the register (AR-18…AR-21). Next:
+  `exec_plan api-reference`.
+- 2026-07-10: **RD-06 (api-reference) → 📋 PLAN CREATED** ([plan](plans/api-reference/00-index.md)) via
+  `make_plan`. 9 docs (00-index · 00-ambiguity-register AR-1…AR-17 · 01-requirements delta · 02-current-state
+  · 03-01 generation-pipeline · 03-02 integration-cross-linking · 03-03 gating-anti-drift · 07-testing-strategy
+  ST-1…ST-13 · 99-execution-plan). **4 phases / 16 tasks, spec-first.** Zero-Ambiguity Gate PASSED (17/17):
+  TypeDoc → `typedoc-plugin-markdown` + `typedoc-vitepress-theme`; all four public barrels (incl. core's
+  `src/engine/index.ts`, not `src/index.ts`), ui/files/web badged pre-release; generated `api/<pkg>/`
+  **gitignored** and regenerated before every build (root `docs:build` chains `docs:api`); **bidirectional**
+  component↔reference cross-links via a symbol↔page map (forward links + a post-gen back-link injector);
+  determinism + coverage/leakage/link-resolution asserted e2e in `check-docs-build.mjs`, the pure helpers
+  unit-spec'd in `yarn verify`; TypeDoc/plugin/theme are docs-site devDeps only so `check:deps` stays green.
+  Grounded: no TypeDoc in-repo yet, `api/index.md` is a committed placeholder, `/api/` already nav-routed
+  with a static one-item sidebar. Next: `exec_plan api-reference` (optionally `preflight` first).
 - 2026-07-10: **RD-03 → DONE** ✅ ([plan](plans/live-example-system/99-execution-plan.md)) via `exec_plan
   live-example-system`. **All 7 phases / 40 tasks `[x]`, spec-first.** The live-example system: every docs
   code sample runs live in an xterm.js terminal via `@jsvision/web`'s `mountApp` (no backend), shown code

@@ -8,6 +8,12 @@ coverage
 **/.vitepress/dist
 **/.vitepress/cache
 
+# Generated TypeDoc API reference (docs-site) — regenerated every build, gitignored.
+# The hand-written api/index.md preface stays formatted; only the generated trees +
+# merged sidebar are exempt.
+packages/docs-site/api/*/
+packages/docs-site/api/typedoc-sidebar.json
+
 # CodeOps process artifacts — authored docs, not code; Prettier would churn
 # their hand-built tables. Kept out of the formatting gate.
 codeops
