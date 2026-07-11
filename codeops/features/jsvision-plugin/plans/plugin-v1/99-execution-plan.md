@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-11 12:33
-> **Progress**: 0/37 tasks (0%)
+> **Last Updated**: 2026-07-11 13:21
+> **Progress**: 5/37 tasks (14%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -45,15 +45,15 @@ the AI-driven self-update pipeline is a separate follow-on plan (`plugin-self-sy
 **Reference**: 03-01 §Implementation Details · AR-1, AR-11, AR-13
 **Objective**: A valid, loadable plugin skeleton with manifest, marketplace entry, and README.
 
-- [ ] 1.1.1 Create the manifest — `tools/claude-plugin/.claude-plugin/plugin.json`
-- [ ] 1.1.2 Create the marketplace entry (local source) — `marketplace.json` (repo root)
-- [ ] 1.1.3 Write the plugin README (install `--plugin-dir` + marketplace path + in-repo app-target model) — `tools/claude-plugin/README.md`
-- [ ] 1.1.4 Create the `skills/` + `templates/` directory skeleton — `tools/claude-plugin/`
-- [ ] 1.1.5 Validate the manifest against the live schema (`claude plugin validate ./tools/claude-plugin`; if unavailable, record the accepted field subset for `check-plugin.mjs`)
+- [x] 1.1.1 Create the manifest — `tools/claude-plugin/.claude-plugin/plugin.json` ✅ (completed: 2026-07-11 13:21)
+- [x] 1.1.2 Create the marketplace entry (local `source` string) — `.claude-plugin/marketplace.json` (repo root) ✅ (completed: 2026-07-11 13:21)
+- [x] 1.1.3 Write the plugin README (install `--plugin-dir` + marketplace path + in-repo app-target model) — `tools/claude-plugin/README.md` ✅ (completed: 2026-07-11 13:21)
+- [x] 1.1.4 Create the `skills/` + `templates/` directory skeleton — `tools/claude-plugin/` ✅ (completed: 2026-07-11 13:21)
+- [x] 1.1.5 Validate the manifest against the live schema — `claude plugin validate ./tools/claude-plugin` → **✔ Validation passed** ✅ (completed: 2026-07-11 13:21)
 
 **Deliverables**:
-- [ ] Plugin loads via `claude --plugin-dir tools/claude-plugin`
-- [ ] All verification passing
+- [x] Plugin loads via `claude --plugin-dir tools/claude-plugin` (manifest validated)
+- [x] All verification passing (`yarn lint` green; turbo build/test unaffected — files are outside all workspaces)
 
 **Verify**: `yarn verify`
 

@@ -1,0 +1,11 @@
+{
+  "name": "jsvision-marketplace",
+  "owner": { "name": "jsvision" },
+  "plugins": [
+    {
+      "name": "jsvision-plugin",
+      "source": "./tools/claude-plugin",
+      "description": "Expert jsvision TUI app development — scaffold, compose, run, verify, and extend terminal-UI apps."
+    }
+  ]
+}
