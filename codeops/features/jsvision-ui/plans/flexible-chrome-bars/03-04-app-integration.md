@@ -18,9 +18,14 @@ opts.statusLine.layout = { ...opts.statusLine.layout, size: { kind: 'fixed', cel
 - Everything else in `application.ts` is unchanged: `root.add(bar)`, `bar.attach(seam)`, resize wiring.
   The app-shell lifecycle/desktop/window oracles are untouched.
 
-## Playground demo (AR-14)
+## Standalone demo (AR-14 · preflight PF-001 decision B)
 
-`packages/examples/playground/main.ts` — extend the existing minimal shell to show the target layout:
+> Preflight found the plan's original `packages/examples/playground/main.ts` target exists only in the
+> Ink repo, and `demo:playground` is already bound to `keyboard-mouse-playground`. Resolution (user
+> decision B): create a **new** `packages/examples/chrome-bars-demo/` example (matching this repo's
+> `*-demo/` convention) with its own `demo:chrome-bars` script.
+
+`packages/examples/chrome-bars-demo/main.ts` — a new minimal app-shell demo showing the target layout:
 
 ```ts
 const value = signal(0);           // progress 0..1
@@ -37,11 +42,13 @@ statusLine([
 // one coalesced frame (the tvision-demo idiom); unref the timer.
 ```
 
-- Keep the existing TTY guard + `main().then(process.exit)` tail. The menu bar can show a right-aligned
-  `~F1~ Help` via `menuSpacer()` to demo the menu side too.
-- **tsconfig fix (AR-14):** add `"playground"` to the `include` array in
+- Use a TTY guard + `main().then(process.exit)` tail (the standard example shape). The menu bar can show
+  a right-aligned `~F1~ Help` via `menuSpacer()` to demo the menu side too.
+- **New script:** add `"demo:chrome-bars": "tsx chrome-bars-demo/main.ts"` to
+  `packages/examples/package.json` (`demo:playground` is taken by `keyboard-mouse-playground`).
+- **tsconfig fix (AR-14):** add `"chrome-bars-demo"` to the `include` array in
   `packages/examples/tsconfig.json` (currently `["capability-probe","resize-demo","keyboard-mouse-playground"]`)
-  so the file is type-checked. Confirm `yarn workspace @jsvision/examples typecheck` covers it.
+  so the new file is type-checked. Confirm `yarn workspace @jsvision/examples typecheck` covers it.
 
 ## Kitchen-sink story (AR-15)
 
