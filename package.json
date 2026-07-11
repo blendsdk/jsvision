@@ -26,7 +26,8 @@
     "bench": "yarn workspace @jsvision/core bench",
     "designer": "yarn workspace @jsvision/theme-designer start",
     "docs:dev": "yarn workspace @jsvision/docs-site dev",
-    "docs:build": "yarn workspace @jsvision/docs-site vp:build"
+    "docs:api": "yarn workspace @jsvision/docs-site docs:api",
+    "docs:build": "yarn docs:api && yarn workspace @jsvision/docs-site vp:build"
   },
   "devDependencies": {
     "eslint": "^9.17.0",
