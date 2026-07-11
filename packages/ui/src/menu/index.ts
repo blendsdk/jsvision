@@ -11,6 +11,7 @@ export {
   subMenu,
   item,
   separator,
+  menuSpacer,
   parseTilde,
   tildeSegments,
   layoutTitles,

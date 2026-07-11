@@ -109,8 +109,8 @@ export class MenuPopup extends View {
     for (let i = 0; i < this.items.length; i += 1) {
       const node = this.items[i];
       const y = i + 1;
-      if (node.kind === 'separator') {
-        // A separator joins the side borders with ├───┤.
+      if (node.kind === 'separator' || node.kind === 'spacer') {
+        // A separator joins the side borders with ├───┤ (a stray top-level spacer is drawn the same).
         ctx.text(1, y, FRAME.lt, base);
         ctx.fillRect(2, y, w - 4, 1, FRAME.h, base);
         ctx.text(w - 2, y, FRAME.rt, base);

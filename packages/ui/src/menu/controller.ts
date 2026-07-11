@@ -102,14 +102,14 @@ class CatcherView extends View {
 
 /** A non-separator item is selectable for navigation only if it is a submenu or an enabled command. */
 function isSelectable(node: MenuItem, isEnabled: (command: string) => boolean): boolean {
-  if (node.kind === 'separator') return false;
+  if (node.kind === 'separator' || node.kind === 'spacer') return false;
   if (node.kind === 'sub') return true;
   return isEnabled(node.command);
 }
 
 /** The first non-separator row (the initial highlight — a disabled item may sit here; Enter no-ops). */
 function firstSelectable(items: readonly MenuItem[]): number {
-  const index = items.findIndex((node) => node.kind !== 'separator');
+  const index = items.findIndex((node) => node.kind !== 'separator' && node.kind !== 'spacer');
   return index === -1 ? 0 : index;
 }
 
@@ -122,7 +122,7 @@ function firstSelectable(items: readonly MenuItem[]): number {
  * @returns Its required popup width in cells.
  */
 function itemWidth(node: MenuItem): number {
-  if (node.kind === 'separator') return 0;
+  if (node.kind === 'separator' || node.kind === 'spacer') return 0;
   let width = parseTilde(node.title).text.length + 6;
   if (node.kind === 'sub') width += 3;
   else if (node.key !== undefined) width += node.key.length + 2;
@@ -194,7 +194,9 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
   function openLevelForTop(index: number): void {
     const node = tops[index];
     if (node === undefined || node.kind !== 'sub') return;
-    const title = layoutTitles(tops)[index];
+    // Match by node index (titles skip spacers, so an array position no longer equals a node index)
+    // and pass the bar width so the anchor follows a flex-moved (right-aligned) title.
+    const title = layoutTitles(tops, viewport().width).find((t) => t.index === index);
     // Anchor the popup one column left of its bar title, one row below the bar, so its border aligns
     // with the title.
     const anchorX = Math.max(0, (title?.x ?? 1) - 1);
@@ -287,7 +289,11 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
   function switchTop(dir: -1 | 1): void {
     if (openTopIndex === null) return;
     const count = tops.length;
-    const next = (((openTopIndex + dir) % count) + count) % count;
+    // Step over any spacer nodes so ←→ only lands on real titles.
+    let next = openTopIndex;
+    do {
+      next = (((next + dir) % count) + count) % count;
+    } while (tops[next]?.kind === 'spacer' && next !== openTopIndex);
     clearLevels();
     openTopIndex = next;
     openLevelForTop(next);
@@ -352,7 +358,7 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
     if (index === -1) return;
     while (levels.length - 1 > index) closeLevel();
     const node = levels[index]?.items[row];
-    if (node === undefined || node.kind === 'separator') return;
+    if (node === undefined || node.kind === 'separator' || node.kind === 'spacer') return;
     popup.highlight = row;
     activate();
   }
@@ -369,7 +375,9 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
     const level = deepest();
     if (level === null) return false;
     const lower = char.toLowerCase();
-    const index = level.items.findIndex((node) => node.kind !== 'separator' && parseTilde(node.title).hotkey === lower);
+    const index = level.items.findIndex(
+      (node) => node.kind !== 'separator' && node.kind !== 'spacer' && parseTilde(node.title).hotkey === lower,
+    );
     if (index === -1) return false;
     level.popup.highlight = index;
     activate();

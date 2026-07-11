@@ -9,6 +9,8 @@
  */
 import { Attr } from '@jsvision/core';
 import type { Style } from '@jsvision/core';
+import { packRow } from '../layout/pack-row.js';
+import type { RowSegment } from '../layout/pack-row.js';
 import { reportDuplicateAccelerators } from './accelerators.js';
 
 /**
@@ -30,7 +32,8 @@ export function accentStyle(base: Style, reveal: boolean): Style {
 export type MenuItem =
   | { kind: 'item'; title: string; command: string; key?: string } // `~X~` in the title marks the hotkey
   | { kind: 'sub'; title: string; items: MenuItem[] }
-  | { kind: 'separator' };
+  | { kind: 'separator' }
+  | { kind: 'spacer'; weight?: number }; // a flexible gap between top-level titles (right-alignment)
 
 /** A label with its `~X~` accelerator parsed out. */
 export interface ParsedLabel {
@@ -119,44 +122,64 @@ export function tildeSegments(label: string): TildeSegment[] {
   return segments;
 }
 
-/** The title text of a top-level menu node (`''` for a separator, which is never a top-level title). */
+/** The title text of a top-level menu node (`''` for a separator or spacer, which carry no title). */
 function titleOf(node: MenuItem): string {
-  return node.kind === 'separator' ? '' : node.title;
+  return node.kind === 'separator' || node.kind === 'spacer' ? '' : node.title;
 }
 
-/** A menu node's `~X~` accelerator char (lowercase), or `''` when it has none (separators, no `~X~`). */
+/** A menu node's `~X~` accelerator char (lowercase), or `''` when it has none (separators, spacers, no `~X~`). */
 export function menuItemHotkey(node: MenuItem): string {
-  return node.kind === 'separator' ? '' : (parseTilde(node.title).hotkey ?? '');
+  return node.kind === 'separator' || node.kind === 'spacer' ? '' : (parseTilde(node.title).hotkey ?? '');
 }
 
-/** A menu node's display label (tildes stripped), or `''` for a separator — used to name a collision. */
+/** A menu node's display label (tildes stripped), or `''` for a separator/spacer — used to name a collision. */
 export function menuItemLabel(node: MenuItem): string {
-  return node.kind === 'separator' ? '' : parseTilde(node.title).text;
+  return node.kind === 'separator' || node.kind === 'spacer' ? '' : parseTilde(node.title).text;
 }
 
 /**
- * Place the top-level titles left-to-right as abutting ` text ` buttons: the first starts at column
- * 1, each spans its display text plus one pad space on each side, and the next begins where the
- * previous ended (the pad spaces form the visible gap).
+ * Place the top-level titles left-to-right as ` text ` buttons. Each title is a fixed-width button
+ * (display text plus one pad column on each side); a `menuSpacer` between them is a flexible gap.
+ * With `barWidth` given and one or more spacers present, the gaps absorb the leftover width, pushing
+ * the titles after a spacer toward the right edge. With no `barWidth` (or no spacer) the result is
+ * the classic left-pack from column 1 — byte-identical to a bar with no flexible gaps. Spacers carry
+ * no title, so they are not returned; the remaining titles keep their original node index.
  *
- * @param tops The top-level menu nodes.
- * @returns Each title's index, button left x, full button width, and parsed label.
+ * @param tops     The top-level menu nodes (titles and any `menuSpacer`s).
+ * @param barWidth The full bar width, to right-align titles after a spacer; omit for a plain left-pack.
+ * @returns Each title's node index, button left x, full button width, and parsed label — spacers excluded.
  */
-export function layoutTitles(tops: readonly MenuItem[]): TitleLayout[] {
+export function layoutTitles(tops: readonly MenuItem[], barWidth?: number): TitleLayout[] {
+  const segments: RowSegment[] = tops.map((node) =>
+    node.kind === 'spacer'
+      ? { kind: 'flex', weight: node.weight ?? 1 }
+      : { kind: 'fixed', width: parseTilde(titleOf(node)).text.length + TITLE_PAD },
+  );
+  // With no bar width there is no right edge to fill: pack into just the fixed sum so any spacer
+  // collapses to zero, yielding the classic left-pack from the margin.
+  const fixedSum = segments.reduce((sum, seg) => (seg.kind === 'fixed' ? sum + seg.width : sum), 0);
+  const total = barWidth ?? fixedSum + TITLE_MARGIN;
+  const slots = packRow(segments, total, TITLE_MARGIN);
+
   const out: TitleLayout[] = [];
-  let x = TITLE_MARGIN;
   tops.forEach((node, index) => {
-    const label = parseTilde(titleOf(node));
-    const width = label.text.length + TITLE_PAD;
-    out.push({ index, x, width, label });
-    x += width;
+    if (node.kind === 'spacer') return; // a spacer is a gap, never a title
+    out.push({ index, x: slots[index].x, width: slots[index].width, label: parseTilde(titleOf(node)) });
   });
   return out;
 }
 
-/** The top-level title index whose x-range contains `x`, or `null`. */
-export function titleIndexAt(tops: readonly MenuItem[], x: number): number | null {
-  for (const t of layoutTitles(tops)) {
+/**
+ * The top-level title index whose button x-range contains `x`, or `null` (including a click that
+ * lands in a flexible gap). Pass `barWidth` so right-aligned titles map correctly.
+ *
+ * @param tops     The top-level menu nodes.
+ * @param x        The column to test (bar-local).
+ * @param barWidth The full bar width, matching {@link layoutTitles}; omit for the left-pack layout.
+ * @returns The title's node index, or `null`.
+ */
+export function titleIndexAt(tops: readonly MenuItem[], x: number, barWidth?: number): number | null {
+  for (const t of layoutTitles(tops, barWidth)) {
     if (x >= t.x && x < t.x + t.width) return t.index;
   }
   return null;
@@ -215,4 +238,25 @@ export function item(title: string, command: string, key?: string): MenuItem {
  */
 export function separator(): MenuItem {
   return { kind: 'separator' };
+}
+
+/**
+ * Build a flexible gap between top-level menu titles: the titles placed after it are pushed toward
+ * the bar's right edge, so `menuBar([subMenu('~F~ile', …), menuSpacer(), subMenu('~H~elp', …)])`
+ * right-aligns Help. A spacer is never a navigation target — it carries no title, hotkey, or command
+ * and is skipped by drawing, hit-testing, and ←→ navigation.
+ *
+ * @param weight The gap's grow weight relative to other spacers (default `1`); more weight ⇒ more slack.
+ * @returns A spacer {@link MenuItem} node.
+ * @example
+ * import { menuBar, subMenu, item, menuSpacer } from '@jsvision/ui';
+ *
+ * const bar = menuBar([
+ *   subMenu('~F~ile', [item('~O~pen', 'file.open')]),
+ *   menuSpacer(), // push Help to the right edge
+ *   subMenu('~H~elp', [item('~A~bout', 'help.about')]),
+ * ]);
+ */
+export function menuSpacer(weight = 1): MenuItem {
+  return { kind: 'spacer', weight };
 }

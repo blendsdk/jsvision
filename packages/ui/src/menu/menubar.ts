@@ -79,7 +79,7 @@ export class MenuBar extends View {
 
     const openIndex = this.controller?.openIndex() ?? null;
     ctx.fillRect(0, 0, ctx.size.width, 1, ' ', base);
-    for (const title of layoutTitles(this.items)) {
+    for (const title of layoutTitles(this.items, ctx.size.width)) {
       const isOpen = open && openIndex === title.index;
       const style = isOpen ? selected : base;
       const accent = isOpen ? selAccent : baseAccent;
@@ -107,7 +107,7 @@ export class MenuBar extends View {
 
     if (inner.type === 'mouse') {
       if (inner.kind === 'down' && ev.local !== undefined) {
-        const index = titleIndexAt(this.items, ev.local.x);
+        const index = titleIndexAt(this.items, ev.local.x, this.bounds.width);
         if (index !== null) {
           controller.openTop(index);
           ev.handled = true;

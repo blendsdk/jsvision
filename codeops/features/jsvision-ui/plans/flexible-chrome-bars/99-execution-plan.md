@@ -1,7 +1,7 @@
 # Execution Plan — Flexible Chrome Bars
 
 > **Feature**: jsvision-ui / flexible-chrome-bars · **CodeOps Skills Version**: 3.3.2
-> **Progress**: 10/25 tasks (40%) · Last updated: 2026-07-11 14:28
+> **Progress**: 17/25 tasks (68%) · Last updated: 2026-07-11 14:44
 > Single source of truth for progress — each task appears once. Spec-first ordering per feature phase
 > (Spec Tests → red → Implementation → green → Impl Tests & Hardening). Commit via **/gitcm** (or
 > **/gitcmp**) per the exec_plan commit mode — never raw git.
@@ -76,27 +76,34 @@ Spec 03-02. Oracles ST-01…ST-07 + preserved status oracles.
 Spec 03-03. Oracles ST-08…ST-10 + preserved menu oracles.
 
 ### Session 1 — Spec tests (red)
-- [ ] **T-3.1** Write `packages/ui/test/menu-flex.spec.test.ts` with ST-08…ST-10 (07 § A). Run — red.
-  Do **not** touch `app-shell.menu.spec/impl` (preserved).
+- [x] **T-3.1** Write `packages/ui/test/menu-flex.spec.test.ts` with ST-08…ST-10 (07 § A). Run — red.
+  Do **not** touch `app-shell.menu.spec/impl` (preserved). ✅ (completed: 2026-07-11 14:44)
 
 ### Session 2 — Implementation (green)
-- [ ] **T-3.2** Add the `{kind:'spacer', weight?}` `MenuItem` variant + `menuSpacer(weight?)` builder;
+- [x] ✅ (completed: 2026-07-11 14:44) **T-3.2** Add the `{kind:'spacer', weight?}` `MenuItem` variant + `menuSpacer(weight?)` builder;
   make `titleOf`/`menuItemHotkey`/`menuItemLabel` return `''` for it (skipped by nav/hotkey). (AR-5, AR-19)
-- [ ] **T-3.3** Make `layoutTitles(tops, barWidth?)` + `titleIndexAt(tops, x, barWidth?)` width-aware via
-  `packRow` — default (no width / no spacer) byte-identical to today. (AR-7, AR-8)
-- [ ] **T-3.4** Thread the bar width: `MenuBar.draw` passes `ctx.size.width`; the click hit-test passes
-  the bar width; the controller passes `viewport().width` so popups anchor under the moved
+  - Mechanical fallout: extending the `MenuItem` union forced spacer guards in existing submenu-item
+    code that narrows on `kind` (`controller.ts` isSelectable/firstSelectable/itemWidth/pickRow/itemHotkey,
+    `popup.ts` row draw) — each treats a stray spacer as inert (spacers are top-level only).
+- [x] ✅ (completed: 2026-07-11 14:44) **T-3.3** Make `layoutTitles(tops, barWidth?)` + `titleIndexAt(tops, x, barWidth?)` width-aware via
+  `packRow` — default (no width / no spacer) byte-identical to today; spacers are not emitted as titles
+  (the returned titles keep their original node index). (AR-7, AR-8)
+- [x] ✅ (completed: 2026-07-11 14:44) **T-3.4** Thread the bar width: `MenuBar.draw` passes `ctx.size.width`; the click hit-test passes
+  `this.bounds.width`; the controller passes `viewport().width` so popups anchor under the moved
   title. (AR-8)
-  - **Preflight PF-002:** the `layoutTitles(tops)[index]` popup-anchor read lives in
-    **`openLevelForTop` (`controller.ts:197`)**, not `openTop` (`:230`, which calls it) — thread
-    `viewport().width` into `openLevelForTop`'s `layoutTitles` call. Safety net: ST-09.
-- [ ] **T-3.5** Export `menuSpacer` from `menu/index.ts` (additive). Green: ST-08…ST-10 pass **and**
-  `app-shell.menu.spec` + `app-shell.menu.impl` pass unmodified.
+  - **Preflight PF-002 (done):** threaded `viewport().width` into `openLevelForTop`'s `layoutTitles`
+    call (not `openTop`). Also had to change its array-index `layoutTitles(tops)[index]` to
+    `.find(t => t.index === index)` — titles now skip spacers, so an array position ≠ a node index.
+  - Realizes **AR-5** (nav skips a spacer): `switchTop` (←→) now steps over spacer nodes. The plan's
+    "existing filter" mechanism did not exist; this adds it. No-spacer bars are unaffected.
+- [x] ✅ (completed: 2026-07-11 14:44) **T-3.5** Export `menuSpacer` from `menu/index.ts` + the package barrel `src/index.ts` (additive).
+  Green: ST-08…ST-10 pass **and** `app-shell.menu.spec` + `app-shell.menu.impl` pass unmodified (full ui
+  suite 1532 passed).
 
 ### Session 3 — Impl tests & hardening
-- [ ] **T-3.6** `menu-flex.impl.test.ts` — spacer skipped by helpers; `layoutTitles` with 0/1/2 spacers;
-  `openTop` anchor x with a right-aligned title. (07 § C)
-- [ ] **T-3.7** JSDoc: `@example` on `menuSpacer` + updated `layoutTitles`; `check:docs` green. (AR-13)
+- [x] ✅ (completed: 2026-07-11 14:44) **T-3.6** `menu-flex.impl.test.ts` — spacer skipped by helpers; `layoutTitles` with 0/1/2/weighted spacers;
+  click-to-open anchor with a right-aligned title; ←→ steps over the spacer. (07 § C) — 4 tests.
+- [x] ✅ (completed: 2026-07-11 14:44) **T-3.7** JSDoc: `@example` on `menuSpacer` + updated `layoutTitles`/`titleIndexAt`; `check:docs` green. (AR-13)
 
 **Verify:** `yarn workspace @jsvision/ui test` + `check:docs` green.
 
