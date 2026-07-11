@@ -22,6 +22,7 @@
     "check:docs": "turbo run check:docs",
     "verify": "yarn lint && turbo run typecheck build test check:docs && node scripts/check-plugin.mjs",
     "gate": "node scripts/gate.mjs",
+    "plugin:sync": "node scripts/plugin-sync.mjs",
     "sync-versions": "node scripts/sync-versions.mjs",
     "bench": "yarn workspace @jsvision/core bench",
     "designer": "yarn workspace @jsvision/theme-designer start",
@@ -30,6 +31,7 @@
     "docs:build": "yarn docs:api && yarn workspace @jsvision/docs-site vp:build"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "eslint": "^9.17.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.4.2",
