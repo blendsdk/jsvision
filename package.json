@@ -22,6 +22,7 @@
     "check:docs": "turbo run check:docs",
     "verify": "yarn lint && turbo run typecheck build test check:docs && node scripts/check-plugin.mjs",
     "gate": "node scripts/gate.mjs",
+    "plugin:sync": "node scripts/plugin-sync.mjs",
     "sync-versions": "node scripts/sync-versions.mjs",
     "bench": "yarn workspace @jsvision/core bench",
     "designer": "yarn workspace @jsvision/theme-designer start",

@@ -18,7 +18,7 @@
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 ✅ Done — UI small batch: Tree markers (#17) · duplicate-accelerator warning (#6) · Switch (#11) | 1/1 plans | ✅ | 2026-07-09 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — VitePress site + gh-pages CI + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · **RD-02 ✅ Done** (web-runtime — `@jsvision/web` shipped: browser host/`mountApp` · caps · virtual FileSystem · key-reclaim · clipboard · `browser-stubs`; 17/17 tasks, 41 tests ST-1…ST-12, dogfooded into web-xterm) · **RD-03 ✅ Done** (live-example-system — every docs sample runs live in xterm.js via `mountApp`, shown code == running code; 40/40 tasks / 7 phases; DemoShell + client-only Play + a11y/no-kbd/deep-link + **8 seed examples** (button…desktop…preset-gallery); ST-1…ST-14 green, docs gate 14/14; **↳ remediation ✅ 2026-07-10** — 7 post-ship bugs fixed: terminal-driven Play resize, unified draggable-Window shell, reopenable dialogs, build()-first Source; 22/27 tasks, verify 22/22 + gate 14/14, browser-confirmed M1/M2/M4–M8) · **RD-06 ✅ Done** (api-reference — generated TypeDoc→md→VitePress reference for the 4 public barrels, gitignored+regen per-package for clean `/api/<pkg>/…` URLs, **bidirectional** cross-links via a 29-row symbol↔page map, drift-gated (6 `API-*` checks → docs gate 20/20; pure `.mjs` helpers in `yarn verify`); 4 phases/16 tasks all `[x]`; barrelExports == generated set per pkg (0 missing/leaked); clean-dist verify 22/22 + gate 20/20; TypeDoc devDeps only) · RD-04/05/07…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 4/10 RDs · RD-06 ✅ done | 🔄 | 2026-07-11 |
-| jsvision-plugin | [→](features/jsvision-plugin/00-roadmap.md) | **PL-01 ✅ Done** (Claude Code plugin: `jsvision` skill + `jsvision-new-app` scaffolder + 4 recipes + `check-plugin.mjs` gate) · **PL-02 📋 Plan Created** (`plugin-self-sync` — deterministic `detectDrift()` + a deterministic snippet `--fix` + an AI catalog-entry draft via a local skill **and** an injected-client API script; verify-gated, nothing auto-commits, CI scaffolded disabled/secret-free; 30 tasks/4 phases) | 1/2 plans | 🔄 | 2026-07-11 |
+| jsvision-plugin | [→](features/jsvision-plugin/00-roadmap.md) | **PL-01 ✅ Done** (Claude Code plugin: `jsvision` skill + `jsvision-new-app` scaffolder + 4 recipes + `check-plugin.mjs` gate) · **PL-02 🔄 Executing** (`plugin-self-sync` — deterministic `detectDrift()` + a deterministic snippet `--fix` + an AI catalog-entry draft via a local skill **and** an injected-client API script; verify-gated, nothing auto-commits, CI scaffolded disabled/secret-free; 30 tasks/4 phases; spec-first per phase) | 1/2 plans | 🔄 | 2026-07-11 |
 
 ## Archived
 
@@ -28,6 +28,15 @@
 
 ## Notes
 
+- 2026-07-11: **jsvision-plugin PL-02 `plugin-self-sync` → 🔬 PLAN PREFLIGHTED** (`preflight`, fresh
+  session). **✅ PASSED — 7 findings (3🟠/3🟡/1🔵), all accepted + applied.** MAJORs: an injectable
+  `roots` filesystem seam (the analogue of the injected model client) so seeded-drift specs never
+  mutate the repo (PF-001); `detectDrift` reuses `checkBarrelCoverage` so its findings are exactly the
+  gate's (PF-002); a deterministic `New — needs categorization` holding heading replaces the
+  underivable per-widget section (PF-003). Minors: `readWidgetDoc` scope, `yarn.lock` update, adapter
+  model/`max_tokens`. Every CI/manifest/line-number claim in the plan verified against real code.
+  Report: `features/jsvision-plugin/plans/plugin-self-sync/00-preflight-report.md`. Cascaded from
+  **jsvision-plugin**. Next: `exec_plan plugin-self-sync`.
 - 2026-07-11: **jsvision-plugin PL-02 `plugin-self-sync` → 📋 PLAN CREATED** (`make_plan`) — an
   AI-assisted self-updater for the plugin's SDK-drift loop. Structured `detectDrift()` extending
   `check-plugin.mjs`; a deterministic snippet `--fix` (no AI); an AI catalog-entry draft grounded in a

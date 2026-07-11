@@ -1,7 +1,7 @@
 # Execution Plan: plugin-self-sync (PL-02)
 
 > **Feature**: jsvision-plugin · **CodeOps Skills Version**: 3.3.2
-> **Progress**: 0/30 tasks (0%) · **Last Updated**: 2026-07-11
+> **Progress**: 7/30 tasks (23%) · **Last Updated**: 2026-07-11
 > **Branch**: `feat/plugin-self-sync` (off `master`, PL-01 merged) · **Verify**: `yarn verify`
 
 Spec-first per phase: spec tests → red → implement → green → impl tests → full verify. A task is
@@ -12,18 +12,18 @@ Legend: `[ ]` todo · `[~]` implemented, unverified · `[x]` done.
 
 ## Phase 1 — Structured detector + deterministic snippet fix (03-01)
 
-- [ ] 1.1 Spec: add `plugin-sync.spec.test.ts` with ST-1, ST-2, ST-3, ST-4, ST-11 (red)
-- [ ] 1.2 Impl: add exported `detectDrift()` to `check-plugin.mjs`; export `extractRegion`/`readRegion` + needed path consts (no change to `runAllChecks`)
-- [ ] 1.3 Impl: `scripts/plugin-sync.mjs` — pure `replaceFencedBlock`, `fixSnippetDrift`, guarded `main()` handling `--fix`
-- [ ] 1.4 Impl: add `"plugin:sync": "node scripts/plugin-sync.mjs"` to root `package.json`
-- [ ] 1.5 Green: ST-1…ST-4, ST-11 pass; `node scripts/check-plugin.mjs` still PASS
-- [ ] 1.6 Impl tests: `plugin-sync.impl.test.ts` — multi-drift, absent-region skip, idempotent `--fix`
-- [ ] 1.7 Full `yarn verify` green
+- [x] 1.1 Spec: add `plugin-sync.spec.test.ts` with ST-1, ST-2, ST-3, ST-4, ST-11 (red)
+- [x] 1.2 Impl: add exported `detectDrift(roots = DEFAULT_ROOTS)` to `check-plugin.mjs` (reuse `checkBarrelCoverage` for the undocumented-widget set — one predicate); export `extractRegion`/`readRegion`, `DEFAULT_ROOTS` + needed path consts (no change to `runAllChecks`)
+- [x] 1.3 Impl: `scripts/plugin-sync.mjs` — pure `replaceFencedBlock`, `fixSnippetDrift(findings, roots = DEFAULT_ROOTS)`, guarded `main()` handling `--fix`
+- [x] 1.4 Impl: add `"plugin:sync": "node scripts/plugin-sync.mjs"` to root `package.json`
+- [x] 1.5 Green: ST-1…ST-4, ST-11 pass; `node scripts/check-plugin.mjs` still PASS
+- [x] 1.6 Impl tests: `plugin-sync.impl.test.ts` — multi-drift, absent-region skip, idempotent `--fix` (hardened `fixSnippetDrift` to guard unknown modules before any fs read)
+- [x] 1.7 Full `yarn verify` green (22/22 turbo, check-plugin: PASS)
 
 ## Phase 2 — Catalog-entry request builder + the `jsvision-plugin-sync` skill (03-02)
 
 - [ ] 2.1 Spec: add ST-5 (request builder) + ST-8 (skill exists/validates) to the spec file (red)
-- [ ] 2.2 Impl: `scripts/plugin-sync-request.mjs` — `readWidgetDoc` (JSDoc lead + `@example` via the TS extractor), `buildCatalogEntryRequest`, pure `applyCatalogEntry` + `sectionFor`
+- [ ] 2.2 Impl: `scripts/plugin-sync-request.mjs` — `readWidgetDoc` (lead + `@example` via `getDocumentationComment`/`getJsDocTags` over the extractor's `Program`), `buildCatalogEntryRequest` (targets the `New — needs categorization` holding heading), pure `applyCatalogEntry`
 - [ ] 2.3 Impl: `--detect` JSON mode in `plugin-sync.mjs` (read-only `detectDrift()` dump)
 - [ ] 2.4 Impl: `tools/claude-plugin/skills/jsvision-plugin-sync/SKILL.md` (manual, `disable-model-invocation`, the detect→draft→review→verify loop; grounded-only drafting per AR-14)
 - [ ] 2.5 Impl: register the skill in `plugin.json`/marketplace as needed (match `jsvision-new-app`)
@@ -34,9 +34,9 @@ Legend: `[ ]` todo · `[~]` implemented, unverified · `[x]` done.
 ## Phase 3 — API script + injected client + disabled CI + SDK dep (03-03)
 
 - [ ] 3.1 Spec: add ST-6, ST-7 (fake-client draft/apply) + ST-9 (workflow) + ST-10 (dep policy) (red)
-- [ ] 3.2 Impl: `fixUndocumentedWidgets(findings, client)` + `normalizeBullet` in `plugin-sync.mjs`; wire the AI branch into `main()`
-- [ ] 3.3 Impl: `scripts/plugin-sync-anthropic.mjs` — the real `DraftClient` over `@anthropic-ai/sdk` (constructed only in `main()`, never imported by tests)
-- [ ] 3.4 Impl: add `@anthropic-ai/sdk` to root `devDependencies` (tooling only, AR-9)
+- [ ] 3.2 Impl: `fixUndocumentedWidgets(findings, client, roots = DEFAULT_ROOTS)` + `normalizeBullet` in `plugin-sync.mjs`; wire the AI branch into `main()`
+- [ ] 3.3 Impl: `scripts/plugin-sync-anthropic.mjs` — the real `DraftClient` over `@anthropic-ai/sdk` (a current Claude model + small `max_tokens`; constructed only in `main()`, never imported by tests)
+- [ ] 3.4 Impl: add `@anthropic-ai/sdk` to root `devDependencies` (tooling only, AR-9) **and run `yarn install` to update `yarn.lock`** (CI uses `--frozen-lockfile`)
 - [ ] 3.5 Impl: `.github/workflows/plugin-self-sync.yml` — `workflow_dispatch`-only, `if: false`, no secret referenced
 - [ ] 3.6 Impl: `tools/claude-plugin/README.md` "Enabling automated sync" section (the enable path)
 - [ ] 3.7 Green: ST-6, ST-7, ST-9, ST-10 pass; `yarn check:deps` green

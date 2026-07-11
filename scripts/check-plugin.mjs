@@ -20,7 +20,7 @@ const PLUGIN_ROOT = join(ROOT, 'tools', 'claude-plugin');
 const SKILL_ROOT = join(PLUGIN_ROOT, 'skills', 'jsvision');
 const MANIFEST = join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json');
 const MARKETPLACE = join(ROOT, '.claude-plugin', 'marketplace.json');
-const CATALOG = join(SKILL_ROOT, 'references', 'component-catalog.md');
+export const CATALOG = join(SKILL_ROOT, 'references', 'component-catalog.md');
 const GOTCHAS = join(SKILL_ROOT, 'references', 'gotchas.md');
 const RECIPE_DIR = join(ROOT, 'packages', 'examples', 'recipes');
 const TEMPLATES_DIR = join(PLUGIN_ROOT, 'templates', 'app-skeleton');
@@ -37,10 +37,10 @@ const TEMPLATE_FILES = [
 ];
 
 // Class exports that need not appear in the component catalog: the abstract base and the error type.
-const CATALOG_DENYLIST = ['View', 'ReactiveCycleError'];
+export const CATALOG_DENYLIST = ['View', 'ReactiveCycleError'];
 
 // Recipe/authoring pages and the source module region each embeds (drift is checked between them).
-const DRIFT_PAIRS = [
+export const DRIFT_PAIRS = [
   { md: join('references', 'recipes', 'data-driven.md'), module: 'data-grid' },
   { md: join('references', 'recipes', 'forms-dialogs.md'), module: 'form-dialog' },
   { md: join('references', 'recipes', 'file-text.md'), module: 'file-tools' },
@@ -129,7 +129,13 @@ function extractTsBlock(md) {
   return lines.slice(start + 1, end).join('\n');
 }
 
-function extractRegion(src) {
+/**
+ * Extract the text between `// #region example` and `// #endregion example` in a source module.
+ *
+ * @param {string} src The source module text.
+ * @returns {string | null} The region body, or `null` when either marker is absent.
+ */
+export function extractRegion(src) {
   const lines = src.split('\n');
   const a = lines.findIndex((l) => l.trim() === '// #region example');
   const b = lines.findIndex((l) => l.trim() === '// #endregion example');
@@ -242,6 +248,74 @@ export function extractUiClassExports() {
     if (sym.flags & ts.SymbolFlags.Class) names.push(exported.getName());
   }
   return names.sort();
+}
+
+/**
+ * @typedef {{ kind: 'undocumented-widget', name: string }
+ *          | { kind: 'snippet-drift', module: string }} DriftFinding
+ * @typedef {{ catalogPath: string, recipeDir: string, skillRoot: string,
+ *             listClassExports: () => string[] }} DriftRoots
+ */
+
+/**
+ * The real plugin tree — the default target for {@link detectDrift} and the fixers. Tests pass their
+ * own `roots` (a temp-dir copy) so drift detection and fixing never touch the repo.
+ */
+export const DEFAULT_ROOTS = {
+  catalogPath: CATALOG,
+  recipeDir: RECIPE_DIR,
+  skillRoot: SKILL_ROOT,
+  listClassExports: extractUiClassExports,
+};
+
+/**
+ * Read a recipe module's `// #region example` block from a `roots` tree.
+ *
+ * @param {string} module The recipe module base name (e.g. `'data-grid'`).
+ * @param {DriftRoots} [roots] Defaults to the real tree.
+ * @returns {string | null} The region text, or `null` when the module has no marked region.
+ * @example
+ * const region = readRegion('data-grid');
+ */
+export function readRegion(module, roots = DEFAULT_ROOTS) {
+  return extractRegion(readFileSync(join(roots.recipeDir, `${module}.ts`), 'utf8'));
+}
+
+/**
+ * Structured drift detection: the two integrity findings PL-02 can auto-fix, as machine-readable
+ * objects. It reuses the gate's own checkers — `checkBarrelCoverage` for undocumented widgets and
+ * `checkDrift` for snippet drift — so a finding it returns is always a real gate finding (one
+ * predicate, no second regex to drift from the gate). The catalog-name-not-exported reverse gap and
+ * the missing-region error stay `runAllChecks` errors, not syncable deltas — you cannot invent a
+ * widget or a source region.
+ *
+ * @param {DriftRoots} [roots] Defaults to the real plugin tree; a test passes a temp-dir `roots` so
+ *   it observes seeded drift without reading or mutating the repo.
+ * @returns {DriftFinding[]} The drift set — no more, no fewer than the two syncable kinds.
+ * @example
+ * const findings = detectDrift();
+ * // → [{ kind: 'undocumented-widget', name: 'ColorSwatch' }, { kind: 'snippet-drift', module: 'data-grid' }]
+ */
+export function detectDrift(roots = DEFAULT_ROOTS) {
+  const findings = [];
+  const catalog = readFileSync(roots.catalogPath, 'utf8');
+
+  // Undocumented widgets: map the gate's own "missing entry" errors back to findings, so the set is
+  // — by construction — identical to what barrel-coverage reports.
+  for (const err of checkBarrelCoverage(roots.listClassExports(), catalog, CATALOG_DENYLIST)) {
+    const m = err.match(/missing entry for exported class "(.+)"/);
+    if (m) findings.push({ kind: 'undocumented-widget', name: m[1] });
+  }
+
+  // Drifted snippets: a recipe module whose #region differs from the embedded block in its page.
+  for (const { md, module } of DRIFT_PAIRS) {
+    const region = readRegion(module, roots);
+    if (region === null) continue; // an absent region is a runAllChecks error, not a syncable delta
+    if (checkDrift(readFileSync(join(roots.skillRoot, md), 'utf8'), region).length > 0) {
+      findings.push({ kind: 'snippet-drift', module });
+    }
+  }
+  return findings;
 }
 
 function readJson(path) {
