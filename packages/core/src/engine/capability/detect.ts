@@ -19,7 +19,7 @@ import type {
   Platform,
   ReasonLayer,
 } from './profile.js';
-import { CONSERVATIVE_DEFAULTS } from './defaults.js';
+import { CONSERVATIVE_DEFAULTS, platformDefaults } from './defaults.js';
 import { readEnv, type ColorDepthSignal } from './env.js';
 
 /** Inputs to {@link detectBase}: the ambient signals plus the optional runtime/table sources. */
@@ -59,24 +59,31 @@ export function detectBase(inputs: DetectInputs): {
 } {
   const envSignals = readEnv(inputs.env);
 
-  // Overlay layers, ordered LOW → HIGH precedence (the default base sits below
-  // all of them; the override sits above all of them and is applied later).
+  // The base every field falls back to when no stronger signal (override, live
+  // probe, environment, or known terminal) determines it: the conservative
+  // defaults, raised by any better default the platform guarantees (e.g. a modern
+  // Windows console's color/Unicode/mouse support). Off Windows this is exactly
+  // the conservative defaults.
+  const base: CapabilityProfile = deepMerge(CONSERVATIVE_DEFAULTS, platformDefaults(inputs.platform));
+
+  // Overlay layers, ordered LOW → HIGH precedence (the base sits below all of
+  // them; the override sits above all of them and is applied later).
   const overlays: ReadonlyArray<OverlayLayer> = [
     { reason: 'table', partial: inputs.table ?? {} },
     { reason: 'env', partial: envSignals.profile },
     { reason: 'runtime', partial: inputs.runtime ?? {} },
   ];
 
-  const mouse = resolveField('mouse', overlays);
-  const unicode = resolveField('unicode', overlays);
-  const osc = resolveField('osc', overlays);
-  const sync2026 = resolveField('sync2026', overlays);
-  const altScreen = resolveField('altScreen', overlays);
-  const bracketedPaste = resolveField('bracketedPaste', overlays);
-  const keyboard = resolveField('keyboard', overlays);
-  const glyphs = resolveField('glyphs', overlays);
-  const multiplexer = resolveField('multiplexer', overlays);
-  const colorDepth = resolveColorDepth(envSignals.colorDepth, inputs.runtime, inputs.table);
+  const mouse = resolveField('mouse', base, overlays);
+  const unicode = resolveField('unicode', base, overlays);
+  const osc = resolveField('osc', base, overlays);
+  const sync2026 = resolveField('sync2026', base, overlays);
+  const altScreen = resolveField('altScreen', base, overlays);
+  const bracketedPaste = resolveField('bracketedPaste', base, overlays);
+  const keyboard = resolveField('keyboard', base, overlays);
+  const glyphs = resolveField('glyphs', base, overlays);
+  const multiplexer = resolveField('multiplexer', base, overlays);
+  const colorDepth = resolveColorDepth(base.colorDepth, envSignals.colorDepth, inputs.runtime, inputs.table);
 
   const profile: CapabilityProfile = {
     colorDepth: colorDepth.value,
@@ -112,14 +119,16 @@ export function detectBase(inputs: DetectInputs): {
 
 /**
  * Resolve a single non-colorDepth field by merging each overlay layer (in
- * ascending precedence) over the conservative default. The reason is the
- * highest-precedence layer that contributed any value, or `'default'`.
+ * ascending precedence) over the base default (conservative, plus any
+ * platform-guaranteed baseline). The reason is the highest-precedence layer that
+ * contributed any value, or `'default'` when only the base applies.
  */
 function resolveField<K extends keyof CapabilityProfile>(
   field: K,
+  base: CapabilityProfile,
   overlays: ReadonlyArray<OverlayLayer>,
 ): ResolvedField<CapabilityProfile[K]> {
-  let value: CapabilityProfile[K] = CONSERVATIVE_DEFAULTS[field];
+  let value: CapabilityProfile[K] = base[field];
   let reason: ReasonLayer = 'default';
 
   for (const layer of overlays) {
@@ -136,10 +145,13 @@ function resolveField<K extends keyof CapabilityProfile>(
  * Resolve `colorDepth` with its special precedence (the caller's override is
  * applied later, on top of this):
  * `NO_COLOR/FORCE_COLOR (forced) > runtime probe > COLORTERM/TERM (soft) >
- * table > default`. The forced env signals deliberately outrank a live probe,
- * because a user setting `NO_COLOR` must always win.
+ * table > base default`. The forced env signals deliberately outrank a live
+ * probe, because a user setting `NO_COLOR` must always win; the base default is
+ * the conservative floor raised by any platform baseline (e.g. truecolor on a
+ * modern Windows console).
  */
 function resolveColorDepth(
+  baseColorDepth: ColorDepth,
   signal: ColorDepthSignal,
   runtime: DeepPartial<CapabilityProfile> | undefined,
   table: DeepPartial<CapabilityProfile> | undefined,
@@ -156,7 +168,7 @@ function resolveColorDepth(
   if (table?.colorDepth !== undefined) {
     return { value: table.colorDepth, reason: 'table' };
   }
-  return { value: CONSERVATIVE_DEFAULTS.colorDepth, reason: 'default' };
+  return { value: baseColorDepth, reason: 'default' };
 }
 
 /** Type guard for a plain (non-array) object, used by {@link deepMerge}. */
