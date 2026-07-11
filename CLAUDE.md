@@ -53,6 +53,7 @@
 - **Lint:** `yarn lint` (`eslint .` + `prettier --check .`, repo-wide) · **Fix:** `yarn lint:fix`
 - **Dependency policy:** `yarn check:deps` (`turbo run check:deps`; fails on any native runtime dependency per public package)
 - **JSDoc governance:** `yarn check:docs` (`turbo run check:docs` → `scripts/check-jsdoc.mjs` per package; fails on banned CodeOps/TV-C++ references and on any public export missing an `@example`) — part of `yarn verify`
+- **Plugin self-sync (jsvision-plugin):** `yarn plugin:sync --fix` re-syncs drifted recipe snippets deterministically from their source module `#region example` (no AI, no key) · `yarn plugin:sync --detect` prints the structured `detectDrift()` findings (undocumented widget / snippet drift) as JSON · `yarn plugin:sync` (no flag) also drafts a `component-catalog.md` bullet for each undocumented `@jsvision/ui` widget via the Anthropic API (needs `ANTHROPIC_API_KEY`; `@anthropic-ai/sdk` is a root tooling devDep). Fixes exactly the two deterministic drift kinds `scripts/check-plugin.mjs` reports; every output is `yarn verify`-gated and left **unstaged for human review** (nothing auto-commits). Also runnable in-session via the manual `/jsvision-plugin-sync` skill; the disabled, secret-free `.github/workflows/plugin-self-sync.yml` documents the CI enable path.
 - **Clean:** `rm -rf packages/*/dist .turbo`
 
 ## Project structure
