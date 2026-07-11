@@ -73,6 +73,9 @@ function webImportBindings(text: string): string[] {
 
 const MODULES = exampleModules();
 
+// Each entry is a first-time dynamic import that vite compiles on demand; the
+// full set can exceed the suite's default floor on a cold, slow CI runner
+// (Windows first-compile), so this one test gets extra headroom.
 test('every registry entry loads to a module with a default ExampleDefinition', async () => {
   for (const entry of EXAMPLES) {
     const mod = await entry.load();
@@ -81,7 +84,7 @@ test('every registry entry loads to a module with a default ExampleDefinition', 
     expect(typeof mod.default.title).toBe('string');
     expect(typeof mod.default.blurb).toBe('string');
   }
-});
+}, 60_000);
 
 test('no example module imports @xterm/*', () => {
   for (const mod of MODULES) {
