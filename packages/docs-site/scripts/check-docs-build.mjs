@@ -9,11 +9,16 @@
 //
 // Usage:  node packages/docs-site/scripts/check-docs-build.mjs
 
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { basename, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
+import { API_MAP } from '../src/api/api-map.mjs';
+import { barrelExports } from '../src/api/barrel-exports.mjs';
+import { PACKAGES } from '../src/api/packages.mjs';
+import { validateApiMap } from '../src/api/validate-api-map.mjs';
 
 const siteRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = join(siteRoot, '..', '..');
@@ -496,6 +501,136 @@ check('LIVE-EXAMPLES', 'Every live-example page mounts a labelled Play component
   }
   if (problems.length) fail(`${problems.length} live-example issue(s):\n    ${problems.join('\n    ')}`);
   return `${pages.length} live-example pages: labelled Play component mounted`;
+});
+
+// --- API reference gate ---------------------------------------------------
+// The generated markdown lives under packages/docs-site/api/<pkg>/ (gitignored);
+// the built HTML lives under dist/api/<pkg>/. barrelExports() is the independent
+// ground truth the tree is diffed against.
+
+/** The symbol names TypeDoc generated for a package (page basenames, minus index). */
+function generatedSymbols(pkg) {
+  const dir = join(siteRoot, 'api', pkg);
+  if (!existsSync(dir)) return new Set();
+  return new Set(
+    walk(dir)
+      .filter((f) => f.endsWith('.md') && basename(f) !== 'index.md')
+      .map((f) => basename(f, '.md')),
+  );
+}
+
+check('API-COVERAGE', 'Every public barrel export has a generated API page', () => {
+  const problems = [];
+  for (const pkg of PACKAGES) {
+    const documented = generatedSymbols(pkg.name);
+    const missing = barrelExports(join(siteRoot, pkg.entry)).filter((s) => !documented.has(s));
+    if (missing.length)
+      problems.push(`${pkg.name}: ${missing.length} undocumented (${missing.slice(0, 8).join(', ')})`);
+  }
+  if (problems.length) fail(problems.join('; '));
+  return `all barrel exports documented (core/ui/files/web)`;
+});
+
+check('API-LEAKAGE', 'No symbol outside the public barrel appears in the reference', () => {
+  const problems = [];
+  for (const pkg of PACKAGES) {
+    const barrel = new Set(barrelExports(join(siteRoot, pkg.entry)));
+    const leaked = [...generatedSymbols(pkg.name)].filter((s) => !barrel.has(s));
+    if (leaked.length) problems.push(`${pkg.name}: ${leaked.length} leaked (${leaked.slice(0, 8).join(', ')})`);
+  }
+  if (problems.length) fail(problems.join('; '));
+  return 'no internal/private symbols leaked into the reference';
+});
+
+check('API-SYMBOL', 'createApplication page shows signature, params, return, description, @example', () => {
+  const file = join(siteRoot, 'api', 'ui', 'functions', 'createApplication.md');
+  if (!existsSync(file)) fail('createApplication page is missing');
+  const md = readFileSync(file, 'utf8');
+
+  const missing = [
+    [/createApplication\(/, 'signature'],
+    [/^## Parameters$/m, 'parameters'],
+    [/^## Returns$/m, 'return type'],
+    [/```ts/, '@example code block'],
+  ]
+    .filter(([re]) => !re.test(md))
+    .map(([, name]) => name);
+
+  // The JSDoc description is the prose between the source link and the first section.
+  const description =
+    md
+      .split(/^Defined in:.*$/m)[1]
+      ?.split(/^## /m)[0]
+      ?.trim() ?? '';
+  if (!description) missing.push('description');
+
+  if (missing.length) fail(`createApplication page missing: ${missing.join(', ')}`);
+  return 'createApplication documented with signature, params, return, description, @example';
+});
+
+check('API-LINKS', 'Every mapped apiPath resolves + every mapped component page has the forward link', () => {
+  const mapErrors = validateApiMap(API_MAP);
+  if (mapErrors.length) fail(`API_MAP invalid: ${mapErrors.slice(0, 6).join('; ')}`);
+
+  const keys = new Set(htmlPages().map(pageKey));
+  const problems = [];
+  for (const link of API_MAP) {
+    if (!keys.has(pageKey(link.apiPath.replace(/^\//, '')))) {
+      problems.push(`apiPath not built: ${link.apiPath}`);
+      continue;
+    }
+    const compRel = `${link.componentPage.replace(/^\//, '')}.html`;
+    if (!existsSync(join(distDir, compRel))) {
+      problems.push(`component page not built: ${link.componentPage}`);
+      continue;
+    }
+    const apiKey = pageKey(link.apiPath.replace(/^\//, ''));
+    const html = readFileSync(join(distDir, compRel), 'utf8');
+    if (!anchorHrefs(html).some((href) => resolveInternalLink(href, compRel) === apiKey)) {
+      problems.push(`no forward link on ${link.componentPage} → ${link.apiPath}`);
+    }
+  }
+  if (problems.length) fail(`${problems.length} link issue(s):\n    ${problems.slice(0, 10).join('\n    ')}`);
+  return `${API_MAP.length} mapped symbols: apiPath resolves + component page carries the forward link`;
+});
+
+check('API-DETERMINISM', 'A second docs:api run yields byte-identical api/<pkg>/**', () => {
+  const digest = () => {
+    const hash = createHash('sha256');
+    const files = PACKAGES.flatMap((pkg) => walk(join(siteRoot, 'api', pkg.name))).sort();
+    for (const f of files) {
+      hash.update(relative(siteRoot, f).split('\\').join('/'));
+      hash.update(readFileSync(f));
+    }
+    return hash.digest('hex');
+  };
+
+  const before = digest();
+  execFileSync(process.execPath, [join(siteRoot, 'scripts', 'gen-api.mjs')], { cwd: siteRoot, stdio: 'ignore' });
+  if (digest() !== before) fail('the api tree changed on regeneration — generation is not deterministic');
+  return 'regeneration is byte-identical';
+});
+
+check('API-SEARCH', 'Generated API pages render in the site shell + appear in local search', () => {
+  const apiPages = htmlPages().filter((p) => p.startsWith('api/') && p !== 'api/index.html');
+  if (apiPages.length < 400) fail(`expected the generated API tree in dist, found only ${apiPages.length} api pages`);
+
+  // Rendered inside the VitePress shell (site nav present), not standalone TypeDoc HTML.
+  const sample = readFileSync(join(distDir, 'api', 'ui', 'classes', 'Button.html'), 'utf8');
+  if (!new RegExp(`href="${BASE}components/?"`).test(sample) && !/class="VP/.test(sample)) {
+    fail('an API page is not rendered inside the VitePress shell');
+  }
+
+  // Present in the local search index.
+  const index = walk(distDir)
+    .filter((f) => /localSearchIndex/i.test(f))
+    .map((f) => readFileSync(f, 'utf8'))
+    .join('');
+  if (!index) fail('no local search index chunk');
+  for (const sym of ['createApplication', 'Button']) {
+    if (!index.includes(sym)) fail(`local search index missing API symbol: ${sym}`);
+  }
+  return `${apiPages.length} API pages in the shell + indexed for search`;
 });
 
 // --- report + exit --------------------------------------------------------

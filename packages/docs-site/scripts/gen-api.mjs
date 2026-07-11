@@ -18,22 +18,14 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { API_MAP } from '../src/api/api-map.mjs';
 import { injectBackLink } from '../src/api/inject-back-links.mjs';
+import { PACKAGES } from '../src/api/packages.mjs';
 
 const require = createRequire(import.meta.url);
 const siteRoot = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/docs-site
 const apiDir = join(siteRoot, 'api');
 
-/**
- * The public entry point of each documented package, each generated into api/<pkg>/.
- * `web` intentionally lists only its main barrel — the throwing `browser-stubs`
- * subpath is not an entry point, so it never appears in the reference.
- */
-const PACKAGES = [
-  { name: 'core', entry: '../core/src/engine/index.ts', tsconfig: '../core/tsconfig.json' },
-  { name: 'ui', entry: '../ui/src/index.ts', tsconfig: '../ui/tsconfig.json' },
-  { name: 'files', entry: '../files/src/index.ts', tsconfig: '../files/tsconfig.json' },
-  { name: 'web', entry: '../web/src/index.ts', tsconfig: '../web/tsconfig.json' },
-];
+// `web` lists only its main barrel — the throwing `browser-stubs` subpath is not an
+// entry point (see PACKAGES), so it never appears in the reference.
 
 /** Absolute path to TypeDoc's CLI entry, resolved cross-platform (run via node). */
 function typedocBin() {
