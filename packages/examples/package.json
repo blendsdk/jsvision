@@ -40,7 +40,8 @@
     "demo:amiga-clock": "tsx amiga-clock/main.ts",
     "demo:web": "vite --config web-xterm/vite.config.ts",
     "demo:editor": "tsx editor-demo/main.ts",
-    "demo:tvedit": "tsx tvedit-demo/main.ts"
+    "demo:tvedit": "tsx tvedit-demo/main.ts",
+    "playground": "tsx --watch playground/main.ts"
   },
   "dependencies": {
     "@jsvision/core": "*",
@@ -49,7 +50,7 @@
     "@jsvision/web": "*"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "^26.1.1",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-webgl": "^0.18.0",
     "@xterm/xterm": "^5.5.0",
