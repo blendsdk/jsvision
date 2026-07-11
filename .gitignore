@@ -13,3 +13,5 @@ packages/examples/theme.json
 # Scaffolder integration-test scratch dirs (created + removed within a test run)
 **/.scaffold-tmp/
 **/.scaffold-probe/
+# Compiled standalone executables (e.g. Bun --compile dev builds)
+*.exe
