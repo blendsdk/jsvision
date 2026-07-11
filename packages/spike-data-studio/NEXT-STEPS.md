@@ -18,10 +18,10 @@ editors. Concretely:
 
 1. In `src/04-editable-grid.ts`, build `resolveEditors(source.meta, overrides)` once, keyed by column.
 2. In `grid.onEdit = (col) => …`, look up the column's `EditorSpec`, `createCellEditor(spec,
-   rs.field(FIELD[col]), host)`, and mount the returned `View` at the cell rect (skip when it returns
+rs.field(FIELD[col]), host)`, and mount the returned `View` at the cell rect (skip when it returns
    `null` — read-only / datetime).
 3. Provide a `CellEditorHost.loadLookup(cfg)` that runs a parameterized `SELECT key, label FROM
-   <refTable> ORDER BY … LIMIT …` (for FK dropdowns). Use `app.order` (has an FK `customer_id`) as the
+<refTable> ORDER BY … LIMIT …` (for FK dropdowns). Use `app.order` (has an FK `customer_id`) as the
    demo table to exercise the lookup editor, or add an override on a customer column.
 4. Keep Enter=commit / Esc=cancel; the adapters in `editor-spec.ts` (bool/date/enum/lookup) already
    handle the typed binding — just ensure they're created inside the overlay's reactive root.

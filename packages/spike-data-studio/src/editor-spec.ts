@@ -9,23 +9,24 @@
  *
  * This compiles against the real widget API; it is a design artefact, not a wired feature.
  */
-import { Input, CheckGroup, DatePicker, ComboBox, filter, signal, effect, untrack, toISO, parseISO } from '@jsvision/ui';
+import {
+  Input,
+  CheckGroup,
+  DatePicker,
+  ComboBox,
+  filter,
+  signal,
+  effect,
+  untrack,
+  toISO,
+  parseISO,
+} from '@jsvision/ui';
 import type { Signal, Validator, View, ColumnWidth, ColumnAlign, CalendarDate } from '@jsvision/ui';
 import type { ColumnMeta, ForeignKeyMeta, TableMeta } from './introspect.js';
 
 /** The concrete editor a cell uses (widget-level, one step below the PG type). */
 export type EditorKind =
-  | 'text'
-  | 'integer'
-  | 'decimal'
-  | 'boolean'
-  | 'date'
-  | 'datetime'
-  | 'enum'
-  | 'lookup'
-  | 'json'
-  | 'array'
-  | 'readonly';
+  'text' | 'integer' | 'decimal' | 'boolean' | 'date' | 'datetime' | 'enum' | 'lookup' | 'json' | 'array' | 'readonly';
 
 /** How NULL is treated on a nullable column (distinct from an empty string). */
 export interface NullPolicy {
@@ -270,7 +271,12 @@ export function createCellEditor(spec: EditorSpec, field: Signal<string>, host: 
     case 'lookup': {
       const items = signal<LookupItem[]>([]);
       if (spec.lookup) void host.loadLookup(spec.lookup).then((rows) => items.set(rows));
-      return new ComboBox<LookupItem>({ items, getText: (it) => it.label, value: lookupBridge(field, items), editable: false });
+      return new ComboBox<LookupItem>({
+        items,
+        getText: (it) => it.label,
+        value: lookupBridge(field, items),
+        editable: false,
+      });
     }
     case 'datetime':
     case 'readonly':
