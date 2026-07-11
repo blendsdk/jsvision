@@ -137,4 +137,4 @@ once.
   `okButton()` / `cancelButton()` helpers.
 - [Input](/components/controls/input) — the text field a Save/OK button usually commits.
 - `CheckGroup` and `RadioGroup` — sibling controls that share the button's hotkey and focus model.
-- [API reference](/api/) — the full generated `Button` and `ButtonOptions` signatures.
+- [API reference](/api/ui/classes/Button) — the full generated `Button` and `ButtonOptions` signatures.

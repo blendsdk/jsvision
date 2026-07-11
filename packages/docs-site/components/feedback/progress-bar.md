@@ -72,3 +72,4 @@ variable-width label (`9%`→`100%`) reflows the bar as it grows — pad it to a
 ## Related
 
 - [Spinner](/components/feedback/spinner) — the indeterminate counterpart, for unknown-duration work.
+- [API reference](/api/ui/classes/ProgressBar) — the generated `ProgressBar` signature.

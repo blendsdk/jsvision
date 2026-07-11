@@ -95,3 +95,4 @@ The button draws the shared `▐↓▌` dropdown icon; the popup rows use the hi
 
 - [Combo box](/components/dropdown/combo-box) — a field + dropdown list of arbitrary items.
 - [Input](/components/controls/input) — the field a history dropdown recalls values for.
+- [API reference](/api/ui/classes/History) — the generated `History` signature.

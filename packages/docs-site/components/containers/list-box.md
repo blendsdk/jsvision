@@ -10,3 +10,7 @@ the highlight, **Enter** or a click selects a row, and typing a prefix jumps to 
 owned scroll bar tracks the focused row; the echo shows the focused and selected items.
 
 <PlayExample id="containers/list-box" title="List box" blurb="A virtual-scroll list with type-ahead: arrows / PgDn move, Enter selects, type a prefix to jump." />
+
+## Related
+
+- [API reference](/api/ui/classes/ListBox) — the generated `ListBox` signature.
