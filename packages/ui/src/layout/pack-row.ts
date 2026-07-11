@@ -13,8 +13,7 @@ import type { TrackItem } from './apportion.js';
 
 /** A segment to place along a bar: a fixed-width button, or a flexible spacer with a grow weight. */
 export type RowSegment =
-  | { readonly kind: 'fixed'; readonly width: number }
-  | { readonly kind: 'flex'; readonly weight: number };
+  { readonly kind: 'fixed'; readonly width: number } | { readonly kind: 'flex'; readonly weight: number };
 
 /** The resolved integer left column + width of one packed segment. */
 export interface RowSlot {
@@ -52,9 +51,7 @@ export function packRow(segments: readonly RowSegment[], total: number, startX =
 
   const available = Math.max(0, total - startX);
   const items: TrackItem[] = segments.map((seg) =>
-    seg.kind === 'fixed'
-      ? { kind: 'fixed', size: Math.max(0, seg.width) }
-      : { kind: 'flex', weight: seg.weight },
+    seg.kind === 'fixed' ? { kind: 'fixed', size: Math.max(0, seg.width) } : { kind: 'flex', weight: seg.weight },
   );
   const widths = solveTrack(available, items);
 

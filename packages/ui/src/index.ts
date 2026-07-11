@@ -77,7 +77,7 @@ export { MenuBar, MenuPopup, menuBar, subMenu, item, separator } from './menu/in
 export type { MenuItem, ParsedLabel, TitleLayout, MenuController, MenuLoopSeam } from './menu/index.js';
 export { findDuplicateAccelerators, reportDuplicateAccelerators } from './menu/index.js';
 export type { DuplicateAccelerator } from './menu/index.js';
-export { Commands, StatusLine, statusLine, statusItem } from './status/index.js';
+export { Commands, StatusLine, StatusItemView, statusLine, statusItem } from './status/index.js';
 export type { CommandName, StatusItem, StatusLoopSeam } from './status/index.js';
 
 // Form controls — the everyday leaf widgets (static text, labels, buttons, text
