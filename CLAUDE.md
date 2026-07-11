@@ -32,7 +32,7 @@
 - **Orchestration:** **Turborepo** (`turbo.json`: `build`/`typecheck`/`test`/`test:e2e`/`check:deps`; `test` dependsOn `build`, `typecheck` dependsOn `^build`)
 - **Test framework:** **vitest** (two projects: `unit` = `*.{spec,impl}.test.ts`, `e2e` = `*.e2e.test.ts` single-fork). Vite resolves NodeNext `.js`→`.ts` natively. Tests use `expect()`; `tsx` is retained for bench/examples/probe + e2e child processes.
 - **Lint/format:** root-global ESLint flat config (`typescript-eslint`) + Prettier
-- **Node:** active LTS **20 / 22 / 24** (`engines.node >= 20`; Node 18 dropped, EOL)
+- **Node:** LTS **22 / 24** (`engines.node >= 22`; Node 20 dropped 2026-07 as EOL, Node 18 earlier)
 
 ## Commands
 

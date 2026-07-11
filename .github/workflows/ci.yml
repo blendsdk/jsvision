@@ -3,7 +3,7 @@
 # The project is pre-1.0 and far from release, so there is deliberately NO
 # publish/deploy step here (publish-with-provenance comes at a later milestone).
 #
-# Cross-platform matrix: 3 OSes × 3 active-LTS Node versions = 9 cells. Every cell
+# Cross-platform matrix: 3 OSes × 2 supported-LTS Node versions = 6 cells. Every cell
 # installs the workspace (yarn), typechecks each package (fail-fast), then runs
 # `yarn verify` (lint + turbo typecheck/build/unit-tests/docs-guard) across the packages,
 # then guards the dependency policy, the lockstep versions, the
@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node: [20, 22, 24]
+        node: [22, 24]
     steps:
       - name: Checkout
         uses: actions/checkout@v5
