@@ -18,6 +18,8 @@ import { enterMode, leaveMode } from './modes.js';
 import { realRuntime } from './platform.js';
 import { createRestore } from './restore.js';
 import type { GuaranteedRestore } from './restore.js';
+import { createInputDiagnostics } from './diagnostics.js';
+import type { InputDiagnostics } from './diagnostics.js';
 import { installSignals } from './signals.js';
 import type { Host, HostOptions, RuntimeAdapter, TimerHandle } from './types.js';
 import type { CapabilityProfile } from '../capability/profile.js';
@@ -96,6 +98,7 @@ export function createHost(options: HostOptions): Host {
   let lastBuffer: ScreenBuffer | null = null;
   let escTimer: TimerHandle | null = null;
   let isTTY = false;
+  let inputDiag: InputDiagnostics | null = null;
   let dataListener: ((chunk: Uint8Array | string) => void) | null = null;
   let errorListener: ((err: unknown) => void) | null = null;
   let signalsTeardown: (() => void) | null = null;
@@ -120,6 +123,7 @@ export function createHost(options: HostOptions): Host {
   /** The input pump: bytes → decode → dispatch, managing the lone-ESC disambiguation timer. */
   function onData(chunk: Uint8Array | string): void {
     if (!adapter) return;
+    inputDiag?.noteInput(chunk);
     const result = decode(toBytes(chunk), decoderState, { caps });
     decoderState = result.state;
     dispatch(result.events);
@@ -233,6 +237,17 @@ export function createHost(options: HostOptions): Host {
       streams.output.write(enterStr); // a throw here is still caught by the on-exit restore backstop
     }
 
+    // Opt-in input diagnostics (JSVISION_INPUT_DIAG): record what the host sees —
+    // TTY state, whether raw mode engaged, and the effective caps — so an
+    // unresponsive launch (e.g. a Windows double-click) can be diagnosed from a file.
+    inputDiag = createInputDiagnostics({
+      env: options.env ?? process.env,
+      input: streams.input,
+      output: streams.output,
+      hostIsTTY: isTTY,
+      caps: effectiveCaps,
+    });
+
     signalsTeardown = installSignals({
       adapter,
       output: streams.output,
@@ -282,6 +297,7 @@ export function createHost(options: HostOptions): Host {
     streams?.dispose();
     streams = null;
     adapter = null;
+    inputDiag = null;
     return Promise.resolve();
   }
 
