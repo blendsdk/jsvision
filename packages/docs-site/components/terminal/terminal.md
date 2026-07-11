@@ -85,3 +85,4 @@ Lines are drawn in the `terminalNormal` role.
 
 - [Surface view](/components/surface/surface-view) — a scrollable window onto an offscreen canvas.
 - [List box](/components/containers/list-box) — a focusable, selectable single-column list.
+- [API reference](/api/ui/classes/Terminal) — the generated `Terminal` signature.

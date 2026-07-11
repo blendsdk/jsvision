@@ -70,3 +70,4 @@ Give it bounds; it draws on a single row. Reserve enough width for the glyph plu
 ## Related
 
 - [Progress bar](/components/feedback/progress-bar) — the determinate counterpart, for known progress.
+- [API reference](/api/ui/classes/Spinner) — the generated `Spinner` signature.

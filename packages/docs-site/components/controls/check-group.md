@@ -87,3 +87,4 @@ const group = new MultiCheckGroup({
 
 - [Radio group](/components/controls/radio-group) — the mutually-exclusive counterpart.
 - [Switch](/components/controls/switch) — a single on/off toggle.
+- [API reference](/api/ui/classes/CheckGroup) — the generated `CheckGroup` signature.

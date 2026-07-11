@@ -67,3 +67,4 @@ and a disabled switch `clusterDisabled`.
 
 - [Check group](/components/controls/check-group) — several independent on/off boxes.
 - [Slider](/components/controls/slider) — a continuous value instead of two states.
+- [API reference](/api/ui/classes/Switch) — the generated `Switch` signature.

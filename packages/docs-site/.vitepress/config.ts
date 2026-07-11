@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type HeadConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
@@ -20,6 +20,16 @@ const ROOT_VERSION = (
 const SITE_URL = 'https://blendsdk.github.io/jsvision/';
 const OG_IMAGE = `${SITE_URL}og-placeholder.png`;
 const DEFAULT_DESCRIPTION = 'A TypeScript SDK for building classic terminal (TUI) applications.';
+
+// The generated TypeDoc sidebar (produced by `docs:api`; gitignored). It is absent
+// on a fresh checkout or before the first generation, so fall back to an empty array
+// rather than hard-failing config load — `docs:dev` and a direct `vp:build` both start
+// regardless. The shipped build always runs `docs:api` first (root `docs:build`), so CI
+// and production carry the real tree; until then the /api/ route shows only the preface.
+const typedocSidebarPath = fileURLToPath(new URL('../api/typedoc-sidebar.json', import.meta.url));
+const typedocSidebar: unknown[] = existsSync(typedocSidebarPath)
+  ? JSON.parse(readFileSync(typedocSidebarPath, 'utf8'))
+  : [];
 
 const GITHUB_URL = 'https://github.com/blendsdk/jsvision';
 const NPM_URL = 'https://www.npmjs.com/package/@jsvision/core';
@@ -98,6 +108,8 @@ export default withMermaid(
     lang: 'en-US',
     title: 'JSVision',
     description: DEFAULT_DESCRIPTION,
+    // Test fixtures are .md but not site pages — keep them out of the build.
+    srcExclude: ['test/**'],
     sitemap: { hostname: SITE_URL },
     head: [
       ['link', { rel: 'icon', type: 'image/svg+xml', href: `${BASE}favicon.svg` }],
@@ -190,7 +202,8 @@ export default withMermaid(
           { text: 'Apps', items: [{ text: 'Overview', link: '/apps/' }] },
           { text: 'Examples', items: [{ text: 'Turbo Vision desktop', link: '/apps/desktop' }] },
         ],
-        '/api/': [{ text: 'API Reference', items: [{ text: 'Overview', link: '/api/' }] }],
+        // Overview is the hand-written preface; the generated per-package trees follow.
+        '/api/': [{ text: 'Overview', link: '/api/' }, ...typedocSidebar],
         '/reference/': [
           { text: 'Reference', items: [{ text: 'Overview', link: '/reference/' }] },
           {

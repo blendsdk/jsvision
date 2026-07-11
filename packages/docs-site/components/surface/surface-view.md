@@ -101,3 +101,4 @@ colors you drew into them.
 
 - [Scroll bar](/components/containers/scroll-bar) — bind its `value` to the view's `delta` to scroll.
 - [Scroller](/components/containers/scroller) — scrolls a live child view, rather than an offscreen buffer.
+- [API reference](/api/ui/classes/SurfaceView) — the generated `SurfaceView` signature.

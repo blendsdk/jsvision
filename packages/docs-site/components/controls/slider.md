@@ -81,3 +81,4 @@ across the whole groove.
 
 - [Switch](/components/controls/switch) — a two-state (on/off) toggle.
 - [Input](/components/controls/input) — a typed numeric field with a range validator.
+- [API reference](/api/ui/classes/Slider) — the generated `Slider` signature.

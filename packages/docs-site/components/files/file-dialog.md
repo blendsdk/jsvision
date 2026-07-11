@@ -10,3 +10,7 @@ Browse a virtual file tree in a modal dialog — no backend, entirely in-memory.
 `@jsvision/web`'s pure browser file system, so the whole dialog runs with no server.
 
 <PlayExample id="files/file-dialog" title="File dialog" blurb="Browse a virtual file tree in a modal dialog — no backend, entirely in-memory." />
+
+## Related
+
+- [API reference](/api/files/classes/FileDialog) — the generated `FileDialog` signature.

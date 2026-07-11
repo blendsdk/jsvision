@@ -79,3 +79,4 @@ Each cell draws its own color as the foreground over a black background. The `�
 ## Related
 
 - [Color picker](/components/color/color-picker) — a one-line field that opens a swatch in a popup.
+- [API reference](/api/ui/classes/ColorSwatch) — the generated `ColorSwatch` signature.

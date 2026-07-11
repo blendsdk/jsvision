@@ -76,3 +76,4 @@ button draws the shared dropdown icon.
 
 - [Calendar](/components/date/calendar) — the month grid opened by the dropdown.
 - [Input](/components/controls/input) — the masked field the picker is built on.
+- [API reference](/api/ui/classes/DatePicker) — the generated `DatePicker` signature.

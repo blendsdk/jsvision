@@ -93,3 +93,4 @@ uses the standard list roles.
 - [History](/components/dropdown/history) — a most-recently-used dropdown for an `Input`'s past values.
 - [List box](/components/containers/list-box) — the list the dropdown opens.
 - [Input](/components/controls/input) — the text field the combo box is built on.
+- [API reference](/api/ui/classes/ComboBox) — the generated `ComboBox` signature.

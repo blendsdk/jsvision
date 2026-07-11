@@ -63,3 +63,4 @@ The label repaints when the linked control gains or loses focus, swapping to its
 
 - [Input](/components/controls/input) — the field a label most often captions.
 - [Text](/components/controls/text) — static text with no control link.
+- [API reference](/api/ui/classes/Label) — the generated `Label` signature.

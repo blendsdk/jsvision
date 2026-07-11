@@ -11,3 +11,7 @@ its header is clicked (▲/▼), rows zebra-stripe under a sticky header, and th
 horizontally when the columns overflow.
 
 <PlayExample id="table/data-grid" title="Data grid" blurb="A sortable multi-column table: click a header to sort (▲/▼), zebra striping, sticky header, H-scroll." />
+
+## Related
+
+- [API reference](/api/ui/classes/DataGrid) — the generated `DataGrid` signature.

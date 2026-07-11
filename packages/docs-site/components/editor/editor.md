@@ -102,3 +102,4 @@ palette).
 
 - [Edit window](/components/editor/edit-window) — an `Editor` framed with scroll bars + a `line:col` indicator.
 - [Memo](/components/editor/memo) — a signal-bound editor for placing inside a dialog.
+- [API reference](/api/ui/classes/Editor) — the generated `Editor` signature.

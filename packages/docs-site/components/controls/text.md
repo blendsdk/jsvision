@@ -61,3 +61,4 @@ wrapped content: text taller than its box is clipped, not scrolled.
 
 - [Label](/components/controls/label) — a caption wired to a control (clickable + Alt-hotkey).
 - [Input](/components/controls/input) — the editable counterpart for user-entered text.
+- [API reference](/api/ui/classes/Text) — the generated `Text` signature.

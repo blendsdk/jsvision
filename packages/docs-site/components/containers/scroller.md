@@ -86,3 +86,4 @@ clamped to `[0, extent − viewport]` per axis, so it never over-scrolls.
 - [Scroll bar](/components/containers/scroll-bar) — the passive bar a Scroller owns.
 - [List box](/components/containers/list-box) — a virtual-scroll list of rows.
 - [Tree](/components/containers/tree) — a scrolling, expandable outline.
+- [API reference](/api/ui/classes/Scroller) — the generated `Scroller` signature.
