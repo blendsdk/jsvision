@@ -7,5 +7,7 @@
  */
 export { Commands } from './commands.js';
 export type { CommandName } from './commands.js';
-export { StatusLine, statusLine, statusItem } from './statusline.js';
-export type { StatusItem, StatusLoopSeam } from './statusline.js';
+export { StatusLine, statusLine } from './statusline.js';
+export type { StatusLoopSeam } from './statusline.js';
+export { StatusItemView, statusItem } from './status-item.js';
+export type { StatusItem } from './status-item.js';

@@ -36,6 +36,7 @@
     "demo:controls-live": "tsx controls-live/main.ts",
     "demo:kitchen": "tsx kitchen-sink/main.ts",
     "demo:tvision": "tsx tvision-demo/main.ts",
+    "demo:chrome-bars": "tsx chrome-bars-demo/main.ts",
     "demo:amiga-clock": "tsx amiga-clock/main.ts",
     "demo:web": "vite --config web-xterm/vite.config.ts",
     "demo:editor": "tsx editor-demo/main.ts",

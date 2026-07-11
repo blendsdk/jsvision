@@ -14,6 +14,7 @@ import { layoutDslStory } from './layout-dsl.story.js';
 import { viewStory } from './view.story.js';
 import { eventsStory } from './events.story.js';
 import { shellStory } from './shell.story.js';
+import { statusBarStory } from './status-bar.story.js';
 import { textStory } from './text.story.js';
 import { labelStory } from './label.story.js';
 import { buttonStory } from './button.story.js';
@@ -58,6 +59,7 @@ export const STORIES: readonly Story[] = [
   viewStory,
   eventsStory,
   shellStory,
+  statusBarStory,
   textStory,
   labelStory,
   buttonStory,

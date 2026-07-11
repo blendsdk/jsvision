@@ -38,6 +38,20 @@
   0 + smoke → `claude plugin validate`). Commits 8fea5e4 · 4bf7f5f · 28286df · c93437d · ce9acd6.
   **Portfolio now 4/6 done.** PL-02 `plugin-self-sync` (AI drift auto-updater) stays backlog.
   Cascaded from **jsvision-plugin**.
+- 2026-07-11: **jsvision-ui follow-up `flexible-chrome-bars` → ✅ DONE** — via `exec_plan --auto-commit`
+  (no RD — the jsvision-ui 22/22 RD set stays complete). Refactors the app-shell chrome bars onto the
+  layout engine: **StatusLine** becomes a general child-view container (`extends Group`, `direction:'row'`,
+  `statusBar` background) hosting any fitting 1-row view — an embedded `ProgressBar`/`Spinner`/`Text`, a
+  `spacer()` fill, command-less accessor-text labels — via new `StatusItemView` + accessor/optional-command
+  `statusItem`; **MenuBar** gains `menuSpacer(weight?)` right-aligned titles with width-aware
+  `layoutTitles`/`titleIndexAt` over a shared internal `packRow` helper (nav/popup-anchor/hit-test follow
+  moved titles). **Additive-only** public surface — **no breaking changes**; every preserved
+  status/menu/packaging/app-shell oracle stays green **unmodified**. 10 new spec oracles (ST-01…ST-10) +
+  impl + `pack-row` suite; `demo:chrome-bars` example + `app-shell/status-bar` kitchen-sink story.
+  **25/25 tasks, 5 phases, spec-first.** Full `yarn verify` green — **22/22 turbo tasks** (the two off-CI
+  wall-clock perf asserts pass under the documented `TUI_SKIP_PERF`). Branch `feat/flexible-chrome-bars`,
+  commits `0ea7c6d`→`0d0442e` (pushed; no PR yet). Cascaded from **jsvision-ui**. **Deferred follow-up:**
+  embedded passive widgets in the menu bar; a `ToolBar` component.
 - 2026-07-11: **jsvision-plugin PL-01 → PLAN PREFLIGHTED** 🔬 (`preflight`) — **✅ PASSED, 7 findings applied.**
   Format re-verified against the live Claude Code docs (skill design validated); corrected the `marketplace.json`
   schema (PF-001), recipe embedding = a literal drift-checked copy not a VitePress `<<<` transclusion (PF-002),
