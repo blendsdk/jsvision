@@ -139,11 +139,16 @@ export function lookupTable(env: NodeJS.ProcessEnv): DeepPartial<CapabilityProfi
     return BY_TERM_PROGRAM[termProgram];
   }
 
-  // Windows Terminal advertises itself only via WT_SESSION.
+  // Windows Terminal advertises itself only via WT_SESSION. Windows has no POSIX
+  // UTF-8 locale (`LC_*`/`LANG`), so the environment layer never flags Unicode
+  // there; Windows Terminal is fully UTF-8 capable, so its entry asserts Unicode +
+  // box-drawing/half-block glyphs itself — otherwise box drawing degrades to ASCII.
   if (env.WT_SESSION !== undefined) {
     return {
       colorDepth: 'truecolor',
       mouse: FULL_MOUSE,
+      unicode: { utf8: true },
+      glyphs: { boxDrawing: true, halfBlocks: true },
       osc: { hyperlink8: true, title: true },
       altScreen: true,
       bracketedPaste: true,
