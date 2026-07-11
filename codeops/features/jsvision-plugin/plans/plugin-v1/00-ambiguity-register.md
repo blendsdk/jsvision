@@ -117,3 +117,19 @@ emitted `main.ts` **exports `buildApp()`** and gates its auto-run behind a direc
 (`packages/ui/src/app/application.ts:80-114`); `createApplication` mounts + paints the first frame
 (`:243`); `EventLoop.resize(Size2D)` reflows+flushes (`event-loop.ts:232`); cross-root `.mjs` test
 imports are established here (`packages/core/test/gate.spec.test.ts:18`).
+
+**AR-22 (ST-10 browser-variant terminal — runtime, decided during execution):** ST-10 mounts the
+live-dashboard's browser variant on a "headless terminal". Recon found `@xterm/headless` is only a
+devDep of `@jsvision/web` (hoisted, resolvable from examples but undeclared there); a clean mount
+would add it to `packages/examples/package.json` devDeps — but that file carries a **pre-existing
+unrelated change this plan must not touch or commit**. Chosen: mount on an **inline structural fake
+`TerminalLike`** (`{ write, onData, onResize }`, recording writes) built in the spec test — no new
+dependency, no `package.json` edit, deterministic. It still exercises the entire jsvision browser
+path (`mountApp` → `createBrowserHost` → `serialize(buffer)` → `term.write`), asserting
+`writes.length > 0` (mounted + first paint) and `dispose()` clean; only xterm's own cell rendering
+is stubbed (not jsvision's concern). This is stronger than 03-03's allowed "at minimum, typechecked"
+fallback. `TerminalLike` is not re-exported from the `@jsvision/web` barrel, so the recipe types its
+terminal param via `NonNullable<MountAppOptions['term']>`. Grounded: `mountApp` never imports
+`@xterm/xterm` and calls `term.focus?.()`/`dispose?.()` optionally (`packages/web/src/mount.ts:8-11,
+85-112`); the fake-terminal pattern is the shipped web-test idiom
+(`packages/web/test/helpers/fake-terminal.ts`).

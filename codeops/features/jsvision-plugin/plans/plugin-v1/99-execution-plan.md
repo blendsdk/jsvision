@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-11 13:47
-> **Progress**: 13/37 tasks (35%)
+> **Last Updated**: 2026-07-11 14:07
+> **Progress**: 23/37 tasks (62%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -96,27 +96,32 @@ the AI-driven self-update pipeline is a separate follow-on plan (`plugin-self-sy
 **Reference**: 07 ST-7…ST-11 · 03-03
 **Objective**: Lock recipe paint + behavior before implementing the modules.
 
-- [ ] 3.1.1 Write recipe smoke + behavior spec tests from ST-7…ST-11 — `packages/examples/test/recipes.smoke.spec.test.ts`
-- [ ] 3.1.2 Run spec tests — verify they FAIL (red phase)
+- [x] 3.1.1 Write recipe smoke + behavior spec tests from ST-7…ST-11 — `packages/examples/test/recipes.smoke.spec.test.ts` ✅ (completed: 2026-07-11 13:58)
+- [x] 3.1.2 Run spec tests — verify they FAIL (red phase) ✅ RED: `Cannot find module '../recipes/data-grid.js'` (completed: 2026-07-11 13:58)
 
 ### Step 3.2: Implementation
 
 **Reference**: 03-03 §The four recipes / §The example custom widget · AR-4, AR-5, AR-16
 **Objective**: The four recipe apps + the example widget as real modules with `#region example`.
 
-- [ ] 3.2.1 Implement the data-driven & master-detail recipe — `packages/examples/recipes/data-grid/`
-- [ ] 3.2.2 Implement the forms/dialogs/wizards recipe — `packages/examples/recipes/form-dialog/`
-- [ ] 3.2.3 Implement the file & text tools recipe — `packages/examples/recipes/file-tools/`
-- [ ] 3.2.4 Implement the live/dashboard recipe (+ browser-hosted variant) — `packages/examples/recipes/live-dashboard/`
-- [ ] 3.2.5 Implement the example custom widget — `packages/examples/recipes/custom-widget/`
-- [ ] 3.2.6 Run spec tests — verify they PASS (green phase)
+- [x] 3.2.1 Implement the data-driven & master-detail recipe — `packages/examples/recipes/data-grid.ts` ✅ (completed: 2026-07-11 14:06)
+- [x] 3.2.2 Implement the forms/dialogs/wizards recipe — `packages/examples/recipes/form-dialog.ts` ✅ (completed: 2026-07-11 14:06)
+- [x] 3.2.3 Implement the file & text tools recipe — `packages/examples/recipes/file-tools.ts` ✅ (completed: 2026-07-11 14:06)
+- [x] 3.2.4 Implement the live/dashboard recipe (+ browser-hosted variant) — `packages/examples/recipes/live-dashboard.ts` ✅ (completed: 2026-07-11 14:06)
+- [x] 3.2.5 Implement the example custom widget — `packages/examples/recipes/custom-widget.ts` ✅ (completed: 2026-07-11 14:06)
+- [x] 3.2.6 Run spec tests — verify they PASS (green phase) ✅ 5/5 green (fixed a float-accumulation recipe bug); typecheck + lint clean (completed: 2026-07-11 14:06)
+
+> **Note:** recipes are single `.ts` modules (not dirs) — simpler, and the `#region example`
+> extraction + the Phase-5 gate work per-file. `recipes` added to `packages/examples/tsconfig.json`
+> include so they typecheck (PF-004). ST-10's browser variant mounts on an inline fake `TerminalLike`
+> (AR-22) to avoid editing the constraint-frozen `packages/examples/package.json`.
 
 ### Step 3.3: Implementation tests & hardening
 
-- [ ] 3.3.1 Add optional e2e walkthroughs for the interactive recipes — `packages/examples/test/recipes-*.e2e.test.ts`
-- [ ] 3.3.2 Full verification
+- [x] 3.3.1 Add optional e2e walkthroughs for the interactive recipes — `packages/examples/test/recipes-*.e2e.test.ts` ⏭️ DEFERRED (optional/Med per 07): the recipes are library modules (no runnable `main.ts`), and all five behaviors are already covered by the ST-7…ST-11 headless smoke specs. No child-process walkthrough added. (2026-07-11 14:06)
+- [x] 3.3.2 Full verification ✅ `yarn verify` green — 22/22 turbo tasks; lint (repo-wide) + typecheck + test all pass; no regressions (completed: 2026-07-11 14:07)
 
-**Verify**: `yarn verify`
+**Verify**: `yarn verify` ✅ PASS (2026-07-11 14:07)
 
 ---
 
