@@ -86,3 +86,4 @@ The blue window frame uses the window roles; the hosted editor uses the `editorN
 - [Editor](/components/editor/editor) — the editor this window hosts.
 - [Memo](/components/editor/memo) — a signal-bound editor for a dialog, without window chrome.
 - [Scroll bar](/components/containers/scroll-bar) — the bars framing the editor.
+- [API reference](/api/ui/classes/EditWindow) — the generated `EditWindow` signature.

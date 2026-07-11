@@ -103,3 +103,4 @@ The owned scroll bar uses the `scrollBar*` roles.
 
 - [List box](/components/containers/list-box) — a flat single-column list.
 - [Data grid](/components/table/data-grid) — a multi-column table.
+- [API reference](/api/ui/classes/Tree) — the generated `Tree` signature.

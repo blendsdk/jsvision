@@ -92,3 +92,4 @@ widget's `measure()` to size it to the chosen density; enabling `showWeekNumbers
 ## Related
 
 - [Date picker](/components/date/date-picker) — a one-line field that opens a Calendar in a popup.
+- [API reference](/api/ui/classes/Calendar) — the generated `Calendar` signature.

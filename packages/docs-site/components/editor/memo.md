@@ -71,3 +71,4 @@ Text uses the `memoNormal` / `memoSelected` gray-dialog roles (rather than the b
 - [Editor](/components/editor/editor) — the base multiline editor.
 - [Edit window](/components/editor/edit-window) — a full document window with scroll bars.
 - [Dialog](/components/containers/dialog) — the modal frame a memo typically sits in.
+- [API reference](/api/ui/classes/Memo) — the generated `Memo` signature.

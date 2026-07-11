@@ -12,10 +12,12 @@
 // Usage:  node packages/docs-site/scripts/gen-api.mjs   (or `yarn docs:api`)
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { API_MAP } from '../src/api/api-map.mjs';
+import { injectBackLink } from '../src/api/inject-back-links.mjs';
 
 const require = createRequire(import.meta.url);
 const siteRoot = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/docs-site
@@ -73,6 +75,58 @@ function mergeSidebars() {
   writeFileSync(join(apiDir, 'typedoc-sidebar.json'), `${JSON.stringify(merged, null, 2)}\n`);
 }
 
+/**
+ * Inject the "Documented in →" back-link into each mapped symbol's generated page.
+ * The trees are regenerated (and wiped) every run, so the notes are re-applied
+ * every build — never committed, never stale. Fails loud if a mapped symbol has no
+ * generated page, so a stale map row can't silently ship a dead link.
+ */
+function injectBackLinks() {
+  for (const link of API_MAP) {
+    const file = join(siteRoot, `${link.apiPath.replace(/^\//, '')}.md`);
+    if (!existsSync(file)) {
+      throw new Error(`gen-api: API_MAP apiPath has no generated page: ${link.apiPath}`);
+    }
+    writeFileSync(file, injectBackLink(readFileSync(file, 'utf8'), link));
+  }
+}
+
+/** Every `.md` file under `dir`, recursively (absolute paths). */
+function walkMd(dir) {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const abs = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...walkMd(abs));
+    else if (entry.name.endsWith('.md')) out.push(abs);
+  }
+  return out;
+}
+
+/**
+ * Give every generated page a package-qualified frontmatter title, so the same
+ * symbol re-exported by more than one package (e.g. `resolveCapabilities` in both
+ * core and ui) does not produce two pages with an identical `<title>`. The title
+ * is derived from the page's H1 plus the package name — deterministic, and unique
+ * across the whole reference.
+ */
+function qualifyTitles() {
+  for (const pkg of PACKAGES) {
+    for (const file of walkMd(join(apiDir, pkg.name))) {
+      const md = readFileSync(file, 'utf8');
+      if (md.startsWith('---\n')) continue; // already has frontmatter
+      const h1 = /^#\s+(.+?)\s*$/m.exec(md);
+      if (!h1) continue;
+      // TypeDoc backslash-escapes markdown punctuation in headings (`AMBIGUOUS\_PROBE`,
+      // `DeepPartial\<T\>`); undo that for a clean plain-text title. JSON.stringify then
+      // yields a valid YAML double-quoted scalar (handles any remaining quote/escape).
+      const title = `${h1[1]} · ${pkg.name}`.replace(/\\([^A-Za-z0-9])/g, '$1');
+      writeFileSync(file, `---\ntitle: ${JSON.stringify(title)}\n---\n\n${md}`);
+    }
+  }
+}
+
 const bin = typedocBin();
 for (const pkg of PACKAGES) generate(bin, pkg);
+injectBackLinks();
+qualifyTitles();
 mergeSidebars();

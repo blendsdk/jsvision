@@ -83,3 +83,4 @@ button draws the shared dropdown icon.
 
 - [Color swatch](/components/color/color-swatch) — the grid opened by the dropdown.
 - [Input](/components/controls/input) — the hex field used for custom truecolor.
+- [API reference](/api/ui/classes/ColorPicker) — the generated `ColorPicker` signature.

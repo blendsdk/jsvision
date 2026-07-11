@@ -60,3 +60,4 @@ Shares the check/radio cluster roles: `clusterNormal`, `clusterSelected` (focuse
 
 - [Check group](/components/controls/check-group) — independent (multi-select) checkboxes.
 - [Switch](/components/controls/switch) — a single on/off toggle.
+- [API reference](/api/ui/classes/RadioGroup) — the generated `RadioGroup` signature.

@@ -83,3 +83,4 @@ Both default to cyan on blue.
 - [Scroller](/components/containers/scroller) — a focusable viewport that owns bar(s) for you.
 - [List box](/components/containers/list-box) — a virtual-scroll list with an owned bar.
 - [Tree](/components/containers/tree) — an outline with an owned bar.
+- [API reference](/api/ui/classes/ScrollBar) — the generated `ScrollBar` signature.

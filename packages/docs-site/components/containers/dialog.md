@@ -90,3 +90,4 @@ The gray `dialog` role colours the chrome: `border` and `title` for the frame li
 - [Form dialog](/components/controls/form-dialog) — a worked dialog assembling several controls.
 - [File dialog](/components/files/file-dialog) — a `Dialog` subclass for picking files.
 - [Button](/components/controls/button) — the OK / Cancel controls that terminate a dialog.
+- [API reference](/api/ui/classes/Dialog) — the generated `Dialog` signature.

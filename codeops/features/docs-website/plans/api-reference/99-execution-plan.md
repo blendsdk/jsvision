@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-11 10:58
-> **Progress**: 5/16 tasks (31%)
+> **Last Updated**: 2026-07-11 11:24
+> **Progress**: 10/16 tasks (63%)
 > **CodeOps Skills Version**: 3.3.2
 
 ## Overview
@@ -68,19 +68,19 @@ Reference: [03-01](03-01-generation-pipeline.md) · AR-1/2/6/7/8/9/10/11/12/14/1
 ## Phase 2 — Site integration & cross-linking
 Reference: [03-02](03-02-integration-cross-linking.md) · AR-4/6/13/18/19/20 · ST-7, ST-12
 
-- [ ] 2.1 Spec: ST-7 (`injectBackLink` inserts after frontmatter + idempotent) and ST-12
-  (`validateApiMap` violations) + fixtures. Run red. — `packages/docs-site/test/api-back-links.spec.test.ts`, `test/api-map.spec.test.ts`, `test/fixtures/api/page.md`
-- [ ] 2.2 Impl: `inject-back-links.mjs`, `validate-api-map.mjs`, and `api-map.mjs` (plain ESM, AR-18;
-  the map co-located under `src/api/`, AR-20; seeded from the components that already have pages).
-  Green ST-7/12. — `packages/docs-site/src/api/*.mjs` (incl. `api-map.mjs`)
-- [ ] 2.3 Impl: `gen-api.mjs` stage-2 — `import` `injectBackLink` + `API_MAP` from `src/api/*.mjs`, walk
-  `API_MAP`, inject the "Documented in →" back-link into each `apiPath` page. — `packages/docs-site/scripts/gen-api.mjs`
-- [ ] 2.4 Impl: rewrite `api/index.md` as the "how to read this" preface (+ pre-release note for
+- [x] 2.1 Spec: ST-7 (`injectBackLink` inserts after frontmatter + idempotent) and ST-12
+  (`validateApiMap` violations) + fixtures. Run red. — `packages/docs-site/test/api-back-links.spec.test.ts`, `test/api-map.spec.test.ts`, `test/fixtures/api/page.md` (implemented: 2026-07-11 11:04 · completed: 2026-07-11 11:07 — red confirmed, then green)
+- [x] 2.2 Impl: `inject-back-links.mjs`, `validate-api-map.mjs`, and `api-map.mjs` (plain ESM, AR-18;
+  the map co-located under `src/api/`, AR-20; seeded comprehensively — **29 rows**, one per component
+  page with a clear primary symbol; form-dialog/preset-gallery left unmapped). Green ST-7/12. — `packages/docs-site/src/api/*.mjs` (incl. `api-map.mjs`) (implemented: 2026-07-11 11:07 · completed: 2026-07-11 11:07 — ST-7/ST-12 green, 4/4; all 29 apiPaths + component pages verified to exist)
+- [x] 2.3 Impl: `gen-api.mjs` stage-2 — `import` `injectBackLink` + `API_MAP` from `src/api/*.mjs`, walk
+  `API_MAP`, inject the "Documented in →" back-link into each `apiPath` page (fails loud on a missing page). — `packages/docs-site/scripts/gen-api.mjs` (implemented: 2026-07-11 11:09 · completed: 2026-07-11 11:10 — 29 back-links injected, determinism holds)
+- [x] 2.4 Impl: rewrite `api/index.md` as the "how to read this" preface (+ pre-release note for
   ui/files/web); wire a **defensive fs-read** of `typedoc-sidebar.json` into `config.ts` for `/api/`
   (`existsSync ? … : []`, AR-19 — so `docs:dev` on a fresh checkout still starts); add a forward "API
-  reference →" link to each mapped component page's `## Related`. — `packages/docs-site/api/index.md`, `.vitepress/config.ts`, `components/**/*.md`
-- [ ] 2.5 Verify: `yarn docs:build` renders `/api/` with the generated sidebar; forward + back links
-  present; VitePress dead-link check clean; `yarn verify` green. — **Verify**: `yarn verify`
+  reference →" link to each mapped component page's `## Related` (29 pages, via a one-off codemod). — `packages/docs-site/api/index.md`, `.vitepress/config.ts`, `components/**/*.md` (implemented: 2026-07-11 11:12 · completed: 2026-07-11 11:24)
+- [x] 2.5 Verify: `yarn docs:build` renders `/api/` with the generated sidebar; forward + back links
+  present; VitePress dead-link check clean; `yarn verify` green. — **Verify**: `yarn verify` (implemented: 2026-07-11 11:24 · completed: 2026-07-11 11:24 — ✅ `docs:build` exit 0, docs gate 14/14 (fixed ST-8 via AR-23: srcExclude test/ + package-qualified titles), `yarn verify` 22/22, docs-site 53 tests)
 
 **Deliverables**: `/api/` navigable in-site; bidirectional cross-links live.
 
