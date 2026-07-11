@@ -38,10 +38,18 @@ Spec 03-02. Oracles ST-01…ST-07 + preserved status oracles.
   faithful per-item render (pressed/enabled style matrix, `~…~` accent), `measure()` → `{width, height:1}`,
   `focusable=false`. Retain the public `StatusItem` **type** so `StatusItemView` satisfies it and
   exposes `.command`/`.text`/`.key`. (AR-2, AR-3, AR-9, AR-10, AR-13)
+  - **Preflight PF-004:** an accessor-text change must trigger `invalidateLayout()` (not just
+    `invalidate()`) so a widened string re-measures the row and shifts neighbours (ST-04). Bind the
+    accessor on **mount** (like `Text`) so eager construction at the 18 call sites needs no reactive owner.
 - [ ] **T-2.3** Rewrite `StatusLine` as `extends Group` (`direction:'row'`, `postProcess`), owning
   interaction: `itemAt(x)` over command-item children only, press/drag/release + accelerator sweep +
   capture via the unchanged seam; `statusLine(children: View[])`. Passive segments (spacer/widget/
   command-less) are skipped by hit-test + accelerators. (AR-4, AR-5, AR-12, AR-20)
+  - **Preflight PF-003:** set the group `background` to the `statusBar` bg so empty gap cells and
+    trailing cells keep the full-row fill the current monolithic `draw()` produced (`statusline.ts:138`);
+    otherwise ST-01's empty-gap assertion + the preserved trailing-cell pixel oracles regress.
+  - **Preflight (safe):** no external code reads `StatusLine.items` — back the accelerator sweep with
+    the command-item children instead.
 - [ ] **T-2.4** Update `packages/ui/src/status/index.ts` — add `StatusItemView` (additive); keep
   `StatusLine`/`statusLine`/`statusItem`/`StatusItem`/`StatusLoopSeam`.
 - [ ] **T-2.5** Green: ST-01…ST-07 pass **and** `app-shell.status.spec` + `app-shell.packaging.spec`
@@ -71,8 +79,11 @@ Spec 03-03. Oracles ST-08…ST-10 + preserved menu oracles.
 - [ ] **T-3.3** Make `layoutTitles(tops, barWidth?)` + `titleIndexAt(tops, x, barWidth?)` width-aware via
   `packRow` — default (no width / no spacer) byte-identical to today. (AR-7, AR-8)
 - [ ] **T-3.4** Thread the bar width: `MenuBar.draw` passes `ctx.size.width`; the click hit-test passes
-  the bar width; `MenuController.openTop` passes `viewport().width` so popups anchor under the moved
+  the bar width; the controller passes `viewport().width` so popups anchor under the moved
   title. (AR-8)
+  - **Preflight PF-002:** the `layoutTitles(tops)[index]` popup-anchor read lives in
+    **`openLevelForTop` (`controller.ts:197`)**, not `openTop` (`:230`, which calls it) — thread
+    `viewport().width` into `openLevelForTop`'s `layoutTitles` call. Safety net: ST-09.
 - [ ] **T-3.5** Export `menuSpacer` from `menu/index.ts` (additive). Green: ST-08…ST-10 pass **and**
   `app-shell.menu.spec` + `app-shell.menu.impl` pass unmodified.
 
@@ -91,10 +102,13 @@ Spec 03-04.
 
 - [ ] **T-4.1** `application.ts` — merge the fixed-1-row size into each bar's existing layout
   (`{...layout, size:{fixed:1}}`) so StatusLine keeps `direction:'row'`; app-shell oracles stay green. (AR-11)
-- [ ] **T-4.2** Extend `packages/examples/playground/main.ts` — `<Exit><spacer fill><ProgressBar><clock>`
-  status line + a right-aligned `~F1~ Help` menu via `menuSpacer()`; a ~1s timer bumps `value`/`clock`
-  and emits a no-op command to flush a frame (unref'd); keep the TTY guard + exit tail. (AR-14)
-- [ ] **T-4.3** Add `"playground"` to `packages/examples/tsconfig.json` `include`; confirm
+- [ ] **T-4.2** (Preflight PF-001, decision **B**) **Create** a new example
+  `packages/examples/chrome-bars-demo/main.ts` — `<Exit><spacer fill><ProgressBar><clock>` status line +
+  a right-aligned `~F1~ Help` menu via `menuSpacer()`; a ~1s timer bumps `value`/`clock` and emits a
+  no-op command to flush a frame (unref'd); keep the TTY guard + `main().then(process.exit)` tail. Add a
+  `"demo:chrome-bars": "tsx chrome-bars-demo/main.ts"` script to `packages/examples/package.json` (the
+  `demo:playground` name is already taken by `keyboard-mouse-playground`). (AR-14)
+- [ ] **T-4.3** Add `"chrome-bars-demo"` to `packages/examples/tsconfig.json` `include`; confirm
   `yarn workspace @jsvision/examples typecheck` now covers it. (AR-14)
 - [ ] **T-4.4** Add `kitchen-sink/stories/status-bar.story.ts` (id `app-shell/status-bar`: spacer
   right-align + embedded `ProgressBar` + live clock + blurb/hint) and register it in
@@ -111,7 +125,7 @@ Spec 03-04.
   all packages, including docs-site's live-example test/typecheck.
 - [ ] **T-5.2** Regression audit: confirm **no** preserved spec-oracle file was modified; every preserved
   oracle (status/menu/packaging/app-shell suites) green. (07 § B)
-- [ ] **T-5.3** Manual smoke on a real TTY: `yarn workspace @jsvision/examples playground` shows
+- [ ] **T-5.3** Manual smoke on a real TTY: `yarn workspace @jsvision/examples demo:chrome-bars` shows
   `<Exit>———fill———<progress><clock>`, the progress advances, the clock ticks, Alt-X quits. (Piped run
   hits the TTY guard — note that as the headless path.)
 - [ ] **T-5.4** Commit the feature via **/gitcm** (or **/gitcmp**), scope `status`/`menu`/`app-shell`.
