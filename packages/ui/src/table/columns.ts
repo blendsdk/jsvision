@@ -60,6 +60,11 @@ export interface ColumnGeometry {
  * @param rows    The current (unsorted) row snapshot.
  * @param measure Display-width function (measures each string in terminal cells, wide-glyph aware).
  * @returns One entry per column: the measured `auto` width, or `null` for non-`auto` columns.
+ * @example
+ * ```ts
+ * const cols = [{ title: 'Name', accessor: (r) => r.name, width: 'auto' as const }];
+ * measureAutoWidths(cols, [{ name: 'Ada' }, { name: 'Bartholomew' }], (s) => s.length); // [11]
+ * ```
  */
 export function measureAutoWidths<T>(
   columns: Column<T>[],
@@ -101,6 +106,14 @@ function toTrackItem<T>(col: Column<T>, autoWidth: number | null, pinned: number
  * @param autoWidths    The {@link measureAutoWidths} result (memoize it upstream).
  * @param viewportWidth The data-area width in cells.
  * @returns The resolved {@link ColumnGeometry}; empty arrays + `totalWidth 0` for zero columns.
+ * @example
+ * ```ts
+ * const cols = [
+ *   { title: 'A', accessor: (r) => r.a, width: '1fr' as const },
+ *   { title: 'B', accessor: (r) => r.b, width: 6 },
+ * ];
+ * apportionColumns(cols, [null, null], 20); // { widths: [12, 6], starts: [0, 13], totalWidth: 20 }
+ * ```
  */
 export function apportionColumns<T>(
   columns: Column<T>[],
@@ -157,6 +170,11 @@ export function apportionColumns<T>(
  * @param align   The horizontal alignment.
  * @param measure Per-glyph display-width function (measures in terminal cells, wide-glyph aware).
  * @returns A string that occupies exactly `width` terminal cells.
+ * @example
+ * ```ts
+ * alignCell('Ada', 6, 'right', (s) => s.length);         // '   Ada'
+ * alignCell('Bartholomew', 6, 'left', (s) => s.length);  // 'Bartho' (clipped to 6 cells)
+ * ```
  */
 export function alignCell(text: string, width: number, align: ColumnAlign, measure: (s: string) => number): string {
   if (width <= 0) return '';
@@ -186,6 +204,11 @@ export function alignCell(text: string, width: number, align: ColumnAlign, measu
  * @param sort    The active sort, or `null` for source order.
  * @returns A new sorted array, or the original `rows` unchanged when `sort` is `null` or its column
  *   index is out of range.
+ * @example
+ * ```ts
+ * const cols = [{ title: 'Qty', accessor: (r) => String(r.qty), width: 'auto' as const, compare: (a, b) => a.qty - b.qty }];
+ * sortRows([{ qty: 1000 }, { qty: 9 }], cols, { col: 0, dir: 'asc' }); // [{ qty: 9 }, { qty: 1000 }]
+ * ```
  */
 export function sortRows<T>(rows: T[], columns: Column<T>[], sort: SortState): T[] {
   if (sort === null || sort.col < 0 || sort.col >= columns.length) return rows;
