@@ -41,15 +41,15 @@ effect(() => {
 
 `new Editor(options)` — every field is optional; a bare `new Editor()` is fully usable.
 
-| Prop           | Type                     | Default    | Description                                                                    |
-| -------------- | ------------------------ | ---------- | ------------------------------------------------------------------------------ |
-| `clipboard`    | `Editor`                 | —          | The shared clipboard editor. Without one, in-app Cut/Copy/Paste is a no-op.    |
-| `keyBindings`  | `'modern' \| 'wordstar'` | `'modern'` | `'modern'` overlays Ctrl+X/C/V/A; `'wordstar'` is the classic WordStar layout. |
-| `undoDepth`    | `number`                 | `1000`     | Maximum retained undo steps.                                                   |
-| `autoIndent`   | `boolean`                | `false`    | Copy the previous line's leading whitespace on Enter.                          |
-| `overwrite`    | `boolean`                | `false`    | Start in overwrite mode (Insert toggles it).                                   |
-| `editorDialog` | `EditorDialogHandler`    | cancel-all | Handler for find/replace/save prompts.                                         |
-| `commands`     | `EditorCommandSeam`      | —          | Hook for greying out Cut/Copy/Paste as selection/undo state changes.           |
+| Prop           | Type                     | Default    | Description                                                                                                                                                                                                      |
+| -------------- | ------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clipboard`    | `Editor`                 | —          | An optional dedicated clipboard editor that takes precedence for Cut/Copy/Paste. Without one, the editor uses the event loop's shared app-local buffer, so clipboard still works and text moves between widgets. |
+| `keyBindings`  | `'modern' \| 'wordstar'` | `'modern'` | `'modern'` overlays Ctrl+X/C/V/A; `'wordstar'` is the classic WordStar layout.                                                                                                                                   |
+| `undoDepth`    | `number`                 | `1000`     | Maximum retained undo steps.                                                                                                                                                                                     |
+| `autoIndent`   | `boolean`                | `false`    | Copy the previous line's leading whitespace on Enter.                                                                                                                                                            |
+| `overwrite`    | `boolean`                | `false`    | Start in overwrite mode (Insert toggles it).                                                                                                                                                                     |
+| `editorDialog` | `EditorDialogHandler`    | cancel-all | Handler for find/replace/save prompts.                                                                                                                                                                           |
+| `commands`     | `EditorCommandSeam`      | —          | Hook for greying out Cut/Copy/Paste as selection/undo state changes.                                                                                                                                             |
 
 ### Reactive state
 
@@ -86,8 +86,10 @@ caret in view; bind a scroll bar to `editor.delta.x` / `editor.delta.y` to scrol
 
 ## Best practices
 
-- **Share one clipboard editor.** Pass the same hidden `Editor` as every editor's `clipboard` so Cut
-  in one and Paste in another work — there is no implicit global clipboard.
+- **A shared clipboard is built in.** Under the event loop, Cut/Copy/Paste use an app-local buffer
+  shared with every widget, so copying in an `Input` and pasting into an `Editor` (or between two
+  editors) just works — see [Keyboard & clipboard](/guide/#keyboard-clipboard). Pass a dedicated
+  `clipboard` editor only when you want a separate, scoped clipboard that takes precedence.
 - **Drive the UI from the signals.** Read `curPos`/`modified`/`canUndo` in an `effect` or bind them to
   a status line rather than polling the editor.
 - **Modern keys are the default.** Ctrl+C is copy, not the WordStar break — a deliberate, documented
