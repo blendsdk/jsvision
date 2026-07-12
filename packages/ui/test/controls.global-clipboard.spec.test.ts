@@ -223,3 +223,14 @@ test("ST-20: under clipboardKeys 'none', raw Ctrl+A still selects all via the wi
   loop.dispatch(key('a', { ctrl: true })); // no global keymap → raw key → Input.handleKey selectAll
   expect(input.selection).toEqual({ start: 0, end: 5 });
 });
+
+// ST-24 — hasSelection() reports the queryable selection state the app uses to grey copy/cut.
+test('ST-24: hasSelection() is false with no selection and true with one', () => {
+  const value = signal('hello');
+  const { loop, input } = mountInput({ value });
+  expect(input.hasSelection()).toBe(false); // fresh field: selStart === selEnd
+  loop.dispatch(key('a', { ctrl: true })); // select all
+  expect(input.hasSelection()).toBe(true); // selStart < selEnd
+  loop.dispatch(key('right')); // a plain motion collapses the selection
+  expect(input.hasSelection()).toBe(false);
+});

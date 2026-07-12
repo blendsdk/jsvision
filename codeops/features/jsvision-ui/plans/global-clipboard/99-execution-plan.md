@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-12 22:48
-> **Progress**: 34/50 tasks (68%)
+> **Last Updated**: 2026-07-12 23:24
+> **Progress**: 43/50 tasks (86%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -218,23 +218,23 @@ the mandatory showcase story.
 
 **Reference**: 07 ST-24, ST-25 · AR-7, AR-12
 
-- [ ] 4.1.1 Write `Input.hasSelection()` spec test (ST-24) — `packages/ui/test/controls.global-clipboard.spec.test.ts`
-- [ ] 4.1.2 Confirm the kitchen-sink smoke covers the new story (ST-25) — `packages/examples/kitchen-sink/test/kitchen-sink.smoke.spec.test.ts` (generic; no new file if it already iterates the registry)
-- [ ] 4.1.3 Run spec tests — verify the new/uncovered cases FAIL (red phase)
+- [x] 4.1.1 Write `Input.hasSelection()` spec test (ST-24) — `packages/ui/test/controls.global-clipboard.spec.test.ts` ✅ (implemented: 2026-07-12 23:15)
+- [x] 4.1.2 Confirm the kitchen-sink smoke covers the new story (ST-25) — `packages/examples/kitchen-sink/test/kitchen-sink.smoke.spec.test.ts` (generic registry loop picks it up; no new file) ✅ (implemented: 2026-07-12 23:15)
+- [x] 4.1.3 Run spec tests — verify the new/uncovered cases FAIL (red phase) — ST-24 was red before `hasSelection`; the smoke's registry loop had no `controls/clipboard` entry ✅ (implemented: 2026-07-12 23:15)
 
 ### Step 4.2: Implementation
 
 **Reference**: 03-03 §Input.5, §Kitchen-sink story
 
-- [ ] 4.2.1 Add `Input.hasSelection(): boolean` **and** a reactive `hasSelection: Signal<boolean>` updated on every selection change (`selectAll`, shift-extend, drag/double-click select, collapse/delete) — the mirror of the Editor's `hasSelection` (`Input` has no selection signal today). The app binds it for menu/status greying — `packages/ui/src/controls/input.ts`
-- [ ] 4.2.2 Add the `clipboard` story (two `Input`s + a `Memo`, live bound-state echo, copy/cut/paste/select-all across widgets, keyboard+mouse, hints) + register it — `packages/examples/kitchen-sink/stories/clipboard.story.ts`, `packages/examples/kitchen-sink/stories/index.ts`
-- [ ] 4.2.3 Add `@example` JSDoc to every new public export; confirm no banned CodeOps/TV IDs in shipped comments — `packages/ui/src/**`
-- [ ] 4.2.4 Run spec + smoke tests — verify they PASS (green phase)
+- [x] 4.2.1 Add `Input.hasSelection(): boolean` **and** a reactive `hasSelection: Signal<boolean>` updated on every selection change (`selectAll`, shift-extend, drag/double-click select, collapse/delete) — the mirror of the Editor's `hasSelection` (`Input` has no selection signal today). The app binds it for menu/status greying — `packages/ui/src/controls/input.ts` ✅ (implemented: 2026-07-12 23:15)
+- [x] 4.2.2 Add the `clipboard` story (two `Input`s + a `Memo`, live bound-state echo, copy/cut/paste/select-all across widgets, keyboard+mouse, hints) + register it — `packages/examples/kitchen-sink/stories/clipboard.story.ts`, `packages/examples/kitchen-sink/stories/index.ts` ✅ (implemented: 2026-07-12 23:15)
+- [x] 4.2.3 Add `@example` JSDoc to every new public export; confirm no banned CodeOps/TV IDs in shipped comments — `packages/ui/src/**` ✅ (implemented: 2026-07-12 23:15)
+- [x] 4.2.4 Run spec + smoke tests — verify they PASS (green phase) — controls.global-clipboard.spec 13/13, kitchen-sink.smoke 52/52 ✅ (implemented: 2026-07-12 23:15)
 
 ### Step 4.3: Implementation tests & hardening
 
-- [ ] 4.3.1 Write impl tests / story polish (no clipped text; bound-state echo updates) — relevant test files
-- [ ] 4.3.2 Full verification + `yarn check:docs` + kitchen-sink smoke
+- [x] 4.3.1 Write impl tests / story polish (no clipped text; bound-state echo updates) — added the reactive `hasSelection` fires-on-selection-only-change impl test (8/8 green); tightened the story's hints + `Notes` label so nothing clips at ~72 cols — `packages/ui/test/controls.global-clipboard.impl.test.ts`, `packages/examples/kitchen-sink/stories/clipboard.story.ts` ✅ (implemented: 2026-07-12 23:24)
+- [x] 4.3.2 Full verification + `yarn check:docs` + kitchen-sink smoke — ui 1575/1575, examples 161/161, check:docs clean, typecheck/build green. Refactor note: `hasSelection` pushed `input.ts` to 518 lines (over the ≤500 controls-file oracle ST-13/ST-15); extracted the pure `draw()` paint body to `input-render.ts` as `paintInput` → 497, oracle green. Out-of-scope pre-existing/environmental core failures (untouched by this feature): `packaging.spec` ST-3 (CHANGELOG.md not in the pack allow-list, v0.2.0 `[skip ci]` release drift) + `perf-budget.spec` ST-1 (timing test, flaky under the parallel turbo fan-out; passes 2/2 in isolation; never gates) ✅ (implemented: 2026-07-12 23:24)
 
 **Verify**: `yarn verify` && `yarn workspace @jsvision/examples test`
 
