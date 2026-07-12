@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-12 22:36
-> **Progress**: 28/50 tasks (56%)
+> **Last Updated**: 2026-07-12 22:48
+> **Progress**: 34/50 tasks (68%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -182,22 +182,30 @@ scope guard.
 
 **Reference**: 07 ST-19, ST-22, ST-23 · AR-6, AR-15
 
-- [ ] 3.1.1 Write cross-widget + modal-scope spec tests (ST-22 Editor→Input, ST-23 Input→Editor, ST-19 copy-in-dialog → paste-after-close) — `packages/ui/test/editor.global-clipboard.spec.test.ts`
-- [ ] 3.1.2 Run spec tests — verify they FAIL (red phase)
+- [x] 3.1.1 Write cross-widget + modal-scope spec tests (ST-22 Editor→Input, ST-23 Input→Editor, ST-19 copy-in-dialog → paste-after-close) — `packages/ui/test/editor.global-clipboard.spec.test.ts` ✅ (completed: 2026-07-12 22:45)
+- [x] 3.1.2 Run spec tests — verify they FAIL (red phase) ✅ (completed: 2026-07-12 22:45 — ST-23 red; ST-22/19 already held via the loop buffer)
 
 ### Step 3.2: Implementation
 
 **Reference**: 03-03 §Editor.3
 
-- [ ] 3.2.1 Thread `ev.readClipboard` → `ed.clipboardRead` in `handleEditorEvent` (mirror of the `mirrorSink` line); `editorPaste` falls back to the loop buffer when the clipboard editor yields `''` — `packages/ui/src/editor/editor-events.ts`, `packages/ui/src/editor/editor-clipboard.ts`
-- [ ] 3.2.2 Run spec tests — verify they PASS (green phase)
+- [x] 3.2.1 Thread `ev.readClipboard` → `ed.clipboardRead` in `handleEditorEvent` (mirror of the `mirrorSink` line); `editorPaste` falls back to the loop buffer when the clipboard editor yields `''` — `packages/ui/src/editor/editor-events.ts`, `packages/ui/src/editor/editor-clipboard.ts` ✅ (completed: 2026-07-12 22:45)
+- [x] 3.2.2 Run spec tests — verify they PASS (green phase) ✅ (completed: 2026-07-12 22:45 — 4/4 editor global-clipboard specs green)
 
 ### Step 3.3: Implementation tests & hardening
 
-- [ ] 3.3.1 Write impl tests (precedence: an injected clipboard editor beats the loop buffer when both are set; paste is one undo step) — `packages/ui/test/editor.global-clipboard.impl.test.ts`
-- [ ] 3.3.2 Full verification
+- [x] 3.3.1 Write impl tests (precedence: an injected clipboard editor beats the loop buffer when both are set; paste is one undo step) — `packages/ui/test/editor.global-clipboard.impl.test.ts` ✅ (completed: 2026-07-12 22:45 — 2 green)
+- [x] 3.3.2 Full verification ✅ (completed: 2026-07-12 22:48 — ui 1573 unit + typecheck + check:docs; all ui-dependent pkgs green; check-plugin PASS)
 
 **Verify**: `yarn verify`
+
+> **Cross-feature oracle conflict — RESOLVED (runtime AR-20, user-chosen).** The cross-widget Editor
+> paste fallback (R4/R12/AR-6, required by ST-23 whose paste target is a *bare* Editor; 03-03 §Editor.3
+> specifies falling back when the clipboard editor is "absent **or** empty") deliberately supersedes the
+> RD-08 oracle `editor.spec.test.ts > ST-17`'s "bare Editor paste is a no-op" clause (TV null-clipboard,
+> RD-08 PA-2). It was the ONLY editor regression. Resolved by updating that one RD-08 assertion
+> (`bare.getText()` `'c'`→`'abc'`) + its comment/title, marked in-code as the deliberate global-clipboard
+> supersession. Suite green 1573/1573.
 
 ---
 

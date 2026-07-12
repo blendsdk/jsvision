@@ -23,6 +23,7 @@ import { Editor, SM_EXTEND } from './editor.js';
 export function handleEditorEvent(ed: Editor, ev: DispatchEvent): void {
   const inner = ev.event;
   if (ev.setClipboard !== undefined) ed.mirrorSink = ev.setClipboard; // copy/cut mirror channel
+  if (ev.readClipboard !== undefined) ed.clipboardRead = ev.readClipboard; // paste fallback to the app-local buffer
   if (inner.type === 'mouse' || inner.type === 'wheel') {
     handleEditorMouse(ed, ev);
     return;
