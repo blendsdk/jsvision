@@ -23,17 +23,33 @@
     "verify": "yarn lint && turbo run typecheck build test check:docs && node scripts/check-plugin.mjs",
     "gate": "node scripts/gate.mjs",
     "plugin:sync": "node scripts/plugin-sync.mjs",
-    "sync-versions": "node scripts/sync-versions.mjs",
+    "ncu:check": "ncu --root --workspaces -x \"@jsvision/*\"",
+    "ncu": "ncu -u --root --workspaces -x \"@jsvision/*\" && rm -rf node_modules yarn.lock && yarn install && yarn verify",
+    "lockstep:version": "lockstep version --type auto --ci",
+    "lockstep:publish": "lockstep publish --tag latest --git-push --provenance",
+    "sync-core-version": "node scripts/sync-core-version.mjs",
     "bench": "yarn workspace @jsvision/core bench",
     "designer": "yarn workspace @jsvision/theme-designer start",
     "docs:dev": "yarn workspace @jsvision/docs-site dev",
     "docs:api": "yarn build && yarn workspace @jsvision/docs-site docs:api",
-    "docs:build": "yarn docs:api && yarn workspace @jsvision/docs-site vp:build"
+    "docs:build": "yarn docs:api && yarn workspace @jsvision/docs-site vp:build",
+    "prepare": "husky"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.111.0",
+    "@blendsdk/lockstep": "^1.2.0",
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.0",
     "eslint": "^9.17.0",
     "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.1.7",
+    "npm-check-updates": "^22.2.9",
+    "openai": "^6.46.0",
     "prettier": "^3.4.2",
     "turbo": "^2.10.0",
     "typescript": "^5.7.2",

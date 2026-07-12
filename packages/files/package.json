@@ -1,9 +1,28 @@
 {
   "name": "@jsvision/files",
-  "private": true,
   "version": "0.1.0",
-  "description": "jsvision files — the Turbo Vision file-system dialog family (FileDialog/ChDirDialog + FileList/DirList/FileInput/FileInfoPane) on @jsvision/ui. Private until first release.",
+  "description": "jsvision files — a classic file-system dialog family (FileDialog/ChDirDialog + FileList/DirList/FileInput/FileInfoPane) for @jsvision/ui.",
+  "keywords": [
+    "tui",
+    "terminal",
+    "file-dialog",
+    "file-browser",
+    "widgets",
+    "text-mode",
+    "typescript"
+  ],
+  "homepage": "https://github.com/blendsdk/jsvision#readme",
+  "bugs": "https://github.com/blendsdk/jsvision/issues",
   "license": "MIT",
+  "author": "TrueSoftware B.V. <gevik@truesoftware.nl>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/files"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -19,6 +38,7 @@
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {

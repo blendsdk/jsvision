@@ -92,7 +92,7 @@ export async function runDialog(host: ModalDialogHost, dlg: Dialog): Promise<str
  * @param o    Title, message text, and the button set.
  * @returns `'ok'` when OK is chosen, `'cancel'` on Cancel, Esc, or the frame close-box.
  * @example
- * await messageBox(app, { title: 'About', text: 'jsvision — Turbo Vision, reimagined' });
+ * await messageBox(app, { title: 'About', text: 'jsvision — classic terminal UI, reimagined' });
  * const answer = await messageBox(app, { title: 'Delete?', text: 'This cannot be undone.', buttons: 'okCancel' });
  * if (answer === 'ok') remove();
  */

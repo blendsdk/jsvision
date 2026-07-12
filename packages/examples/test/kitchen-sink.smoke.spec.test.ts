@@ -15,7 +15,7 @@ import { test, expect } from 'vitest';
 import {
   resolveCapabilities,
   Attr,
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,
@@ -189,7 +189,7 @@ test('ST-35: the theming/presets story is registered with metadata and paints', 
 // buffer, so a hot-swap to any preset paints (the render root is themed with the preset directly).
 test('ST-35: every preset renders a representative widget set to a non-empty buffer', () => {
   const presets: Record<string, Theme> = {
-    turboVisionTheme,
+    classicTheme,
     monochromeTheme,
     slateTheme,
     nordTheme,

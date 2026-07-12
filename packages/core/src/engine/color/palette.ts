@@ -4,7 +4,7 @@
  *
  * The reference tables ({@link ANSI16_REFERENCE}, {@link rgb256}) define the
  * canonical RGB of each terminal palette slot, so downsampling can pick the
- * nearest match. The app-facing {@link PALETTE} is the classic Borland 16-color
+ * nearest match. The app-facing {@link PALETTE} is the classic DOS 16-color
  * set as ready-to-use `#rrggbb` values you assign to theme roles or cells.
  */
 import type { Ansi16Name, Color } from '../render/types.js';
@@ -96,7 +96,7 @@ export function rgb256(index: number): Rgb {
 }
 
 /**
- * The classic Borland / DOS 16-color palette as ready-to-use `#rrggbb` colors.
+ * The classic DOS 16-color palette as ready-to-use `#rrggbb` colors.
  *
  * Each value is a valid {@link Color} you can assign directly to a cell or a
  * theme role; it encodes through the normal {@link encode} path (and downsamples
