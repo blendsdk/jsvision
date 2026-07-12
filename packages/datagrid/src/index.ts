@@ -10,3 +10,13 @@
 export { column } from './column.js';
 export type { GridColumn } from './column.js';
 export type { ColumnWidth, ColumnAlign } from '@jsvision/ui';
+
+// Data source — the read seam the grid binds to. `fromRows` is the in-memory source; every source
+// carries a required `rowKey`. `SortKey`/`FilterModel` are forward-declared for later push-down.
+export { fromRows } from './data-source.js';
+export type { GridDataSource, SortKey, FilterModel } from './data-source.js';
+
+// Commit sink — the `onCommit` veto contract and the `commitCell` primitive that applies an edit
+// immediately and reverts it on veto.
+export { commitCell } from './commit.js';
+export type { CellCommit, OnCommit } from './commit.js';
