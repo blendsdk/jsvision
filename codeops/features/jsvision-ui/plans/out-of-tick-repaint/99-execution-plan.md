@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-12 22:49
-> **Progress**: 4/12 tasks (33%)
+> **Last Updated**: 2026-07-12 23:02
+> **Progress**: 9/12 tasks (75%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -85,15 +85,15 @@ out-of-tick staleness before changing anything (so the red phase is meaningful).
 **Reference**: [03-01-coalesced-schedule.md](03-01-coalesced-schedule.md), [03-02-lifecycle-stop-seam.md](03-02-lifecycle-stop-seam.md) · PA-1,PA-2,PA-3,PA-5
 **Objective**: Implement the painter and the gate; turn the spec suite green.
 
-- [ ] 3.1.1 Add public surface to types: `EventLoopOptions.scheduleMicrotask?` and `EventLoop.stop()` — `packages/ui/src/event/types.ts`
-- [ ] 3.1.2 Implement the painter in `EventLoopImpl`: replace the no-op `schedule` with the coalesced seam; extract `paint()` from the `runTick` tail (reuse at `runTick`, and clear `flushPending` in `resize`/`mount`); add `flushPending` + `stopped` fields, the `scheduleMicrotask` default, and `stop()` — `packages/ui/src/event/event-loop.ts`
-- [ ] 3.1.3 Wire `ctx.loop.stop()` into `run()`'s `finally` (after `host.stop()`, before nulling the sinks) — `packages/ui/src/app/run.ts`
-- [ ] 3.1.4 JSDoc both new public symbols with a copy-pasteable `@example` (per the project's non-negotiable doc rule); no `codeops/`/RD refs in shipped code — `packages/ui/src/event/{types,event-loop}.ts`
-- [ ] 3.1.5 Run the spec suite — verify GREEN (ST-1…ST-6). If any fails, fix the implementation, never the test — `packages/ui`
+- [x] 3.1.1 Add public surface to types: `EventLoopOptions.scheduleMicrotask?` and `EventLoop.stop()` — `packages/ui/src/event/types.ts` ✅ (completed: 2026-07-12 23:02)
+- [x] 3.1.2 Implement the painter in `EventLoopImpl`: replace the no-op `schedule` with the coalesced seam; extract `paint()` from the `runTick` tail (reuse at `runTick`, and clear `flushPending` in `resize`); add `flushPending` + `stopped` fields, the `scheduleMicrotask` default, and `stop()` — `packages/ui/src/event/event-loop.ts` ✅ (completed: 2026-07-12 23:02) — **PA-12 runtime correction: `mount()` must NOT clear `flushPending` (its `onMount`-bind re-schedules during the flush, so the mount microtask is the drain that clears the render root's `scheduled` flag)**
+- [x] 3.1.3 Wire `ctx.loop.stop()` into `run()`'s `finally` (after `host.stop()`, before nulling the sinks) — `packages/ui/src/app/run.ts` ✅ (completed: 2026-07-12 23:02)
+- [x] 3.1.4 JSDoc both new public symbols with a copy-pasteable `@example` (per the project's non-negotiable doc rule); no `codeops/`/RD refs in shipped code — `packages/ui/src/event/{types,event-loop}.ts` ✅ (completed: 2026-07-12 23:02)
+- [x] 3.1.5 Run the spec suite — verify GREEN (ST-1…ST-6). If any fails, fix the implementation, never the test — `packages/ui` ✅ (completed: 2026-07-12 23:02)
 
 **Deliverables**:
-- [ ] Painter + `stop()` implemented; additive-only public surface
-- [ ] ST-1…ST-6 green
+- [x] Painter + `stop()` implemented; additive-only public surface
+- [x] ST-1…ST-6 green
 
 **Verify**: `yarn workspace @jsvision/ui test`
 

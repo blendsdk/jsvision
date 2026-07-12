@@ -71,6 +71,21 @@ export interface EventLoopOptions {
    * When unset (a bare loop), the quit command is a plain command with no special termination.
    */
   onQuit?: (code: number) => void;
+  /**
+   * How the loop defers an out-of-tick repaint. Defaults to `queueMicrotask`. A mutation that reaches
+   * the retained view tree outside a dispatch tick — a timer callback, a promise continuation, or a
+   * direct imperative call between input ticks — is painted on the callback this schedules, coalesced
+   * so a burst of such mutations in one JS turn produces a single frame. Inject a capturing
+   * implementation to step that deferred paint deterministically in a test.
+   *
+   * @example
+   * // Deterministic stepping in a test: capture the deferred paint instead of queuing a microtask.
+   * const pending: Array<() => void> = [];
+   * const loop = createEventLoop({ width: 40, height: 10 }, { caps, scheduleMicrotask: (cb) => pending.push(cb) });
+   * // …cause an out-of-tick signal write…
+   * pending.forEach((cb) => cb()); // run the coalesced deferred paint
+   */
+  scheduleMicrotask?: (cb: () => void) => void;
 }
 
 /**
@@ -87,6 +102,19 @@ export interface EventLoop {
   readonly renderRoot: RenderRoot;
   /** Mount a view tree as the loop's root and paint the first frame. Call once before dispatching. */
   mount(root: View): void;
+  /**
+   * Stop the loop's out-of-tick painter. After `stop()`, a mutation that would normally schedule a
+   * deferred repaint — a timer, a promise continuation, a direct call between ticks — is ignored, and
+   * any already-queued deferred paint is skipped, so a late callback during or after teardown never
+   * writes to a stopped host. Idempotent. In-tick painting (a `dispatch`/`resize`/command) is
+   * unaffected: a running loop never calls this, and `run()` calls it once during shutdown. It does
+   * not dispose the mounted view tree.
+   *
+   * @example
+   * // Inside run()'s shutdown, after the terminal is restored:
+   * loop.stop(); // gate the deferred painter before detaching the frame/caret sinks
+   */
+  stop(): void;
   /** Feed one decoded input event (key/mouse/wheel/paste) into the loop; it routes and repaints in one tick. */
   dispatch(event: AppEvent): void;
   /** Resize the viewport: reflow the tree and paint exactly one frame. */

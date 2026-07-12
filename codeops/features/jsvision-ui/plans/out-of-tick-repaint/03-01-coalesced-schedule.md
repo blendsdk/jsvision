@@ -110,8 +110,13 @@ private paint(): void {
   with `this.paint();`.
 - **`resize`** (`event-loop.ts:243-244`): after its existing `onFrame`/`emitCaret`, add
   `this.flushPending = false;` (its synchronous `renderRoot.flush()` already made the queued
-  microtask redundant).
-- **`mount`** (`event-loop.ts:203-208`): after `emitCaret()`, add `this.flushPending = false;`.
+  microtask redundant; `resize` re-runs no `onMount`, so nothing re-schedules).
+- **`mount`** (`event-loop.ts:203-208`): after `emitCaret()`, **do NOT** clear `flushPending`
+  (runtime correction — PA-12). Unlike `resize`, the initial layout fires each view's `onMount` →
+  `bind`, whose first effect run marks the tree dirty again, so the render root ends this synchronous
+  paint with a **pending** flush (`scheduled = true`). The queued microtask is what drains it (its
+  `paint()` calls `renderRoot.flush()`); clearing `flushPending` here would strand the render root's
+  `scheduled` flag and block every later out-of-tick repaint.
 
 ## Integration Points
 
@@ -129,7 +134,8 @@ private paint(): void {
 | Out-of-tick signal write | `bind` effect → `invalidate` → `scheduleFlush` (render root `scheduled=true`) → seam (`draining=false`) → `flushPending=true` + microtask → microtask runs `paint()` | 1 frame ✅ |
 | N out-of-tick writes, one turn | first sets `flushPending`; the rest early-return (`flushPending` already true; render-root `scheduled` also true) | 1 frame ✅ |
 | In-tick mutation | seam sees `draining=true` → returns; `runTick` tail `paint()` | 1 frame ✅ (no microtask) |
-| `resize()` / `mount()` | inline `renderRoot.flush()` schedules a microtask (`draining=false`); the method ends `flushPending=false` → microtask no-ops | 1 frame ✅ |
+| `resize()` | inline `renderRoot.flush()` leaves `scheduled` clean; the method ends `flushPending=false` → the queued microtask no-ops | 1 frame ✅ |
+| `mount()` | the initial layout's `onMount`→`bind` re-marks the tree dirty during the flush, so the render root ends `scheduled=true`; `flushPending` is left set so the queued microtask drains it (`renderRoot.flush()`) — a redundant identical paint, then clean (PA-12) | 1 frame + 1 drain ✅ |
 | Tick pre-empts a queued microtask | tick `paint()` clears `flushPending`; the microtask then sees `!flushPending` → returns | no redundant frame ✅ |
 | After `stop()` | seam returns on `stopped`; a queued microtask returns on `stopped` | no paint ✅ (03-02) |
 
