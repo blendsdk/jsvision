@@ -1,7 +1,7 @@
 # Task T-01: Release stdin on host `stop()` so the process exits after quit
 
 > **Type**: Task (lightweight) · **Feature**: _maintenance · **CodeOps Skills Version**: 3.4.1
-> **Progress**: 4/5 tasks (80%)
+> **Progress**: 5/5 tasks (100%)
 > **Last Updated**: 2026-07-12
 
 ## Objective
@@ -99,7 +99,7 @@ if (streams && dataListener) {
 - [x] T-01.2 Implement the `stop()` pause fix in `host.ts`; re-run the spec → **green**.
 - [x] T-01.3 Write `host-stop-release.impl.test.ts` (ST-2, ST-3); run → green.
 - [x] T-01.4 Run core unit suite + lint on the changed files.
-- [ ] T-01.5 Commit (`fix(host): …`, `closes #69`); close #67 + #69 on GitHub, leave #68 open.
+- [x] T-01.5 Commit (`fix(host): …`, `closes #69`); close #67 + #69 on GitHub, leave #68 open.
 
 **Verify**: `TUI_SKIP_PERF=1 yarn verify` (fix is validated by the `@jsvision/core` unit suite +
 `eslint`/`prettier` on the touched files; the pre-existing v0.1.1 release debt in
