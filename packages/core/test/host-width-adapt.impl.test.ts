@@ -174,3 +174,61 @@ describe('host adaptation resilience', () => {
     await host.stop();
   });
 });
+
+describe('render gating across start()/stop()', () => {
+  const ALT_ENTER = '\x1b[?1049h'; // the alternate-screen enter written at the end of start()
+
+  // A frame produced during start()'s async width probe (before the alternate screen is entered) must
+  // never reach the terminal: it would land on the primary screen, blank the alt-screen's first diff
+  // (the frame equals prev, so nothing repaints), and reappear on the primary screen on exit. The UI
+  // event loop can produce exactly such a frame — a coalesced out-of-tick paint queued at mount fires
+  // on the first microtask, which is inside `await host.start()`.
+  test('render() during the start() probe window writes nothing; the frame lands after the alt-screen', async () => {
+    const output = new CaptureStream();
+    const input = new FakeInput(true);
+    const host = createHost({
+      caps: caps(), // utf8 + box-drawing ⇒ not ASCII-safe ⇒ start() runs the probe and awaits
+      runtime: new FakeRuntimeAdapter(),
+      input: input.asInput(),
+      output: output.asOutput(),
+      adaptAmbiguousWidth: true,
+    });
+
+    const startP = host.start();
+    await tick(); // start() is now suspended on the width probe — streams bound, alt-screen not entered
+    expect(output.data).not.toContain(ALT_ENTER); // sanity: still on the primary screen
+
+    host.render(rowBuffer(['Z', 'Z', 'Z'])); // a paint arriving mid-start
+    expect(output.data).not.toContain('Z'); // dropped: nothing written before the host is ready
+
+    input.feed(twoCprs(9, 9)); // narrow reply ⇒ probe resolves, start() enters the alternate screen
+    await startP;
+    expect(output.data).toContain(ALT_ENTER);
+
+    // The host is ready now: the same frame reaches the output as a full first frame (the dropped paint
+    // never set the diff baseline, so this is not an empty diff).
+    const afterEnter = output.data.length;
+    host.render(rowBuffer(['Z', 'Z', 'Z']));
+    expect(output.data.slice(afterEnter)).toContain('Z');
+    await host.stop();
+  });
+
+  test('render() after stop() writes nothing (the terminal is being restored)', async () => {
+    const output = new CaptureStream();
+    const input = new FakeInput(true);
+    const host = createHost({
+      caps: caps(),
+      runtime: new FakeRuntimeAdapter(),
+      input: input.asInput(),
+      output: output.asOutput(),
+      // probe off (default) ⇒ start() completes synchronously
+    });
+
+    await host.start();
+    await host.stop();
+
+    output.data = '';
+    host.render(rowBuffer(['Z']));
+    expect(output.data).toBe(''); // gated: no frame after teardown
+  });
+});
