@@ -27,11 +27,11 @@
   "dependencies": {
     "@jsvision/core": "0.1.1",
     "@jsvision/ui": "0.1.1",
-    "pg": "^8.13.1"
+    "pg": "^8.22.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
-    "@types/pg": "^8.11.10",
-    "tsx": "^4.19.2"
+    "@types/node": "^26.1.1",
+    "@types/pg": "^8.20.0",
+    "tsx": "^4.23.0"
   }
 }

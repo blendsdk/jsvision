@@ -68,7 +68,10 @@ function toBytes(chunk: Buffer | string): Uint8Array {
  * }
  */
 export function createTerminalQuery(options: TerminalQueryOptions = {}): ManagedTerminalQuery {
-  const input = options.input ?? process.stdin;
+  // Annotate to the readable-stream interface so the type stays a single stream
+  // shape; unioning process.stdin's concrete type with it makes the event-emitter
+  // overloads (on/removeListener) resolve to incompatible signatures.
+  const input: NodeJS.ReadableStream = options.input ?? process.stdin;
   const output = options.output ?? process.stdout;
 
   const queue: Uint8Array[] = [];
