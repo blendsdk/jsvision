@@ -21,7 +21,11 @@ import { Window } from '../src/window/index.js';
 
 // A UTF-8 locale so the Spinner keeps its Unicode `dots` preset (a bare env would fall back to the
 // ASCII `line` frames), and truecolor so color depth never downsamples the frame under test.
-const caps = resolveCapabilities({ env: { LANG: 'en_US.UTF-8' }, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
+const caps = resolveCapabilities({
+  env: { LANG: 'en_US.UTF-8' },
+  platform: 'linux',
+  override: { colorDepth: 'truecolor' },
+}).profile;
 const PATTERN = defaultTheme.desktop.pattern; // the desktop fill glyph (░)
 
 /** The glyph painted at a cell of a frame. */
@@ -206,7 +210,7 @@ describe('out-of-tick repaint', () => {
   // double-paint. (This case may pass before the fix too — pre-fix, resize paints synchronously and
   // nothing is ever queued; post-fix, the queued callback is a clean no-op.)
   test('ST-5: resize does not double-paint via a leftover deferred callback', () => {
-    const { loop, pending, runPending } = harness({ width: 10, height: 3 });
+    const { loop, runPending } = harness({ width: 10, height: 3 });
     const g = new Group();
     const sv = new SignalView(() => 'X');
     sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 5, height: 1 } };
