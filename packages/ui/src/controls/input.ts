@@ -17,8 +17,9 @@
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent, Point } from '../view/index.js';
+import { signal } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
-import type { KeyEvent, MouseEvent, Style } from '@jsvision/core';
+import type { KeyEvent, MouseEvent } from '@jsvision/core';
 import type { Validator } from './validators/index.js';
 import { Commands } from '../status/index.js';
 import { selectionBlock, mousePos, motionOf, caretAfterMotion } from './input-selection.js';
@@ -26,7 +27,7 @@ import { clipboardChord, clipboardCommand, applyPaste, insertFilled } from './in
 import type { ClipboardAction } from './input-clipboard.js';
 import { computeDelete } from './input-editing.js';
 import type { EditState, DeleteKind } from './input-editing.js';
-import { LEFT_ARROW, RIGHT_ARROW, canScrollRight, displayedPos, glyphAt } from './input-render.js';
+import { canScrollRight, displayedPos, paintInput } from './input-render.js';
 
 /** Options for {@link Input}. */
 export interface InputOptions {
@@ -83,6 +84,13 @@ export class Input extends View {
   protected dragging = false;
   /** Set by {@link valid} / focus-leave; drives the invalid styling. Read it to react to validity. */
   invalid = false;
+  /**
+   * Whether the field currently holds a non-empty selection, as a reactive signal. Read it as
+   * `input.hasSelection()`, or bind it (in an effect/computed) to grey a Cut/Copy menu or status item
+   * when nothing is selected. It updates on every selection change — select-all, Shift+motion, mouse
+   * drag/double-click, and any edit that collapses or deletes the selection.
+   */
+  readonly hasSelection: Signal<boolean> = signal(false);
   /** Tracks the focus edge so the blocking validator runs only when focus actually leaves the field. */
   protected wasFocused = false;
 
@@ -133,6 +141,7 @@ export class Input extends View {
           if (this.selStart > len) this.selStart = len;
           if (this.selEnd > len) this.selEnd = len;
           if (this.anchor > len) this.anchor = len;
+          this.refreshHasSelection(); // a shorter external value can collapse the selection
           this.adjustScroll();
         },
       );
@@ -163,40 +172,20 @@ export class Input extends View {
   }
 
   /**
-   * Paint the field: the value from `firstPos` at column 1, the edge arrows when scrolled, in the
-   * focused/normal role.
+   * Paint the field: the scrolled value at column 1, the edge arrows, the selection band, and a
+   * visible caret, in the focused/normal role. Delegates the pixel math to the render helper.
    *
    * @param ctx The clipped, view-local paint context.
    */
   override draw(ctx: DrawContext): void {
-    const v = this.value();
-    const style = ctx.color(this.state.focused ? 'inputSelected' : 'inputNormal');
-    const arrows = ctx.color('inputArrows');
-    const { width: w, height: h } = ctx.size;
-    ctx.fillRect(0, 0, w, h, ' ', style);
-    if (w > 1) ctx.text(1, 0, v.slice(this.firstPos, this.firstPos + (w - 1)), style); // text starts at column 1
-    if (canScrollRight(v, w, this.firstPos)) ctx.text(w - 1, 0, RIGHT_ARROW, arrows);
-    if (this.firstPos > 0) ctx.text(0, 0, LEFT_ARROW, arrows);
-    // Highlight the visible part of the selection, only when focused with a non-empty selection.
-    if (this.state.focused && this.selStart < this.selEnd) {
-      const l = Math.max(0, displayedPos(this.selStart) - this.firstPos);
-      const r = Math.min(w - 2, displayedPos(this.selEnd) - this.firstPos);
-      if (l < r) {
-        const seg = v.slice(this.firstPos + l, this.firstPos + r); // the characters inside the band
-        ctx.text(l + 1, 0, seg, ctx.color('inputSelection'));
-      }
-    }
-    // Draw a visible caret LAST by repainting the edit cell with the field colours reversed, so the
-    // caret shows even on terminals that hide the hardware cursor (and in headless/test rendering).
-    // Reuse whatever glyph already sits there (a character or an edge arrow) so the caret overlays
-    // it rather than erasing it.
-    if (this.state.focused) {
-      const caretCol = displayedPos(this.curPos) - this.firstPos + 1;
-      if (caretCol >= 0 && caretCol < w) {
-        const reversed: Style = { fg: style.bg, bg: style.fg }; // field fg/bg swapped
-        ctx.text(caretCol, 0, glyphAt(caretCol, v, w, this.firstPos), reversed);
-      }
-    }
+    paintInput(ctx, {
+      value: this.value(),
+      focused: this.state.focused,
+      selStart: this.selStart,
+      selEnd: this.selEnd,
+      curPos: this.curPos,
+      firstPos: this.firstPos,
+    });
   }
 
   /**
@@ -368,6 +357,7 @@ export class Input extends View {
     this.curPos = s.curPos;
     this.selStart = s.selStart;
     this.selEnd = s.selEnd;
+    this.refreshHasSelection();
   }
 
   /**
@@ -418,11 +408,18 @@ export class Input extends View {
     const { start, end } = selectionBlock(this.curPos, this.anchor);
     this.selStart = start;
     this.selEnd = end;
+    this.refreshHasSelection();
   }
 
   /** Clear the selection. */
   protected collapseSelection(): void {
     this.selStart = this.selEnd = 0;
+    this.refreshHasSelection();
+  }
+
+  /** Push the current selection-presence into {@link hasSelection} so an app can react to selection changes. */
+  protected refreshHasSelection(): void {
+    this.hasSelection.set(this.selStart !== this.selEnd);
   }
 
   /**
@@ -433,6 +430,7 @@ export class Input extends View {
   selectAll(enable = true): void {
     this.selStart = 0;
     this.curPos = this.selEnd = enable ? this.value().length : 0;
+    this.refreshHasSelection();
     this.adjustScroll();
     this.invalidate();
   }

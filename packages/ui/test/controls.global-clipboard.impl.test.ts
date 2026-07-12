@@ -9,7 +9,7 @@ import type { KeyEvent, CapabilityProfile } from '@jsvision/core';
 import { View, Group } from '../src/view/index.js';
 import type { DrawContext, DispatchEvent } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
-import { signal } from '../src/reactive/index.js';
+import { signal, effect, createRoot } from '../src/reactive/index.js';
 import { Input, picture, range } from '../src/controls/index.js';
 import { Commands } from '../src/status/index.js';
 
@@ -120,4 +120,29 @@ test('a paste command on an event with no readClipboard seam is a harmless no-op
   const input = new Input({ value }); // never mounted in a loop → no enriched seams
   input.onEvent({ event: { type: 'command', command: Commands.paste }, handled: false });
   expect(value()).toBe('keep'); // the `?.() ?? ''` guard yields an empty paste → nothing inserted
+});
+
+test('the reactive hasSelection signal fires on selection-only changes (no value edit)', () => {
+  const value = signal('hello');
+  const { loop, input } = mountInput({ value });
+  const seen: boolean[] = [];
+  let dispose = (): void => {};
+  createRoot((d) => {
+    dispose = d;
+    // Track the reactive signal — an app binds this to grey Cut/Copy. It must react to selection
+    // changes that never touch the bound value.
+    effect(() => {
+      seen.push(input.hasSelection());
+    });
+  });
+  expect(seen).toEqual([false]); // initial run: fresh field, no selection
+
+  loop.dispatch(key('a', { ctrl: true })); // select all — a selection appears, the value is untouched
+  expect(value()).toBe('hello');
+  expect(seen).toEqual([false, true]);
+
+  loop.dispatch(key('right')); // a plain motion collapses the selection — value still untouched
+  expect(value()).toBe('hello');
+  expect(seen).toEqual([false, true, false]);
+  dispose();
 });

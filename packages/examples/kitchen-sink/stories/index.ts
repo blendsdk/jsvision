@@ -25,6 +25,7 @@ import { checkGroupStory } from './checkgroup.story.js';
 import { radioGroupStory } from './radiogroup.story.js';
 import { multiCheckGroupStory } from './multicheckgroup.story.js';
 import { acceleratorsStory } from './accelerators.story.js';
+import { clipboardStory } from './clipboard.story.js';
 import { scrollBarStory } from './scrollbar.story.js';
 import { scrollerStory } from './scroller.story.js';
 import { listViewStory } from './listview.story.js';
@@ -70,6 +71,7 @@ export const STORIES: readonly Story[] = [
   radioGroupStory,
   multiCheckGroupStory,
   acceleratorsStory,
+  clipboardStory,
   scrollBarStory,
   scrollerStory,
   listViewStory,
