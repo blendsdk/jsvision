@@ -151,6 +151,12 @@ export class Desktop extends Group {
       if (this.active !== null) {
         this.active.active.set(true);
         this.loop?.focusInto(this.active); // focus the newly active window's inner view
+      } else {
+        // No window remains: run a tick so the emptied desktop repaints. removeWindow can be called
+        // from an async modal teardown (a dialog's `finally`), outside any loop tick, and the loop
+        // only flushes a frame at tick end — without this the closed window's stale frame would
+        // linger on screen until the next input event.
+        this.loop?.focusInto(this);
       }
     }
   }
