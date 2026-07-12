@@ -44,8 +44,9 @@
   commits `56094afe`→`ce3bf047`. **Verification:** ui 1575/1575 unit · examples 161/161 · `test:e2e`
   10/10 tasks · typecheck/build/check:docs green. Pre-existing out-of-scope repo red (v0.2.0 `[skip ci]`
   release drift, NOT this feature): per-package CHANGELOG/RELEASE_NOTES prettier + core `packaging.spec`
-  ST-3 pack allow-list. **Remaining (deferred to the user):** `gh issue close 5` — an outward GitHub
-  action held per the keep-local choice. Cascaded from **jsvision-ui**.
+  ST-3 pack allow-list (a release-governance issue that still holds `yarn verify` red repo-wide — flagged
+  to the user; `yarn lint` itself went green after the `.prettierignore` fix). **#5 closed** as superseded
+  by #73; branch `feat/glorbal-ctrl-functions` pushed to origin. Cascaded from **jsvision-ui**.
 - 2026-07-11: **jsvision-plugin PL-02 `plugin-self-sync` → ✅ DONE** (`exec_plan`, per-phase local
   commits). 30/30 tasks / 4 phases, spec-first. The `check-plugin.mjs` drift gate now has an
   auto-fix loop: `detectDrift()` (reusing `checkBarrelCoverage`, so findings mirror the gate) →

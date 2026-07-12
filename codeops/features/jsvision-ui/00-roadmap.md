@@ -68,8 +68,8 @@ foundation RDs of the same number.
   (1 major + 2 minor + 2 observation), all resolved into the plan docs — the major (PF-001) corrected
   a phantom "existing selection-change signal" to **add** a reactive `Input.hasSelection` signal
   mirroring the Editor's. **Done** ✅ (`exec_plan global-clipboard` complete 2026-07-12 — **6 phases /
-  49 of 50 tasks**, all spec-first; commits `56094afe` (P0+1) → `752ca22a` (P2) → `fef48688` (P3) →
-  `8be4a151` (P4) → `ce3bf047` (P5), unpushed/keep-local). Shipped: the `src/event/default-keymap.ts`
+  50 of 50 tasks**, all spec-first; commits `56094afe` (P0+1) → `752ca22a` (P2) → `fef48688` (P3) →
+  `8be4a151` (P4) → `ce3bf047` (P5), branch `feat/glorbal-ctrl-functions` **pushed** to origin). Shipped: the `src/event/default-keymap.ts`
   keymap (`buildKeymap` + `ClipboardKeys`, compose-at-lookup merge, user keymap wins) merged into the
   loop; `Commands.selectAll`; the dual-sink `setClipboard` + `readClipboard()` seam over a loop-owned
   app-local buffer (no OSC-52 read); `Input`/`Editor` handle `selectAll`+copy/cut/paste as commands;
@@ -80,9 +80,10 @@ foundation RDs of the same number.
   controls-file oracle. **Verification:** ui 1575/1575 unit · examples 161/161 · `test:e2e` 10/10 tasks
   · typecheck/build/check:docs green (0 banned refs / 0 missing `@example`). Out-of-scope pre-existing
   repo red (v0.2.0 `[skip ci]` release drift, NOT this feature): per-package CHANGELOG/RELEASE_NOTES
-  prettier + core `packaging.spec` ST-3 pack allow-list — these hold `yarn verify`/`yarn lint` red
-  repo-wide. **Remaining (task 5.3.2, deferred to the user):** `gh issue close 5` — an outward GitHub
-  action held back per the keep-local/no-push choice. CHANGELOG `[Unreleased]` updated. Prior —
+  prettier + core `packaging.spec` ST-3 pack allow-list. `yarn lint` went green after the `.prettierignore`
+  release-drift fix (`00c75082`); only the core ST-3 pack-allow-list (a release-governance issue) still
+  holds `yarn verify` red repo-wide — flagged to the user. **#5 closed** as superseded by #73; CHANGELOG
+  `[Unreleased]` updated. Prior —
   **Executing** 🔄 (started 2026-07-12): Phase 0 ✅ default keymap + `clipboardKeys` config +
   `Commands.selectAll` + barrel exports; ST-1..ST-7 green.
 - **2026-07-11** — **Follow-up plan `flexible-chrome-bars` DONE ✅** ([plan](plans/flexible-chrome-bars/00-index.md))
