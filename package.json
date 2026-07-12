@@ -1,7 +1,7 @@
 {
   "name": "@jsvision/monorepo",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Monorepo for the jsvision terminal UI SDK",
   "license": "MIT",
   "type": "module",
