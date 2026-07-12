@@ -3,7 +3,7 @@
 > **Feature-Set**: DataGrid (`@jsvision/datagrid`)
 > **Status**: In Progress
 > **Created**: 2026-07-12
-> **Last Updated**: 2026-07-12
+> **Last Updated**: 2026-07-13
 > **Progress**: 0 / 14 (0%)
 > **CodeOps Skills Version**: 3.4.1
 
@@ -23,7 +23,7 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
-| RD-01 | Foundation & grid-engine exposure | [RD-01](requirements/RD-01-foundation.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Package scaffold · ui exports `GridRows`/`GridHeader`/`columns.ts` · value/format/parse · `GridDataSource`+`rowKey` · `onCommit` · cell-overlay helper. Gates all others. |
+| RD-01 | Foundation & grid-engine exposure | [RD-01](requirements/RD-01-foundation.md) | [foundation](plans/foundation/00-index.md) | Executing | 🔄 | 2026-07-13 | Package scaffold · ui exports `GridRows`/`GridHeader`/`columns.ts`/`stringWidth` · value/format/parse · `GridDataSource`+`rowKey` · `onCommit` · cell-overlay helper · read-only `EditableDataGrid`. 6 phases / 39 tasks. Gates all others. Plan preflighted (6 findings resolved). Executing via `exec_plan`. |
 | RD-02 | Editing engine & commit model | [RD-02](requirements/RD-02-editing-engine.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Cell cursor, in-cell overlay lifecycle, per-cell immediate commit, dirty tracking, keymap. Depends RD-01. |
 | RD-03 | Cell editors & value help | [RD-03](requirements/RD-03-cell-editors.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Typed editors + custom factory + F4 lookup. Depends RD-01, RD-02. |
 | RD-04 | Formatting & cell rendering | [RD-04](requirements/RD-04-formatting-rendering.md) | — | RD Preflighted | 🔎 | 2026-07-12 | `Intl` formatters, parse round-trip, custom renderer, conditional styling. Depends RD-01. |
@@ -51,3 +51,18 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
   Key amendments: container-owned shared cursor/selection (RD-02, so RD-07's 3-panel freeze composes),
   the explicit `GridColumn → engine Column` adapter (RD-01), and the RD-07-as-substrate dependency edges.
   Next: `make_plan` starting at RD-01. See requirements/00-preflight-report.md.
+- 2026-07-12: **RD-01 Plan Created** 📋 via `make_plan RD-01` → [plans/foundation/](plans/foundation/00-index.md)
+  (6 phases / 39 tasks, spec-first). Plan-level gate PASSED (8 items) — the new decisions: a minimal **read-only**
+  `EditableDataGrid` container ships in RD-01 (RD-02 adds editing), the kitchen-sink story is an **in-package**
+  harness (examples stays independent for now), and both `defineColumns<T>()` and a tested `commitCell` primitive
+  are included. Next: `preflight datagrid foundation` (optional) or `exec_plan` the foundation plan.
+- 2026-07-12: **RD-01 Plan Preflighted** 🔬 via `preflight datagrid foundation` — a fresh-session, codebase-grounded
+  audit (line-level verification against real `@jsvision/ui`/`@jsvision/core` source + two empirical `tsc` runs;
+  one independent challenger on the majors). 6 findings (2 major / 4 minor), **all resolved and applied**. Key
+  amendments: per-array `defineColumns<T>()` → per-column **`column<T,V>()`** (the array form can't infer per-column
+  `V` — its examples failed `tsc`); the read-only container mounts a **sort-suppressed `ReadonlyGridHeader`** (the
+  reused header's click-to-sort would paint an arrow the read-only body never reorders); and **`stringWidth`** joins
+  the ui promotion set so the container measures what the engine draws. See plans/foundation/00-preflight-report.md.
+  Next: `exec_plan` the foundation plan.
+- 2026-07-13: **RD-01 Executing** 🔄 via `exec_plan datagrid foundation --auto-commit` — implementing the 6-phase,
+  39-task foundation plan spec-first (auto-commit after each verified task).
