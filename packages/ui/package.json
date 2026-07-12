@@ -1,6 +1,6 @@
 {
   "name": "@jsvision/ui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "jsvision UI — a retro-desktop widget framework (retained tree + fine-grained signals) for classic terminal (TUI) applications, built on @jsvision/core.",
   "keywords": [
     "tui",
@@ -52,7 +52,7 @@
     "check:docs": "node ../../scripts/check-jsdoc.mjs ."
   },
   "dependencies": {
-    "@jsvision/core": "*"
+    "@jsvision/core": "0.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

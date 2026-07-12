@@ -1,6 +1,6 @@
 {
   "name": "@jsvision/theme-designer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "jsvision theme designer — a standalone terminal app for authoring @jsvision/core themes (live preview, RGB/hex/swatch color picking, WCAG contrast, depth downsampling, presets, JSON import/export). Built from the widgets it themes. Private until first release.",
   "license": "MIT",
@@ -21,9 +21,9 @@
     "check:deps": "node ../../scripts/check-no-native-deps.mjs ."
   },
   "dependencies": {
-    "@jsvision/core": "*",
-    "@jsvision/ui": "*",
-    "@jsvision/files": "*"
+    "@jsvision/core": "0.1.1",
+    "@jsvision/ui": "0.1.1",
+    "@jsvision/files": "0.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

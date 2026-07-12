@@ -1,6 +1,6 @@
 {
   "name": "@jsvision/docs-site",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "JSVision documentation & showcase website (VitePress). Dev-only; never shipped.",
   "license": "MIT",
@@ -19,10 +19,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
-    "@jsvision/core": "*",
-    "@jsvision/files": "*",
-    "@jsvision/ui": "*",
-    "@jsvision/web": "*",
+    "@jsvision/core": "0.1.1",
+    "@jsvision/files": "0.1.1",
+    "@jsvision/ui": "0.1.1",
+    "@jsvision/web": "0.1.1",
     "@types/node": "^22.10.0",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-webgl": "^0.18.0",
