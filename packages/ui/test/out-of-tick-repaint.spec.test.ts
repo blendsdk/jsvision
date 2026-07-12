@@ -84,7 +84,7 @@ describe('out-of-tick repaint', () => {
     spinner.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 4, height: 1 } };
     g.add(spinner);
     loop.mount(g);
-    pending.length = 0; // discard any mount-time schedule
+    runPending(); // drain the mount-time deferred paint so the render root's scheduled flag settles
 
     const glyph0 = charAt(loop.renderRoot.buffer(), 0, 0);
     expect(glyph0).toBe(SPINNERS.dots[0]); // frame 0 glyph ⇒ the dots preset is active on this caps
@@ -123,7 +123,7 @@ describe('out-of-tick repaint', () => {
     b.layout.rect = { x: 5, y: 2, width: 20, height: 6 }; // both start overlapping
     desktop.addWindow(a);
     desktop.addWindow(b); // z-order [a(back), b(front)]
-    pending.length = 0; // discard setup schedules
+    runPending(); // drain the mount/add-window deferred paints so the render root settles
 
     let paints = 0;
     let last: ScreenBuffer | null = null;
@@ -138,12 +138,14 @@ describe('out-of-tick repaint', () => {
     runPending();
 
     expect(paints).toBe(1);
-    expect(b.bounds).toMatchObject({ x: 1, y: 1 }); // cascade stepped the front window one down-right
+    // Cascade steps window i (back→front) to (i, i): the back window sits at the origin, the front
+    // window one cell down-right. Assert both the computed geometry and that it was actually painted.
+    expect(a.bounds).toMatchObject({ x: 0, y: 0 });
+    expect(b.bounds).toMatchObject({ x: 1, y: 1 });
     const frame = last as unknown as ScreenBuffer;
-    const corner = charAt(frame, 0, 0); // window a's top-left corner
-    expect(corner).not.toBe(' ');
-    expect(corner).not.toBe(PATTERN); // it is window chrome, not the desktop fill
-    expect(charAt(frame, 1, 1)).toBe(corner); // window b's identical corner, offset one down-right
+    expect(charAt(frame, 0, 0)).not.toBe(PATTERN); // window a's corner at the origin, not the desktop fill
+    expect(charAt(frame, 1, 1)).not.toBe(' '); // window b's corner is painted here (not a's blank interior)
+    expect(charAt(frame, 1, 1)).not.toBe(PATTERN); // …and it is window chrome, not the desktop fill
   });
 
   // ST-3 — a bare out-of-tick signal write repaints with the new content.
@@ -155,7 +157,7 @@ describe('out-of-tick repaint', () => {
     sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } };
     g.add(sv);
     loop.mount(g);
-    pending.length = 0;
+    runPending();
 
     let paints = 0;
     let last: ScreenBuffer | null = null;
@@ -182,7 +184,7 @@ describe('out-of-tick repaint', () => {
     sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } };
     g.add(sv);
     loop.mount(g);
-    pending.length = 0;
+    runPending();
 
     let paints = 0;
     let last: ScreenBuffer | null = null;
@@ -210,7 +212,7 @@ describe('out-of-tick repaint', () => {
     sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 5, height: 1 } };
     g.add(sv);
     loop.mount(g);
-    pending.length = 0;
+    runPending();
 
     let paints = 0;
     loop.onFrame = () => {
@@ -235,7 +237,7 @@ describe('out-of-tick repaint', () => {
     sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 5, height: 1 } };
     g.add(sv);
     loop.mount(g);
-    pending.length = 0;
+    runPending();
 
     let paints = 0;
     loop.onFrame = () => {

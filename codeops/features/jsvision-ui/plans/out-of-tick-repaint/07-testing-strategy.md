@@ -27,8 +27,9 @@ const pending: Array<() => void> = [];
 const runPending = () => { const q = pending.splice(0); q.forEach((cb) => cb()); };
 let paints = 0; let last: ScreenBuffer | null = null;
 const loop = createEventLoop(size, { caps, scheduleMicrotask: (cb) => pending.push(cb) });
-// ...mount...
-loop.onFrame = (buf) => { paints++; last = buf.clone(); }; // wired AFTER mount → counts only new frames
+// ...mount (+ any addWindow/setup)...
+runPending(); // drain the mount-time deferred paint (PA-12) so the render root's scheduled flag settles
+loop.onFrame = (buf) => { paints++; last = buf.clone(); }; // wired AFTER the settle → counts only new frames
 ```
 
 ## 🚨 Specification Test Cases (MANDATORY — NON-NEGOTIABLE)
