@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 01:28
-> **Progress**: 14/39 tasks (36%)
+> **Last Updated**: 2026-07-13 01:34
+> **Progress**: 20/39 tasks (51%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -108,20 +108,20 @@ Depends on Phases 1–2. Spec-first (03-03).
 
 **Reference**: [03-03](03-03-column-model-adapter.md) · [07 ST-3, ST-4] · req AR-31
 
-- [ ] 3.1.1 Write the adapter spec (ST-3 accessor `String(value)` vs `format`; ST-4 value-aware compare orders 9 < 1000) — `packages/datagrid/test/column.spec.test.ts`
-- [ ] 3.1.2 Run — verify it FAILS (red)
+- [x] 3.1.1 Write the adapter spec (ST-3 accessor `String(value)` vs `format`; ST-4 value-aware compare orders 9 < 1000) — `packages/datagrid/test/column.spec.test.ts` ✅ (completed: 2026-07-13 01:34)
+- [x] 3.1.2 Run — verify it FAILS (red) ✅ (completed: 2026-07-13 01:34)
 
 ### Step 3.2: Implementation
 
 **Reference**: [03-03 §Implementation Details]
 
-- [ ] 3.2.1 Implement `GridColumn<T,V>`, the per-column `column<T,V>()` helper, `toEngineColumn`, `defaultCompare`; export the public symbols from the barrel — `packages/datagrid/src/column.ts`, `packages/datagrid/src/index.ts`
-- [ ] 3.2.2 Run the spec — verify it PASSES (green)
+- [x] 3.2.1 Implement `GridColumn<T,V>`, the per-column `column<T,V>()` helper, `toEngineColumn`, `defaultCompare`; export the public symbols from the barrel — `packages/datagrid/src/column.ts`, `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-13 01:34)
+- [x] 3.2.2 Run the spec — verify it PASSES (green) ✅ (completed: 2026-07-13 01:34)
 
 ### Step 3.3: Hardening
 
-- [ ] 3.3.1 Write impl tests (`defaultCompare` number/string/Date/null/mixed; `column` value-inference — typed `format`/`parse` compiles, a mismatch is a compile error) — `packages/datagrid/test/column.impl.test.ts`
-- [ ] 3.3.2 Full verify
+- [x] 3.3.1 Write impl tests (`defaultCompare` number/string/Date/null/mixed; `column` value-inference — typed `format`/`parse` compiles, a mismatch is a compile error) — `packages/datagrid/test/column.impl.test.ts` ✅ (completed: 2026-07-13 01:34)
+- [x] 3.3.2 Full verify ✅ (completed: 2026-07-13 01:34 — datagrid typecheck + test + check:docs green)
 
 **Deliverables**: value/format/parse column + value-aware adapter, exported + tested.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs`

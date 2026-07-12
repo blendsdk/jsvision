@@ -4,4 +4,9 @@
  * column model and `column` helper, the `GridDataSource` seam with `fromRows`, the `commitCell` sink,
  * the `mountCellOverlay` helper, and the read-only `EditableDataGrid` container.
  */
-export {};
+
+// Typed column model — a `value`/`format`/`parse` column authored with `column()` (which infers each
+// column's value type). The `ColumnWidth`/`ColumnAlign` sizing types are re-exported from the engine.
+export { column } from './column.js';
+export type { GridColumn } from './column.js';
+export type { ColumnWidth, ColumnAlign } from '@jsvision/ui';
