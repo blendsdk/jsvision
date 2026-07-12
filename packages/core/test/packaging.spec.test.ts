@@ -74,9 +74,11 @@ test('ST-2: VERSION equals package.json#version', () => {
 
 // ST-3 (AC-3): every packed path is under dist/ or is an allowed root file.
 test(
-  'ST-3: packed files are a subset of dist/** ∪ {package.json, README.md, LICENSE}',
+  'ST-3: packed files are a subset of dist/** ∪ {package.json, README.md, LICENSE, CHANGELOG.md, RELEASE_NOTES.md}',
   () => {
-    const allowedRootFiles = new Set(['package.json', 'README.md', 'LICENSE']);
+    // CHANGELOG.md / RELEASE_NOTES.md are release-generated docs the package deliberately ships
+    // (CHANGELOG.md is listed in package.json#files); they are allowed alongside the core metadata.
+    const allowedRootFiles = new Set(['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md', 'RELEASE_NOTES.md']);
     const files = packFileList();
     expect(files.length > 0).toBeTruthy();
     for (const path of files) {
