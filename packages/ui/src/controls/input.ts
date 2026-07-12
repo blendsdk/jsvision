@@ -23,7 +23,7 @@ import type { KeyEvent, MouseEvent } from '@jsvision/core';
 import type { Validator } from './validators/index.js';
 import { Commands } from '../status/index.js';
 import { selectionBlock, mousePos, motionOf, caretAfterMotion } from './input-selection.js';
-import { clipboardChord, clipboardCommand, applyPaste, insertFilled } from './input-clipboard.js';
+import { clipboardCommand, applyPaste, insertFilled } from './input-clipboard.js';
 import type { ClipboardAction } from './input-clipboard.js';
 import { computeDelete } from './input-editing.js';
 import type { EditState, DeleteKind } from './input-editing.js';
@@ -245,12 +245,6 @@ export class Input extends View {
     }
     if (inner.type !== 'key') return;
     if (inner.key === 'enter' || inner.key === 'tab') return; // let these pass through
-    const chord = clipboardChord(inner); // Ctrl+Ins / Shift+Ins / Shift+Del, before normal editing
-    if (chord !== null) {
-      this.runClipboard(chord, ev);
-      ev.handled = true;
-      return;
-    }
     if (this.handleKey(inner)) ev.handled = true;
   }
 
