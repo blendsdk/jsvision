@@ -8,4 +8,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.1] - 2026-07-12
 
 Added:
-  - Added repository field to package.json for provenance compliance.
+
+- Added repository field to package.json for provenance compliance.

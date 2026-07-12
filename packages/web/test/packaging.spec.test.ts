@@ -5,8 +5,8 @@
  * artifacts — `dist/index.js`, `dist/index.d.ts`, and the standalone `dist/browser-stubs.js`.
  * ST-12: the `@jsvision/web/browser-stubs` subpath resolves and each stub **throws** when invoked; the
  * `.` barrel does **not** re-export the stubs (importing the package never drags the throwing native
- * placeholders into a consumer's graph); and `package.json#version` is static at the root `0.1.0`
- * (AR-2 — `sync-versions` skips this private package).
+ * placeholders into a consumer's graph); and `package.json#version` tracks the lockstepped root
+ * version (the release tool bumps every package together, so this private package equals the root).
  *
  * The full barrel-symbol presence assertion (every public export is reachable from `@jsvision/web`)
  * lands in Phase 5 once all modules exist. `.js` specifiers per NodeNext.
@@ -63,12 +63,13 @@ test('ST-12: the barrel exposes every public runtime symbol', () => {
   expect(Array.isArray(barrel.UNRECLAIMABLE_CHORDS)).toBe(true);
 });
 
-// ST-12 — the version is static at the root 0.1.0 (AR-2: sync-versions skips private packages).
-test('ST-12: package.json version is static at the root 0.1.0', () => {
+// ST-12 — this private package is lockstepped to the monorepo root version (the release tool bumps
+// every package together), so its version always equals the root's — no hardcoded literal to go stale.
+test('ST-12: package.json version matches the lockstepped root version', () => {
   const pkg = JSON.parse(readFileSync(join(pkgRoot, 'package.json'), 'utf8')) as { version?: string };
   const root = JSON.parse(readFileSync(join(pkgRoot, '..', '..', 'package.json'), 'utf8')) as {
     version?: string;
   };
-  expect(pkg.version).toBe('0.1.0');
+  expect(pkg.version).toBeTruthy();
   expect(pkg.version).toBe(root.version);
 });

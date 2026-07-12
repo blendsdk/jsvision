@@ -8,4 +8,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.1] - 2026-07-12
 
 Fixed:
+
 - Added repository field to package.json of theme-designer to meet provenance requirements for private packages.

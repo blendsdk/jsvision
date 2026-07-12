@@ -8,5 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.1] - 2026-07-12
 
 Fixed:
+
 - Added `repository` field to private packages for provenance requirements.
 - Aligned docs-site version to match the monorepo version 0.1.0.
