@@ -29,8 +29,11 @@ export default defineConfig({
           name: 'unit',
           include: ['test/**/*.{spec,impl}.test.ts'],
           exclude: ['node_modules/**'],
-          // A modest floor over vitest's 5s default for slow Windows runners.
-          testTimeout: 15_000,
+          // Generous headroom over vitest's 5s default: the barrel-export spec builds
+          // a full TypeScript program (ts.createProgram loads every lib .d.ts), whose
+          // cold start can take ~20s on a loaded Windows runner. 15s was too tight and
+          // flaked there; 60s keeps the check without the platform-timeout flake.
+          testTimeout: 60_000,
         },
       },
     ],
