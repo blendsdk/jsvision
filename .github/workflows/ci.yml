@@ -65,8 +65,8 @@ jobs:
       - name: Dependency policy guard (no native runtime deps)
         run: yarn check:deps
 
-      - name: Core VERSION constant matches its package.json
-        run: node scripts/sync-core-version.mjs --check
+      - name: Package VERSION constants match their package.json
+        run: node scripts/sync-package-versions.mjs --check
 
       # Audit PRODUCTION dependencies only: the shipped packages carry zero
       # runtime deps (the whole guarantee), so this is the surface that matters.

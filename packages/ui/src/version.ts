@@ -1,8 +1,8 @@
 /**
  * The package version of `@jsvision/ui`.
  *
- * Currently a standalone constant (the package is `private` and outside the
- * lockstep `sync-versions` machinery until its first release). A specification
- * test asserts it matches `package.json#version`.
+ * Kept in sync with `package.json#version` by the release version-sync step. A
+ * specification test asserts the two match so a release bump can never silently
+ * desync the runtime constant from the manifest.
  */
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';

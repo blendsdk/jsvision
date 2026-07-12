@@ -52,8 +52,8 @@
     }
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
-    "@xterm/headless": "^5.5.0",
-    "vitest": "^4.1.9"
+    "@types/node": "^26.1.1",
+    "@xterm/headless": "^6.0.0",
+    "vitest": "^4.1.10"
   }
 }

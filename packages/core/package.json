@@ -53,10 +53,10 @@
     "bench": "tsx bench/frame-bench.mjs"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "^26.1.1",
     "@xterm/headless": "^6.0.0",
     "esbuild": "^0.28.1",
-    "tsx": "^4.19.2",
-    "vitest": "^4.1.9"
+    "tsx": "^4.23.0",
+    "vitest": "^4.1.10"
   }
 }
