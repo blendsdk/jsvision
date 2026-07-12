@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 01:16
-> **Progress**: 9/39 tasks (23%)
+> **Last Updated**: 2026-07-13 01:28
+> **Progress**: 14/39 tasks (36%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -84,16 +84,16 @@ Infrastructure (03-02) — the config files are scaffolding; the ST-13/ST-14 gua
 
 **Reference**: [03-02](03-02-package-scaffold.md) · AR #4/#5 (plan) · req AR-01, PF-007
 
-- [ ] 2.1.1 Create `package.json` + `tsconfig.json` + `tsconfig.typecheck.json` + `vitest.config.ts` + `README.md` (clone `@jsvision/files`, rename to `@jsvision/datagrid`, `private:true`, deps `"0.2.0"`) — `packages/datagrid/`
-- [ ] 2.1.2 Create the minimal public barrel + install/link + build the empty package — `packages/datagrid/src/index.ts`; then `yarn install` + `yarn workspace @jsvision/datagrid build`
+- [x] 2.1.1 Create `package.json` + `tsconfig.json` + `tsconfig.typecheck.json` + `vitest.config.ts` + `README.md` (clone `@jsvision/files`, rename to `@jsvision/datagrid`, `private:true`, deps `"0.2.0"`) — `packages/datagrid/` ✅ (completed: 2026-07-13 01:28)
+- [x] 2.1.2 Create the minimal public barrel + install/link + build the empty package — `packages/datagrid/src/index.ts`; then `yarn install` + `yarn workspace @jsvision/datagrid build` ✅ (completed: 2026-07-13 01:28)
 
 ### Step 2.2: Packaging & security guards
 
 **Reference**: [07 ST-13, ST-14] · AC-1, AC-10
 
-- [ ] 2.2.1 Write the packaging e2e (ST-13, single entry point) + the source-scan security spec (ST-14, no `eval`/dynamic-require) — `packages/datagrid/test/packaging.e2e.test.ts`, `packages/datagrid/test/security.spec.test.ts`
-- [ ] 2.2.2 Run them — packaging e2e passes post-build, security scan passes, `check:deps` reports zero native deps
-- [ ] 2.2.3 Confirm turbo auto-fans-out to the new package (no `turbo.json` edit) + full verify
+- [x] 2.2.1 Write the packaging e2e (ST-13, single entry point) + the source-scan security spec (ST-14, no `eval`/dynamic-require) — `packages/datagrid/test/packaging.e2e.test.ts`, `packages/datagrid/test/security.spec.test.ts` ✅ (completed: 2026-07-13 01:28)
+- [x] 2.2.2 Run them — packaging e2e passes post-build, security scan passes, `check:deps` reports zero native deps ✅ (completed: 2026-07-13 01:28)
+- [x] 2.2.3 Confirm turbo auto-fans-out to the new package (no `turbo.json` edit) + full verify ✅ (completed: 2026-07-13 01:28 — datagrid-scoped verify + ui suite green; full `yarn verify` blocked only by pre-existing CHANGELOG/RELEASE_NOTES prettier drift, unrelated to this work)
 
 **Deliverables**: `packages/datagrid` builds to one entry point, zero native deps, turbo-integrated.
 **Verify**: `yarn workspace @jsvision/datagrid build check:deps check:docs test test:e2e`
