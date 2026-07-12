@@ -79,13 +79,15 @@ test('ST-16: each source file is ≤ 500 lines', () => {
   }
 });
 
-// ST-16 — only the two workspace runtime deps (no native/third-party); private (out of the public lockstep).
-test('ST-16: @jsvision/files declares only the workspace runtime deps and is private', () => {
+// ST-16 — only the two workspace runtime deps (no native/third-party); public, published under the lockstep.
+test('ST-16: @jsvision/files declares only the workspace runtime deps and is publishable', () => {
   const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')) as {
     private?: boolean;
+    publishConfig?: { access?: string };
     dependencies?: Record<string, string>;
   };
-  expect(pkg.private).toBe(true);
+  expect(pkg.private ?? false).toBe(false); // public — part of the lockstep release
+  expect(pkg.publishConfig?.access).toBe('public');
   expect(Object.keys(pkg.dependencies ?? {}).sort()).toEqual(['@jsvision/core', '@jsvision/ui']);
 });
 

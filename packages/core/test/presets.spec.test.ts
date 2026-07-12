@@ -10,7 +10,7 @@
  */
 import { test, expect } from 'vitest';
 import {
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,
@@ -30,7 +30,7 @@ import {
 } from '../src/engine/index.js';
 
 const PRESETS: Record<string, Theme> = {
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,
@@ -59,7 +59,7 @@ function colorFields(role: ThemeRole): string[] {
 
 test('ST-21: every preset is a full, resolvable Theme and turboVision is defaultTheme', () => {
   expect(Object.keys(PRESETS).length, '13 presets').toBe(13);
-  expect(turboVisionTheme, 'turboVision === defaultTheme').toBe(defaultTheme);
+  expect(classicTheme, 'turboVision === defaultTheme').toBe(defaultTheme);
   for (const [name, theme] of Object.entries(PRESETS)) {
     for (const key of Object.keys(defaultTheme)) {
       expect(key in theme, `${name}.${key} present`).toBe(true);
@@ -97,7 +97,7 @@ test('ST-22: retro presets pin their signature backdrop and accent', () => {
 // ── ST-23: the defaultTheme-invariance reference (the real oracles are the *-theme.spec files) ──────
 
 test('ST-23: defaultTheme is unchanged — turboVision aliases it and no role carries attrs', () => {
-  expect(turboVisionTheme, 'turboVision is defaultTheme').toBe(defaultTheme);
+  expect(classicTheme, 'turboVision is defaultTheme').toBe(defaultTheme);
   for (const [name, role] of Object.entries(defaultTheme)) {
     expect((role as ThemeRole).attrs, `defaultTheme.${name} has no attrs`).toBeUndefined();
   }

@@ -292,7 +292,7 @@ export class ScreenBuffer {
 
   /**
    * Cast a drop shadow by darkening the cells one column right and one row below
-   * the rectangle (Turbo Vision style). Only the colors change; glyphs stay.
+   * the rectangle (classic text-mode style). Only the colors change; glyphs stay.
    */
   public shadow(x: number, y: number, w: number, h: number, style: Style): void {
     const attrs = style.attrs ?? Attr.none;

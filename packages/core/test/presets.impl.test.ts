@@ -8,7 +8,7 @@ import { test, expect } from 'vitest';
 import {
   serializeTheme,
   parseTheme,
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,
@@ -26,7 +26,7 @@ import {
 } from '../src/engine/index.js';
 
 const PRESETS: Record<string, Theme> = {
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,

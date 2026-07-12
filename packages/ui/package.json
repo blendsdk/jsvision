@@ -1,9 +1,30 @@
 {
   "name": "@jsvision/ui",
-  "private": true,
   "version": "0.1.0",
-  "description": "jsvision UI — Turbo Vision-style widget framework (retained tree + signals) on @jsvision/core. Scaffold; private until first release.",
+  "description": "jsvision UI — a retro-desktop widget framework (retained tree + fine-grained signals) for classic terminal (TUI) applications, built on @jsvision/core.",
+  "keywords": [
+    "tui",
+    "terminal",
+    "cli",
+    "widgets",
+    "ui-framework",
+    "retro-desktop",
+    "text-mode",
+    "reactive",
+    "typescript"
+  ],
+  "homepage": "https://github.com/blendsdk/jsvision#readme",
+  "bugs": "https://github.com/blendsdk/jsvision/issues",
   "license": "MIT",
+  "author": "TrueSoftware B.V. <gevik@truesoftware.nl>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/ui"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -19,6 +40,7 @@
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {

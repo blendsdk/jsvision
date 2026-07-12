@@ -1,6 +1,6 @@
 /**
  * {@link Slider} — a focusable value control: a horizontal or vertical groove with a draggable thumb
- * bound to a numeric `Signal`. It is the framework's trackbar (Turbo Vision had none), so its look is a
+ * bound to a numeric `Signal`. It is the framework's trackbar, so its look is a
  * fresh design: the groove draws in the `sliderTrack` role (`─` across, `│` down) and the single thumb
  * cell in the `sliderThumb` role (`█`), with no end-arrows. Its value↔position math is the shared
  * `track.ts` helper, so it stays consistent with `ScrollBar` by construction.

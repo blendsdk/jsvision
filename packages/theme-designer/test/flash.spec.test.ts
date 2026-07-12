@@ -10,19 +10,19 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
-import { turboVisionTheme, toRgb } from '@jsvision/core';
+import { classicTheme, toRgb } from '@jsvision/core';
 import type { Color } from '@jsvision/core';
 
 import { flashColor, flashColorFor } from '../src/model/index.js';
 
 test('flashColor replaces every fg/bg equal to `from` with `to`, and only those', () => {
-  const from = turboVisionTheme.button.bg;
+  const from = classicTheme.button.bg;
   const to: Color = '#ff00ff';
-  const flashed = flashColor(turboVisionTheme, from, to);
+  const flashed = flashColor(classicTheme, from, to);
 
   // Every role whose bg was `from` now shows `to`; a role whose bg was not `from` is unchanged.
-  for (const key of Object.keys(turboVisionTheme) as (keyof typeof turboVisionTheme)[]) {
-    const before = turboVisionTheme[key];
+  for (const key of Object.keys(classicTheme) as (keyof typeof classicTheme)[]) {
+    const before = classicTheme[key];
     const after = flashed[key];
     expect(after.bg).toBe(before.bg === from ? to : before.bg);
     expect(after.fg).toBe(before.fg === from ? to : before.fg);
@@ -32,15 +32,15 @@ test('flashColor replaces every fg/bg equal to `from` with `to`, and only those'
 });
 
 test('flashColor is pure — it does not mutate the input theme', () => {
-  const from = turboVisionTheme.button.bg;
-  const snapshot = JSON.stringify(turboVisionTheme);
-  flashColor(turboVisionTheme, from, '#ff00ff');
-  expect(JSON.stringify(turboVisionTheme)).toBe(snapshot);
+  const from = classicTheme.button.bg;
+  const snapshot = JSON.stringify(classicTheme);
+  flashColor(classicTheme, from, '#ff00ff');
+  expect(JSON.stringify(classicTheme)).toBe(snapshot);
 });
 
 test('flashColor leaves non-color fields (the desktop pattern glyph) intact', () => {
-  const flashed = flashColor(turboVisionTheme, turboVisionTheme.desktop.bg, '#ff00ff');
-  expect(flashed.desktop.pattern).toBe(turboVisionTheme.desktop.pattern);
+  const flashed = flashColor(classicTheme, classicTheme.desktop.bg, '#ff00ff');
+  expect(flashed.desktop.pattern).toBe(classicTheme.desktop.pattern);
 });
 
 test('flashColorFor returns a visibly different color (its photographic negative)', () => {
