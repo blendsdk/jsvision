@@ -9,6 +9,9 @@ Text fields with live validators and two-way binding: a **name** field that acce
 and spaces, an **age** field clamped to 0–150, and a **phone** field whose dashes auto-fill from a
 picture mask. Tab moves between fields and the echo below tracks the bound values.
 
+Selection and clipboard work out of the box — `Ctrl+A`/`C`/`X`/`V` and `Shift`+arrows — shared with
+every other editable widget. See [Keyboard & clipboard](/guide/#keyboard-clipboard).
+
 <PlayExample id="controls/input" title="Input" blurb="Text fields with live validators: a letters-only filter, a 0–150 range, and a picture mask." />
 
 ## Related

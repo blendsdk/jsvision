@@ -123,6 +123,8 @@ export class Editor extends View {
   coalesceNextEdit = false;
   /** @internal Sink that mirrors copied/cut text to the OS clipboard, captured per event. */
   mirrorSink: ((text: string) => void) | undefined;
+  /** @internal Reads the app-local clipboard buffer, captured per event; the paste fallback when no clipboard editor holds text. */
+  clipboardRead: (() => string) | undefined;
 
   /** @internal Attached scroll bars + indicator (see {@link attachGadgets}). */
   hBar: GadgetBar | null = null;

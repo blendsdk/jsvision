@@ -76,9 +76,11 @@ test('ST-2: VERSION equals package.json#version', () => {
 // CHANGELOG.md ships with the package (it is in `files`), so consumers see the
 // version history on npm alongside the README.
 test(
-  'ST-3: packed files are a subset of dist/** ∪ {package.json, README.md, CHANGELOG.md, LICENSE}',
+  'ST-3: packed files are a subset of dist/** ∪ {package.json, README.md, LICENSE, CHANGELOG.md, RELEASE_NOTES.md}',
   () => {
-    const allowedRootFiles = new Set(['package.json', 'README.md', 'CHANGELOG.md', 'LICENSE']);
+    // CHANGELOG.md / RELEASE_NOTES.md are release-generated docs the package deliberately ships
+    // (CHANGELOG.md is listed in package.json#files); they are allowed alongside the core metadata.
+    const allowedRootFiles = new Set(['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md', 'RELEASE_NOTES.md']);
     const files = packFileList();
     expect(files.length > 0).toBeTruthy();
     for (const path of files) {

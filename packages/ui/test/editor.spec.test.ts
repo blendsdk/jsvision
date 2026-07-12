@@ -212,7 +212,7 @@ test('ST-13: attachGadgets pushes the decoded setRange params + indicator values
 });
 
 // ST-17 / AC-5 / PA-2 / PA-16 — the clipboard-editor seam + the OSC-52 mirror (Phase 5).
-test('ST-17: copy fills the clipboard editor (selected) + writes ONE OSC-52; cut/paste behave; no-clipboard degrades', () => {
+test('ST-17: copy fills the clipboard editor (selected) + writes ONE OSC-52; cut/paste behave; no-clipboard pastes the shared buffer', () => {
   const capsClip = { ...caps, osc: { ...caps.osc, clipboard52: true } };
   const clipboard = new Editor();
   const ed = new Editor({ clipboard });
@@ -247,7 +247,9 @@ test('ST-17: copy fills the clipboard editor (selected) + writes ONE OSC-52; cut
   loop.dispatch(key('insert', { shift: true })); // paste
   expect(ed.getText()).toBe('hello world'); // "hello" replaced by the clipboard's "hello"
 
-  // With NO clipboard injected: copy/cut still mirror + delete; paste is a no-op (PA-2).
+  // With NO clipboard editor injected: copy/cut still mirror + delete. Paste no longer degrades to a
+  // no-op — the global-clipboard feature added a loop-owned app-local buffer shared across widgets, and
+  // paste falls back to it (this deliberately supersedes the earlier TV null-clipboard no-op).
   const bare = new Editor();
   const root2 = new Group();
   root2.layout = { direction: 'col' };
@@ -266,8 +268,8 @@ test('ST-17: copy fills the clipboard editor (selected) + writes ONE OSC-52; cut
   loop2.dispatch(key('delete', { shift: true })); // cut → mirror + delete
   expect(osc2).toHaveLength(2);
   expect(bare.getText()).toBe('c');
-  loop2.dispatch(key('insert', { shift: true })); // paste → internal no-op
-  expect(bare.getText()).toBe('c');
+  loop2.dispatch(key('insert', { shift: true })); // paste → falls back to the app-local buffer ("ab", cut above)
+  expect(bare.getText()).toBe('abc');
 });
 
 // ST-18 / AC-5 — a bracketed paste (however many chunks the wire delivered) is ONE insertion,

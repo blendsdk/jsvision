@@ -50,6 +50,42 @@ foundation RDs of the same number.
 
 ## Notes
 
+- **2026-07-12** — **Follow-up plan `global-clipboard` DONE** ✅ ([plan](plans/global-clipboard/00-index.md) · [preflight report](plans/global-clipboard/00-preflight-report.md))
+  (no RD — the 22/22 RD set stays complete; implements GitHub issue #73, **supersedes #5**). Makes
+  `Ctrl+A/C/X/V` (select-all/copy/cut/paste) work **framework-wide** across every editable widget via a
+  **default keymap** merged into the event loop (`clipboardKeys: 'modern'|'classic'|'both'|'none'`,
+  default `'both'`) that maps the chords to `Commands.selectAll/copy/cut/paste`; the raw chord is
+  swallowed, so both `Input` and `Editor` handle them as commands (new `Commands.selectAll` wired into
+  both — the anti-regression invariant). In-app **paste** is functional on every terminal via a
+  loop-owned app-local buffer exposed through a dual-sink `setClipboard` + a new `readClipboard()` seam
+  — **no** OSC-52 read (DEF-25 stays deferred). Cross-widget Editor↔Input clipboard + selection-based
+  copy/cut greying are in scope. `clipboardChord()` retired (aliases cover it). 6 phases / 50 tasks,
+  spec-first (ST-1…ST-25); **AR-1…AR-16 ✅ GATE PASSED** — user chose: standalone plan (no RD), adopt
+  all four issue core decisions, both refinements in scope, and modern-first with a documented
+  classic/WordStar-editor `clipboardKeys` opt-out. **Preflight ✅ PASSED WITH NOTES** (2026-07-12):
+  13-dimension codebase-grounded audit — plan verified accurate against source (Keymap structural
+  merge, enabled-by-default commands, no hidden regression from globalizing the chords); 5 findings
+  (1 major + 2 minor + 2 observation), all resolved into the plan docs — the major (PF-001) corrected
+  a phantom "existing selection-change signal" to **add** a reactive `Input.hasSelection` signal
+  mirroring the Editor's. **Done** ✅ (`exec_plan global-clipboard` complete 2026-07-12 — **6 phases /
+  50 of 50 tasks**, all spec-first; commits `56094afe` (P0+1) → `752ca22a` (P2) → `fef48688` (P3) →
+  `8be4a151` (P4) → `ce3bf047` (P5), branch `feat/glorbal-ctrl-functions` **pushed** to origin). Shipped: the `src/event/default-keymap.ts`
+  keymap (`buildKeymap` + `ClipboardKeys`, compose-at-lookup merge, user keymap wins) merged into the
+  loop; `Commands.selectAll`; the dual-sink `setClipboard` + `readClipboard()` seam over a loop-owned
+  app-local buffer (no OSC-52 read); `Input`/`Editor` handle `selectAll`+copy/cut/paste as commands;
+  cross-widget Editor↔Input paste; the reactive `Input.hasSelection` for menu/status greying; and the
+  `controls/clipboard` kitchen-sink story. `clipboardChord()` retired — the classic `Ctrl/Shift+Ins/Del`
+  chords now ride the keymap→command path (the ST-05/06 behavioral oracles stay green). A line-count
+  refactor extracted `Input.draw()` → `input-render.ts` `paintInput` to hold `input.ts` under the ≤500
+  controls-file oracle. **Verification:** ui 1575/1575 unit · examples 161/161 · `test:e2e` 10/10 tasks
+  · typecheck/build/check:docs green (0 banned refs / 0 missing `@example`). Out-of-scope pre-existing
+  repo red (v0.2.0 `[skip ci]` release drift, NOT this feature): per-package CHANGELOG/RELEASE_NOTES
+  prettier + core `packaging.spec` ST-3 pack allow-list. `yarn lint` went green after the `.prettierignore`
+  release-drift fix (`00c75082`); only the core ST-3 pack-allow-list (a release-governance issue) still
+  holds `yarn verify` red repo-wide — flagged to the user. **#5 closed** as superseded by #73; CHANGELOG
+  `[Unreleased]` updated. Prior —
+  **Executing** 🔄 (started 2026-07-12): Phase 0 ✅ default keymap + `clipboardKeys` config +
+  `Commands.selectAll` + barrel exports; ST-1..ST-7 green.
 - **2026-07-11** — **Follow-up plan `flexible-chrome-bars` DONE ✅** ([plan](plans/flexible-chrome-bars/00-index.md))
   (no RD — the 22/22 RD set stays complete). Refactors the app-shell chrome bars onto the layout
   engine so both bars support right-alignment / flexible gaps. **StatusLine** becomes a general
