@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 01:34
-> **Progress**: 20/39 tasks (51%)
+> **Last Updated**: 2026-07-13 01:39
+> **Progress**: 28/39 tasks (72%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -136,22 +136,22 @@ Depends on Phases 1–3. Spec-first (03-04). Owns AC-5's `rowKey`-required type 
 
 **Reference**: [03-04](03-04-data-source-commit.md) · [07 ST-5, ST-6, ST-7, ST-8] · req AR-14, AR-15, AR-16
 
-- [ ] 4.1.1 Write the data-source spec (ST-6 `length`/`rowAt`; ST-7 shared suite over in-memory + a windowed double) + the windowed double fixture — `packages/datagrid/test/data-source.spec.test.ts`, `packages/datagrid/test/fixtures/windowed-source.ts`
-- [ ] 4.1.2 Write the commit spec (ST-8 apply→onCommit→revert) + the required-`rowKey` type test (ST-5, `// @ts-expect-error` on `fromRows(sig,{})`) — `packages/datagrid/test/commit.spec.test.ts`, `packages/datagrid/test/types.spec.test.ts`
-- [ ] 4.1.3 Run — verify all FAIL (red)
+- [x] 4.1.1 Write the data-source spec (ST-6 `length`/`rowAt`; ST-7 shared suite over in-memory + a windowed double) + the windowed double fixture — `packages/datagrid/test/data-source.spec.test.ts`, `packages/datagrid/test/fixtures/windowed-source.ts` ✅ (completed: 2026-07-13 01:39)
+- [x] 4.1.2 Write the commit spec (ST-8 apply→onCommit→revert) + the required-`rowKey` type test (ST-5, `// @ts-expect-error` on `fromRows(sig,{})`) — `packages/datagrid/test/commit.spec.test.ts`, `packages/datagrid/test/types.spec.test.ts` ✅ (completed: 2026-07-13 01:39)
+- [x] 4.1.3 Run — verify all FAIL (red) ✅ (completed: 2026-07-13 01:39)
 
 ### Step 4.2: Implementation
 
 **Reference**: [03-04 §Implementation Details]
 
-- [ ] 4.2.1 Implement `GridDataSource<T>` + `fromRows` (required `rowKey`) + the forward `SortKey`/`FilterModel` placeholder aliases; export — `packages/datagrid/src/data-source.ts`, `src/index.ts`
-- [ ] 4.2.2 Implement `CellCommit`/`OnCommit` + `commitCell`; export — `packages/datagrid/src/commit.ts`, `src/index.ts`
-- [ ] 4.2.3 Run the specs — verify they PASS (green); `typecheck` enforces the ST-5 `@ts-expect-error`
+- [x] 4.2.1 Implement `GridDataSource<T>` + `fromRows` (required `rowKey`) + the forward `SortKey`/`FilterModel` placeholder aliases; export — `packages/datagrid/src/data-source.ts`, `src/index.ts` ✅ (completed: 2026-07-13 01:39)
+- [x] 4.2.2 Implement `CellCommit`/`OnCommit` + `commitCell`; export — `packages/datagrid/src/commit.ts`, `src/index.ts` ✅ (completed: 2026-07-13 01:39)
+- [x] 4.2.3 Run the specs — verify they PASS (green); `typecheck` enforces the ST-5 `@ts-expect-error` ✅ (completed: 2026-07-13 01:39)
 
 ### Step 4.3: Hardening
 
-- [ ] 4.3.1 Write impl tests (`fromRows` reactivity; no-`onCommit` path; late async commit) — `packages/datagrid/test/data-source.impl.test.ts`, `packages/datagrid/test/commit.impl.test.ts`
-- [ ] 4.3.2 Full verify
+- [x] 4.3.1 Write impl tests (`fromRows` reactivity; no-`onCommit` path; late async commit) — `packages/datagrid/test/data-source.impl.test.ts`, `packages/datagrid/test/commit.impl.test.ts` ✅ (completed: 2026-07-13 01:39)
+- [x] 4.3.2 Full verify ✅ (completed: 2026-07-13 01:39 — datagrid build + typecheck + test (21) + check:docs green)
 
 **Deliverables**: two-tier source (in-memory + windowed-proven) + commit primitive, exported + tested.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs`
