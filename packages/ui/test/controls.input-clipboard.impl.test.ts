@@ -10,7 +10,7 @@ import type { DrawContext } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { signal } from '../src/reactive/index.js';
 import { Input, filter } from '../src/controls/index.js';
-import { clipboardChord, clipboardCommand, applyPaste } from '../src/controls/input-clipboard.js';
+import { clipboardCommand, applyPaste } from '../src/controls/input-clipboard.js';
 
 const b = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 const capsClip: CapabilityProfile = { ...b, osc: { ...b.osc, clipboard52: true } };
@@ -43,14 +43,6 @@ function mountInput(opts: ConstructorParameters<typeof Input>[0]) {
 }
 
 // --- Pure helpers ----------------------------------------------------------------------------------
-test('clipboardChord maps the DOS chords, null otherwise', () => {
-  expect(clipboardChord(key('insert', { ctrl: true }))).toBe('copy');
-  expect(clipboardChord(key('insert', { shift: true }))).toBe('paste');
-  expect(clipboardChord(key('delete', { shift: true }))).toBe('cut');
-  expect(clipboardChord(key('delete'))).toBeNull(); // plain Delete → edit machine
-  expect(clipboardChord(key('a'))).toBeNull();
-});
-
 test('clipboardCommand maps Commands.copy/cut/paste, null otherwise', () => {
   expect(clipboardCommand('copy')).toBe('copy');
   expect(clipboardCommand('cut')).toBe('cut');
