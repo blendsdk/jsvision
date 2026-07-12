@@ -50,6 +50,29 @@ foundation RDs of the same number.
 
 ## Notes
 
+- **2026-07-12** — **Follow-up plan `global-clipboard` EXECUTING** 🔄 ([plan](plans/global-clipboard/00-index.md) · [preflight report](plans/global-clipboard/00-preflight-report.md))
+  (no RD — the 22/22 RD set stays complete; implements GitHub issue #73, **supersedes #5**). Makes
+  `Ctrl+A/C/X/V` (select-all/copy/cut/paste) work **framework-wide** across every editable widget via a
+  **default keymap** merged into the event loop (`clipboardKeys: 'modern'|'classic'|'both'|'none'`,
+  default `'both'`) that maps the chords to `Commands.selectAll/copy/cut/paste`; the raw chord is
+  swallowed, so both `Input` and `Editor` handle them as commands (new `Commands.selectAll` wired into
+  both — the anti-regression invariant). In-app **paste** is functional on every terminal via a
+  loop-owned app-local buffer exposed through a dual-sink `setClipboard` + a new `readClipboard()` seam
+  — **no** OSC-52 read (DEF-25 stays deferred). Cross-widget Editor↔Input clipboard + selection-based
+  copy/cut greying are in scope. `clipboardChord()` retired (aliases cover it). 6 phases / 50 tasks,
+  spec-first (ST-1…ST-25); **AR-1…AR-16 ✅ GATE PASSED** — user chose: standalone plan (no RD), adopt
+  all four issue core decisions, both refinements in scope, and modern-first with a documented
+  classic/WordStar-editor `clipboardKeys` opt-out. **Preflight ✅ PASSED WITH NOTES** (2026-07-12):
+  13-dimension codebase-grounded audit — plan verified accurate against source (Keymap structural
+  merge, enabled-by-default commands, no hidden regression from globalizing the chords); 5 findings
+  (1 major + 2 minor + 2 observation), all resolved into the plan docs — the major (PF-001) corrected
+  a phantom "existing selection-change signal" to **add** a reactive `Input.hasSelection` signal
+  mirroring the Editor's. **Executing** 🔄 (`exec_plan global-clipboard` started 2026-07-12): Phase 0
+  ✅ complete — default keymap + `clipboardKeys` config + `Commands.selectAll` + barrel exports; ST-1..ST-7
+  green. Globalizing `Ctrl+A` puts 11 pre-existing widget tests (that use Ctrl+A as a select-all setup
+  step) into an **expected transient red** until Phase 1 wires `Commands.selectAll` into Input/Editor —
+  the swallow-the-raw-chord invariant Phase 1 exists to close (joint full `yarn verify` runs at end of
+  Phase 1). Next: Phase 1 (global copy/cut + select-all wiring).
 - **2026-07-11** — **Follow-up plan `flexible-chrome-bars` DONE ✅** ([plan](plans/flexible-chrome-bars/00-index.md))
   (no RD — the 22/22 RD set stays complete). Refactors the app-shell chrome bars onto the layout
   engine so both bars support right-alignment / flexible gaps. **StatusLine** becomes a general

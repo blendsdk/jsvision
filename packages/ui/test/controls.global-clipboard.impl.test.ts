@@ -1,0 +1,81 @@
+/**
+ * Implementation tests — global clipboard, Input internals & edges: wide-glyph selection copy, caret
+ * placement after a cut, and the dual-sink independence boundary (the app-local buffer fills even when
+ * the OS-clipboard write is a headless/incapable no-op). Complements the ST oracles in the spec file.
+ */
+import { test, expect } from 'vitest';
+import { resolveCapabilities } from '@jsvision/core';
+import type { KeyEvent, CapabilityProfile } from '@jsvision/core';
+import { View, Group } from '../src/view/index.js';
+import type { DrawContext, DispatchEvent } from '../src/view/index.js';
+import { createEventLoop } from '../src/event/index.js';
+import { signal } from '../src/reactive/index.js';
+import { Input } from '../src/controls/index.js';
+import { Commands } from '../src/status/index.js';
+
+const base = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
+const capsClip: CapabilityProfile = { ...base, osc: { ...base.osc, clipboard52: true } };
+const capsNoClip: CapabilityProfile = { ...base, osc: { ...base.osc, clipboard52: false } };
+
+function key(k: string, mods: Partial<Pick<KeyEvent, 'alt' | 'ctrl' | 'shift'>> = {}): KeyEvent {
+  return { type: 'key', key: k, ctrl: false, alt: false, shift: false, ...mods };
+}
+
+class ClipProbe extends View {
+  override focusable = true;
+  lastRead = '';
+  draw(_ctx: DrawContext): void {}
+  override onEvent(ev: DispatchEvent): void {
+    if (ev.event.type === 'command') this.lastRead = ev.readClipboard?.() ?? '';
+  }
+}
+
+function mountInput(opts: ConstructorParameters<typeof Input>[0], caps = capsClip, w = 15) {
+  const input = new Input(opts);
+  const probe = new ClipProbe();
+  const root = new Group();
+  root.layout = { direction: 'col' };
+  input.layout = { size: { kind: 'fixed', cells: 1 } };
+  probe.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.add(input);
+  root.add(probe);
+  const loop = createEventLoop({ width: w, height: 3 }, { caps, commands: [...Object.values(Commands), '__read__'] });
+  const clip: string[] = [];
+  loop.writeClipboard = (seq) => clip.push(seq);
+  loop.mount(root);
+  loop.focusView(input);
+  const readClip = (): string => {
+    const prev = loop.getFocused();
+    loop.focusView(probe);
+    loop.emitCommand('__read__');
+    if (prev !== null) loop.focusView(prev);
+    return probe.lastRead;
+  };
+  return { loop, input, clip, readClip };
+}
+
+test('copy carries a wide-glyph selection intact into the buffer', () => {
+  const value = signal('漢字');
+  const { loop, readClip } = mountInput({ value });
+  loop.dispatch(key('a', { ctrl: true })); // select all
+  loop.dispatch(key('c', { ctrl: true })); // copy
+  expect(readClip()).toBe('漢字');
+});
+
+test('after a cut the caret sits at the start of the removed selection', () => {
+  const value = signal('hello');
+  const { loop, input } = mountInput({ value });
+  loop.dispatch(key('a', { ctrl: true })); // select all
+  loop.dispatch(key('x', { ctrl: true })); // cut
+  expect(value()).toBe('');
+  expect(input.caretPos).toBe(0);
+});
+
+test('the app-local buffer fills even when the OS clipboard write is an incapable no-op', () => {
+  const value = signal('hi');
+  const { loop, clip, readClip } = mountInput({ value }, capsNoClip); // terminal without OSC-52 clipboard
+  loop.dispatch(key('a', { ctrl: true }));
+  loop.dispatch(key('c', { ctrl: true }));
+  expect(clip.length).toBe(0); // no OS write sequence emitted (capability-gated off)
+  expect(readClip()).toBe('hi'); // but in-app paste still works — the buffer was filled unconditionally
+});

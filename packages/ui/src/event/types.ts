@@ -5,6 +5,7 @@
 import type { CapabilityProfile, Theme, Logger, Keymap, ScreenBuffer } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
 import type { View, RenderRoot, AppEvent, Point, PopupHost } from '../view/index.js';
+import type { ClipboardKeys } from './default-keymap.js';
 
 /**
  * The handle a self-closing modal view receives so it can close itself from its own event handling.
@@ -42,6 +43,14 @@ export interface EventLoopOptions {
   logger?: Logger;
   /** Key-chord → command map (from core's `createKeymap`): a matched chord fires the command and swallows the key. */
   keymap?: Keymap;
+  /**
+   * Which clipboard key set the framework binds by default (default `'both'` — modern Ctrl+A/C/X/V
+   * plus the classic Ctrl+Insert/Shift+Insert/Shift+Delete aliases). A `keymap` you supply is merged
+   * on top and wins on any conflicting chord. `'none'` binds no clipboard chords at all — only a
+   * widget's built-in raw Ctrl+A select-all still fires — so an app on `'none'` supplies its own
+   * keymap for copy/cut/paste (and the classic chords).
+   */
+  clipboardKeys?: ClipboardKeys;
   /** Optional list of command names known up front. Commands are enabled by default whether listed or not. */
   commands?: Iterable<string>;
   /** Called once per dispatch tick after all cascaded events drain, just before the frame is painted. */
