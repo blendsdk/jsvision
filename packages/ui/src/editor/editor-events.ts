@@ -68,6 +68,8 @@ export function handleEditorEvent(ed: Editor, ev: DispatchEvent): void {
     if (c === Commands.cut) ed.cut();
     else if (c === Commands.copy) ed.copy();
     else if (c === Commands.paste) ed.paste();
+    // Ctrl+A arrives as a command because the framework keymap swallows the raw chord.
+    else if (c === Commands.selectAll) ed.execute('selectAll');
     else if (c === Commands.undo) ed.undo();
     else if (c === Commands.redo) ed.redo();
     else if (c === EditorCommands.clear) ed.deleteSelect();

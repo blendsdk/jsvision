@@ -20,6 +20,7 @@ import type { DrawContext, DispatchEvent, Point } from '../view/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { KeyEvent, MouseEvent, Style } from '@jsvision/core';
 import type { Validator } from './validators/index.js';
+import { Commands } from '../status/index.js';
 import { selectionBlock, mousePos, motionOf, caretAfterMotion } from './input-selection.js';
 import { clipboardChord, clipboardCommand, applyPaste, insertFilled } from './input-clipboard.js';
 import type { ClipboardAction } from './input-clipboard.js';
@@ -230,6 +231,13 @@ export class Input extends View {
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type === 'command') {
+      // Select-all arrives as a command (the framework keymap swallows raw Ctrl+A), so it must be
+      // handled here or select-all regresses. Kept separate from the copy/cut/paste classifier.
+      if (inner.command === Commands.selectAll) {
+        this.selectAll(true);
+        ev.handled = true;
+        return;
+      }
       const action = clipboardCommand(inner.command); // cut/copy/paste raised from a menu/status/keymap
       if (action !== null) {
         this.runClipboard(action, ev);

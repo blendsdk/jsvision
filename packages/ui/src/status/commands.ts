@@ -33,13 +33,19 @@ export const Commands = {
   yes: 'yes',
   /** Negative dialog answer; gated by `valid()` like `ok`. */
   no: 'no',
-  // Clipboard commands — the focused `Input` handles these. The terminal-safe chords Ctrl+Insert /
-  // Shift+Insert / Shift+Delete map to copy / paste / cut.
-  /** Cut the focused Input's selection to the clipboard (Shift+Delete). */
+  // Clipboard & selection commands — handled by the focused editable widget (an `Input` or an
+  // `Editor`). The framework's default keymap raises them from Ctrl+A (select-all), Ctrl+C (copy),
+  // Ctrl+X (cut), and Ctrl+V (paste), with the classic chords Ctrl+Insert (copy), Shift+Insert
+  // (paste), and Shift+Delete (cut) as aliases. Registering an `onCommand` handler for any of these on
+  // the loop or application intercepts it before the focused widget (the loop's command sink runs
+  // first), so handle them app-wide only when you mean to override the in-widget clipboard.
+  /** Select all text in the focused editable widget (Ctrl+A). */
+  selectAll: 'selectAll',
+  /** Cut the focused editable widget's selection to the clipboard (Ctrl+X, or classic Shift+Delete). */
   cut: 'cut',
-  /** Copy the focused Input's selection to the clipboard (Ctrl+Insert). */
+  /** Copy the focused editable widget's selection to the clipboard (Ctrl+C, or classic Ctrl+Insert). */
   copy: 'copy',
-  /** Paste the clipboard into the focused Input (Shift+Insert). */
+  /** Paste the clipboard into the focused editable widget (Ctrl+V, or classic Shift+Insert). */
   paste: 'paste',
   // Editor undo/redo — the focused `Editor` handles both. Redo is command-only (there is no default
   // key chord for it), so bind it from a menu, status item, or app keymap if you want a shortcut.
