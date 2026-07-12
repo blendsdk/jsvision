@@ -90,6 +90,12 @@ export function createHost(options: HostOptions): Host {
   let effectiveCaps: CapabilityProfile = forceAscii ? degradeCapsFully(caps) : caps;
 
   let running = false;
+  // True only once start() has finished its terminal setup (raw mode, the width probe, and — on a
+  // TTY — switching to the alternate screen). render() stays a no-op until then, so a frame produced
+  // during start()'s async window (the width probe awaits before the alternate screen is entered)
+  // cannot land on the primary screen — which would blank the alt-screen's first diff and leave the
+  // frame behind on exit. Reset on every start()/stop() so a restart re-gates cleanly.
+  let ready = false;
   let streams: BoundStreams | null = null;
   let adapter: RuntimeAdapter | null = null;
   let restore: GuaranteedRestore | null = null;
@@ -204,6 +210,7 @@ export function createHost(options: HostOptions): Host {
     // half-reset state.
     prev = null;
     lastBuffer = null;
+    ready = false; // gate render() until this start() finishes its terminal setup below
     decoderState = createDecoderState();
     streams = bindStreams(options);
     isTTY = streams.isTTY;
@@ -270,12 +277,14 @@ export function createHost(options: HostOptions): Host {
     streams.input.on('data', dataListener);
     errorListener = (err: unknown): void => onOutputError(err);
     streams.output.on('error', errorListener);
+    ready = true; // terminal setup complete — render() may now write frames
     return Promise.resolve();
   }
 
   function stop(): Promise<void> {
     if (!running) return Promise.resolve();
     running = false;
+    ready = false; // stop writing frames immediately — the terminal is being restored below
     clearEscTimer();
     if (streams && dataListener) {
       streams.input.removeListener('data', dataListener);
@@ -311,7 +320,10 @@ export function createHost(options: HostOptions): Host {
   }
 
   function render(next: ScreenBuffer, trailer?: string): void {
-    if (!streams) return;
+    // Drop frames until start() has finished (ready) and while there is no bound output (streams).
+    // A paint issued during start()'s async window would otherwise reach the primary screen before
+    // the alternate screen is entered, so it is silently skipped — start() repaints the first frame.
+    if (!streams || !ready) return;
     // The effective caps swap wide chrome to ASCII when the probe or env forced adaptation.
     const out = serialize(next, prev, { caps: effectiveCaps });
     // The trailer (e.g. the caret show+move) rides the SAME write as the damage: a separate write
