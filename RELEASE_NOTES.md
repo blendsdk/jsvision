@@ -1,13 +1,17 @@
-# Release Notes — v0.1.1
+# Release Notes — v0.2.0
 
 **Released**: 2026-07-12
 
-We are excited to announce the release of version 0.1.1 of our software, which includes updated packages designed to enhance the overall experience for our users. This release primarily focuses on improving the organization and traceability of our code, which is essential for maintaining the quality of our applications.
+We are excited to announce the release of version 0.2.0 of our software! This update introduces several enhancements designed to improve your experience and ensure our platform remains effective and efficient. 
 
-Highlights of this release include:
+In this version, we've focused on updating various components of our software to enhance stability and performance across the board. While the core functionalities continue to operate smoothly, you may notice improvements in responsiveness and overall usability.
 
-- **Improved Package Information**: Each of our updated packages now includes a repository field. This addition enhances transparency by providing users with clearer access to the source of the package. Knowing where our software comes from contributes to trust and credibility, ensuring that users can rely on what they are using.
+Here are some highlights of the changes included in this release:
 
-- **Alignment of Versions**: The version of the documentation site has been synchronized with the overall project version. This consistency helps users understand that they are viewing the most relevant and up-to-date information about the software features and functionalities.
+- **New Demo**: We have added an engaging Matrix digital-rain demo to the examples package. This new feature provides a fun visual experience that illustrates the capabilities of our platform in a creative way.
+  
+- **Improved User Interface**: The user interface has been updated to enhance the interaction when closing windows. Now, if you close the last window on your desktop, the application will repurpose its resources more efficiently, which could lead to a smoother user experience.
 
-These updates may not introduce new features in the traditional sense but are vital in ensuring that our applications remain stable, secure, and easy to use. By making these foundational improvements, we set the stage for more visible enhancements in the future. Thank you for your ongoing support and trust in our products!
+- **Mandatory Updates**: The various packages have been updated to the latest versions (excluding TypeScript), which enhances the functionality and compatibility of our software. This ensures that you are using the most up-to-date capabilities available to you.
+
+We recommend that all users upgrade to version 0.2.0 to take advantage of these improvements. Your feedback is valuable to us, so please share any thoughts or experiences you have with this release. Thank you for your continued support!
