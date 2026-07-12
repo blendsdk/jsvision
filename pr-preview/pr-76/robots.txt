@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://blendsdk.github.io/jsvision/sitemap.xml
