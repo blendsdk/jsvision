@@ -11,7 +11,7 @@ import type { CapabilityProfile, Theme, Logger, Keymap, RuntimeAdapter } from '@
 import type { Size2D } from '../layout/index.js';
 import { Group } from '../view/index.js';
 import { createEventLoop } from '../event/index.js';
-import type { EventLoop } from '../event/index.js';
+import type { EventLoop, ClipboardKeys } from '../event/index.js';
 import { Desktop } from '../desktop/index.js';
 import type { MenuBar } from '../menu/index.js';
 import { Commands } from '../status/index.js';
@@ -35,6 +35,13 @@ export interface ApplicationOptions {
   logger?: Logger;
   /** Key-chord → command map (from core's `createKeymap`) applied across the whole app. */
   keymap?: Keymap;
+  /**
+   * Which clipboard key set the framework binds by default (default `'both'` — modern Ctrl+A/C/X/V
+   * plus the classic Ctrl+Insert/Shift+Insert/Shift+Delete aliases). Any `keymap` you supply merges on
+   * top and wins on a conflicting chord. Use `'none'` to bind no clipboard chords (e.g. an app hosting
+   * a WordStar-mode `Editor`) and supply your own keymap instead.
+   */
+  clipboardKeys?: ClipboardKeys;
   /** Optional menu bar shown as the top row. Build one with `menuBar(...)`. */
   menuBar?: MenuBar;
   /** Optional status line shown as the bottom row. Build one with `statusLine(...)`. */
@@ -237,6 +244,7 @@ export function createApplication(opts: ApplicationOptions): Application {
     theme: opts.theme,
     logger: opts.logger,
     keymap: opts.keymap,
+    clipboardKeys: opts.clipboardKeys, // undefined ⇒ the loop's `'both'` default
     commands: Object.values(Commands),
     quitCommand: Commands.quit, // a quit while a dialog is open cascades top-down through the modals
     onQuit: (code) => quitState.resolve?.(code), // the loop registers quit through its command sink

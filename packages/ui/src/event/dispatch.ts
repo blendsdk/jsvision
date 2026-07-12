@@ -45,6 +45,8 @@ export interface RouteContext {
   hasCapture(view: View): boolean;
   /** Write text to the system clipboard. Exposed as `ev.setClipboard`. */
   setClipboard(text: string): void;
+  /** Read the app-local clipboard buffer (the last text copied/cut in the app). Exposed as `ev.readClipboard`. */
+  readClipboard(): string;
   /** The currently focused view. Exposed as `ev.getFocused`. */
   getFocused(): View | null;
   /** The host for anchored dropdown popups, or `undefined`. Exposed as `ev.popupHost`. */
@@ -185,6 +187,7 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
     releaseCapture: ctx.releaseCapture,
     hasCapture: ctx.hasCapture,
     setClipboard: ctx.setClipboard,
+    readClipboard: ctx.readClipboard,
     getFocused: ctx.getFocused,
     popupHost: ctx.popupHost,
   };

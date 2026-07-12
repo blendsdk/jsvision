@@ -10,10 +10,13 @@ import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import {
   createEventLoop,
+  buildKeymap,
+  Commands,
   View,
   Group,
   type EventLoop,
   type EventLoopOptions,
+  type ClipboardKeys,
   type CommandEvent,
   type AppEvent,
   type DispatchEvent,
@@ -68,4 +71,24 @@ test('ST-20: routing is a bounded pass; command names are opaque (no injection)'
   const dangerous = "'; rm -rf / --";
   loop.emitCommand(dangerous);
   expect(received).toBe(dangerous);
+});
+
+// ST-7 — the global-clipboard public surface imports from `@jsvision/ui`: the new `selectAll`
+// command constant, the `buildKeymap` builder, and the `ClipboardKeys` mode type.
+test('ST-7: Commands.selectAll, buildKeymap, and ClipboardKeys are on the public surface', () => {
+  expect(Commands.selectAll).toBe('selectAll');
+  expect(buildKeymap).toBeTypeOf('function');
+
+  // Type-only usage — fails to typecheck if `ClipboardKeys` is missing from the public surface.
+  const mode: ClipboardKeys = 'both';
+  const km = buildKeymap(mode);
+  expect(km?.lookup({ type: 'key', key: 'c', ctrl: true, alt: false, shift: false })).toBe('copy');
+
+  // `readClipboard` is part of the DispatchEvent public contract (type-only — fails typecheck if absent).
+  const ev: DispatchEvent = {
+    event: { type: 'command', command: 'x' },
+    handled: false,
+    readClipboard: () => 'buf',
+  };
+  expect(ev.readClipboard?.()).toBe('buf');
 });
