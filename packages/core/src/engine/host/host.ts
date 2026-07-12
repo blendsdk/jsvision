@@ -279,6 +279,15 @@ export function createHost(options: HostOptions): Host {
     clearEscTimer();
     if (streams && dataListener) {
       streams.input.removeListener('data', dataListener);
+      // Removing the last 'data' listener does not pause the stream: the flowing-mode ref it took on
+      // the input handle persists and keeps the Node event loop alive, so the process would hang after
+      // the app quits instead of returning to the shell. Pause to release that ref. Best-effort — a
+      // teardown throw must never jump over the terminal restore below.
+      try {
+        streams.input.pause();
+      } catch {
+        /* releasing the input is best-effort; restore still runs */
+      }
       dataListener = null;
     }
     if (streams && errorListener) {
