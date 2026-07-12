@@ -1,7 +1,7 @@
 {
   "name": "@jsvision/spike-data-studio",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "THROWAWAY feasibility spike — a Paradox/MS-Access-style DB front-end on @jsvision/ui + PostgreSQL. Evidence for the Data Studio decision memo; delete after the decision. Deliberately inert: no build/test/typecheck scripts so turbo + yarn verify skip it.",
   "license": "MIT",
   "repository": {
@@ -25,8 +25,8 @@
     "probe:7": "tsx src/07-scale.ts"
   },
   "dependencies": {
-    "@jsvision/core": "0.1.1",
-    "@jsvision/ui": "0.1.1",
+    "@jsvision/core": "0.2.0",
+    "@jsvision/ui": "0.2.0",
     "pg": "^8.22.0"
   },
   "devDependencies": {

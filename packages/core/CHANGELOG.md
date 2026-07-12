@@ -7,11 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2026-07-12
 
-Changed:
-- Updated all development and build dependencies while holding TypeScript at 5.x to maintain compatibility.
+### Fixed
+- Released stdin on stop() to ensure the process exits properly after quit.
 
-## [0.1.1] - 2026-07-12
-
-Added:
-
-- Added repository field to package.json for provenance compliance.
+### Changed
+- Upgraded all dependencies except TypeScript to maintain compatibility with the current type-aware toolchain.
