@@ -28,6 +28,24 @@
 
 ## Notes
 
+- 2026-07-12: **jsvision-ui follow-up `global-clipboard` → ✅ DONE** (`exec_plan`, per-phase local
+  commits, keep-local/no-push; no RD — the jsvision-ui 22/22 RD set stays complete; implements GitHub
+  issue **#73**, **supersedes #5**). Framework-wide `Ctrl+A/C/X/V` across every editable widget via a
+  **default keymap** merged into the event loop (`clipboardKeys: 'modern'|'classic'|'both'|'none'`,
+  default `'both'`) mapping the chords to `Commands.selectAll/copy/cut/paste`; the raw chord is
+  swallowed so `Input` **and** `Editor` handle them as commands (new `Commands.selectAll` — the
+  anti-regression invariant). In-app **paste** works on every terminal via a loop-owned app-local
+  buffer behind a dual-sink `setClipboard` + a new `readClipboard()` seam (**no** OSC-52 read). Ships
+  cross-widget Editor↔Input clipboard, a reactive `Input.hasSelection` for menu/status greying, and a
+  `controls/clipboard` kitchen-sink story. `clipboardChord()` retired — the classic `Ctrl/Shift+Ins/Del`
+  chords ride the keymap→command path (ST-05/06 behavioral oracles stay green). New public exports:
+  `buildKeymap` + `ClipboardKeys`, `Commands.selectAll`, `Input.hasSelection`, and the `clipboardKeys`
+  option on `createApplication`/`createEventLoop`. **6 phases / 49 of 50 tasks**, spec-first (ST-1…ST-25);
+  commits `56094afe`→`ce3bf047`. **Verification:** ui 1575/1575 unit · examples 161/161 · `test:e2e`
+  10/10 tasks · typecheck/build/check:docs green. Pre-existing out-of-scope repo red (v0.2.0 `[skip ci]`
+  release drift, NOT this feature): per-package CHANGELOG/RELEASE_NOTES prettier + core `packaging.spec`
+  ST-3 pack allow-list. **Remaining (deferred to the user):** `gh issue close 5` — an outward GitHub
+  action held per the keep-local choice. Cascaded from **jsvision-ui**.
 - 2026-07-11: **jsvision-plugin PL-02 `plugin-self-sync` → ✅ DONE** (`exec_plan`, per-phase local
   commits). 30/30 tasks / 4 phases, spec-first. The `check-plugin.mjs` drift gate now has an
   auto-fix loop: `detectDrift()` (reusing `checkBarrelCoverage`, so findings mirror the gate) →
