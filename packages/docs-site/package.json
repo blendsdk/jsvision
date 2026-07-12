@@ -4,6 +4,11 @@
   "private": true,
   "description": "JSVision documentation & showcase website (VitePress). Dev-only; never shipped.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/docs-site"
+  },
   "type": "module",
   "scripts": {
     "dev": "vitepress dev",

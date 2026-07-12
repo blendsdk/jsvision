@@ -89,14 +89,22 @@ jobs:
           git tag "v${VERSION}"
 
       - name: Publish to npm (lockstep, provenance, push commit + tag)
-        # `yarn <bin>` runs node_modules/.bin/lockstep; a bare `lockstep` is not on
-        # PATH in this plain shell (only the yarn-script steps above had .bin on PATH).
+        # Run lockstep by putting node_modules/.bin on PATH and calling it directly,
+        # NOT via `yarn lockstep`. `yarn` forces npm_config_registry=registry.yarnpkg.com
+        # onto its child processes, which the spawned `npm publish` would then target —
+        # but the auth token setup-node wrote is scoped to registry.npmjs.org, so the
+        # publish would fail auth against the yarn mirror. Calling lockstep directly keeps
+        # the clean npmjs.org env (from .npmrc + npm_config_registry below).
+        # The dry run passes --provenance too so it exercises the same pre-flight
+        # validation (e.g. the repository-field check) as the real publish.
         run: |
+          export PATH="$(pwd)/node_modules/.bin:$PATH"
           if [ "${{ inputs.dry-run }}" = "true" ]; then
             echo "DRY RUN — no packages will be published."
-            yarn lockstep publish --tag "${{ inputs.dist-tag }}" --dry
+            lockstep publish --tag "${{ inputs.dist-tag }}" --provenance --dry
           else
-            yarn lockstep publish --tag "${{ inputs.dist-tag }}" --git-push --provenance
+            lockstep publish --tag "${{ inputs.dist-tag }}" --git-push --provenance
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm_config_registry: 'https://registry.npmjs.org/'

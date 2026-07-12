@@ -4,6 +4,11 @@
   "version": "0.1.0",
   "description": "Run any JSVision app in a browser xterm.js terminal — a browser host over the reused pure engine, a virtual FileSystem, key-chord reclaim, and a clipboard bridge. Private until first release.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/web"
+  },
   "type": "module",
   "engines": {
     "node": ">=22"
