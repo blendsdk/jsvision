@@ -89,12 +89,14 @@ jobs:
           git tag "v${VERSION}"
 
       - name: Publish to npm (lockstep, provenance, push commit + tag)
+        # `yarn <bin>` runs node_modules/.bin/lockstep; a bare `lockstep` is not on
+        # PATH in this plain shell (only the yarn-script steps above had .bin on PATH).
         run: |
           if [ "${{ inputs.dry-run }}" = "true" ]; then
             echo "DRY RUN — no packages will be published."
-            lockstep publish --tag "${{ inputs.dist-tag }}" --dry
+            yarn lockstep publish --tag "${{ inputs.dist-tag }}" --dry
           else
-            lockstep publish --tag "${{ inputs.dist-tag }}" --git-push --provenance
+            yarn lockstep publish --tag "${{ inputs.dist-tag }}" --git-push --provenance
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
