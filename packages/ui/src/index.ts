@@ -148,7 +148,15 @@ export type { TreeNode, TreeOptions, MarkerStyle } from './tree/index.js';
 // The grid engine underneath is exposed too — the `GridRows`/`GridHeader` renderers, the pure
 // column math (`apportionColumns`/`alignCell`/`sortRows`/`measureAutoWidths`), and the wide-glyph
 // `stringWidth` measure they draw with — so another package can compose a bespoke grid on it.
-export { DataGrid, GridRows, GridHeader, apportionColumns, alignCell, sortRows, measureAutoWidths } from './table/index.js';
+export {
+  DataGrid,
+  GridRows,
+  GridHeader,
+  apportionColumns,
+  alignCell,
+  sortRows,
+  measureAutoWidths,
+} from './table/index.js';
 export type {
   Column,
   ColumnWidth,

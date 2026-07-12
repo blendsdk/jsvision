@@ -55,8 +55,17 @@ test('should expose working engine helpers, not placeholder bindings', () => {
   expect(stringWidth('ab')).toBe(2);
   expect(alignCell('x', 3, 'left', stringWidth)).toBe('x  ');
 
-  const cols: Column<Row>[] = [{ title: 'N', accessor: (r) => String(r.n), width: 'auto', compare: (a, b) => a.n - b.n }];
-  const sorted = sortRows([{ v: 'b', n: 9 }, { v: 'a', n: 1 }], cols, { col: 0, dir: 'asc' });
+  const cols: Column<Row>[] = [
+    { title: 'N', accessor: (r) => String(r.n), width: 'auto', compare: (a, b) => a.n - b.n },
+  ];
+  const sorted = sortRows(
+    [
+      { v: 'b', n: 9 },
+      { v: 'a', n: 1 },
+    ],
+    cols,
+    { col: 0, dir: 'asc' },
+  );
   expect(sorted.map((r) => r.n)).toEqual([1, 9]);
 
   const autos = measureAutoWidths(cols, [{ v: 'a', n: 1000 }], stringWidth);
