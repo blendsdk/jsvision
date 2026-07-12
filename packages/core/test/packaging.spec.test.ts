@@ -66,7 +66,7 @@ test('ST-1: VERSION is a non-empty string', () => {
 
 // ST-2 (PL-6, PL-7): exported VERSION equals package.json#version. The literal
 // value is not asserted — it moves with every release (lockstep bump +
-// sync-core-version.mjs); the invariant is that the two stay equal.
+// sync-package-versions.mjs); the invariant is that the two stay equal.
 test('ST-2: VERSION equals package.json#version', () => {
   const pkg = readPackageJson();
   expect(VERSION).toBe(pkg['version']);

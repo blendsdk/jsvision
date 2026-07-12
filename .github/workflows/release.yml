@@ -4,8 +4,8 @@
 # Versioning is owned by @blendsdk/lockstep: it analyses conventional commits since the
 # last tag, bumps every public package to one shared version, and drafts the changelog
 # (OpenAI primary, Anthropic fallback). This workflow adds the pieces lockstep leaves to
-# the project: a full `yarn verify` gate BEFORE releasing, syncing core's exported
-# VERSION constant to the bumped manifest, a rebuild so the published dist carries the
+# the project: a full `yarn verify` gate BEFORE releasing, syncing each package's exported
+# VERSION constant to the bumped manifests, a rebuild so the published dist carries the
 # new version, and a single release commit + tag.
 #
 # Only @jsvision/core, @jsvision/ui, and @jsvision/files are public; every other
@@ -74,8 +74,8 @@ jobs:
           LOCKSTEP_OPENAI_MODEL: ${{ secrets.LOCKSTEP_OPENAI_MODEL }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
-      - name: Sync core VERSION constant to the bumped manifest
-        run: node scripts/sync-core-version.mjs
+      - name: Sync package VERSION constants to the bumped manifests
+        run: node scripts/sync-package-versions.mjs
 
       - name: Rebuild so published dist carries the new version
         run: yarn build

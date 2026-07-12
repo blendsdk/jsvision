@@ -14,7 +14,7 @@
  */
 import { test, expect } from 'vitest';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
@@ -22,6 +22,10 @@ import { dirname, join, resolve } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url)); // test/
 const repoRoot = resolve(here, '..');
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+
+// Derive the expected VERSION from the manifest so the assertion tracks every release
+// bump instead of pinning a literal that goes stale the next time the version changes.
+const coreVersion = (JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')) as { version: string }).version;
 
 /** Build the tarball into `dest` and return its absolute path. */
 function packInto(dest: string): string {
@@ -59,7 +63,7 @@ test('ST-13/ST-14: packed tarball installs; ESM import works, CJS require fails'
     writeFileSync(join(consumer, 'esm.mjs'), "import { VERSION } from '@jsvision/core';\nconsole.log(VERSION);\n");
     const esm = spawnSync(process.execPath, ['esm.mjs'], { cwd: consumer, encoding: 'utf8' });
     expect(esm.status).toBe(0);
-    expect(esm.stdout.trim()).toBe('0.1.0');
+    expect(esm.stdout.trim()).toBe(coreVersion);
 
     // ST-14: CJS require fails with an ESM-related error.
     writeFileSync(join(consumer, 'cjs.cjs'), "require('@jsvision/core');\n");
