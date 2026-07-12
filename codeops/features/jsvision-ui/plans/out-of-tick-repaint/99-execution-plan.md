@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-12 23:12
-> **Progress**: 11/12 tasks (92%)
+> **Last Updated**: 2026-07-12 23:17
+> **Progress**: 12/12 tasks (100%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -108,11 +108,11 @@ out-of-tick staleness before changing anything (so the red phase is meaningful).
 
 - [x] 4.1.1 Write `out-of-tick-repaint.impl.test.ts` (bursts across turns; partial vs full recompose out-of-tick; caret cell after a deferred paint; `stop()` idempotent; in-tick `dispatch` before `stop()` still paints; default `queueMicrotask` path via `await Promise.resolve()`) — `packages/ui/test/out-of-tick-repaint.impl.test.ts` ✅ (completed: 2026-07-12 23:12) — 5/5 green
 - [x] 4.1.2 Confirm the exact-`onFrame`-count regression tests stay green (`desktop-removewindow-repaint.impl` `toBe(1)`, `app-shell.lifecycle.impl`, `app-shell.seams.spec`) — `packages/ui/test/` ✅ (completed: 2026-07-12 23:12) — 24/24 green
-- [~] 4.1.3 Full monorepo verify — `yarn verify` (lint + typecheck + build + test + check:docs) — repo root ⏳ (implemented: 2026-07-12 23:12) — **all #68-related phases green (lint/prettier/eslint on touched files, typecheck, build, ui tests, check:docs). Blocked ONLY by two PRE-EXISTING failures from the v0.2.0 release `[skip ci]` commit (9a3b71a4), unrelated to #68: (1) prettier drift in the 7 generated `CHANGELOG.md` + `RELEASE_NOTES.md`; (2) `@jsvision/core` `packaging.spec` ST-3 rejects the packed `CHANGELOG.md` (npm force-includes it; it is not in the allowlist). Awaiting user decision on scope.**
+- [x] 4.1.3 Full monorepo verify — `yarn verify` (lint + typecheck + build + test + check:docs) — repo root ✅ (completed: 2026-07-12 23:17) — 22/22 turbo tasks + check-plugin PASS. The two PRE-EXISTING release-artifact blockers (v0.2.0 `[skip ci]` commit 9a3b71a4) were cleared per the user's decision in a separate `chore(release)` commit: prettier-format the generated changelogs + `RELEASE_NOTES.md`, and ship `CHANGELOG.md` in the `@jsvision/core` pack (added to `packaging.spec` ST-3's allowlist).
 
 **Deliverables**:
 - [x] Impl suite green (5/5); regression suites green (24/24)
-- [~] `yarn verify` green — blocked on pre-existing release-artifact failures (see 4.1.3 note)
+- [x] `yarn verify` green (full monorepo)
 
 **Verify**: `yarn verify`
 
