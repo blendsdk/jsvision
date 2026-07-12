@@ -21,6 +21,7 @@
     "check:deps": "turbo run check:deps",
     "check:docs": "turbo run check:docs",
     "verify": "yarn lint && turbo run typecheck build test check:docs && node scripts/check-plugin.mjs",
+    "verify:shipped": "yarn lint && turbo run typecheck build test check:docs --filter=@jsvision/core --filter=@jsvision/ui --filter=@jsvision/web --filter=@jsvision/files",
     "gate": "node scripts/gate.mjs",
     "plugin:sync": "node scripts/plugin-sync.mjs",
     "ncu:check": "ncu --root --workspaces -x \"@jsvision/* typescript\"",
