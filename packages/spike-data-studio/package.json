@@ -4,6 +4,11 @@
   "version": "0.1.0",
   "description": "THROWAWAY feasibility spike — a Paradox/MS-Access-style DB front-end on @jsvision/ui + PostgreSQL. Evidence for the Data Studio decision memo; delete after the decision. Deliberately inert: no build/test/typecheck scripts so turbo + yarn verify skip it.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/spike-data-studio"
+  },
   "type": "module",
   "engines": {
     "node": ">=22"

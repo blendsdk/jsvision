@@ -4,6 +4,11 @@
   "private": true,
   "description": "jsvision theme designer — a standalone terminal app for authoring @jsvision/core themes (live preview, RGB/hex/swatch color picking, WCAG contrast, depth downsampling, presets, JSON import/export). Built from the widgets it themes. Private until first release.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/theme-designer"
+  },
   "type": "module",
   "engines": {
     "node": ">=22"
