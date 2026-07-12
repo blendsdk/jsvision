@@ -4,6 +4,11 @@
   "version": "0.1.0",
   "description": "Dev-only runnable examples + probe harness for @jsvision/core (never published)",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/examples"
+  },
   "type": "module",
   "engines": {
     "node": ">=22"
