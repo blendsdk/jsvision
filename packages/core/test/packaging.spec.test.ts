@@ -73,10 +73,12 @@ test('ST-2: VERSION equals package.json#version', () => {
 });
 
 // ST-3 (AC-3): every packed path is under dist/ or is an allowed root file.
+// CHANGELOG.md ships with the package (it is in `files`), so consumers see the
+// version history on npm alongside the README.
 test(
-  'ST-3: packed files are a subset of dist/** ∪ {package.json, README.md, LICENSE}',
+  'ST-3: packed files are a subset of dist/** ∪ {package.json, README.md, CHANGELOG.md, LICENSE}',
   () => {
-    const allowedRootFiles = new Set(['package.json', 'README.md', 'LICENSE']);
+    const allowedRootFiles = new Set(['package.json', 'README.md', 'CHANGELOG.md', 'LICENSE']);
     const files = packFileList();
     expect(files.length > 0).toBeTruthy();
     for (const path of files) {
