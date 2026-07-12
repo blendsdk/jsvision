@@ -1,8 +1,8 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-11
-> **Features**: 4 / 6 done
+> **Last Updated**: 2026-07-12
+> **Features**: 4 / 7 done
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -19,6 +19,7 @@
 | jsvision-ui-enhancements | [→](features/jsvision-ui-enhancements/00-roadmap.md) | B-01 ✅ Done — UI small batch: Tree markers (#17) · duplicate-accelerator warning (#6) · Switch (#11) | 1/1 plans | ✅ | 2026-07-09 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | **RD-01 ✅ Done (impl)** (site-foundation — VitePress site + gh-pages CI + IA/nav/search/theme/SEO/strict-CSP + absorbed `docs/`; live deploy pending user) · **RD-02 ✅ Done** (web-runtime — `@jsvision/web` shipped: browser host/`mountApp` · caps · virtual FileSystem · key-reclaim · clipboard · `browser-stubs`; 17/17 tasks, 41 tests ST-1…ST-12, dogfooded into web-xterm) · **RD-03 ✅ Done** (live-example-system — every docs sample runs live in xterm.js via `mountApp`, shown code == running code; 40/40 tasks / 7 phases; DemoShell + client-only Play + a11y/no-kbd/deep-link + **8 seed examples** (button…desktop…preset-gallery); ST-1…ST-14 green, docs gate 14/14; **↳ remediation ✅ 2026-07-10** — 7 post-ship bugs fixed: terminal-driven Play resize, unified draggable-Window shell, reopenable dialogs, build()-first Source; 22/27 tasks, verify 22/22 + gate 14/14, browser-confirmed M1/M2/M4–M8) · **RD-06 ✅ Done** (api-reference — generated TypeDoc→md→VitePress reference for the 4 public barrels, gitignored+regen per-package for clean `/api/<pkg>/…` URLs, **bidirectional** cross-links via a 29-row symbol↔page map, drift-gated (6 `API-*` checks → docs gate 20/20; pure `.mjs` helpers in `yarn verify`); 4 phases/16 tasks all `[x]`; barrelExports == generated set per pkg (0 missing/leaked); clean-dist verify 22/22 + gate 20/20; TypeDoc devDeps only) · RD-04/05/07…RD-10 ✏️ drafted — VitePress docs & showcase site, client-side live demos in xterm.js, GitHub Pages | 4/10 RDs · RD-06 ✅ done | 🔄 | 2026-07-11 |
 | jsvision-plugin | [→](features/jsvision-plugin/00-roadmap.md) | **PL-01 ✅ Done** (Claude Code plugin: `jsvision` skill + `jsvision-new-app` scaffolder + 4 recipes + `check-plugin.mjs` gate) · **PL-02 ✅ Done** (`plugin-self-sync` — deterministic `detectDrift()` reusing `checkBarrelCoverage` + a deterministic snippet `--fix` + an AI catalog-entry draft via a local `jsvision-plugin-sync` skill **and** an injected-client API script; verify-gated, nothing auto-commits, CI scaffolded disabled/secret-free; 30/30 tasks/4 phases, spec-first; 25 fake-client tests) | 2/2 plans | ✅ | 2026-07-11 |
+| datagrid | [→](features/datagrid/00-roadmap.md) | RD-01…RD-14 ✏️ drafted — enterprise editable data grid `@jsvision/datagrid` (v1 = the enterprise datasheet; Gate PASSED AR-01…AR-30, 3 named deferrals) | 0/14 RDs | ⬜ | 2026-07-12 |
 
 ## Archived
 
@@ -28,6 +29,16 @@
 
 ## Notes
 
+- 2026-07-12: **New feature `datagrid` + RD-01…RD-14 → RD DRAFTED** ✏️ ([roadmap](features/datagrid/00-roadmap.md))
+  via `make_requirements`. An enterprise-class editable data grid (`@jsvision/datagrid`, a new zero-dep
+  package; PostgreSQL / Data Studio is a separate downstream app), SAP ALV / MS-Access / Paradox-class,
+  grounded in the Data Studio feasibility spike (Probes 0–7, GO-WITH-CAVEATS). Discovery front-loaded in
+  a same-day design conversation; 14 RDs (foundation · editing · editors · formatting · sorting ·
+  filtering · columns/freeze · rows/selection · footer/master-detail · navigation · data-at-scale ·
+  validation · export/variants · non-functional). Zero-Ambiguity Gate PASSED — 30 items (AR-01…AR-27
+  resolved; AR-28 pager offset/keyset · AR-29 cell/range selection · AR-30 undo/redo = confirmed named
+  deferrals). v1 = per-cell immediate editing, row-oriented selection, virtual scroll. **Portfolio now
+  7 features.** Next: `preflight datagrid` or `make_plan RD-01`.
 - 2026-07-11: **jsvision-plugin PL-02 `plugin-self-sync` → ✅ DONE** (`exec_plan`, per-phase local
   commits). 30/30 tasks / 4 phases, spec-first. The `check-plugin.mjs` drift gate now has an
   auto-fix loop: `detectDrift()` (reusing `checkBarrelCoverage`, so findings mirror the gate) →
