@@ -83,4 +83,12 @@ test('ST-7: Commands.selectAll, buildKeymap, and ClipboardKeys are on the public
   const mode: ClipboardKeys = 'both';
   const km = buildKeymap(mode);
   expect(km?.lookup({ type: 'key', key: 'c', ctrl: true, alt: false, shift: false })).toBe('copy');
+
+  // `readClipboard` is part of the DispatchEvent public contract (type-only — fails typecheck if absent).
+  const ev: DispatchEvent = {
+    event: { type: 'command', command: 'x' },
+    handled: false,
+    readClipboard: () => 'buf',
+  };
+  expect(ev.readClipboard?.()).toBe('buf');
 });

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-12 22:20
-> **Progress**: 20/50 tasks (40%)
+> **Last Updated**: 2026-07-12 22:36
+> **Progress**: 28/50 tasks (56%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -151,22 +151,22 @@ Governs: [03-02](03-02-clipboard-buffer-seam.md) (read seam) + [03-03](03-03-wid
 
 **Reference**: 07 ST-11, ST-12, ST-15, ST-17, ST-20 · AR-4
 
-- [ ] 2.1.1 Extend Input spec (ST-11 paste from buffer, ST-12 empty no-op, ST-15 validator/maxLength drop, ST-17 ComboBox/History inherit, ST-20 raw-`Ctrl+A` fallback under `'none'`) — `packages/ui/test/controls.global-clipboard.spec.test.ts`
-- [ ] 2.1.2 Extend packaging spec for `readClipboard` on `DispatchEvent` (ST-7) — `packages/ui/test/event.packaging.spec.test.ts`
-- [ ] 2.1.3 Run spec tests — verify the new cases FAIL (red phase)
+- [x] 2.1.1 Extend Input spec (ST-11 paste from buffer, ST-12 empty no-op, ST-15 validator/maxLength drop, ST-17 ComboBox/History inherit, ST-20 raw-`Ctrl+A` fallback under `'none'`) — `packages/ui/test/controls.global-clipboard.spec.test.ts` ✅ (completed: 2026-07-12 22:36)
+- [x] 2.1.2 Extend packaging spec for `readClipboard` on `DispatchEvent` (ST-7) — `packages/ui/test/event.packaging.spec.test.ts` ✅ (completed: 2026-07-12 22:36)
+- [x] 2.1.3 Run spec tests — verify the new cases FAIL (red phase) ✅ (completed: 2026-07-12 22:36 — ST-11/15/17 red; ST-12/20 already held)
 
 ### Step 2.2: Implementation
 
 **Reference**: 03-02 §readClipboard seam, 03-03 §Input.2
 
-- [ ] 2.2.1 Add `readClipboard()` across the four sites — `RouteContext` + `ev2` enrichment (`dispatch.ts`), `routeContext()` (`event-loop.ts`), and `DispatchEvent` (`view/types.ts`)
-- [ ] 2.2.2 `Input.runClipboard('paste')` reads `ev.readClipboard?.() ?? ''` and inserts via the existing `pasteText`/`applyPaste` path — `packages/ui/src/controls/input.ts`
-- [ ] 2.2.3 Run spec tests — verify they PASS (green phase)
+- [x] 2.2.1 Add `readClipboard()` across the four sites — `RouteContext` + `ev2` enrichment (`dispatch.ts`), `routeContext()` (`event-loop.ts`), and `DispatchEvent` (`view/types.ts`) ✅ (completed: 2026-07-12 22:05 — **done in Phase 1 task 1.2.1**, per runtime AR-18)
+- [x] 2.2.2 `Input.runClipboard('paste')` reads `ev.readClipboard?.() ?? ''` and inserts via the existing `pasteText`/`applyPaste` path — `packages/ui/src/controls/input.ts` ✅ (completed: 2026-07-12 22:36)
+- [x] 2.2.3 Run spec tests — verify they PASS (green phase) ✅ (completed: 2026-07-12 22:36 — 12/12 spec green)
 
 ### Step 2.3: Implementation tests & hardening
 
-- [ ] 2.3.1 Write impl tests (paste through picture/filter/range validators; caret placement; unit-constructed event → undefined seam no-op) — `packages/ui/test/controls.global-clipboard.impl.test.ts`
-- [ ] 2.3.2 Full verification
+- [x] 2.3.1 Write impl tests (paste through picture/filter/range validators; caret placement; unit-constructed event → undefined seam no-op) — `packages/ui/test/controls.global-clipboard.impl.test.ts` ✅ (completed: 2026-07-12 22:36 — 4 added, 7 total green)
+- [x] 2.3.2 Full verification ✅ (completed: 2026-07-12 22:36 — ui 1568 unit + typecheck + check:docs; all ui-dependent pkgs green)
 
 **Verify**: `yarn verify`
 

@@ -266,16 +266,23 @@ export class Input extends View {
   }
 
   /**
-   * Run a clipboard action. Copy and cut write the current selection to the clipboard; an empty
-   * selection is a no-op. Cut then deletes the selection. Paste here is a no-op — a real paste
-   * arrives as a paste event handled by {@link pasteText}, since there is no synchronous system
-   * clipboard read.
+   * Run a clipboard action. Copy and cut write the current selection to the clipboard (which mirrors
+   * it to both the OS clipboard and the app-local buffer); an empty selection is a no-op, and cut then
+   * deletes the selection. Paste inserts the app-local buffer at the caret — replacing any selection —
+   * through the validator and length cap; an empty buffer is a no-op. The terminal's own paste gesture
+   * still arrives separately as a paste event handled by {@link pasteText}.
    *
    * @param action The clipboard action.
-   * @param ev     The dispatch envelope (carries `setClipboard`).
+   * @param ev     The dispatch envelope (carries `setClipboard` / `readClipboard`).
    */
   protected runClipboard(action: ClipboardAction, ev: DispatchEvent): void {
-    if (action === 'paste') return; // handled via the paste event, not here
+    if (action === 'paste') {
+      // In-app paste: insert the loop's app-local buffer. No synchronous OS-clipboard read — the seam
+      // is undefined on an event not routed through the loop, and empty before anything is copied.
+      const pasted = ev.readClipboard?.() ?? '';
+      if (pasted !== '') this.pasteText(pasted); // reuses the validator + maxLength insertion path
+      return;
+    }
     const text = this.value().slice(this.selStart, this.selEnd);
     if (text === '') return; // nothing selected
     ev.setClipboard?.(text); // the event loop sanitizes and gates this by capability
