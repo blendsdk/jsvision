@@ -97,11 +97,14 @@ export default withMermaid(
         'process.env.NODE_ENV': JSON.stringify('production'),
       },
       resolve: {
-        // The only two Node built-ins in the @jsvision/core graph (the native tty host + the logger's
-        // file sink) — aliased to throwing browser stubs the live demos never call.
+        // The Node built-ins the @jsvision/core + @jsvision/files graphs pull in (the native tty host,
+        // the logger's file sink, the opt-in input diagnostics, and the default Node filesystem) —
+        // aliased to throwing browser stubs the live demos never call.
         alias: {
           'node:fs': '@jsvision/web/browser-stubs',
           'node:tty': '@jsvision/web/browser-stubs',
+          'node:os': '@jsvision/web/browser-stubs',
+          'node:path': '@jsvision/web/browser-stubs',
         },
       },
     },
