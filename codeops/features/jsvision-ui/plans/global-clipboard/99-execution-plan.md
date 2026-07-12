@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-12 23:34
-> **Progress**: 49/50 tasks (98%) — 5.3.2 `[~]`: acceptance criteria verified; only the outward `gh issue close 5` is deferred to the user (keep-local / no-push)
+> **Last Updated**: 2026-07-12 23:40
+> **Progress**: 50/50 tasks (100%) — COMPLETE. #5 closed as superseded by #73; branch pushed. One out-of-scope pre-existing repo-red remains (core `packaging.spec` ST-3, release-governance), flagged to the user.
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -263,7 +263,7 @@ Governs: [03-03](03-03-widget-integration.md) §Retire path + `01` acceptance cr
 ### Step 5.3: Wrap-up
 
 - [x] 5.3.1 Full verification + relevant `test:e2e` — `yarn verify` && `yarn test:e2e` — typecheck/build/check:docs green; `test:e2e` 10/10 tasks (examples 19/19). Unit: feature green everywhere; the only monorepo failure is the pre-existing core `packaging.spec` ST-3 (CHANGELOG.md not in the pack allow-list, v0.2.0 `[skip ci]` release drift — not this feature; also blocks `yarn lint`/prettier on the release-generated per-package CHANGELOGs). Ran the downstream `turbo run typecheck build test check:docs` directly to get past that pre-existing prettier block ✅ (implemented: 2026-07-12 23:33)
-- [~] 5.3.2 Close #5 as superseded, linking this plan / #73 (`gh issue close 5`) — verify the acceptance-criteria checklist in `01-requirements.md` is fully satisfied — AC 1–13 + 16 verified green (per their ST oracles + check:docs); AC-14 green *for this feature* (typecheck/build/test/check:docs/e2e), with the caveat that repo-wide `yarn verify`/`yarn lint` are held red by PRE-EXISTING v0.2.0 `[skip ci]` release drift (per-package CHANGELOG/RELEASE_NOTES prettier + core ST-3 pack allow-list — not this feature); AC-15 CHANGELOG done. **`gh issue close 5` deferred** — it is an outward GitHub action and the user chose to keep this work local (no push); surfaced for the user to run/authorize ⏳ (implemented: 2026-07-12 23:34)
+- [x] 5.3.2 Close #5 as superseded, linking this plan / #73 (`gh issue close 5`) — verify the acceptance-criteria checklist in `01-requirements.md` is fully satisfied — AC 1–13 + 16 verified green (per their ST oracles + check:docs); AC-14 green (typecheck/build/test/check:docs/e2e + `yarn lint` now green after the `.prettierignore` release-drift fix landed mid-session, commit `00c75082`), with the caveat that repo-wide `yarn verify` is still held red ONLY by the PRE-EXISTING core `packaging.spec` ST-3 (each package's release-generated `CHANGELOG.md` is packed but absent from the allow-list — a release-governance issue, not this feature; flagged to the user); AC-15 CHANGELOG done. **#5 closed** as `completed` with a supersession comment linking #73; branch `feat/glorbal-ctrl-functions` pushed to origin (user-approved) ✅ (implemented: 2026-07-12 23:40)
 
 **Verify**: `yarn verify` && `yarn test:e2e`
 
