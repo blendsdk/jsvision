@@ -20,3 +20,12 @@ export type { GridDataSource, SortKey, FilterModel } from './data-source.js';
 // immediately and reverts it on veto.
 export { commitCell } from './commit.js';
 export type { CellCommit, OnCommit } from './commit.js';
+
+// Cell overlay — `mountCellOverlay` mounts an editor view over a grid cell; `absoluteRect` gives a
+// mounted view's absolute origin.
+export { mountCellOverlay, absoluteRect } from './overlay.js';
+export type { CellRect } from './overlay.js';
+
+// The read-only grid container — composes the promoted engine over the column model and data source.
+export { EditableDataGrid } from './grid.js';
+export type { EditableDataGridOptions } from './grid.js';

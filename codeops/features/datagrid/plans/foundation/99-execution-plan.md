@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 01:39
-> **Progress**: 28/39 tasks (72%)
+> **Last Updated**: 2026-07-13 01:54
+> **Progress**: 36/39 tasks (92%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -166,22 +166,22 @@ Depends on Phases 1–4. Spec-first (03-05).
 
 **Reference**: [03-05](03-05-overlay-container.md) · [07 ST-9, ST-10, ST-11] · req PF-004, AR-25
 
-- [ ] 5.1.1 Write the overlay spec (ST-9 mount at translated rect + focus + dispose-disposes-root, fake loop) — `packages/datagrid/test/overlay.spec.test.ts`
-- [ ] 5.1.2 Write the container spec (ST-10 renders `format(value)` from in-memory + windowed; ST-11 control-byte cell → no raw ESC/BEL) + extend the type test for grid-options `rowKey` (ST-5) — `packages/datagrid/test/grid.spec.test.ts`, `packages/datagrid/test/types.spec.test.ts`
-- [ ] 5.1.3 Run — verify all FAIL (red)
+- [x] 5.1.1 Write the overlay spec (ST-9 mount at translated rect + focus + dispose-disposes-root, fake loop) — `packages/datagrid/test/overlay.spec.test.ts` ✅ (completed: 2026-07-13 01:54)
+- [x] 5.1.2 Write the container spec (ST-10 renders `format(value)` from in-memory + windowed; ST-11 control-byte cell → no raw ESC/BEL) + extend the type test for grid-options `rowKey` (ST-5) — `packages/datagrid/test/grid.spec.test.ts`, `packages/datagrid/test/types.spec.test.ts` ✅ (completed: 2026-07-13 01:54)
+- [x] 5.1.3 Run — verify all FAIL (red) ✅ (completed: 2026-07-13 01:54)
 
 ### Step 5.2: Implementation
 
 **Reference**: [03-05 §Implementation Details]
 
-- [ ] 5.2.1 Implement `CellRect`/`absoluteRect`/`mountCellOverlay` (public primitives, owned reactive root) — `packages/datagrid/src/overlay.ts`, `src/index.ts`
-- [ ] 5.2.2 Implement read-only `EditableDataGrid<T>` + `EditableDataGridOptions<T>` (adapter → a sort-suppressed `ReadonlyGridHeader` + `GridRows` over a source via the promoted `stringWidth` measure, absolute overlay host; materialize coerces `rowAt`'s `T | undefined` to the engine's `display: () => T[]` with a type-guard) — `packages/datagrid/src/grid.ts`, `src/index.ts`
-- [ ] 5.2.3 Run the specs — verify they PASS (green)
+- [x] 5.2.1 Implement `CellRect`/`absoluteRect`/`mountCellOverlay` (public primitives, owned reactive root) — `packages/datagrid/src/overlay.ts`, `src/index.ts` ✅ (completed: 2026-07-13 01:54)
+- [x] 5.2.2 Implement read-only `EditableDataGrid<T>` + `EditableDataGridOptions<T>` (adapter → a sort-suppressed `ReadonlyGridHeader` + `GridRows` over a source via the promoted `stringWidth` measure, absolute overlay host; materialize coerces `rowAt`'s `T | undefined` to the engine's `display: () => T[]` with a type-guard) — `packages/datagrid/src/grid.ts`, `src/index.ts` ✅ (completed: 2026-07-13 01:54)
+- [x] 5.2.3 Run the specs — verify they PASS (green) ✅ (completed: 2026-07-13 01:54)
 
 ### Step 5.3: Hardening
 
-- [ ] 5.3.1 Write impl tests (`absoluteRect` walk; overlay re-mount; empty-source `<empty>`; windowed materialization) — `packages/datagrid/test/overlay.impl.test.ts`, `packages/datagrid/test/grid.impl.test.ts`
-- [ ] 5.3.2 Full verify
+- [x] 5.3.1 Write impl tests (`absoluteRect` walk; overlay re-mount; empty-source `<empty>`; windowed materialization) — `packages/datagrid/test/overlay.impl.test.ts`, `packages/datagrid/test/grid.impl.test.ts` ✅ (completed: 2026-07-13 01:54)
+- [x] 5.3.2 Full verify ✅ (completed: 2026-07-13 01:54 — datagrid build + typecheck + test (32) + check:docs green)
 
 **Deliverables**: `mountCellOverlay` + a read-only `EditableDataGrid<T>` proving AC-3/AC-7/AC-8.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs`
