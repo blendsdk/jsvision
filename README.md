@@ -49,6 +49,14 @@ yarn verify   # lint + typecheck + build + test across all packages
 All public packages share one lockstep version. For the full workflow, see the
 [development guide](https://blendsdk.github.io/jsvision/reference/guides/development).
 
+## Versioning & stability
+
+jsvision follows [Semantic Versioning](https://semver.org/). While it is pre-1.0 the
+public API may change between **minor** versions — pin an exact version. From 1.0
+onward, each package's entry point is the stable public surface and breaking changes
+ship only in a **major** release; anything marked `@deprecated` is kept for at least
+one minor before removal. Notable changes are recorded per package in `CHANGELOG.md`.
+
 ## License
 
 [MIT](LICENSE)
