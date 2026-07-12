@@ -1,0 +1,100 @@
+# Publish the public @jsvision packages to npm, in lockstep, with provenance.
+#
+# Manually triggered only (workflow_dispatch): GitHub → Actions → Release → Run workflow.
+# Versioning is owned by @blendsdk/lockstep: it analyses conventional commits since the
+# last tag, bumps every public package to one shared version, and drafts the changelog
+# (OpenAI primary, Anthropic fallback). This workflow adds the pieces lockstep leaves to
+# the project: a full `yarn verify` gate BEFORE releasing, syncing core's exported
+# VERSION constant to the bumped manifest, a rebuild so the published dist carries the
+# new version, and a single release commit + tag.
+#
+# Only @jsvision/core, @jsvision/ui, and @jsvision/files are public; every other
+# workspace is `private` and npm skips it. Provenance requires the id-token permission
+# and a `repository` field in each published package (both satisfied here).
+#
+# Run with "Dry run" checked first to preview what would publish — it bumps + packs in
+# the runner but never commits, tags, pushes, or publishes.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dist-tag:
+        description: 'npm dist-tag to publish under'
+        type: choice
+        options:
+          - latest
+          - next
+          - beta
+        default: latest
+      dry-run:
+        description: 'Dry run (bump + pack only; no publish, commit, tag, or push)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the release commit + tag
+      id-token: write # npm provenance (OIDC)
+    steps:
+      - name: Checkout (full history for conventional-commit analysis)
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Verify (lint + typecheck + build + tests + docs guards)
+        run: yarn verify
+
+      - name: Configure git identity
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Bump versions + draft changelog (no commit yet)
+        run: yarn lockstep:version --no-git-commit
+        env:
+          # AI-drafted changelog notes: OpenAI primary, Anthropic fallback. With no
+          # key, lockstep writes deterministic fallback entries and still proceeds.
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LOCKSTEP_OPENAI_MODEL: ${{ secrets.LOCKSTEP_OPENAI_MODEL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Sync core VERSION constant to the bumped manifest
+        run: node scripts/sync-core-version.mjs
+
+      - name: Rebuild so published dist carries the new version
+        run: yarn build
+
+      - name: Commit + tag the release
+        if: ${{ !inputs.dry-run }}
+        run: |
+          VERSION=$(node -p "require('./packages/core/package.json').version")
+          git add -A
+          git commit -m "chore(release): v${VERSION} [skip ci]"
+          git tag "v${VERSION}"
+
+      - name: Publish to npm (lockstep, provenance, push commit + tag)
+        run: |
+          if [ "${{ inputs.dry-run }}" = "true" ]; then
+            echo "DRY RUN — no packages will be published."
+            lockstep publish --tag "${{ inputs.dist-tag }}" --dry
+          else
+            lockstep publish --tag "${{ inputs.dist-tag }}" --git-push --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

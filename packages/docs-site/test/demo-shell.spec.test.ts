@@ -14,7 +14,7 @@
  * no menu bar, Theme/Depth in the status line" no longer describes the shell.)
  */
 import { test, expect } from 'vitest';
-import { resolveCapabilities, turboVisionTheme, nordTheme } from '@jsvision/core';
+import { resolveCapabilities, classicTheme, nordTheme } from '@jsvision/core';
 import type { DrawContext } from '@jsvision/ui';
 import { View, Window, createRoot } from '@jsvision/ui';
 import { demoShell } from '../src/demo-shell.js';
@@ -90,7 +90,7 @@ test('ST-B1: a component example is wrapped in a titled, non-closable Window on 
 test('ST-B2: a component demo renders on the window surface, not the desktop pattern', () => {
   createRoot((dispose) => {
     const app = demoShell({ build: () => marker(), title: 'Widget Demo', kind: 'component', caps, viewport: VP });
-    const pattern = turboVisionTheme.desktop.pattern; // ░ — tiled across the desktop background
+    const pattern = classicTheme.desktop.pattern; // ░ — tiled across the desktop background
     // Dead-centre sits inside the near-full-desktop stage window → the window's clean interior surface.
     expect(cellCharAt(app, Math.floor(VP.width / 2), Math.floor(VP.height / 2))).not.toBe(pattern);
     // The desktop still patterns its margin left of the inset window — proving the sample discriminates.
@@ -168,7 +168,7 @@ test('ST-9: the default theme is Turbo Vision and setTheme repaints live without
   createRoot((dispose) => {
     const opts = { build: () => marker(), title: 'Widget Demo', kind: 'component' as const, caps, viewport: VP };
     const dflt = demoShell(opts);
-    const tv = demoShell({ ...opts, theme: turboVisionTheme });
+    const tv = demoShell({ ...opts, theme: classicTheme });
     // Default (no theme option) renders identically to an explicit Turbo Vision theme.
     expect(signatureOf(dflt)).toEqual(signatureOf(tv));
 

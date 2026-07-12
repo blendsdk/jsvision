@@ -24,7 +24,7 @@ import {
   serializeTheme,
   parseTheme,
   InvalidThemeError,
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,
@@ -71,7 +71,7 @@ test('ST-27: every new theming function/class is importable from @jsvision/core'
 
 test('ST-27: all 7 presets are importable objects', () => {
   for (const preset of [
-    turboVisionTheme,
+    classicTheme,
     monochromeTheme,
     slateTheme,
     nordTheme,

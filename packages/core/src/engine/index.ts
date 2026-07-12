@@ -165,7 +165,7 @@ export {
   serializeTheme,
   parseTheme,
   InvalidThemeError,
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,

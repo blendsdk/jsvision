@@ -1,8 +1,8 @@
 # @jsvision/ui
 
-The Turbo Vision-style **widget framework** of [jsvision](https://github.com/blendsdk/jsvision) — a **retained widget tree** with **fine-grained signal reactivity** (the "disciplined hybrid" model), built on the [`@jsvision/core`](../core) engine.
+The **retro-desktop widget framework** of [jsvision](https://github.com/blendsdk/jsvision) — a **retained widget tree** with **fine-grained signal reactivity** (the "disciplined hybrid" model), built on the [`@jsvision/core`](https://www.npmjs.com/package/@jsvision/core) engine.
 
-> **Status: scaffold.** This package is an empty skeleton wired into the monorepo (build, typecheck, tests, the `@jsvision/core` dependency). Subsystems land here per the component map in [`plans/tui-ui/01-component-map.md`](../../plans/tui-ui/01-component-map.md): the reactive core, the layout engine, the view/group spine, then the widgets. It is marked `private` until the first release.
+> **Status: pre-release (0.x).** The framework spans the reactive core, the layout engine, the view/group spine, the event loop, the app shell, and ~40 controls (windows, menus, dialogs, lists, tables, tabs, trees, and more). The public API may still change before 1.0 — pin an exact version.
 
 ## Public entry point
 

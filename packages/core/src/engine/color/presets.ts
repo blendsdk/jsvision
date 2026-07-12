@@ -1,6 +1,6 @@
 /**
  * The shipped theme presets — ready-to-use {@link Theme}s covering the classic
- * Turbo Vision look, an attribute-driven monochrome scheme, and five popular
+ * classic DOS look, an attribute-driven monochrome scheme, and five popular
  * dark/enterprise palettes.
  *
  * Each preset is an independent named export, so importing one tree-shakes the
@@ -31,15 +31,15 @@ import { Attr } from '../render/types.js';
 export { PRESET_SEEDS } from './preset-seeds.js';
 
 /**
- * The classic Borland / Turbo Vision "gray dialog / blue window" theme — an alias
+ * The classic DOS "gray dialog / blue window" theme — an alias
  * of {@link defaultTheme} and the render-root default.
  *
  * @example
- * import { turboVisionTheme } from '@jsvision/core';
+ * import { classicTheme } from '@jsvision/core';
  *
- * turboVisionTheme.window.bg; // the classic blue
+ * classicTheme.window.bg; // the classic blue
  */
-export const turboVisionTheme: Theme = defaultTheme;
+export const classicTheme: Theme = defaultTheme;
 
 // Achromatic building blocks for the monochrome preset.
 const W = '#ffffff';

@@ -64,11 +64,12 @@ test('ST-1: VERSION is a non-empty string', () => {
   expect(VERSION.length > 0).toBeTruthy();
 });
 
-// ST-2 (PL-6, PL-7): exported VERSION equals package.json#version (0.1.0).
+// ST-2 (PL-6, PL-7): exported VERSION equals package.json#version. The literal
+// value is not asserted — it moves with every release (lockstep bump +
+// sync-core-version.mjs); the invariant is that the two stay equal.
 test('ST-2: VERSION equals package.json#version', () => {
   const pkg = readPackageJson();
   expect(VERSION).toBe(pkg['version']);
-  expect(VERSION).toBe('0.1.0');
 });
 
 // ST-3 (AC-3): every packed path is under dist/ or is an allowed root file.

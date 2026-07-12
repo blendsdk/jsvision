@@ -12,7 +12,7 @@ import { test, expect } from 'vitest';
 import { ScreenBuffer, serialize, resolveCapabilities } from '../src/engine/index.js';
 import type { ColorDepth, RenderOptions, Style, Theme, ThemeRole } from '../src/engine/index.js';
 import {
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,
@@ -28,7 +28,7 @@ import {
 } from '../src/engine/index.js';
 
 const PRESETS: Record<string, Theme> = {
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,

@@ -38,7 +38,7 @@ import {
 } from '@jsvision/ui';
 import type { Application } from '@jsvision/ui';
 import {
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,
@@ -96,7 +96,7 @@ interface Preset {
 
 /** The 13 shipped presets, in menu order (default open = Turbo Vision). */
 const PRESETS: readonly Preset[] = [
-  { name: 'Turbo Vision', theme: turboVisionTheme },
+  { name: 'Classic', theme: classicTheme },
   { name: 'Monochrome', theme: monochromeTheme },
   { name: 'Slate', theme: slateTheme },
   { name: 'Nord', theme: nordTheme },
@@ -185,7 +185,7 @@ export function demoApp(
   return createApplication({
     caps: ctx.caps,
     viewport: { width: ctx.width, height: ctx.height },
-    theme: turboVisionTheme,
+    theme: classicTheme,
     menuBar: buildMenuBar({ windowMenu }),
     statusLine: buildStatusLine(),
   });
@@ -196,7 +196,7 @@ function shellForView(opts: DemoShellOptions): Application {
   const app = createApplication({
     caps: opts.caps,
     viewport: opts.viewport,
-    theme: opts.theme ?? turboVisionTheme,
+    theme: opts.theme ?? classicTheme,
     menuBar: buildMenuBar({ windowMenu: false }),
     statusLine: buildStatusLine(),
   });

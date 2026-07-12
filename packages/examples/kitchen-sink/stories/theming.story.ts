@@ -9,7 +9,7 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import {
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,
@@ -31,7 +31,7 @@ import type { Story, StoryContext } from '../story.js';
 
 /** The presets shown, in navigator order. */
 const PRESETS: readonly [string, Theme][] = [
-  ['turboVision', turboVisionTheme],
+  ['turboVision', classicTheme],
   ['monochrome', monochromeTheme],
   ['slate', slateTheme],
   ['nord', nordTheme],
