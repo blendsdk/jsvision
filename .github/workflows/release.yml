@@ -102,3 +102,8 @@ jobs:
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Force the public npm registry. Running lockstep via `yarn` otherwise
+          # injects npm_config_registry=registry.yarnpkg.com into the spawned
+          # `npm publish`, overriding the npmjs.org registry setup-node wrote to
+          # .npmrc — and the auth token is scoped to registry.npmjs.org.
+          npm_config_registry: 'https://registry.npmjs.org/'
