@@ -65,8 +65,8 @@ jobs:
       - name: Dependency policy guard (no native runtime deps)
         run: yarn check:deps
 
-      - name: Lockstep versions (public packages share the root version)
-        run: yarn sync-versions --check
+      - name: Core VERSION constant matches its package.json
+        run: node scripts/sync-core-version.mjs --check
 
       # Audit PRODUCTION dependencies only: the shipped packages carry zero
       # runtime deps (the whole guarantee), so this is the surface that matters.

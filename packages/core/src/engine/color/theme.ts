@@ -3,7 +3,7 @@
  *
  * A {@link Theme} is plain data — a lookup from a role name (e.g. `menuBar`,
  * `button`, `listFocused`) to a foreground/background pair (plus an optional
- * hotkey accent). {@link defaultTheme} is the classic Borland "gray dialog /
+ * hotkey accent). {@link defaultTheme} is the classic DOS-era "gray dialog /
  * blue window" look, ready to use out of the box. Assign a role's colors to the
  * cells you draw; the theme itself has no view-tree or inheritance behavior.
  */
@@ -246,7 +246,7 @@ export interface Theme {
 }
 
 /**
- * The classic Borland / Turbo Vision look — a "gray dialog / blue window" theme
+ * The classic DOS text-mode look — a "gray dialog / blue window" theme
  * ready to use as-is or as the base for your own. Each role's `(fg, bg)` pair is
  * a plain {@link Color} from {@link PALETTE}; roles carry no inheritance or
  * view-mapping behavior.

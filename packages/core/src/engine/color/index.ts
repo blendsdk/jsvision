@@ -42,7 +42,7 @@ export { serializeTheme, parseTheme, InvalidThemeError } from './serialize.js';
 
 // Shipped theme presets (tree-shakeable named exports) + the derived presets' seed sets as data.
 export {
-  turboVisionTheme,
+  classicTheme,
   monochromeTheme,
   slateTheme,
   nordTheme,

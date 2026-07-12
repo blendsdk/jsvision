@@ -264,7 +264,7 @@ export {
  * The seed sets behind the {@link createTheme}-generated presets, keyed by name — the same
  * `{ mode, accent, neutral, overrides }` options each curated theme is built from, exposed as data so
  * a tool (e.g. a theme editor) can load a preset as an *editable* starting point rather than an opaque
- * finished theme. The two literal presets (`turboVisionTheme`, `monochromeTheme`) are hand-authored
+ * finished theme. The two literal presets (`classicTheme`, `monochromeTheme`) are hand-authored
  * and have no seed form, so they are intentionally absent here.
  *
  * Importing `PRESET_SEEDS` pulls in every seed set; importing a single preset theme does not pull in
