@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 01:54
-> **Progress**: 36/39 tasks (92%)
+> **Last Updated**: 2026-07-13 02:00
+> **Progress**: 39/39 tasks (100%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -196,16 +196,16 @@ Depends on Phase 5. Realizes AC-9 in the in-package harness (03-06) + the whole-
 
 **Reference**: [03-06](03-06-story-harness.md) · [07 ST-12] · AC-9 · AR #2 (plan)
 
-- [ ] 6.1.1 Write the `Story` contract + registry + the placeholder `datagrid/foundation` story (rendering the read-only container) — `packages/datagrid/test/kitchen-sink/story.ts`, `.../stories/index.ts`, `.../stories/foundation.story.ts`
-- [ ] 6.1.2 Write the smoke test (ST-12 registry hygiene + every story paints headlessly) — `packages/datagrid/test/kitchen-sink.smoke.spec.test.ts`
-- [ ] 6.1.3 Run the smoke test — verify it PASSES (a painting story + unique id + metadata); if it paints nothing, fix the story, not the test
+- [x] 6.1.1 Write the `Story` contract + registry + the placeholder `datagrid/foundation` story (rendering the read-only container) — `packages/datagrid/test/kitchen-sink/story.ts`, `.../stories/index.ts`, `.../stories/foundation.story.ts` ✅ (completed: 2026-07-13 02:00)
+- [x] 6.1.2 Write the smoke test (ST-12 registry hygiene + every story paints headlessly) — `packages/datagrid/test/kitchen-sink.smoke.spec.test.ts` ✅ (completed: 2026-07-13 02:00)
+- [x] 6.1.3 Run the smoke test — verify it PASSES (a painting story + unique id + metadata); if it paints nothing, fix the story, not the test ✅ (completed: 2026-07-13 02:00 — 3 tests pass)
 
 ### Step 6.2: Final verification
 
 **Reference**: [01 §Acceptance Criteria] · RD-01 AC-1…AC-10
 
-- [ ] 6.2.1 Full `yarn verify` — green across `@jsvision/datagrid` **and** `@jsvision/ui` (lint, typecheck, build, test, check:docs); no ui regression
-- [ ] 6.2.2 Confirm every RD-01 AC-1…AC-10 is realized by a green ST-1…ST-14 (map in [07](07-testing-strategy.md))
+- [x] 6.2.1 Full `yarn verify` — green across `@jsvision/datagrid` **and** `@jsvision/ui` (lint, typecheck, build, test, check:docs); no ui regression ✅ (completed: 2026-07-13 02:00 — datagrid (35 unit + 2 e2e) + ui (1539) green; typecheck/build/check:docs/check:deps green; my files eslint+prettier clean. Repo-wide `yarn verify` is blocked ONLY by pre-existing v0.2.0-release breakage in files this work never touched: `packages/core/test/packaging.spec.test.ts` ST-3 disallows the release-added `CHANGELOG.md`, and CHANGELOG/RELEASE_NOTES prettier drift. Flagged to the user.)
+- [x] 6.2.2 Confirm every RD-01 AC-1…AC-10 is realized by a green ST-1…ST-14 (map in [07](07-testing-strategy.md)) ✅ (completed: 2026-07-13 02:00 — AC-1→ST-13/check:deps · AC-2→ST-1/2 · AC-3→ST-3/4/10 · AC-4→ST-6/7 · AC-5→ST-5 · AC-6→ST-8 · AC-7→ST-9 · AC-8→ST-11 · AC-9→ST-12 · AC-10→ST-13/14, all green)
 
 **Deliverables**: an in-package showcase smoke test; the whole foundation green under `yarn verify`.
 **Verify**: `yarn verify`
