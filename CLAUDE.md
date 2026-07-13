@@ -204,4 +204,3 @@ build(ctx) }`) + one line in `stories/index.ts`. `build(ctx)` returns a `Group` 
 - **Spec-first task ordering** (CodeOps): spec tests → red → implement → green → impl tests → verify. A `*.spec.test.ts` is an immutable oracle — if it fails after implementation, fix the code, not the test.
 - `npm audit` is **not** wired into `verify` (it runs in CI and is locally runnable) so audit advisories don't block local typecheck/test loops.
 - Prettier is scoped to code: `codeops/` is in `.prettierignore` (CodeOps process docs, not code).
-

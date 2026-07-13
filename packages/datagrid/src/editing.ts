@@ -142,8 +142,7 @@ export interface EditController {
 }
 
 type EditState<T> =
-  | { kind: 'idle' }
-  | { kind: 'editing'; cell: CellRef<T>; field: Signal<string>; editor: View; dispose: () => void };
+  { kind: 'idle' } | { kind: 'editing'; cell: CellRef<T>; field: Signal<string>; editor: View; dispose: () => void };
 
 /**
  * Build the in-cell editing controller for a grid body.
