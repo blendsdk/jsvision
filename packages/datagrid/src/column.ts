@@ -8,9 +8,17 @@
  * `format(value)` (or `String(value)`), and the sort comparator is synthesized from the typed value —
  * so a numeric or date column orders by its value, never by the formatted text.
  */
-import type { Column, ColumnWidth, ColumnAlign } from '@jsvision/ui';
+import type { Column, ColumnWidth, ColumnAlign, ThemeRoleName, Style } from '@jsvision/ui';
 import type { CellEditorSpec } from './cell-editor.js';
 import type { ParseFailed } from './format.js';
+import type { CellRenderer } from './cell-draw.js';
+
+/**
+ * Value-driven cell colour. Returns either a theme role name (resolved against the active theme) or an
+ * explicit {@link Style}. Composited under the fixed cell precedence
+ * (cursor > dirty > selected-row > cellStyle > zebra > normal), so a higher-precedence state wins.
+ */
+export type CellStyle<T, V> = (value: V, row: T) => ThemeRoleName | Style;
 
 /**
  * One typed column of a data grid: a stable `id`, a header `title`, a typed `value` accessor (the
@@ -50,6 +58,18 @@ export interface GridColumn<T, V = unknown> {
    * `{ kind: 'lookup', items }` — or `{ kind: 'readonly' }` to make an otherwise-editable column read-only.
    */
   readonly editor?: CellEditorSpec | ((row: T) => CellEditorSpec);
+  /**
+   * Custom cell painter — the escape hatch for glyph indicators, badges, and traffic lights. Draws into
+   * a cell-local, cell-clipped context (origin at the cell's top-left) and is draw-error isolated: a
+   * throw degrades only its own cell. When set, it replaces the default formatted text for the cell.
+   */
+  readonly render?: CellRenderer<T, V>;
+  /**
+   * Value-driven cell colour, composited under the fixed precedence
+   * (cursor > dirty > selected-row > cellStyle > zebra > normal): it paints only when no higher state
+   * (the cursor cell, a pending commit, or the selected/focused row) owns the cell.
+   */
+  readonly cellStyle?: CellStyle<T, V>;
 }
 
 /**

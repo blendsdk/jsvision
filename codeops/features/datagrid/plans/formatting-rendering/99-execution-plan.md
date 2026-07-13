@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-14 00:25
-> **Progress**: 10/24 tasks (42%)
+> **Last Updated**: 2026-07-14 00:42
+> **Progress**: 19/24 tasks (79%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -95,32 +95,32 @@ so Phase 1 adds no paint code; Phase 2 owns the new per-cell paint. No `@jsvisio
 **Reference**: `03-02` · `07 §Cell rendering & styling` (ST-10…ST-16) · AR #1–#3, #9
 **Objective**: Pin render/cellStyle/precedence before touching the paint path.
 
-- [ ] 2.1.1 Write `cell-rendering.spec.test.ts` covering ST-10…ST-16 (cellStyle colour; cursor>cellStyle; selected>cellStyle; render glyph; render-throw isolation; cell-local clip + width-correct truncation; default path unchanged) — `test/cell-rendering.spec.test.ts`
-- [ ] 2.1.2 Verify RED — the new spec file fails (no `render`/`cellStyle` paint yet)
+- [x] 2.1.1 Write `cell-rendering.spec.test.ts` covering ST-10…ST-16 (cellStyle colour; cursor>cellStyle; selected>cellStyle; render glyph; render-throw isolation; cell-local clip + width-correct truncation; default path unchanged) — `test/cell-rendering.spec.test.ts` ✅ (completed: 2026-07-14 00:40)
+- [x] 2.1.2 Verify RED — the 4 behaviour-dependent cases fail (no `render`/`cellStyle` paint yet); the precedence/identity guards already hold ✅ (completed: 2026-07-14 00:40)
 
 ### Step 2.2: Implementation (GREEN)
 
 **Reference**: `03-02 §Implementation Details` · AR #1–#3
 **Objective**: The self-contained per-cell paint path.
 
-- [ ] 2.2.1 Add `render?`/`cellStyle?` to `GridColumn` and the `CellStyle`/`CellRenderer`/`RenderCell`/`CellState`/`CellDrawContext` types — `src/column.ts`, `src/cell-draw.ts`
-- [ ] 2.2.2 Implement `cellContext` (cell-local clipped facade) + `safeRender` (draw-error isolation → `⚠` in `gridDirty` fg over the row bg; no `danger` role — PF-001) — `src/cell-draw.ts`
-- [ ] 2.2.3 Rewrite `EditableGridRows.draw` as the self-contained row/cell loop honoring precedence (cursor>dirty>selected>cellStyle>zebra>normal); set `topItem` via the protected `this.updateTop()` (the `keepVisible`/`clampIndex` helpers are unreachable — PF-003), keep `paintCursorCell`/`paintDirtyMarkers` as final overpaints — `src/editable-grid-rows.ts`
-- [ ] 2.2.4 Export the public render/cellStyle/cell-draw types from the barrel with `@example` JSDoc — `src/index.ts`
-- [ ] 2.2.5 Verify GREEN — ST-10…ST-16 pass
+- [x] 2.2.1 Add `render?`/`cellStyle?` to `GridColumn` and the `CellStyle`/`CellRenderer`/`RenderCell`/`CellState`/`CellDrawContext` types — `src/column.ts`, `src/cell-draw.ts` ✅ (completed: 2026-07-14 00:40) — `CellRenderer` placed in `cell-draw.ts` (with the cell-draw types) to avoid a circular type import; `CellStyle` in `column.ts`
+- [x] 2.2.2 Implement `cellContext` (cell-local clipped facade) + `safeRender` (draw-error isolation → `⚠` in `gridDirty` fg over the row bg; no `danger` role — PF-001) — `src/cell-draw.ts` ✅ (completed: 2026-07-14 00:40)
+- [x] 2.2.3 Rewrite `EditableGridRows.draw` as the self-contained row/cell loop honoring precedence (cursor>dirty>selected>cellStyle>zebra>normal); set `topItem` via the protected `this.updateTop()` (the `keepVisible`/`clampIndex` helpers are unreachable — PF-003), keep `paintCursorCell`/`paintDirtyMarkers` as final overpaints — `src/editable-grid-rows.ts` ✅ (completed: 2026-07-14 00:40)
+- [x] 2.2.4 Export the public render/cellStyle/cell-draw types from the barrel with `@example` JSDoc — `src/index.ts` ✅ (completed: 2026-07-14 00:40)
+- [x] 2.2.5 Verify GREEN — ST-10…ST-16 pass (143 datagrid unit tests green) ✅ (completed: 2026-07-14 00:40)
 
 ### Step 2.3: Implementation tests & hardening
 
 **Reference**: `07 §Implementation Tests`
 **Objective**: Full precedence matrix + edges.
 
-- [ ] 2.3.1 Write `cell-rendering.impl.test.ts` — precedence matrix, empty grid, wide-glyph cell, `Style` vs role-name return, dirty-marker over a cellStyle cell, scrolled/indented clip — `test/cell-rendering.impl.test.ts`
-- [ ] 2.3.2 Verify (full)
+- [x] 2.3.1 Write `cell-rendering.impl.test.ts` — precedence matrix, empty grid, wide-glyph cell, `Style` vs role-name return, dirty-marker over a cellStyle cell, scrolled/indented clip — `test/cell-rendering.impl.test.ts` ✅ (completed: 2026-07-14 00:42)
+- [x] 2.3.2 Verify (full) — full `yarn verify` green (150 datagrid unit tests) ✅ (completed: 2026-07-14 00:42)
 
 **Deliverables**:
-- [ ] `render`/`cellStyle` on `GridColumn` with the fixed precedence, draw-error isolated, cell-clipped
-- [ ] Default (no-hook) path renders identically to the pre-RD-04 base (ST-16)
-- [ ] All verification passing
+- [x] `render`/`cellStyle` on `GridColumn` with the fixed precedence, draw-error isolated, cell-clipped
+- [x] Default (no-hook) path renders identically to the pre-RD-04 base (ST-16)
+- [x] All verification passing
 
 **Verify**: `yarn verify`
 

@@ -20,11 +20,18 @@ import type { OnCommit } from './commit.js';
 import type { CellRect } from './overlay.js';
 import { createEditController, cellKey } from './editing.js';
 import type { CellRef, EditController, DirtyRegistry } from './editing.js';
+import { safeRender } from './cell-draw.js';
+import type { RenderCell } from './cell-draw.js';
 
 /** Clamp `v` into `[lo, hi]` (returns `lo` when the range is empty). */
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
+
+/** The inter-column divider drawn at each column's right edge (matches the base engine). */
+const DIVIDER = '│';
+/** The placeholder drawn once, top-left, for an empty grid (matches the base engine). */
+const EMPTY_TEXT = '<empty>';
 
 /** Construction config for {@link EditableGridRows}: the base grid config plus the editing wiring. */
 export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
@@ -257,13 +264,111 @@ export class EditableGridRows<T> extends GridRows<T> {
   }
 
   /**
-   * Paint the rows (base), then overpaint the focused cell in `gridCursor`.
+   * Paint the visible window with per-cell resolution: each row is blanked in its resolved colour
+   * (focused > selected > zebra > normal), then every cell is drawn under the fixed precedence
+   * cursor > dirty > selected-row > cellStyle > zebra > normal — a column's `cellStyle` colours a cell
+   * only when no higher row state owns it, and a column's `render` paints custom content into a
+   * cell-local, cell-clipped context (draw-error isolated). The cursor + dirty overpaints run last, so
+   * they always win. The no-hook path paints byte-identically to the base engine.
+   *
+   * This is a self-contained override rather than a `super.draw()` call because the base blanks a whole
+   * row in one colour via its string accessor, leaving no seam for per-cell colour or custom content.
    *
    * @param ctx The clipped, view-local paint context.
    */
   override draw(ctx: DrawContext): void {
-    super.draw(ctx); // base paints the rows (incl. the focused row in listFocused) and sets topItem
-    this.paintCursorCell(ctx);
+    const width = ctx.size.width;
+    const rows = ctx.size.height;
+    const display = this.display();
+    const range = display.length;
+    const geom = this.geometry(width);
+    // Re-limit both scroll bars exactly as the base does (value=focused / indent, page keeps one line).
+    this.vbar?.setRange(0, Math.max(0, range - 1), Math.max(1, rows - 1));
+    const maxIndent = Math.max(0, geom.totalWidth - width);
+    this.hbar?.setRange(0, maxIndent, Math.max(1, width - 1));
+    const indent = Math.min(maxIndent, Math.max(0, this.indent()));
+
+    const normal = ctx.color('listNormal');
+    if (range === 0) {
+      ctx.fill(' ', normal);
+      ctx.text(1, 0, EMPTY_TEXT, normal); // <empty> placeholder, one cell in from the left
+      return;
+    }
+
+    // Keep the (clamped) focused row visible. The base's `keepVisible`/`clampIndex` free functions are
+    // module-private to the engine, so drive the inherited protected helper instead.
+    this.updateTop();
+    const top = this.topItem;
+    const focusedRow = clamp(this.focused(), 0, range - 1);
+    const focusedCol = clamp(this.focusedCol(), 0, this.columns.length - 1);
+    const active = this.state.focused;
+    const selected = this.selected();
+    const divider = ctx.color('listDivider');
+
+    for (let i = 0; i < rows; i += 1) {
+      const item = top + i;
+      if (item >= range) {
+        ctx.fillRect(0, i, width, 1, ' ', normal); // blank trailing row
+        continue;
+      }
+      const row = display[item];
+      const isFocusedRow = item === focusedRow;
+      const isSelectedRow = item === selected;
+      const zebra = this.zebra && (item & 1) === 1;
+      // Row colour priority: focused > selected > zebra stripe > normal (unchanged from the base).
+      const roleName = isFocusedRow
+        ? active
+          ? 'listFocused'
+          : 'listSelected'
+        : isSelectedRow
+          ? 'listSelected'
+          : zebra
+            ? 'staticText'
+            : 'listNormal';
+      const rowStyle = ctx.color(roleName);
+      ctx.fillRect(0, i, width, 1, ' ', rowStyle); // blank the row in its colour
+
+      // cellStyle is suppressed while a higher-precedence row state owns the row (this enforces
+      // selected > cellStyle, and — with the cursor overpaint below — cursor > cellStyle).
+      const rowOwns = isFocusedRow || isSelectedRow;
+
+      for (let c = 0; c < this.columns.length; c += 1) {
+        const col = this.columns[c];
+        const tcol = this.typedColumns[c];
+        const w = geom.widths[c];
+        const x = geom.starts[c] - indent;
+
+        let cellStyle = rowStyle;
+        if (!rowOwns && tcol.cellStyle !== undefined) {
+          const resolved = tcol.cellStyle(tcol.value(row), row);
+          cellStyle = typeof resolved === 'string' ? ctx.color(resolved) : resolved;
+          ctx.fillRect(x, i, w, 1, ' ', cellStyle); // blank the cell in its conditional colour
+        }
+
+        if (tcol.render !== undefined) {
+          const cell: RenderCell<T, unknown> = {
+            x,
+            y: i,
+            width: w,
+            value: tcol.value(row),
+            row,
+            state: {
+              focused: active && isFocusedRow && c === focusedCol,
+              selected: isSelectedRow,
+              dirty: this.dirty?.has(cellKey(this.rowKey(row), tcol.id)) ?? false,
+              zebra,
+            },
+          };
+          safeRender(ctx, x, i, w, cellStyle, tcol.render, cell); // draw-error isolated
+        } else {
+          const text = alignCell(col.accessor(row), w, col.align ?? 'left', stringWidth);
+          ctx.text(x, i, text, cellStyle); // ctx clips off-screen cells (H-scroll)
+        }
+        ctx.text(x + w, i, DIVIDER, divider); // divider at the column right edge
+      }
+    }
+
+    this.paintCursorCell(ctx); // final overpaints — cursor and dirty always win
     this.paintDirtyMarkers(ctx);
   }
 
