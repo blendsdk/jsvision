@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-07-12
 > **Last Updated**: 2026-07-13
-> **Progress**: 1 / 14 (7%)
+> **Progress**: 1 / 14 (7%) · RD-02 planned
 > **CodeOps Skills Version**: 3.4.1
 
 Enterprise-class editable data grid for the jsvision TUI SDK (SAP ALV / MS-Access / Paradox-class),
@@ -24,7 +24,7 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
 | RD-01 | Foundation & grid-engine exposure | [RD-01](requirements/RD-01-foundation.md) | [foundation](plans/foundation/00-index.md) | Done | ✅ | 2026-07-13 | Package scaffold · ui exports `GridRows`/`GridHeader`/`columns.ts`/`stringWidth` · value/format/parse · `GridDataSource`+`rowKey` · `onCommit` · cell-overlay helper · read-only `EditableDataGrid`. 6 phases / 39 tasks all green (datagrid 35 unit + 2 e2e, ui 1539). All AC-1…AC-10 realized. Unblocks RD-02…RD-14. |
-| RD-02 | Editing engine & commit model | [RD-02](requirements/RD-02-editing-engine.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Cell cursor, in-cell overlay lifecycle, per-cell immediate commit, dirty tracking, keymap. Depends RD-01. |
+| RD-02 | Editing engine & commit model | [RD-02](requirements/RD-02-editing-engine.md) | [editing-engine](plans/editing-engine/00-index.md) | Plan Created | 📋 | 2026-07-13 | Cell cursor, in-cell overlay lifecycle, per-cell immediate commit, dirty tracking, keymap. 6 phases / 43 tasks, spec-first. Plan-level gate PASSED (15 items). Depends RD-01. |
 | RD-03 | Cell editors & value help | [RD-03](requirements/RD-03-cell-editors.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Typed editors + custom factory + F4 lookup. Depends RD-01, RD-02. |
 | RD-04 | Formatting & cell rendering | [RD-04](requirements/RD-04-formatting-rendering.md) | — | RD Preflighted | 🔎 | 2026-07-12 | `Intl` formatters, parse round-trip, custom renderer, conditional styling. Depends RD-01. |
 | RD-05 | Sorting | [RD-05](requirements/RD-05-sorting.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Single/multi/value-aware/push-down. Depends RD-01, RD-04. |
@@ -73,6 +73,17 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
   `EditableDataGrid`, and an in-package story harness. datagrid 35 unit + 2 e2e + ui 1539 unit all green;
   typecheck/build/check:docs/check:deps green; all AC-1…AC-10 realized (ST-1…ST-14). Next: `exec_plan`
   RD-02 (editing engine).
+- 2026-07-13: **RD-02 Plan Created** 📋 via `make_plan datagrid RD-02` → [plans/editing-engine/](plans/editing-engine/00-index.md)
+  (6 phases / 43 tasks, spec-first). Plan-level Zero-Ambiguity Gate PASSED (15 items; 4 user-decided via
+  `AskUserQuestion`, 11 grounded plan-authoring resolutions). Key decisions: additive `column.set` (editable ⇔
+  `parse` && `set`) with optimistic write via the RD-01 `commitCell` + revert-on-veto; a `createCellEditor`
+  factory + default text `Input` (RD-03 extends it); two byte-frozen core theme roles `gridCursor`/`gridDirty`;
+  a single `EditableGridRows` panel with the **container** owning the shared `focusedCol`/`focused`/`selected`/
+  `indent` signals (so RD-07's freeze split composes with no retrofit); a container `version` bump-on-write for
+  in-place-commit repaint; and **await-close** commit semantics (AC-5/AC-7 reconciliation — the live
+  optimistic-close/background-commit UX is scoped to RD-12). No new `@jsvision/ui` promotion needed (the engine
+  is already public from RD-01). Next: `preflight datagrid editing-engine` (recommended — same-session authorship)
+  or `exec_plan datagrid editing-engine`.
 - 2026-07-13: **CI fully green.** Two follow-up fixes so repo-wide `yarn verify` passes: (1) the **pre-existing
   v0.2.0-release blocker** unrelated to this work — the core packaging spec now allows the release-added
   `CHANGELOG.md`/`RELEASE_NOTES.md`, and those generated changelogs are excluded from the prettier gate (both files
