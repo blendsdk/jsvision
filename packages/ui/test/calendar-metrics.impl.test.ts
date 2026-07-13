@@ -31,7 +31,8 @@ test('comfortable metrics — 28×10, 4-wide cells, a footer with a right-aligne
   expect(m).toMatchObject({ width: 28, height: 10, cellWidth: 4, weekdayLen: 3 });
   expect(dayFieldX(m, 0)).toBe(2); // right-justified 2-digit within the 4-wide cell
   expect(weekdayLabelX(m, 0)).toBe(1);
-  expect(m.footer).toMatchObject({ dividerY: 8, textY: 9, todayW: 5, todayX: 23 }); // 28 − 'Today'.length
+  // The button auto-sizes to its padded face ` Today ` (7 wide) and right-aligns: todayX = 28 − 7.
+  expect(m.footer).toMatchObject({ dividerY: 8, textY: 9, todayW: 7, todayX: 21, todayFace: ' Today ' });
   expect(m.yearUpX).toBe(26);
   expect(m.yearDownX).toBe(27);
 });
