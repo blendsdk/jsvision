@@ -5,6 +5,13 @@
 
 <!-- analyze_project: compacted 2026-07-13 — 28 stacked refresh comments pruned to 1; Overview/Toolchain/Commands/Project structure tightened; hand-authored Conventions/Git/Documentation/TV-fidelity/Kitchen-sink/Special-rules preserved verbatim -->
 
+## Prime directive (NON-NEGOTIABLE)
+
+> **Before the final `git push` that opens or updates a pull request, always run `yarn lint:fix`.**
+> Auto-fix every lint and format violation on the branch locally, then stage and commit whatever it
+> changes, so the PR lands green. CI must never be the first place a fixable lint/format error
+> surfaces. No PR-bound push goes out until `yarn lint:fix` has run and the working tree is clean.
+
 ## Overview
 
 - **Type:** monorepo (library SDK) — published `@jsvision/core`; private-until-release `@jsvision/ui` (widgets), `@jsvision/web` (browser runtime), `@jsvision/files`, the `@jsvision/theme-designer` app, `@jsvision/examples`, and `@jsvision/docs-site`.
@@ -112,6 +119,9 @@ terminal-matrix.json       RD-03 cross-terminal evidence (appended by the probe 
 
 - **Commit scope:** the area touched — `scaffold`, `package`, `toolchain`, `packaging`, `tests`, `docs`, or the engine subsystem name in later RDs.
 - **Main branch:** `master` • **Remote:** `origin` → `git@github.com:blendsdk/jsvision.git`. Publish (with provenance) is still deferred to a later milestone.
+- **Pre-push lint (NON-NEGOTIABLE).** Run `yarn lint:fix` before the final `git push` that creates or
+  updates a PR, then commit any files it changed. This applies auto-fixable lint/format issues locally
+  so the PR does not break CI. See the [Prime directive](#prime-directive-non-negotiable) above.
 
 ## Documentation for users & AI agents (NON-NEGOTIABLE)
 
