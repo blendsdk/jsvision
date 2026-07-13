@@ -3,12 +3,14 @@
  * windowed-materialization path (a source with a not-yet-loaded hole renders only its loaded rows),
  * and the exposed `rows`/`overlay` handles.
  */
-import { test, expect } from 'vitest';
-import { Group, createRenderRoot, resolveCapabilities, signal } from '@jsvision/ui';
+import { test, expect, vi } from 'vitest';
+import { Group, Input, createEventLoop, createRenderRoot, resolveCapabilities, signal } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
+import type { OnCommit } from '../src/commit.js';
 import { EditableDataGrid } from '../src/grid.js';
+import { EditableGridRows } from '../src/editable-grid-rows.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
 
@@ -63,4 +65,121 @@ test('should expose the focusable rows renderer and the overlay host', () => {
   const { grid } = renderGrid(fromRows(signal<Row[]>([{ id: 1, name: 'Ada' }]), { rowKey: (r) => r.id }));
   expect(grid.rows.focusable).toBe(true);
   expect(grid.overlay).toBeInstanceOf(Group);
+});
+
+// ---- Editable container internals (Phase 5): shared-signal injection, version repaint, onCommit threading ----
+
+const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+
+function key(k: string) {
+  return { type: 'key' as const, key: k, ctrl: false, alt: false, shift: false };
+}
+
+interface Emp {
+  id: number;
+  name: string;
+  city: string;
+}
+
+/** Build a two-column editable container, focus its body, and return the handles. */
+function buildInteractive(opts: { onCommit?: OnCommit<Emp> } = {}) {
+  const rows = signal<Emp[]>([
+    { id: 1, name: 'Ada', city: 'NYC' },
+    { id: 2, name: 'Bo', city: 'LA' },
+  ]);
+  const columns = [
+    column<Emp, string>({
+      id: 'name',
+      title: 'Name',
+      value: (r) => r.name,
+      parse: (t) => t,
+      set: (r, v) => {
+        r.name = v;
+      },
+      width: 6,
+    }),
+    column<Emp, string>({
+      id: 'city',
+      title: 'City',
+      value: (r) => r.city,
+      parse: (t) => t,
+      set: (r, v) => {
+        r.city = v;
+      },
+      width: 6,
+    }),
+  ];
+  const grid = new EditableDataGrid<Emp>({
+    columns,
+    source: fromRows(rows, { rowKey: (r) => r.id }),
+    onCommit: opts.onCommit,
+  });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+  return { grid, loop, rows };
+}
+
+/** The characters painted on each screen row of the loop's frame. */
+function frameRows(loop: ReturnType<typeof buildInteractive>['loop']): string[] {
+  const buf = loop.renderRoot.buffer();
+  const out: string[] = [];
+  for (let y = 0; y < H; y += 1) {
+    let s = '';
+    for (let x = 0; x < W; x += 1) s += buf.get(x, y)?.char ?? ' ';
+    out.push(s);
+  }
+  return out;
+}
+
+// The container mounts an EditableGridRows body and injects the shared column cursor, so a `→` before
+// begin-edit targets the second column through the container.
+test('mounts an EditableGridRows body sharing the injected column cursor', async () => {
+  const { grid, loop, rows } = buildInteractive();
+  expect(grid.rows).toBeInstanceOf(EditableGridRows);
+  loop.dispatch(key('right')); // move the shared column cursor to 'city'
+  loop.dispatch(key('f2'));
+  const editor = loop.getFocused();
+  expect(editor).toBeInstanceOf(Input);
+  if (editor instanceof Input) {
+    expect(editor.getValueSignal()()).toBe('NYC'); // seeded from column 1 (city) — the cursor moved
+    editor.getValueSignal().set('SF');
+  }
+  loop.dispatch(key('enter'));
+  await tick();
+  expect(rows()[0].city).toBe('SF'); // committed into the second column
+  expect(rows()[0].name).toBe('Ada'); // the first column untouched
+});
+
+// An in-place cell write mutates the row object without changing the rows-array reference; the repaint
+// comes from the container's version bump folded into the display computed (AR #5 mechanism).
+test('repaints an in-place cell write via the version bump (stable rows reference)', async () => {
+  const { loop, rows } = buildInteractive();
+  const before = rows(); // capture the array reference
+  loop.dispatch(key('f2'));
+  const editor = loop.getFocused();
+  if (editor instanceof Input) editor.getValueSignal().set('Zed');
+  loop.dispatch(key('enter'));
+  await tick();
+  loop.renderRoot.flush();
+  expect(rows()).toBe(before); // same array reference — the row object was mutated in place
+  expect(frameRows(loop).slice(1).join('\n')).toContain('Zed'); // repaint came from the version bump
+});
+
+// A vetoing onCommit threaded through the container keeps the editor open with the field preserved.
+test('threads a vetoing onCommit through the container — the editor stays open', async () => {
+  const spy = vi.fn<OnCommit<Emp>>(() => false);
+  const { loop } = buildInteractive({ onCommit: spy });
+  loop.dispatch(key('f2'));
+  const editor = loop.getFocused();
+  if (editor instanceof Input) editor.getValueSignal().set('bad');
+  loop.dispatch(key('enter'));
+  await tick();
+  expect(spy).toHaveBeenCalledTimes(1);
+  const still = loop.getFocused();
+  expect(still).toBeInstanceOf(Input); // vetoed → the editor remains open through the container
+  if (still instanceof Input) expect(still.getValueSignal()()).toBe('bad'); // field preserved
 });
