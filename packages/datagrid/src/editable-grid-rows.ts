@@ -168,6 +168,10 @@ export class EditableGridRows<T> extends GridRows<T> {
       this.controller.beginEdit(ev);
       return true; // an editable cell's Enter is begin-edit, never a row activate
     }
+    if (inner.key === 'f4') {
+      this.controller.beginEdit(ev, { openDropdown: true });
+      return true; // value help: begin the edit and open the dropdown (a ComboBox editor) in one press
+    }
     // A printable begins the edit and replaces the content. Detection mirrors Input.insertPrintable
     // (there is no `char` field on a key event): printable iff not a chord and a single code point.
     if (!inner.ctrl && !inner.alt && (inner.key === 'space' || [...inner.key].length === 1)) {

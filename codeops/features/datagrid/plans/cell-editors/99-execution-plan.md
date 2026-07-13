@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 18:13
-> **Progress**: 25/45 tasks (56%) — Phases 1–3 complete
+> **Last Updated**: 2026-07-13 18:20
+> **Progress**: 32/45 tasks (71%) — Phases 1–4 complete
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -156,21 +156,21 @@ Delivers AC-6 (the F4 clause; F2/Enter open is ST-7).
 
 **Reference**: [03-03 §2, §5](03-03-lookup-f4-and-showcase.md) · [07 ST-7, ST-8] · AR #2, #7, #8
 
-- [ ] 4.1.1 Write ST-7 (F2/Enter mount the type-appropriate widget; `getFocused()` is the **single pinned** target per kind — the widget for text/boolean, `editor.input` for the Group editors date/enum/lookup, PF-005 as refined by AR #14 runtime) + ST-8 (with `loop.popupHost` wired: `F4` on a lookup cell mounts the editor **and** `popupOpen(overlay)===true`; `F4` on a read-only cell is a no-op) — `packages/datagrid/test/cell-editor.spec.test.ts`
-- [ ] 4.1.2 Run — verify ST-8 FAILs (red: F4 branch + Alt+Down forward not yet present); ST-7 may partly pass (F2/Enter already mount)
+- [x] 4.1.1 Write ST-7 (F2/Enter mount the type-appropriate widget; `getFocused()` is the **single pinned** target per kind — the widget for text/boolean, `editor.input` for the Group editors date/enum/lookup, PF-005 as refined by AR #14 runtime) + ST-8 (with `loop.popupHost` wired: `F4` on a lookup cell mounts the editor **and** `popupOpen(overlay)===true`; `F4` on a read-only cell is a no-op) — `packages/datagrid/test/cell-editor.spec.test.ts` ✅ (completed: 2026-07-13 18:20)
+- [x] 4.1.2 Run — verify ST-8 FAILs (red: F4 branch + Alt+Down forward not yet present); ST-7 may partly pass (F2/Enter already mount) ✅ (completed: 2026-07-13 18:20)
 
 ### Step 4.2: Implementation
 
 **Reference**: [03-03 §2a, §2b]
 
-- [ ] 4.2.1 Add the `f4` branch to `EditableGridRows.tryBeginEdit` → `controller.beginEdit(ev, { openDropdown: true })` — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 4.2.2 Extend `beginEdit` opts with `openDropdown?`; after mount+focus, when set and `editor instanceof ComboBox`, forward a synthetic `Alt+Down` `DispatchEvent` (spread from `ev`, reusing `popupHost`/`focusView`) to `editor.onEvent`; import `ComboBox` from `@jsvision/ui` — `packages/datagrid/src/editing.ts`
-- [ ] 4.2.3 Run the specs — verify ST-7/ST-8 PASS (green) + `check:docs`
+- [x] 4.2.1 Add the `f4` branch to `EditableGridRows.tryBeginEdit` → `controller.beginEdit(ev, { openDropdown: true })` — `packages/datagrid/src/editable-grid-rows.ts` ✅ (completed: 2026-07-13 18:20)
+- [x] 4.2.2 Extend `beginEdit` opts with `openDropdown?`; after mount+focus, when set and `editor instanceof ComboBox`, forward a synthetic `Alt+Down` `DispatchEvent` (spread from `ev`, reusing `popupHost`/`focusView`) to `editor.onEvent`; import `ComboBox` from `@jsvision/ui` — `packages/datagrid/src/editing.ts` ✅ (completed: 2026-07-13 18:20)
+- [x] 4.2.3 Run the specs — verify ST-7/ST-8 PASS (green) + `check:docs` ✅ (completed: 2026-07-13 18:20)
 
 ### Step 4.3: Hardening
 
-- [ ] 4.3.1 Write impl test: `openDropdown` on a non-ComboBox editor (text/date) is inert (no throw, editor mounts); F4 on an editable non-lookup cell begins the edit — `packages/datagrid/test/editing.impl.test.ts`
-- [ ] 4.3.2 Phase gate: `yarn workspace @jsvision/datagrid typecheck` + `test` + `check:docs` (separately)
+- [x] 4.3.1 Write impl test: `openDropdown` on a non-ComboBox editor (text/date) is inert (no throw, editor mounts); F4 on an editable non-lookup cell begins the edit — `packages/datagrid/test/editing.impl.test.ts` ✅ (completed: 2026-07-13 18:20)
+- [x] 4.3.2 Phase gate: `yarn workspace @jsvision/datagrid typecheck` + `test` + `check:docs` (separately) ✅ (completed: 2026-07-13 18:20)
 
 **Deliverables**: F4 = begin-edit + open the value-help dropdown (one press), via the public Alt+Down trigger.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs` (separately)

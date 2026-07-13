@@ -161,3 +161,19 @@ test('PF-005: a deferred async commit flushes the repaint and refocus on resolve
   expect(focused()).toBe(1); // advanced to the next row
   expect(frameRow(loop, 0)).toContain('Zed'); // committed value repainted
 });
+
+// F4 begins the edit on any editable cell; its `openDropdown` flag only opens a dropdown for a
+// value-help ComboBox editor. On a non-ComboBox editor (here a text Input; a DatePicker behaves the
+// same) the open forward is guarded away — the editor just mounts and focuses, and nothing throws.
+test('F4 begins the edit on a non-lookup cell and openDropdown is inert', () => {
+  const { grid, loop } = build();
+  expect(() => loop.dispatch(key('f4'))).not.toThrow();
+  const editor = loop.getFocused();
+  expect(editor).toBeInstanceOf(Input); // the text editor mounted and took focus (begin-edit)
+  expect(editor).not.toBe(grid);
+  // Typing lands in the mounted editor — proof it is a live begin-edit, not a swallowed key.
+  if (editor instanceof Input) {
+    loop.dispatch(key('x'));
+    expect(editor.getValueSignal()()).toContain('x');
+  }
+});
