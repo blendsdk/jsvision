@@ -3,7 +3,6 @@
  * inserting pasted text one code point at a time through the field's length cap and validator. Pure
  * functions over strings and events — no view or reactive dependency.
  */
-import type { KeyEvent } from '@jsvision/core';
 import type { Validator } from './validators/index.js';
 import { Commands } from '../status/index.js';
 
@@ -14,21 +13,6 @@ export type ClipboardAction = 'copy' | 'cut' | 'paste';
 export interface PasteResult {
   readonly value: string;
   readonly curPos: number;
-}
-
-/**
- * Classify a clipboard key chord: `Ctrl+Insert` = copy, `Shift+Insert` = paste, `Shift+Delete` =
- * cut. Returns `null` for any other key (it flows on to normal editing). These chords are used
- * because they never collide with the terminal's own `Ctrl+C`/`Ctrl+V` handling.
- *
- * @param inner The decoded key event.
- * @returns The clipboard action, or `null`.
- */
-export function clipboardChord(inner: KeyEvent): ClipboardAction | null {
-  if (inner.key === 'insert' && inner.ctrl) return 'copy';
-  if (inner.key === 'insert' && inner.shift) return 'paste';
-  if (inner.key === 'delete' && inner.shift) return 'cut';
-  return null;
 }
 
 /**

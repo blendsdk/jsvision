@@ -3,7 +3,8 @@
  *
  * The clipboard is itself an `Editor` — Copy fills it with exactly the copied text (left selected),
  * Cut is a copy plus a delete recorded as one undo step, and Paste inserts whatever is selected in
- * the clipboard editor. With no clipboard editor injected, in-app Paste is a no-op; system paste
+ * the clipboard editor. When the clipboard editor is absent or empty, Paste falls back to the
+ * app-local buffer shared across widgets (so text copied elsewhere still pastes here); system paste
  * still arrives separately as a bracketed paste event. Copy/Cut also mirror one write to the host's
  * OS clipboard when the terminal supports it. Undo/redo apply the undo stack's inverse steps.
  */
@@ -31,11 +32,15 @@ export function editorCut(ed: Editor): void {
   ed.trackCursor(false);
 }
 
-/** Paste the clipboard editor's selection at the caret, replacing any selection, as one undo step. */
+/**
+ * Paste at the caret, replacing any selection, as one undo step. Prefers the injected clipboard
+ * editor's selection; when that is absent or empty, falls back to the app-local buffer shared across
+ * the app (so text copied in another widget, e.g. an `Input`, pastes here). A no-op when both are empty.
+ */
 export function editorPaste(ed: Editor): void {
   const clip = ed.options.clipboard;
-  if (clip === undefined || clip === ed) return; // no clipboard editor ⇒ in-app paste is a no-op
-  const text = clip.selectionText();
+  let text = clip !== undefined && clip !== ed ? clip.selectionText() : '';
+  if (text === '') text = ed.clipboardRead?.() ?? ''; // cross-widget fallback: the shared app-local buffer
   if (text === '') return;
   ed.insertRaw(convertNewEdit(text, ed.eolKind), false);
   ed.trackCursor(false);

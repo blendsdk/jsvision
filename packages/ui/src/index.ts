@@ -54,10 +54,11 @@ export type { Flex, Placement } from './view/index.js';
 
 // The event loop — routes keyboard and mouse input to views, manages focus, and
 // drives one render per tick. Host-agnostic: you supply the input source.
-export { createEventLoop } from './event/index.js';
+export { createEventLoop, buildKeymap } from './event/index.js';
 export type {
   EventLoop,
   EventLoopOptions,
+  ClipboardKeys,
   CommandEvent,
   AppEvent,
   DispatchEvent,

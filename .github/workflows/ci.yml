@@ -44,8 +44,22 @@ jobs:
       - name: Typecheck (per package, fail-fast)
         run: yarn typecheck
 
-      - name: 'Verify (turbo: lint + typecheck + build + unit tests + docs guard across packages)'
+      # The cross-platform matrix exists to validate the SHIPPED runtime (core, ui,
+      # web, files) on each OS — the native tty host, path handling, and byte output
+      # that genuinely differ per platform. On Linux we verify everything; on
+      # Windows/macOS we scope the turbo run to those shipped packages. The dev-only
+      # packages (docs-site, examples, theme-designer) are built and used only on
+      # Linux, and their heavy tooling suites (a full ts.createProgram in the API-doc
+      # extractor, loading every live-example module) merely time out on slow Windows
+      # runners without adding any platform-specific coverage. Repo-wide lint still
+      # runs on every OS.
+      - name: 'Verify — all packages (Linux)'
+        if: runner.os == 'Linux'
         run: yarn verify
+
+      - name: 'Verify — shipped packages only (Windows/macOS)'
+        if: runner.os != 'Linux'
+        run: yarn verify:shipped
 
       # Informational only (RD-10 AR-9): prints median/p95, never gates. Scoped to a
       # single cell to avoid 9× noise and Windows shell-quoting (PF-008); the hard

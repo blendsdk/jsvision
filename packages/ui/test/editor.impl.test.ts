@@ -11,6 +11,7 @@ import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent, MouseEvent, WheelEvent, PasteEvent } from '@jsvision/core';
 import { Group } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
+import type { ClipboardKeys } from '../src/event/index.js';
 import { Editor } from '../src/editor/editor.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
@@ -30,14 +31,20 @@ function wheel(dir: WheelEvent['dir'], x: number, y: number): WheelEvent {
 // The multi-click clock now lives on the loop (the framework's single source of truth); the harness
 // accepts `now` and injects it into `createEventLoop` so the same-cell double-click window stays
 // deterministic (AR-14 — only the injection point moves; assertions are unchanged).
-function mountEditor(opts: ConstructorParameters<typeof Editor>[0] & { now?: () => number } = {}, w = 12, h = 3) {
-  const { now, ...editorOpts } = opts;
+function mountEditor(
+  opts: ConstructorParameters<typeof Editor>[0] & { now?: () => number; clipboardKeys?: ClipboardKeys } = {},
+  w = 12,
+  h = 3,
+) {
+  const { now, clipboardKeys, ...editorOpts } = opts;
   const ed = new Editor(editorOpts);
   const root = new Group();
   root.layout = { direction: 'col' };
   ed.layout = { size: { kind: 'fr', weight: 1 } };
   root.add(ed);
-  const loop = createEventLoop({ width: w, height: h }, { caps, now });
+  // clipboardKeys defaults to undefined → the loop's 'both'; a WordStar-mode test passes 'none' so the
+  // global keymap does not shadow the WordStar Ctrl+C/X/V navigation chords.
+  const loop = createEventLoop({ width: w, height: h }, { caps, now, clipboardKeys });
   loop.mount(root);
   loop.renderRoot.flush();
   loop.focusView(ed);
@@ -159,7 +166,9 @@ test("keyBindings:'wordstar': Ctrl+Y deletes the line (not redo), Ctrl+U undoes"
 
 test("keyBindings:'wordstar' keeps the faithful decode (Ctrl+C = pageDown, not copy)", () => {
   const clipboard = new Editor();
-  const { loop, ed } = mountEditor({ clipboard, keyBindings: 'wordstar' }, 12, 3);
+  // A WordStar app opts out of the global clipboard keymap ('none'), so Ctrl+C/X/V reach the editor as
+  // the raw WordStar navigation chords instead of being globalized to copy/cut/paste commands.
+  const { loop, ed } = mountEditor({ clipboard, keyBindings: 'wordstar', clipboardKeys: 'none' }, 12, 3);
   ed.setText('a\nb\nc\nd\ne');
   loop.dispatch(key('a', { ctrl: true })); // WordStar: selectAll (same in both sets)
   loop.dispatch(key('c', { ctrl: true })); // WordStar: cmPageDown — must NOT copy
