@@ -23,6 +23,11 @@ export type {
   DisplayFormat,
 } from './format.js';
 
+// Cell rendering & conditional styling — the `render`/`cellStyle` column hooks, the cell-local draw
+// surface a custom renderer sees, and the read-only per-cell state handed to it.
+export type { CellStyle } from './column.js';
+export type { CellRenderer, CellDrawContext, RenderCell, CellState } from './cell-draw.js';
+
 // Data source — the read seam the grid binds to. `fromRows` is the in-memory source; every source
 // carries a required `rowKey`. `SortKey`/`FilterModel` are forward-declared for later push-down.
 export { fromRows } from './data-source.js';
