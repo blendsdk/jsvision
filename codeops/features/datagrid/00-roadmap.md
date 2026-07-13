@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-07-12
 > **Last Updated**: 2026-07-13
-> **Progress**: 1 / 14 (7%) · RD-02 planned
+> **Progress**: 1 / 14 (7%) · RD-02 plan preflighted (ready for exec_plan)
 > **CodeOps Skills Version**: 3.4.1
 
 Enterprise-class editable data grid for the jsvision TUI SDK (SAP ALV / MS-Access / Paradox-class),
@@ -24,7 +24,7 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
 | RD-01 | Foundation & grid-engine exposure | [RD-01](requirements/RD-01-foundation.md) | [foundation](plans/foundation/00-index.md) | Done | ✅ | 2026-07-13 | Package scaffold · ui grid-engine promotion · value/format/parse · read-only `EditableDataGrid` · 6 phases / 39 tasks green · unblocks RD-02…RD-14 |
-| RD-02 | Editing engine & commit model | [RD-02](requirements/RD-02-editing-engine.md) | [editing-engine](plans/editing-engine/00-index.md) | Plan Created | 📋 | 2026-07-13 | Cell cursor · in-cell overlay lifecycle · per-cell commit · dirty tracking · keymap · 6 phases / 43 tasks · gate PASSED (15 items) · depends RD-01 |
+| RD-02 | Editing engine & commit model | [RD-02](requirements/RD-02-editing-engine.md) | [editing-engine](plans/editing-engine/00-index.md) | Plan Preflighted | 🔬 | 2026-07-13 | Cell cursor · in-cell overlay lifecycle · per-cell commit · dirty tracking · keymap · 6 phases / 43 tasks · gate PASSED (15 items) · **preflight PASSED** (iter-2 re-run: PF-001/002/003 fixed → Tab/Shift-Tab deferred to RD-10; PF-004…007 resolved) · depends RD-01 |
 | RD-03 | Cell editors & value help | [RD-03](requirements/RD-03-cell-editors.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Typed editors + custom factory + F4 lookup. Depends RD-01, RD-02. |
 | RD-04 | Formatting & cell rendering | [RD-04](requirements/RD-04-formatting-rendering.md) | — | RD Preflighted | 🔎 | 2026-07-12 | `Intl` formatters, parse round-trip, custom renderer, conditional styling. Depends RD-01. |
 | RD-05 | Sorting | [RD-05](requirements/RD-05-sorting.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Single/multi/value-aware/push-down. Depends RD-01, RD-04. |
@@ -32,7 +32,7 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
 | RD-07 | Columns & layout | [RD-07](requirements/RD-07-columns-layout.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Resize/reorder/hide + frozen pinned-panel columns + sticky header. Depends RD-01. |
 | RD-08 | Rows, records & selection | [RD-08](requirements/RD-08-rows-selection.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Row selection, checkbox column, gutter, insert/delete/duplicate, null policy. Depends RD-01, RD-02. |
 | RD-09 | Footer, aggregation & master-detail | [RD-09](requirements/RD-09-footer-aggregation-master-detail.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Footer band + aggregates + master-detail. Depends RD-01, RD-08. |
-| RD-10 | Navigation & interaction | [RD-10](requirements/RD-10-navigation-interaction.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Consolidated keymap, mouse, synthesized double-click. Depends RD-02. |
+| RD-10 | Navigation & interaction | [RD-10](requirements/RD-10-navigation-interaction.md) | — | RD Preflighted | 🔎 | 2026-07-13 | Consolidated keymap, mouse, synthesized double-click · **+ `Tab`/`Shift-Tab` cell traversal + Tab commit-advance received from RD-02** (dispatch swallows unbound Tab; needs keymap→command — PF-001). Depends RD-02. |
 | RD-11 | Data at scale | [RD-11](requirements/RD-11-data-at-scale.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Virtual scroll, server paging, opt-in pager (backend deferred AR-28). Depends RD-01. |
 | RD-12 | Validation & lifecycle | [RD-12](requirements/RD-12-validation-lifecycle.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Per-cell + per-row + BeforeSave gates, error surfacing, loading/empty/error. Depends RD-02, RD-03. |
 | RD-13 | Export, import & personalization | [RD-13](requirements/RD-13-export-import-personalization.md) | — | RD Preflighted | 🔎 | 2026-07-12 | CSV/HTML/JSON export (+ formula-injection escaping) · import · layout variants · Phase B · depends RD-05, RD-06, RD-07 |

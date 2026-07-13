@@ -45,12 +45,16 @@ for the keys the base already does right:
 | `←` / `→` | `moveCol(∓1)` — column cursor (base binds these to H-scroll) | ✅ intercept |
 | `Home` / `End` | `focusedCol → 0` / `last` (base = first/last visible row) | ✅ intercept |
 | `Ctrl+Home` / `Ctrl+End` | first / last cell of the grid (`focused` + `focusedCol`) | ✅ intercept |
-| `Tab` / `Shift+Tab` | `moveCellForward` / `Back` (row wrap; corner clamps, AR #8) | ✅ intercept |
-| `F2` | begin-edit | ✅ intercept |
-| `Enter` | editable → begin-edit; read-only → no-op (consume) | ✅ intercept |
-| printable (`inner.char !== undefined && !ctrl && !alt`, incl. Space) | editable → begin-edit + replace; read-only → no-op | ✅ intercept |
+| `F2` | editable → begin-edit; read-only → `super.onEvent` (base ignores F2) | ✅ / ⤵ by editability |
+| `Enter` | editable → begin-edit; read-only → `super.onEvent` (base row activate/select — PF-003) | ✅ / ⤵ by editability |
+| printable (`!ctrl && !alt` **and** `inner.key === 'space' \|\| [...inner.key].length === 1`, incl. Space) | editable → begin-edit + replace; read-only → `super.onEvent` | ✅ / ⤵ by editability |
 | `↑` / `↓` / `PgUp` / `PgDn` / `Ctrl+PgUp` / `Ctrl+PgDn` | row nav (inherited) | ⤵ `super.onEvent` |
 | mouse / wheel | base row click + wheel (mouse begin-edit is RD-10) | ⤵ `super.onEvent` |
+
+> `Tab` / `Shift+Tab` are **not** handled here — an unbound `Tab` is swallowed by the dispatch router
+> (`packages/ui/src/event/dispatch.ts`) for focus traversal **before** any `onEvent` runs, so Tab can
+> never reach this intercept. Tab cell traversal + the Tab commit-advance are deferred to RD-10
+> (keymap chord → `nextCell`/`prevCell` command). See PF-001 in `00-preflight-report.md`.
 
 Cursor math (all clamp to `[0, n)`; `n = columns.length`, `len = display().length`):
 
@@ -59,13 +63,10 @@ moveCol(d)        → focusedCol.set(clamp(focusedCol() + d, 0, n - 1))
 colFirst / colLast→ focusedCol.set(0) / focusedCol.set(n - 1)
 gridStart (C-Home)→ focused.set(0); focusedCol.set(0)
 gridEnd   (C-End) → focused.set(len - 1); focusedCol.set(n - 1)
-moveCellForward   → focusedCol < n-1 ? focusedCol+1
-                    : focused < len-1 ? (focused+1, focusedCol=0)
-                    : (stay)                       // grid corner clamps (AR #8)
-moveCellBack      → focusedCol > 0 ? focusedCol-1
-                    : focused > 0 ? (focused-1, focusedCol=n-1)
-                    : (stay)
 ```
+
+(`moveCellForward` / `moveCellBack` — the per-cell Tab walk with row wrap + corner clamp — move to
+RD-10 with `Tab` itself; RD-02 needs no per-cell advance helper.)
 
 `focused.set(...)` reuses the base's existing bind (it re-runs `updateTop()` + repaints); `focusedCol` gets its
 own `bind` in `onMount` so a column move repaints.
@@ -126,28 +127,34 @@ beginEdit(ev, opts?: { replaceWith?: string }): boolean {
     origin: absoluteRect(this),                      // body's absolute origin
     view: editorHost,
   });
-  ev.focusView?.(editor);                            // focus the INNER Input so typing lands + Enter/Tab bubble to editorHost
+  ev.focusView?.(editor);                            // focus the INNER Input so typing lands + Enter/Esc bubble to editorHost
   state = { kind: 'editing', cell, field, editorHost, dispose };
   return true;
 }
 ```
 
 - **`getFocused() === editor`** holds (AC-1) because we focus the inner `Input`.
-- **Enter on a read-only cell** is a consumed no-op (`beginEdit` returns `false`; `onEvent` still sets
-  `ev.handled = true` so the base `activate` never fires) — AC-1.
-- **printable** passes `replaceWith: inner.key` so the field is the typed char (content replaced) — AC-2.
+- **Read-only cell** (F2/Enter/printable): `onEvent` does **not** intercept — it calls `super.onEvent(ev)` so
+  the base handles it (Enter/Space → row activate/select; other keys ignored). `beginEdit` is therefore only
+  ever reached for an editable cell and never mounts an editor on a read-only column — AC-1 still holds
+  (`getFocused()` unchanged = the body, record untouched). (PF-003)
+- **printable detection + seed** use the `Input.insertPrintable` idiom, **not** a non-existent `inner.char`
+  (the core `KeyEvent` has no `char` field; PF-002): a key is printable when `!inner.ctrl && !inner.alt` **and**
+  `inner.key === 'space' || [...inner.key].length === 1`. `onEvent` passes
+  `replaceWith: inner.key === 'space' ? ' ' : inner.key`, so Space seeds a real space (not the literal
+  `'space'`) and the field equals the typed char (content replaced) — AC-2.
 
 ### commit-key capture (`onEditorKey`, on the editor-host `Group`, AR #7)
 
-The inner `Input` leaves Enter/Tab unhandled and does not consume Esc, so all three bubble here:
+The inner `Input` leaves Enter unhandled and does not consume Esc, so **both bubble up the focus chain** to
+this host `onEvent`. (Tab does **not** bubble here — the dispatch router swallows an unbound `Tab` for focus
+traversal before the focus-chain phase runs, so Tab commit-advance is RD-10; PF-001.)
 
 ```ts
 onEditorKey(ev2, cell, field, editor): void {
   const k = ev2.event; if (k.type !== 'key') return;
-  if (k.key === 'escape')            { this.cancel(ev2, cell); ev2.handled = true; }
-  else if (k.key === 'enter')        { void this.commit(ev2, cell, field, 'row');  ev2.handled = true; }
-  else if (k.key === 'tab' && k.shift){ void this.commit(ev2, cell, field, 'cell-back'); ev2.handled = true; }
-  else if (k.key === 'tab')          { void this.commit(ev2, cell, field, 'cell-forward'); ev2.handled = true; }
+  if (k.key === 'escape')     { this.cancel(ev2, cell); ev2.handled = true; }
+  else if (k.key === 'enter') { void this.commit(ev2, cell, field); ev2.handled = true; } // commit + next row
   // everything else stays in the Input (already handled there)
 }
 ```
@@ -163,10 +170,10 @@ cancel(ev, cell): void {
 }
 ```
 
-### commit (Enter/Tab, await-close — AR #15, AC-3/5/6)
+### commit (Enter, await-close — AR #15, AC-3/5)
 
 ```ts
-async commit(ev, cell, field, advance): Promise<void> {
+async commit(ev, cell, field): Promise<void> {          // Enter only — Tab commit-advance is RD-10 (PF-001)
   const tcol = typedColumns[cell.col];
   const value = tcol.parse!(field());                 // text -> V
   const previous = tcol.value(cell.row);
@@ -182,21 +189,19 @@ async commit(ev, cell, field, advance): Promise<void> {
   bumpVersion();                                       // repaint the (new or reverted) value (AR #5)
   dirty.delete(ckey);
   committing.delete(ckey);
-  if (res.committed) { closeEditor(); state = { kind: 'idle' }; this.applyAdvance(advance); ev.focusView?.(this); }
+  if (res.committed) {
+    closeEditor(); state = { kind: 'idle' };
+    this.focused.set(clampIndex(this.focused() + 1, len())); // commit + advance: same col, next row (AC-3)
+    ev.focusView?.(this);
+  }
   // vetoed: the editor REMAINS open (AC-5); commitCell already reverted the record; the field is left for the user to fix.
-}
-
-applyAdvance(advance): void {
-  if (advance === 'row')          this.focused.set(clampIndex(this.focused() + 1, len())); // same col, next row (AC-3)
-  else if (advance === 'cell-forward') this.moveCellForward();  // AC-6
-  else                                 this.moveCellBack();
 }
 ```
 
 - **`onCommit` called exactly once** with `{ rowKey, columnId, value: parse(field), previous, row }` — it is the
   `commitCell` payload (AC-5).
-- **committed** ⇒ editor closes, cursor advances (Enter → next row same col; Tab → next cell wrap; corner clamps),
-  body refocused (AC-3/6).
+- **committed** ⇒ editor closes, cursor advances (Enter → next row, same col; corner clamps), body refocused
+  (AC-3). (Tab → next-cell advance is RD-10.)
 - **vetoed** ⇒ editor stays open, record shows `previous` (AC-5).
 - **repaint** ⇒ `bumpVersion()` folds into the container `display` computed so the mutated-in-place row repaints
   (AR #5). Nothing else can trigger it (same object reference).
@@ -216,8 +221,8 @@ The `mountCellOverlay` disposer tears down the `createRoot` scope, so the editor
 
 ## Spec coverage (see [07](07-testing-strategy.md))
 
-ST-1 (read-only no-op / editable mounts + `getFocused`), ST-2 (Enter mounts editor), ST-3 (printable replaces),
-ST-4 (Enter commits + next row, `focusedCol` unchanged), ST-5 (Esc reverts + closes, no `onCommit`), ST-6
-(`onCommit` once; false keeps open + previous; true closes + new), ST-7 (Tab/Shift-Tab row wrap + corner clamp),
-ST-9 (overlay one-cell rect + dispose disposes root), ST-12 (nav clamps + fall-through), ST-13 (cursor overpaint
-in `gridCursor`), ST-14 (per-cell commit serialization).
+ST-1 (read-only fall-through / editable mounts + `getFocused`), ST-2 (Enter mounts editor), ST-3 (printable
+replaces), ST-4 (Enter commits + next row, `focusedCol` unchanged), ST-5 (Esc reverts + closes, no `onCommit`),
+ST-6 (`onCommit` once; false keeps open + previous; true closes + new), ST-9 (overlay one-cell rect + dispose
+disposes root), ST-12 (nav clamps + fall-through), ST-13 (cursor overpaint in `gridCursor`), ST-14 (per-cell
+commit serialization). (ST-7 Tab/Shift-Tab wrap is deferred to RD-10 with Tab; PF-001.)

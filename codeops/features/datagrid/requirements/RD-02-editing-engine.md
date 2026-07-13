@@ -6,6 +6,10 @@
 > **Project**: @jsvision/datagrid — enterprise-class editable data grid (TUI)
 > **Depends On**: RD-01
 > **CodeOps Skills Version**: 3.4.1
+> **Amended 2026-07-13**: `Tab`/`Shift-Tab` cell traversal + the Tab commit-advance are deferred to
+> RD-10 — the framework dispatch router swallows an unbound `Tab` for focus traversal before any
+> view's `onEvent`, so grid-action `Tab` needs RD-10's keymap→command layer (see the editing-engine
+> plan's `plans/editing-engine/00-preflight-report.md`, PF-001).
 
 ---
 
@@ -39,10 +43,11 @@ validation gate is RD-12.
       already sharing `focused`/`selected` via `GridRowsConfig`; `focusedCol` is the additional shared
       signal the container owns. The focused *cell* is overpainted so the cell (not just the row) is
       visible.
-- [ ] **Cursor navigation** — `↑`/`↓` move the row (inherited), `←`/`→` move the column, `Tab`/
-      `Shift-Tab` move the cell with wrap to the next/prev row at the ends, `Home`/`End` jump to the
-      first/last column, `Ctrl+Home`/`Ctrl+End` to the first/last cell of the grid, `PgUp`/`PgDn`
-      page rows. All clamp to range.
+- [ ] **Cursor navigation** — `↑`/`↓` move the row (inherited), `←`/`→` move the column, `Home`/`End`
+      jump to the first/last column, `Ctrl+Home`/`Ctrl+End` to the first/last cell of the grid,
+      `PgUp`/`PgDn` page rows. All clamp to range. (`Tab`/`Shift-Tab` cell traversal is **deferred to
+      RD-10** — an unbound `Tab` is swallowed by the dispatch router for focus traversal before any
+      view sees it, so grid-action `Tab` requires the keymap→command wiring RD-10 consolidates.)
 - [ ] **Begin-edit triggers (AR-19)** — `F2` and `Enter` on an editable cell open the editor with the
       caret at end; typing a printable character opens the editor and *replaces* the content.
 - [ ] **In-cell editor overlay** — on begin-edit the editor `View` (from RD-03) mounts at the focused
@@ -56,8 +61,8 @@ validation gate is RD-12.
       commit + auto-advance to the same column of the next row.
 - [ ] **Cancel** — `Esc` while editing reverts to `previous` and closes the editor without calling
       `onCommit`.
-- [ ] **Auto-advance** — `Tab` commits (if editing) then moves to the next cell (wrap to next row);
-      `Enter` commits then moves to the next row, same column.
+- [ ] **Auto-advance** — `Enter` commits then moves to the next row, same column. (The `Tab`
+      commit-then-next-cell variant is **deferred to RD-10** with the Tab keymap wiring.)
 - [ ] **Dirty tracking** — a per-cell dirty flag keyed by `rowKey`+`columnId` (set while a commit is
       pending or a value differs from the source's last-known); a dirty marker (a `•` in the dirty
       theme role) paints on the cell. Exposes `isDirty(rowKey, columnId)` and row/grid rollups.
@@ -86,11 +91,14 @@ validation gate is RD-12.
 
 - `EditableGridRows<T>` overrides `onEvent` to intercept `←`/`→` (move column — the base binds these
   to horizontal scroll), `Home`/`End`/`Ctrl+Home`/`Ctrl+End` (column/grid ends — the base binds
-  `Home`/`End` to the first/last *visible row* and ignores `Ctrl`), and `Tab`/`F2`/`Enter`/printable;
-  each is handled and **returns before `super.onEvent`** (fall-through would let the base consume it).
-  It falls through to the base only for `↑`/`↓`, `PgUp`/`PgDn` paging, and the base's
-  `Ctrl+PgUp`/`Ctrl+PgDn` first/last-row jump. It overrides `draw` to overpaint the focused cell and
-  the dirty marker after the base row render.
+  `Home`/`End` to the first/last *visible row* and ignores `Ctrl`), and `F2`/`Enter`/printable **on an
+  editable cell**; each is handled and **returns before `super.onEvent`** (fall-through would let the
+  base consume it). It falls through to the base for `↑`/`↓`, `PgUp`/`PgDn` paging, the base's
+  `Ctrl+PgUp`/`Ctrl+PgDn` first/last-row jump, and `Enter`/printable **on a read-only cell** (so the
+  base row activate/select still fires). `Tab`/`Shift-Tab` are **not** intercepted here — an unbound
+  `Tab` is swallowed by the dispatch router for focus traversal before any `onEvent` runs, so Tab cell
+  traversal is deferred to RD-10 (keymap→command). It overrides `draw` to overpaint the focused cell
+  and the dirty marker after the base row render.
 - Editor lifecycle is a small state machine: `idle → editing(cell) → committing → idle`. `editing`
   owns a reactive root (RD-01 overlay helper) holding the editor + its field-binding effects; entering
   `idle` disposes it. `committing` awaits an async `onCommit`; the cell shows dirty until it resolves.
@@ -105,7 +113,7 @@ validation gate is RD-12.
 
 ```
 beginEdit(cell) → mount editor bound to field
-Enter/Tab       → value = parse(field()); previous = column.value(row)
+Enter           → value = parse(field()); previous = column.value(row)   // Tab commit is RD-10
                   applyToRecord(rowKey, columnId, value)   // in-memory, immediate
                   ok = await onCommit({rowKey, columnId, value, previous, row})
                   ok ? closeEditor()+advance() : revert(previous)+keepEditorOpen()
@@ -118,7 +126,7 @@ Esc             → revert(previous); closeEditor()          // no onCommit
 |-----|-------------|---------|
 | ←/→ | move column | (caret in editor) |
 | ↑/↓ | move row | — |
-| Tab / Shift-Tab | move cell (wrap) | commit + move cell |
+| Tab / Shift-Tab | _deferred to RD-10_ | _deferred to RD-10_ |
 | Home/End · Ctrl+Home/End | col ends / grid ends | — |
 | F2 / printable | begin edit | — |
 | Enter | begin edit (editable) | commit + next row |
@@ -145,8 +153,11 @@ Esc             → revert(previous); closeEditor()          // no onCommit
 - The `onCommit` seam is where RD-12 inserts per-cell validation, the per-row gate, and the BeforeSave
   veto; a rejected validation surfaces as a `false` commit here.
 
-### With RD-08 (selection) / RD-10 (mouse)
+### With RD-08 (selection) / RD-10 (mouse & Tab traversal)
 - The cursor coexists with row selection (RD-08); mouse click/double-click begin-edit routing is RD-10.
+- `Tab`/`Shift-Tab` cell traversal + the Tab commit-advance are RD-10: an unbound `Tab` is swallowed
+  by the dispatch router for focus traversal before any `onEvent`, so grid-action Tab needs RD-10's
+  keymap→command layer.
 
 ---
 
@@ -189,8 +200,10 @@ Esc             → revert(previous); closeEditor()          // no onCommit
 5. [ ] A commit calls `onCommit` exactly once with `{rowKey, columnId, value: parse(field), previous,
        row}`; when it resolves `false`, the cell displays `previous` and the editor remains open; when
        `true`, the editor closes and the cell displays the new value.
-6. [ ] `Tab` at the last column commits (if editing) and moves to the first column of the next row;
-       `Shift-Tab` at the first column moves to the last column of the previous row.
+6. [ ] _Deferred to RD-10._ `Tab`/`Shift-Tab` cell traversal + the Tab commit-then-next-cell advance
+       move to RD-10 (Navigation & Interaction): an unbound `Tab` is swallowed by the dispatch router
+       for focus traversal before any view's `onEvent`, so grid-action `Tab` requires the
+       keymap→command wiring RD-10 defines. (Enter commit + next-row advance is AC-3.)
 7. [ ] A cell whose pending value differs from the source's last-known value paints the dirty marker
        (`•` in the dirty role); after `onCommit` resolves `true` and the source reflects the value, the
        marker clears; `isDirty(rowKey, columnId)` matches the marker's presence.

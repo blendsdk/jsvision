@@ -22,15 +22,17 @@ two byte-frozen **core** theme roles (`gridCursor`, `gridDirty`), and grows the 
 own the shared cursor/selection/scroll signals so RD-07's frozen-panel split composes later with no retrofit.
 
 Typed editor widgets are **RD-03**; the validation/BeforeSave gate is **RD-12** (RD-02 only exposes the
-`onCommit` seam it plugs into); row-selection gestures are **RD-08**; mouse/double-click begin-edit routing is
-**RD-10**. RD-02 keeps to the keyboard-driven, single-panel, text-editor slice — but with every seam the later
+`onCommit` seam it plugs into); row-selection gestures are **RD-08**; mouse/double-click begin-edit routing **and
+`Tab`/`Shift-Tab` cell traversal** are **RD-10** (an unbound `Tab` is swallowed by the dispatch router for focus
+traversal before any `onEvent`, so grid-action Tab needs RD-10's keymap→command layer — PF-001). RD-02 keeps to
+the keyboard-driven, single-panel, text-editor slice (Enter commit + row-advance) — but with every seam the later
 RDs need already in place.
 
 ## Document Index
 
 | #   | Document                                                     | Description                                                       |
 | --- | ------------------------------------------------------------ | ---------------------------------------------------------------- |
-| AR  | [Ambiguity Register](00-ambiguity-register.md)               | Plan-level Zero-Ambiguity Gate decisions (14 items)              |
+| AR  | [Ambiguity Register](00-ambiguity-register.md)               | Plan-level Zero-Ambiguity Gate decisions (15 items)              |
 | 00  | [Index](00-index.md)                                         | This document — overview and navigation                          |
 | 01  | [Requirements](01-requirements.md)                           | Scope delta over RD-02 + plan-local decisions                    |
 | 02  | [Current State](02-current-state.md)                         | Grounded analysis of the code RD-02 subclasses / edits           |
@@ -85,7 +87,7 @@ grid.isDirty(1, 'name'); // false once a commit resolves and the source reflects
 | Panel model | Single `EditableGridRows`; **container** owns `focusedCol`/`focused`/`selected`/`indent` | AR #4 (plan) |
 | Repaint after commit | Container `version` signal folded into `display` (the `Surface.version` pattern) | AR #5 (plan) |
 | Dirty semantics | Pending-commit flag in a reactive `Set`; clears when the source reflects the value | AR #6 (plan) |
-| Commit-key capture | Editor-host `Group` catches Enter/Tab/Esc via the focus-chain bubble | AR #7 (plan) |
+| Commit-key capture | Editor-host `Group` catches Enter/Esc via the focus-chain bubble (Tab → RD-10, PF-001) | AR #7 (plan) |
 | Commit granularity | Per-cell immediate write-through | req AR-02 / AR-16 |
 | Enter precedence | Context-sensitive (begin-edit when idle; commit + next-row when editing) | req AR-18 |
 | Begin-edit triggers | F2 + Enter + printable-replaces | req AR-19 |

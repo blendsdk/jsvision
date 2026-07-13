@@ -18,21 +18,22 @@ It is additive: no RD-01 contract changes shape (only `GridColumn` **gains** an 
    the editor lifecycle. (03-02)
 2. **Two-axis cell cursor** — `focusedCol` + the inherited row `focused`, **owned by the `EditableDataGrid`
    container** and injected as shared signals (AR #4). The focused cell is overpainted in `gridCursor`. (03-02, 03-03)
-3. **Cursor navigation** — `←`/`→` move the column; `↑`/`↓` move the row (inherited); `Tab`/`Shift-Tab` move the
-   cell with row wrap; `Home`/`End` jump to the first/last column; `Ctrl+Home`/`Ctrl+End` to the first/last cell
-   of the grid; `PgUp`/`PgDn` page rows (inherited). All clamp to range (AR #8). (03-02)
+3. **Cursor navigation** — `←`/`→` move the column; `↑`/`↓` move the row (inherited); `Home`/`End` jump to the
+   first/last column; `Ctrl+Home`/`Ctrl+End` to the first/last cell of the grid; `PgUp`/`PgDn` page rows
+   (inherited). All clamp to range (AR #8). `Tab`/`Shift-Tab` cell traversal is **deferred to RD-10** — an
+   unbound `Tab` is swallowed by the dispatch router for focus traversal before any `onEvent` (PF-001). (03-02)
 4. **Begin-edit triggers** — `F2` and `Enter` on an **editable** cell open the editor (caret at end); a printable
    character opens the editor and **replaces** the content (req AR-19). (03-02)
 5. **In-cell editor overlay** — the editor `View` mounts at the focused cell's rect via the RD-01
    `mountCellOverlay`; focus routes to it (`getFocused() === editor`); it is disposed on commit/cancel. (03-02)
-6. **Per-cell immediate commit** — on `Enter`/`Tab` while editing, `parse(field())` is written to the record via
+6. **Per-cell immediate commit** — on `Enter` while editing, `parse(field())` is written to the record via
    `column.set` (immediate), then `onCommit({rowKey, columnId, value, previous, row})` runs; `false`/reject reverts
    to `previous` and keeps the editor open, `true` closes it and shows the new value (req AR-02/AR-16). (03-02)
 7. **Enter precedence** — not editing → begin edit (no-op on a read-only cell); editing → commit + auto-advance to
    the same column of the next row (req AR-18). (03-02)
 8. **Cancel** — `Esc` while editing reverts to `previous` and closes the editor **without** calling `onCommit`. (03-02)
-9. **Auto-advance** — `Tab` commits (if editing) then moves to the next cell (row wrap); `Enter` commits then moves
-   to the next row, same column (AR #8). (03-02)
+9. **Auto-advance** — `Enter` commits then moves to the next row, same column (AR #8). (The `Tab`
+   commit-then-next-cell variant is **deferred to RD-10** with the Tab keymap wiring.) (03-02)
 10. **Dirty tracking** — a per-cell pending-commit flag keyed by `rowKey`+`columnId`; a `•` marker in `gridDirty`
     paints on the cell; `isDirty(rowKey, columnId)` + row/grid rollups (AR #6). (03-03)
 11. **Read-only columns** — a column that is not editable (missing `parse` or `set`) rejects begin-edit; the cursor
@@ -58,6 +59,10 @@ It is additive: no RD-01 contract changes shape (only `GridColumn` **gains** an 
 - **Row selection gestures / checkbox column** — RD-08. The cursor coexists with (does not implement) selection.
 - **Mouse / double-click begin-edit routing** — RD-10. RD-02 is keyboard-driven; all begin-edit paths are
   event-driven off the keyboard envelope (AR #13).
+- **`Tab`/`Shift-Tab` cell traversal + Tab commit-advance** — RD-10. An unbound `Tab` is swallowed by the
+  `@jsvision/ui` dispatch router for focus traversal before any `onEvent`, so grid-action Tab requires RD-10's
+  keymap→command layer (PF-001). RD-02 ships Enter commit+row-advance and `←`/`→`/`Home`/`End`/`Ctrl+Home`/
+  `Ctrl+End` cell nav.
 - **Row-editor dialog (form view)** — RD-02 Should-Have, deferred to Phase B (req AR-27).
 - **Undo/redo** — deferred (req AR-30).
 
@@ -73,14 +78,15 @@ what RD-02's prose fixes; every implementation detail traces to one:
 - **Dirty = pending commit** in a reactive `Set` (AR #6), not a "value ever changed" flag.
 - **Commit keys captured by the editor-host `Group`** via the focus-chain bubble (AR #7) — the grid body is
   unfocused while editing.
-- **Grid-corner navigation clamps** (AR #8); Tab/Shift-Tab wrap between rows but not around the grid.
+- **Grid-corner navigation clamps** (AR #8). (Tab/Shift-Tab row-wrap is deferred to RD-10 with Tab itself.)
 - **`committing` locks the cell**; other cells stay navigable; per-cell commits serialize (AR #9).
 - **No stored `loop` ref** — focus routing uses the `DispatchEvent.focusView` seam (AR #13).
 
 ## Success criteria
 
-RD-02 is complete when every RD-02 AC-1…AC-10 is realized by a green ST-1…ST-17
-([07-testing-strategy](07-testing-strategy.md)), `yarn verify` is green across `@jsvision/datagrid` **and**
+RD-02 is complete when every RD-02 AC-1…AC-10 **(except AC-6, deferred to RD-10)** is realized by a green
+ST-1…ST-17 **(except ST-7, deferred with AC-6)** ([07-testing-strategy](07-testing-strategy.md)), `yarn verify`
+is green across `@jsvision/datagrid` **and**
 `@jsvision/core` (the new roles), the editable kitchen-sink story passes the headless smoke test, and no ui/core
 regression is introduced (`DataGrid` + the existing theme suites stay green).
 
