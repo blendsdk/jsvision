@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 18:25
-> **Progress**: 37/45 tasks (82%) — Phases 1–5 complete
+> **Last Updated**: 2026-07-13 18:34
+> **Progress**: 45/45 tasks (100%) — COMPLETE · full verify green
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -211,20 +211,20 @@ done gate.
 
 **Reference**: [03-03 §3, §4](03-03-lookup-f4-and-showcase.md) · [07 ST-10, ST-11] · AR #11
 
-- [ ] 6.1.1 Write ST-11 security cases (a) lookup `label: 'A\x1b[31mB\x07'` renders sanitized (no raw ESC/BEL in the buffer / serialized frame; wired `popupHost`) (b) `integer` `filter('0-9-')` rejects a letter keystroke before commit — `packages/datagrid/test/security.spec.test.ts`
-- [ ] 6.1.2 Run — verify the new security cases FAIL where behavior is missing (red)
+- [x] 6.1.1 Write ST-11 security cases (a) lookup `label: 'A\x1b[31mB\x07'` renders sanitized (no raw ESC/BEL in the buffer / serialized frame; wired `popupHost`) (b) `integer` `filter('0-9-')` rejects a letter keystroke before commit — `packages/datagrid/test/security.spec.test.ts` ✅ (completed: 2026-07-13 18:34)
+- [x] 6.1.2 Run — verify the new security cases FAIL where behavior is missing (red) ✅ (completed: 2026-07-13 18:34)
 
 ### Step 6.2: Implementation
 
-- [ ] 6.2.1 Add `packages/datagrid/test/kitchen-sink/stories/editors.story.ts` (`id: 'datagrid/editors'`) with boolean/date/enum/lookup columns + a bound-state echo + interaction hints; register it (one import + one array entry) in `stories/index.ts`
-- [ ] 6.2.2 Confirm the security behavior passes (the core `sanitize` boundary + the `filter` keystroke gate already deliver it; add code only if a gap is found) — `security.spec.test.ts` green
-- [ ] 6.2.3 Run the smoke + security specs — verify ST-10 + ST-11 PASS (green) + `check:docs`
+- [x] 6.2.1 Add `packages/datagrid/test/kitchen-sink/stories/editors.story.ts` (`id: 'datagrid/editors'`) with boolean/date/enum/lookup columns + a bound-state echo + interaction hints; register it (one import + one array entry) in `stories/index.ts` ✅ (completed: 2026-07-13 18:34)
+- [x] 6.2.2 Confirm the security behavior passes (the core `sanitize` boundary + the `filter` keystroke gate already deliver it; add code only if a gap is found) — `security.spec.test.ts` green ✅ (completed: 2026-07-13 18:34)
+- [x] 6.2.3 Run the smoke + security specs — verify ST-10 + ST-11 PASS (green) + `check:docs` ✅ (completed: 2026-07-13 18:34)
 
 ### Step 6.3: Hardening & done gate
 
-- [ ] 6.3.1 Update the `@jsvision/datagrid` public JSDoc for every new/changed export (`createCellEditor`, the spec types) — each has a lead sentence + `@example`; run `check:docs` (0 banned refs / 0 missing `@example`)
-- [ ] 6.3.2 Full `yarn verify` (use `TUI_SKIP_PERF=1` if the `@jsvision/ui` `editor-perf` ceiling trips under load; confirm it passes in isolation) — capture the PASS one-liner
-- [ ] 6.3.3 Roadmap sync: RD-03 → `Done` (✅) in `codeops/features/datagrid/00-roadmap.md`, cascade to `codeops/00-roadmap.md` (via the roadmap skill)
+- [x] 6.3.1 Update the `@jsvision/datagrid` public JSDoc for every new/changed export (`createCellEditor`, the spec types) — each has a lead sentence + `@example`; run `check:docs` (0 banned refs / 0 missing `@example`) ✅ (completed: 2026-07-13 18:34)
+- [x] 6.3.2 Full `yarn verify` (use `TUI_SKIP_PERF=1` if the `@jsvision/ui` `editor-perf` ceiling trips under load; confirm it passes in isolation) — capture the PASS one-liner ✅ (completed: 2026-07-13 18:34)
+- [x] 6.3.3 Roadmap sync: RD-03 → `Done` (✅) in `codeops/features/datagrid/00-roadmap.md`, cascade to `codeops/00-roadmap.md` (via the roadmap skill) ✅ (completed: 2026-07-13 18:34)
 
 **Deliverables**: editor kitchen-sink stories + smoke, RD-03 security ST, full-verify-green RD-03.
 **Verify**: full `yarn verify`
