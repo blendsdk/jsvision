@@ -1,0 +1,202 @@
+/**
+ * The in-cell editing lifecycle: a small `idle ↔ editing` state machine that mounts an editor over the
+ * focused cell, captures Enter/Esc from the editor's host, and drives the per-cell commit seam
+ * (optimistic write + revert-on-veto) with per-cell serialization.
+ *
+ * The controller is view-agnostic: it reaches the grid body only through the {@link EditHost} seam
+ * (which the body implements over its own private state), so the machine has no direct dependency on
+ * the renderer's internals. Commit is **await-close** — the editor stays open across an async
+ * `onCommit`, closing (and advancing) only once the veto resolves.
+ */
+import { Group, signal } from '@jsvision/ui';
+import type { View, Signal, DispatchEvent } from '@jsvision/ui';
+import type { GridColumn } from './column.js';
+import { isEditable } from './column.js';
+import type { OnCommit } from './commit.js';
+import { commitCell } from './commit.js';
+import { createCellEditor } from './cell-editor.js';
+import { mountCellOverlay, absoluteRect } from './overlay.js';
+import type { CellRect } from './overlay.js';
+
+/** The cell-key separator — a NUL byte, which cannot occur in a realistic row key or column id. */
+const KEY_SEP = String.fromCharCode(0);
+
+/**
+ * A stable cell key joining the row key and column id with a NUL byte. The separator cannot occur in a
+ * realistic row key or column id, so distinct cells never collide and a `rowKey`-plus-separator prefix
+ * cleanly matches every cell in one row.
+ *
+ * @param rowKey The row's stable key.
+ * @param columnId The column id.
+ * @returns The joined key (`rowKey`, a NUL byte, then `columnId`).
+ * @example
+ * ```ts
+ * import { cellKey } from '@jsvision/datagrid';
+ * const k = cellKey(42, 'name'); // the row key, a NUL byte, then the column id
+ * ```
+ */
+export const cellKey = (rowKey: string | number, columnId: string): string => `${rowKey}${KEY_SEP}${columnId}`;
+
+/** The cell an edit targets. */
+export interface CellRef<T> {
+  /** The row record. */
+  readonly row: T;
+  /** The row's stable key. */
+  readonly rowKey: string | number;
+  /** The column index. */
+  readonly col: number;
+  /** The column id. */
+  readonly columnId: string;
+}
+
+/**
+ * The seam the {@link EditController} needs from the grid body. The body implements it over its own
+ * (private) cursor/geometry state, so the controller never touches the renderer's internals.
+ */
+export interface EditHost<T> {
+  /** The grid body view — used for the overlay's absolute origin and to refocus on close. */
+  readonly body: View;
+  /** The absolute overlay group the editor mounts into. */
+  readonly overlay: Group;
+  /** The typed columns (parse/set/format live here). */
+  readonly typedColumns: GridColumn<T>[];
+  /** The optional per-cell veto sink. */
+  readonly onCommit?: OnCommit<T>;
+  /** Bump-on-write so an in-place `set` repaints the mutated row. */
+  readonly bumpVersion: () => void;
+  /** The focused cell (row + column), or `null` when the grid is empty. */
+  currentCell(): CellRef<T> | null;
+  /** The focused cell's rect in body-local coordinates (for the overlay mount). */
+  cellRect(): CellRect;
+  /** Advance the row cursor to the next row (clamped), keeping the column. */
+  advanceRow(): void;
+}
+
+/** The editing lifecycle controller — begin-edit plus the commit/cancel it drives from the editor host. */
+export interface EditController {
+  /**
+   * Begin editing the focused cell. Mounts a focused editor over an editable cell; a read-only cell,
+   * an in-flight commit on that cell, or an already-open editor is rejected.
+   *
+   * @param ev The dispatch envelope carrying the focus seam.
+   * @param opts `replaceWith` seeds the field with a typed character (a printable begin-edit).
+   * @returns Whether an editor was opened.
+   */
+  beginEdit(ev: DispatchEvent, opts?: { replaceWith?: string }): boolean;
+  /** Whether an editor is currently open. */
+  isEditing(): boolean;
+}
+
+type EditState<T> =
+  | { kind: 'idle' }
+  | { kind: 'editing'; cell: CellRef<T>; field: Signal<string>; editor: View; dispose: () => void };
+
+/**
+ * Build the in-cell editing controller for a grid body.
+ *
+ * @param host The grid-body seam the controller drives (see {@link EditHost}).
+ * @returns The {@link EditController} the body wires into its key handling.
+ * @example
+ * ```ts
+ * // Inside a grid body that implements EditHost over its own state:
+ * import { createEditController } from '@jsvision/datagrid';
+ * const controller = createEditController<Row>(host);
+ * // In the body's key handler, on F2/Enter/printable over an editable cell:
+ * controller.beginEdit(ev);
+ * ```
+ */
+export function createEditController<T>(host: EditHost<T>): EditController {
+  let state: EditState<T> = { kind: 'idle' };
+  // Per-cell serialization guard: at most one commit in flight per cell, so a second Enter (or a
+  // begin-edit) on a cell whose commit is still resolving is ignored rather than overlapping.
+  const committing = new Set<string>();
+
+  function beginEdit(ev: DispatchEvent, opts?: { replaceWith?: string }): boolean {
+    if (state.kind !== 'idle') return false;
+    const cell = host.currentCell();
+    if (cell === null) return false;
+    const tcol = host.typedColumns[cell.col];
+    if (tcol === undefined || !isEditable(tcol) || committing.has(cellKey(cell.rowKey, cell.columnId))) {
+      return false;
+    }
+    const seed =
+      opts?.replaceWith ?? (tcol.format ? tcol.format(tcol.value(cell.row), cell.row) : String(tcol.value(cell.row)));
+    const field = signal(seed);
+    const editor = createCellEditor(tcol, field, { overlay: host.overlay });
+    if (editor === null) return false; // defensive — isEditable already guaranteed an editor
+    const editorHost = new Group();
+    editor.layout = { position: 'fill' };
+    editorHost.add(editor);
+    // Enter/Esc bubble up the focus chain from the Input (which leaves them unhandled) to this host.
+    editorHost.onEvent = (ev2: DispatchEvent): void => onEditorKey(ev2);
+    const dispose = mountCellOverlay({
+      host: host.overlay,
+      loop: { focusView: (v: View) => ev.focusView?.(v) },
+      rect: host.cellRect(),
+      origin: absoluteRect(host.body),
+      view: editorHost,
+    });
+    ev.focusView?.(editor); // focus the inner Input so typing lands and Enter/Esc bubble to editorHost
+    state = { kind: 'editing', cell, field, editor, dispose };
+    return true;
+  }
+
+  function onEditorKey(ev2: DispatchEvent): void {
+    if (state.kind !== 'editing') return;
+    const k = ev2.event;
+    if (k.type !== 'key') return;
+    if (k.key === 'escape') {
+      cancel(ev2);
+      ev2.handled = true;
+    } else if (k.key === 'enter') {
+      void commit(ev2);
+      ev2.handled = true;
+    }
+    // everything else stays in the Input (already handled there)
+  }
+
+  function closeEditor(): void {
+    if (state.kind !== 'editing') return;
+    state.dispose(); // remove the editor host and dispose its reactive scope (owner disposal)
+  }
+
+  function cancel(ev2: DispatchEvent): void {
+    closeEditor();
+    state = { kind: 'idle' };
+    ev2.focusView?.(host.body); // refocus the body — nothing was ever written to the record
+  }
+
+  async function commit(ev2: DispatchEvent): Promise<void> {
+    if (state.kind !== 'editing') return;
+    const { cell, field } = state;
+    const ck = cellKey(cell.rowKey, cell.columnId);
+    if (committing.has(ck)) return; // a commit for this cell is already resolving — serialize
+    const tcol = host.typedColumns[cell.col];
+    const value = tcol.parse!(field());
+    const previous = tcol.value(cell.row);
+    committing.add(ck);
+    const res = await commitCell({
+      row: cell.row,
+      columnId: cell.columnId,
+      rowKey: cell.rowKey,
+      previous,
+      next: value,
+      apply: (r, _c, v) => tcol.set!(r, v),
+      onCommit: host.onCommit,
+    });
+    host.bumpVersion(); // repaint the new (or reverted) value — the row mutated in place
+    committing.delete(ck);
+    if (res.committed) {
+      closeEditor();
+      state = { kind: 'idle' };
+      host.advanceRow(); // Enter → same column, next row (clamped)
+      ev2.focusView?.(host.body);
+    }
+    // vetoed → the editor remains open; commitCell already reverted the record to `previous`
+  }
+
+  return {
+    beginEdit,
+    isEditing: () => state.kind === 'editing',
+  };
+}

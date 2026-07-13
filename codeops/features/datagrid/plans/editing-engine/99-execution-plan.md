@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 12:45
-> **Progress**: 16/43 tasks (37%)
+> **Last Updated**: 2026-07-13 13:13
+> **Progress**: 22/43 tasks (51%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -117,22 +117,22 @@ Depends on Phases 1–2 (`createCellEditor` + the cursor). Spec-first (03-02 §l
 
 **Reference**: [03-02 §lifecycle] · [07 ST-1…ST-6, ST-9] · req AR-02/16/18/19
 
-- [ ] 3.1.1 Write the lifecycle spec (ST-1 read-only fall-through; ST-2 editable mounts + `getFocused`; ST-3 printable replaces; ST-4 route + Enter→next row `focusedCol` unchanged; ST-5 Esc reverts + no `onCommit`; ST-6 `onCommit` once / false-open / true-close; ST-9 one-cell overlay + owner disposal) — `packages/datagrid/test/editing.spec.test.ts`. **(ST-7 Tab/Shift-Tab wrap is deferred to RD-10; PF-001.)**
+- [~] 3.1.1 Write the lifecycle spec (ST-1 read-only fall-through; ST-2 editable mounts + `getFocused`; ST-3 printable replaces; ST-4 route + Enter→next row `focusedCol` unchanged; ST-5 Esc reverts + no `onCommit`; ST-6 `onCommit` once / false-open / true-close; ST-9 one-cell overlay + owner disposal) — `packages/datagrid/test/editing.spec.test.ts`. **(ST-7 Tab/Shift-Tab wrap is deferred to RD-10; PF-001.)** ⏳ (implemented: 2026-07-13 12:55)
 - [ ] 3.1.2 Run — verify it FAILS (red)
 
 ### Step 3.2: Implementation
 
 **Reference**: [03-02 §begin-edit/commit/cancel] · AR #7, #13, #15 (plan)
 
-- [ ] 3.2.1 Implement the edit-lifecycle FSM (`idle`/`editing`) + `beginEdit` (seed field, `createCellEditor`, wrap in an editor-host `Group`, `mountCellOverlay` fed the `ev.focusView` seam, focus the inner editor) — `packages/datagrid/src/editing.ts`
-- [ ] 3.2.2 Implement `onEditorKey` (**Enter/Esc via the focus-chain bubble** — Tab is swallowed by the router before the bubble, deferred to RD-10; PF-001) + `cancel` (dispose + refocus body, no `onCommit`) + `commit` (parse → `commitCell` with `apply = column.set` → `bumpVersion` → close + advance-to-next-row on true / keep-open on veto) — `packages/datagrid/src/editing.ts`
-- [ ] 3.2.3 Wire `EditableGridRows.onEvent` F2/Enter/printable → `beginEdit` **on an editable cell** (read-only → `super.onEvent`, base activate/select — PF-003); printable **detection + seed** use the `Input.insertPrintable` idiom (`!ctrl && !alt` and `key === 'space' || [...key].length === 1`; seed `key === 'space' ? ' ' : key`), **not** the non-existent `inner.char` (PF-002) — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 3.2.4 Run the spec — verify it PASSES (green)
+- [x] 3.2.1 Implement the edit-lifecycle FSM (`idle`/`editing`) + `beginEdit` (seed field, `createCellEditor`, wrap in an editor-host `Group`, `mountCellOverlay` fed the `ev.focusView` seam, focus the inner editor) — `packages/datagrid/src/editing.ts` ✅ (completed: 2026-07-13 13:08) — PF-004 seam resolved: FSM lives in `editing.ts` as `createEditController(host)`; the body implements a small `EditHost` (currentCell/cellRect/advanceRow) so the controller never touches the renderer's protected state
+- [x] 3.2.2 Implement `onEditorKey` (**Enter/Esc via the focus-chain bubble** — Tab is swallowed by the router before the bubble, deferred to RD-10; PF-001) + `cancel` (dispose + refocus body, no `onCommit`) + `commit` (parse → `commitCell` with `apply = column.set` → `bumpVersion` → close + advance-to-next-row on true / keep-open on veto) — `packages/datagrid/src/editing.ts` ✅ (completed: 2026-07-13 13:08)
+- [x] 3.2.3 Wire `EditableGridRows.onEvent` F2/Enter/printable → `beginEdit` **on an editable cell** (read-only → `super.onEvent`, base activate/select — PF-003); printable **detection + seed** use the `Input.insertPrintable` idiom (`!ctrl && !alt` and `key === 'space' || [...key].length === 1`; seed `key === 'space' ? ' ' : key`), **not** the non-existent `inner.char` (PF-002) — `packages/datagrid/src/editable-grid-rows.ts` ✅ (completed: 2026-07-13 13:08)
+- [x] 3.2.4 Run the spec — verify it PASSES (green) ✅ (completed: 2026-07-13 13:08)
 
 ### Step 3.3: Hardening
 
-- [ ] 3.3.1 Write impl tests (veto keeps the field for re-editing; `version` bump repaints a mutated-in-place row; the per-cell `committing` guard = ST-14; async resolve ordering) **and verify the post-resolve repaint/focus actually flush headlessly for a deferred-async commit (PF-005)** — `packages/datagrid/test/editing.impl.test.ts`
-- [ ] 3.3.2 Full verify (datagrid)
+- [x] 3.3.1 Write impl tests (veto keeps the field for re-editing; `version` bump repaints a mutated-in-place row; the per-cell `committing` guard = ST-14; async resolve ordering) **and verify the post-resolve repaint/focus actually flush headlessly for a deferred-async commit (PF-005)** — `packages/datagrid/test/editing.impl.test.ts` ✅ (completed: 2026-07-13 13:13)
+- [x] 3.3.2 Full verify (datagrid) ✅ (completed: 2026-07-13 13:13) — 20 files / 69 tests green; PF-005 deferred-async flush validated headlessly
 
 **Deliverables**: begin-edit (F2/Enter/type), commit (Enter) with revert-on-veto, cancel (Esc), Enter row-advance. (Tab commit-advance is RD-10.)
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs`
