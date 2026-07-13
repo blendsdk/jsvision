@@ -71,7 +71,11 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
   `stringWidth`) to public API; new `@jsvision/datagrid` package ships the `value`/`format`/`parse` `column()` model +
   value-aware adapter, `GridDataSource`/`fromRows` (required `rowKey`), `commitCell`, `mountCellOverlay`, a read-only
   `EditableDataGrid`, and an in-package story harness. datagrid 35 unit + 2 e2e + ui 1539 unit all green;
-  typecheck/build/check:docs/check:deps green; all AC-1…AC-10 realized (ST-1…ST-14). Note: repo-wide `yarn verify`
-  is red only from **pre-existing v0.2.0-release breakage** unrelated to this work (core packaging spec disallows the
-  release-added `CHANGELOG.md`; CHANGELOG/RELEASE_NOTES prettier drift) — flagged for a separate fix. Next: `exec_plan`
+  typecheck/build/check:docs/check:deps green; all AC-1…AC-10 realized (ST-1…ST-14). Next: `exec_plan`
   RD-02 (editing engine).
+- 2026-07-13: **CI fully green.** Two follow-up fixes so repo-wide `yarn verify` passes: (1) the **pre-existing
+  v0.2.0-release blocker** unrelated to this work — the core packaging spec now allows the release-added
+  `CHANGELOG.md`/`RELEASE_NOTES.md`, and those generated changelogs are excluded from the prettier gate (both files
+  taken verbatim from `origin/master`, where it was already fixed); (2) the **plugin-catalog gate** consequence of
+  Phase 1's grid-engine promotion — `GridRows`/`GridHeader` are now documented in the plugin's `component-catalog.md`
+  (the self-sync gate requires every public `@jsvision/ui` class to be listed). `yarn verify` exits 0.
