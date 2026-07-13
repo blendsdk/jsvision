@@ -95,7 +95,7 @@ base until Phase 3.
 
 **Reference**: [03-02 §`EditableGridRows`] · AR #4, #8 (plan)
 
-- [ ] 2.2.1 Implement `EditableGridRows<T>` + `EditableGridRowsConfig<T>`: `focusedCol` + injected shared signals; `onEvent` nav intercept (`←`/`→`/`Home`/`End`/`Ctrl+Home`/`Ctrl+End`/`Tab`/`Shift-Tab`) + `super.onEvent` fall-through for row/mouse; `moveCol`/`colFirst`/`colLast`/`gridStart`/`gridEnd`/`moveCellForward`/`Back` (clamp; corner clamps) — `packages/datagrid/src/editable-grid-rows.ts`
+- [ ] 2.2.1 Implement `EditableGridRows<T>` + `EditableGridRowsConfig<T>`: `focusedCol` + injected shared signals; `onEvent` nav intercept (`←`/`→`/`Home`/`End`/`Ctrl+Home`/`Ctrl+End`) + `super.onEvent` fall-through for row/mouse **and for `F2`/`Enter`/printable on a read-only cell** (PF-003); `moveCol`/`colFirst`/`colLast`/`gridStart`/`gridEnd` (clamp; grid-corner clamps). **`Tab`/`Shift-Tab` are not intercepted — deferred to RD-10 (an unbound Tab is swallowed by the dispatch router; PF-001).** — `packages/datagrid/src/editable-grid-rows.ts`
 - [ ] 2.2.2 Implement `draw` override: `super.draw` then `paintCursorCell` (fill + redraw the cell text in `gridCursor`, only when `this.state.focused`); add the `focusedCol` `bind` in `onMount` — `packages/datagrid/src/editable-grid-rows.ts`
 - [ ] 2.2.3 Run the spec — verify it PASSES (green)
 
@@ -115,9 +115,9 @@ Depends on Phases 1–2 (`createCellEditor` + the cursor). Spec-first (03-02 §l
 
 ### Step 3.1: Specification tests
 
-**Reference**: [03-02 §lifecycle] · [07 ST-1…ST-7, ST-9] · req AR-02/16/18/19
+**Reference**: [03-02 §lifecycle] · [07 ST-1…ST-6, ST-9] · req AR-02/16/18/19
 
-- [ ] 3.1.1 Write the lifecycle spec (ST-1 read-only no-op; ST-2 editable mounts + `getFocused`; ST-3 printable replaces; ST-4 route + Enter→next row `focusedCol` unchanged; ST-5 Esc reverts + no `onCommit`; ST-6 `onCommit` once / false-open / true-close; ST-7 Tab/Shift-Tab wrap + corner clamp; ST-9 one-cell overlay + owner disposal) — `packages/datagrid/test/editing.spec.test.ts`
+- [ ] 3.1.1 Write the lifecycle spec (ST-1 read-only fall-through; ST-2 editable mounts + `getFocused`; ST-3 printable replaces; ST-4 route + Enter→next row `focusedCol` unchanged; ST-5 Esc reverts + no `onCommit`; ST-6 `onCommit` once / false-open / true-close; ST-9 one-cell overlay + owner disposal) — `packages/datagrid/test/editing.spec.test.ts`. **(ST-7 Tab/Shift-Tab wrap is deferred to RD-10; PF-001.)**
 - [ ] 3.1.2 Run — verify it FAILS (red)
 
 ### Step 3.2: Implementation
@@ -125,16 +125,16 @@ Depends on Phases 1–2 (`createCellEditor` + the cursor). Spec-first (03-02 §l
 **Reference**: [03-02 §begin-edit/commit/cancel] · AR #7, #13, #15 (plan)
 
 - [ ] 3.2.1 Implement the edit-lifecycle FSM (`idle`/`editing`) + `beginEdit` (seed field, `createCellEditor`, wrap in an editor-host `Group`, `mountCellOverlay` fed the `ev.focusView` seam, focus the inner editor) — `packages/datagrid/src/editing.ts`
-- [ ] 3.2.2 Implement `onEditorKey` (Enter/Tab/Shift-Tab/Esc via the focus-chain bubble) + `cancel` (dispose + refocus body, no `onCommit`) + `commit` (parse → `commitCell` with `apply = column.set` → `bumpVersion` → close+advance on true / keep-open on veto) + `applyAdvance` — `packages/datagrid/src/editing.ts`
-- [ ] 3.2.3 Wire `EditableGridRows.onEvent` F2/Enter/printable → `beginEdit` (Enter on read-only = consumed no-op; printable passes `replaceWith`) — `packages/datagrid/src/editable-grid-rows.ts`
+- [ ] 3.2.2 Implement `onEditorKey` (**Enter/Esc via the focus-chain bubble** — Tab is swallowed by the router before the bubble, deferred to RD-10; PF-001) + `cancel` (dispose + refocus body, no `onCommit`) + `commit` (parse → `commitCell` with `apply = column.set` → `bumpVersion` → close + advance-to-next-row on true / keep-open on veto) — `packages/datagrid/src/editing.ts`
+- [ ] 3.2.3 Wire `EditableGridRows.onEvent` F2/Enter/printable → `beginEdit` **on an editable cell** (read-only → `super.onEvent`, base activate/select — PF-003); printable **detection + seed** use the `Input.insertPrintable` idiom (`!ctrl && !alt` and `key === 'space' || [...key].length === 1`; seed `key === 'space' ? ' ' : key`), **not** the non-existent `inner.char` (PF-002) — `packages/datagrid/src/editable-grid-rows.ts`
 - [ ] 3.2.4 Run the spec — verify it PASSES (green)
 
 ### Step 3.3: Hardening
 
-- [ ] 3.3.1 Write impl tests (veto keeps the field for re-editing; `version` bump repaints a mutated-in-place row; the per-cell `committing` guard = ST-14; async resolve ordering) — `packages/datagrid/test/editing.impl.test.ts`
+- [ ] 3.3.1 Write impl tests (veto keeps the field for re-editing; `version` bump repaints a mutated-in-place row; the per-cell `committing` guard = ST-14; async resolve ordering) **and verify the post-resolve repaint/focus actually flush headlessly for a deferred-async commit (PF-005)** — `packages/datagrid/test/editing.impl.test.ts`
 - [ ] 3.3.2 Full verify (datagrid)
 
-**Deliverables**: begin-edit (F2/Enter/type), commit (Enter/Tab) with revert-on-veto, cancel (Esc), auto-advance.
+**Deliverables**: begin-edit (F2/Enter/type), commit (Enter) with revert-on-veto, cancel (Esc), Enter row-advance. (Tab commit-advance is RD-10.)
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs`
 
 ---
@@ -246,5 +246,5 @@ container (5). Strictly sequential in practice.
 4. ✅ No dead code — no unused parameters, functions, classes, or modules
 5. ✅ Security hardened — editor text through `sanitize` (ST-11); no out-of-band persistence; zero native deps
 6. ✅ Documentation updated — every public export has an `@example`; user/agent-facing JSDoc, no banned refs
-7. ✅ RD-02 AC-1…AC-10 all realized by green ST-1…ST-17
+7. ✅ RD-02 AC-1…AC-10 all realized by green ST-1…ST-17 (except AC-6/ST-7 — Tab — deferred to RD-10; PF-001)
 8. ✅ Post-completion project re-analysis (handled by the exec_plan skill)

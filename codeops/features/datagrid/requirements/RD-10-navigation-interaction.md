@@ -27,7 +27,9 @@ interaction gaps (double-click, context menu, tooltips).
 - [ ] **Consolidated default keymap** — one documented table covering navigation (`↑↓←→`, `Tab`/
       `Shift-Tab`, `Home`/`End`, `Ctrl+Home`/`Ctrl+End`, `PgUp`/`PgDn`), editing (`F2`, `Enter`, `Esc`,
       type-to-edit), selection (`Space`, `Shift+↑↓`), and value help (`F4`). Every binding is remappable
-      via a `keymap` option (merge-over-default).
+      via a `keymap` option (merge-over-default). **`Tab`/`Shift-Tab` cell traversal (`nextCell`/
+      `prevCell`) and the Tab commit-then-next-cell advance are received here from RD-02** — RD-02
+      ships Enter-advance only and defers Tab to this RD (see the dispatch note below).
 - [ ] **Mouse** — single-click focuses the cell and its row (and selects per RD-08), header-click
       sorts (RD-05), the funnel opens the filter popup (RD-06), the wheel scrolls rows (± step), the
       scrollbar drags, and border/header drags resize/reorder (RD-07). Clicks map to a cell via the
@@ -71,6 +73,11 @@ export type Keymap = Record<string /*chord*/, GridAction>;
 
 - Dispatch: a key is resolved to a `GridAction` via the merged keymap, then routed to the owning
   subsystem (edit → RD-02, select → RD-08, …). An unmapped chord falls through to the base view.
+- **`Tab`/`Shift-Tab` must be bound through this keymap→`GridAction` path, never a view `onEvent`
+  intercept:** the `@jsvision/ui` dispatch router swallows an *unbound* `Tab` for focus traversal
+  before any view is offered the event (`packages/ui/src/event/dispatch.ts`), so a keymap chord →
+  `nextCell`/`prevCell` command is the only way `Tab` reaches the grid. This is why RD-02 defers Tab
+  here (PF-001).
 
 ### Double-click synthesis
 

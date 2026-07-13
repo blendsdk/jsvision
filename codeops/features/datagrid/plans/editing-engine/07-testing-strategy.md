@@ -22,13 +22,13 @@ synthetic key/mouse envelopes. Assert on `loop.getFocused()`, the serialized fra
 
 | ST | AC | Input → Expected | File |
 | -- | -- | ---------------- | ---- |
-| **ST-1** | 1 | Cursor on a **read-only** column (no `parse`/`set`); dispatch `Enter`, then `F2` → **no** editor mounts (`getFocused()` unchanged = the body), the record is untouched. | `editing.spec.test.ts` |
+| **ST-1** | 1 | Cursor on a **read-only** column (no `parse`/`set`); dispatch `Enter`, then `F2` → **no** editor mounts (`getFocused()` unchanged = the body), the record is untouched. (`Enter` falls through to the base row activate/select — PF-003 — so assert on editor-absence + untouched record, not on `selected`.) | `editing.spec.test.ts` |
 | **ST-2** | 1 | Cursor on an **editable** column; dispatch `Enter` (then separately `F2`) → an editor mounts and `loop.getFocused() === editor`. | `editing.spec.test.ts` |
 | **ST-3** | 2 | Cursor on an editable cell; dispatch printable `'x'` → editor mounts and the field **equals** `'x'` (content replaced), not `previous + 'x'`. | `editing.spec.test.ts` |
 | **ST-4** | 3 | While editing, dispatch a printable → it lands in the editor and the grid cursor does **not** move. Then `Enter` → `onCommit`→true, editor closes, `focusedCol` unchanged, `focused === row + 1` (clamped). | `editing.spec.test.ts` |
 | **ST-5** | 4 | While editing (field changed), dispatch `Esc` → the cell shows `previous`, the editor is closed (`getFocused()` = body), and `onCommit` was **not** called. | `editing.spec.test.ts` |
 | **ST-6** | 5 | Edit + `Enter` with `onCommit` spy: called **exactly once** with `{ rowKey, columnId, value: parse(field), previous, row }`. `onCommit → false`: editor **remains open**, cell shows `previous`. `onCommit → true`: editor closes, cell shows the new value. | `editing.spec.test.ts` |
-| **ST-7** | 6 | `Tab` while editing the **last** column → commit, then cursor at **first column of the next row**. `Shift-Tab` while editing the **first** column → cursor at **last column of the previous row**. Grid **corner** (last cell / first cell) clamps. | `editing.spec.test.ts` |
+| **ST-7** | 6 | _Deferred to RD-10 with `Tab` (PF-001)._ The Tab/Shift-Tab commit-then-next-cell wrap + corner clamp move to RD-10: an unbound `Tab` is swallowed by the dispatch router for focus traversal before any `onEvent`, so it cannot be driven through `loop.dispatch` in RD-02. | _(RD-10)_ |
 | **ST-8** | 7 | Async `onCommit` (deferred promise). On `Enter`: `isDirty(rowKey, columnId) === true` while pending; resolve `true` → `isDirty === false`. Draw a body whose registry marks a cell dirty → the serialized frame shows `'•'` at that cell in the `gridDirty` foreground. | `dirty.spec.test.ts` |
 | **ST-9** | 8 | On begin-edit, the mounted overlay's `bounds` = the focused cell rect (`width = column width`, `height = 1`). On close, an `onCleanup` registered inside the editor's scope **fires** (owner disposal — no leaked binding effect). | `editing.spec.test.ts` |
 | **ST-10** | 9 | The `editing` story is registered (unique id + required metadata) and paints headlessly; a scripted nav → edit → commit sequence mutates the bound row. | `kitchen-sink.smoke.spec.test.ts` |
@@ -49,7 +49,7 @@ synthetic key/mouse envelopes. Assert on `loop.getFocused()`, the serialized fra
 | AC-3 keys route to editor; Enter → next row, `focusedCol` unchanged | ST-4 |
 | AC-4 Esc reverts + closes, no `onCommit` | ST-5 |
 | AC-5 `onCommit` once; false keeps open + previous; true closes + new | ST-6 |
-| AC-6 Tab/Shift-Tab row wrap | ST-7 |
+| AC-6 Tab/Shift-Tab row wrap | _deferred to RD-10 (ST-7); PF-001_ |
 | AC-7 dirty marker + `isDirty` | ST-8 |
 | AC-8 overlay one-cell rect + owner disposal | ST-9 |
 | AC-9 editable kitchen-sink story + smoke | ST-10 |
@@ -58,8 +58,9 @@ synthetic key/mouse envelopes. Assert on `loop.getFocused()`, the serialized fra
 
 ## Impl test coverage (non-exhaustive)
 
-- `editable-grid-rows.impl.test.ts` — corner clamp exactness; `Space`-as-printable on editable vs read-only;
-  cursor overpaint math at H-scroll offsets + partial-width edge columns; `focusedCol` bind repaint.
+- `editable-grid-rows.impl.test.ts` — grid-corner clamp exactness (`Ctrl+Home`/`Ctrl+End`); `Space` begins
+  edit on an editable cell and **falls through to base activate/select on a read-only cell** (PF-003); cursor
+  overpaint math at H-scroll offsets + partial-width edge columns; `focusedCol` bind repaint.
 - `editing.impl.test.ts` — veto keeps the field for re-editing; `version` bump repaints a mutated-in-place row;
   the `committing` guard (ST-14); async resolve ordering (dirty clears after `bumpVersion`).
 - `dirty.impl.test.ts` — `createDirtyRegistry` reactivity (fresh Set ref on add/delete); `cellKey` NUL join;

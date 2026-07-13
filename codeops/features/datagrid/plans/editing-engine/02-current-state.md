@@ -24,9 +24,11 @@ fields and hooks `EditableGridRows` needs are `protected`, not `private`:
 - **The base keymap RD-02 must reassign** (`handleKey`, `:272-308`): `←`/`→` → `indentBy(±1)` (horizontal
   scroll); `Home`/`End` → `focusTo(topItem)` / `focusTo(topItem+rows−1)` (first/last **visible row**, `Ctrl`
   ignored); base first/last-**row** is on `Ctrl+PgUp`/`Ctrl+PgDn` (`:281-288`). `↑`/`↓`/`PgUp`/`PgDn`/`Enter`/
-  `Space` stay. So `EditableGridRows.onEvent` intercepts `←`/`→`/`Home`/`End`/`Ctrl+Home`/`Ctrl+End`/`Tab`/`F2`/
-  `Enter`/printable and **returns before `super.onEvent`**; it falls through for `↑`/`↓`/`PgUp`/`PgDn`/
-  `Ctrl+PgUp`/`Ctrl+PgDn`.
+  `Space` stay. So `EditableGridRows.onEvent` intercepts `←`/`→`/`Home`/`End`/`Ctrl+Home`/`Ctrl+End`/`F2`/`Enter`/
+  printable **on an editable cell** and **returns before `super.onEvent`**; it falls through for `↑`/`↓`/`PgUp`/
+  `PgDn`/`Ctrl+PgUp`/`Ctrl+PgDn` **and for `F2`/`Enter`/printable on a read-only cell** (PF-003). `Tab`/`Shift-Tab`
+  cannot be intercepted at all — the dispatch router swallows an unbound `Tab` for focus traversal before any
+  `onEvent` (`packages/ui/src/event/dispatch.ts`), so they are deferred to RD-10 (PF-001).
 - **Row focus indicator** (`:205,216-226`): the base paints the focused **row** in `listFocused` when
   `this.state.focused` (the `View` active flag). RD-02 overpaints the focused **cell** on top, in `gridCursor`.
 
@@ -80,22 +82,25 @@ OnCommit<T>`**; `EditableDataGrid` **adds `isDirty(rowKey, columnId): boolean`**
 ## The editor to mount — `@jsvision/ui` `Input`
 
 `packages/ui/src/controls/input.ts`: `new Input({ value: Signal<string>, maxLength?, validator? })`
-(`InputOptions`, `:31-38`). **Verified commit-key behavior** (`input.ts:250`): `onEvent` does
+(`InputOptions`, `:31-38`). **Verified commit-key behavior** (`input.ts:247`): `onEvent` does
 `if (inner.key === 'enter' || inner.key === 'tab') return;` — it leaves Enter/Tab **unhandled** (no
-`ev.handled = true`), and Esc is not consumed by `handleKey`. So mounted inside an editor-host `Group`, those
-three keys **bubble up the focus chain** to the host's `onEvent` (the loop's "focus-chain bubble clamped to
-scopeRoot"), which runs commit/advance/cancel. Printables/arrows/Backspace/clipboard chords are consumed by the
-`Input` (AR #7). This is the mechanism that makes the RD-02 lifecycle work with an off-the-shelf `Input`.
+`ev.handled = true`), and Esc is not consumed by `handleKey` (`insertPrintable` returns `false` for the
+multi-char `'escape'`). So mounted inside an editor-host `Group`, **Enter and Esc bubble up the focus chain** to
+the host's `onEvent` (the loop's "focus-chain bubble clamped to scopeRoot"), which runs commit/cancel.
+Printables/arrows/Backspace/clipboard chords are consumed by the `Input` (AR #7). **`Tab` does NOT reach the
+host** — the dispatch router swallows an unbound `Tab` for focus traversal *before* the focus-chain phase runs
+(`packages/ui/src/event/dispatch.ts`), so Tab cell-advance is deferred to RD-10 (PF-001). This is the mechanism
+that makes the RD-02 Enter/Esc lifecycle work with an off-the-shelf `Input`.
 
 ## The focus seam — `getFocused` (for AC-1)
 
-Both the loop (`packages/ui/src/event/event-loop.ts:247` `getFocused(): View | null`) and the dispatch envelope
-(`packages/ui/src/view/types.ts:163` `getFocused?: () => View | null`) expose it, so AC-1's
+Both the loop (`packages/ui/src/event/event-loop.ts:292` `getFocused(): View | null`) and the dispatch envelope
+(`packages/ui/src/view/types.ts:170` `getFocused?: () => View | null`) expose it, so AC-1's
 "`getFocused() === editor`" is directly testable and the controller can assert the editor is focused.
 
 ## Core theme — where the two roles land, and the inventory tripwire
 
-`packages/core/src/engine/color/theme.ts`: `ThemeRole { fg, bg, hotkey? }` (`:15`); 80 roles today. Precedents
+`packages/core/src/engine/color/theme.ts`: `ThemeRole { fg, bg, hotkey? }` (`:15`); 60 roles today. Precedents
 for the new roles: `calendarCursor: { fg: black, bg: white }` (`:337`, the filled-reverse cell cursor) and
 `colorMarker: { fg: black, bg: lightGray }` (`:340`, a forced-contrast marker). **RD-02 adds** `gridCursor`
 (filled-reverse, modeled on `calendarCursor`) and `gridDirty` (the `•` marker color) — exact bytes pinned in
