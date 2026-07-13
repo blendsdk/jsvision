@@ -11,15 +11,19 @@
  *
  * Expectations derive from the requirements, never the implementation.
  */
-import { test, expect } from 'vitest';
-import { Group, Input, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+import { test, expect, vi } from 'vitest';
+import { CheckGroup, DatePicker, Group, Input, createEventLoop, resolveCapabilities, signal, toISO } from '@jsvision/ui';
 import type { PopupHost } from '@jsvision/ui';
 import { column, isEditable, toEngineColumn } from '../src/column.js';
 import type { GridColumn } from '../src/column.js';
 import { createCellEditor } from '../src/cell-editor.js';
+import type { OnCommit } from '../src/commit.js';
 import { EditableGridRows } from '../src/editable-grid-rows.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
+
+/** Drain the microtasks a deferred (await-close) commit or an async provider schedules. */
+const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
 /** A synthetic key envelope for `loop.dispatch`. */
 function key(k: string, mods: { ctrl?: boolean; alt?: boolean; shift?: boolean } = {}) {
@@ -34,7 +38,12 @@ const H = 6;
  * inspect the mounted editor. The popup overlay is separate from the grid's editor-mount overlay — the
  * ComboBox opens its list into `loop.popupHost.overlay`, exactly as the app shell does.
  */
-function build<T>(typedColumns: GridColumn<T>[], rows: T[], rowKey: (r: T) => string | number) {
+function build<T>(
+  typedColumns: GridColumn<T>[],
+  rows: T[],
+  rowKey: (r: T) => string | number,
+  opts: { onCommit?: OnCommit<T> } = {},
+) {
   const engineCols = typedColumns.map(toEngineColumn);
   const focused = signal(0);
   const focusedCol = signal(0);
@@ -57,6 +66,7 @@ function build<T>(typedColumns: GridColumn<T>[], rows: T[], rowKey: (r: T) => st
     focusedCol,
     typedColumns,
     overlay,
+    onCommit: opts.onCommit,
     rowKey,
     bumpVersion: () => version.set(version() + 1),
   });
@@ -178,4 +188,94 @@ test('ST-1: a column without parse/set is null regardless of editor', () => {
     editor: { kind: 'text' },
   });
   expect(createCellEditor(labelWithEditor, signal(''), host)).toBeNull();
+});
+
+interface Flag {
+  id: number;
+  active: boolean;
+}
+const activeCol = column<Flag, boolean>({
+  id: 'active',
+  title: 'Active',
+  value: (r) => r.active,
+  format: (v) => (v ? 'true' : 'false'),
+  parse: (t) => t === 'true',
+  set: (r, v) => {
+    r.active = v;
+  },
+  width: 10,
+  editor: { kind: 'boolean' },
+});
+
+// ST-2 — a boolean column mounts a CheckGroup; Space toggles and Enter commits the flipped 'true'/'false'.
+test('ST-2: boolean editor is a CheckGroup; Space toggles, Enter commits false→true', async () => {
+  const spy = vi.fn<OnCommit<Flag>>(() => true);
+  const rows: Flag[] = [{ id: 1, active: false }];
+  const h = build<Flag>([activeCol], rows, (r) => r.id, { onCommit: spy });
+  h.loop.dispatch(key('f2'));
+  expect(h.loop.getFocused()).toBeInstanceOf(CheckGroup); // boolean → CheckGroup (a focusable leaf)
+  h.loop.dispatch(key('space')); // toggle the single checkbox
+  h.loop.dispatch(key('enter'));
+  await tick();
+  expect(spy).toHaveBeenCalledTimes(1);
+  expect(spy).toHaveBeenCalledWith(expect.objectContaining({ value: true, previous: false }));
+  expect(rows[0].active).toBe(true);
+});
+
+test('ST-2: boolean editor commits true→false when toggled off', async () => {
+  const spy = vi.fn<OnCommit<Flag>>(() => true);
+  const rows: Flag[] = [{ id: 1, active: true }];
+  const h = build<Flag>([activeCol], rows, (r) => r.id, { onCommit: spy });
+  h.loop.dispatch(key('f2'));
+  h.loop.dispatch(key('space'));
+  h.loop.dispatch(key('enter'));
+  await tick();
+  expect(spy).toHaveBeenCalledWith(expect.objectContaining({ value: false, previous: true }));
+  expect(rows[0].active).toBe(false);
+});
+
+interface Due {
+  id: number;
+  due: string;
+}
+const dueCol = column<Due, string>({
+  id: 'due',
+  title: 'Due',
+  value: (r) => r.due,
+  parse: (t) => t,
+  set: (r, v) => {
+    r.due = v;
+  },
+  width: 12,
+  editor: { kind: 'date' },
+});
+
+// ST-3 — a date column mounts a DatePicker bound to the ISO field; commit yields ISO YYYY-MM-DD.
+test('ST-3: date editor is a DatePicker bound to the ISO field; commit yields ISO', async () => {
+  const spy = vi.fn<OnCommit<Due>>(() => true);
+  const rows: Due[] = [{ id: 1, due: '2026-07-13' }];
+  const h = build<Due>([dueCol], rows, (r) => r.id, { onCommit: spy });
+  h.loop.dispatch(key('f2'));
+  const focused = h.loop.getFocused();
+  expect(focused).toBeInstanceOf(Input); // a Group editor focuses its `.input`
+  const dp = focused?.parent;
+  expect(dp).toBeInstanceOf(DatePicker);
+  if (dp instanceof DatePicker) {
+    expect(dp.value()).not.toBeNull();
+    expect(toISO(dp.value()!)).toBe('2026-07-13'); // dateBridge mapped the ISO field to the CalendarDate
+  }
+  h.loop.dispatch(key('enter'));
+  await tick();
+  expect(spy).toHaveBeenCalledWith(expect.objectContaining({ value: '2026-07-13' }));
+  expect(rows[0].due).toBe('2026-07-13');
+});
+
+// ST-3 — an empty date field seeds the picker with no selection (null).
+test('ST-3: an empty date field seeds the DatePicker value as null', () => {
+  const rows: Due[] = [{ id: 1, due: '' }];
+  const h = build<Due>([dueCol], rows, (r) => r.id);
+  h.loop.dispatch(key('f2'));
+  const dp = h.loop.getFocused()?.parent;
+  expect(dp).toBeInstanceOf(DatePicker);
+  if (dp instanceof DatePicker) expect(dp.value()).toBeNull();
 });

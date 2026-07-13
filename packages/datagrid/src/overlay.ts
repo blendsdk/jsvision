@@ -48,9 +48,15 @@ export function absoluteRect(view: View): { x: number; y: number } {
  * reactive scope (so its binding effects do not leak after the overlay closes). There is no frame or
  * border — it is a bare cell-aligned mount.
  *
+ * Pass either a pre-built `view` or a `build` callback. `build` runs **inside** the mount's reactive
+ * root, so an editor that creates binding effects at construction time (a typed editor's field bridges
+ * do) has those effects owned by this scope and disposed on close. A `build` that returns `null` mounts
+ * nothing (a read-only editor) and the returned disposer just tears down the empty root.
+ *
  * @param args `host` (the grid's absolute overlay group), `loop` (the focus seam), `rect` (body-local
- *   cell rect), `origin` (the body's absolute origin, e.g. from {@link absoluteRect}), and `view` (the
- *   editor to mount).
+ *   cell rect), `origin` (the body's absolute origin, e.g. from {@link absoluteRect}), and exactly one
+ *   of `view` (a pre-built editor) or `build` (a factory run inside the root, returning the editor or
+ *   `null`).
  * @returns A `dispose()` that removes the view and disposes its reactive scope (idempotent-safe to
  *   call once).
  * @example
@@ -71,17 +77,21 @@ export function mountCellOverlay(args: {
   loop: { focusView(v: View): void };
   rect: CellRect;
   origin: { x: number; y: number };
-  view: View;
+  view?: View;
+  build?: () => View | null;
 }): () => void {
-  const { host, loop, rect, origin, view } = args;
-  view.layout = {
-    position: 'absolute',
-    rect: { x: origin.x + rect.x, y: origin.y + rect.y, width: rect.width, height: rect.height },
-  };
+  const { host, loop, rect, origin } = args;
   // One reactive owner for the mount: any binding effects the editor sets up are torn down together
   // with the view when `dispose()` runs. `host.add` mounts the view under the host's scope; `remove`
   // disposes that scope (firing the view's `onCleanup`), and `dispose()` clears this owner too.
   return createRoot((dispose) => {
+    // Build inside the root so factory-time effects (typed editor bridges) are owned by this scope.
+    const view = args.build ? args.build() : (args.view ?? null);
+    if (view === null) return dispose; // nothing to mount (e.g. a read-only editor resolved to null)
+    view.layout = {
+      position: 'absolute',
+      rect: { x: origin.x + rect.x, y: origin.y + rect.y, width: rect.width, height: rect.height },
+    };
     host.add(view);
     loop.focusView(view);
     return () => {
