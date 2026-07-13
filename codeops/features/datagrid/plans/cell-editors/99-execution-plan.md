@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 18:06
-> **Progress**: 17/45 tasks (38%) — Phases 1–2 complete
+> **Last Updated**: 2026-07-13 18:13
+> **Progress**: 25/45 tasks (56%) — Phases 1–3 complete
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -125,22 +125,22 @@ Delivers AC-2, AC-3 + the enum/lookup half of AC-7.
 
 **Reference**: [03-03 §1](03-03-lookup-f4-and-showcase.md) · [07 ST-4, ST-5]
 
-- [ ] 3.1.1 Write the enum/lookup specs (ST-4: select-only `ComboBox`, `items()` = `values` in order, select 3rd commits it; ST-5(a): async provider loads after `tick()`, shows the label, select writes the **key**; **ST-5(b) regression (PF-001): field seeded with an existing key `'7'` + no interaction → after `tick()` shows the label and commit yields the unchanged `'7'` — not clobbered to `''` on mount**) — `packages/datagrid/test/cell-editor.spec.test.ts`
-- [ ] 3.1.2 Run — verify ST-4/ST-5 FAIL (red: `enum`/`lookup` cases + bridges not yet present)
+- [x] 3.1.1 Write the enum/lookup specs (ST-4: select-only `ComboBox`, `items()` = `values` in order, select 3rd commits it; ST-5(a): async provider loads after `tick()`, shows the label, select writes the **key**; **ST-5(b) regression (PF-001): field seeded with an existing key `'7'` + no interaction → after `tick()` shows the label and commit yields the unchanged `'7'` — not clobbered to `''` on mount**) — `packages/datagrid/test/cell-editor.spec.test.ts` ✅ (completed: 2026-07-13 18:13)
+- [x] 3.1.2 Run — verify ST-4/ST-5 FAIL (red: `enum`/`lookup` cases + bridges not yet present) ✅ (completed: 2026-07-13 18:13) — 3 cases red
 
 ### Step 3.2: Implementation
 
 **Reference**: [03-02 §enumBridge, §lookupBridge] · [03-03 §1] · AR #6, #9
 
-- [ ] 3.2.1 Add `enumBridge(field)` (`'' ⟷ null`) + `lookupBridge(field, items)` (key ⟷ `LookupItem`, re-matches on `items` change; **reverse effect guarded to write only when a row is actually selected — never clobber a seeded key with `''` on mount, PF-001**) to `editor-bridges.ts`
-- [ ] 3.2.2 Add the `enum` case (seed `signal(values)` → select-only `ComboBox<string>` + `enumBridge`) and the `lookup` case (`buildLookupEditor`: static array seeds `items`; async provider `void provider().then(items.set)`; `ComboBox<LookupItem>` `getText = it.label`, `editable:false`, `lookupBridge`) — `cell-editor.ts`
-- [ ] 3.2.3 Run the specs — verify ST-4/ST-5 PASS (green) + `check:docs`
+- [x] 3.2.1 Add `enumBridge(field)` (`'' ⟷ null`) + `lookupBridge(field, items)` (key ⟷ `LookupItem`, re-matches on `items` change; **reverse effect guarded to write only when a row is actually selected — never clobber a seeded key with `''` on mount, PF-001**) to `editor-bridges.ts` ✅ (completed: 2026-07-13 18:13)
+- [x] 3.2.2 Add the `enum` case (seed `signal(values)` → select-only `ComboBox<string>` + `enumBridge`) and the `lookup` case (`buildLookupEditor`: static array seeds `items`; async provider `void provider().then(items.set)`; `ComboBox<LookupItem>` `getText = it.label`, `editable:false`, `lookupBridge`) — `cell-editor.ts` ✅ (completed: 2026-07-13 18:13)
+- [x] 3.2.3 Run the specs — verify ST-4/ST-5 PASS (green) + `check:docs` ✅ (completed: 2026-07-13 18:13) — 13/13 spec green
 
 ### Step 3.3: Hardening
 
-- [ ] 3.3.1 Extend bridge impl tests: `enumBridge` `''⟷null`; `lookupBridge` key⟷item + re-match after async `items` repopulation — `editor-bridges.impl.test.ts`
-- [ ] 3.3.2 Write the no-loop spec (ST-9: each of the four bridges updates its control once and does not re-write `field`; effect-run counts) — `packages/datagrid/test/editor-bridges.impl.test.ts`
-- [ ] 3.3.3 Phase gate: `yarn workspace @jsvision/datagrid typecheck` + `test` + `check:docs` (separately)
+- [x] 3.3.1 Extend bridge impl tests: `enumBridge` `''⟷null`; `lookupBridge` key⟷item + re-match after async `items` repopulation — `editor-bridges.impl.test.ts` ✅ (completed: 2026-07-13 18:13)
+- [x] 3.3.2 Write the no-loop spec (ST-9: each of the four bridges updates its control once and does not re-write `field`; effect-run counts) — `packages/datagrid/test/editor-bridges.impl.test.ts` ✅ (completed: 2026-07-13 18:13)
+- [x] 3.3.3 Phase gate: `yarn workspace @jsvision/datagrid typecheck` + `test` + `check:docs` (separately) ✅ (completed: 2026-07-13 18:13) — typecheck OK · 105 unit tests · check:docs OK
 
 **Deliverables**: `enumBridge`/`lookupBridge`, `enum`/`lookup` editors, async provider load, no-loop guarantee.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs` (separately)
