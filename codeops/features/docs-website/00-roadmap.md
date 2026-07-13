@@ -3,8 +3,8 @@
 > **Feature-Set**: Docs Website
 > **Status**: In Progress
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-11
-> **Progress**: 4 / 10 (40%) — RD-06 ✅ Done (api-reference — generated TypeDoc reference, bidirectional cross-links, 20/20 gate) · RD-01 implementation ✅ (all 25 tasks; live deploy acceptance pending user) · RD-02 ✅ Done (all 17 tasks; `@jsvision/web` shipped — 41 tests ST-1…ST-12, dogfooded into web-xterm) · RD-03 ✅ Done (7 phases / 40 tasks; live-example system shipped — 8 seed examples, ST-1…ST-14 green, `yarn verify` 22/22, docs gate 14/14)
+> **Last Updated**: 2026-07-13
+> **Progress**: 4 / 10 (40%) — RD-01/02/03/06 ✅ done · RD-04/05/07…10 ✏️ drafted (RD-01 live deploy pending user)
 > **CodeOps Skills Version**: 3.3.2
 
 A professional, DX/UX-first **VitePress** documentation & showcase website for JSVision — the
