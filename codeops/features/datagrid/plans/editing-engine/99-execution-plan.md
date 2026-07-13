@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 13:13
-> **Progress**: 22/43 tasks (51%)
+> **Last Updated**: 2026-07-13 13:24
+> **Progress**: 29/43 tasks (67%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -147,21 +147,21 @@ Depends on Phase 3 (commit sets/clears dirty). Spec-first (03-03 §1).
 
 **Reference**: [03-03 §1] · [07 ST-8] · AR #6 (plan)
 
-- [ ] 4.1.1 Write the dirty spec (ST-8: `isDirty` flips true across a **deferred** async `onCommit` and false on resolve `true`; the body overpaints `•` in `gridDirty` for a cell present in the registry) — `packages/datagrid/test/dirty.spec.test.ts`
-- [ ] 4.1.2 Run — verify it FAILS (red)
+- [x] 4.1.1 Write the dirty spec (ST-8: `isDirty` flips true across a **deferred** async `onCommit` and false on resolve `true`; the body overpaints `•` in `gridDirty` for a cell present in the registry) — `packages/datagrid/test/dirty.spec.test.ts` ✅ (completed: 2026-07-13 13:20)
+- [x] 4.1.2 Run — verify it FAILS (red) ✅ (completed: 2026-07-13 13:20)
 
 ### Step 4.2: Implementation
 
 **Reference**: [03-03 §1] · AR #6 (plan)
 
-- [ ] 4.2.1 Implement `createDirtyRegistry` (reactive `Signal<ReadonlySet<string>>`, fresh-ref add/delete) + `cellKey` (NUL join); export — `packages/datagrid/src/editing.ts`, `src/index.ts`
-- [ ] 4.2.2 Wire `dirty.add`/`delete` around `commit` (Phase 3) + implement `paintDirtyMarkers` (`•` at `x+w−1`, `gridDirty.fg` composed over the cell/cursor bg) + a `dirty.keys()` `bind` for reactive repaint — `packages/datagrid/src/editable-grid-rows.ts`, `src/editing.ts`
-- [ ] 4.2.3 Run the spec — verify it PASSES (green)
+- [x] 4.2.1 Implement `createDirtyRegistry` (reactive `Signal<ReadonlySet<string>>`, fresh-ref add/delete) + `cellKey` (NUL join); export — `packages/datagrid/src/editing.ts`, `src/index.ts` ✅ (completed: 2026-07-13 13:20)
+- [x] 4.2.2 Wire `dirty.add`/`delete` around `commit` (Phase 3) + implement `paintDirtyMarkers` (`•` at `x+w−1`, `gridDirty.fg` composed over the cell/cursor bg) + a `dirty.keys()` `bind` for reactive repaint — `packages/datagrid/src/editable-grid-rows.ts`, `src/editing.ts` ✅ (completed: 2026-07-13 13:20)
+- [x] 4.2.3 Run the spec — verify it PASSES (green) ✅ (completed: 2026-07-13 13:20)
 
 ### Step 4.3: Hardening
 
-- [ ] 4.3.1 Write impl tests (registry reactivity; `cellKey` NUL join; `isRowDirty`/`isGridDirty` rollups) — `packages/datagrid/test/dirty.impl.test.ts`
-- [ ] 4.3.2 Full verify (datagrid)
+- [x] 4.3.1 Write impl tests (registry reactivity; `cellKey` NUL join; `isRowDirty`/`isGridDirty` rollups) — `packages/datagrid/test/dirty.impl.test.ts` ✅ (completed: 2026-07-13 13:24)
+- [x] 4.3.2 Full verify (datagrid) ✅ (completed: 2026-07-13 13:24) — 22 files · 75 tests · typecheck + check:docs clean
 
 **Deliverables**: a reactive dirty registry, the `•` overpaint, and the `isDirty` + rollup readers.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs`
