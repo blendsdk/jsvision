@@ -136,6 +136,9 @@ export async function runApplication(ctx: RunContext): Promise<number> {
     return await quitPromise;
   } finally {
     await host.stop(); // always restore the terminal — on normal exit, a throw, or a signal
+    // Gate the loop's out-of-tick painter before detaching the sinks, so a deferred paint still in
+    // flight during teardown (a timer/promise that fired mid-shutdown) cannot write to the stopped host.
+    ctx.loop.stop();
     ctx.loop.onFrame = undefined;
     ctx.loop.onCaret = undefined;
     ctx.loop.writeClipboard = undefined;

@@ -157,6 +157,13 @@ export interface DispatchEvent {
    */
   readonly setClipboard?: (text: string) => void;
   /**
+   * Read the application's in-app clipboard buffer (the last text copied or cut within the app). Used
+   * by editable controls for in-app paste without reading the external OS clipboard. Returns `''` when
+   * nothing has been copied yet, and is `undefined` on an event that was not routed through the loop
+   * (e.g. one constructed directly in a test) — always call it optional-chained.
+   */
+  readonly readClipboard?: () => string;
+  /**
    * The currently-focused view. A dropdown control saves it before opening its popup and restores it
    * on dismiss.
    */

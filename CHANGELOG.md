@@ -11,6 +11,20 @@ the deprecation policy.
 
 ### Added
 
+- **Global clipboard & selection — framework-wide `Ctrl+A`/`C`/`X`/`V` (`@jsvision/ui`).**
+  Select-all, copy, cut, and paste now work in every editable widget (`Input`, `Memo`/`Editor`,
+  `ComboBox`, `History`, and anything built on them) with no per-widget wiring. The app shell
+  installs a default keymap that turns those chords into commands the focused editor consumes; the
+  classic `Ctrl+Ins` / `Shift+Ins` / `Shift+Del` aliases are included by default. Copy and cut fill a
+  loop-owned in-app buffer **and** the OS clipboard (OSC-52, when the terminal supports it), so text
+  copied in one field pastes into another — or between an `Input` and an `Editor`. A new
+  `clipboardKeys?: 'modern' | 'classic' | 'both' | 'none'` option on `createApplication` /
+  `createEventLoop` (default `'both'`) selects which chord sets are bound — use `'none'` (or
+  `'classic'`) to free `Ctrl`-letter keys for an app with its own bindings (e.g. a WordStar-style
+  editor). New public exports: `buildKeymap` + the `ClipboardKeys` type, the `Commands.selectAll`
+  command, and `Input.hasSelection` (a `Signal<boolean>` an app binds to grey a Cut/Copy item when
+  nothing is selected). A `controls/clipboard` kitchen-sink story ships with it.
+
 - **`Switch` — an on/off toggle control (`@jsvision/ui`).** A focusable single-boolean control bound
   two-way to a `Signal<boolean>` (the `Slider` idiom): `new Switch({ value, label?, onLabel?,
 offLabel?, disabled? })`. Toggle it with `Space`/`Enter`, a click, or — when `label` marks a `~X~`
@@ -206,6 +220,13 @@ offLabel?, disabled? })`. Toggle it with `Space`/`Enter`, a click, or — when `
 
 ### Changed
 
+- **`@jsvision/ui`: a focused editable widget now consumes `Ctrl+C` (and `Ctrl+A`/`X`/`V`).**
+  Behavioral change from the global clipboard feature: under the default `clipboardKeys: 'both'`,
+  these chords are captured as copy/select-all/cut/paste when an `Input`/`Editor`/etc. holds focus,
+  so they no longer fall through to an app-level command or the terminal. An app that needs those
+  keys for its own bindings sets `clipboardKeys: 'classic'` (frees the `Ctrl`-letter chords, keeps
+  `Ctrl`/`Shift`+`Ins`/`Del`) or `'none'` (frees them all; each widget's own raw `Ctrl+A` select-all
+  still works). Unfocused or non-editable views are unaffected.
 - **Minimum Node version raised to 22 (`engines.node: ">=22"`).** Node 20 "Iron" reached
   end-of-life on 2026-04-30, so it is dropped from the supported set and the CI matrix (now
   Node 22 + 24 across all three OSes). Supported runtimes are the maintenance LTS (22) and the

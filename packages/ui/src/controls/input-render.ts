@@ -3,10 +3,28 @@
  * horizontal-scroll offset (`firstPos`). They decide when the scroll arrows appear and which glyph
  * belongs in each visible column. No instance state, so they are easy to test in isolation.
  */
+import type { DrawContext } from '../view/index.js';
+import type { Style } from '@jsvision/core';
 
 /** The left / right scroll arrows shown when the value is scrolled horizontally. */
 export const LEFT_ARROW = '◄';
 export const RIGHT_ARROW = '►';
+
+/** A snapshot of the render-relevant field state that {@link paintInput} draws. */
+export interface InputPaintState {
+  /** The value string being edited. */
+  readonly value: string;
+  /** Whether the field is focused (drives the colour role, selection band, and caret). */
+  readonly focused: boolean;
+  /** Selection start index (inclusive); `selStart === selEnd` means no selection. */
+  readonly selStart: number;
+  /** Selection end index (exclusive). */
+  readonly selEnd: number;
+  /** The caret index into the value. */
+  readonly curPos: number;
+  /** First visible value index (the horizontal-scroll offset). */
+  readonly firstPos: number;
+}
 
 /**
  * Whether text extends past the right edge of the field (i.e. a `►` arrow should show).
@@ -47,4 +65,41 @@ export function glyphAt(col: number, v: string, w: number, firstPos: number): st
   if (col === w - 1 && canScrollRight(v, w, firstPos)) return RIGHT_ARROW;
   const idx = col - 1 + firstPos; // the value index shown at this column (col 1 → firstPos)
   return idx >= 0 && idx < v.length ? (v[idx] ?? ' ') : ' ';
+}
+
+/**
+ * Paint a single-line input field: the scrolled value at column 1, the ◄/► edge arrows, the visible
+ * part of any selection band, and a visible caret drawn by reversing the edit cell (so the caret
+ * shows even on terminals that hide the hardware cursor, and in headless rendering).
+ *
+ * @param ctx The clipped, view-local paint context.
+ * @param s   The render-relevant field state (value, focus, selection, caret, scroll offset).
+ */
+export function paintInput(ctx: DrawContext, s: InputPaintState): void {
+  const { value: v, focused, selStart, selEnd, curPos, firstPos } = s;
+  const style = ctx.color(focused ? 'inputSelected' : 'inputNormal');
+  const arrows = ctx.color('inputArrows');
+  const { width: w, height: h } = ctx.size;
+  ctx.fillRect(0, 0, w, h, ' ', style);
+  if (w > 1) ctx.text(1, 0, v.slice(firstPos, firstPos + (w - 1)), style); // text starts at column 1
+  if (canScrollRight(v, w, firstPos)) ctx.text(w - 1, 0, RIGHT_ARROW, arrows);
+  if (firstPos > 0) ctx.text(0, 0, LEFT_ARROW, arrows);
+  // Highlight the visible part of the selection, only when focused with a non-empty selection.
+  if (focused && selStart < selEnd) {
+    const l = Math.max(0, displayedPos(selStart) - firstPos);
+    const r = Math.min(w - 2, displayedPos(selEnd) - firstPos);
+    if (l < r) {
+      const seg = v.slice(firstPos + l, firstPos + r); // the characters inside the band
+      ctx.text(l + 1, 0, seg, ctx.color('inputSelection'));
+    }
+  }
+  // Draw the caret LAST by repainting the edit cell with the field colours reversed, reusing whatever
+  // glyph already sits there (a character or an edge arrow) so the caret overlays rather than erases it.
+  if (focused) {
+    const caretCol = displayedPos(curPos) - firstPos + 1;
+    if (caretCol >= 0 && caretCol < w) {
+      const reversed: Style = { fg: style.bg, bg: style.fg }; // field fg/bg swapped
+      ctx.text(caretCol, 0, glyphAt(caretCol, v, w, firstPos), reversed);
+    }
+  }
 }

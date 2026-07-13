@@ -14,6 +14,7 @@ import type { Size2D } from '../layout/index.js';
 import { createRenderRoot, View } from '../view/index.js';
 import type { RenderRoot, AppEvent, DispatchEvent, Point, PopupHost } from '../view/index.js';
 import type { EventLoop, EventLoopOptions, ModalHostAware } from './types.js';
+import { buildKeymap } from './default-keymap.js';
 import { createCommandRegistry } from './commands.js';
 import type { CommandRegistry } from './commands.js';
 import { route } from './dispatch.js';
@@ -134,12 +135,26 @@ class EventLoopImpl implements EventLoop {
   private draining = false;
   /** The pointer-capture target: while set, all mouse/wheel events go here. */
   private captureTarget: View | null = null;
+  /**
+   * The app-local clipboard buffer: the last text copied or cut within the app. Filled by the
+   * dual-sink `setClipboard` and read back by `readClipboard`, so in-app paste works on every terminal
+   * without reading the external OS clipboard. In-memory only — never serialized to disk or network.
+   */
+  private clipboardText = '';
   /** The command that terminates the app; a quit while modals are open cascades top-down. */
   private readonly quitCommand: string;
   /** Whether accelerator mode is armed (hotkeys revealed, bare letters fire accelerators). */
   private acceleratorMode = false;
   /** The key that toggles accelerator mode (default `'f12'`); `null` disables the feature. */
   private readonly revealKey: string | null;
+
+  // --- Out-of-tick painter ----------------------------------------------------------------------
+  /** How a deferred out-of-tick paint is enqueued (default `queueMicrotask`). */
+  private readonly scheduleMicrotask: (cb: () => void) => void;
+  /** True while a deferred out-of-tick paint is queued and not yet run — coalesces a burst to one paint. */
+  private flushPending = false;
+  /** True after `stop()` — the out-of-tick painter is gated so no deferred paint runs post-teardown. */
+  private stopped = false;
 
   // --- Double-click tracking --------------------------------------------------------------------
   /** Clock for timing double-clicks (`opts.now ?? Date.now`). */
@@ -166,10 +181,15 @@ class EventLoopImpl implements EventLoop {
     this.logger = opts.logger ?? createLogger();
     this.caps = opts.caps;
     this.onIdle = opts.onIdle;
-    this.keymap = opts.keymap;
+    // Merge the framework's default clipboard keymap (Ctrl+A/C/X/V + classic aliases) with any keymap
+    // the caller supplied; the caller wins on a conflicting chord. `'none'` + no caller keymap yields
+    // undefined, so no chord is globalized.
+    this.keymap = buildKeymap(opts.clipboardKeys, opts.keymap);
     this.quitCommand = opts.quitCommand ?? 'quit';
     this.revealKey = opts.revealKey === undefined ? 'f12' : opts.revealKey; // an explicit null disables it
     this.clock = opts.now ?? Date.now;
+    // Real apps take the microtask default; a test injects a capturing seam to step the deferred paint.
+    this.scheduleMicrotask = opts.scheduleMicrotask ?? ((cb) => queueMicrotask(cb));
     this.registry = createCommandRegistry({
       seed: opts.commands,
       enqueue: (ev) => this.queue.push(ev), // a raised command cascades onto the active tick
@@ -184,14 +204,27 @@ class EventLoopImpl implements EventLoop {
       const onQuit = opts.onQuit;
       this.commandSink.registerInternal(this.quitCommand, (arg) => onQuit(typeof arg === 'number' ? arg : 0));
     }
-    // Build the render root with a no-op schedule so it never repaints on its own; the loop decides
-    // when to repaint and calls `renderRoot.flush()` exactly once per tick.
+    // Build the render root with a schedule that the loop drives. In a tick, the render root must not
+    // self-repaint (the tick's trailing paint covers it); OUTSIDE a tick — a timer, a promise, a
+    // direct call between ticks — the loop coalesces the dirtying into one microtask-deferred paint so
+    // the frame still reaches the host without waiting for the next input event.
     this.renderRoot = createRenderRoot(viewport, {
       caps: opts.caps,
       theme: opts.theme,
       logger: this.logger,
       schedule: () => {
-        // intentionally empty — the loop drives flush itself, so the render root must not self-repaint
+        // In-tick, the tick's trailing paint already covers this; after stop(), never paint. Otherwise
+        // set the coalescing guard and enqueue exactly one deferred paint for the whole burst. The
+        // render root's own flush callback is ignored: paint() calls renderRoot.flush() itself AND does
+        // the onFrame/caret steps that flush omits, so a wrong path would never reach the terminal.
+        if (this.draining || this.stopped || this.flushPending) return;
+        this.flushPending = true;
+        this.scheduleMicrotask(() => {
+          // A synchronous paint (a tick, resize, or mount) may have run first and cleared flushPending,
+          // making this deferred paint redundant — skip it. Never paint after stop().
+          if (this.stopped || !this.flushPending) return;
+          this.paint();
+        });
       },
       // When a group removes the currently focused child, move focus into that group (to its first
       // focusable descendant, or nowhere) inside a tick, so the focus change and its repaint stay
@@ -205,6 +238,17 @@ class EventLoopImpl implements EventLoop {
     this.renderRoot.mount(root); // paints the initial frame internally
     this.onFrame?.(this.renderRoot.buffer()); // hand the first frame to the host
     this.emitCaret(); // position the initial caret
+    // Note: unlike resize, mount does NOT clear flushPending. The initial layout fires each view's
+    // onMount → bind, whose first effect run marks the tree dirty again — so the render root is left
+    // with a pending flush after this synchronous paint. That queued microtask is what drains it (its
+    // paint() calls renderRoot.flush()); clearing flushPending here would strand the render root's
+    // scheduled flag and block every later out-of-tick repaint.
+  }
+
+  stop(): void {
+    // Gate the out-of-tick painter: the seam and any queued microtask early-return on `stopped`, so a
+    // late timer/promise callback during or after teardown cannot write a frame to a stopped host.
+    this.stopped = true;
   }
 
   onCommand(command: string, handler: () => void): () => void {
@@ -242,6 +286,7 @@ class EventLoopImpl implements EventLoop {
     }
     this.onFrame?.(this.renderRoot.buffer());
     this.emitCaret(); // the reflow may have moved the focused view, so re-report the caret
+    this.flushPending = false; // resize ran outside a tick; this synchronous paint covers its deferred one
   }
 
   getFocused(): View | null {
@@ -372,7 +417,20 @@ class EventLoopImpl implements EventLoop {
       this.draining = false;
     }
     this.onIdle?.(); // everything queued this tick has drained
-    this.renderRoot.flush(); // one coalesced frame for the whole tick
+    this.paint(); // one coalesced frame for the whole tick
+  }
+
+  /**
+   * Paint one frame: flush the render root, hand the composed buffer to the host, then report the
+   * caret. The step order matters — `onFrame` may only stash the frame while `onCaret` writes it to
+   * the terminal together with the caret (see `run()`), so the caret step must follow the frame step.
+   * Clears `flushPending` so any still-queued deferred paint becomes a no-op. It deliberately does not
+   * call `onIdle`, which signals the end of a tick's command drain, not a repaint. Shared by the tick's
+   * trailing paint and the coalesced out-of-tick painter so both take the exact same path.
+   */
+  private paint(): void {
+    this.flushPending = false;
+    this.renderRoot.flush();
     this.onFrame?.(this.renderRoot.buffer());
     this.emitCaret();
   }
@@ -452,12 +510,18 @@ class EventLoopImpl implements EventLoop {
       // A view checks this to detect that its capture was lost externally (a modal opened, the target
       // unmounted). The stale-target release above means this reflects the live capture.
       hasCapture: (view) => this.captureTarget === view,
-      // Clipboard write a control requests from its onEvent (Input copy/cut). The loop encodes and
-      // sanitizes the text for the terminal and hands it to the host writer; a no-op headlessly.
+      // Clipboard write a control requests from its onEvent (Input/Editor copy/cut). A dual sink: it
+      // fills the app-local buffer (which powers in-app paste, unconditional so it works even when the
+      // OS write is a headless no-op) AND encodes/sanitizes the text for the terminal, handing it to
+      // the host writer.
       setClipboard: (text) => {
+        this.clipboardText = text; // app-local buffer — independent of terminal capability
         const seq = setClipboard(text, this.caps);
         if (seq !== '') this.writeClipboard?.(seq);
       },
+      // Clipboard read a control requests from its onEvent (Input/Editor paste). Returns the app-local
+      // buffer, so paste works with no external OS-clipboard read; `''` before anything is copied.
+      readClipboard: () => this.clipboardText,
       // The focus query + popup host a dropdown control reaches through to save/restore focus and
       // mount its anchored popup. `popupHost` is undefined headlessly, so opening a dropdown no-ops.
       getFocused: () => this.focus.getFocused(),
