@@ -3,8 +3,8 @@
 > **Feature-Set**: jsvision UI
 > **Status**: In Progress
 > **Created**: 2026-06-29
-> **Last Updated**: 2026-07-11
-> **Progress**: 22 / 22 (100%) — all RDs shipped; RD-22 (Theming) done 2026-07-08 (7 phases, spec-first) on branch `feat/theming-rd22`. Follow-up plan `flexible-chrome-bars` DONE ✅ 2026-07-11 (no RD; additive app-shell chrome-bar layout).
+> **Last Updated**: 2026-07-13
+> **Progress**: 22 / 22 (100%)
 > **CodeOps Skills Version**: 2.0.0
 
 The `@jsvision/ui` layer — a reimagined Turbo Vision widget framework on
