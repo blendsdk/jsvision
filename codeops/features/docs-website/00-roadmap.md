@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-07-09
 > **Last Updated**: 2026-07-13
-> **Progress**: 4 / 10 (40%) — RD-01/02/03/06 ✅ done · RD-04/05/07…10 ✏️ drafted (RD-01 live deploy pending user)
+> **Progress**: 4 / 10 (40%)
 > **CodeOps Skills Version**: 3.3.2
 
 A professional, DX/UX-first **VitePress** documentation & showcase website for JSVision — the
