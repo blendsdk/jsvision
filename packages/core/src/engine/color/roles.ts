@@ -1,5 +1,5 @@
 /**
- * Expand the 16 semantic aliases into the full set of concrete UI roles.
+ * Expand the 18 semantic aliases into the full set of concrete UI roles.
  *
  * This is the one canonical place that decides which alias colors a generated
  * theme's every control uses. Each of the roles maps to its nearest alias *by
@@ -12,7 +12,7 @@ import type { ThemeColors } from './aliases.js';
 import type { Theme } from './theme.js';
 
 /**
- * Build a complete {@link Theme} from a resolved 16-token {@link ThemeColors} set.
+ * Build a complete {@link Theme} from a resolved 18-token {@link ThemeColors} set.
  *
  * Every one of the theme's roles (and its structural extras — the desktop
  * pattern, window/dialog border/title/icon) is assigned from the alias that best
@@ -21,7 +21,7 @@ import type { Theme } from './theme.js';
  * is the expansion step inside {@link createTheme}; call it directly only when you
  * already hold a `ThemeColors` object.
  *
- * @param c The 16 resolved semantic aliases.
+ * @param c The 18 resolved semantic aliases.
  * @returns A full theme with every role populated from the aliases.
  * @example
  * import { rolesFromAliases } from '@jsvision/core';
@@ -30,7 +30,8 @@ import type { Theme } from './theme.js';
  *   foreground: '#e0e0e0', foregroundMuted: '#a0a0a0', foregroundDisabled: '#707070',
  *   foregroundOnAccent: '#ffffff', background: '#101010', backgroundRaised: '#202020',
  *   backgroundSunken: '#0a0a0a', backgroundSelected: '#303030', accent: '#3b82f6',
- *   accentMuted: '#2563eb', border: '#404040', borderMuted: '#303030', danger: '#ef4444',
+ *   accentMuted: '#2563eb', accelerator: '#f59e0b', menuAccelerator: '#ef4444',
+ *   border: '#404040', borderMuted: '#303030', danger: '#ef4444',
  *   warning: '#f59e0b', success: '#22c55e', info: '#0ea5e9',
  * });
  * theme.button.bg; // '#3b82f6' — the accent alias
@@ -38,8 +39,8 @@ import type { Theme } from './theme.js';
 export function rolesFromAliases(c: ThemeColors): Theme {
   return {
     desktop: { fg: c.foregroundMuted, bg: c.background, pattern: '░' }, // ░
-    menuBar: { fg: c.foreground, bg: c.backgroundRaised, hotkey: c.danger },
-    menuSelected: { fg: c.foregroundOnAccent, bg: c.accent, hotkey: c.danger },
+    menuBar: { fg: c.foreground, bg: c.backgroundRaised, hotkey: c.menuAccelerator },
+    menuSelected: { fg: c.foregroundOnAccent, bg: c.accent, hotkey: c.menuAccelerator },
     window: { fg: c.foreground, bg: c.backgroundRaised, border: c.border, title: c.foreground, icon: c.accent },
     windowInactive: {
       fg: c.foregroundMuted,
@@ -50,18 +51,18 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     },
     dialog: { fg: c.foreground, bg: c.backgroundRaised, border: c.border, title: c.foreground, icon: c.accent },
     button: { fg: c.foregroundOnAccent, bg: c.accent },
-    buttonFocused: { fg: c.foregroundOnAccent, bg: c.accentMuted, hotkey: c.warning },
+    buttonFocused: { fg: c.foregroundOnAccent, bg: c.accentMuted, hotkey: c.accelerator },
     staticText: { fg: c.foreground, bg: c.backgroundRaised },
     label: { fg: c.foreground, bg: c.backgroundRaised },
     labelSelected: { fg: c.accent, bg: c.backgroundRaised },
-    labelShortcut: { fg: c.warning, bg: c.backgroundRaised },
+    labelShortcut: { fg: c.accelerator, bg: c.backgroundRaised },
     buttonDefault: { fg: c.foregroundOnAccent, bg: c.accent },
     buttonDisabled: { fg: c.foregroundDisabled, bg: c.backgroundRaised },
-    buttonShortcut: { fg: c.warning, bg: c.accent },
+    buttonShortcut: { fg: c.accelerator, bg: c.accent },
     buttonShadow: { fg: c.foregroundDisabled, bg: c.backgroundRaised },
     clusterNormal: { fg: c.foreground, bg: c.backgroundRaised },
     clusterSelected: { fg: c.accent, bg: c.backgroundRaised },
-    clusterShortcut: { fg: c.warning, bg: c.backgroundRaised },
+    clusterShortcut: { fg: c.accelerator, bg: c.backgroundRaised },
     clusterDisabled: { fg: c.foregroundDisabled, bg: c.backgroundRaised },
     inputNormal: { fg: c.foreground, bg: c.backgroundSunken },
     inputSelected: { fg: c.foreground, bg: c.backgroundSunken },
@@ -83,8 +84,8 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     outlineFocused: { fg: c.foregroundOnAccent, bg: c.accent },
     outlineSelected: { fg: c.foreground, bg: c.backgroundSelected },
     outlineNotExpanded: { fg: c.foreground, bg: c.backgroundRaised },
-    tabActive: { fg: c.foregroundOnAccent, bg: c.accent, hotkey: c.warning },
-    tabInactive: { fg: c.foregroundOnAccent, bg: c.accentMuted, hotkey: c.warning },
+    tabActive: { fg: c.foregroundOnAccent, bg: c.accent, hotkey: c.accelerator },
+    tabInactive: { fg: c.foregroundOnAccent, bg: c.accentMuted, hotkey: c.accelerator },
     tabDisabled: { fg: c.foregroundDisabled, bg: c.accentMuted },
     progressFill: { fg: c.foregroundOnAccent, bg: c.accent },
     progressTrack: { fg: c.foregroundMuted, bg: c.backgroundSunken },
@@ -105,8 +106,8 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     indicatorNormal: { fg: c.foregroundMuted, bg: c.backgroundRaised },
     indicatorDragging: { fg: c.success, bg: c.backgroundRaised },
     terminalNormal: { fg: c.foreground, bg: c.backgroundSunken },
-    statusBar: { fg: c.foreground, bg: c.backgroundRaised, hotkey: c.danger },
-    statusSelected: { fg: c.foregroundOnAccent, bg: c.accent, hotkey: c.danger },
+    statusBar: { fg: c.foreground, bg: c.backgroundRaised, hotkey: c.menuAccelerator },
+    statusSelected: { fg: c.foregroundOnAccent, bg: c.accent, hotkey: c.menuAccelerator },
     shadow: { fg: c.foregroundDisabled, bg: c.background },
   };
 }
