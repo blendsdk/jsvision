@@ -97,6 +97,8 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     calendarDisabled: { fg: c.foregroundDisabled, bg: c.backgroundRaised },
     calendarWeekNumber: { fg: c.foregroundMuted, bg: c.backgroundRaised },
     colorMarker: { fg: c.foreground, bg: c.backgroundRaised },
+    gridCursor: { fg: c.background, bg: c.foreground },
+    gridDirty: { fg: c.danger, bg: c.background },
     fileInfo: { fg: c.foregroundMuted, bg: c.backgroundRaised },
     editorNormal: { fg: c.foreground, bg: c.backgroundSunken },
     editorSelected: { fg: c.foregroundOnAccent, bg: c.accent },

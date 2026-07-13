@@ -7,7 +7,7 @@
 
 // Typed column model — a `value`/`format`/`parse` column authored with `column()` (which infers each
 // column's value type). The `ColumnWidth`/`ColumnAlign` sizing types are re-exported from the engine.
-export { column } from './column.js';
+export { column, isEditable } from './column.js';
 export type { GridColumn } from './column.js';
 export type { ColumnWidth, ColumnAlign } from '@jsvision/ui';
 
@@ -25,6 +25,11 @@ export type { CellCommit, OnCommit } from './commit.js';
 // mounted view's absolute origin.
 export { mountCellOverlay, absoluteRect } from './overlay.js';
 export type { CellRect } from './overlay.js';
+
+// Cell editor seam — `createCellEditor` builds the editor view for a cell (a text `Input` by default),
+// or `null` for a read-only column. `CellEditorHost` carries what a richer editor needs later.
+export { createCellEditor } from './cell-editor.js';
+export type { CellEditorHost } from './cell-editor.js';
 
 // The read-only grid container — composes the promoted engine over the column model and data source.
 export { EditableDataGrid } from './grid.js';

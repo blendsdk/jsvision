@@ -118,6 +118,8 @@ export const monochromeTheme: Theme = {
   calendarDisabled: { fg: G, bg: B, attrs: DIM },
   calendarWeekNumber: { fg: G, bg: B },
   colorMarker: { fg: W, bg: B },
+  gridCursor: { fg: W, bg: B, attrs: REV },
+  gridDirty: { fg: W, bg: B, attrs: BLD },
   fileInfo: { fg: G, bg: B },
   editorNormal: { fg: W, bg: B },
   editorSelected: { fg: W, bg: B, attrs: REV },
