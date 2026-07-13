@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 13:16
-> **Progress**: 10/19 tasks (53%)
+> **Last Updated**: 2026-07-13 13:26
+> **Progress**: 19/19 tasks (100%)
 > **CodeOps Skills Version**: 3.6.0
 
 ## Overview
@@ -89,32 +89,32 @@ failing oracles.
 **Objective**: Encode the rail's "(reserved)" annotation and the two new alias rows as failing
 oracles.
 
-- [ ] 2.1.1 Write the rail-label spec: `aliasRailLabel` reserved/plain cases + `buildRolesPanel(model).targets` include `accelerator`/`menuAccelerator` — `packages/theme-designer/test/roles-panel.spec.test.ts`
-- [ ] 2.1.2 Run the theme-designer `unit` project — verify ST-9 FAILS (red phase)
+- [x] 2.1.1 Write the rail-label spec: `aliasRailLabel` reserved/plain cases + `buildRolesPanel(model).targets` include `accelerator`/`menuAccelerator` — `packages/theme-designer/test/roles-panel.spec.test.ts` ✅ (completed: 2026-07-13 13:18)
+- [x] 2.1.2 Run the theme-designer `unit` project — verify ST-9 FAILS (red phase) ✅ (completed: 2026-07-13 13:18) — RED: `aliasRailLabel is not a function`. The targets half passes early (the two accelerator alias rows appear automatically via `resolvedAliases()` now returning 18 keys — the plan's predicted auto-pickup)
 
 ### Step 2.2: Implementation
 
 **Reference**: `03-02 §Implementation Details` + `§Docs & Governance` · AR-09,10,15,17
 **Objective**: Add the annotation and complete the doc-accuracy sweep.
 
-- [ ] 2.2.1 Add `RESERVED_ALIASES` + `aliasRailLabel`; use it for the alias rows in `buildRolesPanel` (raw key stays in `targets`) — `packages/theme-designer/src/view/roles-panel.ts`
-- [ ] 2.2.2 Run the theme-designer `unit` project — ST-9 PASSES (green phase)
-- [ ] 2.2.3 Update the barrel doc comment "16 aliases → 63 roles" → "18 aliases → 63 roles" — `packages/core/src/engine/color/index.ts`
-- [ ] 2.2.4 Add a `CHANGELOG` entry: two accelerator aliases + the `warning`/`danger` hotkey-decouple behavior change — `CHANGELOG.md`
-- [ ] 2.2.5 Update the theming story copy "16 aliases" → "18" (`blurb` + in-canvas `Text`) — `packages/examples/kitchen-sink/stories/theming.story.ts`
-- [ ] 2.2.6 Update the theme-designer "16 aliases" JSDoc → "18" (4 mentions: `model/types.ts:32`, `view/roles-panel.ts:2` & `:17`, `model/model.ts:41`) — `check-jsdoc` won't flag a stale count, so this is a hand edit — `packages/theme-designer/src/`
+- [x] 2.2.1 Add `RESERVED_ALIASES` + `aliasRailLabel`; use it for the alias rows in `buildRolesPanel` (raw key stays in `targets`) — `packages/theme-designer/src/view/roles-panel.ts` ✅ (completed: 2026-07-13 13:20) — exported helper with `@example`; `targets` keep raw names
+- [x] 2.2.2 Run the theme-designer `unit` project — ST-9 PASSES (green phase) ✅ (completed: 2026-07-13 13:20) — 2/2 pass
+- [x] 2.2.3 Update the barrel doc comment "16 aliases → 63 roles" → "18 aliases → 63 roles" — `packages/core/src/engine/color/index.ts` ✅ (completed: 2026-07-13 13:20)
+- [x] 2.2.4 Add a `CHANGELOG` entry: two accelerator aliases + the `warning`/`danger` hotkey-decouple behavior change — `CHANGELOG.md` ✅ (completed: 2026-07-13 13:20)
+- [x] 2.2.5 Update the theming story copy "16 aliases" → "18" (`blurb` + in-canvas `Text`) — `packages/examples/kitchen-sink/stories/theming.story.ts` ✅ (completed: 2026-07-13 13:20)
+- [x] 2.2.6 Update the theme-designer "16 aliases" JSDoc → "18" (4 mentions: `model/types.ts:32`, `view/roles-panel.ts:2` & `:17`, `model/model.ts:41`) — `check-jsdoc` won't flag a stale count, so this is a hand edit — `packages/theme-designer/src/` ✅ (completed: 2026-07-13 13:20) — roles-panel.ts `:2`/`:17` done alongside 2.2.1
 
 > `CLAUDE.md`'s "16 aliases" mentions are **not** hand-edited here — they live in auto-generated
 > sections and are refreshed by `/analyze_project` (the exec_plan post-completion re-analysis).
 
 ### Step 2.3: Hardening
 
-- [ ] 2.3.1 Full verification (incl. `check:docs` + kitchen-sink smoke + designer walkthrough e2e)
+- [x] 2.3.1 Full verification (incl. `check:docs` + kitchen-sink smoke + designer walkthrough e2e) ✅ (completed: 2026-07-13 13:26) — `yarn verify` green (22/22 turbo tasks; check-plugin PASS); designer walkthrough e2e 1/1. Note: the off-CI wall-clock perf budgets (`editor-perf` ST-35, core `perf-budget`) flake under full-suite machine load — run deterministically with `TUI_SKIP_PERF=1` (their documented CI idiom); each passes standalone on an idle machine and is unrelated to this change
 
 **Deliverables**:
-- [ ] `danger`/`warning` marked "(reserved)"; `accelerator`/`menuAccelerator` rows present
-- [ ] JSDoc / CHANGELOG / kitchen-sink / CLAUDE.md accurate at 18 aliases
-- [ ] All verification passing
+- [x] `danger`/`warning` marked "(reserved)"; `accelerator`/`menuAccelerator` rows present
+- [x] JSDoc / CHANGELOG / kitchen-sink accurate at 18 aliases (CLAUDE.md deferred to `/analyze_project`)
+- [x] All verification passing
 
 **Verify**: `yarn verify`
 
