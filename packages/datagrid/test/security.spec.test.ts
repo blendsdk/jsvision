@@ -109,3 +109,98 @@ test('should sanitize a control-byte edit at the frame and mutate only via onCom
   }
   expect(loop.renderRoot.serialize()).not.toContain('\x07');
 });
+
+interface Cust {
+  id: number;
+  customerId: string;
+}
+
+// ST-11(a) — a lookup provider's label carrying control bytes is sanitized at the frame: opening the
+// dropdown (wired popupHost) and rendering the row never puts a raw ESC/BEL in the buffer or the frame.
+test('ST-11: a lookup label with control bytes renders sanitized at the frame', async () => {
+  const LW = 20;
+  const LH = 10;
+  const rows = signal<Cust[]>([{ id: 1, customerId: '' }]);
+  const columns = [
+    column<Cust, string>({
+      id: 'customerId',
+      title: 'Customer',
+      value: (r) => r.customerId,
+      parse: (t) => t,
+      set: (r, v) => {
+        r.customerId = v;
+      },
+      width: 14,
+      editor: { kind: 'lookup', items: async () => [{ key: '7', label: 'A\x1b[31mB\x07' }] },
+    }),
+  ];
+  const grid = new EditableDataGrid<Cust>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: LW, height: LH } };
+  const overlay = new Group();
+  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: LW, height: LH } };
+  overlay.state.visible = false;
+  const root = new Group();
+  root.add(grid);
+  root.add(overlay);
+  const loop = createEventLoop({ width: LW, height: LH }, { caps });
+  loop.mount(root);
+  loop.popupHost = { overlay, focusView: (v) => loop.focusView(v), getFocused: () => loop.getFocused() };
+  loop.focusView(grid.rows);
+
+  loop.dispatch(key('f4')); // begin edit + open the value-help dropdown
+  await tick(); // the async provider resolves → the malicious label populates the list
+  loop.renderRoot.flush();
+
+  const buf = loop.renderRoot.buffer();
+  for (let y = 0; y < LH; y += 1) {
+    for (let x = 0; x < LW; x += 1) {
+      const ch = buf.get(x, y)?.char ?? '';
+      expect(ch).not.toBe('\x1b');
+      expect(ch).not.toBe('\x07');
+    }
+  }
+  expect(loop.renderRoot.serialize()).not.toContain('\x07');
+});
+
+interface Q {
+  id: number;
+  qty: string;
+}
+
+// ST-11(b) — an integer editor's keystroke filter rejects a non-conforming character before commit, so
+// the committed value is filter-conformant (the commit-time valid() gate is a later concern).
+test('ST-11: an integer keystroke filter rejects a letter before commit', async () => {
+  const rows = signal<Q[]>([{ id: 1, qty: '5' }]);
+  const spy = vi.fn<OnCommit<Q>>(() => true);
+  const columns = [
+    column<Q, string>({
+      id: 'qty',
+      title: 'Qty',
+      value: (r) => r.qty,
+      parse: (t) => t,
+      set: (r, v) => {
+        r.qty = v;
+      },
+      width: 8,
+      editor: { kind: 'integer' },
+    }),
+  ];
+  const grid = new EditableDataGrid<Q>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }), onCommit: spy });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+
+  loop.dispatch(key('f2')); // begin edit (seed '5')
+  loop.dispatch(key('a')); // a letter — rejected by filter('0-9-')
+  loop.dispatch(key('9')); // a digit — accepted
+  loop.dispatch(key('enter'));
+  await tick();
+
+  expect(spy).toHaveBeenCalledTimes(1);
+  const committed = String(spy.mock.calls[0][0].value);
+  expect(committed).not.toContain('a'); // the letter never entered the buffer
+  expect(/^[0-9-]*$/.test(committed)).toBe(true); // filter-conformant
+});

@@ -26,19 +26,23 @@ export interface CellEditorHost {
  * The concrete editor a cell mounts. `text`/`integer`/`decimal` are single-line inputs (the numeric
  * kinds add a keystroke filter); `boolean`/`date`/`enum`/`lookup` are typed widgets; `readonly` yields
  * no editor; `custom` is the caller's own factory.
+ *
+ * @example
+ * ```ts
+ * const kind: CellEditorKind = 'boolean'; // one of text|integer|decimal|boolean|date|enum|lookup|readonly|custom
+ * ```
  */
 export type CellEditorKind =
-  | 'text'
-  | 'integer'
-  | 'decimal'
-  | 'boolean'
-  | 'date'
-  | 'enum'
-  | 'lookup'
-  | 'readonly'
-  | 'custom';
+  'text' | 'integer' | 'decimal' | 'boolean' | 'date' | 'enum' | 'lookup' | 'readonly' | 'custom';
 
-/** One row of a value-help lookup: the stored `key` (what commits) and the shown `label` (what displays). */
+/**
+ * One row of a value-help lookup: the stored `key` (what commits) and the shown `label` (what displays).
+ *
+ * @example
+ * ```ts
+ * const row: LookupItem = { key: '7', label: 'Ada Lovelace' }; // commits '7', shows 'Ada Lovelace'
+ * ```
+ */
 export interface LookupItem {
   /** The value written to the record on select (the stored key). */
   readonly key: string;
@@ -49,6 +53,12 @@ export interface LookupItem {
 /**
  * A lookup editor's rows: a static array, or an async provider invoked once when the editor opens. A
  * rejected provider leaves the dropdown empty; it never throws into the render loop.
+ *
+ * @example
+ * ```ts
+ * const staticRows: LookupProvider = [{ key: '7', label: 'Ada' }];
+ * const asyncRows: LookupProvider = async () => (await fetch('/api/customers')).json();
+ * ```
  */
 export type LookupProvider = readonly LookupItem[] | (() => Promise<LookupItem[]>);
 
@@ -56,6 +66,13 @@ export type LookupProvider = readonly LookupItem[] | (() => Promise<LookupItem[]
  * The declarative editor descriptor a column carries. Only `kind` is required; the remaining fields
  * apply to specific kinds — `values` to `enum`, `items` to `lookup`, `create` to `custom`, and
  * `validator` to override a numeric kind's built-in keystroke filter.
+ *
+ * @example
+ * ```ts
+ * const boolSpec: CellEditorSpec = { kind: 'boolean' };
+ * const enumSpec: CellEditorSpec = { kind: 'enum', values: ['open', 'paid', 'shipped'] };
+ * const lookupSpec: CellEditorSpec = { kind: 'lookup', items: [{ key: '7', label: 'Ada' }] };
+ * ```
  */
 export interface CellEditorSpec {
   /** Which typed editor the cell mounts. */

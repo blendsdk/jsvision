@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-07-12
 > **Last Updated**: 2026-07-13
-> **Progress**: 2 / 14 (14%) · RD-02 done (editing engine)
+> **Progress**: 3 / 14 (21%) · RD-03 done (cell editors & value help)
 > **CodeOps Skills Version**: 3.4.1
 
 Enterprise-class editable data grid for the jsvision TUI SDK (SAP ALV / MS-Access / Paradox-class),
@@ -25,7 +25,7 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
 |----|-------|----|------|-------|--------|--------------|-----------------|
 | RD-01 | Foundation & grid-engine exposure | [RD-01](requirements/RD-01-foundation.md) | [foundation](plans/foundation/00-index.md) | Done | ✅ | 2026-07-13 | Package scaffold · ui grid-engine promotion · value/format/parse · read-only `EditableDataGrid` · 6 phases / 39 tasks green · unblocks RD-02…RD-14 |
 | RD-02 | Editing engine & commit model | [RD-02](requirements/RD-02-editing-engine.md) | [editing-engine](plans/editing-engine/00-index.md) | Done | ✅ | 2026-07-13 | Cell cursor · in-cell overlay lifecycle · per-cell commit · dirty tracking · editable story · 6 phases / 43 tasks green · gate PASSED · preflight PASSED (Tab/Shift-Tab deferred to RD-10) · **exec_plan complete** · depends RD-01 |
-| RD-03 | Cell editors & value help | [RD-03](requirements/RD-03-cell-editors.md) | [cell-editors](plans/cell-editors/00-index.md) | Executing | 🔄 | 2026-07-13 | Typed editors (`text`/`integer`/`decimal`/`boolean`/`date`/`enum`/`lookup`/`readonly`/`custom`) + F4 value help · 6-phase / 39-task plan, spec-first · gate PASSED (3 user + 10 plan AR) · preflight PASSED (6 findings resolved) · **exec_plan started (`--auto-commit`)** · additive over RD-02 `createCellEditor` seam (no ui promotion) · depends RD-01, RD-02 |
+| RD-03 | Cell editors & value help | [RD-03](requirements/RD-03-cell-editors.md) | [cell-editors](plans/cell-editors/00-index.md) | Done | ✅ | 2026-07-13 | Typed editors (`text`/`integer`/`decimal`/`boolean`/`date`/`enum`/`lookup`/`readonly`/`custom`) + F4 value help · 6-phase / **45-task** plan, spec-first · gate PASSED (3 user + 10 plan AR) · preflight PASSED (6 findings resolved) · **exec_plan complete (`--auto-commit`) — 116 datagrid tests, full `yarn verify` green; AR #14 runtime (DatePicker/ComboBox focus `.input`)** · additive over RD-02 `createCellEditor` seam (no ui promotion) · depends RD-01, RD-02 |
 | RD-04 | Formatting & cell rendering | [RD-04](requirements/RD-04-formatting-rendering.md) | — | RD Preflighted | 🔎 | 2026-07-12 | `Intl` formatters, parse round-trip, custom renderer, conditional styling. Depends RD-01. |
 | RD-05 | Sorting | [RD-05](requirements/RD-05-sorting.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Single/multi/value-aware/push-down. Depends RD-01, RD-04. |
 | RD-06 | Filtering | [RD-06](requirements/RD-06-filtering.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Quick row + condition + value-list + funnel/"N of M" + distinct + push-down. Depends RD-01, RD-04. |
