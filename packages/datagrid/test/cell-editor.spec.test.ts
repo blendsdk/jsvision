@@ -12,7 +12,17 @@
  * Expectations derive from the requirements, never the implementation.
  */
 import { test, expect, vi } from 'vitest';
-import { CheckGroup, DatePicker, Group, Input, createEventLoop, resolveCapabilities, signal, toISO } from '@jsvision/ui';
+import {
+  CheckGroup,
+  ComboBox,
+  DatePicker,
+  Group,
+  Input,
+  createEventLoop,
+  resolveCapabilities,
+  signal,
+  toISO,
+} from '@jsvision/ui';
 import type { PopupHost } from '@jsvision/ui';
 import { column, isEditable, toEngineColumn } from '../src/column.js';
 import type { GridColumn } from '../src/column.js';
@@ -278,4 +288,101 @@ test('ST-3: an empty date field seeds the DatePicker value as null', () => {
   const dp = h.loop.getFocused()?.parent;
   expect(dp).toBeInstanceOf(DatePicker);
   if (dp instanceof DatePicker) expect(dp.value()).toBeNull();
+});
+
+interface Order {
+  id: number;
+  status: string;
+}
+const statusCol = column<Order, string>({
+  id: 'status',
+  title: 'Status',
+  value: (r) => r.status,
+  parse: (t) => t,
+  set: (r, v) => {
+    r.status = v;
+  },
+  width: 12,
+  editor: { kind: 'enum', values: ['open', 'paid', 'shipped'] },
+});
+
+// ST-4 — an enum column mounts a select-only ComboBox listing exactly `values` in order; a pick commits it.
+test('ST-4: enum editor is a select-only ComboBox listing values in order; pick commits the string', async () => {
+  const spy = vi.fn<OnCommit<Order>>(() => true);
+  const rows: Order[] = [{ id: 1, status: 'open' }];
+  const h = build<Order>([statusCol], rows, (r) => r.id, { onCommit: spy });
+  h.loop.dispatch(key('f2'));
+  const combo = h.loop.getFocused()?.parent;
+  expect(combo).toBeInstanceOf(ComboBox);
+  if (!(combo instanceof ComboBox)) return;
+  expect(combo.items()).toEqual(['open', 'paid', 'shipped']); // exactly the values, in order
+  h.loop.dispatch(key('down', { alt: true })); // open (list focus index 0)
+  h.loop.dispatch(key('down')); // paid (1)
+  h.loop.dispatch(key('down')); // shipped (2)
+  h.loop.dispatch(key('enter')); // pick the 3rd row
+  expect(combo.value()).toBe('shipped');
+  h.loop.dispatch(key('enter')); // commit the cell
+  await tick();
+  expect(spy).toHaveBeenCalledWith(expect.objectContaining({ value: 'shipped' }));
+  expect(rows[0].status).toBe('shipped');
+});
+
+interface Cust {
+  id: number;
+  customerId: string;
+}
+const custCol = column<Cust, string>({
+  id: 'customerId',
+  title: 'Customer',
+  value: (r) => r.customerId,
+  parse: (t) => t,
+  set: (r, v) => {
+    r.customerId = v;
+  },
+  width: 16,
+  editor: {
+    kind: 'lookup',
+    items: async () => [
+      { key: '7', label: 'Ada' },
+      { key: '9', label: 'Bo' },
+    ],
+  },
+});
+
+// ST-5(a) — an async lookup provider loads, shows the label, and a pick commits the KEY (not the label).
+test('ST-5(a): lookup async provider loads; picking a row commits the key, not the label', async () => {
+  const spy = vi.fn<OnCommit<Cust>>(() => true);
+  const rows: Cust[] = [{ id: 1, customerId: '' }];
+  const h = build<Cust>([custCol], rows, (r) => r.id, { onCommit: spy });
+  h.loop.dispatch(key('f2'));
+  const combo = h.loop.getFocused()?.parent;
+  expect(combo).toBeInstanceOf(ComboBox);
+  if (!(combo instanceof ComboBox)) return;
+  await tick(); // the async provider resolves into the live items signal
+  expect(combo.items().length).toBe(2);
+  h.loop.dispatch(key('down', { alt: true })); // open (index 0 = Ada)
+  h.loop.dispatch(key('enter')); // pick Ada
+  expect(combo.text()).toBe('Ada'); // the label is shown
+  h.loop.dispatch(key('enter')); // commit the cell
+  await tick();
+  expect(spy).toHaveBeenCalledWith(expect.objectContaining({ value: '7' })); // the KEY, not 'Ada'
+  expect(rows[0].customerId).toBe('7');
+});
+
+// ST-5(b) — a seeded existing key survives mount (PF-001 regression): not clobbered to '' before the
+// async rows arrive; once loaded the key re-matches its label, and commit yields the unchanged key.
+test('ST-5(b): a seeded existing key is not clobbered on mount (PF-001 regression)', async () => {
+  const spy = vi.fn<OnCommit<Cust>>(() => true);
+  const rows: Cust[] = [{ id: 1, customerId: '7' }]; // a pre-existing FK
+  const h = build<Cust>([custCol], rows, (r) => r.id, { onCommit: spy });
+  h.loop.dispatch(key('f2')); // begin edit — NO user interaction
+  const combo = h.loop.getFocused()?.parent;
+  expect(combo).toBeInstanceOf(ComboBox);
+  if (!(combo instanceof ComboBox)) return;
+  await tick(); // the async rows load; the key re-matches its item
+  expect(combo.text()).toBe('Ada'); // key '7' re-matched to its label
+  h.loop.dispatch(key('enter')); // commit with no change
+  await tick();
+  expect(spy).toHaveBeenCalledWith(expect.objectContaining({ value: '7' })); // NOT clobbered to ''
+  expect(rows[0].customerId).toBe('7');
 });

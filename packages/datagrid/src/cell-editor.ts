@@ -6,11 +6,11 @@
  * editable at all. A read-only column, or an explicit `{ kind: 'readonly' }`, yields `null`, which is
  * how the grid rejects begin-edit. The editing lifecycle never changes shape to gain a new editor kind.
  */
-import { Input, filter, CheckGroup, DatePicker } from '@jsvision/ui';
+import { Input, filter, signal, CheckGroup, DatePicker, ComboBox } from '@jsvision/ui';
 import type { View, Signal, Group, Validator } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { isEditable } from './column.js';
-import { boolBridge, dateBridge } from './editor-bridges.js';
+import { boolBridge, dateBridge, enumBridge, lookupBridge } from './editor-bridges.js';
 
 /**
  * What an editor may need to open its own sub-UI (a dropdown or value-help popup). The default text
@@ -137,8 +137,36 @@ export function createCellEditor<T>(
       return new CheckGroup({ labels: [column.title], value: boolBridge(field) });
     case 'date':
       return new DatePicker({ value: dateBridge(field) });
+    case 'enum': {
+      const items = signal<string[]>([...(spec.values ?? [])]);
+      return new ComboBox<string>({ items, getText: (s) => s, value: enumBridge(field), editable: false });
+    }
+    case 'lookup':
+      return buildLookupEditor(spec, field);
     case 'readonly':
     default:
       return null; // explicit read-only opt-out (and the not-yet-built kinds until their case lands)
   }
+}
+
+/**
+ * Build the select-only lookup `ComboBox`. A static array seeds the rows immediately; an async provider
+ * loads once (fire-and-forget) into the live `items` signal, so the open list re-renders and the
+ * current key re-matches its label when the rows arrive. A rejected provider leaves the rows empty — it
+ * never throws into the render loop. The field holds the key; the ComboBox shows the label.
+ */
+function buildLookupEditor(spec: CellEditorSpec, field: Signal<string>): View {
+  const items = signal<LookupItem[]>([]);
+  const provider = spec.items;
+  if (typeof provider === 'function') {
+    void provider().then((rows) => items.set(rows)); // async — load once; a rejection leaves rows empty
+  } else if (provider !== undefined) {
+    items.set([...provider]); // static list — available immediately
+  }
+  return new ComboBox<LookupItem>({
+    items,
+    getText: (it) => it.label,
+    value: lookupBridge(field, items),
+    editable: false,
+  });
 }

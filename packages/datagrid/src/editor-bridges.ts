@@ -16,6 +16,7 @@
  */
 import { effect, parseISO, signal, toISO, untrack } from '@jsvision/ui';
 import type { CalendarDate, Signal } from '@jsvision/ui';
+import type { LookupItem } from './cell-editor.js';
 
 /**
  * Adapt the edit field to a `CheckGroup`'s single-item `Signal<boolean[]>`. The field's canonical
@@ -75,4 +76,63 @@ export function dateBridge(field: Signal<string>): Signal<CalendarDate | null> {
     });
   });
   return d;
+}
+
+/**
+ * Adapt the edit field to a select-only `ComboBox<string>`'s `Signal<string | null>`. An empty field is
+ * no selection (`null`); selecting a value writes that string back to the field.
+ *
+ * @param field The editor's string edit field.
+ * @returns A nullable string signal for the enum `ComboBox`.
+ */
+export function enumBridge(field: Signal<string>): Signal<string | null> {
+  const s = signal<string | null>(field() === '' ? null : field());
+  // field → control: an empty field is no selection.
+  effect(() => {
+    const v = field() === '' ? null : field();
+    untrack(() => s.set(v));
+  });
+  // control → field: write the selected string (or '' for no selection) only when it changes.
+  effect(() => {
+    const v = s() ?? '';
+    untrack(() => {
+      if (field() !== v) field.set(v);
+    });
+  });
+  return s;
+}
+
+/**
+ * Adapt the edit field (which holds a lookup **key**) to a `ComboBox<LookupItem>`'s
+ * `Signal<LookupItem | null>`. The field is authoritative: it stores the key, the ComboBox shows the
+ * matching row's label, and selecting a row writes that row's key back.
+ *
+ * The forward effect also depends on `items`, so when an async provider resolves and repopulates the
+ * rows, the current key re-matches to its item and the label appears. Unlike the other bridges, `sel`
+ * cannot be seeded from the field (the item for a key is unknown until the rows load), so it seeds
+ * `null`; the reverse effect therefore writes **only when a row is actually selected** — a bare reverse
+ * write would fire `field.set('')` at mount and destroy a seeded key before the async rows arrive.
+ *
+ * @param field The editor's string edit field (holds the key).
+ * @param items The live rows signal (seeded synchronously, or populated by an async provider).
+ * @returns A nullable `LookupItem` signal for the lookup `ComboBox`.
+ */
+export function lookupBridge(field: Signal<string>, items: Signal<LookupItem[]>): Signal<LookupItem | null> {
+  const sel = signal<LookupItem | null>(null);
+  // field → sel: re-match the key against the (possibly async-loaded) rows.
+  effect(() => {
+    const key = field();
+    const m = items().find((it) => it.key === key) ?? null;
+    untrack(() => sel.set(m));
+  });
+  // sel → field: write ONLY when a row is actually selected. On mount `sel` is null, so a seeded key is
+  // left intact; once the rows load the forward effect re-matches it (the write is then a no-op); a user
+  // selection writes the new key.
+  effect(() => {
+    const s = sel();
+    untrack(() => {
+      if (s !== null && field() !== s.key) field.set(s.key);
+    });
+  });
+  return sel;
 }
