@@ -10,6 +10,7 @@
  */
 import type { Column, ColumnWidth, ColumnAlign } from '@jsvision/ui';
 import type { CellEditorSpec } from './cell-editor.js';
+import type { ParseFailed } from './format.js';
 
 /**
  * One typed column of a data grid: a stable `id`, a header `title`, a typed `value` accessor (the
@@ -27,8 +28,12 @@ export interface GridColumn<T, V = unknown> {
   readonly value: (row: T) => V;
   /** Formats the value for display (default: `String(value)`). */
   readonly format?: (value: V, row: T) => string;
-  /** Parses edited text back to the typed value (editable columns only). */
-  readonly parse?: (text: string) => V;
+  /**
+   * Parses edited text back to the typed value (editable columns only). May return the `PARSE_FAILED`
+   * sentinel for an unparseable string (as the invertible `fmt.*` formatters do); the commit path
+   * rejects that — the record is left unchanged and the editor stays open.
+   */
+  readonly parse?: (text: string) => V | ParseFailed;
   /**
    * Writes the parsed value back into the record (editable columns only). Pairs with `parse`: a
    * column is editable exactly when it has both, so an edit round-trips text → value → record.

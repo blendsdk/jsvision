@@ -15,6 +15,7 @@ import { isEditable } from './column.js';
 import type { OnCommit } from './commit.js';
 import { commitCell } from './commit.js';
 import { createCellEditor } from './cell-editor.js';
+import { PARSE_FAILED } from './format.js';
 import { mountCellOverlay, absoluteRect } from './overlay.js';
 import type { CellRect } from './overlay.js';
 
@@ -261,6 +262,9 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     if (committing.has(ck)) return; // a commit for this cell is already resolving — serialize
     const tcol = host.typedColumns[cell.col];
     const value = tcol.parse!(field());
+    // An unparseable edit is a validation failure: keep the editor open and write nothing (no sentinel
+    // or NaN ever reaches the record). Richer field validation layers on top of this later.
+    if (value === PARSE_FAILED) return;
     const previous = tcol.value(cell.row);
     committing.add(ck);
     host.dirty?.add(ck); // mark the cell pending until the commit resolves

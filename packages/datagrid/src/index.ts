@@ -11,6 +11,18 @@ export { column, isEditable } from './column.js';
 export type { GridColumn } from './column.js';
 export type { ColumnWidth, ColumnAlign } from '@jsvision/ui';
 
+// Formatter registry — locale-aware `Intl` formatters (`fmt.number/currency/percent/date/datetime/
+// boolean/enumLabel/lookupLabel`). The numeric kinds ship a matched inverse `parse`; `PARSE_FAILED` is
+// the sentinel it returns for an unparseable string (the commit path rejects it).
+export { fmt, PARSE_FAILED } from './format.js';
+export type {
+  ParseFailed,
+  NumberFormatOptions,
+  CurrencyFormatOptions,
+  InvertibleFormat,
+  DisplayFormat,
+} from './format.js';
+
 // Data source — the read seam the grid binds to. `fromRows` is the in-memory source; every source
 // carries a required `rowKey`. `SortKey`/`FilterModel` are forward-declared for later push-down.
 export { fromRows } from './data-source.js';
