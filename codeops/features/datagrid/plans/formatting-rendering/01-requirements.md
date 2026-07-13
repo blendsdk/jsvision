@@ -60,7 +60,7 @@
 The RD owns AC-1…AC-9 (`RD-04 §Acceptance Criteria`); the ST cases in `07-testing-strategy.md` encode
 them. Plan-local completion adds:
 
-1. [ ] `fmt` and the cell-render/cellStyle types are exported from the `@jsvision/datagrid` barrel with
+1. [x] `fmt` and the cell-render/cellStyle types are exported from the `@jsvision/datagrid` barrel with
        `@example`-bearing JSDoc (`check:docs` green).
-2. [ ] No `@jsvision/ui` source changes (AR-1) — the feature is self-contained in `@jsvision/datagrid`.
-3. [ ] `yarn verify` green (AR-11), no regressions in the RD-01/02/03 suites.
+2. [x] No `@jsvision/ui` source changes (AR-1) — the feature is self-contained in `@jsvision/datagrid`.
+3. [x] `yarn verify` green (AR-11), no regressions in the RD-01/02/03 suites.

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-14 00:42
-> **Progress**: 19/24 tasks (79%)
+> **Last Updated**: 2026-07-14 00:46
+> **Progress**: 24/24 tasks (100%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -133,28 +133,28 @@ so Phase 1 adds no paint code; Phase 2 owns the new per-cell paint. No `@jsvisio
 **Reference**: `07 §Security` (ST-17, ST-18) · RD-04 AC-5/AC-9
 **Objective**: Prove the sanitize boundary holds for format output and render output.
 
-- [ ] 3.1.1 Add ST-17 (format-output control-byte) + ST-18 (render-output control-byte) sanitize-boundary tests to `security.spec.test.ts` — `test/security.spec.test.ts`
-- [ ] 3.1.2 Verify — the format/render paths render sanitized (no raw ESC/BEL); confirm the tests exercise the Phase-2 paint code
+- [x] 3.1.1 Add ST-17 (format-output control-byte) + ST-18 (render-output control-byte) sanitize-boundary tests to `security.spec.test.ts` — `test/security.spec.test.ts` ✅ (completed: 2026-07-14 00:44)
+- [x] 3.1.2 Verify — the format/render paths render sanitized (no raw ESC/BEL); the render test exercises the Phase-2 paint code ✅ (completed: 2026-07-14 00:44)
 
 ### Step 3.2: Implementation (kitchen-sink story)
 
 **Reference**: `07 §Kitchen-sink` (ST-19) · RD-04 AC-8 · CLAUDE.md kitchen-sink gate
 **Objective**: The showcase story.
 
-- [ ] 3.2.1 Add the `datagrid` formatting story (currency-formatted column + `cellStyle` conditional column + a `render`-hook cell) and register it — `test/kitchen-sink/stories/formatting.story.ts`, `test/kitchen-sink/stories/index.ts`
-- [ ] 3.2.2 Verify GREEN — the smoke test (ST-19) passes for the new story
+- [x] 3.2.1 Add the `datagrid` formatting story (currency-formatted column + `cellStyle` conditional column + a `render`-hook cell) and register it — `test/kitchen-sink/stories/formatting.story.ts`, `test/kitchen-sink/stories/index.ts` ✅ (completed: 2026-07-14 00:46)
+- [x] 3.2.2 Verify GREEN — the smoke test (ST-19) passes for the new story ✅ (completed: 2026-07-14 00:46)
 
 ### Step 3.3: Hardening
 
 **Reference**: `01 §Acceptance Criteria`
 **Objective**: Full green, no regressions.
 
-- [ ] 3.3.1 Full `yarn verify`; confirm no regressions in the RD-01/02/03 suites (116-test baseline) and `check:docs` green — verify only
+- [x] 3.3.1 Full `yarn verify`; confirm no regressions in the RD-01/02/03 suites (116-test baseline) and `check:docs` green — verify only ✅ (completed: 2026-07-14 00:46) — 153 datagrid unit tests green (116 baseline + 37 new), full monorepo verify + check-plugin green
 
 **Deliverables**:
-- [ ] Sanitize-boundary verified for format + render output
-- [ ] Formatting story registered + smoke-passing
-- [ ] `yarn verify` green, no regressions
+- [x] Sanitize-boundary verified for format + render output
+- [x] Formatting story registered + smoke-passing
+- [x] `yarn verify` green, no regressions
 
 **Verify**: `yarn verify`
 
