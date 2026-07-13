@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 14:32
-> **Progress**: 0/39 tasks (0%)
+> **Last Updated**: 2026-07-13 17:45
+> **Progress**: 9/45 tasks (20%) — Phase 1 complete
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -24,14 +24,14 @@ throughout via the `{ kind: 'text' }` default.
 
 | Phase | Title | Tasks |
 | ----- | ----- | ----- |
-| 1 | Editor spec, factory & filtered text editors (`text`/`integer`/`decimal`/`readonly`) | 8 |
-| 2 | Typed bridges + reactive-ownership restructure & `boolean`/`date` editors | 7 |
-| 3 | `enum` & `lookup` editors (async value help) | 7 |
-| 4 | F4 value-help activation (begin-edit + open) | 5 |
-| 5 | Custom-editor escape hatch | 4 |
+| 1 | Editor spec, factory & filtered text editors (`text`/`integer`/`decimal`/`readonly`) | 9 |
+| 2 | Typed bridges + reactive-ownership restructure & `boolean`/`date` editors | 8 |
+| 3 | `enum` & `lookup` editors (async value help) | 8 |
+| 4 | F4 value-help activation (begin-edit + open) | 7 |
+| 5 | Custom-editor escape hatch | 5 |
 | 6 | Kitchen-sink editor stories, security & final verify | 8 |
 
-**Total: 39 tasks across 6 phases** (no fabricated hour estimates).
+**Total: 45 tasks across 6 phases** (literal checkbox count — the source of truth; no fabricated hour estimates).
 
 > **⚠️ EXECUTION RULE — APPLIES TO EVERY AGENT EXECUTING THIS PLAN:**
 >
@@ -59,25 +59,25 @@ of AC-9. Backward-compatible with RD-02 (no `editor` → text `Input`). Blocks P
 
 **Reference**: [03-01](03-01-editor-spec-and-factory.md) · [07 ST-1] · AR #1, #3
 
-- [ ] 1.1.1 Write/extend the factory spec (ST-1: no-`editor` editable col → `Input`; `editor:{kind:'readonly'}` → `null` + begin-edit rejected + record untouched; no parse/set → `null`) — `packages/datagrid/test/cell-editor.spec.test.ts`
-- [ ] 1.1.2 Run — verify the new ST-1 cases FAIL (red: `editor` field + `resolveSpec` not yet present); confirm the pre-existing ST-15 still PASSES
+- [x] 1.1.1 Write/extend the factory spec (ST-1: no-`editor` editable col → `Input`; `editor:{kind:'readonly'}` → `null` + begin-edit rejected + record untouched; no parse/set → `null`) — `packages/datagrid/test/cell-editor.spec.test.ts` ✅ (completed: 2026-07-13 17:40)
+- [x] 1.1.2 Run — verify the new ST-1 cases FAIL (red: `editor` field + `resolveSpec` not yet present); confirm the pre-existing ST-15 still PASSES ✅ (completed: 2026-07-13 17:40) — 2 readonly-kind cases red, ST-15 + ST-1(a)/(c) green
 
 ### Step 1.2: Implementation
 
 **Reference**: [03-01 §1–6] · AR #1, #3, #4
 
-- [ ] 1.2.1 Add the public types `CellEditorKind`/`CellEditorSpec`/`LookupItem`/`LookupProvider` (+ `create?` on the spec) to `cell-editor.ts`, each with plain-language JSDoc — no spike/plan/RD refs
-- [ ] 1.2.2 Add `editor?: CellEditorSpec | ((row: T) => CellEditorSpec)` to `GridColumn` (with `@example`) — `packages/datagrid/src/column.ts`
-- [ ] 1.2.3 Implement internal `resolveSpec(column, row)` (function/literal/absent→`{kind:'text'}`) + `defaultValidator(kind)` (`integer`→`filter('0-9-')`, `decimal`→`filter('0-9.-')`) — `cell-editor.ts`
-- [ ] 1.2.4 Rework `createCellEditor` to `(column, field, host, row?)`: `isEditable` gate first, then `switch(resolveSpec.kind)` with `text`/`integer`/`decimal` → `new Input({ value: field, validator: spec.validator ?? defaultValidator })`, `readonly`/`default` → `null`; update the `@example`. **Append** `cell.row` as the 4th arg to the *existing* `createCellEditor(tcol, field, { overlay: host.overlay })` call at `editing.ts:178` — keep the 3rd-arg literal, do not replace it (PF-006). Export the new types from `index.ts`
-- [ ] 1.2.5 Run the specs — verify ST-1 + ST-15 PASS (green) + `yarn workspace @jsvision/datagrid check:docs`
+- [x] 1.2.1 Add the public types `CellEditorKind`/`CellEditorSpec`/`LookupItem`/`LookupProvider` (+ `create?` on the spec) to `cell-editor.ts`, each with plain-language JSDoc — no spike/plan/RD refs ✅ (completed: 2026-07-13 17:45)
+- [x] 1.2.2 Add `editor?: CellEditorSpec | ((row: T) => CellEditorSpec)` to `GridColumn` (with `@example`) — `packages/datagrid/src/column.ts` ✅ (completed: 2026-07-13 17:45)
+- [x] 1.2.3 Implement internal `resolveSpec(column, row)` (function/literal/absent→`{kind:'text'}`) + `defaultValidator(kind)` (`integer`→`filter('0-9-')`, `decimal`→`filter('0-9.-')`) — `cell-editor.ts` ✅ (completed: 2026-07-13 17:45)
+- [x] 1.2.4 Rework `createCellEditor` to `(column, field, host, row?)`: `isEditable` gate first, then `switch(resolveSpec.kind)` with `text`/`integer`/`decimal` → `new Input({ value: field, validator: spec.validator ?? defaultValidator })`, `readonly`/`default` → `null`; update the `@example`. **Append** `cell.row` as the 4th arg to the *existing* `createCellEditor(tcol, field, { overlay: host.overlay })` call at `editing.ts:178` — keep the 3rd-arg literal, do not replace it (PF-006). Export the new types from `index.ts` ✅ (completed: 2026-07-13 17:45) — `_host` kept underscored until `custom` (Phase 5) consumes it
+- [x] 1.2.5 Run the specs — verify ST-1 + ST-15 PASS (green) + `yarn workspace @jsvision/datagrid check:docs` ✅ (completed: 2026-07-13 17:45) — 6/6 spec, check:docs OK
 
 ### Step 1.3: Hardening
 
 **Reference**: [07 impl: `resolveSpec`, dispatch]
 
-- [ ] 1.3.1 Write impl tests: `resolveSpec` per-row function form + `undefined`-row fallback + literal passthrough; `spec.validator` overrides `defaultValidator` — `packages/datagrid/test/cell-editor.impl.test.ts`
-- [ ] 1.3.2 Phase gate: `yarn workspace @jsvision/datagrid typecheck` + `test` + `check:docs` (run separately) — all green
+- [x] 1.3.1 Write impl tests: `resolveSpec` per-row function form + `undefined`-row fallback + literal passthrough; `spec.validator` overrides `defaultValidator` — `packages/datagrid/test/cell-editor.impl.test.ts` ✅ (completed: 2026-07-13 17:45)
+- [x] 1.3.2 Phase gate: `yarn workspace @jsvision/datagrid typecheck` + `test` + `check:docs` (run separately) — all green ✅ (completed: 2026-07-13 17:45) — typecheck OK · 90 unit tests · check:docs OK
 
 **Deliverables**: `CellEditorSpec`/kinds types, `column.editor`, `resolveSpec`, filtered `text`/`integer`/`decimal` + `readonly`; RD-02 default preserved.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs` (separately)
