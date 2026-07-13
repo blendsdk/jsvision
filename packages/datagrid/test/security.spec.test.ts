@@ -204,3 +204,67 @@ test('ST-11: an integer keystroke filter rejects a letter before commit', async 
   expect(committed).not.toContain('a'); // the letter never entered the buffer
   expect(/^[0-9-]*$/.test(committed)).toBe(true); // filter-conformant
 });
+
+interface Ctl {
+  id: number;
+  v: number;
+}
+
+/** Assert no buffer cell holds a raw ESC/BEL and the serialized frame has no BEL. */
+function expectNoControlBytes(loop: ReturnType<typeof createEventLoop>): void {
+  const buf = loop.renderRoot.buffer();
+  for (let y = 0; y < H; y += 1) {
+    for (let x = 0; x < W; x += 1) {
+      const ch = buf.get(x, y)?.char ?? '';
+      expect(ch).not.toBe('\x1b');
+      expect(ch).not.toBe('\x07');
+    }
+  }
+  expect(loop.renderRoot.serialize()).not.toContain('\x07');
+}
+
+// ST-17 — a column `format` that emits ESC/BEL is sanitized at the frame: the control bytes flow
+// through the accessor/alignCell paint path but never reach a buffer cell or the serialized output.
+test('ST-17: a format result with control bytes renders sanitized at the frame', () => {
+  const rows = signal<Ctl[]>([{ id: 1, v: 1 }]);
+  const columns = [
+    column<Ctl, number>({
+      id: 'v',
+      title: 'V',
+      value: (r) => r.v,
+      format: () => '\x1b[31mX\x07', // a formatter emitting a raw ESC + BEL
+      width: 12,
+    }),
+  ];
+  const grid = new EditableDataGrid<Ctl>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  loop.renderRoot.flush();
+  expectNoControlBytes(loop);
+});
+
+// ST-18 — a custom `render` hook that writes ESC/BEL is sanitized at the frame: the cell-local ctx
+// still funnels through the engine's buffer-write sanitize boundary, so no raw control byte lands.
+test('ST-18: a render hook writing control bytes renders sanitized at the frame', () => {
+  const rows = signal<Ctl[]>([{ id: 1, v: 1 }]);
+  const columns = [
+    column<Ctl, number>({
+      id: 'v',
+      title: 'V',
+      value: (r) => r.v,
+      width: 12,
+      render: (ctx) => ctx.text(0, 0, '\x1b[31mX\x07', { fg: 'brightRed', bg: 'cyan' }),
+    }),
+  ];
+  const grid = new EditableDataGrid<Ctl>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  loop.renderRoot.flush();
+  expectNoControlBytes(loop);
+});
