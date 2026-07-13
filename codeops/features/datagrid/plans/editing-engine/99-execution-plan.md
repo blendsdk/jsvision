@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 12:32
-> **Progress**: 9/43 tasks (21%)
+> **Last Updated**: 2026-07-13 12:45
+> **Progress**: 16/43 tasks (37%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -88,21 +88,21 @@ base until Phase 3.
 
 **Reference**: [03-02 §Navigation, §Cell overpaint] · [07 ST-12, ST-13]
 
-- [ ] 2.1.1 Write the cursor/nav spec (ST-12: `←`/`→`/`Home`/`End`/`Ctrl+Home`/`Ctrl+End` clamp; `↑`/`↓`/`PgUp`/`PgDn` fall through to the base; ST-13: focused-cell overpaint in `gridCursor` only when the body is focused) — `packages/datagrid/test/editable-grid-rows.spec.test.ts`
-- [ ] 2.1.2 Run — verify it FAILS (red)
+- [x] 2.1.1 Write the cursor/nav spec (ST-12: `←`/`→`/`Home`/`End`/`Ctrl+Home`/`Ctrl+End` clamp; `↑`/`↓`/`PgUp`/`PgDn` fall through to the base; ST-13: focused-cell overpaint in `gridCursor` only when the body is focused) — `packages/datagrid/test/editable-grid-rows.spec.test.ts` ✅ (completed: 2026-07-13 12:41)
+- [x] 2.1.2 Run — verify it FAILS (red) ✅ (completed: 2026-07-13 12:41)
 
 ### Step 2.2: Implementation
 
 **Reference**: [03-02 §`EditableGridRows`] · AR #4, #8 (plan)
 
-- [ ] 2.2.1 Implement `EditableGridRows<T>` + `EditableGridRowsConfig<T>`: `focusedCol` + injected shared signals; `onEvent` nav intercept (`←`/`→`/`Home`/`End`/`Ctrl+Home`/`Ctrl+End`) + `super.onEvent` fall-through for row/mouse **and for `F2`/`Enter`/printable on a read-only cell** (PF-003); `moveCol`/`colFirst`/`colLast`/`gridStart`/`gridEnd` (clamp; grid-corner clamps). **`Tab`/`Shift-Tab` are not intercepted — deferred to RD-10 (an unbound Tab is swallowed by the dispatch router; PF-001).** — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 2.2.2 Implement `draw` override: `super.draw` then `paintCursorCell` (fill + redraw the cell text in `gridCursor`, only when `this.state.focused`); add the `focusedCol` `bind` in `onMount` — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 2.2.3 Run the spec — verify it PASSES (green)
+- [x] 2.2.1 Implement `EditableGridRows<T>` + `EditableGridRowsConfig<T>`: `focusedCol` + injected shared signals; `onEvent` nav intercept (`←`/`→`/`Home`/`End`/`Ctrl+Home`/`Ctrl+End`) + `super.onEvent` fall-through for row/mouse **and for `F2`/`Enter`/printable on a read-only cell** (PF-003); `moveCol`/`colFirst`/`colLast`/`gridStart`/`gridEnd` (clamp; grid-corner clamps). **`Tab`/`Shift-Tab` are not intercepted — deferred to RD-10 (an unbound Tab is swallowed by the dispatch router; PF-001).** — `packages/datagrid/src/editable-grid-rows.ts` ✅ (completed: 2026-07-13 12:41) — config kept minimal (base + `focusedCol`); editing/dirty fields join in Phases 3–4. F2/Enter/printable fall through wholesale in Phase 2 (no editing yet); the editable-vs-read-only split lands with begin-edit wiring in 3.2.3.
+- [x] 2.2.2 Implement `draw` override: `super.draw` then `paintCursorCell` (fill + redraw the cell text in `gridCursor`, only when `this.state.focused`); add the `focusedCol` `bind` in `onMount` — `packages/datagrid/src/editable-grid-rows.ts` ✅ (completed: 2026-07-13 12:41)
+- [x] 2.2.3 Run the spec — verify it PASSES (green) ✅ (completed: 2026-07-13 12:41)
 
 ### Step 2.3: Hardening
 
-- [ ] 2.3.1 Write impl tests (corner clamp exactness; overpaint math at H-scroll offsets + partial-width edge columns; `focusedCol` bind repaint) — `packages/datagrid/test/editable-grid-rows.impl.test.ts`
-- [ ] 2.3.2 Full verify (datagrid)
+- [x] 2.3.1 Write impl tests (corner clamp exactness; overpaint math at H-scroll offsets + partial-width edge columns; `focusedCol` bind repaint) — `packages/datagrid/test/editable-grid-rows.impl.test.ts` ✅ (completed: 2026-07-13 12:45)
+- [x] 2.3.2 Full verify (datagrid) ✅ (completed: 2026-07-13 12:45) — 18 files / 56 tests green; check:docs clean
 
 **Deliverables**: a cell-cursor grid body with a `gridCursor` overpaint; nav reassigned, base row nav intact.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs`
