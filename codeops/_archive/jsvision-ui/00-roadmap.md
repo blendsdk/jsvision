@@ -1,7 +1,7 @@
 # Roadmap: jsvision UI
 
 > **Feature-Set**: jsvision UI
-> **Status**: In Progress
+> **Status**: Archived
 > **Created**: 2026-06-29
 > **Last Updated**: 2026-07-13
 > **Progress**: 22 / 22 (100%)

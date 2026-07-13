@@ -1,9 +1,9 @@
 # Roadmap: jsvision-ui Enhancements
 
 > **Feature-Set**: jsvision-ui Enhancements
-> **Status**: Done
+> **Status**: Archived
 > **Created**: 2026-07-09
-> **Last Updated**: 2026-07-09
+> **Last Updated**: 2026-07-13
 > **Progress**: 1 / 1 (100%)
 > **CodeOps Skills Version**: 3.3.2
 
