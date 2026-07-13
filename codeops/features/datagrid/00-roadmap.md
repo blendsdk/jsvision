@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-07-12
 > **Last Updated**: 2026-07-13
-> **Progress**: 1 / 14 (7%) · RD-02 executing (editing engine)
+> **Progress**: 2 / 14 (14%) · RD-02 done (editing engine)
 > **CodeOps Skills Version**: 3.4.1
 
 Enterprise-class editable data grid for the jsvision TUI SDK (SAP ALV / MS-Access / Paradox-class),
@@ -24,7 +24,7 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
 | RD-01 | Foundation & grid-engine exposure | [RD-01](requirements/RD-01-foundation.md) | [foundation](plans/foundation/00-index.md) | Done | ✅ | 2026-07-13 | Package scaffold · ui grid-engine promotion · value/format/parse · read-only `EditableDataGrid` · 6 phases / 39 tasks green · unblocks RD-02…RD-14 |
-| RD-02 | Editing engine & commit model | [RD-02](requirements/RD-02-editing-engine.md) | [editing-engine](plans/editing-engine/00-index.md) | Executing | 🔄 | 2026-07-13 | Cell cursor · in-cell overlay lifecycle · per-cell commit · dirty tracking · keymap · 6 phases / 43 tasks · gate PASSED (15 items) · preflight PASSED (Tab/Shift-Tab deferred to RD-10) · **exec_plan in progress** · depends RD-01 |
+| RD-02 | Editing engine & commit model | [RD-02](requirements/RD-02-editing-engine.md) | [editing-engine](plans/editing-engine/00-index.md) | Done | ✅ | 2026-07-13 | Cell cursor · in-cell overlay lifecycle · per-cell commit · dirty tracking · editable story · 6 phases / 43 tasks green · gate PASSED · preflight PASSED (Tab/Shift-Tab deferred to RD-10) · **exec_plan complete** · depends RD-01 |
 | RD-03 | Cell editors & value help | [RD-03](requirements/RD-03-cell-editors.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Typed editors + custom factory + F4 lookup. Depends RD-01, RD-02. |
 | RD-04 | Formatting & cell rendering | [RD-04](requirements/RD-04-formatting-rendering.md) | — | RD Preflighted | 🔎 | 2026-07-12 | `Intl` formatters, parse round-trip, custom renderer, conditional styling. Depends RD-01. |
 | RD-05 | Sorting | [RD-05](requirements/RD-05-sorting.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Single/multi/value-aware/push-down. Depends RD-01, RD-04. |
