@@ -116,7 +116,7 @@ const SEEDED_THEMES: Record<string, Theme> = {
   horizon: horizonTheme,
 };
 
-/** Roles whose hotkey/shortcut color must equal the preset's historical `warning`. */
+/** Roles whose in-dialog hotkey/shortcut color is fed by the preset's `accelerator` alias. */
 const ACCELERATOR_ROLE_COLORS = (t: Theme): string[] => [
   t.buttonFocused.hotkey as string,
   t.tabActive.hotkey as string,
@@ -126,7 +126,7 @@ const ACCELERATOR_ROLE_COLORS = (t: Theme): string[] => [
   t.clusterShortcut.fg,
 ];
 
-/** Roles whose hotkey color must equal the preset's historical `danger`. */
+/** Roles whose menu/status hotkey color is fed by the preset's `menuAccelerator` alias. */
 const MENU_ACCELERATOR_ROLE_COLORS = (t: Theme): string[] => [
   t.menuBar.hotkey as string,
   t.menuSelected.hotkey as string,
@@ -134,16 +134,20 @@ const MENU_ACCELERATOR_ROLE_COLORS = (t: Theme): string[] => [
   t.statusSelected.hotkey as string,
 ];
 
-test('ST-6: every curated preset pins its hotkeys to its historical warning/danger', () => {
+test('ST-6: every curated preset pins its hotkeys to its accelerator/menuAccelerator alias', () => {
+  // `accelerator` / `menuAccelerator` are first-class aliases (independent of `warning` / `danger`):
+  // the hotkey/shortcut roles read them directly, so each role must equal the preset's override.
   let checked = 0;
   for (const [name, seeds] of Object.entries(PRESET_SEEDS)) {
     if (!seeds.overrides) continue; // slate rides the defaults — no override block to mirror
     const theme = SEEDED_THEMES[name];
     for (const color of ACCELERATOR_ROLE_COLORS(theme)) {
-      expect(color, `${name}: accelerator-fed role === historical warning`).toBe(seeds.overrides.warning);
+      expect(color, `${name}: accelerator-fed role === accelerator alias`).toBe(seeds.overrides.accelerator);
     }
     for (const color of MENU_ACCELERATOR_ROLE_COLORS(theme)) {
-      expect(color, `${name}: menuAccelerator-fed role === historical danger`).toBe(seeds.overrides.danger);
+      expect(color, `${name}: menuAccelerator-fed role === menuAccelerator alias`).toBe(
+        seeds.overrides.menuAccelerator,
+      );
     }
     checked++;
   }
@@ -151,10 +155,10 @@ test('ST-6: every curated preset pins its hotkeys to its historical warning/dang
 });
 
 test('ST-6: spot-anchored hotkey parity for nord and dracula', () => {
-  expect(nordTheme.labelShortcut.fg, 'nord accelerator = its warning').toBe('#ebcb8b');
-  expect(nordTheme.menuBar.hotkey, 'nord menuAccelerator = its danger').toBe('#bf616a');
-  expect(draculaTheme.labelShortcut.fg, 'dracula accelerator = its warning').toBe('#f1fa8c');
-  expect(draculaTheme.menuBar.hotkey, 'dracula menuAccelerator = its danger').toBe('#ff5555');
+  expect(nordTheme.labelShortcut.fg, 'nord accelerator alias').toBe('#ebcb8b');
+  expect(nordTheme.menuBar.hotkey, 'nord menuAccelerator alias').toBe('#bf616a');
+  expect(draculaTheme.labelShortcut.fg, 'dracula accelerator alias').toBe('#f1fa8c');
+  expect(draculaTheme.menuBar.hotkey, 'dracula menuAccelerator alias').toBe('#ff5555');
 });
 
 // ── ST-23: the defaultTheme-invariance reference (the real oracles are the *-theme.spec files) ──────
