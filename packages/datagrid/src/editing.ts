@@ -8,7 +8,7 @@
  * the renderer's internals. Commit is **await-close** — the editor stays open across an async
  * `onCommit`, closing (and advancing) only once the veto resolves.
  */
-import { Group, signal } from '@jsvision/ui';
+import { Group, signal, ComboBox, DatePicker } from '@jsvision/ui';
 import type { View, Signal, DispatchEvent } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { isEditable } from './column.js';
@@ -20,6 +20,17 @@ import type { CellRect } from './overlay.js';
 
 /** The cell-key separator — a NUL byte, which cannot occur in a realistic row key or column id. */
 const KEY_SEP = String.fromCharCode(0);
+
+/**
+ * Focus the editor's real target. A `Group` editor (a `DatePicker` or `ComboBox`) is not a focusable
+ * leaf, so `focusView` (which only focuses leaves) would no-op on it — focus its `.input` child
+ * instead. Leaf editors (`Input`, `CheckGroup`) are focused directly. This is what lets a keystroke
+ * land in the editor and lets Enter/Esc bubble up to the editor host.
+ */
+function focusEditor(ev: DispatchEvent, editor: View): void {
+  const target = editor instanceof DatePicker || editor instanceof ComboBox ? editor.input : editor;
+  ev.focusView?.(target);
+}
 
 /**
  * A stable cell key joining the row key and column id with a NUL byte. The separator cannot occur in a
@@ -175,21 +186,30 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     const seed =
       opts?.replaceWith ?? (tcol.format ? tcol.format(tcol.value(cell.row), cell.row) : String(tcol.value(cell.row)));
     const field = signal(seed);
-    const editor = createCellEditor(tcol, field, { overlay: host.overlay }, cell.row);
-    if (editor === null) return false; // defensive — isEditable already guaranteed an editor
-    const editorHost = new Group();
-    editor.layout = { position: 'fill' };
-    editorHost.add(editor);
-    // Enter/Esc bubble up the focus chain from the Input (which leaves them unhandled) to this host.
-    editorHost.onEvent = (ev2: DispatchEvent): void => onEditorKey(ev2);
+    let editor: View | null = null;
     const dispose = mountCellOverlay({
       host: host.overlay,
       loop: { focusView: (v: View) => ev.focusView?.(v) },
       rect: host.cellRect(),
       origin: absoluteRect(host.body),
-      view: editorHost,
+      // Built INSIDE the mount's reactive root so a typed editor's field bridges (which create their
+      // effects eagerly at construction) are owned by that scope and disposed when the overlay closes.
+      build: () => {
+        editor = createCellEditor(tcol, field, { overlay: host.overlay }, cell.row);
+        if (editor === null) return null; // a read-only editor kind → mount nothing
+        const editorHost = new Group();
+        editor.layout = { position: 'fill' };
+        editorHost.add(editor);
+        // Enter/Esc bubble up the focus chain from the editor (which leaves them unhandled) to this host.
+        editorHost.onEvent = (ev2: DispatchEvent): void => onEditorKey(ev2);
+        return editorHost;
+      },
     });
-    ev.focusView?.(editor); // focus the inner Input so typing lands and Enter/Esc bubble to editorHost
+    if (editor === null) {
+      dispose(); // tear down the empty root the null build created
+      return false; // defensive — isEditable guaranteed an editor unless the kind is explicitly readonly
+    }
+    focusEditor(ev, editor); // focus the inner editor (its `.input` for Group editors) so keys land + bubble
     state = { kind: 'editing', cell, field, editor, dispose };
     return true;
   }

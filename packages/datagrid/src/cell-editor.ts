@@ -6,10 +6,11 @@
  * editable at all. A read-only column, or an explicit `{ kind: 'readonly' }`, yields `null`, which is
  * how the grid rejects begin-edit. The editing lifecycle never changes shape to gain a new editor kind.
  */
-import { Input, filter } from '@jsvision/ui';
+import { Input, filter, CheckGroup, DatePicker } from '@jsvision/ui';
 import type { View, Signal, Group, Validator } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { isEditable } from './column.js';
+import { boolBridge, dateBridge } from './editor-bridges.js';
 
 /**
  * What an editor may need to open its own sub-UI (a dropdown or value-help popup). The default text
@@ -132,6 +133,10 @@ export function createCellEditor<T>(
     case 'integer':
     case 'decimal':
       return new Input({ value: field, validator: spec.validator ?? defaultValidator(spec.kind) });
+    case 'boolean':
+      return new CheckGroup({ labels: [column.title], value: boolBridge(field) });
+    case 'date':
+      return new DatePicker({ value: dateBridge(field) });
     case 'readonly':
     default:
       return null; // explicit read-only opt-out (and the not-yet-built kinds until their case lands)

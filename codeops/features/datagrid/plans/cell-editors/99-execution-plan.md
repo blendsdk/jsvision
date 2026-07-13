@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 17:45
-> **Progress**: 9/45 tasks (20%) — Phase 1 complete
+> **Last Updated**: 2026-07-13 18:06
+> **Progress**: 17/45 tasks (38%) — Phases 1–2 complete
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -94,22 +94,22 @@ Depends on Phase 1. Adds the reactive-ownership restructure (construct the edito
 
 **Reference**: [03-02](03-02-typed-bridges.md) · [07 ST-2, ST-3]
 
-- [ ] 2.1.1 Write the boolean/date editor specs (ST-2: `CheckGroup` + `Space` toggle flips `'true'`/`'false'` on commit; ST-3: `DatePicker` + ISO `YYYY-MM-DD` commit; empty field → `null`) — `packages/datagrid/test/cell-editor.spec.test.ts`
-- [ ] 2.1.2 Run — verify ST-2/ST-3 FAIL (red: `boolean`/`date` cases + bridges not yet present)
+- [x] 2.1.1 Write the boolean/date editor specs (ST-2: `CheckGroup` + `Space` toggle flips `'true'`/`'false'` on commit; ST-3: `DatePicker` + ISO `YYYY-MM-DD` commit; empty field → `null`) — `packages/datagrid/test/cell-editor.spec.test.ts` ✅ (completed: 2026-07-13 18:06)
+- [x] 2.1.2 Run — verify ST-2/ST-3 FAIL (red: `boolean`/`date` cases + bridges not yet present) ✅ (completed: 2026-07-13 18:06) — 4 cases red
 
 ### Step 2.2: Implementation
 
 **Reference**: [03-02 §boolBridge, §dateBridge, §Ownership] · [03-01 §4] · [02-current-state impact table] · AR #10
 
-- [ ] 2.2.1 **Ownership restructure (PF-002):** give `mountCellOverlay` a build-callback form that constructs the editor **inside** its `createRoot` and returns the built editor; move the `createCellEditor(...)` call out of the pre-mount position into that callback, so every bridge `effect()` is owned by the overlay scope and disposes on close (existing disposer path reused; the returned editor feeds Phase-4's F4 forward) — `packages/datagrid/src/overlay.ts`, `packages/datagrid/src/editing.ts`
-- [ ] 2.2.2 Create `packages/datagrid/src/editor-bridges.ts` with `boolBridge(field)` + `dateBridge(field)` (each a pair of `untrack`-guarded effects; code-comment the no-loop invariant **and** the mount-coercion limitation — empty→`'false'`, unparseable date→`''`) — internal, not barrel-exported
-- [ ] 2.2.3 Add the `boolean` (`CheckGroup` + `boolBridge`) and `date` (`DatePicker` + `dateBridge`) cases to the `createCellEditor` switch — `cell-editor.ts`
-- [ ] 2.2.4 Run the specs — verify ST-2/ST-3 PASS (green); confirm **no** "created outside any `createRoot()`" dev-warning fires on begin-edit + `check:docs`
+- [x] 2.2.1 **Ownership restructure (PF-002):** give `mountCellOverlay` a build-callback form that constructs the editor **inside** its `createRoot` and returns the built editor; move the `createCellEditor(...)` call out of the pre-mount position into that callback, so every bridge `effect()` is owned by the overlay scope and disposes on close (existing disposer path reused; the returned editor feeds Phase-4's F4 forward). Also generalize the post-mount focus: focus `editor.input` for Group editors (`DatePicker`/`ComboBox`), the widget itself for leaf editors (`Input`/`CheckGroup`) — AR #14 runtime, needed so the `date` editor can commit — `packages/datagrid/src/overlay.ts`, `packages/datagrid/src/editing.ts` ✅ (completed: 2026-07-13 18:06) — `view` form kept for ST-9 oracle; `focusEditor` helper added
+- [x] 2.2.2 Create `packages/datagrid/src/editor-bridges.ts` with `boolBridge(field)` + `dateBridge(field)` (each a pair of `untrack`-guarded effects; code-comment the no-loop invariant **and** the mount-coercion limitation — empty→`'false'`, unparseable date→`''`) — internal, not barrel-exported ✅ (completed: 2026-07-13 18:06)
+- [x] 2.2.3 Add the `boolean` (`CheckGroup` + `boolBridge`) and `date` (`DatePicker` + `dateBridge`) cases to the `createCellEditor` switch — `cell-editor.ts` ✅ (completed: 2026-07-13 18:06)
+- [x] 2.2.4 Run the specs — verify ST-2/ST-3 PASS (green); confirm **no** "created outside any `createRoot()`" dev-warning fires on begin-edit + `check:docs` ✅ (completed: 2026-07-13 18:06) — 10/10 spec, no dev-warning
 
 ### Step 2.3: Hardening
 
-- [ ] 2.3.1 Write bridge impl tests (round-trip both directions; `dateBridge` idempotent same-day reset) — `packages/datagrid/test/editor-bridges.impl.test.ts`
-- [ ] 2.3.2 Phase gate: `yarn workspace @jsvision/datagrid typecheck` + `test` + `check:docs` (separately)
+- [x] 2.3.1 Write bridge impl tests (round-trip both directions; `dateBridge` idempotent same-day reset) — `packages/datagrid/test/editor-bridges.impl.test.ts` ✅ (completed: 2026-07-13 18:06)
+- [x] 2.3.2 Phase gate: `yarn workspace @jsvision/datagrid typecheck` + `test` + `check:docs` (separately) ✅ (completed: 2026-07-13 18:06) — typecheck OK · 99 unit tests · check:docs OK
 
 **Deliverables**: `boolBridge`/`dateBridge`, `boolean`/`date` editors.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs` (separately)
@@ -156,7 +156,7 @@ Delivers AC-6 (the F4 clause; F2/Enter open is ST-7).
 
 **Reference**: [03-03 §2, §5](03-03-lookup-f4-and-showcase.md) · [07 ST-7, ST-8] · AR #2, #7, #8
 
-- [ ] 4.1.1 Write ST-7 (F2/Enter mount the type-appropriate widget; `getFocused()` is the **single pinned** target per kind — the widget for text/boolean/date, `combo.input` for enum/lookup, PF-005) + ST-8 (with `loop.popupHost` wired: `F4` on a lookup cell mounts the editor **and** `popupOpen(overlay)===true`; `F4` on a read-only cell is a no-op) — `packages/datagrid/test/cell-editor.spec.test.ts`
+- [ ] 4.1.1 Write ST-7 (F2/Enter mount the type-appropriate widget; `getFocused()` is the **single pinned** target per kind — the widget for text/boolean, `editor.input` for the Group editors date/enum/lookup, PF-005 as refined by AR #14 runtime) + ST-8 (with `loop.popupHost` wired: `F4` on a lookup cell mounts the editor **and** `popupOpen(overlay)===true`; `F4` on a read-only cell is a no-op) — `packages/datagrid/test/cell-editor.spec.test.ts`
 - [ ] 4.1.2 Run — verify ST-8 FAILs (red: F4 branch + Alt+Down forward not yet present); ST-7 may partly pass (F2/Enter already mount)
 
 ### Step 4.2: Implementation
