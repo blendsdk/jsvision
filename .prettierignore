@@ -17,3 +17,10 @@ packages/docs-site/api/typedoc-sidebar.json
 # CodeOps process artifacts — authored docs, not code; Prettier would churn
 # their hand-built tables. Kept out of the formatting gate.
 codeops
+**/CHANGELOG.md
+**/RELEASE_NOTES.md
+# Generated release notes + per-package changelogs — drafted by @blendsdk/lockstep
+# from conventional commits and committed by the release workflow, not hand-formatted.
+# The root CHANGELOG.md is hand-maintained and stays gated.
+packages/*/CHANGELOG.md
+RELEASE_NOTES.md
