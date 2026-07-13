@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-07-12
 > **Last Updated**: 2026-07-13
-> **Progress**: 0 / 14 (0%)
+> **Progress**: 1 / 14 (7%)
 > **CodeOps Skills Version**: 3.4.1
 
 Enterprise-class editable data grid for the jsvision TUI SDK (SAP ALV / MS-Access / Paradox-class),
@@ -23,7 +23,7 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
-| RD-01 | Foundation & grid-engine exposure | [RD-01](requirements/RD-01-foundation.md) | [foundation](plans/foundation/00-index.md) | Executing | 🔄 | 2026-07-13 | Package scaffold · ui exports `GridRows`/`GridHeader`/`columns.ts`/`stringWidth` · value/format/parse · `GridDataSource`+`rowKey` · `onCommit` · cell-overlay helper · read-only `EditableDataGrid`. 6 phases / 39 tasks. Gates all others. Plan preflighted (6 findings resolved). Executing via `exec_plan`. |
+| RD-01 | Foundation & grid-engine exposure | [RD-01](requirements/RD-01-foundation.md) | [foundation](plans/foundation/00-index.md) | Done | ✅ | 2026-07-13 | Package scaffold · ui exports `GridRows`/`GridHeader`/`columns.ts`/`stringWidth` · value/format/parse · `GridDataSource`+`rowKey` · `onCommit` · cell-overlay helper · read-only `EditableDataGrid`. 6 phases / 39 tasks all green (datagrid 35 unit + 2 e2e, ui 1539). All AC-1…AC-10 realized. Unblocks RD-02…RD-14. |
 | RD-02 | Editing engine & commit model | [RD-02](requirements/RD-02-editing-engine.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Cell cursor, in-cell overlay lifecycle, per-cell immediate commit, dirty tracking, keymap. Depends RD-01. |
 | RD-03 | Cell editors & value help | [RD-03](requirements/RD-03-cell-editors.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Typed editors + custom factory + F4 lookup. Depends RD-01, RD-02. |
 | RD-04 | Formatting & cell rendering | [RD-04](requirements/RD-04-formatting-rendering.md) | — | RD Preflighted | 🔎 | 2026-07-12 | `Intl` formatters, parse round-trip, custom renderer, conditional styling. Depends RD-01. |
@@ -66,3 +66,12 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
   Next: `exec_plan` the foundation plan.
 - 2026-07-13: **RD-01 Executing** 🔄 via `exec_plan datagrid foundation --auto-commit` — implementing the 6-phase,
   39-task foundation plan spec-first (auto-commit after each verified task).
+- 2026-07-13: **RD-01 DONE** ✅ via `exec_plan datagrid foundation --auto-commit` — all 6 phases / 39 tasks green,
+  spec-first, committed per phase. `@jsvision/ui` promotes its grid engine (`GridRows`/`GridHeader`/`columns.ts`/
+  `stringWidth`) to public API; new `@jsvision/datagrid` package ships the `value`/`format`/`parse` `column()` model +
+  value-aware adapter, `GridDataSource`/`fromRows` (required `rowKey`), `commitCell`, `mountCellOverlay`, a read-only
+  `EditableDataGrid`, and an in-package story harness. datagrid 35 unit + 2 e2e + ui 1539 unit all green;
+  typecheck/build/check:docs/check:deps green; all AC-1…AC-10 realized (ST-1…ST-14). Note: repo-wide `yarn verify`
+  is red only from **pre-existing v0.2.0-release breakage** unrelated to this work (core packaging spec disallows the
+  release-added `CHANGELOG.md`; CHANGELOG/RELEASE_NOTES prettier drift) — flagged for a separate fix. Next: `exec_plan`
+  RD-02 (editing engine).
