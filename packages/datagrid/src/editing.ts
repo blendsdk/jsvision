@@ -175,7 +175,7 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     const seed =
       opts?.replaceWith ?? (tcol.format ? tcol.format(tcol.value(cell.row), cell.row) : String(tcol.value(cell.row)));
     const field = signal(seed);
-    const editor = createCellEditor(tcol, field, { overlay: host.overlay });
+    const editor = createCellEditor(tcol, field, { overlay: host.overlay }, cell.row);
     if (editor === null) return false; // defensive — isEditable already guaranteed an editor
     const editorHost = new Group();
     editor.layout = { position: 'fill' };

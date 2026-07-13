@@ -9,6 +9,7 @@
  * so a numeric or date column orders by its value, never by the formatted text.
  */
 import type { Column, ColumnWidth, ColumnAlign } from '@jsvision/ui';
+import type { CellEditorSpec } from './cell-editor.js';
 
 /**
  * One typed column of a data grid: a stable `id`, a header `title`, a typed `value` accessor (the
@@ -37,6 +38,13 @@ export interface GridColumn<T, V = unknown> {
   readonly width?: ColumnWidth;
   /** Text alignment within the column width. */
   readonly align?: ColumnAlign;
+  /**
+   * The cell editor to mount: a literal {@link CellEditorSpec}, or a per-row function that returns one.
+   * Absent on an editable column (one with `parse` + `set`) mounts a plain text input; a read-only
+   * column ignores it. Use it to pick a typed widget — e.g. `{ kind: 'boolean' }` or
+   * `{ kind: 'lookup', items }` — or `{ kind: 'readonly' }` to make an otherwise-editable column read-only.
+   */
+  readonly editor?: CellEditorSpec | ((row: T) => CellEditorSpec);
 }
 
 /**

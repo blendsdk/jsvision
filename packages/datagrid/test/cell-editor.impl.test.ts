@@ -6,12 +6,23 @@
  * exercise the round-trip building blocks the editing controller wires together in a later phase.
  */
 import { test, expect } from 'vitest';
-import { Group, Input, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+import { Group, Input, createEventLoop, filter, resolveCapabilities, signal } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { createCellEditor } from '../src/cell-editor.js';
 import type { CellEditorHost } from '../src/cell-editor.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+
+/** Mount an editor Input standalone, focus it, and return the loop so a test can dispatch keystrokes. */
+function mountInput(editor: Input) {
+  editor.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 1 } };
+  const root = new Group();
+  root.add(editor);
+  const loop = createEventLoop({ width: 12, height: 1 }, { caps });
+  loop.mount(root);
+  loop.focusView(editor);
+  return loop;
+}
 
 /** A synthetic key envelope for `loop.dispatch`. */
 function key(k: string, mods: { ctrl?: boolean; alt?: boolean; shift?: boolean } = {}) {
@@ -91,4 +102,85 @@ test('createCellEditor never touches the host for the text Input', () => {
   };
   expect(() => createCellEditor(name, field, trapHost)).not.toThrow();
   expect(createCellEditor(name, field, trapHost)).toBeInstanceOf(Input);
+});
+
+interface Locked {
+  name: string;
+  locked: boolean;
+}
+const perRow = column<Locked, string>({
+  id: 'name',
+  title: 'Name',
+  value: (r) => r.name,
+  parse: (t) => t,
+  set: (r, v) => {
+    r.name = v;
+  },
+  editor: (row) => (row.locked ? { kind: 'readonly' } : { kind: 'text' }),
+});
+
+// resolveSpec — a per-row editor function is resolved against the row being edited.
+test('resolveSpec: a per-row editor function resolves per row', () => {
+  const host = { overlay: new Group() };
+  expect(createCellEditor(perRow, signal(''), host, { name: 'Ada', locked: true })).toBeNull();
+  expect(createCellEditor(perRow, signal(''), host, { name: 'Ada', locked: false })).toBeInstanceOf(Input);
+});
+
+// resolveSpec — with no row (a direct factory call) a function editor falls back to a text Input.
+test('resolveSpec: an undefined row falls back to a text Input', () => {
+  expect(createCellEditor(perRow, signal(''), { overlay: new Group() })).toBeInstanceOf(Input);
+});
+
+// resolveSpec — a literal spec passes straight through (readonly → null).
+test('resolveSpec: a literal editor spec passes through', () => {
+  const ro = column<Locked, string>({
+    id: 'name',
+    title: 'Name',
+    value: (r) => r.name,
+    parse: (t) => t,
+    set: (r, v) => {
+      r.name = v;
+    },
+    editor: { kind: 'readonly' },
+  });
+  expect(createCellEditor(ro, signal(''), { overlay: new Group() })).toBeNull();
+});
+
+// createCellEditor dispatch — spec.validator overrides the per-kind default keystroke filter. The
+// integer default ('0-9-') rejects a letter; an explicit letter filter accepts it instead.
+test('createCellEditor: spec.validator overrides the default keystroke filter', () => {
+  const intCol = column<Locked, string>({
+    id: 'name',
+    title: 'Name',
+    value: (r) => r.name,
+    parse: (t) => t,
+    set: (r, v) => {
+      r.name = v;
+    },
+    editor: { kind: 'integer' },
+  });
+  const overrideCol = column<Locked, string>({
+    id: 'name',
+    title: 'Name',
+    value: (r) => r.name,
+    parse: (t) => t,
+    set: (r, v) => {
+      r.name = v;
+    },
+    editor: { kind: 'integer', validator: filter('a-z') },
+  });
+
+  const df = signal('');
+  const dloop = mountInput(createCellEditor(intCol, df, { overlay: new Group() }) as Input);
+  dloop.dispatch({ type: 'key', key: 'x', ctrl: false, alt: false, shift: false }); // a letter
+  expect(df()).toBe(''); // rejected by the digits-only default
+  dloop.dispatch({ type: 'key', key: '5', ctrl: false, alt: false, shift: false });
+  expect(df()).toBe('5'); // a digit is accepted
+
+  const of = signal('');
+  const oloop = mountInput(createCellEditor(overrideCol, of, { overlay: new Group() }) as Input);
+  oloop.dispatch({ type: 'key', key: 'x', ctrl: false, alt: false, shift: false });
+  expect(of()).toBe('x'); // accepted by the overriding letter filter
+  oloop.dispatch({ type: 'key', key: '5', ctrl: false, alt: false, shift: false });
+  expect(of()).toBe('x'); // a digit is now rejected
 });

@@ -27,9 +27,10 @@ export { mountCellOverlay, absoluteRect } from './overlay.js';
 export type { CellRect } from './overlay.js';
 
 // Cell editor seam — `createCellEditor` builds the editor view for a cell (a text `Input` by default),
-// or `null` for a read-only column. `CellEditorHost` carries what a richer editor needs later.
+// or `null` for a read-only column. `CellEditorHost` carries what a richer editor needs; the
+// `CellEditorSpec`/`CellEditorKind` descriptor a column declares selects the typed widget it mounts.
 export { createCellEditor } from './cell-editor.js';
-export type { CellEditorHost } from './cell-editor.js';
+export type { CellEditorHost, CellEditorKind, CellEditorSpec, LookupItem, LookupProvider } from './cell-editor.js';
 
 // Dirty tracking — the reactive pending-commit registry and the NUL-joined `cellKey` it is keyed by
 // (the container owns the registry; the grid body paints its `•` markers). The controller is internal.
