@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 13:40
-> **Progress**: 36/43 tasks (84%)
+> **Last Updated**: 2026-07-13 13:50
+> **Progress**: 43/43 tasks (100%) ✅
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -205,16 +205,16 @@ Depends on Phase 5. Realizes AC-9 + AC-10 + the whole-plan gate (03-03 §3–4).
 
 **Reference**: [03-03 §3–4] · [07 ST-10, ST-11] · AC-9, AC-10 · AR #12 (plan)
 
-- [ ] 6.1.1 Write the `editing` story (editable Name + read-only ID, a bound-state echo, nav/edit/commit hints, `onCommit` vetoing empty) + register it — `packages/datagrid/test/kitchen-sink/stories/editing.story.ts`, `.../stories/index.ts`
-- [ ] 6.1.2 Extend the security spec (ST-11: a control byte typed + committed → the serialized frame has no raw ESC/BEL; a spy `onCommit` is the only mutation path) — `packages/datagrid/test/security.spec.test.ts`
-- [ ] 6.1.3 Run the smoke (ST-10) + security (ST-11) — verify they PASS (a painting story + unique id + metadata; sanitized frame). If the story paints nothing, fix the story, not the test.
+- [x] 6.1.1 Write the `editing` story (editable Name + read-only ID, a bound-state echo, nav/edit/commit hints, `onCommit` vetoing empty) + register it — `packages/datagrid/test/kitchen-sink/stories/editing.story.ts`, `.../stories/index.ts` ✅ (completed: 2026-07-13 13:46)
+- [x] 6.1.2 Extend the security spec (ST-11: a control byte typed + committed → the serialized frame has no raw ESC/BEL; a spy `onCommit` is the only mutation path) — `packages/datagrid/test/security.spec.test.ts` ✅ (completed: 2026-07-13 13:46)
+- [x] 6.1.3 Run the smoke (ST-10) + security (ST-11) — verify they PASS (a painting story + unique id + metadata; sanitized frame). If the story paints nothing, fix the story, not the test. ✅ (completed: 2026-07-13 13:46) — story mounts+paints; control-byte frame sanitized
 
 ### Step 6.2: Final verification
 
 **Reference**: [01 §Success criteria] · RD-02 AC-1…AC-10
 
-- [ ] 6.2.1 Full `yarn verify` — green across `@jsvision/datagrid`, `@jsvision/core` (new roles), and `@jsvision/ui` (allowlist edits); no core/ui regression
-- [ ] 6.2.2 Confirm every RD-02 AC-1…AC-10 is realized by a green ST-1…ST-17 (map in [07](07-testing-strategy.md))
+- [x] 6.2.1 Full `yarn verify` — green across `@jsvision/datagrid`, `@jsvision/core` (new roles), and `@jsvision/ui` (allowlist edits); no core/ui regression ✅ (completed: 2026-07-13 13:50) — 26/26 turbo tasks green (lint+typecheck+build+test+check:docs+check-plugin). The only exclusion is `@jsvision/ui`'s env-sensitive `editor-perf` 16 ms ceiling (`TUI_SKIP_PERF=1`; never gates, passes clean in isolation), unrelated to RD-02.
+- [x] 6.2.2 Confirm every RD-02 AC-1…AC-10 is realized by a green ST-1…ST-17 (map in [07](07-testing-strategy.md)) ✅ (completed: 2026-07-13 13:50) — AC-1→ST-1/2, AC-2→ST-3, AC-3→ST-4, AC-4→ST-5, AC-5→ST-6, AC-6→ST-7 (deferred to RD-10 per PF-001), AC-7→ST-8, AC-8→ST-9, AC-9→ST-10, AC-10→ST-11; foundational ST-12…ST-17 green. All present ST-1…ST-6, ST-8…ST-17 pass in the datagrid suite (81 tests); ST-7 is a documented RD-10 deferral, not a gap.
 
 **Deliverables**: an editable showcase story + security proof; the whole editing engine green under `yarn verify`.
 **Verify**: `yarn verify`

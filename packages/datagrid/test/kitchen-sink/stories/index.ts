@@ -4,5 +4,6 @@
  */
 import type { Story } from '../story.js';
 import { foundationStory } from './foundation.story.js';
+import { editingStory } from './editing.story.js';
 
-export const STORIES: readonly Story[] = [foundationStory];
+export const STORIES: readonly Story[] = [foundationStory, editingStory];
