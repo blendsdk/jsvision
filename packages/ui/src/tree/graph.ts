@@ -7,9 +7,12 @@
  * Each row's prefix is built from box-drawing glyphs, all chosen to be single-width (width 1) so
  * column math is exact:
  *   `│` U+2502 · `├` U+251C · `└` U+2514 · `─` U+2500 · `+` U+002B · space.
- * Each ancestor level occupies 3 columns; the row's own end graphic occupies another 3 columns
- * (fork/corner, a horizontal fill, then the expand marker). The marker is `─` when the node is
- * expanded or is a leaf, and `+` when it is a collapsed node with children.
+ * Each ancestor level occupies 3 columns. The row's own end graphic is the fork/corner (`├`/`└`), a
+ * horizontal fill (`─`), then the expand marker. In the default `tv` style the marker is a single
+ * cell drawn flush against the node text (`+` collapsed, `─` expanded or leaf). The `brackets` and
+ * `triangle` styles instead keep one space between the marker and the text, and a leaf carries no
+ * marker — just that single separating space — so its end graphic is narrower than a parent's (leaf
+ * and folder text are intentionally ragged, not column-aligned, in those styles).
  */
 
 /**
@@ -70,46 +73,52 @@ const GRAPH = {
 /**
  * How a {@link Tree} draws its per-row expand/collapse marker.
  *
- * - `'tv'` — the default: a single `+` on a collapsed node, `─` on an expanded node or a leaf.
- * - `'brackets'` — pure-ASCII `[+]`/`[-]` on collapsible nodes (3 blank cells on a leaf); the most
- *   legible option and the safe fallback when Unicode is unavailable.
- * - `'triangle'` — `▸`/`▾` on collapsible nodes (a single blank on a leaf); needs a Unicode
- *   terminal and degrades to `'brackets'` when the caps report no Unicode.
+ * - `'tv'` — the default: a single `+` on a collapsed node, `─` on an expanded node or a leaf, drawn
+ *   flush against the node text (no separating space).
+ * - `'brackets'` — pure-ASCII `[+]`/`[-]` on collapsible nodes, each followed by one space before the
+ *   text; a leaf shows just that single space. The most legible option and the safe fallback when
+ *   Unicode is unavailable.
+ * - `'triangle'` — `▸`/`▾` on collapsible nodes, each followed by one space; a leaf shows just that
+ *   single space. Needs a Unicode terminal and degrades to `'brackets'` when the caps report no
+ *   Unicode.
  *
- * All markers are single-width, so a style change never disturbs column alignment.
+ * In `'brackets'` and `'triangle'` a leaf's end graphic is narrower than a parent's (no marker), so
+ * leaf and folder text are intentionally ragged rather than column-aligned; `'tv'` keeps every marker
+ * one cell, so its columns line up.
  */
 export type MarkerStyle = 'tv' | 'brackets' | 'triangle';
 
 /**
- * The expand marker for a node under a given style. `flags` distinguishes the three node states:
- * collapsed-with-children (`!OV_EXPANDED`), expanded-with-children (`OV_EXPANDED | OV_CHILDREN`),
- * and leaf (`OV_EXPANDED` alone). `'brackets'` returns 3 cells, `'tv'`/`'triangle'` return 1, so a
- * leaf blanks out to the same width as its style's marker and alignment is preserved.
+ * The expand marker for a node under a given style — the text that follows the fork/corner + fill.
+ * `flags` distinguishes the three node states: collapsed-with-children (`!OV_EXPANDED`),
+ * expanded-with-children (`OV_EXPANDED | OV_CHILDREN`), and leaf (`OV_EXPANDED` alone). `'brackets'`
+ * and `'triangle'` append one space so the text has breathing room, and a leaf collapses to that
+ * single space (no marker); `'tv'` returns a single flush cell. The returned string's cell count is
+ * the marker field width used by {@link graphWidth}.
  */
 function marker(style: MarkerStyle, flags: number): string {
   const expanded = (flags & OV_EXPANDED) !== 0;
   const hasChildren = (flags & OV_CHILDREN) !== 0;
+  const leaf = expanded && !hasChildren;
   switch (style) {
     case 'brackets':
-      if (!expanded) return '[+]'; // collapsed with children
-      return hasChildren ? '[-]' : '   '; // expanded with children | leaf (3 blanks)
+      if (leaf) return ' '; // no marker — just the single space before the text
+      return expanded ? '[-] ' : '[+] '; // expanded | collapsed, one trailing space
     case 'triangle':
-      if (!expanded) return GRAPH.triCollapsed; // ▸
-      return hasChildren ? GRAPH.triExpanded : ' '; // ▾ | leaf (1 blank)
+      if (leaf) return ' ';
+      return expanded ? `${GRAPH.triExpanded} ` : `${GRAPH.triCollapsed} `; // ▾ | ▸, one trailing space
     case 'tv':
     default:
-      // Faithful single char: `─` for an expanded node or a leaf, `+` for a collapsed node.
+      // Faithful single char, flush against the text: `─` for an expanded node or a leaf, `+` for a
+      // collapsed node.
       return expanded ? GRAPH.hFill : GRAPH.markCollapsed;
   }
 }
 
-/** The end-graphic width (fork/corner + fill + marker) for a style: `brackets` is 5, the rest 3. */
-function endWidth(style: MarkerStyle): number {
-  return style === 'brackets' ? LEVEL_WIDTH + 2 : LEVEL_WIDTH;
-}
-
-/** Columns per ancestor level (also the width of the row's own end graphic). */
+/** Columns per ancestor level. */
 const LEVEL_WIDTH = 3;
+/** Fixed cells before the marker in a row's end graphic: the fork/corner glyph + the horizontal fill. */
+const CONNECTOR_WIDTH = 2;
 /** Depth cap for {@link flattenVisible}, so a caller-built cycle can't drive an unbounded walk. */
 const MAX_DEPTH = 512;
 
@@ -126,7 +135,8 @@ const MAX_DEPTH = 512;
  *               `'triangle'` `▸`/`▾`. Only the marker changes — the ancestor guides and fork/corner
  *               are identical across styles. Pass the caller-resolved effective style (the
  *               `triangle`→`brackets` no-Unicode fallback is decided by the renderer, not here).
- * @returns The prefix string; its width is `graphWidth(level, style)` cells (every glyph is width 1).
+ * @returns The prefix string; its width is `graphWidth(level, style, flags)` cells (every glyph is
+ *          width 1). In `'brackets'`/`'triangle'` a leaf's prefix is narrower than a parent's.
  */
 export function createGraph(
   level: number,
@@ -156,13 +166,20 @@ export function createGraph(
 }
 
 /**
- * The prefix width (in cells) for a row at `level` under `style` — `level * 3 + endWidth(style)`,
- * independent of `guides`. `'brackets'` adds 2 cells (its `[+]` marker is 3 wide); `'tv'`/`'triangle'`
- * keep the classic `level * 3 + 3`. The tree's mouse toggle-zone reads this, so the hit-zone tracks
- * the wider bracket graphic automatically.
+ * The prefix width (in cells) for a row at `level` under `style`, given the node's `flags` —
+ * `level * 3 + 2 + <marker field width>`, independent of `guides`. In `'tv'` the marker is always one
+ * cell, so the width is the classic `level * 3 + 3` for every node. In `'brackets'`/`'triangle'` the
+ * width is node-dependent: a collapsed/expanded node includes the marker plus one trailing space,
+ * while a leaf includes only that single space — so a leaf's prefix is narrower. The tree's mouse
+ * toggle-zone reads this, so the hit-zone tracks each row's actual graphic.
+ *
+ * @param level The 0-based depth.
+ * @param style The marker style (default `'tv'`).
+ * @param flags The node state (`OV_EXPANDED | OV_CHILDREN | OV_LAST`); defaults to a collapsed node.
+ * @returns The prefix width in cells.
  */
-export function graphWidth(level: number, style: MarkerStyle = 'tv'): number {
-  return level * LEVEL_WIDTH + endWidth(style);
+export function graphWidth(level: number, style: MarkerStyle = 'tv', flags = 0): number {
+  return level * LEVEL_WIDTH + CONNECTOR_WIDTH + [...marker(style, flags)].length;
 }
 
 /** A pending node to visit during the flatten walk, carrying its display context. */

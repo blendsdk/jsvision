@@ -371,13 +371,19 @@ test('ST-10: density sizes — compact 20×8, comfortable 28×10, spacious 35×1
 
 // ── ST-11: the comfortable footer — 3-letter labels, a divider, the selected echo + Today ──────
 
-test('ST-11: comfortable renders 3-letter weekday labels, a ─ divider, and a bracket-free Today button', () => {
+test('ST-11: comfortable renders 3-letter weekday labels, a ─ divider, and a padded bracket-free Today button', () => {
   const h = makeCal({ value: { year: 2026, month: 9, day: 15 }, density: 'comfortable' });
   expect(h.row(1)).toBe(' Sun Mon Tue Wed Thu Fri Sat'); // 3-letter labels, 4-wide cells
   expect(h.row(8)).toBe('─'.repeat(28)); // the footer divider row
   expect(h.row(9).startsWith('2026-09-15'), 'selected-date echo at the left').toBe(true);
   expect(h.row(9).includes('Today'), 'Today button at the right').toBe(true);
-  expect(h.row(9).includes('['), 'the Today button has NO brackets (PA-21)').toBe(false);
+  expect(h.row(9).includes('['), 'the Today button has NO brackets').toBe(false);
+  // The button is padded ` Today ` (7 wide, right-aligned at col 21): the leading pad cell carries the
+  // today colour so the chip has breathing room, whereas the fill cell just left of it does not.
+  expect(h.cell(21, 9)?.bg, 'the padded chip starts at col 21 in the today colour').toBe(defaultTheme.calendarToday.bg);
+  expect(h.cell(20, 9)?.bg, 'the cell before the chip is the plain fill, not the button').toBe(
+    defaultTheme.calendarNormal.bg,
+  );
 });
 
 // ── ST-12: the focus cursor is a FILLED reverse cell, not a fg-only tint (issue #1) ────────────────
@@ -405,7 +411,7 @@ test('ST-13: the T key navigates to today (no commit); a Today click navigates A
   expect(h.value(), 'T only navigates — nothing committed').toBeNull();
   h.loop.dispatch(mouseDown(1, 1)); // → October again
   h.loop.renderRoot.flush();
-  h.loop.dispatch(mouseDown(25, 10)); // local (24,9): inside the footer Today button (cols 23-27, y9)
+  h.loop.dispatch(mouseDown(25, 10)); // local (24,9): inside the padded footer Today button (cols 21-27, y9)
   h.loop.renderRoot.flush();
   expect(h.row(0).includes('September 2026'), 'Today click returned to today').toBe(true);
   expect(h.value(), 'Today click commits today (select)').toStrictEqual(TODAY);
