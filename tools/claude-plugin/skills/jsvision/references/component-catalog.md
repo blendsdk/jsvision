@@ -33,6 +33,10 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 
 - **DataGrid** — a typed multi-column table (`DataGrid<T>`) over a rows `Signal`, with sortable
   columns, selection, zebra striping, and a sticky header. See `recipes/data-driven.md`.
+- **GridRows** — the focusable, multi-column, virtual-scroll grid body that draws only the visible
+  window; the low-level body `DataGrid` composes, exposed for building custom grid layouts.
+- **GridHeader** — the non-scrolling sticky header: column titles in `tableHeader`, a sort
+  indicator, and click-to-sort; the low-level header `DataGrid` composes.
 - **Tree** — a collapsible outline/tree of nodes with expand/collapse, keyboard nav, and type-ahead.
 
 ## Feedback
