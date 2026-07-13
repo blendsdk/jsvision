@@ -2,7 +2,7 @@
  * Build a full {@link Theme} from a handful of seed colors.
  *
  * `createTheme` is the front door of the theming system: give it a `mode` and an
- * `accent` (plus optional neutral/status seeds), and it derives the 16 semantic
+ * `accent` (plus optional neutral/status seeds), and it derives the 18 semantic
  * aliases with perceptual {@link ramp}s and hands them to {@link rolesFromAliases}
  * to fill in every role. Two override hooks let you steer the result — `overrides`
  * adjusts the aliases (and so re-drives every role that uses them), while
@@ -24,9 +24,13 @@ export interface ThemeOptions {
   readonly accent: Color;
   /** Neutral seed for the surface/text ramp; defaults to a mode-neutral gray. Low-chroma works best. */
   readonly neutral?: Color;
-  /** Danger signal seed; defaults to a red. */
+  /** In-dialog control hotkey (accelerator) seed; defaults to an amber. Independent of `warning`. */
+  readonly accelerator?: Color;
+  /** Menu-bar / status-line hotkey (accelerator) seed; defaults to a red. Independent of `danger`. */
+  readonly menuAccelerator?: Color;
+  /** Danger signal seed; defaults to a red. Reserved for app content — drives no built-in role. */
   readonly danger?: Color;
-  /** Warning signal seed; defaults to an amber. */
+  /** Warning signal seed; defaults to an amber. Reserved for app content — drives no built-in role. */
   readonly warning?: Color;
   /** Success signal seed; defaults to a green. */
   readonly success?: Color;
@@ -47,7 +51,7 @@ function foregroundOn(bg: Color): Color {
 }
 
 /**
- * Derive the 16 semantic {@link ThemeColors} aliases from a set of seeds — the step {@link createTheme}
+ * Derive the 18 semantic {@link ThemeColors} aliases from a set of seeds — the step {@link createTheme}
  * runs before it merges `overrides` and expands the roles.
  *
  * Give it the same `mode`/`accent`/neutral/status seeds you would pass to {@link createTheme} and it
@@ -57,8 +61,8 @@ function foregroundOn(bg: Color): Color {
  * so a tool (e.g. a theme editor) can show the aliases a given seed set produces without building the
  * full theme.
  *
- * @param options Seeds (`mode`, `accent`, optional `neutral`/status). `overrides`/`roleOverrides` are ignored.
- * @returns The 16 resolved aliases, before any override merge.
+ * @param options Seeds (`mode`, `accent`, optional `neutral`/accelerator/status). `overrides`/`roleOverrides` are ignored.
+ * @returns The 18 resolved aliases, before any override merge.
  * @throws InvalidColorError when a seed is `'default'` or otherwise unresolvable.
  * @example
  * import { aliasesFromSeeds } from '@jsvision/core';
@@ -106,6 +110,8 @@ export function aliasesFromSeeds(options: ThemeOptions): ThemeColors {
     backgroundSelected: surface.selected,
     accent,
     accentMuted: darken(accent, 0.1),
+    accelerator: options.accelerator ?? '#f59e0b',
+    menuAccelerator: options.menuAccelerator ?? '#ef4444',
     border: surface.border,
     borderMuted: surface.borderMuted,
     danger: options.danger ?? '#ef4444',
