@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 13:24
-> **Progress**: 29/43 tasks (67%)
+> **Last Updated**: 2026-07-13 13:40
+> **Progress**: 36/43 tasks (84%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -176,21 +176,21 @@ Depends on Phases 2–4. Spec-first (03-03 §2). Wires the pieces into `Editable
 
 **Reference**: [03-03 §2] · [07 ST-4, ST-6, ST-8 end-to-end] · AR #4, #5 (plan)
 
-- [ ] 5.1.1 Extend the grid spec: the container owns + injects `focused`/`focusedCol`/`selected`/`indent`; `onCommit` threads to the body; `isDirty`/`isRowDirty`/`isGridDirty`; an end-to-end edit→commit repaints via `version` — `packages/datagrid/test/grid.spec.test.ts`
+- [~] 5.1.1 Extend the grid spec: the container owns + injects `focused`/`focusedCol`/`selected`/`indent`; `onCommit` threads to the body; `isDirty`/`isRowDirty`/`isGridDirty`; an end-to-end edit→commit repaints via `version` — `packages/datagrid/test/grid.spec.test.ts` (implemented: 2026-07-13 13:32)
 - [ ] 5.1.2 Run — verify it FAILS (red)
 
 ### Step 5.2: Implementation
 
 **Reference**: [03-03 §2] · AR #4, #5 (plan)
 
-- [ ] 5.2.1 `EditableDataGrid`: add `focusedCol`/`version`/`dirty` fields; fold `version()` into the `display` computed; construct `overlay` before `rows`; swap `GridRows`→`EditableGridRows` with the injected config; add `EditableDataGridOptions.onCommit` — `packages/datagrid/src/grid.ts`
-- [ ] 5.2.2 Implement `isDirty` + `isRowDirty` + `isGridDirty`; update the `EditableDataGrid` `@example` to an editable column + `onCommit`; add re-exports (`EditableGridRows`, `createCellEditor`, `isEditable`, dirty registry) — `packages/datagrid/src/grid.ts`, `src/index.ts`
-- [ ] 5.2.3 Reconcile the RD-01 grid render baseline with the new cursor overpaint (only if a prior assertion pinned focused-cell colors — a sanctioned baseline update since RD-02 adds a documented cursor; text-in-source-order stays asserted); run the specs — verify they PASS (green)
-- [ ] 5.2.4 Full verify (datagrid) — no RD-01 grid regression beyond the reconciled cursor baseline
+- [x] 5.2.1 `EditableDataGrid`: add `focusedCol`/`version`/`dirty` fields; fold `version()` into the `display` computed; construct `overlay` before `rows`; swap `GridRows`→`EditableGridRows` with the injected config; add `EditableDataGridOptions.onCommit` — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-13 13:36)
+- [x] 5.2.2 Implement `isDirty` + `isRowDirty` + `isGridDirty`; update the `EditableDataGrid` `@example` to an editable column + `onCommit`; add re-exports (`EditableGridRows`, `createCellEditor`, `isEditable`, dirty registry) — `packages/datagrid/src/grid.ts`, `src/index.ts` ✅ (completed: 2026-07-13 13:36)
+- [x] 5.2.3 Reconcile the RD-01 grid render baseline with the new cursor overpaint (only if a prior assertion pinned focused-cell colors — a sanctioned baseline update since RD-02 adds a documented cursor; text-in-source-order stays asserted); run the specs — verify they PASS (green) ✅ (completed: 2026-07-13 13:36) — no reconcile needed (read-only tests never focus the body, so no cursor overpaint)
+- [x] 5.2.4 Full verify (datagrid) — no RD-01 grid regression beyond the reconciled cursor baseline ✅ (completed: 2026-07-13 13:36) — 22 files · 78 tests · typecheck + check:docs clean
 
 ### Step 5.3: Hardening
 
-- [ ] 5.3.1 Extend `grid.impl` (shared-signal ownership + injection; `onCommit` threading; `version` repaint end-to-end) — `packages/datagrid/test/grid.impl.test.ts`
+- [x] 5.3.1 Extend `grid.impl` (shared-signal ownership + injection; `onCommit` threading; `version` repaint end-to-end) — `packages/datagrid/test/grid.impl.test.ts` ✅ (completed: 2026-07-13 13:40) — 22 files · 81 tests · typecheck + check:docs clean
 
 **Deliverables**: `EditableDataGrid` owns the shared cursor, mounts the editable body, exposes `onCommit`/`isDirty`.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs`

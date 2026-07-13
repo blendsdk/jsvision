@@ -36,6 +36,12 @@ export type { CellEditorHost } from './cell-editor.js';
 export { createDirtyRegistry, cellKey } from './editing.js';
 export type { DirtyRegistry } from './editing.js';
 
-// The read-only grid container — composes the promoted engine over the column model and data source.
+// The editable grid body — the `GridRows` engine plus a two-axis cell cursor, the focused-cell
+// overpaint, and the in-cell editor lifecycle. The container injects the shared cursor signals.
+export { EditableGridRows } from './editable-grid-rows.js';
+export type { EditableGridRowsConfig } from './editable-grid-rows.js';
+
+// The grid container — composes the promoted engine over the column model and data source, owns the
+// shared cursor state, and mounts the editable body with its optional `onCommit` veto sink.
 export { EditableDataGrid } from './grid.js';
 export type { EditableDataGridOptions } from './grid.js';
