@@ -469,3 +469,59 @@ test('ST-8: F4 on a read-only cell is a no-op', () => {
   expect(h.loop.getFocused()).toBe(h.grid); // no editor took focus
   expect(popupOpen(h.popup)).toBe(false);
 });
+
+// ST-6 — a custom editor mounts exactly the caller's View; Enter commits once (RD-02 protocol),
+// Esc cancels without calling onCommit.
+test('ST-6: custom editor mounts the caller View; Enter commits once', async () => {
+  let created: Input | null = null;
+  const customCol = column<Person, string>({
+    id: 'name',
+    title: 'Name',
+    value: (r) => r.name,
+    parse: (t) => t,
+    set: (r, v) => {
+      r.name = v;
+    },
+    width: 10,
+    editor: {
+      kind: 'custom',
+      create: (field) => {
+        created = new Input({ value: field });
+        return created;
+      },
+    },
+  });
+  const spy = vi.fn<OnCommit<Person>>(() => true);
+  const rows: Person[] = [{ id: 1, name: 'Ada' }];
+  const h = build<Person>([customCol], rows, (r) => r.id, { onCommit: spy });
+  h.loop.dispatch(key('f2'));
+  expect(h.loop.getFocused()).toBe(created); // the mounted editor IS the caller's Input
+  h.loop.dispatch(key('x')); // type into it
+  h.loop.dispatch(key('enter')); // commit
+  await tick();
+  expect(spy).toHaveBeenCalledTimes(1); // exactly once, via the RD-02 protocol
+  expect(rows[0].name).toContain('x');
+});
+
+test('ST-6: custom editor Esc cancels without committing', async () => {
+  const customCol = column<Person, string>({
+    id: 'name',
+    title: 'Name',
+    value: (r) => r.name,
+    parse: (t) => t,
+    set: (r, v) => {
+      r.name = v;
+    },
+    width: 10,
+    editor: { kind: 'custom', create: (field) => new Input({ value: field }) },
+  });
+  const spy = vi.fn<OnCommit<Person>>(() => true);
+  const rows: Person[] = [{ id: 1, name: 'Bo' }];
+  const h = build<Person>([customCol], rows, (r) => r.id, { onCommit: spy });
+  h.loop.dispatch(key('f2'));
+  h.loop.dispatch(key('Z')); // a fresh edit
+  h.loop.dispatch(key('escape'));
+  await tick();
+  expect(rows[0].name).toBe('Bo'); // reverted — never written to the record
+  expect(spy).not.toHaveBeenCalled(); // Esc does not commit
+});
