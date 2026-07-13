@@ -29,7 +29,7 @@ export interface ThemeSeeds {
   readonly info?: Color;
 }
 
-/** What the inspector currently edits — one of the 16 aliases, or one of the 63 concrete roles. */
+/** What the inspector currently edits — one of the 18 aliases, or one of the 63 concrete roles. */
 export type EditTarget =
   { readonly kind: 'alias'; readonly name: keyof ThemeColors } | { readonly kind: 'role'; readonly name: keyof Theme };
 

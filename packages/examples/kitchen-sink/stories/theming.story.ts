@@ -67,7 +67,7 @@ export const themingStory: Story = {
   category: 'Theming',
   title: 'Theme presets',
   rd: 'RD-22',
-  blurb: '13 presets as palette swatches · createTheme → 16 aliases → 63 roles · serialize · setTheme hot-swap.',
+  blurb: '13 presets as palette swatches · createTheme → 18 aliases → 63 roles · serialize · setTheme hot-swap.',
   build(ctx: StoryContext) {
     const g = new Group();
     const swatchY = 2;
@@ -94,7 +94,7 @@ export const themingStory: Story = {
     g.add(at(new Button('~O~K', { onClick: () => {} }), 1, afterSwatches + 2, 8, 2));
     g.add(
       at(
-        new Text('createTheme(seeds) → 16 aliases → 63 roles · serializeTheme/parseTheme · setTheme hot-swaps live.'),
+        new Text('createTheme(seeds) → 18 aliases → 63 roles · serializeTheme/parseTheme · setTheme hot-swaps live.'),
         1,
         afterSwatches + 5,
         Math.max(10, ctx.width - 2),
