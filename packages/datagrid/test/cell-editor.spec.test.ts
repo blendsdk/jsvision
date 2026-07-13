@@ -100,6 +100,9 @@ function build<T>(
   return { grid, loop, overlay, popup, rows, focused, focusedCol, version };
 }
 
+/** Whether the wired popup overlay is showing a hosted popup frame (the ui `combobox.spec` pattern). */
+const popupOpen = (o: Group): boolean => o.state.visible && o.children.some((c) => c instanceof Group);
+
 interface Person {
   id: number;
   name: string;
@@ -385,4 +388,84 @@ test('ST-5(b): a seeded existing key is not clobbered on mount (PF-001 regressio
   await tick();
   expect(spy).toHaveBeenCalledWith(expect.objectContaining({ value: '7' })); // NOT clobbered to ''
   expect(rows[0].customerId).toBe('7');
+});
+
+const textCol = column<Person, string>({
+  id: 'name',
+  title: 'Name',
+  value: (r) => r.name,
+  parse: (t) => t,
+  set: (r, v) => {
+    r.name = v;
+  },
+  width: 10,
+  editor: { kind: 'text' },
+});
+
+// ST-7 — F2/Enter mount the type-appropriate widget and focus the single pinned target per kind:
+// the widget itself for the leaf editors (text/boolean), and `editor.input` for the Group editors
+// (date/enum/lookup, whose `.input` is their only focusable descendant).
+for (const openKey of ['f2', 'enter'] as const) {
+  test(`ST-7: ${openKey} mounts each editor and focuses its single pinned target`, () => {
+    // text → Input (a focusable leaf) — getFocused() is the widget.
+    {
+      const h = build<Person>([textCol], [{ id: 1, name: 'Ada' }], (r) => r.id);
+      h.loop.dispatch(key(openKey));
+      expect(h.loop.getFocused()).toBeInstanceOf(Input);
+    }
+    // boolean → CheckGroup (a focusable leaf) — getFocused() is the widget.
+    {
+      const h = build<Flag>([activeCol], [{ id: 1, active: false }], (r) => r.id);
+      h.loop.dispatch(key(openKey));
+      expect(h.loop.getFocused()).toBeInstanceOf(CheckGroup);
+    }
+    // date → DatePicker (a Group) — getFocused() === editor.input.
+    {
+      const h = build<Due>([dueCol], [{ id: 1, due: '2026-07-13' }], (r) => r.id);
+      h.loop.dispatch(key(openKey));
+      const focused = h.loop.getFocused();
+      const editor = focused?.parent;
+      expect(editor).toBeInstanceOf(DatePicker);
+      if (editor instanceof DatePicker) expect(focused).toBe(editor.input);
+    }
+    // enum → ComboBox (a Group) — getFocused() === editor.input.
+    {
+      const h = build<Order>([statusCol], [{ id: 1, status: 'open' }], (r) => r.id);
+      h.loop.dispatch(key(openKey));
+      const focused = h.loop.getFocused();
+      const editor = focused?.parent;
+      expect(editor).toBeInstanceOf(ComboBox);
+      if (editor instanceof ComboBox) expect(focused).toBe(editor.input);
+    }
+    // lookup → ComboBox (a Group) — getFocused() === editor.input.
+    {
+      const h = build<Cust>([custCol], [{ id: 1, customerId: '' }], (r) => r.id);
+      h.loop.dispatch(key(openKey));
+      const focused = h.loop.getFocused();
+      const editor = focused?.parent;
+      expect(editor).toBeInstanceOf(ComboBox);
+      if (editor instanceof ComboBox) expect(focused).toBe(editor.input);
+    }
+  });
+}
+
+// ST-8 — F4 on a lookup cell begins the edit AND opens the value-help dropdown in one press. Opening
+// the dropdown moves focus into the popup list, so the editor is located via the mount overlay.
+test('ST-8: F4 on a lookup cell mounts the editor and opens the dropdown', () => {
+  const h = build<Cust>([custCol], [{ id: 1, customerId: '' }], (r) => r.id);
+  h.loop.dispatch(key('f4'));
+  expect(h.overlay.children.length).toBe(1); // an editor mounted over the cell
+  const editorHost = h.overlay.children[0];
+  const editor = editorHost instanceof Group ? editorHost.children[0] : undefined;
+  expect(editor).toBeInstanceOf(ComboBox);
+  expect(popupOpen(h.popup)).toBe(true); // the dropdown is open (one press)
+});
+
+// ST-8 — F4 on a read-only cell mounts nothing and opens no dropdown.
+test('ST-8: F4 on a read-only cell is a no-op', () => {
+  const roCol = column<Person, number>({ id: 'id', title: 'ID', value: (r) => r.id }); // no parse/set
+  const h = build<Person>([roCol], [{ id: 1, name: 'Ada' }], (r) => r.id);
+  h.loop.dispatch(key('f4'));
+  expect(h.loop.getFocused()).toBe(h.grid); // no editor took focus
+  expect(popupOpen(h.popup)).toBe(false);
 });

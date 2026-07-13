@@ -144,10 +144,11 @@ export interface EditController {
    * an in-flight commit on that cell, or an already-open editor is rejected.
    *
    * @param ev The dispatch envelope carrying the focus seam.
-   * @param opts `replaceWith` seeds the field with a typed character (a printable begin-edit).
+   * @param opts `replaceWith` seeds the field with a typed character (a printable begin-edit);
+   *   `openDropdown` auto-opens the dropdown when the mounted editor is a value-help `ComboBox` (F4).
    * @returns Whether an editor was opened.
    */
-  beginEdit(ev: DispatchEvent, opts?: { replaceWith?: string }): boolean;
+  beginEdit(ev: DispatchEvent, opts?: { replaceWith?: string; openDropdown?: boolean }): boolean;
   /** Whether an editor is currently open. */
   isEditing(): boolean;
 }
@@ -175,7 +176,7 @@ export function createEditController<T>(host: EditHost<T>): EditController {
   // begin-edit) on a cell whose commit is still resolving is ignored rather than overlapping.
   const committing = new Set<string>();
 
-  function beginEdit(ev: DispatchEvent, opts?: { replaceWith?: string }): boolean {
+  function beginEdit(ev: DispatchEvent, opts?: { replaceWith?: string; openDropdown?: boolean }): boolean {
     if (state.kind !== 'idle') return false;
     const cell = host.currentCell();
     if (cell === null) return false;
@@ -186,7 +187,9 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     const seed =
       opts?.replaceWith ?? (tcol.format ? tcol.format(tcol.value(cell.row), cell.row) : String(tcol.value(cell.row)));
     const field = signal(seed);
-    let editor: View | null = null;
+    // A holder read back after the mount — the editor is built inside the overlay's root (below), and a
+    // closure-assigned local would not narrow cleanly for the read.
+    const built: { editor: View | null } = { editor: null };
     const dispose = mountCellOverlay({
       host: host.overlay,
       loop: { focusView: (v: View) => ev.focusView?.(v) },
@@ -195,22 +198,34 @@ export function createEditController<T>(host: EditHost<T>): EditController {
       // Built INSIDE the mount's reactive root so a typed editor's field bridges (which create their
       // effects eagerly at construction) are owned by that scope and disposed when the overlay closes.
       build: () => {
-        editor = createCellEditor(tcol, field, { overlay: host.overlay }, cell.row);
-        if (editor === null) return null; // a read-only editor kind → mount nothing
+        const e = createCellEditor(tcol, field, { overlay: host.overlay }, cell.row);
+        built.editor = e;
+        if (e === null) return null; // a read-only editor kind → mount nothing
         const editorHost = new Group();
-        editor.layout = { position: 'fill' };
-        editorHost.add(editor);
+        e.layout = { position: 'fill' };
+        editorHost.add(e);
         // Enter/Esc bubble up the focus chain from the editor (which leaves them unhandled) to this host.
         editorHost.onEvent = (ev2: DispatchEvent): void => onEditorKey(ev2);
         return editorHost;
       },
     });
+    const editor = built.editor;
     if (editor === null) {
       dispose(); // tear down the empty root the null build created
       return false; // defensive — isEditable guaranteed an editor unless the kind is explicitly readonly
     }
     focusEditor(ev, editor); // focus the inner editor (its `.input` for Group editors) so keys land + bubble
     state = { kind: 'editing', cell, field, editor, dispose };
+    if (opts?.openDropdown && editor instanceof ComboBox) {
+      // Value help (F4): open the dropdown via the ComboBox's public Alt+Down trigger (`open()` is
+      // protected). The spread reuses the real envelope's popupHost/focusView, so it opens exactly as a
+      // user's Alt+Down would; a non-ComboBox editor just begins the edit (the guard skips the open).
+      editor.onEvent({
+        ...ev,
+        event: { type: 'key', key: 'down', ctrl: false, alt: true, shift: false },
+        handled: false,
+      });
+    }
     return true;
   }
 
