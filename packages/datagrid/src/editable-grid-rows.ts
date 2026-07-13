@@ -18,8 +18,8 @@ import type { GridColumn } from './column.js';
 import { isEditable } from './column.js';
 import type { OnCommit } from './commit.js';
 import type { CellRect } from './overlay.js';
-import { createEditController } from './editing.js';
-import type { CellRef, EditController } from './editing.js';
+import { createEditController, cellKey } from './editing.js';
+import type { CellRef, EditController, DirtyRegistry } from './editing.js';
 
 /** Clamp `v` into `[lo, hi]` (returns `lo` when the range is empty). */
 function clamp(v: number, lo: number, hi: number): number {
@@ -40,6 +40,8 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
   rowKey: (row: T) => string | number;
   /** Bump-on-write so an in-place `set` repaints the mutated row. */
   bumpVersion: () => void;
+  /** The shared dirty registry (pending-commit markers); omit to disable dirty tracking. */
+  dirty?: DirtyRegistry;
 }
 
 /**
@@ -88,6 +90,8 @@ export class EditableGridRows<T> extends GridRows<T> {
   protected readonly rowKey: (row: T) => string | number;
   /** Bump-on-write repaint hook (the container owns the `version` signal). */
   protected readonly bumpVersion: () => void;
+  /** The shared dirty registry (pending-commit markers), or `undefined` when dirty tracking is off. */
+  protected readonly dirty?: DirtyRegistry;
   /** The in-cell editing lifecycle controller. */
   protected readonly controller: EditController;
 
@@ -102,6 +106,7 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.onCommit = cfg.onCommit;
     this.rowKey = cfg.rowKey;
     this.bumpVersion = cfg.bumpVersion;
+    this.dirty = cfg.dirty;
     // The controller reaches this body only through the EditHost seam below — no access to protected state.
     this.controller = createEditController<T>({
       body: this,
@@ -109,6 +114,7 @@ export class EditableGridRows<T> extends GridRows<T> {
       typedColumns: this.typedColumns,
       onCommit: this.onCommit,
       bumpVersion: this.bumpVersion,
+      dirty: this.dirty,
       currentCell: () => this.currentCell(),
       cellRect: () => this.cellRect(),
       advanceRow: () => this.advanceRow(),
@@ -119,6 +125,14 @@ export class EditableGridRows<T> extends GridRows<T> {
         () => this.focusedCol(),
         () => undefined,
       );
+      // Repaint when the dirty set changes, so the `•` markers appear/clear reactively.
+      const registry = this.dirty;
+      if (registry !== undefined) {
+        this.bind(
+          () => registry.keys(),
+          () => undefined,
+        );
+      }
     });
   }
 
@@ -246,6 +260,59 @@ export class EditableGridRows<T> extends GridRows<T> {
   override draw(ctx: DrawContext): void {
     super.draw(ctx); // base paints the rows (incl. the focused row in listFocused) and sets topItem
     this.paintCursorCell(ctx);
+    this.paintDirtyMarkers(ctx);
+  }
+
+  /**
+   * Overpaint a `•` in the `gridDirty` foreground on every visible cell that has a pending commit. The
+   * marker foreground is composited over whatever background the cell already shows (the cursor cell,
+   * the focused/selected row, a zebra stripe, or a normal row), so it never punches a hole in a
+   * coloured row. `•` measures one cell, so it never splits a wide neighbour.
+   *
+   * @param ctx The clipped, view-local paint context.
+   */
+  protected paintDirtyMarkers(ctx: DrawContext): void {
+    const registry = this.dirty;
+    if (registry === undefined) return;
+    const display = this.display();
+    const range = display.length;
+    if (range === 0) return;
+
+    const width = ctx.size.width;
+    const geom = this.geometry(width);
+    const maxIndent = Math.max(0, geom.totalWidth - width);
+    const indent = Math.min(maxIndent, Math.max(0, this.indent()));
+    const active = this.state.focused;
+    const focusedRow = clamp(this.focused(), 0, range - 1);
+    const focusedCol = clamp(this.focusedCol(), 0, this.columns.length - 1);
+    const selected = this.selected();
+    const dirtyFg = ctx.color('gridDirty').fg;
+    const cursorBg = ctx.color('gridCursor').bg;
+
+    for (let i = 0; i < ctx.size.height; i += 1) {
+      const item = this.topItem + i;
+      if (item >= range) break;
+      const rk = this.rowKey(display[item]);
+      for (let c = 0; c < this.columns.length; c += 1) {
+        const w = geom.widths[c];
+        if (w <= 0 || !registry.has(cellKey(rk, this.typedColumns[c].id))) continue;
+        // Recompute the cell's background so the marker composites onto it (the base's row-colour
+        // priority is focused > selected > zebra > normal; the active focused cell shows the cursor bg).
+        const bg =
+          active && item === focusedRow && c === focusedCol
+            ? cursorBg
+            : item === focusedRow
+              ? active
+                ? ctx.color('listFocused').bg
+                : ctx.color('listSelected').bg
+              : item === selected
+                ? ctx.color('listSelected').bg
+                : this.zebra && (item & 1) === 1
+                  ? ctx.color('staticText').bg
+                  : ctx.color('listNormal').bg;
+        ctx.text(geom.starts[c] - indent + w - 1, i, '•', { fg: dirtyFg, bg });
+      }
+    }
   }
 
   /**

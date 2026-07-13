@@ -37,6 +37,58 @@ const KEY_SEP = String.fromCharCode(0);
  */
 export const cellKey = (rowKey: string | number, columnId: string): string => `${rowKey}${KEY_SEP}${columnId}`;
 
+/** A reactive registry of cells with a pending (not-yet-confirmed) commit. */
+export interface DirtyRegistry {
+  /** Mark a cell key pending. */
+  add(key: string): void;
+  /** Clear a cell key. */
+  delete(key: string): void;
+  /** Whether a cell key is pending — a reactive read (re-runs in an effect on change). */
+  has(key: string): boolean;
+  /** The current pending set — a reactive read (for the row/grid rollups and the marker overpaint). */
+  keys(): ReadonlySet<string>;
+}
+
+/**
+ * Create a reactive dirty registry. `add`/`delete` publish a **fresh** `Set` reference so effects that
+ * read `has`/`keys` re-run, driving the `•` marker overpaint and the `isDirty` rollups reactively.
+ *
+ * @returns A {@link DirtyRegistry}.
+ * @example
+ * ```ts
+ * import { createDirtyRegistry, cellKey } from '@jsvision/datagrid';
+ * const dirty = createDirtyRegistry();
+ * dirty.add(cellKey(1, 'name'));
+ * dirty.has(cellKey(1, 'name')); // true
+ * ```
+ */
+export function createDirtyRegistry(): DirtyRegistry {
+  const set = signal<ReadonlySet<string>>(new Set());
+  const replace = (mut: (s: Set<string>) => void): void => {
+    const next = new Set(set());
+    mut(next);
+    set.set(next); // a fresh Set reference so reactive readers re-run
+  };
+  return {
+    add: (k) => {
+      if (!set().has(k)) {
+        replace((s) => {
+          s.add(k);
+        });
+      }
+    },
+    delete: (k) => {
+      if (set().has(k)) {
+        replace((s) => {
+          s.delete(k);
+        });
+      }
+    },
+    has: (k) => set().has(k),
+    keys: () => set(),
+  };
+}
+
 /** The cell an edit targets. */
 export interface CellRef<T> {
   /** The row record. */
@@ -64,6 +116,8 @@ export interface EditHost<T> {
   readonly onCommit?: OnCommit<T>;
   /** Bump-on-write so an in-place `set` repaints the mutated row. */
   readonly bumpVersion: () => void;
+  /** The shared dirty registry (pending-commit markers); omit to disable dirty tracking. */
+  readonly dirty?: DirtyRegistry;
   /** The focused cell (row + column), or `null` when the grid is empty. */
   currentCell(): CellRef<T> | null;
   /** The focused cell's rect in body-local coordinates (for the overlay mount). */
@@ -175,6 +229,7 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     const value = tcol.parse!(field());
     const previous = tcol.value(cell.row);
     committing.add(ck);
+    host.dirty?.add(ck); // mark the cell pending until the commit resolves
     const res = await commitCell({
       row: cell.row,
       columnId: cell.columnId,
@@ -185,6 +240,7 @@ export function createEditController<T>(host: EditHost<T>): EditController {
       onCommit: host.onCommit,
     });
     host.bumpVersion(); // repaint the new (or reverted) value — the row mutated in place
+    host.dirty?.delete(ck); // the source now reflects the value (committed or reverted) — no longer pending
     committing.delete(ck);
     if (res.committed) {
       closeEditor();

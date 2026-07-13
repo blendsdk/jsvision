@@ -31,6 +31,11 @@ export type { CellRect } from './overlay.js';
 export { createCellEditor } from './cell-editor.js';
 export type { CellEditorHost } from './cell-editor.js';
 
+// Dirty tracking — the reactive pending-commit registry and the NUL-joined `cellKey` it is keyed by
+// (the container owns the registry; the grid body paints its `•` markers). The controller is internal.
+export { createDirtyRegistry, cellKey } from './editing.js';
+export type { DirtyRegistry } from './editing.js';
+
 // The read-only grid container — composes the promoted engine over the column model and data source.
 export { EditableDataGrid } from './grid.js';
 export type { EditableDataGridOptions } from './grid.js';
