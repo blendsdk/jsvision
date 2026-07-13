@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 03:20
-> **Progress**: 0/43 tasks (0%)
+> **Last Updated**: 2026-07-13 12:32
+> **Progress**: 9/43 tasks (21%)
 > **CodeOps Skills Version**: 3.4.1
 
 ## Overview
@@ -56,23 +56,23 @@ The three small additions everything else builds on (03-01). Blocks Phases 2–6
 
 **Reference**: [03-01](03-01-additive-surface.md) · [07 ST-15, ST-16]
 
-- [ ] 1.1.1 Write the editor-seam spec (ST-15: `column.set` writes; `isEditable` ⇔ `parse` && `set`; `createCellEditor` → `Input` for editable, `null` for read-only) + the theme spec (ST-16: `gridCursor`/`gridDirty` byte-frozen + `encode()` non-throw at all depths) — `packages/datagrid/test/cell-editor.spec.test.ts`, `packages/datagrid/test/grid-theme.spec.test.ts`
-- [ ] 1.1.2 Run — verify both FAIL (red: symbols/roles not yet added)
+- [x] 1.1.1 Write the editor-seam spec (ST-15: `column.set` writes; `isEditable` ⇔ `parse` && `set`; `createCellEditor` → `Input` for editable, `null` for read-only) + the theme spec (ST-16: `gridCursor`/`gridDirty` byte-frozen + `encode()` non-throw at all depths) — `packages/datagrid/test/cell-editor.spec.test.ts`, `packages/datagrid/test/grid-theme.spec.test.ts` ✅ (completed: 2026-07-13 12:19)
+- [x] 1.1.2 Run — verify both FAIL (red: symbols/roles not yet added) ✅ (completed: 2026-07-13 12:19)
 
 ### Step 1.2: Implementation
 
 **Reference**: [03-01 §1–3] · AR #1, #2, #3 (plan)
 
-- [ ] 1.2.1 Add `gridCursor` (black-on-brightWhite) + `gridDirty` (brightRed fg) roles + plain-language JSDoc — `packages/core/src/engine/color/theme.ts`
-- [ ] 1.2.2 Add `'gridCursor'`,`'gridDirty'` to each full-inventory allowlist (`LATER_ADDITIVE_ROLES`) — `packages/ui/test/{tabs,editor,feedback,date,color}-theme.spec.test.ts` (sanctioned additive edit, not an oracle change)
-- [ ] 1.2.3 Add `set?: (row, value: V) => void` to `GridColumn` + the `isEditable(col)` predicate (both with `@example`, no banned refs); export `isEditable` — `packages/datagrid/src/column.ts`, `src/index.ts`
-- [ ] 1.2.4 Add `createCellEditor(column, field, host)` + `CellEditorHost` + the default text-`Input` host (with `@example`); export — `packages/datagrid/src/cell-editor.ts`, `src/index.ts`
-- [ ] 1.2.5 Run the specs — verify they PASS (green) + `yarn workspace @jsvision/core test check:docs` + `yarn workspace @jsvision/datagrid check:docs`
+- [x] 1.2.1 Add `gridCursor` (black-on-white `#ffffff`) + `gridDirty` (brightRed fg) roles + plain-language JSDoc — `packages/core/src/engine/color/theme.ts` ✅ (completed: 2026-07-13 12:27) — mechanical correction: plan snippet said `PALETTE.brightWhite`, which the DOS-16 `PALETTE` has no key for; used `PALETTE.white` (`#ffffff`, the intended pure bright white, matching the `calendarCursor` precedent)
+- [x] 1.2.2 Add `'gridCursor'`,`'gridDirty'` to each full-inventory allowlist (`LATER_ADDITIVE_ROLES`) — `packages/ui/test/{tabs,editor,feedback,date,color}-theme.spec.test.ts` (sanctioned additive edit, not an oracle change) ✅ (completed: 2026-07-13 12:27)
+- [x] 1.2.3 Add `set?: (row, value: V) => void` to `GridColumn` + the `isEditable(col)` predicate (both with `@example`, no banned refs); export `isEditable` — `packages/datagrid/src/column.ts`, `src/index.ts` ✅ (completed: 2026-07-13 12:27)
+- [x] 1.2.4 Add `createCellEditor(column, field, host)` + `CellEditorHost` + the default text-`Input` host (with `@example`); export — `packages/datagrid/src/cell-editor.ts`, `src/index.ts` ✅ (completed: 2026-07-13 12:27)
+- [x] 1.2.5 Run the specs — verify they PASS (green) + `yarn workspace @jsvision/core test check:docs` + `yarn workspace @jsvision/datagrid check:docs` ✅ (completed: 2026-07-13 12:27)
 
 ### Step 1.3: Hardening
 
-- [ ] 1.3.1 Write the round-trip impl test (ST-17: `format`-seed / printable-replace / `parse`-commit; host arg ignored by `Input`) — `packages/datagrid/test/cell-editor.impl.test.ts`
-- [ ] 1.3.2 Full verify (datagrid + core: typecheck/test/check:docs); confirm no other theme tripwire fired
+- [x] 1.3.1 Write the round-trip impl test (ST-17: `format`-seed / printable-replace / `parse`-commit; host arg ignored by `Input`) — `packages/datagrid/test/cell-editor.impl.test.ts` ✅ (completed: 2026-07-13 12:32)
+- [x] 1.3.2 Full verify (datagrid + core: typecheck/test/check:docs); confirm no other theme tripwire fired ✅ (completed: 2026-07-13 12:32) — core tripwire caught+fixed: `monochromeTheme` (presets.ts) + `rolesFromAliases` (roles.ts) also needed the two roles
 
 **Deliverables**: `column.set`+`isEditable`, `createCellEditor`+default `Input`, two byte-frozen core roles.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs` + `yarn workspace @jsvision/core test check:docs`

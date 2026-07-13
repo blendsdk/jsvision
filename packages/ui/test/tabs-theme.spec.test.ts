@@ -137,6 +137,8 @@ test('ST-30: the tab* roles are the ONLY additive keys — every existing role i
     'terminalNormal', // RD-08 editor family (PA-8; guarded by editor-theme.spec)
     'sliderTrack',
     'sliderThumb', // theme-designer Slider control (guarded by slider-theme.spec)
+    'gridCursor',
+    'gridDirty', // RD-02 datagrid editing engine (guarded by grid-theme.spec)
   ] as const;
   const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...TAB_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);

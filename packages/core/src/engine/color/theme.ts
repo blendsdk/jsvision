@@ -208,6 +208,19 @@ export interface Theme {
    */
   readonly colorMarker: ThemeRole;
   /**
+   * The focused **cell** highlight in an editable data grid — a filled
+   * black-on-white reverse block drawn over the focused row so the cursor cell
+   * reads distinctly inside the row highlight. Painted only while the grid body
+   * has focus.
+   */
+  readonly gridCursor: ThemeRole;
+  /**
+   * The pending-commit marker colour in an editable data grid: the `•` drawn on a
+   * cell whose edit has not yet been confirmed. Its foreground is composited over
+   * the cell's own background at draw time, so the stored background is nominal.
+   */
+  readonly gridDirty: ThemeRole;
+  /**
    * A file dialog's info pane — the strip below the dialog that reads out the
    * expanded path and the focused entry's name/size/date/time: cyan on blue.
    */
@@ -338,6 +351,8 @@ export const defaultTheme: Theme = {
   calendarDisabled: { fg: PALETTE.darkGray, bg: PALETTE.cyan },
   calendarWeekNumber: { fg: PALETTE.black, bg: PALETTE.cyan },
   colorMarker: { fg: PALETTE.black, bg: PALETTE.lightGray },
+  gridCursor: { fg: PALETTE.black, bg: PALETTE.white },
+  gridDirty: { fg: PALETTE.brightRed, bg: PALETTE.black },
   fileInfo: { fg: PALETTE.cyan, bg: PALETTE.blue },
   editorNormal: { fg: PALETTE.yellow, bg: PALETTE.blue },
   editorSelected: { fg: PALETTE.blue, bg: PALETTE.lightGray },

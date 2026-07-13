@@ -28,6 +28,11 @@ export interface GridColumn<T, V = unknown> {
   readonly format?: (value: V, row: T) => string;
   /** Parses edited text back to the typed value (editable columns only). */
   readonly parse?: (text: string) => V;
+  /**
+   * Writes the parsed value back into the record (editable columns only). Pairs with `parse`: a
+   * column is editable exactly when it has both, so an edit round-trips text → value → record.
+   */
+  readonly set?: (row: T, value: V) => void;
   /** Sizing rule (default `'auto'` when adapted): fixed cells, `${n}fr`, or `'auto'`. */
   readonly width?: ColumnWidth;
   /** Text alignment within the column width. */
@@ -66,6 +71,30 @@ export function column<T, V>(col: GridColumn<T, V>): GridColumn<T> {
   // sound: a consumer of `GridColumn<T>` only reads `value(row)` (as `unknown`) and, for display, the
   // string from `format`/`String(value)` — it never feeds a value back into the erased `format`.
   return col as GridColumn<T>;
+}
+
+/**
+ * Whether a column can be edited: it round-trips text through both `parse` (text → value) and `set`
+ * (value → record). A column missing either is read-only — the cursor still lands on it for
+ * navigation, but begin-edit is a no-op.
+ *
+ * @param col The column to test.
+ * @returns `true` when the column defines both `parse` and `set`.
+ * @example
+ * ```ts
+ * import { column, isEditable } from '@jsvision/datagrid';
+ * interface Person { name: string; }
+ * const name = column({
+ *   id: 'name', title: 'Name', value: (r: Person) => r.name,
+ *   parse: (t) => t, set: (r, v) => { r.name = v; },
+ * });
+ * const label = column({ id: 'label', title: 'Label', value: (r: Person) => r.name }); // no parse/set
+ * isEditable(name);  // true
+ * isEditable(label); // false
+ * ```
+ */
+export function isEditable<T>(col: GridColumn<T>): boolean {
+  return typeof col.parse === 'function' && typeof col.set === 'function';
 }
 
 /**

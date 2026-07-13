@@ -15,7 +15,7 @@
 |---------|---------|---------------|----------|--------|--------------|
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done (site-foundation · @jsvision/web runtime · live-example system · TypeDoc API ref) · RD-04/05/07…10 ✏️ drafted | 4/10 RDs | ⬜ | 2026-07-13 |
-| datagrid | [→](features/datagrid/00-roadmap.md) | RD-01 ✅ Done (foundation) · RD-02 🔬 Plan Preflighted (editing-engine) · RD-03…RD-14 🔎 RD Preflighted | 1/14 RDs | 🔄 | 2026-07-13 |
+| datagrid | [→](features/datagrid/00-roadmap.md) | RD-01 ✅ Done (foundation) · RD-02 🔄 Executing (editing-engine) · RD-03…RD-14 🔎 RD Preflighted | 1/14 RDs | 🔄 | 2026-07-13 |
 
 ## Archived
 
