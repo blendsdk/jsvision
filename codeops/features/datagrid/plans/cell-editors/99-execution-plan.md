@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-13 18:20
-> **Progress**: 32/45 tasks (71%) — Phases 1–4 complete
+> **Last Updated**: 2026-07-13 18:25
+> **Progress**: 37/45 tasks (82%) — Phases 1–5 complete
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -185,17 +185,17 @@ Depends on Phase 1 (the switch). Adds the `custom` case (03-01 §4). Delivers AC
 
 **Reference**: [03-01 §4] · [07 ST-6]
 
-- [ ] 5.1.1 Write ST-6 (a `custom` column whose `create` returns the caller's `Input`; `F2` mounts exactly that view; type + `Enter` commits once via the RD-02 protocol; a fresh edit + `Esc` reverts with no `onCommit`) — `packages/datagrid/test/cell-editor.spec.test.ts`
-- [ ] 5.1.2 Run — verify ST-6 FAILs (red: `custom` case not yet present → `default` null)
+- [x] 5.1.1 Write ST-6 (a `custom` column whose `create` returns the caller's `Input`; `F2` mounts exactly that view; type + `Enter` commits once via the RD-02 protocol; a fresh edit + `Esc` reverts with no `onCommit`) — `packages/datagrid/test/cell-editor.spec.test.ts` ✅ (completed: 2026-07-13 18:25)
+- [x] 5.1.2 Run — verify ST-6 FAILs (red: `custom` case not yet present → `default` null) ✅ (completed: 2026-07-13 18:25)
 
 ### Step 5.2: Implementation
 
-- [ ] 5.2.1 Add the `custom` case: `return spec.create ? spec.create(field, host) : null` (the caller's factory gets the field + the existing `CellEditorHost`) — `cell-editor.ts`; document the Enter=commit/Esc=cancel contract in the `create` JSDoc
-- [ ] 5.2.2 Run the spec — verify ST-6 PASSES (green) + `check:docs`
+- [x] 5.2.1 Add the `custom` case: `return spec.create ? spec.create(field, host) : null` (the caller's factory gets the field + the existing `CellEditorHost`) — `cell-editor.ts`; document the Enter=commit/Esc=cancel contract in the `create` JSDoc ✅ (completed: 2026-07-13 18:25)
+- [x] 5.2.2 Run the spec — verify ST-6 PASSES (green) + `check:docs` ✅ (completed: 2026-07-13 18:25)
 
 ### Step 5.3: Hardening
 
-- [ ] 5.3.1 Phase gate: `yarn workspace @jsvision/datagrid typecheck` + `test` + `check:docs` (separately); confirm a `create` returning `null` is treated as read-only (begin-edit rejected)
+- [x] 5.3.1 Phase gate: `yarn workspace @jsvision/datagrid typecheck` + `test` + `check:docs` (separately); confirm a `create` returning `null` is treated as read-only (begin-edit rejected) ✅ (completed: 2026-07-13 18:25)
 
 **Deliverables**: `custom` editor factory honoring the RD-02 commit/cancel protocol.
 **Verify**: `yarn workspace @jsvision/datagrid typecheck test check:docs` (separately)

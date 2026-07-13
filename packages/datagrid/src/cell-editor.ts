@@ -103,7 +103,8 @@ function defaultValidator(kind: CellEditorKind): Validator | undefined {
  *
  * @param column The typed column being edited.
  * @param field The edit-buffer signal (seeded from the cell, parsed back on commit).
- * @param _host What a richer editor uses to open a sub-popup; ignored by the text/numeric inputs.
+ * @param host What a richer editor uses to open a sub-popup, and what a `custom` factory receives;
+ *   ignored by the text/numeric inputs.
  * @param row The row being edited, used to resolve a per-row `editor` function; omit for a static spec.
  * @returns A focusable editor view bound to `field`, or `null` for a read-only column.
  * @example
@@ -123,7 +124,7 @@ function defaultValidator(kind: CellEditorKind): Validator | undefined {
 export function createCellEditor<T>(
   column: GridColumn<T>,
   field: Signal<string>,
-  _host: CellEditorHost,
+  host: CellEditorHost,
   row?: T,
 ): View | null {
   if (!isEditable(column)) return null; // the parse+set editability rule wins over any `editor`
@@ -143,6 +144,10 @@ export function createCellEditor<T>(
     }
     case 'lookup':
       return buildLookupEditor(spec, field);
+    case 'custom':
+      // The caller's factory owns the view; it is bound to `field` and honors the same Enter=commit /
+      // Esc=cancel lifecycle as the built-in editors. A `create` returning `null` reads as read-only.
+      return spec.create ? spec.create(field, host) : null;
     case 'readonly':
     default:
       return null; // explicit read-only opt-out (and the not-yet-built kinds until their case lands)

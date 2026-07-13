@@ -131,6 +131,22 @@ test('resolveSpec: an undefined row falls back to a text Input', () => {
   expect(createCellEditor(perRow, signal(''), { overlay: new Group() })).toBeInstanceOf(Input);
 });
 
+// custom — a `create` that returns null is treated as read-only (createCellEditor returns null, so
+// begin-edit is rejected exactly like a readonly kind).
+test('createCellEditor: a custom create returning null reads as read-only', () => {
+  const nullCustom = column<Locked, string>({
+    id: 'name',
+    title: 'Name',
+    value: (r) => r.name,
+    parse: (t) => t,
+    set: (r, v) => {
+      r.name = v;
+    },
+    editor: { kind: 'custom', create: () => null },
+  });
+  expect(createCellEditor(nullCustom, signal(''), { overlay: new Group() })).toBeNull();
+});
+
 // resolveSpec — a literal spec passes straight through (readonly → null).
 test('resolveSpec: a literal editor spec passes through', () => {
   const ro = column<Locked, string>({
