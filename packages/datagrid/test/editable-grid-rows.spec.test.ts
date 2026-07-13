@@ -61,6 +61,10 @@ function build() {
     selected,
     zebra: false,
     focusedCol,
+    typedColumns: COLS.map((c, i) => ({ id: `c${i}`, title: c.title, value: () => 0 })),
+    overlay: new Group(),
+    rowKey: () => 0,
+    bumpVersion: () => undefined,
   });
   grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
   const stub = new FocusStub();

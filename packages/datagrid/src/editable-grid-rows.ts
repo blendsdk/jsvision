@@ -12,18 +12,34 @@
  * here: an unbound Tab is consumed by the framework's focus traversal before any view sees it.
  */
 import { GridRows, alignCell, stringWidth } from '@jsvision/ui';
-import type { GridRowsConfig, DispatchEvent, DrawContext, Signal } from '@jsvision/ui';
+import type { GridRowsConfig, DispatchEvent, DrawContext, Signal, Group } from '@jsvision/ui';
 import type { KeyEvent } from '@jsvision/core';
+import type { GridColumn } from './column.js';
+import { isEditable } from './column.js';
+import type { OnCommit } from './commit.js';
+import type { CellRect } from './overlay.js';
+import { createEditController } from './editing.js';
+import type { CellRef, EditController } from './editing.js';
 
 /** Clamp `v` into `[lo, hi]` (returns `lo` when the range is empty). */
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
-/** Construction config for {@link EditableGridRows}: the base grid config plus the shared column cursor. */
+/** Construction config for {@link EditableGridRows}: the base grid config plus the editing wiring. */
 export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
   /** The shared column cursor index, owned by the container and injected (so panels can share it). */
   focusedCol: Signal<number>;
+  /** The typed columns (parse/set/format live here; the base `columns` are the engine adapters). */
+  typedColumns: GridColumn<T>[];
+  /** The editor mount host (the container's absolute overlay group). */
+  overlay: Group;
+  /** The optional per-cell veto sink. */
+  onCommit?: OnCommit<T>;
+  /** The row-identity function (from the data source). */
+  rowKey: (row: T) => string | number;
+  /** Bump-on-write so an in-place `set` repaints the mutated row. */
+  bumpVersion: () => void;
 }
 
 /**
@@ -62,13 +78,41 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
 export class EditableGridRows<T> extends GridRows<T> {
   /** The shared column cursor index (the row axis is the base's inherited `focused`). */
   protected readonly focusedCol: Signal<number>;
+  /** The typed columns (parse/set/format), parallel to the base engine `columns`. */
+  protected readonly typedColumns: GridColumn<T>[];
+  /** The absolute overlay group the editor mounts into. */
+  protected readonly overlay: Group;
+  /** The optional per-cell veto sink. */
+  protected readonly onCommit?: OnCommit<T>;
+  /** The row-identity function. */
+  protected readonly rowKey: (row: T) => string | number;
+  /** Bump-on-write repaint hook (the container owns the `version` signal). */
+  protected readonly bumpVersion: () => void;
+  /** The in-cell editing lifecycle controller. */
+  protected readonly controller: EditController;
 
   /**
-   * @param cfg The base grid config plus the injected {@link EditableGridRowsConfig.focusedCol}.
+   * @param cfg The base grid config plus the injected cursor + editing wiring (see {@link EditableGridRowsConfig}).
    */
   constructor(cfg: EditableGridRowsConfig<T>) {
     super(cfg);
     this.focusedCol = cfg.focusedCol;
+    this.typedColumns = cfg.typedColumns;
+    this.overlay = cfg.overlay;
+    this.onCommit = cfg.onCommit;
+    this.rowKey = cfg.rowKey;
+    this.bumpVersion = cfg.bumpVersion;
+    // The controller reaches this body only through the EditHost seam below — no access to protected state.
+    this.controller = createEditController<T>({
+      body: this,
+      overlay: this.overlay,
+      typedColumns: this.typedColumns,
+      onCommit: this.onCommit,
+      bumpVersion: this.bumpVersion,
+      currentCell: () => this.currentCell(),
+      cellRect: () => this.cellRect(),
+      advanceRow: () => this.advanceRow(),
+    });
     this.onMount(() => {
       // Repaint when the column cursor moves (the base already binds focused/display/selected/indent).
       this.bind(
@@ -86,11 +130,63 @@ export class EditableGridRows<T> extends GridRows<T> {
    */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
-    if (inner.type === 'key' && this.handleColKey(inner)) {
-      ev.handled = true;
-      return;
+    if (inner.type === 'key') {
+      if (this.handleColKey(inner)) {
+        ev.handled = true;
+        return;
+      }
+      if (this.tryBeginEdit(inner, ev)) {
+        ev.handled = true;
+        return;
+      }
     }
     super.onEvent(ev);
+  }
+
+  /**
+   * Begin editing on F2/Enter/printable when the focused cell is editable; a read-only cell falls
+   * through to the base (row activate/select), so `Enter`/`Space` still work there.
+   */
+  private tryBeginEdit(inner: KeyEvent, ev: DispatchEvent): boolean {
+    const col = this.typedColumns[this.focusedCol()];
+    if (col === undefined || !isEditable(col)) return false; // read-only → base handles it
+    if (inner.key === 'f2' || inner.key === 'enter') {
+      this.controller.beginEdit(ev);
+      return true; // an editable cell's Enter is begin-edit, never a row activate
+    }
+    // A printable begins the edit and replaces the content. Detection mirrors Input.insertPrintable
+    // (there is no `char` field on a key event): printable iff not a chord and a single code point.
+    if (!inner.ctrl && !inner.alt && (inner.key === 'space' || [...inner.key].length === 1)) {
+      this.controller.beginEdit(ev, { replaceWith: inner.key === 'space' ? ' ' : inner.key });
+      return true;
+    }
+    return false;
+  }
+
+  /** The focused cell (row + column), or `null` when the grid is empty. */
+  private currentCell(): CellRef<T> | null {
+    const rows = this.display();
+    if (rows.length === 0) return null;
+    const row = rows[clamp(this.focused(), 0, rows.length - 1)];
+    const c = clamp(this.focusedCol(), 0, this.typedColumns.length - 1);
+    return { row, rowKey: this.rowKey(row), col: c, columnId: this.typedColumns[c].id };
+  }
+
+  /** The focused cell's rect in body-local coordinates (for the overlay mount). */
+  private cellRect(): CellRect {
+    const width = this.bounds.width;
+    const geom = this.geometry(width);
+    const c = clamp(this.focusedCol(), 0, this.columns.length - 1);
+    const maxIndent = Math.max(0, geom.totalWidth - width);
+    const indent = Math.min(maxIndent, Math.max(0, this.indent()));
+    const range = this.display().length;
+    const y = (range === 0 ? 0 : clamp(this.focused(), 0, range - 1)) - this.topItem;
+    return { x: geom.starts[c] - indent, y, width: geom.widths[c], height: 1 };
+  }
+
+  /** Advance the row cursor to the next row (clamped), keeping the column. */
+  private advanceRow(): void {
+    this.focused.set(clamp(this.focused() + 1, 0, Math.max(0, this.display().length - 1)));
   }
 
   /** Apply a column-cursor / grid-corner key; returns whether it was consumed here. */

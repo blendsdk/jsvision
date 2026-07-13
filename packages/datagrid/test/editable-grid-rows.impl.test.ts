@@ -51,6 +51,10 @@ function build(opts: {
     selected,
     zebra: false,
     focusedCol,
+    typedColumns: opts.cols.map((c, i) => ({ id: `c${i}`, title: c.title, value: () => 0 })),
+    overlay: new Group(),
+    rowKey: () => 0,
+    bumpVersion: () => undefined,
   });
   const height = opts.height ?? 5;
   grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: opts.width, height } };
