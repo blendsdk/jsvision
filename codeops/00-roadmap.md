@@ -1,8 +1,8 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-13
-> **Features**: 0 / 2 done
+> **Last Updated**: 2026-07-14
+> **Features**: 0 / 3 done
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -15,6 +15,7 @@
 |---------|---------|---------------|----------|--------|--------------|
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done (site-foundation · @jsvision/web runtime · live-example system · TypeDoc API ref) · RD-04/05/07…10 ✏️ drafted | 4/10 RDs | ⬜ | 2026-07-13 |
+| jsvision-forms | [→](features/jsvision-forms/00-roadmap.md) | RD-01/02 🔄 executing (form-store) · RD-03/04 ✏️ drafted — first slice, sync Zod | 0/4 RDs | 🔄 | 2026-07-15 |
 
 ## Archived
 
