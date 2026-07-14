@@ -1,0 +1,64 @@
+{
+  "name": "@jsvision/forms",
+  "version": "0.2.0",
+  "description": "jsvision forms — a headless, reactive form/field store with synchronous Zod validation for @jsvision/ui.",
+  "keywords": [
+    "tui",
+    "terminal",
+    "forms",
+    "validation",
+    "zod",
+    "reactive",
+    "widgets",
+    "typescript"
+  ],
+  "homepage": "https://github.com/blendsdk/jsvision#readme",
+  "bugs": "https://github.com/blendsdk/jsvision/issues",
+  "license": "MIT",
+  "author": "TrueSoftware B.V. <gevik@truesoftware.nl>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/forms"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --project unit --passWithNoTests",
+    "test:e2e": "vitest run --project e2e --passWithNoTests",
+    "check:deps": "node ../../scripts/check-no-native-deps.mjs .",
+    "check:docs": "node ../../scripts/check-jsdoc.mjs ."
+  },
+  "dependencies": {
+    "@jsvision/ui": "0.2.0"
+  },
+  "peerDependencies": {
+    "zod": "^4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "vitest": "^4.1.10",
+    "zod": "^4.4.3"
+  }
+}
