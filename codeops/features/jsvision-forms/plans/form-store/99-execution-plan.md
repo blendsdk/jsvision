@@ -2,8 +2,8 @@
 
 > **Implements**: jsvision-forms/RD-01 + RD-02 · **Feature**: jsvision-forms
 > **CodeOps Skills Version**: 3.7.0
-> **Progress**: 3/16 tasks (19%)
-> **Last Updated**: 2026-07-15 01:33
+> **Progress**: 6/16 tasks (38%)
+> **Last Updated**: 2026-07-15 01:40
 
 Specification-first ordering per feature phase: **Spec Tests → Implementation → Impl Tests &
 Hardening**. Build in a separate worktree. Commits go through **/gitcm** (commit) or **/gitcmp**
@@ -32,13 +32,13 @@ Stand up `@jsvision/forms` by mirroring `@jsvision/files` (03-01 §1). No featur
 
 ### Session A — Spec Tests (write oracles, go red)
 
-- [ ] **T1.1** `test/store.spec.test.ts` — ST-01…ST-10 (value model, stable handles, rawValues,
+- [x] **T1.1** `test/store.spec.test.ts` — ST-01…ST-10 (value model, stable handles, rawValues,
       values, dirty incl. arrays, reset, isValid pre-touch, submit gate, unknown-key throw, no-warn/
-      no-dispose). *Ref: 07 §ST-01…10.*
-- [ ] **T1.2** `test/validation.spec.test.ts` — ST-11…ST-17 (single eager validation, field error
+      no-dispose). *Ref: 07 §ST-01…10.* ✅ (completed: 2026-07-15 01:40) — + shared `test/fixtures.ts`; dropped `--passWithNoTests`.
+- [x] **T1.2** `test/validation.spec.test.ts` — ST-11…ST-17 (single eager validation, field error
       first/live, form-level path-less, field-routed refine, coercion, message passthrough, touched
-      store-half). *Ref: 07 §ST-11…17.*
-- [ ] **T1.3** Confirm **red** — all ST fail against the empty barrel (no implementation yet).
+      store-half). *Ref: 07 §ST-11…17.* ✅ (completed: 2026-07-15 01:40)
+- [x] **T1.3** Confirm **red** — all ST fail against the empty barrel (no implementation yet). ✅ (completed: 2026-07-15 01:40) — 17/17 spec tests red.
 
 ### Session B — Implementation (go green)
 
