@@ -16,7 +16,7 @@ AR-06 (`values()`→`z.output<S>|null`, `rawValues()` always), AR-07 (`submit`),
 `.refine`; path-less→`form.errors()`), AR-12 (dirty/baseline), AR-13 (reset), AR-18 (typing), AR-19
 (unknown-key throw), AR-21 (stable handles), AR-22 (security), AR-24 (message passthrough).
 
-## Plan-level items (confirmed by the user 2026-07-14)
+## Plan-level items (confirmed by the user 2026-07-14; PA-7 added during execution 2026-07-15)
 
 | PA | Item | Resolution | Status |
 |----|------|------------|--------|
@@ -26,6 +26,7 @@ AR-06 (`values()`→`z.output<S>|null`, `rawValues()` always), AR-07 (`submit`),
 | PA-4 | Module breakdown for `packages/forms/src/` | `index.ts` (barrel) · `types.ts` (`Form`/`Field`/`CreateFormOptions`) · `errors.ts` (`FormFieldError`) · `create-form.ts` (the store: field enumeration, value/dirty/reset/submit, `createRoot`) · `validation.ts` (the `safeParse` computed + `error`/`errors`/`isValid`/`values` derivations). All ≤500 lines. | ✅ Resolved |
 | PA-5 | Field enumeration & signal creation — how the store knows the field set without runtime schema introspection (AR-2.6 deferred that). | Fields = `Object.keys(initial)`; the store **eagerly** creates one `value` signal + one `touched` signal per field at `createForm` time (⇒ complete `rawValues()`, stable handles AR-21, working dirty/touched). No `schema.shape` access — validation is `schema.safeParse(rawValues)`. | ✅ Resolved |
 | PA-6 | `FormFieldError` base & the baseline snapshot | `FormFieldError extends Error` (native; no cross-package error coupling this slice). Baseline = a defensively-copied snapshot of `initial` captured at `createForm` (array values copied) so `reset()`/`dirty()` compare against an immutable original. | ✅ Resolved |
+| PA-7 (runtime) | The documented generic bound `S extends z.ZodObject<any>` fails the repo's `@typescript-eslint/no-explicit-any` lint rule (error). | **Mechanical correction:** use `z.ZodObject<z.ZodRawShape>` — a lint-clean, behavior-preserving expression of the same bound. Re-verified against real zod 4.4.3: the refined fixture is still accepted, raw vs coerced types infer correctly, and an unknown field key is still a compile error (standalone contract probe, exit 0). No user round-trip (equivalent bound forced by the repo lint policy). | ✅ Resolved |
 
 ## Gate status
 

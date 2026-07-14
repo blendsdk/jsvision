@@ -2,8 +2,8 @@
 
 > **Implements**: jsvision-forms/RD-01 + RD-02 · **Feature**: jsvision-forms
 > **CodeOps Skills Version**: 3.7.0
-> **Progress**: 6/16 tasks (38%)
-> **Last Updated**: 2026-07-15 01:40
+> **Progress**: 12/16 tasks (75%)
+> **Last Updated**: 2026-07-15 01:50
 
 Specification-first ordering per feature phase: **Spec Tests → Implementation → Impl Tests &
 Hardening**. Build in a separate worktree. Commits go through **/gitcm** (commit) or **/gitcmp**
@@ -42,18 +42,18 @@ Stand up `@jsvision/forms` by mirroring `@jsvision/files` (03-01 §1). No featur
 
 ### Session B — Implementation (go green)
 
-- [ ] **T1.4** `src/types.ts` — `Field`, `Form`, `CreateFormOptions` (typing contract AR-18).
-      *Ref: 03-01 §3.*
-- [ ] **T1.5** `src/errors.ts` — `FormFieldError extends Error` (PA-6). *Ref: 03-01 §4.*
-- [ ] **T1.6** `src/create-form.ts` — `createForm` via `createRoot` (PA-1); baseline snapshot (PA-6);
+- [x] **T1.4** `src/types.ts` — `Field`, `Form`, `CreateFormOptions` (typing contract AR-18).
+      *Ref: 03-01 §3.* ✅ (completed: 2026-07-15 01:50) — bound is `z.ZodObject<z.ZodRawShape>` (PA-7, lint).
+- [x] **T1.5** `src/errors.ts` — `FormFieldError extends Error` (PA-6). *Ref: 03-01 §4.* ✅ (completed: 2026-07-15 01:50)
+- [x] **T1.6** `src/create-form.ts` — `createForm` via `createRoot` (PA-1); baseline snapshot (PA-6);
       field enumeration + eager value/touched signals (PA-5); memoized handles + unknown-key throw
-      (AR-19/21); `rawValues`/`dirty`/`reset`/`submit` (AR-06/12/13/07). *Ref: 03-01 §5–6.*
-- [ ] **T1.7** `src/validation.ts` — the single `safeParse` `computed` + `error`/`errors`/`isValid`/
-      `values` derivations (AR-02/03/04/06/11); wire them into the field handles + form. *Ref: 03-02.*
-- [ ] **T1.8** `src/index.ts` — export `createForm`, `FormFieldError`, and the `Form`/`Field`/
-      `CreateFormOptions` types; nothing internal. *Ref: 03-01 §7.*
-- [ ] **T1.9** **Green** — `yarn workspace @jsvision/forms test` passes ST-01…ST-17. Fix code, never
-      the spec oracles.
+      (AR-19/21); `rawValues`/`dirty`/`reset`/`submit` (AR-06/12/13/07). *Ref: 03-01 §5–6.* ✅ (completed: 2026-07-15 01:50)
+- [x] **T1.7** `src/validation.ts` — the single `safeParse` `computed` + `error`/`errors`/`isValid`/
+      `values` derivations (AR-02/03/04/06/11); wire them into the field handles + form. *Ref: 03-02.* ✅ (completed: 2026-07-15 01:50)
+- [x] **T1.8** `src/index.ts` — export `createForm`, `FormFieldError`, and the `Form`/`Field`/
+      `CreateFormOptions` types; nothing internal. *Ref: 03-01 §7.* ✅ (completed: 2026-07-15 01:50)
+- [x] **T1.9** **Green** — `yarn workspace @jsvision/forms test` passes ST-01…ST-17. Fix code, never
+      the spec oracles. ✅ (completed: 2026-07-15 01:50) — 17/17 spec tests green; typecheck + check:docs green.
 
 ### Session C — Impl Tests & Hardening
 
