@@ -50,6 +50,16 @@ export interface GridColumn<T, V = unknown> {
   readonly set?: (row: T, value: V) => void;
   /** Sizing rule (default `'auto'` when adapted): fixed cells, `${n}fr`, or `'auto'`. */
   readonly width?: ColumnWidth;
+  /**
+   * Minimum width in cells. A resize clamps to this floor and an `'auto'`/`fr` column never
+   * apportions below it. Defaults to a small built-in floor when omitted.
+   */
+  readonly minWidth?: number;
+  /**
+   * Maximum width in cells. Caps apportionment and bounds auto-fit (auto-fit falls back to a
+   * generous built-in default when omitted). An interactive resize is not capped unless this is set.
+   */
+  readonly maxWidth?: number;
   /** Text alignment within the column width. */
   readonly align?: ColumnAlign;
   /**
@@ -163,6 +173,8 @@ export function toEngineColumn<T, V>(c: GridColumn<T, V>): Column<T> {
       return c.format ? c.format(v, row) : String(v);
     },
     width: c.width ?? 'auto',
+    minWidth: c.minWidth,
+    maxWidth: c.maxWidth,
     align: c.align,
     compare: (a, b) => defaultCompare(c.value(a), c.value(b)),
   };
