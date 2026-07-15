@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-07-12
 > **Last Updated**: 2026-07-15
-> **Progress**: 6 / 15 (40%) · RD-05 done (sorting) · RD-06 done (filtering) · RD-15 drafted (showcase app)
+> **Progress**: 6 / 15 (40%) · RD-05 done (sorting) · RD-06 done (filtering) · RD-15 preflighted (showcase app)
 > **CodeOps Skills Version**: 3.4.1
 
 Enterprise-class editable data grid for the jsvision TUI SDK (SAP ALV / MS-Access / Paradox-class),
@@ -37,4 +37,4 @@ virtual scroll, and the enterprise column/sort/filter/footer surface. Zero-Ambig
 | RD-12 | Validation & lifecycle | [RD-12](requirements/RD-12-validation-lifecycle.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Per-cell + per-row + BeforeSave gates, error surfacing, loading/empty/error. Depends RD-02, RD-03. |
 | RD-13 | Export, import & personalization | [RD-13](requirements/RD-13-export-import-personalization.md) | — | RD Preflighted | 🔎 | 2026-07-12 | CSV/HTML/JSON export (+ formula-injection escaping) · import · layout variants · Phase B · depends RD-05, RD-06, RD-07 |
 | RD-14 | Non-functional requirements | [RD-14](requirements/RD-14-non-functional.md) | — | RD Preflighted | 🔎 | 2026-07-12 | Perf, security posture, a11y, theme roles, test tiers, API governance. Cross-cutting. |
-| RD-15 | DataGrid showcase app | [RD-15](requirements/RD-15-showcase-app.md) | — | RD Drafted | ✏️ | 2026-07-15 | Standalone datagrid showcase in `packages/examples/datagrid-showcase/` (`demo:datagrid`): granular one-per-capability demos for the shipped RD-01…06 surface + per-RD "coming soon" panels for RD-07…14; dedicated shell seeded from `kitchen-sink/shell.ts`; smoke + headless-walkthrough gated. **Drafted 2026-07-15 — Zero-Ambiguity Gate PASSED (AR #33–#41; 3 AskUserQuestion forks + bulk accept). The living acceptance surface each future RD extends.** Depends RD-01…RD-06. |
+| RD-15 | DataGrid showcase app | [RD-15](requirements/RD-15-showcase-app.md) | — | RD Preflighted | 🔎 | 2026-07-15 | Standalone datagrid showcase in `packages/examples/datagrid-showcase/` (`demo:datagrid`): granular one-per-capability demos for the shipped RD-01…06 surface + per-RD "coming soon" panels for RD-07…14; dedicated shell seeded from `kitchen-sink/shell.ts`; smoke + headless-walkthrough gated. **Drafted + Preflighted 2026-07-15 — Zero-Ambiguity Gate PASSED (AR #33–#41; 3 AskUserQuestion forks + bulk accept). Preflight PASSED WITH NOTES (Iteration 3, PF-020…PF-023: 3 minor + 1 obs, all applied to the RD; same-session, every code claim re-verified against `packages/datagrid/src` + `packages/examples/kitchen-sink`). The living acceptance surface each future RD extends.** Depends RD-01…RD-06. |
