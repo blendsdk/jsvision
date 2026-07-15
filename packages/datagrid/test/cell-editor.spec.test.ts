@@ -450,15 +450,44 @@ for (const openKey of ['f2', 'enter'] as const) {
 }
 
 // ST-8 — F4 on a lookup cell begins the edit AND opens the value-help dropdown in one press. Opening
-// the dropdown moves focus into the popup list, so the editor is located via the mount overlay.
-test('ST-8: F4 on a lookup cell mounts the editor and opens the dropdown', () => {
+// the dropdown moves focus into the popup list, so the editor is located via the mount overlay. The
+// editor mounts synchronously; the dropdown opens on the next microtask (after the tick's layout pass),
+// so the popup anchors on the settled cell — drain that microtask before asserting the popup is open.
+test('ST-8: F4 on a lookup cell mounts the editor and opens the dropdown', async () => {
   const h = build<Cust>([custCol], [{ id: 1, customerId: '' }], (r) => r.id);
   h.loop.dispatch(key('f4'));
-  expect(h.overlay.children.length).toBe(1); // an editor mounted over the cell
+  expect(h.overlay.children.length).toBe(1); // an editor mounted over the cell (synchronous)
   const editorHost = h.overlay.children[0];
   const editor = editorHost instanceof Group ? editorHost.children[0] : undefined;
   expect(editor).toBeInstanceOf(ComboBox);
+  await tick();
   expect(popupOpen(h.popup)).toBe(true); // the dropdown is open (one press)
+});
+
+// ST-8 (regression) — the F4 value-help dropdown must anchor on the LAID-OUT cell, not on the editor's
+// pre-layout bounds. F4 mounts the editor and asks it to open in the same tick, but the layout pass that
+// sizes the editor runs at the tick's end. A dropdown opened synchronously anchors on a zero-width rect
+// and paints an empty popup collapsed to its border at the cell's edge; the open must wait for layout.
+test('ST-8: F4 dropdown anchors on the settled cell, not a pre-layout zero-width rect', async () => {
+  const h = build<Cust>([custCol], [{ id: 1, customerId: '' }], (r) => r.id);
+  h.loop.dispatch(key('f4'));
+  await tick(); // the open is deferred to after the tick's layout pass — drain it
+  expect(popupOpen(h.popup)).toBe(true);
+
+  // The mounted editor, now laid out over the cell with a real (non-zero) width.
+  const editorHost = h.overlay.children[0];
+  const combo = editorHost instanceof Group ? editorHost.children[0] : undefined;
+  expect(combo).toBeInstanceOf(ComboBox);
+  if (!(combo instanceof ComboBox)) return;
+  expect(combo.bounds.width).toBeGreaterThan(0);
+
+  // The popup frame is anchored on that cell, so it spans at least the cell width (its 1-cell border may
+  // be clipped where the cell sits against the viewport edge) — never the degenerate ~1 a zero-width
+  // anchor collapses it to.
+  const frame = h.popup.children.find((c) => c instanceof Group);
+  expect(frame).toBeInstanceOf(Group);
+  if (!(frame instanceof Group)) return;
+  expect(frame.layout.rect?.width ?? 0).toBeGreaterThanOrEqual(combo.bounds.width);
 });
 
 // ST-8 — F4 on a read-only cell mounts nothing and opens no dropdown.

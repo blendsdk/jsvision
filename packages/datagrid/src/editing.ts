@@ -218,13 +218,23 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     focusEditor(ev, editor); // focus the inner editor (its `.input` for Group editors) so keys land + bubble
     state = { kind: 'editing', cell, field, editor, dispose };
     if (opts?.openDropdown && editor instanceof ComboBox) {
+      const combo = editor;
       // Value help (F4): open the dropdown via the ComboBox's public Alt+Down trigger (`open()` is
       // protected). The spread reuses the real envelope's popupHost/focusView, so it opens exactly as a
-      // user's Alt+Down would; a non-ComboBox editor just begins the edit (the guard skips the open).
-      editor.onEvent({
-        ...ev,
-        event: { type: 'key', key: 'down', ctrl: false, alt: true, shift: false },
-        handled: false,
+      // user's Alt+Down would.
+      //
+      // Defer the open to a microtask: the ComboBox was mounted this same tick and has no laid-out
+      // bounds yet, and the dropdown anchors on those bounds. Opening synchronously would place an empty,
+      // zero-width popup at the cell's edge — the layout pass runs at the end of the tick, after this
+      // handler. The microtask fires after that pass, so the anchor reads the settled cell geometry.
+      // Re-check the editor is still open, since an Esc/commit could close it before the microtask runs.
+      queueMicrotask(() => {
+        if (state.kind !== 'editing' || state.editor !== combo) return;
+        combo.onEvent({
+          ...ev,
+          event: { type: 'key', key: 'down', ctrl: false, alt: true, shift: false },
+          handled: false,
+        });
       });
     }
     return true;
