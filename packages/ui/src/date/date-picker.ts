@@ -71,6 +71,8 @@ export interface DatePickerOptions {
   showWeekNumbers?: boolean;
   /** Density of the dropdown `Calendar` (default `'comfortable'`; the popup sizes to it). */
   density?: CalendarDensity;
+  /** A muted hint shown in the field while it is empty; forwarded to the inner text field. */
+  placeholder?: string | Signal<string>;
 }
 
 /**
@@ -130,7 +132,12 @@ export class DatePicker extends Group {
 
     const initial = this.value();
     this.text = signal(initial !== null ? this.spec.serialize(initial) : '');
-    this.input = new Input({ value: this.text, validator: picture(this.spec.mask), maxLength: this.spec.mask.length });
+    this.input = new Input({
+      value: this.text,
+      validator: picture(this.spec.mask),
+      maxLength: this.spec.mask.length,
+      placeholder: opts.placeholder,
+    });
     this.input.layout = { size: { kind: 'fr', weight: 1 } };
     this.button = new DateButton((ev) => this.open(ev));
     this.add(this.input);

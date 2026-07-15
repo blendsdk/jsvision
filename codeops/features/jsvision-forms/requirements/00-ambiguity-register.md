@@ -53,3 +53,31 @@ package `@jsvision/forms`. Async validation, async loading, the `formDialog` hel
 - [x] AR-18…AR-24 confirmed by the user (AR-18 typing contract; AR-19/20 low-stakes calls; AR-21–24 correctness/statements).
 - [x] Zero deferred *within-scope* items — every in-scope ambiguity has a concrete answer.
 - [x] User reviewed and confirmed the complete register.
+
+---
+
+## RD-09 — Styled Error Text & Input Placeholder (2026-07-15 extension)
+
+> Appended for the reopened feature (see `00-roadmap.md`). Scope: two `@jsvision/ui`/`@jsvision/core`
+> presentation primitives. AR-25/26/28/31 were explicit user decisions (2026-07-15); AR-27/29/30/32
+> are recommendations derived from them, confirmed on RD review.
+
+| AR | Decision | Resolution | Status |
+|----|----------|------------|--------|
+| AR-25 | Danger/advisory colour model | Add semantic **`dangerText` + `warningText`** roles to `@jsvision/core`'s `Theme`, derived from the existing `danger`/`warning` aliases (defaults `#ef4444`/`#f59e0b`); `createTheme` overrides flow through. Chosen over a hardcoded raw colour or reusing an existing role — themeable, and powers both error text and the showcase's amber advisories. Role names deliberately differ from the `danger`/`warning` **alias** names — preflight PF-003 found a `warning` role would collide with the `warning` alias (dup theme-designer row; breaks the no-role-name=alias-name invariant); user chose `dangerText`/`warningText` (2026-07-15). | ✅ Resolved (user) |
+| AR-26 | Styled-error primitive shape | **Extend the existing `Text`** with an optional `severity` option (paints via the new role); no new widget class. Touched-gating stays app-composed. Chosen over a dedicated `ErrorText`/`StyledText`. | ✅ Resolved (user) |
+| AR-27 | Severity option type | `Text`'s option is **`severity?: 'error' \| 'warning'`** (semantic, static) rather than a general `role`/`style` bag — purpose-built, avoids speculative surface; content is already reactive. The public value stays `'error'`/`'warning'` and is **decoupled from the role names**: `draw()` maps `'error'`→`dangerText`, `'warning'`→`warningText`, unset→`staticText` (PF-003). | ✅ Resolved (derived) |
+| AR-28 | Placeholder visibility | `Input` placeholder shown muted **whenever the bound value is empty** (any focus state), hidden on the first character. Chosen over show-only-when-unfocused. | ✅ Resolved (user) |
+| AR-29 | Placeholder styling | Rendered in a **muted style composed from existing roles** (`staticText` fg over `inputNormal` bg) — no new `inputPlaceholder` role — bounding the core change to the two severity roles; themeable by inheritance, reliable across colour depths. | ✅ Resolved (derived) |
+| AR-30 | Placeholder propagation | Added to `Input` and forwarded only to Inputs that own a persistent field with a meaningful empty state — **`DatePicker` + `ComboBox` + the `inputBox()` modal prompt**. Preflight PF-003/PF-001 corrected the original "4 wrappers" list: `History` owns no `Input` (it decorates a caller-supplied field via `opts.link`), and `ColorPicker`'s hex `Input` is transient, `allowCustom`-gated, and a specialised `#rrggbb` editor — both excluded; `inputBox()` added. | ✅ Resolved (amended by preflight) |
+| AR-31 | Per-field `field.reset()` | **Deferred** out of RD-09 — a store concern that would reopen the locked Field handle (AR-14). Remains in the GH #89 backlog / a later store RD. | ✅ Resolved (deferred) |
+| AR-32 | Package span / layering | RD-09 spans `@jsvision/core` (roles) + `@jsvision/ui` (Text/Input) + `@jsvision/examples` (stories); **no `@jsvision/forms` change** — a `Field`-coupled widget can't live in `ui` (which `forms` depends on), so the styled primitive is generic and the touched-gated reveal stays app-composed. Core stays zero-dep. | ✅ Resolved (derived) |
+
+### Gate status (RD-09) — ✅ PASSED (preflighted 2026-07-15)
+
+- [x] The four semantically-pivotal items (AR-25/26/28/31) resolved by explicit user decision.
+- [x] Derived items (AR-27/29/30/32) recorded with rationale.
+- [x] User reviewed the RD-09 set via preflight (`00-preflight-report-rd-09.md`).
+- [x] Preflight decisions applied: role names `dangerText`/`warningText` (PF-003, revises AR-25/27);
+      propagation to `DatePicker` + `ComboBox` + `inputBox()` (PF-001, revises AR-30); theme-role
+      integration surface corrected + MINOR items (PF-002/004/005/006/007). Report: BLOCKED → resolved.
