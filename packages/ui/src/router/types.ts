@@ -62,6 +62,48 @@ export interface ChromeHostAware {
   attachChromeHost(host: ChromeHost): void;
 }
 
+/**
+ * The focus seam an application hands to a router-style body so it can save and restore keyboard
+ * focus across navigation — restoring the exact field a warm screen had focused, or the same-position
+ * field of a rebuilt one. `createApplication` implements it over the event loop. A standalone-mounted
+ * router (no application) gets none, and the loop's own focus-healing provides the first-focusable
+ * floor automatically.
+ *
+ * @example
+ * // Restore the previously focused view when returning to a screen:
+ * const previous = focus.getFocused();
+ * // …navigate away and back…
+ * if (previous !== null) focus.focusView(previous);
+ */
+export interface FocusHost {
+  /** Move keyboard focus to `view` (a no-op if the view is not currently mounted). */
+  focusView(view: View): void;
+  /** The currently focused view, or `null` when nothing holds focus. */
+  getFocused(): View | null;
+}
+
+/**
+ * Implemented by an application body (e.g. a router) that saves/restores focus across navigation. When
+ * such a body is passed as `createApplication({ content })`, the application hands it a
+ * {@link FocusHost} once the loop exists. A body that does not implement this is left untouched.
+ *
+ * @example
+ * import { Group } from '@jsvision/ui';
+ *
+ * class Router extends Group {
+ *   private focus: FocusHost | null = null;
+ *   attachFocusHost(host: FocusHost): void { this.focus = host; }
+ * }
+ */
+export interface FocusHostAware {
+  /**
+   * Receive the application's focus seam. Called once by `createApplication` after the loop is built.
+   *
+   * @param host The focus seam that moves and reads keyboard focus.
+   */
+  attachFocusHost(host: FocusHost): void;
+}
+
 /** The context a route's `build` receives: the typed params the screen was navigated to. */
 export interface RouteContext<P> {
   /** The params the route was entered with. */

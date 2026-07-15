@@ -15,9 +15,9 @@ import { createEventLoop } from '../event/index.js';
 import type { EventLoop, ClipboardKeys } from '../event/index.js';
 import { Desktop } from '../desktop/index.js';
 import type { MenuBar, MenuItem } from '../menu/index.js';
-import { Commands } from '../status/index.js';
+import { Commands, StatusItemView, statusItem } from '../status/index.js';
 import type { StatusLine } from '../status/index.js';
-import type { ChromeHost, ChromeHostAware } from '../router/types.js';
+import type { ChromeHost, ChromeHostAware, FocusHostAware } from '../router/types.js';
 import { runApplication } from './run.js';
 import type { QuitState } from './run.js';
 
@@ -128,6 +128,29 @@ export interface Application {
    */
   setTheme(theme: Theme): void;
   /**
+   * A **fresh** copy of the application's base status items — the global affordances (e.g. quit/help)
+   * a screen composes with its own hints via `withBase`. Each call rebuilds new item views, because a
+   * view has a single parent: composing with the live base bar's own instances would re-parent them
+   * and corrupt the fallback bar. Only command items are reproduced (spacers/widgets are not part of a
+   * composable base).
+   *
+   * @returns Fresh status-item views mirroring the base bar's command items (empty if no status line).
+   * @example
+   * // A screen's status = the app base plus a screen-specific action:
+   * status: withBase(app.statusBase(), [statusItem('~E~dit', 'detail.edit')]);
+   */
+  statusBase(): View[];
+  /**
+   * The application's base menu items — the top-level menu nodes `createApplication({ menuBar })` was
+   * given. Menu items are plain data (not views), so this returns a shallow copy safe to compose with
+   * `withBase`.
+   *
+   * @returns A copy of the base menu's top-level items (empty if no menu bar).
+   * @example
+   * menu: withBase(app.menuBase(), [subMenu('~S~creen', [item('~E~dit', 'detail.edit')])]);
+   */
+  menuBase(): MenuItem[];
+  /**
    * Connect to the terminal and run until the `'quit'` command, resolving to the exit code. The
    * terminal is always restored on exit — normal, thrown, or signalled.
    */
@@ -174,6 +197,26 @@ const WINDOW_COMMANDS = new Set<string>([
 /** Whether an app body opts into driving the shared chrome (implements {@link ChromeHostAware}). */
 function isChromeHostAware(view: View): view is View & ChromeHostAware {
   return typeof (view as Partial<ChromeHostAware>).attachChromeHost === 'function';
+}
+
+/** Whether an app body opts into save/restore focus across navigation (implements {@link FocusHostAware}). */
+function isFocusHostAware(view: View): view is View & FocusHostAware {
+  return typeof (view as Partial<FocusHostAware>).attachFocusHost === 'function';
+}
+
+/**
+ * A fresh copy of a status line's command items — new {@link StatusItemView}s reconstructed from each
+ * item's `text`/`command`/`key`. A view has one parent, so a composable base must hand out fresh
+ * instances; passive segments (spacers/widgets) are not part of the base. Read once at startup, before
+ * any screen swaps the live bar.
+ */
+function freshStatusBase(statusLine: StatusLine | undefined): () => View[] {
+  const specs = statusLine
+    ? statusLine.children
+        .filter((child): child is StatusItemView => child instanceof StatusItemView)
+        .map((child) => ({ text: child.text, command: child.command, key: child.key }))
+    : [];
+  return () => specs.map((spec) => statusItem(spec.text, spec.command, spec.key));
 }
 
 /**
@@ -373,6 +416,17 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
     body.attachChromeHost(buildChromeHost(opts.menuBar, opts.statusLine));
   }
 
+  // Hand the same body a focus seam so it can save/restore keyboard focus across navigation. Without
+  // it, the loop's own focus-healing still floors focus into a new screen's first focusable.
+  if (isFocusHostAware(body)) {
+    body.attachFocusHost({ focusView: (view) => loop.focusView(view), getFocused: () => loop.getFocused() });
+  }
+
+  // Capture the base chrome once, before any screen swaps the live bars, so `statusBase`/`menuBase`
+  // reproduce the app's global affordances for `withBase` composition.
+  const statusBase = freshStatusBase(opts.statusLine);
+  const baseMenu: readonly MenuItem[] = opts.menuBar ? [...opts.menuBar.items] : [];
+
   // On resize, keep the overlay full-screen, re-anchor the open menu's outside-click catcher, and
   // re-fit maximized windows to the new size. The loop fires this after the reflow settles the body
   // bounds, then repaints once more, on both real and headless resizes.
@@ -389,6 +443,8 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
     loop,
     onCommand: (command, handler) => loop.onCommand(command, handler),
     setTheme: (theme) => loop.setTheme(theme), // forwards to the loop seam so the swap repaints from any call site
+    statusBase, // fresh copies of the base command items, for `withBase` composition
+    menuBase: () => [...baseMenu], // a shallow copy of the base menu items (plain data)
     run: () =>
       runApplication({
         loop,
