@@ -5,7 +5,10 @@
 The 38 shipped demos, the placeholder factory, the shared demo lib, and the bespoke push-down source.
 Every demo is one `*.story.ts` under `stories/<cluster>/` (AR #3) exporting a `Story` whose `build(ctx)`
 returns an absolutely-positioned `Group` within `ctx.width × ctx.height`, with a one-line blurb, the
-live component, a **bound-state echo** where relevant, and key hints. Ids are `datagrid/<cluster>/<slug>`.
+live component, a **bound-state echo** where relevant, and key hints. Ids are
+`datagrid/<dir-slug>/<demo-slug>`, where `<dir-slug>` is the cluster **directory** (`foundation`,
+`editing`, `editors`, `formatting`, `sorting`, `filtering`) — e.g. `datagrid/editors/text` — so ids stay
+stable and consistent across the two build phases (only ST-3 uniqueness is enforced).
 
 ## Shared demo lib — `stories/lib/`
 
@@ -90,7 +93,7 @@ lands (AR #34/#36 / RD §Placeholder panel).
 ## Governance — gate reconciliation (Phase 2)
 
 Edit `codeops/kitchen-sink-gate.md`: datagrid component stories are demonstrated in this dedicated app,
-not the general kitchen-sink; record that `kitchen-sink/data-grid.story.ts` (ui's **read-only**
+not the general kitchen-sink; record that `kitchen-sink/stories/data-grid.story.ts` (ui's **read-only**
 `DataGrid`, a different component) is intentionally retained (AR #9, PF-022).
 
 ## Draw-safety
