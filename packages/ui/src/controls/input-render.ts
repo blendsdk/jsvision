@@ -98,7 +98,7 @@ export function paintInput(ctx: DrawContext, s: InputPaintState): void {
   // Placeholder: a muted hint shown ONLY over an empty value. It is display-only — it takes no part in
   // the selection/scroll/caret math and is never the bound value; a focused caret still overlays col 1.
   if (v === '' && s.placeholder && w > 1) {
-    const muted: Style = { fg: ctx.color('staticText').fg, bg: style.bg }; // static-text fg on the field bg
+    const muted: Style = { fg: ctx.color('inputPlaceholder').fg, bg: style.bg }; // dedicated muted role, on the field bg
     ctx.text(1, 0, s.placeholder.slice(0, w - 1), muted); // clipped to width, starts at col 1
   }
   if (canScrollRight(v, w, firstPos)) ctx.text(w - 1, 0, RIGHT_ARROW, arrows);
@@ -118,7 +118,15 @@ export function paintInput(ctx: DrawContext, s: InputPaintState): void {
     const caretCol = displayedPos(curPos) - firstPos + 1;
     if (caretCol >= 0 && caretCol < w) {
       const reversed: Style = { fg: style.bg, bg: style.fg }; // field fg/bg swapped
-      ctx.text(caretCol, 0, glyphAt(caretCol, v, w, firstPos), reversed);
+      // Reuse whatever glyph the cell already shows so the caret overlays rather than ERASES it: the
+      // value glyph normally, or — over an empty field with a placeholder — the placeholder glyph at
+      // this column. Without this, glyphAt() returns a space for the empty value and the caret blanks
+      // the first placeholder character (the "Try" → "ry" bug).
+      const underCaret =
+        v === '' && s.placeholder
+          ? (s.placeholder.slice(0, w - 1)[caretCol - 1] ?? ' ')
+          : glyphAt(caretCol, v, w, firstPos);
+      ctx.text(caretCol, 0, underCaret, reversed);
     }
   }
 }

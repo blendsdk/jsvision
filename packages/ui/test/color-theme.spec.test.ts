@@ -131,6 +131,7 @@ test('ST-11: colorMarker is the ONLY additive key — every existing role is byt
     'sliderThumb', // theme-designer Slider control (guarded by slider-theme.spec)
     'dangerText',
     'warningText', // severity text roles for a styled Text (guarded by severity-text-theme.spec)
+    'inputPlaceholder', // muted placeholder role for an empty Input (guarded by input-placeholder.spec)
   ]);
   const actualKeys = Object.keys(defaultTheme);
   const unexpected = actualKeys.filter((k) => !knownKeys.has(k));

@@ -57,15 +57,16 @@ test('impl: a Signal<string> placeholder repaints an empty field when it changes
   expect(rowOf(rr.buffer(), 10)).toBe(' two      ');
 });
 
-test('impl: a focused caret overlays column 1 while the rest of the placeholder still shows', () => {
+test('impl: a focused caret overlays the first placeholder glyph without erasing it', () => {
   const { loop } = mountFocused({ value: signal(''), placeholder: 'Name' }, 10);
   const buf = loop.renderRoot.buffer();
-  // The caret reverses col 1 (curPos 0 over an empty value → a reversed blank), overlaying the 'N'.
-  expect(buf.get(1, 0)?.char, 'col 1 is the reversed caret cell').toBe(' ');
+  // The caret reverses col 1 but REUSES the placeholder glyph 'N' rather than blanking it (the caret
+  // overlays, it does not erase — regression guard for the "Try" → "ry" bug).
+  expect(buf.get(1, 0)?.char, "col 1 is the reversed caret over the 'N', not a blank").toBe('N');
   expect(buf.get(1, 0)?.bg, 'caret bg = the field fg (reversed)').toBe(defaultTheme.inputSelected.fg);
   // The rest of the placeholder still shows, muted, from col 2.
   expect(buf.get(2, 0)?.char, "placeholder 'a' still shows at col 2").toBe('a');
-  expect(buf.get(2, 0)?.fg, 'still muted (staticText fg)').toBe(defaultTheme.staticText.fg);
+  expect(buf.get(2, 0)?.fg, 'still muted (inputPlaceholder fg)').toBe(defaultTheme.inputPlaceholder.fg);
 });
 
 test('impl: the muted placeholder bg tracks the field focus role', () => {

@@ -102,6 +102,11 @@ export interface Theme {
   readonly inputSelection: ThemeRole;
   /** The input-line `◄`/`►` scroll arrows shown when text overflows: brightGreen on blue. */
   readonly inputArrows: ThemeRole;
+  /**
+   * The muted hint text shown in an empty input line (its placeholder): a dimmed, secondary
+   * foreground on the input field's own background — visible but clearly not the typed value.
+   */
+  readonly inputPlaceholder: ThemeRole;
   // --- Scrollbar + list roles ---
   /**
    * A scrollbar's track / page area (the `▒`/`▓` fill): cyan on blue. The track
@@ -313,6 +318,9 @@ export const defaultTheme: Theme = {
   // The text-selection highlight (distinct from the field color).
   inputSelection: { fg: PALETTE.white, bg: PALETTE.green },
   inputArrows: { fg: PALETTE.brightGreen, bg: PALETTE.blue },
+  // Muted placeholder hint on the input field: cyan on blue — the same "muted secondary" pairing as
+  // scrollBarPage/progressTrack/fileInfo, so an empty field's hint reads as dimmed, not as typed text.
+  inputPlaceholder: { fg: PALETTE.cyan, bg: PALETTE.blue },
   scrollBarPage: { fg: PALETTE.cyan, bg: PALETTE.blue },
   scrollBarControls: { fg: PALETTE.cyan, bg: PALETTE.blue },
   listNormal: { fg: PALETTE.black, bg: PALETTE.cyan },

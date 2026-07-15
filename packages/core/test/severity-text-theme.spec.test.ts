@@ -25,11 +25,12 @@ test('ST-C1: defaultTheme.dangerText / .warningText equal the pinned severity by
   });
 });
 
-test('ST-C2: the theme has 67 roles including dangerText/warningText, whose names are not aliases', () => {
+test('ST-C2: the theme has 68 roles including dangerText/warningText/inputPlaceholder, whose names are not aliases', () => {
   const keys = Object.keys(defaultTheme);
-  expect(keys.length, 'total role count').toBe(67);
+  expect(keys.length, 'total role count').toBe(68);
   expect(keys, 'dangerText role present').toContain('dangerText');
   expect(keys, 'warningText role present').toContain('warningText');
+  expect(keys, 'inputPlaceholder role present').toContain('inputPlaceholder');
 
   // The role names deliberately differ from the `danger`/`warning` alias names, so neither role can be
   // mistaken for (or collide with) a ThemeColors alias key.

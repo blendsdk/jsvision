@@ -42,11 +42,13 @@ function bufferHasText(buf: ReturnType<typeof mountBuffer>, width: number, heigh
   return false;
 }
 
-test('ST-U4: a placeholder over an empty value is painted muted (staticText fg on the field bg)', () => {
+test('ST-U4: a placeholder over an empty value is painted in the muted inputPlaceholder role on the field bg', () => {
   const buf = mountBuffer(new Input({ value: signal(''), placeholder: 'Name' }), 10);
   expect(rowText(buf, 0, 10)).toBe(' Name     '); // starts at col 1, field is unfocused (no caret)
-  // Muted style: staticText fg over the (unfocused) inputNormal field bg.
-  expect(buf.get(2, 0)?.fg, "placeholder 'a' fg = staticText").toBe(defaultTheme.staticText.fg);
+  // Muted style: the dedicated inputPlaceholder fg over the (unfocused) inputNormal field bg — and it
+  // is genuinely dimmed, i.e. NOT the typed-value foreground.
+  expect(buf.get(2, 0)?.fg, "placeholder 'a' fg = inputPlaceholder").toBe(defaultTheme.inputPlaceholder.fg);
+  expect(buf.get(2, 0)?.fg, 'placeholder fg is muted, not the value fg').not.toBe(defaultTheme.inputNormal.fg);
   expect(buf.get(2, 0)?.bg, 'placeholder bg = inputNormal field').toBe(defaultTheme.inputNormal.bg);
 });
 

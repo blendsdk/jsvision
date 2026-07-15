@@ -1,5 +1,5 @@
 /**
- * The left rail — a scrollable list of the 18 semantic aliases followed by the 67 concrete roles.
+ * The left rail — a scrollable list of the 18 semantic aliases followed by the 68 concrete roles.
  * Moving the highlight selects that edit target (the app wires the `focused` signal to
  * `model.select`), which loads it into the inspector. Editing an alias re-derives the theme; editing a
  * role overrides it.
@@ -36,7 +36,7 @@ export interface RolesPanel {
   view: Group;
   /** The highlighted row index — drive `model.select(targets[focused()])` from an effect. */
   focused: Signal<number>;
-  /** The edit target for each row, in list order (18 aliases, then 67 roles). */
+  /** The edit target for each row, in list order (18 aliases, then 68 roles). */
   targets: readonly EditTarget[];
   /** The focus leaf to hand to `loop.focusView`. */
   rows: ListBox['rows'];

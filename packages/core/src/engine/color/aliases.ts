@@ -1,12 +1,12 @@
 /**
  * The semantic alias tier — the small, human-authored vocabulary a theme is
- * expressed in, one level below the 67 concrete UI roles.
+ * expressed in, one level below the 68 concrete UI roles.
  *
  * A {@link ThemeColors} object is 18 named colors describing *intent* (body text,
  * a raised surface, the brand accent, the highlighted hotkey letter) rather than a
  * specific widget. `createTheme` produces one of these from a handful of seeds, and
  * `rolesFromAliases` expands it into a full {@link Theme}. Author at this tier and
- * every control stays coherent; you never hand-write 67 roles.
+ * every control stays coherent; you never hand-write 68 roles.
  */
 import type { Color } from '../render/types.js';
 
@@ -15,7 +15,7 @@ import type { Color } from '../render/types.js';
  *
  * Each token is a {@link Color} (hex, a named ANSI-16 color, or `'default'`) and
  * carries a fixed meaning — the groups are text, surface, accent, accelerator, line,
- * and status. `rolesFromAliases` maps every one of the 67 UI roles onto its nearest
+ * and status. `rolesFromAliases` maps every one of the 68 UI roles onto its nearest
  * token by purpose, so changing (say) `accent` re-colors every focus/selection
  * surface at once.
  *
