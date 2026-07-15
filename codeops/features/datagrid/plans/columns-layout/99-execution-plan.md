@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-16 01:11
-> **Progress**: 51/58 tasks (88%) — Phase 1–6 ✅ (incl. folded 3.2.7 reactive rebuild)
+> **Last Updated**: 2026-07-16 01:22
+> **Progress**: 58/58 tasks (100%) — ✅ COMPLETE (all 7 phases; incl. folded 3.2.7 reactive rebuild)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -179,17 +179,17 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 **Reference**: `07 §Story & showcase` (ST-27…ST-29) · CLAUDE.md §Kitchen-sink + §Documentation · AR-3
 
 ### Step 7.1: Kitchen-sink story (smoke)
-- [ ] 7.1.1 Add `columns-layout.story.ts` (frozen columns + live resize/reorder + show/hide toggle, with a bound-state echo) + register in `stories/index.ts` — `packages/datagrid/test/kitchen-sink/stories/`
-- [ ] 7.1.2 Verify the story passes `kitchen-sink.smoke.spec.test.ts` (ST-28, AC-8)
+- [x] 7.1.1 Add `columns-layout.story.ts` (frozen columns + live resize/reorder + show/hide toggle, with a bound-state echo) + register in `stories/index.ts` — `packages/datagrid/test/kitchen-sink/stories/`
+- [x] 7.1.2 Verify the story passes `kitchen-sink.smoke.spec.test.ts` (ST-28, AC-8)
 
 ### Step 7.2: datagrid-showcase upgrade (AR-3)
-- [ ] 7.2.1 Replace the RD-07 "coming soon" placeholder (`placeholders.ts:42`) with a live columns-layout demo cluster (frozen panels · resize/reorder · show/hide · frozen rows · density) under `stories/columns-layout/` + register in `stories/index.ts` — `packages/examples/datagrid-showcase/`
-- [ ] 7.2.2 Verify the showcase smoke + walkthrough tiers pass (ST-29)
+- [x] 7.2.1 Replace the RD-07 "coming soon" placeholder (`placeholders.ts:42`) with a live columns-layout demo cluster (frozen panels · resize/reorder · show/hide · frozen rows · density) under `stories/columns-layout/` + register in `stories/index.ts` — `packages/examples/datagrid-showcase/`
+- [x] 7.2.2 Verify the showcase smoke + walkthrough tiers pass (ST-29)
 
 ### Step 7.3: Security & hardening (final gate)
-- [ ] 7.3.1 Add ST-27 (header/cell text stays sanitized after a reorder + hide) to `security.spec.test.ts`; verify green (AC-9)
-- [ ] 7.3.2 JSDoc + `@example` on every new public export; `yarn check:docs` green (no banned refs, `@example` present)
-- [ ] 7.3.3 Full `yarn verify` (final gate — no datagrid/examples regressions)
+- [x] 7.3.1 Add ST-27 (header/cell text stays sanitized after a reorder + hide) to `security.spec.test.ts`; verify green (AC-9)
+- [x] 7.3.2 JSDoc + `@example` on every new public export; `yarn check:docs` green (no banned refs, `@example` present)
+- [x] 7.3.3 Full `yarn verify` (final gate — no datagrid/examples regressions)
 
 **Deliverables**: `columns-layout` story (AC-8) + showcase upgrade (AR-3); AC-9 security confirmed; full `yarn verify` green. **Verify**: `yarn verify`
 

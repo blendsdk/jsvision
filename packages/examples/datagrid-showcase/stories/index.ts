@@ -59,7 +59,14 @@ import { filteringValueListStory } from './filtering/value-list.story.js';
 import { filteringNofMStory } from './filtering/n-of-m.story.js';
 import { filteringPushDownStory } from './filtering/push-down.story.js';
 
-// Roadmap — the "coming soon" panels (RD-07…RD-14)
+// Columns & layout (RD-07)
+import { layoutFrozenPanelsStory } from './columns-layout/frozen-panels.story.js';
+import { layoutResizeReorderStory } from './columns-layout/resize-reorder.story.js';
+import { layoutShowHideStory } from './columns-layout/show-hide.story.js';
+import { layoutFrozenRowsStory } from './columns-layout/frozen-rows.story.js';
+import { layoutDensityStory } from './columns-layout/density.story.js';
+
+// Roadmap — the "coming soon" panels (RD-08…RD-14)
 import { placeholders } from './placeholders.js';
 
 /** Every registered demo, in navigator order (six shipped clusters, then the roadmap band). */
@@ -114,6 +121,13 @@ export const STORIES: readonly Story[] = [
   filteringNofMStory,
   filteringPushDownStory,
 
-  // Roadmap — coming soon (RD-07…RD-14) · 8
+  // Columns & layout (RD-07) · 5
+  layoutFrozenPanelsStory,
+  layoutResizeReorderStory,
+  layoutShowHideStory,
+  layoutFrozenRowsStory,
+  layoutDensityStory,
+
+  // Roadmap — coming soon (RD-08…RD-14) · 7
   ...placeholders,
 ];

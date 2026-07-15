@@ -61,24 +61,35 @@ for (const story of STORIES) {
   });
 }
 
-// ST-6 — the "coming soon" roadmap band is exactly the eight not-yet-shipped RDs (RD-07…RD-14).
-test('ST-6: the Roadmap category holds exactly 8 placeholder entries (RD-07…RD-14)', () => {
+// ST-6 — the "coming soon" roadmap band is exactly the seven not-yet-shipped RDs (RD-08…RD-14); RD-07
+// (Columns & layout) has shipped, so its placeholder was replaced by a live cluster.
+test('ST-6: the Roadmap category holds exactly 7 placeholder entries (RD-08…RD-14)', () => {
   const roadmap = STORIES.filter((s) => s.category === 'Roadmap');
-  expect(roadmap.length).toBe(8);
+  expect(roadmap.length).toBe(7);
 });
 
-// The seven navigator categories the RD-15 inventory defines (six shipped clusters + the roadmap band).
-const CATEGORIES = ['Foundation', 'Editing', 'Cell editors', 'Formatting', 'Sorting', 'Filtering', 'Roadmap'] as const;
+// The navigator categories the inventory defines: the shipped clusters (Columns & layout landed with
+// RD-07) plus the roadmap band. A future RD adding a cluster updates this list.
+const CATEGORIES = [
+  'Foundation',
+  'Editing',
+  'Cell editors',
+  'Formatting',
+  'Sorting',
+  'Filtering',
+  'Columns & layout',
+  'Roadmap',
+] as const;
 
 // ST-5 — every navigator category is present (a future RD adding a cluster updates this list).
-test('ST-5: all seven navigator categories are present', () => {
+test('ST-5: all navigator categories are present', () => {
   const present = new Set(STORIES.map((s) => s.category));
   for (const c of CATEGORIES) {
     expect(present.has(c), `category "${c}" present`).toBe(true);
   }
 });
 
-// ST-7 — each shipped cluster carries its full demo count (the RD-15 §Demo Inventory scope).
+// ST-7 — each shipped cluster carries its full demo count (the §Demo Inventory scope).
 test('ST-7: each shipped cluster has its full demo count', () => {
   const counts: Record<string, number> = {};
   for (const s of STORIES) counts[s.category] = (counts[s.category] ?? 0) + 1;
@@ -88,4 +99,5 @@ test('ST-7: each shipped cluster has its full demo count', () => {
   expect(counts['Formatting'], 'Formatting').toBe(8);
   expect(counts['Sorting'], 'Sorting').toBe(5);
   expect(counts['Filtering'], 'Filtering').toBe(6);
+  expect(counts['Columns & layout'], 'Columns & layout').toBe(5);
 });

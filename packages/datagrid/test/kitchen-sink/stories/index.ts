@@ -9,6 +9,7 @@ import { editorsStory } from './editors.story.js';
 import { formattingStory } from './formatting.story.js';
 import { sortingStory } from './sorting.story.js';
 import { filteringStory } from './filtering.story.js';
+import { columnsLayoutStory } from './columns-layout.story.js';
 
 export const STORIES: readonly Story[] = [
   foundationStory,
@@ -17,4 +18,5 @@ export const STORIES: readonly Story[] = [
   formattingStory,
   sortingStory,
   filteringStory,
+  columnsLayoutStory,
 ];
