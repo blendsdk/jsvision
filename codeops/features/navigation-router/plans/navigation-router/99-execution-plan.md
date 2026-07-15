@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Progress**: 36/43 tasks (84%) — 1 deferred (3.2.3 wizard, AR-24)
-> **Last Updated**: 2026-07-15 (Phase 3 barrel + JSDoc + drill-down demo/story/e2e complete; wizard deferred — `yarn verify` green)
+> **Progress**: 42/43 tasks (98%) — COMPLETE (1 deferred: 3.2.3 wizard, AR-24)
+> **Last Updated**: 2026-07-15 (Phase 4 hardening + docs governance complete — `yarn verify` + `yarn gate` green)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -153,17 +153,17 @@ green and is committed (via /gitcm).
 
 ---
 
-## Phase 4: Hardening + Docs Governance
+## Phase 4: Hardening + Docs Governance ✅
 **Reference**: [01](01-requirements.md) R-10 · AR-20
 
 | # | Task | File |
 |---|------|------|
-| 4.1 | Line-count audit (all router + touched files ≤500; split if needed) | `packages/ui/src/router/*`, `app/application.ts` |
-| 4.2 | Confirm additive-only: full `@jsvision/core` + `@jsvision/ui` suites green; ST-2 Desktop path unchanged | — |
-| 4.3 | `check:docs` (JSDoc governance) + `check:deps` (no native dep) green | — |
-| 4.4 | Update CLAUDE.md Project structure with the `packages/ui/src/router/` line + the `content`/`ChromeHost` shell additions | `CLAUDE.md` |
-| 4.5 | Prime directive: `yarn lint:fix` before the PR push; commit any changes | — |
-| 4.6 | Full `yarn verify` + `yarn gate` green | — |
+| 4.1 | `[x]` Line-count audit — all router + touched files ≤500 (router.ts 412, application.ts 464) | `packages/ui/src/router/*`, `app/application.ts` |
+| 4.2 | `[x]` Additive-only confirmed: full `@jsvision/core` + `@jsvision/ui` suites green; ST-1/ST-2 Desktop path unchanged | — |
+| 4.3 | `[x]` `check:docs` (JSDoc governance) + `check:deps` (no native dep) green | — |
+| 4.4 | `[x]` Updated CLAUDE.md — the `packages/ui/src/router/` line + the `content`/`ChromeHost`/`FocusHost`/`statusBase` shell additions | `CLAUDE.md` |
+| 4.5 | `[x]` Prime directive: `yarn lint:fix` run — no code changes (tree already clean) | — |
+| 4.6 | `[x]` Full `yarn verify` + `yarn gate` green | — |
 
 **Verify**: `yarn verify && yarn gate` green; commit via /gitcm.
 
