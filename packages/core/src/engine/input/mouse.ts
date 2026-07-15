@@ -108,7 +108,16 @@ function buildEvent(b: number, x: number, y: number, final: number): MouseEvent 
   } else {
     kind = 'down';
   }
-  return { type: 'mouse', kind, button, x, y };
+  return {
+    type: 'mouse',
+    kind,
+    button,
+    x,
+    y,
+    ctrl: (b & CTRL_BIT) !== 0,
+    alt: (b & ALT_BIT) !== 0,
+    shift: (b & SHIFT_BIT) !== 0,
+  };
 }
 
 /** A parsed unsigned integer field plus the index just past it. */
