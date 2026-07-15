@@ -6,10 +6,17 @@ developer — it can scaffold, compose, run, verify, and extend jsvision apps.
 ## What's inside
 
 - **`jsvision` skill** — the knowledge base. Claude loads it automatically when you ask to build or
-  extend a jsvision app. It carries the mental model, the non-negotiables, a component catalog, the
-  common gotchas, the run/verify loop, theming, widget authoring, and runnable recipes.
+  extend a jsvision app. It carries the mental model, the non-negotiables, a component catalog, a
+  generated API reference, the common gotchas, the run/verify loop, theming, widget authoring, and
+  runnable recipes.
 - **`/jsvision-new-app <name>` skill** — scaffolds a complete, runnable app package under
   `packages/<name>/` (you invoke this one manually).
+- **`/jsvision-doctor [path]` skill** — statically lints an app for the documented footguns (missing
+  `measure()`, bind-in-constructor, content laid out with absolute rects, missing `.js` imports, and
+  more). Run it before calling an app done (`yarn doctor <path>`).
+- **`/jsvision-render <module>` skill** — prints a headless ASCII screenshot of an app or view at any
+  size (optionally after driving keys), so you can see the layout without a terminal
+  (`yarn render:app <module>`).
 
 ## Install
 

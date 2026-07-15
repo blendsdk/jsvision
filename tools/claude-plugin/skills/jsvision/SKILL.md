@@ -59,8 +59,10 @@ await app.run();
    collapses to `{0,0}` and draws nothing.
 4. **`bind()` goes in `onMount`, never the constructor** — the reactive scope only exists after
    mount.
-5. **Finish every app by reading `references/gotchas.md`** and checking your code against all 12
-   footguns. This is where "works" and "expert" diverge.
+5. **Before calling an app done, run `/jsvision-doctor` and `/jsvision-render`.** `jsvision-doctor`
+   lints your app for the 12 footguns automatically; `jsvision-render` prints a headless ASCII
+   screenshot so you can _see_ the layout. Fix what the doctor flags (open `references/gotchas.md`
+   for the full fix) and confirm the render looks right. This is where "works" and "expert" diverge.
 
 **Layout is DSL-first (non-negotiable).** Compose every screen with `col`/`row`/`stack` +
 `grow`/`fixed`/`fill`; let the engine size and reflow it. Use an absolute `rect` **only** when one of
@@ -90,5 +92,7 @@ Open the reference that matches the task; open `gotchas.md` before you call an a
 | Colors/themes: presets, `createTheme`, `app.setTheme`, depth                                     | `references/theming.md`                                            |
 | Author a custom widget (subclass `View`)                                                         | `references/widget-authoring.md`                                   |
 | Run + verify an app (three run modes, headless smoke)                                            | `references/running-and-testing.md`                                |
+| **Lint an app for footguns** (missing measure, bind-in-ctor, content rects, …)                   | run `/jsvision-doctor [path]`                                      |
+| **See the screen** — headless ASCII screenshot of an app/view                                    | run `/jsvision-render <module>`                                    |
 | Complete example apps by archetype                                                               | `references/recipes/index.md`                                      |
 | **Debugging "nothing paints", a hung modal, a leak**                                             | `references/gotchas.md`                                            |
