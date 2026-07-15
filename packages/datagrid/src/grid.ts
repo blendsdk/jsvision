@@ -19,6 +19,8 @@ import { toEngineColumn } from './column.js';
 import type { GridDataSource } from './data-source.js';
 import { sortRowsMulti } from './sort.js';
 import type { SortKey, SortDir } from './sort.js';
+import { filterRows } from './filter.js';
+import type { FilterModel, ColumnFilter } from './filter.js';
 import { SortHeader } from './sort-header.js';
 import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
@@ -151,6 +153,10 @@ export class EditableDataGrid<T> extends Group {
   // The single source of truth for the sort model — the header and the `sortBy`/`addSort`/`clearSort`
   // API both drive this one signal; the body's `display` derives from it on the client path.
   private readonly sortKeys = signal<SortKey[]>([]);
+  // The single source of truth for the filter model — the quick-filter row, the popups, and the
+  // `setFilter`/`clearFilter` API all drive this one signal; `display` filters from it on the client
+  // path and the push-down effect forwards it when the source exposes `setFilter` (twin of `sortKeys`).
+  private readonly filters = signal<FilterModel>(new Map());
   // `source`, `columnMap`, and `display` are instance fields (not constructor locals) because the sort
   // API methods below — `applySort`/`sortBy`/`addSort` — read them.
   private readonly source: GridDataSource<T>;
@@ -169,22 +175,32 @@ export class EditableDataGrid<T> extends Group {
 
     // The materialized display re-runs when the source's rows change or a cell is written in place
     // (via `version`); the auto-width measure re-runs when the display changes. Both are shared by the
-    // header and body so their geometry never disagrees. Client path is pure — it sorts in memory; a
-    // push-down source (`setSort`) owns its own ordering (already re-queried), so we don't re-sort it.
+    // header and body so their geometry never disagrees. The client path is pure — it filters then
+    // sorts in memory. Each half is skipped when its push-down seam exists: a `setFilter`/`setSort`
+    // source owns that stage itself (already re-queried), so applying it again client-side would be
+    // wrong. Filter runs before sort so a client sort orders only the surviving rows.
     this.display = this.derived(() => {
       this.version();
-      const rows = materialize(this.source);
-      return this.source.setSort ? rows : sortRowsMulti(rows, this.sortKeys(), this.columnMap);
+      let rows = materialize(this.source);
+      if (!this.source.setFilter) rows = filterRows(rows, this.filters(), this.columnMap);
+      if (!this.source.setSort) rows = sortRowsMulti(rows, this.sortKeys(), this.columnMap);
+      return rows;
     });
     const autoWidths = this.derived(() => measureAutoWidths(engineCols, this.display(), stringWidth));
 
-    // Push-down: delegate ordering to the source whenever the model changes — a SEPARATE, guarded
-    // effect (never inside `display`, so `display` stays pure and a re-query can't loop through it).
+    // Push-down: delegate ordering/filtering to the source whenever a model changes — SEPARATE, guarded
+    // effects (never inside `display`, so `display` stays pure and a re-query can't loop through it).
     this.onMount(() => {
       if (this.source.setSort) {
         this.bind(
           () => this.sortKeys(),
           (keys) => this.source.setSort!(keys),
+        );
+      }
+      if (this.source.setFilter) {
+        this.bind(
+          () => this.filters(),
+          (model) => this.source.setFilter!(model),
         );
       }
     });
@@ -351,18 +367,89 @@ export class EditableDataGrid<T> extends Group {
   }
 
   /**
-   * The one sort mutator. Sets the new key list, then — on the client path only — re-anchors the
-   * cursor and selection to the same records they were on before the re-sort (by row key), so the
-   * focused/selected record stays under the cursor when its display index moves. A push-down source
-   * re-queries asynchronously, so a synchronous re-anchor makes sense only in memory.
+   * Set (or replace) a column's filter. The quick-filter row and the popups both call this. An unknown
+   * `columnId` is ignored — never added to the model and never forwarded to a push-down `setFilter`.
+   *
+   * @param columnId The column to filter.
+   * @param filter The filter condition to apply.
    */
-  private applySort(next: SortKey[]): void {
+  setFilter(columnId: string, filter: ColumnFilter): void {
+    if (!this.columnMap.has(columnId)) return; // unknown id — no-op (never reaches setFilter)
+    const next = new Map(this.filters());
+    next.set(columnId, filter);
+    this.applyFilter(next);
+  }
+
+  /**
+   * Clear one column's filter, or — with no argument — every filter.
+   *
+   * @param columnId The column whose filter to clear; omit to clear all filters.
+   */
+  clearFilter(columnId?: string): void {
+    if (columnId === undefined) {
+      this.applyFilter(new Map());
+      return;
+    }
+    const next = new Map(this.filters());
+    next.delete(columnId);
+    this.applyFilter(next);
+  }
+
+  /**
+   * The current filter model. Reactive — reading it inside an effect re-runs when the filters change.
+   *
+   * @returns The active per-column filters (empty when nothing is filtered).
+   */
+  filterModel(): FilterModel {
+    return this.filters();
+  }
+
+  /**
+   * The number of rows passing all active filters. Reactive. On the client path this is the filtered
+   * row count; on an eager push-down source `source.length()` already reflects the filtered set, so it
+   * equals `totalCount()` there (a documented v1 limitation until the windowing seam exposes a separate
+   * pre-filter total).
+   *
+   * @returns The count of rows currently shown — render "N of M" from this and {@link totalCount}.
+   */
+  filteredCount(): number {
+    return this.display().length;
+  }
+
+  /**
+   * The pre-filter row count. Reactive. On the client path this is the true total; on a push-down
+   * source it reflects whatever `source.length()` reports (see {@link filteredCount}).
+   *
+   * @returns The source's row count.
+   */
+  totalCount(): number {
+    return this.source.length();
+  }
+
+  /**
+   * Snapshot the focused and selected records by their row key from the current display, so a mutator
+   * can re-find them after the display re-derives (the focused/selected record stays under the cursor
+   * even when its display index moves). Returns `undefined` for an anchor when the grid is empty or
+   * nothing is selected.
+   */
+  private snapshotAnchors(): { anchor: string | number | undefined; selAnchor: string | number | undefined } {
     const before = this.display();
     const n = before.length;
     const fIdx = Math.max(0, Math.min(this.focused(), n - 1));
     const anchor = n > 0 ? this.source.rowKey(before[fIdx]) : undefined;
     const sIdx = this.selected();
     const selAnchor = sIdx >= 0 && sIdx < n ? this.source.rowKey(before[sIdx]) : undefined;
+    return { anchor, selAnchor };
+  }
+
+  /**
+   * The one sort mutator. Sets the new key list, then — on the client path only — re-anchors the
+   * cursor and selection to the same records they were on before the re-sort (by row key), so the
+   * focused/selected record stays under the cursor when its display index moves. A push-down source
+   * re-queries asynchronously, so a synchronous re-anchor makes sense only in memory.
+   */
+  private applySort(next: SortKey[]): void {
+    const { anchor, selAnchor } = this.snapshotAnchors();
 
     this.sortKeys.set(next);
 
@@ -371,6 +458,35 @@ export class EditableDataGrid<T> extends Group {
     if (anchor !== undefined) {
       const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
       if (i >= 0) this.focused.set(i);
+    }
+    if (selAnchor !== undefined) {
+      this.selected.set(after.findIndex((r) => this.source.rowKey(r) === selAnchor)); // -1 if the row is gone
+    }
+  }
+
+  /**
+   * The one filter mutator. Sets the new model, then — on the client path only — re-anchors the cursor
+   * and selection by row key. Unlike a re-sort, a filter can REMOVE the focused row: when its anchor is
+   * gone the cursor clamps into the shrunk display and the selection resets to `-1`. A push-down source
+   * re-queries asynchronously, so a synchronous re-anchor makes sense only in memory.
+   */
+  private applyFilter(next: FilterModel): void {
+    const { anchor, selAnchor } = this.snapshotAnchors();
+
+    this.filters.set(next);
+
+    if (this.source.setFilter) return; // push-down re-queries; the client-side re-anchor doesn't apply
+    const after = this.display();
+    if (anchor !== undefined) {
+      const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
+      if (i >= 0) {
+        this.focused.set(i);
+      } else {
+        // The focused row was filtered out — clamp the cursor into the shrunk display, drop selection.
+        this.focused.set(Math.max(0, Math.min(this.focused(), after.length - 1)));
+        this.selected.set(-1);
+        return;
+      }
     }
     if (selAnchor !== undefined) {
       this.selected.set(after.findIndex((r) => this.source.rowKey(r) === selAnchor)); // -1 if the row is gone
