@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 15:52
-> **Progress**: 41/45 tasks (91%)
+> **Last Updated**: 2026-07-15 15:57
+> **Progress**: 45/45 tasks (100%) — COMPLETE
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -203,16 +203,16 @@ tests → red → implement → green → impl tests → verify) and mirrors the
 **Reference**: `07 §Security & story` (ST-28) · CLAUDE.md §Kitchen-sink showcase · AR #2
 **Objective**: The live demo + reactive N-of-M echo.
 
-- [ ] 6.1.1 Add `filtering.story.ts` (quick-filter row + a value-list filter over region/qty/closed columns, with a live `Text(() => 'N of M')` echo of `filteredCount()`/`totalCount()`) + register in `stories/index.ts` — `packages/datagrid/test/kitchen-sink/stories/filtering.story.ts`, `.../stories/index.ts`
-- [ ] 6.1.2 Verify the story passes `kitchen-sink.smoke.spec.test.ts` (ST-28)
+- [x] 6.1.1 Add `filtering.story.ts` (quick-filter row + a value-list filter over region/qty/closed columns, with a live `Text(() => 'N of M')` echo of `filteredCount()`/`totalCount()`) + register in `stories/index.ts` — `packages/datagrid/test/kitchen-sink/stories/filtering.story.ts`, `.../stories/index.ts` ✅ (completed: 2026-07-15 15:57)
+- [x] 6.1.2 Verify the story passes `kitchen-sink.smoke.spec.test.ts` (ST-28) ✅ (completed: 2026-07-15 15:57)
 
 ### Step 6.2: Hardening & final gate
 
 **Reference**: CLAUDE.md §Documentation · `03-*` · AR #2
 **Objective**: Docs + full green.
 
-- [ ] 6.2.1 JSDoc + `@example` pass on every new public export; `yarn check:docs` green (no banned refs, `@example` present)
-- [ ] 6.2.2 Full `yarn verify` (final gate — lint + typecheck + build + test + check:docs; no regressions in the datagrid suite)
+- [x] 6.2.1 JSDoc + `@example` pass on every new public export; `yarn check:docs` green (no banned refs, `@example` present) — 18 datagrid files, 0 banned refs, 0 missing @example ✅ (completed: 2026-07-15 15:57)
+- [x] 6.2.2 Full `yarn verify` (final gate — lint + typecheck + build + test + check:docs; no regressions in the datagrid suite) — 234 datagrid tests green, 26/26 turbo tasks ✅ (completed: 2026-07-15 15:57)
 
 **Deliverables**: `filtering` story (AC-8); AC-9 security confirmed; full `yarn verify` green.
 **Verify**: `yarn verify`
