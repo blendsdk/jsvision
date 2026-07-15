@@ -36,7 +36,7 @@ import {
   View,
   Commands,
 } from '@jsvision/ui';
-import type { Application } from '@jsvision/ui';
+import type { Application, DesktopApplication } from '@jsvision/ui';
 import {
   classicTheme,
   monochromeTheme,
@@ -180,7 +180,7 @@ export function demoShell(opts: DemoShellOptions): Application {
 export function demoApp(
   ctx: { readonly caps: CapabilityProfile; readonly width: number; readonly height: number },
   opts?: { readonly windowMenu?: boolean },
-): Application {
+): DesktopApplication {
   const windowMenu = opts?.windowMenu ?? false;
   return createApplication({
     caps: ctx.caps,
@@ -287,9 +287,10 @@ function buildStatusLine(): ReturnType<typeof statusLine> {
 
 /** Wire the shared About/Theme/Depth command handlers onto an application's loop. */
 function wireCommands(app: Application, opts: DemoShellOptions): void {
-  const host = { loop: app.loop, desktop: app.desktop };
   app.onCommand(CMD_ABOUT, () => {
-    void messageBox(host, { title: `About ${SITE_META.name}`, text: aboutText() });
+    // The About box is hosted as a desktop window; a router-bodied app (no desktop) simply skips it.
+    if (app.desktop === undefined) return;
+    void messageBox({ loop: app.loop, desktop: app.desktop }, { title: `About ${SITE_META.name}`, text: aboutText() });
   });
   PRESETS.forEach((preset, i) => {
     app.onCommand(themeCmd(i), () => app.setTheme(preset.theme));
