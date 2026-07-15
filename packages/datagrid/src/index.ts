@@ -40,6 +40,21 @@ export type { GridDataSource } from './data-source.js';
 export { filterRows, computeDistinct } from './filter.js';
 export type { ColumnFilter, FilterModel, DistinctResult, FilterType } from './filter.js';
 
+// Column-layout model — the pure, view-free column-layout ops (visible order, the frozen L/C/R
+// `partition`, within-panel `reorderWithinPanel`, `clampWidth`, and the `overPinnedIds` guard) plus
+// the `FreezePartition`/`FreezeSpec` shapes and the default width bounds. The data-plane twin of the
+// sort/filter models; the container wraps these in signals and injects them into the panels.
+export {
+  visibleOrder,
+  partition,
+  reorderWithinPanel,
+  clampWidth,
+  overPinnedIds,
+  DEFAULT_MIN_WIDTH,
+  DEFAULT_AUTOFIT_MAX,
+} from './column-model.js';
+export type { FreezePartition, FreezeSpec } from './column-model.js';
+
 // Sort model — the pure `sortRowsMulti` multi-key comparator plus the `SortKey`/`SortDir` shape a
 // sort directive uses (a single-column sort is a one-element key list). `SortKey` is the same shape
 // the data source's `setSort` push-down consumes.
