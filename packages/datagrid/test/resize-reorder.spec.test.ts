@@ -53,7 +53,16 @@ function buildGrid(extra: Partial<EditableDataGridOptions<Emp>> = {}) {
   // screen row 0, so we send `x0 + 1` and `y = 1` (matching the existing header-click tests).
   const mouse = (kind: 'down' | 'drag' | 'up', x0: number) =>
     loop.dispatch({ type: 'mouse', kind, button: 0, x: x0 + 1, y: 1 } as never);
-  return { grid, loop, mouse };
+  const headerText = (): string => {
+    loop.renderRoot.flush();
+    const buf = loop.renderRoot.buffer();
+    let s = '';
+    for (let x = 0; x < W; x += 1) s += buf.get(x, 0)?.char ?? ' ';
+    return s;
+  };
+  // The 0-based content-x of a column title's first character (robust across the frozen layout).
+  const titleX = (label: string): number => headerText().indexOf(label);
+  return { grid, loop, mouse, headerText, titleX };
 }
 
 // The right-edge grip of a fixed-width column, at content-x `Σ widths + (c) dividers` for column c. With
@@ -87,4 +96,42 @@ test('ST-21: double-clicking a grip auto-fits the column to its widest cell', ()
   mouse('down', NAME_GRIP); // clickCount 2 → double-click → auto-fit
   mouse('up', NAME_GRIP);
   expect(grid.columnWidth('name')).toBe(9); // fitted to 'Alexander'
+});
+
+// ---------------------------------------------------------------------------
+// Reorder gesture (Phase 5 — ST-22, ST-23)
+// ---------------------------------------------------------------------------
+
+// ST-22 — a press-and-drag on a title reorders within the panel; a plain click still sorts.
+test('ST-22: a title drag reorders within the panel; a plain click still sorts', () => {
+  const drag = buildGrid();
+  expect(drag.grid.columnOrder()).toEqual(['id', 'name', 'city']);
+  const nameX = drag.titleX('Name');
+  const cityX = drag.titleX('City');
+  drag.mouse('down', nameX); // press the 'name' title (this also sorts on down…)
+  drag.mouse('drag', cityX); // …but a drag past threshold starts the reorder (reverting that sort)
+  drag.mouse('up', cityX);
+  expect(drag.grid.columnOrder()).toEqual(['id', 'city', 'name']); // name moved to the city slot
+  expect(drag.grid.sort()).toEqual([]); // the reorder reverted the on-down sort — a drag never sorts
+
+  const click = buildGrid();
+  const idX = click.titleX('ID');
+  click.mouse('down', idX); // a plain click (no drag)…
+  click.mouse('up', idX);
+  expect(click.grid.sort()).toEqual([{ columnId: 'id', dir: 'asc' }]); // …still sorts
+  expect(click.grid.columnOrder()).toEqual(['id', 'name', 'city']); // and never reorders
+});
+
+// ST-23 — a reorder never crosses a freeze boundary: a frozen column is never displaced by a drag in
+// another panel, and the drag stays within its own panel.
+test('ST-23: a reorder is constrained to its panel — a cross-boundary drop is rejected', () => {
+  const { grid, mouse, titleX } = buildGrid({ freeze: 1 }); // id frozen (left panel); name+city center
+  expect(grid.columnOrder()).toEqual(['id', 'name', 'city']);
+  expect(grid.frozen().left).toEqual(['id']);
+  const cityX = titleX('City'); // a center-panel column
+  mouse('down', cityX);
+  mouse('drag', 0); // drag hard left, past the freeze boundary into the frozen panel's area
+  mouse('up', 0);
+  expect(grid.frozen().left).toEqual(['id']); // the frozen column was not displaced
+  expect(grid.columnOrder()[0]).toBe('id'); // id stays pinned first — the drop never crossed the boundary
 });

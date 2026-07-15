@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-16 00:05
-> **Progress**: 36/58 tasks (62%) — Phase 1–4 ✅ (incl. folded 3.2.7 reactive rebuild)
+> **Last Updated**: 2026-07-16 00:46
+> **Progress**: 43/58 tasks (74%) — Phase 1–5 ✅ (incl. folded 3.2.7 reactive rebuild)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -136,17 +136,17 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 **Reference**: `03-03 §Reorder` · `07 §Reorder` (ST-22, ST-23) · AR-12 / RD-07 AR#22
 
 ### Step 5.1: Specification tests (red)
-- [ ] 5.1.1 Add the reorder section to `resize-reorder.spec.test.ts` (ST-22 title-drag reorders within panel + plain click still sorts; ST-23 cross-boundary drop rejected)
-- [ ] 5.1.2 Verify **red**
+- [x] 5.1.1 Add the reorder section to `resize-reorder.spec.test.ts` (ST-22 title-drag reorders within panel + plain click still sorts; ST-23 cross-boundary drop rejected)
+- [x] 5.1.2 Verify **red**
 
 ### Step 5.2: Implement (green)
-- [ ] 5.2.1 `sort-header.ts`: reorder gesture — press-and-drag past threshold → drop indicator at the target slot, panel-constrained; up → `onColumnReorder(fromVisible, toVisible)` (a plain click without drag stays sort/funnel) — `packages/datagrid/src/sort-header.ts`
-- [ ] 5.2.2 `grid.ts`: wire `onColumnReorder` → `reorderWithinPanel` (map panel-local via `columnOffset` → global visible order) → `setColumnOrder`; cross-panel drop is a no-op — `packages/datagrid/src/grid.ts`
-- [ ] 5.2.3 Verify **green** — ST-22, ST-23 pass (AC-2)
+- [x] 5.2.1 `sort-header.ts`: reorder gesture — press-and-drag past threshold → drop indicator at the target slot, panel-constrained; up → `onColumnReorder(fromVisible, toVisible)` (a plain click without drag stays sort/funnel) — `packages/datagrid/src/sort-header.ts`
+- [x] 5.2.2 `grid.ts`: wire `onColumnReorder` → `reorderWithinPanel` (map panel-local via `columnOffset` → global visible order) → `setColumnOrder`; cross-panel drop is a no-op — `packages/datagrid/src/grid.ts`
+- [x] 5.2.3 Verify **green** — ST-22, ST-23 pass (AC-2)
 
 ### Step 5.3: Impl tests & verify
-- [ ] 5.3.1 Write reorder impl tests (drop onto own slot no-op; drop indicator pins at panel edge when dragged past)
-- [ ] 5.3.2 Full `yarn verify`
+- [x] 5.3.1 Write reorder impl tests (drop onto own slot no-op; drop indicator pins at panel edge when dragged past)
+- [x] 5.3.2 Full `yarn verify`
 
 **Deliverables**: within-panel reorder + drop indicator + cross-boundary reject (AC-2). **Verify**: `yarn verify`
 

@@ -29,10 +29,11 @@ const EMPS: Emp[] = [
 const W = 30;
 const H = 6;
 
-function buildGrid(cols: ReturnType<typeof makeCols>) {
+function buildGrid(cols: ReturnType<typeof makeCols>, extra: { freeze?: number } = {}) {
   const grid = new EditableDataGrid<Emp>({
     columns: cols,
     source: fromRows(signal(EMPS.slice()), { rowKey: (r) => r.id }),
+    ...extra,
   });
   grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
   const root = new Group();
@@ -123,4 +124,36 @@ test('a lost capture aborts the resize cleanly', () => {
   captured = false; // the loop steals the capture (e.g. a modal opened)
   header.onEvent(envelope('drag', 12)); // this drag must be ignored, not reported
   expect(onResize).toHaveBeenCalledTimes(1); // still 1 — the stale drag aborted cleanly
+});
+
+// ---------------------------------------------------------------------------
+// Reorder gesture internals (beyond the ST-22/23 oracles)
+// ---------------------------------------------------------------------------
+
+// A drag that wanders off and returns to its own slot commits nothing — but it still counted as a
+// drag, so the sort the press applied on mouse-down is reverted (a drag never leaves a net sort).
+test('a reorder drag that drops on its own slot is a no-op (order unchanged, sort reverted)', () => {
+  const { grid, headerLine, mouse } = buildGrid(makeCols('5'));
+  const nameX = headerLine().indexOf('Name');
+  const cityX = headerLine().indexOf('City');
+  mouse('down', nameX); // press 'name' (sorts on down + arms a reorder)
+  mouse('drag', cityX); // drag away to the city slot…
+  mouse('drag', nameX); // …then back onto name's own slot
+  mouse('up', nameX);
+  expect(grid.columnOrder()).toEqual(['id', 'name', 'city']); // dropped on its own slot → nothing moved
+  expect(grid.sort()).toEqual([]); // the drag still reverted the on-down sort
+});
+
+// Dragging a center-panel column past the freeze boundary clamps the drop indicator to the panel's
+// own left edge — it never renders in (or drops into) the frozen panel.
+test('the drop indicator pins to the panel edge when a column is dragged past it', () => {
+  const { headerLine, mouse } = buildGrid(makeCols('5'), { freeze: 1 }); // id frozen; name+city center
+  const centerOrigin = headerLine().indexOf('Name'); // the center panel's first slot (its left edge)
+  const cityX = headerLine().indexOf('City');
+  mouse('down', cityX); // press 'city' in the center panel
+  mouse('drag', 0); // drag hard left, past the freeze boundary into the frozen panel's screen area
+  const line = headerLine();
+  expect(line[centerOrigin]).toBe('▏'); // indicator pinned at the center panel's left edge (slot 0)
+  expect(line[0]).not.toBe('▏'); // and never painted into the frozen (id) panel at x=0
+  mouse('up', 0); // release the captured gesture
 });
