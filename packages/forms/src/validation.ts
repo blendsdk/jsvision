@@ -15,14 +15,28 @@ export interface Validation<S extends z.ZodObject<z.ZodRawShape>> {
  *
  * A single memoized computed runs `schema.safeParse` on the whole object; every accessor
  * reads that one result, so the parse runs at most once per raw change no matter how many
- * readers subscribe. The parse is synchronous — an async refinement would surface as an
- * error rather than a promise.
+ * readers subscribe. The parse is synchronous: a schema that contains an async refinement makes
+ * `safeParse` throw, which this layer catches and rethrows as a named developer error pointing at
+ * the `asyncValidators` option — the supported way to do per-field async checks.
  */
 export function createValidation<S extends z.ZodObject<z.ZodRawShape>, I>(
   schema: S,
   rawValues: () => I,
 ): Validation<S> {
-  const result = computed(() => schema.safeParse(rawValues()));
+  const result = computed(() => {
+    try {
+      return schema.safeParse(rawValues());
+    } catch (cause) {
+      // A synchronous `safeParse` returns `{ success: false }` for ordinary validation failures, so a
+      // *throw* here unambiguously means the schema holds an async refinement (Zod's $ZodAsyncError) —
+      // which the synchronous validator cannot run. Rethrow a named error; `cause` keeps the original.
+      throw new Error(
+        'jsvision-forms: the schema contains an async refinement, which the synchronous validator ' +
+          'cannot run. Use the `asyncValidators` option for per-field async checks instead.',
+        { cause },
+      );
+    }
+  });
 
   return {
     isValid: () => result().success,

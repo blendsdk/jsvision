@@ -66,7 +66,7 @@ rest are recorded as a backlog in **GH #89**. Build order: RD-09 → RD-06 → R
 | RD | Title | Status | Depends on |
 |----|-------|--------|------------|
 | [RD-09](RD-09-styled-error-text-input-placeholder.md) | Styled Error Text & Input Placeholder (`error`/`warning` theme roles · `Text` severity · `Input` placeholder) | Draft | — |
-| RD-06 | Async Validation (plain-Promise · debounce · stale-guard · `validating()`) | Planned | — |
+| [RD-06](RD-06-async-validation.md) | Async Validation (per-field `asyncValidators` · debounce · stale-guard + `AbortSignal` · `validating()`/`asyncError()` · async-aware `submit()` · `dispose()`) | Draft | RD-01, RD-02 |
 | RD-07 | Async Loading + Baseline Rebase (`load()`/`loading()`) | Planned | RD-06 |
 | RD-08 | `formDialog()` + Modal Submit-Gate | Planned | RD-09 |
 | RD-05 | Comprehensive Forms Showcase (built last) | Planned | RD-06…09 |

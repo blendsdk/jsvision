@@ -3,6 +3,21 @@ import type { z } from 'zod';
 import type { ZodIssue } from 'zod';
 
 /**
+ * An opt-in asynchronous validator for a single field — the "is this username / email already
+ * taken?" round-trip class of check that a synchronous Zod schema cannot express.
+ *
+ * It receives the field's **raw** editing value (coerce inside if you need a typed value) and an
+ * `AbortSignal` that is aborted when a newer change supersedes this run or the form is disposed —
+ * thread it into `fetch` so a stale request is cancelled. It resolves the error message to surface,
+ * or `null` for "no async error". A **rejected** promise is treated as "no async error"; if your
+ * validator can fail (e.g. the network is down), `catch` inside and return a message such as
+ * `'Could not verify'` to surface that as an error.
+ *
+ * @typeParam T - the field's raw editing value type.
+ */
+export type AsyncValidator<T> = (value: T, ctx: { signal: AbortSignal }) => Promise<string | null>;
+
+/**
  * A single field's handle: its live, store-owned raw value signal plus the derived
  * error / touched / dirty accessors. Handles are stable — `form.field(name)` returns
  * the same instance every call — so a UI can bind to one shared signal.
@@ -18,6 +33,19 @@ export interface Field<T> {
   touched(): boolean;
   /** Whether the raw value differs from its baseline. */
   dirty(): boolean;
+  /**
+   * Whether an async validation for this field is currently in flight. Always `false` for a field
+   * with no `asyncValidators` entry. Stays `false` during the debounce window — it flips `true` only
+   * once the validator is actually running.
+   */
+  validating(): boolean;
+  /**
+   * The latest non-superseded async validation message, or `null`. This is a **distinct** surface
+   * from `error()` (which stays the synchronous `ZodIssue`): an async message is never fabricated
+   * into a `ZodIssue`. Cleared to `null` the moment the value changes (a verdict describes one
+   * specific value). Compose the two surfaces yourself in the UI.
+   */
+  asyncError(): string | null;
 }
 
 /**
@@ -37,18 +65,36 @@ export interface Form<S extends z.ZodObject<z.ZodRawShape>, I> {
   rawValues(): I;
   /** Form-level (path-less) validation issues, e.g. from an object-level `refine`. */
   errors(): ZodIssue[];
-  /** Whether the whole object currently satisfies the schema (live, independent of touched). */
+  /**
+   * Whether the whole object currently satisfies the schema **and** has no async error (live,
+   * independent of touched). Optimistic about pending async work: a field whose async validator has
+   * not yet run (or is still in flight) does not hold this `false` — only a resolved async error
+   * does. Adds no extra `safeParse` call.
+   */
   isValid(): boolean;
   /** Whether any field diverges from its baseline. */
   dirty(): boolean;
+  /** Whether any field is currently running an async validation. */
+  validating(): boolean;
   /**
    * Mark every field touched, validate, and — when valid — await `onValid` with the
    * coerced values. Resolves `true` when valid (after `onValid` completes) and `false`
    * when invalid (without calling `onValid`).
+   *
+   * The async-aware gate: it short-circuits `false` on a synchronously-invalid object (no async
+   * validator is invoked), otherwise it cancels pending debounces, force-runs and awaits every async
+   * validator, and gates on the combined result — so a value an async rule rejects never passes.
    */
   submit(onValid: (values: z.output<S>) => void | Promise<void>): Promise<boolean>;
   /** Restore every field to its baseline value and clear dirty + touched, in one batch. */
   reset(): void;
+  /**
+   * Tear down the form's whole reactive scope — the standing async-validation effects and every
+   * owned computed. Idempotent and safe to call more than once. A long-lived form need not call
+   * this, but a per-dialog form that mounts async validators should dispose it when the dialog
+   * closes so no debounce fires after teardown.
+   */
+  dispose(): void;
 }
 
 /**
@@ -70,4 +116,15 @@ export interface CreateFormOptions<S extends z.ZodObject<z.ZodRawShape>, I exten
    * string).
    */
   initial: I;
+  /**
+   * Opt-in per-field async validators, keyed by field name. A field with an entry runs its validator
+   * debounced on change (only while the field is synchronously clean) and on submit; the field's
+   * `validating()` / `asyncError()` reflect the result. Fields with no entry are unaffected.
+   */
+  asyncValidators?: { [K in keyof I]?: AsyncValidator<I[K]> };
+  /**
+   * Debounce, in milliseconds, before an async validator runs after a change. Defaults to `300`.
+   * Applies to every async field.
+   */
+  asyncDebounceMs?: number;
 }

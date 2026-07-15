@@ -81,3 +81,41 @@ package `@jsvision/forms`. Async validation, async loading, the `formDialog` hel
 - [x] Preflight decisions applied: role names `dangerText`/`warningText` (PF-003, revises AR-25/27);
       propagation to `DatePicker` + `ComboBox` + `inputBox()` (PF-001, revises AR-30); theme-role
       integration surface corrected + MINOR items (PF-002/004/005/006/007). Report: BLOCKED → resolved.
+
+---
+
+## RD-06 — Async Validation (2026-07-15 extension)
+
+> Appended for the async-validation slice (see `00-roadmap.md`; source design GH #85, scope fence
+> GH #89). AR-33/36/40/44 are explicit user decisions (2026-07-15); the rest are recommendations
+> derived from them and from the codebase, confirmed on RD review. The pivotal architecture call
+> (AR-33) was hardened with an independent adversarial review that empirically confirmed the
+> sync-parse-throws-on-async-refine landmine against the pinned zod 4.4.3.
+
+| AR | Decision | Resolution | Status |
+|----|----------|------------|--------|
+| AR-33 | Async architecture | **Keep the synchronous whole-object `safeParse` for schema rules; add an opt-in per-field async validator layer beside it** (not a whole-object `safeParseAsync`). Chosen because per-field `validating()` — an RD-06 deliverable — cannot be derived from a whole-object async parse without reading `schema.shape` (banned), and a sync `safeParse` on an async-refine schema *throws* (verified, zod 4.4.3). Preserves instant sync `isValid()`. Accepted cost: no cross-field **async** (AR-43). | ✅ Resolved (user) |
+| AR-34 | Async validator config surface | `CreateFormOptions` gains `asyncValidators?: { [K in keyof I]?: AsyncValidator<I[K]> }` where `AsyncValidator<T> = (value: T, ctx: { signal: AbortSignal }) => Promise<string \| null>`. Additive, typed, keyed by field name; the schema stays the sync source of truth; the flat `Object.keys(initial)` field model is untouched. | ✅ Resolved (derived) |
+| AR-35 | Value passed to the validator | The validator receives the field's **raw** editing value (`I[K]`, what `field.value` holds), not the schema-coerced value. The coerced value only exists on whole-object success (`result.data` is `null` otherwise), so passing raw avoids a null-data trap and lets async run per-field; the author coerces inside the validator if needed. | ✅ Resolved (derived) |
+| AR-36 | Trigger + gating | Async runs **debounced on value change, only when the field is sync-clean** (`fieldError(name) === null`, re-checked after the debounce), and is **force-run on submit**. Chosen over on-blur-only and on-submit-only for live "checking…" feedback while bounding request volume and never checking a malformed value. **Preflight PF-002:** one trigger effect **per async field**, each subscribing only to its own value (tracked) and reading the sync gate **untracked** — because `fieldError` reads the one shared parse, tracking it would make any field's edit re-run/abort every field's in-flight check. | ✅ Resolved (user; PF-002 refined) |
+| AR-37 | Debounce | Form-level `asyncDebounceMs?: number`, default **300**; changes within the window coalesce to one run with the final value. Per-field override deferred (speculative until a use lands). | ✅ Resolved (derived) |
+| AR-38 | Concurrency correctness | Per-field **monotonic generation counter** — a result is applied only if its generation is still current (a slow answer for an old value is dropped) — **plus an `AbortSignal`** handed to the validator and aborted when a run is superseded (or the form disposed), so cancellable work (`fetch`) can stop. Mirrors the `load({ signal })` idiom. | ✅ Resolved (derived) |
+| AR-39 | `validating()` state | Per-field `field.validating(): boolean` (drives the row spinner) + form-level `form.validating(): boolean` = OR over fields (drives the global busy / Save-disabled state). Backed by signals the async runner sets. | ✅ Resolved (derived) |
+| AR-40 | Async error surface | **Distinct `field.asyncError(): string \| null`**; `error(): ZodIssue \| null` stays sync-only and unchanged. Chosen over merging the async message into `error()` as a synthetic `ZodIssue` — honest (no fabricated `code`/`path`), back-compatible, and keeps the `ZodIssue`-passthrough guardrail (AR-20). The app composes `error()?.message ?? asyncError()`. | ✅ Resolved (user) |
+| AR-41 | `isValid()` + submit gate | `form.isValid()` = whole-object sync-valid **AND** no field holds an async error; **sync-optimistic about pending** (a not-yet-run async check does not by itself flip `isValid()` false). `form.submit()` marks touched → **force-runs + awaits every async validator** (debounce-bypassing, stale-guarded) → re-checks `isValid()` → gates. Signature unchanged. RD-06 owns submit's async-awareness; the `formDialog` wiring is RD-08. **Preflight PF-003:** `submit()` cancels any pending debounce timers before force-running, so a queued debounced run cannot supersede the force-run mid-gate. | ✅ Resolved (derived; PF-003 refined) |
+| AR-42 | In-schema async refine | The sync parse is guarded: a throwing `schema.safeParse` (Zod's `$ZodAsyncError` when the schema holds an async refine) is rethrown as a **named developer error** directing the author to `asyncValidators`, instead of crashing every accessor. In-schema async refinements are an unsupported input, documented as such. (`safeParse` never throws for ordinary failures — it returns `{ success: false }` — so a throw unambiguously means an async refinement.) | ✅ Resolved (derived) |
+| AR-43 | Cross-field async — out of scope | **Deferred.** A per-field validator sees only its own field and writes only its own channel, so cross-field / object-level **async** validation is not expressible in this model; RD-06 forecloses it. Recorded tie-breaker: if cross-field async later becomes a hard requirement, the whole-object `safeParseAsync` architecture (AR-33 option b) must be revisited — it cannot be retrofitted. Cross-field **sync** validation via schema `.refine`/`.superRefine` is unchanged (AR-11). | ✅ Resolved (user, via AR-33) |
+| AR-44 | Store lifecycle / `dispose()` | `createForm` gains **`dispose(): void`** that tears down the form's **whole reactive scope** — the standing async-trigger effects **and** the validation/field computeds — by exposing the disposer the existing `createRoot` already provides (currently discarded at `create-form.ts:64`). **Idempotent** (owner-disposed guard); **after `dispose()` the form must not be used**. It is **not** a "no-op without async validators" — it disposes the (lazy) scope regardless — but a sync-only form has no standing effect to leak, so calling it is optional there (preflight PF-001 corrected the original no-op wording; `createRoot`'s disposer and `effect`'s lack of an individual disposer, `owner.ts:163`/`effect.ts:9`, make whole-scope teardown the honest semantics). **Revises AR-15** — the store is no longer purely lazy once async validators are present. Chosen over keeping it owner-free because per-dialog forms (RD-08) must tear their scope down to avoid a leak. | ✅ Resolved (user; PF-001 refined) |
+| AR-45 | Repo gates + `submitting()` deferral | A kitchen-sink async-validation **story** (a field with a simulated availability check: live "checking…" + async error) passing the headless smoke test is required. `form.submitting()` (submit-in-flight lifecycle) stays **deferred to RD-08**, where the submit-gate/dialog UX lives. | ✅ Resolved (derived) |
+
+### Gate status (RD-06) — ✅ PASSED (2026-07-15)
+
+- [x] The four semantically-pivotal items (AR-33 architecture, AR-36 trigger/gating, AR-40 async
+      error surface, AR-44 lifecycle/`dispose`) resolved by explicit user decision.
+- [x] AR-33 hardened with an independent adversarial review (empirically confirmed the sync-parse
+      async-refine throw against zod 4.4.3; verdict: architecture (a) is the only guardrail-satisfying
+      option, with three sharp edges — folded into AR-41/42/43).
+- [x] Derived items (AR-34/35/37/38/39/41/42/43/45) recorded with codebase-grounded rationale.
+- [x] Zero deferred *within-scope* items — every in-scope ambiguity has a concrete answer; cross-field
+      async is an explicit, recorded **out-of-scope** decision (AR-43), not an unresolved gap.
+- [x] User reviewed and confirmed the four pivotal decisions (AskUserQuestion, 2026-07-15).
