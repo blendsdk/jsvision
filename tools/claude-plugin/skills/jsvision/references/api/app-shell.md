@@ -16,6 +16,8 @@ interface Application {
   loop: EventLoop;   // The underlying event loop. Use it to emit commands, manage focus, or run modals.
   onCommand(command: string, handler: () => void): () => void;   // Register an app-wide handler for a named command; returns a function that unregisters it. Every handler registered for a command runs when that command is emitted, and a handled command is consumed there. Forwards to `loop.onCommand` — see it for the pre-process ordering and the modal-open caveat.
   setTheme(theme: Theme): void;   // Replace the active theme at runtime and repaint every view with the new colors in one coalesced frame. Forwards to `loop.setTheme`, so it is safe to call from a command handler or a bare imperative call — the repainted frame reaches the terminal even outside an input tick.
+  statusBase(): View[];   // A **fresh** copy of the application's base status items — the global affordances (e.g. quit/help) a screen composes with its own hints via `withBase`. Each call rebuilds new item views, because a view has a single parent: composing with the live base bar's own instances would re-parent them and corrupt the fallback bar. Only command items are reproduced (spacers/widgets are not part of a composable base).
+  menuBase(): MenuItem[];   // The application's base menu items — the top-level menu nodes `createApplication({ menuBar })` was given. Menu items are plain data (not views), so this returns a shallow copy safe to compose with `withBase`.
   run(): Promise<number>;   // Connect to the terminal and run until the `'quit'` command, resolving to the exit code. The terminal is always restored on exit — normal, thrown, or signalled.
 }
 ```

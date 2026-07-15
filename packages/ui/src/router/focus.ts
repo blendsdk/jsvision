@@ -64,6 +64,30 @@ export function viewAtPath(root: View, path: readonly number[]): View | null {
 }
 
 /**
+ * Find the view under `root` whose `keyOf(view)` equals `key` — the screen-cooperative restore tier
+ * for a rebuilt screen that reshapes (so the index path no longer fits). Walks depth-first in paint
+ * order and returns the first match, or `null` when none matches.
+ *
+ * @param root  The rebuilt screen root to search.
+ * @param keyOf The route's `focusKey` — derives a stable key from a view.
+ * @param key   The key captured from the previously focused view.
+ * @returns The matching view, or `null` if no view yields `key`.
+ * @example
+ * const target = findFocusByKey(rebuiltRoot, route.focusKey!, savedKey);
+ * if (target !== null) loop.focusView(target);
+ */
+export function findFocusByKey(root: View, keyOf: (view: View) => string, key: string): View | null {
+  if (keyOf(root) === key) return root;
+  if (root instanceof Group) {
+    for (const child of root.children) {
+      const found = findFocusByKey(child, keyOf, key);
+      if (found !== null) return found;
+    }
+  }
+  return null;
+}
+
+/**
  * The first focusable leaf under `root` in paint order (depth-first, children in order) — the
  * best-effort floor when neither the exact view nor an index-path resolve is available.
  *

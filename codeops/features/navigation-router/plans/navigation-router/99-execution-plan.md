@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Progress**: 22/43 tasks (51%)
-> **Last Updated**: 2026-07-15 (Phase 1 router core complete — `yarn verify` green)
+> **Progress**: 29/43 tasks (67%)
+> **Last Updated**: 2026-07-15 (Phase 2 keep-alive + chrome contributions + full focus restore complete — `yarn verify` green)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -98,24 +98,24 @@ green and is committed (via /gitcm).
 ## Phase 2: Keep-alive + Chrome Contributions + Focus
 **Reference**: [03-02](03-02-router-core.md), [03-03](03-03-chrome-contributions.md) · AR-4, AR-5, AR-7, AR-19
 
-### Session 2.1 — Spec tests (red)
+### Session 2.1 — Spec tests (red) ✅
 | # | Task | File |
 |---|------|------|
-| 2.1.1 | Write ST-14/ST-15 spec: dispose-on-pop vs `keepAlive` warm-state survival | `packages/ui/test/router.keepalive.spec.test.ts` |
-| 2.1.2 | Write ST-16 spec: replace-when-present + base fallback + `withBase` | `packages/ui/test/router.chrome.spec.test.ts` |
+| 2.1.1 | `[x]` Write ST-14/ST-15 spec: dispose-on-pop vs `keepAlive` warm-state survival | `packages/ui/test/router.keepalive.spec.test.ts` |
+| 2.1.2 | `[x]` Write ST-16 spec: replace-when-present + base fallback + `withBase` | `packages/ui/test/router.chrome.spec.test.ts` |
 
-### Session 2.2 — Implementation (green)
+### Session 2.2 — Implementation (green) ✅
 | # | Task | File |
 |---|------|------|
-| 2.2.1 | Keep-alive: keyed-`For` + `visible` toggle for warm frames; dispose path for default frames | `packages/ui/src/router/router.ts` |
-| 2.2.2 | Chrome apply-on-activation via `ChromeHost` (cache `bundle.status`/`menu` per frame); `withBase` helper + `app.statusBase(): View[]` **factory** (fresh items — PF-003) + `app.menuBase(): MenuItem[]` | `packages/ui/src/router/router.ts`, `packages/ui/src/router/chrome.ts`, `packages/ui/src/app/application.ts` |
-| 2.2.3 | Full focus restore per the finalized AR-19 tiers (exact / `focusKey` / floor) | `packages/ui/src/router/focus.ts` |
+| 2.2.1 | `[x]` Keep-alive: keyed-`For` (view identity) + `visible` toggle for warm frames; dispose path (view→`null`) for default frames — frame model in `router.ts` | `packages/ui/src/router/router.ts` |
+| 2.2.2 | `[x]` Chrome apply-on-activation (frame retains `bundle`, re-applied on `back`); `withBase` helper (`router/chrome.ts`) + `app.statusBase(): View[]` **factory** (fresh command-item copies — PF-003) + `app.menuBase(): MenuItem[]` | `packages/ui/src/router/router.ts`, `packages/ui/src/router/chrome.ts`, `packages/ui/src/app/application.ts` |
+| 2.2.3 | `[x]` Full focus restore per the finalized AR-19 tiers (exact / `focusKey` / index-path / floor) via a `FocusHost` seam wired by `createApplication`; `findFocusByKey` added to `focus.ts` | `packages/ui/src/router/focus.ts`, `packages/ui/src/router/router.ts`, `packages/ui/src/router/types.ts`, `packages/ui/src/app/application.ts` |
 
-### Session 2.3 — Impl tests & hardening
+### Session 2.3 — Impl tests & hardening ✅
 | # | Task | File |
 |---|------|------|
-| 2.3.1 | Impl tests: warm chrome re-apply, disposed-frame focus floor, **modal-open stale-focus test (PF-006)** — navigating while a modal is open must not focus into a disposed screen on modal close (`focusView` on an unmounted view is a documented no-op) | `packages/ui/test/router.keepalive.impl.test.ts` |
-| 2.3.2 | ST-14…ST-16 green; `yarn verify` green | — |
+| 2.3.1 | `[x]` Impl tests: warm chrome re-apply, disposed-frame focus restore, **modal-open stale-focus test (PF-006)** — navigating while a modal is open must not focus into a disposed screen on modal close (`focusView` on an unmounted view is a documented no-op) | `packages/ui/test/router.keepalive.impl.test.ts` |
+| 2.3.2 | `[x]` ST-14…ST-16 + impl green; `yarn verify` green | — |
 
 **Verify**: `yarn verify` green; commit via /gitcm.
 
