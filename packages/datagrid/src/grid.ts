@@ -327,11 +327,15 @@ export class EditableDataGrid<T> extends Group {
       columnMap: this.columnMap,
       autoWidths: this.autoWidths,
       resolvedWidth: (id) => this.resolvedWidth(id),
+      widthOverride: (id) => this.columnWidths().get(id),
+      widthTick: () => this.columnWidths(),
       zebra: opts.zebra ?? false,
       sort: this.sortKeys,
       filters: this.filters,
       onHeaderClick: (columnId, additive) => (additive ? this.addSort(columnId) : this.sortBy(columnId)),
       onFunnelClick: (columnId, anchor, ev, header) => this.openFilterPopup(columnId, anchor, ev, header),
+      onColumnResize: (id, w) => this.setColumnWidth(id, w),
+      onColumnAutoFit: (id) => this.autoFitColumn(id),
       quickFilter: opts.quickFilter === true,
       onQuickFilter: (columnId, text) =>
         text.length === 0

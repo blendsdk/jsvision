@@ -54,6 +54,14 @@ export interface GridBodyDeps<T> {
   autoWidths: () => (number | null)[];
   /** A column's resolved width in cells (override → fixed → auto → title), to size a frozen band. */
   resolvedWidth: (id: string) => number;
+  /**
+   * A column's explicit width override in cells, or `undefined` when none is set. Reactive — the panel
+   * columns' `width` reads it so a live resize re-apportions without a rebuild. Unlike `resolvedWidth`
+   * it preserves a column's original `'auto'`/`fr` kind when there is no override.
+   */
+  widthOverride: (id: string) => number | undefined;
+  /** Reactive width-override trigger — bound by every header + body for repaint on a live resize. */
+  widthTick: () => unknown;
   /** Stripe odd rows. */
   zebra: boolean;
   /** The container's sort model (read by every header). */
@@ -67,6 +75,10 @@ export interface GridBodyDeps<T> {
    * to the panel header that owns the funnel — in a frozen grid the three headers have different origins.
    */
   onFunnelClick: (columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent, header: SortHeader<T>) => void;
+  /** Live column-resize sink (a captured grip drag) — routes to the container's `setColumnWidth`. */
+  onColumnResize: (columnId: string, width: number) => void;
+  /** Grip double-click sink — routes to the container's `autoFitColumn`. */
+  onColumnAutoFit: (columnId: string) => void;
   /** Whether the opt-in quick-filter band is shown. */
   quickFilter: boolean;
   /** Quick-filter text sink (empty text ⇒ clear that column's filter). */
@@ -179,7 +191,20 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       }
     : undefined;
 
-  const engineOf = (id: string): Column<T> => deps.engineCols[deps.columnIndex.get(id) ?? 0];
+  // Each panel column wraps its engine column with an override-aware `width` getter: apportionColumns
+  // reads `col.width` on every (reactive) draw, so reading the override signal there makes a live resize
+  // re-apportion with no rebuild. With no override the original width kind (`number`/`'auto'`/fr) passes
+  // through unchanged, so a non-resized grid is byte-identical.
+  const engineOf = (id: string): Column<T> => {
+    const base = deps.engineCols[deps.columnIndex.get(id) ?? 0];
+    return {
+      ...base,
+      get width() {
+        const o = deps.widthOverride(id);
+        return o !== undefined ? o : base.width;
+      },
+    };
+  };
   const sliceCols = (ids: string[]): Column<T>[] => ids.map(engineOf);
   const sliceTyped = (ids: string[]): GridColumn<T>[] => ids.map((id) => deps.columnMap.get(id)!);
   // A per-slice auto-width reader: reindexes the shared measurement into this slice's local order, and
@@ -201,6 +226,9 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       // Capture this header so the popup anchors on the panel that owns the clicked funnel (in a frozen
       // grid the three headers sit at different origins, so the anchor must be the header that was clicked).
       onFunnelClick: (columnId, anchor, ev) => deps.onFunnelClick(columnId, anchor, ev, header),
+      onColumnResize: deps.onColumnResize,
+      onColumnAutoFit: deps.onColumnAutoFit,
+      widthTick: deps.widthTick,
     });
     headers.push(header);
     return header;
@@ -233,6 +261,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       mouseColumns: frozen,
       autoScrollColumns: autoScroll,
       panelActive: gridActive,
+      widthTick: deps.widthTick,
     });
     panels.push(body);
     return body;

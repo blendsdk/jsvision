@@ -83,6 +83,13 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
    * single body (focus is then this view's own).
    */
   panelActive?: () => boolean;
+  /**
+   * A reactive column-geometry trigger. Bound for repaint so a change to a column's width override
+   * (a live resize / auto-fit) re-apportions and repaints — `draw` reads widths through the column
+   * objects but does not auto-track, so this explicit read is what schedules the repaint. Omit when the
+   * grid has no resizable columns.
+   */
+  widthTick?: () => unknown;
 }
 
 /**
@@ -147,6 +154,8 @@ export class EditableGridRows<T> extends GridRows<T> {
   private readonly autoScrollColumns: boolean;
   /** Grid-wide focus predicate (frozen-panel mode); `undefined` for a single body. */
   private readonly panelActive?: () => boolean;
+  /** Reactive column-width trigger (bound for repaint on a live resize/auto-fit); `undefined` when off. */
+  private readonly widthTick?: () => unknown;
   /** The in-cell editing lifecycle controller. */
   protected readonly controller: EditController;
 
@@ -169,6 +178,7 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.mouseColumns = cfg.mouseColumns ?? false;
     this.autoScrollColumns = cfg.autoScrollColumns ?? false;
     this.panelActive = cfg.panelActive;
+    this.widthTick = cfg.widthTick;
     // The controller reaches this body only through the EditHost seam below — no access to protected state.
     this.controller = createEditController<T>({
       body: this,
@@ -187,6 +197,13 @@ export class EditableGridRows<T> extends GridRows<T> {
         () => this.focusedCol(),
         () => undefined,
       );
+      // Repaint when a column width override changes (a live resize/auto-fit) so the geometry re-flows.
+      if (this.widthTick !== undefined) {
+        this.bind(
+          () => this.widthTick!(),
+          () => undefined,
+        );
+      }
       // Repaint when the dirty set changes, so the `•` markers appear/clear reactively.
       const registry = this.dirty;
       if (registry !== undefined) {

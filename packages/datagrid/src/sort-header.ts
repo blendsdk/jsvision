@@ -16,6 +16,7 @@ import { View, apportionColumns, alignCell, stringWidth } from '@jsvision/ui';
 import type { Column, ColumnGeometry, DispatchEvent, DrawContext, Signal } from '@jsvision/ui';
 import type { SortKey } from './sort.js';
 import type { FilterModel } from './filter.js';
+import { clampWidth } from './column-model.js';
 
 /** The inter-column divider `│` drawn at each column's right edge (mirrors the engine body). */
 const DIVIDER = '│';
@@ -49,6 +50,24 @@ export interface SortHeaderConfig<T> {
    * silently no-ops without `ev.popupHost`). The `{x,y}` anchor alone is not sufficient.
    */
   onFunnelClick: (columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void;
+  /**
+   * Reports a live column resize (a captured drag on a column's right-edge grip): the `columnId` and the
+   * new width in cells, already clamped to the column's `[minWidth, maxWidth]`. Fired on every captured
+   * drag so the grid resizes live. Optional — a header without it has no resize grips (a sort/filter-only
+   * grid is unaffected).
+   */
+  onColumnResize?: (columnId: string, width: number) => void;
+  /**
+   * Reports a double-click on a column's grip: the `columnId` to auto-fit to its widest visible cell.
+   * Optional — omit to disable grip auto-fit.
+   */
+  onColumnAutoFit?: (columnId: string) => void;
+  /**
+   * A reactive column-geometry trigger, bound for repaint so a width-override change (a live resize /
+   * auto-fit) re-apportions the header — `draw` reads widths through the column objects but does not
+   * auto-track. Omit when the grid has no resizable columns.
+   */
+  widthTick?: () => unknown;
 }
 
 /**
@@ -82,6 +101,14 @@ export class SortHeader<T> extends View {
   private readonly onHeaderClick: (columnId: string, additive: boolean) => void;
   private readonly filterModel: Signal<FilterModel>;
   private readonly onFunnelClick: (columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void;
+  private readonly onColumnResize?: (columnId: string, width: number) => void;
+  private readonly onColumnAutoFit?: (columnId: string) => void;
+  private readonly widthTick?: () => unknown;
+  // Live-resize gesture state: the local column index being resized (`-1` when idle), the content-space
+  // x where the grip was grabbed, and the column's width at grab time — the drag delta adds to it.
+  private resizeCol = -1;
+  private resizeStartX = 0;
+  private resizeStartWidth = 0;
 
   /**
    * @param cfg The shared header configuration (columns, ids, geometry, indent, sort/filter models, sinks).
@@ -96,6 +123,9 @@ export class SortHeader<T> extends View {
     this.onHeaderClick = cfg.onHeaderClick;
     this.filterModel = cfg.filterModel;
     this.onFunnelClick = cfg.onFunnelClick;
+    this.onColumnResize = cfg.onColumnResize;
+    this.onColumnAutoFit = cfg.onColumnAutoFit;
+    this.widthTick = cfg.widthTick;
     this.onMount(() => {
       // Repaint when the sort model, the filter model, or the shared H-scroll offset changes.
       this.bind(
@@ -110,6 +140,13 @@ export class SortHeader<T> extends View {
         () => this.indent(),
         () => undefined,
       );
+      // Repaint when a column width override changes (a live resize/auto-fit) so the header re-flows.
+      if (this.widthTick !== undefined) {
+        this.bind(
+          () => this.widthTick!(),
+          () => undefined,
+        );
+      }
     });
   }
 
@@ -131,6 +168,30 @@ export class SortHeader<T> extends View {
   private clampedIndent(geom: ColumnGeometry, width: number): number {
     const maxIndent = Math.max(0, geom.totalWidth - width);
     return Math.min(maxIndent, Math.max(0, this.indent()));
+  }
+
+  /**
+   * The column whose resize grip sits at content-space `x`, or `-1`. A grip is the 1-cell divider at a
+   * column's right edge (`starts[c] + widths[c]`) — the same `│` cell {@link draw} paints.
+   */
+  private gripAt(geom: ColumnGeometry, x: number): number {
+    for (let c = 0; c < geom.widths.length; c += 1) {
+      if (x === geom.starts[c] + geom.widths[c]) return c;
+    }
+    return -1;
+  }
+
+  /**
+   * Apply a captured resize drag: map the pointer to content space, add the drag delta to the grabbed
+   * width, clamp to the column's `[minWidth, maxWidth]`, and report it. Fired on every drag so the grid
+   * resizes live.
+   */
+  private dragResize(localX: number): void {
+    const geom = this.geometry(this.bounds.width);
+    const contentX = localX + this.clampedIndent(geom, this.bounds.width);
+    const col = this.columns[this.resizeCol];
+    const next = clampWidth(this.resizeStartWidth + (contentX - this.resizeStartX), col.minWidth, col.maxWidth);
+    this.onColumnResize?.(this.columnIds[this.resizeCol], next);
   }
 
   /**
@@ -178,24 +239,60 @@ export class SortHeader<T> extends View {
   }
 
   /**
-   * A header click maps its content-space x to a column. A click on a **funnel cell** (a filtered
-   * column's reserved funnel glyph) opens that column's filter popup — the live envelope is forwarded
-   * so the container inherits its focus/popup seam — and never also sorts. Otherwise a click in a
-   * column's content reports a sort intent (Ctrl ⇒ additive). A click on a divider or past the last
-   * column is ignored — no change, and the event is left unhandled so it can fall through.
+   * The header pointer machine. While a resize is in progress it consumes the captured drag/up (and
+   * aborts on a lost capture). Otherwise a mouse-down is classified grip > funnel > title: a grip down
+   * starts a live resize (or auto-fits on a double-click); a funnel down opens that column's filter
+   * popup (the live envelope is forwarded so the container inherits its focus/popup seam) and never also
+   * sorts; a title down reports a sort intent (Ctrl ⇒ additive). A down on a divider that is not a
+   * resize grip, or past the last column, is ignored and left unhandled so it can fall through.
    *
    * @param ev The dispatch envelope.
    */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
-    if (inner.type !== 'mouse' || inner.kind !== 'down') return;
+    if (inner.type !== 'mouse') return;
+
+    // A resize in progress owns the captured drag/up until release; a lost capture aborts it cleanly.
+    if (this.resizeCol >= 0) {
+      if (ev.hasCapture !== undefined && !ev.hasCapture(this)) {
+        this.resizeCol = -1; // capture was stolen — abandon the half-finished resize (mirrors Desktop)
+        return;
+      }
+      if (inner.kind === 'drag' || inner.kind === 'move') {
+        if (ev.local !== undefined) this.dragResize(ev.local.x);
+        ev.handled = true;
+      } else if (inner.kind === 'up') {
+        this.resizeCol = -1;
+        ev.releaseCapture?.();
+        ev.handled = true;
+      }
+      return;
+    }
+
+    if (inner.kind !== 'down') return;
     const local = ev.local;
     if (local === undefined) return;
     const geom = this.geometry(this.bounds.width);
     const indent = this.clampedIndent(geom, this.bounds.width);
     const contentX = local.x + indent;
 
-    // A funnel click is checked first, so a click on a filtered column's funnel never also sorts.
+    // A resize grip (a column's right-edge divider cell) takes precedence over the title/funnel zones.
+    const grip = this.gripAt(geom, contentX);
+    if (grip >= 0 && this.onColumnResize !== undefined) {
+      if (ev.clickCount !== undefined && ev.clickCount >= 2) {
+        this.onColumnAutoFit?.(this.columnIds[grip]); // double-click a grip → auto-fit the column
+        ev.handled = true;
+        return;
+      }
+      this.resizeCol = grip;
+      this.resizeStartX = contentX;
+      this.resizeStartWidth = geom.widths[grip]; // the visible width the user grabbed — the drag delta adds to it
+      ev.setCapture?.(this);
+      ev.handled = true;
+      return;
+    }
+
+    // A funnel click is checked next, so a click on a filtered column's funnel never also sorts.
     const filters = this.filterModel();
     const multi = this.sort().length >= 2;
     const sortedIds = new Set(this.sort().map((k) => k.columnId));
