@@ -1,0 +1,1 @@
+A data-table window: a sortable DataGrid over a typed row signal with a detail line bound to the focused row.

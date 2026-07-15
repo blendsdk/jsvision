@@ -17,14 +17,17 @@ view an explicit fixed `size` / absolute `rect`.
 **Fix:** wrap it: `this.onMount(() => this.bind(() => this.sig(), () => undefined))`. Same for
 `onCleanup`.
 
-### 3. Absolute children land in the wrong place
+### 3. You laid out content with absolute rects
 
-**Symptom:** an absolutely-positioned child appears offset from where you expected.
-**Cause:** absolute rects are **parent-interior-relative**, not screen-relative — `{ x: 0, y: 0 }`
-is the parent's top-left content cell.
-**Fix:** position children relative to their parent. Use
-`view.layout = { position: 'absolute', rect: { x, y, width, height } }` (windows accept the
-`win.layout.rect = …` shorthand).
+**Symptom:** content doesn't adapt when the window resizes, children overlap or leave gaps, or an
+absolutely-positioned child appears offset from where you expected.
+**Cause:** you hand-positioned flowed content with `position: 'absolute'` rects, bypassing the layout
+engine — and absolute rects are **parent-interior-relative**, not screen-relative (`{ x: 0, y: 0 }`
+is the parent's top-left content cell), which is easy to get wrong.
+**Fix:** compose the screen with the layout DSL — `col`/`row`/`stack` + `grow`/`fixed`/`fill` — so the
+engine sizes and reflows it (see `layout.md`). Reserve an absolute `rect` for the sanctioned cases: a
+`Window`/`Dialog`'s own desktop placement (`win.layout.rect = …`), framework popups, and a true
+overlap the flow model can't express. When you do go absolute, remember rects are parent-relative.
 
 ### 4. Dialog/Window children look doubly inset
 
