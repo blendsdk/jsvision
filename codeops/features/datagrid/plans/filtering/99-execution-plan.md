@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 13:37
-> **Progress**: 0/45 tasks (0%)
+> **Last Updated**: 2026-07-15 14:41
+> **Progress**: 9/45 tasks (20%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -52,24 +52,24 @@ tests → red → implement → green → impl tests → verify) and mirrors the
 **Reference**: `03-01 §Implementation Details` · `07 §Filter model` (ST-1…ST-11) · AR #4/#6/#8/#9/#10/#14
 **Objective**: Lock the model's behavior before it exists.
 
-- [ ] 1.1.1 Write `filter.spec.test.ts` covering ST-1…ST-11 (text/number/date/set/custom predicates, `filterRows` AND + empty + unknown-drop + non-mutation, `computeDistinct`, `resolveFilterType`) — `packages/datagrid/test/filter.spec.test.ts`
-- [ ] 1.1.2 Verify **red** — the spec tests fail (no `filter.ts` yet)
+- [x] 1.1.1 Write `filter.spec.test.ts` covering ST-1…ST-11 (text/number/date/set/custom predicates, `filterRows` AND + empty + unknown-drop + non-mutation, `computeDistinct`, `resolveFilterType`) — `packages/datagrid/test/filter.spec.test.ts` ✅ (completed: 2026-07-15 14:32)
+- [x] 1.1.2 Verify **red** — the spec tests fail (no `filter.ts` yet) ✅ (completed: 2026-07-15 14:32)
 
 ### Step 1.2: Implement (green)
 
 **Reference**: `03-01` · AR #6
 **Objective**: The pure model, re-pointed seams, and barrel.
 
-- [ ] 1.2.1 Create `filter.ts`: `ColumnFilter`, `FilterModel`, `DistinctResult`, `FilterType`, `displayLabel`, `filterPredicate`, `filterRows`, `computeDistinct`, `resolveFilterType` (JSDoc + `@example` on public exports) — `packages/datagrid/src/filter.ts`
-- [ ] 1.2.2 Add `readonly filterType?: FilterType` to `GridColumn` — `packages/datagrid/src/column.ts`
-- [ ] 1.2.3 Re-point `data-source.ts`: import `FilterModel`/`DistinctResult` from `filter.ts` (drop the placeholder `FilterModel`); widen `distinct?` → `Promise<DistinctResult>` — `packages/datagrid/src/data-source.ts`
-- [ ] 1.2.4 Barrel: export `filterRows`/`computeDistinct` + `ColumnFilter`/`FilterModel`/`DistinctResult`/`FilterType` types (re-point `FilterModel` here) — `packages/datagrid/src/index.ts`
-- [ ] 1.2.5 Verify **green** — ST-1…ST-11 pass
+- [x] 1.2.1 Create `filter.ts`: `ColumnFilter`, `FilterModel`, `DistinctResult`, `FilterType`, `displayLabel`, `filterPredicate`, `filterRows`, `computeDistinct`, `resolveFilterType` (JSDoc + `@example` on public exports) — `packages/datagrid/src/filter.ts` ✅ (completed: 2026-07-15 14:36)
+- [x] 1.2.2 Add `readonly filterType?: FilterType` to `GridColumn` — `packages/datagrid/src/column.ts` ✅ (completed: 2026-07-15 14:36)
+- [x] 1.2.3 Re-point `data-source.ts`: import `FilterModel`/`DistinctResult` from `filter.ts` (drop the placeholder `FilterModel`); widen `distinct?` → `Promise<DistinctResult>` — `packages/datagrid/src/data-source.ts` ✅ (completed: 2026-07-15 14:36)
+- [x] 1.2.4 Barrel: export `filterRows`/`computeDistinct` + `ColumnFilter`/`FilterModel`/`DistinctResult`/`FilterType` types (re-point `FilterModel` here) — `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-15 14:36)
+- [x] 1.2.5 Verify **green** — ST-1…ST-11 pass ✅ (completed: 2026-07-15 14:36)
 
 ### Step 1.3: Impl tests & verify
 
-- [ ] 1.3.1 Write `filter.impl.test.ts` (edges: `between` `b`-omitted, nil under each kind, `dateOrdinal` boundaries, collator ties, non-mutation) — `packages/datagrid/test/filter.impl.test.ts`
-- [ ] 1.3.2 Full `yarn verify`
+- [x] 1.3.1 Write `filter.impl.test.ts` (edges: `between` `b`-omitted, nil under each kind, `dateOrdinal` boundaries, collator ties, non-mutation) — `packages/datagrid/test/filter.impl.test.ts` ✅ (completed: 2026-07-15 14:41)
+- [x] 1.3.2 Full `yarn verify` ✅ (completed: 2026-07-15 14:41)
 
 **Deliverables**: `filter.ts` green; `FilterModel`/`distinct` seams re-pointed; barrel updated.
 **Verify**: `yarn verify`

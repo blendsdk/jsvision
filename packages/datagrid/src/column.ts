@@ -12,6 +12,7 @@ import type { Column, ColumnWidth, ColumnAlign, ThemeRoleName, Style } from '@js
 import type { CellEditorSpec } from './cell-editor.js';
 import type { ParseFailed } from './format.js';
 import type { CellRenderer } from './cell-draw.js';
+import type { FilterType } from './filter.js';
 
 /**
  * Value-driven cell colour. Returns either a theme role name (resolved against the active theme) or an
@@ -78,6 +79,13 @@ export interface GridColumn<T, V = unknown> {
   readonly compare?: (a: V, b: V) => number;
   /** Where null/undefined values sort, independent of direction (default `'last'`). */
   readonly nulls?: 'first' | 'last';
+  /**
+   * The operator family the column's filter popup presents (`'text'` / `'number'` / `'date'`). When
+   * omitted it is inferred at runtime from a sampled non-null value (a number → `'number'`, a `Date`
+   * or `CalendarDate` → `'date'`, otherwise `'text'`); set it to override a sparse or ambiguous
+   * column whose sample would misclassify.
+   */
+  readonly filterType?: FilterType;
 }
 
 /**
