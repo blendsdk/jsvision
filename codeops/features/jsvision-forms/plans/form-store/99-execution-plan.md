@@ -2,8 +2,8 @@
 
 > **Implements**: jsvision-forms/RD-01 + RD-02 · **Feature**: jsvision-forms
 > **CodeOps Skills Version**: 3.7.0
-> **Progress**: 12/16 tasks (75%)
-> **Last Updated**: 2026-07-15 01:50
+> **Progress**: 16/16 tasks (100%)
+> **Last Updated**: 2026-07-15 02:02
 
 Specification-first ordering per feature phase: **Spec Tests → Implementation → Impl Tests &
 Hardening**. Build in a separate worktree. Commits go through **/gitcm** (commit) or **/gitcmp**
@@ -57,16 +57,17 @@ Stand up `@jsvision/forms` by mirroring `@jsvision/files` (03-01 §1). No featur
 
 ### Session C — Impl Tests & Hardening
 
-- [ ] **T1.10** `test/store.impl.test.ts` + `test/validation.impl.test.ts` — baseline immutability,
-      array-dirty edges, async `onValid` awaited, `reset` clears `submitAttempted`, `values()`
-      freshness. *Ref: 07 §Impl tests.*
-- [ ] **T1.11** JSDoc `@example` on every public export (purpose, params/returns, the `z.coerce` +
+- [x] **T1.10** `test/store.impl.test.ts` + `test/validation.impl.test.ts` — baseline immutability,
+      array-dirty edges, async `onValid` awaited, `values()` non-aliasing (submit-attempted stays
+      latent/untested per the strategy); + form-level vs field-routed error separation, first-issue
+      ordering. *Ref: 07 §Impl tests.* ✅ (completed: 2026-07-15 02:02)
+- [x] **T1.11** JSDoc `@example` on every public export (purpose, params/returns, the `z.coerce` +
       raw-`initial` gotchas); `yarn workspace @jsvision/forms check:docs` green; no banned refs.
-      *Ref: 03-01 §8, RD-04 FR-4.7.*
-- [ ] **T1.12** Security assertion (AR-22): a control-byte-laden value stored via `field.value` is
-      unchanged as data and the store performs no encoding/escaping of its own. *Ref: 07 §Non-functional.*
-- [ ] **T1.13** **Phase gate** — `yarn verify` green (lint → typecheck → build → test → check:docs);
-      `yarn lint:fix` run and its changes staged before any PR push.
+      *Ref: 03-01 §8, RD-04 FR-4.7.* ✅ (completed: 2026-07-15 02:02) — `@example` on `createForm`/`FormFieldError`, written inline with the impl.
+- [x] **T1.12** Security assertion (AR-22): a control-byte-laden value stored via `field.value` is
+      unchanged as data and the store performs no encoding/escaping of its own. *Ref: 07 §Non-functional.* ✅ (completed: 2026-07-15 02:02) — `test/security.impl.test.ts`.
+- [x] **T1.13** **Phase gate** — `yarn verify` green (lint → typecheck → build → test → check:docs);
+      `yarn lint:fix` run and its changes staged before any PR push. ✅ (completed: 2026-07-15 02:02) — CI-mode verify 26/26 green + `check:deps` green; the sole plain-`yarn verify` red is core's env-sensitive perf-budget assertion, which is skipped under CI (`perfBudgetMode` → log) and unrelated to forms.
 
 ---
 
