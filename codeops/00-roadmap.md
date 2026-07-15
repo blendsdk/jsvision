@@ -15,7 +15,7 @@
 |---------|---------|---------------|----------|--------|--------------|
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done (site-foundation · @jsvision/web runtime · live-example system · TypeDoc API ref) · RD-04/05/07…10 ✏️ drafted | 4/10 RDs | ⬜ | 2026-07-13 |
-| jsvision-forms | [→](features/jsvision-forms/00-roadmap.md) | RD-01/02 ✅ Done (form-store — @jsvision/forms store + sync Zod validation) · RD-03/04 ✏️ drafted | 2/4 RDs | 🔄 | 2026-07-15 |
+| jsvision-forms | [→](features/jsvision-forms/00-roadmap.md) | RD-01/02 ✅ Done (form-store — @jsvision/forms store + sync Zod validation) · RD-03 ✅ Done (widget-binding — bindField/bindRadio/bindCheck) · RD-04 ✏️ drafted | 3/4 RDs | 🔄 | 2026-07-15 |
 
 ## Archived
 
