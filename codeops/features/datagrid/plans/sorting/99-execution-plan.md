@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 13:01
-> **Progress**: 26/30 tasks (87%) — Phases 1–3 complete
+> **Last Updated**: 2026-07-15 13:06
+> **Progress**: 31/31 tasks (100%) — ✅ ALL PHASES COMPLETE
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -167,28 +167,28 @@ change is Phase 1's additive optional mouse modifiers.
 **Reference**: `07 §Security` (ST-21) · RD AC-9 · AR #14
 **Objective**: Prove an unknown `columnId` is never forwarded to a source query.
 
-- [ ] 4.1.1 Add ST-21 to `security.spec.test.ts`: `grid.sortBy('nope')` is a no-op; a keys list with an unknown id never reaches the spy `setSort` — `packages/datagrid/test/security.spec.test.ts`
-- [ ] 4.1.2 Verify — the unknown-id guard holds on both the API and the push-down path
+- [x] 4.1.1 Add ST-21 to `security.spec.test.ts`: `grid.sortBy('nope')` is a no-op; a keys list with an unknown id never reaches the spy `setSort` — `packages/datagrid/test/security.spec.test.ts` ✅ (completed: 2026-07-15 13:04)
+- [x] 4.1.2 Verify — the unknown-id guard holds on both the API and the push-down path ✅ (completed: 2026-07-15 13:04 — 7 security tests green)
 
 ### Step 4.2: Implementation (kitchen-sink story)
 
 **Reference**: `07 §Kitchen-sink` (ST-22) · RD AC-8 · CLAUDE.md kitchen-sink gate
 **Objective**: The showcase story.
 
-- [ ] 4.2.1 Add the `sorting` story (multi-column value-aware sort — numeric + string + nullable columns — with a live `grid.sort()` echo and interaction hints) and register it — `packages/datagrid/test/kitchen-sink/stories/sorting.story.ts`, `.../stories/index.ts`
-- [ ] 4.2.2 Verify GREEN — the smoke test (ST-22) passes for the new story
+- [x] 4.2.1 Add the `sorting` story (multi-column value-aware sort — numeric + string + nullable columns — with a live `grid.sort()` echo and interaction hints) and register it — `packages/datagrid/test/kitchen-sink/stories/sorting.story.ts`, `.../stories/index.ts` ✅ (completed: 2026-07-15 13:05)
+- [x] 4.2.2 Verify GREEN — the smoke test (ST-22) passes for the new story ✅ (completed: 2026-07-15 13:05 — smoke suite 7 tests green, 5 stories)
 
 ### Step 4.3: Hardening
 
 **Reference**: `01 §Acceptance Criteria`
 **Objective**: Full green, no regressions.
 
-- [ ] 4.3.1 Full `yarn verify`; confirm no regressions in the RD-01…RD-04 datagrid suites and the core/ui/files/examples suites; `check:docs` green — verify only
+- [x] 4.3.1 Full `yarn verify`; confirm no regressions in the RD-01…RD-04 datagrid suites and the core/ui/files/examples suites; `check:docs` green — verify only ✅ (completed: 2026-07-15 13:06 — 26/26 tasks, 192 datagrid tests, check:docs + check-plugin green)
 
 **Deliverables**:
-- [ ] Unknown-`columnId` ignored on the API and push-down paths (AC-9)
-- [ ] `sorting` story registered + smoke-passing (AC-8)
-- [ ] `yarn verify` green, no regressions, `check:docs` green
+- [x] Unknown-`columnId` ignored on the API and push-down paths (AC-9) ✅
+- [x] `sorting` story registered + smoke-passing (AC-8) ✅
+- [x] `yarn verify` green, no regressions, `check:docs` green ✅
 
 **Verify**: `yarn verify`
 

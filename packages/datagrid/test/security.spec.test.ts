@@ -10,6 +10,8 @@ import { dirname, join } from 'node:path';
 import { Group, Input, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
+import type { GridDataSource } from '../src/data-source.js';
+import type { SortKey } from '../src/sort.js';
 import type { OnCommit } from '../src/commit.js';
 import { EditableDataGrid } from '../src/grid.js';
 
@@ -267,4 +269,40 @@ test('ST-18: a render hook writing control bytes renders sanitized at the frame'
   loop.mount(root);
   loop.renderRoot.flush();
   expectNoControlBytes(loop);
+});
+
+interface Sale {
+  region: string;
+  qty: number;
+}
+
+// ST-21 — an unknown sort `columnId` is ignored by the sort API (no state change) and is never
+// forwarded to a push-down source's `setSort` query. Structured `SortKey[]` only — never raw SQL.
+test('ST-21: an unknown sort columnId is a no-op and never reaches a push-down setSort', () => {
+  const setSort = vi.fn<(keys: SortKey[]) => void>();
+  const source: GridDataSource<Sale> = {
+    rowKey: (r) => r.region,
+    length: () => 1,
+    rowAt: () => ({ region: 'east', qty: 1 }),
+    setSort,
+  };
+  const columns = [
+    column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region }),
+    column<Sale, number>({ id: 'qty', title: 'Qty', value: (r) => r.qty }),
+  ];
+  const grid = new EditableDataGrid<Sale>({ columns, source });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+
+  grid.sortBy('nope'); // unknown via the single-key API
+  grid.addSort('nope', 'desc'); // unknown via the multi-key API
+  expect(grid.sort()).toEqual([]); // no state change
+
+  // Every push-down call carries only known columns — the unknown id never reaches the query.
+  for (const call of setSort.mock.calls) {
+    expect(call[0].some((k) => k.columnId === 'nope')).toBe(false);
+  }
 });
