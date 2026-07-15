@@ -67,6 +67,7 @@ binding, cell/range selection, undo/redo, and the pager backend are explicit Pha
 | **RD-12** | [Validation & Lifecycle](RD-12-validation-lifecycle.md) | Per-cell + per-row + BeforeSave gates, error surfacing, loading/empty/error | RD-02, RD-03 |
 | **RD-13** | [Export, Import & Personalization](RD-13-export-import-personalization.md) | CSV/HTML/JSON export, import, layout variants | RD-05, RD-06, RD-07 |
 | **RD-14** | [Non-Functional Requirements](RD-14-non-functional.md) | Perf, security posture, a11y, theme roles, test tiers, API governance | — |
+| **RD-15** | [DataGrid Showcase App](RD-15-showcase-app.md) | Standalone datagrid showcase in `packages/examples/datagrid-showcase/`: granular one-per-capability demos for RD-01…06 + per-RD "coming soon" panels for RD-07…14; `demo:datagrid` | RD-01…RD-06 |
 
 ## Dependency Graph
 
@@ -79,6 +80,7 @@ RD-01 ─┬─ RD-02 ─┬─ RD-03 ─── RD-12
        ├─ RD-07 ─────────────┘
        └─ RD-11
 RD-14 ── cross-cutting (governs RD-01…RD-13)
+RD-15 ── showcase (consumes the shipped RD-01…RD-06 surface; placeholder panels track RD-07…RD-14)
 ```
 
 No circular dependencies. RD-01 gates everything; RD-14 is cross-cutting. **RD-07 (pinned-panel layout)
@@ -122,3 +124,7 @@ Each requirements document is designed to be used with the make_plan skill:
 5. Implement iteratively, specification-first.
 
 Suggested order: **RD-01 → RD-02 → RD-04 → RD-03 → RD-05 → RD-06 → RD-07 → RD-08 → RD-09 → RD-10 → RD-11 → RD-12 → (RD-13) → RD-14 verified throughout.**
+
+**RD-15 (showcase)** is buildable now — it consumes only the shipped RD-01…RD-06 surface and is
+independent of the remaining RDs (which it represents as "coming soon" placeholder panels until they
+land). It is the living acceptance surface each future RD extends with its own demo cluster.
