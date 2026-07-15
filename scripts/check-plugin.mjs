@@ -26,6 +26,7 @@ export const CATALOG = join(SKILL_ROOT, 'references', 'component-catalog.md');
 const GOTCHAS = join(SKILL_ROOT, 'references', 'gotchas.md');
 const RECIPE_DIR = join(ROOT, 'packages', 'examples', 'recipes');
 const TEMPLATES_DIR = join(PLUGIN_ROOT, 'templates', 'app-skeleton');
+const ARCHETYPES_DIR = join(PLUGIN_ROOT, 'templates', 'archetypes');
 const UI_BARREL = join(ROOT, 'packages', 'ui', 'src', 'index.ts');
 
 const PLUGIN_NAME = 'jsvision-plugin';
@@ -193,6 +194,43 @@ function checkTemplatesValid(templatesDir) {
       JSON.parse(filled);
     } catch {
       errors.push('templates/app-skeleton/package.json.tmpl: not valid JSON after token fill');
+    }
+  }
+  return errors;
+}
+
+/**
+ * Validate the discoverable archetypes: each subdirectory of `templates/archetypes/` is a starting
+ * point the scaffolder overlays on the base skeleton. Every archetype must ship a `main.ts.tmpl` that
+ * exports the `buildApp` the shared smoke test mounts, an `about.txt` for `--list`, and — if it
+ * overrides `package.json.tmpl` — valid JSON after token fill.
+ *
+ * @param {string} archetypesDir The absolute `templates/archetypes/` path.
+ * @returns {string[]} Human-readable errors (empty when every archetype is well-formed).
+ */
+export function checkArchetypesValid(archetypesDir) {
+  const errors = [];
+  if (!existsSync(archetypesDir)) return errors; // no archetypes yet — only `basic` is available
+  const dirs = readdirSync(archetypesDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+  for (const dir of dirs) {
+    const label = `templates/archetypes/${dir.name}`;
+    const main = join(archetypesDir, dir.name, 'main.ts.tmpl');
+    if (!existsSync(main)) {
+      errors.push(`${label}: missing main.ts.tmpl (an archetype must override the starter source)`);
+    } else if (!/export function buildApp\b/.test(readFileSync(main, 'utf8'))) {
+      errors.push(`${label}/main.ts.tmpl: must export a "buildApp" function (the smoke-test contract)`);
+    }
+    if (!existsSync(join(archetypesDir, dir.name, 'about.txt'))) {
+      errors.push(`${label}: missing about.txt (the one-line --list description)`);
+    }
+    const pkg = join(archetypesDir, dir.name, 'package.json.tmpl');
+    if (existsSync(pkg)) {
+      const filled = readFileSync(pkg, 'utf8').replaceAll('__SLUG__', 'sample').replaceAll('__UIDEP__', '*');
+      try {
+        JSON.parse(filled);
+      } catch {
+        errors.push(`${label}/package.json.tmpl: not valid JSON after token fill`);
+      }
     }
   }
   return errors;
@@ -406,8 +444,9 @@ export function runAllChecks() {
     add(`drift:${module}`, checkDrift(readFileSync(join(SKILL_ROOT, md), 'utf8'), region));
   }
 
-  // 4. scaffolder templates
+  // 4. scaffolder templates + archetypes
   add('templates', checkTemplatesValid(TEMPLATES_DIR));
+  add('archetypes', checkArchetypesValid(ARCHETYPES_DIR));
 
   // 5. barrel-coverage + gotchas completeness
   add('barrel', checkBarrelCoverage(extractUiClassExports(), readFileSync(CATALOG, 'utf8'), CATALOG_DENYLIST));

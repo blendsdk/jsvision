@@ -10,7 +10,9 @@ developer — it can scaffold, compose, run, verify, and extend jsvision apps.
   generated API reference, the common gotchas, the run/verify loop, theming, widget authoring, and
   runnable recipes.
 - **`/jsvision-new-app <name>` skill** — scaffolds a complete, runnable app package under
-  `packages/<name>/` (you invoke this one manually).
+  `packages/<name>/` (you invoke this one manually). Pick a starting point with `--template <name>`
+  (`basic` · `form` · `grid` · `dashboard`; `--list` shows them) — archetypes are auto-discovered
+  directories under `templates/archetypes/`, so adding one needs no code change.
 - **`/jsvision-doctor [path]` skill** — statically lints an app for the documented footguns (missing
   `measure()`, bind-in-constructor, content laid out with absolute rects, missing `.js` imports, and
   more). Run it before calling an app done (`yarn doctor <path>`).
