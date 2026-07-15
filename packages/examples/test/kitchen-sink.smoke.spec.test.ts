@@ -217,6 +217,33 @@ test('ST-35: every preset renders a representative widget set to a non-empty buf
   }
 });
 
+// ST-N1 (RD-04 FR-4.6) — the Forms showcase story is registered with the required metadata (unique
+// id `forms/form`, category `Forms`, truthy title/blurb, guarding accidental de-registration) and
+// paints its forms-specific `valid · dirty` bound-state echo headlessly — proving the form actually
+// wired up, not merely that *some* cell painted (which the generic smoke loop below already asserts
+// for every story).
+test('ST-N1: the forms/form story is registered with metadata and paints its valid · dirty echo', () => {
+  const story = STORIES.find((s) => s.id === 'forms/form');
+  expect(story, 'a story with id "forms/form" is registered').toBeTruthy();
+  expect(story!.category, 'category Forms').toBe('Forms');
+  expect(story!.title, 'title').toBeTruthy();
+  expect(story!.blurb, 'blurb').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    // Reconstruct the painted text so we can assert a form-specific signal, not just a non-blank cell.
+    const painted = rr
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+    expect(painted, 'the valid · dirty echo is painted').toMatch(/valid/);
+    expect(painted, 'the valid · dirty echo is painted').toMatch(/dirty/);
+    dispose();
+  });
+});
+
 // The core smoke oracle: each story builds + mounts + draws without throwing, and paints something.
 for (const story of STORIES) {
   test(`story "${story.id}" mounts headlessly and paints`, () => {
