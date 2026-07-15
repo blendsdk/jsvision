@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 15:39
-> **Progress**: 34/45 tasks (76%)
+> **Last Updated**: 2026-07-15 15:52
+> **Progress**: 41/45 tasks (91%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -174,22 +174,22 @@ tests → red → implement → green → impl tests → verify) and mirrors the
 **Reference**: `03-03 §ValueList/distinct` · `07 §Filter popups` (ST-23…ST-26) · AR #5/#9/#10
 **Objective**: Lock the distinct picker + truncation disclosure.
 
-- [ ] 5.1.1 Write `value-list-popup.spec.test.ts` (ST-23 check-subset + Select All on client distinct; ST-24 uses `source.distinct` when present; ST-25 `truncated` disclosure; ST-26 type-ahead search narrows visible labels) — `packages/datagrid/test/value-list-popup.spec.test.ts`
-- [ ] 5.1.2 Verify **red**
+- [x] 5.1.1 Write `value-list-popup.spec.test.ts` (ST-23 check-subset + Select All on client distinct; ST-24 uses `source.distinct` when present; ST-25 `truncated` disclosure; ST-26 type-ahead search narrows visible labels) — `packages/datagrid/test/value-list-popup.spec.test.ts` ✅ (completed: 2026-07-15 15:44)
+- [x] 5.1.2 Verify **red** — `value-list-popup.ts` module absent ✅ (completed: 2026-07-15 15:44)
 
 ### Step 5.2: Implement (green)
 
 **Reference**: `03-03` · `03-04 §Distinct delegation` · AR #5/#9/#10
 **Objective**: The value-list + distinct delegation embedded in the popup.
 
-- [ ] 5.2.1 Create `ValueList`: async-populated distinct checkbox list + type-ahead search + Select All + truncation note; emits `{kind:'set',selected}` (JSDoc + `@example`) — `packages/datagrid/src/value-list-popup.ts`
-- [ ] 5.2.2 `grid.ts`: add `distinctFor(columnId)` (client `computeDistinct` vs. `source.distinct`); pass a `distinct` thunk into `FilterPopup`, which embeds `ValueList` — `packages/datagrid/src/grid.ts`, `packages/datagrid/src/filter-popup.ts`
-- [ ] 5.2.3 Barrel: export `ValueList` + `ValueListConfig` — `packages/datagrid/src/index.ts`
-- [ ] 5.2.4 Verify **green** — ST-23…ST-26 pass (AC-3, AC-7)
+- [x] 5.2.1 Create `ValueList`: async-populated distinct checkbox list + type-ahead search + Select All + truncation note; emits `{kind:'set',selected}` (JSDoc + `@example`) — `packages/datagrid/src/value-list-popup.ts` ✅ (completed: 2026-07-15 15:52)
+- [x] 5.2.2 `grid.ts`: add `distinctFor(columnId)` (client `computeDistinct` vs. `source.distinct`); pass a `distinct` thunk into `FilterPopup`, which embeds `ValueList` — `packages/datagrid/src/grid.ts`, `packages/datagrid/src/filter-popup.ts` ✅ (completed: 2026-07-15 15:52)
+- [x] 5.2.3 Barrel: export `ValueList` + `ValueListConfig` — `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-15 15:52)
+- [x] 5.2.4 Verify **green** — ST-23…ST-26 pass (AC-3, AC-7); 233 datagrid tests green, typecheck clean ✅ (completed: 2026-07-15 15:52)
 
 ### Step 5.3: Verify
 
-- [ ] 5.3.1 Full `yarn verify`
+- [x] 5.3.1 Full `yarn verify` ✅ (completed: 2026-07-15 15:52)
 
 **Deliverables**: Excel value-list (AC-3) + distinct enumeration + truncation disclosure (AC-7).
 **Verify**: `yarn verify`

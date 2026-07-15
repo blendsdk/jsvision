@@ -14,6 +14,7 @@ import { Group, Input, DatePicker, RadioGroup, Button, signal, filter } from '@j
 import type { View, Signal, DispatchEvent, CalendarDate } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import type { ColumnFilter, DistinctResult, FilterType } from './filter.js';
+import { ValueList } from './value-list-popup.js';
 
 /** The operator choices offered per column filter type — the exact op values a {@link ColumnFilter} uses. */
 const OPERATORS: Record<FilterType, readonly string[]> = {
@@ -168,6 +169,23 @@ export class FilterPopup<T> extends Group {
     clearBtn.layout = { position: 'absolute', rect: { x: 13, y: 6, width: 11, height: 2 } };
     this.add(applyBtn);
     this.add(clearBtn);
+
+    // The Excel value-list section, below the condition section, when a distinct thunk is supplied. It
+    // applies a `{ kind: 'set' }` filter of the checked labels — last-writer-wins with the condition
+    // section (one filter per column). A reopened set filter pre-checks its labels.
+    if (cfg.distinct !== undefined) {
+      const currentSet = cur !== undefined && cur.kind === 'set' ? cur.selected : undefined;
+      const valueList = new ValueList({
+        distinct: cfg.distinct,
+        current: currentSet,
+        onApply: (selected) => {
+          this.onApply(this.columnId, { kind: 'set', selected });
+          this.onClose();
+        },
+      });
+      valueList.layout = { position: 'absolute', rect: { x: 1, y: 8, width: 24, height: 9 } };
+      this.add(valueList);
+    }
 
     this.onMount(() => {
       // Show the second operand only for `between`, reflowing so the hidden editor leaves no gap.
