@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 15:16
-> **Progress**: 26/45 tasks (58%)
+> **Last Updated**: 2026-07-15 15:39
+> **Progress**: 34/45 tasks (76%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -144,23 +144,23 @@ tests → red → implement → green → impl tests → verify) and mirrors the
 **Reference**: `03-03 §FilterPopup` · `07 §Filter popups` (ST-21, ST-22) · AR #11/#14
 **Objective**: Lock the operator sets + operand behavior.
 
-- [ ] 4.1.1 Write `filter-popup.spec.test.ts` (ST-21 operator set per `filterType`; ST-22 number `between` reveals second operand + Apply emits `{number,between,a,b}`) — `packages/datagrid/test/filter-popup.spec.test.ts`
-- [ ] 4.1.2 Verify **red**
+- [x] 4.1.1 Write `filter-popup.spec.test.ts` (ST-21 operator set per `filterType`; ST-22 number `between` reveals second operand + Apply emits `{number,between,a,b}`) — `packages/datagrid/test/filter-popup.spec.test.ts` ✅ (completed: 2026-07-15 15:20)
+- [x] 4.1.2 Verify **red** — `filter-popup.ts` module absent ✅ (completed: 2026-07-15 15:20)
 
 ### Step 4.2: Implement (green)
 
 **Reference**: `03-03` · `03-04 §Funnel → popup` · AR #11/#14/#18
 **Objective**: The condition popup + real anchoring (the funnel forwards the live `DispatchEvent`; the mount reuses `ev.focusView`/`ev.popupHost`, AR #18).
 
-- [ ] 4.2.1 Create `FilterPopup<T>`: type-appropriate condition section (text/number/date operators + operand inputs, second operand for `between`), `onApply`/`onClear`/`onClose` (JSDoc + `@example`) — `packages/datagrid/src/filter-popup.ts`
-- [ ] 4.2.2 `grid.ts`: implement `openFilterPopup(columnId, anchor, ev)` (resolve `filterType`, build `FilterPopup`, anchor via `absoluteRect(header)` + funnel anchor) mounting into a dedicated `popupOverlay` (hit-transparent when empty) via `mountCellOverlay` with `loop: { focusView: (v) => ev.focusView?.(v) }`, the popup's nested widgets consuming the spread envelope (AR #18); route Apply/Clear to `setFilter`/`clearFilter` — `packages/datagrid/src/grid.ts`
-- [ ] 4.2.3 Barrel: export `FilterPopup` + `FilterPopupConfig` — `packages/datagrid/src/index.ts`
-- [ ] 4.2.4 Verify **green** — ST-21, ST-22 pass (AC-2)
+- [x] 4.2.1 Create `FilterPopup<T>`: type-appropriate condition section (text/number/date operators + operand inputs, second operand for `between`), `onApply`/`onClear`/`onClose` (JSDoc + `@example`) — `packages/datagrid/src/filter-popup.ts` ✅ (completed: 2026-07-15 15:34)
+- [x] 4.2.2 `grid.ts`: implement `openFilterPopup(columnId, anchor, ev)` (resolve `filterType`, build `FilterPopup`, anchor via `absoluteRect(header)` + funnel anchor) mounting into a dedicated `popupOverlay` (hit-transparent when empty) via `mountCellOverlay` with `loop: { focusView: (v) => ev.focusView?.(v) }`, the popup's nested widgets consuming the spread envelope (AR #18); route Apply/Clear to `setFilter`/`clearFilter` — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-15 15:34)
+- [x] 4.2.3 Barrel: export `FilterPopup` + `FilterPopupConfig` — `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-15 15:34)
+- [x] 4.2.4 Verify **green** — ST-21, ST-22 pass (AC-2); 226 datagrid tests green, typecheck clean ✅ (completed: 2026-07-15 15:34)
 
 ### Step 4.3: Impl tests & verify
 
-- [ ] 4.3.1 Write `filter-popup.impl.test.ts` (reopen pre-filled with `current`; Escape/click-away close; anchoring) — `packages/datagrid/test/filter-popup.impl.test.ts`
-- [ ] 4.3.2 Full `yarn verify`
+- [x] 4.3.1 Write `filter-popup.impl.test.ts` (reopen pre-filled with `current`; Escape/click-away close; anchoring) — `packages/datagrid/test/filter-popup.impl.test.ts` ✅ (completed: 2026-07-15 15:39)
+- [x] 4.3.2 Full `yarn verify` ✅ (completed: 2026-07-15 15:39)
 
 **Deliverables**: funnel opens a working condition popup; number `between` filter (AC-2).
 **Verify**: `yarn verify`

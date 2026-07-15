@@ -59,6 +59,12 @@ export type { SortHeaderConfig } from './sort-header.js';
 export { QuickFilterRow } from './quick-filter-row.js';
 export type { QuickFilterRowConfig } from './quick-filter-row.js';
 
+// The condition-filter popup — the funnel-opened panel with a per-type operator selector and operand
+// editors that emits a `ColumnFilter`. The container opens one on a funnel click; it is exported so a
+// bespoke grid can drive it programmatically.
+export { FilterPopup } from './filter-popup.js';
+export type { FilterPopupConfig } from './filter-popup.js';
+
 // Commit sink — the `onCommit` veto contract and the `commitCell` primitive that applies an edit
 // immediately and reverts it on veto.
 export { commitCell } from './commit.js';
