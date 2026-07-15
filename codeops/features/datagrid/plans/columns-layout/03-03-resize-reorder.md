@@ -7,6 +7,15 @@ the **existing** `ev.setCapture?.(this)` / `ev.releaseCapture?.()` / `ev.hasCapt
 no core/ui change (AR-12). Each `SortHeader` reports the gesture up to the container via new config
 callbacks, which mutate the shared column-layout signals.
 
+**Terminal-capability note (PF-007).** Intermediate `drag` events are reported only when the terminal
+enables DEC 1002 — gated on `caps.mouse.sgr && caps.mouse.drag` (`packages/core/src/engine/host/
+modes.ts:47`). The web runtime always enables it (`packages/web/src/host.ts:33`) and headless tests
+inject synthetic drag envelopes, so CI/web get **live** tracking. On a native terminal *without*
+`caps.mouse.drag`, a captured gesture receives only `down` and `up` (no `drag`), so **live** resize /
+the live drop indicator gracefully degrade to **apply-on-release** (final `up` position). Both
+gestures hold a button down, so `drag` — not motion (DEC 1003, enabled nowhere) — is the correct and
+available event where supported. This degradation is expected, not a bug.
+
 ## Header hit-zones
 
 `SortHeader.geometry()` already yields `starts[]`/`widths[]`. Add a zone classifier on mouse-down
@@ -42,10 +51,11 @@ width apportions as `fixed`, so resizing an `auto`/`fr` column pins it. Clamp fl
   `clampWidth(autoWidth ?? titleWidth, col.minWidth, col.maxWidth ?? DEFAULT_AUTOFIT_MAX)` — bounded
   by `maxWidth ?? 60` (AR-4). Sets an explicit width override.
 - **API** `autoFitColumn(id)` / `autoFitAll()` on the container do the same without a gesture.
-- Double-click detection: two grip-downs within the framework's existing double-click window (reuse
-  the mouse event's click-count if present, else a small time/space heuristic already used elsewhere —
-  confirm the available signal during impl; if none, a plain `autoFitColumn` API + a documented
-  single-primitive gesture is acceptable and the double-click is a thin add).
+- Double-click detection (PF-009 — resolved): use the **live `ev.clickCount`** the loop already
+  stamps on every mouse-down (`view/types.ts:130`; `MULTI_CLICK_MS = 500`, `event-loop.ts:263-271`;
+  already consumed at `grid-rows.ts:261`). A grip double-click is two downs with `clickCount` 1 then
+  2 (`clickCount` increments only on the *same* cell, which a 1-cell grip satisfies) — no manual
+  time/space heuristic, no capture needed for the detection.
 
 ## Reorder gesture (AC-2)
 

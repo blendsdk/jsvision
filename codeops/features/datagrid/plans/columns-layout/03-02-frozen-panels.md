@@ -33,10 +33,16 @@ draw.
 ## Shared cursor & vertical scroll (H2, H5, AR-6)
 
 - **Row cursor + selection + vertical position** are the container's existing `focused`/`selected`
-  signals, injected into all three panels (already the constructor shape). Because every panel binds
-  the same `focused` and lays out at the **same height**, their inherited `updateTop()`/`topItem`
-  compute the **same** virtual window — vertical scroll stays in lockstep without sharing `topItem`
-  state (H5). *(Impl test asserts the three `topItem`s agree after a scroll.)*
+  signals, injected into all three panels (already the constructor shape). `topItem` is
+  **history-carrying** (`keepVisible` feeds the prior `topItem` back in, `grid-rows.ts:165` /
+  `list/virtual.ts:42`), so lockstep is an **invariant**, not an inherent property: three panels
+  seeded to `topItem = 0`, sharing the same `focused` + the same row `range` (rows are sliced by
+  *column*, not row) + laid out at the **same height**, evolve `topItem` deterministically identically
+  and stay in lockstep without sharing `topItem` state (H5). **PF-008: this invariant is load-bearing
+  — the impl test asserting "the three `topItem`s agree after a scroll" (3.3.1) is a required guard,
+  not optional; any future per-panel height difference (a stray band split, a per-panel corner) would
+  silently desync vertical scroll.** All three panels are `EditableGridRows`, so all use the same
+  `bounds.height` `updateTop()` path (`editable-grid-rows.ts:300`) — keep it that way.
 - **Column cursor** stays **one global `focusedCol`** over the whole visible order (AR-6). A new
   protected seam on `EditableGridRows` gives each panel its **column-slice range** `[startCol,
   endCol)` in global-index space. The panel:
@@ -52,16 +58,32 @@ draw.
     so the focused center column is visible (reuses the existing indent-clamp math; the frozen panels
     never scroll).
 
-### Where the keys live
+### Where the keys live (PF-004 — routing pinned)
 
 Today `EditableGridRows.handleColKey` owns the column keys (`editable-grid-rows.ts:218-263`). With
-panels, key routing must act on the **global** cursor, not a panel-local one. Two options, decided:
-the **container** focuses a single "active" panel (the one the loop routes keys to) but the cursor
-math is global. Cleanest: keep the key handlers on `EditableGridRows` but have them read/write the
-**shared global `focusedCol`** and the **shared total column count** (injected), so whichever panel
-is focused moves the one global cursor; the container re-focuses the panel that now owns the cursor
-after a cross-boundary move (a leaf-focus call, mirroring the RD-03 Group-editor focus rule). *(This
-keeps all navigation logic in one place and off the container.)*
+panels the key handlers stay on `EditableGridRows` but read/write the **shared global `focusedCol`**
+and an injected **total column count** — so whichever panel currently has focus moves the one global
+cursor. Concretely:
+
+- The loop routes keys to exactly **one focused panel** at a time (the panel holding the leaf focus).
+- That panel's `handleColKey` moves the global `focusedCol` over `[0, totalCols)`.
+- When a move crosses this panel's `[startCol, endCol)` range (a cross-boundary `←`/`→`, or
+  `Home`/`End`/`Ctrl+Home`/`Ctrl+End`), the container **re-focuses the panel that now owns the
+  cursor** — a single leaf-focus call on that panel (mirroring the RD-03 Group-editor focus rule:
+  focus the leaf, not the group). The newly-focused panel then handles the next key. Begin-edit and
+  the cursor overpaint always run on the panel that owns `focusedCol`, so exactly one panel shows the
+  cursor.
+
+This keeps all navigation logic in `EditableGridRows` (one place) and limits the container to the
+cross-boundary re-focus hop.
+
+### Mouse-click cursor coordination (PF-005)
+
+A mouse-down on a cell in any panel sets the **global** `focusedCol`: the clicked panel maps its
+local column index to the global index (`columnOffset + localCol`) and writes the shared `focusedCol`
+(and `focused` for the row), then the container re-focuses that panel (same leaf-focus hop as a
+cross-boundary key). So clicking a frozen cell moves the cursor into that panel exactly as arrowing
+into it would — keyboard and mouse drive the one global cursor identically.
 
 ## Horizontal indent (H3, AR-7)
 
@@ -105,6 +127,19 @@ against the current viewport width and resolved widths. Any returned id is **mov
 The center panel is therefore never blank (AC-6). The guard re-runs when the viewport or widths
 change (a derived computed), but the `devWarn` is de-duplicated per distinct over-pin set so a resize
 storm doesn't spam.
+
+## Edge cases (PF-006)
+
+- **All columns explicitly frozen** (e.g. `freezeLeft` names every column) → the center partition is
+  legitimately empty *even though nothing over-pins on width*. This is **allowed** (respect explicit
+  user intent): the center panel renders as a zero-width / empty band, the frozen panels + dividers
+  fill the width, and the horizontal `ScrollBar` has nothing to range over (inert). The over-pin
+  guard (which only fires on width overflow) does **not** force-unfreeze here.
+- **All columns hidden** → `visibleIds()` is empty → every partition is empty → the grid renders the
+  existing `<empty>`-style placeholder (`editable-grid-rows.ts:292-296`), not a crash. Sort/filter
+  state on hidden columns is retained and reappears when a column is unhidden.
+- **A frozen id that is also hidden** → dropped by `visibleOrder` before `partition` (03-01), so it
+  isn't drawn; unhiding restores it to its panel.
 
 ## Editor overlay panel-awareness (H4 — see 03-04)
 

@@ -23,7 +23,7 @@ in `toEngineColumn` (`column.ts:158`): `minWidth: c.minWidth, maxWidth: c.maxWid
 ## New container signals (AR-13)
 
 ```ts
-private readonly columnOrderSig = signal<string[]>(opts.columns.map((c) => c.id)); // visible order (all ids initially)
+private readonly columnOrderSig = signal<string[]>(opts.columns.map((c) => c.id)); // FULL order (all ids, incl. hidden)
 private readonly columnWidths = signal<Map<string, number>>(new Map());            // explicit width overrides
 private readonly hidden = signal<Set<string>>(new Set());                          // hidden ids
 private readonly freezeSpec: FreezeSpec = { freezeLeft, freezeRight, freeze };      // static (from options)
@@ -48,8 +48,8 @@ Every mutator guards unknown ids against the column map (like `sortBy`, `grid.ts
 id is a **no-op**, never added to state (AC-9).
 
 ```ts
-columnOrder(): string[]                 // reactive read of the visible order
-setColumnOrder(ids: string[]): void     // validate all ids known + a permutation; else ignore
+columnOrder(): string[]                 // reactive read of the VISIBLE order (= visibleIds())
+setColumnOrder(ids: string[]): void     // a permutation of the currently-VISIBLE ids (AR-18)
 columnWidth(id: string): number         // resolved width (override → engine default)
 setColumnWidth(id: string, w: number): void // clampWidth(w, col.minWidth, col.maxWidth) → override
 setColumnVisible(id: string, visible: boolean): void // add/remove from hidden
@@ -61,6 +61,15 @@ autoFitAll(): void
 `setColumnVisible(id, false)` removes the column from `visibleIds` → the panels omit it → but
 `sortBy(id)`/`setFilter(id)` still hit the column map, so sort/filter state stays addressable
 (AC-3). A hidden, sorted column keeps sorting the data; it just isn't drawn.
+
+**Order contract (AR-18, PF-003).** `columnOrderSig` is the **full** order (every id, hidden
+included); `columnOrder()` returns the **visible** projection (`visibleIds()`). `setColumnOrder(ids)`
+takes a permutation of the **currently-visible** ids and splices them back into the full order **in
+place** — each hidden column keeps its anchor slot (the position it holds in `columnOrderSig`), and
+the visible ids fill the remaining slots in the caller's new order. So a caller only ever reasons
+about the columns it can see, and unhiding a column later restores it to its anchor position. A
+`setColumnOrder` argument that is not a permutation of the visible ids (unknown id, wrong length,
+duplicate) is ignored (AC-9).
 
 ## Panel assembly (03-02)
 
@@ -87,9 +96,14 @@ the mount host (a `fill` layer over the whole grid); only the **origin** differs
 per-panel `absoluteRect` already yields. **No new coordination** beyond routing begin-edit to the
 focused panel (which the shared-cursor design already does — only the owning panel handles the key).
 
-- *Filter popup* anchors on a header; with per-panel headers it anchors on the **funnel's** panel
-  header origin — same `absoluteRect(header)` logic, resolved against the panel whose funnel was
-  clicked (the funnel click already carries the panel's header).
+- *Filter popup* (PF-002 — real gap, fixed here). Today `openFilterPopup` anchors on a **single
+  retained** header (`grid.ts:210,542` `absoluteRect(this.header)`) and `onFunnelClick(columnId,
+  anchor, ev)` carries **no** header (`sort-header.ts:51`). With three panel headers the container
+  cannot tell which header's `absoluteRect` to use. **Fix:** extend `onFunnelClick` to pass the
+  **clicked `SortHeader`** (or its absolute origin), so `openFilterPopup` anchors on that panel's
+  header. Small signature extension; the funnel routing is otherwise unchanged. *(This is a genuine
+  change, unlike the editor overlay — H4/AR-10 — which needs nothing because each panel already owns
+  its `EditController` + per-body `absoluteRect`.)*
 
 ## Barrel
 
