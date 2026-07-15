@@ -1,7 +1,7 @@
 ## Ambiguity Register: @jsvision/datagrid (editable data grid)
 
-> **Status**: ✅ GATE PASSED — all 32 items resolved (AR-01…AR-27 + AR-31/AR-32 Resolved · AR-28…AR-30 confirmed named deferrals)
-> **Last Updated**: 2026-07-12 (AR-31/AR-32 added during preflight remediation)
+> **Status**: ✅ GATE PASSED — all 41 items resolved (AR-01…AR-27 + AR-31…AR-41 Resolved · AR-28…AR-30 confirmed named deferrals)
+> **Last Updated**: 2026-07-15 (AR-33…AR-41 added for RD-15 — DataGrid Showcase App)
 > **Session note**: AR-01…AR-11 decided during the design conversation of 2026-07-12 (front-loaded discovery + four AskUserQuestion forks). AR-12…AR-30 resolved 2026-07-12 by explicit bulk acceptance ("accept all") of the recommendations below; per the shared gate, bulk acceptance is an explicit user decision.
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
@@ -38,6 +38,15 @@
 | 30 | Behavioral | Undo/redo history model | Defer to Phase B | ⏸ Deferred — edit undo/redo stack semantics · owner: user · revisit: Phase B (RD-08/RD-12 Should). Consequence acknowledged: v1 edits aren't undoable (commit/cancel only) | ⏸ Deferred |
 | 31 | UX / Technical | Value model: a formatted-string accessor vs a value/format/parse split | Single formatted accessor · split `value` (typed) / `format` (display) / `parse` (edit round-trip) | Split value/format/parse — sort/filter key off the typed `value`, the cell shows `format(value)`, edits round-trip via `parse` (decided in the 2026-07-12 design conversation, e.g. `10000.25` ⟷ `"$10.000,25"`) | ✅ Resolved |
 | 32 | Behavioral | Lookup / value-help commit: store the key or the label? | Commit the visible label · commit the underlying key | Commit the key (the foreign-key value); display the label | ✅ Resolved |
+| 33 | Scope / Architecture | Where the standalone datagrid showcase lives | New package `@jsvision/datagrid-showcase` · subfolder in `packages/examples` · promote datagrid's `test/kitchen-sink` in place | Subfolder `packages/examples/datagrid-showcase/` with a `demo:datagrid` script; `@jsvision/examples` gains a dependency on `@jsvision/datagrid` (RD-15) | ✅ Resolved |
+| 34 | Scope | First-cut coverage of the showcase | Shipped features only, grow per RD · also scaffold placeholders for the unbuilt RDs | Granular demos for the shipped RD-01…RD-06 surface **plus** "coming soon" placeholder slots for RD-07…RD-14 (RD-15) | ✅ Resolved |
+| 35 | Architecture | How the showcase gets its shell (sidebar navigator + menu + status + welcome) | Dedicated shell seeded from the kitchen-sink pattern · extract a shared `showcase-shell` module used by both · import kitchen-sink's shell directly | Dedicated shell, seeded from the proven `kitchen-sink/shell.ts` pattern — isolated (zero risk to the general kitchen-sink), room for datagrid-specific chrome; mild duplication accepted (RD-15) | ✅ Resolved |
+| 36 | UX | What each unbuilt-RD placeholder slot shows | Per-RD description panel · single roadmap overview screen · greyed/disabled nav entries | Per-RD description panel: RD title + a planned-capability blurb + a "coming soon" status chip; each slot is the drop-in target when that RD lands (RD-15) | ✅ Resolved |
+| 37 | Scope | The concrete demo inventory | The ~38-demo inventory across 6 clusters + 8 placeholders (tabled in RD-15) · a leaner one-per-cluster first cut · revise specific clusters | Approved as proposed — the full ~38-demo inventory (RD-15 §Demo inventory) | ✅ Resolved |
+| 38 | Naming | Folder + run-script name | `datagrid-showcase` · `datagrid-kitchen-sink` · `datagrid-demo` | Folder `datagrid-showcase`, script `demo:datagrid` — distinct from the general `kitchen-sink` (RD-15) | ✅ Resolved |
+| 39 | Testing / Integration | Fate of datagrid's existing `test/kitchen-sink` smoke stories | Retire the 6 coarse stories (superseded) · keep them | Keep the 6 in-package smoke stories as the *isolated* render guard (datagrid must not depend on `examples`); build the rich granular set fresh in the showcase (RD-15) | ✅ Resolved |
+| 40 | Testing | Test tiers for the showcase | Per-demo smoke only · smoke + headless walkthrough | Per-demo smoke test (mounts + paints ≥1 cell) **Must** + a headless piped walkthrough auto-advancing every demo **Must**, CI-gated (RD-15) | ✅ Resolved |
+| 41 | UX | The "shine" quality bar | — | Every demo: a one-line blurb + the live component + a visible bound-state echo + key hints; keyboard **and** mouse; faithful TV theming; a welcome/overview landing screen (RD-15) | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -80,3 +89,5 @@
 **AR-32:** A lookup / value-help editor commits the selected item's `key` (the stored foreign-key value), not its human `label`; the label is shown, the key is written to the field (RD-03).
 
 **AR-28 / AR-29 / AR-30:** Confirmed named deferrals (Phase-B forks); consequences acknowledged in the table.
+
+**AR-33…AR-41 (RD-15 — DataGrid Showcase App):** Resolved 2026-07-15 via four AskUserQuestion forks plus explicit bulk acceptance of the remaining recommendations. AR-33/34/35/36/37 were direct user picks; AR-38/39/40/41 were presented with grounded recommendations and bulk-accepted (per the shared gate, bulk acceptance is an explicit user decision). The showcase is a standalone, datagrid-centric kitchen-sink under `packages/examples/datagrid-showcase/`, seeded from the proven `kitchen-sink/shell.ts` navigator pattern (a sidebar `ListBox` + per-category menu + clickable status hints + welcome catalog), demonstrating each shipped RD-01…RD-06 capability as its own granular demo, with per-RD "coming soon" panels for RD-07…RD-14 that become drop-in slots as those RDs land. Grounding: the datagrid public barrel (`packages/datagrid/src/index.ts`) enumerates the demo-able surface; `test/kitchen-sink/story.ts` already established the "trimmed copy of the examples showcase model" precedent. The showcase is intended as the living acceptance surface for every future datagrid RD.
