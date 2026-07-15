@@ -50,7 +50,7 @@ The spike measured the **index-path** resolver (`focusPath` capture → `viewAtP
 
 | ST | Given → Expect | Traces |
 |----|----------------|--------|
-| ST-17 | The **wizard** story and the **drill-down browser** story each mount headlessly, paint a non-empty frame, carry unique ids + required metadata; the wizard's "Next" greys until the step validates; the drill-down list preserves scroll across `back()` (`keepAlive`). | R-9 / AR-11, AR-7 |
+| ST-17 | The **drill-down browser** story mounts headlessly, paints a non-empty frame, carries a unique id + required metadata; the drill-down list preserves scroll across `back()` (`keepAlive`). *(The **wizard** story + its "Next greys until valid" flow are deferred with the wizard demo — AR-24, `@jsvision/forms` unmerged.)* | R-9 / AR-11, AR-7 |
 
 ## Verification
 

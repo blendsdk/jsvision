@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Progress**: 29/43 tasks (67%)
-> **Last Updated**: 2026-07-15 (Phase 2 keep-alive + chrome contributions + full focus restore complete — `yarn verify` green)
+> **Progress**: 36/43 tasks (84%) — 1 deferred (3.2.3 wizard, AR-24)
+> **Last Updated**: 2026-07-15 (Phase 3 barrel + JSDoc + drill-down demo/story/e2e complete; wizard deferred — `yarn verify` green)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -124,25 +124,30 @@ green and is committed (via /gitcm).
 ## Phase 3: Barrel + JSDoc + Demos + Stories
 **Reference**: [01](01-requirements.md) R-9, R-10 · AR-15
 
-### Session 3.1 — Spec tests (red)
-| # | Task | File |
-|---|------|------|
-| 3.1.1 | Write ST-17 smoke additions: wizard + drill-down stories mount, paint, unique id + metadata | `packages/examples/test/kitchen-sink.smoke.spec.test.ts` |
-| 3.1.2 | Write the router walkthrough e2e (headless ASCII render of a push/back flow) | `packages/examples/test/router-demo.e2e.test.ts` |
+> **Scope note (AR-24):** the multi-step **wizard** reference app + `wizard.story.ts` are **deferred**
+> — `@jsvision/forms` lives on the unmerged `feat/forms` branch, absent here. Phase 3 ships the
+> **drill-down (keep-alive) browser** as BOTH the standalone `router-demo/` demo and the kitchen-sink
+> story. ST-17 is narrowed to the drill-down oracle; the wizard half lands once `feat/forms` merges.
 
-### Session 3.2 — Implementation (green)
+### Session 3.1 — Spec tests (red) ✅
 | # | Task | File |
 |---|------|------|
-| 3.2.1 | `router/index.ts` barrel; EXPLICIT named re-exports from `src/index.ts` (createRouter, withBase, types) | `packages/ui/src/router/index.ts`, `packages/ui/src/index.ts` |
-| 3.2.2 | Public JSDoc + `@example` on every export; no CodeOps/TV-C++ refs (check:docs green) | `packages/ui/src/router/*.ts` |
-| 3.2.3 | Multi-step **wizard** demo (consumes `@jsvision/forms`) + kitchen-sink story | `packages/examples/router-demo/`, `packages/examples/kitchen-sink/stories/wizard.story.ts`, `stories/index.ts` |
-| 3.2.4 | **Drill-down browser** demo + kitchen-sink story (keepAlive list) | `packages/examples/kitchen-sink/stories/drill-down.story.ts`, `stories/index.ts` |
+| 3.1.1 | `[x]` Write ST-17 smoke addition: the **drill-down** story mounts, paints, unique id + metadata (wizard deferred — AR-24) | `packages/examples/test/kitchen-sink.smoke.spec.test.ts` |
+| 3.1.2 | `[x]` Write the router walkthrough e2e (headless ASCII render of a push/back/keep-alive flow) | `packages/examples/test/router-demo.e2e.test.ts` |
 
-### Session 3.3 — Impl tests & hardening
+### Session 3.2 — Implementation (green) ✅ (3.2.3 deferred)
 | # | Task | File |
 |---|------|------|
-| 3.3.1 | ST-17 + router-demo.e2e green; stories pass the smoke gate | — |
-| 3.3.2 | `yarn verify` green | — |
+| 3.2.1 | `[x]` `router/index.ts` barrel; EXPLICIT named re-exports from `src/index.ts` (createRouter, withBase, Router + types); `Router` added to the plugin component-catalog | `packages/ui/src/router/index.ts`, `packages/ui/src/index.ts` |
+| 3.2.2 | `[x]` Public JSDoc + `@example` on every export; no CodeOps/TV-C++ refs (check:docs green) | `packages/ui/src/router/*.ts` |
+| 3.2.3 | ⏸ **DEFERRED (AR-24)** — Multi-step **wizard** demo (consumes `@jsvision/forms`) + `wizard.story.ts`; revisit when `feat/forms` merges | `packages/examples/router-demo/`, `packages/examples/kitchen-sink/stories/wizard.story.ts` |
+| 3.2.4 | `[x]` **Drill-down browser**: the standalone `router-demo/` demo (headless push/back/keep-alive walkthrough, `demo:router`) + kitchen-sink story `navigation/drill-down` (keepAlive list preserves scroll across `back()`) | `packages/examples/router-demo/`, `packages/examples/kitchen-sink/stories/drill-down.story.ts`, `stories/index.ts` |
+
+### Session 3.3 — Impl tests & hardening ✅
+| # | Task | File |
+|---|------|------|
+| 3.3.1 | `[x]` ST-17 (drill-down) + router-demo.e2e green; the story passes the smoke gate | — |
+| 3.3.2 | `[x]` `yarn verify` green | — |
 
 **Verify**: `yarn verify` + `yarn workspace @jsvision/examples demo:kitchen` (smoke) green; commit via /gitcm.
 
