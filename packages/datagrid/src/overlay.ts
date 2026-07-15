@@ -1,9 +1,9 @@
 /**
  * The cell-aligned overlay helper — how an editor view is mounted over a grid cell.
  *
- * `mountCellOverlay` translates a body-local cell rect to absolute coordinates, mounts the editor as
- * an absolutely-placed child of the grid's overlay host, focuses it, and returns a disposer that
- * removes it and tears down its reactive scope. It is built from public `@jsvision/ui` primitives —
+ * `mountCellOverlay` translates a body-local cell rect into the overlay host's own frame, mounts the
+ * editor as an absolutely-placed child of the grid's overlay host, focuses it, and returns a disposer
+ * that removes it and tears down its reactive scope. It is built from public `@jsvision/ui` primitives —
  * no frame or border chrome — so an editor that needs its own dropdown opens it through its own
  * widget.
  */
@@ -43,10 +43,11 @@ export function absoluteRect(view: View): { x: number; y: number } {
 }
 
 /**
- * Mount `view` over a cell: place it at the absolute position derived from a body-local cell rect,
- * focus it through the loop seam, and return a disposer that removes the view and disposes its
- * reactive scope (so its binding effects do not leak after the overlay closes). There is no frame or
- * border — it is a bare cell-aligned mount.
+ * Mount `view` over a cell: place it on the cell derived from a body-local cell rect (correct even
+ * when the grid is nested far from the screen origin — the host's own offset is not double-counted),
+ * focus it through the loop seam, and return a disposer that removes the view and disposes its reactive
+ * scope (so its binding effects do not leak after the overlay closes). There is no frame or border — it
+ * is a bare cell-aligned mount.
  *
  * Pass either a pre-built `view` or a `build` callback. `build` runs **inside** the mount's reactive
  * root, so an editor that creates binding effects at construction time (a typed editor's field bridges
@@ -88,9 +89,21 @@ export function mountCellOverlay(args: {
     // Build inside the root so factory-time effects (typed editor bridges) are owned by this scope.
     const view = args.build ? args.build() : (args.view ?? null);
     if (view === null) return dispose; // nothing to mount (e.g. a read-only editor resolved to null)
+    // The absolute cell position is `origin + rect`. But an absolute-positioned view is placed
+    // RELATIVE to its parent's content origin, and the parent here is `host` — itself already at some
+    // absolute position (a grid nested inside an app shell sits far from the screen origin). So express
+    // the cell in the host's local frame by subtracting the host's own absolute origin; otherwise the
+    // host's offset is double-counted and the editor lands elsewhere. When the host is at the screen
+    // origin this subtracts zero, so a grid at (0, 0) is unaffected.
+    const hostOrigin = absoluteRect(host);
     view.layout = {
       position: 'absolute',
-      rect: { x: origin.x + rect.x, y: origin.y + rect.y, width: rect.width, height: rect.height },
+      rect: {
+        x: origin.x + rect.x - hostOrigin.x,
+        y: origin.y + rect.y - hostOrigin.y,
+        width: rect.width,
+        height: rect.height,
+      },
     };
     host.add(view);
     loop.focusView(view);

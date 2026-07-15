@@ -9,7 +9,7 @@
 import { test, expect } from 'vitest';
 import { Group, View, createRenderRoot, resolveCapabilities } from '@jsvision/ui';
 import type { DrawContext } from '@jsvision/ui';
-import { mountCellOverlay } from '../src/overlay.js';
+import { mountCellOverlay, absoluteRect } from '../src/overlay.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
 
@@ -69,4 +69,32 @@ test('should translate the body-local rect by the body origin', () => {
   const view = new Probe();
   mountCellOverlay({ host, loop, rect: { x: 3, y: 2, width: 4, height: 1 }, origin: { x: 10, y: 1 }, view });
   expect(view.layout).toEqual({ position: 'absolute', rect: { x: 13, y: 3, width: 4, height: 1 } });
+});
+
+// ST-9 — the overlay must land on the intended absolute cell (origin + rect) even when the host is
+// itself mounted at a non-zero offset (e.g. a grid nested inside an app shell). The absolute cell
+// position must NOT be double-counted by the host's own offset.
+test('should land the overlay on the cell when the host is nested at an offset', () => {
+  const parent = new Group();
+  const host = new Group();
+  host.layout = { position: 'absolute', rect: { x: 5, y: 2, width: 20, height: 6 } };
+  parent.add(host);
+  const render = createRenderRoot({ width: 30, height: 12 }, { caps });
+  render.mount(parent);
+  render.flush();
+  expect(absoluteRect(host), 'the host is offset from the screen origin').toEqual({ x: 5, y: 2 });
+
+  const view = new Probe();
+  // `origin` is the absolute cell origin (as the grid passes `absoluteRect(body)`); `rect` is cell-local.
+  mountCellOverlay({
+    host,
+    loop: { focusView: () => undefined },
+    rect: { x: 3, y: 1, width: 4, height: 1 },
+    origin: { x: 8, y: 3 },
+    view,
+  });
+  render.flush();
+
+  // Composed absolute position must equal origin + rect = (11, 4), not shifted by the host's (5, 2).
+  expect(absoluteRect(view)).toEqual({ x: 11, y: 4 });
 });
