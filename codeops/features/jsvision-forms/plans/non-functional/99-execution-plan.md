@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 14:47
-> **Progress**: 10/15 tasks (67%)
+> **Last Updated**: 2026-07-15 14:54
+> **Progress**: 15/15 tasks (100%) — ✅ COMPLETE
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -108,27 +108,27 @@ this plan is narrow and reconciliation-heavy.
 **Reference**: `07 §Coverage audit matrix` · `03-02 §Coverage audit` · AR-P3
 **Objective**: Every RD-01/02/03 AC traces to a passing spec test; genuine gaps filled.
 
-- [ ] 3.1.1 Complete the coverage matrix in `07` — map each RD-01/02/03 AC → covering spec test (file + `should…`) — `codeops/features/jsvision-forms/plans/non-functional/07-testing-strategy.md`
-- [ ] 3.1.2 For each gap found, add a spec case (spec-first) to the matching existing `*.spec.test.ts` and confirm green; if zero gaps, record "zero gaps" in the matrix — `packages/forms/test/*.spec.test.ts`
+- [x] 3.1.1 Complete the coverage matrix in `07` — map each RD-01/02/03 AC → covering spec test (file + `should…`) — `codeops/features/jsvision-forms/plans/non-functional/07-testing-strategy.md` ✅ (completed: 2026-07-15 14:52)
+- [x] 3.1.2 For each gap found, add a spec case (spec-first) to the matching existing `*.spec.test.ts` and confirm green; if zero gaps, record "zero gaps" in the matrix — `packages/forms/test/*.spec.test.ts` ✅ (completed: 2026-07-15 14:52 — zero gaps; all 20 ACs (8+7+5) trace 1:1 to shipped oracles, no case added)
 
 ### Step 3.2: Surface lock
 
 **Reference**: `03-02 §Surface lock` · `07` ST-N3 · AR-P6
 **Objective**: The barrel's runtime exports are locked to exactly the FR-4.2 set.
 
-- [ ] 3.2.1 Add the surface-lock test (`Object.keys` equals exactly the five value exports) — `packages/forms/test/surface.impl.test.ts`
-- [ ] 3.2.2 Run full `yarn verify`; confirm green (typecheck locks the FR-4.2 type surface)
+- [x] 3.2.1 Add the surface-lock test (`Object.keys` equals exactly the five value exports) — `packages/forms/test/surface.impl.test.ts` ✅ (completed: 2026-07-15 14:52)
+- [x] 3.2.2 Run full `yarn verify`; confirm green (typecheck locks the FR-4.2 type surface) ✅ (completed: 2026-07-15 14:54)
 
 ### Step 3.3: Pre-PR lint gate
 
 **Reference**: `03-02 §Green build & lint gate` · project Prime directive · AR-P7
 **Objective**: CI lands green — no fixable lint/format error surfaces in CI first.
 
-- [ ] 3.3.1 Run `yarn lint:fix`; commit any changes; confirm the working tree is clean
+- [x] 3.3.1 Run `yarn lint:fix`; commit any changes; confirm the working tree is clean ✅ (completed: 2026-07-15 14:54 — lint:fix clean, no changes)
 
 **Deliverables**:
-- [ ] Coverage matrix complete; surface locked; `yarn verify` green; tree clean
-- [ ] All verification passing
+- [x] Coverage matrix complete; surface locked; `yarn verify` green; tree clean
+- [x] All verification passing
 
 **Verify**: `yarn verify`
 

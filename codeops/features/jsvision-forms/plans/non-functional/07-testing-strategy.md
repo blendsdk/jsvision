@@ -55,11 +55,11 @@ spec test that covers it (file + `should…` name). A row with no covering test 
 spec case (spec-first) to the listed existing file. Do **not** restate the ACs here — cite them by
 their RD; the RDs own the criteria.
 
-| RD | AC count | Expected owning spec file(s) | Covered? (fill in exec) | Gap → action |
-|----|----------|------------------------------|-------------------------|--------------|
-| RD-01 (store) | 8 | `store.spec.test.ts` | _audit_ | add case to `store.spec.test.ts` |
-| RD-02 (validation) | 7 | `validation.spec.test.ts` | _audit_ | add case to `validation.spec.test.ts` |
-| RD-03 (binding) | 5 | `adapters.spec.test.ts`, `bind-field.spec.test.ts` | _audit_ | add case to the matching file |
+| RD | AC count | Expected owning spec file(s) | Covered? | Gap → action |
+|----|----------|------------------------------|----------|--------------|
+| RD-01 (store) | 8 | `store.spec.test.ts` | 8/8 ✅ (ST-01…10) | none — zero gaps |
+| RD-02 (validation) | 7 | `validation.spec.test.ts` | 7/7 ✅ (ST-11…17) | none — zero gaps |
+| RD-03 (binding) | 5 | `adapters.spec.test.ts`, `bind-field.spec.test.ts` | 5/5 ✅ (adapters ST-04…07 · bind-field ST-01…03) | none — zero gaps |
 
 > **Mapping effort (recon 2026-07-15):** only the RD-03 spec files annotate AC IDs inline
 > (`adapters.spec.test.ts`, `bind-field.spec.test.ts`). `store.spec`/`validation.spec` carry
@@ -67,9 +67,45 @@ their RD; the RDs own the criteria.
 > `ST-01…10` vs bind-field `ST-01…03`). So the RD-01/RD-02 rows need a manual ST→AC mapping pass, and
 > the AC counts (RD-01 8, RD-02 7, RD-03 5) must be re-verified against the RD files during the audit.
 
-> Likely outcome (recon): the shipped suites already map 1:1 to the RD-01/02/03 functional areas, so
-> the audit's expected result is "zero gaps." The matrix must nonetheless be completed cell-by-cell —
-> assumption is not proof (the whole point of AR-P3).
+> **Audit result (completed 2026-07-15): zero gaps.** Every RD-01/02/03 acceptance criterion traces
+> to a passing spec test (per-AC below). No spec case was added — the shipped oracles already cover
+> the surface 1:1. ST numbers are not globally unique across files, so each is cited file-qualified.
+> AC counts re-verified against the RD files: RD-01 = 8, RD-02 = 7, RD-03 = 5.
+
+**RD-01 (store) — 8/8 → `store.spec.test.ts`:**
+
+| RD-01 AC | Covering spec test |
+| -------- | ------------------ |
+| `createForm` returns `Form`; `field.value` + `values()` typed from initial | ST-01 (value is store-owned, two-way, stable) + ST-04 (values coerced/null); the static typings are held by `typecheck` |
+| stable `field(name)` handle (`===`) | ST-02 |
+| `rawValues()` snapshot; `values()` coerced-when-valid / `null`-when-invalid, no throw | ST-03 + ST-04 |
+| `dirty()` element-wise for arrays; `reset()` clears dirty + touched | ST-05 + ST-06 |
+| `isValid()` false all-empty → true pre-touch | ST-07 |
+| `submit()` marks touched, `false` on invalid, awaits `onValid(coerced)` → `true` | ST-08 (+ `validation.spec` ST-17 for the mark-all-touched half) |
+| `field('unknown')` throws `FormFieldError` | ST-09 |
+| no `dispose()`, no effect leak on discard | ST-10 |
+
+**RD-02 (validation) — 7/7 → `validation.spec.test.ts`:**
+
+| RD-02 AC | Covering spec test |
+| -------- | ------------------ |
+| one `safeParse` per change; error/errors/isValid/values all reflect it | ST-11 |
+| `field.error()` first issue by `path[0]` / `null`, live pre-touch | ST-12 |
+| path-less `.refine` → `form.errors()`, not any field | ST-13 |
+| field-routed `.refine({ path })` → that field's `error()` | ST-14 |
+| `z.coerce.number()` `'42'`→`42`; `'x'`→ `error()` + `values() === null` | ST-15 |
+| `isValid()` tracks `safeParse` success, ignores `touched` | ST-17 (+ `store.spec` ST-07 for pre-touch liveness) |
+| surfaced messages are exactly the schema's | ST-16 |
+
+**RD-03 (binding) — 5/5 → `adapters.spec.test.ts` + `bind-field.spec.test.ts`:**
+
+| RD-03 AC | Covering spec test |
+| -------- | ------------------ |
+| `new Input({ value: field.value })` two-way, no adapter | `bind-field` ST-01 (text) + ST-02 (boolean) |
+| `bindField` touched once on first focus-leave, never on mount, cleaned up on unmount | `bind-field` ST-03 |
+| `bindRadio` `Signal<number>`: read `indexOf`, set idx→value, out-of-set → `-1` | `adapters` ST-04 |
+| `bindCheck` `['x','z']` ⇄ `[true,false,true]`, toggling updates the array | `adapters` ST-05 |
+| choice widgets keep the schema in domain terms (`z.enum`, `z.array(z.enum)`) | `adapters` ST-06 + ST-07 (pure lenses) |
 
 ## Test Categories
 

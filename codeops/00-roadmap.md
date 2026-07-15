@@ -2,7 +2,7 @@
 
 > **Status**: Active
 > **Last Updated**: 2026-07-15
-> **Features**: 0 / 3 done
+> **Features**: 1 / 3 done
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -15,7 +15,7 @@
 |---------|---------|---------------|----------|--------|--------------|
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done (site-foundation · @jsvision/web runtime · live-example system · TypeDoc API ref) · RD-04/05/07…10 ✏️ drafted | 4/10 RDs | ⬜ | 2026-07-13 |
-| jsvision-forms | [→](features/jsvision-forms/00-roadmap.md) | RD-01/02 ✅ Done (form-store — @jsvision/forms store + sync Zod validation) · RD-03 ✅ Done (widget-binding — bindField/bindRadio/bindCheck) · RD-04 🔄 Executing (non-functional — kitchen-sink story + security/audit/gates) | 3/4 RDs | 🔄 | 2026-07-15 |
+| jsvision-forms | [→](features/jsvision-forms/00-roadmap.md) | RD-01/02 ✅ Done (form-store — @jsvision/forms store + sync Zod validation) · RD-03 ✅ Done (widget-binding — bindField/bindRadio/bindCheck) · RD-04 ✅ Done (non-functional — kitchen-sink story + render-path security oracle + surface lock + coverage audit) | 4/4 RDs | ✅ | 2026-07-15 |
 
 ## Archived
 
