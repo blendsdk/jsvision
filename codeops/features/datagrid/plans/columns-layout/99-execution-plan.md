@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-16 00:46
-> **Progress**: 43/58 tasks (74%) — Phase 1–5 ✅ (incl. folded 3.2.7 reactive rebuild)
+> **Last Updated**: 2026-07-16 01:11
+> **Progress**: 51/58 tasks (88%) — Phase 1–6 ✅ (incl. folded 3.2.7 reactive rebuild)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -157,18 +157,18 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 **Reference**: `03-05` · `07 §Frozen rows & density` (ST-24, ST-25) · AR-14/AR-15
 
 ### Step 6.1: Specification tests (red)
-- [ ] 6.1.1 Write `frozen-rows-density.spec.test.ts` (ST-24 `freezeRows:1` pins first row + body window offset + stays on scroll; ST-25 `density:'compact'` drops divider + wider content + aligned both modes) — `packages/datagrid/test/frozen-rows-density.spec.test.ts`
-- [ ] 6.1.2 Verify **red**
+- [x] 6.1.1 Write `frozen-rows-density.spec.test.ts` (ST-24 `freezeRows:1` pins first row + body window offset + stays on scroll; ST-25 `density:'compact'` drops divider + wider content + aligned both modes) — `packages/datagrid/test/frozen-rows-density.spec.test.ts`
+- [x] 6.1.2 Verify **red**
 
 ### Step 6.2: Implement (green)
-- [ ] 6.2.1 `grid.ts` + `editable-grid-rows.ts`: `freezeRows?` band — a fixed-height pinned band mirroring the panel split; body virtual window offset by N; clamp + `devWarn` on over-freeze (AR-14) — `packages/datagrid/src/grid.ts`, `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 6.2.2 Density: add the **additive optional divider param** to `apportionColumns` in `@jsvision/ui` (gates both `columns.ts:126` `- numCols` and `:157` `+ 1`; existing callers byte-identical when omitted — AR-17); thread `density?`→`compact` into header + all panels + bands; compact passes `dividers:false` so geometry reserves 0 divider cells and painters skip the `│` (AR-15) — `packages/ui/src/table/columns.ts`, `packages/datagrid/src/grid.ts`, `editable-grid-rows.ts`, `sort-header.ts`
-- [ ] 6.2.3 Barrel + options docs for `freezeRows`/`density` + `@example` — `packages/datagrid/src/index.ts`, `grid.ts`
-- [ ] 6.2.4 Verify **green** — ST-24, ST-25 pass
+- [x] 6.2.1 `grid.ts` + `editable-grid-rows.ts`: `freezeRows?` band — a fixed-height pinned band mirroring the panel split; body virtual window offset by N; clamp + `devWarn` on over-freeze (AR-14) — `packages/datagrid/src/grid.ts`, `packages/datagrid/src/editable-grid-rows.ts`
+- [x] 6.2.2 Density: add the **additive optional divider param** to `apportionColumns` in `@jsvision/ui` (gates both `columns.ts:126` `- numCols` and `:157` `+ 1`; existing callers byte-identical when omitted — AR-17); thread `density?`→`compact` into header + all panels + bands; compact passes `dividers:false` so geometry reserves 0 divider cells and painters skip the `│` (AR-15) — `packages/ui/src/table/columns.ts`, `packages/datagrid/src/grid.ts`, `editable-grid-rows.ts`, `sort-header.ts`
+- [x] 6.2.3 Barrel + options docs for `freezeRows`/`density` + `@example` — `packages/datagrid/src/index.ts`, `grid.ts`
+- [x] 6.2.4 Verify **green** — ST-24, ST-25 pass
 
 ### Step 6.3: Impl tests & verify
-- [ ] 6.3.1 Write impl tests (frozen-rows × frozen-cols intersection pins both axes; over-freeze rows clamp; compact alignment header↔body) — `packages/datagrid/test/frozen-rows-density.impl.test.ts`
-- [ ] 6.3.2 Full `yarn verify`
+- [x] 6.3.1 Write impl tests (frozen-rows × frozen-cols intersection pins both axes; over-freeze rows clamp; compact alignment header↔body) — `packages/datagrid/test/frozen-rows-density.impl.test.ts`
+- [x] 6.3.2 Full `yarn verify`
 
 **Deliverables**: pinned frozen-rows band + compact density mode. **Verify**: `yarn verify`
 

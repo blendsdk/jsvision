@@ -88,6 +88,11 @@ export interface SortHeaderConfig<T> {
    * {@link onColumnReorder} reports global visible indices. `0` for a single body.
    */
   columnOffset?: number;
+  /**
+   * Compact density (default `false`): drop the inter-column `│` divider, reclaiming its cell so columns
+   * pack tighter. Must match the body/quick-filter setting so header and body stay column-aligned.
+   */
+  compact?: boolean;
 }
 
 /**
@@ -127,6 +132,8 @@ export class SortHeader<T> extends View {
   private readonly onColumnReorder?: (fromVisible: number, toVisible: number) => void;
   private readonly onReorderStart?: () => void;
   private readonly columnOffset: number;
+  /** Whether to reserve + paint the inter-column divider (`false` in compact density). */
+  private readonly dividers: boolean;
   // Live-resize gesture state: the local column index being resized (`-1` when idle), the content-space
   // x where the grip was grabbed, and the column's width at grab time — the drag delta adds to it.
   private resizeCol = -1;
@@ -158,6 +165,7 @@ export class SortHeader<T> extends View {
     this.onColumnReorder = cfg.onColumnReorder;
     this.onReorderStart = cfg.onReorderStart;
     this.columnOffset = cfg.columnOffset ?? 0;
+    this.dividers = cfg.compact !== true;
     this.onMount(() => {
       // Repaint when the sort model, the filter model, or the shared H-scroll offset changes.
       this.bind(
@@ -193,7 +201,7 @@ export class SortHeader<T> extends View {
 
   /** The column geometry for the current viewport width (identical inputs to the body). */
   private geometry(width: number): ColumnGeometry {
-    return apportionColumns(this.columns, this.autoWidths(), width);
+    return apportionColumns(this.columns, this.autoWidths(), width, this.dividers);
   }
 
   /** The clamped horizontal offset for a given content width. */
@@ -266,7 +274,7 @@ export class SortHeader<T> extends View {
         if (multi && w >= 2) ctx.text(x + w - 2, 0, String(sorted.priority + 1), header);
         ctx.text(x + w - 1, 0, sorted.dir === 'asc' ? SORT_ASC : SORT_DESC, header);
       }
-      ctx.text(x + w, 0, DIVIDER, divider); // divider at the column right edge
+      if (this.dividers) ctx.text(x + w, 0, DIVIDER, divider); // divider at the column right edge (compact skips it)
     }
     // While a reorder drag is live, paint a drop indicator at the target slot's left edge (the
     // insertion point). It marks "drop before this column" and is cleared when the gesture resets.

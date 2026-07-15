@@ -39,11 +39,11 @@ export type SortState = { readonly col: number; readonly dir: 'asc' | 'desc' } |
 
 /** Resolved per-column geometry for one draw (all integer, post-apportion). */
 export interface ColumnGeometry {
-  /** Content cells per column (excludes the 1-cell divider). */
+  /** Content cells per column (excludes the divider cell). */
   readonly widths: number[];
-  /** Absolute x of each column's content, pre-indent: `starts[c] = Σ_{k<c}(widths[k] + 1)`. */
+  /** Absolute x of each column's content, pre-indent: `starts[c] = Σ_{k<c}(widths[k] + gap)`, where `gap` is 1 with dividers, 0 compact. */
   readonly starts: number[];
-  /** The H-scroll content width: `Σ(widths[c] + 1 divider)`. */
+  /** The H-scroll content width: `Σ(widths[c] + gap)` (`gap` = 1 with dividers, 0 compact). */
   readonly totalWidth: number;
 }
 
@@ -102,9 +102,15 @@ function toTrackItem<T>(col: Column<T>, autoWidth: number | null, pinned: number
  * passes. Fixed and `auto` widths pass through unchanged, so an all-fixed track that overflows keeps
  * its widths (enabling horizontal scroll) rather than shrinking.
  *
+ * Pass `dividers: false` to reserve **no** inter-column divider cell (a compact / dense layout): the
+ * track apportions over the full `viewportWidth`, `starts` pack tightly, and `totalWidth` excludes the
+ * dividers — so a caller that also skips painting the `│` stays aligned and its horizontal-scroll clamp
+ * is correct. The default (`true`) is byte-identical to reserving one divider per column.
+ *
  * @param columns       The column descriptors.
  * @param autoWidths    The {@link measureAutoWidths} result (memoize it upstream).
  * @param viewportWidth The data-area width in cells.
+ * @param dividers      Reserve one divider cell per column (default `true`); `false` packs columns tight.
  * @returns The resolved {@link ColumnGeometry}; empty arrays + `totalWidth 0` for zero columns.
  * @example
  * ```ts
@@ -113,17 +119,20 @@ function toTrackItem<T>(col: Column<T>, autoWidth: number | null, pinned: number
  *   { title: 'B', accessor: (r) => r.b, width: 6 },
  * ];
  * apportionColumns(cols, [null, null], 20); // { widths: [12, 6], starts: [0, 13], totalWidth: 20 }
+ * apportionColumns(cols, [null, null], 20, false); // compact: { widths: [14, 6], starts: [0, 14], totalWidth: 20 }
  * ```
  */
 export function apportionColumns<T>(
   columns: Column<T>[],
   autoWidths: (number | null)[],
   viewportWidth: number,
+  dividers = true,
 ): ColumnGeometry {
   const numCols = columns.length;
   if (numCols === 0) return { widths: [], starts: [], totalWidth: 0 };
 
-  const trackTotal = Math.max(0, viewportWidth - numCols);
+  const gap = dividers ? 1 : 0; // cells reserved per column for the inter-column divider
+  const trackTotal = Math.max(0, viewportWidth - numCols * gap);
   const pinned: (number | undefined)[] = new Array(numCols).fill(undefined);
 
   let widths: number[] = [];
@@ -154,7 +163,7 @@ export function apportionColumns<T>(
   let x = 0;
   for (let c = 0; c < numCols; c++) {
     starts[c] = x;
-    x += widths[c] + 1; // +1 divider cell per column
+    x += widths[c] + gap; // + the reserved divider cell(s) per column (0 in compact mode)
   }
   return { widths, starts, totalWidth: x };
 }

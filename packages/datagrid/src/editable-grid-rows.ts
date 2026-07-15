@@ -11,8 +11,8 @@
  * unchanged. All movement clamps to range (no wrap). `Tab`/`Shift+Tab` are intentionally not handled
  * here: an unbound Tab is consumed by the framework's focus traversal before any view sees it.
  */
-import { GridRows, alignCell, stringWidth } from '@jsvision/ui';
-import type { GridRowsConfig, DispatchEvent, DrawContext, Signal, Group } from '@jsvision/ui';
+import { GridRows, alignCell, apportionColumns, stringWidth } from '@jsvision/ui';
+import type { GridRowsConfig, ColumnGeometry, DispatchEvent, DrawContext, Signal, Group } from '@jsvision/ui';
 import type { KeyEvent } from '@jsvision/core';
 import type { GridColumn } from './column.js';
 import { isEditable } from './column.js';
@@ -90,6 +90,22 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
    * grid has no resizable columns.
    */
   widthTick?: () => unknown;
+  /**
+   * Compact density (default `false`): drop the inter-column `│` divider, reclaiming its cell so columns
+   * pack tighter. The geometry apportions over the full width with no divider cells and `draw` skips the
+   * `│`; the header/quick-filter must use the same setting so every band stays column-aligned.
+   */
+  compact?: boolean;
+  /**
+   * Clamp the top of this panel's virtual window to `[rowFloor, rowCeil]` (default `[0, ∞)`). Used to
+   * split the row axis for frozen rows: a **pinned band** sets `rowFloor: 0, rowCeil: 0` (its window
+   * never scrolls off row 0), while the **scrolling body** sets `rowFloor: N` (its window starts after
+   * the N pinned rows, so a pinned row is never rendered twice). The shared `focused` cursor still ranges
+   * over the whole row set; the panel that does not own the cursor simply doesn't render it (its window
+   * excludes that row), and the sibling that does render it lights it up.
+   */
+  rowFloor?: number;
+  rowCeil?: number;
 }
 
 /**
@@ -156,6 +172,11 @@ export class EditableGridRows<T> extends GridRows<T> {
   private readonly panelActive?: () => boolean;
   /** Reactive column-width trigger (bound for repaint on a live resize/auto-fit); `undefined` when off. */
   private readonly widthTick?: () => unknown;
+  /** Whether to reserve + paint the inter-column divider (`false` in compact density). */
+  private readonly dividers: boolean;
+  /** Lower / upper clamp on the virtual window's top row (frozen-rows split); defaults `0` / `∞`. */
+  private readonly rowFloor: number;
+  private readonly rowCeil: number;
   /** The in-cell editing lifecycle controller. */
   protected readonly controller: EditController;
 
@@ -179,6 +200,9 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.autoScrollColumns = cfg.autoScrollColumns ?? false;
     this.panelActive = cfg.panelActive;
     this.widthTick = cfg.widthTick;
+    this.dividers = cfg.compact !== true;
+    this.rowFloor = cfg.rowFloor ?? 0;
+    this.rowCeil = cfg.rowCeil ?? Number.POSITIVE_INFINITY;
     // The controller reaches this body only through the EditHost seam below — no access to protected state.
     this.controller = createEditController<T>({
       body: this,
@@ -213,6 +237,24 @@ export class EditableGridRows<T> extends GridRows<T> {
         );
       }
     });
+  }
+
+  /**
+   * The column geometry for this panel — like the base, but honouring compact density (no reserved
+   * divider cell) so the header/body/quick-filter all apportion identically.
+   */
+  protected override geometry(width: number): ColumnGeometry {
+    return apportionColumns(this.columns, this.autoWidths(), width, this.dividers);
+  }
+
+  /**
+   * Keep the focused row visible, then clamp the window top into `[rowFloor, rowCeil]`. A pinned band
+   * (`rowFloor: 0, rowCeil: 0`) never scrolls off row 0; a scrolling body (`rowFloor: N`) never renders
+   * a pinned row — so the shared cursor is drawn by whichever panel's window contains it, never both.
+   */
+  protected override updateTop(): void {
+    super.updateTop();
+    this.topItem = clamp(this.topItem, this.rowFloor, this.rowCeil);
   }
 
   /**
@@ -258,6 +300,7 @@ export class EditableGridRows<T> extends GridRows<T> {
    * through to the base (row activate/select), so `Enter`/`Space` still work there.
    */
   private tryBeginEdit(inner: KeyEvent, ev: DispatchEvent): boolean {
+    if (this.focused() < this.rowFloor) return false; // the cursor is on a pinned row (the band owns it)
     const c = this.localCol();
     if (c < 0) return false; // the cursor is in another panel — not ours to edit
     const col = this.typedColumns[c];
@@ -485,7 +528,7 @@ export class EditableGridRows<T> extends GridRows<T> {
           const text = alignCell(col.accessor(row), w, col.align ?? 'left', stringWidth);
           ctx.text(x, i, text, cellStyle); // ctx clips off-screen cells (H-scroll)
         }
-        ctx.text(x + w, i, DIVIDER, divider); // divider at the column right edge
+        if (this.dividers) ctx.text(x + w, i, DIVIDER, divider); // divider at the column right edge (compact skips it)
       }
     }
 

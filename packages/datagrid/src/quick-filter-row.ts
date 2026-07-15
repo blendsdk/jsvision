@@ -26,6 +26,11 @@ export interface QuickFilterRowConfig<T> {
    * — never an empty-needle `contains`, which would match every row.
    */
   onQuickFilter: (columnId: string, text: string) => void;
+  /**
+   * Compact density (default `false`): no reserved inter-column divider cell, so each input fills its
+   * column's full width and the band stays aligned with a compact header/body.
+   */
+  compact?: boolean;
 }
 
 /**
@@ -50,6 +55,8 @@ export class QuickFilterRow<T> extends Group {
   private readonly autoWidths: () => (number | null)[];
   private readonly indent: Signal<number>;
   private readonly onQuickFilter: (columnId: string, text: string) => void;
+  /** Whether a divider cell is reserved between columns (`false` in compact density). */
+  private readonly dividers: boolean;
   /** One text input per column, parallel to `columns` (also this group's children, in column order). */
   private readonly inputs: Input[];
 
@@ -61,6 +68,7 @@ export class QuickFilterRow<T> extends Group {
     this.columns = cfg.columns;
     this.columnIds = cfg.columnIds;
     this.autoWidths = cfg.autoWidths;
+    this.dividers = cfg.compact !== true;
     this.indent = cfg.indent;
     this.onQuickFilter = cfg.onQuickFilter;
     this.inputs = this.columns.map(() => new Input({ value: signal('') }));
@@ -100,19 +108,20 @@ export class QuickFilterRow<T> extends Group {
   }
 
   /**
-   * Place each input under its column: an absolute rect at `{ x: starts[c] - indent, y: 0, width:
-   * widths[c] - 1 }` — one cell narrower than the column so the divider column shows through. A
-   * negative x pans the input off the left edge, where the band's bounds clip it.
+   * Place each input under its column: an absolute rect at `{ x: starts[c] - indent, y: 0, width }`
+   * where `width` is one cell narrower than the column so the divider column shows through — or the full
+   * column width in compact density (no divider to leave room for). A negative x pans the input off the
+   * left edge, where the band's bounds clip it.
    */
   private reposition(): void {
     const width = this.bounds.width;
     if (width <= 0) return;
-    const geom = apportionColumns(this.columns, this.autoWidths(), width);
+    const geom = apportionColumns(this.columns, this.autoWidths(), width, this.dividers);
     const maxIndent = Math.max(0, geom.totalWidth - width);
     const indent = Math.min(maxIndent, Math.max(0, this.indent()));
     this.inputs.forEach((input, c) => {
       const x = geom.starts[c] - indent;
-      const w = Math.max(0, geom.widths[c] - 1);
+      const w = Math.max(0, geom.widths[c] - (this.dividers ? 1 : 0));
       input.layout = { position: 'absolute', rect: { x, y: 0, width: w, height: 1 } };
     });
   }
