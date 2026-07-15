@@ -66,3 +66,26 @@ test('ST-6: the Roadmap category holds exactly 8 placeholder entries (RD-07…RD
   const roadmap = STORIES.filter((s) => s.category === 'Roadmap');
   expect(roadmap.length).toBe(8);
 });
+
+// The seven navigator categories the RD-15 inventory defines (six shipped clusters + the roadmap band).
+const CATEGORIES = ['Foundation', 'Editing', 'Cell editors', 'Formatting', 'Sorting', 'Filtering', 'Roadmap'] as const;
+
+// ST-5 — every navigator category is present (a future RD adding a cluster updates this list).
+test('ST-5: all seven navigator categories are present', () => {
+  const present = new Set(STORIES.map((s) => s.category));
+  for (const c of CATEGORIES) {
+    expect(present.has(c), `category "${c}" present`).toBe(true);
+  }
+});
+
+// ST-7 — each shipped cluster carries its full demo count (the RD-15 §Demo Inventory scope).
+test('ST-7: each shipped cluster has its full demo count', () => {
+  const counts: Record<string, number> = {};
+  for (const s of STORIES) counts[s.category] = (counts[s.category] ?? 0) + 1;
+  expect(counts['Foundation'], 'Foundation').toBe(5);
+  expect(counts['Editing'], 'Editing').toBe(5);
+  expect(counts['Cell editors'], 'Cell editors').toBe(9);
+  expect(counts['Formatting'], 'Formatting').toBe(8);
+  expect(counts['Sorting'], 'Sorting').toBe(5);
+  expect(counts['Filtering'], 'Filtering').toBe(6);
+});

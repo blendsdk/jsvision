@@ -8,17 +8,112 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import type { Story } from '../story.js';
+
+// Foundation (RD-01)
 import { sizingStory } from './foundation/sizing.story.js';
+import { valueFormatParseStory } from './foundation/value-format-parse.story.js';
+import { dataSourceStory } from './foundation/data-source.story.js';
+import { readOnlyStory } from './foundation/read-only.story.js';
+import { themingStory } from './foundation/theming.story.js';
+
+// Editing (RD-02)
+import { perCellEditStory } from './editing/per-cell-edit.story.js';
+import { commitVetoStory } from './editing/commit-veto.story.js';
+import { dirtyTrackingStory } from './editing/dirty-tracking.story.js';
+import { cursorNavStory } from './editing/cursor-nav.story.js';
+import { overlayStory } from './editing/overlay.story.js';
+
+// Cell editors (RD-03) — one per CellEditorKind
+import { editorTextStory } from './editors/text.story.js';
+import { editorIntegerStory } from './editors/integer.story.js';
+import { editorDecimalStory } from './editors/decimal.story.js';
+import { editorBooleanStory } from './editors/boolean.story.js';
+import { editorDateStory } from './editors/date.story.js';
+import { editorEnumStory } from './editors/enum.story.js';
+import { editorLookupStory } from './editors/lookup.story.js';
+import { editorReadonlyStory } from './editors/readonly.story.js';
+import { editorCustomStory } from './editors/custom.story.js';
+
+// Formatting & rendering (RD-04)
+import { fmtNumberStory } from './formatting/number.story.js';
+import { fmtCurrencyStory } from './formatting/currency.story.js';
+import { fmtPercentStory } from './formatting/percent.story.js';
+import { fmtDateStory } from './formatting/date.story.js';
+import { fmtBooleanStory } from './formatting/boolean.story.js';
+import { fmtLabelsStory } from './formatting/labels.story.js';
+import { fmtParseRoundtripStory } from './formatting/parse-roundtrip.story.js';
+import { fmtRenderStyleStory } from './formatting/render-style.story.js';
+
+// Sorting (RD-05)
+import { sortingSingleStory } from './sorting/single.story.js';
+import { sortingMultiStory } from './sorting/multi.story.js';
+import { sortingValueAwareStory } from './sorting/value-aware.story.js';
+import { sortingCollatorStory } from './sorting/collator.story.js';
+import { sortingPushDownStory } from './sorting/push-down.story.js';
+
+// Filtering (RD-06)
+import { filteringQuickFilterStory } from './filtering/quick-filter.story.js';
+import { filteringConditionTextStory } from './filtering/condition-text.story.js';
+import { filteringConditionNumDateStory } from './filtering/condition-num-date.story.js';
+import { filteringValueListStory } from './filtering/value-list.story.js';
+import { filteringNofMStory } from './filtering/n-of-m.story.js';
+import { filteringPushDownStory } from './filtering/push-down.story.js';
+
+// Roadmap — the "coming soon" panels (RD-07…RD-14)
 import { placeholders } from './placeholders.js';
 
-/**
- * Every registered demo, in navigator order. Phase 1 registers the Foundation seed demo and the eight
- * roadmap placeholders; the remaining clusters are appended before the `Roadmap` band as they land.
- */
+/** Every registered demo, in navigator order (six shipped clusters, then the roadmap band). */
 export const STORIES: readonly Story[] = [
-  // Foundation (RD-01)
+  // Foundation (RD-01) · 5
   sizingStory,
+  valueFormatParseStory,
+  dataSourceStory,
+  readOnlyStory,
+  themingStory,
 
-  // Roadmap — the "coming soon" panels (RD-07…RD-14)
+  // Editing (RD-02) · 5
+  perCellEditStory,
+  commitVetoStory,
+  dirtyTrackingStory,
+  cursorNavStory,
+  overlayStory,
+
+  // Cell editors (RD-03) · 9
+  editorTextStory,
+  editorIntegerStory,
+  editorDecimalStory,
+  editorBooleanStory,
+  editorDateStory,
+  editorEnumStory,
+  editorLookupStory,
+  editorReadonlyStory,
+  editorCustomStory,
+
+  // Formatting & rendering (RD-04) · 8
+  fmtNumberStory,
+  fmtCurrencyStory,
+  fmtPercentStory,
+  fmtDateStory,
+  fmtBooleanStory,
+  fmtLabelsStory,
+  fmtParseRoundtripStory,
+  fmtRenderStyleStory,
+
+  // Sorting (RD-05) · 5
+  sortingSingleStory,
+  sortingMultiStory,
+  sortingValueAwareStory,
+  sortingCollatorStory,
+  sortingPushDownStory,
+
+  // Filtering (RD-06) · 6
+  filteringQuickFilterStory,
+  filteringConditionTextStory,
+  filteringConditionNumDateStory,
+  filteringValueListStory,
+  filteringNofMStory,
+  filteringPushDownStory,
+
+  // Roadmap — coming soon (RD-07…RD-14) · 8
   ...placeholders,
 ];
