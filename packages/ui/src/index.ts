@@ -70,7 +70,13 @@ export type {
 // `Application` lifecycle, a `Desktop` window manager, `Window` chrome, a
 // `MenuBar`, and a `StatusLine`.
 export { createApplication } from './app/index.js';
-export type { Application, ApplicationOptions } from './app/index.js';
+export type {
+  Application,
+  ApplicationOptions,
+  DesktopApplication,
+  RouterApplication,
+  CreatedApplication,
+} from './app/index.js';
 export { Desktop } from './desktop/index.js';
 export type { DesktopLoopSeam } from './desktop/index.js';
 export { Window } from './window/index.js';
