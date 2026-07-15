@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 20:15
-> **Progress**: 0/57 tasks (0%)
+> **Last Updated**: 2026-07-15 22:28
+> **Progress**: 7/57 tasks (12%) — Phase 1 ✅
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -44,17 +44,17 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 **Reference**: `03-01` · `07 §Column model` (ST-1…ST-7) · AR-8/AR-13/AR-4/AR-5
 
 ### Step 1.1: Specification tests (red)
-- [ ] 1.1.1 Write `column-model.spec.test.ts` (ST-1 `visibleOrder`; ST-2/ST-3 `partition`; ST-4/ST-5 `reorderWithinPanel` incl. cross-boundary reject; ST-6 `clampWidth`; ST-7 `overPinnedIds`) — `packages/datagrid/test/column-model.spec.test.ts`
-- [ ] 1.1.2 Verify **red** — no `column-model.ts` yet
+- [x] 1.1.1 Write `column-model.spec.test.ts` (ST-1 `visibleOrder`; ST-2/ST-3 `partition`; ST-4/ST-5 `reorderWithinPanel` incl. cross-boundary reject; ST-6 `clampWidth`; ST-7 `overPinnedIds`) — `packages/datagrid/test/column-model.spec.test.ts` ✅ (completed: 2026-07-15 22:28)
+- [x] 1.1.2 Verify **red** — no `column-model.ts` yet ✅ (completed: 2026-07-15 22:28)
 
 ### Step 1.2: Implement (green)
-- [ ] 1.2.1 Create `column-model.ts`: `FreezePartition`/`FreezeSpec` types, `DEFAULT_MIN_WIDTH`/`DEFAULT_AUTOFIT_MAX`, and pure `visibleOrder`/`partition`/`reorderWithinPanel`/`clampWidth`/`overPinnedIds` (JSDoc + `@example`) — `packages/datagrid/src/column-model.ts`
-- [ ] 1.2.2 Barrel: export the public types + pure ops + constants — `packages/datagrid/src/index.ts`
-- [ ] 1.2.3 Verify **green** — ST-1…ST-7 pass
+- [x] 1.2.1 Create `column-model.ts`: `FreezePartition`/`FreezeSpec` types, `DEFAULT_MIN_WIDTH`/`DEFAULT_AUTOFIT_MAX`, and pure `visibleOrder`/`partition`/`reorderWithinPanel`/`clampWidth`/`overPinnedIds` (JSDoc + `@example`) — `packages/datagrid/src/column-model.ts` ✅ (completed: 2026-07-15 22:28)
+- [x] 1.2.2 Barrel: export the public types + pure ops + constants — `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-15 22:28)
+- [x] 1.2.3 Verify **green** — ST-1…ST-7 pass ✅ (completed: 2026-07-15 22:28)
 
 ### Step 1.3: Impl tests & verify
-- [ ] 1.3.1 Write `column-model.impl.test.ts` (edges: empty order, all-hidden, single-panel partition, reorder no-op same index, clamp min>max, over-pin drops innermost-first) — `packages/datagrid/test/column-model.impl.test.ts`
-- [ ] 1.3.2 Full `yarn verify`
+- [x] 1.3.1 Write `column-model.impl.test.ts` (edges: empty order, all-hidden, single-panel partition, reorder no-op same index, clamp min>max, over-pin drops innermost-first) — `packages/datagrid/test/column-model.impl.test.ts` ✅ (completed: 2026-07-15 22:28)
+- [x] 1.3.2 Full `yarn verify` ✅ (completed: 2026-07-15 22:28)
 
 **Deliverables**: pure column model green; barrel updated. **Verify**: `yarn verify`
 
