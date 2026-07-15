@@ -15,6 +15,8 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import ts from 'typescript';
 
+import { checkApiDrift } from './gen-plugin-api.mjs';
+
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PLUGIN_ROOT = join(ROOT, 'tools', 'claude-plugin');
 const SKILL_ROOT = join(PLUGIN_ROOT, 'skills', 'jsvision');
@@ -410,6 +412,9 @@ export function runAllChecks() {
   // 5. barrel-coverage + gotchas completeness
   add('barrel', checkBarrelCoverage(extractUiClassExports(), readFileSync(CATALOG, 'utf8'), CATALOG_DENYLIST));
   add('gotchas', checkGotchas(readFileSync(GOTCHAS, 'utf8'), REQUIRED_GOTCHAS));
+
+  // 6. generated API reference — the committed pages must equal a fresh generation from the source.
+  add('api', checkApiDrift(ROOT));
 
   return { ok: errors.length === 0, errors };
 }
