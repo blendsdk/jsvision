@@ -7,17 +7,7 @@
  * stable row identity.
  */
 import type { Signal } from '@jsvision/ui';
-
-/**
- * A single sort directive. The full sorting model is defined by a later release; this is a
- * forward-declared placeholder so the source contract stays stable.
- */
-export interface SortKey {
-  /** The column to sort by. */
-  readonly columnId: string;
-  /** Sort direction. */
-  readonly dir: 'asc' | 'desc';
-}
+import type { SortKey } from './sort.js';
 
 /**
  * A filter model applied to the grid's rows. The full filtering model is defined by a later release;

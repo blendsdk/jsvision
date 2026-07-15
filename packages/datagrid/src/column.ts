@@ -70,6 +70,14 @@ export interface GridColumn<T, V = unknown> {
    * (the cursor cell, a pending commit, or the selected/focused row) owns the cell.
    */
   readonly cellStyle?: CellStyle<T, V>;
+  /**
+   * Custom order for this column's values, overriding the type-aware default (numbers, dates, then a
+   * case-insensitive collator). Receives only non-null values — null/undefined ordering is governed by
+   * `nulls`. Returns `<0` / `0` / `>0` like `Array.prototype.sort`'s comparator.
+   */
+  readonly compare?: (a: V, b: V) => number;
+  /** Where null/undefined values sort, independent of direction (default `'last'`). */
+  readonly nulls?: 'first' | 'last';
 }
 
 /**
