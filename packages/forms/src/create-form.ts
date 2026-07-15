@@ -3,6 +3,7 @@ import type { Signal } from '@jsvision/ui';
 import type { z } from 'zod';
 import type { CreateFormOptions, Field, Form } from './types.js';
 import { FormFieldError } from './errors.js';
+import { touchedSinks } from './internal.js';
 import { createValidation } from './validation.js';
 
 /** Copy an array value (so the store never shares a reference with the caller); pass scalars through. */
@@ -123,6 +124,9 @@ function buildForm<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof 
       dirty: () => fieldDirty(key),
     };
     handles.set(key, handle);
+    // Register the touched write seam for this handle, so `bindField` can flip touched without a
+    // public setter on the handle. It writes the same signal `field.touched()` reads.
+    touchedSinks.set(handle, () => touchedSignal(key).set(true));
     return handle as Field<I[K]>;
   };
 
