@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-07-14
 > **Last Updated**: 2026-07-15
-> **Progress**: 0 / 4 (0%)
+> **Progress**: 2 / 4 (50%)
 > **CodeOps Skills Version**: 3.7.0
 
 An enterprise-grade forms engine as a new package `@jsvision/forms`. **This roadmap covers the
@@ -21,8 +21,8 @@ async loading, `formDialog`, `Input` placeholder) are named and deferred. Source
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
-| RD-01 | Form & Field Store | [RD-01](requirements/RD-01-form-field-store.md) | [form-store](plans/form-store/00-index.md) | Executing | 🔄 | 2026-07-15 | Executing form-store. createForm via createRoot (PA-1); value model; dirty/reset/isValid/submit; typing AR-18. Preflighted ([report](plans/form-store/00-preflight-report.md)): 0 crit/0 major, 8 findings applied; zod@4 verified empirically. |
-| RD-02 | Validation & Error Surfacing | [RD-02](requirements/RD-02-validation-error-surfacing.md) | [form-store](plans/form-store/00-index.md) | Executing | 🔄 | 2026-07-15 | Executing form-store (with RD-01). Single eager safeParse computed; per-field + form-level errors; cross-field .refine; coercion — all confirmed against real zod@4. |
+| RD-01 | Form & Field Store | [RD-01](requirements/RD-01-form-field-store.md) | [form-store](plans/form-store/00-index.md) | Done | ✅ | 2026-07-15 | Shipped in `@jsvision/forms`: createForm via createRoot (owned computeds, no dispose); value model; stable handles; dirty (element-wise)/reset/isValid/submit; FormFieldError. 27 tests green (17 spec + impl + security). |
+| RD-02 | Validation & Error Surfacing | [RD-02](requirements/RD-02-validation-error-surfacing.md) | [form-store](plans/form-store/00-index.md) | Done | ✅ | 2026-07-15 | Shipped: one memoized safeParse drives isValid/values/errors + per-field first-issue routing; path-less→form.errors(); coercion; message passthrough. Verified against real zod 4.4.3. |
 | RD-03 | Widget Binding | [RD-03](requirements/RD-03-widget-binding.md) | — | RD Drafted | ✏️ | 2026-07-14 | Direct text/switch bind · bindField touched-on-blur (focusSignal) · bindRadio/bindCheck domain-value adapters. |
 | RD-04 | Non-Functional | [RD-04](requirements/RD-04-non-functional.md) | — | RD Drafted | ✏️ | 2026-07-14 | Package + zod peer (core/ui stay zero-dep) · security posture · spec-first tests · kitchen-sink story + smoke · JSDoc @example · verify/lint gates. |
 
