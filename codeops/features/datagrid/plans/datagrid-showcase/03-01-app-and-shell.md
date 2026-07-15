@@ -34,11 +34,20 @@ demos and the smoke test both bind to this contract.
 ## `shell.ts`
 
 A focused copy of `kitchen-sink/shell.ts` — `createDatagridShowcase(caps): Showcase` returning
-`{ app, run }`. Keep the whole navigator apparatus (sidebar `ListBox` from `buildNavRows`, per-category
-menu from `buildMenu`, status line, `NavKeys` `Ctrl`+←/→, welcome catalog, `showStory` /
+`{ app, run, disposedCount }`. Keep the whole navigator apparatus (sidebar `ListBox` from `buildNavRows`,
+per-category menu from `buildMenu`, status line, `NavKeys` `Ctrl`+←/→, welcome catalog, `showStory` /
 `disposePrevious` swap). Category order is first-seen from the registry, so the sidebar reads:
 Foundation · Editing · Cell editors · Formatting · Sorting · Filtering · Roadmap. The welcome screen
 titles the app "DataGrid Showcase" and lists the categories with their demo counts.
+
+**Test seam (sanctioned divergence from the verbatim copy).** The dedicated shell adds one read-only
+`disposedCount(): number` accessor that increments inside `disposePrevious()` (each time a story's
+reactive owner is disposed). The headless walkthrough (`07 §Walkthrough oracle`) drives navigation
+through the **real** command path — `app.loop.emitCommand(story.id)` → the shell's `CommandSink` → the
+private `showStory` — so it never needs `showStory` exposed and never calls `run()` (which asserts a
+TTY, `run.ts:128`). `disposedCount()` is the only added surface, and it lets ST-9 observe the
+dispose-previous lifecycle directly rather than inferring it from the buffer. AR #7 permits the focused
+copy to diverge; the general kitchen-sink shell is untouched.
 
 Datagrid-specific chrome (data-source-size toggle, theme switcher) is a deferred Should — the copy is
 a focused clone now, not a shared module (AR #7 / RD AR #35); the general kitchen-sink shell is not
@@ -63,5 +72,8 @@ demo later is one file + one line (RD AC #7).
 
 ## Verify seam
 
-`main.ts` is TTY-gated, so it is exercised **only** by the walkthrough test's headless driver
-(`03-02` / `07`), never by mounting the interactive `app.run()` in CI.
+The headless walkthrough (`07`) drives the **shell factory** `createDatagridShowcase` directly via
+`app.loop.emitCommand`, so the interactive `app.run()` path is never mounted in CI. `main.ts` is
+TTY-gated (mirrors `kitchen-sink/main.ts`: non-TTY → print the notice, return 0) and — like the
+kitchen-sink `main.ts` — is not itself unit-tested; the two tiers assert the shell + demos, not the
+`main.ts` entry tail.

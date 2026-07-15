@@ -33,15 +33,21 @@ shape).
 
 ## Walkthrough oracle — the shell navigates every demo
 
-A bespoke headless driver (like theme-designer's `runWalkthrough`, separate from `app.run()` —
-`theme-designer/src/main.ts:16,19`) constructs the showcase over a headless render root and drives the
-navigator through every registered story.
+A bespoke headless driver constructs the showcase (`createDatagridShowcase(caps)`) and drives its
+**real navigation command path** — it never calls `run()` (which asserts a TTY at `run.ts:128`). It
+dispatches each entry via `showcase.app.loop.emitCommand(story.id)` (routed to the shell's
+`CommandSink` exactly as a menu/sidebar selection is → `showStory`) and reads the painted canvas from
+`showcase.app.loop.renderRoot.buffer().rows()` (the same headless buffer read the shell itself performs
+at `shell.ts:313-317`), slicing the canvas region (`x ≥ SIDEBAR_W`). Disposal is observed directly via
+the shell's read-only `disposedCount()` accessor (see `03-01 §shell.ts`). This is a shell-navigation
+driver, **not** the pure-model render narration theme-designer's `runWalkthrough` performs — a distinct
+pattern with no in-repo precedent, so ST-10 front-loads its feasibility as the Phase-1 green gate.
 
 | ST | Input | Expected |
 |----|-------|----------|
-| ST-8 | drive `showStory` across every registry entry (no TTY) | no throw; each swap paints ≥1 non-blank cell on the canvas |
-| ST-9 | navigate story A → story B | the previous view is disposed (swap is clean; no double-mount) |
-| ST-10 | the Foundation `sizing` **seed** demo mounted in the shell | a real `EditableDataGrid` paints (proves the vertical — AR #8) |
+| ST-8 | `emitCommand(story.id)` for every registry entry (no TTY) | no throw; each swap paints ≥1 non-blank cell in the canvas region |
+| ST-9 | navigate story A → story B | `disposedCount()` increments **and** B paints with no A residue (clean swap — the previous reactive owner disposed, no double-mount) |
+| ST-10 | the Foundation `sizing` **seed** demo, driven in the shell via `emitCommand` | a real `EditableDataGrid` paints (proves the vertical — AR #8) |
 
 → Covers RD AC #2 (navigation), AC #6 (walkthrough drives every demo). ST-10 is the Phase-1 green gate.
 
