@@ -25,6 +25,10 @@ import.
   size children; `stack` layers overlays) — the engine sizes and reflows them. Absolute rects are the
   exception, reserved for a window's own desktop placement and framework popups. See
   `references/layout.md`.
+- **The API reference is authoritative.** `references/api/` lists every public export's exact
+  signature — constructor, options fields, methods, and types — generated from the source, so it is
+  always current. Consult it (start at `references/api/index.md`) for any API detail instead of
+  reading `@jsvision/*` source.
 - **App lifecycle.** `createApplication(opts)` → `app.desktop.addWindow(win)` → `await app.run()`.
   `run()` connects a real terminal and restores it on every exit path. In the browser, `mountApp`
   replaces `run()`.
@@ -65,12 +69,19 @@ genuine overlap the flow model cannot express (try `stack`/`place` first) — an
 which one. Hand-positioning ordinary content (forms, toolbars, lists, dashboards) with rects is the
 gotcha-3 smell; convert it to the DSL. Full rules and the exception list: `references/layout.md`.
 
+**Don't read the SDK source for API details (non-negotiable).** Every public export's constructor,
+options fields, methods, and types live in `references/api/` — generated from the source and always
+current. When you need a prop name, a method signature, or a type, open the matching category page
+(index at `references/api/index.md`) instead of grepping `packages/*/src`. Reading source to learn
+the API wastes turns and risks copying an internal instead of the public contract.
+
 ## Where to look (routing table)
 
 Open the reference that matches the task; open `gotchas.md` before you call an app done.
 
 | Task                                                                                             | Open                                                               |
 | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| **Exact API — options fields, method signatures, types (instead of reading source)**             | `references/api/index.md`                                          |
 | Start a new app                                                                                  | run `/jsvision-new-app <name>`, then `references/app-lifecycle.md` |
 | App shell: windows, menus, status line, commands, `run()`                                        | `references/app-lifecycle.md`                                      |
 | Reactivity: `signal`/`computed`/`effect`/`Show`/`For`, `view.bind`                               | `references/reactivity.md`                                         |

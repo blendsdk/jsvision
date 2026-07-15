@@ -3,6 +3,10 @@
 Every widget below is imported from `@jsvision/ui`. Each takes an options object (`new X({ ... })`)
 unless noted, and each carries a matching `XOptions` type. Reach for the one that matches the job.
 
+> **This page is the chooser; `api/index.md` is the signature lookup.** For the exact constructor,
+> options fields, methods, and types of anything here — generated from the source, always current —
+> open the matching page under [`api/`](api/index.md) instead of reading `@jsvision/*` source.
+
 ## Controls (leaf inputs)
 
 - **Text** — static, word-wrapped paragraph. `new Text('hello')` or `new Text(() => reactive())`.
