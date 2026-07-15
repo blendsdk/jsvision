@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 14:44
-> **Progress**: 7/15 tasks (47%)
+> **Last Updated**: 2026-07-15 14:47
+> **Progress**: 10/15 tasks (67%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -83,19 +83,19 @@ this plan is narrow and reconciliation-heavy.
 **Reference**: `03-02 §Render-path security` · `07` ST-N2 · AR-P2 / AR-22
 **Objective**: An oracle proving a control-byte value is sanitized when rendered through a bound `Input`.
 
-- [ ] 2.1.1 Add the render-path oracle (bind field → `Input` → `RenderRoot`; assert no cell `< 0x20`) — `packages/forms/test/security.spec.test.ts`
-- [ ] 2.1.2 Observe: run `yarn workspace @jsvision/forms test`; confirm the oracle exercises the render path and its verdict (expected green — sanitization ships in `@jsvision/ui`)
+- [x] 2.1.1 Add the render-path oracle (bind field → `Input` → `RenderRoot`; assert no cell `< 0x20`) — `packages/forms/test/security.spec.test.ts` ✅ (completed: 2026-07-15 14:47)
+- [x] 2.1.2 Observe: run `yarn workspace @jsvision/forms test`; confirm the oracle exercises the render path and its verdict (expected green — sanitization ships in `@jsvision/ui`) ✅ (completed: 2026-07-15 14:47 — painted `ab[31mc`; NUL/ESC/BEL/CR/LF/CSI all stripped, non-vacuous)
 
 ### Step 2.2: Close any gap
 
 **Reference**: `03-02 §Render-path security` (design notes)
 **Objective**: Green oracle; if a real escape is found, fix the path (not the oracle).
 
-- [ ] 2.2.1 If ST-N2 fails, fix the render/bind path and re-verify; else confirm green and pin the contract — `packages/forms/*`
+- [x] 2.2.1 If ST-N2 fails, fix the render/bind path and re-verify; else confirm green and pin the contract — `packages/forms/*` ✅ (completed: 2026-07-15 14:47 — no gap; oracle green on first run, contract pinned)
 
 **Deliverables**:
-- [ ] `security.spec.test.ts` green (render-path sanitization proven)
-- [ ] All verification passing
+- [x] `security.spec.test.ts` green (render-path sanitization proven)
+- [x] All verification passing
 
 **Verify**: `yarn verify`
 
