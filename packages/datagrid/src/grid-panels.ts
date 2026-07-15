@@ -79,6 +79,14 @@ export interface GridBodyDeps<T> {
   onColumnResize: (columnId: string, width: number) => void;
   /** Grip double-click sink — routes to the container's `autoFitColumn`. */
   onColumnAutoFit: (columnId: string) => void;
+  /**
+   * Committed column-reorder sink (a title press-drag-drop) — the `from`/`to` indices in the global
+   * visible order. Routes to the container's panel-constrained reorder. Each header adds its panel's
+   * `columnOffset` so a panel-local drag reports global indices.
+   */
+  onColumnReorder: (fromVisible: number, toVisible: number) => void;
+  /** Reorder-start sink — fired once when a title press becomes a drag; the container reverts the on-down sort. */
+  onReorderStart: () => void;
   /** Whether the opt-in quick-filter band is shown. */
   quickFilter: boolean;
   /** Quick-filter text sink (empty text ⇒ clear that column's filter). */
@@ -214,7 +222,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
     return ids.map((id) => aw[deps.columnIndex.get(id) ?? 0]);
   };
 
-  const makeHeader = (ids: string[], indent: Signal<number>): SortHeader<T> => {
+  const makeHeader = (ids: string[], indent: Signal<number>, offset: number): SortHeader<T> => {
     const header: SortHeader<T> = new SortHeader<T>({
       columns: sliceCols(ids),
       columnIds: ids,
@@ -229,6 +237,9 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       onColumnResize: deps.onColumnResize,
       onColumnAutoFit: deps.onColumnAutoFit,
       widthTick: deps.widthTick,
+      onColumnReorder: deps.onColumnReorder,
+      onReorderStart: deps.onReorderStart,
+      columnOffset: offset, // this panel's start in the global visible order — maps local drops to global
     });
     headers.push(header);
     return header;
@@ -279,7 +290,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   let center: EditableGridRows<T>;
   if (!frozen) {
     // Single-body path — one header + one body over the visible columns, sized `fr` beside the bars.
-    const header = makeHeader(part.center, deps.indent);
+    const header = makeHeader(part.center, deps.indent, 0);
     const body = makeBody(part.center, deps.indent, 0, false);
     header.layout = fr;
     body.layout = fr;
@@ -322,7 +333,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       const band: LayoutProps = seg.fixed
         ? { size: { kind: 'fixed', cells: panelBandWidth(seg.ids, deps.resolvedWidth) } }
         : fr;
-      const header = makeHeader(seg.ids, seg.indent);
+      const header = makeHeader(seg.ids, seg.indent, seg.offset);
       const body = makeBody(seg.ids, seg.indent, seg.offset, seg.autoScroll);
       header.layout = band;
       body.layout = band;

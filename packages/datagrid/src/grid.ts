@@ -240,6 +240,9 @@ export class EditableDataGrid<T> extends Group {
   private readonly columnWidths = signal<Map<string, number>>(new Map());
   private readonly hidden = signal<Set<string>>(new Set());
   private readonly freezeSpec: FreezeSpec;
+  // A title press sorts on mouse-down; if that press then becomes a reorder drag we undo the sort so a
+  // drag never leaves a net sort. This holds the pre-sort keys captured on the down, restored on drag.
+  private reorderSortSnapshot: SortKey[] | null = null;
   // Derived projections: the visible order (order minus hidden) and the frozen left/center/right
   // partition with over-pinned columns pushed back to the center (so the center is never blank).
   private readonly visibleIds: () => string[];
@@ -341,10 +344,24 @@ export class EditableDataGrid<T> extends Group {
       zebra: opts.zebra ?? false,
       sort: this.sortKeys,
       filters: this.filters,
-      onHeaderClick: (columnId, additive) => (additive ? this.addSort(columnId) : this.sortBy(columnId)),
+      onHeaderClick: (columnId, additive) => {
+        // Snapshot the pre-sort keys before sorting on the down, so onReorderStart can undo it if this
+        // press turns into a reorder drag (a plain click keeps the sort; the snapshot is just discarded).
+        this.reorderSortSnapshot = this.sortKeys();
+        if (additive) this.addSort(columnId);
+        else this.sortBy(columnId);
+      },
       onFunnelClick: (columnId, anchor, ev, header) => this.openFilterPopup(columnId, anchor, ev, header),
       onColumnResize: (id, w) => this.setColumnWidth(id, w),
       onColumnAutoFit: (id) => this.autoFitColumn(id),
+      onColumnReorder: (from, to) => this.reorderWithinPanel(from, to),
+      onReorderStart: () => {
+        // A press became a drag → undo the sort the down applied, so a reorder never also sorts.
+        if (this.reorderSortSnapshot !== null) {
+          this.applySort(this.reorderSortSnapshot);
+          this.reorderSortSnapshot = null;
+        }
+      },
       quickFilter: opts.quickFilter === true,
       onQuickFilter: (columnId, text) =>
         text.length === 0
@@ -615,6 +632,25 @@ export class EditableDataGrid<T> extends Group {
     let vi = 0;
     const next = this.columnOrderSig().map((id) => (hidden.has(id) ? id : ids[vi++]));
     this.columnOrderSig.set(next);
+  }
+
+  /**
+   * Move a visible column within its freeze panel. `from`/`to` are indices in the global visible order;
+   * the header drives this from a title drag and clamps the drop to its own panel, so a move whose
+   * source and target land in different freeze panels (left/center/right) is rejected here as a no-op —
+   * a drag can never pull a column across a freeze boundary. Out-of-range or same-index calls are ignored.
+   */
+  private reorderWithinPanel(from: number, to: number): void {
+    const visible = this.visibleIds();
+    if (from < 0 || from >= visible.length || to < 0 || to >= visible.length || from === to) return;
+    const part = this.partitionSig();
+    const panelOf = (i: number): number =>
+      i < part.left.length ? 0 : i < part.left.length + part.center.length ? 1 : 2;
+    if (panelOf(from) !== panelOf(to)) return; // never cross a freeze boundary
+    const next = visible.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved); // standard array-move: `to` is the final index after removal
+    this.setColumnOrder(next);
   }
 
   /**

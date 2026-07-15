@@ -25,6 +25,8 @@ const SORT_ASC = '▲';
 const SORT_DESC = '▼';
 /** The funnel indicator drawn on a column that has an active filter (same width class as the arrows). */
 const FUNNEL = '▽';
+/** The reorder drop indicator — a thin caret at the target slot's left edge during a title drag. */
+const DROP_MARKER = '▏';
 
 /** Construction config for {@link SortHeader}. */
 export interface SortHeaderConfig<T> {
@@ -68,6 +70,24 @@ export interface SortHeaderConfig<T> {
    * auto-track. Omit when the grid has no resizable columns.
    */
   widthTick?: () => unknown;
+  /**
+   * Reports a committed column reorder (a title press-drag-drop): the `from` and `to` indices in the
+   * **global visible order** (this panel's local index plus {@link columnOffset}). The target is
+   * constrained to this panel, so `from`/`to` never cross a freeze boundary. Optional — a header without
+   * it has no reorder gesture (a title stays a plain sort click).
+   */
+  onColumnReorder?: (fromVisible: number, toVisible: number) => void;
+  /**
+   * Fired once, when a title press turns into a reorder drag (the pointer moved past the threshold). The
+   * container uses it to revert the sort the press triggered on mouse-down, so a drag reorders without a
+   * net sort while a plain click still sorts. Optional — pairs with {@link onColumnReorder}.
+   */
+  onReorderStart?: () => void;
+  /**
+   * This panel's start index in the global visible order (default `0`), added to a local column index so
+   * {@link onColumnReorder} reports global visible indices. `0` for a single body.
+   */
+  columnOffset?: number;
 }
 
 /**
@@ -104,11 +124,20 @@ export class SortHeader<T> extends View {
   private readonly onColumnResize?: (columnId: string, width: number) => void;
   private readonly onColumnAutoFit?: (columnId: string) => void;
   private readonly widthTick?: () => unknown;
+  private readonly onColumnReorder?: (fromVisible: number, toVisible: number) => void;
+  private readonly onReorderStart?: () => void;
+  private readonly columnOffset: number;
   // Live-resize gesture state: the local column index being resized (`-1` when idle), the content-space
   // x where the grip was grabbed, and the column's width at grab time — the drag delta adds to it.
   private resizeCol = -1;
   private resizeStartX = 0;
   private resizeStartWidth = 0;
+  // Reorder gesture state: the local source column being dragged (`-1` when idle), the content-space x at
+  // press, whether the drag passed the threshold (a reorder vs a plain click), and the current drop slot.
+  private reorderCol = -1;
+  private reorderStartX = 0;
+  private reorderMoved = false;
+  private reorderTarget = -1;
 
   /**
    * @param cfg The shared header configuration (columns, ids, geometry, indent, sort/filter models, sinks).
@@ -126,6 +155,9 @@ export class SortHeader<T> extends View {
     this.onColumnResize = cfg.onColumnResize;
     this.onColumnAutoFit = cfg.onColumnAutoFit;
     this.widthTick = cfg.widthTick;
+    this.onColumnReorder = cfg.onColumnReorder;
+    this.onReorderStart = cfg.onReorderStart;
+    this.columnOffset = cfg.columnOffset ?? 0;
     this.onMount(() => {
       // Repaint when the sort model, the filter model, or the shared H-scroll offset changes.
       this.bind(
@@ -236,15 +268,22 @@ export class SortHeader<T> extends View {
       }
       ctx.text(x + w, 0, DIVIDER, divider); // divider at the column right edge
     }
+    // While a reorder drag is live, paint a drop indicator at the target slot's left edge (the
+    // insertion point). It marks "drop before this column" and is cleared when the gesture resets.
+    if (this.reorderMoved && this.reorderTarget >= 0) {
+      const tx = geom.starts[this.reorderTarget] - indent;
+      if (tx >= 0 && tx < width) ctx.text(tx, 0, DROP_MARKER, ctx.color('listFocused'));
+    }
   }
 
   /**
-   * The header pointer machine. While a resize is in progress it consumes the captured drag/up (and
-   * aborts on a lost capture). Otherwise a mouse-down is classified grip > funnel > title: a grip down
-   * starts a live resize (or auto-fits on a double-click); a funnel down opens that column's filter
-   * popup (the live envelope is forwarded so the container inherits its focus/popup seam) and never also
-   * sorts; a title down reports a sort intent (Ctrl ⇒ additive). A down on a divider that is not a
-   * resize grip, or past the last column, is ignored and left unhandled so it can fall through.
+   * The header pointer machine. A captured gesture (resize or reorder) owns every drag/move/up until
+   * release and aborts cleanly on a lost capture. Otherwise a mouse-down is classified grip > funnel >
+   * title: a grip down starts a live resize (or auto-fits on a double-click); a funnel down opens that
+   * column's filter popup (the live envelope is forwarded so the container inherits its focus/popup seam)
+   * and never also sorts; a title down reports a sort intent (Ctrl ⇒ additive) AND — when reorder is
+   * enabled — arms a reorder drag. A down on a divider that is not a resize grip, or past the last
+   * column, is ignored and left unhandled so it can fall through.
    *
    * @param ev The dispatch envelope.
    */
@@ -252,24 +291,32 @@ export class SortHeader<T> extends View {
     const inner = ev.event;
     if (inner.type !== 'mouse') return;
 
-    // A resize in progress owns the captured drag/up until release; a lost capture aborts it cleanly.
-    if (this.resizeCol >= 0) {
+    // A captured gesture (resize or reorder) owns drag/move/up until release; a lost capture aborts it.
+    if (inner.kind === 'drag' || inner.kind === 'move' || inner.kind === 'up') {
+      if (this.resizeCol < 0 && this.reorderCol < 0) return; // no gesture in progress — not ours
       if (ev.hasCapture !== undefined && !ev.hasCapture(this)) {
-        this.resizeCol = -1; // capture was stolen — abandon the half-finished resize (mirrors Desktop)
+        this.resetGesture(); // capture was stolen — abandon the half-finished gesture (mirrors Desktop)
         return;
       }
-      if (inner.kind === 'drag' || inner.kind === 'move') {
-        if (ev.local !== undefined) this.dragResize(ev.local.x);
-        ev.handled = true;
-      } else if (inner.kind === 'up') {
-        this.resizeCol = -1;
+      if (inner.kind === 'up') {
+        if (this.reorderCol >= 0) this.finishReorder();
+        this.resetGesture();
         ev.releaseCapture?.();
-        ev.handled = true;
+      } else if (this.resizeCol >= 0) {
+        if (ev.local !== undefined) this.dragResize(ev.local.x);
+      } else {
+        this.dragReorder(ev);
       }
+      ev.handled = true;
       return;
     }
 
     if (inner.kind !== 'down') return;
+    // A new press supersedes any dangling gesture (a real `up` always precedes; this is defensive).
+    if (this.resizeCol >= 0 || this.reorderCol >= 0) {
+      ev.releaseCapture?.();
+      this.resetGesture();
+    }
     const local = ev.local;
     if (local === undefined) return;
     const geom = this.geometry(this.bounds.width);
@@ -314,9 +361,64 @@ export class SortHeader<T> extends View {
 
     const c = columnAtX(geom, contentX);
     if (c >= 0) {
-      this.onHeaderClick(this.columnIds[c], inner.ctrl === true);
+      this.onHeaderClick(this.columnIds[c], inner.ctrl === true); // sort on down (a plain click's effect)
       ev.handled = true;
+      // Arm a reorder: a subsequent drag past the threshold turns this press into a reorder (and reverts
+      // the sort above via onReorderStart); a plain click with no drag leaves the sort in place.
+      if (this.onColumnReorder !== undefined) {
+        this.reorderCol = c;
+        this.reorderStartX = contentX;
+        this.reorderMoved = false;
+        this.reorderTarget = c;
+        ev.setCapture?.(this);
+      }
     }
+  }
+
+  /** Clear all gesture state; repaint to drop the reorder indicator if one was showing. */
+  private resetGesture(): void {
+    const wasReordering = this.reorderMoved;
+    this.resizeCol = -1;
+    this.reorderCol = -1;
+    this.reorderMoved = false;
+    this.reorderTarget = -1;
+    if (wasReordering) this.invalidate(); // clear the drop indicator
+  }
+
+  /**
+   * Advance a reorder drag: once the pointer clears the 1-cell threshold, fire {@link onReorderStart}
+   * (so the container reverts the on-down sort) and track the drop slot, clamped to this panel, painting
+   * the drop indicator as it moves.
+   */
+  private dragReorder(ev: DispatchEvent): void {
+    if (ev.local === undefined) return;
+    const geom = this.geometry(this.bounds.width);
+    const indent = this.clampedIndent(geom, this.bounds.width);
+    const contentX = ev.local.x + indent;
+    if (!this.reorderMoved) {
+      if (Math.abs(contentX - this.reorderStartX) < 1) return; // still within the click threshold
+      this.reorderMoved = true;
+      this.onReorderStart?.(); // a real drag → revert the sort the press fired on mouse-down
+    }
+    const target = this.slotAt(geom, contentX);
+    if (target !== this.reorderTarget) {
+      this.reorderTarget = target;
+      this.invalidate(); // move the drop indicator
+    }
+  }
+
+  /** Commit a reorder on drop: report the move in global visible indices when it actually changed slots. */
+  private finishReorder(): void {
+    if (this.reorderMoved && this.reorderTarget >= 0 && this.reorderTarget !== this.reorderCol) {
+      this.onColumnReorder?.(this.columnOffset + this.reorderCol, this.columnOffset + this.reorderTarget);
+    }
+  }
+
+  /** The drop slot for a content-space x: the column under the pointer, clamped to this panel's range. */
+  private slotAt(geom: ColumnGeometry, x: number): number {
+    const c = columnAtX(geom, x);
+    if (c >= 0) return c;
+    return x < geom.starts[0] ? 0 : this.columns.length - 1; // on a divider / past an end → nearest slot
   }
 }
 
