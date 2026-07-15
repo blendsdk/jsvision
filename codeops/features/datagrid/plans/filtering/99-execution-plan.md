@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 14:41
-> **Progress**: 9/45 tasks (20%)
+> **Last Updated**: 2026-07-15 14:48
+> **Progress**: 16/45 tasks (36%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -83,22 +83,22 @@ tests → red → implement → green → impl tests → verify) and mirrors the
 **Reference**: `03-04 §Filter API/composition/push-down` · `07 §Container wiring` (ST-12…ST-16), `§Security` (ST-15, ST-27) · AR #7/#13
 **Objective**: Lock the container's filter behavior.
 
-- [ ] 2.1.1 Write `grid-filter.spec.test.ts` (ST-12 setFilter/count, ST-13 clearFilter, ST-14 push-down spy no-client-filter, ST-16 filter-then-sort composition) — `packages/datagrid/test/grid-filter.spec.test.ts`
-- [ ] 2.1.2 Add ST-15 (unknown-column no-op, never forwarded) + ST-27 (structured push-down model, no query concatenation) to `security.spec.test.ts` — `packages/datagrid/test/security.spec.test.ts`
-- [ ] 2.1.3 Verify **red**
+- [x] 2.1.1 Write `grid-filter.spec.test.ts` (ST-12 setFilter/count, ST-13 clearFilter, ST-14 push-down spy no-client-filter, ST-16 filter-then-sort composition) — `packages/datagrid/test/grid-filter.spec.test.ts` ✅ (completed: 2026-07-15 14:45)
+- [x] 2.1.2 Add ST-15 (unknown-column no-op, never forwarded) + ST-27 (structured push-down model, no query concatenation) to `security.spec.test.ts` — `packages/datagrid/test/security.spec.test.ts` ✅ (completed: 2026-07-15 14:45)
+- [x] 2.1.3 Verify **red** ✅ (completed: 2026-07-15 14:45)
 
 ### Step 2.2: Implement (green)
 
 **Reference**: `03-04` · AR #2/#7/#13
 **Objective**: Filter signal, `display` composition, push-down, API, count, re-anchor.
 
-- [ ] 2.2.1 `grid.ts`: add `filters = signal<FilterModel<T>>(new Map())`; rewrite `display` to filter-then-sort (each half client-side only when its push-down seam is absent); add the `setFilter` push-down effect beside the sort one — `packages/datagrid/src/grid.ts`
-- [ ] 2.2.2 `grid.ts`: add the filter API (`setFilter`/`clearFilter`/`filterModel`/`filteredCount`/`totalCount`) with the unknown-column guard, and `applyFilter` cursor/selection re-anchor (clamp on a row-removing filter) — `packages/datagrid/src/grid.ts`
-- [ ] 2.2.3 Verify **green** — ST-12…ST-16, ST-15, ST-27 pass
+- [x] 2.2.1 `grid.ts`: add `filters = signal<FilterModel>(new Map())`; rewrite `display` to filter-then-sort (each half client-side only when its push-down seam is absent); add the `setFilter` push-down effect beside the sort one — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-15 14:47)
+- [x] 2.2.2 `grid.ts`: add the filter API (`setFilter`/`clearFilter`/`filterModel`/`filteredCount`/`totalCount`) with the unknown-column guard, and `applyFilter` cursor/selection re-anchor (clamp on a row-removing filter; shared `snapshotAnchors` helper) — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-15 14:47)
+- [x] 2.2.3 Verify **green** — ST-12…ST-16, ST-15, ST-27 pass ✅ (completed: 2026-07-15 14:47)
 
 ### Step 2.3: Verify
 
-- [ ] 2.3.1 Full `yarn verify`
+- [x] 2.3.1 Full `yarn verify` ✅ (completed: 2026-07-15 14:48)
 
 **Deliverables**: reactive filter API + client filtering + `setFilter` push-down + N-of-M count.
 **Verify**: `yarn verify`

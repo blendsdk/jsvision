@@ -12,6 +12,7 @@ import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
 import type { SortKey } from '../src/sort.js';
+import type { FilterModel } from '../src/filter.js';
 import type { OnCommit } from '../src/commit.js';
 import { EditableDataGrid } from '../src/grid.js';
 
@@ -305,4 +306,49 @@ test('ST-21: an unknown sort columnId is a no-op and never reaches a push-down s
   for (const call of setSort.mock.calls) {
     expect(call[0].some((k) => k.columnId === 'nope')).toBe(false);
   }
+});
+
+/** Mount a grid over a push-down source (spy `setFilter`); return the grid and the spy. */
+function buildFilterPushGrid() {
+  const setFilter = vi.fn<(model: FilterModel) => void>();
+  const source: GridDataSource<Sale> = {
+    rowKey: (r) => r.region,
+    length: () => 1,
+    rowAt: () => ({ region: 'east', qty: 1 }),
+    setFilter,
+  };
+  const columns = [
+    column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region }),
+    column<Sale, number>({ id: 'qty', title: 'Qty', value: (r) => r.qty }),
+  ];
+  const grid = new EditableDataGrid<Sale>({ columns, source });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  return { grid, setFilter };
+}
+
+// ST-15 — an unknown filter `columnId` is ignored by the filter API (no state change) and is never
+// forwarded to a push-down source's `setFilter` query.
+test('ST-15: an unknown filter columnId is a no-op and never reaches a push-down setFilter', () => {
+  const { grid, setFilter } = buildFilterPushGrid();
+  grid.setFilter('nope', { kind: 'text', op: 'contains', value: 'x' }); // unknown column
+  grid.clearFilter('nope');
+  expect(grid.filterModel().size).toBe(0); // no state change
+
+  for (const call of setFilter.mock.calls) {
+    expect(call[0].has('nope')).toBe(false); // the unknown id never reaches the query
+  }
+});
+
+// ST-27 — the filter model pushed down is a structured map of literal operands: no string is
+// concatenated into a query by the grid (the source owns any query building).
+test('ST-27: the push-down filter model is a structured map of literal operands, never a query string', () => {
+  const { grid, setFilter } = buildFilterPushGrid();
+  grid.setFilter('qty', { kind: 'number', op: 'between', a: 100, b: 500 });
+  const model = setFilter.mock.calls.at(-1)?.[0];
+  expect(model).toBeInstanceOf(Map); // a ReadonlyMap, not a string
+  expect(model?.get('qty')).toEqual({ kind: 'number', op: 'between', a: 100, b: 500 }); // structured literals
 });
