@@ -346,6 +346,10 @@ class EventLoopImpl implements EventLoop {
     return this.registry.isEnabled(command);
   }
 
+  commandsVersion(): number {
+    return this.registry.version();
+  }
+
   execView<R>(view: View): Promise<R> {
     // The caller has already added `view` to the tree. Open the modal inside a tick so it paints one
     // frame on open; the returned promise resolves later, when endModal is called.
