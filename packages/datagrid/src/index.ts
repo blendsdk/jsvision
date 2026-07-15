@@ -29,9 +29,15 @@ export type { CellStyle } from './column.js';
 export type { CellRenderer, CellDrawContext, RenderCell, CellState } from './cell-draw.js';
 
 // Data source — the read seam the grid binds to. `fromRows` is the in-memory source; every source
-// carries a required `rowKey`. `SortKey`/`FilterModel` are forward-declared for later push-down.
+// carries a required `rowKey`. `FilterModel` is forward-declared for later push-down.
 export { fromRows } from './data-source.js';
-export type { GridDataSource, SortKey, FilterModel } from './data-source.js';
+export type { GridDataSource, FilterModel } from './data-source.js';
+
+// Sort model — the pure `sortRowsMulti` multi-key comparator plus the `SortKey`/`SortDir` shape a
+// sort directive uses (a single-column sort is a one-element key list). `SortKey` is the same shape
+// the data source's `setSort` push-down consumes.
+export { sortRowsMulti } from './sort.js';
+export type { SortKey, SortDir } from './sort.js';
 
 // Commit sink — the `onCommit` veto contract and the `commitCell` primitive that applies an edit
 // immediately and reverts it on veto.

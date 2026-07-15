@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 11:41
-> **Progress**: 7/30 tasks (23%) — Phase 1 complete
+> **Last Updated**: 2026-07-15 12:37
+> **Progress**: 16/30 tasks (53%) — Phases 1–2 complete
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -89,32 +89,32 @@ change is Phase 1's additive optional mouse modifiers.
 **Reference**: `03-01` · `07` (ST-3 … ST-12) · AR #2, #6, #11, #13, #14
 **Objective**: Pin the multi-key comparator contract before any code exists.
 
-- [ ] 2.1.1 Write `sort.spec.test.ts` covering ST-3 … ST-12 (numeric value order, multi-key + tie fall-through, stability, case-insensitive strings, custom `compare`, `nulls` first/last absolute-of-dir, unknown-id drop, empty-key source order + non-mutation, desc) — `packages/datagrid/test/sort.spec.test.ts`
-- [ ] 2.1.2 Verify RED — fails (no `sort.ts`/`sortRowsMulti` yet)
+- [x] 2.1.1 Write `sort.spec.test.ts` covering ST-3 … ST-12 (numeric value order, multi-key + tie fall-through, stability, case-insensitive strings, custom `compare`, `nulls` first/last absolute-of-dir, unknown-id drop, empty-key source order + non-mutation, desc) — `packages/datagrid/test/sort.spec.test.ts` ✅ (completed: 2026-07-15 12:35)
+- [x] 2.1.2 Verify RED — fails (no `sort.ts`/`sortRowsMulti` yet) ✅ (completed: 2026-07-15 12:35)
 
 ### Step 2.2: Implementation (GREEN)
 
 **Reference**: `03-01 §Implementation Details` · AR #2, #11, #13, #14
 **Objective**: The pure sort model.
 
-- [ ] 2.2.1 Create `sort.ts`: `SortDir`, `SortKey` (moved here), a memoized case-insensitive `Intl.Collator`, `compareValues`, `compareOneKey` (nulls absolute-of-dir), and `sortRowsMulti` (unknown-id drop, stable, non-mutating) — `packages/datagrid/src/sort.ts`
-- [ ] 2.2.2 Re-home `SortKey`: `data-source.ts` imports `SortKey` from `./sort.js` and drops its local declaration (`setSort` signature unchanged) — `packages/datagrid/src/data-source.ts`
-- [ ] 2.2.3 Add `compare?(a: V, b: V): number` + `nulls?: 'first' | 'last'` to `GridColumn` (leave `defaultCompare`/`toEngineColumn` untouched) — `packages/datagrid/src/column.ts`
-- [ ] 2.2.4 Barrel: export `SortDir` + `sortRowsMulti` (with `@example`), and re-point `SortKey`'s export to `sort.ts` (same name/shape) — `packages/datagrid/src/index.ts`
-- [ ] 2.2.5 Verify GREEN — ST-3 … ST-12 pass; `import type { SortKey } from '@jsvision/datagrid'` still resolves (plan AC-2)
+- [x] 2.2.1 Create `sort.ts`: `SortDir`, `SortKey` (moved here), a memoized case-insensitive `Intl.Collator`, `compareValues`, `compareOneKey` (nulls absolute-of-dir), and `sortRowsMulti` (unknown-id drop, stable, non-mutating) — `packages/datagrid/src/sort.ts` ✅ (completed: 2026-07-15 12:37)
+- [x] 2.2.2 Re-home `SortKey`: `data-source.ts` imports `SortKey` from `./sort.js` and drops its local declaration (`setSort` signature unchanged) — `packages/datagrid/src/data-source.ts` ✅ (completed: 2026-07-15 12:37)
+- [x] 2.2.3 Add `compare?(a: V, b: V): number` + `nulls?: 'first' | 'last'` to `GridColumn` (leave `defaultCompare`/`toEngineColumn` untouched) — `packages/datagrid/src/column.ts` ✅ (completed: 2026-07-15 12:37)
+- [x] 2.2.4 Barrel: export `SortDir` + `sortRowsMulti` (with `@example`), and re-point `SortKey`'s export to `sort.ts` (same name/shape) — `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-15 12:37)
+- [x] 2.2.5 Verify GREEN — ST-3 … ST-12 pass; `import type { SortKey } from '@jsvision/datagrid'` still resolves (plan AC-2) ✅ (completed: 2026-07-15 12:37 — typecheck green across the barrel re-point)
 
 ### Step 2.3: Implementation tests & hardening
 
 **Reference**: `07 §Implementation Tests`
 **Objective**: Edge coverage for the comparator.
 
-- [ ] 2.3.1 Write `sort.impl.test.ts` — Date ordering, mixed/other-type stringify, empty/single-row, all-null column, `compare`+`nulls` interaction, ≥3 keys, non-mutation guard — `packages/datagrid/test/sort.impl.test.ts`
-- [ ] 2.3.2 Verify (full) — `yarn verify`
+- [x] 2.3.1 Write `sort.impl.test.ts` — Date ordering, mixed/other-type stringify, empty/single-row, all-null column, `compare`+`nulls` interaction, ≥3 keys, non-mutation guard — `packages/datagrid/test/sort.impl.test.ts` ✅ (completed: 2026-07-15 12:37)
+- [x] 2.3.2 Verify (full) — `yarn verify` ✅ (completed: 2026-07-15 12:37 — 170 datagrid tests, full verify 26/26 green)
 
 **Deliverables**:
-- [ ] `sortRowsMulti` + one shared comparator (case-insensitive strings, `compare`/`nulls` honored)
-- [ ] `SortKey` re-homed with an unchanged public shape/export; `GridColumn.compare?`/`nulls?` added
-- [ ] All verification passing
+- [x] `sortRowsMulti` + one shared comparator (case-insensitive strings, `compare`/`nulls` honored) ✅
+- [x] `SortKey` re-homed with an unchanged public shape/export; `GridColumn.compare?`/`nulls?` added ✅
+- [x] All verification passing ✅
 
 **Verify**: `yarn verify`
 
