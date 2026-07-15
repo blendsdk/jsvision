@@ -23,8 +23,10 @@ sorts *above* `"$9,00"` numerically, not lexically.
 
 ### Must Have
 
-- [ ] **Single-column header-click sort** — clicking a column header sorts by it; the header shows
-      `▲` (asc) / `▼` (desc). (Reused from the exposed engine.)
+- [ ] **Single-column header-click sort** — clicking an unsorted column header sorts it ascending
+      (`▲`); re-clicking the same single-sorted column toggles ascending↔descending (`▼`). This
+      two-state asc/desc toggle matches the shipped read-only grid; the third "none" state is the
+      Should-Have tri-state cycle below, not part of v1's toggle.
 - [ ] **Multi-column priority sort** — `Ctrl`+click on a header adds it as a secondary/tertiary key;
       each sorted header shows its priority index (`1`, `2`, `3`) next to the arrow. Plain click
       resets to a single key.
@@ -57,10 +59,13 @@ sorts *above* `"$9,00"` numerically, not lexically.
 ### Sort model
 
 ```ts
+// `SortKey` already exists as a forward-declared placeholder on the data-source seam; this release
+// finalizes that same interface (do not declare a second one). `SortDir` may be extracted from its
+// current inline `'asc' | 'desc'` union.
 export type SortDir = 'asc' | 'desc';
 export interface SortKey { readonly columnId: string; readonly dir: SortDir; }
 
-// Extends the engine's single-key sortRows to an ordered key list.
+// The datagrid's own ordered multi-key comparator (a single-column sort is a one-element key list).
 export function sortRowsMulti<T>(
   rows: readonly T[],
   keys: readonly SortKey[],
@@ -83,16 +88,22 @@ export function sortRowsMulti<T>(
 
 ### Header indicators
 
-- The exposed `GridHeader` renders `▲`/`▼` and, for multi-sort, a small priority digit; unsorted
-  columns show no indicator. Title clipping preserves the indicator (never truncated away).
+- The header shows `▲` (asc) / `▼` (desc) on each sorted column and, for multi-sort, a small priority
+  digit (`1`/`2`/`3`) beside the arrow; unsorted columns show no indicator. Title clipping preserves the
+  indicator (never truncated away).
+- The exposed `@jsvision/ui` `GridHeader` renders only a single arrow for one column (its `SortState` is
+  single-column and index-based). The multi-column, `columnId`-keyed indicator with priority digits is a
+  datagrid concern; the rendering surface (own the header vs. extend the engine) is a plan decision.
 
 ---
 
 ## Integration Points
 
 ### With RD-01 / RD-04
-- Sorts by `GridColumn.value`; independent of `format` (RD-04). The value/format split is what makes
-  numeric/date sort correct.
+- The functional dependency is **RD-01**: sorting reads `GridColumn.value` and relies on the value/format
+  split RD-01 established — that split is what makes numeric/date order correct.
+- **RD-04 is not a functional prerequisite** (sorting consumes no `fmt`/`render`/`cellStyle`); it matters
+  only so formatted columns can *demonstrate* value-based (not display-string) ordering in the showcase.
 
 ### With RD-11 (data at scale)
 - `setSort` push-down is the same seam a windowed/server source uses; large datasets never sort

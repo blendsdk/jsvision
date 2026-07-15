@@ -171,3 +171,116 @@ User: **"i accept"** (all recommended amendments), 2026-07-12.
 | PF-008 | MINOR | ✅ Applied | RD-02 + RD-12: async-commit concurrency specified (cell locked during in-flight gate; overlapping per-cell commits serialized). |
 | PF-009 | MINOR | ✅ Applied | RD-04: each editable formatter must ship a matched, tested inverse (`Intl` has no parser); non-invertible ⇒ read-only. |
 | PF-010 | OBS | ✅ Applied | README: suggested-order table aligned to RD-04-before-RD-03 (formatting seeds the editor field). |
+
+---
+
+## Iteration 2 — RD-05 Sorting (focused, code-grounded re-scan)
+
+> **Artifact**: `requirements/RD-05-sorting.md` · **Date**: 2026-07-14 · **Iteration**: 2 (findings continue at PF-011)
+> **Outcome**: ✅ **PASSED WITH NOTES** — 2 major · 5 minor · 2 observation, all with decisions. RD-level
+> defects applied to `RD-05-sorting.md`; the implementation-architecture findings are resolved *by decision*
+> and carried forward to `make_plan` (their proper home — an RD states *what*, not *how*).
+> ✅ **Fresh-session review** — RD-05 was authored 2026-07-12; this re-scan ran 2026-07-14 (a different
+> session, after RD-01…RD-04 shipped), so same-session bias is low. Every codebase claim cites a real
+> `file:line` verified this scan, and the load-bearing architecture call was reconciled against an
+> **independent challenger agent** that read the code cold and ranked the options A > B > C.
+
+### Why re-scan a passed RD
+RD-05's original audit (iteration 1, above) ran before *any* `@jsvision/datagrid` code existed. RD-01…RD-04
+are now shipped, so this scan reality-checks the sorting RD against actual seams — and found real drift plus
+several favorable pre-built seams.
+
+### Codebase Context Summary
+- **Value-aware sort already works on the reused path.** `toEngineColumn` synthesizes `compare: (a,b) =>
+  defaultCompare(c.value(a), c.value(b))` (`packages/datagrid/src/column.ts:151`); `defaultCompare`
+  (`column.ts:164`) orders numbers numerically, `Date`s chronologically, strings by `localeCompare`, and
+  **nulls last** — so AC-1 ("9 above 1000") and much of "type-aware default + nulls-last" are already built.
+- **Push-down seam pre-exists.** `GridDataSource.setSort?(keys: SortKey[])` and `SortKey {columnId, dir}` are
+  already declared + barrel-exported (`data-source.ts:15,51`; `index.ts:34`), forward-declared in RD-01.
+- **Header is single-column.** The promoted `GridHeader` draws one `▲`/`▼` for one `SortState = {col,dir}|null`
+  (a column *index*), reserving a single cell, **no priority digit** (`packages/ui/src/table/grid-rows.ts:412,426,443`);
+  `draw()`/`onEvent()` are monolithic single-key with no `super` seam. `columnAt` hit-test is module-private
+  and unexported (`grid-rows.ts:45`).
+- **Grid deliberately disables sort.** `EditableDataGrid` wraps the header in `ReadonlyGridHeader` that swallows
+  `onEvent` (`grid.ts:37`), hard-wires `signal<SortState>(null)` (`grid.ts:132`), and `display` is
+  `materialize(source)` in source order (`grid.ts:126`) — it never calls `sortRows`, so the engine sort path
+  (`sortRows`/`SortState`/`toEngineColumn.compare`) is **already dead code for the datagrid**.
+
+### Consolidated architecture (the load-bearing output for make_plan)
+The findings collapse to one decision: **the datagrid owns its sort model end-to-end.** A container-owned
+`Signal<SortKey[]>` is the single source of truth; a **from-scratch** sort header (drawn like the shipped
+`EditableGridRows.draw` self-contained override, `editable-grid-rows.ts:279` — *not* a `GridHeader` subclass,
+which buys ~1 line and inherits a dead single-key `SortState` field) renders arrows + priority digits from it;
+**all** sorting (single-column = a one-element `SortKey[]`) routes through the datagrid's own `sortRowsMulti`.
+The ui engine's `SortState`/`sortRows`/`toEngineColumn.compare` path stays untouched and unused by the datagrid
+(the ui `DataGrid` still uses it). Reuse `apportionColumns`/`alignCell`/`stringWidth` + the shared
+`autoWidths`/`indent` signals for geometry, so header and body agree by construction. Ranked A (own header) >
+B (subclass) > C (extend ui) — B/C both still hand-write the multi-key draw/onEvent *and* wrestle the
+index↔id mismatch, so they cost more for no reuse dividend.
+
+### Findings
+
+**🟠 PF-011 — Multi-sort header/API model unspecified; RD mis-stated the exposed header's capability.**
+*Architecture Mismatch (13.3), Completeness (4), Feasibility (6).* RD claimed the exposed `GridHeader` renders
+a priority digit; it renders a single index-based arrow (`grid-rows.ts:426`). The multi-id `SortKey[]` model and
+the single-index `SortState` never meet in code. **Resolution:** RD reworded to state the *goal* (arrow +
+priority digit) and flag the exposed header's single-arrow limit; the mechanism (own-the-header) is a plan
+decision → carried to make_plan.
+
+**🟠 PF-012 — `EditableDataGrid` actively suppresses sort; RD blind to the unwind + a reactive footgun.**
+*Impact Blindness (13.4), Ordering (11), Completeness (4).* `ReadonlyGridHeader` + `signal<SortState>(null)` +
+class JSDoc (`grid.ts:11,37,132`) must be unwound. **Correctness constraint for the plan:** `source.setSort(keys)`
+must fire from a **separate reactive effect** guarded by `if (source.setSort)`, *not* inside the pure `display`
+computed (client path stays `display = derived(sortRowsMulti(materialize(source), keys(), map))`). → carried to
+make_plan.
+
+**🟡 PF-013 — `SortKey` already declared + exported; RD re-declared it.** *Redundancy (13.5), Consistency (12).*
+`data-source.ts:15` + `index.ts:34`. **Resolution:** RD reworded to *finalize* the forward-declared interface,
+not declare a second. ✅ Applied to RD.
+
+**🟡 PF-014 — Reuse `defaultCompare`; watch the collator inconsistency.** *Consistency (12), Codebase Alignment (13).*
+RD re-specifies a type-aware default that `defaultCompare` already provides; a case-insensitive `Intl.Collator`
+default would diverge from `defaultCompare`'s `localeCompare`. Moot under the consolidated architecture (a single
+`sortRowsMulti` comparator, one code path). → carried to make_plan (pick one comparator; reuse `defaultCompare`,
+parameterize `nulls`).
+
+**🟡 PF-015 — (Corrected from first pass.) Thread `compare`/`nulls` through `sortRowsMulti` only — NOT `toEngineColumn`.**
+*Completeness (4).* An earlier recommendation to thread `GridColumn.compare` through `toEngineColumn.compare` was
+wrong: that comparator is dead-for-sort on the datagrid path (`column.ts:151`, never read). **Resolution:** single-
+sort is a one-element `SortKey[]` through `sortRowsMulti`; `compare`/`nulls` thread there; note `toEngineColumn.compare`
+is unused-for-sort. → carried to make_plan.
+
+**🟡 PF-016 — Cursor re-anchor across a re-sort unspecified.** *Edge Cases (9).* `focused`/`selected` are display-
+*index* signals (`grid.ts:105`); a re-sort moves the cursor to a different record. **Resolution (recommended):**
+re-anchor by **row-key** (enterprise-correct; `rowKey` already on hand). → carried to make_plan.
+
+**🔵 PF-017 — Name the new files + barrel/`@example` obligation** (`sort.ts`, the sort header) so `check:docs` is
+planned in — matching how `format.ts`/`cell-draw.ts` were placed. → carried to make_plan.
+
+**🔵 PF-018 — `Depends On: RD-04` is weak.** *Dependency Reality (13.7).* Sorting consumes the value accessor
+(RD-01), not `fmt` (RD-04). **Resolution:** RD Integration Points clarified — RD-01 is the functional dependency,
+RD-04 is demo-only. `Depends On` header left as-is (RD-04 is Done, so the listing is harmless — no roadmap churn).
+✅ Applied to RD.
+
+**🟡 PF-019 — v1 repeat-click behavior undefined between Must (asc/desc) and Should (tri-state none).**
+*Ambiguity (1).* Shipped ui toggles asc↔desc (`grid-rows.ts:454`); tri-state (Should) inserts "none".
+**Resolution:** RD's Must bullet now states the v1 two-state toggle and scopes "none" to the Should tri-state.
+✅ Applied to RD.
+
+### Decisions log — Iteration 2
+
+| Finding | Severity | Decision | Home |
+|---|---|---|---|
+| PF-011 | MAJOR | ✅ RD mis-statement corrected; mechanism → plan | RD + make_plan |
+| PF-012 | MAJOR | ✅ Unwind + `setSort`-as-effect constraint recorded | make_plan |
+| PF-013 | MINOR | ✅ Applied — finalize the forward-declared `SortKey` | RD |
+| PF-014 | MINOR | ✅ Moot under consolidated arch; reuse `defaultCompare` | make_plan |
+| PF-015 | MINOR | ✅ Corrected — thread via `sortRowsMulti`, not `toEngineColumn` | make_plan |
+| PF-016 | MINOR | ✅ Re-anchor cursor by row-key | make_plan |
+| PF-017 | OBS | ✅ File/barrel/`@example` planned in | make_plan |
+| PF-018 | OBS | ✅ Applied — RD-01 is the functional dep; RD-04 demo-only | RD |
+| PF-019 | MINOR | ✅ Applied — v1 two-state toggle stated | RD |
+
+**Stage:** RD-05 remains 🔎 *RD Preflighted* (a re-scan does not advance the stage). Next: `make_plan sorting`,
+where the architecture findings become Zero-Ambiguity Register entries + the technical design, and the header
+A/B/C decision is put to the user.
