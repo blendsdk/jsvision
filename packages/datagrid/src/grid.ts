@@ -8,15 +8,18 @@
  * keys to move the cursor, `F2`/`Enter`/a printable to edit an editable cell, and `Enter` to commit
  * through the optional {@link EditableDataGridOptions.onCommit} veto sink. The container **owns** the
  * shared cursor/selection/scroll signals and injects them into the body, so a later frozen-panel split
- * can bind the very same signals. The header's click-to-sort is deliberately suppressed — the body
- * renders in source order, so a live sort arrow would mislead. An absolute overlay on top hosts the
- * cell editor while an edit is open.
+ * can bind the very same signals. Clicking a header sorts by that column's typed value (Ctrl+click
+ * builds a multi-key priority sort); the body reflects the container's live sort model. An absolute
+ * overlay on top hosts the cell editor while an edit is open.
  */
-import { Group, GridHeader, ScrollBar, measureAutoWidths, stringWidth, signal } from '@jsvision/ui';
-import type { Column, SortState, LayoutProps } from '@jsvision/ui';
+import { Group, ScrollBar, measureAutoWidths, stringWidth, signal } from '@jsvision/ui';
+import type { Column, LayoutProps, View } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { toEngineColumn } from './column.js';
 import type { GridDataSource } from './data-source.js';
+import { sortRowsMulti } from './sort.js';
+import type { SortKey, SortDir } from './sort.js';
+import { SortHeader } from './sort-header.js';
 import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
@@ -33,11 +36,25 @@ export interface EditableDataGridOptions<T> {
   readonly onCommit?: OnCommit<T>;
 }
 
-/** A grid header whose click-to-sort is suppressed — the body renders in source order. */
-class ReadonlyGridHeader<T> extends GridHeader<T> {
-  override onEvent(): void {
-    // Sorting is a later feature: swallow header clicks so no sort arrow is painted for an order the
-    // body never applies.
+/**
+ * The editor overlay host. It is a full-grid `fill` layer that hosts the in-cell editor while an edit
+ * is open, so it must be **transparent to hit-testing while empty** — otherwise the `fill` layer would
+ * sit on top of the header and body and swallow every click (a header/body click bubbles up its own
+ * ancestors, never across to the overlay's siblings). It stays hidden until it has a child and hides
+ * again when the last child leaves, so an empty overlay never intercepts a click.
+ */
+class EditorOverlay extends Group {
+  constructor() {
+    super();
+    this.state.visible = false; // empty at construction — don't intercept clicks
+  }
+  override add(child: View): void {
+    super.add(child);
+    this.state.visible = this.children.length > 0;
+  }
+  override remove(child: View): void {
+    super.remove(child);
+    this.state.visible = this.children.length > 0;
   }
 }
 
@@ -58,6 +75,27 @@ function corner(): Group {
   cell.background = 'scrollBarPage';
   cell.layout = { size: { kind: 'fixed', cells: 1 } };
   return cell;
+}
+
+// --- Tri-state click helpers (pure): a click cycles a key asc → desc → none (AR #4/#5). ---
+
+/** Cycle the sole sorted key: `asc` → `desc`; `desc` → cleared (source order). */
+function cycleSole(k: SortKey): SortKey[] {
+  return k.dir === 'asc' ? [{ ...k, dir: 'desc' }] : [];
+}
+
+/** Cycle the key at `idx` within a multi-key list: `asc` → set `desc` (keep the rest); `desc` → remove it. */
+function cycleAt(keys: SortKey[], idx: number): SortKey[] {
+  const k = keys[idx];
+  if (k.dir === 'asc') return keys.map((x, i) => (i === idx ? { ...x, dir: 'desc' as const } : x));
+  return keys.filter((_, i) => i !== idx);
+}
+
+/** Set the given column's direction if it is already a key, else append it as a new key (explicit-dir API). */
+function withKeyDir(keys: SortKey[], columnId: string, dir: SortDir): SortKey[] {
+  const idx = keys.findIndex((k) => k.columnId === columnId);
+  if (idx < 0) return [...keys, { columnId, dir }];
+  return keys.map((k, i) => (i === idx ? { columnId, dir } : k));
 }
 
 /**
@@ -110,6 +148,14 @@ export class EditableDataGrid<T> extends Group {
   // so the display computed reads this version to force a repaint of the mutated row.
   private readonly version = signal(0);
   private readonly dirty = createDirtyRegistry();
+  // The single source of truth for the sort model — the header and the `sortBy`/`addSort`/`clearSort`
+  // API both drive this one signal; the body's `display` derives from it on the client path.
+  private readonly sortKeys = signal<SortKey[]>([]);
+  // `source`, `columnMap`, and `display` are instance fields (not constructor locals) because the sort
+  // API methods below — `applySort`/`sortBy`/`addSort` — read them.
+  private readonly source: GridDataSource<T>;
+  private readonly columnMap: ReadonlyMap<string, GridColumn<T>>;
+  private readonly display: () => T[];
 
   /**
    * @param opts The `columns`, the `source`, optional `zebra` striping, and an optional `onCommit`
@@ -118,26 +164,46 @@ export class EditableDataGrid<T> extends Group {
   constructor(opts: EditableDataGridOptions<T>) {
     super();
     const engineCols: Column<T>[] = opts.columns.map((c) => toEngineColumn(c));
-    const { source } = opts;
+    this.source = opts.source;
+    this.columnMap = new Map(opts.columns.map((c) => [c.id, c]));
 
     // The materialized display re-runs when the source's rows change or a cell is written in place
     // (via `version`); the auto-width measure re-runs when the display changes. Both are shared by the
-    // header and body so their geometry never disagrees.
-    const display = this.derived(() => {
+    // header and body so their geometry never disagrees. Client path is pure — it sorts in memory; a
+    // push-down source (`setSort`) owns its own ordering (already re-queried), so we don't re-sort it.
+    this.display = this.derived(() => {
       this.version();
-      return materialize(source);
+      const rows = materialize(this.source);
+      return this.source.setSort ? rows : sortRowsMulti(rows, this.sortKeys(), this.columnMap);
     });
-    const autoWidths = this.derived(() => measureAutoWidths(engineCols, display(), stringWidth));
+    const autoWidths = this.derived(() => measureAutoWidths(engineCols, this.display(), stringWidth));
 
-    const sort = signal<SortState>(null); // fixed null — the read-only header never changes it
+    // Push-down: delegate ordering to the source whenever the model changes — a SEPARATE, guarded
+    // effect (never inside `display`, so `display` stays pure and a re-query can't loop through it).
+    this.onMount(() => {
+      if (this.source.setSort) {
+        this.bind(
+          () => this.sortKeys(),
+          (keys) => this.source.setSort!(keys),
+        );
+      }
+    });
 
     // The overlay is built before the body because the body's config references it as the editor host.
-    this.overlay = new Group();
+    // It is hidden while empty so it never intercepts header/body clicks (see EditorOverlay).
+    this.overlay = new EditorOverlay();
     this.overlay.layout = { position: 'fill' };
 
-    const header = new ReadonlyGridHeader<T>({ columns: engineCols, autoWidths, indent: this.indent, sort });
+    const header = new SortHeader<T>({
+      columns: engineCols,
+      columnIds: opts.columns.map((c) => c.id),
+      autoWidths,
+      indent: this.indent,
+      sort: this.sortKeys,
+      onHeaderClick: (columnId, additive) => (additive ? this.addSort(columnId) : this.sortBy(columnId)),
+    });
     this.rows = new EditableGridRows<T>({
-      display,
+      display: this.display,
       columns: engineCols,
       autoWidths,
       indent: this.indent,
@@ -148,7 +214,7 @@ export class EditableDataGrid<T> extends Group {
       typedColumns: opts.columns,
       overlay: this.overlay,
       onCommit: opts.onCommit,
-      rowKey: source.rowKey,
+      rowKey: this.source.rowKey,
       bumpVersion: () => this.version.set(this.version() + 1),
       dirty: this.dirty,
     });
@@ -224,5 +290,90 @@ export class EditableDataGrid<T> extends Group {
    */
   isGridDirty(): boolean {
     return this.dirty.keys().size > 0;
+  }
+
+  /**
+   * Sort by a single column (a plain header click / the primary API). With an explicit `dir`, sets
+   * exactly that key. Without `dir`: an unsorted or secondary column becomes the sole ascending key;
+   * re-issuing it on the *sole* sorted column cycles its direction (asc → desc → cleared). An unknown
+   * `columnId` is ignored (never forwarded to a source query).
+   *
+   * @param columnId The column to sort by.
+   * @param dir Optional explicit direction; omit to toggle/cycle.
+   */
+  sortBy(columnId: string, dir?: SortDir): void {
+    if (!this.columnMap.has(columnId)) return; // unknown id — no-op (never reaches setSort)
+    if (dir !== undefined) {
+      this.applySort([{ columnId, dir }]);
+      return;
+    }
+    const cur = this.sortKeys();
+    const sole = cur.length === 1 && cur[0].columnId === columnId;
+    this.applySort(sole ? cycleSole(cur[0]) : [{ columnId, dir: 'asc' }]);
+  }
+
+  /**
+   * Add or update a secondary sort key (a Ctrl+click / the multi-key API). With an explicit `dir`,
+   * sets-or-appends that key. Without `dir`: a new column is appended ascending; an existing key
+   * cycles its direction in place (asc → desc → removed), keeping its priority. An unknown `columnId`
+   * is ignored.
+   *
+   * @param columnId The column to add or update.
+   * @param dir Optional explicit direction; omit to append-ascending / cycle.
+   */
+  addSort(columnId: string, dir?: SortDir): void {
+    if (!this.columnMap.has(columnId)) return;
+    const cur = this.sortKeys();
+    if (dir !== undefined) {
+      this.applySort(withKeyDir(cur, columnId, dir));
+      return;
+    }
+    const idx = cur.findIndex((k) => k.columnId === columnId);
+    if (idx < 0) {
+      this.applySort([...cur, { columnId, dir: 'asc' }]);
+      return;
+    }
+    this.applySort(cycleAt(cur, idx));
+  }
+
+  /** Clear all sort keys — the client path restores source order; a push-down source gets `setSort([])`. */
+  clearSort(): void {
+    this.applySort([]);
+  }
+
+  /**
+   * The current sort model. Reactive — reading it inside an effect re-runs when the sort changes.
+   *
+   * @returns The ordered `SortKey[]` (empty when unsorted); the first key is the primary.
+   */
+  sort(): SortKey[] {
+    return this.sortKeys();
+  }
+
+  /**
+   * The one sort mutator. Sets the new key list, then — on the client path only — re-anchors the
+   * cursor and selection to the same records they were on before the re-sort (by row key), so the
+   * focused/selected record stays under the cursor when its display index moves. A push-down source
+   * re-queries asynchronously, so a synchronous re-anchor makes sense only in memory.
+   */
+  private applySort(next: SortKey[]): void {
+    const before = this.display();
+    const n = before.length;
+    const fIdx = Math.max(0, Math.min(this.focused(), n - 1));
+    const anchor = n > 0 ? this.source.rowKey(before[fIdx]) : undefined;
+    const sIdx = this.selected();
+    const selAnchor = sIdx >= 0 && sIdx < n ? this.source.rowKey(before[sIdx]) : undefined;
+
+    this.sortKeys.set(next);
+
+    if (this.source.setSort) return; // push-down re-queries; the client-side re-anchor doesn't apply
+    const after = this.display();
+    if (anchor !== undefined) {
+      const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
+      if (i >= 0) this.focused.set(i);
+    }
+    if (selAnchor !== undefined) {
+      this.selected.set(after.findIndex((r) => this.source.rowKey(r) === selAnchor)); // -1 if the row is gone
+    }
   }
 }

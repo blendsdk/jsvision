@@ -39,6 +39,12 @@ export type { GridDataSource, FilterModel } from './data-source.js';
 export { sortRowsMulti } from './sort.js';
 export type { SortKey, SortDir } from './sort.js';
 
+// The sort header — the datagrid's own multi-key sticky header View (arrows + priority digits,
+// columnId-keyed, click-to-sort). The container mounts one internally; it is exported so a bespoke
+// grid (or a later frozen-panel split) can bind several headers to one sort signal.
+export { SortHeader } from './sort-header.js';
+export type { SortHeaderConfig } from './sort-header.js';
+
 // Commit sink — the `onCommit` veto contract and the `commitCell` primitive that applies an edit
 // immediately and reverts it on veto.
 export { commitCell } from './commit.js';
