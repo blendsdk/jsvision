@@ -12,20 +12,30 @@ Create a complete, runnable jsvision application package from the app name in `$
 
 ## What to do
 
-1. Run the generator with the user's app name:
+1. If the user described a kind of app (a form, a data table, a live dashboard), pick a matching
+   **archetype** — otherwise use the default plain starter. List the archetypes first if unsure:
+
+   ```bash
+   node "${CLAUDE_PLUGIN_ROOT}/skills/jsvision-new-app/scripts/new-jsvision-app.mjs" --list
+   ```
+
+2. Run the generator with the user's app name, adding `--template <name>` for a non-default archetype:
 
    ```bash
    node "${CLAUDE_PLUGIN_ROOT}/skills/jsvision-new-app/scripts/new-jsvision-app.mjs" "$ARGUMENTS"
+   # or, for a specific archetype:
+   node "${CLAUDE_PLUGIN_ROOT}/skills/jsvision-new-app/scripts/new-jsvision-app.mjs" "$ARGUMENTS" --template grid
    ```
 
    It creates `packages/<slug>/` with a `package.json`, `tsconfig.json`, `vitest.config.ts`, a
-   starter `src/main.ts` (a desktop with one window), and a headless `test/<slug>.smoke.test.ts`.
-   The name is slugified (e.g. `My App` → `my-app`); unsafe names (path separators, `..`, absolute
-   paths, empty) are rejected without writing anything.
+   starter `src/main.ts`, and a headless `test/<slug>.smoke.test.ts`. The archetype only changes the
+   starter `src/main.ts` — every app gets the same 5-file skeleton. The name is slugified (e.g.
+   `My App` → `my-app`); unsafe names (path separators, `..`, absolute paths, empty) are rejected
+   without writing anything.
 
-2. Report the files it created and the exact slug it chose.
+3. Report the files it created and the exact slug it chose.
 
-3. Tell the user the next steps the script printed:
+4. Tell the user the next steps the script printed:
 
    ```bash
    yarn install                              # register the new workspace package
@@ -33,8 +43,22 @@ Create a complete, runnable jsvision application package from the app name in `$
    yarn verify                               # typecheck + tests, including the app's smoke test
    ```
 
-4. Offer to build out the app. The `jsvision` skill carries the mental model, the component
+5. Offer to build out the app. The `jsvision` skill carries the mental model, the component
    catalog, the gotchas, and runnable recipes — load it to compose real UI in `src/main.ts`.
+
+## Archetypes
+
+`--template <name>` picks a starting point; `--list` shows them all. Each is DSL-based and
+footgun-clean out of the box:
+
+- **basic** (default) — one window with a greeting.
+- **form** — a labelled `Input` + a Save button wired to a command handler.
+- **grid** — a sortable `DataGrid` over a typed row signal with a bound detail line.
+- **dashboard** — a `ProgressBar` + `Spinner` advanced by Step / Reset buttons.
+
+Archetypes are auto-discovered directories under
+`${CLAUDE_PLUGIN_ROOT}/templates/archetypes/` — adding one needs no code change (see that folder's
+`README.md`).
 
 ## Notes
 

@@ -5,8 +5,8 @@
 // headless, never touches the real disk), but accepts a Node-backed `nodeFileSystem` (or a temp-dir
 // FS) to edit real files. All I/O is confined to whatever FS you inject.
 
-import { Group, Memo, signal, Text } from '@jsvision/ui';
-import type { Signal } from '@jsvision/ui';
+import { col, fixed, grow, Memo, signal, Text } from '@jsvision/ui';
+import type { Group, Signal } from '@jsvision/ui';
 import type { FileSystem } from '@jsvision/files';
 import { createBrowserFileSystem } from '@jsvision/web';
 
@@ -51,14 +51,12 @@ export function buildFileViewer(fs?: FileSystem): FileViewer {
   // Read the file THROUGH the seam and bind it to the editor.
   const text = signal(filesystem.readFile(path));
   const memo = new Memo({ value: text });
-  memo.layout = { position: 'absolute', rect: { x: 0, y: 1, width: 44, height: 8 } };
 
   const heading = new Text(() => `File: ${path}`);
-  heading.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 44, height: 1 } };
 
-  const root = new Group();
-  root.add(heading);
-  root.add(memo);
+  // A one-row filename heading above the editor, which grows to fill the rest — composed with the
+  // layout DSL so the editor tracks the container height instead of a fixed rect.
+  const root = col(fixed(heading, 1), grow(memo));
 
   const save = (newText: string): void => {
     text.set(newText);
