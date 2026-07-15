@@ -68,6 +68,7 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     inputSelected: { fg: c.foreground, bg: c.backgroundSunken },
     inputSelection: { fg: c.foregroundOnAccent, bg: c.accent },
     inputArrows: { fg: c.accent, bg: c.backgroundSunken },
+    inputPlaceholder: { fg: c.foregroundMuted, bg: c.backgroundSunken },
     scrollBarPage: { fg: c.foregroundMuted, bg: c.backgroundRaised },
     scrollBarControls: { fg: c.foreground, bg: c.backgroundRaised },
     listNormal: { fg: c.foreground, bg: c.backgroundRaised },
