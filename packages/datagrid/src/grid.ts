@@ -12,20 +12,26 @@
  * builds a multi-key priority sort); the body reflects the container's live sort model. An absolute
  * overlay on top hosts the cell editor while an edit is open.
  */
-import { Group, ScrollBar, measureAutoWidths, stringWidth, signal } from '@jsvision/ui';
-import type { Column, DispatchEvent, LayoutProps, View } from '@jsvision/ui';
+import { Group, ScrollBar, View, measureAutoWidths, stringWidth, signal } from '@jsvision/ui';
+import type { Column, DispatchEvent, DrawContext, LayoutProps } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { toEngineColumn } from './column.js';
 import type { GridDataSource } from './data-source.js';
 import { sortRowsMulti } from './sort.js';
 import type { SortKey, SortDir } from './sort.js';
-import { filterRows } from './filter.js';
+import { filterRows, resolveFilterType } from './filter.js';
 import type { FilterModel, ColumnFilter } from './filter.js';
 import { SortHeader } from './sort-header.js';
 import { QuickFilterRow } from './quick-filter-row.js';
+import { FilterPopup } from './filter-popup.js';
+import { mountCellOverlay, absoluteRect } from './overlay.js';
 import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
+
+/** The filter popup's fixed cell size — enough for the operator selector, operands, and the buttons. */
+const FILTER_POPUP_WIDTH = 26;
+const FILTER_POPUP_HEIGHT = 8;
 
 /** Construction options for {@link EditableDataGrid}. */
 export interface EditableDataGridOptions<T> {
@@ -63,6 +69,28 @@ class EditorOverlay extends Group {
   override remove(child: View): void {
     super.remove(child);
     this.state.visible = this.children.length > 0;
+  }
+}
+
+/**
+ * A transparent full-overlay catcher placed **below** an open filter popup, so a mouse-down anywhere
+ * outside the popup closes it (click-away). It paints nothing and consumes the click so it does not
+ * also reach the grid behind. Clicks on the popup itself hit the popup (painted above) and never reach
+ * this catcher.
+ */
+class PopupCatcher extends View {
+  constructor(private readonly onOutside: () => void) {
+    super();
+  }
+  draw(_ctx: DrawContext): void {
+    // transparent — the catcher only hit-tests, it never paints
+  }
+  override onEvent(ev: DispatchEvent): void {
+    const inner = ev.event;
+    if (inner.type === 'mouse' && inner.kind === 'down') {
+      this.onOutside();
+      ev.handled = true;
+    }
   }
 }
 
@@ -145,6 +173,12 @@ export class EditableDataGrid<T> extends Group {
   readonly rows: EditableGridRows<T>;
   /** The absolute overlay host on top of the grid — the cell editor mounts into it while editing. */
   readonly overlay: Group;
+  /**
+   * A second absolute overlay, above {@link overlay}, that hosts a filter popup opened from the header
+   * funnel. Kept separate from the editor overlay so a filter popup and an open cell editor never
+   * collide, and hit-transparent while empty (see {@link EditorOverlay}).
+   */
+  readonly popupOverlay: Group;
 
   // Container-owned shared cursor/selection/scroll state — the body binds these signals, and a later
   // frozen-panel split can bind the very same ones with no retrofit.
@@ -168,6 +202,10 @@ export class EditableDataGrid<T> extends Group {
   private readonly source: GridDataSource<T>;
   private readonly columnMap: ReadonlyMap<string, GridColumn<T>>;
   private readonly display: () => T[];
+  // The header is retained so the funnel-opened filter popup can anchor to its absolute origin.
+  private readonly header: SortHeader<T>;
+  // The disposer for the currently-open filter popup (at most one), or `null` when none is open.
+  private popupDispose: (() => void) | null = null;
 
   /**
    * @param opts The `columns`, the `source`, optional `zebra` striping, and an optional `onCommit`
@@ -215,6 +253,9 @@ export class EditableDataGrid<T> extends Group {
     // It is hidden while empty so it never intercepts header/body clicks (see EditorOverlay).
     this.overlay = new EditorOverlay();
     this.overlay.layout = { position: 'fill' };
+    // A second overlay, above the editor overlay, dedicated to the funnel-opened filter popup.
+    this.popupOverlay = new EditorOverlay();
+    this.popupOverlay.layout = { position: 'fill' };
 
     const columnIds = opts.columns.map((c) => c.id);
     const header = new SortHeader<T>({
@@ -227,6 +268,7 @@ export class EditableDataGrid<T> extends Group {
       filterModel: this.filters,
       onFunnelClick: (columnId, anchor, ev) => this.openFilterPopup(columnId, anchor, ev),
     });
+    this.header = header;
     this.rows = new EditableGridRows<T>({
       display: this.display,
       columns: engineCols,
@@ -303,7 +345,8 @@ export class EditableDataGrid<T> extends Group {
     inner.add(botRow);
 
     this.add(inner); // behind
-    this.add(this.overlay); // on top — hosts the cell editor while editing
+    this.add(this.overlay); // above — hosts the cell editor while editing
+    this.add(this.popupOverlay); // topmost — hosts the funnel-opened filter popup
   }
 
   /**
@@ -458,17 +501,65 @@ export class EditableDataGrid<T> extends Group {
   }
 
   /**
-   * Open a column's filter popup, anchored at its funnel cell. Invoked by the header when a funnel cell
-   * is clicked; the live dispatch envelope is forwarded because the popup mount reuses its focus/popup
-   * seam (`ev.focusView`/`ev.popupHost`) so the popup and its nested dropdowns can focus and open.
+   * Open a column's filter popup, anchored just below its funnel cell. Invoked by the header on a funnel
+   * click; the live dispatch envelope is forwarded so the popup mount reuses its focus/popup seam
+   * (`ev.focusView`/`ev.popupHost`) — the popup's operator selector is focused through it, and its
+   * nested date editors open their own calendars through it. At most one popup is open at a time.
    *
-   * @param _columnId The column whose filter popup to open.
-   * @param _anchor The funnel cell's header-local anchor for positioning the popup.
-   * @param _ev The live dispatch envelope carrying the focus/popup seam.
+   * @param columnId The column whose filter popup to open (ignored when unknown).
+   * @param anchor The funnel cell's header-local anchor, positioning the popup one row below it.
+   * @param ev The live dispatch envelope carrying the focus/popup seam.
    */
-  private openFilterPopup(_columnId: string, _anchor: { x: number; y: number }, _ev: DispatchEvent): void {
-    // The popup itself lands with the condition / value-list popups; the funnel routing is wired now so
-    // the header→container seam (including the forwarded envelope) is exercised from this phase on.
+  private openFilterPopup(columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent): void {
+    const col = this.columnMap.get(columnId);
+    if (col === undefined) return; // unknown column — no popup (guarded, never reached in practice)
+    this.closeFilterPopup(); // at most one filter popup open at a time
+
+    const rows = materialize(this.source);
+    const sample = rows.length > 0 ? col.value(rows[0]) : undefined;
+    const filterType = resolveFilterType(col, sample);
+    const origin = absoluteRect(this.header);
+    const holder: { popup: FilterPopup<T> | null } = { popup: null };
+
+    // A click-away catcher goes in first (below the popup); an outside mouse-down closes the popup.
+    const catcher = new PopupCatcher(() => this.closeFilterPopup());
+    catcher.layout = { position: 'fill' };
+    this.popupOverlay.add(catcher);
+
+    const mountDispose = mountCellOverlay({
+      host: this.popupOverlay,
+      loop: { focusView: (v) => ev.focusView?.(v) },
+      // anchor.y is the header row; +1 drops the popup just below the funnel. The mount adds the
+      // header's absolute origin, so the rect is header-local like the funnel anchor.
+      rect: { x: anchor.x, y: anchor.y + 1, width: FILTER_POPUP_WIDTH, height: FILTER_POPUP_HEIGHT },
+      origin,
+      build: () => {
+        const popup = new FilterPopup<T>({
+          column: col,
+          columnId,
+          filterType,
+          current: this.filters().get(columnId),
+          onApply: (id, next) => this.setFilter(id, next),
+          onClear: (id) => this.clearFilter(id),
+          onClose: () => this.closeFilterPopup(),
+        });
+        holder.popup = popup;
+        return popup;
+      },
+    });
+    // Close disposes both the popup mount (removing the popup + its reactive scope) and the catcher.
+    this.popupDispose = () => {
+      mountDispose();
+      this.popupOverlay.remove(catcher);
+    };
+    // Focus a leaf inside the popup — mountCellOverlay focuses the popup Group, which is not a focus leaf.
+    if (holder.popup !== null) ev.focusView?.(holder.popup.focusTarget());
+  }
+
+  /** Dispose the open filter popup (removing it from the overlay), if any. Idempotent. */
+  private closeFilterPopup(): void {
+    this.popupDispose?.();
+    this.popupDispose = null;
   }
 
   /**
