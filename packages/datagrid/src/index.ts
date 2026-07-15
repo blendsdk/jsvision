@@ -65,6 +65,11 @@ export type { QuickFilterRowConfig } from './quick-filter-row.js';
 export { FilterPopup } from './filter-popup.js';
 export type { FilterPopupConfig } from './filter-popup.js';
 
+// The Excel value-list — the distinct-value checkbox picker (async-populated, type-ahead search, Select
+// All, truncation disclosure) that the condition popup embeds. Exported for bespoke composition.
+export { ValueList } from './value-list-popup.js';
+export type { ValueListConfig } from './value-list-popup.js';
+
 // Commit sink — the `onCommit` veto contract and the `commitCell` primitive that applies an edit
 // immediately and reverts it on veto.
 export { commitCell } from './commit.js';

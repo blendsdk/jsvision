@@ -19,8 +19,8 @@ import { toEngineColumn } from './column.js';
 import type { GridDataSource } from './data-source.js';
 import { sortRowsMulti } from './sort.js';
 import type { SortKey, SortDir } from './sort.js';
-import { filterRows, resolveFilterType } from './filter.js';
-import type { FilterModel, ColumnFilter } from './filter.js';
+import { filterRows, resolveFilterType, computeDistinct } from './filter.js';
+import type { FilterModel, ColumnFilter, DistinctResult } from './filter.js';
 import { SortHeader } from './sort-header.js';
 import { QuickFilterRow } from './quick-filter-row.js';
 import { FilterPopup } from './filter-popup.js';
@@ -29,9 +29,13 @@ import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
 
-/** The filter popup's fixed cell size — enough for the operator selector, operands, and the buttons. */
+/**
+ * The filter popup's fixed cell size — wide enough for the operator selector and operands, tall enough
+ * for the condition section stacked above the embedded value-list section (both are always present for
+ * an in-memory source). It clips against a short grid; a taller viewport shows it whole.
+ */
 const FILTER_POPUP_WIDTH = 26;
-const FILTER_POPUP_HEIGHT = 8;
+const FILTER_POPUP_HEIGHT = 17;
 
 /** Construction options for {@link EditableDataGrid}. */
 export interface EditableDataGridOptions<T> {
@@ -501,6 +505,23 @@ export class EditableDataGrid<T> extends Group {
   }
 
   /**
+   * The distinct formatted labels for a column's value-list. Delegates to `source.distinct` when the
+   * source provides it (which may report a `truncated` cap); otherwise computes them client-side over
+   * the materialized rows (never truncated). Reactive inputs are read eagerly, so callers get a stable
+   * promise per open.
+   *
+   * @param columnId The column to enumerate.
+   * @returns The distinct labels and a truncation flag.
+   */
+  private distinctFor(columnId: string): Promise<DistinctResult> {
+    const col = this.columnMap.get(columnId);
+    if (col === undefined) return Promise.resolve({ values: [], truncated: false });
+    return this.source.distinct
+      ? this.source.distinct(columnId)
+      : Promise.resolve({ values: computeDistinct(materialize(this.source), col), truncated: false });
+  }
+
+  /**
    * Open a column's filter popup, anchored just below its funnel cell. Invoked by the header on a funnel
    * click; the live dispatch envelope is forwarded so the popup mount reuses its focus/popup seam
    * (`ev.focusView`/`ev.popupHost`) — the popup's operator selector is focused through it, and its
@@ -539,6 +560,7 @@ export class EditableDataGrid<T> extends Group {
           columnId,
           filterType,
           current: this.filters().get(columnId),
+          distinct: () => this.distinctFor(columnId), // embeds the value-list section
           onApply: (id, next) => this.setFilter(id, next),
           onClear: (id) => this.clearFilter(id),
           onClose: () => this.closeFilterPopup(),
