@@ -11,8 +11,9 @@
 RD-07 makes a wide table usable on a large terminal: pin the identity columns, scroll the rest,
 resize/reorder/hide columns live, and keep the header sticky. It builds directly on the promoted
 `@jsvision/ui` column-geometry engine (RD-01) and the pointer-capture seam the framework already
-uses for window-resize grips — so **no core/ui change is required** (unlike RD-05's mouse-modifier
-touch).
+uses for window-resize grips — so the gesture layer needs **no core/ui change**. The **one** small ui
+touch is an additive *optional* divider-count param on `apportionColumns` for compact mode (AR-17,
+decided at preflight PF-001); every existing caller is byte-identical when it is omitted.
 
 The load-bearing architecture is the **pinned-panel model** (RD-07 AR#8): when freeze is
 configured, the body splits into **left-pinned | center-scrolling | right-pinned** panels — three

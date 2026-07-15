@@ -42,17 +42,24 @@ virtual body, sharing each panel's column geometry (the horizontal mirror of fro
 - **No row-height change** — rows are already 1 cell tall in this TUI; "compact" is horizontal only
   (divider removal). A future multi-line-row mode is out of scope.
 
-### Geometry impact
+### Geometry impact (AR-17 — decided at preflight, PF-001)
 
-`apportionColumns` reserves `numCols` divider cells today (`trackTotal = viewportWidth − numCols`,
-`columns.ts:126`). Compact mode needs that reservation to be **0**. Two realizations, decided: pass an
-optional `gap` (0 in compact, 1 normal) into the datagrid's geometry call — the underlying
-`solveTrack` already takes a `gap` param (`apportion.ts:99`), and `apportionColumns` can forward it.
-If `apportionColumns`'s signature can't be extended without a ui change, the datagrid computes the
-compact geometry with an inline variant (no ui touch) — confirm at impl which is cleaner; **prefer
-the no-ui-change path** (AR-12's "no core/ui change" spirit). *(This is the one spot that might
-warrant a tiny additive `gap?` param on `apportionColumns`; if so it is additive + optional and
-does not change existing callers — flag it as a runtime AR if taken.)*
+`apportionColumns` reserves **one** divider cell per column, hardcoded in **two** spots that
+`solveTrack`'s `gap` does NOT route through: `columns.ts:126` (`trackTotal = viewportWidth −
+numCols`) and `columns.ts:157` (`x += widths[c] + 1`; this also defines `totalWidth`). The earlier
+"forward `solveTrack`'s `gap`" idea is **refuted** — `solveTrack`'s `gap` (`apportion.ts:99`) is
+inter-item spacing inside free-space distribution, a different mechanism; forwarding it leaves both
+`- numCols` and `+ 1` intact, so the dividers stay reserved.
+
+Compact mode therefore takes the plan's **one ui touch**: an **additive optional param on
+`apportionColumns`** (`@jsvision/ui`) — e.g. `dividers?: boolean` (default `true`) or a divider-cell
+count — that gates **both** spots (`- numCols` → `- numCols·dividers`, `+ 1` → `+ dividers`). It is
+additive + optional, so every existing caller (`grid-rows.ts`, `sort-header.ts`, the base engine) is
+byte-identical when the param is omitted. `ColumnGeometry.totalWidth` then correctly reflects the
+compact width so H-scroll clamps right. The datagrid threads `dividers: density !== 'compact'` into
+its `geometry()` calls. This is a small, honest, uniform change benefiting header + body +
+quick-filter together (contrast an inline datagrid re-implementation, which would duplicate the
+apportionment logic and risk drift — rejected).
 
 ## Testing hooks
 

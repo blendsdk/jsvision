@@ -94,16 +94,16 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 ### Step 3.2: Implement (green)
 - [ ] 3.2.1 `editable-grid-rows.ts`: add the panel column-slice seam — inject `columnOffset`/`columnCount` (global range) + `totalCols`; range-limit the cursor paint/`cellRect`/dirty-in-cursor to `[offset, offset+count)` mapping to local indices (H2) — `packages/datagrid/src/editable-grid-rows.ts`
 - [ ] 3.2.2 `editable-grid-rows.ts`: rewrite the column-cursor keys to move the **global** `focusedCol` over `[0, totalCols)` (linear cross-panel; `Ctrl+Home`/`End` span the grid) + center auto-scroll of `indent` (AR-2) — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 3.2.3 `sort-header.ts`: accept a column slice so a per-panel header renders its slice aligned to its panel (AR-11) — `packages/datagrid/src/sort-header.ts`
+- [ ] 3.2.3 `sort-header.ts`: accept a column slice so a per-panel header renders its slice aligned to its panel (AR-11); extend `onFunnelClick` to carry the **clicked header** (or its absolute origin) so a funnel popup anchors on the right panel's header (PF-002) — `packages/datagrid/src/sort-header.ts`
 - [ ] 3.2.4 `grid.ts`: `buildBody()` — single-body path when not frozen (AR-5); else 3 panels + 3 headers + freeze dividers, center binds `indent` / frozen bind `signal(0)`, rebuilt in an effect on `partitionSig` — `packages/datagrid/src/grid.ts` (extract `grid-panels.ts` if over the 700-line cap)
 - [ ] 3.2.5 `grid.ts`: over-pin guard wired into layout (`applyOverPin` → move to center + de-duped `devWarn`, AR-9); route begin-edit + overlay origin to the panel owning `focusedCol` (H4/AR-10) — `packages/datagrid/src/grid.ts`
 - [ ] 3.2.6 Verify **green** — ST-14…ST-19 pass
 
 ### Step 3.3: Impl tests & verify
-- [ ] 3.3.1 Write `frozen-panels.impl.test.ts` (three panels' `topItem` agree after a vertical scroll (H5); center auto-scroll keeps the focused center col visible; editing a frozen cell mounts over the right panel) — `packages/datagrid/test/frozen-panels.impl.test.ts`
+- [ ] 3.3.1 Write `frozen-panels.impl.test.ts` (three panels' `topItem` agree after a vertical scroll — **load-bearing invariant guard, PF-008**; center auto-scroll keeps the focused center col visible; editing a frozen cell mounts over the right panel) — `packages/datagrid/test/frozen-panels.impl.test.ts`
 - [ ] 3.3.2 Full `yarn verify`
 
-**Deliverables**: frozen L/C/R panels (AC-4), sticky per-panel headers (AC-5), over-pin guard (AC-6), linear cross-panel cursor; no-freeze path preserved. **Verify**: `yarn verify`
+**Deliverables**: frozen L/C/R panels (AC-4), sticky per-panel headers (AC-5), over-pin guard (AC-6), linear cross-panel cursor (keyboard + mouse, PF-004/005). **PF-010: the new `EditableGridRows`/`SortHeader` seams default so the no-freeze single-body path is byte-identical — every existing datagrid spec oracle stays green.** **Verify**: `yarn verify`
 
 ---
 
@@ -161,7 +161,7 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 
 ### Step 6.2: Implement (green)
 - [ ] 6.2.1 `grid.ts` + `editable-grid-rows.ts`: `freezeRows?` band — a fixed-height pinned band mirroring the panel split; body virtual window offset by N; clamp + `devWarn` on over-freeze (AR-14) — `packages/datagrid/src/grid.ts`, `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 6.2.2 Density: `density?` option threaded as `compact` into header + all panels + bands; compact reserves 0 divider cells (forward `gap:0` to the geometry) and skips the `│` (AR-15) — `packages/datagrid/src/grid.ts`, `editable-grid-rows.ts`, `sort-header.ts` (+ optional additive `gap?` on `apportionColumns` if cleaner — record a runtime AR if taken)
+- [ ] 6.2.2 Density: add the **additive optional divider param** to `apportionColumns` in `@jsvision/ui` (gates both `columns.ts:126` `- numCols` and `:157` `+ 1`; existing callers byte-identical when omitted — AR-17); thread `density?`→`compact` into header + all panels + bands; compact passes `dividers:false` so geometry reserves 0 divider cells and painters skip the `│` (AR-15) — `packages/ui/src/table/columns.ts`, `packages/datagrid/src/grid.ts`, `editable-grid-rows.ts`, `sort-header.ts`
 - [ ] 6.2.3 Barrel + options docs for `freezeRows`/`density` + `@example` — `packages/datagrid/src/index.ts`, `grid.ts`
 - [ ] 6.2.4 Verify **green** — ST-24, ST-25 pass
 
@@ -221,7 +221,7 @@ first) to keep each phase's spec suite isolated.
 
 1. ✅ All 57 tasks complete
 2. ✅ `yarn verify` green (lint + typecheck + build + test + check:docs)
-3. ✅ No dead code; no core/ui change (AR-12)
+3. ✅ No dead code; no core change; the only ui change is AR-17's additive optional divider param on `apportionColumns` (existing callers byte-identical)
 4. ✅ Security: unknown ids ignored in every layout call; text sanitized after any layout change (AC-9)
 5. ✅ `@example` on every new public export; `check:docs` green
 6. ✅ RD-07 AC-1…AC-9 satisfied + the AR-1 extras (frozen rows, density)
