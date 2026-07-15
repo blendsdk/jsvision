@@ -21,6 +21,10 @@ import.
   (`mountApp`) and `@jsvision/files` only for the file dialogs/editor.
 - **Retained tree + signals.** You build a tree of `View`s (leaves) and `Group`s (containers) once,
   then bind reactive `signal`s to them; the framework repaints the minimal damage on change.
+- **DSL-first layout.** Compose screens with the `col`/`row`/`stack` layout DSL (`grow`/`fixed`/`fill`
+  size children; `stack` layers overlays) — the engine sizes and reflows them. Absolute rects are the
+  exception, reserved for a window's own desktop placement and framework popups. See
+  `references/layout.md`.
 - **App lifecycle.** `createApplication(opts)` → `app.desktop.addWindow(win)` → `await app.run()`.
   `run()` connects a real terminal and restores it on every exit path. In the browser, `mountApp`
   replaces `run()`.
@@ -28,12 +32,15 @@ import.
 A hello-world:
 
 ```ts
-import { createApplication, Window, Text } from '@jsvision/ui';
+import { createApplication, Window, col, fixed, Text } from '@jsvision/ui';
 
 const app = createApplication({});
 const win = new Window('Hello');
-win.layout.rect = { x: 2, y: 2, width: 30, height: 6 };
-win.add(new Text('Hello, jsvision!'));
+win.layout.rect = { x: 2, y: 2, width: 30, height: 6 }; // window frame placement — a sanctioned rect
+// Compose the interior with the layout DSL, not absolute rects.
+win.add(
+  col({ gap: 1 }, fixed(new Text('Hello, jsvision!'), 1), fixed(new Text('Edit and rebuild to grow this app.'), 1)),
+);
 app.desktop.addWindow(win);
 await app.run();
 ```
@@ -51,19 +58,26 @@ await app.run();
 5. **Finish every app by reading `references/gotchas.md`** and checking your code against all 12
    footguns. This is where "works" and "expert" diverge.
 
+**Layout is DSL-first (non-negotiable).** Compose every screen with `col`/`row`/`stack` +
+`grow`/`fixed`/`fill`; let the engine size and reflow it. Use an absolute `rect` **only** when one of
+these applies — a `Window`/`Dialog`'s own placement on the desktop, a framework-positioned popup, or a
+genuine overlap the flow model cannot express (try `stack`/`place` first) — and be ready to name
+which one. Hand-positioning ordinary content (forms, toolbars, lists, dashboards) with rects is the
+gotcha-3 smell; convert it to the DSL. Full rules and the exception list: `references/layout.md`.
+
 ## Where to look (routing table)
 
 Open the reference that matches the task; open `gotchas.md` before you call an app done.
 
-| Task                                                                    | Open                                                               |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Start a new app                                                         | run `/jsvision-new-app <name>`, then `references/app-lifecycle.md` |
-| App shell: windows, menus, status line, commands, `run()`               | `references/app-lifecycle.md`                                      |
-| Reactivity: `signal`/`computed`/`effect`/`Show`/`For`, `view.bind`      | `references/reactivity.md`                                         |
-| Placing/ sizing views: absolute rects, the `col`/`row` DSL, `measure()` | `references/layout.md`                                             |
-| Pick a widget ("what shows a table/date/tree?")                         | `references/component-catalog.md`                                  |
-| Colors/themes: presets, `createTheme`, `app.setTheme`, depth            | `references/theming.md`                                            |
-| Author a custom widget (subclass `View`)                                | `references/widget-authoring.md`                                   |
-| Run + verify an app (three run modes, headless smoke)                   | `references/running-and-testing.md`                                |
-| Complete example apps by archetype                                      | `references/recipes/index.md`                                      |
-| **Debugging "nothing paints", a hung modal, a leak**                    | `references/gotchas.md`                                            |
+| Task                                                                                             | Open                                                               |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Start a new app                                                                                  | run `/jsvision-new-app <name>`, then `references/app-lifecycle.md` |
+| App shell: windows, menus, status line, commands, `run()`                                        | `references/app-lifecycle.md`                                      |
+| Reactivity: `signal`/`computed`/`effect`/`Show`/`For`, `view.bind`                               | `references/reactivity.md`                                         |
+| Placing/sizing views: the `col`/`row`/`stack` layout DSL (default), `measure()`, rect exceptions | `references/layout.md`                                             |
+| Pick a widget ("what shows a table/date/tree?")                                                  | `references/component-catalog.md`                                  |
+| Colors/themes: presets, `createTheme`, `app.setTheme`, depth                                     | `references/theming.md`                                            |
+| Author a custom widget (subclass `View`)                                                         | `references/widget-authoring.md`                                   |
+| Run + verify an app (three run modes, headless smoke)                                            | `references/running-and-testing.md`                                |
+| Complete example apps by archetype                                                               | `references/recipes/index.md`                                      |
+| **Debugging "nothing paints", a hung modal, a leak**                                             | `references/gotchas.md`                                            |
