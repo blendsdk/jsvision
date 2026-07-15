@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 23:27
-> **Progress**: 26/58 tasks (45%) — Phase 1–3 ✅ (3.2.7 reactive-rebuild follow-up deferred, AR-19)
+> **Last Updated**: 2026-07-15 23:47
+> **Progress**: 34/58 tasks (59%) — Phase 1–3 ✅ · Phase 4 resize+auto-fit ✅ (3.2.7 rebuild + 4.3.2 verify pending)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -98,7 +98,7 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 - [x] 3.2.4 `grid.ts` + **new** `grid-panels.ts` `buildGridBody()`: single-body path when not frozen (AR-5, byte-identical); else left/center/right panels + per-panel headers + `FreezeDivider`s, center binds `indent` / frozen bind `signal(0)`; cross-panel row highlight via a grid-wide `panelActive` focus predicate (`focusSignal`). **Built at construction; the reactive rebuild-on-`partitionSig` clause is deferred to 3.2.7 (AR-19).** — `packages/datagrid/src/grid-panels.ts`, `grid.ts` (completed: 2026-07-15 23:27)
 - [x] 3.2.5 `grid.ts`: over-pin guard (`initialPartition()` over-freeze→single-body fallback + one `devWarn`, AR-9); begin-edit + overlay origin route to the panel owning `focusedCol` via the focus hop — each focused panel handles its own edit/overlay (H4/AR-10) — `packages/datagrid/src/grid.ts` (completed: 2026-07-15 23:27)
 - [x] 3.2.6 Verify **green** — ST-14…ST-19 pass (completed: 2026-07-15 23:27)
-- [ ] 3.2.7 **(follow-up, AR-19)** `grid.ts`: reactive rebuild — re-run `buildGridBody` in a post-mount effect when the partition key changes (live `setColumnVisible`/`setColumnOrder`/`setColumnWidth` + width-based over-pin once bounds settle), preserving focus + child order. **Cross-cutting with Phases 4–5 gestures; sequencing surfaced to the user.** — `packages/datagrid/src/grid.ts`
+- [ ] 3.2.7 **(follow-up, AR-19 — folded into Phase 4 per user decision 2026-07-15)** `grid.ts`: reactive rebuild — re-run `buildGridBody` in a post-mount effect when the partition key changes (live `setColumnVisible`/`setColumnOrder`/`setColumnWidth` + width-based over-pin once bounds settle), preserving focus + child order. Built in Phase 4 alongside the resize gesture (first model mutation needing body reflection); see task 4.x. — `packages/datagrid/src/grid.ts`
 
 ### Step 3.3: Impl tests & verify
 - [x] 3.3.1 Write `frozen-panels.impl.test.ts` (three panels' `topItem` agree after a vertical scroll — **load-bearing invariant guard, PF-008**; center auto-scroll keeps the focused center col visible; editing a frozen cell mounts over the right panel) — `packages/datagrid/test/frozen-panels.impl.test.ts` (completed: 2026-07-15 23:27)
@@ -113,21 +113,21 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 **Reference**: `03-03 §Resize/Auto-fit` · `07 §Resize` (ST-20, ST-21) · AR-12/AR-4
 
 ### Step 4.1: Specification tests (red)
-- [ ] 4.1.1 Write `resize-reorder.spec.test.ts` resize section (ST-20 grip-drag live width + min clamp; ST-21 double-click grip auto-fit) — `packages/datagrid/test/resize-reorder.spec.test.ts`
-- [ ] 4.1.2 Verify **red**
+- [x] 4.1.1 Write `resize-reorder.spec.test.ts` resize section (ST-20 grip-drag live width + min clamp; ST-21 double-click grip auto-fit) — `packages/datagrid/test/resize-reorder.spec.test.ts` (completed: 2026-07-15 23:44)
+- [x] 4.1.2 Verify **red** (completed: 2026-07-15 23:44)
 
 ### Step 4.2: Implement (green)
-- [ ] 4.2.1 `sort-header.ts`: add the hit-zone classifier (grip/title/none) + config `onColumnResize`/`onColumnAutoFit`/`columnOffset` — `packages/datagrid/src/sort-header.ts`
-- [ ] 4.2.2 `sort-header.ts`: resize capture gesture — down on grip → `ev.setCapture`, captured drag → `clampWidth`→`onColumnResize` (live), up → `releaseCapture`, with the `!hasCapture` stale-abort guard — `packages/datagrid/src/sort-header.ts`
-- [ ] 4.2.3 `sort-header.ts`: double-click grip → `onColumnAutoFit` — `packages/datagrid/src/sort-header.ts`
-- [ ] 4.2.4 `grid.ts`: pass `onColumnResize`→`setColumnWidth`, `onColumnAutoFit`→`autoFitColumn` to each header — `packages/datagrid/src/grid.ts`
-- [ ] 4.2.5 Verify **green** — ST-20, ST-21 pass (AC-1, AC-7)
+- [x] 4.2.1 `sort-header.ts`: hit-zone classifier (`gripAt`, grip > funnel > title) + config `onColumnResize`/`onColumnAutoFit`/`widthTick` — `packages/datagrid/src/sort-header.ts` (completed: 2026-07-15 23:44)
+- [x] 4.2.2 `sort-header.ts`: resize capture gesture — down on grip → `ev.setCapture`, captured drag → `clampWidth`→`onColumnResize` (live), up → `releaseCapture`, with the `!hasCapture` stale-abort guard — `packages/datagrid/src/sort-header.ts` (completed: 2026-07-15 23:44)
+- [x] 4.2.3 `sort-header.ts`: double-click grip (`ev.clickCount >= 2`) → `onColumnAutoFit` — `packages/datagrid/src/sort-header.ts` (completed: 2026-07-15 23:44)
+- [x] 4.2.4 `grid.ts` + `grid-panels.ts`: pass `onColumnResize`→`setColumnWidth`, `onColumnAutoFit`→`autoFitColumn` to each header; **live visual reflow** via override-aware column `width` getters + a `widthTick` repaint bind on every header + body — `packages/datagrid/src/grid.ts`, `grid-panels.ts` (completed: 2026-07-15 23:44)
+- [x] 4.2.5 Verify **green** — ST-20, ST-21 pass (AC-1, AC-7) (completed: 2026-07-15 23:44)
 
 ### Step 4.3: Impl tests & verify
-- [ ] 4.3.1 Write resize impl tests (drag below min stops at min; resizing an `fr`/`auto` column pins it; stale-capture aborts cleanly) — `packages/datagrid/test/resize-reorder.impl.test.ts`
-- [ ] 4.3.2 Full `yarn verify`
+- [x] 4.3.1 Write resize impl tests (a resize moves the rendered boundary — live reflow; resizing an `auto` column pins it; a lost capture aborts cleanly) — `packages/datagrid/test/resize-reorder.impl.test.ts` (completed: 2026-07-15 23:47)
+- [ ] 4.3.2 Full `yarn verify` (after 3.2.7 reactive rebuild — folded into this phase)
 
-**Deliverables**: live column resize (AC-1) + auto-fit (AC-7). **Verify**: `yarn verify`
+**Deliverables**: live column resize (AC-1) + auto-fit (AC-7) **[done]**; live model-driven repaint (hide/show/reorder) via 3.2.7 **[pending, this phase]**. **Verify**: `yarn verify`
 
 ---
 
