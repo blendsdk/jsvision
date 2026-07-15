@@ -22,6 +22,8 @@ export interface MenuLoopSeam {
   emitCommand(command: string, arg?: unknown): void;
   /** Whether a command is enabled — a disabled item is greyed and cannot be activated. */
   isCommandEnabled(command: string): boolean;
+  /** A tick that changes on any command-enablement change; the bar binds it so greying repaints live. */
+  commandsVersion(): number;
   /** Focus a view — used to restore the pre-menu focus when the menu closes. */
   focusView(view: View): void;
   /** The currently-focused view, captured when a menu opens so it can be restored on close. */

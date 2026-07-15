@@ -5,8 +5,8 @@
 // pattern for any list/table screen: reactive data in a signal, a grid over it, and selection wired
 // to a detail pane.
 
-import { computed, DataGrid, Group, signal, Text } from '@jsvision/ui';
-import type { Column, Signal, SortState } from '@jsvision/ui';
+import { col, computed, DataGrid, fixed, grow, signal, Text } from '@jsvision/ui';
+import type { Column, Group, Signal, SortState } from '@jsvision/ui';
 
 // #region example
 /** A row in the people grid. */
@@ -58,7 +58,6 @@ export function buildPeopleGrid(): PeopleGrid {
   ];
 
   const grid = new DataGrid<Person>({ rows, columns, focused, selected, sort, zebra: true });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 9 } };
 
   // Mirror the grid's sort so the detail line reads the displayed order. The grid stably sorts a copy
   // of `rows` by the active column's compare; reproduce that here from the same signals.
@@ -78,11 +77,10 @@ export function buildPeopleGrid(): PeopleGrid {
   });
 
   const detailView = new Text(() => detail());
-  detailView.layout = { position: 'absolute', rect: { x: 0, y: 10, width: 40, height: 1 } };
 
-  const root = new Group();
-  root.add(grid);
-  root.add(detailView);
+  // Stack the grid over the detail line with the layout DSL: the grid grows to fill, the detail is a
+  // fixed single row pinned below it — no absolute rects, so it re-solves at any size.
+  const root = col(grow(grid), fixed(detailView, 1));
 
   return { root, grid, rows, sorted, detail };
 }

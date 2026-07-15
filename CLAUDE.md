@@ -4,6 +4,7 @@
 > re-running preserves your hand-written sections.
 
 <!-- analyze_project: refreshed 2026-07-15 — re-scan confirmed Toolchain/Commands/Project structure unchanged (RD-09 added no manifest/script/package; @jsvision/forms untouched); hand-authored Conventions/Git/Documentation/TV-fidelity/Kitchen-sink/Special-rules preserved verbatim. (File was compacted 2026-07-13: 28 stacked comments → 1.) -->
+<!-- analyze_project: compacted 2026-07-15 — Project structure collapsed to one line per top-level area; 3 refresh comments pruned to 1; hand-authored sections preserved verbatim -->
 
 ## Prime directive (NON-NEGOTIABLE)
 

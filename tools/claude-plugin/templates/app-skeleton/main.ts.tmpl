@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url';
 
-import { Commands, createApplication, statusItem, statusLine, Text, Window, type Application } from '@jsvision/ui';
+import { col, Commands, createApplication, fixed, grow, statusItem, statusLine, Text, Window, type Application } from '@jsvision/ui';
 
 /**
  * Build the __SLUG__ application: a desktop hosting one starter window with a greeting. Returns the
@@ -18,8 +18,17 @@ export function buildApp(): Application {
   });
 
   const win = new Window('__SLUG__');
+  // A window places its own frame on the desktop by rect — one of the few sanctioned absolute cases.
   win.layout.rect = { x: 2, y: 2, width: 44, height: 12 };
-  win.add(new Text('Hello from __SLUG__ — edit src/main.ts to build your app.'));
+  // Compose the interior with the layout DSL (col/row + fixed/grow), never absolute rects: a one-row
+  // title over a growing body. Add rows/columns of controls here as your UI grows.
+  win.add(
+    col(
+      { gap: 1 },
+      fixed(new Text('__SLUG__'), 1),
+      grow(new Text('Edit src/main.ts to build your app — compose the UI with col()/row(), not rects.')),
+    ),
+  );
   app.desktop.addWindow(win);
 
   return app;

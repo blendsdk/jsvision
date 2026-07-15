@@ -1,0 +1,77 @@
+import { pathToFileURL } from 'node:url';
+
+import {
+  Button,
+  col,
+  Commands,
+  createApplication,
+  fixed,
+  Input,
+  Label,
+  row,
+  signal,
+  statusItem,
+  statusLine,
+  Text,
+  Window,
+  type Application,
+} from '@jsvision/ui';
+
+/**
+ * Build the __SLUG__ application: a window with a labelled text field and a Save button that greets
+ * the entered name. Returns the assembled application *without* connecting to a terminal, so it can be
+ * mounted headlessly in a test. Extend it with more fields, live validation (pass a `validator:` to
+ * the {@link Input}), or a modal dialog (see the jsvision skill's forms recipe).
+ *
+ * @returns The ready-to-run application.
+ * @example
+ * const app = buildApp();
+ * await app.run(); // on an interactive terminal
+ */
+export function buildApp(): Application {
+  const app = createApplication({
+    statusLine: statusLine([statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X')]),
+  });
+
+  const name = signal('');
+  const greeting = signal('Type your name and press Save.');
+
+  const field = new Input({ value: name });
+  const label = new Label('~N~ame:', field);
+  const save = new Button('~S~ave', { command: 'save' });
+  // Command handlers run inside a dispatch tick, so signal writes here repaint automatically.
+  app.onCommand('save', () => {
+    const entered = name().trim();
+    greeting.set(entered === '' ? 'Please enter a name.' : `Hello, ${entered}!`);
+  });
+
+  const win = new Window('__SLUG__');
+  win.layout.rect = { x: 2, y: 2, width: 50, height: 10 };
+  // Compose the interior with the layout DSL: a labelled field row, a button row, then the greeting.
+  win.add(
+    col(
+      { gap: 1 },
+      fixed(row({ gap: 1 }, fixed(label, 6), fixed(field, 26)), 1),
+      fixed(row({ gap: 1 }, fixed(save, 10)), 2),
+      fixed(new Text(() => greeting()), 1),
+    ),
+  );
+  app.desktop.addWindow(win);
+
+  return app;
+}
+
+/** Connect to the terminal and run until quit, unless there is no interactive TTY. */
+async function run(): Promise<number> {
+  if (process.stdout.isTTY !== true) {
+    process.stdout.write('This app needs an interactive terminal (TTY).\n');
+    return 0;
+  }
+  return buildApp().run();
+}
+
+// Auto-run only when this file is executed directly (e.g. `tsx src/main.ts`), never when imported by
+// a test — importing must not connect to a terminal or exit the process.
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  void run().then((code) => process.exit(code));
+}

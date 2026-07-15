@@ -24,6 +24,8 @@
     "verify:shipped": "yarn lint && turbo run typecheck build test check:docs --filter=@jsvision/core --filter=@jsvision/ui --filter=@jsvision/web --filter=@jsvision/files",
     "gate": "node scripts/gate.mjs",
     "plugin:sync": "node scripts/plugin-sync.mjs",
+    "doctor": "node scripts/jsvision-doctor.mjs",
+    "render:app": "tsx scripts/render-app.mjs",
     "ncu:check": "ncu --root --workspaces -x \"@jsvision/* typescript\"",
     "ncu": "ncu -u --root --workspaces -x \"@jsvision/* typescript\" && rm -rf node_modules yarn.lock && yarn install && yarn verify",
     "lockstep:version": "lockstep version --type auto --ci",
