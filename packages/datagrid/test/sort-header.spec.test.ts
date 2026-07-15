@@ -18,6 +18,7 @@ import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
 import type { SortKey } from '../src/sort.js';
+import type { FilterModel, ColumnFilter } from '../src/filter.js';
 import { EditableDataGrid } from '../src/grid.js';
 import { SortHeader } from '../src/sort-header.js';
 
@@ -49,7 +50,14 @@ const UNIT_COLS: Column<Sale>[] = [
 const UNIT_IDS = ['region', 'qty'] as const;
 
 /** Mount a bare `SortHeader` in a render root and return it plus a frame reader. */
-function buildHeader(sort: Signal<SortKey[]>, onHeaderClick: (columnId: string, additive: boolean) => void) {
+function buildHeader(
+  sort: Signal<SortKey[]>,
+  onHeaderClick: (columnId: string, additive: boolean) => void,
+  opts: {
+    filterModel?: Signal<FilterModel>;
+    onFunnelClick?: (columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void;
+  } = {},
+) {
   const header = new SortHeader<Sale>({
     columns: UNIT_COLS,
     columnIds: [...UNIT_IDS],
@@ -57,6 +65,8 @@ function buildHeader(sort: Signal<SortKey[]>, onHeaderClick: (columnId: string, 
     indent: signal(0),
     sort,
     onHeaderClick,
+    filterModel: opts.filterModel ?? signal<FilterModel>(new Map()),
+    onFunnelClick: opts.onFunnelClick ?? (() => undefined),
   });
   header.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: 1 } };
   const root = new Group();
@@ -267,4 +277,40 @@ test('ST-20: a fresh grid paints no indicator and renders in source order', () =
   expect(rows[0]).not.toContain('▲');
   expect(rows[0]).not.toContain('▼');
   expect(bodyRowOf(rows, '1000')).toBeLessThan(bodyRowOf(rows, '9')); // source order
+});
+
+// ---------------------------------------------------------------------------
+// Funnel indicator + funnel-vs-title click routing (the filter surface merged into the header).
+// The `(filter)` qualifier distinguishes these from the sorting ST-19/ST-20 above (same file).
+// ---------------------------------------------------------------------------
+
+test('ST-19 (filter): the funnel ▽ appears on a filtered column and is removed when cleared', () => {
+  const { grid, frame } = buildGrid();
+  expect(frame().some((r) => r.includes('▽'))).toBe(false); // nothing filtered → no funnel
+  grid.setFilter('qty', { kind: 'number', op: 'gt', a: 0 });
+  expect(frame().some((r) => r.includes('▽'))).toBe(true); // the filtered column shows the funnel
+  grid.clearFilter('qty');
+  expect(frame().some((r) => r.includes('▽'))).toBe(false); // cleared → funnel gone
+});
+
+test('ST-20 (filter): a funnel-cell click fires onFunnelClick (no sort); a title click sorts', () => {
+  const onFunnel = vi.fn<(columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void>();
+  const onSort = vi.fn<(columnId: string, additive: boolean) => void>();
+  // qty is filtered → its funnel is hittable. Unsorted qty reserves no sort cell, so the funnel is the
+  // column's rightmost content cell: starts[1](=9) + width(6) - 1 = 14.
+  const filterModel = signal<FilterModel>(
+    new Map<string, ColumnFilter>([['qty', { kind: 'text', op: 'contains', value: '5' }]]),
+  );
+  const { header } = buildHeader(signal<SortKey[]>([]), onSort, { filterModel, onFunnelClick: onFunnel });
+
+  const funnelEv = mouseDown(14);
+  header.onEvent(funnelEv);
+  expect(onFunnel).toHaveBeenCalledTimes(1);
+  expect(onFunnel.mock.calls[0][0]).toBe('qty'); // reports the filtered column
+  expect(onFunnel.mock.calls[0][2]).toBe(funnelEv); // forwards the LIVE dispatch envelope (focus/popup seam)
+  expect(funnelEv.handled).toBe(true);
+  expect(onSort).not.toHaveBeenCalled(); // a funnel click never also sorts
+
+  header.onEvent(mouseDown(10)); // within qty content [9,15) but left of the funnel cell → title (sort)
+  expect(onSort).toHaveBeenLastCalledWith('qty', false);
 });

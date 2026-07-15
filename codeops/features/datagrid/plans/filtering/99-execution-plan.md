@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 14:48
-> **Progress**: 16/45 tasks (36%)
+> **Last Updated**: 2026-07-15 15:16
+> **Progress**: 26/45 tasks (58%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -112,25 +112,25 @@ tests → red → implement → green → impl tests → verify) and mirrors the
 **Reference**: `03-02` · `07 §Quick-filter row & funnel` (ST-17…ST-20) · AR #3/#4/#11/#12
 **Objective**: Lock the always-visible UI behavior.
 
-- [ ] 3.1.1 Write `quick-filter-row.spec.test.ts` (ST-17 band absent unless `quickFilter`; ST-18 typing sets `text/contains`, clearing removes) — `packages/datagrid/test/quick-filter-row.spec.test.ts`
-- [ ] 3.1.2 Add ST-19 (funnel glyph on a filtered column, gone when cleared) + ST-20 (funnel-cell click → `onFunnelClick`; title click → sort) to `sort-header.spec.test.ts` — `packages/datagrid/test/sort-header.spec.test.ts`
-- [ ] 3.1.3 Verify **red**
+- [x] 3.1.1 Write `quick-filter-row.spec.test.ts` (ST-17 band absent unless `quickFilter`; ST-18 typing sets `text/contains`, clearing removes) — `packages/datagrid/test/quick-filter-row.spec.test.ts` ✅ (completed: 2026-07-15 15:04)
+- [x] 3.1.2 Add ST-19 (funnel glyph on a filtered column, gone when cleared) + ST-20 (funnel-cell click → `onFunnelClick`; title click → sort) to `sort-header.spec.test.ts` ✅ (completed: 2026-07-15 15:04)
+- [x] 3.1.3 Verify **red** — QuickFilterRow module absent; funnel glyph/`onFunnelClick` not yet wired ✅ (completed: 2026-07-15 15:04)
 
 ### Step 3.2: Implement (green)
 
 **Reference**: `03-02` · `03-04 §quick-filter band/funnel` · AR #11/#12/#18
 **Objective**: The band, the funnel, and their container wiring.
 
-- [ ] 3.2.1 Create `QuickFilterRow<T>`: one `Input` per column over the shared geometry/indent, `onQuickFilter(columnId, text)` (JSDoc + `@example`) — `packages/datagrid/src/quick-filter-row.ts`
-- [ ] 3.2.2 Extend `SortHeader`: add `filterModel`/`onFunnelClick` config (the click **forwards the live `DispatchEvent`** — the focus/popup seam, AR #18), draw the funnel `▽` in a reserved cell on filtered columns, and route a funnel-cell click before the title click — `packages/datagrid/src/sort-header.ts`
-- [ ] 3.2.3 `grid.ts`: add the `quickFilter?: boolean` option + mount the `QuickFilterRow` band between header and body when set; pass `filterModel`/`onFunnelClick` to `SortHeader` (`onFunnelClick` → a placeholder `openFilterPopup(columnId, anchor, ev)` no-op carrying the **final** signature incl. the forwarded `ev`, filled in Phase 4 — AR #18) — `packages/datagrid/src/grid.ts`
-- [ ] 3.2.4 Barrel: export `QuickFilterRow` + `QuickFilterRowConfig`; extend `EditableDataGridOptions` (`quickFilter`) — `packages/datagrid/src/index.ts`
-- [ ] 3.2.5 Verify **green** — ST-17…ST-20 pass
+- [x] 3.2.1 Create `QuickFilterRow<T>`: one `Input` per column over the shared geometry/indent, `onQuickFilter(columnId, text)` (JSDoc + `@example`) — `packages/datagrid/src/quick-filter-row.ts` ✅ (completed: 2026-07-15 15:13)
+- [x] 3.2.2 Extend `SortHeader`: add `filterModel`/`onFunnelClick` config (the click **forwards the live `DispatchEvent`** — the focus/popup seam, AR #18), draw the funnel `▽` in a reserved cell on filtered columns, and route a funnel-cell click before the title click — `packages/datagrid/src/sort-header.ts` ✅ (completed: 2026-07-15 15:13)
+- [x] 3.2.3 `grid.ts`: add the `quickFilter?: boolean` option + mount the `QuickFilterRow` band between header and body when set; pass `filterModel`/`onFunnelClick` to `SortHeader` (`onFunnelClick` → a placeholder `openFilterPopup(columnId, anchor, ev)` no-op carrying the **final** signature incl. the forwarded `ev`, filled in Phase 4 — AR #18) — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-15 15:13)
+- [x] 3.2.4 Barrel: export `QuickFilterRow` + `QuickFilterRowConfig`; extend `EditableDataGridOptions` (`quickFilter`) — `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-15 15:13)
+- [x] 3.2.5 Verify **green** — ST-17…ST-20 pass (221 datagrid tests green) ✅ (completed: 2026-07-15 15:13)
 
 ### Step 3.3: Impl tests & verify
 
-- [ ] 3.3.1 Write `quick-filter-row.impl.test.ts` (indent/geometry reposition, off-screen Input clipping, band height) — `packages/datagrid/test/quick-filter-row.impl.test.ts`
-- [ ] 3.3.2 Full `yarn verify`
+- [x] 3.3.1 Write `quick-filter-row.impl.test.ts` (indent/geometry reposition, off-screen Input clipping, band height) — `packages/datagrid/test/quick-filter-row.impl.test.ts` ✅ (completed: 2026-07-15 15:16)
+- [x] 3.3.2 Full `yarn verify` ✅ (completed: 2026-07-15 15:16)
 
 **Deliverables**: opt-in quick-filter row (AC-1) + header funnel indicator + funnel-click routing (AC-4).
 **Verify**: `yarn verify`

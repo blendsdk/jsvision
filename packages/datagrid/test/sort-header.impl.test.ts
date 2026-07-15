@@ -10,6 +10,7 @@ import type { Column, DispatchEvent, Signal } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import type { SortKey } from '../src/sort.js';
+import type { FilterModel } from '../src/filter.js';
 import { EditableDataGrid } from '../src/grid.js';
 import { SortHeader } from '../src/sort-header.js';
 
@@ -45,6 +46,8 @@ function buildHeader(
     indent: opts.indent ?? signal(0),
     sort,
     onHeaderClick,
+    filterModel: signal<FilterModel>(new Map()),
+    onFunnelClick: () => undefined,
   });
   header.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height: 1 } };
   const root = new Group();
@@ -102,6 +105,8 @@ test('a priority digit renders the 1-based position for a key at index ≥ 2', (
       { columnId: 'a', dir: 'asc' },
     ]),
     onHeaderClick: () => undefined,
+    filterModel: signal<FilterModel>(new Map()),
+    onFunnelClick: () => undefined,
   });
   header.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 1 } };
   const root = new Group();

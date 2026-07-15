@@ -13,7 +13,7 @@
  * overlay on top hosts the cell editor while an edit is open.
  */
 import { Group, ScrollBar, measureAutoWidths, stringWidth, signal } from '@jsvision/ui';
-import type { Column, LayoutProps, View } from '@jsvision/ui';
+import type { Column, DispatchEvent, LayoutProps, View } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { toEngineColumn } from './column.js';
 import type { GridDataSource } from './data-source.js';
@@ -22,6 +22,7 @@ import type { SortKey, SortDir } from './sort.js';
 import { filterRows } from './filter.js';
 import type { FilterModel, ColumnFilter } from './filter.js';
 import { SortHeader } from './sort-header.js';
+import { QuickFilterRow } from './quick-filter-row.js';
 import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
@@ -34,6 +35,11 @@ export interface EditableDataGridOptions<T> {
   readonly source: GridDataSource<T>;
   /** Stripe odd rows for readability (default `false`). */
   readonly zebra?: boolean;
+  /**
+   * Show the opt-in quick-filter row — a band of per-column text inputs below the header that drive a
+   * live `contains` filter as you type (default `false`; the band is never built when off).
+   */
+  readonly quickFilter?: boolean;
   /** The per-cell veto sink — accept or reject each edit (see {@link OnCommit}). */
   readonly onCommit?: OnCommit<T>;
 }
@@ -210,13 +216,16 @@ export class EditableDataGrid<T> extends Group {
     this.overlay = new EditorOverlay();
     this.overlay.layout = { position: 'fill' };
 
+    const columnIds = opts.columns.map((c) => c.id);
     const header = new SortHeader<T>({
       columns: engineCols,
-      columnIds: opts.columns.map((c) => c.id),
+      columnIds,
       autoWidths,
       indent: this.indent,
       sort: this.sortKeys,
       onHeaderClick: (columnId, additive) => (additive ? this.addSort(columnId) : this.sortBy(columnId)),
+      filterModel: this.filters,
+      onFunnelClick: (columnId, anchor, ev) => this.openFilterPopup(columnId, anchor, ev),
     });
     this.rows = new EditableGridRows<T>({
       display: this.display,
@@ -253,6 +262,27 @@ export class EditableDataGrid<T> extends Group {
     topRow.add(header);
     topRow.add(corner());
 
+    // The opt-in quick-filter band: one fixed cell tall, an `fr` band beside a 1-cell corner so it
+    // resolves to the same data width as the header/body and its inputs line up under the columns.
+    let quickRow: Group | undefined;
+    if (opts.quickFilter === true) {
+      const band = new QuickFilterRow<T>({
+        columns: engineCols,
+        columnIds,
+        autoWidths,
+        indent: this.indent,
+        onQuickFilter: (columnId, text) =>
+          text.length === 0
+            ? this.clearFilter(columnId)
+            : this.setFilter(columnId, { kind: 'text', op: 'contains', value: text }),
+      });
+      band.layout = { size: { kind: 'fr', weight: 1 } };
+      quickRow = new Group();
+      quickRow.layout = { direction: 'row', size: { kind: 'fixed', cells: 1 } };
+      quickRow.add(band);
+      quickRow.add(corner());
+    }
+
     const bodyRow = new Group();
     bodyRow.layout = { direction: 'row', size: { kind: 'fr', weight: 1 } };
     bodyRow.add(this.rows);
@@ -268,6 +298,7 @@ export class EditableDataGrid<T> extends Group {
     const inner = new Group();
     inner.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
     inner.add(topRow);
+    if (quickRow !== undefined) inner.add(quickRow); // between header and body when quick-filter is on
     inner.add(bodyRow);
     inner.add(botRow);
 
@@ -424,6 +455,20 @@ export class EditableDataGrid<T> extends Group {
    */
   totalCount(): number {
     return this.source.length();
+  }
+
+  /**
+   * Open a column's filter popup, anchored at its funnel cell. Invoked by the header when a funnel cell
+   * is clicked; the live dispatch envelope is forwarded because the popup mount reuses its focus/popup
+   * seam (`ev.focusView`/`ev.popupHost`) so the popup and its nested dropdowns can focus and open.
+   *
+   * @param _columnId The column whose filter popup to open.
+   * @param _anchor The funnel cell's header-local anchor for positioning the popup.
+   * @param _ev The live dispatch envelope carrying the focus/popup seam.
+   */
+  private openFilterPopup(_columnId: string, _anchor: { x: number; y: number }, _ev: DispatchEvent): void {
+    // The popup itself lands with the condition / value-list popups; the funnel routing is wired now so
+    // the header→container seam (including the forwarded envelope) is exercised from this phase on.
   }
 
   /**
