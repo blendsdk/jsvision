@@ -13,7 +13,7 @@
  * overlay on top hosts the cell editor while an edit is open.
  */
 import { Group, ScrollBar, View, measureAutoWidths, stringWidth, signal } from '@jsvision/ui';
-import type { Column, DispatchEvent, DrawContext, LayoutProps, Signal } from '@jsvision/ui';
+import type { Column, DispatchEvent, DrawContext, Signal } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { toEngineColumn } from './column.js';
 import { visibleOrder, partition, overPinnedIds, clampWidth, DEFAULT_AUTOFIT_MAX } from './column-model.js';
@@ -24,12 +24,22 @@ import type { SortKey, SortDir } from './sort.js';
 import { filterRows, resolveFilterType, computeDistinct } from './filter.js';
 import type { FilterModel, ColumnFilter, DistinctResult } from './filter.js';
 import { SortHeader } from './sort-header.js';
-import { QuickFilterRow } from './quick-filter-row.js';
+import { buildGridBody } from './grid-panels.js';
 import { FilterPopup } from './filter-popup.js';
 import { mountCellOverlay, absoluteRect } from './overlay.js';
 import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
+
+/**
+ * Development-only warning tagged for the datagrid — the single sanctioned `console.*` sink for this
+ * package (a shipped TUI shares the terminal with the screen, so it stays silent in production builds).
+ */
+function devWarn(scope: string, message: string): void {
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn(`[jsvision/datagrid ${scope}] ${message}`);
+  }
+}
 
 /**
  * The filter popup's fixed cell size — wide enough for the operator selector and operands, tall enough
@@ -122,13 +132,6 @@ function materialize<T>(source: GridDataSource<T>): T[] {
 }
 
 /** A fixed 1-cell corner filled in the scroll-bar page colour, so the bar columns read continuously. */
-function corner(): Group {
-  const cell = new Group();
-  cell.background = 'scrollBarPage';
-  cell.layout = { size: { kind: 'fixed', cells: 1 } };
-  return cell;
-}
-
 // --- Tri-state click helpers (pure): a click cycles a key asc → desc → none (AR #4/#5). ---
 
 /** Cycle the sole sorted key: `asc` → `desc`; `desc` → cleared (source order). */
@@ -185,8 +188,16 @@ function withKeyDir(keys: SortKey[], columnId: string, dir: SortDir): SortKey[] 
  * loop.focusView(grid.rows); // focus the body: arrow keys move, F2/Enter/type edits, Enter commits
  */
 export class EditableDataGrid<T> extends Group {
-  /** The focusable body renderer — focus this (a plain `Group` is not a focus target). */
-  readonly rows: EditableGridRows<T>;
+  /**
+   * The focusable body renderer — focus this (a plain `Group` is not a focus target). In a frozen grid
+   * this is the center (horizontally-scrolling) panel; every panel shares one row cursor, so focusing it
+   * and moving the cursor drives all panels together.
+   */
+  get rows(): EditableGridRows<T> {
+    return this._center;
+  }
+  /** The focusable body — the center panel when frozen, the single body otherwise (backs {@link rows}). */
+  private _center!: EditableGridRows<T>;
   /** The absolute overlay host on top of the grid — the cell editor mounts into it while editing. */
   readonly overlay: Group;
   /**
@@ -234,8 +245,6 @@ export class EditableDataGrid<T> extends Group {
   private readonly source: GridDataSource<T>;
   private readonly columnMap: ReadonlyMap<string, GridColumn<T>>;
   private readonly display: () => T[];
-  // The header is retained so the funnel-opened filter popup can anchor to its absolute origin.
-  private readonly header: SortHeader<T>;
   // The disposer for the currently-open filter popup (at most one), or `null` when none is open.
   private popupDispose: (() => void) | null = null;
 
@@ -302,96 +311,60 @@ export class EditableDataGrid<T> extends Group {
     this.popupOverlay = new EditorOverlay();
     this.popupOverlay.layout = { position: 'fill' };
 
-    const columnIds = opts.columns.map((c) => c.id);
-    const header = new SortHeader<T>({
-      columns: engineCols,
-      columnIds,
-      autoWidths,
-      indent: this.indent,
-      sort: this.sortKeys,
-      onHeaderClick: (columnId, additive) => (additive ? this.addSort(columnId) : this.sortBy(columnId)),
-      filterModel: this.filters,
-      onFunnelClick: (columnId, anchor, ev) => this.openFilterPopup(columnId, anchor, ev),
-    });
-    this.header = header;
-    this.rows = new EditableGridRows<T>({
-      display: this.display,
-      columns: engineCols,
-      autoWidths,
-      indent: this.indent,
-      focused: this.focused,
-      selected: this.selected,
-      zebra: opts.zebra ?? false,
-      focusedCol: this.focusedCol,
-      typedColumns: opts.columns,
-      overlay: this.overlay,
-      onCommit: opts.onCommit,
-      rowKey: this.source.rowKey,
-      bumpVersion: () => this.version.set(this.version() + 1),
-      dirty: this.dirty,
-    });
+    // Build the body from the resolved partition — a single body when not frozen, or left/center/right
+    // frozen panels sharing one cursor/scroll. `buildGridBody` owns the band assembly (see grid-panels.ts).
     const vbar = new ScrollBar({ value: this.focused, orientation: 'vertical' });
     const hbar = new ScrollBar({ value: this.indent, orientation: 'horizontal' });
-    this.rows.vbar = vbar; // the body re-limits both bars' ranges on every draw
-    this.rows.hbar = hbar;
+    const parts = buildGridBody<T>(this.initialPartition(), {
+      focused: this.focused,
+      focusedCol: this.focusedCol,
+      selected: this.selected,
+      indent: this.indent,
+      display: this.display,
+      rowKey: this.source.rowKey,
+      engineCols: this.engineCols,
+      columnIndex: this.columnIndex,
+      columnMap: this.columnMap,
+      autoWidths: this.autoWidths,
+      resolvedWidth: (id) => this.resolvedWidth(id),
+      zebra: opts.zebra ?? false,
+      sort: this.sortKeys,
+      filters: this.filters,
+      onHeaderClick: (columnId, additive) => (additive ? this.addSort(columnId) : this.sortBy(columnId)),
+      onFunnelClick: (columnId, anchor, ev, header) => this.openFilterPopup(columnId, anchor, ev, header),
+      quickFilter: opts.quickFilter === true,
+      onQuickFilter: (columnId, text) =>
+        text.length === 0
+          ? this.clearFilter(columnId)
+          : this.setFilter(columnId, { kind: 'text', op: 'contains', value: text }),
+      overlay: this.overlay,
+      onCommit: opts.onCommit,
+      bumpVersion: () => this.version.set(this.version() + 1),
+      dirty: this.dirty,
+      vbar,
+      hbar,
+    });
+    this._center = parts.center;
 
-    // Band layout: header/body/hbar each `fr` beside a fixed 1-cell sibling so all three resolve to the
-    // same data width and their columns line up exactly.
-    const fr: LayoutProps = { size: { kind: 'fr', weight: 1 } };
-    const fixed1: LayoutProps = { size: { kind: 'fixed', cells: 1 } };
-    header.layout = fr;
-    this.rows.layout = fr;
-    vbar.layout = fixed1;
-    hbar.layout = fr;
-
-    const topRow = new Group();
-    topRow.layout = { direction: 'row', size: { kind: 'fixed', cells: 1 } };
-    topRow.add(header);
-    topRow.add(corner());
-
-    // The opt-in quick-filter band: one fixed cell tall, an `fr` band beside a 1-cell corner so it
-    // resolves to the same data width as the header/body and its inputs line up under the columns.
-    let quickRow: Group | undefined;
-    if (opts.quickFilter === true) {
-      const band = new QuickFilterRow<T>({
-        columns: engineCols,
-        columnIds,
-        autoWidths,
-        indent: this.indent,
-        onQuickFilter: (columnId, text) =>
-          text.length === 0
-            ? this.clearFilter(columnId)
-            : this.setFilter(columnId, { kind: 'text', op: 'contains', value: text }),
-      });
-      band.layout = { size: { kind: 'fr', weight: 1 } };
-      quickRow = new Group();
-      quickRow.layout = { direction: 'row', size: { kind: 'fixed', cells: 1 } };
-      quickRow.add(band);
-      quickRow.add(corner());
-    }
-
-    const bodyRow = new Group();
-    bodyRow.layout = { direction: 'row', size: { kind: 'fr', weight: 1 } };
-    bodyRow.add(this.rows);
-    bodyRow.add(vbar);
-
-    const botRow = new Group();
-    botRow.layout = { direction: 'row', size: { kind: 'fixed', cells: 1 } };
-    botRow.add(hbar);
-    botRow.add(corner());
-
-    // The bands stack in an inner column container so the grid's own `layout` prop stays free for the
-    // parent to place it (absolute rect or an `fr` flow slot).
-    const inner = new Group();
-    inner.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
-    inner.add(topRow);
-    if (quickRow !== undefined) inner.add(quickRow); // between header and body when quick-filter is on
-    inner.add(bodyRow);
-    inner.add(botRow);
-
-    this.add(inner); // behind
+    this.add(parts.inner); // behind
     this.add(this.overlay); // above — hosts the cell editor while editing
     this.add(this.popupOverlay); // topmost — hosts the funnel-opened filter popup
+  }
+
+  /**
+   * The partition the panels are built from at construction: the raw freeze split — but folded back to a
+   * single body (with one dev warning) when freezing would leave the center empty, so the center is never
+   * blank. The width-based over-pin that {@link frozen} reports is applied lazily once the real viewport
+   * width is known; the construction-time build is width-independent.
+   */
+  private initialPartition(): FreezePartition {
+    const raw = partition(this.visibleIds(), this.freezeSpec);
+    const overFrozen = raw.center.length === 0 && (raw.left.length > 0 || raw.right.length > 0);
+    if (overFrozen) {
+      devWarn('datagrid', 'every column is frozen — the freeze is ignored so the grid stays scrollable');
+      return { left: [], center: this.visibleIds(), right: [] };
+    }
+    return raw;
   }
 
   /**
@@ -711,8 +684,15 @@ export class EditableDataGrid<T> extends Group {
    * @param columnId The column whose filter popup to open (ignored when unknown).
    * @param anchor The funnel cell's header-local anchor, positioning the popup one row below it.
    * @param ev The live dispatch envelope carrying the focus/popup seam.
+   * @param header The header panel that owns the clicked funnel — the popup anchors to its absolute
+   *   origin, so in a frozen grid it lands under the right panel (the three headers differ in origin).
    */
-  private openFilterPopup(columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent): void {
+  private openFilterPopup(
+    columnId: string,
+    anchor: { x: number; y: number },
+    ev: DispatchEvent,
+    header: SortHeader<T>,
+  ): void {
     const col = this.columnMap.get(columnId);
     if (col === undefined) return; // unknown column — no popup (guarded, never reached in practice)
     this.closeFilterPopup(); // at most one filter popup open at a time
@@ -720,7 +700,7 @@ export class EditableDataGrid<T> extends Group {
     const rows = materialize(this.source);
     const sample = rows.length > 0 ? col.value(rows[0]) : undefined;
     const filterType = resolveFilterType(col, sample);
-    const origin = absoluteRect(this.header);
+    const origin = absoluteRect(header);
     const holder: { popup: FilterPopup<T> | null } = { popup: null };
 
     // A click-away catcher goes in first (below the popup); an outside mouse-down closes the popup.
