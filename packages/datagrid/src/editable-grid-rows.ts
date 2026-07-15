@@ -28,6 +28,12 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
+/** The largest local column index whose region contains content-space x `px`, or -1 when outside. */
+function columnAtX(starts: readonly number[], px: number): number {
+  for (let c = starts.length - 1; c >= 0; c -= 1) if (px >= starts[c]) return c;
+  return -1;
+}
+
 /** The inter-column divider drawn at each column's right edge (matches the base engine). */
 const DIVIDER = '│';
 /** The placeholder drawn once, top-left, for an empty grid (matches the base engine). */
@@ -49,6 +55,34 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
   bumpVersion: () => void;
   /** The shared dirty registry (pending-commit markers); omit to disable dirty tracking. */
   dirty?: DirtyRegistry;
+  /**
+   * This panel's start index in the GLOBAL column order (default `0`). In a frozen-panel grid the
+   * shared `focusedCol` is a single global index; a panel owns `[columnOffset, columnOffset + count)`
+   * and maps the global cursor to its local column via this offset. `0` for a single body.
+   */
+  columnOffset?: number;
+  /**
+   * The GLOBAL visible column count (default: this panel's own column count). The cursor keys move
+   * `focusedCol` over `[0, totalCols())`; a single body's `totalCols` is just its column count, so its
+   * navigation is unchanged.
+   */
+  totalCols?: () => number;
+  /**
+   * Called when a cursor move lands `focusedCol` outside this panel's range, so the container can
+   * re-focus the panel that now owns the cursor (a leaf-focus hop). Omitted for a single body.
+   */
+  onCursorEnterPanel?: (globalCol: number, ev: DispatchEvent) => void;
+  /** When set, a mouse-down sets the global column cursor to the clicked column (frozen-panel mode). */
+  mouseColumns?: boolean;
+  /** When set, moving the cursor to an off-screen column scrolls this panel to reveal it (center panel). */
+  autoScrollColumns?: boolean;
+  /**
+   * Grid-wide focus predicate (frozen-panel mode). When set, the focused-row highlight, the cursor
+   * cell, and the dirty markers light up whenever *any* sibling panel holds focus — not only this
+   * one — so the shared row cursor reads as one continuous row across the frozen boundary. Omit for a
+   * single body (focus is then this view's own).
+   */
+  panelActive?: () => boolean;
 }
 
 /**
@@ -99,6 +133,20 @@ export class EditableGridRows<T> extends GridRows<T> {
   protected readonly bumpVersion: () => void;
   /** The shared dirty registry (pending-commit markers), or `undefined` when dirty tracking is off. */
   protected readonly dirty?: DirtyRegistry;
+  /** This panel's start index in the global column order (`0` for a single body). */
+  readonly columnOffset: number;
+  /** This panel's own column count (the length of its column slice). */
+  readonly columnCount: number;
+  /** The global visible column count (defaults to this panel's own count). */
+  private readonly totalColsFn: () => number;
+  /** Re-focus hop when the cursor leaves this panel's range (frozen-panel mode). */
+  private readonly onCursorEnterPanel?: (globalCol: number, ev: DispatchEvent) => void;
+  /** Whether a mouse-down sets the global column cursor (frozen-panel mode). */
+  private readonly mouseColumns: boolean;
+  /** Whether moving the cursor off-screen scrolls this panel to reveal it (center panel). */
+  private readonly autoScrollColumns: boolean;
+  /** Grid-wide focus predicate (frozen-panel mode); `undefined` for a single body. */
+  private readonly panelActive?: () => boolean;
   /** The in-cell editing lifecycle controller. */
   protected readonly controller: EditController;
 
@@ -114,6 +162,13 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.rowKey = cfg.rowKey;
     this.bumpVersion = cfg.bumpVersion;
     this.dirty = cfg.dirty;
+    this.columnOffset = cfg.columnOffset ?? 0;
+    this.columnCount = cfg.columns.length;
+    this.totalColsFn = cfg.totalCols ?? (() => this.columns.length);
+    this.onCursorEnterPanel = cfg.onCursorEnterPanel;
+    this.mouseColumns = cfg.mouseColumns ?? false;
+    this.autoScrollColumns = cfg.autoScrollColumns ?? false;
+    this.panelActive = cfg.panelActive;
     // The controller reaches this body only through the EditHost seam below — no access to protected state.
     this.controller = createEditController<T>({
       body: this,
@@ -152,7 +207,7 @@ export class EditableGridRows<T> extends GridRows<T> {
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type === 'key') {
-      if (this.handleColKey(inner)) {
+      if (this.handleColKey(inner, ev)) {
         ev.handled = true;
         return;
       }
@@ -161,7 +216,24 @@ export class EditableGridRows<T> extends GridRows<T> {
         return;
       }
     }
+    // Frozen-panel mode: a click sets the global column cursor to the clicked column, then the base
+    // focuses/selects the row. A single body (mouseColumns off) keeps its click behavior unchanged.
+    if (inner.type === 'mouse' && inner.kind === 'down' && this.mouseColumns) {
+      this.setColFromClick(ev);
+    }
     super.onEvent(ev);
+  }
+
+  /** Set the global column cursor from a mouse-down x (frozen-panel mode). */
+  private setColFromClick(ev: DispatchEvent): void {
+    const local = ev.local;
+    if (local === undefined || this.columns.length === 0) return;
+    const width = this.bounds.width;
+    const geom = this.geometry(width);
+    const maxIndent = Math.max(0, geom.totalWidth - width);
+    const indent = Math.min(maxIndent, Math.max(0, this.indent()));
+    const c = columnAtX(geom.starts, local.x + indent);
+    if (c >= 0) this.focusedCol.set(this.columnOffset + c);
   }
 
   /**
@@ -169,7 +241,9 @@ export class EditableGridRows<T> extends GridRows<T> {
    * through to the base (row activate/select), so `Enter`/`Space` still work there.
    */
   private tryBeginEdit(inner: KeyEvent, ev: DispatchEvent): boolean {
-    const col = this.typedColumns[this.focusedCol()];
+    const c = this.localCol();
+    if (c < 0) return false; // the cursor is in another panel — not ours to edit
+    const col = this.typedColumns[c];
     if (col === undefined || !isEditable(col)) return false; // read-only → base handles it
     if (inner.key === 'f2' || inner.key === 'enter') {
       this.controller.beginEdit(ev);
@@ -188,12 +262,12 @@ export class EditableGridRows<T> extends GridRows<T> {
     return false;
   }
 
-  /** The focused cell (row + column), or `null` when the grid is empty. */
+  /** The focused cell (row + column), or `null` when the grid is empty. `col` is this panel's LOCAL index. */
   private currentCell(): CellRef<T> | null {
     const rows = this.display();
     if (rows.length === 0) return null;
     const row = rows[clamp(this.focused(), 0, rows.length - 1)];
-    const c = clamp(this.focusedCol(), 0, this.typedColumns.length - 1);
+    const c = clamp(Math.max(0, this.localCol()), 0, this.typedColumns.length - 1);
     return { row, rowKey: this.rowKey(row), col: c, columnId: this.typedColumns[c].id };
   }
 
@@ -201,7 +275,7 @@ export class EditableGridRows<T> extends GridRows<T> {
   private cellRect(): CellRect {
     const width = this.bounds.width;
     const geom = this.geometry(width);
-    const c = clamp(this.focusedCol(), 0, this.columns.length - 1);
+    const c = clamp(Math.max(0, this.localCol()), 0, this.columns.length - 1);
     const maxIndent = Math.max(0, geom.totalWidth - width);
     const indent = Math.min(maxIndent, Math.max(0, this.indent()));
     const range = this.display().length;
@@ -214,53 +288,83 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.focused.set(clamp(this.focused() + 1, 0, Math.max(0, this.display().length - 1)));
   }
 
-  /** Apply a column-cursor / grid-corner key; returns whether it was consumed here. */
-  private handleColKey(inner: KeyEvent): boolean {
+  /**
+   * Apply a column-cursor / grid-corner key; returns whether it was consumed. The cursor is a single
+   * GLOBAL index over `[0, totalCols())`, so `←`/`→` cross a frozen-panel boundary (a linear sequence)
+   * and `Home`/`End` reach the first/last column of the whole grid; `Ctrl+Home`/`Ctrl+End` also jump
+   * the row. For a single body `totalCols` is its own column count, so this is unchanged.
+   */
+  private handleColKey(inner: KeyEvent, ev: DispatchEvent): boolean {
     switch (inner.key) {
       case 'left':
-        this.moveCol(-1);
+        this.setGlobalCol(this.focusedCol() - 1, ev);
         return true;
       case 'right':
-        this.moveCol(1);
+        this.setGlobalCol(this.focusedCol() + 1, ev);
         return true;
       case 'home':
-        if (inner.ctrl) this.gridStart();
-        else this.colFirst();
+        if (inner.ctrl) this.focused.set(0);
+        this.setGlobalCol(0, ev);
         return true;
       case 'end':
-        if (inner.ctrl) this.gridEnd();
-        else this.colLast();
+        if (inner.ctrl) this.focused.set(Math.max(0, this.display().length - 1));
+        this.setGlobalCol(this.totalCols() - 1, ev);
         return true;
       default:
         return false;
     }
   }
 
-  /** Move the column cursor by `delta`, clamped to `[0, columns-1]`. */
-  protected moveCol(delta: number): void {
-    this.focusedCol.set(clamp(this.focusedCol() + delta, 0, this.columns.length - 1));
+  /** The global visible column count (a single body's own count by default). */
+  protected totalCols(): number {
+    return this.totalColsFn();
   }
 
-  /** Move the column cursor to the first column. */
-  protected colFirst(): void {
-    this.focusedCol.set(0);
+  /** This panel's local cursor index, or -1 when the global cursor is in another panel. */
+  protected localCol(): number {
+    const l = this.focusedCol() - this.columnOffset;
+    return l >= 0 && l < this.columns.length ? l : -1;
   }
 
-  /** Move the column cursor to the last column. */
-  protected colLast(): void {
-    this.focusedCol.set(Math.max(0, this.columns.length - 1));
+  /**
+   * Whether the grid (this view or, in frozen-panel mode, any sibling panel) currently holds focus —
+   * the focus test the row highlight, cursor cell, and dirty markers key on. A single body reports its
+   * own focus; a frozen panel defers to the container's `panelActive` predicate (which reactively reads
+   * every panel's focus tick) so the shared row cursor lights up as one row across the freeze boundary.
+   */
+  protected gridActive(): boolean {
+    return this.panelActive ? this.panelActive() : this.state.focused;
   }
 
-  /** Jump to the first cell of the grid (top-left). */
-  protected gridStart(): void {
-    this.focused.set(0);
-    this.focusedCol.set(0);
+  /**
+   * Set the GLOBAL column cursor (clamped to `[0, totalCols)`); auto-scroll this panel to reveal the
+   * column if it lands here (center panel), and — if it lands in another panel — ask the container to
+   * re-focus the panel that now owns the cursor (a leaf-focus hop). Single body: no hop, no auto-scroll.
+   */
+  protected setGlobalCol(g: number, ev: DispatchEvent): void {
+    const clamped = clamp(g, 0, Math.max(0, this.totalCols() - 1));
+    this.focusedCol.set(clamped);
+    this.autoScrollToCol(clamped);
+    const inThisPanel = clamped >= this.columnOffset && clamped < this.columnOffset + this.columns.length;
+    if (!inThisPanel) this.onCursorEnterPanel?.(clamped, ev);
   }
 
-  /** Jump to the last cell of the grid (bottom-right). */
-  protected gridEnd(): void {
-    this.focused.set(Math.max(0, this.display().length - 1));
-    this.focusedCol.set(Math.max(0, this.columns.length - 1));
+  /** Scroll this panel horizontally so the focused column is visible (center panel only). */
+  private autoScrollToCol(g: number): void {
+    if (!this.autoScrollColumns) return;
+    const local = g - this.columnOffset;
+    if (local < 0 || local >= this.columns.length) return; // cursor not in this panel
+    const width = this.bounds.width;
+    if (width <= 0) return;
+    const geom = this.geometry(width);
+    const start = geom.starts[local];
+    const end = start + geom.widths[local];
+    const maxIndent = Math.max(0, geom.totalWidth - width);
+    let indent = Math.min(maxIndent, Math.max(0, this.indent()));
+    if (start < indent)
+      indent = start; // scroll left to reveal
+    else if (end > indent + width) indent = Math.min(maxIndent, end - width); // scroll right
+    if (indent !== this.indent()) this.indent.set(indent);
   }
 
   /**
@@ -300,8 +404,8 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.updateTop();
     const top = this.topItem;
     const focusedRow = clamp(this.focused(), 0, range - 1);
-    const focusedCol = clamp(this.focusedCol(), 0, this.columns.length - 1);
-    const active = this.state.focused;
+    const focusedCol = this.localCol(); // -1 when the cursor is in another panel → no cursor cell here
+    const active = this.gridActive();
     const selected = this.selected();
     const divider = ctx.color('listDivider');
 
@@ -391,9 +495,9 @@ export class EditableGridRows<T> extends GridRows<T> {
     const geom = this.geometry(width);
     const maxIndent = Math.max(0, geom.totalWidth - width);
     const indent = Math.min(maxIndent, Math.max(0, this.indent()));
-    const active = this.state.focused;
+    const active = this.gridActive();
     const focusedRow = clamp(this.focused(), 0, range - 1);
-    const focusedCol = clamp(this.focusedCol(), 0, this.columns.length - 1);
+    const focusedCol = this.localCol(); // -1 when the cursor is in another panel → no cursor cell here
     const selected = this.selected();
     const dirtyFg = ctx.color('gridDirty').fg;
     const cursorBg = ctx.color('gridCursor').bg;
@@ -426,20 +530,22 @@ export class EditableGridRows<T> extends GridRows<T> {
 
   /**
    * Overpaint the focused cell as a filled `gridCursor` box with its text redrawn on top — but only
-   * while the body has focus (colour-only focus, matching the base). Uses the same geometry + indent
+   * while the grid has focus (this body, or any sibling panel in frozen mode; colour-only focus,
+   * matching the base) and this panel owns the global cursor column. Uses the same geometry + indent
    * clamp as the base so the box lines up exactly with the painted cell; `ctx` clips anything scrolled
    * off-screen, so no extra horizontal bounds math is needed.
    *
    * @param ctx The clipped, view-local paint context.
    */
   protected paintCursorCell(ctx: DrawContext): void {
-    if (!this.state.focused) return;
+    if (!this.gridActive()) return;
     const width = ctx.size.width;
     const range = this.display().length;
     const n = this.columns.length;
     if (range === 0 || n === 0) return;
 
-    const c = clamp(this.focusedCol(), 0, n - 1);
+    const c = this.localCol(); // the cursor cell is painted only by the panel that owns the cursor
+    if (c < 0) return;
     const geom = this.geometry(width);
     const w = geom.widths[c];
     if (w <= 0) return;

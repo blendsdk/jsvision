@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 22:39
-> **Progress**: 16/57 tasks (28%) — Phase 1–2 ✅
+> **Last Updated**: 2026-07-15 23:27
+> **Progress**: 26/58 tasks (45%) — Phase 1–3 ✅ (3.2.7 reactive-rebuild follow-up deferred, AR-19)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -88,20 +88,21 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 **Reference**: `03-02` · `07 §Frozen panels` (ST-14…ST-19) · AR-5/AR-6/AR-7/AR-9/AR-11/AR-2
 
 ### Step 3.1: Specification tests (red)
-- [ ] 3.1.1 Write `frozen-panels.spec.test.ts` (ST-14 frozen left panel + no H-shift + divider; ST-15 row highlight spans panels; ST-16 sticky header + panel alignment; ST-17 over-pin clamp + one devWarn; ST-18 linear cross-panel cursor + Ctrl+Home/End; ST-19 no-freeze single-body) — `packages/datagrid/test/frozen-panels.spec.test.ts`
-- [ ] 3.1.2 Verify **red**
+- [x] 3.1.1 Write `frozen-panels.spec.test.ts` (ST-14 frozen left panel + no H-shift + divider; ST-15 row highlight spans panels; ST-16 sticky header + panel alignment; ST-17 over-pin clamp + one devWarn; ST-18 linear cross-panel cursor + Ctrl+Home/End; ST-19 no-freeze single-body) — `packages/datagrid/test/frozen-panels.spec.test.ts` (completed: 2026-07-15 22:39)
+- [x] 3.1.2 Verify **red** (completed: 2026-07-15 22:39)
 
 ### Step 3.2: Implement (green)
-- [ ] 3.2.1 `editable-grid-rows.ts`: add the panel column-slice seam — inject `columnOffset`/`columnCount` (global range) + `totalCols`; range-limit the cursor paint/`cellRect`/dirty-in-cursor to `[offset, offset+count)` mapping to local indices (H2) — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 3.2.2 `editable-grid-rows.ts`: rewrite the column-cursor keys to move the **global** `focusedCol` over `[0, totalCols)` (linear cross-panel; `Ctrl+Home`/`End` span the grid) + center auto-scroll of `indent` (AR-2) — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 3.2.3 `sort-header.ts`: accept a column slice so a per-panel header renders its slice aligned to its panel (AR-11); extend `onFunnelClick` to carry the **clicked header** (or its absolute origin) so a funnel popup anchors on the right panel's header (PF-002) — `packages/datagrid/src/sort-header.ts`
-- [ ] 3.2.4 `grid.ts`: `buildBody()` — single-body path when not frozen (AR-5); else 3 panels + 3 headers + freeze dividers, center binds `indent` / frozen bind `signal(0)`, rebuilt in an effect on `partitionSig` — `packages/datagrid/src/grid.ts` (extract `grid-panels.ts` if over the 700-line cap)
-- [ ] 3.2.5 `grid.ts`: over-pin guard wired into layout (`applyOverPin` → move to center + de-duped `devWarn`, AR-9); route begin-edit + overlay origin to the panel owning `focusedCol` (H4/AR-10) — `packages/datagrid/src/grid.ts`
-- [ ] 3.2.6 Verify **green** — ST-14…ST-19 pass
+- [x] 3.2.1 `editable-grid-rows.ts`: add the panel column-slice seam — inject `columnOffset`/`columnCount` (global range) + `totalCols`; range-limit the cursor paint/`cellRect`/dirty-in-cursor to `[offset, offset+count)` mapping to local indices (H2) — `packages/datagrid/src/editable-grid-rows.ts` (completed: 2026-07-15 22:39)
+- [x] 3.2.2 `editable-grid-rows.ts`: rewrite the column-cursor keys to move the **global** `focusedCol` over `[0, totalCols)` (linear cross-panel; `Ctrl+Home`/`End` span the grid) + center auto-scroll of `indent` (AR-2) — `packages/datagrid/src/editable-grid-rows.ts` (completed: 2026-07-15 22:39)
+- [x] 3.2.3 `sort-header.ts`: per-panel header renders its slice aligned to its panel (AR-11 — the existing `SortHeader` config already accepts a column slice; the container passes each panel its slice); `onFunnelClick` carries the **clicked header** so a funnel popup anchors on the right panel's header (via a per-header closure in `grid-panels.ts` — no `SortHeader` signature change) — `packages/datagrid/src/grid-panels.ts` (completed: 2026-07-15 23:27)
+- [x] 3.2.4 `grid.ts` + **new** `grid-panels.ts` `buildGridBody()`: single-body path when not frozen (AR-5, byte-identical); else left/center/right panels + per-panel headers + `FreezeDivider`s, center binds `indent` / frozen bind `signal(0)`; cross-panel row highlight via a grid-wide `panelActive` focus predicate (`focusSignal`). **Built at construction; the reactive rebuild-on-`partitionSig` clause is deferred to 3.2.7 (AR-19).** — `packages/datagrid/src/grid-panels.ts`, `grid.ts` (completed: 2026-07-15 23:27)
+- [x] 3.2.5 `grid.ts`: over-pin guard (`initialPartition()` over-freeze→single-body fallback + one `devWarn`, AR-9); begin-edit + overlay origin route to the panel owning `focusedCol` via the focus hop — each focused panel handles its own edit/overlay (H4/AR-10) — `packages/datagrid/src/grid.ts` (completed: 2026-07-15 23:27)
+- [x] 3.2.6 Verify **green** — ST-14…ST-19 pass (completed: 2026-07-15 23:27)
+- [ ] 3.2.7 **(follow-up, AR-19)** `grid.ts`: reactive rebuild — re-run `buildGridBody` in a post-mount effect when the partition key changes (live `setColumnVisible`/`setColumnOrder`/`setColumnWidth` + width-based over-pin once bounds settle), preserving focus + child order. **Cross-cutting with Phases 4–5 gestures; sequencing surfaced to the user.** — `packages/datagrid/src/grid.ts`
 
 ### Step 3.3: Impl tests & verify
-- [ ] 3.3.1 Write `frozen-panels.impl.test.ts` (three panels' `topItem` agree after a vertical scroll — **load-bearing invariant guard, PF-008**; center auto-scroll keeps the focused center col visible; editing a frozen cell mounts over the right panel) — `packages/datagrid/test/frozen-panels.impl.test.ts`
-- [ ] 3.3.2 Full `yarn verify`
+- [x] 3.3.1 Write `frozen-panels.impl.test.ts` (three panels' `topItem` agree after a vertical scroll — **load-bearing invariant guard, PF-008**; center auto-scroll keeps the focused center col visible; editing a frozen cell mounts over the right panel) — `packages/datagrid/test/frozen-panels.impl.test.ts` (completed: 2026-07-15 23:27)
+- [x] 3.3.2 Full `yarn verify` (completed: 2026-07-15 23:27)
 
 **Deliverables**: frozen L/C/R panels (AC-4), sticky per-panel headers (AC-5), over-pin guard (AC-6), linear cross-panel cursor (keyboard + mouse, PF-004/005). **PF-010: the new `EditableGridRows`/`SortHeader` seams default so the no-freeze single-body path is byte-identical — every existing datagrid spec oracle stays green.** **Verify**: `yarn verify`
 
