@@ -352,3 +352,26 @@ test('ST-27: the push-down filter model is a structured map of literal operands,
   expect(model).toBeInstanceOf(Map); // a ReadonlyMap, not a string
   expect(model?.get('qty')).toEqual({ kind: 'number', op: 'between', a: 100, b: 500 }); // structured literals
 });
+
+// ST-26 — an unknown columnId in ANY column-layout call is ignored and never enters layout state.
+test('ST-26: an unknown columnId in every column-layout call is a no-op, never entering state', () => {
+  interface Row {
+    a: string;
+    b: number;
+  }
+  const cols = [
+    column<Row, string>({ id: 'a', title: 'A', value: (r) => r.a }),
+    column<Row, number>({ id: 'b', title: 'B', value: (r) => r.b }),
+  ];
+  const grid = new EditableDataGrid<Row>({
+    columns: cols,
+    source: fromRows(signal([{ a: 'x', b: 1 }]), { rowKey: (r) => r.a }),
+  });
+  const before = grid.columnOrder();
+  grid.setColumnOrder(['a', 'zzz']); // not a permutation of the visible ids → ignored
+  grid.setColumnWidth('zzz', 50); // unknown → no-op
+  grid.setColumnVisible('zzz', false); // unknown → no-op
+  grid.autoFitColumn('zzz'); // unknown → no-op
+  expect(grid.columnOrder()).toEqual(before); // order unchanged
+  expect(grid.frozen()).toEqual({ left: [], right: [] }); // no freeze introduced
+});

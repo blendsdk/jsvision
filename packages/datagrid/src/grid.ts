@@ -13,9 +13,11 @@
  * overlay on top hosts the cell editor while an edit is open.
  */
 import { Group, ScrollBar, View, measureAutoWidths, stringWidth, signal } from '@jsvision/ui';
-import type { Column, DispatchEvent, DrawContext, LayoutProps } from '@jsvision/ui';
+import type { Column, DispatchEvent, DrawContext, LayoutProps, Signal } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { toEngineColumn } from './column.js';
+import { visibleOrder, partition, overPinnedIds, clampWidth, DEFAULT_AUTOFIT_MAX } from './column-model.js';
+import type { FreezeSpec, FreezePartition } from './column-model.js';
 import type { GridDataSource } from './data-source.js';
 import { sortRowsMulti } from './sort.js';
 import type { SortKey, SortDir } from './sort.js';
@@ -52,6 +54,16 @@ export interface EditableDataGridOptions<T> {
   readonly quickFilter?: boolean;
   /** The per-cell veto sink — accept or reject each edit (see {@link OnCommit}). */
   readonly onCommit?: OnCommit<T>;
+  /** Column ids to pin to the left (frozen) panel. */
+  readonly freezeLeft?: string[];
+  /** Column ids to pin to the right (frozen) panel. */
+  readonly freezeRight?: string[];
+  /** Shorthand for freezing the first N columns to the left (ignored when `freezeLeft` is set). */
+  readonly freeze?: number;
+  /** Pin the first N data rows as a non-scrolling band (the horizontal mirror of frozen columns). */
+  readonly freezeRows?: number;
+  /** Row density: `'compact'` drops the inter-column divider for a denser view (default `'normal'`). */
+  readonly density?: 'normal' | 'compact';
 }
 
 /**
@@ -201,6 +213,22 @@ export class EditableDataGrid<T> extends Group {
   // `setFilter`/`clearFilter` API all drive this one signal; `display` filters from it on the client
   // path and the push-down effect forwards it when the source exposes `setFilter` (twin of `sortKeys`).
   private readonly filters = signal<FilterModel>(new Map());
+  // Column-layout state — the reactive twins of `sortKeys`/`filters`: the full column order (all ids,
+  // hidden included), per-column width overrides, and the hidden set. The panels derive their sliced
+  // columns from these; the layout API below drives them.
+  private readonly columnOrderSig: Signal<string[]>;
+  private readonly columnWidths = signal<Map<string, number>>(new Map());
+  private readonly hidden = signal<Set<string>>(new Set());
+  private readonly freezeSpec: FreezeSpec;
+  // Derived projections: the visible order (order minus hidden) and the frozen left/center/right
+  // partition with over-pinned columns pushed back to the center (so the center is never blank).
+  private readonly visibleIds: () => string[];
+  private readonly partitionSig: () => FreezePartition;
+  // The engine columns (accessor/title/width) + an id→index map, retained so the layout API can resolve
+  // and auto-fit widths; the auto-width measure is shared with the header and body.
+  private readonly engineCols: Column<T>[];
+  private readonly columnIndex: ReadonlyMap<string, number>;
+  private readonly autoWidths: () => (number | null)[];
   // `source`, `columnMap`, and `display` are instance fields (not constructor locals) because the sort
   // API methods below — `applySort`/`sortBy`/`addSort` — read them.
   private readonly source: GridDataSource<T>;
@@ -218,6 +246,10 @@ export class EditableDataGrid<T> extends Group {
   constructor(opts: EditableDataGridOptions<T>) {
     super();
     const engineCols: Column<T>[] = opts.columns.map((c) => toEngineColumn(c));
+    this.engineCols = engineCols;
+    this.columnIndex = new Map(opts.columns.map((c, i) => [c.id, i]));
+    this.columnOrderSig = signal<string[]>(opts.columns.map((c) => c.id));
+    this.freezeSpec = { freezeLeft: opts.freezeLeft, freezeRight: opts.freezeRight, freeze: opts.freeze };
     this.source = opts.source;
     this.columnMap = new Map(opts.columns.map((c) => [c.id, c]));
 
@@ -235,6 +267,15 @@ export class EditableDataGrid<T> extends Group {
       return rows;
     });
     const autoWidths = this.derived(() => measureAutoWidths(engineCols, this.display(), stringWidth));
+    this.autoWidths = autoWidths;
+    // Visible order = full order minus hidden; partition = the frozen left/center/right split with any
+    // over-pinned columns pushed back to the center (so the center is never blank). Both derive lazily.
+    this.visibleIds = this.derived(() => visibleOrder(this.columnOrderSig(), this.hidden()));
+    this.partitionSig = this.derived(() => {
+      const part = partition(this.visibleIds(), this.freezeSpec);
+      const over = overPinnedIds(part, (id) => this.resolvedWidth(id), this.viewportWidth());
+      return this.applyOverPin(part, over);
+    });
 
     // Push-down: delegate ordering/filtering to the source whenever a model changes — SEPARATE, guarded
     // effects (never inside `display`, so `display` stays pure and a re-query can't loop through it).
@@ -502,6 +543,146 @@ export class EditableDataGrid<T> extends Group {
    */
   totalCount(): number {
     return this.source.length();
+  }
+
+  /**
+   * The visible column order (the full order minus hidden columns). Reactive — reading it inside an
+   * effect re-runs when the order, visibility, or a reorder changes.
+   *
+   * @returns The visible column ids, in order.
+   */
+  columnOrder(): string[] {
+    return this.visibleIds();
+  }
+
+  /**
+   * Reorder the visible columns. Accepts a permutation of the **currently-visible** ids; the new
+   * order is spliced back into the full order so hidden columns keep their anchor slots. A non-
+   * permutation (unknown id, wrong length, duplicate) is ignored.
+   *
+   * @param ids The visible ids in their new order.
+   */
+  setColumnOrder(ids: string[]): void {
+    const visible = this.visibleIds();
+    if (ids.length !== visible.length) return; // wrong length
+    const target = new Set(ids);
+    if (target.size !== ids.length) return; // duplicate id
+    for (const id of visible) if (!target.has(id)) return; // must be the same set of ids
+    // Splice the new visible order back into the full order; hidden columns keep their positions.
+    const hidden = this.hidden();
+    let vi = 0;
+    const next = this.columnOrderSig().map((id) => (hidden.has(id) ? id : ids[vi++]));
+    this.columnOrderSig.set(next);
+  }
+
+  /**
+   * The resolved width of a column in cells: an explicit override if set, else the column's declared
+   * fixed width, else its measured auto width, else its title width. Reactive.
+   *
+   * @param id The column id.
+   * @returns The resolved width in cells (0 for an unknown id).
+   */
+  columnWidth(id: string): number {
+    return this.resolvedWidth(id);
+  }
+
+  /**
+   * Set a column's explicit width, clamped to the column's `[minWidth, maxWidth]`. An unknown id is
+   * ignored. The override makes the column apportion as a fixed width.
+   *
+   * @param id The column id.
+   * @param w The requested width in cells (clamped).
+   */
+  setColumnWidth(id: string, w: number): void {
+    const col = this.columnMap.get(id);
+    if (col === undefined) return; // unknown → no-op
+    const next = new Map(this.columnWidths());
+    next.set(id, clampWidth(w, col.minWidth, col.maxWidth));
+    this.columnWidths.set(next);
+  }
+
+  /**
+   * Show or hide a column. A hidden column is omitted from the visible order/layout but stays
+   * addressable by id for sort/filter (its sort/filter state is retained and reappears when shown).
+   * An unknown id is ignored.
+   *
+   * @param id The column id.
+   * @param visible `false` to hide, `true` to show.
+   */
+  setColumnVisible(id: string, visible: boolean): void {
+    if (!this.columnMap.has(id)) return; // unknown → no-op
+    const next = new Set(this.hidden());
+    if (visible) next.delete(id);
+    else next.add(id);
+    this.hidden.set(next);
+  }
+
+  /**
+   * The resolved frozen partition: which visible columns are pinned left and right (over-pinned
+   * columns are pushed back to the center, so this reflects what actually renders frozen). Reactive.
+   *
+   * @returns The left- and right-pinned column ids, in order.
+   */
+  frozen(): { left: string[]; right: string[] } {
+    const p = this.partitionSig();
+    return { left: p.left, right: p.right };
+  }
+
+  /**
+   * Size a column to its widest visible cell (its title or any displayed value), floored to the
+   * column's `minWidth` and bounded by its `maxWidth` (or a generous default). Stores the result as an
+   * explicit width override. An unknown id is ignored.
+   *
+   * @param id The column id.
+   */
+  autoFitColumn(id: string): void {
+    const col = this.columnMap.get(id);
+    const idx = this.columnIndex.get(id);
+    if (col === undefined || idx === undefined) return; // unknown → no-op
+    const engine = this.engineCols[idx];
+    let w = stringWidth(engine.title);
+    for (const row of this.display()) w = Math.max(w, stringWidth(engine.accessor(row)));
+    const next = new Map(this.columnWidths());
+    next.set(id, clampWidth(w, col.minWidth, col.maxWidth ?? DEFAULT_AUTOFIT_MAX));
+    this.columnWidths.set(next);
+  }
+
+  /** Auto-fit every visible column (see {@link EditableDataGrid.autoFitColumn}). */
+  autoFitAll(): void {
+    for (const id of this.visibleIds()) this.autoFitColumn(id);
+  }
+
+  /** The resolved width of a column: override → declared fixed → measured auto → title width. */
+  private resolvedWidth(id: string): number {
+    const override = this.columnWidths().get(id);
+    if (override !== undefined) return override;
+    const idx = this.columnIndex.get(id);
+    if (idx === undefined) return 0;
+    const col = this.engineCols[idx];
+    if (typeof col.width === 'number') return col.width;
+    const auto = this.autoWidths()[idx];
+    if (auto !== null && auto !== undefined) return auto;
+    return stringWidth(col.title);
+  }
+
+  /** The grid's usable content width in cells (drives the over-pin guard). */
+  private viewportWidth(): number {
+    return Math.max(0, this.bounds.width);
+  }
+
+  /** Move the over-pinned ids from their frozen panels back into the center (never a blank center). */
+  private applyOverPin(part: FreezePartition, over: string[]): FreezePartition {
+    if (over.length === 0) return part;
+    const overSet = new Set(over);
+    return {
+      left: part.left.filter((id) => !overSet.has(id)),
+      center: [
+        ...part.left.filter((id) => overSet.has(id)),
+        ...part.center,
+        ...part.right.filter((id) => overSet.has(id)),
+      ],
+      right: part.right.filter((id) => !overSet.has(id)),
+    };
   }
 
   /**

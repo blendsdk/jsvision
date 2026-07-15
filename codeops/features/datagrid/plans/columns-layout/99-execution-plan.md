@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 22:28
-> **Progress**: 7/57 tasks (12%) — Phase 1 ✅
+> **Last Updated**: 2026-07-15 22:39
+> **Progress**: 16/57 tasks (28%) — Phase 1–2 ✅
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -65,19 +65,19 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 **Reference**: `03-04` · `07 §Container API` (ST-8…ST-13) + `§Security` (ST-26) · AR-13/AR-4/AR-9
 
 ### Step 2.1: Specification tests (red)
-- [ ] 2.1.1 Write `grid-layout.spec.test.ts` (ST-8 width clamp/unknown no-op; ST-9 setColumnOrder permutation; ST-10 setColumnVisible + sort-still-works; ST-11 `frozen()`; ST-12 autoFit bound; ST-13 min/max threaded to engine) — `packages/datagrid/test/grid-layout.spec.test.ts`
-- [ ] 2.1.2 Add ST-26 (unknown id in every layout call is ignored, never enters state) to `security.spec.test.ts`
-- [ ] 2.1.3 Verify **red**
+- [x] 2.1.1 Write `grid-layout.spec.test.ts` (ST-8 width clamp/unknown no-op; ST-9 setColumnOrder permutation; ST-10 setColumnVisible + sort-still-works; ST-11 `frozen()`; ST-12 autoFit bound; ST-13 min/max threaded to engine) — `packages/datagrid/test/grid-layout.spec.test.ts` ✅ (completed: 2026-07-15 22:39)
+- [x] 2.1.2 Add ST-26 (unknown id in every layout call is ignored, never enters state) to `security.spec.test.ts` ✅ (completed: 2026-07-15 22:39)
+- [x] 2.1.3 Verify **red** ✅ (completed: 2026-07-15 22:39)
 
 ### Step 2.2: Implement (green)
-- [ ] 2.2.1 `column.ts`: add `readonly minWidth?`/`maxWidth?` to `GridColumn`; thread both in `toEngineColumn` (ST-13) — `packages/datagrid/src/column.ts`
-- [ ] 2.2.2 `grid.ts`: add `columnOrderSig`/`columnWidths`/`hidden` signals + `freezeSpec`; add `visibleIds`/`partitionSig` derived computeds (incl. `applyOverPin` + `overPinnedIds`) — `packages/datagrid/src/grid.ts`
-- [ ] 2.2.3 `grid.ts`: add the reactive API (`columnOrder`/`setColumnOrder`/`columnWidth`/`setColumnWidth`/`setColumnVisible`/`frozen`/`autoFitColumn`/`autoFitAll`) with unknown-id guards (AC-3, AC-9) — `packages/datagrid/src/grid.ts`
-- [ ] 2.2.4 Barrel + `EditableDataGridOptions` docs: `freezeLeft`/`freezeRight`/`freeze`/`freezeRows`/`density` options + `@example` — `packages/datagrid/src/index.ts`, `grid.ts`
-- [ ] 2.2.5 Verify **green** — ST-8…ST-13, ST-26 pass
+- [x] 2.2.1 `column.ts`: add `readonly minWidth?`/`maxWidth?` to `GridColumn`; thread both in `toEngineColumn` (ST-13) — `packages/datagrid/src/column.ts` ✅ (completed: 2026-07-15 22:39)
+- [x] 2.2.2 `grid.ts`: add `columnOrderSig`/`columnWidths`/`hidden` signals + `freezeSpec`; add `visibleIds`/`partitionSig` derived computeds (incl. `applyOverPin` + `overPinnedIds`) — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-15 22:39)
+- [x] 2.2.3 `grid.ts`: add the reactive API (`columnOrder`/`setColumnOrder`/`columnWidth`/`setColumnWidth`/`setColumnVisible`/`frozen`/`autoFitColumn`/`autoFitAll`) with unknown-id guards (AC-3, AC-9) — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-15 22:39)
+- [x] 2.2.4 Barrel + `EditableDataGridOptions` docs: `freezeLeft`/`freezeRight`/`freeze`/`freezeRows`/`density` options + `@example` — `packages/datagrid/src/index.ts`, `grid.ts` ✅ (completed: 2026-07-15 22:39)
+- [x] 2.2.5 Verify **green** — ST-8…ST-13, ST-26 pass ✅ (completed: 2026-07-15 22:39)
 
 ### Step 2.3: Verify
-- [ ] 2.3.1 Full `yarn verify`
+- [x] 2.3.1 Full `yarn verify` ✅ (completed: 2026-07-15 22:39)
 
 **Deliverables**: reactive column-layout API + per-column min/max; over-pin projection (no UI yet). **Verify**: `yarn verify`
 
