@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 12:37
-> **Progress**: 16/30 tasks (53%) — Phases 1–2 complete
+> **Last Updated**: 2026-07-15 13:01
+> **Progress**: 26/30 tasks (87%) — Phases 1–3 complete
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -127,34 +127,34 @@ change is Phase 1's additive optional mouse modifiers.
 **Reference**: `03-02` · `07` (ST-13 … ST-20) · AR #1, #3, #5, #6, #7, #14, #16
 **Objective**: Pin header render + click machine + wiring + re-anchor + readout + the safe unwind.
 
-- [ ] 3.1.1 Write `sort-header.spec.test.ts` covering ST-13 … ST-20 (click sorts + `▲`; Ctrl+click adds key 2 + `1`/`2`; plain-click resets from multi; push-down spy vs client `sortRowsMulti`; tri-state asc→desc→none; cursor re-anchor by row-key; `grid.sort()` readout; empty sort ⇒ no indicator + source order) — `packages/datagrid/test/sort-header.spec.test.ts`. (Mouse events are new to the datagrid suite — use the two seams in `07 §Test-seam note`: barrel-exported `SortHeader` + synthetic `DispatchEvent` for unit-level; `loop.dispatch({type:'mouse',kind:'down',x,y:0,…})` for container-level.)
-- [ ] 3.1.2 Verify RED — fails (header suppressed, no sort API yet)
+- [x] 3.1.1 Write `sort-header.spec.test.ts` covering ST-13 … ST-20 (click sorts + `▲`; Ctrl+click adds key 2 + `1`/`2`; plain-click resets from multi; push-down spy vs client `sortRowsMulti`; tri-state asc→desc→none; cursor re-anchor by row-key; `grid.sort()` readout; empty sort ⇒ no indicator + source order) — `packages/datagrid/test/sort-header.spec.test.ts`. (Mouse events are new to the datagrid suite — use the two seams in `07 §Test-seam note`: barrel-exported `SortHeader` + synthetic `DispatchEvent` for unit-level; `loop.dispatch({type:'mouse',kind:'down',x,y:1,…})` for container-level — note `loop.dispatch` takes 1-based coords.) ✅ (completed: 2026-07-15 12:57)
+- [x] 3.1.2 Verify RED — fails (header suppressed, no sort API yet) ✅ (completed: 2026-07-15 12:51)
 
 ### Step 3.2: Implementation (GREEN)
 
 **Reference**: `03-02 §Implementation Details` · AR #1, #3, #5, #6, #7, #10, #14
 **Objective**: Own the header + unwind the suppression + wire the model.
 
-- [ ] 3.2.1 Create `sort-header.ts`: `SortHeader` View + `SortHeaderConfig` — self-contained `draw()` (arrows + priority digits, indicator-cell reservation per AR #10, shared `apportionColumns`/`alignCell`/`stringWidth`), `onEvent()` columnId hit-test (`columnAtX`), reads `inner.ctrl` — `packages/datagrid/src/sort-header.ts`
-- [ ] 3.2.2 `grid.ts`: remove `ReadonlyGridHeader`, the `signal<SortState>(null)`, and the `SortState`/`GridHeader` imports; **promote `source`, `display`, and the new `columnMap` from constructor locals to instance fields** (so the sort API methods in 3.2.4 can read them — `applySort`/`sortBy`/`addSort` are class methods); route `display` through `sortRowsMulti` (client) / passthrough when `source.setSort` (push-down) — `packages/datagrid/src/grid.ts`
-- [ ] 3.2.3 `grid.ts`: mount `SortHeader` (onHeaderClick → `sortBy`/`addSort`); register the guarded push-down `bind` effect (`if (source.setSort)` → `setSort(keys)`, in `onMount`) — `packages/datagrid/src/grid.ts`
-- [ ] 3.2.4 `grid.ts`: the sort API `sortBy`/`addSort`/`clearSort`/`sort` + `applySort` (row-key cursor/selection re-anchor on the client path) + the tri-state cycle helpers + unknown-id guard — `packages/datagrid/src/grid.ts`
-- [ ] 3.2.5 Update the `EditableDataGrid` class JSDoc (drop "suppressed"/"source order"); barrel-export `SortHeader` + `SortHeaderConfig` with `@example` — `packages/datagrid/src/grid.ts`, `packages/datagrid/src/index.ts`
-- [ ] 3.2.6 Verify GREEN — ST-13 … ST-20 pass
+- [x] 3.2.1 Create `sort-header.ts`: `SortHeader` View + `SortHeaderConfig` — self-contained `draw()` (arrows + priority digits, indicator-cell reservation per AR #10, shared `apportionColumns`/`alignCell`/`stringWidth`), `onEvent()` columnId hit-test (`columnAtX`), reads `inner.ctrl` — `packages/datagrid/src/sort-header.ts` ✅ (completed: 2026-07-15 12:51)
+- [x] 3.2.2 `grid.ts`: remove `ReadonlyGridHeader`, the `signal<SortState>(null)`, and the `SortState`/`GridHeader` imports; **promote `source`, `display`, and the new `columnMap` from constructor locals to instance fields** (so the sort API methods in 3.2.4 can read them — `applySort`/`sortBy`/`addSort` are class methods); route `display` through `sortRowsMulti` (client) / passthrough when `source.setSort` (push-down) — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-15 12:51)
+- [x] 3.2.3 `grid.ts`: mount `SortHeader` (onHeaderClick → `sortBy`/`addSort`); register the guarded push-down `bind` effect (`if (source.setSort)` → `setSort(keys)`, in `onMount`) — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-15 12:51)
+- [x] 3.2.4 `grid.ts`: the sort API `sortBy`/`addSort`/`clearSort`/`sort` + `applySort` (row-key cursor/selection re-anchor on the client path) + the tri-state cycle helpers + unknown-id guard — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-15 12:51)
+- [x] 3.2.5 Update the `EditableDataGrid` class JSDoc (drop "suppressed"/"source order"); barrel-export `SortHeader` + `SortHeaderConfig` with `@example` — `packages/datagrid/src/grid.ts`, `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-15 12:51)
+- [x] 3.2.6 Verify GREEN — ST-13 … ST-20 pass ✅ (completed: 2026-07-15 12:57 — surfaced AR #18 (runtime): the empty editor `overlay` (`position:'fill'`) was swallowing header clicks; fixed with a hit-transparent `EditorOverlay` (hidden while empty). 13/13 sort-header spec green; full 183-test datagrid suite green, no editing regression.)
 
 ### Step 3.3: Implementation tests & hardening
 
 **Reference**: `07 §Implementation Tests`
 **Objective**: Header/geometry edges + click-machine corners.
 
-- [ ] 3.3.1 Write `sort-header.impl.test.ts` — narrow-column indicator clamp (`w<reserve`), digit for key ≥3, indented/H-scrolled hit-test, click on divider/empty area (no-op), Ctrl+click toggles an existing key's dir, header repaints on `sortKeys` change — `packages/datagrid/test/sort-header.impl.test.ts`
-- [ ] 3.3.2 Verify (full) — `yarn verify`; no regression in the RD-01…RD-04 datagrid suites
+- [x] 3.3.1 Write `sort-header.impl.test.ts` — narrow-column indicator clamp (`w<reserve`), digit for key ≥3, indented/H-scrolled hit-test, click on divider/empty area (no-op), Ctrl+click toggles an existing key's dir, header repaints on `sortKeys` change — `packages/datagrid/test/sort-header.impl.test.ts` ✅ (completed: 2026-07-15 13:00)
+- [x] 3.3.2 Verify (full) — `yarn verify`; no regression in the RD-01…RD-04 datagrid suites ✅ (completed: 2026-07-15 13:01 — 190 datagrid tests, full verify 26/26 green)
 
 **Deliverables**:
-- [ ] `SortHeader` renders single/multi indicators; the click machine (AR #5) drives the container signal
-- [ ] Container owns `Signal<SortKey[]>`; client `sortRowsMulti` / guarded push-down; row-key re-anchor; the sort API
-- [ ] ui engine sort path untouched and unused (plan AC-1); no ui source change
-- [ ] All verification passing
+- [x] `SortHeader` renders single/multi indicators; the click machine (AR #5) drives the container signal ✅
+- [x] Container owns `Signal<SortKey[]>`; client `sortRowsMulti` / guarded push-down; row-key re-anchor; the sort API ✅
+- [x] ui engine sort path untouched and unused (plan AC-1); no ui source change ✅
+- [x] All verification passing ✅
 
 **Verify**: `yarn verify`
 
