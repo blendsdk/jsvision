@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15
-> **Progress**: 0/22 tasks (0%)
+> **Last Updated**: 2026-07-15 18:41
+> **Progress**: 12/22 tasks (55%) — Phase 1 complete (full `yarn verify` green)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -54,28 +54,28 @@ full verify. Spec-first throughout (spec tests → red → implement → green �
 **Reference**: `07 §Smoke oracle` (ST-1…ST-4, ST-6) · `07 §Walkthrough oracle` (ST-8…ST-10) · `07 §Lib spec` (ST-11/12) · AR #6/#8
 **Objective**: Lock the harness behavior before the app exists. (ST-5 all-categories + ST-7 counts are Phase-2 scope oracles.)
 
-- [ ] 1.1.1 Write `test/datagrid-showcase.smoke.spec.test.ts` — ST-1 (registry non-empty), ST-2 (metadata), ST-3 (unique ids), ST-4 (each story mounts + paints ≥1 cell), ST-6 (`Roadmap` = 8 panels). Red (no app yet).
-- [ ] 1.1.2 Write `test/datagrid-showcase.walkthrough.spec.test.ts` — ST-8 (headless driver navigates every registry entry, paints on swap), ST-9 (previous view disposed on swap), ST-10 (Foundation seed demo mounts a real `EditableDataGrid`). Red.
-- [ ] 1.1.3 Write the spy-source spec (ST-11/12) covering `setSort`/`setFilter` recording + `length()` reflecting the sorted/filtered set. Red.
+- [x] 1.1.1 Write `test/datagrid-showcase.smoke.spec.test.ts` — ST-1 (registry non-empty), ST-2 (metadata), ST-3 (unique ids), ST-4 (each story mounts + paints ≥1 cell), ST-6 (`Roadmap` = 8 panels). Red (no app yet). ✅ (completed: 2026-07-15 18:29 — 3 spec files red for the right reason: app modules absent)
+- [x] 1.1.2 Write `test/datagrid-showcase.walkthrough.spec.test.ts` — ST-8 (headless driver navigates every entry via `app.loop.emitCommand(story.id)`, paints on swap), ST-9 (`disposedCount()` increments + no prior-view residue on swap), ST-10 (Foundation seed demo mounts a real `EditableDataGrid`, driven via `emitCommand`). Red. ✅ (completed: 2026-07-15 18:29)
+- [x] 1.1.3 Write the spy-source spec (ST-11/12) covering `setSort`/`setFilter` recording + `length()` reflecting the sorted/filtered set. Red. ✅ (completed: 2026-07-15 18:29)
 
 ### Step 1.2: Scaffold + shell + lib (implement → green)
 
 **Reference**: `03-01 §Files` · `03-02 §Shared demo lib`, `§Placeholders` · AR #2/#5/#7/#8
 **Objective**: The runnable skeleton, green against Step 1.1.
 
-- [ ] 1.2.1 Create `datagrid-showcase/story.ts` + `window.ts` (dedicated copies of the kitchen-sink files).
-- [ ] 1.2.2 Create `datagrid-showcase/shell.ts` (`createDatagridShowcase(caps)`, focused copy) + `main.ts` (TTY guard → `.run()`).
-- [ ] 1.2.3 Create `stories/lib/data.ts` (typed demo rows as signals) + `stories/lib/spy-source.ts` (in-memory `GridDataSource` exposing `setSort`/`setFilter`/`distinct`); make ST-11/12 pass.
-- [ ] 1.2.4 Create `stories/placeholders.ts` — `placeholderStory(rd,title,blurb)` factory + the 8 RD-07…14 panels.
-- [ ] 1.2.5 Create `stories/foundation/sizing.story.ts` — the seed demo (a real read-only `EditableDataGrid` with mixed `auto`/fixed/`fr` + align).
-- [ ] 1.2.6 Create `stories/index.ts` — register the seed demo + the 8 placeholders (`Foundation` + `Roadmap` categories).
+- [x] 1.2.1 Create `datagrid-showcase/story.ts` + `window.ts` (dedicated copies of the kitchen-sink files). ✅ (completed: 2026-07-15 18:41)
+- [x] 1.2.2 Create `datagrid-showcase/shell.ts` (`createDatagridShowcase(caps)`, focused copy; return `{ app, run, disposedCount }` — the read-only dispose accessor the walkthrough reads) + `main.ts` (TTY guard → `.run()`). ✅ (completed: 2026-07-15 18:41 — exported `SIDEBAR_W`; guarded `canvas.layout.rect` reads for the tsc include)
+- [x] 1.2.3 Create `stories/lib/data.ts` (typed demo rows as signals) + `stories/lib/spy-source.ts` (in-memory `GridDataSource` exposing `setSort`/`setFilter`/`distinct`); make ST-11/12 pass. ✅ (completed: 2026-07-15 18:41 — data as fresh-per-demo signal factories)
+- [x] 1.2.4 Create `stories/placeholders.ts` — `placeholderStory(rd,title,blurb)` factory + the 8 RD-07…14 panels. ✅ (completed: 2026-07-15 18:41)
+- [x] 1.2.5 Create `stories/foundation/sizing.story.ts` — the seed demo (a real read-only `EditableDataGrid` with mixed `auto`/fixed/`fr` + align). ✅ (completed: 2026-07-15 18:41)
+- [x] 1.2.6 Create `stories/index.ts` — register the seed demo + the 8 placeholders (`Foundation` + `Roadmap` categories). ✅ (completed: 2026-07-15 18:41)
 
 ### Step 1.3: Wiring + green + verify
 
 **Reference**: `03-01 §Package & tooling wiring` · AR #2/#4
-- [ ] 1.3.1 Wire `packages/examples/package.json`: add `demo:datagrid` script + `@jsvision/datagrid` dependency; add `datagrid-showcase` to `tsconfig.json` `include`.
-- [ ] 1.3.2 Run the smoke + walkthrough + lib specs → green; fix until ST-1…ST-4, ST-6, ST-8…ST-12 pass.
-- [ ] 1.3.3 Full `yarn verify` green (lint + typecheck incl. the demos + build + test). Phase-1 commit.
+- [x] 1.3.1 Wire `packages/examples/package.json`: add `demo:datagrid` script + `@jsvision/datagrid` dependency; add `datagrid-showcase` to `tsconfig.json` `include`. ✅ (completed: 2026-07-15 18:41)
+- [x] 1.3.2 Run the smoke + walkthrough + lib specs → green; fix until ST-1…ST-4, ST-6, ST-8…ST-12 pass. ✅ (completed: 2026-07-15 18:41 — 18 tests green)
+- [x] 1.3.3 Full `yarn verify` green (lint + typecheck incl. the demos + build + test). Phase-1 commit. ✅ (completed: 2026-07-15 18:41 — turbo 26/26 successful)
 
 ---
 
@@ -103,8 +103,8 @@ full verify. Spec-first throughout (spec tests → red → implement → green �
 ### Step 2.3: Governance + hardening + verify
 
 **Reference**: `03-02 §Governance` · `07 §Walkthrough` · AR #9 / PF-022
-- [ ] 2.3.1 Reconcile `codeops/kitchen-sink-gate.md`: route datagrid component stories to this app; record that `kitchen-sink/data-grid.story.ts` (ui read-only `DataGrid`, a different component) is intentionally retained.
-- [ ] 2.3.2 Confirm the walkthrough drives all 47 entries and the smoke ST-5/ST-7 pass; fix any demo that clips text or fails to paint. Green.
+- [ ] 2.3.1 Reconcile `codeops/kitchen-sink-gate.md`: route datagrid component stories to this app; record that `kitchen-sink/stories/data-grid.story.ts` (ui read-only `DataGrid`, a different component) is intentionally retained.
+- [ ] 2.3.2 Confirm the walkthrough drives all 46 registry entries (38 shipped + 8 placeholders) and the smoke ST-5/ST-7 pass; fix any demo that clips text or fails to paint. Green.
 - [ ] 2.3.3 Full `yarn verify` green. Phase-2 commit. (Optional techdocs/analyze_project re-run per exec_plan post-hooks.)
 
 ---
