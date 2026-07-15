@@ -1,8 +1,8 @@
 /**
- * The "coming soon" roadmap panels — one per not-yet-shipped datagrid RD (RD-07…RD-14). Each is a
+ * The "coming soon" roadmap panels — one per not-yet-shipped datagrid RD (RD-08…RD-14). Each is a
  * `Story` in the `Roadmap` category built by a single {@link placeholderStory} factory: the capability
  * title, a "what this will demonstrate" paragraph, and a coming-soon chip. When an RD lands, its panel
- * is replaced by the real demo cluster in the same navigator slot.
+ * is replaced by the real demo cluster in the same navigator slot (as RD-07 was).
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
@@ -36,13 +36,8 @@ export function placeholderStory(rd: string, title: string, blurb: string): Stor
   };
 }
 
-/** The eight roadmap placeholders (RD-07…RD-14), in RD order. */
+/** The seven roadmap placeholders (RD-08…RD-14), in RD order — RD-07 (Columns & layout) has shipped. */
 export const placeholders: readonly Story[] = [
-  placeholderStory(
-    'RD-07',
-    'Columns & layout',
-    'Resize, reorder, and hide columns, plus frozen pinned-panel columns and a sticky header.',
-  ),
   placeholderStory(
     'RD-08',
     'Rows & selection',

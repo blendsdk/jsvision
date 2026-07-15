@@ -375,3 +375,45 @@ test('ST-26: an unknown columnId in every column-layout call is a no-op, never e
   expect(grid.columnOrder()).toEqual(before); // order unchanged
   expect(grid.frozen()).toEqual({ left: [], right: [] }); // no freeze introduced
 });
+
+// ST-27 (columns-layout) — layout is presentational: a header/cell text carrying control bytes stays
+// sanitized at the frame after a reorder + hide (the RD-04 sanitize boundary is untouched by any layout
+// change). Named distinctly from the RD-06 push-down ST-27 above (this file spans several plans).
+test('ST-27: header/cell text with control bytes stays sanitized after a reorder + hide', () => {
+  interface Row {
+    id: number;
+    name: string;
+    dept: string;
+  }
+  const cols = [
+    column<Row, number>({ id: 'id', title: 'ID', value: (r) => r.id, width: 4 }),
+    // A header title and a cell value both laced with a raw ESC + BEL.
+    column<Row, string>({ id: 'name', title: 'Na\x1b[31mme\x07', value: (r) => r.name, width: 12 }),
+    column<Row, string>({ id: 'dept', title: 'Dept', value: (r) => r.dept, width: 8 }),
+  ];
+  const grid = new EditableDataGrid<Row>({
+    columns: cols,
+    source: fromRows(signal([{ id: 1, name: 'A\x1b[32mB\x07', dept: 'R&D' }]), { rowKey: (r) => r.id }),
+  });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 5 } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: 30, height: 5 }, { caps });
+  loop.mount(root);
+  loop.renderRoot.flush();
+
+  // Apply layout changes: reorder (name before id) and hide a column.
+  grid.setColumnOrder(['name', 'id', 'dept']);
+  grid.setColumnVisible('dept', false);
+  loop.renderRoot.flush();
+
+  // No raw ESC/BEL reaches any buffer cell — the frame sanitizes regardless of column order/visibility.
+  const buf = loop.renderRoot.buffer();
+  for (let y = 0; y < 5; y += 1) {
+    for (let x = 0; x < 30; x += 1) {
+      const ch = buf.get(x, y)?.char ?? ' ';
+      expect(ch).not.toBe('\x1b');
+      expect(ch).not.toBe('\x07');
+    }
+  }
+});
