@@ -46,11 +46,18 @@ export type { ColumnFilter, FilterModel, DistinctResult, FilterType } from './fi
 export { sortRowsMulti } from './sort.js';
 export type { SortKey, SortDir } from './sort.js';
 
-// The sort header — the datagrid's own multi-key sticky header View (arrows + priority digits,
-// columnId-keyed, click-to-sort). The container mounts one internally; it is exported so a bespoke
-// grid (or a later frozen-panel split) can bind several headers to one sort signal.
+// The sort header — the datagrid's own multi-key sticky header View (arrows + priority digits + the
+// per-column filter funnel, columnId-keyed, click-to-sort / click-to-open-filter). The container
+// mounts one internally; it is exported so a bespoke grid (or a later frozen-panel split) can bind
+// several headers to one sort/filter signal.
 export { SortHeader } from './sort-header.js';
 export type { SortHeaderConfig } from './sort-header.js';
+
+// The quick-filter row — the opt-in band of per-column text inputs that drive a live `contains` filter
+// as you type. The container builds one internally when `quickFilter` is set; it is exported so a
+// bespoke grid can mount its own band over the shared column geometry.
+export { QuickFilterRow } from './quick-filter-row.js';
+export type { QuickFilterRowConfig } from './quick-filter-row.js';
 
 // Commit sink — the `onCommit` veto contract and the `commitCell` primitive that applies an edit
 // immediately and reverts it on veto.
