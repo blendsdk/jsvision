@@ -24,6 +24,8 @@ export interface InputPaintState {
   readonly curPos: number;
   /** First visible value index (the horizontal-scroll offset). */
   readonly firstPos: number;
+  /** A muted hint painted only while the value is empty; never part of the value. */
+  readonly placeholder?: string;
 }
 
 /**
@@ -68,6 +70,17 @@ export function glyphAt(col: number, v: string, w: number, firstPos: number): st
 }
 
 /**
+ * Resolve a placeholder option to a display string: a plain string as-is, a getter/signal by calling
+ * it, and `undefined` to the empty string (no placeholder).
+ *
+ * @param p A placeholder string, a `() => string` getter (a signal is one), or `undefined`.
+ * @returns The resolved placeholder text (`''` when unset).
+ */
+export function resolvePlaceholder(p: string | (() => string) | undefined): string {
+  return p === undefined ? '' : typeof p === 'function' ? p() : p;
+}
+
+/**
  * Paint a single-line input field: the scrolled value at column 1, the ◄/► edge arrows, the visible
  * part of any selection band, and a visible caret drawn by reversing the edit cell (so the caret
  * shows even on terminals that hide the hardware cursor, and in headless rendering).
@@ -82,6 +95,12 @@ export function paintInput(ctx: DrawContext, s: InputPaintState): void {
   const { width: w, height: h } = ctx.size;
   ctx.fillRect(0, 0, w, h, ' ', style);
   if (w > 1) ctx.text(1, 0, v.slice(firstPos, firstPos + (w - 1)), style); // text starts at column 1
+  // Placeholder: a muted hint shown ONLY over an empty value. It is display-only — it takes no part in
+  // the selection/scroll/caret math and is never the bound value; a focused caret still overlays col 1.
+  if (v === '' && s.placeholder && w > 1) {
+    const muted: Style = { fg: ctx.color('staticText').fg, bg: style.bg }; // static-text fg on the field bg
+    ctx.text(1, 0, s.placeholder.slice(0, w - 1), muted); // clipped to width, starts at col 1
+  }
   if (canScrollRight(v, w, firstPos)) ctx.text(w - 1, 0, RIGHT_ARROW, arrows);
   if (firstPos > 0) ctx.text(0, 0, LEFT_ARROW, arrows);
   // Highlight the visible part of the selection, only when focused with a non-empty selection.

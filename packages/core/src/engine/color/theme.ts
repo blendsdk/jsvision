@@ -243,6 +243,11 @@ export interface Theme {
   readonly statusSelected: ThemeRole;
   /** The window drop-shadow: darkGray on black. */
   readonly shadow: ThemeRole;
+  // --- Severity text roles (semantic body-text colours for a styled Text) ---
+  /** Danger/error body text — a validation error or alert line: danger-red on the static-text field. */
+  readonly dangerText: ThemeRole;
+  /** Advisory/warning body text — a non-blocking caution: amber on the static-text field. */
+  readonly warningText: ThemeRole;
 }
 
 /**
@@ -349,4 +354,6 @@ export const defaultTheme: Theme = {
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },
+  dangerText: { fg: '#ef4444', bg: PALETTE.lightGray },
+  warningText: { fg: '#f59e0b', bg: PALETTE.lightGray },
 };

@@ -1,5 +1,5 @@
 /**
- * The left rail — a scrollable list of the 18 semantic aliases followed by the 63 concrete roles.
+ * The left rail — a scrollable list of the 18 semantic aliases followed by the 67 concrete roles.
  * Moving the highlight selects that edit target (the app wires the `focused` signal to
  * `model.select`), which loads it into the inspector. Editing an alias re-derives the theme; editing a
  * role overrides it.
@@ -9,21 +9,22 @@ import type { Signal } from '@jsvision/ui';
 import type { DesignerModel, EditTarget } from '../model/index.js';
 
 /**
- * Aliases that remain in the vocabulary for app content but drive no built-in role, so editing them
- * changes no widget. The rail flags them so the user is not surprised by an edit that "does nothing".
+ * Aliases kept in the vocabulary that drive no built-in role, so editing one changes no widget — the
+ * rail flags them `(reserved)` so the edit is not mistaken for a no-op. Empty now that `danger`/`warning`
+ * drive the `dangerText`/`warningText` roles; the mechanism stays for any alias reserved in future.
  */
-const RESERVED_ALIASES: ReadonlySet<string> = new Set(['danger', 'warning']);
+const RESERVED_ALIASES: ReadonlySet<string> = new Set<string>();
 
 /**
  * The rail label for an alias key — `α name`, suffixed `(reserved)` for an app-reserved alias (one
  * that drives no built-in role). The suffix is display-only; the underlying selection target keeps the
- * raw alias name.
+ * raw alias name. No alias is reserved today, so every label is the plain `α name` form.
  *
  * @param name The alias key (e.g. `'accent'`, `'danger'`).
  * @returns The display label for that alias's rail row.
  * @example
- * aliasRailLabel('accent');  // 'α accent'
- * aliasRailLabel('danger');  // 'α danger (reserved)'
+ * aliasRailLabel('accent'); // 'α accent'
+ * aliasRailLabel('danger'); // 'α danger' — danger now drives the dangerText role, so it is not reserved
  */
 export function aliasRailLabel(name: string): string {
   return RESERVED_ALIASES.has(name) ? `α ${name} (reserved)` : `α ${name}`;
@@ -35,7 +36,7 @@ export interface RolesPanel {
   view: Group;
   /** The highlighted row index — drive `model.select(targets[focused()])` from an effect. */
   focused: Signal<number>;
-  /** The edit target for each row, in list order (18 aliases, then 63 roles). */
+  /** The edit target for each row, in list order (18 aliases, then 67 roles). */
   targets: readonly EditTarget[];
   /** The focus leaf to hand to `loop.focusView`. */
   rows: ListBox['rows'];

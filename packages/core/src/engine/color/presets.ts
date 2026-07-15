@@ -129,6 +129,8 @@ export const monochromeTheme: Theme = {
   statusBar: { fg: B, bg: W, hotkey: B },
   statusSelected: { fg: B, bg: W, hotkey: B, attrs: REV },
   shadow: { fg: G, bg: B },
+  dangerText: { fg: W, bg: B },
+  warningText: { fg: W, bg: B },
 };
 
 /**

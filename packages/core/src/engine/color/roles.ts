@@ -109,5 +109,7 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     statusBar: { fg: c.foreground, bg: c.backgroundRaised, hotkey: c.menuAccelerator },
     statusSelected: { fg: c.foregroundOnAccent, bg: c.accent, hotkey: c.menuAccelerator },
     shadow: { fg: c.foregroundDisabled, bg: c.background },
+    dangerText: { fg: c.danger, bg: c.backgroundRaised },
+    warningText: { fg: c.warning, bg: c.backgroundRaised },
   };
 }

@@ -15,6 +15,7 @@ import { test, expect } from 'vitest';
 import {
   resolveCapabilities,
   Attr,
+  defaultTheme,
   classicTheme,
   monochromeTheme,
   slateTheme,
@@ -242,6 +243,33 @@ test('ST-N1: the forms/form story is registered with metadata and paints its val
     expect(painted, 'the valid · dirty echo is painted').toMatch(/dirty/);
     dispose();
   });
+});
+
+// ST-S1 (RD-09 AC-8) — the placeholder + severity demos render: the controls/input story paints its
+// muted placeholder hint over an empty field, and the theming/presets story paints a severity-coloured
+// Text (a glyph cell in the dangerText fg). Read from the painted buffer (an unfocused headless mount
+// puts no caret over column 1, so the leading placeholder glyph is not blanked).
+test('ST-S1: the placeholder demo paints its hint and the severity demo renders in dangerText', () => {
+  const paintedOf = (id: string): { text: string; hasDangerFg: boolean } => {
+    const story = STORIES.find((s) => s.id === id);
+    expect(story, `a story with id "${id}" is registered`).toBeTruthy();
+    let text = '';
+    let hasDangerFg = false;
+    createRoot((dispose) => {
+      const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+      const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+      rr.mount(view);
+      const rows = rr.buffer().rows();
+      text = rows.map((row) => row.map((c) => c.char).join('')).join('\n');
+      hasDangerFg = rows.some((row) => row.some((c) => c.char !== ' ' && c.fg === defaultTheme.dangerText.fg));
+      dispose();
+    });
+    return { text, hasDangerFg };
+  };
+  // The muted placeholder hint is visible over the empty field in the Input story.
+  expect(paintedOf('controls/input').text, 'the placeholder hint paints').toContain('Ada Lovelace');
+  // A severity-coloured Text renders in the Theming story (a dangerText-fg glyph cell).
+  expect(paintedOf('theming/presets').hasDangerFg, 'a severity Text paints in dangerText').toBe(true);
 });
 
 // The core smoke oracle: each story builds + mounts + draws without throwing, and paints something.

@@ -100,6 +100,8 @@ export {
   picture,
 } from './controls/index.js';
 export type {
+  TextOptions,
+  TextSeverity,
   ButtonOptions,
   InputOptions,
   SliderOptions,

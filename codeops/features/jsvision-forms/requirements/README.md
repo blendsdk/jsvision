@@ -55,8 +55,21 @@ state, or hand-rolled parsing.
 | [RD-03](RD-03-widget-binding.md) | Widget Binding | Must | RD-01, RD-02 |
 | [RD-04](RD-04-non-functional.md) | Non-Functional (packaging, security, testing, gates) | Must | RD-01…03 |
 
-**Suggested implementation order:** RD-01 → RD-02 → RD-03 → RD-04. The whole set is the MVP for the
-forms engine; follow-on slices build on it.
+**Suggested implementation order (first slice):** RD-01 → RD-02 → RD-03 → RD-04. The whole set is the
+MVP for the forms engine; the extension below builds on it.
+
+## Extension — 2026-07-15 (reopened, see `../00-roadmap.md`)
+
+A post-slice-1 triage promoted four deferred follow-ons to RDs plus a comprehensive showcase; the
+rest are recorded as a backlog in **GH #89**. Build order: RD-09 → RD-06 → RD-07 → RD-08 → RD-05.
+
+| RD | Title | Status | Depends on |
+|----|-------|--------|------------|
+| [RD-09](RD-09-styled-error-text-input-placeholder.md) | Styled Error Text & Input Placeholder (`error`/`warning` theme roles · `Text` severity · `Input` placeholder) | Draft | — |
+| RD-06 | Async Validation (plain-Promise · debounce · stale-guard · `validating()`) | Planned | — |
+| RD-07 | Async Loading + Baseline Rebase (`load()`/`loading()`) | Planned | RD-06 |
+| RD-08 | `formDialog()` + Modal Submit-Gate | Planned | RD-09 |
+| RD-05 | Comprehensive Forms Showcase (built last) | Planned | RD-06…09 |
 
 ## Traceability
 
