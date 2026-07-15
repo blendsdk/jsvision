@@ -104,11 +104,18 @@ test('ST-09 field(unknown) throws FormFieldError naming the field', () => {
   expect(() => f.field('nope' as never)).toThrow(/nope/);
 });
 
-// ST-10 — the store is owner-scoped: no dev warning, no public dispose.
-test('ST-10 createForm emits no dev warning and exposes no dispose', () => {
+// ST-10 — the store is owner-scoped: no dev warning; dispose() is exposed and idempotent.
+// (The first slice exposed no dispose; async validation revises that — the whole reactive scope is
+// now tear-down-able through an idempotent form.dispose() so a per-dialog form can release its
+// standing async effects. The owner-scoping guarantee — no owner-less dev warning — is unchanged.)
+test('ST-10 createForm emits no dev warning and exposes an idempotent dispose', () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   const f = createForm({ schema: Schema, initial: makeInitial() });
   expect(warn).not.toHaveBeenCalled();
-  expect('dispose' in (f as object)).toBe(false);
+  expect(typeof f.dispose).toBe('function');
+  expect(() => {
+    f.dispose();
+    f.dispose();
+  }).not.toThrow();
   warn.mockRestore();
 });

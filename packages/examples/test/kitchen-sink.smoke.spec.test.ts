@@ -263,6 +263,31 @@ test('ST-N1: the forms/form story is registered with metadata and paints its val
   });
 });
 
+// ST-AS1 (RD-06 AC-14) — the async-validation showcase story is registered with the required metadata
+// (unique id `forms/async`, category `Forms`) and paints its characteristic async affordance: the
+// `Username` label + the always-painted `checking…` interaction hint (proving the async demo renders
+// its distinctive state headlessly, not merely that some cell painted).
+test('ST-AS1: the forms/async story is registered with metadata and paints its async affordance', () => {
+  const story = STORIES.find((s) => s.id === 'forms/async');
+  expect(story, 'a story with id "forms/async" is registered').toBeTruthy();
+  expect(story!.category, 'category Forms').toBe('Forms');
+  expect(story!.title, 'title').toBeTruthy();
+  expect(story!.blurb, 'blurb').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    const painted = rr
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+    expect(painted, 'the Username label paints').toMatch(/Username/);
+    expect(painted, 'the checking… hint paints').toMatch(/checking…/);
+    dispose();
+  });
+});
+
 // ST-S1 (RD-09 AC-8) — the placeholder + severity demos render: the controls/input story paints its
 // muted placeholder hint over an empty field, and the theming/presets story paints a severity-coloured
 // Text (a glyph cell in the dangerText fg). Read from the painted buffer (an unfocused headless mount

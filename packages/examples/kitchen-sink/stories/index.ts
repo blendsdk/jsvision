@@ -50,6 +50,7 @@ import { terminalStory } from './terminal.story.js';
 import { chDirDialogStory } from './chdir-dialog.story.js';
 import { themingStory } from './theming.story.js';
 import { formsStory } from './forms.story.js';
+import { formsAsyncStory } from './forms-async.story.js';
 
 /**
  * Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers
@@ -98,4 +99,5 @@ export const STORIES: readonly Story[] = [
   drillDownStory,
   themingStory,
   formsStory,
+  formsAsyncStory,
 ];
