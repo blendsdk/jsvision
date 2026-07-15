@@ -52,8 +52,10 @@
   "dependencies": {
     "@jsvision/core": "0.2.0",
     "@jsvision/files": "0.2.0",
+    "@jsvision/forms": "0.2.0",
     "@jsvision/ui": "0.2.0",
-    "@jsvision/web": "0.2.0"
+    "@jsvision/web": "0.2.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
