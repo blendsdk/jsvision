@@ -29,9 +29,16 @@ export type { CellStyle } from './column.js';
 export type { CellRenderer, CellDrawContext, RenderCell, CellState } from './cell-draw.js';
 
 // Data source — the read seam the grid binds to. `fromRows` is the in-memory source; every source
-// carries a required `rowKey`. `FilterModel` is forward-declared for later push-down.
+// carries a required `rowKey`.
 export { fromRows } from './data-source.js';
-export type { GridDataSource, FilterModel } from './data-source.js';
+export type { GridDataSource } from './data-source.js';
+
+// Filter model — the pure `filterRows` multi-column AND evaluator and `computeDistinct` label
+// enumeration, plus the `ColumnFilter` per-column condition, the `FilterModel` map the source's
+// `setFilter` push-down consumes, the `DistinctResult` a value-list reads, and the `FilterType` a
+// column's condition popup presents.
+export { filterRows, computeDistinct } from './filter.js';
+export type { ColumnFilter, FilterModel, DistinctResult, FilterType } from './filter.js';
 
 // Sort model — the pure `sortRowsMulti` multi-key comparator plus the `SortKey`/`SortDir` shape a
 // sort directive uses (a single-column sort is a one-element key list). `SortKey` is the same shape

@@ -55,3 +55,12 @@ docs. `[user]` = confirmed via the preflight decision batch; `[preflight]` = gro
 | 20 | PF-003 (MINOR) — quick-filter Input ⇄ popup filter on the same column | **Last-writer-wins** (one filter per column via the `Map`). The quick-filter Input reflects only `text` filters; a popup-set `set`/`number`/`date` filter leaves the Input blank while the funnel shows the column is filtered. Documented; no two-way sync in v1. | [user] · [preflight] |
 | 21 | PF-004 (OBS) — "mirrors sort.ts type detection" over-claim | `resolveFilterType` **extends** sort.ts detection (adds a `CalendarDate → date` branch the sort comparator lacks); reworded in 03-01. | [user] · [preflight] |
 | 22 | PF-005 (MINOR) — `filteredCount()` mechanism wording | `filteredCount()` returns `display().length` (== `source.length()` for an eager push-down source); ST-14 wording aligned to the implementation. | [user] · [preflight] |
+
+## Runtime amendments (execution)
+
+Decisions taken during `exec_plan`, tagged `(runtime)` per the zero-ambiguity-during-execution rule.
+Mechanical/low-stakes only — no behavioral change to the plan.
+
+| #  | Trigger | Resolution | Source |
+|----|---------|------------|--------|
+| 23 | The plan's `FilterModel<T>` fails the repo's `@typescript-eslint/no-unused-vars` (the alias body `ReadonlyMap<string, ColumnFilter>` never references `T` — it was always a phantom). | **`FilterModel` is non-generic** — a `ReadonlyMap<string, ColumnFilter>`, row-type-agnostic (each `ColumnFilter` reads its own column's value). The consuming signatures (`setFilter?(model: FilterModel)`, the grid signal/`filterModel()`) drop the `<T>`. Zero value-level/behavioral impact. | (runtime) |

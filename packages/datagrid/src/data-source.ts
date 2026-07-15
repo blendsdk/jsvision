@@ -8,17 +8,7 @@
  */
 import type { Signal } from '@jsvision/ui';
 import type { SortKey } from './sort.js';
-
-/**
- * A filter model applied to the grid's rows. The full filtering model is defined by a later release;
- * this is a forward-declared placeholder so the source contract stays stable.
- */
-export interface FilterModel<T> {
-  /** Per-column filter conditions (shape defined by the filtering subsystem). */
-  readonly conditions?: readonly unknown[];
-  /** Phantom marker tying the model to the row type; carries no runtime data. */
-  readonly rowType?: (row: T) => void;
-}
+import type { FilterModel, DistinctResult } from './filter.js';
 
 /**
  * The read/mutate seam the grid body binds to. In-memory and windowed/server sources implement this
@@ -40,9 +30,13 @@ export interface GridDataSource<T> {
   /** Push sort down to the source; omit for client-side sorting (a later release). */
   setSort?(keys: SortKey[]): void;
   /** Push filtering down to the source; omit for client-side filtering (a later release). */
-  setFilter?(model: FilterModel<T>): void;
-  /** Distinct values for a column, for value-list filtering (a later release). */
-  distinct?(columnId: string): Promise<string[]>;
+  setFilter?(model: FilterModel): void;
+  /**
+   * Distinct formatted labels for a column, for value-list filtering (a later release). Returns the
+   * labels plus an optional `truncated` flag so a bounded/windowed source can disclose a capped list
+   * instead of silently under-reporting.
+   */
+  distinct?(columnId: string): Promise<DistinctResult>;
 }
 
 /**
