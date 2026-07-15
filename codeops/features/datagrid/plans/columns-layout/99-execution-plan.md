@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-15 23:47
-> **Progress**: 34/58 tasks (59%) — Phase 1–3 ✅ · Phase 4 resize+auto-fit ✅ (3.2.7 rebuild + 4.3.2 verify pending)
+> **Last Updated**: 2026-07-16 00:05
+> **Progress**: 36/58 tasks (62%) — Phase 1–4 ✅ (incl. folded 3.2.7 reactive rebuild)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -98,7 +98,7 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 - [x] 3.2.4 `grid.ts` + **new** `grid-panels.ts` `buildGridBody()`: single-body path when not frozen (AR-5, byte-identical); else left/center/right panels + per-panel headers + `FreezeDivider`s, center binds `indent` / frozen bind `signal(0)`; cross-panel row highlight via a grid-wide `panelActive` focus predicate (`focusSignal`). **Built at construction; the reactive rebuild-on-`partitionSig` clause is deferred to 3.2.7 (AR-19).** — `packages/datagrid/src/grid-panels.ts`, `grid.ts` (completed: 2026-07-15 23:27)
 - [x] 3.2.5 `grid.ts`: over-pin guard (`initialPartition()` over-freeze→single-body fallback + one `devWarn`, AR-9); begin-edit + overlay origin route to the panel owning `focusedCol` via the focus hop — each focused panel handles its own edit/overlay (H4/AR-10) — `packages/datagrid/src/grid.ts` (completed: 2026-07-15 23:27)
 - [x] 3.2.6 Verify **green** — ST-14…ST-19 pass (completed: 2026-07-15 23:27)
-- [ ] 3.2.7 **(follow-up, AR-19 — folded into Phase 4 per user decision 2026-07-15)** `grid.ts`: reactive rebuild — re-run `buildGridBody` in a post-mount effect when the partition key changes (live `setColumnVisible`/`setColumnOrder`/`setColumnWidth` + width-based over-pin once bounds settle), preserving focus + child order. Built in Phase 4 alongside the resize gesture (first model mutation needing body reflection); see task 4.x. — `packages/datagrid/src/grid.ts`
+- [x] 3.2.7 **(folded into Phase 4 per user decision 2026-07-15)** `grid.ts`: reactive rebuild — `rebuildBody()` re-runs `buildGridBody` in a post-mount effect keyed on `partitionKey()` (left/center/right ids + frozen-band widths), so live `setColumnVisible`/`setColumnOrder` + a frozen-column resize repaint; a scrolling-column resize stays live via the width getters (no rebuild). New inner added before the old is removed so focus heals into the new panels. — `packages/datagrid/src/grid.ts` (completed: 2026-07-16 00:05)
 
 ### Step 3.3: Impl tests & verify
 - [x] 3.3.1 Write `frozen-panels.impl.test.ts` (three panels' `topItem` agree after a vertical scroll — **load-bearing invariant guard, PF-008**; center auto-scroll keeps the focused center col visible; editing a frozen cell mounts over the right panel) — `packages/datagrid/test/frozen-panels.impl.test.ts` (completed: 2026-07-15 23:27)
@@ -125,9 +125,9 @@ security. Every phase follows spec-first ordering (spec tests → red → implem
 
 ### Step 4.3: Impl tests & verify
 - [x] 4.3.1 Write resize impl tests (a resize moves the rendered boundary — live reflow; resizing an `auto` column pins it; a lost capture aborts cleanly) — `packages/datagrid/test/resize-reorder.impl.test.ts` (completed: 2026-07-15 23:47)
-- [ ] 4.3.2 Full `yarn verify` (after 3.2.7 reactive rebuild — folded into this phase)
+- [x] 4.3.2 Full `yarn verify` (completed: 2026-07-16 00:05)
 
-**Deliverables**: live column resize (AC-1) + auto-fit (AC-7) **[done]**; live model-driven repaint (hide/show/reorder) via 3.2.7 **[pending, this phase]**. **Verify**: `yarn verify`
+**Deliverables**: live column resize (AC-1) + auto-fit (AC-7) **[done]**; live model-driven repaint (hide/show/reorder + frozen-band resize) via 3.2.7 **[done]**. **Verify**: `yarn verify` ✅
 
 ---
 

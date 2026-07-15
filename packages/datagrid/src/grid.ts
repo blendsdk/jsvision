@@ -25,6 +25,7 @@ import { filterRows, resolveFilterType, computeDistinct } from './filter.js';
 import type { FilterModel, ColumnFilter, DistinctResult } from './filter.js';
 import { SortHeader } from './sort-header.js';
 import { buildGridBody } from './grid-panels.js';
+import type { GridBodyDeps } from './grid-panels.js';
 import { FilterPopup } from './filter-popup.js';
 import { mountCellOverlay, absoluteRect } from './overlay.js';
 import type { OnCommit } from './commit.js';
@@ -198,6 +199,14 @@ export class EditableDataGrid<T> extends Group {
   }
   /** The focusable body — the center panel when frozen, the single body otherwise (backs {@link rows}). */
   private _center!: EditableGridRows<T>;
+  /** The current inner band stack (swapped out by a rebuild when the partition shape changes). */
+  private _inner!: Group;
+  /** The shared body-assembly deps, retained so a rebuild re-runs `buildGridBody` with the same wiring. */
+  private _bodyDeps!: GridBodyDeps<T>;
+  /** The last partition key a rebuild ran for — a rebuild is skipped while it is unchanged. */
+  private lastPartitionKey = '';
+  /** Whether the one-time over-freeze dev warning has fired (de-duped so a rebuild never re-warns). */
+  private warnedOverFreeze = false;
   /** The absolute overlay host on top of the grid — the cell editor mounts into it while editing. */
   readonly overlay: Group;
   /**
@@ -315,7 +324,7 @@ export class EditableDataGrid<T> extends Group {
     // frozen panels sharing one cursor/scroll. `buildGridBody` owns the band assembly (see grid-panels.ts).
     const vbar = new ScrollBar({ value: this.focused, orientation: 'vertical' });
     const hbar = new ScrollBar({ value: this.indent, orientation: 'horizontal' });
-    const parts = buildGridBody<T>(this.initialPartition(), {
+    this._bodyDeps = {
       focused: this.focused,
       focusedCol: this.focusedCol,
       selected: this.selected,
@@ -347,28 +356,84 @@ export class EditableDataGrid<T> extends Group {
       dirty: this.dirty,
       vbar,
       hbar,
-    });
+    };
+    this.maybeWarnOverFreeze();
+    const parts = buildGridBody<T>(this.computePartition(), this._bodyDeps);
     this._center = parts.center;
+    this._inner = parts.inner;
+    this.lastPartitionKey = this.partitionKey();
 
-    this.add(parts.inner); // behind
+    this.add(this._inner); // behind
     this.add(this.overlay); // above — hosts the cell editor while editing
     this.add(this.popupOverlay); // topmost — hosts the funnel-opened filter popup
+
+    // Rebuild the body when the partition SHAPE changes — a hidden/shown/reordered column, or a frozen
+    // column resized (which resizes its fixed panel band). A pure width change to a scrolling column is
+    // NOT a shape change: the reactive width getters re-flow it live without a rebuild.
+    this.onMount(() => {
+      this.bind(
+        () => this.partitionKey(),
+        (key) => {
+          if (key === this.lastPartitionKey) return; // unchanged (incl. the initial run) — nothing to rebuild
+          this.lastPartitionKey = key;
+          this.rebuildBody();
+        },
+      );
+    });
   }
 
   /**
-   * The partition the panels are built from at construction: the raw freeze split — but folded back to a
-   * single body (with one dev warning) when freezing would leave the center empty, so the center is never
-   * blank. The width-based over-pin that {@link frozen} reports is applied lazily once the real viewport
-   * width is known; the construction-time build is width-independent.
+   * The partition the panels are built from: the raw freeze split, folded back to a single scrolling body
+   * when freezing would leave the center empty (so the center is never blank). Pure — the one-time dev
+   * warning for that fold lives in {@link maybeWarnOverFreeze}. The width-based over-pin that
+   * {@link frozen} reports is applied lazily once the real viewport width is known.
    */
-  private initialPartition(): FreezePartition {
+  private computePartition(): FreezePartition {
     const raw = partition(this.visibleIds(), this.freezeSpec);
     const overFrozen = raw.center.length === 0 && (raw.left.length > 0 || raw.right.length > 0);
-    if (overFrozen) {
+    return overFrozen ? { left: [], center: this.visibleIds(), right: [] } : raw;
+  }
+
+  /** Emit the over-freeze dev warning once (de-duped across rebuilds) when every column is frozen. */
+  private maybeWarnOverFreeze(): void {
+    if (this.warnedOverFreeze) return;
+    const raw = partition(this.visibleIds(), this.freezeSpec);
+    if (raw.center.length === 0 && (raw.left.length > 0 || raw.right.length > 0)) {
       devWarn('datagrid', 'every column is frozen — the freeze is ignored so the grid stays scrollable');
-      return { left: [], center: this.visibleIds(), right: [] };
+      this.warnedOverFreeze = true;
     }
-    return raw;
+  }
+
+  /**
+   * A string key for the current partition SHAPE — the left/center/right id lists plus the resolved
+   * widths of the frozen (fixed-band) columns. It changes on a hide/show/reorder or a frozen-column
+   * resize (both of which need a rebuild), but NOT on a scrolling-column resize (handled live).
+   */
+  private partitionKey(): string {
+    const p = this.computePartition();
+    const frozenWidths = [...p.left, ...p.right].map((id) => this.resolvedWidth(id)).join(',');
+    return `${p.left.join('|')}#${p.center.join('|')}#${p.right.join('|')}@${frozenWidths}`;
+  }
+
+  /**
+   * Swap the body for a freshly-built one from the current partition. The new band stack is added first,
+   * then the old one removed — so if the removed panel held focus, the framework's focus-healing re-homes
+   * focus into the new panels (they are already present) rather than dropping it. Removing the old panels
+   * unmounts them, tearing down their reactive scopes. The overlays are re-added last to stay on top.
+   */
+  private rebuildBody(): void {
+    this.maybeWarnOverFreeze();
+    const parts = buildGridBody<T>(this.computePartition(), this._bodyDeps);
+    const old = this._inner;
+    this._inner = parts.inner;
+    this._center = parts.center;
+    this.add(parts.inner); // new inner present before the old is removed → focus heals into it
+    this.remove(old);
+    // Restore z-order: the overlays sit above the (new) inner band stack.
+    this.remove(this.overlay);
+    this.remove(this.popupOverlay);
+    this.add(this.overlay);
+    this.add(this.popupOverlay);
   }
 
   /**
