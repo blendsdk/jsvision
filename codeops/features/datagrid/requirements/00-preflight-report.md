@@ -284,3 +284,43 @@ RD-04 is demo-only. `Depends On` header left as-is (RD-04 is Done, so the listin
 **Stage:** RD-05 remains 🔎 *RD Preflighted* (a re-scan does not advance the stage). Next: `make_plan sorting`,
 where the architecture findings become Zero-Ambiguity Register entries + the technical design, and the header
 A/B/C decision is put to the user.
+
+---
+
+## Iteration 3 — RD-15 DataGrid Showcase App
+
+> **Artifact**: `requirements/RD-15-showcase-app.md` · **Date**: 2026-07-15 · **Iteration**: 3 (findings continue at PF-020)
+> **Outcome**: ✅ **PASSED WITH NOTES** — 0 critical · 0 major · 3 minor · 1 observation; all resolved via small RD amendments (user-accepted 2026-07-15).
+> ⚠️ **SAME-SESSION REVIEW** — the same agent authored RD-15 and this audit in one session. Bias countered by re-verifying every claim against primary source (`packages/datagrid/src/*`, `packages/examples/kitchen-sink/*`, `packages/theme-designer/src/main.ts`) with `file:line` citations, and by running the adversarial-question checklist. A fresh-session re-review remains advisable.
+
+### Codebase Context Summary
+
+RD-15 targets a **new dev-only example app** (`packages/examples/datagrid-showcase/`) that consumes the **shipped** `@jsvision/datagrid` public barrel and reuses the proven `kitchen-sink` showcase machinery. Recon confirmed:
+
+- **Reuse substrate real & sufficient** — `packages/examples/kitchen-sink/shell.ts:184,319` (`createApplication({caps,menuBar,statusLine})` + `run: () => app.run()`), the persistent sidebar `ListBox`, per-category menu, status hints, `Ctrl`+arrow `NavKeys`, and `buildWelcome`; the `Story` contract (`kitchen-sink/story.ts`), already trimmed-copied into `packages/datagrid/test/kitchen-sink/story.ts`. TTY guard: `kitchen-sink/main.ts`.
+- **Demo-able surface real** — the datagrid barrel (`packages/datagrid/src/index.ts`) exports every capability the inventory names; `EditableDataGridOptions` carries `zebra?`/`quickFilter?` (`grid.ts:47,52`) and `filteredCount()`/`totalCount()`/`setFilter`/`clearFilter`/`filterModel()` are public (`grid.ts:454–503`); `CellEditorKind` = the exact 9 kinds the inventory demos (`cell-editor.ts:35`).
+- **No dependency cycle** — `@jsvision/examples` → `@jsvision/datagrid` → `@jsvision/ui`/`core`; examples does not currently depend on datagrid (adds it). `demo:datagrid` script name is free.
+- **Dist-resolved workspace deps** — both `ui` and `datagrid` `exports` point at `./dist` (`package.json`), so the demo (like every existing one) assumes a built workspace; consistent with convention, no new finding.
+
+### Findings
+
+**🟡 PF-020 — Push-down demos contradict "in-memory `fromRows` only"; the demo source is unspecified.** *Logical Contradiction (3), Completeness (4), Codebase Alignment (13).* The inventory's push-down demos — Sorting §5.5 (`setSort`) and Filtering §6.6 (`setFilter`) — require a `GridDataSource` that implements the **optional** `setSort?`/`setFilter?` seams (`data-source.ts:31,33`), but `fromRows` omits them (`data-source.ts:60–63`, so the grid takes the client path — `grid.ts:233,248`) and the RD's Security section states "demos use in-memory `fromRows` sources only." Resolution: reword the constraint to "in-memory sources only (no network)" and note that the two push-down demos use a **small bespoke in-memory `GridDataSource`** (a spy that filters/sorts in memory but exposes `setSort`/`setFilter`) to exercise the push-down path.
+
+**🟡 PF-021 — Smoke test and headless walkthrough overlap; the walkthrough's distinct job is unstated.** *Testability (7), Redundancy (13.5).* Both tiers "mount each demo headlessly and assert paint." theme-designer's headless path is a **bespoke** `runWalkthrough` separate from `app.run()` (`theme-designer/src/main.ts:16,19`), not the interactive shell. Unless sharpened, the walkthrough is a redundant re-mount of the smoke test. Resolution: state the walkthrough's distinct purpose — it drives the **shell** (sidebar-select → canvas swap → dispose-previous), which the per-demo smoke test does not — so it is built as a navigation/lifecycle guard, not a second render check.
+
+**🟡 PF-022 — Reconciling the NON-NEGOTIABLE kitchen-sink-gate is under-specified.** *Ordering (11), Convention Violations (13.8).* AC #8 depends on editing `codeops/kitchen-sink-gate.md` (which mandates stories in `packages/examples/kitchen-sink/`). Resolution: make the gate-doc reconciliation an explicit plan task, and explicitly record that the general kitchen-sink's existing `data-grid.story.ts` — which demos **ui's read-only `DataGrid`, a different component** — is intentionally retained (so a later reader does not "consolidate" it into the datagrid showcase).
+
+**🔵 PF-023 — Some editing sub-capabilities are internal mechanics better shown through a live grid.** *Feasibility (6).* Overlay lifecycle (`mountCellOverlay`/`absoluteRect`), the two-axis cursor, and the dirty registry are plumbing that a story most naturally demonstrates **through** a live `EditableDataGrid` with a bound-state echo, not as isolated widget harnesses. Non-blocking note for `make_plan`: prefer live-grid demonstrations with visible state over synthetic standalone harnesses for these three.
+
+### Decisions log — Iteration 3
+
+| Finding | Severity | Decision | Applies to |
+|---------|----------|----------|-----------|
+| PF-020 | MINOR | ✅ Reword Security to "in-memory (no network)" + note a bespoke push-down demo source | RD + make_plan |
+| PF-021 | MINOR | ✅ State the walkthrough's distinct shell/navigation purpose | RD + make_plan |
+| PF-022 | MINOR | ✅ Gate-doc reconciliation is an explicit task; retain the ui.DataGrid story | RD + make_plan |
+| PF-023 | OBS | ✅ Prefer live-grid demonstrations for overlay/cursor/dirty | make_plan |
+
+**Confidence:** High — all four are wording/scoping clarifications on an otherwise sound, code-grounded RD; no CRITICAL/MAJOR, so no independent challenger was spawned (per recommendation-hardening, reserved for high-stakes findings). **Hardening:** in-context adversarial-question checklist run; every code claim carries a `file:line` citation re-verified against primary source.
+
+**Stage:** RD-15 advances to 🔎 *RD Preflighted*. Next: `make_plan datagrid-showcase`, where PF-020…PF-023 become Zero-Ambiguity Register entries + technical-design decisions.

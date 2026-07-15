@@ -53,9 +53,11 @@ example code (not part of any published package), imported by name exactly as a 
 - [ ] **Per-demo smoke test** — every registered demo mounts headlessly, paints ≥1 non-blank cell, and
       carries unique id + required metadata (mirrors the existing `kitchen-sink.smoke.spec.test.ts`).
       *(AR #40)*
-- [ ] **Headless walkthrough test** — a piped/headless run that auto-advances through **every** demo
-      (shipped and placeholder) without a TTY and without throwing, so the whole app is CI-gated — not
-      just individual demos (mirrors the theme-designer piped-walkthrough idiom). *(AR #40)*
+- [ ] **Headless walkthrough test** — a bespoke headless driver (like theme-designer's `runWalkthrough`,
+      `theme-designer/src/main.ts:16,19`, separate from the interactive `app.run()`) that drives the
+      **shell** through every demo — sidebar-select → canvas swap → dispose-previous — without a TTY and
+      without throwing. Its distinct job from the smoke test: it exercises the shell's navigation +
+      story-swap lifecycle, not merely that each story mounts in isolation. *(AR #40, PF-021)*
 - [ ] **Registry hygiene** — an explicit aggregation registry (`stories/index.ts`): adding a demo is one
       import + one array entry. Ids unique; categories preserve first-seen order for the sidebar.
 
@@ -126,6 +128,12 @@ Each shipped demo is a focused, self-contained scenario over a small typed row s
 has a natural "before/after" (e.g. commit veto, inverse parse, push-down), the demo makes both states
 visible via the bound-state echo.
 
+The two **push-down** demos (Sorting §5.5, Filtering §6.6) use a small **bespoke in-memory
+`GridDataSource`** that implements the optional `setSort`/`setFilter` seams (`data-source.ts:31,33`) —
+a spy that sorts/filters in memory but proves the delegation path. `fromRows` omits those seams
+(`data-source.ts:60-63`), so the grid takes the client path and `fromRows` alone cannot demonstrate
+push-down. *(PF-020)*
+
 ### Placeholder panel
 
 A single reusable `placeholderStory(rd, title, blurb)` factory builds each RD-07…RD-14 slot: a `Group`
@@ -137,8 +145,10 @@ registry under a `Roadmap` category so the sidebar shows the whole datagrid road
 - **Smoke** (`*.smoke.spec.test.ts`) — the registry is non-empty, ids are unique, metadata is present,
   and every demo mounts headlessly and paints ≥1 non-blank cell (the `kitchen-sink.smoke.spec.test.ts`
   pattern over the datagrid-showcase registry). *(AR #40)*
-- **Walkthrough** — a headless run driving the shell through every demo (no TTY), asserting no throw
-  and that each swap paints; the app's CI-observable "it actually runs" guard. *(AR #40)*
+- **Walkthrough** — a bespoke headless driver (separate from `app.run()`, per theme-designer's
+  `runWalkthrough`) that navigates the shell through every demo (no TTY), asserting no throw and that
+  each canvas swap paints. Distinct from the smoke test: it guards the shell's navigation + swap +
+  dispose-previous lifecycle, not per-story rendering. *(AR #40, PF-021)*
 - Both live under `packages/examples/` test config; neither requires a TTY.
 
 ---
@@ -161,8 +171,10 @@ registry under a `Roadmap` category so the sidebar shows the whole datagrid road
 
 ### With future RD-07…RD-14
 - Each ships its own demo cluster into this showcase as it lands, replacing that RD's placeholder panel
-  — the kitchen-sink-gate's per-component story obligation is satisfied here for datagrid. The gate doc
-  (`codeops/kitchen-sink-gate.md`) is reconciled to route datagrid stories to this app.
+  — the kitchen-sink-gate's per-component story obligation is satisfied here for datagrid. Reconciling
+  the NON-NEGOTIABLE gate doc (`codeops/kitchen-sink-gate.md`) to route datagrid stories to this app is
+  an **explicit plan task** (not incidental). The general kitchen-sink's existing `data-grid.story.ts`
+  — which demos ui's **read-only** `DataGrid`, a different component — is intentionally retained. *(PF-022)*
 
 ---
 
@@ -187,8 +199,8 @@ registry under a `Roadmap` category so the sidebar shows the whole datagrid road
   static and author-controlled. No untrusted input path is introduced.
 - **Sanitize boundary unchanged**: all rendered text still passes the core `sanitize` boundary via the
   datagrid/ui render path — the showcase adds no new terminal-write path that bypasses it. *(AR #25)*
-- **No secrets / no network**: demos use in-memory `fromRows` sources only; no credentials, no external
-  calls, no filesystem writes.
+- **No secrets / no network**: demos use in-memory sources only (both `fromRows` and the bespoke
+  push-down source are in-process); no credentials, no external calls, no filesystem writes.
 - **Injection**: demos never build queries; the push-down demos pass a structured `SortKey[]`/`FilterModel`
   to an in-memory source, illustrating (not exercising) the parameterized-source contract. *(AR grid rule)*
 - **Encryption / rate limiting / infrastructure**: N/A (dev-only local TUI).
@@ -213,7 +225,8 @@ registry under a `Roadmap` category so the sidebar shows the whole datagrid road
        painting on each swap.
 7. [ ] Adding a demo is one import + one registry entry (verified by the registry's shape); the datagrid
        package's own `test/kitchen-sink` smoke stories are unchanged and still pass.
-8. [ ] `codeops/kitchen-sink-gate.md` is reconciled to route datagrid component stories to this app; the
-       general `kitchen-sink` app is unmodified.
+8. [ ] `codeops/kitchen-sink-gate.md` is reconciled (as an explicit plan task) to route datagrid
+       component stories to this app; the general `kitchen-sink` app is unmodified and its read-only ui
+       `DataGrid` story (`data-grid.story.ts`) is intentionally retained.
 9. [ ] Full `yarn verify` is green (lint + typecheck + build + test + check:docs), including the new
        showcase's typecheck and both test tiers.
