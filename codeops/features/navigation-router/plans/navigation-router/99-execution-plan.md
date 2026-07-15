@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Progress**: 12/43 tasks (28%)
-> **Last Updated**: 2026-07-15 (Phase 0 de-risking spike complete — `yarn verify` green)
+> **Progress**: 22/43 tasks (51%)
+> **Last Updated**: 2026-07-15 (Phase 1 router core complete — `yarn verify` green)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -69,27 +69,27 @@ green and is committed (via /gitcm).
 ## Phase 1: Router Core
 **Reference**: [03-02](03-02-router-core.md) · AR-3, AR-8, AR-9, AR-12, AR-13, AR-14, AR-16
 
-### Session 1.1 — Spec tests (red)
+### Session 1.1 — Spec tests (red) ✅
 | # | Task | File |
 |---|------|------|
-| 1.1.1 | Write ST-7/ST-8/ST-9 spec: push/back/replace/reset, `location()`, `canGoBack()`, back-at-root no-op | `packages/ui/test/router.stack.spec.test.ts` |
-| 1.1.2 | Write ST-10/ST-11 spec: param flow + typed generic (compile-time `@ts-expect-error`) + structured `initial` | `packages/ui/test/router.params.spec.test.ts` |
-| 1.1.3 | Write ST-12/ST-13 spec: `build` throw isolation; `serialize`/`parse` round-trip | `packages/ui/test/router.errors.spec.test.ts`, `packages/ui/test/router.location.spec.test.ts` |
-| 1.1.4 | Write ST-18 spec: `location()`/`canGoBack()` **reactivity** — an `effect` re-runs on `push`/`back` | `packages/ui/test/router.location.spec.test.ts` |
+| 1.1.1 | `[x]` Write ST-7/ST-8/ST-9 spec: push/back/replace/reset, `location()`, `canGoBack()`, back-at-root no-op | `packages/ui/test/router.stack.spec.test.ts` |
+| 1.1.2 | `[x]` Write ST-10/ST-11 spec: param flow + typed generic (compile-time `@ts-expect-error`) + structured `initial` | `packages/ui/test/router.params.spec.test.ts` |
+| 1.1.3 | `[x]` Write ST-12/ST-13 spec: `build` throw isolation; `serialize`/`parse` round-trip | `packages/ui/test/router.errors.spec.test.ts`, `packages/ui/test/router.location.spec.test.ts` |
+| 1.1.4 | `[x]` Write ST-18 spec: `location()`/`canGoBack()` **reactivity** — an `effect` re-runs on `push`/`back` | `packages/ui/test/router.location.spec.test.ts` |
 
-### Session 1.2 — Implementation (green)
+### Session 1.2 — Implementation (green) ✅
 | # | Task | File |
 |---|------|------|
-| 1.2.1 | Pure stack model + navigation reducers (view-free) | `packages/ui/src/router/stack.ts` |
-| 1.2.2 | Route/bundle/context/location types + `createRouter<Routes>` generic | `packages/ui/src/router/types.ts` |
-| 1.2.3 | `createRouter`: the `Group` body swapping the top screen (via `addDynamic`/`Show`), push/back/replace/reset through the loop tick seam | `packages/ui/src/router/router.ts` |
-| 1.2.4 | `location()`/`canGoBack()` reactive accessors; per-route `serialize`/`parse` storage; `build` error isolation | `packages/ui/src/router/router.ts` |
+| 1.2.1 | `[x]` Pure stack model + navigation reducers (view-free) | `packages/ui/src/router/stack.ts` |
+| 1.2.2 | `[x]` Route/bundle/context/location types + `createRouter<Routes>` generic (typed `NavArgs`/`InitialRoute`) | `packages/ui/src/router/types.ts` |
+| 1.2.3 | `[x]` `createRouter`: the `Group` body swapping the top screen (via `addDynamic`); push/back/replace/reset coalesced with `batch()` | `packages/ui/src/router/router.ts` |
+| 1.2.4 | `[x]` `location()`/`canGoBack()` reactive accessors; per-route `serialize`/`parse` types; `build` error isolation (build-first-then-mutate); per-screen chrome apply-on-activation | `packages/ui/src/router/router.ts` |
 
-### Session 1.3 — Impl tests & hardening
+### Session 1.3 — Impl tests & hardening ✅
 | # | Task | File |
 |---|------|------|
-| 1.3.1 | Impl tests: empty-stack edges, rapid push/back coalescing, re-entrant-nav note (AR-16) | `packages/ui/test/router.stack.impl.test.ts` |
-| 1.3.2 | ST-7…ST-13 green; `yarn verify` green | — |
+| 1.3.1 | `[x]` Impl tests: pure-reducer edges, replace-at-root, reset-from-deep, fresh rebuild on return, re-entrant-nav safety (AR-16) | `packages/ui/test/router.stack.impl.test.ts` |
+| 1.3.2 | `[x]` ST-7…ST-13 + ST-18 green; `yarn verify` green | — |
 
 **Verify**: `yarn verify` green; commit via /gitcm.
 

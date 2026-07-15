@@ -5,6 +5,7 @@
  * the user moves between screens, without ever reaching into the bar internals. `createApplication`
  * implements it over the real bars and hands it to a {@link ChromeHostAware} body.
  */
+import type { Logger } from '@jsvision/core';
 import type { View } from '../view/index.js';
 import type { MenuItem } from '../menu/index.js';
 
@@ -59,4 +60,78 @@ export interface ChromeHostAware {
    * @param host The chrome seam that drives the shared menu bar and status line.
    */
   attachChromeHost(host: ChromeHost): void;
+}
+
+/** The context a route's `build` receives: the typed params the screen was navigated to. */
+export interface RouteContext<P> {
+  /** The params the route was entered with. */
+  params: P;
+}
+
+/**
+ * What a route's `build` returns: the screen view plus its optional per-screen chrome. `status`
+ * replaces the status line and `menu` replaces the menu bar on activation (each `null`/omitted falls
+ * back to the app base).
+ */
+export interface ScreenBundle {
+  /** The full-screen view for this screen. */
+  view: View;
+  /** Optional status-line items for this screen; omit to keep the app base. */
+  status?: View[];
+  /** Optional menu-bar items for this screen; omit to keep the app base. */
+  menu?: MenuItem[];
+}
+
+/**
+ * A route definition: how to build the screen for a set of params, plus optional keep-alive, focus,
+ * and (de)serialization behavior.
+ *
+ * @example
+ * const detail: Route<{ id: number }> = {
+ *   build: (ctx) => ({ view: new DetailScreen(ctx.params.id) }),
+ *   keepAlive: false,
+ *   serialize: (p) => `id=${p.id}`,
+ *   parse: (s) => ({ id: Number(new URLSearchParams(s).get('id')) }),
+ * };
+ */
+export interface Route<P> {
+  /** Build this route's screen bundle for the given params. Called on each activation unless kept alive. */
+  build: (ctx: RouteContext<P>) => ScreenBundle;
+  /** Keep the screen mounted-but-hidden when navigating away, so its state survives a round-trip. Default off. */
+  keepAlive?: boolean;
+  /** Optional exact-restore key: derive a stable key from the focused view so focus survives a rebuild. */
+  focusKey?: (view: View) => string;
+  /** Optional codec: serialize this route's params to a string (designed for deep-linking). */
+  serialize?: (params: P) => string;
+  /** Optional codec: parse this route's params back from a string. */
+  parse?: (s: string) => P;
+}
+
+/** The route table: one {@link Route} per key of the `Routes` map, typed to that route's params. */
+export type RouteMap<R> = { [K in keyof R]: Route<R[K]> };
+
+/** The reactive current location: the top route's name and the params it was entered with. */
+export interface RouterLocation<R> {
+  /** The current route name. */
+  name: keyof R;
+  /** The current params. */
+  params: R[keyof R];
+}
+
+/**
+ * The initial route for a router: a route name plus its params. Params are required for a route with
+ * a non-`void` param type and omittable for a `void` one.
+ */
+export type InitialRoute<R> = {
+  [K in keyof R]: { name: K } & (R[K] extends void ? { params?: undefined } : { params: R[K] });
+}[keyof R];
+
+/** Options for `createRouter`. */
+export interface RouterOptions<R> {
+  /** The route to show first (structured + typed, so it can carry params). */
+  initial: InitialRoute<R>;
+  /** The route table. */
+  routes: RouteMap<R>;
+  /** Optional logger for isolated `build` errors; defaults to the framework's screen-safe logger. */
+  logger?: Logger;
 }
