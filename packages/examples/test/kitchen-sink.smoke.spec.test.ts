@@ -143,6 +143,24 @@ test('ST-17: the layout/dsl story is registered with metadata and paints', () =>
   });
 });
 
+// ST-17 (navigation-router) — the drill-down router story is registered with the required metadata
+// (unique id `navigation/drill-down`, category `Navigation`) and paints at least one non-blank cell
+// headlessly. (The wizard story is deferred until @jsvision/forms merges.)
+test('ST-17: the navigation/drill-down story is registered with metadata and paints', () => {
+  const story = STORIES.find((s) => s.id === 'navigation/drill-down');
+  expect(story, 'a story with id "navigation/drill-down" is registered').toBeTruthy();
+  expect(story!.category, 'category Navigation').toBe('Navigation');
+  expect(story!.title, 'title').toBeTruthy();
+  expect(story!.blurb, 'blurb').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    expect(paintedCells(rr.buffer().rows()), 'the drill-down story painted nothing').toBeGreaterThan(0);
+    dispose();
+  });
+});
+
 // AR-11 (accelerator-overlay) — the accelerator-overlay story is registered with metadata, and when
 // its RenderRoot arms reveal (`setRevealAccelerators(true)`) at least one hot glyph gains
 // `Attr.underline`. This is the showcase's live proof that the F12 overlay lights up hotkeys.
