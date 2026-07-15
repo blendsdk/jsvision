@@ -71,9 +71,19 @@ export interface EditableDataGridOptions<T> {
   readonly freezeRight?: string[];
   /** Shorthand for freezing the first N columns to the left (ignored when `freezeLeft` is set). */
   readonly freeze?: number;
-  /** Pin the first N data rows as a non-scrolling band (the horizontal mirror of frozen columns). */
+  /**
+   * Pin the first N data rows as a non-scrolling band directly below the header — the horizontal mirror
+   * of frozen columns. The scrolling body's window starts after them, so a pinned row never scrolls off
+   * or renders twice. Clamped so at least one scrolling row always remains (a value larger than the row
+   * count is reduced, with a dev warning). Composes with frozen columns: the top-left cell is pinned on
+   * both axes. Default `0` (no band).
+   */
   readonly freezeRows?: number;
-  /** Row density: `'compact'` drops the inter-column divider for a denser view (default `'normal'`). */
+  /**
+   * Row density (default `'normal'`). `'compact'` drops the inter-column `│` divider, reclaiming its cell
+   * per column so content packs tighter (the header, body, and quick-filter all reflow together and stay
+   * aligned). Horizontal only — rows are 1 cell tall in either mode.
+   */
   readonly density?: 'normal' | 'compact';
 }
 
@@ -323,6 +333,20 @@ export class EditableDataGrid<T> extends Group {
     this.popupOverlay = new EditorOverlay();
     this.popupOverlay.layout = { position: 'fill' };
 
+    // Density: compact drops the inter-column divider across every band (threaded via `buildGridBody`).
+    const compact = opts.density === 'compact';
+    // Frozen rows: clamp the request so at least one scrolling row always remains — a pinned band that
+    // ate every row would leave nothing to scroll. Data-driven at construction; a band taller than the
+    // viewport is a layout concern. Mirrors the over-pinned-columns guard.
+    const requestedFreezeRows = Math.max(0, opts.freezeRows ?? 0);
+    const freezeRows = Math.min(requestedFreezeRows, Math.max(0, this.display().length - 1));
+    if (freezeRows < requestedFreezeRows) {
+      devWarn(
+        'freezeRows',
+        `freezeRows ${requestedFreezeRows} exceeds the available rows; clamped to ${freezeRows} to keep at least one scrolling row.`,
+      );
+    }
+
     // Build the body from the resolved partition — a single body when not frozen, or left/center/right
     // frozen panels sharing one cursor/scroll. `buildGridBody` owns the band assembly (see grid-panels.ts).
     const vbar = new ScrollBar({ value: this.focused, orientation: 'vertical' });
@@ -342,6 +366,8 @@ export class EditableDataGrid<T> extends Group {
       widthOverride: (id) => this.columnWidths().get(id),
       widthTick: () => this.columnWidths(),
       zebra: opts.zebra ?? false,
+      compact,
+      freezeRows,
       sort: this.sortKeys,
       filters: this.filters,
       onHeaderClick: (columnId, additive) => {

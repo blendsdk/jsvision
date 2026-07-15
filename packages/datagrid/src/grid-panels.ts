@@ -64,6 +64,13 @@ export interface GridBodyDeps<T> {
   widthTick: () => unknown;
   /** Stripe odd rows. */
   zebra: boolean;
+  /** Compact density — drop the inter-column divider across every band (header, panels, quick-filter). */
+  compact: boolean;
+  /**
+   * Pin the first N rows as a non-scrolling band below the header (0 = no band). Every body panel floors
+   * its window at N; a parallel pinned band renders rows `[0, N)`, so a pinned row never scrolls or duplicates.
+   */
+  freezeRows: number;
   /** The container's sort model (read by every header). */
   sort: Signal<SortKey[]>;
   /** The container's filter model (read by every header). */
@@ -143,13 +150,14 @@ class FreezeDivider extends View {
 
 /**
  * The fixed band width for a frozen panel: the sum of its columns' resolved widths plus one divider
- * cell between each pair (no trailing gutter — the {@link FreezeDivider} provides the boundary). Sizing
- * the band this tight makes the panel apportion its columns at exactly their resolved widths.
+ * cell between each pair (none in compact density) — no trailing gutter, since the {@link FreezeDivider}
+ * provides the boundary. Sizing the band this tight makes the panel apportion its columns at exactly
+ * their resolved widths.
  */
-function panelBandWidth(ids: string[], resolvedWidth: (id: string) => number): number {
+function panelBandWidth(ids: string[], resolvedWidth: (id: string) => number, compact: boolean): number {
   let sum = 0;
   for (const id of ids) sum += resolvedWidth(id);
-  return sum + Math.max(0, ids.length - 1);
+  return sum + (compact ? 0 : Math.max(0, ids.length - 1));
 }
 
 /**
@@ -188,10 +196,13 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   const fullVisible = [...part.left, ...part.center, ...part.right];
 
   const panels: EditableGridRows<T>[] = [];
+  const bands: EditableGridRows<T>[] = []; // pinned frozen-rows band panels (parallel to `panels`)
   const headers: SortHeader<T>[] = [];
-  // Only in frozen mode do the row highlight / cursor / dirty markers key on grid-wide focus and does a
-  // cursor move hop focus across panels; a single body keeps its own focus and never hops.
-  const gridActive = frozen ? (): boolean => anyPanelFocused(panels) : undefined;
+  const freezeRows = Math.max(0, deps.freezeRows);
+  // When columns OR rows are frozen the row highlight / cursor / dirty markers key on grid-wide focus so
+  // a pinned band (or a sibling column panel) lights up while the scrolling body holds the keyboard. A
+  // plain single body keeps its own focus and never hops — byte-identical to the pre-freeze grid.
+  const gridActive = frozen || freezeRows > 0 ? (): boolean => anyPanelFocused(panels) : undefined;
   const hop = frozen
     ? (globalCol: number, ev: DispatchEvent): void => {
         const owner = panels.find((p) => globalCol >= p.columnOffset && globalCol < p.columnOffset + p.columnCount);
@@ -240,6 +251,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       onColumnReorder: deps.onColumnReorder,
       onReorderStart: deps.onReorderStart,
       columnOffset: offset, // this panel's start in the global visible order — maps local drops to global
+      compact: deps.compact,
     });
     headers.push(header);
     return header;
@@ -273,9 +285,46 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       autoScrollColumns: autoScroll,
       panelActive: gridActive,
       widthTick: deps.widthTick,
+      compact: deps.compact,
+      rowFloor: deps.freezeRows, // scrolling body: its window starts after the N pinned rows
     });
     panels.push(body);
     return body;
+  };
+
+  // A pinned frozen-rows band panel: it renders the first N rows (`rowFloor: 0, rowCeil: 0` → never
+  // scrolls) sharing the body's cursor/selection so a pinned row lights up here. Passive — the scrolling
+  // body owns the keyboard; a click still moves the shared cursor onto a pinned row. Not registered in
+  // `panels` (it is neither a focus source for `gridActive` nor a hop target).
+  const makeBand = (ids: string[], indent: Signal<number>, offset: number): EditableGridRows<T> => {
+    const band = new EditableGridRows<T>({
+      display: deps.display,
+      columns: sliceCols(ids),
+      autoWidths: sliceAuto(ids),
+      indent,
+      focused: deps.focused,
+      selected: deps.selected,
+      zebra: deps.zebra,
+      focusedCol: deps.focusedCol,
+      typedColumns: sliceTyped(ids),
+      overlay: deps.overlay,
+      onCommit: deps.onCommit,
+      rowKey: deps.rowKey,
+      bumpVersion: deps.bumpVersion,
+      dirty: deps.dirty,
+      columnOffset: offset,
+      totalCols: () => total,
+      mouseColumns: frozen,
+      autoScrollColumns: false,
+      panelActive: gridActive,
+      widthTick: deps.widthTick,
+      compact: deps.compact,
+      rowFloor: 0,
+      rowCeil: 0, // pin to the top — the band never scrolls off the first N rows
+    });
+    band.focusable = false; // passive: mirrors the cursor, but the scrolling body holds the keyboard
+    bands.push(band);
+    return band;
   };
 
   // The horizontal bands share one column container; the grid's own `layout` prop stays free for the
@@ -286,62 +335,69 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   const headerRow = bandRow();
   const bodyRow = new Group();
   bodyRow.layout = { direction: 'row', size: { kind: 'fr', weight: 1 } };
+  // The pinned frozen-rows band row (built only when freezeRows > 0), `freezeRows` cells tall.
+  const freezeRowsRow = new Group();
+  freezeRowsRow.layout = { direction: 'row', size: { kind: 'fixed', cells: freezeRows } };
 
-  let center: EditableGridRows<T>;
-  if (!frozen) {
-    // Single-body path — one header + one body over the visible columns, sized `fr` beside the bars.
-    const header = makeHeader(part.center, deps.indent, 0);
-    const body = makeBody(part.center, deps.indent, 0, false);
-    header.layout = fr;
-    body.layout = fr;
-    headerRow.add(header);
-    bodyRow.add(body);
-    center = body;
-  } else {
-    // Frozen path — left? / center / right? panels in visual order, a divider between each pair.
-    const zero = signal(0); // frozen panels never pan horizontally
-    interface Seg {
-      ids: string[];
-      indent: Signal<number>;
-      offset: number;
-      autoScroll: boolean;
-      fixed: boolean;
-    }
-    const segs: Seg[] = [];
-    let offset = 0;
-    if (part.left.length > 0) {
-      segs.push({ ids: part.left, indent: zero, offset, autoScroll: false, fixed: true });
-      offset += part.left.length;
-    }
-    segs.push({ ids: part.center, indent: deps.indent, offset, autoScroll: true, fixed: false });
-    offset += part.center.length;
-    if (part.right.length > 0) {
-      segs.push({ ids: part.right, indent: zero, offset, autoScroll: false, fixed: true });
-    }
-
-    center = null as unknown as EditableGridRows<T>; // assigned by the center seg below
-    segs.forEach((seg, i) => {
-      if (i > 0) {
-        // A freeze divider before every seg after the first (marks the boundary in header + body).
-        const hd = new FreezeDivider();
-        hd.layout = fixed1;
-        headerRow.add(hd);
-        const bd = new FreezeDivider();
-        bd.layout = fixed1;
-        bodyRow.add(bd);
-      }
-      const band: LayoutProps = seg.fixed
-        ? { size: { kind: 'fixed', cells: panelBandWidth(seg.ids, deps.resolvedWidth) } }
-        : fr;
-      const header = makeHeader(seg.ids, seg.indent, seg.offset);
-      const body = makeBody(seg.ids, seg.indent, seg.offset, seg.autoScroll);
-      header.layout = band;
-      body.layout = band;
-      headerRow.add(header);
-      bodyRow.add(body);
-      if (!seg.fixed) center = body;
-    });
+  // One segment list drives every row (header, pinned band, body): the center pans, frozen columns don't.
+  // A single, unfrozen grid is exactly one center seg with `fr` layout and no dividers — the original path.
+  const zero = signal(0); // frozen column panels never pan horizontally
+  interface Seg {
+    ids: string[];
+    indent: Signal<number>;
+    offset: number;
+    autoScroll: boolean;
+    fixed: boolean;
   }
+  const segs: Seg[] = [];
+  let segOffset = 0;
+  if (part.left.length > 0) {
+    segs.push({ ids: part.left, indent: zero, offset: segOffset, autoScroll: false, fixed: true });
+    segOffset += part.left.length;
+  }
+  // The center auto-scrolls its column cursor only in a frozen-column grid (a single body never has).
+  segs.push({ ids: part.center, indent: deps.indent, offset: segOffset, autoScroll: frozen, fixed: false });
+  segOffset += part.center.length;
+  if (part.right.length > 0) {
+    segs.push({ ids: part.right, indent: zero, offset: segOffset, autoScroll: false, fixed: true });
+  }
+
+  // A fixed panel band is exactly its columns' resolved widths + inter-column dividers (none in compact);
+  // the `FreezeDivider` between panels provides the boundary, so no trailing gutter. The center is `fr`.
+  const segLayout = (seg: Seg): LayoutProps =>
+    seg.fixed ? { size: { kind: 'fixed', cells: panelBandWidth(seg.ids, deps.resolvedWidth, deps.compact) } } : fr;
+
+  let center = null as unknown as EditableGridRows<T>; // assigned by the center seg below
+  segs.forEach((seg, i) => {
+    if (i > 0) {
+      // A freeze divider (1 cell) before every seg after the first — in the header, the pinned band, and
+      // the body — so the boundary reads as a continuous rule down all three.
+      const hd = new FreezeDivider();
+      hd.layout = fixed1;
+      headerRow.add(hd);
+      if (freezeRows > 0) {
+        const fd = new FreezeDivider();
+        fd.layout = fixed1;
+        freezeRowsRow.add(fd);
+      }
+      const bd = new FreezeDivider();
+      bd.layout = fixed1;
+      bodyRow.add(bd);
+    }
+    const layout = segLayout(seg);
+    const header = makeHeader(seg.ids, seg.indent, seg.offset);
+    header.layout = layout;
+    headerRow.add(header);
+    if (freezeRows > 0) {
+      const band = makeBand(seg.ids, seg.indent, seg.offset);
+      band.layout = layout;
+      freezeRowsRow.add(band);
+    }
+    const body = makeBody(seg.ids, seg.indent, seg.offset, seg.autoScroll);
+    body.layout = layout;
+    bodyRow.add(body);
+    if (!seg.fixed) center = body;
+  });
 
   // The center/only body owns both scroll bars (it re-limits their ranges on every draw); frozen panels
   // scroll only in lockstep via the shared `focused`/`indent`, so they never touch a bar.
@@ -362,12 +418,20 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       autoWidths: sliceAuto(fullVisible),
       indent: deps.indent,
       onQuickFilter: deps.onQuickFilter,
+      compact: deps.compact,
     });
     band.layout = fr;
     const quickRow = bandRow();
     quickRow.add(band);
     quickRow.add(corner());
     inner.add(quickRow);
+  }
+
+  if (freezeRows > 0) {
+    // The pinned rows sit between the header/quick-filter and the scrolling body; a corner squares off
+    // the scroll-bar gutter so the band's right edge lines up with the body's.
+    freezeRowsRow.add(corner());
+    inner.add(freezeRowsRow);
   }
 
   inner.add(bodyRow);
