@@ -145,6 +145,12 @@ export interface EventLoop {
   /** Whether a command is currently enabled. Commands are enabled by default until disabled. */
   isCommandEnabled(command: string): boolean;
   /**
+   * A version counter that changes whenever any command's enablement changes via
+   * {@link enableCommand}. Read it inside a view's `bind` to repaint on greying — the shell's status
+   * line and menu bar do exactly this so a disabled command greys live with no manual invalidate.
+   */
+  commandsVersion(): number;
+  /**
    * Open `view` as a modal: input is captured to its subtree until it closes. Returns a promise that
    * resolves with the value passed to {@link endModal}. `await` it to run a dialog and read its result.
    */

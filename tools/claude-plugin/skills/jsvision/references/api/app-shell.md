@@ -12,10 +12,12 @@ A ready-to-run terminal application.
 
 ```ts
 interface Application {
-  desktop: Desktop;   // The desktop window manager. Add windows with `desktop.addWindow(...)`.
+  desktop: Desktop | undefined;   // The desktop window manager, or `undefined` when the app was created with a custom `content` body (a router app manages its own body and registers no window commands). A no-`content` app always has one — and `createApplication` returns the precise DesktopApplication type there, so you never need a null check for the default case.
   loop: EventLoop;   // The underlying event loop. Use it to emit commands, manage focus, or run modals.
   onCommand(command: string, handler: () => void): () => void;   // Register an app-wide handler for a named command; returns a function that unregisters it. Every handler registered for a command runs when that command is emitted, and a handled command is consumed there. Forwards to `loop.onCommand` — see it for the pre-process ordering and the modal-open caveat.
   setTheme(theme: Theme): void;   // Replace the active theme at runtime and repaint every view with the new colors in one coalesced frame. Forwards to `loop.setTheme`, so it is safe to call from a command handler or a bare imperative call — the repainted frame reaches the terminal even outside an input tick.
+  statusBase(): View[];   // A **fresh** copy of the application's base status items — the global affordances (e.g. quit/help) a screen composes with its own hints via `withBase`. Each call rebuilds new item views, because a view has a single parent: composing with the live base bar's own instances would re-parent them and corrupt the fallback bar. Only command items are reproduced (spacers/widgets are not part of a composable base).
+  menuBase(): MenuItem[];   // The application's base menu items — the top-level menu nodes `createApplication({ menuBar })` was given. Menu items are plain data (not views), so this returns a shallow copy safe to compose with `withBase`.
   run(): Promise<number>;   // Connect to the terminal and run until the `'quit'` command, resolving to the exit code. The terminal is always restored on exit — normal, thrown, or signalled.
 }
 ```
@@ -26,6 +28,7 @@ Options for createApplication.
 
 ```ts
 interface ApplicationOptions {
+  content?: View;   // The app body: the single view that fills the middle of the shell (below the menu bar, above the status line). Defaults to a Desktop window manager — the classic overlapping-windows shape. Pass any view (e.g. a router) for a full-screen, non-windowed app; when you do, the app exposes no `desktop` and does not register the window-management commands.
   caps?: CapabilityProfile | 'auto';   // Terminal capability profile that drives color-depth encoding for every painted frame. Defaults to `'auto'`, which detects the running terminal's capabilities via `resolveCapabilities()`. Pass an explicit profile to override the detection (used verbatim, no re-resolution).
   viewport?: Size2D;   // Initial viewport size in cells. Defaults to the output terminal's size, or 80×24 if unknown.
   theme?: Theme;   // Color/style theme applied to every view; defaults to the built-in `defaultTheme`.
@@ -81,7 +84,17 @@ const Commands: { readonly quit: "quit"; readonly close: "close"; readonly zoom:
 Create a terminal application: assemble the event loop, desktop, optional menu bar/status line, and popup overlay, register the standard window-management commands, and return an Application.
 
 ```ts
-createApplication(opts: ApplicationOptions): Application
+createApplication<O extends ApplicationOptions = ApplicationOptions>(opts: O = {} as O): CreatedApplication<O>
+```
+
+## CreatedApplication
+
+The precise application type for a given options object: a RouterApplication when `content` is a view, otherwise a DesktopApplication.
+
+```ts
+type CreatedApplication<O extends ApplicationOptions> = O extends { content: View }
+  ? RouterApplication
+  : DesktopApplication
 ```
 
 ## createEventLoop
@@ -114,6 +127,16 @@ focusWindowNumber(n: number): void
 beginMove(w: Window, grabLocal: Point): void
 beginResize(w: Window): void
 beginResizeLeft(w: Window): void
+```
+
+## DesktopApplication
+
+An application whose body is the default Desktop window manager (no `content` was given).
+
+```ts
+interface DesktopApplication {
+  desktop: Desktop;   // The desktop window manager — always present for a no-`content` app.
+}
 ```
 
 ## DesktopLoopSeam
@@ -161,6 +184,7 @@ interface EventLoop {
   emitCommand(command: string, arg?: unknown): void;   // Emit a command, routing it to any handler. Dropped silently if the command is disabled.
   enableCommand(command: string, on: boolean): void;   // Enable or disable a command. While disabled, `emitCommand` for it is dropped.
   isCommandEnabled(command: string): boolean;   // Whether a command is currently enabled. Commands are enabled by default until disabled.
+  commandsVersion(): number;   // A version counter that changes whenever any command's enablement changes via enableCommand. Read it inside a view's `bind` to repaint on greying — the shell's status line and menu bar do exactly this so a disabled command greys live with no manual invalidate.
   execView(view: View): Promise<R>;   // Open `view` as a modal: input is captured to its subtree until it closes. Returns a promise that resolves with the value passed to endModal. `await` it to run a dialog and read its result.
   endModal(result: R): void;   // Close the top-most modal, restore the previously focused view, and resolve its `execView` promise with `result`.
   setAcceleratorMode(on: boolean): void;   // Turn accelerator mode on or off. When on, every reachable `~X~` hotkey is underlined and a bare letter fires the matching accelerator like `Alt`+letter. The reveal key (default `F12`) toggles this for you; call it directly to arm/dismiss the mode programmatically. A no-op when the feature is disabled (`revealKey: null`).
@@ -231,6 +255,7 @@ new MenuBar()   // extends View
 // methods & signals:
 items: readonly MenuItem[]
 controller: MenuController | null
+setItems(items: readonly MenuItem[]): void
 ```
 
 ## MenuController
@@ -273,6 +298,7 @@ The application-level operations the controller calls into for activation, greyi
 interface MenuLoopSeam {
   emitCommand(command: string, arg?: unknown): void;   // Emit the activated item's command so the app can handle it.
   isCommandEnabled(command: string): boolean;   // Whether a command is enabled — a disabled item is greyed and cannot be activated.
+  commandsVersion(): number;   // A tick that changes on any command-enablement change; the bar binds it so greying repaints live.
   focusView(view: View): void;   // Focus a view — used to restore the pre-menu focus when the menu closes.
   getFocused(): View | null;   // The currently-focused view, captured when a menu opens so it can be restored on close.
   dismissAccelerators(): void;   // Turn off the accelerator-hint overlay when a menu opens. Optional — a bare event loop without the full app shell omits it. An open menu owns plain letter keys (for item hotkeys), so the overlay must not also intercept them; the controller calls this on every open path.
@@ -342,6 +368,16 @@ Run findDuplicateAccelerators over a scope's accelerator chars and emit one dev-
 reportDuplicateAccelerators(scope: string, chars: readonly string[], labels?: readonly string[]): void
 ```
 
+## RouterApplication
+
+An application whose body is a custom `content` view (e.g. a router); it has no window manager.
+
+```ts
+interface RouterApplication {
+  desktop: undefined;   // No window manager: a `content` app manages its own body.
+}
+```
+
 ## separator
 
 Build a separator — a horizontal rule between groups of items inside a submenu.
@@ -398,6 +434,7 @@ The application status line.
 new StatusLine()   // extends Group
 // methods & signals:
 seam: StatusLoopSeam | null
+setItems(items: View[]): void
 ```
 
 ## StatusLoopSeam
@@ -408,6 +445,7 @@ The application operations the status line calls into for activation, greying, a
 interface StatusLoopSeam {
   emitCommand(command: string, arg?: unknown): void;   // Emit the item's command so the app can handle it.
   isCommandEnabled(command: string): boolean;   // Whether a command is enabled — a disabled item is greyed and cannot be activated.
+  commandsVersion(): number;   // A tick that changes on any command-enablement change; the bar binds it so greying repaints live.
   setCapture(view: Group): void;   // Capture the pointer to the status line for the duration of a press.
   releaseCapture(): void;   // Release the pointer capture.
 }
