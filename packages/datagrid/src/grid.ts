@@ -478,7 +478,7 @@ export class EditableDataGrid<T> extends Group {
     const old = this._inner;
     this._inner = parts.inner;
     this._center = parts.center;
-    this._headers = parts.headers; // refresh: the old headers were unmounted by the swap below (PF-002)
+    this._headers = parts.headers; // refresh: the old headers are unmounted by the swap below, so the keyboard opener must not hold a stale reference
     this.add(parts.inner); // new inner present before the old is removed → focus heals into it
     this.remove(old);
     // Restore z-order: the overlays sit above the (new) inner band stack.

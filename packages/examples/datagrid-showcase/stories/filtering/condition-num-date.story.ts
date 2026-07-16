@@ -1,7 +1,9 @@
 /**
- * Filtering · Number & date conditions — the funnel popup adapts its operators to the column type:
- * number columns get gt / lt / eq / between; date columns get before / after / on / between. The echo
- * shows the active filter. The `.js` extension is required by NodeNext ESM resolution.
+ * Filtering · Number & date conditions — every filterable column shows an always-visible funnel `▽`;
+ * click it (or focus a cell and press `Alt+Down`) to open its condition popup, whose operators adapt to
+ * the column type: number columns get gt / lt / eq / between; date columns get before / after / on /
+ * between. A quick-filter row is live too. The echo shows the active filter. The `.js` extension is
+ * required by NodeNext ESM resolution.
  */
 import { column } from '@jsvision/datagrid';
 import { buildFilterStory } from './filter-demo.js';
@@ -25,8 +27,9 @@ export const filteringConditionNumDateStory = buildFilterStory<Row>({
   title: 'Number & date conditions',
   blurb:
     'The funnel popup adapts operators to the column type — number gt/lt/eq/between, date before/after/on/between.',
-  hint: 'Click the Qty funnel ▽ for number operators (incl. between), or Closed for date operators',
+  hint: "Click a column's ▽ (or focus a cell + Alt+Down) for type-aware operators — number on Qty, date on Closed; or use the quick-filter row",
   echo: 'model',
+  quickFilter: true,
   rows: DATA,
   columns: [
     column<Row, number>({ id: 'qty', title: 'Qty', value: (r) => r.qty, align: 'right', width: 8 }),

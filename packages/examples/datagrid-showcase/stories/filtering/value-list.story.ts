@@ -1,8 +1,9 @@
 /**
  * Filtering · Value list — the Excel-style distinct-value picker embedded in the funnel popup: a
  * checkbox per distinct value, a type-ahead search, Select All, and a truncation disclosure for a
- * bounded source. The echo shows how many values are selected. The `.js` extension is required by
- * NodeNext ESM resolution.
+ * bounded source. Open it from any column's always-visible funnel `▽` (click it, or focus a cell and
+ * press `Alt+Down`); a quick-filter row is live too. The echo shows how many values are selected. The
+ * `.js` extension is required by NodeNext ESM resolution.
  */
 import { column } from '@jsvision/datagrid';
 import { buildFilterStory } from './filter-demo.js';
@@ -26,8 +27,9 @@ export const filteringValueListStory = buildFilterStory<Row>({
   slug: 'value-list',
   title: 'Value list',
   blurb: 'A distinct-value checkbox picker with search and Select All, embedded in the funnel popup.',
-  hint: 'Click the Region funnel ▽ → tick distinct values (search + Select All) to filter by set',
+  hint: 'Click the Region ▽ (or focus a cell + Alt+Down) → tick distinct values (search + Select All); or use the quick-filter row',
   echo: 'model',
+  quickFilter: true,
   rows: DATA,
   columns: [
     column<Row, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 10 }),
