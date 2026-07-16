@@ -10,6 +10,7 @@ import { formattingStory } from './formatting.story.js';
 import { sortingStory } from './sorting.story.js';
 import { filteringStory } from './filtering.story.js';
 import { columnsLayoutStory } from './columns-layout.story.js';
+import { rowsSelectionStory } from './rows-selection.story.js';
 
 export const STORIES: readonly Story[] = [
   foundationStory,
@@ -19,4 +20,5 @@ export const STORIES: readonly Story[] = [
   sortingStory,
   filteringStory,
   columnsLayoutStory,
+  rowsSelectionStory,
 ];

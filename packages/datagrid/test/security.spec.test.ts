@@ -452,3 +452,55 @@ test('ST-27: header/cell text with control bytes stays sanitized after a reorder
     }
   }
 });
+
+interface Member {
+  id: number;
+  name: string;
+  dept: string;
+}
+
+// ST-21 (sanitize) — the RD-08 row/selection mutations are presentational to the render sanitize
+// boundary: header + cell text laced with control bytes stays sanitized at the frame AFTER an insert
+// (a new malicious row), a duplicate (clone of a malicious row), a header select-all, and a reorder.
+// None of the mutation/selection paths open a new route for a raw ESC/BEL to reach the buffer.
+test('ST-21: header/cell text stays sanitized after insert / duplicate / select-all / reorder', () => {
+  const SW = 34;
+  const SH = 8;
+  const rows = signal<Member[]>([{ id: 1, name: 'A\x1b[31mB\x07', dept: 'R&D' }]); // a cell laced with ESC + BEL
+  const cols = [
+    column<Member, number>({ id: 'id', title: 'ID', value: (r) => r.id, width: 4 }),
+    // A header title itself carrying a raw ESC + BEL.
+    column<Member, string>({ id: 'name', title: 'Na\x1b[31mme\x07', value: (r) => r.name, width: 12 }),
+    column<Member, string>({ id: 'dept', title: 'Dept', value: (r) => r.dept, width: 8 }),
+  ];
+  const grid = new EditableDataGrid<Member>({
+    columns: cols,
+    source: fromRows(rows, { rowKey: (r) => r.id }),
+    checkboxColumn: true,
+    assignKey: (clone) => ({ ...clone, id: clone.id + 100 }),
+  });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: SW, height: SH } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: SW, height: SH }, { caps });
+  loop.mount(root);
+  loop.renderRoot.flush();
+
+  // Exercise every RD-08 mutation/selection path with control-byte-laden data.
+  grid.insertRow({ id: 2, name: 'C\x1b[32mD\x07', dept: 'Ops' }); // a new malicious row
+  grid.duplicateRow(1); // clone the malicious row 1 with a fresh key
+  grid.selectAllDisplayed(); // the header select-all path
+  grid.setColumnOrder(['name', 'id', 'dept']); // reorder
+  loop.renderRoot.flush();
+
+  // No raw ESC/BEL reaches any buffer cell, and no BEL survives into the serialized frame.
+  const buf = loop.renderRoot.buffer();
+  for (let y = 0; y < SH; y += 1) {
+    for (let x = 0; x < SW; x += 1) {
+      const ch = buf.get(x, y)?.char ?? ' ';
+      expect(ch).not.toBe('\x1b');
+      expect(ch).not.toBe('\x07');
+    }
+  }
+  expect(loop.renderRoot.serialize()).not.toContain('\x07');
+});
