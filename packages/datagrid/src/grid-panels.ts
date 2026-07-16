@@ -256,6 +256,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       onReorderStart: deps.onReorderStart,
       columnOffset: offset, // this panel's start in the global visible order — maps local drops to global
       compact: deps.compact,
+      filterable: sliceFilterable(ids), // per-panel filterability → the always-visible funnel gate
     });
     headers.push(header);
     return header;

@@ -56,6 +56,7 @@ function buildHeader(
   opts: {
     filterModel?: Signal<FilterModel>;
     onFunnelClick?: (columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void;
+    filterable?: boolean[];
   } = {},
 ) {
   const header = new SortHeader<Sale>({
@@ -67,6 +68,7 @@ function buildHeader(
     onHeaderClick,
     filterModel: opts.filterModel ?? signal<FilterModel>(new Map()),
     onFunnelClick: opts.onFunnelClick ?? (() => undefined),
+    filterable: opts.filterable,
   });
   header.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: 1 } };
   const root = new Group();
@@ -79,7 +81,11 @@ function buildHeader(
     for (let x = 0; x < W; x += 1) s += buf.get(x, 0)?.char ?? ' ';
     return s;
   };
-  return { header, line };
+  /** The painted buffer cell at header-local `x` (char + resolved fg/bg), for tone assertions. */
+  const cell = (x: number) => render.buffer().get(x, 0);
+  /** Re-paint after a reactive change (filter set/cleared) so the buffer reflects it. */
+  const flush = (): void => render.flush();
+  return { header, line, cell, flush };
 }
 
 /** A synthetic mouse-down envelope at header-local x. */
@@ -280,17 +286,56 @@ test('ST-20: a fresh grid paints no indicator and renders in source order', () =
 });
 
 // ---------------------------------------------------------------------------
-// Funnel indicator + funnel-vs-title click routing (the filter surface merged into the header).
-// The `(filter)` qualifier distinguishes these from the sorting ST-19/ST-20 above (same file).
+// Always-visible funnel (muted vs emphasized) + funnel-vs-title click routing (the filter surface
+// merged into the header). This plan's cases use an `ST-EP-*` scheme (filter-entry-point), distinct
+// from the sorting `ST-13…ST-20` above in the same file. The old `ST-19 (filter)` ("nothing filtered
+// → no funnel") is deliberately replaced here — the funnel is now permanent on every filterable
+// column — while `ST-20 (filter)` (funnel-cell click on a *filtered* column) is retained below.
 // ---------------------------------------------------------------------------
 
-test('ST-19 (filter): the funnel ▽ appears on a filtered column and is removed when cleared', () => {
-  const { grid, frame } = buildGrid();
-  expect(frame().some((r) => r.includes('▽'))).toBe(false); // nothing filtered → no funnel
-  grid.setFilter('qty', { kind: 'number', op: 'gt', a: 0 });
-  expect(frame().some((r) => r.includes('▽'))).toBe(true); // the filtered column shows the funnel
-  grid.clearFilter('qty');
-  expect(frame().some((r) => r.includes('▽'))).toBe(false); // cleared → funnel gone
+test('ST-EP-1 (filter): a filterable, unfiltered column paints ▽ in the muted listDivider tone', () => {
+  const { cell } = buildHeader(signal<SortKey[]>([]), () => undefined); // nothing filtered; every column filterable
+  expect(cell(14)?.char).toBe('▽'); // qty's funnel cell (starts[1]=9 + width 6 − 1 = 14)
+  expect(cell(14)?.fg).toBe(defaultTheme.listDivider.fg); // muted tone
+  expect(cell(14)?.bg).toBe(defaultTheme.listDivider.bg);
+  expect(cell(7)?.char).toBe('▽'); // region shows one too — every filterable column, not only filtered ones
+});
+
+test('ST-EP-2 (filter): a filterable column with an active filter paints ▽ in the emphasized tableHeader tone', () => {
+  const filterModel = signal<FilterModel>(
+    new Map<string, ColumnFilter>([['qty', { kind: 'text', op: 'contains', value: '5' }]]),
+  );
+  const { cell } = buildHeader(signal<SortKey[]>([]), () => undefined, { filterModel });
+  expect(cell(14)?.char).toBe('▽');
+  expect(cell(14)?.fg).toBe(defaultTheme.tableHeader.fg); // emphasized (normal header tone)
+  expect(cell(14)?.fg).not.toBe(defaultTheme.listDivider.fg); // and distinct from the muted tone
+});
+
+test('ST-EP-3 (filter): clearing a filter leaves the ▽ present, muted — it is not removed', () => {
+  const filterModel = signal<FilterModel>(new Map());
+  const { cell, flush } = buildHeader(signal<SortKey[]>([]), () => undefined, { filterModel });
+  expect(cell(14)?.fg).toBe(defaultTheme.listDivider.fg); // starts muted (unfiltered)
+
+  filterModel.set(new Map<string, ColumnFilter>([['qty', { kind: 'text', op: 'contains', value: '5' }]]));
+  flush();
+  expect(cell(14)?.fg).toBe(defaultTheme.tableHeader.fg); // emphasized while filtered
+
+  filterModel.set(new Map()); // clear
+  flush();
+  expect(cell(14)?.char).toBe('▽'); // still present
+  expect(cell(14)?.fg).toBe(defaultTheme.listDivider.fg); // back to muted, not gone
+});
+
+test('ST-EP-4 (filter): a filterable:false column paints no ▽ and its funnel cell is not hit-testable', () => {
+  const onFunnel = vi.fn<(columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void>();
+  const { cell, header } = buildHeader(signal<SortKey[]>([]), () => undefined, {
+    filterable: [true, false], // region filterable, qty opted out
+    onFunnelClick: onFunnel,
+  });
+  expect(cell(7)?.char).toBe('▽'); // region (filterable) shows the funnel
+  expect(cell(14)?.char).not.toBe('▽'); // qty (non-filterable) shows none
+  header.onEvent(mouseDown(14)); // a click on qty's would-be funnel cell
+  expect(onFunnel).not.toHaveBeenCalled(); // never routes to the popup
 });
 
 test('ST-20 (filter): a funnel-cell click fires onFunnelClick (no sort); a title click sorts', () => {
@@ -313,4 +358,56 @@ test('ST-20 (filter): a funnel-cell click fires onFunnelClick (no sort); a title
 
   header.onEvent(mouseDown(10)); // within qty content [9,15) but left of the funnel cell → title (sort)
   expect(onSort).toHaveBeenLastCalledWith('qty', false);
+});
+
+test("ST-EP-5 (filter): a click on an UNfiltered filterable column's funnel cell fires onFunnelClick, not a sort", () => {
+  const onFunnel = vi.fn<(columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void>();
+  const onSort = vi.fn<(columnId: string, additive: boolean) => void>();
+  // Nothing filtered — the funnel is now permanent, so the cell must still route to the popup (FR-2).
+  const { header } = buildHeader(signal<SortKey[]>([]), onSort, { onFunnelClick: onFunnel });
+  const ev = mouseDown(14); // qty funnel cell (unsorted → starts[1]+width−1 = 14)
+  header.onEvent(ev);
+  expect(onFunnel).toHaveBeenCalledTimes(1);
+  expect(onFunnel.mock.calls[0][0]).toBe('qty'); // reports the column even with no active filter
+  expect(ev.handled).toBe(true);
+  expect(onSort).not.toHaveBeenCalled(); // a funnel click never also sorts
+});
+
+test('ST-EP-6 (filter): the funnel cell routes to the funnel; the cell to its left routes to the title (sort)', () => {
+  const onFunnel = vi.fn<(columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void>();
+  const onSort = vi.fn<(columnId: string, additive: boolean) => void>();
+  const { header } = buildHeader(signal<SortKey[]>([]), onSort, { onFunnelClick: onFunnel }); // unfiltered, filterable
+  header.onEvent(mouseDown(14)); // exactly the funnel cell → funnel
+  expect(onFunnel).toHaveBeenCalledTimes(1);
+  expect(onSort).not.toHaveBeenCalled();
+  header.onEvent(mouseDown(13)); // one cell left of the funnel → title zone (sort)
+  expect(onSort).toHaveBeenLastCalledWith('qty', false);
+});
+
+test('ST-EP-7 (filter): a too-narrow sorted filterable column drops the funnel and keeps the sort arrow', () => {
+  // A width-1 column that is both sorted and filtered has room for exactly one indicator: drop-first
+  // precedence keeps the sort arrow and drops the funnel.
+  const narrowCols: Column<Sale>[] = [{ title: 'Q', accessor: (r) => String(r.qty), width: 1 }];
+  const header = new SortHeader<Sale>({
+    columns: narrowCols,
+    columnIds: ['qty'],
+    autoWidths: () => [null],
+    indent: signal(0),
+    sort: signal<SortKey[]>([{ columnId: 'qty', dir: 'asc' }]), // reserves the arrow cell
+    onHeaderClick: () => undefined,
+    filterModel: signal<FilterModel>(
+      new Map<string, ColumnFilter>([['qty', { kind: 'text', op: 'contains', value: '5' }]]),
+    ),
+    onFunnelClick: () => undefined,
+    filterable: [true],
+  });
+  header.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 8, height: 1 } };
+  const root = new Group();
+  root.add(header);
+  const render = createRenderRoot({ width: 8, height: 1 }, { caps });
+  render.mount(root);
+  const buf = render.buffer();
+  const chars = Array.from({ length: 8 }, (_, x) => buf.get(x, 0)?.char ?? ' ').join('');
+  expect(chars).toContain('▲'); // the sort arrow survives
+  expect(chars).not.toContain('▽'); // the funnel is dropped (drop-first, too narrow)
 });

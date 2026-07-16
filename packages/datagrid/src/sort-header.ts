@@ -1,10 +1,11 @@
 /**
  * `SortHeader<T>` — the datagrid's own sticky header. It renders multi-key sort indicators (an
  * ascending/descending arrow, plus a 1-based priority digit when several columns sort) from a
- * container-owned `Signal<SortKey[]>`, and a funnel `▽` on any column with an active filter from a
- * container-owned `Signal<FilterModel>`. A click in a column's title reports sort intent (Ctrl held ⇒
- * add a key rather than replace); a click on a column's funnel cell reports a funnel click instead, so
- * the container can open that column's filter popup. It shares the body's column geometry
+ * container-owned `Signal<SortKey[]>`, and an always-visible funnel `▽` on every filterable column —
+ * muted when the column has no active filter, emphasized when it does — driven by a container-owned
+ * `Signal<FilterModel>`. A click in a column's title reports sort intent (Ctrl held ⇒ add a key rather
+ * than replace); a click on a column's funnel cell reports a funnel click instead, so the container can
+ * open that column's filter popup whether or not a filter is already active. It shares the body's column geometry
  * (`apportionColumns`/`alignCell`/`stringWidth`) and its horizontal-scroll `indent`, so header and
  * body stay column-aligned and pan together.
  *
@@ -23,7 +24,7 @@ const DIVIDER = '│';
 /** Ascending / descending sort indicators (shared with the engine header glyphs). */
 const SORT_ASC = '▲';
 const SORT_DESC = '▼';
-/** The funnel indicator drawn on a column that has an active filter (same width class as the arrows). */
+/** The funnel indicator drawn on every filterable column — muted when unfiltered, emphasized when a filter is active (same width class as the arrows). */
 const FUNNEL = '▽';
 /** The reorder drop indicator — a thin caret at the target slot's left edge during a title drag. */
 const DROP_MARKER = '▏';
@@ -93,6 +94,12 @@ export interface SortHeaderConfig<T> {
    * pack tighter. Must match the body/quick-filter setting so header and body stay column-aligned.
    */
   compact?: boolean;
+  /**
+   * Per-column filterability, parallel to `columns` (index → filterable). A `false` column shows **no**
+   * funnel and its funnel cell is not hit-testable; every other column shows the always-visible funnel —
+   * muted when unfiltered, emphasized when a filter is active. Omit to make every column filterable.
+   */
+  filterable?: boolean[];
 }
 
 /**
@@ -134,6 +141,8 @@ export class SortHeader<T> extends View {
   private readonly columnOffset: number;
   /** Whether to reserve + paint the inter-column divider (`false` in compact density). */
   private readonly dividers: boolean;
+  /** Per-column filterability, parallel to `columns` — a `false` column has no funnel (draw + hit-test). */
+  private readonly filterable: boolean[];
   // Live-resize gesture state: the local column index being resized (`-1` when idle), the content-space
   // x where the grip was grabbed, and the column's width at grab time — the drag delta adds to it.
   private resizeCol = -1;
@@ -159,6 +168,9 @@ export class SortHeader<T> extends View {
     this.onHeaderClick = cfg.onHeaderClick;
     this.filterModel = cfg.filterModel;
     this.onFunnelClick = cfg.onFunnelClick;
+    // Default: every column is filterable (matches the pre-opt-out behavior); a caller supplies the
+    // real per-column slice so a `filterable: false` column shows no funnel.
+    this.filterable = cfg.filterable ?? cfg.columns.map(() => true);
     this.onColumnResize = cfg.onColumnResize;
     this.onColumnAutoFit = cfg.onColumnAutoFit;
     this.widthTick = cfg.widthTick;
@@ -236,10 +248,12 @@ export class SortHeader<T> extends View {
 
   /**
    * Draw the header row: blank it in the header colour, then each title left-aligned with a right-edge
-   * `│` divider. A column reserves its last cell(s) for indicators — a funnel `▽` when it has an active
-   * filter, then (further right) a 1-based priority digit for a multi-key sort and the sort arrow — so
-   * an indicator is never truncated even when the title fills the width. The glyphs are painted from
-   * left (funnel) to right (arrow), so the sort arrow always survives when the column is too narrow.
+   * `│` divider. A filterable column reserves its last cell(s) for indicators — an always-visible funnel
+   * `▽` (muted when the column has no active filter, emphasized when it does), then (further right) a
+   * 1-based priority digit for a multi-key sort and the sort arrow — so an indicator is never truncated
+   * even when the title fills the width. A non-filterable column reserves no funnel cell. The glyphs are
+   * painted from left (funnel) to right (arrow), so the sort arrow always survives when the column is too
+   * narrow to hold both.
    *
    * @param ctx The clipped, view-local paint context.
    */
@@ -263,13 +277,18 @@ export class SortHeader<T> extends View {
       const x = geom.starts[c] - indent;
       const sorted = rank.get(this.columnIds[c]);
       const filtered = filters.has(this.columnIds[c]);
+      const filterable = this.filterable[c] !== false; // a column filters unless it opts out
       const sortReserve = this.sortReserve(sorted !== undefined, multi);
-      // The title clips into whatever the funnel + sort glyphs leave, clamped to the column width.
-      const reserve = Math.min(sortReserve + (filtered ? 1 : 0), w);
+      // Reserve the funnel cell on every filterable column (whether or not it currently has a filter), so
+      // the title clips one cell earlier there; a non-filterable column keeps today's full title width.
+      const reserve = Math.min(sortReserve + (filterable ? 1 : 0), w);
       ctx.text(x, 0, alignCell(col.title, Math.max(0, w - reserve), 'left', stringWidth), header);
       // Funnel first (leftmost reserved cell), then the sort glyphs to its right — painted last, so a
-      // too-narrow column drops the funnel before the arrow.
-      if (filtered && w - 1 - sortReserve >= 0) ctx.text(x + w - 1 - sortReserve, 0, FUNNEL, header);
+      // too-narrow column drops the funnel before the arrow. Muted (listDivider) when the column has no
+      // active filter, emphasized (tableHeader) when it does — same glyph either way.
+      if (filterable && w - 1 - sortReserve >= 0) {
+        ctx.text(x + w - 1 - sortReserve, 0, FUNNEL, filtered ? header : divider);
+      }
       if (sorted !== undefined && w > 0) {
         if (multi && w >= 2) ctx.text(x + w - 2, 0, String(sorted.priority + 1), header);
         ctx.text(x + w - 1, 0, sorted.dir === 'asc' ? SORT_ASC : SORT_DESC, header);
@@ -347,14 +366,14 @@ export class SortHeader<T> extends View {
       return;
     }
 
-    // A funnel click is checked next, so a click on a filtered column's funnel never also sorts.
-    const filters = this.filterModel();
+    // A funnel click is checked next, so a click on a filterable column's funnel never also sorts. The
+    // funnel is always present on a filterable column, so this routes regardless of the current filter state.
     const multi = this.sort().length >= 2;
     const sortedIds = new Set(this.sort().map((k) => k.columnId));
     const f = funnelColumnAt(
       geom,
       contentX,
-      (k) => filters.has(this.columnIds[k]),
+      (k) => this.filterable[k] !== false,
       (k) => this.sortReserve(sortedIds.has(this.columnIds[k]), multi),
     );
     if (f >= 0) {
@@ -444,20 +463,21 @@ function columnAtX(geom: ColumnGeometry, x: number): number {
 
 /**
  * The column whose funnel cell sits exactly at content-space `x`, or `-1` when none does. A column has
- * a funnel only when `isFiltered(k)` is true and it is wide enough to hold it; the funnel occupies the
+ * a funnel only when `isFilterable(k)` is true and it is wide enough to hold it; the funnel occupies the
  * cell `sortReserveOf(k)` in from the column's right edge (so it clears any sort arrow/priority digit).
- * Checked before {@link columnAtX} so a funnel click routes to the popup instead of a sort.
+ * The funnel is permanent on a filterable column, so this routes regardless of whether a filter is
+ * currently active. Checked before {@link columnAtX} so a funnel click routes to the popup instead of a sort.
  */
 function funnelColumnAt(
   geom: ColumnGeometry,
   x: number,
-  isFiltered: (index: number) => boolean,
+  isFilterable: (index: number) => boolean,
   sortReserveOf: (index: number) => number,
 ): number {
   for (let k = 0; k < geom.widths.length; k += 1) {
     const w = geom.widths[k];
     const reserve = sortReserveOf(k);
-    if (!isFiltered(k) || w - 1 - reserve < 0) continue;
+    if (!isFilterable(k) || w - 1 - reserve < 0) continue;
     if (x === geom.starts[k] + w - 1 - reserve) return k;
   }
   return -1;
