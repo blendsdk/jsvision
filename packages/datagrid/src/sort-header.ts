@@ -223,6 +223,27 @@ export class SortHeader<T> extends View {
   }
 
   /**
+   * The header-local anchor `{ x, y }` of a column's funnel cell — the point a filter popup opens from —
+   * or `null` when the column is not in this header. Computed from the current geometry + indent, so it
+   * matches exactly the cell {@link draw} paints. Shared by the mouse funnel-click path and the
+   * container's `Alt+Down` keyboard opener, so both open the popup at the same cell.
+   *
+   * @param columnId The column whose funnel anchor to resolve.
+   * @returns The funnel cell's header-local `{ x, y }`, or `null` when the column is not in this panel.
+   */
+  funnelAnchor(columnId: string): { x: number; y: number } | null {
+    const c = this.columnIds.indexOf(columnId);
+    if (c < 0) return null;
+    const width = this.bounds.width;
+    const geom = this.geometry(width);
+    const indent = this.clampedIndent(geom, width);
+    const multi = this.sort().length >= 2;
+    const sorted = this.sort().some((k) => k.columnId === columnId);
+    const reserve = this.sortReserve(sorted, multi);
+    return { x: geom.starts[c] + geom.widths[c] - 1 - reserve - indent, y: 0 };
+  }
+
+  /**
    * The column whose resize grip sits at content-space `x`, or `-1`. A grip is the 1-cell divider at a
    * column's right edge (`starts[c] + widths[c]`) — the same `│` cell {@link draw} paints.
    */
@@ -377,11 +398,11 @@ export class SortHeader<T> extends View {
       (k) => this.sortReserve(sortedIds.has(this.columnIds[k]), multi),
     );
     if (f >= 0) {
-      const funnelLocalX =
-        geom.starts[f] + geom.widths[f] - 1 - this.sortReserve(sortedIds.has(this.columnIds[f]), multi) - indent;
-      // Forward the LIVE envelope: `ev.focusView`/`ev.popupHost` live on it, and a popup's nested
+      // Reuse funnelAnchor so a funnel click and the container's Alt+Down opener land on the exact same
+      // cell. Forward the LIVE envelope: `ev.focusView`/`ev.popupHost` live on it, and a popup's nested
       // ComboBox/DatePicker silently no-op without `ev.popupHost`.
-      this.onFunnelClick(this.columnIds[f], { x: funnelLocalX, y: 0 }, ev);
+      const anchor = this.funnelAnchor(this.columnIds[f]) ?? { x: 0, y: 0 };
+      this.onFunnelClick(this.columnIds[f], anchor, ev);
       ev.handled = true;
       return;
     }

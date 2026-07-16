@@ -72,6 +72,13 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
    * re-focus the panel that now owns the cursor (a leaf-focus hop). Omitted for a single body.
    */
   onCursorEnterPanel?: (globalCol: number, ev: DispatchEvent) => void;
+  /**
+   * Open-filter sink: fired when `Alt+Down` is pressed on the non-editing body, with the GLOBAL focused
+   * column index and the live dispatch envelope (so the popup inherits `ev.focusView`/`ev.popupHost`).
+   * The container resolves the column's filterability and owning header and opens the condition popup.
+   * Optional — a body without it ignores `Alt+Down` (which then falls through to the base row cursor).
+   */
+  onOpenFilter?: (globalCol: number, ev: DispatchEvent) => void;
   /** When set, a mouse-down sets the global column cursor to the clicked column (frozen-panel mode). */
   mouseColumns?: boolean;
   /** When set, moving the cursor to an off-screen column scrolls this panel to reveal it (center panel). */
@@ -164,6 +171,8 @@ export class EditableGridRows<T> extends GridRows<T> {
   private readonly totalColsFn: () => number;
   /** Re-focus hop when the cursor leaves this panel's range (frozen-panel mode). */
   private readonly onCursorEnterPanel?: (globalCol: number, ev: DispatchEvent) => void;
+  /** Open-filter sink for `Alt+Down` (reports the global focused column up to the container). */
+  private readonly onOpenFilter?: (globalCol: number, ev: DispatchEvent) => void;
   /** Whether a mouse-down sets the global column cursor (frozen-panel mode). */
   private readonly mouseColumns: boolean;
   /** Whether moving the cursor off-screen scrolls this panel to reveal it (center panel). */
@@ -196,6 +205,7 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.columnCount = cfg.columns.length;
     this.totalColsFn = cfg.totalCols ?? (() => this.columns.length);
     this.onCursorEnterPanel = cfg.onCursorEnterPanel;
+    this.onOpenFilter = cfg.onOpenFilter;
     this.mouseColumns = cfg.mouseColumns ?? false;
     this.autoScrollColumns = cfg.autoScrollColumns ?? false;
     this.panelActive = cfg.panelActive;
@@ -266,6 +276,12 @@ export class EditableGridRows<T> extends GridRows<T> {
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type === 'key') {
+      // Alt+Down opens the focused column's filter popup. This MUST precede super.onEvent: the base
+      // binds `down` ignoring modifiers, so an un-intercepted Alt+Down would move the row cursor instead.
+      if (this.handleOpenFilter(inner, ev)) {
+        ev.handled = true;
+        return;
+      }
       if (this.handleColKey(inner, ev)) {
         ev.handled = true;
         return;
@@ -281,6 +297,22 @@ export class EditableGridRows<T> extends GridRows<T> {
       this.setColFromClick(ev);
     }
     super.onEvent(ev);
+  }
+
+  /**
+   * Open the focused column's filter popup on `Alt+Down` (Excel's open-filter shortcut) from the
+   * non-editing body; returns whether it was consumed. Reports the GLOBAL focused column up via
+   * `onOpenFilter`, forwarding the live envelope so the popup inherits the focus/popup seam.
+   *
+   * While a cell editor is open the editor owns the key — including its own synthesized `Alt+Down`
+   * (value-help dropdown) — so this no-ops then. A plain `Down` (no Alt) is deliberately left for the
+   * base row navigation.
+   */
+  private handleOpenFilter(inner: KeyEvent, ev: DispatchEvent): boolean {
+    if (inner.key !== 'down' || !inner.alt || inner.ctrl || inner.shift) return false;
+    if (this.onOpenFilter === undefined || this.controller.isEditing()) return false;
+    this.onOpenFilter(this.focusedCol(), ev);
+    return true;
   }
 
   /** Set the global column cursor from a mouse-down x (frozen-panel mode). */
