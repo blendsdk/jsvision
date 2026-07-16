@@ -131,12 +131,15 @@ export class QuickFilterRow<T> extends Group {
   }
 
   /**
-   * Place each input under its column: an absolute rect at `{ x: starts[c] - indent, y: 0, width:
-   * widths[c] }` — the column's full content width, so each input is flush with its header title and the
-   * in-cell editor below it. The inter-column divider occupies its own reserved cell (already excluded
-   * from `widths[c]` by `apportionColumns`), so nothing is subtracted here; the `dividers` flag only
-   * selects the apportionment, keeping the band aligned with a normal or compact header/body. A negative
-   * x pans the input off the left edge, where the band's bounds clip it.
+   * Place each input under its column, clipped to the band's viewport. The column's natural span is
+   * `[starts[c] - indent, starts[c] - indent + widths[c])` (`widths[c]` excludes the inter-column
+   * divider cell, which `apportionColumns` reserves separately, so the input is flush with its header
+   * title and the in-cell editor below it). Absolute rects cannot have a negative origin — the layout
+   * engine clamps a negative `x` to `0` — so a column scrolled partly off the left is placed at the
+   * viewport's left edge with its width shrunk by the clipped amount, rather than at a negative `x` that
+   * would pin to `0` and overlap the next column. The band's bounds clip the right edge, and a column
+   * scrolled entirely off the left collapses to width `0` (renders nothing). The `dividers` flag only
+   * selects the apportionment, keeping the band aligned with a normal or compact header/body.
    */
   private reposition(): void {
     const width = this.bounds.width;
@@ -146,8 +149,9 @@ export class QuickFilterRow<T> extends Group {
     const indent = Math.min(maxIndent, Math.max(0, this.indent()));
     this.inputs.forEach((input, c) => {
       if (!input) return; // non-filterable column: blank slot, nothing to place
-      const x = geom.starts[c] - indent;
-      const w = Math.max(0, geom.widths[c]);
+      const left = geom.starts[c] - indent; // natural left edge, negative when scrolled off the left
+      const x = Math.max(0, left); // clip to the viewport's left edge (no negative absolute x)
+      const w = Math.max(0, left + geom.widths[c] - x); // shrink by the clipped amount; bounds clip the right
       input.layout = { position: 'absolute', rect: { x, y: 0, width: w, height: 1 } };
     });
   }
