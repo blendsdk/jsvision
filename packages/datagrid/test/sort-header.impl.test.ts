@@ -7,6 +7,7 @@
 import { test, expect, vi } from 'vitest';
 import { Group, createRenderRoot, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
 import type { Column, DispatchEvent, Signal } from '@jsvision/ui';
+import { defaultTheme } from '@jsvision/core';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import type { SortKey } from '../src/sort.js';
@@ -36,6 +37,8 @@ function buildHeader(
     indent?: Signal<number>;
     autoWidths?: () => (number | null)[];
     columns?: Column<Sale>[];
+    filterable?: boolean[];
+    filterModel?: Signal<FilterModel>;
   } = {},
 ) {
   const width = opts.width ?? 22;
@@ -46,8 +49,9 @@ function buildHeader(
     indent: opts.indent ?? signal(0),
     sort,
     onHeaderClick,
-    filterModel: signal<FilterModel>(new Map()),
+    filterModel: opts.filterModel ?? signal<FilterModel>(new Map()),
     onFunnelClick: () => undefined,
+    filterable: opts.filterable,
   });
   header.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height: 1 } };
   const root = new Group();
@@ -182,4 +186,55 @@ test('the header repaints when the sort model changes', () => {
   expect(line()).not.toContain('▲');
   sort.set([{ columnId: 'qty', dir: 'asc' }]);
   expect(line()).toContain('▲'); // the bound repaint reflected the new model
+});
+
+test('a filterable column clips its title one cell earlier for the funnel; a non-filterable one does not', () => {
+  // One 8-wide column whose 8-char title exactly fills it. Filterable → the funnel takes the last cell
+  // (the title clips to 7); non-filterable → the title keeps all 8 cells and shows no funnel.
+  const cols: Column<Sale>[] = [{ title: 'ABCDEFGH', accessor: () => '', width: 8 }];
+  const filterable = buildHeader(signal<SortKey[]>([]), () => undefined, {
+    columns: cols,
+    width: 10,
+    autoWidths: () => [null],
+    filterable: [true],
+  }).line();
+  expect(filterable[7]).toBe('▽'); // funnel occupies the last cell
+  expect(filterable.slice(0, 7)).toBe('ABCDEFG'); // title clipped one char early
+  expect(filterable).not.toContain('H'); // the 8th title char is dropped for the funnel
+
+  const plain = buildHeader(signal<SortKey[]>([]), () => undefined, {
+    columns: cols,
+    width: 10,
+    autoWidths: () => [null],
+    filterable: [false],
+  }).line();
+  expect(plain.slice(0, 8)).toBe('ABCDEFGH'); // full title — no funnel cell reserved
+  expect(plain).not.toContain('▽');
+});
+
+test("setFilter/clearFilter on the grid repaints only that column's funnel emphasized↔muted", () => {
+  const grid = new EditableDataGrid<Sale>({
+    columns: [
+      column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 8 }),
+      column<Sale, number>({ id: 'qty', title: 'Qty', value: (r) => r.qty, width: 6 }),
+    ],
+    source: fromRows(signal([{ region: 'east', qty: 5 }]), { rowKey: (r) => r.region }),
+  });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 22, height: 6 } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: 22, height: 6 }, { caps });
+  loop.mount(root);
+  // Funnel cells on the header row (y=0): region at 7, qty at 14 (each column's rightmost content cell,
+  // unsorted). Inspect the resolved fg to tell muted (listDivider) from emphasized (tableHeader).
+  const fgAt = (x: number): unknown => {
+    loop.renderRoot.flush();
+    return loop.renderRoot.buffer().get(x, 0)?.fg;
+  };
+  expect(fgAt(14)).toBe(defaultTheme.listDivider.fg); // qty starts muted
+  grid.setFilter('qty', { kind: 'number', op: 'gt', a: 0 });
+  expect(fgAt(14)).toBe(defaultTheme.tableHeader.fg); // qty emphasized
+  expect(fgAt(7)).toBe(defaultTheme.listDivider.fg); // region stays muted (only the filtered column emphasizes)
+  grid.clearFilter('qty');
+  expect(fgAt(14)).toBe(defaultTheme.listDivider.fg); // qty muted again — never removed
 });

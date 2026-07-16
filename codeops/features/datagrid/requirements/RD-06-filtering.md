@@ -12,9 +12,10 @@
 ## Feature Overview
 
 Excel-class filtering: an always-visible quick-filter row, per-column condition filters, the Excel
-value-list (distinct-value checkbox picker with search), a funnel indicator on filtered columns and a
-"N of M rows" footer, multi-column AND combination, and server-side push-down. Like sorting, filters
-evaluate the column `value` (RD-01), not the formatted string.
+value-list (distinct-value checkbox picker with search), a funnel indicator on every filterable column
+(muted when unfiltered, emphasized when a filter is active) and a "N of M rows" footer, multi-column
+AND combination, and server-side push-down. Like sorting, filters evaluate the column `value` (RD-01),
+not the formatted string.
 
 ---
 
@@ -24,15 +25,17 @@ evaluate the column `value` (RD-01), not the formatted string.
 
 - [ ] **Quick-filter row** — an optional always-visible row beneath the header, one inline `Input`
       per filterable column doing live case-insensitive contains-match on the column's display/value.
-- [ ] **Condition filters** — a header funnel opens an anchored popup offering type-appropriate
-      operators: text (`contains` / `startsWith` / `endsWith` / `equals`), number (`>` / `<` /
-      `between` / `=`), date (before/after/between/on).
+- [ ] **Condition filters** — a header funnel (always present on filterable columns) — or `Alt+Down`
+      on the focused column — opens an anchored popup offering type-appropriate operators: text
+      (`contains` / `startsWith` / `endsWith` / `equals`), number (`>` / `<` / `between` / `=`), date
+      (before/after/between/on).
 - [ ] **Excel value-list** — the same popup offers a distinct-value checkbox list with a type-ahead
       search and "Select All"; checking a subset keeps only rows whose value is in the set.
 - [ ] **Distinct enumeration seam** — value-list values come from `source.distinct(columnId)` (client
       computes them for an in-memory source; a windowed source runs `SELECT DISTINCT … LIMIT`).
-- [ ] **Funnel indicator + "N of M"** — a filtered column's header shows a funnel glyph; a footer/status
-      area shows the filtered row count vs total (`"37 of 1,204 rows"`).
+- [ ] **Funnel indicator + "N of M"** — every filterable column's header shows a funnel glyph — muted
+      when unfiltered, emphasized when a filter is active; a footer/status area shows the filtered row
+      count vs total (`"37 of 1,204 rows"`).
 - [ ] **Multi-column AND** — active filters across columns combine with AND.
 - [ ] **Push-down** — when `source.setFilter(model)` exists, filtering re-queries the source; otherwise
       an in-memory source filters client-side.
@@ -80,9 +83,9 @@ export type FilterModel<T> = ReadonlyMap<string /*columnId*/, ColumnFilter>;
 
 ### Funnel + count
 
-- The header renders a funnel glyph on any column with an active filter; the count ("N of M") renders
-  in the footer band (RD-09) or, absent a footer, the status area — driven by the reactive filtered
-  length vs `source.length()` pre-filter.
+- The header renders a funnel glyph on every filterable column — muted when unfiltered, emphasized when
+  a filter is active; the count ("N of M") renders in the footer band (RD-09) or, absent a footer, the
+  status area — driven by the reactive filtered length vs `source.length()` pre-filter.
 
 ---
 
@@ -136,7 +139,9 @@ export type FilterModel<T> = ReadonlyMap<string /*columnId*/, ColumnFilter>;
        `100 ≤ value ≤ 500`, evaluated on the numeric `value` (not the formatted `"$250,00"` text).
 3. [ ] The value-list popup lists the column's distinct values from `source.distinct(columnId)`;
        checking two of them keeps only rows whose value is one of the two; "Select All" restores all.
-4. [ ] A filtered column's header shows the funnel glyph; clearing its filter removes the glyph.
+4. [ ] Every filterable column's header shows a funnel glyph at all times — muted when unfiltered,
+       emphasized when filtered; clearing a filter mutes the glyph (it is not removed). A funnel click
+       or `Alt+Down` opens the column's condition popup regardless of current filter state.
 5. [ ] Two active column filters combine with AND (a row must satisfy both to remain).
 6. [ ] With a source exposing `setFilter`, filtering calls `setFilter(model)` and does not filter
        client-side (spy-verified); `length()` returns the filtered count and the footer shows "N of M".
@@ -144,5 +149,7 @@ export type FilterModel<T> = ReadonlyMap<string /*columnId*/, ColumnFilter>;
        silent cap).
 8. [ ] A `datagrid` kitchen-sink story demonstrates the quick-filter row + a value-list filter and
        passes the smoke test.
+9. [ ] A non-filterable column (`filterable: false`) shows no funnel, omits its quick-filter input, and
+       `Alt+Down` is a no-op on it.
 9. [ ] Security verified: filter operands are passed as structured literals to `setFilter`, never
        concatenated into a query by the grid; an unknown `columnId` filter is ignored.

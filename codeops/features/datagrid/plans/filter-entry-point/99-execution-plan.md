@@ -3,8 +3,8 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Tracks**: GitHub issue #92
-> **Last Updated**: 2026-07-16 09:10
-> **Progress**: 8/30 tasks (27%)
+> **Last Updated**: 2026-07-16 09:24
+> **Progress**: 18/30 tasks (60%)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -65,20 +65,20 @@ the `ST-19` re-spec are explicit tasks **both in Phase 2** (preflight PF-006 —
 **Reference**: `03-01` · `07 §Funnel states / §Funnel hit-test` (ST-1…ST-7) · AR-3/AR-6/AR-7/AR-8
 
 ### Step 2.1: Specification tests (red)
-- [ ] 2.1.1 In `sort-header.spec.test.ts`: **replace `ST-19 (filter)`** with ST-1 (muted `▽` when unfiltered), ST-2 (emphasized when filtered), ST-3 (clear ⇒ stays muted), ST-4 (`filterable:false` ⇒ no `▽`); prefix the new cases (e.g. `ST-EP-*`) so they don't blur with the RD-05 `ST-13…ST-20` already in the file, and leave `ST-20 (filter)` in place (PF-008) — `packages/datagrid/test/sort-header.spec.test.ts`
-- [ ] 2.1.2 Add ST-5 (funnel click on an unfiltered column fires `onFunnelClick`, not `onSort`), ST-6 (funnel-cell routing), ST-7 (narrow ⇒ drop funnel, keep arrow) — same file
-- [ ] 2.1.3 Verify **red** — funnel is still filtered-only
+- [x] 2.1.1 In `sort-header.spec.test.ts`: **replace `ST-19 (filter)`** with ST-1 (muted `▽` when unfiltered), ST-2 (emphasized when filtered), ST-3 (clear ⇒ stays muted), ST-4 (`filterable:false` ⇒ no `▽`); prefix the new cases (e.g. `ST-EP-*`) so they don't blur with the RD-05 `ST-13…ST-20` already in the file, and leave `ST-20 (filter)` in place (PF-008) — `packages/datagrid/test/sort-header.spec.test.ts` *(completed 2026-07-16 09:24 — added `ST-EP-1..4`, replaced old `ST-19 (filter)`, kept `ST-20 (filter)`; tone asserted via `defaultTheme.listDivider/tableHeader.fg`)*
+- [x] 2.1.2 Add ST-5 (funnel click on an unfiltered column fires `onFunnelClick`, not `onSort`), ST-6 (funnel-cell routing), ST-7 (narrow ⇒ drop funnel, keep arrow) — same file *(completed 2026-07-16 09:24 — `ST-EP-5..7`)*
+- [x] 2.1.3 Verify **red** — funnel is still filtered-only *(completed 2026-07-16 09:12 — 5 of 7 new cases red; ST-EP-2/7 codify pre-existing invariants, green)*
 
 ### Step 2.2: Implement (green)
-- [ ] 2.2.1 `SortHeader`: accept an **optional** `filterable[]` config (default all-`true`, PF-004); in `draw`, reserve + paint `▽` on every filterable column — `listDivider` when unfiltered, `tableHeader` when filtered; keep narrow-column drop-first — `packages/datagrid/src/sort-header.ts`
-- [ ] 2.2.2 `funnelColumnAt`: gate on `isFilterable(k)` instead of `isFiltered(k)` so clicks route regardless of filter state — same file
-- [ ] 2.2.3 Update `draw` / `funnelColumnAt` JSDoc to the new behavior (plain language, no plan IDs) — same file
-- [ ] 2.2.4 **RD-06 funnel revision (moved here from Phase 4, PF-006):** revise all five spots that encode the old rule — §Feature Overview (~L15), §Condition filters (~L27), §Funnel indicator (~L34), Technical §Funnel + count (~L83), acceptance #4 (~L139) — and add the non-filterable AC, per [00-ambiguity-register §C](00-ambiguity-register.md) — `codeops/features/datagrid/requirements/RD-06-filtering.md`
-- [ ] 2.2.5 Verify **green** — ST-1…ST-7 pass; RD-06 + the re-spec agree
+- [x] 2.2.1 `SortHeader`: accept an **optional** `filterable[]` config (default all-`true`, PF-004); in `draw`, reserve + paint `▽` on every filterable column — `listDivider` when unfiltered, `tableHeader` when filtered; keep narrow-column drop-first — `packages/datagrid/src/sort-header.ts` *(completed 2026-07-16 09:24 — + wired `sliceFilterable(ids)` into `makeHeader` in grid-panels.ts)*
+- [x] 2.2.2 `funnelColumnAt`: gate on `isFilterable(k)` instead of `isFiltered(k)` so clicks route regardless of filter state — same file *(completed 2026-07-16 09:24 — predicate renamed; unused `filters` local removed)*
+- [x] 2.2.3 Update `draw` / `funnelColumnAt` JSDoc to the new behavior (plain language, no plan IDs) — same file *(completed 2026-07-16 09:24 — module overview + FUNNEL const + draw + funnelColumnAt)*
+- [x] 2.2.4 **RD-06 funnel revision (moved here from Phase 4, PF-006):** revise all five spots that encode the old rule — §Feature Overview (~L15), §Condition filters (~L27), §Funnel indicator (~L34), Technical §Funnel + count (~L83), acceptance #4 (~L139) — and add the non-filterable AC, per [00-ambiguity-register §C](00-ambiguity-register.md) — `codeops/features/datagrid/requirements/RD-06-filtering.md` *(completed 2026-07-16 09:24 — all 5 spots + new AC #9)*
+- [x] 2.2.5 Verify **green** — ST-1…ST-7 pass; RD-06 + the re-spec agree *(completed 2026-07-16 09:16 — sort-header 28 green)*
 
 ### Step 2.3: Impl tests & verify
-- [ ] 2.3.1 Impl tests: title clips one cell earlier on a filterable column (unchanged on a non-filterable one); muted↔emphasized repaint on `setFilter`/`clearFilter` — `packages/datagrid/test/sort-header.impl.test.ts`
-- [ ] 2.3.2 Full `yarn verify`
+- [x] 2.3.1 Impl tests: title clips one cell earlier on a filterable column (unchanged on a non-filterable one); muted↔emphasized repaint on `setFilter`/`clearFilter` — `packages/datagrid/test/sort-header.impl.test.ts` *(completed 2026-07-16 09:24 — title-clip + grid-API reactive tone flip, only the filtered column emphasizes)*
+- [x] 2.3.2 Full `yarn verify` *(completed 2026-07-16 09:24 — turbo 26/26 green; datagrid full suite + showcase/kitchen-sink smoke unaffected by the always-on funnel)*
 
 **Deliverables**: mouse entry point live on every filterable column; RD-06 + `ST-19` agree with the code. **Verify**: `yarn verify`
 
