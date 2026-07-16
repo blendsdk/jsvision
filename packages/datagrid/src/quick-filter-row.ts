@@ -1,7 +1,9 @@
 /**
- * `QuickFilterRow<T>` — the opt-in, one-cell-tall band of live text inputs (one per column) that sits
- * between the sticky header and the body. Typing into a column's input drives a `contains` text filter
- * for that column; emptying the input clears it. The band shares the body's column geometry
+ * `QuickFilterRow<T>` — the opt-in, one-cell-tall band of live text inputs (one per filterable column)
+ * that sits between the sticky header and the body. Typing into a column's input drives a `contains`
+ * text filter for that column; emptying the input clears it. A column that opts out of filtering
+ * (`filterable: false`) has a blank slot instead of an input, and the surviving inputs stay aligned
+ * under their columns. The band shares the body's column geometry
  * (`apportionColumns`) and its horizontal-scroll `indent`, so each input stays under its column's title
  * and pans with the body — an input scrolled off the left edge is clipped away by the band's bounds.
  *
@@ -31,6 +33,12 @@ export interface QuickFilterRowConfig<T> {
    * column's full width and the band stays aligned with a compact header/body.
    */
   compact?: boolean;
+  /**
+   * Per-column filterability, parallel to `columns` (index → filterable). A `false` entry omits that
+   * column's input entirely — a blank, non-interactive slot — while the surrounding inputs keep their
+   * positions under their columns. Omit to make every column filterable.
+   */
+  filterable?: boolean[];
 }
 
 /**
@@ -57,8 +65,14 @@ export class QuickFilterRow<T> extends Group {
   private readonly onQuickFilter: (columnId: string, text: string) => void;
   /** Whether a divider cell is reserved between columns (`false` in compact density). */
   private readonly dividers: boolean;
-  /** One text input per column, parallel to `columns` (also this group's children, in column order). */
-  private readonly inputs: Input[];
+  /**
+   * One slot per column, parallel to `columns`: a live `Input` for a filterable column, or `null` for a
+   * non-filterable one. The non-null inputs are this group's children, in column order. Keeping the array
+   * index-parallel to `columns` (rather than compacting out the gaps) is what keeps every surviving
+   * input aligned under its title when an earlier column opts out — `reposition` and the filter wiring
+   * both index by column position.
+   */
+  private readonly inputs: (Input | null)[];
 
   /**
    * @param cfg The shared band configuration (columns, ids, geometry, indent, and the filter-text sink).
@@ -71,8 +85,11 @@ export class QuickFilterRow<T> extends Group {
     this.dividers = cfg.compact !== true;
     this.indent = cfg.indent;
     this.onQuickFilter = cfg.onQuickFilter;
-    this.inputs = this.columns.map(() => new Input({ value: signal('') }));
-    for (const input of this.inputs) this.add(input);
+    // A `filterable: false` column gets a null slot (no input); every other column gets a live Input.
+    // The array stays index-parallel to `columns` so positions never shift when a column opts out.
+    const filterable = cfg.filterable;
+    this.inputs = this.columns.map((_, c) => (filterable?.[c] === false ? null : new Input({ value: signal('') })));
+    for (const input of this.inputs) if (input) this.add(input);
 
     this.onMount(() => {
       // Position the inputs (bounds are valid by onMount), then re-position whenever the shared
@@ -91,6 +108,7 @@ export class QuickFilterRow<T> extends Group {
       // display / cursor signals inside the container's re-anchor) would join this effect's
       // dependencies while it writes them, and the reactive graph would never converge.
       this.inputs.forEach((input, c) => {
+        if (!input) return; // non-filterable column: no input, nothing to wire
         const value = input.getValueSignal();
         let first = true;
         this.bind(
@@ -122,6 +140,7 @@ export class QuickFilterRow<T> extends Group {
     const maxIndent = Math.max(0, geom.totalWidth - width);
     const indent = Math.min(maxIndent, Math.max(0, this.indent()));
     this.inputs.forEach((input, c) => {
+      if (!input) return; // non-filterable column: blank slot, nothing to place
       const x = geom.starts[c] - indent;
       const w = Math.max(0, geom.widths[c]);
       input.layout = { position: 'absolute', rect: { x, y: 0, width: w, height: 1 } };

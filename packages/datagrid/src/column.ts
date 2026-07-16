@@ -96,6 +96,22 @@ export interface GridColumn<T, V = unknown> {
    * column whose sample would misclassify.
    */
   readonly filterType?: FilterType;
+  /**
+   * Whether this column participates in filtering (default `true`). A `false` column shows **no**
+   * header funnel and its funnel cell is not hit-testable, its quick-filter input is omitted, and the
+   * `Alt+Down` open-filter shortcut is a no-op while one of its cells is focused — use it for
+   * action/icon columns, or any column that should never be filtered. Column geometry is unaffected:
+   * the funnel reserve and the quick-filter slot are simply not taken.
+   *
+   * @example
+   * ```ts
+   * import { column } from '@jsvision/datagrid';
+   * interface Row { name: string; }
+   * // An action column that never shows a funnel and has no quick-filter input:
+   * const actions = column({ id: 'actions', title: '', value: (_r: Row) => '', filterable: false });
+   * ```
+   */
+  readonly filterable?: boolean;
 }
 
 /**

@@ -226,6 +226,10 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   };
   const sliceCols = (ids: string[]): Column<T>[] => ids.map(engineOf);
   const sliceTyped = (ids: string[]): GridColumn<T>[] => ids.map((id) => deps.columnMap.get(id)!);
+  // Each slice's filterability, parallel to `ids`: a column filters unless it opts out with
+  // `filterable: false`. Derived from the same `columnMap` as `sliceTyped`, so the funnel, the
+  // quick-filter band, and the keyboard opener all read one consistent per-column gate.
+  const sliceFilterable = (ids: string[]): boolean[] => ids.map((id) => deps.columnMap.get(id)?.filterable !== false);
   // A per-slice auto-width reader: reindexes the shared measurement into this slice's local order, and
   // stays reactive (it reads `deps.autoWidths()` on each call, so a re-measure repaints the panel).
   const sliceAuto = (ids: string[]) => (): (number | null)[] => {
@@ -419,6 +423,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       indent: deps.indent,
       onQuickFilter: deps.onQuickFilter,
       compact: deps.compact,
+      filterable: sliceFilterable(fullVisible),
     });
     band.layout = fr;
     const quickRow = bandRow();

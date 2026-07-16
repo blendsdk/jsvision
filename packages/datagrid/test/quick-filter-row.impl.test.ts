@@ -26,7 +26,7 @@ const UNIT_COLS: Column<Sale>[] = [
 const UNIT_IDS = ['region', 'qty'] as const;
 
 /** Mount a bare `QuickFilterRow` at `width` (default 10 < content 16, so the indent pans). */
-function buildBand(opts: { width?: number; indent?: Signal<number> } = {}) {
+function buildBand(opts: { width?: number; indent?: Signal<number>; filterable?: boolean[] } = {}) {
   const width = opts.width ?? 10;
   const indent = opts.indent ?? signal(0);
   const band = new QuickFilterRow<Sale>({
@@ -35,6 +35,7 @@ function buildBand(opts: { width?: number; indent?: Signal<number> } = {}) {
     autoWidths: () => [null, null],
     indent,
     onQuickFilter: () => undefined,
+    filterable: opts.filterable,
   });
   band.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height: 1 } };
   const root = new Group();
@@ -76,4 +77,43 @@ test('the band is one cell tall with one input per column', () => {
   for (const input of inputs) expect(input.layout.rect?.height).toBe(1);
   expect(inputs[0].layout.rect?.x).toBe(0); // no pan when the content fits
   expect(inputs[1].layout.rect?.x).toBe(9);
+});
+
+test('an undefined filterable config keeps every input; a false entry omits just that column', () => {
+  const all = buildBand({ width: 22 }); // no filterable ⇒ default all-true
+  expect(all.inputs.length).toBe(2);
+
+  const one = buildBand({ width: 22, filterable: [true, false] }); // qty (index 1) opts out
+  expect(one.inputs.length).toBe(1); // only region keeps an input
+  expect(one.inputs[0].layout.rect?.x).toBe(0); // survivor stays under region (starts[0])
+  expect(one.inputs[0].layout.rect?.width).toBe(8); // full region width — geometry unchanged
+});
+
+test('multiple filterable:false columns each drop their input while survivors stay index-aligned', () => {
+  // Three fixed columns (widths 8,6,8 → starts [0,9,16]); only the middle one filters. The survivor
+  // must land at starts[1]=9 — proving the null slots keep the input array index-parallel to columns
+  // (a compacted array would misplace it at starts[0]=0).
+  const COLS3: Column<Sale>[] = [
+    { title: 'A', accessor: (r) => r.region, width: 8 },
+    { title: 'B', accessor: (r) => String(r.qty), width: 6 },
+    { title: 'C', accessor: (r) => r.region, width: 8 },
+  ];
+  const band = new QuickFilterRow<Sale>({
+    columns: COLS3,
+    columnIds: ['a', 'b', 'c'],
+    autoWidths: () => [null, null, null],
+    indent: signal(0),
+    onQuickFilter: () => undefined,
+    filterable: [false, true, false],
+  });
+  band.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 25, height: 1 } };
+  const root = new Group();
+  root.add(band);
+  const render = createRenderRoot({ width: 25, height: 1 }, { caps });
+  render.mount(root);
+  render.flush();
+  const inputs = band.children.filter((v): v is Input => v instanceof Input);
+  expect(inputs.length).toBe(1); // only column B has an input
+  expect(inputs[0].layout.rect?.x).toBe(9); // under column B (starts[1]), not compacted to 0
+  expect(inputs[0].layout.rect?.width).toBe(6); // column B's full width
 });
