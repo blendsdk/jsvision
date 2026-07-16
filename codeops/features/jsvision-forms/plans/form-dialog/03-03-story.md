@@ -24,13 +24,21 @@ The launch button opens the real `formDialog`, wired through `ctx.execView`:
 const openDialog = (): void => {
   if (ctx.execView === undefined) { result.set('(headless — run demo:kitchen for the modal)'); return; }
   const schema = z.object({ name: z.string().min(1, 'Required'), port: z.coerce.number().int().min(1).max(65535) });
-  void formDialog(
-    { loop: { execView: ctx.execView }, desktop: ctx.desktop /* from the shell */ },
-    {
-      schema, initial: { name: '', port: '8080' }, title: ' Edit server ', width: 44, height: 9,
-      body: (form) => { /* Label + bound Input for name + port; a Text.severity error line, touched-gated */ },
+  // `ctx.execView` (the shell's `execModal`) already adds the modal to the desktop, runs it, and removes
+  // it — so the ModalDialogHost's desktop must be a NO-OP shim, or the dialog would be mounted twice.
+  // `bounds` is only present to satisfy the type; `formDialog` does not read it.
+  const host = {
+    loop: { execView: ctx.execView },
+    desktop: {
+      addWindow: () => {},
+      removeWindow: () => {},
+      bounds: { x: 0, y: 0, width: ctx.width, height: ctx.height },
     },
-  ).then((values) => result.set(values ? `saved: ${values.name}:${values.port}` : 'cancelled'));
+  };
+  void formDialog(host, {
+    schema, initial: { name: '', port: '8080' }, title: ' Edit server ', width: 44, height: 9,
+    body: (form) => { /* Label + bound Input for name + port; a Text.severity error line, touched-gated */ },
+  }).then((values) => result.set(values ? `saved: ${values.name}:${values.port}` : 'cancelled'));
 };
 ```
 
@@ -39,14 +47,16 @@ const openDialog = (): void => {
 - The body binds `Input`s to `form.field('name'|'port').value` and shows a touched-gated error via
   RD-09's `Text` `severity` (soft integration; the story uses it, the engine mandates none — RD-08
   §"With RD-09").
-- **Host wiring caveat (resolve at exec time)**: `formDialog` needs a `ModalDialogHost` (`{ loop:
-  { execView }, desktop: { addWindow, removeWindow, bounds } }`). The story has `ctx.execView` but must
-  obtain the `desktop` handle from the shell context. If the `StoryContext` does not already expose a
-  desktop, the story wraps `ctx.execView` and supplies a minimal desktop shim, OR the live-path demo is
-  driven through `demo:kitchen` only (as `file-dialog.story.ts` defers its full flow to `demo:files`).
-  This is a **story-wiring detail** flagged for the executor to resolve against the then-current
-  `StoryContext` — it does **not** affect the `formDialog` contract or any `ST-D*` oracle. Record any
-  runtime resolution in the register with a `(runtime)` tag.
+- **Host wiring (the no-op-desktop shim)**: `formDialog` needs a `ModalDialogHost` (`{ loop:
+  { execView }, desktop: { addWindow, removeWindow, bounds } }`), but `StoryContext` exposes **only**
+  `ctx.execView` — there is **no `ctx.desktop`** (`story.ts:21-34`). And `ctx.execView` (the shell's
+  `execModal`, `shell.ts:198-206`) **already** does `addWindow → execView → removeWindow` itself, so the
+  host's desktop must be a **no-op shim** (as above) — a real desktop would mount the dialog twice.
+  `bounds` is a stub purely to satisfy the `ModalDialogHost` type (`message-box.ts:22-27` includes it;
+  `formDialog` never reads it). This is the live-path shape; it does **not** affect the `formDialog`
+  contract, the headless smoke degrade (below), or any `ST-D*` oracle. If, at exec time, the shell has
+  grown a real desktop seam on `StoryContext`, prefer it (dropping the no-op shim) and record the change
+  in the register with a `(runtime)` tag; otherwise the shim above is the answer.
 
 ## Headless degrade (`ctx.execView === undefined` — the smoke mount)
 
