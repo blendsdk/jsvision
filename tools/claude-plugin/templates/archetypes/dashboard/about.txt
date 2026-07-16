@@ -1,0 +1,1 @@
+A dashboard window: a ProgressBar and a Spinner bound to signals, advanced by Step / Reset buttons.

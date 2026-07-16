@@ -5,10 +5,13 @@
 // the rest assert each check trips on a seeded-broken input. Immutable oracle: if the gate disagrees,
 // the gate is wrong — never the test.
 
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
 import {
+  checkArchetypesValid,
   checkBarrelCoverage,
   checkDrift,
   checkGotchas,
@@ -75,4 +78,42 @@ test('ST-18: barrel-coverage catches undocumented and removed widget classes', (
   expect(checkBarrelCoverage(['Button'], staleCatalog, []).length).toBeGreaterThan(0);
   // A denylisted base class need not be documented and is not required.
   expect(checkBarrelCoverage(['Button', 'View'], catalog, ['View'])).toEqual([]);
+});
+
+// ST-19 — archetype validation: a well-formed archetype passes; a missing main.ts.tmpl / about.txt,
+// a buildApp-less starter, or malformed package.json.tmpl each trips.
+test('ST-19: archetype validation catches malformed archetype directories', () => {
+  const root = fileURLToPath(new URL('./fixtures/plugin-archetypes-tmp/', import.meta.url));
+  rmSync(root, { recursive: true, force: true });
+  const write = (rel: string, body: string) => {
+    const abs = join(root, rel);
+    mkdirSync(join(abs, '..'), { recursive: true });
+    writeFileSync(abs, body);
+  };
+  try {
+    // A well-formed archetype: exports buildApp + carries about.txt → no errors.
+    write('good/main.ts.tmpl', 'export function buildApp() { return null; }\n');
+    write('good/about.txt', 'A good archetype.\n');
+    expect(checkArchetypesValid(root)).toEqual([]);
+
+    // A starter with no buildApp export (breaks the shared smoke-test contract).
+    write('nobuild/main.ts.tmpl', 'export const x = 1;\n');
+    write('nobuild/about.txt', 'desc\n');
+    expect(checkArchetypesValid(root).some((e) => e.includes('nobuild'))).toBe(true);
+
+    // An archetype missing about.txt.
+    write('nodesc/main.ts.tmpl', 'export function buildApp() {}\n');
+    expect(checkArchetypesValid(root).some((e) => e.includes('nodesc') && e.includes('about.txt'))).toBe(true);
+
+    // An archetype that overrides package.json.tmpl with invalid JSON.
+    write('badpkg/main.ts.tmpl', 'export function buildApp() {}\n');
+    write('badpkg/about.txt', 'desc\n');
+    write('badpkg/package.json.tmpl', '{ not json');
+    expect(checkArchetypesValid(root).some((e) => e.includes('badpkg') && e.includes('JSON'))).toBe(true);
+
+    // A missing archetypes dir is fine (only `basic` is available).
+    expect(checkArchetypesValid(join(root, 'does-not-exist'))).toEqual([]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

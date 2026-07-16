@@ -46,6 +46,12 @@ false })` and `loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x, y })` 
 If you only need to paint (no events), `createRenderRoot({ width, height }, { caps })` +
 `rr.mount(root)` + `rr.flush()` is the lighter tool.
 
+**See the screen, don't just count cells.** `paintedCells > 0` proves _something_ rendered; to catch
+clipping, overlap, or a view in the wrong place, print the actual composed screen with
+`/jsvision-render <module>` (a headless ASCII screenshot at any size, optionally after driving keys).
+Use it whenever a layout doesn't look right — a missing view usually means it collapsed to `{0,0}`
+(run `/jsvision-doctor`, which flags a missing `measure()`).
+
 ## Smoke tests
 
 Every app the scaffolder makes ships a smoke test that builds the app and asserts `paintedCells > 0`

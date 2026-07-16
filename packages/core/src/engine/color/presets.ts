@@ -88,6 +88,7 @@ export const monochromeTheme: Theme = {
   inputSelected: { fg: W, bg: B },
   inputSelection: { fg: W, bg: B, attrs: REV },
   inputArrows: { fg: W, bg: B },
+  inputPlaceholder: { fg: G, bg: B },
   scrollBarPage: { fg: G, bg: B },
   scrollBarControls: { fg: W, bg: B },
   listNormal: { fg: W, bg: B },
@@ -131,6 +132,8 @@ export const monochromeTheme: Theme = {
   statusBar: { fg: B, bg: W, hotkey: B },
   statusSelected: { fg: B, bg: W, hotkey: B, attrs: REV },
   shadow: { fg: G, bg: B },
+  dangerText: { fg: W, bg: B },
+  warningText: { fg: W, bg: B },
 };
 
 /**

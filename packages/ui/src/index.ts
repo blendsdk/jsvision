@@ -70,9 +70,32 @@ export type {
 // `Application` lifecycle, a `Desktop` window manager, `Window` chrome, a
 // `MenuBar`, and a `StatusLine`.
 export { createApplication } from './app/index.js';
-export type { Application, ApplicationOptions } from './app/index.js';
+export type {
+  Application,
+  ApplicationOptions,
+  DesktopApplication,
+  RouterApplication,
+  CreatedApplication,
+} from './app/index.js';
 export { Desktop } from './desktop/index.js';
 export type { DesktopLoopSeam } from './desktop/index.js';
+// The screen router: a full-screen screen-stack application body (the complement to `Desktop`).
+export { createRouter, withBase } from './router/index.js';
+export type {
+  Router,
+  NavArgs,
+  Route,
+  RouteMap,
+  RouteContext,
+  ScreenBundle,
+  RouterLocation,
+  InitialRoute,
+  RouterOptions,
+  ChromeHost,
+  ChromeHostAware,
+  FocusHost,
+  FocusHostAware,
+} from './router/index.js';
 export { Window } from './window/index.js';
 export { MenuBar, MenuPopup, menuBar, subMenu, item, separator, menuSpacer } from './menu/index.js';
 export type { MenuItem, ParsedLabel, TitleLayout, MenuController, MenuLoopSeam } from './menu/index.js';
@@ -100,6 +123,8 @@ export {
   picture,
 } from './controls/index.js';
 export type {
+  TextOptions,
+  TextSeverity,
   ButtonOptions,
   InputOptions,
   SliderOptions,

@@ -1,8 +1,8 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-15
-> **Features**: 0 / 3 done
+> **Last Updated**: 2026-07-16
+> **Features**: 0 / 4 done · datagrid (RD-08 rows & selection planned) + jsvision-forms reopened (first slice shipped; extended with showcase + follow-on slices)
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -16,6 +16,7 @@
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done (site-foundation · @jsvision/web runtime · live-example system · TypeDoc API ref) · RD-04/05/07…10 ✏️ drafted | 4/10 RDs | ⬜ | 2026-07-13 |
 | datagrid | [→](features/datagrid/00-roadmap.md) | RD-01…RD-04 ✅ Done (foundation · editing-engine · cell-editors · formatting-rendering) · RD-05 ✅ Done (sorting) · RD-06 ✅ Done (filtering) · RD-07 ✅ Done (columns & layout — 58 tasks / 7 phases) · RD-08 📋 Plan Created (rows & selection — 50 tasks / 6 phases) · RD-09…RD-14 🔎 RD Preflighted · RD-15 ✅ Done (showcase app — 51 demos) | 8/15 RDs | 🔄 | 2026-07-16 |
+| jsvision-forms | [→](features/jsvision-forms/00-roadmap.md) | RD-01…04 ✅ Done (first slice: store · sync Zod validation · widget-binding · non-functional) · RD-09 ✅ Shipped (styled `Text` severity + `Input` placeholder + `dangerText`/`warningText` theme roles; 32/32 tasks, `yarn verify` green) · RD-06 ✅ Shipped (async validation — per-field `asyncValidators` + `validating()`/`asyncError()` + async-aware `submit()` + idempotent whole-scope `dispose()`; new `src/async.ts` + additive edits; 70 forms tests + one `forms/async` story; 28/28 tasks/4 phases spec-first, `yarn verify` green; preflight ✅ PASSED incl. the generation-stale-guard hardening AR-P11/ST-A16; runtime AR-P12 ST-10↔AR-44) · RD-05/07/08 ⬜ planned (showcase + async loading/rebase + `formDialog`) — 2026-07-15 triage; backlog in GH #89 | 6/9 RDs done | 🔄 | 2026-07-16 |
 
 ## Archived
 

@@ -197,7 +197,7 @@ export class TreeRows<T> extends View {
 
       const expanded = (row.flags & OV_EXPANDED) !== 0;
       const textStyle = this.textStyle(ctx, roleName, expanded);
-      const gw = graphWidth(row.level, style);
+      const gw = graphWidth(row.level, style, row.flags);
       const text = this.getText(row.node.value).slice(0, Math.max(0, width - gw));
       ctx.text(gw, i, text, textStyle); // node text at the post-graph column, two-tone
     }
@@ -261,7 +261,7 @@ export class TreeRows<T> extends View {
       const index = clampIndex(this.topItem + local.y, flat.length);
       this.focusTo(index); // always focus the clicked row
       const row = flat[index];
-      if (local.x < graphWidth(row.level, this.effectiveStyle)) {
+      if (local.x < graphWidth(row.level, this.effectiveStyle, row.flags)) {
         this.toggle(row.node); // graph zone ⇒ toggle expand (on any click)
       } else if (ev.clickCount === 2) {
         this.select(index, ev); // text double-click ⇒ activate (select + onSelect + emit)

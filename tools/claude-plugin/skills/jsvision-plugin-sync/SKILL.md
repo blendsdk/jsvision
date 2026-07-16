@@ -7,10 +7,12 @@ allowed-tools: 'Bash Read Edit'
 
 # Sync the jsvision plugin to the SDK
 
-Bring the plugin's taught content back in line with `@jsvision/ui` when the integrity gate
-(`node scripts/check-plugin.mjs`, part of `yarn verify`) reports drift. Two kinds of drift are
-fixable: a **drifted recipe snippet** (mechanical, no AI) and an **undocumented widget** (a catalog
-bullet you draft in-session from the widget's own docs).
+Bring the plugin's taught content back in line with the SDK when the integrity gate
+(`node scripts/check-plugin.mjs`, part of `yarn verify`) reports drift. Three kinds of drift are
+fixable, two mechanically: a **drifted recipe snippet** and a **stale generated API reference**
+(`references/api/*`, regenerated from the `@jsvision/*` source types) — both refreshed by
+`yarn plugin:sync --fix`, no AI — and an **undocumented widget** (a catalog bullet you draft
+in-session from the widget's own docs).
 
 > **Maintainer command.** This operates on _this_ repository — it runs the repo-root
 > `scripts/plugin-sync.mjs` and reads `packages/ui`. It is manual-only (`disable-model-invocation`),
@@ -29,8 +31,9 @@ bullet you draft in-session from the widget's own docs).
    `{ "kind": "undocumented-widget", "name": "..." }`. If the output is `[]`, there is nothing to
    sync — stop.
 
-2. **Fix the snippet drift deterministically** (safe to run whenever there is any `snippet-drift`
-   finding — it copies each source module's marked region into its recipe page, no AI):
+2. **Fix the mechanical drift deterministically** (always safe to run — it copies each source
+   module's marked region into its recipe page and regenerates the whole `references/api/` reference
+   from the `@jsvision/*` source types, no AI):
 
    ```bash
    yarn plugin:sync --fix

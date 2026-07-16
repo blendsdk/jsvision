@@ -43,6 +43,9 @@ export class MenuBar extends View {
   items: readonly MenuItem[] = [];
   /** The navigation controller; `null` until the application wires it in via {@link attach}. */
   controller: MenuController | null = null;
+  /** @internal The overlay + seam retained at {@link attach}, so {@link setItems} can rebuild the controller. */
+  private overlay: Group | null = null;
+  private seam: MenuLoopSeam | null = null;
 
   constructor() {
     super();
@@ -51,13 +54,35 @@ export class MenuBar extends View {
 
   /**
    * @internal Wire the navigation controller. Called once by `createApplication` with the overlay
-   * layer that hosts the popups and the loop seam used for activation/greying/focus.
+   * layer that hosts the popups and the loop seam used for activation/greying/focus. Retains the
+   * overlay + seam so a router can later swap the menu via {@link setItems}, and binds the seam's
+   * command-version tick so a disabled menu command greys live.
    *
    * @param overlay The app-root overlay layer (top-most, absolute, full-viewport).
-   * @param seam    The loop seam (`emitCommand`/`isCommandEnabled`/`focusView`/`getFocused`).
+   * @param seam    The loop seam (`emitCommand`/`isCommandEnabled`/`commandsVersion`/`focusView`/`getFocused`).
    */
   attach(overlay: Group, seam: MenuLoopSeam): void {
+    this.overlay = overlay;
+    this.seam = seam;
     this.controller = createMenuController(this.items, overlay, seam);
+    // `attach` runs after mount, so this fires immediately and subscribes the bar to enablement ticks.
+    this.onMount(() => this.bind(() => seam.commandsVersion()));
+  }
+
+  /**
+   * Replace the bar's top-level menu items and rebuild the navigation controller, so a router can swap
+   * a screen's menu contribution onto the shared bar. Closes any open menu first; `draw()` already
+   * reads `items` live, so the new titles paint on the next frame.
+   *
+   * @param items The top-level menu nodes to show; replaces the current items.
+   */
+  setItems(items: readonly MenuItem[]): void {
+    this.controller?.close();
+    this.items = items;
+    if (this.overlay !== null && this.seam !== null) {
+      this.controller = createMenuController(items, this.overlay, this.seam);
+    }
+    this.invalidate();
   }
 
   /** Draw the bar background then each top-level title, accenting its `~hotkey~` character. */

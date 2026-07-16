@@ -21,6 +21,14 @@ import.
   (`mountApp`) and `@jsvision/files` only for the file dialogs/editor.
 - **Retained tree + signals.** You build a tree of `View`s (leaves) and `Group`s (containers) once,
   then bind reactive `signal`s to them; the framework repaints the minimal damage on change.
+- **DSL-first layout.** Compose screens with the `col`/`row`/`stack` layout DSL (`grow`/`fixed`/`fill`
+  size children; `stack` layers overlays) — the engine sizes and reflows them. Absolute rects are the
+  exception, reserved for a window's own desktop placement and framework popups. See
+  `references/layout.md`.
+- **The API reference is authoritative.** `references/api/` lists every public export's exact
+  signature — constructor, options fields, methods, and types — generated from the source, so it is
+  always current. Consult it (start at `references/api/index.md`) for any API detail instead of
+  reading `@jsvision/*` source.
 - **App lifecycle.** `createApplication(opts)` → `app.desktop.addWindow(win)` → `await app.run()`.
   `run()` connects a real terminal and restores it on every exit path. In the browser, `mountApp`
   replaces `run()`.
@@ -28,12 +36,15 @@ import.
 A hello-world:
 
 ```ts
-import { createApplication, Window, Text } from '@jsvision/ui';
+import { createApplication, Window, col, fixed, Text } from '@jsvision/ui';
 
 const app = createApplication({});
 const win = new Window('Hello');
-win.layout.rect = { x: 2, y: 2, width: 30, height: 6 };
-win.add(new Text('Hello, jsvision!'));
+win.layout.rect = { x: 2, y: 2, width: 30, height: 6 }; // window frame placement — a sanctioned rect
+// Compose the interior with the layout DSL, not absolute rects.
+win.add(
+  col({ gap: 1 }, fixed(new Text('Hello, jsvision!'), 1), fixed(new Text('Edit and rebuild to grow this app.'), 1)),
+);
 app.desktop.addWindow(win);
 await app.run();
 ```
@@ -48,22 +59,40 @@ await app.run();
    collapses to `{0,0}` and draws nothing.
 4. **`bind()` goes in `onMount`, never the constructor** — the reactive scope only exists after
    mount.
-5. **Finish every app by reading `references/gotchas.md`** and checking your code against all 12
-   footguns. This is where "works" and "expert" diverge.
+5. **Before calling an app done, run `/jsvision-doctor` and `/jsvision-render`.** `jsvision-doctor`
+   lints your app for the 12 footguns automatically; `jsvision-render` prints a headless ASCII
+   screenshot so you can _see_ the layout. Fix what the doctor flags (open `references/gotchas.md`
+   for the full fix) and confirm the render looks right. This is where "works" and "expert" diverge.
+
+**Layout is DSL-first (non-negotiable).** Compose every screen with `col`/`row`/`stack` +
+`grow`/`fixed`/`fill`; let the engine size and reflow it. Use an absolute `rect` **only** when one of
+these applies — a `Window`/`Dialog`'s own placement on the desktop, a framework-positioned popup, or a
+genuine overlap the flow model cannot express (try `stack`/`place` first) — and be ready to name
+which one. Hand-positioning ordinary content (forms, toolbars, lists, dashboards) with rects is the
+gotcha-3 smell; convert it to the DSL. Full rules and the exception list: `references/layout.md`.
+
+**Don't read the SDK source for API details (non-negotiable).** Every public export's constructor,
+options fields, methods, and types live in `references/api/` — generated from the source and always
+current. When you need a prop name, a method signature, or a type, open the matching category page
+(index at `references/api/index.md`) instead of grepping `packages/*/src`. Reading source to learn
+the API wastes turns and risks copying an internal instead of the public contract.
 
 ## Where to look (routing table)
 
 Open the reference that matches the task; open `gotchas.md` before you call an app done.
 
-| Task                                                                    | Open                                                               |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Start a new app                                                         | run `/jsvision-new-app <name>`, then `references/app-lifecycle.md` |
-| App shell: windows, menus, status line, commands, `run()`               | `references/app-lifecycle.md`                                      |
-| Reactivity: `signal`/`computed`/`effect`/`Show`/`For`, `view.bind`      | `references/reactivity.md`                                         |
-| Placing/ sizing views: absolute rects, the `col`/`row` DSL, `measure()` | `references/layout.md`                                             |
-| Pick a widget ("what shows a table/date/tree?")                         | `references/component-catalog.md`                                  |
-| Colors/themes: presets, `createTheme`, `app.setTheme`, depth            | `references/theming.md`                                            |
-| Author a custom widget (subclass `View`)                                | `references/widget-authoring.md`                                   |
-| Run + verify an app (three run modes, headless smoke)                   | `references/running-and-testing.md`                                |
-| Complete example apps by archetype                                      | `references/recipes/index.md`                                      |
-| **Debugging "nothing paints", a hung modal, a leak**                    | `references/gotchas.md`                                            |
+| Task                                                                                             | Open                                                               |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| **Exact API — options fields, method signatures, types (instead of reading source)**             | `references/api/index.md`                                          |
+| Start a new app                                                                                  | run `/jsvision-new-app <name>`, then `references/app-lifecycle.md` |
+| App shell: windows, menus, status line, commands, `run()`                                        | `references/app-lifecycle.md`                                      |
+| Reactivity: `signal`/`computed`/`effect`/`Show`/`For`, `view.bind`                               | `references/reactivity.md`                                         |
+| Placing/sizing views: the `col`/`row`/`stack` layout DSL (default), `measure()`, rect exceptions | `references/layout.md`                                             |
+| Pick a widget ("what shows a table/date/tree?")                                                  | `references/component-catalog.md`                                  |
+| Colors/themes: presets, `createTheme`, `app.setTheme`, depth                                     | `references/theming.md`                                            |
+| Author a custom widget (subclass `View`)                                                         | `references/widget-authoring.md`                                   |
+| Run + verify an app (three run modes, headless smoke)                                            | `references/running-and-testing.md`                                |
+| **Lint an app for footguns** (missing measure, bind-in-ctor, content rects, …)                   | run `/jsvision-doctor [path]`                                      |
+| **See the screen** — headless ASCII screenshot of an app/view                                    | run `/jsvision-render <module>`                                    |
+| Complete example apps by archetype                                                               | `references/recipes/index.md`                                      |
+| **Debugging "nothing paints", a hung modal, a leak**                                             | `references/gotchas.md`                                            |
