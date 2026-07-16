@@ -55,9 +55,12 @@ export function absoluteRect(view: View): { x: number; y: number } {
  * nothing (a read-only editor) and the returned disposer just tears down the empty root.
  *
  * @param args `host` (the grid's absolute overlay group), `loop` (the focus seam), `rect` (body-local
- *   cell rect), `origin` (the body's absolute origin, e.g. from {@link absoluteRect}), and exactly one
- *   of `view` (a pre-built editor) or `build` (a factory run inside the root, returning the editor or
- *   `null`).
+ *   cell rect), `origin` (the body's absolute origin, e.g. from {@link absoluteRect}), exactly one of
+ *   `view` (a pre-built editor) or `build` (a factory run inside the root, returning the editor or
+ *   `null`), and optional `clamp` — pass the host-local viewport `{ width, height }` to keep the mounted
+ *   view within it (right-aligned/clamped so it never renders off-screen); omit it for a cell-pinned
+ *   editor. If the built view set its own absolute `layout`, that size is honored (so a larger custom
+ *   popup fits and is clamped by its true size).
  * @returns A `dispose()` that removes the view and disposes its reactive scope (idempotent-safe to
  *   call once).
  * @example
@@ -80,6 +83,7 @@ export function mountCellOverlay(args: {
   origin: { x: number; y: number };
   view?: View;
   build?: () => View | null;
+  clamp?: { width: number; height: number };
 }): () => void {
   const { host, loop, rect, origin } = args;
   // One reactive owner for the mount: any binding effects the editor sets up are torn down together
@@ -96,15 +100,28 @@ export function mountCellOverlay(args: {
     // host's offset is double-counted and the editor lands elsewhere. When the host is at the screen
     // origin this subtracts zero, so a grid at (0, 0) is unaffected.
     const hostOrigin = absoluteRect(host);
-    view.layout = {
-      position: 'absolute',
-      rect: {
-        x: origin.x + rect.x - hostOrigin.x,
-        y: origin.y + rect.y - hostOrigin.y,
-        width: rect.width,
-        height: rect.height,
-      },
-    };
+    // Honor a size the built view chose for itself (a custom filter popup that set its own absolute
+    // layout can be larger than the default cell size); otherwise use the passed rect's size.
+    const pre = view.layout;
+    const width = pre?.position === 'absolute' && pre.rect ? pre.rect.width : rect.width;
+    const height = pre?.position === 'absolute' && pre.rect ? pre.rect.height : rect.height;
+    let x = origin.x + rect.x - hostOrigin.x;
+    let y = origin.y + rect.y - hostOrigin.y;
+    // Keep the overlay within the viewport when asked (a filter popup anchored near an edge):
+    // right-align/clamp so it never renders off-screen. The caller passes the host-local viewport size
+    // (the host is a fill layer that may not be re-laid-out yet, so its own bounds are unreliable here).
+    // In-cell editors pass no clamp — they must stay pinned exactly to their cell.
+    if (args.clamp !== undefined && args.clamp.width > 0) {
+      // Horizontal: always keep the right edge on-screen (a too-narrow viewport pins it to x=0).
+      x = Math.max(0, Math.min(x, args.clamp.width - width));
+    }
+    // Vertical: only clamp when the view actually fits — the popup anchors under the header row (near the
+    // top), so a taller-than-viewport popup keeps its natural anchor and clips downward rather than being
+    // yanked up over the header on a short terminal.
+    if (args.clamp !== undefined && height <= args.clamp.height) {
+      y = Math.max(0, Math.min(y, args.clamp.height - height));
+    }
+    view.layout = { position: 'absolute', rect: { x, y, width, height } };
     host.add(view);
     loop.focusView(view);
     return () => {

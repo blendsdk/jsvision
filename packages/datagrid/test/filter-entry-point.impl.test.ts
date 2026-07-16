@@ -4,9 +4,11 @@
  * `Alt+Down` (ComboBox value-help), and — the load-bearing one — that the opener still anchors under
  * the correct header after a layout rebuild, proving the container refreshed its retained headers.
  *
- * The popup is mounted with no screen clamping (`mountCellOverlay` places it at `origin + anchor`), so
- * its `layout.rect.x` is exactly the anchor — a keyboard-vs-mouse comparison is precise. The `.js`
- * import specifier is required by NodeNext ESM.
+ * The popup anchors under the column's funnel cell and is clamped into the viewport. These grids are
+ * sized wide enough that the popup fits without clamping, so its `layout.rect.x` is exactly the anchor —
+ * a keyboard-vs-mouse comparison is precise. A separate case exercises the clamp on a narrow viewport.
+ * `qty` opts into an always-visible funnel (`showFunnel`) so the mouse funnel-click path has a target
+ * even when the column is unfiltered. The `.js` import specifier is required by NodeNext ESM.
  */
 import { test, expect } from 'vitest';
 import { Group, View, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
@@ -28,10 +30,12 @@ const SALES: Sale[] = [
   { region: 'north', qty: 50 },
 ];
 
-const CW = 24;
+// Wide enough that the 26-cell popup fits at these anchors without clamping (so rect.x == the anchor).
+const CW = 40;
 const CH = 6;
 const REGION = column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 8 });
-const QTY = column<Sale, number>({ id: 'qty', title: 'Qty', value: (r) => r.qty, width: 6 });
+// showFunnel so the funnel is drawn on the (unfiltered) column and the mouse funnel-click path has a target.
+const QTY = column<Sale, number>({ id: 'qty', title: 'Qty', value: (r) => r.qty, width: 6, showFunnel: true });
 
 /** A raw key event for `loop.dispatch`. */
 function rawKey(k: string, mods: { ctrl?: boolean; alt?: boolean; shift?: boolean } = {}) {
@@ -143,4 +147,31 @@ test('Alt+Down still anchors under the correct header after a rebuild (retained 
   loop.dispatch(rawKey('down', { alt: true }));
   loop.renderRoot.flush();
   expect(onlyPopup(grid).layout.rect?.x).toBe(mouseX);
+});
+
+test('the filter popup clamps into the viewport instead of rendering off the right edge (BUG-2)', () => {
+  // A column whose funnel sits near the right edge of a full-width grid: unclamped the 26-cell popup
+  // would overflow past the viewport. Opening it must keep the whole popup on-screen.
+  const region = column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 8 });
+  const wide = column<Sale, number>({ id: 'qty', title: 'Quantity', value: (r) => r.qty, width: 20 });
+  const source = fromRows(signal(SALES.slice()), { rowKey: (r) => r.region });
+  const grid = new EditableDataGrid<Sale>({ columns: [region, wide], source });
+  const GW = 30; // narrower than region(8)+divider+wide(20) funnel anchor + popup width
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: GW, height: CH } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: GW, height: CH }, { caps });
+  loop.mount(root);
+  loop.renderRoot.flush();
+
+  loop.focusView(grid.rows);
+  loop.dispatch(rawKey('end')); // cursor → the wide right-edge column
+  loop.dispatch(rawKey('down', { alt: true }));
+  loop.renderRoot.flush();
+
+  const rect = onlyPopup(grid).layout.rect;
+  const x = rect?.x ?? 0;
+  const w = rect?.width ?? 0;
+  expect(x).toBeGreaterThanOrEqual(0); // not pushed off the left
+  expect(x + w).toBeLessThanOrEqual(GW); // fully on-screen — the whole popup fits within the viewport
 });

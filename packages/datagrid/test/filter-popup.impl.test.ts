@@ -115,7 +115,7 @@ test('Escape closes the popup without applying; Enter applies then closes', () =
 });
 
 test('a funnel click opens the popup anchored below the funnel; an outside click closes it', () => {
-  const W = 30;
+  const W = 40; // wide enough that the 26-cell popup fits at the funnel anchor without clamping
   const H = 8;
   const COLUMNS = [
     column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 8 }),

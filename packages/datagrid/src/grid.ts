@@ -880,6 +880,10 @@ export class EditableDataGrid<T> extends Group {
       // header's absolute origin, so the rect is header-local like the funnel anchor.
       rect: { x: anchor.x, y: anchor.y + 1, width: FILTER_POPUP_WIDTH, height: FILTER_POPUP_HEIGHT },
       origin,
+      // Keep the popup within the grid viewport — a funnel near the right/bottom edge must not clip
+      // off-screen. The popup host is a fill layer over the grid, so its host-local viewport is the
+      // grid's own size. Clamp only past the FIRST layout, when the grid's bounds are measured.
+      clamp: this.bounds.width > 0 ? { width: this.bounds.width, height: this.bounds.height } : undefined,
       build: () => {
         const popup = new FilterPopup<T>({
           column: col,
