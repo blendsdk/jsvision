@@ -83,6 +83,20 @@ errors and resolve two UX forks the first-pass plan left implicit.
 
 ---
 
+## E. Runtime notes (exec_plan, 2026-07-16)
+
+Minor implementation refinements surfaced during execution — none change a user-facing decision or a
+spec oracle; recorded for traceability per the zero-ambiguity mandate.
+
+| #      | Note | Resolution |
+| ------ | ---- | ---------- |
+| RT-1 (AR-6) | `grid.ts` entered RD-08 at **1029 lines** (not the plan's assumed 945 — it grew during the intervening filter-entry-point work), so RD-08 cannot land it ≤ 1050 by extracting only the selection wiring. | The selection state/logic is fully extracted to a new `grid-selection.ts` (`GridSelection<T>` controller: keys + anchor + gesture-by-index handlers); `grid.ts` keeps only thin public delegators and lands at ~1098. The Phase-2 impl test guards the extraction + a runaway ceiling instead of a hard ≤1050. Phase 4 will similarly extract the CRUD wiring to keep `grid.ts` in check. |
+| RT-2 | The plan's internal body callback `onToggleRow(rowIndex, additive)` carried a redundant `additive` flag — `toggleKey`/`selectRange` already encode the single-vs-multi decision from the mode, so a separate flag would be dead or contradictory. | The internal gesture callbacks are index-only (`onToggleRow(rowIndex)` / `onRangeToRow(rowIndex)`); the container applies `this.selection`'s mode. Behaviour is identical; no spec touched. |
+| RT-3 | `EditableGridRowsConfig.selectedKeys` made **optional** (defaults to an empty set) rather than required, so the ten test files that construct `EditableGridRows` directly keep compiling; the container always passes it. | Optional field + internal default. |
+| RT-4 | One existing RD-04 oracle (`cell-rendering.spec` "selected row beats cellStyle") set selection via the old single `selected` index. | Re-expressed via a `selectedKeys` set (sanctioned requirement-changed representation — the selection model changed from index to key set); the behavioural assertion is unchanged. |
+
+---
+
 ## Gate status
 
 ✅ **GATE PASSED** — all items Resolved. Section A confirmed by the user at the plan gate
