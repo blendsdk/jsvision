@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Progress**: 42/43 tasks (98%) — COMPLETE (1 deferred: 3.2.3 wizard, AR-24)
-> **Last Updated**: 2026-07-15 (Phase 4 hardening + docs governance complete — `yarn verify` + `yarn gate` green)
+> **Progress**: 43/43 tasks (100%) — COMPLETE (3.2.3 wizard landed, GH #91)
+> **Last Updated**: 2026-07-16 (wizard reference app + `wizard.story.ts` landed — AR-24 / GH #91; `feat/forms` merged, so the deferred wizard half now ships)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -124,10 +124,12 @@ green and is committed (via /gitcm).
 ## Phase 3: Barrel + JSDoc + Demos + Stories
 **Reference**: [01](01-requirements.md) R-9, R-10 · AR-15
 
-> **Scope note (AR-24):** the multi-step **wizard** reference app + `wizard.story.ts` are **deferred**
-> — `@jsvision/forms` lives on the unmerged `feat/forms` branch, absent here. Phase 3 ships the
-> **drill-down (keep-alive) browser** as BOTH the standalone `router-demo/` demo and the kitchen-sink
-> story. ST-17 is narrowed to the drill-down oracle; the wizard half lands once `feat/forms` merges.
+> **Scope note (AR-24, resolved GH #91):** Phase 3 originally shipped only the **drill-down
+> (keep-alive) browser** (standalone `router-demo/` demo + kitchen-sink story), deferring the
+> multi-step **wizard** because `@jsvision/forms` was on the unmerged `feat/forms` branch. With
+> `feat/forms` merged, the wizard half now ships too: the `wizard-demo/` walkthrough + the
+> `navigation/wizard` story, and ST-17 is **re-widened** to cover both oracles (see
+> [07-testing-strategy.md](07-testing-strategy.md)).
 
 ### Session 3.1 — Spec tests (red) ✅
 | # | Task | File |
@@ -140,7 +142,7 @@ green and is committed (via /gitcm).
 |---|------|------|
 | 3.2.1 | `[x]` `router/index.ts` barrel; EXPLICIT named re-exports from `src/index.ts` (createRouter, withBase, Router + types); `Router` added to the plugin component-catalog | `packages/ui/src/router/index.ts`, `packages/ui/src/index.ts` |
 | 3.2.2 | `[x]` Public JSDoc + `@example` on every export; no CodeOps/TV-C++ refs (check:docs green) | `packages/ui/src/router/*.ts` |
-| 3.2.3 | ⏸ **DEFERRED (AR-24)** — Multi-step **wizard** demo (consumes `@jsvision/forms`) + `wizard.story.ts`; revisit when `feat/forms` merges | `packages/examples/router-demo/`, `packages/examples/kitchen-sink/stories/wizard.story.ts` |
+| 3.2.3 | `[x]` **(AR-24, GH #91)** Multi-step **wizard** demo (`wizard-demo/`, `demo:wizard`) sharing one `@jsvision/forms` form across router screens with a Next greyed until each step validates + keepAlive-preserved values, + `wizard.story.ts` (`navigation/wizard`) + its ST-17 smoke assertion + `wizard-demo.e2e` — landed once `feat/forms` merged | `packages/examples/wizard-demo/`, `packages/examples/kitchen-sink/stories/wizard.story.ts`, `stories/index.ts`, `packages/examples/test/{kitchen-sink.smoke.spec,wizard-demo.e2e}.test.ts` |
 | 3.2.4 | `[x]` **Drill-down browser**: the standalone `router-demo/` demo (headless push/back/keep-alive walkthrough, `demo:router`) + kitchen-sink story `navigation/drill-down` (keepAlive list preserves scroll across `back()`) | `packages/examples/router-demo/`, `packages/examples/kitchen-sink/stories/drill-down.story.ts`, `stories/index.ts` |
 
 ### Session 3.3 — Impl tests & hardening ✅
