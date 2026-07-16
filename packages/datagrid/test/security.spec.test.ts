@@ -308,6 +308,41 @@ test('ST-21: an unknown sort columnId is a no-op and never reaches a push-down s
   }
 });
 
+interface Rec {
+  id: number;
+  v: number;
+}
+
+// ST-21 (mutation) — the grid persists ONLY through the source's `insert`/`remove` seam, so a read-only
+// source (one exposing neither) can never be mutated by the CRUD API: `insertRow`/`deleteRows`/
+// `duplicateRow` are safe no-ops that throw nothing. `deleteRows` still prunes the in-grid selection —
+// that is grid-local state, not a mutation of the source's backing store.
+test('ST-21: a read-only source without insert/remove is never mutated by the CRUD API', () => {
+  const store: Rec[] = [{ id: 1, v: 10 }];
+  const source: GridDataSource<Rec> = {
+    rowKey: (r) => r.id,
+    length: () => store.length,
+    rowAt: (i) => store[i],
+    // no `insert` / `remove` — a read-only source
+  };
+  const columns = [column<Rec, number>({ id: 'v', title: 'V', value: (r) => r.v })];
+  const grid = new EditableDataGrid<Rec>({ columns, source, assignKey: (c) => ({ ...c, id: 999 }) });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+
+  grid.selectRow(1);
+  expect(() => {
+    grid.insertRow({ id: 2, v: 20 }, 0); // no `insert` seam → no-op
+    grid.duplicateRow(1); // no `insert` seam → no-op even with `assignKey`
+    grid.deleteRows([1]); // no `remove` seam → the backing store is untouched
+  }).not.toThrow();
+  expect(store).toEqual([{ id: 1, v: 10 }]); // the source's array is byte-for-byte unchanged
+  expect(grid.selectedKeys().size).toBe(0); // …but the in-grid selection still pruned (not a source mutation)
+});
+
 /** Mount a grid over a push-down source (spy `setFilter`); return the grid and the spy. */
 function buildFilterPushGrid() {
   const setFilter = vi.fn<(model: FilterModel) => void>();

@@ -175,9 +175,9 @@ test('AR-6: the selection controller is extracted to grid-selection.ts and grid.
   const grid = readFileSync(fileURLToPath(new URL('../src/grid.ts', import.meta.url)), 'utf8');
   expect(gridSel).toContain('export class GridSelection'); // the selection state/logic lives here
   expect(grid).toContain('import { GridSelection }'); // grid.ts wires it, does not inline the state
-  // grid.ts entered RD-08 already ~1029 lines; the selection controller (and, in Phase 4, the row-
-  // mutation logic) live in grid-selection.ts so grid.ts stays a thin set of public delegators + the
-  // new options. This ceiling is a runaway-growth guard, not the 700-line target.
+  // grid.ts entered RD-08 already ~1029 lines; the selection controller (grid-selection.ts) and the
+  // row-mutation logic (row-mutations.ts) live outside it, so grid.ts stays a thin set of public
+  // delegators + the new options. This ceiling is a runaway-growth guard, not the 700-line target.
   const lineCount = grid.split('\n').length;
   expect(lineCount).toBeLessThan(1200);
 });
