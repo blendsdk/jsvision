@@ -117,8 +117,8 @@ test('the selected-row highlight spans frozen panels', () => {
   const nameX = line.indexOf('Bo'); // the center-panel name cell
   expect(idX).toBeGreaterThanOrEqual(0);
   expect(nameX).toBeGreaterThan(idX);
-  expect(buf.get(idX, y)?.bg).toBe(defaultTheme.listSelected.bg); // frozen panel highlighted
-  expect(buf.get(nameX, y)?.bg).toBe(defaultTheme.listSelected.bg); // center panel highlighted too
+  expect(buf.get(idX, y)?.bg).toBe(defaultTheme.gridSelectedRow.bg); // frozen panel highlighted
+  expect(buf.get(nameX, y)?.bg).toBe(defaultTheme.gridSelectedRow.bg); // center panel highlighted too
 });
 
 test('a dirty marker on a selected, non-focused row composites onto the listSelected background (AR-18)', () => {
@@ -167,7 +167,7 @@ test('a dirty marker on a selected, non-focused row composites onto the listSele
   const buf = loop.renderRoot.buffer();
   const MARKER_X = 9; // right edge of the width-10 column
   expect(buf.get(MARKER_X, 0)?.char).toBe('•');
-  expect(buf.get(MARKER_X, 0)?.bg).toBe(defaultTheme.listSelected.bg); // composited onto the selected row's bg
+  expect(buf.get(MARKER_X, 0)?.bg).toBe(defaultTheme.gridSelectedRow.bg); // composited onto the selected row's bg
 });
 
 test('AR-6: the selection controller is extracted to grid-selection.ts and grid.ts delegates to it', () => {

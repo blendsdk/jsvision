@@ -159,16 +159,31 @@ test('ST-10: selected keys survive a re-sort (same keys, not same indices)', () 
 });
 
 // ST-11 — a selected row paints the `selected` role; the focused row wins over selected (AC-4 / AR-13).
-test('ST-11: a selected row paints listSelected; a focused+selected row paints listFocused (focused wins)', () => {
+test('ST-11: a selected row paints gridSelectedRow; a focused+selected row paints listFocused (focused wins)', () => {
   const { grid, loop } = buildGrid();
   grid.selectRow(2); // select display row 1 (id 2); the cursor stays on row 0
   loop.renderRoot.flush();
-  expect(rowBg(loop, 1)).toBe(defaultTheme.listSelected.bg); // the non-focused selected row → selected role
+  expect(rowBg(loop, 1)).toBe(defaultTheme.gridSelectedRow.bg); // the non-focused selected row → selected role
   expect(rowBg(loop, 0)).toBe(defaultTheme.listFocused.bg); // the focused (unselected) row → focus role
 
   grid.selectRow(1); // now select the focused row (id 1, display row 0)
   loop.renderRoot.flush();
   expect(rowBg(loop, 0)).toBe(defaultTheme.listFocused.bg); // focused wins over selected
+});
+
+// BUG-1 regression — a selected row must be VISUALLY DISTINCT from a normal row, not merely a
+// different foreground over the same background. The datagrid paints selection with the dedicated
+// `gridSelectedRow` role, whose background differs from a normal row's (the old shared `listSelected`
+// carried `listNormal`'s cyan bg, so a selection was invisible — especially against zebra striping).
+test('BUG-1: a selected non-focused row has a background distinct from a normal row', () => {
+  const { grid, loop } = buildGrid();
+  grid.selectRow(2); // select display row 1 (id 2); the cursor stays on row 0 (focus highlight is elsewhere)
+  loop.renderRoot.flush();
+  const selectedBg = rowBg(loop, 1); // the selected, non-focused row
+  const normalBg = rowBg(loop, 2); // a normal row (neither focused nor selected)
+  expect(selectedBg).toBe(defaultTheme.gridSelectedRow.bg); // paints the dedicated selected-row role…
+  expect(selectedBg).not.toBe(normalBg); // …whose background does not blend into a normal row
+  expect(defaultTheme.gridSelectedRow.bg).not.toBe(defaultTheme.listNormal.bg); // token-level guard
 });
 
 // ST-12 — Ctrl+click toggles a row into the selection and moves the cursor/anchor to it (RD AR-21).

@@ -140,6 +140,7 @@ test('ST-11: the progress* roles are the ONLY additive keys — every existing r
     'sliderThumb', // theme-designer Slider control (guarded by slider-theme.spec)
     'gridCursor',
     'gridDirty', // RD-02 datagrid editing engine (guarded by grid-theme.spec)
+    'gridSelectedRow', // RD-08 datagrid row-selection highlight (guarded by grid-theme.spec)
     'dangerText',
     'warningText', // severity text roles for a styled Text (guarded by severity-text-theme.spec)
     'inputPlaceholder', // muted placeholder role for an empty Input (guarded by input-placeholder.spec)

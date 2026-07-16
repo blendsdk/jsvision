@@ -25,11 +25,11 @@ test('ST-C1: defaultTheme.dangerText / .warningText equal the pinned severity by
   });
 });
 
-test('ST-C2: the theme has 70 roles including dangerText/warningText/inputPlaceholder, whose names are not aliases', () => {
+test('ST-C2: the theme has 71 roles including dangerText/warningText/inputPlaceholder, whose names are not aliases', () => {
   const keys = Object.keys(defaultTheme);
-  // 70 = the severity-text era's role count (68) plus the two datagrid grid roles (gridCursor,
-  // gridDirty), which are additive and pinned by their own grid-theme spec.
-  expect(keys.length, 'total role count').toBe(70);
+  // 71 = the severity-text era's role count (68) plus the three datagrid grid roles (gridCursor,
+  // gridDirty, gridSelectedRow), which are additive and pinned by their own grid-theme spec.
+  expect(keys.length, 'total role count').toBe(71);
   expect(keys, 'dangerText role present').toContain('dangerText');
   expect(keys, 'warningText role present').toContain('warningText');
   expect(keys, 'inputPlaceholder role present').toContain('inputPlaceholder');

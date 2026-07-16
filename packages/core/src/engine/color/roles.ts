@@ -106,6 +106,10 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     // roles, and a dirty cell is a neutral "unsaved" signal that stays legible on any generated
     // palette rather than shifting with a theme's danger seed.
     gridDirty: { fg: PALETTE.brightRed, bg: c.background },
+    // The multi-row selection band — the selected background (distinct from a normal row's raised
+    // background) with the proven-legible primary foreground, so a selected row stays clear on any
+    // generated palette. A theme may override it for a bolder selection colour.
+    gridSelectedRow: { fg: c.foreground, bg: c.backgroundSelected },
     fileInfo: { fg: c.foregroundMuted, bg: c.backgroundRaised },
     editorNormal: { fg: c.foreground, bg: c.backgroundSunken },
     editorSelected: { fg: c.foregroundOnAccent, bg: c.accent },

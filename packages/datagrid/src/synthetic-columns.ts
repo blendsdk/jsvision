@@ -244,14 +244,15 @@ export class SyntheticBodyBand<T> extends GridRows<T> {
       const row = display[item];
       const selected = selectedKeys.has(this.bandRowKey(row));
       const zebra = this.zebra && (item & 1) === 1;
-      // Match the data body's row-colour priority: focused > selected > zebra > normal.
+      // Match the data body's row-colour priority: focused > selected > zebra > normal. A selected row
+      // paints the dedicated `gridSelectedRow` band so its checkbox/gutter reads on the same highlight.
       const roleName =
         item === focusedRow
           ? active
             ? 'listFocused'
             : 'listSelected'
           : selected
-            ? 'listSelected'
+            ? 'gridSelectedRow'
             : zebra
               ? 'staticText'
               : 'listNormal';

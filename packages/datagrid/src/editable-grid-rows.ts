@@ -621,13 +621,15 @@ export class EditableGridRows<T> extends GridRows<T> {
       const isFocusedRow = item === focusedRow;
       const isSelectedRow = selectedKeys.has(this.rowKey(row)); // set membership, not a single index
       const zebra = this.zebra && (item & 1) === 1;
-      // Row colour priority: focused > selected > zebra stripe > normal (unchanged from the base).
+      // Row colour priority: focused > selected > zebra stripe > normal. A row in the selection set
+      // paints the dedicated `gridSelectedRow` band (distinct from a normal row's bg); a blurred grid's
+      // focused row keeps the base `listSelected` look.
       const roleName = isFocusedRow
         ? active
           ? 'listFocused'
           : 'listSelected'
         : isSelectedRow
-          ? 'listSelected'
+          ? 'gridSelectedRow'
           : zebra
             ? 'staticText'
             : 'listNormal';
@@ -721,7 +723,7 @@ export class EditableGridRows<T> extends GridRows<T> {
                 ? ctx.color('listFocused').bg
                 : ctx.color('listSelected').bg
               : selectedKeys.has(rk)
-                ? ctx.color('listSelected').bg
+                ? ctx.color('gridSelectedRow').bg
                 : this.zebra && (item & 1) === 1
                   ? ctx.color('staticText').bg
                   : ctx.color('listNormal').bg;

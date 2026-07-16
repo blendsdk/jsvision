@@ -226,6 +226,15 @@ export interface Theme {
    */
   readonly gridDirty: ThemeRole;
   /**
+   * A selected row in an editable data grid — the multi-row selection highlight, a
+   * solid band distinct from both the focused-cell {@link gridCursor} and the base
+   * list's {@link listSelected}: bright white on blue. It carries its own background
+   * (not `listSelected`'s cyan, which matches a normal row), so a selected row reads
+   * clearly even against zebra striping. Painted for every row whose key is in the
+   * selection set; the focused-cell cursor and the pending-commit marker win over it.
+   */
+  readonly gridSelectedRow: ThemeRole;
+  /**
    * A file dialog's info pane — the strip below the dialog that reads out the
    * expanded path and the focused entry's name/size/date/time: cyan on blue.
    */
@@ -366,6 +375,7 @@ export const defaultTheme: Theme = {
   colorMarker: { fg: PALETTE.black, bg: PALETTE.lightGray },
   gridCursor: { fg: PALETTE.black, bg: PALETTE.white },
   gridDirty: { fg: PALETTE.brightRed, bg: PALETTE.black },
+  gridSelectedRow: { fg: PALETTE.white, bg: PALETTE.blue },
   fileInfo: { fg: PALETTE.cyan, bg: PALETTE.blue },
   editorNormal: { fg: PALETTE.yellow, bg: PALETTE.blue },
   editorSelected: { fg: PALETTE.blue, bg: PALETTE.lightGray },
