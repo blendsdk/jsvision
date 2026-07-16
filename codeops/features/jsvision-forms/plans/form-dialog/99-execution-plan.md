@@ -2,7 +2,7 @@
 
 > **Feature**: jsvision-forms/RD-08 — `formDialog()` + modal submit-gate
 > **CodeOps Skills Version**: 3.8.0
-> **Progress**: 0/18 tasks (0%)
+> **Progress**: 6/18 tasks (33%)
 > **Last Updated**: 2026-07-16
 
 Specification-first ordering is non-negotiable within every phase: **spec tests → verify red →
@@ -27,17 +27,17 @@ The story (Phase 3) consumes the finished public surface.
 Spec oracles: ST-D-SUB1…3 ([07](07-testing-strategy.md)). Touches `create-form.ts` + `types.ts` only —
 the barrel/surface lock is unchanged in this phase (`submitting()` is a type-only method).
 
-- [ ] **1.1** Write the spec oracles ST-D-SUB1…3 in `packages/forms/test/form-dialog.spec.test.ts`
-      (assert `submitting()` on `form.submit()` directly, with a deferred-promise `onValid` helper) — AR-PL2.
-- [ ] **1.2** Verify **red**: `yarn workspace @jsvision/forms test` — ST-D-SUB1…3 fail (`submitting` absent).
-- [ ] **1.3** Implement `submitting`: seed `const submitting = signal(false)` beside `submitAttempted`
+- [x] **1.1** Write the spec oracles ST-D-SUB1…3 in `packages/forms/test/form-dialog.spec.test.ts`
+      (assert `submitting()` on `form.submit()` directly, with a deferred-promise `onValid` helper) — AR-PL2. _(2026-07-16)_
+- [x] **1.2** Verify **red**: `yarn workspace @jsvision/forms test` — ST-D-SUB1…3 fail (`submitting` absent). _(3/3 red: `form.submitting is not a function`)_
+- [x] **1.3** Implement `submitting`: seed `const submitting = signal(false)` beside `submitAttempted`
       (`create-form.ts:121`); wrap `submit()` (`:213-230`) in `set(true)` at entry + a `try/finally` that
       `set(false)` on every path incl. a re-throw; expose `submitting: () => submitting()` on the returned
-      object (`:266-279`) — [03-02](03-02-submitting.md).
-- [ ] **1.4** Add `submitting(): boolean` to `interface Form` (`types.ts`, between `validating()` and
-      `loading()`) with prose JSDoc (no per-member `@example`) — [03-02](03-02-submitting.md).
-- [ ] **1.5** Verify **green**: ST-D-SUB1…3 pass.
-- [ ] **1.6** Full **verify**: `yarn verify` green.
+      object (`:266-279`) — [03-02](03-02-submitting.md). _(2026-07-16)_
+- [x] **1.4** Add `submitting(): boolean` to `interface Form` (`types.ts`, between `validating()` and
+      `loading()`) with prose JSDoc (no per-member `@example`) — [03-02](03-02-submitting.md). _(2026-07-16)_
+- [x] **1.5** Verify **green**: ST-D-SUB1…3 pass. _(3/3 green)_
+- [x] **1.6** Full **verify**: `yarn verify` green. _(26/26 turbo tasks; all tests + check:docs/check-plugin green)_
 - [ ] **1.7** Commit via **/gitcmp** (`feat(forms): add form.submitting() in-flight signal`).
 
 ---

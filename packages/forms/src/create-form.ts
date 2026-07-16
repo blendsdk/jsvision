@@ -120,6 +120,11 @@ function buildForm<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof 
   // clears it, and nothing reads it yet — a later reveal-after-submit feature consumes it.
   const submitAttempted = signal(false);
 
+  // In-flight submit flag: true from submit() entry until it settles (validators AND onValid), on
+  // every exit path. A modal that gates OK on submit() reads this synchronously to seal itself and
+  // disable its OK button while the submit runs.
+  const submitting = signal(false);
+
   // In-flight async record load (the "open this form to edit an existing record" case). `loading`
   // drives the "Loading…" swap; `loadGen` is a monotonic ticket so a superseded load's late settle is
   // dropped; `loadController` cancels the prior load; `disposed` guards every post-teardown write —
@@ -211,22 +216,30 @@ function buildForm<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof 
   };
 
   const submit = async (onValid: (values: z.output<S>) => void | Promise<void>): Promise<boolean> => {
-    batch(() => {
-      for (const name of names) touchedSignal(name).set(true);
-      submitAttempted.set(true);
-    });
-    // Short-circuit on a sync-invalid object: no async validator is invoked (no pointless round-trip
-    // on a doomed submit, and no malformed value is handed to a validator). Every field is sync-clean
-    // past this point, so the async gate is the only thing left to satisfy.
-    if (!validation.isValid()) return false;
-    // No queued debounce may supersede the force-run; then force-run + await every async validator.
-    asyncLayer.cancelPendingDebounces();
-    await asyncLayer.runAllForced();
-    if (!isValidForm()) return false; // now also reflects any async error
-    const coerced = validation.values();
-    if (coerced === null) return false; // isValidForm() true implies non-null; guard for safety
-    await onValid(coerced);
-    return true;
+    // Flip in-flight synchronously at entry so a caller/dialog observing right after invoking submit()
+    // (before the first await) already sees submitting() true. onValid is awaited WITHOUT a try/catch,
+    // so a rejecting onValid re-throws out of submit(); the try/finally clears the flag before it does.
+    submitting.set(true);
+    try {
+      batch(() => {
+        for (const name of names) touchedSignal(name).set(true);
+        submitAttempted.set(true);
+      });
+      // Short-circuit on a sync-invalid object: no async validator is invoked (no pointless round-trip
+      // on a doomed submit, and no malformed value is handed to a validator). Every field is sync-clean
+      // past this point, so the async gate is the only thing left to satisfy.
+      if (!validation.isValid()) return false;
+      // No queued debounce may supersede the force-run; then force-run + await every async validator.
+      asyncLayer.cancelPendingDebounces();
+      await asyncLayer.runAllForced();
+      if (!isValidForm()) return false; // now also reflects any async error
+      const coerced = validation.values();
+      if (coerced === null) return false; // isValidForm() true implies non-null; guard for safety
+      await onValid(coerced);
+      return true;
+    } finally {
+      submitting.set(false); // clears on EVERY path: 4× return false, return true, and a re-throw
+    }
   };
 
   const load = async (loader: (ctx: { signal: AbortSignal }) => Promise<I>): Promise<boolean> => {
@@ -271,6 +284,7 @@ function buildForm<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof 
     isValid: isValidForm,
     dirty,
     validating: () => asyncLayer.anyValidating(),
+    submitting: () => submitting(),
     loading: () => loading(),
     load,
     submit,
