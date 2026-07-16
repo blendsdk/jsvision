@@ -78,7 +78,7 @@ export type { QuickFilterRowConfig } from './quick-filter-row.js';
 // editors that emits a `ColumnFilter`. The container opens one on a funnel click; it is exported so a
 // bespoke grid can drive it programmatically.
 export { FilterPopup } from './filter-popup.js';
-export type { FilterPopupConfig } from './filter-popup.js';
+export type { FilterPopupConfig, FilterPopupContext } from './filter-popup.js';
 
 // The Excel value-list — the distinct-value checkbox picker (async-populated, type-ahead search, Select
 // All, truncation disclosure) that the condition popup embeds. Exported for bespoke composition.
