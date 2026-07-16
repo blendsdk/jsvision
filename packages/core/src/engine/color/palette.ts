@@ -106,8 +106,8 @@ export function rgb256(index: number): Rgb {
  * @example
  * import { PALETTE } from '@jsvision/core';
  *
- * const titleFg = PALETTE.brightWhite;  // '#ffffff'
- * const titleBg = PALETTE.blue;         // '#0000aa'
+ * const titleFg = PALETTE.white;  // '#ffffff' — the brightest white (there is no `brightWhite` key)
+ * const titleBg = PALETTE.blue;   // '#0000aa'
  */
 export const PALETTE = {
   black: '#000000',
