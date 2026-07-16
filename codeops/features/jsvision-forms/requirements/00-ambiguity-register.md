@@ -119,3 +119,51 @@ package `@jsvision/forms`. Async validation, async loading, the `formDialog` hel
 - [x] Zero deferred *within-scope* items — every in-scope ambiguity has a concrete answer; cross-field
       async is an explicit, recorded **out-of-scope** decision (AR-43), not an unresolved gap.
 - [x] User reviewed and confirmed the four pivotal decisions (AskUserQuestion, 2026-07-15).
+
+## RD-07 — Async Loading + Baseline Rebase (2026-07-16 extension)
+
+> Appended for the async-loading slice (see `00-roadmap.md`; source design GH #85, scope fence
+> GH #89). AR-46/47/48/49 are explicit user decisions (2026-07-16, AskUserQuestion); the rest are
+> recommendations derived from them, from RD-06's ratified idioms, and from the codebase, confirmed on
+> RD review. This slice resolves the item GH #85 left **explicitly open** — "reset baseline (esp. for
+> async-loaded forms) + dirty/touched reset" (#85 §7) — and lifts AR-12's "baseline immutable this
+> slice" now that a well-defined mutation point (the seeded `baseline` record, `create-form.ts:99`) is
+> the rebase target.
+
+| AR | Decision | Resolution | Status |
+|----|----------|------------|--------|
+| AR-46 | Load trigger surface | An imperative **`form.load(loader): Promise<boolean>`** method, where `loader: (ctx: { signal: AbortSignal }) => Promise<I>`. Chosen over a `load:` option on `createForm` that auto-runs at creation (the #85 sketch): a method is re-invokable (a Reload button), keeps I/O out of the constructor, is testable in isolation, and is symmetric with `submit(onValid)`. The `AbortSignal` mirrors the async-validator `ctx` (AR-38). | ✅ Resolved (user) |
+| AR-47 | Loaded-record shape + application | The loader resolves a **full raw record `Promise<I>`** — the same raw editing shape as `initial`; the author maps a server/domain record → raw editing values inside the loader (raw, not schema-coerced, is **forced**: there is no generic inverse of `z.coerce`, and `initial` is already the raw shape). On success the store **replaces every field value and rebases the whole baseline** to the loaded record, in one `batch()`. Chosen over a partial `Promise<Partial<I>>` merge — a full replace is the clean "load the record to edit" model and avoids a mixed per-key dirty/baseline state. | ✅ Resolved (user) |
+| AR-48 | Post-load form state | A successful load leaves the form **pristine**: every field's `touched` is cleared and the submit-attempted flag is cleared, and because the baseline is rebased, `dirty()` is `false`. The loaded record is a clean starting point, behaviourally identical to a fresh `createForm` initialised with it. Mirrors `reset()` (AR-13). Chosen over preserving `touched` — a freshly-loaded value showing a "touched" error reveal is the wrong default. | ✅ Resolved (user) |
+| AR-49 | Loader-rejection behaviour | If the loader rejects (or throws), **`form.load` resolves `false`**; values and baseline are left exactly as they were and `loading()` returns to `false`. **No `loadError()` surface** is added — the loader owns its own try/catch and surfaces a message its own way (the same contract as `asyncValidators`, AR-34; keeps the engine from minting a message, honouring the `ZodIssue`-passthrough spirit of AR-40). Mirrors `submit()`'s boolean gate (AR-07). This is the failure half of the #85-open baseline-rebase question. | ✅ Resolved (user) |
+| AR-50 | Baseline mutability + rebase mechanics | The seeded `baseline` record (`create-form.ts:99`, written only in the seed loop at `:103`) becomes the **mutation point**: on a successful load the store overwrites `baseline[name]` for every field (defensively cloned for arrays, as at `:103`) inside the same `batch()` that sets the values, so `fieldDirty` (`:142`) and `reset` (`:174`) both track against the loaded record with no other change to their logic. **Revises AR-12** ("baseline immutable this slice") — the baseline is now immutable only until a `load()` succeeds. | ✅ Resolved (derived) |
+| AR-51 | Load concurrency correctness | A **monotonic load-generation counter + an `AbortController`**, reusing RD-06's stale-guard idiom (AR-38): a second `load()` supersedes an in-flight first — the prior run's `AbortSignal` is aborted and, even if the loader ignores it, the stale result is dropped by the generation check, so only the newest load's record is ever applied. **Disposal is guarded separately (preflight PF-001):** because `dispose()` (AR-44) bumps **no** generation counter (`owner.ts:163` tears down computations only, and signals survive disposal), the generation check cannot protect the dispose path. `dispose()` therefore **sets a `disposed` flag and aborts** the in-flight load, and the load path tests that flag before **every** state write — including the rejection path's `loading.set(false)` — so a load that resolves *or* rejects after teardown is a true no-op (no value write, no rebase, no `loading()` clear). Because `load` creates no standing effect (only a transient controller per call), it does not by itself make `dispose()` newly mandatory for a sync-only form. | ✅ Resolved (derived; PF-001 refined) |
+| AR-52 | `loading()` surface + independence | A single form-level **`form.loading(): boolean`** (no per-field loading — a load is atomic/whole-form, unlike per-field `validating()`). `isValid()` and `submit()` do **not** auto-gate on `loading()`; the app composes the busy state (e.g. `disabled: () => form.loading()`), matching how `validating()` is left to the app (AR-39). Setting the loaded values fires each async field's trigger effect (a value change), so a loaded record is re-validated on load — an accepted, documented consequence of treating load as "set new values". | ✅ Resolved (derived) |
+| AR-53 | Repo gates + security | A kitchen-sink story demonstrating **load → edit → `dirty()` → `reset()`-to-loaded** (with the `loading()` state shown) and passing the headless smoke test is required. Security: the engine performs **no I/O of its own** and mints no message — the loader owns every network call, URL construction, and escaping; loaded **string** values render through the existing control-byte sanitisation path (`ScreenBuffer.set` / `sanitize`) exactly as typed input does, asserted by an oracle mirroring RD-04/RD-06's render-and-scan. | ✅ Resolved (derived) |
+
+### Gate status (RD-07) — ✅ PASSED (2026-07-16)
+
+- [x] The four semantically-pivotal items (AR-46 load surface, AR-47 record shape/application, AR-48
+      post-load state, AR-49 rejection behaviour) resolved by explicit user decision (AskUserQuestion,
+      2026-07-16).
+- [x] Derived items (AR-50 baseline mechanics, AR-51 concurrency, AR-52 `loading()`/independence,
+      AR-53 gates/security) recorded with codebase-grounded rationale and RD-06-idiom reuse.
+- [x] Resolves the GH #85 explicitly-open baseline-rebase-for-async-loaded-forms question, and revises
+      AR-12 ("baseline immutable this slice") accordingly.
+- [x] Zero deferred *within-scope* items — every in-scope ambiguity has a concrete answer; partial-load
+      merge and per-field `loading()` are explicit, recorded **out-of-scope** decisions (AR-47, AR-52),
+      not unresolved gaps.
+
+### Preflight (RD-07) — ✅ PASSED (2026-07-16, `00-preflight-report-rd-07.md`)
+
+- [x] **PF-001 (MAJOR) applied** — the disposal path is guarded by an explicit `disposed` flag, not the
+      generation counter (which `dispose()` does not bump); AR-51 + the RD's FR/orchestration prose
+      corrected, and AC #10 tightened to cover both the resolve and reject-after-dispose paths.
+- [x] **PF-002 (MINOR) applied** — new AC #4 locks the re-invokable reload case (two sequential loads →
+      the second record is the rebase/`reset()` target) that motivated a method over a `load:` option.
+- [x] **PF-003 (MINOR) applied** — the former AC #10 split into AC #11 (`asyncError` cleared on load,
+      unconditional) + AC #12 (validator re-runs only for a **sync-clean** loaded value, per the
+      `fieldSyncClean` gate).
+- [x] **PF-004 / PF-005 (observations) applied** — `load`-vs-in-flight-`submit` interleaving noted as an
+      app-composition concern; the loader's full-record contract (a missing key blanks the field +
+      baseline) documented on the raw-record FR.
