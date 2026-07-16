@@ -7,11 +7,16 @@
  * (`apportionColumns`) and its horizontal-scroll `indent`, so each input stays under its column's title
  * and pans with the body — an input scrolled off the left edge is clipped away by the band's bounds.
  *
- * It is a passive `Group` whose only children are the inputs; the container owns the filter model that
+ * It is a passive `Group`: its children are the per-column inputs, and it paints the inter-column `│`
+ * divider at each column's right edge so the band lines up with the header and body (which draw the same
+ * divider) instead of leaving a stray gap between columns. The container owns the filter model that
  * `onQuickFilter` writes into.
  */
 import { Group, Input, apportionColumns, signal, untrack } from '@jsvision/ui';
-import type { Column, Signal } from '@jsvision/ui';
+import type { Column, Signal, DrawContext } from '@jsvision/ui';
+
+/** The inter-column `│` drawn at each column's right edge — matches the header + body divider glyph. */
+const DIVIDER = '│';
 
 /** Construction config for {@link QuickFilterRow}. */
 export interface QuickFilterRowConfig<T> {
@@ -145,5 +150,29 @@ export class QuickFilterRow<T> extends Group {
       const w = Math.max(0, geom.widths[c]);
       input.layout = { position: 'absolute', rect: { x, y: 0, width: w, height: 1 } };
     });
+  }
+
+  /**
+   * Paint the inter-column `│` divider at each column's right edge, so the band matches the header and
+   * body (which draw the same divider). The inputs are composited over this layer by the render root and
+   * cover only their columns' content cells; the reserved divider cell between them is left for this to
+   * fill — without it that one cell shows the layer behind as a stray gap (the "empty block" between
+   * columns). The shared `indent` is applied for symmetry with the header/body, and off-viewport cells
+   * are clipped by the band bounds. Skipped in compact density, which reserves no divider cell.
+   *
+   * @param ctx The clipped, view-local paint context.
+   */
+  override draw(ctx: DrawContext): void {
+    super.draw(ctx); // fill the group background if one is set (children composite above this layer)
+    if (!this.dividers) return; // compact density: no reserved divider cell, so nothing to draw
+    const width = ctx.size.width;
+    const geom = apportionColumns(this.columns, this.autoWidths(), width, this.dividers);
+    const maxIndent = Math.max(0, geom.totalWidth - width);
+    const indent = Math.min(maxIndent, Math.max(0, this.indent()));
+    const divider = ctx.color('listDivider');
+    for (let c = 0; c < this.columns.length; c += 1) {
+      const x = geom.starts[c] + geom.widths[c] - indent; // the reserved divider cell (right of the column)
+      if (x >= 0 && x < width) ctx.text(x, 0, DIVIDER, divider);
+    }
   }
 }
