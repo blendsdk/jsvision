@@ -77,6 +77,14 @@ export interface Form<S extends z.ZodObject<z.ZodRawShape>, I> {
   /** Whether any field is currently running an async validation. */
   validating(): boolean;
   /**
+   * Whether a {@link Form.submit} is currently in flight — `true` synchronously from the moment
+   * `submit()` is called until it settles (its validators **and** the `onValid` callback), `false` on
+   * every return path, including a `onValid` that throws. Form-level; it completes the
+   * `loading()` / `validating()` / `submitting()` in-flight trio. Bind a busy indicator or a
+   * `disabled` getter to it (e.g. `disabled: () => form.submitting()`).
+   */
+  submitting(): boolean;
+  /**
    * Whether an async record load started by {@link Form.load} is currently in flight. Form-level and
    * atomic (a whole record loads at once — there is no per-field loading). It does NOT gate
    * `isValid()` / `submit()`; compose the busy state yourself (e.g. `disabled: () => form.loading()`).
