@@ -54,13 +54,17 @@ test('each input sits under its column and re-positions when the indent changes'
   expect(inputs[0].layout.rect?.x).toBe(0); // region at starts[0]
   expect(inputs[1].layout.rect?.x).toBe(9); // qty at starts[1]
 
-  indent.set(4); // scroll right by 4 (content 16 > viewport 10, so not clamped)
+  indent.set(4); // scroll right by 4 (content 16 > viewport 10)
   render.flush();
-  expect(inputs[0].layout.rect?.x).toBe(-4); // region panned 4 cells off the left edge
-  expect(inputs[1].layout.rect?.x).toBe(5); // qty follows in lockstep
+  // A column scrolled partly off the left is CLIPPED to the viewport edge (absolute rects can't have a
+  // negative x), not placed at a negative x — so its left edge pins to 0 and its width shrinks by the
+  // clipped amount, and it never overlaps its neighbor.
+  expect(inputs[0].layout.rect?.x).toBe(0); // region clipped to the left edge (was 0 − 4)
+  expect(inputs[0].layout.rect?.width).toBe(4); // width shrinks by the 4 clipped cells (8 − 4)
+  expect(inputs[1].layout.rect?.x).toBe(5); // qty follows in lockstep (9 − 4), fully on-screen
 });
 
-test('each input fills its full column width and pans fully off-screen at max indent', () => {
+test('a column pans off the left as a clip, never overlapping the next column', () => {
   const indent = signal(0);
   const { inputs, render } = buildBand({ indent });
   expect(inputs[0].layout.rect?.width).toBe(8); // region fills its full content width (divider has its own cell)
@@ -68,8 +72,13 @@ test('each input fills its full column width and pans fully off-screen at max in
 
   indent.set(6); // max indent = content 16 − viewport 10
   render.flush();
-  expect(inputs[0].layout.rect?.x).toBe(-6); // region entirely left of the viewport → clipped away
+  // region is scrolled 6 off: content 8 − 6 = 2 cells remain, clipped at the left edge.
+  expect(inputs[0].layout.rect?.x).toBe(0);
+  expect(inputs[0].layout.rect?.width).toBe(2);
+  // qty at 9 − 6 = 3; region's right edge is 0 + 2 = 2, so it never reaches qty's left (3) — no overlap.
   expect(inputs[1].layout.rect?.x).toBe(3);
+  const regionRight = inputs[0].layout.rect!.x + inputs[0].layout.rect!.width;
+  expect(regionRight).toBeLessThanOrEqual(inputs[1].layout.rect!.x);
 });
 
 test('the band is one cell tall with one input per column', () => {
@@ -99,6 +108,17 @@ test('the band paints the inter-column │ divider (matching the header and body
   expect(at(15)?.char).toBe('│'); // trailing divider after the last column (as the header/body draw)
   expect(at(8)?.fg).toBe(defaultTheme.listDivider.fg); // same muted tone as the header/body dividers
   expect(at(8)?.bg).toBe(defaultTheme.listDivider.bg);
+});
+
+test('the band divider stays painted under horizontal scroll (a left-clipped input no longer overruns it)', () => {
+  const indent = signal(0);
+  const { render } = buildBand({ indent }); // width 10 < content 16 → panning is observable
+  expect(render.buffer().get(8, 0)?.char).toBe('│'); // divider between region|qty at content x=8
+  indent.set(4); // scroll right by 4
+  render.flush();
+  // region's right edge (its divider cell) is now at content 8 − 4 = 4; the clipped input ends at x=4,
+  // so the divider cell is free and the │ is painted there (before the fix the input overran it).
+  expect(render.buffer().get(4, 0)?.char).toBe('│');
 });
 
 test('compact density paints no │ in the band (no reserved divider cell)', () => {
