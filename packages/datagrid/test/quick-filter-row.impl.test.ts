@@ -10,6 +10,7 @@
 import { test, expect } from 'vitest';
 import { Group, Input, createRenderRoot, resolveCapabilities, signal } from '@jsvision/ui';
 import type { Column, Signal } from '@jsvision/ui';
+import { defaultTheme } from '@jsvision/core';
 import { QuickFilterRow } from '../src/quick-filter-row.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
@@ -87,6 +88,37 @@ test('an undefined filterable config keeps every input; a false entry omits just
   expect(one.inputs.length).toBe(1); // only region keeps an input
   expect(one.inputs[0].layout.rect?.x).toBe(0); // survivor stays under region (starts[0])
   expect(one.inputs[0].layout.rect?.width).toBe(8); // full region width — geometry unchanged
+});
+
+test('the band paints the inter-column │ divider (matching the header and body), in the muted tone', () => {
+  // Widths 8,6 with the divider reserve → divider cells at x=8 (between region|qty) and x=15 (after the
+  // last column). A wide viewport (22 > content 16) clamps the indent to 0, so the cells are on-screen.
+  const { render } = buildBand({ width: 22 });
+  const at = (x: number) => render.buffer().get(x, 0);
+  expect(at(8)?.char).toBe('│'); // divider between the two columns — not a blank gap
+  expect(at(15)?.char).toBe('│'); // trailing divider after the last column (as the header/body draw)
+  expect(at(8)?.fg).toBe(defaultTheme.listDivider.fg); // same muted tone as the header/body dividers
+  expect(at(8)?.bg).toBe(defaultTheme.listDivider.bg);
+});
+
+test('compact density paints no │ in the band (no reserved divider cell)', () => {
+  const band = new QuickFilterRow<Sale>({
+    columns: UNIT_COLS,
+    columnIds: [...UNIT_IDS],
+    autoWidths: () => [null, null],
+    indent: signal(0),
+    onQuickFilter: () => undefined,
+    compact: true,
+  });
+  band.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 22, height: 1 } };
+  const root = new Group();
+  root.add(band);
+  const render = createRenderRoot({ width: 22, height: 1 }, { caps });
+  render.mount(root);
+  render.flush();
+  let row = '';
+  for (let x = 0; x < 22; x += 1) row += render.buffer().get(x, 0)?.char ?? ' ';
+  expect(row).not.toContain('│'); // compact reserves no divider cell, so the band draws none
 });
 
 test('multiple filterable:false columns each drop their input while survivors stay index-aligned', () => {
