@@ -32,6 +32,7 @@ import { mountCellOverlay, absoluteRect } from './overlay.js';
 import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { GridSelection } from './grid-selection.js';
+import type { SyntheticPrefix } from './synthetic-columns.js';
 import type { Key, SelectionMode } from './selection.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
 
@@ -67,6 +68,18 @@ export interface EditableDataGridOptions<T> {
    * Selection gestures are always live; the checkbox column and row-number gutter are separately opt-in.
    */
   readonly selectionMode?: SelectionMode;
+  /**
+   * Show a leading **selection checkbox column** (default `false`): a per-row `[ ]`/`[x]` box plus a
+   * tri-state header box (none/some/all of the displayed rows). It is a fixed-width, left-pinned cell —
+   * not a sortable/filterable column and never reached by the `←`/`→` cursor. A per-row click toggles the
+   * row; the header box selects/clears all displayed rows.
+   */
+  readonly checkboxColumn?: boolean;
+  /**
+   * Show a leading **row-number gutter** (default `false`): 1-based, right-aligned display numbers that
+   * renumber whenever the display re-derives (after a sort/filter). Left-pinned and display-only.
+   */
+  readonly rowNumbers?: boolean;
   /**
    * Show the opt-in quick-filter row — a band of per-column text inputs below the header that drive a
    * live `contains` filter as you type (default `false`; the band is never built when off).
@@ -407,6 +420,15 @@ export class EditableDataGrid<T> extends Group {
       selectedKeys: this.selection.keys,
       onToggleRow: (rowIndex) => this.selection.toggleAtRow(rowIndex),
       onRangeToRow: (rowIndex) => this.selection.rangeToRow(rowIndex),
+      // The opt-in synthetic prefix (checkbox + row-number gutter). The gutter width is sized from the
+      // source row count so it does not reflow as a filter shrinks the display.
+      prefix: {
+        checkbox: opts.checkboxColumn === true,
+        rowNumbers: opts.rowNumbers === true,
+        rowCount: this.source.length(),
+      } satisfies SyntheticPrefix,
+      triState: () => this.selection.currentTriState(),
+      onToggleAll: () => this.selection.toggleAll(),
       indent: this.indent,
       display: this.display,
       rowKey: this.source.rowKey,

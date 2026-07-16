@@ -17,7 +17,7 @@ import { Group, ScrollBar, View, signal } from '@jsvision/ui';
 import type { Column, DispatchEvent, DrawContext, LayoutProps, Signal } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import type { FreezePartition } from './column-model.js';
-import type { Key } from './selection.js';
+import type { Key, TriState } from './selection.js';
 import type { SortKey } from './sort.js';
 import type { FilterModel } from './filter.js';
 import type { OnCommit } from './commit.js';
@@ -25,6 +25,8 @@ import type { DirtyRegistry } from './editing.js';
 import { SortHeader } from './sort-header.js';
 import { QuickFilterRow } from './quick-filter-row.js';
 import { EditableGridRows } from './editable-grid-rows.js';
+import { prefixWidth, SyntheticHeaderBand, SyntheticBodyBand } from './synthetic-columns.js';
+import type { SyntheticPrefix } from './synthetic-columns.js';
 
 /**
  * Everything {@link buildGridBody} needs from the container: the shared reactive state, the column
@@ -45,6 +47,12 @@ export interface GridBodyDeps<T> {
   onToggleRow: (rowIndex: number) => void;
   /** Range-extend sink (`Shift`+click / `Shift`+↑↓) — the container moves the cursor + unions the run. */
   onRangeToRow: (rowIndex: number) => void;
+  /** The synthetic-prefix spec (checkbox / row-number gutter + row count). `prefixWidth` 0 ⇒ no band. */
+  prefix: SyntheticPrefix;
+  /** The header tri-state over the current display (drives the header checkbox glyph). */
+  triState: () => TriState;
+  /** Header-checkbox click sink — the container toggles select-all / clear by the current tri-state. */
+  onToggleAll: () => void;
   /** Shared horizontal scroll offset — bound only by the center panel; frozen panels bind a constant `0`. */
   indent: Signal<number>;
   /** The materialized, sorted+filtered display rows (shared by every panel). */
@@ -396,6 +404,58 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
     seg.fixed ? { size: { kind: 'fixed', cells: panelBandWidth(seg.ids, deps.resolvedWidth, deps.compact) } } : fr;
 
   let center = null as unknown as EditableGridRows<T>; // assigned by the center seg below
+
+  // The synthetic-prefix bands (checkbox + row-number gutter): fixed-width, non-scrolling segments
+  // prepended to the LEFTMOST region (before the first data segment) of the header, the pinned frozen-
+  // rows band, and the body. `prefixWidth` 0 (neither affordance on) adds nothing → byte-identical.
+  const pw = prefixWidth(deps.prefix);
+  if (pw > 0) {
+    const prefixLayout: LayoutProps = { size: { kind: 'fixed', cells: pw } };
+    // Grid-wide focus for the prefix body band: reuse the frozen predicate, else read the single body's
+    // focus reactively so the focused row's prefix cell lights up in lockstep with the data body.
+    const bandActive: () => boolean =
+      gridActive ??
+      ((): boolean => {
+        center.focusSignal()(); // subscribe (reactive) so a focus flip repaints the prefix band
+        return center.state.focused;
+      });
+    const makePrefixBody = (rowFloor: number, rowCeil: number): SyntheticBodyBand<T> =>
+      new SyntheticBodyBand<T>({
+        display: deps.display,
+        columns: [],
+        autoWidths: () => [],
+        indent: zero, // the prefix never pans horizontally
+        focused: deps.focused,
+        selected: deps.selected,
+        zebra: deps.zebra,
+        prefix: deps.prefix,
+        selectedKeys: deps.selectedKeys,
+        rowKey: deps.rowKey,
+        onToggleRow: deps.onToggleRow,
+        active: bandActive,
+        rowFloor,
+        rowCeil,
+      });
+
+    const headerBand = new SyntheticHeaderBand({
+      prefix: deps.prefix,
+      triState: deps.triState,
+      onToggleAll: deps.onToggleAll,
+    });
+    headerBand.layout = prefixLayout;
+    headerRow.add(headerBand);
+
+    if (freezeRows > 0) {
+      const pinnedPrefix = makePrefixBody(0, 0); // pinned band: always the first N rows, never scrolls
+      pinnedPrefix.layout = prefixLayout;
+      freezeRowsRow.add(pinnedPrefix);
+    }
+
+    const bodyPrefix = makePrefixBody(freezeRows, Number.POSITIVE_INFINITY); // scrolling body window
+    bodyPrefix.layout = prefixLayout;
+    bodyRow.add(bodyPrefix);
+  }
+
   segs.forEach((seg, i) => {
     if (i > 0) {
       // A freeze divider (1 cell) before every seg after the first — in the header, the pinned band, and

@@ -11,8 +11,8 @@
  */
 import { signal } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
-import { toggleKey, selectRange, selectAll } from './selection.js';
-import type { Key, SelectionMode } from './selection.js';
+import { toggleKey, selectRange, selectAll, triState } from './selection.js';
+import type { Key, SelectionMode, TriState } from './selection.js';
 
 /** Construction config for {@link GridSelection}. */
 export interface GridSelectionConfig<T> {
@@ -82,6 +82,17 @@ export class GridSelection<T> {
   /** Select every displayed row — the header select-all (over the current filtered display). */
   selectAllDisplayed(): void {
     this.keys.set(selectAll(this.displayKeys()));
+  }
+
+  /** The header tri-state over the current display: `none` / `some` / `all` of the displayed rows selected. */
+  currentTriState(): TriState {
+    return triState(this.keys(), this.displayKeys());
+  }
+
+  /** The header-checkbox toggle: when every displayed row is selected, clear; otherwise select them all. */
+  toggleAll(): void {
+    if (this.currentTriState() === 'all') this.clear();
+    else this.selectAllDisplayed();
   }
 
   /** Clear the selection and the range anchor. */
