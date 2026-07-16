@@ -2,7 +2,7 @@
 
 > **Feature**: jsvision-forms/RD-08 — `formDialog()` + modal submit-gate
 > **CodeOps Skills Version**: 3.8.0
-> **Progress**: 16/18 tasks (89%) — Phases 1–2 complete ✅
+> **Progress**: 18/18 tasks (100%) — ✅ COMPLETE (Phases 1–3, `yarn verify` green)
 > **Last Updated**: 2026-07-16
 
 Specification-first ordering is non-negotiable within every phase: **spec tests → verify red →
@@ -83,16 +83,16 @@ Spec oracle: ST-DS1 ([07](07-testing-strategy.md)) → RD-08 AC #12.
 - [x] **3.4** Verify **green**: ST-DS1 passes (rebuild `@jsvision/forms` first — examples import by
       name → dist; `yarn verify`'s turbo `test dependsOn build` handles it). _(65/65 smoke)_
 - [x] **3.5** Full **verify**: `yarn verify` green (whole workspace, incl. `check:docs`). _(26/26 turbo; examples 198 tests; check-plugin PASS)_
-- [ ] **3.6** Commit via **/gitcmp** (`feat(examples): forms/dialog kitchen-sink story`).
+- [x] **3.6** Commit via **/gitcmp** (`feat(examples): forms/dialog kitchen-sink story`). _(4ab057bc, pushed 2026-07-16)_
 
 ---
 
 ## Definition of done (whole plan)
 
-- [ ] All 18 tasks `[x]`; every RD-08 AC (1–14) satisfied per the [07](07-testing-strategy.md) coverage map.
-- [ ] `yarn verify` green + banned-ref grep clean; `@jsvision/core`/`@jsvision/ui` still zero-dep; `zod`
+- [x] All 18 tasks `[x]`; every RD-08 AC (1–14) satisfied per the [07](07-testing-strategy.md) coverage map.
+- [x] `yarn verify` green + banned-ref grep clean; `@jsvision/core`/`@jsvision/ui` still zero-dep; `zod`
       still the only peer dep.
-- [ ] Roadmap synced: RD-08 → `Executing` (🔄) on start, `Done` (✅) on completion; portfolio row
+- [x] Roadmap synced: RD-08 → `Executing` (🔄) on start, `Done` (✅) on completion; portfolio row
       cascaded (nested-layout mandate).
 
 ## Estimated effort
