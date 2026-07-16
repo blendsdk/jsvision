@@ -32,6 +32,7 @@ import { mountCellOverlay, absoluteRect } from './overlay.js';
 import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { GridSelection } from './grid-selection.js';
+import { RowMutations } from './row-mutations.js';
 import type { SyntheticPrefix } from './synthetic-columns.js';
 import type { Key, SelectionMode } from './selection.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
@@ -124,6 +125,19 @@ export interface EditableDataGridOptions<T> {
    * ```
    */
   readonly filterPopup?: (ctx: FilterPopupContext<T>) => View;
+  /**
+   * Mint the fresh key for {@link EditableDataGrid.duplicateRow} — the caller owns key generation. It
+   * receives a structured clone of the original row plus the original, and returns the row to insert
+   * (typically the clone with a new `rowKey`). Without it, `duplicateRow` is a no-op (it never inserts a
+   * key-colliding row).
+   *
+   * @example
+   * ```ts
+   * let nextId = 1000;
+   * const grid = new EditableDataGrid({ columns, source, assignKey: (clone) => ({ ...clone, id: nextId++ }) });
+   * ```
+   */
+  readonly assignKey?: (clone: T, original: T) => T;
 }
 
 /**
@@ -322,6 +336,9 @@ export class EditableDataGrid<T> extends Group {
   private popupDispose: (() => void) | null = null;
   // Optional custom filter-popup factory — replaces the built-in popup when set (see the config option).
   private readonly filterPopupFactory?: (ctx: FilterPopupContext<T>) => View;
+  // The row-CRUD controller — insert/delete/duplicate through the source's mutation seam (the stateful
+  // wiring, like GridSelection, lives in row-mutations.ts so grid.ts stays thin public delegators).
+  private readonly mutations: RowMutations<T>;
 
   /**
    * @param opts The `columns`, the `source`, optional `zebra` striping, and an optional `onCommit`
@@ -360,6 +377,15 @@ export class EditableDataGrid<T> extends Group {
       focused: this.focused,
       display: this.display,
       rowKey: this.source.rowKey,
+    });
+    // Row CRUD routes through the source's mutation seam; a delete also prunes the selection. `assignKey`
+    // (from opts) mints the clone key for `duplicateRow` — without it, duplicate is a no-op + devWarn.
+    this.mutations = new RowMutations<T>({
+      source: this.source,
+      display: this.display,
+      selection: this.selection,
+      assignKey: opts.assignKey,
+      warn: (message) => devWarn('duplicateRow', message),
     });
     // Visible order = full order minus hidden; partition = the frozen left/center/right split with any
     // over-pinned columns pushed back to the center (so the center is never blank). Both derive lazily.
@@ -1116,5 +1142,57 @@ export class EditableDataGrid<T> extends Group {
   /** Clear the row selection and its range anchor. */
   clearSelection(): void {
     this.selection.clear();
+  }
+
+  /**
+   * Insert a row through the data-source mutation seam. `at` is a **source-array** index (append when
+   * omitted). A no-op when the source is read-only (exposes no `insert`) — the grid never persists on its
+   * own. The row must already carry its `rowKey` (the caller owns key generation). With an active client
+   * sort the row re-sorts to its value-determined display position on the next derive; a push-down source
+   * owns its own ordering.
+   *
+   * @param row The row to insert (already carrying its `rowKey`).
+   * @param at The source index to splice at; appended when omitted.
+   * @example
+   * ```ts
+   * grid.insertRow({ id: 10, name: 'New' });    // appended
+   * grid.insertRow({ id: 11, name: 'Top' }, 0); // spliced at the front of the source
+   * ```
+   */
+  insertRow(row: T, at?: number): void {
+    this.mutations.insertRow(row, at);
+  }
+
+  /**
+   * Remove rows by key through the data-source mutation seam, then prune those keys from the selection
+   * (a deleted row never stays selected). A no-op on the source when it is read-only (exposes no
+   * `remove`); the selection is still pruned either way. Keys not present are ignored.
+   *
+   * @param keys The row keys to remove.
+   * @example
+   * ```ts
+   * grid.deleteRows([10, 11]); // removed from the source and de-selected
+   * ```
+   */
+  deleteRows(keys: readonly Key[]): void {
+    this.mutations.deleteRows(keys);
+  }
+
+  /**
+   * Insert a structured clone of the row identified by `key`, adjacent to it, carrying a fresh key from
+   * the `assignKey` option. A no-op (with a dev warning) when `assignKey` is not configured — it never
+   * inserts a key-colliding row. Also a no-op when `key` is absent from the display, or when the row is
+   * not structured-cloneable (holds a function, a class instance, etc.) — the clone is attempted inside a
+   * guard, so a non-cloneable row warns instead of throwing and never leaves a partial insert.
+   *
+   * @param key The key of the row to duplicate.
+   * @example
+   * ```ts
+   * // With `assignKey: (clone) => ({ ...clone, id: nextId() })` configured:
+   * grid.duplicateRow(10); // a clone with a fresh id is inserted right after row 10
+   * ```
+   */
+  duplicateRow(key: Key): void {
+    this.mutations.duplicateRow(key);
   }
 }

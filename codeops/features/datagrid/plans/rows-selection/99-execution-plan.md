@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-16 15:10
-> **Progress**: 25/50 tasks (50%)
+> **Last Updated**: 2026-07-16 15:24
+> **Progress**: 34/50 tasks (68%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -111,19 +111,19 @@ selection paint reuses the datagrid body's own `draw()` override.
 **Reference**: `03-04` · `07 §Row CRUD` (ST-16…ST-18) + `§Security` (ST-21 mutation) · AR-4/AR-12/AR-9
 
 ### Step 4.1: Specification tests (red)
-- [ ] 4.1.1 Write `row-crud.spec.test.ts` (ST-16 insert at source index grows length; ST-17 delete removes + de-selects; ST-18 duplicate with/without `assignKey`) — `packages/datagrid/test/row-crud.spec.test.ts`
-- [ ] 4.1.2 Add the **mutation half** of ST-21 to `security.spec.test.ts` (a read-only source without `insert`/`remove` is never mutated by `insertRow`/`deleteRows`) — `packages/datagrid/test/security.spec.test.ts`
-- [ ] 4.1.3 Verify **red**
+- [x] 4.1.1 Write `row-crud.spec.test.ts` (ST-16 insert at source index grows length; ST-17 delete removes + de-selects; ST-18 duplicate with/without `assignKey`) — `packages/datagrid/test/row-crud.spec.test.ts`
+- [x] 4.1.2 Add the **mutation half** of ST-21 to `security.spec.test.ts` (a read-only source without `insert`/`remove` is never mutated by `insertRow`/`deleteRows`) — `packages/datagrid/test/security.spec.test.ts`
+- [x] 4.1.3 Verify **red**
 
 ### Step 4.2: Implement (green)
-- [ ] 4.2.1 `data-source.ts`: add optional `insert?(row, at?)`/`remove?(keys)` to `GridDataSource`; `fromRows` implements both by splicing the `Signal<T[]>` (new array) — `packages/datagrid/src/data-source.ts`
-- [ ] 4.2.2 `grid.ts`: `insertRow(row, at?)` (source index, append default), `deleteRows(keys)` (seam + prune `selectedKeys`/`anchorKey`, AR-12), `duplicateRow(key)` (`structuredClone` + `assignKey` hook; no hook ⇒ no-op + `devWarn`) + the `assignKey?` option — `packages/datagrid/src/grid.ts`
-- [ ] 4.2.3 Barrel + `RowMutations`/`assignKey` docs + `@example` — `packages/datagrid/src/index.ts`, `grid.ts`, `data-source.ts`
-- [ ] 4.2.4 Verify **green** — ST-16…ST-18 + ST-21 (mutation) pass (AC-5)
+- [x] 4.2.1 `data-source.ts`: add optional `insert?(row, at?)`/`remove?(keys)` to `GridDataSource`; `fromRows` implements both by splicing the `Signal<T[]>` (new array) — `packages/datagrid/src/data-source.ts`
+- [x] 4.2.2 `grid.ts`: `insertRow(row, at?)` (source index, append default), `deleteRows(keys)` (seam + prune `selectedKeys`/`anchorKey`, AR-12), `duplicateRow(key)` (`structuredClone` + `assignKey` hook; no hook ⇒ no-op + `devWarn`) + the `assignKey?` option. The row-mutation logic is extracted to `row-mutations.ts` (`RowMutations<T>`, the twin of `GridSelection`) so grid.ts stays thin delegators under the line guard — `packages/datagrid/src/grid.ts`, `row-mutations.ts`
+- [x] 4.2.3 Barrel + `RowMutations`/`assignKey` docs + `@example` — `packages/datagrid/src/index.ts`, `grid.ts`, `data-source.ts`
+- [x] 4.2.4 Verify **green** — ST-16…ST-18 + ST-21 (mutation) pass (AC-5)
 
 ### Step 4.3: Impl tests & verify
-- [ ] 4.3.1 Write `row-crud.impl.test.ts` (insert under an active client sort lands by value; delete of a non-selected key leaves the selection intact; read-only source no-ops; **`duplicateRow` on a non-structured-cloneable row → devWarn + no-op, no partial insert, AR-21/PF-008**) — `packages/datagrid/test/row-crud.impl.test.ts`
-- [ ] 4.3.2 Full `yarn verify`
+- [x] 4.3.1 Write `row-crud.impl.test.ts` (insert under an active client sort lands by value; delete of a non-selected key leaves the selection intact; read-only source no-ops; **`duplicateRow` on a non-structured-cloneable row → devWarn + no-op, no partial insert, AR-21/PF-008**) — `packages/datagrid/test/row-crud.impl.test.ts`
+- [x] 4.3.2 Full `yarn verify`
 
 **Deliverables**: insert/delete/duplicate via the mutation seam; delete de-selects (AC-5); no mutation outside `RowMutations` (AC-9 mutation half). **Verify**: `yarn verify`
 

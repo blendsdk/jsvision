@@ -28,8 +28,10 @@ export type {
 export type { CellStyle } from './column.js';
 export type { CellRenderer, CellDrawContext, RenderCell, CellState } from './cell-draw.js';
 
-// Data source — the read seam the grid binds to. `fromRows` is the in-memory source; every source
-// carries a required `rowKey`.
+// Data source — the read/mutate seam the grid binds to. `fromRows` is the in-memory source; every
+// source carries a required `rowKey` and may implement the optional `insert`/`remove` mutation seam
+// (`fromRows` does, by splicing its signal). A source without it is read-only — the grid never persists
+// on its own, so `insertRow`/`deleteRows`/`duplicateRow` become no-ops.
 export { fromRows } from './data-source.js';
 export type { GridDataSource } from './data-source.js';
 
