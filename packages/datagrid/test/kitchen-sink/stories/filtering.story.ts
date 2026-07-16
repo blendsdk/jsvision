@@ -1,9 +1,10 @@
 /**
  * The filtering showcase story — Excel-class column filtering (RD-06). The opt-in quick-filter row
- * under the header does a live contains-match per column as you type; each header funnel `▽` opens a
- * condition popup (type-appropriate operators) with an embedded value-list (distinct checkboxes +
- * search + Select All). A live "N of M" readout echoes `filteredCount()` / `totalCount()` so the effect
- * of every filter is visible immediately.
+ * under the header does a live contains-match per column as you type; every filterable column shows an
+ * always-visible funnel `▽` (click it, or press `Alt+Down` on a focused cell) that opens a condition
+ * popup (type-appropriate operators) with an embedded value-list (distinct checkboxes + search + Select
+ * All). A live "N of M" readout echoes `filteredCount()` / `totalCount()` so the effect of every filter
+ * is visible immediately.
  */
 import { Group, Text, signal } from '@jsvision/ui';
 import { column, fromRows, EditableDataGrid } from '../../../src/index.js';
@@ -51,7 +52,9 @@ export const filteringStory: Story = {
       zebra: true,
     });
 
-    const hints = new Text('Type in the quick-filter row · click a header funnel ▽ for conditions & a value-list');
+    const hints = new Text(
+      'Type in the quick-filter row · every column shows a ▽ — click it or press Alt+Down on a cell for conditions & a value-list',
+    );
     // Live "N of M" — repaints whenever a filter changes the visible row count.
     const echo = new Text(() => `Showing ${grid.filteredCount()} of ${grid.totalCount()} rows`);
 

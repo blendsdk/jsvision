@@ -1,7 +1,8 @@
 /**
- * Filtering · Text conditions — click a text column's header funnel `▽` to open its condition popup
- * with text operators (contains / starts with / ends with / equals). The echo shows the active filter.
- * The `.js` extension is required by NodeNext ESM resolution.
+ * Filtering · Text conditions — every filterable column shows an always-visible funnel `▽`; click it
+ * (or focus a cell and press `Alt+Down`) to open its condition popup with text operators
+ * (contains / starts with / ends with / equals). A quick-filter row is live too. The echo shows the
+ * active filter. The `.js` extension is required by NodeNext ESM resolution.
  */
 import { column } from '@jsvision/datagrid';
 import { buildFilterStory } from './filter-demo.js';
@@ -24,8 +25,9 @@ export const filteringConditionTextStory = buildFilterStory<Row>({
   slug: 'condition-text',
   title: 'Text conditions',
   blurb: 'Open a text column funnel ▽ for condition operators: contains, starts with, ends with, equals.',
-  hint: 'Click the Product funnel ▽ → pick an operator (contains / starts with / …) and type a value',
+  hint: 'Every column shows a ▽ — click it (or focus a cell + Alt+Down) for text conditions; or type in the quick-filter row',
   echo: 'model',
+  quickFilter: true,
   rows: DATA,
   columns: [
     column<Row, string>({ id: 'product', title: 'Product', value: (r) => r.product, width: 12 }),

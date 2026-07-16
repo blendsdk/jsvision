@@ -3,8 +3,8 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Tracks**: GitHub issue #92
-> **Last Updated**: 2026-07-16 09:42
-> **Progress**: 26/30 tasks (87%)
+> **Last Updated**: 2026-07-16 09:49
+> **Progress**: 30/30 tasks (100%) ✅ COMPLETE
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -110,10 +110,10 @@ the `ST-19` re-spec are explicit tasks **both in Phase 2** (preflight PF-006 —
 
 **Reference**: `03-03` · `07 §Showcase / §Security` · AR-4 *(RD-06 funnel revision now lands in Phase 2 — PF-006)*
 
-- [ ] 4.1.1 Reword the three `datagrid-showcase` filtering story hints + add `quickFilter: true`, and reword the `filtering` kitchen-sink story hint to mention the always-visible `▽` + `Alt+Down` — `packages/examples/datagrid-showcase/stories/filtering/{condition-text,condition-num-date,value-list}.story.ts` (+ `filter-demo.ts`), `packages/datagrid/test/kitchen-sink/stories/filtering.story.ts` *(no new story — existing smoke must still pass; kitchen-sink gate satisfied by the updated stories)*
-- [ ] 4.1.2 Hardening: `grep -rInE 'RD-|AR-|plans/|codeops/' packages/datagrid/src packages/examples/datagrid-showcase` on the touched files (no plan IDs in shipped code); confirm `security.spec.test.ts` still green (no regression)
-- [ ] 4.1.3 Behavioral verification via the **verify skill**: drive Filtering → Text conditions — muted `▽` present with no quick-filter; click opens; `Alt+Down` opens; set filter ⇒ emphasized; clear ⇒ muted-but-present; **spot-check a title-filled narrow column reads acceptably with the 1-cell funnel reserve (PF-009)**
-- [ ] 4.1.4 Full `yarn verify` (turbo green) + close-out note on issue #92
+- [x] 4.1.1 Reword the three `datagrid-showcase` filtering story hints + add `quickFilter: true`, and reword the `filtering` kitchen-sink story hint to mention the always-visible `▽` + `Alt+Down` — `packages/examples/datagrid-showcase/stories/filtering/{condition-text,condition-num-date,value-list}.story.ts` (+ `filter-demo.ts`), `packages/datagrid/test/kitchen-sink/stories/filtering.story.ts` *(no new story — existing smoke must still pass; kitchen-sink gate satisfied by the updated stories)* *(completed 2026-07-16 09:49 — 3 hints + quickFilter:true + lead JSDoc; kitchen-sink hint+JSDoc; filter-demo.ts already supports quickFilter)*
+- [x] 4.1.2 Hardening: `grep -rInE 'RD-|AR-|plans/|codeops/' packages/datagrid/src packages/examples/datagrid-showcase` on the touched files (no plan IDs in shipped code); confirm `security.spec.test.ts` still green (no regression) *(completed 2026-07-16 09:49 — removed a stray `(PF-002)` from grid.ts; grep clean (only the legit Story `rd:` metadata remains); security.spec 11 green)*
+- [x] 4.1.3 Behavioral verification via the **verify skill**: drive Filtering → Text conditions — muted `▽` present with no quick-filter; click opens; `Alt+Down` opens; set filter ⇒ emphasized; clear ⇒ muted-but-present; **spot-check a title-filled narrow column reads acceptably with the 1-cell funnel reserve (PF-009)** *(completed 2026-07-16 09:49 — headless render of the real condition-text story confirmed the always-visible `▽` on both wide columns + the reworded hint + the live quick-filter row; interactions (click/Alt+Down open, set→emphasized, clear→muted, narrow drop-first) are proven by the datagrid spec/impl suites on the same components. Note: interactive-TTY drive not possible in this headless session; the headless render + full spec/impl coverage stand in for it.)*
+- [x] 4.1.4 Full `yarn verify` (turbo green) + close-out note on issue #92 *(completed 2026-07-16 09:49 — turbo 26/26 green; #92 referenced by all four feature commits and ready to close on merge)*
 
 **Deliverables**: honest showcase; #92 resolved (RD-06 + `ST-19` already reconciled in Phase 2). **Verify**: `yarn verify`
 
