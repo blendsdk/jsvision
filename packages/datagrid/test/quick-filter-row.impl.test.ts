@@ -58,11 +58,11 @@ test('each input sits under its column and re-positions when the indent changes'
   expect(inputs[1].layout.rect?.x).toBe(5); // qty follows in lockstep
 });
 
-test('each input reserves one cell for the divider and pans fully off-screen at max indent', () => {
+test('each input fills its full column width and pans fully off-screen at max indent', () => {
   const indent = signal(0);
   const { inputs, render } = buildBand({ indent });
-  expect(inputs[0].layout.rect?.width).toBe(7); // region width 8 − 1 divider
-  expect(inputs[1].layout.rect?.width).toBe(5); // qty width 6 − 1 divider
+  expect(inputs[0].layout.rect?.width).toBe(8); // region fills its full content width (divider has its own cell)
+  expect(inputs[1].layout.rect?.width).toBe(6); // qty fills its full content width
 
   indent.set(6); // max indent = content 16 − viewport 10
   render.flush();
