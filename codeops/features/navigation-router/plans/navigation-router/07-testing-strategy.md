@@ -50,7 +50,7 @@ The spike measured the **index-path** resolver (`focusPath` capture → `viewAtP
 
 | ST | Given → Expect | Traces |
 |----|----------------|--------|
-| ST-17 | The **drill-down browser** story mounts headlessly, paints a non-empty frame, carries a unique id + required metadata; the drill-down list preserves scroll across `back()` (`keepAlive`). *(The **wizard** story + its "Next greys until valid" flow are deferred with the wizard demo — AR-24, `@jsvision/forms` unmerged.)* | R-9 / AR-11, AR-7 |
+| ST-17 | Both router stories mount headlessly, paint a non-empty frame, and carry a unique id + required metadata: the **drill-down browser** story (its `keepAlive` list preserves scroll across `back()`) and the multi-step **wizard** story (`navigation/wizard`, its first-step `Account` title + `Next` action paint). The `wizard-demo` e2e additionally proves the "Next greys until the step validates" gate — an invalid `emitCommand('wizard.next')` is dropped — and keepAlive-preserved values across a Back round-trip. *(Wizard half re-widened here once `@jsvision/forms` merged — AR-24 / GH #91.)* | R-9 / AR-11, AR-7 |
 
 ## Verification
 
