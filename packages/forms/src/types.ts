@@ -77,6 +77,27 @@ export interface Form<S extends z.ZodObject<z.ZodRawShape>, I> {
   /** Whether any field is currently running an async validation. */
   validating(): boolean;
   /**
+   * Whether an async record load started by {@link Form.load} is currently in flight. Form-level and
+   * atomic (a whole record loads at once — there is no per-field loading). It does NOT gate
+   * `isValid()` / `submit()`; compose the busy state yourself (e.g. `disabled: () => form.loading()`).
+   */
+  loading(): boolean;
+  /**
+   * Load an existing record into the form: runs `loader` (given a fresh `AbortSignal`) and, on
+   * success, replaces every field's value and rebases the whole baseline to the loaded record in one
+   * batch, leaving the form pristine — `touched` / submit-attempted cleared and `dirty()` false, so
+   * `reset()` now returns to the LOADED record. Resolves `true` on success, `false` if the loader
+   * rejects (state untouched) — it never rejects. Re-invokable (a Reload button). A newer `load()`
+   * supersedes an older in-flight one; `dispose()` aborts an in-flight load. Do NOT call while a
+   * `submit()` is in flight (the two are independent; gate them in the app).
+   *
+   * The loader must resolve the full RAW editing record (`Promise<I>`, the same shape as `initial`) —
+   * map your server/domain record to raw editing values inside it (there is no inverse of
+   * `z.coerce`). A key missing from the resolved record sets that field (and its baseline) to
+   * `undefined`.
+   */
+  load(loader: (ctx: { signal: AbortSignal }) => Promise<I>): Promise<boolean>;
+  /**
    * Mark every field touched, validate, and — when valid — await `onValid` with the
    * coerced values. Resolves `true` when valid (after `onValid` completes) and `false`
    * when invalid (without calling `onValid`).
