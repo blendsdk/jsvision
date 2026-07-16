@@ -17,25 +17,32 @@ through `buildGridBody` (`grid-panels.ts`, 445 lines).
 
 | File | Purpose | Changes Needed |
 | ---- | ------- | -------------- |
-| `packages/datagrid/src/grid.ts` | Container: signals, options, API, reconcile | Replace the vestigial `selected` index with a `selectedKeys` set + anchor + `selectionMode`; add CRUD wrappers (`insertRow`/`deleteRows`/`duplicateRow`) + `assignKey`; wire `checkboxColumn`/`rowNumbers`; null-policy commit path. Watch the 945→~1050 line cap (AR-6). |
-| `packages/datagrid/src/editable-grid-rows.ts` | Body: self-contained `draw()`, cursor, editing | Set-membership selection paint (`:480`–`:492`); selection gestures (`Space`/`Ctrl`/`Shift`) in `onEvent`. |
+| `packages/datagrid/src/grid.ts` | Container: signals, options, API, reconcile | Keep the base-owned `selected` (click sink, AR-16) + **add** a `selectedKeys` set + anchor + `selectionMode`; add CRUD wrappers (`insertRow`/`deleteRows`/`duplicateRow`) + `assignKey`; wire `checkboxColumn`/`rowNumbers`; drop the selection half of the re-anchor (AR-17). Watch the 945→~1050 line cap (AR-6). |
+| `packages/datagrid/src/editable-grid-rows.ts` | Body: self-contained `draw()`, cursor, editing | Set-membership selection paint in **both** `draw()` (`:480`) and `paintDirtyMarkers()` (`:581`) (AR-18); override `select()` so a plain click is cursor-only (AR-17); `Space`-toggles-selection on a **read-only** focused cell (begin-edit stays on editable, AR-19) + `Ctrl`/`Shift` gestures in `onEvent`. |
 | `packages/datagrid/src/grid-panels.ts` | `buildGridBody` band assembly | Prepend a fixed-width synthetic prefix segment (checkbox + gutter) to the leftmost panel (AR-11). |
 | `packages/datagrid/src/data-source.ts` | `GridDataSource` + `fromRows` (65 lines) | Add `RowMutations` (`insert?`/`remove?`) to the interface; `fromRows` splices the signal. |
-| `packages/datagrid/src/column.ts` | `GridColumn` + `toEngineColumn` (200 lines) | Add the `null?: { nullable; display? }` field; thread its `display` into rendering. |
-| `packages/datagrid/src/format.ts` / commit / cell-editor | Render + commit + editor | Render `null.display` for a null value; empty-editor→null on a nullable column (AR-3). |
+| `packages/datagrid/src/column.ts` | `GridColumn` + `toEngineColumn` (200 lines) | Add flat `nullable?`/`nullDisplay?` fields (AR-15); the `toEngineColumn` accessor (`:171`) renders `nullDisplay ?? ''` for a nullish value before `format`/`String`. |
+| `packages/datagrid/src/editing.ts` (edit controller) / `column.ts` | Commit lowering + editor | Empty editor text on a `nullable` column commits `null` (bypass `parse`) in `commit()` (`editing.ts:274`, AR-20); non-nullable unchanged. |
 | `packages/datagrid/src/index.ts` | Barrel | Export `selection.ts` ops + types, `RowMutations`, new option/API types. |
 | `packages/examples/datagrid-showcase/stories/placeholders.ts` + smoke | Showcase roadmap | Replace the RD-08 placeholder with a live cluster; re-base the placeholder-count oracle to RD-09…14. |
 
 ### Code Analysis — the seams RD-08 plugs into
 
-**1. The vestigial single-index selection (`grid.ts:233`).**
+**1. The base-owned single-index selection (`grid.ts:233`).**
 ```ts
-private readonly selected = signal(-1);   // engine "chosen row" index — never set to a real value
+private readonly selected = signal(-1);   // base GridRows "chosen row" index — set on every plain click
 ```
-It is injected into the body (`grid.ts:357 selected: this.selected`) and re-anchored by key on
-re-sort/re-filter (`grid.ts:886`–`:942`), but nothing ever assigns it a real index, so the re-anchor
-only ever recomputes `-1`. RD-08 **replaces** it with a `selectedKeys` set (AR-1/AR-10); the
-re-anchor logic is dropped because a key set survives sort/filter with no reconcile.
+It is injected into the body (`grid.ts:357 selected: this.selected`). **The base `GridRows` writes it
+on every plain click** — `super.onEvent` → `select(newItem)` (`ui/…/grid-rows.ts:260`) → `selected.set(index)`
+(`:330`) — so today a plain click highlights one row (`listSelected`), and the by-key re-anchor
+(`grid.ts:886`–`:942`) genuinely keeps that row selected across re-sort/re-filter (AR-17 corrects the
+earlier claim that it "only ever recomputes `-1`"). The signal is **required** by `GridRowsConfig`
+(`grid-rows.ts:66`) and reactively bound in the base (`:143`), so it **cannot be removed** without a
+`@jsvision/ui` change (AR-1 forbids that). RD-08 therefore **keeps** `selected` as the base's click
+sink but **supersedes** it with a `selectedKeys` set (AR-16): `EditableGridRows.select()` is overridden
+so a plain click moves the cursor only and does not drive the base's single-index selection (AR-17); the
+body paints from `selectedKeys`. The selection half of the re-anchor is then genuinely moot and is
+dropped (a key set survives sort/filter with no reconcile, AR-10); the focus half stays.
 
 **2. The body's self-contained `draw()` role logic (`editable-grid-rows.ts:443`, 480–492).**
 ```ts
@@ -43,10 +50,12 @@ const selected = this.selected();              // single index
 const isSelectedRow = item === selected;       // ← swap for selectedKeys.has(rowKey(row))
 const roleName = isFocusedRow ? … : isSelectedRow ? 'selected-role' : zebra ? … : normal;
 ```
-`isSelectedRow` already flows into `rowOwns` (cellStyle suppression, `:505`) and `CellState.selected`
-(`:521`). RD-08 changes exactly the two lines above — **no `@jsvision/ui` change** (AR-1/AR-13). The
-base `GridRows.draw()` (`ui/src/table/grid-rows.ts:216`) has no `rowRole()` hook, but the datagrid
-body does not call `super.draw()`, so none is needed.
+`isSelectedRow` already flows into `rowOwns` (cellStyle suppression, `:497`) and `CellState.selected`
+(`:521`). RD-08 swaps the membership test in **two** paint sites (AR-18) — the main `draw()` role logic
+(`:480`) **and** `paintDirtyMarkers()` (`:561`/`:581`, which recomputes a dirty cell's row background so
+the `•` composites correctly) — **no `@jsvision/ui` change** (AR-1/AR-13). The base `GridRows.draw()`
+(`ui/src/table/grid-rows.ts:206`) has no `rowRole()` hook, but the datagrid body does not call
+`super.draw()`, so none is needed.
 
 **3. The data source is read-only (`data-source.ts:59`).**
 ```ts
@@ -68,8 +77,10 @@ non-scrolling. The synthetic prefix is a new fixed-width segment on the leftmost
 ## Gaps Identified
 
 ### Gap 1: No multi-selection representation
-**Current:** a single `selected` index (always `-1`). **Required:** a `ReadonlySet<Key>` + anchor,
-paint by membership. **Fix:** `selection.ts` pure ops + container signals + a two-line draw change.
+**Current:** a single base-owned `selected` index (set on plain click, one row at a time). **Required:**
+a `ReadonlySet<Key>` + anchor, paint by membership, multi/single modes. **Fix:** `selection.ts` pure ops
++ container signals + a draw change at **both** paint sites (`draw()` + `paintDirtyMarkers()`, AR-18) +
+a cursor-only `select()` override (AR-17); the base `selected` stays as the required base sink (AR-16).
 
 ### Gap 2: No row CRUD
 **Current:** the source is read-only; the grid cannot add/remove rows. **Required:** insert / delete /

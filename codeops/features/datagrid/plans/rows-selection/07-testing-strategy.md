@@ -31,7 +31,9 @@ Test files: `selection.spec.test.ts` / `.impl.test.ts`, `grid-selection.spec.tes
 
 | ST | Setup / Gesture | Expected | Source |
 | -- | --------------- | -------- | ------ |
-| ST-8 | `Space` on the focused row (multi) then again ; same in `single` after selecting another | multi: key added then removed ; single: the new selection **replaces** the prior | **AC-1** |
+| ST-8 | `Space` on a **read-only** focused cell (multi) then again ; same in `single` after selecting another | multi: key added then removed ; single: the new selection **replaces** the prior | **AC-1** / AR-19 |
+| ST-8b | `Space` on an **editable** focused cell | begins the cell edit (`replaceWith: ' '`); `selectedKeys()` is **unchanged** (begin-edit precedence preserved) | AR-19 |
+| ST-8c | a plain (unmodified) mouse click on a row | moves the cursor; `selectedKeys()` is **unchanged** (cursor-only click, `select()` override) | AR-17 |
 | ST-9 | anchor on row 1, `Shift`+`↓` twice | `selectedKeys()` = the 3 contiguous keys in display order | **AC-2** |
 | ST-10 | select keys {k1,k3}, then re-sort the grid | the **same keys** {k1,k3} stay selected (not the same indices) | **AC-2** / AR-10 |
 | ST-11 | a selected (non-focused) row painted ; the focused row is also selected ; a dirty selected cell | selected row → `selected` role ; focused wins over selected ; dirty cell wins over selected (precedence cursor > dirty > selected > cellStyle > zebra > normal) | **AC-4** / AR-13 |

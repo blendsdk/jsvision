@@ -53,6 +53,14 @@ export function gutterLabel(index: number, width: number): string;
 - **Geometry:** the prefix width is reserved **before** the data columns; the data columns' geometry
   is unchanged (they still apportion over the remaining width). The prefix is drawn at a fixed origin,
   never H-scrolled.
+- **Draw / hit-test seam (to specify at Phase 3 start):** the leftmost panel is an `EditableGridRows`
+  whose `draw()`, geometry (`geom.starts`), and column hit-test (`columnAtX`/`localCol`) are built
+  entirely around `columns`. The prefix is **not** a `GridColumn`, so it must be painted by a dedicated
+  segment (a first pass in the panel's `draw()` over a reserved `[0, prefixWidth)` band, or a sibling
+  overlay view sharing the panel's row window) that the column cursor's hit-test explicitly **excludes**
+  (a mouse-down with `local.x < prefixWidth` routes to the checkbox toggle, never to `setColFromClick`;
+  `columnAtX` is offset by `prefixWidth`). Pin down which of the two before writing task 3.2.2 so the
+  header↔body↔frozen-band alignment test has a concrete target.
 
 ### Interaction
 
