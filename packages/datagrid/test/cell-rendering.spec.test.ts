@@ -114,12 +114,12 @@ test('cursor beats cellStyle on the focused cell', () => {
   expect(buf.get(QTY_X, 2)?.fg).toBe(defaultTheme.gridCursor.fg);
 });
 
-// The selected row wins over cellStyle: the red cell in the selected row paints in listSelected.
+// The selected row wins over cellStyle: the red cell in the selected row paints in gridSelectedRow.
 // RD-08: selection is set membership by rowKey — row index 2 is id 3 (see DATA).
 test('selected row beats cellStyle', () => {
   const { buf } = mountGrid(styleColumns(), { focused: 0, selectedKeys: [3], active: true });
-  expect(buf.get(QTY_X, 2)?.bg).toBe(defaultTheme.listSelected.bg); // theme hex, not the cellStyle name
-  expect(buf.get(QTY_X, 2)?.fg).toBe(defaultTheme.listSelected.fg);
+  expect(buf.get(QTY_X, 2)?.bg).toBe(defaultTheme.gridSelectedRow.bg); // theme hex, not the cellStyle name
+  expect(buf.get(QTY_X, 2)?.fg).toBe(defaultTheme.gridSelectedRow.fg);
   expect(buf.get(QTY_X, 2)?.fg).not.toBe('brightRed');
 });
 
