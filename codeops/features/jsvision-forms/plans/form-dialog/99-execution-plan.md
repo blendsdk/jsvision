@@ -2,7 +2,7 @@
 
 > **Feature**: jsvision-forms/RD-08 — `formDialog()` + modal submit-gate
 > **CodeOps Skills Version**: 3.8.0
-> **Progress**: 15/18 tasks (83%) — Phases 1–2 complete ✅
+> **Progress**: 16/18 tasks (89%) — Phases 1–2 complete ✅
 > **Last Updated**: 2026-07-16
 
 Specification-first ordering is non-negotiable within every phase: **spec tests → verify red →
@@ -66,7 +66,7 @@ module + the barrel export + the surface-lock bump.
 - [x] **2.7** Impl tests: `form-dialog.impl.test.ts` for internals/edges not covered by spec (button
       placement/`default` flag, first-focusable focus, the re-entrancy seal internals) — [07](07-testing-strategy.md). _(3 impl tests; 18/18 total)_
 - [x] **2.8** Full **verify**: `yarn verify` green **+** banned-ref grep over `packages/forms/src` clean. _(26/26 turbo; grep clean; prettier auto-fixed form-dialog.ts wrapping)_
-- [ ] **2.9** Commit via **/gitcmp** (`feat(forms): formDialog() modal submit-gate bridge`).
+- [x] **2.9** Commit via **/gitcmp** (`feat(forms): formDialog() modal submit-gate bridge`). _(905c820b, pushed 2026-07-16)_
 
 ---
 
@@ -74,17 +74,15 @@ module + the barrel export + the surface-lock bump.
 
 Spec oracle: ST-DS1 ([07](07-testing-strategy.md)) → RD-08 AC #12.
 
-- [ ] **3.1** Write the smoke oracle ST-DS1 in `kitchen-sink.smoke.spec.test.ts` (mounts `forms/dialog`,
-      unique id + required metadata) — [03-03](03-03-story.md).
-- [ ] **3.2** Verify **red**: ST-DS1 fails (story unregistered).
-- [ ] **3.3** Create `stories/forms-dialog.story.ts` (`id: 'forms/dialog'`, `rd: 'RD-08'`; live path via
+- [x] **3.1** Write the smoke oracle ST-DS1 in `kitchen-sink.smoke.spec.test.ts` (mounts `forms/dialog`,
+      unique id + required metadata) — [03-03](03-03-story.md). _(2026-07-16)_
+- [x] **3.2** Verify **red**: ST-DS1 fails (story unregistered). _(1 failed / 63 passed)_
+- [x] **3.3** Create `stories/forms-dialog.story.ts` (`id: 'forms/dialog'`, `rd: 'RD-08'`; live path via
       `ctx.execView`; headless degrade to launch button + echo + always-painted hint) and register it in
-      `stories/index.ts` (import + array entry) — [03-03](03-03-story.md), AR-PL4. Resolve the
-      `ModalDialogHost` desktop-wiring against the current `StoryContext`; if it needs a runtime call,
-      record it in the register with a `(runtime)` tag.
-- [ ] **3.4** Verify **green**: ST-DS1 passes (rebuild `@jsvision/forms` first — examples import by
-      name → dist; `yarn verify`'s turbo `test dependsOn build` handles it).
-- [ ] **3.5** Full **verify**: `yarn verify` green (whole workspace, incl. `check:docs`).
+      `stories/index.ts` (import + array entry) — [03-03](03-03-story.md), AR-PL4. _(2026-07-16; no-op-desktop shim per PF-003 — ctx.execView re-exposed as the generic method formDialog calls; no runtime `(runtime)` register entry needed)_
+- [x] **3.4** Verify **green**: ST-DS1 passes (rebuild `@jsvision/forms` first — examples import by
+      name → dist; `yarn verify`'s turbo `test dependsOn build` handles it). _(65/65 smoke)_
+- [x] **3.5** Full **verify**: `yarn verify` green (whole workspace, incl. `check:docs`). _(26/26 turbo; examples 198 tests; check-plugin PASS)_
 - [ ] **3.6** Commit via **/gitcmp** (`feat(examples): forms/dialog kitchen-sink story`).
 
 ---

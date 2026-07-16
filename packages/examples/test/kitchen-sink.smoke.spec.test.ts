@@ -338,6 +338,31 @@ test('ST-LS1: the forms/load story is registered with metadata and paints its lo
   });
 });
 
+// ST-DS1 (RD-08 AC-12) — the forms/dialog story is registered with the required metadata (unique id
+// `forms/dialog`, category `Forms`) and paints its characteristic headless affordance: the launch
+// trigger + the submit-gate interaction hint (the modal itself is exercised by demo:kitchen; the
+// 44×9 dialog would exceed the 72×16 smoke canvas, so headless it degrades to the launch button).
+test('ST-DS1: the forms/dialog story is registered with metadata and paints its launch affordance', () => {
+  const story = STORIES.find((s) => s.id === 'forms/dialog');
+  expect(story, 'a story with id "forms/dialog" is registered').toBeTruthy();
+  expect(story!.category, 'category Forms').toBe('Forms');
+  expect(story!.title, 'title').toBeTruthy();
+  expect(story!.blurb, 'blurb').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    const painted = rr
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+    expect(painted, 'the launch trigger paints').toMatch(/form dialog/i);
+    expect(painted, 'the submit-gate hint paints').toMatch(/invalid OK/i);
+    dispose();
+  });
+});
+
 // ST-S1 (RD-09 AC-8) — the placeholder + severity demos render: the controls/input story paints its
 // muted placeholder hint over an empty field, and the theming/presets story paints a severity-coloured
 // Text (a glyph cell in the dangerText fg). Read from the painted buffer (an unfocused headless mount
