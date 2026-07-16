@@ -235,6 +235,9 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   // `filterable: false`. Derived from the same `columnMap` as `sliceTyped`, so the funnel, the
   // quick-filter band, and the keyboard opener all read one consistent per-column gate.
   const sliceFilterable = (ids: string[]): boolean[] => ids.map((id) => deps.columnMap.get(id)?.filterable !== false);
+  // Each slice's always-visible-funnel opt-in, parallel to `ids`. A column shows its funnel only while
+  // filtered unless it opts in with `showFunnel: true`. Same `columnMap` source as `sliceFilterable`.
+  const sliceShowFunnel = (ids: string[]): boolean[] => ids.map((id) => deps.columnMap.get(id)?.showFunnel === true);
   // A per-slice auto-width reader: reindexes the shared measurement into this slice's local order, and
   // stays reactive (it reads `deps.autoWidths()` on each call, so a re-measure repaints the panel).
   const sliceAuto = (ids: string[]) => (): (number | null)[] => {
@@ -261,7 +264,8 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       onReorderStart: deps.onReorderStart,
       columnOffset: offset, // this panel's start in the global visible order — maps local drops to global
       compact: deps.compact,
-      filterable: sliceFilterable(ids), // per-panel filterability → the always-visible funnel gate
+      filterable: sliceFilterable(ids), // per-panel filterability → the funnel draw + hit-test gate
+      showFunnel: sliceShowFunnel(ids), // per-panel always-visible-funnel opt-in
     });
     headers.push(header);
     return header;

@@ -77,7 +77,25 @@ requirement changed*, recorded here and in the RD-06 edit above.
 
 ---
 
+## D. Post-ship revision — BUG-2 (2026-07-16, user-directed)
+
+After the plan shipped, the user reported that the always-visible funnel (AR-1) was too noisy and
+asked to make it **opt-in per column**, not always-on. This reverses AR-1's "always-visible funnel on
+every filterable column" and re-revises the RD-06 spots §C touched. The follow-up work (BUG-2) also
+fixed an off-screen popup and added a customization seam. Recorded here for provenance; RD-06 and its
+spec-test oracles (ST-EP-*) were updated to match, the sanctioned "requirement changed → spec changes"
+path.
+
+| #     | Ambiguity | ✅ Decision |
+| ----- | --------- | ---------- |
+| AR-14 | Funnel visibility default (reverses AR-1) | **Opt-in per column.** New `GridColumn.showFunnel` (default `false`). By default a column's funnel shows **only while it has an active filter** (emphasized); `showFunnel: true` draws it always (muted→emphasized). `Alt+Down` still opens any filterable column regardless. Per-column, **not** a grid-wide flag (user preference). |
+| AR-15 | Off-screen popup near the right edge | **Clamp into the viewport.** `mountCellOverlay` gains an opt-in `clamp` (viewport size); the filter popup right-aligns/clamps horizontally and clamps vertically only when it fits. In-cell editors stay cell-pinned (no clamp). |
+| AR-16 | How much popup customization to expose | **A `filterPopup` factory seam.** `(ctx) => View`, where `ctx` carries the column/type/current/sinks + `defaultPopup()` to wrap or reuse the built-in. Anchored + clamped at the view's own size. Default visuals unchanged for now (framed/modal designs deferred to a future opt-in built via this seam). |
+
+---
+
 ## Gate status
 
 - All items Status = ✅ Resolved · zero deferred · user confirmed the register (three decision rounds).
 - **✅ GATE PASSED** — plan documents may be written.
+- **BUG-2 follow-up (2026-07-16):** AR-14…AR-16 reverse/extend the funnel decision post-ship (see §D).

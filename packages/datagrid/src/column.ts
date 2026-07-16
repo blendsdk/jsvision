@@ -112,6 +112,24 @@ export interface GridColumn<T, V = unknown> {
    * ```
    */
   readonly filterable?: boolean;
+  /**
+   * Show the filter funnel `▽` on this column's header **at all times** (default `false`). By default a
+   * column's funnel appears only while it has an active filter (emphasized) and the header is otherwise
+   * clean; set this to advertise the filter affordance permanently — the glyph is drawn muted when
+   * unfiltered and emphasized when a filter is active. Independent of the keyboard opener: `Alt+Down`
+   * opens the condition popup on any filterable column regardless of this flag. Ignored when
+   * `filterable` is `false` (a non-filterable column never shows a funnel). Reserving the funnel cell
+   * clips a title that would otherwise fill the full column width by one cell.
+   *
+   * @example
+   * ```ts
+   * import { column } from '@jsvision/datagrid';
+   * interface Row { region: string; }
+   * // A column that always advertises its filter funnel, even before any filter is applied:
+   * const region = column({ id: 'region', title: 'Region', value: (r: Row) => r.region, showFunnel: true });
+   * ```
+   */
+  readonly showFunnel?: boolean;
 }
 
 /**
