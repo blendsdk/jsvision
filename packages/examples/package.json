@@ -28,6 +28,7 @@
     "demo:shell": "tsx shell-demo/main.ts",
     "demo:controls": "tsx controls-demo/main.ts",
     "demo:router": "tsx router-demo/main.ts",
+    "demo:wizard": "tsx wizard-demo/main.ts",
     "demo:containers": "tsx containers-demo/main.ts",
     "demo:tree": "tsx tree-demo/main.ts",
     "demo:table": "tsx table-demo/main.ts",
