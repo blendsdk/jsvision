@@ -185,8 +185,17 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     if (tcol === undefined || !isEditable(tcol) || committing.has(cellKey(cell.rowKey, cell.columnId))) {
       return false;
     }
+    // Seed the editor from the cell's current display text — but a nullish value seeds EMPTY (never the
+    // literal "null" or a formatted null), so clearing an already-null cell and re-committing keeps it
+    // null. The `nullDisplay` string is a render affordance, not editable text.
+    const seedValue = tcol.value(cell.row);
     const seed =
-      opts?.replaceWith ?? (tcol.format ? tcol.format(tcol.value(cell.row), cell.row) : String(tcol.value(cell.row)));
+      opts?.replaceWith ??
+      (seedValue === null || seedValue === undefined
+        ? ''
+        : tcol.format
+          ? tcol.format(seedValue, cell.row)
+          : String(seedValue));
     const field = signal(seed);
     // A holder read back after the mount — the editor is built inside the overlay's root (below), and a
     // closure-assigned local would not narrow cleanly for the read.
@@ -271,7 +280,11 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     const ck = cellKey(cell.rowKey, cell.columnId);
     if (committing.has(ck)) return; // a commit for this cell is already resolving — serialize
     const tcol = host.typedColumns[cell.col];
-    const value = tcol.parse!(field());
+    const raw = field();
+    // A `nullable` column clears to null on an empty edit (bypassing `parse`), so null is stored and
+    // rendered (via `nullDisplay`) distinctly from ''. A non-nullable column keeps parsing '' as before
+    // (a text column yields '', a numeric column yields PARSE_FAILED → rejected below).
+    const value = tcol.nullable === true && raw === '' ? null : tcol.parse!(raw);
     // An unparseable edit is a validation failure: keep the editor open and write nothing (no sentinel
     // or NaN ever reaches the record). Richer field validation layers on top of this later.
     if (value === PARSE_FAILED) return;

@@ -90,6 +90,20 @@ export interface GridColumn<T, V = unknown> {
   /** Where null/undefined values sort, independent of direction (default `'last'`). */
   readonly nulls?: 'first' | 'last';
   /**
+   * Allow this cell to hold `null`: an editor that commits an empty value stores `null` (not `''`), so a
+   * null round-trips distinctly from an empty string. A non-nullable column parses `''` as usual.
+   * Consequence: a nullable column cannot also store a literal empty string distinct from null — empty
+   * means null there; a caller who needs a literal `''` leaves the column non-nullable.
+   */
+  readonly nullable?: boolean;
+  /**
+   * Text shown for a null/undefined value (default `''`), distinct from an empty string and never the
+   * literal `"null"`. Resolved in the render accessor upstream of `format`, so it applies to the default
+   * text path; a column with a custom `render` hook owns its own null handling (it receives the raw
+   * `null`, not `nullDisplay`).
+   */
+  readonly nullDisplay?: string;
+  /**
    * The operator family the column's filter popup presents (`'text'` / `'number'` / `'date'`). When
    * omitted it is inferred at runtime from a sampled non-null value (a number → `'number'`, a `Date`
    * or `CalendarDate` → `'date'`, otherwise `'text'`); set it to override a sparse or ambiguous
@@ -192,9 +206,10 @@ export function isEditable<T>(col: GridColumn<T>): boolean {
 
 /**
  * Adapt a typed {@link GridColumn} to the `@jsvision/ui` engine's string-accessor `Column`. The
- * accessor is `format(value, row)` when a formatter is set, else `String(value)`; the comparator is
- * value-aware (numbers/dates order naturally, not by their display text). Internal — the container
- * adapts columns before constructing the engine renderers.
+ * accessor renders `nullDisplay` (default `''`) for a nullish value — upstream of `format`/`String`, so
+ * a null never shows as the literal `"null"` — otherwise `format(value, row)` when a formatter is set,
+ * else `String(value)`; the comparator is value-aware (numbers/dates order naturally, not by their
+ * display text). Internal — the container adapts columns before constructing the engine renderers.
  *
  * @param c The typed column.
  * @returns The engine column (string accessor + synthesized value comparator).
@@ -204,6 +219,9 @@ export function toEngineColumn<T, V>(c: GridColumn<T, V>): Column<T> {
     title: c.title,
     accessor: (row) => {
       const v = c.value(row);
+      // A nullish value renders `nullDisplay` (default '') before `format`/`String`, so null stays
+      // distinct from '' and never surfaces as the literal "null". A `render` hook bypasses this path.
+      if (v === null || v === undefined) return c.nullDisplay ?? '';
       return c.format ? c.format(v, row) : String(v);
     },
     width: c.width ?? 'auto',

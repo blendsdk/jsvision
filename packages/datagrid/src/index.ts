@@ -7,6 +7,8 @@
 
 // Typed column model — a `value`/`format`/`parse` column authored with `column()` (which infers each
 // column's value type). The `ColumnWidth`/`ColumnAlign` sizing types are re-exported from the engine.
+// A column may opt into a null policy: `nullDisplay` renders a null value distinctly from `''` (never
+// the literal `"null"`), and `nullable` lets an empty editor commit store `null` rather than `''`.
 export { column, isEditable } from './column.js';
 export type { GridColumn } from './column.js';
 export type { ColumnWidth, ColumnAlign } from '@jsvision/ui';
