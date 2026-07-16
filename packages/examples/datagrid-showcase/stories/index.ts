@@ -66,7 +66,14 @@ import { layoutShowHideStory } from './columns-layout/show-hide.story.js';
 import { layoutFrozenRowsStory } from './columns-layout/frozen-rows.story.js';
 import { layoutDensityStory } from './columns-layout/density.story.js';
 
-// Roadmap — the "coming soon" panels (RD-08…RD-14)
+// Rows & selection (RD-08)
+import { selectionMultiStory } from './rows-selection/multi-select.story.js';
+import { selectionCheckboxStory } from './rows-selection/checkbox-column.story.js';
+import { selectionGutterStory } from './rows-selection/row-gutter.story.js';
+import { selectionCrudStory } from './rows-selection/row-crud.story.js';
+import { selectionNullStory } from './rows-selection/null-policy.story.js';
+
+// Roadmap — the "coming soon" panels (RD-09…RD-14)
 import { placeholders } from './placeholders.js';
 
 /** Every registered demo, in navigator order (six shipped clusters, then the roadmap band). */
@@ -128,6 +135,13 @@ export const STORIES: readonly Story[] = [
   layoutFrozenRowsStory,
   layoutDensityStory,
 
-  // Roadmap — coming soon (RD-08…RD-14) · 7
+  // Rows & selection (RD-08) · 5
+  selectionMultiStory,
+  selectionCheckboxStory,
+  selectionGutterStory,
+  selectionCrudStory,
+  selectionNullStory,
+
+  // Roadmap — coming soon (RD-09…RD-14) · 6
   ...placeholders,
 ];

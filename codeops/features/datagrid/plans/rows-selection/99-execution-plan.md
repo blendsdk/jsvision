@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-16 15:32
-> **Progress**: 42/50 tasks (84%)
+> **Last Updated**: 2026-07-16 15:43
+> **Progress**: 50/50 tasks (100%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -156,18 +156,18 @@ selection paint reuses the datagrid body's own `draw()` override.
 **Reference**: `07 §Story & showcase` (ST-22, ST-23) + `§Security` (ST-21 sanitize) · CLAUDE.md §Kitchen-sink + §Documentation · AR-8
 
 ### Step 6.1: Kitchen-sink story (smoke)
-- [ ] 6.1.1 Add `rows-selection.story.ts` (multi-row selection + checkbox column + row-number gutter, with a live `selectedKeys()` echo) + register in `stories/index.ts` — `packages/datagrid/test/kitchen-sink/stories/`
-- [ ] 6.1.2 Verify the story passes `kitchen-sink.smoke.spec.test.ts` (ST-22, AC-8)
+- [x] 6.1.1 Add `rows-selection.story.ts` (multi-row selection + checkbox column + row-number gutter, with a live `selectedKeys()` echo) + register in `stories/index.ts` — `packages/datagrid/test/kitchen-sink/stories/`
+- [x] 6.1.2 Verify the story passes `kitchen-sink.smoke.spec.test.ts` (ST-22, AC-8)
 
 ### Step 6.2: datagrid-showcase cluster (AR-8)
-- [ ] 6.2.1 Replace the RD-08 "coming soon" placeholder with a live "Rows & selection" demo cluster (multi-select · checkbox column · gutter · row CRUD · null policy) under `stories/rows-selection/` + register — `packages/examples/datagrid-showcase/`
-- [ ] 6.2.2 Re-base the showcase oracle: RD-08 placeholder removed (RD-09…14 remain), +1 category cluster — update the counts in `datagrid-showcase.smoke.spec.test.ts` (ST-23; the sanctioned requirement-changed oracle edit) — `packages/examples/test/`
-- [ ] 6.2.3 Verify the showcase smoke + walkthrough tiers pass (ST-23)
+- [x] 6.2.1 Replace the RD-08 "coming soon" placeholder with a live "Rows & selection" demo cluster (multi-select · checkbox column · gutter · row CRUD · null policy) under `stories/rows-selection/` + register — `packages/examples/datagrid-showcase/`
+- [x] 6.2.2 Re-base the showcase oracle: RD-08 placeholder removed (RD-09…14 remain), +1 category cluster — update the counts in `datagrid-showcase.smoke.spec.test.ts` (ST-23; the sanctioned requirement-changed oracle edit) — `packages/examples/test/`
+- [x] 6.2.3 Verify the showcase smoke + walkthrough tiers pass (ST-23)
 
 ### Step 6.3: Security & hardening (final gate)
-- [ ] 6.3.1 Add the **sanitize half** of ST-21 to `security.spec.test.ts` (header/cell text stays sanitized after insert/duplicate/select-all/reorder); verify green (AC-9) — `packages/datagrid/test/security.spec.test.ts`
-- [ ] 6.3.2 JSDoc + `@example` on every new public export; `yarn check:docs` green; **plus a plain `grep` for banned CodeOps ids** across `packages/datagrid/src` + `packages/examples` (the check:docs scanner truncates on `grid.ts`)
-- [ ] 6.3.3 Full `yarn verify` (final gate — no datagrid/examples regressions)
+- [x] 6.3.1 Add the **sanitize half** of ST-21 to `security.spec.test.ts` (header/cell text stays sanitized after insert/duplicate/select-all/reorder); verify green (AC-9) — `packages/datagrid/test/security.spec.test.ts`
+- [x] 6.3.2 JSDoc + `@example` on every new public export; `yarn check:docs` green; **plus a plain `grep` for banned CodeOps ids** across `packages/datagrid/src` + `packages/examples` (the check:docs scanner truncates on `grid.ts`)
+- [x] 6.3.3 Full `yarn verify` (final gate — no datagrid/examples regressions)
 
 **Deliverables**: `rows-selection` story (AC-8) + showcase cluster (AR-8); AC-9 security confirmed (mutation + sanitize); full `yarn verify` green. **Verify**: `yarn verify`
 
