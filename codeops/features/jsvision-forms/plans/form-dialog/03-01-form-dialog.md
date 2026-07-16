@@ -54,8 +54,10 @@ export function formDialog<
 
 ## `FormDialog` subclass (internal — AR-PL7)
 
-`class FormDialog extends Dialog`, holding a reference to the created `form` and the resolved `onSubmit`.
-It overrides exactly three members ([02](02-current-state.md) has each base signature):
+`class FormDialog extends Dialog`, holding a reference to the created `form` and the resolved `onSubmit`,
+plus a `private captured` field surfaced through a public `result(): z.output<S> | null` accessor (the
+factory reads it after close — see "The factory"). It overrides exactly three inherited members
+([02](02-current-state.md) has each base signature):
 
 ### 1. `handleTerminating(command, ev)` — the interceptor
 
@@ -114,7 +116,10 @@ private async runOkGate(): Promise<void> {
 ```
 
 - **`this.captured`** (a `private captured: z.output<S> | null = null` field) is set inside the
-  `onValid` closure — captured **before** the factory disposes the form (RD-08 FR, AC #2).
+  `onValid` closure — captured **before** the factory disposes the form (RD-08 FR, AC #2). The factory
+  reads it back through a **public `result(): z.output<S> | null`** accessor on `FormDialog`
+  (`result() { return this.captured; }`) — mirroring `FileDialog.result()` (`openers.ts:75`) — because a
+  TypeScript `private` field is class-scoped and cannot be read from the sibling `formDialog` function.
 - **Seal correctness** (RD-08 §Orchestration step 1, PF-301): because Cancel/Esc/quit are all inert
   while `submitting()`, no concurrent close can pop the modal or dispose the form during the `await` — so
   `this.modalHost` after the `await` is guaranteed still the active host. The override never calls `super`
@@ -125,45 +130,62 @@ private async runOkGate(): Promise<void> {
 ## The factory
 
 Mirrors `openFile` (`openers.ts:60-79`, [02](02-current-state.md)), adding form creation + disposal +
-value capture:
+value capture. **Unlike `openFile` (which has no caller-supplied body), the whole sequence — form
+creation, `body(form)` build, `addWindow` — runs INSIDE the promise's `try`, so a synchronous
+`body(form)` throw (e.g. the caller calls `form.field('typo')`, which throws `FormFieldError`
+synchronously — `create-form.ts:143`) still reaches the `finally` and disposes the form** (RD-08 AC #10,
+ST-D9). A `mounted` flag guards `removeWindow` so it is never called on a dialog that threw before it
+was added:
 
 ```ts
 export function formDialog(host, options): Promise<z.output<S> | null> {
-  const form = createForm({
-    schema: options.schema, initial: options.initial,
-    asyncValidators: options.asyncValidators, asyncDebounceMs: options.asyncDebounceMs,
-  });
-  const dlg = new FormDialog({ title: options.title, width: options.width, height: options.height },
-                             form, options.onSubmit);
-  const ok = new Button(options.okText ?? '~O~K',
-                        { command: Commands.ok, default: true, disabled: () => form.submitting() });
-  dlg.add(options.body(form));      // caller-built body; binds widgets to form.field(...)
-  dlg.add(placed(ok));              // + a placed cancelButton() — absolute rects per the message-box helpers
-  dlg.add(placed(cancelButton()));
-  host.desktop.addWindow(dlg);
   return (async () => {
+    const form = createForm({
+      schema: options.schema, initial: options.initial,
+      asyncValidators: options.asyncValidators, asyncDebounceMs: options.asyncDebounceMs,
+    });
+    const dlg = new FormDialog({ title: options.title, width: options.width, height: options.height },
+                               form, options.onSubmit);
+    const ok = new Button(options.okText ?? '~O~K',
+                          { command: Commands.ok, default: true, disabled: () => form.submitting() });
+    let mounted = false;
     try {
+      dlg.add(options.body(form));    // caller-built body — may throw synchronously (form.field('typo'))
+      dlg.add(placed(ok));            // + a placed cancelButton() — absolute rects per the message-box helpers
+      dlg.add(placed(cancelButton()));
+      host.desktop.addWindow(dlg);
+      mounted = true;
       const command = await host.loop.execView<string>(dlg);
-      return command === Commands.ok ? dlg.captured : null;    // captured (coerced) on OK, null otherwise
+      return command === Commands.ok ? dlg.result() : null;    // captured (coerced) on OK, null otherwise
     } finally {
-      host.desktop.removeWindow(dlg);
-      form.dispose();                                           // dispose on EVERY path (OK/cancel/throw)
+      if (mounted) host.desktop.removeWindow(dlg);             // guard: a pre-addWindow throw never mounted
+      form.dispose();                                          // dispose on EVERY path (OK/cancel/body-throw/execView-throw)
     }
   })();
 }
 ```
+
+> The async IIFE body runs **synchronously up to the first `await`**, so `createForm` + `addWindow`
+> still execute eagerly before the pending promise is returned — the dialog is mounted by the time
+> `formDialog` returns, which the headless harness relies on (it `emitCommand`s right after the call,
+> [07](07-testing-strategy.md)). Moving the prelude inside the `try` changes `formDialog` from
+> *possibly throwing synchronously* to *always returning a promise* (a rejected one on a body throw) —
+> the correct shape for a `Promise`-returning factory.
 
 - **Button placement**: OK is `default: true` (Enter activates it → drives the same async gate as a fired
   `Commands.ok`, RD-08 AC #11). Both buttons get absolute rects via a small local `placed()` helper (the
   `at()` pattern from `message-box.ts:57-60`); exact rect math is an implementation detail sized to
   `width`/`height`, not a spec oracle. Focusing the first focusable body view (RD-08 FR) is done after
   `addWindow` via the standard focus path.
-- **Disposal on every path** (RD-08 AC #10): `form.dispose()` sits in the `finally` beside
-  `removeWindow` — OK, cancel, and an exceptional `execView`/body throw all dispose exactly once. The form
-  scope is independent of the view scope (`create-form.ts:97`), so both must be town down explicitly.
-- **Result** (RD-08 AC #2/#5): `command === Commands.ok ? dlg.captured : null`. On OK the modal was ended
-  by the gate with `Commands.ok` and `captured` holds the coerced values; every other terminator (cancel,
-  Esc→cancel, close-box→cancel, a quit-close where `'quit' !== 'ok'`) yields `null`.
+- **Disposal on every path** (RD-08 AC #10, ST-D9): `form.dispose()` sits in the single `finally` beside
+  the guarded `removeWindow`, and the whole prelude (creation + `body(form)` build + `addWindow`) is
+  inside the same `try` — so OK, cancel, an `execView` throw, **and a synchronous `body(form)` throw**
+  all dispose exactly once (the `createRoot` disposer is idempotent). The form scope is independent of
+  the view scope (`create-form.ts:97`), so both must be torn down explicitly.
+- **Result** (RD-08 AC #2/#5): `command === Commands.ok ? dlg.result() : null` (the public `result()`
+  accessor above). On OK the modal was ended by the gate with `Commands.ok` and `result()` returns the
+  coerced values; every other terminator (cancel, Esc→cancel, close-box→cancel, a quit-close where
+  `'quit' !== 'ok'`) yields `null`.
 
 ## JSDoc + `@example` (RD-08 AC #14; CLAUDE.md documentation directive)
 
