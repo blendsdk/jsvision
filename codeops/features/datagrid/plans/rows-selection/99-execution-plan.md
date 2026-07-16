@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-16 14:52
-> **Progress**: 16/50 tasks (32%)
+> **Last Updated**: 2026-07-16 15:10
+> **Progress**: 25/50 tasks (50%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -88,19 +88,19 @@ selection paint reuses the datagrid body's own `draw()` override.
 **Reference**: `03-03` · `07 §Synthetic columns` (ST-13…ST-15) · AR-5/AR-7/AR-11
 
 ### Step 3.1: Specification tests (red)
-- [ ] 3.1.1 Write `synthetic-columns.spec.test.ts` (ST-13 checkbox per-row toggle + tri-state header + stays pinned on H-scroll; ST-14 select-all over the filtered display; ST-15 gutter 1-based renumber after sort) — `packages/datagrid/test/synthetic-columns.spec.test.ts`
-- [ ] 3.1.2 Verify **red**
+- [x] 3.1.1 Write `synthetic-columns.spec.test.ts` (ST-13 checkbox per-row toggle + tri-state header + stays pinned on H-scroll; ST-14 select-all over the filtered display; ST-15 gutter 1-based renumber after sort) — `packages/datagrid/test/synthetic-columns.spec.test.ts`
+- [x] 3.1.2 Verify **red**
 
 ### Step 3.2: Implement (green)
-- [ ] 3.2.1 Create `synthetic-columns.ts`: `SyntheticPrefix`, `prefixWidth`, `checkboxGlyph`, `headerCheckboxGlyph`, `gutterLabel` (JSDoc + `@example`) — `packages/datagrid/src/synthetic-columns.ts`
-- [ ] 3.2.2 `grid-panels.ts`: prepend a fixed-width prefix segment to the leftmost panel's header + body + frozen-rows band (left frozen panel when `freeze*`, else the single body); fixed-x, non-scrolling (AR-11) — `packages/datagrid/src/grid-panels.ts`
-- [ ] 3.2.3 `grid.ts` + `grid-panels.ts`: `checkboxColumn?`/`rowNumbers?` options; per-row checkbox click → `toggleRow`; header box click → `selectAllDisplayed`/`clearSelection` by tri-state (over the **display** set, AR-7); gutter renders the 1-based display number — `packages/datagrid/src/grid.ts`, `grid-panels.ts`
-- [ ] 3.2.4 Barrel + `EditableDataGridOptions` docs (`checkboxColumn`/`rowNumbers`) + `@example` — `packages/datagrid/src/index.ts`, `grid.ts`
-- [ ] 3.2.5 Verify **green** — ST-13…ST-15 pass (AC-3, AC-7)
+- [x] 3.2.1 Create `synthetic-columns.ts`: `SyntheticPrefix`, `prefixWidth`, `checkboxGlyph`, `headerCheckboxGlyph`, `gutterLabel` (JSDoc + `@example`) — `packages/datagrid/src/synthetic-columns.ts`
+- [x] 3.2.2 `grid-panels.ts`: prepend a fixed-width prefix segment to the leftmost panel's header + body + frozen-rows band (left frozen panel when `freeze*`, else the single body); fixed-x, non-scrolling (AR-11) — `packages/datagrid/src/grid-panels.ts`
+- [x] 3.2.3 `grid.ts` + `grid-panels.ts`: `checkboxColumn?`/`rowNumbers?` options; per-row checkbox click → `toggleRow`; header box click → `selectAllDisplayed`/`clearSelection` by tri-state (over the **display** set, AR-7); gutter renders the 1-based display number — `packages/datagrid/src/grid.ts`, `grid-panels.ts`
+- [x] 3.2.4 Barrel + `EditableDataGridOptions` docs (`checkboxColumn`/`rowNumbers`) + `@example` — `packages/datagrid/src/index.ts`, `grid.ts`
+- [x] 3.2.5 Verify **green** — ST-13…ST-15 pass (AC-3, AC-7)
 
 ### Step 3.3: Impl tests & verify
-- [ ] 3.3.1 Write `synthetic-columns.impl.test.ts` (prefix alignment header↔body↔frozen-rows band; prefix composes with frozen columns; `prefixWidth` 0 leaves the no-prefix body byte-identical) — `packages/datagrid/test/synthetic-columns.impl.test.ts`
-- [ ] 3.3.2 Full `yarn verify`
+- [x] 3.3.1 Write `synthetic-columns.impl.test.ts` (prefix alignment header↔body↔frozen-rows band; prefix composes with frozen columns; `prefixWidth` 0 leaves the no-prefix body byte-identical) — `packages/datagrid/test/synthetic-columns.impl.test.ts`
+- [x] 3.3.2 Full `yarn verify`
 
 **Deliverables**: opt-in checkbox column (tri-state header, AC-3) + row-number gutter (AC-7), left-pinned. **Verify**: `yarn verify`
 

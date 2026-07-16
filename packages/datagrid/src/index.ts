@@ -68,6 +68,13 @@ export type { SortKey, SortDir } from './sort.js';
 export { toggleKey, selectRange, selectAll, triState } from './selection.js';
 export type { Key, SelectionMode, TriState } from './selection.js';
 
+// Synthetic prefix helpers — the pure geometry/glyph functions behind the opt-in checkbox column and
+// row-number gutter (`prefixWidth`, `checkboxGlyph`, `headerCheckboxGlyph`, `gutterLabel`) plus the
+// `SyntheticPrefix` shape. Enabled via the `checkboxColumn`/`rowNumbers` grid options; exported so a
+// bespoke grid can size or paint its own leading affordances.
+export { prefixWidth, checkboxGlyph, headerCheckboxGlyph, gutterLabel } from './synthetic-columns.js';
+export type { SyntheticPrefix } from './synthetic-columns.js';
+
 // The sort header — the datagrid's own multi-key sticky header View (arrows + priority digits + the
 // per-column filter funnel, columnId-keyed, click-to-sort / click-to-open-filter). The container
 // mounts one internally; it is exported so a bespoke grid (or a later frozen-panel split) can bind
