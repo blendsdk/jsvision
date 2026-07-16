@@ -201,9 +201,10 @@ record fires each async field's trigger effect (a value change), so a loaded rec
 `asyncError` is cleared on that change (`async.ts:128`).
 
 ### With RD-08 (formDialog + Modal Submit-Gate)
-RD-08's dialog opens a form and (optionally) loads a record into it before showing; `loading()` drives
-the dialog's initial "Loading…" body, and `dispose()` on dialog-close tears down both the async
-effects (RD-06) and any in-flight load (this RD).
+`dispose()` on dialog-close tears down both the async effects (RD-06) and any in-flight load (this RD).
+**Superseded by RD-08 (AR-59):** load-before-show is **not** built into `formDialog` — the dialog does
+not own the load; a caller composes open-to-edit by `await form.load(...)` before opening, or a body
+that reads `loading()`. (This note originally sketched a "Loading…" dialog body; RD-08 scopes that out.)
 
 ### With RD-05 (Comprehensive Showcase)
 The showcase curates the load story: a simulated fetch, the `loading()` swap, then load → edit →

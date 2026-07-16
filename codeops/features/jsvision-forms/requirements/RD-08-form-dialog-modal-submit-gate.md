@@ -60,17 +60,29 @@ cannot read a disposed form) and removes the per-dialog-form leak the `createFor
 - [ ] **`formDialog(host, options)` helper.** A new exported function in `@jsvision/forms`:
       `formDialog<S, I>(host: ModalDialogHost, options: FormDialogOptions<S, I>): Promise<z.output<S> | null>`.
       It **creates** a `createForm` store from `options.schema` / `options.initial` (+ optional
-      `asyncValidators` / `asyncDebounceMs`), builds a `Dialog` sized to fit, mounts the caller's
-      `options.body(form)` and an OK/Cancel button pair, runs it modally via `host.loop.execView`, and —
+      `asyncValidators` / `asyncDebounceMs`), builds a `Dialog` at the caller-given `width` / `height`
+      (required — the body is opaque), mounts the caller's `options.body(form)` and an OK/Cancel button
+      pair, focuses the first focusable view in the body, runs it modally via `host.loop.execView`, and —
       in a `finally` — `removeWindow`s the dialog **and** calls `form.dispose()`. `host` is the existing
       `ModalDialogHost` seam (`message-box.ts:22`: `{ loop: { execView }, desktop: { addWindow,
       removeWindow } }`) that an `Application` satisfies directly (AR-54).
 - [ ] **OK gates on the async `submit()` (out-of-band), not the sync `valid()` sweep.** Activating OK
-      (or pressing Enter on the default OK button) makes the dialog **intercept** the `ok` command and
-      run `const ok = await form.submit(options.onSubmit ?? (() => {}))`. On `ok === true` the dialog
-      resolves the modal with the coerced values; on `false` it **stays open** (the failed `submit()`
-      has already marked every field `touched` and surfaced the errors — `create-form.ts:214-216`). The
+      (or pressing Enter on the default OK button) makes the dialog **intercept** the `ok` command and,
+      in a `try/catch`, run `const ok = await form.submit(options.onSubmit ?? (() => {}))`. On `ok ===
+      true` the dialog resolves the modal with the coerced values; on `false` it **stays open** (the
+      failed `submit()` has already marked every field `touched` and surfaced the errors —
+      `create-form.ts:214-217`). A **rejected** `submit()` — `submit()` awaits `onValid` with **no**
+      try/catch (`create-form.ts:228`), so a throwing/rejecting `onSubmit` makes `submit()` *re-throw*,
+      not resolve `false` — is **caught** and treated exactly as "stay open" (see the `onSubmit` FR). The
       OK path does **not** run `Dialog.valid()`'s child-sweep (AR-56).
+- [ ] **The dialog is sealed for the duration of the async gate.** While `form.submitting()` is `true`
+      the dialog ignores **every** terminating path — a re-fired `ok`, the Cancel command, and Esc /
+      close-box are all inert — and its `valid()` returns `false` so the app-quit cascade cannot tear it
+      down mid-gate. This closes the concurrency hazard where a Cancel/Esc/quit during the in-flight
+      `submit()` ends the modal (disposing the form in the `finally`) while `submit()`/`onSubmit` is still
+      running, leaving the resolving OK gate to call `endModal` on an already-popped frame. Only once
+      `submit()` settles does the dialog resolve (OK → values) or accept a fresh Cancel (→ `null`)
+      (AR-56, AR-60).
 - [ ] **Cancel / Esc / close-box always close, returning `null`.** The Cancel button carries
       `Commands.cancel` and closes through the inherited path (`valid()` returns `true` for cancel,
       `dialog.ts:165`); Esc and the frame close-box route to the same cancel (`dialog.ts:233`). In every
@@ -89,8 +101,8 @@ cannot read a disposed form) and removes the per-dialog-form leak the `createFor
       `submit()` begins until it settles (validators **and** `onValid`/`onSubmit`), `false` on every
       return path. It is form-level, independent of `isValid()`/`loading()`/`validating()`, and completes
       the in-flight-state trio. `formDialog` binds the OK button `disabled: () => form.submitting()` and
-      the interceptor **guards re-entrancy** (an `ok` while `submitting()` is ignored) so Enter or a
-      double-click cannot double-submit (AR-57, AR-60). This resolves RD-07's AR-45 deferral.
+      the seal (above) drops a re-fired `ok`, so Enter or a double-click cannot double-submit (AR-57,
+      AR-60). This resolves RD-07's AR-45 deferral.
 - [ ] **App-quit veto uses the synchronous `form.isValid()`.** The inherited `valid(command)` is
       overridden to `command === Commands.cancel || form.isValid()` so the quit cascade
       (`event-loop.ts:332`, which calls `valid()` **synchronously**) vetoes a quit while the form is
@@ -137,11 +149,12 @@ cannot read a disposed form) and removes the per-dialog-form leak the `createFor
 ### New public surface (`@jsvision/forms`)
 
 ```ts
-// The modal host — the existing seam an Application satisfies (message-box.ts:22).
-interface ModalDialogHost {
-  loop: { execView<R>(view: View): Promise<R> };
-  desktop: { addWindow(w: View): void; removeWindow(w: View): void };
-}
+// The modal host is the EXISTING barrel-exported seam (message-box.ts:22-27, ui/src/index.ts:148) an
+// Application satisfies — formDialog IMPORTS `ModalDialogHost`, it does NOT redeclare it. For reference:
+//   type ModalDialogHost = {
+//     loop: Pick<EventLoop, 'execView'>;
+//     desktop: Pick<Desktop, 'addWindow' | 'removeWindow' | 'bounds'>;   // note: includes `bounds`
+//   };
 
 interface FormDialogOptions<S extends z.ZodObject<z.ZodRawShape>, I> {
   schema: S;
@@ -151,11 +164,11 @@ interface FormDialogOptions<S extends z.ZodObject<z.ZodRawShape>, I> {
   title?: string;
   /** Build the dialog body; bind widgets to `form.field(...)`. The form is owned by the dialog. */
   body: (form: Form<S, I>) => View;
-  /** Optional in-modal save; runs inside the submit gate. Reject → dialog stays open. */
+  /** Optional in-modal save; runs inside the submit gate (caught by the OK gate). Reject → stays open. */
   onSubmit?: (values: z.output<S>) => void | Promise<void>;
   okText?: string;   // default '~O~K'
-  width?: number;    // optional geometry overrides (mirrors DialogOptions)
-  height?: number;
+  width: number;     // REQUIRED — the body is opaque, so the caller sizes the dialog; Dialog applies a
+  height: number;    //   rect only when BOTH are given (dialog.ts:102-109).
 }
 
 function formDialog<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof z.output<S>, unknown>>(
@@ -184,30 +197,44 @@ Grounded in the modal machinery (`dialog.ts`, `event-loop.ts`, `message-box.ts`,
   from **any** source — Enter on the default button, a mouse click, `loop.emitCommand(Commands.ok)` in
   tests — reaches the gate uniformly.
 - **The async OK gate** (fire-and-forget from the sync event turn):
-  1. If `form.submitting()` is already `true`, ignore (re-entrancy guard).
-  2. Capture the `modalHost` reference locally — the base `handleTerminating` nulls `this.modalHost`
-     after `endModal` (`dialog.ts:224`); the async override must hold its own reference across the
-     `await` so a late resolve can still end the modal.
-  3. `let captured: z.output<S> | null = null;`
-     `const ok = await form.submit((values) => { captured = values; return options.onSubmit?.(values); });`
-  4. On `ok === true`: `host.endModal(Commands.ok)` and stash `captured` for the outer factory to
-     resolve. On `false` (sync/async validation failed) **or** an `onSubmit` rejection propagated
-     through `submit()`: do nothing — the dialog stays open, errors are already revealed
-     (`create-form.ts:214`), and `submitting()` has returned to `false` so OK re-enables.
-- **The synchronous `valid()` override**: `valid(command) => command === Commands.cancel ||
-  form.isValid()` — keeps the app-quit veto (`cascadeQuit`, `event-loop.ts:335`) coherent without
-  touching the loop. It is **not** the OK gate (that is the async interceptor above).
-- **Buttons**: `okCancelButtons()` (`buttons.ts:88`) gives an OK (`default: true`, Enter) + Cancel pair
-  with the `Commands.ok`/`Commands.cancel` wiring already correct; `okText` overrides the OK label. OK
-  is `disabled: () => form.submitting()`.
+  1. **Seal the dialog for the gate.** While `form.submitting()` is `true` the override ignores every
+     terminating command (a re-fired `ok`, and `cancel`) and Esc / close-box, and `valid()` returns
+     `false` (vetoes app-quit). This is what makes the gate safe: no concurrent Cancel/Esc/quit can pop
+     the modal or dispose the form while `submit()`/`onSubmit` is in flight — so the `modalHost` the
+     override drives after the `await` is guaranteed still the active one (there is **no** stale-ref
+     hazard, and no reliance on the base's post-`endModal` nulling, which never runs on the intercepted
+     OK path anyway — the override does not call super for `ok`).
+  2. `let captured: z.output<S> | null = null;`
+     `try {`
+       `const ok = await form.submit((values) => { captured = values; return options.onSubmit?.(values); });`
+       `if (ok) this.modalHost?.endModal(Commands.ok);`  *(stash `captured` for the outer factory)*
+     `} catch { /* onSubmit rejected → do nothing; dialog stays open */ }`
+  3. **On `ok === true`**: the modal ends with `Commands.ok`; the outer factory resolves `captured`.
+  4. **On `ok === false`** (sync/async validation failed): do nothing — the dialog stays open, errors are
+     already revealed (`create-form.ts:214-217`).
+  5. **On a rejected `submit()`** (a throwing/rejecting `onSubmit` — `submit()` awaits `onValid` with **no**
+     try/catch, `create-form.ts:228`, so it re-throws): the `catch` does nothing; the dialog stays open.
+     `submit()`'s own `submitting()` `finally` has already cleared the flag, so the seal lifts and OK
+     re-enables. `formDialog` mints no error UI (the app surfaces the failure via its body).
+- **The synchronous `valid()` override**: `valid(command) => form.submitting() ? false : (command ===
+  Commands.cancel || form.isValid())` — while sealed it vetoes app-quit (returns `false`); otherwise it
+  keeps the quit veto coherent via the sync `form.isValid()` (`cascadeQuit` calls it with the loop's
+  `quitCommand`, default `'quit'`, `event-loop.ts:332-336`). It is **not** the OK gate (that is the async
+  interceptor above). Limitation: the quit veto is optimistic/sync — it cannot force-run async validators.
+- **Buttons**: the OK button is built **directly** — `new Button(options.okText ?? '~O~K', { command:
+  Commands.ok, default: true, disabled: () => form.submitting() })` — because the `okButton()` /
+  `okCancelButtons()` presets hardcode `'~O~K'` and pass no `disabled`, and `Button`'s label / command /
+  disabled are constructor-only readonly fields with no setters (`buttons.ts:33-35,88` / `button.ts:57-83`);
+  the constructor **does** accept a reactive `disabled` getter (`button.ts:28`). Cancel comes from
+  `cancelButton()` (`Commands.cancel`).
 - **The outer factory** mirrors `openFile` (`openers.ts:60-79`): `host.desktop.addWindow(dlg)`, then
   `try { const command = await host.loop.execView<string>(dlg); return command === Commands.ok ?
   captured : null; } finally { host.desktop.removeWindow(dlg); form.dispose(); }`.
 
 ### `submitting()` orchestration (internal — additive to `create-form.ts`)
 
-- One form-level `submitting = signal(false)`, seeded beside `loading`/`submitAttempted`
-  (`create-form.ts:110-118`).
+- One form-level `submitting = signal(false)`, seeded beside `submitAttempted` (`create-form.ts:121`) and
+  `loading` (`:127`).
 - `submit()` (`create-form.ts:213`) sets `submitting.set(true)` at entry (inside/after the initial
   `batch`) and `submitting.set(false)` on **every** return path — the sync-invalid short-circuit, the
   async-invalid return, the `coerced === null` guard, and the success path after `onValid` settles —
@@ -267,11 +294,11 @@ modal" flow with the submit-gate, the `submitting()` busy state, and a returned-
 |----------|-------------------|--------|-----------|--------|
 | Placement + form ownership | (a) in `@jsvision/forms`, dialog owns+disposes the form · (b) in `@jsvision/ui` taking a `Form` · (c) caller passes a pre-built form | **(a) in `@jsvision/forms`; `formDialog` creates, owns, and disposes the form; `body(form)` builder** | `ui` can't import `createForm` (layering); owning the form lets it return coerced values and removes the per-dialog-form leak (`create-form.ts:35`). | AR-54 |
 | Signature + result shape | (a) `Promise<z.output<S> \| null>` (values/​null) · (b) `Promise<'ok'\|'cancel'>` (bare command) | **(a) coerced values on OK, `null` on cancel/Esc/close** | The form is disposed on close, so the caller can't read it after — the helper must return the values; mirrors `openFile`'s `dlg.result()` payload model (`openers.ts:75`). | AR-55 |
-| OK gate mechanism | (a) intercept `ok` → `await submit()` → drive `endModal`; sync `valid()`→`isValid()` for quit-veto · (b) native sync `valid()` child-sweep as the OK gate | **(a) async `submit()` drives close; sync `valid()` repurposed to `isValid()`** | `Dialog.valid()` is sync + un-awaited (`dialog.ts:164,222`); `submit()` is async (`create-form.ts:213`) — only (a) lets async validators + save gate OK. (b) would bypass `submit()` entirely, defeating RD-06. | AR-56 |
+| OK gate mechanism | (a) intercept `ok` → `await submit()` (try/caught) → drive `endModal`; **seal** the dialog during the gate; sync `valid()`→`isValid()` for quit-veto · (b) native sync `valid()` child-sweep as the OK gate | **(a) async `submit()` drives close; dialog sealed during the gate; sync `valid()` repurposed to `isValid()`** | `Dialog.valid()` is sync + un-awaited (`dialog.ts:164,222`); `submit()` is async (`create-form.ts:213`) — only (a) lets async validators + save gate OK. Sealing Cancel/Esc/quit during the gate closes the concurrent-close race; the gate `await` is try/caught so a rejecting `onSubmit` can't escape. (b) would bypass `submit()` entirely, defeating RD-06. | AR-56 |
 | `submitting()` signal | add a form-level signal vs a dialog-local flag | **Add `form.submitting()` to `Form`** | Completes the `loading()`/`validating()`/`submitting()` trio; reusable outside a dialog; blocks double-submit; resolves RD-07's AR-45 deferral. | AR-57 |
 | Save location | (a) optional in-modal `onSubmit(values)` (save inside the gate; reject → stay open) · (b) collect-and-return only (caller saves after close) | **(a) optional in-modal `onSubmit`; omitted ⇒ validate+collect** | `submit()` awaits `onValid` precisely so a failed save can veto the close; keeping the dialog open on a save failure is the correct "submit-gate" UX. No minted error UI — app owns failure display. | AR-58 |
 | Load-before-show | build a `load:` loader + "Loading…" body vs caller-composed | **Out of scope; caller composes `load` (RD-07) or reads `loading()`** | Keeps RD-08 the submit-gate bridge; avoids importing the load lifecycle + its failure path into the dialog. | AR-59 |
-| Buttons + double-submit | fixed OK+Cancel vs configurable; guard re-entrancy | **OK+Cancel (optional `okText`); OK `disabled: () => submitting()` + re-entrancy guard** | The common case; `okCancelButtons()` presets already wire the commands (`buttons.ts:88`); the guard makes Enter/double-click safe during the async gate. | AR-60 |
+| Buttons + double-submit | fixed OK+Cancel vs configurable; guard re-entrancy | **OK+Cancel (optional `okText`); OK built directly with `disabled: () => submitting()`; the seal guards concurrency** | The common case. The OK button is built directly (`new Button(okText ?? '~O~K', { command: Commands.ok, default: true, disabled })`) — the `okCancelButtons()`/`okButton()` presets hardcode the label and can't carry `disabled` (`buttons.ts:33,88`, `button.ts:57-83`); Cancel from `cancelButton()`. The **seal** (not just a re-entrancy guard) makes Enter/double-click **and** a concurrent Cancel/Esc/quit safe during the async gate. | AR-60 |
 | Repo gates + security | — | **Kitchen-sink `forms/dialog` story + smoke; headless modal test harness; no engine I/O; bound-field render sanitisation** | Story non-negotiable; ACs testable via `createEventLoop` + `emitCommand` (mirroring `openers.impl.test.ts`); engine mints/fetches nothing. | AR-61 |
 
 > **Traceability:** every decision references `00-ambiguity-register.md` (AR-54…AR-61).
@@ -326,16 +353,23 @@ modal" flow with the submit-gate, the `submitting()` busy state, and a returned-
 6. [ ] **In-modal `onSubmit` runs inside the gate.** With an `onSubmit` that awaits, `submitting()` is
        `true` across the await; on resolve the dialog closes and the promise yields the values; `onSubmit`
        was called exactly once with the coerced values.
-7. [ ] **`onSubmit` rejection keeps the dialog open.** An `onSubmit` that rejects leaves the dialog open,
-       `submitting()` returns to `false` (OK re-enabled), the promise is **not** resolved, and no
-       partial/`null` result leaks; a subsequent successful OK still resolves the values.
-8. [ ] **`submitting()` transitions + double-submit guard.** `submitting()` is `false` before, `true`
-       across the async gate, `false` after; a second `Commands.ok` fired while `submitting()` is `true`
-       is ignored (the interceptor's re-entrancy guard) — `onSubmit`/`submit` runs once.
+7. [ ] **`onSubmit` rejection keeps the dialog open.** An `onSubmit` that rejects leaves the dialog open —
+       the OK gate **catches** the re-thrown `submit()` (`submit()` does not swallow an `onValid`
+       rejection, `create-form.ts:228`, so it re-throws) — `submitting()` returns to `false` (OK
+       re-enabled), the promise is **not** resolved, and no partial/`null` result leaks; a subsequent
+       successful OK still resolves the values. (No unhandled rejection escapes the interceptor.)
+8. [ ] **`submitting()` transitions + the dialog is sealed during the gate.** `submitting()` is `false`
+       before, `true` across the async gate, `false` after. While `submitting()` is `true` the dialog is
+       **sealed**: a second `Commands.ok`, a `Commands.cancel`, and the Esc route are all inert — the modal
+       does **not** close and `onSubmit`/`submit` runs exactly once; once the gate settles, OK resolves the
+       values (or a fresh Cancel returns `null`). Guards the concurrent-close / `endModal`-on-popped-frame
+       race.
 9. [ ] **Quit-veto uses sync `isValid()`.** While the dialog is open with a sync-invalid form, the app
-       quit cascade's `valid(Commands.quit-terminating)` returns `false` (veto); with a sync-valid form it
-       returns `true`. (Documents that quit-veto is optimistic/sync and does not force-run async
-       validators.)
+       quit cascade — which calls the top view's `valid(command)` with the loop's `quitCommand` (default
+       `'quit'`, `event-loop.ts:332-336`) — gets `valid('quit') === false` (veto). With a sync-valid form
+       `valid('quit') === true`, so the non-veto path `modal.end('quit')` **closes** the dialog resolving
+       `null` (`'quit' !== 'ok'`). While `submitting()`, `valid('quit')` is `false` (sealed). (Documents
+       that quit-veto is optimistic/sync and does not force-run async validators.)
 10. [ ] **Form owned + disposed once, on every path.** The form `formDialog` created is disposed exactly
         once — on OK, on cancel, and if the body/`onSubmit` throws — in the same `finally` as
         `removeWindow`; opening + closing a dialog emits no unowned-computation warning (the `openers`
