@@ -1,9 +1,10 @@
 /**
- * Filtering · Number & date conditions — every filterable column shows an always-visible funnel `▽`;
- * click it (or focus a cell and press `Alt+Down`) to open its condition popup, whose operators adapt to
- * the column type: number columns get gt / lt / eq / between; date columns get before / after / on /
- * between. A quick-filter row is live too. The echo shows the active filter. The `.js` extension is
- * required by NodeNext ESM resolution.
+ * Filtering · Number & date conditions — these columns opt into an always-visible funnel `▽`
+ * (`showFunnel: true`); click it (or focus any filterable cell and press `Alt+Down`, which works with or
+ * without a visible funnel) to open the condition popup, whose operators adapt to the column type:
+ * number columns get gt / lt / eq / between; date columns get before / after / on / between. By default
+ * a funnel appears only once a column is filtered. A quick-filter row is live too. The echo shows the
+ * active filter. The `.js` extension is required by NodeNext ESM resolution.
  */
 import { column } from '@jsvision/datagrid';
 import { buildFilterStory } from './filter-demo.js';
@@ -27,18 +28,19 @@ export const filteringConditionNumDateStory = buildFilterStory<Row>({
   title: 'Number & date conditions',
   blurb:
     'The funnel popup adapts operators to the column type — number gt/lt/eq/between, date before/after/on/between.',
-  hint: "Click a column's ▽ (or focus a cell + Alt+Down) for type-aware operators — number on Qty, date on Closed; or use the quick-filter row",
+  hint: "Click a column's ▽ (or focus any cell + Alt+Down) for type-aware operators — number on Qty, date on Closed; or use the quick-filter row",
   echo: 'model',
   quickFilter: true,
   rows: DATA,
   columns: [
-    column<Row, number>({ id: 'qty', title: 'Qty', value: (r) => r.qty, align: 'right', width: 8 }),
+    column<Row, number>({ id: 'qty', title: 'Qty', value: (r) => r.qty, align: 'right', width: 8, showFunnel: true }),
     column<Row, Date | null>({
       id: 'closed',
       title: 'Closed',
       value: (r) => r.closed,
       format: (v) => (v ? v.toISOString().slice(0, 10) : '—'),
       width: 12,
+      showFunnel: true,
     }),
   ],
 });

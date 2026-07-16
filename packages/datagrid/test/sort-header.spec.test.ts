@@ -57,6 +57,7 @@ function buildHeader(
     filterModel?: Signal<FilterModel>;
     onFunnelClick?: (columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void;
     filterable?: boolean[];
+    showFunnel?: boolean[];
   } = {},
 ) {
   const header = new SortHeader<Sale>({
@@ -69,6 +70,7 @@ function buildHeader(
     filterModel: opts.filterModel ?? signal<FilterModel>(new Map()),
     onFunnelClick: opts.onFunnelClick ?? (() => undefined),
     filterable: opts.filterable,
+    showFunnel: opts.showFunnel,
   });
   header.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: 1 } };
   const root = new Group();
@@ -286,35 +288,41 @@ test('ST-20: a fresh grid paints no indicator and renders in source order', () =
 });
 
 // ---------------------------------------------------------------------------
-// Always-visible funnel (muted vs emphasized) + funnel-vs-title click routing (the filter surface
-// merged into the header). This plan's cases use an `ST-EP-*` scheme (filter-entry-point), distinct
-// from the sorting `ST-13…ST-20` above in the same file. The old `ST-19 (filter)` ("nothing filtered
-// → no funnel") is deliberately replaced here — the funnel is now permanent on every filterable
-// column — while `ST-20 (filter)` (funnel-cell click on a *filtered* column) is retained below.
+// Funnel visibility (default = only when filtered; opt-in always-visible via `showFunnel`) + the
+// muted/emphasized tone + funnel-vs-title click routing (the filter surface merged into the header).
+// These cases use an `ST-EP-*` scheme (distinct from the sorting `ST-13…ST-20` above in this file).
+// The funnel is NOT permanent: by default an unfiltered column shows none; a filtered column shows an
+// emphasized one; a `showFunnel: true` column shows an always-visible muted→emphasized one. `ST-20
+// (filter)` (funnel-cell click on a *filtered* column) is retained below.
 // ---------------------------------------------------------------------------
 
-test('ST-EP-1 (filter): a filterable, unfiltered column paints ▽ in the muted listDivider tone', () => {
-  const { cell } = buildHeader(signal<SortKey[]>([]), () => undefined); // nothing filtered; every column filterable
-  expect(cell(14)?.char).toBe('▽'); // qty's funnel cell (starts[1]=9 + width 6 − 1 = 14)
-  expect(cell(14)?.fg).toBe(defaultTheme.listDivider.fg); // muted tone
-  expect(cell(14)?.bg).toBe(defaultTheme.listDivider.bg);
-  expect(cell(7)?.char).toBe('▽'); // region shows one too — every filterable column, not only filtered ones
+test('ST-EP-1 (filter): an unfiltered column WITHOUT showFunnel paints no ▽ (clean header)', () => {
+  const { cell } = buildHeader(signal<SortKey[]>([]), () => undefined); // nothing filtered, no opt-in
+  expect(cell(14)?.char).not.toBe('▽'); // qty's would-be funnel cell (starts[1]=9 + width 6 − 1 = 14) is clean
+  expect(cell(7)?.char).not.toBe('▽'); // region's too — no funnel until filtered or opted-in
 });
 
-test('ST-EP-2 (filter): a filterable column with an active filter paints ▽ in the emphasized tableHeader tone', () => {
+test('ST-EP-2 (filter): a column with an active filter paints ▽ in the emphasized tableHeader tone', () => {
   const filterModel = signal<FilterModel>(
     new Map<string, ColumnFilter>([['qty', { kind: 'text', op: 'contains', value: '5' }]]),
   );
   const { cell } = buildHeader(signal<SortKey[]>([]), () => undefined, { filterModel });
-  expect(cell(14)?.char).toBe('▽');
+  expect(cell(14)?.char).toBe('▽'); // the filtered column shows one even without showFunnel
   expect(cell(14)?.fg).toBe(defaultTheme.tableHeader.fg); // emphasized (normal header tone)
   expect(cell(14)?.fg).not.toBe(defaultTheme.listDivider.fg); // and distinct from the muted tone
+  expect(cell(7)?.char).not.toBe('▽'); // the unfiltered, non-opted-in column stays clean
 });
 
-test('ST-EP-3 (filter): clearing a filter leaves the ▽ present, muted — it is not removed', () => {
+test('ST-EP-3 (filter): a showFunnel column paints a muted ▽ unfiltered, emphasized when filtered, muted again when cleared', () => {
   const filterModel = signal<FilterModel>(new Map());
-  const { cell, flush } = buildHeader(signal<SortKey[]>([]), () => undefined, { filterModel });
-  expect(cell(14)?.fg).toBe(defaultTheme.listDivider.fg); // starts muted (unfiltered)
+  // qty opts into an always-visible funnel; region does not.
+  const { cell, flush } = buildHeader(signal<SortKey[]>([]), () => undefined, {
+    filterModel,
+    showFunnel: [false, true],
+  });
+  expect(cell(14)?.char).toBe('▽'); // present because opted-in, even though unfiltered
+  expect(cell(14)?.fg).toBe(defaultTheme.listDivider.fg); // muted tone
+  expect(cell(7)?.char).not.toBe('▽'); // region did not opt in and is unfiltered → clean
 
   filterModel.set(new Map<string, ColumnFilter>([['qty', { kind: 'text', op: 'contains', value: '5' }]]));
   flush();
@@ -322,18 +330,19 @@ test('ST-EP-3 (filter): clearing a filter leaves the ▽ present, muted — it i
 
   filterModel.set(new Map()); // clear
   flush();
-  expect(cell(14)?.char).toBe('▽'); // still present
+  expect(cell(14)?.char).toBe('▽'); // still present (opted-in)
   expect(cell(14)?.fg).toBe(defaultTheme.listDivider.fg); // back to muted, not gone
 });
 
-test('ST-EP-4 (filter): a filterable:false column paints no ▽ and its funnel cell is not hit-testable', () => {
+test('ST-EP-4 (filter): a filterable:false column paints no ▽ (even with showFunnel) and its funnel cell is not hit-testable', () => {
   const onFunnel = vi.fn<(columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void>();
   const { cell, header } = buildHeader(signal<SortKey[]>([]), () => undefined, {
-    filterable: [true, false], // region filterable, qty opted out
+    filterable: [true, false], // region filterable, qty opted out entirely
+    showFunnel: [true, true], // opting-in cannot override filterable:false
     onFunnelClick: onFunnel,
   });
-  expect(cell(7)?.char).toBe('▽'); // region (filterable) shows the funnel
-  expect(cell(14)?.char).not.toBe('▽'); // qty (non-filterable) shows none
+  expect(cell(7)?.char).toBe('▽'); // region (filterable + opted-in) shows the funnel
+  expect(cell(14)?.char).not.toBe('▽'); // qty (non-filterable) shows none despite showFunnel
   header.onEvent(mouseDown(14)); // a click on qty's would-be funnel cell
   expect(onFunnel).not.toHaveBeenCalled(); // never routes to the popup
 });
@@ -341,8 +350,8 @@ test('ST-EP-4 (filter): a filterable:false column paints no ▽ and its funnel c
 test('ST-20 (filter): a funnel-cell click fires onFunnelClick (no sort); a title click sorts', () => {
   const onFunnel = vi.fn<(columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void>();
   const onSort = vi.fn<(columnId: string, additive: boolean) => void>();
-  // qty is filtered → its funnel is hittable. Unsorted qty reserves no sort cell, so the funnel is the
-  // column's rightmost content cell: starts[1](=9) + width(6) - 1 = 14.
+  // qty is filtered → its funnel is drawn and hittable. Unsorted qty reserves no sort cell, so the
+  // funnel is the column's rightmost content cell: starts[1](=9) + width(6) - 1 = 14.
   const filterModel = signal<FilterModel>(
     new Map<string, ColumnFilter>([['qty', { kind: 'text', op: 'contains', value: '5' }]]),
   );
@@ -360,11 +369,14 @@ test('ST-20 (filter): a funnel-cell click fires onFunnelClick (no sort); a title
   expect(onSort).toHaveBeenLastCalledWith('qty', false);
 });
 
-test("ST-EP-5 (filter): a click on an UNfiltered filterable column's funnel cell fires onFunnelClick, not a sort", () => {
+test("ST-EP-5 (filter): a click on a showFunnel column's funnel cell fires onFunnelClick, not a sort", () => {
   const onFunnel = vi.fn<(columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void>();
   const onSort = vi.fn<(columnId: string, additive: boolean) => void>();
-  // Nothing filtered — the funnel is now permanent, so the cell must still route to the popup (FR-2).
-  const { header } = buildHeader(signal<SortKey[]>([]), onSort, { onFunnelClick: onFunnel });
+  // Nothing filtered, but qty opts into an always-visible funnel → the cell must route to the popup.
+  const { header } = buildHeader(signal<SortKey[]>([]), onSort, {
+    onFunnelClick: onFunnel,
+    showFunnel: [false, true],
+  });
   const ev = mouseDown(14); // qty funnel cell (unsorted → starts[1]+width−1 = 14)
   header.onEvent(ev);
   expect(onFunnel).toHaveBeenCalledTimes(1);
@@ -376,12 +388,24 @@ test("ST-EP-5 (filter): a click on an UNfiltered filterable column's funnel cell
 test('ST-EP-6 (filter): the funnel cell routes to the funnel; the cell to its left routes to the title (sort)', () => {
   const onFunnel = vi.fn<(columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void>();
   const onSort = vi.fn<(columnId: string, additive: boolean) => void>();
-  const { header } = buildHeader(signal<SortKey[]>([]), onSort, { onFunnelClick: onFunnel }); // unfiltered, filterable
+  // qty opts in so its funnel is drawn; region does not.
+  const { header } = buildHeader(signal<SortKey[]>([]), onSort, { onFunnelClick: onFunnel, showFunnel: [false, true] });
   header.onEvent(mouseDown(14)); // exactly the funnel cell → funnel
   expect(onFunnel).toHaveBeenCalledTimes(1);
   expect(onSort).not.toHaveBeenCalled();
   header.onEvent(mouseDown(13)); // one cell left of the funnel → title zone (sort)
   expect(onSort).toHaveBeenLastCalledWith('qty', false);
+});
+
+test("ST-EP-8 (filter): an unfiltered non-showFunnel column's rightmost cell routes to the title (sort), not a funnel", () => {
+  const onFunnel = vi.fn<(columnId: string, anchor: { x: number; y: number }, ev: DispatchEvent) => void>();
+  const onSort = vi.fn<(columnId: string, additive: boolean) => void>();
+  // Default columns: filterable but unfiltered and not opted-in → no funnel is drawn, so the rightmost
+  // content cell is part of the title zone and a click there sorts.
+  const { header } = buildHeader(signal<SortKey[]>([]), onSort, { onFunnelClick: onFunnel });
+  header.onEvent(mouseDown(14)); // qty's rightmost content cell — no funnel here anymore
+  expect(onFunnel).not.toHaveBeenCalled(); // nothing routes to the popup
+  expect(onSort).toHaveBeenLastCalledWith('qty', false); // it sorts instead
 });
 
 test('ST-EP-7 (filter): a too-narrow sorted filterable column drops the funnel and keeps the sort arrow', () => {

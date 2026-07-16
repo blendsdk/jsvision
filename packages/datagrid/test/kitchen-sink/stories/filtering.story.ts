@@ -1,10 +1,12 @@
 /**
- * The filtering showcase story — Excel-class column filtering (RD-06). The opt-in quick-filter row
- * under the header does a live contains-match per column as you type; every filterable column shows an
- * always-visible funnel `▽` (click it, or press `Alt+Down` on a focused cell) that opens a condition
- * popup (type-appropriate operators) with an embedded value-list (distinct checkboxes + search + Select
- * All). A live "N of M" readout echoes `filteredCount()` / `totalCount()` so the effect of every filter
- * is visible immediately.
+ * The filtering showcase story — Excel-class column filtering. The opt-in quick-filter row under the
+ * header does a live contains-match per column as you type. A column's funnel `▽` appears once it has an
+ * active filter; the columns here also opt into an always-visible funnel (`showFunnel: true`) so the
+ * affordance is visible up front. Click a funnel, or press `Alt+Down` on any focused filterable cell
+ * (which works whether or not a funnel is shown), to open a condition popup (type-appropriate operators)
+ * with an embedded value-list (distinct checkboxes + search + Select All). The popup stays within the
+ * viewport, and can be replaced wholesale via the grid's `filterPopup` seam. A live "N of M" readout
+ * echoes `filteredCount()` / `totalCount()` so the effect of every filter is visible immediately.
  */
 import { Group, Text, signal } from '@jsvision/ui';
 import { column, fromRows, EditableDataGrid } from '../../../src/index.js';
@@ -34,14 +36,22 @@ export const filteringStory: Story = {
     ]);
 
     const columns = [
-      column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 10 }),
-      column<Sale, number>({ id: 'qty', title: 'Qty', value: (r) => r.qty, align: 'right', width: 8 }),
+      column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 10, showFunnel: true }),
+      column<Sale, number>({
+        id: 'qty',
+        title: 'Qty',
+        value: (r) => r.qty,
+        align: 'right',
+        width: 8,
+        showFunnel: true,
+      }),
       column<Sale, Date | null>({
         id: 'closed',
         title: 'Closed',
         width: 12,
         value: (r) => r.closed,
         format: (v) => (v ? v.toISOString().slice(0, 10) : '—'),
+        showFunnel: true,
       }),
     ];
 
@@ -53,7 +63,7 @@ export const filteringStory: Story = {
     });
 
     const hints = new Text(
-      'Type in the quick-filter row · every column shows a ▽ — click it or press Alt+Down on a cell for conditions & a value-list',
+      'Type in the quick-filter row · these columns show a ▽ — click it or press Alt+Down on any cell for conditions & a value-list',
     );
     // Live "N of M" — repaints whenever a filter changes the visible row count.
     const echo = new Text(() => `Showing ${grid.filteredCount()} of ${grid.totalCount()} rows`);
