@@ -11,11 +11,12 @@
  * unchanged. All movement clamps to range (no wrap). `Tab`/`Shift+Tab` are intentionally not handled
  * here: an unbound Tab is consumed by the framework's focus traversal before any view sees it.
  */
-import { GridRows, alignCell, apportionColumns, stringWidth } from '@jsvision/ui';
+import { GridRows, alignCell, apportionColumns, stringWidth, signal } from '@jsvision/ui';
 import type { GridRowsConfig, ColumnGeometry, DispatchEvent, DrawContext, Signal, Group } from '@jsvision/ui';
-import type { KeyEvent } from '@jsvision/core';
+import type { KeyEvent, MouseEvent } from '@jsvision/core';
 import type { GridColumn } from './column.js';
 import { isEditable } from './column.js';
+import type { Key } from './selection.js';
 import type { OnCommit } from './commit.js';
 import type { CellRect } from './overlay.js';
 import { createEditController, cellKey } from './editing.js';
@@ -55,6 +56,24 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
   bumpVersion: () => void;
   /** The shared dirty registry (pending-commit markers); omit to disable dirty tracking. */
   dirty?: DirtyRegistry;
+  /**
+   * The datagrid selection set, keyed by `rowKey` — the body paints a row's `selected` role by
+   * membership here (not the base's single `selected` index, which is kept only as the base's required
+   * click sink). Optional: omit for a body that shows no selection (defaults to an empty set).
+   */
+  selectedKeys?: Signal<ReadonlySet<Key>>;
+  /**
+   * Toggle the selection of the row at a display index — wired to `Space` on a read-only focused cell
+   * and `Ctrl`+click. The container maps the index to a key, moves the cursor to it, and toggles it.
+   * Omitted for a body without selection (the gesture then falls through to the base).
+   */
+  onToggleRow?: (rowIndex: number) => void;
+  /**
+   * Extend the selection range to the row at a display index — wired to `Shift`+click and `Shift`+↑/↓.
+   * The container captures the pre-move cursor row as the range's default anchor, moves the cursor to
+   * the target, and unions the display-order run. Omitted for a body without selection.
+   */
+  onRangeToRow?: (rowIndex: number) => void;
   /**
    * This panel's start index in the GLOBAL column order (default `0`). In a frozen-panel grid the
    * shared `focusedCol` is a single global index; a panel owns `[columnOffset, columnOffset + count)`
@@ -163,6 +182,12 @@ export class EditableGridRows<T> extends GridRows<T> {
   protected readonly bumpVersion: () => void;
   /** The shared dirty registry (pending-commit markers), or `undefined` when dirty tracking is off. */
   protected readonly dirty?: DirtyRegistry;
+  /** The datagrid selection set the body paints from (empty when the container wires no selection). */
+  protected readonly selectedKeys: Signal<ReadonlySet<Key>>;
+  /** Toggle-row gesture sink (`Space` on a read-only cell / `Ctrl`+click); `undefined` when off. */
+  private readonly onToggleRow?: (rowIndex: number) => void;
+  /** Range-extend gesture sink (`Shift`+click / `Shift`+↑↓); `undefined` when off. */
+  private readonly onRangeToRow?: (rowIndex: number) => void;
   /** This panel's start index in the global column order (`0` for a single body). */
   readonly columnOffset: number;
   /** This panel's own column count (the length of its column slice). */
@@ -201,6 +226,9 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.rowKey = cfg.rowKey;
     this.bumpVersion = cfg.bumpVersion;
     this.dirty = cfg.dirty;
+    this.selectedKeys = cfg.selectedKeys ?? signal<ReadonlySet<Key>>(new Set());
+    this.onToggleRow = cfg.onToggleRow;
+    this.onRangeToRow = cfg.onRangeToRow;
     this.columnOffset = cfg.columnOffset ?? 0;
     this.columnCount = cfg.columns.length;
     this.totalColsFn = cfg.totalCols ?? (() => this.columns.length);
@@ -229,6 +257,12 @@ export class EditableGridRows<T> extends GridRows<T> {
       // Repaint when the column cursor moves (the base already binds focused/display/selected/indent).
       this.bind(
         () => this.focusedCol(),
+        () => undefined,
+      );
+      // Repaint when the datagrid selection set changes (the body paints by set membership, so the
+      // base's own `selected` bind does not cover it).
+      this.bind(
+        () => this.selectedKeys(),
         () => undefined,
       );
       // Repaint when a column width override changes (a live resize/auto-fit) so the geometry re-flows.
@@ -268,8 +302,20 @@ export class EditableGridRows<T> extends GridRows<T> {
   }
 
   /**
-   * Route the column-cursor keys here; let everything else fall through to the base (row navigation,
-   * activation, mouse, wheel).
+   * Selection is cursor-only on a plain click: the base moves the row cursor via `focusTo`, then calls
+   * `select(index)` to set its single-index highlight — but the datagrid paints selection from the
+   * `selectedKeys` set (toggled by `Space`/`Ctrl`+click/`Shift`/the checkbox column), so this override
+   * makes that per-click `select` a no-op. A plain click therefore never changes the selection (and the
+   * base's `activate()`, which also calls `select`, no longer highlights either). The base `selected`
+   * signal stays at its initial value — it is kept only because `GridRowsConfig` requires it.
+   */
+  protected override select(): void {
+    // Intentionally empty — see the doc above: a plain click is cursor-only.
+  }
+
+  /**
+   * Route the column-cursor keys and selection gestures here; let everything else fall through to the
+   * base (row navigation, activation, mouse, wheel).
    *
    * @param ev The dispatch envelope.
    */
@@ -286,17 +332,81 @@ export class EditableGridRows<T> extends GridRows<T> {
         ev.handled = true;
         return;
       }
+      // tryBeginEdit must precede the selection keys: on an editable cell `Space` begins the edit,
+      // so only a read-only cell's `Space` reaches handleSelectionKey below.
       if (this.tryBeginEdit(inner, ev)) {
         ev.handled = true;
         return;
       }
+      if (this.handleSelectionKey(inner, ev)) {
+        ev.handled = true;
+        return;
+      }
     }
-    // Frozen-panel mode: a click sets the global column cursor to the clicked column, then the base
-    // focuses/selects the row. A single body (mouseColumns off) keeps its click behavior unchanged.
-    if (inner.type === 'mouse' && inner.kind === 'down' && this.mouseColumns) {
-      this.setColFromClick(ev);
+    if (inner.type === 'mouse' && inner.kind === 'down') {
+      // Frozen-panel mode: a click sets the global column cursor to the clicked column first.
+      if (this.mouseColumns) this.setColFromClick(ev);
+      // Ctrl/Shift+click drive selection (toggle / range) instead of a plain cursor move — intercept
+      // before the base so the base's plain focus+select does not also run.
+      if (this.handleSelectionClick(inner, ev)) {
+        ev.handled = true;
+        return;
+      }
     }
     super.onEvent(ev);
+  }
+
+  /**
+   * Selection keys on the non-editing body: `Space` toggles the focused row (only on a read-only cell —
+   * an editable cell's `Space` was already claimed by `tryBeginEdit`), and `Shift`+↑/↓ extends
+   * the range one row from the anchor. The container owns the cursor move for a range gesture (so it can
+   * capture the pre-move row as the default anchor), so this reports the TARGET index and does not move
+   * the cursor itself. Returns whether the key was consumed.
+   */
+  private handleSelectionKey(inner: KeyEvent, ev: DispatchEvent): boolean {
+    void ev;
+    const range = this.display().length;
+    if (range === 0) return false;
+    if (this.localCol() < 0) return false; // the cursor is in another panel — not ours to act on
+    // Shift+↑/↓: extend the range to the adjacent row (the container moves the cursor + unions the run).
+    if ((inner.key === 'up' || inner.key === 'down') && inner.shift && !inner.ctrl && !inner.alt) {
+      if (this.onRangeToRow === undefined) return false;
+      const target = clamp(this.focused() + (inner.key === 'down' ? 1 : -1), 0, range - 1);
+      this.onRangeToRow(target);
+      return true;
+    }
+    // Space on a read-only focused cell: toggle the focused row (an editable cell never reaches here).
+    if (inner.key === 'space' && !inner.ctrl && !inner.alt && !inner.shift) {
+      if (this.onToggleRow === undefined) return false;
+      this.onToggleRow(clamp(this.focused(), 0, range - 1));
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Selection clicks: `Ctrl`+click toggles the clicked row, `Shift`+click extends the range to it. Both
+   * report the clicked display index and let the container move the cursor + apply the pure op; a plain
+   * (unmodified) click returns false so the base's cursor-only focus runs. Returns whether it was
+   * consumed.
+   */
+  private handleSelectionClick(inner: MouseEvent, ev: DispatchEvent): boolean {
+    const local = ev.local;
+    if (local === undefined) return false;
+    const range = this.display().length;
+    if (range === 0) return false;
+    const rowIndex = Math.min(this.topItem + local.y, range - 1);
+    if (inner.ctrl === true && inner.shift !== true) {
+      if (this.onToggleRow === undefined) return false;
+      this.onToggleRow(rowIndex);
+      return true;
+    }
+    if (inner.shift === true && inner.ctrl !== true) {
+      if (this.onRangeToRow === undefined) return false;
+      this.onRangeToRow(rowIndex);
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -498,7 +608,7 @@ export class EditableGridRows<T> extends GridRows<T> {
     const focusedRow = clamp(this.focused(), 0, range - 1);
     const focusedCol = this.localCol(); // -1 when the cursor is in another panel → no cursor cell here
     const active = this.gridActive();
-    const selected = this.selected();
+    const selectedKeys = this.selectedKeys();
     const divider = ctx.color('listDivider');
 
     for (let i = 0; i < rows; i += 1) {
@@ -509,7 +619,7 @@ export class EditableGridRows<T> extends GridRows<T> {
       }
       const row = display[item];
       const isFocusedRow = item === focusedRow;
-      const isSelectedRow = item === selected;
+      const isSelectedRow = selectedKeys.has(this.rowKey(row)); // set membership, not a single index
       const zebra = this.zebra && (item & 1) === 1;
       // Row colour priority: focused > selected > zebra stripe > normal (unchanged from the base).
       const roleName = isFocusedRow
@@ -590,7 +700,7 @@ export class EditableGridRows<T> extends GridRows<T> {
     const active = this.gridActive();
     const focusedRow = clamp(this.focused(), 0, range - 1);
     const focusedCol = this.localCol(); // -1 when the cursor is in another panel → no cursor cell here
-    const selected = this.selected();
+    const selectedKeys = this.selectedKeys();
     const dirtyFg = ctx.color('gridDirty').fg;
     const cursorBg = ctx.color('gridCursor').bg;
 
@@ -610,7 +720,7 @@ export class EditableGridRows<T> extends GridRows<T> {
               ? active
                 ? ctx.color('listFocused').bg
                 : ctx.color('listSelected').bg
-              : item === selected
+              : selectedKeys.has(rk)
                 ? ctx.color('listSelected').bg
                 : this.zebra && (item & 1) === 1
                   ? ctx.color('staticText').bg

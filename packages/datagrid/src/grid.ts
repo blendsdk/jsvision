@@ -31,6 +31,8 @@ import type { FilterPopupContext } from './filter-popup.js';
 import { mountCellOverlay, absoluteRect } from './overlay.js';
 import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
+import { GridSelection } from './grid-selection.js';
+import type { Key, SelectionMode } from './selection.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
 
 /**
@@ -59,6 +61,12 @@ export interface EditableDataGridOptions<T> {
   readonly source: GridDataSource<T>;
   /** Stripe odd rows for readability (default `false`). */
   readonly zebra?: boolean;
+  /**
+   * Row selection mode (default `'multi'`). `'single'` keeps at most one row selected — each pick
+   * replaces the prior; `'multi'` accumulates (`Space`/`Ctrl`+click toggle, `Shift` extends a range).
+   * Selection gestures are always live; the checkbox column and row-number gutter are separately opt-in.
+   */
+  readonly selectionMode?: SelectionMode;
   /**
    * Show the opt-in quick-filter row — a band of per-column text inputs below the header that drive a
    * live `contains` filter as you type (default `false`; the band is never built when off).
@@ -254,7 +262,13 @@ export class EditableDataGrid<T> extends Group {
   // frozen-panel split can bind the very same ones with no retrofit.
   private readonly focused = signal(0);
   private readonly focusedCol = signal(0);
+  // The base's required single-index click sink. Kept because `GridRowsConfig` requires it, but
+  // superseded by `selection` below: `EditableGridRows.select()` is a no-op, so this stays at `-1` and
+  // never drives the highlight; the datagrid paints selection from `selection.keys` instead.
   private readonly selected = signal(-1);
+  // The datagrid selection model — a `ReadonlySet<Key>` + anchor keyed by `rowKey`, so selection
+  // survives re-sort/re-filter with no reconcile (the stateful wiring lives in grid-selection.ts).
+  private readonly selection: GridSelection<T>;
   private readonly indent = signal(0);
   // Bump-on-write: an in-place cell `set` mutates the record without changing the rows array identity,
   // so the display computed reads this version to force a repaint of the mutated row.
@@ -326,6 +340,14 @@ export class EditableDataGrid<T> extends Group {
     });
     const autoWidths = this.derived(() => measureAutoWidths(engineCols, this.display(), stringWidth));
     this.autoWidths = autoWidths;
+    // The selection controller reads the live display + cursor lazily (only when a gesture/API call
+    // fires), so a re-sort/re-filter needs no reconcile — the same keys re-highlight wherever they moved.
+    this.selection = new GridSelection<T>({
+      mode: opts.selectionMode ?? 'multi',
+      focused: this.focused,
+      display: this.display,
+      rowKey: this.source.rowKey,
+    });
     // Visible order = full order minus hidden; partition = the frozen left/center/right split with any
     // over-pinned columns pushed back to the center (so the center is never blank). Both derive lazily.
     this.visibleIds = this.derived(() => visibleOrder(this.columnOrderSig(), this.hidden()));
@@ -382,6 +404,9 @@ export class EditableDataGrid<T> extends Group {
       focused: this.focused,
       focusedCol: this.focusedCol,
       selected: this.selected,
+      selectedKeys: this.selection.keys,
+      onToggleRow: (rowIndex) => this.selection.toggleAtRow(rowIndex),
+      onRangeToRow: (rowIndex) => this.selection.rangeToRow(rowIndex),
       indent: this.indent,
       display: this.display,
       rowKey: this.source.rowKey,
@@ -961,29 +986,26 @@ export class EditableDataGrid<T> extends Group {
   }
 
   /**
-   * Snapshot the focused and selected records by their row key from the current display, so a mutator
-   * can re-find them after the display re-derives (the focused/selected record stays under the cursor
-   * even when its display index moves). Returns `undefined` for an anchor when the grid is empty or
-   * nothing is selected.
+   * Snapshot the focused record's key from the current display, so a mutator can re-find it after the
+   * display re-derives (the focused record stays under the cursor even when its display index moves).
+   * Returns `undefined` when the grid is empty. Selection needs no snapshot — it is a `rowKey` set that
+   * survives re-sort/re-filter unchanged; only a delete prunes it.
    */
-  private snapshotAnchors(): { anchor: string | number | undefined; selAnchor: string | number | undefined } {
+  private focusAnchorKey(): Key | undefined {
     const before = this.display();
     const n = before.length;
-    const fIdx = Math.max(0, Math.min(this.focused(), n - 1));
-    const anchor = n > 0 ? this.source.rowKey(before[fIdx]) : undefined;
-    const sIdx = this.selected();
-    const selAnchor = sIdx >= 0 && sIdx < n ? this.source.rowKey(before[sIdx]) : undefined;
-    return { anchor, selAnchor };
+    if (n === 0) return undefined;
+    return this.source.rowKey(before[Math.max(0, Math.min(this.focused(), n - 1))]);
   }
 
   /**
-   * The one sort mutator. Sets the new key list, then — on the client path only — re-anchors the
-   * cursor and selection to the same records they were on before the re-sort (by row key), so the
-   * focused/selected record stays under the cursor when its display index moves. A push-down source
-   * re-queries asynchronously, so a synchronous re-anchor makes sense only in memory.
+   * The one sort mutator. Sets the new key list, then — on the client path only — re-anchors the cursor
+   * to the same record it was on before the re-sort (by row key), so the focused record stays under the
+   * cursor when its display index moves. The `selectedKeys` set is untouched (its keys are stable). A
+   * push-down source re-queries asynchronously, so a synchronous re-anchor makes sense only in memory.
    */
   private applySort(next: SortKey[]): void {
-    const { anchor, selAnchor } = this.snapshotAnchors();
+    const anchor = this.focusAnchorKey();
 
     this.sortKeys.set(next);
 
@@ -993,19 +1015,17 @@ export class EditableDataGrid<T> extends Group {
       const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
       if (i >= 0) this.focused.set(i);
     }
-    if (selAnchor !== undefined) {
-      this.selected.set(after.findIndex((r) => this.source.rowKey(r) === selAnchor)); // -1 if the row is gone
-    }
   }
 
   /**
    * The one filter mutator. Sets the new model, then — on the client path only — re-anchors the cursor
-   * and selection by row key. Unlike a re-sort, a filter can REMOVE the focused row: when its anchor is
-   * gone the cursor clamps into the shrunk display and the selection resets to `-1`. A push-down source
+   * by row key. Unlike a re-sort, a filter can REMOVE the focused row: when its anchor is gone the cursor
+   * clamps into the shrunk display. The `selectedKeys` set is untouched — a selected row that is filtered
+   * out simply stops being displayed and re-highlights when the filter clears. A push-down source
    * re-queries asynchronously, so a synchronous re-anchor makes sense only in memory.
    */
   private applyFilter(next: FilterModel): void {
-    const { anchor, selAnchor } = this.snapshotAnchors();
+    const anchor = this.focusAnchorKey();
 
     this.filters.set(next);
 
@@ -1013,17 +1033,66 @@ export class EditableDataGrid<T> extends Group {
     const after = this.display();
     if (anchor !== undefined) {
       const i = after.findIndex((r) => this.source.rowKey(r) === anchor);
-      if (i >= 0) {
-        this.focused.set(i);
-      } else {
-        // The focused row was filtered out — clamp the cursor into the shrunk display, drop selection.
-        this.focused.set(Math.max(0, Math.min(this.focused(), after.length - 1)));
-        this.selected.set(-1);
-        return;
-      }
+      // The focused row survived → follow it; else clamp the cursor into the shrunk display.
+      this.focused.set(i >= 0 ? i : Math.max(0, Math.min(this.focused(), after.length - 1)));
     }
-    if (selAnchor !== undefined) {
-      this.selected.set(after.findIndex((r) => this.source.rowKey(r) === selAnchor)); // -1 if the row is gone
-    }
+  }
+
+  /**
+   * The current row selection, keyed by `rowKey`. Reactive — reading it inside an effect re-runs when
+   * the selection changes. The set survives re-sort/re-filter (the keys are stable); a delete prunes it.
+   *
+   * @returns The selected row keys (empty when nothing is selected).
+   * @example
+   * ```ts
+   * import { EditableDataGrid } from '@jsvision/datagrid';
+   * const grid = new EditableDataGrid({ columns, source }); // default 'multi'
+   * grid.selectRow(1); // select the row whose rowKey is 1
+   * grid.toggleRow(3); // add row 3 → { 1, 3 }
+   * [...grid.selectedKeys()]; // [1, 3]
+   * grid.clearSelection(); // {}
+   * ```
+   */
+  selectedKeys(): ReadonlySet<Key> {
+    return this.selection.read();
+  }
+
+  /**
+   * Select exactly `key`, replacing any prior selection, and make it the range anchor.
+   *
+   * @param key The row key to select.
+   */
+  selectRow(key: Key): void {
+    this.selection.selectOnly(key);
+  }
+
+  /**
+   * Toggle a row's membership under the selection mode (`multi` adds/removes; `single` replaces), and
+   * make it the range anchor.
+   *
+   * @param key The row key to toggle.
+   */
+  toggleRow(key: Key): void {
+    this.selection.toggle(key);
+  }
+
+  /**
+   * Extend the selection to `toKey` as a contiguous display-order range from the current anchor (or, when
+   * no anchor is set, from the focused row). A no-op on an empty grid.
+   *
+   * @param toKey The far end of the range, in the current display order.
+   */
+  selectRange(toKey: Key): void {
+    this.selection.rangeTo(toKey);
+  }
+
+  /** Select every displayed (filtered/sorted) row — the header checkbox's select-all target. */
+  selectAllDisplayed(): void {
+    this.selection.selectAllDisplayed();
+  }
+
+  /** Clear the row selection and its range anchor. */
+  clearSelection(): void {
+    this.selection.clear();
   }
 }

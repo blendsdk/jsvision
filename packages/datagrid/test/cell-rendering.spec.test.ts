@@ -42,7 +42,8 @@ const DATA: Row[] = [
 interface MountOpts {
   focused?: number;
   focusedCol?: number;
-  selected?: number;
+  /** Row keys to mark selected — RD-08's set-membership selection (the body paints from this). */
+  selectedKeys?: (string | number)[];
   active?: boolean;
   zebra?: boolean;
 }
@@ -51,7 +52,8 @@ interface MountOpts {
 function mountGrid(typed: GridColumn<Row>[], opts: MountOpts = {}) {
   const focused = signal(opts.focused ?? 0);
   const focusedCol = signal(opts.focusedCol ?? 0);
-  const selected = signal(opts.selected ?? -1);
+  const selected = signal(-1); // the base's required click sink; the datagrid paints from selectedKeys
+  const selectedKeys = signal<ReadonlySet<string | number>>(new Set(opts.selectedKeys ?? []));
   const indent = signal(0);
   const engineCols = typed.map((c) => toEngineColumn(c));
   const grid = new EditableGridRows<Row>({
@@ -61,6 +63,7 @@ function mountGrid(typed: GridColumn<Row>[], opts: MountOpts = {}) {
     indent,
     focused,
     selected,
+    selectedKeys,
     zebra: opts.zebra ?? false,
     focusedCol,
     typedColumns: typed,
@@ -112,8 +115,9 @@ test('cursor beats cellStyle on the focused cell', () => {
 });
 
 // The selected row wins over cellStyle: the red cell in the selected row paints in listSelected.
+// RD-08: selection is set membership by rowKey — row index 2 is id 3 (see DATA).
 test('selected row beats cellStyle', () => {
-  const { buf } = mountGrid(styleColumns(), { focused: 0, selected: 2, active: true });
+  const { buf } = mountGrid(styleColumns(), { focused: 0, selectedKeys: [3], active: true });
   expect(buf.get(QTY_X, 2)?.bg).toBe(defaultTheme.listSelected.bg); // theme hex, not the cellStyle name
   expect(buf.get(QTY_X, 2)?.fg).toBe(defaultTheme.listSelected.fg);
   expect(buf.get(QTY_X, 2)?.fg).not.toBe('brightRed');

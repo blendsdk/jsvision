@@ -17,6 +17,7 @@ import { Group, ScrollBar, View, signal } from '@jsvision/ui';
 import type { Column, DispatchEvent, DrawContext, LayoutProps, Signal } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import type { FreezePartition } from './column-model.js';
+import type { Key } from './selection.js';
 import type { SortKey } from './sort.js';
 import type { FilterModel } from './filter.js';
 import type { OnCommit } from './commit.js';
@@ -36,8 +37,14 @@ export interface GridBodyDeps<T> {
   focused: Signal<number>;
   /** Shared global column cursor over `[0, totalCols)` (a panel owns `[offset, offset+count)`). */
   focusedCol: Signal<number>;
-  /** Shared selection index. */
+  /** Shared selection index (the base's required click sink — kept, but not the paint driver). */
   selected: Signal<number>;
+  /** Shared datagrid selection set, keyed by `rowKey` — every panel paints its `selected` role from it. */
+  selectedKeys: Signal<ReadonlySet<Key>>;
+  /** Toggle-row sink (`Space` on a read-only cell / `Ctrl`+click) — the container moves the cursor + toggles. */
+  onToggleRow: (rowIndex: number) => void;
+  /** Range-extend sink (`Shift`+click / `Shift`+↑↓) — the container moves the cursor + unions the run. */
+  onRangeToRow: (rowIndex: number) => void;
   /** Shared horizontal scroll offset — bound only by the center panel; frozen panels bind a constant `0`. */
   indent: Signal<number>;
   /** The materialized, sorted+filtered display rows (shared by every panel). */
@@ -284,6 +291,9 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       indent,
       focused: deps.focused,
       selected: deps.selected,
+      selectedKeys: deps.selectedKeys,
+      onToggleRow: deps.onToggleRow,
+      onRangeToRow: deps.onRangeToRow,
       zebra: deps.zebra,
       focusedCol: deps.focusedCol,
       typedColumns: sliceTyped(ids),
@@ -319,6 +329,9 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       indent,
       focused: deps.focused,
       selected: deps.selected,
+      selectedKeys: deps.selectedKeys,
+      onToggleRow: deps.onToggleRow,
+      onRangeToRow: deps.onRangeToRow,
       zebra: deps.zebra,
       focusedCol: deps.focusedCol,
       typedColumns: sliceTyped(ids),
