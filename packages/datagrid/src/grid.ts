@@ -209,6 +209,12 @@ export class EditableDataGrid<T> extends Group {
   }
   /** The focusable body — the center panel when frozen, the single body otherwise (backs {@link rows}). */
   private _center!: EditableGridRows<T>;
+  /**
+   * The current header panels, retained (and refreshed on every rebuild) so the keyboard filter opener
+   * can resolve a column's owning header — the mouse path captures its header in a closure, but the
+   * `Alt+Down` path has no closure, so this array is its only route to the live header.
+   */
+  private _headers: SortHeader<T>[] = [];
   /** The current inner band stack (swapped out by a rebuild when the partition shape changes). */
   private _inner!: Group;
   /** The shared body-assembly deps, retained so a rebuild re-runs `buildGridBody` with the same wiring. */
@@ -378,6 +384,7 @@ export class EditableDataGrid<T> extends Group {
         else this.sortBy(columnId);
       },
       onFunnelClick: (columnId, anchor, ev, header) => this.openFilterPopup(columnId, anchor, ev, header),
+      onOpenFilter: (globalCol, ev) => this.openFilterFromKeyboard(globalCol, ev),
       onColumnResize: (id, w) => this.setColumnWidth(id, w),
       onColumnAutoFit: (id) => this.autoFitColumn(id),
       onColumnReorder: (from, to) => this.reorderWithinPanel(from, to),
@@ -404,6 +411,7 @@ export class EditableDataGrid<T> extends Group {
     const parts = buildGridBody<T>(this.computePartition(), this._bodyDeps);
     this._center = parts.center;
     this._inner = parts.inner;
+    this._headers = parts.headers;
     this.lastPartitionKey = this.partitionKey();
 
     this.add(this._inner); // behind
@@ -470,6 +478,7 @@ export class EditableDataGrid<T> extends Group {
     const old = this._inner;
     this._inner = parts.inner;
     this._center = parts.center;
+    this._headers = parts.headers; // refresh: the old headers were unmounted by the swap below (PF-002)
     this.add(parts.inner); // new inner present before the old is removed → focus heals into it
     this.remove(old);
     // Restore z-order: the overlays sit above the (new) inner band stack.
@@ -818,6 +827,31 @@ export class EditableDataGrid<T> extends Group {
    * @param header The header panel that owns the clicked funnel — the popup anchors to its absolute
    *   origin, so in a frozen grid it lands under the right panel (the three headers differ in origin).
    */
+  /**
+   * Open the filter popup for a keyboard request (`Alt+Down`) on the global focused column. Maps the
+   * column index to its id, no-ops when the column is unknown or non-filterable, resolves the owning
+   * header from the retained panel headers, and opens the popup at that header's funnel-cell anchor —
+   * the same cell a funnel click uses. In a frozen grid the owning header is whichever panel holds the
+   * column, so the popup lands under the correct panel.
+   *
+   * @param globalCol The global focused column index (from the body's shared cursor).
+   * @param ev The live dispatch envelope, forwarded so the popup inherits the focus/popup seam.
+   */
+  private openFilterFromKeyboard(globalCol: number, ev: DispatchEvent): void {
+    const ids = this.visibleIds();
+    if (globalCol < 0 || globalCol >= ids.length) return; // empty grid / out of range → no-op
+    const columnId = ids[globalCol];
+    const col = this.columnMap.get(columnId);
+    if (col === undefined || col.filterable === false) return; // unknown or non-filterable → no-op
+    for (const header of this._headers) {
+      const anchor = header.funnelAnchor(columnId);
+      if (anchor !== null) {
+        this.openFilterPopup(columnId, anchor, ev, header);
+        return;
+      }
+    }
+  }
+
   private openFilterPopup(
     columnId: string,
     anchor: { x: number; y: number },

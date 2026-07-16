@@ -3,8 +3,8 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Tracks**: GitHub issue #92
-> **Last Updated**: 2026-07-16 09:24
-> **Progress**: 18/30 tasks (60%)
+> **Last Updated**: 2026-07-16 09:42
+> **Progress**: 26/30 tasks (87%)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -89,18 +89,18 @@ the `ST-19` re-spec are explicit tasks **both in Phase 2** (preflight PF-006 —
 **Reference**: `03-02` · `07 §Keyboard opener` (ST-8…ST-12) · AR-5/AR-9/AR-10/AR-11
 
 ### Step 3.1: Specification tests (red)
-- [ ] 3.1.1 New `filter-entry-point.spec.test.ts`: ST-8 (`Alt+Down` on non-editing body opens the focused column's popup, `ev.handled`), ST-9 (no-op while editing), ST-10 (`filterable:false` ⇒ no-op), ST-11 (blank popup on an unfiltered column), ST-12 (frozen right panel), **+ a plain-`Down` guard: no popup and the row cursor still moves (PF-001)** — `packages/datagrid/test/filter-entry-point.spec.test.ts`
-- [ ] 3.1.2 Verify **red** — no keyboard route exists
+- [x] 3.1.1 New `filter-entry-point.spec.test.ts`: ST-8 (`Alt+Down` on non-editing body opens the focused column's popup, `ev.handled`), ST-9 (no-op while editing), ST-10 (`filterable:false` ⇒ no-op), ST-11 (blank popup on an unfiltered column), ST-12 (frozen right panel), **+ a plain-`Down` guard: no popup and the row cursor still moves (PF-001)** — `packages/datagrid/test/filter-entry-point.spec.test.ts` *(completed 2026-07-16 09:42 — 8 cases incl. body-unit onOpenFilter spy + modifier guard)*
+- [x] 3.1.2 Verify **red** — no keyboard route exists *(completed 2026-07-16 09:37 — 5 new-behavior cases red; invariant guards green)*
 
 ### Step 3.2: Implement (green)
-- [ ] 3.2.1 `EditableGridRows`: add `onOpenFilter?(globalCol, ev)` config + handle `Alt+Down` **before `super.onEvent`** and only when **not editing** (`!this.controller.isEditing()`); forward the live `ev`; `ev.handled = true` **so the base row-down doesn't also fire (PF-001)** — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 3.2.2 `SortHeader`: add a `funnelAnchor(columnId)` helper returning the funnel cell's header-local anchor, and **refactor the mouse path (`onEvent`) to call it too**, so both routes share one anchor (parity) — `packages/datagrid/src/sort-header.ts`
-- [ ] 3.2.3 `grid.ts` + `grid-panels.ts`: **retain `parts.headers` as a field and re-assign it in `rebuildBody` (PF-002)**; thread `onOpenFilter`; map `globalCol` → `columnId` + owning header (from the retained headers), no-op when non-filterable, then call `openFilterPopup(columnId, funnelAnchor, ev, header)` — `packages/datagrid/src/grid.ts`, `grid-panels.ts`
-- [ ] 3.2.4 Verify **green** — ST-8…ST-12 pass
+- [x] 3.2.1 `EditableGridRows`: add `onOpenFilter?(globalCol, ev)` config + handle `Alt+Down` **before `super.onEvent`** and only when **not editing** (`!this.controller.isEditing()`); forward the live `ev`; `ev.handled = true` **so the base row-down doesn't also fire (PF-001)** — `packages/datagrid/src/editable-grid-rows.ts` *(completed 2026-07-16 09:42 — `handleOpenFilter` first in the key block)*
+- [x] 3.2.2 `SortHeader`: add a `funnelAnchor(columnId)` helper returning the funnel cell's header-local anchor, and **refactor the mouse path (`onEvent`) to call it too**, so both routes share one anchor (parity) — `packages/datagrid/src/sort-header.ts` *(completed 2026-07-16 09:42)*
+- [x] 3.2.3 `grid.ts` + `grid-panels.ts`: **retain `parts.headers` as a field and re-assign it in `rebuildBody` (PF-002)**; thread `onOpenFilter`; map `globalCol` → `columnId` + owning header (from the retained headers), no-op when non-filterable, then call `openFilterPopup(columnId, funnelAnchor, ev, header)` — `packages/datagrid/src/grid.ts`, `grid-panels.ts` *(completed 2026-07-16 09:42 — `_headers` field + `openFilterFromKeyboard`; header resolved via `funnelAnchor` returning null off-panel)*
+- [x] 3.2.4 Verify **green** — ST-8…ST-12 pass *(completed 2026-07-16 09:40 — 8/8 spec green; full datagrid suite 308 green)*
 
 ### Step 3.3: Impl tests & verify
-- [ ] 3.3.1 Impl tests: anchor parity (keyboard-opened popup lands where a funnel click would); `Alt+Down` on an empty grid is a no-op (no throw); the in-editor `Alt+Down`→ComboBox path still works; **`Alt+Down` still opens under the correct header after a rebuild (hide/show or reorder) — proves headers are refreshed (PF-002)** — `packages/datagrid/test/filter-entry-point.impl.test.ts`
-- [ ] 3.3.2 Full `yarn verify`
+- [x] 3.3.1 Impl tests: anchor parity (keyboard-opened popup lands where a funnel click would); `Alt+Down` on an empty grid is a no-op (no throw); the in-editor `Alt+Down`→ComboBox path still works; **`Alt+Down` still opens under the correct header after a rebuild (hide/show or reorder) — proves headers are refreshed (PF-002)** — `packages/datagrid/test/filter-entry-point.impl.test.ts` *(completed 2026-07-16 09:42 — 4 cases; freshness proven by keyboard==mouse anchor after a hide-rebuild)*
+- [x] 3.3.2 Full `yarn verify` *(completed 2026-07-16 09:42 — turbo 26/26 green)*
 
 **Deliverables**: keyboard entry point live; both routes share one anchor. **Verify**: `yarn verify`
 

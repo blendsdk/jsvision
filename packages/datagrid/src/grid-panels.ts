@@ -98,6 +98,11 @@ export interface GridBodyDeps<T> {
   quickFilter: boolean;
   /** Quick-filter text sink (empty text ⇒ clear that column's filter). */
   onQuickFilter: (columnId: string, text: string) => void;
+  /**
+   * Open-filter sink for the body's `Alt+Down`: the GLOBAL focused column index + the live envelope.
+   * The container maps the column to its id + owning header and opens the condition popup.
+   */
+  onOpenFilter: (globalCol: number, ev: DispatchEvent) => void;
   /** The editor mount host (the container's absolute overlay). */
   overlay: Group;
   /** The per-cell veto sink. */
@@ -286,6 +291,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       columnOffset: offset,
       totalCols: () => total,
       onCursorEnterPanel: hop,
+      onOpenFilter: deps.onOpenFilter, // Alt+Down → the container resolves the owning header + opens the popup
       mouseColumns: frozen,
       autoScrollColumns: autoScroll,
       panelActive: gridActive,
