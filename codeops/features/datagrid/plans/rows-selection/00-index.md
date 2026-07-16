@@ -16,12 +16,15 @@ a *selection set* — whole records the user has marked — plus the machinery t
 duplicate rows, and to represent an absent value (null) distinctly from an empty string.
 
 Selection is **keyed by `rowKey`** (RD AR-15), so it is stable across sort, filter, and reorder for
-free — a selected row stays selected wherever it moves. It replaces the vestigial single-index
-`selected` signal the container has carried since RD-01 (`grid.ts:233`), which nothing ever set to a
-real value. The paint path already exists: the body's self-contained `draw()` override
-(`editable-grid-rows.ts:443`) computes a per-row role under the precedence **cursor > dirty >
-selected > cellStyle > zebra > normal** — RD-08 only swaps the single-index selection test for a set
-membership test (**zero `@jsvision/ui` change**, AR-1).
+free — a selected row stays selected wherever it moves. It **supersedes** the single-index `selected`
+signal the container has carried since RD-01 (`grid.ts:233`) — which the base `GridRows` sets on every
+plain click (`ui/…/grid-rows.ts:260`→`:330`) and which is a **required, base-owned** config field that
+cannot be removed under zero-ui-change (AR-16). RD-08 keeps `selected` as the base's click sink, adds a
+`selectedKeys` set beside it, and overrides `select()` so a plain click is cursor-only (AR-17). The
+paint path already exists: the body's self-contained `draw()` override (`editable-grid-rows.ts:443`)
+computes a per-row role under the precedence **cursor > dirty > selected > cellStyle > zebra > normal** —
+RD-08 swaps the single-index selection test for a set-membership test at **both** paint sites (`draw()`
+and `paintDirtyMarkers()`, AR-18) (**zero `@jsvision/ui` change**, AR-1).
 
 The plan is phased **data-plane-first** (mirroring RD-05/06/07): the pure `selection.ts` model, then
 the container state + gestures + paint, then the synthetic checkbox/gutter columns, then row CRUD,
@@ -83,7 +86,8 @@ grid.deleteRows([2]);                // removes id:2 and clears it from the sele
 
 | Decision                          | Outcome                                                              | AR   |
 | --------------------------------- | ------------------------------------------------------------------- | ---- |
-| Selection state                   | `selectedKeys: Signal<ReadonlySet<Key>>` + anchor; datagrid-local paint; **zero ui change** | AR-1 |
+| Selection state                   | `selectedKeys: Signal<ReadonlySet<Key>>` + anchor **beside** the kept base `selected` sink; datagrid-local paint at both draw sites; **zero ui change** | AR-1/AR-16/AR-18 |
+| Plain-click + `Space` semantics   | plain click cursor-only (`select()` override); `Space` toggles selection on read-only cells, begin-edit on editable cells | AR-17/AR-19 |
 | Selection defaults                | gestures always live; `selectionMode` default `'multi'`; checkbox + gutter opt-in | AR-2 |
 | Null policy                       | empty→null on a nullable column; non-nullable stores `''`           | AR-3 |
 | Row CRUD + duplicate key          | `fromRows` built-in splice; caller-formed keys; `assignKey` hook (no hook ⇒ no-op + devWarn) | AR-4 |
@@ -99,7 +103,9 @@ tests `selection.spec/impl.test.ts`, `grid-selection.spec.test.ts`, `synthetic-c
 `row-crud.spec.test.ts`, `null-policy.spec.test.ts`; kitchen-sink `rows-selection.story.ts`; a
 datagrid-showcase `rows-selection/` cluster.
 
-**Modified:** `grid.ts` (selection state + CRUD + null wiring), `editable-grid-rows.ts` (set-membership
-paint + gestures), `grid-panels.ts` (synthetic prefix segment), `data-source.ts` (`RowMutations` +
-`fromRows` mutation), `column.ts` (`null?` field), `format.ts`/commit/editor path (null rendering +
-empty→null), `index.ts` (barrel), and the datagrid-showcase `placeholders.ts` + smoke oracle.
+**Modified:** `grid.ts` (selection state beside the kept `selected` sink + CRUD + null wiring),
+`editable-grid-rows.ts` (set-membership paint at both `draw()` + `paintDirtyMarkers()`, a cursor-only
+`select()` override, read-only-cell `Space`-toggle + `Ctrl`/`Shift` gestures), `grid-panels.ts`
+(synthetic prefix segment), `data-source.ts` (`RowMutations` + `fromRows` mutation), `column.ts` (flat
+`nullable?`/`nullDisplay?` fields + accessor null render), `editing.ts` (empty→null commit lowering),
+`index.ts` (barrel), and the datagrid-showcase `placeholders.ts` + smoke oracle.

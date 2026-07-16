@@ -89,6 +89,9 @@ readonly assignKey?: (clone: T, original: T) => T;
   clears `anchorKey` if its row is gone.
 - **`duplicateRow(key)`** — finds the row by key in `display()`; `structuredClone` it; `assignKey(clone,
   original)`; `insertRow(newRow, sourceIndexOf(original) + 1)`. Missing `assignKey` ⇒ devWarn + no-op.
+  `structuredClone` throws on a non-cloneable row (one holding functions, class instances, etc.), so
+  either document "rows must be structured-cloneable" in the `duplicateRow` JSDoc, or wrap the clone in
+  `try/catch` → `devWarn` + no-op (never a partial insert). Add an impl test for a non-cloneable row.
 
 ### Security (AR-9 / RD AR-16/25/26)
 

@@ -50,9 +50,13 @@ So a null renders `nullDisplay` (default `''`), a real value renders as before. 
 every render path (the engine cell, the datagrid body's `format` echo) uniformly. The `nullDisplay`
 string still passes the `sanitize` boundary like any rendered text (RD AR-25).
 
-### Editing (the begin-edit / commit path, `editable-grid-rows.ts` → `commitCell`)
+### Editing (the commit lowering, `editing.ts` `createEditController.commit()`)
 
-On commit, the edited text is turned into a value:
+The editor text is lowered to a value where `parse` runs — `editing.ts:274`
+(`const value = tcol.parse!(field())`), inside the edit controller's `commit()`. **Not** `commitCell`
+(`commit.ts`, the veto/persist sink, which never parses) and **not** `editable-grid-rows.ts` (AR-20).
+The typed column the controller holds must expose `nullable` for this branch. On commit, the edited
+text is turned into a value:
 
 - **`nullable` column + empty text (`''`)** → the committed value is **`null`** (bypasses `parse`);
   `set(row, null)` writes it; `nullDisplay` renders it (AR-3).
@@ -68,9 +72,12 @@ already-null cell and re-committing keeps it null.
 
 ## Integration Points
 
-- **With RD-04 formatting:** `nullDisplay` is resolved in the accessor, upstream of `format`, so a
-  custom `render` still runs for non-null values; a null value shows `nullDisplay` (the render hook is
-  for value glyphs, not the null placeholder).
+- **With RD-04 formatting:** `nullDisplay` is resolved in the engine **accessor** (`column.ts:171`),
+  upstream of `format`/`String`, so the default text path shows `nullDisplay` for a null. A column with
+  a custom **`render`** hook bypasses the accessor entirely (the body's render path passes the raw
+  `value`, possibly `null`, to `render` — `editable-grid-rows.ts:513`–`529`), so a `render` column
+  **owns its own null handling** and receives the raw `null` (it does *not* automatically show
+  `nullDisplay`). AR-21. `nullable` (the empty→null commit) is independent of `render`.
 - **With RD-05 sorting:** null ordering stays governed by `nulls?`/`defaultCompare` — unchanged.
 - **With `04` CRUD:** an inserted row may carry null fields; they render via `nullDisplay`.
 - **With `onCommit` (RD AR-16):** a null commit goes through `commitCell` like any edit; the sink can

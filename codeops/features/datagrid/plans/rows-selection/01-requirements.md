@@ -13,9 +13,10 @@ in/out boundary and the acceptance criteria it commits to, with the gate decisio
 - **Row-oriented selection** — single + multi selection of whole records, keyed by `rowKey`;
   reactive `selectedKeys(): ReadonlySet<Key>`; a `selectionMode: 'single' | 'multi'` option
   (default `'multi'`, AR-2). [RD-08 Must; AR-1/AR-2/AR-9]
-- **Selection gestures** — `Space` toggles the focused row; `Ctrl`+click toggles a row; `Shift`+click
-  and `Shift`+`↑`/`↓` extend a contiguous range from the anchor; a checkbox-column click toggles; the
-  header checkbox selects/clears all **displayed** rows. [RD AR-21; AR-7]
+- **Selection gestures** — `Space` toggles the focused row **on a read-only cell** (on an editable cell
+  `Space` keeps its begin-edit meaning; AR-19); `Ctrl`+click toggles a row; `Shift`+click and
+  `Shift`+`↑`/`↓` extend a contiguous range from the anchor; a checkbox-column click toggles; the header
+  checkbox selects/clears all **displayed** rows. A plain click is cursor-only (AR-17). [RD AR-21; AR-7]
 - **Selected-row highlight** — selected rows paint the `selected` role under the fixed precedence
   **cursor > dirty > selected > cellStyle > zebra > normal** (shared with RD-04). [RD-08 Must; AR-13]
 - **Selection checkbox column** — optional (`checkboxColumn?`, default off) leading `[ ]`/`[x]` box +
@@ -26,8 +27,9 @@ in/out boundary and the acceptance criteria it commits to, with the gate decisio
   data-source mutation seam; `fromRows` splices the signal in-memory; deleting rows clears them from
   the selection; the caller owns key generation (`assignKey` hook for duplicate). [RD-08 Must;
   AR-4/AR-12]
-- **Null policy** — a per-column `null?: { nullable: boolean; display?: string }`; a null value
-  renders `display` (default `''`), distinct from an empty string; an editor on a nullable column
+- **Null policy** — per-column flat fields `nullable?: boolean` + `nullDisplay?: string` (AR-15, a
+  plan-local rename of the RD's literal `null?:{…}` to avoid the `nulls?` collision); a null value
+  renders `nullDisplay` (default `''`), distinct from an empty string; an editor on a nullable column
   commits `null` for an empty value. [RD-08 Must; AR-3]
 - **Kitchen-sink story** + **datagrid-showcase cluster** replacing the RD-08 placeholder. [AR-8]
 - **Security** — CRUD/selection never mutate outside the caller's `RowMutations`; all rendered text
@@ -62,8 +64,9 @@ in/out boundary and the acceptance criteria it commits to, with the gate decisio
 
 ## Acceptance criteria (from RD-08, committed here)
 
-1. `Space` toggles the focused row's membership in `selectedKeys()`; `single` mode replaces the prior
-   selection, `multi` accumulates. *(AC-1 → Phase 2)*
+1. `Space` on a **read-only** focused cell toggles the focused row's membership in `selectedKeys()`
+   (`single` mode replaces the prior selection, `multi` accumulates); on an **editable** cell `Space`
+   keeps its begin-edit meaning and leaves the selection unchanged (AR-19). *(AC-1 → Phase 2)*
 2. `Shift`+`↓` from an anchor selects the contiguous range in display order; after re-sorting, the
    same row **keys** remain selected (not the same indices). *(AC-2 → Phase 2)*
 3. The header checkbox shows none/some/all tri-state and toggles all **displayed** rows; per-row
