@@ -108,10 +108,12 @@ export class QuickFilterRow<T> extends Group {
   }
 
   /**
-   * Place each input under its column: an absolute rect at `{ x: starts[c] - indent, y: 0, width }`
-   * where `width` is one cell narrower than the column so the divider column shows through — or the full
-   * column width in compact density (no divider to leave room for). A negative x pans the input off the
-   * left edge, where the band's bounds clip it.
+   * Place each input under its column: an absolute rect at `{ x: starts[c] - indent, y: 0, width:
+   * widths[c] }` — the column's full content width, so each input is flush with its header title and the
+   * in-cell editor below it. The inter-column divider occupies its own reserved cell (already excluded
+   * from `widths[c]` by `apportionColumns`), so nothing is subtracted here; the `dividers` flag only
+   * selects the apportionment, keeping the band aligned with a normal or compact header/body. A negative
+   * x pans the input off the left edge, where the band's bounds clip it.
    */
   private reposition(): void {
     const width = this.bounds.width;
@@ -121,7 +123,7 @@ export class QuickFilterRow<T> extends Group {
     const indent = Math.min(maxIndent, Math.max(0, this.indent()));
     this.inputs.forEach((input, c) => {
       const x = geom.starts[c] - indent;
-      const w = Math.max(0, geom.widths[c] - (this.dividers ? 1 : 0));
+      const w = Math.max(0, geom.widths[c]);
       input.layout = { position: 'absolute', rect: { x, y: 0, width: w, height: 1 } };
     });
   }
