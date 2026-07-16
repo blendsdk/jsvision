@@ -13,6 +13,7 @@ import { test, expect } from 'vitest';
 import { Group, Input, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 import { column } from '../src/column.js';
+import type { GridColumn } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import { EditableDataGrid } from '../src/grid.js';
 import { QuickFilterRow } from '../src/quick-filter-row.js';
@@ -37,9 +38,9 @@ const COLUMNS = [
 ];
 
 /** Mount an `EditableDataGrid` (optionally with the quick-filter band) and return it + a frame pump. */
-function buildGrid(opts: { quickFilter?: boolean } = {}) {
+function buildGrid(opts: { quickFilter?: boolean; columns?: GridColumn<Sale>[] } = {}) {
   const source = fromRows(signal(SALES.slice()), { rowKey: (r) => r.region });
-  const grid = new EditableDataGrid<Sale>({ columns: COLUMNS, source, quickFilter: opts.quickFilter });
+  const grid = new EditableDataGrid<Sale>({ columns: opts.columns ?? COLUMNS, source, quickFilter: opts.quickFilter });
   grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
   const root = new Group();
   root.add(grid);
@@ -73,6 +74,43 @@ test('ST-17: the quick-filter band exists only with quickFilter:true, one Input 
   expect(bands.length).toBe(1); // exactly one band when on
   const inputs = bands[0].children.filter((v): v is Input => v instanceof Input);
   expect(inputs.length).toBe(COLUMNS.length); // one Input per column
+});
+
+/** The quick-filter Inputs of a mounted grid, in column order (non-filterable columns contribute none). */
+function bandInputs(grid: EditableDataGrid<Sale>): Input[] {
+  const band = descendants(grid).find((v): v is QuickFilterRow<Sale> => v instanceof QuickFilterRow);
+  expect(band).toBeDefined();
+  return band!.children.filter((v): v is Input => v instanceof Input);
+}
+
+test('ST-EP-13: a filterable:false column omits its quick-filter Input; other columns keep their geometry', () => {
+  // Three fixed-width columns; the middle one opts out of filtering. A baseline (all filterable) and a
+  // variant (middle non-filterable) share identical widths, so any geometry shift on the survivors shows.
+  const make = (qtyFilterable: boolean): GridColumn<Sale>[] => [
+    column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 8 }),
+    column<Sale, number>({
+      id: 'qty',
+      title: 'Qty',
+      value: (r) => r.qty,
+      width: 6,
+      filterable: qtyFilterable ? undefined : false,
+    }),
+    column<Sale, string>({ id: 'city', title: 'City', value: (r) => r.region, width: 8 }),
+  ];
+
+  const baseline = bandInputs(buildGrid({ quickFilter: true, columns: make(true) }).grid);
+  const variant = bandInputs(buildGrid({ quickFilter: true, columns: make(false) }).grid);
+
+  expect(baseline.length).toBe(3); // every column filterable → three inputs
+  expect(variant.length).toBe(2); // qty opts out → its input is omitted
+
+  const qtyX = baseline[1].layout.rect?.x; // qty's slot in the all-filterable baseline
+  expect(variant.some((i) => i.layout.rect?.x === qtyX)).toBe(false); // nothing rendered under the non-filterable column
+
+  // The trailing city column keeps its position + width — the omitted input leaves a nullable slot, so
+  // downstream columns stay index-parallel and their geometry is unchanged.
+  expect(variant[1].layout.rect?.x).toBe(baseline[2].layout.rect?.x);
+  expect(variant[1].layout.rect?.width).toBe(baseline[2].layout.rect?.width);
 });
 
 test('ST-18: typing into a column Input sets a text/contains filter; clearing the Input removes it', () => {
