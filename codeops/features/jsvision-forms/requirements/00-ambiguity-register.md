@@ -167,3 +167,38 @@ package `@jsvision/forms`. Async validation, async loading, the `formDialog` hel
 - [x] **PF-004 / PF-005 (observations) applied** — `load`-vs-in-flight-`submit` interleaving noted as an
       app-composition concern; the loader's full-record contract (a missing key blanks the field +
       baseline) documented on the raw-record FR.
+
+## RD-08 — formDialog() + Modal Submit-Gate (2026-07-16 extension)
+
+> Zero-Ambiguity Gate for RD-08 (`RD-08-form-dialog-modal-submit-gate.md`). AR-54…AR-61. The five
+> semantically-pivotal forks (AR-54 ownership, AR-56 OK-gate model, AR-57 `submitting()`, AR-58 save
+> location, AR-59 load-scope) are explicit user decisions (2026-07-16, AskUserQuestion); AR-55/AR-60/AR-61
+> are recommendations derived from them and from the codebase reconnaissance (the `@jsvision/ui` modal
+> machinery — `dialog.ts` / `event-loop.ts` / `message-box.ts` — and `openers.ts`), confirmed on review.
+> Grounding surfaced the load-bearing seam: `Dialog.valid()` is **synchronous + un-awaited**
+> (`dialog.ts:164,222`) but `form.submit()` is **async** (`create-form.ts:213`), which forces the OK-gate
+> reconciliation in AR-56.
+
+| AR | Decision | Resolution | Status |
+|----|----------|------------|--------|
+| AR-54 | Placement + form ownership | **`formDialog` lives in `@jsvision/forms` and creates, owns, and disposes the form**; a `body(form)` builder binds widgets to `form.field(...)`. `@jsvision/ui` cannot import `createForm` (layering), so placement is forced; owning the form lets the helper return coerced values and removes the per-dialog-form leak (`create-form.ts:35`). Rejected: helper in `ui` taking a `Form` (ui↛forms); caller passes a pre-built form (leak footgun). | ✅ Resolved (user) |
+| AR-55 | Signature + result shape | **`formDialog(host, options): Promise<z.output<S> \| null>`** — coerced `values()` (captured in the gate) on OK, `null` on cancel/Esc/close-box/quit-close. `host` is the existing `ModalDialogHost` (`message-box.ts:22`). Forced by AR-54: a disposed-on-close form can't be read by the caller, so the helper returns the values (mirrors `openFile`'s `dlg.result()` payload, `openers.ts:75`). Rejected: bare `'ok'\|'cancel'` command. | ✅ Resolved (derived) |
+| AR-56 | OK-gate mechanism | **The dialog intercepts the `ok` command and `await`s `form.submit(onSubmit ?? noop)` out-of-band, driving `modalHost.endModal(Commands.ok)` itself on `true`** (capturing the host ref across the await — the base `handleTerminating` nulls it, `dialog.ts:224`); on `false` it stays open (errors already revealed). The inherited **sync `valid(command)` is repurposed to `command === cancel \|\| form.isValid()`** so the app-quit veto (`event-loop.ts:332`) still works — sync/optimistic, **cannot** force-run async validators (accepted, documented limitation). Rejected: the native sync `valid()` child-sweep as the OK gate — it bypasses `submit()`, defeating RD-06. | ✅ Resolved (user) |
+| AR-57 | `submitting()` signal | **Add `form.submitting(): boolean`** to `Form` — `true` while `submit()` is in flight (validators + `onValid`), form-level, independent of `isValid()`/`loading()`/`validating()`. Set true at `submit()` entry, false on every return via `try/finally` (`create-form.ts:213`). Blocks double-submit, drives the OK busy state, reusable outside a dialog. **Resolves RD-07's AR-45 deferral.** Rejected: a dialog-local flag only (not reusable). | ✅ Resolved (user) |
+| AR-58 | Save location | **Optional in-modal `onSubmit(values): void \| Promise<void>`** runs as `submit`'s `onValid` inside the gate (so `submitting()` spans validators + save). Success → close + resolve values. **`onSubmit` rejection → dialog stays open, OK re-enables, no minted error UI** (app surfaces failure via its own body widget). Omitted → validate + collect (resolve values; caller saves after). `submit()` awaits `onValid` precisely so a failed save can veto the close. Rejected: collect-and-return only (a save failure lands after the dialog is gone). | ✅ Resolved (user) |
+| AR-59 | Load-before-show | **Out of scope for RD-08.** `formDialog` shows the body immediately; open-to-edit is caller-composed — `await form.load(...)` (RD-07) before, or a body reading `form.loading()`. Keeps RD-08 the submit-gate bridge; avoids importing the load lifecycle + failure path. Corrects RD-07's forward reference (the dialog disposes the load, does not own it). Rejected: a `load:` loader + "Loading…" body inside `formDialog`. | ✅ Resolved (user) |
+| AR-60 | Buttons + double-submit guard | **Fixed OK + Cancel** via `okCancelButtons()` (`buttons.ts:88`), OK `default: true` (Enter), optional `okText` override, Cancel fixed. **OK `disabled: () => form.submitting()`** and the interceptor **guards re-entrancy** (an `ok` while `submitting()` is ignored) so Enter/double-click can't double-submit. No cancel-with-dirty confirm (app wraps if needed). Rejected: configurable button sets (later concern). | ✅ Resolved (derived) |
+| AR-61 | Repo gates + security | **Kitchen-sink `forms/dialog` story + smoke; ACs headlessly testable** via `createEventLoop` + a fake `{loop, desktop:{addWindow,removeWindow}}` host + `loop.emitCommand(Commands.ok/cancel)` (mirroring `openers.impl.test.ts`). The engine performs **no I/O** (network lives in the author's `onSubmit`), mints no message, and adds **no render path** — bound fields render through the existing control-byte sanitisation. | ✅ Resolved (derived) |
+
+### Gate status (RD-08) — ✅ PASSED (2026-07-16)
+
+- [x] The five semantically-pivotal forks (AR-54 ownership, AR-56 OK-gate model, AR-57 `submitting()`,
+      AR-58 save location, AR-59 load-scope) resolved by explicit user decision (AskUserQuestion, 2026-07-16).
+- [x] Derived items (AR-55 signature/result, AR-60 buttons/guard, AR-61 gates/security) recorded with
+      codebase-grounded rationale — the real modal machinery (`dialog.ts`/`event-loop.ts`/`message-box.ts`),
+      `openers.ts` as the structural analog, and `openers.impl.test.ts` as the headless test harness.
+- [x] The load-bearing sync-`valid()`-vs-async-`submit()` seam surfaced during grounding and drove AR-56;
+      the accepted quit-veto limitation (sync `isValid()` only) is documented, not an unresolved gap.
+- [x] Resolves RD-07's AR-45 deferral of `submitting()` (AR-57). Load-before-show is an explicit
+      out-of-scope decision (AR-59), not a gap.
+- [x] Zero deferred within-scope items — every RD-08 ambiguity has a concrete answer.
