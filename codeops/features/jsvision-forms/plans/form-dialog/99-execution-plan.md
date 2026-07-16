@@ -2,7 +2,7 @@
 
 > **Feature**: jsvision-forms/RD-08 — `formDialog()` + modal submit-gate
 > **CodeOps Skills Version**: 3.8.0
-> **Progress**: 6/18 tasks (33%)
+> **Progress**: 15/18 tasks (83%) — Phases 1–2 complete ✅
 > **Last Updated**: 2026-07-16
 
 Specification-first ordering is non-negotiable within every phase: **spec tests → verify red →
@@ -38,7 +38,7 @@ the barrel/surface lock is unchanged in this phase (`submitting()` is a type-onl
       `loading()`) with prose JSDoc (no per-member `@example`) — [03-02](03-02-submitting.md). _(2026-07-16)_
 - [x] **1.5** Verify **green**: ST-D-SUB1…3 pass. _(3/3 green)_
 - [x] **1.6** Full **verify**: `yarn verify` green. _(26/26 turbo tasks; all tests + check:docs/check-plugin green)_
-- [ ] **1.7** Commit via **/gitcmp** (`feat(forms): add form.submitting() in-flight signal`).
+- [x] **1.7** Commit via **/gitcmp** (`feat(forms): add form.submitting() in-flight signal`). _(0f750377, pushed 2026-07-16)_
 
 ---
 
@@ -47,25 +47,25 @@ the barrel/surface lock is unchanged in this phase (`submitting()` is a type-onl
 Spec oracles: ST-D1…D10 + ST-D-SEC ([07](07-testing-strategy.md)) → RD-08 AC #2–#11, #13. Adds the new
 module + the barrel export + the surface-lock bump.
 
-- [ ] **2.1** Append the spec oracles ST-D1…D10 to `form-dialog.spec.test.ts` and write ST-D-SEC in
+- [x] **2.1** Append the spec oracles ST-D1…D10 to `form-dialog.spec.test.ts` and write ST-D-SEC in
       `form-dialog-security.spec.test.ts`, using the `createEventLoop` headless host (AR-PL5,
       [07](07-testing-strategy.md)). Update `surface.impl.test.ts` to expect **6** runtime values
-      (add `'formDialog'`, prose 5→6) — AR-PL3.
-- [ ] **2.2** Verify **red**: the ST-D* oracles + the surface lock fail (`formDialog` absent).
-- [ ] **2.3** Create `packages/forms/src/form-dialog.ts`: the `FormDialogOptions<S, I>` interface, the
+      (add `'formDialog'`, prose 5→6) — AR-PL3. _(2026-07-16)_
+- [x] **2.2** Verify **red**: the ST-D* oracles + the surface lock fail (`formDialog` absent). _(13 failed / 3 passed — the ST-D-SUB oracles stay green)_
+- [x] **2.3** Create `packages/forms/src/form-dialog.ts`: the `FormDialogOptions<S, I>` interface, the
       internal `class FormDialog extends Dialog` overriding `handleTerminating` / `resolveCancel` /
       `valid` + the async OK gate (try/caught `await form.submit`, `captured`, `endModal`), and the
       `formDialog` factory (create form → build subclass + body + OK(direct)/Cancel → `addWindow` →
       `execView` → map command → `finally { removeWindow; form.dispose() }`) — [03-01](03-01-form-dialog.md),
-      AR-PL1/PL7.
-- [ ] **2.4** Export from the barrel (`index.ts`): `formDialog` (runtime) + `FormDialogOptions` (type) —
-      [03-02](03-02-submitting.md), AR-PL3.
-- [ ] **2.5** Add the class/function-level `@example`s to `formDialog` + `FormDialogOptions` (open → edit
-      → OK-with-values / Cancel-null) for `check:docs` — RD-08 AC #14, [03-01](03-01-form-dialog.md).
-- [ ] **2.6** Verify **green**: ST-D1…D10 + ST-D-SEC + the updated surface lock pass.
-- [ ] **2.7** Impl tests: `form-dialog.impl.test.ts` for internals/edges not covered by spec (button
-      placement/`default` flag, first-focusable focus, the re-entrancy seal internals) — [07](07-testing-strategy.md).
-- [ ] **2.8** Full **verify**: `yarn verify` green **+** banned-ref grep over `packages/forms/src` clean.
+      AR-PL1/PL7. _(2026-07-16; PF-001 mounted-guard finally, PF-002 public result() applied)_
+- [x] **2.4** Export from the barrel (`index.ts`): `formDialog` (runtime) + `FormDialogOptions` (type) —
+      [03-02](03-02-submitting.md), AR-PL3. _(2026-07-16)_
+- [x] **2.5** Add the class/function-level `@example`s to `formDialog` + `FormDialogOptions` (open → edit
+      → OK-with-values / Cancel-null) for `check:docs` — RD-08 AC #14, [03-01](03-01-form-dialog.md). _(formDialog @example; FormDialogOptions is a type → check:docs-exempt)_
+- [x] **2.6** Verify **green**: ST-D1…D10 + ST-D-SEC + the updated surface lock pass. _(16/16)_
+- [x] **2.7** Impl tests: `form-dialog.impl.test.ts` for internals/edges not covered by spec (button
+      placement/`default` flag, first-focusable focus, the re-entrancy seal internals) — [07](07-testing-strategy.md). _(3 impl tests; 18/18 total)_
+- [x] **2.8** Full **verify**: `yarn verify` green **+** banned-ref grep over `packages/forms/src` clean. _(26/26 turbo; grep clean; prettier auto-fixed form-dialog.ts wrapping)_
 - [ ] **2.9** Commit via **/gitcmp** (`feat(forms): formDialog() modal submit-gate bridge`).
 
 ---
