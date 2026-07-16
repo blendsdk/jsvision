@@ -61,6 +61,13 @@ export type { FreezePartition, FreezeSpec } from './column-model.js';
 export { sortRowsMulti } from './sort.js';
 export type { SortKey, SortDir } from './sort.js';
 
+// Selection model — the pure, view-free set-membership ops (`toggleKey`, `selectRange`, `selectAll`,
+// `triState`) every selection gesture shares, plus the `Key`/`SelectionMode`/`TriState` shapes. The
+// data-plane twin of the sort/filter models: the container wraps these in a `selectedKeys` signal + an
+// anchor key. Selection is keyed by `rowKey`, so it survives re-sort/re-filter with no reconcile.
+export { toggleKey, selectRange, selectAll, triState } from './selection.js';
+export type { Key, SelectionMode, TriState } from './selection.js';
+
 // The sort header — the datagrid's own multi-key sticky header View (arrows + priority digits + the
 // per-column filter funnel, columnId-keyed, click-to-sort / click-to-open-filter). The container
 // mounts one internally; it is exported so a bespoke grid (or a later frozen-panel split) can bind

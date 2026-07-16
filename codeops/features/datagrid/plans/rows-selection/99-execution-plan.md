@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-16 01:51
-> **Progress**: 0/50 tasks (0%)
+> **Last Updated**: 2026-07-16 14:17
+> **Progress**: 7/50 tasks (14%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -44,17 +44,17 @@ selection paint reuses the datagrid body's own `draw()` override.
 **Reference**: `03-01` · `07 §Selection model` (ST-1…ST-7) · AR-9/AR-2/AR-10
 
 ### Step 1.1: Specification tests (red)
-- [ ] 1.1.1 Write `selection.spec.test.ts` (ST-1 toggle add/remove; ST-2 single replace; ST-3/ST-4 range forward+backward; ST-5 selectAll+clear; ST-6 triState none/some/all; ST-7 single-collapse + stale anchor) — `packages/datagrid/test/selection.spec.test.ts`
-- [ ] 1.1.2 Verify **red** — no `selection.ts` yet
+- [x] 1.1.1 Write `selection.spec.test.ts` (ST-1 toggle add/remove; ST-2 single replace; ST-3/ST-4 range forward+backward; ST-5 selectAll+clear; ST-6 triState none/some/all; ST-7 single-collapse + stale anchor) — `packages/datagrid/test/selection.spec.test.ts` (completed: 2026-07-16 14:14)
+- [x] 1.1.2 Verify **red** — no `selection.ts` yet (completed: 2026-07-16 14:14 — import of `../src/selection.js` fails to resolve)
 
 ### Step 1.2: Implement (green)
-- [ ] 1.2.1 Create `selection.ts`: `Key`/`SelectionMode`/`TriState` types + pure `toggleKey`/`selectRange`/`selectAll`/`triState` (JSDoc + `@example`) — `packages/datagrid/src/selection.ts`
-- [ ] 1.2.2 Barrel: export the public types + pure ops — `packages/datagrid/src/index.ts`
-- [ ] 1.2.3 Verify **green** — ST-1…ST-7 pass
+- [x] 1.2.1 Create `selection.ts`: `Key`/`SelectionMode`/`TriState` types + pure `toggleKey`/`selectRange`/`selectAll`/`triState` (JSDoc + `@example`) — `packages/datagrid/src/selection.ts` (completed: 2026-07-16 14:15)
+- [x] 1.2.2 Barrel: export the public types + pure ops — `packages/datagrid/src/index.ts` (completed: 2026-07-16 14:15)
+- [x] 1.2.3 Verify **green** — ST-1…ST-7 pass (completed: 2026-07-16 14:15)
 
 ### Step 1.3: Impl tests & verify
-- [ ] 1.3.1 Write `selection.impl.test.ts` (absent-key toggle single vs multi; anchor == target; whole-display range; empty-set triState) — `packages/datagrid/test/selection.impl.test.ts`
-- [ ] 1.3.2 Full `yarn verify`
+- [x] 1.3.1 Write `selection.impl.test.ts` (absent-key toggle single vs multi; anchor == target; whole-display range; empty-set triState) — `packages/datagrid/test/selection.impl.test.ts` (completed: 2026-07-16 14:17)
+- [x] 1.3.2 Full `yarn verify` (completed: 2026-07-16 14:17 — 30/30 turbo tasks + check-plugin PASS, TUI_SKIP_PERF=1)
 
 **Deliverables**: pure selection model green; barrel updated. **Verify**: `yarn verify`
 
@@ -65,21 +65,21 @@ selection paint reuses the datagrid body's own `draw()` override.
 **Reference**: `03-02` · `07 §Container selection` (ST-8…ST-12) · AR-1/AR-2/AR-9/AR-10/AR-13
 
 ### Step 2.1: Specification tests (red)
-- [ ] 2.1.1 Write `grid-selection.spec.test.ts` (ST-8 Space toggle single/multi; ST-9 Shift range; ST-10 keys survive re-sort; ST-11 selected-role paint + precedence; ST-12 Ctrl+click toggle) — `packages/datagrid/test/grid-selection.spec.test.ts`
+- [ ] 2.1.1 Write `grid-selection.spec.test.ts` (ST-8 Space toggle on a read-only cell single/multi; **ST-8b Space on an editable cell begins edit, selection unchanged; ST-8c plain click is cursor-only, selection unchanged**; ST-9 Shift range; ST-10 keys survive re-sort; ST-11 selected-role paint + precedence; ST-12 Ctrl+click toggle) — `packages/datagrid/test/grid-selection.spec.test.ts`
 - [ ] 2.1.2 Verify **red**
 
 ### Step 2.2: Implement (green)
-- [ ] 2.2.1 `grid.ts`: add `selectedKeys = signal<ReadonlySet<Key>>(new Set())` + `anchorKey` + `selectionMode` (from `opts.selectionMode ?? 'multi'`); **remove** the vestigial `selected = signal(-1)` and the selection half of the sort/filter reconcile (a key set survives with no reconcile, AR-10) — `packages/datagrid/src/grid.ts`
-- [ ] 2.2.2 `editable-grid-rows.ts`: body config takes `selectedKeys: Signal<ReadonlySet<Key>>` (replacing `selected: Signal<number>`); draw role becomes `selectedKeys.has(rowKey(row))` (`:480`–`:492`), feeding `rowOwns` + `CellState.selected` unchanged (AR-13); repaint binds `selectedKeys` — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 2.2.3 `editable-grid-rows.ts`: selection gestures in `onEvent` — intercept `Space` (toggle, **before** the base activate), `Ctrl`+click, `Shift`+click, `Shift`+`↑`/`↓` → injected `onToggleRow`/`onRangeToRow` callbacks; plain click keeps cursor semantics (single mode also selects) — `packages/datagrid/src/editable-grid-rows.ts`
+- [ ] 2.2.1 `grid.ts`: add `selectedKeys = signal<ReadonlySet<Key>>(new Set())` + `anchorKey` + `selectionMode` (from `opts.selectionMode ?? 'multi'`); **keep** `selected = signal(-1)` (the base's required, base-written click sink — removing it needs a ui change, forbidden by AR-1; AR-16); **remove only the selection half** of the sort/filter reconcile (the `selAnchor` lines at `:890`/`913`/`937`/`942`; keep the focus half) — a key set survives with no reconcile (AR-10) — `packages/datagrid/src/grid.ts`
+- [ ] 2.2.2 `editable-grid-rows.ts`: body config **adds** `selectedKeys: Signal<ReadonlySet<Key>>` **beside** the kept base `selected: Signal<number>` (AR-16); migrate **both** paint sites to `selectedKeys.has(rowKey(row))` — `draw()` role at `:480`–`:492` (feeding `rowOwns`/`CellState.selected` unchanged, AR-13) **and** `paintDirtyMarkers()` at `:581` (uses `rk` already in scope at `:568`) (AR-18); **override `select()`** to a cursor-only no-op so the base's per-click `selected.set(index)` no longer highlights (AR-17); repaint binds `selectedKeys` — `packages/datagrid/src/editable-grid-rows.ts`
+- [ ] 2.2.3 `editable-grid-rows.ts`: selection gestures in `onEvent` — `Space` toggles selection **only on a read-only focused cell** (on an editable cell `tryBeginEdit` keeps `Space`=begin-edit, `:318`, untouched; AR-19), `Ctrl`+click, `Shift`+click, `Shift`+`↑`/`↓` → injected `onToggleRow`/`onRangeToRow` callbacks; plain click is cursor-only (no selection change, via the `select()` override) — `packages/datagrid/src/editable-grid-rows.ts`
 - [ ] 2.2.4 `grid.ts`: wire the callbacks to the pure ops (`rowIndex`→key via `display()`; `toggleKey`/`selectRange`; set/clear `anchorKey`); add the public API (`selectedKeys`/`selectRow`/`toggleRow`/`selectRange`/`selectAllDisplayed`/`clearSelection`) + the `selectionMode` option with `@example` — `packages/datagrid/src/grid.ts`, `index.ts`
 - [ ] 2.2.5 Verify **green** — ST-8…ST-12 pass (AC-1, AC-2, AC-4)
 
 ### Step 2.3: Impl tests & verify
-- [ ] 2.3.1 Write `grid-selection.impl.test.ts` (anchor defaults to the focused row; single-mode Ctrl/Shift collapse to one key; selection highlight spans frozen panels; **`grid.ts` line count checked ≤ ~1050 — extract a helper if exceeded, AR-6**) — `packages/datagrid/test/grid-selection.impl.test.ts`
+- [ ] 2.3.1 Write `grid-selection.impl.test.ts` (anchor defaults to the focused row; single-mode Ctrl/Shift collapse to one key; selection highlight spans frozen panels; **a dirty `•` on a selected row keeps the `listSelected` background — the `paintDirtyMarkers` second site, AR-18**; **a plain click leaves `selectedKeys` unchanged — the `select()` override, AR-17**; **`grid.ts` line count checked ≤ ~1050 — extract a helper if exceeded, AR-6**) — `packages/datagrid/test/grid-selection.impl.test.ts`
 - [ ] 2.3.2 Full `yarn verify`
 
-**Deliverables**: reactive multi/single selection + gestures + `selected`-role paint (AC-1/AC-2/AC-4); the single-index `selected` retired. **Verify**: `yarn verify`
+**Deliverables**: reactive multi/single selection + gestures + `selected`-role paint at both sites (AC-1/AC-2/AC-4); base `selected` kept as the click sink (AR-16), datagrid selection driven by `selectedKeys` with a cursor-only `select()` override (AR-17). **Verify**: `yarn verify`
 
 ---
 
@@ -122,7 +122,7 @@ selection paint reuses the datagrid body's own `draw()` override.
 - [ ] 4.2.4 Verify **green** — ST-16…ST-18 + ST-21 (mutation) pass (AC-5)
 
 ### Step 4.3: Impl tests & verify
-- [ ] 4.3.1 Write `row-crud.impl.test.ts` (insert under an active client sort lands by value; delete of a non-selected key leaves the selection intact; read-only source no-ops) — `packages/datagrid/test/row-crud.impl.test.ts`
+- [ ] 4.3.1 Write `row-crud.impl.test.ts` (insert under an active client sort lands by value; delete of a non-selected key leaves the selection intact; read-only source no-ops; **`duplicateRow` on a non-structured-cloneable row → devWarn + no-op, no partial insert, AR-21/PF-008**) — `packages/datagrid/test/row-crud.impl.test.ts`
 - [ ] 4.3.2 Full `yarn verify`
 
 **Deliverables**: insert/delete/duplicate via the mutation seam; delete de-selects (AC-5); no mutation outside `RowMutations` (AC-9 mutation half). **Verify**: `yarn verify`
@@ -139,7 +139,7 @@ selection paint reuses the datagrid body's own `draw()` override.
 
 ### Step 5.2: Implement (green)
 - [ ] 5.2.1 `column.ts`: add `readonly nullable?`/`nullDisplay?` to `GridColumn`; `toEngineColumn` accessor renders `nullDisplay ?? ''` for a nullish value **before** `format`/`String` — `packages/datagrid/src/column.ts`
-- [ ] 5.2.2 Edit/commit path (`editable-grid-rows.ts` → `commitCell`): an empty editor value on a `nullable` column commits `null` (bypasses `parse`); non-nullable keeps today's behavior — `packages/datagrid/src/editable-grid-rows.ts`
+- [ ] 5.2.2 Commit lowering in the edit controller (`editing.ts` `createEditController.commit()`, at the `tcol.parse!(field())` call `:274` — **not** `commitCell`/`editable-grid-rows.ts`, AR-20): an empty editor value (`''`) on a `nullable` column commits `null` (bypasses `parse`); non-nullable keeps today's behavior. Thread `nullable` onto the typed column the controller reads — `packages/datagrid/src/editing.ts`, `column.ts`
 - [ ] 5.2.3 Barrel/docs for `nullable`/`nullDisplay` + `@example` — `packages/datagrid/src/index.ts`, `column.ts`
 - [ ] 5.2.4 Verify **green** — ST-19, ST-20 pass (AC-6)
 
