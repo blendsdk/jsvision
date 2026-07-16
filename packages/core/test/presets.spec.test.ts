@@ -25,6 +25,7 @@ import {
   horizonTheme,
   defaultTheme,
   toRgb,
+  PRESET_SEEDS,
   type Theme,
   type ThemeRole,
 } from '../src/engine/index.js';
@@ -92,6 +93,72 @@ test('ST-22: retro presets pin their signature backdrop and accent', () => {
   expect(workbenchTheme.button.bg, 'Workbench orange').toBe('#ff8800');
   expect(horizonTheme.desktop.bg, 'enterprise shell blue').toBe('#354a5f');
   expect(horizonTheme.button.bg, 'corporate blue').toBe('#0a6ed1');
+});
+
+// ── ST-6: curated-preset hotkey parity — data-driven over every curated preset ──────────────────────
+// Each curated preset must render byte-identical hotkeys after the accelerator decouple: its
+// accelerator-fed roles equal its historical `warning`, its menuAccelerator-fed roles equal its
+// historical `danger`. A forgotten/transposed pin is type-valid (overrides is Partial<ThemeColors>)
+// and silently regresses to the generic default — this loop is the guard the round-trip cannot be.
+
+/** The generated theme built from each entry of `PRESET_SEEDS` (the two literal presets have no seeds). */
+const SEEDED_THEMES: Record<string, Theme> = {
+  slate: slateTheme,
+  nord: nordTheme,
+  dracula: draculaTheme,
+  'solarized-dark': solarizedDarkTheme,
+  'gruvbox-dark': gruvboxDarkTheme,
+  janus: janusTheme,
+  warp: warpTheme,
+  solstice: solsticeTheme,
+  platinum: platinumTheme,
+  workbench: workbenchTheme,
+  horizon: horizonTheme,
+};
+
+/** Roles whose in-dialog hotkey/shortcut color is fed by the preset's `accelerator` alias. */
+const ACCELERATOR_ROLE_COLORS = (t: Theme): string[] => [
+  t.buttonFocused.hotkey as string,
+  t.tabActive.hotkey as string,
+  t.tabInactive.hotkey as string,
+  t.labelShortcut.fg,
+  t.buttonShortcut.fg,
+  t.clusterShortcut.fg,
+];
+
+/** Roles whose menu/status hotkey color is fed by the preset's `menuAccelerator` alias. */
+const MENU_ACCELERATOR_ROLE_COLORS = (t: Theme): string[] => [
+  t.menuBar.hotkey as string,
+  t.menuSelected.hotkey as string,
+  t.statusBar.hotkey as string,
+  t.statusSelected.hotkey as string,
+];
+
+test('ST-6: every curated preset pins its hotkeys to its accelerator/menuAccelerator alias', () => {
+  // `accelerator` / `menuAccelerator` are first-class aliases (independent of `warning` / `danger`):
+  // the hotkey/shortcut roles read them directly, so each role must equal the preset's override.
+  let checked = 0;
+  for (const [name, seeds] of Object.entries(PRESET_SEEDS)) {
+    if (!seeds.overrides) continue; // slate rides the defaults — no override block to mirror
+    const theme = SEEDED_THEMES[name];
+    for (const color of ACCELERATOR_ROLE_COLORS(theme)) {
+      expect(color, `${name}: accelerator-fed role === accelerator alias`).toBe(seeds.overrides.accelerator);
+    }
+    for (const color of MENU_ACCELERATOR_ROLE_COLORS(theme)) {
+      expect(color, `${name}: menuAccelerator-fed role === menuAccelerator alias`).toBe(
+        seeds.overrides.menuAccelerator,
+      );
+    }
+    checked++;
+  }
+  expect(checked, 'all 10 curated presets checked').toBe(10);
+});
+
+test('ST-6: spot-anchored hotkey parity for nord and dracula', () => {
+  expect(nordTheme.labelShortcut.fg, 'nord accelerator alias').toBe('#ebcb8b');
+  expect(nordTheme.menuBar.hotkey, 'nord menuAccelerator alias').toBe('#bf616a');
+  expect(draculaTheme.labelShortcut.fg, 'dracula accelerator alias').toBe('#f1fa8c');
+  expect(draculaTheme.menuBar.hotkey, 'dracula menuAccelerator alias').toBe('#ff5555');
 });
 
 // ── ST-23: the defaultTheme-invariance reference (the real oracles are the *-theme.spec files) ──────

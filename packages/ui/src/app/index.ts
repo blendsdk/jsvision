@@ -6,4 +6,10 @@
  * connects it to a real terminal and runs until the `'quit'` command.
  */
 export { createApplication, syncOverlayVisible } from './application.js';
-export type { Application, ApplicationOptions } from './application.js';
+export type {
+  Application,
+  ApplicationOptions,
+  DesktopApplication,
+  RouterApplication,
+  CreatedApplication,
+} from './application.js';

@@ -38,7 +38,7 @@ export interface DesignerModel {
    * role target has both a background and a foreground — `field` selects which (default `'bg'`).
    */
   colorOf(target: EditTarget, field?: 'fg' | 'bg'): Color;
-  /** The 16 resolved aliases (seed-derived + overrides) — for the rail's alias chips. */
+  /** The 18 resolved aliases (seed-derived + overrides) — for the rail's alias chips. */
   resolvedAliases(): ThemeColors;
 
   /** Edit an alias; transitions roles→derive so the edit is immediately visible. */

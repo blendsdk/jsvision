@@ -6,7 +6,7 @@
  * reusable data — useful for a tool (e.g. a theme editor) that loads a preset as an *editable*
  * starting point — without breaking that per-preset isolation.
  *
- * The curated palettes override all 16 semantic aliases from each palette's published spec, so every
+ * The curated palettes override all 18 semantic aliases from each palette's published spec, so every
  * derived surface, border and status color is authentic rather than a generic ramp of one neutral;
  * `background` stays the palette's canonical backdrop and `accent` its signature color (and so its
  * button face).
@@ -29,6 +29,8 @@ const nordSeeds: ThemeOptions = {
     backgroundSelected: '#434c5e',
     accent: '#88c0d0',
     accentMuted: '#5e81ac',
+    accelerator: '#ebcb8b',
+    menuAccelerator: '#bf616a',
     border: '#4c566a',
     borderMuted: '#434c5e',
     danger: '#bf616a',
@@ -51,6 +53,8 @@ const draculaSeeds: ThemeOptions = {
     backgroundSelected: '#44475a',
     accent: '#bd93f9',
     accentMuted: '#9a75d6',
+    accelerator: '#f1fa8c',
+    menuAccelerator: '#ff5555',
     border: '#6272a4',
     borderMuted: '#44475a',
     danger: '#ff5555',
@@ -73,6 +77,8 @@ const solarizedDarkSeeds: ThemeOptions = {
     backgroundSelected: '#0a3f4d',
     accent: '#268bd2',
     accentMuted: '#1e6ea3',
+    accelerator: '#b58900',
+    menuAccelerator: '#dc322f',
     border: '#586e75',
     borderMuted: '#073642',
     danger: '#dc322f',
@@ -95,6 +101,8 @@ const gruvboxDarkSeeds: ThemeOptions = {
     backgroundSelected: '#504945',
     accent: '#d79921',
     accentMuted: '#b57614',
+    accelerator: '#d79921',
+    menuAccelerator: '#cc241d',
     border: '#665c54',
     borderMuted: '#504945',
     danger: '#cc241d',
@@ -122,6 +130,8 @@ const janusSeeds: ThemeOptions = {
     backgroundSelected: '#a6a6a6',
     accent: '#000080',
     accentMuted: '#000050',
+    accelerator: '#ffff00',
+    menuAccelerator: '#aa0000',
     border: '#000000',
     borderMuted: '#808080',
     danger: '#aa0000',
@@ -145,6 +155,8 @@ const warpSeeds: ThemeOptions = {
     backgroundSelected: '#9aabbd',
     accent: '#1d3f73',
     accentMuted: '#14284d',
+    accelerator: '#ffff00',
+    menuAccelerator: '#a01818',
     border: '#34506e',
     borderMuted: '#7f93a8',
     danger: '#a01818',
@@ -168,6 +180,8 @@ const solsticeSeeds: ThemeOptions = {
     backgroundSelected: '#a8a596',
     accent: '#2a7d7d',
     accentMuted: '#1d5757',
+    accelerator: '#ffff00',
+    menuAccelerator: '#9a2020',
     border: '#57544a',
     borderMuted: '#9a9789',
     danger: '#9a2020',
@@ -191,6 +205,8 @@ const platinumSeeds: ThemeOptions = {
     backgroundSelected: '#b8b8b8',
     accent: '#3355bb',
     accentMuted: '#2a4494',
+    accelerator: '#00ffff',
+    menuAccelerator: '#cc2222',
     border: '#000000',
     borderMuted: '#888888',
     danger: '#cc2222',
@@ -214,6 +230,8 @@ const workbenchSeeds: ThemeOptions = {
     backgroundSelected: '#ffcc88',
     accent: '#ff8800',
     accentMuted: '#d97400',
+    accelerator: '#ffffff',
+    menuAccelerator: '#cc0000',
     border: '#0055aa',
     borderMuted: '#6a95c5',
     danger: '#cc0000',
@@ -237,6 +255,8 @@ const horizonSeeds: ThemeOptions = {
     backgroundSelected: '#e5f0fa',
     accent: '#0a6ed1',
     accentMuted: '#085caf',
+    accelerator: '#00cd00',
+    menuAccelerator: '#bb0000',
     border: '#d9d9d9',
     borderMuted: '#ededed',
     danger: '#bb0000',
@@ -247,17 +267,17 @@ const horizonSeeds: ThemeOptions = {
 };
 
 export {
-  slateSeeds,
-  nordSeeds,
   draculaSeeds,
-  solarizedDarkSeeds,
   gruvboxDarkSeeds,
-  janusSeeds,
-  warpSeeds,
-  solsticeSeeds,
-  platinumSeeds,
-  workbenchSeeds,
   horizonSeeds,
+  janusSeeds,
+  nordSeeds,
+  platinumSeeds,
+  slateSeeds,
+  solarizedDarkSeeds,
+  solsticeSeeds,
+  warpSeeds,
+  workbenchSeeds,
 };
 
 /**

@@ -1,0 +1,1 @@
+A form window: a labelled Input + a Save button wired to a command handler that greets the entered name.

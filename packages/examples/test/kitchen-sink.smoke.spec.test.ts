@@ -15,6 +15,7 @@ import { test, expect } from 'vitest';
 import {
   resolveCapabilities,
   Attr,
+  defaultTheme,
   classicTheme,
   monochromeTheme,
   slateTheme,
@@ -143,6 +144,49 @@ test('ST-17: the layout/dsl story is registered with metadata and paints', () =>
   });
 });
 
+// ST-17 (navigation-router) — the drill-down router story is registered with the required metadata
+// (unique id `navigation/drill-down`, category `Navigation`) and paints at least one non-blank cell
+// headlessly.
+test('ST-17: the navigation/drill-down story is registered with metadata and paints', () => {
+  const story = STORIES.find((s) => s.id === 'navigation/drill-down');
+  expect(story, 'a story with id "navigation/drill-down" is registered').toBeTruthy();
+  expect(story!.category, 'category Navigation').toBe('Navigation');
+  expect(story!.title, 'title').toBeTruthy();
+  expect(story!.blurb, 'blurb').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    expect(paintedCells(rr.buffer().rows()), 'the drill-down story painted nothing').toBeGreaterThan(0);
+    dispose();
+  });
+});
+
+// ST-17 (navigation-router, wizard half) — the multi-step **wizard** router story is registered with
+// the required metadata (unique id `navigation/wizard`, category `Navigation`) and paints its
+// characteristic first-step affordance headlessly: the `Account` step title + the `Next` action
+// (proving the wizard renders its distinctive first screen, not merely that some cell painted).
+test('ST-17: the navigation/wizard story is registered with metadata and paints its first step', () => {
+  const story = STORIES.find((s) => s.id === 'navigation/wizard');
+  expect(story, 'a story with id "navigation/wizard" is registered').toBeTruthy();
+  expect(story!.category, 'category Navigation').toBe('Navigation');
+  expect(story!.title, 'title').toBeTruthy();
+  expect(story!.blurb, 'blurb').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    const painted = rr
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+    expect(painted, 'the Account step title paints').toMatch(/Account/);
+    expect(painted, 'the Next action paints').toMatch(/Next/);
+    dispose();
+  });
+});
+
 // AR-11 (accelerator-overlay) — the accelerator-overlay story is registered with metadata, and when
 // its RenderRoot arms reveal (`setRevealAccelerators(true)`) at least one hot glyph gains
 // `Attr.underline`. This is the showcase's live proof that the F12 overlay lights up hotkeys.
@@ -215,6 +259,85 @@ test('ST-35: every preset renders a representative widget set to a non-empty buf
       dispose();
     });
   }
+});
+
+// ST-N1 (RD-04 FR-4.6) — the Forms showcase story is registered with the required metadata (unique
+// id `forms/form`, category `Forms`, truthy title/blurb, guarding accidental de-registration) and
+// paints its forms-specific `valid · dirty` bound-state echo headlessly — proving the form actually
+// wired up, not merely that *some* cell painted (which the generic smoke loop below already asserts
+// for every story).
+test('ST-N1: the forms/form story is registered with metadata and paints its valid · dirty echo', () => {
+  const story = STORIES.find((s) => s.id === 'forms/form');
+  expect(story, 'a story with id "forms/form" is registered').toBeTruthy();
+  expect(story!.category, 'category Forms').toBe('Forms');
+  expect(story!.title, 'title').toBeTruthy();
+  expect(story!.blurb, 'blurb').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    // Reconstruct the painted text so we can assert a form-specific signal, not just a non-blank cell.
+    const painted = rr
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+    expect(painted, 'the valid · dirty echo is painted').toMatch(/valid/);
+    expect(painted, 'the valid · dirty echo is painted').toMatch(/dirty/);
+    dispose();
+  });
+});
+
+// ST-AS1 (RD-06 AC-14) — the async-validation showcase story is registered with the required metadata
+// (unique id `forms/async`, category `Forms`) and paints its characteristic async affordance: the
+// `Username` label + the always-painted `checking…` interaction hint (proving the async demo renders
+// its distinctive state headlessly, not merely that some cell painted).
+test('ST-AS1: the forms/async story is registered with metadata and paints its async affordance', () => {
+  const story = STORIES.find((s) => s.id === 'forms/async');
+  expect(story, 'a story with id "forms/async" is registered').toBeTruthy();
+  expect(story!.category, 'category Forms').toBe('Forms');
+  expect(story!.title, 'title').toBeTruthy();
+  expect(story!.blurb, 'blurb').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    const painted = rr
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+    expect(painted, 'the Username label paints').toMatch(/Username/);
+    expect(painted, 'the checking… hint paints').toMatch(/checking…/);
+    dispose();
+  });
+});
+
+// ST-S1 (RD-09 AC-8) — the placeholder + severity demos render: the controls/input story paints its
+// muted placeholder hint over an empty field, and the theming/presets story paints a severity-coloured
+// Text (a glyph cell in the dangerText fg). Read from the painted buffer (an unfocused headless mount
+// puts no caret over column 1, so the leading placeholder glyph is not blanked).
+test('ST-S1: the placeholder demo paints its hint and the severity demo renders in dangerText', () => {
+  const paintedOf = (id: string): { text: string; hasDangerFg: boolean } => {
+    const story = STORIES.find((s) => s.id === id);
+    expect(story, `a story with id "${id}" is registered`).toBeTruthy();
+    let text = '';
+    let hasDangerFg = false;
+    createRoot((dispose) => {
+      const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+      const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+      rr.mount(view);
+      const rows = rr.buffer().rows();
+      text = rows.map((row) => row.map((c) => c.char).join('')).join('\n');
+      hasDangerFg = rows.some((row) => row.some((c) => c.char !== ' ' && c.fg === defaultTheme.dangerText.fg));
+      dispose();
+    });
+    return { text, hasDangerFg };
+  };
+  // The muted placeholder hint is visible over the empty field in the Input story.
+  expect(paintedOf('controls/input').text, 'the placeholder hint paints').toContain('Ada Lovelace');
+  // A severity-coloured Text renders in the Theming story (a dangerText-fg glyph cell).
+  expect(paintedOf('theming/presets').hasDangerFg, 'a severity Text paints in dangerText').toBe(true);
 });
 
 // The core smoke oracle: each story builds + mounts + draws without throwing, and paints something.

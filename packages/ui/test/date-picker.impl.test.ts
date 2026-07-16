@@ -117,8 +117,8 @@ test('open → click the footer Today button → today selected + popup closed (
   h.loop.dispatch(key('down', { alt: true })); // open, hosted comfortable calendar
   const cal = hostedCalendar(h.overlay);
   expect(cal).toBeInstanceOf(Calendar);
-  // The comfortable footer Today button spans calendar-local cols 23-27, row weekRowY(5)+2 = the footer
-  // textY = 9 (compute the calendar's absolute origin from its bounds).
+  // The comfortable footer Today button (padded ` Today `) spans calendar-local cols 21-27, row
+  // weekRowY(5)+2 = the footer textY = 9 (compute the calendar's absolute origin from its bounds).
   let ax = 0;
   let ay = 0;
   let node = cal as unknown as { bounds: { x: number; y: number }; parent: typeof node } | null;

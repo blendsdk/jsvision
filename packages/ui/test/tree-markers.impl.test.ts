@@ -25,21 +25,24 @@ function mouse(kind: 'down' | 'up', x: number, y: number): CoreMouseEvent {
   return { type: 'mouse', kind, button: 0, x, y };
 }
 
-test('brackets geometry at a deep level: full width = level*3 + 5, marker `[+]` at the tail', () => {
-  // Level 3, collapsed-with-children, all ancestors continued ⇒ `│  │  │  ├─[+]`.
+test('brackets geometry at a deep level: full width = level*3 + 6, marker `[+] ` at the tail', () => {
+  // Level 3, collapsed-with-children, all ancestors continued ⇒ `│  │  │  ├─[+] `.
   const g = createGraph(3, 0b111, OV_CHILDREN, true, 'brackets');
-  expect(cells(g)).toHaveLength(graphWidth(3, 'brackets')); // 3*3 + 5 = 14
-  expect(g.endsWith('├─[+]')).toBe(true);
+  expect(cells(g)).toHaveLength(graphWidth(3, 'brackets', OV_CHILDREN)); // 3*3 + 2 + 4 = 15
+  expect(g.endsWith('├─[+] ')).toBe(true);
   expect(cells(g).slice(0, 9)).toEqual(['│', ' ', ' ', '│', ' ', ' ', '│', ' ', ' ']);
 });
 
-test('leaf blank widths match the style marker width (alignment holds)', () => {
-  // brackets leaf = 3 blanks; triangle leaf = 1 blank; tv leaf = `─`.
-  expect(createGraph(0, 0, OV_EXPANDED | OV_LAST, true, 'brackets').endsWith('   ')).toBe(true);
-  expect(cells(createGraph(0, 0, OV_EXPANDED | OV_LAST, true, 'brackets'))).toHaveLength(5);
-  expect(cells(createGraph(0, 0, OV_EXPANDED | OV_LAST, true, 'triangle'))).toHaveLength(3);
-  expect([...createGraph(0, 0, OV_EXPANDED | OV_LAST, true, 'triangle')].at(-1)).toBe(' ');
-  expect([...createGraph(0, 0, OV_EXPANDED | OV_LAST, true, 'tv')].at(-1)).toBe('─');
+test('a leaf prefix collapses to one trailing cell; brackets/triangle branches are wider (ragged)', () => {
+  // Every style's leaf is 3 cells: fork/corner + fill + one marker-or-space cell.
+  const brLeaf = createGraph(0, 0, OV_EXPANDED | OV_LAST, true, 'brackets');
+  expect(cells(brLeaf)).toEqual(['└', '─', ' ']); // just the single separating space, no `[…]`
+  const triLeaf = createGraph(0, 0, OV_EXPANDED | OV_LAST, true, 'triangle');
+  expect(cells(triLeaf)).toEqual(['└', '─', ' ']);
+  expect([...createGraph(0, 0, OV_EXPANDED | OV_LAST, true, 'tv')].at(-1)).toBe('─'); // tv leaf is flush `─`
+  // A marked (collapsed) node is wider than the leaf in brackets/triangle ⇒ ragged text columns.
+  expect(cells(createGraph(0, 0, OV_CHILDREN, true, 'brackets')).length).toBeGreaterThan(cells(brLeaf).length);
+  expect(cells(createGraph(0, 0, OV_CHILDREN, true, 'triangle')).length).toBeGreaterThan(cells(triLeaf).length);
 });
 
 test('guides=false keeps the per-style width and marker, dropping only the connectors', () => {
@@ -47,10 +50,12 @@ test('guides=false keeps the per-style width and marker, dropping only the conne
     const on = createGraph(2, 0b11, OV_CHILDREN, true, style);
     const off = createGraph(2, 0b11, OV_CHILDREN, false, style);
     expect(cells(off)).toHaveLength(cells(on).length); // width parity
-    expect(/[│├└─]/.test(off.slice(0, cells(off).length - (style === 'brackets' ? 3 : 1)))).toBe(false);
+    // Slice off the marker field (brackets `[+] `=4, triangle `▸ `=2, tv `+`=1) ⇒ the rest is all spaces.
+    const markerLen = style === 'brackets' ? 4 : style === 'triangle' ? 2 : 1;
+    expect(/[│├└─]/.test(off.slice(0, cells(off).length - markerLen))).toBe(false);
   }
-  // The bracket marker survives guides=false.
-  expect(createGraph(1, 0, OV_CHILDREN, false, 'brackets').endsWith('[+]')).toBe(true);
+  // The bracket marker (with its trailing space) survives guides=false.
+  expect(createGraph(1, 0, OV_CHILDREN, false, 'brackets').endsWith('[+] ')).toBe(true);
 });
 
 test('mouse toggle-zone tracks the widened bracket graphic across levels', () => {
@@ -71,7 +76,7 @@ test('mouse toggle-zone tracks the widened bracket graphic across levels', () =>
   loop.dispatch(mouse('up', 5, 1));
   expect(tree.isExpanded(roots()[0])).toBe(true);
 
-  // Now 'child' is on row 1 at level 1; graphWidth(1,'brackets') = 8. Local x=7 (1-based 8) is inside.
+  // Now 'child' is on row 1 at level 1; graphWidth(1,'brackets',collapsed) = 9. Local x=7 (1-based 8) is inside.
   loop.dispatch(mouse('down', 8, 2));
   loop.dispatch(mouse('up', 8, 2));
   expect(tree.isExpanded(child)).toBe(true);

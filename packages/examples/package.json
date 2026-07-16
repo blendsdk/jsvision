@@ -27,6 +27,8 @@
     "demo:events": "tsx event-demo/main.ts",
     "demo:shell": "tsx shell-demo/main.ts",
     "demo:controls": "tsx controls-demo/main.ts",
+    "demo:router": "tsx router-demo/main.ts",
+    "demo:wizard": "tsx wizard-demo/main.ts",
     "demo:containers": "tsx containers-demo/main.ts",
     "demo:tree": "tsx tree-demo/main.ts",
     "demo:table": "tsx table-demo/main.ts",
@@ -54,8 +56,10 @@
     "@jsvision/core": "0.2.0",
     "@jsvision/datagrid": "0.2.0",
     "@jsvision/files": "0.2.0",
+    "@jsvision/forms": "0.2.0",
     "@jsvision/ui": "0.2.0",
-    "@jsvision/web": "0.2.0"
+    "@jsvision/web": "0.2.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
