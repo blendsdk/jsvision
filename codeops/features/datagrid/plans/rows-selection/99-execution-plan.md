@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-16 15:24
-> **Progress**: 34/50 tasks (68%)
+> **Last Updated**: 2026-07-16 15:32
+> **Progress**: 42/50 tasks (84%)
 > **CodeOps Skills Version**: 3.7.0
 
 ## Overview
@@ -134,18 +134,18 @@ selection paint reuses the datagrid body's own `draw()` override.
 **Reference**: `03-05` · `07 §Null policy` (ST-19…ST-20) · AR-3/AR-15
 
 ### Step 5.1: Specification tests (red)
-- [ ] 5.1.1 Write `null-policy.spec.test.ts` (ST-19 null renders `nullDisplay`, round-trips distinct from `''`; ST-20 empty commit → null on nullable, `''` on non-nullable) — `packages/datagrid/test/null-policy.spec.test.ts`
-- [ ] 5.1.2 Verify **red**
+- [x] 5.1.1 Write `null-policy.spec.test.ts` (ST-19 null renders `nullDisplay`, round-trips distinct from `''`; ST-20 empty commit → null on nullable, `''` on non-nullable) — `packages/datagrid/test/null-policy.spec.test.ts`
+- [x] 5.1.2 Verify **red**
 
 ### Step 5.2: Implement (green)
-- [ ] 5.2.1 `column.ts`: add `readonly nullable?`/`nullDisplay?` to `GridColumn`; `toEngineColumn` accessor renders `nullDisplay ?? ''` for a nullish value **before** `format`/`String` — `packages/datagrid/src/column.ts`
-- [ ] 5.2.2 Commit lowering in the edit controller (`editing.ts` `createEditController.commit()`, at the `tcol.parse!(field())` call `:274` — **not** `commitCell`/`editable-grid-rows.ts`, AR-20): an empty editor value (`''`) on a `nullable` column commits `null` (bypasses `parse`); non-nullable keeps today's behavior. Thread `nullable` onto the typed column the controller reads — `packages/datagrid/src/editing.ts`, `column.ts`
-- [ ] 5.2.3 Barrel/docs for `nullable`/`nullDisplay` + `@example` — `packages/datagrid/src/index.ts`, `column.ts`
-- [ ] 5.2.4 Verify **green** — ST-19, ST-20 pass (AC-6)
+- [x] 5.2.1 `column.ts`: add `readonly nullable?`/`nullDisplay?` to `GridColumn`; `toEngineColumn` accessor renders `nullDisplay ?? ''` for a nullish value **before** `format`/`String` — `packages/datagrid/src/column.ts`
+- [x] 5.2.2 Commit lowering in the edit controller (`editing.ts` `createEditController.commit()`, at the `tcol.parse!(field())` call `:274` — **not** `commitCell`/`editable-grid-rows.ts`, AR-20): an empty editor value (`''`) on a `nullable` column commits `null` (bypasses `parse`); non-nullable keeps today's behavior. `nullable` reads straight off the typed column the controller holds. The editor seed also empties for a nullish value (never seeds `"null"`) so a null cell re-commits null — `packages/datagrid/src/editing.ts`, `column.ts`
+- [x] 5.2.3 Barrel/docs for `nullable`/`nullDisplay` + `@example` — `packages/datagrid/src/index.ts`, `column.ts`
+- [x] 5.2.4 Verify **green** — ST-19, ST-20 pass (AC-6)
 
 ### Step 5.3: Impl tests & verify
-- [ ] 5.3.1 Write `null-policy.impl.test.ts` (null renders `''` with no `nullDisplay`; a non-null value is unaffected; a numeric non-nullable empty commit still rejects) — `packages/datagrid/test/null-policy.impl.test.ts`
-- [ ] 5.3.2 Full `yarn verify`
+- [x] 5.3.1 Write `null-policy.impl.test.ts` (null renders `''` with no `nullDisplay`; a non-null value is unaffected; a numeric non-nullable empty commit still rejects) — `packages/datagrid/test/null-policy.impl.test.ts`
+- [x] 5.3.2 Full `yarn verify`
 
 **Deliverables**: per-column null render + empty→null on nullable (AC-6); null vs `''` distinct. **Verify**: `yarn verify`
 
