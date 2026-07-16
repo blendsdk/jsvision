@@ -59,6 +59,39 @@ export interface FilterPopupConfig<T> {
 }
 
 /**
+ * The context a {@link FilterPopupConfig}-shaped `filterPopup` factory receives — everything needed to
+ * build a custom popup for one column. It carries the opened column, its resolved filter type, the
+ * column's current filter (for pre-filling), the value-list `distinct` thunk, and the apply/clear/close
+ * sinks, plus `defaultPopup()` which builds the **built-in** popup so a factory can wrap or reuse it
+ * (e.g. return `ctx.defaultPopup()` unchanged, or place it inside a framed container).
+ *
+ * @example
+ * import type { FilterPopupContext } from '@jsvision/datagrid';
+ * // A factory that reuses the built-in popup unchanged (the grid's default behavior):
+ * const filterPopup = (ctx: FilterPopupContext<Row>) => ctx.defaultPopup();
+ */
+export interface FilterPopupContext<T> {
+  /** The column whose popup is being opened. */
+  readonly column: GridColumn<T>;
+  /** The column id — reported back through `onApply`/`onClear`. */
+  readonly columnId: string;
+  /** The resolved filter type (selects the operator set + operand editors). */
+  readonly filterType: FilterType;
+  /** The column's existing filter, if any (pre-fills a reopened popup). */
+  readonly current?: ColumnFilter;
+  /** The distinct-value source for the value-list section. */
+  readonly distinct: () => Promise<DistinctResult>;
+  /** Report an applied condition/set filter for the column. */
+  readonly onApply: (columnId: string, filter: ColumnFilter) => void;
+  /** Report that the column's filter should be cleared. */
+  readonly onClear: (columnId: string) => void;
+  /** Close the popup — call after applying/clearing, or on cancel. */
+  readonly onClose: () => void;
+  /** Build the built-in {@link FilterPopup} with this context (for wrapping or reuse). */
+  defaultPopup(): FilterPopup<T>;
+}
+
+/**
  * The condition-filter popup for one column — see the module overview.
  *
  * @example

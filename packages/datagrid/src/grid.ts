@@ -27,6 +27,7 @@ import { SortHeader } from './sort-header.js';
 import { buildGridBody } from './grid-panels.js';
 import type { GridBodyDeps } from './grid-panels.js';
 import { FilterPopup } from './filter-popup.js';
+import type { FilterPopupContext } from './filter-popup.js';
 import { mountCellOverlay, absoluteRect } from './overlay.js';
 import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
@@ -85,6 +86,23 @@ export interface EditableDataGridOptions<T> {
    * aligned). Horizontal only — rows are 1 cell tall in either mode.
    */
   readonly density?: 'normal' | 'compact';
+  /**
+   * Replace the built-in condition-filter popup with a custom view. The factory receives a
+   * {@link FilterPopupContext} (the column, its filter type, the current filter, the value-list
+   * `distinct` thunk, the apply/clear/close sinks, and a `defaultPopup()` builder) and returns the view
+   * to mount. Call `ctx.defaultPopup()` to reuse or wrap the built-in popup; return your own view to
+   * replace it entirely. The returned view is mounted **anchored** under the column and clamped into the
+   * viewport, at the size it sets on its own `layout` (or the default popup size when it sets none); if
+   * it exposes a `focusTarget()` method that view is focused. Omit to use the built-in popup.
+   *
+   * @example
+   * ```ts
+   * import { EditableDataGrid } from '@jsvision/datagrid';
+   * // Reuse the built-in popup unchanged (equivalent to omitting the option):
+   * const grid = new EditableDataGrid({ columns, source, filterPopup: (ctx) => ctx.defaultPopup() });
+   * ```
+   */
+  readonly filterPopup?: (ctx: FilterPopupContext<T>) => View;
 }
 
 /**
@@ -275,6 +293,8 @@ export class EditableDataGrid<T> extends Group {
   private readonly display: () => T[];
   // The disposer for the currently-open filter popup (at most one), or `null` when none is open.
   private popupDispose: (() => void) | null = null;
+  // Optional custom filter-popup factory — replaces the built-in popup when set (see the config option).
+  private readonly filterPopupFactory?: (ctx: FilterPopupContext<T>) => View;
 
   /**
    * @param opts The `columns`, the `source`, optional `zebra` striping, and an optional `onCommit`
@@ -287,6 +307,7 @@ export class EditableDataGrid<T> extends Group {
     this.columnIndex = new Map(opts.columns.map((c, i) => [c.id, i]));
     this.columnOrderSig = signal<string[]>(opts.columns.map((c) => c.id));
     this.freezeSpec = { freezeLeft: opts.freezeLeft, freezeRight: opts.freezeRight, freeze: opts.freeze };
+    this.filterPopupFactory = opts.filterPopup;
     this.source = opts.source;
     this.columnMap = new Map(opts.columns.map((c) => [c.id, c]));
 
@@ -866,7 +887,21 @@ export class EditableDataGrid<T> extends Group {
     const sample = rows.length > 0 ? col.value(rows[0]) : undefined;
     const filterType = resolveFilterType(col, sample);
     const origin = absoluteRect(header);
-    const holder: { popup: FilterPopup<T> | null } = { popup: null };
+    const holder: { view: View | null } = { view: null };
+
+    // Build the built-in popup for this column; the customization seam either returns this (via
+    // `ctx.defaultPopup()`) or its own view instead.
+    const buildDefault = (): FilterPopup<T> =>
+      new FilterPopup<T>({
+        column: col,
+        columnId,
+        filterType,
+        current: this.filters().get(columnId),
+        distinct: () => this.distinctFor(columnId), // embeds the value-list section
+        onApply: (id, next) => this.setFilter(id, next),
+        onClear: (id) => this.clearFilter(id),
+        onClose: () => this.closeFilterPopup(),
+      });
 
     // A click-away catcher goes in first (below the popup); an outside mouse-down closes the popup.
     const catcher = new PopupCatcher(() => this.closeFilterPopup());
@@ -885,18 +920,23 @@ export class EditableDataGrid<T> extends Group {
       // grid's own size. Clamp only past the FIRST layout, when the grid's bounds are measured.
       clamp: this.bounds.width > 0 ? { width: this.bounds.width, height: this.bounds.height } : undefined,
       build: () => {
-        const popup = new FilterPopup<T>({
-          column: col,
-          columnId,
-          filterType,
-          current: this.filters().get(columnId),
-          distinct: () => this.distinctFor(columnId), // embeds the value-list section
-          onApply: (id, next) => this.setFilter(id, next),
-          onClear: (id) => this.clearFilter(id),
-          onClose: () => this.closeFilterPopup(),
-        });
-        holder.popup = popup;
-        return popup;
+        // The customization seam: a factory receives the column context (with `defaultPopup()`) and
+        // returns the view to mount; without one, the built-in popup is used.
+        const view: View = this.filterPopupFactory
+          ? this.filterPopupFactory({
+              column: col,
+              columnId,
+              filterType,
+              current: this.filters().get(columnId),
+              distinct: () => this.distinctFor(columnId),
+              onApply: (id, next) => this.setFilter(id, next),
+              onClear: (id) => this.clearFilter(id),
+              onClose: () => this.closeFilterPopup(),
+              defaultPopup: buildDefault,
+            })
+          : buildDefault();
+        holder.view = view;
+        return view;
       },
     });
     // Close disposes both the popup mount (removing the popup + its reactive scope) and the catcher.
@@ -904,8 +944,14 @@ export class EditableDataGrid<T> extends Group {
       mountDispose();
       this.popupOverlay.remove(catcher);
     };
-    // Focus a leaf inside the popup — mountCellOverlay focuses the popup Group, which is not a focus leaf.
-    if (holder.popup !== null) ev.focusView?.(holder.popup.focusTarget());
+    // Focus a leaf inside the popup — mountCellOverlay focuses the mounted view (a Group), not a focus
+    // leaf. The built-in popup (and any custom view that opts in) exposes `focusTarget()`; otherwise the
+    // view itself is focused.
+    const mounted = holder.view;
+    if (mounted !== null) {
+      const withTarget = mounted as { focusTarget?: () => View };
+      ev.focusView?.(withTarget.focusTarget ? withTarget.focusTarget() : mounted);
+    }
   }
 
   /** Dispose the open filter popup (removing it from the overlay), if any. Idempotent. */
