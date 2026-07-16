@@ -177,10 +177,15 @@ test('aliasesFromSeeds returns accelerator/menuAccelerator with independent defa
   expect(seeded.menuAccelerator, 'menuAccelerator seed wins').toBe('#fedcba');
 });
 
-test('overriding danger/warning changes no role — the two themes are byte-identical', () => {
+test('overriding danger/warning changes only dangerText/warningText — no other role moves', () => {
   const seeds = { mode: 'dark', accent: '#3b82f6' } as const;
   const base = createTheme(seeds);
   const withStatusOverrides = createTheme({ ...seeds, overrides: { danger: '#010203', warning: '#040506' } });
-  // No role reads danger/warning, so the outputs must be deep-equal (a deterministic inertness proof).
-  expect(withStatusOverrides, 'danger/warning drive nothing').toStrictEqual(base);
+  // danger/warning drive exactly the two severity-text roles; the override must move those and no others.
+  expect(withStatusOverrides.dangerText.fg, 'danger override reaches dangerText.fg').toBe('#010203');
+  expect(withStatusOverrides.warningText.fg, 'warning override reaches warningText.fg').toBe('#040506');
+  for (const name of Object.keys(base) as (keyof Theme)[]) {
+    if (name === 'dangerText' || name === 'warningText') continue;
+    expect(withStatusOverrides[name], `${name} unchanged by a danger/warning override`).toStrictEqual(base[name]);
+  }
 });

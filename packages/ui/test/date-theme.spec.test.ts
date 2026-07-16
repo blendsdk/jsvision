@@ -153,6 +153,9 @@ test('ST-14: the calendar* roles are the ONLY additive keys — every existing r
     'terminalNormal', // RD-08 editor family (PA-8; guarded by editor-theme.spec)
     'sliderTrack',
     'sliderThumb', // theme-designer Slider control (guarded by slider-theme.spec)
+    'dangerText',
+    'warningText', // severity text roles for a styled Text (guarded by severity-text-theme.spec)
+    'inputPlaceholder', // muted placeholder role for an empty Input (guarded by input-placeholder.spec)
   ] as const;
   const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...CALENDAR_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);

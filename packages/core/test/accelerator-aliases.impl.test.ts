@@ -2,14 +2,13 @@
  * Implementation test — accelerator-alias internals.
  *
  * Covers seed precedence for the two accelerator aliases (seed beats default, override beats seed) and
- * an exhaustive proof that `danger`/`warning` drive no built-in role — they are app-reserved status
- * tokens after the accelerator decouple, so a sentinel value placed on either must never surface in any
- * role color, in either mode.
+ * a scoped proof that `danger`/`warning` drive exactly the two severity-text roles — a sentinel placed
+ * on either surfaces in its own role (`dangerText`/`warningText`) and in no other role, in either mode.
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
-import { createTheme, aliasesFromSeeds, type Theme, type ThemeRole } from '../src/engine/index.js';
+import { createTheme, aliasesFromSeeds, type ThemeRole } from '../src/engine/index.js';
 
 /** Every color-valued field on a role (fg/bg + optional hotkey + structural color extras). */
 function colorFields(role: ThemeRole): string[] {
@@ -19,11 +18,6 @@ function colorFields(role: ThemeRole): string[] {
     if (typeof r[key] === 'string') out.push(r[key] as string);
   }
   return out;
-}
-
-/** Every color across every role in a theme. */
-function allColors(theme: Theme): string[] {
-  return Object.values(theme).flatMap((role) => colorFields(role));
 }
 
 test('an accelerator seed drives the control hotkeys; a menuAccelerator seed drives the chrome hotkeys', () => {
@@ -66,18 +60,25 @@ test('aliasesFromSeeds: an accelerator seed overrides the default, an absent see
   expect(seeded.menuAccelerator, 'menuAccelerator seed wins over default').toBe('#0e0e0e');
 });
 
-test('danger/warning drive no role in either mode — sentinel values never appear in any role color', () => {
-  // Sentinel hexes unlikely to be produced by the neutral ramp or to equal another alias. If either
-  // one surfaced in a role, some role would still be reading danger/warning — the decouple would leak.
+test('danger/warning drive exactly dangerText/warningText — the sentinel lands there and leaks nowhere else', () => {
+  // Sentinel hexes unlikely to be produced by the neutral ramp or to equal another alias. Each must
+  // surface in its own severity-text role and in NO other role — proof danger/warning drive those two
+  // roles and nothing more.
   const sentinels: [string, string][] = [
     ['#dead01', '#beef02'],
     ['#c0ffee', '#faded0'],
   ];
   for (const mode of ['dark', 'light'] as const) {
     for (const [danger, warning] of sentinels) {
-      const colors = allColors(createTheme({ mode, accent: '#3b82f6', overrides: { danger, warning } }));
-      expect(colors, `${mode}: danger ${danger} absent from every role`).not.toContain(danger);
-      expect(colors, `${mode}: warning ${warning} absent from every role`).not.toContain(warning);
+      const theme = createTheme({ mode, accent: '#3b82f6', overrides: { danger, warning } });
+      expect(theme.dangerText.fg, `${mode}: danger ${danger} drives dangerText.fg`).toBe(danger);
+      expect(theme.warningText.fg, `${mode}: warning ${warning} drives warningText.fg`).toBe(warning);
+      // Every OTHER role must be free of both sentinels (no leak beyond the two intended roles).
+      const otherColors = Object.entries(theme)
+        .filter(([name]) => name !== 'dangerText' && name !== 'warningText')
+        .flatMap(([, role]) => colorFields(role as ThemeRole));
+      expect(otherColors, `${mode}: danger ${danger} absent from every other role`).not.toContain(danger);
+      expect(otherColors, `${mode}: warning ${warning} absent from every other role`).not.toContain(warning);
     }
   }
 });

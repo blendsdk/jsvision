@@ -28,9 +28,9 @@ export interface ThemeOptions {
   readonly accelerator?: Color;
   /** Menu-bar / status-line hotkey (accelerator) seed; defaults to a red. Independent of `danger`. */
   readonly menuAccelerator?: Color;
-  /** Danger signal seed; defaults to a red. Reserved for app content — drives no built-in role. */
+  /** Danger signal seed; defaults to a red. Drives the `dangerText` role a `Text` paints at `severity: 'error'`. */
   readonly danger?: Color;
-  /** Warning signal seed; defaults to an amber. Reserved for app content — drives no built-in role. */
+  /** Warning signal seed; defaults to an amber. Drives the `warningText` role a `Text` paints at `severity: 'warning'`. */
   readonly warning?: Color;
   /** Success signal seed; defaults to a green. */
   readonly success?: Color;

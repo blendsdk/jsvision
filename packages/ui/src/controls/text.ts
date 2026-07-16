@@ -64,6 +64,21 @@ function wrapText(content: string, width: number): string[] {
 }
 
 /**
+ * A semantic severity for a {@link Text} — selects a danger/warning colour in place of the default
+ * static-text role. `'error'` paints danger-red, `'warning'` amber.
+ */
+export type TextSeverity = 'error' | 'warning';
+
+/** Construction options for a {@link Text}. */
+export interface TextOptions {
+  /**
+   * Paint the text in a semantic severity colour instead of the default static-text role:
+   * `'error'` → danger-red, `'warning'` → amber. Omit for the normal static-text colour.
+   */
+  readonly severity?: TextSeverity;
+}
+
+/**
  * A static, non-focusable text view. Paints word-wrapped, left-aligned text; give it a getter for a
  * value that updates itself reactively.
  *
@@ -85,17 +100,27 @@ function wrapText(content: string, width: number): string[] {
  * const readout = new Text(() => `Count: ${count()}`);
  * readout.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 30, height: 1 } };
  * panel.add(readout);
+ *
+ * // A validation error, painted danger-red via the severity option.
+ * const error = new Text('Email is required.', { severity: 'error' });
+ * error.layout = { position: 'absolute', rect: { x: 1, y: 2, width: 30, height: 1 } };
+ * panel.add(error);
  */
 export class Text extends View {
   /** The literal text, or a reactive getter that repaints the view when its signals change. */
   protected readonly content: string | (() => string);
 
+  /** The severity colour override (`'error'`/`'warning'`), or undefined for the static-text role. */
+  protected readonly severity?: TextSeverity;
+
   /**
    * @param content A literal string, or a getter (`() => string`) that repaints `Text` on change.
+   * @param opts    Optional settings — `severity` recolours the text (`'error'`/`'warning'`).
    */
-  constructor(content: string | (() => string)) {
+  constructor(content: string | (() => string), opts?: TextOptions) {
     super();
     this.content = content;
+    this.severity = opts?.severity;
     if (typeof content === 'function') {
       // Subscribe on mount, not in the constructor: the reactive scope that owns this view's
       // subscriptions only exists once the view is mounted into a live tree.
@@ -111,7 +136,9 @@ export class Text extends View {
    */
   override draw(ctx: DrawContext): void {
     const content = typeof this.content === 'function' ? this.content() : this.content;
-    const style = ctx.color('staticText');
+    // Map the semantic severity to its theme role; unset falls back to the plain static-text colour.
+    const role = this.severity === 'error' ? 'dangerText' : this.severity === 'warning' ? 'warningText' : 'staticText';
+    const style = ctx.color(role);
     const { width, height } = ctx.size;
     ctx.fillRect(0, 0, width, height, ' ', style); // clear the whole field first
     const lines = wrapText(content, width);

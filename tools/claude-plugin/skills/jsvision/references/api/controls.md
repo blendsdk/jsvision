@@ -80,6 +80,7 @@ interface InputOptions {
   value: Signal<string>;   // The two-way bound text. Reading it renders the field; editing writes back. Required.
   maxLength?: number;   // Maximum stored length. Default: unbounded.
   validator?: Validator;   // A rule that filters keystrokes live and validates the completed value on focus-leave.
+  placeholder?: string | Signal<string>;   // A muted hint shown while the bound value is empty; never part of the value. Static text or a signal.
 }
 ```
 
@@ -210,7 +211,25 @@ interface SwitchOptions {
 A static, non-focusable text view.
 
 ```ts
-new Text(content: string | (() => string))   // extends View
+new Text(content: string | (() => string), opts?: TextOptions)   // extends View
+```
+
+## TextOptions
+
+Construction options for a Text.
+
+```ts
+interface TextOptions {
+  severity?: TextSeverity;   // Paint the text in a semantic severity colour instead of the default static-text role: `'error'` → danger-red, `'warning'` → amber. Omit for the normal static-text colour.
+}
+```
+
+## TextSeverity
+
+A semantic severity for a Text — selects a danger/warning colour in place of the default static-text role.
+
+```ts
+type TextSeverity = 'error' | 'warning'
 ```
 
 ## Validator

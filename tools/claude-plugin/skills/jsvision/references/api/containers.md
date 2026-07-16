@@ -51,6 +51,7 @@ interface ComboBoxOptions<T> {
   onSelect?: (index: number, item: T) => void;   // App callback on pick, with the list's display index + the item.
   command?: string;   // Typed command emitted on pick (via the list's activation).
   maxRows?: number;   // Max visible popup rows (default 6).
+  placeholder?: string | Signal<string>;   // A muted hint shown in the field while it is empty (editable mode); forwarded to the inner field.
 }
 ```
 
@@ -166,6 +167,7 @@ interface InputBoxOptions {
   label: string;   // Label shown above the field (supports `~X~` hotkey markup).
   value: Signal<string>;   // The two-way value signal the field reads and writes.
   validator?: Validator;   // Optional validator; OK is gated by the dialog's `valid()` sweep, which refocuses an invalid field.
+  placeholder?: string | Signal<string>;   // A muted hint shown in the prompt field while it is empty; never part of the value.
 }
 ```
 

@@ -4,7 +4,7 @@
  * The model is **two-mode**, discriminated by `roleSnapshot`:
  * - `roleSnapshot === null` ⇒ *derive* mode — the theme is generated from editable {@link ThemeSeeds}
  *   plus per-alias overrides via `createTheme`, so editing an alias re-drives every role that uses it.
- * - `roleSnapshot !== null` ⇒ *roles* mode — an opaque 63-role theme (from an import or a literal
+ * - `roleSnapshot !== null` ⇒ *roles* mode — an opaque 68-role theme (from an import or a literal
  *   preset) is shown verbatim; the first alias/seed edit transitions back to derive mode.
  *
  * In both modes, per-role overrides are layered last, so a direct role edit always wins.
@@ -29,7 +29,7 @@ export interface ThemeSeeds {
   readonly info?: Color;
 }
 
-/** What the inspector currently edits — one of the 18 aliases, or one of the 63 concrete roles. */
+/** What the inspector currently edits — one of the 18 aliases, or one of the 68 concrete roles. */
 export type EditTarget =
   { readonly kind: 'alias'; readonly name: keyof ThemeColors } | { readonly kind: 'role'; readonly name: keyof Theme };
 

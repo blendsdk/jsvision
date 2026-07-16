@@ -67,7 +67,7 @@ export const themingStory: Story = {
   category: 'Theming',
   title: 'Theme presets',
   rd: 'RD-22',
-  blurb: '13 presets as palette swatches · createTheme → 18 aliases → 63 roles · serialize · setTheme hot-swap.',
+  blurb: '13 presets as palette swatches · createTheme → 18 aliases → 68 roles · serialize · setTheme hot-swap.',
   build(ctx: StoryContext) {
     const g = new Group();
     const swatchY = 2;
@@ -82,6 +82,11 @@ export const themingStory: Story = {
       ),
     );
     g.add(at(new PaletteView(), 1, swatchY, Math.min(ctx.width - 2, 40), PRESETS.length));
+    // Severity text roles: a danger-red error line and an amber advisory, painted via Text.severity and
+    // driven by the theme's dangerText / warningText roles (they hot-swap with the theme).
+    const sevY = swatchY + PRESETS.length; // the row just below the swatch strips
+    g.add(at(new Text('✖ validation error', { severity: 'error' }), 1, sevY, 20, 1));
+    g.add(at(new Text('▲ heads-up advisory', { severity: 'warning' }), 22, sevY, 20, 1));
     g.add(
       at(
         new Input({ value: signal('editable — themed by the app') }),
@@ -94,7 +99,7 @@ export const themingStory: Story = {
     g.add(at(new Button('~O~K', { onClick: () => {} }), 1, afterSwatches + 2, 8, 2));
     g.add(
       at(
-        new Text('createTheme(seeds) → 18 aliases → 63 roles · serializeTheme/parseTheme · setTheme hot-swaps live.'),
+        new Text('createTheme(seeds) → 18 aliases → 68 roles · serializeTheme/parseTheme · setTheme hot-swaps live.'),
         1,
         afterSwatches + 5,
         Math.max(10, ctx.width - 2),
