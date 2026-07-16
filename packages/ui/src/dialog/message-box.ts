@@ -46,6 +46,8 @@ export interface InputBoxOptions {
   value: Signal<string>;
   /** Optional validator; OK is gated by the dialog's `valid()` sweep, which refocuses an invalid field. */
   validator?: Validator;
+  /** A muted hint shown in the prompt field while it is empty; never part of the value. */
+  placeholder?: string | Signal<string>;
 }
 
 /** Standard button-cell size, and the width of an OK/Cancel pair with a 2-cell gap between them. */
@@ -158,7 +160,12 @@ export async function inputBox(host: ModalDialogHost, o: InputBoxOptions): Promi
   const dlg = new Dialog({ title: o.title, width, height: 9, centered: true });
   dlg.layout = { ...dlg.layout, padding: 0 };
 
-  const input = at(new Input({ value: o.value, validator: o.validator }), { x: 3, y: 3, width: width - 6, height: 1 });
+  const input = at(new Input({ value: o.value, validator: o.validator, placeholder: o.placeholder }), {
+    x: 3,
+    y: 3,
+    width: width - 6,
+    height: 1,
+  });
   dlg.add(input);
   dlg.add(at(new Label(o.label, input), { x: 3, y: 2, width: width - 6, height: 1 }));
   const [ok, cancel] = okCancelButtons();

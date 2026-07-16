@@ -18,7 +18,11 @@ export const inputStory: Story = {
     const name = signal('');
     const age = signal('');
     const phone = signal('');
+    const fullName = signal('');
     const nameInput = new Input({ value: name, validator: filter('A-Za-z ') });
+    // A muted placeholder advertises what belongs in the field; it disappears as soon as you type and
+    // never becomes part of the bound value.
+    const fullInput = new Input({ value: fullName, placeholder: 'e.g. Ada Lovelace' });
     const ageInput = new Input({ value: age, validator: range(0, 150) });
     // A picture field: the `-` literals auto-fill as you type, `#` requires a digit (tvalidat.cpp).
     // No leading literal — TV rejects a keystroke that mismatches a leading literal (faithful).
@@ -51,6 +55,8 @@ export const inputStory: Story = {
       ),
     );
     g.add(at(new Text('Type past the edge to see the ◄ / ► scroll arrows. Tab moves between fields.'), 1, 8, width, 1));
+    g.add(at(new Text('Placeholder (muted, shown only while empty):'), 1, 10, width, 1));
+    g.add(at(fullInput, 1, 11, 26, 1));
     return g;
   },
 };

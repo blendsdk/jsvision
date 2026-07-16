@@ -169,6 +169,7 @@ interface DatePickerOptions {
   firstDayOfWeek?: 0 | 1;   // First day of the week (0 = Sunday, 1 = Monday), forwarded to the dropdown `Calendar`.
   showWeekNumbers?: boolean;   // Show ISO week numbers in the dropdown `Calendar`.
   density?: CalendarDensity;   // Density of the dropdown `Calendar` (default `'comfortable'`; the popup sizes to it).
+  placeholder?: string | Signal<string>;   // A muted hint shown in the field while it is empty; forwarded to the inner text field.
 }
 ```
 

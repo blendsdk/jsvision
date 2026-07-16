@@ -68,6 +68,7 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     inputSelected: { fg: c.foreground, bg: c.backgroundSunken },
     inputSelection: { fg: c.foregroundOnAccent, bg: c.accent },
     inputArrows: { fg: c.accent, bg: c.backgroundSunken },
+    inputPlaceholder: { fg: c.foregroundMuted, bg: c.backgroundSunken },
     scrollBarPage: { fg: c.foregroundMuted, bg: c.backgroundRaised },
     scrollBarControls: { fg: c.foreground, bg: c.backgroundRaised },
     listNormal: { fg: c.foreground, bg: c.backgroundRaised },
@@ -109,5 +110,7 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     statusBar: { fg: c.foreground, bg: c.backgroundRaised, hotkey: c.menuAccelerator },
     statusSelected: { fg: c.foregroundOnAccent, bg: c.accent, hotkey: c.menuAccelerator },
     shadow: { fg: c.foregroundDisabled, bg: c.background },
+    dangerText: { fg: c.danger, bg: c.backgroundRaised },
+    warningText: { fg: c.warning, bg: c.backgroundRaised },
   };
 }
