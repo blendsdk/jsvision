@@ -313,6 +313,86 @@ test('ST-AS1: the forms/async story is registered with metadata and paints its a
   });
 });
 
+// ST-LS1 (RD-07 AC-13) — the async-loading showcase story is registered with the required metadata
+// (unique id `forms/load`, category `Forms`) and paints its characteristic affordances: the
+// `Load record` trigger + the `dirty` rebase-state echo (proving the load demo renders its distinctive
+// state headlessly, not merely that some cell painted).
+test('ST-LS1: the forms/load story is registered with metadata and paints its load affordance', () => {
+  const story = STORIES.find((s) => s.id === 'forms/load');
+  expect(story, 'a story with id "forms/load" is registered').toBeTruthy();
+  expect(story!.category, 'category Forms').toBe('Forms');
+  expect(story!.title, 'title').toBeTruthy();
+  expect(story!.blurb, 'blurb').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    const painted = rr
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+    expect(painted, 'the Load record trigger paints').toMatch(/Load record/);
+    expect(painted, 'the dirty rebase-state echo paints').toMatch(/dirty/);
+    dispose();
+  });
+});
+
+// ST-DS1 (RD-08 AC-12) — the forms/dialog story is registered with the required metadata (unique id
+// `forms/dialog`, category `Forms`) and paints its characteristic headless affordance: the launch
+// trigger + the submit-gate interaction hint (the modal itself is exercised by demo:kitchen; the
+// 44×9 dialog would exceed the 72×16 smoke canvas, so headless it degrades to the launch button).
+test('ST-DS1: the forms/dialog story is registered with metadata and paints its launch affordance', () => {
+  const story = STORIES.find((s) => s.id === 'forms/dialog');
+  expect(story, 'a story with id "forms/dialog" is registered').toBeTruthy();
+  expect(story!.category, 'category Forms').toBe('Forms');
+  expect(story!.title, 'title').toBeTruthy();
+  expect(story!.blurb, 'blurb').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    const painted = rr
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+    expect(painted, 'the launch trigger paints').toMatch(/form dialog/i);
+    expect(painted, 'the submit-gate hint paints').toMatch(/invalid OK/i);
+    dispose();
+  });
+});
+
+// ST-SS1 (RD-05 AC-1, AC-8) — the comprehensive Forms showcase story is registered with the required
+// metadata (unique id `forms/showcase`, category `Forms`, truthy title/blurb) and paints its
+// characteristic affordances headlessly: the flagship identity (`showcase` / `inspector`), the
+// error-layout toggle labels (`right` / `below`), and the privileged-port advisory hint (`privileged`
+// / `<1024`). These come from the always-painted hint + static labels, so the assertion is
+// deterministic regardless of live reactive state — the live advisory only paints when port < 1024.
+test('ST-SS1: the forms/showcase story is registered with metadata and paints its characteristic affordances', () => {
+  const story = STORIES.find((s) => s.id === 'forms/showcase');
+  expect(story, 'a story with id "forms/showcase" is registered').toBeTruthy();
+  expect(story!.category, 'category Forms').toBe('Forms');
+  expect(story!.title, 'title').toBeTruthy();
+  expect(story!.blurb, 'blurb').toBeTruthy();
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    expect(paintedCells(rr.buffer().rows()), 'the showcase story painted nothing').toBeGreaterThan(0);
+    const painted = rr
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+    expect(painted, 'the flagship identity paints').toMatch(/showcase|inspector/i);
+    expect(painted, 'the error-layout toggle right label paints').toMatch(/right/i);
+    expect(painted, 'the error-layout toggle below label paints').toMatch(/below/i);
+    expect(painted, 'the privileged-port advisory hint paints').toMatch(/privileged|<\s*1024/i);
+    dispose();
+  });
+});
+
 // ST-S1 (RD-09 AC-8) — the placeholder + severity demos render: the controls/input story paints its
 // muted placeholder hint over an empty field, and the theming/presets story paints a severity-coloured
 // Text (a glyph cell in the dangerText fg). Read from the painted buffer (an unfocused headless mount
