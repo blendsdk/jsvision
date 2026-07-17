@@ -6,7 +6,7 @@
  * a raised surface, the brand accent, the highlighted hotkey letter) rather than a
  * specific widget. `createTheme` produces one of these from a handful of seeds, and
  * `rolesFromAliases` expands it into a full {@link Theme}. Author at this tier and
- * every control stays coherent; you never hand-write 68 roles.
+ * every control stays coherent; you never hand-write 70 roles.
  */
 import type { Color } from '../render/types.js';
 
