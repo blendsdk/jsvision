@@ -36,7 +36,7 @@ export interface RolesPanel {
   view: Group;
   /** The highlighted row index — drive `model.select(targets[focused()])` from an effect. */
   focused: Signal<number>;
-  /** The edit target for each row, in list order (18 aliases, then 68 roles). */
+  /** The edit target for each row, in list order (18 aliases, then 70 roles). */
   targets: readonly EditTarget[];
   /** The focus leaf to hand to `loop.focusView`. */
   rows: ListBox['rows'];

@@ -35,7 +35,16 @@ export interface Padding {
 /** How a box is sized along its parent's main axis. */
 export type Size =
   | { kind: 'fixed'; cells: number } // exact integer cells
-  | { kind: 'fr'; weight: number } // grow-weight share of leftover space
+  | {
+      kind: 'fr';
+      weight: number; // grow-weight share of leftover space
+      /**
+       * Optional floor in whole cells: an `fr` box never sizes below this, and it reserves the
+       * floor even inside a shrink-to-fit (`auto`) parent. Omitted ⇒ no floor — identical to the
+       * pre-existing behaviour. A negative value clamps to 0 in {@link normalizeSize}.
+       */
+      min?: number;
+    }
   | { kind: 'auto' }; // size to content (via measure() / children)
 
 /** Main-axis distribution of leftover space (like CSS `justify-content`). */
@@ -166,7 +175,11 @@ export function normalizeSize(size: Size | undefined): Size {
     return { kind: 'fixed', cells: toCells(size.cells) };
   }
   if (size.kind === 'fr') {
-    return { kind: 'fr', weight: Math.max(0, size.weight) };
+    return {
+      kind: 'fr',
+      weight: Math.max(0, size.weight),
+      min: size.min === undefined ? undefined : toCells(size.min),
+    };
   }
   return { kind: 'auto' };
 }

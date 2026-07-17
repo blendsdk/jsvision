@@ -248,6 +248,18 @@ export interface Theme {
   readonly statusSelected: ThemeRole;
   /** The window drop-shadow: darkGray on black. */
   readonly shadow: ThemeRole;
+  // --- Split panes (a resizable divider between two panes) ---
+  /**
+   * A split-pane divider at rest: lightGray on blue, drawn over the divider's
+   * `│` (row split) or `─` (col split) fill, with a `▓` grab mark at its midpoint.
+   */
+  readonly splitter: ThemeRole;
+  /**
+   * A split-pane divider while it is being dragged: brightGreen on blue — the
+   * dragging counterpart of {@link splitter}, mirroring how {@link indicatorDragging}
+   * relates to {@link indicatorNormal}.
+   */
+  readonly splitterDragging: ThemeRole;
   // --- Severity text roles (semantic body-text colours for a styled Text) ---
   /** Danger/error body text — a validation error or alert line: danger-red on the static-text field. */
   readonly dangerText: ThemeRole;
@@ -362,6 +374,8 @@ export const defaultTheme: Theme = {
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },
+  splitter: { fg: PALETTE.lightGray, bg: PALETTE.blue },
+  splitterDragging: { fg: PALETTE.brightGreen, bg: PALETTE.blue },
   dangerText: { fg: '#ef4444', bg: PALETTE.lightGray },
   warningText: { fg: '#f59e0b', bg: PALETTE.lightGray },
 };

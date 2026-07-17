@@ -2,7 +2,7 @@
 
 # API — Containers, scrolling, lists & tabs
 
-Scroll bars, scrollers, list views, dialogs, dropdowns, and tabs.
+Scroll bars, scrollers, list views, dialogs, dropdowns, tabs, and split panes.
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
@@ -329,6 +329,35 @@ interface ScrollerOptions {
   content: View;   // The oversized content view (clipped to the viewport, offset by `-delta`).
   extent: Size2D | (() => Size2D);   // The content's natural size = the scroll limit; a thunk is re-read each `draw()` for dynamic content.
   scrollbars?: ScrollbarsMode;   // Which owned bars to create (default `'vertical'`).
+}
+```
+
+## SplitView
+
+A resizable split-pane container.
+
+```ts
+new SplitView(opts: SplitViewOptions)   // extends Group
+// methods & signals:
+splitters: Splitter[]
+grabMark: Signal<boolean>
+beginDrag(index: number, ev: DispatchEvent): void
+resizeBy(index: number, delta: number): void
+```
+
+## SplitViewOptions
+
+Construction options for SplitView.
+
+```ts
+interface SplitViewOptions {
+  direction: Direction;   // Split axis: `'row'` = side-by-side panes, `'col'` = stacked panes.
+  children: View[];   // The pane views, in order. N children produce N−1 splitters.
+  sizes: Signal<number[]>;   // Two-way pane sizing as `fr` weights. Seed it with ratios (`signal([1, 1])` = equal, `[2, 1]` = 2:1); a drag rewrites it with the resolved cell counts. Restoring saved weights into a differently-sized container rescales them proportionally.
+  minSize?: number | number[];   // Minimum pane size in cells — a scalar applies to every pane, an array is per-pane.
+  grabMark?: boolean;   // Whether each splitter draws the `▓` grab mark at its midpoint. Defaults to `true`. This is only the initial value — the live state lives in the public SplitView.grabMark signal, so you can flip it at runtime.
+  onResize?: (sizes: number[]) => void;   // Fired on every **live** change: each drag move that actually changes the sizes, and each keyboard step. Never fires when the sizes are unchanged — a drag held against a minimum is a silent no-op. Use this to mirror the layout live; use SplitViewOptions.onResizeEnd to persist it.
+  onResizeEnd?: (sizes: number[]) => void;   // Fired once per **commit**: the pointer-up that ends a drag, and each discrete keyboard step. One drag gesture fires this exactly once however far the pointer travelled — so this, not SplitViewOptions.onResize, is the hook to persist a layout from.
 }
 ```
 
