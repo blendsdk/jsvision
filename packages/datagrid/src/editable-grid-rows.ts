@@ -76,6 +76,14 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
   dirty?: DirtyRegistry;
   /** The shared invalid-cell registry (the `gridInvalid` band + message); omit to disable surfacing. */
   errors?: ErrorRegistry;
+  /** Mark a row as edited (a cell committed) — fed to the container's row-leave gate. */
+  markRowTouched?: (rowKey: string | number) => void;
+  /**
+   * The row-leave gate: consulted before a **row-changing** move (keyboard row-nav, the `Enter`-advance,
+   * or a click on a different row). Returns `true` to allow the leave, `false` to block it (the gate has
+   * already refocused the offending field). A within-row column move never consults it. Omit for no gate.
+   */
+  rowLeaveGate?: () => boolean;
   /**
    * The datagrid selection set, keyed by `rowKey` — the body paints a row's `selected` role by
    * membership here (not the base's single `selected` index, which is kept only as the base's required
@@ -208,6 +216,10 @@ export class EditableGridRows<T> extends GridRows<T> {
   protected readonly dirty?: DirtyRegistry;
   /** The shared invalid-cell registry (the `gridInvalid` band), or `undefined` when surfacing is off. */
   protected readonly errors?: ErrorRegistry;
+  /** Mark a row edited (a cell committed) — threaded into the edit controller's host. */
+  private readonly markRowTouched?: (rowKey: string | number) => void;
+  /** The row-leave gate for the body-owned leave paths (row-nav, Enter-advance, cross-row click). */
+  private readonly rowLeaveGate?: () => boolean;
   /** The datagrid selection set the body paints from (empty when the container wires no selection). */
   protected readonly selectedKeys: Signal<ReadonlySet<Key>>;
   /** Toggle-row gesture sink (`Space` on a read-only cell / `Ctrl`+click); `undefined` when off. */
@@ -257,6 +269,8 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.bumpVersion = cfg.bumpVersion;
     this.dirty = cfg.dirty;
     this.errors = cfg.errors;
+    this.markRowTouched = cfg.markRowTouched;
+    this.rowLeaveGate = cfg.rowLeaveGate;
     this.selectedKeys = cfg.selectedKeys ?? signal<ReadonlySet<Key>>(new Set());
     this.onToggleRow = cfg.onToggleRow;
     this.onRangeToRow = cfg.onRangeToRow;
@@ -282,6 +296,7 @@ export class EditableGridRows<T> extends GridRows<T> {
       bumpVersion: this.bumpVersion,
       dirty: this.dirty,
       errors: this.errors,
+      markRowTouched: this.markRowTouched,
       currentCell: () => this.currentCell(),
       cellRect: () => this.cellRect(),
       advanceRow: () => this.advanceRow(),
@@ -389,6 +404,16 @@ export class EditableGridRows<T> extends GridRows<T> {
       }
     }
     if (inner.type === 'mouse' && inner.kind === 'down') {
+      // A plain click on a DIFFERENT row is a row-leave: gate it before anything moves the cursor, so a
+      // blocked leave leaves the cursor (and the gate's field refocus) intact. Modified clicks (Ctrl/Shift
+      // selection gestures) and within-row clicks are never gated.
+      const plainClick = inner.ctrl !== true && inner.shift !== true;
+      if (plainClick && this.rowLeaveGate !== undefined && this.clickTargetsOtherRow(ev)) {
+        if (!this.rowLeaveGate()) {
+          ev.handled = true; // blocked — the gate refocused the offending field; the row cursor stays
+          return;
+        }
+      }
       // A body click sets the column cursor to the clicked cell (single-click cell focus).
       if (this.mouseColumns) this.setColFromClick(ev);
       // A double-click on an editable cell begins the edit — intercept before super.onEvent so the base's
@@ -428,31 +453,39 @@ export class EditableGridRows<T> extends GridRows<T> {
         this.setGlobalCol(this.focusedCol() + 1, ev);
         return true;
       case 'moveUp':
+        if (!this.rowMoveAllowed(-1)) return true; // row-leave gate blocked the move (field refocused)
         this.focusBy(-1);
         return true;
       case 'moveDown':
+        if (!this.rowMoveAllowed(1)) return true;
         this.focusBy(1);
         return true;
       case 'pageUp':
+        if (!this.rowMoveAllowed(-this.viewportRows())) return true;
         this.focusBy(-this.viewportRows());
         return true;
       case 'pageDown':
+        if (!this.rowMoveAllowed(this.viewportRows())) return true;
         this.focusBy(this.viewportRows());
         return true;
       case 'rowStart':
-        this.setGlobalCol(0, ev);
+        this.setGlobalCol(0, ev); // column-only move — never gated
         return true;
       case 'rowEnd':
-        this.setGlobalCol(this.totalCols() - 1, ev);
+        this.setGlobalCol(this.totalCols() - 1, ev); // column-only move — never gated
         return true;
       case 'gridStart':
+        if (!this.rowMoveToAllowed(0)) return true;
         this.focused.set(0);
         this.setGlobalCol(0, ev);
         return true;
-      case 'gridEnd':
-        this.focused.set(Math.max(0, this.display().length - 1));
+      case 'gridEnd': {
+        const last = Math.max(0, this.display().length - 1);
+        if (!this.rowMoveToAllowed(last)) return true;
+        this.focused.set(last);
         this.setGlobalCol(this.totalCols() - 1, ev);
         return true;
+      }
       case 'beginEdit':
         if (this.editableCol() < 0) return false; // read-only / other panel / pinned row → base activate
         this.controller.beginEdit(ev);
@@ -609,9 +642,45 @@ export class EditableGridRows<T> extends GridRows<T> {
     return { x: geom.starts[c] - indent, y, width: geom.widths[c], height: 1 };
   }
 
-  /** Advance the row cursor to the next row (clamped), keeping the column. */
+  /**
+   * Advance the row cursor to the next row (clamped), keeping the column — the `Enter`-commit path. When
+   * the move would actually change the row it consults the row-leave gate first (the just-committed cell
+   * marked the row edited); on a block it does not advance (the gate refocused the offending field).
+   */
   private advanceRow(): void {
-    this.focused.set(clamp(this.focused() + 1, 0, Math.max(0, this.display().length - 1)));
+    const target = clamp(this.focused() + 1, 0, Math.max(0, this.display().length - 1));
+    if (target === this.focused()) return; // already at the last row — nothing to leave
+    if (this.rowLeaveGate !== undefined && !this.rowLeaveGate()) return; // blocked → stay put
+    this.focused.set(target);
+  }
+
+  /**
+   * Whether a row-changing keyboard move by `delta` is allowed: a move that stays on the same row (a
+   * clamp at an edge) never gates; otherwise the row-leave gate decides. A body with no gate always
+   * allows, so a plain grid's navigation is unchanged.
+   */
+  private rowMoveAllowed(delta: number): boolean {
+    const range = this.display().length;
+    if (range === 0) return true;
+    const target = clamp(this.focused() + delta, 0, range - 1);
+    if (target === this.focused()) return true; // clamped at an edge → no row change → no gate
+    return this.rowLeaveGate === undefined || this.rowLeaveGate();
+  }
+
+  /** Whether a move to an absolute `target` row is allowed (the `gridStart`/`gridEnd` variant of {@link rowMoveAllowed}). */
+  private rowMoveToAllowed(target: number): boolean {
+    if (target === this.focused()) return true;
+    return this.rowLeaveGate === undefined || this.rowLeaveGate();
+  }
+
+  /** Whether a click's target display row differs from the current cursor row (a cross-row click). */
+  private clickTargetsOtherRow(ev: DispatchEvent): boolean {
+    const local = ev.local;
+    if (local === undefined) return false;
+    const range = this.display().length;
+    if (range === 0) return false;
+    const rowIndex = Math.min(this.topItem + local.y, range - 1);
+    return rowIndex !== clamp(this.focused(), 0, range - 1);
   }
 
   /** The global visible column count (a single body's own count by default). */

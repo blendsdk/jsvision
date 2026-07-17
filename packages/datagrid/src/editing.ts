@@ -135,6 +135,8 @@ export interface EditHost<T> {
   readonly dirty?: DirtyRegistry;
   /** The shared invalid-cell registry (marker + message); omit to disable error surfacing. */
   readonly errors?: ErrorRegistry;
+  /** Mark a row as edited (a cell committed) so the row-leave gate knows to validate it; omit to disable. */
+  readonly markRowTouched?: (rowKey: string | number) => void;
   /** The focused cell (row + column), or `null` when the grid is empty. */
   currentCell(): CellRef<T> | null;
   /** The focused cell's rect in body-local coordinates (for the overlay mount). */
@@ -345,6 +347,7 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     committing.delete(ck);
     if (res.committed) {
       host.errors?.clear(ck); // the cell now holds a committed, valid value
+      host.markRowTouched?.(cell.rowKey); // the row was edited → the row-leave gate will validate it
       closeEditor();
       state = { kind: 'idle' };
       return true;

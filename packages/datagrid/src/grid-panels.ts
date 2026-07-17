@@ -135,6 +135,10 @@ export interface GridBodyDeps<T> {
   dirty: DirtyRegistry;
   /** The shared invalid-cell registry (the `gridInvalid` band + message). */
   errors?: ErrorRegistry;
+  /** Mark a row edited (a cell committed) — fed to the row-leave gate. */
+  markRowTouched?: (rowKey: string | number) => void;
+  /** The row-leave gate consulted by the body before a row-changing move (row-nav / Enter / cross-row click). */
+  rowLeaveGate?: () => boolean;
   /**
    * The grid's one-line validation message band, or `undefined` when validation is not configured. When
    * present it is assembled as a dedicated one-cell band in the footer region — independent of any footer
@@ -338,6 +342,8 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       bumpVersion: deps.bumpVersion,
       dirty: deps.dirty,
       errors: deps.errors,
+      markRowTouched: deps.markRowTouched,
+      rowLeaveGate: deps.rowLeaveGate,
       columnOffset: offset,
       totalCols: () => total,
       onCursorEnterPanel: hop,
@@ -381,6 +387,8 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       bumpVersion: deps.bumpVersion,
       dirty: deps.dirty,
       errors: deps.errors,
+      markRowTouched: deps.markRowTouched,
+      rowLeaveGate: deps.rowLeaveGate,
       columnOffset: offset,
       totalCols: () => total,
       mouseColumns: frozen,

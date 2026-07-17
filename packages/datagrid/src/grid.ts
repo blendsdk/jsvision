@@ -43,7 +43,8 @@ import type { SyntheticPrefix } from './synthetic-columns.js';
 import type { Key, SelectionMode } from './selection.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
 import { createErrorRegistry } from './error-registry.js';
-import { buildMessageBand } from './validation.js';
+import { buildMessageBand, createRowGate } from './validation.js';
+import type { RowValidation, RowGate } from './validation.js';
 
 /**
  * The filter popup's fixed cell size — wide enough for the operator selector and operands, tall enough
@@ -101,6 +102,24 @@ export interface EditableDataGridOptions<T> {
    * ```
    */
   readonly beforeSave?: BeforeSave<T>;
+  /**
+   * A per-row cross-field gate that runs when the cursor leaves a row **that was edited** this visit (a
+   * cell in it committed). Return `{ ok: true }` to allow the leave, or `{ ok: false, message?, field? }`
+   * to block it: the cursor stays on the row, refocuses the `field` column (the offending field), and
+   * `message` surfaces in the message band. An untouched row — even a pre-existing invalid one — leaves
+   * freely; a row that once passes will not re-trap. Use it for cross-field rules a single cell cannot
+   * check (e.g. `end` after `start`). Client-side gating is UX only — the source stays authoritative.
+   *
+   * @example
+   * ```ts
+   * import { EditableDataGrid } from '@jsvision/datagrid';
+   * const grid = new EditableDataGrid({
+   *   columns, source,
+   *   validateRow: (r) => (r.end > r.start ? { ok: true } : { ok: false, message: 'End must be after start', field: 'end' }),
+   * });
+   * ```
+   */
+  readonly validateRow?: (row: T) => RowValidation;
   /**
    * A per-grid keyboard remap layered over the default binding table (see `DEFAULT_KEYMAP`). Each entry
    * maps a chord (`'ctrl+alt+shift+key'`) to a `GridAction`; a caller entry wins on a chord conflict, and
@@ -293,6 +312,13 @@ export class EditableDataGrid<T> extends Group {
   // active message the footer band shows. Threaded into the body (the `gridInvalid` paint) and the edit
   // pipeline (set on a blocked/vetoed commit, cleared on a successful re-commit or an abandoned edit).
   private readonly errors = createErrorRegistry();
+  // Rows edited this visit (a cell committed) — the trigger for the row-leave gate. A row is added on a
+  // successful commit and removed when it leaves with `validateRow` passing, so an untouched row (seed
+  // data) never traps and a validated row does not re-trap. Distinct from `dirty` (in-flight commits).
+  private readonly touched = new Set<Key>();
+  // The per-row cross-field leave gate (validateRow). Owns no reactive state — it reads live grid state
+  // through delegators; every row-leave path (nav, Enter-advance, Tab row-edge, cross-row click) consults it.
+  private readonly rowGate: RowGate;
   // The single source of truth for the sort model — the header and the `sortBy`/`addSort`/`clearSort`
   // API both drive this one signal; the body's `display` derives from it on the client path.
   private readonly sortKeys = signal<SortKey[]>([]);
@@ -447,16 +473,34 @@ export class EditableDataGrid<T> extends Group {
     // Merge the caller's keymap over the default table once; every panel shares this one frozen map.
     const keymap = mergeKeymap(opts.keymap);
 
-    // The validation message band is built only when validation is configured — a column `validate` or a
-    // grid `beforeSave`. A plain editable grid keeps its exact layout (no extra footer row); a configured
-    // grid gets a reserved one-cell band that shows the active message and is blank when there is none.
-    const validationConfigured = opts.beforeSave !== undefined || opts.columns.some((c) => c.validate !== undefined);
+    // The validation message band is built only when validation is configured — a column `validate`, a
+    // grid `beforeSave`, or a `validateRow`. A plain editable grid keeps its exact layout (no extra footer
+    // row); a configured grid gets a reserved one-cell band that shows the active message, blank when none.
+    const validationConfigured =
+      opts.beforeSave !== undefined ||
+      opts.validateRow !== undefined ||
+      opts.columns.some((c) => c.validate !== undefined);
     const messageBand = validationConfigured
       ? buildMessageBand(
           () => this.errors.active(),
           () => 'error',
         )
       : undefined;
+
+    // The row-leave gate reads live grid state through delegators (no owned reactive state). `focusColumn`
+    // sets the shared global column cursor to the offending field; `columnIndex` resolves a field id to its
+    // visible index (−1 when hidden/unknown → the gate falls back to the current column).
+    this.rowGate = createRowGate<T>({
+      validateRow: opts.validateRow,
+      focusedRow: () => this.focusedRow(),
+      focusedKey: () => this.focusedKey(),
+      isRowTouched: (rowKey) => this.touched.has(rowKey),
+      clearTouched: (rowKey) => this.touched.delete(rowKey),
+      columnIndex: (columnId) => this.visibleIds().indexOf(columnId),
+      currentColumn: () => this.focusedCol(),
+      focusColumn: (index) => this.focusedCol.set(index),
+      note: (message) => this.errors.note(message),
+    });
 
     this._bodyDeps = {
       focused: this.focused,
@@ -520,6 +564,8 @@ export class EditableDataGrid<T> extends Group {
       bumpVersion: () => this.version.set(this.version() + 1),
       dirty: this.dirty,
       errors: this.errors,
+      markRowTouched: (rowKey) => this.touched.add(rowKey),
+      rowLeaveGate: () => this.rowGate.tryLeave(),
       messageBand,
       vbar,
       hbar,
@@ -1246,7 +1292,9 @@ export class EditableDataGrid<T> extends Group {
 
   /**
    * Shared cell-advance: commit an open edit first (a vetoed commit stays put), then move the container's
-   * cursor signals to the pure next/previous cell — or report `'exit'` at the grid edge.
+   * cursor signals to the pure next/previous cell — or report `'exit'` at the grid edge. A hop that wraps
+   * to a different row consults the row-leave gate first (the just-committed cell marked the row edited);
+   * on a block the cursor stays and the grid keeps focus (`'moved'`).
    */
   private async advanceCell(forward: boolean): Promise<'moved' | 'exit'> {
     if (this._center.isEditing()) {
@@ -1259,6 +1307,7 @@ export class EditableDataGrid<T> extends Group {
       ? nextCellIndex(this.focusedCol(), this.focused(), cols, rows)
       : prevCellIndex(this.focusedCol(), this.focused(), cols, rows);
     if (move === 'exit') return 'exit';
+    if (move.row !== this.focused() && !this.rowGate.tryLeave()) return 'moved'; // blocked row-edge hop → stay
     this.focused.set(move.row);
     this.focusedCol.set(move.col);
     return 'moved';
