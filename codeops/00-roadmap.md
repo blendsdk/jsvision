@@ -2,7 +2,7 @@
 
 > **Status**: Active
 > **Last Updated**: 2026-07-17
-> **Features**: 0 / 4 done · jsvision-forms reopened (first slice shipped; extended with showcase + follow-on slices) · split-panes executing (Phases 1–2/4 landed)
+> **Features**: 0 / 4 done · jsvision-forms reopened (first slice shipped; extended with showcase + follow-on slices) · split-panes executing (Phases 1–3/4 landed)
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -15,7 +15,7 @@
 |---------|---------|---------------|----------|--------|--------------|
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done (site-foundation · @jsvision/web runtime · live-example system · TypeDoc API ref) · RD-04/05/07…10 ✏️ drafted | 4/10 RDs | ⬜ | 2026-07-13 |
-| split-panes | [→](features/split-panes/plans/split-panes/00-index.md) | 🔄 Executing — resizable split panes (GH #10): N panes + N−1 draggable splitters, row/col, nestable for grids. **Phases 1–2/4 landed & verified**: (P1) optional `min` on the flex layout engine (`TrackItem.min`/`Size.min` + private `apportionMin`, no-min fast path byte-identical across 1641 ui tests); (P2) `splitter`/`splitterDragging` theme roles across all 13 presets (70 roles total; the anticipated role-count + allowlist-union bump handled, runtime AR-23); ST-1…ST-9, ST-25 green. Remaining: the `SplitView` component (P3), kitchen-sink story (P4). Preflight ✅ PASSED — 6 findings all resolved (PF-001…004; specs ST-28…ST-31) | 22/43 tasks · 2/4 phases | 🔄 | 2026-07-17 |
+| split-panes | [→](features/split-panes/plans/split-panes/00-index.md) | 🔄 Executing — resizable split panes (GH #10): N panes + N−1 draggable splitters, row/col, nestable for grids. **Phases 1–3/4 landed & verified**: (P1) optional `min` on the flex layout engine; (P2) `splitter`/`splitterDragging` theme roles (70 roles; role-count + allowlist-union bump, AR-23); (P3) the **`SplitView` component** — declarative `fr`-track container, captured-drag resize, keyboard resize, `minSize` clamp, nesting; ST-10…ST-31 green (23 spec + 12 impl). Preflight fixes all pinned: clamp-inversion frozen-divider (PF-001), stuck-highlight bind (PF-002), live/commit callbacks (PF-003), write-back loop guard (PF-004). Remaining: kitchen-sink story + close-out (P4) | 37/45 tasks · 3/4 phases | 🔄 | 2026-07-17 |
 | jsvision-forms | [→](features/jsvision-forms/00-roadmap.md) | RD-01…04 ✅ Done (first slice: store · sync Zod validation · widget-binding · non-functional) · RD-09 ✅ Shipped (styled `Text` severity + `Input` placeholder + `dangerText`/`warningText` theme roles; 32/32 tasks, `yarn verify` green) · RD-06 ✅ Shipped (async validation — per-field `asyncValidators` + `validating()`/`asyncError()` + async-aware `submit()` + idempotent whole-scope `dispose()`; new `src/async.ts` + additive edits; 70 forms tests + one `forms/async` story; 28/28 tasks/4 phases spec-first, `yarn verify` green; preflight ✅ PASSED incl. the generation-stale-guard hardening AR-P11/ST-A16; runtime AR-P12 ST-10↔AR-44) · RD-05/07/08 ⬜ planned (showcase + async loading/rebase + `formDialog`) — 2026-07-15 triage; backlog in GH #89 | 6/9 RDs done | 🔄 | 2026-07-16 |
 
 ## Archived

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-17 17:58
-> **Progress**: 22/43 tasks (51%) — Phases 1 & 2 complete
+> **Last Updated**: 2026-07-17 18:33
+> **Progress**: 37/45 tasks (82%) — Phases 1–3 complete (Phase 3 has 15 task checkboxes, not the 13 the table below first stated; the checkboxes are authoritative, so the true total is 45)
 > **CodeOps Skills Version**: 3.8.0
 > **Preflighted**: 2026-07-17 — 6 findings (4 major, 2 minor), all resolved into the specs above; see
 > [`00-preflight-report.md`](00-preflight-report.md). Fixes folded into existing tasks (count unchanged);
@@ -26,10 +26,10 @@ then the mandatory showcase story.
 | ----- | ----- | ----- |
 | 1 | Layout engine: minimum-size support | 13 |
 | 2 | Theme roles: `splitter` + `splitterDragging` | 9 |
-| 3 | `SplitView` component | 13 |
+| 3 | `SplitView` component | 15 |
 | 4 | Kitchen-sink story + close-out | 8 |
 
-**Total: 43 tasks across 4 phases** (no fabricated hour estimates)
+**Total: 45 tasks across 4 phases** (no fabricated hour estimates; Phase 3's count corrected from 13 → 15 during execution to match its actual checkboxes)
 
 > **⚠️ EXECUTION RULE — APPLIES TO EVERY AGENT EXECUTING THIS PLAN:**
 >
@@ -164,12 +164,12 @@ then the mandatory showcase story.
 **Reference**: [03-03](03-03-splitview-component.md) · ST-10…ST-24, ST-27 · AR-1, AR-5, AR-6, AR-8…AR-17
 **Objective**: Pin the component's geometry, drag fidelity, clamping, and keyboard contract before writing it.
 
-- [ ] 3.1.1 Write `packages/ui/test/split.spec.test.ts` — ST-10…ST-24, ST-27…ST-31. Geometry expectations are hand-computed in 07; do not recompute them from the code. ⚠️ ST-29/ST-30/ST-31 are mask-prone: assert the splitter role **after mouse-up**, write `sizes` **after mount**, and assert callback **call counts** — a happy-path version of any of the three re-certifies the bug it exists to catch (PF-001…PF-004)
-- [ ] 3.1.2 Write `packages/ui/test/split.packaging.spec.test.ts` — `SplitView` + `SplitViewOptions` exported from `@jsvision/ui`; `applySplitResize` **not** exported. Matches the per-subsystem `*.packaging.spec.test.ts` convention
-- [ ] 3.1.3 Run — verify all FAIL (red phase)
+- [x] 3.1.1 Write `packages/ui/test/split.spec.test.ts` — ST-10…ST-24, ST-27…ST-31. Geometry hand-computed & re-verified against `solveTrack`/`apportionMin` (ST-10 `[10,10]`, ST-11 `[7,7,6]`, ST-27 `[12,18]`, ST-28 squeeze→frozen). ST-29 asserts role **after** mouse-up, ST-30 writes `sizes` **after** mount, ST-31 asserts callback **call counts** (0 while clamped, exactly 1 `onResizeEnd`) ✅ (completed: 2026-07-17 18:10)
+- [x] 3.1.2 Write `packages/ui/test/split.packaging.spec.test.ts` — `SplitView` + `SplitViewOptions` exported from `@jsvision/ui`; `applySplitResize` **not** exported; each `src/split/` file ≤ 500 lines. Matches the `tabs.packaging.spec` convention ✅ (completed: 2026-07-17 18:10)
+- [x] 3.1.3 Run — all FAIL (red phase): `split.spec` fails to import the absent modules; `split.packaging` fails on `SplitView` undefined + no `src/split` dir ✅ (completed: 2026-07-17 18:10)
 
 **Deliverables**:
-- [ ] ST-10…ST-24, ST-27 written and red
+- [x] ST-10…ST-24, ST-27…ST-31 written and red ✅ (2026-07-17 18:10)
 
 **Verify**: `yarn verify`
 
@@ -178,18 +178,18 @@ then the mandatory showcase story.
 **Reference**: [03-03](03-03-splitview-component.md) §Implementation Details
 **Objective**: The widget — declarative structure, captured drag, keyboard resize.
 
-- [ ] 3.2.1 Implement pure `applySplitResize(cells, index, delta, mins)` — clamp + conserve the adjacent pair's sum — `packages/ui/src/split/resize.ts` (module-private, per AR-7). ⚠️ Clamp bounds are `lo = min(0, mins[a]−cells[a])`, `hi = max(0, cells[b]−mins[b])` — the `min(0,…)`/`max(0,…)` are **load-bearing**: without them the range inverts once the engine has squeezed panes below their mins, and a zero-delta mouse-down silently corrupts `sizes` (PF-001, ST-28). Reuse the repo's `clamp` (`desktop/gestures.ts:22-24`, hoisted) rather than re-implementing, so the argument order is pinned
-- [ ] 3.2.2 Implement `Splitter extends View` — `focusable = true`; `│`/`─` glyph + static `▓` grab mark at the midpoint; role `splitter` / `splitterDragging`; arrow keys → `owner.resizeBy(index, ±1)`. ⚠️ Add `onMount(){ this.bind(() => this.dragging()) }` — `draw()` is **not** auto-tracked, so without the bind the drag highlight sticks after mouse-up (PF-002, ST-29); copying `indicator.ts:72`'s draw line without its `:56-61` bind is the exact trap. ⚠️ Handle **unmodified** arrows only — leave `Ctrl`/`Alt`+arrow and cross-axis arrows unhandled so they bubble (the base `GridRows` swallow-modifiers trap). Extends **`View`** (the exported abstract base), **not** `BaseView` (which does not exist — it is only a local alias in `scroller.ts:14`, PF-005) — `packages/ui/src/split/splitter.ts`
-- [ ] 3.2.3 Implement `SplitView extends Group` — inner `track` Group (`position:'fill'`, `direction`, `gap:0`); interleaved pane/splitter children; panes `{kind:'fr', weight, min}`, splitters `{kind:'fixed', cells:1}`; constructor normalization (children, `minSize`) per 03-03 §Normalization. ⚠️ `sizes` length normalization does **not** go in the constructor — it goes in `applyWeights` (3.2.4), because `sizes` is a caller-owned signal any writer can rewrite (PF-004) — `packages/ui/src/split/split-view.ts`
-- [ ] 3.2.4 Wire reactive resync: `bind(() => sizes(), applyWeights, { relayout: true })` in `onMount` (`bind` throws outside it). `applyWeights` pads/truncates to the pane count on **every** write, with a write-back guarded on length mismatch only. ⚠️ The guard is mandatory: an **unconditional** `sizes.set(freshArray)` inside the effect is an infinite loop (`Object.is` never matches a new array reference — PF-004, ST-30) — `packages/ui/src/split/split-view.ts`
-- [ ] 3.2.5 Implement the gesture — `beginDrag` (called by `Splitter`, mirroring `window.ts:285`'s `manager.beginMove`) captures on **`SplitView`**, not the splitter; `onEvent` recomputes from `startCells` + total delta using **raw terminal coords**; `hasCapture` staleness guard; idempotent `endDrag`. Read live geometry via `resolvedCells()` — **never** the `sizes` signal. Callbacks: `commit()` dedupes (no fire on an unchanged array) and fires `onResize` live; `endDrag({commit:true})` fires `onResizeEnd` once; the staleness-guard `endDrag()` fires neither (PF-003, R7, ST-31) — `packages/ui/src/split/split-view.ts`
-- [ ] 3.2.6 Create `packages/ui/src/split/index.ts` and re-export the subsystem from `packages/ui/src/index.ts`
-- [ ] 3.2.7 JSDoc every public export with a working, copy-pasteable `@example` (`check-jsdoc.mjs` gates it) — no plan/RD ids, no TV provenance; comment the non-obvious *why* (the capture-on-container choice; recompute-from-start vs incremental accumulation)
-- [ ] 3.2.8 Run the spec tests — verify **ST-10…ST-24, ST-27 PASS** (green phase). If any fails, fix the code, not the test
+- [x] 3.2.1 Implement pure `applySplitResize(cells, index, delta, mins)` — `packages/ui/src/split/resize.ts` (module-private). Load-bearing `min(0,…)`/`max(0,…)` bounds implemented (PF-001, ST-28 green). **Hoisted** the repo's `clamp` to a new shared `src/shared/clamp.ts` and rewired `desktop/gestures.ts` to import it, so the argument order is pinned by one definition ✅ (completed: 2026-07-17 18:17)
+- [x] 3.2.2 Implement `Splitter extends View` — `focusable=true`; `│`/`─` + `▓` grab mark; role flip; unmodified-arrow keyboard. `onMount(){ this.bind(() => this.dragging()) }` in place (PF-002, ST-29 green). Extends `View` (not the nonexistent `BaseView`). Owner typed via a minimal `SplitOwner` interface to avoid a runtime import cycle with `split-view.ts` — `packages/ui/src/split/splitter.ts` ✅ (completed: 2026-07-17 18:17)
+- [x] 3.2.3 Implement `SplitView extends Group` — inner `track` Group (`position:'fill'`, `direction`, `gap:0`); interleaved children; `minSize`/children normalization in the constructor; `sizes` length normalization deferred to `applyWeights` (PF-004) — `packages/ui/src/split/split-view.ts` ✅ (completed: 2026-07-17 18:17)
+- [x] 3.2.4 Reactive resync `bind(() => sizes(), applyWeights, {relayout:true})` in `onMount`; `applyWeights` pads/truncates every write with the **length-guarded** write-back (no unconditional `sizes.set` → no `Object.is` loop; PF-004, ST-30 green) ✅ (completed: 2026-07-17 18:17)
+- [x] 3.2.5 Gesture — `beginDrag` captures on `SplitView`; `onEvent` recomputes from `startCells` + total delta using raw terminal coords; `hasCapture` staleness guard; idempotent `endDrag`. Live geometry via `resolvedCells()`. `commit()` dedupes + fires `onResize`; `endDrag({commit:true})` fires `onResizeEnd` once; staleness `endDrag()` fires neither (PF-003, R7, ST-31 green) ✅ (completed: 2026-07-17 18:17)
+- [x] 3.2.6 Created `packages/ui/src/split/index.ts` + re-exported `SplitView`/`SplitViewOptions` from `packages/ui/src/index.ts` (next to `TabView`) ✅ (completed: 2026-07-17 18:17)
+- [x] 3.2.7 JSDoc every public export with a working `@example` (`SplitView` carries a copy-pasteable one); commented the non-obvious *why* (capture-on-container, recompute-from-start, the write-back guard) — no plan/RD ids, no TV provenance ✅ (completed: 2026-07-17 18:17)
+- [x] 3.2.8 Run the spec tests — **ST-10…ST-24, ST-27…ST-31 PASS** (23/23 green, first run); full ui suite 1670/1670 green (no regression from the `clamp` hoist) ✅ (completed: 2026-07-17 18:17)
 
 **Deliverables**:
-- [ ] `SplitView` drags, clamps, resizes from the keyboard, and nests
-- [ ] Files within the 200–500 line target
+- [x] `SplitView` drags, clamps, resizes from the keyboard, and nests ✅ (2026-07-17 18:17)
+- [x] Files within the 200–500 line target (resize 51 · splitter 76 · split-view ~230) ✅ (2026-07-17 18:17)
 
 **Verify**: `yarn verify`
 
@@ -198,13 +198,13 @@ then the mandatory showcase story.
 **Reference**: [07-testing-strategy.md](07-testing-strategy.md) §Implementation + §Integration
 **Objective**: Cover the gesture's edges and prove the declarative design actually reflows pane interiors.
 
-- [ ] 3.3.1 Write `packages/ui/test/split.impl.test.ts` — `endDrag` idempotency (second call fires no `onResizeEnd`); normalization edges (0 children, `minSize` length mismatch, negative `minSize`); modified arrows fall through; grab-mark position at even/odd extents; a 1-cell splitter axis; `delta === 0` no-op in **both** the feasible and squeezed regimes; the `applyWeights` write-back **terminates** in one corrective write (the `Object.is` loop guard, PF-004)
-- [ ] 3.3.2 Add the rubber-band guard test — drag far past a clamp then reverse by 1; the divider stays pinned until the pointer returns past the clamp point (proves recompute-from-`startCells`)
-- [ ] 3.3.3 Add the integration tests — the drag driven **through the capture seam** in a real `EventLoop` (an issue #10 acceptance criterion, not a direct `resizeBy` call); **pane interiors reflow** after a drag (the regression test for the rejected imperative design); the nested grid at a realistic size
-- [ ] 3.3.4 Full verification
+- [x] 3.3.1 Write `packages/ui/test/split.impl.test.ts` — `endDrag` idempotency (abandoned gesture + up fires no `onResizeEnd`); normalization edges (0 children, `minSize` length mismatch `[12]`→`[12,17]`, negative `minSize`→0); modified arrows fall through (Ctrl/Alt); grab-mark at even/odd extents (h4/5/6 → y2/2/3); 1-cell axis; squeezed-regime zero-delta freeze end-to-end (`[10,9]`, never `[12,7]`); write-back terminates in one pass (PF-004) ✅ (completed: 2026-07-17 18:22)
+- [x] 3.3.2 Rubber-band guard test — drag to `[15,5]`, reverse by 1 stays pinned, moves only at total-delta 4 → `[14,6]` (proves recompute-from-`startCells`) ✅ (completed: 2026-07-17 18:22)
+- [x] 3.3.3 Integration tests — full down→drag→up **through the capture seam** in a real `EventLoop` (releases capture, no resize after release); **pane interiors reflow** after a drag (an fr child tracks the grown pane, 10→13); a nested row-of-cols 2×2 grid at 41×11 ✅ (completed: 2026-07-17 18:22)
+- [x] 3.3.4 Full verification ✅ (completed: 2026-07-17 18:33) — `CI=1 yarn verify` green across all 26 turbo tasks + `check-plugin` PASS. Adding `SplitView`/`SplitViewOptions` to the barrel required: a plugin API-reference regen, registering the `split` source segment → `containers` category in `gen-plugin-api.mjs` (else SplitView mis-filed under core-essentials), and a hand-written `component-catalog.md` bullet (catalog drafting is normally the AI path, unavailable here). New source grepped clean of banned refs; all `split/` files ≤ 262 lines
 
 **Deliverables**:
-- [ ] Impl + integration tests green
+- [x] Impl + integration tests green (12/12) ✅ (2026-07-17 18:22)
 
 **Verify**: `yarn verify`
 
