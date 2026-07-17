@@ -95,9 +95,10 @@ export const formsLoadStory: Story = {
     g.add(at(loadBtn, 1, 4, 17, 2));
     g.add(at(resetBtn, 19, 4, 11, 2));
 
-    // The always-painted interaction hint — it also guarantees the literal `Load record` / `dirty`
-    // demonstration strings paint even in a headless mount (the smoke oracle reads them).
-    g.add(at(new Text('Load record → edit Name (dirty flips true) → Reset returns to the loaded record.'), 1, 7, w, 1));
+    // The always-painted interaction hint. It also names how to fire Reset: it is a click / Space /
+    // Alt+R action, NOT Enter — Enter always triggers the dialog default (the Load button), so a
+    // keyboard user who tabs to Reset and presses Enter re-loads instead of resetting.
+    g.add(at(new Text('Reset: click or Alt+R (Enter runs Load) → returns to the loaded record.'), 1, 7, w, 1));
 
     return g;
   },
