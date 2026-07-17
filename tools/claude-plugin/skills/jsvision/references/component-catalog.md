@@ -30,6 +30,7 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 - **Scroller** — a focusable viewport that scrolls oversized content and owns its scroll bars.
 - **ListView** — a single-column, virtual-scroll list `[rows | scrollbar]`; focus its `rows`.
 - **ListBox** — a `ListView<string>` preset for simple string lists.
+- **SplitView** — N resizable panes divided by N−1 draggable splitters (row or col; nest for grids). Drag a divider or Tab to it and use the arrows; pane sizes live in a caller-owned `Signal<number[]>`.
 - **Dialog** — a modal window (gray frame, close box) opened with `loop.execView(dialog)`; its
   `valid()` gate vetoes a bad OK. Pair with `okButton()`/`cancelButton()`; see `recipes/forms-dialogs.md`.
 

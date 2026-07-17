@@ -166,7 +166,7 @@ function solveMainSizes(
       return { kind: 'fixed', size: size.cells };
     }
     if (size.kind === 'fr') {
-      return { kind: 'flex', weight: size.weight };
+      return { kind: 'flex', weight: size.weight, min: size.min };
     }
     // auto → measure the child's natural content extent and treat it as fixed.
     return { kind: 'fixed', size: mainOf(naturalSize(child, available), direction) };

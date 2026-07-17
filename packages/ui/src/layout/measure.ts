@@ -19,8 +19,8 @@ import { crossOf, mainOf, normalizeProps, sizeFromAxis, toCells } from './types.
  * 2. **Container, no `measure`** — derive along the box's own `direction`:
  *    main = Σ child main sizes + `gap × (n − 1)` + main padding; cross = max
  *    child cross size + cross padding. A `fixed` child contributes its `cells`,
- *    an `auto` child its own natural main, and an `fr` child `0` (it has no
- *    intrinsic main extent — it only grows when there is leftover space).
+ *    an `auto` child its own natural main, and an `fr` child its `min` floor
+ *    (0 when it declares none — a plain `fr` only grows from leftover space).
  * 3. **`auto` leaf with no `measure`** — `{0,0}` (a real widget supplies `measure`).
  *
  * @param box The box to size.
@@ -64,8 +64,8 @@ export function naturalSize(box: LayoutBox, available: Size2D): Size2D {
 /**
  * A child's natural contribution along its parent's main/cross axes. The main
  * contribution honors the child's own `size` token (`fixed` → its cells, `fr` →
- * 0, `auto`/other → its natural main); the cross contribution is always the
- * child's natural cross size.
+ * its `min` floor or 0, `auto`/other → its natural main); the cross contribution
+ * is always the child's natural cross size.
  */
 function childMainAndCross(
   child: LayoutBox,
@@ -80,7 +80,9 @@ function childMainAndCross(
     return { main: size.cells, cross };
   }
   if (size.kind === 'fr') {
-    return { main: 0, cross };
+    // A plain `fr` contributes 0 (it only grows from leftover space, of which a shrink-to-fit
+    // container has none); a floor is space it takes regardless, so it counts toward natural size.
+    return { main: size.min ?? 0, cross };
   }
   return { main: mainOf(natural, parentDirection), cross };
 }

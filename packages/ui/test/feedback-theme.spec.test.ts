@@ -145,6 +145,8 @@ test('ST-11: the progress* roles are the ONLY additive keys — every existing r
     'dangerText',
     'warningText', // severity text roles for a styled Text (guarded by severity-text-theme.spec)
     'inputPlaceholder', // muted placeholder role for an empty Input (guarded by input-placeholder.spec)
+    'splitter',
+    'splitterDragging', // split-pane divider roles (guarded by theme-roles.spec)
   ] as const;
   const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...FEEDBACK_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);

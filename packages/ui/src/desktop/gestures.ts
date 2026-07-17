@@ -8,6 +8,7 @@
 import type { Rect } from '../layout/index.js';
 import type { Point } from '../view/index.js';
 import type { Window } from '../window/index.js';
+import { clamp } from '../shared/clamp.js';
 
 /** The smallest width and height a window can be dragged down to. */
 export const MIN_WIDTH = 10;
@@ -18,11 +19,6 @@ export type Gesture =
   | { kind: 'move'; target: Window; grabDX: number; grabDY: number } // offset of the grab point within the window
   | { kind: 'resize'; target: Window; originX: number; originY: number } // bottom-right — top-left stays fixed
   | { kind: 'resize-left'; target: Window; anchorRight: number; originY: number }; // bottom-left — right edge + top stay fixed
-
-/** Clamp `n` into `[lo, hi]` (`lo` wins if the range is empty). */
-function clamp(n: number, lo: number, hi: number): number {
-  return Math.max(lo, Math.min(hi, n));
-}
 
 /** The window's current rect, or a minimum-size fallback if it has none yet. */
 function rectOf(w: Window): Rect {

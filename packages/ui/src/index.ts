@@ -200,6 +200,11 @@ export { stringWidth } from './controls/measure.js';
 export { TabView } from './tabs/index.js';
 export type { Tab, TabViewOptions } from './tabs/index.js';
 
+// Split panes — a resizable `SplitView`: N panes divided by N−1 draggable 1-cell
+// splitters, row or column, nestable for grids.
+export { SplitView } from './split/index.js';
+export type { SplitViewOptions } from './split/index.js';
+
 // Progress feedback — a determinate `ProgressBar` (smooth sub-cell fill), an
 // indeterminate `Spinner`, and `runSpinner`, a helper that advances a spinner on
 // a timer.

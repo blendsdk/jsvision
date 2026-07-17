@@ -166,7 +166,9 @@ test('ST-32: the editor-family roles are the ONLY additive keys — every existi
     'dangerText',
     'warningText',
     'inputPlaceholder',
-  ] as const; // Slider (slider-theme.spec) + datagrid grid* (grid-theme.spec) + severity text roles (severity-text-theme.spec) + muted input placeholder (input-placeholder.spec)
+    'splitter',
+    'splitterDragging',
+  ] as const; // Slider (slider-theme.spec) + datagrid grid* (grid-theme.spec) + severity text roles (severity-text-theme.spec) + muted input placeholder (input-placeholder.spec) + split-pane divider roles (theme-roles.spec)
   const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...EDITOR_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);
   const unexpected = actualKeys.filter((k) => !knownKeys.has(k));

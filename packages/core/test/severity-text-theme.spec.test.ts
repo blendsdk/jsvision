@@ -25,13 +25,14 @@ test('ST-C1: defaultTheme.dangerText / .warningText equal the pinned severity by
   });
 });
 
-test('ST-C2: the theme has 72 roles including dangerText/warningText/inputPlaceholder/gridInvalid, whose names are not aliases', () => {
+test('ST-C2: the theme has 74 roles including dangerText/warningText/inputPlaceholder/gridInvalid, whose names are not aliases', () => {
   const keys = Object.keys(defaultTheme);
-  // 72 = the severity-text era's role count (68) plus the four datagrid grid roles (gridCursor,
-  // gridDirty, gridSelectedRow, gridInvalid), which are additive and pinned by their own grid-theme
-  // spec. gridInvalid — the solid band marking a cell whose edit failed validation — is the fourth,
-  // taking the count 71 → 72.
-  expect(keys.length, 'total role count').toBe(72);
+  // 74 = the severity-text era's role count (68) plus the four datagrid grid roles (gridCursor,
+  // gridDirty, gridSelectedRow, gridInvalid) and the two split-pane roles (splitter,
+  // splitterDragging) — all additive and each pinned by its own theme spec (grid-theme /
+  // theme-roles). gridInvalid — the solid band marking a cell whose edit failed validation — is one
+  // of the datagrid four.
+  expect(keys.length, 'total role count').toBe(74);
   expect(keys, 'dangerText role present').toContain('dangerText');
   expect(keys, 'warningText role present').toContain('warningText');
   expect(keys, 'inputPlaceholder role present').toContain('inputPlaceholder');
