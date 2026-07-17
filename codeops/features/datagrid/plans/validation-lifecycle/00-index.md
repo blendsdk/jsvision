@@ -94,7 +94,7 @@ const grid = new EditableDataGrid<Line>({
 | Invalid-cell style | New `gridInvalid` core theme role | AR-4 |
 | `validateRow` trigger | Row-leave, only when the row is dirty | AR-5 |
 | Empty state | One `emptyText` + filter-aware built-in | AR-6 |
-| Placement | New modules; `grid.ts` thin; guard re-based `< 1300` → `< 1350` | AR-7 |
+| Placement | New modules; `grid.ts` thin; guard re-based `< 1300` → `< 1450` | AR-7 |
 
 ## Related Files
 

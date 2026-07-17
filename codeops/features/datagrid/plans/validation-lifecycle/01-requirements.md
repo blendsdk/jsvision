@@ -49,7 +49,7 @@ Only decisions NOT already fixed by the RD. Full context in the register.
 | Invalid-cell styling | New `gridInvalid` core theme role | AR-4 |
 | `validateRow` trigger scope | Row-leave, only when the row is dirty | AR-5 |
 | Empty-state config | One `emptyText` + built-in filter-aware "No matching rows" | AR-6 |
-| Module placement / line guard | New modules; `grid.ts` thin; guard re-based `< 1300` → `< 1350` (added public surface crosses 1299), never by re-inlining | AR-7 |
+| Module placement / line guard | New modules; `grid.ts` thin; guard re-based `< 1300` → `< 1450` (added public surface crosses 1299), never by re-inlining | AR-7 |
 | `beforeSave` composition | Extend `commitCell` with an optional post-apply/pre-`onCommit` gate | AR-9 |
 | Parse-failure surfacing | Additively mark invalid + generic message (existing behavior preserved) | AR-14 |
 
@@ -58,7 +58,7 @@ Only decisions NOT already fixed by the RD. Full context in the register.
 The RD owns AC-1…AC-8. This plan is complete when, in addition:
 
 1. [ ] All ST-cases in [07-testing-strategy.md](07-testing-strategy.md) pass (spec-first).
-2. [ ] The `grid.ts` line guard is re-based `< 1300` → `< 1350` across all three guard tests with the
+2. [ ] The `grid.ts` line guard is re-based `< 1300` → `< 1450` across all three guard tests with the
        AR-7 rationale (the added irreducible public surface, not re-inlined logic); heavy logic stays in
        the new modules.
 3. [ ] `@jsvision/core` gains the additive `gridInvalid` role with a CHANGELOG entry; every theme

@@ -48,6 +48,28 @@ export interface GridColumn<T, V = unknown> {
    * column is editable exactly when it has both, so an edit round-trips text → value → record.
    */
   readonly set?: (row: T, value: V) => void;
+  /**
+   * Validate the parsed value at commit time (editable columns). Return `null` to accept, or a short
+   * message describing why the value is invalid. On a message the commit is blocked, nothing is
+   * written, the editor stays open, and the cell is marked in the `gridInvalid` role with the message
+   * surfaced in the grid's message band. Runs on the typed value **after** `parse`, so it composes with
+   * the editor's live keystroke filter (which is unaffected). Not called when a `nullable` column is
+   * cleared to `null` — an empty clear is not a typed value to validate, so a validator written for the
+   * typed `V` never receives `null`. Client-side validation is **UX only**: the authoritative gate is
+   * the caller's `onCommit`/source.
+   *
+   * @example
+   * ```ts
+   * import { column } from '@jsvision/datagrid';
+   * interface Line { qty: number; }
+   * const qty = column({
+   *   id: 'qty', title: 'Qty', value: (r: Line) => r.qty,
+   *   parse: (t) => Number(t), set: (r, v) => { r.qty = v; },
+   *   validate: (v) => (v > 0 ? null : 'Quantity must be positive'),
+   * });
+   * ```
+   */
+  readonly validate?: (value: V, row: T) => string | null;
   /** Sizing rule (default `'auto'` when adapted): fixed cells, `${n}fr`, or `'auto'`. */
   readonly width?: ColumnWidth;
   /**

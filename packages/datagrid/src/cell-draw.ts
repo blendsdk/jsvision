@@ -32,6 +32,8 @@ export interface CellState {
   readonly selected: boolean;
   /** A pending commit. */
   readonly dirty: boolean;
+  /** A blocked commit — the last edit failed validation / a veto and never took. */
+  readonly invalid: boolean;
   /** An odd zebra stripe. */
   readonly zebra: boolean;
 }

@@ -12,8 +12,9 @@ import { Group, signal, ComboBox, DatePicker } from '@jsvision/ui';
 import type { View, Signal, DispatchEvent } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { isEditable } from './column.js';
-import type { OnCommit } from './commit.js';
+import type { OnCommit, BeforeSave } from './commit.js';
 import { commitCell } from './commit.js';
+import type { ErrorRegistry } from './error-registry.js';
 import { createCellEditor } from './cell-editor.js';
 import { PARSE_FAILED } from './format.js';
 import { mountCellOverlay, absoluteRect } from './overlay.js';
@@ -126,10 +127,14 @@ export interface EditHost<T> {
   readonly typedColumns: GridColumn<T>[];
   /** The optional per-cell veto sink. */
   readonly onCommit?: OnCommit<T>;
+  /** The optional per-cell gate above `onCommit` (a veto reverts and skips `onCommit`). */
+  readonly beforeSave?: BeforeSave<T>;
   /** Bump-on-write so an in-place `set` repaints the mutated row. */
   readonly bumpVersion: () => void;
   /** The shared dirty registry (pending-commit markers); omit to disable dirty tracking. */
   readonly dirty?: DirtyRegistry;
+  /** The shared invalid-cell registry (marker + message); omit to disable error surfacing. */
+  readonly errors?: ErrorRegistry;
   /** The focused cell (row + column), or `null` when the grid is empty. */
   currentCell(): CellRef<T> | null;
   /** The focused cell's rect in body-local coordinates (for the overlay mount). */
@@ -277,6 +282,12 @@ export function createEditController<T>(host: EditHost<T>): EditController {
   }
 
   function cancel(ev2: DispatchEvent): void {
+    if (state.kind === 'editing') {
+      // Abandoning a blocked edit must clear the cell's marker: the record kept its prior valid value,
+      // so a lingering `gridInvalid` band would mark a valid-valued cell with no passive recovery.
+      const { cell } = state;
+      host.errors?.clear(cellKey(cell.rowKey, cell.columnId));
+    }
     closeEditor();
     state = { kind: 'idle' };
     ev2.focusView?.(host.body); // refocus the body — nothing was ever written to the record
@@ -299,9 +310,23 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     // rendered (via `nullDisplay`) distinctly from ''. A non-nullable column keeps parsing '' as before
     // (a text column yields '', a numeric column yields PARSE_FAILED → rejected below).
     const value = tcol.nullable === true && raw === '' ? null : tcol.parse!(raw);
-    // An unparseable edit is a validation failure: keep the editor open and write nothing (no sentinel
-    // or NaN ever reaches the record). Richer field validation layers on top of this later.
-    if (value === PARSE_FAILED) return false;
+    // An unparseable edit is a blocked commit: keep the editor open and write nothing (no sentinel or
+    // NaN ever reaches the record), and mark the cell with a generic message.
+    if (value === PARSE_FAILED) {
+      host.errors?.set(ck, 'Invalid value');
+      return false;
+    }
+    // Pre-apply per-cell validation — runs on the parsed typed value before any write. Skipped on a
+    // nullable clear (`value === null`): an empty clear is not a typed value, so a validator written for
+    // the typed `V` never receives `null`. A non-null message blocks: nothing is written, the editor
+    // stays open, and the cell is marked.
+    if (value !== null) {
+      const message = tcol.validate?.(value, cell.row);
+      if (message != null) {
+        host.errors?.set(ck, message);
+        return false;
+      }
+    }
     const previous = tcol.value(cell.row);
     committing.add(ck);
     host.dirty?.add(ck); // mark the cell pending until the commit resolves
@@ -312,17 +337,22 @@ export function createEditController<T>(host: EditHost<T>): EditController {
       previous,
       next: value,
       apply: (r, _c, v) => tcol.set!(r, v),
+      beforeSave: host.beforeSave,
       onCommit: host.onCommit,
     });
     host.bumpVersion(); // repaint the new (or reverted) value — the row mutated in place
     host.dirty?.delete(ck); // the source now reflects the value (committed or reverted) — no longer pending
     committing.delete(ck);
     if (res.committed) {
+      host.errors?.clear(ck); // the cell now holds a committed, valid value
       closeEditor();
       state = { kind: 'idle' };
       return true;
     }
-    return false; // vetoed → the editor remains open; commitCell already reverted the record to `previous`
+    // A post-apply veto (beforeSave / onCommit) already reverted the record to `previous`; mark the cell
+    // and surface a generic reason (the gates return only a boolean), keeping the editor open.
+    host.errors?.set(ck, 'Change was rejected');
+    return false;
   }
 
   async function commit(ev2: DispatchEvent): Promise<void> {
