@@ -368,8 +368,14 @@ export class EditableGridRows<T> extends GridRows<T> {
       }
     }
     if (inner.type === 'mouse' && inner.kind === 'down') {
-      // Frozen-panel mode: a click sets the global column cursor to the clicked column first.
+      // A body click sets the column cursor to the clicked cell (single-click cell focus).
       if (this.mouseColumns) this.setColFromClick(ev);
+      // A double-click on an editable cell begins the edit — intercept before super.onEvent so the base's
+      // clickCount===2 row-activate does not also fire on an editable cell.
+      if (this.handleDoubleClickEdit(ev)) {
+        ev.handled = true;
+        return;
+      }
       // Ctrl/Shift+click drive selection (toggle / range) instead of a plain cursor move — intercept
       // before the base so the base's plain focus+select does not also run.
       if (this.handleSelectionClick(inner, ev)) {
@@ -507,7 +513,21 @@ export class EditableGridRows<T> extends GridRows<T> {
     return false;
   }
 
-  /** Set the global column cursor from a mouse-down x (frozen-panel mode). */
+  /**
+   * Begin an edit on a double-click over an editable cell. The event loop stamps `ev.clickCount` (same
+   * cell within a 500 ms window, injectable clock) on the mouse-down, so no bespoke timer is needed. This
+   * runs in the mouse-down branch before the base, so the base's `clickCount===2` row-activate never also
+   * fires on an editable cell; a single click, a read-only cell, or a cell in another panel falls through
+   * to the base activate. By this point the clicked cell's row (from the first down's focus) and column
+   * (from `setColFromClick`) are already the cursor, so this only resolves editability and opens the editor.
+   */
+  private handleDoubleClickEdit(ev: DispatchEvent): boolean {
+    if (ev.clickCount !== 2) return false;
+    if (this.editableCol() < 0) return false; // read-only / other panel / pinned row → base activate
+    return this.controller.beginEdit(ev);
+  }
+
+  /** Set the global column cursor from a mouse-down x (single-click cell focus / frozen-panel mode). */
   private setColFromClick(ev: DispatchEvent): void {
     const local = ev.local;
     if (local === undefined || this.columns.length === 0) return;

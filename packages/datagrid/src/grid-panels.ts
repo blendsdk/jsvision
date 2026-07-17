@@ -329,7 +329,9 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       totalCols: () => total,
       onCursorEnterPanel: hop,
       onOpenFilter: deps.onOpenFilter, // Alt+Down → the container resolves the owning header + opens the popup
-      mouseColumns: frozen,
+      // A body click always sets the column cursor to the clicked cell — in a single body too, so
+      // click-then-F2 edits the clicked column (not just in a frozen split). The pinned band stays passive.
+      mouseColumns: true,
       autoScrollColumns: autoScroll,
       panelActive: gridActive,
       widthTick: deps.widthTick,
