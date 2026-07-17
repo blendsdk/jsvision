@@ -12,12 +12,13 @@
  * Expectations derive from the requirements + the AR decisions, never the implementation. An open editor
  * is observable as one child mounted in the overlay; the cursor is the `focused`/`focusedCol` signals.
  */
-import { test, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { test, expect, vi } from 'vitest';
 import { Group, Input, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
 import { column, toEngineColumn } from '../src/column.js';
 import { EditableGridRows } from '../src/editable-grid-rows.js';
 import { mergeKeymap } from '../src/keymap.js';
-import type { GridKeymap } from '../src/keymap.js';
+import type { GridAction, GridKeymap } from '../src/keymap.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -243,4 +244,22 @@ test('ST-13b: a non-owning frozen panel no-ops on edit/selection keys', () => {
   g.focusedCol.set(0);
   g.loop.dispatch(key('space')); // editable Name cell → begins an edit, still no toggle
   expect(g.overlay.children.length).toBe(1);
+});
+
+// ST-25 — security: unknown/malformed keymap entries are ignored at the integration level (no throw),
+// and the router dispatches by a static switch (the package-wide no-eval scan lives in security.spec).
+test('ST-25: unknown/malformed keymap entries are ignored; the router is a static switch', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  // An unknown action AND a malformed chord — both dropped at merge time (a dev warning, never thrown).
+  const g = build({ keymap: mergeKeymap({ 'ctrl+e': 'frobnicate' as GridAction, 'ktrl+x': 'beginEdit' }) });
+  expect(() => {
+    g.loop.dispatch(key('e', { ctrl: true })); // unknown-action chord unbound → ignored
+    g.loop.dispatch(key('x', { ctrl: true })); // malformed chord never bound → ignored
+  }).not.toThrow();
+  expect(g.overlay.children.length).toBe(0); // neither had any effect
+  warn.mockRestore();
+
+  // The action router is a static switch — no eval / dynamic dispatch (package-wide scan in security.spec).
+  const src = readFileSync(new URL('../src/editable-grid-rows.ts', import.meta.url), 'utf8');
+  expect(src).toMatch(/switch\s*\(action\)/);
 });

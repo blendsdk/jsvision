@@ -133,8 +133,24 @@ export type { EditableGridRowsConfig } from './editable-grid-rows.js';
 // shared cursor state, and mounts the editable body with its optional `onCommit` veto sink. It exposes
 // the reactive readouts `displayedRows()` (the aggregate fold target), `focusedRow()`/`focusedKey()`
 // (the record/key under the cursor, re-anchored across sort/filter), and `filteredCount()`/`totalCount()`.
+// The `keymap` option remaps input; `nextCell()`/`prevCell()`/`isBodyFocused()`/`isEditing()` drive Tab
+// cell-traversal (via `installGridNavigation`).
 export { EditableDataGrid } from './grid.js';
 export type { EditableDataGridOptions } from './grid.js';
+
+// Keymap model — the remappable input surface: the `GridAction` vocabulary, the frozen `DEFAULT_KEYMAP`
+// chord→action table, `resolveGridAction` (a key→action lookup), and `mergeKeymap` (layer a caller's
+// overrides over the default; unknown actions and malformed chords are dropped, never thrown). Pass a
+// `GridKeymap` to the grid's `keymap` option to remap a chord.
+export { DEFAULT_KEYMAP, resolveGridAction, mergeKeymap } from './keymap.js';
+export type { GridAction, GridKeymap, KeymapKeyEvent } from './keymap.js';
+
+// Tab cell-traversal — the pure cursor math (`nextCellIndex`/`prevCellIndex`, wrapping at row ends,
+// `'exit'` at the grid edge), the `gridKeymap` loop-fragment binding Tab/Shift+Tab to grid-navigation
+// commands, and `installGridNavigation` (registers the command handlers for one or more grids; the app
+// opts in — no core/ui change). `NavGrid` is the structural grid shape the helper drives.
+export { nextCellIndex, prevCellIndex, gridKeymap, installGridNavigation } from './navigation.js';
+export type { CellMove, NavGrid } from './navigation.js';
 
 // Aggregate model — the pure fold behind a footer aggregate: the `AggregateFn` reductions, the
 // `AggregateSpec` descriptor, `foldAggregate` (edge-safe), `formatAggregate` (with the honesty

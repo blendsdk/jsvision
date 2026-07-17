@@ -3,8 +3,8 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Implements**: datagrid/RD-10
-> **Last Updated**: 2026-07-17 17:38
-> **Progress**: 36/45 tasks (80%)
+> **Last Updated**: 2026-07-17 17:52
+> **Progress**: 45/45 tasks (100%) — ✅ COMPLETE
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -144,19 +144,19 @@ and the frozen-panel per-panel guard (PF-006).
 **Reference**: [07 §E](07-testing-strategy.md) · AR-14/AR-16 · CLAUDE.md (kitchen-sink gate)
 
 ### Step 5.1: Spec the security oracle
-- [ ] 5.1.1 Write spec — unknown keymap chords/actions ignored at the integration level; router uses no `eval`/dynamic dispatch (ST-25) — `packages/datagrid/test/body-dispatch.spec.test.ts`
-- [ ] 5.1.2 Verify RED/GREEN as appropriate (validation lands in Phase 1; ST-25 is the integration-level confirmation)
+- [x] 5.1.1 Write spec — unknown keymap chords/actions ignored at the integration level; router uses no `eval`/dynamic dispatch (ST-25) — `packages/datagrid/test/body-dispatch.spec.test.ts` ✅ (completed: 2026-07-17 17:52)
+- [x] 5.1.2 Verify RED/GREEN as appropriate (validation lands in Phase 1; ST-25 is the integration-level confirmation) — GREEN (validation from Phase 1, router switch from Phase 2; package-wide no-eval scan lives in `security.spec`) ✅ (completed: 2026-07-17 17:52)
 
 ### Step 5.2: Publish + demo
-- [ ] 5.2.1 Barrel exports — `GridAction`/`GridKeymap`/`DEFAULT_KEYMAP`/`resolveGridAction`/`mergeKeymap`, `nextCellIndex`/`prevCellIndex`/`gridKeymap`/`installGridNavigation` (the `keymap` option + `nextCell`/`prevCell`/`isBodyFocused` ship on the exported `EditableDataGrid`) — `packages/datagrid/src/index.ts`
-- [ ] 5.2.2 Kitchen-sink `navigation-interaction.story.ts` (keyboard + mouse + double-click + `Tab` via `installGridNavigation`; a visible keymap/state echo) + register — `packages/datagrid/test/kitchen-sink/stories/`
-- [ ] 5.2.3 datagrid-showcase `navigation-interaction/` cluster — demos (keymap table · Tab traversal · double-click-to-edit · scroll-into-view · remap-a-chord) + a shared builder + registry — `packages/examples/datagrid-showcase/stories/navigation-interaction/`
-- [ ] 5.2.4 Remove the RD-10 placeholder; re-base placeholder-count oracles (+ `Navigation & interaction` category) — `packages/examples/datagrid-showcase/stories/placeholders.ts`, `stories/index.ts`, `packages/examples/test/datagrid-showcase.smoke.spec.test.ts`
-- [ ] 5.2.5 Verify GREEN — ST-25 + kitchen-sink + showcase smoke (ST-26, ST-27) pass
+- [x] 5.2.1 Barrel exports — `GridAction`/`GridKeymap`/`DEFAULT_KEYMAP`/`resolveGridAction`/`mergeKeymap`, `nextCellIndex`/`prevCellIndex`/`gridKeymap`/`installGridNavigation` (+ `CellMove`/`NavGrid`/`KeymapKeyEvent` types; the `keymap` option + `nextCell`/`prevCell`/`isBodyFocused`/`isEditing` ship on the exported `EditableDataGrid`) — `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-17 17:52)
+- [x] 5.2.2 Kitchen-sink `navigation-interaction.story.ts` (remappable keymap + keyboard + click-to-focus + double-click + state echo; `Tab` noted as app-wired — `build(ctx)` has no loop) + register — `packages/datagrid/test/kitchen-sink/stories/` ✅ (completed: 2026-07-17 17:52)
+- [x] 5.2.3 datagrid-showcase `navigation-interaction/` cluster — 5 demos (keymap table · remap-a-chord · double-click-to-edit · scroll-into-view · Tab traversal [wiring shown]) + a shared `nav-demo.ts` builder + registry — `packages/examples/datagrid-showcase/stories/navigation-interaction/` ✅ (completed: 2026-07-17 17:52)
+- [x] 5.2.4 Remove the RD-10 placeholder; re-base placeholder-count oracles (5→4) + add the `Navigation & interaction` category (count 5) — `packages/examples/datagrid-showcase/stories/placeholders.ts`, `stories/index.ts`, `packages/examples/test/datagrid-showcase.smoke.spec.test.ts` ✅ (completed: 2026-07-17 17:52)
+- [x] 5.2.5 Verify GREEN — ST-25 + kitchen-sink (12) + showcase smoke (68) pass ✅ (completed: 2026-07-17 17:52)
 
 ### Step 5.3: Final hardening
-- [ ] 5.3.1 JSDoc `@example` on every new public export; `check-jsdoc` clean (datagrid); grep touched `src` for banned CodeOps IDs (clean) — `packages/datagrid/src/*`
-- [ ] 5.3.2 Full `yarn verify` — turbo green; `grid.ts < 1300` (re-based guard, PF-004); no RD-01…09 regression; run `yarn lint:fix` before any PR-bound push
+- [x] 5.3.1 JSDoc `@example` on every new public export; `check-jsdoc` clean (datagrid — 0 missing `@example`); grep all `src` for banned CodeOps IDs (clean) — `packages/datagrid/src/*` ✅ (completed: 2026-07-17 17:52)
+- [x] 5.3.2 Full `yarn verify` — turbo green (30/30); `grid.ts < 1300` (1298, re-based guard, PF-004); no RD-01…09 regression; `yarn lint:fix` run before push ✅ (completed: 2026-07-17 17:52)
 
 **Deliverables**: shipped public surface + live demos + the security gate; full verify green.
 **Verify**: `yarn verify`

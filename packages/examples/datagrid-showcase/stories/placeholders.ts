@@ -36,13 +36,8 @@ export function placeholderStory(rd: string, title: string, blurb: string): Stor
   };
 }
 
-/** The five roadmap placeholders (RD-10…RD-14), in RD order — RD-07/RD-08/RD-09 have shipped as live clusters. */
+/** The four roadmap placeholders (RD-11…RD-14), in RD order — RD-07/RD-08/RD-09/RD-10 have shipped as live clusters. */
 export const placeholders: readonly Story[] = [
-  placeholderStory(
-    'RD-10',
-    'Navigation',
-    'A consolidated keymap, full mouse interaction, synthesized double-click, and Tab cell traversal.',
-  ),
   placeholderStory(
     'RD-11',
     'Data at scale',
