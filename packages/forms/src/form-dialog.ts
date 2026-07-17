@@ -227,7 +227,12 @@ export function formDialog<S extends z.ZodObject<z.ZodRawShape>, I extends Recor
       body.layout = { ...body.layout, position: 'fill' };
       dlg.add(body);
       dlg.add(place(ok, rects.ok));
-      dlg.add(place(cancelButton(), rects.cancel));
+      // Cancel must not steal focus from the body on click: a click-to-focus would blur the field
+      // being edited, and a blur-driven error reveal (bindField / an Input validator) would flash the
+      // validation red for one frame before the dialog closes. Cancel stays Tab-reachable + Esc works.
+      const cancel = cancelButton();
+      cancel.grabsFocus = false;
+      dlg.add(place(cancel, rects.cancel));
       host.desktop.addWindow(dlg);
       mounted = true;
       const command = await host.loop.execView<string>(dlg);
