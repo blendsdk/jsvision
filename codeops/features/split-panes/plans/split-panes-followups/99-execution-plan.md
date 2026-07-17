@@ -3,7 +3,7 @@
 > **Feature**: split-panes · **Plan**: split-panes-followups
 > **Type**: Full (lean) plan · **Branch**: `feat/split-panes` · **CodeOps Skills Version**: 3.8.0
 > **Verify**: `CI=1 yarn verify` *(AR-9)*
-> **Progress**: 9/13 tasks (69%) · **Last Updated**: 2026-07-17
+> **Progress**: 11/13 tasks (85%) · **Last Updated**: 2026-07-17
 
 Specification-first per phase: spec tests → red → implement → green → impl tests → verify. Marks are
 two-stage: `[~]` on implementation, `[x]` only after its verify passes. Commit per the active
@@ -54,12 +54,12 @@ The only shipped-source change. `@jsvision/core` untouched.
 
 No automated test (AR-8).
 
-- [ ] **3.1 Implement.** Edit `packages/examples/amiga-clock/main.ts` only: import `SplitView`; add a
+- [x] **3.1 Implement.** Edit `packages/examples/amiga-clock/main.ts` only: import `SplitView`; add a
   4th `Clocks` `Window` with a `position:'fill'` nested grid `row:[ Analog | col:[ Digital / Boing ] ]`
   using **fresh** clock instances bound to the same `now`/`frame` signals; keep the three existing
-  windows unchanged. Tune window size + `minSize`s so nothing clips. Per [03-02](03-02-demos.md).
-- [ ] **3.2 Verify.** `yarn typecheck` green; a manual `yarn workspace @jsvision/examples
-  demo:amiga-clock` sanity note; **`CI=1 yarn verify` green.** Commit.
+  windows unchanged. Tune window size + `minSize`s so nothing clips. Per [03-02](03-02-demos.md). *(impl 2026-07-17; 60×20 window, grid minSize [24,24] / right col minSize [9,9], spec defaults)*
+- [x] **3.2 Verify.** `yarn typecheck` green; a manual `yarn workspace @jsvision/examples
+  demo:amiga-clock` sanity note; **`CI=1 yarn verify` green.** Commit. *(impl 2026-07-17; amiga-clock is outside the tsconfig include (runs via tsx) — validated my edit type-clean via a throwaway include-config, tsc exit 0; CI=1 yarn verify green — 26/26 tasks. Live TTY visual run is the user's manual step (no TTY here); window/minSize values are cosmetic defaults, may want live tuning per 03-02.)*
 
 ## Phase 4 — Close-out
 
@@ -78,7 +78,7 @@ No automated test (AR-8).
 |-------|-------|------|
 | 1 — grab-mark option | 6 | 6 |
 | 2 — scroll story | 3 | 3 |
-| 3 — clock split window | 2 | 0 |
+| 3 — clock split window | 2 | 2 |
 | 4 — close-out | 2 | 0 |
 | **Total** | **13** | **0** |
 
