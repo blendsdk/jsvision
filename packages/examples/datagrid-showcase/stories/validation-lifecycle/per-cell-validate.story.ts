@@ -51,7 +51,9 @@ export const perCellValidateStory: Story = {
     const gridH = Math.max(1, ctx.height - 2);
     root.add(
       at(
-        new Text('Edit Qty to 0 or a negative number, press Enter → rejected (editor stays open)'),
+        new Text(
+          'Edit Qty to 0 or negative, press Enter → value rejected & NOT saved (editor stays open, Esc reverts)',
+        ),
         0,
         0,
         ctx.width,
