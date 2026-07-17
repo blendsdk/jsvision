@@ -32,7 +32,7 @@ export { ramp, lighten, darken, mix } from './ramp.js';
 export { contrastRatio } from './contrast.js';
 export type { ThemeColors } from './aliases.js';
 
-// Theme builder — seeds → 18 aliases → 68 roles. `aliasesFromSeeds` exposes the seed→alias step alone.
+// Theme builder — seeds → 18 aliases → 70 roles. `aliasesFromSeeds` exposes the seed→alias step alone.
 export { createTheme, aliasesFromSeeds } from './create-theme.js';
 export { rolesFromAliases } from './roles.js';
 export type { ThemeOptions } from './create-theme.js';

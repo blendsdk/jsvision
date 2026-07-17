@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-17 17:33
-> **Progress**: 13/43 tasks (30%) — Phase 1 complete
+> **Last Updated**: 2026-07-17 17:58
+> **Progress**: 22/43 tasks (51%) — Phases 1 & 2 complete
 > **CodeOps Skills Version**: 3.8.0
 > **Preflighted**: 2026-07-17 — 6 findings (4 major, 2 minor), all resolved into the specs above; see
 > [`00-preflight-report.md`](00-preflight-report.md). Fixes folded into existing tasks (count unchanged);
@@ -119,11 +119,11 @@ then the mandatory showcase story.
 **Reference**: [03-02](03-02-theme-roles.md) · ST-25 · AR-15
 **Objective**: Pin both roles' presence across every theme surface.
 
-- [ ] 2.1.1 Add ST-25 as a new case in `packages/core/test/theme-roles.spec.test.ts` — both roles present in `defaultTheme`, `monochromeTheme`, every `createTheme` preset, and the derived `CANONICAL_ROLES`
-- [ ] 2.1.2 Run — verify **ST-25 FAILS** (red phase)
+- [x] 2.1.1 Add ST-25 as a new case in `packages/core/test/theme-roles.spec.test.ts` — both roles present in `defaultTheme`, `monochromeTheme`, every `createTheme` preset, and the derived `CANONICAL_ROLES`. Split into two cases: presence+valid-fg/bg across all 13 presets + a fresh `createTheme`, and canonical-set membership + serialize→parse survival. Roles looked up by string so red = undefined (not a compile error) ✅ (completed: 2026-07-17 17:38)
+- [x] 2.1.2 Run — **ST-25 FAILS** (red phase); the two ST-13 cases still pass ✅ (completed: 2026-07-17 17:38)
 
 **Deliverables**:
-- [ ] ST-25 written and red
+- [x] ST-25 written and red ✅ (2026-07-17 17:38)
 
 **Verify**: `yarn verify`
 
@@ -132,24 +132,24 @@ then the mandatory showcase story.
 **Reference**: [03-02](03-02-theme-roles.md) §Implementation Details · AR-15
 **Objective**: Four compiler-enforced edits, modelled on the `indicatorNormal`/`indicatorDragging` pair.
 
-- [ ] 2.2.1 Add `splitter` + `splitterDragging` members to `interface Theme`, each JSDoc'd in the file's house style (describe the colour in words) — `packages/core/src/engine/color/theme.ts`
-- [ ] 2.2.2 Add both entries to the `defaultTheme` literal — `packages/core/src/engine/color/theme.ts`. ⚠️ `PALETTE` uses **DOS-16** names: bright white is `PALETTE.white`, normal white is `PALETTE.lightGray`; there is **no** `brightWhite` (a mistyped key is `undefined` → `InvalidThemeError` at runtime, not a compile error)
-- [ ] 2.2.3 Add both entries to `monochromeTheme` — `packages/core/src/engine/color/presets.ts`
-- [ ] 2.2.4 Add both entries to `rolesFromAliases` so all 11 generated presets inherit them — `packages/core/src/engine/color/roles.ts`
-- [ ] 2.2.5 Run — verify **ST-25 PASSES** (green phase)
+- [x] 2.2.1 Add `splitter` + `splitterDragging` members to `interface Theme`, each JSDoc'd in the file's house style (describe the colour in words) — `packages/core/src/engine/color/theme.ts` ✅ (completed: 2026-07-17 17:40)
+- [x] 2.2.2 Add both entries to the `defaultTheme` literal — `packages/core/src/engine/color/theme.ts`. Used `PALETTE.lightGray`/`PALETTE.brightGreen`/`PALETTE.blue` (no `brightWhite`) ✅ (completed: 2026-07-17 17:40)
+- [x] 2.2.3 Add both entries to `monochromeTheme` — `packages/core/src/engine/color/presets.ts` ✅ (completed: 2026-07-17 17:40)
+- [x] 2.2.4 Add both entries to `rolesFromAliases` so all 11 generated presets inherit them — `packages/core/src/engine/color/roles.ts` ✅ (completed: 2026-07-17 17:40)
+- [x] 2.2.5 Run — **ST-25 PASSES** (green phase). Verified role count is exactly 70 (was 68); updated 3 stale "68 roles" doc comments (aliases.ts, color/index.ts, theme-designer roles-panel.ts) ✅ (completed: 2026-07-17 17:40)
 
 **Deliverables**:
-- [ ] Both roles resolve in every theme · no `serialize.ts` change needed (`CANONICAL_ROLES` is derived)
+- [x] Both roles resolve in every theme · no `serialize.ts` change needed (`CANONICAL_ROLES` is derived) ✅ (2026-07-17 17:40)
 
 **Verify**: `yarn verify`
 
 ### Step 2.3: Implementation Tests & Hardening
 
-- [ ] 2.3.1 Add an impl test asserting both roles resolve to valid colours in every preset. ⚠️ Note `presets.impl.test.ts` is a **self round-trip** (serialization-lossless), **not** a byte-parity guard — a pass there does not prove the new values are right
-- [ ] 2.3.2 Full verification
+- [x] 2.3.1 Add an impl test asserting both roles resolve to valid colours in every preset — new `packages/core/test/theme-roles.impl.test.ts`: `encode()` of each role's fg/bg at all 4 depths across all 13 presets does not throw (goes beyond ST-25's presence check to prove the colour *values* are valid, which the self-round-trip preset test cannot) ✅ (completed: 2026-07-17 17:42)
+- [x] 2.3.2 Full verification ✅ (completed: 2026-07-17 17:58) — `CI=1 yarn verify` green across all 26 turbo tasks. Adding the two roles tripped 6 pre-existing whole-theme snapshot oracles (a total-count assertion + 5 per-feature "additive-only" allowlists); registered `splitter`/`splitterDragging` in each via their designed "sanctioned later additive roles" slot — the mechanical union AR-15/03-02 pre-accepted (recorded as runtime AR-23). Note: `TUI_SKIP_PERF` is not forwarded through turbo; use `CI=1` to skip the machine-dependent editor-perf ceiling
 
 **Deliverables**:
-- [ ] Theming suite green
+- [x] Theming suite green ✅ (2026-07-17 17:58)
 
 **Verify**: `yarn verify`
 

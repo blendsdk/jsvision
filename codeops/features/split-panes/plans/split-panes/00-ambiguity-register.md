@@ -1,8 +1,8 @@
 # Ambiguity Register: Split Panes (resizable)
 
-> **Status**: ✅ GATE PASSED — all 22 items resolved (21 resolved · 1 named deferral)
-> *(AR-22 was surfaced during authoring per the surface-during-authoring rule, and resolved before writing resumed.)*
-> **Last Updated**: 2026-07-17 15:11
+> **Status**: ✅ GATE PASSED — all 22 items resolved (21 resolved · 1 named deferral) · +1 runtime (AR-23)
+> *(AR-22 was surfaced during authoring per the surface-during-authoring rule, and resolved before writing resumed. AR-23 was surfaced during execution — tagged `(runtime)`.)*
+> **Last Updated**: 2026-07-17 17:58
 > **Source issue**: [GH #10](https://github.com/blendsdk/jsvision/issues/10) — "Modern component: Split panes (resizable)"
 > **CodeOps Skills Version**: 3.8.0
 
@@ -35,6 +35,8 @@ wrong about the current code — those are marked **(issue claim corrected)**.
 | 20 | Scope (deferral) | Framework-wide hover support (mouse mode 1003 + capability gate) — split out of AR-4 | A: named deferral (owner + demand trigger) · B: milestone trigger · C: GH issue only | ⏸ **Deferred** — framework-wide hover support (mouse mode 1003 + capability gate) · owner: gevik · revisit: when a second widget needs hover, or before `@jsvision/ui` v1.0. Also to be filed as a GitHub issue. | ⏸ Deferred |
 | 21 | Technical | The verify command that fills every plan Verify line | A: `yarn verify` · B: `yarn verify` per task + `yarn gate` at the end | **A** — `yarn verify` (= `yarn lint` then `turbo run typecheck build test check:docs`), per CLAUDE.md and issue #10's own acceptance criterion | ✅ Resolved |
 | 22 | Naming (surfaced during authoring) | Spec-test naming: the CodeOps template bans ST-/RD- ids in test code; the repo's tests use them | A: repo convention (`ST-N:` titles) · B: CodeOps plain-language · C: plain language + mapping in the plan only | **A** — repo convention: `test('ST-N: …')`, matching `kitchen-sink.smoke.spec.test.ts:66`. ⚠️ **Justification corrected by preflight (PF-006):** this row originally read "matching … **every other test file**". That is false — it is the *dominant* convention (269 of 306 spec files), and `apportion.spec.test.ts`, one of this plan's own targets, is an exception with no ST-prefixed tests. **The decision stands; the reasoning was overstated.** 07-testing-strategy.md now carries the id-qualification rule the correction implies | ✅ Resolved (justification corrected) |
+
+| 23 | Testing **(runtime)** | Adding the `splitter`/`splitterDragging` roles broke **6 pre-existing spec-test invariants** that snapshot the whole theme role set — a total-count assertion (`severity-text-theme.spec` ST-C2, 68) and five per-feature "additive-only" allowlists (`color`/`date`/`editor`/`feedback`/`tabs-theme.spec`) — none of which knew about the new roles | A: register the two roles in each snapshot (each test's own **designed** "sanctioned later additive roles" extension slot) · B: report a blocker and stop, per the immutable-oracle rule | **A** — this is the exact mechanical friction AR-15 / 03-02 §Known friction pre-accepted ("a role-count assertion **plus a union**"). Each oracle still byte-freezes every pre-existing + own-feature role and still trips on any *un*sanctioned key, so the guarantee is **preserved, not weakened** — as those tests' own comments state ("Extending this allowlist does NOT weaken the guarantee"). Updated: count `68→70`; allowlists `+= splitter, splitterDragging`. Not a spec *rewrite* — a registration into the tests' extension point | ✅ Resolved (runtime) |
 
 ### Resolution Notes
 
