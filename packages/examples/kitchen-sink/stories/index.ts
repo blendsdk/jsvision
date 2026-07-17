@@ -35,6 +35,8 @@ import { historyStory } from './history.story.js';
 import { comboBoxStory } from './combobox.story.js';
 import { dataGridStory } from './data-grid.story.js';
 import { tabsStory } from './tabs.story.js';
+import { splitStory } from './split.story.js';
+import { splitScrollStory } from './split-scroll.story.js';
 import { drillDownStory } from './drill-down.story.js';
 import { wizardStory } from './wizard.story.js';
 import { progressBarStory } from './progress-bar.story.js';
@@ -85,6 +87,8 @@ export const STORIES: readonly Story[] = [
   treeStory,
   dataGridStory,
   tabsStory,
+  splitStory,
+  splitScrollStory,
   dialogStory,
   historyStory,
   comboBoxStory,

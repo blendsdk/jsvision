@@ -144,6 +144,43 @@ test('ST-17: the layout/dsl story is registered with metadata and paints', () =>
   });
 });
 
+// ST-26 (split-panes) — the split-panes showcase story is registered with the required metadata
+// (unique id `layout/split`, category `Layout`) and paints at least one non-blank cell headlessly.
+// No `rd` assertion — the provenance chip is deliberately omitted (this plan implements no RD).
+test('ST-26: the layout/split story is registered with metadata and paints', () => {
+  const story = STORIES.find((s) => s.id === 'layout/split');
+  expect(story, 'a story with id "layout/split" is registered').toBeTruthy();
+  expect(story!.category, 'category Layout').toBe('Layout');
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    expect(paintedCells(rr.buffer().rows()), 'the split story painted nothing').toBeGreaterThan(0);
+    dispose();
+  });
+});
+
+// ST-5 (followups) — the layout/split-scroll story is registered (unique id `layout/split-scroll`,
+// category `Layout`) and paints a list-item label, proving the ListBox rendered *inside* the SplitView
+// pane — not merely that some cell painted (the generic smoke loop below already asserts that).
+test('ST-5 (followups): the layout/split-scroll story is registered and paints a list item in its pane', () => {
+  const story = STORIES.find((s) => s.id === 'layout/split-scroll');
+  expect(story, 'a story with id "layout/split-scroll" is registered').toBeTruthy();
+  expect(story!.category, 'category Layout').toBe('Layout');
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    const painted = rr
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''))
+      .join('\n');
+    expect(painted, 'a list item label paints inside the pane').toMatch(/Item 0/);
+    dispose();
+  });
+});
+
 // ST-17 (navigation-router) — the drill-down router story is registered with the required metadata
 // (unique id `navigation/drill-down`, category `Navigation`) and paints at least one non-blank cell
 // headlessly.
