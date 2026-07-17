@@ -1,0 +1,1 @@
+const e={quit:"quit",close:"close",zoom:"zoom",next:"next",prev:"prev",cascade:"cascade",tile:"tile",ok:"ok",cancel:"cancel",yes:"yes",no:"no",selectAll:"selectAll",cut:"cut",copy:"copy",paste:"paste",undo:"undo",redo:"redo"};export{e as C};
