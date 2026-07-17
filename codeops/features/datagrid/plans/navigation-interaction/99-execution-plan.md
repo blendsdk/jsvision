@@ -3,8 +3,8 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Implements**: datagrid/RD-10
-> **Last Updated**: 2026-07-17 17:27
-> **Progress**: 27/45 tasks (60%)
+> **Last Updated**: 2026-07-17 17:38
+> **Progress**: 36/45 tasks (80%)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -120,19 +120,19 @@ and the frozen-panel per-panel guard (PF-006).
 **Reference**: [03-04](03-04-mouse-doubleclick.md) · [07 §D](07-testing-strategy.md) · AR-3/AR-11 · PF-001
 
 ### Step 4.1: Spec
-- [ ] 4.1.1 Write spec tests for double-click-to-edit via `ev.clickCount` with a fake loop clock (ST-20…ST-22) **plus ST-20b (single click in a single-body grid moves the column cursor to the clicked cell — PF-001)** — `packages/datagrid/test/double-click.spec.test.ts`
-- [ ] 4.1.2 Write spec tests for the scroll-into-view guarantee (ST-23, ST-24) — same file
-- [ ] 4.1.3 Verify RED
+- [x] 4.1.1 Write spec tests for double-click-to-edit via `ev.clickCount` with a fake loop clock (ST-20…ST-22) **plus ST-20b (single click in a single-body grid moves the column cursor to the clicked cell — PF-001)** — `packages/datagrid/test/double-click.spec.test.ts` ✅ (completed: 2026-07-17 17:38)
+- [x] 4.1.2 Write spec tests for the scroll-into-view guarantee (ST-23, ST-24) — same file ✅ (completed: 2026-07-17 17:38)
+- [x] 4.1.3 Verify RED ✅ (completed: 2026-07-17 17:38)
 
 ### Step 4.2: Implement
-- [ ] 4.2.1 **Single-click cell focus (AC-4, PF-001):** set the column cursor on every body mouse-down — wire `mouseColumns: true` for the single/center body in `grid-panels.ts` (or drop the `if (this.mouseColumns)` guard so `setColFromClick` always runs); the pinned frozen-rows band stays passive (`focusable === false`) — `packages/datagrid/src/grid-panels.ts`, `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 4.2.2 Add `handleDoubleClickEdit` in the body mouse-down branch (before `super.onEvent`): `clickCount===2` + editable cell → `beginEdit`; read-only/single click fall through unchanged. With 4.2.1 in place the column is already set from the first down, so avoid a second divergent column-from-click path — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 4.2.3 Confirm the AC-6 guarantee holds (add a clamp in `updateTop`/`autoScrollToCol` only if a spec exposes a gap — no new machinery by default) — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 4.2.4 Verify GREEN — ST-20…ST-24 pass (incl. ST-20b)
+- [x] 4.2.1 **Single-click cell focus (AC-4, PF-001):** set the column cursor on every body mouse-down — wire `mouseColumns: true` for the single/center body in `grid-panels.ts` (or drop the `if (this.mouseColumns)` guard so `setColFromClick` always runs); the pinned frozen-rows band stays passive (`focusable === false`) — `packages/datagrid/src/grid-panels.ts`, `packages/datagrid/src/editable-grid-rows.ts` ✅ (completed: 2026-07-17 17:38)
+- [x] 4.2.2 Add `handleDoubleClickEdit` in the body mouse-down branch (before `super.onEvent`): `clickCount===2` + editable cell → `beginEdit`; read-only/single click fall through unchanged. With 4.2.1 in place the column is already set from the first down, so avoid a second divergent column-from-click path — `packages/datagrid/src/editable-grid-rows.ts` ✅ (completed: 2026-07-17 17:38)
+- [x] 4.2.3 Confirm the AC-6 guarantee holds (add a clamp in `updateTop`/`autoScrollToCol` only if a spec exposes a gap — no new machinery by default) — no gap: ST-23/ST-24 pass over the existing `updateTop`/`autoScrollToCol` (no new code) — `packages/datagrid/src/editable-grid-rows.ts` ✅ (completed: 2026-07-17 17:38)
+- [x] 4.2.4 Verify GREEN — ST-20…ST-24 pass (incl. ST-20b) ✅ (completed: 2026-07-17 17:38)
 
 ### Step 4.3: Harden
-- [ ] 4.3.1 Impl tests — single-body vs frozen-panel single- and double-click column resolution; a double-click on a read-only cell still activates; cursor never painted off-screen — `packages/datagrid/test/double-click.impl.test.ts`
-- [ ] 4.3.2 Phase verify
+- [x] 4.3.1 Impl tests — single-body single- and double-click column resolution; a double-click on a read-only cell still activates (base focuses the row); different-cell rapid clicks reset the count — `packages/datagrid/test/double-click.impl.test.ts` ✅ (completed: 2026-07-17 17:38)
+- [x] 4.3.2 Phase verify ✅ (completed: 2026-07-17 17:38)
 
 **Deliverables**: double-click-to-edit (framework `clickCount`, no bespoke timer) + the asserted scroll-into-view guarantee.
 **Verify**: `yarn verify`
