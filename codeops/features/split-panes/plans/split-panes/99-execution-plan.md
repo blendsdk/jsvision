@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-17 16:53
-> **Progress**: 0/43 tasks (0%)
+> **Last Updated**: 2026-07-17 17:33
+> **Progress**: 13/43 tasks (30%) — Phase 1 complete
 > **CodeOps Skills Version**: 3.8.0
 > **Preflighted**: 2026-07-17 — 6 findings (4 major, 2 minor), all resolved into the specs above; see
 > [`00-preflight-report.md`](00-preflight-report.md). Fixes folded into existing tasks (count unchanged);
@@ -66,12 +66,12 @@ then the mandatory showcase story.
 **Reference**: [03-01](03-01-layout-engine-min.md) · [07-testing-strategy.md](07-testing-strategy.md) ST-1…ST-9 · AR-8, AR-16
 **Objective**: Pin the min-support contract — and the no-min fast path's zero-regression guarantee — before touching the shared solver.
 
-- [ ] 1.1.1 Add ST-1…ST-7 as new cases in `packages/ui/test/apportion.spec.test.ts` — **add only; do not alter any existing expectation**
-- [ ] 1.1.2 Add ST-8, ST-9 as new cases in `packages/ui/test/layout.sizing.spec.test.ts`
-- [ ] 1.1.3 Run the spec tests — verify **ST-2…ST-6, ST-8, ST-9 FAIL** (red phase). **Expected pre-implementation passes:** ST-1 and ST-7 assert that *current* behavior is preserved, so they pass before implementation by design — record this rather than treating it as a red-phase failure
+- [x] 1.1.1 Add ST-1…ST-7 as new cases in `packages/ui/test/apportion.spec.test.ts` — **add only; do not alter any existing expectation** ✅ (completed: 2026-07-17 17:18)
+- [x] 1.1.2 Add ST-8, ST-9 as new cases in `packages/ui/test/layout.sizing.spec.test.ts` ✅ (completed: 2026-07-17 17:18)
+- [x] 1.1.3 Run the spec tests — red phase recorded ✅ (completed: 2026-07-17 17:18). **Actual red set:** ST-2, ST-5, ST-8, ST-9 fail. **Pre-implementation passes (by design):** ST-1, ST-3, ST-4, ST-6, ST-7 — each asserts preserved or coincident behavior. The plan predicted ST-2…ST-6 would all fail; in fact ST-3 `[5,5]`, ST-4 `[37,42]`, and ST-6 `[5]` coincide with the *naive* apportionment (equal mins squeeze to the same split; single item takes all; identity), so they pass pre-impl like ST-1/ST-7. Oracle **values** all verified correct by hand — only the plan's red/green prediction was overstated
 
 **Deliverables**:
-- [ ] ST-1…ST-9 written and their red/green status recorded
+- [x] ST-1…ST-9 written and their red/green status recorded ✅ (2026-07-17 17:18)
 
 **Verify**: `yarn verify`
 
@@ -80,18 +80,18 @@ then the mandatory showcase story.
 **Reference**: [03-01](03-01-layout-engine-min.md) §Implementation Details · AR-7, AR-8
 **Objective**: Add an optional `min` to the flex track, behind a fast path that leaves every existing caller byte-identical.
 
-- [ ] 1.2.1 Add `min?: number` to the `flex` variant of `TrackItem` — `packages/ui/src/layout/apportion.ts`
-- [ ] 1.2.2 Implement module-private `apportionMin(total, weights, mins)` per 03-01 §Algorithm (infeasible → `apportion(total, mins)`; else pin-to-fixpoint) — `packages/ui/src/layout/apportion.ts`. **Not** barrel-exported (AR-7)
-- [ ] 1.2.3 Add the no-min fast path to `solveTrack`: delegate to `apportionMin` only when some item carries a `min`, else run today's `apportion` line unchanged — `packages/ui/src/layout/apportion.ts`
-- [ ] 1.2.4 Add `min?: number` to the `fr` variant of `Size`; clamp via `toCells` in `normalizeSize` — `packages/ui/src/layout/types.ts`
-- [ ] 1.2.5 Pass `min` through the `fr`→`TrackItem` bridge — `packages/ui/src/layout/layout.ts`
-- [ ] 1.2.6 An `fr` item contributes `min ?? 0` (was `0`) to natural size — `packages/ui/src/layout/measure.ts`
-- [ ] 1.2.7 JSDoc the new field on both public types, with a working `@example` showing a binding minimum (`check-jsdoc.mjs` gates this) — no plan/RD ids, no TV provenance
-- [ ] 1.2.8 Run the spec tests — verify **ST-1…ST-9 PASS** (green phase). If any fails, fix the code, not the test
+- [x] 1.2.1 Add `min?: number` to the `flex` variant of `TrackItem` — `packages/ui/src/layout/apportion.ts` ✅ (completed: 2026-07-17 17:24)
+- [x] 1.2.2 Implement module-private `apportionMin(total, weights, mins)` per 03-01 §Algorithm (infeasible → `apportion(total, mins)`; else pin-to-fixpoint) — `packages/ui/src/layout/apportion.ts`. **Not** barrel-exported (AR-7) ✅ (completed: 2026-07-17 17:24)
+- [x] 1.2.3 Add the no-min fast path to `solveTrack`: delegate to `apportionMin` only when some item carries a `min`, else run today's `apportion` line unchanged — `packages/ui/src/layout/apportion.ts` ✅ (completed: 2026-07-17 17:24)
+- [x] 1.2.4 Add `min?: number` to the `fr` variant of `Size`; clamp via `toCells` in `normalizeSize` — `packages/ui/src/layout/types.ts` ✅ (completed: 2026-07-17 17:24)
+- [x] 1.2.5 Pass `min` through the `fr`→`TrackItem` bridge — `packages/ui/src/layout/layout.ts` ✅ (completed: 2026-07-17 17:24)
+- [x] 1.2.6 An `fr` item contributes `min ?? 0` (was `0`) to natural size — `packages/ui/src/layout/measure.ts` ✅ (completed: 2026-07-17 17:24)
+- [x] 1.2.7 JSDoc the new field on both public types, with a working `@example` showing a binding minimum (`check-jsdoc.mjs` gates this) — no plan/RD ids, no TV provenance. Note: the gate requires `@example` only on public class/function exports, not type aliases; added a binding-minimum `@example` to `solveTrack` (a gated public function) + inline field JSDoc on both types ✅ (completed: 2026-07-17 17:24)
+- [x] 1.2.8 Run the spec tests — **ST-1…ST-9 PASS** (green phase); full ui unit suite 1641/1641 green (zero regression) ✅ (completed: 2026-07-17 17:24)
 
 **Deliverables**:
-- [ ] `min` supported on `fr`/`flex` tracks end to end
-- [ ] ST-1 green — zero regression for existing callers
+- [x] `min` supported on `fr`/`flex` tracks end to end ✅ (2026-07-17 17:24)
+- [x] ST-1 green — zero regression for existing callers (290 files / 1641 tests green) ✅ (2026-07-17 17:24)
 
 **Verify**: `yarn verify`
 
@@ -100,11 +100,11 @@ then the mandatory showcase story.
 **Reference**: [07-testing-strategy.md](07-testing-strategy.md) §Implementation Tests
 **Objective**: Cover the fixpoint's internals and prove the shared solver is unharmed.
 
-- [ ] 1.3.1 Add impl tests to `packages/ui/test/apportion.impl.test.ts` — 3+ simultaneously-binding minimums; tie-breaking; a zero-weight item with a `min` (gets its min, residue unfilled); `min` × `gap` (`solveTrack(21, [{flex,1,min:15},{flex,1}], 1)` → `[15,5]`); `min` alongside `fixed` items
-- [ ] 1.3.2 Full verification — **the entire existing layout suite must be green**; that is the real proof of the fast path
+- [x] 1.3.1 Add impl tests to `packages/ui/test/apportion.impl.test.ts` — 3+ simultaneously-binding minimums; tie-breaking; a zero-weight item with a `min` (gets its min, residue unfilled); `min` × `gap` (`solveTrack(21, [{flex,1,min:15},{flex,1}], 1)` → `[15,5]`); `min` alongside `fixed` items. Also added a fill-exactly invariant sweep across widths 1..200 ✅ (completed: 2026-07-17 17:27)
+- [x] 1.3.2 Full verification — **the entire existing layout suite green**; `yarn verify` green across all 26 turbo tasks (with `TUI_SKIP_PERF=1`; the sole non-min failure was the machine-dependent editor-perf ceiling, which passes in isolation). Required a plugin API-reference regen (`yarn plugin:sync --fix`) since `TrackItem.min`/`Size.min` are new public surface — only `layout-views.md` drifted ✅ (completed: 2026-07-17 17:33)
 
 **Deliverables**:
-- [ ] Impl tests green · existing layout suite green
+- [x] Impl tests green · existing layout suite green ✅ (2026-07-17 17:33)
 
 **Verify**: `yarn verify`
 
