@@ -54,6 +54,7 @@ import { formsStory } from './forms.story.js';
 import { formsAsyncStory } from './forms-async.story.js';
 import { formsLoadStory } from './forms-load.story.js';
 import { formsDialogStory } from './forms-dialog.story.js';
+import { formsShowcaseStory } from './forms-showcase.story.js';
 
 /**
  * Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers
@@ -106,4 +107,5 @@ export const STORIES: readonly Story[] = [
   formsAsyncStory,
   formsLoadStory,
   formsDialogStory,
+  formsShowcaseStory,
 ];
