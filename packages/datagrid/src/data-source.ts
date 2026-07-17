@@ -49,6 +49,13 @@ export interface GridDataSource<T> {
    * instead of silently under-reporting.
    */
   distinct?(columnId: string): Promise<DistinctResult>;
+  /**
+   * Whether every row is loaded in memory. Omit it (or return `true`) for an eager in-memory source, so a
+   * footer aggregate renders a clean grand total. A windowed/server source that has loaded only part of
+   * the dataset returns `false`, and the footer labels its aggregates `"(loaded)"` — a total over the
+   * loaded set is never passed off as a whole-dataset grand total.
+   */
+  complete?(): boolean;
 }
 
 /**

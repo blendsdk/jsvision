@@ -9,6 +9,7 @@
  */
 import { View, Group } from '@jsvision/ui';
 import { createRoot } from '@jsvision/ui';
+import type { DispatchEvent, DrawContext } from '@jsvision/ui';
 
 /** A cell rect in the grid body's local coordinates. */
 export interface CellRect {
@@ -129,4 +130,48 @@ export function mountCellOverlay(args: {
       dispose();
     };
   });
+}
+
+/**
+ * The editor overlay host. It is a full-grid `fill` layer that hosts the in-cell editor while an edit
+ * is open, so it must be **transparent to hit-testing while empty** — otherwise the `fill` layer would
+ * sit on top of the header and body and swallow every click (a header/body click bubbles up its own
+ * ancestors, never across to the overlay's siblings). It stays hidden until it has a child and hides
+ * again when the last child leaves, so an empty overlay never intercepts a click.
+ */
+export class EditorOverlay extends Group {
+  constructor() {
+    super();
+    this.state.visible = false; // empty at construction — don't intercept clicks
+  }
+  override add(child: View): void {
+    super.add(child);
+    this.state.visible = this.children.length > 0;
+  }
+  override remove(child: View): void {
+    super.remove(child);
+    this.state.visible = this.children.length > 0;
+  }
+}
+
+/**
+ * A transparent full-overlay catcher placed **below** an open filter popup, so a mouse-down anywhere
+ * outside the popup closes it (click-away). It paints nothing and consumes the click so it does not
+ * also reach the grid behind. Clicks on the popup itself hit the popup (painted above) and never reach
+ * this catcher.
+ */
+export class PopupCatcher extends View {
+  constructor(private readonly onOutside: () => void) {
+    super();
+  }
+  draw(_ctx: DrawContext): void {
+    // transparent — the catcher only hit-tests, it never paints
+  }
+  override onEvent(ev: DispatchEvent): void {
+    const inner = ev.event;
+    if (inner.type === 'mouse' && inner.kind === 'down') {
+      this.onOutside();
+      ev.handled = true;
+    }
+  }
 }

@@ -3,9 +3,9 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-17
-> **Progress**: 6/47 tasks (13%) — Phase 1 complete ✅
+> **Progress**: 16/47 tasks (34%) — Phases 1–2 complete ✅
 > **CodeOps Skills Version**: 3.8.0
-> **Last Task**: 1.3.2 (Phase 1 verify) — 2026-07-17 11:46
+> **Last Task**: 2.3.2 (Phase 2 verify) — 2026-07-17 12:00
 
 ## Overview
 
@@ -79,28 +79,28 @@ guard, all new logic lands in new modules (`aggregate.ts`, `footer-band.ts`, `gr
 **Objective**: Reclaim `grid.ts` lines so the new public surface fits under the guard, and make `devWarn`
 reachable from the new footer module. Pure moves — no behavior change.
 
-- [ ] 2.0.1 Extract the self-contained `EditorOverlay` + `PopupCatcher` classes out of `grid.ts` into `overlay.ts` (their natural home); import them back — reclaims ~40 lines — `packages/datagrid/src/overlay.ts`, `packages/datagrid/src/grid.ts`
-- [ ] 2.0.2 Extract the module-private `devWarn` from `grid.ts` into a new `dev.ts`; import it in `grid.ts` (and, in Phase 3, `grid-footer.ts`) — `packages/datagrid/src/dev.ts`, `packages/datagrid/src/grid.ts`
-- [ ] 2.0.3 Verify GREEN — no behavior change; `grid.ts` line count dropped; RD-01…08 suites pass
+- [x] 2.0.1 Extract the self-contained `EditorOverlay` + `PopupCatcher` classes out of `grid.ts` into `overlay.ts` (their natural home); import them back — reclaims ~40 lines — `packages/datagrid/src/overlay.ts`, `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-17 11:52)
+- [x] 2.0.2 Extract the module-private `devWarn` from `grid.ts` into a new `dev.ts`; import it in `grid.ts` (and, in Phase 3, `grid-footer.ts`) — `packages/datagrid/src/dev.ts`, `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-17 11:52)
+- [x] 2.0.3 Verify GREEN — no behavior change; `grid.ts` line count dropped 1198→1145 (−53); 394 datagrid tests pass ✅ (completed: 2026-07-17 11:52)
 
 ### Step 2.1: Spec the readouts
 
 **Reference**: [03-04 §New grid accessors](03-04-master-detail.md) · [02 Gap 2](02-current-state.md) · [07 §F](07-testing-strategy.md) · AR-8/AR-2
 **Objective**: Public `displayedRows()`/`focusedRow()`/`focusedKey()` + the optional `complete?()` seam.
 
-- [ ] 2.1.1 Write spec tests for `focusedRow()`/`focusedKey()` cursor-track + re-anchor after sort (ST-19, ST-20) — `packages/datagrid/test/master-detail.spec.test.ts`
-- [ ] 2.1.2 Verify RED
+- [x] 2.1.1 Write spec tests for `focusedRow()`/`focusedKey()` cursor-track + re-anchor after sort (ST-19, ST-20) — `packages/datagrid/test/master-detail.spec.test.ts` ✅ (completed: 2026-07-17 11:50)
+- [x] 2.1.2 Verify RED ✅ (completed: 2026-07-17 11:50)
 
 ### Step 2.2: Implement the readouts + seam
 
-- [ ] 2.2.1 Add `displayedRows()`, `focusedRow()`, `focusedKey()` thin accessors over the private `display`/`focused` — `packages/datagrid/src/grid.ts`
-- [ ] 2.2.2 Add optional `complete?(): boolean` to `GridDataSource`; `fromRows` leaves it unset (⇒ complete) — `packages/datagrid/src/data-source.ts`
-- [ ] 2.2.3 Verify GREEN — ST-19, ST-20 pass
+- [x] 2.2.1 Add `displayedRows()`, `focusedRow()`, `focusedKey()` thin accessors over the private `display`/`focused` — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-17 11:55)
+- [x] 2.2.2 Add optional `complete?(): boolean` to `GridDataSource`; `fromRows` leaves it unset (⇒ complete) — `packages/datagrid/src/data-source.ts` ✅ (completed: 2026-07-17 11:55)
+- [x] 2.2.3 Verify GREEN — ST-19, ST-20 pass ✅ (completed: 2026-07-17 11:55)
 
 ### Step 2.3: Harden
 
-- [ ] 2.3.1 Impl test — `grid.ts` stays a thin delegator and holds the line-count guard after the Step 2.0 extractions (if the irreducible public surface still crosses it, re-base the guard with rationale per the reconciled AC#11 — never by re-inlining logic); accessors reactive; `complete?()` optional/absent path — `packages/datagrid/test/grid-footer.impl.test.ts`
-- [ ] 2.3.2 Phase verify
+- [x] 2.3.1 Impl test — `grid.ts` stays a thin delegator and holds the line-count guard after the Step 2.0 extractions (if the irreducible public surface still crosses it, re-base the guard with rationale per the reconciled AC#11 — never by re-inlining logic); accessors reactive; `complete?()` optional/absent path — `packages/datagrid/test/grid-footer.impl.test.ts` ✅ (completed: 2026-07-17 11:57) — guard HELD without re-basing (grid.ts 1198→1181: extraction −53, accessors +36 with sibling-consistent concise JSDoc)
+- [x] 2.3.2 Phase verify ✅ (completed: 2026-07-17 12:00 — full `yarn verify` green, turbo 30/30, `TUI_SKIP_PERF=1`)
 
 **Deliverables**: three thin accessors + the honesty predicate seam; `grid.ts < 1200`.
 **Verify**: `yarn verify`
