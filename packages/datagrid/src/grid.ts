@@ -13,7 +13,7 @@
  * overlay on top hosts the cell editor while an edit is open.
  */
 import { Group, ScrollBar, View, measureAutoWidths, stringWidth, signal } from '@jsvision/ui';
-import type { Column, DispatchEvent, DrawContext, Signal } from '@jsvision/ui';
+import type { Column, DispatchEvent, Signal } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { toEngineColumn } from './column.js';
 import { visibleOrder, partition, overPinnedIds, clampWidth, DEFAULT_AUTOFIT_MAX } from './column-model.js';
@@ -28,7 +28,8 @@ import { buildGridBody } from './grid-panels.js';
 import type { GridBodyDeps } from './grid-panels.js';
 import { FilterPopup } from './filter-popup.js';
 import type { FilterPopupContext } from './filter-popup.js';
-import { mountCellOverlay, absoluteRect } from './overlay.js';
+import { mountCellOverlay, absoluteRect, EditorOverlay, PopupCatcher } from './overlay.js';
+import { devWarn } from './dev.js';
 import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { GridSelection } from './grid-selection.js';
@@ -36,16 +37,6 @@ import { RowMutations } from './row-mutations.js';
 import type { SyntheticPrefix } from './synthetic-columns.js';
 import type { Key, SelectionMode } from './selection.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
-
-/**
- * Development-only warning tagged for the datagrid — the single sanctioned `console.*` sink for this
- * package (a shipped TUI shares the terminal with the screen, so it stays silent in production builds).
- */
-function devWarn(scope: string, message: string): void {
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(`[jsvision/datagrid ${scope}] ${message}`);
-  }
-}
 
 /**
  * The filter popup's fixed cell size — wide enough for the operator selector and operands, tall enough
@@ -138,50 +129,6 @@ export interface EditableDataGridOptions<T> {
    * ```
    */
   readonly assignKey?: (clone: T, original: T) => T;
-}
-
-/**
- * The editor overlay host. It is a full-grid `fill` layer that hosts the in-cell editor while an edit
- * is open, so it must be **transparent to hit-testing while empty** — otherwise the `fill` layer would
- * sit on top of the header and body and swallow every click (a header/body click bubbles up its own
- * ancestors, never across to the overlay's siblings). It stays hidden until it has a child and hides
- * again when the last child leaves, so an empty overlay never intercepts a click.
- */
-class EditorOverlay extends Group {
-  constructor() {
-    super();
-    this.state.visible = false; // empty at construction — don't intercept clicks
-  }
-  override add(child: View): void {
-    super.add(child);
-    this.state.visible = this.children.length > 0;
-  }
-  override remove(child: View): void {
-    super.remove(child);
-    this.state.visible = this.children.length > 0;
-  }
-}
-
-/**
- * A transparent full-overlay catcher placed **below** an open filter popup, so a mouse-down anywhere
- * outside the popup closes it (click-away). It paints nothing and consumes the click so it does not
- * also reach the grid behind. Clicks on the popup itself hit the popup (painted above) and never reach
- * this catcher.
- */
-class PopupCatcher extends View {
-  constructor(private readonly onOutside: () => void) {
-    super();
-  }
-  draw(_ctx: DrawContext): void {
-    // transparent — the catcher only hit-tests, it never paints
-  }
-  override onEvent(ev: DispatchEvent): void {
-    const inner = ev.event;
-    if (inner.type === 'mouse' && inner.kind === 'down') {
-      this.onOutside();
-      ev.handled = true;
-    }
-  }
 }
 
 /** Collect the source's currently-available rows into a dense array (skipping any not-yet-loaded holes). */
@@ -734,6 +681,17 @@ export class EditableDataGrid<T> extends Group {
   }
 
   /**
+   * The filtered + sorted rows currently displayed (reactive). This is the loaded/in-memory set the
+   * footer aggregates fold over; reading it inside an effect re-runs when a row is edited, inserted,
+   * deleted, sorted, or filtered.
+   *
+   * @returns The displayed rows, in display order (a read-only view of the live derived set).
+   */
+  displayedRows(): readonly T[] {
+    return this.display();
+  }
+
+  /**
    * The visible column order (the full order minus hidden columns). Reactive — reading it inside an
    * effect re-runs when the order, visibility, or a reorder changes.
    *
@@ -1103,6 +1061,31 @@ export class EditableDataGrid<T> extends Group {
    */
   selectedKeys(): ReadonlySet<Key> {
     return this.selection.read();
+  }
+
+  /**
+   * The record under the row cursor (reactive), or `undefined` when the grid is empty. Re-anchored by
+   * `rowKey` after a sort/filter, so it follows the same record even as its display index moves — the
+   * natural binding target for a master-detail link. The cursor is clamped into range, so a transiently-
+   * stale cursor never returns `undefined` while rows exist.
+   *
+   * @returns The focused record, or `undefined` on an empty grid.
+   */
+  focusedRow(): T | undefined {
+    const rows = this.display();
+    const n = rows.length;
+    if (n === 0) return undefined;
+    return rows[Math.max(0, Math.min(this.focused(), n - 1))];
+  }
+
+  /**
+   * The `rowKey` of the focused record (reactive), or `undefined` when the grid is empty. Shares the same
+   * clamped cursor as {@link focusedRow}.
+   *
+   * @returns The focused row's key, or `undefined` on an empty grid.
+   */
+  focusedKey(): Key | undefined {
+    return this.focusAnchorKey();
   }
 
   /**
