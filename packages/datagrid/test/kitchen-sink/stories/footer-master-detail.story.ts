@@ -98,7 +98,7 @@ export const footerMasterDetailStory: Story = {
               lines.set(lines().filter((l) => !drop.has(l.id)));
             },
           }),
-          footer: { aggregates: { qty: { fn: 'sum', label: 'Σqty' } } },
+          footer: { aggregates: { qty: { fn: 'sum', label: 'Σ' } } },
         }),
     );
 
