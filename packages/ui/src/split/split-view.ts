@@ -8,7 +8,7 @@
  */
 import { Group, View } from '../view/index.js';
 import type { DispatchEvent } from '../view/index.js';
-import type { Signal } from '../reactive/index.js';
+import { signal, type Signal } from '../reactive/index.js';
 import type { Direction } from '../layout/index.js';
 import { Splitter } from './splitter.js';
 import type { SplitOwner } from './splitter.js';
@@ -64,6 +64,12 @@ export interface SplitViewOptions {
   /** Minimum pane size in cells — a scalar applies to every pane, an array is per-pane. */
   minSize?: number | number[];
   /**
+   * Whether each splitter draws the `▓` grab mark at its midpoint. Defaults to `true`. This is only
+   * the initial value — the live state lives in the public {@link SplitView.grabMark} signal, so you
+   * can flip it at runtime.
+   */
+  grabMark?: boolean;
+  /**
    * Fired on every **live** change: each drag move that actually changes the sizes, and each keyboard
    * step. Never fires when the sizes are unchanged — a drag held against a minimum is a silent no-op.
    * Use this to mirror the layout live; use {@link SplitViewOptions.onResizeEnd} to persist it.
@@ -101,10 +107,19 @@ export interface SplitViewOptions {
  *   onResizeEnd: (next) => localStorage.setItem('panes', JSON.stringify(next)), // persist once per gesture
  * });
  * split.layout = { position: 'fill' };
+ *
+ * split.grabMark.set(false); // hide the ▓ grab marks on every divider; .set(true) restores them
  */
 export class SplitView extends Group implements SplitOwner {
   /** The divider views, in order (N−1 of them). Focus one to resize it from the keyboard. */
   readonly splitters: Splitter[] = [];
+
+  /**
+   * Whether the splitters draw their `▓` grab mark. Seeded from {@link SplitViewOptions.grabMark}
+   * (default `true`); write it to show/hide the mark on every divider at runtime — the splitters
+   * repaint on the next frame.
+   */
+  readonly grabMark: Signal<boolean>;
 
   private readonly direction: Direction;
   private readonly panes: View[];
@@ -123,6 +138,8 @@ export class SplitView extends Group implements SplitOwner {
     this.onResizeCb = opts.onResize;
     this.onResizeEndCb = opts.onResizeEnd;
     this.mins = normalizeMins(opts.minSize, this.panes.length);
+    // Seeded before the splitters are built — each Splitter reads this.owner.grabMark() and binds it.
+    this.grabMark = signal(opts.grabMark ?? true);
 
     // The inner track carries the real layout. It exists so a caller assigning `split.layout` (a whole
     // object write) can never clobber the container's own direction — the TabView precedent.

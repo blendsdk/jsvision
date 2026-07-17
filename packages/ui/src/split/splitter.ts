@@ -10,6 +10,7 @@
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
 import { signal } from '../reactive/index.js';
+import type { Signal } from '../reactive/index.js';
 import type { Direction } from '../layout/index.js';
 
 /** The slice of `SplitView` a {@link Splitter} drives — narrowed to avoid a runtime import cycle. */
@@ -18,6 +19,8 @@ export interface SplitOwner {
   beginDrag(index: number, ev: DispatchEvent): void;
   /** Resize the divider at `index` by `delta` cells from the live geometry (the keyboard path). */
   resizeBy(index: number, delta: number): void;
+  /** Whether splitters draw the `▓` grab mark (read live in `draw` so a toggle repaints). */
+  grabMark: Signal<boolean>;
 }
 
 /** The 1-cell divider view. Focusable so its owning split can be resized from the keyboard. */
@@ -35,20 +38,29 @@ export class Splitter extends View {
   ) {
     super();
     this.onMount(() => {
-      // draw() is NOT auto-tracked, so a bare dragging.set() schedules no frame. Bind it here so the
-      // role flip actually repaints — without this the divider stays painted `splitterDragging` after
-      // the drag ends, because endDrag() does no resize and so triggers no incidental relayout.
-      this.bind(() => this.dragging());
+      // draw() is NOT auto-tracked, so a bare dragging.set() (or grabMark flip) schedules no frame.
+      // Bind both reads here so a role flip or a grab-mark toggle actually repaints — without this the
+      // divider stays painted `splitterDragging` after the drag ends (endDrag() does no resize, so
+      // nothing else relayouts) and a `grabMark.set(...)` would leave the ▓ stale until the next frame.
+      this.bind(() => {
+        this.dragging();
+        this.owner.grabMark();
+      });
     });
   }
 
-  /** Paint the line fill in the current role, then the static `▓` grab mark at the midpoint. */
+  /**
+   * Paint the line fill in the current role, then — when `owner.grabMark()` is true — the static `▓`
+   * grab mark at the midpoint.
+   */
   override draw(ctx: DrawContext): void {
     const style = ctx.color(this.dragging() ? 'splitterDragging' : 'splitter');
     const row = this.direction === 'row';
     ctx.fill(row ? '│' : '─', style);
-    if (row) ctx.text(0, Math.floor(ctx.size.height / 2), '▓', style);
-    else ctx.text(Math.floor(ctx.size.width / 2), 0, '▓', style);
+    if (this.owner.grabMark()) {
+      if (row) ctx.text(0, Math.floor(ctx.size.height / 2), '▓', style);
+      else ctx.text(Math.floor(ctx.size.width / 2), 0, '▓', style);
+    }
   }
 
   /** Mouse-down starts a captured drag; an unmodified along-axis arrow resizes by 1 cell. */
