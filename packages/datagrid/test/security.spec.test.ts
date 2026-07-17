@@ -13,7 +13,8 @@ import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
 import type { SortKey } from '../src/sort.js';
 import type { FilterModel } from '../src/filter.js';
-import type { OnCommit } from '../src/commit.js';
+import type { OnCommit, BeforeSave } from '../src/commit.js';
+import { PARSE_FAILED } from '../src/format.js';
 import { EditableDataGrid } from '../src/grid.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -111,6 +112,109 @@ test('should sanitize a control-byte edit at the frame and mutate only via onCom
     }
   }
   expect(loop.renderRoot.serialize()).not.toContain('\x07');
+});
+
+interface Qty {
+  id: number;
+  qty: number;
+}
+
+// RD-12 security — a `validate` message laced with control bytes is surfaced in the message band but
+// sanitized at the draw boundary: no raw ESC/BEL reaches the frame (client validation is UX only, and
+// its message is never trusted as terminal output).
+test('a validate message with control bytes renders sanitized in the message band', async () => {
+  const VW = 24;
+  const VH = 7;
+  const rows = signal<Qty[]>([{ id: 1, qty: 5 }]);
+  const columns = [
+    column<Qty, number>({
+      id: 'qty',
+      title: 'Qty',
+      value: (r) => r.qty,
+      parse: (t) => (Number.isFinite(Number(t)) && t.trim() !== '' ? Number(t) : PARSE_FAILED),
+      set: (r, v) => {
+        r.qty = v;
+      },
+      validate: () => 'bad\x1b[31mvalue\x07', // a message carrying a raw ESC + BEL
+      width: 10,
+    }),
+  ];
+  const grid = new EditableDataGrid<Qty>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: VW, height: VH } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: VW, height: VH }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+
+  loop.dispatch(key('f2'));
+  const editor = loop.getFocused();
+  if (editor instanceof Input) editor.getValueSignal().set('9');
+  loop.dispatch(key('enter')); // blocked by validate → the control-byte message goes to the band
+  await tick();
+  loop.renderRoot.flush();
+
+  expect(grid.activeMessage()).toContain('\x1b'); // the raw message is held in memory (caller-supplied)
+  const buf = loop.renderRoot.buffer(); // …but the frame is clean
+  for (let y = 0; y < VH; y += 1) {
+    for (let x = 0; x < VW; x += 1) {
+      const ch = buf.get(x, y)?.char ?? '';
+      expect(ch).not.toBe('\x1b');
+      expect(ch).not.toBe('\x07');
+    }
+  }
+  expect(loop.renderRoot.serialize()).not.toContain('\x07');
+});
+
+// RD-12 security — client gating never persists behind the source's back: a `beforeSave` veto reverts
+// and never reaches `onCommit`, and an invalid (`validate`-failed) value never applies or reaches
+// `onCommit`. `onCommit`/the source stay the sole persistence path.
+test('a beforeSave veto and a validate-failed value never persist (onCommit is the only sink)', async () => {
+  const rows = signal<Qty[]>([{ id: 1, qty: 5 }]);
+  const onCommit = vi.fn<OnCommit<Qty>>(() => true);
+  const beforeSave: BeforeSave<Qty> = () => false; // always veto
+  const columns = [
+    column<Qty, number>({
+      id: 'qty',
+      title: 'Qty',
+      value: (r) => r.qty,
+      parse: (t) => (Number.isFinite(Number(t)) && t.trim() !== '' ? Number(t) : PARSE_FAILED),
+      set: (r, v) => {
+        r.qty = v;
+      },
+      validate: (v) => (v > 0 ? null : 'must be positive'),
+      width: 10,
+    }),
+  ];
+  const grid = new EditableDataGrid<Qty>({
+    columns,
+    source: fromRows(rows, { rowKey: (r) => r.id }),
+    beforeSave,
+    onCommit,
+  });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+
+  // A valid value that passes validate but is vetoed by beforeSave → reverted, onCommit never called.
+  loop.dispatch(key('f2'));
+  let editor = loop.getFocused();
+  if (editor instanceof Input) editor.getValueSignal().set('9');
+  loop.dispatch(key('enter'));
+  await tick();
+  expect(rows()[0].qty).toBe(5); // reverted to previous
+  expect(onCommit).not.toHaveBeenCalled(); // beforeSave short-circuited the persistence sink
+
+  // An invalid value (validate-failed) → never applied, onCommit never reached.
+  editor = loop.getFocused();
+  if (editor instanceof Input) editor.getValueSignal().set('-3');
+  loop.dispatch(key('enter'));
+  await tick();
+  expect(rows()[0].qty).toBe(5); // still unchanged — nothing written
+  expect(onCommit).not.toHaveBeenCalled();
 });
 
 interface Cust {

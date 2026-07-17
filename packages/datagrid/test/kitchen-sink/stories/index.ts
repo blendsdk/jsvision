@@ -13,6 +13,7 @@ import { columnsLayoutStory } from './columns-layout.story.js';
 import { rowsSelectionStory } from './rows-selection.story.js';
 import { footerMasterDetailStory } from './footer-master-detail.story.js';
 import { navigationInteractionStory } from './navigation-interaction.story.js';
+import { validationLifecycleStory } from './validation-lifecycle.story.js';
 
 export const STORIES: readonly Story[] = [
   foundationStory,
@@ -25,4 +26,5 @@ export const STORIES: readonly Story[] = [
   rowsSelectionStory,
   footerMasterDetailStory,
   navigationInteractionStory,
+  validationLifecycleStory,
 ];

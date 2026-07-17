@@ -3,8 +3,8 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Implements**: datagrid/RD-12
-> **Last Updated**: 2026-07-17 22:47
-> **Progress**: 37/46 tasks (80%) — Phases 1–4 complete (foundations + per-cell pipeline & error surfacing + per-row gate & row-leave trap + lifecycle states, verified green)
+> **Last Updated**: 2026-07-17 23:00
+> **Progress**: 46/46 tasks (100%) — ✅ COMPLETE. All 5 phases verified green (foundations · per-cell pipeline & error surfacing · per-row gate & row-leave trap · lifecycle states · barrel + showcase + security).
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -146,19 +146,18 @@ wiring + delegators (AR-7). The one cross-package change is the additive `gridIn
 **Reference**: [03-05](03-05-public-api-showcase-security.md) · [07 §E](07-testing-strategy.md) · AR-19/AR-21 · CLAUDE.md (kitchen-sink gate)
 
 ### Step 5.1: Spec the security oracle
-- [ ] 5.1.1 Spec the security posture (ST-21…ST-23) — a control-byte validation message renders sanitized; a veto/invalid value never persists (spy sinks); the new modules use no `eval`/`Function` — `packages/datagrid/test/security.spec.test.ts`
-- [ ] 5.1.2 Verify RED/GREEN (sanitize is free at draw; the veto/no-eval assertions confirm the Phase 1–4 wiring)
+- [x] 5.1.1 Spec the security posture — a control-byte `validate` message surfaces in the band but renders sanitized at draw (no raw ESC/BEL in the frame); a `beforeSave` veto + a `validate`-failed value never persist (`onCommit` spy not called, record unchanged); the no-eval scan already covers the new modules — `security.spec.test.ts` (+2 tests) — green 2026-07-17
+- [x] 5.1.2 Verify GREEN — security spec 15 tests green (sanitize free at draw; veto/no-eval confirm Phase 1–4 wiring)
 
 ### Step 5.2: Publish + demo
-- [ ] 5.2.1 Barrel exports — `BeforeSave`, `ErrorRegistry`, `createErrorRegistry`, `GridStatus`, `RowValidation` (the new options ship on the exported `GridColumn`/`EditableDataGridOptions`) — `packages/datagrid/src/index.ts`
-- [ ] 5.2.2 Kitchen-sink `validation-lifecycle.story.ts` (a rejected `validate` edit + a `validateRow` veto + a state echo; lifecycle noted app-wired) + register — `packages/datagrid/test/kitchen-sink/stories/`, `stories/index.ts`
-- [ ] 5.2.3 `datagrid-showcase` `validation-lifecycle/` cluster — 4 demos (per-cell `validate` · row-gate veto · `beforeSave` vs `onCommit` · loading/empty/error + `retry`) + a shared builder + registry — `packages/examples/datagrid-showcase/stories/validation-lifecycle/`
-- [ ] 5.2.4 Remove the RD-12 placeholder; re-base the placeholder-count oracle + add the `Validation & lifecycle` category — `packages/examples/datagrid-showcase/stories/placeholders.ts`, `stories/index.ts`, `packages/examples/test/datagrid-showcase.smoke.spec.test.ts`
-- [ ] 5.2.5 Verify GREEN — ST-21…ST-23 + kitchen-sink smoke + showcase smoke + showcase walkthrough (`emitCommand`) pass
-
+- [x] 5.2.1 Barrel exports — `BeforeSave`, `ErrorRegistry`, `createErrorRegistry`, `GridStatus`, `RowValidation` on `index.ts` (options ship on the exported `GridColumn`/`EditableDataGridOptions`). datagrid is not an API-ref barrel (ui/web/files only), so no api-ref regen — done
+- [x] 5.2.2 Kitchen-sink `validation-lifecycle.story.ts` (a `validate` reject + a `validateRow` cross-field trap + a live message echo; lifecycle noted app-wired) + registered — kitchen-sink smoke 13 tests green
+- [x] 5.2.3 `datagrid-showcase` `validation-lifecycle/` cluster — 4 self-contained demos (per-cell `validate` · row-gate cross-field · `beforeSave` vs `onCommit` · loading/empty/error + working `retry`) + registered — done
+- [x] 5.2.4 Removed the RD-12 placeholder; re-based the placeholder-count oracle (4→3) + added the `Validation & lifecycle` category (+ ST-7 count 4) — `placeholders.ts`, `stories/index.ts`, `datagrid-showcase.smoke.spec.test.ts`
+- [x] 5.2.5 Verify GREEN — showcase smoke + walkthrough (`emitCommand`) 76 tests green; kitchen-sink smoke green; examples typecheck green (after a datagrid rebuild so the dist barrel carries the new exports) — 2026-07-17
 ### Step 5.3: Final hardening
-- [ ] 5.3.1 JSDoc `@example` on every new public export; `check-jsdoc` clean; grep all `packages/*/src` for banned CodeOps IDs (clean) — `packages/datagrid/src/*`, `packages/core/src/*`
-- [ ] 5.3.2 Full `yarn verify` — turbo green; `grid.ts` under the re-based `< 1500` guard (all three guard tests re-based together with the AR-7 rationale; heavy logic stays in the new modules, never re-inlined); no RD-01…11 regression; `yarn lint:fix` before push
+- [x] 5.3.1 JSDoc `@example` on every new public export (`createErrorRegistry`/`buildMessageBand`/`createRowGate`/`createLifecycleController`/`applyLifecycleSwap`/`emptyMessage` + the options); `check:docs` clean (0 banned refs · 0 missing @example); banned-CodeOps-ID grep of `packages/*/src` clean — done
+- [x] 5.3.2 Full `yarn verify` green (exit 0, all 30 turbo tasks, check-plugin PASS; `TUI_SKIP_PERF=1`). `yarn lint:fix` run; `grid.ts` 1472 under the re-based `< 1500` guard; api-reference oracle green (datagrid is not a documented barrel). Zero RD-01…11 regression. — ✅ verified 2026-07-17 23:00
 
 **Deliverables**: shipped public surface + live demos + the security gate; full verify green.
 **Verify**: `yarn verify`

@@ -103,10 +103,24 @@ export type { FilterPopupConfig, FilterPopupContext } from './filter-popup.js';
 export { ValueList } from './value-list-popup.js';
 export type { ValueListConfig } from './value-list-popup.js';
 
-// Commit sink — the `onCommit` veto contract and the `commitCell` primitive that applies an edit
-// immediately and reverts it on veto.
+// Commit sink — the `onCommit` veto contract, the `beforeSave` gate that layers above it (a veto reverts
+// and skips `onCommit`), and the `commitCell` primitive that applies an edit immediately and reverts it
+// on veto.
 export { commitCell } from './commit.js';
-export type { CellCommit, OnCommit } from './commit.js';
+export type { CellCommit, OnCommit, BeforeSave } from './commit.js';
+
+// Validation surfacing — the reactive invalid-cell registry (`createErrorRegistry`, the twin of
+// `createDirtyRegistry`: a message per blocked cell plus one active-message channel for the band) and
+// the `RowValidation` result a grid `validateRow` returns (`{ ok; message?; field? }`). A cell is marked
+// invalid on a blocked/vetoed commit and cleared on a successful re-commit or an abandoned edit.
+export { createErrorRegistry } from './error-registry.js';
+export type { ErrorRegistry } from './error-registry.js';
+export type { RowValidation } from './validation.js';
+
+// Lifecycle — the `GridStatus` a caller's `status` getter returns (loading / ready / error, with string
+// shorthands); the grid derives the empty state (filter-aware) from the displayed count. Loading/error
+// swap the body region for a spinner/error placeholder while the header stays visible.
+export type { GridStatus } from './grid-lifecycle.js';
 
 // Cell overlay — `mountCellOverlay` mounts an editor view over a grid cell; `absoluteRect` gives a
 // mounted view's absolute origin.

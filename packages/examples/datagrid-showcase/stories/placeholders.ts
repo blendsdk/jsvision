@@ -1,5 +1,5 @@
 /**
- * The "coming soon" roadmap panels — one per not-yet-shipped datagrid RD (RD-10…RD-14). Each is a
+ * The "coming soon" roadmap panels — one per not-yet-shipped datagrid RD (RD-11, RD-13, RD-14). Each is a
  * `Story` in the `Roadmap` category built by a single {@link placeholderStory} factory: the capability
  * title, a "what this will demonstrate" paragraph, and a coming-soon chip. When an RD lands, its panel
  * is replaced by the real demo cluster in the same navigator slot (as RD-07, RD-08, and RD-09 were).
@@ -36,17 +36,12 @@ export function placeholderStory(rd: string, title: string, blurb: string): Stor
   };
 }
 
-/** The four roadmap placeholders (RD-11…RD-14), in RD order — RD-07/RD-08/RD-09/RD-10 have shipped as live clusters. */
+/** The three roadmap placeholders (RD-11, RD-13, RD-14), in RD order — RD-07…RD-10 + RD-12 have shipped as live clusters. */
 export const placeholders: readonly Story[] = [
   placeholderStory(
     'RD-11',
     'Data at scale',
     'Virtual scroll, server-side paging, and an opt-in pager for very large data sets.',
-  ),
-  placeholderStory(
-    'RD-12',
-    'Validation & lifecycle',
-    'Per-cell and per-row validation, BeforeSave gates, and loading / empty / error states.',
   ),
   placeholderStory(
     'RD-13',
