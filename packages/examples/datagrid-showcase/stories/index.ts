@@ -80,6 +80,13 @@ import { footerStickyStory } from './footer-master-detail/sticky.story.js';
 import { footerHonestyStory } from './footer-master-detail/honesty.story.js';
 import { footerMasterDetailStory } from './footer-master-detail/master-detail.story.js';
 
+// Navigation & interaction (RD-10)
+import { navKeymapTableStory } from './navigation-interaction/keymap-table.story.js';
+import { navRemapChordStory } from './navigation-interaction/remap-chord.story.js';
+import { navDoubleClickStory } from './navigation-interaction/double-click.story.js';
+import { navScrollIntoViewStory } from './navigation-interaction/scroll-into-view.story.js';
+import { navTabTraversalStory } from './navigation-interaction/tab-traversal.story.js';
+
 // Roadmap — the "coming soon" panels (RD-10…RD-14)
 import { placeholders } from './placeholders.js';
 
@@ -156,6 +163,13 @@ export const STORIES: readonly Story[] = [
   footerHonestyStory,
   footerMasterDetailStory,
 
-  // Roadmap — coming soon (RD-10…RD-14) · 5
+  // Navigation & interaction (RD-10) · 5
+  navKeymapTableStory,
+  navRemapChordStory,
+  navDoubleClickStory,
+  navScrollIntoViewStory,
+  navTabTraversalStory,
+
+  // Roadmap — coming soon (RD-11…RD-14) · 4
   ...placeholders,
 ];
