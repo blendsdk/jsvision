@@ -73,6 +73,15 @@ at the gate (2026-07-16). Open to revisit at preflight.
 
 ---
 
+## D. Runtime decisions (discovered during exec_plan — recorded, not re-litigated)
+
+| #      | Decision | Realization & grounding | Status |
+| ------ | -------- | ----------------------- | ------ |
+| AR-R1  | `GridFooter` is **non-generic** (not `GridFooter<T>` per AR-11) | The repo's `tsconfig` enables `noUnusedParameters`, so an unused type parameter fails typecheck (`TS6133` on `src/grid-footer.ts`). `GridFooter`'s shape (`sticky`/`aggregates: Record<string, AggregateSpec>`/`widgets: readonly View[]`) uses no `T`, so the generic is genuinely dead. Dropped to `GridFooter`; the grid option is `footer?: GridFooter`. Callers are unaffected (the arg was never used). `FooterController<T>` stays generic (it needs the typed columns). **Mechanical, forced by the compiler — one correct realization.** | ✅ Resolved (runtime) |
+| AR-R2  | The `grid.ts` `<1200` line guard is **re-based to `<1250`** | The anticipated PF-001 outcome: Step 2.0 extractions reclaimed ~53 lines (grid.ts 1198→1145), but RD-09's irreducible public surface — the `footer` option, the three reactive readout accessors, and the footer-controller wiring — pushed grid.ts to 1204, past 1200. Per the reconciled AC#11/AR-10 the runaway-growth ceiling is re-based with this rationale (both impl-test guards: `grid-footer.impl.test.ts`, `grid-selection.impl.test.ts`), **never met by re-inlining logic** — all heavy footer logic lives in `aggregate.ts`/`footer-band.ts`/`grid-footer.ts`. | ✅ Resolved (runtime) |
+
+---
+
 ## Gate status
 
 ✅ **GATE PASSED** — all Section-A items (AR-1…AR-6) Resolved with the user's explicit decisions

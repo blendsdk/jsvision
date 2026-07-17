@@ -34,6 +34,8 @@ import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { GridSelection } from './grid-selection.js';
 import { RowMutations } from './row-mutations.js';
+import { FooterController } from './grid-footer.js';
+import type { GridFooter } from './grid-footer.js';
 import type { SyntheticPrefix } from './synthetic-columns.js';
 import type { Key, SelectionMode } from './selection.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
@@ -129,6 +131,12 @@ export interface EditableDataGridOptions<T> {
    * ```
    */
   readonly assignKey?: (clone: T, original: T) => T;
+  /**
+   * An optional footer band: per-column aggregates (totals aligned under their columns, folded reactively
+   * over the displayed rows, honesty-labelled for a not-fully-loaded source) and/or a free-form widget
+   * row. See {@link GridFooter}. Omit for no footer.
+   */
+  readonly footer?: GridFooter;
 }
 
 /** Collect the source's currently-available rows into a dense array (skipping any not-yet-loaded holes). */
@@ -286,6 +294,7 @@ export class EditableDataGrid<T> extends Group {
   // The row-CRUD controller — insert/delete/duplicate through the source's mutation seam (the stateful
   // wiring, like GridSelection, lives in row-mutations.ts so grid.ts stays thin public delegators).
   private readonly mutations: RowMutations<T>;
+  private readonly footer?: FooterController<T>;
 
   /**
    * @param opts The `columns`, the `source`, optional `zebra` striping, and an optional `onCommit`
@@ -386,6 +395,18 @@ export class EditableDataGrid<T> extends Group {
     // frozen panels sharing one cursor/scroll. `buildGridBody` owns the band assembly (see grid-panels.ts).
     const vbar = new ScrollBar({ value: this.focused, orientation: 'vertical' });
     const hbar = new ScrollBar({ value: this.indent, orientation: 'horizontal' });
+    // The footer controller (when a footer is declared): validates the aggregate specs against the real
+    // columns and folds each lazily over the displayed rows. It holds no reactive state of its own — the
+    // footer band binds the fold to the data deps for repaint.
+    if (opts.footer !== undefined) {
+      this.footer = new FooterController<T>({
+        footer: opts.footer,
+        columns: this.columnMap,
+        displayedRows: () => this.display(),
+        complete: this.source.complete ? () => this.source.complete!() : undefined,
+      });
+    }
+
     this._bodyDeps = {
       focused: this.focused,
       focusedCol: this.focusedCol,
@@ -447,6 +468,8 @@ export class EditableDataGrid<T> extends Group {
       dirty: this.dirty,
       vbar,
       hbar,
+      // The aggregate row is built only when at least one valid aggregate survived validation.
+      footerCell: this.footer?.hasAggregates === true ? (id) => this.footer!.cell(id) : undefined,
     };
     this.maybeWarnOverFreeze();
     const parts = buildGridBody<T>(this.computePartition(), this._bodyDeps);

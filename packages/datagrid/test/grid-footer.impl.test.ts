@@ -57,11 +57,14 @@ test('the headroom extractions landed: EditorOverlay/PopupCatcher live in overla
 
 test('grid.ts stays a thin delegator under the line-count guard', () => {
   // The footer/aggregate logic lands in new modules (aggregate.ts, footer-band.ts, grid-footer.ts,
-  // master-detail.ts), so grid.ts keeps only thin accessors + the footer option pass-through. This
-  // ceiling is a runaway-growth guard, not the 700-line target; it is re-based only with rationale and
-  // never met by re-inlining logic elsewhere.
+  // master-detail.ts), so grid.ts keeps only thin accessors + the footer option pass-through + the
+  // controller wiring. This ceiling is a runaway-growth guard, not the 700-line target. The headroom
+  // extractions (EditorOverlay/PopupCatcher -> overlay.ts, devWarn -> dev.ts) reclaimed ~53 lines first;
+  // the remaining IRREDUCIBLE public surface — the footer option, the three reactive readout accessors,
+  // and the footer-controller wiring — still crosses the original 1200, so the ceiling is re-based to
+  // 1250 with this rationale, and is NEVER met by re-inlining logic that belongs in the new modules.
   const lineCount = src('grid.ts').split('\n').length;
-  expect(lineCount).toBeLessThan(1200);
+  expect(lineCount).toBeLessThan(1250);
 });
 
 test('displayedRows is reactive: an effect re-runs when the source rows change', () => {
@@ -118,4 +121,70 @@ test('complete?() is optional: fromRows omits it (absent ⇒ complete); a source
     complete: () => false,
   };
   expect(windowed.complete?.()).toBe(false);
+});
+
+// ---- Phase 3: footer controller + band ----------------------------------------------------------
+
+interface Sale {
+  id: number;
+  amount: number;
+  region: string;
+}
+function buildFooterGrid(withFooter: boolean, width = 30, height = 6) {
+  const rows = signal<Sale[]>([
+    { id: 1, amount: 10, region: 'N' },
+    { id: 2, amount: 20, region: 'S' },
+    { id: 3, amount: 30, region: 'E' },
+  ]);
+  const grid = new EditableDataGrid<Sale>({
+    columns: [
+      column<Sale, number>({ id: 'amount', title: 'Amount', value: (r) => r.amount, align: 'right', width: 16 }),
+      column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 8 }),
+    ],
+    source: fromRows(rows, { rowKey: (r) => r.id }),
+    ...(withFooter ? { footer: { aggregates: { amount: { fn: 'sum' } } } } : {}),
+  });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width, height }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+  loop.renderRoot.flush();
+  const amountAt = (y: number): string => {
+    const buf = loop.renderRoot.buffer();
+    let s = '';
+    for (let x = 0; x < 16; x += 1) s += buf.get(x, y)?.char ?? ' ';
+    return s.trim();
+  };
+  return { grid, loop, amountAt };
+}
+
+test('the footer controller is instantiated (not inlined) — the fold lives in grid-footer.ts', () => {
+  const gridFooter = src('grid-footer.ts');
+  const grid = src('grid.ts');
+  expect(gridFooter).toContain('export class FooterController'); // the controller + validation live here
+  expect(grid).toContain('new FooterController'); // grid.ts instantiates it
+  expect(grid).toContain('import { FooterController }');
+  expect(grid).not.toContain('foldAggregate'); // grid.ts never inlines the fold itself
+});
+
+test('the footer band is present only when a footer with aggregates is declared', () => {
+  const footerY = 6 - 2; // header(0) · body(1,2,3) · footer(4) · hbar(5)
+  const withFooter = buildFooterGrid(true);
+  expect(withFooter.amountAt(footerY)).toBe('60'); // the aggregate band occupies the fixed bottom band
+
+  const noFooter = buildFooterGrid(false);
+  expect(noFooter.amountAt(footerY)).not.toBe('60'); // no footer band → that row is not an aggregate
+});
+
+test('a rebuild (partition change) recreates the footer band', () => {
+  const footerY = 6 - 2;
+  const { grid, loop, amountAt } = buildFooterGrid(true);
+  expect(amountAt(footerY)).toBe('60');
+  // Hiding a column changes the partition shape → rebuildBody re-runs buildGridBody (which recreates the
+  // footer). The aggregate must survive the rebuild.
+  grid.setColumnVisible('region', false);
+  loop.renderRoot.flush();
+  expect(amountAt(footerY)).toBe('60'); // footer recreated with the aggregate intact
 });
