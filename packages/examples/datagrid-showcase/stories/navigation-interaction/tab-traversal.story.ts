@@ -2,8 +2,8 @@
  * Tab cell-traversal — Tab/Shift+Tab move the cursor cell-to-cell (wrapping at row ends, exiting to the
  * next widget at the grid edge, committing an open edit before advancing). Because the framework swallows
  * an unbound Tab for focus traversal, the app opts in at loop construction: merge `gridKeymap` into the
- * loop and call `installGridNavigation(loop, grid)`. That wiring lives in the app, so this demo shows the
- * two lines rather than re-wiring the showcase's shared loop.
+ * loop and call `installGridNavigation(loop, grid)`. The showcase wires exactly that for every grid demo,
+ * so Tab is live here — the snippet below is the same two lines your own app writes.
  */
 import { column } from '@jsvision/datagrid';
 import { buildNavStory } from './nav-demo.js';
@@ -33,8 +33,8 @@ const editable = (id: 'first' | 'last', title: string) =>
 export const navTabTraversalStory = buildNavStory<Person>({
   slug: 'tab-traversal',
   title: 'Tab cell-traversal',
-  blurb: 'Tab/Shift+Tab move cell-to-cell (wrap, edge-exit, commit-then-advance); the app opts in at the loop.',
-  hint: 'App-side wiring (Tab is otherwise swallowed for focus traversal):',
+  blurb: 'Tab/Shift+Tab move cell-to-cell here (wrap, edge-exit, commit-then-advance); your app opts in at the loop.',
+  hint: 'Tab moves cell-to-cell here. Your app enables it with two lines:',
   note: [
     '  const loop = createEventLoop(size, { caps, keymap: gridKeymap });',
     '  loop.focusView(grid.rows);',

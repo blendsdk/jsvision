@@ -30,6 +30,7 @@ import {
   type DrawContext,
 } from '@jsvision/ui';
 import type { CapabilityProfile } from '@jsvision/core';
+import { EditableDataGrid, gridKeymap, installGridNavigation, type NavGrid } from '@jsvision/datagrid';
 import { StoryWindow, CommandSink } from './window.js';
 import { STORIES } from './stories/index.js';
 import { at, firstFocusable } from './story.js';
@@ -166,6 +167,21 @@ function buildWelcome(cats: Map<string, Story[]>, w: number, h: number): Group {
   return g;
 }
 
+/**
+ * Depth-first collect every {@link EditableDataGrid} in a built demo subtree. A grid satisfies the
+ * structural `NavGrid` shape, so the shell can install cell-traversal on it without knowing the row type;
+ * a master-detail demo yields both grids and the nav handler advances only the focused one.
+ */
+function collectGrids(view: View): NavGrid[] {
+  const found: NavGrid[] = [];
+  const walk = (v: View): void => {
+    if (v instanceof EditableDataGrid) found.push(v);
+    if (v instanceof Group) for (const child of v.children) walk(child);
+  };
+  walk(view);
+  return found;
+}
+
 /** The composed showcase: the app + a `run()` that drives it to the `quit` command. */
 export interface Showcase {
   /** The composed application (loop + desktop + chrome). */
@@ -188,7 +204,16 @@ export interface Showcase {
  */
 export function createDatagridShowcase(caps: CapabilityProfile): Showcase {
   const cats = categoriesOf(STORIES);
-  const app = createApplication({ caps, menuBar: buildMenu(cats), statusLine: buildStatus() });
+  // Bind Tab/Shift+Tab to the grid-navigation commands app-wide. The framework otherwise swallows an
+  // unbound Tab for widget focus-traversal, so cell traversal can only arrive as a loop command. This is
+  // safe globally: when no grid holds focus the handler falls back to the loop's own focus traversal, so
+  // Tab still moves between the sidebar and canvas on the welcome screen and in non-grid contexts.
+  const app = createApplication({
+    caps,
+    menuBar: buildMenu(cats),
+    statusLine: buildStatus(),
+    keymap: gridKeymap,
+  });
 
   const dw = app.desktop.bounds.width;
   const dh = app.desktop.bounds.height;
@@ -241,11 +266,18 @@ export function createDatagridShowcase(caps: CapabilityProfile): Showcase {
   // Disposes the reactive owner of the currently-shown demo's build() (its signals/computeds/effects),
   // so swapping demos never leaks reactive computations. `null` on the welcome screen.
   let disposeStory: (() => void) | null = null;
+  // Unregisters the Tab/Shift+Tab handlers installed for the current demo's grids (if any), so each demo
+  // owns exactly its own grids and swapping never stacks stale handlers. `null` when the demo has no grid.
+  let uninstallNav: (() => void) | null = null;
   // Count of demo owners actually disposed — the read-only `disposedCount()` seam reads this.
   let disposed = 0;
 
   /** Tear down the previous demo's reactive graph before showing the next content. */
   function disposePrevious(): void {
+    if (uninstallNav !== null) {
+      uninstallNav();
+      uninstallNav = null;
+    }
     if (disposeStory !== null) {
       disposeStory();
       disposed += 1; // a real demo owner was torn down (not the initial welcome, where it is null)
@@ -284,6 +316,11 @@ export function createDatagridShowcase(caps: CapabilityProfile): Showcase {
       body = story.build({ caps, width: bodyW, height: bodyH, execView: execModal });
     });
     holder.add(at(body!, 0, 3, bodyW, bodyH));
+    // Light up Tab/Shift+Tab cell-traversal for whatever grids the demo built. Every grid-bearing story
+    // constructs EditableDataGrid instances, so a subtree walk finds them with no per-story wiring; the
+    // uninstaller is torn down on the next swap by disposePrevious.
+    const grids = collectGrids(body!);
+    if (grids.length > 0) uninstallNav = installGridNavigation(app.loop, grids);
     showView(holder, `${story.category} / ${story.title}`);
   }
 
