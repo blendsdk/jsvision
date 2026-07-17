@@ -22,6 +22,7 @@ import type { SortKey } from './sort.js';
 import type { FilterModel } from './filter.js';
 import type { OnCommit } from './commit.js';
 import type { DirtyRegistry } from './editing.js';
+import type { GridKeymap } from './keymap.js';
 import { SortHeader } from './sort-header.js';
 import { QuickFilterRow } from './quick-filter-row.js';
 import { EditableGridRows } from './editable-grid-rows.js';
@@ -40,6 +41,8 @@ export interface GridBodyDeps<T> {
   focused: Signal<number>;
   /** Shared global column cursor over `[0, totalCols)` (a panel owns `[offset, offset+count)`). */
   focusedCol: Signal<number>;
+  /** The merged chord→action keymap (computed once by the container), shared by every panel. */
+  keymap: GridKeymap;
   /** Shared selection index (the base's required click sink — kept, but not the paint driver). */
   selected: Signal<number>;
   /** Shared datagrid selection set, keyed by `rowKey` — every panel paints its `selected` role from it. */
@@ -315,6 +318,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       onRangeToRow: deps.onRangeToRow,
       zebra: deps.zebra,
       focusedCol: deps.focusedCol,
+      keymap: deps.keymap,
       typedColumns: sliceTyped(ids),
       overlay: deps.overlay,
       onCommit: deps.onCommit,
@@ -353,6 +357,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       onRangeToRow: deps.onRangeToRow,
       zebra: deps.zebra,
       focusedCol: deps.focusedCol,
+      keymap: deps.keymap,
       typedColumns: sliceTyped(ids),
       overlay: deps.overlay,
       onCommit: deps.onCommit,

@@ -1,15 +1,22 @@
 /**
  * `EditableGridRows<T>` — the editable grid body. It subclasses the `@jsvision/ui` `GridRows` engine
- * to add a **column** cursor beside the engine's inherited **row** focus, reassigns the horizontal
- * keys to move that cursor, and overpaints the focused cell so it reads distinctly inside the
+ * to add a **column** cursor beside the engine's inherited **row** focus and to route every keyboard
+ * gesture through a remappable keymap. The focused cell is overpainted so it reads distinctly inside the
  * highlighted row. The column cursor (`focusedCol`) is owned by the container and injected, so a later
  * frozen-panel split can share the very same signal with no retrofit.
  *
- * Navigation: `←`/`→` move the column cursor; `Home`/`End` jump to the first/last column;
- * `Ctrl+Home`/`Ctrl+End` jump to the first/last cell of the whole grid. Everything else — `↑`/`↓`,
- * `PgUp`/`PgDn`, `Ctrl+PgUp`/`Ctrl+PgDn`, mouse, and wheel — falls through to the base row navigation
- * unchanged. All movement clamps to range (no wrap). `Tab`/`Shift+Tab` are intentionally not handled
- * here: an unbound Tab is consumed by the framework's focus traversal before any view sees it.
+ * Input is one dispatch: a key resolves to a `GridAction` against the merged keymap (a per-grid override
+ * layered over the default table), then routes to the matching seam — column-cursor moves; row
+ * navigation delegated to the base engine's own helpers (so the whole nav table is remappable with no
+ * re-implementation); begin-edit; value help; selection toggle/extend; and filter-open. A printable key
+ * that resolves to nothing begins a replace-edit on an editable cell (that fallback is not remappable).
+ * The editability precedence is preserved: on an editable cell a key that could either edit or select
+ * begins the edit; on a read-only cell it selects or activates.
+ *
+ * Movement clamps to range (no wrap). `Ctrl+PgUp`/`Ctrl+PgDn` and any chord the keymap does not bind
+ * fall through to the base row navigation unchanged. `Tab`/`Shift+Tab` are not handled here — an unbound
+ * Tab is consumed by the framework's focus traversal before any view sees it; cell-to-cell Tab traversal
+ * is wired at the application level as a loop command.
  */
 import { GridRows, alignCell, apportionColumns, stringWidth, signal } from '@jsvision/ui';
 import type { GridRowsConfig, ColumnGeometry, DispatchEvent, DrawContext, Signal, Group } from '@jsvision/ui';
@@ -23,6 +30,8 @@ import { createEditController, cellKey } from './editing.js';
 import type { CellRef, EditController, DirtyRegistry } from './editing.js';
 import { safeRender } from './cell-draw.js';
 import type { RenderCell } from './cell-draw.js';
+import { resolveGridAction, mergeKeymap } from './keymap.js';
+import type { GridAction, GridKeymap } from './keymap.js';
 
 /** Clamp `v` into `[lo, hi]` (returns `lo` when the range is empty). */
 function clamp(v: number, lo: number, hi: number): number {
@@ -44,6 +53,12 @@ const EMPTY_TEXT = '<empty>';
 export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
   /** The shared column cursor index, owned by the container and injected (so panels can share it). */
   focusedCol: Signal<number>;
+  /**
+   * The merged chord→action keymap the body resolves keys against. The container computes it once
+   * (`mergeKeymap(callerOverrides)`) and passes the same frozen map to every panel, so a remap is shared
+   * across a frozen-panel split. Omit to use the default table.
+   */
+  keymap?: GridKeymap;
   /** The typed columns (parse/set/format live here; the base `columns` are the engine adapters). */
   typedColumns: GridColumn<T>[];
   /** The editor mount host (the container's absolute overlay group). */
@@ -170,6 +185,8 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
 export class EditableGridRows<T> extends GridRows<T> {
   /** The shared column cursor index (the row axis is the base's inherited `focused`). */
   protected readonly focusedCol: Signal<number>;
+  /** The merged chord→action keymap this body resolves keys against (defaults to the default table). */
+  protected readonly keymap: GridKeymap;
   /** The typed columns (parse/set/format), parallel to the base engine `columns`. */
   protected readonly typedColumns: GridColumn<T>[];
   /** The absolute overlay group the editor mounts into. */
@@ -220,6 +237,9 @@ export class EditableGridRows<T> extends GridRows<T> {
   constructor(cfg: EditableGridRowsConfig<T>) {
     super(cfg);
     this.focusedCol = cfg.focusedCol;
+    // The container passes an already-merged, frozen map shared by every panel; a direct caller may omit
+    // it, in which case the default table is used (merged over itself for a stable frozen instance).
+    this.keymap = cfg.keymap ?? mergeKeymap();
     this.typedColumns = cfg.typedColumns;
     this.overlay = cfg.overlay;
     this.onCommit = cfg.onCommit;
@@ -314,31 +334,22 @@ export class EditableGridRows<T> extends GridRows<T> {
   }
 
   /**
-   * Route the column-cursor keys and selection gestures here; let everything else fall through to the
-   * base (row navigation, activation, mouse, wheel).
+   * Resolve a key to a `GridAction` against the merged keymap and route it, falling back to printable
+   * type-to-edit; handle selection clicks; let everything else reach the base (row navigation,
+   * activation, mouse, wheel).
    *
    * @param ev The dispatch envelope.
    */
   override onEvent(ev: DispatchEvent): void {
     const inner = ev.event;
     if (inner.type === 'key') {
-      // Alt+Down opens the focused column's filter popup. This MUST precede super.onEvent: the base
-      // binds `down` ignoring modifiers, so an un-intercepted Alt+Down would move the row cursor instead.
-      if (this.handleOpenFilter(inner, ev)) {
+      const action = resolveGridAction(inner, this.keymap);
+      if (action !== undefined && this.runAction(action, ev)) {
         ev.handled = true;
         return;
       }
-      if (this.handleColKey(inner, ev)) {
-        ev.handled = true;
-        return;
-      }
-      // tryBeginEdit must precede the selection keys: on an editable cell `Space` begins the edit,
-      // so only a read-only cell's `Space` reaches handleSelectionKey below.
-      if (this.tryBeginEdit(inner, ev)) {
-        ev.handled = true;
-        return;
-      }
-      if (this.handleSelectionKey(inner, ev)) {
+      // A printable that resolved to no action begins a replace-edit on an editable cell (not remappable).
+      if (this.tryPrintableEdit(inner, ev)) {
         ev.handled = true;
         return;
       }
@@ -357,31 +368,105 @@ export class EditableGridRows<T> extends GridRows<T> {
   }
 
   /**
-   * Selection keys on the non-editing body: `Space` toggles the focused row (only on a read-only cell —
-   * an editable cell's `Space` was already claimed by `tryBeginEdit`), and `Shift`+↑/↓ extends
-   * the range one row from the anchor. The container owns the cursor move for a range gesture (so it can
-   * capture the pre-move row as the default anchor), so this reports the TARGET index and does not move
-   * the cursor itself. Returns whether the key was consumed.
+   * Route a resolved {@link GridAction} to its behavior seam; returns whether it was consumed. Navigation
+   * actions are global-cursor ops and always run. Edit / value-help / selection actions carry the same
+   * per-panel and editability guards the pre-keymap handlers did: an edit begins only on an editable
+   * focused cell this panel owns, and a panel that does not own the global cursor (`localCol() < 0`) — or
+   * whose cursor sits on a pinned band row (`focused() < rowFloor`) — does not begin an edit, so a
+   * frozen-panel split never double-fires or edits the wrong panel's column 0.
+   *
+   * @param action The resolved grid action.
+   * @param ev The dispatch envelope (forwarded to the edit controller / cursor hop / filter opener).
+   * @returns Whether the action was consumed (an unconsumed key falls through to the base).
    */
-  private handleSelectionKey(inner: KeyEvent, ev: DispatchEvent): boolean {
-    void ev;
+  private runAction(action: GridAction, ev: DispatchEvent): boolean {
+    switch (action) {
+      case 'moveLeft':
+        this.setGlobalCol(this.focusedCol() - 1, ev);
+        return true;
+      case 'moveRight':
+        this.setGlobalCol(this.focusedCol() + 1, ev);
+        return true;
+      case 'moveUp':
+        this.focusBy(-1);
+        return true;
+      case 'moveDown':
+        this.focusBy(1);
+        return true;
+      case 'pageUp':
+        this.focusBy(-this.viewportRows());
+        return true;
+      case 'pageDown':
+        this.focusBy(this.viewportRows());
+        return true;
+      case 'rowStart':
+        this.setGlobalCol(0, ev);
+        return true;
+      case 'rowEnd':
+        this.setGlobalCol(this.totalCols() - 1, ev);
+        return true;
+      case 'gridStart':
+        this.focused.set(0);
+        this.setGlobalCol(0, ev);
+        return true;
+      case 'gridEnd':
+        this.focused.set(Math.max(0, this.display().length - 1));
+        this.setGlobalCol(this.totalCols() - 1, ev);
+        return true;
+      case 'beginEdit':
+        if (this.editableCol() < 0) return false; // read-only / other panel / pinned row → base activate
+        this.controller.beginEdit(ev);
+        return true;
+      case 'valueHelp':
+        if (this.editableCol() < 0) return false;
+        this.controller.beginEdit(ev, { openDropdown: true });
+        return true;
+      case 'toggleSelect':
+        return this.runToggleSelect();
+      case 'extendUp':
+        return this.runExtend(-1);
+      case 'extendDown':
+        return this.runExtend(1);
+      case 'openFilter':
+        // While a cell editor is open it owns the key (incl. its own value-help); a body without an
+        // open-filter sink ignores the action (it then falls through to the base row cursor).
+        if (this.onOpenFilter === undefined || this.controller.isEditing()) return false;
+        this.onOpenFilter(this.focusedCol(), ev);
+        return true;
+      default:
+        // `nextCell`/`prevCell` are delivered as loop commands (Tab); `commit`/`cancel` are owned by the
+        // open editor's host — none is body-key-resolved, so let the key fall through to the base.
+        return false;
+    }
+  }
+
+  /**
+   * Extend the selection range by one row (`delta` = ±1) from the current cursor row; returns whether it
+   * was consumed. The container owns the cursor move (so it can capture the pre-move row as the range
+   * anchor), so this reports the TARGET index only. A panel that does not own the cursor no-ops.
+   */
+  private runExtend(delta: number): boolean {
     const range = this.display().length;
     if (range === 0) return false;
     if (this.localCol() < 0) return false; // the cursor is in another panel — not ours to act on
-    // Shift+↑/↓: extend the range to the adjacent row (the container moves the cursor + unions the run).
-    if ((inner.key === 'up' || inner.key === 'down') && inner.shift && !inner.ctrl && !inner.alt) {
-      if (this.onRangeToRow === undefined) return false;
-      const target = clamp(this.focused() + (inner.key === 'down' ? 1 : -1), 0, range - 1);
-      this.onRangeToRow(target);
-      return true;
-    }
-    // Space on a read-only focused cell: toggle the focused row (an editable cell never reaches here).
-    if (inner.key === 'space' && !inner.ctrl && !inner.alt && !inner.shift) {
-      if (this.onToggleRow === undefined) return false;
-      this.onToggleRow(clamp(this.focused(), 0, range - 1));
-      return true;
-    }
-    return false;
+    if (this.onRangeToRow === undefined) return false;
+    this.onRangeToRow(clamp(this.focused() + delta, 0, range - 1));
+    return true;
+  }
+
+  /**
+   * Toggle the focused row's selection on `Space` — but only on a read-only focused cell: on an editable
+   * cell the printable-edit fallback claims `Space` (a replace-edit), preserving the edit-before-select
+   * precedence. A panel that does not own the cursor no-ops. Returns whether it was consumed.
+   */
+  private runToggleSelect(): boolean {
+    if (this.editableCol() >= 0) return false; // editable focused cell → Space begins an edit instead
+    const range = this.display().length;
+    if (range === 0) return false;
+    if (this.localCol() < 0) return false; // the cursor is in another panel — not ours to act on
+    if (this.onToggleRow === undefined) return false;
+    this.onToggleRow(clamp(this.focused(), 0, range - 1));
+    return true;
   }
 
   /**
@@ -409,22 +494,6 @@ export class EditableGridRows<T> extends GridRows<T> {
     return false;
   }
 
-  /**
-   * Open the focused column's filter popup on `Alt+Down` (Excel's open-filter shortcut) from the
-   * non-editing body; returns whether it was consumed. Reports the GLOBAL focused column up via
-   * `onOpenFilter`, forwarding the live envelope so the popup inherits the focus/popup seam.
-   *
-   * While a cell editor is open the editor owns the key — including its own synthesized `Alt+Down`
-   * (value-help dropdown) — so this no-ops then. A plain `Down` (no Alt) is deliberately left for the
-   * base row navigation.
-   */
-  private handleOpenFilter(inner: KeyEvent, ev: DispatchEvent): boolean {
-    if (inner.key !== 'down' || !inner.alt || inner.ctrl || inner.shift) return false;
-    if (this.onOpenFilter === undefined || this.controller.isEditing()) return false;
-    this.onOpenFilter(this.focusedCol(), ev);
-    return true;
-  }
-
   /** Set the global column cursor from a mouse-down x (frozen-panel mode). */
   private setColFromClick(ev: DispatchEvent): void {
     const local = ev.local;
@@ -438,25 +507,26 @@ export class EditableGridRows<T> extends GridRows<T> {
   }
 
   /**
-   * Begin editing on F2/Enter/printable when the focused cell is editable; a read-only cell falls
-   * through to the base (row activate/select), so `Enter`/`Space` still work there.
+   * The local column index of the focused cell IF it is editable and the cursor is on a scrolling
+   * (non-pinned) row this panel owns; else -1. The single guard shared by begin-edit, value help, and
+   * the printable-edit fallback — matching the pre-keymap edit precedence exactly.
    */
-  private tryBeginEdit(inner: KeyEvent, ev: DispatchEvent): boolean {
-    if (this.focused() < this.rowFloor) return false; // the cursor is on a pinned row (the band owns it)
+  private editableCol(): number {
+    if (this.focused() < this.rowFloor) return -1; // the cursor is on a pinned row (the band owns it)
     const c = this.localCol();
-    if (c < 0) return false; // the cursor is in another panel — not ours to edit
+    if (c < 0) return -1; // the cursor is in another panel — not ours to edit
     const col = this.typedColumns[c];
-    if (col === undefined || !isEditable(col)) return false; // read-only → base handles it
-    if (inner.key === 'f2' || inner.key === 'enter') {
-      this.controller.beginEdit(ev);
-      return true; // an editable cell's Enter is begin-edit, never a row activate
-    }
-    if (inner.key === 'f4') {
-      this.controller.beginEdit(ev, { openDropdown: true });
-      return true; // value help: begin the edit and open the dropdown (a ComboBox editor) in one press
-    }
-    // A printable begins the edit and replaces the content. Detection mirrors Input.insertPrintable
-    // (there is no `char` field on a key event): printable iff not a chord and a single code point.
+    return col !== undefined && isEditable(col) ? c : -1;
+  }
+
+  /**
+   * The printable type-to-edit fallback: when a key resolved to no action, a non-chord single-codepoint
+   * key (or `Space`) over an editable focused cell begins a replace-edit seeded with that character.
+   * Detection mirrors `Input.insertPrintable` (there is no `char` field on a key event): printable iff
+   * not a chord and a single code point. Returns whether it was consumed.
+   */
+  private tryPrintableEdit(inner: KeyEvent, ev: DispatchEvent): boolean {
+    if (this.editableCol() < 0) return false; // read-only / other panel / pinned row → not editable
     if (!inner.ctrl && !inner.alt && (inner.key === 'space' || [...inner.key].length === 1)) {
       this.controller.beginEdit(ev, { replaceWith: inner.key === 'space' ? ' ' : inner.key });
       return true;
@@ -488,33 +558,6 @@ export class EditableGridRows<T> extends GridRows<T> {
   /** Advance the row cursor to the next row (clamped), keeping the column. */
   private advanceRow(): void {
     this.focused.set(clamp(this.focused() + 1, 0, Math.max(0, this.display().length - 1)));
-  }
-
-  /**
-   * Apply a column-cursor / grid-corner key; returns whether it was consumed. The cursor is a single
-   * GLOBAL index over `[0, totalCols())`, so `←`/`→` cross a frozen-panel boundary (a linear sequence)
-   * and `Home`/`End` reach the first/last column of the whole grid; `Ctrl+Home`/`Ctrl+End` also jump
-   * the row. For a single body `totalCols` is its own column count, so this is unchanged.
-   */
-  private handleColKey(inner: KeyEvent, ev: DispatchEvent): boolean {
-    switch (inner.key) {
-      case 'left':
-        this.setGlobalCol(this.focusedCol() - 1, ev);
-        return true;
-      case 'right':
-        this.setGlobalCol(this.focusedCol() + 1, ev);
-        return true;
-      case 'home':
-        if (inner.ctrl) this.focused.set(0);
-        this.setGlobalCol(0, ev);
-        return true;
-      case 'end':
-        if (inner.ctrl) this.focused.set(Math.max(0, this.display().length - 1));
-        this.setGlobalCol(this.totalCols() - 1, ev);
-        return true;
-      default:
-        return false;
-    }
   }
 
   /** The global visible column count (a single body's own count by default). */

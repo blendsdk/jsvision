@@ -3,8 +3,8 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Implements**: datagrid/RD-10
-> **Last Updated**: 2026-07-17 16:28
-> **Progress**: 6/45 tasks (13%)
+> **Last Updated**: 2026-07-17 16:49
+> **Progress**: 16/45 tasks (36%)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -69,20 +69,20 @@ and the frozen-panel per-panel guard (PF-006).
 **Reference**: [03-02](03-02-body-dispatch.md) · [07 §B](07-testing-strategy.md) · AR-1/AR-4/AR-9/AR-10
 
 ### Step 2.1: Spec the dispatch
-- [ ] 2.1.1 Write spec tests for chord→action routing + precedence (ST-7…ST-12) — `packages/datagrid/test/body-dispatch.spec.test.ts`
-- [ ] 2.1.2 Write the **regression** spec — the RD-02…09 gesture matrix with no `keymap` option behaves byte-identically (ST-13) **plus ST-13b (a non-owning frozen panel no-ops on edit/selection keys — PF-006)** — same file
-- [ ] 2.1.3 Verify RED — the new routing/precedence assertions fail (old handlers still hardcoded)
+- [x] 2.1.1 Write spec tests for chord→action routing + precedence (ST-7…ST-12) — `packages/datagrid/test/body-dispatch.spec.test.ts` ✅ (completed: 2026-07-17 16:49)
+- [x] 2.1.2 Write the **regression** spec — the RD-02…09 gesture matrix with no `keymap` option behaves byte-identically (ST-13) **plus ST-13b (a non-owning frozen panel no-ops on edit/selection keys — PF-006)** — same file ✅ (completed: 2026-07-17 16:49)
+- [x] 2.1.3 Verify RED — the new routing/precedence assertions fail (old handlers still hardcoded) ✅ (completed: 2026-07-17 16:49)
 
 ### Step 2.2: Implement the refactor
-- [ ] 2.2.1 Add `keymap: GridKeymap` to `EditableGridRowsConfig`; thread `mergeKeymap(opts.keymap)` from `grid.ts` into the body **and every panel (`makeBody` + `makeBand`)** so all share the one merged map — `packages/datagrid/src/editable-grid-rows.ts`, `packages/datagrid/src/grid.ts`, `packages/datagrid/src/grid-panels.ts`
-- [ ] 2.2.2 Rewrite `onEvent` to `resolveGridAction`→`runAction`, with `tryPrintableEdit` as the fallback; add `runAction` routing every `GridAction` to its existing seam (nav delegates to base `focusBy`/`focusTo`/`viewportRows`) preserving the `beginEdit`-before-`toggleSelect` editability precedence **and the `localCol() < 0` / `focused() < rowFloor` per-panel ownership short-circuit for edit/selection/value-help actions (PF-006)** — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 2.2.3 Remove the now-superseded `handleColKey`/`tryBeginEdit`/`handleSelectionKey`/`handleOpenFilter` bodies (fold their logic into `runAction`/`tryPrintableEdit`); no dead code left — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 2.2.4 Verify GREEN — ST-7…ST-12 pass
-- [ ] 2.2.5 Verify GREEN — ST-13 regression passes (zero RD-02…09 behavior change)
+- [x] 2.2.1 Add `keymap: GridKeymap` to `EditableGridRowsConfig`; thread `mergeKeymap(opts.keymap)` from `grid.ts` into the body **and every panel (`makeBody` + `makeBand`)** so all share the one merged map — `packages/datagrid/src/editable-grid-rows.ts`, `packages/datagrid/src/grid.ts`, `packages/datagrid/src/grid-panels.ts` ✅ (completed: 2026-07-17 16:49)
+- [x] 2.2.2 Rewrite `onEvent` to `resolveGridAction`→`runAction`, with `tryPrintableEdit` as the fallback; add `runAction` routing every `GridAction` to its existing seam (nav delegates to base `focusBy`/`focusTo`/`viewportRows`) preserving the `beginEdit`-before-`toggleSelect` editability precedence **and the `localCol() < 0` / `focused() < rowFloor` per-panel ownership short-circuit for edit/selection/value-help actions (PF-006)** — `packages/datagrid/src/editable-grid-rows.ts` ✅ (completed: 2026-07-17 16:49)
+- [x] 2.2.3 Remove the now-superseded `handleColKey`/`tryBeginEdit`/`handleSelectionKey`/`handleOpenFilter` bodies (fold their logic into `runAction`/`tryPrintableEdit`); no dead code left — `packages/datagrid/src/editable-grid-rows.ts` ✅ (completed: 2026-07-17 16:49)
+- [x] 2.2.4 Verify GREEN — ST-7…ST-12 pass ✅ (completed: 2026-07-17 16:49)
+- [x] 2.2.5 Verify GREEN — ST-13 regression passes (zero RD-02…09 behavior change) ✅ (completed: 2026-07-17 16:49)
 
 ### Step 2.3: Harden
-- [ ] 2.3.1 Impl tests — frozen-panel cross-boundary cursor via the router (`setGlobalCol`/leaf-focus hop unchanged); a non-owning panel no-ops on edit/selection keys (PF-006); `enter`/`space` editable-vs-read-only precedence; grid.ts still a thin delegator — `packages/datagrid/test/body-dispatch.impl.test.ts`
-- [ ] 2.3.2 Phase verify — full datagrid suite + `grid.ts < 1300`
+- [x] 2.3.1 Impl tests — frozen-panel cross-boundary cursor via the router (`setGlobalCol`/leaf-focus hop unchanged); a non-owning panel no-ops on edit/selection keys (PF-006); `enter`/`space` editable-vs-read-only precedence; grid.ts still a thin delegator — `packages/datagrid/test/body-dispatch.impl.test.ts` ✅ (completed: 2026-07-17 16:49)
+- [x] 2.3.2 Phase verify — full datagrid suite + `grid.ts < 1300` ✅ (completed: 2026-07-17 16:49)
 
 **Deliverables**: one remappable chord→action dispatch replacing four hardcoded handlers; zero regression.
 **Verify**: `yarn verify`

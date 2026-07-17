@@ -32,6 +32,8 @@ import { mountCellOverlay, absoluteRect, EditorOverlay, PopupCatcher } from './o
 import { devWarn } from './dev.js';
 import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
+import { mergeKeymap } from './keymap.js';
+import type { GridKeymap } from './keymap.js';
 import { GridSelection } from './grid-selection.js';
 import { RowMutations } from './row-mutations.js';
 import { FooterController } from './grid-footer.js';
@@ -81,6 +83,19 @@ export interface EditableDataGridOptions<T> {
   readonly quickFilter?: boolean;
   /** The per-cell veto sink — accept or reject each edit (see {@link OnCommit}). */
   readonly onCommit?: OnCommit<T>;
+  /**
+   * A per-grid keyboard remap layered over the default binding table (see `DEFAULT_KEYMAP`). Each entry
+   * maps a chord (`'ctrl+alt+shift+key'`) to a `GridAction`; a caller entry wins on a chord conflict, and
+   * the untouched defaults still fire. An entry naming an unknown action or a malformed chord is ignored
+   * (a dev warning, never thrown), so a typo can never break construction. Omit to use the defaults.
+   *
+   * @example
+   * ```ts
+   * // Ctrl+E also begins editing (F2 still works); an unknown chord is ignored.
+   * const grid = new EditableDataGrid({ columns, source, keymap: { 'ctrl+e': 'beginEdit' } });
+   * ```
+   */
+  readonly keymap?: GridKeymap;
   /** Column ids to pin to the left (frozen) panel. */
   readonly freezeLeft?: string[];
   /** Column ids to pin to the right (frozen) panel. */
@@ -407,9 +422,13 @@ export class EditableDataGrid<T> extends Group {
       });
     }
 
+    // Merge the caller's keymap over the default table once; every panel shares this one frozen map.
+    const keymap = mergeKeymap(opts.keymap);
+
     this._bodyDeps = {
       focused: this.focused,
       focusedCol: this.focusedCol,
+      keymap,
       selected: this.selected,
       selectedKeys: this.selection.keys,
       onToggleRow: (rowIndex) => this.selection.toggleAtRow(rowIndex),
