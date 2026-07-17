@@ -466,6 +466,7 @@ state: ViewState
 layout: LayoutProps
 castsShadow
 centered
+grabsFocus
 focusSignal(): Signal<void>
 selectByClick(): void
 ```

@@ -38,6 +38,7 @@ import { tabsStory } from './tabs.story.js';
 import { splitStory } from './split.story.js';
 import { splitScrollStory } from './split-scroll.story.js';
 import { drillDownStory } from './drill-down.story.js';
+import { wizardStory } from './wizard.story.js';
 import { progressBarStory } from './progress-bar.story.js';
 import { spinnerStory } from './spinner.story.js';
 import { calendarStory } from './calendar.story.js';
@@ -53,6 +54,9 @@ import { chDirDialogStory } from './chdir-dialog.story.js';
 import { themingStory } from './theming.story.js';
 import { formsStory } from './forms.story.js';
 import { formsAsyncStory } from './forms-async.story.js';
+import { formsLoadStory } from './forms-load.story.js';
+import { formsDialogStory } from './forms-dialog.story.js';
+import { formsShowcaseStory } from './forms-showcase.story.js';
 
 /**
  * Every registered story, in navigator order (Foundations RD-01…05, Controls RD-06, Containers
@@ -101,7 +105,11 @@ export const STORIES: readonly Story[] = [
   memoStory,
   terminalStory,
   drillDownStory,
+  wizardStory,
   themingStory,
   formsStory,
   formsAsyncStory,
+  formsLoadStory,
+  formsDialogStory,
+  formsShowcaseStory,
 ];
