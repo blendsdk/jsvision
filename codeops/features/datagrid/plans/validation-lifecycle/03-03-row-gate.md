@@ -34,18 +34,24 @@ readonly validateRow?: (row: T) => { ok: boolean; message?: string; field?: stri
 // field = the columnId to refocus on failure; message = the surfaced text.
 ```
 
-### The `RowGate` controller (`validation.ts`, AR-5/AR-15)
+### The `RowGate` controller (`validation.ts`, AR-5/AR-15/AR-24)
+
+> **Trigger corrected at execution (AR-24).** The gate keys on a **touched-rows** registry, not
+> `isRowDirty`: the dirty registry tracks only *in-flight* commits (cleared the instant a commit
+> resolves, and the editor holds focus while one is pending), so a dirty-keyed gate can never trap. A
+> cell whose commit **succeeds** marks its row `touched`; the gate runs `validateRow` only for a touched
+> row; a passing leave clears the row from `touched`.
 
 ```ts
 export interface RowGateDeps<T> {
-  validateRow?: (row: T) => { ok: boolean; message?: string; field?: string };
-  focusedRow(): T | undefined;              // grid.ts:1119 delegator
-  focusedKey(): string | number | undefined;// grid.ts:1130 delegator
-  isRowDirty(rowKey: string | number): boolean; // dirty prefix scan (grid.ts:597 logic)
-  columnIndex(columnId: string): number;    // typedColumns.findIndex(c => c.id === id)
-  focusColumn(index: number): void;         // set the shared column cursor + focus the cell
-  firstDirtyColumn(rowKey: string | number): number | undefined;
-  note(message: string | null): void;       // push/clear the active band message (error registry)
+  validateRow?: (row: T) => RowValidation;
+  focusedRow(): T | undefined;                     // grid.ts focusedRow() delegator
+  focusedKey(): string | number | undefined;       // grid.ts focusedKey() delegator
+  isRowTouched(rowKey: string | number): boolean;  // the touched-rows set (AR-24)
+  clearTouched(rowKey: string | number): void;     // reset on a passing leave (no re-trap)
+  columnIndex(columnId: string): number;           // typedColumns.findIndex(c => c.id === id), or -1
+  focusColumn(index: number): void;                // set the shared column cursor + focus the cell
+  note(message: string | null): void;              // push/clear the active band message (error registry)
 }
 
 export function createRowGate<T>(deps: RowGateDeps<T>): { tryLeave(): boolean };
@@ -54,15 +60,17 @@ export function createRowGate<T>(deps: RowGateDeps<T>): { tryLeave(): boolean };
 `tryLeave()`:
 
 1. If `validateRow` is undefined → `return true` (no gate).
-2. `row = focusedRow()`; if undefined → `return true` (empty grid).
-3. If **not** `isRowDirty(focusedKey())` → `return true` (AR-5: untouched rows leave freely — even a
+2. `key = focusedKey()`; `row = focusedRow()`; if either is undefined → `return true` (empty grid).
+3. If **not** `isRowTouched(key)` → `return true` (AR-5: untouched rows leave freely — even a
    pre-existing-invalid seed row).
-4. `res = validateRow(row)`; if `res.ok` → `note(null)` (clear any stale message) and `return true`.
-5. Blocked: `focusColumn(res.field ? columnIndex(res.field) : firstDirtyColumn(key) ?? currentCol)`,
-   `note(res.message ?? 'This row is invalid')`, `return false`.
+4. `res = validateRow(row)`; if `res.ok` → `clearTouched(key)` + `note(null)` (clear the message) and
+   `return true` (a validated row will not re-trap on a later leave).
+5. Blocked: `focusColumn(res.field ? columnIndex(res.field) : currentCol)` (an unknown/hidden `field`
+   falls back to the current column; never throws), `note(res.message ?? 'This row is invalid')`,
+   `return false`.
 
 `note` uses the error registry's shared active-message channel ([03-02](03-02-error-surfacing.md)) — a
-transient row/veto message with no `cellKey`; it clears on the next successful leave or correction.
+transient row message with no `cellKey`; it clears on the next passing leave.
 
 ### The four leave paths (AR-15)
 
@@ -87,9 +95,11 @@ first dirty column, then the current column (never throw).
 
 ## Integration Points
 
-- `grid.ts` constructs the `RowGate` with delegators it already exposes (`focusedRow`/`focusedKey`
-  `:1119/:1130`; the dirty prefix scan `:597`) plus a `focusColumn` that reuses the existing
-  column-cursor setter; it wires `rowLeaveGate: () => rowGate.tryLeave()` into `_bodyDeps` — which the
+- `grid.ts` owns a `touched` set of row keys (beside `dirty`/`errors`), marked on a successful commit
+  via a `markRowTouched` `EditHost` seam (`editing.ts` calls it when `res.committed`). It constructs the
+  `RowGate` with `focusedRow`/`focusedKey`, `isRowTouched`/`clearTouched` (the touched set, AR-24), and a
+  `focusColumn` that reuses the existing column-cursor setter; it wires `rowLeaveGate: () =>
+  rowGate.tryLeave()` into `_bodyDeps` — which the
   **body** consults for the three body-owned leave paths (Path 1 `runAction`, Path 2 the body's
   `advanceRow`, Path 4 the mouse-down branch) — and calls `rowGate.tryLeave()` directly in its own
   `advanceCell` implementation (Path 3, the container-owned `Tab` method). The container has no

@@ -3,8 +3,8 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Implements**: datagrid/RD-12
-> **Last Updated**: 2026-07-17 22:03
-> **Progress**: 18/46 tasks (39%) — Phases 1–2 complete (foundations + per-cell pipeline & error surfacing, verified green)
+> **Last Updated**: 2026-07-17 22:25
+> **Progress**: 29/46 tasks (63%) — Phases 1–3 complete (foundations + per-cell pipeline & error surfacing + per-row gate & row-leave trap, verified green)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -97,21 +97,21 @@ wiring + delegators (AR-7). The one cross-package change is the additive `gridIn
 **Reference**: [03-03](03-03-row-gate.md) · [07 §C](07-testing-strategy.md) · AR-5/AR-15/AR-16
 
 ### Step 3.1: Spec
-- [ ] 3.1.1 Spec the row gate (ST-12…ST-16) — an edited invalid row is trapped on arrow / `Enter` / click, cursor lands on `field`, message shows; a corrected row leaves + clears; an **untouched** invalid row leaves freely — `packages/datagrid/test/row-gate.spec.test.ts`
-- [ ] 3.1.2 Verify RED
+- [x] 3.1.1 Spec the row gate (ST-12…ST-16) — an edited invalid row is trapped on arrow / `Enter` / click, cursor lands on `field`, message shows; a corrected row leaves + clears; an **untouched** invalid row leaves freely — `row-gate.spec.test.ts` (5 tests) — green 2026-07-17 22:21
+- [x] 3.1.2 Verify RED — confirmed (validateRow ignored, gate never traps; ST-14 passed as the default no-gate leave) 2026-07-17 22:14
 
-### Step 3.2: Implement
-- [ ] 3.2.1 Add the `validateRow?: (row) => { ok; message?; field? }` grid option + the `RowValidation` type — `packages/datagrid/src/grid.ts`, `packages/datagrid/src/validation.ts`
-- [ ] 3.2.2 Implement `createRowGate` in `validation.ts` — `tryLeave()`: undefined/empty/not-dirty → allow; ok → `note(null)` + allow; else refocus `field` (→ first-dirty → current fallback) + `note(message)` + block; a `validateRow` throw = blocking — `packages/datagrid/src/validation.ts`
-- [ ] 3.2.3 Wire path 1 (keyboard row nav) — a `rowLeaveGate?: () => boolean` body config hook; in `runAction`, a **row-changing** nav action consults it before the base move (column-only actions never gate) — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 3.2.4 Wire path 2 (`Enter`-advance) — the **body's** `advanceRow` (`editable-grid-rows.ts:592`, bound to `EditHost.advanceRow`) consults the `rowLeaveGate` body-dep from 3.2.3 before advancing; on block it does not advance (field refocuses). NOTE: `advanceRow` is a body method — there is no `advanceRow` on the container — so this lands in the body, and `grid.ts` only injects the dep — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 3.2.5 Wire path 3 (`Tab` row-edge) — the container-owned `advanceCell` calls `rowGate.tryLeave()` directly before a row-changing hop; a within-row cell hop does not gate — `packages/datagrid/src/grid.ts`
-- [ ] 3.2.6 Wire path 4 (click a different row) — the body mouse-down consults `rowLeaveGate` before setting the row cursor from a click on a different row — `packages/datagrid/src/editable-grid-rows.ts`
-- [ ] 3.2.7 Verify GREEN — ST-12…ST-16 pass
+### Step 3.2: Implement (row gate keys on the **touched-rows** registry, AR-24 — not `isRowDirty`; see below)
+- [x] 3.2.1 Add the `validateRow?: (row) => RowValidation` grid option + the `RowValidation` type + `EditableDataGridOptions.validateRow` JSDoc — `grid.ts`, `validation.ts`
+- [x] 3.2.2 Implement `createRowGate` in `validation.ts` — `tryLeave()`: no validateRow/empty/**not-touched** → allow; ok → `clearTouched` + `note(null)` + allow; else refocus `field` (→ current-column fallback) + `note(message)` + block; a `validateRow` throw = blocking. Plus a `touched` set + `markRowTouched` EditHost seam (marked on a successful commit, editing.ts) — `validation.ts`, `editing.ts`, `grid.ts`
+- [x] 3.2.3 Wire path 1 (keyboard row nav) — `rowLeaveGate?: () => boolean` body config; in `runAction`, the row-changing actions (moveUp/Down, pageUp/Down, gridStart/End) consult it via `rowMoveAllowed`/`rowMoveToAllowed` before the base move (column-only actions never gate) — `editable-grid-rows.ts`
+- [x] 3.2.4 Wire path 2 (`Enter`-advance) — the **body's** `advanceRow` consults `rowLeaveGate` before advancing (only when it would change the row); on block it does not advance. `grid.ts` only injects the dep — `editable-grid-rows.ts`
+- [x] 3.2.5 Wire path 3 (`Tab` row-edge) — the container-owned `advanceCell` calls `rowGate.tryLeave()` directly before a row-changing hop; a within-row cell hop does not gate — `grid.ts`
+- [x] 3.2.6 Wire path 4 (click a different row) — the body mouse-down consults `rowLeaveGate` (plain clicks only, via `clickTargetsOtherRow`) before the base cursor move; on block it consumes the event — `editable-grid-rows.ts`
+- [x] 3.2.7 Verify GREEN — ST-12…ST-16 pass (5 tests); full datagrid suite 512 + typecheck green 2026-07-17 22:21
 
 ### Step 3.3: Harden
-- [ ] 3.3.1 Impl tests — `field` fallback chain; within-row moves never gate; `validateRow` throw handled; frozen multi-panel gates once; `note` clears on success — `packages/datagrid/test/validation.impl.test.ts`
-- [ ] 3.3.2 Phase verify — full datagrid suite + `grid.ts` under the line guard (re-based `< 1300` → `< 1450` across all three guard tests with the AR-7 rationale once the added public surface crosses 1299; never re-inline)
+- [x] 3.3.1 Impl tests — direct `createRowGate` unit tests (untouched allows / touched-ok clears+notes(null) / touched-fail blocks+refocuses+notes / unknown+absent `field` → current-column fallback / throw = blocking); grid-level within-row-never-gates + a leave fires validateRow exactly once — `validation.impl.test.ts` (8 tests green) 2026-07-17 22:22
+- [x] 3.3.2 Phase verify — full `yarn verify` green (exit 0, all 30 turbo tasks, check-plugin PASS; `TUI_SKIP_PERF=1`). `grid.ts` at 1404 under the re-based `< 1450` guard (AR-7/AR-23). Zero RD-01…11 regression. — verified 2026-07-17 22:25
 
 **Deliverables**: `validateRow` cross-field gate with a dirty-gated row-leave trap + field refocus across all four leave paths.
 **Verify**: `yarn verify`
