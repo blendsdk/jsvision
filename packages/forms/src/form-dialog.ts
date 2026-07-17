@@ -218,7 +218,14 @@ export function formDialog<S extends z.ZodObject<z.ZodRawShape>, I extends Recor
     const rects = buttonRects(options.width, options.height);
     let mounted = false;
     try {
-      dlg.add(options.body(form)); // caller-built body — may throw synchronously (e.g. form.field('typo'))
+      const body = options.body(form); // caller-built — may throw synchronously (e.g. form.field('typo'))
+      // Pin the body to a `fill` overlay so it always spans the dialog's content box. A body whose
+      // children are all absolutely-positioned (the common case — `Label`/`Input` at fixed rects) has
+      // no in-flow content, so without this its `auto` width would resolve to zero, collapsing the
+      // group and clipping every child away — the dialog would show only its frame + buttons (and the
+      // focused field's caret). `fill` needs no rect and re-solves if the dialog is ever resized.
+      body.layout = { ...body.layout, position: 'fill' };
+      dlg.add(body);
       dlg.add(place(ok, rects.ok));
       dlg.add(place(cancelButton(), rects.cancel));
       host.desktop.addWindow(dlg);

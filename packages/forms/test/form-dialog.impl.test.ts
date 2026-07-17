@@ -101,6 +101,41 @@ test('impl: OK + Cancel are absolutely placed as a centered pair on one row', as
   await p;
 });
 
+test('impl: the caller body fills the dialog interior and renders (regression: no zero-width collapse)', async () => {
+  const { loop, host } = makeHost();
+  let bodyGroup!: Group;
+  // A body whose only child is absolutely positioned — the common Label/Input-at-fixed-rects shape.
+  // With no in-flow content the group's `auto` width would resolve to zero and clip everything inside
+  // it, so the dialog showed only its frame + buttons (+ the focused caret). The fill fix must keep
+  // the body spanning the interior so its bound value actually paints.
+  const p = formDialog(host, {
+    schema: Schema,
+    initial: { name: 'ZequeXY', port: '8080' },
+    width: 44,
+    height: 9,
+    body: (f) => {
+      const g = new Group();
+      const input = new Input({ value: f.field('name').value });
+      input.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 30, height: 1 } };
+      g.add(input);
+      bodyGroup = g;
+      return g;
+    },
+  });
+
+  loop.renderRoot.flush();
+  expect(bodyGroup.bounds.width).toBeGreaterThan(0); // the body spans the interior, not a 0-wide collapse
+  const painted = loop.renderRoot
+    .buffer()
+    .rows()
+    .map((row) => row.map((cell) => cell.char).join(''))
+    .join('\n');
+  expect(painted).toContain('ZequeXY'); // the bound value is visible, not clipped away
+
+  loop.emitCommand(Commands.cancel);
+  await p;
+});
+
 test('impl: the OK button greys (state.disabled) while a submit is in flight, then re-enables', async () => {
   const { loop, host, added } = makeHost();
   const gate = deferred();
