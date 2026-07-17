@@ -162,6 +162,7 @@ test('ST-32: the editor-family roles are the ONLY additive keys — every existi
     'gridCursor',
     'gridDirty',
     'gridSelectedRow', // RD-08 datagrid row-selection highlight (guarded by grid-theme.spec)
+    'gridInvalid', // RD-12 datagrid failed-validation band (guarded by grid-theme.spec)
     'dangerText',
     'warningText',
     'inputPlaceholder',

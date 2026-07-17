@@ -13,6 +13,10 @@
  *   • `gridSelectedRow` — pure white (`#ffffff`) on blue (`#0000aa`): a solid selection band with its
  *     OWN background, so a selected row stays distinct from a normal row (whose `listSelected` shares
  *     `listNormal`'s cyan) even under zebra striping.
+ *   • `gridInvalid` — pure white (`#ffffff`) on the deep DOS red (`#aa0000`): a solid band marking a
+ *     cell whose edit failed validation. A full band (not the `gridDirty` dot) and a stronger, deeper
+ *     red than the `gridDirty` foreground, so an invalid cell reads as a hard error distinct from a
+ *     pending-commit marker; white-on-deep-red keeps it legible where white-on-brightRed would not.
  */
 import { test, expect } from 'vitest';
 import type { ColorDepth } from '@jsvision/core';
@@ -34,8 +38,20 @@ test('ST-16: gridSelectedRow is frozen at white-on-blue with a background distin
   expect(defaultTheme.gridSelectedRow.bg).not.toBe(defaultTheme.listNormal.bg);
 });
 
+test('ST-16: gridInvalid is frozen at white-on-deep-red (the solid failed-validation band)', () => {
+  expect(defaultTheme.gridInvalid).toStrictEqual({ fg: '#ffffff', bg: '#aa0000' });
+  // A full band, distinct from the gridDirty pending marker: its background is a deep red the dirty
+  // marker never uses (gridDirty is a brightRed foreground over the cell's own background).
+  expect(defaultTheme.gridInvalid.bg).not.toBe(defaultTheme.gridDirty.bg);
+});
+
 test('ST-16: encode() of each new role does not throw at any colour depth', () => {
-  for (const role of [defaultTheme.gridCursor, defaultTheme.gridDirty, defaultTheme.gridSelectedRow]) {
+  for (const role of [
+    defaultTheme.gridCursor,
+    defaultTheme.gridDirty,
+    defaultTheme.gridSelectedRow,
+    defaultTheme.gridInvalid,
+  ]) {
     for (const depth of ALL_DEPTHS) {
       expect(() => encode(role.fg, 'fg', depth)).not.toThrow();
       expect(() => encode(role.bg, 'bg', depth)).not.toThrow();

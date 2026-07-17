@@ -235,6 +235,14 @@ export interface Theme {
    */
   readonly gridSelectedRow: ThemeRole;
   /**
+   * A cell whose edit failed validation in an editable data grid — a solid band
+   * (white on a deep red), distinct from both the {@link gridDirty} pending-commit
+   * marker (a `•`, not a band) and the {@link gridCursor} focus. Painted over the
+   * whole invalid cell so a rejected value reads as a hard error; it wins over the
+   * dirty marker but yields to the focused-cell cursor.
+   */
+  readonly gridInvalid: ThemeRole;
+  /**
    * A file dialog's info pane — the strip below the dialog that reads out the
    * expanded path and the focused entry's name/size/date/time: cyan on blue.
    */
@@ -376,6 +384,7 @@ export const defaultTheme: Theme = {
   gridCursor: { fg: PALETTE.black, bg: PALETTE.white },
   gridDirty: { fg: PALETTE.brightRed, bg: PALETTE.black },
   gridSelectedRow: { fg: PALETTE.white, bg: PALETTE.blue },
+  gridInvalid: { fg: PALETTE.white, bg: PALETTE.red },
   fileInfo: { fg: PALETTE.cyan, bg: PALETTE.blue },
   editorNormal: { fg: PALETTE.yellow, bg: PALETTE.blue },
   editorSelected: { fg: PALETTE.blue, bg: PALETTE.lightGray },
