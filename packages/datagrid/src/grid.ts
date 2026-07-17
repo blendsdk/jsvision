@@ -30,7 +30,7 @@ import { FilterPopup } from './filter-popup.js';
 import type { FilterPopupContext } from './filter-popup.js';
 import { mountCellOverlay, absoluteRect, EditorOverlay, PopupCatcher } from './overlay.js';
 import { devWarn } from './dev.js';
-import type { OnCommit } from './commit.js';
+import type { OnCommit, BeforeSave } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { mergeKeymap } from './keymap.js';
 import type { GridKeymap } from './keymap.js';
@@ -42,6 +42,8 @@ import type { GridFooter } from './grid-footer.js';
 import type { SyntheticPrefix } from './synthetic-columns.js';
 import type { Key, SelectionMode } from './selection.js';
 import { createDirtyRegistry, cellKey } from './editing.js';
+import { createErrorRegistry } from './error-registry.js';
+import { buildMessageBand } from './validation.js';
 
 /**
  * The filter popup's fixed cell size — wide enough for the operator selector and operands, tall enough
@@ -84,6 +86,21 @@ export interface EditableDataGridOptions<T> {
   readonly quickFilter?: boolean;
   /** The per-cell veto sink — accept or reject each edit (see {@link OnCommit}). */
   readonly onCommit?: OnCommit<T>;
+  /**
+   * A per-cell gate that runs **above** `onCommit`: after the optimistic in-memory write and before
+   * `onCommit`. Return `true` to proceed to `onCommit`, or `false`/a rejected promise to veto — a veto
+   * reverts the cell to its previous value, surfaces a rejection message, and `onCommit` is never called.
+   * Use it for a policy check (permission, a business rule) that should short-circuit persistence.
+   * Client-side gating is UX only — the authoritative check still belongs in `onCommit`/the source.
+   *
+   * @example
+   * ```ts
+   * import { EditableDataGrid } from '@jsvision/datagrid';
+   * // Block edits to a locked row before they ever reach onCommit:
+   * const grid = new EditableDataGrid({ columns, source, beforeSave: (c) => !(c.row as { locked?: boolean }).locked });
+   * ```
+   */
+  readonly beforeSave?: BeforeSave<T>;
   /**
    * A per-grid keyboard remap layered over the default binding table (see `DEFAULT_KEYMAP`). Each entry
    * maps a chord (`'ctrl+alt+shift+key'`) to a `GridAction`; a caller entry wins on a chord conflict, and
@@ -272,6 +289,10 @@ export class EditableDataGrid<T> extends Group {
   // so the display computed reads this version to force a repaint of the mutated row.
   private readonly version = signal(0);
   private readonly dirty = createDirtyRegistry();
+  // The invalid-cell registry — the twin of `dirty`, holding a message per blocked cell plus the one
+  // active message the footer band shows. Threaded into the body (the `gridInvalid` paint) and the edit
+  // pipeline (set on a blocked/vetoed commit, cleared on a successful re-commit or an abandoned edit).
+  private readonly errors = createErrorRegistry();
   // The single source of truth for the sort model — the header and the `sortBy`/`addSort`/`clearSort`
   // API both drive this one signal; the body's `display` derives from it on the client path.
   private readonly sortKeys = signal<SortKey[]>([]);
@@ -426,6 +447,17 @@ export class EditableDataGrid<T> extends Group {
     // Merge the caller's keymap over the default table once; every panel shares this one frozen map.
     const keymap = mergeKeymap(opts.keymap);
 
+    // The validation message band is built only when validation is configured — a column `validate` or a
+    // grid `beforeSave`. A plain editable grid keeps its exact layout (no extra footer row); a configured
+    // grid gets a reserved one-cell band that shows the active message and is blank when there is none.
+    const validationConfigured = opts.beforeSave !== undefined || opts.columns.some((c) => c.validate !== undefined);
+    const messageBand = validationConfigured
+      ? buildMessageBand(
+          () => this.errors.active(),
+          () => 'error',
+        )
+      : undefined;
+
     this._bodyDeps = {
       focused: this.focused,
       focusedCol: this.focusedCol,
@@ -484,8 +516,11 @@ export class EditableDataGrid<T> extends Group {
           : this.setFilter(columnId, { kind: 'text', op: 'contains', value: text }),
       overlay: this.overlay,
       onCommit: opts.onCommit,
+      beforeSave: opts.beforeSave,
       bumpVersion: () => this.version.set(this.version() + 1),
       dirty: this.dirty,
+      errors: this.errors,
+      messageBand,
       vbar,
       hbar,
       // The aggregate row is built only when at least one valid aggregate survived validation.
@@ -605,6 +640,30 @@ export class EditableDataGrid<T> extends Group {
    */
   isGridDirty(): boolean {
     return this.dirty.keys().size > 0;
+  }
+
+  /**
+   * Whether a specific cell is marked invalid — its last edit was blocked (a failed `validate`, an
+   * unparseable value, or a vetoed change) and never took. Reactive (see {@link EditableDataGrid.isDirty}).
+   * Clears on a successful re-commit or an abandoned edit.
+   *
+   * @param rowKey The cell's row key.
+   * @param columnId The cell's column id.
+   * @returns `true` while the cell is marked invalid.
+   */
+  isInvalid(rowKey: string | number, columnId: string): boolean {
+    return this.errors.has(cellKey(rowKey, columnId));
+  }
+
+  /**
+   * The active validation/veto message shown in the grid's message band, or `null` when there is none.
+   * Reactive — it follows the most recent blocked commit or row-gate message and clears once the
+   * offending cell/row is valid again.
+   *
+   * @returns The active message string, or `null`.
+   */
+  activeMessage(): string | null {
+    return this.errors.active();
   }
 
   /**

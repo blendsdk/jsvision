@@ -24,10 +24,11 @@ import type { KeyEvent, MouseEvent } from '@jsvision/core';
 import type { GridColumn } from './column.js';
 import { isEditable } from './column.js';
 import type { Key } from './selection.js';
-import type { OnCommit } from './commit.js';
+import type { OnCommit, BeforeSave } from './commit.js';
 import type { CellRect } from './overlay.js';
 import { createEditController, cellKey } from './editing.js';
 import type { CellRef, EditController, DirtyRegistry } from './editing.js';
+import type { ErrorRegistry } from './error-registry.js';
 import { safeRender } from './cell-draw.js';
 import type { RenderCell } from './cell-draw.js';
 import { resolveGridAction, mergeKeymap } from './keymap.js';
@@ -65,12 +66,16 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
   overlay: Group;
   /** The optional per-cell veto sink. */
   onCommit?: OnCommit<T>;
+  /** The optional per-cell gate above `onCommit` (a veto reverts and skips `onCommit`). */
+  beforeSave?: BeforeSave<T>;
   /** The row-identity function (from the data source). */
   rowKey: (row: T) => string | number;
   /** Bump-on-write so an in-place `set` repaints the mutated row. */
   bumpVersion: () => void;
   /** The shared dirty registry (pending-commit markers); omit to disable dirty tracking. */
   dirty?: DirtyRegistry;
+  /** The shared invalid-cell registry (the `gridInvalid` band + message); omit to disable surfacing. */
+  errors?: ErrorRegistry;
   /**
    * The datagrid selection set, keyed by `rowKey` — the body paints a row's `selected` role by
    * membership here (not the base's single `selected` index, which is kept only as the base's required
@@ -193,12 +198,16 @@ export class EditableGridRows<T> extends GridRows<T> {
   protected readonly overlay: Group;
   /** The optional per-cell veto sink. */
   protected readonly onCommit?: OnCommit<T>;
+  /** The optional per-cell gate above `onCommit`. */
+  protected readonly beforeSave?: BeforeSave<T>;
   /** The row-identity function. */
   protected readonly rowKey: (row: T) => string | number;
   /** Bump-on-write repaint hook (the container owns the `version` signal). */
   protected readonly bumpVersion: () => void;
   /** The shared dirty registry (pending-commit markers), or `undefined` when dirty tracking is off. */
   protected readonly dirty?: DirtyRegistry;
+  /** The shared invalid-cell registry (the `gridInvalid` band), or `undefined` when surfacing is off. */
+  protected readonly errors?: ErrorRegistry;
   /** The datagrid selection set the body paints from (empty when the container wires no selection). */
   protected readonly selectedKeys: Signal<ReadonlySet<Key>>;
   /** Toggle-row gesture sink (`Space` on a read-only cell / `Ctrl`+click); `undefined` when off. */
@@ -243,9 +252,11 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.typedColumns = cfg.typedColumns;
     this.overlay = cfg.overlay;
     this.onCommit = cfg.onCommit;
+    this.beforeSave = cfg.beforeSave;
     this.rowKey = cfg.rowKey;
     this.bumpVersion = cfg.bumpVersion;
     this.dirty = cfg.dirty;
+    this.errors = cfg.errors;
     this.selectedKeys = cfg.selectedKeys ?? signal<ReadonlySet<Key>>(new Set());
     this.onToggleRow = cfg.onToggleRow;
     this.onRangeToRow = cfg.onRangeToRow;
@@ -267,8 +278,10 @@ export class EditableGridRows<T> extends GridRows<T> {
       overlay: this.overlay,
       typedColumns: this.typedColumns,
       onCommit: this.onCommit,
+      beforeSave: this.beforeSave,
       bumpVersion: this.bumpVersion,
       dirty: this.dirty,
+      errors: this.errors,
       currentCell: () => this.currentCell(),
       cellRect: () => this.cellRect(),
       advanceRow: () => this.advanceRow(),
@@ -297,6 +310,14 @@ export class EditableGridRows<T> extends GridRows<T> {
       if (registry !== undefined) {
         this.bind(
           () => registry.keys(),
+          () => undefined,
+        );
+      }
+      // Repaint when the invalid set changes, so the `gridInvalid` band appears/clears reactively.
+      const errors = this.errors;
+      if (errors !== undefined) {
+        this.bind(
+          () => errors.keys(),
           () => undefined,
         );
       }
@@ -740,6 +761,7 @@ export class EditableGridRows<T> extends GridRows<T> {
               focused: active && isFocusedRow && c === focusedCol,
               selected: isSelectedRow,
               dirty: this.dirty?.has(cellKey(this.rowKey(row), tcol.id)) ?? false,
+              invalid: this.errors?.has(cellKey(this.rowKey(row), tcol.id)) ?? false,
               zebra,
             },
           };
@@ -752,15 +774,63 @@ export class EditableGridRows<T> extends GridRows<T> {
       }
     }
 
-    this.paintCursorCell(ctx); // final overpaints — cursor and dirty always win
+    // Final overpaints, in precedence order cursor > gridInvalid > gridDirty: the cursor cell keeps its
+    // box (paintInvalidCells skips it), an invalid cell shows a solid band, and the dirty `•` marks only
+    // cells that are neither the cursor nor invalid.
+    this.paintCursorCell(ctx);
+    this.paintInvalidCells(ctx);
     this.paintDirtyMarkers(ctx);
+  }
+
+  /**
+   * Overpaint every visible invalid cell as a filled `gridInvalid` band with its text redrawn on top —
+   * a stronger signal than the pending-commit `•`, so a blocked edit reads as a hard error. The active
+   * cursor cell is skipped (cursor wins over invalid), and the dirty marker yields to it (invalid wins
+   * over dirty), giving the precedence cursor > gridInvalid > gridDirty. Uses the same geometry + indent
+   * clamp as the base so the band lines up with the painted cell; `ctx` clips anything scrolled off.
+   *
+   * @param ctx The clipped, view-local paint context.
+   */
+  protected paintInvalidCells(ctx: DrawContext): void {
+    const registry = this.errors;
+    if (registry === undefined) return;
+    const display = this.display();
+    const range = display.length;
+    if (range === 0) return;
+
+    const width = ctx.size.width;
+    const geom = this.geometry(width);
+    const maxIndent = Math.max(0, geom.totalWidth - width);
+    const indent = Math.min(maxIndent, Math.max(0, this.indent()));
+    const active = this.gridActive();
+    const focusedRow = clamp(this.focused(), 0, range - 1);
+    const focusedCol = this.localCol(); // -1 when the cursor is in another panel → no cursor cell here
+    const style = ctx.color('gridInvalid');
+
+    for (let i = 0; i < ctx.size.height; i += 1) {
+      const item = this.topItem + i;
+      if (item >= range) break;
+      const row = display[item];
+      const rk = this.rowKey(row);
+      for (let c = 0; c < this.columns.length; c += 1) {
+        const w = geom.widths[c];
+        if (w <= 0 || !registry.has(cellKey(rk, this.typedColumns[c].id))) continue;
+        if (active && item === focusedRow && c === focusedCol) continue; // cursor wins over the invalid band
+        const x = geom.starts[c] - indent;
+        ctx.fillRect(x, i, w, 1, ' ', style);
+        const col = this.columns[c];
+        const text = alignCell(col.accessor(row), w, col.align ?? 'left', stringWidth);
+        ctx.text(x, i, text, style);
+      }
+    }
   }
 
   /**
    * Overpaint a `•` in the `gridDirty` foreground on every visible cell that has a pending commit. The
    * marker foreground is composited over whatever background the cell already shows (the cursor cell,
    * the focused/selected row, a zebra stripe, or a normal row), so it never punches a hole in a
-   * coloured row. `•` measures one cell, so it never splits a wide neighbour.
+   * coloured row. `•` measures one cell, so it never splits a wide neighbour. An invalid cell is skipped
+   * — its solid band supersedes the pending marker (invalid > dirty).
    *
    * @param ctx The clipped, view-local paint context.
    */
@@ -788,7 +858,9 @@ export class EditableGridRows<T> extends GridRows<T> {
       const rk = this.rowKey(display[item]);
       for (let c = 0; c < this.columns.length; c += 1) {
         const w = geom.widths[c];
-        if (w <= 0 || !registry.has(cellKey(rk, this.typedColumns[c].id))) continue;
+        const ck = cellKey(rk, this.typedColumns[c].id);
+        if (w <= 0 || !registry.has(ck)) continue;
+        if (this.errors?.has(ck)) continue; // an invalid band supersedes the pending marker (invalid > dirty)
         // Recompute the cell's background so the marker composites onto it (the base's row-colour
         // priority is focused > selected > zebra > normal; the active focused cell shows the cursor bg).
         const bg =

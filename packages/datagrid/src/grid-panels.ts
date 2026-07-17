@@ -20,8 +20,9 @@ import type { FreezePartition } from './column-model.js';
 import type { Key, TriState } from './selection.js';
 import type { SortKey } from './sort.js';
 import type { FilterModel } from './filter.js';
-import type { OnCommit } from './commit.js';
+import type { OnCommit, BeforeSave } from './commit.js';
 import type { DirtyRegistry } from './editing.js';
+import type { ErrorRegistry } from './error-registry.js';
 import type { GridKeymap } from './keymap.js';
 import { SortHeader } from './sort-header.js';
 import { QuickFilterRow } from './quick-filter-row.js';
@@ -126,10 +127,20 @@ export interface GridBodyDeps<T> {
   overlay: Group;
   /** The per-cell veto sink. */
   onCommit?: OnCommit<T>;
+  /** The per-cell gate above `onCommit` (a veto reverts and skips `onCommit`). */
+  beforeSave?: BeforeSave<T>;
   /** Bump-on-write repaint hook. */
   bumpVersion: () => void;
   /** The shared dirty registry. */
   dirty: DirtyRegistry;
+  /** The shared invalid-cell registry (the `gridInvalid` band + message). */
+  errors?: ErrorRegistry;
+  /**
+   * The grid's one-line validation message band, or `undefined` when validation is not configured. When
+   * present it is assembled as a dedicated one-cell band in the footer region — independent of any footer
+   * aggregate/widget row, so a validation message surfaces even with no footer.
+   */
+  messageBand?: View;
   /** The vertical scroll bar (bound by the center/only body). */
   vbar: ScrollBar;
   /** The horizontal scroll bar (bound by the center/only body). */
@@ -322,9 +333,11 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       typedColumns: sliceTyped(ids),
       overlay: deps.overlay,
       onCommit: deps.onCommit,
+      beforeSave: deps.beforeSave,
       rowKey: deps.rowKey,
       bumpVersion: deps.bumpVersion,
       dirty: deps.dirty,
+      errors: deps.errors,
       columnOffset: offset,
       totalCols: () => total,
       onCursorEnterPanel: hop,
@@ -363,9 +376,11 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       typedColumns: sliceTyped(ids),
       overlay: deps.overlay,
       onCommit: deps.onCommit,
+      beforeSave: deps.beforeSave,
       rowKey: deps.rowKey,
       bumpVersion: deps.bumpVersion,
       dirty: deps.dirty,
+      errors: deps.errors,
       columnOffset: offset,
       totalCols: () => total,
       mouseColumns: frozen,
@@ -587,6 +602,17 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
     const widgetRow = bandRow();
     for (const widget of deps.footerWidgets) widgetRow.add(widget);
     inner.add(widgetRow);
+  }
+
+  // The validation message band: a dedicated one-cell row spanning the full band width, present in the
+  // footer region whenever validation is configured — independent of the footer aggregate/widget rows,
+  // so a validation/veto message surfaces even with no footer. It shows a blank line when idle, so the
+  // reserved row keeps the body height stable as messages come and go.
+  if (deps.messageBand !== undefined) {
+    deps.messageBand.layout = fr;
+    const messageRow = bandRow();
+    messageRow.add(deps.messageBand);
+    inner.add(messageRow);
   }
 
   const botRow = bandRow();

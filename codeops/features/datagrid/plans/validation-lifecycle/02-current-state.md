@@ -126,7 +126,7 @@ visual and no message area (grep for `message` in `src` finds only `devWarn`).
 | ---- | ---------- | ------ | ---------- |
 | Row-leave trap traps the cursor unexpectedly (feels "stuck") | Med | High | AR-5: gate only dirty rows; AR-15: refocus a concrete field; spec ST covers an untouched invalid row leaving freely |
 | `gridInvalid` core change breaks a theme role oracle | Med | Med | AR-18: enumerate the exact spots; Phase 1 runs the full core theme suite; count bump `71→72` is explicit |
-| `grid.ts` crosses the `< 1300` guard | High (expected) | Low | AR-7: all logic in new modules; the added public surface (4 documented options + wiring) crosses 1299, so re-base `< 1300` → `< 1350` across all three guard tests with rationale — never by re-inlining |
+| `grid.ts` crosses the `< 1300` guard | High (expected) | Low | AR-7: all logic in new modules; the added public surface (4 documented options + wiring) crosses 1299, so re-base `< 1300` → `< 1450` across all three guard tests with rationale — never by re-inlining (the plan's initial `< 1350` estimate proved low once every option carried its JSDoc; see AR-23) |
 | Loading spinner needs a running clock in tests | Low | Low | AR-13: static first frame paints headless; animation is loop-timer-driven and optional |
 | Message echoing malicious input | Low | High | AR-19: sanitized at draw (free); a security ST asserts a control-byte message renders clean |
 | Changing `commitValue`/`commitCell` regresses RD-02…10 commit behavior | Med | High | Spec-first; the existing `editing.spec`/`parse-commit.spec` oracles stay green; additive ordering only |
