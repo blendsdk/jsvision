@@ -73,7 +73,14 @@ import { selectionGutterStory } from './rows-selection/row-gutter.story.js';
 import { selectionCrudStory } from './rows-selection/row-crud.story.js';
 import { selectionNullStory } from './rows-selection/null-policy.story.js';
 
-// Roadmap — the "coming soon" panels (RD-09…RD-14)
+// Footer & aggregation (RD-09)
+import { footerAggregatesStory } from './footer-master-detail/aggregates.story.js';
+import { footerWidgetsStory } from './footer-master-detail/widgets.story.js';
+import { footerStickyStory } from './footer-master-detail/sticky.story.js';
+import { footerHonestyStory } from './footer-master-detail/honesty.story.js';
+import { footerMasterDetailStory } from './footer-master-detail/master-detail.story.js';
+
+// Roadmap — the "coming soon" panels (RD-10…RD-14)
 import { placeholders } from './placeholders.js';
 
 /** Every registered demo, in navigator order (six shipped clusters, then the roadmap band). */
@@ -142,6 +149,13 @@ export const STORIES: readonly Story[] = [
   selectionCrudStory,
   selectionNullStory,
 
-  // Roadmap — coming soon (RD-09…RD-14) · 6
+  // Footer & aggregation (RD-09) · 5
+  footerAggregatesStory,
+  footerWidgetsStory,
+  footerStickyStory,
+  footerHonestyStory,
+  footerMasterDetailStory,
+
+  // Roadmap — coming soon (RD-10…RD-14) · 5
   ...placeholders,
 ];
