@@ -156,6 +156,7 @@ test('ST-14: the calendar* roles are the ONLY additive keys — every existing r
     'gridCursor',
     'gridDirty', // RD-02 datagrid editing engine (guarded by grid-theme.spec)
     'gridSelectedRow', // RD-08 datagrid row-selection highlight (guarded by grid-theme.spec)
+    'gridInvalid', // RD-12 datagrid failed-validation band (guarded by grid-theme.spec)
     'dangerText',
     'warningText', // severity text roles for a styled Text (guarded by severity-text-theme.spec)
     'inputPlaceholder', // muted placeholder role for an empty Input (guarded by input-placeholder.spec)

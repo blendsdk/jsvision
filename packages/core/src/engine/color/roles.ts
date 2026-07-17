@@ -110,6 +110,13 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     // background) with the proven-legible primary foreground, so a selected row stays clear on any
     // generated palette. A theme may override it for a bolder selection colour.
     gridSelectedRow: { fg: c.foreground, bg: c.backgroundSelected },
+    // The failed-validation band — a fixed deep-red field with white text, matching the hand-authored
+    // default. Like gridDirty, it is deliberately NOT derived from the `danger` alias: `danger` is
+    // reserved for the severity-text roles (a hard invariant — a danger override must move only
+    // dangerText/warningText), and an invalid-cell band stays legible on any generated palette rather
+    // than shifting with a theme's danger seed. The band-vs-dot distinction from gridDirty comes from
+    // painting the whole cell. A theme may override this role directly for a different invalid colour.
+    gridInvalid: { fg: PALETTE.white, bg: PALETTE.red },
     fileInfo: { fg: c.foregroundMuted, bg: c.backgroundRaised },
     editorNormal: { fg: c.foreground, bg: c.backgroundSunken },
     editorSelected: { fg: c.foregroundOnAccent, bg: c.accent },

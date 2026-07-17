@@ -122,6 +122,7 @@ export const monochromeTheme: Theme = {
   gridCursor: { fg: W, bg: B, attrs: REV },
   gridDirty: { fg: W, bg: B, attrs: BLD },
   gridSelectedRow: { fg: W, bg: B, attrs: BLD },
+  gridInvalid: { fg: W, bg: B, attrs: REV },
   fileInfo: { fg: G, bg: B },
   editorNormal: { fg: W, bg: B },
   editorSelected: { fg: W, bg: B, attrs: REV },
