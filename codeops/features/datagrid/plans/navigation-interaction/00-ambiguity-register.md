@@ -60,3 +60,13 @@ refine, not overturn, the decisions above:
 | PF-005 | AR-1 | The `Keymap` type renames to **`GridKeymap`** (avoids colliding with core/ui's exported `Keymap`). |
 | PF-006 | AR-1, AR-4 | `runAction` preserves the `localCol() < 0` / `focused() < rowFloor` per-panel guards for edit/selection/value-help actions (frozen-panel correctness). |
 | PF-007 | AR-5, AR-7 | `nextCell()`/`prevCell()` return `'moved'` on a vetoed commit (no advance) — documented in the JSDoc so the return is not read as "cursor advanced". |
+
+## Runtime resolutions (execution, 2026-07-17)
+
+Grounded corrections discovered while executing; each honors (not overturns) a plan decision. Single
+viable path each — recorded and continued per the exec-plan zero-ambiguity/deviation rule.
+
+| # | Amends | Resolution |
+|---|--------|------------|
+| AR-R1 `(runtime)` | AR-2, AR-7, PF-003 | **Active-grid predicate must include `isEditing`.** The plan's `installGridNavigation` found the active grid via `isBodyFocused()` alone — but while a cell editor is open the keyboard focus is on the editor overlay, not the body, so `isBodyFocused()` is false during the exact `Tab`-while-editing case AR-7 targets. Without a fix, Tab-commit-advance never fires. Resolution: expose a public `EditableDataGrid.isEditing()` (delegating to the body's controller) and match the active grid with `isBodyFocused() ‖ isEditing()`. `NavGrid` gains `isEditing()`. Verified by ST-19b. |
+| AR-R2 `(runtime)` | AR-12 | **`installGridNavigation` takes a structural `NavGrid`, not `EditableDataGrid<any>`.** The plan's `EditableDataGrid<any>` is banned by the `no-explicit-any` lint, and `EditableDataGrid<unknown>` rejects a concrete `EditableDataGrid<Row>` (T is contravariant via `insertRow`/typed columns). Resolution: a small structural `NavGrid` interface (`isBodyFocused`/`isEditing`/`nextCell`/`prevCell`/`rows: View`) that every `EditableDataGrid` satisfies regardless of row type, so master + detail (different row types) still pass together. |

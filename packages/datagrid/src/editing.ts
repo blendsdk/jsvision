@@ -152,6 +152,14 @@ export interface EditController {
   beginEdit(ev: DispatchEvent, opts?: { replaceWith?: string; openDropdown?: boolean }): boolean;
   /** Whether an editor is currently open. */
   isEditing(): boolean;
+  /**
+   * Commit an open editor (parse → veto → write) without advancing the cursor or refocusing anything,
+   * and resolve whether the value committed. Unlike the `Enter` path (which advances by row and refocuses
+   * the body from its event envelope), this is driven by the envelope-free `Tab` command path: the caller
+   * advances by cell and restores focus. Resolves `false` when idle, unparseable, or vetoed (the editor
+   * then stays open); `true` after a successful commit (the editor is closed).
+   */
+  commitEdit(): Promise<boolean>;
 }
 
 type EditState<T> =
@@ -274,11 +282,17 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     ev2.focusView?.(host.body); // refocus the body — nothing was ever written to the record
   }
 
-  async function commit(ev2: DispatchEvent): Promise<void> {
-    if (state.kind !== 'editing') return;
+  /**
+   * The shared commit core: parse the field, run the optimistic write through the veto, and — only on a
+   * successful commit — close the editor and go idle. It does NOT advance the cursor or refocus anything,
+   * so both the `Enter` path (advance-by-row + envelope refocus) and the `Tab` path (advance-by-cell +
+   * caller refocus) build on it without duplicating logic. Resolves whether the value committed.
+   */
+  async function commitValue(): Promise<boolean> {
+    if (state.kind !== 'editing') return false;
     const { cell, field } = state;
     const ck = cellKey(cell.rowKey, cell.columnId);
-    if (committing.has(ck)) return; // a commit for this cell is already resolving — serialize
+    if (committing.has(ck)) return false; // a commit for this cell is already resolving — serialize
     const tcol = host.typedColumns[cell.col];
     const raw = field();
     // A `nullable` column clears to null on an empty edit (bypassing `parse`), so null is stored and
@@ -287,7 +301,7 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     const value = tcol.nullable === true && raw === '' ? null : tcol.parse!(raw);
     // An unparseable edit is a validation failure: keep the editor open and write nothing (no sentinel
     // or NaN ever reaches the record). Richer field validation layers on top of this later.
-    if (value === PARSE_FAILED) return;
+    if (value === PARSE_FAILED) return false;
     const previous = tcol.value(cell.row);
     committing.add(ck);
     host.dirty?.add(ck); // mark the cell pending until the commit resolves
@@ -306,14 +320,29 @@ export function createEditController<T>(host: EditHost<T>): EditController {
     if (res.committed) {
       closeEditor();
       state = { kind: 'idle' };
-      host.advanceRow(); // Enter → same column, next row (clamped)
+      return true;
+    }
+    return false; // vetoed → the editor remains open; commitCell already reverted the record to `previous`
+  }
+
+  async function commit(ev2: DispatchEvent): Promise<void> {
+    // The Enter path: on a successful commit, advance to the same column of the next row and refocus the
+    // body from this event's envelope.
+    if (await commitValue()) {
+      host.advanceRow();
       ev2.focusView?.(host.body);
     }
-    // vetoed → the editor remains open; commitCell already reverted the record to `previous`
+  }
+
+  async function commitEdit(): Promise<boolean> {
+    // The Tab path: commit only. The command that drives Tab has no event envelope, so this cannot
+    // refocus the body the way Enter does — the caller advances by cell and restores focus.
+    return commitValue();
   }
 
   return {
     beginEdit,
     isEditing: () => state.kind === 'editing',
+    commitEdit,
   };
 }
