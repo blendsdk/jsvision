@@ -12,6 +12,7 @@
  */
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
+import type { Size2D } from '../layout/index.js';
 import { parseTilde, tildeSegments, accentStyle } from '../menu/index.js';
 import type { ParsedLabel } from '../menu/index.js';
 import { stringWidth } from './measure.js';
@@ -103,6 +104,18 @@ export class Button extends View {
   /** Resolve the disabled flag (evaluating the getter if it is reactive). */
   protected resolveDisabled(): boolean {
     return typeof this.disabledOpt === 'function' ? this.disabledOpt() : this.disabledOpt;
+  }
+
+  /**
+   * The button's natural face size: the label's display width plus the surrounding face padding and the
+   * drop-shadow column, by a height of two (a content row plus the bottom shadow row). A flex/flow layout
+   * uses it to self-size the button; an absolute layout sets an explicit rect and ignores it. A host
+   * shorter than two rows clips the shadow.
+   *
+   * @returns The natural `{ width, height }` in terminal cells.
+   */
+  override measure(): Size2D {
+    return { width: stringWidth(this.parsed.text) + 4, height: 2 };
   }
 
   /**

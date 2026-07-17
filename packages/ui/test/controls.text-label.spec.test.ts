@@ -126,3 +126,11 @@ test('ST-04: Alt-<hotkey> focuses the Label link from the post-process phase', (
   loop.dispatch(key('n', { alt: true }));
   expect(loop.getFocused()).toBe(link);
 });
+
+// measure() advertises the content's natural display size, so Text self-sizes in a flow layout (e.g. a
+// footer widget row). An absolute layout sets an explicit rect and ignores it.
+test('Text.measure returns the content display width and the line count', () => {
+  expect(new Text('hello').measure()).toEqual({ width: 5, height: 1 });
+  expect(new Text('two\nlines!').measure()).toEqual({ width: 6, height: 2 }); // widest line × line count
+  expect(new Text(() => 'reactive').measure().width).toBe(8); // a reactive getter is evaluated
+});

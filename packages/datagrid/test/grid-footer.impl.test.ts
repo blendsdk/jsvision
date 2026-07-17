@@ -4,10 +4,11 @@
  * line-count guard, the reactivity of the new displayed/focused readouts, and the optional source
  * completeness seam.
  */
-import { test, expect } from 'vitest';
+import { test, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { Group, createEventLoop, resolveCapabilities, signal, effect, createRoot } from '@jsvision/ui';
+import { Group, Text, Button, createEventLoop, resolveCapabilities, signal, effect, createRoot } from '@jsvision/ui';
+import type { View } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
@@ -187,4 +188,63 @@ test('a rebuild (partition change) recreates the footer band', () => {
   grid.setColumnVisible('region', false);
   loop.renderRoot.flush();
   expect(amountAt(footerY)).toBe('60'); // footer recreated with the aggregate intact
+});
+
+// ---- Phase 4: widget row ------------------------------------------------------------------------
+
+function buildWidgetImplGrid(widgets: View[], width = 30, height = 6) {
+  const rows = signal<Sale[]>([
+    { id: 1, amount: 10, region: 'N' },
+    { id: 2, amount: 20, region: 'S' },
+  ]);
+  const grid = new EditableDataGrid<Sale>({
+    columns: [
+      column<Sale, number>({ id: 'amount', title: 'Amount', value: (r) => r.amount, width: 16 }),
+      column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 8 }),
+    ],
+    source: fromRows(rows, { rowKey: (r) => r.id }),
+    footer: { widgets },
+  });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width, height }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+  loop.renderRoot.flush();
+  const rowAt = (y: number): string => {
+    const buf = loop.renderRoot.buffer();
+    let s = '';
+    for (let x = 0; x < width; x += 1) s += buf.get(x, y)?.char ?? ' ';
+    return s;
+  };
+  return { grid, loop, rowAt };
+}
+
+test('the widget row is built only when footer.widgets is non-empty', () => {
+  const footerY = 6 - 2;
+  const withWidgets = buildWidgetImplGrid([new Text('HELLO')]);
+  expect(withWidgets.rowAt(footerY)).toContain('HELLO'); // the widget row occupies the bottom band
+
+  const noWidgets = buildWidgetImplGrid([]);
+  expect(noWidgets.rowAt(footerY)).not.toContain('HELLO'); // empty widgets ⇒ no widget band
+});
+
+test('a footer button is mounted in the dispatch tree so its command routes to onCommand', () => {
+  const go = new Button('Go', { command: 'go' });
+  const { loop } = buildWidgetImplGrid([go]);
+  const fired = vi.fn();
+  loop.onCommand('go', fired);
+  loop.focusView(go); // reachable ⇒ the widget is live in the mounted tree
+  loop.dispatch({ type: 'key', key: 'space', ctrl: false, alt: false, shift: false });
+  expect(fired).toHaveBeenCalledTimes(1);
+});
+
+test('a rebuild (partition change) keeps a footer widget working', () => {
+  const footerY = 6 - 2;
+  const { grid, loop, rowAt } = buildWidgetImplGrid([new Text('HELLO')]);
+  expect(rowAt(footerY)).toContain('HELLO');
+  grid.setColumnVisible('region', false); // triggers rebuildBody
+  loop.renderRoot.flush();
+  expect(rowAt(footerY)).toContain('HELLO'); // the reused widget survives the rebuild
 });
