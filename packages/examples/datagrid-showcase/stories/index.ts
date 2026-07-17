@@ -87,7 +87,13 @@ import { navDoubleClickStory } from './navigation-interaction/double-click.story
 import { navScrollIntoViewStory } from './navigation-interaction/scroll-into-view.story.js';
 import { navTabTraversalStory } from './navigation-interaction/tab-traversal.story.js';
 
-// Roadmap — the "coming soon" panels (RD-10…RD-14)
+// Validation & lifecycle (RD-12)
+import { perCellValidateStory } from './validation-lifecycle/per-cell-validate.story.js';
+import { rowGateStory } from './validation-lifecycle/row-gate.story.js';
+import { beforeSaveStory } from './validation-lifecycle/before-save.story.js';
+import { lifecycleStory } from './validation-lifecycle/lifecycle.story.js';
+
+// Roadmap — the "coming soon" panels (RD-11, RD-13, RD-14)
 import { placeholders } from './placeholders.js';
 
 /** Every registered demo, in navigator order (six shipped clusters, then the roadmap band). */
@@ -170,6 +176,12 @@ export const STORIES: readonly Story[] = [
   navScrollIntoViewStory,
   navTabTraversalStory,
 
-  // Roadmap — coming soon (RD-11…RD-14) · 4
+  // Validation & lifecycle (RD-12) · 4
+  perCellValidateStory,
+  rowGateStory,
+  beforeSaveStory,
+  lifecycleStory,
+
+  // Roadmap — coming soon (RD-11, RD-13, RD-14) · 3
   ...placeholders,
 ];
