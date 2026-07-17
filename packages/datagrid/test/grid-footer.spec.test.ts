@@ -11,7 +11,7 @@
  * the painted buffer; the footer occupies the fixed band directly above the horizontal scroll bar.
  */
 import { test, expect, vi } from 'vitest';
-import { Group, Input, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+import { Group, Input, Button, Text, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
@@ -174,4 +174,72 @@ test('ST-27: should ignore an unknown column and an invalid fn, and warn', () =>
   expect(messages).toContain('nope'); // warned about the unknown column
   expect(messages).toContain('median'); // warned about the invalid fn
   warn.mockRestore();
+});
+
+// ---- Widget slots (Phase 4) ---------------------------------------------------------------------
+
+/** Mount a grid whose footer hosts the given free-form widgets (no aggregates). */
+function buildWidgetGrid(widgets: import('@jsvision/ui').View[]) {
+  const rows = signal<Sale[]>(SALES.map((s) => ({ ...s })));
+  const grid = new EditableDataGrid<Sale>({
+    columns: [amountCol(false), regionCol()],
+    source: fromRows(rows, { rowKey: (r) => r.id }),
+    footer: { widgets },
+  });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+  loop.renderRoot.flush();
+  return { grid, loop };
+}
+
+// ST-13 — a footer Button emits its `command` through the event loop when activated.
+test('ST-13: should emit a footer button command through the event loop', () => {
+  const exportBtn = new Button('Export', { command: 'export' });
+  const { loop } = buildWidgetGrid([exportBtn]);
+  const fired = vi.fn();
+  loop.onCommand('export', fired);
+  loop.focusView(exportBtn);
+  // A focused button activates on Space (Enter only activates a default button); activation emits the command.
+  loop.dispatch({ type: 'key', key: 'space', ctrl: false, alt: false, shift: false });
+  expect(fired).toHaveBeenCalledTimes(1); // the command reached an onCommand handler
+});
+
+// ST-26 — the N-of-M and selection-count read-outs update reactively as filter/selection change.
+// The read-out widgets close over `grid`; they only run at draw time (after construction returns and
+// the grid is mounted), so the const is assigned by then — the documented usage pattern.
+test('ST-26: should update the N-of-M and selection read-outs reactively', () => {
+  const rows = signal<Sale[]>(SALES.map((s) => ({ ...s })));
+  // Explicit annotation breaks the self-referential inference (the widgets close over `grid`).
+  const grid: EditableDataGrid<Sale> = new EditableDataGrid<Sale>({
+    columns: [amountCol(false), regionCol()],
+    source: fromRows(rows, { rowKey: (r) => r.id }),
+    footer: {
+      widgets: [
+        new Text(() => `${grid.filteredCount()} of ${grid.totalCount()}`),
+        new Text(() => `${grid.selectedKeys().size} sel`),
+      ],
+    },
+  });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  loop.renderRoot.flush();
+
+  const widgetRow = () => slice(loop, 0, W, FOOTER_Y); // footer is the widget row only (no aggregates)
+  expect(widgetRow()).toContain('3 of 3');
+  expect(widgetRow()).toContain('0 sel');
+
+  grid.setFilter('region', { kind: 'set', selected: new Set(['N', 'E']) }); // hide one row
+  loop.renderRoot.flush();
+  expect(widgetRow()).toContain('2 of 3');
+
+  grid.selectRow(1); // select a row
+  loop.renderRoot.flush();
+  expect(widgetRow()).toContain('1 sel');
 });

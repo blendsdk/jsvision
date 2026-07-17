@@ -470,6 +470,8 @@ export class EditableDataGrid<T> extends Group {
       hbar,
       // The aggregate row is built only when at least one valid aggregate survived validation.
       footerCell: this.footer?.hasAggregates === true ? (id) => this.footer!.cell(id) : undefined,
+      // The widget row hosts the caller's free-form footer views (totals, buttons, read-outs).
+      footerWidgets: opts.footer?.widgets,
     };
     this.maybeWarnOverFreeze();
     const parts = buildGridBody<T>(this.computePartition(), this._bodyDeps);

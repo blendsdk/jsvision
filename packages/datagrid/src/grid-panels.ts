@@ -136,6 +136,11 @@ export interface GridBodyDeps<T> {
    * aggregate row. When present, a sticky, column-aligned aggregate band is assembled below the body.
    */
   footerCell?: (columnId: string) => string;
+  /**
+   * The caller's free-form footer widgets, or `undefined`/empty for no widget row. When non-empty, a flow
+   * row hosting them (spanning the full band width) is assembled below the aggregate row.
+   */
+  footerWidgets?: readonly View[];
 }
 
 /** The assembled body: the inner band stack plus the panels/headers and the focusable (center/only) body. */
@@ -566,6 +571,15 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
     });
     footerRow.add(corner()); // square off the vbar gutter, like the frozen-rows band
     inner.add(footerRow);
+  }
+
+  // The footer widget row: a flow row of the caller's free-form widgets, spanning the full band width
+  // (including the vbar-gutter column, so a caller-inserted `spacer()` right-aligns to the body's right
+  // edge). Fixed one cell tall in v1; the widgets keep the keyboard-reachable focus order they were given.
+  if (deps.footerWidgets !== undefined && deps.footerWidgets.length > 0) {
+    const widgetRow = bandRow();
+    for (const widget of deps.footerWidgets) widgetRow.add(widget);
+    inner.add(widgetRow);
   }
 
   const botRow = bandRow();

@@ -3,9 +3,9 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-17
-> **Progress**: 31/47 tasks (66%) — Phases 1–3 complete ✅
+> **Progress**: 37/47 tasks (79%) — Phases 1–4 complete ✅
 > **CodeOps Skills Version**: 3.8.0
-> **Last Task**: 3.3.2 (Phase 3 verify) — 2026-07-17 12:55
+> **Last Task**: 4.3.2 (Phase 4 verify) — 2026-07-17 13:40
 
 ## Overview
 
@@ -143,18 +143,18 @@ reachable from the new footer module. Pure moves — no behavior change.
 **Reference**: [03-03](03-03-widget-slots.md) · [07 §C](07-testing-strategy.md) · AR-3
 **Objective**: The flow widget row + `Button`→`ev.emit` dispatch + reactive read-outs.
 
-- [ ] 4.1.1 Write spec tests — footer `Button({command})` emits through the loop (ST-13); N-of-M + selection `Text` read-outs update reactively (ST-26) — `packages/datagrid/test/grid-footer.spec.test.ts`
-- [ ] 4.1.2 Verify RED
+- [x] 4.1.1 Write spec tests — footer `Button({command})` emits through the loop (ST-13); N-of-M + selection `Text` read-outs update reactively (ST-26) — `packages/datagrid/test/grid-footer.spec.test.ts` ✅ (completed: 2026-07-17 13:20)
+- [x] 4.1.2 Verify RED ✅ (completed: 2026-07-17 13:20)
 
 ### Step 4.2: Implement the widget row
 
-- [ ] 4.2.1 Assemble the widget row (flow `Group` from `footer.widgets`, spanning the band; `spacer()` right-align) in `buildGridBody` — `packages/datagrid/src/grid-panels.ts`
-- [ ] 4.2.2 Verify GREEN — ST-13, ST-26 pass
+- [x] 4.2.1 Assemble the widget row (flow `Group` from `footer.widgets`, spanning the band; `spacer()` right-align) in `buildGridBody` + thread `footerWidgets` through deps/grid.ts — `packages/datagrid/src/grid-panels.ts` ✅ (completed: 2026-07-17 13:30) — required the AR-R3 ui enabler: added backward-compat `measure()` to `@jsvision/ui` `Text`+`Button` (user-approved) so raw widgets self-size in the flow row
+- [x] 4.2.2 Verify GREEN — ST-13, ST-26 pass ✅ (completed: 2026-07-17 13:30)
 
 ### Step 4.3: Harden
 
-- [ ] 4.3.1 Impl test — widget row present only when `footer.widgets` set; mounted in the dispatch tree (so `ev.emit` is populated); `grid.ts < 1200` holds — `packages/datagrid/test/grid-footer.impl.test.ts`
-- [ ] 4.3.2 Phase verify
+- [x] 4.3.1 Impl test — widget row present only when `footer.widgets` set; mounted in the dispatch tree (so `ev.emit` is populated); rebuild keeps a reused widget working; `grid.ts < 1250` holds — `packages/datagrid/test/grid-footer.impl.test.ts` ✅ (completed: 2026-07-17 13:35)
+- [x] 4.3.2 Phase verify ✅ (completed: 2026-07-17 13:40 — full `yarn verify` green, turbo 30/30, `TUI_SKIP_PERF=1`; the cross-package ui `measure()` change clean across all packages)
 
 **Deliverables**: a free-form widget row hosting caller `View`s with working command dispatch.
 **Verify**: `yarn verify`

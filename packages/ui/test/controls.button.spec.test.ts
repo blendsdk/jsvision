@@ -143,3 +143,11 @@ test('ST-06: a disabled button never activates (no emit, no onClick)', () => {
   expect(clicks()).toBe(0);
   expect(btn.state.disabled).toBe(true); // greyed + non-focusable
 });
+
+// measure() advertises the button's natural face size (label + chrome) so it self-sizes in a flow
+// layout. An absolute layout sets an explicit rect and ignores it. Height is 2 (a content row + the
+// drop-shadow row); a shorter host clips the shadow.
+test('Button.measure returns a face width fitting the label at height 2', () => {
+  expect(new Button('OK').measure()).toEqual({ width: 6, height: 2 }); // 2 + chrome
+  expect(new Button('Cancel').measure()).toEqual({ width: 10, height: 2 }); // 6 + chrome
+});
