@@ -34,7 +34,7 @@ export type { CellRenderer, CellDrawContext, RenderCell, CellState } from './cel
 // source carries a required `rowKey` and may implement the optional `insert`/`remove` mutation seam
 // (`fromRows` does, by splicing its signal). A source without it is read-only — the grid never persists
 // on its own, so `insertRow`/`deleteRows`/`duplicateRow` become no-ops.
-export { fromRows } from './data-source.js';
+export { fromRows, fromReactiveRows } from './data-source.js';
 export type { GridDataSource } from './data-source.js';
 
 // Filter model — the pure `filterRows` multi-column AND evaluator and `computeDistinct` label
@@ -130,6 +130,24 @@ export { EditableGridRows } from './editable-grid-rows.js';
 export type { EditableGridRowsConfig } from './editable-grid-rows.js';
 
 // The grid container — composes the promoted engine over the column model and data source, owns the
-// shared cursor state, and mounts the editable body with its optional `onCommit` veto sink.
+// shared cursor state, and mounts the editable body with its optional `onCommit` veto sink. It exposes
+// the reactive readouts `displayedRows()` (the aggregate fold target), `focusedRow()`/`focusedKey()`
+// (the record/key under the cursor, re-anchored across sort/filter), and `filteredCount()`/`totalCount()`.
 export { EditableDataGrid } from './grid.js';
 export type { EditableDataGridOptions } from './grid.js';
+
+// Aggregate model — the pure fold behind a footer aggregate: the `AggregateFn` reductions, the
+// `AggregateSpec` descriptor, `foldAggregate` (edge-safe), `formatAggregate` (with the honesty
+// qualifier), and the `isAggregateFn` config-time guard. Exported so a bespoke grid can fold its own totals.
+export { foldAggregate, formatAggregate, isAggregateFn } from './aggregate.js';
+export type { AggregateFn, AggregateSpec } from './aggregate.js';
+
+// Footer — the `GridFooter` config (per-column aggregates + free-form widgets + the reserved sticky flag)
+// a caller passes to the grid's `footer` option, and the `FooterBand` view (the passive per-panel
+// aggregate painter the grid assembles internally; exported for bespoke composition).
+export type { GridFooter } from './grid-footer.js';
+export { FooterBand } from './footer-band.js';
+
+// Master-detail — `fromReactiveRows` (above) plus `masterDetail`, which links a detail grid to a master's
+// focused record and disposes the reactive link with the surrounding scope.
+export { masterDetail } from './master-detail.js';

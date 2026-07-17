@@ -61,12 +61,12 @@ for (const story of STORIES) {
   });
 }
 
-// ST-6 — the "coming soon" roadmap band is exactly the six not-yet-shipped RDs (RD-09…RD-14); RD-07
-// (Columns & layout) and RD-08 (Rows & selection) have shipped, so their placeholders were replaced by
-// live clusters.
-test('ST-6: the Roadmap category holds exactly 6 placeholder entries (RD-09…RD-14)', () => {
+// ST-6 — the "coming soon" roadmap band is exactly the five not-yet-shipped RDs (RD-10…RD-14); RD-07
+// (Columns & layout), RD-08 (Rows & selection), and RD-09 (Footer & aggregation) have shipped, so their
+// placeholders were replaced by live clusters.
+test('ST-6: the Roadmap category holds exactly 5 placeholder entries (RD-10…RD-14)', () => {
   const roadmap = STORIES.filter((s) => s.category === 'Roadmap');
-  expect(roadmap.length).toBe(6);
+  expect(roadmap.length).toBe(5);
 });
 
 // The navigator categories the inventory defines: the shipped clusters (Columns & layout landed with
@@ -80,6 +80,7 @@ const CATEGORIES = [
   'Filtering',
   'Columns & layout',
   'Rows & selection',
+  'Footer & aggregation',
   'Roadmap',
 ] as const;
 
@@ -103,4 +104,5 @@ test('ST-7: each shipped cluster has its full demo count', () => {
   expect(counts['Filtering'], 'Filtering').toBe(6);
   expect(counts['Columns & layout'], 'Columns & layout').toBe(5);
   expect(counts['Rows & selection'], 'Rows & selection').toBe(5);
+  expect(counts['Footer & aggregation'], 'Footer & aggregation').toBe(5);
 });

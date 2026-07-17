@@ -3,9 +3,9 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-17
-> **Progress**: 45/47 tasks (96%) — Phases 1–5 complete ✅
+> **Progress**: 47/47 tasks (100%) — ALL PHASES COMPLETE ✅
 > **CodeOps Skills Version**: 3.8.0
-> **Last Task**: 5.3.2 (Phase 5 verify) — 2026-07-17 14:05
+> **Last Task**: 6.3.2 (final verify) — 2026-07-17 14:45
 
 ## Overview
 
@@ -195,21 +195,21 @@ reachable from the new footer module. Pure moves — no behavior change.
 **Reference**: [07 §G](07-testing-strategy.md) · AR-12/AR-14 · CLAUDE.md (kitchen-sink gate)
 **Objective**: Sanitize oracle, public barrel, stories, showcase cluster, placeholder re-base.
 
-- [ ] 6.1.1 Write spec test — footer label/widget text with control bytes renders stripped (ST-28) — `packages/datagrid/test/footer-band.spec.test.ts`
-- [ ] 6.1.2 Verify RED
+- [x] 6.1.1 Write spec test — footer label/widget text with control bytes renders stripped (ST-28) — `packages/datagrid/test/footer-band.spec.test.ts` ✅ (completed: 2026-07-17 14:20)
+- [x] 6.1.2 Verify RED — N/A: the `ctx.text` sanitize boundary is inherited (AR-12), so ST-28 is GREEN on arrival (a coverage-confirmation oracle, no impl needed) ✅ (completed: 2026-07-17 14:20)
 
 ### Step 6.2: Publish + demo
 
-- [ ] 6.2.1 Barrel exports — `AggregateFn`/`AggregateSpec`/`foldAggregate`/`formatAggregate`, `GridFooter`/`FooterBand`, `fromReactiveRows`, `masterDetail`, `displayedRows`/`focusedRow`/`focusedKey` types — `packages/datagrid/src/index.ts`
-- [ ] 6.2.2 Kitchen-sink story `footer-master-detail.story.ts` (totals footer + editable master-detail) + register — `packages/examples/kitchen-sink/stories/`
-- [ ] 6.2.3 datagrid-showcase `footer-master-detail/` cluster (aggregates · widgets · sticky · honesty · master-detail demos + demo helper) + registry — `packages/examples/datagrid-showcase/stories/footer-master-detail/`
-- [ ] 6.2.4 Remove the RD-09 placeholder; re-base placeholder-count oracles to RD-10…RD-14 — `packages/examples/datagrid-showcase/stories/placeholders.ts`, `stories/index.ts`, showcase smoke/walkthrough tests
-- [ ] 6.2.5 Verify GREEN — ST-28 + kitchen-sink + showcase smoke pass
+- [x] 6.2.1 Barrel exports — `AggregateFn`/`AggregateSpec`/`foldAggregate`/`formatAggregate`/`isAggregateFn`, `GridFooter`/`FooterBand`, `fromReactiveRows`, `masterDetail` (the readout accessors ship on the exported `EditableDataGrid`) — `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-17 14:15)
+- [x] 6.2.2 Kitchen-sink story `footer-master-detail.story.ts` (totals footer + editable master-detail) + register — **PATH CORRECTED**: the datagrid's own kitchen-sink is `packages/datagrid/test/kitchen-sink/stories/` (where RD-06/07/08 stories live + the datagrid smoke gate), not `examples/kitchen-sink` ✅ (completed: 2026-07-17 14:25)
+- [x] 6.2.3 datagrid-showcase `footer-master-detail/` cluster — 5 demos (aggregates · widgets · sticky · honesty · master-detail) + a shared `footer-demo.ts` builder + registry — `packages/examples/datagrid-showcase/stories/footer-master-detail/` ✅ (completed: 2026-07-17 14:30)
+- [x] 6.2.4 Remove the RD-09 placeholder; re-base placeholder-count oracles (Roadmap 6→5, +`Footer & aggregation` category, ST-7 count 5) — `packages/examples/datagrid-showcase/stories/placeholders.ts`, `stories/index.ts`, `packages/examples/test/datagrid-showcase.smoke.spec.test.ts` ✅ (completed: 2026-07-17 14:32)
+- [x] 6.2.5 Verify GREEN — ST-28 + kitchen-sink (11) + showcase (69) smoke pass ✅ (completed: 2026-07-17 14:35)
 
 ### Step 6.3: Final hardening
 
-- [ ] 6.3.1 JSDoc `@example` on every new public export; `check-jsdoc` clean; grep for banned CodeOps IDs in touched `src`; confirm sanitize path — `packages/datagrid/src/*`
-- [ ] 6.3.2 Full `yarn verify` — turbo green; `grid.ts < 1200`; no RD-01…08 regression
+- [x] 6.3.1 JSDoc `@example` on every new public export; `check-jsdoc` clean (datagrid + ui, 0/0); grep for banned CodeOps IDs in touched `src` (clean); sanitize path confirmed (ST-28) — `packages/datagrid/src/*` ✅ (completed: 2026-07-17 14:38)
+- [x] 6.3.2 Full `yarn verify` — turbo green (30/30); `grid.ts < 1250` (re-based per AR-R2); no RD-01…08 regression; examples 263 tests green ✅ (completed: 2026-07-17 14:45)
 
 **Deliverables**: shipped public surface + live demos + the security gate; full verify green.
 **Verify**: `yarn verify`

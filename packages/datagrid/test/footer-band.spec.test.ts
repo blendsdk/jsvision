@@ -11,7 +11,7 @@
  * cell is used as the ground-truth x for its column so alignment is asserted against the real geometry.
  */
 import { test, expect } from 'vitest';
-import { Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+import { Group, Text, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import { EditableDataGrid } from '../src/grid.js';
@@ -146,4 +146,42 @@ test('ST-16: should align aggregate cells to their columns across a frozen/scrol
   // with the body.
   expect(footer1.indexOf('7000')).toBeGreaterThanOrEqual(0);
   expect(footer1.indexOf('7000')).toBe(bodyTop1.indexOf('3000'));
+});
+
+// ---- Security (ST-28) ---------------------------------------------------------------------------
+
+// ST-28 — a footer aggregate label and a widget text carrying control bytes render stripped: no raw
+// ESC/BEL ever reaches the buffer or the serialized frame (the ctx.text draw boundary sanitizes).
+test('ST-28: should strip control bytes from footer label + widget text at the draw boundary', () => {
+  const rows = signal<V[]>([
+    { id: 1, v: 10 },
+    { id: 2, v: 20 },
+  ]);
+  const grid = new EditableDataGrid<V>({
+    columns: [column<V, number>({ id: 'v', title: 'V', value: (r) => r.v, align: 'right', width: 12 })],
+    source: fromRows(rows, { rowKey: (r) => r.id }),
+    footer: {
+      aggregates: { v: { fn: 'sum', label: '\x1b[31mΣ\x07' } }, // ESC/BEL-laden aggregate label
+      widgets: [new Text('tot\x1b[31mal\x07')], // ESC/BEL-laden widget text
+    },
+  });
+  const W = 16;
+  const H = 7; // header · body(×2) · aggregate row · widget row · hbar
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+  loop.renderRoot.flush();
+
+  const buf = loop.renderRoot.buffer();
+  for (let y = 0; y < H; y += 1) {
+    for (let x = 0; x < W; x += 1) {
+      const ch = buf.get(x, y)?.char ?? '';
+      expect(ch).not.toBe('\x1b'); // no raw ESC in any cell
+      expect(ch).not.toBe('\x07'); // no raw BEL in any cell
+    }
+  }
+  expect(loop.renderRoot.serialize()).not.toContain('\x07'); // and none in the emitted frame
 });
