@@ -3,7 +3,7 @@
 > **Feature**: split-panes · **Plan**: split-panes-followups
 > **Type**: Full (lean) plan · **Branch**: `feat/split-panes` · **CodeOps Skills Version**: 3.8.0
 > **Verify**: `CI=1 yarn verify` *(AR-9)*
-> **Progress**: 6/13 tasks (46%) · **Last Updated**: 2026-07-17
+> **Progress**: 9/13 tasks (69%) · **Last Updated**: 2026-07-17
 
 Specification-first per phase: spec tests → red → implement → green → impl tests → verify. Marks are
 two-stage: `[~]` on implementation, `[x]` only after its verify passes. Commit per the active
@@ -41,14 +41,14 @@ The only shipped-source change. `@jsvision/core` untouched.
 
 ## Phase 2 — Scroll-in-a-pane story (examples) · F7–F9
 
-- [ ] **2.1 Spec test (red).** Append ST-5 to
+- [x] **2.1 Spec test (red).** Append ST-5 to
   `packages/examples/test/kitchen-sink.smoke.spec.test.ts` (story registered, category `Layout`,
-  paints a `/Item 0/` label). Run — expect red (story missing).
-- [ ] **2.2 Implement (green).** Create
+  paints a `/Item 0/` label). Run — expect red (story missing). *(impl 2026-07-17; verified red: ST-5 fails "expected undefined to be truthy")*
+- [x] **2.2 Implement (green).** Create
   `packages/examples/kitchen-sink/stories/split-scroll.story.ts` (a `row` split: a 100-item
   `ListBox` direct pane child beside an info pane) per [03-02](03-02-demos.md); register it in
-  `stories/index.ts`. Verify ST-5 + the generic smoke loop green.
-- [ ] **2.3 Full verify.** **`CI=1 yarn verify` green.** Commit.
+  `stories/index.ts`. Verify ST-5 + the generic smoke loop green. *(impl 2026-07-17; ST-5 + generic loop green — 63 smoke tests pass)*
+- [x] **2.3 Full verify.** **`CI=1 yarn verify` green.** Commit. *(impl 2026-07-17; CI=1 yarn verify green — 26/26 turbo tasks, check-plugin PASS)*
 
 ## Phase 3 — amiga-clock "Clocks" split window (examples) · F10–F12
 
@@ -77,7 +77,7 @@ No automated test (AR-8).
 | Phase | Tasks | Done |
 |-------|-------|------|
 | 1 — grab-mark option | 6 | 6 |
-| 2 — scroll story | 3 | 0 |
+| 2 — scroll story | 3 | 3 |
 | 3 — clock split window | 2 | 0 |
 | 4 — close-out | 2 | 0 |
 | **Total** | **13** | **0** |
