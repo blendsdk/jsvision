@@ -3,7 +3,7 @@
 > **Feature**: split-panes · **Plan**: split-panes-followups
 > **Type**: Full (lean) plan · **Branch**: `feat/split-panes` · **CodeOps Skills Version**: 3.8.0
 > **Verify**: `CI=1 yarn verify` *(AR-9)*
-> **Progress**: 11/13 tasks (85%) · **Last Updated**: 2026-07-17
+> **Progress**: 13/13 tasks (100%) · **Last Updated**: 2026-07-17
 
 Specification-first per phase: spec tests → red → implement → green → impl tests → verify. Marks are
 two-stage: `[~]` on implementation, `[x]` only after its verify passes. Commit per the active
@@ -63,12 +63,12 @@ No automated test (AR-8).
 
 ## Phase 4 — Close-out
 
-- [ ] **4.1 Roadmap + requirements.** Check off `01-requirements.md` F1–F12 + acceptance criteria;
+- [x] **4.1 Roadmap + requirements.** Check off `01-requirements.md` F1–F12 + acceptance criteria;
   update the roadmap via the roadmap skill (feature row, then cascade to portfolio `00-roadmap.md`);
-  note the follow-ups on the split-panes row.
-- [ ] **4.2 Final gate.** Confirm `check-plugin` green (no new class ⇒ no component-catalog entry;
+  note the follow-ups on the split-panes row. *(impl 2026-07-17; all 18 checkboxes ✅; portfolio roadmap split-panes row → +followups ✅ Done; no feature-level roadmap exists — split-panes is tracked only in the portfolio)*
+- [x] **4.2 Final gate.** Confirm `check-plugin` green (no new class ⇒ no component-catalog entry;
   only the API reference changed, done in 1.6); final **`CI=1 yarn verify` green.** Commit any
-  residual doc changes.
+  residual doc changes. *(impl 2026-07-17; check-plugin PASS; final CI=1 yarn verify green — 26/26 tasks)*
 
 ---
 
@@ -79,8 +79,8 @@ No automated test (AR-8).
 | 1 — grab-mark option | 6 | 6 |
 | 2 — scroll story | 3 | 3 |
 | 3 — clock split window | 2 | 2 |
-| 4 — close-out | 2 | 0 |
-| **Total** | **13** | **0** |
+| 4 — close-out | 2 | 2 |
+| **Total** | **13** | **13** |
 
 ## Notes
 
