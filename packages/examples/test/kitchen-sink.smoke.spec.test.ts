@@ -144,6 +144,22 @@ test('ST-17: the layout/dsl story is registered with metadata and paints', () =>
   });
 });
 
+// ST-26 (split-panes) — the split-panes showcase story is registered with the required metadata
+// (unique id `layout/split`, category `Layout`) and paints at least one non-blank cell headlessly.
+// No `rd` assertion — the provenance chip is deliberately omitted (this plan implements no RD).
+test('ST-26: the layout/split story is registered with metadata and paints', () => {
+  const story = STORIES.find((s) => s.id === 'layout/split');
+  expect(story, 'a story with id "layout/split" is registered').toBeTruthy();
+  expect(story!.category, 'category Layout').toBe('Layout');
+  createRoot((dispose) => {
+    const view = at(story!.build({ caps, width: WIDTH, height: HEIGHT }), 0, 0, WIDTH, HEIGHT);
+    const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps });
+    rr.mount(view);
+    expect(paintedCells(rr.buffer().rows()), 'the split story painted nothing').toBeGreaterThan(0);
+    dispose();
+  });
+});
+
 // ST-17 (navigation-router) — the drill-down router story is registered with the required metadata
 // (unique id `navigation/drill-down`, category `Navigation`) and paints at least one non-blank cell
 // headlessly. (The wizard story is deferred until @jsvision/forms merges.)

@@ -23,24 +23,24 @@ is a documented new component, free to be designed on its own terms.
 
 ### Must Have
 
-- [ ] **R1** — A `row` or `col` `SplitView` renders N panes separated by N−1 one-cell splitters. *(AR-1)*
-- [ ] **R2** — Dragging a splitter with the pointer re-apportions space between its two adjacent panes, live. *(AR-5)*
-- [ ] **R3** — A 1-cell pointer movement moves the divider exactly 1 cell — never 0, never 2. *(AR-6)*
-- [ ] **R4** — No pane may be dragged below its `minSize`. *(AR-8)*
-- [ ] **R5** — A container shrink must not push a pane below its `minSize`; when the container cannot honour every minimum, panes squeeze proportionally and must still exactly fill the container — never overflow. *(AR-8)*
-- [ ] **R6** — Nesting a `SplitView` inside a `SplitView` produces a working grid, by composition alone. *(AR-17)*
-- [ ] **R7** — Pane sizes live in a caller-owned `Signal<number[]>` of `fr` weights, which the drag rewrites in cell units. An `onResize` callback fires **on change** (live; never on an unchanged array), and an `onResizeEnd` callback fires **on commit** — once per drag gesture, once per keyboard step. Persistence is an `onResizeEnd` concern. *(AR-9)*
-- [ ] **R8** — The focused splitter resizes with the arrow keys, using the same clamps as the drag. *(AR-3)*
-- [ ] **R9** — A splitter is focusable and takes a tab stop. *(AR-12)*
-- [ ] **R10** — A splitter draws `│` (row split) or `─` (col split) with a static `▓` grab mark at its midpoint, in the `splitter` theme role; while dragging it draws in `splitterDragging`. *(AR-14, AR-15)*
-- [ ] **R11** — Degenerate inputs are normalized, not thrown: a 1-child split renders the child with no splitter; a `sizes` array whose length ≠ the child count is padded/truncated — **at every write, not only at construction**, since `sizes` is a caller-owned signal any writer may rewrite; zero/negative weights clamp to 0. *(AR-16)*
-- [ ] **R12** — The component ships a kitchen-sink story that passes the headless smoke test. *(AR-19, and the repo's non-negotiable showcase gate)*
+- [x] **R1** — A `row` or `col` `SplitView` renders N panes separated by N−1 one-cell splitters. *(AR-1)*
+- [x] **R2** — Dragging a splitter with the pointer re-apportions space between its two adjacent panes, live. *(AR-5)*
+- [x] **R3** — A 1-cell pointer movement moves the divider exactly 1 cell — never 0, never 2. *(AR-6)*
+- [x] **R4** — No pane may be dragged below its `minSize`. *(AR-8)*
+- [x] **R5** — A container shrink must not push a pane below its `minSize`; when the container cannot honour every minimum, panes squeeze proportionally and must still exactly fill the container — never overflow. *(AR-8)*
+- [x] **R6** — Nesting a `SplitView` inside a `SplitView` produces a working grid, by composition alone. *(AR-17)*
+- [x] **R7** — Pane sizes live in a caller-owned `Signal<number[]>` of `fr` weights, which the drag rewrites in cell units. An `onResize` callback fires **on change** (live; never on an unchanged array), and an `onResizeEnd` callback fires **on commit** — once per drag gesture, once per keyboard step. Persistence is an `onResizeEnd` concern. *(AR-9)*
+- [x] **R8** — The focused splitter resizes with the arrow keys, using the same clamps as the drag. *(AR-3)*
+- [x] **R9** — A splitter is focusable and takes a tab stop. *(AR-12)*
+- [x] **R10** — A splitter draws `│` (row split) or `─` (col split) with a static `▓` grab mark at its midpoint, in the `splitter` theme role; while dragging it draws in `splitterDragging`. *(AR-14, AR-15)*
+- [x] **R11** — Degenerate inputs are normalized, not thrown: a 1-child split renders the child with no splitter; a `sizes` array whose length ≠ the child count is padded/truncated — **at every write, not only at construction**, since `sizes` is a caller-owned signal any writer may rewrite; zero/negative weights clamp to 0. *(AR-16)*
+- [x] **R12** — The component ships a kitchen-sink story that passes the headless smoke test. *(AR-19, and the repo's non-negotiable showcase gate)*
 
 ### Should Have
 
-- [ ] **R13** — `minSize` accepts a scalar (applies to every pane) or an array (per-pane). *(AR-10)*
-- [ ] **R14** — Mouse-down on a splitter focuses it, per the framework's focus-on-click default. *(AR-13)*
-- [ ] **R15** — A drag whose pointer capture is lost externally (a modal opens, the view is removed) abandons the gesture rather than leaving a stuck splitter. *(AR-5 notes — the `Desktop` precedent)*
+- [x] **R13** — `minSize` accepts a scalar (applies to every pane) or an array (per-pane). *(AR-10)*
+- [x] **R14** — Mouse-down on a splitter focuses it, per the framework's focus-on-click default. *(AR-13)*
+- [x] **R15** — A drag whose pointer capture is lost externally (a modal opens, the view is removed) abandons the gesture rather than leaving a stuck splitter. *(AR-5 notes — the `Desktop` precedent)*
 
 ### Won't Have (Out of Scope)
 
@@ -115,16 +115,16 @@ requirements rather than vulnerabilities:
 Issue #10's stated criteria, plus the two this plan adds from the gate and the four preflight
 added (see [`00-preflight-report.md`](00-preflight-report.md)):
 
-1. [ ] A `row`/`col` split renders panes with a draggable divider; dragging re-apportions within `minSize` clamps. *(R1, R2, R4)*
-2. [ ] Nested splits produce a grid. *(R6)*
-3. [ ] The pure apportion/clamp helpers are covered by spec + impl tests; the drag goes through the capture seam. *(07-testing-strategy.md)*
-4. [ ] A kitchen-sink story exists and passes the headless smoke test. *(R12)*
-5. [ ] `yarn verify` is green. *(AR-21)*
-6. [ ] **Added by the gate:** a container shrink never pushes a pane below `minSize`, and panes never overflow their container. *(R5, AR-8)*
-7. [ ] **Added by the gate:** adding `min` causes zero behavioral change for every existing `solveTrack` caller. *(AR-8)*
-8. [ ] `yarn check:deps` green (no native deps) and `scripts/check-jsdoc.mjs` green (every public export has an `@example`; no banned references).
-9. [ ] **Added by preflight (PF-001):** a drag while the minimums are unsatisfiable never rewrites `sizes` — the divider freezes rather than jumping, and the persisted signal is never silently corrupted. *(ST-28)*
-10. [ ] **Added by preflight (PF-002):** the splitter repaints in `splitter` immediately after mouse-up — the drag highlight never sticks. *(ST-29)*
-11. [ ] **Added by preflight (PF-004):** a wrong-length `sizes` array written *after* mount is padded/truncated, never `NaN`-poisoned. *(ST-30)*
-12. [ ] **Added by preflight (PF-003):** `onResize` never fires on an unchanged array, and one drag gesture fires exactly one `onResizeEnd`. *(R7, ST-31)*
+1. [x] A `row`/`col` split renders panes with a draggable divider; dragging re-apportions within `minSize` clamps. *(R1, R2, R4)*
+2. [x] Nested splits produce a grid. *(R6)*
+3. [x] The pure apportion/clamp helpers are covered by spec + impl tests; the drag goes through the capture seam. *(07-testing-strategy.md)*
+4. [x] A kitchen-sink story exists and passes the headless smoke test. *(R12)*
+5. [x] `yarn verify` is green. *(AR-21)*
+6. [x] **Added by the gate:** a container shrink never pushes a pane below `minSize`, and panes never overflow their container. *(R5, AR-8)*
+7. [x] **Added by the gate:** adding `min` causes zero behavioral change for every existing `solveTrack` caller. *(AR-8)*
+8. [x] `yarn check:deps` green (no native deps) and `scripts/check-jsdoc.mjs` green (every public export has an `@example`; no banned references).
+9. [x] **Added by preflight (PF-001):** a drag while the minimums are unsatisfiable never rewrites `sizes` — the divider freezes rather than jumping, and the persisted signal is never silently corrupted. *(ST-28)*
+10. [x] **Added by preflight (PF-002):** the splitter repaints in `splitter` immediately after mouse-up — the drag highlight never sticks. *(ST-29)*
+11. [x] **Added by preflight (PF-004):** a wrong-length `sizes` array written *after* mount is padded/truncated, never `NaN`-poisoned. *(ST-30)*
+12. [x] **Added by preflight (PF-003):** `onResize` never fires on an unchanged array, and one drag gesture fires exactly one `onResizeEnd`. *(R7, ST-31)*
 </content>
