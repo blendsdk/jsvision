@@ -178,8 +178,9 @@ test('AR-6: the selection controller is extracted to grid-selection.ts and grid.
   // grid.ts entered RD-08 already ~1029 lines; the selection controller (grid-selection.ts) and the
   // row-mutation logic (row-mutations.ts) live outside it, so grid.ts stays a thin set of public
   // delegators + the new options. This ceiling is a runaway-growth guard, not the 700-line target. It
-  // was re-based 1200 -> 1250 when the footer surface (its option + three readout accessors + the
-  // controller wiring) landed — heavy logic stayed in the new footer modules; see grid-footer.impl.test.
+  // was re-based 1200 -> 1250 when the footer surface landed, then 1250 -> 1300 for the navigation
+  // surface (the keymap option + the thin nextCell/prevCell/isBodyFocused delegators; the pure cursor
+  // math lives in navigation.ts) — heavy logic stays in the new modules; see grid-footer.impl.test.
   const lineCount = grid.split('\n').length;
-  expect(lineCount).toBeLessThan(1250);
+  expect(lineCount).toBeLessThan(1300);
 });

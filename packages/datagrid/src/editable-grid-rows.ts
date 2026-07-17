@@ -303,6 +303,19 @@ export class EditableGridRows<T> extends GridRows<T> {
     });
   }
 
+  /** Whether an in-cell editor is currently open on this body. */
+  isEditing(): boolean {
+    return this.controller.isEditing();
+  }
+
+  /**
+   * Commit an open editor without advancing the cursor or refocusing (the Tab command path has no event
+   * envelope). Resolves whether the value committed; the caller advances by cell and restores focus.
+   */
+  commitEdit(): Promise<boolean> {
+    return this.controller.commitEdit();
+  }
+
   /**
    * The column geometry for this panel — like the base, but honouring compact density (no reserved
    * divider cell) so the header/body/quick-filter all apportion identically.

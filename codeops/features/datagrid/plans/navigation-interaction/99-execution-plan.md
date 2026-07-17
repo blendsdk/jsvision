@@ -3,8 +3,8 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Implements**: datagrid/RD-10
-> **Last Updated**: 2026-07-17 16:49
-> **Progress**: 16/45 tasks (36%)
+> **Last Updated**: 2026-07-17 17:27
+> **Progress**: 27/45 tasks (60%)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -94,21 +94,21 @@ and the frozen-panel per-panel guard (PF-006).
 **Reference**: [03-03](03-03-tab-traversal.md) · [07 §C](07-testing-strategy.md) · AR-2/AR-5/AR-6/AR-7/AR-8/AR-12
 
 ### Step 3.1: Spec the traversal
-- [ ] 3.1.1 Write spec tests for `nextCellIndex`/`prevCellIndex` (wrap + `'exit'`) (ST-14…ST-16) — `packages/datagrid/test/navigation.spec.test.ts`
-- [ ] 3.1.2 Write spec tests for `grid.nextCell()` commit-then-advance (ST-17), `gridKeymap` (ST-18), `installGridNavigation` focus/fallback/multi-grid (ST-19), **and post-commit focus restoration (ST-19b — after a Tab-commit the grid body still holds focus, PF-003)** — same file
-- [ ] 3.1.3 Verify RED
+- [x] 3.1.1 Write spec tests for `nextCellIndex`/`prevCellIndex` (wrap + `'exit'`) (ST-14…ST-16) — `packages/datagrid/test/navigation.spec.test.ts` ✅ (completed: 2026-07-17 17:27)
+- [x] 3.1.2 Write spec tests for `grid.nextCell()` commit-then-advance (ST-17), `gridKeymap` (ST-18), `installGridNavigation` focus/fallback/multi-grid (ST-19), **and post-commit focus restoration (ST-19b — after a Tab-commit the grid body still holds focus, PF-003)** — same file ✅ (completed: 2026-07-17 17:27)
+- [x] 3.1.3 Verify RED ✅ (completed: 2026-07-17 17:27)
 
 ### Step 3.2: Implement
-- [ ] 3.2.1 Implement pure `nextCellIndex`/`prevCellIndex` (wrap at row ends; `'exit'` at grid edge / empty grid) — `packages/datagrid/src/navigation.ts`
-- [ ] 3.2.2 Add public `EditController.commitEdit(): Promise<boolean>` — extract the shared body from the existing private `commit()` (no duplicate logic); `Enter` keeps `advanceRow`, `Tab` advances by cell. **`commitEdit` closes the editor but does NOT refocus the body (no event envelope in the command path) — the caller restores focus (PF-003).** — `packages/datagrid/src/editing.ts`
-- [ ] 3.2.3 Add `EditableDataGrid.nextCell()`/`prevCell()` (commit-if-editing via `commitEdit`; a vetoed commit stays put returning `'moved'`; else move the container cursor) + a public `isBodyFocused()` — thin delegators over `navigation.ts` — `packages/datagrid/src/grid.ts`
-- [ ] 3.2.4 Implement `gridKeymap` (`createKeymap` fragment) + `installGridNavigation(loop, grid|grids[])` (one handler pair; focused grid advances → **`loop.focusView(grid.rows)` on `'moved'` to restore focus after a possible editor close (PF-003)**; else/`'exit'`→`focusNext`/`focusPrev`) — `packages/datagrid/src/navigation.ts`
-- [ ] 3.2.5 **Re-base the line-count guard `< 1250` → `< 1300`** in both `grid-footer.impl.test.ts` and `grid-selection.impl.test.ts`, keeping their "thin delegator / no inlined logic" rationale (PF-004) — `packages/datagrid/test/grid-footer.impl.test.ts`, `packages/datagrid/test/grid-selection.impl.test.ts`
-- [ ] 3.2.6 Verify GREEN — ST-14…ST-19b pass
+- [x] 3.2.1 Implement pure `nextCellIndex`/`prevCellIndex` (wrap at row ends; `'exit'` at grid edge / empty grid) — `packages/datagrid/src/navigation.ts` ✅ (completed: 2026-07-17 17:27)
+- [x] 3.2.2 Add public `EditController.commitEdit(): Promise<boolean>` — extract the shared body from the existing private `commit()` (no duplicate logic); `Enter` keeps `advanceRow`, `Tab` advances by cell. **`commitEdit` closes the editor but does NOT refocus the body (no event envelope in the command path) — the caller restores focus (PF-003).** — `packages/datagrid/src/editing.ts` ✅ (completed: 2026-07-17 17:27)
+- [x] 3.2.3 Add `EditableDataGrid.nextCell()`/`prevCell()` (commit-if-editing via `commitEdit`; a vetoed commit stays put returning `'moved'`; else move the container cursor) + public `isBodyFocused()`/`isEditing()` (AR-R1) — thin delegators over `navigation.ts` — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-17 17:27)
+- [x] 3.2.4 Implement `gridKeymap` (`createKeymap` fragment) + `installGridNavigation(loop, grid|grids[])` (one handler pair; active grid = `isBodyFocused() ‖ isEditing()` (AR-R1); advances → **`loop.focusView(grid.rows)` on `'moved'` to restore focus after a possible editor close (PF-003)**; else/`'exit'`→`focusNext`/`focusPrev`; structural `NavGrid` param, AR-R2) — `packages/datagrid/src/navigation.ts` ✅ (completed: 2026-07-17 17:27)
+- [x] 3.2.5 **Re-base the line-count guard `< 1250` → `< 1300`** in both `grid-footer.impl.test.ts` and `grid-selection.impl.test.ts`, keeping their "thin delegator / no inlined logic" rationale (PF-004) — `packages/datagrid/test/grid-footer.impl.test.ts`, `packages/datagrid/test/grid-selection.impl.test.ts` ✅ (completed: 2026-07-17 17:27)
+- [x] 3.2.6 Verify GREEN — ST-14…ST-19b pass ✅ (completed: 2026-07-17 17:27)
 
 ### Step 3.3: Harden
-- [ ] 3.3.1 Impl tests — `commitEdit` idempotent/idle→false; multi-grid double-`focusNext` guard; uninstaller unregisters; grid.ts `< 1300` — `packages/datagrid/test/navigation.impl.test.ts`
-- [ ] 3.3.2 Phase verify
+- [x] 3.3.1 Impl tests — `commitEdit` idempotent/idle→false; multi-grid single-advance guard; uninstaller unregisters; grid.ts `< 1300` — `packages/datagrid/test/navigation.impl.test.ts` ✅ (completed: 2026-07-17 17:27)
+- [x] 3.3.2 Phase verify ✅ (completed: 2026-07-17 17:27)
 
 **Deliverables**: `Tab`/`Shift-Tab` cell traversal with wrap, edge-exit, and commit-then-advance; the app-opt-in helper.
 **Verify**: `yarn verify`

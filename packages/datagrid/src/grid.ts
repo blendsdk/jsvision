@@ -34,6 +34,7 @@ import type { OnCommit } from './commit.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { mergeKeymap } from './keymap.js';
 import type { GridKeymap } from './keymap.js';
+import { nextCellIndex, prevCellIndex } from './navigation.js';
 import { GridSelection } from './grid-selection.js';
 import { RowMutations } from './row-mutations.js';
 import { FooterController } from './grid-footer.js';
@@ -1130,6 +1131,78 @@ export class EditableDataGrid<T> extends Group {
    */
   focusedKey(): Key | undefined {
     return this.focusAnchorKey();
+  }
+
+  /** Whether the grid body currently holds keyboard focus (used by the Tab-navigation helper). */
+  isBodyFocused(): boolean {
+    return this._center.state.focused;
+  }
+
+  /**
+   * Whether an in-cell editor is currently open on this grid. Note that while editing the keyboard focus
+   * is on the editor overlay, not the body — so the Tab-navigation helper treats a grid as its active
+   * target when its body is focused OR it is editing (a Tab then commits and advances by cell).
+   */
+  isEditing(): boolean {
+    return this._center.isEditing();
+  }
+
+  /**
+   * Advance the cell cursor one step forward (left-to-right, top-to-bottom), wrapping at a row end. If an
+   * editor is open it is committed first; a **vetoed** commit keeps the editor open and returns `'moved'`
+   * WITHOUT advancing — `'moved'` means "the grid handled Tab; do not hand focus away", not "the cursor
+   * advanced". At the last cell of the last row it returns `'exit'` (the caller moves to the next widget).
+   *
+   * @returns `'moved'` when the grid handled the step (advanced, or held an open editor), else `'exit'`.
+   * @example
+   * ```ts
+   * const r = await grid.nextCell();
+   * if (r === 'exit') loop.focusNext(); // at the grid edge → leave to the next widget
+   * ```
+   */
+  async nextCell(): Promise<'moved' | 'exit'> {
+    return this.advanceCell(true);
+  }
+
+  /**
+   * Retreat the cell cursor one step (the mirror of {@link nextCell}), wrapping at column 0. An open edit
+   * is committed first; a vetoed commit keeps the editor open and returns `'moved'` without moving. At
+   * `(0, 0)` it returns `'exit'`.
+   *
+   * @returns `'moved'` when the grid handled the step, else `'exit'` at the grid start.
+   * @example
+   * ```ts
+   * const r = await grid.prevCell();
+   * if (r === 'exit') loop.focusPrev();
+   * ```
+   */
+  async prevCell(): Promise<'moved' | 'exit'> {
+    return this.advanceCell(false);
+  }
+
+  /** The visible column count the cell cursor ranges over (visible order minus hidden columns). */
+  private totalVisibleCols(): number {
+    return this.visibleIds().length;
+  }
+
+  /**
+   * Shared cell-advance: commit an open edit first (a vetoed commit stays put), then move the container's
+   * cursor signals to the pure next/previous cell — or report `'exit'` at the grid edge.
+   */
+  private async advanceCell(forward: boolean): Promise<'moved' | 'exit'> {
+    if (this._center.isEditing()) {
+      const committed = await this._center.commitEdit();
+      if (!committed) return 'moved'; // vetoed → editor stays open, cursor does not advance
+    }
+    const cols = this.totalVisibleCols();
+    const rows = this.display().length;
+    const move = forward
+      ? nextCellIndex(this.focusedCol(), this.focused(), cols, rows)
+      : prevCellIndex(this.focusedCol(), this.focused(), cols, rows);
+    if (move === 'exit') return 'exit';
+    this.focused.set(move.row);
+    this.focusedCol.set(move.col);
+    return 'moved';
   }
 
   /**
