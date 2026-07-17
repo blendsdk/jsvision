@@ -9,9 +9,9 @@
 import { test, expect } from 'vitest';
 import { z } from 'zod';
 import { resolveCapabilities } from '@jsvision/core';
-import { createEventLoop, Commands, Group, Input, Button } from '@jsvision/ui';
+import { createEventLoop, Commands, Group, Input, Button, Text } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
-import { formDialog } from '../src/index.js';
+import { formDialog, bindField } from '../src/index.js';
 import type { Form } from '../src/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
@@ -134,6 +134,51 @@ test('impl: the caller body fills the dialog interior and renders (regression: n
 
   loop.emitCommand(Commands.cancel);
   await p;
+});
+
+test('impl: clicking Cancel discards without touching/validating the body (no error flash)', async () => {
+  const { loop, host, added } = makeHost();
+  let form!: Form<typeof Schema, Init>;
+  let nameInput!: Input;
+  const p = formDialog(host, {
+    schema: Schema,
+    initial, // name:'' → invalid; the error stays hidden until the field is touched
+    width: 44,
+    height: 9,
+    body: (f) => {
+      form = f;
+      const g = new Group();
+      const nf = f.field('name');
+      nameInput = new Input({ value: nf.value });
+      nameInput.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 30, height: 1 } };
+      bindField(nf, nameInput); // touched-on-first-blur reveal
+      const err = new Text(() => (nf.touched() && nf.error() ? nf.error()!.message : ''), { severity: 'error' });
+      err.layout = { position: 'absolute', rect: { x: 2, y: 3, width: 38, height: 1 } };
+      g.add(nameInput);
+      g.add(err);
+      return g;
+    },
+  });
+  loop.renderRoot.flush();
+  loop.focusView(nameInput); // the user is editing the (invalid, empty) field
+
+  const dlg = added[0] as unknown as Group;
+  const cancel = dlg.children.filter((c): c is Button => c instanceof Button)[1]; // [ok, cancel]
+  const o = loop.renderRoot.originOf(cancel)!;
+  // Mouse-down on Cancel must NOT blur the field (grabsFocus:false), so nothing is touched/revealed.
+  loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: o.x + 2 + 1, y: o.y + 1 });
+  loop.renderRoot.flush();
+  expect(nameInput.state.focused).toBe(true); // focus stayed on the field — no blur
+  expect(form.field('name').touched()).toBe(false); // never marked touched
+  const painted = loop.renderRoot
+    .buffer()
+    .rows()
+    .map((r) => r.map((c) => c.char).join(''))
+    .join('\n');
+  expect(painted).not.toContain('Required'); // no validation error flashed while cancelling
+
+  loop.dispatch({ type: 'mouse', kind: 'up', button: 0, x: o.x + 2 + 1, y: o.y + 1 });
+  expect(await p).toBeNull(); // the click still cancelled
 });
 
 test('impl: the OK button greys (state.disabled) while a submit is in flight, then re-enables', async () => {

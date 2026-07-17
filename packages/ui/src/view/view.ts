@@ -92,6 +92,15 @@ export abstract class View {
    * the `state.focused` flag.
    */
   focusable = false;
+  /**
+   * Whether a mouse-down that hits this view moves keyboard focus to it. Default `true` — the usual
+   * click-to-focus. Set `false` for a control that should act on a click without stealing focus from
+   * whatever is focused (e.g. a dialog Cancel button, or a toolbar/stepper button): the click still
+   * dispatches, but the previously-focused view keeps focus, so it never fires a focus-leave side
+   * effect such as a field's blur-validation. Independent of {@link focusable} — a `grabsFocus: false`
+   * view can still be reached by `Tab` and activated by `Space`.
+   */
+  grabsFocus = true;
   /** Take part in the pre-process sweep (root→down, before the focused view sees the event). */
   preProcess = false;
   /** Take part in the post-process sweep (after the focused view sees the event). */
