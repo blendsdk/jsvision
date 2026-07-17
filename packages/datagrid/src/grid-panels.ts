@@ -159,6 +159,15 @@ export interface GridBodyDeps<T> {
    * row hosting them (spanning the full band width) is assembled below the aggregate row.
    */
   footerWidgets?: readonly View[];
+  /**
+   * When `true`, the whole body region (everything below the header) is wrapped in a swap host so the
+   * container can swap it for a loading/error placeholder; the returned {@link GridBodyParts.lifecycleSwap}
+   * carries the host + the grid region. Omit for no lifecycle (the body region is added directly — the
+   * header/body layout is byte-identical to a grid with no lifecycle).
+   */
+  lifecycle?: boolean;
+  /** The zero-row empty message getter (lifecycle empty state), threaded to the body; omit to keep `<empty>`. */
+  emptyText?: () => string;
 }
 
 /** The assembled body: the inner band stack plus the panels/headers and the focusable (center/only) body. */
@@ -171,6 +180,12 @@ export interface GridBodyParts<T> {
   headers: SortHeader<T>[];
   /** The focusable body — the center panel when frozen, the single body otherwise. */
   center: EditableGridRows<T>;
+  /**
+   * The lifecycle swap handle when `deps.lifecycle` is set: `host` is the swap-host `Group` in the body
+   * region (its child is swapped by the container's effect between `gridRegion` and a placeholder), and
+   * `gridRegion` is the assembled grid body+footer shown while `ready`. Absent when lifecycle is off.
+   */
+  lifecycleSwap?: { host: Group; gridRegion: Group };
 }
 
 const fr: LayoutProps = { size: { kind: 'fr', weight: 1 } };
@@ -344,6 +359,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       errors: deps.errors,
       markRowTouched: deps.markRowTouched,
       rowLeaveGate: deps.rowLeaveGate,
+      emptyText: deps.emptyText,
       columnOffset: offset,
       totalCols: () => total,
       onCursorEnterPanel: hop,
@@ -389,6 +405,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       errors: deps.errors,
       markRowTouched: deps.markRowTouched,
       rowLeaveGate: deps.rowLeaveGate,
+      emptyText: deps.emptyText,
       columnOffset: offset,
       totalCols: () => total,
       mouseColumns: frozen,
@@ -539,6 +556,13 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
 
   inner.add(headerRow);
 
+  // The body region (everything below the header) is added to `bodyStack`. With no lifecycle it IS `inner`
+  // — byte-identical to before. With lifecycle it is a wrapper the container can swap out for a
+  // loading/error placeholder, so only the header stays visible in those states.
+  const lifecycle = deps.lifecycle === true;
+  const bodyStack = lifecycle ? new Group() : inner;
+  if (lifecycle) bodyStack.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
+
   if (deps.quickFilter) {
     // One full-width quick-filter band under the header (over every visible column, panning with center).
     const band = new QuickFilterRow<T>({
@@ -554,17 +578,17 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
     const quickRow = bandRow();
     quickRow.add(band);
     quickRow.add(corner());
-    inner.add(quickRow);
+    bodyStack.add(quickRow);
   }
 
   if (freezeRows > 0) {
     // The pinned rows sit between the header/quick-filter and the scrolling body; a corner squares off
     // the scroll-bar gutter so the band's right edge lines up with the body's.
     freezeRowsRow.add(corner());
-    inner.add(freezeRowsRow);
+    bodyStack.add(freezeRowsRow);
   }
 
-  inner.add(bodyRow);
+  bodyStack.add(bodyRow);
 
   // The footer aggregate band: a fixed one-cell row directly below the body, outside its virtual-scroll
   // window (so it is sticky-at-bottom for free) and above the horizontal scroll bar. It mirrors the same
@@ -600,7 +624,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       footerRow.add(band);
     });
     footerRow.add(corner()); // square off the vbar gutter, like the frozen-rows band
-    inner.add(footerRow);
+    bodyStack.add(footerRow);
   }
 
   // The footer widget row: a flow row of the caller's free-form widgets, spanning the full band width
@@ -609,7 +633,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   if (deps.footerWidgets !== undefined && deps.footerWidgets.length > 0) {
     const widgetRow = bandRow();
     for (const widget of deps.footerWidgets) widgetRow.add(widget);
-    inner.add(widgetRow);
+    bodyStack.add(widgetRow);
   }
 
   // The validation message band: a dedicated one-cell row spanning the full band width, present in the
@@ -620,13 +644,24 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
     deps.messageBand.layout = fr;
     const messageRow = bandRow();
     messageRow.add(deps.messageBand);
-    inner.add(messageRow);
+    bodyStack.add(messageRow);
   }
 
   const botRow = bandRow();
   botRow.add(deps.hbar);
   botRow.add(corner());
-  inner.add(botRow);
+  bodyStack.add(botRow);
+
+  // With lifecycle configured, wrap the assembled body region in a swap host so the container's effect can
+  // swap it for a loading/error placeholder while the header stays visible. Without it, `bodyStack === inner`
+  // and everything is already in place (byte-identical).
+  if (lifecycle) {
+    const host = new Group();
+    host.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
+    host.add(bodyStack);
+    inner.add(host);
+    return { inner, panels, headers, center, lifecycleSwap: { host, gridRegion: bodyStack } };
+  }
 
   return { inner, panels, headers, center };
 }

@@ -45,6 +45,8 @@ import { createDirtyRegistry, cellKey } from './editing.js';
 import { createErrorRegistry } from './error-registry.js';
 import { buildMessageBand, createRowGate } from './validation.js';
 import type { RowValidation, RowGate } from './validation.js';
+import { createLifecycleController, emptyMessage, applyLifecycleSwap } from './grid-lifecycle.js';
+import type { GridStatus, LifecycleController } from './grid-lifecycle.js';
 
 /**
  * The filter popup's fixed cell size — wide enough for the operator selector and operands, tall enough
@@ -189,6 +191,31 @@ export interface EditableDataGridOptions<T> {
    * row. See {@link GridFooter}. Omit for no footer.
    */
   readonly footer?: GridFooter;
+  /**
+   * A caller-driven reactive lifecycle status. Return `'loading'` to show a spinner (the header stays,
+   * the rows hide), `'ready'` to show the grid, or `{ kind: 'error', message, retry? }` to show the
+   * message and a Retry button (clicking it calls `retry`). The **empty** state is auto-derived: when
+   * `ready` with zero displayed rows the grid shows {@link emptyText} (or the filter-aware
+   * `'No matching rows'`). Evaluated in the grid's reactive scope, so flipping the value it reads swaps
+   * the view. Omit for an always-`ready` grid (a zero-row grid then shows the plain `<empty>` body).
+   *
+   * @example
+   * ```ts
+   * import { EditableDataGrid } from '@jsvision/datagrid';
+   * import { signal } from '@jsvision/ui';
+   * const state = signal<'loading' | 'ready'>('loading');
+   * const grid = new EditableDataGrid({ columns, source, status: () => state() });
+   * // later: state.set('ready');
+   * ```
+   */
+  readonly status?: () => GridStatus;
+  /**
+   * The message shown when the grid is `ready` with zero displayed rows and no active filter (default
+   * `'No rows'`). When a filter has reduced a non-empty source to zero, the built-in `'No matching rows'`
+   * is shown instead. Setting this (or {@link status}) opts the grid into the lifecycle empty state; a grid
+   * with neither keeps the plain `<empty>` body at zero rows.
+   */
+  readonly emptyText?: string;
 }
 
 /** Collect the source's currently-available rows into a dense array (skipping any not-yet-loaded holes). */
@@ -279,6 +306,8 @@ export class EditableDataGrid<T> extends Group {
   private _inner!: Group;
   /** The shared body-assembly deps, retained so a rebuild re-runs `buildGridBody` with the same wiring. */
   private _bodyDeps!: GridBodyDeps<T>;
+  /** The current lifecycle swap handle (host + grid region), refreshed on each rebuild; absent with no `status`. */
+  private _lifecycleSwap?: { host: Group; gridRegion: Group };
   /** The last partition key a rebuild ran for — a rebuild is skipped while it is unchanged. */
   private lastPartitionKey = '';
   /** Whether the one-time over-freeze dev warning has fired (de-duped so a rebuild never re-warns). */
@@ -319,6 +348,9 @@ export class EditableDataGrid<T> extends Group {
   // The per-row cross-field leave gate (validateRow). Owns no reactive state — it reads live grid state
   // through delegators; every row-leave path (nav, Enter-advance, Tab row-edge, cross-row click) consults it.
   private readonly rowGate: RowGate;
+  // The lifecycle controller (caller `status` → loading/ready/error). Drives the body-region swap; the
+  // empty state is rendered by the body itself. Always constructed (a grid with no `status` reads `ready`).
+  private readonly lifecycle: LifecycleController;
   // The single source of truth for the sort model — the header and the `sortBy`/`addSort`/`clearSort`
   // API both drive this one signal; the body's `display` derives from it on the client path.
   private readonly sortKeys = signal<SortKey[]>([]);
@@ -502,6 +534,15 @@ export class EditableDataGrid<T> extends Group {
       note: (message) => this.errors.note(message),
     });
 
+    // Lifecycle: the controller drives the body-region swap (loading/error) from the caller `status`; the
+    // empty state is rendered by the body via `emptyResolver` (filter-aware). A grid with neither `status`
+    // nor `emptyText` gets no swap host and no resolver — its zero-row body stays the plain `<empty>`.
+    this.lifecycle = createLifecycleController({ status: opts.status });
+    const emptyResolver =
+      opts.status !== undefined || opts.emptyText !== undefined
+        ? (): string => emptyMessage(opts.emptyText, this.filteredCount(), this.totalCount())
+        : undefined;
+
     this._bodyDeps = {
       focused: this.focused,
       focusedCol: this.focusedCol,
@@ -567,6 +608,8 @@ export class EditableDataGrid<T> extends Group {
       markRowTouched: (rowKey) => this.touched.add(rowKey),
       rowLeaveGate: () => this.rowGate.tryLeave(),
       messageBand,
+      lifecycle: opts.status !== undefined,
+      emptyText: emptyResolver,
       vbar,
       hbar,
       // The aggregate row is built only when at least one valid aggregate survived validation.
@@ -579,11 +622,24 @@ export class EditableDataGrid<T> extends Group {
     this._center = parts.center;
     this._inner = parts.inner;
     this._headers = parts.headers;
+    this._lifecycleSwap = parts.lifecycleSwap;
     this.lastPartitionKey = this.partitionKey();
 
     this.add(this._inner); // behind
     this.add(this.overlay); // above — hosts the cell editor while editing
     this.add(this.popupOverlay); // topmost — hosts the funnel-opened filter popup
+
+    // The lifecycle body-region swap: an effect that shows the grid body while `ready` and a spinner/error
+    // placeholder otherwise. Only set up when `status` is configured (a swap host exists). Bound on the
+    // grid (not the swappable inner), reading the current `_lifecycleSwap` so it survives a body rebuild.
+    if (this._lifecycleSwap !== undefined) {
+      this.onMount(() => {
+        this.bind(
+          () => this.lifecycle.state(),
+          () => this.applyLifecycleSwap(),
+        );
+      });
+    }
 
     // Rebuild the body when the partition SHAPE changes — a hidden/shown/reordered column, or a frozen
     // column resized (which resizes its fixed panel band). A pure width change to a scrolling column is
@@ -646,6 +702,7 @@ export class EditableDataGrid<T> extends Group {
     this._inner = parts.inner;
     this._center = parts.center;
     this._headers = parts.headers; // refresh: the old headers are unmounted by the swap below, so the keyboard opener must not hold a stale reference
+    this._lifecycleSwap = parts.lifecycleSwap; // the new inner carries a fresh swap host
     this.add(parts.inner); // new inner present before the old is removed → focus heals into it
     this.remove(old);
     // Restore z-order: the overlays sit above the (new) inner band stack.
@@ -653,6 +710,15 @@ export class EditableDataGrid<T> extends Group {
     this.remove(this.popupOverlay);
     this.add(this.overlay);
     this.add(this.popupOverlay);
+    // The freshly-built inner starts showing the grid region; re-sync it to the current lifecycle state so
+    // a rebuild during loading/error keeps its placeholder.
+    this.applyLifecycleSwap();
+  }
+
+  /** Sync the lifecycle swap host to the current state (delegates to `grid-lifecycle`); a no-op with no `status`. */
+  private applyLifecycleSwap(): void {
+    if (this._lifecycleSwap === undefined) return;
+    applyLifecycleSwap(this._lifecycleSwap, this.lifecycle.state(), () => this.lifecycle.placeholder());
   }
 
   /**

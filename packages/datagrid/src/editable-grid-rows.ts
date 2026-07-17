@@ -85,6 +85,11 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
    */
   rowLeaveGate?: () => boolean;
   /**
+   * The message to draw when the body has zero rows (the lifecycle empty state). Omit to keep the plain
+   * `<empty>` placeholder, so a grid with no lifecycle configured is byte-identical.
+   */
+  emptyText?: () => string;
+  /**
    * The datagrid selection set, keyed by `rowKey` — the body paints a row's `selected` role by
    * membership here (not the base's single `selected` index, which is kept only as the base's required
    * click sink). Optional: omit for a body that shows no selection (defaults to an empty set).
@@ -220,6 +225,8 @@ export class EditableGridRows<T> extends GridRows<T> {
   private readonly markRowTouched?: (rowKey: string | number) => void;
   /** The row-leave gate for the body-owned leave paths (row-nav, Enter-advance, cross-row click). */
   private readonly rowLeaveGate?: () => boolean;
+  /** The zero-row message getter (lifecycle empty state), or `undefined` to keep the plain `<empty>`. */
+  private readonly emptyText?: () => string;
   /** The datagrid selection set the body paints from (empty when the container wires no selection). */
   protected readonly selectedKeys: Signal<ReadonlySet<Key>>;
   /** Toggle-row gesture sink (`Space` on a read-only cell / `Ctrl`+click); `undefined` when off. */
@@ -271,6 +278,7 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.errors = cfg.errors;
     this.markRowTouched = cfg.markRowTouched;
     this.rowLeaveGate = cfg.rowLeaveGate;
+    this.emptyText = cfg.emptyText;
     this.selectedKeys = cfg.selectedKeys ?? signal<ReadonlySet<Key>>(new Set());
     this.onToggleRow = cfg.onToggleRow;
     this.onRangeToRow = cfg.onRangeToRow;
@@ -763,7 +771,9 @@ export class EditableGridRows<T> extends GridRows<T> {
     const normal = ctx.color('listNormal');
     if (range === 0) {
       ctx.fill(' ', normal);
-      ctx.text(1, 0, EMPTY_TEXT, normal); // <empty> placeholder, one cell in from the left
+      // The lifecycle empty message when configured (filter-aware, resolved by the container), else the
+      // plain `<empty>` placeholder — so a grid with no lifecycle configured paints byte-identically.
+      ctx.text(1, 0, this.emptyText?.() ?? EMPTY_TEXT, normal);
       return;
     }
 
