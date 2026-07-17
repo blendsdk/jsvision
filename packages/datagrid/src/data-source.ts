@@ -97,3 +97,58 @@ export function fromRows<T>(rows: Signal<T[]>, opts: { rowKey: (row: T) => strin
     },
   };
 }
+
+/**
+ * Build a reactive, **write-through** {@link GridDataSource} — the twin of {@link fromRows} for rows that
+ * are a *function* of other state (e.g. a master grid's focused record).
+ *
+ * `read` supplies the current rows; it is evaluated inside the grid's reactive derivation, so the grid
+ * re-derives whenever a signal `read` touches changes. `insert`/`remove` delegate to caller writers that
+ * mutate the **owning** collection, so a structural edit on this source persists there. Omit a writer to
+ * make the source read-only for that operation — the grid's `insertRow`/`deleteRows` then no-op
+ * gracefully (cell edits still work via the in-place `version` path). `complete` feeds the footer honesty
+ * label (omit ⇒ complete).
+ *
+ * The caller contract: `read` must return **stable references** into the owned model (not fresh objects
+ * each call) for cell edits to persist, and should stay cheap — the grid calls it once per row per
+ * re-derivation, so a filtering `read` over a large set is O(n²) per derivation.
+ *
+ * @param read Returns the current rows (evaluated in the grid's reactive scope).
+ * @param opts `rowKey` (required identity), optional `insert`/`remove` write-through writers, and an
+ *   optional `complete` completeness predicate.
+ * @returns A reactive write-through `GridDataSource`.
+ * @example
+ * ```ts
+ * import { signal } from '@jsvision/ui';
+ * import { fromReactiveRows } from '@jsvision/datagrid';
+ * interface Line { id: number; orderId: number }
+ * const lines = signal<Line[]>([{ id: 1, orderId: 7 }]);
+ * const focusedOrderId = 7;
+ * const source = fromReactiveRows(() => lines().filter((l) => l.orderId === focusedOrderId), {
+ *   rowKey: (l) => l.id,
+ *   insert: (row, at) => { const n = lines().slice(); n.splice(at ?? n.length, 0, row); lines.set(n); },
+ *   remove: (keys) => { const drop = new Set(keys); lines.set(lines().filter((l) => !drop.has(l.id))); },
+ * });
+ * ```
+ */
+export function fromReactiveRows<T>(
+  read: () => readonly T[],
+  opts: {
+    rowKey: (row: T) => string | number;
+    insert?: (row: T, at?: number) => void;
+    remove?: (keys: readonly Key[]) => void;
+    complete?: () => boolean;
+  },
+): GridDataSource<T> {
+  const source: GridDataSource<T> = {
+    rowKey: opts.rowKey,
+    length: () => read().length,
+    rowAt: (index) => read()[index],
+  };
+  // Present the mutation/completeness members only when supplied — an absent `insert`/`remove` is what
+  // makes `EditableDataGrid.insertRow`/`deleteRows` no-op (the read-only-source contract).
+  if (opts.insert) source.insert = opts.insert;
+  if (opts.remove) source.remove = opts.remove;
+  if (opts.complete) source.complete = opts.complete;
+  return source;
+}

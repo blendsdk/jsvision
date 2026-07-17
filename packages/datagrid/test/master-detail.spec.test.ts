@@ -10,10 +10,11 @@
  * moves the row cursor via arrow keys; the `.js` import specifier is required by NodeNext ESM.
  */
 import { test, expect } from 'vitest';
-import { Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+import { Group, createEventLoop, resolveCapabilities, signal, effect } from '@jsvision/ui';
 import { column } from '../src/column.js';
-import { fromRows } from '../src/data-source.js';
+import { fromRows, fromReactiveRows } from '../src/data-source.js';
 import { EditableDataGrid } from '../src/grid.js';
+import { masterDetail } from '../src/master-detail.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 const W = 24;
@@ -73,4 +74,78 @@ test('ST-20: should keep the same focused record after a sort moves it', () => {
   // the cursor followed record id 1 to its new position — same record, still focused
   expect(grid.focusedRow()).toEqual({ id: 1, n: 10 });
   expect(grid.focusedKey()).toBe(1);
+});
+
+// ---- masterDetail link (ST-21, ST-22) -----------------------------------------------------------
+
+const up = () => ({ type: 'key' as const, key: 'up', ctrl: false, alt: false, shift: false });
+
+interface Order {
+  id: number;
+}
+interface Line {
+  id: number;
+  orderId: number;
+}
+
+/** Mount an orders master; the lines signal is the owned collection a detail reads/writes through. */
+function buildOrdersMaster() {
+  const orders = signal<Order[]>([{ id: 1 }, { id: 2 }]);
+  const lines = signal<Line[]>([
+    { id: 10, orderId: 1 },
+    { id: 11, orderId: 1 },
+    { id: 12, orderId: 2 },
+  ]);
+  const master = new EditableDataGrid<Order>({
+    columns: [column<Order, number>({ id: 'id', title: 'Order', value: (r) => r.id, width: 6 })],
+    source: fromRows(orders, { rowKey: (o) => o.id }),
+  });
+  master.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(master);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  loop.focusView(master.rows);
+  loop.renderRoot.flush();
+  return { master, loop, lines };
+}
+
+/** A detail grid over the lines of the master's focused order. */
+const detailFor = (focused: () => Order | undefined, lines: () => Line[]) =>
+  new EditableDataGrid<Line>({
+    columns: [column<Line, number>({ id: 'id', title: 'Line', value: (r) => r.id, width: 6 })],
+    source: fromReactiveRows(() => lines().filter((l) => l.orderId === focused()?.id), { rowKey: (l) => l.id }),
+  });
+
+// ST-21 — moving the master focus updates the detail's rows to the new record's related rows.
+test('ST-21: should update the detail rows when the master focus changes', () => {
+  const { master, loop, lines } = buildOrdersMaster();
+  const { detail, dispose } = masterDetail(master, (focused) => detailFor(focused, lines));
+  expect(detail.displayedRows().map((l) => l.id)).toEqual([10, 11]); // order 1's lines
+  loop.dispatch(down()); // master cursor → order 2
+  loop.renderRoot.flush();
+  expect(detail.displayedRows().map((l) => l.id)).toEqual([12]); // order 2's lines
+  dispose();
+});
+
+// ST-22 — after dispose(), the detail's reactive wiring no longer recomputes on a master focus change.
+test('ST-22: should stop recomputing after dispose()', () => {
+  const { master, loop, lines } = buildOrdersMaster();
+  let recomputes = 0;
+  const { dispose } = masterDetail(master, (focused) => {
+    effect(() => {
+      focused(); // track the master's focused record
+      recomputes += 1;
+    });
+    return detailFor(focused, lines);
+  });
+  expect(recomputes).toBe(1); // the effect ran on creation
+  loop.dispatch(down()); // master focus → order 2 → the effect re-runs
+  loop.renderRoot.flush();
+  expect(recomputes).toBe(2);
+
+  dispose(); // tear down the detail's reactive scope
+  loop.dispatch(up()); // master focus → order 1 again
+  loop.renderRoot.flush();
+  expect(recomputes).toBe(2); // no recompute after dispose (scope torn down)
 });
