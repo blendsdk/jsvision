@@ -3,9 +3,9 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-17
-> **Progress**: 37/47 tasks (79%) — Phases 1–4 complete ✅
+> **Progress**: 45/47 tasks (96%) — Phases 1–5 complete ✅
 > **CodeOps Skills Version**: 3.8.0
-> **Last Task**: 4.3.2 (Phase 4 verify) — 2026-07-17 13:40
+> **Last Task**: 5.3.2 (Phase 5 verify) — 2026-07-17 14:05
 
 ## Overview
 
@@ -168,20 +168,20 @@ reachable from the new footer module. Pure moves — no behavior change.
 **Reference**: [03-04](03-04-master-detail.md) · [07 §F](07-testing-strategy.md) · AR-4/AR-8
 **Objective**: `fromReactiveRows` (write-through) + `masterDetail` (linked + disposed).
 
-- [ ] 5.1.1 Write spec tests for `fromReactiveRows` — reactive read, write-through insert/remove, omitted-writer read-only (ST-23, ST-24, ST-25) — `packages/datagrid/test/reactive-source.spec.test.ts`
-- [ ] 5.1.2 Write spec tests for `masterDetail` — focus-change updates detail rows, `dispose()` stops recompute (ST-21, ST-22) — `packages/datagrid/test/master-detail.spec.test.ts`
-- [ ] 5.1.3 Verify RED
+- [x] 5.1.1 Write spec tests for `fromReactiveRows` — reactive read, write-through insert/remove, omitted-writer read-only (ST-23, ST-24, ST-25) — `packages/datagrid/test/reactive-source.spec.test.ts` ✅ (completed: 2026-07-17 13:55)
+- [x] 5.1.2 Write spec tests for `masterDetail` — focus-change updates detail rows, `dispose()` stops recompute (ST-21, ST-22) — `packages/datagrid/test/master-detail.spec.test.ts` ✅ (completed: 2026-07-17 13:55)
+- [x] 5.1.3 Verify RED ✅ (completed: 2026-07-17 13:55)
 
 ### Step 5.2: Implement
 
-- [ ] 5.2.1 Implement `fromReactiveRows(read, {rowKey, insert?, remove?, complete?})` — the write-through twin of `fromRows` — `packages/datagrid/src/data-source.ts`
-- [ ] 5.2.2 Implement `masterDetail(master, buildDetail)` — `createRoot` scope, `focused` accessor, ambient `onCleanup` disposal — `packages/datagrid/src/master-detail.ts`
-- [ ] 5.2.3 Verify GREEN — ST-21…ST-25 pass
+- [x] 5.2.1 Implement `fromReactiveRows(read, {rowKey, insert?, remove?, complete?})` — the write-through twin of `fromRows` (writers/`complete` present only when supplied) — `packages/datagrid/src/data-source.ts` ✅ (completed: 2026-07-17 14:00)
+- [x] 5.2.2 Implement `masterDetail(master, buildDetail)` — `createRoot` scope, `focused` accessor, ambient `onCleanup` disposal (capture the ambient owner BEFORE `createRoot` + `runWithOwner` — the plan sketch's in-root `getOwner()` would be the new root; prose intent honored) — `packages/datagrid/src/master-detail.ts` ✅ (completed: 2026-07-17 14:00)
+- [x] 5.2.3 Verify GREEN — ST-21…ST-25 pass ✅ (completed: 2026-07-17 14:00)
 
 ### Step 5.3: Harden
 
-- [ ] 5.3.1 Impl tests — dispose idempotence; no scope leak; empty-master `read()`→`[]` — `packages/datagrid/test/master-detail.impl.test.ts`
-- [ ] 5.3.2 Phase verify
+- [x] 5.3.1 Impl tests — dispose idempotence; detail freed with the surrounding scope (no leak); empty-master `read()`→`[]` — `packages/datagrid/test/master-detail.impl.test.ts` ✅ (completed: 2026-07-17 14:02)
+- [x] 5.3.2 Phase verify ✅ (completed: 2026-07-17 14:05 — full `yarn verify` green, turbo 30/30, `TUI_SKIP_PERF=1`)
 
 **Deliverables**: fully editable master-detail (cell + insert/delete persist into the owned model).
 **Verify**: `yarn verify`
