@@ -27,6 +27,7 @@ import { QuickFilterRow } from './quick-filter-row.js';
 import { EditableGridRows } from './editable-grid-rows.js';
 import { prefixWidth, SyntheticHeaderBand, SyntheticBodyBand } from './synthetic-columns.js';
 import type { SyntheticPrefix } from './synthetic-columns.js';
+import { FooterBand } from './footer-band.js';
 
 /**
  * Everything {@link buildGridBody} needs from the container: the shared reactive state, the column
@@ -130,6 +131,11 @@ export interface GridBodyDeps<T> {
   vbar: ScrollBar;
   /** The horizontal scroll bar (bound by the center/only body). */
   hbar: ScrollBar;
+  /**
+   * The footer aggregate-cell accessor (the footer controller's on-demand fold), or `undefined` for no
+   * aggregate row. When present, a sticky, column-aligned aggregate band is assembled below the body.
+   */
+  footerCell?: (columnId: string) => string;
 }
 
 /** The assembled body: the inner band stack plus the panels/headers and the focusable (center/only) body. */
@@ -524,6 +530,43 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   }
 
   inner.add(bodyRow);
+
+  // The footer aggregate band: a fixed one-cell row directly below the body, outside its virtual-scroll
+  // window (so it is sticky-at-bottom for free) and above the horizontal scroll bar. It mirrors the same
+  // `segs` loop as the body — one FooterBand per panel, the same per-segment `indent` (frozen panels do
+  // not pan, the center does) and dividers — plus a leading prefix spacer and a trailing gutter corner,
+  // so its aggregate cells align to their columns across the frozen/scrolling split.
+  if (deps.footerCell !== undefined) {
+    const footerCell = deps.footerCell;
+    const footerRow = bandRow();
+    if (pw > 0) {
+      // Reserve the synthetic-prefix width so the aggregate cells line up under the data columns.
+      const spacer = new Group();
+      spacer.background = 'tableHeader';
+      spacer.layout = { size: { kind: 'fixed', cells: pw } };
+      footerRow.add(spacer);
+    }
+    segs.forEach((seg, i) => {
+      if (i > 0) {
+        const fd = new FreezeDivider();
+        fd.layout = fixed1;
+        footerRow.add(fd);
+      }
+      const band = new FooterBand<T>({
+        columns: sliceCols(seg.ids),
+        columnIds: seg.ids,
+        autoWidths: sliceAuto(seg.ids),
+        indent: seg.indent,
+        compact: deps.compact,
+        widthTick: deps.widthTick,
+        cell: footerCell,
+      });
+      band.layout = segLayout(seg);
+      footerRow.add(band);
+    });
+    footerRow.add(corner()); // square off the vbar gutter, like the frozen-rows band
+    inner.add(footerRow);
+  }
 
   const botRow = bandRow();
   botRow.add(deps.hbar);

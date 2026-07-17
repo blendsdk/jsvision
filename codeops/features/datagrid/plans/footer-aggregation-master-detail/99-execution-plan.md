@@ -3,9 +3,9 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-17
-> **Progress**: 16/47 tasks (34%) — Phases 1–2 complete ✅
+> **Progress**: 31/47 tasks (66%) — Phases 1–3 complete ✅
 > **CodeOps Skills Version**: 3.8.0
-> **Last Task**: 2.3.2 (Phase 2 verify) — 2026-07-17 12:00
+> **Last Task**: 3.3.2 (Phase 3 verify) — 2026-07-17 12:55
 
 ## Overview
 
@@ -114,22 +114,22 @@ reachable from the new footer module. Pure moves — no behavior change.
 **Reference**: [03-02](03-02-footer-band.md) · [07 §A/§D/§E/§G](07-testing-strategy.md) · AR-2/AR-7/AR-9/AR-10/AR-12
 **Objective**: The reactive aggregate row, sticky + frozen-aligned, honesty-labelled, validated.
 
-- [ ] 3.1.1 Write spec tests — reactive sum end-to-end + honesty + validation (ST-1…ST-6, ST-17, ST-18, ST-27) — `packages/datagrid/test/grid-footer.spec.test.ts`
-- [ ] 3.1.2 Write spec tests — sticky while scrolling + aligned across a freeze split (ST-14, ST-15, ST-16) — `packages/datagrid/test/footer-band.spec.test.ts`
-- [ ] 3.1.3 Verify RED
+- [x] 3.1.1 Write spec tests — reactive sum end-to-end + honesty + validation (ST-1…ST-6, ST-17, ST-18, ST-27) — `packages/datagrid/test/grid-footer.spec.test.ts` ✅ (completed: 2026-07-17 12:20)
+- [x] 3.1.2 Write spec tests — sticky while scrolling + aligned across a freeze split (ST-14, ST-15, ST-16) — `packages/datagrid/test/footer-band.spec.test.ts` ✅ (completed: 2026-07-17 12:20)
+- [x] 3.1.3 Verify RED — all 10 fail (no footer yet) ✅ (completed: 2026-07-17 12:20)
 
 ### Step 3.2: Implement the band + controller
 
-- [ ] 3.2.1 Implement the passive `FooterBand` view (per-panel column-aligned aggregate painter; `apportionColumns`+`alignCell`; `widthTick`) — `packages/datagrid/src/footer-band.ts`
-- [ ] 3.2.2 Implement the `GridFooter<T>` config interface + the `FooterController<T>` (reactive aggregate `computed`s over `displayedRows()`; `cell(columnId)`; honesty via `complete?()`; `fn`/`columnId` validation + `devWarn`) — `packages/datagrid/src/grid-footer.ts`
-- [ ] 3.2.3 Assemble the aggregate row in `buildGridBody` — `segs`-loop `FooterBand` sub-views + `FreezeDivider`s + `corner()`, inserted after `bodyRow` and before the hbar; band-height math — `packages/datagrid/src/grid-panels.ts`
-- [ ] 3.2.4 Wire the `footer?` option + `displayedRows` into `_bodyDeps`; confirm `rebuildBody` recreates the footer (thin `grid.ts`) — `packages/datagrid/src/grid.ts`, `packages/datagrid/src/grid-panels.ts`
-- [ ] 3.2.5 Verify GREEN — ST-1…ST-6, ST-14…ST-18, ST-27 pass
+- [x] 3.2.1 Implement the passive `FooterBand` view (per-panel column-aligned aggregate painter; `apportionColumns`+`alignCell`; `widthTick` + `indent` binds) — `packages/datagrid/src/footer-band.ts` ✅ (completed: 2026-07-17 12:35)
+- [x] 3.2.2 Implement the `GridFooter` config interface + the `FooterController<T>` (LAZY fold over `displayedRows()`, no owned `computed`; `cell(columnId)`; honesty via `complete?()`; `fn`/`columnId` validation + `devWarn`) — `packages/datagrid/src/grid-footer.ts` ✅ (completed: 2026-07-17 12:35) — `GridFooter` non-generic (AR-R1)
+- [x] 3.2.3 Assemble the aggregate row in `buildGridBody` — `segs`-loop `FooterBand` sub-views + `FreezeDivider`s + prefix spacer + `corner()`, inserted after `bodyRow` and before the hbar — `packages/datagrid/src/grid-panels.ts` ✅ (completed: 2026-07-17 12:35)
+- [x] 3.2.4 Wire the `footer?` option + `FooterController` + `footerCell` into `_bodyDeps`; `rebuildBody` recreates the footer (thin `grid.ts`) — `packages/datagrid/src/grid.ts`, `packages/datagrid/src/grid-panels.ts` ✅ (completed: 2026-07-17 12:35)
+- [x] 3.2.5 Verify GREEN — ST-1…ST-6, ST-14…ST-18, ST-27 pass ✅ (completed: 2026-07-17 12:45) — the FooterBand `indent` bind was the fix for cross-split pan (ST-16)
 
 ### Step 3.3: Harden
 
-- [ ] 3.3.1 Impl tests — `grid.ts < 1200`; controller instantiated (not inlined); rebuild recreates the footer; band height with/without widgets — `packages/datagrid/test/grid-footer.impl.test.ts`
-- [ ] 3.3.2 Phase verify
+- [x] 3.3.1 Impl tests — `grid.ts` line guard (RE-BASED 1200→1250 with rationale per AC#11/AR-10/AR-R2 — grid.ts at 1204 after the irreducible footer public surface; heavy logic all in new modules, never re-inlined); controller instantiated (not inlined); rebuild recreates the footer; band present only with a footer — `packages/datagrid/test/grid-footer.impl.test.ts` ✅ (completed: 2026-07-17 12:50)
+- [x] 3.3.2 Phase verify ✅ (completed: 2026-07-17 12:55 — full `yarn verify` green after `lint:fix`, 412 datagrid tests, check:docs clean)
 
 **Deliverables**: a sticky, column-aligned, reactive aggregate footer with honesty labelling.
 **Verify**: `yarn verify`
