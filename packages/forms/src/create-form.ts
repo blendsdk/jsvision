@@ -1,4 +1,4 @@
-import { batch, createRoot, signal } from '@jsvision/ui';
+import { batch, createRoot, onCleanup, signal } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
 import type { z } from 'zod';
 import type { AsyncValidator, CreateFormOptions, Field, Form } from './types.js';
@@ -74,7 +74,18 @@ function eq(a: unknown, b: unknown): boolean {
  *   console.log(values.port); // 8080 (typed as a number)
  * });
  *
- * form.dispose(); // tear down the async effects (per-dialog forms must call this)
+ * // Open-to-edit: load an existing record. `loading()` drives the "Loading…" swap. On success every
+ * // field value AND the whole baseline rebase to the loaded record, so the form is pristine.
+ * const ok = await form.load(async ({ signal }) => {
+ *   const res = await fetch('/api/servers/42', { signal });
+ *   const s = await res.json();
+ *   return { name: s.name, port: String(s.port) }; // the RAW editing shape (port edited as a string)
+ * });
+ * if (!ok) console.log('Could not load'); // loader rejected → false, state untouched
+ * form.dirty();  // false — the loaded record is the new baseline
+ * form.reset();  // returns to the LOADED record, not the blank initial
+ *
+ * form.dispose(); // tear down the async effects + abort any in-flight load (per-dialog forms must call this)
  * ```
  */
 export function createForm<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof z.output<S>, unknown>>(
@@ -108,6 +119,29 @@ function buildForm<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof 
   // Mandated reset target. Intentionally write-only for now: submit() sets it, reset()
   // clears it, and nothing reads it yet — a later reveal-after-submit feature consumes it.
   const submitAttempted = signal(false);
+
+  // In-flight submit flag: true from submit() entry until it settles (validators AND onValid), on
+  // every exit path. A modal that gates OK on submit() reads this synchronously to seal itself and
+  // disable its OK button while the submit runs.
+  const submitting = signal(false);
+
+  // In-flight async record load (the "open this form to edit an existing record" case). `loading`
+  // drives the "Loading…" swap; `loadGen` is a monotonic ticket so a superseded load's late settle is
+  // dropped; `loadController` cancels the prior load; `disposed` guards every post-teardown write —
+  // disposal bumps no generation, so the generation ticket alone cannot detect a torn-down form.
+  const loading = signal(false);
+  let loadGen = 0;
+  let loadController: AbortController | undefined;
+  let disposed = false;
+
+  // Tear the load machinery down on ANY disposal — a direct form.dispose() OR an enclosing scope
+  // disposing this form's nested child scope. Registered as a scope cleanup (not folded into the
+  // returned dispose) precisely so it fires in the enclosing-scope case too: a returned dispose
+  // wrapper only runs when the caller invokes form.dispose(), which an owning parent never does.
+  onCleanup(() => {
+    disposed = true;
+    loadController?.abort(); // abort an in-flight load; its settle then no-ops via the guards in load()
+  });
 
   const valueSignal = (name: string): Signal<unknown> => {
     const s = valueSignals.get(name);
@@ -182,21 +216,63 @@ function buildForm<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof 
   };
 
   const submit = async (onValid: (values: z.output<S>) => void | Promise<void>): Promise<boolean> => {
+    // Flip in-flight synchronously at entry so a caller/dialog observing right after invoking submit()
+    // (before the first await) already sees submitting() true. onValid is awaited WITHOUT a try/catch,
+    // so a rejecting onValid re-throws out of submit(); the try/finally clears the flag before it does.
+    submitting.set(true);
+    try {
+      batch(() => {
+        for (const name of names) touchedSignal(name).set(true);
+        submitAttempted.set(true);
+      });
+      // Short-circuit on a sync-invalid object: no async validator is invoked (no pointless round-trip
+      // on a doomed submit, and no malformed value is handed to a validator). Every field is sync-clean
+      // past this point, so the async gate is the only thing left to satisfy.
+      if (!validation.isValid()) return false;
+      // No queued debounce may supersede the force-run; then force-run + await every async validator.
+      asyncLayer.cancelPendingDebounces();
+      await asyncLayer.runAllForced();
+      if (!isValidForm()) return false; // now also reflects any async error
+      const coerced = validation.values();
+      if (coerced === null) return false; // isValidForm() true implies non-null; guard for safety
+      await onValid(coerced);
+      return true;
+    } finally {
+      submitting.set(false); // clears on EVERY path: 4× return false, return true, and a re-throw
+    }
+  };
+
+  const load = async (loader: (ctx: { signal: AbortSignal }) => Promise<I>): Promise<boolean> => {
+    if (disposed) return false; // a stray call on a torn-down form is a no-op
+    const g = ++loadGen;
+    loadController?.abort(); // supersede any in-flight load
+    loadController = new AbortController();
+    loading.set(true); // set synchronously, before the first await, so loading() is true at once
+
+    let record: Record<string, unknown>;
+    try {
+      record = (await loader({ signal: loadController.signal })) as Record<string, unknown>;
+    } catch {
+      // Loader rejected → resolve false, leave state untouched. Clear loading only if this is still the
+      // current run AND the form is live — a torn-down or superseded form must never be written.
+      if (!disposed && g === loadGen) loading.set(false);
+      return false;
+    }
+
+    // Drop the result if the form was torn down or a newer load has since superseded this one.
+    if (disposed || g !== loadGen) return false;
+
     batch(() => {
-      for (const name of names) touchedSignal(name).set(true);
-      submitAttempted.set(true);
+      for (const name of names) {
+        // Two independent copies: the baseline snapshot must never share an array reference with the
+        // live value signal, or an in-place edit of one would silently mutate the other.
+        baseline[name] = clone(record[name]); // rebase — the loaded record becomes the new baseline
+        valueSignal(name).set(clone(record[name])); // replace the value (a change re-runs async checks)
+        touchedSignal(name).set(false); // pristine — no error reveal on a freshly loaded record
+      }
+      submitAttempted.set(false);
+      loading.set(false);
     });
-    // Short-circuit on a sync-invalid object: no async validator is invoked (no pointless round-trip
-    // on a doomed submit, and no malformed value is handed to a validator). Every field is sync-clean
-    // past this point, so the async gate is the only thing left to satisfy.
-    if (!validation.isValid()) return false;
-    // No queued debounce may supersede the force-run; then force-run + await every async validator.
-    asyncLayer.cancelPendingDebounces();
-    await asyncLayer.runAllForced();
-    if (!isValidForm()) return false; // now also reflects any async error
-    const coerced = validation.values();
-    if (coerced === null) return false; // isValidForm() true implies non-null; guard for safety
-    await onValid(coerced);
     return true;
   };
 
@@ -208,6 +284,9 @@ function buildForm<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof 
     isValid: isValidForm,
     dirty,
     validating: () => asyncLayer.anyValidating(),
+    submitting: () => submitting(),
+    loading: () => loading(),
+    load,
     submit,
     reset,
     dispose: disposeScope,

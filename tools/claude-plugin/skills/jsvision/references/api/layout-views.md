@@ -354,7 +354,16 @@ How a box is sized along its parent's main axis.
 
 ```ts
 type Size = | { kind: 'fixed'; cells: number } // exact integer cells
-  | { kind: 'fr'; weight: number } // grow-weight share of leftover space
+  | {
+      kind: 'fr';
+      weight: number; // grow-weight share of leftover space
+      /**
+       * Optional floor in whole cells: an `fr` box never sizes below this, and it reserves the
+       * floor even inside a shrink-to-fit (`auto`) parent. Omitted ⇒ no floor — identical to the
+       * pre-existing behaviour. A negative value clamps to 0 in {@link normalizeSize}.
+       */
+      min?: number;
+    }
   | { kind: 'auto' }
 ```
 
@@ -423,7 +432,18 @@ A single item along a 1-D flex track: either a fixed cell count or a flexible gr
 
 ```ts
 type TrackItem = | { readonly kind: 'fixed'; readonly size: number } // exact integer cells
-  | { readonly kind: 'flex'; readonly weight: number }
+  | {
+      readonly kind: 'flex';
+      readonly weight: number; // `fr` / grow weight
+      /**
+       * Optional floor in whole cells: this item is never solved below `min`, even as the
+       * container shrinks. When **no** item on the track carries a `min`, the solver runs its
+       * plain apportionment untouched (the no-min fast path), so the field is free for every
+       * existing caller. When the floors are collectively unsatisfiable — their sum exceeds the
+       * available space — every item squeezes proportionally rather than overflow the track.
+       */
+      readonly min?: number;
+    }
 ```
 
 ## translate
@@ -446,6 +466,7 @@ state: ViewState
 layout: LayoutProps
 castsShadow
 centered
+grabsFocus
 focusSignal(): Signal<void>
 selectByClick(): void
 ```

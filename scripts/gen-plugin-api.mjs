@@ -38,7 +38,7 @@ export const CATEGORIES = [
   {
     slug: 'containers',
     title: 'Containers, scrolling, lists & tabs',
-    blurb: 'Scroll bars, scrollers, list views, dialogs, dropdowns, and tabs.',
+    blurb: 'Scroll bars, scrollers, list views, dialogs, dropdowns, tabs, and split panes.',
   },
   { slug: 'data-views', title: 'Data views', blurb: 'The `DataGrid` table and the `Tree` outline.' },
   { slug: 'feedback', title: 'Feedback', blurb: 'Progress bars and spinners.' },
@@ -86,6 +86,7 @@ const UI_SEGMENT_CATEGORY = {
   dropdown: 'containers',
   dialog: 'containers',
   tabs: 'containers',
+  split: 'containers',
   table: 'data-views',
   tree: 'data-views',
   feedback: 'feedback',

@@ -134,6 +134,8 @@ export const monochromeTheme: Theme = {
   statusBar: { fg: B, bg: W, hotkey: B },
   statusSelected: { fg: B, bg: W, hotkey: B, attrs: REV },
   shadow: { fg: G, bg: B },
+  splitter: { fg: G, bg: B },
+  splitterDragging: { fg: W, bg: B, attrs: BLD },
   dangerText: { fg: W, bg: B },
   warningText: { fg: W, bg: B },
 };

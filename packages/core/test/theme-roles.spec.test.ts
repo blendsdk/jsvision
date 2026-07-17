@@ -23,6 +23,24 @@ import { test, expect } from 'vitest';
 
 import type { ColorDepth } from '../src/engine/capability/index.js';
 import { defaultTheme, encode } from '../src/engine/color/index.js';
+import {
+  monochromeTheme,
+  slateTheme,
+  nordTheme,
+  draculaTheme,
+  solarizedDarkTheme,
+  gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
+  createTheme,
+  serializeTheme,
+  parseTheme,
+} from '../src/engine/color/index.js';
+import type { Theme, ThemeRole } from '../src/engine/color/index.js';
 
 import { decodeGrayDialogSlot } from './theme-decode.helpers.js';
 
@@ -58,5 +76,65 @@ test('ST-13: encode() of each RD-11 theme role does not throw at any colour dept
       expect(() => encode(fg, 'fg', depth), `${role}.fg @ ${depth}`).not.toThrow();
       expect(() => encode(bg, 'bg', depth), `${role}.bg @ ${depth}`).not.toThrow();
     }
+  }
+});
+
+// --- Split-pane divider roles (split-panes feature) --------------------------
+// Both roles must exist and be valid (defined fg + bg) across every theme surface:
+// the two hand-authored themes (default + monochrome), every createTheme-generated
+// preset, and the derived canonical role set that drives serialization. Roles are
+// looked up by string so the case stays red (undefined) before implementation
+// rather than becoming a compile error against the not-yet-extended Theme type.
+
+const SPLIT_ROLES = ['splitter', 'splitterDragging'] as const;
+
+/** The createTheme-generated presets — every one must inherit the pair via rolesFromAliases. */
+const GENERATED_PRESETS: Record<string, Theme> = {
+  slateTheme,
+  nordTheme,
+  draculaTheme,
+  solarizedDarkTheme,
+  gruvboxDarkTheme,
+  janusTheme,
+  warpTheme,
+  solsticeTheme,
+  platinumTheme,
+  workbenchTheme,
+  horizonTheme,
+};
+
+const roleOf = (theme: Theme, role: string): ThemeRole | undefined =>
+  (theme as unknown as Record<string, ThemeRole | undefined>)[role];
+
+test('ST-25 (split-panes): both splitter roles are present and valid across every theme surface', () => {
+  const themes: Record<string, Theme> = {
+    defaultTheme,
+    monochromeTheme,
+    ...GENERATED_PRESETS,
+    // A fresh generation proves rolesFromAliases produces the pair for any seed, not just
+    // the shipped presets.
+    freshCreateTheme: createTheme({ mode: 'dark', accent: '#5b7a99', neutral: '#64748b' }),
+  };
+  for (const [name, theme] of Object.entries(themes)) {
+    for (const role of SPLIT_ROLES) {
+      const value = roleOf(theme, role);
+      expect(value, `${name}.${role} present`).toBeDefined();
+      expect(value?.fg, `${name}.${role}.fg defined`).toBeDefined();
+      expect(value?.bg, `${name}.${role}.bg defined`).toBeDefined();
+    }
+  }
+});
+
+test('ST-25 (split-panes): both splitter roles are in the derived canonical set (serialize→parse safe)', () => {
+  // CANONICAL_ROLES is Object.keys(defaultTheme); both roles must be members, and must survive
+  // the canonical serializer that iterates it.
+  const canonical = Object.keys(defaultTheme);
+  for (const role of SPLIT_ROLES) expect(canonical).toContain(role);
+
+  const restored = parseTheme(serializeTheme(defaultTheme));
+  for (const role of SPLIT_ROLES) {
+    const value = roleOf(restored, role);
+    expect(value?.fg, `restored.${role}.fg`).toBeDefined();
+    expect(value?.bg, `restored.${role}.bg`).toBeDefined();
   }
 });
