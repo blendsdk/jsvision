@@ -119,3 +119,113 @@ package `@jsvision/forms`. Async validation, async loading, the `formDialog` hel
 - [x] Zero deferred *within-scope* items — every in-scope ambiguity has a concrete answer; cross-field
       async is an explicit, recorded **out-of-scope** decision (AR-43), not an unresolved gap.
 - [x] User reviewed and confirmed the four pivotal decisions (AskUserQuestion, 2026-07-15).
+
+## RD-07 — Async Loading + Baseline Rebase (2026-07-16 extension)
+
+> Appended for the async-loading slice (see `00-roadmap.md`; source design GH #85, scope fence
+> GH #89). AR-46/47/48/49 are explicit user decisions (2026-07-16, AskUserQuestion); the rest are
+> recommendations derived from them, from RD-06's ratified idioms, and from the codebase, confirmed on
+> RD review. This slice resolves the item GH #85 left **explicitly open** — "reset baseline (esp. for
+> async-loaded forms) + dirty/touched reset" (#85 §7) — and lifts AR-12's "baseline immutable this
+> slice" now that a well-defined mutation point (the seeded `baseline` record, `create-form.ts:99`) is
+> the rebase target.
+
+| AR | Decision | Resolution | Status |
+|----|----------|------------|--------|
+| AR-46 | Load trigger surface | An imperative **`form.load(loader): Promise<boolean>`** method, where `loader: (ctx: { signal: AbortSignal }) => Promise<I>`. Chosen over a `load:` option on `createForm` that auto-runs at creation (the #85 sketch): a method is re-invokable (a Reload button), keeps I/O out of the constructor, is testable in isolation, and is symmetric with `submit(onValid)`. The `AbortSignal` mirrors the async-validator `ctx` (AR-38). | ✅ Resolved (user) |
+| AR-47 | Loaded-record shape + application | The loader resolves a **full raw record `Promise<I>`** — the same raw editing shape as `initial`; the author maps a server/domain record → raw editing values inside the loader (raw, not schema-coerced, is **forced**: there is no generic inverse of `z.coerce`, and `initial` is already the raw shape). On success the store **replaces every field value and rebases the whole baseline** to the loaded record, in one `batch()`. Chosen over a partial `Promise<Partial<I>>` merge — a full replace is the clean "load the record to edit" model and avoids a mixed per-key dirty/baseline state. | ✅ Resolved (user) |
+| AR-48 | Post-load form state | A successful load leaves the form **pristine**: every field's `touched` is cleared and the submit-attempted flag is cleared, and because the baseline is rebased, `dirty()` is `false`. The loaded record is a clean starting point, behaviourally identical to a fresh `createForm` initialised with it. Mirrors `reset()` (AR-13). Chosen over preserving `touched` — a freshly-loaded value showing a "touched" error reveal is the wrong default. | ✅ Resolved (user) |
+| AR-49 | Loader-rejection behaviour | If the loader rejects (or throws), **`form.load` resolves `false`**; values and baseline are left exactly as they were and `loading()` returns to `false`. **No `loadError()` surface** is added — the loader owns its own try/catch and surfaces a message its own way (the same contract as `asyncValidators`, AR-34; keeps the engine from minting a message, honouring the `ZodIssue`-passthrough spirit of AR-40). Mirrors `submit()`'s boolean gate (AR-07). This is the failure half of the #85-open baseline-rebase question. | ✅ Resolved (user) |
+| AR-50 | Baseline mutability + rebase mechanics | The seeded `baseline` record (`create-form.ts:99`, written only in the seed loop at `:103`) becomes the **mutation point**: on a successful load the store overwrites `baseline[name]` for every field (defensively cloned for arrays, as at `:103`) inside the same `batch()` that sets the values, so `fieldDirty` (`:142`) and `reset` (`:174`) both track against the loaded record with no other change to their logic. **Revises AR-12** ("baseline immutable this slice") — the baseline is now immutable only until a `load()` succeeds. | ✅ Resolved (derived) |
+| AR-51 | Load concurrency correctness | A **monotonic load-generation counter + an `AbortController`**, reusing RD-06's stale-guard idiom (AR-38): a second `load()` supersedes an in-flight first — the prior run's `AbortSignal` is aborted and, even if the loader ignores it, the stale result is dropped by the generation check, so only the newest load's record is ever applied. **Disposal is guarded separately (preflight PF-001):** because `dispose()` (AR-44) bumps **no** generation counter (`owner.ts:163` tears down computations only, and signals survive disposal), the generation check cannot protect the dispose path. `dispose()` therefore **sets a `disposed` flag and aborts** the in-flight load, and the load path tests that flag before **every** state write — including the rejection path's `loading.set(false)` — so a load that resolves *or* rejects after teardown is a true no-op (no value write, no rebase, no `loading()` clear). Because `load` creates no standing effect (only a transient controller per call), it does not by itself make `dispose()` newly mandatory for a sync-only form. | ✅ Resolved (derived; PF-001 refined) |
+| AR-52 | `loading()` surface + independence | A single form-level **`form.loading(): boolean`** (no per-field loading — a load is atomic/whole-form, unlike per-field `validating()`). `isValid()` and `submit()` do **not** auto-gate on `loading()`; the app composes the busy state (e.g. `disabled: () => form.loading()`), matching how `validating()` is left to the app (AR-39). Setting the loaded values fires each async field's trigger effect (a value change), so a loaded record is re-validated on load — an accepted, documented consequence of treating load as "set new values". | ✅ Resolved (derived) |
+| AR-53 | Repo gates + security | A kitchen-sink story demonstrating **load → edit → `dirty()` → `reset()`-to-loaded** (with the `loading()` state shown) and passing the headless smoke test is required. Security: the engine performs **no I/O of its own** and mints no message — the loader owns every network call, URL construction, and escaping; loaded **string** values render through the existing control-byte sanitisation path (`ScreenBuffer.set` / `sanitize`) exactly as typed input does, asserted by an oracle mirroring RD-04/RD-06's render-and-scan. | ✅ Resolved (derived) |
+
+### Gate status (RD-07) — ✅ PASSED (2026-07-16)
+
+- [x] The four semantically-pivotal items (AR-46 load surface, AR-47 record shape/application, AR-48
+      post-load state, AR-49 rejection behaviour) resolved by explicit user decision (AskUserQuestion,
+      2026-07-16).
+- [x] Derived items (AR-50 baseline mechanics, AR-51 concurrency, AR-52 `loading()`/independence,
+      AR-53 gates/security) recorded with codebase-grounded rationale and RD-06-idiom reuse.
+- [x] Resolves the GH #85 explicitly-open baseline-rebase-for-async-loaded-forms question, and revises
+      AR-12 ("baseline immutable this slice") accordingly.
+- [x] Zero deferred *within-scope* items — every in-scope ambiguity has a concrete answer; partial-load
+      merge and per-field `loading()` are explicit, recorded **out-of-scope** decisions (AR-47, AR-52),
+      not unresolved gaps.
+
+### Preflight (RD-07) — ✅ PASSED (2026-07-16, `00-preflight-report-rd-07.md`)
+
+- [x] **PF-001 (MAJOR) applied** — the disposal path is guarded by an explicit `disposed` flag, not the
+      generation counter (which `dispose()` does not bump); AR-51 + the RD's FR/orchestration prose
+      corrected, and AC #10 tightened to cover both the resolve and reject-after-dispose paths.
+- [x] **PF-002 (MINOR) applied** — new AC #4 locks the re-invokable reload case (two sequential loads →
+      the second record is the rebase/`reset()` target) that motivated a method over a `load:` option.
+- [x] **PF-003 (MINOR) applied** — the former AC #10 split into AC #11 (`asyncError` cleared on load,
+      unconditional) + AC #12 (validator re-runs only for a **sync-clean** loaded value, per the
+      `fieldSyncClean` gate).
+- [x] **PF-004 / PF-005 (observations) applied** — `load`-vs-in-flight-`submit` interleaving noted as an
+      app-composition concern; the loader's full-record contract (a missing key blanks the field +
+      baseline) documented on the raw-record FR.
+
+## RD-08 — formDialog() + Modal Submit-Gate (2026-07-16 extension)
+
+> Zero-Ambiguity Gate for RD-08 (`RD-08-form-dialog-modal-submit-gate.md`). AR-54…AR-61. The five
+> semantically-pivotal forks (AR-54 ownership, AR-56 OK-gate model, AR-57 `submitting()`, AR-58 save
+> location, AR-59 load-scope) are explicit user decisions (2026-07-16, AskUserQuestion); AR-55/AR-60/AR-61
+> are recommendations derived from them and from the codebase reconnaissance (the `@jsvision/ui` modal
+> machinery — `dialog.ts` / `event-loop.ts` / `message-box.ts` — and `openers.ts`), confirmed on review.
+> Grounding surfaced the load-bearing seam: `Dialog.valid()` is **synchronous + un-awaited**
+> (`dialog.ts:164,222`) but `form.submit()` is **async** (`create-form.ts:213`), which forces the OK-gate
+> reconciliation in AR-56.
+
+| AR | Decision | Resolution | Status |
+|----|----------|------------|--------|
+| AR-54 | Placement + form ownership | **`formDialog` lives in `@jsvision/forms` and creates, owns, and disposes the form**; a `body(form)` builder binds widgets to `form.field(...)`. `@jsvision/ui` cannot import `createForm` (layering), so placement is forced; owning the form lets the helper return coerced values and removes the per-dialog-form leak (`create-form.ts:35`). Rejected: helper in `ui` taking a `Form` (ui↛forms); caller passes a pre-built form (leak footgun). | ✅ Resolved (user) |
+| AR-55 | Signature + result shape | **`formDialog(host, options): Promise<z.output<S> \| null>`** — coerced `values()` (captured in the gate) on OK, `null` on cancel/Esc/close-box/quit-close. `host` is the existing `ModalDialogHost` (`message-box.ts:22`). Forced by AR-54: a disposed-on-close form can't be read by the caller, so the helper returns the values (mirrors `openFile`'s `dlg.result()` payload, `openers.ts:75`). Rejected: bare `'ok'\|'cancel'` command. | ✅ Resolved (derived) |
+| AR-56 | OK-gate mechanism | **The dialog intercepts the `ok` command and, in a `try/catch`, `await`s `form.submit(onSubmit ?? noop)` out-of-band, driving `this.modalHost?.endModal(Commands.ok)` itself on `true`**; on `false` it stays open (errors already revealed); on a **rejected** `submit()` (a throwing `onSubmit` — `submit()` re-throws, `create-form.ts:228`) the `catch` keeps it open. **The dialog is SEALED while `submitting()`** — a re-fired `ok`, `cancel`, and Esc/close-box are inert and `valid()` returns `false` (vetoes app-quit) — so no concurrent close can pop the modal or dispose the form mid-gate, which is why the `modalHost` the override drives after the await is guaranteed still active (no stale-ref hazard; the override does **not** call super for `ok`, so the base's post-`endModal` nulling at `dialog.ts:225` never runs on this path — preflight PF-301/PF-302). Outside the gate, the sync **`valid(command)` is repurposed to `command === cancel \|\| form.isValid()`** so the app-quit veto (`cascadeQuit` with the loop's `quitCommand` `'quit'`, `event-loop.ts:332-336`) still works — sync/optimistic, **cannot** force-run async validators (accepted, documented limitation). Rejected: the native sync `valid()` child-sweep as the OK gate — it bypasses `submit()`, defeating RD-06. | ✅ Resolved (user) |
+| AR-57 | `submitting()` signal | **Add `form.submitting(): boolean`** to `Form` — `true` while `submit()` is in flight (validators + `onValid`), form-level, independent of `isValid()`/`loading()`/`validating()`. Set true at `submit()` entry, false on every return via `try/finally` (`create-form.ts:213`). Blocks double-submit, drives the OK busy state, reusable outside a dialog. **Resolves RD-07's AR-45 deferral.** Rejected: a dialog-local flag only (not reusable). | ✅ Resolved (user) |
+| AR-58 | Save location | **Optional in-modal `onSubmit(values): void \| Promise<void>`** runs as `submit`'s `onValid` inside the gate (so `submitting()` spans validators + save). Success → close + resolve values. **`onSubmit` rejection → dialog stays open, OK re-enables, no minted error UI** (app surfaces failure via its own body widget). Omitted → validate + collect (resolve values; caller saves after). `submit()` awaits `onValid` precisely so a failed save can veto the close. Rejected: collect-and-return only (a save failure lands after the dialog is gone). | ✅ Resolved (user) |
+| AR-59 | Load-before-show | **Out of scope for RD-08.** `formDialog` shows the body immediately; open-to-edit is caller-composed — `await form.load(...)` (RD-07) before, or a body reading `form.loading()`. Keeps RD-08 the submit-gate bridge; avoids importing the load lifecycle + failure path. Corrects RD-07's forward reference (the dialog disposes the load, does not own it). Rejected: a `load:` loader + "Loading…" body inside `formDialog`. | ✅ Resolved (user) |
+| AR-60 | Buttons + double-submit guard | **Fixed OK + Cancel.** The OK button is built **directly** — `new Button(okText ?? '~O~K', { command: Commands.ok, default: true, disabled: () => form.submitting() })` — because the `okButton()`/`okCancelButtons()` presets hardcode `'~O~K'` and pass no `disabled`, and `Button`'s label/command/disabled are constructor-only readonly (`buttons.ts:33,88`, `button.ts:57-83`); the constructor accepts a reactive `disabled` getter (`button.ts:28`). Cancel from `cancelButton()`. **OK disabled while `submitting()`**; the **seal** (AR-56) — not merely a re-entrancy guard — makes Enter/double-click **and** a concurrent Cancel/Esc/quit safe during the async gate (preflight PF-303). No cancel-with-dirty confirm (app wraps if needed). Rejected: configurable button sets (later concern). | ✅ Resolved (derived) |
+| AR-61 | Repo gates + security | **Kitchen-sink `forms/dialog` story + smoke; ACs headlessly testable** via `createEventLoop` + a fake `{loop, desktop:{addWindow,removeWindow}}` host + `loop.emitCommand(Commands.ok/cancel)` (mirroring `openers.impl.test.ts`). The engine performs **no I/O** (network lives in the author's `onSubmit`), mints no message, and adds **no render path** — bound fields render through the existing control-byte sanitisation. | ✅ Resolved (derived) |
+
+### Gate status (RD-08) — ✅ PASSED (2026-07-16)
+
+- [x] The five semantically-pivotal forks (AR-54 ownership, AR-56 OK-gate model, AR-57 `submitting()`,
+      AR-58 save location, AR-59 load-scope) resolved by explicit user decision (AskUserQuestion, 2026-07-16).
+- [x] Derived items (AR-55 signature/result, AR-60 buttons/guard, AR-61 gates/security) recorded with
+      codebase-grounded rationale — the real modal machinery (`dialog.ts`/`event-loop.ts`/`message-box.ts`),
+      `openers.ts` as the structural analog, and `openers.impl.test.ts` as the headless test harness.
+- [x] The load-bearing sync-`valid()`-vs-async-`submit()` seam surfaced during grounding and drove AR-56;
+      the accepted quit-veto limitation (sync `isValid()` only) is documented, not an unresolved gap.
+- [x] Resolves RD-07's AR-45 deferral of `submitting()` (AR-57). Load-before-show is an explicit
+      out-of-scope decision (AR-59), not a gap.
+- [x] Zero deferred within-scope items — every RD-08 ambiguity has a concrete answer.
+
+### Preflight (RD-08) — ✅ PASSED (2026-07-16, `00-preflight-report-rd-08.md`)
+
+Same-session review + 1 independent challenger; 9 findings (2 MAJOR · 7 MINOR), all applied. The
+challenger affirmatively verified the core async-OK-interception design is workable (no CRITICAL).
+
+- [x] **PF-301 (MAJOR) applied** — the dialog is **sealed** while `submitting()` (Cancel/Esc/quit inert,
+      `valid()` → false), closing the concurrent-close race where a Cancel/Esc during the gate pops the
+      modal and disposes the form, leaving the resolving OK to `endModal` a popped frame. AR-56 revised;
+      the mis-diagnosed "capture the host ref across the await" rationale (base nulling at `dialog.ts:225`
+      never runs on the intercepted OK path) dropped; new AC #8 seal clause.
+- [x] **PF-302 (MAJOR) applied** — the OK gate `await` is wrapped in `try/catch`: `submit()` re-throws a
+      rejecting `onSubmit` (`create-form.ts:228`), so the catch keeps the dialog open (no unhandled
+      rejection). Tech-Req steps 2/5 + AC #7 corrected.
+- [x] **PF-303 (MINOR) applied** — the OK button is built **directly** (`new Button(...)`); the
+      `okCancelButtons()`/`okButton()` presets can't carry `okText`/`disabled` (readonly, no setters).
+- [x] **PF-304 (MINOR) applied** — AC #9 uses `valid('quit')` (the loop's `quitCommand`), not the
+      fabricated `Commands.quit-terminating`; added the valid-form-quit-closes-`null` consequence.
+- [x] **PF-305 (MINOR) applied** — the Tech-Req interface no longer redeclares `ModalDialogHost`; it
+      imports the barrel-exported type (with `desktop.bounds`).
+- [x] **PF-306 (MINOR) applied** — `width`/`height` are **required** (the body is opaque; `Dialog` sizes
+      only when both are given, `dialog.ts:102-109`); "sized to fit" reworded.
+- [x] **PF-307 (MINOR) applied** — citations corrected: `modalHost` nulling `:225` (not `:224`);
+      `submitAttempted` `:121` / `loading` `:127` (not `:110-118`).
+- [x] **PF-308 (MINOR) applied** — RD-07's stale "loading() drives the dialog Loading… body" forward-ref
+      marked superseded by RD-08 (AR-59).
+- [x] **PF-309 (MINOR) applied** — initial focus specified: the first focusable view in the body.
