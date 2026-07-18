@@ -51,7 +51,7 @@ centered<V extends View>(view: V, width: number, height: number): V
 Build a **vertical** flex container (`direction: 'col'`) — children stack top to bottom.
 
 ```ts
-col(...args: [Flex, ...View[]] | View[]): Group
+col(...args: [Flex, ...Child[]] | Child[]): Group
 ```
 
 ## CommandEvent
@@ -145,8 +145,11 @@ Container props for col/row: every LayoutProps field except `direction` (the bui
 
 ```ts
 type Flex = Omit<LayoutProps, 'direction'> & {
-  /** Flex-grow weight — shorthand for `size: { kind:'fr', weight }`. */
-  grow?: number;
+  /**
+   * Flex-grow weight — shorthand for `size: { kind:'fr', weight }`. The object form adds a `min`
+   * cell floor: `{ weight, min }` → `{ kind:'fr', weight, min }` (the box never solves below `min`).
+   */
+  grow?: number | { weight: number; min?: number };
   /** Fixed cell count — shorthand for `size: { kind:'fixed', cells }`. */
   fixed?: number;
   /** Take a flex share of `1` — shorthand for `size: { kind:'fr', weight:1 }`. */
@@ -175,7 +178,7 @@ addDynamic(build: DynamicBuilder): void
 Give a view a flex-grow size: it takes a share of the container's leftover main-axis space proportional to `n`.
 
 ```ts
-grow<V extends View>(view: V, n = 1): V
+grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V
 ```
 
 ## intersect
@@ -345,7 +348,7 @@ interface RenderRootOptions {
 Build a **horizontal** flex container (`direction: 'row'`) — children sit left to right.
 
 ```ts
-row(...args: [Flex, ...View[]] | View[]): Group
+row(...args: [Flex, ...Child[]] | Child[]): Group
 ```
 
 ## Size
@@ -399,7 +402,7 @@ spacer(arg: number | { fixed: number } = 1): View
 Build a z-overlay stack: every layer shares the same box and paints back-to-front (a later layer draws over an earlier one).
 
 ```ts
-stack(...args: [Flex, ...View[]] | View[]): Group
+stack(...args: [Flex, ...Layer[]] | Layer[]): Group
 ```
 
 ## ThemeRoleName

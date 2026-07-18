@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-19 00:35
-> **Progress**: 7/32 tasks (22%)
+> **Last Updated**: 2026-07-19 01:13
+> **Progress**: 14/32 tasks (44%)
 > **CodeOps Skills Version**: 3.9.0
 
 ## Overview
@@ -72,18 +72,18 @@ spec-immutability exception, not a behavior change.
 
 ### Step 2.1: Spec (red)
 **Reference**: 03-02 · 07 ST-1…ST-6 · AR-2, AR-7
-- [ ] 2.1.1 Write `packages/ui/test/dsl-sizing.spec.test.ts` (ST-1…ST-5) + `dsl-falsy.spec.test.ts` (ST-6, covering falsy skip in **both** `col`/`row` and `stack`)
-- [ ] 2.1.2 Red: run both suites, confirm they FAIL against current code
+- [x] 2.1.1 Write `packages/ui/test/dsl-sizing.spec.test.ts` (ST-1…ST-5) + `dsl-falsy.spec.test.ts` (ST-6, covering falsy skip in **both** `col`/`row` and `stack`) ✅ (completed: 2026-07-19 01:13) — ST-3 corrected to an engine-faithful binding scenario per AR-14 (runtime, signed off)
+- [x] 2.1.2 Red: run both suites, confirm they FAIL against current code ✅ (completed: 2026-07-19 01:13) — 5 failed / 2 pre-passing (ST-2, ST-4 satisfiable-floor)
 
 ### Step 2.2: Implement (green)
 **Reference**: 03-02 §grow/fixed, §falsy
-- [ ] 2.2.1 Add `min` to `grow()` (overloads) + the `Flex.grow` object form in `toLayout()` — `dsl/flex.ts`
-- [ ] 2.2.2 Filter `null`/`undefined`/`false` children in `container()` **and** `stack()`, and widen **both** their child/layer param types to `View | null | undefined | false` — `dsl/flex.ts`, `dsl/stack.ts`
-- [ ] 2.2.3 Green: ST-1…ST-6 pass
+- [x] 2.2.1 Add `min` to `grow()` + the `Flex.grow` object form in `toLayout()` — `dsl/flex.ts` ✅ (completed: 2026-07-19 01:13) — single union-typed `grow(view, n=1, opts?)` signature (no TS overloads: they tripped the per-declaration `check:docs` `@example` guard, and one signature already accepts all call forms)
+- [x] 2.2.2 Filter `null`/`undefined`/`false` children in `container()` **and** `stack()`, and widen **both** their child/layer param types to `View | null | undefined | false` — `dsl/flex.ts`, `dsl/stack.ts` ✅ (completed: 2026-07-19 01:13) — props detection also fixed to treat a *leading* falsy value as a skipped child, not a props object
+- [x] 2.2.3 Green: ST-1…ST-6 pass ✅ (completed: 2026-07-19 01:13)
 
 ### Step 2.3: Impl tests & verify
-- [ ] 2.3.1 Impl tests (`Flex.grow` object-vs-number resolution; falsy edges) — `packages/ui/test/dsl-hardening.impl.test.ts`
-- [ ] 2.3.2 Verify
+- [x] 2.3.1 Impl tests (`Flex.grow` object-vs-number resolution; falsy edges) — `packages/ui/test/dsl-hardening.impl.test.ts` ✅ (completed: 2026-07-19 01:13)
+- [x] 2.3.2 Verify ✅ (completed: 2026-07-19 01:13) — full `CI=1 yarn verify` green (30/30) + `check:deps` green; API-reference page `api/layout-views.md` re-synced via `yarn plugin:sync --fix` (no AI)
 
 **Deliverables**: `grow`/`fixed`/shorthand carry `min`; `col`/`row`/`stack` tolerate falsy children (runtime + types).
 **Verify**: `yarn verify`
