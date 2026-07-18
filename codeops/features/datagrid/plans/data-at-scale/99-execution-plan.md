@@ -2,8 +2,8 @@
 
 > **Implements**: datagrid/RD-11 (Must-Have slice)
 > **CodeOps Skills Version**: 3.8.0
-> **Progress**: 8 / 34 tasks (24%) · 1 / 4 phases
-> **Last Updated**: 2026-07-18 02:24
+> **Progress**: 16 / 34 tasks (47%) · 2 / 4 phases
+> **Last Updated**: 2026-07-18 02:48
 
 Four phases, **foundation-first**, each in the mandatory three-session order
 (**Spec Tests → Implementation → Impl Tests & Hardening**) with spec-first ordering enforced
@@ -40,18 +40,18 @@ green at every task. ST-4 is the tripwire.
 ## Phase 2 — Windowed rendering, prefetch & coalescing (03-02) · ST-5…ST-10
 
 *Session 2A — Spec tests (red)*
-- [ ] 2.1 `windowing.spec.test.ts` ST-5 (window → `ensureRange(visible+buffer)`, clamped) + ST-7 (per-frame coalesce + settled-window de-dup) + ST-8 (bounds clamped/integer, security) — verify **red**.
-- [ ] 2.2 ST-6 (unloaded row paints `…`, repaints on `revision`) + ST-9 (unloaded focused cell read-only) + ST-10 (synthetic band placeholder) — verify **red**.
+- [x] 2.1 `windowing.spec.test.ts` ST-5 (window → `ensureRange(visible+buffer)`, clamped) + ST-7 (per-frame coalesce + settled-window de-dup) + ST-8 (bounds clamped/integer, security) — verify **red**. ✅ (completed: 2026-07-18 02:48)
+- [x] 2.2 ST-6 (unloaded row paints `…`, repaints on `revision`) + ST-9 (unloaded focused cell read-only) + ST-10 (synthetic band placeholder) — verify **red**. ✅ (completed: 2026-07-18 02:48)
 
 *Session 2B — Implementation (green)*
-- [ ] 2.3 Inject `ensureRange`/`rowCount`/`prefetch` seams into `EditableGridRowsConfig`; add `requestWindow(top, visibleRows)` + `coalesceEnsureRange` (microtask, settled-window de-dup, bounds clamp) to the body; call it from `draw` once the window is resolved (windowed only).
-- [ ] 2.4 Add the muted `…` placeholder paint (`paintPlaceholderRow`) in the body's draw loop for an `undefined` row — **fg-only**: `ctx.color('inputPlaceholder').fg` over the row-band bg, never the role's own bg ([PF-007](00-preflight-report.md)); skip cursor/dirty/invalid overpaints. Wire the `prefetch?: number` option through `grid.ts` → `grid-panels.ts` → the body, with **unset ⇒ buffer = current `visibleRows`** (dynamic, per-draw; no static default — [PF-008](00-preflight-report.md)).
-- [ ] 2.5 Mirror the `undefined`-guard + placeholder into `SyntheticBodyBand.draw` (`synthetic-columns.ts`) — blank checkbox + `…`/blank gutter ([AR-16](00-ambiguity-register.md)).
-- [ ] 2.6 Read-only unloaded-focused guards: `editableCol()` / `currentCell()` return `-1`/`null` on an `undefined` row; `focusedRow()`/`focusAnchorKey()` (`grid.ts`) return `null`/`undefined` (no `rowKey(undefined)`); the row-gate treats a null focused row as nothing-to-validate ([AR-12](00-ambiguity-register.md)).
-- [ ] 2.7 Verify ST-5…ST-10 **green**; confirm the coalescing scheduler against the event loop (record a `(runtime)` AR note if it must change); full `yarn verify` green.
+- [x] 2.3 Inject `ensureRange`/`rowCount`/`prefetch` seams into `EditableGridRowsConfig`; add `requestWindow(top, visibleRows)` + `coalesceEnsureRange` (microtask, settled-window de-dup, bounds clamp) to the body; call it from `draw` once the window is resolved (windowed only). ✅ (completed: 2026-07-18 02:48)
+- [x] 2.4 Add the muted `…` placeholder paint (`paintPlaceholderRow`) in the body's draw loop for an `undefined` row — **fg-only**: `ctx.color('inputPlaceholder').fg` over the row-band bg, never the role's own bg ([PF-007](00-preflight-report.md)); skip cursor/dirty/invalid overpaints. Wire the `prefetch?: number` option through `grid.ts` → `grid-panels.ts` → the body, with **unset ⇒ buffer = current `visibleRows`** (dynamic, per-draw; no static default — [PF-008](00-preflight-report.md)). ✅ (completed: 2026-07-18 02:48)
+- [x] 2.5 Mirror the `undefined`-guard + placeholder into `SyntheticBodyBand.draw` (`synthetic-columns.ts`) — blank checkbox + `…`/blank gutter ([AR-16](00-ambiguity-register.md)). ✅ (completed: 2026-07-18 02:48)
+- [x] 2.6 Read-only unloaded-focused guards: `editableCol()` / `currentCell()` return `-1`/`null` on an `undefined` row; `focusedRow()`/`focusAnchorKey()` (`grid.ts`) return `null`/`undefined` (no `rowKey(undefined)`); the row-gate treats a null focused row as nothing-to-validate ([AR-12](00-ambiguity-register.md)). ✅ (completed: 2026-07-18 02:48)
+- [x] 2.7 Verify ST-5…ST-10 **green**; confirm the coalescing scheduler against the event loop (record a `(runtime)` AR note if it must change); full `yarn verify` green. ✅ (completed: 2026-07-18 02:48)
 
 *Session 2C — Impl tests & hardening*
-- [ ] 2.8 `windowing.impl.test.ts`: coalescer edges (empty/single-row source, window at exactly `length()`, back-to-back settles); placeholder precedence vs zebra/selected row band. Verify.
+- [x] 2.8 `windowing.impl.test.ts`: coalescer edges (empty/single-row source, window at exactly `length()`, back-to-back settles); placeholder precedence vs zebra/selected row band. Verify. ✅ (completed: 2026-07-18 02:48)
 
 ---
 

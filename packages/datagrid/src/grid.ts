@@ -217,6 +217,14 @@ export interface EditableDataGridOptions<T> {
    * with neither keeps the plain `<empty>` body at zero rows.
    */
   readonly emptyText?: string;
+  /**
+   * Prefetch buffer size in rows on each side of the visible window, for a **windowed** source (one
+   * exposing `ensureRange`). As the grid scrolls it requests `[top − prefetch, top + visible + prefetch)`,
+   * coalesced to at most one call per frame. **Unset ⇒ one viewport** (the current visible row count,
+   * resolved per draw) — there is no static default because the viewport height is not known at
+   * construction. Ignored for an eager in-memory source.
+   */
+  readonly prefetch?: number;
 }
 
 /** Collect the source's currently-available rows into a dense array (skipping any not-yet-loaded holes). */
@@ -624,6 +632,11 @@ export class EditableDataGrid<T> extends Group {
       footerCell: this.footer?.hasAggregates === true ? (id) => this.footer!.cell(id) : undefined,
       // The widget row hosts the caller's free-form footer views (totals, buttons, read-outs).
       footerWidgets: opts.footer?.widgets,
+      // Windowed prefetch: the scrolling body requests source.ensureRange over its window. Wired only for
+      // a windowed source; an eager grid leaves these undefined, so the body's window path stays inert.
+      ensureRange: this.windowed ? (start, end) => this.source.ensureRange!(start, end) : undefined,
+      rowCount: this.windowed ? () => this.source.length() : undefined,
+      prefetch: opts.prefetch,
     };
     this.maybeWarnOverFreeze();
     const parts = buildGridBody<T>(this.computePartition(), this._bodyDeps);
@@ -1225,7 +1238,9 @@ export class EditableDataGrid<T> extends Group {
     const before = this.display();
     const n = before.length;
     if (n === 0) return undefined;
-    return this.source.rowKey(before[Math.max(0, Math.min(this.focused(), n - 1))]);
+    const row = before[Math.max(0, Math.min(this.focused(), n - 1))];
+    if (row === undefined) return undefined; // an unloaded windowed row has no anchor key (no rowKey(undefined))
+    return this.source.rowKey(row);
   }
 
   /**

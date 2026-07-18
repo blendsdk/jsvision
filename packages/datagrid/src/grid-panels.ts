@@ -168,6 +168,16 @@ export interface GridBodyDeps<T> {
   lifecycle?: boolean;
   /** The zero-row empty message getter (lifecycle empty state), threaded to the body; omit to keep `<empty>`. */
   emptyText?: () => string;
+  /**
+   * Windowed prefetch sink — the scrolling body requests the page range covering its window (plus a
+   * buffer) as it scrolls. Only the scrolling body drives it (a pinned frozen-rows band does not). Omit
+   * for an eager source (the windowed loading path is then inert).
+   */
+  ensureRange?: (start: number, end: number) => void | Promise<void>;
+  /** The source's total row count (windowed) for the window clamp. Omit for an eager source. */
+  rowCount?: () => number;
+  /** Prefetch buffer in rows each side of the viewport; unset ⇒ one viewport (per-draw). */
+  prefetch?: number;
 }
 
 /** The assembled body: the inner band stack plus the panels/headers and the focusable (center/only) body. */
@@ -372,6 +382,10 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       widthTick: deps.widthTick,
       compact: deps.compact,
       rowFloor: deps.freezeRows, // scrolling body: its window starts after the N pinned rows
+      // Windowed prefetch: the scrolling body drives the source's ensureRange over its window (inert on eager).
+      ensureRange: deps.ensureRange,
+      rowCount: deps.rowCount,
+      prefetch: deps.prefetch,
     });
     panels.push(body);
     return body;

@@ -4,11 +4,18 @@
  * or partly loaded), and the `isWindowed` predicate + inert `revision` read on the eager path.
  */
 import { test, expect } from 'vitest';
-import { signal } from '@jsvision/ui';
+import { Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+import type { Column } from '@jsvision/ui';
+import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
+import { EditableDataGrid } from '../src/grid.js';
+import { EditableGridRows } from '../src/editable-grid-rows.js';
 import { isWindowed, windowedView } from '../src/windowing.js';
 import { asyncWindowedSource } from './fixtures/async-windowed-source.js';
+
+const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
 interface Row {
   id: number;
@@ -101,4 +108,99 @@ test('an eager source omits revision, so the grid read source.revision?.() is in
   expect(src.revision).toBeUndefined();
   expect(() => src.revision?.()).not.toThrow(); // optional-chain read yields undefined, never throws
   expect(src.revision?.()).toBeUndefined();
+});
+
+// ---- Phase 2 — coalescer edges & placeholder precedence ----
+
+/** A windowed body over `total` synthetic rows; records the ensureRange windows it requests. */
+function windowBody(total: number, viewport: number) {
+  const calls: Array<[number, number]> = [];
+  const source: GridDataSource<Row> = {
+    rowKey: (r) => r.id,
+    length: () => total,
+    rowAt: (i) => (i >= 0 && i < total ? { id: i, name: `r${i}` } : undefined),
+    ensureRange: () => undefined,
+  };
+  const focused = signal(0);
+  const bodyCols: Column<Row>[] = [{ title: 'ID', accessor: (r) => String(r.id), width: 6 }];
+  const body = new EditableGridRows<Row>({
+    display: () => windowedView(source),
+    columns: bodyCols,
+    autoWidths: () => [null],
+    indent: signal(0),
+    focused,
+    selected: signal(-1),
+    zebra: false,
+    focusedCol: signal(0),
+    typedColumns: [{ id: 'id', title: 'ID', value: (r: Row) => r.id }],
+    overlay: new Group(),
+    rowKey: (r) => r.id,
+    bumpVersion: () => undefined,
+    ensureRange: (s, e) => void calls.push([s, e]),
+    rowCount: () => total,
+  });
+  body.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: viewport } };
+  const root = new Group();
+  root.add(body);
+  const loop = createEventLoop({ width: 20, height: viewport }, { caps });
+  loop.mount(root);
+  return { body, loop, focused, calls };
+}
+
+test('coalescer: an empty windowed source requests no window (the draw returns early)', async () => {
+  const { calls } = windowBody(0, 5);
+  await tick();
+  expect(calls).toEqual([]);
+});
+
+test('coalescer: a single-row source requests exactly one clamped window', async () => {
+  const { calls } = windowBody(1, 5);
+  await tick();
+  expect(calls).toEqual([[0, 1]]); // clamp(0-5,0,1)=0, clamp(0+5+5,0,1)=1
+});
+
+test('coalescer: a window at exactly length() clamps end to length()', async () => {
+  const { loop, focused, calls } = windowBody(40, 20);
+  focused.set(39); // keepVisible(39,0,20,40) === 20 → window [0, clamp(20+20+20,0,40)=40]
+  loop.renderRoot.flush();
+  await tick();
+  expect(calls.at(-1)).toEqual([0, 40]); // end clamps exactly to length()
+});
+
+test('coalescer: a new settled window after a prior one fires a fresh call (de-dup releases)', async () => {
+  const { loop, focused, calls } = windowBody(100000, 20);
+  await tick(); // the mount window [0,40]
+  focused.set(1019);
+  loop.renderRoot.flush();
+  await tick(); // a distinct window → a fresh call
+  expect(calls).toEqual([
+    [0, 40],
+    [980, 1040],
+  ]);
+});
+
+test('placeholder: an unloaded focused row on a zebra grid paints … and stays read-only', () => {
+  const W = 22;
+  const H = 6;
+  const src = asyncWindowedSource<Row>({
+    total: 1000,
+    pageSize: 100,
+    fetchPage: (p) =>
+      Promise.resolve(Array.from({ length: 100 }, (_, k) => ({ id: p * 100 + k, name: `r${p * 100 + k}` }))),
+    rowKey: (r) => r.id,
+  });
+  const cols = [column<Row, string>({ id: 'name', title: 'Name', value: (r) => r.name, width: 12 })];
+  const grid = new EditableDataGrid<Row>({ columns: cols, source: src, zebra: true });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+
+  const buf = loop.renderRoot.buffer();
+  let text = '';
+  for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) text += buf.get(x, y)?.char ?? ' ';
+  expect(text).toContain('…'); // placeholder shows regardless of the zebra stripe
+  expect(grid.focusedRow()).toBeUndefined(); // the focused unloaded row is read-only
 });
