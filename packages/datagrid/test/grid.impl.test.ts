@@ -4,13 +4,14 @@
  * and the exposed `rows`/`overlay` handles.
  */
 import { test, expect, vi } from 'vitest';
-import { Group, Input, createEventLoop, createRenderRoot, resolveCapabilities, signal } from '@jsvision/ui';
+import { Group, Input, View, createEventLoop, createRenderRoot, resolveCapabilities, signal } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
 import type { OnCommit } from '../src/commit.js';
 import { EditableDataGrid } from '../src/grid.js';
 import { EditableGridRows } from '../src/editable-grid-rows.js';
+import { asyncWindowedSource } from './fixtures/async-windowed-source.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
 
@@ -182,4 +183,60 @@ test('threads a vetoing onCommit through the container — the editor stays open
   const still = loop.getFocused();
   expect(still).toBeInstanceOf(Input); // vetoed → the editor remains open through the container
   if (still instanceof Input) expect(still.getValueSignal()()).toBe('bad'); // field preserved
+});
+
+// ---- AC-1: bounded cell views at scale (ST-19) ----
+
+interface Big {
+  id: number;
+  name: string;
+}
+const bigCols = [column<Big, string>({ id: 'name', title: 'Name', value: (r) => r.name, width: 12 })];
+
+/** Count the mounted views in a tree (Group children are the only structural nesting). */
+function countViews(v: View): number {
+  let n = 1;
+  if (v instanceof Group) for (const c of v.children) n += countViews(c);
+  return n;
+}
+
+function mountBig(source: GridDataSource<Big>) {
+  const grid = new EditableDataGrid<Big>({ columns: bigCols, source });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 32 } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: 20, height: 32 }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+  return { grid, loop, root };
+}
+
+const pgdn = { type: 'key' as const, key: 'pagedown', ctrl: false, alt: false, shift: false };
+
+// ST-19 — a 100k windowed grid AND a 100k in-memory grid each mount a bounded number of views (the
+// single-view body paints only the window — no per-row View), and a page-scroll does not grow the count.
+test('ST-19: 100k windowed and 100k in-memory grids keep a bounded, scroll-stable view count', () => {
+  // Windowed: nothing materialized; the lazy view paints only the visible window.
+  const windowed = asyncWindowedSource<Big>({
+    total: 100000,
+    pageSize: 100,
+    fetchPage: (p) =>
+      Promise.resolve(Array.from({ length: 100 }, (_, k) => ({ id: p * 100 + k, name: `r${p * 100 + k}` }))),
+    rowKey: (r) => r.id,
+  });
+  const w = mountBig(windowed);
+  const wBefore = countViews(w.root);
+  for (let i = 0; i < 5; i += 1) w.loop.dispatch(pgdn);
+  const wAfter = countViews(w.root);
+  expect(wBefore).toBeLessThan(60); // bounded — NOT ~100000 (no per-row view)
+  expect(wAfter).toBe(wBefore); // a page-scroll does not grow the mounted-view count
+
+  // In-memory large: `materialize` copies once on data-change, but the body is still a single view.
+  const rows = signal<Big[]>(Array.from({ length: 100000 }, (_, i) => ({ id: i, name: `r${i}` })));
+  const e = mountBig(fromRows(rows, { rowKey: (r) => r.id }));
+  const eBefore = countViews(e.root);
+  for (let i = 0; i < 5; i += 1) e.loop.dispatch(pgdn);
+  const eAfter = countViews(e.root);
+  expect(eBefore).toBeLessThan(60);
+  expect(eAfter).toBe(eBefore);
 });

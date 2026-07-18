@@ -318,3 +318,56 @@ test('windowed auto-width: an auto column falls back and the grid renders withou
   expect(frame).toContain('…'); // the grid rendered (unloaded rows show the placeholder) — the fallback held
   warn.mockRestore();
 });
+
+// ---- Phase 4 — async fixture edges ----
+
+function pagedRows(page: number, size: number): Row[] {
+  return Array.from({ length: size }, (_, k) => ({ id: page * size + k, name: `r${page * size + k}` }));
+}
+
+test('async source: two reads of the same unloaded page kick exactly one fetch (in-flight de-dup)', async () => {
+  let fetches = 0;
+  const src = asyncWindowedSource<Row>({
+    total: 10000,
+    pageSize: 100,
+    fetchPage: (p) => {
+      fetches += 1;
+      return Promise.resolve(pagedRows(p, 100));
+    },
+    rowKey: (r) => r.id,
+  });
+  src.rowAt(500); // page 5 miss
+  src.rowAt(550); // same page, still in flight
+  src.rowAt(599); // same page
+  expect(fetches).toBe(1);
+  await src.settle();
+  expect(fetches).toBe(1); // still one — no duplicate fetch
+});
+
+test('async source: settle() with zero pending resolves immediately', async () => {
+  const src = asyncWindowedSource<Row>({
+    total: 100,
+    pageSize: 100,
+    fetchPage: (p) => Promise.resolve(pagedRows(p, 100)),
+    rowKey: (r) => r.id,
+  });
+  await expect(src.settle()).resolves.toBeUndefined(); // nothing in flight → resolves
+});
+
+test('async source: a window straddling two unloaded pages loads both', async () => {
+  let fetches = 0;
+  const src = asyncWindowedSource<Row>({
+    total: 10000,
+    pageSize: 100,
+    fetchPage: (p) => {
+      fetches += 1;
+      return Promise.resolve(pagedRows(p, 100));
+    },
+    rowKey: (r) => r.id,
+  });
+  await src.ensureRange(150, 250); // spans page 1 and page 2
+  await src.settle();
+  expect(fetches).toBe(2);
+  expect(src.rowAt(150)).toEqual({ id: 150, name: 'r150' });
+  expect(src.rowAt(249)).toEqual({ id: 249, name: 'r249' });
+});

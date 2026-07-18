@@ -2,8 +2,8 @@
 
 > **Implements**: datagrid/RD-11 (Must-Have slice)
 > **CodeOps Skills Version**: 3.8.0
-> **Progress**: 25 / 34 tasks (74%) · 3 / 4 phases
-> **Last Updated**: 2026-07-18 03:07
+> **Progress**: 34 / 34 tasks (100%) · 4 / 4 phases
+> **Last Updated**: 2026-07-18 03:27
 
 Four phases, **foundation-first**, each in the mandatory three-session order
 (**Spec Tests → Implementation → Impl Tests & Hardening**) with spec-first ordering enforced
@@ -77,19 +77,19 @@ green at every task. ST-4 is the tripwire.
 ## Phase 4 — Helper source, showcase, barrel & security (03-04) · ST-18…ST-21
 
 *Session 4A — Spec tests (red)*
-- [ ] 4.1 `windowing.spec.test.ts` ST-18 over the async source (built in **task 1.0**): miss→undefined+load-kick, settle-able `ensureRange`, `revision` bump, retained pages, stable refs — verify (pins the fixture's contract).
-- [ ] 4.2 `grid.impl.test.ts` ST-19 (100k windowed **and** 100k in-memory → bounded views, scroll doesn't grow the count) + `security.spec.test.ts` ST-20 (bounds/coalesce/static placeholder/no persistence bypass) — verify **red**.
+- [x] 4.1 `windowing.spec.test.ts` ST-18 over the async source (built in **task 1.0**): miss→undefined+load-kick, settle-able `ensureRange`, `revision` bump, retained pages, stable refs — verify (pins the fixture's contract). ✅ (completed: 2026-07-18 03:27)
+- [x] 4.2 `grid.impl.test.ts` ST-19 (100k windowed **and** 100k in-memory → bounded views, scroll doesn't grow the count) + `security.spec.test.ts` ST-20 (bounds/coalesce/static placeholder/no persistence bypass) — verify **red**. ✅ (completed: 2026-07-18 03:27)
 
 *Session 4B — Implementation (green)*
-- [ ] 4.3 Wire `asyncWindowedSource` (built in **task 1.0**: page store, no eviction; `rowAt` load-kick + in-flight de-dup; `ensureRange` Promise + `settle()`; `revision` signal; `complete()`; push-down/`distinct` spies; stable mutable refs) as the datagrid-showcase demo source; confirm it satisfies ST-12/17/18 ([AR-13](00-ambiguity-register.md)).
-- [ ] 4.4 Barrel: export `isWindowed`/`windowedView` from `src/index.ts` with JSDoc `@example`; ensure `GridDataSource.revision?()` is documented; **update the public `displayedRows()` JSDoc to disclose the windowed limitation** (`.length` + integer index only; whole-array ops throw — [PF-006](00-preflight-report.md)). Run `yarn check:docs` (JSDoc `@example` gate) + a plain grep for banned CodeOps IDs in `packages/*/src`.
-- [ ] 4.5 **Kitchen-sink story** — `packages/datagrid/test/kitchen-sink/stories/data-at-scale.story.ts` + one line in that **datagrid-local** `stories/index.ts` (the registry the datagrid smoke test imports; [PF-005](00-preflight-report.md)): a 100k windowed scroll with an "N of M loaded" read-out + blurb/hint (mandatory showcase gate). Make ST-21 (`packages/datagrid/test/kitchen-sink.smoke.spec.test.ts`) pass.
-- [ ] 4.6 Datagrid-showcase "Data at scale" cluster — replace the RD-11 placeholder (`placeholders.ts`) with `stories/data-at-scale/` demos (100k scroll · `…` placeholder · push-down over the window · "(loaded)" footer · in-memory-large); re-base the showcase registry counts + per-category oracle; keep both headless tiers green.
-- [ ] 4.7 Verify ST-18…ST-21 **green**; full `yarn verify` green.
+- [x] 4.3 Wire `asyncWindowedSource` (built in **task 1.0**: page store, no eviction; `rowAt` load-kick + in-flight de-dup; `ensureRange` Promise + `settle()`; `revision` signal; `complete()`; push-down/`distinct` spies; stable mutable refs) as the datagrid-showcase demo source; confirm it satisfies ST-12/17/18 ([AR-13](00-ambiguity-register.md)). **Exec note:** the datagrid *test* fixture can't be imported cross-package by `packages/examples` (which consumes the **built** `@jsvision/datagrid`), so the showcase uses a small package-local twin `stories/lib/windowed-source.ts` (same shape: lazy page loading + `revision` repaint + real `setSort`/`setFilter` push-down over a backing array). The fixture itself is validated by ST-18 (task 4.1) + the 4.8 edge tests. ✅ (completed: 2026-07-18 03:27)
+- [x] 4.4 Barrel: export `isWindowed`/`windowedView` from `src/index.ts` with JSDoc `@example`; ensure `GridDataSource.revision?()` is documented; **update the public `displayedRows()` JSDoc to disclose the windowed limitation** (`.length` + integer index only; whole-array ops throw — [PF-006](00-preflight-report.md)). Run `yarn check:docs` (JSDoc `@example` gate) + a plain grep for banned CodeOps IDs in `packages/*/src`. ✅ (completed: 2026-07-18 03:27)
+- [x] 4.5 **Kitchen-sink story** — `packages/datagrid/test/kitchen-sink/stories/data-at-scale.story.ts` + one line in that **datagrid-local** `stories/index.ts` (the registry the datagrid smoke test imports; [PF-005](00-preflight-report.md)): a 100k windowed scroll with an "N of M loaded" read-out + blurb/hint (mandatory showcase gate). Make ST-21 (`packages/datagrid/test/kitchen-sink.smoke.spec.test.ts`) pass. ✅ (completed: 2026-07-18 03:27)
+- [x] 4.6 Datagrid-showcase "Data at scale" cluster — replace the RD-11 placeholder (`placeholders.ts`) with `stories/data-at-scale/` demos (100k scroll · `…` placeholder · push-down over the window · "(loaded)" footer · in-memory-large); re-base the showcase registry counts + per-category oracle; keep both headless tiers green. **Exec note (scope):** shipped as **2** live demos under a new `Data at scale` category — `scroll-100k` (windowed virtual scroll, which inherently demonstrates the `…` placeholder AND push-down-on-header-click) and `in-memory-large` (the eager 100k AC-1 variant). The `…` placeholder + push-down are folded into `scroll-100k` (they are the same grid, not separate screens); the "(loaded)" footer honesty label is already showcased by the existing `footer-master-detail/honesty` story, so it was not duplicated. RD-11 removed from `placeholders.ts`; the smoke oracles re-based (Roadmap 3→2, new `Data at scale`=2 category). A caller wanting finer-grained demos can split `scroll-100k` further. ✅ (completed: 2026-07-18 03:27)
+- [x] 4.7 Verify ST-18…ST-21 **green**; full `yarn verify` green. ✅ (completed: 2026-07-18 03:27)
 
 *Session 4C — Impl tests & hardening*
-- [ ] 4.8 `async-windowed-source` impl edges: in-flight de-dup, `settle()` with zero pending, a window straddling two unloaded pages; reconcile the kitchen-sink-gate checklist.
-- [ ] 4.9 Final full `yarn verify` (turbo all green); confirm zero RD-01…12 regression; `grid.ts` under `< 1500`; run `yarn lint:fix` before any PR-bound push (prime directive) and commit what it changes.
+- [x] 4.8 `async-windowed-source` impl edges: in-flight de-dup, `settle()` with zero pending, a window straddling two unloaded pages; reconcile the kitchen-sink-gate checklist. ✅ (completed: 2026-07-18 03:27)
+- [x] 4.9 Final full `yarn verify` (turbo all green); confirm zero RD-01…12 regression; `grid.ts` under `< 1500`; run `yarn lint:fix` before any PR-bound push (prime directive) and commit what it changes. ✅ (completed: 2026-07-18 03:27)
 
 ---
 

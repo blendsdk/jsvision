@@ -37,27 +37,6 @@ export function isWindowed<T>(source: GridDataSource<T>): boolean {
 }
 
 /**
- * A length-correct, lazily-read view over a windowed source, presentable as the `display: () => T[]` the
- * grid body demands. `.length` reports the source total; an integer index returns the loaded row or
- * `undefined` (a hole is never collapsed away). It is typed `T[]`, but only `.length` and integer
- * indexing are supported — every whole-array operation (`.map`/`.find`/`.reduce`/spread/`for..of`)
- * **throws** a descriptive error, because such an operation over a windowed source would either crash on
- * the first unloaded row or full-scan the entire dataset (a fetch-storm). Route each whole-array consumer
- * behind {@link isWindowed} and read `source.rowAt(i)` directly instead.
- *
- * @param source The windowed source to present as a lazy array.
- * @returns A `T[]`-typed lazy view: length-correct, integer-indexable, and fail-loud on any other access.
- * @example
- * ```ts
- * import { windowedView } from '@jsvision/datagrid';
- * const view = windowedView(source);   // source.length() === 100000, only rows [0,50) loaded
- * view.length;                         // 100000 (the source total)
- * view[10];                            // the loaded row
- * view[500];                           // undefined (an unloaded hole)
- * // view.map(...) or [...view] throws — gate the consumer behind isWindowed(source) first.
- * ```
- */
-/**
  * Validate a windowed source's grid configuration at construction. A windowed source **must** push sort
  * and filter down to itself (they cannot run client-side over a partially-loaded dataset, and the grid's
  * re-anchor scans are gated by push-down presence, not by `isWindowed`) — a missing `setSort`/`setFilter`
@@ -88,6 +67,27 @@ export function validateWindowedConfig<T>(
   }
 }
 
+/**
+ * A length-correct, lazily-read view over a windowed source, presentable as the `display: () => T[]` the
+ * grid body demands. `.length` reports the source total; an integer index returns the loaded row or
+ * `undefined` (a hole is never collapsed away). It is typed `T[]`, but only `.length` and integer
+ * indexing are supported — every whole-array operation (`.map`/`.find`/`.reduce`/spread/`for..of`)
+ * **throws** a descriptive error, because such an operation over a windowed source would either crash on
+ * the first unloaded row or full-scan the entire dataset (a fetch-storm). Route each whole-array consumer
+ * behind {@link isWindowed} and read `source.rowAt(i)` directly instead.
+ *
+ * @param source The windowed source to present as a lazy array.
+ * @returns A `T[]`-typed lazy view: length-correct, integer-indexable, and fail-loud on any other access.
+ * @example
+ * ```ts
+ * import { windowedView } from '@jsvision/datagrid';
+ * const view = windowedView(source);   // source.length() === 100000, only rows [0,50) loaded
+ * view.length;                         // 100000 (the source total)
+ * view[10];                            // the loaded row
+ * view[500];                           // undefined (an unloaded hole)
+ * // view.map(...) or [...view] throws — gate the consumer behind isWindowed(source) first.
+ * ```
+ */
 export function windowedView<T>(source: GridDataSource<T>): T[] {
   const unsupported = (prop: string | symbol): never => {
     throw new Error(
