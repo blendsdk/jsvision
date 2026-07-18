@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-19 01:20
-> **Progress**: 20/32 tasks (63%)
+> **Last Updated**: 2026-07-19 01:28
+> **Progress**: 27/32 tasks (84%)
 > **CodeOps Skills Version**: 3.9.0
 
 ## Overview
@@ -115,18 +115,18 @@ spec-immutability exception, not a behavior change.
 
 ### Step 4.1: Spec (red)
 **Reference**: 03-04 · 07 ST-13…ST-15 · AR-5, AR-6
-- [ ] 4.1.1 Write `packages/ui/test/dsl-offsets.spec.test.ts` (ST-13…ST-15)
-- [ ] 4.1.2 Red: confirm FAIL
+- [x] 4.1.1 Write `packages/ui/test/dsl-offsets.spec.test.ts` (ST-13…ST-15) ✅ (completed: 2026-07-19 01:28)
+- [x] 4.1.2 Red: confirm FAIL ✅ (completed: 2026-07-19 01:28) — ST-13 (offset) + ST-15 (dev-warn) fail; ST-14 clamp trivially passes pre-impl (no offset ⇒ already in range)
 
 ### Step 4.2: Implement (green)
 **Reference**: 03-04 §offsets, §dev-warn
-- [ ] 4.2.1 Add `hOffset`/`vOffset` to `Placement` + apply-then-clamp in `layerRect()`; ignore on a `'fill'` axis — `dsl/stack.ts`
-- [ ] 4.2.2 Add the orphan-tagger dev-warn — route through the shared `devWarn(scope, message)` helper (`shared/warnings.ts`, the single sanctioned console sink), with a `WeakSet` `adoptedByStack` tracker + `queueMicrotask` one-shot check — `dsl/stack.ts`
-- [ ] 4.2.3 Green: ST-13…ST-15 pass
+- [x] 4.2.1 Add `hOffset`/`vOffset` to `Placement` + apply-then-clamp in `layerRect()`; ignore on a `'fill'` axis — `dsl/stack.ts` ✅ (completed: 2026-07-19 01:28) — offset applied **directionally** (add for start/center, subtract for end) per AR-15 (runtime): the plan's uniform `pos + off` snippet contradicted ST-13; corrected to the ST oracle
+- [x] 4.2.2 Add the orphan-tagger dev-warn — route through the shared `devWarn(scope, message)` helper (`shared/warnings.ts`, the single sanctioned console sink), with a `WeakSet` `adoptedByStack` tracker + `queueMicrotask` one-shot check — `dsl/stack.ts` ✅ (completed: 2026-07-19 01:28)
+- [x] 4.2.3 Green: ST-13…ST-15 pass ✅ (completed: 2026-07-19 01:28)
 
 ### Step 4.3: Impl tests & verify
-- [ ] 4.3.1 Impl test (offset ignored on a `'fill'` axis; warn suppressed inside `stack()`) — extend `dsl-hardening.impl.test.ts`
-- [ ] 4.3.2 Verify
+- [x] 4.3.1 Impl test (offset ignored on a `'fill'` axis; start-anchored inset; warn suppressed inside `stack()`) — extend `dsl-hardening.impl.test.ts` ✅ (completed: 2026-07-19 01:28)
+- [x] 4.3.2 Verify ✅ (completed: 2026-07-19 01:28) — full `CI=1 yarn verify` green (30/30); no dev-warn fallout (every existing tagger is stack-adopted); `Placement` API-ref re-synced (no AI)
 
 **Deliverables**: placement offsets + a guidance dev-warn (via `devWarn`).
 **Verify**: `yarn verify`

@@ -16,6 +16,7 @@ import { Group } from '../group.js';
 import type { DrawContext } from '../types.js';
 import type { Padding, Rect } from '../../layout/index.js';
 import { toLayout, type Flex } from './flex.js';
+import { devWarn } from '../../shared/warnings.js';
 
 /**
  * A layer accepted by {@link stack}: a real {@link View}, or a falsy value
@@ -43,10 +44,25 @@ export interface Placement {
   width?: number;
   /** Fixed height in cells for a non-`fill` vertical axis. */
   height?: number;
+  /**
+   * Horizontal inset in cells, applied after the `start`/`center`/`end` position: a positive value
+   * moves the layer *away from its anchored edge* (right for `start`/`center`, left for `end`), then
+   * the box is clamped to stay within the content box. Ignored on a `'fill'` horizontal axis.
+   */
+  hOffset?: number;
+  /**
+   * Vertical inset in cells, applied after the `start`/`center`/`end` position: a positive value
+   * moves the layer *away from its anchored edge* (down for `start`/`center`, up for `end`), then the
+   * box is clamped to stay within the content box. Ignored on a `'fill'` vertical axis.
+   */
+  vOffset?: number;
 }
 
 /** Placement tags attached by {@link place}; read by {@link stack} to wire each layer. */
 const placements = new WeakMap<View, Placement>();
+
+/** Views a {@link stack} has adopted — a WeakSet (like {@link placements}) so it never retains a view. */
+const adoptedByStack = new WeakSet<View>();
 
 /** Whether an axis mode fills (spans the whole extent) — the untagged/`'fill'` case. */
 function isFillAxis(mode: PlaceAxis | undefined): boolean {
@@ -56,21 +72,27 @@ function isFillAxis(mode: PlaceAxis | undefined): boolean {
 /**
  * Resolve a {@link Placement} to a content-box-relative {@link Rect} for a `W×H` content box: per
  * axis, `'fill'` (or no fixed size) spans `[0, extent]`, otherwise a size of `min(want, extent)` is
- * placed at the start (`0`), centered (`floor((extent-size)/2)`), or the end (`extent-size`).
+ * placed at the start (`0`), centered (`floor((extent-size)/2)`), or the end (`extent-size`). A
+ * non-fill axis then applies its offset — a positive value insets the box away from its anchored edge
+ * (added for `start`/`center`, subtracted for `end`) — and clamps to `[0, extent-size]` so the box
+ * never leaves the content box. An offset on a `'fill'` axis is ignored (a fill spans everything).
  */
 function layerRect(p: Placement, W: number, H: number): Rect {
   const axis = (
     mode: PlaceAxis | undefined,
     want: number | undefined,
     extent: number,
+    offset: number,
   ): { pos: number; size: number } => {
     if (isFillAxis(mode) || want === undefined) return { pos: 0, size: extent };
     const size = Math.min(want, extent);
-    const pos = mode === 'start' ? 0 : mode === 'center' ? Math.floor((extent - size) / 2) : extent - size;
+    const base = mode === 'start' ? 0 : mode === 'center' ? Math.floor((extent - size) / 2) : extent - size;
+    const shifted = mode === 'end' ? base - offset : base + offset;
+    const pos = Math.max(0, Math.min(extent - size, shifted));
     return { pos, size };
   };
-  const h = axis(p.h, p.width, W);
-  const v = axis(p.v, p.height, H);
+  const h = axis(p.h, p.width, W, p.hOffset ?? 0);
+  const v = axis(p.v, p.height, H, p.vOffset ?? 0);
   return { x: h.pos, y: v.pos, width: h.size, height: v.size };
 }
 
@@ -170,6 +192,9 @@ export function stack(...args: [Flex, ...Layer[]] | Layer[]): Group {
   for (const layer of layers) {
     // Skip null/undefined/false so a conditional layer composes; anything else is a real View.
     if (layer === null || layer === undefined || layer === false) continue;
+    // Record adoption before the place() one-shot check runs (next microtask), so a properly-wired
+    // layer never triggers the orphaned-tagger warning.
+    adoptedByStack.add(layer);
     const placement = placements.get(layer);
     if (placement === undefined || (isFillAxis(placement.h) && isFillAxis(placement.v))) {
       // Untagged or both-axes fill → engine overlay fill (lag-free, layers overlap).
@@ -218,6 +243,18 @@ export function stack(...args: [Flex, ...Layer[]] | Layer[]): Group {
  */
 export function place<V extends View>(view: V, placement: Placement): V {
   placements.set(view, placement);
+  // A placement tag only does anything once a stack() adopts the view. If none has by the next
+  // microtask (after synchronous composition), the tag is a silent no-op — warn the developer.
+  // No throw, no production cost (devWarn is silent under NODE_ENV=production); a one-shot check.
+  queueMicrotask(() => {
+    if (placements.has(view) && !adoptedByStack.has(view)) {
+      devWarn(
+        'layout',
+        'place()/centered()/topRight()/… on a view never added to a stack() has no effect — ' +
+          'use cover()/center()/at() to place a standalone view.',
+      );
+    }
+  });
   return view;
 }
 
