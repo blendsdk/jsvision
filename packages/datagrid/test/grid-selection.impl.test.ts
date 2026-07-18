@@ -185,7 +185,10 @@ test('AR-6: the selection controller is extracted to grid-selection.ts and grid.
   // the error-registry / message-band / lifecycle wiring — logic in error-registry.ts / validation.ts /
   // grid-lifecycle.ts) — heavy logic stays in the new modules; see grid-footer.impl.test. Re-based
   // 1500 -> 1550 for the RD-11 windowing surface (thin isWindowed-guarded delegators; the lazy view +
-  // push-down validation live in windowing.ts).
+  // push-down validation live in windowing.ts), then 1550 -> 1680 for the RD-13 export & layout-variants
+  // surface: four documented public methods (exportView / setFrozen / saveVariant / applyVariant), each
+  // with JSDoc + an @example, plus the freezeSpec->signal edit — the serialization + variant logic lives
+  // in the new export-view.ts / variant.ts modules; the guard is NEVER met by re-inlining that logic.
   const lineCount = grid.split('\n').length;
-  expect(lineCount).toBeLessThan(1550);
+  expect(lineCount).toBeLessThan(1680);
 });

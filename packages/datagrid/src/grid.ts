@@ -20,6 +20,8 @@ import { visibleOrder, partition, overPinnedIds, clampWidth, DEFAULT_AUTOFIT_MAX
 import type { FreezeSpec, FreezePartition } from './column-model.js';
 import type { GridDataSource } from './data-source.js';
 import { isWindowed, windowedView, validateWindowedConfig } from './windowing.js';
+import { serializeView } from './export-view.js';
+import type { ExportColumn, ExportFormat } from './export-view.js';
 import { sortRowsMulti } from './sort.js';
 import type { SortKey, SortDir } from './sort.js';
 import { filterRows, resolveFilterType, computeDistinct } from './filter.js';
@@ -54,8 +56,8 @@ import type { GridStatus, LifecycleController } from './grid-lifecycle.js';
  * for the condition section stacked above the embedded value-list section (both are always present for
  * an in-memory source). It clips against a short grid; a taller viewport shows it whole.
  */
-const FILTER_POPUP_WIDTH = 26;
-const FILTER_POPUP_HEIGHT = 17;
+const FILTER_POPUP_WIDTH = 34;
+const FILTER_POPUP_HEIGHT = 19;
 
 /** Construction options for {@link EditableDataGrid}. */
 export interface EditableDataGridOptions<T> {
@@ -945,6 +947,59 @@ export class EditableDataGrid<T> extends Group {
    */
   displayedRows(): readonly T[] {
     return this.display();
+  }
+
+  /**
+   * Serialize the current view — the visible columns in display order, their `format`ted values, and the
+   * filtered + sorted rows — to CSV, HTML, JSON, or TSV. CSV/TSV are RFC-4180 (records CRLF-joined; a
+   * field with the delimiter, a `"`, or a newline is double-quoted, embedded quotes doubled) with
+   * spreadsheet formula-injection escaping (a cell that begins with `= + - @` — the accepted tradeoff: a
+   * negative like `-5` becomes `'-5`); HTML is a standalone document with a markup-escaped `<table>`;
+   * JSON is an array of objects holding the **raw** values keyed by column **id**. Hidden and synthetic
+   * (checkbox / row-number) columns are excluded; the grid never chooses a destination — it returns a
+   * string the caller writes to a file or clipboard.
+   *
+   * **Eager sources only.** This serializes the resident displayed rows. On a **windowed** source (one
+   * exposing `ensureRange`) the displayed rows are a lazy window, not a full array, so this **throws** — a
+   * full-view export over a windowed source is a separate mechanism.
+   *
+   * @param format The target format (`'csv' | 'html' | 'json' | 'tsv'`).
+   * @returns The serialized document as a string.
+   * @throws If the grid is over a windowed source.
+   * @example
+   * ```ts
+   * const csv = grid.exportView('csv');   // 'Name,Total\r\nAnn,10\r\n…' — RFC-4180, formula-escaped
+   * const json = grid.exportView('json'); // [{ name: 'Ann', total: 10 }, …] — raw values, keyed by id
+   * ```
+   */
+  exportView(format: ExportFormat): string {
+    if (this.windowed) {
+      // Guard before serializeView touches displayedRows(): on a windowed source that is a fail-loud lazy
+      // view whose whole-array ops throw a generic error. Mirrors autoFitColumn/distinctFor.
+      throw new Error(
+        'exportView is unsupported on a windowed source: the displayed rows are a lazy window, not a full ' +
+          'array. Export the loaded window (or drive the full range) via a follow-up.',
+      );
+    }
+    const cols: ExportColumn<T>[] = this.columnOrder().map((id) => {
+      // columnOrder() yields only real, visible column ids, so the map lookup is always present.
+      const col = this.columnMap.get(id)!;
+      return {
+        id,
+        title: col.title,
+        text: (row: T) => {
+          const value = col.value(row);
+          if (col.format === undefined) return String(value);
+          try {
+            return col.format(value, row);
+          } catch {
+            return String(value); // a throwing formatter degrades its one cell, never the whole export
+          }
+        },
+        raw: (row: T) => col.value(row),
+      };
+    });
+    return serializeView(cols, this.displayedRows(), format);
   }
 
   /**

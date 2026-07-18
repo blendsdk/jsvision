@@ -74,8 +74,12 @@ test('grid.ts stays a thin delegator under the line-count guard', () => {
   // 1500 -> 1550 for the RD-11 windowing surface: the thin isWindowed-guarded delegators (the display
   // branch, the auto-width/distinct/count guards, the `prefetch` option, and the windowed flags threaded
   // to the selection/mutation/footer controllers) — the lazy view + push-down validation live in windowing.ts.
+  // Re-based 1550 -> 1680 for the RD-13 export & layout-variants surface: four documented public methods
+  // (exportView / setFrozen / saveVariant / applyVariant) each with JSDoc + an @example, plus the
+  // freezeSpec->signal edit — the serialization + variant logic lives in the new export-view.ts /
+  // variant.ts modules, and (as always) the guard is never met by re-inlining that logic.
   const lineCount = src('grid.ts').split('\n').length;
-  expect(lineCount).toBeLessThan(1550);
+  expect(lineCount).toBeLessThan(1680);
 });
 
 test('displayedRows is reactive: an effect re-runs when the source rows change', () => {
