@@ -251,3 +251,27 @@ test('a nested row-of-cols lays out a 2×2 grid at a realistic size', () => {
   expect(tl.bounds.height + 1 + bl.bounds.height, 'the left column fills the height').toBe(11);
   expect(tr.bounds.height).toBe(5);
 });
+
+// ── the DSL grow(min) reaches each pane, and grow's additive merge preserves a pre-set prop ───────
+
+test('each pane carries the minSize on its fr size token (the DSL grow min reaches the pane)', () => {
+  const [a, b] = [new Pane(), new Pane()];
+
+  new SplitView({ direction: 'row', children: [a, b], sizes: signal([1, 3]), minSize: 12 });
+  expect(a.layout.size).toEqual({ kind: 'fr', weight: 1, min: 12 });
+  expect(b.layout.size).toEqual({ kind: 'fr', weight: 3, min: 12 });
+});
+
+test("a pane's pre-set non-size layout prop survives construction (grow merges, not replaces)", () => {
+  const a = new Pane();
+  a.layout = { direction: 'col' }; // a pre-existing non-size prop the split must not clobber
+  const b = new Pane();
+
+  new SplitView({ direction: 'row', children: [a, b], sizes: signal([1, 1]), minSize: 12 });
+  expect(a.layout.direction, "the pane's own direction is preserved through the split's sizing").toBe('col');
+  expect(a.layout.size, 'sizing is still applied (merged over, not instead of)').toEqual({
+    kind: 'fr',
+    weight: 1,
+    min: 12,
+  });
+});

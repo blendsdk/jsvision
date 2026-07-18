@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-19 01:28
-> **Progress**: 27/32 tasks (84%)
+> **Last Updated**: 2026-07-19 01:34
+> **Progress**: 30/32 tasks (94%)
 > **CodeOps Skills Version**: 3.9.0
 
 ## Overview
@@ -137,9 +137,9 @@ spec-immutability exception, not a behavior change.
 
 ### Step 5.1: Guard + migrate + verify green
 **Reference**: 03-05 · 07 ST-16, ST-17 · AR-9
-- [ ] 5.1.1 Add the ST-16 assertions to `packages/ui/test/split.impl.test.ts` — the pane `min` reaches the pane, AND a pane's pre-existing non-size `layout` props survive `grow`'s merge; confirm both pass on current code (invariant baseline)
-- [ ] 5.1.2 Migrate `split-view.ts` sites `:153`/`:157`/`:185` to `grow(v, w, { min })` / `fixed(v, 1)` (leave the `:147` runtime-direction track as-is). Note: `grow` **merges** (`{...view.layout, size}`) where the old sites replaced — additive-merge, not byte-identical; panes must not pre-set `position` — `packages/ui/src/split/split-view.ts`
-- [ ] 5.1.3 Verify `split.spec.test.ts` + `split.impl.test.ts` + `split.packaging.spec.test.ts` + `split-grabmark.*` pass **unchanged** (ST-16, ST-17)
+- [x] 5.1.1 Add the ST-16 assertions to `packages/ui/test/split.impl.test.ts` — the pane `min` reaches the pane, AND a pane's pre-existing non-size `layout` props survive `grow`'s merge ✅ (completed: 2026-07-19 01:34) — assertion (a) `min`-reaches-pane is the invariant (green pre-migration); assertion (b) prop-survives is the **distinguisher** (RED pre-migration on the old replace-semantics, GREEN after), not an "invariant baseline" — the plan wording is imprecise for (b)
+- [x] 5.1.2 Migrate `split-view.ts` sites `:153`/`:157`/`:185` to `grow(v, w, { min })` / `fixed(v, 1)` (left the `:147` runtime-direction track as-is). `grow` **merges** where the old sites replaced — additive-merge; panes must not pre-set `position` — `packages/ui/src/split/split-view.ts` ✅ (completed: 2026-07-19 01:34) — renamed the local `fixed` weights array → `fitted` to avoid shadowing the imported DSL `fixed`
+- [x] 5.1.3 Verify `split.spec.test.ts` + `split.impl.test.ts` + `split.packaging.spec.test.ts` + `split-grabmark.*` pass (ST-16 now green; the rest unchanged — ST-17) ✅ (completed: 2026-07-19 01:34) — 5 suites / 43 tests green; full `CI=1 yarn verify` green (30/30)
 
 **Deliverables**: split-view uses the DSL `min` form; behavior identical (modulo the documented additive-merge).
 **Verify**: `yarn verify`
