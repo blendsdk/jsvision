@@ -64,6 +64,13 @@ export type { GridVariant, GridVariantColumn, GridColumnInfo } from './variant.j
 export { createMemoryVariantStore } from './variant-store.js';
 export type { VariantStore } from './variant-store.js';
 
+// Personalization dialog — `personalizeGrid(grid, { store, host, title? })` opens the staged end-user
+// "Personalize columns" modal: show/hide, reorder, freeze, and resize columns and manage saved layout
+// variants, committed to the grid via `applyVariant` on OK (untouched on Cancel/Esc). Ships no default
+// keybinding — wire it to a menu item or key of your choice.
+export { personalizeGrid } from './personalize.js';
+export type { PersonalizeOptions, PersonalizeResult } from './personalize.js';
+
 // Filter model — the pure `filterRows` multi-column AND evaluator and `computeDistinct` label
 // enumeration, plus the `ColumnFilter` per-column condition, the `FilterModel` map the source's
 // `setFilter` push-down consumes, the `DistinctResult` a value-list reads, and the `FilterType` a
