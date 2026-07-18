@@ -101,6 +101,9 @@ import { dataAtScaleInMemoryStory } from './data-at-scale/in-memory-large.story.
 import { exportFormatsStory } from './export-personalization/export.story.js';
 import { variantsStory } from './export-personalization/variants.story.js';
 
+// Personalization (RD-16) — the end-user personalizeGrid modal over a caller VariantStore
+import { personalizeStory } from './personalization/personalize.story.js';
+
 // Roadmap — the "coming soon" panels (RD-14)
 import { placeholders } from './placeholders.js';
 
@@ -197,6 +200,9 @@ export const STORIES: readonly Story[] = [
   // Export & variants (RD-13) · 2
   exportFormatsStory,
   variantsStory,
+
+  // Personalization (RD-16) · 1
+  personalizeStory,
 
   // Roadmap — coming soon (RD-14) · 1
   ...placeholders,

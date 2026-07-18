@@ -84,6 +84,7 @@ const CATEGORIES = [
   'Validation & lifecycle',
   'Data at scale',
   'Export & variants',
+  'Personalization',
   'Roadmap',
 ] as const;
 
@@ -112,4 +113,5 @@ test('ST-7: each shipped cluster has its full demo count', () => {
   expect(counts['Validation & lifecycle'], 'Validation & lifecycle').toBe(4);
   expect(counts['Data at scale'], 'Data at scale').toBe(2);
   expect(counts['Export & variants'], 'Export & variants').toBe(2);
+  expect(counts['Personalization'], 'Personalization').toBe(1);
 });

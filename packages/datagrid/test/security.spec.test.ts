@@ -7,7 +7,9 @@ import { test, expect, vi } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { Group, Input, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+import { Group, Input, createEventLoop, resolveCapabilities, signal, Commands } from '@jsvision/ui';
+import type { View } from '@jsvision/ui';
+import { defaultTheme } from '@jsvision/core';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
@@ -16,6 +18,9 @@ import type { FilterModel } from '../src/filter.js';
 import type { OnCommit, BeforeSave } from '../src/commit.js';
 import { PARSE_FAILED } from '../src/format.js';
 import { EditableDataGrid } from '../src/grid.js';
+import { personalizeGrid } from '../src/personalize.js';
+import { createMemoryVariantStore } from '../src/variant-store.js';
+import type { PersonalizeDialog } from '../src/personalize-dialog.js';
 import { asyncWindowedSource } from './fixtures/async-windowed-source.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -792,4 +797,104 @@ test('control-byte sanitize: no raw control byte reaches the output in any forma
 test('JSON is not over-escaped: a formula value stays raw and round-trips', () => {
   const json = buildFGrid(['=SUM(A1)']).exportView('json');
   expect(JSON.parse(json)).toEqual([{ f: '=SUM(A1)' }]); // raw, not "'=SUM(A1)"
+});
+
+// ───────────────────────────────────────────────────────────────────────────────────────────────
+// ST-26 — the personalization dialog's security posture.
+// ───────────────────────────────────────────────────────────────────────────────────────────────
+
+interface Pers {
+  id: number;
+  total: number;
+}
+function buildPersGrid(): EditableDataGrid<Pers> {
+  const columns = [
+    column<Pers, number>({ id: 'id', title: 'ID', value: (r) => r.id, width: 5 }),
+    column<Pers, number>({ id: 'total', title: 'Total', value: (r) => r.total, width: 6, minWidth: 4, maxWidth: 40 }),
+  ];
+  const grid = new EditableDataGrid<Pers>({
+    columns,
+    source: fromRows(signal([{ id: 1, total: 10 }]), { rowKey: (r) => r.id }),
+  });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 6 } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: 40, height: 6 }, { caps });
+  loop.mount(root);
+  loop.renderRoot.flush();
+  return grid;
+}
+function makePersHost() {
+  const root = new Group();
+  const loop = createEventLoop({ width: 70, height: 24 }, { caps });
+  loop.mount(root);
+  const added: View[] = [];
+  const host = {
+    loop,
+    desktop: {
+      addWindow: (v: View) => {
+        added.push(v);
+        root.add(v);
+      },
+      removeWindow: (v: View) => root.remove(v),
+      bounds: { x: 0, y: 0, width: 70, height: 24 },
+    },
+  };
+  return { loop, host, added };
+}
+
+// No new core theme roles — the dialog reuses the existing Dialog roles, adding none to core.
+test('ST-26: the personalization dialog adds no new core theme roles', () => {
+  expect(Object.keys(defaultTheme).length).toBe(74); // unchanged by RD-16
+});
+
+// The variant name is sanitized (control bytes stripped), hard-capped at 64, and a blank name is rejected.
+test('ST-26: the variant name is sanitized, capped at 64, and a blank name is rejected', async () => {
+  const grid = buildPersGrid();
+  const store = createMemoryVariantStore();
+  const { host, added } = makePersHost();
+  void personalizeGrid(grid, { store, host });
+  const dlg = added[0] as unknown as PersonalizeDialog<Pers>;
+  dlg.setName('a\x1bb\x07c'); // ESC + BEL embedded
+  expect(dlg.sanitizedName()).toBe('abc'); // control bytes stripped
+  expect(dlg.sanitizedName()).not.toMatch(/[\x00-\x08\x0e-\x1f]/); // no raw control bytes
+  dlg.setName('y'.repeat(120));
+  expect(dlg.nameValue().length).toBeLessThanOrEqual(64); // hard-capped
+  dlg.setName('   ');
+  expect(await dlg.saveAs()).toBe('blank'); // whitespace-only rejected
+  expect(store.list()).toHaveLength(0); // nothing written
+});
+
+// A hostile width value is clamped to the column's [minWidth, maxWidth] on OK (never out of bounds).
+test('ST-26: a hostile width value clamps to the column max on OK', async () => {
+  const grid = buildPersGrid();
+  const { loop, host, added } = makePersHost();
+  const result = personalizeGrid(grid, { store: createMemoryVariantStore(), host });
+  const dlg = added[0] as unknown as PersonalizeDialog<Pers>;
+  dlg.select(dlg.indexOf('total'));
+  dlg.setSelectedWidth('9999'); // far above maxWidth 40
+  loop.emitCommand(Commands.ok);
+  await result;
+  expect(grid.columnWidth('total')).toBe(40); // clamped, not out of bounds
+});
+
+// Applying a variant that names an unknown column drops it — no phantom column is injected.
+test('ST-26: applying a variant drops an unknown column id (no injection)', async () => {
+  const grid = buildPersGrid();
+  const { loop, host, added } = makePersHost();
+  const result = personalizeGrid(grid, { store: createMemoryVariantStore(), host });
+  const dlg = added[0] as unknown as PersonalizeDialog<Pers>;
+  dlg.applyStored({
+    name: 'x',
+    columns: [
+      { id: 'id', visible: true },
+      { id: 'evil', visible: true }, // not a current column
+    ],
+    freeze: { left: [], right: [] },
+    sort: [],
+    filter: [],
+  });
+  loop.emitCommand(Commands.ok);
+  await result;
+  expect(grid.columnOrder()).not.toContain('evil'); // dropped, no throw
 });
