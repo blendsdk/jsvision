@@ -37,6 +37,13 @@ export type { CellRenderer, CellDrawContext, RenderCell, CellState } from './cel
 export { fromRows, fromReactiveRows } from './data-source.js';
 export type { GridDataSource } from './data-source.js';
 
+// Windowing — the windowed read path. `isWindowed` detects a windowed source (one exposing `ensureRange`);
+// `windowedView` presents it as the length-correct lazy `display: () => T[]` the grid body demands (only
+// `.length` + integer indexing; every whole-array op throws, so a missed guard is a located test failure,
+// never a silent full-scan). A windowed source drives its own loading and pushes sort/filter down, and
+// signals a landed page through the optional reactive `revision?()` member on `GridDataSource`.
+export { isWindowed, windowedView } from './windowing.js';
+
 // Filter model — the pure `filterRows` multi-column AND evaluator and `computeDistinct` label
 // enumeration, plus the `ColumnFilter` per-column condition, the `FilterModel` map the source's
 // `setFilter` push-down consumes, the `DistinctResult` a value-list reads, and the `FilterType` a

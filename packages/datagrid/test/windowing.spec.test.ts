@@ -531,3 +531,42 @@ test('ST-17: a windowed value-list filter delegates to source.distinct with no c
   expect(distinctCalls).toContain('id'); // the focused column's value-list delegated, never a client scan
   expect(src.rowAtCount()).toBeLessThan(100); // no computeDistinct(materialize) / sample full-scan
 });
+
+// ---- Phase 4 — helper source contract (ST-18) ----
+
+// ST-18 — the async paged source: a miss returns undefined + kicks the page fetch (idempotent); a landed
+// page bumps revision; loaded pages are retained (a re-read issues no re-fetch); rows are stable mutable
+// refs (an in-place edit persists); ensureRange returns a settle-able Promise.
+test('ST-18: the async paged source loads on miss, settles, bumps revision, retains pages, stable refs', async () => {
+  let fetches = 0;
+  const src = asyncWindowedSource<Row>({
+    total: 100000,
+    pageSize: 100,
+    fetchPage: (p) => {
+      fetches += 1;
+      return Promise.resolve(Array.from({ length: 100 }, (_, k) => ({ id: p * 100 + k, name: `r${p * 100 + k}` })));
+    },
+    rowKey: (r) => r.id,
+  });
+  const rev0 = src.revision();
+  expect(src.rowAt(250)).toBeUndefined(); // page 2 not loaded → hole + fetch kicked
+  expect(src.rowAt(251)).toBeUndefined(); // same page in flight → no second fetch (idempotent)
+  expect(fetches).toBe(1);
+  await src.settle();
+  expect(src.revision()).toBeGreaterThan(rev0); // a landed page bumped the revision
+  expect(src.rowAt(250)).toEqual({ id: 250, name: 'r250' }); // now loaded
+
+  const before = fetches;
+  src.rowAt(299); // still page 2 — retained, no re-fetch
+  await src.settle();
+  expect(fetches).toBe(before);
+
+  const row = src.rowAt(250)!;
+  row.name = 'edited';
+  expect(src.rowAt(250)!.name).toBe('edited'); // stable, mutable ref — an in-place edit persists
+
+  const p = src.ensureRange(300, 500);
+  expect(p).toBeInstanceOf(Promise); // settle-able Promise
+  await p;
+  expect(src.rowAt(400)).toEqual({ id: 400, name: 'r400' });
+});

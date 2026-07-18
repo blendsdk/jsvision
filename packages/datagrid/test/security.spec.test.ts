@@ -16,6 +16,7 @@ import type { FilterModel } from '../src/filter.js';
 import type { OnCommit, BeforeSave } from '../src/commit.js';
 import { PARSE_FAILED } from '../src/format.js';
 import { EditableDataGrid } from '../src/grid.js';
+import { asyncWindowedSource } from './fixtures/async-windowed-source.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const srcDir = join(here, '..', 'src');
@@ -607,4 +608,115 @@ test('ST-21: header/cell text stays sanitized after insert / duplicate / select-
     }
   }
   expect(loop.renderRoot.serialize()).not.toContain('\x07');
+});
+
+// ---- ST-20 — windowed security oracle ----
+
+interface WRow {
+  id: number;
+  name: string;
+}
+
+// Every window request a hostile scroll can produce is an integer range clamped to [0, length()]; a burst
+// of scroll gestures is coalesced (rate-bounded), never a per-row flood of source calls.
+test('ST-20: windowed scroll never sends the source a bad range, and bursts are coalesced', async () => {
+  const total = 100000;
+  const calls: Array<[number, number]> = [];
+  const src: GridDataSource<WRow> = {
+    rowKey: (r) => r.id,
+    length: () => total,
+    rowAt: () => undefined, // nothing loaded → placeholders (isolates the window math)
+    ensureRange: (s, e) => void calls.push([s, e]),
+    setSort: () => undefined,
+    setFilter: () => undefined,
+  };
+  const columns = [column<WRow, string>({ id: 'name', title: 'Name', value: (r) => r.name, width: 10 })];
+  const grid = new EditableDataGrid<WRow>({ columns, source: src });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 6 } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: 12, height: 6 }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+
+  for (const k of ['pagedown', 'pagedown', 'pagedown', 'end', 'home', 'pagedown']) {
+    loop.dispatch({ type: 'key', key: k, ctrl: k === 'end' || k === 'home', alt: false, shift: false });
+  }
+  await tick();
+  expect(calls.length).toBeGreaterThan(0);
+  expect(calls.length).toBeLessThan(10); // coalesced — not one call per gesture/row
+  for (const [start, end] of calls) {
+    expect(Number.isInteger(start)).toBe(true);
+    expect(Number.isInteger(end)).toBe(true);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(end).toBeLessThanOrEqual(total);
+    expect(start).toBeLessThanOrEqual(end);
+  }
+});
+
+// The `…` placeholder is a static constant — never interpolated from (would-be hostile) row data; an
+// unloaded row shows only `…`, so no source string can reach the frame through a placeholder.
+test('ST-20: the unloaded-row placeholder is a static constant (no row-data leak)', () => {
+  const hostile: GridDataSource<WRow> = {
+    rowKey: (r) => r.id,
+    length: () => 500,
+    rowAt: () => undefined, // unloaded — the row that WOULD carry hostile text never renders
+    ensureRange: () => undefined,
+    setSort: () => undefined,
+    setFilter: () => undefined,
+  };
+  const columns = [column<WRow, string>({ id: 'name', title: 'Name', value: (r) => r.name, width: 10 })];
+  const grid = new EditableDataGrid<WRow>({ columns, source: hostile });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 14, height: 6 } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: 14, height: 6 }, { caps });
+  loop.mount(root);
+  const buf = loop.renderRoot.buffer();
+  let text = '';
+  for (let y = 0; y < 6; y += 1) for (let x = 0; x < 14; x += 1) text += buf.get(x, y)?.char ?? ' ';
+  expect(text).toContain('…'); // the placeholder is the constant, painted for every unloaded row
+  expect(loop.renderRoot.serialize()).not.toContain('\x1b'); // no escape leaks
+  expect(loop.renderRoot.serialize()).not.toContain('\x07');
+});
+
+// A windowed edit still routes through onCommit — nothing in the windowed path writes around the sink.
+test('ST-20: a windowed edit routes through onCommit (no persistence bypass)', async () => {
+  const spy = vi.fn<OnCommit<WRow>>(() => true);
+  const src = asyncWindowedSource<WRow>({
+    total: 1000,
+    pageSize: 100,
+    fetchPage: (p) =>
+      Promise.resolve(Array.from({ length: 100 }, (_, k) => ({ id: p * 100 + k, name: `r${p * 100 + k}` }))),
+    rowKey: (r) => r.id,
+  });
+  await src.ensureRange(0, 100); // load the visible window
+  await src.settle();
+  const columns = [
+    column<WRow, string>({
+      id: 'name',
+      title: 'Name',
+      value: (r) => r.name,
+      parse: (t) => t,
+      set: (r, v) => {
+        r.name = v;
+      },
+      width: 12,
+    }),
+  ];
+  const grid = new EditableDataGrid<WRow>({ columns, source: src, onCommit: spy });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 6 } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: 16, height: 6 }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+
+  loop.dispatch(key('f2')); // the focused row 0 is loaded → editable
+  const editor = loop.getFocused();
+  if (editor instanceof Input) editor.getValueSignal().set('changed');
+  loop.dispatch(key('enter'));
+  await tick();
+  expect(spy).toHaveBeenCalledTimes(1); // the commit sink is the only persistence path
+  expect(spy.mock.calls[0][0]).toMatchObject({ rowKey: 0, columnId: 'name', value: 'changed' });
 });

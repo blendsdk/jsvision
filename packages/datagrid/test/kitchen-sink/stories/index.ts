@@ -14,6 +14,7 @@ import { rowsSelectionStory } from './rows-selection.story.js';
 import { footerMasterDetailStory } from './footer-master-detail.story.js';
 import { navigationInteractionStory } from './navigation-interaction.story.js';
 import { validationLifecycleStory } from './validation-lifecycle.story.js';
+import { dataAtScaleStory } from './data-at-scale.story.js';
 
 export const STORIES: readonly Story[] = [
   foundationStory,
@@ -27,4 +28,5 @@ export const STORIES: readonly Story[] = [
   footerMasterDetailStory,
   navigationInteractionStory,
   validationLifecycleStory,
+  dataAtScaleStory,
 ];

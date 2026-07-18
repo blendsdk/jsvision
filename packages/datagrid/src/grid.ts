@@ -935,7 +935,13 @@ export class EditableDataGrid<T> extends Group {
    * footer aggregates fold over; reading it inside an effect re-runs when a row is edited, inserted,
    * deleted, sorted, or filtered.
    *
-   * @returns The displayed rows, in display order (a read-only view of the live derived set).
+   * **Windowed sources:** for a windowed source (one exposing `ensureRange`) this returns a
+   * length-correct **lazy view**, not a materialized array. Only `.length` and integer indexing are
+   * supported — every whole-array operation (`.map`/`.find`/`.filter`/spread/`for..of`) **throws**. Read
+   * `.length` for the count and `[i]` for a row (`undefined` at an unloaded index); do not assume a dense
+   * `T[]`. An eager source returns an ordinary dense array.
+   *
+   * @returns The displayed rows, in display order — a dense array (eager) or a lazy view (windowed).
    */
   displayedRows(): readonly T[] {
     return this.display();
