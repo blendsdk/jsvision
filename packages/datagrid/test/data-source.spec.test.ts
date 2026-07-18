@@ -10,6 +10,7 @@ import { signal } from '@jsvision/ui';
 import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
 import { windowedSource } from './fixtures/windowed-source.js';
+import { asyncWindowedSource } from './fixtures/async-windowed-source.js';
 
 interface Row {
   id: number;
@@ -38,8 +39,33 @@ describe('GridDataSource length/rowAt/rowKey contract', () => {
     assertSourceContract(fromRows(signal(data), { rowKey: (r) => r.id }));
   });
 
-  // ST-7 — a windowed double over the same rows produces identical results.
-  test('should be satisfied identically by a windowed double over the same rows', () => {
+  // ST-7 — an eager double over the same rows produces identical results.
+  test('should be satisfied identically by an eager double over the same rows', () => {
     assertSourceContract(windowedSource(data, (r) => r.id));
+  });
+});
+
+describe('GridDataSource revision contract (windowed repaint seam)', () => {
+  // A windowed/async source exposes an optional reactive `revision` read; a landed page bumps it, so a
+  // scope reading it inside the grid's display derivation re-runs and repaints the newly-loaded rows.
+  test('a windowed source exposes a reactive revision that bumps when a page lands', async () => {
+    const src = asyncWindowedSource<Row>({
+      total: 50,
+      pageSize: 10,
+      fetchPage: (page) => Promise.resolve(Array.from({ length: 10 }, (_, k) => ({ id: page * 10 + k, name: 'x' }))),
+      rowKey: (r) => r.id,
+    });
+    expect(typeof src.revision).toBe('function');
+    const before = src.revision!();
+    src.rowAt(0); // miss → kicks the page fetch
+    await src.settle(); // page lands → revision bumps
+    expect(src.revision!()).toBeGreaterThan(before);
+  });
+
+  // An eager in-memory source omits `revision` — its rows signal already drives repaint, so the member
+  // is absent (and the grid's `revision?.()` read is inert on the eager path).
+  test('an eager fromRows source omits revision', () => {
+    const src = fromRows(signal<Row[]>([]), { rowKey: (r) => r.id });
+    expect(src.revision).toBeUndefined();
   });
 });
