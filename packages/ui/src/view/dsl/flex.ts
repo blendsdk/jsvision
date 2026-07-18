@@ -16,6 +16,13 @@ import type { ThemeRoleName } from '../types.js';
 import type { Direction, LayoutProps, Size } from '../../layout/index.js';
 
 /**
+ * A child accepted by {@link col}/{@link row}: a real {@link View}, or a falsy value
+ * (`null`/`undefined`/`false`) that is skipped so the `cond && child` conditional-render idiom
+ * composes without a manual `.add()` dance.
+ */
+type Child = View | null | undefined | false;
+
+/**
  * Container props for {@link col}/{@link row}: every {@link LayoutProps} field except `direction`
  * (the builder sets that), plus size shorthands and a `background` role.
  *
@@ -32,8 +39,11 @@ import type { Direction, LayoutProps, Size } from '../../layout/index.js';
  * const screen = row(layout, col({ fixed: 20 }, sidebar), col({ grow: 1 }, main));
  */
 export type Flex = Omit<LayoutProps, 'direction'> & {
-  /** Flex-grow weight — shorthand for `size: { kind:'fr', weight }`. */
-  grow?: number;
+  /**
+   * Flex-grow weight — shorthand for `size: { kind:'fr', weight }`. The object form adds a `min`
+   * cell floor: `{ weight, min }` → `{ kind:'fr', weight, min }` (the box never solves below `min`).
+   */
+  grow?: number | { weight: number; min?: number };
   /** Fixed cell count — shorthand for `size: { kind:'fixed', cells }`. */
   fixed?: number;
   /** Take a flex share of `1` — shorthand for `size: { kind:'fr', weight:1 }`. */
@@ -54,7 +64,7 @@ export function toLayout(f: Flex, direction: Direction): LayoutProps {
     (fixedN !== undefined
       ? { kind: 'fixed', cells: fixedN }
       : growN !== undefined
-        ? { kind: 'fr', weight: growN }
+        ? growFrom(growN)
         : fillOn === true
           ? { kind: 'fr', weight: 1 }
           : undefined);
@@ -63,26 +73,36 @@ export function toLayout(f: Flex, direction: Direction): LayoutProps {
   return props;
 }
 
+/** Resolve the `Flex.grow` shorthand (a bare weight or a `{ weight, min }` object) into an fr size. */
+function growFrom(g: number | { weight: number; min?: number }): Size {
+  if (typeof g === 'number') return { kind: 'fr', weight: g };
+  return { kind: 'fr', weight: g.weight, ...(g.min !== undefined ? { min: g.min } : {}) };
+}
+
 /**
  * Build a flex container in the given direction. The first argument may be a {@link Flex} props
  * object or the first child; every remaining argument is a child view, added in order (paint order,
  * back-to-front).
  */
-function container(direction: Direction, args: Array<Flex | View>): Group {
+function container(direction: Direction, args: Array<Flex | Child>): Group {
   const group = new Group();
   const first = args[0];
-  let children: View[];
-  if (first instanceof View) {
-    // No props object — every argument is a child.
-    children = args as View[];
-    group.layout = { direction };
-  } else {
-    const props = (first as Flex | undefined) ?? {};
-    children = args.slice(1) as View[];
+  let children: Array<Flex | Child>;
+  // A props object is a *truthy non-View* first argument; a View or a falsy value (a skipped child)
+  // is not — so a leading `cond && child` is never mistaken for props.
+  if (first !== null && first !== undefined && first !== false && !(first instanceof View)) {
+    const props = first as Flex;
+    children = args.slice(1);
     group.layout = toLayout(props, direction);
     if (props.background !== undefined) group.background = props.background;
+  } else {
+    children = args;
+    group.layout = { direction };
   }
-  for (const child of children) group.add(child);
+  // Skip null/undefined/false so `col(cond && fixed(x, 1), grow(y))` composes; anything else is a View.
+  for (const child of children) {
+    if (child !== null && child !== undefined && child !== false) group.add(child as View);
+  }
   return group;
 }
 
@@ -90,15 +110,19 @@ function container(direction: Direction, args: Array<Flex | View>): Group {
  * Build a **vertical** flex container (`direction: 'col'`) — children stack top to bottom. Pass an
  * optional {@link Flex} props object first, then the child views.
  *
- * @param args An optional {@link Flex} props object followed by child views (or just child views).
- * @returns A `Group` with `layout.direction = 'col'` and the children added in order.
+ * A falsy child (`null`/`undefined`/`false`) is skipped, so `col(showMenu && fixed(menu, 1), body)`
+ * composes without a manual `.add()` dance.
+ *
+ * @param args An optional {@link Flex} props object followed by child views (or just child views); a
+ *   falsy child is skipped.
+ * @returns A `Group` with `layout.direction = 'col'` and the (truthy) children added in order.
  * @example
  * import { col, fixed, grow } from '@jsvision/ui';
  *
- * // A header of fixed height above a growing body.
- * const page = col({ gap: 1 }, fixed(header, 3), grow(body));
+ * // A header of fixed height above a growing body; the status bar only when there is a message.
+ * const page = col({ gap: 1 }, fixed(header, 3), grow(body), message && fixed(status, 1));
  */
-export function col(...args: [Flex, ...View[]] | View[]): Group {
+export function col(...args: [Flex, ...Child[]] | Child[]): Group {
   return container('col', args);
 }
 
@@ -106,15 +130,19 @@ export function col(...args: [Flex, ...View[]] | View[]): Group {
  * Build a **horizontal** flex container (`direction: 'row'`) — children sit left to right. Pass an
  * optional {@link Flex} props object first, then the child views.
  *
- * @param args An optional {@link Flex} props object followed by child views (or just child views).
- * @returns A `Group` with `layout.direction = 'row'` and the children added in order.
+ * A falsy child (`null`/`undefined`/`false`) is skipped, so `row(grow(main), showAside && aside)`
+ * composes without a manual `.add()` dance.
+ *
+ * @param args An optional {@link Flex} props object followed by child views (or just child views); a
+ *   falsy child is skipped.
+ * @returns A `Group` with `layout.direction = 'row'` and the (truthy) children added in order.
  * @example
  * import { row, fixed, grow } from '@jsvision/ui';
  *
  * // A fixed-width sidebar beside a growing main pane.
  * const body = row(fixed(sidebar, 20), grow(main));
  */
-export function row(...args: [Flex, ...View[]] | View[]): Group {
+export function row(...args: [Flex, ...Child[]] | Child[]): Group {
   return container('row', args);
 }
 
@@ -123,18 +151,25 @@ export function row(...args: [Flex, ...View[]] | View[]): Group {
  * proportional to `n`. Mutates the view's `layout.size` (preserving its other layout props) and
  * returns the same view, so it composes inline inside a `col`/`row`.
  *
+ * Pass `{ min }` to add a cell floor: the view then never solves below `min` cells, even as the
+ * container shrinks (forwarding the engine's `Size.fr.min`). The floor binds only when it exceeds the
+ * view's fair share; a lone floored view is still capped at its track (the engine never overflows).
+ *
  * @param view The view to size.
  * @param n The flex weight (default `1`). Two `grow(v, 1)` children split the space evenly; a
  *   `grow(v, 2)` child gets twice the share of a `grow(v, 1)` sibling.
+ * @param opts Optional `{ min }` cell floor. A negative `min` is forwarded and the engine clamps it
+ *   to `0` at solve time (no double-clamp here). There is no `max` — the engine has no ceiling.
  * @returns The same `view`, for inline chaining.
  * @example
  * import { row, grow } from '@jsvision/ui';
  *
- * // `main` takes twice the width of `aside`.
- * const body = row(grow(aside, 1), grow(main, 2));
+ * // `main` takes twice the width of `aside`; `aside` never shrinks below 12 cells.
+ * const body = row(grow(aside, 1, { min: 12 }), grow(main, 2));
  */
-export function grow<V extends View>(view: V, n = 1): V {
-  view.layout = { ...view.layout, size: { kind: 'fr', weight: n } };
+export function grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V {
+  const size: Size = { kind: 'fr', weight: n, ...(opts?.min !== undefined ? { min: opts.min } : {}) };
+  view.layout = { ...view.layout, size };
   return view;
 }
 

@@ -41,8 +41,10 @@
 |------|------------------|----------------------------|--------|
 | ST-1 | `grow(v, 2, { min: 12 })` | `v.layout.size` === `{ kind:'fr', weight:2, min:12 }` | R1 / 03-02 / AR-2 |
 | ST-2 | `grow(v, 2)` (no opts) | `v.layout.size` === `{ kind:'fr', weight:2 }` (no `min` key) — unchanged 2-arg behavior | R1 / AR-2 |
-| ST-3 | `row({ grow: { weight:1, min:12 } }, a)` then solve in a 10-cell row | `a` resolves to width 12 (floored, not 10) | R1 / 03-02 / AR-2 |
+| ST-3 | **Forwarding:** `row({ grow: { weight:1, min:12 } })`. **Binding:** `row(grow(a,1,{min:20}), grow(b,3))` solved in a 40-cell row | Forwarding: the row's `layout.size` === `{ kind:'fr', weight:1, min:12 }` (the container shorthand carries `min`). Binding: `a` resolves to **20** (the floor forces it above its fair share of 10; without `min` it would be 10) and `b` to 20; total = 40 | R1 / 03-02 / AR-2 / AR-14 |
 | ST-4 | Two panes `grow(a,1,{min:12})`,`grow(b,1)` in a 30-cell row | `a` ≥ 12; total = 30 | R1 / AR-2 |
+
+> **ST-3 correction (AR-14, runtime, signed off).** The original ST-3 ("a lone `fr` `min:12` child in a 10-cell row → 12") was unsatisfiable: the engine deliberately **caps a lone floored item at its track** (→ 10, never overflowing — hit-testing-critical). ST-3 is rewritten to prove the `min` genuinely **binds** and changes the solve (two contended `fr` children, the floor forcing one above its fair share), plus that the container shorthand forwards `min` onto the size token. A sanctioned spec-case correction, not a silent edit.
 | ST-5 | `grow(v, 1, { min: -5 })` | forwarded; engine normalizes `min` to 0 (no throw, no double-clamp) | R1 / AR-2 |
 
 ### S7 — falsy children (03-02)

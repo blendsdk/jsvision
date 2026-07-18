@@ -17,6 +17,13 @@ import type { DrawContext } from '../types.js';
 import type { Padding, Rect } from '../../layout/index.js';
 import { toLayout, type Flex } from './flex.js';
 
+/**
+ * A layer accepted by {@link stack}: a real {@link View}, or a falsy value
+ * (`null`/`undefined`/`false`) that is skipped so `stack(canvas, cond && overlay)` composes without
+ * a manual `.add()` dance.
+ */
+type Layer = View | null | undefined | false;
+
 /** An alignment mode for one axis of a {@link Placement}. */
 type PlaceAxis = 'fill' | 'start' | 'center' | 'end';
 
@@ -126,36 +133,43 @@ class Stack extends Group {
  * corner/edge layers settle one frame later.
  *
  * Pass an optional {@link Flex} props object first (e.g. a `background`), then the layers. The stack
- * takes a flex share of `1` by default, so a bare `stack(...)` fills its parent.
+ * takes a flex share of `1` by default, so a bare `stack(...)` fills its parent. A falsy layer
+ * (`null`/`undefined`/`false`) is skipped, so `stack(canvas, showBadge && topRight(badge, 5, 1))`
+ * composes without a manual `.add()` dance.
  *
  * Note: a `centered` layer centers against the stack's **full** box, not its content box — keep a
  * stack's `padding` at `0` for a true center.
  *
- * @param args An optional {@link Flex} props object followed by the layer views (back-to-front).
- * @returns A `Group` overlay containing the wired layers.
+ * @param args An optional {@link Flex} props object followed by the layer views (back-to-front); a
+ *   falsy layer is skipped.
+ * @returns A `Group` overlay containing the wired (truthy) layers.
  * @example
  * import { stack, centered, topRight } from '@jsvision/ui';
  *
  * // A full-box canvas with a centered dialog and a badge pinned to the top-right corner.
  * const screen = stack({ background: 'desktop' }, canvas, centered(dialog, 40, 12), topRight(badge, 5, 1));
  */
-export function stack(...args: [Flex, ...View[]] | View[]): Group {
+export function stack(...args: [Flex, ...Layer[]] | Layer[]): Group {
   const overlay = new Stack();
   const first = args[0];
-  let layers: View[];
-  if (first instanceof View) {
-    layers = args as View[];
-    overlay.layout = { size: { kind: 'fr', weight: 1 } };
-  } else {
-    const props = (first as Flex | undefined) ?? {};
-    layers = args.slice(1) as View[];
+  let layers: Layer[];
+  // A props object is a *truthy non-View* first argument; a View or a falsy value (a skipped layer)
+  // is not — so a leading `cond && layer` is never mistaken for props.
+  if (first !== null && first !== undefined && first !== false && !(first instanceof View)) {
+    const props = first as Flex;
+    layers = args.slice(1) as Layer[];
     const layout = toLayout(props, 'col');
     if (layout.size === undefined) layout.size = { kind: 'fr', weight: 1 }; // default: fill the parent
     overlay.layout = layout;
     if (props.background !== undefined) overlay.background = props.background;
+  } else {
+    layers = args as Layer[];
+    overlay.layout = { size: { kind: 'fr', weight: 1 } };
   }
 
   for (const layer of layers) {
+    // Skip null/undefined/false so a conditional layer composes; anything else is a real View.
+    if (layer === null || layer === undefined || layer === false) continue;
     const placement = placements.get(layer);
     if (placement === undefined || (isFillAxis(placement.h) && isFillAxis(placement.v))) {
       // Untagged or both-axes fill → engine overlay fill (lag-free, layers overlap).
