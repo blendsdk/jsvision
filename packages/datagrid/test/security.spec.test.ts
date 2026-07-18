@@ -720,3 +720,76 @@ test('ST-20: a windowed edit routes through onCommit (no persistence bypass)', a
   expect(spy).toHaveBeenCalledTimes(1); // the commit sink is the only persistence path
   expect(spy.mock.calls[0][0]).toMatchObject({ rowKey: 0, columnId: 'name', value: 'changed' });
 });
+
+// ---- Export serializer security — formula-injection escaping, markup escaping, control-byte sanitize ----
+
+interface FRow {
+  id: number;
+  f: string;
+}
+
+/** A single-column ("F") grid over the given cell strings, mounted so `exportView` reads settle. */
+function buildFGrid(values: string[]): EditableDataGrid<FRow> {
+  const rows = values.map((f, i) => ({ id: i + 1, f }));
+  const columns = [column<FRow, string>({ id: 'f', title: 'F', value: (r) => r.f })];
+  const grid = new EditableDataGrid<FRow>({ columns, source: fromRows(signal(rows), { rowKey: (r) => r.id }) });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  return grid;
+}
+
+// A formatted cell that begins with a spreadsheet formula trigger (= + - @, or a leading tab/CR) is
+// prefixed with `'` in CSV so a spreadsheet never executes it; a benign leading char is untouched.
+test('CSV formula injection: a formula-triggering cell is prefixed; a benign cell is not', () => {
+  // Control bytes are stripped BEFORE the formula-escape, so a control-byte-masked formula cannot slip a
+  // live payload through (an ESC- or CR-masked "=SUM" is still defused). A bare leading control byte with
+  // no formula behind it is simply removed and needs no prefix.
+  const csv = buildFGrid(['=SUM(A1)', '+1', '-1', '@x', '\tTAB', '\r=SUM', '\x1b=SUM', 'hello']).exportView('csv');
+  const lines = csv.split('\r\n');
+  expect(lines[0]).toBe('F'); // the title header
+  expect(lines[1]).toBe("'=SUM(A1)"); // = defused
+  expect(lines[2]).toBe("'+1"); // +
+  expect(lines[3]).toBe("'-1"); // - (a legitimate negative formats to '-1 — the accepted tradeoff)
+  expect(lines[4]).toBe("'@x"); // @
+  expect(lines[5].startsWith("'")).toBe(true); // a leading tab is defused too
+  expect(lines[6]).toBe("'=SUM"); // a CR-masked formula: the CR is stripped, the formula still defused
+  expect(lines[7]).toBe("'=SUM"); // an ESC-masked formula: likewise defused (no control-byte bypass)
+  expect(lines[8]).toBe('hello'); // a benign leading char is left untouched
+});
+
+// The same formula-injection escaping applies to TSV output (Excel tolerates quoted TSV on paste).
+test('TSV formula injection: the same triggers are prefixed in TSV output', () => {
+  const tsv = buildFGrid(['=SUM(A1)', '+1', '-1', '@x']).exportView('tsv');
+  expect(tsv).toContain("'=SUM(A1)");
+  expect(tsv).toContain("'+1");
+  expect(tsv).toContain("'-1");
+  expect(tsv).toContain("'@x");
+});
+
+// An HTML cell carrying markup is escaped, never emitted live — exported data can inject no markup.
+test('HTML markup injection: a cell with markup is escaped, never emitted live', () => {
+  const html = buildFGrid(['<script>x</script>']).exportView('html');
+  expect(html).toContain('&lt;script&gt;x&lt;/script&gt;');
+  expect(html).not.toContain('<script>x</script>'); // no live <script> reaches the document
+});
+
+// Control bytes are stripped before serialization, so no raw ESC/BEL reaches the output in any format
+// (JSON escapes them structurally as \u sequences; the text formats sanitize them away).
+test('control-byte sanitize: no raw control byte reaches the output in any format', () => {
+  const grid = buildFGrid(['a\x1bX\x07']);
+  for (const fmt of ['csv', 'html', 'json', 'tsv'] as const) {
+    const out = grid.exportView(fmt);
+    expect(out).not.toContain('\x1b'); // no raw ESC
+    expect(out).not.toContain('\x07'); // no raw BEL
+  }
+});
+
+// JSON is a structured format, not a spreadsheet paste target, so a formula value stays RAW there
+// (never `'`-prefixed) and round-trips through JSON.parse.
+test('JSON is not over-escaped: a formula value stays raw and round-trips', () => {
+  const json = buildFGrid(['=SUM(A1)']).exportView('json');
+  expect(JSON.parse(json)).toEqual([{ f: '=SUM(A1)' }]); // raw, not "'=SUM(A1)"
+});

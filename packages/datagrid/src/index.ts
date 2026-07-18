@@ -44,6 +44,12 @@ export type { GridDataSource } from './data-source.js';
 // signals a landed page through the optional reactive `revision?()` member on `GridDataSource`.
 export { isWindowed, windowedView } from './windowing.js';
 
+// View export — `grid.exportView(format)` serializes the current view (visible columns in display order,
+// formatted values, the filtered + sorted rows) to CSV / HTML / JSON / TSV. `ExportFormat` is the target
+// selector; CSV/TSV are RFC-4180 with spreadsheet formula-injection escaping, HTML is a standalone escaped
+// document, JSON is raw values keyed by column id. The grid returns a string; the caller owns the sink.
+export type { ExportFormat } from './export-view.js';
+
 // Filter model — the pure `filterRows` multi-column AND evaluator and `computeDistinct` label
 // enumeration, plus the `ColumnFilter` per-column condition, the `FilterModel` map the source's
 // `setFilter` push-down consumes, the `DistinctResult` a value-list reads, and the `FilterType` a
