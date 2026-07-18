@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-19 01:13
-> **Progress**: 14/32 tasks (44%)
+> **Last Updated**: 2026-07-19 01:20
+> **Progress**: 20/32 tasks (63%)
 > **CodeOps Skills Version**: 3.9.0
 
 ## Overview
@@ -94,17 +94,17 @@ spec-immutability exception, not a behavior change.
 
 ### Step 3.1: Spec (red)
 **Reference**: 03-03 · 07 ST-7…ST-12 · AR-3, AR-4
-- [ ] 3.1.1 Write `packages/ui/test/dsl-absolute.spec.test.ts` (ST-7…ST-12)
-- [ ] 3.1.2 Red: confirm FAIL (exports don't exist yet)
+- [x] 3.1.1 Write `packages/ui/test/dsl-absolute.spec.test.ts` (ST-7…ST-12) ✅ (completed: 2026-07-19 01:20)
+- [x] 3.1.2 Red: confirm FAIL (exports don't exist yet) ✅ (completed: 2026-07-19 01:20) — 6 failed (`at`/`cover`/`center` not functions)
 
 ### Step 3.2: Implement (green)
 **Reference**: 03-03 §at, §absolute-child, §cover-center
-- [ ] 3.2.1 Create `packages/ui/src/view/dsl/absolute.ts`: `at` (positional + `Rect` overload, merge-preserving, pure), `cover`, `center`; re-export via `dsl/index.ts`, `view/index.ts`, `src/index.ts`
-- [ ] 3.2.2 Green: ST-7…ST-12 pass (incl. ST-9 out-of-flow `at()` child)
+- [x] 3.2.1 Create `packages/ui/src/view/dsl/absolute.ts`: `at` (positional + `Rect` form, merge-preserving, pure), `cover`, `center`; re-export via `dsl/index.ts`, `view/index.ts`, `src/index.ts` ✅ (completed: 2026-07-19 01:20) — `at` uses a **single variadic-tuple signature** `(view, ...[x,y,w,h] | [rect])` for full type safety (rejects a partial rect) without TS overloads (which trip the `check:docs` per-declaration `@example` guard)
+- [x] 3.2.2 Green: ST-7…ST-12 pass (incl. ST-9 out-of-flow `at()` child) ✅ (completed: 2026-07-19 01:20)
 
 ### Step 3.3: Impl tests & verify
-- [ ] 3.3.1 Impl tests (`at` numeric-vs-rect overload dispatch; `center`/`cover` merge over prior props) — extend `dsl-hardening.impl.test.ts`
-- [ ] 3.3.2 Verify
+- [x] 3.3.1 Impl tests (`at` numeric-vs-rect dispatch; `center`/`cover` merge over prior props) — extend `dsl-hardening.impl.test.ts` ✅ (completed: 2026-07-19 01:20)
+- [x] 3.3.2 Verify ✅ (completed: 2026-07-19 01:20) — full `CI=1 yarn verify` green (30/30); `api/layout-views.md` re-synced (`+at/cover/center`, no AI)
 
 **Deliverables**: `at`/`cover`/`center` exported and spec-green.
 **Verify**: `yarn verify`

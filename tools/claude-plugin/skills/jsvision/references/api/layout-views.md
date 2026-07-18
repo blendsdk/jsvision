@@ -30,12 +30,28 @@ Distribute `total` integer cells across weighted shares so the result sums to `t
 apportion(total: number, weights: readonly number[]): number[]
 ```
 
+## at
+
+Place a view absolutely at a parent-content-relative rectangle, and return the same view for inline composition.
+
+```ts
+at<V extends View>(view: V, ...spec: [x: number, y: number, width: number, height: number] | [rect: Rect]): V
+```
+
 ## bottomRight
 
 Tag a view as a fixed-size stack layer pinned to the **bottom-right** corner.
 
 ```ts
 bottomRight<V extends View>(view: V, width: number, height: number): V
+```
+
+## center
+
+Center a fixed-size view in its parent as an out-of-flow overlay, re-centering on resize, and return the same view — standalone, no `stack()` wrapper.
+
+```ts
+center<V extends View>(view: V, width: number, height: number): V
 ```
 
 ## centered
@@ -72,6 +88,14 @@ Test whether a point lies inside a rect.
 
 ```ts
 contains(r: Rect, p: Point): boolean
+```
+
+## cover
+
+Make a view cover its parent's whole content box as an out-of-flow overlay, and return the same view — standalone, no `stack()` wrapper.
+
+```ts
+cover<V extends View>(view: V): V
 ```
 
 ## createRenderRoot

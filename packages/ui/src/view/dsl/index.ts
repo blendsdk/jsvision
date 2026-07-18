@@ -12,3 +12,4 @@ export { col, row, grow, fixed, spacer } from './flex.js';
 export type { Flex } from './flex.js';
 export { stack, place, centered, topRight, bottomRight, topLeft } from './stack.js';
 export type { Placement } from './stack.js';
+export { at, cover, center } from './absolute.js';
