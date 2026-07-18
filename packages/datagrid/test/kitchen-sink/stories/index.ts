@@ -16,6 +16,7 @@ import { navigationInteractionStory } from './navigation-interaction.story.js';
 import { validationLifecycleStory } from './validation-lifecycle.story.js';
 import { dataAtScaleStory } from './data-at-scale.story.js';
 import { exportVariantsStory } from './export-variants.story.js';
+import { personalizationStory } from './personalization.story.js';
 
 export const STORIES: readonly Story[] = [
   foundationStory,
@@ -31,4 +32,5 @@ export const STORIES: readonly Story[] = [
   validationLifecycleStory,
   dataAtScaleStory,
   exportVariantsStory,
+  personalizationStory,
 ];
