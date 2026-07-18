@@ -14,6 +14,7 @@
  * access throws, so a missed guard is a located test failure, never a silent full-scan or a crash deep in
  * unrelated code.
  */
+import type { Column } from '@jsvision/ui';
 import type { GridDataSource } from './data-source.js';
 
 /**
@@ -56,6 +57,37 @@ export function isWindowed<T>(source: GridDataSource<T>): boolean {
  * // view.map(...) or [...view] throws — gate the consumer behind isWindowed(source) first.
  * ```
  */
+/**
+ * Validate a windowed source's grid configuration at construction. A windowed source **must** push sort
+ * and filter down to itself (they cannot run client-side over a partially-loaded dataset, and the grid's
+ * re-anchor scans are gated by push-down presence, not by `isWindowed`) — a missing `setSort`/`setFilter`
+ * is a hard misconfiguration, so this **throws**. Separately, an `auto`-width column falls back to a
+ * fixed width (measuring every row would page-fault), which is recoverable, so that only **warns**.
+ *
+ * @param source The windowed source being configured.
+ * @param columns The engine columns (checked for `auto` width).
+ * @param warn The dev-warning sink (scope, message).
+ * @throws If the source omits `setSort` or `setFilter`.
+ */
+export function validateWindowedConfig<T>(
+  source: GridDataSource<T>,
+  columns: readonly Column<T>[],
+  warn: (scope: string, message: string) => void,
+): void {
+  if (!source.setSort || !source.setFilter) {
+    throw new Error(
+      'A windowed source (ensureRange present) must implement setSort and setFilter — sort and filter ' +
+        'cannot run client-side over a partially-loaded dataset.',
+    );
+  }
+  if (columns.some((c) => c.width === 'auto')) {
+    warn(
+      'windowed-auto-width',
+      'auto-width columns use a fixed fallback on a windowed source (measuring every row would page-fault).',
+    );
+  }
+}
+
 export function windowedView<T>(source: GridDataSource<T>): T[] {
   const unsupported = (prop: string | symbol): never => {
     throw new Error(

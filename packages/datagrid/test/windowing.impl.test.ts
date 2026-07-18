@@ -3,7 +3,7 @@
  * traps, its **fail-loud** contract (any whole-array access throws, whether the source is fully loaded
  * or partly loaded), and the `isWindowed` predicate + inert `revision` read on the eager path.
  */
-import { test, expect } from 'vitest';
+import { test, expect, vi } from 'vitest';
 import { Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
 import type { Column } from '@jsvision/ui';
 import { column } from '../src/column.js';
@@ -11,6 +11,9 @@ import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
 import { EditableDataGrid } from '../src/grid.js';
 import { EditableGridRows } from '../src/editable-grid-rows.js';
+import { FooterController } from '../src/grid-footer.js';
+import { GridSelection } from '../src/grid-selection.js';
+import { RowMutations } from '../src/row-mutations.js';
 import { isWindowed, windowedView } from '../src/windowing.js';
 import { asyncWindowedSource } from './fixtures/async-windowed-source.js';
 
@@ -203,4 +206,115 @@ test('placeholder: an unloaded focused row on a zebra grid paints … and stays 
   for (let y = 0; y < H; y += 1) for (let x = 0; x < W; x += 1) text += buf.get(x, y)?.char ?? ' ';
   expect(text).toContain('…'); // placeholder shows regardless of the zebra stripe
   expect(grid.focusedRow()).toBeUndefined(); // the focused unloaded row is read-only
+});
+
+// ---- Phase 3 — full-scan consumer guard edges ----
+
+interface RowB {
+  id: number;
+  balance: number;
+}
+
+test('windowed footer: the devWarn fires once across repeated cell() calls (fold never invoked)', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  let scans = 0;
+  const src: GridDataSource<RowB> = {
+    rowKey: (r) => r.id,
+    length: () => 500,
+    rowAt: (i) => {
+      scans += 1;
+      return { id: i, balance: 1 };
+    },
+    ensureRange: () => undefined,
+  };
+  const columns = new Map([
+    ['balance', column<RowB, number>({ id: 'balance', title: 'Bal', value: (r) => r.balance })],
+  ]);
+  const footer = new FooterController<RowB>({
+    footer: { aggregates: { balance: { fn: 'sum' } } },
+    columns,
+    displayedRows: () => windowedView(src),
+    windowed: true,
+  });
+  scans = 0;
+  expect(footer.cell('balance')).toBe('');
+  expect(footer.cell('balance')).toBe('');
+  expect(footer.cell('balance')).toBe('');
+  expect(scans).toBe(0); // never folds over the lazy view
+  const windowedWarns = warn.mock.calls.flat().filter((m) => String(m).includes('windowed-footer'));
+  expect(windowedWarns.length).toBe(1); // one-time
+  warn.mockRestore();
+});
+
+test('windowed selection: tri-state reads none and toggle-all no-ops (no display map)', () => {
+  const src: GridDataSource<Row> = {
+    rowKey: (r) => r.id,
+    length: () => 1000,
+    rowAt: (i) => ({ id: i, name: `r${i}` }),
+    ensureRange: () => undefined,
+  };
+  const sel = new GridSelection<Row>({
+    mode: 'multi',
+    focused: signal(0),
+    display: () => windowedView(src),
+    rowKey: (r) => r.id,
+    windowed: true,
+  });
+  expect(sel.currentTriState()).toBe('none');
+  sel.toggleAll(); // inert
+  expect(sel.read().size).toBe(0);
+  expect(() => sel.rangeTo(5)).not.toThrow();
+  expect(sel.read().size).toBe(0);
+});
+
+test('windowed mutation: a positional insert `at` is dropped to an append', () => {
+  const inserts: Array<[Row, number | undefined]> = [];
+  const src: GridDataSource<Row> = {
+    rowKey: (r) => r.id,
+    length: () => 1000,
+    rowAt: (i) => ({ id: i, name: `r${i}` }),
+    ensureRange: () => undefined,
+    insert: (row, at) => void inserts.push([row, at]),
+  };
+  const sel = new GridSelection<Row>({
+    mode: 'multi',
+    focused: signal(0),
+    display: () => windowedView(src),
+    rowKey: (r) => r.id,
+    windowed: true,
+  });
+  const mut = new RowMutations<Row>({
+    source: src,
+    display: () => windowedView(src),
+    selection: sel,
+    warn: () => undefined,
+    windowed: true,
+  });
+  mut.insertRow({ id: 42, name: 'x' }, 5); // an explicit positional index
+  expect(inserts).toEqual([[{ id: 42, name: 'x' }, undefined]]); // dropped to append
+});
+
+test('windowed auto-width: an auto column falls back and the grid renders without a scan', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  const src = asyncWindowedSource<Row>({
+    total: 5000,
+    pageSize: 100,
+    fetchPage: (p) =>
+      Promise.resolve(Array.from({ length: 100 }, (_, k) => ({ id: p * 100 + k, name: `r${p * 100 + k}` }))),
+    rowKey: (r) => r.id,
+  });
+  const autoCols = [column<Row, string>({ id: 'name', title: 'Name', value: (r) => r.name })]; // no width ⇒ auto
+  const grid = new EditableDataGrid<Row>({ columns: autoCols, source: src });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 18, height: 4 } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: 18, height: 4 }, { caps });
+  src.resetCounts();
+  expect(() => loop.mount(root)).not.toThrow(); // fixed fallback — no all-rows measure (a scan would throw)
+  expect(src.rowAtCount()).toBeLessThan(50); // the auto-width scan did not run
+  const buf = loop.renderRoot.buffer();
+  let frame = '';
+  for (let y = 0; y < 4; y += 1) for (let x = 0; x < 18; x += 1) frame += buf.get(x, y)?.char ?? ' ';
+  expect(frame).toContain('…'); // the grid rendered (unloaded rows show the placeholder) — the fallback held
+  warn.mockRestore();
 });

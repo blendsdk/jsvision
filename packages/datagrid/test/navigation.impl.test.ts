@@ -137,7 +137,9 @@ test('grid.ts stays under the re-based line-count guard', () => {
   // (`beforeSave`, `validateRow`, `status`, `emptyText`) with their JSDoc, plus the thin
   // isInvalid/activeMessage accessors and the error-registry / message-band / lifecycle wiring. The heavy
   // logic lives in the new modules (error-registry.ts, validation.ts, grid-lifecycle.ts); the guard is
-  // NEVER met by re-inlining that logic. See grid-footer.impl.test for the full re-base history.
+  // NEVER met by re-inlining that logic. Re-based 1500 -> 1550 for the RD-11 windowing surface (thin
+  // isWindowed-guarded delegators; the lazy view + push-down validation live in windowing.ts). See
+  // grid-footer.impl.test for the full re-base history.
   const gridSrc = readFileSync(fileURLToPath(new URL('../src/grid.ts', import.meta.url)), 'utf8');
-  expect(gridSrc.split('\n').length).toBeLessThan(1500);
+  expect(gridSrc.split('\n').length).toBeLessThan(1550);
 });

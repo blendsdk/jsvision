@@ -2,8 +2,8 @@
 
 > **Implements**: datagrid/RD-11 (Must-Have slice)
 > **CodeOps Skills Version**: 3.8.0
-> **Progress**: 16 / 34 tasks (47%) · 2 / 4 phases
-> **Last Updated**: 2026-07-18 02:48
+> **Progress**: 25 / 34 tasks (74%) · 3 / 4 phases
+> **Last Updated**: 2026-07-18 03:07
 
 Four phases, **foundation-first**, each in the mandatory three-session order
 (**Spec Tests → Implementation → Impl Tests & Hardening**) with spec-first ordering enforced
@@ -58,19 +58,19 @@ green at every task. ST-4 is the tripwire.
 ## Phase 3 — Full-scan consumer guards (03-03) · ST-11…ST-17
 
 *Session 3A — Spec tests (red)*
-- [ ] 3.1 `windowing.spec.test.ts` ST-11 (auto-width skipped + fallback + `devWarn`; `autoFitColumn` no-op) + ST-12 (push-down required `devWarn`; no client scan) + ST-17 (`distinct` required; sample via `rowAt(0)`) — verify **red**.
-- [ ] 3.2 ST-13 (windowed footer aggregate blank + `devWarn`; fold not invoked) + ST-14 (select-all/tri-state **and range** disabled; keyed toggle on a loaded row, no-op on an unloaded row) + ST-15 (`filteredCount` reads `source.length()`; filtered ≡ grand total v1) + ST-16 (append/delete via seam; duplicate/positional no-op + `devWarn`) — verify **red**.
+- [x] 3.1 `windowing.spec.test.ts` ST-11 (auto-width skipped + fallback + `devWarn`; `autoFitColumn` no-op) + ST-12 (push-down required `devWarn`; no client scan) + ST-17 (`distinct` required; sample via `rowAt(0)`) — verify **red**. ✅ (completed: 2026-07-18 03:07)
+- [x] 3.2 ST-13 (windowed footer aggregate blank + `devWarn`; fold not invoked) + ST-14 (select-all/tri-state **and range** disabled; keyed toggle on a loaded row, no-op on an unloaded row) + ST-15 (`filteredCount` reads `source.length()`; filtered ≡ grand total v1) + ST-16 (append/delete via seam; duplicate/positional no-op + `devWarn`) — verify **red**. ✅ (completed: 2026-07-18 03:07)
 
 *Session 3B — Implementation (green)*
-- [ ] 3.3 Construction guard: **throw** when a windowed source omits `setSort`/`setFilter` (hard-fail, not `devWarn` — guarantees the `applySort`/`applyFilter` re-anchor early-returns fire so `.findIndex` never hits the loud Proxy; [PF-003](00-preflight-report.md)); `distinctFor` requires `source.distinct` (no `computeDistinct(materialize)`); the filter-popup sample reads `source.rowAt(0)` ([AR-7](00-ambiguity-register.md)).
-- [ ] 3.4 Auto-width: `autoWidths` skips `measureAutoWidths` for windowed (fixed/`fr`, `auto`→fixed fallback + `devWarn`); `autoFitColumn` no-op ([AR-8](00-ambiguity-register.md)).
-- [ ] 3.5 Footer: for a windowed source, aggregate cells render **blank + a one-time `devWarn`** (the live loaded-window fold is deferred to Phase B — no cheap loaded-range seam, and a no-eviction fold would drift/mislead; [PF-001](00-preflight-report.md)). Do **not** wire a folding `displayedRows` dep for windowed. The eager `complete()`/"(loaded)" fold is unchanged ([AR-9](00-ambiguity-register.md)).
-- [ ] 3.6 Selection: disable header select-all + tri-state **and Ctrl/Shift range** for windowed (all route through `display().map(rowKey)`; prefix omits/inerts the select-all affordance). Keep only single-row keyed toggle (Ctrl-click / `Space`) on a **loaded** row, guarded at the `GridSelection` choke points — `toggleAtRow`/`rangeToRow`/`focusedKey`/`runToggleSelect` no-op when `source.rowAt(i) === undefined` (never `rowKey(undefined)`) ([AR-4](00-ambiguity-register.md), [PF-002](00-preflight-report.md)).
-- [ ] 3.7 Counts + mutation: `filteredCount()` reads `source.length()` for windowed ([AR-10](00-ambiguity-register.md)); `insertRow` appends via `source.insert`, `deleteRows` via `source.remove`, `duplicateRow`/positional insert no-op + `devWarn` ([AR-5](00-ambiguity-register.md)).
-- [ ] 3.8 Verify ST-11…ST-17 **green**; full `yarn verify` green; confirm `grid.ts` under `< 1500`.
+- [x] 3.3 Construction guard: **throw** when a windowed source omits `setSort`/`setFilter` (hard-fail, not `devWarn` — guarantees the `applySort`/`applyFilter` re-anchor early-returns fire so `.findIndex` never hits the loud Proxy; [PF-003](00-preflight-report.md)); `distinctFor` requires `source.distinct` (no `computeDistinct(materialize)`); the filter-popup sample reads `source.rowAt(0)` ([AR-7](00-ambiguity-register.md)). ✅ (completed: 2026-07-18 03:07)
+- [x] 3.4 Auto-width: `autoWidths` skips `measureAutoWidths` for windowed (fixed/`fr`, `auto`→fixed fallback + `devWarn`); `autoFitColumn` no-op ([AR-8](00-ambiguity-register.md)). ✅ (completed: 2026-07-18 03:07)
+- [x] 3.5 Footer: for a windowed source, aggregate cells render **blank + a one-time `devWarn`** (the live loaded-window fold is deferred to Phase B — no cheap loaded-range seam, and a no-eviction fold would drift/mislead; [PF-001](00-preflight-report.md)). Do **not** wire a folding `displayedRows` dep for windowed. The eager `complete()`/"(loaded)" fold is unchanged ([AR-9](00-ambiguity-register.md)). ✅ (completed: 2026-07-18 03:07)
+- [x] 3.6 Selection: disable header select-all + tri-state **and Ctrl/Shift range** for windowed (all route through `display().map(rowKey)`; prefix omits/inerts the select-all affordance). Keep only single-row keyed toggle (Ctrl-click / `Space`) on a **loaded** row, guarded at the `GridSelection` choke points — `toggleAtRow`/`rangeToRow`/`focusedKey`/`runToggleSelect` no-op when `source.rowAt(i) === undefined` (never `rowKey(undefined)`) ([AR-4](00-ambiguity-register.md), [PF-002](00-preflight-report.md)). ✅ (completed: 2026-07-18 03:07)
+- [x] 3.7 Counts + mutation: `filteredCount()` reads `source.length()` for windowed ([AR-10](00-ambiguity-register.md)); `insertRow` appends via `source.insert`, `deleteRows` via `source.remove`, `duplicateRow`/positional insert no-op + `devWarn` ([AR-5](00-ambiguity-register.md)). ✅ (completed: 2026-07-18 03:07)
+- [x] 3.8 Verify ST-11…ST-17 **green**; full `yarn verify` green; confirm `grid.ts` under `< 1500`. ✅ (completed: 2026-07-18 03:07)
 
 *Session 3C — Impl tests & hardening*
-- [ ] 3.9 `windowing.impl.test.ts`: fallback width value; the **windowed footer blank + one-time `devWarn`** (fold not invoked); the **selection loaded-guard** (toggle/range no-op on an unloaded row, no `rowKey(undefined)`); select-all inert-affordance render; append-at-append-index behavior. Verify.
+- [x] 3.9 `windowing.impl.test.ts`: fallback width value; the **windowed footer blank + one-time `devWarn`** (fold not invoked); the **selection loaded-guard** (toggle/range no-op on an unloaded row, no `rowKey(undefined)`); select-all inert-affordance render; append-at-append-index behavior. Verify. ✅ (completed: 2026-07-18 03:07)
 
 ---
 

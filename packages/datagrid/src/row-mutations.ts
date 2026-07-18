@@ -25,6 +25,12 @@ export interface RowMutationsConfig<T> {
   readonly assignKey?: (clone: T, original: T) => T;
   /** Dev-warning sink (already scoped) — used for the `duplicateRow` no-op cases. */
   readonly warn: (message: string) => void;
+  /**
+   * Whether the source is windowed. `duplicateRow` and positional insert-at both client-scan the source
+   * to find/place a row, so they are no-ops for a windowed source; append (via `insert`) and key-delete
+   * (via `remove`) still work with no scan.
+   */
+  readonly windowed?: boolean;
 }
 
 /**
@@ -39,6 +45,7 @@ export class RowMutations<T> {
   private readonly selection: GridSelection<T>;
   private readonly assignKey?: (clone: T, original: T) => T;
   private readonly warn: (message: string) => void;
+  private readonly windowed: boolean;
 
   /** @param cfg The source seam, the display accessor, the selection controller, and the key minter. */
   constructor(cfg: RowMutationsConfig<T>) {
@@ -47,6 +54,7 @@ export class RowMutations<T> {
     this.selection = cfg.selection;
     this.assignKey = cfg.assignKey;
     this.warn = cfg.warn;
+    this.windowed = cfg.windowed ?? false;
   }
 
   /**
@@ -58,7 +66,8 @@ export class RowMutations<T> {
    * @param at The source index to splice at; appended when omitted.
    */
   insertRow(row: T, at?: number): void {
-    this.source.insert?.(row, at);
+    // A windowed source appends only — a positional `at` over partial data is meaningless, so it is dropped.
+    this.source.insert?.(row, this.windowed ? undefined : at);
   }
 
   /**
@@ -82,6 +91,11 @@ export class RowMutations<T> {
    * @param key The key of the row to duplicate.
    */
   duplicateRow(key: Key): void {
+    if (this.windowed) {
+      // Duplicate needs a `display().find` + positional insert-at, both of which client-scan the source.
+      this.warn('duplicate / positional insert is not available on a windowed source (append + key-delete only).');
+      return;
+    }
     if (!this.assignKey) {
       this.warn('no `assignKey` configured — duplicate is a no-op (it never collides a key).');
       return;

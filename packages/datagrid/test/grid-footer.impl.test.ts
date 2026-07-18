@@ -70,9 +70,12 @@ test('grid.ts stays a thin delegator under the line-count guard', () => {
   // `emptyText` options with their JSDoc, the isInvalid/activeMessage accessors, and the error-registry /
   // message-band / lifecycle wiring — the logic lives in error-registry.ts / validation.ts /
   // grid-lifecycle.ts. (grid.ts entered RD-12 already at 1298, so the documented public surface alone
-  // crosses 1300; the plan's 1350 estimate proved low once every option carried its JSDoc.)
+  // crosses 1300; the plan's 1350 estimate proved low once every option carried its JSDoc.) Re-based
+  // 1500 -> 1550 for the RD-11 windowing surface: the thin isWindowed-guarded delegators (the display
+  // branch, the auto-width/distinct/count guards, the `prefetch` option, and the windowed flags threaded
+  // to the selection/mutation/footer controllers) — the lazy view + push-down validation live in windowing.ts.
   const lineCount = src('grid.ts').split('\n').length;
-  expect(lineCount).toBeLessThan(1500);
+  expect(lineCount).toBeLessThan(1550);
 });
 
 test('displayedRows is reactive: an effect re-runs when the source rows change', () => {
