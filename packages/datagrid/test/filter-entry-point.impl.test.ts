@@ -30,8 +30,8 @@ const SALES: Sale[] = [
   { region: 'north', qty: 50 },
 ];
 
-// Wide enough that the 26-cell popup fits at these anchors without clamping (so rect.x == the anchor).
-const CW = 40;
+// Wide enough that the 34-cell popup fits at these anchors without clamping (so rect.x == the anchor).
+const CW = 60;
 const CH = 6;
 const REGION = column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 8 });
 // showFunnel so the funnel is drawn on the (unfiltered) column and the mouse funnel-click path has a target.
@@ -150,13 +150,13 @@ test('Alt+Down still anchors under the correct header after a rebuild (retained 
 });
 
 test('the filter popup clamps into the viewport instead of rendering off the right edge (BUG-2)', () => {
-  // A column whose funnel sits near the right edge of a full-width grid: unclamped the 26-cell popup
+  // A column whose funnel sits near the right edge of a full-width grid: unclamped the 34-cell popup
   // would overflow past the viewport. Opening it must keep the whole popup on-screen.
   const region = column<Sale, string>({ id: 'region', title: 'Region', value: (r) => r.region, width: 8 });
   const wide = column<Sale, number>({ id: 'qty', title: 'Quantity', value: (r) => r.qty, width: 20 });
   const source = fromRows(signal(SALES.slice()), { rowKey: (r) => r.region });
   const grid = new EditableDataGrid<Sale>({ columns: [region, wide], source });
-  const GW = 30; // narrower than region(8)+divider+wide(20) funnel anchor + popup width
+  const GW = 40; // narrower than region(8)+divider+wide(20) funnel anchor + popup width
   grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: GW, height: CH } };
   const root = new Group();
   root.add(grid);

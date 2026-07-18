@@ -54,12 +54,13 @@ import { createLifecycleController, emptyMessage, applyLifecycleSwap } from './g
 import type { GridStatus, LifecycleController } from './grid-lifecycle.js';
 
 /**
- * The filter popup's fixed cell size — wide enough for the operator selector and operands, tall enough
- * for the condition section stacked above the embedded value-list section (both are always present for
- * an in-memory source). It clips against a short grid; a taller viewport shows it whole.
+ * The filter popup's width, and the **worst-case** height it mounts at — wide enough for the operator
+ * selector and operands, tall enough for the condition section plus a full value-list. The popup then
+ * auto-sizes down to its actual content, so it only ever shrinks from this height and never needs
+ * re-clamping to stay on-screen. It clips against a short grid; a taller viewport shows it whole.
  */
 const FILTER_POPUP_WIDTH = 34;
-const FILTER_POPUP_HEIGHT = 19;
+const FILTER_POPUP_HEIGHT = 26;
 
 /** Construction options for {@link EditableDataGrid}. */
 export interface EditableDataGridOptions<T> {

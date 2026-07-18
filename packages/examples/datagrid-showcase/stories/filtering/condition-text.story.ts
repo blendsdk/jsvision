@@ -21,6 +21,16 @@ const DATA: Row[] = [
   { id: 3, product: 'Sprocket', region: 'AMER' },
   { id: 4, product: 'Widget', region: 'APAC' },
   { id: 5, product: 'Gizmo', region: 'EMEA' },
+  { id: 6, product: 'Gadget', region: 'AMER' },
+  { id: 7, product: 'Gizmo', region: 'APAC' },
+  { id: 8, product: 'Widget', region: 'EMEA' },
+  { id: 9, product: 'Sprocket', region: 'APAC' },
+  { id: 10, product: 'Gizmo', region: 'AMER' },
+  { id: 11, product: 'Widget', region: 'EMEA' },
+  { id: 12, product: 'Gadget', region: 'APAC' },
+  { id: 13, product: 'Sprocket', region: 'AMER' },
+  { id: 14, product: 'Widget', region: 'APAC' },
+  { id: 15, product: 'Gizmo', region: 'EMEA' },
 ];
 
 export const filteringConditionTextStory = buildFilterStory<Row>({

@@ -21,6 +21,21 @@ const DATA: Row[] = [
   { id: 3, qty: 50, closed: new Date(2025, 11, 1) },
   { id: 4, qty: 300, closed: new Date(2026, 1, 20) },
   { id: 5, qty: 120, closed: new Date(2026, 2, 3) },
+  { id: 6, qty: 75, closed: new Date(2025, 10, 15) },
+  { id: 7, qty: 200, closed: new Date(2026, 3, 10) },
+  { id: 8, qty: 15, closed: null },
+  { id: 9, qty: 500, closed: new Date(2025, 9, 30) },
+  { id: 10, qty: 80, closed: new Date(2026, 4, 5) },
+  { id: 11, qty: 250, closed: new Date(2025, 8, 20) },
+  { id: 12, qty: 30, closed: null },
+  { id: 13, qty: 400, closed: new Date(2026, 5, 15) },
+  { id: 14, qty: 60, closed: new Date(2025, 7, 10) },
+  { id: 15, qty: 150, closed: new Date(2026, 6, 1) },
+  { id: 16, qty: 90, closed: new Date(2025, 6, 25) },
+  { id: 17, qty: 350, closed: new Date(2026, 7, 20) },
+  { id: 18, qty: 20, closed: null },
+  { id: 19, qty: 600, closed: new Date(2025, 5, 15) },
+  { id: 20, qty: 70, closed: new Date(2026, 8, 10) },
 ];
 
 export const filteringConditionNumDateStory = buildFilterStory<Row>({

@@ -48,14 +48,14 @@ function descendants(view: View): View[] {
   return out;
 }
 
-/** Mount a grid (40 wide so the popup fits without clamping) with an optional custom popup factory. */
+/** Mount a grid (60 wide so the popup fits without clamping) with an optional custom popup factory. */
 function buildGrid(filterPopup?: (ctx: FilterPopupContext<Sale>) => View) {
   const source = fromRows(signal(SALES.slice()), { rowKey: (r) => r.region });
   const grid = new EditableDataGrid<Sale>({ columns: [REGION, QTY], source, filterPopup });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 6 } };
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 60, height: 6 } };
   const root = new Group();
   root.add(grid);
-  const loop = createEventLoop({ width: 40, height: 6 }, { caps });
+  const loop = createEventLoop({ width: 60, height: 6 }, { caps });
   loop.mount(root);
   loop.renderRoot.flush();
   return { grid, loop };
@@ -102,6 +102,6 @@ test('a custom popup that sets its own size is mounted anchored at that size (no
   loop.renderRoot.flush();
   const big = descendants(grid).find((v): v is BigPopup => v instanceof BigPopup);
   expect(big).toBeDefined();
-  expect(big!.layout.rect?.width).toBe(30); // the factory-chosen width is honored (default is 26)
+  expect(big!.layout.rect?.width).toBe(30); // the factory-chosen width is honored (default is 34)
   expect(big!.layout.rect?.height).toBe(5); // ...and height
 });

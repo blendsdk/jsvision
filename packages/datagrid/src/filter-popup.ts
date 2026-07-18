@@ -10,11 +10,12 @@
  * mechanism the in-cell editor host relies on. A `distinct` thunk in the config reserves the value-list
  * section (added in a later phase); the condition section here ignores it.
  */
-import { Group, Input, DatePicker, RadioGroup, Button, signal, filter } from '@jsvision/ui';
+import { Group, Input, DatePicker, RadioGroup, Button, Text, col, spacer, signal, filter } from '@jsvision/ui';
 import type { View, Signal, DispatchEvent, CalendarDate } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import type { ColumnFilter, DistinctResult, FilterType } from './filter.js';
-import { ValueList } from './value-list-popup.js';
+import { ValueList, valueListButtonWidth } from './value-list-popup.js';
+import { buttonRow, buttonCellWidth } from './button-row.js';
 
 /** The operator choices offered per column filter type — the exact op values a {@link ColumnFilter} uses. */
 const OPERATORS: Record<FilterType, readonly string[]> = {
@@ -37,6 +38,16 @@ const OP_LABELS: Record<string, string> = {
   after: 'after',
   on: 'on',
 };
+
+/**
+ * Stack a caption above an editor as one two-row field block (the DSL `col`), so a filter operand
+ * always shows what it is for.
+ */
+function labelledField(caption: Text, editor: View): Group {
+  caption.layout = { size: { kind: 'fixed', cells: 1 } };
+  editor.layout = { size: { kind: 'fixed', cells: 1 } };
+  return col({ fixed: 2 }, caption, editor);
+}
 
 /** Construction config for {@link FilterPopup}. */
 export interface FilterPopupConfig<T> {
@@ -125,6 +136,8 @@ export class FilterPopup<T> extends Group {
   private readonly operatorGroup: RadioGroup;
   /** The second operand editor (number/date only), toggled by {@link needsSecondOperand}; hidden for text. */
   private readonly operandBView?: View;
+  /** The embedded value-list, if any — its wanted height drives the popup's auto-sizing. */
+  private readonly valueListView?: ValueList;
 
   /** Operand A as raw text (text/number filters read this). */
   readonly operandA: Signal<string>;
@@ -145,7 +158,8 @@ export class FilterPopup<T> extends Group {
     this.onApply = cfg.onApply;
     this.onClear = cfg.onClear;
     this.onClose = cfg.onClose;
-    this.background = 'window'; // a solid panel over the grid
+    this.background = 'dialog'; // the light-gray dialog surface that its controls sit on
+    this.castsShadow = true; // the overlay casts a drop shadow over the grid behind it
 
     const ops = OPERATORS[cfg.filterType];
     const cur = cfg.current;
@@ -172,8 +186,7 @@ export class FilterPopup<T> extends Group {
     }
 
     this.operatorGroup = new RadioGroup({ labels: ops.map((o) => OP_LABELS[o]), value: this.operatorIndex });
-    this.operatorGroup.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 24, height: 4 } };
-    this.add(this.operatorGroup);
+    this.operatorGroup.layout = { size: { kind: 'fixed', cells: 4 } };
 
     // Operand editors depend on the type: DatePicker for date, numeric-filtered Input for number, a
     // plain Input for text (which has a single operand).
@@ -188,37 +201,53 @@ export class FilterPopup<T> extends Group {
     } else {
       operandA = new Input({ value: this.operandA });
     }
-    operandA.layout = { position: 'absolute', rect: { x: 1, y: 4, width: 24, height: 1 } };
-    this.add(operandA);
+    // Each operand editor sits under its own caption: the first reads "From" for a `between` range
+    // and "Value" otherwise; the second ("To") only appears for `between`.
+    const fieldA = labelledField(new Text(() => (this.needsSecondOperand() ? 'From' : 'Value')), operandA);
+    let fieldB: Group | undefined;
     if (operandB !== undefined) {
-      operandB.layout = { position: 'absolute', rect: { x: 1, y: 5, width: 24, height: 1 } };
-      this.add(operandB);
+      fieldB = labelledField(new Text('To'), operandB);
+      // Start collapsed unless the initial operator is `between`; the column flow reclaims its rows.
+      fieldB.state.visible = this.needsSecondOperand();
     }
-    this.operandBView = operandB;
+    // Toggle the whole second-operand block (caption + editor) as one unit on the `between` reveal.
+    this.operandBView = fieldB;
 
+    // Every button in the popup — Apply/Clear here plus the value-list's Select All/Apply — shares one
+    // width, the widest label's face width, so all four line up. Each row centres its buttons in it.
     const applyBtn = new Button('Apply', { onClick: () => this.apply() });
     const clearBtn = new Button('Clear', { onClick: () => this.clear() });
-    applyBtn.layout = { position: 'absolute', rect: { x: 1, y: 6, width: 11, height: 2 } };
-    clearBtn.layout = { position: 'absolute', rect: { x: 13, y: 6, width: 11, height: 2 } };
-    this.add(applyBtn);
-    this.add(clearBtn);
+    const buttonWidth = Math.max(buttonCellWidth([applyBtn, clearBtn]), valueListButtonWidth());
+    const buttons = buttonRow([applyBtn, clearBtn], buttonWidth);
 
     // The Excel value-list section, below the condition section, when a distinct thunk is supplied. It
     // applies a `{ kind: 'set' }` filter of the checked labels — last-writer-wins with the condition
     // section (one filter per column). A reopened set filter pre-checks its labels.
+    let valueList: ValueList | undefined;
     if (cfg.distinct !== undefined) {
       const currentSet = cur !== undefined && cur.kind === 'set' ? cur.selected : undefined;
-      const valueList = new ValueList({
+      valueList = new ValueList({
         distinct: cfg.distinct,
         current: currentSet,
+        buttonWidth,
         onApply: (selected) => {
           this.onApply(this.columnId, { kind: 'set', selected });
           this.onClose();
         },
       });
-      valueList.layout = { position: 'absolute', rect: { x: 1, y: 8, width: 24, height: 9 } };
-      this.add(valueList);
+      valueList.layout = { size: { kind: 'fr', weight: 1 } }; // grow to fill the popup below the buttons
     }
+    this.valueListView = valueList;
+
+    // Flow the whole overlay as one padded column (the layout DSL): operator selector → operand
+    // field(s) → a one-row gap → Apply/Clear bar → value-list. A hidden second-operand block collapses
+    // so the rows below move up with no gap; the cross-axis stretch sizes every row to the padded width.
+    const sections: View[] = [this.operatorGroup, fieldA];
+    if (fieldB !== undefined) sections.push(fieldB);
+    sections.push(spacer({ fixed: 1 }), buttons);
+    if (valueList !== undefined) sections.push(valueList);
+    // One-cell padding on the top and sides; none at the bottom so the overlay sits one row tighter.
+    this.add(col({ position: 'fill', padding: { top: 1, right: 1, bottom: 0, left: 1 } }, ...sections));
 
     this.onMount(() => {
       // Show the second operand only for `between`, reflowing so the hidden editor leaves no gap.
@@ -232,7 +261,31 @@ export class FilterPopup<T> extends Group {
           { relayout: true },
         );
       }
+      // Auto-size the overlay to its content — the fixed condition rows plus the value-list's wanted
+      // height. It shrinks/grows as the second operand reveals or the distinct set loads/filters. The
+      // grid mounts it at the worst-case height, so from here it only shrinks and never needs
+      // re-clamping to stay on-screen (the anchored top does not move).
+      this.bind(
+        () => this.contentHeight(),
+        (h) => {
+          const rect = this.layout.rect;
+          if (rect !== undefined && rect.height !== h) this.layout = { ...this.layout, rect: { ...rect, height: h } };
+        },
+        { relayout: true },
+      );
     });
+  }
+
+  /**
+   * The overlay's wanted height in cells: one-cell padding on top and bottom, the operator selector,
+   * the operand field (plus a second one for `between`), the gap, the Apply/Clear bar, and the
+   * value-list's own wanted height. Reactive — it re-derives as the operator or the distinct set
+   * changes.
+   */
+  private contentHeight(): number {
+    // top padding(1) + selector(4) + operand field(2) + second operand(2, `between` only) + gap(1) + buttons(2)
+    const condition = 1 + 4 + 2 + (this.needsSecondOperand() ? 2 : 0) + 1 + 2;
+    return condition + (this.valueListView?.desiredHeight() ?? 0);
   }
 
   /** The operator choices for this popup's filter type (the op values a filter uses). */
