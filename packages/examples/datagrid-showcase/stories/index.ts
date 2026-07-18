@@ -97,7 +97,11 @@ import { lifecycleStory } from './validation-lifecycle/lifecycle.story.js';
 import { dataAtScaleScrollStory } from './data-at-scale/scroll-100k.story.js';
 import { dataAtScaleInMemoryStory } from './data-at-scale/in-memory-large.story.js';
 
-// Roadmap — the "coming soon" panels (RD-13, RD-14)
+// Export & variants (RD-13) — view export + saved layout variants + runtime freeze
+import { exportFormatsStory } from './export-personalization/export.story.js';
+import { variantsStory } from './export-personalization/variants.story.js';
+
+// Roadmap — the "coming soon" panels (RD-14)
 import { placeholders } from './placeholders.js';
 
 /** Every registered demo, in navigator order (six shipped clusters, then the roadmap band). */
@@ -190,6 +194,10 @@ export const STORIES: readonly Story[] = [
   dataAtScaleScrollStory,
   dataAtScaleInMemoryStory,
 
-  // Roadmap — coming soon (RD-13, RD-14) · 2
+  // Export & variants (RD-13) · 2
+  exportFormatsStory,
+  variantsStory,
+
+  // Roadmap — coming soon (RD-14) · 1
   ...placeholders,
 ];
