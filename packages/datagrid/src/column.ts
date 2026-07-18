@@ -244,7 +244,15 @@ export function toEngineColumn<T, V>(c: GridColumn<T, V>): Column<T> {
       // A nullish value renders `nullDisplay` (default '') before `format`/`String`, so null stays
       // distinct from '' and never surfaces as the literal "null". A `render` hook bypasses this path.
       if (v === null || v === undefined) return c.nullDisplay ?? '';
-      return c.format ? c.format(v, row) : String(v);
+      if (c.format === undefined) return String(v);
+      try {
+        return c.format(v, row);
+      } catch {
+        // A trusted on-screen formatter that throws degrades to the raw value in its own cell, so the
+        // rest of the row and the frame still paint — the same isolation the export path and the custom
+        // renderer already give.
+        return String(v);
+      }
     },
     width: c.width ?? 'auto',
     minWidth: c.minWidth,

@@ -47,16 +47,16 @@ This is the single source of truth for progress — each task appears exactly on
 ## Phase 3 — Callback isolation (Should-Have, extends AC-7) · ST-6, ST-7
 
 **Session 1 — Spec tests (red)**
-- [ ] 3.1 Write `test/callback-isolation.spec.test.ts` (ST-6 throwing on-screen formatter → one-cell degrade; ST-7 throwing comparator → default-order degrade, no crash). Confirm **red** (guards absent).
+- [x] 3.1 _(2026-07-18: `test/callback-isolation.spec.test.ts` — ST-6 (mount + painted-frame read), ST-7 (pure `sortRowsMulti` + grid-level `sortBy`). All 3 RED — the throw propagated from `sort.ts:63` / the format broke the paint.)_ Write `test/callback-isolation.spec.test.ts`. Confirm **red**.
 
 **Session 2 — Implementation (green)**
-- [ ] 3.2 Guard the on-screen formatter at `src/column.ts:247` — on throw, degrade to `String(v)` (mirror `grid.ts:1004-1005`); comment the *why*, no ID references.
-- [ ] 3.3 Guard the comparator at `src/sort.ts:63` — on throw, fall back to `compareValues(va, vb)`; keep `sortRowsMulti` total; comment the *why*.
-- [ ] 3.4 Confirm ST-6/ST-7 green.
+- [x] 3.2 _(2026-07-18: `column.ts` accessor — `try { c.format(v,row) } catch { String(v) }`, mirroring the export-path guard.)_ Guard the on-screen formatter.
+- [x] 3.3 _(2026-07-18: `sort.ts` `compareOneKey` — `col.compare` wrapped in try/catch, fallback `compareValues(va,vb)`; stays below the nil short-circuit so a custom comparator never sees a null.)_ Guard the comparator.
+- [x] 3.4 _(2026-07-18: all 3 spec tests green.)_ Confirm ST-6/ST-7 green.
 
 **Session 3 — Impl tests & hardening**
-- [ ] 3.5 Write `test/callback-isolation.impl.test.ts` — formatter throws on some rows only; comparator throws under multi-key sort (falls back per-key, honors others) and below the `nulls` short-circuit; export-path formatter regression still degrades.
-- [ ] 3.6 Full `yarn verify`; commit via **/gitcm**.
+- [x] 3.5 _(2026-07-18: `test/callback-isolation.impl.test.ts` — formatter degrades only the throwing cell (accessor unit); throwing primary comparator falls back yet the secondary key still orders ties; the guard sits below the `nulls` short-circuit; export-path formatter still degrades. 4/4 green.)_ Write `test/callback-isolation.impl.test.ts`.
+- [ ] 3.6 Full `yarn verify`; commit.
 
 ## Phase 4 — API governance & closeout
 
