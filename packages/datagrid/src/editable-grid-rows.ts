@@ -165,6 +165,20 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
    */
   rowFloor?: number;
   rowCeil?: number;
+  /**
+   * Windowed prefetch seam: request the page range covering the visible window (plus a buffer each
+   * side) as it scrolls, coalesced to ≤1 call per frame for the settled window. Omit for an eager
+   * source — the windowed loading path is then entirely inert.
+   */
+  ensureRange?: (start: number, end: number) => void | Promise<void>;
+  /** The source's total row count (windowed) — the window clamp reads it. Omit for an eager source. */
+  rowCount?: () => number;
+  /**
+   * Prefetch buffer size in rows on each side of the viewport. Unset ⇒ one viewport (the current
+   * visible row count, resolved per-draw, since the viewport height is not known at config time); a
+   * number pins a fixed buffer.
+   */
+  prefetch?: number;
 }
 
 /**
@@ -256,6 +270,15 @@ export class EditableGridRows<T> extends GridRows<T> {
   /** Lower / upper clamp on the virtual window's top row (frozen-rows split); defaults `0` / `∞`. */
   private readonly rowFloor: number;
   private readonly rowCeil: number;
+  /** Windowed prefetch sink (request the covering page range); `undefined` on the eager path. */
+  private readonly ensureRangeFn?: (start: number, end: number) => void | Promise<void>;
+  /** The source total for the window clamp (windowed); `undefined` on the eager path. */
+  private readonly rowCountFn?: () => number;
+  /** The prefetch buffer in rows each side of the viewport; `undefined` ⇒ one viewport (per-draw). */
+  private readonly prefetchRows?: number;
+  /** The last window range requested (settled-window de-dup) and whether a request is scheduled this frame. */
+  private lastRequested: { start: number; end: number } | null = null;
+  private windowPending = false;
   /** The in-cell editing lifecycle controller. */
   protected readonly controller: EditController;
 
@@ -294,6 +317,9 @@ export class EditableGridRows<T> extends GridRows<T> {
     this.dividers = cfg.compact !== true;
     this.rowFloor = cfg.rowFloor ?? 0;
     this.rowCeil = cfg.rowCeil ?? Number.POSITIVE_INFINITY;
+    this.ensureRangeFn = cfg.ensureRange;
+    this.rowCountFn = cfg.rowCount;
+    this.prefetchRows = cfg.prefetch;
     // The controller reaches this body only through the EditHost seam below — no access to protected state.
     this.controller = createEditController<T>({
       body: this,
@@ -376,6 +402,41 @@ export class EditableGridRows<T> extends GridRows<T> {
   protected override updateTop(): void {
     super.updateTop();
     this.topItem = clamp(this.topItem, this.rowFloor, this.rowCeil);
+  }
+
+  /**
+   * Windowed prefetch: request the page range covering `[top, top + visibleRows)` plus a buffer on
+   * each side. A no-op on the eager path. The bounds are floored + clamped to `[0, rowCount]`, so even
+   * a hostile (fractional / out-of-range) scroll position never sends the source a bad range.
+   *
+   * @param top The window's top row index.
+   * @param visibleRows The number of rows the viewport shows (the dynamic prefetch default).
+   */
+  private requestWindow(top: number, visibleRows: number): void {
+    if (this.ensureRangeFn === undefined) return; // eager path — no windowed loading
+    const n = this.rowCountFn ? this.rowCountFn() : this.display().length;
+    const buffer = this.prefetchRows ?? visibleRows; // unset ⇒ one viewport (dynamic, per-draw)
+    const start = Math.floor(clamp(top - buffer, 0, n));
+    const end = Math.floor(clamp(top + visibleRows + buffer, 0, n)); // half-open [start, end)
+    this.coalesceEnsureRange(start, end);
+  }
+
+  /**
+   * Collapse rapid scroll to at most one `ensureRange` per frame for the settled window: a window
+   * identical to the last requested issues no call, and all intra-frame deltas coalesce to the final
+   * window via a microtask. The repaint on a landed page is independent (driven by the source's
+   * `revision`), so this never repaints.
+   */
+  private coalesceEnsureRange(start: number, end: number): void {
+    if (this.lastRequested?.start === start && this.lastRequested.end === end) return; // settled → no call
+    this.lastRequested = { start, end };
+    if (this.windowPending) return; // a request is already scheduled this frame
+    this.windowPending = true;
+    queueMicrotask(() => {
+      this.windowPending = false;
+      const r = this.lastRequested!;
+      this.ensureRangeFn!(r.start, r.end); // fires once for the settled window
+    });
   }
 
   /**
@@ -608,6 +669,8 @@ export class EditableGridRows<T> extends GridRows<T> {
    */
   private editableCol(): number {
     if (this.focused() < this.rowFloor) return -1; // the cursor is on a pinned row (the band owns it)
+    const rows = this.display();
+    if (rows.length === 0 || rows[clamp(this.focused(), 0, rows.length - 1)] === undefined) return -1; // unloaded → read-only
     const c = this.localCol();
     if (c < 0) return -1; // the cursor is in another panel — not ours to edit
     const col = this.typedColumns[c];
@@ -634,6 +697,7 @@ export class EditableGridRows<T> extends GridRows<T> {
     const rows = this.display();
     if (rows.length === 0) return null;
     const row = rows[clamp(this.focused(), 0, rows.length - 1)];
+    if (row === undefined) return null; // an unloaded windowed row has no cell ref (no rowKey(undefined))
     const c = clamp(Math.max(0, this.localCol()), 0, this.typedColumns.length - 1);
     return { row, rowKey: this.rowKey(row), col: c, columnId: this.typedColumns[c].id };
   }
@@ -781,6 +845,7 @@ export class EditableGridRows<T> extends GridRows<T> {
     // module-private to the engine, so drive the inherited protected helper instead.
     this.updateTop();
     const top = this.topItem;
+    this.requestWindow(top, rows); // windowed: prefetch the covering page range (no-op on the eager path)
     const focusedRow = clamp(this.focused(), 0, range - 1);
     const focusedCol = this.localCol(); // -1 when the cursor is in another panel → no cursor cell here
     const active = this.gridActive();
@@ -794,6 +859,12 @@ export class EditableGridRows<T> extends GridRows<T> {
         continue;
       }
       const row = display[item];
+      if (row === undefined) {
+        // A windowed row that has not loaded yet: paint the muted `…` placeholder (no committed value,
+        // dirty marker, or validation state exists on it — those overpaints skip it below).
+        this.paintPlaceholderRow(ctx, i, item, geom, indent, focusedRow, active);
+        continue;
+      }
       const isFocusedRow = item === focusedRow;
       const isSelectedRow = selectedKeys.has(this.rowKey(row)); // set membership, not a single index
       const zebra = this.zebra && (item & 1) === 1;
@@ -862,6 +933,45 @@ export class EditableGridRows<T> extends GridRows<T> {
   }
 
   /**
+   * Paint an unloaded (windowed) row: the row band in its resolved colour, then a muted `…` per cell.
+   * The `…` is painted **fg-only** over the band background (`inputPlaceholder`'s own sunken-field bg
+   * would clash with the row band), so the loading row reads as one continuous band. Selection is
+   * unknown for a hole, so the band is focused > zebra > normal (never the selected colour).
+   *
+   * @param ctx The clipped, view-local paint context.
+   * @param i The screen row (0-based within the viewport).
+   * @param item The display index of the row.
+   * @param geom The apportioned column geometry.
+   * @param indent The horizontal scroll offset.
+   * @param focusedRow The focused display index (for the row-band colour).
+   * @param active Whether the grid holds focus (for the focused-row colour).
+   */
+  private paintPlaceholderRow(
+    ctx: DrawContext,
+    i: number,
+    item: number,
+    geom: ColumnGeometry,
+    indent: number,
+    focusedRow: number,
+    active: boolean,
+  ): void {
+    const width = ctx.size.width;
+    const zebra = this.zebra && (item & 1) === 1;
+    const roleName =
+      item === focusedRow ? (active ? 'listFocused' : 'listSelected') : zebra ? 'staticText' : 'listNormal';
+    const rowStyle = ctx.color(roleName);
+    ctx.fillRect(0, i, width, 1, ' ', rowStyle); // blank the row band in its colour
+    const phFg = ctx.color('inputPlaceholder').fg; // fg only — compose over the row band, not the role's bg
+    const divider = ctx.color('listDivider');
+    for (let c = 0; c < this.columns.length; c += 1) {
+      const w = geom.widths[c];
+      const x = geom.starts[c] - indent;
+      if (w > 0) ctx.text(x, i, '…', { fg: phFg, bg: rowStyle.bg }); // static constant — never row data
+      if (this.dividers) ctx.text(x + w, i, DIVIDER, divider);
+    }
+  }
+
+  /**
    * Overpaint every visible invalid cell as a filled `gridInvalid` band with its text redrawn on top —
    * a stronger signal than the pending-commit `•`, so a blocked edit reads as a hard error. The active
    * cursor cell is skipped (cursor wins over invalid), and the dirty marker yields to it (invalid wins
@@ -890,6 +1000,7 @@ export class EditableGridRows<T> extends GridRows<T> {
       const item = this.topItem + i;
       if (item >= range) break;
       const row = display[item];
+      if (row === undefined) continue; // an unloaded windowed row has no invalid state
       const rk = this.rowKey(row);
       for (let c = 0; c < this.columns.length; c += 1) {
         const w = geom.widths[c];
@@ -934,7 +1045,9 @@ export class EditableGridRows<T> extends GridRows<T> {
     for (let i = 0; i < ctx.size.height; i += 1) {
       const item = this.topItem + i;
       if (item >= range) break;
-      const rk = this.rowKey(display[item]);
+      const row = display[item];
+      if (row === undefined) continue; // an unloaded windowed row has no dirty markers
+      const rk = this.rowKey(row);
       for (let c = 0; c < this.columns.length; c += 1) {
         const w = geom.widths[c];
         const ck = cellKey(rk, this.typedColumns[c].id);
@@ -982,6 +1095,8 @@ export class EditableGridRows<T> extends GridRows<T> {
     if (w <= 0) return;
 
     const focused = clamp(this.focused(), 0, range - 1);
+    const focusedRowValue = this.display()[focused];
+    if (focusedRowValue === undefined) return; // an unloaded windowed row shows no cursor box (read-only)
     const y = focused - this.topItem;
     if (y < 0 || y >= ctx.size.height) return;
 
@@ -992,7 +1107,7 @@ export class EditableGridRows<T> extends GridRows<T> {
     const style = ctx.color('gridCursor');
     ctx.fillRect(x, y, w, 1, ' ', style);
     const col = this.columns[c];
-    const cell = alignCell(col.accessor(this.display()[focused]), w, col.align ?? 'left', stringWidth);
+    const cell = alignCell(col.accessor(focusedRowValue), w, col.align ?? 'left', stringWidth);
     ctx.text(x, y, cell, style);
   }
 }

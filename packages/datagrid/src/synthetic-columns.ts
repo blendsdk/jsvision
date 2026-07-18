@@ -242,6 +242,18 @@ export class SyntheticBodyBand<T> extends GridRows<T> {
         continue;
       }
       const row = display[item];
+      if (row === undefined) {
+        // A windowed row that has not loaded yet: mirror the body — a blank checkbox (selection is
+        // unknown) and a `…` gutter, never `rowKey(undefined)`.
+        const zebraHole = this.zebra && (item & 1) === 1;
+        const holeRole =
+          item === focusedRow ? (active ? 'listFocused' : 'listSelected') : zebraHole ? 'staticText' : 'listNormal';
+        const holeStyle = ctx.color(holeRole);
+        ctx.fillRect(0, i, width, 1, ' ', holeStyle);
+        if (this.prefix.rowNumbers)
+          ctx.text(this.checkboxW, i, '…', { fg: ctx.color('inputPlaceholder').fg, bg: holeStyle.bg });
+        continue;
+      }
       const selected = selectedKeys.has(this.bandRowKey(row));
       const zebra = this.zebra && (item & 1) === 1;
       // Match the data body's row-colour priority: focused > selected > zebra > normal. A selected row
