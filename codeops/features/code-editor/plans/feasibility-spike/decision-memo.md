@@ -46,13 +46,17 @@ in the lost README; see *Unrecoverable* below.
 
 ## The decision — architecture (settled)
 
-**Language engine: Lezer (`@lezer/*`).** A real incremental parse tree in pure JS: no DOM, no WASM,
-no native. Drives syntax highlighting, **tree-based** folding, and incremental reparse. This is the
-primary engine.
+**Language engine: Lezer (`@lezer/*`) — and Lezer only.** A real incremental parse tree in pure JS:
+no DOM, no WASM, no native. Drives syntax highlighting, **tree-based** folding, and incremental
+reparse. This is the sole engine.
 
-**Breadth fallback: VS Code TextMate** (`vscode-textmate` + the pure-JS `oniguruma-to-es`) for the
-long tail of languages that lack a Lezer grammar — behind the **same** `(from, to, tag)` span
-**`Tokenizer` seam**, so the editor never knows which engine produced the spans.
+**No TextMate fallback (decided 2026-07-18).** An earlier draft kept VS Code TextMate
+(`vscode-textmate` + `oniguruma-to-es`) as a long-tail breadth fallback behind the same seam. That
+is **dropped**: it is Lezer or we don't build this. The engine surface stays single, small, and
+grammar-consistent.
+- **Consequence (accepted):** the supported-language set = **languages that have (or for which we
+  author) a Lezer grammar**. A language with no Lezer grammar is simply out of scope until a grammar
+  exists — we do not reach for a regex/TextMate second path to cover it.
 
 **Explicitly rejected:** CodeMirror's `view`/`language`/`commands` and Monaco — all DOM-bound. Our
 view is the shipped `@jsvision/ui` editor.
