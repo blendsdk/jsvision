@@ -22,6 +22,8 @@ import type { GridDataSource } from './data-source.js';
 import { isWindowed, windowedView, validateWindowedConfig } from './windowing.js';
 import { serializeView } from './export-view.js';
 import type { ExportColumn, ExportFormat } from './export-view.js';
+import { buildVariant, resolveVariant } from './variant.js';
+import type { GridVariant, LayoutSnapshot } from './variant.js';
 import { sortRowsMulti } from './sort.js';
 import type { SortKey, SortDir } from './sort.js';
 import { filterRows, resolveFilterType, computeDistinct } from './filter.js';
@@ -375,7 +377,9 @@ export class EditableDataGrid<T> extends Group {
   private readonly columnOrderSig: Signal<string[]>;
   private readonly columnWidths = signal<Map<string, number>>(new Map());
   private readonly hidden = signal<Set<string>>(new Set());
-  private readonly freezeSpec: FreezeSpec;
+  // Freeze is a signal (not a construction-only readonly) so `setFrozen` can re-pin at runtime and
+  // `applyVariant` can restore it. The partition derives from it, so a re-freeze re-pins reactively.
+  private readonly freezeSpecSig: Signal<FreezeSpec>;
   // A title press sorts on mouse-down; if that press then becomes a reorder drag we undo the sort so a
   // drag never leaves a net sort. This holds the pre-sort keys captured on the down, restored on drag.
   private reorderSortSnapshot: SortKey[] | null = null;
@@ -416,7 +420,11 @@ export class EditableDataGrid<T> extends Group {
     this.engineCols = engineCols;
     this.columnIndex = new Map(opts.columns.map((c, i) => [c.id, i]));
     this.columnOrderSig = signal<string[]>(opts.columns.map((c) => c.id));
-    this.freezeSpec = { freezeLeft: opts.freezeLeft, freezeRight: opts.freezeRight, freeze: opts.freeze };
+    this.freezeSpecSig = signal<FreezeSpec>({
+      freezeLeft: opts.freezeLeft,
+      freezeRight: opts.freezeRight,
+      freeze: opts.freeze,
+    });
     this.filterPopupFactory = opts.filterPopup;
     this.source = opts.source;
     this.windowed = isWindowed(opts.source);
@@ -471,7 +479,7 @@ export class EditableDataGrid<T> extends Group {
     // over-pinned columns pushed back to the center (so the center is never blank). Both derive lazily.
     this.visibleIds = this.derived(() => visibleOrder(this.columnOrderSig(), this.hidden()));
     this.partitionSig = this.derived(() => {
-      const part = partition(this.visibleIds(), this.freezeSpec);
+      const part = partition(this.visibleIds(), this.freezeSpecSig());
       const over = overPinnedIds(part, (id) => this.resolvedWidth(id), this.viewportWidth());
       return this.applyOverPin(part, over);
     });
@@ -698,7 +706,7 @@ export class EditableDataGrid<T> extends Group {
    * {@link frozen} reports is applied lazily once the real viewport width is known.
    */
   private computePartition(): FreezePartition {
-    const raw = partition(this.visibleIds(), this.freezeSpec);
+    const raw = partition(this.visibleIds(), this.freezeSpecSig());
     const overFrozen = raw.center.length === 0 && (raw.left.length > 0 || raw.right.length > 0);
     return overFrozen ? { left: [], center: this.visibleIds(), right: [] } : raw;
   }
@@ -706,7 +714,7 @@ export class EditableDataGrid<T> extends Group {
   /** Emit the over-freeze dev warning once (de-duped across rebuilds) when every column is frozen. */
   private maybeWarnOverFreeze(): void {
     if (this.warnedOverFreeze) return;
-    const raw = partition(this.visibleIds(), this.freezeSpec);
+    const raw = partition(this.visibleIds(), this.freezeSpecSig());
     if (raw.center.length === 0 && (raw.left.length > 0 || raw.right.length > 0)) {
       devWarn('datagrid', 'every column is frozen — the freeze is ignored so the grid stays scrollable');
       this.warnedOverFreeze = true;
@@ -1102,6 +1110,88 @@ export class EditableDataGrid<T> extends Group {
   frozen(): { left: string[]; right: string[] } {
     const p = this.partitionSig();
     return { left: p.left, right: p.right };
+  }
+
+  /**
+   * Re-pin the frozen columns at runtime. Sets the left and right frozen panels to the given ids (an
+   * unknown or hidden id is ignored by the partition); the panels rebuild reactively. The over-pin guard
+   * still applies — pinning wider than the viewport peels the innermost frozen column back to the
+   * scrolling center (and, when *every* column would be frozen, the freeze is dropped with one dev
+   * warning so the grid stays scrollable). Freeze is otherwise construction-only; this is what lets
+   * {@link applyVariant} restore it.
+   *
+   * @param left Column ids to pin to the left panel, in order.
+   * @param right Column ids to pin to the right panel, in order.
+   * @example
+   * ```ts
+   * grid.setFrozen(['id'], ['actions']); // id pinned left, actions pinned right
+   * grid.setFrozen([], []);              // clear all freezing
+   * ```
+   */
+  setFrozen(left: string[], right: string[]): void {
+    this.freezeSpecSig.set({ freezeLeft: [...left], freezeRight: [...right] });
+  }
+
+  /**
+   * Capture the grid's full column layout — the column order, per-column width overrides and visibility,
+   * the frozen partition, the sort model, and the filter model — as a serializable {@link GridVariant}
+   * the caller persists. The grid stores nothing itself; pair it with {@link applyVariant} to restore.
+   *
+   * @param name A caller-facing label for the variant.
+   * @returns The serializable layout snapshot (plain JSON — no functions).
+   * @example
+   * ```ts
+   * const mine = grid.saveVariant('mine'); // { name, columns, freeze, sort, filter } — persist it
+   * ```
+   */
+  saveVariant(name: string): GridVariant {
+    const snap: LayoutSnapshot = {
+      order: this.columnOrderSig(),
+      hidden: this.hidden(),
+      widthOf: (id) => this.columnWidths().get(id),
+      freeze: this.frozen(),
+      sort: this.sortKeys(),
+      filter: this.filters(),
+    };
+    return buildVariant(name, snap);
+  }
+
+  /**
+   * Restore a layout {@link GridVariant} saved with {@link saveVariant}. Reproduces, in a fixed sequence,
+   * the column order, visibility, width overrides, freeze, sort, and filter. An id the grid no longer has
+   * is skipped (never thrown); a column the grid has that the variant does not name keeps its current
+   * state and is appended after the named columns. A filter on a column the variant hides is retained and
+   * reappears when the column is shown.
+   *
+   * @param variant The variant to apply.
+   * @example
+   * ```ts
+   * grid.applyVariant(mine); // reproduces order / width / visibility / freeze / sort / filter
+   * ```
+   */
+  applyVariant(variant: GridVariant): void {
+    const resolved = resolveVariant(variant, this.columnOrderSig());
+    // Fixed restore sequence — order → visibility → widths → freeze → sort → filter — so each step lands
+    // on the final column arrangement. Order/visibility/widths set the private layout signals directly
+    // (the public setColumnOrder rejects a non-visible permutation); freeze routes through setFrozen; and
+    // sort/filter set their signals directly, so the push-down effects forward them to a setSort/setFilter
+    // source just as the interactive path does.
+    this.columnOrderSig.set(resolved.order);
+    const hidden = new Set(this.hidden());
+    for (const [id, visible] of resolved.visibleById) {
+      if (visible) hidden.delete(id);
+      else hidden.add(id);
+    }
+    this.hidden.set(hidden);
+    const widths = new Map(this.columnWidths());
+    for (const [id, width] of resolved.widthById) {
+      const col = this.columnMap.get(id);
+      if (col !== undefined) widths.set(id, clampWidth(width, col.minWidth, col.maxWidth));
+    }
+    this.columnWidths.set(widths);
+    this.setFrozen(resolved.freeze.left, resolved.freeze.right);
+    this.sortKeys.set(resolved.sort);
+    this.filters.set(new Map(resolved.filter.map((f) => [f.columnId, f.filter])));
   }
 
   /**

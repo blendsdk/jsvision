@@ -240,3 +240,26 @@ test('ST-19: 100k windowed and 100k in-memory grids keep a bounded, scroll-stabl
   expect(eBefore).toBeLessThan(60);
   expect(eAfter).toBe(eBefore);
 });
+
+// `freezeSpec` became a signal (so `setFrozen` / `applyVariant` can re-pin at runtime). The
+// construction-time `freezeLeft` / `freezeRight` options must still apply unchanged.
+test('construction-time freeze still applies after freezeSpec became a signal', () => {
+  const columns = [
+    column<Row, string>({ id: 'a', title: 'A', value: (r) => r.name, width: 5 }),
+    column<Row, string>({ id: 'b', title: 'B', value: (r) => r.name, width: 6 }),
+    column<Row, string>({ id: 'c', title: 'C', value: (r) => r.name, width: 6 }),
+  ];
+  const grid = new EditableDataGrid<Row>({
+    columns,
+    source: fromRows(signal([{ id: 1, name: 'x' }]), { rowKey: (r) => r.id }),
+    freezeLeft: ['a'],
+    freezeRight: ['c'],
+  });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 5 } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: 40, height: 5 }, { caps });
+  loop.mount(root);
+  loop.renderRoot.flush();
+  expect(grid.frozen()).toEqual({ left: ['a'], right: ['c'] }); // frozen partition unchanged by the signal conversion
+});

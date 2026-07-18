@@ -50,6 +50,12 @@ export { isWindowed, windowedView } from './windowing.js';
 // document, JSON is raw values keyed by column id. The grid returns a string; the caller owns the sink.
 export type { ExportFormat } from './export-view.js';
 
+// Layout variants — a named, serializable snapshot of a grid's full column layout (order, widths,
+// visibility, freeze, sort, filter) that `grid.saveVariant(name)` returns and `grid.applyVariant(v)`
+// restores. The caller persists the `GridVariant`; the grid holds no registry. `setFrozen(left, right)`
+// (a method on the grid) is the runtime freeze mutation variants rely on.
+export type { GridVariant, GridVariantColumn } from './variant.js';
+
 // Filter model — the pure `filterRows` multi-column AND evaluator and `computeDistinct` label
 // enumeration, plus the `ColumnFilter` per-column condition, the `FilterModel` map the source's
 // `setFilter` push-down consumes, the `DistinctResult` a value-list reads, and the `FilterType` a
