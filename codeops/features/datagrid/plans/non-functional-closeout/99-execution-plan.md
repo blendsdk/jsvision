@@ -1,7 +1,7 @@
 # Execution Plan — non-functional-closeout
 
 > **Implements**: datagrid/RD-14 · **CodeOps Skills Version**: 3.9.0
-> **Progress**: 20/24 tasks (83%) — exec_plan started 2026-07-18 (`--auto-commit`); Phase 0 ✅ · Phase 1 ✅ (`18cd2291`) · Phase 2 ✅ (`e22fa20e`) · Phase 3 ✅ (`78e24af9`)
+> **Progress**: 24/24 tasks (100%) ✅ — exec_plan COMPLETE 2026-07-18 (`--auto-commit`); Phase 0 ✅ · Phase 1 ✅ (`18cd2291`) · Phase 2 ✅ (`e22fa20e`) · Phase 3 ✅ (`78e24af9`) · Phase 4 ✅ (`1164540c`). Committed-state `yarn verify` green (worktree-proven, 30/30 turbo).
 > **Verify** (every task): `yarn verify` — perf specs auto-skip under `CI` / `TUI_SKIP_PERF`.
 
 Specification-first per phase: **Spec tests → red → implement → green → impl tests & hardening**.
@@ -62,8 +62,8 @@ This is the single source of truth for progress — each task appears exactly on
 
 - [x] 4.1 _(2026-07-18: CHANGELOG `[Unreleased]` — added `Callback isolation` (Added) + a new `Non-functional` subsection (golden-screen/a11y + perf/bytes) + a "Versioning & stability" note; trimmed the now-shipped golden/bench line from "Not yet shipped".)_ Update `CHANGELOG.md` `[Unreleased]` (AR-12).
 - [x] 4.2 _(2026-07-18: `prettier --write` on the CHANGELOG; `check:docs`/`check:deps` clean. Whole-tree `yarn lint:fix` races the concurrent RD-16 editor's mid-write state, so my files were formatted directly.)_ Run lint/format; stage what it changes.
-- [ ] 4.3 Final full `yarn verify` green; confirm `check:deps` + `check:docs` clean and the whole datagrid suite passes with zero regression.
-- [ ] 4.4 Commit via **/gitcm**. (exec_plan then advances RD-14 → ✅ Done on the feature roadmap.)
+- [x] 4.3 _(2026-07-18: proved the complete committed state green via a **git-worktree verify at branch HEAD** — 30/30 turbo tasks + check-plugin PASS, immune to the working tree's concurrent RD-16 edits. `check:deps`/`check:docs` clean; zero regression in the datagrid suite. The main working tree's `yarn verify` fails ONLY on the concurrent RD-16 `personalize.impl.test.ts` (uncommitted WIP, not in any of these commits).)_ Final full `yarn verify` green.
+- [x] 4.4 _(2026-07-18: closeout committed + pushed; RD-14 advanced → ✅ Done on the feature + portfolio roadmaps.)_ Commit. (exec_plan advances RD-14 → ✅ Done.)
 
 ## Estimate
 
