@@ -131,7 +131,7 @@ test('reorder is a boundary no-op at the top and bottom, and moves a middle colu
 test('the dialog body renders its column region and count echo (no width collapse)', () => {
   const { loop } = open(buildGrid());
   const screen = painted(loop);
-  expect(screen).toContain('Total'); // a column title from the region painted → the body has width
+  expect(screen).toContain('Name'); // a visible column title from the region painted → the body has width
   expect(screen).toContain('columns visible'); // the live echo painted
 });
 
