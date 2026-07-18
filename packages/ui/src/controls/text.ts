@@ -7,7 +7,8 @@
  */
 import { View } from '../view/index.js';
 import type { DrawContext } from '../view/index.js';
-import { glyphWidth } from './measure.js';
+import type { Size2D } from '../layout/index.js';
+import { glyphWidth, stringWidth } from './measure.js';
 
 /**
  * Word-wrap `content` to `width` display columns. Each output line is a verbatim slice of the
@@ -134,6 +135,21 @@ export class Text extends View {
    *
    * @param ctx The clipped, view-local paint context.
    */
+  /**
+   * The content's natural display size: the widest line's display width by its line count. A flex/flow
+   * layout uses it to self-size the text (e.g. a status bar or a data-grid footer widget row); an
+   * absolute layout sets an explicit rect and ignores it. The reactive getter (if any) is evaluated.
+   *
+   * @returns The natural `{ width, height }` in terminal cells.
+   */
+  override measure(): Size2D {
+    const content = typeof this.content === 'function' ? this.content() : this.content;
+    const lines = content.split('\n');
+    let width = 0;
+    for (const line of lines) width = Math.max(width, stringWidth(line));
+    return { width, height: Math.max(1, lines.length) };
+  }
+
   override draw(ctx: DrawContext): void {
     const content = typeof this.content === 'function' ? this.content() : this.content;
     // Map the semantic severity to its theme role; unset falls back to the plain static-text colour.

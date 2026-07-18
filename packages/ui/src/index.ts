@@ -171,8 +171,29 @@ export type { TreeNode, TreeOptions, MarkerStyle } from './tree/index.js';
 
 // Data table — a scrollable, multi-column `DataGrid<T>` with a sticky header,
 // per-column widths and alignment, click-to-sort, and horizontal scrolling.
-export { DataGrid } from './table/index.js';
-export type { Column, ColumnWidth, ColumnAlign, SortState, ColumnGeometry, DataGridOptions } from './table/index.js';
+// The grid engine underneath is exposed too — the `GridRows`/`GridHeader` renderers, the pure
+// column math (`apportionColumns`/`alignCell`/`sortRows`/`measureAutoWidths`), and the wide-glyph
+// `stringWidth` measure they draw with — so another package can compose a bespoke grid on it.
+export {
+  DataGrid,
+  GridRows,
+  GridHeader,
+  apportionColumns,
+  alignCell,
+  sortRows,
+  measureAutoWidths,
+} from './table/index.js';
+export type {
+  Column,
+  ColumnWidth,
+  ColumnAlign,
+  SortState,
+  ColumnGeometry,
+  DataGridOptions,
+  GridRowsConfig,
+  GridHeaderConfig,
+} from './table/index.js';
+export { stringWidth } from './controls/measure.js';
 
 // Tabs — a `TabView` folder-tab container that shows one page at a time, with
 // keyboard and hotkey switching and closable/overflowing tabs.
