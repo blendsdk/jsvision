@@ -142,3 +142,69 @@ test('applyVariant fires the setSort/setFilter push-down when the source impleme
   const lastFilter = setFilter.mock.calls.at(-1)?.[0];
   expect(lastFilter?.get('dept')).toEqual({ kind: 'text', op: 'contains', value: 'A' }); // pushed the restored filter
 });
+
+// Every named column carrying no width lands in clearWidths (with none carrying a width).
+test('resolveVariant lists every named-without-width id in clearWidths', () => {
+  const variant: GridVariant = {
+    name: 'x',
+    columns: [
+      { id: 'a', visible: true },
+      { id: 'b', visible: true },
+    ],
+    freeze: { left: [], right: [] },
+    sort: [],
+    filter: [],
+  };
+  const resolved = resolveVariant(variant, ['a', 'b']);
+  expect(resolved.clearWidths).toEqual(['a', 'b']); // all named, none carried a width
+  expect(resolved.widthById.size).toBe(0); // nothing to set
+});
+
+// When every named column carries a width, clearWidths is empty and widthById carries them all.
+test('resolveVariant reports an empty clearWidths when every named column carries a width', () => {
+  const variant: GridVariant = {
+    name: 'x',
+    columns: [
+      { id: 'a', visible: true, width: 7 },
+      { id: 'b', visible: true, width: 9 },
+    ],
+    freeze: { left: [], right: [] },
+    sort: [],
+    filter: [],
+  };
+  const resolved = resolveVariant(variant, ['a', 'b']);
+  expect(resolved.clearWidths).toEqual([]); // nothing to clear
+  expect([...resolved.widthById.entries()]).toEqual([
+    ['a', 7],
+    ['b', 9],
+  ]);
+});
+
+// A column the variant does not name (appended, unnamed) keeps its width override; only named-without-
+// width columns are cleared — the delete-then-set never touches an unnamed column.
+test('applyVariant leaves an unnamed column width override untouched (only named-without-width clear)', () => {
+  interface Cell {
+    id: number;
+    a: number;
+    b: number;
+  }
+  const columns = [
+    column<Cell, number>({ id: 'a', title: 'A', value: (r) => r.a, width: 6 }),
+    column<Cell, number>({ id: 'b', title: 'B', value: (r) => r.b, width: 6 }),
+  ];
+  const grid = mount(
+    new EditableDataGrid({ columns, source: fromRows(signal([{ id: 1, a: 1, b: 2 }]), { rowKey: (r) => r.id }) }),
+  );
+  grid.setColumnWidth('a', 15); // 'a' is named without a width by the variant → the override must clear
+  grid.setColumnWidth('b', 20); // 'b' is unnamed (the variant omits it) → the override must persist
+  const variant: GridVariant = {
+    name: 'x',
+    columns: [{ id: 'a', visible: true }], // names only 'a', without a width
+    freeze: { left: [], right: [] },
+    sort: [],
+    filter: [],
+  };
+  grid.applyVariant(variant);
+  expect(grid.columnWidth('a')).toBe(6); // named-without-width → override cleared → back to declared 6
+  expect(grid.columnWidth('b')).toBe(20); // unnamed → override preserved
+});

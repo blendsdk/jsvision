@@ -77,9 +77,12 @@ test('grid.ts stays a thin delegator under the line-count guard', () => {
   // Re-based 1550 -> 1680 for the RD-13 export & layout-variants surface: four documented public methods
   // (exportView / setFrozen / saveVariant / applyVariant) each with JSDoc + an @example, plus the
   // freezeSpec->signal edit — the serialization + variant logic lives in the new export-view.ts /
-  // variant.ts modules, and (as always) the guard is never met by re-inlining that logic.
+  // variant.ts modules, and (as always) the guard is never met by re-inlining that logic. Re-based
+  // 1680 -> 1760 for the RD-16 personalization grid read API: the documented public reads columns() /
+  // defaultColumnLayout() + clearColumnWidth() (each JSDoc + @example), the applyVariant delete-then-set
+  // width-restore, and the resolvedWidth/declaredWidth split — the GridColumnInfo assembly lives in variant.ts.
   const lineCount = src('grid.ts').split('\n').length;
-  expect(lineCount).toBeLessThan(1680);
+  expect(lineCount).toBeLessThan(1760);
 });
 
 test('displayedRows is reactive: an effect re-runs when the source rows change', () => {
