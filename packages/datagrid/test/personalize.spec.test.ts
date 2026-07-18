@@ -6,10 +6,56 @@
  * the requirements + the 03-XX specs, never from the implementation.
  */
 import { test, expect } from 'vitest';
-import { Group, createEventLoop, resolveCapabilities, signal, effect, createRoot } from '@jsvision/ui';
+import { Group, createEventLoop, resolveCapabilities, signal, effect, createRoot, Commands } from '@jsvision/ui';
+import type { View } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import { EditableDataGrid } from '../src/grid.js';
+import { personalizeGrid } from '../src/personalize.js';
+import { createMemoryVariantStore } from '../src/variant-store.js';
+import type { PersonalizeDialog } from '../src/personalize-dialog.js';
+
+/** A fake execView-capable modal host that captures added/removed windows into a mounted root (the
+ * form-dialog.spec pattern). The dialog runs in its own loop, independent of the grid's. */
+function makeHost(w = 70, h = 24) {
+  const root = new Group();
+  const loop = createEventLoop({ width: w, height: h }, { caps });
+  loop.mount(root);
+  const added: View[] = [];
+  const removed: View[] = [];
+  const host = {
+    loop,
+    desktop: {
+      addWindow: (v: View) => {
+        added.push(v);
+        root.add(v);
+      },
+      removeWindow: (v: View) => {
+        removed.push(v);
+        root.remove(v);
+      },
+      bounds: { x: 0, y: 0, width: w, height: h },
+    },
+  };
+  return { loop, host, added, removed };
+}
+
+/** Open the dialog and hand back the live `PersonalizeDialog` (captured via the host's addWindow) plus
+ * the pending result promise and the loop — the driving handle for the column-region oracles. */
+function open(grid: EditableDataGrid<Emp>, store = createMemoryVariantStore()) {
+  const { loop, host, added, removed } = makeHost();
+  const result = personalizeGrid(grid, { store, host });
+  const dlg = added[0] as unknown as PersonalizeDialog<Emp>;
+  return { loop, dlg, result, added, removed, store };
+}
+
+const key = (k: string, mods: { alt?: boolean; shift?: boolean; ctrl?: boolean } = {}) => ({
+  type: 'key' as const,
+  key: k,
+  ctrl: mods.ctrl ?? false,
+  alt: mods.alt ?? false,
+  shift: mods.shift ?? false,
+});
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -139,4 +185,221 @@ test('clearColumnWidth removes an override (unknown id is a no-op)', () => {
   grid.clearColumnWidth('name');
   expect(grid.columnWidth('name')).toBe(8); // back to the declared width
   expect(() => grid.clearColumnWidth('nope')).not.toThrow(); // unknown id → silent no-op
+});
+
+// ───────────────────────────────────────────────────────────────────────────────────────────────
+// Dialog column region + personalizeGrid helper (ST-12…ST-20) — driven on a headless modal host.
+// ───────────────────────────────────────────────────────────────────────────────────────────────
+
+// OK commits the pending layout via applyVariant; Cancel and Esc leave the grid byte-identical.
+test('OK applies the pending layout; Cancel and Esc leave the grid untouched', async () => {
+  // OK path
+  {
+    const grid = buildGrid();
+    const { loop, dlg, result } = open(grid);
+    dlg.select(dlg.indexOf('note'));
+    dlg.toggleSelectedVisibility(); // hide 'note' (pending only)
+    loop.emitCommand(Commands.ok);
+    await expect(result).resolves.toEqual({ ok: true });
+    expect(grid.columnOrder()).not.toContain('note'); // committed
+  }
+  // Cancel path — pending edit discarded
+  {
+    const grid = buildGrid();
+    const snapshot = JSON.stringify(grid.columns());
+    const { loop, dlg, result } = open(grid);
+    dlg.select(dlg.indexOf('note'));
+    dlg.toggleSelectedVisibility();
+    loop.emitCommand(Commands.cancel);
+    await expect(result).resolves.toEqual({ ok: false });
+    expect(JSON.stringify(grid.columns())).toBe(snapshot); // untouched
+  }
+  // Esc path — same as Cancel
+  {
+    const grid = buildGrid();
+    const snapshot = JSON.stringify(grid.columns());
+    const { loop, dlg, result } = open(grid);
+    dlg.select(dlg.indexOf('note'));
+    dlg.toggleSelectedVisibility();
+    loop.dispatch(key('escape'));
+    await expect(result).resolves.toEqual({ ok: false });
+    expect(JSON.stringify(grid.columns())).toBe(snapshot);
+  }
+});
+
+// Hiding a column removes it from the visible order (kept in columns() as visible:false); re-showing
+// restores it.
+test('hide a column then re-show it across two OK commits', async () => {
+  const grid = buildGrid();
+  {
+    const { loop, dlg, result } = open(grid);
+    dlg.select(dlg.indexOf('dept'));
+    dlg.toggleSelectedVisibility(); // hide
+    loop.emitCommand(Commands.ok);
+    await result;
+  }
+  expect(grid.columnOrder()).not.toContain('dept'); // gone from the visible order
+  expect(grid.columns().find((c) => c.id === 'dept')!.visible).toBe(false); // still present, hidden
+  {
+    const { loop, dlg, result } = open(grid);
+    dlg.select(dlg.indexOf('dept'));
+    dlg.toggleSelectedVisibility(); // show again
+    loop.emitCommand(Commands.ok);
+    await result;
+  }
+  expect(grid.columnOrder()).toContain('dept'); // restored
+});
+
+// The last visible column's toggle is a guarded no-op — a zero-visible layout is never committed.
+test('the last visible column cannot be hidden (guard)', async () => {
+  const grid = buildGrid();
+  const { loop, dlg, result } = open(grid);
+  // Hide every column but the first, one at a time.
+  for (const id of ['name', 'dept', 'total', 'note', 'active']) {
+    dlg.select(dlg.indexOf(id));
+    dlg.toggleSelectedVisibility();
+  }
+  expect(dlg.visibleCount()).toBe(1);
+  // Attempt to hide the last remaining visible column ('id') — guarded no-op.
+  dlg.select(dlg.indexOf('id'));
+  dlg.toggleSelectedVisibility();
+  expect(dlg.visibleCount()).toBe(1); // still one visible; the guard held
+  expect(dlg.workingColumns().find((c) => c.id === 'id')!.visible).toBe(true);
+  loop.emitCommand(Commands.ok);
+  await result;
+  expect(grid.columnOrder().length).toBe(1); // a zero-visible layout was never committed
+});
+
+// Reorder moves the selected column up/down; a top column does not move up, a bottom column down.
+test('reorder the selected column, with boundary no-ops', async () => {
+  const grid = buildGrid();
+  const { loop, dlg, result } = open(grid);
+  // Move 'total' (index 3) up two positions → index 1.
+  dlg.select(dlg.indexOf('total'));
+  dlg.reorderSelected(-1);
+  dlg.reorderSelected(-1);
+  expect(dlg.workingColumns().map((c) => c.id)).toEqual(['id', 'total', 'name', 'dept', 'note', 'active']);
+  // Boundary: the top column cannot move up.
+  dlg.select(0);
+  dlg.reorderSelected(-1);
+  expect(dlg.workingColumns()[0].id).toBe('id'); // unchanged
+  // Boundary: the bottom column cannot move down.
+  dlg.select(dlg.workingColumns().length - 1);
+  dlg.reorderSelected(1);
+  expect(dlg.workingColumns().at(-1)!.id).toBe('active'); // unchanged
+  loop.emitCommand(Commands.ok);
+  await result;
+  expect(grid.columnOrder()).toEqual(['id', 'total', 'name', 'dept', 'note', 'active']);
+});
+
+// The freeze control cycles none → left → right → none and commits to the frozen partition.
+test('freeze cycles none → left → right → none and commits', async () => {
+  const grid = buildGrid();
+  const { loop, dlg, result } = open(grid);
+  dlg.select(dlg.indexOf('id'));
+  const sideOf = () => dlg.workingColumns().find((c) => c.id === 'id')!.freeze;
+  dlg.cycleSelectedFreeze();
+  expect(sideOf()).toBe('left');
+  dlg.cycleSelectedFreeze();
+  expect(sideOf()).toBe('right');
+  dlg.cycleSelectedFreeze();
+  expect(sideOf()).toBe('none');
+  dlg.cycleSelectedFreeze(); // back to left for the commit
+  loop.emitCommand(Commands.ok);
+  await result;
+  expect(grid.frozen().left).toContain('id');
+  expect(grid.frozen().right).not.toContain('id');
+});
+
+// Width: below-min clamps up on OK, above-max clamps down, an empty field clears the override to auto.
+test('width clamps up/down on OK and an empty field clears the override', async () => {
+  // clamp up
+  {
+    const grid = buildGrid();
+    const { loop, dlg, result } = open(grid);
+    dlg.select(dlg.indexOf('total'));
+    dlg.setSelectedWidth('1'); // below minWidth 4
+    loop.emitCommand(Commands.ok);
+    await result;
+    expect(grid.columnWidth('total')).toBe(4); // clamped up on OK
+  }
+  // clamp down
+  {
+    const grid = buildGrid();
+    const { loop, dlg, result } = open(grid);
+    dlg.select(dlg.indexOf('total'));
+    dlg.setSelectedWidth('999'); // above maxWidth 40
+    loop.emitCommand(Commands.ok);
+    await result;
+    expect(grid.columnWidth('total')).toBe(40); // clamped down on OK
+  }
+  // clear → auto
+  {
+    const grid = buildGrid();
+    grid.setColumnWidth('total', 22); // a prior override
+    const { loop, dlg, result } = open(grid);
+    dlg.select(dlg.indexOf('total'));
+    dlg.setSelectedWidth(''); // empty → auto
+    loop.emitCommand(Commands.ok);
+    await result;
+    expect(grid.columnWidth('total')).toBe(6); // override cleared → declared/auto width
+  }
+});
+
+// Reset restores the column facets to the construction baseline (all visible, construction order, no
+// freeze, no width overrides) but leaves the pending sort/filter untouched.
+test('Reset restores column facets to defaults and leaves sort/filter', async () => {
+  const grid = buildGrid();
+  grid.setColumnVisible('note', false);
+  grid.setFrozen(['id'], []);
+  grid.setColumnWidth('total', 30);
+  grid.sortBy('name', 'asc');
+  grid.setFilter('dept', { kind: 'text', op: 'contains', value: 'Eng' });
+  const { loop, dlg, result } = open(grid);
+  dlg.reset();
+  loop.emitCommand(Commands.ok);
+  await result;
+  expect(grid.columnOrder()).toEqual(['id', 'name', 'dept', 'total', 'note', 'active']); // all visible, construction order
+  expect(grid.frozen()).toEqual({ left: [], right: [] }); // no freeze
+  expect(grid.columnWidth('total')).toBe(6); // override cleared → declared
+  expect(grid.sort()).toEqual([{ columnId: 'name', dir: 'asc' }]); // sort untouched by Reset
+  expect(grid.filterModel().get('dept')).toEqual({ kind: 'text', op: 'contains', value: 'Eng' }); // filter untouched
+});
+
+// Keyboard-only operability: ↑/↓ move the selection, Space toggles visibility, Alt+↑/↓ reorder, Enter
+// = OK, Esc = Cancel — all via dispatched keys, no mouse.
+test('the dialog is fully keyboard-operable (↑/↓ · Space · Alt+arrows · Enter · Esc)', async () => {
+  // Esc = Cancel
+  {
+    const grid = buildGrid();
+    const { loop, result } = open(grid);
+    loop.dispatch(key('escape'));
+    await expect(result).resolves.toEqual({ ok: false });
+  }
+  // ↓ selects, Space toggles visibility, Alt+↑ reorders, Enter = OK.
+  {
+    const grid = buildGrid();
+    const { loop, dlg, result } = open(grid);
+    loop.dispatch(key('down')); // select index 1 ('name')
+    loop.dispatch(key('down')); // select index 2 ('dept')
+    expect(dlg.selected()).toBe(2);
+    loop.dispatch(key('space')); // hide 'dept'
+    expect(dlg.workingColumns().find((c) => c.id === 'dept')!.visible).toBe(false);
+    loop.dispatch(key('up', { alt: true })); // reorder 'dept' up to index 1
+    expect(dlg.workingColumns()[1].id).toBe('dept');
+    loop.dispatch(key('enter')); // OK
+    await expect(result).resolves.toEqual({ ok: true });
+    expect(grid.columnOrder()).not.toContain('dept'); // committed hidden
+  }
+});
+
+// A variant name with control bytes renders/stores sanitized, and the field is hard-capped at 64.
+test('the variant-name field sanitizes control bytes and caps at 64 characters', () => {
+  const grid = buildGrid();
+  const { dlg } = open(grid);
+  dlg.setName('a\x1bb\x07c'); // ESC + BEL embedded
+  expect(dlg.sanitizedName()).toBe('abc'); // control bytes stripped
+  expect(dlg.sanitizedName()).not.toMatch(/[\x00-\x08\x0e-\x1f]/); // no raw control bytes survive
+  dlg.setName('x'.repeat(200));
+  expect(dlg.nameValue().length).toBeLessThanOrEqual(64); // hard-capped at entry
 });

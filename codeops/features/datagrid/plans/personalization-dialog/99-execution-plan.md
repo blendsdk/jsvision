@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-18 13:35
-> **Progress**: 14/45 tasks (31%)
+> **Last Updated**: 2026-07-18 16:54
+> **Progress**: 27/45 tasks (60%) · Phase 1 ✅ (892efea5) · Phase 2 ✅ (column region + personalizeGrid)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -75,7 +75,7 @@ guard.
 - [x] 1.3.1 Extend `variant.impl.test.ts`: `clearWidths` all-named / none-named; width clamp edges (existing test); unnamed-column override untouched — `packages/datagrid/test/variant.impl.test.ts` ✅ (completed: 2026-07-18 13:35)
 - [x] 1.3.2 `variant-store.impl.test.ts`: seed defensive-copy; overwrite ordering; `setDefault` of an absent name — `packages/datagrid/test/variant-store.impl.test.ts` ✅ (completed: 2026-07-18 13:35)
 - [x] 1.3.3 JSDoc `@example` on `columns`/`defaultColumnLayout`/`clearColumnWidth` + `createMemoryVariantStore`; `check:docs` green (0 banned · 0 missing @example); **grep `packages/datagrid/src` banned refs → clean** — ✅ (completed: 2026-07-18 13:35)
-- [~] 1.3.4 Commit via **/gitcm** (auto-commit mode → commit+push; `yarn lint:fix` first per the Prime Directive) ⏳ (in progress: 2026-07-18 13:35)
+- [x] 1.3.4 Commit via **/gitcm** (auto-commit mode → commit+push; `yarn lint:fix` first per the Prime Directive) ✅ (completed: 2026-07-18 16:26 — commit `892efea5`, pushed to `origin/feat/editable-data-grid`; scoped to RD-16 + roadmaps, RD-14 files excluded per user pick 1+2)
 
 **Deliverables**:
 - [x] Grid read API + width-restore correction + store all green; RD-13 round-trip regression passes ✅
@@ -91,33 +91,33 @@ guard.
 
 **Reference**: [03-03 §Column region](03-03-personalize-dialog.md) · [07 ST-12…ST-20] · [AR-5,6,7,8](00-ambiguity-register.md)
 
-- [ ] 2.1.1 Extend `personalize.spec.test.ts` with the dialog-core cases: ST-12 (OK applies / Cancel-Esc untouched), ST-13 (hide/show), ST-14 (last-column guard), ST-15 (reorder + boundaries), ST-16 (freeze cycle), ST-17 (width clamp/clear), ST-18 (Reset), ST-19 (keyboard-only), ST-20 (name sanitize + 64-cap) — `packages/datagrid/test/personalize.spec.test.ts`
-- [ ] 2.1.2 RED: run, confirm fail (no `personalizeGrid` / `PersonalizeDialog` yet)
+- [x] 2.1.1 Extend `personalize.spec.test.ts` with the dialog-core cases: ST-12 (OK applies / Cancel-Esc untouched), ST-13 (hide/show), ST-14 (last-column guard), ST-15 (reorder + boundaries), ST-16 (freeze cycle), ST-17 (width clamp/clear), ST-18 (Reset), ST-19 (keyboard-only), ST-20 (name sanitize + 64-cap) — `packages/datagrid/test/personalize.spec.test.ts` ✅ (completed: 2026-07-18 16:54)
+- [x] 2.1.2 RED: run, confirm fail (no `personalizeGrid` / `PersonalizeDialog` yet) ✅ (completed: 2026-07-18 16:54 — module-missing load failure = clean red)
 
 ### Step 2.2: Implement (GREEN)
 
 **Reference**: [03-03 §Architecture, §Column region](03-03-personalize-dialog.md) · [AR-5,6,7,8](00-ambiguity-register.md)
 
-- [ ] 2.2.1 `personalize-dialog.ts`: `PersonalizeDialog extends Dialog` skeleton — `fill` body, `okCancelButtons()`, pending model seeded from `grid.saveVariant('(current)')`, `result()` returning pending — `packages/datagrid/src/personalize-dialog.ts`
-- [ ] 2.2.2 Column region: a `Scroller` over a `Group` of per-column composite rows — visibility toggle with a **reactive** `disabled` getter (`Button`-based checkbox or custom focusable `View`, **not** stock `Switch`) + title + freeze cycle button with an adjacent reactive `Text(() => side)` readout (button label is static) + width `Input({maxLength:3,validator:filter('0-9')})` (clamp lands on OK). Rows built once, driven by signals (focus preserved). In pending order (AR-5/AR-6, PF-001/PF-002) — `packages/datagrid/src/personalize-dialog.ts`
-- [ ] 2.2.3 Visibility toggle with the **last-visible-column guard** (reactive `disabled: () => visibleCount()===1 && isVisible(col)` — greys it and drops it from the Tab order) + the live `N of M columns visible` echo via reactive `Text` — `packages/datagrid/src/personalize-dialog.ts`
-- [ ] 2.2.4 Reorder (`Alt+↑`/`Alt+↓` + up/down buttons, boundary no-ops) and keyboard wiring (`↑`/`↓` select, `Space` toggle, `Tab`/`Shift+Tab`, `Enter`=OK, `Esc`=Cancel) — `packages/datagrid/src/personalize-dialog.ts`
-- [ ] 2.2.5 Reset action (restores pending column facets from `grid.defaultColumnLayout()`, leaves pending sort/filter) — `packages/datagrid/src/personalize-dialog.ts`
-- [ ] 2.2.6 `personalize.ts`: `personalizeGrid()` + `PersonalizeOptions`/`PersonalizeResult` — inline `addWindow → execView → finally removeWindow`; on OK `grid.applyVariant(dlg.result())` — `packages/datagrid/src/personalize.ts`
-- [ ] 2.2.7 Barrel: `export { personalizeGrid }` + `export type { PersonalizeOptions, PersonalizeResult }` — `packages/datagrid/src/index.ts`
-- [ ] 2.2.8 GREEN: ST-12…ST-20 pass
+- [x] 2.2.1 `personalize-dialog.ts`: `PersonalizeDialog extends Dialog` skeleton — fixed rect proportioned to `host.desktop.bounds`, `padding:0`, `okCancelButtons()`, pending model seeded from `grid.saveVariant('(current)')`, `result()` returning the pending variant — `packages/datagrid/src/personalize-dialog.ts` ✅ (completed: 2026-07-18 16:54)
+- [x] 2.2.2 Column region: a `Scroller` over a `Group` (`ColumnRegion`) of per-column composite rows — a focusable `ToggleCell` (reactive `[x]`/`[ ]` + reactive `state.disabled` guard) + title `Text` + freeze cycle `Button` + adjacent reactive `Text(() => side)` + width `Input({maxLength:3,validator:filter('0-9')})` (clamp on OK). Rows built once, repositioned by a reactive order bind (focus preserved). AR-5/AR-6/PF-001/PF-002 + runtime AR-13 — `packages/datagrid/src/personalize-dialog.ts` ✅ (completed: 2026-07-18 16:54)
+- [x] 2.2.3 Visibility toggle with the **last-visible-column guard** (`ToggleCell` disabled via reactive `isLastVisible(id)` — greys + drops from key handling/Tab) + the live `N of M columns visible` echo via reactive `Text` — `packages/datagrid/src/personalize-dialog.ts` ✅ (completed: 2026-07-18 16:54)
+- [x] 2.2.4 Reorder (`Alt+↑`/`Alt+↓`, boundary no-ops) + keyboard wiring — `ColumnRegion.onEvent` handles the `↑`/`↓`/`Alt+arrows` bubbled up from the focused row widget (event-router leaf→ancestor chain); `Space` toggles via the focused `ToggleCell`, `Enter`=OK (default button), `Esc`=Cancel (base Dialog) — `packages/datagrid/src/personalize-dialog.ts` ✅ (completed: 2026-07-18 16:54)
+- [x] 2.2.5 Reset action (rebuilds pending columns from `grid.defaultColumnLayout()` with `width` omitted per PF-003, leaves pending sort/filter) — `packages/datagrid/src/personalize-dialog.ts` ✅ (completed: 2026-07-18 16:54)
+- [x] 2.2.6 `personalize.ts`: `personalizeGrid()` + `PersonalizeOptions`/`PersonalizeResult` — inline `addWindow → execView → finally removeWindow`; on OK `grid.applyVariant(dlg.result())` — `packages/datagrid/src/personalize.ts` ✅ (completed: 2026-07-18 16:54)
+- [x] 2.2.7 Barrel: `export { personalizeGrid }` + `export type { PersonalizeOptions, PersonalizeResult }` — `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-18 16:54)
+- [x] 2.2.8 GREEN: ST-12…ST-20 pass ✅ (completed: 2026-07-18 16:54 — 14/14 personalize.spec)
 
 ### Step 2.3: Impl tests & hardening
 
 **Reference**: [07 §Implementation Tests]
 
-- [ ] 2.3.1 `personalize.impl.test.ts`: freeze-cycle wraparound; reorder boundary no-ops; body `fill` non-collapse; count-echo edges — `packages/datagrid/test/personalize.impl.test.ts`
-- [ ] 2.3.2 JSDoc `@example` on `personalizeGrid`; `check:docs` green; grep banned refs
-- [ ] 2.3.3 Commit via **/gitcm**
+- [x] 2.3.1 `personalize.impl.test.ts`: freeze-cycle wraparound; reorder boundary no-ops; body region non-collapse (paints titles + echo); count-echo edges — `packages/datagrid/test/personalize.impl.test.ts` ✅ (completed: 2026-07-18 16:54)
+- [x] 2.3.2 JSDoc `@example` on `personalizeGrid`; `check:docs` green (41 files · 0 banned · 0 missing @example); grep banned refs → clean — ✅ (completed: 2026-07-18 16:54)
+- [~] 2.3.3 Commit via **/gitcm** (auto-commit → commit+push; `yarn lint:fix` first) ⏳ (in progress: 2026-07-18 16:54)
 
 **Deliverables**:
-- [ ] The column-region dialog opens, stages edits, and commits/discards correctly via `personalizeGrid`
-- [ ] All verification passing (datagrid slice)
+- [x] The column-region dialog opens, stages edits, and commits/discards correctly via `personalizeGrid` ✅
+- [x] All verification passing (datagrid slice: typecheck · 645 tests · check:docs · check:deps) ✅
 
 **Verify**: `CI=1 yarn verify`
 

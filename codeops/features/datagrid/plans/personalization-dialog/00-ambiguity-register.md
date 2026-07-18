@@ -30,6 +30,12 @@ preflight report.
 | 11 | Process | The project verify command that fills every Verify line | Detected from CLAUDE.md + RD-16 AC#15 | **`CI=1 yarn verify`** (= `yarn lint && turbo run typecheck build test check:docs && node scripts/check-plugin.mjs`). Per-slice green is acceptable when whole-repo verify is blocked only by unrelated concurrent work (documented at execution, per the sibling RD-13 plan) | ✅ Resolved (grounded, detected) |
 | 12 | Testing | Placement of the RD-13 width-restore regression test the correction ships with (PF-024) | A dedicated regression file vs a spec case in the existing variant tests | **A spec case in `variant.spec.test.ts`** — a `saveVariant`→`applyVariant` round-trip after a width is cleared must restore *no override*. It is a spec-level round-trip guarantee that guards both RD-16 and the latent RD-13 bug; an impl edge lands in `variant.impl.test.ts` | ✅ Resolved (grounded) |
 
+## Runtime decisions (recorded during exec_plan)
+
+| # | Category | Ambiguity / Gap | Decision | Status |
+|---|----------|-----------------|----------|--------|
+| 13 | UX / Architecture (runtime) | AR-5 mandates per-row composite **widgets** (toggle · freeze `Button` · width `Input`), while AC#11/AR-57 specify a **list-cursor** keyboard model (`↑`/`↓` select · `Space` toggle · `Alt`+arrows reorder). How do both coexist without a focus/key conflict? | **Grounded in the real event router** (`packages/ui/src/event/dispatch.ts:207-214`): the focused phase walks the focused **leaf → up its ancestor chain**, so a container `onEvent` handles exactly what the focused child ignored. Design: each column row's widgets are the focusable leaves (handling their own `Space`/`Enter`/digits); the column-list **container** (`ColumnListView`, an ancestor `Group`) owns a `selected` cursor and handles the `↑`/`↓`/`Alt`+arrows the leaves ignore. Rows are built once and repositioned by a reactive y-bind to their working-order index (focus preserved, PF-002). `Enter`=OK (default button), `Esc`=Cancel (base `Dialog`). The dialog exposes small testable logic methods (`toggleSelectedVisibility`/`reorderSelected`/`cycleSelectedFreeze`/`setSelectedWidth`/`reset`/`result`) that both the widgets and the spec tests drive — behavior is tested through these + raw-key dispatch for the keyboard-operability oracle. | ✅ Resolved (runtime, grounded) |
+
 ## Resolution notes
 
 - **AR-1 / AR-9 / AR-10** are the three user picks (make_plan AskUserQuestion round, 2026-07-18); each matched the grounded recommendation.
