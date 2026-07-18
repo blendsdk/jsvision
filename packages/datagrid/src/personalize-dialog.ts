@@ -2,37 +2,50 @@
  * `PersonalizeDialog` — the end-user "Personalize columns" modal (an internal view; the public entry is
  * `personalizeGrid` in `personalize.js`). It is **staged**: every edit mutates a *pending* layout held
  * by the dialog, and only OK commits it to the grid (via `grid.applyVariant(dlg.result())`); Cancel/Esc
- * leave the grid untouched. It composes existing `@jsvision/ui` widgets — a sync `Dialog` with
- * `okCancelButtons()`, a column region of built-once composite rows, and (added by the variants panel) a
- * store list — so the package stays zero-runtime-dependency.
+ * leave the grid untouched. It composes existing `@jsvision/ui` widgets so the package stays
+ * zero-runtime-dependency.
  *
- * The column region reconciles per-row widgets with a list-cursor keyboard model using the event
- * router's focused-leaf → ancestor bubbling: each row's widgets are the focusable leaves (they handle
- * their own activation), while the row container owns a selection cursor and handles the `↑`/`↓` /
- * `Alt`+arrows the leaves ignore. Rows are built once and repositioned by a reactive index bind, so
- * keyboard focus survives every edit.
+ * The whole dialog is laid out with the flex layout DSL (`col`/`row`/`grow`/`fixed`/`buttonRow`) — one
+ * fill `col` of flex-sized sections (header · scrollable column band · count echo · variants section ·
+ * two button bars), never a hand-placed per-control rect. Each column row and the header are flex
+ * `row`s of the SAME cells (`fixed` marker/toggle/freeze/width around a `grow` title), so a header
+ * label always lines up over its control with no column math to keep in sync. The scrollable band is a
+ * vertical `col` of those rows sized to its full extent, so the reflow flows and stretches the rows and
+ * the Scroller just pans them; the working order is reflected by re-sorting the region's children (the
+ * rows are reused, so a reorder keeps keyboard focus), not by a per-row rect.
+ *
+ * The region reconciles per-row widgets with a list-cursor keyboard model using the event router's
+ * focused-leaf → ancestor bubbling: each row's widgets are the focusable leaves (they handle their own
+ * activation), while the row container owns a selection cursor and handles the `↑`/`↓` / `Alt`+arrows
+ * the leaves ignore.
  */
+import { sanitize } from '@jsvision/core';
+import type { DispatchEvent, DrawContext, ModalDialogHost, Signal } from '@jsvision/ui';
 import {
-  Dialog,
-  Group,
-  View,
   Button,
-  Text,
+  col,
+  confirm,
+  Dialog,
+  filter,
+  fixed,
+  Group,
+  grow,
   Input,
-  Scroller,
   ListBox,
   okCancelButtons,
-  confirm,
-  filter,
+  row,
+  Scroller,
   signal,
+  spacer,
+  Text,
+  View,
 } from '@jsvision/ui';
-import type { Signal, DispatchEvent, DrawContext, ModalDialogHost } from '@jsvision/ui';
-import { sanitize } from '@jsvision/core';
-import type { EditableDataGrid } from './grid.js';
-import type { GridVariant } from './variant.js';
-import type { SortKey } from './sort.js';
+import { buttonRow } from './button-row.js';
 import type { ColumnFilter } from './filter.js';
+import type { EditableDataGrid } from './grid.js';
+import type { SortKey } from './sort.js';
 import type { VariantStore } from './variant-store.js';
+import type { GridVariant } from './variant.js';
 
 /** The freeze side a column is pinned to in the pending layout. */
 export type FreezeSide = 'left' | 'right' | 'none';
@@ -59,11 +72,30 @@ const WIDTH_MAX_DIGITS = 3;
 const ROW_HEIGHT = 1;
 
 /**
- * Shared column x-offsets (and widths) for every composite row AND the header line, so each header
- * label always sits directly above the control it describes. Change the geometry in one place.
+ * Flex cell widths shared by the header row and every column row, so a header label always lines up
+ * over the control it labels; the title cell grows to fill the rest, and {@link ROW_GAP} sits between
+ * adjacent cells. Because the header and the rows use the very same cells, alignment is automatic —
+ * there is no per-element column math to keep in sync.
  */
-const COL = { marker: 0, toggle: 2, title: 7, freeze: 25, width: 35 } as const;
-const COL_W = { marker: 1, toggle: 3, title: 16, freeze: 8, width: 5 } as const;
+const CELL = { marker: 1, toggle: 4, freeze: 8, width: 6 } as const;
+/** One cell of gap between adjacent cells in the header row and every column row. */
+const ROW_GAP = 1;
+/**
+ * The one column the Scroller reserves for its vertical bar (scroller.ts computes `viewport = width − 1`).
+ * The header row reserves the SAME column as right padding, so the header cells and the scrolled rows are
+ * laid out to one identical content width — otherwise `grow(title)` eats the mismatch and every cell to
+ * its right (Freeze, Width) drifts, and the Width cell paints under the bar. It must stay in step with the
+ * Scroller's `scrollbars: 'vertical'` below.
+ */
+const SCROLLBAR = 1;
+/** The dialog's frame border (1) plus the body `col`'s padding (1), on each side — the content-box inset. */
+const BODY_INSET = 2;
+/**
+ * A breathing column reserved between the Width field's right edge and the scrollbar, so the field never
+ * butts against the bar. Reserved identically in the header (its right padding) and the rows (a narrower
+ * content width), so the two stay column-aligned.
+ */
+const GUTTER = 1;
 
 /** The human freeze-side labels painted in the freeze cell (the model keeps the lowercase enum). */
 const FREEZE_LABEL: Record<FreezeSide, string> = { none: 'None', left: 'Left', right: 'Right' };
@@ -161,10 +193,12 @@ class FreezeCell extends View {
 }
 
 /**
- * The row container: the Scroller's content Group. It holds one built-once composite row per column
- * (repositioned by a reactive index bind) and owns the selection cursor. It handles the `↑`/`↓` /
- * `Alt`+arrows that a focused row widget ignored (they bubble up to it), driving `selected` and
- * reorder; per-row widgets keep handling their own activation.
+ * The row container: the Scroller's content Group, a vertical `col` sized to the full extent so the
+ * reflow flows its rows within the extent (each stretched to full width, aligned under the header)
+ * rather than compressing them into the shorter viewport. It holds one built-once composite row per
+ * column and owns the selection cursor. It handles the `↑`/`↓` / `Alt`+arrows that a focused row widget
+ * ignored (they bubble up to it), driving `selected` and reorder; per-row widgets keep handling their
+ * own activation.
  */
 class ColumnRegion extends Group {
   constructor(private readonly dlg: PersonalizeDialog<unknown>) {
@@ -187,6 +221,19 @@ class ColumnRegion extends Group {
       this.dlg.reorderSelected(1);
       ev.handled = true;
     }
+  }
+
+  /**
+   * Reorder the held rows to `ordered` in place — mutating child order, never re-adding — so the rows
+   * stay mounted and the focused row keeps its focus across a reorder. Relayouts so the `col` re-flows
+   * the rows top-to-bottom in the new working order.
+   *
+   * @param ordered The row views in the new working order (a permutation of the current children).
+   */
+  setRowOrder(ordered: View[]): void {
+    this.children.length = 0;
+    for (const view of ordered) this.children.push(view);
+    this.invalidateLayout();
   }
 }
 
@@ -231,18 +278,16 @@ export class PersonalizeDialog<T> extends Dialog {
   private readonly variantNames: Signal<string[]>;
   /** The panel list's cursor index (the selected variant). */
   private readonly variantSelected = signal(0);
-  /** The dialog's own content dimensions, known at construction (this.bounds is 0 until layout). */
+  /** The dialog's own width, known at construction — used only to size the scroller's content extent. */
   private readonly dlgW: number;
-  private readonly dlgH: number;
 
   constructor(grid: EditableDataGrid<T>, store: VariantStore, host: ModalDialogHost, title: string) {
     const bounds = host.desktop.bounds;
     const w = Math.min(Math.max(48, bounds.width - 8), 64);
-    const h = Math.min(Math.max(14, bounds.height - 4), 20); // room for the header line above the rows
+    const h = Math.min(Math.max(13, bounds.height - 4), 20); // room for the header line above the rows
     super({ title, width: w, height: h });
-    this.layout = { ...this.layout, padding: 0 }; // place children at explicit frame offsets (message-box/form-dialog idiom)
+    // The default Dialog padding (1) is the frame inset; the single fill `col` body lays out inside it.
     this.dlgW = w;
-    this.dlgH = h;
     this.grid = grid;
     this.store = store;
     this.dlgHost = host;
@@ -267,147 +312,142 @@ export class PersonalizeDialog<T> extends Dialog {
     this.variantNames = signal(store.list().map((v) => v.name));
 
     this.region = new ColumnRegion(this as PersonalizeDialog<unknown>);
-    this.buildHeader();
-    this.buildColumnRegion();
-    this.buildVariantsPanel();
-    this.buildFooter();
+    this.buildBody();
   }
 
-  // ── Layout ─────────────────────────────────────────────────────────────────────────────────────
+  // ── Layout (flex DSL) ────────────────────────────────────────────────────────────────────────────
 
-  /** Paint the fixed column header (Show · Column · Freeze · Width), aligned to the row controls. */
-  private buildHeader(): void {
-    const header = new Group();
-    // [x-offset, width, label] — the offsets are the SAME COL.* the rows use, so labels align.
-    const cells: Array<[number, number, string]> = [
-      [COL.toggle, 4, 'Show'],
-      [COL.title, COL_W.title, 'Column'],
-      [COL.freeze, COL_W.freeze, 'Freeze'],
-      [COL.width, COL_W.width, 'Width'],
-    ];
-    for (const [x, width, label] of cells) {
-      const t = new Text(label);
-      t.layout = { position: 'absolute', rect: { x, y: 0, width, height: 1 } };
-      header.add(t);
-    }
-    // Pinned at x:1 — the same left edge as the scroller — so header x-offsets and row x-offsets match.
-    header.layout = { position: 'absolute', rect: { x: 1, y: 1, width: this.dlgW - 2, height: 1 } };
-    this.add(header);
+  /**
+   * Compose the whole dialog with the flex layout DSL: one fill `col` of flex-sized sections — the
+   * fixed header, the growing scrollable column band, the visible-count echo, the variants section,
+   * and the two `buttonRow` bars. Nothing is hand-placed with a per-control rect, so the layout
+   * reflows and never leaves a control mis-sized (a two-row-tall `buttonRow` is why the buttons paint).
+   */
+  private buildBody(): void {
+    // The scrollable band's content width: the frame-inset content box, minus the column the vertical
+    // scrollbar reserves and one breathing gutter before it. The header row reserves the same two columns
+    // (its right padding), so both are laid out to this one width and line up, and the Width field neither
+    // paints under the bar nor butts against it.
+    const contentW = Math.max(8, this.dlgW - 2 * BODY_INSET - SCROLLBAR - GUTTER);
+
+    const echo = new Text(() => `${this.visibleCount()} of ${this.cols().length} columns visible`);
+
+    // The variant-management bar and the commit bar. `buttonRow` lays a row of equal, individually
+    // centered, two-row-tall cells — uniform regardless of label lengths, and clip-free when narrow.
+    const save = new Button('Save', { onClick: () => void this.saveAs() });
+    const apply = new Button('Apply', { onClick: () => this.applySelected() });
+    const del = new Button('Delete', { onClick: () => void this.deleteSelected() });
+    const setDefault = new Button('Default', { onClick: () => this.setDefaultSelected() });
+    const reset = new Button('Reset', { onClick: () => this.reset() });
+    const [ok, cancel] = okCancelButtons();
+
+    this.add(
+      col(
+        { position: 'fill', padding: 1 },
+        this.buildHeaderRow(),
+        // The band GROWS to fill the space left by the fixed sections, so the two button bars stay
+        // pinned to the bottom and visible; a fixed height here overflows and clips the OK/Cancel bar.
+        fixed(this.buildColumnScroller(contentW), 5),
+        fixed(echo, 1),
+        spacer({ fixed: 1 }), // a gap between the two button bars
+        this.buildVariantsSection(),
+        spacer({ fixed: 1 }), // a gap between the two button bars
+        buttonRow([save, apply, del, setDefault, reset]),
+        buttonRow([ok, cancel]),
+      ),
+    );
   }
 
-  /** Build the built-once composite rows, wrap them in a scroller, and pin the region as the body. */
-  private buildColumnRegion(): void {
-    const order = this.cols();
-    const rowWidth = Math.max(48, this.dlgW - 2);
-    for (const col of order) {
-      this.rowById.set(col.id, this.buildRow(col, rowWidth));
-    }
-    // Position the rows by their working-order index; re-bind on reorder so built-once rows move.
+  /** The fixed column header (Show · Column · Freeze · Width) — the same flex cells a row uses. */
+  private buildHeaderRow(): Group {
+    // padding-right reserves the scrollbar column plus the gutter, so a header label lines up with the
+    // scrolled rows (which reserve the same two columns via their narrower content width).
+    return row(
+      {
+        size: { kind: 'fixed', cells: ROW_HEIGHT },
+        gap: ROW_GAP,
+        padding: { top: 0, right: SCROLLBAR + GUTTER, bottom: 0, left: 0 },
+      },
+      fixed(new Text(' '), CELL.marker),
+      fixed(new Text('Show'), CELL.toggle),
+      grow(new Text('Column'), 1),
+      fixed(new Text('Freeze'), CELL.freeze),
+      fixed(new Text('Width'), CELL.width),
+    );
+  }
+
+  /**
+   * Build the composite rows once, stack them in the vertical `col` region, and wrap it in a Scroller.
+   * The region carries an absolute rect at the FULL extent size — the one load-bearing detail: it makes
+   * the reflow flow the rows within the extent (each stretched to full width, aligned under the header)
+   * rather than compressing them into the shorter viewport; the Scroller then simply pans that band. The
+   * column count never changes (only the order and per-row facets), so the extent is fixed and only the
+   * child ORDER is reactive: a working-order bind re-sorts the region's children in place, and because
+   * the rows are reused (never rebuilt) a reorder preserves keyboard focus.
+   */
+  private buildColumnScroller(contentW: number): Scroller {
+    const height = Math.max(1, this.cols().length * ROW_HEIGHT);
+    for (const c of this.cols()) this.rowById.set(c.id, this.buildRow(c));
+    this.region.layout = {
+      direction: 'col',
+      position: 'absolute',
+      rect: { x: 0, y: 0, width: contentW, height },
+    };
+    for (const c of this.cols()) this.region.add(this.rowById.get(c.id)!);
+    // Keep the region's child order in step with the working order (the rows themselves are reused).
     this.region.onMount(() => {
       this.region.bind(
         () => this.cols(),
-        (o) => {
-          o.forEach((c, i) => {
-            const row = this.rowById.get(c.id);
-            if (row !== undefined)
-              row.layout = {
-                position: 'absolute',
-                rect: { x: 0, y: i * ROW_HEIGHT, width: rowWidth, height: ROW_HEIGHT },
-              };
-          });
+        (order) => {
+          const ordered = order.map((c) => this.rowById.get(c.id)).filter((r): r is Group => r !== undefined);
+          this.region.setRowOrder(ordered);
         },
-        { relayout: true },
       );
     });
-    for (const col of order) this.region.add(this.rowById.get(col.id)!);
 
-    const scroller = new Scroller({
+    return new Scroller({
       content: this.region,
-      extent: () => ({ width: rowWidth, height: Math.max(1, this.cols().length * ROW_HEIGHT) }),
+      extent: () => ({ width: contentW, height: Math.max(1, this.cols().length * ROW_HEIGHT) }),
       scrollbars: 'vertical',
     });
-    scroller.layout = {
-      position: 'absolute',
-      rect: { x: 1, y: 2, width: this.dlgW - 2, height: Math.max(1, this.dlgH - 12) }, // y:2 — below the header
-    };
-    this.add(scroller);
-
-    // The live visibility read-out, e.g. "4 of 6 columns visible", reactive on the pending visibility.
-    const echo = new Text(() => `${this.visibleCount()} of ${this.cols().length} columns visible`);
-    echo.layout = {
-      position: 'absolute',
-      rect: { x: 1, y: Math.max(1, this.dlgH - 10), width: this.dlgW - 2, height: 1 },
-    };
-    this.add(echo);
   }
 
-  /** Build the variants panel: the store list + a name field + Save-as/Apply/Delete/Set-default/Reset. */
-  private buildVariantsPanel(): void {
-    const labelY = Math.max(2, this.dlgH - 9);
-    const listY = Math.max(3, this.dlgH - 8);
-    const half = Math.floor(this.dlgW / 2);
-    const leftW = Math.max(8, half - 2);
-    const rightW = Math.max(8, this.dlgW - half - 2);
-
-    // Section labels so the list (left) and the save-name field (right) are self-explanatory.
+  /** The variants section (flex): a labelled saved-layouts list beside a labelled save-name field. */
+  private buildVariantsSection(): Group {
     const savedLabel = new Text('Saved layouts');
-    savedLabel.layout = { position: 'absolute', rect: { x: 1, y: labelY, width: leftW, height: 1 } };
-    this.add(savedLabel);
-    const nameLabel = new Text('Save as:');
-    nameLabel.layout = { position: 'absolute', rect: { x: half, y: labelY, width: rightW, height: 1 } };
-    this.add(nameLabel);
-
     const list = new ListBox({ items: this.variantNames, focused: this.variantSelected });
-    list.layout = { position: 'absolute', rect: { x: 1, y: listY, width: leftW, height: 3 } };
-    this.add(list);
-
+    const nameLabel = new Text('Save as:');
     const nameInput = new Input({ value: this.name, maxLength: NAME_MAX, placeholder: 'variant name' });
-    nameInput.layout = { position: 'absolute', rect: { x: half, y: listY, width: rightW, height: 1 } };
-    this.add(nameInput);
 
-    const btnY = Math.max(2, this.dlgH - 4);
-    const specs: Array<[string, () => void]> = [
-      ['Save', () => void this.saveAs()],
-      ['Apply', () => this.applySelected()],
-      ['Delete', () => void this.deleteSelected()],
-      ['Default', () => this.setDefaultSelected()],
-      ['Reset', () => this.reset()],
-    ];
-    let x = 1;
-    for (const [label, onClick] of specs) {
-      const b = new Button(label, { onClick });
-      const w = label.length + 4;
-      b.layout = { position: 'absolute', rect: { x, y: btnY, width: w, height: 1 } };
-      this.add(b);
-      x += w + 1;
-    }
+    // Two equal halves: label-over-list on the left, label-over-field on the right.
+    return row(
+      { size: { kind: 'fixed', cells: 4 }, gap: 2 },
+      col({ fill: true }, fixed(savedLabel, 1), grow(list, 1)),
+      col({ fill: true }, fixed(nameLabel, 1), fixed(nameInput, 1), spacer()),
+    );
   }
 
-  /** Build one composite row: marker · visibility toggle · title · freeze cycle + side · width input. */
-  private buildRow(col: WorkingCol, rowWidth: number): Group {
-    const row = new Group();
-    const id = col.id;
+  /**
+   * Build one composite row with the flex DSL — the same cells as the header (marker · toggle · grow
+   * title · freeze · width), so they align. The row is a plain flow child of the `col` region: the col
+   * flows it at its natural one-cell height and stretches it to the region width, so `grow(title)` fills
+   * the space between the fixed cells. Reordering is the region's job, not a per-row rect.
+   */
+  private buildRow(column: WorkingCol): Group {
+    const id = column.id;
 
     const marker = new Text(() => (this.cols()[this.selectedIdx()]?.id === id ? '▸' : ' '));
-    marker.layout = { position: 'absolute', rect: { x: COL.marker, y: 0, width: COL_W.marker, height: 1 } };
-
     const toggle = new ToggleCell(
       () => this.isVisible(id),
       () => this.toggleVisibility(id),
       () => this.isLastVisible(id),
     );
-    toggle.layout = { position: 'absolute', rect: { x: COL.toggle, y: 0, width: COL_W.toggle, height: 1 } };
     this.toggleById.set(id, toggle);
-
-    const title = new Text(col.title);
-    title.layout = { position: 'absolute', rect: { x: COL.title, y: 0, width: COL_W.title, height: 1 } };
-
+    const title = new Text(column.title);
     const freeze = new FreezeCell(
       () => this.freezeOf(id),
       () => this.cycleFreeze(id),
     );
-    freeze.layout = { position: 'absolute', rect: { x: COL.freeze, y: 0, width: COL_W.freeze, height: 1 } };
-
     const widthSig = this.widthText.get(id)!;
     // `placeholder: 'auto'` makes an empty width cell self-explanatory (empty = declared/auto width).
     const widthInput = new Input({
@@ -416,25 +456,15 @@ export class PersonalizeDialog<T> extends Dialog {
       validator: filter('0-9'),
       placeholder: 'auto',
     });
-    widthInput.layout = { position: 'absolute', rect: { x: COL.width, y: 0, width: COL_W.width, height: 1 } };
 
-    row.add(marker);
-    row.add(toggle);
-    row.add(title);
-    row.add(freeze);
-    row.add(widthInput);
-    row.layout = { position: 'absolute', rect: { x: 0, y: 0, width: rowWidth, height: ROW_HEIGHT } };
-    return row;
-  }
-
-  /** Place OK / Cancel at the dialog foot; OK is the default (Enter) and commits, Cancel discards. */
-  private buildFooter(): void {
-    const [ok, cancel] = okCancelButtons();
-    const y = Math.max(2, this.dlgH - 3);
-    ok.layout = { position: 'absolute', rect: { x: Math.max(1, this.dlgW - 24), y, width: 10, height: 2 } };
-    cancel.layout = { position: 'absolute', rect: { x: Math.max(12, this.dlgW - 13), y, width: 12, height: 2 } };
-    this.add(ok);
-    this.add(cancel);
+    return row(
+      { gap: ROW_GAP },
+      fixed(marker, CELL.marker),
+      fixed(toggle, CELL.toggle),
+      grow(title, 1),
+      fixed(freeze, CELL.freeze),
+      fixed(widthInput, CELL.width),
+    );
   }
 
   // ── Pending reads ──────────────────────────────────────────────────────────────────────────────
