@@ -49,6 +49,12 @@ export interface FooterControllerConfig<T> {
   readonly displayedRows: () => readonly T[];
   /** The source completeness predicate (absent ⇒ complete) — feeds the `"(loaded)"` honesty qualifier. */
   readonly complete?: () => boolean;
+  /**
+   * Whether the source is windowed. A windowed aggregate cell renders **blank** (the live loaded-window
+   * fold is deferred: there is no cheap loaded-range seam, and folding via `rowAt` would page-fault). The
+   * eager partially-loaded `"(loaded)"` fold is unaffected.
+   */
+  readonly windowed?: boolean;
 }
 
 /**
@@ -60,6 +66,9 @@ export class FooterController<T> {
   private readonly columns: ReadonlyMap<string, GridColumn<T>>;
   private readonly displayedRows: () => readonly T[];
   private readonly complete?: () => boolean;
+  private readonly windowed: boolean;
+  /** Whether the one-time windowed-footer warning has fired (de-duped across columns). */
+  private warnedWindowed = false;
   /** The surviving aggregate specs, keyed by column id (unknown columns / invalid fns dropped). */
   private readonly specs = new Map<string, AggregateSpec>();
 
@@ -68,6 +77,7 @@ export class FooterController<T> {
     this.columns = cfg.columns;
     this.displayedRows = cfg.displayedRows;
     this.complete = cfg.complete;
+    this.windowed = cfg.windowed ?? false;
     for (const [columnId, spec] of Object.entries(cfg.footer.aggregates ?? {})) {
       if (!this.columns.has(columnId)) {
         devWarn('footer', `aggregate for unknown column "${columnId}" ignored`);
@@ -101,6 +111,14 @@ export class FooterController<T> {
   cell(columnId: string): string {
     const spec = this.specs.get(columnId);
     if (spec === undefined) return '';
+    if (this.windowed) {
+      // The live fold is deferred for a windowed source — render blank (never a folded '0'), warning once.
+      if (!this.warnedWindowed) {
+        devWarn('windowed-footer', 'aggregates over a windowed source are not computed yet — the cell is left blank.');
+        this.warnedWindowed = true;
+      }
+      return '';
+    }
     const col = this.columns.get(columnId)!;
     const values = this.displayedRows().map((row) => col.value(row));
     const result = foldAggregate(spec.fn, values);

@@ -19,7 +19,7 @@ import { toEngineColumn } from './column.js';
 import { visibleOrder, partition, overPinnedIds, clampWidth, DEFAULT_AUTOFIT_MAX } from './column-model.js';
 import type { FreezeSpec, FreezePartition } from './column-model.js';
 import type { GridDataSource } from './data-source.js';
-import { isWindowed, windowedView } from './windowing.js';
+import { isWindowed, windowedView, validateWindowedConfig } from './windowing.js';
 import { sortRowsMulti } from './sort.js';
 import type { SortKey, SortDir } from './sort.js';
 import { filterRows, resolveFilterType, computeDistinct } from './filter.js';
@@ -418,6 +418,8 @@ export class EditableDataGrid<T> extends Group {
     this.filterPopupFactory = opts.filterPopup;
     this.source = opts.source;
     this.windowed = isWindowed(opts.source);
+    // A windowed source must push sort/filter down (hard-fail) and forgoes auto-width (warn); validated once.
+    if (this.windowed) validateWindowedConfig(opts.source, engineCols, devWarn);
     this.columnMap = new Map(opts.columns.map((c) => [c.id, c]));
 
     // The materialized display re-runs when the source's rows change or a cell is written in place
@@ -435,7 +437,14 @@ export class EditableDataGrid<T> extends Group {
       if (!this.source.setSort) rows = sortRowsMulti(rows, this.sortKeys(), this.columnMap);
       return rows;
     });
-    const autoWidths = this.derived(() => measureAutoWidths(engineCols, this.display(), stringWidth));
+    // A windowed source forgoes auto-width (measuring every row would page-fault + reflow on scroll): a
+    // fixed/`fr` column keeps its declared width, and an `auto` column falls back to its title width
+    // (floored at `minWidth`) instead of being measured over the (partial) rows.
+    const autoWidths = this.derived(() =>
+      this.windowed
+        ? engineCols.map((c) => (c.width === 'auto' ? Math.max(stringWidth(c.title), c.minWidth ?? 0) : null))
+        : measureAutoWidths(engineCols, this.display(), stringWidth),
+    );
     this.autoWidths = autoWidths;
     // The selection controller reads the live display + cursor lazily (only when a gesture/API call
     // fires), so a re-sort/re-filter needs no reconcile — the same keys re-highlight wherever they moved.
@@ -444,6 +453,7 @@ export class EditableDataGrid<T> extends Group {
       focused: this.focused,
       display: this.display,
       rowKey: this.source.rowKey,
+      windowed: this.windowed,
     });
     // Row CRUD routes through the source's mutation seam; a delete also prunes the selection. `assignKey`
     // (from opts) mints the clone key for `duplicateRow` — without it, duplicate is a no-op + devWarn.
@@ -453,6 +463,7 @@ export class EditableDataGrid<T> extends Group {
       selection: this.selection,
       assignKey: opts.assignKey,
       warn: (message) => devWarn('duplicateRow', message),
+      windowed: this.windowed,
     });
     // Visible order = full order minus hidden; partition = the frozen left/center/right split with any
     // over-pinned columns pushed back to the center (so the center is never blank). Both derive lazily.
@@ -515,6 +526,7 @@ export class EditableDataGrid<T> extends Group {
         columns: this.columnMap,
         displayedRows: () => this.display(),
         complete: this.source.complete ? () => this.source.complete!() : undefined,
+        windowed: this.windowed,
       });
     }
 
@@ -904,7 +916,8 @@ export class EditableDataGrid<T> extends Group {
    * @returns The count of rows currently shown — render "N of M" from this and {@link totalCount}.
    */
   filteredCount(): number {
-    return this.display().length;
+    // Windowed: read source.length() directly (the filtered total the server reports), not the lazy view.
+    return this.windowed ? this.source.length() : this.display().length;
   }
 
   /**
@@ -1038,6 +1051,7 @@ export class EditableDataGrid<T> extends Group {
    * @param id The column id.
    */
   autoFitColumn(id: string): void {
+    if (this.windowed) return; // no-op for windowed — measuring unloaded rows would page-fault
     const col = this.columnMap.get(id);
     const idx = this.columnIndex.get(id);
     if (col === undefined || idx === undefined) return; // unknown → no-op
@@ -1099,9 +1113,13 @@ export class EditableDataGrid<T> extends Group {
   private distinctFor(columnId: string): Promise<DistinctResult> {
     const col = this.columnMap.get(columnId);
     if (col === undefined) return Promise.resolve({ values: [], truncated: false });
-    return this.source.distinct
-      ? this.source.distinct(columnId)
-      : Promise.resolve({ values: computeDistinct(materialize(this.source), col), truncated: false });
+    if (this.source.distinct) return this.source.distinct(columnId);
+    if (this.windowed) {
+      // A windowed source must provide `distinct` (a client scan would page-fault); none ⇒ an empty list.
+      devWarn('windowed-distinct', `column "${columnId}" needs source.distinct for a value-list on a windowed source.`);
+      return Promise.resolve({ values: [], truncated: false });
+    }
+    return Promise.resolve({ values: computeDistinct(materialize(this.source), col), truncated: false });
   }
 
   /**
@@ -1151,8 +1169,9 @@ export class EditableDataGrid<T> extends Group {
     if (col === undefined) return; // unknown column — no popup (guarded, never reached in practice)
     this.closeFilterPopup(); // at most one filter popup open at a time
 
-    const rows = materialize(this.source);
-    const sample = rows.length > 0 ? col.value(rows[0]) : undefined;
+    // Windowed: sample the first loaded row via rowAt(0), never a full materialize scan.
+    const first = this.windowed ? this.source.rowAt(0) : materialize(this.source)[0];
+    const sample = first !== undefined ? col.value(first) : undefined;
     const filterType = resolveFilterType(col, sample);
     const origin = absoluteRect(header);
     const holder: { view: View | null } = { view: null };

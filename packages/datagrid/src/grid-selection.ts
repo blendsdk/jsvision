@@ -24,6 +24,12 @@ export interface GridSelectionConfig<T> {
   readonly display: () => T[];
   /** Row identity (from the data source). */
   readonly rowKey: (row: T) => Key;
+  /**
+   * Whether the source is windowed. Select-all / tri-state / range selection all enumerate the **whole**
+   * display (`display().map(rowKey)`), which a windowed source cannot serve, so they are disabled; only a
+   * single-row keyed toggle on a **loaded** row survives.
+   */
+  readonly windowed?: boolean;
 }
 
 /**
@@ -41,6 +47,7 @@ export class GridSelection<T> {
   private readonly focused: Signal<number>;
   private readonly display: () => T[];
   private readonly rowKey: (row: T) => Key;
+  private readonly windowed: boolean;
 
   /** @param cfg The selection mode plus the shared cursor + display + row-identity seams. */
   constructor(cfg: GridSelectionConfig<T>) {
@@ -48,6 +55,7 @@ export class GridSelection<T> {
     this.focused = cfg.focused;
     this.display = cfg.display;
     this.rowKey = cfg.rowKey;
+    this.windowed = cfg.windowed ?? false;
   }
 
   /** The current selection (reactive read). */
@@ -74,6 +82,7 @@ export class GridSelection<T> {
    * @param toKey The far end of the range, in the current display order.
    */
   rangeTo(toKey: Key): void {
+    if (this.windowed) return; // range enumerates the whole display — disabled for windowed
     const fallback = this.focusedKey();
     if (fallback === undefined) return;
     this.extend(toKey, fallback);
@@ -81,16 +90,19 @@ export class GridSelection<T> {
 
   /** Select every displayed row — the header select-all (over the current filtered display). */
   selectAllDisplayed(): void {
+    if (this.windowed) return; // can't enumerate unloaded keys without page-faulting — disabled for windowed
     this.keys.set(selectAll(this.displayKeys()));
   }
 
   /** The header tri-state over the current display: `none` / `some` / `all` of the displayed rows selected. */
   currentTriState(): TriState {
+    if (this.windowed) return 'none'; // select-all/tri-state disabled for windowed → always reads empty
     return triState(this.keys(), this.displayKeys());
   }
 
   /** The header-checkbox toggle: when every displayed row is selected, clear; otherwise select them all. */
   toggleAll(): void {
+    if (this.windowed) return; // disabled for windowed (the select-all affordance is inert)
     if (this.currentTriState() === 'all') this.clear();
     else this.selectAllDisplayed();
   }
@@ -111,6 +123,7 @@ export class GridSelection<T> {
     const rows = this.display();
     if (rows.length === 0) return;
     const i = clampIndex(rowIndex, rows.length);
+    if (rows[i] === undefined) return; // an unloaded (placeholder) row — no-op (never rowKey(undefined))
     this.focused.set(i);
     this.toggle(this.rowKey(rows[i]));
   }
@@ -123,6 +136,7 @@ export class GridSelection<T> {
    * @param rowIndex The display index of the range's moving end.
    */
   rangeToRow(rowIndex: number): void {
+    if (this.windowed) return; // range enumerates the whole display — disabled for windowed
     const rows = this.display();
     if (rows.length === 0) return;
     const i = clampIndex(rowIndex, rows.length);

@@ -6,7 +6,7 @@
  *
  * Expectations derive from the requirements / plan spec, never the implementation.
  */
-import { test, expect } from 'vitest';
+import { test, expect, vi } from 'vitest';
 import { Group, createEventLoop, resolveCapabilities, signal, computed, effect, createRoot } from '@jsvision/ui';
 import type { Column } from '@jsvision/ui';
 import { column } from '../src/column.js';
@@ -15,6 +15,9 @@ import type { GridDataSource } from '../src/data-source.js';
 import { EditableDataGrid } from '../src/grid.js';
 import { EditableGridRows } from '../src/editable-grid-rows.js';
 import { SyntheticBodyBand } from '../src/synthetic-columns.js';
+import { FooterController } from '../src/grid-footer.js';
+import { GridSelection } from '../src/grid-selection.js';
+import { RowMutations } from '../src/row-mutations.js';
 import { isWindowed, windowedView } from '../src/windowing.js';
 import { asyncWindowedSource } from './fixtures/async-windowed-source.js';
 
@@ -330,4 +333,201 @@ test('ST-10: the synthetic prefix band renders a placeholder for an unloaded row
   const text = frame(loop, W, H);
   expect(text).toContain('…'); // the gutter reads as loading (mirrors the body placeholder)
   expect(text).not.toContain('['); // blank checkbox — no `[ ]`/`[x]` (selection is unknown)
+});
+
+// ---- Phase 3 — full-scan consumer guards (ST-11…ST-17) ----
+
+/** Mount a grid over `source` at W×H, focus the body, and return the loop. */
+function mountGrid(source: GridDataSource<Row>, gridCols = cols, W = 26, H = 6) {
+  const grid = new EditableDataGrid<Row>({ columns: gridCols, source });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: W, height: H }, { caps });
+  loop.mount(root);
+  loop.focusView(grid.rows);
+  return { grid, loop };
+}
+
+// ST-11 — a windowed source with an auto-width column skips the all-rows measure (the loud view would
+// throw on a scan), falls back to a fixed width + a devWarn, and autoFitColumn is a no-op.
+test('ST-11: windowed auto-width skips the measure (fallback + devWarn); autoFitColumn no-ops', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  const src = pagedSource(1000, 100);
+  const autoCols = [column<Row, string>({ id: 'name', title: 'Name', value: (r) => r.name })]; // no width ⇒ auto
+  const grid = new EditableDataGrid<Row>({ columns: autoCols, source: src });
+  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 5 } };
+  const root = new Group();
+  root.add(grid);
+  const loop = createEventLoop({ width: 20, height: 5 }, { caps });
+  expect(() => loop.mount(root)).not.toThrow(); // measureAutoWidths skipped — a scan would throw on the loud view
+  expect(warn.mock.calls.flat().join(' ')).toMatch(/auto-width/i); // fallback devWarn
+  src.resetCounts();
+  grid.autoFitColumn('name'); // no-op for windowed (cannot measure unloaded rows)
+  expect(src.rowAtCount()).toBeLessThan(50); // no full-scan measure
+  warn.mockRestore();
+});
+
+// ST-12 — (a) a windowed source lacking push-down throws at construction; (b) a configured one pushes
+// sort/filter down to the source and never client-scans.
+test('ST-12: windowed push-down is required (throws) and runs server-side with no client scan', () => {
+  const minimal: GridDataSource<Row> = {
+    rowKey: (r) => r.id,
+    length: () => 10,
+    rowAt: () => undefined,
+    ensureRange: () => undefined,
+  };
+  expect(() => new EditableDataGrid<Row>({ columns: cols, source: minimal })).toThrow(/setSort|setFilter/);
+
+  const src = pagedSource(1000, 100);
+  const { grid } = mountGrid(src);
+  src.resetCounts();
+  grid.sortBy('name');
+  expect(src.spies.setSort.length).toBeGreaterThan(0); // sort pushed down
+  grid.setFilter('name', { kind: 'text', op: 'contains', value: 'x' });
+  expect(src.spies.setFilter.length).toBeGreaterThan(0); // filter pushed down
+  expect(src.rowAtCount()).toBeLessThan(100); // no materialize / client scan
+});
+
+interface RowB {
+  id: number;
+  balance: number;
+}
+
+// ST-13 — a windowed footer aggregate cell renders blank + a one-time devWarn; the fold is never invoked
+// (no displayedRows().map over the lazy view).
+test('ST-13: a windowed footer aggregate is blank + a one-time devWarn (fold not invoked)', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  let scans = 0;
+  const src: GridDataSource<RowB> = {
+    rowKey: (r) => r.id,
+    length: () => 1000,
+    rowAt: (i) => {
+      scans += 1;
+      return { id: i, balance: 10 };
+    },
+    ensureRange: () => undefined,
+  };
+  const columns = new Map([
+    ['balance', column<RowB, number>({ id: 'balance', title: 'Bal', value: (r) => r.balance })],
+  ]);
+  const footer = new FooterController<RowB>({
+    footer: { aggregates: { balance: { fn: 'sum' } } },
+    columns,
+    displayedRows: () => windowedView(src),
+    windowed: true,
+  });
+  scans = 0;
+  expect(footer.cell('balance')).toBe(''); // blank — NOT a misleading '0'/'Σ 0'
+  expect(scans).toBe(0); // the fold did not run (no map over the lazy view)
+  expect(warn.mock.calls.flat().join(' ')).toMatch(/windowed/i);
+  warn.mockRestore();
+});
+
+// ST-14 — windowed selection disables select-all / tri-state / Ctrl+Shift range (they map over the whole
+// display); a single-row keyed toggle works on a loaded row and no-ops on an unloaded (placeholder) row.
+test('ST-14: windowed selection disables select-all/range; keyed toggle guards unloaded rows', async () => {
+  const src = pagedSource(1000, 100);
+  await src.ensureRange(0, 100); // load rows [0,100); rows >= 100 stay unloaded
+  await src.settle();
+  const sel = new GridSelection<Row>({
+    mode: 'multi',
+    focused: signal(0),
+    display: () => windowedView(src),
+    rowKey: (r) => r.id,
+    windowed: true,
+  });
+  sel.selectAllDisplayed();
+  expect(sel.read().size).toBe(0); // disabled (a map over length() would throw)
+  expect(() => sel.currentTriState()).not.toThrow();
+  expect(sel.currentTriState()).toBe('none');
+  expect(() => sel.rangeToRow(50)).not.toThrow(); // range disabled
+  expect(sel.read().size).toBe(0);
+
+  sel.toggleAtRow(0); // loaded → toggles its key
+  expect(sel.read().has(0)).toBe(true);
+  sel.toggleAtRow(500); // unloaded → no-op (no rowKey(undefined))
+  expect(sel.read().size).toBe(1);
+});
+
+// ST-15 — windowed counts read source.length(); a pushed-down filter re-reports a smaller total, and
+// filtered ≡ grand total (the v1 single-length limitation).
+test('ST-15: windowed counts read source.length() (filtered ≡ grand total, v1)', () => {
+  const src = pagedSource(100000, 100);
+  const { grid } = mountGrid(src);
+  expect(grid.totalCount()).toBe(100000);
+  expect(grid.filteredCount()).toBe(100000);
+  grid.setFilter('name', { kind: 'text', op: 'contains', value: 'x' });
+  src.setTotal(4000); // the server re-reports the filtered total
+  expect(grid.filteredCount()).toBe(4000);
+  expect(grid.totalCount()).toBe(4000); // filtered ≡ grand total (a distinct grand total is Phase B)
+});
+
+// ST-16 — windowed mutation appends via insert (no `at`) and deletes via remove (key-based); duplicate /
+// positional insert is a no-op + devWarn; no source linear scan runs.
+test('ST-16: windowed mutation is append/delete via the seam; duplicate no-ops without scanning', () => {
+  const warn = vi.fn();
+  const inserts: Array<[Row, number | undefined]> = [];
+  const removes: Array<readonly (string | number)[]> = [];
+  let scans = 0;
+  const src: GridDataSource<Row> = {
+    rowKey: (r) => r.id,
+    length: () => 1000,
+    rowAt: (i) => {
+      scans += 1;
+      return { id: i, name: `r${i}` };
+    },
+    ensureRange: () => undefined,
+    insert: (row, at) => void inserts.push([row, at]),
+    remove: (keys) => void removes.push(keys),
+  };
+  const sel = new GridSelection<Row>({
+    mode: 'multi',
+    focused: signal(0),
+    display: () => windowedView(src),
+    rowKey: (r) => r.id,
+    windowed: true,
+  });
+  const mut = new RowMutations<Row>({
+    source: src,
+    display: () => windowedView(src),
+    selection: sel,
+    assignKey: (clone) => clone,
+    warn,
+    windowed: true,
+  });
+  mut.insertRow({ id: 9999, name: 'new' });
+  expect(inserts).toEqual([[{ id: 9999, name: 'new' }, undefined]]); // append, no positional `at`
+  mut.deleteRows([1]);
+  expect(removes).toEqual([[1]]); // key-based remove
+  scans = 0;
+  mut.duplicateRow(5); // windowed → no-op + devWarn, no linear scan
+  expect(warn).toHaveBeenCalled();
+  expect(scans).toBe(0);
+});
+
+// ST-17 — opening a value-list filter on a windowed grid delegates to source.distinct (never a client
+// materialize/computeDistinct), and the popup sample reads source.rowAt(0) — so no full-scan runs.
+test('ST-17: a windowed value-list filter delegates to source.distinct with no client scan', async () => {
+  const distinctCalls: string[] = [];
+  const src = asyncWindowedSource<Row>({
+    total: 100000,
+    pageSize: 100,
+    fetchPage: (p) =>
+      Promise.resolve(Array.from({ length: 100 }, (_, k) => ({ id: p * 100 + k, name: `r${p * 100 + k}` }))),
+    rowKey: (r) => r.id,
+    distinct: (columnId) => {
+      distinctCalls.push(columnId);
+      return Promise.resolve({ values: ['r0', 'r1'], truncated: true });
+    },
+  });
+  await src.ensureRange(0, 100);
+  await src.settle();
+  const { loop } = mountGrid(src);
+  src.resetCounts();
+  loop.dispatch({ type: 'key', key: 'down', ctrl: false, alt: true, shift: false }); // Alt+Down → open the popup on the focused column ('id')
+  await tick();
+  expect(src.spies.distinct.length).toBeGreaterThan(0); // delegated to source.distinct
+  expect(distinctCalls).toContain('id'); // the focused column's value-list delegated, never a client scan
+  expect(src.rowAtCount()).toBeLessThan(100); // no computeDistinct(materialize) / sample full-scan
 });
