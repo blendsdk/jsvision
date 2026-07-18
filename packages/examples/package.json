@@ -42,6 +42,7 @@
     "demo:dropdowns": "tsx dropdowns-demo/main.ts",
     "demo:controls-live": "tsx controls-live/main.ts",
     "demo:kitchen": "tsx kitchen-sink/main.ts",
+    "demo:datagrid": "tsx datagrid-showcase/main.ts",
     "demo:tvision": "tsx tvision-demo/main.ts",
     "demo:chrome-bars": "tsx chrome-bars-demo/main.ts",
     "demo:amiga-clock": "tsx amiga-clock/main.ts",
@@ -53,6 +54,7 @@
   },
   "dependencies": {
     "@jsvision/core": "0.2.0",
+    "@jsvision/datagrid": "0.2.0",
     "@jsvision/files": "0.2.0",
     "@jsvision/forms": "0.2.0",
     "@jsvision/ui": "0.2.0",

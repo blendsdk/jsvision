@@ -6,6 +6,22 @@ The `DataGrid` table and the `Tree` outline.
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
+## alignCell
+
+Clip `text` to exactly `width` cells (width-aware — never splits a wide/CJK glyph), then pad to the requested alignment: `left` pads on the right, `right` pads on the left, `center` splits the remainder (an odd extra cell goes to the right).
+
+```ts
+alignCell(text: string, width: number, align: ColumnAlign, measure: (s: string) => number): string
+```
+
+## apportionColumns
+
+Apportion per-column integer widths and absolute start columns for a viewport — the O(cols) per-draw pass.
+
+```ts
+apportionColumns<T>(columns: Column<T>[], autoWidths: (number | null)[], viewportWidth: number, dividers = true): ColumnGeometry
+```
+
 ## Column
 
 A single heterogeneous column of a `DataGrid<T>` — a title, a field accessor, a sizing rule, and optional alignment / typed comparator / min-max clamps.
@@ -36,9 +52,9 @@ Resolved per-column geometry for one draw (all integer, post-apportion).
 
 ```ts
 interface ColumnGeometry {
-  widths: number[];   // Content cells per column (excludes the 1-cell divider).
-  starts: number[];   // Absolute x of each column's content, pre-indent: `starts[c] = Σ_{k<c}(widths[k] + 1)`.
-  totalWidth: number;   // The H-scroll content width: `Σ(widths[c] + 1 divider)`.
+  widths: number[];   // Content cells per column (excludes the divider cell).
+  starts: number[];   // Absolute x of each column's content, pre-indent: `starts[c] = Σ_{k<c}(widths[k] + gap)`, where `gap` is 1 with dividers, 0 compact.
+  totalWidth: number;   // The H-scroll content width: `Σ(widths[c] + gap)` (`gap` = 1 with dividers, 0 compact).
 }
 ```
 
@@ -83,12 +99,78 @@ interface DataGridOptions<T> {
 }
 ```
 
+## GridHeader
+
+The non-scrolling sticky header: column titles in `tableHeader`, a sort indicator, click-to-sort.
+
+```ts
+new GridHeader<T>(cfg: GridHeaderConfig<T>)   // extends View
+```
+
+## GridHeaderConfig
+
+Shared configuration handed from a `DataGrid` to its GridHeader.
+
+```ts
+interface GridHeaderConfig<T> {
+  columns: Column<T>[];   // The heterogeneous columns.
+  autoWidths: () => (number | null)[];   // The memoized `auto`-width measurement (shared with GridRows so both use identical geometry).
+  indent: Signal<number>;   // The horizontal cell offset (shared with the rows — the header pans in lockstep).
+  sort: Signal<SortState>;   // The active sort (this view draws its `▲`/`▼` indicator + a header click toggles it).
+}
+```
+
+## GridRows
+
+The focusable, multi-column, virtual-scroll grid body — draws only the visible window.
+
+```ts
+new GridRows<T>(cfg: GridRowsConfig<T>)   // extends View
+// methods & signals:
+vbar?: ScrollBar
+hbar?: ScrollBar
+```
+
+## GridRowsConfig
+
+Shared configuration handed from a `DataGrid` to its GridRows.
+
+```ts
+interface GridRowsConfig<T> {
+  display: () => T[];   // The sorted display rows (a `computed` in `DataGrid`; `focused`/`selected` index THIS list).
+  columns: Column<T>[];   // The heterogeneous columns.
+  autoWidths: () => (number | null)[];   // The memoized `auto`-width measurement (a `computed` over the source rows).
+  indent: Signal<number>;   // The horizontal cell offset (shared with the owned horizontal scroll bar's value).
+  focused: Signal<number>;   // The focused (highlighted) display index (shared with the vertical scroll bar's value).
+  selected: Signal<number>;   // The selected (chosen) display index (`-1` = none).
+  zebra: boolean;   // Stripe odd rows for readability (below focus/selection in priority).
+  onSelect?: (index: number, row: T) => void;   // Activation callback (Enter/Space or double-click); `index` is display order, `row` the value.
+  command?: string;   // Command name emitted on activation, handled elsewhere.
+}
+```
+
 ## MarkerStyle
 
 How a Tree draws its per-row expand/collapse marker. - `'tv'` — the default: a single `+` on a collapsed node, `─` on an expanded node or a leaf, drawn flush against the node text (no separating space). - `'brackets'` — pure-ASCII `[+]`/`[-]` on collapsible nodes, each followed by one space before the text; a leaf shows just that single space.
 
 ```ts
 type MarkerStyle = 'tv' | 'brackets' | 'triangle'
+```
+
+## measureAutoWidths
+
+Pre-measure `auto` columns to a fixed cell width across ALL current rows.
+
+```ts
+measureAutoWidths<T>(columns: Column<T>[], rows: T[], measure: (s: string) => number): (number | null)[]
+```
+
+## sortRows
+
+Produce a new display ordering of `rows` by column + direction.
+
+```ts
+sortRows<T>(rows: T[], columns: Column<T>[], sort: SortState): T[]
 ```
 
 ## SortState

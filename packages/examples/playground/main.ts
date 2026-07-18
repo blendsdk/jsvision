@@ -16,6 +16,7 @@ import {
   createApplication,
   item,
   menuBar,
+  separator,
   statusItem,
   statusLine,
   subMenu,
@@ -35,6 +36,7 @@ async function main(): Promise<number> {
 
   const app = createApplication({
     menuBar: menuBar([
+      subMenu('\u2261', [item('~W~elcome', Commands.ok, 'F1'), separator(), item('E~x~it', Commands.quit, 'Alt-X')]),
       subMenu('~F~ile', [
         //
         item('E~x~it', Commands.quit, 'Alt-X'),

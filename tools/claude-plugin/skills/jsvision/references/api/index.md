@@ -10,9 +10,9 @@ When you already know which widget you want, open its category page and copy the
 
 - [Reactivity](./reactivity.md) — Signals, computeds, effects, and reactive control flow. (18 exports)
 - [Layout & view system](./layout-views.md) — The `col`/`row`/`stack` DSL, `View`/`Group`, layout props, and the render root. (43 exports)
-- [Controls](./controls.md) — Leaf input widgets and the `Input` validators. (23 exports)
+- [Controls](./controls.md) — Leaf input widgets and the `Input` validators. (24 exports)
 - [Containers, scrolling, lists & tabs](./containers.md) — Scroll bars, scrollers, list views, dialogs, dropdowns, tabs, and split panes. (38 exports)
-- [Data views](./data-views.md) — The `DataGrid` table and the `Tree` outline. (11 exports)
+- [Data views](./data-views.md) — The `DataGrid` table and the `Tree` outline. (19 exports)
 - [Feedback](./feedback.md) — Progress bars and spinners. (10 exports)
 - [Date & color pickers](./date-color.md) — Calendars, date pickers, color swatches, and color pickers. (20 exports)
 - [Surfaces & terminal](./surfaces-terminal.md) — Offscreen surfaces and the scrollback terminal view. (8 exports)

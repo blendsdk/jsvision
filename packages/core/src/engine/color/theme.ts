@@ -213,6 +213,36 @@ export interface Theme {
    */
   readonly colorMarker: ThemeRole;
   /**
+   * The focused **cell** highlight in an editable data grid — a filled
+   * black-on-white reverse block drawn over the focused row so the cursor cell
+   * reads distinctly inside the row highlight. Painted only while the grid body
+   * has focus.
+   */
+  readonly gridCursor: ThemeRole;
+  /**
+   * The pending-commit marker colour in an editable data grid: the `•` drawn on a
+   * cell whose edit has not yet been confirmed. Its foreground is composited over
+   * the cell's own background at draw time, so the stored background is nominal.
+   */
+  readonly gridDirty: ThemeRole;
+  /**
+   * A selected row in an editable data grid — the multi-row selection highlight, a
+   * solid band distinct from both the focused-cell {@link gridCursor} and the base
+   * list's {@link listSelected}: bright white on blue. It carries its own background
+   * (not `listSelected`'s cyan, which matches a normal row), so a selected row reads
+   * clearly even against zebra striping. Painted for every row whose key is in the
+   * selection set; the focused-cell cursor and the pending-commit marker win over it.
+   */
+  readonly gridSelectedRow: ThemeRole;
+  /**
+   * A cell whose edit failed validation in an editable data grid — a solid band
+   * (white on a deep red), distinct from both the {@link gridDirty} pending-commit
+   * marker (a `•`, not a band) and the {@link gridCursor} focus. Painted over the
+   * whole invalid cell so a rejected value reads as a hard error; it wins over the
+   * dirty marker but yields to the focused-cell cursor.
+   */
+  readonly gridInvalid: ThemeRole;
+  /**
    * A file dialog's info pane — the strip below the dialog that reads out the
    * expanded path and the focused entry's name/size/date/time: cyan on blue.
    */
@@ -363,6 +393,10 @@ export const defaultTheme: Theme = {
   calendarDisabled: { fg: PALETTE.darkGray, bg: PALETTE.cyan },
   calendarWeekNumber: { fg: PALETTE.black, bg: PALETTE.cyan },
   colorMarker: { fg: PALETTE.black, bg: PALETTE.lightGray },
+  gridCursor: { fg: PALETTE.black, bg: PALETTE.white },
+  gridDirty: { fg: PALETTE.brightRed, bg: PALETTE.black },
+  gridSelectedRow: { fg: PALETTE.white, bg: PALETTE.blue },
+  gridInvalid: { fg: PALETTE.white, bg: PALETTE.red },
   fileInfo: { fg: PALETTE.cyan, bg: PALETTE.blue },
   editorNormal: { fg: PALETTE.yellow, bg: PALETTE.blue },
   editorSelected: { fg: PALETTE.blue, bg: PALETTE.lightGray },

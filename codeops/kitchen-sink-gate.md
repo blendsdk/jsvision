@@ -83,3 +83,18 @@ That is the whole extensibility contract — no shell edits, no chrome, no host 
 - **Visual components** (buttons, inputs, lists, dialogs, menus, …) — a story is **mandatory**.
 - **Non-visual capabilities** (reactivity, capability detection, color downsampling, layout math) —
   a story **when it is meaningful to show** (e.g. a reactive-counter demo, a color-depth swatch grid).
+
+## `@jsvision/datagrid` — routed to the dedicated showcase
+
+`@jsvision/datagrid` is an enterprise component family in its own right, so its live demos ship in a
+**dedicated** Storybook-for-TUI app — `packages/examples/datagrid-showcase/`
+(run `yarn workspace @jsvision/examples demo:datagrid`) — **not** this general `@jsvision/ui`
+kitchen-sink. It reuses the same `Story` contract and a focused copy of this shell, and it carries its
+own headless gate (`test/datagrid-showcase.smoke.spec.test.ts` per-demo render +
+`test/datagrid-showcase.walkthrough.spec.test.ts` shell navigation). The principle is unchanged — a
+datagrid capability is not "done" until its demo exists and its smoke test passes — only its showcase
+app differs.
+
+The existing `kitchen-sink/stories/data-grid.story.ts` demos `@jsvision/ui`'s **read-only** `DataGrid`
+(a distinct, simpler component) and is **intentionally retained** here — it is not superseded by the
+datagrid showcase.

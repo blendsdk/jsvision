@@ -20,10 +20,17 @@ export function glyphWidth(ch: string): number {
 }
 
 /**
- * Display width of a string, summed over its glyphs.
+ * Display width of a string, summed over its glyphs. Use this to measure text the way the screen
+ * buffer draws it — feed it to a grid's column-width / alignment math so auto-sized and CJK columns
+ * line up with what actually renders (a naive `s.length` counts a wide glyph as one column and drifts).
  *
  * @param s The string to measure.
  * @returns The total display width in columns.
+ * @example
+ * ```ts
+ * stringWidth('ab');   // 2 — two narrow glyphs
+ * stringWidth('日本'); // 4 — each wide CJK glyph is 2 columns
+ * ```
  */
 export function stringWidth(s: string): number {
   let w = 0;

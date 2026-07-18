@@ -182,6 +182,14 @@ interface SliderOptions {
 }
 ```
 
+## stringWidth
+
+Display width of a string, summed over its glyphs.
+
+```ts
+stringWidth(s: string): number
+```
+
 ## Switch
 
 A focusable on/off toggle bound two-way to a `Signal<boolean>` (see the module docs for glyphs, colours, and interaction).
