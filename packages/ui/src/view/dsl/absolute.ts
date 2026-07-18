@@ -57,10 +57,14 @@ export function at<V extends View>(
  * @param view The view to make an overlay.
  * @returns The same `view`, for inline chaining.
  * @example
- * import { cover } from '@jsvision/ui';
+ * import { col, grow, cover } from '@jsvision/ui';
  *
  * // A canvas that fills its parent and overlaps whatever is behind it.
  * cover(canvasView);
+ *
+ * // Contrast with the Flex.fill shorthand, which is grow:1 (a flow child), NOT an overlay:
+ * col({ fill: true }, header, body); // fill → the column takes a flex share of its parent's flow
+ * cover(overlayView); // cover → the view leaves the flow and covers the whole content box
  */
 export function cover<V extends View>(view: V): V {
   view.layout = { ...view.layout, position: 'fill' };

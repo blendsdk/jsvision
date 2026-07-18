@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-19 01:34
-> **Progress**: 30/32 tasks (94%)
+> **Last Updated**: 2026-07-19 01:41
+> **Progress**: 32/32 tasks (100%) ✅ COMPLETE
 > **CodeOps Skills Version**: 3.9.0
 
 ## Overview
@@ -150,8 +150,8 @@ spec-immutability exception, not a behavior change.
 
 ### Step 6.1: JSDoc, packaging, gate
 **Reference**: 01 R10 · AR-12, AR-13
-- [ ] 6.1.1 Ensure a copy-pasteable `@example` on every new/changed export (`at`/`cover`/`center` + extended `grow`/`fixed`/`Placement`); the `cover` example notes the `Flex.fill` (grow:1) vs `cover()` (position:'fill') distinction; extend the packaging spec to assert `@jsvision/ui` gains exactly `at`/`cover`/`center` — `packages/ui/test/*packaging*`
-- [ ] 6.1.2 Full gate: `yarn verify` (lint · typecheck · build · test · check:docs) **and** `yarn check:deps` green; no dead code
+- [x] 6.1.1 Ensure a copy-pasteable `@example` on every new/changed export (`at`/`cover`/`center` + extended `grow`/`fixed`/`Placement`); the `cover` example notes the `Flex.fill` (grow:1) vs `cover()` (position:'fill') distinction; extend the packaging spec to assert `@jsvision/ui` gains exactly `at`/`cover`/`center` — `packages/ui/test/*packaging*` ✅ (completed: 2026-07-19 01:41) — added a `Placement` `@example` (offsets) + a side-by-side `Flex.fill` vs `cover()` example; new packaging test asserts the `dsl/` barrel exports **exactly** the 14 builders (`Object.keys(import * as)` — value exports only)
+- [x] 6.1.2 Full gate: `yarn verify` (lint · typecheck · build · test · check:docs) **and** `yarn check:deps` green; no dead code ✅ (completed: 2026-07-19 01:41) — `CI=1 yarn verify` green (30/30 turbo tasks) + `check:deps` green (13/13); no dead code (old `dsl.ts` removed; eslint clean)
 
 **Deliverables**: docs + packaging locked; green gate.
 **Verify**: `yarn verify` && `yarn check:deps`

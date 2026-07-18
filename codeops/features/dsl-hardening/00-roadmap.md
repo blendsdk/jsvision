@@ -1,10 +1,10 @@
 # Roadmap: DSL Hardening
 
 > **Feature-Set**: DSL Hardening
-> **Status**: In Progress
+> **Status**: Done
 > **Created**: 2026-07-18
 > **Last Updated**: 2026-07-19
-> **Progress**: 0 / 1 plans (0%)
+> **Progress**: 1 / 1 plans (100%)
 > **CodeOps Skills Version**: 3.9.0
 
 Harden the `@jsvision/ui` layout DSL so the codebase-wide adoption (epic GH #108) can land: **S1**
@@ -21,4 +21,4 @@ and behavior-preserving; zero runtime deps. Prerequisite to the layout-DSL adopt
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
-| dsl-hardening | Layout DSL hardening (S1/S2/S3/S5/S7 + `dsl/` module split + split-view min proof) | — (direct, GH #113) | [dsl-hardening](plans/dsl-hardening/00-index.md) | Executing | 🔄 | 2026-07-19 | Standalone plan (no RD), created from GH #113. 6 phases / 32 tasks, spec-first; Zero-Ambiguity Gate PASSED (14 ARs incl. runtime AR-14, 18 ST-cases). Preflighted 2026-07-18→19 (PF-001…007) — PASSED, all 7 resolved. **exec_plan in progress (`--auto-commit`): Phase 1 ✅ (`dsl/` split + packaging-oracle repath) · Phase 2 ✅ (S1 `grow` `min` + `Flex.grow` object form + S7 falsy children; ST-3 corrected to a binding scenario, AR-14 runtime signed off) · Phase 3 ✅ (S2 `at()` merge-preserving absolute + out-of-flow container child (S4) + S3 standalone `cover()`/`center()`; new `dsl/absolute.ts`, +{at,cover,center}) · Phase 4 ✅ (S5 `Placement` `hOffset`/`vOffset` directional inset + clamp [AR-15 runtime] + S3 orphan-tagger `devWarn` via `WeakSet`+`queueMicrotask`) · Phase 5 ✅ (R9 proof — `split-view.ts` panes/splitters migrated to `grow(v,w,{min})`/`fixed(v,1)`; `grow`'s additive merge now preserves a pane's own `.layout` props; ST-16 red→green, split spec oracle unchanged). 30/32 tasks, full `yarn verify` green each phase.** S6 (`flex()`) + S8 (Group-subclass) deferred — no consumer. |
+| dsl-hardening | Layout DSL hardening (S1/S2/S3/S5/S7 + `dsl/` module split + split-view min proof) | — (direct, GH #113) | [dsl-hardening](plans/dsl-hardening/00-index.md) | Done | ✅ | 2026-07-19 | Standalone plan (no RD), from GH #113. 6 phases / 32 tasks, spec-first; Zero-Ambiguity Gate PASSED (15 ARs incl. runtime AR-14/AR-15, 18 ST-cases). Preflighted (PF-001…007) — PASSED. **exec_plan COMPLETE 2026-07-19 (`--auto-commit`), 32/32 tasks / 6 phases, full `CI=1 yarn verify` green each phase + `check:deps` green, zero regression: Phase 1 (`dsl/` split + packaging-oracle repath) · Phase 2 (S1 `grow`/`Flex.grow` `min`; S7 falsy children; ST-3 corrected → binding, AR-14 runtime) · Phase 3 (S2 `at()` merge-preserving + out-of-flow child (S4); S3 `cover()`/`center()`; new `dsl/absolute.ts`) · Phase 4 (S5 `Placement` `hOffset`/`vOffset` directional inset+clamp [AR-15 runtime]; orphan-tagger `devWarn`) · Phase 5 (R9 proof — `split-view.ts` → `grow(min)`/`fixed`, additive-merge, ST-16 red→green) · Phase 6 (docs + surface locked at +{at,cover,center}). Commits 0b9b1198·1646f21d·838cdf64·c85e3573·a17e5d4a + final.** S6 (`flex()`) + S8 (Group-subclass) deferred — no consumer (GH #113). Unblocks the layout-DSL adoption (epic GH #108). |

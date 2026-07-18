@@ -15,6 +15,7 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import * as ui from '@jsvision/ui';
+import * as dslBarrel from '../src/view/dsl/index.js';
 import {
   col,
   row,
@@ -27,6 +28,9 @@ import {
   topRight,
   bottomRight,
   topLeft,
+  at,
+  cover,
+  center,
   type Flex,
   type Placement,
 } from '@jsvision/ui';
@@ -37,11 +41,50 @@ const dslDir = join(here, '..', 'src', 'view', 'dsl');
 /** Every TypeScript module in the split `dsl/` folder. */
 const dslFiles = readdirSync(dslDir).filter((f) => f.endsWith('.ts'));
 
-// Every DSL value symbol is importable from `@jsvision/ui` as a function.
-test('col/row/stack/grow/fixed/spacer/place/centered/corner helpers are exported functions', () => {
-  for (const fn of [col, row, stack, grow, fixed, spacer, place, centered, topRight, bottomRight, topLeft]) {
+// Every DSL value symbol — including the new at/cover/center — is importable from `@jsvision/ui` as
+// a function.
+test('col/row/stack/grow/fixed/spacer/place/centered/corner + at/cover/center are exported functions', () => {
+  const fns = [
+    col,
+    row,
+    stack,
+    grow,
+    fixed,
+    spacer,
+    place,
+    centered,
+    topRight,
+    bottomRight,
+    topLeft,
+    at,
+    cover,
+    center,
+  ];
+  for (const fn of fns) {
     expect(typeof fn).toBe('function');
   }
+});
+
+// The DSL barrel exports EXACTLY the expected builder set — at/cover/center were added and nothing
+// else leaked onto the surface (an `import * as` sees only the value exports; types are erased).
+test('the dsl/ barrel exports exactly the expected builder set (+at/cover/center, nothing else)', () => {
+  const expected = [
+    'col',
+    'row',
+    'grow',
+    'fixed',
+    'spacer',
+    'stack',
+    'place',
+    'centered',
+    'topRight',
+    'bottomRight',
+    'topLeft',
+    'at',
+    'cover',
+    'center',
+  ].sort();
+  expect(Object.keys(dslBarrel).sort()).toEqual(expected);
 });
 
 // The `Flex` and `Placement` types are on the public surface (type-only usage compiles).
