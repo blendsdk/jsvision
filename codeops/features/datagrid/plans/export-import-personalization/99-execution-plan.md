@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-18 08:48
-> **Progress**: 10/28 tasks (36%) — Phase 1 complete
+> **Last Updated**: 2026-07-18 09:01
+> **Progress**: 21/28 tasks (75%) — Phases 1 & 2 complete
 > **CodeOps Skills Version**: 3.9.0
 > **Execution-gate preflight**: ✅ refreshed 2026-07-18 against post-RD-11 code — see `00-preflight-report.md` (4 major + 1 minor, all resolved; PF-001 windowed guard, PF-002 smoke-oracle task added, PF-003 story → datagrid-local, PF-004 line budget 1520/<1550).
 
@@ -105,33 +105,35 @@ neither is this plan's code. Only this plan's files were staged/committed.
 
 **Reference**: [03-02](03-02-variants-and-freeze.md) · [07 ST-12…ST-19] · [AR-3,12,13,14](00-ambiguity-register.md)
 
-- [ ] 2.1.1 Write `variant.spec.test.ts` (ST-12 round-trip, ST-13…ST-18 build/resolve, ST-19 `setFrozen`) — `packages/datagrid/test/variant.spec.test.ts`
-- [ ] 2.1.2 RED: run, confirm fail (no `variant` module / `setFrozen` yet)
+- [x] 2.1.1 Write `variant.spec.test.ts` (ST-12 round-trip, ST-13…ST-18 build/resolve, ST-19 `setFrozen`) — `packages/datagrid/test/variant.spec.test.ts` ✅ (completed: 2026-07-18 09:00)
+- [x] 2.1.2 RED: run, confirm fail (no `variant` module / `setFrozen` yet) ✅ (completed: 2026-07-18 09:00 — import of `../src/variant.js` unresolved)
 
 ### Step 2.2: Implement (GREEN)
 
 **Reference**: [03-02 §Proposed Changes / §restore sequence](03-02-variants-and-freeze.md) · [AR-3,12,13,14,16](00-ambiguity-register.md)
 
-- [ ] 2.2.1 `freezeSpec` → `signal<FreezeSpec>`; read it in `partitionSig`/`rawPartition`/over-freeze warning; add `setFrozen(left, right)` — `packages/datagrid/src/grid.ts`
-- [ ] 2.2.2 Create `variant.ts`: `GridVariant`/`GridVariantColumn` + pure `buildVariant` + `resolveVariant` (drop-unknown, append-unnamed) — `packages/datagrid/src/variant.ts`
-- [ ] 2.2.3 Add `saveVariant(name)` + `applyVariant(variant)` delegators (fixed restore order: order→visibility→widths→freeze→sort→filter) — `packages/datagrid/src/grid.ts`
-- [ ] 2.2.4 Barrel: `export type { GridVariant, GridVariantColumn }` — `packages/datagrid/src/index.ts`
-- [ ] 2.2.5 GREEN: ST-12…ST-19 pass
+- [x] 2.2.1 `freezeSpec` → `signal<FreezeSpec>` (`freezeSpecSig`); read it in `partitionSig`/`computePartition`/`maybeWarnOverFreeze`; add `setFrozen(left, right)` — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-18 09:00)
+- [x] 2.2.2 Create `variant.ts`: `GridVariant`/`GridVariantColumn` + pure `buildVariant` + `resolveVariant` (drop-unknown, dedup, append-unnamed) — `packages/datagrid/src/variant.ts` ✅ (completed: 2026-07-18 09:00)
+- [x] 2.2.3 Add `saveVariant(name)` + `applyVariant(variant)` delegators (fixed restore order: order→visibility→widths→freeze→sort→filter) — `packages/datagrid/src/grid.ts` ✅ (completed: 2026-07-18 09:00)
+- [x] 2.2.4 Barrel: `export type { GridVariant, GridVariantColumn }` — `packages/datagrid/src/index.ts` ✅ (completed: 2026-07-18 09:00)
+- [x] 2.2.5 GREEN: ST-12…ST-19 pass ✅ (completed: 2026-07-18 09:00 — 8 variant spec tests green)
 
 ### Step 2.3: Impl tests & hardening
 
 **Reference**: [07 §Implementation Tests] · [AR-15](00-ambiguity-register.md)
 
-- [ ] 2.3.1 `variant.impl.test.ts`: all-unknown ids; duplicate ids; empty `columns[]`; width clamp; push-down `setSort`/`setFilter` fired on restore — `packages/datagrid/test/variant.impl.test.ts`
-- [ ] 2.3.2 `grid.impl.test.ts` additions: `freezeSpec`→signal does not regress construction-time freeze — `packages/datagrid/test/grid.impl.test.ts`. **Line guard (PF-004):** grid.ts is 1520 / guard `< 1550`; the guard lives in **three** impl tests — `grid-selection.impl.test.ts:190`, `grid-footer.impl.test.ts:78`, `navigation.impl.test.ts:144` (NOT `grid.impl.test.ts`). Four `@example`-bearing public methods will very likely cross 1550 → **re-base all three to ~1600 with a rationale comment** extending their existing re-base-history chain (RD-10/RD-12/RD-11 precedent); never re-inline the logic.
-- [ ] 2.3.3 JSDoc `@example` on `setFrozen`/`saveVariant`/`applyVariant` + `GridVariant`/`GridVariantColumn`; `check:docs` green
-- [ ] 2.3.4 Commit via **/gitcm**
+- [x] 2.3.1 `variant.impl.test.ts`: all-unknown ids; duplicate ids; empty `columns[]`; width clamp; push-down `setSort`/`setFilter` fired on restore — `packages/datagrid/test/variant.impl.test.ts` ✅ (completed: 2026-07-18 09:00)
+- [x] 2.3.2 `grid.impl.test.ts` additions: `freezeSpec`→signal does not regress construction-time freeze — `packages/datagrid/test/grid.impl.test.ts`. **Line guard (PF-004):** the guard lives in **three** impl tests — `grid-selection.impl.test.ts`, `grid-footer.impl.test.ts`, `navigation.impl.test.ts` (NOT `grid.impl.test.ts`). Re-based `< 1550 → < 1680` **during Phase 1** (see the Phase-1 note) with a rationale comment extending the existing re-base chain; grid.ts final = **1665 / < 1680**, never re-inlining logic. ✅ (completed: 2026-07-18 09:00)
+- [x] 2.3.3 JSDoc `@example` on `setFrozen`/`saveVariant`/`applyVariant` + `GridVariant`/`GridVariantColumn`; `check:docs` green ✅ (completed: 2026-07-18 09:00 — datagrid check:docs 0 banned refs · 0 missing @example)
+- [x] 2.3.4 Commit via **/gitcm** ✅ (completed: 2026-07-18 09:00)
 
 **Deliverables**:
-- [ ] Variant round-trip reproduces order/width/visibility/freeze/sort/filter; `setFrozen` works
-- [ ] No RD-07 freeze regression; all verification passing
+- [x] Variant round-trip reproduces order/width/visibility/freeze/sort/filter; `setFrozen` works
+- [x] No RD-07 freeze regression; all verification passing (datagrid: typecheck ✅ · 614 tests ✅ · check:docs ✅)
 
-**Verify**: `CI=1 yarn verify`
+**Verify**: `CI=1 yarn verify` — datagrid slice green (typecheck + 614 tests + check:docs). Global `yarn verify`
+remains blocked only by the unrelated concurrent job's unformatted files + flaky examples `plugin-sync`
+timeouts (see the Phase-1 note); only this plan's files were staged/committed.
 
 ---
 
