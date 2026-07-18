@@ -5,7 +5,7 @@
  */
 import { test, expect } from 'vitest';
 import { View } from '../src/view/index.js';
-import { col, row, grow, fixed, stack } from '../src/view/index.js';
+import { col, row, grow, fixed, stack, at, cover, center } from '../src/view/index.js';
 
 /** Minimal concrete leaf view. */
 class Leaf extends View {
@@ -77,4 +77,46 @@ test('a leading falsy value is a skipped child, never consumed as the props obje
   expect(g.children).toEqual([a]);
   expect(g.layout.direction).toBe('row');
   expect(g.background).toBeUndefined();
+});
+
+// --- at() overload dispatch: the numeric and rect forms are interchangeable ----------------------
+
+test('at() numeric and rect forms produce an identical layout', () => {
+  const p = new Leaf();
+  const q = new Leaf();
+  at(p, 5, 6, 7, 8);
+  at(q, { x: 5, y: 6, width: 7, height: 8 });
+  expect(p.layout).toEqual(q.layout);
+  expect(p.layout).toEqual({ position: 'absolute', rect: { x: 5, y: 6, width: 7, height: 8 } });
+});
+
+test('at() merges over multiple prior layout props and overwrites a prior position', () => {
+  const v = new Leaf();
+  v.layout = { direction: 'row', gap: 2, position: 'fill' };
+  at(v, 1, 1, 4, 4);
+  expect(v.layout.direction).toBe('row'); // preserved
+  expect(v.layout.gap).toBe(2); // preserved
+  expect(v.layout.position).toBe('absolute'); // overwritten fill → absolute
+  expect(v.layout.rect).toEqual({ x: 1, y: 1, width: 4, height: 4 });
+});
+
+// --- cover() / center() merge over prior props ---------------------------------------------------
+
+test('cover() overwrites a prior absolute position with fill while preserving other props', () => {
+  const v = new Leaf();
+  v.layout = { direction: 'col', position: 'absolute', rect: { x: 1, y: 2, width: 3, height: 4 } };
+  cover(v);
+  expect(v.layout.position).toBe('fill');
+  expect(v.layout.direction).toBe('col'); // preserved
+});
+
+test('center() preserves prior props and sets the centered flag alongside the absolute rect', () => {
+  const v = new Leaf();
+  v.layout = { direction: 'col', gap: 1 };
+  center(v, 30, 10);
+  expect(v.layout.direction).toBe('col'); // preserved
+  expect(v.layout.gap).toBe(1); // preserved
+  expect(v.layout.position).toBe('absolute');
+  expect(v.layout.rect).toEqual({ x: 0, y: 0, width: 30, height: 10 });
+  expect(v.centered).toBe(true);
 });
