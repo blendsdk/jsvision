@@ -60,7 +60,18 @@ function compareOneKey<T>(va: unknown, vb: unknown, col: GridColumn<T>, dir: Sor
     // The nil goes to the top (first) or bottom (last), NOT flipped by dir.
     return aNil ? (nullsFirst ? -1 : 1) : nullsFirst ? 1 : -1;
   }
-  const base = col.compare ? col.compare(va, vb) : compareValues(va, vb);
+  let base: number;
+  if (col.compare) {
+    try {
+      base = col.compare(va, vb);
+    } catch {
+      // A trusted custom comparator that throws falls back to the type-aware default order, keeping
+      // this comparator total and deterministic so one bad column never tears down the whole sort.
+      base = compareValues(va, vb);
+    }
+  } else {
+    base = compareValues(va, vb);
+  }
   return dir === 'desc' ? -base : base;
 }
 
