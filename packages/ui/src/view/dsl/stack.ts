@@ -32,8 +32,15 @@ type PlaceAxis = 'fill' | 'start' | 'center' | 'end';
  * Where a {@link stack} layer sits within the shared overlay box.
  *
  * Each axis is either `'fill'` (span the whole extent) or `'start'`/`'center'`/`'end'` (align a fixed
- * size given by `width`/`height`). An omitted axis defaults to `'fill'`. Build one with {@link place}
- * or the {@link centered}/{@link topRight}/{@link bottomRight}/{@link topLeft} conveniences.
+ * size given by `width`/`height`). An omitted axis defaults to `'fill'`. An optional `hOffset`/
+ * `vOffset` insets the box away from its anchored edge. Build one with {@link place} or the
+ * {@link centered}/{@link topRight}/{@link bottomRight}/{@link topLeft} conveniences.
+ *
+ * @example
+ * import { stack, place } from '@jsvision/ui';
+ *
+ * // A 10×2 OK button, horizontally centered and pinned one cell above the bottom edge.
+ * const dialog = stack(body, place(okButton, { h: 'center', v: 'end', vOffset: 1, width: 10, height: 2 }));
  */
 export interface Placement {
   /** Horizontal mode (default `'fill'`). */
