@@ -58,6 +58,16 @@ const WIDTH_MAX_DIGITS = 3;
 /** Each column row is one cell tall; the region scrolls when the column count exceeds the viewport. */
 const ROW_HEIGHT = 1;
 
+/**
+ * Shared column x-offsets (and widths) for every composite row AND the header line, so each header
+ * label always sits directly above the control it describes. Change the geometry in one place.
+ */
+const COL = { marker: 0, toggle: 2, title: 7, freeze: 25, width: 35 } as const;
+const COL_W = { marker: 1, toggle: 3, title: 16, freeze: 8, width: 5 } as const;
+
+/** The human freeze-side labels painted in the freeze cell (the model keeps the lowercase enum). */
+const FREEZE_LABEL: Record<FreezeSide, string> = { none: 'None', left: 'Left', right: 'Right' };
+
 /** Parse a width input's text to an override: empty → `undefined` (auto), else the digit value. */
 function parseWidth(text: string): number | undefined {
   const t = text.trim();
@@ -105,6 +115,46 @@ class ToggleCell extends View {
       ev.handled = true;
     } else if (e.type === 'mouse' && e.kind === 'down') {
       this.onToggle();
+      ev.handled = true;
+    }
+  }
+}
+
+/**
+ * A focusable freeze-side cell that paints the current side (`None`/`Left`/`Right`) from a reactive
+ * reader and cycles it (`None → Left → Right → None`) on Space or a click; `↑`/`↓`/`Alt`+arrows are
+ * ignored so they bubble to the row container. It sits under the "Freeze" header — one self-describing
+ * control in place of a separate button paired with a raw-enum `none` label. Enter is left for the
+ * dialog's default OK button, mirroring {@link ToggleCell}.
+ */
+class FreezeCell extends View {
+  override focusable = true;
+
+  constructor(
+    private readonly sideReader: () => FreezeSide,
+    private readonly onCycle: () => void,
+  ) {
+    super();
+    this.onMount(() => {
+      this.bind(() => {
+        this.sideReader(); // repaint when the freeze side changes
+      });
+    });
+  }
+
+  override draw(ctx: DrawContext): void {
+    const role = ctx.color('listNormal');
+    ctx.fill(' ', role);
+    ctx.text(0, 0, FREEZE_LABEL[this.sideReader()], role);
+  }
+
+  override onEvent(ev: DispatchEvent): void {
+    const e = ev.event;
+    if (e.type === 'key' && e.key === 'space') {
+      this.onCycle();
+      ev.handled = true;
+    } else if (e.type === 'mouse' && e.kind === 'down') {
+      this.onCycle();
       ev.handled = true;
     }
   }
@@ -188,7 +238,7 @@ export class PersonalizeDialog<T> extends Dialog {
   constructor(grid: EditableDataGrid<T>, store: VariantStore, host: ModalDialogHost, title: string) {
     const bounds = host.desktop.bounds;
     const w = Math.min(Math.max(48, bounds.width - 8), 64);
-    const h = Math.min(Math.max(12, bounds.height - 4), 20);
+    const h = Math.min(Math.max(14, bounds.height - 4), 20); // room for the header line above the rows
     super({ title, width: w, height: h });
     this.layout = { ...this.layout, padding: 0 }; // place children at explicit frame offsets (message-box/form-dialog idiom)
     this.dlgW = w;
@@ -217,12 +267,33 @@ export class PersonalizeDialog<T> extends Dialog {
     this.variantNames = signal(store.list().map((v) => v.name));
 
     this.region = new ColumnRegion(this as PersonalizeDialog<unknown>);
+    this.buildHeader();
     this.buildColumnRegion();
     this.buildVariantsPanel();
     this.buildFooter();
   }
 
   // ── Layout ─────────────────────────────────────────────────────────────────────────────────────
+
+  /** Paint the fixed column header (Show · Column · Freeze · Width), aligned to the row controls. */
+  private buildHeader(): void {
+    const header = new Group();
+    // [x-offset, width, label] — the offsets are the SAME COL.* the rows use, so labels align.
+    const cells: Array<[number, number, string]> = [
+      [COL.toggle, 4, 'Show'],
+      [COL.title, COL_W.title, 'Column'],
+      [COL.freeze, COL_W.freeze, 'Freeze'],
+      [COL.width, COL_W.width, 'Width'],
+    ];
+    for (const [x, width, label] of cells) {
+      const t = new Text(label);
+      t.layout = { position: 'absolute', rect: { x, y: 0, width, height: 1 } };
+      header.add(t);
+    }
+    // Pinned at x:1 — the same left edge as the scroller — so header x-offsets and row x-offsets match.
+    header.layout = { position: 'absolute', rect: { x: 1, y: 1, width: this.dlgW - 2, height: 1 } };
+    this.add(header);
+  }
 
   /** Build the built-once composite rows, wrap them in a scroller, and pin the region as the body. */
   private buildColumnRegion(): void {
@@ -257,7 +328,7 @@ export class PersonalizeDialog<T> extends Dialog {
     });
     scroller.layout = {
       position: 'absolute',
-      rect: { x: 1, y: 1, width: this.dlgW - 2, height: Math.max(1, this.dlgH - 11) },
+      rect: { x: 1, y: 2, width: this.dlgW - 2, height: Math.max(1, this.dlgH - 12) }, // y:2 — below the header
     };
     this.add(scroller);
 
@@ -272,18 +343,26 @@ export class PersonalizeDialog<T> extends Dialog {
 
   /** Build the variants panel: the store list + a name field + Save-as/Apply/Delete/Set-default/Reset. */
   private buildVariantsPanel(): void {
-    const rowY = Math.max(2, this.dlgH - 9);
+    const labelY = Math.max(2, this.dlgH - 9);
+    const listY = Math.max(3, this.dlgH - 8);
     const half = Math.floor(this.dlgW / 2);
+    const leftW = Math.max(8, half - 2);
+    const rightW = Math.max(8, this.dlgW - half - 2);
+
+    // Section labels so the list (left) and the save-name field (right) are self-explanatory.
+    const savedLabel = new Text('Saved layouts');
+    savedLabel.layout = { position: 'absolute', rect: { x: 1, y: labelY, width: leftW, height: 1 } };
+    this.add(savedLabel);
+    const nameLabel = new Text('Save as:');
+    nameLabel.layout = { position: 'absolute', rect: { x: half, y: labelY, width: rightW, height: 1 } };
+    this.add(nameLabel);
 
     const list = new ListBox({ items: this.variantNames, focused: this.variantSelected });
-    list.layout = { position: 'absolute', rect: { x: 1, y: rowY, width: Math.max(8, half - 2), height: 4 } };
+    list.layout = { position: 'absolute', rect: { x: 1, y: listY, width: leftW, height: 3 } };
     this.add(list);
 
-    const nameInput = new Input({ value: this.name, maxLength: NAME_MAX });
-    nameInput.layout = {
-      position: 'absolute',
-      rect: { x: half, y: rowY, width: Math.max(8, this.dlgW - half - 2), height: 1 },
-    };
+    const nameInput = new Input({ value: this.name, maxLength: NAME_MAX, placeholder: 'variant name' });
+    nameInput.layout = { position: 'absolute', rect: { x: half, y: listY, width: rightW, height: 1 } };
     this.add(nameInput);
 
     const btnY = Math.max(2, this.dlgH - 4);
@@ -310,33 +389,39 @@ export class PersonalizeDialog<T> extends Dialog {
     const id = col.id;
 
     const marker = new Text(() => (this.cols()[this.selectedIdx()]?.id === id ? '▸' : ' '));
-    marker.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 1 } };
+    marker.layout = { position: 'absolute', rect: { x: COL.marker, y: 0, width: COL_W.marker, height: 1 } };
 
     const toggle = new ToggleCell(
       () => this.isVisible(id),
       () => this.toggleVisibility(id),
       () => this.isLastVisible(id),
     );
-    toggle.layout = { position: 'absolute', rect: { x: 2, y: 0, width: 3, height: 1 } };
+    toggle.layout = { position: 'absolute', rect: { x: COL.toggle, y: 0, width: COL_W.toggle, height: 1 } };
     this.toggleById.set(id, toggle);
 
     const title = new Text(col.title);
-    title.layout = { position: 'absolute', rect: { x: 6, y: 0, width: 16, height: 1 } };
+    title.layout = { position: 'absolute', rect: { x: COL.title, y: 0, width: COL_W.title, height: 1 } };
 
-    const freezeBtn = new Button('Freeze', { onClick: () => this.cycleFreeze(id) });
-    freezeBtn.layout = { position: 'absolute', rect: { x: 23, y: 0, width: 8, height: 1 } };
-    const freezeSide = new Text(() => this.freezeOf(id));
-    freezeSide.layout = { position: 'absolute', rect: { x: 32, y: 0, width: 6, height: 1 } };
+    const freeze = new FreezeCell(
+      () => this.freezeOf(id),
+      () => this.cycleFreeze(id),
+    );
+    freeze.layout = { position: 'absolute', rect: { x: COL.freeze, y: 0, width: COL_W.freeze, height: 1 } };
 
     const widthSig = this.widthText.get(id)!;
-    const widthInput = new Input({ value: widthSig, maxLength: WIDTH_MAX_DIGITS, validator: filter('0-9') });
-    widthInput.layout = { position: 'absolute', rect: { x: 40, y: 0, width: 5, height: 1 } };
+    // `placeholder: 'auto'` makes an empty width cell self-explanatory (empty = declared/auto width).
+    const widthInput = new Input({
+      value: widthSig,
+      maxLength: WIDTH_MAX_DIGITS,
+      validator: filter('0-9'),
+      placeholder: 'auto',
+    });
+    widthInput.layout = { position: 'absolute', rect: { x: COL.width, y: 0, width: COL_W.width, height: 1 } };
 
     row.add(marker);
     row.add(toggle);
     row.add(title);
-    row.add(freezeBtn);
-    row.add(freezeSide);
+    row.add(freeze);
     row.add(widthInput);
     row.layout = { position: 'absolute', rect: { x: 0, y: 0, width: rowWidth, height: ROW_HEIGHT } };
     return row;
