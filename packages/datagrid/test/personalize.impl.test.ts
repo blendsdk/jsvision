@@ -4,7 +4,7 @@
  * the visible-count echo tracks the pending visibility. Driven on a headless modal host.
  */
 import { test, expect } from 'vitest';
-import { Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+import { Group, createEventLoop, resolveCapabilities, signal, Commands } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
@@ -12,6 +12,15 @@ import { EditableDataGrid } from '../src/grid.js';
 import { personalizeGrid } from '../src/personalize.js';
 import { createMemoryVariantStore } from '../src/variant-store.js';
 import type { PersonalizeDialog } from '../src/personalize-dialog.js';
+import type { GridVariant } from '../src/variant.js';
+
+const oneCol = (name: string): GridVariant => ({
+  name,
+  columns: [{ id: 'id', visible: true }],
+  freeze: { left: [], right: [] },
+  sort: [],
+  filter: [],
+});
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -66,9 +75,9 @@ function makeHost(w = 70, h = 24) {
   return { loop, host, added };
 }
 
-function open(grid: EditableDataGrid<Emp>) {
+function open(grid: EditableDataGrid<Emp>, store = createMemoryVariantStore()) {
   const { loop, host, added } = makeHost();
-  const result = personalizeGrid(grid, { store: createMemoryVariantStore(), host });
+  const result = personalizeGrid(grid, { store, host });
   loop.renderRoot.flush();
   return { loop, dlg: added[0] as unknown as PersonalizeDialog<Emp>, result };
 }
@@ -134,4 +143,45 @@ test('the visible-count echo tracks the pending visibility', () => {
   dlg.toggleSelectedVisibility(); // hide one
   loop.renderRoot.flush();
   expect(painted(loop)).toContain('5 of 6 columns visible');
+});
+
+// A nested confirm() opened from the dialog returns modal control to the dialog when it closes (the
+// LIFO modal stack pops back) — a subsequent Cancel closes the dialog, not a stale confirm.
+test('a nested confirm returns control to the dialog on close', async () => {
+  const grid = buildGrid();
+  const { loop, dlg, result } = open(grid, createMemoryVariantStore([oneCol('dup')]));
+  dlg.setName('dup');
+  const p = dlg.saveAs();
+  await Promise.resolve(); // let the nested confirm open
+  loop.emitCommand(Commands.no); // close the confirm (declining the overwrite)
+  expect(await p).toBe('declined');
+  loop.emitCommand(Commands.cancel); // control is back on the dialog → this closes IT
+  await expect(result).resolves.toEqual({ ok: false });
+});
+
+// A confirmed overwrite replaces the variant content with the pending layout; a declined one leaves
+// the store byte-identical.
+test('confirmed overwrite replaces content; a declined overwrite leaves the store untouched', async () => {
+  const grid = buildGrid();
+  const store = createMemoryVariantStore([oneCol('v')]);
+  const { loop, dlg } = open(grid, store);
+  const snapshot = JSON.stringify(store.list());
+  // Decline → byte-identical.
+  dlg.setName('v');
+  const p1 = dlg.saveAs();
+  await Promise.resolve();
+  loop.emitCommand(Commands.no);
+  expect(await p1).toBe('declined');
+  expect(JSON.stringify(store.list())).toBe(snapshot); // untouched
+  // Confirm → overwritten with the pending layout (all six columns, not the one-column original).
+  const p2 = dlg.saveAs();
+  await Promise.resolve();
+  loop.emitCommand(Commands.yes);
+  expect(await p2).toBe('overwrote');
+  expect(
+    store
+      .list()
+      .find((v) => v.name === 'v')!
+      .columns.map((c) => c.id),
+  ).toEqual(['id', 'name', 'dept', 'total', 'note', 'active']);
 });

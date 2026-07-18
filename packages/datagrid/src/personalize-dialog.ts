@@ -12,7 +12,20 @@
  * `Alt`+arrows the leaves ignore. Rows are built once and repositioned by a reactive index bind, so
  * keyboard focus survives every edit.
  */
-import { Dialog, Group, View, Button, Text, Input, Scroller, okCancelButtons, filter, signal } from '@jsvision/ui';
+import {
+  Dialog,
+  Group,
+  View,
+  Button,
+  Text,
+  Input,
+  Scroller,
+  ListBox,
+  okCancelButtons,
+  confirm,
+  filter,
+  signal,
+} from '@jsvision/ui';
 import type { Signal, DispatchEvent, DrawContext, ModalDialogHost } from '@jsvision/ui';
 import { sanitize } from '@jsvision/core';
 import type { EditableDataGrid } from './grid.js';
@@ -164,6 +177,10 @@ export class PersonalizeDialog<T> extends Dialog {
   /** The built-once composite row per column id (repositioned by the working order). */
   private readonly rowById = new Map<string, Group>();
   private readonly region: ColumnRegion;
+  /** The variant names shown in the panel list — refreshed after every store mutation. */
+  private readonly variantNames: Signal<string[]>;
+  /** The panel list's cursor index (the selected variant). */
+  private readonly variantSelected = signal(0);
   /** The dialog's own content dimensions, known at construction (this.bounds is 0 until layout). */
   private readonly dlgW: number;
   private readonly dlgH: number;
@@ -197,9 +214,11 @@ export class PersonalizeDialog<T> extends Dialog {
       };
     });
     this.cols = signal(initial);
+    this.variantNames = signal(store.list().map((v) => v.name));
 
     this.region = new ColumnRegion(this as PersonalizeDialog<unknown>);
     this.buildColumnRegion();
+    this.buildVariantsPanel();
     this.buildFooter();
   }
 
@@ -238,7 +257,7 @@ export class PersonalizeDialog<T> extends Dialog {
     });
     scroller.layout = {
       position: 'absolute',
-      rect: { x: 1, y: 1, width: this.dlgW - 2, height: Math.max(1, this.dlgH - 6) },
+      rect: { x: 1, y: 1, width: this.dlgW - 2, height: Math.max(1, this.dlgH - 11) },
     };
     this.add(scroller);
 
@@ -246,9 +265,43 @@ export class PersonalizeDialog<T> extends Dialog {
     const echo = new Text(() => `${this.visibleCount()} of ${this.cols().length} columns visible`);
     echo.layout = {
       position: 'absolute',
-      rect: { x: 1, y: Math.max(1, this.dlgH - 4), width: this.dlgW - 2, height: 1 },
+      rect: { x: 1, y: Math.max(1, this.dlgH - 10), width: this.dlgW - 2, height: 1 },
     };
     this.add(echo);
+  }
+
+  /** Build the variants panel: the store list + a name field + Save-as/Apply/Delete/Set-default/Reset. */
+  private buildVariantsPanel(): void {
+    const rowY = Math.max(2, this.dlgH - 9);
+    const half = Math.floor(this.dlgW / 2);
+
+    const list = new ListBox({ items: this.variantNames, focused: this.variantSelected });
+    list.layout = { position: 'absolute', rect: { x: 1, y: rowY, width: Math.max(8, half - 2), height: 4 } };
+    this.add(list);
+
+    const nameInput = new Input({ value: this.name, maxLength: NAME_MAX });
+    nameInput.layout = {
+      position: 'absolute',
+      rect: { x: half, y: rowY, width: Math.max(8, this.dlgW - half - 2), height: 1 },
+    };
+    this.add(nameInput);
+
+    const btnY = Math.max(2, this.dlgH - 4);
+    const specs: Array<[string, () => void]> = [
+      ['Save', () => void this.saveAs()],
+      ['Apply', () => this.applySelected()],
+      ['Delete', () => void this.deleteSelected()],
+      ['Default', () => this.setDefaultSelected()],
+      ['Reset', () => this.reset()],
+    ];
+    let x = 1;
+    for (const [label, onClick] of specs) {
+      const b = new Button(label, { onClick });
+      const w = label.length + 4;
+      b.layout = { position: 'absolute', rect: { x, y: btnY, width: w, height: 1 } };
+      this.add(b);
+      x += w + 1;
+    }
   }
 
   /** Build one composite row: marker · visibility toggle · title · freeze cycle + side · width input. */
@@ -422,7 +475,7 @@ export class PersonalizeDialog<T> extends Dialog {
   }
 
   /** Replace the whole pending layout with a saved variant (columns + freeze + sort + filter). */
-  protected applyStored(variant: GridVariant): void {
+  applyStored(variant: GridVariant): void {
     this.sortModel.set(variant.sort.map((k) => ({ ...k })));
     this.filterModel.set(variant.filter.map((f) => ({ ...f })));
     const titleOf = new Map(this.cols().map((c) => [c.id, c.title]));
@@ -440,6 +493,98 @@ export class PersonalizeDialog<T> extends Dialog {
     });
     this.cols.set(next);
     this.selectedIdx.set(0);
+  }
+
+  // ── Variants panel (store-backed; save/apply/delete/set-default) ─────────────────────────────────
+
+  /** The variants currently in the store (a live snapshot). */
+  storeVariants(): readonly GridVariant[] {
+    return this.store.list();
+  }
+
+  /** The name of the currently-selected variant in the panel list, or `undefined`. */
+  selectedVariantName(): string | undefined {
+    return this.variantNames()[this.variantSelected()];
+  }
+
+  /** Move the panel selection to a named variant (a no-op if absent). */
+  selectVariant(name: string): void {
+    const i = this.variantNames().indexOf(name);
+    if (i >= 0) this.variantSelected.set(i);
+  }
+
+  private refreshVariants(): void {
+    this.variantNames.set(this.store.list().map((v) => v.name));
+  }
+
+  /** The pending layout as a named variant to persist (all facets: columns/freeze/sort/filter). */
+  private buildVariant(name: string): GridVariant {
+    return { ...this.result(), name };
+  }
+
+  /**
+   * Save the pending layout under the name field. A blank/whitespace name is rejected; an existing name
+   * prompts a nested confirm-overwrite (declining leaves the store unchanged). The name is sanitized
+   * before it is stored.
+   *
+   * @returns `'blank'` (rejected), `'saved'` (new), `'overwrote'` (confirmed overwrite), or `'declined'`.
+   */
+  async saveAs(): Promise<'blank' | 'saved' | 'overwrote' | 'declined'> {
+    const clean = sanitize(this.name()).trim();
+    if (clean === '') return 'blank'; // nothing written for an empty name
+    const exists = this.store.list().some((v) => v.name === clean);
+    if (exists) {
+      const ok = await confirm(this.dlgHost, `Overwrite "${clean}"?`);
+      if (!ok) return 'declined'; // declined → store untouched
+      this.store.save(this.buildVariant(clean));
+      this.refreshVariants();
+      return 'overwrote';
+    }
+    this.store.save(this.buildVariant(clean));
+    this.refreshVariants();
+    return 'saved';
+  }
+
+  /** Apply the currently-selected variant to the pending layout (a no-op if none is selected). */
+  applySelected(): void {
+    const name = this.selectedVariantName();
+    if (name === undefined) return;
+    const v = this.store.list().find((x) => x.name === name);
+    if (v !== undefined) this.applyStored(v);
+  }
+
+  /**
+   * Delete a variant after a nested confirm. Declining leaves the store untouched; confirming removes it
+   * (and clears the default if it named it, on the store side).
+   *
+   * @param name The variant name to delete.
+   * @returns `'deleted'` or `'declined'`.
+   */
+  async deleteStored(name: string): Promise<'deleted' | 'declined'> {
+    const ok = await confirm(this.dlgHost, `Delete "${name}"?`);
+    if (!ok) return 'declined';
+    this.store.delete(name);
+    this.refreshVariants();
+    this.variantSelected.set(0);
+    return 'deleted';
+  }
+
+  /** Delete the currently-selected variant (nested confirm); `'none'` when nothing is selected. */
+  async deleteSelected(): Promise<'deleted' | 'declined' | 'none'> {
+    const name = this.selectedVariantName();
+    if (name === undefined) return 'none';
+    return this.deleteStored(name);
+  }
+
+  /** Mark a variant the store default. The grid layout is not changed (no auto-apply). */
+  setDefaultStored(name: string): void {
+    this.store.setDefault(name);
+  }
+
+  /** Mark the currently-selected variant the default (a no-op if none is selected). */
+  setDefaultSelected(): void {
+    const name = this.selectedVariantName();
+    if (name !== undefined) this.setDefaultStored(name);
   }
 
   // ── Result ───────────────────────────────────────────────────────────────────────────────────────

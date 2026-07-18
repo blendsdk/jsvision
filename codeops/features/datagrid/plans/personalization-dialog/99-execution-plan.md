@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-18 16:54
-> **Progress**: 27/45 tasks (60%) · Phase 1 ✅ (892efea5) · Phase 2 ✅ (column region + personalizeGrid)
+> **Last Updated**: 2026-07-18 17:07
+> **Progress**: 36/45 tasks (80%) · Phase 1 ✅ (892efea5) · Phase 2 ✅ (ba3b9a03) · Phase 3 ✅ (variants panel)
 > **CodeOps Skills Version**: 3.8.0
 
 ## Overview
@@ -113,7 +113,7 @@ guard.
 
 - [x] 2.3.1 `personalize.impl.test.ts`: freeze-cycle wraparound; reorder boundary no-ops; body region non-collapse (paints titles + echo); count-echo edges — `packages/datagrid/test/personalize.impl.test.ts` ✅ (completed: 2026-07-18 16:54)
 - [x] 2.3.2 JSDoc `@example` on `personalizeGrid`; `check:docs` green (41 files · 0 banned · 0 missing @example); grep banned refs → clean — ✅ (completed: 2026-07-18 16:54)
-- [~] 2.3.3 Commit via **/gitcm** (auto-commit → commit+push; `yarn lint:fix` first) ⏳ (in progress: 2026-07-18 16:54)
+- [x] 2.3.3 Commit via **/gitcm** (auto-commit → commit+push; `yarn lint:fix` first) ✅ (completed: 2026-07-18 16:57 — commit `ba3b9a03`, pushed; RD-16 Phase 2 scope, RD-14 excluded)
 
 **Deliverables**:
 - [x] The column-region dialog opens, stages edits, and commits/discards correctly via `personalizeGrid` ✅
@@ -129,28 +129,28 @@ guard.
 
 **Reference**: [03-03 §Variants panel](03-03-personalize-dialog.md) · [07 ST-21…ST-25] · [AR-49,50](00-ambiguity-register.md)
 
-- [ ] 3.1.1 Extend `personalize.spec.test.ts` with ST-21 (Save-as reflects pending), ST-22 (blank-reject + confirm-overwrite), ST-23 (Apply re-renders + reproduces on OK + drop-unknown), ST-24 (Apply carries sort/filter; none-applied leaves them), ST-25 (Delete + confirm + default-clear; Set-default no-auto-apply) — `packages/datagrid/test/personalize.spec.test.ts`
-- [ ] 3.1.2 RED: run, confirm the variants-panel cases fail
+- [x] 3.1.1 Extend `personalize.spec.test.ts` with ST-21 (Save-as reflects pending), ST-22 (blank-reject + confirm-overwrite), ST-23 (Apply re-renders + reproduces on OK + drop-unknown), ST-24 (Apply carries sort/filter; none-applied leaves them), ST-25 (Delete + confirm + default-clear; Set-default no-auto-apply) — `packages/datagrid/test/personalize.spec.test.ts` ✅ (completed: 2026-07-18 17:07)
+- [x] 3.1.2 RED: run, confirm the variants-panel cases fail ✅ (completed: 2026-07-18 17:07 — 3 of 5 red on missing saveAs/deleteStored/setDefaultStored)
 
 ### Step 3.2: Implement (GREEN)
 
 **Reference**: [03-03 §Variants panel](03-03-personalize-dialog.md) · [AR-49,50](00-ambiguity-register.md) · [PF-025,PF-026]
 
-- [ ] 3.2.1 Variants panel: a `ListBox` of `store.list()` names + Save-as/Apply/Delete/Set-default/Reset buttons — `packages/datagrid/src/personalize-dialog.ts`
-- [ ] 3.2.2 Save-as: name `Input({maxLength:64})` + `sanitize` + trim-empty reject; build a `GridVariant` from pending (all facets); **nested `confirm()` overwrite** on name collision; re-read `list()` — `packages/datagrid/src/personalize-dialog.ts`
-- [ ] 3.2.3 Apply (replace pending wholesale + re-render), Delete (**nested `confirm()`** + `store.delete` + default-clear), Set-default (`store.setDefault`, no grid change) — `packages/datagrid/src/personalize-dialog.ts`
-- [ ] 3.2.4 GREEN: ST-21…ST-25 pass
+- [x] 3.2.1 Variants panel: a `ListBox` of `store.list()` names (`focused`=cursor signal) + Save-as/Apply/Delete/Set-default/Reset buttons + a name `Input` — `packages/datagrid/src/personalize-dialog.ts` ✅ (completed: 2026-07-18 17:07)
+- [x] 3.2.2 Save-as: name `Input({maxLength:64})` + `sanitize` + trim-empty reject; build a `GridVariant` from pending (all facets); **nested `confirm()` overwrite** on name collision; re-read `list()` — `packages/datagrid/src/personalize-dialog.ts` ✅ (completed: 2026-07-18 17:07)
+- [x] 3.2.3 Apply (replace pending wholesale + re-render), Delete (**nested `confirm()`** + `store.delete` + default-clear), Set-default (`store.setDefault`, no grid change) — `packages/datagrid/src/personalize-dialog.ts` ✅ (completed: 2026-07-18 17:07)
+- [x] 3.2.4 GREEN: ST-21…ST-25 pass ✅ (completed: 2026-07-18 17:07 — 19/19 personalize.spec)
 
 ### Step 3.3: Impl tests & hardening
 
 **Reference**: [07 §Implementation Tests] · [02 §Risks — nested confirm](02-current-state.md)
 
-- [ ] 3.3.1 `personalize.impl.test.ts` additions: **nested-confirm focus restore** (LIFO modal stack pops back to the dialog); overwrite-declined leaves the store untouched — `packages/datagrid/test/personalize.impl.test.ts`
-- [ ] 3.3.2 JSDoc/grep check green; commit via **/gitcm**
+- [x] 3.3.1 `personalize.impl.test.ts` additions: **nested-confirm modal-stack restore** (control pops back to the dialog); overwrite confirmed replaces / declined leaves the store untouched — `packages/datagrid/test/personalize.impl.test.ts` ✅ (completed: 2026-07-18 17:07)
+- [~] 3.3.2 JSDoc/grep check green (0 banned · 0 missing @example); commit via **/gitcm** (auto → commit+push; `yarn lint:fix` first) ⏳ (in progress: 2026-07-18 17:07)
 
 **Deliverables**:
-- [ ] Full variant management works from the dialog; nested confirms restore focus
-- [ ] All verification passing (datagrid slice)
+- [x] Full variant management works from the dialog; nested confirms restore control ✅
+- [x] All verification passing (datagrid slice: typecheck · 652 tests · check:docs) ✅
 
 **Verify**: `CI=1 yarn verify`
 

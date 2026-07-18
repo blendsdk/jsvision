@@ -14,6 +14,7 @@ import { EditableDataGrid } from '../src/grid.js';
 import { personalizeGrid } from '../src/personalize.js';
 import { createMemoryVariantStore } from '../src/variant-store.js';
 import type { PersonalizeDialog } from '../src/personalize-dialog.js';
+import type { GridVariant } from '../src/variant.js';
 
 /** A fake execView-capable modal host that captures added/removed windows into a mounted root (the
  * form-dialog.spec pattern). The dialog runs in its own loop, independent of the grid's. */
@@ -402,4 +403,128 @@ test('the variant-name field sanitizes control bytes and caps at 64 characters',
   expect(dlg.sanitizedName()).not.toMatch(/[\x00-\x08\x0e-\x1f]/); // no raw control bytes survive
   dlg.setName('x'.repeat(200));
   expect(dlg.nameValue().length).toBeLessThanOrEqual(64); // hard-capped at entry
+});
+
+// ───────────────────────────────────────────────────────────────────────────────────────────────
+// Variants panel (ST-21…ST-25) — save-as / apply / delete / set-default over the caller's store.
+// ───────────────────────────────────────────────────────────────────────────────────────────────
+
+const mkVariant = (name: string): GridVariant => ({
+  name,
+  columns: [{ id: 'id', visible: true }],
+  freeze: { left: [], right: [] },
+  sort: [],
+  filter: [],
+});
+
+// Save-as writes a variant reflecting the pending layout (equal to the grid at open, all facets).
+test('Save-as writes a variant reflecting the pending layout', async () => {
+  const grid = buildGrid();
+  grid.sortBy('name', 'asc');
+  grid.setFilter('dept', { kind: 'text', op: 'contains', value: 'Eng' });
+  const store = createMemoryVariantStore();
+  const { dlg } = open(grid, store);
+  dlg.setName('mine');
+  expect(await dlg.saveAs()).toBe('saved');
+  const saved = store.list().find((v) => v.name === 'mine')!;
+  expect(saved).toBeDefined();
+  expect(saved.columns.map((c) => c.id)).toEqual(['id', 'name', 'dept', 'total', 'note', 'active']); // pending columns
+  expect(saved.sort).toEqual([{ columnId: 'name', dir: 'asc' }]); // pending sort
+  expect(saved.filter).toEqual([{ columnId: 'dept', filter: { kind: 'text', op: 'contains', value: 'Eng' } }]); // pending filter
+});
+
+// Save-as rejects a blank/whitespace name, and a declined overwrite leaves the store unchanged.
+test('Save-as rejects a blank name and honors a declined overwrite', async () => {
+  const grid = buildGrid();
+  const store = createMemoryVariantStore([mkVariant('dup')]);
+  const { loop, dlg } = open(grid, store);
+  dlg.setName('   '); // whitespace only
+  expect(await dlg.saveAs()).toBe('blank');
+  expect(store.list()).toHaveLength(1); // nothing written
+  // Overwrite an existing name, then decline the confirm.
+  dlg.setName('dup');
+  const p = dlg.saveAs();
+  await Promise.resolve(); // let the nested confirm open
+  loop.emitCommand(Commands.no); // decline
+  expect(await p).toBe('declined');
+  expect(store.list().filter((v) => v.name === 'dup')).toHaveLength(1); // still the original, unchanged
+});
+
+// Apply re-renders the pending layout, reproduces it on OK, and drops an unknown column id.
+test('Apply re-renders, reproduces on OK, and drops an unknown column', async () => {
+  const grid = buildGrid();
+  const variant: GridVariant = {
+    name: 'v',
+    columns: [
+      { id: 'total', visible: true },
+      { id: 'id', visible: true },
+      { id: 'legacy', visible: true }, // not a current column → dropped on OK
+      { id: 'name', visible: false }, // hidden
+      { id: 'dept', visible: true },
+      { id: 'note', visible: true },
+      { id: 'active', visible: true },
+    ],
+    freeze: { left: ['id'], right: [] },
+    sort: [{ columnId: 'total', dir: 'desc' }],
+    filter: [],
+  };
+  const { loop, dlg, result } = open(grid);
+  dlg.applyStored(variant);
+  expect(dlg.workingColumns()[0].id).toBe('total'); // the column list re-rendered to the variant order
+  loop.emitCommand(Commands.ok);
+  await result;
+  expect(grid.columnOrder()[0]).toBe('total'); // reproduced order
+  expect(grid.columnOrder()).not.toContain('name'); // hidden
+  expect(grid.columnOrder()).not.toContain('legacy'); // unknown id dropped, no throw
+  expect(grid.frozen().left).toContain('id');
+  expect(grid.sort()).toEqual([{ columnId: 'total', dir: 'desc' }]);
+});
+
+// Applying a variant carries its sort/filter onto OK; with no variant applied they are unchanged.
+test('Apply restages the variant sort/filter on OK; no apply leaves them unchanged', async () => {
+  // Applied → the variant's sort/filter are restaged on OK.
+  {
+    const grid = buildGrid();
+    const variant: GridVariant = {
+      name: 'v',
+      columns: COLS().map((c) => ({ id: c.id, visible: true })),
+      freeze: { left: [], right: [] },
+      sort: [{ columnId: 'total', dir: 'desc' }],
+      filter: [{ columnId: 'dept', filter: { kind: 'text', op: 'contains', value: 'Ops' } }],
+    };
+    const { loop, dlg, result } = open(grid);
+    dlg.applyStored(variant);
+    loop.emitCommand(Commands.ok);
+    await result;
+    expect(grid.sort()).toEqual([{ columnId: 'total', dir: 'desc' }]);
+    expect(grid.filterModel().get('dept')).toEqual({ kind: 'text', op: 'contains', value: 'Ops' });
+  }
+  // Not applied → sort/filter unchanged (OK re-applies the same pending sort/filter).
+  {
+    const grid = buildGrid();
+    grid.sortBy('id', 'asc');
+    const { loop, result } = open(grid);
+    loop.emitCommand(Commands.ok);
+    await result;
+    expect(grid.sort()).toEqual([{ columnId: 'id', dir: 'asc' }]); // unchanged
+  }
+});
+
+// Delete removes a variant (confirmed) and clears the default if it named it; Set-default records the
+// default without changing the grid (no auto-apply).
+test('Delete (confirmed) clears the default; Set-default does not change the grid', async () => {
+  const grid = buildGrid();
+  const store = createMemoryVariantStore([mkVariant('a'), mkVariant('b')]);
+  store.setDefault('a');
+  const { loop, dlg } = open(grid, store);
+  const before = JSON.stringify(grid.columns());
+  const p = dlg.deleteStored('a'); // delete the default
+  await Promise.resolve(); // let the nested confirm open
+  loop.emitCommand(Commands.yes); // confirm
+  expect(await p).toBe('deleted');
+  expect(store.list().map((v) => v.name)).toEqual(['b']); // removed
+  expect(store.getDefault()).toBeUndefined(); // deleting the default cleared it
+  dlg.setDefaultStored('b');
+  expect(store.getDefault()).toBe('b');
+  expect(JSON.stringify(grid.columns())).toBe(before); // no auto-apply — grid layout unchanged
 });
