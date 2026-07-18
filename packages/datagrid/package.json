@@ -58,6 +58,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
+    "@xterm/headless": "^6.0.0",
     "vitest": "^4.1.10"
   }
 }

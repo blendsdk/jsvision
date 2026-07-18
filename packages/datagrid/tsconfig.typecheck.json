@@ -4,5 +4,12 @@
     "noEmit": true,
     "rootDir": "."
   },
-  "include": ["src", "test"]
+  "include": ["src", "test"],
+  // These specs import test/bench helpers from the sibling @jsvision/core package by
+  // workspace-relative path. Those imports resolve at run time (vitest/tsx, NodeNext),
+  // but tsc rejects them here: a cross-package .ts falls outside this package's rootDir
+  // (TS6059) and the declaration-less .mjs bench has no types (TS7016). Excluding them
+  // mirrors core's own posture (core never typechecks its test/); they stay fully
+  // covered by vitest at run time.
+  "exclude": ["test/golden-screen.spec.test.ts", "test/a11y-golden.spec.test.ts", "test/perf-grid-bench.spec.test.ts"]
 }
