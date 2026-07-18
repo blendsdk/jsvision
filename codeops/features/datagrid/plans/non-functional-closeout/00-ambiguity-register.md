@@ -52,3 +52,14 @@ decisions above; the original decisions stand except as noted:
   grid's `•`/`▲`/`▼` need `ambiguousWide:true`, and funnel `▽`/ellipsis `…` have no core fallback.
   ST-3 now uses `{boxDrawing:false, ambiguousWide:true}` and keeps `▽`/`…` out of the fixture
   (recorded as a known limitation).
+
+## Runtime decisions (exec, 2026-07-18)
+
+Decisions taken during `exec_plan` that refine the plan's latitude; each is grounded in the real code
+and does not change any acceptance criterion.
+
+| AR | Category | Question | Decision | Source |
+|----|----------|----------|----------|--------|
+| AR-13 | Testability | How to seed the four role states without one masking another or stealing focus? | Build the fixture on the `EditableGridRows` body (a public barrel export) with **injected** `dirty`/`errors`/`selectedKeys` registries — the same seams `dirty.spec`/`grid-selection.spec` drive — plus `loop.focusView(body)` for `gridCursor`. `dirty.add(cellKey(k,col))` / `errors.set(cellKey(k,col),msg)` / `selectedKeys.set(...)` place each role on a distinct row deterministically. Rejected: driving real edit/commit for `gridDirty`/`gridInvalid` (a blocked `gridInvalid` commit keeps an editor focused, which suppresses the `gridCursor` overpaint). The frame is drawn `set`-cell-by-cell (not `ScreenBuffer.box`, which `fillRect`s its interior and would erase the composed content). | (runtime) |
+| AR-14 | Testability | Is `rr.serialize()` the right "full first paint" source for ST-5? | No — the grid schedules a reactive **post-mount** repaint, so a later `rr.serialize()` re-flushes to an empty cached diff (empirically `0` bytes). ST-5 instead snapshots `rr.buffer().clone()` and diffs with core's standalone `serialize(base,null)` (full) / `serialize(after,base)` (diff), exactly mirroring core's `render-bytes-damage.spec`. Same property, deterministic. | (runtime) |
+| AR-15 | Testability | ST-2 "render intact" under mono — assert specific surviving glyphs? | No — the resolved **mono** capability profile also downgrades box-drawing (`┌→+`), so "intact" is asserted as a painted-cell count (`> 20` non-blank cells), not a specific surviving glyph. Correct behaviour (NO_COLOR terminals are often glyph-limited too), not a defect. | (runtime) |

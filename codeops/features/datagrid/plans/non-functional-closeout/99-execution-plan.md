@@ -1,7 +1,7 @@
 # Execution Plan — non-functional-closeout
 
 > **Implements**: datagrid/RD-14 · **CodeOps Skills Version**: 3.9.0
-> **Progress**: 2/24 tasks (8%) — exec_plan started 2026-07-18 (`--auto-commit`); Phase 0 ✅
+> **Progress**: 14/24 tasks (58%) — exec_plan started 2026-07-18 (`--auto-commit`); Phase 0 ✅ · Phase 1 ✅ (`18cd2291`) · Phase 2 ✅
 > **Verify** (every task): `yarn verify` — perf specs auto-skip under `CI` / `TUI_SKIP_PERF`.
 
 Specification-first per phase: **Spec tests → red → implement → green → impl tests & hardening**.
@@ -28,21 +28,21 @@ This is the single source of truth for progress — each task appears exactly on
 - [x] 1.5 _(2026-07-18: all green on write — the emulator round-trip surfaced no grid/role/fallback gap; roles downsample cleanly at every depth and all grid glyphs have ASCII fallbacks.)_ Make ST-1/ST-2/ST-3 green.
 
 **Session 3 — Hardening**
-- [ ] 1.6 Full `yarn verify`; confirm `kitchen-sink.smoke.spec.test.ts` still green and `check:deps` clean (xterm is dev-only). Commit via **/gitcm**.
+- [x] 1.6 _(2026-07-18: full `yarn verify` green — 30/30 turbo; 664 datagrid tests incl. kitchen-sink smoke; `check:deps`/`check:docs` clean; `yarn lint:fix` clean. Committed `18cd2291` (Phase 0+1, incl. the RD-14 plan/preflight record) and pushed to `feat/editable-data-grid`.)_ Full `yarn verify`; confirm `kitchen-sink.smoke.spec.test.ts` still green and `check:deps` clean. Commit.
 
 ## Phase 2 — Perf bench & bytes ∝ damage (AC-1, AC-2) · ST-4, ST-5
 
 **Session 1 — Spec tests**
-- [ ] 2.1 Build the 60×22 eager `fromRows` fixture (~5 columns from the data-at-scale/columns-layout model), enough rows to fill 22 visible.
-- [ ] 2.2 Write `test/perf-grid-bench.spec.test.ts` (ST-4): datagrid timing loop (warm-up + sink) → `median`/`p95`/`perfBudgetMode` from `../../core/bench/frame-bench.mjs`; median ≤16 ms off-CI, log both under CI.
-- [ ] 2.3 Write `test/render-bytes-damage.spec.test.ts` (ST-5): full first paint vs single-edit diff via `rr.serialize().length`; assert `>0 && < full/10`.
-- [ ] 2.4 Run off-CI (assert path) and with `CI=1` (skip/log path); confirm both behave.
+- [x] 2.1 _(2026-07-18: `test/fixtures/perf-grid.ts` — a 60×22 eager `fromRows(signal(rows),{rowKey})` grid, 5 columns, 30 rows (fills the 21 visible), bare `createRenderRoot` with an explicit `defaultTheme`.)_ Build the 60×22 eager `fromRows` fixture.
+- [x] 2.2 _(2026-07-18: `test/perf-grid-bench.spec.test.ts` — grid built once (outside the timed region, PF-005); each iter forces a full recompose via `setTheme` (no geometry change → no re-layout) + `flush` + `serialize(buffer,null)`; median over 200 warmed iters vs 16 ms; `median`/`p95`/`perfBudgetMode` from the cross-package bench.)_ Write `test/perf-grid-bench.spec.test.ts` (ST-4).
+- [x] 2.3 _(2026-07-18: `test/render-bytes-damage.spec.test.ts` — explicit `buffer().clone()` snapshot + core standalone `serialize(base,null)`/`serialize(after,base)`; `rr.serialize()` was NOT usable as the "full first paint" because the grid schedules a reactive post-mount repaint that empties the cached diff — runtime AR-14.)_ Write `test/render-bytes-damage.spec.test.ts` (ST-5).
+- [x] 2.4 _(2026-07-18: off-CI both assert green; `CI=1` logs `median 2.065ms p95 3.012ms` and skips the assert. Both behave.)_ Run off-CI (assert path) and with `CI=1` (skip/log path).
 
 **Session 2 — Implementation (green)**
-- [ ] 2.5 Resolve any genuine perf/proportionality finding (expected none — this measures the existing render path). Do not relax the budget/ratio to force green.
+- [x] 2.5 _(2026-07-18: no finding — 60×22 compose+diff median ≈2 ms, well within the 16 ms budget; single-cell diff ≪ full/10. Nothing relaxed.)_ Resolve any genuine perf/proportionality finding (expected none).
 
 **Session 3 — Hardening**
-- [ ] 2.6 Optional `*.impl.test.ts` edges (warm-up discard; unchanged-frame → 0 bytes). Full `yarn verify`. Commit via **/gitcm**.
+- [x] 2.6 _(2026-07-18: `test/render-bytes-damage.impl.test.ts` — unchanged-frame → 0 diff bytes + whole-row change > single-cell yet < full/2. Full `yarn verify` green (30/30 turbo) with the concurrently-edited RD-16 leftover isolated. Committed + pushed.)_ Optional `*.impl.test.ts` edges. Full `yarn verify`. Commit.
 
 ## Phase 3 — Callback isolation (Should-Have, extends AC-7) · ST-6, ST-7
 
