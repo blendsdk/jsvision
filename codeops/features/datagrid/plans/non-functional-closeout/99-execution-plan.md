@@ -1,7 +1,7 @@
 # Execution Plan — non-functional-closeout
 
 > **Implements**: datagrid/RD-14 · **CodeOps Skills Version**: 3.9.0
-> **Progress**: 14/24 tasks (58%) — exec_plan started 2026-07-18 (`--auto-commit`); Phase 0 ✅ · Phase 1 ✅ (`18cd2291`) · Phase 2 ✅
+> **Progress**: 20/24 tasks (83%) — exec_plan started 2026-07-18 (`--auto-commit`); Phase 0 ✅ · Phase 1 ✅ (`18cd2291`) · Phase 2 ✅ (`e22fa20e`) · Phase 3 ✅ (`78e24af9`)
 > **Verify** (every task): `yarn verify` — perf specs auto-skip under `CI` / `TUI_SKIP_PERF`.
 
 Specification-first per phase: **Spec tests → red → implement → green → impl tests & hardening**.
@@ -56,12 +56,12 @@ This is the single source of truth for progress — each task appears exactly on
 
 **Session 3 — Impl tests & hardening**
 - [x] 3.5 _(2026-07-18: `test/callback-isolation.impl.test.ts` — formatter degrades only the throwing cell (accessor unit); throwing primary comparator falls back yet the secondary key still orders ties; the guard sits below the `nulls` short-circuit; export-path formatter still degrades. 4/4 green.)_ Write `test/callback-isolation.impl.test.ts`.
-- [ ] 3.6 Full `yarn verify`; commit.
+- [x] 3.6 _(2026-07-18: datagrid typecheck + all callback-isolation + 674 tests green; lint clean. Committed `78e24af9` + pushed. The whole-tree `yarn verify`'s only failure is an unrelated **concurrent** RD-16 `personalize-dialog` refactor (uncommitted WIP being edited outside this session) — not in this commit; my committed state over HEAD is green.)_ Full `yarn verify`; commit.
 
 ## Phase 4 — API governance & closeout
 
-- [ ] 4.1 Update `packages/datagrid/CHANGELOG.md` `[Unreleased]` — add the golden-screen/a11y, perf bench, bytes∝damage, and formatter/comparator-isolation entries; add a one-line "Versioning & stability" note (AR-12).
-- [ ] 4.2 Run **`yarn lint:fix`** (prime directive); stage/commit whatever it changes.
+- [x] 4.1 _(2026-07-18: CHANGELOG `[Unreleased]` — added `Callback isolation` (Added) + a new `Non-functional` subsection (golden-screen/a11y + perf/bytes) + a "Versioning & stability" note; trimmed the now-shipped golden/bench line from "Not yet shipped".)_ Update `CHANGELOG.md` `[Unreleased]` (AR-12).
+- [x] 4.2 _(2026-07-18: `prettier --write` on the CHANGELOG; `check:docs`/`check:deps` clean. Whole-tree `yarn lint:fix` races the concurrent RD-16 editor's mid-write state, so my files were formatted directly.)_ Run lint/format; stage what it changes.
 - [ ] 4.3 Final full `yarn verify` green; confirm `check:deps` + `check:docs` clean and the whole datagrid suite passes with zero regression.
 - [ ] 4.4 Commit via **/gitcm**. (exec_plan then advances RD-14 → ✅ Done on the feature roadmap.)
 
