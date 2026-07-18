@@ -33,12 +33,12 @@ seam types in `@jsvision/core`; Lezer engine in opt-in `@jsvision/lang`; `core`/
 - **#101 lands first** (extract `@jsvision/editor`; widen `ui` public API for `measure`/`message-box`; re-point `@jsvision/files`; add to lockstep version set).
 - **Degrade-to-plain keeps zero-dep features** (line numbers, gutter, indent-based default folder); drops only Lezer features (syntax highlight + tree-based fold).
 
-## Out of scope (deferred — each its own RD/issue)
+## Out of scope (deferred — each tracked by its own issue)
 
-- ⏸ **Multiple cursors** · owner: future RD · revisit: post-v1
-- ⏸ **Word-wrap** · owner: future RD · revisit: post-v1
-- ⏸ **Autocomplete / IntelliSense** · owner: own RD · revisit: post-v1
-- ⏸ **Diagnostics / linting / LSP** · owner: own RD · revisit: post-v1
+- ⏸ **Multiple cursors** — GH #104 · revisit: post-v1
+- ⏸ **Word-wrap** — GH #105 · revisit: post-v1
+- ⏸ **Autocomplete / IntelliSense** — GH #106 · revisit: post-v1
+- ⏸ **Diagnostics / linting / LSP** — GH #107 · revisit: post-v1
 
 ## Open risks
 
