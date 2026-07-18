@@ -26,15 +26,22 @@ export interface Placement {
 }
 ```
 
-`layerRect()` applies the offset after computing the start/center/end position, then clamps the
-box to stay within the content box:
+`layerRect()` applies the offset after computing the start/center/end position — a positive offset
+insets the box **away from its anchored edge** (so `{ v:'end', vOffset:1 }` sits one cell *above* the
+bottom, matching the consumer intent) — then clamps to stay within the content box:
 
 ```ts
-// after: pos = start ? 0 : center ? floor((extent-size)/2) : extent-size
+// after: base = start ? 0 : center ? floor((extent-size)/2) : extent-size
 const off = axis === 'h' ? (p.hOffset ?? 0) : (p.vOffset ?? 0);
-pos = Math.max(0, Math.min(extent - size, pos + off));   // keep the box inside the content box
+const shifted = mode === 'end' ? base - off : base + off;  // + moves away from the anchored edge
+pos = Math.max(0, Math.min(extent - size, shifted));       // keep the box inside the content box
 ```
 
+- **Direction (AR-15, runtime).** The offset is applied **directionally** — added for `start`/`center`,
+  **subtracted** for `end` — so a positive value always insets toward the interior. The original
+  snippet used a uniform `pos + off`, which for `end` gave `10 - 2 + 1 = 9` (clamped to 8) and
+  contradicted ST-13's `y = 10 - 2 - 1 = 7` and the errorBox "one cell above the bottom" intent. The
+  ST oracle is authoritative; the snippet was the mis-derivation and is corrected here.
 - Offsets are ignored on a `'fill'` axis (a fill spans the whole extent — nothing to offset).
 - Consumer: `errorBox`'s OK button sits one cell above the bottom → `{ v:'end', vOffset:1, … }`
   (the TV-dialog review, GH #115).

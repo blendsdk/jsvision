@@ -297,6 +297,8 @@ interface Placement {
   v?: PlaceAxis;   // Vertical mode (default `'fill'`).
   width?: number;   // Fixed width in cells for a non-`fill` horizontal axis.
   height?: number;   // Fixed height in cells for a non-`fill` vertical axis.
+  hOffset?: number;   // Horizontal inset in cells, applied after the `start`/`center`/`end` position: a positive value moves the layer *away from its anchored edge* (right for `start`/`center`, left for `end`), then the box is clamped to stay within the content box. Ignored on a `'fill'` horizontal axis.
+  vOffset?: number;   // Vertical inset in cells, applied after the `start`/`center`/`end` position: a positive value moves the layer *away from its anchored edge* (down for `start`/`center`, up for `end`), then the box is clamped to stay within the content box. Ignored on a `'fill'` vertical axis.
 }
 ```
 

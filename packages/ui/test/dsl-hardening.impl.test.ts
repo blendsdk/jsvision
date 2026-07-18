@@ -3,15 +3,42 @@
  * oracles do not pin: the `Flex.grow` object-vs-number resolution, explicit-size precedence, and the
  * falsy-child edges (empty results, a props object followed by falsy children).
  */
-import { test, expect } from 'vitest';
-import { View } from '../src/view/index.js';
-import { col, row, grow, fixed, stack, at, cover, center } from '../src/view/index.js';
+import { test, expect, vi } from 'vitest';
+import { resolveCapabilities } from '@jsvision/core';
+import { View, createRenderRoot } from '../src/view/index.js';
+import { col, row, grow, fixed, stack, place, topRight, at, cover, center } from '../src/view/index.js';
+
+const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
 
 /** Minimal concrete leaf view. */
 class Leaf extends View {
   draw(): void {
-    // no-op — only layout props / child identity are under test here
+    // no-op — only layout props / child identity / solved bounds are under test here
   }
+}
+
+/** A render root over a deferred scheduler, so a test can drive the draw-time repositioning frames. */
+function harness(width: number, height: number) {
+  let pending: (() => void) | null = null;
+  const render = createRenderRoot(
+    { width, height },
+    {
+      caps,
+      schedule: (f): void => {
+        pending = f;
+      },
+    },
+  );
+  const drain = (): void => {
+    let n = 0;
+    while (pending !== null) {
+      const run = pending;
+      pending = null;
+      run();
+      if (++n > 50) throw new Error('layout did not converge');
+    }
+  };
+  return { render, drain };
 }
 
 // --- Flex.grow shorthand: number vs { weight, min } ----------------------------------------------
@@ -119,4 +146,39 @@ test('center() preserves prior props and sets the centered flag alongside the ab
   expect(v.layout.position).toBe('absolute');
   expect(v.layout.rect).toEqual({ x: 0, y: 0, width: 30, height: 10 });
   expect(v.centered).toBe(true);
+});
+
+// --- placement offsets & dev-warn edges ----------------------------------------------------------
+
+test('an offset on a fill axis is ignored (the fill spans the whole extent)', () => {
+  const v = new Leaf();
+  // Vertical is fill (v omitted) with a vOffset that must be ignored; horizontal is a centered fixed 4.
+  const s = stack(place(v, { h: 'center', width: 4, vOffset: 5 }));
+  const { render, drain } = harness(20, 10);
+  render.mount(s);
+  drain();
+  expect(v.bounds.y).toBe(0); // fill axis: the offset is ignored, the box spans from 0
+  expect(v.bounds.height).toBe(10); // …and fills the whole content height
+});
+
+test('a positive start-anchored offset insets the layer toward the interior', () => {
+  const v = new Leaf();
+  const s = stack(place(v, { h: 'start', width: 4, hOffset: 3, v: 'start', height: 2, vOffset: 1 }));
+  const { render, drain } = harness(20, 10);
+  render.mount(s);
+  drain();
+  expect(v.bounds.x).toBe(3); // 0 + 3 (away from the left edge)
+  expect(v.bounds.y).toBe(1); // 0 + 1 (away from the top edge)
+});
+
+test('a corner tagger wired into a stack() does not warn', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  try {
+    const badge = new Leaf();
+    stack(topRight(badge, 4, 1));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(warn).not.toHaveBeenCalled();
+  } finally {
+    warn.mockRestore();
+  }
 });
