@@ -324,3 +324,273 @@ RD-15 targets a **new dev-only example app** (`packages/examples/datagrid-showca
 **Confidence:** High — all four are wording/scoping clarifications on an otherwise sound, code-grounded RD; no CRITICAL/MAJOR, so no independent challenger was spawned (per recommendation-hardening, reserved for high-stakes findings). **Hardening:** in-context adversarial-question checklist run; every code claim carries a `file:line` citation re-verified against primary source.
 
 **Stage:** RD-15 advances to 🔎 *RD Preflighted*. Next: `make_plan datagrid-showcase`, where PF-020…PF-023 become Zero-Ambiguity Register entries + technical-design decisions.
+
+---
+
+# Preflight Scan — RD-16: Column & Variant Personalization Dialog (2026-07-18)
+
+> **Artifact**: `codeops/features/datagrid/requirements/RD-16-personalization-dialog.md`
+> **Iterations**: 1 (first scan) → 2 (re-scan after fixes) · **CodeOps Skills Version**: 3.8.0
+> **Outcome**: ✅ **PASSED** — all 8 findings resolved at iteration 2 (0 critical · 2 major · 4 minor ·
+> 2 observation; user accepted every recommendation 2026-07-18, fixes applied to RD-16 + the register).
+> _(Was ❌ BLOCKED at iteration 1 on PF-024/PF-025.)_
+> **Findings**: PF-024…PF-031 (numbering continues from RD-15's PF-023; never reused).
+> ⚠️ **RECENT-CREATION / SAME-AGENT REVIEW** — RD-16 was created today (2026-07-18) and is still
+> untracked in git; the Ambiguity Register was updated the same day. Same-agent bias risk is elevated,
+> so every code claim below was verified directly against source, and both MAJOR findings were run past
+> one independent adversarial challenger (which confirmed both). A fresh-session re-review is advisable.
+
+## Codebase Context Summary (RD-16)
+
+- **Grid layout/variant API is real and complete for what RD-16 leans on.** Verified on
+  `packages/datagrid/src/grid.ts`: `saveVariant`/`applyVariant`/`setFrozen` (`:1148,1173,1132`),
+  `setColumnVisible`/`setColumnOrder`/`setColumnWidth` (`:1097,1031,1081`), `columnOrder()` (visible-only,
+  `:1020`), `frozen()` (`{left,right}`, resolved partition, `:1111`), `columnWidth(id)` (`:1070`), `sort()`
+  (`:879`), `filterModel()` (`:917`). `GridVariant` (`variant.ts:40`) matches the RD's schema. `columnMap`
+  is `private` (`:399`); construction order survives only in the private `columnIndex` (`:394,422`).
+- **Modal seam matches shipped precedent.** `ModalDialogHost` (`packages/ui/src/dialog/message-box.ts:22`)
+  is a real barrel type; `formDialog(host: ModalDialogHost, …)` (`forms/src/form-dialog.ts:194`) confirms the
+  RD's "as formDialog uses" claim (`openFile` takes the related `ExecHost`). `confirm()` exists (`:132`) and
+  **nested modals are supported** (a modal *stack*, `event/modal.ts:27`) — the RD's nested `confirm()` is feasible.
+- **`sanitize` path is established.** `sanitize` lives in `@jsvision/core` (`core/.../safety/sanitize.ts:35`),
+  is **already imported** by the datagrid (`export-view.ts:13`), so RD-16's name-sanitize has a real home.
+- **"RD-13 Gap 1" is real but mis-located** — defined in the RD-13 *plan* current-state doc
+  (`plans/export-import-personalization/02-current-state.md:56`, "No public column-metadata accessor"), not
+  the RD-13 requirements doc (→ PF-030).
+
+**Reference verification:** ~30 references mapped — all API/type/dependency references VERIFIED real; the
+two MAJORs are behavioral gaps/contradictions, not phantom references.
+
+### Summary by Severity (RD-16 scan)
+
+| Severity | Count | Status |
+|----------|-------|--------|
+| 🔴 CRITICAL | 0 | — |
+| 🟠 MAJOR | 2 | PF-024, PF-025 pending |
+| 🟡 MINOR | 4 | PF-026…PF-029 pending |
+| 🔵 OBSERVATION | 2 | PF-030, PF-031 |
+
+---
+
+### PF-024: "Reset to defaults" and clearing a width override are not buildable on the proposed surface 🟠 MAJOR
+
+**Dimension:** Codebase Alignment (root) / Completeness / Feasibility
+**Location:** RD-16 — Must-Have "Reset to defaults" (lines 53–55); Acceptance Criterion 6 (line 293);
+"Set column width" (lines 51–52); Complexity "no new primitives … one reactive accessor and one small
+store seam" (lines 204–206).
+**Codebase Evidence:** `grid.ts:394,422` (`columnIndex` `private readonly` — the only surviving copy of
+construction order); `grid.ts:1081–1087` (`setColumnWidth` only `.set()`s; no clear method exists anywhere);
+`grid.ts:1187–1192` + `variant.ts:159` (`applyVariant` seeds `new Map(this.columnWidths())` and only
+`.set()`s `widthById` — never deletes).
+
+**The Problem:** RD-16 states the dialog's only new public surface is `grid.columns()` (current state), a
+`VariantStore`, and `personalizeGrid()`, committing on OK via `grid.applyVariant(pending)`. Three required
+behaviors cannot be produced through that surface:
+1. **Construction order is unreachable** by the external helper — `grid.columns()` returns *current* order
+   (`columnOrderSig`), which may already differ (header drag / a variant applied on load); the declared
+   order survives only in the private `columnIndex`.
+2. **No API clears a width override** — `setColumnWidth(id, w: number)` always sets a clamped positive
+   width; there is no `clearColumnWidth`/reset, so "width → auto" and Reset's "no width overrides" have no mechanism.
+3. **`applyVariant` cannot clear a width override** — it copies current overrides then only sets named ones,
+   so a width-less pending column keeps its stale override. Committing a "no width overrides" pending layout
+   (Reset, AC#6) leaves overrides in place. **This is also a latent pre-existing bug in shipped RD-13 code.**
+
+**Recommendation:** Option A — budget a grid-owned Reset affordance + correct `applyVariant`'s width
+semantics: (i) `grid.resetLayout()` or `grid.defaultLayout(): GridVariant` (grid privately holds
+construction order + declared widths); (ii) make `applyVariant`/`resolveVariant` *remove* a named column's
+override when the variant carries no width (delete-then-set) — also fixes the RD-13 bug; (iii) add
+`clearColumnWidth(id)`. Revise RD-16's "no new primitives" wording (lines 204–206). Rejected alt: "dialog
+reconstructs construction order itself" — impossible, the data is private. Option B (drop Reset + width-clear
+from v1) regresses the AR-52 user-chosen Must-Have.
+`Confidence: High. Hardening: independent challenger CONFIRMED all three sub-points against source + flagged the RD-13 latent bug; recommendation unchanged.`
+
+**User Decision:** Resolved — User accepted the recommendation; fix applied to RD-16 (2026-07-18).
+
+---
+
+### PF-025: Sort/filter handling is self-contradictory (and the Save-as source is ambiguous) 🟠 MAJOR
+
+**Dimension:** Logical Contradictions / Ambiguities
+**Location:** RD-16 — §On OK "re-applies the (unchanged) sort/filter" (lines 200–201); Won't-Have "never
+edits them" (line 102); Must-Have "Apply a saved variant … replaces the pending layout wholesale (columns,
+freeze, sort, filter)" (lines 63–66); AC#8 "sort()/filterModel() reproduce it" (lines 299–301); Must-Have
+Save "its sort/filter from the grid's current sort()/filterModel()" (line 61) vs AR-55 "captures the pending
+(staged) layout" (line 250).
+**Codebase Evidence:** `grid.ts:1194–1195` — `applyVariant` sets both `sortKeys` and `filters` on the live
+grid; OK commits pending via `applyVariant` (RD line 200).
+
+**The Problem:** Two internal conflicts on the headline capability (variant management):
+- **Contradiction:** §On-OK calls the committed sort/filter "(unchanged)" and Won't-Have says "never edits"
+  them — but "Apply a saved variant" replaces pending sort/filter wholesale and AC#8 *requires*
+  `grid.sort()`/`filterModel()` to change to reproduce the applied variant. "(unchanged)" and AC#8 cannot
+  both hold.
+- **Ambiguity:** After applying variant V1 then "Save as V2", V2's sort/filter come from the **live** grid
+  (line 61) or the **pending** layout = V1's (AR-55)? Diverges once a variant has been applied.
+
+**Recommendation:** Option A — adopt the model AC#8 already forces: pending **owns** sort/filter from open
+onward (seeded once from live); applying a saved variant restages its sort/filter; OK commits them. Reword
+all three source spots to agree (Won't-Have → "no sort/filter *editing controls*"; §On-OK → drop
+"(unchanged)"; Save-as line 61 → "from the pending layout"). Option B (apply-variant restages columns/freeze
+only) contradicts AC#8 and makes variant management lossy — rejected.
+`Confidence: High. Hardening: challenger CONFIRMED the contradiction survives the most charitable reading and confirmed the three-spot (seed/Save-as/OK) source ambiguity; recommendation unchanged.`
+
+**User Decision:** Resolved — User accepted the recommendation; fix applied to RD-16 (2026-07-18).
+
+---
+
+### PF-026: Deleting the default variant leaves a dangling `getDefault()` 🟡 MINOR
+
+**Dimension:** Completeness Gaps / Edge Cases
+**Location:** RD-16 — `VariantStore` contract (lines 140–151); Must-Have "Delete" / "Mark a default" (lines 67–72).
+**The Problem:** The contract never defines what `delete(name)` does when `name` is the current default;
+`getDefault()` could then return a name absent from `list()`, breaking the app's load-time
+`getDefault()`+`applyVariant` path (AR-50).
+**Recommendation:** Specify (single viable) — deleting the current default clears it (`getDefault()` →
+`undefined`); the reference in-memory store implements it; add an AC. `Confidence: High.`
+
+**User Decision:** Resolved — User accepted the recommendation; fix applied to RD-16 (2026-07-18).
+
+---
+
+### PF-027: Hiding the last visible column / OK with zero visible columns is undefined 🟡 MINOR
+
+**Dimension:** Edge Cases
+**Location:** RD-16 — Must-Have "Show / hide columns" (lines 42–44); Should-Have visible-count echo (line 88).
+**The Problem:** The dialog allows toggling every column off; committing zero-visible on OK yields an
+unusable grid — neither forbidden nor defined. SAP ALV forbids hiding the last column.
+**Recommendation:** Prevent hiding the last visible column (disable its toggle at count == 1) and add an AC.
+Considered/dropped: allowing zero visible. `Confidence: High.`
+
+**User Decision:** Resolved — User accepted the recommendation; fix applied to RD-16 (2026-07-18).
+
+---
+
+### PF-028: Over-pinned freeze silently narrows on open+OK; `grid.columns()` reports resolved, not intended, freeze 🟡 MINOR
+
+**Dimension:** Edge Cases / Stale Assumption
+**Location:** RD-16 — `grid.columns()` `frozen` "from `frozen()` membership" (lines 113–124); §Pending model
+seed (lines 194–196); Must-Have freeze "over-pin guard … one dev warning" (lines 48–50).
+**Codebase Evidence:** `grid.ts:1111–1114` `frozen()` returns the *resolved* partition (`partitionSig`, over-pin
+folded); `saveVariant` (`:1153`) captures freeze via `this.frozen()`; `maybeWarnOverFreeze` (`:716–723`) warns
+**only** when *every* column is frozen (a partial over-pin peel emits no warning).
+**The Problem:** Because the pending seed and `grid.columns()` read the resolved freeze, an over-pinned column
+reports `frozen:'none'`, and opening+OK (touching nothing) re-commits the narrowed freeze, permanently
+dropping the over-pinned intent. Also, "peels the innermost back, with one dev warning" conflates the
+partial-peel (no warning) with the all-frozen (warns once) case.
+**Recommendation:** Option A — document as a known v1 limitation (modal covers the grid; over-pin is
+viewport-dependent; matches shipped `saveVariant`) and correct the "one dev warning" wording. Option B (read
+the intended `freezeSpecSig` instead) changes shipped semantics — deferred.
+`Confidence: Medium — real but low-frequency (needs an over-pinned grid); documenting is proportionate for v1.`
+
+**User Decision:** Resolved — User accepted the recommendation; fix applied to RD-16 (2026-07-18).
+
+---
+
+### PF-029: Variant-name length rule — "cap 64" (truncate) vs AC "truncated/rejected" 🟡 MINOR
+
+**Dimension:** Consistency / Testability
+**Location:** RD-16 — Security "capped at 64 characters" (lines 267–268); AR-56 "cap at 64"; AC#12 "truncated/
+rejected at entry" (lines 311–312).
+**The Problem:** AR-56/Security say "cap" (truncate); AC#12 says "truncated/rejected" — an untestable
+disjunction.
+**Recommendation:** Truncate/hard-cap at entry (a `maxLength`, consistent with AR-56); reword AC#12 to
+"prevented from exceeding 64 chars at entry". `Confidence: High.`
+
+**User Decision:** Resolved — User accepted the recommendation; fix applied to RD-16 (2026-07-18).
+
+---
+
+### PF-030: "RD-13 Gap-1" cites a gap defined in the RD-13 *plan*, not the RD-13 requirements doc 🔵 OBSERVATION
+
+**Dimension:** Consistency (traceability)
+**Location:** RD-16 — Technical Requirements "(the grid's `columnMap` is private — RD-13 Gap-1)" (line 112);
+AR-48 "(Resolves RD-13 Gap-1 …)".
+**Codebase Evidence:** RD-13 requirements doc contains no "Gap"/"columnMap"/"columns()"; "Gap 1: No public
+column-metadata accessor" is defined in `plans/export-import-personalization/02-current-state.md:56`.
+**Recommendation:** Optional — reword to "the RD-13 plan's Gap 1" or state the fact plainly.
+
+**User Decision:** Resolved — User accepted the recommendation; fix applied to RD-16 (2026-07-18).
+
+---
+
+### PF-031: Minor descriptive imprecisions in the Technical Requirements prose 🔵 OBSERVATION
+
+**Dimension:** Consistency
+**Location:** RD-16 — Technical Requirements composition note (line 114).
+**The Problem:** The internal width signal is `columnWidths` (plural); `columnWidth` is the public *method*
+and `frozen()` is a *method* over the resolved partition, not a raw signal. Harmless, but names don't match
+the code (freeze half overlaps PF-028).
+**Recommendation:** Optional — name the actual members (`columnWidths`, `partitionSig`) or soften to
+"composes the grid's existing layout signals".
+
+**User Decision:** Resolved — User accepted the recommendation; fix applied to RD-16 (2026-07-18).
+
+---
+
+## Adversarial checklist (same-agent-bias safeguard — RD-16)
+
+- *Authoring assumption I might be confirming:* that OK-via-`applyVariant` is a clean full-replace. It is
+  **not** for widths (PF-024) — verified at `grid.ts:1187–1192`.
+- *Convention/standard this might violate:* SAP-ALV parity (the stated model) forbids hiding the last column
+  (PF-027) and ships an explicit "Default layout" (PF-024 Reset).
+- *What a domain expert would flag:* the sort/filter staging model (PF-025) — "does applying a variant change
+  the grid's sort on OK?" exposed the contradiction.
+
+## Verdict (RD-16) — iteration 1
+
+**❌ BLOCKED** pending PF-024 and PF-025 (both MAJOR). The RD is otherwise well-grounded: every
+RD-07/RD-13/ui API it relies on is real, the staged-modal approach matches shipped precedent, and nested
+`confirm()` is feasible. Resolving the two MAJORs is mostly RD wording (PF-025) plus a small, scoped grid-API
+addition that also repairs a latent RD-13 bug (PF-024).
+
+---
+
+## Preflight Scan — RD-16 · Iteration 2 (re-scan after fixes, 2026-07-18)
+
+> **Status**: ✅ **PASSED** — all 8 findings verified resolved; 0 new findings; 0 regressions.
+> **Previous Iteration**: 8 findings (PF-024…PF-031) — all resolved.
+> **This Iteration**: 0 new findings.
+> **Carried Forward**: none.
+
+The user chose "apply your recommendations and re-scan." All fixes were applied to
+`RD-16-personalization-dialog.md` and `00-ambiguity-register.md`; this iteration re-read the amended RD in
+full, verified each fix landed, and swept all 13 dimensions for regressions introduced by the edits.
+
+### Fix verification
+
+| Finding | Fix landed | Where (amended RD-16) |
+|---|---|---|
+| PF-024 🟠 | Added `grid.defaultColumnLayout()` + `grid.clearColumnWidth()` and a corrected (delete-then-set) `applyVariant` width-restore; Reset seeds from `defaultColumnLayout()`, width field clears via `clearColumnWidth`; Complexity + RD-07 integration updated | §"Reset & width-clear affordances"; Must-Have Reset + Set-width; §Complexity; §Integration RD-07; AC#5/#6 |
+| PF-025 🟠 | Single-sourced sort/filter: pending owns them from open (one read of live at seed); apply-a-variant restages; Won't-Have narrowed to "no sort/filter *editing controls*"; "(unchanged)" dropped from On-OK; Save-as sources from pending | Won't-Have; §Pending model; §On OK; Must-Have Save-as; AC#7 |
+| PF-026 🟡 | Deleting the default clears the store default; reference impl + `delete` doc + AC updated | `VariantStore.delete`; Must-Have Delete; ref-impl bullet; AC#9 |
+| PF-027 🟡 | Last visible column's toggle disabled; zero-visible never committed | Must-Have Show/hide; AC#2 |
+| PF-028 🟡 | `grid.columns()` reports the resolved freeze — documented as a v1 limitation; "one dev warning" corrected to the all-frozen case | Must-Have Freeze; §`grid.columns()` note |
+| PF-029 🟡 | Name hard-capped/truncated at 64 at entry (removed "rejected" disjunction) | AC#12 (Security section already said "capped") |
+| PF-030 🔵 | "RD-13 Gap-1" re-attributed to the RD-13 *plan*'s Gap 1 | §`grid.columns()` intro; register AR-48 |
+| PF-031 🔵 | Composition note names the actual members (`columnWidths`, resolved freeze partition) | §`grid.columns()` intro |
+
+### Regression sweep (all 13 dimensions)
+
+- **Contradictions (Dim 3):** The former sort/filter conflict is gone — Won't-Have, §Pending model, §On-OK,
+  Save-as (Must-Have) and AC#7/#8 now all state one rule (*pending owns sort/filter from open; applying a
+  variant restages them; OK commits them*). The "Save captures" scope-decision row ("Pending layout") agrees.
+- **Codebase Alignment (Dim 13):** The three new members are correctly framed as *proposed* additions, not
+  claimed-existing (no phantom reference). The supporting claims were re-verified: construction order lives
+  in the private `columnIndex` (`grid.ts:394,422`) and declared widths in `engineCols` — so
+  `defaultColumnLayout()` is buildable from retained private state; the "latent RD-13 round-trip bug" is real
+  (`grid.ts:1187–1192`). `defaultColumnLayout(): readonly GridColumnInfo[]` reuses the existing shape
+  consistently (all-visible / `frozen:'none'` / resolved auto width == "no override" baseline).
+- **Completeness/Edge (Dim 4/9):** delete-default, last-column, and width-clear edges now have ACs.
+- **Consistency (Dim 12):** citation + member-name nits closed; no terminology drift introduced.
+- Dimensions 1, 2, 5, 6, 7, 8, 10, 11 — unchanged from iteration 1 (clean); the edits touched none of them.
+
+**No new findings; no regressions.** One pre-existing non-finding left intentionally untouched (not raised
+either iteration): AC#1's "byte-for-byte identical" is loose phrasing for a deep-equal on a freshly-derived
+array — testable as written, not a defect.
+
+## Verdict (RD-16) — iteration 2
+
+**✅ PASSED.** All 8 findings resolved; the amended RD-16 is internally consistent and code-grounded. The
+two MAJOR fixes are doc-complete and carry a small, well-scoped grid-API budget (`defaultColumnLayout()`,
+`clearColumnWidth()`, corrected `applyVariant` width-restore) that additionally repairs a latent RD-13 bug —
+to be picked up when RD-16 is planned (`make_plan`). **Roadmap:** RD-16 advances to 🔎 *RD Preflighted*.

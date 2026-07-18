@@ -52,7 +52,7 @@ binding, cell/range selection, undo/redo, and the pager backend are explicit Pha
 
 | # | Document | Description | Depends On |
 |---|----------|-------------|------------|
-| **AR** | [Ambiguity Register](00-ambiguity-register.md) | Zero-Ambiguity Gate decisions (30 items, all resolved) | — |
+| **AR** | [Ambiguity Register](00-ambiguity-register.md) | Zero-Ambiguity Gate decisions (57 items, all resolved) | — |
 | **RD-01** | [Foundation & Grid-Engine Exposure](RD-01-foundation.md) | Package scaffold, ui engine export, value/format/parse, data-source + rowKey + commit contracts, cell-overlay helper | — |
 | **RD-02** | [Editing Engine & Commit Model](RD-02-editing-engine.md) | Cell cursor, in-cell overlay lifecycle, per-cell immediate commit, dirty tracking, keymap | RD-01 |
 | **RD-03** | [Cell Editors & Value Help](RD-03-cell-editors.md) | Typed editors, custom factory, F4 lookup | RD-01, RD-02 |
@@ -68,6 +68,7 @@ binding, cell/range selection, undo/redo, and the pager backend are explicit Pha
 | **RD-13** | [Export, Import & Personalization](RD-13-export-import-personalization.md) | CSV/HTML/JSON export, import, layout variants | RD-05, RD-06, RD-07 |
 | **RD-14** | [Non-Functional Requirements](RD-14-non-functional.md) | Perf, security posture, a11y, theme roles, test tiers, API governance | — |
 | **RD-15** | [DataGrid Showcase App](RD-15-showcase-app.md) | Standalone datagrid showcase in `packages/examples/datagrid-showcase/`: granular one-per-capability demos for RD-01…06 + per-RD "coming soon" panels for RD-07…14; `demo:datagrid` | RD-01…RD-06 |
+| **RD-16** | [Column & Variant Personalization Dialog](RD-16-personalization-dialog.md) | End-user modal for column show/hide/reorder/freeze/width + variant save/apply/delete/default; `personalizeGrid()` helper, public `grid.columns()` accessor, caller `VariantStore` | RD-07, RD-13 |
 
 ## Dependency Graph
 
@@ -76,11 +77,12 @@ RD-01 ─┬─ RD-02 ─┬─ RD-03 ─── RD-12
        │         ├─ RD-08 ─── RD-09
        │         └─ RD-10
        ├─ RD-04 ─┬─ RD-05 ─┐
-       │         └─ RD-06 ─┴─ RD-13
-       ├─ RD-07 ─────────────┘
+       │         └─ RD-06 ─┴─ RD-13 ─── RD-16
+       ├─ RD-07 ─────────────┴───────────┘
        └─ RD-11
-RD-14 ── cross-cutting (governs RD-01…RD-13)
+RD-14 ── cross-cutting (governs RD-01…RD-16)
 RD-15 ── showcase (consumes the shipped RD-01…RD-06 surface; placeholder panels track RD-07…RD-14)
+RD-16 ── personalization dialog (end-user UI on RD-07 layout + RD-13 variant APIs)
 ```
 
 No circular dependencies. RD-01 gates everything; RD-14 is cross-cutting. **RD-07 (pinned-panel layout)
@@ -96,7 +98,7 @@ RD-02, not retrofitted in RD-07.
 |-------|-----------|-------------|
 | **A: MVP — the enterprise datasheet (v1)** | RD-01 → RD-02 → RD-04 → RD-03 → RD-05 → RD-06 → RD-07 → RD-08 → RD-09 → RD-10 → RD-11(core) → RD-12 (+ RD-14 throughout) | Editable, formatted, sortable, filterable, frozen-column, row-selectable, footer-aggregating grid over virtual scroll, with validation. |
 | **B: Enhanced (P2)** | Should-sections across RDs + RD-13; pager mode (RD-11); cell/range selection; concurrency/pending/retry (RD-12); master-detail drill-in (RD-09) | Export/import/variants, pager, richer selection and lifecycle. |
-| **C: Later (P3)** | density/compact mode, grouped headers, personalization dialog, row drag-reorder | Polish and long-tail parity. |
+| **C: Later (P3)** | density/compact mode, grouped headers, **personalization dialog ([RD-16](RD-16-personalization-dialog.md) — now specified)**, row drag-reorder | Polish and long-tail parity. |
 
 ## Key Architecture Decisions
 
