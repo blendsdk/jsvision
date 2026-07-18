@@ -56,6 +56,15 @@ export interface GridDataSource<T> {
    * loaded set is never passed off as a whole-dataset grand total.
    */
   complete?(): boolean;
+  /**
+   * A reactive revision counter for a windowed/async source: the grid reads it inside its display
+   * derivation, so a bump (a fetched window has landed) re-derives the display and repaints the
+   * newly-loaded rows. It **must** be a tracked signal read (e.g. the getter of a `signal<number>`), not
+   * a plain counter — a non-reactive read never subscribes, so the grid would never repaint on resolve.
+   * Omit it for an eager in-memory source (its rows signal already drives repaint); the grid's read is
+   * then inert.
+   */
+  revision?(): number;
 }
 
 /**

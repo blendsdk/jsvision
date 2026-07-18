@@ -19,6 +19,7 @@ import { toEngineColumn } from './column.js';
 import { visibleOrder, partition, overPinnedIds, clampWidth, DEFAULT_AUTOFIT_MAX } from './column-model.js';
 import type { FreezeSpec, FreezePartition } from './column-model.js';
 import type { GridDataSource } from './data-source.js';
+import { isWindowed, windowedView } from './windowing.js';
 import { sortRowsMulti } from './sort.js';
 import type { SortKey, SortDir } from './sort.js';
 import { filterRows, resolveFilterType, computeDistinct } from './filter.js';
@@ -382,6 +383,10 @@ export class EditableDataGrid<T> extends Group {
   private readonly source: GridDataSource<T>;
   private readonly columnMap: ReadonlyMap<string, GridColumn<T>>;
   private readonly display: () => T[];
+  // Computed once at construction: a windowed source (one exposing `ensureRange`) takes the lazy read
+  // path — `display()` is a length-correct lazy view, `materialize`/client sort+filter are skipped, and
+  // every whole-array consumer is gated off this flag. An eager source leaves all of that untouched.
+  private readonly windowed: boolean;
   // The disposer for the currently-open filter popup (at most one), or `null` when none is open.
   private popupDispose: (() => void) | null = null;
   // Optional custom filter-popup factory — replaces the built-in popup when set (see the config option).
@@ -404,6 +409,7 @@ export class EditableDataGrid<T> extends Group {
     this.freezeSpec = { freezeLeft: opts.freezeLeft, freezeRight: opts.freezeRight, freeze: opts.freeze };
     this.filterPopupFactory = opts.filterPopup;
     this.source = opts.source;
+    this.windowed = isWindowed(opts.source);
     this.columnMap = new Map(opts.columns.map((c) => [c.id, c]));
 
     // The materialized display re-runs when the source's rows change or a cell is written in place
@@ -414,6 +420,8 @@ export class EditableDataGrid<T> extends Group {
     // wrong. Filter runs before sort so a client sort orders only the surviving rows.
     this.display = this.derived(() => {
       this.version();
+      this.source.revision?.(); // windowed: a landed page bumps this → fresh identity → repaint
+      if (this.windowed) return windowedView(this.source); // length-correct lazy view; no materialize/client sort/filter
       let rows = materialize(this.source);
       if (!this.source.setFilter) rows = filterRows(rows, this.filters(), this.columnMap);
       if (!this.source.setSort) rows = sortRowsMulti(rows, this.sortKeys(), this.columnMap);
