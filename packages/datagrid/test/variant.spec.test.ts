@@ -204,3 +204,61 @@ test('setFrozen re-pins, clears, ignores unknown ids, and warns once when all co
   expect(warn).toHaveBeenCalled(); // one dev warning for the over-freeze
   warn.mockRestore();
 });
+
+// A variant that NAMES a column but carries no width must, on apply, REMOVE that column's existing
+// override (delete-then-set) — while a named column that carries a width has it set. This is the
+// corrected width-restore: applying a layout can clear a width to auto, not only set one.
+test('applyVariant clears an omitted-width override and sets a carried width (delete-then-set)', () => {
+  const grid = buildGrid();
+  grid.setColumnWidth('name', 30); // a prior override on the column the variant names WITHOUT a width
+  expect(grid.columnWidth('name')).toBe(30);
+  const variant: GridVariant = {
+    name: 'x',
+    columns: [
+      { id: 'id', visible: true },
+      { id: 'name', visible: true }, // named, no width → the override must be cleared
+      { id: 'dept', visible: true },
+      { id: 'total', visible: true, width: 18 }, // named with a width in [4,40] → set
+      { id: 'note', visible: true },
+    ],
+    freeze: { left: [], right: [] },
+    sort: [],
+    filter: [],
+  };
+  grid.applyVariant(variant);
+  expect(grid.columnWidth('total')).toBe(18); // carried width applied
+  expect(grid.columnWidth('name')).toBe(8); // override removed → back to the declared width (not 30)
+});
+
+// The latent round-trip bug: a variant saved AFTER a width was cleared must, on apply, remove a
+// re-added override — not leave the stale value. Guards both the new personalization flow and the
+// prior variant round-trip.
+test('applyVariant restores no width override for a variant saved after the width was cleared', () => {
+  const grid = buildGrid();
+  grid.setColumnWidth('note', 30);
+  grid.saveVariant('v'); // 'note' captured WITH width 30 (documents the round-trip start)
+  grid.clearColumnWidth('note'); // pending state: no override
+  const v2 = grid.saveVariant('v2'); // 'note' captured WITHOUT a width
+  grid.setColumnWidth('note', 30); // re-add an override to prove apply clears it
+  grid.applyVariant(v2);
+  expect(grid.columnWidth('note')).toBe(6); // back to the declared width — the override is cleared
+});
+
+// resolveVariant reports the named-but-width-less ids in `clearWidths`; a current-but-unnamed column
+// is left out (its override stays untouched on apply).
+test('resolveVariant reports named-without-width ids as clearWidths, leaving unnamed columns alone', () => {
+  const variant: GridVariant = {
+    name: 'x',
+    columns: [
+      { id: 'id', visible: true, width: 10 }, // named WITH a width
+      { id: 'name', visible: true }, // named WITHOUT a width → clearWidths
+    ],
+    freeze: { left: [], right: [] },
+    sort: [],
+    filter: [],
+  };
+  const resolved = resolveVariant(variant, ['id', 'name', 'dept']); // 'dept' is current-but-unnamed
+  expect(resolved.clearWidths).toEqual(['name']); // named, width omitted
+  expect([...resolved.widthById.entries()]).toEqual([['id', 10]]); // named, width carried
+  expect(resolved.clearWidths).not.toContain('dept'); // unnamed → not a clear target
+});

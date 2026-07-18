@@ -1,0 +1,47 @@
+# Ambiguity Register: Personalization Dialog (plan)
+
+> **Status**: ✅ GATE PASSED — all 12 plan-local items resolved (3 user picks + 9 grounded defaults)
+> **Plan**: `codeops/features/datagrid/plans/personalization-dialog/`
+> **Implements**: datagrid/RD-16 · **CodeOps Skills Version**: 3.8.0
+> **Last Updated**: 2026-07-18 11:36
+
+## Scope of this register
+
+RD-16 already passed its own Zero-Ambiguity Gate (AR-42…AR-57) and preflight (PF-024…PF-031); those
+resolve the feature's **behavior** (the *what*) and are imported here as pre-resolved upstream context —
+**not re-litigated** (shared-gate rule 3). This register records only the **plan-local** decisions
+make_plan must commit to (the *how*): module layout, the internal shape of the width-restore fix, the
+dialog's widget composition, phasing, and the test/showcase surface. Plan-local ids use their own
+sequence (AR-1…AR-12); references to `AR-42…AR-57` and `PF-024…PF-031` point at the RD's register /
+preflight report.
+
+| # | Category | Ambiguity / Gap | Options Presented | Decision | Status |
+|---|----------|-----------------|-------------------|----------|--------|
+| 1 | Naming / Architecture | How to split the new code into modules | (A) 3 modules — `variant-store.ts`, `personalize.ts`, `personalize-dialog.ts` · (B) 2 modules — helper+dialog folded into one `personalize.ts` | **(A) 3 modules** — the dialog view is substantial (Scroller-of-Groups column list + variants panel + nested confirms); a dedicated `personalize-dialog.ts` keeps every file in the 200–500-line target and isolates the pure helper | ✅ Resolved (user pick) |
+| 2 | Naming | Where `GridColumnInfo` lives; the reference-store factory name | `GridColumnInfo` in `variant.ts` vs a new file · `createMemoryVariantStore()` vs `MemoryVariantStore` class | `GridColumnInfo` in **`variant.ts`** (co-located with `GridVariant`; type-only, no `@example` cost); reference store = **`createMemoryVariantStore()`** factory (matches the `create*` SDK convention: `createForm`/`createTheme`/`createCellEditor`) | ✅ Resolved (grounded, confirmed in Q1 preview) |
+| 3 | Technical | How `resolveVariant` signals "clear this override" so `applyVariant` can *remove* a width (PF-024) | (A) add `clearWidths: string[]` to `ResolvedLayout` · (B) widen `widthById` to `Map<string, number \| undefined>` | **(A) `clearWidths: string[]`** (named columns carrying no `width`); `applyVariant` deletes those overrides then `.set()`s the rest. Least blast radius — leaves the existing `widthById: Map<string,number>` value type untouched. Behaviourally identical to (B); internal (neither symbol is exported), zero user-facing semantic impact | ✅ Resolved (grounded) |
+| 4 | Technical | `grid.ts` line-guard (3 assertions at `< 1680`, src at 1666) will breach when the 4 delegators + their `@example`s land | Re-base the guard vs offload public methods off the class | **Keep grid.ts thin delegators** (assembly logic in pure helpers in `variant.ts`), **re-base all three `< 1680` guards** to the projected final with headroom (≈ `< 1760`, set precisely at implementation against the measured line count). Established precedent (RD-09…13 re-base chain; a public method's signature+JSDoc cannot leave the class) | ✅ Resolved (grounded) |
+| 5 | Technical | The dialog's per-column list needs per-row controls, but `ListView`/`ListBox` render **text-only** rows | Extend a list widget vs compose from primitives | **A `Scroller` over a `Group` of per-column composite rows** (each row = a visibility toggle + width `Input` + freeze control + reorder buttons). Forced by the recon finding that `ListView`/`ListBox` are text-only (`list/list-rows.ts:235-236`); `Scroller` clips the oversized content group and owns the scrollbar | ✅ Resolved (grounded, single viable path) |
+| 6 | UX | The per-column freeze affordance (left / right / none) | A 3-state cycle control vs two independent toggles | **A per-row freeze cycle** (`none → left → right → none`): a static-labelled focusable `Button` (or a small custom focusable `View`) that cycles the side, with the current side shown in an adjacent **reactive** `Text(() => side)`. One control + one readout, keyboard-idiomatic, minimal row width. `Button`'s label is fixed at construction, so state lives in the reactive `Text`, not the button label (amended per preflight PF-002) | ✅ Resolved (grounded; amended PF-002) |
+| 7 | Technical / Security | The width + name inputs' constraints | Native widget support vs custom keystroke filtering | Width = `Input({ maxLength: 3, validator: filter('0-9') })` — digit-filtered live (empty allowed); the min/max **clamp lands on OK** via `applyVariant`'s `clampWidth` (an empty field maps to `width: undefined` → clears the override). **Not** `range()`: its `isValid` rejects empty and out-of-range, which would veto the OK close instead of committing+clamping. Name = `Input({ value, maxLength: 64 })` (hard cap at entry) + `sanitize()` on echo/persist. Recon-confirmed native support — no custom filtering needed | ✅ Resolved (grounded; amended PF-001) |
+| 8 | Architecture | The dialog's mount/close/validation mechanism | Reuse `formDialog`'s async `FormDialog` subclass vs a plain sync `Dialog` | **A sync `PersonalizeDialog extends Dialog`** + `okCancelButtons()` + the base `valid()` OK-gate; inline the `addWindow → execView → finally removeWindow` skeleton (`runDialog` is not barrel-exported); return the pending `GridVariant` via a `result()` method (`null` on non-OK), mirroring `openFile`. No `@jsvision/forms` dependency (validation is synchronous) | ✅ Resolved (grounded) |
+| 9 | Scope / UX | Where the showcase demo lives | New `'Personalization'` category vs extend `'Export & variants'` | **New `'Personalization'` category**, one demo (launches the dialog via the `execView` seam, live-echoes the resulting layout, seeds a memory store with a couple of variants; degrades gracefully when `execView` is `undefined` under headless smoke). Adds `'Personalization'` to the showcase `CATEGORIES` oracle + one count line | ✅ Resolved (user pick) |
+| 10 | Process | Execution-plan phasing | 4 phases vs 3 phases | **4 phases** — P1 Foundation (grid API + width-restore fix + VariantStore), P2 Dialog core (column region + staged OK/Cancel + `personalizeGrid`), P3 Variants panel (save/apply/delete/default + confirms), P4 Story + showcase + security + finalize. Each dialog half gets its own spec-first cycle | ✅ Resolved (user pick) |
+| 11 | Process | The project verify command that fills every Verify line | Detected from CLAUDE.md + RD-16 AC#15 | **`CI=1 yarn verify`** (= `yarn lint && turbo run typecheck build test check:docs && node scripts/check-plugin.mjs`). Per-slice green is acceptable when whole-repo verify is blocked only by unrelated concurrent work (documented at execution, per the sibling RD-13 plan) | ✅ Resolved (grounded, detected) |
+| 12 | Testing | Placement of the RD-13 width-restore regression test the correction ships with (PF-024) | A dedicated regression file vs a spec case in the existing variant tests | **A spec case in `variant.spec.test.ts`** — a `saveVariant`→`applyVariant` round-trip after a width is cleared must restore *no override*. It is a spec-level round-trip guarantee that guards both RD-16 and the latent RD-13 bug; an impl edge lands in `variant.impl.test.ts` | ✅ Resolved (grounded) |
+
+## Resolution notes
+
+- **AR-1 / AR-9 / AR-10** are the three user picks (make_plan AskUserQuestion round, 2026-07-18); each matched the grounded recommendation.
+- **AR-2, AR-5, AR-6, AR-7, AR-8, AR-11** are single-viable-path or convention-fixed grounded defaults (the standards-mandated / recon-forced items) — stated with rationale; no viable alternative was suppressed.
+- **AR-3, AR-12** are internal implementation choices with zero user-facing behavioural difference (both refine the RD's already-hardened PF-024 decision) — decided by the planner and recorded for traceability.
+- **AR-4** follows the documented `grid.ts` re-base chain; the exact new guard number is set at implementation against the measured line count (the sibling RD-13 plan re-based during Phase 1 to the projected final — same discipline here).
+- **AR-6 / AR-7 were amended by preflight** (`00-preflight-report.md`, PF-002 / PF-001) with widget-behaviour evidence read from the ui source that the original grounded defaults did not account for: `Switch.disabled` and `Button`'s label are fixed at construction (so per-row reactive state — the last-visible `disabled` guard and the freeze-side readout — lives in a reactive `disabled` getter + a reactive `Text`, not stock `Switch`/`Button`-label), and `range().isValid` rejects empty and out-of-range (so the width field uses `filter('0-9')` + a clamp on OK, not a `range()` OK-gate).
+
+> **Upstream context (not re-confirmed):** the dialog's behaviour is owned by RD-16 — staged OK/Cancel
+> (AR-43/AR-55), all-four column ops (AR-44), full variant management (AR-45), the async helper (AR-46),
+> caller `VariantStore` (AR-47), `grid.columns()` (AR-48), confirm-overwrite (AR-49), store-flag default
+> (AR-50), move-up/down reorder (AR-51), Reset (AR-52), keyboard-operable + reuse Dialog roles (AR-57),
+> name sanitize+cap (AR-56) — plus the preflight amendments PF-024 (reset/width-clear grid surface +
+> `applyVariant` width-restore correction), PF-025 (single-sourced sort/filter), PF-026…PF-031. See
+> `../../requirements/00-ambiguity-register.md` and `../../requirements/00-preflight-report.md`.

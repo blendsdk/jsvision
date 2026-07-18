@@ -53,8 +53,16 @@ export type { ExportFormat } from './export-view.js';
 // Layout variants — a named, serializable snapshot of a grid's full column layout (order, widths,
 // visibility, freeze, sort, filter) that `grid.saveVariant(name)` returns and `grid.applyVariant(v)`
 // restores. The caller persists the `GridVariant`; the grid holds no registry. `setFrozen(left, right)`
-// (a method on the grid) is the runtime freeze mutation variants rely on.
-export type { GridVariant, GridVariantColumn } from './variant.js';
+// (a method on the grid) is the runtime freeze mutation variants rely on. `GridColumnInfo` is the
+// resolved per-column metadata `grid.columns()` / `grid.defaultColumnLayout()` return (id/title/
+// visible/frozen/width) — the read side an app-built or built-in personalization UI consumes.
+export type { GridVariant, GridVariantColumn, GridColumnInfo } from './variant.js';
+
+// Variant persistence seam — the caller-provided `VariantStore` the personalization dialog reads and
+// writes variants through (the grid holds no registry), plus `createMemoryVariantStore`, a reference
+// in-memory implementation for showcases and tests. Back it with a file or database in a real app.
+export { createMemoryVariantStore } from './variant-store.js';
+export type { VariantStore } from './variant-store.js';
 
 // Filter model — the pure `filterRows` multi-column AND evaluator and `computeDistinct` label
 // enumeration, plus the `ColumnFilter` per-column condition, the `FilterModel` map the source's

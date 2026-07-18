@@ -25,6 +25,27 @@ export interface GridVariantColumn {
 }
 
 /**
+ * Read-only, resolved column metadata for a personalization UI: one column's id, header title, current
+ * visibility, resolved freeze side, and resolved width in cells. Produced by {@link buildColumnInfos}
+ * (the live layout) and {@link defaultLayout} (the construction-time baseline). `frozen` is the
+ * *resolved* partition membership — an over-pinned column reports `'none'`, matching `grid.frozen()`.
+ * `width` is the resolved (display) width; it is not an override signal — restoring the baseline
+ * *omits* a width rather than copying this number back.
+ */
+export interface GridColumnInfo {
+  /** The column id. */
+  readonly id: string;
+  /** The header title. */
+  readonly title: string;
+  /** Whether the column is currently visible (not hidden). */
+  readonly visible: boolean;
+  /** The resolved freeze side: pinned left, pinned right, or not frozen. */
+  readonly frozen: 'left' | 'right' | 'none';
+  /** The resolved width in cells (override → declared → auto → title). */
+  readonly width: number;
+}
+
+/**
  * A named, serializable snapshot of a grid's column layout — the object `saveVariant` returns and
  * `applyVariant` consumes. Array order in `columns` is the full column order (hidden interleaved). It is
  * plain JSON (no functions), so a caller can persist it however it likes.
@@ -84,6 +105,12 @@ export interface ResolvedLayout {
   readonly visibleById: Map<string, boolean>;
   /** Explicit width per named-and-known column that carried one (others keep their current width). */
   readonly widthById: Map<string, number>;
+  /**
+   * Named-and-known column ids that carry NO width in the variant — their existing width override is
+   * *removed* on apply (delete-then-set), so restoring a layout can return a column to auto width, not
+   * only set one. Unnamed (appended) columns are absent here and keep their current override.
+   */
+  readonly clearWidths: string[];
   /** The frozen partition, filtered to columns the grid still has. */
   readonly freeze: { left: string[]; right: string[] };
   /** The sort model, filtered to columns the grid still has. */
@@ -157,10 +184,14 @@ export function resolveVariant(variant: GridVariant, currentIds: readonly string
   const order = [...named.map((c) => c.id), ...appended];
   const visibleById = new Map(named.map((c) => [c.id, c.visible]));
   const widthById = new Map(named.filter((c) => c.width !== undefined).map((c) => [c.id, c.width as number]));
+  // Named columns carrying no width signal "clear this override" so applyVariant can delete it — the
+  // half of a round-trip that lets a cleared width actually return to auto, not keep a stale value.
+  const clearWidths = named.filter((c) => c.width === undefined).map((c) => c.id);
   return {
     order,
     visibleById,
     widthById,
+    clearWidths,
     freeze: {
       left: variant.freeze.left.filter((id) => currentSet.has(id)),
       right: variant.freeze.right.filter((id) => currentSet.has(id)),
@@ -168,4 +199,75 @@ export function resolveVariant(variant: GridVariant, currentIds: readonly string
     sort: variant.sort.filter((k) => currentSet.has(k.columnId)).map((k) => ({ ...k })),
     filter: variant.filter.filter((f) => currentSet.has(f.columnId)).map((f) => ({ ...f })),
   };
+}
+
+/**
+ * Assemble the full, resolved column list a personalization UI reads — one {@link GridColumnInfo} per
+ * id in `order` (hidden columns included, in place). Pure: the grid passes its resolved layout state in
+ * as plain lookups, so this holds no reactive reads. `frozen` is resolved partition membership — an
+ * over-pinned column that `frozen` does not contain reports `'none'`.
+ *
+ * @param order The full column order (all ids, hidden included).
+ * @param hidden The hidden column ids (a column is `visible` when absent from this set).
+ * @param frozen The resolved frozen partition — the left/right pinned ids as `grid.frozen()` reports them.
+ * @param widthOf The resolved width of a column id, in cells.
+ * @param titleOf The header title of a column id.
+ * @returns One resolved info per column, in `order`.
+ * @example
+ * ```ts
+ * buildColumnInfos(
+ *   ['id', 'name'], new Set(['name']),
+ *   { left: ['id'], right: [] },
+ *   (id) => (id === 'id' ? 5 : 8), (id) => id.toUpperCase(),
+ * );
+ * // → [{ id: 'id', title: 'ID', visible: true, frozen: 'left', width: 5 },
+ * //    { id: 'name', title: 'NAME', visible: false, frozen: 'none', width: 8 }]
+ * ```
+ */
+export function buildColumnInfos(
+  order: readonly string[],
+  hidden: ReadonlySet<string>,
+  frozen: { left: readonly string[]; right: readonly string[] },
+  widthOf: (id: string) => number,
+  titleOf: (id: string) => string,
+): GridColumnInfo[] {
+  const left = new Set(frozen.left);
+  const right = new Set(frozen.right);
+  return order.map((id) => ({
+    id,
+    title: titleOf(id),
+    visible: !hidden.has(id),
+    frozen: left.has(id) ? 'left' : right.has(id) ? 'right' : 'none',
+    width: widthOf(id),
+  }));
+}
+
+/**
+ * The construction-time column baseline: every column visible, in construction order, no freeze, and
+ * each column's declared/auto width (no overrides). Pure — the source of a dialog's Reset. The returned
+ * `width` is display-only: a Reset restores *no override* (the pending column omits `width`); never copy
+ * this number back, or it re-establishes an override and defeats the clear.
+ *
+ * @param constructionOrder The column ids in construction (declaration) order.
+ * @param declaredWidthOf The declared/auto width of a column id (no override lookup).
+ * @param titleOf The header title of a column id.
+ * @returns One baseline info per column, all visible and unfrozen, in construction order.
+ * @example
+ * ```ts
+ * defaultLayout(['id', 'name'], (id) => (id === 'id' ? 5 : 8), (id) => id.toUpperCase());
+ * // → [{ id: 'id', title: 'ID', visible: true, frozen: 'none', width: 5 }, …]
+ * ```
+ */
+export function defaultLayout(
+  constructionOrder: readonly string[],
+  declaredWidthOf: (id: string) => number,
+  titleOf: (id: string) => string,
+): GridColumnInfo[] {
+  return constructionOrder.map((id) => ({
+    id,
+    title: titleOf(id),
+    visible: true,
+    frozen: 'none' as const,
+    width: declaredWidthOf(id),
+  }));
 }

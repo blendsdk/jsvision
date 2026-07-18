@@ -22,8 +22,8 @@ import type { GridDataSource } from './data-source.js';
 import { isWindowed, windowedView, validateWindowedConfig } from './windowing.js';
 import { serializeView } from './export-view.js';
 import type { ExportColumn, ExportFormat } from './export-view.js';
-import { buildVariant, resolveVariant } from './variant.js';
-import type { GridVariant, LayoutSnapshot } from './variant.js';
+import { buildVariant, resolveVariant, buildColumnInfos, defaultLayout } from './variant.js';
+import type { GridVariant, LayoutSnapshot, GridColumnInfo } from './variant.js';
 import { sortRowsMulti } from './sort.js';
 import type { SortKey, SortDir } from './sort.js';
 import { filterRows, resolveFilterType, computeDistinct } from './filter.js';
@@ -1022,6 +1022,51 @@ export class EditableDataGrid<T> extends Group {
   }
 
   /**
+   * The full column list — every column (hidden included), in full column order — as resolved
+   * {@link GridColumnInfo} metadata (id, title, visibility, resolved freeze side, resolved width).
+   * Reactive: reading it inside an effect re-runs on any order / visibility / freeze / width change.
+   * `frozen` reports the *resolved* partition, so an over-pinned column reads `'none'` (matching
+   * {@link frozen}). Independently useful for an app-built column UI.
+   *
+   * @returns One info per column, in full column order.
+   * @example
+   * ```ts
+   * for (const c of grid.columns()) {
+   *   // { id, title, visible, frozen: 'left' | 'right' | 'none', width }
+   * }
+   * ```
+   */
+  columns(): readonly GridColumnInfo[] {
+    return buildColumnInfos(
+      this.columnOrderSig(),
+      this.hidden(),
+      this.frozen(),
+      (id) => this.resolvedWidth(id),
+      (id) => this.columnMap.get(id)?.title ?? id,
+    );
+  }
+
+  /**
+   * The construction-time column baseline — every column visible, in construction (declaration) order,
+   * with no freeze and no width overrides. The layout a personalization Reset restores to. Its `width`
+   * is the resolved declared/auto width for display only; a Reset restores *no* override (it never
+   * copies the number back).
+   *
+   * @returns One baseline {@link GridColumnInfo} per column, in construction order.
+   * @example
+   * ```ts
+   * const base = grid.defaultColumnLayout(); // all visible, construction order, no freeze/overrides
+   * ```
+   */
+  defaultColumnLayout(): readonly GridColumnInfo[] {
+    return defaultLayout(
+      [...this.columnMap.keys()],
+      (id) => this.declaredWidth(id),
+      (id) => this.columnMap.get(id)?.title ?? id,
+    );
+  }
+
+  /**
    * Reorder the visible columns. Accepts a permutation of the **currently-visible** ids; the new
    * order is spliced back into the full order so hidden columns keep their anchor slots. A non-
    * permutation (unknown id, wrong length, duplicate) is ignored.
@@ -1083,6 +1128,23 @@ export class EditableDataGrid<T> extends Group {
     if (col === undefined) return; // unknown → no-op
     const next = new Map(this.columnWidths());
     next.set(id, clampWidth(w, col.minWidth, col.maxWidth));
+    this.columnWidths.set(next);
+  }
+
+  /**
+   * Remove a column's explicit width override, returning it to its auto/declared width. An unknown id
+   * is ignored (no throw). The reactive counterpart of {@link setColumnWidth} without the clamp/set.
+   *
+   * @param id The column id.
+   * @example
+   * ```ts
+   * grid.setColumnWidth('amount', 20);
+   * grid.clearColumnWidth('amount'); // amount returns to its auto/declared width
+   * ```
+   */
+  clearColumnWidth(id: string): void {
+    const next = new Map(this.columnWidths());
+    next.delete(id); // an unknown id → a no-op delete
     this.columnWidths.set(next);
   }
 
@@ -1185,6 +1247,10 @@ export class EditableDataGrid<T> extends Group {
     }
     this.hidden.set(hidden);
     const widths = new Map(this.columnWidths());
+    // Delete-then-set: a named column the variant carries without a width has its override removed, so
+    // restoring a layout can return a column to auto width — not only set a width. Because the pending
+    // variant names every column, OK deterministically sets or clears every override.
+    for (const id of resolved.clearWidths) widths.delete(id);
     for (const [id, width] of resolved.widthById) {
       const col = this.columnMap.get(id);
       if (col !== undefined) widths.set(id, clampWidth(width, col.minWidth, col.maxWidth));
@@ -1223,7 +1289,11 @@ export class EditableDataGrid<T> extends Group {
   /** The resolved width of a column: override → declared fixed → measured auto → title width. */
   private resolvedWidth(id: string): number {
     const override = this.columnWidths().get(id);
-    if (override !== undefined) return override;
+    return override !== undefined ? override : this.declaredWidth(id);
+  }
+
+  /** The declared width of a column, ignoring any override: declared fixed → measured auto → title. */
+  private declaredWidth(id: string): number {
     const idx = this.columnIndex.get(id);
     if (idx === undefined) return 0;
     const col = this.engineCols[idx];

@@ -189,6 +189,9 @@ test('AR-6: the selection controller is extracted to grid-selection.ts and grid.
   // surface: four documented public methods (exportView / setFrozen / saveVariant / applyVariant), each
   // with JSDoc + an @example, plus the freezeSpec->signal edit — the serialization + variant logic lives
   // in the new export-view.ts / variant.ts modules; the guard is NEVER met by re-inlining that logic.
+  // Re-based 1680 -> 1760 for the RD-16 personalization grid read API: columns() / defaultColumnLayout() /
+  // clearColumnWidth() (each JSDoc + @example) + the applyVariant delete-then-set width-restore correction;
+  // the GridColumnInfo assembly lives in variant.ts.
   const lineCount = grid.split('\n').length;
-  expect(lineCount).toBeLessThan(1680);
+  expect(lineCount).toBeLessThan(1760);
 });

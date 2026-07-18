@@ -141,7 +141,9 @@ test('grid.ts stays under the re-based line-count guard', () => {
   // isWindowed-guarded delegators; the lazy view + push-down validation live in windowing.ts), then
   // 1550 -> 1680 for the RD-13 export & layout-variants surface (the four documented public methods
   // exportView / setFrozen / saveVariant / applyVariant + the freezeSpec->signal edit; logic lives in the
-  // new export-view.ts / variant.ts modules). See grid-footer.impl.test for the full re-base history.
+  // new export-view.ts / variant.ts modules), then 1680 -> 1760 for the RD-16 personalization grid read
+  // API (columns() / defaultColumnLayout() / clearColumnWidth() + the applyVariant width-restore correction;
+  // the GridColumnInfo assembly lives in variant.ts). See grid-footer.impl.test for the full re-base history.
   const gridSrc = readFileSync(fileURLToPath(new URL('../src/grid.ts', import.meta.url)), 'utf8');
-  expect(gridSrc.split('\n').length).toBeLessThan(1680);
+  expect(gridSrc.split('\n').length).toBeLessThan(1760);
 });
