@@ -252,3 +252,11 @@ interface Validator {
   error?: string;   // Optional message describing the invalid state, for you to surface to the user.
 }
 ```
+
+## wrapText
+
+Word-wrap `content` to `width` display columns — the same wrapping a Text view applies when it draws.
+
+```ts
+wrapText(content: string, width: number): string[]
+```

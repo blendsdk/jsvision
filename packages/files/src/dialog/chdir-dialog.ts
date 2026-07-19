@@ -9,13 +9,24 @@
  * Prefer the {@link changeDir} opener for the common "prompt and get a directory" case; construct
  * `ChDirDialog` directly only when embedding or customizing it.
  */
-import { Dialog, Button, Label, Input, History, signal, Commands } from '@jsvision/ui';
+import {
+  Dialog,
+  Button,
+  Label,
+  Input,
+  History,
+  col,
+  cover,
+  fixed,
+  grow,
+  row,
+  signal,
+  spacer,
+  Commands,
+} from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
 import { nodeFileSystem } from '../fs/node-fs.js';
-import { GrowMode } from './grow.js';
-import type { GrowItem } from './grow-dialog.js';
-import { applyGrowMode, captureGrowItems } from './grow-dialog.js';
 import { DirList } from '../list/dir-list.js';
 
 /** The default recent-path history id — distinct from the file dialog so their lists don't mix. */
@@ -78,19 +89,14 @@ export class ChDirDialog extends Dialog {
   private readonly resultPath: Signal<string | null> = signal<string | null>(null);
   private readonly showErrorSeam?: (message: string) => void;
   private readonly onResolveCb?: (path: string | null) => void;
-  /** The resize-reflow table (children + design rects + grow flags), replayed on drag-resize. */
-  private readonly growItems: GrowItem[];
 
   constructor(opts: ChDirDialogOptions) {
     super({ title: opts.title ?? 'Change Directory', width: 48, height: 18 });
-    // Drag-resizable but floored at the design size, so children only ever grow (see onResized()).
+    // Drag-resizable but floored at the design size. There is no reflow code to go with it: the body
+    // below is a flex tree, so a resize re-solves every child in one layout pass.
     this.resizable = true;
     this.minWidth = 48;
     this.minHeight = 18;
-    // The children are placed at absolute rects measured from the outer frame (at row/col 0). Zero the
-    // base Dialog's padding:1 inset so they aren't pushed in by (1,1) and made to overwrite the border
-    // (see FileDialog for the same reasoning).
-    this.layout = { ...this.layout, padding: 0 };
     this.fs = opts.fs ?? nodeFileSystem;
     this.directory = opts.directory ?? signal(this.fs.resolve('.'));
     this.startDir = this.directory();
@@ -99,35 +105,39 @@ export class ChDirDialog extends Dialog {
     this.onResolveCb = opts.onResolve;
 
     this.pathInput = new Input({ value: this.path });
-    this.pathInput.layout = { position: 'absolute', rect: { x: 3, y: 3, width: 39, height: 1 } };
     this.history = new History({ link: this.pathInput, historyId: opts.historyId ?? DIR_HISTORY_ID });
-    this.history.layout = { position: 'absolute', rect: { x: 42, y: 3, width: 3, height: 1 } };
     const nameLabel = new Label('~D~irectory name', this.pathInput);
-    nameLabel.layout = { position: 'absolute', rect: { x: 2, y: 2, width: 15, height: 1 } };
 
     this.dirList = new DirList({ fs: this.fs, directory: this.directory, onChangeDir: (p) => this.directory.set(p) });
-    this.dirList.layout = { position: 'absolute', rect: { x: 3, y: 6, width: 30, height: 10 } };
     const treeLabel = new Label('~D~irectory tree', this.dirList.rows);
-    treeLabel.layout = { position: 'absolute', rect: { x: 2, y: 5, width: 15, height: 1 } };
 
     this.buildButtons();
 
-    this.add(nameLabel);
-    this.add(this.pathInput);
-    this.add(this.history);
-    this.add(treeLabel);
-    this.add(this.dirList);
-    for (const b of this.buttons) this.add(b);
+    // Every child below that cannot measure itself carries an explicit `fixed`/`grow` size. That is
+    // not decoration: only `Text` and `Button` know their own intrinsic size, so any other widget
+    // left to size automatically would collapse to nothing and vanish.
+    //
+    // A consequence worth knowing: the captions stretch to the full content column rather than
+    // hugging their text, so the blank space beside a caption is part of its click zone and focuses
+    // the control it labels. That is a more forgiving target, and it paints identically as long as
+    // the label and dialog backgrounds match — which every shipped theme keeps in step.
+    const pathRow = row(grow(this.pathInput), fixed(this.history, 3));
+    const buttonCol = col({ gap: 1 }, ...this.buttons);
 
-    // The resize-reflow table, captured at the design size and replayed by onResized(). Fixed-position
-    // labels are omitted. The tree (which owns its scroll bar) grows both ways; the field grows wide;
-    // the buttons stay pinned to the right edge.
-    this.growItems = captureGrowItems([
-      [this.pathInput, GrowMode.HiX],
-      [this.history, GrowMode.LoX | GrowMode.HiX],
-      [this.dirList, GrowMode.HiX | GrowMode.HiY],
-      ...this.buttons.map((b): [Button, number] => [b, GrowMode.LoX | GrowMode.HiX]),
-    ]);
+    // One padded column suffices here — unlike the file dialog, nothing spans the full frame width.
+    this.add(
+      cover(
+        col(
+          { padding: { top: 1, right: 2, bottom: 0, left: 2 } },
+          fixed(nameLabel, 1),
+          fixed(pathRow, 1),
+          spacer({ fixed: 1 }),
+          fixed(treeLabel, 1),
+          // The tree takes whatever height is left, so it grows on resize.
+          grow(row({ gap: 1 }, grow(this.dirList), fixed(buttonCol, 10))),
+        ),
+      ),
+    );
 
     // Reflect the current directory into the path field (a tree select / Chdir / Revert updates it).
     this.onMount(() => {
@@ -141,13 +151,6 @@ export class ChDirDialog extends Dialog {
   /** The resolved absolute directory, or `null` while unresolved / on cancel. */
   result(): string | null {
     return this.resultPath();
-  }
-
-  /** Reflow the children to track the frame when the dialog is drag-resized. */
-  override onResized(): void {
-    if (this.layout.rect !== undefined) {
-      applyGrowMode(this.growItems, this.layout.rect, this.minWidth, this.minHeight);
-    }
   }
 
   /** Descend into the focused tree node (the Chdir button). */
@@ -168,9 +171,8 @@ export class ChDirDialog extends Dialog {
       { label: '~R~evert', onClick: () => this.revert() },
       { label: '~H~elp' },
     ];
-    specs.forEach((s, i) => {
+    specs.forEach((s) => {
       const btn = new Button(s.label, { command: s.command, default: s.default, onClick: s.onClick });
-      btn.layout = { position: 'absolute', rect: { x: 35, y: 6 + i * 3, width: 10, height: 2 } };
       this.buttons.push(btn);
       this.buttonLabels.push(s.label);
     });

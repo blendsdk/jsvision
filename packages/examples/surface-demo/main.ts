@@ -13,7 +13,7 @@
  * a consumer would. `.js` per NodeNext.
  */
 import { resolveCapabilities } from '@jsvision/core';
-import { Group, Surface, SurfaceView, createEventLoop, signal } from '@jsvision/ui';
+import { Group, Surface, SurfaceView, createEventLoop, signal, cover } from '@jsvision/ui';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
 
@@ -47,7 +47,7 @@ function main(): void {
   const surface = buildSurface();
   const delta = signal<Point>({ x: 0, y: 0 });
   const view = new SurfaceView({ surface, delta });
-  view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 6, height: 4 } };
+  cover(view);
   const root = new Group();
   root.add(view);
   const loop = createEventLoop({ width: 6, height: 4 }, { caps });

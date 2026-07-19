@@ -3,37 +3,61 @@
 > **Feature-Set**: Layout-DSL Adoption
 > **Status**: In Progress
 > **Created**: 2026-07-18
-> **Last Updated**: 2026-07-18
-> **Progress**: 0 / 9 issues done
+> **Last Updated**: 2026-07-19
+> **Progress**: 0 / 10 issues done · requirements: RD-01/RD-02 ✏️ drafted · plans: [tier0-parity-safe](plans/tier0-parity-safe/00-index.md) ✅ done (Tier-0 MVP — 12/12) · [focus-traversal-primitive](plans/focus-traversal-primitive/00-index.md) ✅ done (exec_plan 11/11, GH #122) · [flex-dialog-bodies](plans/flex-dialog-bodies/00-index.md) ✅ done 2026-07-19 (exec_plan 14/14) (#115 Tier-2 ui/forms dialog bodies — #122 unblocked) · [files-flex-elimination](plans/files-flex-elimination/00-index.md) ✅ done 2026-07-19 (exec_plan 27/27, PR #125) (#120 Tier-2 files dialogs + grow-mode deletion)
 > **CodeOps Skills Version**: 3.9.0
 
 Adopt the layout DSL (`col`/`row`/`grow`/`fixed`/`spacer`/`stack`/`place` + the #113 additions) across
 the existing `.layout = {…}` call sites — the deferred **AR-4 follow-up** of the archived `layout-dsl`
-plan. A full sweep classified **every** `.layout =` site across all 8 packages (313 sites / 127 files,
-plus a separate 26-site `.layout.rect =` window family); the genuinely-portable work (~17 files) is
-tracked as GitHub issues. **GitHub-issue-driven** (no per-target codeops plans) — this roadmap is the
-codeops-side register pointing at the epic. The `dsl-hardening` prerequisite (GH #113) is its own
-feature with a codeops plan.
+plan. **GitHub-issue-driven** (no per-target codeops plans) — this roadmap is the codeops-side register
+pointing at the epic. The `dsl-hardening` prerequisite (GH #113) is **done** (its own feature/plan).
+
+**Direction update (2026-07-19) — flex-elimination sanctioned.** After a fresh flex-refactor sweep (now
+that #113's `at()`/`cover()`/`center()` shipped), the maintainer decided to **deliberately break Turbo
+Vision geometry parity** to *eliminate* absolute placement in favor of flex — including the TV dialogs
+and demo canvases. The payoff is machinery deletion (`grow-dialog.ts` + `grow.ts` go) plus ~470 demo/
+story/docs sites adopting the idiom, not an `at()`-for-`at()` swap. This is governed by a requirements
+set (a departure from the pure issue-driven model, because it overrides the TV-fidelity + immutable-spec
+disciplines and needs a recorded decision):
+
+- **[RD-01 — Deliberate TV-divergence flex-elimination policy](requirements/RD-01-deliberate-divergence-policy.md)** ✏️ Drafted
+- **[RD-02 — Non-functional & verification](requirements/RD-02-non-functional-and-verification.md)** ✏️ Drafted
+- **[Ambiguity Register](requirements/00-ambiguity-register.md)** — ✅ GATE PASSED (13 items)
+- **[Plan: tier0-parity-safe](plans/tier0-parity-safe/00-index.md)** — ✅ Done (implements RD-01 Tier-0; verification RD-02) — base `Dialog` center/at · catchers + formDialog body `cover()` · 13 demos · CLAUDE.md carve-out
+- **[Plan: focus-traversal-primitive](plans/focus-traversal-primitive/00-index.md)** — ✅ Done (exec_plan 11/11, 2026-07-19; GH **#122**; on `feat/dsl-adoptation`, pending merge) · 🔎 Preflighted 2026-07-19 ([report](plans/focus-traversal-primitive/00-preflight-report.md) — 7 findings, all resolved + fixed) (Primitive; enables RD-01 FR-2/FR-3) — a Tier-2 blocker surfaced during planning: `col`/`row` nest `Group`s but Tab traversal was group-scoped (emergent behavior of `advance()`, not spec-locked), and an empirical probe showed `FileDialog`/`ChDirDialog` Tab **already dead-ended in the list** today. Fix = scope-ceilinged tree-order `advance()` (with a `descendLast` reverse mirror + exited-group memory reset) so nested-flex dialogs become keyboard-traversable. Shipped: ST-F1…F7 spec oracles, all focus witnesses unedited, verify + bench green. **Prerequisite of #115 + #120.**
+- **[Plan: flex-dialog-bodies](plans/flex-dialog-bodies/00-index.md)** — ✅ Done (exec_plan 14/14, 2026-07-19; on `feat/dsl-adoptation`, pending merge) · 🔎 Preflighted 2026-07-19 ([report](plans/flex-dialog-bodies/00-preflight-report.md) — 6 findings all resolved + fixed; PF-001 confirmed live during execution) · implements RD-01 Tier-2 ui/forms, verification RD-02; GH **#115** — the #122-unblocked dialog-body rebuilds: `messageBox`/`confirm`/`inputBox` + editor `findDialog`/`replaceDialog`/`confirmBox`/`replacePrompt`-inner + `formDialog` buttons → flex (`cover(col)` / centered `row`), deleting the local `at`/`tv`/`place`/`centerX`/`PAIR_WIDTH`/`buttonRects`. Oracle cost (per NFR-3): **message-box survives outright**; only `editor-dialogs.spec:51,89` + `form-dialog.impl:80` re-baselined; per-dialog traversal specs + a message-box render guard added (NFR-2, PF-002). **App-overlay `cover()` split out to a separate follow-up task** (user decision — a ~7-file overlay-locator ripple not in NFR-3, 2-line payoff), tracked as **T-AO1** — since **closed won't-do** (2026-07-19): the attempt proved the overlay is a hidden host whose geometry cannot come from the layout pass, now recorded as RD-01 FR-4's hidden-host exclusion. Splitting it out was the right call — it kept a 14/14 green plan clean of a dead end. 14 tasks.
+
+#115 is re-scoped (ui/forms dialog family, deliberate divergence) and **#120** is new (files dialogs +
+grow-dialog deletion). #116 (datagrid) and #117 (setLayout) stay behavior-preserving — out of the
+divergence set. First slice = Tier 0 parity-safe — **planned** in `tier0-parity-safe`: base `Dialog`
+`center()`/`at()`, menu + dropdown catchers + `formDialog` body `cover()`, the enumerated demo/shell
+canvases, and the CLAUDE.md carve-out. **Note (plan gate finding):** the app overlay (`application.ts`)
+`cover()` is **deferred to #115** — its `position:'absolute'` descriptor is a spec-test locator, so
+it is not zero-spec-oracle-cost like the rest of Tier 0.
 
 ## Legend
 
-⬜ Backlog · 📋 Plan Created · 🔄 Executing · ✅ Done · ⛔ Blocked · ⏸️ Deferred
+⬜ Backlog · 📋 Plan Created · 🔄 Executing · ✅ Done · ⛔ Blocked · ⏸️ Deferred · ❌ Won't do
 
 ## Tracker (GitHub-issue-driven)
 
 | GH | Title | Kind | Stage | Notes |
 |----|-------|------|-------|-------|
-| [#108](https://github.com/blendsdk/jsvision/issues/108) | Adopt the layout DSL across the codebase | Epic | ⬜ | Umbrella for the rows below |
-| [#113](https://github.com/blendsdk/jsvision/issues/113) | DSL hardening (prerequisite — do first) | Prereq | 📋 | Feature [`dsl-hardening`](../dsl-hardening/00-roadmap.md) — plan on `feat/dsl-hardening` |
-| [#117](https://github.com/blendsdk/jsvision/issues/117) | Primitive fix — `setLayout(partial)` (read-only field at release) | Primitive | ⬜ | Companion to #113 |
-| [#109](https://github.com/blendsdk/jsvision/issues/109) | ui widgets — data-grid / tab-view / application | Port | ⬜ | `application.ts` part needs #113 |
-| [#110](https://github.com/blendsdk/jsvision/issues/110) | example app-shell demos | Port | ⬜ | learning material |
-| [#111](https://github.com/blendsdk/jsvision/issues/111) | theme-designer panels + workspace | Port | ⬜ | independent |
-| [#112](https://github.com/blendsdk/jsvision/issues/112) | JSDoc `@example` + docs modernization | Docs | ⬜ | expands if #113 `at()` lands |
-| [#114](https://github.com/blendsdk/jsvision/issues/114) | local `place()`/`row()` shadow cleanup | Cleanup | ⬜ | enabled by #113 `at()` |
-| [#115](https://github.com/blendsdk/jsvision/issues/115) | TV-faithful dialogs (case-by-case) | Review | ⬜ | depends on #113 |
-| [#116](https://github.com/blendsdk/jsvision/issues/116) | datagrid widgets (button-row / grid-lifecycle / popups) | Port | ⬜ | 51 sites; real ports |
+| [#108](https://github.com/blendsdk/jsvision/issues/108) | Adopt the layout DSL across the codebase | Epic | ⬜ | Umbrella; re-oriented to flex-elimination |
+| [#113](https://github.com/blendsdk/jsvision/issues/113) | DSL hardening (prerequisite) | Prereq | ✅ | Feature [`dsl-hardening`](../dsl-hardening/00-roadmap.md) — done, merged to `develop` via PR #119 |
+| [#117](https://github.com/blendsdk/jsvision/issues/117) | Primitive fix — `setLayout(partial)` (read-only field at release) | Primitive | ⬜ | Companion to #113; out of the divergence set |
+| [#122](https://github.com/blendsdk/jsvision/issues/122) | **Focus-traversal primitive** — tree-order `Tab` across flex containers | Primitive | ✅ | Companion to #117; **prereq of #115 + #120**; plan [focus-traversal-primitive](plans/focus-traversal-primitive/00-index.md) · ✅ done (exec_plan 11/11, 2026-07-19; on `feat/dsl-adoptation`, pending merge) · 🔎 preflighted 2026-07-19 |
+| [#109](https://github.com/blendsdk/jsvision/issues/109) | ui widgets — data-grid / tab-view / application | Port | ⬜ | behavior-preserving; split-view already done |
+| [#110](https://github.com/blendsdk/jsvision/issues/110) | example app-shell demos + maximal canvas flex | Port | ⬜ | Tier 3 (RD-01 FR-6); learning material |
+| [#111](https://github.com/blendsdk/jsvision/issues/111) | theme-designer panels + workspace | Port | ⬜ | independent; inspector-panel joins Tier 3 |
+| [#112](https://github.com/blendsdk/jsvision/issues/112) | JSDoc `@example` + docs modernization | Docs | ⬜ | expands with Tier 3 |
+| [#114](https://github.com/blendsdk/jsvision/issues/114) | local `place()`/`row()` shadow cleanup | Cleanup | ⬜ | largely subsumed by flex-elimination |
+| [#115](https://github.com/blendsdk/jsvision/issues/115) | **flex-eliminate ui/forms dialog family** (deliberate divergence) | Rebuild | ✅ | RD-01/02; Tier-0 done ([tier0-parity-safe](plans/tier0-parity-safe/00-index.md)); **Tier-2 bodies ✅ DONE 2026-07-19** ([flex-dialog-bodies](plans/flex-dialog-bodies/00-index.md), exec_plan 14/14 — ui messageBox family + editor dialogs + forms formDialog buttons) — #122 unblocked them. Last leftover **T-AO1 closed won't-do** (hidden-host exclusion, RD-01 FR-4), so the issue is complete |
+| T-AO1 | app-overlay `cover()` (`application.ts:335/435`) | Task | ❌ | **Won't do — attempted 2026-07-19, reverted.** The app overlay is `visible:false` until a popup mounts, and `render-root.ts:174` skips invisible children in the layout pass, so a `'fill'` overlay never gets solved `bounds` — while popup placement reads its extent *at open time*. Broke clamping in `menu/controller.ts:155` and **silently** in `dropdown/popup.ts:209` (no test caught the latter). A fix needs an added fallback-chain helper to buy a 2-line deletion — net machinery up, inverting FR-5. Recorded as the **hidden-host exclusion** in RD-01 FR-4; FR-5 / Tier-0 / AC-6 amended 5 overlays → 4. Do not re-attempt |
+| [#116](https://github.com/blendsdk/jsvision/issues/116) | datagrid widgets (button-row / grid-lifecycle / popups) | Port | ⬜ | behavior-preserving; out of divergence set |
+| [#120](https://github.com/blendsdk/jsvision/issues/120) | **flex-eliminate FileDialog/ChDirDialog/errorBox + retire grow-dialog.ts** | Rebuild | ✅ | RD-01/02; Tier 2. Prerequisite #122 ✅ (in PR #123). Plan [files-flex-elimination](plans/files-flex-elimination/00-index.md) ✅ done 2026-07-19 (exec_plan 27/27) — [PR #125](https://github.com/blendsdk/jsvision/pull/125), base `feat/dsl-adoptation`, retarget to `develop` once #123 lands. Branch `feat/files-flex-elimination`. **Shipped:** both dialogs + `errorBox` on flex; `grow.ts` + `grow-dialog.ts` **deleted** (−208 lines); `wrapText` promoted to the ui barrel (AR-4, spans ui + files). **Fixed en route:** errorBox clipped any message past one line. **Reviews:** 3 phase reviews, 2 MAJOR + 6 MINOR all resolved; astral-wrap gap filed as [#124](https://github.com/blendsdk/jsvision/issues/124) |
 
-**Not portable (surveyed, excluded):** TV absolute dialogs (files/forms), `this.layout` self-config,
-per-frame `.layout.rect =` window/desktop/gesture mutations (26), spike-data-studio (inert). Full
-line-level map lives in the sweep artifacts + the GitHub issue bodies.
+**Governed by RD-01/RD-02:** #115, #120, and the Tier-3 parts of #110/#112. **Keep-absolute (excluded, RD-01
+FR-4):** window/desktop/gesture, cursor/caret/measure-anchored popups, `theme-designer/gallery.ts` scatter,
+movable-window desktop apps, polar `analog-clock`, `keyboard-mouse-playground`. Full line-level map lives in
+the sweep artifacts + the GitHub issue bodies.

@@ -128,9 +128,38 @@ export interface EventLoop {
   dispatch(event: AppEvent): void;
   /** Resize the viewport: reflow the tree and paint exactly one frame. */
   resize(size: Size2D): void;
-  /** Move focus to the next focusable view in traversal order, wrapping at the end. */
+  /**
+   * Move focus to the next focusable view in **document (tree) order**, bounded by the active scope
+   * (the open modal's subtree while a modal is up, else the mounted root). Focus descends through
+   * nested groups and, at a group's end, crosses into the parent's next focusable sibling, wrapping at
+   * the scope — so a dialog built from nested `col`/`row` containers is fully traversable and Tab never
+   * escapes an open modal. Continuous Tab is pure tree order (a wrap re-enters at the tree start, not
+   * the last-visited child); container **restore** memory applies only to a non-Tab entry (a click,
+   * `focusView`, a window switch, opening/closing a dialog).
+   *
+   * @example
+   * // A dialog composed with the layout DSL — Tab walks its nested col/row groups in tree order.
+   * import { createEventLoop, col, row, Input, Button } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const loop = createEventLoop({ width: 40, height: 8 }, { caps });
+   * const name = new Input();
+   * const ok = new Button('OK', () => loop.emitCommand('ok'));
+   * const cancel = new Button('Cancel', () => loop.emitCommand('cancel'));
+   * loop.mount(col(row(name), row(ok, cancel)));
+   *
+   * loop.focusNext(); // name
+   * loop.focusNext(); // ok      — Tab exits the first row into the button row
+   * loop.focusNext(); // cancel
+   * loop.focusNext(); // wraps back to name
+   * loop.focusPrev(); // cancel  — Shift-Tab is the exact inverse of Tab
+   */
   focusNext(): void;
-  /** Move focus to the previous focusable view in traversal order, wrapping at the start. */
+  /**
+   * Move focus to the previous focusable view — the exact inverse of {@link EventLoop.focusNext}
+   * (reverse descent lands on a container's last leaf), bounded by and wrapping at the same scope.
+   */
   focusPrev(): void;
   /** Focus exactly `view`. A no-op if `view` is not currently focusable. */
   focusView(view: View): void;

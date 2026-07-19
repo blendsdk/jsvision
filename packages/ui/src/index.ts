@@ -190,6 +190,8 @@ export type { TreeNode, TreeOptions, MarkerStyle } from './tree/index.js';
 // The grid engine underneath is exposed too — the `GridRows`/`GridHeader` renderers, the pure
 // column math (`apportionColumns`/`alignCell`/`sortRows`/`measureAutoWidths`), and the wide-glyph
 // `stringWidth` measure they draw with — so another package can compose a bespoke grid on it.
+// `wrapText` ships alongside it: the same word-wrap a `Text` view draws with, exposed so a caller
+// can count the lines a message will occupy *before* laying anything out (e.g. to size a dialog).
 export {
   DataGrid,
   GridRows,
@@ -209,7 +211,7 @@ export type {
   GridRowsConfig,
   GridHeaderConfig,
 } from './table/index.js';
-export { stringWidth } from './controls/measure.js';
+export { stringWidth, wrapText } from './controls/measure.js';
 
 // Tabs — a `TabView` folder-tab container that shows one page at a time, with
 // keyboard and hotkey switching and closable/overflowing tabs.
