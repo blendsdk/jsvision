@@ -2,9 +2,10 @@
  * Composition witnesses for the designer's three-pane workspace.
  *
  * Everything is asserted against the **real** app tree built by `createDesignerApp`, not against a
- * panel mounted standalone. That matters for more than realism: neither panel builder declares its
- * own stacking direction today — it is applied from the app — so a standalone mount would solve as a
- * row and could never record what the app actually renders.
+ * panel mounted standalone. A witness must observe the composition the app actually produces: the
+ * workspace row in `app.ts` and each builder's own stacking are separate decisions, and only the
+ * assembled tree shows what they add up to. Mounting a panel alone would test one half of that and
+ * silently miss the other.
  *
  * Every rect is a literal captured from a solved layout, and the layout is flushed before any
  * `bounds` is read: `bounds` refreshes only on a layout pass, so reading early captures `{0,0,0,0}`
