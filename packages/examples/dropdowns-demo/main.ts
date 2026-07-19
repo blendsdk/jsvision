@@ -24,6 +24,7 @@ import {
   createEventLoop,
   createRoot,
   signal,
+  cover,
 } from '@jsvision/ui';
 import type { EventLoop, PopupHost } from '@jsvision/ui';
 
@@ -48,7 +49,7 @@ const HEIGHT = 12;
 /** Build a loop + a full-viewport overlay wired as the popup host; the caller adds field controls. */
 function makeApp(controls: Group): { loop: EventLoop; overlay: Group } {
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: WIDTH, height: HEIGHT } };
+  cover(overlay);
   overlay.state.visible = false;
   const root = new Group();
   root.add(controls);
