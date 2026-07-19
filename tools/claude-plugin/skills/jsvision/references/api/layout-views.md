@@ -30,12 +30,28 @@ Distribute `total` integer cells across weighted shares so the result sums to `t
 apportion(total: number, weights: readonly number[]): number[]
 ```
 
+## at
+
+Place a view absolutely at a parent-content-relative rectangle, and return the same view for inline composition.
+
+```ts
+at<V extends View>(view: V, ...spec: [x: number, y: number, width: number, height: number] | [rect: Rect]): V
+```
+
 ## bottomRight
 
 Tag a view as a fixed-size stack layer pinned to the **bottom-right** corner.
 
 ```ts
 bottomRight<V extends View>(view: V, width: number, height: number): V
+```
+
+## center
+
+Center a fixed-size view in its parent as an out-of-flow overlay, re-centering on resize, and return the same view — standalone, no `stack()` wrapper.
+
+```ts
+center<V extends View>(view: V, width: number, height: number): V
 ```
 
 ## centered
@@ -51,7 +67,7 @@ centered<V extends View>(view: V, width: number, height: number): V
 Build a **vertical** flex container (`direction: 'col'`) — children stack top to bottom.
 
 ```ts
-col(...args: [Flex, ...View[]] | View[]): Group
+col(...args: [Flex, ...Child[]] | Child[]): Group
 ```
 
 ## CommandEvent
@@ -72,6 +88,14 @@ Test whether a point lies inside a rect.
 
 ```ts
 contains(r: Rect, p: Point): boolean
+```
+
+## cover
+
+Make a view cover its parent's whole content box as an out-of-flow overlay, and return the same view — standalone, no `stack()` wrapper.
+
+```ts
+cover<V extends View>(view: V): V
 ```
 
 ## createRenderRoot
@@ -145,8 +169,11 @@ Container props for col/row: every LayoutProps field except `direction` (the bui
 
 ```ts
 type Flex = Omit<LayoutProps, 'direction'> & {
-  /** Flex-grow weight — shorthand for `size: { kind:'fr', weight }`. */
-  grow?: number;
+  /**
+   * Flex-grow weight — shorthand for `size: { kind:'fr', weight }`. The object form adds a `min`
+   * cell floor: `{ weight, min }` → `{ kind:'fr', weight, min }` (the box never solves below `min`).
+   */
+  grow?: number | { weight: number; min?: number };
   /** Fixed cell count — shorthand for `size: { kind:'fixed', cells }`. */
   fixed?: number;
   /** Take a flex share of `1` — shorthand for `size: { kind:'fr', weight:1 }`. */
@@ -175,7 +202,7 @@ addDynamic(build: DynamicBuilder): void
 Give a view a flex-grow size: it takes a share of the container's leftover main-axis space proportional to `n`.
 
 ```ts
-grow<V extends View>(view: V, n = 1): V
+grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V
 ```
 
 ## intersect
@@ -270,6 +297,8 @@ interface Placement {
   v?: PlaceAxis;   // Vertical mode (default `'fill'`).
   width?: number;   // Fixed width in cells for a non-`fill` horizontal axis.
   height?: number;   // Fixed height in cells for a non-`fill` vertical axis.
+  hOffset?: number;   // Horizontal inset in cells, applied after the `start`/`center`/`end` position: a positive value moves the layer *away from its anchored edge* (right for `start`/`center`, left for `end`), then the box is clamped to stay within the content box. Ignored on a `'fill'` horizontal axis.
+  vOffset?: number;   // Vertical inset in cells, applied after the `start`/`center`/`end` position: a positive value moves the layer *away from its anchored edge* (down for `start`/`center`, up for `end`), then the box is clamped to stay within the content box. Ignored on a `'fill'` vertical axis.
 }
 ```
 
@@ -345,7 +374,7 @@ interface RenderRootOptions {
 Build a **horizontal** flex container (`direction: 'row'`) — children sit left to right.
 
 ```ts
-row(...args: [Flex, ...View[]] | View[]): Group
+row(...args: [Flex, ...Child[]] | Child[]): Group
 ```
 
 ## Size
@@ -399,7 +428,7 @@ spacer(arg: number | { fixed: number } = 1): View
 Build a z-overlay stack: every layer shares the same box and paints back-to-front (a later layer draws over an earlier one).
 
 ```ts
-stack(...args: [Flex, ...View[]] | View[]): Group
+stack(...args: [Flex, ...Layer[]] | Layer[]): Group
 ```
 
 ## ThemeRoleName
