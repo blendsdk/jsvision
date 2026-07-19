@@ -1,7 +1,7 @@
 # 99 — Execution Plan
 
 > **Plan**: layout-dsl-adoption/focus-traversal-primitive · **Implements**: RD-01 (FR-2/FR-3 enabler)
-> **Progress**: 10/11 tasks (91%)
+> **Progress**: 11/11 tasks (100%) ✅ COMPLETE
 > **Last Updated**: 2026-07-19
 > **CodeOps Skills Version**: 3.9.0
 
@@ -84,12 +84,14 @@ Commit via **/gitcm**; before the PR-bound push run `yarn lint:fix` then **/gitc
   downstream flex-dialog stories. *(Done 2026-07-19: the change is a pure focus-manager/event-loop
   capability — no new visual widget, so per the CLAUDE.md kitchen-sink scope no story is required. It is
   proven by ST-F1…F7 + IMP-1…IMP-4 and will be demonstrated live once the #115/#120 flex dialogs land.)*
-- [~] **4.3 (PR)** `yarn lint:fix`, commit whatever it changes, full verify green, then push for the
+- [x] **4.3 (PR)** `yarn lint:fix`, commit whatever it changes, full verify green, then push for the
   PR-bound update. Open the PR citing the new companion issue; note it is a prerequisite of #115 + #120.
-  *(In progress 2026-07-19: `yarn lint:fix` ran (no further changes); full verify green; work committed +
-  pushed to `feat/dsl-adoptation` per `--auto-commit`. **Pending user confirmation:** opening a GitHub PR
-  and creating the AR-10 companion issue are outward-facing and the work sits on the shared epic branch —
-  surfaced to the maintainer rather than done unilaterally.)*
+  *(Done 2026-07-19: `yarn lint:fix` ran (no further changes); full verify green; all work committed +
+  pushed to `feat/dsl-adoptation` per `--auto-commit`. AR-10 companion issue created — **#122** (Primitive;
+  companion to #117; prerequisite of #115 + #120; the #115/#120 mentions auto-cross-link the dependency).
+  **PR deferred by maintainer decision:** the work sits on the shared epic branch `feat/dsl-adoptation`
+  alongside other layout-DSL WIP, so the primitive rides in via the epic's eventual PR rather than a
+  separate, misleadingly-scoped one.)*
 
 ## Done when
 

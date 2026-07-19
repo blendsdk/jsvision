@@ -2,7 +2,7 @@
 
 > **Feature**: layout-dsl-adoption · **Plan**: focus-traversal-primitive
 > **Implements**: layout-dsl-adoption/RD-01 (enabler for FR-2/FR-3) · **Kind**: Primitive (companion to #117)
-> **Status**: Ready to execute
+> **Status**: ✅ Complete (exec_plan 11/11, 2026-07-19; tracked by #122; on `feat/dsl-adoptation`, pending merge)
 > **Created**: 2026-07-19
 > **CodeOps Skills Version**: 3.9.0
 
