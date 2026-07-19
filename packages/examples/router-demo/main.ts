@@ -26,6 +26,9 @@ import {
   ListView,
   createApplication,
   createRouter,
+  col,
+  fixed,
+  grow,
   signal,
   statusLine,
   statusItem,
@@ -42,7 +45,7 @@ function printFrame(title: string, rows: readonly { char: string }[][]): void {
   const width = rows[0]?.length ?? 0;
   console.log(`\n${title}`);
   console.log(`+${'-'.repeat(width)}+`);
-  for (const row of rows) console.log(`|${row.map((cell) => cell.char).join('')}|`);
+  for (const line of rows) console.log(`|${line.map((cell) => cell.char).join('')}|`);
   console.log(`+${'-'.repeat(width)}+`);
 }
 
@@ -56,18 +59,14 @@ class DetailScreen extends Group {
 
   constructor(repo: string, onBack: () => void) {
     super();
+    // Assigned directly rather than built: this view is the container itself, so there is no builder
+    // call that could produce it — only its children are composed with the DSL below.
     this.layout = { direction: 'col', padding: 1, gap: 1 };
     this.background = 'window';
     this.onBackCb = onBack;
-    const title = new Text(`Repository: ${repo}`);
-    title.layout = { size: { kind: 'fixed', cells: 1 } };
-    const hint = new Text('Branch: main · 128 commits · MIT license');
-    hint.layout = { size: { kind: 'fixed', cells: 1 } };
-    const back = new Button('~B~ack', { command: 'detail.back', onClick: onBack });
-    back.layout = { size: { kind: 'fixed', cells: 2 } };
-    this.add(title);
-    this.add(hint);
-    this.add(back);
+    this.add(fixed(new Text(`Repository: ${repo}`), 1));
+    this.add(fixed(new Text('Branch: main · 128 commits · MIT license'), 1));
+    this.add(fixed(new Button('~B~ack', { command: 'detail.back', onClick: onBack }), 2));
   }
 
   private readonly onBackCb: () => void;
@@ -97,20 +96,18 @@ function main(): void {
       list: {
         keepAlive: true, // keep the list warm so its scroll survives a drill-down round-trip
         build: () => {
-          const screen = new Group();
-          screen.layout = { direction: 'col', padding: 1, gap: 0 };
-          screen.background = 'window';
-          const title = new Text('Repositories — ↑↓ to navigate, Enter to open');
-          title.layout = { size: { kind: 'fixed', cells: 1 } };
           listView = new ListView<string>({
             items: repos,
             getText: (r) => r,
             focused: listFocused,
             onSelect: (index) => router.push('detail', { index }),
           });
-          listView.layout = { size: { kind: 'fr', weight: 1 } };
-          screen.add(title);
-          screen.add(listView);
+          const screen = col(
+            { padding: 1, gap: 0 },
+            fixed(new Text('Repositories — ↑↓ to navigate, Enter to open'), 1),
+            grow(listView),
+          );
+          screen.background = 'window';
           return { view: screen }; // no status → the app base bar shows
         },
       },
