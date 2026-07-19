@@ -347,13 +347,14 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
     opts.statusLine.layout = { ...opts.statusLine.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
   }
 
-  // The app root is a top-to-bottom column: [menu bar?, body, status line?, overlay]. An absent
-  // menu bar or status line is skipped, so the column holds only the rows that exist. The overlay
-  // comes last so it paints over everything else.
-  const root = col(opts.menuBar, body, opts.statusLine, overlay);
-
   // The shared cell the loop's built-in quit registration resolves through; `run()` fills it in.
   const quitState: QuitState = { resolve: null };
+
+  // The app root is a top-to-bottom column: [menu bar?, body, status line?, overlay]. An absent
+  // menu bar or status line is skipped, so the column holds only the rows that exist. The overlay
+  // comes last so it paints over everything else. The leading `{}` is load-bearing: the builder
+  // reads a non-view first argument as its own props, and `menuBar` comes from the caller.
+  const root = col({}, opts.menuBar, body, opts.statusLine, overlay);
 
   // Build the loop and mount the tree, then wire the parts that need the loop to exist first. Window
   // commands are handled by a Desktop, so register them only for a Desktop body — a router app then

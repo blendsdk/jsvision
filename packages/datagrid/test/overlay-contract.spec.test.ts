@@ -61,8 +61,10 @@ test('ST-W7: a caller absolute layout keeps its size but loses every other prope
 
   // Exactly the two properties the mount writes — `padding` and `direction` are both gone.
   expect(view.layout).toEqual({ position: 'absolute', rect: { x: 2, y: 1, width: 30, height: 5 } });
-  // Non-vacuity: the view really mounted, so the descriptor above belongs to a live child.
-  expect(host.children).toContain(view);
+  // Non-vacuity: the view is the host's only child and the descriptor really solved, so the
+  // assertion above is about a laid-out view rather than a detached one.
+  expect(host.children.length).toBe(1);
+  expect(view.bounds).toEqual({ x: 2, y: 1, width: 30, height: 5 });
 });
 
 // ST-W7 (leg 2) — no absolute placement: the caller's size is NOT honored; the passed rect wins.
@@ -81,5 +83,6 @@ test('ST-W7: a caller layout without an absolute placement loses its size too', 
   render.flush();
 
   expect(view.layout).toEqual({ position: 'absolute', rect: { x: 3, y: 2, width: 6, height: 1 } });
-  expect(host.children).toContain(view);
+  expect(host.children.length).toBe(1);
+  expect(view.bounds).toEqual({ x: 3, y: 2, width: 6, height: 1 });
 });
