@@ -20,8 +20,6 @@
  */
 import {
   createApplication,
-  Window,
-  Text,
   menuBar,
   subMenu,
   item,
@@ -34,6 +32,7 @@ import {
   Commands,
   signal,
 } from '@jsvision/ui';
+import { buildChromeBarsWindow } from './tree.js';
 
 /** A demo-local command for the Help menu item. */
 const CMD_HELP = 'help';
@@ -83,22 +82,7 @@ async function main(): Promise<number> {
     /* Help is wired only to show the right-aligned menu title opens its popup; no dialog here. */
   });
 
-  const win = new Window('Flexible Chrome Bars');
-  win.number = 1;
-  win.layout.rect = { x: 2, y: 2, width: 48, height: 9 };
-  const body = new Text(
-    [
-      'The status line and menu bar pack through the layout engine.',
-      '',
-      'spacer()      right-aligns the progress bar + clock',
-      'menuSpacer()  pushes Help to the right edge',
-      '',
-      'Alt-X quits.',
-    ].join('\n'),
-  );
-  body.layout = { size: { kind: 'fr', weight: 1 } };
-  win.add(body);
-  app.desktop.addWindow(win);
+  app.desktop.addWindow(buildChromeBarsWindow());
 
   // ~1s: advance the bar (wrapping) + tick the clock, then emit a no-op command to flush one frame.
   const timer = setInterval(() => {

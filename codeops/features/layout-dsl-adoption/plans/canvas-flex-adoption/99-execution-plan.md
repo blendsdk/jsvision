@@ -2,8 +2,8 @@
 
 > **Implements**: layout-dsl-adoption/GH-110 + GH-111 · **GitHub**: [#110](https://github.com/blendsdk/jsvision/issues/110) + [#111](https://github.com/blendsdk/jsvision/issues/111)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 0/32 tasks (0%)
-> **Last Updated**: 2026-07-19 (revised after preflight — [report](00-preflight-report.md))
+> **Progress**: 7/32 tasks (22%) — Phase 1 done (10 witnesses green-first)
+> **Last Updated**: 2026-07-20 (Phase 1 complete — revised after preflight, [report](00-preflight-report.md))
 > **Branch**: `feat/canvas-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify && yarn workspace @jsvision/examples test:e2e` (AR-11, AR-17 — `yarn verify` alone runs only the `unit` project, which excludes the e2e files seven witnesses live in)
 > **Routing**: standard → Sonnet-eligible throughout (demos, fixtures and panels; no engine work)
@@ -19,13 +19,13 @@ observes the real artifact** — none may assert a tree it built itself (07 §se
 carries an exact child count and at least one **literal** rect (NFR-3); relation-only assertions are
 banned, including between two solved values that could both collapse.
 
-- [ ] 1.1 Extract `chrome-bars-demo`'s window build into a new sibling `chrome-bars-demo/tree.ts` that `main.ts` imports — a **pure move, no reordering**. Not an export from `main.ts`: it calls `process.exit()` at module scope, so importing it would kill the vitest worker (AR-16). `editor-demo` needs no source change — it already prints a frame
-- [ ] 1.2 A new `test/spawn-demo.ts` helper for the frame witnesses (a **new** module, not an edit to an existing case — AC-6); then ST-C1/C2/C3 — `event-demo` frame snapshots appended to `event-demo.e2e.test.ts`: the root's `padding:1` inset, the button row's **2-cell gap** as exact row strings, and the **dialog column** (covers `:119`, which no other witness can see)
-- [ ] 1.3 ST-C4/C5/C6 — `controls-demo` and `router-demo` frame snapshots (the `padding`/`gap` insets, the DetailScreen's `gap:1` as blank rows)
-- [ ] 1.4 ST-C7 — `editor-demo` frame snapshot (the indicator strip as the **last** row); ST-C8 — `demo-composition.impl.test.ts` over `chrome-bars-demo/tree.ts`, literal rects, flushing before reading `bounds`
-- [ ] 1.5 ST-C9 — drive the exported `drillDownStory.build(ctx)`. List leg: the list child's literal rect, the screen's solved `direction` (a lone `fr` child fills identically under `row` and `col`) and `screen.background`. **Detail leg needs navigation**: mount via `createEventLoop`, focus the `ListView`, dispatch `enter`, re-solve — `DetailScreen` is not exported, so reconstructing one would violate the seam rule
-- [ ] 1.6 ST-C10a/b/c — `panel-composition.impl.test.ts` through `createDesignerApp({ caps, viewport, requireTty:false })` at 90×30: each panel's stacking and the workspace's three literal pane rects (AR-14 — the app seam is mandatory, not a convenience)
-- [ ] 1.7 Verify all ten green — **including the e2e project**, which `yarn verify` does not run; confirm no existing test **case** was edited; commit as the pre-conversion baseline. (`chrome-bars-demo` is the one green-first exception: its seam edits the file first, so ST-C8 is green-first relative to the post-extraction state — 07 §zero-edit contract)
+- [x] 1.1 Extract `chrome-bars-demo`'s window build into a new sibling `chrome-bars-demo/tree.ts` that `main.ts` imports — a **pure move, no reordering**. Not an export from `main.ts`: it calls `process.exit()` at module scope, so importing it would kill the vitest worker (AR-16). `editor-demo` needs no source change — it already prints a frame
+- [x] 1.2 A new `test/spawn-demo.ts` helper for the frame witnesses (a **new** module, not an edit to an existing case — AC-6); then ST-C1/C2/C3 — `event-demo` frame snapshots appended to `event-demo.e2e.test.ts`: the root's `padding:1` inset, the button row's **2-cell gap** as exact row strings, and the **dialog column** (covers `:119`, which no other witness can see)
+- [x] 1.3 ST-C4/C5/C6 — `controls-demo` and `router-demo` frame snapshots (the `padding`/`gap` insets, the DetailScreen's `gap:1` as blank rows)
+- [x] 1.4 ST-C7 — `editor-demo` frame snapshot (the indicator strip as the **last** row); ST-C8 — `demo-composition.impl.test.ts` over `chrome-bars-demo/tree.ts`, literal rects, flushing before reading `bounds`
+- [x] 1.5 ST-C9 — drive the exported `drillDownStory.build(ctx)`. List leg: the list child's literal rect, the screen's solved `direction` (a lone `fr` child fills identically under `row` and `col`) and `screen.background`. **Detail leg needs navigation**: mount via `createEventLoop`, focus the `ListView`, dispatch `enter`, re-solve — `DetailScreen` is not exported, so reconstructing one would violate the seam rule
+- [x] 1.6 ST-C10a/b/c — `panel-composition.impl.test.ts` through `createDesignerApp({ caps, viewport, requireTty:false })` at 90×30: each panel's stacking and the workspace's three literal pane rects (AR-14 — the app seam is mandatory, not a convenience)
+- [x] 1.7 Verify all ten green — **including the e2e project**, which `yarn verify` does not run; confirm no existing test **case** was edited; commit as the pre-conversion baseline. (`chrome-bars-demo` is the one green-first exception: its seam edits the file first, so ST-C8 is green-first relative to the post-extraction state — 07 §zero-edit contract)
 
 ## Phase 2 — theme-designer (standard) — 03-02
 
