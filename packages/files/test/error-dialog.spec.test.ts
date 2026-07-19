@@ -41,8 +41,8 @@ function focusRing(app: ReturnType<typeof createApplication>, max = 8): string[]
   return ring; // no wrap within `max` — returned as-is so the assertion shows the runaway order
 }
 
-// ST-03 — OK is the sole tab stop; Tab returns to it.
-test('ST-03: errorBox Tab-traverses [OK] — the message Text is not a tab stop', async () => {
+// ST-FE03 — OK is the sole tab stop; Tab returns to it.
+test('ST-FE03: errorBox Tab-traverses [OK] — the message Text is not a tab stop', async () => {
   const app = makeApp();
   const p = errorBox(app, 'Invalid directory');
   app.loop.renderRoot.flush();
@@ -53,8 +53,8 @@ test('ST-03: errorBox Tab-traverses [OK] — the message Text is not a tab stop'
   await p;
 });
 
-// ST-03 — the contract holds for a long message too (which wraps across several rows).
-test('ST-03: a long message still leaves OK as the sole tab stop', async () => {
+// ST-FE03 — the contract holds for a long message too (one past the box's 60-column width cap).
+test('ST-FE03: a long message still leaves OK as the sole tab stop', async () => {
   const app = makeApp();
   const long = 'The file could not be opened because the directory it lives in is not readable by this user account.';
   const p = errorBox(app, long);

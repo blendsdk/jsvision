@@ -10,7 +10,7 @@ assertion is not a permitted third path.
 | File | Type | Action | Rationale |
 |------|------|--------|-----------|
 | `grow.spec.test.ts` | spec | **delete** | Unit-tests the removed `growRect`/`GrowMode`. |
-| `file-dialog-resize.spec.test.ts` | spec | **delete** | Asserts removed grow-mode rects via `.layout.rect` on children (14 sites) + direct `onResized()` calls. Replaced by ST-08. |
+| `file-dialog-resize.spec.test.ts` | spec | **delete** | Asserts removed grow-mode rects via `.layout.rect` on children (14 sites) + direct `onResized()` calls. Replaced by ST-FE08. |
 | `file-dialog.spec.test.ts` | spec | **re-baseline (partial)** | Composition block only (`:61-68`). Per 03-01 §3, `fileInput`, `fileInfoPane` and both button lines should survive; only `fileList` height and `listBar` y change. Behavioral tests (`:72,89,112,130,144`) untouched. |
 | `chdir-dialog.spec.test.ts` | spec | **re-baseline (partial)** | Composition block only (`:47-52`). Per 03-02 §3, `pathInput` and all button lines survive; only `dirList` w/h change. Behavioral tests (`:56,70,86,96`) untouched. |
 | `history-files.spec.test.ts` | spec | **survive** | Asserts `history` bounds `(31,3,3,1)` / `(42,3,3,1)`; both derivations preserve them exactly (AR-6). **If the red step falsifies this, it becomes a re-baseline and RD-02's NFR-3 table is amended** — recorded as a plan deviation. |
@@ -27,21 +27,21 @@ assertion is not a permitted third path.
 
 ## 2. New specification tests
 
-Written spec-first. ST-01…ST-03 are **green-first witnesses** — NFR-2 requires them to capture the
+Written spec-first. ST-FE01…ST-FE03 are **green-first witnesses** — NFR-2 requires them to capture the
 *pre*-conversion order, so they are authored and passed against today's code, then must stay green
-through the rebuild (AR-10). ST-04…ST-09 are **red-first**.
+through the rebuild (AR-10). ST-FE04…ST-FE09 are **red-first**.
 
 | ID | File | Assertion | Traces |
 |----|------|-----------|--------|
-| ST-01 | `file-dialog-traversal.spec.test.ts` | Ordered focusable descendants of a mounted `FileDialog` = `[fileInput, fileList, listBar, ...buttons]`; a full Tab cycle visits exactly that sequence and wraps. | AC-4, NFR-2 |
-| ST-02 | `chdir-dialog-traversal.spec.test.ts` | Same for `ChDirDialog` = `[pathInput, dirList, ...buttons]`. | AC-4, NFR-2 |
-| ST-03 | `error-dialog.spec.test.ts` | `errorBox`'s only focusable descendant is the OK button; Tab returns to it. | AC-4, AC-7, AR-9 |
-| ST-04 | `file-dialog.spec.test.ts` | Re-baselined composition rects per 03-01 §3. | AC-5 |
-| ST-05 | `chdir-dialog.spec.test.ts` | Re-baselined composition rects per 03-02 §3. | AC-5 |
-| ST-06 | `error-dialog.spec.test.ts` | A 17-char message yields a 5-row dialog; a 120-char message yields a dialog tall enough that `wrapText(msg, width-2).length` rows are all inside the frame — i.e. nothing clips. | AC-7, AR-3 |
-| ST-07 | `error-dialog.spec.test.ts` | `width` still equals `min(60, max(24, len+6))` — the unchanged half of the sizing contract. | AR-2 |
-| ST-08 | `file-dialog-resize.spec.test.ts` (new content) | After a real drag-resize: (a) every child's bounds stay inside the frame ring; (b) `fileList.bounds.height` and `.width` strictly increased; (c) resizing below the floor leaves bounds at `49×19`. Properties, not coordinates. | AC-6, AR-5 |
-| ST-09 | `ui` test | `wrapText` is exported from the barrel and wraps identically to the pre-move private function (a table of message/width → lines). | AC-10, AR-4 |
+| ST-FE01 | `file-dialog-traversal.spec.test.ts` | Ordered focusable descendants of a mounted `FileDialog` = `[fileInput, fileList, listBar, ...buttons]`; a full Tab cycle visits exactly that sequence and wraps. | AC-4, NFR-2 |
+| ST-FE02 | `chdir-dialog-traversal.spec.test.ts` | Same for `ChDirDialog` = `[pathInput, dirList, ...buttons]`. | AC-4, NFR-2 |
+| ST-FE03 | `error-dialog.spec.test.ts` | `errorBox`'s only focusable descendant is the OK button; Tab returns to it. | AC-4, AC-7, AR-9 |
+| ST-FE04 | `file-dialog.spec.test.ts` | Re-baselined composition rects per 03-01 §3. | AC-5 |
+| ST-FE05 | `chdir-dialog.spec.test.ts` | Re-baselined composition rects per 03-02 §3. | AC-5 |
+| ST-FE06 | `error-dialog.spec.test.ts` | A 17-char message yields a 5-row dialog; a 120-char message yields a dialog tall enough that `wrapText(msg, width-2).length` rows are all inside the frame — i.e. nothing clips. | AC-7, AR-3 |
+| ST-FE07 | `error-dialog.spec.test.ts` | `width` still equals `min(60, max(24, len+6))` — the unchanged half of the sizing contract. | AR-2 |
+| ST-FE08 | `file-dialog-resize.spec.test.ts` (new content) | After a real drag-resize: (a) every child's bounds stay inside the frame ring; (b) `fileList.bounds.height` and `.width` strictly increased; (c) resizing below the floor leaves bounds at `49×19`. Properties, not coordinates. | AC-6, AR-5 |
+| ST-FE09 | `ui` test | `wrapText` is exported from the barrel and wraps identically to the pre-move private function (a table of message/width → lines). | AC-10, AR-4 |
 
 ## 3. Behavior-invariance proof (NFR-1)
 

@@ -66,8 +66,8 @@ function focusRing(loop: EventLoop, name: (v: View | null) => string, max = 16):
   return ring; // no wrap within `max` — returned as-is so the assertion shows the runaway order
 }
 
-// ST-02 — path field → tree → OK → Chdir → Revert → Help, then wraps.
-test('ST-02: ChDirDialog Tab-traverses [pathInput, tree, OK, Chdir, Revert, Help]', () => {
+// ST-FE02 — path field → tree → OK → Chdir → Revert → Help, then wraps.
+test('ST-FE02: ChDirDialog Tab-traverses [pathInput, tree, OK, Chdir, Revert, Help]', () => {
   const dlg = new ChDirDialog({ fs: fsFixture(), directory: signal('/home/user') });
   const loop = openChDirDialog(dlg);
 
@@ -81,8 +81,8 @@ test('ST-02: ChDirDialog Tab-traverses [pathInput, tree, OK, Chdir, Revert, Help
   ]);
 });
 
-// ST-02 — the History dropdown and both Labels are decorations, never Tab stops.
-test('ST-02: the History dropdown is not in the ChDirDialog Tab ring', () => {
+// ST-FE02 — the History dropdown and both Labels are decorations, never Tab stops.
+test('ST-FE02: the History dropdown is not in the ChDirDialog Tab ring', () => {
   const dlg = new ChDirDialog({ fs: fsFixture(), directory: signal('/home/user') });
   const loop = openChDirDialog(dlg);
 
