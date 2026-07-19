@@ -2,8 +2,8 @@
 
 > **Implements**: layout-dsl-adoption/GH-110 + GH-111 · **GitHub**: [#110](https://github.com/blendsdk/jsvision/issues/110) + [#111](https://github.com/blendsdk/jsvision/issues/111)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 30/32 tasks (94%) — Phase 4 audits green (AC-6/8/9 verified); 4.5 needs a TTY, 4.7 pending review
-> **Last Updated**: 2026-07-20 (Phase 1 complete — revised after preflight, [report](00-preflight-report.md))
+> **Progress**: 31/32 tasks (97%) — all four phases reviewed and green; 4.5 (live TTY read-through) is the user's step
+> **Last Updated**: 2026-07-20 (Phase 4 close-out — plan revised after preflight, [report](00-preflight-report.md))
 > **Branch**: `feat/canvas-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify && yarn workspace @jsvision/examples test:e2e` (AR-11, AR-17 — `yarn verify` alone runs only the `unit` project, which excludes the e2e files seven witnesses live in)
 > **Routing**: standard → Sonnet-eligible throughout (demos, fixtures and panels; no engine work)
@@ -48,7 +48,7 @@ Panels first: `app.ts` may only drop its `direction:'col'` after the builders ow
 - [x] 3.5 `controls-demo/main.ts` — keep the data-driven loop, move the descriptor onto `col({ padding:1, gap:0 })`; leave `form.background` a separate assignment (AR-15); rename `printFrame`'s loop variable (AR-5)
 - [x] 3.6 `router-demo/main.ts` — the `list` closure → `col({ padding:1, gap:0 }, …)`, `screen.background` left separate (AR-15); `DetailScreen`'s 3 children tagged; **add** the explaining comment at `:59` and leave the assignment (AR-6); rename `printFrame`'s loop variable (AR-5)
 - [x] 3.7 Verify — ST-C4/C5/C6 green; `controls-demo.e2e` + `router-demo.e2e` existing cases green and unedited
-- [x] 3.8 `chrome-bars-demo/main.ts` — `win.add(grow(body))`
+- [x] 3.8 `chrome-bars-demo` — `win.add(grow(body))`. Landed in `tree.ts`, not `main.ts`: task 1.1 relocated this site as part of building the witness seam. 02-current-state's `main.ts:99` was accurate when written
 - [x] 3.9 `drill-down.story.ts` — the `list` closure + `DetailScreen`'s 3 children; **add** the explaining comment at `:29`; do **not** import the DSL's `at` (AR-8)
 - [x] 3.10 Verify — ST-C8/C9 green; `kitchen-sink.smoke.spec` green and unedited (NFR-5)
 - [x] 3.11 Full verify; commit

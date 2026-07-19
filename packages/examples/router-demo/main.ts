@@ -107,6 +107,8 @@ function main(): void {
             fixed(new Text('Repositories — ↑↓ to navigate, Enter to open'), 1),
             grow(listView),
           );
+          // Either form works: a background can also ride on the builder props, as
+          // `col({ background: 'window' }, …)` — see the drill-down story.
           screen.background = 'window';
           return { view: screen }; // no status → the app base bar shows
         },
