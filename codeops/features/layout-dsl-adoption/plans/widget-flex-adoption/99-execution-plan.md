@@ -82,7 +82,8 @@ component spec had said to leave alone.
 **AR-13 (post-phase review, Phase 4).** `editing.ts:230` was converted to `cover()` on a
 justification that only held for the three `grid.ts` sites; its receiver is a caller's custom-editor
 factory return, reachable through the barrel. The clobber was restored and the site became a fourth
-FR-3 preserved receiver. Scope is 47 conversions, not 48. See the register.
+FR-3 preserved receiver, pinned by a new witness (ST-W8, mutation-checked). Scope is 47 conversions
+across 12 touched files, not 48. See the register.
 
 **Close-out results.** AC-8: the residue grep returns exactly the 22 allowlisted statements (recomposed by AR-13 — one JSDoc entry out, one preserved receiver in).
 AC-3/NFR-2: `git diff --stat` on `**/test/**` is 5 added files, 738 insertions, **zero** modifications —

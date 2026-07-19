@@ -47,7 +47,8 @@ deviation.
 
 **Decision (user):** (a). This plan's contract is zero behavior change (NFR-1), and a merge here is a
 behavior change on a published extension seam however benign it looks. All four public receivers now
-behave alike. Group C drops from 4 conversions to 3; the plan's total is 47, not 48.
+behave alike. Group C drops from 4 conversions to 3; the plan's total is 47, not 48. A witness (ST-W8) pins the
+restored clobber, so all four preserved receivers now carry one.
 
 **Note for the record.** This is the third public receiver the AR-1 rule was stated for and applied
 incompletely — preflight caught `overlay.ts:125` (PF-007) the same way. The rule needs a mechanical
