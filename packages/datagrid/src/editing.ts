@@ -227,6 +227,9 @@ export function createEditController<T>(host: EditHost<T>): EditController {
         built.editor = e;
         if (e === null) return null; // a read-only editor kind → mount nothing
         const editorHost = new Group();
+        // Assigned wholesale rather than tagged: a custom editor factory's own layout on the view it
+        // returns is intentionally discarded, so an editor always fills its cell no matter what the
+        // factory set.
         e.layout = { position: 'fill' };
         editorHost.add(e);
         // Enter/Esc bubble up the focus chain from the editor (which leaves them unhandled) to this host.

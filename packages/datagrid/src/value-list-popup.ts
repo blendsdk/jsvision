@@ -12,7 +12,7 @@
  * checkbox list scrolls by keyboard, mouse wheel, and a grabbable scroll bar. All labels are checked
  * by default (equivalent to no filter); unchecking narrows the kept rows.
  */
-import { Group, View, Input, Button, Text, ScrollBar, col, row, spacer, signal } from '@jsvision/ui';
+import { Group, View, Input, Button, Text, ScrollBar, col, row, spacer, signal, grow, fixed } from '@jsvision/ui';
 import type { Signal, DispatchEvent, DrawContext } from '@jsvision/ui';
 import type { DistinctResult } from './filter.js';
 import { buttonRow, buttonCellWidth } from './button-row.js';
@@ -227,17 +227,17 @@ export class ValueList extends Group {
     });
 
     const searchLabel = new Text('Search');
-    searchLabel.layout = { size: { kind: 'fixed', cells: 1 } };
+    fixed(searchLabel, 1);
     const searchInput = new Input({ value: this.search });
-    searchInput.layout = { size: { kind: 'fixed', cells: 1 } };
+    fixed(searchInput, 1);
 
     // The checkbox list and its scroll bar share one offset signal: the list drives it from the
     // keyboard + wheel, the bar from clicks + a grabbable thumb, and each renders from it.
     const scrollTop = signal(0);
     const scrollBar = new ScrollBar({ value: scrollTop, orientation: 'vertical' });
-    scrollBar.layout = { size: { kind: 'fixed', cells: 1 } };
+    fixed(scrollBar, 1);
     const list = new CheckboxList(this.visible, this.checked, (label) => this.toggle(label), scrollTop, scrollBar);
-    list.layout = { size: { kind: 'fr', weight: 1 } };
+    grow(list);
     const listRow = row({ fill: true }, list, scrollBar);
 
     const selectAll = new Button(SELECT_ALL_LABEL, { onClick: () => this.selectAll() });
@@ -254,7 +254,7 @@ export class ValueList extends Group {
             ? 'list truncated — refine search'
             : '',
     );
-    status.layout = { size: { kind: 'fixed', cells: 1 } };
+    fixed(status, 1);
     status.state.visible = this.hasStatus(); // collapse the row once loaded, unless truncated/errored
 
     // Flow the sections top-to-bottom via the `col` DSL, filling the value-list's slot so they sit

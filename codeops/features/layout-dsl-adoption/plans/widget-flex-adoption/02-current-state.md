@@ -56,7 +56,7 @@ and `app-shell.lifecycle.impl.test.ts:43`. The overlay must remain a **direct ch
 its descriptor intact. `col(...)` adds arguments as direct children (verified, no intermediate
 wrapper), so this holds — ST-W1 asserts it *before* the conversion.
 
-## 2. `#116` — `packages/datagrid/src` (36 conversions)
+## 2. `#116` — `packages/datagrid/src` (35 conversions across 6 modules)
 
 | File | In scope | Shape | Target |
 |------|----------|-------|--------|
@@ -65,8 +65,7 @@ wrapper), so this holds — ST-W1 asserts it *before* the conversion.
 | `grid-lifecycle.ts` | 5 (`:76,80,89,96,100`) | 4 size-only + **`:76` carries `direction:'col'`** | taggers, except `:76` → `grow(col(...))` |
 | `filter-popup.ts` | 4 (`:47,48,189,238`) | size-only; `:47/48` are `labelledField` params | taggers (internal — AR-1) |
 | `button-row.ts` | 3 (`:81,84,87`) | flex; `:84` is the caller's button | `row(...)` + taggers (internal — AR-1) |
-| `grid.ts` | 3 (`:508,511,1417`) | `position:'fill'` | `cover()` (AR-8) |
-| `editing.ts` | 1 (`:230`) | `position:'fill'` | `cover()` (AR-8) |
+| `grid.ts` | 3 (`:508,511,1417`) | `position:'fill'` | `cover()` (AR-8) — locally constructed |
 
 **`grid-panels.ts` — the 15 in scope:** `:208, 255, 517, 522, 527, 536, 540, 544, 566, 567, 591,
 619, 625, 658, 674`.
@@ -82,7 +81,8 @@ because `'row'` is the engine default; and `grid-lifecycle.ts:76` is `{ directio
 where a bare `grow()` genuinely flips the placeholder shells to horizontal.
 
 **Dropped/excluded elsewhere:** `quick-filter-row.ts:155`, `personalize-dialog.ts:391` (AR-7),
-`overlay.ts:125` (preserved, AR-11), `filter-popup.ts:272` (reactive self-resize). Full list:
+`overlay.ts:125` (preserved, AR-11), `editing.ts:230` (preserved, AR-13 — its `e` is a caller's
+custom-editor factory return, so AR-1 applies), `filter-popup.ts:272` (reactive self-resize). Full list:
 [01-requirements.md §Residue allowlist](01-requirements.md#residue-allowlist).
 
 `grid-panels.ts` detail: `buildGridBody()` (`:267-681`) assembles up to eight horizontal bands over a
