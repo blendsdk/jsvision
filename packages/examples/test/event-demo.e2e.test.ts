@@ -62,9 +62,10 @@ describe('demo:events composed frames', () => {
 
   beforeAll(async () => {
     const run = await spawnDemo('event-demo', 30_000);
-    expect(run.code).toBe(0);
+    expect(run.code, run.stderr).toBe(0);
     stdout = run.stdout;
-  });
+    // Above vitest's 10s default hook budget, and above the child guard so its message wins.
+  }, 40_000);
 
   test('the desktop is inset by one blank cell on every side, and each band sits on its own row', () => {
     const rows = frameRows(stdout, 'Frame 1 — focus on [OK]');

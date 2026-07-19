@@ -22,7 +22,10 @@ const BODY_LINES = [
  *
  * @example
  * ```ts
- * const app = createApplication({ menuBar, statusLine });
+ * import { createApplication } from '@jsvision/ui';
+ * import { buildChromeBarsWindow } from './tree.js';
+ *
+ * const app = createApplication({});
  * app.desktop.addWindow(buildChromeBarsWindow());
  * ```
  */

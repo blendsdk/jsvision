@@ -19,33 +19,42 @@ const tsxBin = join(monorepoRoot, 'node_modules', '.bin', process.platform === '
 export interface DemoRun {
   readonly code: number | null;
   readonly stdout: string;
+  /** Anything the demo wrote to stderr — a crash's stack trace arrives here, not in `stdout`. */
+  readonly stderr: string;
 }
 
 /**
  * Run `<demoDir>/main.ts` under tsx with no TTY and collect its output.
  *
+ * stderr is drained as well as stdout, for two reasons: a child that fills an unread pipe blocks
+ * forever and would surface only as a timeout, and when a demo throws, the stack trace it prints is
+ * the one piece of information worth having.
+ *
  * @param demoDir Directory name of the demo inside the examples package, e.g. `'event-demo'`.
  * @param timeoutMs How long to wait before killing the child and rejecting.
- * @returns The exit code and captured stdout.
+ * @returns The exit code and everything the demo wrote to stdout and stderr.
  */
 export async function spawnDemo(demoDir: string, timeoutMs = 15_000): Promise<DemoRun> {
   const mainPath = join(pkgRoot, demoDir, 'main.ts');
   return new Promise<DemoRun>((resolvePromise, rejectPromise) => {
     const child = spawn(tsxBin, [mainPath], { stdio: ['pipe', 'pipe', 'pipe'] });
     let stdout = '';
+    let stderr = '';
     const guard = setTimeout(() => {
       child.kill('SIGKILL');
-      rejectPromise(new Error(`${demoDir} did not exit in time`));
+      rejectPromise(new Error(`${demoDir} did not exit in time${stderr === '' ? '' : `; stderr:\n${stderr}`}`));
     }, timeoutMs);
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', (chunk: string) => (stdout += chunk));
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', (chunk: string) => (stderr += chunk));
     child.on('error', (err) => {
       clearTimeout(guard);
       rejectPromise(err);
     });
     child.on('close', (code) => {
       clearTimeout(guard);
-      resolvePromise({ code, stdout });
+      resolvePromise({ code, stdout, stderr });
     });
     child.stdin.end();
   });
