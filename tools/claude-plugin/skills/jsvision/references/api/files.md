@@ -50,7 +50,6 @@ dirList: DirList
 buttons: Button[]
 buttonLabels: string[]
 result(): string | null
-onResized(): void
 chdir(): void
 revert(): void
 valid(command: string): boolean
