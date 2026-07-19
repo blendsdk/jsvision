@@ -74,6 +74,7 @@ Record here if the red step falsifies a derivation.
 
 | # | Expected (plan) | Actual (solver) | Resolution |
 |---|-----------------|-----------------|------------|
+| D-3 | Phase 2 was a behavior-neutral verbatim move | The JSDoc written around it over-promised on astral characters (AR-16) | Docs corrected, behavior pinned by a spec case, real fix filed as GH #124. The move itself remains verbatim. |
 | D-2 | ST-FE09 asserts no wrapped line exceeds the requested width | A glyph wider than the whole width (2-column CJK at width 1) is emitted alone, so the wrap always terminates | Real pre-existing contract detail, not a defect. The oracle now states it explicitly and the promoted public JSDoc documents it. |
 | D-1 | 03-01 §5 / 03-02 §4: focusables are `fileList` / `dirList` and `listBar` | Focus is leaf-only, so the Tab stop is `fileList.rows` / `dirList.rows`; `listBar` (a `ScrollBar`) is **not** focusable at all | Mechanical correction — the *user-visible* traversal order is unchanged, so ST-FE01/ST-FE02 assert the real ring. No behavior impact on the conversion. |
 
