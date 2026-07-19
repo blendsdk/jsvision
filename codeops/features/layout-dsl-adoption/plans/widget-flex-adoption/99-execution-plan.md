@@ -8,7 +8,7 @@
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify` (AR-6)
 > **Routing**: standard → Sonnet-eligible, except tasks 1.7 and Phase 3 (complex)
 
-**Scope**: 48 conversions (12 ui + 36 datagrid) across 10 files, plus 3 preserved sites.
+**Scope**: 47 conversions (12 ui + 35 datagrid) across 10 files, plus 4 preserved sites (AR-13).
 
 ## Phase 1 — Green-first witnesses (standard; 1.7 complex)
 
@@ -79,7 +79,12 @@ builder's overloaded first slot, where a cross-realm `instanceof` miss would sil
 as a props object; now `col({}, …)`. `quitState` was restored to its original position, which the
 component spec had said to leave alone.
 
-**Close-out results.** AC-8: the residue grep returns exactly the 22 allowlisted statements.
+**AR-13 (post-phase review, Phase 4).** `editing.ts:230` was converted to `cover()` on a
+justification that only held for the three `grid.ts` sites; its receiver is a caller's custom-editor
+factory return, reachable through the barrel. The clobber was restored and the site became a fourth
+FR-3 preserved receiver. Scope is 47 conversions, not 48. See the register.
+
+**Close-out results.** AC-8: the residue grep returns exactly the 22 allowlisted statements (recomposed by AR-13 — one JSDoc entry out, one preserved receiver in).
 AC-3/NFR-2: `git diff --stat` on `**/test/**` is 5 added files, 738 insertions, **zero** modifications —
 no locator was edited, so NFR-2's allowance was never invoked. AC-4: both full-screen goldens
 zero-diff. NFR-5: kitchen-sink smoke 71/71, no story touched. NFR-6: both security oracles green and

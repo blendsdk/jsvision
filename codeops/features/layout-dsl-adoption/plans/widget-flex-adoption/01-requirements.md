@@ -8,14 +8,15 @@
 `app/application.ts` compose their internal view trees with the layout DSL at the **12** sites in
 [02-current-state.md §1](02-current-state.md).
 
-**FR-2 — datagrid composition (#116).** The **36** in-scope sites across 7 `packages/datagrid/src`
+**FR-2 — datagrid composition (#116).** The **35** in-scope sites across 7 `packages/datagrid/src`
 modules ([02-current-state.md §2](02-current-state.md)) use the DSL: flex containers via `col`/`row`,
 size tags via `grow`/`fixed`, fill placement via `cover()`. No `at()` conversion remains in scope
 (AR-7).
 
 **FR-3 — the public-clobber contract is preserved and pinned.** At `tab-view.ts:254`,
-`application.ts:330` and `overlay.ts:125` the wholesale assignment **stays**, because an external
-caller can reach those receivers and today's behavior discards any layout they set (AR-1, AR-11).
+`application.ts:330`, `overlay.ts:125` and `editing.ts:230` the wholesale assignment **stays**,
+because an external caller can reach those receivers and today's behavior discards any layout they
+set (AR-1, AR-11, AR-13).
 Each site gains a comment stating why it is deliberately not converted — written in plain language
 with no plan or issue identifiers, per CLAUDE.md's documentation directive — and each is pinned by a
 spec test (ST-W3, ST-W4, ST-W7).
@@ -55,7 +56,7 @@ and `packages/ui/test/controls.completions.security.spec.test.ts` must stay gree
 | # | Criterion | Oracle |
 |---|-----------|--------|
 | AC-1 | All 12 #109 conversions landed; both preserved ui sites documented + pinned | 02-current-state §1 tables · ST-W3 · ST-W4 |
-| AC-2 | All 36 #116 conversions landed | grep audit vs the residue allowlist |
+| AC-2 | All 35 #116 conversions landed | grep audit vs the residue allowlist |
 | AC-3 | Zero geometry/golden assertion edited in any existing test | `git diff` on `**/test/**` at close-out |
 | AC-4 | `golden-screen.spec` + `a11y-golden.spec` green **and zero-diff** | verify + diff |
 | AC-5 | All three preserved sites unchanged and pinned | ST-W3, ST-W4, ST-W7 |
@@ -82,6 +83,7 @@ file and the statement it is, not by where it sits.
 | `ui/src/tabs/tab-view.ts:254` | preserved — public receiver (FR-3) |
 | `ui/src/app/application.ts:330` | preserved — public receiver (FR-3) |
 | `datagrid/src/overlay.ts:125` | preserved — public receiver (FR-3, AR-11) |
+| `datagrid/src/editing.ts:230` | preserved — public receiver, custom-editor factory (FR-3, AR-13) |
 | `ui/src/app/application.ts:335`, `:435` | excluded — T-AO1 hidden host |
 | `ui/src/app/application.ts:347`, `:353` | excluded — #117 owns the merge pattern |
 | `datagrid/src/filter-popup.ts:272` | excluded — reactive self-resize (AR-7) |
@@ -90,7 +92,11 @@ file and the statement it is, not by where it sits.
 | `datagrid/src/quick-filter-row.ts:155` | dropped — issue #116 out-scope (AR-7) |
 | `datagrid/src/personalize-dialog.ts:391` | dropped — issue #116 out-scope (AR-7) |
 | `ui/src/table/data-grid.ts:89`, `ui/src/tabs/tab-view.ts:199` | JSDoc `@example` — #112 (AR-10) |
-| `datagrid/src/grid.ts:293`, `datagrid/src/button-row.ts:63` | JSDoc — #112 (AR-10) |
+| `datagrid/src/grid.ts:293` | JSDoc — #112 (AR-10) |
+
+`button-row.ts:63`'s JSDoc `@example` left this list when AR-13's follow-up rewrote it to recommend
+`at(bar, rect)` — one JSDoc entry out, one preserved receiver (`editing.ts:230`) in, so the total is
+unchanged at 22.
 
 Note `application.ts:314` is a `.layout.rect =` line inside a JSDoc `@example`, so it does not appear in this grep;
 `editable-grid-rows.ts:208` is a JSDoc example in a file otherwise untouched by this plan.
