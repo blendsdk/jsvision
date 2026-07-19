@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-07-18
 > **Last Updated**: 2026-07-19
-> **Progress**: 0 / 10 issues done · requirements: RD-01/RD-02 ✏️ drafted · plan: [tier0-parity-safe](plans/tier0-parity-safe/00-index.md) 🔄 executing (Tier-0 MVP — Phase 1 base Dialog ✅)
+> **Progress**: 0 / 10 issues done · requirements: RD-01/RD-02 ✏️ drafted · plan: [tier0-parity-safe](plans/tier0-parity-safe/00-index.md) ✅ done (Tier-0 MVP — 12/12 tasks; Tier-2 remainder open under #115/#120)
 > **CodeOps Skills Version**: 3.9.0
 
 Adopt the layout DSL (`col`/`row`/`grow`/`fixed`/`spacer`/`stack`/`place` + the #113 additions) across
@@ -23,7 +23,7 @@ disciplines and needs a recorded decision):
 - **[RD-01 — Deliberate TV-divergence flex-elimination policy](requirements/RD-01-deliberate-divergence-policy.md)** ✏️ Drafted
 - **[RD-02 — Non-functional & verification](requirements/RD-02-non-functional-and-verification.md)** ✏️ Drafted
 - **[Ambiguity Register](requirements/00-ambiguity-register.md)** — ✅ GATE PASSED (13 items)
-- **[Plan: tier0-parity-safe](plans/tier0-parity-safe/00-index.md)** — 🔄 Executing (implements RD-01 Tier-0; verification RD-02)
+- **[Plan: tier0-parity-safe](plans/tier0-parity-safe/00-index.md)** — ✅ Done (implements RD-01 Tier-0; verification RD-02) — base `Dialog` center/at · catchers + formDialog body `cover()` · 13 demos · CLAUDE.md carve-out
 
 #115 is re-scoped (ui/forms dialog family, deliberate divergence) and **#120** is new (files dialogs +
 grow-dialog deletion). #116 (datagrid) and #117 (setLayout) stay behavior-preserving — out of the

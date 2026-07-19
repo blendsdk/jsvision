@@ -1,8 +1,8 @@
 # 99 — Execution Plan
 
 > **Plan**: layout-dsl-adoption/tier0-parity-safe · **Implements**: layout-dsl-adoption/RD-01 (Tier-0)
-> **Progress**: 9/12 tasks (75%)
-> **Last Updated**: 2026-07-19 11:50
+> **Progress**: 12/12 tasks (100%)
+> **Last Updated**: 2026-07-19 11:55
 > **CodeOps Skills Version**: 3.9.0
 
 Four independent, parity-safe phases. Each follows the spec-first ordering adapted for a
@@ -55,11 +55,12 @@ carve-out) in one PR; `@jsvision/forms` body (Phase 2) folded into that PR or it
 
 ## Phase 4 — CLAUDE.md carve-out + final gate (R-6, spec 03-03)
 
-- [ ] **4.1 (Impl)** Append the "deliberately non-faithful components" carve-out to the CLAUDE.md
+- [~] **4.1 (Impl)** Append the "deliberately non-faithful components" carve-out to the CLAUDE.md
   "Turbo Vision fidelity" section, naming exactly the nine FR-1 dialog symbols + the RD-01 reference.
-- [ ] **4.2 (Verify)** ST-12 `grep` confirms the block + all nine symbols. Full `yarn verify` +
+  ✅ (completed: 2026-07-19 11:55 — the authoritative FR-1 set is **ten** symbols, not nine (plan prose miscount); all ten named)
+- [x] **4.2 (Verify)** ST-12 `grep` confirms the block + all nine symbols. Full `yarn verify` +
   `check:deps` green. **Run `yarn lint:fix`, commit whatever it changes (/gitcm), then /gitcmp** for
-  the PR-bound push(es).
+  the PR-bound push(es). ✅ (completed: 2026-07-19 11:55 — ST-12 green (block + all ten symbols + RD-01 ref); `yarn verify` + `check:deps` green; lint:fix clean)
 
 ## Done when
 
