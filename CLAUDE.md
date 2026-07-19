@@ -218,3 +218,26 @@ build(ctx) }`) + one line in `stories/index.ts`. `build(ctx)` returns a `Group` 
 - **Spec-first task ordering** (CodeOps): spec tests → red → implement → green → impl tests → verify. A `*.spec.test.ts` is an immutable oracle — if it fails after implementation, fix the code, not the test.
 - `npm audit` is **not** wired into `verify` (it runs in CI and is locally runnable) so audit advisories don't block local typecheck/test loops.
 - Prettier is scoped to code: `codeops/` is in `.prettierignore` (CodeOps process docs, not code).
+
+<!-- CODEOPS-ROUTING:START -->
+
+## Model & effort routing (Mixed core/scaffold)
+
+- Tag each task trivial|standard|complex|sensitive (default standard) in make_plan.
+- exec_plan runs phases inline on the tagged model; dispatch one pinned executor only when a cheaper model than the session's is warranted — trivial/standard→Sonnet (plan-task-executor), complex/sensitive→Opus (plan-task-executor-opus).
+- Core engine work is sensitive (Opus): input decoding, the damage-diff renderer, width/capability probing, colour downsampling, layout solving, and any Turbo Vision fidelity port (the C++ decode). Widget composition, kitchen-sink stories, demos, docs, JSDoc, and fixtures are trivial/standard (Sonnet). preflight always Opus, focused on semantic correctness.
+- Reserve Opus + high/xhigh for make_plan, grill_me, preflight. /compact after each phase; /clear on project switch.
+
+<!-- CODEOPS-ROUTING:END -->
+
+## Quality profile (CodeOps)
+
+<!-- CODEOPS-QUALITY:START -->
+
+lenses: [api-surface]
+security_profile: []
+perf_critical: true
+review_hook: on
+telemetry: on
+agent_models: {}
+<!-- CODEOPS-QUALITY:END -->
