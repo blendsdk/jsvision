@@ -164,11 +164,16 @@ export class FileDialog extends Dialog {
     // Every child below carries an explicit `fixed`/`grow` size. That is not decoration: only `Text`
     // and `Button` know how to measure themselves, so any other widget left to size automatically
     // would collapse to nothing and vanish.
+    //
+    // A consequence worth knowing: the captions stretch to the full content column rather than
+    // hugging their text, so the blank space beside a caption is part of its click zone and focuses
+    // the control it labels. That is a more forgiving target, and it paints identically as long as
+    // the label and dialog backgrounds match — which every shipped theme keeps in step.
     const inputRow = row(grow(this.fileInput), fixed(this.history, 3));
     const leftCol = col(
       fixed(inputLabel, 1),
       fixed(inputRow, 1),
-      fixed(spacer({ fixed: 1 }), 1),
+      spacer({ fixed: 1 }),
       fixed(filesLabel, 1),
       grow(this.fileList), // the listing absorbs whatever height is left, so it grows on resize
       fixed(this.listBar, 1),
