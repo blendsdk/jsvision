@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/GH-110 + GH-111 · **GitHub**: [#110](https://github.com/blendsdk/jsvision/issues/110) + [#111](https://github.com/blendsdk/jsvision/issues/111)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 31/32 tasks (97%) — all four phases reviewed and green; 4.5 (live TTY read-through) is the user's step
+> **Progress**: 31/32 tasks (97%) — PR [#127](https://github.com/blendsdk/jsvision/pull/127) open; only 4.5 (live TTY read-through) is left, and it needs a real terminal
 > **Last Updated**: 2026-07-20 (Phase 4 close-out — plan revised after preflight, [report](00-preflight-report.md))
 > **Branch**: `feat/canvas-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify && yarn workspace @jsvision/examples test:e2e` (AR-11, AR-17 — `yarn verify` alone runs only the `unit` project, which excludes the e2e files seven witnesses live in)
@@ -61,7 +61,7 @@ Panels first: `app.ts` may only drop its `direction:'col'` after the builders ow
 - [x] 4.4 `yarn check:deps`; kitchen-sink smoke green
 - [ ] 4.5 **Manual read-through** — run `yarn designer` on a TTY and at least one `demo:*`; confirm the converted files read well as teaching material, which is the point of FR-6 (not automatable, not a gate)
 - [x] 4.6 Reconcile the #110 and #111 issue bodies and the roadmap tracker rows with the executed scope — including that `view-demo`/`layout.story.ts` remain open under #110 (AR-2)
-- [ ] 4.7 `yarn lint:fix`, full verify, open the PR (base `feat/dsl-adoptation`)
+- [x] 4.7 `yarn lint:fix`, full verify, open the PR (base `feat/dsl-adoptation`)
 
 **Verify**: `TUI_SKIP_PERF=1 yarn verify && yarn workspace @jsvision/examples test:e2e`
 
