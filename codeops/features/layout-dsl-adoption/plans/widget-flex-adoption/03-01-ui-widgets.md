@@ -19,7 +19,7 @@ this.add(inner);
 ```
 
 `corner()` returns its cell already tagged `fixed(cell, 1)` (`:51`), so it needs no wrapper at the
-call sites. The `fr` and `cell` consts (`:150-151`) become unreferenced and are deleted.
+call sites. The `fr` and `cell` consts (`:151-152`) become unreferenced and are deleted.
 
 **Risk — the highest in #109.** `datagrid.spec.test.ts:12-15` documents the solved ratio
 `[header 1 | body 10 | hbar 1]` and 22 golden cases depend on it. The conversion preserves nesting

@@ -37,7 +37,7 @@ characterization witness carries the non-vacuity clause (exact counts + non-zero
 
 ## Phase 3 — #116 `grid-panels.ts` — 15 of 23 sites (complex) — 03-02 Group A
 
-- [ ] 3.1 Pass 1 — convert the 13 pure size-tag sites (`:208, 517, 522, 527, 536, 540, 544, 566, 567, 591, 619, 625, 658`); note `:619` is an inline literal a `fixed1`/`fr` grep will miss
+- [ ] 3.1 Pass 1 — convert the 13 pure size-tag sites (`:208, 517, 522, 527, 536, 540, 544, 566, 567, 591, 619, 625, 658`); note `:619` (inline literal) and `:517/522/527` (`prefixLayout`) are not `fixed1`/`fr`, so a const grep misses them
 - [ ] 3.2 Verify — ST-W6 + `golden-screen.spec` + `a11y-golden.spec` green with **zero** diff (AC-4)
 - [ ] 3.3 Pass 2 — `:255` → `fixed(row(), 1)` (preserving `direction:'row'`); `:674` → `grow(col(bodyStack))`
 - [ ] 3.4 Confirm the 8 out-of-scope sites are untouched (`:441,445,448,578,549,553,557,637`)

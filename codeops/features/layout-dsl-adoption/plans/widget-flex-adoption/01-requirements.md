@@ -54,7 +54,7 @@ and `packages/ui/test/controls.completions.security.spec.test.ts` must stay gree
 
 | # | Criterion | Oracle |
 |---|-----------|--------|
-| AC-1 | All 12 #109 conversions landed; both preserved ui sites documented + pinned | 03-01 table · ST-W3 · ST-W4 |
+| AC-1 | All 12 #109 conversions landed; both preserved ui sites documented + pinned | 02-current-state §1 tables · ST-W3 · ST-W4 |
 | AC-2 | All 36 #116 conversions landed | grep audit vs the residue allowlist |
 | AC-3 | Zero geometry/golden assertion edited in any existing test | `git diff` on `**/test/**` at close-out |
 | AC-4 | `golden-screen.spec` + `a11y-golden.spec` green **and zero-diff** | verify + diff |
@@ -66,8 +66,16 @@ and `packages/ui/test/controls.completions.security.spec.test.ts` must stay gree
 
 ## Residue allowlist
 
-After this plan, a `grep -nE "\.layout\s*=[^=]"` across the in-scope files must return **exactly**
-these 22 sites and no others. Task 5.1 compares against this list — not against a count.
+After this plan, a `grep -nE "\.layout\s*=[^=]"` across the 12 touched files — `ui/src/table/data-grid.ts`,
+`ui/src/tabs/tab-view.ts`, `ui/src/app/application.ts`, and `datagrid/src/{grid-panels,value-list-popup,
+grid-lifecycle,filter-popup,button-row,grid,editing,overlay,quick-filter-row,personalize-dialog}.ts` —
+must return **exactly** these 22 statements and no others.
+
+**Match on file + statement, not on line number.** The line numbers below are as of pre-conversion
+`feat/dsl-adoptation` HEAD and *will shift*: converting `application.ts:341` collapses four `add()`
+calls, `tab-view.ts:244` folds into an expression, and `grid-panels.ts:255`/`:674` each collapse two
+lines. The executor re-anchors the line numbers when running task 5.1; a site is accounted for by its
+file and the statement it is, not by where it sits.
 
 | File:line | Category |
 |---|---|
@@ -84,5 +92,5 @@ these 22 sites and no others. Task 5.1 compares against this list — not agains
 | `ui/src/table/data-grid.ts:89`, `ui/src/tabs/tab-view.ts:199` | JSDoc `@example` — #112 (AR-10) |
 | `datagrid/src/grid.ts:293`, `datagrid/src/button-row.ts:63` | JSDoc — #112 (AR-10) |
 
-Note `application.ts:313` is `.layout.rect =`, so it does not appear in this grep;
+Note `application.ts:314` is a `.layout.rect =` line inside a JSDoc `@example`, so it does not appear in this grep;
 `editable-grid-rows.ts:208` is a JSDoc example in a file otherwise untouched by this plan.

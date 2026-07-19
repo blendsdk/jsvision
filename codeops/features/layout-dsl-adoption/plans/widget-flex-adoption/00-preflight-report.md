@@ -4,8 +4,69 @@
 > independent `preflight-auditor` dispatches (one per dimension cluster) were used as the
 > counter-measure; the findings below are theirs, merged and de-duplicated.
 > **Scanned**: 2026-07-19 · plan at `06e226f6` · branch `feat/dsl-adoptation`
-> **Verdict**: ✅ **PASSED — all 27 findings resolved** (iteration 1 scanned BLOCKED; resolutions applied 2026-07-19)
-> **Findings**: 27 (🔴 1 · 🟠 10 · 🟡 16)
+> **Verdict**: ✅ **PASSED — 38 findings across 2 iterations, all resolved**
+> **Iteration 1**: 27 findings (🔴 1 · 🟠 10 · 🟡 16) — scanned BLOCKED, resolved 2026-07-19
+> **Iteration 2**: 11 findings (🟠 2 · 🟡 9) — verification pass, resolved 2026-07-19
+
+## Iteration 2 — verification pass
+
+Three auditors re-checked the resolutions rather than re-scanning fresh: one verifying each of the
+27 fixes actually landed, one hunting regressions introduced *by* the revision, one re-grounding the
+revision's new factual claims in source.
+
+**Result: 23 of 27 verified clean, 4 partial, 0 missing, 0 wrong** — plus 11 new findings.
+
+The partials were all propagation misses: a fix landed in the plan documents but not in the feature
+roadmap, or landed in two of three places.
+
+### PF-028 🟠 MAJOR — the blind-spot fix did not close the blind spot
+
+The iteration-1 rule added to `03-02` reads "*two sites in this file's scope carry a `direction`*".
+It is **four**: `button-row.ts:81` and `:87` were missed. Worse, those two carry props the rule never
+names — `:81` has `gap: BUTTON_GAP` and `:87` has `justify:'center'`, and the prescribed bare
+`row(...)` writes only `direction`.
+
+`BUTTON_GAP = 1` and `buttonCellWidth` (`button-row.ts:16,35`) computes widths assuming that gap, so
+dropping it shifts every button after the first. ST-W5's "the cell centers" would have caught the
+`justify` loss; **nothing** asserted inter-button spacing, so the `gap` loss would have been silent —
+exactly the failure class PF-002/PF-003 were raised about.
+
+**Resolved:** the rule now carries a four-row table naming every extra prop per site, with explicit
+targets (`fixed(row({ gap: BUTTON_GAP }), BUTTON_HEIGHT)`, `grow(row({ justify: 'center' }, button))`
+— both expressible since `Flex` is `Omit<LayoutProps,'direction'>`), and ST-W5 now asserts the second
+button's solved `x`.
+
+### PF-029 🟠 MAJOR — the feature roadmap's #116 row still carried pre-preflight scope
+
+`00-roadmap.md:57` still said 24 sites, all convertible, and "3 `at()` sites are pulled in" — the
+narrative preflight overturned. That row is what an executor reads when starting #116, and acting on
+it would have re-introduced PF-001. Task 5.5 only reconciles the roadmap at *close-out*, after the
+damage window. **Resolved:** row rewritten to the post-preflight scope.
+
+### PF-030 … PF-038 🟡 MINOR — all resolved
+
+| # | Finding | Fix |
+|---|---------|-----|
+| PF-030 | The residue allowlist is line-pinned but used as a *post*-conversion oracle; conversions collapse lines above listed sites, so the numbers cannot survive. The file set was also never enumerated | Allowlist now matches on **file + statement**, states the numbers are pre-conversion anchors, and lists all 12 files |
+| PF-031 | AR-12 lists "ST-W1/W3/W4/W7 remain `.spec`", omitting ST-W2 — which shares a file with ST-W1 and backs AC-6 | ST-W2 added |
+| PF-032 | `03-02` calls `:674` "the only container expressible as a builder" two lines after converting `:255` to `fixed(row(), 1)` — also a builder; and AR-3 excludes four sites *because* only a degenerate empty builder is possible, which is what `:255` gets | Reworded to "the only container whose children can be passed inline", with the reason an empty builder is worth it at `:255` and not at `:441/445/448/578` |
+| PF-033 | AC-1's oracle cites "03-01 table"; `03-01` has no table | Cites `02-current-state` §1 |
+| PF-034 | `03-01:22` says the `fr`/`cell` consts are at `:150-151`; they are at `:151-152`. Corrected in two docs during iteration 1, missed in the third | Corrected |
+| PF-035 | AR-9's new link `00-index.md#the-applicationts-trade` does not resolve — the heading slug is `…-ar-9` | `(AR-9)` dropped from the heading |
+| PF-036 | The roadmap still labelled `filter-popup.ts:272` the "#113 S6 self-config case", the framing PF-019 rejected | Folded into the PF-029 rewrite |
+| PF-037 | ST-W7 states the caller's w/h are honored unconditionally; `overlay.ts:107-108` honors them **only when** the pre-set layout has `position:'absolute'` *and* a `rect`. It also implies the caller's `rect` survives wholesale, when `x`/`y` are always recomputed | Second witness leg added for the non-absolute case; the x/y recomputation spelled out |
+| PF-038 | `application.ts:313` → `:314`, and it is a JSDoc example line; separately, `:517/522/527` use `prefixLayout`, so a `fixed1`/`fr` grep misses them too — not just `:619` | Both corrected |
+
+### Verified clean in iteration 2
+
+The 🔴 PF-001 fix landed consistently in all six places. Independently re-derived and confirmed:
+`grid-panels.ts` has exactly 23 sites and the 15/8 lists partition them with no overlap or omission;
+all counts (12 + 36 = 48, 15 + 17 + 4 = 36, 35 tasks, 22 allowlist rows) are correct; the residue
+allowlist matches a real grep exactly, with no unlisted survivor in any touched file; every
+overlay-locator citation is exact; `row()` with zero arguments type-checks (an auditor compiled a
+probe); `layout.ts:104-107` does ignore `size` on a fill box; `TabBody`'s override is at
+`tab-view.ts:137-141`; AR-5's RD-02 subset maps line-for-line; every other intra-plan link resolves;
+no surviving task references removed scope.
 
 ## Resolution summary
 

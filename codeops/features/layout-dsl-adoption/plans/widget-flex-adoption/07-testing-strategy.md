@@ -68,7 +68,14 @@ Traces to FR-3, AC-5.
 
 | Input | Expected |
 |-------|----------|
-| a view passed to `mountCellOverlay` carrying `layout = { padding: 1, direction: 'col', position:'absolute', rect: {…} }` | after mount, `view.layout` is exactly `{ position:'absolute', rect: {…} }` — `padding` and `direction` are discarded, while the caller's `rect` **width/height are still honored** per `overlay.ts:106-108` |
+| a view carrying `layout = { padding: 1, direction:'col', position:'absolute', rect: {…} }` | after mount, `view.layout` is exactly `{ position:'absolute', rect }` — `padding` and `direction` discarded, and the caller's **width/height carried into the new rect** |
+| a view carrying `layout = { direction:'col', size: fr 1 }` (**no** `position:'absolute'`) | `padding`/`direction`/`size` discarded, and width/height come from the **passed** rect, not the caller's |
+
+Both legs matter: `overlay.ts:107-108` honors the caller's width/height **only when** the pre-set
+layout has `position:'absolute'` *and* a `rect`. A single-case witness would pin half the contract.
+
+Note the rect's `x`/`y` are always **recomputed** from the host origin with viewport clamping
+(`:109-123`) — assert the host-local origin, never the caller's `x`/`y`.
 
 Pins AR-11. This is the site preflight found the public-receiver rule had never been applied to, and
 whose existing coverage (`filter-customization.spec.test.ts:105-106`) asserts only `rect` w/h — which
@@ -81,7 +88,7 @@ Traces to FR-3, AC-5.
 
 | Input | Expected |
 |-------|----------|
-| `buttonRow([a, b], 10)` | row is `direction:'row'`, height `BUTTON_HEIGHT`; each button width 10; the cell centers |
+| `buttonRow([a, b], 10)` | row is `direction:'row'`, height `BUTTON_HEIGHT`; each button width 10; the cell centers; **and the second button's solved `x` is the first's right edge + `BUTTON_GAP`** |
 | `grid-lifecycle` placeholder / spinner / error shells | the **children's** solved rects (stacked y-offsets), not just the shell's — this is what would catch `:76` losing `direction:'col'` |
 | `ValueList` popup | solved rects of search label, input, scrollbar, list, status |
 
