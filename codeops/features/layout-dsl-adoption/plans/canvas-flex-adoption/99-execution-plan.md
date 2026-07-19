@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/GH-110 + GH-111 · **GitHub**: [#110](https://github.com/blendsdk/jsvision/issues/110) + [#111](https://github.com/blendsdk/jsvision/issues/111)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 25/32 tasks (78%) — Phase 3 done (all 32 conversions landed)
+> **Progress**: 30/32 tasks (94%) — Phase 4 audits green (AC-6/8/9 verified); 4.5 needs a TTY, 4.7 pending review
 > **Last Updated**: 2026-07-20 (Phase 1 complete — revised after preflight, [report](00-preflight-report.md))
 > **Branch**: `feat/canvas-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify && yarn workspace @jsvision/examples test:e2e` (AR-11, AR-17 — `yarn verify` alone runs only the `unit` project, which excludes the e2e files seven witnesses live in)
@@ -55,12 +55,12 @@ Panels first: `app.ts` may only drop its `direction:'col'` after the builders ow
 
 ## Phase 4 — Hardening & close-out (standard)
 
-- [ ] 4.1 Grep audit — `.layout =` across the 9 files returns **exactly** the 3-statement residue allowlist in 01-requirements (AC-8)
-- [ ] 4.2 `git diff --stat` on `**/test/**` — zero edits to any pre-existing test **case** (AC-6). **No locator edit is permitted**: FR-5 forbids nesting changes, so a broken locator is a mis-transcription that halts the phase and is fixed in source, never in the test
-- [ ] 4.3 `git diff --stat` — confirm no file under `packages/{core,ui,datagrid,files,forms,web}/src` was touched (AC-9, NFR-6)
-- [ ] 4.4 `yarn check:deps`; kitchen-sink smoke green
+- [x] 4.1 Grep audit — `.layout =` across the 9 files returns **exactly** the 3-statement residue allowlist in 01-requirements (AC-8)
+- [x] 4.2 `git diff --stat` on `**/test/**` — zero edits to any pre-existing test **case** (AC-6). **No locator edit is permitted**: FR-5 forbids nesting changes, so a broken locator is a mis-transcription that halts the phase and is fixed in source, never in the test
+- [x] 4.3 `git diff --stat` — confirm no file under `packages/{core,ui,datagrid,files,forms,web}/src` was touched (AC-9, NFR-6)
+- [x] 4.4 `yarn check:deps`; kitchen-sink smoke green
 - [ ] 4.5 **Manual read-through** — run `yarn designer` on a TTY and at least one `demo:*`; confirm the converted files read well as teaching material, which is the point of FR-6 (not automatable, not a gate)
-- [ ] 4.6 Reconcile the #110 and #111 issue bodies and the roadmap tracker rows with the executed scope — including that `view-demo`/`layout.story.ts` remain open under #110 (AR-2)
+- [x] 4.6 Reconcile the #110 and #111 issue bodies and the roadmap tracker rows with the executed scope — including that `view-demo`/`layout.story.ts` remain open under #110 (AR-2)
 - [ ] 4.7 `yarn lint:fix`, full verify, open the PR (base `feat/dsl-adoptation`)
 
 **Verify**: `TUI_SKIP_PERF=1 yarn verify && yarn workspace @jsvision/examples test:e2e`
