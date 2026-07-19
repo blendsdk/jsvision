@@ -3,7 +3,7 @@
  * without starting the demo. `main.ts` runs the application the moment it is imported, so anything
  * that wants the composed window — a test, a screenshot tool — needs it from here instead.
  */
-import { Window, Text } from '@jsvision/ui';
+import { Window, Text, grow } from '@jsvision/ui';
 
 /** The body copy shown inside the window — one line per point the demo is making. */
 const BODY_LINES = [
@@ -33,8 +33,6 @@ export function buildChromeBarsWindow(): Window {
   const win = new Window('Flexible Chrome Bars');
   win.number = 1;
   win.layout.rect = { x: 2, y: 2, width: 48, height: 9 };
-  const body = new Text(BODY_LINES.join('\n'));
-  body.layout = { size: { kind: 'fr', weight: 1 } };
-  win.add(body);
+  win.add(grow(new Text(BODY_LINES.join('\n'))));
   return win;
 }

@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/GH-110 + GH-111 · **GitHub**: [#110](https://github.com/blendsdk/jsvision/issues/110) + [#111](https://github.com/blendsdk/jsvision/issues/111)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 14/32 tasks (44%) — Phase 2 done (theme-designer, 7/7 conversions)
+> **Progress**: 25/32 tasks (78%) — Phase 3 done (all 32 conversions landed)
 > **Last Updated**: 2026-07-20 (Phase 1 complete — revised after preflight, [report](00-preflight-report.md))
 > **Branch**: `feat/canvas-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify && yarn workspace @jsvision/examples test:e2e` (AR-11, AR-17 — `yarn verify` alone runs only the `unit` project, which excludes the e2e files seven witnesses live in)
@@ -41,17 +41,17 @@ Panels first: `app.ts` may only drop its `direction:'col'` after the builders ow
 
 ## Phase 3 — example demos (standard) — 03-01
 
-- [ ] 3.1 `editor-demo/main.ts` — `col(grow(ed), fixed(ind,1))`
-- [ ] 3.2 `event-demo/main.ts` — the three-level root; fold the `for (const b of …)` loop into inline `grow()`; carry **`gap:2`** and **`padding:1`** on the builders; leave both `.background =` lines separate (AR-15)
-- [ ] 3.3 `event-demo` — rename `printFrame`'s `for (const row of rows)` → `line` (AR-5), since this file now imports the `row` builder
-- [ ] 3.4 Verify — ST-C1/C2/C3 + ST-C7 green; `editor-demo.e2e` + `event-demo.e2e` existing cases green and unedited
-- [ ] 3.5 `controls-demo/main.ts` — keep the data-driven loop, move the descriptor onto `col({ padding:1, gap:0 })`; leave `form.background` a separate assignment (AR-15); rename `printFrame`'s loop variable (AR-5)
-- [ ] 3.6 `router-demo/main.ts` — the `list` closure → `col({ padding:1, gap:0 }, …)`, `screen.background` left separate (AR-15); `DetailScreen`'s 3 children tagged; **add** the explaining comment at `:59` and leave the assignment (AR-6); rename `printFrame`'s loop variable (AR-5)
-- [ ] 3.7 Verify — ST-C4/C5/C6 green; `controls-demo.e2e` + `router-demo.e2e` existing cases green and unedited
-- [ ] 3.8 `chrome-bars-demo/main.ts` — `win.add(grow(body))`
-- [ ] 3.9 `drill-down.story.ts` — the `list` closure + `DetailScreen`'s 3 children; **add** the explaining comment at `:29`; do **not** import the DSL's `at` (AR-8)
-- [ ] 3.10 Verify — ST-C8/C9 green; `kitchen-sink.smoke.spec` green and unedited (NFR-5)
-- [ ] 3.11 Full verify; commit
+- [x] 3.1 `editor-demo/main.ts` — `col(grow(ed), fixed(ind,1))`
+- [x] 3.2 `event-demo/main.ts` — the three-level root; fold the `for (const b of …)` loop into inline `grow()`; carry **`gap:2`** and **`padding:1`** on the builders; leave both `.background =` lines separate (AR-15)
+- [x] 3.3 `event-demo` — rename `printFrame`'s `for (const row of rows)` → `line` (AR-5), since this file now imports the `row` builder
+- [x] 3.4 Verify — ST-C1/C2/C3 + ST-C7 green; `editor-demo.e2e` + `event-demo.e2e` existing cases green and unedited
+- [x] 3.5 `controls-demo/main.ts` — keep the data-driven loop, move the descriptor onto `col({ padding:1, gap:0 })`; leave `form.background` a separate assignment (AR-15); rename `printFrame`'s loop variable (AR-5)
+- [x] 3.6 `router-demo/main.ts` — the `list` closure → `col({ padding:1, gap:0 }, …)`, `screen.background` left separate (AR-15); `DetailScreen`'s 3 children tagged; **add** the explaining comment at `:59` and leave the assignment (AR-6); rename `printFrame`'s loop variable (AR-5)
+- [x] 3.7 Verify — ST-C4/C5/C6 green; `controls-demo.e2e` + `router-demo.e2e` existing cases green and unedited
+- [x] 3.8 `chrome-bars-demo/main.ts` — `win.add(grow(body))`
+- [x] 3.9 `drill-down.story.ts` — the `list` closure + `DetailScreen`'s 3 children; **add** the explaining comment at `:29`; do **not** import the DSL's `at` (AR-8)
+- [x] 3.10 Verify — ST-C8/C9 green; `kitchen-sink.smoke.spec` green and unedited (NFR-5)
+- [x] 3.11 Full verify; commit
 
 ## Phase 4 — Hardening & close-out (standard)
 
