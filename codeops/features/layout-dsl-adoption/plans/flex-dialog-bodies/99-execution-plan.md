@@ -1,8 +1,8 @@
 # 99 — Execution Plan
 
 > **Plan**: layout-dsl-adoption/flex-dialog-bodies · **Implements**: RD-01 (Tier-2 ui/forms), RD-02 · **GitHub**: #115
-> **Progress**: 8/14 tasks (57%)
-> **Last Updated**: 2026-07-19 16:32
+> **Progress**: 11/14 tasks (79%)
+> **Last Updated**: 2026-07-19 16:52
 > **CodeOps Skills Version**: 3.9.0
 
 Spec-first, behavior-invariant rebuild. Order per family: **traversal spec (green-on-current) → [geometry
@@ -54,9 +54,17 @@ no-regression). Commit via **/gitcm**; before the PR-bound push run `yarn lint:f
 
 ## Phase 3 — formDialog buttons (`forms/form-dialog.ts`) · spec 03-03
 
-- [ ] **3.1 (Spec / re-baseline)** Re-derive `form-dialog.impl:80` (L95-98) from a `position:'absolute'` predicate + rect-delta to the flex-row behavioral geometry (2 buttons, same `bounds.y`, OK left of Cancel, centered) → **RED** against current `place()` code. Add/extend ST-T3 (Tab reaches OK → Cancel), green-on-current. Also swap the **button locator** in `:80`/`:139`/`:184` from `dlg.children.filter(...)` to a `descendants()` walk (the buttons are now grandchildren via the band; assertions unchanged), and add a `renderRoot.flush()` before `:80` reads solved `bounds` (PF-001).
-- [ ] **3.2 (Impl)** Replace the two `place(ok/cancel, buttonRects())` with `at(row({justify:'center',gap:2}, ok, cancel), bottomBand)`; **keep `cover(body)`** and `cancel.grabsFocus=false`; delete local `place`/`buttonRects`/`PAIR_WIDTH`.
-- [ ] **3.3 (Green)** **Rebuild `@jsvision/ui` first**, then `form-dialog.impl:80` + ST-T3 green; `:59`/`:104` + all 14 `form-dialog.spec` + `form-dialog-security.spec` green **unedited**, `:139`/`:184` green (assertions unedited, locator swap only); `yarn workspace @jsvision/forms test` green; no local helper left (`grep`). *(commit boundary — PR body notes the re-derivation citing RD-01)*
+> **Phase ref**: 9dcf2a15
+>
+> **Note.** The re-baselined `:80` block was re-derived to behavioural invariants (same row, OK left of
+> Cancel, centred pair) rather than to literal numbers, so it is green **before and after** rather than
+> red-then-green. That is a stronger oracle than the plan anticipated. PF-001 was confirmed live: the
+> `dlg.children` locator in `:80`/`:139`/`:184` had to become a `descendants()` walk, exactly as the
+> preflight predicted — without it `:139` crashes and `:184` fails.
+
+- [x] **3.1 (Spec / re-baseline)** Re-derive `form-dialog.impl:80` (L95-98) from a `position:'absolute'` predicate + rect-delta to the flex-row behavioral geometry (2 buttons, same `bounds.y`, OK left of Cancel, centered) → **RED** against current `place()` code. Add/extend ST-T3 (Tab reaches OK → Cancel), green-on-current. Also swap the **button locator** in `:80`/`:139`/`:184` from `dlg.children.filter(...)` to a `descendants()` walk (the buttons are now grandchildren via the band; assertions unchanged), and add a `renderRoot.flush()` before `:80` reads solved `bounds` (PF-001).
+- [x] **3.2 (Impl)** Replace the two `place(ok/cancel, buttonRects())` with `at(row({justify:'center',gap:2}, ok, cancel), bottomBand)`; **keep `cover(body)`** and `cancel.grabsFocus=false`; delete local `place`/`buttonRects`/`PAIR_WIDTH`.
+- [x] **3.3 (Green)** **Rebuild `@jsvision/ui` first**, then `form-dialog.impl:80` + ST-T3 green; `:59`/`:104` + all 14 `form-dialog.spec` + `form-dialog-security.spec` green **unedited**, `:139`/`:184` green (assertions unedited, locator swap only); `yarn workspace @jsvision/forms test` green; no local helper left (`grep`). *(commit boundary — PR body notes the re-derivation citing RD-01)*
 
 ## Phase 4 — Non-regression sweep, render check, wrap
 

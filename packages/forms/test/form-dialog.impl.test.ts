@@ -48,6 +48,21 @@ function makeHost(w = 60, h = 20) {
   return { loop, host, added };
 }
 
+/**
+ * All descendants of a view, in tree order. The OK/Cancel pair sits inside a centred band rather than
+ * directly on the dialog, so locating the buttons is a tree walk rather than a children scan.
+ */
+function descendants(v: View): View[] {
+  const out: View[] = [];
+  for (const c of (v as unknown as { children?: View[] }).children ?? []) out.push(c, ...descendants(c));
+  return out;
+}
+
+/** The dialog's buttons, in tree order (OK then Cancel). */
+function buttonsOf(dlg: Group): Button[] {
+  return descendants(dlg).filter((c): c is Button => c instanceof Button);
+}
+
 function bodyInput(form: Form<typeof Schema, Init>): { view: View; input: Input } {
   const g = new Group();
   const input = new Input({ value: form.field('name').value });
@@ -77,7 +92,7 @@ test('impl: focus lands on the first focusable body view when the modal opens', 
   await p;
 });
 
-test('impl: OK + Cancel are absolutely placed as a centered pair on one row', async () => {
+test('impl: OK + Cancel sit as a centered pair on one row', async () => {
   const { loop, host, added } = makeHost();
   const p = formDialog(host, {
     schema: Schema,
@@ -89,13 +104,20 @@ test('impl: OK + Cancel are absolutely placed as a centered pair on one row', as
   });
 
   const dlg = added[0] as unknown as Group;
-  const buttons = dlg.children.filter((c): c is Button => c instanceof Button);
+  const buttons = buttonsOf(dlg);
   expect(buttons.length).toBe(2); // OK + Cancel
 
-  expect(buttons.every((b) => b.layout?.position === 'absolute')).toBe(true);
-  const rects = buttons.map((b) => b.layout!.rect!).sort((a, b) => a.x - b.x);
-  expect(rects[0].y).toBe(rects[1].y); // same row
-  expect(rects[1].x - rects[0].x).toBe(10 + 2); // BUTTON.width (10) + GAP (2)
+  // Read the SOLVED placement rather than a static rect: the pair is laid out by a centred band, so
+  // the buttons carry no rectangle of their own. What must hold is the arrangement, not the numbers.
+  loop.renderRoot.flush();
+  const rr = loop.renderRoot;
+  const origins = buttons.map((b) => rr.originOf(b)!);
+  expect(origins[0].y).toBe(origins[1].y); // one row
+  expect(origins[0].x).toBeLessThan(origins[1].x); // OK left of Cancel
+  const dlgOrigin = rr.originOf(dlg as unknown as View)!;
+  const leftMargin = origins[0].x - dlgOrigin.x;
+  const rightMargin = dlgOrigin.x + 44 - (origins[1].x + buttons[1].bounds.width);
+  expect(leftMargin).toBe(rightMargin); // centered as a pair
 
   loop.emitCommand(Commands.cancel);
   await p;
@@ -163,7 +185,7 @@ test('impl: clicking Cancel discards without touching/validating the body (no er
   loop.focusView(nameInput); // the user is editing the (invalid, empty) field
 
   const dlg = added[0] as unknown as Group;
-  const cancel = dlg.children.filter((c): c is Button => c instanceof Button)[1]; // [ok, cancel]
+  const cancel = buttonsOf(dlg)[1]; // [ok, cancel]
   const o = loop.renderRoot.originOf(cancel)!;
   // Mouse-down on Cancel must NOT blur the field (grabsFocus:false), so nothing is touched/revealed.
   loop.dispatch({ type: 'mouse', kind: 'down', button: 0, x: o.x + 2 + 1, y: o.y + 1 });
@@ -200,7 +222,7 @@ test('impl: the OK button greys (state.disabled) while a submit is in flight, th
   });
 
   const dlg = added[0] as unknown as Group;
-  const buttons = dlg.children.filter((c): c is Button => c instanceof Button);
+  const buttons = buttonsOf(dlg);
   expect(buttons.filter((b) => b.state.disabled).length).toBe(0); // both enabled at rest
 
   form.field('name').value.set('db');

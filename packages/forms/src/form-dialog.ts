@@ -12,8 +12,8 @@
  * inert) so no concurrent close can pop the modal mid-await. The sync `valid()` is repurposed to an
  * optimistic `form.isValid()` app-quit veto.
  */
-import { Dialog, Button, cancelButton, Commands, cover } from '@jsvision/ui';
-import type { View, Rect, DispatchEvent, ModalDialogHost } from '@jsvision/ui';
+import { Dialog, Button, cancelButton, Commands, cover, at, row, fixed } from '@jsvision/ui';
+import type { View, DispatchEvent, ModalDialogHost } from '@jsvision/ui';
 import type { z } from 'zod';
 import type { AsyncValidator, Form } from './types.js';
 import { createForm } from './create-form.js';
@@ -50,26 +50,9 @@ export interface FormDialogOptions<S extends z.ZodObject<z.ZodRawShape>, I> {
   height: number;
 }
 
-/** Standard dialog-button cell size and the centered layout of the OK + Cancel pair. */
+/** Standard dialog-button cell size and the gap between the OK and Cancel faces. */
 const BUTTON = { width: 10, height: 2 } as const;
 const GAP = 2;
-const PAIR_WIDTH = BUTTON.width + GAP + BUTTON.width;
-
-/** Place `view` at an absolute rect and return it (chainable). */
-function place<T extends View>(view: T, rect: Rect): T {
-  view.layout = { ...view.layout, position: 'absolute', rect };
-  return view;
-}
-
-/** The OK/Cancel rects: a centered pair on the second-to-last row (above the bottom frame). */
-function buttonRects(width: number, height: number): { ok: Rect; cancel: Rect } {
-  const startX = Math.max(2, Math.trunc((width - PAIR_WIDTH) / 2));
-  const y = Math.max(2, height - BUTTON.height - 1);
-  return {
-    ok: { x: startX, y, ...BUTTON },
-    cancel: { x: startX + BUTTON.width + GAP, y, ...BUTTON },
-  };
-}
 
 /**
  * The internal `Dialog` subclass that gates OK on the async `form.submit()` and seals itself for the
@@ -215,7 +198,6 @@ export function formDialog<S extends z.ZodObject<z.ZodRawShape>, I extends Recor
       default: true,
       disabled: () => form.submitting(), // greyed + inert while a submit runs
     });
-    const rects = buttonRects(options.width, options.height);
     let mounted = false;
     try {
       const body = options.body(form); // caller-built — may throw synchronously (e.g. form.field('typo'))
@@ -226,13 +208,15 @@ export function formDialog<S extends z.ZodObject<z.ZodRawShape>, I extends Recor
       // focused field's caret). `fill` needs no rect and re-solves if the dialog is ever resized.
       cover(body);
       dlg.add(body);
-      dlg.add(place(ok, rects.ok));
       // Cancel must not steal focus from the body on click: a click-to-focus would blur the field
       // being edited, and a blur-driven error reveal (bindField / an Input validator) would flash the
       // validation red for one frame before the dialog closes. Cancel stays Tab-reachable + Esc works.
       const cancel = cancelButton();
       cancel.grabsFocus = false;
-      dlg.add(place(cancel, rects.cancel));
+      // The pair rides a band anchored to the row above the bottom frame, centered across the dialog.
+      // The band is added after the body so it paints on top of the covering overlay.
+      const band = row({ justify: 'center', gap: GAP }, fixed(ok, BUTTON.width), fixed(cancel, BUTTON.width));
+      dlg.add(at(band, { x: 0, y: options.height - BUTTON.height - 1, width: options.width, height: BUTTON.height }));
       host.desktop.addWindow(dlg);
       mounted = true;
       const command = await host.loop.execView<string>(dlg);
