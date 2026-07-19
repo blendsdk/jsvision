@@ -1,8 +1,8 @@
 # 99 — Execution Plan
 
 > **Plan**: layout-dsl-adoption/tier0-parity-safe · **Implements**: layout-dsl-adoption/RD-01 (Tier-0)
-> **Progress**: 3/12 tasks (25%)
-> **Last Updated**: 2026-07-19 11:14
+> **Progress**: 6/12 tasks (50%)
+> **Last Updated**: 2026-07-19 11:32
 > **CodeOps Skills Version**: 3.9.0
 
 Four independent, parity-safe phases. Each follows the spec-first ordering adapted for a
@@ -28,17 +28,17 @@ carve-out) in one PR; `@jsvision/forms` body (Phase 2) folded into that PR or it
 
 ## Phase 2 — Catchers + `formDialog` body `cover()` (R-2/R-3/R-4, spec 03-02)
 
-- [ ] **2.1 (Spec/witness)** Add `menu-catcher.cover.impl.test.ts` (ST-9: open menu → resize
+- [x] **2.1 (Spec/witness)** Add `menu-catcher.cover.impl.test.ts` (ST-9: open menu → resize
   viewport → outside click closes); confirm **green on current code**. Confirm witnesses ST-5
   (`form-dialog.impl:104`), ST-6 (`popup.spec:120-166`), ST-7 (`app-shell.menu.spec/impl`), ST-8
-  (`app-shell.lifecycle.impl`), ST-13 (security specs) green.
-- [ ] **2.2 (Impl)** `cover(catcher)` in `menu/controller.ts` `mountCatcher`; reduce `resize()` to a
+  (`app-shell.lifecycle.impl`), ST-13 (security specs) green. ✅ (completed: 2026-07-19 11:23 — ST-9 green on current code (2 tests); ST-5/6/7/8/13 green in the Phase-1 full verify baseline)
+- [~] **2.2 (Impl)** `cover(catcher)` in `menu/controller.ts` `mountCatcher`; reduce `resize()` to a
   no-op stub (call site in `application.ts` retained). `cover(catcher)` in `dropdown/popup.ts`.
   `cover(body)` in `forms/form-dialog.ts` (keep the collapse-warning comment). Add `cover` imports.
-  **Leave `application.ts` app overlay + its `onResize` re-anchor untouched (PA-1).**
-- [ ] **2.3 (Verify)** ST-5…ST-9 + ST-13 green **unedited**; **ST-8 green confirms the app overlay
+  **Leave `application.ts` app overlay + its `onResize` re-anchor untouched (PA-1).** ✅ (completed: 2026-07-19 11:32 — cover() at both catcher mounts (sole layout-setter; stale absolute defaults dropped), resize() no-op stub, cover(body); app overlay untouched)
+- [x] **2.3 (Verify)** ST-5…ST-9 + ST-13 green **unedited**; **ST-8 green confirms the app overlay
   was not converted**; `yarn workspace @jsvision/ui test` + `@jsvision/forms test` + `yarn verify`.
-  Commit (/gitcm).
+  Commit (/gitcm). ✅ (completed: 2026-07-19 11:32 — `TUI_SKIP_PERF=1 yarn verify` green (30/30 turbo, examples 284, check-plugin PASS); regenerated `api/app-shell.md` for the MenuController.resize doc; editor-perf ST-35 skipped per its sanctioned non-gating guard)
 
 ## Phase 3 — Demos / demo-shell (R-5, spec 03-03)
 

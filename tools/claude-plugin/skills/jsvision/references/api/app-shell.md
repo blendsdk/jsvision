@@ -275,7 +275,7 @@ interface MenuController {
   right(): void;   // `→`: open a highlighted submenu, else switch to the next top-level menu.
   topHotkey(char: string): boolean;   // `Alt+<char>`: open/switch to the top-level menu whose hotkey matches; `true` if consumed.
   itemHotkey(char: string): boolean;   // A plain `<char>` while open: activate the deepest item whose hotkey matches; `true` if consumed.
-  resize(): void;   // Re-anchor the outside-click catcher after the viewport is resized so it still covers the screen.
+  resize(): void;   // Resize hook for the app shell; a no-op now — the outside-click catcher covers the viewport and re-fills on reflow.
 }
 ```
 
