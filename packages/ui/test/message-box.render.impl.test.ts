@@ -19,6 +19,7 @@ import { createApplication } from '../src/app/index.js';
 import { messageBox, confirm, inputBox } from '../src/dialog/index.js';
 import { Button } from '../src/controls/index.js';
 import { signal } from '../src/reactive/index.js';
+import { Commands } from '../src/status/index.js';
 import type { View } from '../src/view/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
@@ -62,7 +63,7 @@ test('impl: an OK-only messageBox paints its text and solves its button to a rea
   expect(painted(app)).toContain('Zephyrus'); // the message is visible, not clipped away
   expectButtonsSolved(app, 1);
 
-  app.loop.emitCommand('ok');
+  app.loop.emitCommand(Commands.ok);
   await p;
 });
 
@@ -74,7 +75,7 @@ test('impl: an okCancel messageBox paints its text and solves both buttons', asy
   expect(painted(app)).toContain('Zephyrus');
   expectButtonsSolved(app, 2);
 
-  app.loop.emitCommand('cancel');
+  app.loop.emitCommand(Commands.cancel);
   await p;
 });
 
@@ -86,7 +87,7 @@ test('impl: confirm paints its question and solves both buttons', async () => {
   expect(painted(app)).toContain('Zephyrus?');
   expectButtonsSolved(app, 2);
 
-  app.loop.emitCommand('no');
+  app.loop.emitCommand(Commands.no);
   await p;
 });
 
@@ -101,6 +102,6 @@ test('impl: inputBox paints its caption and bound value, and solves both buttons
   expect(screen).toContain('Zephyrus'); // and so does the field's bound value
   expectButtonsSolved(app, 2);
 
-  app.loop.emitCommand('cancel');
+  app.loop.emitCommand(Commands.cancel);
   await p;
 });

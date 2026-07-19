@@ -5,7 +5,7 @@
  * `Application` from `createApplication()` satisfies directly.
  */
 import { Text, Label, Input } from '../controls/index.js';
-import type { Validator } from '../controls/index.js';
+import type { Validator, Button } from '../controls/index.js';
 import { col, row, grow, fixed, cover, spacer } from '../view/index.js';
 import type { View } from '../view/index.js';
 import type { Signal } from '../reactive/index.js';
@@ -50,10 +50,28 @@ export interface InputBoxOptions {
   placeholder?: string | Signal<string>;
 }
 
+/** Standard button face width, so a pair of buttons reads as a matched set. */
+const BUTTON_WIDTH = 10;
 /** The button band is two rows tall: a raised button face plus its drop shadow. */
 const BUTTON_BAND_HEIGHT = 2;
-/** Cells between the two buttons of a pair. */
+/** Cells between adjacent buttons in a band. */
 const BUTTON_GAP = 2;
+/**
+ * Body inset within the dialog's interior: a blank row under the title and a two-column side gutter,
+ * so text never touches the border. No bottom inset — the button band sits on the last interior row.
+ */
+const BODY_PADDING = { top: 1, right: 2, bottom: 0, left: 2 } as const;
+
+/**
+ * A centered, bottom-pinned band of equal-width buttons. Sized as a fixed two-row block so the body
+ * above it absorbs whatever height is left over, which keeps the band on the bottom row at any size.
+ */
+function buttonBand(...buttons: Button[]): View {
+  return fixed(
+    row({ justify: 'center', gap: BUTTON_GAP }, ...buttons.map((b) => fixed(b, BUTTON_WIDTH))),
+    BUTTON_BAND_HEIGHT,
+  );
+}
 
 /**
  * Mount the dialog, run it modally, and remove it — even if `execView` rejects. Resolves to the
@@ -95,13 +113,16 @@ export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): P
   const height = hasCancel ? 9 : 7;
 
   const dlg = new Dialog({ title: o.title, width, height, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 };
-  const buttons = hasCancel
-    ? row({ justify: 'center', gap: BUTTON_GAP }, okButton(), cancelButton())
-    : row({ justify: 'center' }, okButton());
-  // The column covers the dialog box and insets a cell, so its content sits just inside the frame: the
-  // message absorbs the leftover height, which keeps the button band on the bottom row at any size.
-  dlg.add(cover(col({ padding: 1 }, grow(new Text(o.text)), fixed(buttons, BUTTON_BAND_HEIGHT))));
+  // The column covers the dialog's interior, so the message takes the height the button band leaves.
+  dlg.add(
+    cover(
+      col(
+        { padding: BODY_PADDING },
+        grow(new Text(o.text)),
+        hasCancel ? buttonBand(okButton(), cancelButton()) : buttonBand(okButton()),
+      ),
+    ),
+  );
 
   const result = await runDialog(host, dlg);
   return result === 'ok' ? 'ok' : 'cancel';
@@ -119,16 +140,7 @@ export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): P
 export async function confirm(host: ModalDialogHost, text: string): Promise<boolean> {
   const width = Math.min(60, Math.max(40, text.length + 6));
   const dlg = new Dialog({ title: 'Confirm', width, height: 9, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 };
-  dlg.add(
-    cover(
-      col(
-        { padding: 1 },
-        grow(new Text(text)),
-        fixed(row({ justify: 'center', gap: BUTTON_GAP }, yesButton(), noButton()), BUTTON_BAND_HEIGHT),
-      ),
-    ),
-  );
+  dlg.add(cover(col({ padding: BODY_PADDING }, grow(new Text(text)), buttonBand(yesButton(), noButton()))));
 
   const result = await runDialog(host, dlg);
   return result === 'yes';
@@ -150,7 +162,6 @@ export async function confirm(host: ModalDialogHost, text: string): Promise<bool
 export async function inputBox(host: ModalDialogHost, o: InputBoxOptions): Promise<string | null> {
   const width = Math.min(60, Math.max(40, o.label.length + 6));
   const dlg = new Dialog({ title: o.title, width, height: 9, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 };
 
   const input = new Input({ value: o.value, validator: o.validator, placeholder: o.placeholder });
   const [ok, cancel] = okCancelButtons();
@@ -161,11 +172,11 @@ export async function inputBox(host: ModalDialogHost, o: InputBoxOptions): Promi
   dlg.add(
     cover(
       col(
-        { padding: 1 },
+        { padding: BODY_PADDING },
         fixed(new Label(o.label, input), 1),
         fixed(input, 1),
         spacer(),
-        fixed(row({ justify: 'center', gap: BUTTON_GAP }, ok, cancel), BUTTON_BAND_HEIGHT),
+        buttonBand(ok, cancel),
       ),
     ),
   );
