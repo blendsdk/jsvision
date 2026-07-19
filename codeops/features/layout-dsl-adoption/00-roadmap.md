@@ -4,7 +4,7 @@
 > **Status**: In Progress
 > **Created**: 2026-07-18
 > **Last Updated**: 2026-07-19
-> **Progress**: 0 / 10 issues done · requirements: RD-01/RD-02 ✏️ drafted · plan: [tier0-parity-safe](plans/tier0-parity-safe/00-index.md) ✅ done (Tier-0 MVP — 12/12 tasks; Tier-2 remainder open under #115/#120)
+> **Progress**: 0 / 10 issues done · requirements: RD-01/RD-02 ✏️ drafted · plans: [tier0-parity-safe](plans/tier0-parity-safe/00-index.md) ✅ done (Tier-0 MVP — 12/12) · [focus-traversal-primitive](plans/focus-traversal-primitive/00-index.md) 🔄 executing · 🔎 preflighted 2026-07-19 (prereq of #115/#120 — makes `col`/`row` Tab-traversable)
 > **CodeOps Skills Version**: 3.9.0
 
 Adopt the layout DSL (`col`/`row`/`grow`/`fixed`/`spacer`/`stack`/`place` + the #113 additions) across
@@ -24,6 +24,7 @@ disciplines and needs a recorded decision):
 - **[RD-02 — Non-functional & verification](requirements/RD-02-non-functional-and-verification.md)** ✏️ Drafted
 - **[Ambiguity Register](requirements/00-ambiguity-register.md)** — ✅ GATE PASSED (13 items)
 - **[Plan: tier0-parity-safe](plans/tier0-parity-safe/00-index.md)** — ✅ Done (implements RD-01 Tier-0; verification RD-02) — base `Dialog` center/at · catchers + formDialog body `cover()` · 13 demos · CLAUDE.md carve-out
+- **[Plan: focus-traversal-primitive](plans/focus-traversal-primitive/00-index.md)** — 🔄 Executing (started 2026-07-19) · 🔎 Preflighted 2026-07-19 ([report](plans/focus-traversal-primitive/00-preflight-report.md) — 7 findings, all resolved + fixed) (Primitive; enables RD-01 FR-2/FR-3) — a Tier-2 blocker surfaced during planning: `col`/`row` nest `Group`s but Tab traversal is group-scoped (emergent behavior of `advance()`, not spec-locked), and an empirical probe showed `FileDialog`/`ChDirDialog` Tab **already dead-ends in the list** today. Fix = scope-ceilinged tree-order `advance()` (with a `descendLast` reverse mirror + exited-group memory reset) so nested-flex dialogs become keyboard-traversable. **Prerequisite of #115 + #120.**
 
 #115 is re-scoped (ui/forms dialog family, deliberate divergence) and **#120** is new (files dialogs +
 grow-dialog deletion). #116 (datagrid) and #117 (setLayout) stay behavior-preserving — out of the
@@ -44,14 +45,15 @@ it is not zero-spec-oracle-cost like the rest of Tier 0.
 | [#108](https://github.com/blendsdk/jsvision/issues/108) | Adopt the layout DSL across the codebase | Epic | ⬜ | Umbrella; re-oriented to flex-elimination |
 | [#113](https://github.com/blendsdk/jsvision/issues/113) | DSL hardening (prerequisite) | Prereq | ✅ | Feature [`dsl-hardening`](../dsl-hardening/00-roadmap.md) — done, on `feat/dsl-adoptation` |
 | [#117](https://github.com/blendsdk/jsvision/issues/117) | Primitive fix — `setLayout(partial)` (read-only field at release) | Primitive | ⬜ | Companion to #113; out of the divergence set |
+| _(issue TBD)_ | **Focus-traversal primitive** — tree-order `Tab` across flex containers | Primitive | 🔄 | Companion to #117; **prereq of #115 + #120**; plan [focus-traversal-primitive](plans/focus-traversal-primitive/00-index.md) · 🔄 executing (started 2026-07-19) · 🔎 preflighted 2026-07-19 (all findings resolved) |
 | [#109](https://github.com/blendsdk/jsvision/issues/109) | ui widgets — data-grid / tab-view / application | Port | ⬜ | behavior-preserving; split-view already done |
 | [#110](https://github.com/blendsdk/jsvision/issues/110) | example app-shell demos + maximal canvas flex | Port | ⬜ | Tier 3 (RD-01 FR-6); learning material |
 | [#111](https://github.com/blendsdk/jsvision/issues/111) | theme-designer panels + workspace | Port | ⬜ | independent; inspector-panel joins Tier 3 |
 | [#112](https://github.com/blendsdk/jsvision/issues/112) | JSDoc `@example` + docs modernization | Docs | ⬜ | expands with Tier 3 |
 | [#114](https://github.com/blendsdk/jsvision/issues/114) | local `place()`/`row()` shadow cleanup | Cleanup | ⬜ | largely subsumed by flex-elimination |
-| [#115](https://github.com/blendsdk/jsvision/issues/115) | **flex-eliminate ui/forms dialog family** (deliberate divergence) | Rebuild | 📋 | RD-01/02; Tier-0 parts planned ([tier0-parity-safe](plans/tier0-parity-safe/00-index.md)); app-overlay `cover()` + Tier-2 bodies still here |
+| [#115](https://github.com/blendsdk/jsvision/issues/115) | **flex-eliminate ui/forms dialog family** (deliberate divergence) | Rebuild | 📋 | RD-01/02; Tier-0 parts planned ([tier0-parity-safe](plans/tier0-parity-safe/00-index.md)); app-overlay `cover()` + Tier-2 bodies still here; **Tier-2 bodies blocked on the focus-traversal primitive** |
 | [#116](https://github.com/blendsdk/jsvision/issues/116) | datagrid widgets (button-row / grid-lifecycle / popups) | Port | ⬜ | behavior-preserving; out of divergence set |
-| [#120](https://github.com/blendsdk/jsvision/issues/120) | **flex-eliminate FileDialog/ChDirDialog/errorBox + retire grow-dialog.ts** | Rebuild | ⬜ | RD-01/02; Tier 2; deletes 2 source files |
+| [#120](https://github.com/blendsdk/jsvision/issues/120) | **flex-eliminate FileDialog/ChDirDialog/errorBox + retire grow-dialog.ts** | Rebuild | ⬜ | RD-01/02; Tier 2; deletes 2 source files; **blocked on the focus-traversal primitive** (nested-flex Tab traversal) |
 
 **Governed by RD-01/RD-02:** #115, #120, and the Tier-3 parts of #110/#112. **Keep-absolute (excluded, RD-01
 FR-4):** window/desktop/gesture, cursor/caret/measure-anchored popups, `theme-designer/gallery.ts` scatter,
