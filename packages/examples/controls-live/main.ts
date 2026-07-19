@@ -29,7 +29,17 @@
  * as a consumer would. The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { resolveCapabilities } from '@jsvision/core';
-import { createApplication, menuBar, subMenu, item, separator, statusLine, statusItem, Commands } from '@jsvision/ui';
+import {
+  createApplication,
+  menuBar,
+  subMenu,
+  item,
+  separator,
+  statusLine,
+  statusItem,
+  Commands,
+  center,
+} from '@jsvision/ui';
 import { CommandSink } from './dialog.js';
 import { buildDialog, CMD_OK, CMD_CANCEL, CMD_HELP } from './form.js';
 
@@ -83,12 +93,7 @@ async function main(): Promise<number> {
   const height = 19;
   const dw = app.desktop.bounds.width;
   const dh = app.desktop.bounds.height;
-  dialog.layout.rect = {
-    x: Math.max(0, Math.floor((dw - width) / 2)),
-    y: Math.max(0, Math.floor((dh - height) / 2)),
-    width: Math.min(width, dw),
-    height: Math.min(height, dh),
-  };
+  center(dialog, Math.min(width, dw), Math.min(height, dh));
 
   // OK / Cancel quit; Help (F1 / button / menu) toggles the reactive hint line.
   const quit = (): void => app.loop.emitCommand(Commands.quit);

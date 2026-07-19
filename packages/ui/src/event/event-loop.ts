@@ -294,11 +294,11 @@ class EventLoopImpl implements EventLoop {
   }
 
   focusNext(): void {
-    this.runTick(() => this.focus.focusNext());
+    this.runTick(() => this.focus.focusNext(this.scopeRoot()));
   }
 
   focusPrev(): void {
-    this.runTick(() => this.focus.focusPrev());
+    this.runTick(() => this.focus.focusPrev(this.scopeRoot()));
   }
 
   focusView(view: View): void {
@@ -536,9 +536,10 @@ class EventLoopImpl implements EventLoop {
       acceleratorMode: () => this.acceleratorMode,
       toggleAcceleratorMode: () => this.applyAcceleratorMode(!this.acceleratorMode),
       deliver: (view, ev) => this.deliver(view, ev),
-      // Tab traversal runs inside the active tick, so it calls the focus manager directly.
-      focusNext: () => this.focus.focusNext(),
-      focusPrev: () => this.focus.focusPrev(),
+      // Tab traversal runs inside the active tick, so it calls the focus manager directly. The scope
+      // ceiling (already computed above) confines the walk to the open modal's subtree, else the root.
+      focusNext: () => this.focus.focusNext(scope),
+      focusPrev: () => this.focus.focusPrev(scope),
       hitTestRoute: (ev) =>
         hitTestRoute(ev, {
           scopeRoot: scope,

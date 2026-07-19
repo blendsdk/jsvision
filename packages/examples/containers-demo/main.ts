@@ -29,6 +29,7 @@ import {
   signal,
   range,
   Commands,
+  cover,
 } from '@jsvision/ui';
 
 /** A synthetic decoded key (no terminal needed). */
@@ -55,7 +56,7 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { color
 function stepScrollBar(): void {
   const pos = signal(0);
   const bar = new ScrollBar({ value: pos, min: 0, max: 100, orientation: 'vertical' });
-  bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 8 } };
+  cover(bar);
   const root = new Group();
   root.add(bar);
   const loop = createEventLoop({ width: 1, height: 8 }, { caps });
@@ -83,7 +84,7 @@ function stepScroller(): void {
     content.add(line);
   }
   const scroller = new Scroller({ content, extent: { width: 30, height: 20 }, scrollbars: 'vertical' });
-  scroller.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 8 } };
+  cover(scroller);
   const root = new Group();
   root.add(scroller);
   const loop = createEventLoop({ width: 24, height: 8 }, { caps });
@@ -113,7 +114,7 @@ function stepListView(): void {
   const focused = signal(0);
   const selected = signal(-1);
   const list = new ListBox({ items, focused, selected, typeAhead: true });
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 8 } };
+  cover(list);
   const root = new Group();
   root.add(list);
   const loop = createEventLoop({ width: 20, height: 8 }, { caps });

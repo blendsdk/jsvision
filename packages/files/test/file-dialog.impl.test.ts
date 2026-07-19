@@ -13,6 +13,7 @@ import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
 import { Group, createEventLoop, signal, Commands } from '@jsvision/ui';
+import type { EventLoop, View } from '@jsvision/ui';
 import { FileDialog } from '../src/dialog/file-dialog.js';
 import { createMemoryFs, dir, file } from './helpers/memory-fs.js';
 
@@ -45,25 +46,36 @@ function openFileDialog(dlg: FileDialog) {
   return { loop, promise };
 }
 
-// Regression: the base `Dialog`'s `padding:1` used to double-inset the TV-absolute child rects by
-// +1,+1, pushing the info pane to overwrite the right `║` and bottom `╚══╝` frame (a visible bleed).
-// The `padding:0` fix makes the decoded TV rects land flush; assert every child stays strictly inside
-// the 49×19 frame (top-left ≥ (1,1), bottom-right ≤ (47,17) — inside the border ring at 0 and 48/18).
+/**
+ * A child's solved rectangle relative to the dialog's top-left. `View.bounds` is parent-relative, so
+ * a child nested inside layout groups measures from that group; the composed origins give the real
+ * dialog-local position, and `bounds` still gives the size.
+ */
+function rectIn(loop: EventLoop, dialog: View, child: View) {
+  const root = loop.renderRoot;
+  const origin = root.originOf(child)!;
+  const base = root.originOf(dialog)!;
+  return { x: origin.x - base.x, y: origin.y - base.y, width: child.bounds.width, height: child.bounds.height };
+}
+
+// Regression: the info pane once overwrote the right `║` and bottom `╚══╝` frame, a visible bleed
+// caused by insetting the children twice. Nothing may sit on the border ring, so assert every child
+// stays strictly inside the 49×19 frame: top-left ≥ (1,1), bottom-right ≤ (48,18).
 test('impl: no child bleeds past the frame — the info-pane double-inset regression', () => {
   const dlg = new FileDialog({ fs: fsFixture(), directory: signal('/home/user') });
-  openFileDialog(dlg);
+  const { loop } = openFileDialog(dlg);
   const W = 49;
   const H = 19;
   const children = [dlg.fileInput, dlg.history, dlg.fileList, dlg.listBar, dlg.fileInfoPane, ...dlg.buttons];
   for (const c of children) {
-    const b = c.bounds;
+    const b = rectIn(loop, dlg, c);
     expect(b.x, `${c.constructor.name}.x`).toBeGreaterThanOrEqual(1);
     expect(b.y, `${c.constructor.name}.y`).toBeGreaterThanOrEqual(1);
     expect(b.x + b.width, `${c.constructor.name} right edge`).toBeLessThanOrEqual(W - 1);
     expect(b.y + b.height, `${c.constructor.name} bottom edge`).toBeLessThanOrEqual(H - 1);
   }
   // The info pane specifically must sit flush above the bottom border (rows 16–17, full inner width).
-  expect(dlg.fileInfoPane.bounds).toMatchObject({ x: 1, y: 16, width: 47, height: 2 });
+  expect(rectIn(loop, dlg, dlg.fileInfoPane)).toMatchObject({ x: 1, y: 16, width: 47, height: 2 });
 });
 
 test('impl: valid(OK) on a directory name enters it and clears the filename (stays open)', async () => {

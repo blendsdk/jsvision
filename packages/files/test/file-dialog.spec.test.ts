@@ -9,10 +9,19 @@
  * save-mode adds OK/Replace/Clear (PA-1). `valid()` (`:293-351`): `isWild` ⇒ re-scan (stay open),
  * `isDir` ⇒ enter (stay open), a valid file ⇒ resolve + close, else ⇒ error box + stay open; Cancel
  * bypasses. `.js` per NodeNext.
+ *
+ * **Geometry note — deliberate divergence.** The dialog's children are now laid out by the flex
+ * engine rather than at hand-computed cells, as a recorded decision. Most land exactly where the
+ * decode above puts them, but two do not: the listing is one row taller and its scroll bar therefore
+ * one row lower, because the flex pass gives the listing a dead row the hand-placed version left
+ * empty. Those two values are re-derived below on purpose — **do not "restore fidelity" by reverting
+ * them.** Behavior, colours, focus order and return values are unchanged, and that is what the rest
+ * of this file pins.
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { Group, createEventLoop, signal, Commands } from '@jsvision/ui';
+import type { EventLoop, View } from '@jsvision/ui';
 import { FileDialog } from '../src/dialog/file-dialog.js';
 import { createMemoryFs, dir, file } from './helpers/memory-fs.js';
 
@@ -47,25 +56,31 @@ function openFileDialog(dlg: FileDialog) {
   return { loop, promise };
 }
 
-const rectOf = (b: { x: number; y: number; width: number; height: number }) => ({
-  x: b.x,
-  y: b.y,
-  width: b.width,
-  height: b.height,
-});
+/**
+ * A child's solved rectangle relative to the dialog's top-left — the coordinates the composition
+ * decode is written in. `View.bounds` is parent-relative, so for a child nested inside layout groups
+ * it measures from that group rather than from the dialog; the composed origins give the real
+ * dialog-local position, and `bounds` still gives the size.
+ */
+function rectIn(loop: EventLoop, dialog: View, child: View) {
+  const root = loop.renderRoot;
+  const origin = root.originOf(child)!;
+  const base = root.originOf(dialog)!;
+  return { x: origin.x - base.x, y: origin.y - base.y, width: child.bounds.width, height: child.bounds.height };
+}
 
 // ST-8 — 49×19 composition at the decoded dialog-local rects; open-mode button set.
 test('ST-8: FileDialog composes the decoded child rects + the open-mode button strip', () => {
   const dlg = new FileDialog({ fs: fsFixture(), directory: signal('/home/user') });
-  openFileDialog(dlg);
-  expect(rectOf(dlg.fileInput.bounds)).toEqual({ x: 3, y: 3, width: 28, height: 1 });
-  expect(rectOf(dlg.fileList.bounds)).toEqual({ x: 3, y: 6, width: 31, height: 8 });
-  expect(rectOf(dlg.listBar.bounds)).toEqual({ x: 3, y: 14, width: 31, height: 1 });
-  expect(rectOf(dlg.fileInfoPane.bounds)).toEqual({ x: 1, y: 16, width: 47, height: 2 });
+  const { loop } = openFileDialog(dlg);
+  expect(rectIn(loop, dlg, dlg.fileInput)).toEqual({ x: 3, y: 3, width: 28, height: 1 });
+  expect(rectIn(loop, dlg, dlg.fileList)).toEqual({ x: 3, y: 6, width: 31, height: 9 });
+  expect(rectIn(loop, dlg, dlg.listBar)).toEqual({ x: 3, y: 15, width: 31, height: 1 });
+  expect(rectIn(loop, dlg, dlg.fileInfoPane)).toEqual({ x: 1, y: 16, width: 47, height: 2 });
   // Open-mode strip: Open (default) / Cancel / Help at (35,3)/(35,6)/(35,9), 11×2.
   expect(dlg.buttonLabels).toEqual(['~O~pen', '~C~ancel', '~H~elp']);
-  expect(rectOf(dlg.buttons[0].bounds)).toEqual({ x: 35, y: 3, width: 11, height: 2 });
-  expect(rectOf(dlg.buttons[1].bounds)).toEqual({ x: 35, y: 6, width: 11, height: 2 });
+  expect(rectIn(loop, dlg, dlg.buttons[0]!)).toEqual({ x: 35, y: 3, width: 11, height: 2 });
+  expect(rectIn(loop, dlg, dlg.buttons[1]!)).toEqual({ x: 35, y: 6, width: 11, height: 2 });
 });
 
 // ST-9 — valid(): a valid file resolves to the absolute path + closes; Cancel resolves null.

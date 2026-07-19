@@ -14,7 +14,8 @@
  */
 import { resolveCapabilities } from '@jsvision/core';
 import type { CapabilityProfile } from '@jsvision/core';
-import { Group, ProgressBar, Spinner, createEventLoop, signal } from '@jsvision/ui';
+import { Group, ProgressBar, Spinner, createEventLoop, signal, cover } from '@jsvision/ui';
+import type { View } from '@jsvision/ui';
 
 /** Print a render root's composed buffer as an ASCII grid framed by a ruler. */
 function printFrame(title: string, rows: readonly { char: string }[][]): void {
@@ -49,11 +50,10 @@ function mount(view: Group, w: number, h: number, profile: CapabilityProfile) {
   return { loop, frame: (title: string) => printFrame(title, loop.renderRoot.buffer().rows()) };
 }
 
-/** Wrap a leaf view in an absolutely-placed root group. */
-function rootOf(child: { layout: unknown }, w: number, h: number): Group {
-  child.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+/** Wrap a leaf view in a root group it covers (the loop stretches the mounted root to the viewport). */
+function rootOf<T extends View>(child: T): Group {
   const g = new Group();
-  g.add(child as never);
+  g.add(cover(child));
   return g;
 }
 
@@ -61,7 +61,7 @@ function main(): void {
   // --- Determinate bar: 0 → 33 → 66 → 100 % (smooth sub-cell fill) ---
   const value = signal(0);
   const bar = new ProgressBar({ value, caption: true });
-  const barDemo = mount(rootOf(bar, WIDTH, BAR_H), WIDTH, BAR_H, caps);
+  const barDemo = mount(rootOf(bar), WIDTH, BAR_H, caps);
   for (const pct of [0, 33, 66, 100]) {
     value.set(pct / 100);
     barDemo.loop.renderRoot.flush();
@@ -71,7 +71,7 @@ function main(): void {
   // --- Indeterminate spinner: stepped through several frames (dots) ---
   const frame = signal(0);
   const spin = new Spinner({ frame, preset: 'dots', label: 'Loading…' });
-  const spinDemo = mount(rootOf(spin, WIDTH, SPIN_H), WIDTH, SPIN_H, caps);
+  const spinDemo = mount(rootOf(spin), WIDTH, SPIN_H, caps);
   for (let i = 0; i < 4; i += 1) {
     frame.set(i);
     spinDemo.loop.renderRoot.flush();
@@ -81,12 +81,12 @@ function main(): void {
   // --- ASCII fallback (Unicode-off caps): bar → #/- , spinner → line ---
   const av = signal(0.5);
   const abar = new ProgressBar({ value: av, caption: true });
-  const abarDemo = mount(rootOf(abar, WIDTH, BAR_H), WIDTH, BAR_H, asciiCaps);
+  const abarDemo = mount(rootOf(abar), WIDTH, BAR_H, asciiCaps);
   abarDemo.frame('Frame — ASCII fallback: ProgressBar 50% renders whole-cell # fill / - track');
 
   const af = signal(1);
   const aspin = new Spinner({ frame: af, preset: 'dots', label: 'Loading…' });
-  const aspinDemo = mount(rootOf(aspin, WIDTH, SPIN_H), WIDTH, SPIN_H, asciiCaps);
+  const aspinDemo = mount(rootOf(aspin), WIDTH, SPIN_H, asciiCaps);
   aspinDemo.frame('Frame — ASCII fallback: Spinner dots → line preset (still animates)');
 
   console.log('\nDone — a ProgressBar filled 0→100% (smooth), a Spinner animated, and both fell back to ASCII.');

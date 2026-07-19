@@ -25,10 +25,19 @@ export interface FocusManager {
   focusInto(view: View): void;
   /** Whether `view` is a focusable leaf right now (used to climb to the nearest focusable on a click). */
   isFocusable(view: View): boolean;
-  /** Move focus to the next focusable view, wrapping and descending into a focusable container. */
-  focusNext(): void;
-  /** Move focus to the previous focusable view, wrapping. */
-  focusPrev(): void;
+  /**
+   * Move focus to the next focusable view in tree order, bounded by `scope`: descend through nested
+   * groups and, at a group's end, cross into the parent's next focusable sibling, wrapping at `scope`.
+   * Continuous Tab is pure tree order — a wrap re-enters at the tree start, not the last-visited child;
+   * container restore memory is kept only for a non-Tab entry. `scope` is the ceiling the loop supplies
+   * (the top modal's subtree while a modal is open, else the mounted root); `null` is a no-op.
+   */
+  focusNext(scope: View | null): void;
+  /**
+   * Move focus to the previous focusable view — the exact inverse of {@link FocusManager.focusNext}
+   * (reverse descent lands on a container's last leaf), bounded by and wrapping at `scope`.
+   */
+  focusPrev(scope: View | null): void;
 }
 
 /**
@@ -97,11 +106,16 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
   };
 
   /**
-   * Focus a specific view: point the pointer chain at it, then clear the old view's `focused` flag
-   * and set the new one, repainting both. The two repaints coalesce into one frame.
+   * Flip focus from an explicitly given previously-focused leaf `old` to `view`: point the pointer
+   * chain at `view`, clear `old`'s `focused` flag, set `view`'s, and repaint both (the two repaints
+   * coalesce into one frame).
+   *
+   * `old` is passed in rather than read here because Tab traversal resets the `current` pointers of the
+   * groups it climbs out of *before* the flip — after that reset a fresh `getFocused()` can no longer
+   * follow those pointers down to the leaf that was focused when the walk began. Capturing `old` up
+   * front keeps the blur pointed at the right view.
    */
-  const focusLeaf = (view: View): void => {
-    const old = getFocused();
+  const focusLeafFrom = (old: View | null, view: View): void => {
     setCurrentChain(view);
     if (old === view) return; // already focused — nothing to flip
     if (old !== null) {
@@ -114,74 +128,168 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
     view.focusTick?.set(undefined); // notify anything observing the new view's focus (no-op if none)
   };
 
+  /** Focus a specific view, flipping from whatever is focused now. The two repaints coalesce into one frame. */
+  const focusLeaf = (view: View): void => focusLeafFrom(getFocused(), view);
+
+  /** The last child of `group` that can receive focus — the reverse mirror of `children.find`, or `null`. */
+  const findLastReceiver = (group: Group): View | null => {
+    for (let i = group.children.length - 1; i >= 0; i -= 1) {
+      const child = group.children[i];
+      if (child !== undefined && canReceiveFocus(child)) return child;
+    }
+    return null;
+  };
+
   /**
-   * Focus into a target: a leaf is focused directly; a container descends to its last-focused child
-   * (restore) or its first focusable child, recursing until a leaf is reached. A focusable container
-   * with no focusable descendant is focused itself.
+   * Descend into a target for FORWARD entry, flipping from `old`: a leaf is focused directly; a
+   * container descends to its last-focused child (restore) or its FIRST focusable child, recursing to a
+   * leaf. A focusable container with no focusable descendant is focused itself.
    */
-  const focusInto = (view: View): void => {
+  const descendForward = (view: View, old: View | null): void => {
     if (!(view instanceof Group)) {
-      focusLeaf(view);
+      focusLeafFrom(old, view);
       return;
     }
     const saved = view.current !== null && canReceiveFocus(view.current) ? view.current : null;
     const target = saved ?? view.children.find(canReceiveFocus) ?? null;
     if (target !== null) {
-      focusInto(target);
+      descendForward(target, old);
       return;
     }
-    if (isFocusable(view)) focusLeaf(view); // focusable container, no focusable descendants
+    if (isFocusable(view)) focusLeafFrom(old, view); // focusable container, no focusable descendants
   };
+
+  /**
+   * Descend into a target for REVERSE entry — identical to {@link descendForward} except it falls to a
+   * container's LAST focusable child (not its first), so Shift-Tab lands on the last leaf and stays the
+   * exact inverse of Tab. Restore still wins when the container's saved child is present.
+   */
+  const descendLast = (view: View, old: View | null): void => {
+    if (!(view instanceof Group)) {
+      focusLeafFrom(old, view);
+      return;
+    }
+    const saved = view.current !== null && canReceiveFocus(view.current) ? view.current : null;
+    const target = saved ?? findLastReceiver(view);
+    if (target !== null) {
+      descendLast(target, old);
+      return;
+    }
+    if (isFocusable(view)) focusLeafFrom(old, view);
+  };
+
+  /**
+   * Focus into a target: a leaf is focused directly; a container descends to its last-focused child
+   * (restore) or its first focusable child, recursing until a leaf is reached. A focusable container
+   * with no focusable descendant is focused itself. Used by the non-traversal callers (click hit-test,
+   * `healFocus`, the public `EventLoop.focusInto`, modal open); its restore-or-first contract is unchanged.
+   */
+  const focusInto = (view: View): void => descendForward(view, getFocused());
 
   const focusView = (view: View): void => {
     if (isFocusable(view)) focusLeaf(view); // focusing a non-focusable view is a no-op
   };
 
+  /** Whether `view` is `scope` itself or a descendant of it. */
+  const isWithin = (view: View, scope: View): boolean => {
+    let node: View | null = view;
+    while (node !== null) {
+      if (node === scope) return true;
+      node = node.parent;
+    }
+    return false;
+  };
+
   /**
-   * Move focus within the active group (the focused leaf's parent, or the root when nothing is
-   * focused): pick the next/previous focusable child in child order, wrapping at the ends, and
-   * descend into it if it is a container. A no-op when the active group has no focusable children.
+   * The focusable sibling of `child` within `group` in `direction`, or `null` when there is none in
+   * that direction (so the caller bubbles up to the parent — wrapping happens only at the scope). If
+   * `child` is itself no longer a candidate (it was disabled or removed), resume from the nearest
+   * candidate in tree order in `direction` rather than skipping to an end.
    */
-  const advance = (direction: 1 | -1): void => {
-    const root = getRoot();
-    if (root === null) return;
-    const focused = getFocused();
-    const active =
-      focused !== null && focused.parent instanceof Group ? focused.parent : root instanceof Group ? root : null;
-    if (active === null) return;
+  const siblingCandidate = (group: Group, child: View, direction: 1 | -1): View | null => {
+    const candidates = group.children.filter(canReceiveFocus);
+    if (candidates.length === 0) return null;
+    const idx = candidates.indexOf(child);
+    if (idx !== -1) {
+      const next = idx + direction;
+      return next >= 0 && next < candidates.length ? (candidates[next] ?? null) : null;
+    }
+    // The anchor is no longer focusable: resume from the nearest candidate by tree order in `direction`.
+    const anchorPos = group.children.indexOf(child);
+    if (anchorPos === -1) return null;
+    if (direction === 1) {
+      return candidates.find((c) => group.children.indexOf(c) > anchorPos) ?? null;
+    }
+    for (let i = candidates.length - 1; i >= 0; i -= 1) {
+      const cand = candidates[i];
+      if (cand !== undefined && group.children.indexOf(cand) < anchorPos) return cand;
+    }
+    return null;
+  };
 
-    const candidates = active.children.filter(canReceiveFocus);
-    if (candidates.length === 0) return; // nothing focusable in this group
+  /** Direction-aware descent: forward reuses restore-or-first, reverse uses restore-or-last. */
+  const descend = (view: View, direction: 1 | -1, old: View | null): void =>
+    direction === 1 ? descendForward(view, old) : descendLast(view, old);
 
-    const currentChild = active.current;
-    const inCandidates = currentChild !== null ? candidates.indexOf(currentChild) : -1;
-    let nextIndex: number;
-    if (inCandidates !== -1) {
-      nextIndex = (inCandidates + direction + candidates.length) % candidates.length;
-    } else {
-      // The anchor is no longer focusable (it was disabled or removed, or nothing was focused).
-      // Resume from the nearest candidate by tree order in the travel direction rather than jumping
-      // to an end and skipping views; fall back to the appropriate end when there is nothing beyond it.
-      const anchorPos = currentChild !== null ? active.children.indexOf(currentChild) : -1;
-      if (anchorPos === -1) {
-        nextIndex = direction === 1 ? 0 : candidates.length - 1;
-      } else if (direction === 1) {
-        const found = candidates.findIndex((c) => active.children.indexOf(c) > anchorPos);
-        nextIndex = found === -1 ? 0 : found; // none after the anchor → wrap to the first
-      } else {
-        let found = -1;
-        for (let i = candidates.length - 1; i >= 0; i -= 1) {
-          if (active.children.indexOf(candidates[i]) < anchorPos) {
-            found = i;
-            break;
-          }
-        }
-        nextIndex = found === -1 ? candidates.length - 1 : found; // none before → wrap to the last
+  /**
+   * Enter `scope` at its end for `direction`: descend into its first (forward) or last (reverse)
+   * focusable child, flipping from `old`; a focusable leaf/empty scope is focused directly. Backs both
+   * the empty-start entry and the wrap at the ceiling.
+   */
+  const enterEnd = (scope: View, direction: 1 | -1, old: View | null): void => {
+    if (scope instanceof Group) {
+      const child = direction === 1 ? (scope.children.find(canReceiveFocus) ?? null) : findLastReceiver(scope);
+      if (child !== null) {
+        descend(child, direction, old);
+        return;
       }
     }
+    if (isFocusable(scope)) focusLeafFrom(old, scope);
+  };
 
-    const chosen = candidates[nextIndex];
-    if (chosen !== undefined) focusInto(chosen);
+  /**
+   * Move focus one step in `direction`, walking the view tree in document order bounded by `scope`:
+   * from the focused leaf, take the next focusable sibling; when a group has none left, climb into its
+   * parent and retry, until a sibling is found or `scope` is reached (there it wraps). The previously
+   * focused leaf is captured FIRST, so the blur still targets it after the climb resets the `current`
+   * pointer of every group it leaves — that reset is what makes a wrap re-enter at the tree end
+   * (forward-first / reverse-last) instead of the last-visited child, i.e. pure tree order with no
+   * relocated trap. A non-Tab focus change never runs this climb, so container restore survives for it.
+   * With nothing focused (or focus outside `scope`) it enters `scope` at the end; `scope === null` is a
+   * no-op.
+   */
+  const advance = (direction: 1 | -1, scope: View | null): void => {
+    if (scope === null) return;
+    const old = getFocused(); // capture BEFORE any memory reset — the blur must target this leaf
+    if (old === null || !isWithin(old, scope)) {
+      enterEnd(scope, direction, old); // nothing focused, or focus outside scope → enter at the end
+      return;
+    }
+
+    // Climb toward the ceiling, taking the first sibling step in `direction`; remember each group left.
+    let child: View = old;
+    let group: View | null = old.parent;
+    let target: View | null = null;
+    const exited: Group[] = [];
+    while (group instanceof Group && child !== scope) {
+      const next = siblingCandidate(group, child, direction);
+      if (next !== null) {
+        target = next;
+        break;
+      }
+      if (group === scope) break; // ceiling reached with nothing left → wrap
+      exited.push(group); // left this group by Tab → its `current` is now stale
+      child = group;
+      group = group.parent;
+    }
+
+    for (const g of exited) g.current = null; // reset AFTER capturing old; a wrap now goes to the tree end
+
+    if (target !== null) {
+      descend(target, direction, old); // step to the sibling and descend into it
+      return;
+    }
+    enterEnd(scope, direction, old); // wrap: descend into scope's first/last leaf (exited memory cleared)
   };
 
   return {
@@ -190,7 +298,7 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
     focusView,
     focusInto,
     isFocusable,
-    focusNext: () => advance(1),
-    focusPrev: () => advance(-1),
+    focusNext: (scope) => advance(1, scope),
+    focusPrev: (scope) => advance(-1, scope),
   };
 }

@@ -14,7 +14,7 @@
  */
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
-import { Group, Calendar, DatePicker, createEventLoop, signal, toISO } from '@jsvision/ui';
+import { Group, Calendar, DatePicker, createEventLoop, signal, toISO, cover } from '@jsvision/ui';
 import type { CalendarDate, PopupHost } from '@jsvision/ui';
 
 /** A fixed "today" so the walkthrough is deterministic (no real clock). */
@@ -40,7 +40,7 @@ function calendarWalkthrough(): void {
   const value = signal<CalendarDate | null>(null);
   const cal = new Calendar({ value, today: TODAY, firstDayOfWeek: 0 }); // default comfortable density (28×10)
   const size = cal.measure(); // 28×10
-  cal.layout = { position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } };
+  cover(cal);
   const root = new Group();
   root.add(cal);
   const loop = createEventLoop({ width: size.width, height: size.height }, { caps });
@@ -68,7 +68,7 @@ function pickerWalkthrough(): void {
   const dp = new DatePicker({ value, today: TODAY });
   dp.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 16, height: 1 } };
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  cover(overlay);
   overlay.state.visible = false;
   const root = new Group();
   root.add(dp);
