@@ -50,9 +50,15 @@ export interface FormDialogOptions<S extends z.ZodObject<z.ZodRawShape>, I> {
   height: number;
 }
 
-/** Standard dialog-button cell size and the gap between the OK and Cancel faces. */
+/**
+ * Standard dialog-button cell size and the gap between the OK and Cancel faces. These mirror the
+ * button metrics the ui package's own modal helpers use, so a form dialog's buttons match every other
+ * dialog in the SDK; keep them in step if those change.
+ */
 const BUTTON = { width: 10, height: 2 } as const;
 const GAP = 2;
+/** Width of the OK + Cancel pair, used to centre the band that carries them. */
+const PAIR_WIDTH = BUTTON.width + GAP + BUTTON.width;
 
 /**
  * The internal `Dialog` subclass that gates OK on the async `form.submit()` and seals itself for the
@@ -213,10 +219,20 @@ export function formDialog<S extends z.ZodObject<z.ZodRawShape>, I extends Recor
       // validation red for one frame before the dialog closes. Cancel stays Tab-reachable + Esc works.
       const cancel = cancelButton();
       cancel.grabsFocus = false;
-      // The pair rides a band anchored to the row above the bottom frame, centered across the dialog.
-      // The band is added after the body so it paints on top of the covering overlay.
-      const band = row({ justify: 'center', gap: GAP }, fixed(ok, BUTTON.width), fixed(cancel, BUTTON.width));
-      dlg.add(at(band, { x: 0, y: options.height - BUTTON.height - 1, width: options.width, height: BUTTON.height }));
+      // The pair rides a band on the row above the bottom frame. The band is sized to the pair rather
+      // than to the dialog: a full-width band would sit over the body overlay and swallow clicks aimed
+      // at whatever the caller placed on those rows. It is added after the body so it paints on top,
+      // and both edges are floored so a very small dialog pushes the buttons inward instead of onto
+      // the frame.
+      const band = row({ gap: GAP }, fixed(ok, BUTTON.width), fixed(cancel, BUTTON.width));
+      dlg.add(
+        at(band, {
+          x: Math.max(2, Math.trunc((options.width - PAIR_WIDTH) / 2)),
+          y: Math.max(2, options.height - BUTTON.height - 1),
+          width: PAIR_WIDTH,
+          height: BUTTON.height,
+        }),
+      );
       host.desktop.addWindow(dlg);
       mounted = true;
       const command = await host.loop.execView<string>(dlg);

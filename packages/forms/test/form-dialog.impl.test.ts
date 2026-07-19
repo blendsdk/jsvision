@@ -116,7 +116,7 @@ test('impl: OK + Cancel sit as a centered pair on one row', async () => {
   expect(origins[0].x).toBeLessThan(origins[1].x); // OK left of Cancel
   const dlgOrigin = rr.originOf(dlg as unknown as View)!;
   const leftMargin = origins[0].x - dlgOrigin.x;
-  const rightMargin = dlgOrigin.x + 44 - (origins[1].x + buttons[1].bounds.width);
+  const rightMargin = dlgOrigin.x + dlg.bounds.width - (origins[1].x + buttons[1].bounds.width);
   expect(leftMargin).toBe(rightMargin); // centered as a pair
 
   loop.emitCommand(Commands.cancel);
