@@ -1,7 +1,7 @@
 # 03-02 — datagrid widgets (#116)
 
-Site inventory: [02-current-state.md §2](02-current-state.md#2-116--packagesdatagridsrc-36-conversions).
-**36 conversions across 7 modules**, plus one preserved site. Scope narrowed after preflight
+Site inventory: [02-current-state.md §2](02-current-state.md#2-116--packagesdatagridsrc-35-conversions-across-6-modules).
+**35 conversions across 6 modules**, plus two preserved sites. Scope narrowed after preflight
 (AR-3, AR-7, AR-11).
 
 ## The rule that governs every conversion here
@@ -21,8 +21,8 @@ In this plan's scope that bites at **four** sites, and not only for `direction`:
 | `button-row.ts:87` | `direction:'row'`, **`justify:'center'`** | `grow(row({ justify: 'center' }, button))` |
 
 `Flex` is `Omit<LayoutProps, 'direction'>` (`flex.ts:41`), so both `gap` and `justify` are expressible
-through the builder's props object. `BUTTON_GAP = 1` and `buttonCellWidth` (`button-row.ts:16,35`)
-computes widths assuming that gap — dropping it shifts every button after the first.
+through the builder's props object. `BUTTON_GAP = 1` and `buttonRowMinWidth` (`button-row.ts:16,32`)
+reserves room for that gap — dropping it shifts every button after the first.
 
 ## Group A — `grid-panels.ts` (15 of 23 sites)
 
@@ -74,13 +74,21 @@ is not exported from the datagrid barrel — so taggers are safe (AR-1).
 `bind` on `contentHeight()`), not composition. `at(this, …)` would technically work; the exclusion is
 a scope ruling, not a DSL limitation.
 
-## Group C — `position:'fill'` → `cover()` (4 sites)
+## Group C — `position:'fill'` → `cover()` (3 sites)
 
-`grid.ts:508`, `:511`, `:1417` and `editing.ts:230`.
+`grid.ts:508`, `:511` and `:1417`.
 
-**Why this is safe:** all four already carry `position:'fill'`, `cover()` writes a byte-identical
-descriptor, and the engine ignores `size` on a fill box (`ui/src/layout/layout.ts:104-107`). It is a
-literal one-for-one rewrite.
+**Why this is safe:** all three are **locally constructed** (`EditorOverlay`, `PopupCatcher`, neither
+of which sets `layout` in its constructor), so `view.layout` is empty and `cover()` writes a
+byte-identical descriptor. The engine ignores `size` on a fill box
+(`ui/src/layout/layout.ts:104-107`). It is a literal one-for-one rewrite.
+
+**`editing.ts:230` is NOT in this group** — post-phase review found it. Its `e` comes from
+`createCellEditor`, which for `kind:'custom'` returns `spec.create(field, host)` — a **caller's**
+factory. `createCellEditor`/`CellEditorSpec` are barrel-exported and `GridColumn.editor` documents
+the route, so it is a public receiver and AR-1 applies: the wholesale assignment stays (AR-13). The
+"all four already carry `position:'fill'`" justification was true of the three `grid.ts` sites and
+was never checked against this one.
 
 The T-AO1 hidden-host question **does not arise here** — and could not be answered the way an earlier
 draft of this document claimed. `grid.ts:508`/`:511` *are* hidden hosts (`EditorOverlay` sets

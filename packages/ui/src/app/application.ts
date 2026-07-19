@@ -10,6 +10,7 @@ import { resolveCapabilities } from '@jsvision/core';
 import type { CapabilityProfile, Theme, Logger, Keymap, RuntimeAdapter } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
 import { Group } from '../view/index.js';
+import { col } from '../view/dsl/index.js';
 import type { View } from '../view/index.js';
 import { createEventLoop } from '../event/index.js';
 import type { EventLoop, ClipboardKeys } from '../event/index.js';
@@ -327,6 +328,8 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
   // view, or the default Desktop window manager. Only a Desktop body gets window commands + focus.
   const body: View = opts.content ?? new Desktop();
   const isDesktop = body instanceof Desktop;
+  // Assigned wholesale rather than tagged: a caller's own layout on the content view is
+  // intentionally discarded, so the shell governs the body's sizing no matter what the caller set.
   body.layout = { size: { kind: 'fr', weight: 1 } };
 
   // The full-screen overlay popups mount into. It sits on top and stays hidden (so it neither paints
@@ -335,25 +338,23 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
   overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } };
   overlay.state.visible = false;
 
-  // The app root is a top-to-bottom column: [menu bar?, body, status line?, overlay].
-  // The overlay is added last so it paints over everything else.
-  const root = new Group();
-  root.layout = { direction: 'col' };
-
-  // The shared cell the loop's built-in quit registration resolves through; `run()` fills it in.
-  const quitState: QuitState = { resolve: null };
   if (opts.menuBar !== undefined) {
     // Merge, not replace: keep any internal layout (e.g. a bar's own `direction`) and only pin the height.
     opts.menuBar.layout = { ...opts.menuBar.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
-    root.add(opts.menuBar);
   }
-  root.add(body);
   if (opts.statusLine !== undefined) {
     // Merge so the status line keeps its internal `direction: 'row'` — it lays its children out itself.
     opts.statusLine.layout = { ...opts.statusLine.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
-    root.add(opts.statusLine);
   }
-  root.add(overlay);
+
+  // The shared cell the loop's built-in quit registration resolves through; `run()` fills it in.
+  const quitState: QuitState = { resolve: null };
+
+  // The app root is a top-to-bottom column: [menu bar?, body, status line?, overlay]. An absent
+  // menu bar or status line is skipped, so the column holds only the rows that exist. The overlay
+  // comes last so it paints over everything else. The leading `{}` is load-bearing: the builder
+  // reads a non-view first argument as its own props, and `menuBar` comes from the caller.
+  const root = col({}, opts.menuBar, body, opts.statusLine, overlay);
 
   // Build the loop and mount the tree, then wire the parts that need the loop to exist first. Window
   // commands are handled by a Desktop, so register them only for a Desktop body — a router app then

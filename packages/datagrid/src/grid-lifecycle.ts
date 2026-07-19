@@ -6,7 +6,7 @@
  * from the {@link LifecycleController}; the empty state is rendered by the body itself (it draws the
  * resolved empty message at zero rows), so `ready` here covers both a populated and an empty grid.
  */
-import { Group, Spinner, Text, Button, signal } from '@jsvision/ui';
+import { Group, Spinner, Text, Button, signal, col, grow, fixed } from '@jsvision/ui';
 import type { View, Signal } from '@jsvision/ui';
 
 /**
@@ -72,32 +72,29 @@ export function emptyMessage(emptyText: string | undefined, filteredCount: numbe
 
 /** A full-region column of centered content — the shell every placeholder view shares. */
 function placeholderShell(children: View[]): Group {
-  const g = new Group();
-  g.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
   // A leading flexible spacer + a trailing one would center vertically; v1 keeps the content near the top
   // (a fixed one-row lead) so it always paints even in a very short body region.
-  const lead = new Group();
-  lead.layout = { size: { kind: 'fixed', cells: 1 } };
-  g.add(lead);
-  for (const child of children) g.add(child);
-  return g;
+  const lead = fixed(new Group(), 1);
+  // An explicit `col`, not a bare `grow`: a tagger writes only the size, and the shell stacks its
+  // content vertically — left to the engine default the children would flow side by side.
+  return grow(col(lead, ...children));
 }
 
 /** The loading placeholder — a spinner with a `Loading…` label. Static first frame paints without a clock. */
 function spinnerView(frame: Signal<number>): View {
   const spinner = new Spinner({ frame, label: 'Loading…' });
-  spinner.layout = { size: { kind: 'fixed', cells: 1 } };
+  fixed(spinner, 1);
   return placeholderShell([spinner]);
 }
 
 /** The error placeholder — the message in the error severity, plus a Retry button when `retry` is provided. */
 function errorView(message: string, retry?: () => void): View {
   const text = new Text(message, { severity: 'error' });
-  text.layout = { size: { kind: 'fixed', cells: 1 } };
+  fixed(text, 1);
   const children: View[] = [text];
   if (retry !== undefined) {
     const button = new Button('Retry', { onClick: retry });
-    button.layout = { size: { kind: 'fixed', cells: 2 } }; // a button needs a content row + a shadow row
+    fixed(button, 2); // a button needs a content row + a shadow row
     children.push(button);
   }
   return placeholderShell(children);
