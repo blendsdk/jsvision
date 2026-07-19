@@ -13,6 +13,7 @@
  */
 import { Group, View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
+import { center, at } from '../view/dsl/index.js';
 import { Window, drawFrame, frameZoneAt } from '../window/index.js';
 import type { Rect } from '../layout/index.js';
 import type { ModalHost, ModalHostAware } from '../event/index.js';
@@ -101,12 +102,20 @@ export class Dialog extends Window implements ModalHostAware {
     // centered); an explicit `centered` overrides either default.
     const width = opts.width ?? opts.rect?.width;
     const height = opts.height ?? opts.rect?.height;
-    this.centered = opts.centered ?? (width !== undefined && height !== undefined && opts.rect === undefined);
+    const centered = opts.centered ?? (width !== undefined && height !== undefined && opts.rect === undefined);
     if (width !== undefined && height !== undefined) {
-      const x = opts.rect?.x ?? 0;
-      const y = opts.rect?.y ?? 0;
-      this.layout = { position: 'absolute', padding: 1, rect: { x, y, width, height } };
+      // Seed the padding first so the merge-preserving builders retain it, then express the
+      // placement: `center()` for a sized-but-unplaced dialog, `at()` for an explicit rect.
+      this.layout = { padding: 1 };
+      if (opts.rect === undefined) {
+        center(this, width, height);
+      } else {
+        at(this, { x: opts.rect.x, y: opts.rect.y, width, height });
+      }
     }
+    // `center()` force-sets `centered = true` as a side effect; the opt-out (`centered:false`) and
+    // explicit-rect cases need our computed flag to win, so assign it after the builders run.
+    this.centered = centered;
     // Dev-only: on mount, flag two controls in this dialog's focus scope that claim the same
     // `Alt`+hotkey. The walk sees statically-added children present at mount; a reactively-inserted
     // (addDynamic/Show/For) control is not re-checked — acceptable, dialog chrome is composed statically.
