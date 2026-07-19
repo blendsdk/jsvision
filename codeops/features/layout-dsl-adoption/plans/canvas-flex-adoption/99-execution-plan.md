@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/GH-110 + GH-111 · **GitHub**: [#110](https://github.com/blendsdk/jsvision/issues/110) + [#111](https://github.com/blendsdk/jsvision/issues/111)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 7/32 tasks (22%) — Phase 1 done (10 witnesses green-first)
+> **Progress**: 14/32 tasks (44%) — Phase 2 done (theme-designer, 7/7 conversions)
 > **Last Updated**: 2026-07-20 (Phase 1 complete — revised after preflight, [report](00-preflight-report.md))
 > **Branch**: `feat/canvas-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify && yarn workspace @jsvision/examples test:e2e` (AR-11, AR-17 — `yarn verify` alone runs only the `unit` project, which excludes the e2e files seven witnesses live in)
@@ -31,13 +31,13 @@ banned, including between two solved values that could both collapse.
 
 Panels first: `app.ts` may only drop its `direction:'col'` after the builders own it (03-02 §ordering).
 
-- [ ] 2.1 `roles-panel.ts` — tail → `col({ background:'dialog' }, fixed(title,1), grow(list))`; **rewrite the now-false comment** about the app setting the direction
-- [ ] 2.2 `preview-panel.ts` — tail → `col(fixed(title,1), grow(scroller))`
-- [ ] 2.3 Verify — ST-C10a/b still green. **A no-op checkpoint by design**: until 2.4 the direction is applied twice, so this cannot yet prove the builders took ownership — 2.6 is where that is proven
-- [ ] 2.4 `app.ts` — `workspace` → `row(fixed(rail.view,28), grow(preview), fixed(inspector,32))`; drop all three `direction:'col'` halves (inspector's is vestigial, AR-7)
-- [ ] 2.5 **Add** the explaining comment at `sizeWorkspace` and leave the assignment (AR-4)
-- [ ] 2.6 Verify — ST-C10a/b/c all green (C10c is what proves the workspace row survived dropping the three `direction` halves); `walkthrough.e2e` + `inspector-panel.spec` green and unedited
-- [ ] 2.7 Full verify; commit
+- [x] 2.1 `roles-panel.ts` — tail → `col({ background:'dialog' }, fixed(title,1), grow(list))`; **rewrite the now-false comment** about the app setting the direction
+- [x] 2.2 `preview-panel.ts` — tail → `col(fixed(title,1), grow(scroller))`
+- [x] 2.3 Verify — ST-C10a/b still green. **A no-op checkpoint by design**: until 2.4 the direction is applied twice, so this cannot yet prove the builders took ownership — 2.6 is where that is proven
+- [x] 2.4 `app.ts` — `workspace` → `row(fixed(rail.view,28), grow(preview), fixed(inspector,32))`; drop all three `direction:'col'` halves (inspector's is vestigial, AR-7)
+- [x] 2.5 **Add** the explaining comment at `sizeWorkspace` and leave the assignment (AR-4)
+- [x] 2.6 Verify — ST-C10a/b/c all green (C10c is what proves the workspace row survived dropping the three `direction` halves); `walkthrough.e2e` + `inspector-panel.spec` green and unedited
+- [x] 2.7 Full verify; commit
 
 ## Phase 3 — example demos (standard) — 03-01
 
