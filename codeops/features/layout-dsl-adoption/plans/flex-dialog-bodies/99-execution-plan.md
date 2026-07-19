@@ -1,8 +1,8 @@
 # 99 — Execution Plan
 
 > **Plan**: layout-dsl-adoption/flex-dialog-bodies · **Implements**: RD-01 (Tier-2 ui/forms), RD-02 · **GitHub**: #115
-> **Progress**: 11/14 tasks (79%)
-> **Last Updated**: 2026-07-19 16:52
+> **Progress**: 14/14 tasks (100%)
+> **Last Updated**: 2026-07-19 17:05
 > **CodeOps Skills Version**: 3.9.0
 
 Spec-first, behavior-invariant rebuild. Order per family: **traversal spec (green-on-current) → [geometry
@@ -68,9 +68,9 @@ no-regression). Commit via **/gitcm**; before the PR-bound push run `yarn lint:f
 
 ## Phase 4 — Non-regression sweep, render check, wrap
 
-- [ ] **4.1 (Sweep)** Full `TUI_SKIP_PERF=1 yarn verify` across the monorepo green (rebuild ui before examples). `yarn bench` no-regression (no new per-frame alloc on resize). Confirm no behavioral test flipped and no public-JSDoc drift (`check-plugin` PASS — expected, since no exported signature/JSDoc changed).
-- [ ] **4.2 (Render / kitchen-sink)** `forms-dialog.story` + any dialog-bearing demo mount headlessly and paint (ST-K1); a recorded manual pass confirms no clipped text / color regression. No new visual component → no new story required (AR-11).
-- [ ] **4.3 (Wrap)** `yarn lint:fix`, commit whatever it changes, full verify green, push to `feat/dsl-adoptation` (**PR deferred** — rides in the epic's eventual PR, AR-10). Record the **app-overlay `cover()` follow-up** as a task row on the feature roadmap and update the #115 row/note (Tier-2 bodies done; app-overlay remaining).
+- [x] **4.1 (Sweep)** Full `TUI_SKIP_PERF=1 yarn verify` across the monorepo green (rebuild ui before examples). `yarn bench` no-regression (no new per-frame alloc on resize). Confirm no behavioral test flipped and no public-JSDoc drift (`check-plugin` PASS — expected, since no exported signature/JSDoc changed). ✅ (2026-07-19 — verify 30/30; bench compose+diff median 4.34ms p95 5.92ms, well under the 16ms ceiling; check-plugin PASS)
+- [x] **4.2 (Render / kitchen-sink)** `forms-dialog.story` + any dialog-bearing demo mount headlessly and paint (ST-K1); a recorded manual pass confirms no clipped text / color regression. No new visual component → no new story required (AR-11). ✅ (2026-07-19 — examples 284/284 incl. kitchen-sink smoke; headless render of find/replace/confirmBox/replacePrompt + the messageBox family shows correct 2-cell gutters, no clipped text, uniform button faces)
+- [x] **4.3 (Wrap)** `yarn lint:fix`, commit whatever it changes, full verify green, push to `feat/dsl-adoptation` (**PR deferred** — rides in the epic's eventual PR, AR-10). Record the **app-overlay `cover()` follow-up** as a task row on the feature roadmap and update the #115 row/note (Tier-2 bodies done; app-overlay remaining).
 
 ## Done when
 
