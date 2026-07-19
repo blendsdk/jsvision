@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/RD-01 (Tier 2, files) · **GitHub**: [#120](https://github.com/blendsdk/jsvision/issues/120)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 4/18 tasks (22%)
+> **Progress**: 8/18 tasks (44%)
 > **Last Updated**: 2026-07-19
 > **Branch**: `feat/files-flex-elimination` (cut from `feat/dsl-adoptation`; PR retargets to `develop` once #123 lands)
 > **Verify**: `yarn verify`
@@ -22,10 +22,12 @@ is intended (AR-10).
 
 ## Phase 2 — `wrapText` export (AR-4)
 
-- [ ] 2.1 Move `wrapText` from `controls/text.ts` to `controls/measure.ts` verbatim; re-import in `text.ts`
-- [ ] 2.2 Add public JSDoc (lead sentence, `@param`/`@returns`, `@example`) + barrel export
-- [ ] 2.3 ST-FE09 — barrel export + wrap-parity table
-- [ ] 2.4 `yarn plugin:sync --fix` (API-ref regen) · verify green
+> **Phase ref**: d6d95f3f
+
+- [x] 2.1 Move `wrapText` from `controls/text.ts` to `controls/measure.ts` verbatim; re-import in `text.ts` ✅ (completed: 2026-07-19 19:20)
+- [x] 2.2 Add public JSDoc (lead sentence, `@param`/`@returns`, `@example`) + barrel export ✅ (completed: 2026-07-19 19:20)
+- [x] 2.3 ST-FE09 — barrel export + wrap-parity table ✅ (completed: 2026-07-19 19:20)
+- [x] 2.4 `yarn plugin:sync --fix` (API-ref regen) · verify green ✅ (completed: 2026-07-19 19:20)
 
 ## Phase 3 — `errorBox` (03-03)
 
@@ -70,6 +72,7 @@ Record here if the red step falsifies a derivation.
 
 | # | Expected (plan) | Actual (solver) | Resolution |
 |---|-----------------|-----------------|------------|
+| D-2 | ST-FE09 asserts no wrapped line exceeds the requested width | A glyph wider than the whole width (2-column CJK at width 1) is emitted alone, so the wrap always terminates | Real pre-existing contract detail, not a defect. The oracle now states it explicitly and the promoted public JSDoc documents it. |
 | D-1 | 03-01 §5 / 03-02 §4: focusables are `fileList` / `dirList` and `listBar` | Focus is leaf-only, so the Tab stop is `fileList.rows` / `dirList.rows`; `listBar` (a `ScrollBar`) is **not** focusable at all | Mechanical correction — the *user-visible* traversal order is unchanged, so ST-FE01/ST-FE02 assert the real ring. No behavior impact on the conversion. |
 
 > **Watch item (AR-6):** if `history-files.spec.test.ts` goes red in 4.4 or 5.3, the geometry
