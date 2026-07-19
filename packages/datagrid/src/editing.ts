@@ -8,7 +8,7 @@
  * the renderer's internals. Commit is **await-close** — the editor stays open across an async
  * `onCommit`, closing (and advancing) only once the veto resolves.
  */
-import { Group, signal, ComboBox, DatePicker, cover } from '@jsvision/ui';
+import { Group, signal, ComboBox, DatePicker } from '@jsvision/ui';
 import type { View, Signal, DispatchEvent } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { isEditable } from './column.js';
@@ -227,7 +227,11 @@ export function createEditController<T>(host: EditHost<T>): EditController {
         built.editor = e;
         if (e === null) return null; // a read-only editor kind → mount nothing
         const editorHost = new Group();
-        editorHost.add(cover(e));
+        // Assigned wholesale rather than tagged: a custom editor factory's own layout on the view it
+        // returns is intentionally discarded, so an editor always fills its cell no matter what the
+        // factory set.
+        e.layout = { position: 'fill' };
+        editorHost.add(e);
         // Enter/Esc bubble up the focus chain from the editor (which leaves them unhandled) to this host.
         editorHost.onEvent = (ev2: DispatchEvent): void => onEditorKey(ev2);
         return editorHost;

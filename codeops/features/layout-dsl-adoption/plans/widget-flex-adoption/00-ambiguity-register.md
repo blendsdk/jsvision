@@ -28,3 +28,27 @@ re-grounded after preflight** — the first two because their original option fr
 the reasons issue #116 actually gave, the third because its stated rationale was factually wrong
 (the conversion is still correct, for a different reason). AR-11 and AR-12 are new preflight
 resolutions.
+
+## AR-13 (runtime) — `editing.ts:230` is a fourth public receiver
+
+**Raised:** post-phase review of Phase 4. **Status:** ✅ Resolved.
+
+Group C converted `editing.ts:230` to `cover()` on the stated basis that all four Group C sites
+already carry `position:'fill'`. That basis holds for the three `grid.ts` sites, which are locally
+constructed. It does not hold here: `e` is `createCellEditor`'s return, and for a
+`kind:'custom'` column editor that is `spec.create(field, host)` — a caller-supplied factory reached
+through the barrel-exported `createCellEditor`/`CellEditorSpec` and the documented `GridColumn.editor`
+option. The old wholesale assignment destroyed any layout the factory set; `cover()` merges, so a
+factory's `padding`/`direction`/`size`/stale `rect` would newly survive.
+
+**Options considered:** (a) restore the clobber and treat it as a fourth FR-3 preserved receiver;
+(b) keep `cover()` and pin the new merge semantics with a spec test, logged as a deliberate
+deviation.
+
+**Decision (user):** (a). This plan's contract is zero behavior change (NFR-1), and a merge here is a
+behavior change on a published extension seam however benign it looks. All four public receivers now
+behave alike. Group C drops from 4 conversions to 3; the plan's total is 47, not 48.
+
+**Note for the record.** This is the third public receiver the AR-1 rule was stated for and applied
+incompletely — preflight caught `overlay.ts:125` (PF-007) the same way. The rule needs a mechanical
+check ("is this receiver reachable from a barrel export?") rather than a per-site judgement.
