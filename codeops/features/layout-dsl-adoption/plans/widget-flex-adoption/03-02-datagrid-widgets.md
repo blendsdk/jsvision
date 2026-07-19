@@ -7,9 +7,22 @@ Site inventory: [02-current-state.md §2](02-current-state.md#2-116--packagesdat
 ## The rule that governs every conversion here
 
 A tagger writes **only the props it owns** and merges the rest. `fixed(v, n)` writes `size`;
-`grow(v)` writes `size`; `cover(v)` writes `position`. **Anything else in the literal being replaced
-— above all `direction` — is silently dropped unless it is re-established.** Check each site's full
-descriptor before substituting; two sites in this file's scope carry a `direction`.
+`grow(v)` writes `size`; `cover(v)` writes `position`; a bare `row()`/`col()` writes only
+`direction`. **Anything else in the literal being replaced is silently dropped unless it is
+re-established.** Check each site's full descriptor before substituting.
+
+In this plan's scope that bites at **four** sites, and not only for `direction`:
+
+| Site | Extra props beyond `size` | Target |
+|------|---------------------------|--------|
+| `grid-panels.ts:255` | `direction:'row'` | `fixed(row(), 1)` |
+| `grid-lifecycle.ts:76` | `direction:'col'` | `grow(col(...))` |
+| `button-row.ts:81` | `direction:'row'`, **`gap: BUTTON_GAP`** | `fixed(row({ gap: BUTTON_GAP }), BUTTON_HEIGHT)` |
+| `button-row.ts:87` | `direction:'row'`, **`justify:'center'`** | `grow(row({ justify: 'center' }, button))` |
+
+`Flex` is `Omit<LayoutProps, 'direction'>` (`flex.ts:41`), so both `gap` and `justify` are expressible
+through the builder's props object. `BUTTON_GAP = 1` and `buttonCellWidth` (`button-row.ts:16,35`)
+computes widths assuming that gap — dropping it shifts every button after the first.
 
 ## Group A — `grid-panels.ts` (15 of 23 sites)
 
@@ -25,7 +38,10 @@ rather than one of the named consts, so a grep for `fixed1`/`fr` will miss it.
 - `:255` — `bandRow()`'s `{ direction:'row', size: fixed 1 }` → **`fixed(row(), 1)`**. A bare
   `fixed(g, 1)` drops `direction:'row'` and survives only because that is the engine default. Do not
   rely on the coincidence.
-- `:674` — `host` → `grow(col(bodyStack))`. The only container in this file expressible as a builder.
+- `:674` — `host` → `grow(col(bodyStack))`. The only container here whose children can be passed
+  inline to the builder; `:255` also becomes a builder, but an empty one (its callers `add()` later).
+  An empty builder is accepted at `:255` because it is the cheapest way to re-establish the dropped
+  `direction`; at `:441/445/448/578` it would buy nothing, which is why those stay excluded.
 
 **Eight sites are out of scope (AR-3)** — see 02-current-state §2 for the line list and reasoning.
 Do not convert them opportunistically: `:441/445/448/578` accumulate children across branching

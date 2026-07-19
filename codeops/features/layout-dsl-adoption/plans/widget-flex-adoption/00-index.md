@@ -37,7 +37,7 @@ idiom before datagrid's 36 sites touch the most oracle-dense package in the repo
    Preflight found three sites where that bites (PF-001/002/003) and one public receiver the rule
    was never applied to (PF-007). Both classes are now resolved.
 
-## The `application.ts` trade (AR-9)
+## The `application.ts` trade
 
 AR-2 admitted `application.ts` on the basis of two convertible sites; AR-1's later per-site rule
 reclassified one of them as a preserved public receiver, leaving **one** conversion. That one
