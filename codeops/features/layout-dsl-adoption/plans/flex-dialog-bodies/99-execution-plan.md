@@ -1,8 +1,8 @@
 # 99 — Execution Plan
 
 > **Plan**: layout-dsl-adoption/flex-dialog-bodies · **Implements**: RD-01 (Tier-2 ui/forms), RD-02 · **GitHub**: #115
-> **Progress**: 0/14 tasks (0%)
-> **Last Updated**: 2026-07-19
+> **Progress**: 4/14 tasks (29%)
+> **Last Updated**: 2026-07-19 16:05
 > **CodeOps Skills Version**: 3.9.0
 
 Spec-first, behavior-invariant rebuild. Order per family: **traversal spec (green-on-current) → [geometry
@@ -17,10 +17,13 @@ no-regression). Commit via **/gitcm**; before the PR-bound push run `yarn lint:f
 
 ## Phase 1 — messageBox family (`ui/dialog/message-box.ts`) · spec 03-01
 
-- [ ] **1.1 (Spec)** Add `message-box.traversal.spec.test.ts` (ST-T1: `[OK]`/`[OK,Cancel]`/`[Yes,No]`/`[Input,OK,Cancel]`). Confirm **green on current code** (characterizes today's order).
-- [ ] **1.2 (Guard)** Add `message-box.render.impl.test.ts` (ST-K2, PF-002): each of messageBox/confirm/inputBox mounts headless, `flush()`es, a known body string paints, and every button solves to non-zero `bounds`. Confirm **green on current code**.
-- [ ] **1.3 (Impl)** Rebuild `messageBox`/`confirm`/`inputBox` to `cover(col(…, fixed(row({justify:'center'}, …buttons))))`; delete local `at`/`centerX`/`PAIR_WIDTH`. Preserve width/height formulas + the `Label(label, input)` link + validator veto.
-- [ ] **1.4 (Green)** ST-T1 + ST-K2 green; `message-box.spec` (7) + `.impl` (5) green **unedited**; `yarn workspace @jsvision/ui test` green; `tsc` clean; no local helper left (`grep`). *(commit boundary)*
+> **Phase ref**: 1bd705b262c8c11dbe030620052b9dbe3045c760
+
+- [x] **1.1 (Spec)** Add `message-box.traversal.spec.test.ts` (ST-T1: `[OK]`/`[OK,Cancel]`/`[Yes,No]`/`[Input,OK,Cancel]`). Confirm **green on current code** (characterizes today's order). ✅ (completed: 2026-07-19 16:02 — 4/4 green on current code)
+- [x] **1.2 (Guard)** Add `message-box.render.impl.test.ts` (ST-K2, PF-002): each of messageBox/confirm/inputBox mounts headless, `flush()`es, a known body string paints, and every button solves to non-zero `bounds`. Confirm **green on current code**. ✅ (completed: 2026-07-19 16:03 — 4/4 green on current code)
+- [x] **1.3 (Impl)** Rebuild `messageBox`/`confirm`/`inputBox` to `cover(col(…, fixed(row({justify:'center'}, …buttons))))`; delete local `at`/`centerX`/`PAIR_WIDTH`. Preserve width/height formulas + the `Label(label, input)` link + validator veto. ✅ (completed: 2026-07-19 16:05)
+  - *Mechanical correction:* `Label` and `Input` report no natural size, so both take an explicit `fixed(…, 1)` (a bare `Label` child, as the 03-01 sample showed, would collapse to `{0,0}` and be clipped away). `BUTTON`/`PAIR_WIDTH` replaced by `BUTTON_BAND_HEIGHT`/`BUTTON_GAP` — the old `BUTTON.width` became meaningless once buttons self-size.
+- [x] **1.4 (Green)** ST-T1 + ST-K2 green; `message-box.spec` (7) + `.impl` (5) green **unedited**; `yarn workspace @jsvision/ui test` green; `tsc` clean; no local helper left (`grep`). ✅ (completed: 2026-07-19 16:05 — ui suite 1759/1759, typecheck clean) *(commit boundary)*
 
 ## Phase 2 — editor dialogs (`ui/editor/dialogs.ts`) · spec 03-02
 

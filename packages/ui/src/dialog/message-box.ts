@@ -6,8 +6,8 @@
  */
 import { Text, Label, Input } from '../controls/index.js';
 import type { Validator } from '../controls/index.js';
+import { col, row, grow, fixed, cover, spacer } from '../view/index.js';
 import type { View } from '../view/index.js';
-import type { Rect } from '../layout/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { EventLoop } from '../event/index.js';
 import type { Desktop } from '../desktop/index.js';
@@ -50,20 +50,10 @@ export interface InputBoxOptions {
   placeholder?: string | Signal<string>;
 }
 
-/** Standard button-cell size, and the width of an OK/Cancel pair with a 2-cell gap between them. */
-const BUTTON = { width: 10, height: 2 } as const;
-const PAIR_WIDTH = BUTTON.width + 2 + BUTTON.width;
-
-/** Place `view` at an absolute rect (dialogs in this module use `padding: 0` and absolute children). */
-function at<T extends View>(view: T, rect: Rect): T {
-  view.layout = { ...view.layout, position: 'absolute', rect };
-  return view;
-}
-
-/** The left edge that centers a `span`-wide element in a `width`-wide dialog (never past the frame). */
-function centerX(width: number, span: number): number {
-  return Math.max(2, Math.trunc((width - span) / 2));
-}
+/** The button band is two rows tall: a raised button face plus its drop shadow. */
+const BUTTON_BAND_HEIGHT = 2;
+/** Cells between the two buttons of a pair. */
+const BUTTON_GAP = 2;
 
 /**
  * Mount the dialog, run it modally, and remove it — even if `execView` rejects. Resolves to the
@@ -103,18 +93,15 @@ export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): P
   // OK-only reuses the compact info-box geometry; OK/Cancel widens to fit two buttons.
   const width = Math.min(60, Math.max(hasCancel ? 40 : 24, o.text.length + 6));
   const height = hasCancel ? 9 : 7;
-  const buttonY = hasCancel ? 6 : 4;
 
   const dlg = new Dialog({ title: o.title, width, height, centered: true });
   dlg.layout = { ...dlg.layout, padding: 0 };
-  dlg.add(at(new Text(o.text), { x: 3, y: 2, width: width - 6, height: hasCancel ? 2 : 1 }));
-  if (hasCancel) {
-    const startX = centerX(width, PAIR_WIDTH);
-    dlg.add(at(okButton(), { x: startX, y: buttonY, ...BUTTON }));
-    dlg.add(at(cancelButton(), { x: startX + BUTTON.width + 2, y: buttonY, ...BUTTON }));
-  } else {
-    dlg.add(at(okButton(), { x: centerX(width, BUTTON.width), y: buttonY, ...BUTTON }));
-  }
+  const buttons = hasCancel
+    ? row({ justify: 'center', gap: BUTTON_GAP }, okButton(), cancelButton())
+    : row({ justify: 'center' }, okButton());
+  // The column covers the dialog box and insets a cell, so its content sits just inside the frame: the
+  // message absorbs the leftover height, which keeps the button band on the bottom row at any size.
+  dlg.add(cover(col({ padding: 1 }, grow(new Text(o.text)), fixed(buttons, BUTTON_BAND_HEIGHT))));
 
   const result = await runDialog(host, dlg);
   return result === 'ok' ? 'ok' : 'cancel';
@@ -133,10 +120,15 @@ export async function confirm(host: ModalDialogHost, text: string): Promise<bool
   const width = Math.min(60, Math.max(40, text.length + 6));
   const dlg = new Dialog({ title: 'Confirm', width, height: 9, centered: true });
   dlg.layout = { ...dlg.layout, padding: 0 };
-  dlg.add(at(new Text(text), { x: 3, y: 2, width: width - 6, height: 2 }));
-  const startX = centerX(width, PAIR_WIDTH);
-  dlg.add(at(yesButton(), { x: startX, y: 6, ...BUTTON }));
-  dlg.add(at(noButton(), { x: startX + BUTTON.width + 2, y: 6, ...BUTTON }));
+  dlg.add(
+    cover(
+      col(
+        { padding: 1 },
+        grow(new Text(text)),
+        fixed(row({ justify: 'center', gap: BUTTON_GAP }, yesButton(), noButton()), BUTTON_BAND_HEIGHT),
+      ),
+    ),
+  );
 
   const result = await runDialog(host, dlg);
   return result === 'yes';
@@ -160,18 +152,23 @@ export async function inputBox(host: ModalDialogHost, o: InputBoxOptions): Promi
   const dlg = new Dialog({ title: o.title, width, height: 9, centered: true });
   dlg.layout = { ...dlg.layout, padding: 0 };
 
-  const input = at(new Input({ value: o.value, validator: o.validator, placeholder: o.placeholder }), {
-    x: 3,
-    y: 3,
-    width: width - 6,
-    height: 1,
-  });
-  dlg.add(input);
-  dlg.add(at(new Label(o.label, input), { x: 3, y: 2, width: width - 6, height: 1 }));
+  const input = new Input({ value: o.value, validator: o.validator, placeholder: o.placeholder });
   const [ok, cancel] = okCancelButtons();
-  const startX = centerX(width, PAIR_WIDTH);
-  dlg.add(at(ok, { x: startX, y: 6, ...BUTTON }));
-  dlg.add(at(cancel, { x: startX + BUTTON.width + 2, y: 6, ...BUTTON }));
+  // Neither the caption nor the field reports a natural size, so both take an explicit one-row size —
+  // left to size themselves they would collapse to nothing and be clipped away. The spacer below them
+  // absorbs the slack that keeps the button band on the bottom row. The caption is added first for
+  // reading order but is never focusable, so the field still leads the Tab order.
+  dlg.add(
+    cover(
+      col(
+        { padding: 1 },
+        fixed(new Label(o.label, input), 1),
+        fixed(input, 1),
+        spacer(),
+        fixed(row({ justify: 'center', gap: BUTTON_GAP }, ok, cancel), BUTTON_BAND_HEIGHT),
+      ),
+    ),
+  );
 
   const result = await runDialog(host, dlg);
   return result === 'ok' ? o.value.peek() : null;
