@@ -12,7 +12,7 @@
  * inert) so no concurrent close can pop the modal mid-await. The sync `valid()` is repurposed to an
  * optimistic `form.isValid()` app-quit veto.
  */
-import { Dialog, Button, cancelButton, Commands } from '@jsvision/ui';
+import { Dialog, Button, cancelButton, Commands, cover } from '@jsvision/ui';
 import type { View, Rect, DispatchEvent, ModalDialogHost } from '@jsvision/ui';
 import type { z } from 'zod';
 import type { AsyncValidator, Form } from './types.js';
@@ -224,7 +224,7 @@ export function formDialog<S extends z.ZodObject<z.ZodRawShape>, I extends Recor
       // no in-flow content, so without this its `auto` width would resolve to zero, collapsing the
       // group and clipping every child away — the dialog would show only its frame + buttons (and the
       // focused field's caret). `fill` needs no rect and re-solves if the dialog is ever resized.
-      body.layout = { ...body.layout, position: 'fill' };
+      cover(body);
       dlg.add(body);
       dlg.add(place(ok, rects.ok));
       // Cancel must not steal focus from the body on click: a click-to-focus would blur the field
