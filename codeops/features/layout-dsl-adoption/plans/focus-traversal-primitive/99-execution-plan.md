@@ -1,7 +1,7 @@
 # 99 — Execution Plan
 
 > **Plan**: layout-dsl-adoption/focus-traversal-primitive · **Implements**: RD-01 (FR-2/FR-3 enabler)
-> **Progress**: 5/11 tasks (45%)
+> **Progress**: 8/11 tasks (73%)
 > **Last Updated**: 2026-07-19
 > **CodeOps Skills Version**: 3.9.0
 
@@ -49,12 +49,19 @@ Commit via **/gitcm**; before the PR-bound push run `yarn lint:fix` then **/gitc
 
 ## Phase 3 — Impl tests, docs, perf (R-7, NFR-5, spec 07)
 
-- [ ] **3.1 (Impl tests)** Add `event.focus-traversal.impl.test.ts` (IMP-1…IMP-4): empty-start
+- [x] **3.1 (Impl tests)** Add `event.focus-traversal.impl.test.ts` (IMP-1…IMP-4): empty-start
   first/last, disabled-anchor recovery under nesting, no per-frame alloc, `scope=null` no-op.
-- [ ] **3.2 (Docs)** Update JSDoc on `focusNext`/`focusPrev` (interface + impl) — tree-order + scope
-  ceiling + restore-on-entry — with a copy-pasteable `@example` (Tab cycling a `col(row(input),
-  row(ok,cancel))`). `why`-comments only; no CodeOps/TV refs. `yarn check:docs` green.
-- [ ] **3.3 (Perf)** `yarn bench` shows no hot-widget regression (16 ms off-CI ceiling); confirm IMP-3.
+  *(Done 2026-07-19: 4/4 green; IMP-2 also covers the bubble-out when a group is exhausted; IMP-4 tests
+  the manager directly since the public loop only reaches `scope=null` before mount.)*
+- [x] **3.2 (Docs)** Update JSDoc on `focusNext`/`focusPrev` — tree-order + scope ceiling +
+  restore-on-non-Tab-entry — with a copy-pasteable `@example` (Tab cycling a `col(row(input),
+  row(ok,cancel))`). `why`-comments only; no CodeOps/TV refs. `yarn check:docs` green. *(Done 2026-07-19:
+  rich `@example` on the public `EventLoop.focusNext` in `types.ts`; `FocusManager` interface + `advance`
+  impl carry tree-order prose. `FocusManager` is internal (not doc-gated). check:docs: 0 banned refs,
+  0 missing `@example`.)*
+- [x] **3.3 (Perf)** `yarn bench` shows no hot-widget regression (16 ms off-CI ceiling); confirm IMP-3.
+  *(Done 2026-07-19: compose+diff median 3.0 ms / p95 3.7 ms — far under 16 ms; the change touches only
+  the keypress focus path, never the renderer. IMP-3 green.)*
 
 ## Phase 4 — Non-regression sweep, kitchen-sink, PR (AR-8/AR-11, spec 02)
 
