@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/RD-01 (Tier 2, files) · **GitHub**: [#120](https://github.com/blendsdk/jsvision/issues/120)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 8/18 tasks (44%)
+> **Progress**: 11/18 tasks (61%)
 > **Last Updated**: 2026-07-19
 > **Branch**: `feat/files-flex-elimination` (cut from `feat/dsl-adoptation`; PR retargets to `develop` once #123 lands)
 > **Verify**: `yarn verify`
@@ -31,9 +31,11 @@ is intended (AR-10).
 
 ## Phase 3 — `errorBox` (03-03)
 
-- [ ] 3.1 ST-FE06 + ST-FE07 spec tests for the new sizing → **red**
-- [ ] 3.2 Implement wrap-aware height + `cover(col(grow(text), fixed(row(...), 2)))` → green
-- [ ] 3.3 Verify; confirm ST-FE03 still green
+> **Phase ref**: 5c2f89b0
+
+- [x] 3.1 ST-FE06 + ST-FE07 spec tests for the new sizing → **red** ✅ (completed: 2026-07-19 19:40)
+- [x] 3.2 Implement wrap-aware height + `cover(col(grow(text), fixed(row(...), 2)))` → green ✅ (completed: 2026-07-19 19:40)
+- [x] 3.3 Verify; confirm ST-FE03 still green ✅ (completed: 2026-07-19 19:40)
 
 ## Phase 4 — `FileDialog` (03-01)
 
