@@ -113,9 +113,9 @@ export class ChDirDialog extends Dialog {
 
     this.buildButtons();
 
-    // Every child below carries an explicit `fixed`/`grow` size. That is not decoration: only `Text`
-    // and `Button` know how to measure themselves, so any other widget left to size automatically
-    // would collapse to nothing and vanish.
+    // Every child below that cannot measure itself carries an explicit `fixed`/`grow` size. That is
+    // not decoration: only `Text` and `Button` know their own intrinsic size, so any other widget
+    // left to size automatically would collapse to nothing and vanish.
     //
     // A consequence worth knowing: the captions stretch to the full content column rather than
     // hugging their text, so the blank space beside a caption is part of its click zone and focuses
