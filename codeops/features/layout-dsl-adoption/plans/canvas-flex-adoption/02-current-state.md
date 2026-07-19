@@ -18,8 +18,8 @@ bodies. Where the issues and the code disagreed, the code won — noted in §4.
 | Line | Receiver | Literal | Target |
 |------|----------|---------|--------|
 | `:103` | `header` | `{ size: fixed 1 }` | `fixed(header, 1)` |
-| `:107` | `b` (loop over `[btnOk, btnOpen]`) | `{ size: fr 1 }` | `grow(b)`, loop kept |
-| `:109` | `body` | **`{ direction:'row', size: fixed 1, gap: 2 }`** | `fixed(row({ gap: 2 }, btnOk, btnOpen), 1)` |
+| `:107` | `b` (loop over `[btnOk, btnOpen]`) | `{ size: fr 1 }` | folded into `:109`'s inline `grow(btnOk)` / `grow(btnOpen)` — the loop existed only to apply one shared descriptor |
+| `:109` | `body` | **`{ direction:'row', size: fixed 1, gap: 2 }`** | `fixed(row({ gap: 2 }, grow(btnOk), grow(btnOpen)), 1)` |
 | `:114` | `dialogLabel` | `{ size: fixed 1 }` | `fixed(dialogLabel, 1)` |
 | `:116` | `btnClose` | `{ size: fixed 1 }` | `fixed(btnClose, 1)` |
 | `:119` | `dialog` | **`{ direction:'col', size: fixed 2 }`** | `fixed(col({ background:'dialog' }, …), 2)` |
@@ -125,7 +125,7 @@ the builder's props object.
 
 | Property | Sites |
 |---|---|
-| `direction` only | `editor-demo:67`, `drill-down:69`, `app.ts:288`, `:290`, `:303` |
+| `direction` only | `editor-demo:67`, `event-demo:119`, `drill-down:69`, `app.ts:288`, `:290`, `:303` |
 | `direction` + `gap` | `event-demo:109` |
 | `direction` + `padding` | `event-demo:128` |
 | `direction` + `padding` + `gap` | `controls-demo:95`, `router-demo:59`†, `:101`, `drill-down:29`† |
@@ -141,7 +141,8 @@ so `padding`, `gap` and `background` are all expressible through the props objec
 | Harness | What it actually asserts |
 |---|---|
 | `theme-designer/test/walkthrough.e2e.test.ts` | exit 0, stdout contains step headings, `/\+-{5,}\+/`, `Contrast`, `"version": 1`, `Done.` |
-| `examples/test/{editor,event,controls,router}-demo.e2e.test.ts` | exit 0 plus rendered substrings (`══`, `1:1`, `Undo ×2`, …) |
+| `examples/test/{editor,event,controls,router}-demo.e2e.test.ts` | exit 0 plus rendered substrings (`══`, `1:1`, `Undo ×2`, …) — **four**, not five |
+| `chrome-bars-demo` | **no test file exists** — its one site's only oracle is ST-C8 |
 | `theme-designer/test/roles-panel.spec.test.ts` | label strings and the `targets` array |
 | `theme-designer/test/app.{spec,impl}.test.ts` | **zero** occurrences of `layout`, `direction`, `rect`, `children[`, `workspace`, `resize` |
 | `examples/test/kitchen-sink.smoke.spec.test.ts` | the story mounts, paints something, has a unique id |

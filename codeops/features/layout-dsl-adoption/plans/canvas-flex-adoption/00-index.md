@@ -11,13 +11,13 @@ Adopt the layout DSL in the didactic canvases — the `@jsvision/examples` app-s
 
 | Doc | Contents |
 |-----|----------|
-| [00-ambiguity-register](00-ambiguity-register.md) | The 12 decisions taken before authoring · ✅ gate passed |
+| [00-ambiguity-register](00-ambiguity-register.md) | 12 decisions before authoring + AR-13/14 from preflight · ✅ gate passed |
 | [01-requirements](01-requirements.md) | FR-1…FR-5, NFR-1…NFR-6, AC-1…AC-9, the residue allowlist |
 | [02-current-state](02-current-state.md) | Verified site tables, property-drop exposure, why existing coverage does not count |
 | [03-01-example-demos](03-01-example-demos.md) | Target code for the 6 example files |
 | [03-02-theme-designer](03-02-theme-designer.md) | Target code for the 3 designer files + the ordering constraint |
-| [07-testing-strategy](07-testing-strategy.md) | ST-C1…C9, the shared `solveTree` helper, the zero-edit contract |
-| [99-execution-plan](99-execution-plan.md) | 4 phases, 31 tasks |
+| [07-testing-strategy](07-testing-strategy.md) | The **seam rule**, ST-C1…C10, the zero-edit contract |
+| [99-execution-plan](99-execution-plan.md) | 4 phases, 32 tasks |
 
 ## Why these two issues share one plan
 
@@ -28,8 +28,8 @@ once is strictly cheaper than twice (AR-1).
 
 ## What makes this plan different from its siblings
 
-**The property-drop risk is four times denser.** 13 of 35 sites carry a property beyond `size` —
-37%, against 8% in `widget-flex-adoption`. And the extras here are `padding` and `gap` on app-shell
+**The property-drop risk is roughly four times denser.** 13 of 35 sites carry a property beyond
+`size` — 37%, against ~10% in `widget-flex-adoption` (5 of 51, counting its `application.ts` site). And the extras here are `padding` and `gap` on app-shell
 roots, not just `direction`. A bare tagger at any of them silently changes the rendering.
 
 **There is no existing oracle.** Every harness over these 9 files is a stdout-content smoke test: the
@@ -39,6 +39,11 @@ tests assert rendered substrings. None references `bounds`, `.layout`, `rect` or
 
 So the witnesses are not a supplement here — they are the safety net, and Phase 1 is the larger half
 of the work.
+
+**And a witness must observe the real artifact.** Preflight found that the first draft had them
+reconstructing each demo's tree inside the test file, which passes after the conversion by
+construction. The seam is now chosen per file — frame snapshot, exported story, a new `buildRoot()`,
+or the real designer app (AR-13, [07 §seam rule](07-testing-strategy.md)).
 
 **The blast radius is dev-only by construction.** Both packages are `private: true` and nothing in
 the monorepo depends on them, so no consumer can observe any of these layouts. That is what justifies

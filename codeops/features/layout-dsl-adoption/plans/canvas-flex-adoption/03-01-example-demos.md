@@ -9,7 +9,7 @@ A tagger writes **only the props it owns** and merges the rest. `fixed(v, n)` an
 `size`; a bare `row()`/`col()` writes only `direction`. **Everything else in the literal being
 replaced is dropped unless re-established through the builder's props object.**
 
-In this file's scope that bites at **six** sites:
+In this file's scope that bites at **seven** sites:
 
 | Site | Extras beyond `size` | Target |
 |------|----------------------|--------|
@@ -22,9 +22,10 @@ In this file's scope that bites at **six** sites:
 | `drill-down:69` | `direction:'col'` | `col({ background:'window' }, …)` |
 
 `Flex` is `Omit<LayoutProps,'direction'> & { grow?, fixed?, fill?, background? }` (`flex.ts:41-53`),
-so `padding`, `gap` and `background` all ride on the props object. `toLayout` strips `background`
-back onto the Group (`flex.ts:58-60`), so `col({ background:'x' }, …)` is exactly equivalent to the
-separate `.background = 'x'` line it replaces (AR-12).
+so `padding`, `gap` and `background` all ride on the props object. `toLayout` drops `background`
+(`flex.ts:61`) and `container()` assigns it to the Group at `flex.ts:97` — before children are added
+(`:103-105`) — so `col({ background:'x' }, …)` is exactly equivalent to the separate
+`.background = 'x'` line it replaces (AR-12).
 
 ## `editor-demo/main.ts` — the cleanest port
 
@@ -82,7 +83,9 @@ issue identifiers (CLAUDE.md documentation directive):
 ```
 
 **`printFrame`'s `for (const row of rows)` at `:45` is renamed** to `line` for consistency with
-`event-demo`, even though this file does not import the `row` builder (AR-5).
+`event-demo`. There is no shadow to remove here — this file never imports the `row` builder — and
+`no-shadow` is not enabled in the repo's ESLint config, so neither rename is mechanically forced.
+Both are readability calls (AR-5).
 
 ## `chrome-bars-demo/main.ts`
 

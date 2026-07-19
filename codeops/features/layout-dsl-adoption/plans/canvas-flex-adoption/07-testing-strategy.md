@@ -1,75 +1,98 @@
 # Testing Strategy — canvas-flex-adoption
 
+> Revised after preflight. The original strategy prescribed witnesses that **reconstructed** each
+> demo's view tree inside the test file. Both auditors independently found the same defect: a
+> reconstruction never executes a line of the converted file, so it passes after the conversion **by
+> construction** — whatever the conversion did. That is recorded as PF-001/PF-002 and is why the
+> witness seam is now chosen per file rather than assumed.
+
 ## Why this plan is witness-heavy
 
-There is no new behaviour to specify — but unlike the sibling plans, there is also **no existing
-oracle to lean on**. Every harness over these 9 files is a stdout-content smoke test
+There is no new behaviour to specify, and — unlike the sibling plans — no existing oracle to lean
+on. Every harness over these 9 files is a stdout-content smoke test
 ([02-current-state §4](02-current-state.md)); none asserts geometry, child order, or a solved rect.
 A converted panel could flow sideways and every existing test would still pass.
 
-So the witnesses are not a supplement here — they *are* the safety net, and the conversion is the
-cheap half of the work.
+So the witnesses are the safety net, and Phase 1 is the larger half of the work.
 
-**Green-first (NFR-2).** Every witness is written against unmodified source and passes immediately.
-That is the point: a green-first witness records what the artifact does today, so a later red proves
-the conversion moved something.
+## The seam rule — a witness must observe the real artifact
 
-**Non-vacuity (NFR-3).** Each witness asserts an exact child count and at least one **absolute**
-rect per container. A relation between two solved values is never the only assertion — the sibling
-plan's review found exactly that defect in its own witnesses, where `scrollBar.x === list.x +
-list.width` held even with both collapsed to zero.
+**A witness may never assert a tree it built itself.** Each converted file gets the cheapest seam
+that reaches its actual composition:
 
-**Placement.** All nine are `*.impl.test.ts`. They capture internal demo/panel composition, which
-later epic work (#112's docs modernization, #114's shadow cleanup) may legitimately reshape;
-freezing it in an immutable spec oracle would obstruct the feature's own direction.
+| File | Seam | Why |
+|---|---|---|
+| `event-demo`, `controls-demo`, `router-demo` | **frame snapshot** — the demo already prints its whole composed buffer via `printFrame`, and the e2e harness already spawns it | A geometry oracle on the running demo at zero source change. A lost `padding`/`gap` moves the printed cells. |
+| `drill-down.story.ts` | **the exported `drillDownStory`** (`:50`) — drive `build(ctx)` headlessly, as `kitchen-sink.smoke.spec` already does | Already an exported artifact; no new seam needed. |
+| `editor-demo`, `chrome-bars-demo` | **a new exported `buildRoot()`** that `main()` calls; the witness imports it | Neither prints a frame. A ~3-line extraction, in-scope, and itself a didactic improvement. |
+| `roles-panel`, `preview-panel`, `app.ts` | **`createDesignerApp({ caps, viewport, requireTty:false })`** — the real app tree, as `app.spec.test.ts:38` already builds | See §ST-C9 — this is the only seam where green-first and detection are compatible. |
 
-## The shared helper
+**Green-first (NFR-2).** Every witness is authored against unmodified source and passes immediately —
+recording what the artifact does today, so a later red proves the conversion moved something.
 
-`solveTree(view, w, h)` — mounts `view` under a render root at `w × h`, flushes once, and returns a
-plain snapshot of each container's children as `{ x, y, width, height }`. A near-identical copy lives
-in each package's `test/` directory (AR-10): cross-package test imports need a `tsconfig.typecheck`
-exclude, and the repo already sets this precedent with `ui/test/app-shell.fixtures.ts`, a deliberate
-local copy of core's host doubles.
+**Non-vacuity (NFR-3).** Each witness asserts an exact child count **and at least one literal
+absolute rect**. A relation between two solved values is never the only assertion — it holds when
+both operands collapse. The literals are captured from the green-first run and written in as
+constants; do not paraphrase them as relations afterwards.
 
-Because these demos are `main()` scripts rather than exported builders, each witness reconstructs the
-same view tree the demo builds. That duplication is deliberate and is the reason the witness is an
-`impl` test: it asserts *this composition*, and it must be updated in lockstep when the composition
-is intentionally changed.
+> This rule is not theoretical. The sibling plan shipped `scrollBar.x === list.x + list.width` as a
+> sole assertion and had it caught in review — and the first draft of *this* document then repeated
+> the same shape at ST-C3, in the very file that bans it.
+
+**Placement.** The importing witnesses are `*.impl.test.ts`; the frame snapshots extend the existing
+`*.e2e.test.ts` files as **new** test cases (never edits to existing ones — AC-6).
 
 ## Specification test cases
 
-### `packages/examples/test/demo-composition.impl.test.ts`
+### Frame-snapshot witnesses — `packages/examples/test/*-demo.e2e.test.ts` (new cases)
 
 | # | Subject | Asserted |
 |---|---------|----------|
-| ST-C1 | `editor-demo` root | 2 children; editor absorbs the slack, indicator is exactly 1 row at the bottom; both full width |
-| ST-C2 | `event-demo` root | 4 children stacked in order (header, body, dialog, status); **`padding:1` visible as a 1-cell inset on x and y**; header/status 1 row, dialog 2 rows |
-| ST-C3 | `event-demo` body row | 2 buttons side by side; **the second button's x is the first's right edge + 2**, the `gap` — the assertion that catches a dropped gap |
-| ST-C4 | `controls-demo` form | exact child count; **`padding:1` inset**; each row's height matches its declared cell count; `gap:0` means no inter-row space |
-| ST-C5 | `router-demo` list screen | 2 children (title, listView) stacked; `padding:1` inset; listView absorbs the slack |
-| ST-C6 | `router-demo` DetailScreen | 3 children (title, hint, back) stacked with a 1-cell `gap` between each; back is 2 rows |
-| ST-C7 | `chrome-bars-demo` window body | body fills the window's content box below the chrome |
-| ST-C8 | `drill-down.story` list + detail screens | list screen: 1 child filling; detail screen: 3 children stacked with `gap:1` |
+| ST-C1 | `event-demo` root frame | The printed frame's **exact row strings** for the composed desktop: the `padding:1` inset shows as a blank first column and first row; header/status occupy their rows; the dialog block spans 2 rows. Captured verbatim from the green-first run. |
+| ST-C2 | `event-demo` button row | The row containing both buttons, as an exact string — **the two button faces separated by exactly 2 blank cells** (the `gap`). A dropped gap shifts every character after the first button. |
+| ST-C3 | `event-demo` dialog column | The dialog's two rows: `dialogLabel`'s text on the first, `btnClose` on the second. **Covers `event-demo:119`**, whose `direction:'col'` no other witness could see (the root-level "dialog is 2 rows tall" holds in either direction). |
+| ST-C4 | `controls-demo` form frame | Exact row strings showing the `padding:1` inset and each control on its own row with `gap:0` (no blank row between). |
+| ST-C5 | `router-demo` list screen frame | Exact row strings: `padding:1` inset, title on the first content row, list filling beneath. |
+| ST-C6 | `router-demo` DetailScreen frame | Exact row strings: title, blank (the `gap:1`), hint, blank, back — the gap is visible as the blank rows. |
 
-### `packages/theme-designer/test/panel-composition.impl.test.ts`
+Each asserts the frame lines as literal strings, so a count and absolute positions are inherent —
+NFR-3 is satisfied structurally rather than by a separate clause.
+
+### Importing witnesses — `packages/examples/test/demo-composition.impl.test.ts`
 
 | # | Subject | Asserted |
 |---|---------|----------|
-| ST-C9 | roles panel, preview panel, and the 3-pane workspace | each panel: 2 children stacked vertically, title exactly 1 row, body absorbing the slack — **the assertion that catches a lost `direction:'col'`**; workspace: 3 panes side by side at x-offsets 0 / 28 / (width − 32), with the rail 28 wide, the inspector 32 wide, and the preview taking the remainder |
+| ST-C7 | `editor-demo`'s exported `buildRoot()` | Root has exactly 2 children; the indicator's **full literal rect** (1 row, at the bottom, full width) and the editor's full literal rect above it |
+| ST-C8 | `chrome-bars-demo`'s exported `buildRoot()` | The window's child count and the body's **full literal rect** inside the 48×9 frame (`main.ts:88`) — note the subject is the `Window`'s content box, not the app chrome |
+| ST-C9 | `drillDownStory.build(ctx)` — the **real exported story** | List screen: the list child's full literal rect **and** the screen's solved `direction`, since a single `fr` child fills identically under `row` and `col` so the rect alone cannot see `drill-down:69`. Detail screen: 3 children, each child's absolute y, showing the `gap:1` |
 
-ST-C9 is the highest-value witness in the plan: it is the only thing standing between
-`app.ts:288`/`:290` dropping their `direction:'col'` and a silently horizontal panel, and it must be
-green **before** Phase 2 touches either panel builder.
+### Designer witnesses — `packages/theme-designer/test/panel-composition.impl.test.ts`
+
+Driven through `createDesignerApp({ caps, viewport, requireTty:false })` at the 90×30 viewport
+`app.spec.test.ts:22` already uses — walking `app.desktop` to the workspace and its three panes.
+
+| # | Subject | Asserted |
+|---|---------|----------|
+| ST-C10a | roles panel, in the real app tree | 2 children; title's **full literal rect** (1 row, 28 wide); list filling beneath it — vertical stacking, the assertion that sees a lost `direction:'col'` |
+| ST-C10b | preview panel, in the real app tree | 2 children; title's full literal rect; scroller filling beneath |
+| ST-C10c | the 3-pane workspace | 3 panes; each pane's **full literal rect** — rail 28 wide at x 0, preview filling, inspector 32 wide at the right edge |
+
+**Why the app seam is mandatory here (PF-002).** Neither panel builder sets `direction` today; it
+arrives only from `app.ts:288`/`:290`, and `normalizeProps` defaults to `'row'`
+(`ui/src/layout/types.ts:213`). So a witness that mounts `buildRolesPanel(model).view` standalone
+solves it as a **row** and is red-first, violating NFR-2 — while a witness that supplies the
+direction itself keeps supplying it after task 2.4 removes it, and detects nothing. Only the real app
+tree is green today *and* genuinely red if task 2.1/2.2 fails to move the direction into the builder.
 
 ## The zero-edit contract
 
 | Rule | Enforcement |
 |------|-------------|
-| No existing test edited | `git diff --stat` on `**/test/**` per phase; AC-6 |
-| The 5 demo e2e tests + walkthrough e2e green and unedited | AC-6 |
+| No existing test **case** edited; frame snapshots are appended as new cases | `git diff` on `**/test/**` per phase; AC-6 |
+| The 4 demo e2e tests + walkthrough e2e green, their existing cases unedited | AC-6 |
 | `kitchen-sink.smoke.spec` green and unedited | NFR-5 |
-| No nesting change is expected, so a broken locator is a mis-transcription first | NFR-1 |
-| ST-C1…C9 are exempt from any locator allowance — they are the detectors | NFR-1 |
+| **No locator edit is permitted.** FR-5 forbids nesting changes, so a broken locator is a mis-transcription — it halts the phase and is fixed in source, never in the test | NFR-1; task 4.2 |
+| ST-C1…C10 are the detectors and may not be weakened at all | NFR-1 |
 
 ## Verification
 
@@ -77,6 +100,6 @@ Per phase: `TUI_SKIP_PERF=1 yarn verify` (AR-11). At close-out additionally: `ya
 kitchen-sink smoke test (NFR-5), the grep audit against the residue allowlist (AC-8), and a
 `git diff --stat` confirming no other package's `src/` was touched (AC-9, NFR-6).
 
-**Manual check (not automatable).** Both issues ask for a live run — `yarn designer` on a TTY and at
-least one `demo:*` — because these artifacts are didactic and "renders identically" includes reading
-well. Recorded as a close-out task, not a gate.
+**Manual check (not automatable, not a gate).** Both issues ask for a live run — `yarn designer` on a
+TTY and at least one `demo:*` — because these artifacts are didactic and "renders identically"
+includes reading well. Every acceptance criterion has an automatable oracle independent of it.
