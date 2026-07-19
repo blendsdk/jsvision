@@ -11,9 +11,9 @@
  * buttons; Replace offers both fields (find before replace) then the cluster then the buttons; the
  * confirm boxes offer Yes, No, Cancel.
  *
- * Note the history drop-down beside each field is deliberately NOT in the Tab order: it is a
- * mouse-driven affordance that opens the field's previous entries, and it is reached by its own
- * hotkey, not by Tab. It is therefore absent from every ring below by design.
+ * Note the history drop-down beside each field is deliberately NOT in the Tab order: it opens on a
+ * click, or on Down / Alt+Down while its linked field is focused — never by Tab. It is therefore
+ * absent from every ring below by design.
  *
  * Focus is driven through the PUBLIC loop surface (`focusNext`/`getFocused`), mirroring
  * `event.focus-traversal.spec.test.ts`. The `.js` extension in import specifiers is required by

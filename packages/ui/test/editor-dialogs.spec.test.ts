@@ -76,8 +76,8 @@ test('ST-21: findDialog composes at 38×12 and round-trips the record', async ()
   // The field shares its row with the history drop-down, which takes a fixed 3 cells on the right.
   expect(rectIn(app, dlg!, input)).toEqual({ x: 3, y: 3, width: 29, height: 1 });
   const cluster = kids.find((k2): k2 is CheckGroup => k2 instanceof CheckGroup)!;
-  // The option cluster absorbs the leftover height between the field and the button band.
-  expect(rectIn(app, dlg!, cluster)).toEqual({ x: 3, y: 5, width: 32, height: 4 });
+  // The option cluster takes one row per checkbox; a spacer below it absorbs the leftover height.
+  expect(rectIn(app, dlg!, cluster)).toEqual({ x: 3, y: 5, width: 32, height: 2 });
   const buttons = kids.filter((k2): k2 is Button => k2 instanceof Button);
   // A centred pair on the bottom interior row — the original placed them right of centre.
   expect(buttons.map((b) => rectIn(app, dlg!, b))).toEqual([
@@ -125,8 +125,8 @@ test('ST-21: replaceDialog composes at 40×16 and round-trips all four flags', a
     { x: 3, y: 6, width: 31, height: 1 },
   ]);
   const cluster = kids.find((k2): k2 is CheckGroup => k2 instanceof CheckGroup)!;
-  // The four-flag cluster absorbs the leftover height between the fields and the button band.
-  expect(rectIn(app, dlg!, cluster)).toEqual({ x: 3, y: 8, width: 34, height: 5 });
+  // The four-flag cluster takes one row per checkbox; a spacer below it absorbs the leftover height.
+  expect(rectIn(app, dlg!, cluster)).toEqual({ x: 3, y: 8, width: 34, height: 4 });
   const buttons = kids.filter((k2): k2 is Button => k2 instanceof Button);
   // A centred pair on the bottom interior row — the original placed them right of centre.
   expect(buttons.map((b) => rectIn(app, dlg!, b))).toEqual([

@@ -8,7 +8,7 @@
  * editor's `editorDialog` option and it drives them for you.
  */
 import { signal } from '../reactive/index.js';
-import type { Point } from '../view/index.js';
+import type { Point, Group } from '../view/index.js';
 import { col, row, grow, fixed, cover, spacer } from '../view/index.js';
 import { Dialog, okButton, cancelButton, yesButton, noButton } from '../dialog/index.js';
 import { runDialog, messageBox, buttonBand, DIALOG_BODY_PADDING } from '../dialog/message-box.js';
@@ -37,7 +37,7 @@ const HISTORY_WIDTH = 3;
  * explicit sizes because neither reports a natural one — left to size themselves they would collapse to
  * nothing and be clipped away.
  */
-function fieldRow(field: Input): ReturnType<typeof row> {
+function fieldRow(field: Input): Group {
   return row(grow(field), fixed(new History({ link: field }), HISTORY_WIDTH));
 }
 
@@ -60,7 +60,9 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
   const flags = signal([initial?.options.caseSensitive ?? false, initial?.options.wholeWords ?? false]);
 
   const input = new Input({ value: find, maxLength: 80 });
-  // The option cluster absorbs the leftover height, which pins the button band to the bottom row.
+  const labels = ['~C~ase sensitive', '~W~hole words only'];
+  // Every control takes exactly the rows it needs; the spacer absorbs the leftover height, which pins
+  // the button band to the bottom row.
   dlg.add(
     cover(
       col(
@@ -68,7 +70,8 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
         fixed(new Label('~T~ext to find', input), 1),
         fixed(fieldRow(input), 1),
         spacer({ fixed: 1 }),
-        grow(new CheckGroup({ labels: ['~C~ase sensitive', '~W~hole words only'], value: flags })),
+        fixed(new CheckGroup({ labels, value: flags }), labels.length),
+        spacer(),
         buttonBand(okButton(), cancelButton()),
       ),
     ),
@@ -112,7 +115,9 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
 
   const findInput = new Input({ value: find, maxLength: 80 });
   const newInput = new Input({ value: replace, maxLength: 80 });
-  // The flag cluster absorbs the leftover height, which pins the button band to the bottom row.
+  const labels = ['~C~ase sensitive', '~W~hole words only', '~P~rompt on replace', '~R~eplace all'];
+  // Every control takes exactly the rows it needs; the spacer absorbs the leftover height, which pins
+  // the button band to the bottom row.
   dlg.add(
     cover(
       col(
@@ -123,12 +128,8 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
         fixed(new Label('~N~ew text', newInput), 1),
         fixed(fieldRow(newInput), 1),
         spacer({ fixed: 1 }),
-        grow(
-          new CheckGroup({
-            labels: ['~C~ase sensitive', '~W~hole words only', '~P~rompt on replace', '~R~eplace all'],
-            value: flags,
-          }),
-        ),
+        fixed(new CheckGroup({ labels, value: flags }), labels.length),
+        spacer(),
         buttonBand(okButton(), cancelButton()),
       ),
     ),
