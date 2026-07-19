@@ -1,8 +1,8 @@
 # 99 — Execution Plan
 
 > **Plan**: layout-dsl-adoption/flex-dialog-bodies · **Implements**: RD-01 (Tier-2 ui/forms), RD-02 · **GitHub**: #115
-> **Progress**: 4/14 tasks (29%)
-> **Last Updated**: 2026-07-19 16:05
+> **Progress**: 8/14 tasks (57%)
+> **Last Updated**: 2026-07-19 16:32
 > **CodeOps Skills Version**: 3.9.0
 
 Spec-first, behavior-invariant rebuild. Order per family: **traversal spec (green-on-current) → [geometry
@@ -17,7 +17,15 @@ no-regression). Commit via **/gitcm**; before the PR-bound push run `yarn lint:f
 
 ## Phase 1 — messageBox family (`ui/dialog/message-box.ts`) · spec 03-01
 
-> **Phase ref**: 1bd705b262c8c11dbe030620052b9dbe3045c760
+> **Phase ref**: 1bd705b262c8c11dbe030620052b9dbe3045c760 · **Status**: ✅ complete (2026-07-19)
+>
+> **Phase review:** perf auditor — no findings. Phase reviewer — 1 major + 4 minor, all accepted and
+> fixed (`7d5ddb5a`); re-review clean. The major: `col({padding:1})` over the `padding:0` dialog left
+> zero side gutter, so body text painted against the frame. Fix — drop the now-vestigial `padding:0`
+> override (letting `cover()` take the dialog's real interior) and give the body an explicit inset;
+> this restores the **original child geometry exactly** (body `x:3,y:2,w-6`, field `y:3`, band `y:6`/`y:4`).
+> Also: buttons re-pinned to a uniform 10-cell face, a `buttonBand()` helper extracted (reuse it in
+> Phases 2–3), and the new tests switched to the `Commands` constants.
 
 - [x] **1.1 (Spec)** Add `message-box.traversal.spec.test.ts` (ST-T1: `[OK]`/`[OK,Cancel]`/`[Yes,No]`/`[Input,OK,Cancel]`). Confirm **green on current code** (characterizes today's order). ✅ (completed: 2026-07-19 16:02 — 4/4 green on current code)
 - [x] **1.2 (Guard)** Add `message-box.render.impl.test.ts` (ST-K2, PF-002): each of messageBox/confirm/inputBox mounts headless, `flush()`es, a known body string paints, and every button solves to non-zero `bounds`. Confirm **green on current code**. ✅ (completed: 2026-07-19 16:03 — 4/4 green on current code)
@@ -27,10 +35,22 @@ no-regression). Commit via **/gitcm**; before the PR-bound push run `yarn lint:f
 
 ## Phase 2 — editor dialogs (`ui/editor/dialogs.ts`) · spec 03-02
 
-- [ ] **2.1 (Spec)** Add `editor-dialogs.traversal.spec.test.ts` (ST-T2: the four focusable orders). Confirm **green on current code**.
-- [ ] **2.2 (Spec / re-baseline)** Re-derive `editor-dialogs.spec:51` (input L63 / cluster L65 / buttons L67-70) and `:89` (inputs L106-109 / cluster L111 / buttons L113-116) child rects to the intended flex geometry → **RED** against current absolute code. Keep the outer-bounds + record round-trip + `replacePrompt`/`confirmBox` blocks unedited. Also rewrite the file **header comment (L5-14)** to record the RD-01 flex re-derivation (child rects now solve from the `col`/`row` tree, not the TV decode; outer bounds stay decode-faithful) — PF-005.
-- [ ] **2.3 (Impl)** Rebuild `findDialog`/`replaceDialog`/`confirmBox` and `replacePrompt`'s **inner** body to `cover(col(rows…, fixed(buttonRow)))`; delete local `tv`/`at`. Keep `replacePrompt`'s **outer** rect + anchor formula (keep-absolute).
-- [ ] **2.4 (Green)** ST-T2 + re-baselined `:51/:89` green; `:80/:123/:145/:153` green **unedited**; ui suite green; no local `tv`/`at` left (`grep`). *(commit boundary — PR body notes the deliberate re-derivation citing RD-01)*
+> **Phase ref**: 7d5ddb5aa217175f3739f0f33ef83eb254a3510c
+>
+> **Plan correction (runtime).** The documented focus orders for find/replace were **wrong**: they list
+> `History` as a Tab stop, but `History extends View` and never overrides `focusable` (default `false`),
+> so it has never been in the Tab order. Verified empirically — the traversal spec is green on
+> pre-conversion code with `History` absent. True orders: findDialog `[input, cluster, OK, Cancel]`;
+> replaceDialog `[findInput, newInput, cluster, OK, Cancel]`. This corrects 02-current-state, 03-02 and
+> ST-T2; no behavior changes.
+>
+> **Re-baseline note.** The re-derived blocks also had to switch from `layout.rect` to the SOLVED layout
+> (`renderRoot.originOf` + `bounds`) — a flex child carries no static rect. Same root cause as PF-001.
+
+- [x] **2.1 (Spec)** Add `editor-dialogs.traversal.spec.test.ts` (ST-T2: the four focusable orders). Confirm **green on current code**. ✅ (completed: 2026-07-19 16:20 — 4/4 green; History is not focusable, see the correction above)
+- [x] **2.2 (Spec / re-baseline)** Re-derive `editor-dialogs.spec:51` (input L63 / cluster L65 / buttons L67-70) and `:89` (inputs L106-109 / cluster L111 / buttons L113-116) child rects to the intended flex geometry → **RED** against current absolute code. Keep the outer-bounds + record round-trip + `replacePrompt`/`confirmBox` blocks unedited. Also rewrite the file **header comment (L5-14)** to record the RD-01 flex re-derivation (child rects now solve from the `col`/`row` tree, not the TV decode; outer bounds stay decode-faithful) — PF-005. ✅ (completed: 2026-07-19 16:25 — RED confirmed: exactly the 2 re-baselined tests failed)
+- [x] **2.3 (Impl)** Rebuild `findDialog`/`replaceDialog`/`confirmBox` and `replacePrompt`'s **inner** body to `cover(col(rows…, fixed(buttonRow)))`; delete local `tv`/`at`. Keep `replacePrompt`'s **outer** rect + anchor formula (keep-absolute). ✅ (completed: 2026-07-19 16:30 — shares the Phase-1 `buttonBand()` + `DIALOG_BODY_PADDING`; adds a local `fieldRow()`)
+- [x] **2.4 (Green)** ST-T2 + re-baselined `:51/:89` green; `:80/:123/:145/:153` green **unedited**; ui suite green; no local `tv`/`at` left (`grep`). ✅ (completed: 2026-07-19 16:32 — ui 1763/1763, typecheck clean; hand-derived rects were exact first try) *(commit boundary — PR body notes the deliberate re-derivation citing RD-01)*
 
 ## Phase 3 — formDialog buttons (`forms/form-dialog.ts`) · spec 03-03
 
