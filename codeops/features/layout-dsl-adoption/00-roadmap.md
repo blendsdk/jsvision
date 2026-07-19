@@ -44,7 +44,7 @@ it is not zero-spec-oracle-cost like the rest of Tier 0.
 | GH | Title | Kind | Stage | Notes |
 |----|-------|------|-------|-------|
 | [#108](https://github.com/blendsdk/jsvision/issues/108) | Adopt the layout DSL across the codebase | Epic | ⬜ | Umbrella; re-oriented to flex-elimination |
-| [#113](https://github.com/blendsdk/jsvision/issues/113) | DSL hardening (prerequisite) | Prereq | ✅ | Feature [`dsl-hardening`](../dsl-hardening/00-roadmap.md) — done, on `feat/dsl-adoptation` |
+| [#113](https://github.com/blendsdk/jsvision/issues/113) | DSL hardening (prerequisite) | Prereq | ✅ | Feature [`dsl-hardening`](../dsl-hardening/00-roadmap.md) — done, merged to `develop` via PR #119 |
 | [#117](https://github.com/blendsdk/jsvision/issues/117) | Primitive fix — `setLayout(partial)` (read-only field at release) | Primitive | ⬜ | Companion to #113; out of the divergence set |
 | [#122](https://github.com/blendsdk/jsvision/issues/122) | **Focus-traversal primitive** — tree-order `Tab` across flex containers | Primitive | ✅ | Companion to #117; **prereq of #115 + #120**; plan [focus-traversal-primitive](plans/focus-traversal-primitive/00-index.md) · ✅ done (exec_plan 11/11, 2026-07-19; on `feat/dsl-adoptation`, pending merge) · 🔎 preflighted 2026-07-19 |
 | [#109](https://github.com/blendsdk/jsvision/issues/109) | ui widgets — data-grid / tab-view / application | Port | ⬜ | behavior-preserving; split-view already done |
