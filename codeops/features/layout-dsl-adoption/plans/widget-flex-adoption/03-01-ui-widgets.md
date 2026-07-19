@@ -33,8 +33,9 @@ const inner = grow(col(fixed(this.strip, 1), this.body));
 this.add(inner);
 ```
 
-`this.body` carries no size today and gains none — `col`'s default `align:'stretch'` and the absence
-of a size tag reproduce the current descriptor exactly.
+`this.body` is a `TabBody`, which self-assigns `{ direction:'col', size: fr 1, padding }` at its class
+level (`tab-view.ts:137-141`). `col()` never touches a child's existing layout, so passing it
+untagged preserves that descriptor exactly.
 
 **`:254` is deliberately untouched.** `t.content.layout = { size: { kind: 'fr', weight: 1 } }` stays a
 wholesale assignment. It is inside a `For(...)` reconciler over caller-supplied content views, and
@@ -53,9 +54,21 @@ const root = col(opts.menuBar, body, opts.statusLine, overlay);
 ```
 
 #113's S7 falsy-child skip lets the optional `menuBar`/`statusLine` pass straight through as
-`undefined`, replacing the two `if (…) root.add(…)` blocks. The `{ ...spread, size }` sizing at
-`:347`/`:353` stays exactly as-is — it is #117's to remove — so those two statements keep running
-before the `col(...)` call.
+`undefined`, replacing the two `if (…) root.add(…)` blocks.
+
+**The two chrome-sizing statements must be relocated, not left alone.** `:347` and `:353` sit
+*inside* those same `if` blocks (`:345-356`), so removing the blocks moves them by necessity. Lift
+each into its own standalone guard with the assignment expression **byte-identical**:
+
+```ts
+if (opts.menuBar !== undefined) {
+  opts.menuBar.layout = { ...opts.menuBar.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
+}
+```
+
+That is the boundary with #117: the statement is preserved verbatim and merely re-guarded, so #117
+still owns replacing the merge pattern itself. Note the old `:341-356` span also contained
+`quitState` (`:343-344`), which is unrelated to layout and stays where it is.
 
 **Load-bearing constraint.** The overlay must stay a **direct child** of `root` with its
 `position:'absolute'` descriptor, because four test files locate it by scanning `root.children` for

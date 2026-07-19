@@ -1,67 +1,88 @@
 # Requirements — widget-flex-adoption
 
-> **Source**: GitHub [#109](https://github.com/blendsdk/jsvision/issues/109) + [#116](https://github.com/blendsdk/jsvision/issues/116) · verification [RD-02](../../requirements/RD-02-non-functional-and-verification.md) (AR-5)
+> **Source**: GitHub [#109](https://github.com/blendsdk/jsvision/issues/109) + [#116](https://github.com/blendsdk/jsvision/issues/116) · verification [RD-02](../../requirements/RD-02-non-functional-and-verification.md), named subset (AR-5)
 
 ## Functional requirements
 
-**FR-1 — ui widget composition (#109).** `packages/ui/src/table/data-grid.ts`,
-`tabs/tab-view.ts` and `app/application.ts` compose their internal view trees with the layout DSL
-instead of hand-assigned descriptors, at the 12 sites enumerated in
-[02-current-state.md](02-current-state.md) §1.
+**FR-1 — ui widget composition (#109).** `table/data-grid.ts`, `tabs/tab-view.ts` and
+`app/application.ts` compose their internal view trees with the layout DSL at the **12** sites in
+[02-current-state.md §1](02-current-state.md).
 
-**FR-2 — datagrid composition (#116).** All 48 in-scope sites across the 10
-`packages/datagrid/src` modules listed in [02-current-state.md](02-current-state.md) §2 use the DSL:
-flex containers via `col`/`row`, size tags via `grow`/`fixed`, anchored placement via `at()` (AR-7),
-and fill placement via `cover()` (AR-8).
+**FR-2 — datagrid composition (#116).** The **36** in-scope sites across 7 `packages/datagrid/src`
+modules ([02-current-state.md §2](02-current-state.md)) use the DSL: flex containers via `col`/`row`,
+size tags via `grow`/`fixed`, fill placement via `cover()`. No `at()` conversion remains in scope
+(AR-7).
 
-**FR-3 — the public-clobber contract is preserved and pinned.** At `tab-view.ts:254` and
-`application.ts:330` the wholesale assignment **stays**, because an external caller can reach those
-receivers and today's behavior discards any layout they set (AR-1, AR-9). Each site carries a comment
-stating why it is deliberately not converted, and each is pinned by a spec test (ST-W3, ST-W4) so the
-contract survives a future reader's good intentions.
+**FR-3 — the public-clobber contract is preserved and pinned.** At `tab-view.ts:254`,
+`application.ts:330` and `overlay.ts:125` the wholesale assignment **stays**, because an external
+caller can reach those receivers and today's behavior discards any layout they set (AR-1, AR-11).
+Each site gains a comment stating why it is deliberately not converted — written in plain language
+with no plan or issue identifiers, per CLAUDE.md's documentation directive — and each is pinned by a
+spec test (ST-W3, ST-W4, ST-W7).
 
-**FR-4 — no new nesting in a focusable path.** Conversions must not add a Group between a container
-and a focusable leaf. #122's tree-order traversal makes such nesting survivable, but this plan is
-behavior-preserving: tab order must be identical, not merely still-working.
+**FR-4 — no new nesting anywhere.** No conversion may add a Group between a container and any child.
+Tab order must be identical, not merely still-working.
 
 ## Non-functional requirements
 
 **NFR-1 — geometry is frozen (AR-4).** Every geometry, golden-screen and a11y assertion in every
-`*.spec.test.ts` and `*.impl.test.ts` stays **byte-identical and unedited**. A failing geometry
-oracle means the conversion is wrong.
+existing test stays **byte-identical and unedited**. A failing geometry oracle means the conversion
+is wrong. (This deliberately **inverts** RD-02's NFR-3 re-derivation protocol, which does not apply
+to behavior-preserving work.)
 
-**NFR-2 — locator edits are bounded and logged (AR-4).** A child-index locator may be re-expressed
-structurally *only* where nesting genuinely changed, never weakened, and each edit is recorded as a
-plan deviation naming the file, the old and new locator, and why the change was unavoidable. The
-expectation the locator guards must not change.
+**NFR-2 — locator edits are bounded and logged (AR-4).** No nesting change is expected anywhere in
+this plan, so a broken child-index locator is a mis-transcription signal first. Only after that is
+ruled out may a locator be re-expressed structurally — never weakened, and logged as a deviation
+naming file, old and new locator, and cause. **ST-W1, ST-W5, ST-W6 and ST-W7 are exempt**: they are
+the movement detectors and may not be re-expressed at all.
 
-**NFR-3 — zero regression, verify-green per phase (RD-02).** `TUI_SKIP_PERF=1 yarn verify` green at
-every phase boundary (AR-6). `yarn check:deps` green. Bench compose+diff median stays under the
-16 ms ceiling.
+**NFR-3 — zero regression, verify-green per phase.** `TUI_SKIP_PERF=1 yarn verify` green at every
+phase boundary (AR-6); `yarn check:deps` green; bench compose+diff median under the 16 ms ceiling
+(RD-02 NFR-5, NFR-7).
 
 **NFR-4 — build-order discipline.** `packages/datagrid` and `packages/examples` tests import
-`@jsvision/ui` **by name, resolving to built `dist`**. `packages/ui` must be rebuilt after any Phase-2
-change before datagrid tests are trusted, or a stale-dist failure gets misattributed to the datagrid
-conversion.
+`@jsvision/ui` by name, resolving to built `dist`. Rebuild `ui` after any Phase-2 change before
+trusting a datagrid result, or a stale-dist failure gets misattributed.
 
-**NFR-5 — kitchen-sink stories stay green.** Every component touched here already ships a story;
-no new story is required (the components are not new). The showcase smoke test must pass unchanged —
-if a story's rendering shifts, NFR-1 has been violated.
+**NFR-5 — kitchen-sink stories stay green.** Every touched component already ships a story; no new
+story is owed (no new components). The smoke test must pass unchanged.
+
+**NFR-6 — security oracles pass unedited** (RD-02 NFR-6). `packages/datagrid/test/security.spec.test.ts`
+and `packages/ui/test/controls.completions.security.spec.test.ts` must stay green and untouched.
 
 ## Acceptance criteria
 
 | # | Criterion | Oracle |
 |---|-----------|--------|
-| AC-1 | All 12 #109 sites converted or explicitly documented as preserved | grep audit + 03-01 table |
-| AC-2 | All 48 #116 sites converted | grep audit + 03-02 table |
-| AC-3 | Zero `*.spec.test.ts` geometry/golden assertion edited | `git diff` review at close-out |
-| AC-4 | `golden-screen.spec` + `a11y-golden.spec` green **and untouched** | verify + diff |
-| AC-5 | The two public clobber sites unchanged and pinned | ST-W3, ST-W4 |
-| AC-6 | Tab order through `DataGrid`, `TabView`, the app shell and the grid unchanged | ST-W1, existing tabs.spec ST-7/8/37/38 |
+| AC-1 | All 12 #109 conversions landed; both preserved ui sites documented + pinned | 03-01 table · ST-W3 · ST-W4 |
+| AC-2 | All 36 #116 conversions landed | grep audit vs the residue allowlist |
+| AC-3 | Zero geometry/golden assertion edited in any existing test | `git diff` on `**/test/**` at close-out |
+| AC-4 | `golden-screen.spec` + `a11y-golden.spec` green **and zero-diff** | verify + diff |
+| AC-5 | All three preserved sites unchanged and pinned | ST-W3, ST-W4, ST-W7 |
+| AC-6 | Tab order through `TabView` and the app shell unchanged | ST-W2 · existing `tabs.spec` ST-7/8/37/38 |
 | AC-7 | `TUI_SKIP_PERF=1 yarn verify` green at every phase boundary | verify log |
-| AC-8 | No `.layout =` assignment remains in the 13 in-scope files except the 6 documented exclusions | grep audit |
+| AC-8 | The `.layout =` grep over the in-scope files returns **exactly** the residue allowlist below | task 5.1 |
+| AC-9 | Security oracles green and untouched (NFR-6) | verify + diff |
 
-## Explicitly out of scope
+## Residue allowlist
 
-Listed once in [00-index.md](00-index.md#out-of-scope) — JSDoc examples (#112), the T-AO1 overlay,
-the `{...spread}` sites (#117), and `filter-popup.ts:272` (S6 self-config).
+After this plan, a `grep -nE "\.layout\s*=[^=]"` across the in-scope files must return **exactly**
+these 22 sites and no others. Task 5.1 compares against this list — not against a count.
+
+| File:line | Category |
+|---|---|
+| `ui/src/tabs/tab-view.ts:254` | preserved — public receiver (FR-3) |
+| `ui/src/app/application.ts:330` | preserved — public receiver (FR-3) |
+| `datagrid/src/overlay.ts:125` | preserved — public receiver (FR-3, AR-11) |
+| `ui/src/app/application.ts:335`, `:435` | excluded — T-AO1 hidden host |
+| `ui/src/app/application.ts:347`, `:353` | excluded — #117 owns the merge pattern |
+| `datagrid/src/filter-popup.ts:272` | excluded — reactive self-resize (AR-7) |
+| `datagrid/src/grid-panels.ts:441`, `:445`, `:448`, `:578` | excluded — branch-accumulating containers (AR-3) |
+| `datagrid/src/grid-panels.ts:549`, `:553`, `:557`, `:637` | excluded — runtime-branching `segLayout` (AR-3) |
+| `datagrid/src/quick-filter-row.ts:155` | dropped — issue #116 out-scope (AR-7) |
+| `datagrid/src/personalize-dialog.ts:391` | dropped — issue #116 out-scope (AR-7) |
+| `ui/src/table/data-grid.ts:89`, `ui/src/tabs/tab-view.ts:199` | JSDoc `@example` — #112 (AR-10) |
+| `datagrid/src/grid.ts:293`, `datagrid/src/button-row.ts:63` | JSDoc — #112 (AR-10) |
+
+Note `application.ts:313` is `.layout.rect =`, so it does not appear in this grep;
+`editable-grid-rows.ts:208` is a JSDoc example in a file otherwise untouched by this plan.
