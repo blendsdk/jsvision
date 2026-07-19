@@ -74,15 +74,10 @@ function expectSpansInterior(loop: EventLoop, dlg: View, child: View, w: number)
   expect(b.x + b.width, 'spans to the right border').toBe(w - 1);
 }
 
-/**
- * Assert a child hugs the right edge of the content column: flush against the frame's right border
- * less the column's side inset. Expressed relative to the frame width so it holds at any size.
- */
-const CONTENT_INSET = 2; // the side padding the dialog bodies inset their content column by
-
-function expectRightPinned(loop: EventLoop, dlg: View, child: View, w: number): void {
+/** The distance from a child's right edge to the frame's right border, at the given frame width. */
+function gapToRightBorder(loop: EventLoop, dlg: View, child: View, w: number): number {
   const b = rectIn(loop, dlg, child);
-  expect(b.x + b.width, 'right edge tracks the frame').toBe(w - 1 - CONTENT_INSET);
+  return w - (b.x + b.width);
 }
 
 /** Open a dialog centred in an 80×40 desktop and return the app plus its starting bounds. */
@@ -103,6 +98,7 @@ test('ST-FE08: growing a FileDialog enlarges the listing and keeps every child i
   expect(dlg.bounds).toMatchObject({ x: 15, y: 10, width: 49, height: 19 });
   const before = rectIn(app.loop, dlg, dlg.fileList);
   const buttonBefore = rectIn(app.loop, dlg, dlg.buttons[0]!);
+  const buttonGapBefore = gapToRightBorder(app.loop, dlg, dlg.buttons[0]!, 49);
 
   app.loop.dispatch(mouse('down', 63, 28)); // grab the SE grip at local (48,18)
   app.loop.dispatch(mouse('drag', 75, 36)); // ⇒ 61×27, a growth of (12, 8)
@@ -118,8 +114,10 @@ test('ST-FE08: growing a FileDialog enlarges the listing and keeps every child i
   // The read-out band keeps spanning the whole interior; shrinking it to the content column would
   // still sit inside the frame, so containment alone would not catch that.
   expectSpansInterior(app.loop, dlg, dlg.fileInfoPane, 61);
-  // The button strip travels with the right edge rather than staying put or drifting left.
-  expectRightPinned(app.loop, dlg, dlg.buttons[0]!, 61);
+  // The button strip travels with the right edge rather than staying put or drifting left: its
+  // distance to the border is unchanged, and it has moved. Comparing the gap rather than a computed
+  // column keeps this true whatever side padding the body chooses.
+  expect(gapToRightBorder(app.loop, dlg, dlg.buttons[0]!, 61), 'gap to the right border').toBe(buttonGapBefore);
   expect(rectIn(app.loop, dlg, dlg.buttons[0]!).x).toBeGreaterThan(buttonBefore.x);
 
   expectInsideFrame(
@@ -162,6 +160,7 @@ test('ST-FE08: growing a ChDirDialog enlarges the tree and keeps every child ins
   expect(dlg.bounds).toMatchObject({ x: 16, y: 11, width: 48, height: 18 });
   const before = rectIn(app.loop, dlg, dlg.dirList);
   const buttonBefore = rectIn(app.loop, dlg, dlg.buttons[0]!);
+  const buttonGapBefore = gapToRightBorder(app.loop, dlg, dlg.buttons[0]!, 48);
 
   app.loop.dispatch(mouse('down', 63, 28)); // grab the SE grip
   app.loop.dispatch(mouse('drag', 73, 34)); // ⇒ 58×24, a growth of (10, 6)
@@ -174,7 +173,7 @@ test('ST-FE08: growing a ChDirDialog enlarges the tree and keeps every child ins
   expect(after.height).toBeGreaterThan(before.height);
 
   // The button strip tracks the right edge here too.
-  expectRightPinned(app.loop, dlg, dlg.buttons[0]!, 58);
+  expect(gapToRightBorder(app.loop, dlg, dlg.buttons[0]!, 58), 'gap to the right border').toBe(buttonGapBefore);
   expect(rectIn(app.loop, dlg, dlg.buttons[0]!).x).toBeGreaterThan(buttonBefore.x);
 
   expectInsideFrame(app.loop, dlg, [dlg.pathInput, dlg.history, dlg.dirList, ...dlg.buttons], 58, 24);
