@@ -13,9 +13,13 @@ thing a reader meets (RD-01 FR-6 — "this is didactic").
 `packages/theme-designer/src` files use the DSL, and each panel's stacking direction moves **into its
 own builder** rather than being applied from `app.ts`.
 
-**FR-3 — every dropped property is re-established.** At the 13 sites carrying a property beyond
-`size`, that property is carried on the builder's props object. A bare tagger at any of those sites
-is a defect, including where the lost value coincides with an engine default.
+**FR-3 — every dropped property is re-established, at the sites that convert.** 13 sites carry a
+property beyond `size` ([02 §3](02-current-state.md)), but only **9** of them convert: three are
+preserved wholesale (FR-4) and `app.ts:303`'s `direction` is deliberately discarded as verified-
+vestigial (AR-7). At each of those **9**, the property is carried on the builder's props object. A
+bare tagger there is a defect, including where the lost value coincides with an engine default —
+the AR-7 drop is the single recorded exception, and it is an exception because the property was
+proven to have no effect, not because a default happens to match.
 
 **FR-4 — the three preserved sites stay assignments.** `router-demo:59` and `drill-down:29`
 (`this.layout` inside a `Group` subclass constructor — no builder can produce an existing `this`) and
@@ -34,9 +38,11 @@ exercise that permission: any movement is treated as a transcription error, not 
 If a genuine divergence proves unavoidable at some site, it stops the phase and becomes a recorded
 decision rather than an oracle edit.
 
-**NFR-2 — the witnesses are written first and pass first.** Every witness in Phase 1 is authored
-against unmodified source and is green before any conversion. A witness that has to be adjusted to
-make a conversion pass is a failed conversion.
+**NFR-2 — the witnesses observe the real artifact, are written first, and pass first.** Every
+witness in Phase 1 is authored against unmodified source and is green before any conversion. A
+witness that has to be adjusted to make a conversion pass is a failed conversion. **And a witness
+may never assert a view tree it constructed itself** — a reconstruction passes after the conversion
+by construction, whatever the conversion did. Per-file seams are fixed in [07 §seam rule](07-testing-strategy.md).
 
 **NFR-3 — non-vacuity is mandatory.** Every witness asserts an exact child count and at least one
 absolute rect per container. Relations between two solved values (`b.x === a.x + a.width`) are
@@ -59,10 +65,10 @@ monorepo depends on them, so the blast radius is dev-only by construction. Any d
 |---|-----------|--------|
 | AC-1 | All 25 #110 conversions landed | 02-current-state §1 tables · grep audit |
 | AC-2 | All 7 #111 conversions landed | 02-current-state §2 tables · grep audit |
-| AC-3 | All 13 extra-property sites carry their property on a builder | ST-C1…C9 assert `padding`/`gap`/`direction` effects |
+| AC-3 | All **9** convertible extra-property sites carry their property on a builder; the 3 preserved keep theirs in the assignment; `app.ts:303`'s is dropped per AR-7 | ST-C1…C10 assert the `padding`/`gap`/`direction` effects |
 | AC-4 | The 3 preserved sites unchanged, each commented | grep audit · code review |
-| AC-5 | Nine green-first witnesses pass against unmodified source, then still pass after conversion | Phase 1 verify log · Phase 2–3 verify |
-| AC-6 | The 5 demo e2e tests + walkthrough e2e + kitchen-sink smoke pass **unedited** | `git diff` on `**/test/**` |
+| AC-5 | Every witness observes the **real** artifact (never a tree it built itself — 07 §seam rule), passes green-first, and still passes after conversion | Phase 1 verify log · Phase 2–3 verify |
+| AC-6 | The **4** demo e2e tests + walkthrough e2e + kitchen-sink smoke keep every existing case **unedited** (frame snapshots are appended as new cases) | `git diff` on `**/test/**` |
 | AC-7 | `TUI_SKIP_PERF=1 yarn verify` green at every phase boundary | verify log |
 | AC-8 | The `.layout =` grep over the 9 files returns exactly the residue allowlist below | task 4.1 |
 | AC-9 | No file under another package's `src/` is touched (NFR-6) | `git diff --stat` |

@@ -58,10 +58,11 @@ const workspace = row(fixed(rail.view, 28), grow(preview), fixed(inspector, 32))
 Each `size` half becomes a tagger; each `direction:'col'` half **disappears** — two of them because
 the panel builders now own their direction, and the third because it was never load-bearing:
 
-**`inspector`'s `direction:'col'` (`:303`) is vestigial and is dropped (AR-7).** Verified: all 13 of
-the inspector's children are placed absolutely through `inspector-panel.ts`'s local `at()` helper
-(`:56`), which writes `position:'absolute'` with an explicit rect. Nothing in that container flows,
-so its direction has no effect on anything. Only its width is load-bearing.
+**`inspector`'s `direction:'col'` (`:303`) is vestigial and is dropped (AR-7).** Verified: every one
+of the inspector's 17 children is placed through `inspector-panel.ts`'s local `at()` helper
+(`:55-58`), the file's only `add()` path, which writes `position:'absolute'` with an explicit rect.
+Nothing in that container flows, so its direction has no effect on anything. Only its width is
+load-bearing.
 
 **`sizeWorkspace` is deliberately untouched (AR-4).** It re-assigns `workspace.layout` wholesale on
 every resize (`:308-312`), and it re-writes `direction:'row'` itself each time — so the builder's
@@ -80,5 +81,10 @@ identifiers:
 ## Verification note
 
 `preview-panel.ts` has **no test file at all** today, and `app.spec`/`app.impl` contain zero
-assertions about layout, direction, rects, children or the workspace. ST-C9 is the first oracle any
-of this composition has ever had, which is why it is written and green before Phase 2 begins.
+assertions about layout, direction, rects, children or the workspace. ST-C10a/b/c are the first oracle any of this composition has ever had, which is why they are written
+and green before Phase 2 begins — and why they must be solved through the real `createDesignerApp`
+tree rather than by mounting a panel standalone (07 §ST-C10).
+
+Also note `preview-panel.ts:16`'s `@returns` already claims the panel is "laid out as a column" —
+false today, true after task 2.2. Task 2.2 leaves it correct rather than needing an edit, but the
+symmetric comment at `roles-panel.ts:68` does need rewriting (task 2.1).
