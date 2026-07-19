@@ -2,8 +2,8 @@
 
 > **Implements**: layout-dsl-adoption/GH-109 + GH-116 · **GitHub**: [#109](https://github.com/blendsdk/jsvision/issues/109) + [#116](https://github.com/blendsdk/jsvision/issues/116)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 15/35 tasks (43%) — Phases 1-2 complete
-> **Last Updated**: 2026-07-19 (Phases 1-2 complete and post-phase-reviewed; revised after preflight — [report](00-preflight-report.md))
+> **Progress**: 21/35 tasks (60%) — Phases 1-3 complete
+> **Last Updated**: 2026-07-19 (Phases 1-3 complete, 1-2 post-phase-reviewed; revised after preflight — [report](00-preflight-report.md))
 > **Branch**: `feat/widget-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify` (AR-6)
 > **Routing**: standard → Sonnet-eligible, except tasks 1.7 and Phase 3 (complex)
@@ -37,12 +37,12 @@ characterization witness carries the non-vacuity clause (exact counts + non-zero
 
 ## Phase 3 — #116 `grid-panels.ts` — 15 of 23 sites (complex) — 03-02 Group A
 
-- [ ] 3.1 Pass 1 — convert the 13 pure size-tag sites (`:208, 517, 522, 527, 536, 540, 544, 566, 567, 591, 619, 625, 658`); note `:619` (inline literal) and `:517/522/527` (`prefixLayout`) are not `fixed1`/`fr`, so a const grep misses them
-- [ ] 3.2 Verify — ST-W6 + `golden-screen.spec` + `a11y-golden.spec` green with **zero** diff (AC-4)
-- [ ] 3.3 Pass 2 — `:255` → `fixed(row(), 1)` (preserving `direction:'row'`); `:674` → `grow(col(bodyStack))`
-- [ ] 3.4 Confirm the 8 out-of-scope sites are untouched (`:441,445,448,578,549,553,557,637`)
-- [ ] 3.5 Verify — the two goldens still zero-diff; frozen-panels + filter-popup anchor tests green
-- [ ] 3.6 Full verify; commit
+- [x] 3.1 Pass 1 — convert the 13 pure size-tag sites (`:208, 517, 522, 527, 536, 540, 544, 566, 567, 591, 619, 625, 658`); note `:619` (inline literal) and `:517/522/527` (`prefixLayout`) are not `fixed1`/`fr`, so a const grep misses them
+- [x] 3.2 Verify — ST-W6 + `golden-screen.spec` + `a11y-golden.spec` green with **zero** diff (AC-4)
+- [x] 3.3 Pass 2 — `:255` → `fixed(row(), 1)` (preserving `direction:'row'`); `:674` → `grow(col(bodyStack))`
+- [x] 3.4 Confirm the 8 out-of-scope sites are untouched (`:441,445,448,578,549,553,557,637`)
+- [x] 3.5 Verify — the two goldens still zero-diff; frozen-panels + filter-popup anchor tests green
+- [x] 3.6 Full verify; commit
 
 ## Phase 4 — #116 remaining modules (standard) — 03-02 Groups B/C/D
 
