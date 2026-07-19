@@ -44,13 +44,18 @@ witness that has to be adjusted to make a conversion pass is a failed conversion
 may never assert a view tree it constructed itself** — a reconstruction passes after the conversion
 by construction, whatever the conversion did. Per-file seams are fixed in [07 §seam rule](07-testing-strategy.md).
 
-**NFR-3 — non-vacuity is mandatory.** Every witness asserts an exact child count and at least one
-absolute rect per container. Relations between two solved values (`b.x === a.x + a.width`) are
-banned as a sole assertion — they hold when both collapse to zero. This is a direct carry-over from
-the defect the sibling plan's review found in its own witnesses.
+**NFR-3 — non-vacuity is mandatory, in one of two admissible forms.** A *frame* witness asserts
+literal row strings (position and count are inherent in the characters). An *importing* witness
+asserts an exact child count and at least one literal absolute rect, after forcing a flush so it
+never captures an unsolved `{0,0,0,0}`. In both forms, a relation between two solved values
+(`b.x === a.x + a.width`) is banned as a sole assertion — it holds when both collapse to zero. A
+direct carry-over from the defect the sibling plan's review found in its own witnesses, and from
+this plan's own first draft. Forms and rationale: [07 §non-vacuity](07-testing-strategy.md).
 
-**NFR-4 — zero regression, verify-green per phase.** `TUI_SKIP_PERF=1 yarn verify` green at every
-phase boundary (AR-11); `yarn check:deps` green.
+**NFR-4 — zero regression, verify-green per phase.** `TUI_SKIP_PERF=1 yarn verify && yarn workspace
+@jsvision/examples test:e2e` green at every phase boundary (AR-11, AR-17); `yarn check:deps` green.
+The second command is required, not optional: `yarn verify` runs only the `unit` vitest project,
+which excludes `*.e2e.test.ts` — where seven of the ten witnesses live.
 
 **NFR-5 — the kitchen-sink story stays green.** `drill-down.story.ts` must keep passing
 `kitchen-sink.smoke.spec.test.ts` unchanged. No new story is owed — no new components.
@@ -65,11 +70,11 @@ monorepo depends on them, so the blast radius is dev-only by construction. Any d
 |---|-----------|--------|
 | AC-1 | All 25 #110 conversions landed | 02-current-state §1 tables · grep audit |
 | AC-2 | All 7 #111 conversions landed | 02-current-state §2 tables · grep audit |
-| AC-3 | All **9** convertible extra-property sites carry their property on a builder; the 3 preserved keep theirs in the assignment; `app.ts:303`'s is dropped per AR-7 | ST-C1…C10 assert the `padding`/`gap`/`direction` effects |
+| AC-3 | All **9** convertible extra-property sites carry their property on a builder; the 3 preserved keep theirs in the assignment; `app.ts:303`'s is dropped per AR-7 | ST-C1…C10 for the observable effects; **code review** for the `gap:0` halves of `controls-demo:95` and `router-demo:101`, which equal the engine default (`types.ts:216`) and are therefore inert and unobservable |
 | AC-4 | The 3 preserved sites unchanged, each commented | grep audit · code review |
 | AC-5 | Every witness observes the **real** artifact (never a tree it built itself — 07 §seam rule), passes green-first, and still passes after conversion | Phase 1 verify log · Phase 2–3 verify |
 | AC-6 | The **4** demo e2e tests + walkthrough e2e + kitchen-sink smoke keep every existing case **unedited** (frame snapshots are appended as new cases) | `git diff` on `**/test/**` |
-| AC-7 | `TUI_SKIP_PERF=1 yarn verify` green at every phase boundary | verify log |
+| AC-7 | `TUI_SKIP_PERF=1 yarn verify` **and** `yarn workspace @jsvision/examples test:e2e` green at every phase boundary | verify log |
 | AC-8 | The `.layout =` grep over the 9 files returns exactly the residue allowlist below | task 4.1 |
 | AC-9 | No file under another package's `src/` is touched (NFR-6) | `git diff --stat` |
 

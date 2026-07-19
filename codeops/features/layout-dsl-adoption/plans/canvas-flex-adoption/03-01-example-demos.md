@@ -15,10 +15,10 @@ In this file's scope that bites at **seven** sites:
 |------|----------------------|--------|
 | `editor-demo:67` | `direction:'col'` | `col(...)` |
 | `event-demo:109` | `direction:'row'`, **`gap: 2`** | `fixed(row({ gap: 2 }, …), 1)` |
-| `event-demo:119` | `direction:'col'` | `fixed(col({ background:'dialog' }, …), 2)` |
-| `event-demo:128` | `direction:'col'`, **`padding: 1`** | `col({ padding:1, background:'desktop' }, …)` |
-| `controls-demo:95` | `direction:'col'`, **`padding:1`, `gap:0`** | `col({ padding:1, gap:0, background:'window' })` |
-| `router-demo:101` | `direction:'col'`, **`padding:1`, `gap:0`** | `col({ padding:1, gap:0, background:'window' }, …)` |
+| `event-demo:119` | `direction:'col'` | `fixed(col(…), 2)` — `dialog.background` stays a separate assignment (AR-15) |
+| `event-demo:128` | `direction:'col'`, **`padding: 1`** | `col({ padding:1 }, …)` — `root.background` stays a separate assignment (AR-15) |
+| `controls-demo:95` | `direction:'col'`, **`padding:1`, `gap:0`** | `col({ padding:1, gap:0 })` — `form.background` stays separate (AR-15) |
+| `router-demo:101` | `direction:'col'`, **`padding:1`, `gap:0`** | `col({ padding:1, gap:0 }, …)` — `screen.background` stays separate (AR-15) |
 | `drill-down:69` | `direction:'col'` | `col({ background:'window' }, …)` |
 
 `Flex` is `Omit<LayoutProps,'direction'> & { grow?, fixed?, fill?, background? }` (`flex.ts:41-53`),
@@ -39,8 +39,8 @@ Replaces `:66-71` entirely (construct, three assignments, two `add()`s).
 
 ```ts
 const body = fixed(row({ gap: 2 }, grow(btnOk), grow(btnOpen)), 1);
-const dialog = fixed(col({ background: 'dialog' }, fixed(dialogLabel, 1), fixed(btnClose, 1)), 2);
-const root = col({ padding: 1, background: 'desktop' },
+const dialog = fixed(col(fixed(dialogLabel, 1), fixed(btnClose, 1)), 2); // dialog.background stays
+const root = col({ padding: 1 }, // root.background stays a separate assignment
   fixed(header, 1), body, dialog, fixed(status, 1));
 ```
 
@@ -54,7 +54,7 @@ in scope inside that helper.
 ## `controls-demo/main.ts` — keep the data-driven loop
 
 ```ts
-const form = col({ padding: 1, gap: 0, background: 'window' });
+const form = col({ padding: 1, gap: 0 }); // form.background stays a separate assignment
 for (const [view, rows] of [...] as const) form.add(fixed(view, rows));
 ```
 
@@ -65,7 +65,7 @@ The loop is the demo's subject — it shows a form built from data. Only the des
 The `list` route's `build()` closure:
 
 ```ts
-const screen = col({ padding: 1, gap: 0, background: 'window' }, fixed(title, 1), grow(listView));
+const screen = col({ padding: 1, gap: 0 }, fixed(title, 1), grow(listView)); // background stays
 ```
 
 `listView` is declared `let` at `:92` and assigned inside the closure; the tag goes on the
@@ -99,7 +99,7 @@ removes the last hand-written descriptor in the file.
 ## `kitchen-sink/stories/drill-down.story.ts`
 
 Mirrors `router-demo`: the `list` route's closure becomes
-`col({ background:'window' }, grow(list))`, and `DetailScreen`'s three children become
+`col({ background:'window' }, grow(list))` — the one example fold a witness can see (AR-15), and `DetailScreen`'s three children become
 `fixed(title, 1)` / `fixed(meta, 1)` / `fixed(back, 2)`. `:29` is preserved with the same comment as
 `router-demo:59`.
 
