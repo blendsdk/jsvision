@@ -3,7 +3,7 @@
 > **Implements**: layout-dsl-adoption/GH-109 + GH-116 · **GitHub**: [#109](https://github.com/blendsdk/jsvision/issues/109) + [#116](https://github.com/blendsdk/jsvision/issues/116)
 > **CodeOps Skills Version**: 3.10.0
 > **Progress**: 15/35 tasks (43%) — Phases 1-2 complete
-> **Last Updated**: 2026-07-19 (Phase 1 green-first baseline verified; revised after preflight — [report](00-preflight-report.md))
+> **Last Updated**: 2026-07-19 (Phases 1-2 complete and post-phase-reviewed; revised after preflight — [report](00-preflight-report.md))
 > **Branch**: `feat/widget-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify` (AR-6)
 > **Routing**: standard → Sonnet-eligible, except tasks 1.7 and Phase 3 (complex)
@@ -69,6 +69,15 @@ characterization witness carries the non-vacuity clause (exact counts + non-zero
 ## Deviations
 
 **No locator edits so far.** Every existing test passed unedited through Phase 2.
+
+**Post-phase review fixes (Phases 1–2).** The Phase-1 review found the value-list assertions in
+`aux-composition.impl.test.ts` were relations between two solved values rather than absolutes — an
+identity that would have held even if the list collapsed, on a site Phase 4.1 converts. Fixed to
+absolute rects, along with three smaller non-vacuity gaps and one assertion that compared a child
+against itself. The Phase-2 review found `col(opts.menuBar, …)` put a caller-supplied view in the
+builder's overloaded first slot, where a cross-realm `instanceof` miss would silently reinterpret it
+as a props object; now `col({}, …)`. `quitState` was restored to its original position, which the
+component spec had said to leave alone.
 
 **Known-flake note (not a deviation).** One `TUI_SKIP_PERF=1 yarn verify` run failed in
 `@jsvision/ui#test` under turbo's parallel load; the same suite passed standalone (311 files / 1784

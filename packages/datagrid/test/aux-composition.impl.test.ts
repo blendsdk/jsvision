@@ -47,6 +47,15 @@ function solveInColumn(view: View, w: number, h: number): void {
   render.flush();
 }
 
+/**
+ * The value list's solved geometry at 24 x 14: the list row absorbs the column's slack, and the
+ * checkbox list gives up its rightmost cell to the scroll bar. Stated as absolutes (parent-relative,
+ * as `bounds` always is) so a collapsed list fails rather than satisfying a relation between zeroes.
+ */
+const LIST_ROW_HEIGHT = 9;
+const LIST_RECT = { x: 0, y: 0, width: 23, height: LIST_ROW_HEIGHT };
+const SCROLLBAR_RECT = { x: 23, y: 0, width: 1, height: LIST_ROW_HEIGHT };
+
 /** Flush pending microtasks (the value list's async `distinct()` population resolves on one). */
 const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -109,12 +118,13 @@ test('the loading placeholder stacks its lead spacer above the spinner', () => {
   expect(children.length).toBe(2); // the one-row lead + the spinner
 
   const [lead, spinner] = children;
+  expect(lead.bounds.width).toBe(24); // full-width bands — an x-only check holds at width 0 too
+  expect(spinner.bounds.width).toBe(24);
   expect(lead.bounds.height).toBe(1);
   // Vertical stacking: the spinner sits *below* the lead, at the same x. A shell that lost its
   // column direction would place them side by side instead.
   expect(spinner.bounds.y).toBe(lead.bounds.y + lead.bounds.height);
   expect(spinner.bounds.x).toBe(lead.bounds.x);
-  expect(spinner.bounds.width).toBeGreaterThan(0);
   expect(spinner.bounds.height).toBe(1);
 });
 
@@ -130,6 +140,7 @@ test('the error placeholder stacks lead, message and Retry button top-to-bottom'
   expect(children.length).toBe(3); // lead + message + Retry
 
   const [lead, message, retry] = children;
+  for (const band of [lead, message, retry]) expect(band.bounds.width).toBe(24);
   expect(message.bounds.y).toBe(lead.bounds.y + lead.bounds.height);
   expect(retry.bounds.y).toBe(message.bounds.y + message.bounds.height);
   expect(message.bounds.x).toBe(retry.bounds.x); // stacked, not flowed sideways
@@ -176,13 +187,15 @@ test('the value list stacks search label, input, list row, gap, controls and sta
   expect(input.bounds.height).toBe(1);
   expect(gap.bounds.height).toBe(1);
   expect(controls.bounds.height).toBe(2);
-  expect(listRow.bounds.height).toBeGreaterThan(1); // the list absorbs the slack
+  expect(listRow.bounds.height).toBe(LIST_ROW_HEIGHT); // the list absorbs the slack
 
-  // The list row itself flows horizontally: the checkbox list, then its one-cell scroll bar.
+  // The list row itself flows horizontally: the checkbox list, then its one-cell scroll bar. These
+  // are absolutes, not relations between the two — a relation like `scrollBar.x === list.x +
+  // list.width` is an identity that holds even if both collapsed to zero, which is exactly the
+  // failure this witness exists to catch.
   const rowChildren = (listRow as Group).children;
   expect(rowChildren.length).toBe(2);
   const [checkList, scrollBar] = rowChildren;
-  expect(scrollBar.bounds.width).toBe(1);
-  expect(scrollBar.bounds.x).toBe(checkList.bounds.x + checkList.bounds.width);
-  expect(checkList.bounds.y).toBe(scrollBar.bounds.y);
+  expect(checkList.bounds).toEqual(LIST_RECT);
+  expect(scrollBar.bounds).toEqual(SCROLLBAR_RECT);
 });

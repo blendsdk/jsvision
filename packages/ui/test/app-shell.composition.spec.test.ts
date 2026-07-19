@@ -63,8 +63,14 @@ test('ST-W1: the root children are exactly [menuBar?, body, statusLine?, overlay
 
   const root = rootOf(content);
   expect(root.children.length).toBe(4);
-  expect(root.children).toEqual([menu, content, line, root.children[3]]);
+  // Identity per slot, not a deep compare: `toEqual` on a View walks a cyclic tree and would accept
+  // a different-but-structurally-equal view in a slot.
+  expect(root.children[0]).toBe(menu);
+  expect(root.children[1]).toBe(content);
+  expect(root.children[2]).toBe(line);
+  // The overlay is characterized by what the shell writes on it, not by comparing it to itself.
   expect(root.children[3].layout.position).toBe('absolute');
+  expect(root.children[3].state.visible).toBe(false);
   expect(allSolved([menu, content, line])).toBe(true);
 
   // content only
@@ -115,8 +121,9 @@ test('ST-W1: the menu bar and status line each solve to exactly one row', () => 
   expect(content.bounds.y).toBe(1);
 });
 
-// ST-W2 — the shell's Tab ring, as an explicit named list plus its exact length. A ring that grew a
-// wrapper Group would either reorder these or change the length.
+// ST-W2 — the shell's Tab ring, as an explicit named list plus its exact length. This pins the set
+// and order of focusables reachable through `content`, and that the chrome rows contribute none.
+// (It would not, on its own, detect a non-focusable wrapper Group: tree-order traversal skips one.)
 test('ST-W2: the app-shell focus ring visits the content views in tree order', () => {
   const content = new Body();
   const first = new Button('~O~ne', 'one');
