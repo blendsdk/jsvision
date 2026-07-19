@@ -71,8 +71,8 @@ function focusRing(loop: EventLoop, name: (v: View | null) => string, max = 16):
   return ring; // no wrap within `max` — returned as-is so the assertion shows the runaway order
 }
 
-// ST-01 — open mode: field → listing → Open → Cancel → Help, then wraps.
-test('ST-01: FileDialog Tab-traverses [fileInput, listing, Open, Cancel, Help]', () => {
+// ST-FE01 — open mode: field → listing → Open → Cancel → Help, then wraps.
+test('ST-FE01: FileDialog Tab-traverses [fileInput, listing, Open, Cancel, Help]', () => {
   const dlg = new FileDialog({ fs: fsFixture(), directory: signal('/home/user') });
   const loop = openFileDialog(dlg);
 
@@ -85,8 +85,8 @@ test('ST-01: FileDialog Tab-traverses [fileInput, listing, Open, Cancel, Help]',
   ]);
 });
 
-// ST-01 — save mode: the same prefix, followed by the five-button save strip.
-test('ST-01: save-mode FileDialog Tab-traverses the full OK/Replace/Clear/Cancel/Help strip', () => {
+// ST-FE01 — save mode: the same prefix, followed by the five-button save strip.
+test('ST-FE01: save-mode FileDialog Tab-traverses the full OK/Replace/Clear/Cancel/Help strip', () => {
   const dlg = new FileDialog({ fs: fsFixture(), directory: signal('/home/user'), save: true });
   const loop = openFileDialog(dlg);
 
@@ -101,8 +101,8 @@ test('ST-01: save-mode FileDialog Tab-traverses the full OK/Replace/Clear/Cancel
   ]);
 });
 
-// ST-01 — the History dropdown, the scroll bar, and both Labels are decorations, never Tab stops.
-test('ST-01: the History dropdown and the listing scroll bar are not in the FileDialog Tab ring', () => {
+// ST-FE01 — the History dropdown, the scroll bar, and both Labels are decorations, never Tab stops.
+test('ST-FE01: the History dropdown and the listing scroll bar are not in the FileDialog Tab ring', () => {
   const dlg = new FileDialog({ fs: fsFixture(), directory: signal('/home/user') });
   const loop = openFileDialog(dlg);
 
