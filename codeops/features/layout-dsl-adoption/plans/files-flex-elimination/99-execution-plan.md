@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/RD-01 (Tier 2, files) · **GitHub**: [#120](https://github.com/blendsdk/jsvision/issues/120)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 11/18 tasks (61%)
+> **Progress**: 16/18 tasks (89%)
 > **Last Updated**: 2026-07-19
 > **Branch**: `feat/files-flex-elimination` (cut from `feat/dsl-adoptation`; PR retargets to `develop` once #123 lands)
 > **Verify**: `yarn verify`
@@ -39,11 +39,13 @@ is intended (AR-10).
 
 ## Phase 4 — `FileDialog` (03-01)
 
-- [ ] 4.1 ST-FE04 — re-baseline `file-dialog.spec.test.ts` composition block to the 03-01 §3 table → **red**
-- [ ] 4.2 Implement the flex tree; drop the `padding: 0` override and the per-child rects → green
-- [ ] 4.3 Re-baseline the info-pane line in `file-dialog.impl.test.ts:66`
-- [ ] 4.4 Confirm ST-FE01 still green (tab order survived the nesting) and `history-files.spec` **unedited**
-- [ ] 4.5 Verify
+> **Phase ref**: 0e400ce8
+
+- [x] 4.1 ST-FE04 — re-baseline `file-dialog.spec.test.ts` composition block to the 03-01 §3 table → **red** ✅ (completed: 2026-07-19 20:15)
+- [x] 4.2 Implement the flex tree; drop the `padding: 0` override and the per-child rects → green ✅ (completed: 2026-07-19 20:15)
+- [x] 4.3 Re-baseline the info-pane line in `file-dialog.impl.test.ts:66` ✅ (completed: 2026-07-19 20:15)
+- [x] 4.4 Confirm ST-FE01 still green (tab order survived the nesting); `history-files.spec` values unchanged, read mechanism corrected — see D-4 ✅ (completed: 2026-07-19 20:15)
+- [x] 4.5 Verify ✅ (completed: 2026-07-19 20:15)
 
 ## Phase 5 — `ChDirDialog` (03-02)
 
@@ -57,8 +59,8 @@ is intended (AR-10).
 Ordered last by construction — deleting earlier leaves both constructors untypecheckable.
 
 - [ ] 6.1 Delete `grow.ts`, `grow-dialog.ts`, the `growItems` fields, both `onResized()` overrides, and the six imports
-- [ ] 6.2 Delete `test/grow.spec.test.ts`; replace `test/file-dialog-resize.spec.test.ts` with ST-FE08 (invariant oracle)
-- [ ] 6.3 Re-baseline `file-dialog-resize.impl.test.ts` — drop exact grow rects, keep the WM drag gesture + containment loop
+- [x] 6.2 Delete `test/grow.spec.test.ts`; replace `test/file-dialog-resize.spec.test.ts` with ST-FE08 (invariant oracle) — ST-FE08 landed in Phase 4 (forced by ordering, see D-5); `grow.spec.test.ts` deletion still pending ⏳
+- [x] 6.3 Re-baseline `file-dialog-resize.impl.test.ts` — done in Phase 4 (D-5) ✅ (completed: 2026-07-19 20:15)
 - [ ] 6.4 AC-1 grep gate returns zero matches; AC-2 barrel diff is empty
 - [ ] 6.5 Verify
 
@@ -74,6 +76,8 @@ Record here if the red step falsifies a derivation.
 
 | # | Expected (plan) | Actual (solver) | Resolution |
 |---|-----------------|-----------------|------------|
+| D-5 | Machinery-deletion test work is Phase 6 | Converting `FileDialog` in Phase 4 immediately invalidates `file-dialog-resize.{spec,impl}.test.ts`, so 6.2's ST-FE08 replacement and 6.3's re-baseline had to land in Phase 4 | Ordering correction, not a scope change. ST-FE08 covers **both** dialogs from the start, so it stays green across Phase 5 too. |
+| D-4 | AR-6: `history-files.spec.test.ts` survives **unedited** | The geometry derivation was exactly right — `history` solves to `(31,3,3,1)`, every value in 03-01 §3 confirmed. But `View.bounds` is **parent-relative** (`view/view.ts:64`), so a child nested in flex groups no longer *reads* as dialog-local. | The asserted values are byte-identical; only the measuring instrument changed, from raw `.bounds` to the `renderRoot.originOf` composition already used by the sibling ui plan. Not a re-baseline and not a loosened assertion — the oracle now reads the coordinate it always meant. RD-02's NFR-3 table needs no amendment. |
 | D-3 | Phase 2 was a behavior-neutral verbatim move | The JSDoc written around it over-promised on astral characters (AR-16) | Docs corrected, behavior pinned by a spec case, real fix filed as GH #124. The move itself remains verbatim. |
 | D-2 | ST-FE09 asserts no wrapped line exceeds the requested width | A glyph wider than the whole width (2-column CJK at width 1) is emitted alone, so the wrap always terminates | Real pre-existing contract detail, not a defect. The oracle now states it explicitly and the promoted public JSDoc documents it. |
 | D-1 | 03-01 §5 / 03-02 §4: focusables are `fileList` / `dirList` and `listBar` | Focus is leaf-only, so the Tab stop is `fileList.rows` / `dirList.rows`; `listBar` (a `ScrollBar`) is **not** focusable at all | Mechanical correction — the *user-visible* traversal order is unchanged, so ST-FE01/ST-FE02 assert the real ring. No behavior impact on the conversion. |

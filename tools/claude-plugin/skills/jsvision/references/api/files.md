@@ -180,7 +180,6 @@ fileInfoPane: FileInfoPane
 listBar: ScrollBar
 buttons: Button[]
 buttonLabels: string[]
-onResized(): void
 result(): string | null
 replace(): void
 clear(): void

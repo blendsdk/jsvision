@@ -1,75 +1,155 @@
 /**
- * Specification tests (immutable oracle) — `FileDialog`/`ChDirDialog` `growMode` reflow (TV `wfGrow`).
+ * Specification tests (immutable oracle) — what a drag-resize of the file dialogs must guarantee.
  *
- * Derived from the Turbo Vision decode, NOT the implementation. When a `TFileDialog`/`TChDirDialog`
- * grows, each child is repositioned by `TView::calcBounds` from its per-child `growMode`
- * (`tfildlg.cpp:68-137` / `tchdrdlg.cpp:48-78`; the min size pins the baseline to the design size, so
- * the delta is grow-only). The expected rects below are computed by hand from the design rect + the
- * decoded flags, so they hold the implementation accountable to the source. `.js` per NodeNext.
+ * These dialogs are `wfGrow` windows: the user can drag them larger, and the content is expected to
+ * make use of the extra room. The layout that delivers that is a flex tree rather than a table of
+ * per-child grow flags, so this oracle states the guarantee as **properties** instead of coordinates
+ * — the exact cells a child lands on are a layout detail, and pinning them here would only re-encode
+ * the implementation.
+ *
+ * Three things must hold after a resize, and they are what a user would actually notice:
+ *   1. nothing bleeds outside the frame — no child may sit on or past the border ring;
+ *   2. the listing genuinely absorbs the new space, in both directions;
+ *   3. the size floor holds — dragging smaller than the design size does not shrink the dialog.
+ *
+ * The resize is driven through the real window-manager gesture (grab the south-east grip and drag),
+ * not by calling a reflow hook, so this exercises the path a user takes. `.js` per NodeNext.
  */
 import { test, expect } from 'vitest';
-import type { Rect } from '@jsvision/ui';
-import { signal } from '@jsvision/ui';
+import { resolveCapabilities } from '@jsvision/core';
+import type { MouseEvent } from '@jsvision/core';
+import { createApplication, signal } from '@jsvision/ui';
+import type { EventLoop, View } from '@jsvision/ui';
 import { FileDialog } from '../src/dialog/file-dialog.js';
 import { ChDirDialog } from '../src/dialog/chdir-dialog.js';
 import { createMemoryFs, dir, file } from './helpers/memory-fs.js';
 
-const rectOf = (b: Rect): Rect => ({ x: b.x, y: b.y, width: b.width, height: b.height });
+const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
+
+const mouse = (kind: MouseEvent['kind'], x: number, y: number): MouseEvent => ({
+  type: 'mouse',
+  kind,
+  button: 0,
+  x: x + 1,
+  y: y + 1,
+});
 
 function fileFs() {
   return createMemoryFs(dir({ home: dir({ user: dir({ 'a.txt': file({ size: 1 }), sub: dir() }) }) }));
 }
 
-// —— FileDialog grown by (12, 8): 49×19 ⇒ 61×27. ——
-test('FileDialog growMode reflow repositions every child per the tfildlg.cpp decode', () => {
-  const dlg = new FileDialog({ fs: fileFs(), directory: signal('/home/user') });
-  // Grow the dialog outer rect by (12, 8) and run the growMode pass (what the resize gesture calls).
-  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 61, height: 27 } };
-  dlg.onResized();
+/**
+ * A child's solved rectangle relative to the dialog's top-left. `View.bounds` is parent-relative, so
+ * a child nested inside layout groups measures from that group; the composed origins give the real
+ * dialog-local position, and `bounds` still gives the size.
+ */
+function rectIn(loop: EventLoop, dialog: View, child: View) {
+  const root = loop.renderRoot;
+  const origin = root.originOf(child)!;
+  const base = root.originOf(dialog)!;
+  return { x: origin.x - base.x, y: origin.y - base.y, width: child.bounds.width, height: child.bounds.height };
+}
 
-  // fileName gfGrowHiX — widens: (3,3,28,1) ⇒ right edge +12.
-  expect(rectOf(dlg.fileInput.layout.rect as Rect)).toEqual({ x: 3, y: 3, width: 40, height: 1 });
-  // History gfGrowLoX|gfGrowHiX — translates right, keeps width 3: (31,3) ⇒ (43,3).
-  expect(rectOf(dlg.history.layout.rect as Rect)).toEqual({ x: 43, y: 3, width: 3, height: 1 });
-  // fileList gfGrowHiX|gfGrowHiY — grows both: (3,6,31,8) ⇒ (3,6,43,16).
-  expect(rectOf(dlg.fileList.layout.rect as Rect)).toEqual({ x: 3, y: 6, width: 43, height: 16 });
-  // listBar (horizontal) gfGrowLoY|gfGrowHiX|gfGrowHiY — tracks the list bottom + widens.
-  expect(rectOf(dlg.listBar.layout.rect as Rect)).toEqual({ x: 3, y: 22, width: 43, height: 1 });
-  // infoPane gfGrowAll & ~gfGrowLoX — pinned left, flush bottom, full width: (1,16,47,2) ⇒ (1,24,59,2).
-  expect(rectOf(dlg.fileInfoPane.layout.rect as Rect)).toEqual({ x: 1, y: 24, width: 59, height: 2 });
-  // buttons gfGrowLoX|gfGrowHiX — pinned to the right edge, width 11 kept, y unchanged.
-  expect(rectOf(dlg.buttons[0].layout.rect as Rect)).toEqual({ x: 47, y: 3, width: 11, height: 2 });
-  expect(rectOf(dlg.buttons[1].layout.rect as Rect)).toEqual({ x: 47, y: 6, width: 11, height: 2 });
+/** Assert every listed child sits strictly inside a `w × h` frame — never on the border ring. */
+function expectInsideFrame(loop: EventLoop, dlg: View, children: View[], w: number, h: number): void {
+  for (const c of children) {
+    const b = rectIn(loop, dlg, c);
+    expect(b.x, `${c.constructor.name}.x`).toBeGreaterThanOrEqual(1);
+    expect(b.y, `${c.constructor.name}.y`).toBeGreaterThanOrEqual(1);
+    expect(b.x + b.width, `${c.constructor.name} right edge`).toBeLessThanOrEqual(w - 1);
+    expect(b.y + b.height, `${c.constructor.name} bottom edge`).toBeLessThanOrEqual(h - 1);
+  }
+}
+
+/** Open a dialog centred in an 80×40 desktop and return the app plus its starting bounds. */
+function openCentred(dlg: FileDialog | ChDirDialog) {
+  const app = createApplication({ caps, viewport: { width: 80, height: 40 } });
+  void app.desktop.addWindow(dlg);
+  void app.loop.execView(dlg);
+  app.loop.renderRoot.flush();
+  return app;
+}
+
+// ST-FE08 — a grown FileDialog keeps every child inside the frame and gives the space to the listing.
+test('ST-FE08: growing a FileDialog enlarges the listing and keeps every child inside the frame', () => {
+  const dlg = new FileDialog({ fs: fileFs(), directory: signal('/home/user') });
+  const app = openCentred(dlg);
+
+  // Centred in 80×40: x = (80−49)/2 = 15, y = (40−19)/2 = 10. The SE grip is the frame's last cell.
+  expect(dlg.bounds).toMatchObject({ x: 15, y: 10, width: 49, height: 19 });
+  const before = rectIn(app.loop, dlg, dlg.fileList);
+
+  app.loop.dispatch(mouse('down', 63, 28)); // grab the SE grip at local (48,18)
+  app.loop.dispatch(mouse('drag', 75, 36)); // ⇒ 61×27, a growth of (12, 8)
+  app.loop.renderRoot.flush();
+
+  expect(dlg.bounds).toMatchObject({ x: 15, y: 10, width: 61, height: 27 });
+
+  // The listing takes the new room in both directions — the point of a resizable file dialog.
+  const after = rectIn(app.loop, dlg, dlg.fileList);
+  expect(after.width).toBeGreaterThan(before.width);
+  expect(after.height).toBeGreaterThan(before.height);
+
+  expectInsideFrame(
+    app.loop,
+    dlg,
+    [dlg.fileInput, dlg.history, dlg.fileList, dlg.listBar, dlg.fileInfoPane, ...dlg.buttons],
+    61,
+    27,
+  );
 });
 
-// —— A grow-and-shrink-back returns to the exact design rects (idempotent, grow-only baseline). ——
-test('FileDialog growMode reflow is exact at the design size (delta 0 restores base rects)', () => {
+// ST-FE08 — the design size is a floor: dragging smaller must not shrink the dialog past it.
+test('ST-FE08: a FileDialog cannot be dragged below its 49×19 design size', () => {
   const dlg = new FileDialog({ fs: fileFs(), directory: signal('/home/user') });
-  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 61, height: 27 } };
-  dlg.onResized();
-  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 49, height: 19 } }; // back to design
-  dlg.onResized();
+  const app = openCentred(dlg);
 
-  expect(rectOf(dlg.fileInput.layout.rect as Rect)).toEqual({ x: 3, y: 3, width: 28, height: 1 });
-  expect(rectOf(dlg.history.layout.rect as Rect)).toEqual({ x: 31, y: 3, width: 3, height: 1 });
-  expect(rectOf(dlg.fileList.layout.rect as Rect)).toEqual({ x: 3, y: 6, width: 31, height: 8 });
-  expect(rectOf(dlg.fileInfoPane.layout.rect as Rect)).toEqual({ x: 1, y: 16, width: 47, height: 2 });
+  app.loop.dispatch(mouse('down', 63, 28)); // grab the SE grip
+  app.loop.dispatch(mouse('drag', 40, 20)); // drag well inside the design size
+  app.loop.renderRoot.flush();
+
+  expect(dlg.bounds).toMatchObject({ width: 49, height: 19 });
+  expectInsideFrame(
+    app.loop,
+    dlg,
+    [dlg.fileInput, dlg.history, dlg.fileList, dlg.listBar, dlg.fileInfoPane, ...dlg.buttons],
+    49,
+    19,
+  );
 });
 
-// —— ChDirDialog grown by (10, 6): 48×18 ⇒ 58×24. ——
-test('ChDirDialog growMode reflow repositions every child per the tchdrdlg.cpp decode', () => {
+// ST-FE08 — the same guarantees for the change-directory dialog and its tree.
+test('ST-FE08: growing a ChDirDialog enlarges the tree and keeps every child inside the frame', () => {
   const fs = createMemoryFs(dir({ home: dir({ user: dir({ sub: dir() }) }) }));
   const dlg = new ChDirDialog({ fs, directory: signal('/home/user') });
-  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 58, height: 24 } };
-  dlg.onResized();
+  const app = openCentred(dlg);
 
-  // pathInput gfGrowHiX — widens: (3,3,39,1) ⇒ width +10.
-  expect(rectOf(dlg.pathInput.layout.rect as Rect)).toEqual({ x: 3, y: 3, width: 49, height: 1 });
-  // History gfGrowLoX|gfGrowHiX — translates right, keeps width 3: (42,3) ⇒ (52,3).
-  expect(rectOf(dlg.history.layout.rect as Rect)).toEqual({ x: 52, y: 3, width: 3, height: 1 });
-  // dirList gfGrowHiX|gfGrowHiY — grows both. TV splits list (29w) + vertical bar (1w); jsvision's
-  // DirList owns its bar in one (3,6,30,10) container, so the merged footprint grows to (3,6,40,16).
-  expect(rectOf(dlg.dirList.layout.rect as Rect)).toEqual({ x: 3, y: 6, width: 40, height: 16 });
-  // buttons gfGrowLoX|gfGrowHiX — pinned right: (35,6,10,2) ⇒ (45,6,10,2).
-  expect(rectOf(dlg.buttons[0].layout.rect as Rect)).toEqual({ x: 45, y: 6, width: 10, height: 2 });
+  // Centred in 80×40: x = (80−48)/2 = 16, y = (40−18)/2 = 11; the SE grip is at local (47,17).
+  expect(dlg.bounds).toMatchObject({ x: 16, y: 11, width: 48, height: 18 });
+  const before = rectIn(app.loop, dlg, dlg.dirList);
+
+  app.loop.dispatch(mouse('down', 63, 28)); // grab the SE grip
+  app.loop.dispatch(mouse('drag', 73, 34)); // ⇒ 58×24, a growth of (10, 6)
+  app.loop.renderRoot.flush();
+
+  expect(dlg.bounds).toMatchObject({ x: 16, y: 11, width: 58, height: 24 });
+
+  const after = rectIn(app.loop, dlg, dlg.dirList);
+  expect(after.width).toBeGreaterThan(before.width);
+  expect(after.height).toBeGreaterThan(before.height);
+
+  expectInsideFrame(app.loop, dlg, [dlg.pathInput, dlg.history, dlg.dirList, ...dlg.buttons], 58, 24);
+});
+
+// ST-FE08 — the ChDirDialog floor holds too.
+test('ST-FE08: a ChDirDialog cannot be dragged below its 48×18 design size', () => {
+  const fs = createMemoryFs(dir({ home: dir({ user: dir({ sub: dir() }) }) }));
+  const dlg = new ChDirDialog({ fs, directory: signal('/home/user') });
+  const app = openCentred(dlg);
+
+  app.loop.dispatch(mouse('down', 63, 28));
+  app.loop.dispatch(mouse('drag', 40, 20));
+  app.loop.renderRoot.flush();
+
+  expect(dlg.bounds).toMatchObject({ width: 48, height: 18 });
 });

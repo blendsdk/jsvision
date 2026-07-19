@@ -16,13 +16,24 @@
  * `FileDialog` directly only when you need to embed or customize it.
  */
 import type { Signal } from '@jsvision/ui';
-import { Button, Commands, Dialog, History, Label, ScrollBar, signal } from '@jsvision/ui';
+import {
+  Button,
+  Commands,
+  Dialog,
+  History,
+  Label,
+  ScrollBar,
+  col,
+  cover,
+  fixed,
+  grow,
+  row,
+  signal,
+  spacer,
+} from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
 import { nodeFileSystem } from '../fs/node-fs.js';
 import { isWild } from '../fs/wildcard.js';
-import { GrowMode } from './grow.js';
-import type { GrowItem } from './grow-dialog.js';
-import { applyGrowMode, captureGrowItems } from './grow-dialog.js';
 import { FileInput } from '../input/file-input.js';
 import { FileInfoPane } from '../list/file-info-pane.js';
 import { FileList } from '../list/file-list.js';
@@ -52,8 +63,6 @@ export interface FileDialogOptions {
   /** Called when the dialog resolves — with the chosen absolute path, or `null` on cancel. */
   onResolve?: (path: string | null) => void;
 }
-
-const stripTilde = (s: string): string => s.replace(/~/g, '');
 
 /** The default recent-path history id — distinct from the chdir dialog so their lists don't mix. */
 const FILE_HISTORY_ID = 0x0f11;
@@ -104,18 +113,11 @@ export class FileDialog extends Dialog {
   private readonly resultPath: Signal<string | null> = signal<string | null>(null);
   private readonly showErrorSeam?: (message: string) => void;
   private readonly onResolveCb?: (path: string | null) => void;
-  /** The resize-reflow table (children + design rects + grow flags), replayed on drag-resize. */
-  private readonly growItems: GrowItem[];
 
   constructor(opts: FileDialogOptions) {
     super({ title: opts.title ?? (opts.save ? 'Save File As' : 'Open a File'), width: 49, height: 19 });
-    // The children below are placed at absolute rects measured from the dialog's outer frame (which
-    // sits at row/col 0). The base Dialog defaults to a padding:1 inset (handy for message-box style
-    // dialogs); applied here it would double-count the frame and push every child in by (1,1), so the
-    // info pane would overwrite the right and bottom border. Zero it so the rects land exactly.
-    this.layout = { ...this.layout, padding: 0 };
-    // Drag-resizable but floored at the design size, so children only ever grow (never shrink below
-    // the layout below). They track the growing frame in onResized() via the growItems table.
+    // Drag-resizable but floored at the design size. There is no reflow code to go with it: the body
+    // below is a flex tree, so a resize re-solves every child in one layout pass.
     this.resizable = true;
     this.minWidth = 49;
     this.minHeight = 19;
@@ -129,7 +131,6 @@ export class FileDialog extends Dialog {
     const focused = signal(0);
     // The listing's scroll bar is owned by the dialog and placed as a horizontal bar under the list.
     this.listBar = new ScrollBar({ value: focused, orientation: 'horizontal' });
-    this.listBar.layout = { position: 'absolute', rect: { x: 3, y: 14, width: 31, height: 1 } };
     this.fileList = new FileList({
       fs: this.fs,
       directory: this.directory,
@@ -139,7 +140,6 @@ export class FileDialog extends Dialog {
       filter: opts.filter,
       onOpenEntry: (entry) => this.openEntry(entry),
     });
-    this.fileList.layout = { position: 'absolute', rect: { x: 3, y: 6, width: 31, height: 8 } };
 
     this.fileInput = new FileInput({
       value: this.filename,
@@ -147,19 +147,10 @@ export class FileDialog extends Dialog {
       wildcard: () => this.wildcard(),
       sep: this.fs.sep,
     });
-    this.fileInput.layout = { position: 'absolute', rect: { x: 3, y: 3, width: 28, height: 1 } };
     this.history = new History({ link: this.fileInput, historyId: opts.historyId ?? FILE_HISTORY_ID });
-    this.history.layout = { position: 'absolute', rect: { x: 31, y: 3, width: 3, height: 1 } };
 
-    const inputName = opts.inputName ?? '~N~ame';
-    const inputLabel = new Label(inputName, this.fileInput);
-    // Width = the label's display length plus 3 (a trailing gap before the field).
-    inputLabel.layout = {
-      position: 'absolute',
-      rect: { x: 2, y: 2, width: 3 + stripTilde(inputName).length, height: 1 },
-    };
+    const inputLabel = new Label(opts.inputName ?? '~N~ame', this.fileInput);
     const filesLabel = new Label('~F~iles', this.fileList.rows);
-    filesLabel.layout = { position: 'absolute', rect: { x: 2, y: 5, width: 6, height: 1 } };
 
     this.fileInfoPane = new FileInfoPane({
       fs: this.fs,
@@ -167,37 +158,39 @@ export class FileDialog extends Dialog {
       wildcard: () => this.wildcard(),
       focusedEntry: () => this.fileList.focusedEntry(),
     });
-    this.fileInfoPane.layout = { position: 'absolute', rect: { x: 1, y: 16, width: 47, height: 2 } };
 
     this.buildButtons(opts.save === true);
 
-    // Compose (z-order): labels + input + list + bar + info pane + buttons.
-    this.add(inputLabel);
-    this.add(this.fileInput);
-    this.add(this.history);
-    this.add(filesLabel);
-    this.add(this.fileList);
-    this.add(this.listBar);
-    this.add(this.fileInfoPane);
-    for (const b of this.buttons) this.add(b);
+    // Every child below carries an explicit `fixed`/`grow` size. That is not decoration: only `Text`
+    // and `Button` know how to measure themselves, so any other widget left to size automatically
+    // would collapse to nothing and vanish.
+    const inputRow = row(grow(this.fileInput), fixed(this.history, 3));
+    const leftCol = col(
+      fixed(inputLabel, 1),
+      fixed(inputRow, 1),
+      fixed(spacer({ fixed: 1 }), 1),
+      fixed(filesLabel, 1),
+      grow(this.fileList), // the listing absorbs whatever height is left, so it grows on resize
+      fixed(this.listBar, 1),
+    );
+    // The buttons start one row below the filename field, matching the field's own top inset.
+    const buttonCol = col({ padding: { top: 1, right: 0, bottom: 0, left: 0 }, gap: 1 }, ...this.buttons);
 
-    // The resize-reflow table, captured at the design size and replayed by onResized(). Fixed-position
-    // labels are omitted (they never move).
-    this.growItems = captureGrowItems([
-      [this.fileInput, GrowMode.HiX], // filename field — widens
-      [this.history, GrowMode.LoX | GrowMode.HiX], // history icon — rides the field's right edge
-      [this.fileList, GrowMode.HiX | GrowMode.HiY], // listing — grows both ways
-      [this.listBar, GrowMode.LoY | GrowMode.HiX | GrowMode.HiY], // bar — tracks the list bottom, widens
-      [this.fileInfoPane, GrowMode.All & ~GrowMode.LoX], // info pane — pinned left, flush bottom, full width
-      ...this.buttons.map((b): [Button, number] => [b, GrowMode.LoX | GrowMode.HiX]), // pinned to the right edge
-    ]);
-  }
-
-  /** Reflow the children to track the frame when the dialog is drag-resized. */
-  override onResized(): void {
-    if (this.layout.rect !== undefined) {
-      applyGrowMode(this.growItems, this.layout.rect, this.minWidth, this.minHeight);
-    }
+    // The outer column is unpadded so the info pane can span the full frame interior; the inner one
+    // carries the side inset the rest of the content needs.
+    this.add(
+      cover(
+        col(
+          grow(
+            col(
+              { padding: { top: 1, right: 2, bottom: 0, left: 2 } },
+              grow(row({ gap: 1 }, grow(leftCol), fixed(buttonCol, 11))),
+            ),
+          ),
+          fixed(this.fileInfoPane, 2),
+        ),
+      ),
+    );
   }
 
   /** The resolved absolute path, or `null` while unresolved / on cancel. */
@@ -216,7 +209,7 @@ export class FileDialog extends Dialog {
     this.filename.set('');
   }
 
-  /** Build the mode-appropriate button strip (each 11×2, first at (35,3), +3 rows). */
+  /** Build the mode-appropriate button strip; the layout below places and sizes it. */
   private buildButtons(save: boolean): void {
     const specs: Array<{ label: string; command?: string; default?: boolean; onClick?: () => void }> = save
       ? [
@@ -231,9 +224,8 @@ export class FileDialog extends Dialog {
           { label: '~C~ancel', command: Commands.cancel },
           { label: '~H~elp' },
         ];
-    specs.forEach((s, i) => {
+    specs.forEach((s) => {
       const btn = new Button(s.label, { command: s.command, default: s.default, onClick: s.onClick });
-      btn.layout = { position: 'absolute', rect: { x: 35, y: 3 + i * 3, width: 11, height: 2 } };
       this.buttons.push(btn);
       this.buttonLabels.push(s.label);
     });
