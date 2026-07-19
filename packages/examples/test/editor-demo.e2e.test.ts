@@ -6,8 +6,9 @@
  * selection, cut/paste through the clipboard editor, undo/redo, the find + replace-all count, and
  * the final "Done" line. Mirrors `feedback-demo.e2e`. `.js` per NodeNext.
  */
-import { test, expect } from 'vitest';
+import { test, expect, describe, beforeAll } from 'vitest';
 import { spawn } from 'node:child_process';
+import { spawnDemo, frameRows } from './spawn-demo.js';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
@@ -46,4 +47,31 @@ test('demo:editor runs standalone, exits 0, and prints the editor walkthrough', 
   expect(result.stdout).toContain('Undo ×2');
   expect(result.stdout).toContain('replacement(s), the PF-009 count');
   expect(result.stdout).toContain('Done — WordStar keymap');
+});
+
+/**
+ * Composition snapshot for the editor over its indicator strip.
+ *
+ * The demo prints its whole composed buffer after every step, so the running demo is the geometry
+ * oracle and no view tree is rebuilt here.
+ */
+describe('demo:editor composed frame', () => {
+  let stdout = '';
+
+  beforeAll(async () => {
+    const run = await spawnDemo('editor-demo', 30_000);
+    expect(run.code).toBe(0);
+    stdout = run.stdout;
+  });
+
+  test('the editor fills above a full-width indicator strip on the last row', () => {
+    const rows = frameRows(stdout, '1. Loaded — the Indicator shows 1:1');
+
+    expect(rows).toHaveLength(8);
+    expect(rows[0]).toBe('The quick brown fox jumps.                  '); // the editor from the very first row
+    expect(rows[1]).toBe('Second line.                                ');
+    // Were the strip laid out beside the editor instead of under it, it would be one cell wide and
+    // `1:1` would never reach the bottom row.
+    expect(rows[7]).toBe('══════ 1:1 ═════════════════════════════════');
+  });
 });

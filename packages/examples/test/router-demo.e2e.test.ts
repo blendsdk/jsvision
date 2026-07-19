@@ -7,8 +7,9 @@
  * kept-warm list whose scroll row is preserved (keepAlive). Mirrors the controls-demo / event-demo
  * e2e child-process spawn; heavier than the unit specs, so it lives outside the unit glob.
  */
-import { test, expect } from 'vitest';
+import { test, expect, describe, beforeAll } from 'vitest';
 import { spawn } from 'node:child_process';
+import { spawnDemo, frameRows } from './spawn-demo.js';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
@@ -47,4 +48,46 @@ test('demo:router runs standalone, exits 0, and prints the drill-down walkthroug
   expect(result.stdout).toContain('"name":"detail","params":{"index":3}'); // push updated location()
   expect(result.stdout).toContain('Esc Back to list'); // the detail screen swapped in its own status bar
   expect(result.stdout).toContain('PASS (3 → 3)'); // keepAlive preserved the list's scroll across back()
+});
+
+/**
+ * Composition snapshots for the two routed screens.
+ *
+ * The demo prints its whole composed buffer after every step, so the running demo is the geometry
+ * oracle and no screen is rebuilt here. Complete row strings are asserted rather than relationships
+ * between solved values, which stay true even when the values collapse to zero.
+ */
+describe('demo:router composed frames', () => {
+  let stdout = '';
+
+  beforeAll(async () => {
+    const run = await spawnDemo('router-demo', 30_000);
+    expect(run.code).toBe(0);
+    stdout = run.stdout;
+  });
+
+  test('the list screen is inset by one blank cell, with the list filling below the title', () => {
+    const rows = frameRows(stdout, 'Frame 1 — list screen (app base status bar)');
+
+    expect(rows).toHaveLength(16);
+    expect(rows[0]).toBe('                                              '); // the top inset
+    expect(rows[1]).toBe(' Repositories — ↑↓ to navigate, Enter to open '); // title, first content row
+    expect(rows[2]).toBe('  repo-01                                   ▲ '); // the list starts directly under it
+    expect(rows[13]).toBe('  repo-12                                   ▼ '); // and fills to the bottom inset
+    expect(rows[14]).toBe('                                              '); // the bottom inset
+    expect(rows[15]).toBe(' ↑↓/Enter navigate  Alt-X Quit                '); // the app's status line, outside the screen
+  });
+
+  test('the detail screen separates its three children by one blank row each', () => {
+    const rows = frameRows(stdout, 'Frame 3 — Enter → detail screen (its own status bar)');
+
+    expect(rows).toHaveLength(16);
+    expect(rows[0]).toBe('                                              '); // the top inset
+    expect(rows[1]).toBe(' Repository: repo-04                          ');
+    expect(rows[2]).toBe('                                              '); // the gap
+    expect(rows[3]).toBe(' Branch: main · 128 commits · MIT license     ');
+    expect(rows[4]).toBe('                                              '); // the gap
+    expect(rows[5]).toBe('                     Back                   ▄ '); // the button, 2 rows tall
+    expect(rows[6]).toBe('   ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀ ');
+  });
 });
