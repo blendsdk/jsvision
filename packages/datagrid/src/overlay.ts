@@ -122,6 +122,9 @@ export function mountCellOverlay(args: {
     if (args.clamp !== undefined && height <= args.clamp.height) {
       y = Math.max(0, Math.min(y, args.clamp.height - height));
     }
+    // Assigned wholesale rather than tagged: a caller's own layout on the mounted view is
+    // intentionally discarded — only the size it chose above survives, and the position is always
+    // the host-local cell, so an overlay can never be dragged off its cell by the view it hosts.
     view.layout = { position: 'absolute', rect: { x, y, width, height } };
     host.add(view);
     loop.focusView(view);

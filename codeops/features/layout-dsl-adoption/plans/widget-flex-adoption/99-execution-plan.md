@@ -2,8 +2,8 @@
 
 > **Implements**: layout-dsl-adoption/GH-109 + GH-116 · **GitHub**: [#109](https://github.com/blendsdk/jsvision/issues/109) + [#116](https://github.com/blendsdk/jsvision/issues/116)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 21/35 tasks (60%) — Phases 1-3 complete
-> **Last Updated**: 2026-07-19 (Phases 1-3 complete, 1-2 post-phase-reviewed; revised after preflight — [report](00-preflight-report.md))
+> **Progress**: 29/35 tasks (83%) — Phases 1-4 complete
+> **Last Updated**: 2026-07-19 (Phases 1-4 complete, 1-3 post-phase-reviewed; revised after preflight — [report](00-preflight-report.md))
 > **Branch**: `feat/widget-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify` (AR-6)
 > **Routing**: standard → Sonnet-eligible, except tasks 1.7 and Phase 3 (complex)
@@ -46,14 +46,14 @@ characterization witness carries the non-vacuity clause (exact counts + non-zero
 
 ## Phase 4 — #116 remaining modules (standard) — 03-02 Groups B/C/D
 
-- [ ] 4.1 Group B — `value-list-popup.ts` (5) + `grid-lifecycle.ts` (5), converting `:76` as `grow(col(...))` to keep `direction:'col'`
-- [ ] 4.2 Group B — `filter-popup.ts` (4, leaving `:272`) + `button-row.ts` (3, incl. `row(...)`)
-- [ ] 4.3 Verify — ST-W5 green, especially the lifecycle shells' child rects
-- [ ] 4.4 Group C — `grid.ts:508/511/1417` + `editing.ts:230` → `cover()` (a literal descriptor rewrite; host liveness is irrelevant)
-- [ ] 4.5 Verify — `editing.spec` / `cell-editor.spec` nested locators green and unedited
-- [ ] 4.6 Group D — **add** the explaining comment at `overlay.ts:125` and leave the assignment (AR-11)
-- [ ] 4.7 Verify — ST-W7 green; `filter-customization.spec` green and unedited
-- [ ] 4.8 Full verify; commit
+- [x] 4.1 Group B — `value-list-popup.ts` (5) + `grid-lifecycle.ts` (5), converting `:76` as `grow(col(...))` to keep `direction:'col'`
+- [x] 4.2 Group B — `filter-popup.ts` (4, leaving `:272`) + `button-row.ts` (3, incl. `row(...)`)
+- [x] 4.3 Verify — ST-W5 green, especially the lifecycle shells' child rects
+- [x] 4.4 Group C — `grid.ts:508/511/1417` + `editing.ts:230` → `cover()` (a literal descriptor rewrite; host liveness is irrelevant)
+- [x] 4.5 Verify — `editing.spec` / `cell-editor.spec` nested locators green and unedited
+- [x] 4.6 Group D — **add** the explaining comment at `overlay.ts:125` and leave the assignment (AR-11)
+- [x] 4.7 Verify — ST-W7 green; `filter-customization.spec` green and unedited
+- [x] 4.8 Full verify; commit
 
 ## Phase 5 — Hardening & close-out (standard)
 
