@@ -1,0 +1,67 @@
+# Execution Plan — canvas-flex-adoption
+
+> **Implements**: layout-dsl-adoption/GH-110 + GH-111 · **GitHub**: [#110](https://github.com/blendsdk/jsvision/issues/110) + [#111](https://github.com/blendsdk/jsvision/issues/111)
+> **CodeOps Skills Version**: 3.10.0
+> **Progress**: 0/31 tasks (0%)
+> **Last Updated**: 2026-07-19 (created)
+> **Branch**: `feat/canvas-flex-adoption` (cut from `feat/dsl-adoptation`)
+> **Verify**: `TUI_SKIP_PERF=1 yarn verify` (AR-11)
+> **Routing**: standard → Sonnet-eligible throughout (demos, fixtures and panels; no engine work)
+
+**Scope**: 32 conversions (25 examples + 7 theme-designer) across 9 files, plus 3 preserved sites.
+**13 of 35 sites carry a property beyond `size`** — the dominant risk, addressed by FR-3 and ST-C1…C9.
+
+## Phase 1 — Green-first witnesses (standard)
+
+Written against **unmodified** source; all pass immediately, which is the point. Every witness
+carries the non-vacuity clause (exact child count + at least one absolute rect) required by
+[07 §why](07-testing-strategy.md).
+
+- [ ] 1.1 `solveTree` helper — one copy in `packages/examples/test/`, one in `packages/theme-designer/test/` (AR-10)
+- [ ] 1.2 ST-C1/C2/C3 — `editor-demo` root; `event-demo` root incl. the **`padding:1` inset**; the body row's **2-cell gap**
+- [ ] 1.3 ST-C4/C5/C6 — `controls-demo` form (`padding`/`gap`); `router-demo` list screen and `DetailScreen`
+- [ ] 1.4 ST-C7/C8 — `chrome-bars-demo` body; `drill-down.story` list + detail screens
+- [ ] 1.5 ST-C9 — the two designer panels' vertical stacking **and** the 3-pane workspace x-offsets (the highest-value witness in the plan — 03-02 §ordering)
+- [ ] 1.6 Verify all nine green against unmodified source; commit as the pre-conversion baseline
+
+## Phase 2 — theme-designer (standard) — 03-02
+
+Panels first: `app.ts` may only drop its `direction:'col'` after the builders own it (03-02 §ordering).
+
+- [ ] 2.1 `roles-panel.ts` — tail → `col({ background:'dialog' }, fixed(title,1), grow(list))`; **rewrite the now-false comment** about the app setting the direction
+- [ ] 2.2 `preview-panel.ts` — tail → `col(fixed(title,1), grow(scroller))`
+- [ ] 2.3 Verify — ST-C9's panel legs green; the panels still stack vertically with the direction now owned by the builders
+- [ ] 2.4 `app.ts` — `workspace` → `row(fixed(rail.view,28), grow(preview), fixed(inspector,32))`; drop all three `direction:'col'` halves (inspector's is vestigial, AR-7)
+- [ ] 2.5 **Add** the explaining comment at `sizeWorkspace` and leave the assignment (AR-4)
+- [ ] 2.6 Verify — ST-C9 fully green; `walkthrough.e2e` + `inspector-panel.spec` green and unedited
+- [ ] 2.7 Full verify; commit
+
+## Phase 3 — example demos (standard) — 03-01
+
+- [ ] 3.1 `editor-demo/main.ts` — `col(grow(ed), fixed(ind,1))`
+- [ ] 3.2 `event-demo/main.ts` — the three-level root; fold the `for (const b of …)` loop into inline `grow()`; carry **`gap:2`** and **`padding:1`** on the builders
+- [ ] 3.3 `event-demo` — rename `printFrame`'s `for (const row of rows)` → `line` (AR-5), since this file now imports the `row` builder
+- [ ] 3.4 Verify — ST-C1/C2/C3 green; `editor-demo.e2e` + `event-demo.e2e` green and unedited
+- [ ] 3.5 `controls-demo/main.ts` — keep the data-driven loop, move the descriptor onto `col({ padding:1, gap:0, background:'window' })`
+- [ ] 3.6 `router-demo/main.ts` — the `list` closure → `col({ padding:1, gap:0, background:'window' }, …)`; `DetailScreen`'s 3 children tagged; **add** the explaining comment at `:59` and leave the assignment (AR-6); rename `printFrame`'s loop variable (AR-5)
+- [ ] 3.7 Verify — ST-C4/C5/C6 green; `controls-demo.e2e` + `router-demo.e2e` green and unedited
+- [ ] 3.8 `chrome-bars-demo/main.ts` — `win.add(grow(body))`
+- [ ] 3.9 `drill-down.story.ts` — the `list` closure + `DetailScreen`'s 3 children; **add** the explaining comment at `:29`; do **not** import the DSL's `at` (AR-8)
+- [ ] 3.10 Verify — ST-C7/C8 green; `kitchen-sink.smoke.spec` green and unedited (NFR-5)
+- [ ] 3.11 Full verify; commit
+
+## Phase 4 — Hardening & close-out (standard)
+
+- [ ] 4.1 Grep audit — `.layout =` across the 9 files returns **exactly** the 3-statement residue allowlist in 01-requirements (AC-8)
+- [ ] 4.2 `git diff --stat` on `**/test/**` — zero edits to any pre-existing test (AC-6); log any locator edit as a deviation
+- [ ] 4.3 `git diff --stat` — confirm no file under `packages/{core,ui,datagrid,files,forms,web}/src` was touched (AC-9, NFR-6)
+- [ ] 4.4 `yarn check:deps`; kitchen-sink smoke green
+- [ ] 4.5 **Manual read-through** — run `yarn designer` on a TTY and at least one `demo:*`; confirm the converted files read well as teaching material, which is the point of FR-6 (not automatable, not a gate)
+- [ ] 4.6 Reconcile the #110 and #111 issue bodies and the roadmap tracker rows with the executed scope — including that `view-demo`/`layout.story.ts` remain open under #110 (AR-2)
+- [ ] 4.7 `yarn lint:fix`, full verify, open the PR (base `feat/dsl-adoptation`)
+
+**Verify**: `TUI_SKIP_PERF=1 yarn verify`
+
+## Deviations
+
+_None yet — logged here as execution proceeds (NFR-1 requires each locator edit to be recorded)._
