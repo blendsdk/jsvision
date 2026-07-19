@@ -2,8 +2,8 @@
 
 > **Implements**: layout-dsl-adoption/GH-109 + GH-116 · **GitHub**: [#109](https://github.com/blendsdk/jsvision/issues/109) + [#116](https://github.com/blendsdk/jsvision/issues/116)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 29/35 tasks (83%) — Phases 1-4 complete
-> **Last Updated**: 2026-07-19 (Phases 1-4 complete, 1-3 post-phase-reviewed; revised after preflight — [report](00-preflight-report.md))
+> **Progress**: 35/35 tasks (100%) — complete
+> **Last Updated**: 2026-07-19 (complete — all 5 phases executed and post-phase-reviewed; revised after preflight — [report](00-preflight-report.md))
 > **Branch**: `feat/widget-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify` (AR-6)
 > **Routing**: standard → Sonnet-eligible, except tasks 1.7 and Phase 3 (complex)
@@ -57,12 +57,12 @@ characterization witness carries the non-vacuity clause (exact counts + non-zero
 
 ## Phase 5 — Hardening & close-out (standard)
 
-- [ ] 5.1 Grep audit — `.layout =` across the in-scope files returns **exactly** the 22-site residue allowlist in 01-requirements (AC-8)
-- [ ] 5.2 `git diff --stat` on `**/test/**` — zero geometry/golden edits; log any locator edit as a deviation (AC-3, NFR-2)
-- [ ] 5.3 Kitchen-sink smoke green; existing stories unchanged (NFR-5) — no new story owed, the components are not new
-- [ ] 5.4 `yarn check:deps` · `yarn bench` under the 16 ms ceiling · security oracles green and untouched (AC-9, NFR-6)
-- [ ] 5.5 Reconcile the #109 and #116 issue bodies and the roadmap tracker rows with the executed scope, before closing either issue
-- [ ] 5.6 `yarn lint:fix`, full verify, open the PR (base `feat/dsl-adoptation`)
+- [x] 5.1 Grep audit — `.layout =` across the in-scope files returns **exactly** the 22-site residue allowlist in 01-requirements (AC-8)
+- [x] 5.2 `git diff --stat` on `**/test/**` — zero geometry/golden edits; log any locator edit as a deviation (AC-3, NFR-2)
+- [x] 5.3 Kitchen-sink smoke green; existing stories unchanged (NFR-5) — no new story owed, the components are not new
+- [x] 5.4 `yarn check:deps` · `yarn bench` under the 16 ms ceiling · security oracles green and untouched (AC-9, NFR-6)
+- [x] 5.5 Reconcile the #109 and #116 issue bodies and the roadmap tracker rows with the executed scope, before closing either issue
+- [x] 5.6 `yarn lint:fix`, full verify, open the PR (base `feat/dsl-adoptation`)
 
 **Verify**: `TUI_SKIP_PERF=1 yarn verify`
 
@@ -78,6 +78,12 @@ against itself. The Phase-2 review found `col(opts.menuBar, …)` put a caller-s
 builder's overloaded first slot, where a cross-realm `instanceof` miss would silently reinterpret it
 as a props object; now `col({}, …)`. `quitState` was restored to its original position, which the
 component spec had said to leave alone.
+
+**Close-out results.** AC-8: the residue grep returns exactly the 22 allowlisted statements.
+AC-3/NFR-2: `git diff --stat` on `**/test/**` is 5 added files, 738 insertions, **zero** modifications —
+no locator was edited, so NFR-2's allowance was never invoked. AC-4: both full-screen goldens
+zero-diff. NFR-5: kitchen-sink smoke 71/71, no story touched. NFR-6: both security oracles green and
+untouched. `yarn check:deps` green; `yarn bench` compose+diff median 3.03 ms against the 16 ms ceiling.
 
 **Known-flake note (not a deviation).** One `TUI_SKIP_PERF=1 yarn verify` run failed in
 `@jsvision/ui#test` under turbo's parallel load; the same suite passed standalone (311 files / 1784
