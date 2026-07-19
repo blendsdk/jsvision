@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/RD-01 (Tier 2, files) · **GitHub**: [#120](https://github.com/blendsdk/jsvision/issues/120)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 16/18 tasks (89%)
+> **Progress**: 20/22 tasks (91%)
 > **Last Updated**: 2026-07-19
 > **Branch**: `feat/files-flex-elimination` (cut from `feat/dsl-adoptation`; PR retargets to `develop` once #123 lands)
 > **Verify**: `yarn verify`
@@ -49,10 +49,12 @@ is intended (AR-10).
 
 ## Phase 5 — `ChDirDialog` (03-02)
 
-- [ ] 5.1 ST-FE05 — re-baseline `chdir-dialog.spec.test.ts` composition block → **red**
-- [ ] 5.2 Implement the flex tree → green
-- [ ] 5.3 Confirm ST-FE02 green, `chdir-dialog.impl.test.ts` + `history-files.spec` **unedited**
-- [ ] 5.4 Verify
+> **Phase ref**: 5f076910
+
+- [x] 5.1 ST-FE05 — re-baseline `chdir-dialog.spec.test.ts` composition block → **red** ✅ (completed: 2026-07-19 20:35)
+- [x] 5.2 Implement the flex tree → green ✅ (completed: 2026-07-19 20:35)
+- [x] 5.3 Confirm ST-FE02 green; `chdir-dialog.impl.test.ts` unedited, `history-files.spec` values unchanged (D-4) ✅ (completed: 2026-07-19 20:35)
+- [x] 5.4 Verify ✅ (completed: 2026-07-19 20:35)
 
 ## Phase 6 — Machinery deletion (03-04)
 
