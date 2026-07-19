@@ -57,16 +57,24 @@ const BUTTON_BAND_HEIGHT = 2;
 /** Cells between adjacent buttons in a band. */
 const BUTTON_GAP = 2;
 /**
- * Body inset within the dialog's interior: a blank row under the title and a two-column side gutter,
- * so text never touches the border. No bottom inset — the button band sits on the last interior row.
+ * Body inset within a dialog's interior: a blank row under the title and a two-column side gutter, so
+ * text never touches the border. No bottom inset — the button band sits on the last interior row.
+ *
+ * Shared with the editor's dialog builders so every modal in the SDK keeps the same inner margins;
+ * intentionally not re-exported through the package barrel (an internal convention, not public API).
  */
-const BODY_PADDING = { top: 1, right: 2, bottom: 0, left: 2 } as const;
+export const DIALOG_BODY_PADDING = { top: 1, right: 2, bottom: 0, left: 2 } as const;
 
 /**
- * A centered, bottom-pinned band of equal-width buttons. Sized as a fixed two-row block so the body
- * above it absorbs whatever height is left over, which keeps the band on the bottom row at any size.
+ * A centered band of equal-width buttons, sized as a fixed two-row block. Give it the last slot of a
+ * column whose earlier children absorb the leftover height, and it lands on the dialog's bottom row.
+ *
+ * Shared with the editor's dialog builders; intentionally not re-exported through the package barrel.
+ *
+ * @param buttons The buttons to lay out, left to right in activation order.
+ * @returns A sized row ready to drop into a dialog body column.
  */
-function buttonBand(...buttons: Button[]): View {
+export function buttonBand(...buttons: Button[]): View {
   return fixed(
     row({ justify: 'center', gap: BUTTON_GAP }, ...buttons.map((b) => fixed(b, BUTTON_WIDTH))),
     BUTTON_BAND_HEIGHT,
@@ -117,7 +125,7 @@ export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): P
   dlg.add(
     cover(
       col(
-        { padding: BODY_PADDING },
+        { padding: DIALOG_BODY_PADDING },
         grow(new Text(o.text)),
         hasCancel ? buttonBand(okButton(), cancelButton()) : buttonBand(okButton()),
       ),
@@ -140,7 +148,7 @@ export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): P
 export async function confirm(host: ModalDialogHost, text: string): Promise<boolean> {
   const width = Math.min(60, Math.max(40, text.length + 6));
   const dlg = new Dialog({ title: 'Confirm', width, height: 9, centered: true });
-  dlg.add(cover(col({ padding: BODY_PADDING }, grow(new Text(text)), buttonBand(yesButton(), noButton()))));
+  dlg.add(cover(col({ padding: DIALOG_BODY_PADDING }, grow(new Text(text)), buttonBand(yesButton(), noButton()))));
 
   const result = await runDialog(host, dlg);
   return result === 'yes';
@@ -172,7 +180,7 @@ export async function inputBox(host: ModalDialogHost, o: InputBoxOptions): Promi
   dlg.add(
     cover(
       col(
-        { padding: BODY_PADDING },
+        { padding: DIALOG_BODY_PADDING },
         fixed(new Label(o.label, input), 1),
         fixed(input, 1),
         spacer(),

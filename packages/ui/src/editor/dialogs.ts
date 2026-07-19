@@ -8,13 +8,13 @@
  * editor's `editorDialog` option and it drives them for you.
  */
 import { signal } from '../reactive/index.js';
-import type { View, Point } from '../view/index.js';
+import type { Point } from '../view/index.js';
+import { col, row, grow, fixed, cover, spacer } from '../view/index.js';
 import { Dialog, okButton, cancelButton, yesButton, noButton } from '../dialog/index.js';
-import { runDialog, messageBox } from '../dialog/message-box.js';
+import { runDialog, messageBox, buttonBand, DIALOG_BODY_PADDING } from '../dialog/message-box.js';
 import type { ModalDialogHost } from '../dialog/message-box.js';
 import { Input, CheckGroup, Label, Text } from '../controls/index.js';
 import { History } from '../dropdown/index.js';
-import type { Rect } from '../layout/index.js';
 import type {
   EditorDialogHandler,
   EditorDialogRequest,
@@ -29,15 +29,16 @@ import type {
  */
 export type EditorDialogHost = ModalDialogHost;
 
-/** Build a rect from left/top/right/bottom edges (right and bottom are exclusive). */
-function tv(a: number, b: number, c: number, d: number): Rect {
-  return { x: a, y: b, width: c - a, height: d - b };
-}
+/** Width of the history drop-down button that sits beside a field. */
+const HISTORY_WIDTH = 3;
 
-/** Place `view` at an absolute rect inside a dialog with no padding. */
-function at<T extends View>(view: T, rect: Rect): T {
-  view.layout = { ...view.layout, position: 'absolute', rect };
-  return view;
+/**
+ * One entry row: the field takes whatever width the history drop-down beside it leaves. Both are given
+ * explicit sizes because neither reports a natural one — left to size themselves they would collapse to
+ * nothing and be clipped away.
+ */
+function fieldRow(field: Input): ReturnType<typeof row> {
+  return row(grow(field), fixed(new History({ link: field }), HISTORY_WIDTH));
 }
 
 /**
@@ -55,17 +56,23 @@ function at<T extends View>(view: T, rect: Rect): T {
  */
 export async function findDialog(host: EditorDialogHost, initial?: FindRec): Promise<FindRec | null> {
   const dlg = new Dialog({ title: 'Find', width: 38, height: 12, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 }; // children are placed at absolute rects, no auto-inset
   const find = signal(initial?.find ?? '');
   const flags = signal([initial?.options.caseSensitive ?? false, initial?.options.wholeWords ?? false]);
 
-  const input = at(new Input({ value: find, maxLength: 80 }), tv(3, 3, 32, 4));
-  dlg.add(input);
-  dlg.add(at(new Label('~T~ext to find', input), tv(2, 2, 15, 3)));
-  dlg.add(at(new History({ link: input }), tv(32, 3, 35, 4)));
-  dlg.add(at(new CheckGroup({ labels: ['~C~ase sensitive', '~W~hole words only'], value: flags }), tv(3, 5, 35, 7)));
-  dlg.add(at(okButton(), tv(14, 9, 24, 11)));
-  dlg.add(at(cancelButton(), tv(26, 9, 36, 11)));
+  const input = new Input({ value: find, maxLength: 80 });
+  // The option cluster absorbs the leftover height, which pins the button band to the bottom row.
+  dlg.add(
+    cover(
+      col(
+        { padding: DIALOG_BODY_PADDING },
+        fixed(new Label('~T~ext to find', input), 1),
+        fixed(fieldRow(input), 1),
+        spacer({ fixed: 1 }),
+        grow(new CheckGroup({ labels: ['~C~ase sensitive', '~W~hole words only'], value: flags })),
+        buttonBand(okButton(), cancelButton()),
+      ),
+    ),
+  );
 
   const result = await runDialog(host, dlg);
   if (result !== 'ok') return null;
@@ -94,7 +101,6 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
  */
 export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec): Promise<ReplaceRec | null> {
   const dlg = new Dialog({ title: 'Replace', width: 40, height: 16, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 }; // children are placed at absolute rects, no auto-inset
   const find = signal(initial?.find ?? '');
   const replace = signal(initial?.replace ?? '');
   const flags = signal([
@@ -104,25 +110,29 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
     initial?.replaceAll ?? false,
   ]);
 
-  const findInput = at(new Input({ value: find, maxLength: 80 }), tv(3, 3, 34, 4));
-  dlg.add(findInput);
-  dlg.add(at(new Label('~T~ext to find', findInput), tv(2, 2, 15, 3)));
-  dlg.add(at(new History({ link: findInput }), tv(34, 3, 37, 4)));
-  const newInput = at(new Input({ value: replace, maxLength: 80 }), tv(3, 6, 34, 7));
-  dlg.add(newInput);
-  dlg.add(at(new Label('~N~ew text', newInput), tv(2, 5, 12, 6)));
-  dlg.add(at(new History({ link: newInput }), tv(34, 6, 37, 7)));
+  const findInput = new Input({ value: find, maxLength: 80 });
+  const newInput = new Input({ value: replace, maxLength: 80 });
+  // The flag cluster absorbs the leftover height, which pins the button band to the bottom row.
   dlg.add(
-    at(
-      new CheckGroup({
-        labels: ['~C~ase sensitive', '~W~hole words only', '~P~rompt on replace', '~R~eplace all'],
-        value: flags,
-      }),
-      tv(3, 8, 37, 12),
+    cover(
+      col(
+        { padding: DIALOG_BODY_PADDING },
+        fixed(new Label('~T~ext to find', findInput), 1),
+        fixed(fieldRow(findInput), 1),
+        spacer({ fixed: 1 }),
+        fixed(new Label('~N~ew text', newInput), 1),
+        fixed(fieldRow(newInput), 1),
+        spacer({ fixed: 1 }),
+        grow(
+          new CheckGroup({
+            labels: ['~C~ase sensitive', '~W~hole words only', '~P~rompt on replace', '~R~eplace all'],
+            value: flags,
+          }),
+        ),
+        buttonBand(okButton(), cancelButton()),
+      ),
     ),
   );
-  dlg.add(at(okButton(), tv(17, 13, 27, 15)));
-  dlg.add(at(cancelButton(), tv(28, 13, 38, 15)));
 
   const result = await runDialog(host, dlg);
   if (result !== 'ok') return null;
@@ -146,11 +156,15 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
 export async function confirmBox(host: EditorDialogHost, message: string): Promise<'yes' | 'no' | 'cancel'> {
   const width = Math.min(60, Math.max(40, message.length + 6));
   const dlg = new Dialog({ width, height: 9, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 };
-  dlg.add(at(new Text(message), { x: 3, y: 2, width: width - 6, height: 2 }));
-  dlg.add(at(yesButton(), { x: 3, y: 6, width: 10, height: 2 }));
-  dlg.add(at(noButton(), { x: 15, y: 6, width: 10, height: 2 }));
-  dlg.add(at(cancelButton(), { x: 27, y: 6, width: 10, height: 2 }));
+  dlg.add(
+    cover(
+      col(
+        { padding: DIALOG_BODY_PADDING },
+        grow(new Text(message)),
+        buttonBand(yesButton(), noButton(), cancelButton()),
+      ),
+    ),
+  );
   const result = await runDialog(host, dlg);
   return result === 'yes' || result === 'no' ? result : 'cancel';
 }
@@ -187,11 +201,15 @@ export async function replacePrompt(host: EditorDialogHost, cursor: Point): Prom
   let y = 1;
   if (cursor.y <= desk.y + 8 + 1) y = desk.height - 7 - 2; // drop to the bottom to avoid the caret
   const dlg = new Dialog({ rect: { x, y, width: 40, height: 7 } }); // explicit rect — never centered
-  dlg.layout = { ...dlg.layout, padding: 0 };
-  dlg.add(at(new Text('Replace this occurence?'), { x: 3, y: 2, width: 34, height: 1 }));
-  dlg.add(at(yesButton(), { x: 3, y: 4, width: 10, height: 2 }));
-  dlg.add(at(noButton(), { x: 15, y: 4, width: 10, height: 2 }));
-  dlg.add(at(cancelButton(), { x: 27, y: 4, width: 10, height: 2 }));
+  dlg.add(
+    cover(
+      col(
+        { padding: DIALOG_BODY_PADDING },
+        grow(new Text('Replace this occurence?')),
+        buttonBand(yesButton(), noButton(), cancelButton()),
+      ),
+    ),
+  );
   const result = await runDialog(host, dlg);
   return result === 'yes' || result === 'no' ? result : 'cancel';
 }

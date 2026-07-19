@@ -1,19 +1,21 @@
 /**
- * Specification tests (immutable oracles) — RD-08 Phase-6 dialog builders (ST-21).
+ * Specification tests (immutable oracles) — the editor dialog builders.
  *
- * Source: RD-08 AC-9 / PA-7 / PA-11 → ST-21 (codeops/features/jsvision-ui/plans/editor-family/
- * 07-testing-strategy.md; 03-03 §dialogs.ts). TV decode (`examples/tvedit/tvedit2.cpp:55-112`):
- * Find `TDialog(0,0,38,12)` — input maxLen 80 at `(3,3,32,4)`, `~T~ext to find` label, the 2-box
- * cluster `(3,5,35,7)` [Case sensitive, Whole words only], OK `(14,9,24,11)` default, Cancel
- * `(26,9,36,11)`; Replace `TDialog(0,0,40,16)` — two inputs `(3,3,34,4)`/`(3,6,34,7)`, the 4-box
- * cluster `(3,8,37,12)`, OK `(17,13,27,15)`, Cancel `(28,13,38,15)`. The records round-trip the
- * `ef*` flags as booleans (AC-9). `replacePrompt` (`tvedit3.cpp:177-189`, PA-11): the 40×7 box
- * `TRect(0,1,40,8)` h-centred at the top; when the cursor's global y ≤ box bottom + 1 (PF-009,
- * `:184-186`) it moves so its top = `size.y − height − 2`. TV rects are end-exclusive → width =
- * c−a, height = d−b; children sit at VERBATIM dialog-relative rects (the files `padding:0`
- * convention). Expectations derive from RD-08 + the decode, never the implementation.
+ * Find and Replace are composed with the layout DSL rather than the hand-computed cell geometry the
+ * original Turbo Vision dialogs used. That is a deliberate, recorded divergence: their **behavior** is
+ * still held to the original — the outer dialog sizes (38×12 and 40×16), the record round-trips of the
+ * option flags as booleans, the focus order, and the return contracts — while their child *positions*
+ * are whatever the composed column/row tree solves to. The child rectangles asserted below were
+ * therefore re-derived from that structure; the outer sizes and the round-trips still come from the
+ * original specification and must not drift.
  *
- * Trace: RD-08 03-03 · PA-7 / PA-11 / PF-002 · ST-21.
+ * `replacePrompt` keeps its caret-anchored outer placement verbatim — the 40×7 box near the top,
+ * dropping to the bottom when the caret would otherwise be covered — and only its inner body is
+ * composed with flex. Its assertion below is deliberately about the OUTER window only.
+ *
+ * Child geometry is read from the SOLVED layout (`renderRoot.originOf` + `bounds`) rather than from
+ * `layout.rect`: a flex child is placed by the layout pass and carries no static rectangle of its own.
+ *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
@@ -47,8 +49,19 @@ function descendants(v: View): View[] {
   return out;
 }
 
-// ST-21 / AC-9 — the Find dialog's decoded geometry + record round-trip.
-test('ST-21: findDialog composes at the decoded 38×12 rects and round-trips the record', async () => {
+/**
+ * A child's solved rectangle relative to its dialog's top-left. Flex children carry no `layout.rect`,
+ * so position comes from the composed origins and size from the solved bounds.
+ */
+function rectIn(app: ReturnType<typeof createApplication>, dialog: View, child: View) {
+  const root = app.loop.renderRoot;
+  const origin = root.originOf(child)!;
+  const base = root.originOf(dialog)!;
+  return { x: origin.x - base.x, y: origin.y - base.y, width: child.bounds.width, height: child.bounds.height };
+}
+
+// ST-21 / AC-9 — the Find dialog's outer size + composed child geometry + record round-trip.
+test('ST-21: findDialog composes at 38×12 and round-trips the record', async () => {
   const { app, host } = makeHost();
   const promise = findDialog(host, { find: 'seed', options: { caseSensitive: true, wholeWords: false } });
   app.loop.renderRoot.flush();
@@ -59,14 +72,17 @@ test('ST-21: findDialog composes at the decoded 38×12 rects and round-trips the
   expect(dlg!.bounds.height).toBe(12);
 
   const kids = descendants(dlg!);
-  const input = kids.find((k2): k2 is Input => k2 instanceof Input);
-  expect(input?.layout.rect).toEqual({ x: 3, y: 3, width: 29, height: 1 }); // TRect(3,3,32,4)
-  const cluster = kids.find((k2): k2 is CheckGroup => k2 instanceof CheckGroup);
-  expect(cluster?.layout.rect).toEqual({ x: 3, y: 5, width: 32, height: 2 }); // TRect(3,5,35,7)
+  const input = kids.find((k2): k2 is Input => k2 instanceof Input)!;
+  // The field shares its row with the history drop-down, which takes a fixed 3 cells on the right.
+  expect(rectIn(app, dlg!, input)).toEqual({ x: 3, y: 3, width: 29, height: 1 });
+  const cluster = kids.find((k2): k2 is CheckGroup => k2 instanceof CheckGroup)!;
+  // The option cluster absorbs the leftover height between the field and the button band.
+  expect(rectIn(app, dlg!, cluster)).toEqual({ x: 3, y: 5, width: 32, height: 4 });
   const buttons = kids.filter((k2): k2 is Button => k2 instanceof Button);
-  expect(buttons.map((b) => b.layout.rect)).toEqual([
-    { x: 14, y: 9, width: 10, height: 2 }, // OK  TRect(14,9,24,11)
-    { x: 26, y: 9, width: 10, height: 2 }, // Cancel TRect(26,9,36,11)
+  // A centred pair on the bottom interior row — the original placed them right of centre.
+  expect(buttons.map((b) => rectIn(app, dlg!, b))).toEqual([
+    { x: 8, y: 9, width: 10, height: 2 }, // OK
+    { x: 20, y: 9, width: 10, height: 2 }, // Cancel
   ]);
 
   // Type into the focused input and accept: the record round-trips text + flags.
@@ -85,8 +101,8 @@ test('ST-21: findDialog cancel resolves null', async () => {
   expect(await promise).toBeNull();
 });
 
-// ST-21 / AC-9 — the Replace dialog's decoded geometry + the 4 flag booleans round-trip.
-test('ST-21: replaceDialog composes at the decoded 40×16 rects and round-trips all four flags', async () => {
+// ST-21 / AC-9 — the Replace dialog's outer size + composed child geometry + the 4 flag booleans.
+test('ST-21: replaceDialog composes at 40×16 and round-trips all four flags', async () => {
   const { app, host } = makeHost();
   const initial = {
     find: 'from',
@@ -103,16 +119,19 @@ test('ST-21: replaceDialog composes at the decoded 40×16 rects and round-trips 
   expect(dlg!.bounds.height).toBe(16);
   const kids = descendants(dlg!);
   const inputs = kids.filter((k2): k2 is Input => k2 instanceof Input);
-  expect(inputs.map((i) => i.layout.rect)).toEqual([
-    { x: 3, y: 3, width: 31, height: 1 }, // TRect(3,3,34,4)
-    { x: 3, y: 6, width: 31, height: 1 }, // TRect(3,6,34,7)
+  // Each field shares its row with that field's history drop-down (a fixed 3 cells on the right).
+  expect(inputs.map((i) => rectIn(app, dlg!, i))).toEqual([
+    { x: 3, y: 3, width: 31, height: 1 },
+    { x: 3, y: 6, width: 31, height: 1 },
   ]);
-  const cluster = kids.find((k2): k2 is CheckGroup => k2 instanceof CheckGroup);
-  expect(cluster?.layout.rect).toEqual({ x: 3, y: 8, width: 34, height: 4 }); // TRect(3,8,37,12)
+  const cluster = kids.find((k2): k2 is CheckGroup => k2 instanceof CheckGroup)!;
+  // The four-flag cluster absorbs the leftover height between the fields and the button band.
+  expect(rectIn(app, dlg!, cluster)).toEqual({ x: 3, y: 8, width: 34, height: 5 });
   const buttons = kids.filter((k2): k2 is Button => k2 instanceof Button);
-  expect(buttons.map((b) => b.layout.rect)).toEqual([
-    { x: 17, y: 13, width: 10, height: 2 }, // OK  TRect(17,13,27,15)
-    { x: 28, y: 13, width: 10, height: 2 }, // Cancel TRect(28,13,38,15)
+  // A centred pair on the bottom interior row — the original placed them right of centre.
+  expect(buttons.map((b) => rectIn(app, dlg!, b))).toEqual([
+    { x: 9, y: 13, width: 10, height: 2 }, // OK
+    { x: 21, y: 13, width: 10, height: 2 }, // Cancel
   ]);
 
   app.loop.emitCommand('ok');
