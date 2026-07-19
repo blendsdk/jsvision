@@ -21,6 +21,7 @@
  * active page's content as usual.
  */
 import { Group, View } from '../view/index.js';
+import { col, grow, fixed } from '../view/dsl/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
 import { For } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
@@ -241,8 +242,6 @@ export class TabView extends Group {
       onClose: (i) => this.closeTab(i),
       onCycle: (dir) => (dir < 0 ? this.prev() : this.next()),
     });
-    this.strip.layout = { size: { kind: 'fixed', cells: 1 } };
-
     this.body = new TabBody();
     // Build every page up-front, keyed by the content Group's identity so a reorder/close reuses the
     // live page rather than tearing it down and losing its state.
@@ -251,6 +250,8 @@ export class TabView extends Group {
         () => this.tabs(),
         (t) => t.content,
         (t) => {
+          // Assigned wholesale rather than tagged: a caller's own layout on a tab's content view is
+          // intentionally discarded, so the tab body governs sizing no matter what the caller set.
           t.content.layout = { size: { kind: 'fr', weight: 1 } };
           return t.content;
         },
@@ -260,10 +261,7 @@ export class TabView extends Group {
     // Inner column container: keeps the strip stacked above the body regardless of how the parent
     // places the TabView (an absolute rect or an `fr` flow slot both leave the TabView's own `layout`
     // free, so placing the view never clobbers the internal stacking direction).
-    const inner = new Group();
-    inner.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
-    inner.add(this.strip);
-    inner.add(this.body);
+    const inner = grow(col(fixed(this.strip, 1), this.body));
     this.add(inner);
 
     // Self-correcting clamp + one-page-visible flip + onChange. Bound on mount (when the reactive
