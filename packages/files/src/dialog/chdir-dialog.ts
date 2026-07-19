@@ -116,6 +116,11 @@ export class ChDirDialog extends Dialog {
     // Every child below carries an explicit `fixed`/`grow` size. That is not decoration: only `Text`
     // and `Button` know how to measure themselves, so any other widget left to size automatically
     // would collapse to nothing and vanish.
+    //
+    // A consequence worth knowing: the captions stretch to the full content column rather than
+    // hugging their text, so the blank space beside a caption is part of its click zone and focuses
+    // the control it labels. That is a more forgiving target, and it paints identically as long as
+    // the label and dialog backgrounds match — which every shipped theme keeps in step.
     const pathRow = row(grow(this.pathInput), fixed(this.history, 3));
     const buttonCol = col({ gap: 1 }, ...this.buttons);
 
@@ -126,7 +131,7 @@ export class ChDirDialog extends Dialog {
           { padding: { top: 1, right: 2, bottom: 0, left: 2 } },
           fixed(nameLabel, 1),
           fixed(pathRow, 1),
-          fixed(spacer({ fixed: 1 }), 1),
+          spacer({ fixed: 1 }),
           fixed(treeLabel, 1),
           // The tree takes whatever height is left, so it grows on resize.
           grow(row({ gap: 1 }, grow(this.dirList), fixed(buttonCol, 10))),
