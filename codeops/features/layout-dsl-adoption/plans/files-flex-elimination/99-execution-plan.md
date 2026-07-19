@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/RD-01 (Tier 2, files) · **GitHub**: [#120](https://github.com/blendsdk/jsvision/issues/120)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 24/27 tasks (89%)
+> **Progress**: 25/27 tasks (93%)
 > **Last Updated**: 2026-07-19
 > **Branch**: `feat/files-flex-elimination` (cut from `feat/dsl-adoptation`; PR retargets to `develop` once #123 lands)
 > **Verify**: `yarn verify`
@@ -70,7 +70,9 @@ Ordered last by construction — deleting earlier leaves both constructors untyp
 
 ## Phase 7 — Close out
 
-- [ ] 7.1 Kitchen-sink smoke for both stories (AC-8); `yarn bench` sanity (AC-11)
+> **Phase ref**: a2fe7b87
+
+- [x] 7.1 Kitchen-sink smoke for both stories (AC-8); `yarn bench` sanity (AC-11) ✅ (completed: 2026-07-19 21:05) — 284 examples tests green, both stories registered; bench compose+diff median 3.641 ms, far under the 16 ms ceiling
 - [ ] 7.2 `yarn lint:fix`, commit anything it changes (repo prime directive)
 - [ ] 7.3 Full `yarn verify` + `check:deps`; open the PR citing RD-01 for every re-derived oracle
 
