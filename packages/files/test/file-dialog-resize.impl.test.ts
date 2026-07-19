@@ -1,13 +1,21 @@
 /**
- * Implementation tests — end-to-end drag-resize of a `FileDialog` through the real WM gesture
- * (`createApplication` → `desktop.addWindow` → SE-grip down + drag), the GATE-2 AFTER-diff for the
- * `growMode` reflow: after the drag, every child's laid-out `bounds` matches the `tfildlg.cpp`
- * decode, and every child still sits strictly inside the grown frame. `.js` per NodeNext.
+ * Implementation tests — end-to-end drag-resize of a `FileDialog` through the real window-manager
+ * gesture (`createApplication` → `desktop.addWindow` → grab the SE grip and drag).
+ *
+ * The specification oracle beside this file states the *guarantees* a resize must keep (nothing
+ * bleeds, the listing absorbs the space, the floor holds). This file is the complement: it pins the
+ * concrete cells the layout actually resolves to at one grown size, so an accidental change to the
+ * body's structure — a lost padding, a `grow` that became `fixed` — shows up as a specific,
+ * readable diff rather than as a vague property still technically holding.
+ *
+ * Positions are read via the composed origins, because `View.bounds` is parent-relative and these
+ * children sit inside layout groups. `.js` per NodeNext.
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import type { MouseEvent } from '@jsvision/core';
 import { createApplication, signal } from '@jsvision/ui';
+import type { EventLoop, View } from '@jsvision/ui';
 import { FileDialog } from '../src/dialog/file-dialog.js';
 import { createMemoryFs, dir, file } from './helpers/memory-fs.js';
 
@@ -21,7 +29,15 @@ const mouse = (kind: MouseEvent['kind'], x: number, y: number): MouseEvent => ({
 });
 const fs = () => createMemoryFs(dir({ home: dir({ user: dir({ 'a.txt': file({ size: 1 }), sub: dir() }) }) }));
 
-test('drag-resizing a FileDialog reflows every child per the growMode decode (GATE-2 end-to-end)', () => {
+/** A child's solved rectangle relative to the dialog's top-left. */
+function rectIn(loop: EventLoop, dialog: View, child: View) {
+  const root = loop.renderRoot;
+  const origin = root.originOf(child)!;
+  const base = root.originOf(dialog)!;
+  return { x: origin.x - base.x, y: origin.y - base.y, width: child.bounds.width, height: child.bounds.height };
+}
+
+test('impl: drag-resizing a FileDialog re-solves every child from the new frame', () => {
   const app = createApplication({ caps, viewport: { width: 80, height: 40 } });
   const dlg = new FileDialog({ fs: fs(), directory: signal('/home/user') });
   void app.desktop.addWindow(dlg);
@@ -37,23 +53,15 @@ test('drag-resizing a FileDialog reflows every child per the growMode decode (GA
   app.loop.renderRoot.flush();
 
   expect(dlg.bounds).toMatchObject({ x: 15, y: 10, width: 61, height: 27 });
-  // Children reflowed to the grown, growMode-computed rects (bounds are dialog-relative, padding 0).
-  expect(dlg.fileInput.bounds).toMatchObject({ x: 3, y: 3, width: 40, height: 1 });
-  expect(dlg.history.bounds).toMatchObject({ x: 43, y: 3, width: 3, height: 1 });
-  expect(dlg.fileList.bounds).toMatchObject({ x: 3, y: 6, width: 43, height: 16 });
-  expect(dlg.listBar.bounds).toMatchObject({ x: 3, y: 22, width: 43, height: 1 });
-  expect(dlg.fileInfoPane.bounds).toMatchObject({ x: 1, y: 24, width: 59, height: 2 });
-  expect(dlg.buttons[0].bounds).toMatchObject({ x: 47, y: 3, width: 11, height: 2 });
 
-  // Every child stays strictly inside the grown 61×27 frame (no bleed past the border ring).
-  const W = 61;
-  const H = 27;
-  const children = [dlg.fileInput, dlg.history, dlg.fileList, dlg.listBar, dlg.fileInfoPane, ...dlg.buttons];
-  for (const c of children) {
-    const b = c.bounds;
-    expect(b.x, `${c.constructor.name}.x`).toBeGreaterThanOrEqual(1);
-    expect(b.y, `${c.constructor.name}.y`).toBeGreaterThanOrEqual(1);
-    expect(b.x + b.width, `${c.constructor.name} right`).toBeLessThanOrEqual(W - 1);
-    expect(b.y + b.height, `${c.constructor.name} bottom`).toBeLessThanOrEqual(H - 1);
-  }
+  // The filename field takes the extra width and the history icon rides its right edge.
+  expect(rectIn(app.loop, dlg, dlg.fileInput)).toMatchObject({ x: 3, y: 3, width: 40, height: 1 });
+  expect(rectIn(app.loop, dlg, dlg.history)).toMatchObject({ x: 43, y: 3, width: 3, height: 1 });
+  // The listing takes both the extra width and the extra height; its bar stays directly beneath.
+  expect(rectIn(app.loop, dlg, dlg.fileList)).toMatchObject({ x: 3, y: 6, width: 43, height: 17 });
+  expect(rectIn(app.loop, dlg, dlg.listBar)).toMatchObject({ x: 3, y: 23, width: 43, height: 1 });
+  // The info pane stays pinned to the full frame interior, flush above the bottom border.
+  expect(rectIn(app.loop, dlg, dlg.fileInfoPane)).toMatchObject({ x: 1, y: 24, width: 59, height: 2 });
+  // The button strip stays pinned to the right edge at its fixed width.
+  expect(rectIn(app.loop, dlg, dlg.buttons[0]!)).toMatchObject({ x: 47, y: 3, width: 11, height: 2 });
 });

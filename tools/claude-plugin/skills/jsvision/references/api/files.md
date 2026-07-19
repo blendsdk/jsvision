@@ -50,7 +50,6 @@ dirList: DirList
 buttons: Button[]
 buttonLabels: string[]
 result(): string | null
-onResized(): void
 chdir(): void
 revert(): void
 valid(command: string): boolean
@@ -180,7 +179,6 @@ fileInfoPane: FileInfoPane
 listBar: ScrollBar
 buttons: Button[]
 buttonLabels: string[]
-onResized(): void
 result(): string | null
 replace(): void
 clear(): void
