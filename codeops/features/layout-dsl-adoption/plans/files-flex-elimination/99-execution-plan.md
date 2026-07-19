@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/RD-01 (Tier 2, files) · **GitHub**: [#120](https://github.com/blendsdk/jsvision/issues/120)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 20/22 tasks (91%)
+> **Progress**: 24/27 tasks (89%)
 > **Last Updated**: 2026-07-19
 > **Branch**: `feat/files-flex-elimination` (cut from `feat/dsl-adoptation`; PR retargets to `develop` once #123 lands)
 > **Verify**: `yarn verify`
@@ -58,13 +58,15 @@ is intended (AR-10).
 
 ## Phase 6 — Machinery deletion (03-04)
 
+> **Phase ref**: a12c87ce
+
 Ordered last by construction — deleting earlier leaves both constructors untypecheckable.
 
-- [ ] 6.1 Delete `grow.ts`, `grow-dialog.ts`, the `growItems` fields, both `onResized()` overrides, and the six imports
-- [x] 6.2 Delete `test/grow.spec.test.ts`; replace `test/file-dialog-resize.spec.test.ts` with ST-FE08 (invariant oracle) — ST-FE08 landed in Phase 4 (forced by ordering, see D-5); `grow.spec.test.ts` deletion still pending ⏳
+- [x] 6.1 Delete `grow.ts`, `grow-dialog.ts`, the `growItems` fields, both `onResized()` overrides, and the six imports ✅ (completed: 2026-07-19 20:45) — the field/override/import removals landed with each dialog's conversion (Phases 4–5); this task removed the two now-orphaned source files
+- [x] 6.2 Delete `test/grow.spec.test.ts`; replace `test/file-dialog-resize.spec.test.ts` with ST-FE08 (invariant oracle) ✅ (completed: 2026-07-19 20:45) — ST-FE08 landed in Phase 4 (forced by ordering, see D-5); the `grow.spec.test.ts` deletion landed here
 - [x] 6.3 Re-baseline `file-dialog-resize.impl.test.ts` — done in Phase 4 (D-5) ✅ (completed: 2026-07-19 20:15)
-- [ ] 6.4 AC-1 grep gate returns zero matches; AC-2 barrel diff is empty
-- [ ] 6.5 Verify
+- [x] 6.4 AC-1 grep gate returns zero matches; AC-2 barrel diff is empty ✅ (completed: 2026-07-19 20:45)
+- [x] 6.5 Verify ✅ (completed: 2026-07-19 20:45)
 
 ## Phase 7 — Close out
 
