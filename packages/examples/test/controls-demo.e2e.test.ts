@@ -64,9 +64,10 @@ describe('demo:controls composed frame', () => {
 
   beforeAll(async () => {
     const run = await spawnDemo('controls-demo', 30_000);
-    expect(run.code).toBe(0);
+    expect(run.code, run.stderr).toBe(0);
     stdout = run.stdout;
-  });
+    // Above vitest's 10s default hook budget, and above the child guard so its message wins.
+  }, 40_000);
 
   test('the form is inset by one blank cell and stacks every control with no row between', () => {
     const rows = frameRows(stdout, 'Frame 1 — form composed; Input focused (caret shows)');

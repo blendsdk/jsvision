@@ -60,9 +60,10 @@ describe('demo:editor composed frame', () => {
 
   beforeAll(async () => {
     const run = await spawnDemo('editor-demo', 30_000);
-    expect(run.code).toBe(0);
+    expect(run.code, run.stderr).toBe(0);
     stdout = run.stdout;
-  });
+    // Above vitest's 10s default hook budget, and above the child guard so its message wins.
+  }, 40_000);
 
   test('the editor fills above a full-width indicator strip on the last row', () => {
     const rows = frameRows(stdout, '1. Loaded — the Indicator shows 1:1');
