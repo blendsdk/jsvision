@@ -2,8 +2,8 @@
 
 > **Implements**: layout-dsl-adoption/GH-109 + GH-116 · **GitHub**: [#109](https://github.com/blendsdk/jsvision/issues/109) + [#116](https://github.com/blendsdk/jsvision/issues/116)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 0/35 tasks (0%)
-> **Last Updated**: 2026-07-19 (revised after preflight — [report](00-preflight-report.md))
+> **Progress**: 8/35 tasks (23%) — Phase 1 complete
+> **Last Updated**: 2026-07-19 (Phase 1 green-first baseline verified; revised after preflight — [report](00-preflight-report.md))
 > **Branch**: `feat/widget-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify` (AR-6)
 > **Routing**: standard → Sonnet-eligible, except tasks 1.7 and Phase 3 (complex)
@@ -16,14 +16,14 @@ Written against **unmodified** source; all pass immediately, which is the point.
 characterization witness carries the non-vacuity clause (exact counts + non-zero rects) required by
 07 §shape.
 
-- [ ] 1.1 ST-W1 — `app-shell.composition.spec.test.ts`: root child order across 4 shapes, overlay a direct child with `position:'absolute'`, chrome heights as the literal `1`
-- [ ] 1.2 ST-W2 — app-shell focus ring as an explicit named list + exact length
-- [ ] 1.3 ST-W3 — `tabs.content-layout.spec.test.ts`: a caller-set `content.layout` is **discarded**
-- [ ] 1.4 ST-W4 — the same contract for `createApplication({ content })`
-- [ ] 1.5 ST-W7 — `overlay-contract.spec.test.ts`: `mountCellOverlay` discards caller `padding`/`direction` while honoring the caller's `rect` w/h (AR-11)
-- [ ] 1.6 ST-W5 — `aux-composition.impl.test.ts`: `buttonRow`, lifecycle shells (**children's** rects), `ValueList`
-- [ ] 1.7 ST-W6 — `panel-bands.impl.test.ts`: band-named tree walk over `grid-panels` structure **(complex)**
-- [ ] 1.8 Verify all seven green against unmodified source; commit as the pre-conversion baseline
+- [x] 1.1 ST-W1 — `app-shell.composition.spec.test.ts`: root child order across 4 shapes, overlay a direct child with `position:'absolute'`, chrome heights as the literal `1`
+- [x] 1.2 ST-W2 — app-shell focus ring as an explicit named list + exact length
+- [x] 1.3 ST-W3 — `tabs.content-layout.spec.test.ts`: a caller-set `content.layout` is **discarded**
+- [x] 1.4 ST-W4 — the same contract for `createApplication({ content })`
+- [x] 1.5 ST-W7 — `overlay-contract.spec.test.ts`: `mountCellOverlay` discards caller `padding`/`direction` while honoring the caller's `rect` w/h (AR-11)
+- [x] 1.6 ST-W5 — `aux-composition.impl.test.ts`: `buttonRow`, lifecycle shells (**children's** rects), `ValueList`
+- [x] 1.7 ST-W6 — `panel-bands.impl.test.ts`: band-named tree walk over `grid-panels` structure **(complex)**
+- [x] 1.8 Verify all seven green against unmodified source; commit as the pre-conversion baseline
 
 ## Phase 2 — #109 ui widgets (standard) — 03-01
 
