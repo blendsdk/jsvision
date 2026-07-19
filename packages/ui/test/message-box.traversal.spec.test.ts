@@ -21,6 +21,7 @@ import { createApplication } from '../src/app/index.js';
 import { messageBox, confirm, inputBox } from '../src/dialog/index.js';
 import { Input, Button } from '../src/controls/index.js';
 import { signal } from '../src/reactive/index.js';
+import { Commands } from '../src/status/index.js';
 import type { View } from '../src/view/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
@@ -65,7 +66,7 @@ test('ST-T1: an OK-only messageBox Tab-traverses [OK]', async () => {
 
   expect(focusRing(app)).toEqual(['btn:o']);
 
-  app.loop.emitCommand('ok');
+  app.loop.emitCommand(Commands.ok);
   await p;
 });
 
@@ -77,7 +78,7 @@ test('ST-T1: an okCancel messageBox Tab-traverses [OK, Cancel]', async () => {
 
   expect(focusRing(app)).toEqual(['btn:o', 'btn:c']);
 
-  app.loop.emitCommand('cancel');
+  app.loop.emitCommand(Commands.cancel);
   await p;
 });
 
@@ -89,7 +90,7 @@ test('ST-T1: confirm Tab-traverses [Yes, No]', async () => {
 
   expect(focusRing(app)).toEqual(['btn:y', 'btn:n']);
 
-  app.loop.emitCommand('no');
+  app.loop.emitCommand(Commands.no);
   await p;
 });
 
@@ -102,6 +103,6 @@ test('ST-T1: inputBox Tab-traverses [Input, OK, Cancel] — the Label is not in 
 
   expect(focusRing(app)).toEqual(['input', 'btn:o', 'btn:c']);
 
-  app.loop.emitCommand('cancel');
+  app.loop.emitCommand(Commands.cancel);
   await p;
 });
