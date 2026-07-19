@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/GH-109 + GH-116 · **GitHub**: [#109](https://github.com/blendsdk/jsvision/issues/109) + [#116](https://github.com/blendsdk/jsvision/issues/116)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 8/35 tasks (23%) — Phase 1 complete
+> **Progress**: 15/35 tasks (43%) — Phases 1-2 complete
 > **Last Updated**: 2026-07-19 (Phase 1 green-first baseline verified; revised after preflight — [report](00-preflight-report.md))
 > **Branch**: `feat/widget-flex-adoption` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify` (AR-6)
@@ -27,13 +27,13 @@ characterization witness carries the non-vacuity clause (exact counts + non-zero
 
 ## Phase 2 — #109 ui widgets (standard) — 03-01
 
-- [ ] 2.1 `data-grid.ts` — convert the 9 sites to the nested `grow(col(...))` expression; delete the dead `fr`/`cell` consts (`:151-152`)
-- [ ] 2.2 Verify — `datagrid.spec`'s 22 golden cases green **and unedited**; if any moved, fix the code (NFR-1)
-- [ ] 2.3 `tab-view.ts` — convert `:244`/`:264-266`; **add** the explaining comment at `:254` and leave the assignment (03-01 wording)
-- [ ] 2.4 `application.ts` — convert `:341` + the `add()` sites to `col(...)`; **relocate** `:347`/`:353` verbatim into standalone guards; **add** the explaining comment at `:330`
-- [ ] 2.5 Verify — ST-W1…W4 green; the four overlay-locator test files green and unedited
-- [ ] 2.6 Rebuild `packages/ui` so downstream packages see the change (NFR-4)
-- [ ] 2.7 Full verify; `yarn plugin:sync --fix` if any public JSDoc moved; commit
+- [x] 2.1 `data-grid.ts` — convert the 9 sites to the nested `grow(col(...))` expression; delete the dead `fr`/`cell` consts (`:151-152`)
+- [x] 2.2 Verify — `datagrid.spec`'s 22 golden cases green **and unedited**; if any moved, fix the code (NFR-1)
+- [x] 2.3 `tab-view.ts` — convert `:244`/`:264-266`; **add** the explaining comment at `:254` and leave the assignment (03-01 wording)
+- [x] 2.4 `application.ts` — convert `:341` + the `add()` sites to `col(...)`; **relocate** `:347`/`:353` verbatim into standalone guards; **add** the explaining comment at `:330`
+- [x] 2.5 Verify — ST-W1…W4 green; the four overlay-locator test files green and unedited
+- [x] 2.6 Rebuild `packages/ui` so downstream packages see the change (NFR-4)
+- [x] 2.7 Full verify; `yarn plugin:sync --fix` if any public JSDoc moved; commit
 
 ## Phase 3 — #116 `grid-panels.ts` — 15 of 23 sites (complex) — 03-02 Group A
 
@@ -68,4 +68,9 @@ characterization witness carries the non-vacuity clause (exact counts + non-zero
 
 ## Deviations
 
-_None yet — logged here as execution proceeds (NFR-2 requires each locator edit to be recorded)._
+**No locator edits so far.** Every existing test passed unedited through Phase 2.
+
+**Known-flake note (not a deviation).** One `TUI_SKIP_PERF=1 yarn verify` run failed in
+`@jsvision/ui#test` under turbo's parallel load; the same suite passed standalone (311 files / 1784
+tests) and the next full verify passed 30/30. `TUI_SKIP_PERF` does not propagate through turbo, so
+the perf assertions run regardless — a pre-existing condition, unrelated to this plan.
