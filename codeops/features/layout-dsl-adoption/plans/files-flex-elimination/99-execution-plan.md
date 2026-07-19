@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/RD-01 (Tier 2, files) · **GitHub**: [#120](https://github.com/blendsdk/jsvision/issues/120)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 0/18 tasks (0%)
+> **Progress**: 4/18 tasks (22%)
 > **Last Updated**: 2026-07-19
 > **Branch**: `feat/files-flex-elimination` (cut from `feat/dsl-adoptation`; PR retargets to `develop` once #123 lands)
 > **Verify**: `yarn verify`
@@ -10,13 +10,15 @@
 
 ## Phase 1 — Traversal witnesses (green-first, NFR-2)
 
+> **Phase ref**: 7598913fdbf330e70f09dacef1ce2374c8044afe
+
 Captures the pre-conversion focus order so the rebuild is falsifiable. These pass immediately; that
 is intended (AR-10).
 
-- [ ] 1.1 ST-01 — `file-dialog-traversal.spec.test.ts`: ordered focusables + full Tab cycle
-- [ ] 1.2 ST-02 — `chdir-dialog-traversal.spec.test.ts`: same for `ChDirDialog`
-- [ ] 1.3 ST-03 — `error-dialog.spec.test.ts`: OK is the sole tab stop
-- [ ] 1.4 Verify — all three green against **unmodified** source; commit as the pre-conversion baseline
+- [x] 1.1 ST-01 — `file-dialog-traversal.spec.test.ts`: ordered focusables + full Tab cycle ✅ (completed: 2026-07-19 18:52)
+- [x] 1.2 ST-02 — `chdir-dialog-traversal.spec.test.ts`: same for `ChDirDialog` ✅ (completed: 2026-07-19 18:52)
+- [x] 1.3 ST-03 — `error-dialog.spec.test.ts`: OK is the sole tab stop ✅ (completed: 2026-07-19 18:52)
+- [x] 1.4 Verify — all three green against **unmodified** source; commit as the pre-conversion baseline ✅ (completed: 2026-07-19 18:52)
 
 ## Phase 2 — `wrapText` export (AR-4)
 
@@ -68,7 +70,7 @@ Record here if the red step falsifies a derivation.
 
 | # | Expected (plan) | Actual (solver) | Resolution |
 |---|-----------------|-----------------|------------|
-| — | — | — | — |
+| D-1 | 03-01 §5 / 03-02 §4: focusables are `fileList` / `dirList` and `listBar` | Focus is leaf-only, so the Tab stop is `fileList.rows` / `dirList.rows`; `listBar` (a `ScrollBar`) is **not** focusable at all | Mechanical correction — the *user-visible* traversal order is unchanged, so ST-01/ST-02 assert the real ring. No behavior impact on the conversion. |
 
 > **Watch item (AR-6):** if `history-files.spec.test.ts` goes red in 4.4 or 5.3, the geometry
 > derivation was wrong. Reclassify that file as **re-baseline**, amend RD-02's NFR-3 table, and log
