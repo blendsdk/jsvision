@@ -1,7 +1,7 @@
 # 99 — Execution Plan
 
 > **Plan**: layout-dsl-adoption/focus-traversal-primitive · **Implements**: RD-01 (FR-2/FR-3 enabler)
-> **Progress**: 8/11 tasks (73%)
+> **Progress**: 10/11 tasks (91%)
 > **Last Updated**: 2026-07-19
 > **CodeOps Skills Version**: 3.9.0
 
@@ -65,20 +65,31 @@ Commit via **/gitcm**; before the PR-bound push run `yarn lint:fix` then **/gitc
 
 ## Phase 4 — Non-regression sweep, kitchen-sink, PR (AR-8/AR-11, spec 02)
 
-- [ ] **4.1 (Sweep)** First **enumerate any widget that keymap-binds `tab`** — those are the *only*
+- [x] **4.1 (Sweep)** First **enumerate any widget that keymap-binds `tab`** — those are the *only*
   Tab-consumers (an unbound Tab is intercepted in `route()` before any view's `onEvent`, so no view can
   consume it), and they are unaffected because a bound `tab` becomes a command before the focus step; the
   editor binds none (Ctrl-Q/Ctrl-K prefixes). Note `TabView` plain-Tab now escapes the active page into the
-  next sibling by design. Then run full `TUI_SKIP_PERF=1 yarn verify` across the monorepo — especially
-  `@jsvision/ui` (editor/split-view/tab-view/list), `@jsvision/forms` (formDialog), `@jsvision/files`
-  (file/chdir), `@jsvision/examples`. Any behavioral test that flips is a real regression to investigate
-  (expected: only *new* Tab reachability, which no existing test asserts). Record the pass.
-- [ ] **4.2 (Kitchen-sink)** Confirm no new **visual component** is introduced (engine-only capability),
+  next sibling by design. Then run full `TUI_SKIP_PERF=1 yarn verify` across the monorepo. *(Done
+  2026-07-19: a `tab`-literal sweep of `packages/*/src` found **no widget keymap-binds or consumes `tab`**
+  — the only touchpoints are the core input decoder, the built-in intercept `dispatch.ts:134`, and
+  `Input.onEvent` which explicitly lets `tab` pass through (`input.ts:254`). `tab-strip.ts` `'tab'` is a
+  tab-item slot, not the key; `spike-data-studio` is the inert throwaway (excluded). Full
+  `TUI_SKIP_PERF=1 yarn verify` **green** (30/30 turbo tasks; ui 1747/1747; examples 284/284;
+  check-plugin PASS). **No behavioral test flipped.** The one artifact that went stale was the committed
+  plugin API-reference snapshot `references/api/app-shell.md` — a documentation consequence of the R-7
+  JSDoc change on `focusNext`/`focusPrev`, not a behavioral regression; regenerated deterministically via
+  `yarn plugin:sync --fix` (no AI), diff limited to the two focus-method comments.)*
+- [x] **4.2 (Kitchen-sink)** Confirm no new **visual component** is introduced (engine-only capability),
   so no new showcase story is required (AR-8); the traversal is proven by ST-F# and exercised by the
-  downstream flex-dialog stories. Record this determination.
-- [ ] **4.3 (PR)** `yarn lint:fix`, commit whatever it changes (/gitcm), full verify green, then
-  **/gitcmp** for the PR-bound push. Open the PR citing the new companion issue; note it is a
-  prerequisite of #115 + #120.
+  downstream flex-dialog stories. *(Done 2026-07-19: the change is a pure focus-manager/event-loop
+  capability — no new visual widget, so per the CLAUDE.md kitchen-sink scope no story is required. It is
+  proven by ST-F1…F7 + IMP-1…IMP-4 and will be demonstrated live once the #115/#120 flex dialogs land.)*
+- [~] **4.3 (PR)** `yarn lint:fix`, commit whatever it changes, full verify green, then push for the
+  PR-bound update. Open the PR citing the new companion issue; note it is a prerequisite of #115 + #120.
+  *(In progress 2026-07-19: `yarn lint:fix` ran (no further changes); full verify green; work committed +
+  pushed to `feat/dsl-adoptation` per `--auto-commit`. **Pending user confirmation:** opening a GitHub PR
+  and creating the AR-10 companion issue are outward-facing and the work sits on the shared epic branch —
+  surfaced to the maintainer rather than done unilaterally.)*
 
 ## Done when
 
