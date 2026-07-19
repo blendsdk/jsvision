@@ -89,6 +89,18 @@ test('ST-FE09: a glyph too wide for the width is emitted alone rather than dropp
   expect(wrapText('ab日', 1)).toEqual(['a', 'b', '日']);
 });
 
+// ST-FE09 — astral characters are a documented gap, pinned here so it cannot change unnoticed.
+test('ST-FE09: astral characters are measured per UTF-16 half and may split across lines', () => {
+  // The scan walks code units, so a surrogate pair counts as two 1-column halves and can be broken
+  // apart. This is a known limitation stated in the helper's contract, not an accident — the case is
+  // pinned so that fixing it later is a deliberate, visible change rather than silent drift.
+  expect(wrapText('😀😀😀', 3)).toEqual(['😀\ud83d', '\ude00😀']);
+  // A pair counts as 2 columns, so at width 4 two whole emoji fit and the third moves down.
+  expect(wrapText('😀😀😀', 4)).toEqual(['😀😀', '😀']);
+  // Non-astral wide glyphs are handled correctly — the gap is specific to surrogate pairs.
+  expect(wrapText('日本語', 4)).toEqual(['日本', '語']);
+});
+
 // ST-FE09 — wrapping loses no non-whitespace content.
 test('ST-FE09: wrapping drops only whitespace, never text', () => {
   const source = 'The file could not be opened because the directory is not readable by this account.';
