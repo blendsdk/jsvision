@@ -115,5 +115,73 @@ Both are readability calls; now stated as such.
 
 ---
 
-**Iteration 1 verdict: ❌ BLOCKED** — 2 CRITICAL + 6 MAJOR. All 14 findings resolved in the revision
-below; a verification pass follows.
+**Iteration 1 verdict: ❌ BLOCKED** — 2 CRITICAL + 6 MAJOR. All 14 resolved; iteration 2 followed.
+
+## Iteration 2 — 13 further findings (PF-015…PF-027)
+
+Two dispatches: one verifying each iteration-1 fix actually closed its finding, one attacking angles
+iteration 1 never used. **They converged on the same defect again** — and this time it was in the
+*fix* for iteration 1's CRITICAL.
+
+### 🔴 CRITICAL
+
+**PF-015 — the `buildRoot()` seam introduced by PF-001's fix was unimplementable.** Both candidate
+files invoke their entrypoint at module scope, and `chrome-bars-demo/main.ts:118-124` calls
+`process.exit()` there — so a witness importing it would terminate the vitest worker before any
+assertion ran. ST-C8 was the only oracle for the one file with no pre-existing coverage at all, so
+this leg of the CRITICAL fix closed nothing. **Resolution (AR-16):** a sibling `tree.ts` module that
+`main.ts` imports — no entry guard, no exit hazard, `main.ts` stays a pure entrypoint.
+
+### 🟠 MAJOR
+
+**PF-016 — the seam's stated justification was false.** "`editor-demo`, `chrome-bars-demo` — neither
+prints a frame." `editor-demo` prints **nine**, via a local helper named `frame()` rather than
+`printFrame`, emitting the same `|…|` grid the frame seam relies on; it also has an e2e test. The
+fix had been found by grepping for `printFrame`. So the plan was paying a source change for a file
+that qualified for the preferred zero-source-change seam. **Resolution:** `editor-demo` moves to the
+frame seam; task 1.1 shrinks to one file.
+
+**PF-017 — seven of the ten witnesses would never run at a phase gate.** `yarn verify` →
+`turbo run test` → `vitest run --project unit`, and that project *excludes* `test/**/*.e2e.test.ts`
+(`vitest.config.ts:14-15`). An executor could finish every phase green while every frame snapshot
+sat unrun. **Resolution (AR-17):** the per-phase command gains
+`yarn workspace @jsvision/examples test:e2e`, recorded in NFR-4, AC-7 and every verify task.
+
+**PF-018 — the six `background` folds were invisible to every oracle.** `Group.background` fills
+style only (`group.ts:76-77`); every frame seam prints `cell.char`. 6 of 32 conversions had no
+witness while NFR-1 promised unchanged rendering. **Resolution (AR-15):** narrowed to the 2 an
+importing witness can assert; the other 4 stay separate `.background =` lines, which no requirement
+asked to fold.
+
+### 🟡 MINOR / 🔵 INFO
+
+**PF-019** NFR-3 was unsatisfiable by the frame witnesses (it demanded a child count + rect); now
+states two admissible forms. **PF-020** the ST-C9→ST-C10 renumbering left three stale `ST-C9`
+references. **PF-021** AR-9 still said "five demo e2e tests". **PF-022** the roles-panel background
+line was `:71` in two docs and `:70` in the register — `:70` is right. **PF-023** the Deviations note
+re-permitted the locator edit PF-012 had removed, and mis-cited NFR-1. **PF-024** task 2.3's
+checkpoint is undecidable (the direction is applied twice until 2.4) — now labelled a no-op by
+design. **PF-025** the `gap:0` halves of two sites equal the engine default, so no witness can see
+them; AC-3 now names code review for those. **PF-026** ST-C9's detail leg needs router navigation
+the plan didn't budget — now spelled out. **PF-027** an importing witness reading `bounds` before a
+flush would capture `{0,0,0,0}` and bake the zeros in as its "literal rect" — the flush rule is now
+explicit. Plus: AR-10 marked superseded, and the AR-5 rename extended to `controls-demo:51`, which
+has the identical loop.
+
+### Verified clean in iteration 2
+
+`createDesignerApp`'s seam checks out in every particular — exported at `app.ts:141`, options carry
+`caps`/`viewport`/`requireTty`, and the predicted pane offsets (0 / 28 / 58 at 90×30) are arithmetically
+right. The three original frame demos genuinely print every row after mount. `drillDownStory` is
+exported and drivable. AR-12's equivalence, AR-7's "17 children", and the `5 of 51 ≈ 10%` sibling
+figure all reconstruct exactly. The site inventory is still 35, byte-accurate. `check-jsdoc` does not
+scan `packages/examples` (no `src/` barrel), so no new export can trip `check:docs`. Task counts and
+the 9-vs-13 split reconcile across all eight documents.
+
+---
+
+**Iteration 2 verdict: ✅ PASSED** — 27 findings across 2 iterations, all resolved. The recurring
+root cause is recorded plainly: *a conclusion drawn correctly, then applied to a list without
+re-checking each entry*. It produced the 12-vs-13 table, the "neither prints a frame" claim, and the
+"two sites carry a direction" error in the sibling plan. The mitigation that has actually worked is
+adversarial re-grounding per entry, not a tighter rule.

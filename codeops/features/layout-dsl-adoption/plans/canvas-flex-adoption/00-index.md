@@ -42,8 +42,9 @@ of the work.
 
 **And a witness must observe the real artifact.** Preflight found that the first draft had them
 reconstructing each demo's tree inside the test file, which passes after the conversion by
-construction. The seam is now chosen per file — frame snapshot, exported story, a new `buildRoot()`,
-or the real designer app (AR-13, [07 §seam rule](07-testing-strategy.md)).
+construction. The seam is now chosen per file — a frame snapshot for the four demos that already print one, the
+exported story, a sibling module for the one demo with neither, or the real designer app
+(AR-13/AR-16, [07 §seam rule](07-testing-strategy.md)).
 
 **The blast radius is dev-only by construction.** Both packages are `private: true` and nothing in
 the monorepo depends on them, so no consumer can observe any of these layouts. That is what justifies
@@ -53,7 +54,7 @@ a lighter review posture than the sibling plans got.
 
 Each designer panel's `direction:'col'` currently arrives from `app.ts`, not from its own builder.
 The builders must be converted **before** `app.ts` drops it — otherwise both panels flow horizontally
-and nothing in the suite notices. Phase 2 enforces this, and ST-C9 is green before either step.
+and nothing in the suite notices. Phase 2 enforces this, and ST-C10a/b/c are green before either step.
 
 ## Out of scope
 

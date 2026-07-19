@@ -16,7 +16,7 @@ The conversion moves that responsibility into the builders, where `col()` sets i
 panel builders must therefore be converted before `app.ts` drops the direction.** Converting `app.ts`
 first leaves both panels flowing horizontally, and — per
 [02-current-state §4](02-current-state.md) — nothing in the existing suite would notice. The phase
-order in the execution plan enforces this, and ST-C9 is green before either step.
+order in the execution plan enforces this, and ST-C10a/b/c are green before either step.
 
 ## `view/roles-panel.ts`
 
@@ -27,7 +27,7 @@ const view = col({ background: 'dialog' }, fixed(title, 1), grow(list));
 ```
 
 This absorbs three things: the two child descriptors (`:72`, `:73`), the separate
-`view.background = 'dialog'` line (`:71`, per AR-12), and the `direction:'col'` that used to arrive
+`view.background = 'dialog'` line (`:70`, per AR-12/AR-15 — ST-C10a asserts it), and the `direction:'col'` that used to arrive
 from `app.ts:288`.
 
 **The comment above it becomes false and must be rewritten.** It currently reads:
