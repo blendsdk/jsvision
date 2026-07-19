@@ -1,7 +1,9 @@
 /**
- * Display-width helpers shared by the controls. These measure how many terminal columns a glyph or
- * string occupies, using the same width rules the screen buffer uses, so wrapping and centering math
- * agrees with what actually gets drawn (wide CJK/emoji = 2 columns, zero-width combining marks = 0).
+ * Display-width helpers shared by the controls, plus the word-wrap built on them. The measures report
+ * how many terminal columns a glyph or string occupies, using the same width rules the screen buffer
+ * uses, so wrapping and centering math agrees with what actually gets drawn (wide CJK/emoji = 2
+ * columns, zero-width combining marks = 0). {@link wrapText} is the wrap a `Text` view draws with,
+ * exposed here so a caller can pre-count the lines a message will need.
  */
 import { charWidth } from '@jsvision/core';
 import type { WidthMode } from '@jsvision/core';
@@ -49,21 +51,27 @@ export function stringWidth(s: string): number {
  * dropped from the start of the next line. An explicit `\n` always forces a line break, and a blank
  * source line stays a blank output line. A `width` of zero or less yields no lines at all.
  *
- * Widths are measured in display columns, not characters, so CJK and emoji wrap where they actually
- * render rather than where `String.length` would guess. One consequence is worth knowing: a single
- * glyph wider than `width` (a 2-column CJK character at width 1) is emitted on its own line anyway,
- * so wrapping always terminates. That is the only case an output line can exceed `width`.
+ * Widths are measured in display columns rather than characters, so wide CJK glyphs wrap where they
+ * actually render instead of where `String.length` would guess. A glyph too wide to ever fit — a
+ * 2-column character at width 1 — is still emitted on its own line, so wrapping always terminates.
+ *
+ * **Astral characters (most emoji) are not handled.** The scan walks UTF-16 code units, so a
+ * surrogate pair is measured as two separate 1-column halves and can be split across a line break,
+ * leaving lone surrogates that draw as garbage. Do not rely on this for emoji-safe wrapping.
  *
  * @param content The text to wrap.
  * @param width   The available width in display columns.
- * @returns The wrapped lines (at least one, possibly empty, per source paragraph).
+ * @returns The wrapped lines — one or more per source paragraph, or an empty array when `width` is
+ *          zero or less.
  * @example
  * ```ts
  * wrapText('the quick brown fox', 10); // ['the quick', 'brown fox']
  * wrapText('one\n\ntwo', 10);          // ['one', '', 'two'] — the blank line survives
  *
  * // Size a message box so nothing is clipped: frame (2) + button band (2) + the wrapped text.
- * const height = wrapText(message, width - 2).length + 4;
+ * const message = 'The file could not be opened.';
+ * const width = 40;
+ * const height = wrapText(message, width - 2).length + 4; // 5
  * ```
  */
 export function wrapText(content: string, width: number): string[] {
