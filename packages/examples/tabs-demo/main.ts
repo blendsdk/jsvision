@@ -14,7 +14,7 @@
  */
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
-import { Group, Text, TabView, createEventLoop, signal } from '@jsvision/ui';
+import { Group, Text, TabView, createEventLoop, signal, cover } from '@jsvision/ui';
 import type { Tab } from '@jsvision/ui';
 
 /** A synthetic decoded key (no terminal needed). */
@@ -61,7 +61,7 @@ function main(): void {
   const active = signal(0);
   let lastClosed = '(none)';
   const view = new TabView({ tabs, active, onClose: (t) => (lastClosed = t.title.replace(/~/g, '')) });
-  view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: WIDTH, height: HEIGHT } };
+  cover(view);
 
   const root = new Group();
   root.add(view);

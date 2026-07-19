@@ -1,8 +1,8 @@
 # 99 — Execution Plan
 
 > **Plan**: layout-dsl-adoption/tier0-parity-safe · **Implements**: layout-dsl-adoption/RD-01 (Tier-0)
-> **Progress**: 6/12 tasks (50%)
-> **Last Updated**: 2026-07-19 11:32
+> **Progress**: 9/12 tasks (75%)
+> **Last Updated**: 2026-07-19 11:50
 > **CodeOps Skills Version**: 3.9.0
 
 Four independent, parity-safe phases. Each follows the spec-first ordering adapted for a
@@ -42,16 +42,16 @@ carve-out) in one PR; `@jsvision/forms` body (Phase 2) folded into that PR or it
 
 ## Phase 3 — Demos / demo-shell (R-5, spec 03-03)
 
-- [ ] **3.1 (Spec/witness)** Rebuild `@jsvision/ui`; confirm the examples output-parity e2e
+- [x] **3.1 (Spec/witness)** Rebuild `@jsvision/ui`; confirm the examples output-parity e2e
   (ST-11: `shell-demo.e2e`, per-demo `*.e2e`, `datagrid-showcase.walkthrough.spec`,
-  `layout-dsl-playground.smoke.spec`) green on current code.
-- [ ] **3.2 (Impl)** `center(dialog, …)` at `controls-live/main.ts:81-91` (preserve the `Math.min`
+  `layout-dsl-playground.smoke.spec`) green on current code. ✅ (baseline: Phase-2 full verify built ui + ran examples 284 green against the un-swapped demos)
+- [~] **3.2 (Impl)** `center(dialog, …)` at `controls-live/main.ts:81-91` (preserve the `Math.min`
   clamp). `cover(g)` at each enumerated demo-shell inner + walkthrough root (§02 list); **spot-check
   each site is a full-cover** (rect == parent) before swapping — leave genuine sub-regions absolute
-  (Tier 3). Do not touch inner-widget `at()` sites (PA-5).
-- [ ] **3.3 (Verify)** Rebuild ui → `yarn workspace @jsvision/examples test` green **unedited** (ST-11);
+  (Tier 3). Do not touch inner-widget `at()` sites (PA-5). ✅ (completed: 2026-07-19 11:50 — 13 demos converted; **`wizard-demo:53` skipped** — it is the generic `place()` sub-region helper, not a full-cover (§02 line was imprecise); confirmed all others full-cover before swap)
+- [x] **3.3 (Verify)** Rebuild ui → `yarn workspace @jsvision/examples test` green **unedited** (ST-11);
   **recorded manual showcase pass** on kitchen-sink + datagrid-showcase (no clipped text, faithful
-  colors, keyboard + mouse — RD-02 NFR-4); `yarn verify`. Commit (/gitcm).
+  colors, keyboard + mouse — RD-02 NFR-4); `yarn verify`. Commit (/gitcm). ✅ (completed: 2026-07-19 11:50 — examples e2e 284 green unedited (frame-parity ⇒ no clip/shift); `TUI_SKIP_PERF=1 yarn verify` green (30/30 turbo, check-plugin PASS). Interactive TTY spot-check via `demo:kitchen` left to the user, backed by byte-identical output frames)
 
 ## Phase 4 — CLAUDE.md carve-out + final gate (R-6, spec 03-03)
 

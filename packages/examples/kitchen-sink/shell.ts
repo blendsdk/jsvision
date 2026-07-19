@@ -18,6 +18,7 @@ import {
   statusLine,
   statusItem,
   Commands,
+  cover,
   Group,
   Text,
   View,
@@ -161,7 +162,7 @@ function buildWelcome(cats: Map<string, Story[]>, w: number, h: number): Group {
     ),
   );
   // Fill the canvas interior so the absolutely-positioned rows above have space to lay out.
-  g.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  cover(g);
   return g;
 }
 
@@ -258,7 +259,7 @@ export function createShowcase(caps: CapabilityProfile): Showcase {
     const iw = canvas.layout.rect.width - 2; // interior (1-cell border each side)
     const ih = canvas.layout.rect.height - 2;
     const holder = new Group();
-    holder.layout = { position: 'absolute', rect: { x: 0, y: 0, width: iw, height: ih } };
+    cover(holder);
     const chip = story.rd !== undefined ? `[${story.rd}] ` : '';
     holder.add(at(new Text(`${chip}${story.blurb}`), 0, 0, iw, 2)); // 2 rows so long blurbs don't clip
     const bodyW = iw;
