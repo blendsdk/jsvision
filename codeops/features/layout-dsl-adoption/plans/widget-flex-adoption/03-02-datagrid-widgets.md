@@ -1,7 +1,7 @@
 # 03-02 — datagrid widgets (#116)
 
-Site inventory: [02-current-state.md §2](02-current-state.md#2-116--packagesdatagridsrc-36-conversions).
-**35 conversions across 7 modules**, plus two preserved sites. Scope narrowed after preflight
+Site inventory: [02-current-state.md §2](02-current-state.md#2-116--packagesdatagridsrc-35-conversions-across-6-modules).
+**35 conversions across 6 modules**, plus two preserved sites. Scope narrowed after preflight
 (AR-3, AR-7, AR-11).
 
 ## The rule that governs every conversion here
@@ -21,8 +21,8 @@ In this plan's scope that bites at **four** sites, and not only for `direction`:
 | `button-row.ts:87` | `direction:'row'`, **`justify:'center'`** | `grow(row({ justify: 'center' }, button))` |
 
 `Flex` is `Omit<LayoutProps, 'direction'>` (`flex.ts:41`), so both `gap` and `justify` are expressible
-through the builder's props object. `BUTTON_GAP = 1` and `buttonCellWidth` (`button-row.ts:16,35`)
-computes widths assuming that gap — dropping it shifts every button after the first.
+through the builder's props object. `BUTTON_GAP = 1` and `buttonRowMinWidth` (`button-row.ts:16,32`)
+reserves room for that gap — dropping it shifts every button after the first.
 
 ## Group A — `grid-panels.ts` (15 of 23 sites)
 

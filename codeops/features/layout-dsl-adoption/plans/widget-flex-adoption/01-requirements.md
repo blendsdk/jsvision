@@ -8,7 +8,7 @@
 `app/application.ts` compose their internal view trees with the layout DSL at the **12** sites in
 [02-current-state.md §1](02-current-state.md).
 
-**FR-2 — datagrid composition (#116).** The **35** in-scope sites across 7 `packages/datagrid/src`
+**FR-2 — datagrid composition (#116).** The **35** in-scope sites across 6 `packages/datagrid/src`
 modules ([02-current-state.md §2](02-current-state.md)) use the DSL: flex containers via `col`/`row`,
 size tags via `grow`/`fixed`, fill placement via `cover()`. No `at()` conversion remains in scope
 (AR-7).
@@ -19,7 +19,7 @@ because an external caller can reach those receivers and today's behavior discar
 set (AR-1, AR-11, AR-13).
 Each site gains a comment stating why it is deliberately not converted — written in plain language
 with no plan or issue identifiers, per CLAUDE.md's documentation directive — and each is pinned by a
-spec test (ST-W3, ST-W4, ST-W7).
+spec test (ST-W3, ST-W4, ST-W7, ST-W8).
 
 **FR-4 — no new nesting anywhere.** No conversion may add a Group between a container and any child.
 Tab order must be identical, not merely still-working.
@@ -59,7 +59,7 @@ and `packages/ui/test/controls.completions.security.spec.test.ts` must stay gree
 | AC-2 | All 35 #116 conversions landed | grep audit vs the residue allowlist |
 | AC-3 | Zero geometry/golden assertion edited in any existing test | `git diff` on `**/test/**` at close-out |
 | AC-4 | `golden-screen.spec` + `a11y-golden.spec` green **and zero-diff** | verify + diff |
-| AC-5 | All three preserved sites unchanged and pinned | ST-W3, ST-W4, ST-W7 |
+| AC-5 | All four preserved sites unchanged and pinned | ST-W3, ST-W4, ST-W7, ST-W8 |
 | AC-6 | Tab order through `TabView` and the app shell unchanged | ST-W2 · existing `tabs.spec` ST-7/8/37/38 |
 | AC-7 | `TUI_SKIP_PERF=1 yarn verify` green at every phase boundary | verify log |
 | AC-8 | The `.layout =` grep over the in-scope files returns **exactly** the residue allowlist below | task 5.1 |

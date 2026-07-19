@@ -16,7 +16,7 @@ targets the wrong view or an empty `children` array. Every characterization witn
 also assert an exact **count** (children, ring length, band count) and that every captured rect has
 non-zero width and height. Without that clause the Phase-1 baseline certifies nothing.
 
-**Placement (AR-12).** ST-W1/W2/W3/W4/W7 are `*.spec.test.ts` — genuine behavioral contracts.
+**Placement (AR-12).** ST-W1/W2/W3/W4/W7/W8 are `*.spec.test.ts` — genuine behavioral contracts.
 ST-W5/W6 are `*.impl.test.ts` — they capture internal composition, which later flex-elimination tiers
 will legitimately change; freezing it in an immutable oracle would obstruct the feature's own
 direction.
@@ -82,6 +82,18 @@ whose existing coverage (`filter-customization.spec.test.ts:105-106`) asserts on
 `at()` would have overwritten identically, so nothing would have caught the widening.
 Traces to FR-3, AC-5.
 
+### ST-W8 — the custom-editor mount contract (`custom-editor-layout.spec.test.ts`, datagrid)
+
+| Input | Expected |
+|-------|----------|
+| a column with `editor: { kind:'custom', create }` whose factory returns a view carrying `padding`, `direction:'col'`, a `size` and a stale `rect` | after F2 mounts it, the view's layout is exactly `{ position:'fill' }` — every caller property discarded |
+| the same with a factory that sets no layout at all | the same `{ position:'fill' }`, so the contract has one path, not two |
+
+Added after post-phase review found `editing.ts:230` had been converted to a merge-preserving tag.
+`createCellEditor`/`CellEditorSpec` are barrel-exported and `GridColumn.editor` documents the route,
+so the mounted view is caller-owned and AR-1 applies. Mutation-checked: reintroducing the tag turns
+the first case red. Pins AR-13. Traces to FR-3, AC-5.
+
 ## Implementation test cases
 
 ### ST-W5 — datagrid auxiliary composition (`aux-composition.impl.test.ts`)
@@ -115,7 +127,7 @@ This is the most precision-sensitive artifact in the plan and is tagged **comple
 | `golden-screen.spec` + `a11y-golden.spec` show **zero** diff | AC-4 |
 | Security oracles green and untouched | AC-9, NFR-6 |
 | No nesting change is expected, so a broken locator is a mis-transcription first | NFR-2 |
-| ST-W1/W5/W6/W7 are exempt from the locator allowance — they are the detectors | NFR-2 |
+| ST-W1/W5/W6/W7/W8 are exempt from the locator allowance — they are the detectors | NFR-2 |
 
 ## Verification
 
