@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-20 18:55
-> **Progress**: 38/41 tasks (93%) — Phases 1-3 complete
+> **Last Updated**: 2026-07-20 19:45
+> **Progress**: 41/41 tasks (100%) — ✅ COMPLETE (all 4 phases; post-phase reviews resolved)
 > **CodeOps Skills Version**: 3.11.0
 
 ## Overview
@@ -207,9 +207,9 @@ is one reviewable change; counts in parentheses are lines, and they sum to 53.
 > **Phase ref**: _(recorded at phase start)_
 > **Routing**: trivial
 
-- [ ] 4.1.1 File the allowlist-drain follow-up issue — the committed allowlist **is** its worklist (AC-10). Link it from the feature roadmap. **Say plainly in the issue body that a residue is permanent, not backlog**: a literal `{ ... }` elision (`core/engine/capability/index.ts:75,123`) and a top-level `return` (`datagrid/src/validation.ts:83`) are legitimate documentation idioms that cannot compile standalone
-- [ ] 4.1.2 Roadmap sync via the roadmap skill: set #112's row to ✅, cascade to the portfolio `codeops/00-roadmap.md`, and post a close-out comment on #112 recording the scope expansion (AR-1), the four defects found and fixed, the `#129` boundary (AR-4) **and the one docs-site canvas this plan converted inside that boundary (`list-box.ts`, the AR-4 named exception), so #129 does not go looking for it**
-- [ ] 4.1.3 `yarn lint:fix`, commit whatever it changes, then final `yarn verify` before the PR-bound push (CLAUDE.md prime directive)
+- [x] ✅ (completed: 2026-07-20 19:20) 4.1.1 File the allowlist-drain follow-up issue — the committed allowlist **is** its worklist (AC-10). Link it from the feature roadmap. **Say plainly in the issue body that a residue is permanent, not backlog**: a literal `{ ... }` elision (`core/engine/capability/index.ts:75,123`) and a top-level `return` (`datagrid/src/validation.ts:83`) are legitimate documentation idioms that cannot compile standalone
+- [x] ✅ (completed: 2026-07-20 19:20) 4.1.2 Roadmap sync via the roadmap skill: set #112's row to ✅, cascade to the portfolio `codeops/00-roadmap.md`, and post a close-out comment on #112 recording the scope expansion (AR-1), the four defects found and fixed, the `#129` boundary (AR-4) **and the one docs-site canvas this plan converted inside that boundary (`list-box.ts`, the AR-4 named exception), so #129 does not go looking for it**
+- [x] ✅ (completed: 2026-07-20 19:45) 4.1.3 `yarn lint:fix`, commit whatever it changes, then final `yarn verify` before the PR-bound push (CLAUDE.md prime directive)
 
 **Verify**: `yarn verify`
 
