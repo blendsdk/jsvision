@@ -150,6 +150,9 @@ class Stack extends Group {
         changed = true;
       }
     }
+    // Not redundant with the per-layer `setLayout` above: that invalidates through the *layer's*
+    // host, which is null for a layer no longer in this overlay (`track()` never unregisters). This
+    // one goes through the stack's own host, which is always live while the stack is drawing.
     if (changed) this.invalidateLayout();
   }
 }
