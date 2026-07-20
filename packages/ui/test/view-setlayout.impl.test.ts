@@ -71,7 +71,9 @@ test('ST-I3: N setLayout calls request N reflows but schedule exactly one frame'
   );
   rr.mount(root); // mount flushes directly, not via `schedule`
   const base = scheduled;
-  const relayouts = vi.spyOn(rr, 'markRelayout');
+  // Spied through `ViewHost`, the interface that actually declares it — the public `RenderRoot`
+  // interface keeps `markRelayout` internal. Same object; `spyOn` calls through.
+  const relayouts = vi.spyOn(rr as unknown as ViewHost, 'markRelayout');
 
   for (let i = 1; i <= 5; i += 1) child.setLayout({ padding: i });
 

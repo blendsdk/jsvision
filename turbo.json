@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": ["TUI_SKIP_PERF"],
+  "globalEnv": ["CI", "TUI_SKIP_PERF"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
