@@ -106,6 +106,23 @@ test('an allowlisted block that now COMPILES makes the run fail as stale', () =>
   expect(result.unexpected).toEqual([]);
 });
 
+test('a block failing on one missing identifier is grandfathered when the entry names it', () => {
+  // The positive half of the pair below: when the recorded identifier is exactly
+  // the one the block cannot find, the failure is a known one and passes.
+  const key = fixtureKey('missing-one', 'missing-one.ts', 'okCaption');
+  const allowlist: Allowlist = {
+    [key]: {
+      codes: [2304],
+      missingNames: ['dialog'],
+      message: "TS2304 Cannot find name 'dialog'.",
+    },
+  };
+  const result = run('missing-one', allowlist);
+  expect(result.checked).toBe(1);
+  expect(result.unexpected).toEqual([]);
+  expect(result.stale).toEqual([]);
+});
+
 test('the same diagnostic code with an EXTRA missing identifier is unexpected, not grandfathered', () => {
   // A forgotten `at` import raises TS2304 exactly like the recorded missing
   // `dialog` — matching on codes alone would hide it. The guard must compare
@@ -124,12 +141,16 @@ test('the same diagnostic code with an EXTRA missing identifier is unexpected, n
   expect(failure.key).toBe(key);
   expect(failure.missingNames).toContain('at');
   expect(failure.missingNames).toContain('dialog');
+  // Reported once, and not as stale: the entry still describes a block that is
+  // genuinely still broken, so deleting it would drop the grandfathering too.
+  expect(result.stale).toEqual([]);
 });
 
 test('a ```ts fence is stripped before compiling, so a fenced valid block passes', () => {
   // Left in place, the backticks would parse as a template literal and the
   // block could not compile as the code it documents.
   const result = run('fenced', {});
+  expect(result.checked).toBe(1);
   expect(result.unexpected).toEqual([]);
 });
 
@@ -137,6 +158,7 @@ test('relative imports resolve against the SOURCE directory and nothing is writt
   const result = run('relative', {});
   // The block imports './thing.js'; it compiles only if the virtual file is
   // placed inside the source's own directory.
+  expect(result.checked).toBe(1);
   expect(result.unexpected).toEqual([]);
   // The compilation is virtual: after the run the directory holds only the
   // two committed fixtures, no emitted or temporary .ts files.
@@ -209,6 +231,11 @@ test('every @example in the shipped packages compiles, modulo only the committed
   // an example was fixed and its entry must now be deleted.
   const allowlist = JSON.parse(readFileSync(join(HERE, 'jsdoc-examples.allowlist.json'), 'utf8')) as Allowlist;
   const result = checkExamples(collectExamples(SHIPPED_ROOTS), allowlist);
+  // A floor, not a target. Both assertions below are vacuously true when the
+  // harness collects nothing, and the allowlist is meant to drain to empty — at
+  // which point an extractor that silently found zero blocks would pass this
+  // gate cleanly. The repo carries 376 blocks today.
+  expect(result.checked).toBeGreaterThanOrEqual(300);
   // Assert on sorted key projections, not the raw failure objects, so a CI
   // failure prints exactly which `file::Symbol` broke instead of a wall of
   // full diagnostics.

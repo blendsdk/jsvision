@@ -7,10 +7,10 @@
  * both are load-bearing: a body that keeps its fence never compiles, and a key
  * that shifts between runs turns the ratchet into a random failure generator.
  */
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, test, expect } from 'vitest';
-import { collectExamples } from '../src/api/jsdoc-examples.mjs';
+import { collectExamples, SHIPPED_ROOTS } from '../src/api/jsdoc-examples.mjs';
 
 const IMPL_FIXTURES = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'jsdoc-examples', 'impl');
 
@@ -87,5 +87,25 @@ describe('virtual paths', () => {
     }
     // Unique per block, so two blocks in one file cannot shadow each other.
     expect(new Set(blocks.map((b) => b.virtualPath)).size).toBe(blocks.length);
+  });
+
+  test('names every virtual file after its own source, not by offset alone', () => {
+    // The directory is shared with sibling sources, and a byte offset is unique
+    // only within one file. Two blocks in sibling files at the same offset would
+    // otherwise collapse onto one path — and each would then be scored against
+    // the other's source, which no assertion downstream could catch.
+    for (const b of blocks) {
+      const source = basename(b.file, '.ts');
+      expect(basename(b.virtualPath)).toBe(`.jsdoc-example.${source}.${b.pos}.ts`);
+    }
+  });
+
+  test('yields globally distinct virtual paths across the whole shipped surface', () => {
+    // The fixtures are too few to collide by chance; the real tree is not. Its
+    // closest sibling pair sits 3 bytes apart, so this is the case that would
+    // actually fire if the naming scheme regressed.
+    const shipped = collectExamples(SHIPPED_ROOTS);
+    expect(shipped.length).toBeGreaterThan(0);
+    expect(new Set(shipped.map((b) => b.virtualPath)).size).toBe(shipped.length);
   });
 });
