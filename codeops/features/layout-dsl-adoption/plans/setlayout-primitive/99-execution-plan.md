@@ -2,8 +2,8 @@
 
 > **Implements**: layout-dsl-adoption/GH-117 · **GitHub**: [#117](https://github.com/blendsdk/jsvision/issues/117)
 > **CodeOps Skills Version**: 3.10.0
-> **Progress**: 8/22 tasks (36%)
-> **Last Updated**: 2026-07-20 (Phase 1 complete; revised after preflight — [`00-preflight-report.md`](00-preflight-report.md))
+> **Progress**: 17/22 tasks (77%)
+> **Last Updated**: 2026-07-20 (Phases 1–2 complete — all 23 conversions landed; revised after preflight — [`00-preflight-report.md`](00-preflight-report.md))
 > **Branch**: `feat/setlayout-primitive` (cut from `feat/dsl-adoptation`)
 > **Verify**: `TUI_SKIP_PERF=1 yarn verify && yarn workspace @jsvision/examples test:e2e` (AR-4 — `yarn verify` runs only the `unit` project, and `ui` reaches the demos through its built `dist`; the env prefix only works after task 1.0)
 > **Routing**: **sensitive → Opus.** This is the layout primitive every view writes through (CLAUDE.md: core engine work is sensitive). The migration tasks are standard, but they are small and inline.
@@ -31,19 +31,19 @@ Specification-first: ST-S1…S4 are written and **red** before `setLayout` exist
 The audit is inverted ahead of the migration deliberately: an audit run afterwards can only ratify
 what already happened (03-02 §audit-first).
 
-- [ ] 2.1 **Complete the audit table in 03-02** — 23 rows, **no code changes in this task**. Three rows are pre-filled (traced); fill the rest. For each: the starting object, what a replace clears, whether anything downstream restores it, and **whether the view is mounted at call time** — the column whose absence let a misclassification survive the first draft. A ⛔ verdict halts the phase and that site becomes a preserved wholesale assignment with a plain-language comment + a runtime register entry
-- [ ] 2.2 Record the existing witnesses green **pre-migration** — `dsl-absolute.spec.test.ts`, `dsl-hardening.impl.test.ts`, `dialog.dsl-shape.impl.test.ts`, `dialog.centering.impl.test.ts`, `layout-dsl-stack.spec.test.ts`, and `app-shell.composition.spec.test.ts` (ST-W1 covers `application.ts:343`/`:347`; **ST-W4 is the mechanical guard that `:333` stays a clobber**). These already assert merge-preservation, the `Dialog` end state and the shell composition more strongly than new witnesses would (07 §migration witnesses), and must stay green **and unedited** through the phase. Then write the **one** genuinely new witness, **ST-I5** (`StatusLine`/`ColorPicker` `layout.direction === 'row'`) in `view-setlayout.impl.test.ts` — green-first, before the task-2.6 conversion it witnesses
-- [ ] 2.3 ST-S5 written and **red** — a tagger on an already-mounted view calls `markRelayout`. The one deliberate red in this phase (AR-5). It **specifies new behaviour**; it does not witness a bug fix — no site in the codebase observes the change today
-- [ ] 2.4 Convert the **14** DSL sites in `dsl/absolute.ts`, `dsl/flex.ts`, `dsl/stack.ts` — including `flex.ts:217` (`spacer()`), whose wrapped assignment no `.layout = ` grep can see. Leave `stack.ts:153`'s trailing batched `invalidateLayout()` in place — redundant, harmless, and it invalidates through the Stack's host where `setLayout` invalidates through the layer's (03-02)
-- [ ] 2.5 Verify — ST-S5 now **green**; the five witness suites still green and unedited
-- [ ] 2.6 Convert the 6 straightforward `this.layout =` sites: `statusline.ts:83`, `color-picker.ts:220`, `window.ts:161`, `edit-window.ts:77`, `form-dialog.ts:82`, `filter-popup.ts:285`. **`window.ts:161` is the one conversion that adds a reflow** (FR-4a): `commitPlacement()` does not invalidate today and runs on a mounted window at gesture start. Benign — it writes `bounds` back into `layout.rect`, so the extra reflow recomputes identical geometry — but confirm the window/desktop suites stay green and unedited. Rebuild `ui` before any scoped inner-loop run — a bare `yarn workspace @jsvision/datagrid test` bypasses turbo's `^build` and asserts against a stale dist
-- [ ] 2.7 Convert `application.ts:343` and `:347` — the two sites the widget-adoption plan handed to #117 by name and that were orphaned when #109 closed. **Do not touch `:333`**: it is an intentional wholesale replace the sibling plan preserved deliberately (02 §3)
-- [ ] 2.8 Convert `dialog.ts:109` **last** — the only site whose safety rests on a traced argument rather than an empty starting object ([02 §4](02-current-state.md)). Rewrite the surrounding comment if the conversion makes it false
-- [ ] 2.9 Verify — the existing dialog suites green and unedited; full verify; commit
+- [x] 2.1 **Complete the audit table in 03-02** — 23 rows, **no code changes in this task**. Three rows are pre-filled (traced); fill the rest. For each: the starting object, what a replace clears, whether anything downstream restores it, and **whether the view is mounted at call time** — the column whose absence let a misclassification survive the first draft. A ⛔ verdict halts the phase and that site becomes a preserved wholesale assignment with a plain-language comment + a runtime register entry
+- [x] 2.2 Record the existing witnesses green **pre-migration** — `dsl-absolute.spec.test.ts`, `dsl-hardening.impl.test.ts`, `dialog.dsl-shape.impl.test.ts`, `dialog.centering.impl.test.ts`, `layout-dsl-stack.spec.test.ts`, and `app-shell.composition.spec.test.ts` (ST-W1 covers `application.ts:343`/`:347`; **ST-W4 is the mechanical guard that `:333` stays a clobber**). These already assert merge-preservation, the `Dialog` end state and the shell composition more strongly than new witnesses would (07 §migration witnesses), and must stay green **and unedited** through the phase. Then write the **one** genuinely new witness, **ST-I5** (`StatusLine`/`ColorPicker` `layout.direction === 'row'`) in `view-setlayout.impl.test.ts` — green-first, before the task-2.6 conversion it witnesses
+- [x] 2.3 ST-S5 written and **red** — a tagger on an already-mounted view calls `markRelayout`. The one deliberate red in this phase (AR-5). It **specifies new behaviour**; it does not witness a bug fix — no site in the codebase observes the change today
+- [x] 2.4 Convert the **14** DSL sites in `dsl/absolute.ts`, `dsl/flex.ts`, `dsl/stack.ts` — including `flex.ts:217` (`spacer()`), whose wrapped assignment no `.layout = ` grep can see. Leave `stack.ts:153`'s trailing batched `invalidateLayout()` in place — redundant, harmless, and it invalidates through the Stack's host where `setLayout` invalidates through the layer's (03-02)
+- [x] 2.5 Verify — ST-S5 now **green**; the five witness suites still green and unedited
+- [x] 2.6 Convert the 6 straightforward `this.layout =` sites: `statusline.ts:83`, `color-picker.ts:220`, `window.ts:161`, `edit-window.ts:77`, `form-dialog.ts:82`, `filter-popup.ts:285`. **`window.ts:161` is the one conversion that adds a reflow** (FR-4a): `commitPlacement()` does not invalidate today and runs on a mounted window at gesture start. Benign — it writes `bounds` back into `layout.rect`, so the extra reflow recomputes identical geometry — but confirm the window/desktop suites stay green and unedited. Rebuild `ui` before any scoped inner-loop run — a bare `yarn workspace @jsvision/datagrid test` bypasses turbo's `^build` and asserts against a stale dist
+- [x] 2.7 Convert `application.ts:343` and `:347` — the two sites the widget-adoption plan handed to #117 by name and that were orphaned when #109 closed. **Do not touch `:333`**: it is an intentional wholesale replace the sibling plan preserved deliberately (02 §3)
+- [x] 2.8 Convert `dialog.ts:109` **last** — the only site whose safety rests on a traced argument rather than an empty starting object ([02 §4](02-current-state.md)). Rewrite the surrounding comment if the conversion makes it false
+- [x] 2.9 Verify — the existing dialog suites green and unedited; full verify; commit
 
 ## Phase 3 — Hardening & close-out (standard)
 
-- [ ] 3.1 Grep audit, both patterns run verbatim from [02 §8](02-current-state.md), each returning **0**: `grep -rnE "^\s*[A-Za-z_.]+\.layout\s*=([^=]|$)" packages/ui/src/view/dsl/` and `grep -rnE "this\.layout\s*=([^=]|$)" packages/{ui,forms,datagrid}/src`. **The `([^=]|$)` tail is load-bearing** — the `[^=]`-only form silently misses `flex.ts:217`. Confirm the remaining `.layout =` writes are only the composition sites the adoption issues own and the 10 field initializers
+- [ ] 3.1 Grep audit, both patterns run verbatim from [02 §8](02-current-state.md). The DSL pattern returns **0**; the self-layout pattern returns **exactly 1** — `setLayout`'s own body (see DEV-1): `grep -rnE "^\s*[A-Za-z_.]+\.layout\s*=([^=]|$)" packages/ui/src/view/dsl/` and `grep -rnE "this\.layout\s*=([^=]|$)" packages/{ui,forms,datagrid}/src`. **The `([^=]|$)` tail is load-bearing** — the `[^=]`-only form silently misses `flex.ts:217`. Confirm the remaining `.layout =` writes are only the composition sites the adoption issues own and the 10 field initializers
 - [ ] 3.2 `git diff --stat` — nothing under `packages/spike-data-studio` or another package's `src/` touched (AC-9, NFR-6); `turbo.json`, `packages/ui/test/**` and the regenerated `tools/claude-plugin/**` snapshot are the expected out-of-`src` entries
 - [ ] 3.3 `yarn check:deps`. Kitchen-sink + `layout-dsl-playground` smoke suites green **and unedited** — no story is required (`setLayout` is non-visual layout math per `codeops/kitchen-sink-gate.md` §Scope), but FR-4 changes tagger runtime behaviour, so the smoke suites are the check that it did not disturb them. **`yarn bench` is not run**: it measures `@jsvision/core`'s frame bench and cannot observe a `ui` layout-pass regression (NFR-3)
 - [ ] 3.4 **Reconcile #117 and both roadmaps.** On the issue: correct the stale `225 writes / 29 reads` to the measured `82 writes / 17 reads`, correct the "P1 + the getter" design (a class field cannot override an accessor — 02 §5.2), and tick P1/P2/P3. Record **P4's preconditions**: the 59 remaining executable writes (46 once the spike is deleted), the 10 field initializers, the **9 in-place `layout.rect = …` mutations a getter would not close**, the test/example write population, and `spike-data-studio`'s deletion. In `codeops/features/layout-dsl-adoption/00-roadmap.md`: update the #117 row's stage and the header progress line, **and rewrite the four stale figures its #117 row still carries** ("13 DSL internals" → 14, "11 subclass field initializers" → 10, "138 writes / 24 reads" → 82 / 17, "~118 composition writes" → 59, of which 46 after the spike); also correct the #109 row, which names the handed-over sites as `:347`/`:353` when they are now `:343`/`:347`. In `codeops/00-roadmap.md` (portfolio): update the layout-dsl-adoption row's sequencing sentence and issue count
@@ -53,8 +53,16 @@ what already happened (03-02 §audit-first).
 
 ## Deviations
 
-_None yet. A ⛔ audit verdict in task 2.1 is **not** a deviation — it is the audit working, and that
-site becomes a preserved assignment._
+**DEV-1 (task 3.1) — the self-layout grep oracle cannot return 0; it must return 1.**
+`setLayout`'s own body *is* `this.layout = { ...this.layout, ...patch }` (`view.ts:254`), so it
+matches the `this\.layout\s*=([^=]|$)` pattern and will match forever. The oracle as written is
+unsatisfiable. Corrected: the grep must return **exactly one** hit, `packages/ui/src/view/view.ts`
+— the primitive's own assignment, the single place the field is legitimately written. Any second hit
+is a missed site. Recorded as a correction rather than an exclusion: filtering `view.ts` out of the
+path would hide a real regression if a *new* wholesale write ever landed in that file.
+
+_A ⛔ audit verdict in task 2.1 would **not** have been a deviation — it is the audit working, and
+that site would become a preserved assignment. Task 2.1 returned 23 ✅ / 0 ⛔._
 
 ## Post-preflight revisions (2026-07-20)
 

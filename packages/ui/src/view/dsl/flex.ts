@@ -93,11 +93,11 @@ function container(direction: Direction, args: Array<Flex | Child>): Group {
   if (first !== null && first !== undefined && first !== false && !(first instanceof View)) {
     const props = first as Flex;
     children = args.slice(1);
-    group.layout = toLayout(props, direction);
+    group.setLayout(toLayout(props, direction));
     if (props.background !== undefined) group.background = props.background;
   } else {
     children = args;
-    group.layout = { direction };
+    group.setLayout({ direction });
   }
   // Skip null/undefined/false so `col(cond && fixed(x, 1), grow(y))` composes; anything else is a View.
   for (const child of children) {
@@ -169,7 +169,7 @@ export function row(...args: [Flex, ...Child[]] | Child[]): Group {
  */
 export function grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V {
   const size: Size = { kind: 'fr', weight: n, ...(opts?.min !== undefined ? { min: opts.min } : {}) };
-  view.layout = { ...view.layout, size };
+  view.setLayout({ size });
   return view;
 }
 
@@ -188,7 +188,7 @@ export function grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V
  * const app = col(grow(body), fixed(statusBar, 3));
  */
 export function fixed<V extends View>(view: V, n: number): V {
-  view.layout = { ...view.layout, size: { kind: 'fixed', cells: n } };
+  view.setLayout({ size: { kind: 'fixed', cells: n } });
   return view;
 }
 
@@ -214,7 +214,8 @@ class Empty extends View {
  */
 export function spacer(arg: number | { fixed: number } = 1): View {
   const view = new Empty();
-  view.layout =
-    typeof arg === 'number' ? { size: { kind: 'fr', weight: arg } } : { size: { kind: 'fixed', cells: arg.fixed } };
+  view.setLayout(
+    typeof arg === 'number' ? { size: { kind: 'fr', weight: arg } } : { size: { kind: 'fixed', cells: arg.fixed } },
+  );
   return view;
 }

@@ -42,20 +42,20 @@ call path can be, not what it always is.
 
 | # | Site | Starting object | Replace clears | Restored downstream? | Mounted at call time? | Verdict |
 |---|---|---|---|---|---|---|
-| 1 | `absolute.ts:44` (`at`) | caller's | | | caller-dependent — reachable mounted via `split-view`/`grid-panels` | |
-| 2 | `absolute.ts:70` (`cover`) | caller's | | | caller-dependent | |
-| 3 | `absolute.ts:94` (`center`) | caller's | | | caller-dependent | |
-| 4 | `flex.ts:96` (`container`) | `{}` — fresh `Group` | nothing | n/a | no — freshly constructed | |
-| 5 | `flex.ts:100` (`container`) | `{}` — fresh `Group` | nothing | n/a | no — freshly constructed | |
-| 6 | `flex.ts:172` (`grow`) | caller's | | | **yes** — `split-view.ts:188` per drag frame | |
-| 7 | `flex.ts:191` (`fixed`) | caller's | | | **yes** — `grid-panels.ts:563` per `rebuildBody()` | |
-| 8 | `flex.ts:217` (`spacer`) | `{}` — fresh `Empty` | nothing | n/a | no — freshly constructed | |
-| 9 | `stack.ts:149` (`Stack.draw`) | the layer's | | | **yes** — at draw time, change-gated | |
-| 10 | `stack.ts:192` (`stack`) | `{}` — fresh `Stack` | nothing | n/a | no — freshly constructed | |
-| 11 | `stack.ts:196` (`stack`) | `{}` — fresh `Stack` | nothing | n/a | no — freshly constructed | |
-| 12 | `stack.ts:208` (`stack`) | the layer's | | | no — during stack assembly | |
-| 13 | `stack.ts:216` (`stack`) | the layer's | | | no — during stack assembly | |
-| 14 | `stack.ts:225` (`stack`) | the layer's | | | no — during stack assembly | |
+| 1 | `absolute.ts:44` (`at`) | caller's | nothing — already a spread | n/a | caller-dependent — reachable mounted via `split-view`/`grid-panels` | ✅ convert — replace ≡ merge |
+| 2 | `absolute.ts:70` (`cover`) | caller's | nothing — already a spread | n/a | caller-dependent | ✅ convert — replace ≡ merge |
+| 3 | `absolute.ts:94` (`center`) | caller's | nothing — already a spread | n/a | caller-dependent | ✅ convert — replace ≡ merge. The adjacent `view.centered = true` is a separate field and is untouched |
+| 4 | `flex.ts:96` (`container`) | `{}` — fresh `Group` | nothing | n/a | no — freshly constructed | ✅ convert — the whole `toLayout(props, direction)` result becomes the patch |
+| 5 | `flex.ts:100` (`container`) | `{}` — fresh `Group` | nothing | n/a | no — freshly constructed | ✅ convert — replace ≡ merge over `{}` |
+| 6 | `flex.ts:172` (`grow`) | caller's | nothing — already a spread | n/a | **yes** — `split-view.ts:188` per drag frame | ✅ convert — no delta: that path already reflows through its own `bind(…, {relayout:true})` (`split-view.ts:170-171`) |
+| 7 | `flex.ts:191` (`fixed`) | caller's | nothing — already a spread | n/a | **yes** — `grid-panels.ts:563` per `rebuildBody()` | ✅ convert — no delta, but **not** via its bind: `grid.ts:689` passes no options object, so the reflow comes from the `Group.add`/`remove` inside `rebuildBody()` |
+| 8 | `flex.ts:217` (`spacer`) | `{}` — fresh `Empty` | nothing | n/a | no — freshly constructed | ✅ convert — the ternary moves inside the call: `view.setLayout(typeof arg === 'number' ? … : …)` |
+| 9 | `stack.ts:149` (`Stack.draw`) | the layer's | nothing — already a spread | n/a | **yes** — at draw time, change-gated | ✅ convert — safe on both counts: the write is change-gated (`:142-148`) so a settled frame makes no calls, and `flush()` snapshots `needsReflow` before composing (`render-root.ts:333,342-343`) so a draw-time `markRelayout` lands next frame and cannot re-enter. Keep the trailing `:153` |
+| 10 | `stack.ts:192` (`stack`) | `{}` — fresh `Stack` | nothing | n/a | no — freshly constructed | ✅ convert — the local `layout` object (already mutated at `:191` to default `size`) becomes the patch |
+| 11 | `stack.ts:196` (`stack`) | `{}` — fresh `Stack` | nothing | n/a | no — freshly constructed | ✅ convert — replace ≡ merge over `{}` |
+| 12 | `stack.ts:208` (`stack`) | the layer's | nothing — already a spread | n/a | no — during stack assembly | ✅ convert — replace ≡ merge |
+| 13 | `stack.ts:216` (`stack`) | the layer's | nothing — already a spread | n/a | no — during stack assembly | ✅ convert — the adjacent `layer.centered = true` is a separate field and is untouched |
+| 14 | `stack.ts:225` (`stack`) | the layer's | nothing — already a spread | n/a | no — during stack assembly | ✅ convert — replace ≡ merge. `overlay.track(layer, placement)` on the next line reads no layout prop |
 
 ### Self-layout sites (FR-5)
 
@@ -65,11 +65,17 @@ call path can be, not what it always is.
 | 16 | `statusline.ts:83` | `{}` (`Group` initializes nothing) | nothing | n/a | no — constructor | ✅ convert — replace ≡ merge |
 | 17 | `color-picker.ts:220` | `{}` | nothing | n/a | no — constructor | ✅ convert — replace ≡ merge |
 | 18 | `window.ts:161` | the window's | nothing — already a spread | n/a | **yes** — `commitPlacement()` at gesture start (`desktop.ts:213,222,235`), and **nothing on that path invalidates today** | ⚠️ convert — but note the invalidation delta (FR-4a): this is the one conversion that adds a reflow. Benign (it writes `bounds` into `layout.rect`, so geometry is unchanged), but it must be recorded, not absorbed |
-| 19 | `edit-window.ts:77` | inherits `Window`'s `{position:'absolute', padding:1}` | nothing — already a spread | n/a | no — constructor | |
-| 20 | `form-dialog.ts:82` | inherits `Dialog`'s | nothing — already a spread | n/a | no — constructor | |
-| 21 | `filter-popup.ts:285` | the popup's | nothing — already a spread | n/a | **yes** — inside `bind(…, {relayout:true})`, which already invalidates | |
-| 22 | `application.ts:343` | `opts.menuBar`'s | nothing — already a spread | n/a | no — `root` assembled at `:357`, mounted after | |
-| 23 | `application.ts:347` | `opts.statusLine`'s | nothing — already a spread | n/a | no — same | |
+| 19 | `edit-window.ts:77` | inherits `Window`'s `{position:'absolute', padding:1}` | nothing — already a spread | n/a | no — constructor | ✅ convert — but **`:78` is the ordering trap**: the very next line mutates `this.layout.rect` in place. `setLayout` assigns a *fresh* object first, so `:78` mutates the new one and the write survives. It would NOT survive the reverse order |
+| 20 | `form-dialog.ts:82` | inherits `Dialog`'s | nothing — already a spread | n/a | no — constructor | ✅ convert — replace ≡ merge. `padding: 0` here is deliberate and stays (a `formDialog` places children at explicit frame offsets) |
+| 21 | `filter-popup.ts:285` | the popup's | nothing — already a spread | n/a | **yes** — inside `bind(…, {relayout:true})`, which already invalidates | ✅ convert — no delta. Also already change-gated by `rect.height !== h` |
+| 22 | `application.ts:343` | `opts.menuBar`'s | nothing — already a spread | n/a | no — `root` assembled at `:357`, mounted after | ✅ convert — replace ≡ merge; the existing "merge, not replace" comment becomes true by construction rather than by spread |
+| 23 | `application.ts:347` | `opts.statusLine`'s | nothing — already a spread | n/a | no — same | ✅ convert — replace ≡ merge |
+
+**Audit outcome: 23 ✅, 0 ⛔.** Every site is either already a spread (18 of 23) or writes a
+freshly-constructed view whose starting object is `{}` (5). Not one replace turned out to be
+load-bearing, so no site is preserved and the phase proceeds. Two rows carry an ordering or mechanism
+note that the shape alone would not have surfaced — row 19 (the in-place `rect` mutation on the very
+next line) and row 7 (the reflow comes from `Group.add`/`remove`, not from the bind).
 
 **Any row that comes out ⛔ halts the phase** and becomes a preserved site with a comment, plus an
 entry in the register as a runtime addition. Nothing is converted on the assumption that a replace
