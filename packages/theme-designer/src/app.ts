@@ -14,7 +14,9 @@ import {
   statusLine,
   statusItem,
   Commands,
-  Group,
+  row,
+  fixed,
+  grow,
   signal,
   effect,
   untrack,
@@ -285,9 +287,7 @@ export function createDesignerApp(opts: DesignerAppOptions = {}): DesignerApp {
 
   // The three panels.
   const rail = buildRolesPanel(model);
-  rail.view.layout = { size: { kind: 'fixed', cells: 28 }, direction: 'col' };
   const preview = buildPreviewPanel(model);
-  preview.layout = { size: { kind: 'fr', weight: 1 }, direction: 'col' };
   const inspector = buildInspectorPanel({
     r,
     g,
@@ -300,10 +300,12 @@ export function createDesignerApp(opts: DesignerAppOptions = {}): DesignerApp {
       if (ready) commitColor(c);
     },
   });
-  inspector.layout = { size: { kind: 'fixed', cells: 32 }, direction: 'col' };
-
-  // A workspace row filling the desktop (viewport minus the menu + status chrome rows).
-  const workspace = new Group();
+  // A workspace row filling the desktop (viewport minus the menu + status chrome rows). The rail and
+  // the inspector hold a fixed width; the preview takes whatever is left.
+  const workspace = row(fixed(rail.view, 28), grow(preview), fixed(inspector, 32));
+  // Re-assigned wholesale on every resize rather than merged: this is the one layout write that runs
+  // repeatedly, and restating the row direction here keeps the workspace independent of how its
+  // children were composed.
   const sizeWorkspace = (size: Size2D): void => {
     workspace.layout = {
       position: 'absolute',
@@ -317,9 +319,6 @@ export function createDesignerApp(opts: DesignerAppOptions = {}): DesignerApp {
   // user manually resized the terminal.
   const buffer = app.loop.renderRoot.buffer();
   sizeWorkspace({ width: buffer.width, height: buffer.height });
-  workspace.add(rail.view);
-  workspace.add(preview);
-  workspace.add(inspector);
   app.desktop.add(workspace);
   // Chain (not replace) the app shell's resize handler, which re-fits the overlay/menu/desktop; then
   // re-size the workspace to the new viewport.
