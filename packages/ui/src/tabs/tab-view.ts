@@ -154,7 +154,7 @@ class TabBody extends Group {
     }
     // Bottom edge: `└` + `─`… + `┘` (the strip already drew the top corners `┌`/`┐` on row 0 above).
     ctx.text(0, h - 1, TAB_GLYPHS.bl, chrome);
-    for (let col = 1; col < w - 1; col += 1) ctx.text(col, h - 1, TAB_GLYPHS.h, chrome);
+    for (let x = 1; x < w - 1; x += 1) ctx.text(x, h - 1, TAB_GLYPHS.h, chrome);
     ctx.text(w - 1, h - 1, TAB_GLYPHS.br, chrome);
   }
 }

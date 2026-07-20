@@ -30,6 +30,11 @@ import {
   range,
   Commands,
   cover,
+  col,
+  row,
+  grow,
+  fixed,
+  spacer,
 } from '@jsvision/ui';
 
 /** A synthetic decoded key (no terminal needed). */
@@ -46,7 +51,7 @@ function printFrame(title: string, rows: readonly { char: string }[][]): void {
   const width = rows[0]?.length ?? 0;
   console.log(`\n${title}`);
   console.log(`+${'-'.repeat(width)}+`);
-  for (const row of rows) console.log(`|${row.map((cell) => cell.char).join('')}|`);
+  for (const line of rows) console.log(`|${line.map((cell) => cell.char).join('')}|`);
   console.log(`+${'-'.repeat(width)}+`);
 }
 
@@ -77,12 +82,16 @@ function stepScrollBar(): void {
 
 /** Step 2 — a `Scroller` over oversized content, scrolled down by keyboard. */
 function stepScroller(): void {
-  const content = new Group();
-  for (let i = 0; i < 20; i += 1) {
-    const line = new Text(`Line ${String(i + 1).padStart(2, '0')} of oversized content`);
-    line.setLayout({ position: 'absolute', rect: { x: 0, y: i, width: 30, height: 1 } });
-    content.add(line);
-  }
+  // Twenty single-row lines stacked top to bottom — the Scroller's `extent` still declares the
+  // scrollable size, since a col measures no taller than the viewport it is solved into.
+  const content = fixed(
+    col(
+      ...Array.from({ length: 20 }, (_, i) =>
+        fixed(new Text(`Line ${String(i + 1).padStart(2, '0')} of oversized content`), 1),
+      ),
+    ),
+    20,
+  );
   const scroller = new Scroller({ content, extent: { width: 30, height: 20 }, scrollbars: 'vertical' });
   cover(scroller);
   const root = new Group();
@@ -145,16 +154,22 @@ async function stepDialog(): Promise<void> {
   const dlg = new Dialog({ title: ' Person ', width: 34, height: 9 });
   const ageInput = new Input({ value: age, validator: range(0, 120) });
   const label = new Label('~A~ge (0–120)', ageInput);
-  label.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 14, height: 1 } });
-  ageInput.setLayout({ position: 'absolute', rect: { x: 16, y: 1, width: 14, height: 1 } });
   const ok = okButton();
-  ok.setLayout({ position: 'absolute', rect: { x: 6, y: 4, width: 10, height: 2 } });
   const cancel = cancelButton();
-  cancel.setLayout({ position: 'absolute', rect: { x: 18, y: 4, width: 12, height: 2 } });
-  dlg.add(label);
-  dlg.add(ageInput);
-  dlg.add(ok);
-  dlg.add(cancel);
+  // A labelled field over a centred button pair. Every child is given an explicit main-axis size
+  // because none of Label/Input/Button measures itself, and the spacer pushes the buttons to the
+  // dialog's bottom edge the way TV's hand-computed rects did.
+  dlg.setLayout({ direction: 'col' });
+  dlg.add(
+    grow(
+      col(
+        { gap: 1, padding: 1 },
+        fixed(row({ gap: 1 }, fixed(label, 14), fixed(ageInput, 14)), 1),
+        spacer(),
+        fixed(row({ gap: 2, justify: 'center' }, fixed(ok, 10), fixed(cancel, 12)), 2),
+      ),
+    ),
+  );
 
   const root = new Group();
   root.add(dlg);

@@ -2,8 +2,8 @@
 
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
-> **Last Updated**: 2026-07-21 (Phase 2 complete + reviewed — the field is locked)
-> **Progress**: 40/55 tasks (73%)
+> **Last Updated**: 2026-07-21 (Phase 3 complete — canvases converted, shadows retired)
+> **Progress**: 52/55 tasks (95%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -266,26 +266,64 @@ the new `@ts-expect-error` is genuinely load-bearing.
 
 ### Step 3.1 — Baselines
 
-- [ ] 3.1.1 Re-capture the 8 canvases and diff against **2.1.3's pre-Phase-2 baseline**; record the Phase 2 delta per canvas before changing anything further
-- [ ] 3.1.2 Decide the witness question for `playground` and `controls-live` — both `return 0` without a TTY (`playground/main.ts:29`, `controls-live/main.ts:68`), so neither renders headlessly. Build a harness mounting the composition function into `createRenderRoot({width:80,height:24})` (as `themes-demo/main.ts:63-67` does), or record them review-only, or leave them absolute. Record which
-- [ ] 3.1.3 [spec-author] ST-10, ST-11 — ST-11 scoped to files that **import** the shadowed builder
+- [x] 3.1.1 Re-capture the 8 canvases and diff against **2.1.3's pre-Phase-2 baseline**; record the Phase 2 delta per canvas before changing anything further — *done 2026-07-21*. All 6 capturable canvases re-render **byte-identical** to the baseline, re-confirming 2.2.6's zero delta on a clean tree. The 2 witness-less canvases are proven zero-delta at the layout level instead of the pixel level (EX-11): a replace→merge swap can only differ where the target's layout was non-empty in a prop the write omits, and neither has such a site
+- [x] 3.1.2 Decide the witness question for `playground` and `controls-live` — *done 2026-07-21* (EX-10). **`controls-live/form.ts` → mount harness + convert** (`buildDialog()` is exported and un-gated; its `Dialog` mounts at 58×19, baseline committed as `baselines/controls-live-form.txt`); **`playground` → left absolute**, both sites being a `Window` placement RD-01 keeps absolute and a lone `Text` inside it. **Phase 3 therefore converts 16 sites, not 18.**
+- [x] 3.1.3 [spec-author] ST-10, ST-11 — ST-11 scoped to files that **import** the shadowed builder — *implemented + red 2026-07-21* (`packages/examples/test/dsl-name-shadows.spec.test.ts`). ST-10 is not a test file: 07's own wording makes it a recorded per-canvas render verdict, which task 3.3.1 executes. ST-11 is the automated half, and it found a **6th shadow** AR-10 does not list — `examples/recipes/data-grid.ts:67` (**EX-12**), the only one that meets AC-7's criterion literally. Comment-blanking is load-bearing, not hygiene: the DSL modules' own `@example` blocks import the very builders they define, so an unblanked scan reports all 14 definitions as shadows of themselves
 
 ### Step 3.2 — Convert
 
-- [ ] 3.2.1 `dropdowns-demo` (6) — largest; per-file judgment on what is structurally flex
-- [ ] 3.2.2 `containers-demo` (5)
-- [ ] 3.2.3 `playground` (2) · `themes-demo` · `color-demo` · `date-demo` · `controls-live` · `status-bar.story` (1 each)
-- [ ] 3.2.4 Confirm `tabs-demo` carries 0 sites and needs no conversion
-- [ ] 3.2.5 The 2 `theme-designer` shadows — real conversions; call sites become `g.add(at(v, …))`
-- [ ] 3.2.6 The 3 examples shadows — `keyboard-mouse-playground:126`, `analog-clock:70` (a polar helper, not a placer), `layout.story:30` (a rename)
+- [x] 3.2.1 `dropdowns-demo` (6) — largest; per-file judgment on what is structurally flex — *done 2026-07-21*. All 6 converted: each step's `controls` becomes `col({ padding: 1 }, fixed(row(…), 1))`, the outer col fixing the row's height because neither `Input` nor `History` measures itself. **Explained delta, accepted (EX-13):** the field controls now paint. They never did — the old `controls` group held only absolute children, measured `0×0`, and was clipped away, so every frame of all four steps showed an empty field. The converted output lands on exactly the cells the old rects named
+- [x] 3.2.2 `containers-demo` (5) — *done 2026-07-21*. The Scroller's 20 content lines become a `col` of `fixed(…, 1)` rows (**byte-identical**); the dialog becomes a `col` of a labelled-field row, a spacer, and a centred button row. **One accepted delta:** the buttons sit 2 cells left of before, because `justify:'center'` centres them for real and the hand-computed rects had them off-centre by 2 in a 32-cell content box
+- [x] 3.2.3 `playground` (2) · `themes-demo` · `color-demo` · `date-demo` · `controls-live` · `status-bar.story` (1 each) — *done 2026-07-21*. **Converted, all byte-identical:** `themes-demo:63` → `cover(widgets)` (the rect merely restated the render-root size); `status-bar.story:47` → `at(bar, …)`, whose own comment said `at()` *"would drop the row direction"* — true under replace, no longer true under merge, so the workaround the lockdown obsoleted is gone; `controls-live/form.ts` → the whole 15-rect table becomes a `col` of rows, verified through the 3.1.2 harness. **Left absolute:** `playground` (2, EX-10) and `color-demo`/`date-demo` (2, EX-14) — one widget at one rect beside a `fill` overlay, where a padded wrapper would inset the popup too
+- [x] 3.2.4 Confirm `tabs-demo` carries 0 sites and needs no conversion — *confirmed 2026-07-21*, `grep -c setLayout tabs-demo/*.ts` → 0
+- [x] 3.2.5 The 2 `theme-designer` shadows — real conversions; call sites become `g.add(at(v, …))` — *done 2026-07-21*. 36 call sites across `gallery.ts` (19) and `inspector-panel.ts` (17); both local helpers deleted, `at` now imported from `@jsvision/ui`. The plan expected `inspector-panel` to have no witness, but the gallery walkthrough is one for `gallery.ts`, and stash-diffing the whole designer walkthrough before/after is **byte-identical** — the local helper did `setLayout` then `add` in the same order the DSL form does
+- [x] 3.2.6 The 3 examples shadows + the 4th found at 3.1.3 (`recipes/data-grid.ts:67`, EX-12) — *done 2026-07-21*. `keyboard-mouse-playground:126` `row` → `readoutLine`; `amiga-clock/analog-clock.ts:70` `at` → `plot` (it plots a polar point, so the old name collided on spelling only); `layout.story:30` `row` → `rowBox`; `recipes/data-grid.ts:67` `col` → `column`, which also drifted the plugin recipe snapshot and needed `yarn plugin:sync --fix` — `keyboard-mouse-playground:126`, `analog-clock:70` (a polar helper, not a placer), `layout.story:30` (a rename)
 
 ### Step 3.3 — Accept
 
-- [ ] 3.3.1 Re-render; **a recorded verdict per canvas** — byte-identical, an explained and accepted delta, or (for a witness-less canvas) a review verdict naming why there is no render diff
-- [ ] 3.3.2 AC-7 grep, scoped to files importing the shadowed name: no local binding shadows a DSL builder it imports
-- [ ] 3.3.3 Full verify
+- [x] 3.3.1 Re-render; **a recorded verdict per canvas** — *done 2026-07-21*:
+
+  | Canvas | Sites | Verdict |
+  |---|---|---|
+  | `dropdowns-demo` | 6 conv. | **Explained delta, accepted** — the field controls now paint at all (EX-13) |
+  | `containers-demo` | 5 conv. | **One explained delta, accepted** — the button pair is now genuinely centred; everything else byte-identical |
+  | `themes-demo` | 1 conv. | **Byte-identical** |
+  | `status-bar.story` | 1 conv. | **Byte-identical** |
+  | `controls-live/form` | 1 conv. | **Byte-identical** — through the harness built at 3.1.2 |
+  | `theme-designer` | 36 shadow sites | **Byte-identical** — full walkthrough stash-diffed before/after |
+  | `color-demo` · `date-demo` | 2 kept | **No render diff — not converted** (EX-14) |
+  | `playground` | 2 kept | **No render diff — not converted** (EX-10) |
+  | `tabs-demo` | 0 | Nothing to convert (3.2.4) |
+- [x] 3.3.2 AC-7 grep, scoped to files importing the shadowed name: no local binding shadows a DSL builder it imports — *done 2026-07-21*. ST-11 is green across all packages, and a direct grep for module-level `at`/`row`/`col`/`center`/`place`/`stack` bindings in `examples` + `theme-designer` returns only the harmless kind PF-020 catalogued (files that never import the builder they happen to spell)
+- [x] 3.3.3 Full verify — *done 2026-07-21*. `TURBO_CONCURRENCY=2 yarn verify` exit 0 (30/30 tasks), `check-plugin: PASS`
 
 **Verify**: `yarn verify`
+
+### Phase 3 quality review (2026-07-21)
+
+Reviewer + perf auditor dispatched in parallel on `git diff cc7a39ae`. Spec-test integrity clean —
+no pre-existing `*.spec.test.*` touched; the only spec file in the phase is the newly added oracle.
+
+| # | Sev | Lens | Finding | Ruling |
+|---|---|---|---|---|
+| RV-001 | 🟠 | standards | **The phase introduced two shadows of the kind it exists to retire.** `dropdowns-demo:44` and `containers-demo:54` both hold `for (const row of rows)` in `printFrame`, and the conversion added `row` to those files' imports — so `row` means the flex builder on the import line and a buffer row twenty lines down. The 3.3.2 grep missed them because it looked for *module-level* bindings | **Fixed** — renamed to `line` in both |
+| RV-002 | 🟠 | correctness | **The new guard was green with those shadows in the tree.** Two gaps: the declaration regex was anchored at line start, exempting `for`-loop bindings (the dominant shadow shape); and only the bare `@jsvision/ui` specifier was matched, so all of shipped `ui/src` — which imports the DSL relatively — was unguarded | **Fixed, per the maintainer's ruling** — anchor dropped, `class` added, relative `…/view/dsl/…` specifiers matched. Surfaced one pre-existing shadow, `ui/src/tabs/tab-view.ts:157` `for (let col = …)`, renamed to `x`. Parameter/destructuring shadows stay out of scope and the docstring now says so: the regex heuristic tried first false-positived on two test *titles*, so catching them needs a parser, and a guard that never cries wolf plus an honest limit beats a green that reads broader than it is |
+| RV-003 | 🟡 | maintainability | `DSL_BUILDERS` is a hand-copied duplicate of the DSL barrel — correct today, but nothing fails when the DSL gains a builder | **Fixed** — a companion test pins the list to the barrel's value exports |
+| PE-001 | 🟡 | perf | The guard comment-strips all ~1294 sources, then discards ~72% one line later; 121 ms of a 173 ms body | **Fixed** — cheap `includes` prescreen first; test body 193 ms → 130 ms |
+| PE-002 | 🟡 | perf | `containers-demo`'s `Scroller` content became an `auto` flow child, so the 20-row column is intrinsically measured on every reflow where it was O(1) before | **Fixed** — the column carries an explicit size matching the `extent` declared two lines below. Not a problem at 20 rows, but the demo is now the reference for that shape |
+
+Both new assertions were **mutation-tested, not assumed**: re-injecting the loop shadow fails with
+`dropdowns-demo/main.ts:44 — local 'row'`, and deleting one builder from the list fails the barrel
+check.
+
+**Recorded for whoever touches the layout engine next** (out of scope here, no action taken):
+`layout/measure.ts:79` calls `naturalSize(child)` unconditionally — even for a `fixed` child whose
+main size is already known — purely to read a cross extent that `align:'stretch'` then discards.
+
+**Process note.** Reverting a one-line mutation with `git checkout <file>` discarded the whole
+`dropdowns-demo` conversion. Caught, re-applied, and confirmed faithful by diffing against the
+recorded after-render (byte-identical). The remaining mutation test used a file copy. This is the
+second time in this plan that `git checkout` on a dirty tree cost work.
 
 ---
 
