@@ -156,17 +156,24 @@ test('ST-3: every package with a typecheck script typechecks every file in its t
     const pkgDir = join(PACKAGES, name);
     const testDir = join(pkgDir, 'test');
     const config = typecheckConfigOf(pkgDir);
-    if (!existsSync(testDir)) continue; // nothing to cover
     if (config === undefined) {
-      // A package can only opt out of the gate by being named here — otherwise deleting a typecheck
-      // script would silently un-gate the whole package, the exact hole this test exists to close.
-      expect(EXEMPT[name], `${name} has tests but no typecheck script, and is not a named exemption`).toBeDefined();
+      // A package can only leave the gate by being named here — otherwise deleting a typecheck
+      // script would silently un-gate it, the exact hole this test exists to close.
+      expect(EXEMPT[name], `${name} has no typecheck script and is not a named exemption`).toBeDefined();
       continue;
     }
+    if (!existsSync(testDir)) continue; // nothing to cover
+
     const inProgram = new Set(programFiles(config));
     const allowed = new Set((ALLOWED_UNCHECKED[name] ?? []).map((rel) => norm(join(pkgDir, rel))));
     for (const file of tsFilesUnder(testDir)) {
       if (!inProgram.has(file) && !allowed.has(file)) uncovered.push(relative(REPO_ROOT, file));
+    }
+    // An allowance that is no longer needed is a hole nobody would notice, so require each one to
+    // still be doing something: the file must exist and still be outside the program.
+    for (const file of allowed) {
+      expect(existsSync(file), `${relative(REPO_ROOT, file)} is allowed unchecked but no longer exists`).toBe(true);
+      expect(inProgram.has(file), `${relative(REPO_ROOT, file)} is allowed unchecked but is now covered`).toBe(false);
     }
   }
   expect(uncovered).toEqual([]);

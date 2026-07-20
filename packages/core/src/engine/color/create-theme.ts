@@ -16,13 +16,13 @@ import { darken, ramp } from './ramp.js';
 import { rolesFromAliases } from './roles.js';
 import type { Theme, ThemeRole } from './theme.js';
 
-/** Seed colors and override hooks for {@link createTheme}. */
 /**
  * A per-role, per-field patch onto a generated theme: every role is optional, and so is every field
  * within a role. Patching one field leaves the rest of that role exactly as generated.
  */
 export type RoleOverrides = { readonly [K in keyof Theme]?: Partial<Theme[K]> };
 
+/** Seed colors and override hooks for {@link createTheme}. */
 export interface ThemeOptions {
   /** Light or dark: inverts which end of the neutral ramp becomes surface vs. text. */
   readonly mode: 'light' | 'dark';
@@ -141,7 +141,11 @@ function applyRoleOverrides(base: Theme, overrides: RoleOverrides): Theme {
   for (const name of Object.keys(overrides) as (keyof Theme)[]) {
     const patch = overrides[name];
     if (patch === undefined) continue;
-    writable[name] = { ...base[name], ...patch };
+    // Drop explicitly-undefined fields before spreading: `Partial<T>` admits `{ pattern: undefined }`,
+    // and letting that through would erase the generated value rather than leave it alone — the
+    // opposite of what a caller forwarding an optional config value means by it.
+    const present = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined));
+    writable[name] = { ...base[name], ...present };
   }
   return out;
 }
