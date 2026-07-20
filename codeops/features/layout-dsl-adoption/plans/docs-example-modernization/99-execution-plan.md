@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-20 18:05
-> **Progress**: 30/41 tasks (73%) — Phase 1 complete · Phase 2 complete
+> **Last Updated**: 2026-07-20 18:20
+> **Progress**: 32/41 tasks (78%) — Phases 1-2 complete · Phase 3 audit cleared (0 blockers)
 > **CodeOps Skills Version**: 3.11.0
 
 ## Overview
@@ -161,7 +161,7 @@ is one reviewable change; counts in parentheses are lines, and they sum to 53.
 
 ## Phase 3: docs-site shadow retirement
 
-> **Phase ref**: _(recorded at phase start)_
+> **Phase ref**: 868f798d
 > **Lenses**: api-surface
 > **Routing**: standard — mechanical conversion, but the audit gates it.
 
@@ -170,8 +170,8 @@ is one reviewable change; counts in parentheses are lines, and they sum to 53.
 **Reference**: [03-03](03-03-docs-site-shadow-retirement.md) §The two behavioural deltas · AR-3
 **Objective**: Clear Delta A and Delta B **before** anything is converted.
 
-- [ ] 3.1.1 Capture rendered baselines for all seven examples at a fixed viewport into the session scratchpad, after a build (docs-site resolves `@jsvision/ui` from `dist/`)
-- [ ] 3.1.2 Run queries A1–A4 and B1; fill the audit table in [03-03](03-03-docs-site-shadow-retirement.md). Hunt **padding-carrying arguments** specifically — under `position:'absolute'` a preserved `size` is inert and `direction:'row'` is the default, so `padding` is the only load-bearing preserved prop. An empty table is not a pass; every surfaced row gets a verdict, and any ⛔ is resolved by the three-way rule, never absorbed
+- [x] ✅ (completed: 2026-07-20 18:20) 3.1.1 Capture rendered baselines for all seven examples at a fixed viewport into the session scratchpad, after a build (docs-site resolves `@jsvision/ui` from `dist/`)
+- [x] ✅ (completed: 2026-07-20 18:20) 3.1.2 Run queries A1–A4 and B1; fill the audit table in [03-03](03-03-docs-site-shadow-retirement.md). Hunt **padding-carrying arguments** specifically — under `position:'absolute'` a preserved `size` is inert and `direction:'row'` is the default, so `padding` is the only load-bearing preserved prop. An empty table is not a pass; every surfaced row gets a verdict, and any ⛔ is resolved by the three-way rule, never absorbed
 
 ### Step 3.2: Specification tests
 
