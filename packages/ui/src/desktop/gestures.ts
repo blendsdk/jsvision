@@ -20,8 +20,13 @@ export type Gesture =
   | { kind: 'resize'; target: Window; originX: number; originY: number } // bottom-right — top-left stays fixed
   | { kind: 'resize-left'; target: Window; anchorRight: number; originY: number }; // bottom-left — right edge + top stay fixed
 
-/** The window's current rect, or a minimum-size fallback if it has none yet. */
-function rectOf(w: Window): Rect {
+/**
+ * The window's current rect, or a minimum-size fallback if it has none yet.
+ *
+ * Read-only: this hands back the live `layout.rect`, and a mutable alias would let a caller move the
+ * window a field at a time without ever requesting a reflow.
+ */
+function rectOf(w: Window): Readonly<Rect> {
   return w.layout.rect ?? { x: 0, y: 0, width: MIN_WIDTH, height: MIN_HEIGHT };
 }
 
@@ -55,8 +60,11 @@ export function applyResize(g: Extract<Gesture, { kind: 'resize' }>, local: Poin
   const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
   g.target.setLayout({ rect: { x: rect.x, y: rect.y, width, height } });
   g.target.onResized(); // re-pin the window's children to the new size before the repaint reads them
-  // Not redundant with `setLayout`'s own reflow request: that one fires before `onResized()`
-  // re-pins, so this is the one that schedules a pass seeing the re-pinned children.
+  // Kept rather than folded into the `setLayout` above, and not a no-op in every host: a reflow
+  // request is a coalesced flag, so under the default deferred scheduler the pass runs after this
+  // whole function and already sees the re-pinned children. Under a synchronous scheduler it does
+  // not -- `setLayout`'s request flushes inline, before the re-pin -- and this is what schedules the
+  // pass that sees it.
   g.target.invalidateLayout();
 }
 
@@ -75,7 +83,10 @@ export function applyResizeLeft(g: Extract<Gesture, { kind: 'resize-left' }>, lo
   const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
   g.target.setLayout({ rect: { x, y: g.originY, width, height } });
   g.target.onResized(); // re-pin the window's children to the new size before the repaint reads them
-  // Not redundant with `setLayout`'s own reflow request: that one fires before `onResized()`
-  // re-pins, so this is the one that schedules a pass seeing the re-pinned children.
+  // Kept rather than folded into the `setLayout` above, and not a no-op in every host: a reflow
+  // request is a coalesced flag, so under the default deferred scheduler the pass runs after this
+  // whole function and already sees the re-pinned children. Under a synchronous scheduler it does
+  // not -- `setLayout`'s request flushes inline, before the re-pin -- and this is what schedules the
+  // pass that sees it.
   g.target.invalidateLayout();
 }

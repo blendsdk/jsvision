@@ -245,6 +245,18 @@ trailing call is the one that schedules a pass seeing the re-pinned children. Al
 in-place mutation is now visible to an in-flight solve. Unreachable today (`firePendingMounts` runs
 after `layout()` returns), but a real seam for whoever adds a `measure()` that writes layout.
 
+**Re-review of the fix diff** (`4f1f3582..80ab9f7f`) — 4 further findings, all resolved. It confirmed
+the five `CLEARED_LAYOUT` seams are prop-for-prop equivalent to the hand lists they replaced, that the
+constant is absent from both public barriers, that the `Readonly<Rect>` narrowing is free, and that
+the new `@ts-expect-error` is genuinely load-bearing.
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| RV-007 | 🔴 | The fix diff edited **three long-standing spec oracles** purely to apply RV-006's object shorthand. No assertion changed, but AR-15's allowance covers rewrites *required to keep compiling*, and a style nit is not one — as the reviewer put it, nothing required touching an oracle to satisfy a shorthand nit | **The three reverted.** The shorthand stays only where it was legitimate (`matrix-rain/main.ts` in shipped source, and the impl test). Two further spec files in the diff are **not** oracle mutation and are recorded as such: `view-layout-readonly.spec.test.ts` was authored *this phase* at `9bf6c009` (task 2.4.1), and the widened test in `snippet-drift.spec.test.ts` is one added this phase in 2.2.7 — that file's pre-existing test is untouched |
+| RV-008 | 🟡 | The four "not redundant" comments added after the perf audit **state a mechanism that is false**: a reflow request only sets a coalesced flag, so under the default `queueMicrotask` scheduler the pass runs after the whole handler and already sees the re-pinned children. Same defect class as RV-004 — a claim planted to stop a deletion, which a reader who checks it will find untrue | Restated with the scheduler dependency made explicit. The claim holds **only** under a synchronous scheduler, which is what several suites install (`view.occlusion.impl`, `layout-dsl.spec`) — there `setLayout`'s request flushes inline, before the re-pin, and the trailing call is what schedules the pass that sees it. EX-5's *decision* is unaffected; only its in-code justification was overstated |
+| RV-009 | 🟡 | The guard's `/references/api/` exemption used a hard-coded `/`, so it never fires on win32 — and CI runs the docs-site project on the Windows matrix. Latent: the day the generated API ref picks up `View.layout`'s JSDoc (which names the closed spellings verbatim), the suite would pass on Linux and fail only on Windows | Separators normalized before the test. The header now also states that this exemption is the **only** escape hatch, since whole-page scanning means no teaching page can show the assignment even as a labelled anti-pattern |
+| RV-010 | 🟡 | Two more mutable-rect launder points the RV-003 narrowing left open — `gestures.ts:24` and `menu/controller.ts:155` both re-widen the live `layout.rect` to a mutable `Rect`, which TypeScript will not flag. Neither is mutated today, but they defeat the invariant the new JSDoc advertises, inside `ui/src` | Both annotated `Readonly<Rect>`. Free — typecheck stays 15/15 |
+
 ---
 
 ## Phase 3: Canvas adoption (#129)

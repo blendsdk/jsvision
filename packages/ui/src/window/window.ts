@@ -210,8 +210,11 @@ export class Window extends Group {
     this.setLayout({ rect: { x: 0, y: 0, width: size.width, height: size.height } }); // re-maximize
     this.restoredRect = clampRestoredRect(this.restoredRect, size); // keep the un-zoom target on-screen
     this.onResized(); // let a subclass re-pin its absolute children to the new size
-    // Not redundant with `setLayout`'s own reflow request: that one fires before `onResized()`
-    // re-pins, so this is the one that schedules a pass seeing the re-pinned children.
+    // Kept rather than folded into the `setLayout` above, and not a no-op in every host: a reflow
+    // request is a coalesced flag, so under the default deferred scheduler the pass runs after this
+    // whole function and already sees the re-pinned children. Under a synchronous scheduler it does
+    // not -- `setLayout`'s request flushes inline, before the re-pin -- and this is what schedules the
+    // pass that sees it.
     this.invalidateLayout();
   }
 

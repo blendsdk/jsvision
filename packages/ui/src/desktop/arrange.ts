@@ -17,8 +17,11 @@ function place(w: Window, x: number, y: number, width: number, height: number): 
   w.resetZoom();
   w.setLayout({ rect: { x, y, width, height } });
   w.onResized(); // re-pin children to the new size before the repaint reads them
-  // Not redundant with `setLayout`'s own reflow request: that one fires before `onResized()`
-  // re-pins, so this is the one that schedules a pass seeing the re-pinned children.
+  // Kept rather than folded into the `setLayout` above, and not a no-op in every host: a reflow
+  // request is a coalesced flag, so under the default deferred scheduler the pass runs after this
+  // whole function and already sees the re-pinned children. Under a synchronous scheduler it does
+  // not -- `setLayout`'s request flushes inline, before the re-pin -- and this is what schedules the
+  // pass that sees it.
   w.invalidateLayout();
 }
 

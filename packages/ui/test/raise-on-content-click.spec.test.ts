@@ -57,7 +57,7 @@ function windowWithLeaf(
   rect: { x: number; y: number; width: number; height: number },
 ): { win: Window; leaf: ConsumingLeaf } {
   const win = new Window(title);
-  win.setLayout({ rect });
+  win.setLayout({ rect: rect });
   const leaf = new ConsumingLeaf();
   win.add(leaf);
   app.desktop.addWindow(win);
