@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-20 13:47
-> **Progress**: 9/20 tasks (45%)
+> **Last Updated**: 2026-07-20 13:54
+> **Progress**: 16/20 tasks (80%)
 > **CodeOps Skills Version**: 3.10.0
 
 ## Overview
@@ -87,19 +87,19 @@ so ST-4 would be unsatisfiable without it. PR opens against `feat/dsl-adoptation
 **Reference**: [03-01 §The four local placers](03-01-shadow-retirement.md) · AR-13
 **Objective**: No hand-rolled absolute placer or DSL-name-shadowing helper survives in a touched file.
 
-- [ ] 1.4.0 Capture pre-conversion baselines for `wizard-demo`, `themes-demo`, `tabs-demo` and the kitchen-sink `wizard` story — **before** any of 1.4.1–1.4.4 edits them
-- [ ] 1.4.1 Delete `place()`, adopt `at`; rename the `row` text helper to `fieldRow` — `packages/examples/wizard-demo/main.ts:52,178`
-- [ ] 1.4.2 Delete the void-returning `place()`, adopt `at` — `packages/examples/themes-demo/main.ts:37`
-- [ ] 1.4.3 Delete `placed()`, adopt `at(view, x, y, 40, 1)` — `packages/examples/tabs-demo/main.ts:43`
-- [ ] 1.4.4 Rename the `row` text helper to `fieldRow` — `packages/examples/kitchen-sink/stories/wizard.story.ts:113`
-- [ ] 1.4.5 Zero-diff the four affected demos against 1.4.0; full verify
+- [x] 1.4.0 Capture pre-conversion baselines for `wizard-demo`, `themes-demo`, `tabs-demo` and the kitchen-sink `wizard` story — **before** any of 1.4.1–1.4.4 edits them ✅ (completed: 2026-07-20 13:54) — all four captured
+- [x] 1.4.1 Delete `place()`, adopt `at`; rename the `row` text helper to `fieldRow` — `packages/examples/wizard-demo/main.ts:52,178` ✅ (completed: 2026-07-20 13:54) — 24 call sites; `at` added to the ui import, the now-unused `type View` import dropped
+- [x] 1.4.2 Delete the void-returning `place()`, adopt `at` — `packages/examples/themes-demo/main.ts:37` ✅ (completed: 2026-07-20 13:54) — **plan correction**: the helper also did `g.add(view)`, so call sites became `g.add(at(…))`, not a bare `at(…)`. Recorded in 03-01
+- [x] 1.4.3 Delete `placed()`, adopt `at(view, x, y, 40, 1)` — `packages/examples/tabs-demo/main.ts:43` ✅ (completed: 2026-07-20 13:54) — 1 call site; `at` added to the ui import
+- [x] 1.4.4 Rename the `row` text helper to `fieldRow` — `packages/examples/kitchen-sink/stories/wizard.story.ts:113` ✅ (completed: 2026-07-20 13:54) — 5 uses
+- [x] 1.4.5 Zero-diff the four affected demos against 1.4.0; full verify ✅ (completed: 2026-07-20 13:54) — **all four ZERO DIFF** across 528 lines of rendered output (wizard 80 · themes 381 · tabs 67) plus the wizard story at two viewport sizes. Only yarn’s own "Done in Xs" timing lines differed and were excluded
 
 ### Step 1.5: Type-check the untypechecked surface
 
 **Reference**: [07 §What the type-checker does and does not cover](07-testing-strategy.md) · [02 §Gap 2](02-current-state.md)
 **Objective**: Make AC-1's "411 call sites compile unchanged" a real, executed check rather than an assumption.
 
-- [ ] 1.5.1 Run a one-shot `npx tsc --noEmit` with a scratchpad tsconfig extending `packages/examples/tsconfig.json` and adding `kitchen-sink`, `test`, `wizard-demo`, `themes-demo`, `tabs-demo` to `include`. No committed config change. Record the result — in particular that `themes-demo`'s former `place()` void return is not used in an expression position
+- [x] 1.5.1 Run a one-shot `npx tsc --noEmit` with a scratchpad tsconfig extending `packages/examples/tsconfig.json` and adding `kitchen-sink`, `test`, `wizard-demo`, `themes-demo`, `tabs-demo` to `include`. No committed config change. Record the result — in particular that `themes-demo`'s former `place()` void return is not used in an expression position ✅ (completed: 2026-07-20 13:54) — **46 pre-existing errors before, 46 after, 0 introduced** — AC-1 evidenced. The sweep loads 54 kitchen-sink files + the new spec test that the standing build never compiles. The 46 are latent errors in never-typechecked files (`shell.ts` optional-chaining, `.mjs` script imports lacking types, implicit `any` in test callbacks) — untouched by this plan and worth a separate cleanup. First baseline attempt via a git worktree was **invalid** (no `node_modules` there, so it hit the `tsc` placeholder package and reported a bogus 0); redone in-repo by restoring the shadows, measuring, and restoring the re-export
 
 **Deliverables**:
 - [ ] `story-at.spec.test.ts` with all five ST cases green

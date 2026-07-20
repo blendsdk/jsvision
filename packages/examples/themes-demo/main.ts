@@ -16,7 +16,7 @@
  * required by NodeNext ESM resolution.
  */
 import { resolveCapabilities, type CapabilityProfile, type ColorDepth } from '@jsvision/core';
-import { createRenderRoot, createRoot, Group, Button, Text, Input, signal } from '@jsvision/ui';
+import { createRenderRoot, createRoot, Group, Button, Text, Input, signal, at } from '@jsvision/ui';
 import {
   currentTheme,
   cycleAccent,
@@ -34,14 +34,10 @@ const INITIAL: DesignerState = { mode: 'dark', accent: '#3b82f6', status: {}, de
 function previewWidgets(label: string): Group {
   const g = new Group();
   g.background = 'window';
-  const place = (view: Group | Text | Button | Input, x: number, y: number, w: number, h: number): void => {
-    view.layout = { position: 'absolute', rect: { x, y, width: w, height: h } };
-    g.add(view);
-  };
-  place(new Text(label), 1, 0, 30, 1);
-  place(new Input({ value: signal('editable input') }), 1, 2, 24, 1);
-  place(new Button('~O~K', { onClick: () => {} }), 1, 4, 8, 2);
-  place(new Button('~C~ancel', { onClick: () => {} }), 10, 4, 12, 2);
+  g.add(at(new Text(label), 1, 0, 30, 1));
+  g.add(at(new Input({ value: signal('editable input') }), 1, 2, 24, 1));
+  g.add(at(new Button('~O~K', { onClick: () => {} }), 1, 4, 8, 2));
+  g.add(at(new Button('~C~ancel', { onClick: () => {} }), 10, 4, 12, 2));
   return g;
 }
 
