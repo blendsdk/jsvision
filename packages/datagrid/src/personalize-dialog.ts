@@ -388,11 +388,11 @@ export class PersonalizeDialog<T> extends Dialog {
   private buildColumnScroller(contentW: number): Scroller {
     const height = Math.max(1, this.cols().length * ROW_HEIGHT);
     for (const c of this.cols()) this.rowById.set(c.id, this.buildRow(c));
-    this.region.layout = {
+    this.region.setLayout({
       direction: 'col',
       position: 'absolute',
       rect: { x: 0, y: 0, width: contentW, height },
-    };
+    });
     for (const c of this.cols()) this.region.add(this.rowById.get(c.id)!);
     // Keep the region's child order in step with the working order (the rows themselves are reused).
     this.region.onMount(() => {

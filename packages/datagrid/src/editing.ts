@@ -227,10 +227,19 @@ export function createEditController<T>(host: EditHost<T>): EditController {
         built.editor = e;
         if (e === null) return null; // a read-only editor kind → mount nothing
         const editorHost = new Group();
-        // Assigned wholesale rather than tagged: a custom editor factory's own layout on the view it
-        // returns is intentionally discarded, so an editor always fills its cell no matter what the
-        // factory set.
-        e.layout = { position: 'fill' };
+        // Every other prop is reset explicitly, not merely left unset: a custom editor factory's own
+        // layout on the view it returns is intentionally discarded, so an editor always fills its cell
+        // no matter what the factory set. An explicit `undefined` clears a prop back to its default.
+        e.setLayout({
+          position: 'fill',
+          direction: undefined,
+          justify: undefined,
+          align: undefined,
+          gap: undefined,
+          padding: undefined,
+          size: undefined,
+          rect: undefined,
+        });
         editorHost.add(e);
         // Enter/Esc bubble up the focus chain from the editor (which leaves them unhandled) to this host.
         editorHost.onEvent = (ev2: DispatchEvent): void => onEditorKey(ev2);

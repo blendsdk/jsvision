@@ -436,14 +436,14 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   // The horizontal bands share one column container; the grid's own `layout` prop stays free for the
   // parent to place the whole grid (an absolute rect or an `fr` flow slot).
   const inner = new Group();
-  inner.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
+  inner.setLayout({ direction: 'col', size: { kind: 'fr', weight: 1 } });
 
   const headerRow = bandRow();
   const bodyRow = new Group();
-  bodyRow.layout = { direction: 'row', size: { kind: 'fr', weight: 1 } };
+  bodyRow.setLayout({ direction: 'row', size: { kind: 'fr', weight: 1 } });
   // The pinned frozen-rows band row (built only when freezeRows > 0), `freezeRows` cells tall.
   const freezeRowsRow = new Group();
-  freezeRowsRow.layout = { direction: 'row', size: { kind: 'fixed', cells: freezeRows } };
+  freezeRowsRow.setLayout({ direction: 'row', size: { kind: 'fixed', cells: freezeRows } });
 
   // One segment list drives every row (header, pinned band, body): the center pans, frozen columns don't.
   // A single, unfrozen grid is exactly one center seg with `fr` layout and no dividers — the original path.
@@ -543,15 +543,15 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
     }
     const layout = segLayout(seg);
     const header = makeHeader(seg.ids, seg.indent, seg.offset);
-    header.layout = layout;
+    header.setLayout(layout);
     headerRow.add(header);
     if (freezeRows > 0) {
       const band = makeBand(seg.ids, seg.indent, seg.offset);
-      band.layout = layout;
+      band.setLayout(layout);
       freezeRowsRow.add(band);
     }
     const body = makeBody(seg.ids, seg.indent, seg.offset, seg.autoScroll);
-    body.layout = layout;
+    body.setLayout(layout);
     bodyRow.add(body);
     if (!seg.fixed) center = body;
   });
@@ -572,7 +572,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   // loading/error placeholder, so only the header stays visible in those states.
   const lifecycle = deps.lifecycle === true;
   const bodyStack = lifecycle ? new Group() : inner;
-  if (lifecycle) bodyStack.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
+  if (lifecycle) bodyStack.setLayout({ direction: 'col', size: { kind: 'fr', weight: 1 } });
 
   if (deps.quickFilter) {
     // One full-width quick-filter band under the header (over every visible column, panning with center).
@@ -631,7 +631,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
         widthTick: deps.widthTick,
         cell: footerCell,
       });
-      band.layout = segLayout(seg);
+      band.setLayout(segLayout(seg));
       footerRow.add(band);
     });
     footerRow.add(corner()); // square off the vbar gutter, like the frozen-rows band
