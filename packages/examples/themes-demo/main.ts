@@ -60,7 +60,7 @@ function printFrame(title: string, rows: readonly { char: string }[][]): void {
 function showState(heading: string, state: DesignerState): void {
   createRoot((dispose) => {
     const widgets = previewWidgets(`${state.mode} · accent ${state.accent} · depth ${state.depth}`);
-    widgets.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 34, height: 7 } };
+    widgets.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 34, height: 7 } });
     const rr = createRenderRoot({ width: 34, height: 7 }, { caps: capsFor(state.depth), theme: currentTheme(state) });
     rr.mount(widgets);
     printFrame(heading, rr.buffer().rows());

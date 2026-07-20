@@ -38,7 +38,7 @@ function printFrame(title: string, rows: readonly { char: string }[][]): void {
 function showTheme(heading: string, theme: Theme, depth: ColorDepth): void {
   createRoot((dispose) => {
     const gallery = buildGallery();
-    gallery.layout = { position: 'absolute', rect: { x: 0, y: 0, width: WIDTH, height: HEIGHT } };
+    gallery.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: WIDTH, height: HEIGHT } });
     const rr = createRenderRoot({ width: WIDTH, height: HEIGHT }, { caps: capsFor(depth), theme });
     rr.mount(gallery);
     printFrame(heading, rr.buffer().rows());

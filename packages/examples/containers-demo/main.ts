@@ -80,7 +80,7 @@ function stepScroller(): void {
   const content = new Group();
   for (let i = 0; i < 20; i += 1) {
     const line = new Text(`Line ${String(i + 1).padStart(2, '0')} of oversized content`);
-    line.layout = { position: 'absolute', rect: { x: 0, y: i, width: 30, height: 1 } };
+    line.setLayout({ position: 'absolute', rect: { x: 0, y: i, width: 30, height: 1 } });
     content.add(line);
   }
   const scroller = new Scroller({ content, extent: { width: 30, height: 20 }, scrollbars: 'vertical' });
@@ -145,12 +145,12 @@ async function stepDialog(): Promise<void> {
   const dlg = new Dialog({ title: ' Person ', width: 34, height: 9 });
   const ageInput = new Input({ value: age, validator: range(0, 120) });
   const label = new Label('~A~ge (0–120)', ageInput);
-  label.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 14, height: 1 } };
-  ageInput.layout = { position: 'absolute', rect: { x: 16, y: 1, width: 14, height: 1 } };
+  label.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 14, height: 1 } });
+  ageInput.setLayout({ position: 'absolute', rect: { x: 16, y: 1, width: 14, height: 1 } });
   const ok = okButton();
-  ok.layout = { position: 'absolute', rect: { x: 6, y: 4, width: 10, height: 2 } };
+  ok.setLayout({ position: 'absolute', rect: { x: 6, y: 4, width: 10, height: 2 } });
   const cancel = cancelButton();
-  cancel.layout = { position: 'absolute', rect: { x: 18, y: 4, width: 12, height: 2 } };
+  cancel.setLayout({ position: 'absolute', rect: { x: 18, y: 4, width: 12, height: 2 } });
   dlg.add(label);
   dlg.add(ageInput);
   dlg.add(ok);

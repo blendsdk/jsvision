@@ -66,13 +66,13 @@ export default defineExample({
 
     const welcome = new Window('Welcome');
     welcome.number = 1;
-    welcome.layout.rect = { x: 1, y: 1, width: 42, height: 12 };
+    welcome.setLayout({ rect: { x: 1, y: 1, width: 42, height: 12 } });
     welcome.add(new PanelView(WELCOME_LINES));
     app.desktop.addWindow(welcome);
 
     const tips = new Window('Tips');
     tips.number = 2;
-    tips.layout.rect = { x: 46, y: 3, width: 30, height: 10 };
+    tips.setLayout({ rect: { x: 46, y: 3, width: 30, height: 10 } });
     tips.add(new PanelView(TIPS_LINES));
     app.desktop.addWindow(tips);
 

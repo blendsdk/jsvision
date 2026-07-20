@@ -143,13 +143,13 @@ export function buildApp(viewport: Size2D): WebApp {
 
   const welcome = new Window('Welcome');
   welcome.number = 1;
-  welcome.layout.rect = { x: 1, y: 1, width: 40, height: 15 };
+  welcome.setLayout({ rect: { x: 1, y: 1, width: 40, height: 15 } });
   welcome.add(new PanelView(() => WELCOME_LINES));
   app.desktop.addWindow(welcome);
 
   const time = new Window('Clock');
   time.number = 2;
-  time.layout.rect = { x: 44, y: 2, width: 26, height: 8 };
+  time.setLayout({ rect: { x: 44, y: 2, width: 26, height: 8 } });
   time.add(new PanelView(() => ['', '   Local time', '', `      ${clock()}`]));
   app.desktop.addWindow(time);
 

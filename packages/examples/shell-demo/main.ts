@@ -92,7 +92,7 @@ function main(): void {
   const windows = specs.map((spec, i) => {
     const w = new Window(spec.title);
     w.number = i + 1;
-    w.layout.rect = spec.rect;
+    w.setLayout({ rect: spec.rect });
     w.add(new Content(`# ${spec.title}`));
     app.desktop.addWindow(w);
     return w;

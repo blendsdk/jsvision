@@ -28,7 +28,7 @@ class DetailScreen extends Group {
     super();
     // Assigned directly rather than built: this view is the container itself, so there is no builder
     // call that could produce it — only its children are composed with the DSL below.
-    this.layout = { direction: 'col', padding: 1, gap: 1 };
+    this.setLayout({ direction: 'col', padding: 1, gap: 1 });
     this.background = 'window';
     this.add(fixed(new Text(`Repository: ${repo}`), 1));
     this.add(fixed(new Text('Branch: main · 128 commits · MIT'), 1));

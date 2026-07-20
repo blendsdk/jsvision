@@ -47,7 +47,7 @@ export function makeAgeForm(): AgeForm {
 
   const dialog = new Dialog({ title: 'Enter age' });
   // A dialog places its own frame on the desktop by rect — one of the few sanctioned absolute cases.
-  dialog.layout = { ...dialog.layout, rect: { x: 4, y: 3, width: 36, height: 9 } };
+  dialog.setLayout({ rect: { x: 4, y: 3, width: 36, height: 9 } });
   dialog.add(col({ gap: 1, fill: true }, fixed(fieldRow, 1), fixed(buttonRow, 2)));
 
   return { dialog, value, input };

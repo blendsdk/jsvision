@@ -19,7 +19,7 @@ import { ProgressBar, signal } from '@jsvision/ui';
 
 const value = signal(0.4); // progress in [0, 1]
 const bar = new ProgressBar({ value, caption: true, label: 'Copying', labelPosition: 'left' });
-bar.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 24, height: 1 } };
+bar.setLayout({ position: 'absolute', rect: { x: 1, y: 0, width: 24, height: 1 } });
 // Advance it — the bar repaints reactively: value.set(Math.min(1, value() + 0.1)).
 ```
 

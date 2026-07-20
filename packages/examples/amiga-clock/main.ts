@@ -102,19 +102,19 @@ async function main(): Promise<number> {
 
   const analog = new Window('Analog');
   analog.number = 1;
-  analog.layout.rect = { x: 1, y: 1, width: 24, height: 13 };
+  analog.setLayout({ rect: { x: 1, y: 1, width: 24, height: 13 } });
   analog.add(new AnalogClock(() => now()));
   app.desktop.addWindow(analog);
 
   const digital = new Window('Digital');
   digital.number = 2;
-  digital.layout.rect = { x: 27, y: 1, width: 33, height: 9 };
+  digital.setLayout({ rect: { x: 27, y: 1, width: 33, height: 9 } });
   digital.add(new DigitalClock(() => now()));
   app.desktop.addWindow(digital);
 
   const boing = new Window('Boing');
   boing.number = 3;
-  boing.layout.rect = { x: 14, y: 8, width: 34, height: 15 };
+  boing.setLayout({ rect: { x: 14, y: 8, width: 34, height: 15 } });
   boing.add(
     new BoingClock(
       () => frame(),
@@ -130,7 +130,7 @@ async function main(): Promise<number> {
   // the splitter (the deepest view), never the window frame, so resize and window-move never collide.
   const clocks = new Window('Clocks');
   clocks.number = 4;
-  clocks.layout.rect = { x: 4, y: 4, width: 60, height: 20 };
+  clocks.setLayout({ rect: { x: 4, y: 4, width: 60, height: 20 } });
   const rightSizes = signal([1, 1]);
   const right = new SplitView({
     direction: 'col',
@@ -151,7 +151,7 @@ async function main(): Promise<number> {
     sizes: gridSizes,
     minSize: [24, 24],
   });
-  grid.layout = { position: 'fill' };
+  grid.setLayout({ position: 'fill' });
   clocks.add(grid);
   app.desktop.addWindow(clocks);
 
