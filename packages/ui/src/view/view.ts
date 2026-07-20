@@ -65,7 +65,11 @@ export abstract class View {
   bounds: Rect = { x: 0, y: 0, width: 0, height: 0 };
   /** Draw-against flags. The object reference is fixed; individual fields mutate (e.g. `focused`). */
   readonly state: ViewState = { visible: true, disabled: false, focused: false };
-  /** Layout props for this view (direction, size, padding, absolute placement, …). */
+  /**
+   * Layout props for this view (direction, size, padding, absolute placement, …). Prefer
+   * {@link setLayout} to change them: assigning this field wholesale silently drops every prop the
+   * new object omits, and never reflows.
+   */
   layout: LayoutProps = {};
   /** Optional intrinsic-size hook for `auto` sizing — return the size this view wants for `available`. */
   measure?(available: Size2D): Size2D;
@@ -210,6 +214,45 @@ export abstract class View {
   /** Request a reflow (re-run layout, then repaint). Use this when a change affects size/position, not just pixels. */
   invalidateLayout(): void {
     this.host?.markRelayout();
+  }
+
+  /**
+   * Change some of this view's {@link layout} props and request a reflow — the preferred way to write
+   * layout. Props the patch does not name are kept, and the reflow happens for you, so the two ways
+   * a direct `view.layout = {…}` assignment goes wrong (silently dropping the props you left out, and
+   * never repainting) cannot happen.
+   *
+   * The merge is **shallow**, deliberately: `size` and `rect` are replaced whole rather than merged
+   * field-by-field. That is what makes a variant swap correct — going from `{kind:'fixed',cells:1}` to
+   * `{kind:'fr',weight:1}` must not leave a stale `cells` behind. The cost is that per-side `padding`
+   * cannot be patched one side at a time; pass the whole padding value.
+   *
+   * Two behaviours worth knowing:
+   *
+   * - **An explicit `undefined` resets that prop to its layout default.** `setLayout({ size: undefined })`
+   *   makes the view auto-sized again, and `setLayout({ position: 'flow' })` puts an absolutely-placed
+   *   view back in the flow (its now-unused `rect` is simply ignored).
+   * - **Do not call it in a constructor of a class that subclasses may extend.** A base constructor
+   *   body runs *before* a subclass's `override layout = {…}` field initializer, so the subclass's
+   *   initializer would overwrite the whole object and erase the call. Call it after construction, or
+   *   from `onMount`.
+   *
+   * Reflowing an unmounted view is a no-op, so calling it before mount is safe.
+   *
+   * @param patch The layout props to change; anything omitted is preserved.
+   * @example
+   * import { Group } from '@jsvision/ui';
+   *
+   * const panel = new Group();
+   * panel.setLayout({ direction: 'col', padding: 1 });
+   * // Later — `direction` and `padding` survive, and the tree reflows:
+   * panel.setLayout({ size: { kind: 'fr', weight: 1 } });
+   */
+  setLayout(patch: Partial<LayoutProps>): void {
+    // Shallow on purpose: `size` is a discriminated union, so a deep merge would carry the previous
+    // variant's fields into the new one and produce a token that matches no branch cleanly.
+    this.layout = { ...this.layout, ...patch };
+    this.invalidateLayout();
   }
 
   /**
