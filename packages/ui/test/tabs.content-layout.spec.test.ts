@@ -30,7 +30,7 @@ class Leaf extends View {
 
 /** Mount a `TabView` filling `w×h` and flush one frame, so page layouts are applied. */
 function mount(view: TabView, w = 30, h = 10): void {
-  view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(view);
   const loop = createEventLoop({ width: w, height: h }, { caps });
@@ -42,7 +42,7 @@ function mount(view: TabView, w = 30, h = 10): void {
 test('ST-W3: TabView discards the caller layout on a tab content view', () => {
   const content = new Group();
   content.add(new Leaf());
-  content.layout = { padding: 2, size: { kind: 'fixed', cells: 3 } };
+  content.setLayout({ padding: 2, size: { kind: 'fixed', cells: 3 } });
 
   const tabs = signal<Tab[]>([{ title: '~G~eneral', content }]);
   const view = new TabView({ tabs, active: signal(0) });

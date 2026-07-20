@@ -63,7 +63,7 @@ test('ST-5: ListRows double-click activates (onSelect + emit once); single click
     command: 'chosen',
     onSelect: (index, item) => picks.push({ index, item }),
   });
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } });
   const spy = new CommandSpy();
   const root = new Group();
   root.add(list);
@@ -117,7 +117,7 @@ test('ST-6: GridRows double-click activates once; single click focuses + selects
     command: 'grid-open',
     onSelect: (index, row) => picks.push({ index, name: row.name }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 8 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 8 } });
   const spy = new CommandSpy();
   const root = new Group();
   root.add(grid);
@@ -153,7 +153,7 @@ test('ST-7: TreeRows — text single click focuses only, no emit (TV toutline.cp
   const roots = signal<TreeNode<string>[]>([node('A', [node('A1'), node('A2')])]);
   const tree = new Tree<string>({ roots, getText: (v) => v, focused, selected, command: 'open' });
   tree.expand(roots()[0]); // flatten = [A, A1, A2]
-  tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 10 } };
+  tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 10 } });
   const spy = new CommandSpy();
   const root = new Group();
   root.add(tree);
@@ -177,7 +177,7 @@ test('ST-7: TreeRows — text double click activates (select + emit once)', () =
   const roots = signal<TreeNode<string>[]>([node('A', [node('A1'), node('A2')])]);
   const tree = new Tree<string>({ roots, getText: (v) => v, focused, selected, command: 'open' });
   tree.expand(roots()[0]);
-  tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 10 } };
+  tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 10 } });
   const spy = new CommandSpy();
   const root = new Group();
   root.add(tree);
@@ -203,7 +203,7 @@ test('ST-7: TreeRows — graph-zone single click toggles; double click still jus
   const roots = signal<TreeNode<string>[]>([a]);
   const tree = new Tree<string>({ roots, getText: (v) => v, focused, selected, command: 'open' });
   tree.expand(a); // start expanded ⇒ flatten = [A, A1, A2]
-  tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 10 } };
+  tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 10 } });
   const spy = new CommandSpy();
   const root = new Group();
   root.add(tree);
@@ -247,9 +247,9 @@ test('ST-9: ComboBox popup — a double-click picks once and does not reopen (AR
     value,
     editable: false,
   });
-  combo.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 14, height: 1 } };
+  combo.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 14, height: 1 } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(combo);

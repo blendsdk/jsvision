@@ -25,7 +25,7 @@ function wheel(dir: 'up' | 'down', x: number, y: number): CoreWheelEvent {
 }
 
 function hosted(sw: Switch, _value: Signal<boolean>, w = 24, h = 1, focus = true) {
-  sw.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  sw.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(sw);
   const loop = createEventLoop({ width: w, height: h }, { caps });

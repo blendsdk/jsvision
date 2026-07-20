@@ -54,7 +54,7 @@ test('col(a, b, c) with no props → Group of [a, b, c], direction col', () => {
 // grow/fixed merge onto existing layout props rather than replacing them.
 test("grow/fixed preserve a view's other layout props", () => {
   const v = new Leaf();
-  v.layout = { padding: 1, justify: 'end' };
+  v.setLayout({ padding: 1, justify: 'end' });
   grow(v, 2);
   expect(v.layout).toEqual({ padding: 1, justify: 'end', size: { kind: 'fr', weight: 2 } });
   fixed(v, 7);

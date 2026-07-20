@@ -116,14 +116,14 @@ test('the preview rebuilds reactively when a parameter changes (the live behavio
   createRoot((dispose) => {
     const state = createState();
     const host = new Group();
-    host.layout = { padding: 1 };
+    host.setLayout({ padding: 1 });
     host.onMount(() => {
       host.bind(
         () => snapshot(state),
         (p) => {
           for (const child of [...host.children]) host.remove(child);
           const tree = buildPreviewTree(p);
-          tree.layout = { ...tree.layout, position: 'fill' };
+          tree.setLayout({ position: 'fill' });
           host.add(tree);
         },
         { relayout: true },

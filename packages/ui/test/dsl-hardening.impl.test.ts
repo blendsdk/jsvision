@@ -73,7 +73,7 @@ test('grow() with an explicit options object omits the min key when min is undef
 
 test('grow() merges the size over prior layout props rather than replacing them', () => {
   const v = new Leaf();
-  v.layout = { direction: 'col', gap: 2 };
+  v.setLayout({ direction: 'col', gap: 2 });
   grow(v, 1, { min: 3 });
   expect(v.layout.direction).toBe('col'); // preserved
   expect(v.layout.gap).toBe(2); // preserved
@@ -119,7 +119,7 @@ test('at() numeric and rect forms produce an identical layout', () => {
 
 test('at() merges over multiple prior layout props and overwrites a prior position', () => {
   const v = new Leaf();
-  v.layout = { direction: 'row', gap: 2, position: 'fill' };
+  v.setLayout({ direction: 'row', gap: 2, position: 'fill' });
   at(v, 1, 1, 4, 4);
   expect(v.layout.direction).toBe('row'); // preserved
   expect(v.layout.gap).toBe(2); // preserved
@@ -131,7 +131,7 @@ test('at() merges over multiple prior layout props and overwrites a prior positi
 
 test('cover() overwrites a prior absolute position with fill while preserving other props', () => {
   const v = new Leaf();
-  v.layout = { direction: 'col', position: 'absolute', rect: { x: 1, y: 2, width: 3, height: 4 } };
+  v.setLayout({ direction: 'col', position: 'absolute', rect: { x: 1, y: 2, width: 3, height: 4 } });
   cover(v);
   expect(v.layout.position).toBe('fill');
   expect(v.layout.direction).toBe('col'); // preserved
@@ -139,7 +139,7 @@ test('cover() overwrites a prior absolute position with fill while preserving ot
 
 test('center() preserves prior props and sets the centered flag alongside the absolute rect', () => {
   const v = new Leaf();
-  v.layout = { direction: 'col', gap: 1 };
+  v.setLayout({ direction: 'col', gap: 1 });
   center(v, 30, 10);
   expect(v.layout.direction).toBe('col'); // preserved
   expect(v.layout.gap).toBe(1); // preserved

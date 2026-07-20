@@ -43,7 +43,7 @@ function addWindow(
   rect: { x: number; y: number; width: number; height: number },
 ): Window {
   const w = new Window(title);
-  w.layout.rect = rect;
+  w.setLayout({ rect: rect });
   app.desktop.addWindow(w);
   return w;
 }

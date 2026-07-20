@@ -84,7 +84,7 @@ function makeCal(
   const m = metricsFor(density, opts.showWeekNumbers ?? false);
   const w = opts.width ?? m.width;
   const h = m.height;
-  cal.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  cal.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(cal);
   const loop = createEventLoop({ width: w, height: h }, { caps });

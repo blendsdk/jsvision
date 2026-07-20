@@ -142,7 +142,7 @@ function windowBody(total: number, viewport: number) {
     ensureRange: (s, e) => void calls.push([s, e]),
     rowCount: () => total,
   });
-  body.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: viewport } };
+  body.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: viewport } });
   const root = new Group();
   root.add(body);
   const loop = createEventLoop({ width: 20, height: viewport }, { caps });
@@ -194,7 +194,7 @@ test('placeholder: an unloaded focused row on a zebra grid paints … and stays 
   });
   const cols = [column<Row, string>({ id: 'name', title: 'Name', value: (r) => r.name, width: 12 })];
   const grid = new EditableDataGrid<Row>({ columns: cols, source: src, zebra: true });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -305,7 +305,7 @@ test('windowed auto-width: an auto column falls back and the grid renders withou
   });
   const autoCols = [column<Row, string>({ id: 'name', title: 'Name', value: (r) => r.name })]; // no width ⇒ auto
   const grid = new EditableDataGrid<Row>({ columns: autoCols, source: src });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 18, height: 4 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 18, height: 4 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 18, height: 4 }, { caps });

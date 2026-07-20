@@ -31,7 +31,7 @@ function buildGrid(rows: Signal<Person[]>, extra: Partial<EditableDataGridOption
     source: fromRows(rows, { rowKey: (r) => r.id }),
     ...extra,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -97,7 +97,7 @@ test('a read-only source (no insert/remove seam) makes every mutator a no-op', (
     source,
     assignKey: (clone) => ({ ...clone, id: 99 }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -120,7 +120,7 @@ test('duplicateRow on a non-structured-cloneable row devWarns and does not inser
     source: fromRows(rows, { rowKey: (r) => r.id }),
     assignKey: (clone) => ({ ...clone, id: 2 }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

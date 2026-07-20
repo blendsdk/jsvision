@@ -46,9 +46,9 @@ test('a hotkey-less Label paints entirely in the base role and still focuses on 
   const link = new LinkStub();
   const label = new Label('Name', link); // no ~X~
   const root = new Group();
-  root.layout = { direction: 'col' };
-  label.layout = { size: { kind: 'fixed', cells: 1 } };
-  link.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  label.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  link.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(label);
   root.add(link);
   const loop = createEventLoop({ width: 20, height: 3 }, { caps });
@@ -70,9 +70,9 @@ test('focusing a disabled link is inert (click and Alt-hotkey do not move focus)
   link.state.disabled = true; // non-focusable → focus manager refuses it
   const label = new Label('~N~ame', link);
   const root = new Group();
-  root.layout = { direction: 'col' };
-  label.layout = { size: { kind: 'fixed', cells: 1 } };
-  link.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  label.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  link.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(label);
   root.add(link);
   const loop = createEventLoop({ width: 20, height: 3 }, { caps });

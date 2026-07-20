@@ -69,7 +69,7 @@ class CommandSpy extends View {
 
 /** Mount a DataGrid filling `w×h` under a root Group (+ optional spy) and focus its rows renderer. */
 function hosted<T>(grid: DataGrid<T>, w: number, h: number, spy?: CommandSpy) {
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(grid);
   if (spy) root.add(spy);

@@ -58,7 +58,7 @@ function descendants(view: View): View[] {
 function buildGrid(opts: { columns?: GridColumn<Sale>[]; rows?: Sale[] } = {}) {
   const source = fromRows(signal(opts.rows ?? SALES.slice()), { rowKey: (r) => r.region });
   const grid = new EditableDataGrid<Sale>({ columns: opts.columns ?? [REGION, QTY], source });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: CW, height: CH } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: CW, height: CH } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: CW, height: CH }, { caps });
@@ -157,7 +157,7 @@ test('the filter popup clamps into the viewport instead of rendering off the rig
   const source = fromRows(signal(SALES.slice()), { rowKey: (r) => r.region });
   const grid = new EditableDataGrid<Sale>({ columns: [region, wide], source });
   const GW = 40; // narrower than region(8)+divider+wide(20) funnel anchor + popup width
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: GW, height: CH } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: GW, height: CH } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: GW, height: CH }, { caps });

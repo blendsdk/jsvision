@@ -71,9 +71,9 @@ function makePicker(
     onInput: (c) => inputs.push(c),
     onChange: (c) => commits.push(c),
   });
-  picker.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } };
+  picker.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(picker);

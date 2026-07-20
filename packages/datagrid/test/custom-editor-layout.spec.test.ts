@@ -55,7 +55,7 @@ function buildAndEdit(editor: CustomEditor): Group {
   const typedColumns = [NAME];
   const engineCols = typedColumns.map(toEngineColumn);
   const overlay = new Group();
-  overlay.layout = { position: 'fill' };
+  overlay.setLayout({ position: 'fill' });
   const grid = new EditableGridRows<Person>({
     display: () => rows,
     columns: engineCols,
@@ -70,9 +70,9 @@ function buildAndEdit(editor: CustomEditor): Group {
     rowKey: (r) => r.id,
     bumpVersion: () => undefined,
   });
-  grid.layout = { position: 'fill' };
+  grid.setLayout({ position: 'fill' });
   const container = new Group();
-  container.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  container.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   container.add(grid);
   container.add(overlay);
   const root = new Group();
@@ -89,12 +89,12 @@ function buildAndEdit(editor: CustomEditor): Group {
 // The caller's whole descriptor is replaced — not merged into — when the editor mounts.
 test('a custom editor factory loses its own layout when the editor is mounted', () => {
   const editor = new CustomEditor();
-  editor.layout = {
+  editor.setLayout({
     padding: 2,
     direction: 'col',
     size: { kind: 'fixed', cells: 3 },
     rect: { x: 99, y: 99, width: 1, height: 1 },
-  };
+  });
 
   const overlay = buildAndEdit(editor);
 

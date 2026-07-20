@@ -46,7 +46,7 @@ function buildGrid(mode?: SelectionMode) {
     source: fromRows(signal(PEOPLE.map((p) => ({ ...p }))), { rowKey: (r) => r.id }),
     selectionMode: mode,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -101,7 +101,7 @@ test('the selected-row highlight spans frozen panels', () => {
     source: fromRows(signal(PEOPLE.map((p) => ({ ...p }))), { rowKey: (r) => r.id }),
     freeze: 1, // id is a frozen left panel; name is the center panel
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -156,7 +156,7 @@ test('a dirty marker on a selected, non-focused row composites onto the listSele
     bumpVersion: () => undefined,
     dirty: registry,
   });
-  body.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 14, height: 5 } };
+  body.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 14, height: 5 } });
   const root = new Group();
   root.add(body);
   const loop = createEventLoop({ width: 14, height: 5 }, { caps });

@@ -43,7 +43,7 @@ function node<T>(value: T, children: TreeNode<T>[] = []): TreeNode<T> {
 
 /** Render a Tree headlessly and return its composed buffer. */
 function render(tree: Tree<unknown>, w: number, h: number) {
-  tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(tree);
   const rr = createRenderRoot({ width: w, height: h }, { caps });

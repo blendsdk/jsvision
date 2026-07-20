@@ -36,9 +36,9 @@ function mountInput(opts: ConstructorParameters<typeof Input>[0], caps = capsCli
   const input = new Input(opts);
   const probe = new ClipProbe();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
-  probe.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  probe.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(input);
   root.add(probe);
   const loop = createEventLoop(

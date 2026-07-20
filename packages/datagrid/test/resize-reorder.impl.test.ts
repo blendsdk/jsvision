@@ -35,7 +35,7 @@ function buildGrid(cols: ReturnType<typeof makeCols>, extra: { freeze?: number }
     source: fromRows(signal(EMPS.slice()), { rowKey: (r) => r.id }),
     ...extra,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -100,7 +100,7 @@ test('a lost capture aborts the resize cleanly', () => {
     onFunnelClick: () => undefined,
     onColumnResize: onResize,
   });
-  header.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: 1 } };
+  header.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: 1 } });
   const root = new Group();
   root.add(header);
   const loop = createEventLoop({ width: W, height: 1 }, { caps });

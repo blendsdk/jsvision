@@ -72,7 +72,7 @@ describe('out-of-tick repaint (impl)', () => {
     const s = signal(0);
     const g = new Group();
     const sv = new SignalView(() => String(s()));
-    sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } };
+    sv.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } });
     g.add(sv);
     loop.mount(g);
     runPending();
@@ -102,7 +102,7 @@ describe('out-of-tick repaint (impl)', () => {
     const s = signal('A');
     const g = new Group();
     const sv = new SignalView(() => s());
-    sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } };
+    sv.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } });
     g.add(sv);
     loop.mount(g);
     runPending();
@@ -123,7 +123,7 @@ describe('out-of-tick repaint (impl)', () => {
 
     // Full recompose: a structural add out-of-tick forces a relayout.
     const sv2 = new SignalView(() => 'Z');
-    sv2.layout = { position: 'absolute', rect: { x: 0, y: 1, width: 10, height: 1 } };
+    sv2.setLayout({ position: 'absolute', rect: { x: 0, y: 1, width: 10, height: 1 } });
     g.add(sv2);
     expect(pending.length).toBe(1);
     runPending();
@@ -136,7 +136,7 @@ describe('out-of-tick repaint (impl)', () => {
     const s = signal('A');
     const g = new Group();
     const cv = new CaretView(() => s());
-    cv.layout = { position: 'absolute', rect: { x: 2, y: 3, width: 8, height: 1 } };
+    cv.setLayout({ position: 'absolute', rect: { x: 2, y: 3, width: 8, height: 1 } });
     g.add(cv);
     loop.mount(g);
     runPending();
@@ -162,7 +162,7 @@ describe('out-of-tick repaint (impl)', () => {
     const s = signal('A');
     const g = new Group();
     const sv = new SignalView(() => s());
-    sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } };
+    sv.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } });
     g.add(sv);
     loop.mount(g);
     runPending();
@@ -190,7 +190,7 @@ describe('out-of-tick repaint (impl)', () => {
     const s = signal('A');
     const g = new Group();
     const sv = new SignalView(() => s());
-    sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } };
+    sv.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } });
     g.add(sv);
     loop.mount(g);
     await Promise.resolve(); // let mount's deferred paint drain on the real microtask queue

@@ -52,7 +52,7 @@ function descendants(view: View): View[] {
 function buildGrid(filterPopup?: (ctx: FilterPopupContext<Sale>) => View) {
   const source = fromRows(signal(SALES.slice()), { rowKey: (r) => r.region });
   const grid = new EditableDataGrid<Sale>({ columns: [REGION, QTY], source, filterPopup });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 60, height: 6 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 60, height: 6 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 60, height: 6 }, { caps });
@@ -93,7 +93,7 @@ test('a custom popup that sets its own size is mounted anchored at that size (no
   class BigPopup extends Group {
     constructor() {
       super();
-      this.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 5 } };
+      this.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 5 } });
     }
   }
   const { grid, loop } = buildGrid(() => new BigPopup());

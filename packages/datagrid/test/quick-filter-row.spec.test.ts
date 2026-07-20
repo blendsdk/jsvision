@@ -41,7 +41,7 @@ const COLUMNS = [
 function buildGrid(opts: { quickFilter?: boolean; columns?: GridColumn<Sale>[] } = {}) {
   const source = fromRows(signal(SALES.slice()), { rowKey: (r) => r.region });
   const grid = new EditableDataGrid<Sale>({ columns: opts.columns ?? COLUMNS, source, quickFilter: opts.quickFilter });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

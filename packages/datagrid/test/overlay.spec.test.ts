@@ -77,7 +77,7 @@ test('should translate the body-local rect by the body origin', () => {
 test('should land the overlay on the cell when the host is nested at an offset', () => {
   const parent = new Group();
   const host = new Group();
-  host.layout = { position: 'absolute', rect: { x: 5, y: 2, width: 20, height: 6 } };
+  host.setLayout({ position: 'absolute', rect: { x: 5, y: 2, width: 20, height: 6 } });
   parent.add(host);
   const render = createRenderRoot({ width: 30, height: 12 }, { caps });
   render.mount(parent);

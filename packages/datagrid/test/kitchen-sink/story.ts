@@ -53,7 +53,7 @@ export interface Story {
  */
 export function at<T extends View>(view: T, x: number, y: number, width: number, height: number): T {
   const layout: LayoutProps = { position: 'absolute', rect: { x, y, width, height } };
-  view.layout = layout;
+  view.setLayout(layout);
   return view;
 }
 

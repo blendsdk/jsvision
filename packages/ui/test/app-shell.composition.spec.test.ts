@@ -154,7 +154,7 @@ test('ST-W2: the app-shell focus ring visits the content views in tree order', (
 // caller's own descriptor is intentionally lost so the shell alone governs the body's sizing.
 test('ST-W4: createApplication discards the caller layout on `content`', () => {
   const content = new Body();
-  content.layout = { padding: 1, direction: 'row' };
+  content.setLayout({ padding: 1, direction: 'row' });
 
   const app = createApplication({ caps, viewport, content });
   app.loop.renderRoot.flush();

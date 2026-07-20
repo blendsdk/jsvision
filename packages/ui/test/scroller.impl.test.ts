@@ -48,7 +48,7 @@ class LetterRows extends View {
 
 /** Mount a Scroller filling `w×h` under a root Group and focus it; returns the loop + scroller. */
 function hosted(scroller: Scroller, w: number, h: number): ReturnType<typeof createEventLoop> {
-  scroller.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  scroller.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(scroller);
   const loop = createEventLoop({ width: w, height: h }, { caps });

@@ -38,9 +38,9 @@ function mountInput(opts: ConstructorParameters<typeof Input>[0], w = 10) {
   const input = new Input(opts);
   const stub = new FocusStub();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
-  stub.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  stub.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(input);
   root.add(stub);
   const loop = createEventLoop({ width: w, height: 3 }, { caps });
@@ -95,7 +95,7 @@ function makeAppWithInput() {
   const output = new CaptureStream();
   const value = signal('');
   const field = new Input({ value });
-  field.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 10, height: 1 } };
+  field.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 10, height: 1 } });
   const app = createApplication({
     warnAmbiguousWidth: false,
     caps,

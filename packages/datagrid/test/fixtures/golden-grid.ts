@@ -132,7 +132,7 @@ export function buildGoldenGrid(): GoldenGrid {
   const selectedKeys = signal<ReadonlySet<Key>>(new Set());
 
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: INSET_X, y: BODY_Y, width: W - 2, height: H - 3 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: INSET_X, y: BODY_Y, width: W - 2, height: H - 3 } });
 
   const body = new EditableGridRows<Rec>({
     display: () => DATA as Rec[],
@@ -151,7 +151,7 @@ export function buildGoldenGrid(): GoldenGrid {
     errors,
     selectedKeys,
   });
-  body.layout = { position: 'absolute', rect: { x: INSET_X, y: BODY_Y, width: W - 2, height: H - 3 } };
+  body.setLayout({ position: 'absolute', rect: { x: INSET_X, y: BODY_Y, width: W - 2, height: H - 3 } });
 
   // A two-key sort paints both arrows: col a ascending (▲, priority 1), col b descending (▼, priority 2).
   const sort = signal<SortKey[]>([
@@ -169,7 +169,7 @@ export function buildGoldenGrid(): GoldenGrid {
     filterModel: signal<FilterModel>(new Map()),
     onFunnelClick: () => undefined,
   });
-  header.layout = { position: 'absolute', rect: { x: INSET_X, y: HEADER_Y, width: W - 2, height: 1 } };
+  header.setLayout({ position: 'absolute', rect: { x: INSET_X, y: HEADER_Y, width: W - 2, height: 1 } });
 
   const root = new Group();
   root.add(header);

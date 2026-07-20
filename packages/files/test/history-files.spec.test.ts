@@ -32,7 +32,7 @@ function rectIn(loop: EventLoop, dialog: View, child: View) {
 function mountAt<T extends FileDialog | ChDirDialog>(dlg: T, w: number, h: number): { dlg: T; loop: EventLoop } {
   // Preserve the dialog's own layout (esp. `padding`) so the History's resolved bounds reflect the
   // real production geometry — a wholesale replace drops `padding` and masks the frame-inset bug.
-  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: w, height: h } };
+  dlg.setLayout({ rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(dlg);
   const loop = createEventLoop({ width: w, height: h }, { caps });

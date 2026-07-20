@@ -26,9 +26,9 @@ function mount(edText: string, inputText: string, clipboard?: Editor) {
   const inputValue = signal(inputText);
   const input = new Input({ value: inputValue });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  ed.layout = { size: { kind: 'fr', weight: 1 } };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  ed.setLayout({ size: { kind: 'fr', weight: 1 } });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(ed);
   root.add(input);
   const loop = createEventLoop({ width: 24, height: 5 }, { caps: capsClip, commands: Object.values(Commands) });

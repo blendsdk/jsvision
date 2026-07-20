@@ -37,9 +37,9 @@ class FocusStub extends View {
 function mount(view: View, w: number, h: number, focusStub = false): ReturnType<typeof createEventLoop> {
   const stub = new FocusStub();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  view.layout = { size: { kind: 'fixed', cells: h } };
-  stub.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  view.setLayout({ size: { kind: 'fixed', cells: h } });
+  stub.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(view);
   root.add(stub);
   const loop = createEventLoop({ width: w, height: h + 1 }, { caps });

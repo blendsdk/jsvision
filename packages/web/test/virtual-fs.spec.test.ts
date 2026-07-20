@@ -37,7 +37,7 @@ function seededFs() {
 /** Mount a real FileList over `fs` at `dir` and return it (its scan runs on mount). */
 function mountedList(fs: ReturnType<typeof seededFs>, directory: ReturnType<typeof signal<string>>) {
   const list = new FileList({ fs, directory });
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 10 } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 10 } });
   const root = new Group();
   root.add(list);
   const loop = createEventLoop({ width: 40, height: 10 }, { caps });

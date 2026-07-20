@@ -19,6 +19,7 @@ import { createApplication } from '../src/app/index.js';
 import { Window } from '../src/window/index.js';
 import { frameZoneAt } from '../src/window/frame.js';
 import type { WindowFlags } from '../src/window/frame.js';
+import { rectOf } from './layout.fixtures.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -40,7 +41,7 @@ test('ST-14: a window renders its full frame chrome', () => {
   const app = shellApp(40, 10);
   const w = new Window('Editor');
   w.number = 1;
-  w.layout.rect = { x: 0, y: 0, width: 28, height: 6 };
+  w.setLayout({ rect: { x: 0, y: 0, width: 28, height: 6 } });
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
   const buf = app.loop.renderRoot.buffer();
@@ -65,7 +66,7 @@ test('ST-14: a window renders its full frame chrome', () => {
 test('ST-14: a close-box click closes the window', () => {
   const app = shellApp(30, 10);
   const w = new Window('A');
-  w.layout.rect = { x: 0, y: 0, width: 20, height: 6 };
+  w.setLayout({ rect: { x: 0, y: 0, width: 20, height: 6 } });
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
 
@@ -78,7 +79,7 @@ test('ST-14: a close-box click closes the window', () => {
 test('ST-14: a zoom-box click maximizes the window to the desktop', () => {
   const app = shellApp(30, 10);
   const w = new Window('A');
-  w.layout.rect = { x: 2, y: 1, width: 20, height: 6 };
+  w.setLayout({ rect: { x: 2, y: 1, width: 20, height: 6 } });
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
 
@@ -97,7 +98,7 @@ function mouse(kind: MouseEvent['kind'], x: number, y: number): MouseEvent {
 test('RD-10 ST-07: bottom-left grip moves left+bottom edges, right anchored, floored at 10×3', () => {
   const app = shellApp(40, 16);
   const w = new Window('W');
-  w.layout.rect = { x: 10, y: 2, width: 14, height: 8 };
+  w.setLayout({ rect: { x: 10, y: 2, width: 14, height: 8 } });
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
 
@@ -108,8 +109,8 @@ test('RD-10 ST-07: bottom-left grip moves left+bottom edges, right anchored, flo
 
   // Drag the left edge right past the minimum → width floored at 10, x clamped to anchorRight-9 = 14.
   app.loop.dispatch(mouse('drag', 20, 5));
-  expect(w.layout.rect.x).toBe(14);
-  expect(w.layout.rect.width).toBe(10);
+  expect(rectOf(w).x).toBe(14);
+  expect(rectOf(w).width).toBe(10);
   app.loop.dispatch(mouse('up', 20, 5));
 });
 
@@ -133,9 +134,9 @@ test('RD-10 ST-08: frameZoneAt — SW grip = resize-left (resizable), SE = resiz
 test('ST-15: active/inactive theming flips on raise', () => {
   const app = shellApp(40, 10);
   const a = new Window('A');
-  a.layout.rect = { x: 0, y: 0, width: 12, height: 5 };
+  a.setLayout({ rect: { x: 0, y: 0, width: 12, height: 5 } });
   const b = new Window('B');
-  b.layout.rect = { x: 20, y: 0, width: 12, height: 5 };
+  b.setLayout({ rect: { x: 20, y: 0, width: 12, height: 5 } });
   app.desktop.addWindow(a);
   app.desktop.addWindow(b); // b added last ⇒ active
   app.loop.renderRoot.flush();

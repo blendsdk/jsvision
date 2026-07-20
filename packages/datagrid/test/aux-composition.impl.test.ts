@@ -25,7 +25,7 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { color
 
 /** Mount `view` at an absolute `w × h` rect and solve one frame. */
 function solve(view: View, w: number, h: number): void {
-  view.layout = { ...view.layout, position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(view);
   const render = createRenderRoot({ width: w, height: h }, { caps });
@@ -40,7 +40,7 @@ function solve(view: View, w: number, h: number): void {
  */
 function solveInColumn(view: View, w: number, h: number): void {
   const root = new Group();
-  root.layout = { direction: 'col', position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  root.setLayout({ direction: 'col', position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   root.add(view);
   const render = createRenderRoot({ width: w, height: h }, { caps });
   render.mount(root);

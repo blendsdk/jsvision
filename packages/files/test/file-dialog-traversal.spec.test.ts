@@ -31,7 +31,7 @@ function fsFixture() {
 
 /** Mount a FileDialog at its design size and run it modally. */
 function openFileDialog(dlg: FileDialog): EventLoop {
-  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 49, height: 19 } };
+  dlg.setLayout({ rect: { x: 0, y: 0, width: 49, height: 19 } });
   const root = new Group();
   root.add(dlg);
   const loop = createEventLoop({ width: 49, height: 19 }, { caps });

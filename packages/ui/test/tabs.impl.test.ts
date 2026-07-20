@@ -114,12 +114,12 @@ class Leaf extends View {
 }
 function page(): Group {
   const g = new Group();
-  g.layout = { direction: 'col' };
+  g.setLayout({ direction: 'col' });
   g.add(new Leaf());
   return g;
 }
 function host(view: TabView, w = 30, h = 6) {
-  view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(view);
   const loop = createEventLoop({ width: w, height: h }, { caps });

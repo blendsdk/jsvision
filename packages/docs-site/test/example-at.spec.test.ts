@@ -43,7 +43,7 @@ test('ST-9: at() writes absolute placement onto a bare view and returns it', () 
 
 test('ST-10: at() merges with existing layout props instead of replacing them', () => {
   const v = new Group();
-  v.layout = { direction: 'col', padding: 1 };
+  v.setLayout({ direction: 'col', padding: 1 });
 
   at(v, 0, 0, 10, 5);
 

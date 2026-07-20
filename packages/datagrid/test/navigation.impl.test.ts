@@ -48,7 +48,7 @@ function makeGrid() {
     columns: [editable('name', 'Name'), editable('city', 'City')],
     source: fromRows(rows, { rowKey: (r) => r.id }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 6 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 6 } });
   return { grid, rows };
 }
 
