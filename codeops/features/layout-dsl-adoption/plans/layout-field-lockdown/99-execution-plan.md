@@ -3,7 +3,7 @@
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
 > **Last Updated**: 2026-07-20
-> **Progress**: 3/54 tasks (6%)
+> **Progress**: 5/54 tasks (9%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -39,8 +39,8 @@
 - [x] 1.3.1 `examples`: `include: ["**/*.ts"]` (`rootDir` is already `"."`); clear the ~25 ordinary errors. Latent defects deferred to 1.4.1 — *done 2026-07-20*: 25 errors exactly as measured; 17 cleared, the 8 latent left for 1.4.1. Three findings the compiler had been hiding: `files-demo`'s in-memory `FileSystem` never grew the four content methods the interface gained; `tvedit-demo` called `createTerminalQuery` with two positional arguments it does not take and overrode a `CapabilityProfile` field (`input`) that does not exist, so its mouse/unicode overrides were silently doing nothing; and `vitest.config.ts`'s `singleFork: true` had been ignored since the runner dropped that switch. ST-1 and ST-2 are now **green**; ST-3 is down to 7 packages
 - [ ] 1.3.2 `ui`: add `tsconfig.typecheck.json` + script; clear 80 errors / 50 files
 - [ ] 1.3.3 `core`: same; clear 65 / 32 (18 in `input-demux.spec`, 16 in `input-responses.impl`)
-- [ ] 1.3.4 `docs-site`: add `test/**/*.ts` to its existing include; clear **18** errors. Ordinary ones only — the 2 latent defects go to 1.4.1
-- [ ] 1.3.5 `forms` (5) · `theme-designer` (**5** — the package **does** have a `test/`, contrary to the original inventory) · `files` (3) · `web` (0 — confirm)
+- [x] 1.3.4 `docs-site`: add `test/**/*.ts` to its existing include; clear **18** errors. Ordinary ones only — the 2 latent defects go to 1.4.1 — *done 2026-07-20*: **4**, not 18. The `.mjs` seam from 1.2.1 had already retired 14 of them (`jsdoc-examples`, `barrel-exports`, `inject-back-links`, `validate-api-map`), which is the first hard evidence that seam works. Two cleared here (`dialog-reopen.spec` reached an optional `Application.desktop`); the two named latent defects remain for 1.4.1
+- [x] 1.3.5 `forms` (5) · `theme-designer` (**5** — the package **does** have a `test/`, contrary to the original inventory) · `files` (3) · `web` (0 — confirm) — *done 2026-07-20*: every count exact. `web` confirmed at 0. `theme-designer` and `files` cleared. **`forms`' 5 errors are the same 5 the plan books as latent defects**, so 1.3.5 only turns its config on and 1.4.1 clears them — the package's `typecheck` stays red until then, by design. `theme-designer/test/app.impl.test.ts` imported `FileSystem` from `@jsvision/core`, which never exported it (it lives in `@jsvision/files`)
 - [ ] 1.3.6 Cross-package test imports that cannot resolve: follow datagrid's documented `exclude` precedent, with a comment saying why
 - [ ] 1.3.7 Re-evaluate datagrid's three existing exclusions now that `core/test` is typechecked — their in-file rationale ("core never typechecks its `test/`") no longer holds. Fix with the `.d.mts` seam where possible; update the comment either way
 

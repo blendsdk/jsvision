@@ -28,7 +28,9 @@ const viewport = { width: 90, height: 30 };
 function solvedWorkspace(): Group {
   const da = createDesignerApp({ caps, viewport, requireTty: false });
   da.app.loop.renderRoot.flush();
-  const workspace = da.app.desktop.children.find((child): child is Group => child instanceof Group);
+  const desktop = da.app.desktop;
+  if (desktop === undefined) throw new Error('the designer app no longer builds a desktop');
+  const workspace = desktop.children.find((child): child is Group => child instanceof Group);
   if (workspace === undefined) throw new Error('the designer app no longer adds a workspace group to its desktop');
   return workspace;
 }
