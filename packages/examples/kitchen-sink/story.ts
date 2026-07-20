@@ -56,12 +56,8 @@ export interface Story {
 }
 
 /**
- * The blessed absolute-placement builder, re-exported so every story keeps one import site.
- *
- * It merges the absolute rect onto whatever layout props the view already carries — a container's
- * `direction`, `gap` or `padding` survive the call — and asks the render root for a reflow when the
- * view is already mounted. Both are things a hand-rolled `view.layout = {…}` placer silently got
- * wrong.
+ * The absolute-placement builder, re-exported so every story places views through one import site.
+ * See `at` in `@jsvision/ui` for its semantics.
  */
 export { at } from '@jsvision/ui';
 

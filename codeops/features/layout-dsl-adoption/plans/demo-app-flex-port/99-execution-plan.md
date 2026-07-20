@@ -110,6 +110,31 @@ so ST-4 would be unsatisfiable without it. PR opens against `feat/dsl-adoptation
 
 **Verify**: `yarn verify`
 
+### Post-phase quality review
+
+Reviewer + perf auditor dispatched in parallel on the phase diff (`a434912a..HEAD`).
+
+- **perf-auditor: no findings.** Verified the added `invalidateLayout()` is a null check pre-mount
+  (`view.ts:215-217`, `host` set only by `mount()`), and that even a mounted burst is harmless
+  because `markRelayout()` sets a flag and `scheduleFlush()` self-coalesces
+  (`render-root.ts:321-324`) — N calls in a tick collapse to one frame, so the "411 relayouts" shape
+  does not exist. The one extra object spread per call measured 0.12 ms across all 411.
+- **phase-reviewer: 2 🟡 MINOR, both applied** (spec-test integrity PASS — the only `*.spec.test.*`
+  entry in the diff is the added `story-at.spec.test.ts`).
+  - **RV-001** (maintainability): the re-export doc block closed with a retrospective note about what
+    the retired helper "got wrong" — maintainer-facing framing on the import surface 84 story files
+    read, duplicated across two files, and paraphrasing semantics authoritatively specified on `at()`
+    itself. It also never reaches a consumer: for `export { at } from '…'` TypeScript resolves hover
+    docs from the original declaration. Trimmed to the forward-looking half.
+  - **RV-002** (correctness): the oracle's mounted-view case never mounts. Closed with a new
+    `story-at.impl.test.ts` rather than by touching the immutable oracle.
+- The reviewer independently reproduced the Delta-A sweep and reached the same single site, and
+  additionally cleared `ColorPicker` (`color-picker.ts:220` sets `direction:'row'`, which is the
+  engine default per `layout/types.ts:213`, so preserving it is inert).
+- Two bare replace-style layout writes remain in touched files — `themes-demo/main.ts:63` and
+  `kitchen-sink/stories/status-bar.story.ts:47`. They are individual write sites, not the *helpers*
+  this plan retires, so they are out of scope here and go on the follow-up issue (task 2.1.2).
+
 ---
 
 ## Phase 2: Close-out
