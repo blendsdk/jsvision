@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-20 17:35
-> **Progress**: 26/41 tasks (63%) — Phase 1 complete · Phase 2 steps 2.1–2.2 complete
+> **Last Updated**: 2026-07-20 18:05
+> **Progress**: 30/41 tasks (73%) — Phase 1 complete · Phase 2 complete
 > **CodeOps Skills Version**: 3.11.0
 
 ## Overview
@@ -143,16 +143,16 @@ is one reviewable change; counts in parentheses are lines, and they sum to 53.
 **Reference**: [03-02](03-02-jsdoc-example-modernization.md) §FR-6 · [02](02-current-state.md) §Live defects · AR-6
 **Objective**: FR-6.
 
-- [ ] 2.3.1 Fix the `createEventLoop` arity in `tree/tree.ts`, `tabs/tab-view.ts` and `table/data-grid.ts` — add the `{ caps }` second argument (`caps` is the only required `EventLoopOptions` member, `event/types.ts:37-39`) and import `resolveCapabilities` **from `@jsvision/ui`**, the package each example already imports from (neither file has a `@jsvision/core` import line to extend). Call-shape siblings: `dialog/dialog.ts:72`, `dialog/buttons.ts:29` — **not** `group.ts:57`, which documents `createRenderRoot`. **Remove their three allowlist entries**; a stale entry fails the build by design
-- [ ] 2.3.2 `packages/ui/src/app/application.ts:275` — resolve the unreachable `syncOverlayVisible` import per 03-02's **four**-branch rule. The symbol is **not a phantom**: it exists at `:288`, is exported from `app/index.ts:8`, used by `menu/controller.ts` and pinned by `ui/test/dropdown.seams.spec.test.ts:26` — it is absent only from the root barrel. If branch 0 applies (the barrel omission is the defect), **surface it for a maintainer ruling rather than working around it or silently exporting it**. Record the branch taken as **AR-R1**. **Remove its allowlist entry** once the block compiles
+- [x] ✅ (completed: 2026-07-20 18:05) 2.3.1 Fix the `createEventLoop` arity in `tree/tree.ts`, `tabs/tab-view.ts` and `table/data-grid.ts` — add the `{ caps }` second argument (`caps` is the only required `EventLoopOptions` member, `event/types.ts:37-39`) and import `resolveCapabilities` **from `@jsvision/ui`**, the package each example already imports from (neither file has a `@jsvision/core` import line to extend). Call-shape siblings: `dialog/dialog.ts:72`, `dialog/buttons.ts:29` — **not** `group.ts:57`, which documents `createRenderRoot`. **Remove their three allowlist entries**; a stale entry fails the build by design
+- [x] ✅ (completed: 2026-07-20 18:05) 2.3.2 `packages/ui/src/app/application.ts:275` — resolve the unreachable `syncOverlayVisible` import per 03-02's **four**-branch rule. The symbol is **not a phantom**: it exists at `:288`, is exported from `app/index.ts:8`, used by `menu/controller.ts` and pinned by `ui/test/dropdown.seams.spec.test.ts:26` — it is absent only from the root barrel. If branch 0 applies (the barrel omission is the defect), **surface it for a maintainer ruling rather than working around it or silently exporting it**. Record the branch taken as **AR-R1**. **Remove its allowlist entry** once the block compiles
 
 ### Step 2.4: Accept
 
 **Reference**: [01](01-requirements.md) AC-2, AC-3, AC-5
 **Objective**: Prove the sweep is complete, not merely applied.
 
-- [ ] 2.4.1 Acceptance greps — AC-2 reaches 0 (from 53); **AC-3's remaining hits are confined to `packages/ui/src/view/dsl/`** (`absolute.ts:21`, `flex.ts:5`, `index.ts:4` — three prose references inside the docs of the builders that replace the raw field); AC-5 confirms the four defects compile and none is allowlisted; **AC-6 confirms the net allowlist movement is exactly −4 / +0** — six of the nine layout blocks remain, the three arity defects and `application.ts::syncOverlayVisible` are gone, and no file this plan edits contributed a new entry
-- [ ] 2.4.2 Full verify, including `check:docs`
+- [x] ✅ (completed: 2026-07-20 18:05) 2.4.1 Acceptance greps — AC-2 reaches 0 (from 53); **AC-3's remaining hits are confined to `packages/ui/src/view/dsl/`** (`absolute.ts:21`, `flex.ts:5`, `index.ts:4` — three prose references inside the docs of the builders that replace the raw field); AC-5 confirms the four defects compile and none is allowlisted; **AC-6 confirms the net allowlist movement is exactly −4 / +0** — six of the nine layout blocks remain, the three arity defects and `application.ts::syncOverlayVisible` are gone, and no file this plan edits contributed a new entry
+- [x] ✅ (completed: 2026-07-20 18:05) 2.4.2 Full verify, including `check:docs`
 
 **Deliverables**: 53 → 0 · four defects fixed · guard green with an allowlist shrunk by exactly four
 **Verify**: `yarn verify`
