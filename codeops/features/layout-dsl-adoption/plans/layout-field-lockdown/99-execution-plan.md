@@ -316,9 +316,21 @@ Both new assertions were **mutation-tested, not assumed**: re-injecting the loop
 `dropdowns-demo/main.ts:44 — local 'row'`, and deleting one builder from the list fails the barrel
 check.
 
-**Recorded for whoever touches the layout engine next** (out of scope here, no action taken):
-`layout/measure.ts:79` calls `naturalSize(child)` unconditionally — even for a `fixed` child whose
-main size is already known — purely to read a cross extent that `align:'stretch'` then discards.
+**Recorded for whoever touches the layout engine next** (out of scope here, no action taken).
+`measure.ts:76` calls `naturalSize(child)` for every flow child, including a `fixed` one whose main
+size is already known. The *main* result is then discarded — but the *cross* result is not: it feeds
+`crossExtent = max(…)`, which becomes the container's own natural cross size. The real shape is that
+`naturalSize` computes both axes while each of its two callers uses exactly one (`solveMainSizes`
+takes `mainOf`, `crossPlacement` takes `crossOf`), so an axis-aware measure would skip the recursion
+rather than a `fixed`-child special case.
+
+**Measured effect today: none.** Instrumenting the built engine and mounting all 49 kitchen-sink
+stories plus `controls-live/form` yields **7 `naturalSize` calls in total, 3 `measure()`
+invocations, and 0 of the redundant kind**. The path is nearly unreachable here because the codebase
+sizes explicitly — `solveMainSizes` only measures an `auto` child, and `crossPlacement` short-circuits
+under the default `align:'stretch'` — so the redundant call fires only once you are already inside an
+`auto` container. The one such container in this phase was `containers-demo`'s 20-row Scroller
+content (~21 calls and 20 `Text.measure` per reflow), and giving it an explicit size removed it.
 
 **Process note.** Reverting a one-line mutation with `git checkout <file>` discarded the whole
 `dropdowns-demo` conversion. Caught, re-applied, and confirmed faithful by diffing against the
