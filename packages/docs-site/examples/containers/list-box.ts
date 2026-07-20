@@ -4,7 +4,7 @@
  * jumps to the next match. The owned scroll bar tracks the focused row; a live
  * echo shows the focused and selected items.
  */
-import { ListBox, Text, signal, cover, col, grow, fixed, spacer } from '@jsvision/ui';
+import { ListBox, Text, signal, at, col, grow, fixed, spacer } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 
 const FRUITS = [
@@ -38,6 +38,10 @@ const FRUITS = [
   'Strawberry',
 ];
 
+/** The example's box: nine list rows, a gap row, and the echo row. */
+const WIDTH = 40;
+const HEIGHT = 12;
+
 export default defineExample({
   title: 'List box',
   blurb: 'A virtual-scroll list with type-ahead: arrows / PgDn move, Enter selects, type a prefix to jump.',
@@ -53,10 +57,11 @@ export default defineExample({
       return `focused: ${focus}   selected: ${pick}`;
     });
 
-    // The list takes every row the shell offers, a one-cell gap separates it from the echo, and the
-    // echo keeps exactly one row. `spacer({ fixed: 1 })` is the hard gap -- a bare `spacer(1)` would
-    // ask for a 1fr *share* and swallow half the column. `cover()` makes the column fill its host;
-    // a column with no extent of its own would collapse to nothing.
-    return cover(col(grow(list), spacer({ fixed: 1 }), fixed(echo, 1)));
+    // A column: the list takes whatever height is left over, a one-cell gap separates it from the
+    // echo, and the echo keeps exactly one row however long its text is. `spacer({ fixed: 1 })` is
+    // the hard one-cell gap -- a bare `spacer(1)` would ask for a 1fr *share* and swallow half the
+    // column. The size is stated here rather than left to the shell's default, so changing it is a
+    // deliberate edit to this file.
+    return at(col(grow(list), spacer({ fixed: 1 }), fixed(echo, 1)), 0, 0, WIDTH, HEIGHT);
   },
 });
