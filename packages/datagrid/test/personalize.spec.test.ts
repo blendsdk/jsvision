@@ -92,7 +92,7 @@ function buildGrid(w = 50, h = 8): EditableDataGrid<Emp> {
     columns: COLS(),
     source: fromRows(signal(EMPS.slice()), { rowKey: (r) => r.id }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: w, height: h }, { caps });

@@ -33,8 +33,8 @@ function key(k: string, mods: Partial<Pick<KeyEvent, 'alt' | 'ctrl' | 'shift'>> 
 /** Mount a cluster as a child of a Group root (focus routing needs a Group-rooted current chain). */
 function mountCluster(cluster: Cluster, width: number, rows: number): ReturnType<typeof createEventLoop> {
   const root = new Group();
-  root.layout = { direction: 'col' };
-  cluster.layout = { size: { kind: 'fixed', cells: rows } };
+  root.setLayout({ direction: 'col' });
+  cluster.setLayout({ size: { kind: 'fixed', cells: rows } });
   root.add(cluster);
   const loop = createEventLoop({ width, height: rows }, { caps });
   loop.mount(root);

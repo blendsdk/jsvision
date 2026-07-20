@@ -48,7 +48,7 @@ function buildTall() {
   });
   const W = 14;
   const H = 6; // header(0) · body(1,2,3) · footer(4) · hbar(5)
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -111,7 +111,7 @@ function buildFrozen() {
   });
   const W = 13;
   const H = 5; // header(0) · body(1,2) · footer(3) · hbar(4)
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -167,7 +167,7 @@ test('ST-28: should strip control bytes from footer label + widget text at the d
   });
   const W = 16;
   const H = 7; // header · body(×2) · aggregate row · widget row · hbar
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

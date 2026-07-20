@@ -14,7 +14,7 @@ import { resolveCapabilities, defaultTheme } from '@jsvision/core';
 import type { MouseEvent } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
 import { Window } from '../src/window/index.js';
-import type { Rect } from '../src/layout/index.js';
+import { rectOf } from './layout.fixtures.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -34,20 +34,9 @@ function addWindow(
   rect: { x: number; y: number; width: number; height: number },
 ): Window {
   const w = new Window(title);
-  w.layout.rect = rect;
+  w.setLayout({ rect: rect });
   app.desktop.addWindow(w);
   return w;
-}
-
-/**
- * `layout.rect` is typed optional (an `'absolute'` box declared without one collapses to zero size
- * rather than throwing), but every window under test here is always given one via {@link addWindow}
- * or the desktop's own placement — so a missing rect here is a genuine test bug, not a valid state.
- */
-function rectOf(w: Window): Rect {
-  const rect = w.layout.rect;
-  if (rect === undefined) throw new Error(`window "${w.title()}" has no solved rect`);
-  return rect;
 }
 
 /**

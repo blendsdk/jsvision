@@ -67,7 +67,7 @@ const H = 16;
  */
 function buildFullGrid(): { grid: EditableDataGrid<Row>; inner: Group } {
   const widget = new Group();
-  widget.layout = { size: { kind: 'fr', weight: 1 } };
+  widget.setLayout({ size: { kind: 'fr', weight: 1 } });
 
   const grid = new EditableDataGrid<Row>({
     columns: COLS(),
@@ -78,7 +78,7 @@ function buildFullGrid(): { grid: EditableDataGrid<Row>; inner: Group } {
     quickFilter: true,
     footer: { aggregates: { amount: { fn: 'sum' } }, widgets: [widget] },
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -208,7 +208,7 @@ test('an unfrozen grid with no optional bands is a header, body and scroll-bar c
     ],
     source: fromRows(signal(ROWS.slice()), { rowKey: (r) => r.id }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

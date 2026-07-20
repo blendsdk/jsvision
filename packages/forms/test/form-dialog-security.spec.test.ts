@@ -49,7 +49,7 @@ test('ST-D-SEC a control-byte field value bound in a formDialog body never paint
     body: (form) => {
       const g = new Group();
       const input = new Input({ value: form.field('name').value });
-      input.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 30, height: 1 } };
+      input.setLayout({ position: 'absolute', rect: { x: 2, y: 1, width: 30, height: 1 } });
       g.add(input);
       return g;
     },

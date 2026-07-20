@@ -42,7 +42,7 @@ function allChars(buf: ReturnType<typeof render>, w: number, h: number): string 
 test('ST-14: a vertical ScrollBar draws ▲/▼ arrows, a ▒ track, and a █ thumb', () => {
   const g = new Group();
   const bar = new ScrollBar({ value: signal(0), min: 0, max: 100, orientation: 'vertical' });
-  bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 8 } };
+  bar.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 8 } });
   g.add(bar);
   const buf = render(g, 1, 8);
   expect(buf.get(0, 0)?.char).toBe('▲'); // top arrow
@@ -56,7 +56,7 @@ test('ST-14: a vertical ScrollBar draws ▲/▼ arrows, a ▒ track, and a █ t
 test('ST-14: a horizontal ScrollBar draws ◄/► arrows', () => {
   const g = new Group();
   const bar = new ScrollBar({ value: signal(0), min: 0, max: 100, orientation: 'horizontal' });
-  bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 8, height: 1 } };
+  bar.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 8, height: 1 } });
   g.add(bar);
   const buf = render(g, 8, 1);
   expect(buf.get(0, 0)?.char).toBe('◄');
@@ -67,7 +67,7 @@ test('ST-14: a horizontal ScrollBar draws ◄/► arrows', () => {
 test('ST-14: a disabled ScrollBar (max=0) fills the track with ▓', () => {
   const g = new Group();
   const bar = new ScrollBar({ value: signal(0), min: 0, max: 0, orientation: 'vertical' });
-  bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 6 } };
+  bar.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 6 } });
   g.add(bar);
   const buf = render(g, 1, 6);
   // Every interior cell (between the arrows) is the ▓ disabled shade.
@@ -79,7 +79,7 @@ test('ST-14: ListView focus is colour-only (no glyph/divider) with the TV colour
   const items = signal(['Alpha', 'Bravo', 'Charlie']);
   const g = new Group();
   const list = new ListBox({ items, focused: signal(0), selected: signal(1) });
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 3 } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 3 } });
   g.add(list);
   // The `listFocused` colour only applies to an ACTIVE list, so drive it through the loop + focus it
   // (TV: the focused-row colour needs `sfActive`; `tlstview.cpp:66`).
@@ -111,7 +111,7 @@ test('ST-14: ListView focus is colour-only (no glyph/divider) with the TV colour
 test('ST-14: the Dialog frame uses the dialog role — white border + close box, no zoom box', () => {
   const g = new Group();
   const dlg = new Dialog({ title: 'D' });
-  dlg.layout = { position: 'absolute', padding: 1, rect: { x: 0, y: 0, width: 18, height: 6 } };
+  dlg.setLayout({ position: 'absolute', padding: 1, rect: { x: 0, y: 0, width: 18, height: 6 } });
   g.add(dlg);
   const buf = render(g, 18, 6);
   // Active double-line border in the dialog border colour (white-on-lightGray).

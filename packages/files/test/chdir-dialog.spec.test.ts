@@ -32,7 +32,7 @@ function nestedFs(flavor: 'posix' | 'win32' = 'posix') {
 function openChDir(dlg: ChDirDialog) {
   // Preserve the dialog's own layout (esp. `padding`) so the spec exercises the real production
   // geometry — a wholesale layout replace drops `padding` and masks the frame-inset bug (chdir-dialog.ts).
-  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 48, height: 18 } };
+  dlg.setLayout({ rect: { x: 0, y: 0, width: 48, height: 18 } });
   const root = new Group();
   root.add(dlg);
   const loop = createEventLoop({ width: 48, height: 18 }, { caps });

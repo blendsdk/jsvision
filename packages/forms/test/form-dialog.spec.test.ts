@@ -121,7 +121,7 @@ function makeHost(w = 60, h = 20) {
 function bodyInput(form: Form<typeof Schema, Init>): View {
   const g = new Group();
   const input = new Input({ value: form.field('name').value });
-  input.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 24, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 2, y: 1, width: 24, height: 1 } });
   g.add(input);
   return g;
 }

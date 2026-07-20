@@ -43,12 +43,12 @@ const loop = { focusView: (): void => undefined };
 test('ST-W7: a caller absolute layout keeps its size but loses every other property', () => {
   const { host, render } = liveHost();
   const view = new Probe();
-  view.layout = {
+  view.setLayout({
     padding: 1,
     direction: 'col',
     position: 'absolute',
     rect: { x: 99, y: 99, width: 30, height: 5 },
-  };
+  });
 
   mountCellOverlay({
     host,
@@ -71,7 +71,7 @@ test('ST-W7: a caller absolute layout keeps its size but loses every other prope
 test('ST-W7: a caller layout without an absolute placement loses its size too', () => {
   const { host, render } = liveHost();
   const view = new Probe();
-  view.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
+  view.setLayout({ direction: 'col', size: { kind: 'fr', weight: 1 } });
 
   mountCellOverlay({
     host,

@@ -139,7 +139,7 @@ test('a tick writes frame damage + caret positioning as one chunk', async () => 
   const app = appWith({ ...d, viewport: { width: 40, height: 12 } });
   const { Editor } = await import('../src/editor/index.js');
   const ed = new Editor();
-  ed.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 5 } };
+  ed.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 5 } });
   app.desktop.add(ed);
   const runP = app.run();
   await new Promise((r) => setImmediate(r)); // first frame + initial caret

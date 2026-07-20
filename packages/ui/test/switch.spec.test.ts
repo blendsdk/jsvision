@@ -36,7 +36,7 @@ function mouse(kind: 'down' | 'up', x: number, y: number): CoreMouseEvent {
 
 /** Mount a Switch filling `w×h`, focus it, and return the loop + a buffer accessor. */
 function hosted(sw: Switch, value: Signal<boolean>, w = 24, h = 1, useCaps = caps) {
-  sw.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  sw.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(sw);
   const loop = createEventLoop({ width: w, height: h }, { caps: useCaps });
@@ -64,7 +64,7 @@ test('ST-20: a click on the control focuses it and toggles', () => {
   const value = signal(false);
   const root = new Group();
   const sw = new Switch({ value });
-  sw.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 1 } };
+  sw.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 1 } });
   root.add(sw);
   const loop = createEventLoop({ width: 24, height: 1 }, { caps });
   loop.mount(root);
@@ -112,9 +112,9 @@ test('ST-23: under no-Unicode caps the knob renders as ASCII `o`', () => {
 test('ST-24: an Alt-hotkey from elsewhere in the scope focuses + toggles the switch', () => {
   const value = signal(false);
   const other = new Button('~B~tn', { command: 'b' });
-  other.layout = { position: 'absolute', rect: { x: 0, y: 2, width: 10, height: 2 } };
+  other.setLayout({ position: 'absolute', rect: { x: 0, y: 2, width: 10, height: 2 } });
   const sw = new Switch({ value, label: '~A~irplane' });
-  sw.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 1 } };
+  sw.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 1 } });
   const root = new Group();
   root.add(sw);
   root.add(other);

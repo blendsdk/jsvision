@@ -43,18 +43,18 @@ function scheduledRoot(
 
 test('a chain of nested onMount adds all lay out and paint', () => {
   const greatGrand = new PaintLeaf();
-  greatGrand.layout = { size: { kind: 'fixed', cells: 1 } };
+  greatGrand.setLayout({ size: { kind: 'fixed', cells: 1 } });
 
   const grand = new Group();
-  grand.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
+  grand.setLayout({ direction: 'col', size: { kind: 'fr', weight: 1 } });
   grand.onMount(() => grand.add(greatGrand));
 
   const child = new Group();
-  child.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
+  child.setLayout({ direction: 'col', size: { kind: 'fr', weight: 1 } });
   child.onMount(() => child.add(grand));
 
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.add(child);
 
   const { rr, drain } = scheduledRoot(10, 6);
@@ -96,7 +96,7 @@ test('a shadow-margin occlusion check at the viewport edge does not crash', () =
   const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { unicode: { utf8: true } } }).profile;
   const app = createApplication({ caps, viewport: { width: 12, height: 6 } });
   const w = new Window('Edge');
-  w.layout.rect = { x: 10, y: 4, width: 2, height: 2 }; // flush against the right/bottom edges
+  w.setLayout({ rect: { x: 10, y: 4, width: 2, height: 2 } }); // flush against the right/bottom edges
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
   expect(() => {

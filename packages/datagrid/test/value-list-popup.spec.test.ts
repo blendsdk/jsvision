@@ -32,7 +32,7 @@ function build(opts: {
     current: opts.current,
     onApply: opts.onApply ?? (() => undefined),
   });
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(list);
   const render = createRenderRoot({ width: W, height: H }, { caps });

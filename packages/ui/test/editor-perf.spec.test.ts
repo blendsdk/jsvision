@@ -44,8 +44,8 @@ function minTime(n: number, fn: () => void): number {
 test('ST-35: 1 MB buffer — insert+redraw and cursor move each stay under 16 ms (off-CI)', () => {
   const ed = new Editor();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  ed.layout = { size: { kind: 'fr', weight: 1 } };
+  root.setLayout({ direction: 'col' });
+  ed.setLayout({ size: { kind: 'fr', weight: 1 } });
   root.add(ed);
   const loop = createEventLoop({ width: 80, height: 24 }, { caps }); // the dev-box frame (AC-20)
   loop.mount(root);

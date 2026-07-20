@@ -84,14 +84,14 @@ test('ST-35: a raw escape in a history entry is sanitized before it reaches the 
   clearHistory();
   const value = signal('');
   const input = new Input({ value });
-  input.layout = { position: 'absolute', rect: { x: 0, y: 1, width: 20, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 0, y: 1, width: 20, height: 1 } });
   const hist = new History({ link: input, historyId: 77 });
-  hist.layout = { position: 'absolute', rect: { x: 20, y: 1, width: 3, height: 1 } };
+  hist.setLayout({ position: 'absolute', rect: { x: 20, y: 1, width: 3, height: 1 } });
   // A malicious past value carrying a raw CSI escape (would move the cursor / recolor if unescaped).
   historyAdd(77, '[31mHACK[0m');
 
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 12 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 12 } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(input);
@@ -123,13 +123,13 @@ test('ST-35: a picked history value is clamped to the linked field maxLength', (
   clearHistory();
   const value = signal('');
   const input = new Input({ value, maxLength: 4 });
-  input.layout = { position: 'absolute', rect: { x: 0, y: 1, width: 20, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 0, y: 1, width: 20, height: 1 } });
   const hist = new History({ link: input, historyId: 88 });
-  hist.layout = { position: 'absolute', rect: { x: 20, y: 1, width: 3, height: 1 } };
+  hist.setLayout({ position: 'absolute', rect: { x: 20, y: 1, width: 3, height: 1 } });
   historyAdd(88, 'super-long-value'); // longer than maxLength
 
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 12 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 12 } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(input);

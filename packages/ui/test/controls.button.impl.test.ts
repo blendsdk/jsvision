@@ -84,9 +84,9 @@ test('a non-default button ignores Enter', () => {
   const btn = new Button('~O~K', { command: 'ok' }); // default: false
   const spy = new CommandSpy();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  btn.layout = { size: { kind: 'fixed', cells: 2 } };
-  spy.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  btn.setLayout({ size: { kind: 'fixed', cells: 2 } });
+  spy.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(btn);
   root.add(spy);
   const loop = createEventLoop({ width: 8, height: 3 }, { caps });
@@ -102,9 +102,9 @@ test('a reactive disabled getter re-greys and re-enables the button', () => {
   const btn = new Button('~O~K', { command: 'ok', disabled: () => off() });
   const spy = new CommandSpy();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  btn.layout = { size: { kind: 'fixed', cells: 2 } };
-  spy.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  btn.setLayout({ size: { kind: 'fixed', cells: 2 } });
+  spy.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(btn);
   root.add(spy);
   const loop = createEventLoop({ width: 8, height: 3 }, { caps });

@@ -119,9 +119,9 @@ function mountBody(opts: {
     dirty: opts.dirty,
     errors: opts.errors,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: BW, height: BH } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: BW, height: BH } });
   const stub = new FocusStub();
-  stub.layout = { position: 'absolute', rect: { x: 0, y: BH - 1, width: 1, height: 1 } };
+  stub.setLayout({ position: 'absolute', rect: { x: 0, y: BH - 1, width: 1, height: 1 } });
   const root = new Group();
   root.add(grid);
   root.add(stub);

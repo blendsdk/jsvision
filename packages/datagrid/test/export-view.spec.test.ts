@@ -20,7 +20,7 @@ const H = 8;
 
 /** Lay out + mount a grid so its reactive reads settle; return it. */
 function mount<T>(grid: EditableDataGrid<T>): EditableDataGrid<T> {
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

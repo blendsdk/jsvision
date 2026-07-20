@@ -59,11 +59,11 @@ test('ST-33: the button icon is ▐↓▌ in the decoded cpHistory colors (cell-
 test('ST-33: the popup rect is field±1 wide × 8 tall; rows are oldest-at-top in the cpHistoryViewer colors', () => {
   const loop = createEventLoop({ width: 40, height: 20 }, { caps });
   const link = new Input({ value: signal('cur') });
-  link.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 10, height: 1 } };
+  link.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 10, height: 1 } });
   const hist = new History({ link, historyId: 1 });
-  hist.layout = { position: 'absolute', rect: { x: 15, y: 3, width: 3, height: 1 } };
+  hist.setLayout({ position: 'absolute', rect: { x: 15, y: 3, width: 3, height: 1 } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(link);
@@ -114,9 +114,9 @@ test('ST-33: the ComboBox popup rows use the TListBox list* roles (focused = whi
   const loop = createEventLoop({ width: 40, height: 20 }, { caps });
   const value = signal<string | null>(null);
   const combo = new ComboBox<string>({ items: signal(['Apple', 'Banana']), getText: (s) => s, value, editable: false });
-  combo.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 14, height: 1 } };
+  combo.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 14, height: 1 } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(combo);

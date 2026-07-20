@@ -83,7 +83,7 @@ test('the Dialog walk stops at a nested TabView boundary — a tab char does not
     { title: '~B~eta', content: new Group() },
   ]);
   const tv = new TabView({ tabs, active: signal(0) });
-  tv.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 36, height: 8 } };
+  tv.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 36, height: 8 } });
   dialog.add(tv);
   mount(dialog);
   expect(dialogWarns(spy)).toHaveLength(0); // dialog 'a' vs tab 'a' are separate scopes

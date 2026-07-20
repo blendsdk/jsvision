@@ -2,8 +2,8 @@
 
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
-> **Last Updated**: 2026-07-20 (Phase 2 · Step 2.2 complete)
-> **Progress**: 25/55 tasks (45%)
+> **Last Updated**: 2026-07-20 (Phase 2 · Step 2.3 complete)
+> **Progress**: 29/55 tasks (53%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -151,10 +151,10 @@ The three `ui/test` and one `datagrid/test` deltas are churn since the survey, n
 > Per AC-6 these are mechanical **setup** rewrites, not oracle changes. Nothing a spec test asserts
 > may change; 152 spec files are touched this way and that is expected, not a violation.
 
-- [ ] 2.3.1 `ui/test` — 474 sites / 147 files, by directory batch
-- [ ] 2.3.2 `datagrid/test` — 167 / 75
-- [ ] 2.3.3 `forms/test` (31) · `files/test` (18)
-- [ ] 2.3.4 `examples/test` (6) · `docs-site/test` (4) · `web/test` (3) · `theme-designer/test` (1)
+- [x] 2.3.1 `ui/test` — 474 sites / 147 files, by directory batch — *done 2026-07-20*: **477 / 148** (EX-1). Converted in one mechanical pass rather than by directory batch: the rewrite is a single deterministic substitution the compiler checks in full, so splitting it would have produced four identical reviews of the same edit. Two files were held back and handled by hand — `view-setlayout.impl.test.ts`, whose ST-I1/ST-I4 assert the *replace* contract that 2.4.4 inverts (setup converted, assertions untouched), and the four files in EX-9
+- [x] 2.3.2 `datagrid/test` — 167 / 75 — *done 2026-07-20*: **166 / 75** (EX-1). Four needed hand conversion: two multi-line setups that deliberately seed a caller layout to prove the AR-16 erasure (`custom-editor-layout.spec.test.ts:92`, `overlay-contract.spec.test.ts:46` — both convert as setup, and both still prove the erasure, now against the explicit-`undefined` reset), one spread-merge, and `kitchen-sink/story.ts:56`, the parameter alias AR-2 lists as a holder
+- [x] 2.3.3 `forms/test` (31) · `files/test` (18) — *done 2026-07-20*: both exact. Every one of the 7 `files` spread-merges (`dlg.layout = { ...dlg.layout, rect }`) collapses to a plain `setLayout({ rect })`
+- [x] 2.3.4 `examples/test` (6) · `docs-site/test` (4) · `web/test` (3) · `theme-designer/test` (1) — *done 2026-07-20*: all exact. Two of the `examples` six are **string literals fed to `jsvision-doctor`**, not code — they are the doctor's fixture for the retired idiom and stay verbatim. Probing them surfaced **EX-8**: the doctor's window exception only recognized the assignment form, so it flagged `win.setLayout({ position: 'absolute', … })` while passing the identical old spelling. Fixed and pinned
 
 ### Step 2.4 — Flip
 

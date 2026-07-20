@@ -105,11 +105,11 @@ function setup(): Harness {
 
   // Two non-overlapping windows, each with a filling content child; the second (added last) is active.
   const w1 = new Window('One');
-  w1.layout.rect = { x: 2, y: 2, width: 24, height: 6 };
+  w1.setLayout({ rect: { x: 2, y: 2, width: 24, height: 6 } });
   w1.add(new Filler('.'));
   app.desktop.addWindow(w1);
   const w2 = new Window('Two');
-  w2.layout.rect = { x: 30, y: 2, width: 24, height: 6 };
+  w2.setLayout({ rect: { x: 30, y: 2, width: 24, height: 6 } });
   w2.add(new Filler('.'));
   app.desktop.addWindow(w2);
 

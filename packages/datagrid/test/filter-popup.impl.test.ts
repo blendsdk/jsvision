@@ -48,7 +48,7 @@ function buildPopup(opts: {
     onClear: () => undefined,
     onClose: opts.onClose ?? (() => undefined),
   });
-  popup.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 8 } };
+  popup.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 8 } });
   const root = new Group();
   root.add(popup);
   const render = createRenderRoot({ width: 30, height: 10 }, { caps });
@@ -125,7 +125,7 @@ test('a funnel click opens the popup anchored below the funnel; an outside click
     columns: COLUMNS,
     source: fromRows(signal(SALES.slice()), { rowKey: (r) => r.region }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

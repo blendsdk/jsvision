@@ -27,7 +27,7 @@ test('ST-12: Tab/Shift-Tab cycle focus across the controls, skipping the non-foc
   const radio = new RadioGroup({ labels: ['~L~eft'], value: signal(0) });
   const button = new Button('~O~K');
   const form = new Group();
-  form.layout = { direction: 'col' };
+  form.setLayout({ direction: 'col' });
   for (const [view, rows] of [
     [text, 1],
     [input, 1],
@@ -35,7 +35,7 @@ test('ST-12: Tab/Shift-Tab cycle focus across the controls, skipping the non-foc
     [radio, 1],
     [button, 2],
   ] as const) {
-    view.layout = { size: { kind: 'fixed', cells: rows } };
+    view.setLayout({ size: { kind: 'fixed', cells: rows } });
     form.add(view);
   }
   const loop = createEventLoop({ width: 20, height: 6 }, { caps });

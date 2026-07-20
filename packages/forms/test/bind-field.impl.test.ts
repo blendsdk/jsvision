@@ -26,9 +26,9 @@ function twoInputForm() {
   const inputA = new Input({ value: fieldA.value });
   const inputB = new Input({ value: form.field('b').value });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  inputA.layout = { size: { kind: 'fixed', cells: 1 } };
-  inputB.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  inputA.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  inputB.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(inputA);
   root.add(inputB);
   return { form, fieldA, inputA, inputB, root };
@@ -79,8 +79,8 @@ test('direct bind store→widget: an external set repaints Input and Switch', ()
   const nameField = textForm.field('name');
   const input = new Input({ value: nameField.value });
   const inputRoot = new Group();
-  inputRoot.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
+  inputRoot.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
   inputRoot.add(input);
   const inputLoop = createEventLoop({ width: 12, height: 2 }, { caps });
   inputLoop.mount(inputRoot);
@@ -93,8 +93,8 @@ test('direct bind store→widget: an external set repaints Input and Switch', ()
   const onField = boolForm.field('on');
   const sw = new Switch({ value: onField.value });
   const swRoot = new Group();
-  swRoot.layout = { direction: 'col' };
-  sw.layout = { size: { kind: 'fixed', cells: 1 } };
+  swRoot.setLayout({ direction: 'col' });
+  sw.setLayout({ size: { kind: 'fixed', cells: 1 } });
   swRoot.add(sw);
   const swLoop = createEventLoop({ width: 16, height: 2 }, { caps });
   swLoop.mount(swRoot);

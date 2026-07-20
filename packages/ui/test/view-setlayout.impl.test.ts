@@ -41,7 +41,7 @@ function countingHost(): { host: ViewHost; relayouts: () => number } {
 // ST-I1 — an empty patch keeps every prop, still assigns a fresh object, and still invalidates.
 test('ST-I1: setLayout({}) preserves the props, replaces the object, and invalidates', () => {
   const v = new Leaf();
-  v.layout = { direction: 'col', padding: 1 };
+  v.setLayout({ direction: 'col', padding: 1 });
   const before = v.layout;
   const { host, relayouts } = countingHost();
   v.host = host;
@@ -110,7 +110,7 @@ test('ST-I5: StatusLine and ColorPicker keep their constructor direction', () =>
 // `view.layout.rect = …` rely on the previous object staying untouched by a later patch.
 test('ST-I4: setLayout replaces the layout object rather than mutating it', () => {
   const v = new Leaf();
-  v.layout = { direction: 'col' };
+  v.setLayout({ direction: 'col' });
   const before = v.layout;
 
   v.setLayout({ padding: 1 });

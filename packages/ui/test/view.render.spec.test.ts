@@ -36,7 +36,7 @@ test('ST-05: overlapping siblings render back-to-front (later overpaints earlier
   const back = new PaintView('A');
   const front = new PaintView('B');
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(back);
   root.add(front);
 
@@ -59,9 +59,9 @@ test('ST-05: overlapping siblings render back-to-front (later overpaints earlier
 // stale cells show through.
 test('ST-06: a Group background fills its rect before children draw', () => {
   const child = new PaintView('X');
-  child.layout = { size: { kind: 'fixed', cells: 2 } };
+  child.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.background = 'window';
   root.add(child);
 
@@ -79,11 +79,11 @@ test('ST-06: a Group background fills its rect before children draw', () => {
 // still render (the rest of the frame composes).
 test('ST-14: a throwing draw() is logged and isolated; siblings still render', () => {
   const bad = new ThrowView();
-  bad.layout = { size: { kind: 'fixed', cells: 3 } };
+  bad.setLayout({ size: { kind: 'fixed', cells: 3 } });
   const good = new PaintView('G');
-  good.layout = { size: { kind: 'fixed', cells: 3 } };
+  good.setLayout({ size: { kind: 'fixed', cells: 3 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(bad);
   root.add(good);
 
@@ -101,9 +101,9 @@ test('ST-14: a throwing draw() is logged and isolated; siblings still render', (
 // serialized frame without RD-04 (the Phase-0 standalone spine).
 test('ST-19: a render root produces a non-empty serialized frame standalone', () => {
   const child = new PaintView('Z');
-  child.layout = { size: { kind: 'fixed', cells: 1 } };
+  child.setLayout({ size: { kind: 'fixed', cells: 1 } });
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.background = 'desktop';
   root.add(child);
 

@@ -43,7 +43,7 @@ test('ST-03: Scroller clips oversized content and reveals lower rows on scroll, 
   const content = new LetterRows(20);
   const scroller = new Scroller({ content, extent: { width: 10, height: 20 }, scrollbars: 'vertical' });
   // The host places the Scroller (a Window would); fill the 10×5 viewport absolutely.
-  scroller.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 5 } };
+  scroller.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 5 } });
   // A focusable container needs a parent to be the focused leaf (in real apps: the Desktop/Window).
   const root = new Group();
   root.add(scroller);

@@ -180,7 +180,7 @@ test('ST-3.a: removing the focused dynamic child re-homes focus (unmountDynamicC
   const items = signal<number[]>([1, 2]);
   const leaves = new Map<number, FocusLeaf>();
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.addDynamic(() =>
     For(
       () => items(),

@@ -26,7 +26,7 @@ function fsFixture() {
 
 /** Mount a ChDirDialog at its design size and run it modally. */
 function openChDirDialog(dlg: ChDirDialog): EventLoop {
-  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 48, height: 18 } };
+  dlg.setLayout({ rect: { x: 0, y: 0, width: 48, height: 18 } });
   const root = new Group();
   root.add(dlg);
   const loop = createEventLoop({ width: 48, height: 18 }, { caps });

@@ -47,6 +47,18 @@ test('flags an absolute content rect, allows a window/dialog placement rect', ()
   expect(rules(win)).not.toContain('content-absolute-rect');
 });
 
+// The same rule, written the way the framework now requires. `setLayout` is the only way to write
+// layout, so a checker that only understood the assignment form would flag a window placing itself —
+// the one thing gotcha 3 explicitly sanctions — while staying quiet about the identical old spelling.
+test('the window exception survives the setLayout spelling; content is still flagged', () => {
+  const win =
+    "const win = new Window('t'); win.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 5 } });";
+  expect(rules(win)).not.toContain('content-absolute-rect');
+
+  const content = "label.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 4, height: 1 } });";
+  expect(rules(content)).toContain('content-absolute-rect');
+});
+
 // gotcha 10 — focus the inner .rows renderer of a list/grid, not the container.
 test('flags focusing a DataGrid container, allows focusing its .rows', () => {
   expect(rules('const grid = new DataGrid({}); loop.focusView(grid);')).toContain('focus-container-not-rows');

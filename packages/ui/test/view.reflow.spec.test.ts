@@ -22,19 +22,19 @@ class Leaf extends View {
 test('ST-02: reflow writes RD-02 rects to bounds; nested bounds are parent-relative', () => {
   // col root: [ fixed-3 leaf, fr-1 row-group [ fr-1, fr-1 ] ] in an 80×24 viewport.
   const header = new Leaf();
-  header.layout = { size: { kind: 'fixed', cells: 3 } };
+  header.setLayout({ size: { kind: 'fixed', cells: 3 } });
 
   const innerA = new Leaf();
-  innerA.layout = { size: { kind: 'fr', weight: 1 } };
+  innerA.setLayout({ size: { kind: 'fr', weight: 1 } });
   const innerB = new Leaf();
-  innerB.layout = { size: { kind: 'fr', weight: 1 } };
+  innerB.setLayout({ size: { kind: 'fr', weight: 1 } });
   const body = new Group();
-  body.layout = { direction: 'row', size: { kind: 'fr', weight: 1 } };
+  body.setLayout({ direction: 'row', size: { kind: 'fr', weight: 1 } });
   body.add(innerA);
   body.add(innerB);
 
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.add(header);
   root.add(body);
 
@@ -54,14 +54,14 @@ test('ST-02: reflow writes RD-02 rects to bounds; nested bounds are parent-relat
 // fill the freed space (the not-drawn half is asserted by the render specs).
 test('ST-03: a visible:false child is omitted from layout; siblings refill the space', () => {
   const a = new Leaf();
-  a.layout = { size: { kind: 'fr', weight: 1 } };
+  a.setLayout({ size: { kind: 'fr', weight: 1 } });
   const b = new Leaf();
-  b.layout = { size: { kind: 'fr', weight: 1 } };
+  b.setLayout({ size: { kind: 'fr', weight: 1 } });
   const c = new Leaf();
-  c.layout = { size: { kind: 'fr', weight: 1 } };
+  c.setLayout({ size: { kind: 'fr', weight: 1 } });
 
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.add(a);
   root.add(b);
   root.add(c);

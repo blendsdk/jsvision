@@ -41,7 +41,7 @@ function countingHost(): { host: ViewHost; relayouts: () => number } {
 // ST-S1 — the merge preserves every prop the patch does not name.
 test('ST-S1: setLayout merges, preserving props the patch does not name', () => {
   const v = new Leaf();
-  v.layout = { direction: 'col', padding: 1 };
+  v.setLayout({ direction: 'col', padding: 1 });
   v.setLayout({ size: { kind: 'fixed', cells: 2 } });
   expect(v.layout).toEqual({ direction: 'col', padding: 1, size: { kind: 'fixed', cells: 2 } });
 });
@@ -50,7 +50,7 @@ test('ST-S1: setLayout merges, preserving props the patch does not name', () => 
 // a deep merge would leave the previous size variant's `cells` behind alongside the new `weight`.
 test('ST-S2: the merge is shallow — a size variant swap leaves no residual fields', () => {
   const v = new Leaf();
-  v.layout = { size: { kind: 'fixed', cells: 1 } };
+  v.setLayout({ size: { kind: 'fixed', cells: 1 } });
   v.setLayout({ size: { kind: 'fr', weight: 1 } });
   expect(v.layout.size).toEqual({ kind: 'fr', weight: 1 });
 });
@@ -69,7 +69,7 @@ test('ST-S3: setLayout on a mounted view calls markRelayout', () => {
 // solver, so the oracle is pinned to observable layout behaviour rather than to an internal helper.
 test('ST-S9: an explicit undefined resets the prop to its layout default', () => {
   const v = new Leaf();
-  v.layout = { size: { kind: 'fixed', cells: 2 } };
+  v.setLayout({ size: { kind: 'fixed', cells: 2 } });
 
   v.setLayout({ size: undefined });
 
@@ -99,7 +99,7 @@ test('ST-S5: a tagger applied to a mounted view calls markRelayout', () => {
 // ST-S4 — an unmounted view has no host; the call must still merge and must not throw.
 test('ST-S4: setLayout on an unmounted view merges without throwing', () => {
   const v = new Leaf();
-  v.layout = { direction: 'col' };
+  v.setLayout({ direction: 'col' });
   expect(v.host).toBeNull();
   expect(() => v.setLayout({ padding: 1 })).not.toThrow();
   expect(v.layout).toEqual({ direction: 'col', padding: 1 });

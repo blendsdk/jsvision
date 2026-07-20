@@ -39,7 +39,7 @@ test('ST-2: removeWindow of the sole active-but-unfocused window repaints via th
   // holds it as active but not as its focus child — so removing it does NOT trigger the incidental
   // focus-heal repaint; the else-branch is the only thing that can paint.
   w.focusable = false;
-  w.layout.rect = { x: 2, y: 2, width: 20, height: 6 };
+  w.setLayout({ rect: { x: 2, y: 2, width: 20, height: 6 } });
   app.desktop.addWindow(w);
   expect(app.desktop.activeWindow()).toBe(w); // active, though never focused
 
@@ -69,9 +69,9 @@ test('ST-2: removeWindow of the sole active-but-unfocused window repaints via th
 test('ST-2b: removeWindow with another window remaining still repaints (sibling branch intact)', () => {
   const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
   const a = new Window('AAA');
-  a.layout.rect = { x: 0, y: 0, width: 18, height: 5 };
+  a.setLayout({ rect: { x: 0, y: 0, width: 18, height: 5 } });
   const b = new Window('BBB');
-  b.layout.rect = { x: 20, y: 0, width: 18, height: 5 };
+  b.setLayout({ rect: { x: 20, y: 0, width: 18, height: 5 } });
   app.desktop.addWindow(a);
   app.desktop.addWindow(b); // b added last ⇒ active
 

@@ -118,7 +118,7 @@ test('ST-18: a TabView with two tabs sharing ~X~ warns once on mount, naming the
     { title: '~A~lter', content: page() },
   ]);
   const view = new TabView({ tabs, active: signal(0) });
-  view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 38, height: 8 } };
+  view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 38, height: 8 } });
   const root = new Group();
   root.add(view);
   mount(root);
@@ -140,7 +140,7 @@ test('ST-18b: a page-content accelerator sharing a tab char does NOT warn (strip
     { title: '~B~eta', content: new Group() },
   ]);
   const view = new TabView({ tabs, active: signal(0) });
-  view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 38, height: 8 } };
+  view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 38, height: 8 } });
   const root = new Group();
   root.add(view);
   mount(root);

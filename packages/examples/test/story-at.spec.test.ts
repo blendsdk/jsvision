@@ -33,7 +33,7 @@ test('kitchen-sink at() writes an absolute rect on a bare view and returns the s
 // helper wipes `direction` and `padding` here and must fail.
 test('kitchen-sink at() preserves layout props it does not name', () => {
   const v = new Group();
-  v.layout = { direction: 'col', padding: 1 };
+  v.setLayout({ direction: 'col', padding: 1 });
   at(v, 0, 0, 10, 5);
   expect(v.layout).toEqual({
     direction: 'col',
@@ -54,7 +54,7 @@ test('datagrid-showcase at() writes an absolute rect on a bare view and returns 
 // Same merge contract, seen through the datagrid showcase's export.
 test('datagrid-showcase at() preserves layout props it does not name', () => {
   const v = new Group();
-  v.layout = { direction: 'col', padding: 1 };
+  v.setLayout({ direction: 'col', padding: 1 });
   atGrid(v, 0, 0, 10, 5);
   expect(v.layout).toEqual({
     direction: 'col',
