@@ -4,7 +4,7 @@
  * repaints on `app.setTheme`, the gallery re-colors live on every edit. The panel title shows the
  * active preview depth, which the app downsamples the whole preview to.
  */
-import { Group, Text, Scroller } from '@jsvision/ui';
+import { Group, Text, Scroller, col, fixed, grow } from '@jsvision/ui';
 
 import { buildGallery, GALLERY_SIZE } from './gallery.js';
 import type { DesignerModel } from '../model/index.js';
@@ -19,12 +19,7 @@ import type { DesignerModel } from '../model/index.js';
  * const preview = buildPreviewPanel(model);
  */
 export function buildPreviewPanel(model: DesignerModel): Group {
-  const view = new Group();
   const title = new Text(() => `Live preview — ${model.state().depth}`);
-  title.layout = { size: { kind: 'fixed', cells: 1 } };
   const scroller = new Scroller({ content: buildGallery(), extent: GALLERY_SIZE, scrollbars: 'both' });
-  scroller.layout = { size: { kind: 'fr', weight: 1 } };
-  view.add(title);
-  view.add(scroller);
-  return view;
+  return col(fixed(title, 1), grow(scroller));
 }
