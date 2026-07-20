@@ -19,8 +19,9 @@
 ### Deferred / out of this plan
 
 - **GH #110 and GH #111 in full** — the five converted example demos, `drill-down.story.ts`, and the
-  theme-designer panels + 3-pane workspace. **Already implemented in open PR #127**
-  (`feat/canvas-flex-adoption`, plan set `plans/canvas-flex-adoption/`) against the same base branch.
+  theme-designer panels + 3-pane workspace. **Already implemented in PR #127**
+  (`feat/canvas-flex-adoption`, plan set `plans/canvas-flex-adoption/`), which **merged into
+  `feat/dsl-adoptation` on 2026-07-20**.
   Dropped here rather than duplicated. [AR-15]
 - **RD-01 FR-6 maximal** — the 411 `at()` call sites across 84 story files, and the deliberate
   absolute demo canvases (`containers`, `dropdowns`, `themes`, `color`, `date`, `tabs`, `playground`,

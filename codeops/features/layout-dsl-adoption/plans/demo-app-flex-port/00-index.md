@@ -27,9 +27,9 @@ which stay unedited throughout.
 ### Scope note — #110 and #111 are owned by PR #127
 
 An earlier draft of this plan also converted five example demos, `drill-down.story.ts`, and the
-theme-designer panels + 3-pane workspace. **Preflight found that work already implemented in open
+theme-designer panels + 3-pane workspace. **Preflight found that work already implemented in
 PR #127** (`feat/canvas-flex-adoption`, plan set `plans/canvas-flex-adoption/`), against the same
-base branch. Those phases were dropped rather than duplicated (AR-15). This plan now covers the
+base branch, and since merged there. Those phases were dropped rather than duplicated (AR-15). This plan now covers the
 #114 reachable slice only, and its six files are verified untouched by #127.
 
 ## Document Index

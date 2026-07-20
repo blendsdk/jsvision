@@ -14,7 +14,8 @@ audit table, a before/after zero diff per touched demo, and the existing e2e/smo
 unedited.
 
 **Re-scope note.** Phases for GH #110 (example demos) and GH #111 (theme-designer) were removed after
-preflight found that work already implemented in **open PR #127** (`feat/canvas-flex-adoption`).
+preflight found that work already implemented in **PR #127** (`feat/canvas-flex-adoption`), since
+merged into `feat/dsl-adoptation`.
 See AR-15. This plan's six source files are verified disjoint from #127's diff.
 
 **Branch:** from `feat/dsl-adoptation` (after PR #128 merges) or from #128's head. #128 is what makes

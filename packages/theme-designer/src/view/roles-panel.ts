@@ -4,7 +4,7 @@
  * `model.select`), which loads it into the inspector. Editing an alias re-derives the theme; editing a
  * role overrides it.
  */
-import { Group, Text, ListBox, signal } from '@jsvision/ui';
+import { Group, Text, ListBox, col, fixed, grow, signal } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
 import type { DesignerModel, EditTarget } from '../model/index.js';
 
@@ -65,14 +65,8 @@ export function buildRolesPanel(model: DesignerModel): RolesPanel {
   const focused = signal(0);
   const list = new ListBox({ items: signal(labels), focused, selected: signal(0), typeAhead: true });
 
-  // A column [title, list-fills]; the app sizes the panel's width and sets `direction: 'col'`.
-  const view = new Group();
-  view.background = 'dialog';
-  const title = new Text('Roles');
-  title.layout = { size: { kind: 'fixed', cells: 1 } };
-  list.layout = { size: { kind: 'fr', weight: 1 } };
-  view.add(title);
-  view.add(list);
+  // A column [title, list-fills]. The panel owns its own stacking; the app only sizes its width.
+  const view = col({ background: 'dialog' }, fixed(new Text('Roles'), 1), grow(list));
 
   return { view, focused, targets, rows: list.rows };
 }
