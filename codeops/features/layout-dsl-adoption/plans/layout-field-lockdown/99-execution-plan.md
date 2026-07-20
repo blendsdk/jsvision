@@ -82,6 +82,18 @@ Six findings; all resolved.
 | RV-005 | 🟡 | `multiclick.consumers.spec` now recomputes the row list instead of reading the widget's own | **Accepted, not fixed** — the honest fix is a new public read on `Tree`, which is API surface this phase has no mandate to add. Equivalent today; recorded so it is not mistaken for coverage |
 | RV-006 | 🟡 | Two declared types in `plugin-sync.d.mts` carried each other's doc comment | Swapped |
 
+**Re-review of the fix diff** — seven further findings, all resolved except two recorded as accepted:
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| RV-007 | 🔴 | Eight long-standing spec oracles were edited outside the fix's stated scope | **Sanctioned**, not drift: this is task 1.3.8, decided before the sweep ran. No assertion changed; the annotation strictly *strengthens* checking. The reviewer's point that it was mechanical enough to corrupt comments is proven by RV-008 |
+| RV-008 | 🟠 | The sweep's find/replace ate the contrast term, leaving two comments reading "`DesktopApplication` (not `DesktopApplication`)" — the reason the annotation exists became unrecoverable | Contrast term restored in both |
+| RV-009 | 🟠 | Inserting `RoleOverrides` orphaned `ThemeOptions`' own JSDoc above it, leaving a public interface undocumented | Doc moved back onto the interface |
+| RV-010 | 🟡 | `RoleOverrides` is inferable but unnameable — the sibling `overrides` option's type *is* on the barrel | **Accepted.** Widening the public type surface is not this phase's mandate, and it would drift the plugin API-ref snapshot. Callers pass literals |
+| RV-011 | 🟡 | `Partial<Theme[K]>` newly admits an explicit `undefined`, which the spread wrote straight over the generated value — a realistic shape when a caller forwards optional config | Undefined-valued keys are filtered before the spread. Probed: `{ pattern: undefined }` now leaves `'░'` intact |
+| RV-012 | 🟡 | The ST-3 rewrite moved the `test/`-exists check ahead of the exemption check, making `EXEMPT` unreachable | Exemption now gates on the typecheck script alone, so any package leaving the gate must be named. Each `ALLOWED_UNCHECKED` entry must also still exist *and* still be outside the program, so a stale allowance fails |
+| RV-013 | 🟡 | `core/vitest.config.ts` still documented the removed switch — and repeated the misconception that made it look live | Rewritten; the other six configs gained the same one-line explanation |
+
 > **Known flake, pre-existing:** `ui/test/editor-perf.spec.test.ts` ST-35 asserts a 16 ms wall-clock ceiling and fails intermittently when turbo runs packages in parallel on a loaded machine. It passes standalone and under `yarn verify --concurrency=1`, and it failed the same way before this phase. Not introduced here.
 
 ---
