@@ -363,7 +363,7 @@ Options for createRenderRoot .
 interface RenderRootOptions {
   caps: CapabilityProfile;   // REQUIRED — the terminal capability profile used to encode each frame's output.
   theme?: Theme;   // Active theme; defaults to the built-in default theme.
-  schedule?: (flush: () => void) => void;   // How a pending repaint is scheduled; defaults to `queueMicrotask` (one coalesced frame per tick).
+  schedule?: (flush: () => void) => void;   // How a pending repaint is scheduled; defaults to `queueMicrotask` (one coalesced frame per tick). A custom scheduler **must defer** the callback rather than invoking it inline. Coalescing is what makes invalidation cheap: many invalidations in one tick collapse into a single frame. A synchronous `(flush) => flush()` defeats that — every invalidation becomes its own frame: a full repaint pass for `invalidate`, and a reflow plus recompose for `invalidateLayout`. Building a tree then costs one frame per view. Tests that need a frame inline should call the render root's `flush()` instead.
   logger?: Logger;   // Where a widget's `draw()` errors are logged; defaults to a disabled logger (silent).
   healFocus?: (group: View) => void;   // Hook to re-home focus after a group removes its currently-focused child. The event loop wires this so focus lands on a sensible sibling; a standalone (non-interactive) render root leaves it unset.
 }
@@ -498,6 +498,7 @@ centered
 grabsFocus
 focusSignal(): Signal<void>
 selectByClick(): void
+setLayout(patch: Partial<LayoutProps>): void
 ```
 
 ## ViewState
