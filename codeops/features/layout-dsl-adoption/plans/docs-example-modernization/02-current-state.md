@@ -117,6 +117,35 @@ expected order of magnitude.
 | **Total (AR-15 roots)** | **377** | — |
 | theme-designer *(out of scope, AR-15)* | 17 | 20 |
 
+### ✅ Measured for real — task 1.3.1, 2026-07-20
+
+The estimates above are superseded by the harness's own run over the six AR-15 roots, on the
+pre-sweep repo, with the AR-14 options and the AR-16 in-memory host:
+
+| | blocks | failing |
+|---|---|---|
+| core | 72 | 4 |
+| ui | 171 | 93 |
+| web | **11** | 4 |
+| files | 18 | 7 |
+| datagrid | 98 | 56 |
+| forms | 6 | 1 |
+| **Total** | **376** | **165** |
+
+Wall-clock **5.4 s** for all 376 blocks in one `ts.createProgram` (the ~1.9 s planning figure covered
+300 blocks and excluded `core`/`datagrid`). Comfortably inside the package's existing 60 s vitest
+timeout.
+
+The estimates were sound: 376 against a projected 377 (`web` has 11 blocks, not 12), and the failure
+count lands where AR-14 predicted. The four packages the 300-block options probe *did* cover
+reproduce its loose row **exactly** — ui 93 · web 4 · files 7 · forms 1 — which retires any remaining
+doubt that `noUnusedLocals` had to be off. `core` (4) and `datagrid` (56) were outside that probe and
+account for the rest.
+
+All nine layout blocks from the table below are present and keyed as recorded, as is
+`application.ts::syncOverlayVisible` (`codes: [2304, 2305]` — the `TS2305` barrel miss plus a
+`TS2304` on an ambient `myPopup`).
+
 Dominant failure cause is `TS2304 Cannot find name`: blocks written as **fragments** that reference
 an ambient `dialog`, `app`, `loop` or `term`. That is a legitimate documentation style, not a defect
 — which is precisely why the guard grandfathers rather than demands zero (AR-5). A smaller class is

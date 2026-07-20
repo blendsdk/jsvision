@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-20 (preflight iteration 1 applied — 41 tasks)
-> **Progress**: 0/41 tasks (0%)
+> **Last Updated**: 2026-07-20 16:37
+> **Progress**: 15/41 tasks (37%) — Phase 1 complete
 > **CodeOps Skills Version**: 3.11.0
 
 ## Overview
@@ -49,7 +49,7 @@ onto the layout DSL, then retire the seven `at()` shadows in the docs-site examp
 
 ## Phase 1: The `@example` compile guard
 
-> **Phase ref**: _(recorded by the exec_plan skill at phase start)_
+> **Phase ref**: `f78ff0a0` (phase start)
 > **Lenses**: api-surface · perf
 > **Routing**: complex — TypeScript compiler API work: a custom `CompilerHost`, JSDoc-tag
 > de-duplication across binding nodes, and a keying scheme with three collision cases. Not core
@@ -60,9 +60,9 @@ onto the layout DSL, then retire the seven `at()` shadows in the docs-site examp
 **Reference**: [07](07-testing-strategy.md) ST-1…ST-8, ST-13, ST-14 · [03-01](03-01-example-compile-guard.md) · AR-2, AR-5, AR-9, AR-10, AR-11, AR-12, AR-13, AR-14, AR-15, AR-16
 **Objective**: Pin the guard's contract before any of it exists.
 
-- [ ] 1.1.1 Author the fixtures under `packages/docs-site/test/fixtures/jsdoc-examples/` — a compiling example; a wrong-arity example; a `TS2304` example naming one identifier plus a variant naming two (ST-5); a fenced example; a relative-import example plus its sibling; a two-symbol file (ST-8); a **same-symbol two-block** file mirroring `controls/input.ts:47,58` (ST-14); and an `export const` with one `@example` for the de-duplication impl case. **No fixture may import `@jsvision/*`** (07 §authoring rule)
-- [ ] 1.1.2 [spec-author] Write ST-1…ST-8, ST-13, ST-14 as `checkExamples(collectExamples([fixtureRoot]), injectedAllowlist)` — `packages/docs-site/test/jsdoc-examples.spec.test.ts`. **Drive them through `collectExamples`, not hand-built blocks** — fence stripping and key resolution live there, so a hand-built block makes ST-6 and ST-14 assert nothing. **Do not write ST-12 here**: it needs the allowlist that 1.3.1 creates
-- [ ] 1.1.3 Verify RED — all **nine** fail (the module under test does not exist). Capture the run **after** the fixtures land, or it proves nothing
+- [x] 1.1.1 ✅ (completed: 2026-07-20 16:24) Author the fixtures under `packages/docs-site/test/fixtures/jsdoc-examples/` — a compiling example; a wrong-arity example; a `TS2304` example naming one identifier plus a variant naming two (ST-5); a fenced example; a relative-import example plus its sibling; a two-symbol file (ST-8); a **same-symbol two-block** file mirroring `controls/input.ts:47,58` (ST-14); and an `export const` with one `@example` for the de-duplication impl case. **No fixture may import `@jsvision/*`** (07 §authoring rule)
+- [x] 1.1.2 ✅ (completed: 2026-07-20 16:24) [spec-author] Write ST-1…ST-8, ST-13, ST-14 as `checkExamples(collectExamples([fixtureRoot]), injectedAllowlist)` — `packages/docs-site/test/jsdoc-examples.spec.test.ts`. **Drive them through `collectExamples`, not hand-built blocks** — fence stripping and key resolution live there, so a hand-built block makes ST-6 and ST-14 assert nothing. **Do not write ST-12 here**: it needs the allowlist that 1.3.1 creates
+- [x] 1.1.3 ✅ (completed: 2026-07-20 16:24) Verify RED — all **nine** fail (the module under test does not exist). Capture the run **after** the fixtures land, or it proves nothing
 
 **Deliverables**: fixtures committed · nine failing spec cases · red run captured
 **Verify**: `yarn workspace @jsvision/docs-site test` (inner loop — `yarn verify` is the gate at each step boundary, per AR-8)
@@ -72,11 +72,11 @@ onto the layout DSL, then retire the seven `at()` shadows in the docs-site examp
 **Reference**: [03-01](03-01-example-compile-guard.md) §Implementation details
 **Objective**: Make ST-1…ST-8, ST-13 and ST-14 green.
 
-- [ ] 1.2.1 Implement `collectExamples()` in **`packages/docs-site/src/api/jsdoc-examples.mjs`** (in `src/`, not `test/` — it mirrors `src/api/barrel-exports.mjs`, and `tsconfig.json` typechecks `src/**` but not `test/**`). Walk the **six enumerated roots** `core,ui,web,files,datagrid,forms` — never a `packages/*/src` glob (AR-15). Pull `@example` bodies via `ts.getTextOfJSDocComment`; **de-duplicate by `(file, tag.pos)` and resolve the symbol from the outermost declaration owning the JSDoc** — a naive `getJSDocTags` walk mints one block per *binding node* and produces phantom `(anonymous)` twins (02 §Correction 1); strip code fences unconditionally (AR-12); un-escape `*\/` → `*/`; key as `file::Symbol`, `Class.member` for members, `#N` where a key repeats (AR-10)
-- [ ] 1.2.2 Implement `checkExamples()` — the **six**-row verdict table in 03-01, matching on the **set of diagnostic codes plus the identifier named by each `TS2304`**, never message text and never a single first code (five of the six blocks Phase 2 edits are `TS2304`-grandfathered and a forgotten `at` import is also `TS2304`). Report `stale` for entries that now compile **and** for entries naming a vanished file or symbol (AR-9, AR-11)
-- [ ] 1.2.3 Implement the compile path — **in-memory `ts.CompilerHost`, no filesystem writes at all** (AR-16): each block served as a virtual `SourceFile` at a path **inside its own source's directory** (AR-13 — relative specifiers and `type: module` for the 37 top-level-`await` blocks both depend on it), `writeFile` a no-op, one `ts.createProgram` with `tsconfig.base.json`'s options plus exactly three overrides — `noUnusedLocals: false`, `noUnusedParameters: false` (AR-14), `noEmit: true`
-- [ ] 1.2.4 Add `@jsvision/datagrid` and `@jsvision/forms` to `packages/docs-site/package.json` devDependencies — AR-15 puts them in the guard's roots, and without the declared dependency turbo's `^build` does not order their builds before `docs-site#test`, making the allowlist build-order dependent
-- [ ] 1.2.5 Verify GREEN — ST-1…ST-8, ST-13, ST-14 pass (nine cases)
+- [x] ✅ (completed: 2026-07-20 16:30) 1.2.1 Implement `collectExamples()` in **`packages/docs-site/src/api/jsdoc-examples.mjs`** (in `src/`, not `test/` — it mirrors `src/api/barrel-exports.mjs`, and `tsconfig.json` typechecks `src/**` but not `test/**`). Walk the **six enumerated roots** `core,ui,web,files,datagrid,forms` — never a `packages/*/src` glob (AR-15). Pull `@example` bodies via `ts.getTextOfJSDocComment`; **de-duplicate by `(file, tag.pos)` and resolve the symbol from the outermost declaration owning the JSDoc** — a naive `getJSDocTags` walk mints one block per *binding node* and produces phantom `(anonymous)` twins (02 §Correction 1); strip code fences unconditionally (AR-12); un-escape `*\/` → `*/`; key as `file::Symbol`, `Class.member` for members, `#N` where a key repeats (AR-10)
+- [x] ✅ (completed: 2026-07-20 16:30) 1.2.2 Implement `checkExamples()` — the **six**-row verdict table in 03-01, matching on the **set of diagnostic codes plus the identifier named by each `TS2304`**, never message text and never a single first code (five of the six blocks Phase 2 edits are `TS2304`-grandfathered and a forgotten `at` import is also `TS2304`). Report `stale` for entries that now compile **and** for entries naming a vanished file or symbol (AR-9, AR-11)
+- [x] ✅ (completed: 2026-07-20 16:30) 1.2.3 Implement the compile path — **in-memory `ts.CompilerHost`, no filesystem writes at all** (AR-16): each block served as a virtual `SourceFile` at a path **inside its own source's directory** (AR-13 — relative specifiers and `type: module` for the 37 top-level-`await` blocks both depend on it), `writeFile` a no-op, one `ts.createProgram` with `tsconfig.base.json`'s options plus exactly three overrides — `noUnusedLocals: false`, `noUnusedParameters: false` (AR-14), `noEmit: true`
+- [x] ✅ (completed: 2026-07-20 16:30) 1.2.4 Add `@jsvision/datagrid` and `@jsvision/forms` to `packages/docs-site/package.json` devDependencies — AR-15 puts them in the guard's roots, and without the declared dependency turbo's `^build` does not order their builds before `docs-site#test`, making the allowlist build-order dependent
+- [x] ✅ (completed: 2026-07-20 16:30) 1.2.5 Verify GREEN — ST-1…ST-8, ST-13, ST-14 pass (nine cases)
 
 **Deliverables**: harness module in `src/api/` · nine green spec cases · docs-site devDeps updated
 **Verify**: `yarn workspace @jsvision/docs-site test`
@@ -86,10 +86,10 @@ onto the layout DSL, then retire the seven `at()` shadows in the docs-site examp
 **Reference**: [02](02-current-state.md) §Measured baseline · [01](01-requirements.md) FR-9
 **Objective**: Generate the committed allowlist from the **pre-sweep** repo.
 
-- [ ] 1.3.1 Run the guard over the real repo; generate `packages/docs-site/test/jsdoc-examples.allowlist.json`, sorted, one entry per line, keyed `file::Symbol` with the recorded `codes`, `missingNames` and human-readable `message` (FR-9, and see 03-01 §The allowlist contract for the object shape — the value is **not** a bare string)
-- [ ] 1.3.2 Cross-check against [02](02-current-state.md): confirm the **nine layout-block failures** are present and correctly keyed, and that `application.ts::syncOverlayVisible` is present. **No count is a gate.** The corrected expectation is ~377 blocks and ~160 failures, but the real number is whatever the harness reports — the planning probe's "451/192" were artifacts of a multi-count and of running without `noUnusedLocals`, both now corrected. *(The original "stop if it reports more" rule is deliberately removed: a correct harness legitimately reports more than the probe did.)*
-- [ ] 1.3.3 Record the true block count, failure count and wall-clock in [02](02-current-state.md) §Measured baseline, replacing the corrected-but-still-estimated figures
-- [ ] 1.3.4 [spec-author] **Wire the standing gate (FR-1a).** Add **ST-12** to `jsdoc-examples.spec.test.ts`: `checkExamples(collectExamples(SHIPPED_ROOTS), readAllowlist())` reports zero `unexpected` and zero `stale`, and **fails the suite** when it does not. Green on arrival — it is authored after the allowlist exists, which is why it is excluded from 1.1.3's red run. **Without this task the harness, the fixtures and the allowlist all exist and none of them gates anything**; FR-1/FR-2 would ship inert and Phase 2 would have no oracle
+- [x] ✅ (completed: 2026-07-20 16:37) 1.3.1 Run the guard over the real repo; generate `packages/docs-site/test/jsdoc-examples.allowlist.json`, sorted, one entry per line, keyed `file::Symbol` with the recorded `codes`, `missingNames` and human-readable `message` (FR-9, and see 03-01 §The allowlist contract for the object shape — the value is **not** a bare string)
+- [x] ✅ (completed: 2026-07-20 16:37) 1.3.2 Cross-check against [02](02-current-state.md): confirm the **nine layout-block failures** are present and correctly keyed, and that `application.ts::syncOverlayVisible` is present. **No count is a gate.** The corrected expectation is ~377 blocks and ~160 failures, but the real number is whatever the harness reports — the planning probe's "451/192" were artifacts of a multi-count and of running without `noUnusedLocals`, both now corrected. *(The original "stop if it reports more" rule is deliberately removed: a correct harness legitimately reports more than the probe did.)*
+- [x] ✅ (completed: 2026-07-20 16:37) 1.3.3 Record the true block count, failure count and wall-clock in [02](02-current-state.md) §Measured baseline, replacing the corrected-but-still-estimated figures
+- [x] ✅ (completed: 2026-07-20 16:37) 1.3.4 [spec-author] **Wire the standing gate (FR-1a).** Add **ST-12** to `jsdoc-examples.spec.test.ts`: `checkExamples(collectExamples(SHIPPED_ROOTS), readAllowlist())` reports zero `unexpected` and zero `stale`, and **fails the suite** when it does not. Green on arrival — it is authored after the allowlist exists, which is why it is excluded from 1.1.3's red run. **Without this task the harness, the fixtures and the allowlist all exist and none of them gates anything**; FR-1/FR-2 would ship inert and Phase 2 would have no oracle
 
 **Deliverables**: allowlist committed · 02 updated with real numbers · **ST-12 green — the guard now actually gates the build**
 **Verify**: `yarn verify`
@@ -99,9 +99,9 @@ onto the layout DSL, then retire the seven `at()` shadows in the docs-site examp
 **Reference**: [07](07-testing-strategy.md) §Implementation tests · AC-9
 **Objective**: Cover what the oracle does not reach.
 
-- [ ] 1.4.1 Write `packages/docs-site/test/jsdoc-examples.impl.test.ts` — fence variants (` ``` `, ` ```ts `, ` ```typescript `, none) applied package-agnostically; **comment-terminator un-escaping**; the `(anonymous)` fallback and its `#N` ordinal; the `Class.member` qualifier; and **multi-node tag de-duplication** (an `export const` with one `@example` must yield exactly one `ExampleBlock`, not three)
-- [ ] 1.4.2 AC-9: run the guard three ways — passing, with a fixture forced to fail, and **killed mid-compile with SIGINT** — then confirm `git status --short` is clean and no `.jsdoc-example.*` survives anywhere under `packages/`. Under AR-16 this holds by construction; the case is the regression guard against a filesystem write being reintroduced, which is why the interrupted run is included and not merely a failing one
-- [ ] 1.4.3 Full verify
+- [x] ✅ (completed: 2026-07-20 16:37) 1.4.1 Write `packages/docs-site/test/jsdoc-examples.impl.test.ts` — fence variants (` ``` `, ` ```ts `, ` ```typescript `, none) applied package-agnostically; **comment-terminator un-escaping**; the `(anonymous)` fallback and its `#N` ordinal; the `Class.member` qualifier; and **multi-node tag de-duplication** (an `export const` with one `@example` must yield exactly one `ExampleBlock`, not three)
+- [x] ✅ (completed: 2026-07-20 16:37) 1.4.2 AC-9: run the guard three ways — passing, with a fixture forced to fail, and **killed mid-compile with SIGINT** — then confirm `git status --short` is clean and no `.jsdoc-example.*` survives anywhere under `packages/`. Under AR-16 this holds by construction; the case is the regression guard against a filesystem write being reintroduced, which is why the interrupted run is included and not merely a failing one
+- [x] ✅ (completed: 2026-07-20 16:37) 1.4.3 Full verify
 
 **Deliverables**: impl tests green · AC-9 evidenced across all three run modes
 **Verify**: `yarn verify`
