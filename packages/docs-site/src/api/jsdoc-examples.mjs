@@ -11,8 +11,8 @@
 // relative specifiers and top-level `await` (every package is `type: module`)
 // resolve the way they do for a reader who copies the snippet.
 
-import { readdirSync, readFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
@@ -72,6 +72,8 @@ const ANONYMOUS = '(anonymous)';
  *
  * @param {readonly string[]} roots  Directories to walk.
  * @returns {ExampleBlock[]} Every block found, in file then source order.
+ * @throws {Error} If a root does not exist — the shipped roots are a hand-maintained
+ *   list, so a package rename must fail loudly rather than silently check nothing.
  *
  * @example
  * import { collectExamples, SHIPPED_ROOTS } from './jsdoc-examples.mjs';
@@ -81,8 +83,10 @@ export function collectExamples(roots) {
   /** @type {ExampleBlock[]} */
   const blocks = [];
   for (const root of roots) {
-    for (const absPath of walkTypeScript(resolve(REPO_ROOT, root))) {
-      blocks.push(...collectFromFile(absPath));
+    const absRoot = resolve(REPO_ROOT, root);
+    if (!existsSync(absRoot)) throw new Error(`jsdoc-examples: root does not exist: ${root}`);
+    for (const absPath of walkTypeScript(absRoot)) {
+      for (const block of collectFromFile(absPath)) blocks.push(block);
     }
   }
   return blocks;
@@ -106,11 +110,10 @@ export function collectExamples(roots) {
  * if (result.unexpected.length > 0) throw new Error('an @example does not compile');
  */
 export function checkExamples(blocks, allowlist) {
-  const failures = compile(blocks);
+  const { failures, compiled } = compile(blocks);
 
   /** @type {ExampleFailure[]} */
   const unexpected = [];
-  const matched = new Set();
 
   for (const block of blocks) {
     const key = `${block.file}::${block.symbol}`;
@@ -122,46 +125,83 @@ export function checkExamples(blocks, allowlist) {
       unexpected.push(failure);
       continue;
     }
-    if (sameSet(entry.codes ?? [], failure.codes) && sameSet(entry.missingNames ?? [], failure.missingNames)) {
-      matched.add(key);
-    } else {
+    // A grandfathered block that now fails DIFFERENTLY is a new defect wearing an
+    // old entry's clothes, so it is reported — but it is not stale: the entry
+    // still describes a real, still-broken block and deleting it would lose the
+    // grandfathering entirely.
+    if (!sameSet(entry.codes ?? [], failure.codes) || !sameSet(entry.missingNames ?? [], failure.missingNames)) {
       unexpected.push(failure);
     }
   }
 
-  // Everything the allowlist claims but the run did not reproduce is stale: the
-  // block now compiles, or its file or symbol has been renamed away. Both are the
-  // same defect — an entry that no longer describes anything — and the list may
-  // only ever shrink, so neither is tolerated.
+  // An entry is stale when the run produced no failure for it at all: the block
+  // now compiles, or its file or symbol has been renamed away. Both are the same
+  // defect — an entry that no longer describes anything — and since the list may
+  // only ever shrink, neither is tolerated.
   const stale = Object.keys(allowlist)
-    .filter((key) => !matched.has(key))
+    .filter((key) => !failures.has(key))
     .sort();
 
-  return { checked: blocks.length, unexpected, stale };
+  return { checked: compiled, unexpected, stale };
 }
+
+/**
+ * Every real (non-virtual) `SourceFile` this process has already parsed.
+ *
+ * A run pulls in ~430 files of lib and `@jsvision/*` declarations before it looks
+ * at a single block, and `ts.createCompilerHost` caches nothing between calls —
+ * so a suite that checks eleven small fixture sets pays that cost eleven times.
+ * Contents cannot change mid-process and the options are constant, which is what
+ * makes sharing the parsed files across programs safe. Virtual blocks are
+ * deliberately never cached: they are the thing under test.
+ *
+ * @type {Map<string, ts.SourceFile | undefined>}
+ */
+const realSourceFiles = new Map();
 
 /**
  * Compile every block in one in-memory program and index the failures by key.
  *
  * @param {readonly ExampleBlock[]} blocks  Blocks to compile.
- * @returns {Map<string, ExampleFailure>} One entry per failing block.
+ * @returns {{failures: Map<string, ExampleFailure>, compiled: number}} Failures by key, and how many blocks were actually diagnosed.
+ * @throws {Error} If two blocks claim the same virtual path, or a block never reaches the program.
  */
 function compile(blocks) {
   /** @type {Map<string, ExampleFailure>} */
   const failures = new Map();
-  if (blocks.length === 0) return failures;
+  if (blocks.length === 0) return { failures, compiled: 0 };
 
   const options = compilerOptions();
   const virtual = new Map(blocks.map((b) => [b.virtualPath, b.body]));
+
+  // Two blocks sharing a virtual path would silently collapse into one
+  // SourceFile, and each would then be scored against the other's source — a
+  // broken example passing, or a live allowlist entry looking stale. The paths
+  // are built to be unique; this is the assertion that they stayed that way.
+  if (virtual.size !== blocks.length) {
+    throw new Error(`jsdoc-examples: ${blocks.length} blocks collapsed onto ${virtual.size} virtual paths`);
+  }
+
+  requireBuiltPackages(blocks);
+
   const realHost = ts.createCompilerHost(options);
 
   /** @type {ts.CompilerHost} */
   const host = {
     ...realHost,
-    getSourceFile: (fileName, languageVersion, onError, shouldCreate) =>
-      virtual.has(fileName)
-        ? ts.createSourceFile(fileName, /** @type {string} */ (virtual.get(fileName)), languageVersion, true)
-        : realHost.getSourceFile(fileName, languageVersion, onError, shouldCreate),
+    getSourceFile: (fileName, languageVersion, onError, shouldCreate) => {
+      const body = virtual.get(fileName);
+      if (body !== undefined) return ts.createSourceFile(fileName, body, languageVersion, true);
+      // The version may arrive as a CreateSourceFileOptions object; both shapes
+      // have to key distinctly or a cached file could be handed back under the
+      // wrong target.
+      const version = typeof languageVersion === 'object' ? languageVersion.languageVersion : languageVersion;
+      const key = `${fileName}|${version}`;
+      if (!realSourceFiles.has(key)) {
+        realSourceFiles.set(key, realHost.getSourceFile(fileName, languageVersion, onError, shouldCreate));
+      }
+      return realSourceFiles.get(key);
+    },
     fileExists: (fileName) => virtual.has(fileName) || realHost.fileExists(fileName),
     readFile: (fileName) => virtual.get(fileName) ?? realHost.readFile(fileName),
     writeFile: () => {}, // never emits, under any circumstances
@@ -169,9 +209,17 @@ function compile(blocks) {
 
   const program = ts.createProgram({ rootNames: [...virtual.keys()], options, host });
 
+  let compiled = 0;
   for (const block of blocks) {
     const sourceFile = program.getSourceFile(block.virtualPath);
-    if (!sourceFile) continue;
+    // Every block is a program root, so a missing SourceFile is a broken
+    // invariant, never a data condition. Skipping it would score the block as
+    // passing — the one failure mode this guard must never have.
+    if (!sourceFile) {
+      throw new Error(`jsdoc-examples: ${block.file}::${block.symbol} never reached the compiler`);
+    }
+    compiled++;
+
     const diagnostics = [...program.getSyntacticDiagnostics(sourceFile), ...program.getSemanticDiagnostics(sourceFile)];
     if (diagnostics.length === 0) continue;
 
@@ -184,7 +232,34 @@ function compile(blocks) {
     });
   }
 
-  return failures;
+  return { failures, compiled };
+}
+
+/**
+ * Fail loudly when a block imports a package whose `dist/` has not been built.
+ *
+ * Most blocks import `@jsvision/*` by bare specifier, which resolves to the
+ * package's generated declarations. Through `yarn verify` the build always runs
+ * first, but a bare `vitest` on a fresh checkout would otherwise bury the real
+ * cause under hundreds of unrelated "cannot find module" diagnostics — and a
+ * *stale* `dist/` would silently produce verdicts for code that no longer exists.
+ *
+ * @param {readonly ExampleBlock[]} blocks  Blocks about to be compiled.
+ * @returns {void}
+ * @throws {Error} If a referenced package has no build output.
+ */
+function requireBuiltPackages(blocks) {
+  const referenced = new Set();
+  for (const block of blocks) {
+    for (const [, name] of block.body.matchAll(/['"]@jsvision\/([a-z-]+)['"]/g)) referenced.add(name);
+  }
+  const unbuilt = [...referenced].filter((name) => !existsSync(join(REPO_ROOT, 'packages', name, 'dist'))).sort();
+  if (unbuilt.length > 0) {
+    throw new Error(
+      `jsdoc-examples: examples import ${unbuilt.map((n) => `@jsvision/${n}`).join(', ')}, ` +
+        `whose dist/ is missing. Run \`yarn build\` first.`,
+    );
+  }
 }
 
 /**
@@ -232,7 +307,9 @@ function walkTypeScript(dir) {
   const found = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const abs = join(dir, entry.name);
-    if (entry.isDirectory()) found.push(...walkTypeScript(abs));
+    // Accumulated one at a time rather than spread as arguments: a spread hits
+    // the engine's argument-count ceiling on a large directory.
+    if (entry.isDirectory()) for (const nested of walkTypeScript(abs)) found.push(nested);
     else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts')) found.push(abs);
   }
   return found;
@@ -246,6 +323,11 @@ function walkTypeScript(dir) {
  */
 function collectFromFile(absPath) {
   const text = readFileSync(absPath, 'utf8');
+  // Parsing with parent pointers costs roughly three times a bare parse, and two
+  // files in five carry no `@example` at all. A file without the literal tag text
+  // cannot produce a block, so skipping it is free.
+  if (!text.includes('@example')) return [];
+
   const sourceFile = ts.createSourceFile(absPath, text, ts.ScriptTarget.Latest, true);
   const file = relative(REPO_ROOT, absPath).split('\\').join('/');
 
@@ -277,7 +359,11 @@ function collectFromFile(absPath) {
       line: sourceFile.getLineAndCharacterOfPosition(tag.pos).line + 1,
       pos: tag.pos,
       body,
-      virtualPath: join(dirname(absPath), `.jsdoc-example.${tag.pos}.ts`),
+      // The path must sit in the source's own directory, but the offset alone
+      // does NOT make it unique there: two sibling files whose tags land at the
+      // same byte offset would collide, and each block would then be scored
+      // against the other's source. The source's own name is what separates them.
+      virtualPath: join(dirname(absPath), `.jsdoc-example.${basename(absPath, '.ts')}.${tag.pos}.ts`),
     });
   }
 
