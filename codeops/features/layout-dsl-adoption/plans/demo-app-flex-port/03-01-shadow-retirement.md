@@ -130,7 +130,7 @@ after the swap, at two viewport sizes:
 |---|---|---|
 | `wizard-demo/main.ts:52` | `function place<T extends View>(view, x, y, width, height): T` — replaces `layout`, returns the view | Delete; import `at` from `@jsvision/ui`; call sites become `at(…)` |
 | `wizard-demo/main.ts:178` | `const row = (label, value): Text => …` — shadows the DSL `row` builder | Rename → `fieldRow` |
-| `themes-demo/main.ts:37` | `const place = (view, x, y, w, h): void => …` — **returns void**, mutates in place | Delete; call sites become `at(view, x, y, w, h)` and now *return* the view. Call sites are statements today, so the change is source-compatible |
+| `themes-demo/main.ts:37` | `const place = (view, x, y, w, h): void => …` — **returns void**, and does `view.layout = …` **plus `g.add(view)`** | Delete; call sites become `g.add(at(view, x, y, w, h))`. **Plan correction found at execution time:** this helper also *adds to the group*, which the original write-up missed — converting the call sites to a bare `at(...)` would have placed the views correctly and then never added them, rendering an empty preview. The `g.add(...)` is explicit at each call site now |
 | `tabs-demo/main.ts:43` | `function placed<T>(view, x, y): T` — hard-codes `width: 40, height: 1` | Delete; call sites become `at(view, x, y, 40, 1)` (AR-13) |
 | `kitchen-sink/stories/wizard.story.ts:113` | `const row = (label, value): Text => …` | Rename → `fieldRow` |
 | `forms/src/form-dialog.ts:58` | filed by #114 | **Already gone** — deleted by the `flex-dialog-bodies` plan. No action; the issue body is corrected at close-out (AR-12) |
