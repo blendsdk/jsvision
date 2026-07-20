@@ -46,7 +46,26 @@ its meaning does not. Do not treat them as a uniform batch.
 
 ## Verification — the render control (AR-9)
 
-For each canvas, before conversion:
+**Capture the baseline at the head of Phase 2, not here.** Phase 2 task 2.2.6 converts all ~55
+`examples/**` sites — which includes every one of these 18 — and that conversion is itself a
+replace→merge semantic change. A baseline captured after Phase 2 bakes any regression into the
+"before" snapshot, so it could never appear in a Phase 3 diff. This is not hypothetical: the control
+exists because it caught the `demo-shell` replace-semantics defect while `paint-smoke` stayed green,
+and `paint-smoke` is Phase 2's only backstop for these files. So: capture against pre-conversion
+`master`, diff once after 2.2.6, and again after 3.2.x.
+
+**Two canvases have no headless witness.** `playground/main.ts:29-34` and
+`controls-live/main.ts:68-75` both print a TTY notice and `return 0` when `process.stdout.isTTY`
+is not `true`. Nothing else imports `playground/main`, and `controls-live/form.ts`'s `buildDialog`
+is reachable only through that gated entry (the `demo:controls` the file suggests is a different
+demo that never renders `form.ts`). Options, in order of preference: build a small harness that
+imports the composition function directly and mounts it into
+`createRenderRoot({ width: 80, height: 24 })` — the pattern `themes-demo/main.ts:63-67` already
+uses; or record them review-only alongside `inspector-panel`; or simply leave them absolute, which
+`playground/main.ts:52` warrants anyway since it is a `win.layout.rect` window placement RD-01 keeps
+absolute. Decide per canvas at execution and record which.
+
+For each canvas with a witness, before conversion:
 
 1. Render at a fixed viewport (80×24) through its own harness.
 2. Dump every cell as `glyph | fg / bg / attrs / width` — **not** glyphs alone. A merge-preserved
@@ -70,5 +89,6 @@ cells throughout.
 |---|---|
 | A canvas is not structurally flex and is converted anyway | Per-file judgment; a canvas may stay absolute — record why |
 | A conversion changes layout subtly | The render control is cell-exact, including colour and attributes |
-| `inspector-panel` has no headless witness | Render control + explicit review; noted in the issue already |
+| `inspector-panel`, `playground` and `controls-live` have no headless witness | Explicit review, or a purpose-built harness; named in AC-8 so the all-clear stays honest |
+| The baseline is captured after Phase 2 already mutated these files | Capture moves to the head of Phase 2 (task 2.1.3) |
 | Scope creep into keep-absolute territory | The exclusion list above is explicit and derives from RD-01 |

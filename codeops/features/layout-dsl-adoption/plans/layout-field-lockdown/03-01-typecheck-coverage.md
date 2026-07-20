@@ -31,26 +31,37 @@ and point the package's script at it: `"typecheck": "tsc --noEmit -p tsconfig.ty
 Where a test imports across package boundaries, follow datagrid's precedent — an `exclude` entry
 with a comment saying why, rather than loosening the config for everyone.
 
+**Turn each package on and clear it in the same task.** The packages are independent, so there is no
+reason for one task to redden five of them and leave the next four unable to verify. One task per
+package that both adds the config *and* clears that package's errors keeps every task committable on
+its own, which is what the execution rules require.
+
 | Package | Errors to clear | Files |
 |---|---|---|
 | `ui` | 80 | 50 |
 | `core` | 65 | 32 |
+| `docs-site` | **18** | tbd at execution |
 | `forms` | 5 | 3 |
+| `theme-designer` | **5** | tbd at execution |
 | `files` | 3 | 3 |
 | `web` | 0 | 0 |
-| `theme-designer` | 0 (no `test/`) | — |
-| `docs-site` | add `test/**/*.ts` to its existing include | tbd at execution |
+
+`theme-designer` **does** have a `test/` — `packages/theme-designer/test/inspector-panel.spec.test.ts`,
+which also holds a write site at line 40. It gets the same `tsconfig.typecheck.json` as everyone else.
+`docs-site` only needs `test/**/*.ts` added to its existing `include` (its `rootDir` is already `"."`).
 
 ## Part B — `packages/examples`
 
 Two separate problems in one package.
 
 **B1 — the include.** Six directories named; 107 of 255 files reached. Replace with
-`"include": ["**/*.ts"]`, covering `vitest.config.ts` too.
+`"include": ["**/*.ts"]`, covering `vitest.config.ts` too. `rootDir` is already `"."` here, so this
+is a one-line edit with no trap.
 
 **B2 — the 53 errors.** 28 share one root cause: TS tests importing untyped `.mjs` tooling
 (`scripts/*.mjs`, `tools/claude-plugin/**`). Per AR-5, add a hand-written `.d.mts` beside each of
-the **8** imported scripts:
+the **11** imported scripts — 8 reached from `packages/examples`, and 3 more that only appear once
+`docs-site/test` is typechecked:
 
 | Script | Imported by |
 |---|---|
@@ -59,6 +70,8 @@ the **8** imported scripts:
 | `scripts/plugin-sync-request.mjs` · `scripts/plugin-sync.mjs` | 2 each |
 | `scripts/render-app.mjs` · `scripts/jsvision-doctor.mjs` · `scripts/gen-plugin-api.mjs` | 1 each |
 | `packages/docs-site/src/api/barrel-exports.mjs` | 1 |
+| `packages/docs-site/src/api/jsdoc-examples.mjs` | 2 (`jsdoc-examples.{spec,impl}.test.ts`) |
+| `packages/docs-site/src/api/inject-back-links.mjs` · `validate-api-map.mjs` | 1 each |
 
 Declaring the return shapes typically resolves the paired `TS7006` implicit-`any` errors in the
 same callbacks, so the 14 + 14 should fall together. Declare only what the tests consume — a
@@ -68,7 +81,8 @@ The remaining 25 are ordinary type errors, plus the latent defects below.
 
 ## Part C — the latent defects
 
-Eight errors sit in **currently-passing** tests. Each gets an individual verdict recorded during
+Ten errors sit in **currently-passing** tests (eight originally listed, plus
+`docs-site/test/demo-shell.spec.test.ts:82` and `docs-site/test/example-at.spec.test.ts:84`). Each gets an individual verdict recorded during
 execution — *fixture was wrong* or *assertion was weaker than it read* — never a blanket non-null
 assertion. These are spec oracles; a test passing by accident is worse than no test.
 
@@ -90,3 +104,4 @@ Widening `allowJs`/`checkJs` (AR-5), and typechecking the `.mjs` tooling scripts
 | A `.d.mts` drifts from its script | Declare only consumed surface; the tests fail loudly if it lies |
 | Test typechecking slows `turbo typecheck` | Measure at the phase close; `noEmit` runs are cheap and cached |
 | A cross-package test import cannot resolve | Follow datagrid's documented `exclude` precedent |
+| datagrid's own three exclusions become unjustified | Their in-file comment cites *"core never typechecks its `test/`"* — a precedent this phase removes. Re-evaluate once `core/test` is on; the `TS7016` half is fixable with the same `.d.mts` seam. They hold 0 write sites, so there is no lockdown hole either way — update the comment at minimum |
