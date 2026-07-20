@@ -91,17 +91,25 @@ layout is exactly what is expected, and `padding` is the load-bearing prop in a 
 
 *2b — the 4 sites with an `onResized()` between the write and the invalidate* —
 `gestures.ts:57-59`, `gestures.ts:74-76`, `arrange.ts:18-20`, `window.ts:205-208`. That ordering is
-load-bearing (*"re-pin children to the new size before the repaint reads them"*). Keep `onResized()`
-**first**:
+load-bearing (*"re-pin children to the new size before the repaint reads them"*). **These are not
+collapsible pairs**: replace the raw write and keep the other two statements exactly where they are.
 
 ```ts
-  w.onResized();
   w.setLayout({ rect: { x, y, width, height } });
+  w.onResized();        // reads the NEW rect
+  w.invalidateLayout(); // reflow AFTER the re-pin
 ```
 
-Collapsing naively would move the reflow ahead of the re-pin. That is harmless under the default
-`queueMicrotask` scheduler (`render-root.ts:260`) and **not** harmless under the synchronous
-scheduler the suite uses (`view.occlusion.impl.test.ts:54,80`, `layout-dsl.spec.test.ts:94`).
+> **Corrected at execution (EX-5).** This document previously prescribed `w.onResized()` **first**,
+> before `setLayout`. That is a defect: `EditWindow.onResized()` (`edit-window.ts:125`) calls
+> `layoutGadgets()`, whose first statement reads `this.currentRect()` — i.e. `this.layout.rect` — so
+> running it ahead of the write re-pins the editor and both scroll bars to the *pre-drag* geometry.
+
+Collapsing naively would instead move the reflow ahead of the re-pin. That is harmless under the
+default `queueMicrotask` scheduler (`render-root.ts:260`), where `markRelayout()` only sets a flag
+and `scheduleFlush()` coalesces at most one frame per tick — so the two reflow requests above cost
+one frame, not two — and **not** harmless under the synchronous scheduler the suite uses
+(`view.occlusion.impl.test.ts:54,80`, `layout-dsl.spec.test.ts:94`), which flushes inline.
 
 *2c — the ~21 pre-mount construction sites* carry **no** invalidate at all (`edit-window.ts:78`,
 `kitchen-sink/shell.ts:192,230`, `amiga-clock/main.ts:105,111,117,133`,

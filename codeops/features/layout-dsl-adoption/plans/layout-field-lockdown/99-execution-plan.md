@@ -2,8 +2,8 @@
 
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
-> **Last Updated**: 2026-07-20 (Phase 1 complete)
-> **Progress**: 14/55 tasks (25%)
+> **Last Updated**: 2026-07-20 (Phase 2 · Step 2.1 complete)
+> **Progress**: 18/55 tasks (33%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -105,19 +105,41 @@ Six findings; all resolved.
 
 ### Step 2.1 — Groundwork
 
-- [ ] 2.1.1 Re-derive the site inventory with a **comment-excluding** grep and record it. The documented counts are ≈; a delta found now is data, a delta found mid-phase is noise
-- [ ] 2.1.2 Re-run the layout-object **holder** search (`= [A-Za-z.]*\.layout;` and `\.layout = <identifier>;`) across all packages **and** test dirs; record the inventory in AR-2. Known: `grid-panels.ts:201` is a module-level singleton aliased across every grid
-- [ ] 2.1.3 Capture cell-exact baselines (glyph + fg/bg + attrs + width) for the 8 Phase-3 canvases at 80×24, against **pre-conversion** source. Captured here, not in Phase 3: task 2.2.6 converts these very files, and a baseline taken afterwards would bake any replace→merge regression into the "before"
-- [ ] 2.1.4 [spec-author] ST-9 — `applyMove` via the gesture path: rect updates and exactly one reflow. Express the "no separate `invalidateLayout()`" half as a scoped source grep, or drop it and rely on the reflow count
+- [x] 2.1.1 Re-derive the site inventory with a **comment-excluding** grep and record it. The documented counts are ≈; a delta found now is data, a delta found mid-phase is noise — *done 2026-07-20*. **843 sites / 337 files** against `(?<![=!<>])\.layout(\.rect)?\s*=(?!=)` with block and line comments blanked first. Of those, **13 are `spike-data-studio`** (inert: no build, no typecheck, and named as an allowed survivor by AC-3), leaving **830 to convert** against the plan's ~810. Per-batch delta:
+
+| Batch | Plan | Measured | Δ |
+|---|---|---|---|
+| `ui/src` | 31 / 16 | 31 / 16 | — |
+| `datagrid/src` | 12 / 5 | 12 / 5 | — |
+| `docs-site` `src` + `examples` | 5 / 4 | 5 / 4 | — |
+| `docs-site/**/*.md` | 16 | **17 / 15 files** | +1 |
+| `theme-designer/src` | 4 / 4 | 4 / 4 | — |
+| `examples/**` non-test | ≈55 / ≈27 | 55 / 27 | — |
+| `ui/test` | 474 / 147 | **477 / 148** | +3 |
+| `datagrid/test` | 167 / 75 | **166 / 75** | −1 |
+| `forms/test` (31/10) · `files/test` (18/16) · `examples/test` (6/3) · `docs-site/test` (4/4) · `web/test` (3/3) · `theme-designer/test` (1/1) | | all exact | — |
+
+The three `ui/test` and one `datagrid/test` deltas are churn since the survey, not a new shape. The extra `.md` snippet is `containers/scroller.md`, which carries two.
+- [x] 2.1.2 Re-run the layout-object **holder** search (`= [A-Za-z.]*\.layout;` and `\.layout = <identifier>;`) across all packages **and** test dirs; record the inventory in AR-2. Known: `grid-panels.ts:201` is a module-level singleton aliased across every grid — *done 2026-07-20*, recorded as **EX-2** in the register. AR-2's inventory holds in full; the `fr` singleton is still aliased into three views per segment. **Two holders AR-2 does not list** turned up in `examples/kitchen-sink/stories` (`layout-dsl.story.ts:70`, `forms-showcase.story.ts:340`), both spreading `{ ...frame.layout, position, rect }` back onto the same view. Not aliasing hazards — the spread makes a fresh object — and both get *simpler* under conversion, since the spread only exists to emulate the merge `setLayout` performs natively
+- [x] 2.1.3 Capture cell-exact baselines (glyph + fg/bg + attrs + width) for the 8 Phase-3 canvases at 80×24, against **pre-conversion** source. Captured here, not in Phase 3: task 2.2.6 converts these very files, and a baseline taken afterwards would bake any replace→merge regression into the "before" — *done 2026-07-20*, committed under [`baselines/`](baselines/) with a README stating the method and its limits. **6 of 8 captured**; two decisions were needed and are recorded as **EX-3** and **EX-4**. Capture is **glyph-level**, not cell-exact: `LayoutProps` is geometry-only (no colour, no attrs), so a replace→merge regression can only move, resize or clip a box — the fg/bg/attrs dimensions cannot report anything the glyphs miss, and no canvas exposes a mountable build export to hang a cell dumper on. Each of the five walkthroughs contributes **every frame it prints**, not one snapshot; `status-bar.story` is mounted at 80×24 through its `build(ctx)`. `playground` and `controls-live` `return 0` without a TTY (`main.ts:29`, `:68`) and have **no Phase-2 baseline** — deferred to 3.1.2, which already owns their witness question and must now account for the gap
+- [x] 2.1.4 [spec-author] ST-9 — `applyMove` via the gesture path: rect updates and exactly one reflow. Express the "no separate `invalidateLayout()`" half as a scoped source grep, or drop it and rely on the reflow count — *done 2026-07-20* (`packages/ui/test/gesture-reflow.spec.test.ts`, two cases). The **source grep was dropped**: the reflow count subsumes it, because a conversion that left the old `invalidateLayout()` beside the new `setLayout()` calls `markRelayout` twice and the counter sees it. **Mutation-tested** — a second `invalidateLayout()` added to `applyMove` fails both cases (`expected 2 to be 1`, `expected 6 to be 3`); tree restored. Counted by wrapping the window's own `View.host` seam, not a render-root frame counter, which coalesces and cannot separate a reflow request from a repaint. Written **green, not red**: this is a preservation oracle for a refactor, not a spec for new behaviour, so the red-first ordering does not apply and dispatching an implementation-blind spec-author (which is contracted to report RED) would have been the wrong instrument. Scoped to the *move* gesture only — the resize gestures legitimately request a second reflow after `onResized()` (EX-5), and the test says so, so nobody generalizes "exactly one" to them
 
 > ST-4 and ST-5 are **already committed** as ST-S1 (`view-setlayout.spec.test.ts:42`) and ST-S3
 > (`:59`, `countingHost()` included). Record the equivalence; do **not** author duplicates into an
 > immutable oracle. ST-6, ST-7 and ST-8 are deliberately deferred to Step 2.4 — see the note there.
+>
+> **Equivalence confirmed 2026-07-20** at the stated lines: ST-S1 *"setLayout merges, preserving props
+> the patch does not name"* is ST-4, and ST-S3 *"setLayout on a mounted view calls markRelayout"* is
+> ST-5, counting through the same `View.host` seam ST-9 uses. No duplicates authored. Two neighbours
+> are load-bearing for this phase and worth naming: **ST-S2** pins the merge as *shallow*, which is
+> what makes a `size` variant swap correct under `Object.assign`, and **ST-S9** pins an explicit
+> `undefined` as a supported reset — the contract Rule 1a / AR-16 leans on at the three
+> deliberate-erasure sites.
 
 ### Step 2.2 — Convert shipped source (~106 sites)
 
 - [ ] 2.2.1 `ui/src` wholesale writes (≈20 sites) — Rule 1
-- [ ] 2.2.2 `ui/src` rect mutations (8) — Rule 2, **three-way**: collapse the pair only where one exists (`gestures.ts`, `arrange.ts`, `window.ts`); keep `onResized()` **before** `setLayout` at `gestures.ts:57,74`, `arrange.ts:18`, `window.ts:205`; plain rewrite at `edit-window.ts:78`, which has no invalidate
+- [ ] 2.2.2 `ui/src` rect mutations (8) — Rule 2, **three-way**: collapse the pair only where one exists (`gestures.ts:43`, and any other write+invalidate pair with nothing between them); at the 4 sites carrying an `onResized()` (`gestures.ts:57,74`, `arrange.ts:18`, `window.ts:205`) replace **only the raw write** and leave `onResized()` and `invalidateLayout()` where they are — see **EX-5**, which corrects this task: the previously-prescribed `onResized()`-first order reads a stale rect; plain rewrite at `edit-window.ts:78`, which has no invalidate
 - [ ] 2.2.3 `datagrid/src` (12; 8 in `grid-panels.ts`). Note `grid-panels.ts:201`'s shared `fr` singleton — the conversion de-aliases it, which is the point, not a side effect
 - [ ] 2.2.4 **Rule 1a / AR-16** — the 3 deliberate-erasure sites, converted with the discarded props named as explicit `undefined`: `app/application.ts:334`, `datagrid/src/overlay.ts:129`, `datagrid/src/editing.ts:233`. Behaviour must not change; two are public customization seams
 - [ ] 2.2.5 `docs-site` `src` + `examples` (5) · `theme-designer/src` (4)
