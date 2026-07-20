@@ -70,17 +70,59 @@ event handler, a reactive effect, or any code path that runs after the story is 
 
 | # | Query | Call sites surfaced | Site (`file:line`) | Prior layout state | Verdict |
 |---|---|---|---|---|---|
-| A1 | Prior `.layout =` / `.setLayout(…)` on the argument | _(fill)_ | | | ✅ / ⛔ |
-| A2 | `override layout` field initializer in the argument's class | _(fill)_ | | | ✅ / ⛔ |
-| A3 | Argument also passes through another DSL tagger | _(fill)_ | | | ✅ / ⛔ |
-| A4 | Argument is a `col(...)` / `row(...)` result (carries `direction`) | _(fill)_ | | | ✅ / ⛔ |
-| B1 | `at()` reachable after mount (handler / effect / callback) | _(fill)_ | | | ✅ / ⛔ |
+| A1 | Prior `.layout =` / `.setLayout(…)` on the argument | **1** | `kitchen-sink/stories/layout.story.ts:31` → placed `:35` | `{ direction:'row', gap:1, align:'stretch' }` | ⛔ → **accepted fix** (see below) |
+| A2 | `override layout` field initializer in the argument's class | **0** | — (`tabs.story.ts:61` investigated and cleared) | — | ✅ |
+| A3 | Argument also passes through another DSL tagger | **0** | — | — | ✅ |
+| A4 | Argument is a `col(...)` / `row(...)` result (carries `direction`) | **0** | — | — | ✅ |
+| B1 | `at()` reachable after mount (handler / effect / callback) | **0** | — | — | ✅ |
 
-**Totals:** _(fill)_ ✅ convertible · _(fill)_ ⛔ needs handling.
+**A2's near-miss, recorded so it is not re-investigated.** A grep attributed the `override layout`
+at `packages/ui/src/tabs/tab-view.ts:138` (`direction:'col'`, `size: fr 1`,
+`padding:{top:0,left:1,right:1,bottom:1}`) to `TabView`, making `tabs.story.ts:61` look like a
+padding-preservation hazard. It belongs to the internal **`TabBody`** class declared at `:136`;
+`TabView` itself starts at `:208` and declares no layout. `TabBody` is never passed to `at()`.
+Confirmed by dumping the merged props: the `TabView` at that site ends up with
+`{position:'absolute', rect}` and nothing else.
+
+**Which preserved props can even matter.** Under `position:'absolute'` the solver drops the child
+from flex flow and places it by `rect` alone (`packages/ui/src/layout/layout.ts:94`), so a preserved
+`size` is inert. A preserved `direction` of `'row'` is the engine default. The genuinely load-bearing
+one is **`padding`**, which insets the content-box origin for the view's own children
+(`layout.ts:137-147`) — which is why the audit hunted padding-carrying arguments specifically.
+
+**Totals: 410 ✅ convertible · 1 ⛔ handled.**
 
 A ⛔ row is resolved one of three ways, in order of preference: (i) the site is left with an explicit
 field write and a comment explaining why, (ii) the divergence is neutralised before the swap, or
 (iii) the resulting diff is accepted and recorded as a deliberate fix. Never absorbed silently.
+
+### The one ⛔ and its ruling — resolution (iii), accepted fix
+
+`layout.story.ts:31` sets `{ direction:'row', gap:1, align:'stretch' }` on a `Group`, and `:35`
+places that Group with `at()`. The retired shadow **replaced** the whole object, so the story's own
+`gap: 1` never reached the engine; the builder merges, so it now does.
+
+```
+- fixed 16        fr 1              fr 2      before: the declared gap:1 is silently dropped
++ fixed 16         fr 1              fr 2     after:  one cell of gap, as written
+```
+
+Accepted as a deliberate fix rather than neutralised. This is the `foundations/layout` story, whose
+stated job is teaching the flex engine and whose own caption advertises `gap` as a supported prop —
+it was demonstrating the feature while not rendering it. One space, one line, one story. The
+kitchen-sink smoke suite asserts only that a story paints, so nothing else moves.
+
+### Measured blast radius of the whole swap
+
+Not inferred — rendered. Every story in both showcases was built, mounted and serialized before and
+after the swap, at two viewport sizes:
+
+| Showcase | Renders compared | Differing |
+|---|---|---|
+| kitchen-sink (49 stories × 72×16 and 100×30) | 98 | **1** (`foundations/layout`, above) |
+| datagrid-showcase (68 stories × both sizes) | 136 | **0** |
+
+234 renders, zero build errors, one intended one-line change.
 
 ### The four local placers
 
@@ -88,7 +130,7 @@ field write and a comment explaining why, (ii) the divergence is neutralised bef
 |---|---|---|
 | `wizard-demo/main.ts:52` | `function place<T extends View>(view, x, y, width, height): T` — replaces `layout`, returns the view | Delete; import `at` from `@jsvision/ui`; call sites become `at(…)` |
 | `wizard-demo/main.ts:178` | `const row = (label, value): Text => …` — shadows the DSL `row` builder | Rename → `fieldRow` |
-| `themes-demo/main.ts:37` | `const place = (view, x, y, w, h): void => …` — **returns void**, mutates in place | Delete; call sites become `at(view, x, y, w, h)` and now *return* the view. Call sites are statements today, so the change is source-compatible |
+| `themes-demo/main.ts:37` | `const place = (view, x, y, w, h): void => …` — **returns void**, and does `view.layout = …` **plus `g.add(view)`** | Delete; call sites become `g.add(at(view, x, y, w, h))`. **Plan correction found at execution time:** this helper also *adds to the group*, which the original write-up missed — converting the call sites to a bare `at(...)` would have placed the views correctly and then never added them, rendering an empty preview. The `g.add(...)` is explicit at each call site now |
 | `tabs-demo/main.ts:43` | `function placed<T>(view, x, y): T` — hard-codes `width: 40, height: 1` | Delete; call sites become `at(view, x, y, 40, 1)` (AR-13) |
 | `kitchen-sink/stories/wizard.story.ts:113` | `const row = (label, value): Text => …` | Rename → `fieldRow` |
 | `forms/src/form-dialog.ts:58` | filed by #114 | **Already gone** — deleted by the `flex-dialog-bodies` plan. No action; the issue body is corrected at close-out (AR-12) |
@@ -102,16 +144,18 @@ constraint accepts all of them. Confirm this in task 1.5.1's type-check sweep ra
 
 ### Shadows this component does NOT retire (AR-16)
 
-Three local `at`/`row` shadows survive elsewhere in the repo. They are named here so the phase's rule
+Five local `at`/`row` name shadows survive elsewhere in the repo. They are named here so the phase's rule
 reads honestly — **"no shadow survives in a file this plan touches"**, not "one `at()` in the repo":
 
 | Site | Shape | Why it is deferred |
 |---|---|---|
 | `theme-designer/src/view/gallery.ts:32` | `function at<T>(g, view, x, y, w, h)` — replaces `layout` **and** calls `g.add(view)` | Different signature: retiring it rewrites every call site to `g.add(at(v, …))`. A conversion, not a re-export |
 | `theme-designer/src/view/inspector-panel.ts:55` | Same shape | Same — and `host/walkthrough.ts` does not render the inspector, so there is no headless zero-diff vehicle for it today |
-| `examples/keyboard-mouse-playground/main.ts:126` | `const row = (y, label, value): void => …` | A `row` name shadow in an FR-4 keep-absolute demo, outside every file this plan opens |
+| `examples/keyboard-mouse-playground/main.ts:126` | `const row = (y, label, value): void => …` | A `row` name shadow in a keep-absolute demo, outside every file this plan opens |
+| `examples/amiga-clock/analog-clock.ts:70` | `const at = (frac, rad, str, style): void => …` | A polar-plot helper sharing the `at` name only; the file is keep-absolute by policy |
+| `examples/kitchen-sink/stories/layout.story.ts:30` | `const row = new Group()` | A variable rather than a helper, but it would collide with the DSL `row` if this story ever imports it |
 
-All three go on the follow-up issue filed in task 2.1.2.
+All five go on the follow-up issue filed in task 2.1.2, alongside the grep false positives (a placement-*mode* selector, a `Placed[]` data array, several `const row = …` data variables) recorded as cleared.
 
 ### Integration Points
 

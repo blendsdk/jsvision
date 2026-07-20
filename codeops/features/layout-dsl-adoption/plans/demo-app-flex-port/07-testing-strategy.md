@@ -79,9 +79,16 @@ sweep, not at the standing build.
 
 ### Implementation Tests
 
-None. The retired helpers have no internals left to test — the implementation *is* a re-export of a
-builder that `packages/ui/test/view-setlayout.spec.test.ts` and the dsl suites already cover. Adding
-an impl tier here would test `@jsvision/ui` from the wrong package.
+One, added during execution in response to a post-phase review finding:
+`packages/examples/test/story-at.impl.test.ts`. The spec oracle's mounted-view case assigns a host
+double directly, which pins the `at() → setLayout → invalidateLayout → host.markRelayout()` wiring
+but takes "mounted" as given. The impl test mounts a view through a real `createRenderRoot`, asserts
+the host is the one production actually supplies, and checks that placing it still asks for exactly
+one reflow. Spec tests are immutable, so this closes the gap alongside the oracle rather than by
+editing it.
+
+Beyond that there is nothing to test: the implementation *is* a re-export of a builder that
+`packages/ui/test/view-setlayout.spec.test.ts` and the dsl suites already cover.
 
 ### Integration / regression tests (existing, unedited)
 
