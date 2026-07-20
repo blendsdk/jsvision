@@ -53,7 +53,7 @@ class ColorBlock extends View {
 
 /** Place a view at an absolute rect inside a group. */
 function at<T extends View>(g: Group, view: T, x: number, y: number, w: number, h: number): T {
-  view.layout = { position: 'absolute', rect: { x, y, width: w, height: h } };
+  view.setLayout({ position: 'absolute', rect: { x, y, width: w, height: h } });
   g.add(view);
   return view;
 }

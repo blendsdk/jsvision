@@ -66,7 +66,7 @@ function calendarWalkthrough(): void {
 function pickerWalkthrough(): void {
   const value = signal<CalendarDate | null>(null);
   const dp = new DatePicker({ value, today: TODAY });
-  dp.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 16, height: 1 } };
+  dp.setLayout({ position: 'absolute', rect: { x: 2, y: 1, width: 16, height: 1 } });
   const overlay = new Group();
   cover(overlay);
   overlay.state.visible = false;

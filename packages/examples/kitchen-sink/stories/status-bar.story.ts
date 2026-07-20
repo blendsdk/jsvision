@@ -44,7 +44,7 @@ export const statusBarStory: Story = {
       fixed(new ProgressBar({ value, caption: true }), barWidth),
       statusItem(() => clock()),
     ]);
-    bar.layout = { position: 'absolute', rect: { x: 0, y: 2, width: ctx.width, height: 1 }, direction: 'row' };
+    bar.setLayout({ position: 'absolute', rect: { x: 0, y: 2, width: ctx.width, height: 1 }, direction: 'row' });
     g.add(bar);
 
     g.add(

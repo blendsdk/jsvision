@@ -66,10 +66,10 @@ function stepHistory(): void {
   clearHistory();
   const value = signal('/etc/hosts');
   const input = new Input({ value });
-  input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } });
   for (const past of ['/usr/bin', '/etc/hosts', '~/dev']) historyAdd(1, past);
   const hist = new History({ link: input, historyId: 1 });
-  hist.layout = { position: 'absolute', rect: { x: 22, y: 1, width: 3, height: 1 } };
+  hist.setLayout({ position: 'absolute', rect: { x: 22, y: 1, width: 3, height: 1 } });
   const controls = new Group();
   controls.add(input);
   controls.add(hist);
@@ -93,7 +93,7 @@ function stepComboEditable(): void {
   const text = signal('');
   const value = signal<string | null>(null);
   const combo = new ComboBox<string>({ items, getText: (s) => s, value, text, editable: true });
-  combo.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } };
+  combo.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } });
   const controls = new Group();
   controls.add(combo);
   const { loop } = makeApp(controls);
@@ -120,7 +120,7 @@ function stepComboSelect(): void {
   const items = signal(['Red', 'Green', 'Blue', 'Cyan', 'Magenta', 'Yellow']);
   const value = signal<string | null>('Blue');
   const combo = new ComboBox<string>({ items, getText: (s) => s, value, editable: false });
-  combo.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } };
+  combo.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } });
   const controls = new Group();
   controls.add(combo);
   const { loop } = makeApp(controls);
@@ -145,10 +145,10 @@ function stepCancel(): void {
   clearHistory();
   const value = signal('keep-me');
   const input = new Input({ value });
-  input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } });
   for (const past of ['alpha', 'beta']) historyAdd(9, past);
   const hist = new History({ link: input, historyId: 9 });
-  hist.layout = { position: 'absolute', rect: { x: 22, y: 1, width: 3, height: 1 } };
+  hist.setLayout({ position: 'absolute', rect: { x: 22, y: 1, width: 3, height: 1 } });
   const controls = new Group();
   controls.add(input);
   controls.add(hist);

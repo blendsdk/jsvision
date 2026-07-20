@@ -49,11 +49,11 @@ async function main(): Promise<number> {
   });
 
   const win = new Window('Playground');
-  win.layout.rect = { x: 2, y: 1, width: 40, height: 10 };
+  win.setLayout({ rect: { x: 2, y: 1, width: 40, height: 10 } });
   win.castsShadow = true;
 
   const hello = new Text('Hello from the jsvision playground!');
-  hello.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 36, height: 1 } };
+  hello.setLayout({ position: 'absolute', rect: { x: 2, y: 1, width: 36, height: 1 } });
   win.add(hello);
 
   app.desktop.addWindow(win);

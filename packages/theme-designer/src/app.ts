@@ -303,15 +303,15 @@ export function createDesignerApp(opts: DesignerAppOptions = {}): DesignerApp {
   // A workspace row filling the desktop (viewport minus the menu + status chrome rows). The rail and
   // the inspector hold a fixed width; the preview takes whatever is left.
   const workspace = row(fixed(rail.view, 28), grow(preview), fixed(inspector, 32));
-  // Re-assigned wholesale on every resize rather than merged: this is the one layout write that runs
-  // repeatedly, and restating the row direction here keeps the workspace independent of how its
-  // children were composed.
+  // The row direction is restated on every resize rather than assumed, so the workspace stays
+  // independent of how its children were composed. `row()` above sets nothing else, so this writes the
+  // same layout the group already had plus the new rect.
   const sizeWorkspace = (size: Size2D): void => {
-    workspace.layout = {
+    workspace.setLayout({
       position: 'absolute',
       rect: { x: 0, y: 0, width: size.width, height: Math.max(1, size.height - 2) },
       direction: 'row',
-    };
+    });
     workspace.invalidate();
   };
   // Size to the ACTUAL viewport the loop mounted at (the real terminal size on a live run), not the

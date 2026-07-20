@@ -213,7 +213,7 @@ function shellForView(opts: DemoShellOptions): Application {
 
   const win = new Window(opts.title);
   win.closable = false; // a demo can never be closed away to an empty desktop
-  win.layout.rect = winRect;
+  win.setLayout({ rect: winRect });
   win.add(built);
   app.desktop.addWindow(win);
 

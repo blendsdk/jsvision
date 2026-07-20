@@ -30,7 +30,7 @@ export const GALLERY_SIZE = { width: 64, height: 48 };
 
 /** Place a view at an absolute rect inside a group and return it. */
 function at<T extends View>(g: Group, view: T, x: number, y: number, w: number, h: number): T {
-  view.layout = { position: 'absolute', rect: { x, y, width: w, height: h } };
+  view.setLayout({ position: 'absolute', rect: { x, y, width: w, height: h } });
   g.add(view);
   return view;
 }

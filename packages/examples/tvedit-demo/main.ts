@@ -131,7 +131,7 @@ class DemoSink extends View {
   override focusable = false;
   constructor(private readonly handle: (command: string) => void) {
     super();
-    this.layout = { size: { kind: 'fixed', cells: 0 } };
+    this.setLayout({ size: { kind: 'fixed', cells: 0 } });
   }
   override draw(): void {
     /* invisible */

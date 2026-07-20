@@ -26,7 +26,7 @@ const swatch = new ColorSwatch({
   onInput: (c) => preview(c), // live: every arrow / click / drag
   onChange: (c) => commit(c), // commit: Enter / Space / mouse-up
 });
-swatch.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 4 } };
+swatch.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 4 } });
 ```
 
 ## Live example

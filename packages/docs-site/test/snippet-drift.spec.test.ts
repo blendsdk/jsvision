@@ -54,3 +54,18 @@ test('example pages never hand-paste example module source in a fenced block', (
     }
   }
 });
+
+// A documentation snippet is a teaching artifact, so it is held to the idiom the framework permits.
+// `view.layout = {…}` no longer compiles, and unlike shipped source no compiler ever reads these
+// blocks — a stale snippet would sit here teaching a dead idiom until a reader tried it.
+test('no fenced TypeScript snippet assigns the layout field directly', () => {
+  const offenders: string[] = [];
+  for (const page of PAGES) {
+    for (const body of fencedTsBlocks(page.text)) {
+      body.split('\n').forEach((line, i) => {
+        if (/\.layout(\.\w+)* = /.test(line)) offenders.push(`${page.path} (block line ${i + 1}): ${line.trim()}`);
+      });
+    }
+  }
+  expect(offenders, 'write these with setLayout({ … }) — the layout field is read-only').toEqual([]);
+});

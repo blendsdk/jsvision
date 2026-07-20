@@ -80,14 +80,14 @@ function buildScreen(state: PlaygroundState): Group {
   // reactively on every parameter change and filled into the host via `position:'fill'`.
   const previewHost = new Group();
   previewHost.background = 'desktop';
-  previewHost.layout = { padding: 1 };
+  previewHost.setLayout({ padding: 1 });
   previewHost.onMount(() => {
     previewHost.bind(
       () => snapshot(state), // reader: subscribe to every parameter signal
       (p) => {
         for (const child of [...previewHost.children]) previewHost.remove(child);
         const tree = buildPreviewTree(p);
-        tree.layout = { ...tree.layout, position: 'fill' };
+        tree.setLayout({ position: 'fill' });
         previewHost.add(tree);
       },
       { relayout: true },
@@ -96,7 +96,7 @@ function buildScreen(state: PlaygroundState): Group {
 
   const screen = row({ gap: 1, padding: 1 }, fixed(controls, 30), grow(previewHost));
   // Fill the desktop content box (preserving the row's own direction — `at()` would replace it).
-  screen.layout = { ...screen.layout, position: 'fill' };
+  screen.setLayout({ position: 'fill' });
   return screen;
 }
 

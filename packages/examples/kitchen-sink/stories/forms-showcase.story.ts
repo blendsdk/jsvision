@@ -36,7 +36,7 @@ import {
   grow,
   fixed,
 } from '@jsvision/ui';
-import type { View, LayoutProps } from '@jsvision/ui';
+import type { View } from '@jsvision/ui';
 import { createForm, bindField, bindRadio, bindCheck, formDialog } from '@jsvision/forms';
 import type { Field } from '@jsvision/forms';
 import { z } from 'zod';
@@ -330,14 +330,9 @@ export const formsShowcaseStory: Story = {
     // --- Assemble the single DSL frame -------------------------------------------------------------
     const w = Math.max(64, ctx.width - 2);
     const frame = col({ gap: 0 }, grow(bodyRow), fixed(advisory, 1), fixed(actionsRow, 2), fixed(hint, 1));
-    // Place the DSL frame by MERGING an absolute rect onto its layout (preserving `direction`); `at()`
-    // would replace the layout and lose it. The `grow`/`fixed` split reflows for free with the canvas.
-    const framed: LayoutProps = {
-      ...frame.layout,
-      position: 'absolute',
-      rect: { x: 1, y: 0, width: w, height: ctx.height },
-    };
-    frame.layout = framed;
+    // `setLayout` merges, so the frame keeps the `direction` the DSL gave it; `at()` would replace the
+    // whole layout and lose it. The `grow`/`fixed` split reflows for free with the canvas.
+    frame.setLayout({ position: 'absolute', rect: { x: 1, y: 0, width: w, height: ctx.height } });
 
     const g = new Group();
     g.add(frame);

@@ -12,7 +12,7 @@ import type { Story, StoryContext } from '../story.js';
 function box(label: string, role: ThemeRoleName, size: Size): Group {
   const b = new Group();
   b.background = role;
-  b.layout = { size };
+  b.setLayout({ size });
   b.add(at(new Text(label), 1, 0, 14, 1));
   return b;
 }
@@ -28,7 +28,7 @@ export const layoutStory: Story = {
     const g = new Group();
     g.add(at(new Text('A row — fixed 16 · fr 1 · fr 2 (the fr boxes split the remaining width):'), 1, 0, w, 1));
     const row = new Group();
-    row.layout = { direction: 'row', gap: 1, align: 'stretch' };
+    row.setLayout({ direction: 'row', gap: 1, align: 'stretch' });
     row.add(box('fixed 16', 'window', { kind: 'fixed', cells: 16 }));
     row.add(box('fr 1', 'clusterNormal', { kind: 'fr', weight: 1 }));
     row.add(box('fr 2', 'buttonDefault', { kind: 'fr', weight: 2 }));

@@ -32,7 +32,7 @@ const BODY_LINES = [
 export function buildChromeBarsWindow(): Window {
   const win = new Window('Flexible Chrome Bars');
   win.number = 1;
-  win.layout.rect = { x: 2, y: 2, width: 48, height: 9 };
+  win.setLayout({ rect: { x: 2, y: 2, width: 48, height: 9 } });
   win.add(grow(new Text(BODY_LINES.join('\n'))));
   return win;
 }

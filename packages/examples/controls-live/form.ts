@@ -106,7 +106,7 @@ export function buildDialog(): BuiltDialog {
 
   const dialog = new Dialog('Set Parameters');
   for (const { view, rect } of placed) {
-    view.layout = { position: 'absolute', rect };
+    view.setLayout({ position: 'absolute', rect });
     dialog.add(view);
   }
 

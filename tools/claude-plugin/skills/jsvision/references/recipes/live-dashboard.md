@@ -86,7 +86,7 @@ export function mountDashboardInBrowser(term: BrowserTerminal, opts?: { steps?: 
   const dash = buildDashboard(opts);
 
   const win = new Window('Live Dashboard');
-  win.layout.rect = { x: 1, y: 1, width: 36, height: 8 };
+  win.setLayout({ rect: { x: 1, y: 1, width: 36, height: 8 } });
   win.add(dash.root);
   app.desktop.addWindow(win);
 
