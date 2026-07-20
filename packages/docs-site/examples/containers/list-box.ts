@@ -38,7 +38,7 @@ const FRUITS = [
   'Strawberry',
 ];
 
-/** The example's box: nine list rows, a gap row, and the echo row. */
+// A 40x12 box: ten list rows, a gap row, and the echo row.
 const WIDTH = 40;
 const HEIGHT = 12;
 

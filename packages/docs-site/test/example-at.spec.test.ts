@@ -94,6 +94,14 @@ test('ST-12: the demo shell places a flex-rooted example without dropping its di
     expect(root.layout.direction).toBe('col');
     expect(root.layout.position).toBe('absolute');
 
+    // The example states its own box, rather than inheriting the shell's fallback size.
+    expect(root.bounds.height).toBe(12);
+
+    // Asserted before destructuring so a structural change to the example fails with a readable
+    // message instead of a bare TypeError on `children`.
+    expect(root).toBeInstanceOf(Group);
+    expect((root as Group).children).toHaveLength(3);
+
     // The solved children prove it end to end — stacked top to bottom, each spanning the full
     // width. Under a replacing write they sit side by side, one cell wide each.
     const [list, gap, echo] = (root as Group).children;
