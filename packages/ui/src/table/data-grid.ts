@@ -67,7 +67,7 @@ function corner(): Group {
  * focus target, focus the grid's exposed {@link DataGrid.rows} renderer, not the grid.
  *
  * @example
- * import { Group, DataGrid, createEventLoop, signal } from '@jsvision/ui';
+ * import { Group, DataGrid, createEventLoop, signal, at } from '@jsvision/ui';
  * import type { Column, SortState } from '@jsvision/ui';
  *
  * interface Person { name: string; age: number; role: string; }
@@ -85,10 +85,9 @@ function corner(): Group {
  * ];
  *
  * const grid = new DataGrid<Person>({ rows, columns, sort, zebra: true });
- * grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 10 } };
  *
  * const root = new Group();
- * root.add(grid);
+ * root.add(at(grid, 0, 0, 40, 10));
  * const loop = createEventLoop({ width: 40, height: 10 });
  * loop.mount(root);
  * loop.focusView(grid.rows); // focus the rows renderer, not the grid

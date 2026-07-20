@@ -51,7 +51,7 @@ export interface DialogOptions {
  * A modal/modeless gray dialog: a `Window` in the `dialog` role with a `valid()` close-gate.
  *
  * @example
- * import { Dialog, Input, Label, okButton, cancelButton, createEventLoop, signal, range } from '@jsvision/ui';
+ * import { Dialog, Input, Label, okButton, cancelButton, createEventLoop, signal, range, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
@@ -60,10 +60,9 @@ export interface DialogOptions {
  * const dialog = new Dialog({ title: ' Person ', width: 34, height: 9 });
  * const input = new Input({ value: age, validator: range(0, 120) });
  * const label = new Label('~A~ge (0–120)', input);
- * label.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 14, height: 1 } };
- * input.layout = { position: 'absolute', rect: { x: 16, y: 1, width: 14, height: 1 } };
- * const ok = okButton();
- * ok.layout = { position: 'absolute', rect: { x: 6, y: 4, width: 10, height: 2 } };
+ * at(label, 1, 1, 14, 1);
+ * at(input, 16, 1, 14, 1);
+ * const ok = at(okButton(), 6, 4, 10, 2);
  * dialog.add(label);
  * dialog.add(input);
  * dialog.add(ok);

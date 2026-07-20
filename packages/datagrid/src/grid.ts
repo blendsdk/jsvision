@@ -271,7 +271,7 @@ function withKeyDir(keys: SortKey[], columnId: string, dir: SortDir): SortKey[] 
  * body renderer to move the cursor and edit.
  *
  * @example
- * import { Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+ * import { at, Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
  * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
  *
  * interface Row { id: number; name: string; }
@@ -285,12 +285,17 @@ function withKeyDir(keys: SortKey[], columnId: string, dir: SortDir): SortKey[] 
  *   }),
  * ];
  *
- * const grid = new EditableDataGrid<Row>({
- *   columns,
- *   source: fromRows(rows, { rowKey: (r) => r.id }),
- *   onCommit: (c) => String(c.value).trim().length > 0, // veto an empty name
- * });
- * grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } };
+ * const grid = at(
+ *   new EditableDataGrid<Row>({
+ *     columns,
+ *     source: fromRows(rows, { rowKey: (r) => r.id }),
+ *     onCommit: (c) => String(c.value).trim().length > 0, // veto an empty name
+ *   }),
+ *   0,
+ *   0,
+ *   20,
+ *   6,
+ * );
  *
  * const root = new Group();
  * root.add(grid);

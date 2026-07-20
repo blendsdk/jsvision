@@ -80,15 +80,14 @@ export interface DatePickerOptions {
  * field.
  *
  * @example
- * import { Group, DatePicker, Label, signal, toISO } from '@jsvision/ui';
+ * import { Group, DatePicker, Label, signal, toISO, at } from '@jsvision/ui';
  * import type { CalendarDate } from '@jsvision/ui';
  *
  * const g = new Group();
  * const value = signal<CalendarDate | null>(null);
  *
  * const dp = new DatePicker({ value, format: 'DD/MM/YYYY' });
- * dp.layout = { position: 'absolute', rect: { x: 10, y: 0, width: 16, height: 1 } };
- * g.add(dp);
+ * g.add(at(dp, 10, 0, 16, 1));
  *
  * // A Label targets the picker's inner field; Down / Alt+Down / the ▐↓▌ button opens the calendar.
  * g.add(new Label('~D~ate', dp.input));

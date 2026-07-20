@@ -64,7 +64,7 @@ export interface ColorSwatchOptions {
  * its dropdown).
  *
  * @example
- * import { Group, ColorSwatch, signal } from '@jsvision/ui';
+ * import { Group, ColorSwatch, signal, at } from '@jsvision/ui';
  * import { ANSI16_ORDER } from '@jsvision/core';
  * import type { Color } from '@jsvision/core';
  *
@@ -72,14 +72,19 @@ export interface ColorSwatchOptions {
  * const value = signal<Color>('brightCyan');
  *
  * // A 4×4 grid of the 16 DOS colors, bound two-way to `value`.
- * const swatch = new ColorSwatch({
- *   value,
- *   colors: ANSI16_ORDER as readonly Color[],
- *   columns: 4,
- *   onInput: (c) => console.log('previewing', c), // arrows / click / drag update `value` live
- *   onChange: (c) => console.log('committed', c), // Enter / Space / mouse-up commits
- * });
- * swatch.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 4 } };
+ * const swatch = at(
+ *   new ColorSwatch({
+ *     value,
+ *     colors: ANSI16_ORDER as readonly Color[],
+ *     columns: 4,
+ *     onInput: (c) => console.log('previewing', c), // arrows / click / drag update `value` live
+ *     onChange: (c) => console.log('committed', c), // Enter / Space / mouse-up commits
+ *   }),
+ *   1,
+ *   1,
+ *   12,
+ *   4,
+ * );
  * g.add(swatch);
  */
 export class ColorSwatch extends View {

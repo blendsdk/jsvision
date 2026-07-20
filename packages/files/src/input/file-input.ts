@@ -33,19 +33,24 @@ export interface FileInputOptions {
  * The filename input that mirrors the focused directory entry unless it is itself focused.
  *
  * @example
- * import { Group, signal } from '@jsvision/ui';
+ * import { at, Group, signal } from '@jsvision/ui';
  * import { FileInput, nodeFileSystem } from '@jsvision/files';
  * import type { DirEntry } from '@jsvision/files';
  *
  * const filename = signal('');
  * const focused = signal<DirEntry | undefined>(undefined);
- * const field = new FileInput({
- *   value: filename,          // two-way: reflects and receives the typed name
- *   focusedEntry: () => focused(),
- *   wildcard: () => '*.ts',
- *   sep: nodeFileSystem.sep,
- * });
- * field.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 1 } };
+ * const field = at(
+ *   new FileInput({
+ *     value: filename,          // two-way: reflects and receives the typed name
+ *     focusedEntry: () => focused(),
+ *     wildcard: () => '*.ts',
+ *     sep: nodeFileSystem.sep,
+ *   }),
+ *   0,
+ *   0,
+ *   28,
+ *   1,
+ * );
  * new Group().add(field);
  */
 export class FileInput extends Input {

@@ -51,16 +51,15 @@ export interface ScrollBarOptions {
  * A scroll bar: arrows + a page track + a proportional thumb, driven by mouse (see the module docs).
  *
  * @example
- * import { ScrollBar, Group, createEventLoop, signal } from '@jsvision/ui';
+ * import { ScrollBar, Group, createEventLoop, signal, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
  * const pos = signal(0);
  * const bar = new ScrollBar({ value: pos, min: 0, max: 100, orientation: 'vertical' });
- * bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 8 } };
  *
  * const root = new Group();
- * root.add(bar);
+ * root.add(at(bar, 0, 0, 1, 8));
  * const loop = createEventLoop({ width: 1, height: 8 }, { caps });
  * loop.mount(root);
  * pos.set(50); // scroll externally — the thumb re-renders halfway down

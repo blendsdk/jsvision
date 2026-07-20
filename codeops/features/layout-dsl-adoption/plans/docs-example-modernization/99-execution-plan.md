@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-20 16:37
-> **Progress**: 15/41 tasks (37%) — Phase 1 complete
+> **Last Updated**: 2026-07-20 17:35
+> **Progress**: 26/41 tasks (63%) — Phase 1 complete · Phase 2 steps 2.1–2.2 complete
 > **CodeOps Skills Version**: 3.11.0
 
 ## Overview
@@ -119,8 +119,8 @@ onto the layout DSL, then retire the seven `at()` shadows in the docs-site examp
 **Reference**: [03-02](03-02-jsdoc-example-modernization.md) §FR-3 · AR-1
 **Objective**: FR-3.
 
-- [ ] 2.1.1 `packages/ui/src/view/group.ts` — recompose with `row({ gap: 1, padding: 1 }, grow(left), grow(right))`. **Keep the back-to-front paint-order lesson** as a comment; dropping it is a documentation regression
-- [ ] 2.1.2 `packages/ui/src/editor/indicator.ts` — recompose with `col(grow(editor), fixed(indicator, 1))`
+- [x] ✅ (completed: 2026-07-20 17:35) 2.1.1 `packages/ui/src/view/group.ts` — recompose with `row({ gap: 1, padding: 1 }, grow(left), grow(right))`. **Keep the back-to-front paint-order lesson** as a comment; dropping it is a documentation regression
+- [x] ✅ (completed: 2026-07-20 17:35) 2.1.2 `packages/ui/src/editor/indicator.ts` — recompose with `col(grow(editor), fixed(indicator, 1))`
 
 ### Step 2.2: The absolute sweep
 
@@ -128,15 +128,15 @@ onto the layout DSL, then retire the seven `at()` shadows in the docs-site examp
 **Objective**: FR-4, FR-5. Baseline **53 lines across 37 files**. Batched at ≤6 files per task so each
 is one reviewable change; counts in parentheses are lines, and they sum to 53.
 
-- [ ] 2.2.1 `ui/src/dialog/` — `buttons.ts` (6), `dialog.ts` (3). The densest file in the sweep
-- [ ] 2.2.2 `ui/src/controls/` A — `text.ts` (3), `label.ts` (2), `button.ts` (2), `input.ts` (1), `switch.ts` (1), `slider.ts` (1)
-- [ ] 2.2.3 `ui/src/controls/` B + `ui/src/color/` — `check-group.ts`, `multi-check-group.ts`, `radio-group.ts`, `color-picker.ts`, `color-swatch.ts` (1 each)
-- [ ] 2.2.4 `ui/src/{list,dropdown,scroll}/` — `list-box.ts` (1), `list-view.ts` (1), `combo-box.ts` (1), `history.ts` (2), `scroll-bar.ts` (1), `scroller.ts` (2)
-- [ ] 2.2.5 `ui/src/{surface,feedback,date}/` — `surface.ts` (1), `surface-view.ts` (2), `progress-bar.ts` (2), `spinner.ts` (1), `calendar.ts` (1), `date-picker.ts` (1)
-- [ ] 2.2.6 `ui/src/{table,tabs,tree,terminal,editor}/` — `data-grid.ts`, `tab-view.ts`, `tree.ts`, `terminal.ts`, `memo.ts` (1 each). **Three of these five are also FR-6 defect files** — do this task first, then 2.3.1 on the same files, so the `at()` edit and the arity fix stay separately reviewable
-- [ ] 2.2.7 `packages/files/src/` — `input/file-input.ts`, `list/dir-list.ts`, `list/file-info-pane.ts`, `list/file-list.ts` (1 each)
-- [ ] 2.2.8 `packages/datagrid/src/` + `packages/forms/src/` — `editable-grid-rows.ts` (1), `grid.ts` (1), `form-dialog.ts` (2)
-- [ ] 2.2.9 `packages/ui/src/split/split-view.ts:109` — `position:'fill'` → `cover()`. **Do not touch `:103`** — that `direction:'row'` is a `SplitView` constructor option, not a layout prop
+- [x] ✅ (completed: 2026-07-20 17:35) 2.2.1 `ui/src/dialog/` — `buttons.ts` (6), `dialog.ts` (3). The densest file in the sweep
+- [x] ✅ (completed: 2026-07-20 17:35) 2.2.2 `ui/src/controls/` A — `text.ts` (3), `label.ts` (2), `button.ts` (2), `input.ts` (1), `switch.ts` (1), `slider.ts` (1)
+- [x] ✅ (completed: 2026-07-20 17:35) 2.2.3 `ui/src/controls/` B + `ui/src/color/` — `check-group.ts`, `multi-check-group.ts`, `radio-group.ts`, `color-picker.ts`, `color-swatch.ts` (1 each)
+- [x] ✅ (completed: 2026-07-20 17:35) 2.2.4 `ui/src/{list,dropdown,scroll}/` — `list-box.ts` (1), `list-view.ts` (1), `combo-box.ts` (1), `history.ts` (2), `scroll-bar.ts` (1), `scroller.ts` (2)
+- [x] ✅ (completed: 2026-07-20 17:35) 2.2.5 `ui/src/{surface,feedback,date}/` — `surface.ts` (1), `surface-view.ts` (2), `progress-bar.ts` (2), `spinner.ts` (1), `calendar.ts` (1), `date-picker.ts` (1)
+- [x] ✅ (completed: 2026-07-20 17:35) 2.2.6 `ui/src/{table,tabs,tree,terminal,editor}/` — `data-grid.ts`, `tab-view.ts`, `tree.ts`, `terminal.ts`, `memo.ts` (1 each). **Three of these five are also FR-6 defect files** — do this task first, then 2.3.1 on the same files, so the `at()` edit and the arity fix stay separately reviewable
+- [x] ✅ (completed: 2026-07-20 17:35) 2.2.7 `packages/files/src/` — `input/file-input.ts`, `list/dir-list.ts`, `list/file-info-pane.ts`, `list/file-list.ts` (1 each)
+- [x] ✅ (completed: 2026-07-20 17:35) 2.2.8 `packages/datagrid/src/` + `packages/forms/src/` — `editable-grid-rows.ts` (1), `grid.ts` (1), `form-dialog.ts` (2)
+- [x] ✅ (completed: 2026-07-20 17:35) 2.2.9 `packages/ui/src/split/split-view.ts:109` — `position:'fill'` → `cover()`. **Do not touch `:103`** — that `direction:'row'` is a `SplitView` constructor option, not a layout prop
 
 ### Step 2.3: The four live defects
 

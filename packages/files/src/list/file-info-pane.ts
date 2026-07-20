@@ -33,19 +33,24 @@ export interface FileInfoPaneOptions {
  * The file-info read-out pane (search path + focused-entry name/size/date/time).
  *
  * @example
- * import { Group, signal } from '@jsvision/ui';
+ * import { at, Group, signal } from '@jsvision/ui';
  * import { FileInfoPane, nodeFileSystem } from '@jsvision/files';
  * import type { DirEntry } from '@jsvision/files';
  *
  * const directory = signal('/home/user');
  * const focused = signal<DirEntry | undefined>(undefined);
- * const pane = new FileInfoPane({
- *   fs: nodeFileSystem,
- *   directory: () => directory(),
- *   wildcard: () => '*.ts',
- *   focusedEntry: () => focused(),
- * });
- * pane.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 47, height: 2 } };
+ * const pane = at(
+ *   new FileInfoPane({
+ *     fs: nodeFileSystem,
+ *     directory: () => directory(),
+ *     wildcard: () => '*.ts',
+ *     focusedEntry: () => focused(),
+ *   }),
+ *   0,
+ *   0,
+ *   47,
+ *   2,
+ * );
  * new Group().add(pane);
  */
 export class FileInfoPane extends View {

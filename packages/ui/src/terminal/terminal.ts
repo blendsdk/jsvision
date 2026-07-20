@@ -33,12 +33,11 @@ export interface TerminalOptions {
  * auto-scrolls to the bottom, and lets the user wheel back through history.
  *
  * @example
- * import { Group, Terminal } from '@jsvision/ui';
+ * import { Group, Terminal, at } from '@jsvision/ui';
  *
  * const group = new Group();
  * const log = new Terminal({ capacity: 8000 });
- * log.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 60, height: 10 } };
- * group.add(log);
+ * group.add(at(log, 0, 0, 60, 10));
  *
  * log.writeLine('Build started...');
  * log.write('compiling');

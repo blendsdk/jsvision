@@ -175,7 +175,7 @@ class TabBody extends Group {
  * The strip is the focus target — focus the exposed {@link TabView.strip}, not the view.
  *
  * @example
- * import { Group, Text, TabView, createEventLoop, signal } from '@jsvision/ui';
+ * import { Group, Text, TabView, createEventLoop, signal, at } from '@jsvision/ui';
  * import type { Tab } from '@jsvision/ui';
  *
  * const page = (line: string): Group => {
@@ -197,10 +197,9 @@ class TabBody extends Group {
  *   onChange: (i) => console.log('switched to tab', i),
  *   onClose: (tab) => console.log('closed', tab.title),
  * });
- * view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 10 } };
  *
  * const root = new Group();
- * root.add(view);
+ * root.add(at(view, 0, 0, 40, 10));
  * const loop = createEventLoop({ width: 40, height: 10 });
  * loop.mount(root);
  * loop.focusView(view.strip); // focus the strip, not the view

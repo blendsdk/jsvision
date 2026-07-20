@@ -104,20 +104,18 @@ export interface ProgressBarOptions {
  * an optional positioned label.
  *
  * @example
- * import { Group, Button, ProgressBar, signal } from '@jsvision/ui';
+ * import { Group, Button, ProgressBar, signal, at } from '@jsvision/ui';
  *
  * const g = new Group();
  * const value = signal(0.4); // progress in [0, 1]
  *
  * // A bar with a knockout percent caption and a leading label.
  * const bar = new ProgressBar({ value, caption: true, label: 'Copying', labelPosition: 'left' });
- * bar.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 24, height: 1 } };
- * g.add(bar);
+ * g.add(at(bar, 1, 0, 24, 1));
  *
  * // Advance it — the bar repaints reactively when the signal changes.
  * const step = new Button('~S~tep', { onClick: () => value.set(Math.min(1, value() + 0.1)) });
- * step.layout = { position: 'absolute', rect: { x: 1, y: 2, width: 10, height: 2 } };
- * g.add(step);
+ * g.add(at(step, 1, 2, 10, 2));
  */
 export class ProgressBar extends View {
   private readonly value: Signal<number>;

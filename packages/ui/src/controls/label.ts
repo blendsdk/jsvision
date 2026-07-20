@@ -15,14 +15,14 @@ import type { ParsedLabel } from '../menu/index.js';
  * A caption linked to a control. Construct it with the control it should focus.
  *
  * @example
- * import { Group, Label, Input, signal } from '@jsvision/ui';
+ * import { Group, Label, Input, signal, at } from '@jsvision/ui';
  *
  * const name = signal('');
  * const input = new Input({ value: name });
  * const label = new Label('~N~ame', input); // Alt+N or a click focuses `input`
  *
- * label.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 6, height: 1 } };
- * input.layout = { position: 'absolute', rect: { x: 8, y: 0, width: 20, height: 1 } };
+ * at(label, 1, 0, 6, 1);
+ * at(input, 8, 0, 20, 1);
  *
  * const form = new Group();
  * form.add(label);
