@@ -3,7 +3,7 @@
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
 > **Last Updated**: 2026-07-20
-> **Progress**: 0/54 tasks (0%)
+> **Progress**: 1/54 tasks (2%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -22,7 +22,7 @@
 
 ### Step 1.1 — Spec tests
 
-- [ ] 1.1.1 [spec-author] ST-1, ST-2, ST-3 — the coverage gate and its demonstrated failure. ST-2 must inject, observe failure, and revert. ST-3 is scoped to packages having **both** a `typecheck` script and a `test/`, with `spike-data-studio` named as exempt
+- [x] 1.1.1 [spec-author] ST-1, ST-2, ST-3 — the coverage gate and its demonstrated failure. ST-2 must inject, observe failure, and revert. ST-3 is scoped to packages having **both** a `typecheck` script and a `test/`, with `spike-data-studio` named as exempt — *implemented + red 2026-07-20* (`packages/examples/test/typecheck-coverage.spec.test.ts`; ST-1 153 uncovered files, ST-2 `view-demo/main.ts` absent from the program, ST-3 8 packages). Coverage is read via the TypeScript config-resolution API — the same file set `tsc --listFiles` reports — rather than by shelling out to nine compilers
 
 ### Step 1.2 — Shared seam first
 
