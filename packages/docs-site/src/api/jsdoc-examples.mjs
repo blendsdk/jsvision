@@ -35,6 +35,13 @@ export const SHIPPED_ROOTS = Object.freeze([
   'packages/forms/src',
 ]);
 
+/**
+ * Workspace packages that emit a `dist/`. Deliberately the same six the guard
+ * governs — the demos, the theme designer and this site have no build script,
+ * so no example may be held to having built them.
+ */
+const BUILT_PACKAGES = new Set(SHIPPED_ROOTS.map((root) => root.split('/')[1]));
+
 /** Key used when an `@example`'s JSDoc hangs on a node that has no name. */
 const ANONYMOUS = '(anonymous)';
 
@@ -185,6 +192,11 @@ function compile(blocks) {
   requireBuiltPackages(blocks);
 
   const realHost = ts.createCompilerHost(options);
+  // A parsed file is only interchangeable between programs compiled the same way,
+  // so the options are part of its identity. They are constant today; folding
+  // them in means that if they ever stop being constant the cache misses instead
+  // of silently handing back files parsed under the other program's rules.
+  const optionsFingerprint = JSON.stringify(options);
 
   /** @type {ts.CompilerHost} */
   const host = {
@@ -192,11 +204,12 @@ function compile(blocks) {
     getSourceFile: (fileName, languageVersion, onError, shouldCreate) => {
       const body = virtual.get(fileName);
       if (body !== undefined) return ts.createSourceFile(fileName, body, languageVersion, true);
-      // The version may arrive as a CreateSourceFileOptions object; both shapes
-      // have to key distinctly or a cached file could be handed back under the
-      // wrong target.
-      const version = typeof languageVersion === 'object' ? languageVersion.languageVersion : languageVersion;
-      const key = `${fileName}|${version}`;
+      // The version arrives either as a bare target or as an options object that
+      // also fixes the module format; both shapes have to key distinctly or a
+      // cached file could be handed back parsed under the wrong rules.
+      const target = typeof languageVersion === 'object' ? languageVersion.languageVersion : languageVersion;
+      const format = typeof languageVersion === 'object' ? languageVersion.impliedNodeFormat : undefined;
+      const key = `${fileName}|${target}|${format}|${optionsFingerprint}`;
       if (!realSourceFiles.has(key)) {
         realSourceFiles.set(key, realHost.getSourceFile(fileName, languageVersion, onError, shouldCreate));
       }
@@ -241,17 +254,25 @@ function compile(blocks) {
  * Most blocks import `@jsvision/*` by bare specifier, which resolves to the
  * package's generated declarations. Through `yarn verify` the build always runs
  * first, but a bare `vitest` on a fresh checkout would otherwise bury the real
- * cause under hundreds of unrelated "cannot find module" diagnostics — and a
- * *stale* `dist/` would silently produce verdicts for code that no longer exists.
+ * cause under hundreds of unrelated "cannot find module" diagnostics. Only
+ * *absence* is detected: a stale build still passes this check, and ordering the
+ * build before the test run is what keeps it fresh.
  *
  * @param {readonly ExampleBlock[]} blocks  Blocks about to be compiled.
  * @returns {void}
- * @throws {Error} If a referenced package has no build output.
+ * @throws {Error} If a referenced package that is built has no build output.
  */
 function requireBuiltPackages(blocks) {
   const referenced = new Set();
   for (const block of blocks) {
-    for (const [, name] of block.body.matchAll(/['"]@jsvision\/([a-z-]+)['"]/g)) referenced.add(name);
+    // Match the first path segment only, so a subpath specifier such as
+    // '@jsvision/web/browser-stubs' still names its package.
+    for (const [, name] of block.body.matchAll(/['"]@jsvision\/([a-z0-9-]+)(?:\/[^'"]*)?['"]/g)) {
+      // Several workspace packages (the demos, the designer, this site) have no
+      // build script and can never have a dist/. Demanding one of them would
+      // throw an error whose remedy does not exist, bricking the whole gate.
+      if (BUILT_PACKAGES.has(name)) referenced.add(name);
+    }
   }
   const unbuilt = [...referenced].filter((name) => !existsSync(join(REPO_ROOT, 'packages', name, 'dist'))).sort();
   if (unbuilt.length > 0) {
@@ -307,8 +328,8 @@ function walkTypeScript(dir) {
   const found = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const abs = join(dir, entry.name);
-    // Accumulated one at a time rather than spread as arguments: a spread hits
-    // the engine's argument-count ceiling on a large directory.
+    // Accumulated one at a time rather than spread as arguments, so no
+    // intermediate argument list is built per directory.
     if (entry.isDirectory()) for (const nested of walkTypeScript(abs)) found.push(nested);
     else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts')) found.push(abs);
   }
