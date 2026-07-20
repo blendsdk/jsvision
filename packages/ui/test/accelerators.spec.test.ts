@@ -100,8 +100,8 @@ test('ST-16: a char reused across scopes (bar title vs. submenu item) does not w
 test('ST-17: a Dialog mounting two buttons sharing an Alt-hotkey warns once on mount, naming the char', () => {
   const spy = warnSpy();
   const dialog = new Dialog({ title: ' T ', width: 30, height: 8 });
-  dialog.add(new Button('~O~K', 'ok'));
-  dialog.add(new Button('~O~ops', 'oops'));
+  dialog.add(new Button('~O~K', { command: 'ok' }));
+  dialog.add(new Button('~O~ops', { command: 'oops' }));
   mount(dialog);
   const dialogWarns = spy.mock.calls.map((c) => String(c[0])).filter((m) => m.includes('[jsvision/ui dialog]'));
   expect(dialogWarns).toHaveLength(1);
@@ -131,7 +131,7 @@ test('ST-18b: a page-content accelerator sharing a tab char does NOT warn (strip
   const spy = warnSpy();
   const pageWith = (label: string): Group => {
     const g = new Group();
-    g.add(new Button(label, 'cmd'));
+    g.add(new Button(label, { command: 'cmd' }));
     return g;
   };
   // Tab '~A~lpha' (a) with a page button '~A~ction' (a): different interaction, not a v1 conflict.

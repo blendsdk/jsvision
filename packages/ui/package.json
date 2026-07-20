@@ -45,7 +45,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run --project unit",
     "test:e2e": "vitest run --project e2e --passWithNoTests",
     "check:deps": "node ../../scripts/check-no-native-deps.mjs .",

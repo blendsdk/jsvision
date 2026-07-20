@@ -111,7 +111,7 @@ test('ST-23: under no-Unicode caps the knob renders as ASCII `o`', () => {
 
 test('ST-24: an Alt-hotkey from elsewhere in the scope focuses + toggles the switch', () => {
   const value = signal(false);
-  const other = new Button('~B~tn', 'b');
+  const other = new Button('~B~tn', { command: 'b' });
   other.layout = { position: 'absolute', rect: { x: 0, y: 2, width: 10, height: 2 } };
   const sw = new Switch({ value, label: '~A~irplane' });
   sw.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 1 } };
@@ -140,12 +140,12 @@ test('ST-25: a disabled switch ignores Space, is not focusable, and draws dim', 
 
 test('ST-26: measure() returns a non-zero intrinsic size (label + track + text, height 1)', () => {
   const value = signal(false);
-  const bare = new Switch({ value, onLabel: '', offLabel: '' }).measure?.({ width: 100, height: 100 });
+  const bare = new Switch({ value, onLabel: '', offLabel: '' }).measure?.();
   expect(bare).toBeDefined();
   expect(bare?.height).toBe(1);
   expect(bare?.width).toBe(6); // just the `[    ]` track (inner 4 + 2 brackets)
 
-  const labelled = new Switch({ value, label: '~A~irplane' }).measure?.({ width: 100, height: 100 });
+  const labelled = new Switch({ value, label: '~A~irplane' }).measure?.();
   // Label ('Airplane' = 8) + space + track (6) + space + max('On','Off') = 3 ⇒ 8+1+6+1+3 = 19.
   expect(labelled?.width).toBe(19);
   expect(labelled?.height).toBe(1);

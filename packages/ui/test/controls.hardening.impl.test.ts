@@ -21,7 +21,7 @@ function mouse(kind: MouseEvent['kind'], x: number, y: number): MouseEvent {
   return { type: 'mouse', kind, button: 0, x, y };
 }
 function paste(text: string): PasteEvent {
-  return { type: 'paste', text };
+  return { type: 'paste', text, truncated: false }; // these fixtures never exercise the size-cap path
 }
 
 class FocusStub extends View {

@@ -427,7 +427,9 @@ test('ST-A9 submit() force-runs async and gates on the result', async () => {
   const seenA: unknown[] = [];
   const fa = mk();
   fa.field('username').value.set('taken');
-  await expect(fa.submit((v) => seenA.push(v))).resolves.toBe(false);
+  await expect(fa.submit((v) => {
+    seenA.push(v);
+  })).resolves.toBe(false);
   expect(seenA).toEqual([]);
   expect(fa.field('username').asyncError()).toBe('Already in use');
 
@@ -435,7 +437,9 @@ test('ST-A9 submit() force-runs async and gates on the result', async () => {
   const seenB: unknown[] = [];
   const fb = mk();
   fb.field('username').value.set('free');
-  await expect(fb.submit((v) => seenB.push(v))).resolves.toBe(true);
+  await expect(fb.submit((v) => {
+    seenB.push(v);
+  })).resolves.toBe(true);
   expect(seenB).toEqual([{ username: 'free' }]);
 });
 
@@ -450,7 +454,9 @@ test('ST-A15 submit() short-circuits on sync-invalid without invoking any async 
     initial: { username: 'ab' }, // sync-INVALID (length 2)
     asyncValidators: { username: spy },
   });
-  await expect(f.submit((v) => seen.push(v))).resolves.toBe(false);
+  await expect(f.submit((v) => {
+    seen.push(v);
+  })).resolves.toBe(false);
   expect(spy).not.toHaveBeenCalled(); // no async call on a doomed submit
   expect(seen).toEqual([]);
 });

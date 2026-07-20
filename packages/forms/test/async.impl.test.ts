@@ -158,7 +158,9 @@ test('a force-run supersedes an already-started debounced run; its late result i
   await vi.advanceTimersByTimeAsync(300); // the debounced run (call 0) is now in flight
   expect(d.calls).toEqual(['abcd']);
 
-  const submitP = f.submit((v) => seen.push(v)); // force-run (call 1) starts, aborting call 0
+  const submitP = f.submit((v) => {
+    seen.push(v);
+  }); // force-run (call 1) starts, aborting call 0
   await vi.advanceTimersByTimeAsync(0);
   expect(d.calls).toEqual(['abcd', 'abcd']); // the validator was re-invoked by the force-run
 

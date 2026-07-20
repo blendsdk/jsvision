@@ -24,7 +24,15 @@ function doubles(): { runtime: FakeRuntimeAdapter; input: FakeInput; output: Cap
 }
 
 function appWith(
-  opts: Partial<ApplicationOptions> & { output: CaptureStream; input: FakeInput; runtime: FakeRuntimeAdapter },
+  // `ApplicationOptions.input`/`output`/`runtime` are real Node stream/runtime types; the fakes here
+  // stand in for them (converted to the real shape below via `.asInput()`/`.asOutput()`), so they must
+  // be omitted from the base `Partial<ApplicationOptions>` rather than intersected with it — an
+  // intersection would additionally require each fake to satisfy the real stream type it replaces.
+  opts: Omit<Partial<ApplicationOptions>, 'output' | 'input' | 'runtime'> & {
+    output: CaptureStream;
+    input: FakeInput;
+    runtime: FakeRuntimeAdapter;
+  },
 ) {
   const { output, input, runtime, ...rest } = opts;
   return createApplication({

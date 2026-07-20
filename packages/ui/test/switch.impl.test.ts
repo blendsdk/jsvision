@@ -24,7 +24,7 @@ function wheel(dir: 'up' | 'down', x: number, y: number): CoreWheelEvent {
   return { type: 'wheel', dir, x, y, shift: false, alt: false, ctrl: false };
 }
 
-function hosted(sw: Switch, value: Signal<boolean>, w = 24, h = 1, focus = true) {
+function hosted(sw: Switch, _value: Signal<boolean>, w = 24, h = 1, focus = true) {
   sw.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
   const root = new Group();
   root.add(sw);
@@ -59,7 +59,7 @@ test('the wheel is not a toggle gesture (unlike Slider)', () => {
 
 test("onLabel/offLabel = '' omit the word; measure() drops its width", () => {
   const value = signal(false);
-  const sized = new Switch({ value, onLabel: '', offLabel: '' }).measure?.({ width: 100, height: 100 });
+  const sized = new Switch({ value, onLabel: '', offLabel: '' }).measure?.();
   expect(sized?.width).toBe(6); // just the track
   // A rendered switch with hidden words shows no On/Off text past the track.
   const { buf } = hosted(new Switch({ value, onLabel: '', offLabel: '' }), value, 24);

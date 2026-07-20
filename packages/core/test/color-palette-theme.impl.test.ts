@@ -36,6 +36,7 @@ test('window and dialog roles carry border and title colors', () => {
 test('roles with a hotkey accent reference a valid color', () => {
   for (const role of [defaultTheme.menuBar, defaultTheme.menuSelected, defaultTheme.statusBar]) {
     const hotkey = role.hotkey;
+    if (hotkey === undefined) throw new Error('expected a hotkey color');
     expect(hotkey).toBeTruthy();
     expect(() => encode(hotkey, 'fg', '16')).not.toThrow();
   }

@@ -21,7 +21,9 @@ import { Group, View } from '../src/view/index.js';
 import type { DrawContext } from '../src/view/index.js';
 import { createApplication } from '../src/app/index.js';
 import { menuBar, subMenu, item } from '../src/menu/index.js';
+import type { MenuBar } from '../src/menu/index.js';
 import { statusLine, statusItem, Commands } from '../src/status/index.js';
+import type { StatusLine } from '../src/status/index.js';
 import { Button } from '../src/controls/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
@@ -32,10 +34,10 @@ class Body extends Group {
   draw(_ctx: DrawContext): void {}
 }
 
-function bar(): Group {
+function bar(): MenuBar {
   return menuBar([subMenu('~F~ile', [item('E~x~it', Commands.quit)])]);
 }
-function status(): Group {
+function status(): StatusLine {
   return statusLine([statusItem('~Q~uit', Commands.quit, 'Alt+X')]);
 }
 
@@ -126,8 +128,8 @@ test('ST-W1: the menu bar and status line each solve to exactly one row', () => 
 // (It would not, on its own, detect a non-focusable wrapper Group: tree-order traversal skips one.)
 test('ST-W2: the app-shell focus ring visits the content views in tree order', () => {
   const content = new Body();
-  const first = new Button('~O~ne', 'one');
-  const second = new Button('~T~wo', 'two');
+  const first = new Button('~O~ne', { command: 'one' });
+  const second = new Button('~T~wo', { command: 'two' });
   content.add(first);
   content.add(second);
 
@@ -136,7 +138,7 @@ test('ST-W2: the app-shell focus ring visits the content views in tree order', (
   app.loop.focusView(first);
 
   const start = app.loop.getFocused();
-  const ring: (View | undefined)[] = [start];
+  const ring: (View | null)[] = [start];
   for (let i = 0; i < 8; i++) {
     app.loop.focusNext();
     const current = app.loop.getFocused();

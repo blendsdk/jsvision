@@ -32,7 +32,14 @@ test("a 'default' color round-trips as 'default'", () => {
 });
 
 test('a generated theme with a pattern override round-trips losslessly', () => {
-  const theme = createTheme({ mode: 'dark', accent: '#3b82f6', roleOverrides: { desktop: { pattern: '▒' } } });
+  const base = createTheme({ mode: 'dark', accent: '#3b82f6' });
+  // roleOverrides.desktop is typed as a full role (fg/bg required), not a per-field patch —
+  // spread the base role so only `pattern` actually changes, matching the intended surgical override.
+  const theme = createTheme({
+    mode: 'dark',
+    accent: '#3b82f6',
+    roleOverrides: { desktop: { ...base.desktop, pattern: '▒' } },
+  });
   const back = parseTheme(serializeTheme(theme));
   expect(back, 'deep-equal').toStrictEqual(theme);
   expect(back.desktop.pattern, 'single-cell pattern preserved').toBe('▒');

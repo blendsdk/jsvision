@@ -15,6 +15,7 @@
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
+import type { Cell } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
 import { messageBox, confirm, inputBox } from '../src/dialog/index.js';
 import { Button } from '../src/controls/index.js';
@@ -41,7 +42,7 @@ function painted(app: ReturnType<typeof createApplication>): string {
   return app.loop.renderRoot
     .buffer()
     .rows()
-    .map((row) => row.map((cell) => cell.char).join(''))
+    .map((row: readonly Cell[]) => row.map((cell: Cell) => cell.char).join(''))
     .join('\n');
 }
 

@@ -30,6 +30,7 @@ import { test, expect } from 'vitest';
 
 import type { ColorDepth } from '../src/engine/capability/index.js';
 import { defaultTheme, encode } from '../src/engine/color/index.js';
+import type { Color } from '../src/engine/render/index.js';
 
 import { decodeGrayDialogSlot } from './theme-decode.helpers.js';
 
@@ -76,7 +77,7 @@ test('ST-32: History viewer roles deep-equal the cpHistoryViewer source decode',
 });
 
 test('ST-32: encode() of each History theme role does not throw at any colour depth', () => {
-  const pairs: readonly { fg: string; bg: string }[] = [
+  const pairs: readonly { fg: Color; bg: Color }[] = [
     defaultTheme.historyButtonArrow,
     defaultTheme.historyButtonSides,
     { fg: defaultTheme.historyWindow.fg, bg: defaultTheme.historyWindow.bg },

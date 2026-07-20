@@ -22,6 +22,7 @@ import { DataGrid } from '../src/table/index.js';
 import type { Column } from '../src/table/index.js';
 import { Tree } from '../src/tree/index.js';
 import type { TreeNode } from '../src/tree/index.js';
+import { flattenVisible } from '../src/tree/graph.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -211,7 +212,9 @@ test('ST-7: TreeRows — graph-zone single click toggles; double click still jus
   loop.mount(root);
   loop.focusView(tree.rows);
 
-  const flatLen = () => tree.rows.flatten().length;
+  // `flatten` is a protected internal of `TreeRows` — recompute the same visible-row list from the
+  // public pieces (the roots signal this test already holds + the public `isExpanded`).
+  const flatLen = () => flattenVisible(roots(), (n) => tree.isExpanded(n)).length;
   expect(flatLen()).toBe(3); // expanded
 
   // Single graph-zone click on A (1-based (1,1) → local (0,0), x=0 < graphWidth(0)=3) → collapse.

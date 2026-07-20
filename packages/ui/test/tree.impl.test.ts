@@ -20,7 +20,7 @@ function key(k: string): KeyEvent {
   return { type: 'key', key: k, ctrl: false, alt: false, shift: false };
 }
 function wheel(dir: 'up' | 'down', x: number, y: number): CoreWheelEvent {
-  return { type: 'wheel', dir, x, y };
+  return { type: 'wheel', dir, x, y, shift: false, alt: false, ctrl: false };
 }
 function node<T>(value: T, children: TreeNode<T>[] = []): TreeNode<T> {
   return { value, children };

@@ -123,7 +123,9 @@ test('ST-11: Sparkline reports a non-zero measure and repaints on a data change'
   const values = signal<number[]>([1, 2, 3, 4]);
   const spark = new Sparkline({ values });
 
-  const size = spark.measure?.({ width: 100, height: 100 });
+  // `measure()` takes no arguments here: the Sparkline reports an intrinsic size, and the available
+  // box it was previously handed was silently ignored.
+  const size = spark.measure?.();
   expect(size?.width).toBeGreaterThan(0);
   expect(size?.height).toBeGreaterThan(0);
 

@@ -14,6 +14,7 @@ import { resolveCapabilities, defaultTheme } from '@jsvision/core';
 import type { MouseEvent } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
 import { Window } from '../src/window/index.js';
+import type { Rect } from '../src/layout/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -39,13 +40,24 @@ function addWindow(
 }
 
 /**
+ * `layout.rect` is typed optional (an `'absolute'` box declared without one collapses to zero size
+ * rather than throwing), but every window under test here is always given one via {@link addWindow}
+ * or the desktop's own placement — so a missing rect here is a genuine test bug, not a valid state.
+ */
+function rectOf(w: Window): Rect {
+  const rect = w.layout.rect;
+  if (rect === undefined) throw new Error(`window "${w.title()}" has no solved rect`);
+  return rect;
+}
+
+/**
  * Assert a set of window rects exactly partitions the `W×H` desktop: every desktop cell is covered by
  * exactly one window (no gaps, no overlap) — TV's `calcTileRect` divides the desktop with no remainder.
  */
 function assertPartitions(windows: Window[], W: number, H: number): void {
   const cover = new Map<string, number>();
   for (const w of windows) {
-    const { x, y, width, height } = w.layout.rect;
+    const { x, y, width, height } = rectOf(w);
     for (let cy = y; cy < y + height; cy++) {
       for (let cx = x; cx < x + width; cx++) {
         const key = `${cx},${cy}`;
@@ -107,7 +119,7 @@ test('ST-08: drag the title bar repositions the window, clamped at the edge', ()
   app.loop.dispatch(mouse('down', 9, 5)); // grab at the new top-left corner-ish (local (0,0) → title)
   app.loop.dispatch(mouse('drag', 100, 5));
   app.loop.dispatch(mouse('up', 100, 5));
-  expect(w.layout.rect.x).toBe(app.desktop.bounds.width - 1);
+  expect(rectOf(w).x).toBe(app.desktop.bounds.width - 1);
 });
 
 // ST-09 / AC-9 — drag the SE corner to resize, floored at 10×3.
@@ -120,15 +132,15 @@ test('ST-09: drag the SE corner resizes the window, floored at 10×3', () => {
   app.loop.dispatch(mouse('down', 13, 7));
   app.loop.dispatch(mouse('drag', 24, 12));
   app.loop.dispatch(mouse('up', 24, 12));
-  expect(w.layout.rect.width).toBe(25); // 24 - 0 + 1
-  expect(w.layout.rect.height).toBe(13); // 12 - 0 + 1
+  expect(rectOf(w).width).toBe(25); // 24 - 0 + 1
+  expect(rectOf(w).height).toBe(13); // 12 - 0 + 1
 
   // Drag the corner inward below the minimum → floored at 10×3.
   app.loop.dispatch(mouse('down', 24, 12));
   app.loop.dispatch(mouse('drag', 0, 0));
   app.loop.dispatch(mouse('up', 0, 0));
-  expect(w.layout.rect.width).toBe(10);
-  expect(w.layout.rect.height).toBe(3);
+  expect(rectOf(w).width).toBe(10);
+  expect(rectOf(w).height).toBe(3);
 });
 
 // ST-10 / AC-10 — zoom toggles: first maximizes to the desktop; second restores the exact geometry.

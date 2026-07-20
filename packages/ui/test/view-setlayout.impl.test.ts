@@ -57,7 +57,10 @@ test('ST-I1: setLayout({}) preserves the props, replaces the object, and invalid
 // unconditionally costs nothing: the render root early-returns once a flush is already pending.
 test('ST-I3: N setLayout calls request N reflows but schedule exactly one frame', () => {
   let scheduled = 0;
-  let pending: (() => void) | null = null;
+  // Assignment happens inside the `schedule` closure below; a bare `let` narrows to `never` at the
+  // call site because control-flow analysis can't see across the closure boundary — hold it on an
+  // object literal instead so the property keeps its declared, non-narrowed type.
+  const held: { pending: (() => void) | null } = { pending: null };
   const root = new Group();
   const child = new Leaf();
   root.add(child);
@@ -69,7 +72,7 @@ test('ST-I3: N setLayout calls request N reflows but schedule exactly one frame'
       // calls and each write would legitimately schedule its own frame.
       schedule: (fn) => {
         scheduled += 1;
-        pending = fn;
+        held.pending = fn;
       },
     },
   );
@@ -85,7 +88,7 @@ test('ST-I3: N setLayout calls request N reflows but schedule exactly one frame'
   expect(scheduled - base).toBe(1); // …and they collapse into one frame
 
   expect(child.layout.padding).toBe(5);
-  pending?.();
+  held.pending?.();
 });
 
 // ST-I5 — the one genuinely new migration witness. Both widgets set `direction: 'row'` in their
