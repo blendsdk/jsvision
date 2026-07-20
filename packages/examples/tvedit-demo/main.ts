@@ -35,6 +35,7 @@ import {
   View,
 } from '@jsvision/ui';
 import type { Application, DispatchEvent } from '@jsvision/ui';
+import type { Platform } from '@jsvision/core';
 import { nodeFileSystem, openFile, openFileInEditor, FileCommands, FileEditor } from '@jsvision/files';
 
 /** Demo-local commands (no framework surface — the PF-012 quit-sweep + window arrangement). */
@@ -106,9 +107,18 @@ function buildKeymap() {
   });
 }
 
+/** Narrow `process.platform` to the SDK's own platform union without an unsafe cast. */
+function currentPlatform(): Platform {
+  if (process.platform === 'darwin') return 'darwin';
+  if (process.platform === 'win32') return 'win32';
+  return 'linux';
+}
+
 /** Collect the open FileEditors (the quit-sweep targets, PF-012). */
 function openFileEditors(app: Application): FileEditor[] {
   const out: FileEditor[] = [];
+  // An Application built without a desktop has no windows to sweep.
+  if (app.desktop === undefined) return out;
   for (const child of app.desktop.children) {
     if (child instanceof EditWindow && child.editor instanceof FileEditor) out.push(child.editor);
   }
@@ -164,9 +174,9 @@ async function main(): Promise<number> {
   const caps = (
     await resolveCapabilitiesAsync({
       env: process.env,
-      platform: process.platform,
-      query: createTerminalQuery(process.stdin, process.stdout),
-      override: { input: { mouseSgr: true }, unicode: { utf8: true } },
+      platform: currentPlatform(),
+      query: createTerminalQuery(),
+      override: { mouse: { sgr: true }, unicode: { utf8: true } },
     })
   ).profile;
 

@@ -30,28 +30,30 @@ function paintedCells(rows: readonly { char: string }[][]): number {
 
 /** Mount a view under a deferred scheduler and drain pending frames to convergence. */
 function mountAndDrain(view: Group, width = 60, height = 16) {
-  let pending: (() => void) | null = null;
-  const rr = createRenderRoot({ width, height }, { caps, schedule: (f) => (pending = f) });
-  rr.mount(view);
-  let guard = 0;
-  while (pending !== null) {
-    const run = pending;
-    pending = null;
-    run();
-    if (++guard > 50) throw new Error('did not converge');
-  }
-  return {
-    rr,
-    drain: () => {
-      let g = 0;
-      while (pending !== null) {
-        const run = pending;
-        pending = null;
-        run();
-        if (++g > 50) throw new Error('did not converge');
-      }
-    },
+  // Held on an object rather than in a bare `let`: a local only ever assigned from inside the
+  // scheduler closure keeps its initial flow type, so the guarded read below would narrow to `never`.
+  const scheduled: { frame: (() => void) | null } = { frame: null };
+  const drainOnce = (): void => {
+    let guard = 0;
+    while (scheduled.frame !== null) {
+      const run = scheduled.frame;
+      scheduled.frame = null;
+      run();
+      if (++guard > 50) throw new Error('did not converge');
+    }
   };
+  const rr = createRenderRoot(
+    { width, height },
+    {
+      caps,
+      schedule: (f) => {
+        scheduled.frame = f;
+      },
+    },
+  );
+  rr.mount(view);
+  drainOnce();
+  return { rr, drain: drainOnce };
 }
 
 test('the flow preview builds, mounts, and paints', () => {
