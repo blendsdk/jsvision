@@ -122,11 +122,21 @@ export function mountCellOverlay(args: {
     if (args.clamp !== undefined && height <= args.clamp.height) {
       y = Math.max(0, Math.min(y, args.clamp.height - height));
     }
-    // Assigned wholesale rather than tagged: a caller's own layout on the mounted view is
-    // intentionally discarded. Only a size the caller chose by setting a full absolute layout
-    // survives (resolved above); the position is always the host-local cell, so an overlay can never
-    // be dragged off its cell by the view it hosts.
-    view.layout = { position: 'absolute', rect: { x, y, width, height } };
+    // Every other prop is reset explicitly, not merely left unset: a caller's own layout on the
+    // mounted view is intentionally discarded. Only a size the caller chose by setting a full absolute
+    // layout survives (resolved above); the position is always the host-local cell, so an overlay can
+    // never be dragged off its cell by the view it hosts. An explicit `undefined` clears a prop back
+    // to its layout default.
+    view.setLayout({
+      position: 'absolute',
+      rect: { x, y, width, height },
+      direction: undefined,
+      justify: undefined,
+      align: undefined,
+      gap: undefined,
+      padding: undefined,
+      size: undefined,
+    });
     host.add(view);
     loop.focusView(view);
     return () => {

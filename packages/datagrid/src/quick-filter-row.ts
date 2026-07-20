@@ -152,7 +152,7 @@ export class QuickFilterRow<T> extends Group {
       const left = geom.starts[c] - indent; // natural left edge, negative when scrolled off the left
       const x = Math.max(0, left); // clip to the viewport's left edge (no negative absolute x)
       const w = Math.max(0, left + geom.widths[c] - x); // shrink by the clipped amount; bounds clip the right
-      input.layout = { position: 'absolute', rect: { x, y: 0, width: w, height: 1 } };
+      input.setLayout({ position: 'absolute', rect: { x, y: 0, width: w, height: 1 } });
     });
   }
 
