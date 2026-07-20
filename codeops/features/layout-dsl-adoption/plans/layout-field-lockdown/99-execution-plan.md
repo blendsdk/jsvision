@@ -2,8 +2,8 @@
 
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
-> **Last Updated**: 2026-07-20 (Phase 2 · Step 2.4 complete — the field is locked)
-> **Progress**: 37/55 tasks (67%)
+> **Last Updated**: 2026-07-20 (Phase 2 complete — the field is locked)
+> **Progress**: 40/55 tasks (73%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -179,9 +179,31 @@ The three `ui/test` and one `datagrid/test` deltas are churn since the survey, n
 
 ### Step 2.5 — Accept
 
-- [ ] 2.5.1 **AC-3** widened grep (`packages/*/src packages/*/test packages/examples packages/docs-site/{examples,components}`): 0 hits outside comments, `spike-data-studio` and `setLayout`'s body. Enumerate the surviving prose matches
-- [ ] 2.5.2 **AC-5** — `turbo run typecheck` green with the flip in place, **plus** `tsc --listFiles` proving each package's config resolves its `test/`. Record the two surfaces this cannot cover (`spike-data-studio`; any package still lacking a `test/`-inclusive config)
-- [ ] 2.5.3 Full verify — including `jsdoc-examples.spec.test.ts` and `check-plugin`
+- [x] 2.5.1 **AC-3** widened grep (`packages/*/src packages/*/test packages/examples packages/docs-site/{examples,components}`): 0 hits outside comments, `spike-data-studio` and `setLayout`'s body. Enumerate the surviving prose matches — *done 2026-07-20*. **The grep was widened again, to include comments**, and that caught one the phase had missed: `examples/matrix-rain/matrix-rain.ts:23`, an `@example` block. The inventory grep blanks comments by design (so prose does not inflate the count), which made every JSDoc code sample invisible to it — and `examples/` is outside the `packages/*/src` scope of the `@example` ratchet, so nothing else would have caught it either. Converted. The surviving matches, all intentional:
+
+| Survivor | Why it stays |
+|---|---|
+| `spike-data-studio/src` ×13 | AR-6 — inert package, no build/test/typecheck, awaiting deletion |
+| `ui/src/view/view.ts:254` | `setLayout`'s own body: the one blessed writer |
+| `ui/src/view/view.ts:72` | The field's JSDoc, where naming the closed spellings **is** the contract |
+| `ui/test/view-layout-readonly.spec.test.ts:13` | The oracle's own header, explaining why the subclass case is not redundant |
+| `examples/test/jsvision-doctor.spec.test.ts:43,46` | String literals fed to the footgun linter — its fixture for the retired idiom, not code |
+- [x] 2.5.2 **AC-5** — `turbo run typecheck` green with the flip in place, **plus** `tsc --listFiles` proving each package's config resolves its `test/`. Record the two surfaces this cannot cover (`spike-data-studio`; any package still lacking a `test/`-inclusive config) — *done 2026-07-20*: `turbo run typecheck` **15/15**, and every one of the 9 packages resolves its own `test/` — **745 test files in the compiler**:
+
+| Package | Files in program | Under `test/` | Config |
+|---|---|---|---|
+| `ui` | 489 | 318 | `tsconfig.typecheck.json` |
+| `examples` | 256 | 56 | `tsconfig.json` |
+| `core` | 182 | 125 | `tsconfig.typecheck.json` |
+| `datagrid` | 167 | 126 | `tsconfig.typecheck.json` |
+| `docs-site` | 56 | 40 | `tsconfig.json` |
+| `files` | 53 | 34 | `tsconfig.typecheck.json` |
+| `forms` | 32 | 22 | `tsconfig.typecheck.json` |
+| `theme-designer` | 28 | 11 | `tsconfig.json` |
+| `web` | 21 | 13 | `tsconfig.typecheck.json` |
+
+Surfaces this cannot cover: **`spike-data-studio`** (no typecheck script at all — named as exempt in the ST-3 oracle, so removing a script elsewhere would fail rather than silently un-gate), and **the 2 `datagrid` files** in `ALLOWED_UNCHECKED`, which import a `.ts` helper from `core/test` by workspace-relative path — a genuine cross-package `rootDir` violation, still covered by vitest. Both are named allowances the ST-3 oracle re-checks each run: an allowance whose file no longer exists, or that is no longer needed, fails
+- [x] 2.5.3 Full verify — including `jsdoc-examples.spec.test.ts` and `check-plugin` — *done 2026-07-20*: `yarn verify` **30/30 turbo tasks**, `jsdoc-examples` 12/12, `check-plugin: PASS — all integrity checks green`
 
 **Verify**: `yarn verify`
 
