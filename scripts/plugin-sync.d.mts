@@ -11,7 +11,12 @@ import type { DriftFinding, DriftRoots } from './check-plugin.mjs';
  * taking the grounded request and resolving to the raw bullet text. The real Anthropic client and a
  * test's hand-rolled fake both satisfy this structurally.
  */
-type DraftClient = { draft: (request: { system: string; user: string }) => Promise<string> };
+export type DraftRequest = { system: string; user: string };
+
+/**
+ * The minimal shape a drafting client must satisfy.
+ */
+export type DraftClient = { draft: (request: DraftRequest) => Promise<string> };
 
 export declare function replaceFencedBlock(mdText: string, region: string): string;
 

@@ -189,7 +189,10 @@ export function createShowcase(caps: CapabilityProfile): Showcase {
 
   // The story canvas — now shrunk to the right of the persistent navigator sidebar.
   const canvas = new StoryWindow('');
-  canvas.layout.rect = { x: SIDEBAR_W, y: 0, width: dw - SIDEBAR_W, height: dh };
+  // Kept as a local so the interior arithmetic below reads the size it was given rather than
+  // re-deriving it from an optional layout prop.
+  const canvasRect = { x: SIDEBAR_W, y: 0, width: dw - SIDEBAR_W, height: dh };
+  canvas.layout.rect = canvasRect;
   app.desktop.addWindow(canvas);
 
   /**
@@ -256,8 +259,8 @@ export function createShowcase(caps: CapabilityProfile): Showcase {
   function showStory(story: Story): void {
     disposePrevious();
     currentIndex = STORIES.indexOf(story);
-    const iw = canvas.layout.rect.width - 2; // interior (1-cell border each side)
-    const ih = canvas.layout.rect.height - 2;
+    const iw = canvasRect.width - 2; // interior (1-cell border each side)
+    const ih = canvasRect.height - 2;
     const holder = new Group();
     cover(holder);
     const chip = story.rd !== undefined ? `[${story.rd}] ` : '';
@@ -279,8 +282,8 @@ export function createShowcase(caps: CapabilityProfile): Showcase {
   function showWelcome(): void {
     disposePrevious();
     currentIndex = -1;
-    const iw = canvas.layout.rect.width - 2;
-    const ih = canvas.layout.rect.height - 2;
+    const iw = canvasRect.width - 2;
+    const ih = canvasRect.height - 2;
     showView(buildWelcome(cats, iw, ih), 'jsvision · showcase');
   }
 

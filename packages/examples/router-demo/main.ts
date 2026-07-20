@@ -85,10 +85,16 @@ function main(): void {
   const repos = signal(Array.from({ length: 20 }, (_, i) => `repo-${String(i + 1).padStart(2, '0')}`));
   const listFocused = signal(0); // the list's scroll/focus row — read to prove keep-alive preserves it
 
-  // The list screen is built once (keepAlive) and reused; capture it so the walkthrough can focus it
-  // and read its scroll. The route closures call back into `router` — deferred, so they run only
-  // after it exists (onSelect drills into the chosen repo; Back pops the stack).
-  let listView: ListView<string>;
+  // The list screen is built once (keepAlive) and reused, so the list widget can be created up front
+  // and captured — the walkthrough below focuses it and reads its scroll. The route closures call back
+  // into `router` — deferred, so they run only after it exists (onSelect drills into the chosen repo;
+  // Back pops the stack).
+  const listView = new ListView<string>({
+    items: repos,
+    getText: (r) => r,
+    focused: listFocused,
+    onSelect: (index) => router.push('detail', { index }),
+  });
 
   const router = createRouter<Routes>({
     initial: { name: 'list' },
@@ -96,12 +102,6 @@ function main(): void {
       list: {
         keepAlive: true, // keep the list warm so its scroll survives a drill-down round-trip
         build: () => {
-          listView = new ListView<string>({
-            items: repos,
-            getText: (r) => r,
-            focused: listFocused,
-            onSelect: (index) => router.push('detail', { index }),
-          });
           const screen = col(
             { padding: 1, gap: 0 },
             fixed(new Text('Repositories — ↑↓ to navigate, Enter to open'), 1),

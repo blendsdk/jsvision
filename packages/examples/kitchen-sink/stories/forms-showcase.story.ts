@@ -98,7 +98,7 @@ export const formsShowcaseStory: Story = {
         host: '',
         port: '',
         tls: false,
-        mode: 'Dev' as const,
+        mode: 'Dev' as 'Dev' | 'Staging' | 'Prod',
         features: [] as Array<'Logs' | 'Metrics' | 'Tracing'>,
       },
       asyncValidators: {
