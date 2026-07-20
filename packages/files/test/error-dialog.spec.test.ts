@@ -18,12 +18,16 @@
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { createApplication, Button, Commands, wrapText } from '@jsvision/ui';
+// `DesktopApplication`, not `ReturnType<typeof createApplication>`: the latter is a deferred
+// conditional type that resolves to `any` here, which silently switches off checking for every
+// helper below. These tests never pass `content`, so the app is always desktop-bodied.
+import type { DesktopApplication } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 import { errorBox } from '../src/dialog/error-dialog.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
-function makeApp(): ReturnType<typeof createApplication> {
+function makeApp(): DesktopApplication {
   return createApplication({ caps, viewport: { width: 80, height: 24 } });
 }
 
@@ -35,7 +39,7 @@ function label(v: View | null): string {
 }
 
 /** The box's focusable ring in Tab order, walked until focus returns to where it started. */
-function focusRing(app: ReturnType<typeof createApplication>, max = 8): string[] {
+function focusRing(app: DesktopApplication, max = 8): string[] {
   const start = app.loop.getFocused();
   const ring = [label(start)];
   for (let i = 0; i < max; i++) {
@@ -48,7 +52,7 @@ function focusRing(app: ReturnType<typeof createApplication>, max = 8): string[]
 }
 
 /** The whole painted frame as text, for "did this string reach the screen" assertions. */
-function painted(app: ReturnType<typeof createApplication>): string {
+function painted(app: DesktopApplication): string {
   return app.loop.renderRoot
     .buffer()
     .rows()
@@ -57,7 +61,7 @@ function painted(app: ReturnType<typeof createApplication>): string {
 }
 
 /** The open box's outer rectangle, read through the desktop rather than any child locator. */
-function boxBounds(app: ReturnType<typeof createApplication>): { width: number; height: number } {
+function boxBounds(app: DesktopApplication): { width: number; height: number } {
   const win = app.desktop.activeWindow();
   expect(win).not.toBeNull();
   return { width: win!.bounds.width, height: win!.bounds.height };
