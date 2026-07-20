@@ -83,9 +83,10 @@ export interface RenderRootOptions {
    *
    * A custom scheduler **must defer** the callback rather than invoking it inline. Coalescing is what
    * makes invalidation cheap: many invalidations in one tick collapse into a single frame. A
-   * synchronous `(flush) => flush()` defeats that — every `invalidate`/`invalidateLayout` becomes its
-   * own full reflow and recompose, so building a tree costs one layout pass per view. Tests that need
-   * a frame inline should call the render root's `flush()` instead.
+   * synchronous `(flush) => flush()` defeats that — every invalidation becomes its own frame: a full
+   * repaint pass for `invalidate`, and a reflow plus recompose for `invalidateLayout`. Building a tree
+   * then costs one frame per view. Tests that need a frame inline should call the render root's
+   * `flush()` instead.
    */
   schedule?: (flush: () => void) => void;
   /** Where a widget's `draw()` errors are logged; defaults to a disabled logger (silent). */
