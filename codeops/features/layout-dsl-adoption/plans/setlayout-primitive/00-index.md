@@ -2,7 +2,7 @@
 
 > **Implements**: layout-dsl-adoption/GH-117 · **GitHub**: [#117](https://github.com/blendsdk/jsvision/issues/117)
 > **CodeOps Skills Version**: 3.10.0
-> **Status**: ✅ Plan created 2026-07-20 · **preflighted 2026-07-20** (21 findings, all resolved — [`00-preflight-report.md`](00-preflight-report.md))
+> **Status**: ✅ **DONE 2026-07-20** (exec_plan 22/22) · preflighted 2026-07-20 (35 findings over 2 iterations, all resolved — [`00-preflight-report.md`](00-preflight-report.md)) · post-phase review: 10 findings (1 major), all resolved
 
 ## What this plan does
 
