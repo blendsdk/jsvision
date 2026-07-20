@@ -100,12 +100,12 @@ case without a single hand-computed rect.
 
 ## Absolute placement — the sanctioned exceptions
 
-Set `view.layout = { position: 'absolute', rect: { x, y, width, height } }` **only** when one of
+Call `view.setLayout({ position: 'absolute', rect: { x, y, width, height } })` **only** when one of
 these genuinely applies:
 
 1. **A `Window`/`Dialog`'s own placement on the desktop.** The desktop is a free-form window
-   manager, not a flow container, so a window is placed by rect (`win.layout.rect = { x, y, width,
-height }`) — or arranged with `app.desktop.tile()` / `cascade()`. This is about the window frame,
+   manager, not a flow container, so a window is placed by rect (`win.setLayout({ rect: { x, y, width,
+height } })`) — or arranged with `app.desktop.tile()` / `cascade()`. This is about the window frame,
    never its interior: compose the interior with the DSL.
 2. **Framework-positioned overlays** — menus, dropdowns, and popups the framework itself anchors.
    For app-authored overlays, prefer `stack` (above).

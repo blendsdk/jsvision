@@ -5,7 +5,7 @@
  * Three contracts, two of which the compiler enforces and no runtime test can:
  *
  *   - the write happens **in place**, so the object a caller is holding stays the same object;
- *   - assigning the field, or one of its props, is a **compile error** on a plain view;
+ *   - assigning the field, one of its props, or a field of a solved rect, is a **compile error**;
  *   - the same is true through a subclass that redeclares the field.
  *
  * That last one is not redundant. A subclass redeclaring `layout` without `readonly` silently
@@ -54,6 +54,13 @@ test('ST-7: neither the layout field nor its props accept a direct assignment', 
   v.layout = { padding: 1 };
   // @ts-expect-error every prop is read-only too — a rect cannot be swapped in place
   v.layout.rect = { x: 0, y: 0, width: 1, height: 1 };
+
+  v.setLayout({ rect: { x: 0, y: 0, width: 1, height: 1 } });
+  const rect = v.layout.rect;
+  if (rect === undefined) throw new Error('setLayout({ rect }) did not set a rect');
+  // @ts-expect-error and the rect itself is read-only — no editing a solved rect a field at a time,
+  // which would move the view without ever requesting a reflow
+  rect.x = 5;
 
   // The assignments above are compile errors, not runtime ones: `readonly` is erased, so they do
   // execute. Asserting they took effect keeps this honest about what it does and does not prove.

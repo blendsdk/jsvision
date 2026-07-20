@@ -162,8 +162,14 @@ export class Window extends Group {
     this.centered = false;
   }
 
-  /** The window's current WM rect (the layout rect, or a degenerate fallback before placement). */
-  protected currentRect(): Rect {
+  /**
+   * The window's current WM rect (the layout rect, or a degenerate fallback before placement).
+   *
+   * Returned read-only: this hands out the live layout rect, so a mutable alias would let a subclass
+   * move the window a field at a time without requesting a reflow. Copy it (`{ ...currentRect() }`)
+   * if you need a scratch rect.
+   */
+  protected currentRect(): Readonly<Rect> {
     return this.layout.rect ?? FALLBACK_RECT;
   }
 
@@ -204,6 +210,8 @@ export class Window extends Group {
     this.setLayout({ rect: { x: 0, y: 0, width: size.width, height: size.height } }); // re-maximize
     this.restoredRect = clampRestoredRect(this.restoredRect, size); // keep the un-zoom target on-screen
     this.onResized(); // let a subclass re-pin its absolute children to the new size
+    // Not redundant with `setLayout`'s own reflow request: that one fires before `onResized()`
+    // re-pins, so this is the one that schedules a pass seeing the re-pinned children.
     this.invalidateLayout();
   }
 

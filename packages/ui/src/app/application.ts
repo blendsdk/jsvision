@@ -9,6 +9,7 @@
 import { resolveCapabilities } from '@jsvision/core';
 import type { CapabilityProfile, Theme, Logger, Keymap, RuntimeAdapter } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
+import { CLEARED_LAYOUT } from '../layout/index.js';
 import { Group } from '../view/index.js';
 import { col } from '../view/dsl/index.js';
 import type { View } from '../view/index.js';
@@ -332,16 +333,7 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
   // Every other prop is reset explicitly, not merely left unset: a caller's own layout on the content
   // view is intentionally discarded, so the shell governs the body's sizing no matter what the caller
   // set. An explicit `undefined` clears a prop back to its layout default.
-  body.setLayout({
-    size: { kind: 'fr', weight: 1 },
-    direction: undefined,
-    justify: undefined,
-    align: undefined,
-    gap: undefined,
-    padding: undefined,
-    position: undefined,
-    rect: undefined,
-  });
+  body.setLayout({ ...CLEARED_LAYOUT, size: { kind: 'fr', weight: 1 } });
 
   // The full-screen overlay popups mount into. It sits on top and stays hidden (so it neither paints
   // nor intercepts clicks) until a popup is added.

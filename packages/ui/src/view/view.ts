@@ -68,9 +68,10 @@ export abstract class View {
   /**
    * Layout props for this view (direction, size, padding, absolute placement, …) — **read-only**.
    *
-   * Change them with {@link setLayout}, which is the only writer. Both the field and its props are
-   * closed, so neither `view.layout = {…}` nor `view.layout.rect = {…}` compiles. That is deliberate:
-   * a wholesale assignment silently drops every prop it omits and never reflows, and an in-place prop
+   * Change them with {@link setLayout}, which is the only writer. The field and every prop on it are
+   * closed, so neither `view.layout = {…}` nor `view.layout.rect = {…}` compiles, and neither does
+   * editing a solved rect a field at a time (`view.layout.rect.x = 5`). That is deliberate: a
+   * wholesale assignment silently drops every prop it omits and never reflows, and an in-place prop
    * write reflows only if you remember to ask.
    *
    * Read it freely — this is where a view's solved intent lives, and `layout.rect` is how an
@@ -256,9 +257,9 @@ export abstract class View {
     // Shallow on purpose: `size` is a discriminated union, so a deep merge would carry the previous
     // variant's fields into the new one and produce a token that matches no branch cleanly.
     //
-    // In place rather than by replacement, so the object survives the write. The layout pass hands
-    // `layout` straight into the box it solves, and callers stash it too; replacing it would leave
-    // every one of them holding a detached snapshot of the props as they were.
+    // In place rather than by replacement: the field is read-only, so it cannot be reassigned without
+    // a cast, and identity-preservation is the documented contract — anything holding the object goes
+    // on seeing current props rather than a snapshot frozen at the moment it took the reference.
     Object.assign(this.layout, patch);
     this.invalidateLayout();
   }

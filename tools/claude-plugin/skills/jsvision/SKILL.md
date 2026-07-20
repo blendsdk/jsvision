@@ -40,7 +40,7 @@ import { createApplication, Window, col, fixed, Text } from '@jsvision/ui';
 
 const app = createApplication({});
 const win = new Window('Hello');
-win.layout.rect = { x: 2, y: 2, width: 30, height: 6 }; // window frame placement — a sanctioned rect
+win.setLayout({ rect: { x: 2, y: 2, width: 30, height: 6 } }); // window frame placement — a sanctioned rect
 // Compose the interior with the layout DSL, not absolute rects.
 win.add(
   col({ gap: 1 }, fixed(new Text('Hello, jsvision!'), 1), fixed(new Text('Edit and rebuild to grow this app.'), 1)),

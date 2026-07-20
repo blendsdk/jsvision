@@ -55,6 +55,8 @@ export function applyResize(g: Extract<Gesture, { kind: 'resize' }>, local: Poin
   const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
   g.target.setLayout({ rect: { x: rect.x, y: rect.y, width, height } });
   g.target.onResized(); // re-pin the window's children to the new size before the repaint reads them
+  // Not redundant with `setLayout`'s own reflow request: that one fires before `onResized()`
+  // re-pins, so this is the one that schedules a pass seeing the re-pinned children.
   g.target.invalidateLayout();
 }
 
@@ -73,5 +75,7 @@ export function applyResizeLeft(g: Extract<Gesture, { kind: 'resize-left' }>, lo
   const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
   g.target.setLayout({ rect: { x, y: g.originY, width, height } });
   g.target.onResized(); // re-pin the window's children to the new size before the repaint reads them
+  // Not redundant with `setLayout`'s own reflow request: that one fires before `onResized()`
+  // re-pins, so this is the one that schedules a pass seeing the re-pinned children.
   g.target.invalidateLayout();
 }
