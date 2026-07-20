@@ -10,6 +10,7 @@ import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { Group } from '../src/view/index.js';
 import { createApplication } from '../src/app/index.js';
+import type { DesktopApplication } from '../src/app/index.js';
 import type { ApplicationOptions } from '../src/app/index.js';
 import { FakeRuntimeAdapter, CaptureStream, FakeInput } from './app-shell.fixtures.js';
 
@@ -46,7 +47,7 @@ function appWith(
 }
 
 /** The overlay (absolute child) of an app's mounted root. */
-function overlayOf(app: ReturnType<typeof createApplication>): Group {
+function overlayOf(app: DesktopApplication): Group {
   const root = app.desktop.parent as Group;
   return root.children.find((c) => c.layout.position === 'absolute') as Group;
 }

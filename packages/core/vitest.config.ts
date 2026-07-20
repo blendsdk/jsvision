@@ -34,7 +34,6 @@ export default defineConfig({
           // Vitest 4: pool options are top-level. Single fork, no file
           // parallelism — the signal/restore e2e must not interleave.
           pool: 'forks',
-          singleFork: true,
           fileParallelism: false,
           testTimeout: 30_000,
         },

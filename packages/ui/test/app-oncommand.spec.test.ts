@@ -24,7 +24,7 @@ const caps = resolveCapabilities({
   override: { colorDepth: 'truecolor', altScreen: true },
 }).profile;
 
-// `DesktopApplication` (not `ReturnType<typeof createApplication>`) so `app.loop` resolves as a
+// `DesktopApplication` (not `DesktopApplication`) so `app.loop` resolves as a
 // concrete `EventLoop` here: this test never passes `content`, so the app is always desktop-bodied,
 // and a deferred `CreatedApplication<O>` return type otherwise blocks generic calls like
 // `execView<string>` below.

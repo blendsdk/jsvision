@@ -30,6 +30,7 @@ import {
   type DispatchEvent,
   type DrawContext,
 } from '@jsvision/ui';
+import type { DesktopApplication } from '@jsvision/ui';
 import type { CapabilityProfile } from '@jsvision/core';
 import { EditableDataGrid, gridKeymap, installGridNavigation, type NavGrid } from '@jsvision/datagrid';
 import { StoryWindow, CommandSink } from './window.js';
@@ -186,7 +187,7 @@ function collectGrids(view: View): NavGrid[] {
 /** The composed showcase: the app + a `run()` that drives it to the `quit` command. */
 export interface Showcase {
   /** The composed application (loop + desktop + chrome). */
-  readonly app: ReturnType<typeof createApplication>;
+  readonly app: DesktopApplication;
   /** Run the showcase until `quit`; resolves the exit code. */
   run(): Promise<number>;
   /**

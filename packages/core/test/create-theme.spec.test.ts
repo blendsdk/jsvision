@@ -98,12 +98,10 @@ test('ST-10: an accent override re-drives accent-derived roles', () => {
 
 test('ST-10: a roleOverride changes only the targeted key', () => {
   const base = createTheme({ mode: 'dark', accent: '#3b82f6' });
-  // roleOverrides.desktop is typed as a full role (fg/bg required), not a per-field patch —
-  // spread the base role so only `pattern` actually changes, matching the intended surgical override.
   const tweaked = createTheme({
     mode: 'dark',
     accent: '#3b82f6',
-    roleOverrides: { desktop: { ...base.desktop, pattern: '▒' } },
+    roleOverrides: { desktop: { pattern: '▒' } },
   });
   expect(tweaked.desktop.pattern, 'pattern overridden').toBe('▒');
   expect(base.desktop.pattern, 'base pattern differs').not.toBe('▒');

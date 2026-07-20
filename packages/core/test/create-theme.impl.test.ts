@@ -28,12 +28,10 @@ test('an alias override re-drives every role using that alias', () => {
 
 test('a roleOverride merges fields rather than replacing the whole role', () => {
   const base = createTheme({ mode: 'dark', accent: '#3b82f6' });
-  // roleOverrides.window is typed as a full role (fg/bg required), not a per-field patch — spread
-  // the base role so only `border` actually changes, matching the intended surgical override.
   const tweaked = createTheme({
     mode: 'dark',
     accent: '#3b82f6',
-    roleOverrides: { window: { ...base.window, border: '#abcdef' } },
+    roleOverrides: { window: { border: '#abcdef' } },
   });
   expect(tweaked.window.border, 'border patched').toBe('#abcdef');
   expect(tweaked.window.fg, 'window.fg preserved').toBe(base.window.fg);

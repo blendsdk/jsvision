@@ -18,7 +18,7 @@
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { createApplication, Button, Commands, wrapText } from '@jsvision/ui';
-// `DesktopApplication`, not `ReturnType<typeof createApplication>`: the latter is a deferred
+// `DesktopApplication`, not `DesktopApplication`: the latter is a deferred
 // conditional type that resolves to `any` here, which silently switches off checking for every
 // helper below. These tests never pass `content`, so the app is always desktop-bodied.
 import type { DesktopApplication } from '@jsvision/ui';

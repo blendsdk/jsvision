@@ -41,6 +41,20 @@ const EXEMPT: Record<string, string> = {
   'spike-data-studio': 'inert spike — carries no typecheck script',
 };
 
+/**
+ * Individual test files a package's typecheck config may leave out, and why.
+ *
+ * Kept here rather than trusted from each config, so that dropping a file out of the compiler is a
+ * change to this oracle — visible in review — instead of a one-line edit nobody reads. Paths are
+ * package-relative.
+ */
+const ALLOWED_UNCHECKED: Record<string, readonly string[]> = {
+  // Both import a `.ts` helper from the sibling core package by workspace-relative path. That
+  // resolves at run time under vitest, but a cross-package source file falls outside this package's
+  // rootDir, which tsc rejects outright. They stay covered by vitest.
+  datagrid: ['test/golden-screen.spec.test.ts', 'test/a11y-golden.spec.test.ts'],
+};
+
 /** Compare paths the way the compiler reports them: absolute, forward slashes. */
 function norm(p: string): string {
   return resolve(p).split(sep).join('/');
@@ -58,7 +72,9 @@ function typecheckConfigOf(pkgDir: string): string | undefined {
   if (!existsSync(pkgJson)) return undefined;
   const script = (JSON.parse(readFileSync(pkgJson, 'utf8')) as { scripts?: Record<string, string> }).scripts?.typecheck;
   if (script === undefined) return undefined;
-  const explicit = /-p\s+(\S+)/.exec(script);
+  // Both spellings tsc accepts — matching only `-p` would silently fall back to `tsconfig.json` and
+  // report coverage for a config that is never compiled.
+  const explicit = /(?:-p|--project)[\s=]+(\S+)/.exec(script);
   return join(pkgDir, explicit ? explicit[1]! : 'tsconfig.json');
 }
 
@@ -131,20 +147,27 @@ test('ST-2: a type error in a previously-unchecked demo entry fails the typechec
 
 // ST-3 — tests are typechecked repo-wide. `readonly` and every other type-only contract
 // is erased at runtime, so a test directory the compiler never sees enforces nothing.
-test('ST-3: every package with a typecheck script and a test/ directory typechecks it', () => {
+//
+// Every test file must be in the program, not merely one of them: a config that dropped all but a
+// single file would satisfy "the directory is covered" while leaving the rest unchecked.
+test('ST-3: every package with a typecheck script typechecks every file in its test/ directory', () => {
   const uncovered: string[] = [];
   for (const name of readdirSync(PACKAGES)) {
     const pkgDir = join(PACKAGES, name);
     const testDir = join(pkgDir, 'test');
     const config = typecheckConfigOf(pkgDir);
-    if (config === undefined || !existsSync(testDir)) {
-      // A package without both is out of scope, but only deliberately so.
-      if (config === undefined && !existsSync(testDir))
-        expect(EXEMPT[name], `${name} is unexpectedly exempt`).toBeDefined();
+    if (!existsSync(testDir)) continue; // nothing to cover
+    if (config === undefined) {
+      // A package can only opt out of the gate by being named here — otherwise deleting a typecheck
+      // script would silently un-gate the whole package, the exact hole this test exists to close.
+      expect(EXEMPT[name], `${name} has tests but no typecheck script, and is not a named exemption`).toBeDefined();
       continue;
     }
-    const prefix = `${norm(testDir)}/`;
-    if (!programFiles(config).some((f) => f.startsWith(prefix))) uncovered.push(name);
+    const inProgram = new Set(programFiles(config));
+    const allowed = new Set((ALLOWED_UNCHECKED[name] ?? []).map((rel) => norm(join(pkgDir, rel))));
+    for (const file of tsFilesUnder(testDir)) {
+      if (!inProgram.has(file) && !allowed.has(file)) uncovered.push(relative(REPO_ROOT, file));
+    }
   }
   expect(uncovered).toEqual([]);
 });

@@ -3,7 +3,7 @@
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
 > **Last Updated**: 2026-07-20 (Phase 1 complete)
-> **Progress**: 13/54 tasks (24%)
+> **Progress**: 14/55 tasks (25%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -44,6 +44,8 @@
 - [x] 1.3.6 Cross-package test imports that cannot resolve: follow datagrid's documented `exclude` precedent, with a comment saying why — *done 2026-07-20*: **none arose**. No package outside datagrid needed a new exclusion
 - [x] 1.3.7 Re-evaluate datagrid's three existing exclusions now that `core/test` is typechecked — their in-file rationale ("core never typechecks its `test/`") no longer holds. Fix with the `.d.mts` seam where possible; update the comment either way — *done 2026-07-20*: one of the three is retired. `perf-grid-bench.spec` is back in the program because `frame-bench.d.mts` removed its only objection. The other two import a `.ts` helper from `core/test` by workspace-relative path, which is a genuine cross-package `rootDir` violation (`TS6059`) rather than a missing declaration; the comment now says exactly that
 
+- [x] 1.3.8 *(added by the Phase 1 quality review)* Retire `ReturnType<typeof createApplication>` in favour of the concrete `DesktopApplication` across 14 files — *done 2026-07-20*. It is a **deferred conditional type that resolves to `any`**, so every helper annotated with it, and everything reached through it, was unchecked while looking checked. A read as load-bearing as `app.desktop.layout.size` (`ui/test/app-shell.lifecycle.spec.test.ts:86`) was invisible. No `.layout =` write was hiding behind it, so the Phase 2 inventory stands — but the instrument Phase 2 drives from now actually sees these files. The precedent was already recorded in `ui/test/app-oncommand.spec.test.ts`
+
 ### Step 1.4 — The latent defects
 
 - [x] 1.4.1 **One verdict each** — 4× `TS2722` + `TS2554` + `TS2345` + 2× `TS2740` in `examples/test`, 4× `TS2322` + `TS2739` in `forms/test`, `TS2345` at `docs-site/test/demo-shell.spec.test.ts:82`, `TS2322` at `docs-site/test/example-at.spec.test.ts:84`. Record *fixture wrong* or *assertion weaker than it reads*; no blanket non-null assertions — *done 2026-07-20*. Verdicts:
@@ -66,6 +68,21 @@
 - [x] 1.5.3 Full verify — *done 2026-07-20*: `yarn verify` green, 30/30 turbo tasks plus `check-plugin`. `yarn lint:fix` reformatted 5 files, committed with it
 
 **Verify**: `yarn verify`
+
+### Phase 1 quality review
+
+Six findings; all resolved.
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| RV-001 | 🔴 | Clearing a type error made three theme oracles tautological — `create-theme.impl.test.ts` is named *"merges fields rather than replacing the whole role"* and proved nothing | **The type was the defect.** `roleOverrides?: Partial<Theme>` made each role optional but every field required, contradicting its own JSDoc and `applyRoleOverrides`. Widened to a per-field `RoleOverrides`; all three tests restored to real partial patches and **mutation-tested** — replacing the merge with an assignment fails both named oracles |
+| RV-002 | 🟠 | ST-3 passed if *one* file under `test/` was in the program; a package with tests but no typecheck script slipped through unexempted; the script regex missed `--project` | All three closed. Coverage is now per file against a commented per-package allowlist, and mutation-tested by excluding a single file |
+| RV-003 | 🟡 | The kitchen-sink canvas rect became a build-time snapshot, so a story opened after a zoom would be sized for the pre-zoom box | Restored to a live read behind an accessor that throws when the rect is absent |
+| RV-004 | 🟡 | `singleFork` was retired in one vitest config and left dead in seven | Dropped in all seven; `fileParallelism: false` is what serializes those projects |
+| RV-005 | 🟡 | `multiclick.consumers.spec` now recomputes the row list instead of reading the widget's own | **Accepted, not fixed** — the honest fix is a new public read on `Tree`, which is API surface this phase has no mandate to add. Equivalent today; recorded so it is not mistaken for coverage |
+| RV-006 | 🟡 | Two declared types in `plugin-sync.d.mts` carried each other's doc comment | Swapped |
+
+> **Known flake, pre-existing:** `ui/test/editor-perf.spec.test.ts` ST-35 asserts a 16 ms wall-clock ceiling and fails intermittently when turbo runs packages in parallel on a loaded machine. It passes standalone and under `yarn verify --concurrency=1`, and it failed the same way before this phase. Not introduced here.
 
 ---
 
