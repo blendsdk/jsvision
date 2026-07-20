@@ -19,16 +19,10 @@ import {
   Window,
   signal,
   range,
-  View,
+  at,
 } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
-
-/** Absolutely place a view within its parent's interior. */
-function at<V extends View>(view: V, x: number, y: number, width: number, height: number): V {
-  view.layout = { position: 'absolute', rect: { x, y, width, height } };
-  return view;
-}
 
 export default defineExample({
   title: 'Form dialog',

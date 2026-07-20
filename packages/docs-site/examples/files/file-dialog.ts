@@ -8,15 +8,9 @@
  */
 import { openFile } from '@jsvision/files';
 import { createBrowserFileSystem, type FileTree } from '@jsvision/web';
-import { Button, Text, Window, View } from '@jsvision/ui';
+import { Button, Text, Window, at } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
-
-/** Absolutely place a view within its parent's interior. */
-function at<V extends View>(view: V, x: number, y: number, width: number, height: number): V {
-  view.layout = { position: 'absolute', rect: { x, y, width, height } };
-  return view;
-}
 
 /** The home directory the dialog opens at. */
 export const HOME = '/home/demo';

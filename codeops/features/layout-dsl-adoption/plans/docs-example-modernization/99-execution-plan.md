@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-20 18:20
-> **Progress**: 32/41 tasks (78%) — Phases 1-2 complete · Phase 3 audit cleared (0 blockers)
+> **Last Updated**: 2026-07-20 18:55
+> **Progress**: 38/41 tasks (93%) — Phases 1-3 complete
 > **CodeOps Skills Version**: 3.11.0
 
 ## Overview
@@ -178,24 +178,24 @@ is one reviewable change; counts in parentheses are lines, and they sum to 53.
 **Reference**: [07](07-testing-strategy.md) ST-9…ST-11
 **Objective**: Pin the builder's contract from a docs-site surface.
 
-- [ ] 3.2.1 [spec-author] Write ST-9…ST-11 — `packages/docs-site/test/example-at.spec.test.ts`. **These are green before and after**; they are a standing contract, not a red-to-green transition. The retirement's evidence is the audit table plus the unedited regression net
+- [x] ✅ (completed: 2026-07-20 18:55) 3.2.1 [spec-author] Write ST-9…ST-11 — `packages/docs-site/test/example-at.spec.test.ts`. **These are green before and after**; they are a standing contract, not a red-to-green transition. The retirement's evidence is the audit table plus the unedited regression net
 
 ### Step 3.3: Convert
 
 **Reference**: [03-03](03-03-docs-site-shadow-retirement.md) §Proposed changes, §FR-8
 **Objective**: FR-7, FR-8.
 
-- [ ] 3.3.1 Delete all seven local `at()` helpers; add `at` to **six** files' `@jsvision/ui` import; drop the now-unused `View` type import where the helper was its only consumer. **Do not add `at` to `list-box.ts`** — 3.3.2 removes all three of its `at()` calls in the very next task, so the import would be dead on arrival and fail lint + success criterion 4. 38 call sites before; **35 after**
-- [ ] 3.3.2 `examples/containers/list-box.ts` → `cover(col(grow(list), spacer({ fixed: 1 }), fixed(echo, 1)))`; import `cover`/`col`/`grow`/`fixed`/`spacer` from `@jsvision/ui`. Delete the now-dead `WIDTH`/`HEIGHT` consts. Two non-optional details: the **`cover()`** (a `col()` container with no extent collapses to nothing) and **`spacer({ fixed: 1 })`, never `spacer(1)`** — `view/dsl/flex.ts:219-225` reads a numeric argument as a flex **weight**, so `spacer(1)` would hand the gap a 1fr share and eat half the column
+- [x] ✅ (completed: 2026-07-20 18:55) 3.3.1 Delete all seven local `at()` helpers; add `at` to **six** files' `@jsvision/ui` import; drop the now-unused `View` type import where the helper was its only consumer. **Do not add `at` to `list-box.ts`** — 3.3.2 removes all three of its `at()` calls in the very next task, so the import would be dead on arrival and fail lint + success criterion 4. 38 call sites before; **35 after**
+- [x] ✅ (completed: 2026-07-20 18:55) 3.3.2 `examples/containers/list-box.ts` → `cover(col(grow(list), spacer({ fixed: 1 }), fixed(echo, 1)))`; import `cover`/`col`/`grow`/`fixed`/`spacer` from `@jsvision/ui`. Delete the now-dead `WIDTH`/`HEIGHT` consts. Two non-optional details: the **`cover()`** (a `col()` container with no extent collapses to nothing) and **`spacer({ fixed: 1 })`, never `spacer(1)`** — `view/dsl/flex.ts:219-225` reads a numeric argument as a flex **weight**, so `spacer(1)` would hand the gap a 1fr share and eat half the column
 
 ### Step 3.4: Accept
 
 **Reference**: [01](01-requirements.md) AC-4, AC-7 · [07](07-testing-strategy.md) §End-to-end
 **Objective**: Prove parity.
 
-- [ ] 3.4.1 **The primary control** — re-render all seven after a build and diff against 3.1.1's baselines. Byte-identical for six; `list-box.ts` changes **substantially** by design (`cover()` takes it from a pinned 40×12 box to the full viewport), and its diff is reviewed and recorded, not required to be empty. This is the real witness for FR-7/FR-8: four of the seven existing docs-site suites never build an example at all, so `paint-smoke` is a liveness backstop and nothing else catches a merge-preserved `padding` shifting a child by a cell
-- [ ] 3.4.2 AC-4 grep reaches 0; AC-7 confirms no pre-existing `packages/docs-site/test/` file appears in `git diff --name-only`
-- [ ] 3.4.3 Full verify
+- [x] ✅ (completed: 2026-07-20 18:55) 3.4.1 **The primary control** — re-render all seven after a build and diff against 3.1.1's baselines. Byte-identical for six; `list-box.ts` changes **substantially** by design (`cover()` takes it from a pinned 40×12 box to the full viewport), and its diff is reviewed and recorded, not required to be empty. This is the real witness for FR-7/FR-8: four of the seven existing docs-site suites never build an example at all, so `paint-smoke` is a liveness backstop and nothing else catches a merge-preserved `padding` shifting a child by a cell
+- [x] ✅ (completed: 2026-07-20 18:55) 3.4.2 AC-4 grep reaches 0; AC-7 confirms no pre-existing `packages/docs-site/test/` file appears in `git diff --name-only`
+- [x] ✅ (completed: 2026-07-20 18:55) 3.4.3 Full verify
 
 **Deliverables**: audit table filled · 7 shadows gone · render parity recorded
 **Verify**: `yarn verify`
