@@ -70,17 +70,59 @@ event handler, a reactive effect, or any code path that runs after the story is 
 
 | # | Query | Call sites surfaced | Site (`file:line`) | Prior layout state | Verdict |
 |---|---|---|---|---|---|
-| A1 | Prior `.layout =` / `.setLayout(…)` on the argument | _(fill)_ | | | ✅ / ⛔ |
-| A2 | `override layout` field initializer in the argument's class | _(fill)_ | | | ✅ / ⛔ |
-| A3 | Argument also passes through another DSL tagger | _(fill)_ | | | ✅ / ⛔ |
-| A4 | Argument is a `col(...)` / `row(...)` result (carries `direction`) | _(fill)_ | | | ✅ / ⛔ |
-| B1 | `at()` reachable after mount (handler / effect / callback) | _(fill)_ | | | ✅ / ⛔ |
+| A1 | Prior `.layout =` / `.setLayout(…)` on the argument | **1** | `kitchen-sink/stories/layout.story.ts:31` → placed `:35` | `{ direction:'row', gap:1, align:'stretch' }` | ⛔ → **accepted fix** (see below) |
+| A2 | `override layout` field initializer in the argument's class | **0** | — (`tabs.story.ts:61` investigated and cleared) | — | ✅ |
+| A3 | Argument also passes through another DSL tagger | **0** | — | — | ✅ |
+| A4 | Argument is a `col(...)` / `row(...)` result (carries `direction`) | **0** | — | — | ✅ |
+| B1 | `at()` reachable after mount (handler / effect / callback) | **0** | — | — | ✅ |
 
-**Totals:** _(fill)_ ✅ convertible · _(fill)_ ⛔ needs handling.
+**A2's near-miss, recorded so it is not re-investigated.** A grep attributed the `override layout`
+at `packages/ui/src/tabs/tab-view.ts:138` (`direction:'col'`, `size: fr 1`,
+`padding:{top:0,left:1,right:1,bottom:1}`) to `TabView`, making `tabs.story.ts:61` look like a
+padding-preservation hazard. It belongs to the internal **`TabBody`** class declared at `:136`;
+`TabView` itself starts at `:208` and declares no layout. `TabBody` is never passed to `at()`.
+Confirmed by dumping the merged props: the `TabView` at that site ends up with
+`{position:'absolute', rect}` and nothing else.
+
+**Which preserved props can even matter.** Under `position:'absolute'` the solver drops the child
+from flex flow and places it by `rect` alone (`packages/ui/src/layout/layout.ts:94`), so a preserved
+`size` is inert. A preserved `direction` of `'row'` is the engine default. The genuinely load-bearing
+one is **`padding`**, which insets the content-box origin for the view's own children
+(`layout.ts:137-147`) — which is why the audit hunted padding-carrying arguments specifically.
+
+**Totals: 410 ✅ convertible · 1 ⛔ handled.**
 
 A ⛔ row is resolved one of three ways, in order of preference: (i) the site is left with an explicit
 field write and a comment explaining why, (ii) the divergence is neutralised before the swap, or
 (iii) the resulting diff is accepted and recorded as a deliberate fix. Never absorbed silently.
+
+### The one ⛔ and its ruling — resolution (iii), accepted fix
+
+`layout.story.ts:31` sets `{ direction:'row', gap:1, align:'stretch' }` on a `Group`, and `:35`
+places that Group with `at()`. The retired shadow **replaced** the whole object, so the story's own
+`gap: 1` never reached the engine; the builder merges, so it now does.
+
+```
+- fixed 16        fr 1              fr 2      before: the declared gap:1 is silently dropped
++ fixed 16         fr 1              fr 2     after:  one cell of gap, as written
+```
+
+Accepted as a deliberate fix rather than neutralised. This is the `foundations/layout` story, whose
+stated job is teaching the flex engine and whose own caption advertises `gap` as a supported prop —
+it was demonstrating the feature while not rendering it. One space, one line, one story. The
+kitchen-sink smoke suite asserts only that a story paints, so nothing else moves.
+
+### Measured blast radius of the whole swap
+
+Not inferred — rendered. Every story in both showcases was built, mounted and serialized before and
+after the swap, at two viewport sizes:
+
+| Showcase | Renders compared | Differing |
+|---|---|---|
+| kitchen-sink (49 stories × 72×16 and 100×30) | 98 | **1** (`foundations/layout`, above) |
+| datagrid-showcase (68 stories × both sizes) | 136 | **0** |
+
+234 renders, zero build errors, one intended one-line change.
 
 ### The four local placers
 
