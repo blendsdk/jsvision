@@ -144,16 +144,18 @@ constraint accepts all of them. Confirm this in task 1.5.1's type-check sweep ra
 
 ### Shadows this component does NOT retire (AR-16)
 
-Three local `at`/`row` shadows survive elsewhere in the repo. They are named here so the phase's rule
+Five local `at`/`row` name shadows survive elsewhere in the repo. They are named here so the phase's rule
 reads honestly — **"no shadow survives in a file this plan touches"**, not "one `at()` in the repo":
 
 | Site | Shape | Why it is deferred |
 |---|---|---|
 | `theme-designer/src/view/gallery.ts:32` | `function at<T>(g, view, x, y, w, h)` — replaces `layout` **and** calls `g.add(view)` | Different signature: retiring it rewrites every call site to `g.add(at(v, …))`. A conversion, not a re-export |
 | `theme-designer/src/view/inspector-panel.ts:55` | Same shape | Same — and `host/walkthrough.ts` does not render the inspector, so there is no headless zero-diff vehicle for it today |
-| `examples/keyboard-mouse-playground/main.ts:126` | `const row = (y, label, value): void => …` | A `row` name shadow in an FR-4 keep-absolute demo, outside every file this plan opens |
+| `examples/keyboard-mouse-playground/main.ts:126` | `const row = (y, label, value): void => …` | A `row` name shadow in a keep-absolute demo, outside every file this plan opens |
+| `examples/amiga-clock/analog-clock.ts:70` | `const at = (frac, rad, str, style): void => …` | A polar-plot helper sharing the `at` name only; the file is keep-absolute by policy |
+| `examples/kitchen-sink/stories/layout.story.ts:30` | `const row = new Group()` | A variable rather than a helper, but it would collide with the DSL `row` if this story ever imports it |
 
-All three go on the follow-up issue filed in task 2.1.2.
+All five go on the follow-up issue filed in task 2.1.2, alongside the grep false positives (a placement-*mode* selector, a `Placed[]` data array, several `const row = …` data variables) recorded as cleared.
 
 ### Integration Points
 

@@ -29,12 +29,20 @@
   RD-01 AC-8 attaches a manual showcase quality pass to every converted story. [AR-1, AR-2]
 - **`.layout.rect =` window placement** (~20 sites) — already RD-01 **FR-4** keep-absolute. [AR-3]
 - **`@jsvision/docs-site`** — belongs to GH #112. [AR-5]
-- **The three surviving local `at()` / `row` shadows outside this plan's touched set** —
-  `theme-designer/src/view/gallery.ts:32`, `theme-designer/src/view/inspector-panel.ts:55` (both
-  `at(g, view, x, y, w, h)`, a different signature that also adds to the group), and
-  `examples/keyboard-mouse-playground/main.ts:126` (`row`). Retiring them is a real conversion, not a
-  re-export, and the theme-designer pair sits in a package whose only headless proof vehicle does not
-  render them. Named on the follow-up issue rather than silently ignored. [AR-16]
+- **The five surviving local `at()` / `row` name shadows outside this plan's touched set** —
+  `theme-designer/src/view/gallery.ts:32` and `.../inspector-panel.ts:55` (both `at(g, view, x, y, w, h)`,
+  a different signature that also adds to the group), `examples/keyboard-mouse-playground/main.ts:126`
+  (`row`), `examples/amiga-clock/analog-clock.ts:70` (`at`, a polar-plot helper), and
+  `examples/kitchen-sink/stories/layout.story.ts:30` (`const row = new Group()` — a variable, not a
+  helper). Retiring the theme-designer pair is a real conversion rather than a re-export, and that
+  package's only headless vehicle does not render the inspector. All five are on the follow-up issue
+  rather than silently ignored. [AR-16]
+
+  *Count corrected at close-out:* the register originally said three. The acceptance grep surfaced
+  `amiga-clock` and `layout.story` as well; both are genuine name shadows and were added. The same
+  grep's other hits are false positives (a placement-*mode* selector, a `Placed[]` data array, several
+  `const row = …` data variables, and `placeholders.ts` sharing a prefix) and are recorded as cleared
+  on the issue so they are not re-flagged.
 
 ## Plan-local decisions
 
@@ -61,7 +69,8 @@ Plan-local only — RD-01 and RD-02 own their own criteria.
        neutralised before conversion. (AR-6)
 3. [ ] `grep -rn "function place\|const place\|function placed\|function at\|const at = \|const row = " packages/examples --include=*.ts`
        returns no absolute-placement or field-row helper in a file this plan touches, and every
-       remaining hit is one of the three deferred shadows named on the follow-up issue.
+       remaining hit is one of the five deferred shadows named on the follow-up issue, or one of the
+       false positives cleared there.
        (AR-6, AR-13, AR-16)
 4. [ ] Each of the four touched demos (`wizard-demo`, `themes-demo`, `tabs-demo`, plus the
        kitchen-sink `wizard` story) has a recorded before/after full-screen serialization that is a
@@ -72,7 +81,7 @@ Plan-local only — RD-01 and RD-02 own their own criteria.
        stronger form. (AR-7)
 6. [ ] Zero existing test files edited — `git diff --name-only` shows no `*.e2e.test.ts`,
        `*.smoke.spec.test.ts`, or `*.walkthrough.spec.test.ts` path. (AR-7)
-7. [ ] A follow-up issue exists covering the FR-6 maximal and the three deferred shadows, and is
+7. [ ] A follow-up issue exists covering the FR-6 maximal and the five deferred shadows, and is
        referenced from the #114 close-out comment. (AR-1, AR-16)
 8. [ ] `yarn verify` green; `yarn lint:fix` run before the PR-bound push. (AR-8, CLAUDE.md prime directive)
 9. [ ] No `codeops/`, `plans/`, `requirements/`, or `RD-`/`AR-`/`ST-` reference appears in any added

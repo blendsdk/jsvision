@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-20 13:54
-> **Progress**: 16/20 tasks (80%)
+> **Last Updated**: 2026-07-20 14:12
+> **Progress**: 18/20 tasks (90%)
 > **CodeOps Skills Version**: 3.10.0
 
 ## Overview
@@ -147,8 +147,8 @@ Reviewer + perf auditor dispatched in parallel on the phase diff (`a434912a..HEA
 **Reference**: [01 §Acceptance Criteria](01-requirements.md)
 **Objective**: Every acceptance criterion demonstrated; the register, roadmap, and issues reflect reality.
 
-- [ ] 2.1.1 Walk AC-1…AC-9 in [01](01-requirements.md), recording evidence for each. Includes the banned-reference grep over every added comment and the `git diff --name-only` check that no test file was edited
-- [ ] 2.1.2 File the follow-up issue covering the RD-01 FR-6 maximal (411 `at()` canvases across 84 story files) **and** the three deferred shadows named in [01](01-requirements.md) / AR-16 (`theme-designer` `gallery.ts:32`, `inspector-panel.ts:55`, `keyboard-mouse-playground/main.ts:126`)
+- [x] 2.1.1 Walk AC-1…AC-9 in [01](01-requirements.md), recording evidence for each. Includes the banned-reference grep over every added comment and the `git diff --name-only` check that no test file was edited ✅ (completed: 2026-07-20 14:12) — all nine evidenced. **AC-1** both files re-export, no shadow body, 0 type errors introduced (46 pre-existing before and after). **AC-2** table filled, 410 ✅ / 1 ⛔ ruled. **AC-3** no placer or field-row helper in any touched file; the remaining repo-wide grep hits triaged into 5 genuine deferred shadows + 6 false positives (a placement-*mode* selector, a `Placed[]` array, `const row = …` data vars, a `placeholders` prefix collision). **AC-4** four demos zero-diff over 528 rendered lines. **AC-5** audit complete + showcases zero-diff + smoke green and unedited. **AC-6** `git diff --name-status` shows only *added* test files. **AC-7** issue #129. **AC-8** `yarn verify` green, `lint:fix` run. **AC-9** banned-reference grep over the added diff: clean
+- [x] 2.1.2 File the follow-up issue covering the RD-01 FR-6 maximal (411 `at()` canvases across 84 story files) **and** the three deferred shadows named in [01](01-requirements.md) / AR-16 (`theme-designer` `gallery.ts:32`, `inspector-panel.ts:55`, `keyboard-mouse-playground/main.ts:126`) ✅ (completed: 2026-07-20 14:12) — **#129** — the FR-6 Tier-3 maximal + the five residual name shadows, with the cleared false positives and the 46-pre-existing-type-error warning recorded so the next agent does not re-derive them. Count corrected here: the register said three shadows, the acceptance grep found five
 - [ ] 2.1.3 `yarn lint:fix`; commit whatever it changes (CLAUDE.md prime directive — no PR-bound push before this)
 - [ ] 2.1.4 Re-sync the feature roadmap and cascade to the portfolio. The re-scope itself was already synced during preflight (this plan's row covers **#114 only**; #110/#111 now point at `canvas-flex-adoption` / PR #127) — this task advances #114 to done and re-checks both roadmap files after the PR is opened. Then comment and close **#114**, referencing the follow-up issue from 2.1.2 and correcting the stale `forms/src/form-dialog.ts:58` entry (AR-12). Open the PR against `feat/dsl-adoptation`
 
