@@ -3,7 +3,7 @@
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
 > **Last Updated**: 2026-07-20
-> **Progress**: 1/54 tasks (2%)
+> **Progress**: 2/54 tasks (4%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -26,7 +26,7 @@
 
 ### Step 1.2 — Shared seam first
 
-- [ ] 1.2.1 The `.mjs` seam: **11** hand-written `.d.mts` files (AR-5) — 8 reached from `examples`, plus `docs-site/src/api/{jsdoc-examples,inject-back-links,validate-api-map}.mjs`. Declare only the surface the tests consume. Expect the 14 `TS7016` **and** most of the 14 `TS7006` to fall together
+- [x] 1.2.1 The `.mjs` seam: **11** hand-written `.d.mts` files (AR-5) — 8 reached from `examples`, plus `docs-site/src/api/{jsdoc-examples,inject-back-links,validate-api-map}.mjs`. Declare only the surface the tests consume. Expect the 14 `TS7016` **and** most of the 14 `TS7006` to fall together — *done 2026-07-20*. **The true set is 13, not 11**: `scripts/gate.mjs` (imported by `core/test/gate.spec.test.ts`) and `packages/core/bench/frame-bench.mjs` (imported by `core/test/perf-budget.{spec,impl}` and `datagrid/test/perf-grid-bench.spec`) only surface once those test dirs are checked, and were not visible to the authoring spike. Each declares only the surface its tests consume. One residual, deferred to 1.3.1: `plugin-sync.spec.test.ts:160-172` builds its `draft` fake as an intermediate `const`, so the parameter gets no contextual type — that is a test-side fix, not a declaration gap
 
 ### Step 1.3 — Per package: turn it on **and** clear it in the same task
 
