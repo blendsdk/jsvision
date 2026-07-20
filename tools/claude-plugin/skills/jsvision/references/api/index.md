@@ -17,7 +17,7 @@ When you already know which widget you want, open its category page and copy the
 - [Date & color pickers](./date-color.md) — Calendars, date pickers, color swatches, and color pickers. (20 exports)
 - [Surfaces & terminal](./surfaces-terminal.md) — Offscreen surfaces and the scrollback terminal view. (8 exports)
 - [Text editing](./text-editing.md) — The multi-line `Editor`, `Memo`, and edit-window chrome. (27 exports)
-- [App shell](./app-shell.md) — Application, desktop, windows, menus, status line, and the event loop. (39 exports)
+- [App shell](./app-shell.md) — Application, desktop, windows, menus, status line, and the event loop. (40 exports)
 - [Core essentials](./core-essentials.md) — Capabilities, input, keymaps, and style re-exported from `@jsvision/core`. (23 exports)
 - [@jsvision/web — browser runtime](./web.md) — Mount an app in an xterm.js terminal; the in-memory browser file system. (17 exports)
 - [@jsvision/files — file dialogs & editor](./files.md) — File/dir dialogs, the file-system seam, and the openers. (34 exports)

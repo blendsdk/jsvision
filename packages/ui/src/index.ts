@@ -85,7 +85,7 @@ export type {
 // The application shell — the top-level pieces of a full-screen app: the
 // `Application` lifecycle, a `Desktop` window manager, `Window` chrome, a
 // `MenuBar`, and a `StatusLine`.
-export { createApplication } from './app/index.js';
+export { createApplication, syncOverlayVisible } from './app/index.js';
 export type {
   Application,
   ApplicationOptions,

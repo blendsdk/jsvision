@@ -273,10 +273,11 @@ function streamSize(stream: { columns?: number; rows?: number } | undefined): Si
  *
  * @param overlay The shared popup overlay group.
  * @example
- * import { Group } from '@jsvision/ui';
- * import { syncOverlayVisible } from '@jsvision/ui';
+ * import { Group, syncOverlayVisible } from '@jsvision/ui';
  *
  * const overlay = new Group();
+ * const myPopup = new Group();
+ *
  * overlay.add(myPopup);
  * syncOverlayVisible(overlay); // overlay becomes visible
  *

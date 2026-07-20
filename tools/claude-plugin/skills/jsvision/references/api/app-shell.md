@@ -459,6 +459,14 @@ Build a submenu node — a titled entry that opens a nested list of items (or fu
 subMenu(title: string, items: MenuItem[]): MenuItem
 ```
 
+## syncOverlayVisible
+
+Show the shared popup overlay while it hosts any popup, and hide it once empty.
+
+```ts
+syncOverlayVisible(overlay: Group): void
+```
+
 ## TitleLayout
 
 A top-level title's placement on the menu bar.

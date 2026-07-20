@@ -64,7 +64,7 @@ export interface TreeOptions<T> {
  * not the tree.
  *
  * @example
- * import { Group, Tree, createEventLoop, signal, at } from '@jsvision/ui';
+ * import { Group, Tree, createEventLoop, resolveCapabilities, signal, at } from '@jsvision/ui';
  * import type { TreeNode } from '@jsvision/ui';
  *
  * // A leaf is `children: []`.
@@ -85,7 +85,8 @@ export interface TreeOptions<T> {
  *
  * const root = new Group();
  * root.add(at(tree, 0, 0, 28, 10));
- * const loop = createEventLoop({ width: 28, height: 10 });
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const loop = createEventLoop({ width: 28, height: 10 }, { caps });
  * loop.mount(root);
  * loop.focusView(tree.rows); // focus the rows renderer, not the tree
  * tree.expandAll();
