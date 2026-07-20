@@ -2,8 +2,8 @@
 
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
-> **Last Updated**: 2026-07-21 (Phase 4 — roadmaps synced; the issue close-out awaits a merge decision)
-> **Progress**: 53/55 tasks (96%)
+> **Last Updated**: 2026-07-21 (**complete** — 55/55; the three issues close on the branch's merge to `develop`)
+> **Progress**: 55/55 tasks (100%) — plan complete
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -331,9 +331,9 @@ second time in this plan that `git checkout` on a dirty tree cost work.
 
 > **Routing**: trivial
 
-- [ ] 4.1.1 Close #132, #117, #129 with measured close-out comments; note #131 remains open as the uncoupled lane
+- [x] 4.1.1 Close #132, #117, #129 with measured close-out comments; note #131 remains open as the uncoupled lane — *done 2026-07-21*, with one deviation put to the maintainer and ruled on: the three issues are **commented, not closed**. The work is 78 commits ahead of `develop` and unmerged, and every prior plan in this epic closed its issues through a PR to `develop` (#96, #123, #125, #127, #130); closing them here would mark shipped what has not shipped — the exact drift a tracker audit already caught once in this epic. They close on the merge of the PR raised for this branch. #131 untouched: the `@example` allowlist drain is a separate lane and does not gate the epic
 - [x] 4.1.2 Roadmap sync + portfolio cascade; the epic #108 umbrella can close once #117 and #129 do — *done 2026-07-21*. Feature roadmap: #117 🔄 → ✅, new ✅ rows for #132 and #129, #108 ⬜ → 🔄 (**code-complete in-branch, closes on merge**), progress 11/12 → 12/12 in-branch. Portfolio `codeops/00-roadmap.md` re-rolled with the three-issue result. Stage is deliberately *not* ✅ on the epic: the work sits 78 commits ahead of `develop` and unmerged, and the roadmap should not read done for code that has not shipped
-- [ ] 4.1.3 `yarn lint:fix`, commit what it changes, final `yarn verify` (prime directive)
+- [x] 4.1.3 `yarn lint:fix`, commit what it changes, final `yarn verify` (prime directive) — *done 2026-07-21*. `yarn lint:fix` run before each PR-bound push and its changes committed; final `TURBO_CONCURRENCY=2 yarn verify` exit 0 (30/30), `check-plugin: PASS`
 
 **Verify**: `yarn verify`
 
