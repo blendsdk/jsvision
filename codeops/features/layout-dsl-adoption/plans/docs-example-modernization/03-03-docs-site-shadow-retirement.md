@@ -77,11 +77,35 @@ as it was repo-wide in #114. It is still queried rather than assumed.
 
 | # | Query | Sites surfaced | Site | Prior layout state | Verdict |
 |---|---|---|---|---|---|
-| A1 | Prior `.layout =` / `.setLayout(…)` on the argument | _(fill)_ | | | |
-| A2 | `override layout` field initializer in the argument's class | _(fill)_ | | | |
-| A3 | Argument also passes through another DSL tagger | _(fill)_ | | | |
-| A4 | Argument is a `col(...)` / `row(...)` result (carries `direction`) | _(fill)_ | | | |
-| B1 | `at()` reachable after mount (handler / effect / callback) | _(fill)_ | | | |
+| A1 | Prior `.layout =` / `.setLayout(…)` on the argument | **0** | — | — | ✅ |
+| A2 | `override layout` field initializer in the argument's class | **1** | `containers/list-box.ts:60` — `at(list, …)`, `ListBox` → `ListView` (`list-view.ts:83`) | `{ direction: 'row' }` | ✅ inert |
+| A3 | Argument also passes through another DSL tagger | **0** | — | — | ✅ |
+| A4 | Argument is a `col(...)` / `row(...)` result (carries `direction`) | **0** | — | — | ✅ |
+| B1 | `at()` reachable after mount (handler / effect / callback) | **6** | `controls/form-dialog.ts:50-55`, inside `openTheDialog()` | fresh, unadded views (`host === null`) | ✅ inert |
+
+**Audit evidence (run before any conversion; all 38 pre-conversion call sites enumerated).**
+
+- **A1 — clean.** The only `.layout =` writes in the seven files are the seven shadow bodies
+  themselves. `controls/form-dialog.ts:67` writes `stage.layout.rect`, but `stage` is a receiver
+  (`stage.add(at(…))`), never an `at()` argument.
+- **A2 — one hit, inert.** `ListView` declares `{ direction: 'row' }`; the shadow discards it and the
+  builder keeps it. The preserved value **equals the engine default** —
+  `normalizeProps` resolves `props.direction ?? 'row'` (`layout/types.ts:213`) — so solver output is
+  identical either way. *(This required checking: `mainOf`/`crossOf` compare `=== 'row'`, which would
+  make `undefined` behave as `col`, but every consumer goes through `normalizeProps` first.)* The
+  site is removed by the `list-box.ts` rewrite regardless.
+- **B1 — six hits, inert.** `openTheDialog()` is reachable post-mount via
+  `app.onCommand('demo.openDialog', …)`. It is still inert because `at()` runs on a **freshly
+  constructed view before `dlg.add(…)` attaches it**, so `host` is `null` and
+  `invalidateLayout()` → `this.host?.markRelayout()` (`view/view.ts:215-217`) is a no-op. Delta B
+  would only bite if a site re-tagged an already-mounted view; none does.
+- **No padding-carrying argument exists.** The only classes whose `override layout` carries
+  `padding` are `Window` (`window/window.ts:81`) and the dropdown popup host
+  (`dropdown/popup.ts:125`). `Window` appears in two examples as `stage` — always the receiver,
+  never the argument. The remaining argument classes (`Group`, `Button`, `Text`, `Label`, `Input`,
+  `CheckGroup`, `RadioGroup`, `ListBox`, `DataGrid`) declare no `padding`.
+
+**Result: 7 surfaced sites, 7 ✅, 0 ⛔ — the conversion is cleared to proceed.**
 
 **Which preserved props can even matter.** Under `position:'absolute'` the solver drops the child
 from flex flow and places it by `rect` alone (`packages/ui/src/layout/layout.ts:94`), so a preserved
