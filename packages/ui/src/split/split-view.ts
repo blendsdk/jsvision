@@ -141,8 +141,8 @@ export class SplitView extends Group implements SplitOwner {
     // Seeded before the splitters are built — each Splitter reads this.owner.grabMark() and binds it.
     this.grabMark = signal(opts.grabMark ?? true);
 
-    // The inner track carries the real layout. It exists so a caller assigning `split.layout` (a whole
-    // object write) can never clobber the container's own direction — the TabView precedent.
+    // The inner track carries the real layout, so a caller re-sizing or re-placing the SplitView
+    // itself can never disturb the container's own direction — the TabView precedent.
     this.track = new Group();
     this.track.setLayout({ position: 'fill', direction: this.direction, gap: 0 });
 
@@ -182,8 +182,8 @@ export class SplitView extends Group implements SplitOwner {
   private applyWeights(w: number[]): void {
     const fitted = fitToPaneCount(w, this.panes.length);
     if (fitted.length !== w.length) this.sizes.set(fitted);
-    // `grow` re-writes the pane's fr size (weight + min), merging over its other layout props — the
-    // same plain `.layout` set as before, just additive rather than replacing.
+    // `grow` re-writes the pane's fr size (weight + min), merging over its other layout props, so a
+    // pane keeps whatever else it was given.
     this.panes.forEach((pane, i) => {
       grow(pane, Math.max(0, fitted[i]), { min: this.mins[i] });
     });

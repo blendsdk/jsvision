@@ -18,9 +18,8 @@ import type { Rect } from '../../layout/index.js';
  * composition. Accepts either four numbers (`x, y, width, height`) or a single {@link Rect}.
  *
  * **Merge-preserving:** it sets only `position:'absolute'` and `rect`, keeping every other `layout`
- * prop (e.g. a container's `direction`) — unlike a hand-rolled `view.layout = { … }` that would drop
- * them. **Pure:** it never adds the view to a parent; composition stays the caller's job (`g.add(at(v,
- * …))`, or nest it inside a `col`/`row`/`stack`). An `at()`-placed view used as a `col`/`row` child
+ * prop (e.g. a container's `direction`). **Pure:** it never adds the view to a parent; composition
+ * stays the caller's job (`g.add(at(v, …))`, or nest it inside a `col`/`row`/`stack`). An `at()`-placed view used as a `col`/`row` child
  * is honored as an **out-of-flow** overlay — it paints over the content box and reserves no flow
  * space (the engine already excludes `absolute` children from flex flow).
  *

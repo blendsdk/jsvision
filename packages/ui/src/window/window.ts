@@ -70,7 +70,7 @@ function clampRestoredRect(rect: Rect, size: Size2D): Rect {
  *
  * const w = new Window('Editor');
  * w.number = 1;                                  // shows "1" in the frame; Alt+1 activates it
- * w.layout.rect = { x: 1, y: 2, width: 30, height: 10 };
+ * w.setLayout({ rect: { x: 1, y: 2, width: 30, height: 10 } });
  * w.add(new Text('Hello from a window.'));
  * app.desktop.addWindow(w);                      // raises + focuses it
  */
@@ -78,7 +78,7 @@ export class Window extends Group {
   /** A window is a focus target so raising it (and resolving the active window) works. */
   override focusable = true;
   /** Absolute placement — the desktop writes `layout.rect`; `padding: 1` insets content past the border. */
-  override layout: LayoutProps = { position: 'absolute', padding: 1 };
+  override readonly layout: Readonly<LayoutProps> = { position: 'absolute', padding: 1 };
   /** The window title, centered in the top border. Set it to repaint the frame. */
   readonly title: Signal<string>;
   /**

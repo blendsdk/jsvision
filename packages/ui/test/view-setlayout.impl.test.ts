@@ -38,8 +38,13 @@ function countingHost(): { host: ViewHost; relayouts: () => number } {
   };
 }
 
-// ST-I1 — an empty patch keeps every prop, still assigns a fresh object, and still invalidates.
-test('ST-I1: setLayout({}) preserves the props, replaces the object, and invalidates', () => {
+// ST-I1 — an empty patch keeps every prop, keeps the same object, and still invalidates.
+//
+// The identity half was inverted deliberately when the field became read-only: `setLayout` used to
+// replace the object, and now writes into it. The reflow half is the load-bearing one and is
+// unchanged — an empty patch still costs a reflow, because `setLayout` does not inspect the patch to
+// decide, and a caller passing `{}` is asking for a re-solve.
+test('ST-I1: setLayout({}) preserves the props, keeps the same object, and invalidates', () => {
   const v = new Leaf();
   v.setLayout({ direction: 'col', padding: 1 });
   const before = v.layout;
@@ -49,7 +54,7 @@ test('ST-I1: setLayout({}) preserves the props, replaces the object, and invalid
   v.setLayout({});
 
   expect(v.layout).toEqual({ direction: 'col', padding: 1 });
-  expect(v.layout).not.toBe(before);
+  expect(v.layout).toBe(before);
   expect(relayouts()).toBe(1);
 });
 
@@ -104,17 +109,4 @@ test('ST-I5: StatusLine and ColorPicker keep their constructor direction', () =>
 
   const picker = new ColorPicker({ value: signal<Color>('red') });
   expect(picker.layout.direction).toBe('row');
-});
-
-// ST-I4 — setLayout replaces the object rather than mutating it in place. Sites that write
-// `view.layout.rect = …` rely on the previous object staying untouched by a later patch.
-test('ST-I4: setLayout replaces the layout object rather than mutating it', () => {
-  const v = new Leaf();
-  v.setLayout({ direction: 'col' });
-  const before = v.layout;
-
-  v.setLayout({ padding: 1 });
-
-  expect(v.layout).not.toBe(before);
-  expect(before).toEqual({ direction: 'col' });
 });

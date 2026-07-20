@@ -316,7 +316,7 @@ items: readonly MenuItem[]
 highlight
 isEnabled: (command: string) => boolean
 onPick?: (row: number) => void
-layout: LayoutProps
+layout: Readonly<LayoutProps>
 ```
 
 ## menuSpacer
@@ -487,7 +487,7 @@ A titled, framed container.
 ```ts
 new Window(title?: string)   // extends Group
 // methods & signals:
-layout: LayoutProps
+layout: Readonly<LayoutProps>
 title: Signal<string>
 dragging: Signal<boolean>
 active: Signal<boolean>

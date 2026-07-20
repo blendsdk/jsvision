@@ -93,7 +93,7 @@ export interface TreeOptions<T> {
  */
 export class Tree<T> extends Group {
   /** Lay the children out horizontally: rows on the left, the scroll bar on the right. */
-  override layout: LayoutProps = { direction: 'row' };
+  override readonly layout: Readonly<LayoutProps> = { direction: 'row' };
   /** The focusable rows renderer — focus this (a plain `Group` is not itself a focus target). */
   readonly rows: TreeRows<T>;
   /** The owned vertical scroll bar (its `value` is the shared `focused` signal). */

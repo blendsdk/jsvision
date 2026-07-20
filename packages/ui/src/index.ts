@@ -49,7 +49,7 @@ export type { Point, ViewState, DrawContext, ThemeRoleName, RenderRoot, RenderRo
 // Declarative layout builders — compose a screen as one nested expression (`col`/`row` containers,
 // `grow`/`fixed` size shorthands, `spacer` gaps, a `stack` z-overlay with `place`/`centered`/corner
 // helpers, and the absolute `at`/`cover`/`center` escape hatch) instead of imperative
-// `new`/`.add()`/`.layout =`.
+// `new`/`.add()`/`setLayout()`.
 export {
   col,
   row,

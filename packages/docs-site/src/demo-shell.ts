@@ -229,9 +229,9 @@ function shellForView(opts: DemoShellOptions): Application {
  * size fills it. The rect is window-interior-local — the window's `padding: 1`
  * places `{0,0}` just inside the border, so no extra margin is added.
  *
- * Placement is written through `setLayout`, which merges. That matters for an example whose root is
- * a flex container: a wholesale `view.layout = {…}` would drop its `direction`, silently re-solving
- * a column as a row and laying the composition out sideways.
+ * Placement is written through `setLayout`, which merges — it sets `position` and `rect` and leaves
+ * everything else alone. That matters for an example whose root is a flex container: dropping its
+ * `direction` would silently re-solve a column as a row and lay the composition out sideways.
  */
 function centerInInterior(view: View, interiorW: number, interiorH: number): void {
   const { width, height } = intendedSize(view);

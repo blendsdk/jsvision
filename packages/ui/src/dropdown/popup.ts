@@ -122,7 +122,7 @@ class PopupCatcher extends View {
  * hosts the content inside the 1-cell inset. Catches **Esc** in the focus-chain bubble to dismiss.
  */
 class PopupFrame extends Group {
-  override layout: LayoutProps = { position: 'absolute', padding: 1 };
+  override readonly layout: Readonly<LayoutProps> = { position: 'absolute', padding: 1 };
   /** The popup casts a drop shadow, like any window. */
   override castsShadow = true;
 

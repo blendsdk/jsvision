@@ -55,12 +55,12 @@ const DIGIT_KEY = /^[1-9]$/;
  * // Open two windows on the desktop.
  * const editor = new Window('Editor');
  * editor.number = 1;
- * editor.layout.rect = { x: 1, y: 1, width: 30, height: 8 };
+ * editor.setLayout({ rect: { x: 1, y: 1, width: 30, height: 8 } });
  * app.desktop.addWindow(editor);
  *
  * const output = new Window('Output');
  * output.number = 2;
- * output.layout.rect = { x: 10, y: 4, width: 30, height: 8 };
+ * output.setLayout({ rect: { x: 10, y: 4, width: 30, height: 8 } });
  * app.desktop.addWindow(output);
  *
  * // Arrange them and switch between them.

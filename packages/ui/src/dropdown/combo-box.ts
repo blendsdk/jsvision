@@ -61,7 +61,7 @@ export interface ComboBoxOptions<T> {
  */
 class ComboButton extends View {
   /** Fixed 3-cell width (the icon), stretched to the field height by the row layout. */
-  override layout: LayoutProps = { size: { kind: 'fixed', cells: 3 } };
+  override readonly layout: Readonly<LayoutProps> = { size: { kind: 'fixed', cells: 3 } };
 
   constructor(private readonly onOpen: (ev: DispatchEvent) => void) {
     super();

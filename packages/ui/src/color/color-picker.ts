@@ -109,7 +109,7 @@ class ColorChip extends View {
  * the popup.
  */
 class ColorButton extends View {
-  override layout: LayoutProps = { size: { kind: 'fixed', cells: 3 } };
+  override readonly layout: Readonly<LayoutProps> = { size: { kind: 'fixed', cells: 3 } };
 
   constructor(private readonly onOpen: (ev: DispatchEvent) => void) {
     super();
@@ -133,7 +133,7 @@ class ColorButton extends View {
  * bubble when the hex `Input` holds focus (the swatch handles its own Enter via `onChange`) → close.
  */
 class PickerBody extends Group {
-  override layout: LayoutProps = { direction: 'col' };
+  override readonly layout: Readonly<LayoutProps> = { direction: 'col' };
 
   constructor(
     private readonly onClose: () => void,
