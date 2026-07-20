@@ -185,12 +185,11 @@ export class Window extends Group {
     if (!this.zoomable || this.parent === null) return;
     if (this.restoredRect === null) {
       this.restoredRect = { ...this.currentRect() };
-      this.layout.rect = { x: 0, y: 0, width: this.parent.bounds.width, height: this.parent.bounds.height };
+      this.setLayout({ rect: { x: 0, y: 0, width: this.parent.bounds.width, height: this.parent.bounds.height } });
     } else {
-      this.layout.rect = { ...this.restoredRect };
+      this.setLayout({ rect: { ...this.restoredRect } });
       this.restoredRect = null;
     }
-    this.invalidateLayout();
   }
 
   /**
@@ -202,7 +201,7 @@ export class Window extends Group {
    */
   onDesktopResize(size: Size2D): void {
     if (this.restoredRect === null) return; // not zoomed
-    this.layout.rect = { x: 0, y: 0, width: size.width, height: size.height }; // re-maximize
+    this.setLayout({ rect: { x: 0, y: 0, width: size.width, height: size.height } }); // re-maximize
     this.restoredRect = clampRestoredRect(this.restoredRect, size); // keep the un-zoom target on-screen
     this.onResized(); // let a subclass re-pin its absolute children to the new size
     this.invalidateLayout();

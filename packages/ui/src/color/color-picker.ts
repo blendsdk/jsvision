@@ -224,7 +224,7 @@ export class ColorPicker extends Group {
     this.onChange = opts.onChange;
     this.setLayout({ direction: 'row' });
     this.chip = new ColorChip(this.value, this, opts.label, opts.nameFor);
-    this.chip.layout = { size: { kind: 'fr', weight: 1 } };
+    this.chip.setLayout({ size: { kind: 'fr', weight: 1 } });
     this.button = new ColorButton((ev) => this.open(ev));
     this.add(this.chip);
     this.add(this.button);
@@ -276,12 +276,12 @@ export class ColorPicker extends Group {
             commit(); // …then close the popup (the value is already set live)
           },
         });
-        swatch.layout = { size: { kind: 'fr', weight: 1 } };
+        swatch.setLayout({ size: { kind: 'fr', weight: 1 } });
         let hex: Input | undefined;
         if (allowCustom) {
           const hexText = signal(colorToHex(untrack(() => this.value())));
           hex = new Input({ value: hexText, validator: filter(HEX_CHARSET), maxLength: HEX_MAX });
-          hex.layout = { size: { kind: 'fixed', cells: 1 } };
+          hex.setLayout({ size: { kind: 'fixed', cells: 1 } });
           hex.onMount(() => this.wireHexBind(hex!, hexText));
         }
         const body = new PickerBody(commit, hex);

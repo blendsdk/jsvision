@@ -75,7 +75,7 @@ export class EditWindow extends Window {
     this.minWidth = MIN_W;
     this.minHeight = MIN_H;
     this.setLayout({ padding: 0 }); // scroll bars/indicator sit on the frame itself
-    if (options.rect !== undefined) this.layout.rect = { ...options.rect }; // before the first pin
+    if (options.rect !== undefined) this.setLayout({ rect: { ...options.rect } }); // before the first pin
     this.editor = editor;
 
     this.hBar = new ScrollBar({ value: editor.delta.x, orientation: 'horizontal' });
@@ -112,13 +112,23 @@ export class EditWindow extends Window {
     // constructor-era fallback rect, so without this the scroll bars/indicator keep painting at the
     // stale position until the next event. Idempotent and cheap.
     this.invalidateLayout();
-    this.editor.layout = {
+    // Every other prop is reset explicitly, not merely left unset: a hosted editor may be one the
+    // caller built and laid out themselves, and this window governs its placement regardless. An
+    // explicit `undefined` clears a prop back to its layout default. The three gadgets below need no
+    // such reset — this window constructs them itself, so they carry nothing to clear.
+    this.editor.setLayout({
       position: 'absolute',
       rect: { x: 1, y: 1, width: Math.max(0, w - 2), height: Math.max(0, h - 2) },
-    };
-    this.hBar.layout = { position: 'absolute', rect: { x: 18, y: h - 1, width: Math.max(0, w - 20), height: 1 } };
-    this.vBar.layout = { position: 'absolute', rect: { x: w - 1, y: 1, width: 1, height: Math.max(0, h - 2) } };
-    this.ind.layout = { position: 'absolute', rect: { x: 2, y: h - 1, width: 14, height: 1 } };
+      direction: undefined,
+      justify: undefined,
+      align: undefined,
+      gap: undefined,
+      padding: undefined,
+      size: undefined,
+    });
+    this.hBar.setLayout({ position: 'absolute', rect: { x: 18, y: h - 1, width: Math.max(0, w - 20), height: 1 } });
+    this.vBar.setLayout({ position: 'absolute', rect: { x: w - 1, y: 1, width: 1, height: Math.max(0, h - 2) } });
+    this.ind.setLayout({ position: 'absolute', rect: { x: 2, y: h - 1, width: 14, height: 1 } });
   }
 
   /** Reposition the scroll bars/indicator and re-fit the editor scroll after a drag-resize. */

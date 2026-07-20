@@ -2,8 +2,8 @@
 
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
-> **Last Updated**: 2026-07-20 (Phase 2 · Step 2.1 complete)
-> **Progress**: 18/55 tasks (33%)
+> **Last Updated**: 2026-07-20 (Phase 2 · 2.2.2)
+> **Progress**: 20/55 tasks (36%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -138,8 +138,8 @@ The three `ui/test` and one `datagrid/test` deltas are churn since the survey, n
 
 ### Step 2.2 — Convert shipped source (~106 sites)
 
-- [ ] 2.2.1 `ui/src` wholesale writes (≈20 sites) — Rule 1
-- [ ] 2.2.2 `ui/src` rect mutations (8) — Rule 2, **three-way**: collapse the pair only where one exists (`gestures.ts:43`, and any other write+invalidate pair with nothing between them); at the 4 sites carrying an `onResized()` (`gestures.ts:57,74`, `arrange.ts:18`, `window.ts:205`) replace **only the raw write** and leave `onResized()` and `invalidateLayout()` where they are — see **EX-5**, which corrects this task: the previously-prescribed `onResized()`-first order reads a stale rect; plain rewrite at `edit-window.ts:78`, which has no invalidate
+- [x] 2.2.1 `ui/src` wholesale writes (≈20 sites) — Rule 1 — *implemented 2026-07-20*: **21 sites**, all converted. Every target was checked for what the replacement was erasing, not converted blind. 18 write onto a view constructed on the spot, and no class among them declares an `override layout` initializer or calls `this.setLayout` in its own constructor (the 10 hatches are all elsewhere), so their layout is provably `{}` and merge is identical to replace. Two more restate their target's declared initializer exactly (`dropdown/popup.ts:240` against `PopupFrame`'s `{position:'absolute',padding:1}`; `menu/controller.ts:187` against `MenuPopup`'s `{position:'absolute'}`), so those are identical too. Two spreads that existed only to emulate a merge (`dropdown/popup.ts:244`, `router/router.ts:288`) collapse into a plain `setLayout` and their comments lose the now-meaningless "merge rather than replace" framing. `application.ts:437`'s paired `invalidateLayout()` collapses (Rule 2a). **Two sites needed the AR-16 erasure treatment and are not in AR-16's list — see EX-6**: `tabs/tab-view.ts:255` and `editor/edit-window.ts:115`. `ui` unit suite green, 1796/1796
+- [x] 2.2.2 `ui/src` rect mutations (8) — Rule 2, **three-way**: collapse the pair only where one exists (`gestures.ts:43`, and any other write+invalidate pair with nothing between them); at the 4 sites carrying an `onResized()` (`gestures.ts:57,74`, `arrange.ts:18`, `window.ts:205`) replace **only the raw write** and leave `onResized()` and `invalidateLayout()` where they are — see **EX-5**, which corrects this task: the previously-prescribed `onResized()`-first order reads a stale rect; plain rewrite at `edit-window.ts:78`, which has no invalidate — *done 2026-07-20*: 8 exactly, split 3/4/1. **Collapsed the pair** at `gestures.ts:42` (`applyMove`) and at both branches of `window.ts` `zoom()`, whose single trailing `invalidateLayout()` served two writes; ST-9 covers the first and holds at exactly one reflow per pointer sample. **Kept all three statements** at `gestures.ts:57,75`, `arrange.ts:18` and `window.ts:205` per EX-5. **Plain rewrite** at `edit-window.ts:78`, pre-mount with no invalidate to collapse. `ui` unit suite green, 1796/1796; the package has no e2e project
 - [ ] 2.2.3 `datagrid/src` (12; 8 in `grid-panels.ts`). Note `grid-panels.ts:201`'s shared `fr` singleton — the conversion de-aliases it, which is the point, not a side effect
 - [ ] 2.2.4 **Rule 1a / AR-16** — the 3 deliberate-erasure sites, converted with the discarded props named as explicit `undefined`: `app/application.ts:334`, `datagrid/src/overlay.ts:129`, `datagrid/src/editing.ts:233`. Behaviour must not change; two are public customization seams
 - [ ] 2.2.5 `docs-site` `src` + `examples` (5) · `theme-designer/src` (4)

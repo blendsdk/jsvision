@@ -150,7 +150,7 @@ export class ComboBox<T> extends Group {
     this.input = new Input(
       this.editable ? { value: this.text, placeholder: opts.placeholder } : { value: this.text, validator: REJECT_ALL },
     );
-    this.input.layout = { size: { kind: 'fr', weight: 1 } };
+    this.input.setLayout({ size: { kind: 'fr', weight: 1 } });
     this.button = new ComboButton((ev) => this.open(ev));
     this.add(this.input);
     this.add(this.button);

@@ -250,9 +250,19 @@ export class TabView extends Group {
         () => this.tabs(),
         (t) => t.content,
         (t) => {
-          // Assigned wholesale rather than tagged: a caller's own layout on a tab's content view is
-          // intentionally discarded, so the tab body governs sizing no matter what the caller set.
-          t.content.layout = { size: { kind: 'fr', weight: 1 } };
+          // Every other prop is reset explicitly, not merely left unset: a caller's own layout on a
+          // tab's content view is intentionally discarded, so the tab body governs sizing no matter
+          // what the caller set. An explicit `undefined` clears a prop back to its layout default.
+          t.content.setLayout({
+            size: { kind: 'fr', weight: 1 },
+            direction: undefined,
+            justify: undefined,
+            align: undefined,
+            gap: undefined,
+            padding: undefined,
+            position: undefined,
+            rect: undefined,
+          });
           return t.content;
         },
       ),

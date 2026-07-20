@@ -15,7 +15,7 @@ import { MIN_WIDTH, MIN_HEIGHT } from './gestures.js';
 /** Un-maximize a window, set its rect, re-pin its children, and schedule a repaint. */
 function place(w: Window, x: number, y: number, width: number, height: number): void {
   w.resetZoom();
-  w.layout.rect = { x, y, width, height };
+  w.setLayout({ rect: { x, y, width, height } });
   w.onResized(); // re-pin children to the new size before the repaint reads them
   w.invalidateLayout();
 }
