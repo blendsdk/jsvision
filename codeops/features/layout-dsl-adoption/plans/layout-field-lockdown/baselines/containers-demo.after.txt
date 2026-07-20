@@ -1,0 +1,125 @@
+
+Frame 1a — ScrollBar at 0 (▲ track ▼)
++-+
+|▲|
+|█|
+|▒|
+|▒|
+|▒|
+|▒|
+|▒|
+|▼|
++-+
+
+Frame 1b — after 3× ▼ arrow + a mid-track click (jump-to-position)
++-+
+|▲|
+|▒|
+|▒|
+|▒|
+|█|
+|▒|
+|▒|
+|▼|
++-+
+  ScrollBar value: 60 (arrow ±1; a track click jumps the thumb to that position)
+
+Frame 2a — Scroller at top (Line 01 …)
++------------------------+
+|Line 01 of oversized co▲|
+|Line 02 of oversized co█|
+|Line 03 of oversized co▒|
+|Line 04 of oversized co▒|
+|Line 05 of oversized co▒|
+|Line 06 of oversized co▒|
+|Line 07 of oversized co▒|
+|Line 08 of oversized co▼|
++------------------------+
+
+Frame 2b — PgDn + ↓ reveals lower lines
++------------------------+
+|Line 09 of oversized co▲|
+|Line 10 of oversized co▒|
+|Line 11 of oversized co▒|
+|Line 12 of oversized co▒|
+|Line 13 of oversized co█|
+|Line 14 of oversized co▒|
+|Line 15 of oversized co▒|
+|Line 16 of oversized co▼|
++------------------------+
+
+Frame 3a — ListBox, focus on Apple
++--------------------+
+| Apple             ▲|
+| Apricot           █|
+| Banana            ▒|
+| Grape             ▒|
+| Grapefruit        ▒|
+| Kiwi              ▒|
+| Mango             ▒|
+| Orange            ▼|
++--------------------+
+
+Frame 3b — ↓↓ moves focus to Banana
++--------------------+
+| Apple             ▲|
+| Apricot           ▒|
+| Banana            █|
+| Grape             ▒|
+| Grapefruit        ▒|
+| Kiwi              ▒|
+| Mango             ▒|
+| Orange            ▼|
++--------------------+
+  focused index: 2 = Banana
+
+Frame 3c — type "gr" jumps to Grape (type-ahead)
++--------------------+
+| Apple             ▲|
+| Apricot           ▒|
+| Banana            ▒|
+| Grape             █|
+| Grapefruit        ▒|
+| Kiwi              ▒|
+| Mango             ▒|
+| Orange            ▼|
++--------------------+
+  type-ahead landed on: Grape
+  Enter selected index: 3 = Grape
+  Dialog opened centered at {"x":3,"y":1,"width":34,"height":9} with a drop-shadow (TV ofCentered + sfShadow).
+
+Frame 4a — modal Dialog, Age="200" (invalid)
++----------------------------------------+
+|                                        |
+|   ╔═[×]═══════  Person  ═══════════╗   |
+|   ║                                ║   |
+|   ║ Age (0–120)     200            ║   |
+|   ║                                ║   |
+|   ║                                ║   |
+|   ║        OK   ▄     Cancel  ▄    ║   |
+|   ║      ▀▀▀▀▀▀▀▀    ▀▀▀▀▀▀▀▀▀▀    ║   |
+|   ║                                ║   |
+|   ╚════════════════════════════════╝   |
+|                                        |
+|                                        |
++----------------------------------------+
+  OK with Age="200" → settled? false (vetoed by valid(); focus → Age)
+
+Frame 4b — Age corrected to "42"
++----------------------------------------+
+|                                        |
+|   ╔═[×]═══════  Person  ═══════════╗   |
+|   ║                                ║   |
+|   ║ Age (0–120)     42             ║   |
+|   ║                                ║   |
+|   ║                                ║   |
+|   ║        OK   ▄     Cancel  ▄    ║   |
+|   ║      ▀▀▀▀▀▀▀▀    ▀▀▀▀▀▀▀▀▀▀    ║   |
+|   ║                                ║   |
+|   ╚════════════════════════════════╝   |
+|                                        |
+|                                        |
++----------------------------------------+
+  OK with Age="42" → resolved: ok (age = "42")
+
+Done — a ScrollBar, a Scroller, a ListView (type-ahead + select), and a modal Dialog valid()-gate.

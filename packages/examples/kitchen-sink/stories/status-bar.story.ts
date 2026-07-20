@@ -34,8 +34,8 @@ export const statusBarStory: Story = {
     );
 
     // The real StatusLine (a Group): direction 'row' + a statusBar background. It has no seam here, so
-    // it is a faithful, non-interactive snapshot of the layout. `at()` would drop the row direction, so
-    // set an absolute layout that keeps it.
+    // it is a faithful, non-interactive snapshot of the layout. `at()` places it without disturbing
+    // that direction — it merges the placement into the existing props rather than replacing them.
     const barWidth = Math.min(18, Math.max(12, ctx.width - 28));
     const bar = statusLine([
       statusItem('~Alt-X~ Exit', 'quit', 'Alt+X'),
@@ -44,8 +44,7 @@ export const statusBarStory: Story = {
       fixed(new ProgressBar({ value, caption: true }), barWidth),
       statusItem(() => clock()),
     ]);
-    bar.setLayout({ position: 'absolute', rect: { x: 0, y: 2, width: ctx.width, height: 1 }, direction: 'row' });
-    g.add(bar);
+    g.add(at(bar, 0, 2, ctx.width, 1));
 
     g.add(
       at(

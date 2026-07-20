@@ -32,14 +32,26 @@ build export.
 | `color-demo` | `color-demo.txt` | own walkthrough stdout |
 | `date-demo` | `date-demo.txt` | own walkthrough stdout |
 | `status-bar.story` | `status-bar.story.txt` | mounted at 80×24 through its `build(ctx)` |
-| `playground` | — | **no baseline** — see below |
-| `controls-live` | — | **no baseline** — see below |
+| `controls-live` | `controls-live-form.txt` | mounted at 58×19 through `buildDialog()` — added at 3.1.2, so it is a **post-Phase-2** capture (see below) |
+| `playground` | — | none, and none needed — see below |
+
+### The two TTY-gated canvases
 
 `playground/main.ts:29` and `controls-live/main.ts:68` both `return 0` when `process.stdout.isTTY`
-is not `true`, so neither renders headlessly at all. Task 3.1.2 already owns the decision about what
-witness they get (a mount harness, review-only, or left absolute); pre-building one here would
-front-load a design decision the plan deliberately placed in Phase 3. They are recorded as having no
-Phase-2 "before", and 3.1.2 must account for that.
+is not `true`, so neither rendered headlessly when the other six baselines were taken. Task 3.1.2
+resolved them differently:
+
+- **`controls-live`** got a harness. `buildDialog()` is exported from `form.ts` and carries no TTY
+  dependency of its own — only `main.ts` is gated — so its `Dialog` mounts directly into a render
+  root. `controls-live-form.txt` is the pre-*flex* baseline for the Phase 3 conversion.
+- **`playground`** is left absolute, so it has nothing to diff. Its two sites are a `Window`
+  placement and a single `Text` inside it, in the file whose stated purpose is the minimal shell.
+
+Neither one's missing Phase-2 "before" turned out to matter, because a replace→merge swap can only
+differ where the target's layout was **non-empty in a prop the write omits**, and neither canvas has
+such a site: `playground`'s window write was `win.layout.rect = {…}` — a field write that never
+erased anything — and every view `form.ts` places is constructed inline, carrying an empty layout
+into the write. That argument holds by construction, for every viewport, which a byte diff would not.
 
 ## Reproducing
 
@@ -49,6 +61,13 @@ The five walkthroughs, from `packages/examples`:
 yarn --silent tsx <canvas>/main.ts
 ```
 
-`status-bar.story` is mounted through `createEventLoop({ width: 80, height: 24 })` after calling
-`statusBarStory.build({ width: 80, height: 24 })`, and its buffer rows are joined with trailing
-whitespace stripped.
+The two mounted canvases have committed harnesses beside this file; run them from the repo root:
+
+```
+yarn --silent tsx codeops/features/layout-dsl-adoption/plans/layout-field-lockdown/baselines/capture-status-bar.mts
+yarn --silent tsx codeops/features/layout-dsl-adoption/plans/layout-field-lockdown/baselines/capture-controls-live-form.mts
+```
+
+Each mounts the composition into `createRenderRoot` under pinned truecolor/UTF-8 capabilities (so the
+capture never depends on the developer's terminal) and joins the buffer rows with trailing whitespace
+stripped.

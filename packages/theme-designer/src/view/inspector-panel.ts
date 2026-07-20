@@ -6,7 +6,7 @@
  * watches those signals to push edits into the model (and keeps them in sync), so this module only
  * builds the view.
  */
-import { Group, Text, Slider, Input, ColorSwatch, RadioGroup, View } from '@jsvision/ui';
+import { Group, Text, Slider, Input, ColorSwatch, RadioGroup, View, at } from '@jsvision/ui';
 import type { Signal, DrawContext } from '@jsvision/ui';
 import type { Color } from '@jsvision/core';
 
@@ -51,13 +51,6 @@ class ColorBlock extends View {
   }
 }
 
-/** Place a view at an absolute rect inside a group. */
-function at<T extends View>(g: Group, view: T, x: number, y: number, w: number, h: number): T {
-  view.setLayout({ position: 'absolute', rect: { x, y, width: w, height: h } });
-  g.add(view);
-  return view;
-}
-
 /**
  * Build the inspector panel over app-owned signals.
  *
@@ -71,69 +64,67 @@ export function buildInspectorPanel(deps: InspectorDeps): Group {
   const view = new Group();
   view.background = 'dialog';
 
-  at(view, new Text('Inspector'), 1, 0, 28, 1);
+  view.add(at(new Text('Inspector'), 1, 0, 28, 1));
   // What is being edited — updates live when the rail selection changes.
-  at(
-    view,
-    new Text(() => {
-      const t = deps.model.state().selected;
-      return `Editing: ${t.kind === 'alias' ? 'α' : '▸'} ${String(t.name)}`;
-    }),
-    1,
-    1,
-    30,
-    1,
+  view.add(
+    at(
+      new Text(() => {
+        const t = deps.model.state().selected;
+        return `Editing: ${t.kind === 'alias' ? 'α' : '▸'} ${String(t.name)}`;
+      }),
+      1,
+      1,
+      30,
+      1,
+    ),
   );
   // Background/foreground toggle — only meaningful for a role (an alias is a single color).
-  at(view, new RadioGroup({ labels: ['back~g~round', '~f~oreground'], value: deps.fieldIndex }), 1, 2, 16, 2);
+  view.add(at(new RadioGroup({ labels: ['back~g~round', '~f~oreground'], value: deps.fieldIndex }), 1, 2, 16, 2));
 
-  at(view, new Text('R'), 1, 5, 2, 1);
-  at(view, new Slider({ value: deps.r, min: 0, max: 255 }), 4, 5, 24, 1);
-  at(view, new Text('G'), 1, 6, 2, 1);
-  at(view, new Slider({ value: deps.g, min: 0, max: 255 }), 4, 6, 24, 1);
-  at(view, new Text('B'), 1, 7, 2, 1);
-  at(view, new Slider({ value: deps.b, min: 0, max: 255 }), 4, 7, 24, 1);
+  view.add(at(new Text('R'), 1, 5, 2, 1));
+  view.add(at(new Slider({ value: deps.r, min: 0, max: 255 }), 4, 5, 24, 1));
+  view.add(at(new Text('G'), 1, 6, 2, 1));
+  view.add(at(new Slider({ value: deps.g, min: 0, max: 255 }), 4, 6, 24, 1));
+  view.add(at(new Text('B'), 1, 7, 2, 1));
+  view.add(at(new Slider({ value: deps.b, min: 0, max: 255 }), 4, 7, 24, 1));
 
-  at(view, new Text('Hex'), 1, 9, 4, 1);
-  at(view, new Input({ value: deps.hexText, validator: hexValidator }), 6, 9, 12, 1);
+  view.add(at(new Text('Hex'), 1, 9, 4, 1));
+  view.add(at(new Input({ value: deps.hexText, validator: hexValidator }), 6, 9, 12, 1));
   // A solid swatch of the exact edited color, directly under the hex field's column.
-  at(view, new ColorBlock(deps.color), 6, 10, 12, 1);
+  view.add(at(new ColorBlock(deps.color), 6, 10, 12, 1));
 
-  at(
-    view,
-    new ColorSwatch({ value: deps.color, onInput: deps.onSwatchInput, onChange: deps.onSwatchInput }),
-    1,
-    11,
-    12,
-    4,
+  view.add(
+    at(new ColorSwatch({ value: deps.color, onInput: deps.onSwatchInput, onChange: deps.onSwatchInput }), 1, 11, 12, 4),
   );
 
-  at(view, new Text('Contrast'), 1, 16, 28, 1);
-  at(
-    view,
-    new Text(() =>
-      contrastRows(deps.model.theme())
-        .map((row) => `${row.pair}: ${row.ratio.toFixed(1)} ${row.level}`)
-        .join('\n'),
+  view.add(at(new Text('Contrast'), 1, 16, 28, 1));
+  view.add(
+    at(
+      new Text(() =>
+        contrastRows(deps.model.theme())
+          .map((row) => `${row.pair}: ${row.ratio.toFixed(1)} ${row.level}`)
+          .join('\n'),
+      ),
+      1,
+      17,
+      30,
+      6,
     ),
-    1,
-    17,
-    30,
-    6,
   );
 
-  at(view, new Text('Depth'), 1, 24, 28, 1);
-  at(
-    view,
-    new Text(() =>
-      depthSamples(deps.color())
-        .map((s) => `${s.depth} ${s.hex}`)
-        .join('   '),
+  view.add(at(new Text('Depth'), 1, 24, 28, 1));
+  view.add(
+    at(
+      new Text(() =>
+        depthSamples(deps.color())
+          .map((s) => `${s.depth} ${s.hex}`)
+          .join('   '),
+      ),
+      1,
+      25,
+      30,
+      2,
     ),
-    1,
-    25,
-    30,
-    2,
   );
 
   return view;
