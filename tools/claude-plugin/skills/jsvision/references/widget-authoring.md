@@ -29,6 +29,9 @@ signals, so the bind usually just subscribes and requests a repaint.
 - `this.invalidate()` — request a repaint (pixels changed). `bind` uses this by default.
 - `this.invalidateLayout()` — request a reflow (size/position changed). Use `bind(reader, apply, {
 relayout: true })` to make a bound change reflow.
+- `this.setLayout({ … })` — the preferred way to change layout props: it merges (shallowly) into
+  `this.layout` instead of replacing it, and reflows for you. Prefer it over assigning `this.layout`,
+  which drops every prop you leave out and never reflows.
 
 ## Conventions
 

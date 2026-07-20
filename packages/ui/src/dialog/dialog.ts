@@ -104,9 +104,11 @@ export class Dialog extends Window implements ModalHostAware {
     const height = opts.height ?? opts.rect?.height;
     const centered = opts.centered ?? (width !== undefined && height !== undefined && opts.rect === undefined);
     if (width !== undefined && height !== undefined) {
-      // Seed the padding first so the merge-preserving builders retain it, then express the
-      // placement: `center()` for a sized-but-unplaced dialog, `at()` for an explicit rect.
-      this.layout = { padding: 1 };
+      // Pin the dialog's own 1-cell padding. It is already inherited from `Window`; restating it
+      // here keeps the dialog correct if that ever changes. The placement builders below merge over
+      // it and set `position` themselves: `center()` for a sized-but-unplaced dialog, `at()` for an
+      // explicit rect.
+      this.setLayout({ padding: 1 });
       if (opts.rect === undefined) {
         center(this, width, height);
       } else {

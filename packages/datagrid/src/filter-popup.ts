@@ -282,7 +282,7 @@ export class FilterPopup<T> extends Group {
         () => this.contentHeight(),
         (h) => {
           const rect = this.layout.rect;
-          if (rect !== undefined && rect.height !== h) this.layout = { ...this.layout, rect: { ...rect, height: h } };
+          if (rect !== undefined && rect.height !== h) this.setLayout({ rect: { ...rect, height: h } });
         },
         { relayout: true },
       );

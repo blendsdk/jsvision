@@ -158,7 +158,7 @@ export class Window extends Group {
    */
   commitPlacement(): void {
     if (!this.centered) return;
-    this.layout = { ...this.layout, rect: { ...this.bounds } };
+    this.setLayout({ rect: { ...this.bounds } });
     this.centered = false;
   }
 

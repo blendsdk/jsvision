@@ -74,7 +74,7 @@ export class EditWindow extends Window {
     super(options.clipboard !== undefined && editor === options.clipboard ? 'Clipboard' : 'Untitled');
     this.minWidth = MIN_W;
     this.minHeight = MIN_H;
-    this.layout = { ...this.layout, padding: 0 }; // scroll bars/indicator sit on the frame itself
+    this.setLayout({ padding: 0 }); // scroll bars/indicator sit on the frame itself
     if (options.rect !== undefined) this.layout.rect = { ...options.rect }; // before the first pin
     this.editor = editor;
 
