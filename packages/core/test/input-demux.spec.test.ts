@@ -30,7 +30,6 @@ function matched(scan: ResponseScan): ResponseMatch {
   return scan;
 }
 
-
 // ---------------------------------------------------------------------------
 // ST-14 — shared classifier recognises every query-response grammar (PL-2)
 // ---------------------------------------------------------------------------

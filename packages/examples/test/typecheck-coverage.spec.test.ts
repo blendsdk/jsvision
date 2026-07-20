@@ -56,8 +56,7 @@ function norm(p: string): string {
 function typecheckConfigOf(pkgDir: string): string | undefined {
   const pkgJson = join(pkgDir, 'package.json');
   if (!existsSync(pkgJson)) return undefined;
-  const script = (JSON.parse(readFileSync(pkgJson, 'utf8')) as { scripts?: Record<string, string> }).scripts
-    ?.typecheck;
+  const script = (JSON.parse(readFileSync(pkgJson, 'utf8')) as { scripts?: Record<string, string> }).scripts?.typecheck;
   if (script === undefined) return undefined;
   const explicit = /-p\s+(\S+)/.exec(script);
   return join(pkgDir, explicit ? explicit[1]! : 'tsconfig.json');
@@ -140,7 +139,8 @@ test('ST-3: every package with a typecheck script and a test/ directory typechec
     const config = typecheckConfigOf(pkgDir);
     if (config === undefined || !existsSync(testDir)) {
       // A package without both is out of scope, but only deliberately so.
-      if (config === undefined && !existsSync(testDir)) expect(EXEMPT[name], `${name} is unexpectedly exempt`).toBeDefined();
+      if (config === undefined && !existsSync(testDir))
+        expect(EXEMPT[name], `${name} is unexpectedly exempt`).toBeDefined();
       continue;
     }
     const prefix = `${norm(testDir)}/`;

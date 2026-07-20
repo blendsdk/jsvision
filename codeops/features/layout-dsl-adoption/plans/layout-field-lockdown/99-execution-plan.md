@@ -2,8 +2,8 @@
 
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
-> **Last Updated**: 2026-07-20
-> **Progress**: 10/54 tasks (19%)
+> **Last Updated**: 2026-07-20 (Phase 1 complete)
+> **Progress**: 13/54 tasks (24%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -61,9 +61,9 @@
 
 ### Step 1.5 — Accept
 
-- [ ] 1.5.1 ST-2 in anger: break a demo entry, confirm `yarn typecheck` fails, revert
-- [ ] 1.5.2 Measure the `turbo typecheck` wall-clock delta and record it
-- [ ] 1.5.3 Full verify
+- [x] 1.5.1 ST-2 in anger: break a demo entry, confirm `yarn typecheck` fails, revert — *done 2026-07-20*: a bad assignment appended to `view-demo/main.ts` failed `turbo run typecheck` at `view-demo/main.ts(98,7) TS2322`, naming the file; reverted, green again
+- [x] 1.5.2 Measure the `turbo typecheck` wall-clock delta and record it — *done 2026-07-20*: per package, `ui` 3.1s → 6.2s and `core` 2.0s → 3.2s. Because turbo runs the packages in parallel the repo-wide delta is bounded by the slowest, ≈ **+3s**; a cold `yarn typecheck --force` (builds included) is 22.7s, a warm one 4.1s
+- [x] 1.5.3 Full verify — *done 2026-07-20*: `yarn verify` green, 30/30 turbo tasks plus `check-plugin`. `yarn lint:fix` reformatted 5 files, committed with it
 
 **Verify**: `yarn verify`
 

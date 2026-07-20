@@ -23,7 +23,6 @@ function matched(scan: ResponseScan): ResponseMatch {
   return scan;
 }
 
-
 // ---------------------------------------------------------------------------
 // Incomplete sequences → null (carried by the caller, never a false match)
 // ---------------------------------------------------------------------------

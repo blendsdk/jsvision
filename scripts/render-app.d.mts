@@ -9,11 +9,7 @@ export interface RenderedCell {
 }
 
 /** Frame a composed screen (rows of cells) as ASCII with a titled border showing its dimensions. */
-export declare function bufferToText(
-  rows: readonly (readonly RenderedCell[])[],
-  width: number,
-  title: string,
-): string;
+export declare function bufferToText(rows: readonly (readonly RenderedCell[])[], width: number, title: string): string;
 
 /** One parsed chord from a `"ctrl+s tab enter"` key spec, ready to dispatch to an event loop. */
 export interface ParsedKeyEvent {
