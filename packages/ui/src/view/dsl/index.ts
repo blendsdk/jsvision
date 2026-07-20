@@ -1,7 +1,7 @@
 /**
  * Declarative layout builders — expression-oriented sugar over `Group`/`View` and their `layout`
  * props, so a whole screen can be composed in one nested expression instead of a sequence of `new`,
- * `.add()`, and `.layout = …` mutations.
+ * `.add()`, and `setLayout(…)` calls.
  *
  * `col`/`row` build flex containers; `grow`/`fixed` set a child's size; `spacer` inserts flexible or
  * fixed gaps; `stack` is a z-overlay with `place`/`centered`/corner taggers. Because the builders

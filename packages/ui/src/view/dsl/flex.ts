@@ -2,7 +2,7 @@
  * Flex layout builders — the `col`/`row` containers and the `grow`/`fixed`/`spacer` size
  * shorthands, a thin, expression-oriented sugar over `Group`/`View` and their `layout` props, so a
  * whole screen can be composed in one nested expression instead of a sequence of `new`, `.add()`,
- * and `.layout = …` mutations.
+ * and `setLayout(…)` calls.
  *
  * Because the builders only assemble ordinary views and set ordinary `layout` props, the result
  * reflows and resizes exactly like a hand-built tree — there is no separate runtime.

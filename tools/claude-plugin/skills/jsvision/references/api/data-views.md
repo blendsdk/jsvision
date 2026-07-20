@@ -188,7 +188,7 @@ A focusable, virtual-scrolling, expandable outline (file tree, nav tree, etc.).
 ```ts
 new Tree<T>(opts: TreeOptions<T>)   // extends Group
 // methods & signals:
-layout: LayoutProps
+layout: Readonly<LayoutProps>
 rows: TreeRows<T>
 focused: Signal<number>
 selected: Signal<number>

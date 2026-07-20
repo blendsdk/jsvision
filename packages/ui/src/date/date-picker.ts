@@ -30,7 +30,7 @@ import type { DateFormat, DateFormatSpec } from './date-format.js';
  */
 class DateButton extends View {
   /** Fixed 3-cell width; stretched to the field height by the row layout. */
-  override layout: LayoutProps = { size: { kind: 'fixed', cells: 3 } };
+  override readonly layout: Readonly<LayoutProps> = { size: { kind: 'fixed', cells: 3 } };
 
   constructor(private readonly onOpen: (ev: DispatchEvent) => void) {
     super();

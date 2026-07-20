@@ -492,7 +492,7 @@ new View()
 // methods & signals:
 bounds: Rect
 state: ViewState
-layout: LayoutProps
+layout: Readonly<LayoutProps>
 castsShadow
 centered
 grabsFocus

@@ -135,7 +135,7 @@ function resolveActive(raw: number, tabs: readonly Tab[]): number {
 /** The bordered content region below the strip: draws the side + bottom frame; pages inset by padding. */
 class TabBody extends Group {
   /** Column of pages; padding insets them inside the `│` sides and above the `└─┘` bottom (the top joins the strip). */
-  override layout: LayoutProps = {
+  override readonly layout: Readonly<LayoutProps> = {
     direction: 'col',
     size: { kind: 'fr', weight: 1 },
     padding: { top: 0, left: 1, right: 1, bottom: 1 },

@@ -80,7 +80,7 @@ export interface ListViewOptions<T> {
  */
 export class ListView<T> extends Group {
   /** Lay the children out horizontally: `[rows fr | bar 1]`. */
-  override layout: LayoutProps = { direction: 'row' };
+  override readonly layout: Readonly<LayoutProps> = { direction: 'row' };
   /** The focusable rows renderer (the focus target — a `Group` is not itself a focus leaf). */
   readonly rows: ListRows<T>;
   /** The owned vertical scroll bar (its `value` is the shared `focused` signal). */

@@ -313,7 +313,7 @@ export function syncOverlayVisible(overlay: Group): void {
  * const app = createApplication({ menuBar: bar, statusLine: status });
  *
  * const win = new Window('Editor');
- * win.layout.rect = { x: 1, y: 2, width: 30, height: 8 };
+ * win.setLayout({ rect: { x: 1, y: 2, width: 30, height: 8 } });
  * app.desktop.addWindow(win); // `desktop` is a Desktop here — no `content` was passed
  *
  * const code = await app.run(); // runs until the 'quit' command; restores the terminal on exit

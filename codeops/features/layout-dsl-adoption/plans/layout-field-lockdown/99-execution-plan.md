@@ -2,8 +2,8 @@
 
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
-> **Last Updated**: 2026-07-20 (Phase 2 · Step 2.3 complete)
-> **Progress**: 29/55 tasks (53%)
+> **Last Updated**: 2026-07-20 (Phase 2 · Step 2.4 complete — the field is locked)
+> **Progress**: 37/55 tasks (67%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -163,14 +163,19 @@ The three `ui/test` and one `datagrid/test` deltas are churn since the survey, n
 > whole verify run. Authored early they would leave every task in 2.2/2.3 unable to verify: exactly
 > the condition AR-7 rejected. Keep author → red → flip → green inside this step.
 
-- [ ] 2.4.1 [spec-author] ST-6, ST-7, ST-8 — the identity contract and the **type-level** ratchet. Observe them red against the pre-flip field
-- [ ] 2.4.2 `view.ts`: `readonly layout: Readonly<LayoutProps>` + `setLayout` on `Object.assign`
-- [ ] 2.4.3 The 10 subclass hatches → `override readonly layout: Readonly<LayoutProps>`
-- [ ] 2.4.4 Correct the superseded contract: invert ST-I1's identity assertion and delete ST-I4 in `ui/test/view-setlayout.impl.test.ts`, one recorded verdict each
-- [ ] 2.4.5 **FR-13** — rewrite the 3 shipped `@example` blocks that assign `layout.rect` (`window/window.ts:73`, `app/application.ts:316`, `desktop/desktop.ts:58,63`) to `setLayout({ rect })`, then re-verify `jsdoc-examples.allowlist.json`: `Desktop` is listed as `codes:[2322]` exactly and may now be stale
-- [ ] 2.4.6 **FR-13** — rewrite the shipped prose that describes wholesale assignment as live: `view.ts:68-73` (the field's own JSDoc) and `:222`, `split-view.ts:144,185`, `dsl/{absolute,flex,index}.ts`, `ui/src/index.ts:52`, `demo-shell.ts:233`
-- [ ] 2.4.7 `yarn plugin:sync --fix` + commit — the API-ref snapshot records `layout: LayoutProps` in 5 rows and `check-plugin` fails verify without this. Deterministic, no API key; `--detect` does not catch it
-- [ ] 2.4.8 ST-6/ST-7/ST-8 and ST-12 go green
+- [x] 2.4.1 [spec-author] ST-6, ST-7, ST-8 — the identity contract and the **type-level** ratchet. Observe them red against the pre-flip field — *done 2026-07-20* (`ui/test/view-layout-readonly.spec.test.ts`). **Observed red at both levels**: all four `@ts-expect-error` directives reported `TS2578` *unused* — which is the ratchet proving itself, since it means the field really was open, through `Window`'s override as well as on the base class — and ST-6 failed on identity (`expected { direction: 'col', padding: 1 } to be { direction: 'col' }`). Authored here rather than at the head of the phase, per AR-7: an unused directive is a hard compile error, so authoring early would have left every task in 2.2/2.3 unable to verify
+- [x] 2.4.2 `view.ts`: `readonly layout: Readonly<LayoutProps>` + `setLayout` on `Object.assign` — *done 2026-07-20*. The field's own JSDoc is rewritten: it described a hazard (a wholesale write dropping props and never reflowing) that the compiler now prevents, so it states the contract instead
+- [x] 2.4.3 The 10 subclass hatches → `override readonly layout: Readonly<LayoutProps>` — *done 2026-07-20*: 10 exactly, across 9 files. **`turbo run typecheck` went green on the first attempt, 15/15 tasks** — no conversion was missed anywhere in the repo, which is the return on Phase 1 plus Steps 2.2/2.3
+- [x] 2.4.4 Correct the superseded contract: invert ST-I1's identity assertion and delete ST-I4 in `ui/test/view-setlayout.impl.test.ts`, one recorded verdict each — *done 2026-07-20*. **These two were the only runtime failures in the entire repo after the flip** — 2 failed / 1797 passed — which is itself the evidence that the identity change bit nothing unmeasured. Verdicts:
+
+| Test | Verdict |
+|---|---|
+| ST-I1 *"setLayout({}) preserves the props, replaces the object, and invalidates"* | **Inverted, not deleted.** Only its identity clause is superseded; `not.toBe` becomes `toBe` and the title follows. The load-bearing clause — an empty patch still costs one reflow — is unchanged and still passes, because `setLayout` does not inspect the patch to decide |
+| ST-I4 *"setLayout replaces the layout object rather than mutating it"* | **Deleted.** The whole test asserted the replace contract, and its own comment justified it by the `view.layout.rect = …` sites this phase removed — so its stated reason to exist is gone with them. Its inverse is not lost: ST-6 in `view-layout-readonly.spec.test.ts` pins in-place mutation as a *spec* oracle, which is the stronger home for it |
+- [x] 2.4.5 **FR-13** — rewrite the 3 shipped `@example` blocks that assign `layout.rect` (`window/window.ts:73`, `app/application.ts:316`, `desktop/desktop.ts:58,63`) to `setLayout({ rect })`, then re-verify `jsdoc-examples.allowlist.json`: `Desktop` is listed as `codes:[2322]` exactly and may now be stale — *done 2026-07-20*: 4 assignments across the 3 blocks. **The `Desktop` allowlist entry is not stale and needs no edit** — its recorded `TS2322` is a `Platform` mismatch on `process.platform`, unrelated to layout, so the block still fails with exactly the recorded code. The ratchet passes untouched, 12/12
+- [x] 2.4.6 **FR-13** — rewrite the shipped prose that describes wholesale assignment as live: `view.ts:68-73` (the field's own JSDoc) and `:222`, `split-view.ts:144,185`, `dsl/{absolute,flex,index}.ts`, `ui/src/index.ts:52`, `demo-shell.ts:233` — *done 2026-07-20*: 9 passages. Each stated a hazard as live (*"unlike a hand-rolled `view.layout = { … }` that would drop them"*, *"a caller assigning `split.layout` … can never clobber"*); all now describe the behaviour without contrasting against an idiom that no longer exists. The one surviving mention is in `view.ts:72`, where naming the closed spellings **is** the contract
+- [x] 2.4.7 `yarn plugin:sync --fix` + commit — the API-ref snapshot records `layout: LayoutProps` in 5 rows and `check-plugin` fails verify without this. Deterministic, no API key; `--detect` does not catch it — *done 2026-07-20*: **5 rows across 4 pages**, exactly as predicted, all `layout: LayoutProps` → `layout: Readonly<LayoutProps>`
+- [x] 2.4.8 ST-6/ST-7/ST-8 and ST-12 go green — *done 2026-07-20*: **`yarn verify` 30/30 plus `check-plugin` PASS**. ST-6/7/8 green (the four `@ts-expect-error` directives are now all used, so the fixture compiles only because the errors are real); ST-12 green via `jsdoc-examples.spec.test.ts` and `check-plugin`
 
 ### Step 2.5 — Accept
 
