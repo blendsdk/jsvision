@@ -38,6 +38,7 @@ there was no second viable option.
 |---|---|---|
 | AR-R1 | `packages/ui/src/app/application.ts:275`'s `syncOverlayVisible` import — which branch of [03-02](03-02-jsdoc-example-modernization.md) §FR-6 applies | _(recorded by task 2.3.2)_ |
 | AR-R2 | The 03-03 audit's ⛔ rulings, if any | _(recorded by task 3.1.2)_ |
+| AR-R3 | **Harness placement rationale corrected (task 1.2.1).** [03-01](03-01-example-compile-guard.md) and task 1.2.1 justify `src/api/` partly on "`tsconfig.json` includes `src/**` but not `test/**`, so only a module in `src/` is covered by `yarn typecheck`". **Verified false**: the include is `["examples/**/*.ts", "src/**/*.ts"]`, which matches only `.ts`, and `allowJs`/`checkJs` are off — `tsc --listFiles` reports **zero** files under `src/api/`, so no `.mjs` there is typechecked (`barrel-exports.mjs` never was either) | **Placement kept, rationale narrowed.** The harness stays at `packages/docs-site/src/api/jsdoc-examples.mjs` on the one rationale that does hold — it mirrors `src/api/barrel-exports.mjs`, the package's established shape for a module shared between plain-`node` scripts and the vitest specs. Widening the include to `src/**/*.mjs` with `checkJs` was rejected: it would newly typecheck five unrelated pre-existing `.mjs` modules, which is scope this plan has no mandate for |
 
 ## Gate statement
 
