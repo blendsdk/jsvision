@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-20 (re-scoped after preflight)
-> **Progress**: 0/20 tasks (0%)
+> **Last Updated**: 2026-07-20 13:47
+> **Progress**: 9/20 tasks (45%)
 > **CodeOps Skills Version**: 3.10.0
 
 ## Overview
@@ -51,7 +51,7 @@ so ST-4 would be unsatisfiable without it. PR opens against `feat/dsl-adoptation
 
 ## Phase 1: Shadow retirement
 
-> **Phase ref**: _(recorded at phase start)_
+> **Phase ref**: `a434912a`
 > **Lenses**: api-surface
 > **Routing**: complex — the replace→merge delta across 411 call sites
 
@@ -60,27 +60,27 @@ so ST-4 would be unsatisfiable without it. PR opens against `feat/dsl-adoptation
 **Reference**: [07 §ST-1…ST-4](07-testing-strategy.md) · [03-01 §Delta A/B](03-01-shadow-retirement.md) · AR-6
 **Objective**: Pin the re-exported builder's contract before the shadow is touched.
 
-- [ ] 1.1.1 [spec-author] Write ST-1, ST-2, ST-3a, ST-3b, ST-4 — `packages/examples/test/story-at.spec.test.ts`. ST-1 uses a bare `Group`; ST-4's host double is an inline literal on `view.host`
-- [ ] 1.1.2 Verify RED: ST-2, ST-3b (merge preservation, both import sites) and ST-4 (reflow) must fail against the current shadows; ST-1 and ST-3a pass. Record which failed
+- [x] 1.1.1 [spec-author] Write ST-1, ST-2, ST-3a, ST-3b, ST-4 — `packages/examples/test/story-at.spec.test.ts`. ST-1 uses a bare `Group`; ST-4's host double is an inline literal on `view.host` ✅ (completed: 2026-07-20 13:39)
+- [x] 1.1.2 Verify RED: ST-2, ST-3b (merge preservation, both import sites) and ST-4 (reflow) must fail against the current shadows; ST-1 and ST-3a pass. Record which failed ✅ (completed: 2026-07-20 13:39) — **3 failed / 2 passed, exactly as specified.** ST-2 + ST-3b: `expected { position: 'absolute' } to deeply equal { direction: 'col', padding: 1, … }` (both shadows wipe the unnamed props). ST-4: `expected +0 to be 1` (no `markRelayout`). ST-1 + ST-3a green before and after, as intended
 
 ### Step 1.2: Audit before migration
 
 **Reference**: [03-01 §The two behavioural deltas](03-01-shadow-retirement.md) · AR-6
 **Objective**: Know every site where replace→merge or the added reflow is observable — **before** any code changes.
 
-- [ ] 1.2.1 Run audit queries A1–A4 and B1 across all 411 call sites; fill the 03-01 audit table with the surfaced candidates and a per-row verdict
-- [ ] 1.2.2 Resolve every ⛔ row via the three-way rule (explicit field write + comment / neutralise before the swap / accept and record the diff). No row left unruled
-- [ ] 1.2.3 If more than a handful of ⛔ rows surface, run the optional per-story buffer sweep described in [07](07-testing-strategy.md) before proceeding. Record the decision either way
+- [x] 1.2.1 Run audit queries A1–A4 and B1 across all 411 call sites; fill the 03-01 audit table with the surfaced candidates and a per-row verdict ✅ (completed: 2026-07-20 13:47) — A1 **1** · A2 0 · A3 0 · A4 0 · B1 **0**. Table filled in 03-01. B1 empty repo-wide: every `at()` runs in `build(ctx)`, pre-mount, so the added reflow is unobservable. A2's single candidate (`tabs.story.ts:61`) cleared — the `override layout` at `tab-view.ts:138` belongs to internal `TabBody` (:136), not `TabView` (:208)
+- [x] 1.2.2 Resolve every ⛔ row via the three-way rule (explicit field write + comment / neutralise before the swap / accept and record the diff). No row left unruled ✅ (completed: 2026-07-20 13:47) — the one ⛔ (`layout.story.ts:31`→`:35`) resolved by rule **(iii) accept as a deliberate fix**, user-ruled; recorded as AR-17 (runtime) and in 03-01
+- [x] 1.2.3 If more than a handful of ⛔ rows surface, run the optional per-story buffer sweep described in [07](07-testing-strategy.md) before proceeding. Record the decision either way ✅ (completed: 2026-07-20 13:47) — run anyway despite only 1 ⛔, since the machinery was already built: **234 renders** (49 kitchen-sink + 68 datagrid-showcase stories × 72×16 and 100×30), before vs after. Result: 1 differing line, in the accepted ⛔ story; datagrid-showcase **zero diff** across all 136
 
 ### Step 1.3: Retire the exported pair
 
 **Reference**: [03-01 §Proposed Changes](03-01-shadow-retirement.md) · AR-6, AR-11
 **Objective**: One `at()` in `@jsvision/examples`; 411 call sites unchanged.
 
-- [ ] 1.3.1 Capture pre-conversion baselines: `yarn build`, then serialize the kitchen-sink shell and the datagrid-showcase walkthrough to the scratchpad
-- [ ] 1.3.2 Replace the local body with `export { at } from '@jsvision/ui'`; drop the unused `LayoutProps` import — `packages/examples/kitchen-sink/story.ts`
-- [ ] 1.3.3 Same — `packages/examples/datagrid-showcase/story.ts`
-- [ ] 1.3.4 Verify GREEN (all five ST cases) and re-serialize both showcases; require a zero diff against 1.3.1, or an accepted-and-recorded diff per 1.2.2
+- [x] 1.3.1 Capture pre-conversion baselines: `yarn build`, then serialize the kitchen-sink shell and the datagrid-showcase walkthrough to the scratchpad ✅ (completed: 2026-07-20 13:47) — full-sweep baselines captured to the scratchpad (superset of the two named showcases)
+- [x] 1.3.2 Replace the local body with `export { at } from '@jsvision/ui'`; drop the unused `LayoutProps` import — `packages/examples/kitchen-sink/story.ts` ✅ (completed: 2026-07-20 13:47) — body + JSDoc replaced with the re-export; `LayoutProps` dropped from the type import
+- [x] 1.3.3 Same — `packages/examples/datagrid-showcase/story.ts` ✅ (completed: 2026-07-20 13:47) — same
+- [x] 1.3.4 Verify GREEN (all five ST cases) and re-serialize both showcases; require a zero diff against 1.3.1, or an accepted-and-recorded diff per 1.2.2 ✅ (completed: 2026-07-20 13:47) — all five ST cases green (were 3 red / 2 green). Re-serialized: datagrid-showcase zero diff; kitchen-sink one accepted line per 1.2.2
 
 ### Step 1.4: Retire the four local placers
 
