@@ -22,6 +22,7 @@
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
+import type { DesktopApplication } from '../src/app/index.js';
 import { Input, CheckGroup, Button } from '../src/controls/index.js';
 import { Commands } from '../src/status/index.js';
 import { findDialog, replaceDialog, confirmBox, replacePrompt } from '../src/editor/dialogs.js';
@@ -65,7 +66,7 @@ function namesOf(dialog: View): Map<View, string> {
  * The dialog's focusable ring in Tab order, starting from whatever the modal focused on open.
  * Walks `focusNext()` until focus returns to the start, so the result is the complete cycle.
  */
-function focusRing(app: ReturnType<typeof createApplication>, max = 12): string[] {
+function focusRing(app: DesktopApplication, max = 12): string[] {
   const dialog = app.desktop.activeWindow()!;
   const names = namesOf(dialog);
   const nameOf = (v: View | null): string => (v === null ? '<none>' : (names.get(v) ?? v.constructor.name));

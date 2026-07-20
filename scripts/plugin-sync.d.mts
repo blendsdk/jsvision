@@ -6,15 +6,13 @@
 
 import type { DriftFinding, DriftRoots } from './check-plugin.mjs';
 
+/** The grounded drafting request: the system prompt and the user prompt built from the widget's docs. */
+export type DraftRequest = { system: string; user: string };
+
 /**
  * The minimal shape `fixUndocumentedWidgets` calls on an injected drafting client: a `draft` method
  * taking the grounded request and resolving to the raw bullet text. The real Anthropic client and a
  * test's hand-rolled fake both satisfy this structurally.
- */
-export type DraftRequest = { system: string; user: string };
-
-/**
- * The minimal shape a drafting client must satisfy.
  */
 export type DraftClient = { draft: (request: DraftRequest) => Promise<string> };
 

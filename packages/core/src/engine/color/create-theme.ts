@@ -17,6 +17,12 @@ import { rolesFromAliases } from './roles.js';
 import type { Theme, ThemeRole } from './theme.js';
 
 /** Seed colors and override hooks for {@link createTheme}. */
+/**
+ * A per-role, per-field patch onto a generated theme: every role is optional, and so is every field
+ * within a role. Patching one field leaves the rest of that role exactly as generated.
+ */
+export type RoleOverrides = { readonly [K in keyof Theme]?: Partial<Theme[K]> };
+
 export interface ThemeOptions {
   /** Light or dark: inverts which end of the neutral ramp becomes surface vs. text. */
   readonly mode: 'light' | 'dark';
@@ -38,8 +44,14 @@ export interface ThemeOptions {
   readonly info?: Color;
   /** Per-alias overrides merged after generation — an overridden alias re-drives every role that uses it. */
   readonly overrides?: Partial<ThemeColors>;
-  /** Per-role overrides deep-merged last — surgical single-role/single-field fixes. */
-  readonly roleOverrides?: Partial<Theme>;
+  /**
+   * Per-role overrides deep-merged last — surgical single-role/single-field fixes.
+   *
+   * Each role is optional, and so is each field within it: patching one field leaves the rest of that
+   * role as generated. `Partial<Theme>` cannot express that — it would make every field of a named
+   * role mandatory, forcing a caller to restate the values it does not want to change.
+   */
+  readonly roleOverrides?: RoleOverrides;
 }
 
 /** Indices into a 9-step neutral ramp (0 = darkest … 8 = lightest). */
@@ -122,7 +134,7 @@ export function aliasesFromSeeds(options: ThemeOptions): ThemeColors {
 }
 
 /** Deep-merge per-role overrides onto a base theme (per-role field-level merge). */
-function applyRoleOverrides(base: Theme, overrides: Partial<Theme>): Theme {
+function applyRoleOverrides(base: Theme, overrides: RoleOverrides): Theme {
   const out: Theme = { ...base };
   // Widen to a role map for the write; each merged value keeps its base role's extras at runtime.
   const writable = out as Record<keyof Theme, ThemeRole>;

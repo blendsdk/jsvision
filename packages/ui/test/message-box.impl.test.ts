@@ -12,6 +12,7 @@ import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
+import type { DesktopApplication } from '../src/app/index.js';
 import { messageBox, inputBox } from '../src/dialog/index.js';
 import { Input, range } from '../src/controls/index.js';
 import { signal } from '../src/reactive/index.js';
@@ -19,7 +20,7 @@ import type { View } from '../src/view/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
-function makeApp(): ReturnType<typeof createApplication> {
+function makeApp(): DesktopApplication {
   return createApplication({ caps, viewport: { width: 80, height: 24 } });
 }
 
