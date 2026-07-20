@@ -16,13 +16,12 @@ import { Commands } from '../status/index.js';
  *
  * @returns A {@link Button} labelled `OK`.
  * @example
- * import { Dialog, okButton, cancelButton, createEventLoop } from '@jsvision/ui';
+ * import { Dialog, okButton, cancelButton, createEventLoop, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
  * const dialog = new Dialog({ title: ' Confirm ', width: 30, height: 8 });
- * const ok = okButton();
- * ok.layout = { position: 'absolute', rect: { x: 6, y: 4, width: 10, height: 2 } };
+ * const ok = at(okButton(), 6, 4, 10, 2);
  * dialog.add(ok);
  * dialog.add(cancelButton());
  *
@@ -39,9 +38,8 @@ export function okButton(): Button {
  *
  * @returns A {@link Button} labelled `Cancel`.
  * @example
- * import { cancelButton } from '@jsvision/ui';
- * const cancel = cancelButton();
- * cancel.layout = { position: 'absolute', rect: { x: 18, y: 4, width: 12, height: 2 } };
+ * import { cancelButton, at } from '@jsvision/ui';
+ * const cancel = at(cancelButton(), 18, 4, 12, 2);
  * dialog.add(cancel);
  */
 export function cancelButton(): Button {
@@ -78,10 +76,10 @@ export function noButton(): Button {
  *
  * @returns A `[okButton, cancelButton]` tuple ready to lay out and add.
  * @example
- * import { okCancelButtons } from '@jsvision/ui';
+ * import { okCancelButtons, at } from '@jsvision/ui';
  * const [ok, cancel] = okCancelButtons();
- * ok.layout = { position: 'absolute', rect: { x: 6, y: 4, width: 10, height: 2 } };
- * cancel.layout = { position: 'absolute', rect: { x: 18, y: 4, width: 12, height: 2 } };
+ * at(ok, 6, 4, 10, 2);
+ * at(cancel, 18, 4, 12, 2);
  * dialog.add(ok);
  * dialog.add(cancel);
  */
@@ -94,10 +92,10 @@ export function okCancelButtons(): [Button, Button] {
  *
  * @returns A `[yesButton, noButton]` tuple ready to lay out and add.
  * @example
- * import { yesNoButtons } from '@jsvision/ui';
+ * import { yesNoButtons, at } from '@jsvision/ui';
  * const [yes, no] = yesNoButtons();
- * yes.layout = { position: 'absolute', rect: { x: 6, y: 4, width: 10, height: 2 } };
- * no.layout = { position: 'absolute', rect: { x: 18, y: 4, width: 10, height: 2 } };
+ * at(yes, 6, 4, 10, 2);
+ * at(no, 18, 4, 10, 2);
  * dialog.add(yes);
  * dialog.add(no);
  */

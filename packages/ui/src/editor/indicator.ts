@@ -27,19 +27,14 @@ function findDragSignal(v: View): Signal<boolean> | null {
  * the editor pushes it fresh values via {@link setValue}. It is passive — it never takes focus.
  *
  * @example
- * import { Group, Editor, Indicator } from '@jsvision/ui';
+ * import { Editor, Indicator, col, grow, fixed } from '@jsvision/ui';
  *
  * const editor = new Editor();
  * const indicator = new Indicator();
  * // Give the editor the indicator so it pushes the caret position/modified flag as you edit.
  * editor.attachGadgets(undefined, undefined, indicator);
  *
- * const root = new Group();
- * root.layout = { direction: 'col' };
- * editor.layout = { size: { kind: 'fr', weight: 1 } };
- * indicator.layout = { size: { kind: 'fixed', cells: 1 } };
- * root.add(editor);
- * root.add(indicator);
+ * const root = col(grow(editor), fixed(indicator, 1));
  */
 export class Indicator extends View implements IndicatorTarget {
   override focusable = false;

@@ -87,17 +87,16 @@ class ComboButton extends View {
  * (free text + filter) or select-only (read-only picker + type-ahead). See the module docs.
  *
  * @example
- * import { ComboBox, Group, createEventLoop, signal } from '@jsvision/ui';
+ * import { ComboBox, Group, createEventLoop, signal, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
  * const items = signal(['TypeScript', 'JavaScript', 'Python', 'Rust', 'Go']);
  * const value = signal<string | null>(null);
  * const combo = new ComboBox<string>({ items, getText: (s) => s, value, editable: true });
- * combo.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } };
  *
  * const controls = new Group();
- * controls.add(combo);
+ * controls.add(at(combo, 1, 1, 22, 1));
  * const loop = createEventLoop({ width: 40, height: 12 }, { caps });
  * loop.mount(controls);
  * loop.focusView(combo.input); // the field is the focus target

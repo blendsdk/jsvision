@@ -82,7 +82,7 @@ export interface CalendarOptions {
  * Enter/Space or a single click.
  *
  * @example
- * import { Group, Calendar, signal, dayOfWeek, toISO } from '@jsvision/ui';
+ * import { Group, Calendar, signal, dayOfWeek, toISO, at } from '@jsvision/ui';
  * import type { CalendarDate } from '@jsvision/ui';
  *
  * const g = new Group();
@@ -96,8 +96,7 @@ export interface CalendarOptions {
  *   onChange: (d) => console.log('picked', toISO(d)),
  * });
  * const size = cal.measure();          // size the widget to the chosen density
- * cal.layout = { position: 'absolute', rect: { x: 1, y: 0, width: size.width, height: size.height } };
- * g.add(cal);
+ * g.add(at(cal, 1, 0, size.width, size.height));
  */
 export class Calendar extends View {
   /** The calendar takes focus so its day cursor and keymap are scoped to it. */

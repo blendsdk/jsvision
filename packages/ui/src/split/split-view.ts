@@ -94,7 +94,7 @@ export interface SplitViewOptions {
  * (the divider freezes) until it grows again.
  *
  * @example
- * import { SplitView, Group, signal } from '@jsvision/ui';
+ * import { SplitView, Group, cover, signal } from '@jsvision/ui';
  *
  * const explorer = new Group();
  * const editor = new Group();
@@ -106,7 +106,7 @@ export interface SplitViewOptions {
  *   minSize: 12,                                    // neither pane below 12 cells
  *   onResizeEnd: (next) => localStorage.setItem('panes', JSON.stringify(next)), // persist once per gesture
  * });
- * split.layout = { position: 'fill' };
+ * cover(split);
  *
  * split.grabMark.set(false); // hide the ▓ grab marks on every divider; .set(true) restores them
  */

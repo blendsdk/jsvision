@@ -13,7 +13,7 @@ export type ListBoxOptions = Omit<ListViewOptions<string>, 'getText'>;
  * A single-column list of strings over a `Signal<string[]>`.
  *
  * @example
- * import { ListBox, Group, createEventLoop, signal } from '@jsvision/ui';
+ * import { ListBox, Group, createEventLoop, signal, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
@@ -21,10 +21,9 @@ export type ListBoxOptions = Omit<ListViewOptions<string>, 'getText'>;
  * const focused = signal(0);
  * const selected = signal(-1);
  * const list = new ListBox({ items, focused, selected, typeAhead: true });
- * list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 8 } };
  *
  * const root = new Group();
- * root.add(list);
+ * root.add(at(list, 0, 0, 20, 8));
  * const loop = createEventLoop({ width: 20, height: 8 }, { caps });
  * loop.mount(root);
  * loop.focusView(list.rows); // the rows renderer is the focus target, not the group

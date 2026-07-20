@@ -35,7 +35,7 @@ type DynamicBuilder = () => DynamicProducer;
  * A retained container of child views.
  *
  * @example
- * import { Group, View, createRenderRoot, type DrawContext } from '@jsvision/ui';
+ * import { View, createRenderRoot, row, grow, type DrawContext } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * class Panel extends View {
@@ -43,16 +43,11 @@ type DynamicBuilder = () => DynamicProducer;
  *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
  * }
  *
- * const root = new Group();
- * root.layout = { direction: 'row', gap: 1, padding: 1 };
- * root.background = 'desktop';
- *
  * const left = new Panel('left');
- * left.layout = { size: { kind: 'fr', weight: 1 } };
  * const right = new Panel('right');
- * right.layout = { size: { kind: 'fr', weight: 1 } };
- * root.add(left);   // added back-to-front: `left` then `right`
- * root.add(right);
+ * // Argument order is paint order, back-to-front: `left` is drawn first.
+ * const root = row({ gap: 1, padding: 1 }, grow(left), grow(right));
+ * root.background = 'desktop';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
  * createRenderRoot({ width: 40, height: 8 }, { caps }).mount(root);

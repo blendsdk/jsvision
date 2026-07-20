@@ -176,15 +176,20 @@ export interface ColorPickerOptions {
  * dropdown anchored to the field.
  *
  * @example
- * import { Group, ColorPicker, signal } from '@jsvision/ui';
+ * import { Group, ColorPicker, signal, at } from '@jsvision/ui';
  * import type { Color } from '@jsvision/core';
  *
  * const g = new Group();
  * const value = signal<Color>('red');
  *
  * // A picker with the hex field enabled so custom #rrggbb colors are allowed.
- * const picker = new ColorPicker({ value, allowCustom: true, onChange: (c) => console.log(c) });
- * picker.layout = { position: 'absolute', rect: { x: 10, y: 0, width: 20, height: 1 } };
+ * const picker = at(
+ *   new ColorPicker({ value, allowCustom: true, onChange: (c) => console.log(c) }),
+ *   10,
+ *   0,
+ *   20,
+ *   1,
+ * );
  * g.add(picker);
  * // Down / Alt+Down / clicking the ▐↓▌ button opens the swatch; Esc or an outside click cancels.
  */

@@ -64,7 +64,7 @@ export interface TreeOptions<T> {
  * not the tree.
  *
  * @example
- * import { Group, Tree, createEventLoop, signal } from '@jsvision/ui';
+ * import { Group, Tree, createEventLoop, signal, at } from '@jsvision/ui';
  * import type { TreeNode } from '@jsvision/ui';
  *
  * // A leaf is `children: []`.
@@ -82,10 +82,9 @@ export interface TreeOptions<T> {
  *   markerStyle: 'brackets', // `[+]`/`[-]` expand markers instead of the default `+`/`─`
  *   onSelect: (_i, node) => console.log('opened', node.value),
  * });
- * tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 } };
  *
  * const root = new Group();
- * root.add(tree);
+ * root.add(at(tree, 0, 0, 28, 10));
  * const loop = createEventLoop({ width: 28, height: 10 });
  * loop.mount(root);
  * loop.focusView(tree.rows); // focus the rows renderer, not the tree

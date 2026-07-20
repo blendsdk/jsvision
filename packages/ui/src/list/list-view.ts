@@ -58,7 +58,7 @@ export interface ListViewOptions<T> {
  * A single-column virtual-scroll list: a rows renderer + an owned vertical scroll bar.
  *
  * @example
- * import { ListView, Group, createEventLoop, signal } from '@jsvision/ui';
+ * import { ListView, Group, createEventLoop, signal, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * interface Person { name: string; age: number; }
@@ -71,10 +71,9 @@ export interface ListViewOptions<T> {
  *   selected,
  *   onSelect: (index, person) => console.log('chose', person.name),
  * });
- * list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 8 } };
  *
  * const root = new Group();
- * root.add(list);
+ * root.add(at(list, 0, 0, 24, 8));
  * const loop = createEventLoop({ width: 24, height: 8 }, { caps });
  * loop.mount(root);
  * loop.focusView(list.rows); // focus the rows renderer, not the group
