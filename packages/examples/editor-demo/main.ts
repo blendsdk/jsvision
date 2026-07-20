@@ -14,7 +14,7 @@
  */
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent, MouseEvent } from '@jsvision/core';
-import { Group, Editor, Indicator, createEventLoop } from '@jsvision/ui';
+import { Editor, Indicator, createEventLoop, col, fixed, grow } from '@jsvision/ui';
 import type { EditorDialogRequest, EditorDialogResult } from '@jsvision/ui';
 
 const WIDTH = 44;
@@ -63,12 +63,7 @@ async function main(): Promise<void> {
   const ind = new Indicator();
   ed.attachGadgets(undefined, undefined, ind);
 
-  const root = new Group();
-  root.layout = { direction: 'col' };
-  ed.layout = { size: { kind: 'fr', weight: 1 } };
-  ind.layout = { size: { kind: 'fixed', cells: 1 } };
-  root.add(ed);
-  root.add(ind);
+  const root = col(grow(ed), fixed(ind, 1));
   const loop = createEventLoop(
     { width: WIDTH, height: HEIGHT },
     {
