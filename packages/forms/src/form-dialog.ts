@@ -79,7 +79,7 @@ class FormDialog<S extends z.ZodObject<z.ZodRawShape>, I> extends Dialog {
     this.form = form;
     this.onSubmit = onSubmit;
     // Place children with explicit frame offsets (as the message-box helpers do), not inside a padded box.
-    this.layout = { ...this.layout, padding: 0 };
+    this.setLayout({ padding: 0 });
   }
 
   /** The values captured on a successful OK, or `null` if the dialog closed any other way. */

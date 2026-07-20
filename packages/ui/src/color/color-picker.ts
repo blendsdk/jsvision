@@ -217,7 +217,7 @@ export class ColorPicker extends Group {
     this.nameFor = opts.nameFor;
     this.onInput = opts.onInput;
     this.onChange = opts.onChange;
-    this.layout = { direction: 'row' };
+    this.setLayout({ direction: 'row' });
     this.chip = new ColorChip(this.value, this, opts.label, opts.nameFor);
     this.chip.layout = { size: { kind: 'fr', weight: 1 } };
     this.button = new ColorButton((ev) => this.open(ev));

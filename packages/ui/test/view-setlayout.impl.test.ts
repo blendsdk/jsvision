@@ -8,6 +8,10 @@ import { test, expect, vi } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { View, Group, createRenderRoot } from '../src/view/index.js';
 import type { ViewHost } from '../src/view/index.js';
+import { signal } from '../src/reactive/index.js';
+import { StatusLine } from '../src/status/index.js';
+import { ColorPicker } from '../src/color/index.js';
+import type { Color } from '@jsvision/core';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -82,6 +86,21 @@ test('ST-I3: N setLayout calls request N reflows but schedule exactly one frame'
 
   expect(child.layout.padding).toBe(5);
   pending?.();
+});
+
+// ST-I5 — the one genuinely new migration witness. Both widgets set `direction: 'row'` in their
+// constructor; nothing else in the codebase asserts it, and the ColorPicker suites overwrite that
+// layout wholesale, so the write's effect is otherwise invisible. Written green BEFORE the
+// conversion, so it witnesses that the constructor write survives it.
+//
+// Deliberately an object-shape witness only, not a geometry one: `direction:'row'` is the engine's
+// own default, so replace, merge, and deleting the line outright all solve to the same rects — a
+// bounds assertion here could not fail for any reachable reason.
+test('ST-I5: StatusLine and ColorPicker keep their constructor direction', () => {
+  expect(new StatusLine().layout.direction).toBe('row');
+
+  const picker = new ColorPicker({ value: signal<Color>('red') });
+  expect(picker.layout.direction).toBe('row');
 });
 
 // ST-I4 — setLayout replaces the object rather than mutating it in place. Sites that write

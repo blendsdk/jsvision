@@ -339,12 +339,12 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
   overlay.state.visible = false;
 
   if (opts.menuBar !== undefined) {
-    // Merge, not replace: keep any internal layout (e.g. a bar's own `direction`) and only pin the height.
-    opts.menuBar.layout = { ...opts.menuBar.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
+    // Only pin the height — the bar keeps whatever internal layout it set itself (e.g. its own `direction`).
+    opts.menuBar.setLayout({ size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } });
   }
   if (opts.statusLine !== undefined) {
-    // Merge so the status line keeps its internal `direction: 'row'` — it lays its children out itself.
-    opts.statusLine.layout = { ...opts.statusLine.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
+    // Height only: the status line keeps its internal `direction: 'row'` — it lays its children out itself.
+    opts.statusLine.setLayout({ size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } });
   }
 
   // The shared cell the loop's built-in quit registration resolves through; `run()` fills it in.

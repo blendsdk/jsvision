@@ -6,7 +6,7 @@
  * implementation is wrong.
  */
 import { test, expect } from 'vitest';
-import { View } from '../src/view/index.js';
+import { View, fixed } from '../src/view/index.js';
 import type { ViewHost } from '../src/view/index.js';
 import { layout } from '../src/layout/index.js';
 import type { LayoutBox } from '../src/layout/index.js';
@@ -79,6 +79,21 @@ test('ST-S9: an explicit undefined resets the prop to its layout default', () =>
   const child: LayoutBox = { props: v.layout, children: [], measure: () => ({ width: 7, height: 1 }) };
   const solved = layout({ props: { direction: 'row' }, children: [child] }, { width: 20, height: 3 });
   expect(solved.get(child)?.width).toBe(7);
+});
+
+// ST-S5 — applying a DSL tagger to an ALREADY-MOUNTED view requests a reflow. This specifies new
+// behaviour rather than witnessing a repaired bug: today a caller must remember to invalidate after
+// re-tagging, which is the "set and forget silently doesn't reflow" footgun. Red until the taggers
+// route through setLayout.
+test('ST-S5: a tagger applied to a mounted view calls markRelayout', () => {
+  const v = new Leaf();
+  const { host, relayouts } = countingHost();
+  v.host = host;
+
+  fixed(v, 2);
+
+  expect(v.layout.size).toEqual({ kind: 'fixed', cells: 2 });
+  expect(relayouts()).toBe(1);
 });
 
 // ST-S4 — an unmounted view has no host; the call must still merge and must not throw.
