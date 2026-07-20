@@ -39,8 +39,7 @@ export function applyMove(g: Extract<Gesture, { kind: 'move' }>, local: Point, d
   const rect = rectOf(g.target);
   const x = clamp(local.x - g.grabDX, 1 - rect.width, deskW - 1);
   const y = clamp(local.y - g.grabDY, 0, deskH - 1);
-  g.target.layout.rect = { x, y, width: rect.width, height: rect.height };
-  g.target.invalidateLayout();
+  g.target.setLayout({ rect: { x, y, width: rect.width, height: rect.height } });
 }
 
 /**
@@ -54,7 +53,7 @@ export function applyResize(g: Extract<Gesture, { kind: 'resize' }>, local: Poin
   const rect = rectOf(g.target);
   const width = Math.max(g.target.minWidth, local.x - g.originX + 1);
   const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
-  g.target.layout.rect = { x: rect.x, y: rect.y, width, height };
+  g.target.setLayout({ rect: { x: rect.x, y: rect.y, width, height } });
   g.target.onResized(); // re-pin the window's children to the new size before the repaint reads them
   g.target.invalidateLayout();
 }
@@ -72,7 +71,7 @@ export function applyResizeLeft(g: Extract<Gesture, { kind: 'resize-left' }>, lo
   const x = Math.min(local.x, g.anchorRight - g.target.minWidth + 1);
   const width = g.anchorRight - x + 1;
   const height = Math.max(g.target.minHeight, local.y - g.originY + 1);
-  g.target.layout.rect = { x, y: g.originY, width, height };
+  g.target.setLayout({ rect: { x, y: g.originY, width, height } });
   g.target.onResized(); // re-pin the window's children to the new size before the repaint reads them
   g.target.invalidateLayout();
 }

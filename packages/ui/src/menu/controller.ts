@@ -184,7 +184,7 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
     popup.isEnabled = isEnabled;
     const width = popupWidth(items);
     const height = items.length + 2; // top + bottom border
-    popup.layout = { position: 'absolute', rect: clampRect(anchorX, anchorY, width, height) };
+    popup.setLayout({ position: 'absolute', rect: clampRect(anchorX, anchorY, width, height) });
     popup.onPick = (row) => pickRow(popup, row);
     overlay.add(popup);
     levels.push({ items, popup });

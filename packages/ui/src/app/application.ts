@@ -329,14 +329,24 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
   // view, or the default Desktop window manager. Only a Desktop body gets window commands + focus.
   const body: View = opts.content ?? new Desktop();
   const isDesktop = body instanceof Desktop;
-  // Assigned wholesale rather than tagged: a caller's own layout on the content view is
-  // intentionally discarded, so the shell governs the body's sizing no matter what the caller set.
-  body.layout = { size: { kind: 'fr', weight: 1 } };
+  // Every other prop is reset explicitly, not merely left unset: a caller's own layout on the content
+  // view is intentionally discarded, so the shell governs the body's sizing no matter what the caller
+  // set. An explicit `undefined` clears a prop back to its layout default.
+  body.setLayout({
+    size: { kind: 'fr', weight: 1 },
+    direction: undefined,
+    justify: undefined,
+    align: undefined,
+    gap: undefined,
+    padding: undefined,
+    position: undefined,
+    rect: undefined,
+  });
 
   // The full-screen overlay popups mount into. It sits on top and stays hidden (so it neither paints
   // nor intercepts clicks) until a popup is added.
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } });
   overlay.state.visible = false;
 
   if (opts.menuBar !== undefined) {
@@ -434,8 +444,7 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
   // bounds, then repaints once more, on both real and headless resizes.
   const menu = opts.menuBar;
   loop.onResize = (size) => {
-    overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } };
-    overlay.invalidateLayout();
+    overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } });
     menu?.controller?.resize();
     if (isDesktop) (body as Desktop).handleViewportResize();
   };

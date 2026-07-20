@@ -147,9 +147,9 @@ export class Tree<T> extends Group {
       toggle: (node) => this.toggle(node),
       expandSubtree: (node) => this.expandSubtree(node),
     });
-    this.rows.layout = { size: { kind: 'fr', weight: 1 } };
+    this.rows.setLayout({ size: { kind: 'fr', weight: 1 } });
     this.bar = new ScrollBar({ value: this.focused, orientation: 'vertical' });
-    this.bar.layout = { size: { kind: 'fixed', cells: 1 } };
+    this.bar.setLayout({ size: { kind: 'fixed', cells: 1 } });
     this.rows.bar = this.bar; // the rows renderer re-limits the bar's range on every draw
 
     this.add(this.rows); // z-order: rows (left) then bar (right)

@@ -110,13 +110,13 @@ export class ListView<T> extends Group {
       roles: opts.roles,
       numCols: opts.numCols,
     });
-    this.rows.layout = { size: { kind: 'fr', weight: 1 } };
+    this.rows.setLayout({ size: { kind: 'fr', weight: 1 } });
     this.bar = opts.bar ?? new ScrollBar({ value: this.focused, orientation: 'vertical' });
     this.rows.bar = this.bar; // the rows renderer re-limits the bar's range on each draw
 
     if (opts.bar === undefined) {
       // Default: this view owns + lays out the vertical right-edge bar as a `[rows fr | bar 1]` child.
-      this.bar.layout = { size: { kind: 'fixed', cells: 1 } };
+      this.bar.setLayout({ size: { kind: 'fixed', cells: 1 } });
       this.add(this.rows); // z-order: rows (left) then bar (right)
       this.add(this.bar);
     } else {

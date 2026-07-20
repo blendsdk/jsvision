@@ -144,7 +144,7 @@ export class SplitView extends Group implements SplitOwner {
     // The inner track carries the real layout. It exists so a caller assigning `split.layout` (a whole
     // object write) can never clobber the container's own direction — the TabView precedent.
     this.track = new Group();
-    this.track.layout = { position: 'fill', direction: this.direction, gap: 0 };
+    this.track.setLayout({ position: 'fill', direction: this.direction, gap: 0 });
 
     // Interleave panes and 1-cell splitters. `sizes` length normalization is deferred to applyWeights
     // (it re-runs on every write of the caller-owned signal), so here just seed valid pane weights.

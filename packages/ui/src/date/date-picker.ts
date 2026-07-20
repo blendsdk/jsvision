@@ -137,7 +137,7 @@ export class DatePicker extends Group {
       maxLength: this.spec.mask.length,
       placeholder: opts.placeholder,
     });
-    this.input.layout = { size: { kind: 'fr', weight: 1 } };
+    this.input.setLayout({ size: { kind: 'fr', weight: 1 } });
     this.button = new DateButton((ev) => this.open(ev));
     this.add(this.input);
     this.add(this.button);
