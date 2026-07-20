@@ -220,7 +220,7 @@ export abstract class View {
    * Change some of this view's {@link layout} props and request a reflow — the preferred way to write
    * layout. Props the patch does not name are kept, and the reflow happens for you, so the two ways
    * a direct `view.layout = {…}` assignment goes wrong (silently dropping the props you left out, and
-   * never repainting) cannot happen.
+   * never reflowing) cannot happen.
    *
    * The merge is **shallow**, deliberately: `size` and `rect` are replaced whole rather than merged
    * field-by-field. That is what makes a variant swap correct — going from `{kind:'fixed',cells:1}` to
@@ -245,7 +245,7 @@ export abstract class View {
    *
    * const panel = new Group();
    * panel.setLayout({ direction: 'col', padding: 1 });
-   * // Later — `direction` and `padding` survive, and the tree reflows:
+   * // Later — `direction` and `padding` survive; once `panel` is mounted this also reflows:
    * panel.setLayout({ size: { kind: 'fr', weight: 1 } });
    */
   setLayout(patch: Partial<LayoutProps>): void {
