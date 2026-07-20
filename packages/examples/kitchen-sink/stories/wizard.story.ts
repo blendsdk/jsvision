@@ -110,7 +110,7 @@ export const wizardStory: Story = {
     };
 
     const buildReview = (): ScreenBundle => {
-      const row = (label: string, value: () => string): Text => new Text(() => `${label.padEnd(10)}${value()}`);
+      const fieldRow = (label: string, value: () => string): Text => new Text(() => `${label.padEnd(10)}${value()}`);
       const raw = (): ReturnType<typeof form.rawValues> => form.rawValues();
       const result = new Text(() => (submitted() ? `✓ Submitted: ${submitted()}` : ''));
       const back = new Button('Back', { onClick: () => router.back() });
@@ -125,7 +125,7 @@ export const wizardStory: Story = {
       screen.add(at(new Text('Step 3 of 3: Review'), 1, 0, 40, 1));
       screen.add(
         at(
-          row('Name:', () => raw().name),
+          fieldRow('Name:', () => raw().name),
           1,
           2,
           44,
@@ -134,7 +134,7 @@ export const wizardStory: Story = {
       );
       screen.add(
         at(
-          row('Email:', () => raw().email),
+          fieldRow('Email:', () => raw().email),
           1,
           3,
           44,
@@ -143,7 +143,7 @@ export const wizardStory: Story = {
       );
       screen.add(
         at(
-          row('Mode:', () => raw().mode),
+          fieldRow('Mode:', () => raw().mode),
           1,
           4,
           44,
@@ -152,7 +152,7 @@ export const wizardStory: Story = {
       );
       screen.add(
         at(
-          row('Features:', () => raw().features.join(', ')),
+          fieldRow('Features:', () => raw().features.join(', ')),
           1,
           5,
           44,
@@ -161,7 +161,7 @@ export const wizardStory: Story = {
       );
       screen.add(
         at(
-          row('TLS:', () => (raw().tls ? 'On' : 'Off')),
+          fieldRow('TLS:', () => (raw().tls ? 'On' : 'Off')),
           1,
           6,
           44,
