@@ -2,8 +2,8 @@
 
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
-> **Last Updated**: 2026-07-21 (Phase 3 complete — canvases converted, shadows retired)
-> **Progress**: 52/55 tasks (95%)
+> **Last Updated**: 2026-07-21 (Phase 4 — roadmaps synced; the issue close-out awaits a merge decision)
+> **Progress**: 53/55 tasks (96%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -332,7 +332,7 @@ second time in this plan that `git checkout` on a dirty tree cost work.
 > **Routing**: trivial
 
 - [ ] 4.1.1 Close #132, #117, #129 with measured close-out comments; note #131 remains open as the uncoupled lane
-- [ ] 4.1.2 Roadmap sync + portfolio cascade; the epic #108 umbrella can close once #117 and #129 do
+- [x] 4.1.2 Roadmap sync + portfolio cascade; the epic #108 umbrella can close once #117 and #129 do — *done 2026-07-21*. Feature roadmap: #117 🔄 → ✅, new ✅ rows for #132 and #129, #108 ⬜ → 🔄 (**code-complete in-branch, closes on merge**), progress 11/12 → 12/12 in-branch. Portfolio `codeops/00-roadmap.md` re-rolled with the three-issue result. Stage is deliberately *not* ✅ on the epic: the work sits 78 commits ahead of `develop` and unmerged, and the roadmap should not read done for code that has not shipped
 - [ ] 4.1.3 `yarn lint:fix`, commit what it changes, final `yarn verify` (prime directive)
 
 **Verify**: `yarn verify`
