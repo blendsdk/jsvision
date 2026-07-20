@@ -4,7 +4,7 @@
  * jumps to the next match. The owned scroll bar tracks the focused row; a live
  * echo shows the focused and selected items.
  */
-import { Group, ListBox, Text, signal, View } from '@jsvision/ui';
+import { ListBox, Text, signal, cover, col, grow, fixed, spacer } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 
 const FRUITS = [
@@ -38,15 +38,6 @@ const FRUITS = [
   'Strawberry',
 ];
 
-const WIDTH = 40;
-const HEIGHT = 12;
-
-/** Absolutely place a view within the example's box. */
-function at<V extends View>(view: V, x: number, y: number, width: number, height: number): V {
-  view.layout = { position: 'absolute', rect: { x, y, width, height } };
-  return view;
-}
-
 export default defineExample({
   title: 'List box',
   blurb: 'A virtual-scroll list with type-ahead: arrows / PgDn move, Enter selects, type a prefix to jump.',
@@ -56,21 +47,16 @@ export default defineExample({
     const selected = signal(-1);
     const list = new ListBox({ items, focused, selected, typeAhead: true });
 
-    const group = at(new Group(), 0, 0, WIDTH, HEIGHT);
-    group.add(at(list, 0, 0, WIDTH, 9));
-    group.add(
-      at(
-        new Text(() => {
-          const focus = items()[focused()] ?? '-';
-          const pick = selected() >= 0 ? (items()[selected()] ?? '-') : '(none)';
-          return `focused: ${focus}   selected: ${pick}`;
-        }),
-        0,
-        10,
-        WIDTH,
-        1,
-      ),
-    );
-    return group;
+    const echo = new Text(() => {
+      const focus = items()[focused()] ?? '-';
+      const pick = selected() >= 0 ? (items()[selected()] ?? '-') : '(none)';
+      return `focused: ${focus}   selected: ${pick}`;
+    });
+
+    // The list takes every row the shell offers, a one-cell gap separates it from the echo, and the
+    // echo keeps exactly one row. `spacer({ fixed: 1 })` is the hard gap -- a bare `spacer(1)` would
+    // ask for a 1fr *share* and swallow half the column. `cover()` makes the column fill its host;
+    // a column with no extent of its own would collapse to nothing.
+    return cover(col(grow(list), spacer({ fixed: 1 }), fixed(echo, 1)));
   },
 });

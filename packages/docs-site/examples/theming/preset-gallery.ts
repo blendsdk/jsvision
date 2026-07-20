@@ -5,14 +5,8 @@
  * widget below repaints live: theme swaps are one recompose, a depth change
  * re-mounts to downsample the palette (truecolor → 256 → 16 → mono).
  */
-import { Group, Button, Input, Label, CheckGroup, RadioGroup, Text, signal, View } from '@jsvision/ui';
+import { Group, Button, Input, Label, CheckGroup, RadioGroup, Text, signal, at } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
-
-/** Absolutely place a view within the example's box. */
-function at<V extends View>(view: V, x: number, y: number, width: number, height: number): V {
-  view.layout = { position: 'absolute', rect: { x, y, width, height } };
-  return view;
-}
 
 export default defineExample({
   title: 'Theme gallery',
