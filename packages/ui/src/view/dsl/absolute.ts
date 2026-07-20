@@ -6,6 +6,9 @@
  * These are the escape hatch for canvases, dialog frames, and pixel-exact geometry — **prefer
  * `col`/`row`; reach for these only when flex flow can't express the placement.** Because they only
  * set ordinary `layout` props, the result reflows exactly like a hand-built tree.
+ *
+ * Re-tagging a view that is **already mounted** requests a reflow for you, so there is no need to
+ * follow one of these with a manual `invalidateLayout()`.
  */
 import { View } from '../view.js';
 import type { Rect } from '../../layout/index.js';
