@@ -45,7 +45,7 @@ test('ST-W3: TabView discards the caller layout on a tab content view', () => {
   content.layout = { padding: 2, size: { kind: 'fixed', cells: 3 } };
 
   const tabs = signal<Tab[]>([{ title: '~G~eneral', content }]);
-  const view = new TabView({ tabs: () => tabs(), active: () => 0 });
+  const view = new TabView({ tabs, active: signal(0) });
   mount(view);
 
   // Exactly the shell's descriptor — the caller's `padding` AND `size` are both gone.

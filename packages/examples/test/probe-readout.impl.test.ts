@@ -10,7 +10,9 @@ import { formatEventLine, runLiveReadout } from '../capability-probe/live-readou
 import type { InputEvent } from '@jsvision/core';
 
 test('wheel and focus events format with direction / state', () => {
-  expect(formatEventLine({ type: 'wheel', dir: 'up', x: 3, y: 4 })).toBe('wheel: up @ 3,4');
+  expect(formatEventLine({ type: 'wheel', dir: 'up', x: 3, y: 4, shift: false, alt: false, ctrl: false })).toBe(
+    'wheel: up @ 3,4',
+  );
   expect(formatEventLine({ type: 'focus', focused: true })).toBe('focus: in');
   expect(formatEventLine({ type: 'focus', focused: false })).toBe('focus: out');
 });

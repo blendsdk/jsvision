@@ -22,7 +22,7 @@
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { at, Group, createRoot } from '@jsvision/ui';
-import type { View } from '@jsvision/ui';
+import { View } from '@jsvision/ui';
 import { demoShell } from '../src/demo-shell.js';
 import listBox from '../examples/containers/list-box.js';
 
@@ -81,7 +81,14 @@ test('ST-12: the demo shell places a flex-rooted example without dropping its di
   createRoot((dispose) => {
     let root!: View;
     const app = demoShell({
-      build: (ctx) => (root = listBox.build(ctx)),
+      // The registry's `build` may return an Application (for an 'app' example) or a View; this one is
+      // a component example, so anything else is a broken fixture rather than a case to handle.
+      build: (ctx) => {
+        const built = listBox.build(ctx);
+        if (!(built instanceof View)) throw new Error('the listBox example no longer builds a View');
+        root = built;
+        return built;
+      },
       title: listBox.title,
       kind: 'component',
       caps,

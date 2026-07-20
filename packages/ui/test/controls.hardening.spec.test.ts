@@ -24,7 +24,7 @@ function mouse(kind: MouseEvent['kind'], x: number, y: number): MouseEvent {
   return { type: 'mouse', kind, button: 0, x, y };
 }
 function paste(text: string): PasteEvent {
-  return { type: 'paste', text };
+  return { type: 'paste', text, truncated: false }; // this fixture never exercises the size-cap path
 }
 
 /** A focusable no-draw stub — the "other dialog control" for dialog-wide-hotkey / drag-guard cases. */

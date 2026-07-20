@@ -50,6 +50,8 @@ test('bindField throws FormFieldError for a foreign field handle', () => {
     error: () => null,
     touched: () => false,
     dirty: () => false,
+    validating: () => false,
+    asyncError: () => null,
   };
   const view = new Input({ value: signal('') });
   expect(() => bindField(foreign, view)).toThrow(FormFieldError);

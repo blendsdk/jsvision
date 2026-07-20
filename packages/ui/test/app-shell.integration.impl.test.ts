@@ -24,7 +24,7 @@ import {
   statusItem,
   Commands,
 } from '@jsvision/ui';
-import type { Application, DrawContext, Size2D } from '@jsvision/ui';
+import type { DesktopApplication, DrawContext, Size2D } from '@jsvision/ui';
 import { FakeRuntime, CaptureStream, FakeInput } from './app-shell-host-doubles.js';
 
 /** A leaf that fills a window's interior — a stub-handler content view (does not handle clicks). */
@@ -69,7 +69,9 @@ function caps(): CapabilityProfile {
 }
 
 interface Harness {
-  app: Application;
+  // `createApplication` is called below with no `content`, so it always returns a Desktop app — the
+  // precise type lets callers read `app.desktop` without a null check.
+  app: DesktopApplication;
   input: FakeInput;
   output: CaptureStream;
   runtime: FakeRuntime;

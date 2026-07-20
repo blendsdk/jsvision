@@ -8,14 +8,17 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
-import { createTheme, aliasesFromSeeds, type ThemeRole } from '../src/engine/index.js';
+import { createTheme, aliasesFromSeeds, type Color, type ThemeRole } from '../src/engine/index.js';
 
 /** Every color-valued field on a role (fg/bg + optional hotkey + structural color extras). */
 function colorFields(role: ThemeRole): string[] {
-  const r = role as Record<string, unknown>;
   const out: string[] = [role.fg, role.bg];
-  for (const key of ['hotkey', 'border', 'title', 'icon']) {
-    if (typeof r[key] === 'string') out.push(r[key] as string);
+  // Some roles carry structural extras (border/title/icon) beyond the base ThemeRole
+  // shape; an optional-extras view reads them without an unsound object-shape cast.
+  const extras: Partial<Record<'hotkey' | 'border' | 'title' | 'icon', Color>> = role;
+  for (const key of ['hotkey', 'border', 'title', 'icon'] as const) {
+    const value = extras[key];
+    if (typeof value === 'string') out.push(value);
   }
   return out;
 }
@@ -64,7 +67,7 @@ test('danger/warning drive exactly dangerText/warningText — the sentinel lands
   // Sentinel hexes unlikely to be produced by the neutral ramp or to equal another alias. Each must
   // surface in its own severity-text role and in NO other role — proof danger/warning drive those two
   // roles and nothing more.
-  const sentinels: [string, string][] = [
+  const sentinels: [Color, Color][] = [
     ['#dead01', '#beef02'],
     ['#c0ffee', '#faded0'],
   ];

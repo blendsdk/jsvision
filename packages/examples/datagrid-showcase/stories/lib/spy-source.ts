@@ -15,6 +15,13 @@ import type { GridColumn, GridDataSource, SortKey, FilterModel } from '@jsvision
 
 /** A {@link GridDataSource} that records the last pushed-down sort/filter model (both reactive). */
 export interface SpySource<T> extends GridDataSource<T> {
+  /**
+   * Push a sort model down. Required here, unlike the optional base seam — implementing it is the
+   * entire reason this source exists, so a caller never has to test for its presence.
+   */
+  setSort(keys: SortKey[]): void;
+  /** Push a filter model down. Required here for the same reason as {@link SpySource.setSort}. */
+  setFilter(model: FilterModel): void;
   /** The last sort model pushed down via `setSort` (reactive — read it in an effect to drive an echo). */
   lastSort(): SortKey[];
   /** The last filter model pushed down via `setFilter` (reactive). */

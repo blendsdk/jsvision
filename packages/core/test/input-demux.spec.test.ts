@@ -14,10 +14,22 @@
 import { test, expect } from 'vitest';
 
 import { matchResponse } from '../src/engine/capability/responses.js';
+import type { ResponseMatch, ResponseScan } from '../src/engine/capability/responses.js';
 import { createDecoderState, decode } from '../src/engine/input/decoder.js';
 import type { FocusEvent } from '../src/engine/input/events.js';
 
 const enc = new TextEncoder();
+
+/**
+ * Narrow a scan result to a completed match, failing loudly if it is not one. The scanner also
+ * reports `'incomplete'` and `null`, and a test that read `.kind` off either would be asserting
+ * against `undefined` rather than the classification it means to check.
+ */
+function matched(scan: ResponseScan): ResponseMatch {
+  if (scan === null || scan === 'incomplete') throw new Error(`expected a completed match, got ${String(scan)}`);
+  return scan;
+}
+
 
 // ---------------------------------------------------------------------------
 // ST-14 — shared classifier recognises every query-response grammar (PL-2)
@@ -28,8 +40,8 @@ test("ST-14: matchResponse classifies primary DA as 'da1'", () => {
   const bytes = enc.encode('\x1b[?64;1;2c');
   const match = matchResponse(bytes, 0);
   expect(match !== null).toBeTruthy();
-  expect(match.kind).toBe('da1');
-  expect(match.end).toBe(bytes.length);
+  expect(matched(match).kind).toBe('da1');
+  expect(matched(match).end).toBe(bytes.length);
 });
 
 // ST-14b: a secondary DA reply (`ESC [ > … c`) classifies as 'da2'.
@@ -37,8 +49,8 @@ test("ST-14: matchResponse classifies secondary DA as 'da2'", () => {
   const bytes = enc.encode('\x1b[>0;276;0c');
   const match = matchResponse(bytes, 0);
   expect(match !== null).toBeTruthy();
-  expect(match.kind).toBe('da2');
-  expect(match.end).toBe(bytes.length);
+  expect(matched(match).kind).toBe('da2');
+  expect(matched(match).end).toBe(bytes.length);
 });
 
 // ST-14c: a `?2026` DECRPM reply classifies as 'decrpm' and carries the sync hint.
@@ -46,9 +58,9 @@ test("ST-14: matchResponse classifies ?2026 DECRPM as 'decrpm' with sync hint", 
   const bytes = enc.encode('\x1b[?2026;1$y');
   const match = matchResponse(bytes, 0);
   expect(match !== null).toBeTruthy();
-  expect(match.kind).toBe('decrpm');
-  expect(match.end).toBe(bytes.length);
-  expect(match.hint.sync2026).toBe(true);
+  expect(matched(match).kind).toBe('decrpm');
+  expect(matched(match).end).toBe(bytes.length);
+  expect(matched(match).hint.sync2026).toBe(true);
 });
 
 // ST-14d: an XTVERSION DCS reply (`ESC P … ESC \`) classifies as 'xtversion'.
@@ -56,8 +68,8 @@ test("ST-14: matchResponse classifies XTVERSION DCS as 'xtversion'", () => {
   const bytes = enc.encode('\x1bP>|foot(1.0)\x1b\\');
   const match = matchResponse(bytes, 0);
   expect(match !== null).toBeTruthy();
-  expect(match.kind).toBe('xtversion');
-  expect(match.end).toBe(bytes.length);
+  expect(matched(match).kind).toBe('xtversion');
+  expect(matched(match).end).toBe(bytes.length);
 });
 
 // ST-14e: non-grammar bytes are not a response → null (so the decoder treats

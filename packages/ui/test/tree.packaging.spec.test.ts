@@ -16,9 +16,11 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { resolveCapabilities } from '@jsvision/core';
-import { Group, createRenderRoot } from '../src/view/index.js';
-import { signal } from '../src/reactive/index.js';
-import { Tree } from '@jsvision/ui';
+// Group/createRenderRoot/signal are pulled from the same `@jsvision/ui` package boundary as `Tree`
+// (not `../src/...`): `View` carries protected members, so a source-side `View` and the built
+// package's `View` are two structurally-identical but nominally distinct classes — mixing them makes
+// `Group.add(tree)` a type error even though both are "the same" class at runtime.
+import { Group, createRenderRoot, signal, Tree } from '@jsvision/ui';
 import type { TreeNode } from '@jsvision/ui';
 
 const here = dirname(fileURLToPath(import.meta.url));

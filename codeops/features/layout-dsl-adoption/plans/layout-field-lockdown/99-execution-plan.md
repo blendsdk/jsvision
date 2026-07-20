@@ -3,7 +3,7 @@
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
 > **Last Updated**: 2026-07-20
-> **Progress**: 5/54 tasks (9%)
+> **Progress**: 10/54 tasks (19%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
 > **Execution rules**
@@ -37,16 +37,27 @@
 > `TS2209`, which aborts resolution and hid 80 real errors during measurement.
 
 - [x] 1.3.1 `examples`: `include: ["**/*.ts"]` (`rootDir` is already `"."`); clear the ~25 ordinary errors. Latent defects deferred to 1.4.1 — *done 2026-07-20*: 25 errors exactly as measured; 17 cleared, the 8 latent left for 1.4.1. Three findings the compiler had been hiding: `files-demo`'s in-memory `FileSystem` never grew the four content methods the interface gained; `tvedit-demo` called `createTerminalQuery` with two positional arguments it does not take and overrode a `CapabilityProfile` field (`input`) that does not exist, so its mouse/unicode overrides were silently doing nothing; and `vitest.config.ts`'s `singleFork: true` had been ignored since the runner dropped that switch. ST-1 and ST-2 are now **green**; ST-3 is down to 7 packages
-- [ ] 1.3.2 `ui`: add `tsconfig.typecheck.json` + script; clear 80 errors / 50 files
-- [ ] 1.3.3 `core`: same; clear 65 / 32 (18 in `input-demux.spec`, 16 in `input-responses.impl`)
+- [x] 1.3.2 `ui`: add `tsconfig.typecheck.json` + script; clear 80 errors / 50 files — *done 2026-07-20*: 80 exactly. Every one was a test-side fixture or annotation fault; no implementation defect. Two recurring shapes: `new Button(text, 'cmd')` (the second argument is an options object) and `ReturnType<typeof createApplication>`, a deferred conditional that resolves to `any`
+- [x] 1.3.3 `core`: same; clear 65 / 32 (18 in `input-demux.spec`, 16 in `input-responses.impl`) — *done 2026-07-20*: **61**, not 65 — the `.mjs` seam had already retired the `gate.spec` and `perf-budget` imports. The 34 input errors were one root cause: the scanner returns `ResponseMatch | 'incomplete' | null` and the oracles read `.kind` off it unnarrowed, so a `'incomplete'` result would have asserted against `undefined`. A shared `matched()` narrowing helper *strengthens* those oracles
 - [x] 1.3.4 `docs-site`: add `test/**/*.ts` to its existing include; clear **18** errors. Ordinary ones only — the 2 latent defects go to 1.4.1 — *done 2026-07-20*: **4**, not 18. The `.mjs` seam from 1.2.1 had already retired 14 of them (`jsdoc-examples`, `barrel-exports`, `inject-back-links`, `validate-api-map`), which is the first hard evidence that seam works. Two cleared here (`dialog-reopen.spec` reached an optional `Application.desktop`); the two named latent defects remain for 1.4.1
 - [x] 1.3.5 `forms` (5) · `theme-designer` (**5** — the package **does** have a `test/`, contrary to the original inventory) · `files` (3) · `web` (0 — confirm) — *done 2026-07-20*: every count exact. `web` confirmed at 0. `theme-designer` and `files` cleared. **`forms`' 5 errors are the same 5 the plan books as latent defects**, so 1.3.5 only turns its config on and 1.4.1 clears them — the package's `typecheck` stays red until then, by design. `theme-designer/test/app.impl.test.ts` imported `FileSystem` from `@jsvision/core`, which never exported it (it lives in `@jsvision/files`)
-- [ ] 1.3.6 Cross-package test imports that cannot resolve: follow datagrid's documented `exclude` precedent, with a comment saying why
-- [ ] 1.3.7 Re-evaluate datagrid's three existing exclusions now that `core/test` is typechecked — their in-file rationale ("core never typechecks its `test/`") no longer holds. Fix with the `.d.mts` seam where possible; update the comment either way
+- [x] 1.3.6 Cross-package test imports that cannot resolve: follow datagrid's documented `exclude` precedent, with a comment saying why — *done 2026-07-20*: **none arose**. No package outside datagrid needed a new exclusion
+- [x] 1.3.7 Re-evaluate datagrid's three existing exclusions now that `core/test` is typechecked — their in-file rationale ("core never typechecks its `test/`") no longer holds. Fix with the `.d.mts` seam where possible; update the comment either way — *done 2026-07-20*: one of the three is retired. `perf-grid-bench.spec` is back in the program because `frame-bench.d.mts` removed its only objection. The other two import a `.ts` helper from `core/test` by workspace-relative path, which is a genuine cross-package `rootDir` violation (`TS6059`) rather than a missing declaration; the comment now says exactly that
 
 ### Step 1.4 — The latent defects
 
-- [ ] 1.4.1 **One verdict each** — 4× `TS2722` + `TS2554` + `TS2345` + 2× `TS2740` in `examples/test`, 4× `TS2322` + `TS2739` in `forms/test`, `TS2345` at `docs-site/test/demo-shell.spec.test.ts:82`, `TS2322` at `docs-site/test/example-at.spec.test.ts:84`. Record *fixture wrong* or *assertion weaker than it reads*; no blanket non-null assertions
+- [x] 1.4.1 **One verdict each** — 4× `TS2722` + `TS2554` + `TS2345` + 2× `TS2740` in `examples/test`, 4× `TS2322` + `TS2739` in `forms/test`, `TS2345` at `docs-site/test/demo-shell.spec.test.ts:82`, `TS2322` at `docs-site/test/example-at.spec.test.ts:84`. Record *fixture wrong* or *assertion weaker than it reads*; no blanket non-null assertions — *done 2026-07-20*. Verdicts:
+
+| Site | Verdict |
+|---|---|
+| `examples/test/datagrid-showcase.spy-source` ×4 | **Assertion weaker than it reads.** `SpySource` extended `GridDataSource` without re-declaring `setSort`/`setFilter` as required, so the type said *maybe implemented* about the two seams the source exists to implement. Made required |
+| `examples/test/probe-nontty` ×2 | **Fixture wrong.** It injected `input`/`output` — the interactive TTY streams — into a run that asserts the *non*-TTY path, where neither is ever bound. Dropped; the test is unchanged otherwise |
+| `examples/test/probe-readout` | **Fixture wrong.** The wheel-event literal predates the modifier fields; added as `false` |
+| `examples/test/recipes.smoke` | **Fixture wrong.** `Sparkline.measure()` takes no argument; the available box handed to it was being ignored |
+| `forms/test/async` ×4 | **Fixture wrong.** `((v) => seen.push(v))` returns a number into a `void \| Promise<void>` callback — a union does not get TypeScript's ignored-return exemption. Braced |
+| `forms/test/bind-field` | **Fixture wrong.** The hand-built `Field` literal predates `validating`/`asyncError` |
+| `docs-site/test/demo-shell:82` | **Assertion weaker than it reads.** The helper's structural parameter type asserted `desktop` is always present, dodging the optionality instead of checking it. Now takes `Application` and guards |
+| `docs-site/test/example-at:84` | **Assertion weaker than it reads.** A registry `build` returns `Application \| View`; the assignment assumed a View without saying so. Now guards |
 
 ### Step 1.5 — Accept
 

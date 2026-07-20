@@ -15,6 +15,7 @@ import {
   defaultTheme,
   toRgb,
   contrastRatio,
+  type Color,
   type ThemeColors,
   type Theme,
 } from '../src/engine/index.js';
@@ -75,9 +76,13 @@ test('ST-9: every role in a createTheme output parses via toRgb without throwing
   for (const [name, role] of Object.entries(theme) as [keyof Theme, Theme[keyof Theme]][]) {
     expect(() => toRgb(role.fg), `${name}.fg resolvable`).not.toThrow();
     expect(() => toRgb(role.bg), `${name}.bg resolvable`).not.toThrow();
+    // Some roles carry structural extras (border/title/icon/hotkey) beyond the base ThemeRole
+    // shape; an optional-extras view reads them without an unsound object-shape cast.
+    const extras: Partial<Record<'border' | 'title' | 'icon' | 'hotkey', Color>> = role;
     for (const extra of ['border', 'title', 'icon', 'hotkey'] as const) {
-      if (extra in role) {
-        expect(() => toRgb((role as Record<string, string>)[extra]), `${name}.${extra} resolvable`).not.toThrow();
+      const value = extras[extra];
+      if (value !== undefined) {
+        expect(() => toRgb(value), `${name}.${extra} resolvable`).not.toThrow();
       }
     }
   }
@@ -93,7 +98,13 @@ test('ST-10: an accent override re-drives accent-derived roles', () => {
 
 test('ST-10: a roleOverride changes only the targeted key', () => {
   const base = createTheme({ mode: 'dark', accent: '#3b82f6' });
-  const tweaked = createTheme({ mode: 'dark', accent: '#3b82f6', roleOverrides: { desktop: { pattern: '▒' } } });
+  // roleOverrides.desktop is typed as a full role (fg/bg required), not a per-field patch —
+  // spread the base role so only `pattern` actually changes, matching the intended surgical override.
+  const tweaked = createTheme({
+    mode: 'dark',
+    accent: '#3b82f6',
+    roleOverrides: { desktop: { ...base.desktop, pattern: '▒' } },
+  });
   expect(tweaked.desktop.pattern, 'pattern overridden').toBe('▒');
   expect(base.desktop.pattern, 'base pattern differs').not.toBe('▒');
   expect(tweaked.desktop.fg, 'desktop.fg unchanged').toBe(base.desktop.fg);

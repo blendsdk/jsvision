@@ -45,7 +45,7 @@ class CaretView extends View {
     });
   }
   override draw(ctx: DrawContext): void {
-    ctx.text(0, 0, this.read(), ctx.color('input'));
+    ctx.text(0, 0, this.read(), ctx.color('inputNormal')); // the real Input control's unfocused field role
   }
   override desiredCaret(): Point {
     return { x: 1, y: 0 };

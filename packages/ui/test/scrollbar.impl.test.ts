@@ -23,7 +23,7 @@ function mouse(kind: 'down' | 'up' | 'move', x: number, y: number): CoreMouseEve
   return { type: 'mouse', kind, button: 0, x, y };
 }
 function wheel(dir: 'up' | 'down' | 'left' | 'right', x: number, y: number): CoreWheelEvent {
-  return { type: 'wheel', dir, x, y };
+  return { type: 'wheel', dir, x, y, shift: false, alt: false, ctrl: false };
 }
 
 // getPos mid-range rounds via `+ r/2` (TV `tscrlbar.cpp:89`). H=10 ⇒ getSize=10; min0 max100 value33 ⇒

@@ -33,7 +33,7 @@ function mouse(kind: 'down' | 'up', x: number, y: number): CoreMouseEvent {
   return { type: 'mouse', kind, button: 0, x, y };
 }
 function wheel(dir: 'up' | 'down', x: number, y: number) {
-  return { type: 'wheel', dir, x, y } as const;
+  return { type: 'wheel', dir, x, y, shift: false, alt: false, ctrl: false } as const;
 }
 
 interface Person {
