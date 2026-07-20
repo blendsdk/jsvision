@@ -498,6 +498,7 @@ centered
 grabsFocus
 focusSignal(): Signal<void>
 selectByClick(): void
+setLayout(patch: Partial<LayoutProps>): void
 ```
 
 ## ViewState
