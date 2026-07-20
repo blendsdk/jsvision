@@ -4,7 +4,7 @@
  * identity that in-place `layout.rect = …` writers elsewhere depend on. These assert observed
  * internals rather than requirements, so they belong in the impl tier.
  */
-import { test, expect } from 'vitest';
+import { test, expect, vi } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { View, Group, createRenderRoot } from '../src/view/index.js';
 import type { ViewHost } from '../src/view/index.js';
@@ -71,10 +71,13 @@ test('ST-I3: N setLayout calls request N reflows but schedule exactly one frame'
   );
   rr.mount(root); // mount flushes directly, not via `schedule`
   const base = scheduled;
+  const relayouts = vi.spyOn(rr, 'markRelayout');
 
   for (let i = 1; i <= 5; i += 1) child.setLayout({ padding: i });
 
-  expect(scheduled - base).toBe(1);
+  expect(relayouts).toHaveBeenCalledTimes(5); // every call really does request a reflow…
+  expect(scheduled - base).toBe(1); // …and they collapse into one frame
+
   expect(child.layout.padding).toBe(5);
   pending?.();
 });

@@ -8,9 +8,8 @@
 import { test, expect } from 'vitest';
 import { View } from '../src/view/index.js';
 import type { ViewHost } from '../src/view/index.js';
-// Module-private on purpose (the barrel exports only the solver); imported directly because ST-S9's
-// claim is precisely that the *engine* reads a cleared prop as its default.
-import { normalizeProps } from '../src/layout/types.js';
+import { layout } from '../src/layout/index.js';
+import type { LayoutBox } from '../src/layout/index.js';
 
 /** Minimal concrete leaf view — only its layout props are under test. */
 class Leaf extends View {
@@ -66,13 +65,20 @@ test('ST-S3: setLayout on a mounted view calls markRelayout', () => {
 });
 
 // ST-S9 — an explicit `undefined` is a supported reset, not an accident of spread semantics: the
-// prop is cleared and the engine reads it back as that prop's default.
+// prop is cleared and the engine solves it as that prop's default. Asserted through the public
+// solver, so the oracle is pinned to observable layout behaviour rather than to an internal helper.
 test('ST-S9: an explicit undefined resets the prop to its layout default', () => {
   const v = new Leaf();
   v.layout = { size: { kind: 'fixed', cells: 2 } };
+
   v.setLayout({ size: undefined });
+
   expect(v.layout.size).toBeUndefined();
-  expect(normalizeProps(v.layout).size).toEqual({ kind: 'auto' });
+  // A row container with one child: `fixed 2` would solve to width 2; the default `auto` takes the
+  // child's measured width instead.
+  const child: LayoutBox = { props: v.layout, children: [], measure: () => ({ width: 7, height: 1 }) };
+  const solved = layout({ props: { direction: 'row' }, children: [child] }, { width: 20, height: 3 });
+  expect(solved.get(child)?.width).toBe(7);
 });
 
 // ST-S4 — an unmounted view has no host; the call must still merge and must not throw.
