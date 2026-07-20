@@ -4,6 +4,7 @@
  */
 import { Window } from '../window/index.js';
 import type { Rect } from '../layout/index.js';
+import { CLEARED_LAYOUT } from '../layout/index.js';
 import { ScrollBar } from '../scroll/index.js';
 import { Editor } from './editor.js';
 import { editorViewResized } from './editor-draw.js';
@@ -117,14 +118,9 @@ export class EditWindow extends Window {
     // explicit `undefined` clears a prop back to its layout default. The three gadgets below need no
     // such reset — this window constructs them itself, so they carry nothing to clear.
     this.editor.setLayout({
+      ...CLEARED_LAYOUT,
       position: 'absolute',
       rect: { x: 1, y: 1, width: Math.max(0, w - 2), height: Math.max(0, h - 2) },
-      direction: undefined,
-      justify: undefined,
-      align: undefined,
-      gap: undefined,
-      padding: undefined,
-      size: undefined,
     });
     this.hBar.setLayout({ position: 'absolute', rect: { x: 18, y: h - 1, width: Math.max(0, w - 20), height: 1 } });
     this.vBar.setLayout({ position: 'absolute', rect: { x: w - 1, y: 1, width: 1, height: Math.max(0, h - 2) } });

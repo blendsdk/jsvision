@@ -312,7 +312,6 @@ export function createDesignerApp(opts: DesignerAppOptions = {}): DesignerApp {
       rect: { x: 0, y: 0, width: size.width, height: Math.max(1, size.height - 2) },
       direction: 'row',
     });
-    workspace.invalidate();
   };
   // Size to the ACTUAL viewport the loop mounted at (the real terminal size on a live run), not the
   // 80×24 fallback: no resize event fires at startup, so a stale initial size would persist until the

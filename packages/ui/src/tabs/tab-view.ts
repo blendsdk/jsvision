@@ -26,6 +26,7 @@ import type { DrawContext, DispatchEvent } from '../view/index.js';
 import { For } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { LayoutProps } from '../layout/index.js';
+import { CLEARED_LAYOUT } from '../layout/index.js';
 import { parseTilde } from '../menu/builders.js';
 import { reportDuplicateAccelerators } from '../menu/accelerators.js';
 import { TabStrip, TAB_GLYPHS } from './tab-strip.js';
@@ -253,16 +254,7 @@ export class TabView extends Group {
           // Every other prop is reset explicitly, not merely left unset: a caller's own layout on a
           // tab's content view is intentionally discarded, so the tab body governs sizing no matter
           // what the caller set. An explicit `undefined` clears a prop back to its layout default.
-          t.content.setLayout({
-            size: { kind: 'fr', weight: 1 },
-            direction: undefined,
-            justify: undefined,
-            align: undefined,
-            gap: undefined,
-            padding: undefined,
-            position: undefined,
-            rect: undefined,
-          });
+          t.content.setLayout({ ...CLEARED_LAYOUT, size: { kind: 'fr', weight: 1 } });
           return t.content;
         },
       ),

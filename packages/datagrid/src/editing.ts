@@ -10,6 +10,7 @@
  */
 import { Group, signal, ComboBox, DatePicker } from '@jsvision/ui';
 import type { View, Signal, DispatchEvent } from '@jsvision/ui';
+import { CLEARED_LAYOUT } from './cleared-layout.js';
 import type { GridColumn } from './column.js';
 import { isEditable } from './column.js';
 import type { OnCommit, BeforeSave } from './commit.js';
@@ -230,16 +231,7 @@ export function createEditController<T>(host: EditHost<T>): EditController {
         // Every other prop is reset explicitly, not merely left unset: a custom editor factory's own
         // layout on the view it returns is intentionally discarded, so an editor always fills its cell
         // no matter what the factory set. An explicit `undefined` clears a prop back to its default.
-        e.setLayout({
-          position: 'fill',
-          direction: undefined,
-          justify: undefined,
-          align: undefined,
-          gap: undefined,
-          padding: undefined,
-          size: undefined,
-          rect: undefined,
-        });
+        e.setLayout({ ...CLEARED_LAYOUT, position: 'fill' });
         editorHost.add(e);
         // Enter/Esc bubble up the focus chain from the editor (which leaves them unhandled) to this host.
         editorHost.onEvent = (ev2: DispatchEvent): void => onEditorKey(ev2);

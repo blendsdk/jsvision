@@ -108,7 +108,7 @@ async function main(): Promise<number> {
     count += 1;
     const win = new Window(`Matrix ${count}`);
     win.number = count;
-    win.setLayout({ rect: rect });
+    win.setLayout({ rect });
     win.add(new MatrixRain(() => frame()));
     app.desktop.addWindow(win);
   };

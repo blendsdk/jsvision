@@ -10,6 +10,7 @@
 import { View, Group } from '@jsvision/ui';
 import { createRoot } from '@jsvision/ui';
 import type { DispatchEvent, DrawContext } from '@jsvision/ui';
+import { CLEARED_LAYOUT } from './cleared-layout.js';
 
 /** A cell rect in the grid body's local coordinates. */
 export interface CellRect {
@@ -127,16 +128,7 @@ export function mountCellOverlay(args: {
     // layout survives (resolved above); the position is always the host-local cell, so an overlay can
     // never be dragged off its cell by the view it hosts. An explicit `undefined` clears a prop back
     // to its layout default.
-    view.setLayout({
-      position: 'absolute',
-      rect: { x, y, width, height },
-      direction: undefined,
-      justify: undefined,
-      align: undefined,
-      gap: undefined,
-      padding: undefined,
-      size: undefined,
-    });
+    view.setLayout({ ...CLEARED_LAYOUT, position: 'absolute', rect: { x, y, width, height } });
     host.add(view);
     loop.focusView(view);
     return () => {

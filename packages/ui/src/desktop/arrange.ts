@@ -17,6 +17,8 @@ function place(w: Window, x: number, y: number, width: number, height: number): 
   w.resetZoom();
   w.setLayout({ rect: { x, y, width, height } });
   w.onResized(); // re-pin children to the new size before the repaint reads them
+  // Not redundant with `setLayout`'s own reflow request: that one fires before `onResized()`
+  // re-pins, so this is the one that schedules a pass seeing the re-pinned children.
   w.invalidateLayout();
 }
 

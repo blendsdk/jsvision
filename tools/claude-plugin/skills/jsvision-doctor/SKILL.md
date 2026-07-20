@@ -37,6 +37,6 @@ hang — each mapped to its gotcha and fix. **Run this before you call any jsvis
 - The linter is heuristic and advisory — it reads the syntax tree, not full types. A warning can be a
   false positive (e.g. an invisible full-screen overlay `View` genuinely needs no `measure()` because
   it is absolutely placed). Use judgment; the point is to surface the likely footguns fast.
-- A window's or dialog's **own** placement rect (`win.layout.rect = …`) is _not_ flagged — that is the
+- A window's or dialog's **own** placement rect (`win.setLayout({ rect })`) is _not_ flagged — that is the
   sanctioned absolute case. Only content positioned with absolute rects is.
 - It runs in this monorepo (the supported target) via the repo script; no build or type-check needed.

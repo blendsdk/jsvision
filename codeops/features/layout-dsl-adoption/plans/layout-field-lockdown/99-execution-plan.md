@@ -2,7 +2,7 @@
 
 > **Parent**: [Index](00-index.md)
 > **CodeOps Skills Version**: 3.11.0
-> **Last Updated**: 2026-07-20 (Phase 2 complete — the field is locked)
+> **Last Updated**: 2026-07-21 (Phase 2 complete + reviewed — the field is locked)
 > **Progress**: 40/55 tasks (73%)
 > **Revised**: 2026-07-20 after preflight (see [00-preflight-report.md](00-preflight-report.md))
 
@@ -206,6 +206,44 @@ Surfaces this cannot cover: **`spike-data-studio`** (no typecheck script at all 
 - [x] 2.5.3 Full verify — including `jsdoc-examples.spec.test.ts` and `check-plugin` — *done 2026-07-20*: `yarn verify` **30/30 turbo tasks**, `jsdoc-examples` 12/12, `check-plugin: PASS — all integrity checks green`
 
 **Verify**: `yarn verify`
+
+### Phase 2 quality review
+
+Dispatched in parallel on the phase diff (`3c888fb8..4f1f3582`): the phase reviewer (correctness ·
+maintainability · standards · **api-surface**) and, because the profile sets `perf_critical`, a
+separate perf auditor.
+
+**Perf: no findings** — and measured rather than asserted. `Object.assign` is **25–35% cheaper per
+call than the spread it replaced** (73.9 → 54.8 ns for a 1-key patch; 264.7 → 172.3 ns for an 8-key
+one) and allocates one fewer object. No reflow request was added to any per-frame or per-pointer
+path — every converted site already had one pending. `packages/core/src` is untouched, so the 16 ms
+frame bench measures nothing this phase changed. The audit independently confirmed task 2.2.3's
+aliasing claim: the shared `LayoutProps` singleton in `grid-panels.ts` *would* have become a live
+cross-grid hazard under in-place semantics, and the conversion closed it first.
+
+**Correctness: 6 findings, 2 🟠 and 4 🟡, all resolved.** The reviewer re-ran typecheck (15/15) and
+the `ui` suite (1798/1798), re-derived the residue grep, audited all 5 erasure sites against the
+8-prop interface, checked the EX-5 ordering at all four sites, and script-scanned every converted
+site in the **pre-phase** tree for a receiver whose layout was non-empty. It found **no
+replace→merge regression and no weakened spec assertion**.
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| RV-001 | 🟠 | The agent-facing plugin skill tree still taught the retired idiom as live at 8 hand-written sites — while this same phase regenerated the API-ref half of that tree, leaving it self-contradictory. AC-3's grep scoped to `packages/*`, so it was never swept | All 8 converted. The snippet guard now covers `tools/claude-plugin/skills/**/*.md` as well, scans **whole pages** rather than only fenced blocks (half the offenders were inline prose), and its pattern was tightened from `\.layout(\.\w+)* = ` to `\.layout(\.\w+)*\s*=[^=]`, which the old one would have missed as `.layout={`. **Mutation-tested against both gaps** |
+| RV-002 | 🟠 | The 5 erasure seams hand-enumerated all 8 `LayoutProps` props as explicit `undefined`, five times, with nothing tying the lists to the interface. A 9th prop would silently flip all five from *erase* to *inherit* — on five **public** customization seams — and no test would fail, since `justify`/`align`/`gap` were already unguarded | A `CLEARED_LAYOUT` mapped over `Required<LayoutProps>`, declared once per package (internal to each — no public surface widened, consistent with the Phase-1 RoleOverrides ruling). **Mutation-tested**: adding a 9th prop now fails to compile at exactly two named places |
+| RV-003 | 🟡 | `Readonly<LayoutProps>` is shallow, so `view.layout.rect.x = 5` still compiled — the exact hazard the new JSDoc presented as closed. `Window.currentRect(): Rect` handed a mutable alias to every subclasser | `rect?: Readonly<Rect>` and `currentRect(): Readonly<Rect>`; the oracle gained the deep case. Verified free — 15/15 typecheck green |
+| RV-004 | 🟡 | The comment justifying `Object.assign` gave a **wrong reason**: `reflow()` rebuilds the `LayoutBox` tree every pass, so no box outlives a write and the aliasing it warned about cannot happen | Restated as the real reason — the field is read-only, and identity is the ST-6 contract. A wrong *why* is worse than none |
+| RV-005 | 🟡 | `theme-designer/src/app.ts` still called `workspace.invalidate()` beside a `setLayout` that now relayouts — the Rule-2a collapse missed because the trailing call was `invalidate()`, not `invalidateLayout()` | Deleted |
+| RV-006 | 🟡 | Six sites read `setLayout({ rect: rect })`; lint does not catch it (`object-shorthand` is off) and the Phase-3 sweep would copy it forward | Shorthand at all six |
+
+**Perf observation acted on.** The auditor read the four EX-5 trailing `invalidateLayout()` calls as
+leftover tidiness — the exact misreading that would delete them, from the exact kind of reader that
+would. They are load-bearing: `setLayout`'s own reflow fires *before* `onResized()` re-pins, so the
+trailing call is the one that schedules a pass seeing the re-pinned children. All four now say so.
+
+**Perf observation recorded, not acted on.** `reflow.ts:78` stores `view.layout` by reference, so
+in-place mutation is now visible to an in-flight solve. Unreachable today (`firePendingMounts` runs
+after `layout()` returns), but a real seam for whoever adds a `measure()` that writes layout.
 
 ---
 
