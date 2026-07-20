@@ -349,6 +349,32 @@ second time in this plan that `git checkout` on a dirty tree cost work.
 
 **Verify**: `yarn verify`
 
+### CI follow-up (2026-07-21) — a warm-tree blind spot in the local verify
+
+**PR #133 failed all 12 matrix jobs on `@jsvision/files:typecheck`:**
+`test/files.packaging.spec.test.ts` — `Cannot find module '@jsvision/files'`.
+
+Root cause is a direct consequence of Phase 1. Making every package typecheck its own `test/` brought
+`files.packaging.spec.test.ts` into the program, and that file imports **its own package by name** —
+deliberately, because a packaging spec exists to prove the barrel resolves the way a consumer sees
+it. Resolving `@jsvision/files` goes through `package.json#exports` to `dist/`, but `turbo.json` had
+`typecheck.dependsOn: ["^build"]`, which builds a package's **dependencies** and not the package
+itself. `files` is a leaf that nothing else depends on, so nothing ever built it first.
+
+**It passed locally only because the working tree had a stale `dist` from an earlier build.** No
+number of `yarn verify` runs on a warm tree could have caught it; `mv packages/files/dist` away
+reproduces it exactly. Three other packages (`core`, `ui`, `web` — 35 test files) carry the same
+latent dependency and were saved only by build ordering that happens to run them first.
+
+**Fix:** `typecheck.dependsOn: ["^build", "build"]`. General rather than a per-package override,
+since the shape is repo-wide. Verified from a fully cold tree (`rm -rf packages/*/dist .turbo`):
+typecheck 15/15, `yarn verify` 30/30, and a forced `--filter=@jsvision/files` run shows `files:build`
+now sequenced ahead of `files:typecheck`.
+
+**The lesson for the prime directive:** "run `yarn verify` before the PR-bound push" is necessary but
+not sufficient — it validates the tree you have, not the tree CI checks out. A cold-tree run belongs
+in the pre-PR ritual for any change that alters what the compiler is allowed to see.
+
 ---
 
 ## Dependencies
