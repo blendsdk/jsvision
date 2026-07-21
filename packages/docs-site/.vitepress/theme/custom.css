@@ -33,3 +33,25 @@
 
   --vp-home-hero-name-background: linear-gradient(120deg, #22d3ee 30%, #67e8f9);
 }
+
+/*
+ * Wider article column.
+ *
+ * The default theme caps the doc column at 688px, which is comfortable for
+ * prose but cramps the wide artefacts this site is full of: terminal
+ * screenshots, the live xterm examples, and API tables. The article column is
+ * uncapped so it fills whatever the doc container leaves between the sidebar
+ * and the outline; the container is what now bounds the line length.
+ */
+:root {
+  --vp-layout-max-width: 1600px;
+}
+
+.VPDoc .container {
+  max-width: 1360px;
+}
+
+.VPDoc .content-container,
+.VPDoc.has-aside .content-container {
+  max-width: none;
+}
