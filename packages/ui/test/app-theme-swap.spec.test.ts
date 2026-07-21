@@ -26,9 +26,9 @@ class PaintView extends View {
 
 test('ST-29: loop.setTheme pushes a repainted frame to the host outside any dispatch', () => {
   const child = new PaintView('X');
-  child.layout = { size: { kind: 'fixed', cells: 2 } };
+  child.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.background = 'window';
   root.add(child);
 

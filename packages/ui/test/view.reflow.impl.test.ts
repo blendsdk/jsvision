@@ -17,22 +17,22 @@ class Leaf extends View {
 
 test('a visible:false container omits its whole subtree from layout', () => {
   const a = new Leaf();
-  a.layout = { size: { kind: 'fr', weight: 1 } };
+  a.setLayout({ size: { kind: 'fr', weight: 1 } });
   const c = new Leaf();
-  c.layout = { size: { kind: 'fr', weight: 1 } };
+  c.setLayout({ size: { kind: 'fr', weight: 1 } });
 
   const hidden = new Group();
-  hidden.layout = { direction: 'row', size: { kind: 'fr', weight: 1 } };
+  hidden.setLayout({ direction: 'row', size: { kind: 'fr', weight: 1 } });
   const x = new Leaf();
-  x.layout = { size: { kind: 'fr', weight: 1 } };
+  x.setLayout({ size: { kind: 'fr', weight: 1 } });
   const y = new Leaf();
-  y.layout = { size: { kind: 'fr', weight: 1 } };
+  y.setLayout({ size: { kind: 'fr', weight: 1 } });
   hidden.add(x);
   hidden.add(y);
   hidden.state.visible = false; // hide the whole container before the first reflow
 
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.add(a);
   root.add(hidden);
   root.add(c);
@@ -50,14 +50,14 @@ test('a visible:false container omits its whole subtree from layout', () => {
 test('measure() is honored for an auto-sized leaf', () => {
   let calls = 0;
   const leaf = new Leaf();
-  leaf.layout = { size: { kind: 'auto' } };
+  leaf.setLayout({ size: { kind: 'auto' } });
   leaf.measure = (_available: Size2D): Size2D => {
     calls += 1;
     return { width: 5, height: 2 };
   };
 
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(leaf);
 
   reflow(root, { width: 80, height: 24 });
@@ -68,9 +68,9 @@ test('measure() is honored for an auto-sized leaf', () => {
 
 test('each reflow builds a fresh tree — bounds reflect the latest viewport', () => {
   const a = new Leaf();
-  a.layout = { size: { kind: 'fr', weight: 1 } };
+  a.setLayout({ size: { kind: 'fr', weight: 1 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(a);
 
   reflow(root, { width: 80, height: 10 });
@@ -82,9 +82,9 @@ test('each reflow builds a fresh tree — bounds reflect the latest viewport', (
 
 test('a degenerate (zero) viewport yields zero-size bounds without throwing', () => {
   const a = new Leaf();
-  a.layout = { size: { kind: 'fr', weight: 1 } };
+  a.setLayout({ size: { kind: 'fr', weight: 1 } });
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.add(a);
 
   expect(() => reflow(root, { width: 0, height: 0 })).not.toThrow();

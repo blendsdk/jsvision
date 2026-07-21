@@ -2,7 +2,7 @@
  * Build a full {@link Theme} from a handful of seed colors.
  *
  * `createTheme` is the front door of the theming system: give it a `mode` and an
- * `accent` (plus optional neutral/status seeds), and it derives the 16 semantic
+ * `accent` (plus optional neutral/status seeds), and it derives the 18 semantic
  * aliases with perceptual {@link ramp}s and hands them to {@link rolesFromAliases}
  * to fill in every role. Two override hooks let you steer the result — `overrides`
  * adjusts the aliases (and so re-drives every role that uses them), while
@@ -16,6 +16,12 @@ import { darken, ramp } from './ramp.js';
 import { rolesFromAliases } from './roles.js';
 import type { Theme, ThemeRole } from './theme.js';
 
+/**
+ * A per-role, per-field patch onto a generated theme: every role is optional, and so is every field
+ * within a role. Patching one field leaves the rest of that role exactly as generated.
+ */
+export type RoleOverrides = { readonly [K in keyof Theme]?: Partial<Theme[K]> };
+
 /** Seed colors and override hooks for {@link createTheme}. */
 export interface ThemeOptions {
   /** Light or dark: inverts which end of the neutral ramp becomes surface vs. text. */
@@ -24,9 +30,13 @@ export interface ThemeOptions {
   readonly accent: Color;
   /** Neutral seed for the surface/text ramp; defaults to a mode-neutral gray. Low-chroma works best. */
   readonly neutral?: Color;
-  /** Danger signal seed; defaults to a red. */
+  /** In-dialog control hotkey (accelerator) seed; defaults to an amber. Independent of `warning`. */
+  readonly accelerator?: Color;
+  /** Menu-bar / status-line hotkey (accelerator) seed; defaults to a red. Independent of `danger`. */
+  readonly menuAccelerator?: Color;
+  /** Danger signal seed; defaults to a red. Drives the `dangerText` role a `Text` paints at `severity: 'error'`. */
   readonly danger?: Color;
-  /** Warning signal seed; defaults to an amber. */
+  /** Warning signal seed; defaults to an amber. Drives the `warningText` role a `Text` paints at `severity: 'warning'`. */
   readonly warning?: Color;
   /** Success signal seed; defaults to a green. */
   readonly success?: Color;
@@ -34,8 +44,14 @@ export interface ThemeOptions {
   readonly info?: Color;
   /** Per-alias overrides merged after generation — an overridden alias re-drives every role that uses it. */
   readonly overrides?: Partial<ThemeColors>;
-  /** Per-role overrides deep-merged last — surgical single-role/single-field fixes. */
-  readonly roleOverrides?: Partial<Theme>;
+  /**
+   * Per-role overrides deep-merged last — surgical single-role/single-field fixes.
+   *
+   * Each role is optional, and so is each field within it: patching one field leaves the rest of that
+   * role as generated. `Partial<Theme>` cannot express that — it would make every field of a named
+   * role mandatory, forcing a caller to restate the values it does not want to change.
+   */
+  readonly roleOverrides?: RoleOverrides;
 }
 
 /** Indices into a 9-step neutral ramp (0 = darkest … 8 = lightest). */
@@ -47,7 +63,7 @@ function foregroundOn(bg: Color): Color {
 }
 
 /**
- * Derive the 16 semantic {@link ThemeColors} aliases from a set of seeds — the step {@link createTheme}
+ * Derive the 18 semantic {@link ThemeColors} aliases from a set of seeds — the step {@link createTheme}
  * runs before it merges `overrides` and expands the roles.
  *
  * Give it the same `mode`/`accent`/neutral/status seeds you would pass to {@link createTheme} and it
@@ -57,8 +73,8 @@ function foregroundOn(bg: Color): Color {
  * so a tool (e.g. a theme editor) can show the aliases a given seed set produces without building the
  * full theme.
  *
- * @param options Seeds (`mode`, `accent`, optional `neutral`/status). `overrides`/`roleOverrides` are ignored.
- * @returns The 16 resolved aliases, before any override merge.
+ * @param options Seeds (`mode`, `accent`, optional `neutral`/accelerator/status). `overrides`/`roleOverrides` are ignored.
+ * @returns The 18 resolved aliases, before any override merge.
  * @throws InvalidColorError when a seed is `'default'` or otherwise unresolvable.
  * @example
  * import { aliasesFromSeeds } from '@jsvision/core';
@@ -106,6 +122,8 @@ export function aliasesFromSeeds(options: ThemeOptions): ThemeColors {
     backgroundSelected: surface.selected,
     accent,
     accentMuted: darken(accent, 0.1),
+    accelerator: options.accelerator ?? '#f59e0b',
+    menuAccelerator: options.menuAccelerator ?? '#ef4444',
     border: surface.border,
     borderMuted: surface.borderMuted,
     danger: options.danger ?? '#ef4444',
@@ -116,14 +134,18 @@ export function aliasesFromSeeds(options: ThemeOptions): ThemeColors {
 }
 
 /** Deep-merge per-role overrides onto a base theme (per-role field-level merge). */
-function applyRoleOverrides(base: Theme, overrides: Partial<Theme>): Theme {
+function applyRoleOverrides(base: Theme, overrides: RoleOverrides): Theme {
   const out: Theme = { ...base };
   // Widen to a role map for the write; each merged value keeps its base role's extras at runtime.
   const writable = out as Record<keyof Theme, ThemeRole>;
   for (const name of Object.keys(overrides) as (keyof Theme)[]) {
     const patch = overrides[name];
     if (patch === undefined) continue;
-    writable[name] = { ...base[name], ...patch };
+    // Drop explicitly-undefined fields before spreading: `Partial<T>` admits `{ pattern: undefined }`,
+    // and letting that through would erase the generated value rather than leave it alone — the
+    // opposite of what a caller forwarding an optional config value means by it.
+    const present = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined));
+    writable[name] = { ...base[name], ...present };
   }
   return out;
 }

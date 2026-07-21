@@ -32,7 +32,11 @@ test("a 'default' color round-trips as 'default'", () => {
 });
 
 test('a generated theme with a pattern override round-trips losslessly', () => {
-  const theme = createTheme({ mode: 'dark', accent: '#3b82f6', roleOverrides: { desktop: { pattern: '▒' } } });
+  const theme = createTheme({
+    mode: 'dark',
+    accent: '#3b82f6',
+    roleOverrides: { desktop: { pattern: '▒' } },
+  });
   const back = parseTheme(serializeTheme(theme));
   expect(back, 'deep-equal').toStrictEqual(theme);
   expect(back.desktop.pattern, 'single-cell pattern preserved').toBe('▒');

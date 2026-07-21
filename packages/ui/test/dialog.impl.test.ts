@@ -27,7 +27,7 @@ function mouse(kind: 'down' | 'up', x: number, y: number): CoreMouseEvent {
 
 /** Open `dialog` modally at rect (0,0,`w`×`h`) under a root; return the loop + execView promise. */
 function openModal(dialog: Dialog, w = 24, h = 8) {
-  dialog.layout = { position: 'absolute', padding: 1, rect: { x: 0, y: 0, width: w, height: h } };
+  dialog.setLayout({ position: 'absolute', padding: 1, rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(dialog);
   const loop = createEventLoop({ width: 40, height: 15 }, { caps });
@@ -40,7 +40,7 @@ function openModal(dialog: Dialog, w = 24, h = 8) {
 test('children without valid() are treated valid ⇒ OK resolves', async () => {
   const dlg = new Dialog({ title: 'Info' });
   const text = new Text('Just a label');
-  text.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } };
+  text.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } });
   dlg.add(text);
   const { loop, promise } = openModal(dlg);
   loop.emitCommand(Commands.ok);
@@ -51,7 +51,7 @@ test('children without valid() are treated valid ⇒ OK resolves', async () => {
 test('PF-002: clicking the frame close box resolves execView to cancel, bypassing valid()', async () => {
   const value = signal('999'); // invalid, but cancel bypasses the gate
   const input = new Input({ value, validator: range(0, 100) });
-  input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } });
   const dlg = new Dialog({ title: 'X' });
   dlg.add(input);
   const { loop, promise } = openModal(dlg);
@@ -65,7 +65,7 @@ test('PF-002: clicking the frame close box resolves execView to cancel, bypassin
 test('PF-002: Esc resolves execView to cancel, bypassing valid()', async () => {
   const value = signal('999');
   const input = new Input({ value, validator: range(0, 100) });
-  input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } });
   const dlg = new Dialog({ title: 'X' });
   dlg.add(input);
   const { loop, promise } = openModal(dlg);
@@ -78,7 +78,7 @@ test('PF-002: Esc resolves execView to cancel, bypassing valid()', async () => {
 test('PF-007: a disabled OK command is ignored (dialog stays open)', async () => {
   const dlg = new Dialog({ title: 'X' });
   const text = new Text('body');
-  text.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 8, height: 1 } };
+  text.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 8, height: 1 } });
   dlg.add(text);
   const { loop, promise } = openModal(dlg);
   let settled = false;
@@ -103,7 +103,7 @@ test('nested modal dialogs resolve LIFO', async () => {
 
   const b = new Dialog({ title: 'B' });
   b.add(textAt('b-body'));
-  b.layout = { position: 'absolute', padding: 1, rect: { x: 2, y: 2, width: 20, height: 6 } };
+  b.setLayout({ position: 'absolute', padding: 1, rect: { x: 2, y: 2, width: 20, height: 6 } });
   // The caller adds the nested modal to the tree before execView (the RD-04 contract).
   a.add(b);
   const pb = loop.execView<string>(b);
@@ -124,7 +124,7 @@ test('nested modal dialogs resolve LIFO', async () => {
 // The dialog frame shows the close box + NO zoom box (PF-001 / PA-6 gating).
 test('PF-001: the dialog frame shows the close box and no zoom box', () => {
   const dlg = new Dialog({ title: 'Z' });
-  dlg.layout = { position: 'absolute', padding: 1, rect: { x: 0, y: 0, width: 20, height: 6 } };
+  dlg.setLayout({ position: 'absolute', padding: 1, rect: { x: 0, y: 0, width: 20, height: 6 } });
   const root = new Group();
   root.add(dlg);
   const rr = createRenderRoot({ width: 24, height: 8 }, { caps });
@@ -152,7 +152,7 @@ test('a Dialog casts a drop-shadow by default (TV sfShadow, twindow.cpp:49)', ()
 // column right of the frame (render-root.ts drawDropShadow), even though execView bypasses addWindow.
 test('a modal dialog paints its drop-shadow on the backdrop (right edge)', () => {
   const dlg = new Dialog({ title: 'S' });
-  dlg.layout = { position: 'absolute', padding: 1, rect: { x: 2, y: 2, width: 10, height: 4 } }; // cols 2..11
+  dlg.setLayout({ position: 'absolute', padding: 1, rect: { x: 2, y: 2, width: 10, height: 4 } }); // cols 2..11
   const root = new Group();
   root.add(dlg);
   const rr = createRenderRoot({ width: 40, height: 12 }, { caps });
@@ -166,6 +166,6 @@ test('a modal dialog paints its drop-shadow on the backdrop (right edge)', () =>
 /** A small absolute Text content child. */
 function textAt(s: string): Text {
   const t = new Text(s);
-  t.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 8, height: 1 } };
+  t.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 8, height: 1 } });
   return t;
 }

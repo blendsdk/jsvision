@@ -31,15 +31,7 @@ import type { CalendarDate } from './calendar-date.js';
 import { addDays, addMonths, compare, dayOfWeek, fromDate, toISO } from './calendar-date.js';
 import { buildMonthGrid } from './calendar-grid.js';
 import type { MonthGrid } from './calendar-grid.js';
-import {
-  metricsFor,
-  dayFieldX,
-  weekdayLabelX,
-  weekRowY,
-  weekdayLabels,
-  headerLine,
-  TODAY_LABEL,
-} from './calendar-metrics.js';
+import { metricsFor, dayFieldX, weekdayLabelX, weekRowY, weekdayLabels, headerLine } from './calendar-metrics.js';
 import type { CalendarDensity, CalendarMetrics } from './calendar-metrics.js';
 
 /** Month names indexed 1-12 (index 0 unused). */
@@ -90,7 +82,7 @@ export interface CalendarOptions {
  * Enter/Space or a single click.
  *
  * @example
- * import { Group, Calendar, signal, dayOfWeek, toISO } from '@jsvision/ui';
+ * import { Group, Calendar, signal, dayOfWeek, toISO, at } from '@jsvision/ui';
  * import type { CalendarDate } from '@jsvision/ui';
  *
  * const g = new Group();
@@ -104,8 +96,7 @@ export interface CalendarOptions {
  *   onChange: (d) => console.log('picked', toISO(d)),
  * });
  * const size = cal.measure();          // size the widget to the chosen density
- * cal.layout = { position: 'absolute', rect: { x: 1, y: 0, width: size.width, height: size.height } };
- * g.add(cal);
+ * g.add(at(cal, 1, 0, size.width, size.height));
  */
 export class Calendar extends View {
   /** The calendar takes focus so its day cursor and keymap are scoped to it. */
@@ -313,8 +304,9 @@ export class Calendar extends View {
       ctx.text(m.wkw, m.footer.dividerY, '─'.repeat(m.contentWidth), normal);
       const val = this.value();
       if (val !== null) ctx.text(m.wkw, m.footer.textY, toISO(val), normal);
-      // The Today button borrows the "today" colour so it reads as the today affordance.
-      ctx.text(m.footer.todayX, m.footer.textY, TODAY_LABEL, ctx.color('calendarToday'));
+      // The Today button borrows the "today" colour so it reads as the today affordance. The face is
+      // padded (` Today `) so the coloured chip has breathing room; its width auto-sizes to the word.
+      ctx.text(m.footer.todayX, m.footer.textY, m.footer.todayFace, ctx.color('calendarToday'));
     }
   }
 

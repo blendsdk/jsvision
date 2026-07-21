@@ -50,7 +50,7 @@ class Leaf extends View {
 /** Build a page `Group` wrapping one {@link Leaf} that paints `marker`. */
 function page(marker: string): { group: Group; leaf: Leaf } {
   const group = new Group();
-  group.layout = { direction: 'col' };
+  group.setLayout({ direction: 'col' });
   const leaf = new Leaf(marker);
   group.add(leaf);
   return { group, leaf };
@@ -66,7 +66,7 @@ interface Hosted {
 
 /** Mount a `TabView` filling `w×h` under a root Group; returns the loop + buffer helpers. */
 function host(view: TabView, w: number, h: number): Hosted {
-  view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(view);
   const loop = createEventLoop({ width: w, height: h }, { caps });
@@ -458,8 +458,8 @@ function twoTabViews(sharedHotkey: boolean) {
   const bActive = signal(0);
   const viewA = new TabView({ tabs: aTabs, active: aActive });
   const viewB = new TabView({ tabs: bTabs, active: bActive });
-  viewA.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } };
-  viewB.layout = { position: 'absolute', rect: { x: 0, y: 6, width: 20, height: 6 } };
+  viewA.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } });
+  viewB.setLayout({ position: 'absolute', rect: { x: 0, y: 6, width: 20, height: 6 } });
   const root = new Group();
   root.add(viewA);
   root.add(viewB);

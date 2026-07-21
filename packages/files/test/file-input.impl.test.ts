@@ -24,8 +24,8 @@ class Focusable extends View {
 }
 
 function mount(input: FileInput, sibling: Focusable) {
-  input.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 1 } };
-  sibling.layout = { position: 'absolute', rect: { x: 0, y: 1, width: 20, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 1 } });
+  sibling.setLayout({ position: 'absolute', rect: { x: 0, y: 1, width: 20, height: 1 } });
   const root = new Group();
   root.add(input);
   root.add(sibling);

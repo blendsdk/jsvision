@@ -24,7 +24,7 @@ import {
   statusItem,
   Commands,
 } from '@jsvision/ui';
-import type { Application, DrawContext, Size2D } from '@jsvision/ui';
+import type { DesktopApplication, DrawContext, Size2D } from '@jsvision/ui';
 import { FakeRuntime, CaptureStream, FakeInput } from './app-shell-host-doubles.js';
 
 /** A leaf that fills a window's interior — a stub-handler content view (does not handle clicks). */
@@ -69,7 +69,9 @@ function caps(): CapabilityProfile {
 }
 
 interface Harness {
-  app: Application;
+  // `createApplication` is called below with no `content`, so it always returns a Desktop app — the
+  // precise type lets callers read `app.desktop` without a null check.
+  app: DesktopApplication;
   input: FakeInput;
   output: CaptureStream;
   runtime: FakeRuntime;
@@ -103,11 +105,11 @@ function setup(): Harness {
 
   // Two non-overlapping windows, each with a filling content child; the second (added last) is active.
   const w1 = new Window('One');
-  w1.layout.rect = { x: 2, y: 2, width: 24, height: 6 };
+  w1.setLayout({ rect: { x: 2, y: 2, width: 24, height: 6 } });
   w1.add(new Filler('.'));
   app.desktop.addWindow(w1);
   const w2 = new Window('Two');
-  w2.layout.rect = { x: 30, y: 2, width: 24, height: 6 };
+  w2.setLayout({ rect: { x: 30, y: 2, width: 24, height: 6 } });
   w2.add(new Filler('.'));
   app.desktop.addWindow(w2);
 

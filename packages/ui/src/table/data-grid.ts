@@ -10,7 +10,7 @@
  * corner) so all three resolve to the same data width and their columns line up exactly.
  */
 import { Group } from '../view/index.js';
-import type { LayoutProps } from '../layout/index.js';
+import { col, row, grow, fixed } from '../view/dsl/index.js';
 import { signal } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import { ScrollBar } from '../scroll/index.js';
@@ -48,8 +48,7 @@ export interface DataGridOptions<T> {
 function corner(): Group {
   const cell = new Group();
   cell.background = 'scrollBarPage'; // continue the vbar column visually (blue field)
-  cell.layout = { size: { kind: 'fixed', cells: 1 } };
-  return cell;
+  return fixed(cell, 1);
 }
 
 /**
@@ -68,7 +67,7 @@ function corner(): Group {
  * focus target, focus the grid's exposed {@link DataGrid.rows} renderer, not the grid.
  *
  * @example
- * import { Group, DataGrid, createEventLoop, signal } from '@jsvision/ui';
+ * import { Group, DataGrid, createEventLoop, resolveCapabilities, signal, at } from '@jsvision/ui';
  * import type { Column, SortState } from '@jsvision/ui';
  *
  * interface Person { name: string; age: number; role: string; }
@@ -86,11 +85,11 @@ function corner(): Group {
  * ];
  *
  * const grid = new DataGrid<Person>({ rows, columns, sort, zebra: true });
- * grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 10 } };
  *
  * const root = new Group();
- * root.add(grid);
- * const loop = createEventLoop({ width: 40, height: 10 });
+ * root.add(at(grid, 0, 0, 40, 10));
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
  * loop.mount(root);
  * loop.focusView(grid.rows); // focus the rows renderer, not the grid
  */
@@ -146,37 +145,18 @@ export class DataGrid<T> extends Group {
     this.rows.vbar = this.vbar; // the rows renderer re-limits both bars' ranges on every draw
     this.rows.hbar = this.hbar;
 
-    // Band layout: header/rows/hbar each `fr` beside a fixed 1-cell sibling so all three resolve to
-    // the same data width and their columns align.
-    const fr: LayoutProps = { size: { kind: 'fr', weight: 1 } };
-    const cell: LayoutProps = { size: { kind: 'fixed', cells: 1 } };
-    this.header.layout = fr;
-    this.rows.layout = fr;
-    this.vbar.layout = cell;
-    this.hbar.layout = fr;
-
-    const topRow = new Group();
-    topRow.layout = { direction: 'row', size: { kind: 'fixed', cells: 1 } };
-    topRow.add(this.header);
-    topRow.add(corner());
-
-    const body = new Group();
-    body.layout = { direction: 'row', size: { kind: 'fr', weight: 1 } };
-    body.add(this.rows); // z-order: rows (left) then vbar (right)
-    body.add(this.vbar);
-
-    const botRow = new Group();
-    botRow.layout = { direction: 'row', size: { kind: 'fixed', cells: 1 } };
-    botRow.add(this.hbar);
-    botRow.add(corner());
-
-    // Inner column container: keeps the three bands stacked regardless of how the parent places the
-    // grid (an absolute rect or an `fr` flow slot both leave the grid's own `layout` free).
-    const inner = new Group();
-    inner.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
-    inner.add(topRow);
-    inner.add(body);
-    inner.add(botRow);
+    // Band layout: header/rows/hbar each `fr` beside a fixed 1-cell sibling (the vertical bar, or a
+    // blank corner) so all three resolve to the same data width and their columns align. The bands
+    // stack inside an inner column container, which keeps them stacked regardless of how the parent
+    // places the grid — an absolute rect or an `fr` flow slot both leave the grid's own `layout` free.
+    // Note the body row is `rows` then `vbar`, left to right.
+    const inner = grow(
+      col(
+        fixed(row(grow(this.header), corner()), 1),
+        grow(row(grow(this.rows), fixed(this.vbar, 1))),
+        fixed(row(grow(this.hbar), corner()), 1),
+      ),
+    );
     this.add(inner);
   }
 

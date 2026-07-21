@@ -15,7 +15,7 @@
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities, classicTheme, nordTheme } from '@jsvision/core';
-import type { DrawContext } from '@jsvision/ui';
+import type { Application, DrawContext } from '@jsvision/ui';
 import { View, Window, createRoot } from '@jsvision/ui';
 import { demoShell } from '../src/demo-shell.js';
 import desktopExample from '../examples/apps/desktop.js';
@@ -71,8 +71,14 @@ function signatureOf(app: {
     .join('\n');
 }
 
-/** The stage windows the shell placed on the desktop (public `children`, filtered to `Window`). */
-function stageWindows(app: { desktop: { children: readonly View[] } }): Window[] {
+/**
+ * The stage windows the shell placed on the desktop (public `children`, filtered to `Window`).
+ *
+ * `Application.desktop` is optional — an app can be built around a content view instead — but every
+ * shell these tests build is desktop-bodied, so its absence is a broken shell, not a case to skip.
+ */
+function stageWindows(app: Application): Window[] {
+  if (app.desktop === undefined) throw new Error('the demo shell built an application without a desktop');
   return app.desktop.children.filter((c): c is Window => c instanceof Window);
 }
 

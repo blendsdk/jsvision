@@ -153,6 +153,15 @@ test('ST-14: the calendar* roles are the ONLY additive keys — every existing r
     'terminalNormal', // RD-08 editor family (PA-8; guarded by editor-theme.spec)
     'sliderTrack',
     'sliderThumb', // theme-designer Slider control (guarded by slider-theme.spec)
+    'gridCursor',
+    'gridDirty', // RD-02 datagrid editing engine (guarded by grid-theme.spec)
+    'gridSelectedRow', // RD-08 datagrid row-selection highlight (guarded by grid-theme.spec)
+    'gridInvalid', // RD-12 datagrid failed-validation band (guarded by grid-theme.spec)
+    'dangerText',
+    'warningText', // severity text roles for a styled Text (guarded by severity-text-theme.spec)
+    'inputPlaceholder', // muted placeholder role for an empty Input (guarded by input-placeholder.spec)
+    'splitter',
+    'splitterDragging', // split-pane divider roles (guarded by theme-roles.spec)
   ] as const;
   const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...CALENDAR_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);

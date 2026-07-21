@@ -42,7 +42,7 @@ function render(
   const sp = new Spinner({ frame: f, preset: opts?.preset, label: opts?.label });
   const w = opts?.w ?? 20;
   const h = opts?.h ?? 1;
-  sp.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  sp.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(sp);
   const loop = createEventLoop({ width: w, height: h }, { caps: opts?.caps ?? caps });

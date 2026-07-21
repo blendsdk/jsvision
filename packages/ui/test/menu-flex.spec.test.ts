@@ -11,6 +11,7 @@ import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
 import { Group } from '../src/view/index.js';
 import { createApplication } from '../src/app/index.js';
+import type { DesktopApplication } from '../src/app/index.js';
 import { menuBar, subMenu, item, menuSpacer, layoutTitles, titleIndexAt, MenuPopup } from '../src/menu/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
@@ -21,7 +22,7 @@ function key(name: string, mods: Partial<KeyEvent> = {}): KeyEvent {
 function popups(overlay: Group): MenuPopup[] {
   return overlay.children.filter((c): c is MenuPopup => c instanceof MenuPopup);
 }
-function overlayOf(app: ReturnType<typeof createApplication>): Group {
+function overlayOf(app: DesktopApplication): Group {
   const root = app.desktop.parent as Group;
   return root.children.find((c) => c.layout.position === 'absolute') as Group;
 }

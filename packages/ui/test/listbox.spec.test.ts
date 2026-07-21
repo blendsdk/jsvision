@@ -35,7 +35,7 @@ test('ST-08: updating the items signal re-renders and clamps focused', () => {
   const box = new ListBox({ items, focused });
   const root = new Group();
   root.add(box);
-  box.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 6 } };
+  box.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 6 } });
   const loop = createEventLoop({ width: 12, height: 6 }, { caps });
   loop.mount(root);
   const buf = () => loop.renderRoot.buffer();

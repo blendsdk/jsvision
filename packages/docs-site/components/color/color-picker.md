@@ -25,7 +25,7 @@ const picker = new ColorPicker({
   allowCustom: true, // include a #rrggbb hex field in the popup
   onChange: (c) => console.log('picked', c),
 });
-picker.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 1 } };
+picker.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 1 } });
 // Down / Alt+Down / click the ▐↓▌ button opens the swatch; Tab reaches the hex field.
 ```
 

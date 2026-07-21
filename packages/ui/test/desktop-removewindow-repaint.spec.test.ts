@@ -53,7 +53,7 @@ test('ST-1: closing the only window (async modal teardown) repaints the emptied 
   // the exact runDialog shape — execView + an async `finally` that removes the window outside any tick.
   const dlg = new Dialog({ title: 'CLOSEME', rect: { x: 10, y: 4, width: 30, height: 9 } });
   const ok = okButton();
-  ok.layout = { position: 'absolute', rect: { x: 8, y: 4, width: 12, height: 2 } };
+  ok.setLayout({ position: 'absolute', rect: { x: 8, y: 4, width: 12, height: 2 } });
   dlg.add(ok);
   app.desktop.addWindow(dlg);
 

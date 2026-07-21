@@ -7,8 +7,9 @@
  * emit. Mirrors the event-demo / view-demo e2e child-process spawn; heavier than the unit specs, so it
  * lives outside the unit glob.
  */
-import { test, expect } from 'vitest';
+import { test, expect, describe, beforeAll } from 'vitest';
 import { spawn } from 'node:child_process';
+import { spawnDemo, frameRows } from './spawn-demo.js';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
@@ -49,4 +50,35 @@ test('demo:controls runs standalone, exits 0, and prints the controls walkthroug
   expect(result.stdout).toContain("rejected '3'"); // filter live-reject narration
   expect(result.stdout).toContain('"Alx"'); // the value after the live reject
   expect(result.stdout).toContain('["ok"]'); // the 'ok' command reached the spy via ev.emit
+});
+
+/**
+ * Composition snapshot for the demo's form.
+ *
+ * The demo prints its whole composed buffer, so the running demo is the geometry oracle and no view
+ * tree is rebuilt here. Complete row strings are asserted rather than relationships between solved
+ * values, which stay true even when the values collapse to zero.
+ */
+describe('demo:controls composed frame', () => {
+  let stdout = '';
+
+  beforeAll(async () => {
+    const run = await spawnDemo('controls-demo', 30_000);
+    expect(run.code, run.stderr).toBe(0);
+    stdout = run.stdout;
+    // Above vitest's 10s default hook budget, and above the child guard so its message wins.
+  }, 40_000);
+
+  test('the form is inset by one blank cell and stacks every control with no row between', () => {
+    const rows = frameRows(stdout, 'Frame 1 — form composed; Input focused (caret shows)');
+
+    expect(rows).toHaveLength(18);
+    expect(rows[0]).toBe('                              '); // the top inset
+    expect(rows[1]).toBe(' Name                         '); // label, then its input on row 2
+    expect(rows[3]).toBe(' Phone                        '); // directly under the input — nothing between
+    expect(rows[5]).toBe('  [ ] Bold                    '); // the check group, both rows
+    expect(rows[6]).toBe('  [ ] Italic                  ');
+    expect(rows[7]).toBe('  (•) Left                    '); // the radio group starts immediately after
+    expect(rows[14]).toBe(' command: (none)              '); // the spy, last in the stack
+  });
 });

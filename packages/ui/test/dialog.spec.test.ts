@@ -26,7 +26,7 @@ function key(k: string): KeyEvent {
 
 /** Mount a dialog under a root, open it modally, and return the loop + the execView promise. */
 function openModal(dialog: Dialog, w = 40, h = 15) {
-  dialog.layout = { position: 'absolute', padding: 1, rect: { x: 0, y: 0, width: 24, height: 8 } };
+  dialog.setLayout({ position: 'absolute', padding: 1, rect: { x: 0, y: 0, width: 24, height: 8 } });
   const root = new Group();
   root.add(dialog);
   const loop = createEventLoop({ width: w, height: h }, { caps });
@@ -39,7 +39,7 @@ function openModal(dialog: Dialog, w = 40, h = 15) {
 test('ST-09: execView resolves the terminating command; hosted Input holds the typed data', async () => {
   const value = signal('');
   const input = new Input({ value });
-  input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } });
   const dlg = new Dialog({ title: 'Name' });
   dlg.add(input);
   const { loop, promise } = openModal(dlg);
@@ -59,7 +59,7 @@ test('ST-09: execView resolves the terminating command; hosted Input holds the t
 test('ST-10: valid() gate vetoes OK on an invalid Input, then passes; Cancel bypasses', async () => {
   const value = signal('150'); // out of range(0,100)
   const input = new Input({ value, validator: range(0, 100) });
-  input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } });
   const dlg = new Dialog({ title: 'Age' });
   dlg.add(input);
   const { loop, promise } = openModal(dlg);
@@ -84,7 +84,7 @@ test('ST-10: valid() gate vetoes OK on an invalid Input, then passes; Cancel byp
 test('ST-10: Cancel resolves cancel regardless of an invalid hosted Input', async () => {
   const value = signal('999');
   const input = new Input({ value, validator: range(0, 100) });
-  input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 12, height: 1 } });
   const dlg = new Dialog({ title: 'Age' });
   dlg.add(input);
   const { loop, promise } = openModal(dlg);
@@ -96,7 +96,7 @@ test('ST-10: Cancel resolves cancel regardless of an invalid hosted Input', asyn
 // its frame and is not blocking (no modal host attached ⇒ terminating commands don't end anything).
 test('ST-11: a modeless Dialog is an ordinary non-blocking window', () => {
   const dlg = new Dialog({ title: 'Modeless' });
-  dlg.layout = { position: 'absolute', padding: 1, rect: { x: 0, y: 0, width: 20, height: 6 } };
+  dlg.setLayout({ position: 'absolute', padding: 1, rect: { x: 0, y: 0, width: 20, height: 6 } });
   const root = new Group();
   root.add(dlg);
   const rr = createRenderRoot({ width: 30, height: 10 }, { caps });
@@ -115,7 +115,7 @@ test('ST-12: standard buttons render + emit ok/cancel/yes/no', () => {
   expect(Commands.no).toBe('no');
 
   const ok = okButton();
-  ok.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 8, height: 2 } };
+  ok.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 8, height: 2 } });
   const root = new Group();
   root.add(ok);
   const rr = createRenderRoot({ width: 10, height: 2 }, { caps });

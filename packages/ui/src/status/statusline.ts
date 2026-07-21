@@ -25,6 +25,8 @@ export interface StatusLoopSeam {
   emitCommand(command: string, arg?: unknown): void;
   /** Whether a command is enabled — a disabled item is greyed and cannot be activated. */
   isCommandEnabled(command: string): boolean;
+  /** A tick that changes on any command-enablement change; the bar binds it so greying repaints live. */
+  commandsVersion(): number;
   /** Capture the pointer to the status line for the duration of a press. */
   setCapture(view: Group): void;
   /** Release the pointer capture. */
@@ -78,19 +80,44 @@ export class StatusLine extends Group {
 
   constructor() {
     super();
-    this.layout = { direction: 'row' }; // items laid out left-to-right; `spacer()` absorbs the slack
+    this.setLayout({ direction: 'row' }); // items laid out left-to-right; `spacer()` absorbs the slack
     this.background = 'statusBar'; // fill the whole row, so gap + trailing cells stay status-coloured
     this.postProcess = true; // an accelerator fires only if the focused view didn't consume the key
   }
 
   /**
    * @internal Wire the loop seam and push the live enabled-state resolver to each command item so a
-   * disabled command greys as its enablement changes. Called once by `createApplication`.
+   * disabled command greys as its enablement changes. Called once by `createApplication`. Also binds
+   * the seam's command-version tick so any `enableCommand` repaints the bar (and thus re-greys its
+   * items) live — greying is otherwise inert because a view's `draw()` runs untracked.
    *
-   * @param seam The application operations (`emitCommand`/`isCommandEnabled`/capture).
+   * @param seam The application operations (`emitCommand`/`isCommandEnabled`/`commandsVersion`/capture).
    */
   attach(seam: StatusLoopSeam): void {
     this.seam = seam;
+    this.wireEnablement();
+    // `attach` runs after the bar is mounted, so `onMount` fires the bind immediately; binding here
+    // (not in the constructor) is what subscribes the bar to the version tick within its own scope.
+    this.onMount(() => this.bind(() => seam.commandsVersion()));
+  }
+
+  /**
+   * Replace the bar's items in place and re-wire enablement, so a router can swap a screen's status
+   * contribution onto the shared bar. Activation already flows through this line, so the new items
+   * emit correctly with no further wiring.
+   *
+   * @param items The status items/spacers to show; replaces the current children.
+   */
+  setItems(items: View[]): void {
+    for (const child of [...this.children]) this.remove(child);
+    for (const item of items) this.add(item);
+    this.wireEnablement();
+  }
+
+  /** Push the live enabled-state resolver into each command item (from the wired seam). */
+  private wireEnablement(): void {
+    const seam = this.seam;
+    if (seam === null) return;
     for (const item of this.commandItems()) {
       item.isEnabled = (command): boolean => seam.isCommandEnabled(command);
     }

@@ -38,7 +38,7 @@ class CommandSpy extends View {
 
 /** Mount a ListView filling `w×h` under a root Group (+ optional command spy) and focus its rows. */
 function hosted<T>(list: ListView<T>, w: number, h: number, spy?: CommandSpy) {
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(list);
   if (spy) root.add(spy);

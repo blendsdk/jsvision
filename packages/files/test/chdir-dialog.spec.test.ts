@@ -8,10 +8,18 @@
  * `(35,6,45,8)`, Chdir `(35,9,45,11)`, Revert `(35,12,45,14)`, Help `(35,15,45,17)`. Chdir descends the
  * focused tree node; Revert restores the starting directory; `valid(cmOK)` validates the path (a
  * readable directory) — else the error box; Cancel/Esc bypass. `.js` per NodeNext.
+ *
+ * **Geometry note — deliberate divergence.** The dialog's children are now laid out by the flex
+ * engine rather than at hand-computed cells, as a recorded decision. The path field, its history icon
+ * and every button land exactly where the decode above puts them; only the tree differs, one column
+ * wider and one row taller because it absorbs slack the hand-placed version left unused. That value
+ * is re-derived below on purpose — **do not "restore fidelity" by reverting it.** Behavior, colours,
+ * focus order and return values are unchanged, and that is what the rest of this file pins.
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { Group, createEventLoop, signal, Commands } from '@jsvision/ui';
+import type { EventLoop, View } from '@jsvision/ui';
 import { ChDirDialog } from '../src/dialog/chdir-dialog.js';
 import { createMemoryFs, dir } from './helpers/memory-fs.js';
 
@@ -24,7 +32,7 @@ function nestedFs(flavor: 'posix' | 'win32' = 'posix') {
 function openChDir(dlg: ChDirDialog) {
   // Preserve the dialog's own layout (esp. `padding`) so the spec exercises the real production
   // geometry — a wholesale layout replace drops `padding` and masks the frame-inset bug (chdir-dialog.ts).
-  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 48, height: 18 } };
+  dlg.setLayout({ rect: { x: 0, y: 0, width: 48, height: 18 } });
   const root = new Group();
   root.add(dlg);
   const loop = createEventLoop({ width: 48, height: 18 }, { caps });
@@ -33,23 +41,29 @@ function openChDir(dlg: ChDirDialog) {
   return { loop, promise };
 }
 
-const rectOf = (b: { x: number; y: number; width: number; height: number }) => ({
-  x: b.x,
-  y: b.y,
-  width: b.width,
-  height: b.height,
-});
+/**
+ * A child's solved rectangle relative to the dialog's top-left — the coordinates this decode is
+ * written in. `View.bounds` is parent-relative, so a child nested inside layout groups measures from
+ * that group rather than from the dialog; the composed origins give the real dialog-local position,
+ * and `bounds` still gives the size.
+ */
+function rectIn(loop: EventLoop, dialog: View, child: View) {
+  const root = loop.renderRoot;
+  const origin = root.originOf(child)!;
+  const base = root.originOf(dialog)!;
+  return { x: origin.x - base.x, y: origin.y - base.y, width: child.bounds.width, height: child.bounds.height };
+}
 
 // ST-10 — 48×18 composition at the decoded rects + the OK/Chdir/Revert/Help strip.
 test('ST-10: ChDirDialog composes the decoded child rects + button strip', () => {
   const dlg = new ChDirDialog({ fs: nestedFs(), directory: signal('/home/user/proj') });
-  openChDir(dlg);
-  expect(rectOf(dlg.pathInput.bounds)).toEqual({ x: 3, y: 3, width: 39, height: 1 });
-  expect(rectOf(dlg.dirList.bounds)).toEqual({ x: 3, y: 6, width: 30, height: 10 });
+  const { loop } = openChDir(dlg);
+  expect(rectIn(loop, dlg, dlg.pathInput)).toEqual({ x: 3, y: 3, width: 39, height: 1 });
+  expect(rectIn(loop, dlg, dlg.dirList)).toEqual({ x: 3, y: 6, width: 31, height: 11 });
   expect(dlg.buttonLabels).toEqual(['~O~K', '~C~hdir', '~R~evert', '~H~elp']);
-  expect(rectOf(dlg.buttons[0].bounds)).toEqual({ x: 35, y: 6, width: 10, height: 2 });
-  expect(rectOf(dlg.buttons[1].bounds)).toEqual({ x: 35, y: 9, width: 10, height: 2 });
-  expect(rectOf(dlg.buttons[3].bounds)).toEqual({ x: 35, y: 15, width: 10, height: 2 });
+  expect(rectIn(loop, dlg, dlg.buttons[0]!)).toEqual({ x: 35, y: 6, width: 10, height: 2 });
+  expect(rectIn(loop, dlg, dlg.buttons[1]!)).toEqual({ x: 35, y: 9, width: 10, height: 2 });
+  expect(rectIn(loop, dlg, dlg.buttons[3]!)).toEqual({ x: 35, y: 15, width: 10, height: 2 });
 });
 
 // ST-10 — Chdir descends the focused tree node; Revert restores the starting directory.

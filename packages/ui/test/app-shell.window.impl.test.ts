@@ -26,9 +26,9 @@ function mouse(kind: MouseEvent['kind'], x: number, y: number): MouseEvent {
 test('the active window draws a double-line border; the inactive a single-line one (Turbo Vision)', () => {
   const app = createApplication({ caps, viewport: { width: 40, height: 10 } });
   const a = new Window('A');
-  a.layout.rect = { x: 0, y: 0, width: 12, height: 5 };
+  a.setLayout({ rect: { x: 0, y: 0, width: 12, height: 5 } });
   const b = new Window('B');
-  b.layout.rect = { x: 20, y: 0, width: 12, height: 5 };
+  b.setLayout({ rect: { x: 20, y: 0, width: 12, height: 5 } });
   app.desktop.addWindow(a);
   app.desktop.addWindow(b); // added last ⇒ active
   app.loop.renderRoot.flush();
@@ -65,7 +65,7 @@ test('frameZoneAt gates zones behind the window flags', () => {
 test('left-grow keeps the top edge fixed while the bottom grows, then releases capture on up', () => {
   const app = createApplication({ caps, viewport: { width: 40, height: 16 } });
   const w = new Window('W');
-  w.layout.rect = { x: 10, y: 2, width: 14, height: 8 };
+  w.setLayout({ rect: { x: 10, y: 2, width: 14, height: 8 } });
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
 
@@ -85,7 +85,7 @@ test('the SW grip of a non-resizable window is inert (no left-grow gesture begin
   const app = createApplication({ caps, viewport: { width: 40, height: 16 } });
   const w = new Window('W');
   w.resizable = false;
-  w.layout.rect = { x: 10, y: 2, width: 14, height: 8 };
+  w.setLayout({ rect: { x: 10, y: 2, width: 14, height: 8 } });
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
   const before = { ...w.layout.rect };
@@ -99,9 +99,9 @@ test('the SW grip of a non-resizable window is inert (no left-grow gesture begin
 test('the window content child is inset by the 1-cell border (padding:1)', () => {
   const app = createApplication({ caps, viewport: { width: 30, height: 12 } });
   const w = new Window('W');
-  w.layout.rect = { x: 0, y: 0, width: 20, height: 8 };
+  w.setLayout({ rect: { x: 0, y: 0, width: 20, height: 8 } });
   const content = new Group();
-  content.layout = { size: { kind: 'fr', weight: 1 } };
+  content.setLayout({ size: { kind: 'fr', weight: 1 } });
   w.add(content);
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
@@ -113,7 +113,7 @@ test('the window content child is inset by the 1-cell border (padding:1)', () =>
 test('a reactive title change repaints the new title', () => {
   const app = createApplication({ caps, viewport: { width: 30, height: 12 } });
   const w = new Window('Old');
-  w.layout.rect = { x: 0, y: 0, width: 20, height: 6 };
+  w.setLayout({ rect: { x: 0, y: 0, width: 20, height: 6 } });
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
 
@@ -129,7 +129,7 @@ test('a reactive title change repaints the new title', () => {
 test('close disposes the window scope (onCleanup fires) and is a no-op when !closable', () => {
   const app = createApplication({ caps, viewport: { width: 30, height: 12 } });
   const w = new Window('W');
-  w.layout.rect = { x: 0, y: 0, width: 20, height: 6 };
+  w.setLayout({ rect: { x: 0, y: 0, width: 20, height: 6 } });
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
 
@@ -142,7 +142,7 @@ test('close disposes the window scope (onCleanup fires) and is a no-op when !clo
   // A !closable window ignores close().
   const w2 = new Window('W2');
   w2.closable = false;
-  w2.layout.rect = { x: 0, y: 0, width: 12, height: 5 };
+  w2.setLayout({ rect: { x: 0, y: 0, width: 12, height: 5 } });
   app.desktop.addWindow(w2);
   app.loop.renderRoot.flush();
   w2.close();
@@ -158,9 +158,9 @@ test('a content child draws over the interior, never the border', () => {
   }
   const app = createApplication({ caps, viewport: { width: 30, height: 12 } });
   const w = new Window('W');
-  w.layout.rect = { x: 0, y: 0, width: 20, height: 6 };
+  w.setLayout({ rect: { x: 0, y: 0, width: 20, height: 6 } });
   const filler = new Filler();
-  filler.layout = { size: { kind: 'fr', weight: 1 } };
+  filler.setLayout({ size: { kind: 'fr', weight: 1 } });
   w.add(filler);
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();

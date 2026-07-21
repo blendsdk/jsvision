@@ -11,6 +11,18 @@ the deprecation policy.
 
 ### Added
 
+- **Theme accelerator aliases — dedicated hotkey colors for `@jsvision/core`.** `ThemeColors` gains
+  two semantic aliases: `accelerator` (the highlighted hotkey letter of an in-dialog control — a
+  focused button, a tab, a label/cluster shortcut; default `#f59e0b`) and `menuAccelerator` (the
+  hotkey letter of the global chrome — the menu bar and the status line; default `#ef4444`), taking
+  the generated-theme vocabulary from 16 to 18 tokens. `createTheme` / `aliasesFromSeeds` gain
+  matching optional `accelerator?` / `menuAccelerator?` seeds. Every shipped preset renders
+  **byte-identical** to before. **Behavior change:** `warning` and `danger` are now reserved for app
+  content and drive **no** built-in role — overriding either (as a seed or an `overrides` entry) no
+  longer retints any menu/control hotkey; set `accelerator` / `menuAccelerator` for that. Acceptable
+  at v0.2.0 (pre-1.0). The `@jsvision/theme-designer` rail marks the now-inert `danger`/`warning`
+  rows "(reserved)".
+
 - **Global clipboard & selection — framework-wide `Ctrl+A`/`C`/`X`/`V` (`@jsvision/ui`).**
   Select-all, copy, cut, and paste now work in every editable widget (`Input`, `Memo`/`Editor`,
   `ComboBox`, `History`, and anything built on them) with no per-widget wiring. The app shell

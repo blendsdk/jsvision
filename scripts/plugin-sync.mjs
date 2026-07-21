@@ -15,6 +15,7 @@ import { pathToFileURL } from 'node:url';
 
 import { DEFAULT_ROOTS, detectDrift, DRIFT_PAIRS, readRegion } from './check-plugin.mjs';
 import { applyCatalogEntry, buildCatalogEntryRequest } from './plugin-sync-request.mjs';
+import { writeApiDocs } from './gen-plugin-api.mjs';
 
 /**
  * @typedef {import('./check-plugin.mjs').DriftFinding} DriftFinding
@@ -133,8 +134,10 @@ async function main(argv = process.argv.slice(2)) {
   if (argv.includes('--fix')) {
     const fixed = fixSnippetDrift(detectDrift());
     process.stdout.write(
-      fixed.length > 0 ? `synced ${fixed.length} snippet(s): ${fixed.join(', ')}\n` : 'nothing to sync\n',
+      fixed.length > 0 ? `synced ${fixed.length} snippet(s): ${fixed.join(', ')}\n` : 'no snippets to sync\n',
     );
+    const apiPages = writeApiDocs();
+    process.stdout.write(`regenerated ${apiPages.length} API reference page(s)\n`);
     return;
   }
 
@@ -146,6 +149,9 @@ async function main(argv = process.argv.slice(2)) {
   if (fixedSnippets.length > 0) {
     process.stdout.write(`synced ${fixedSnippets.length} snippet(s): ${fixedSnippets.join(', ')}\n`);
   }
+
+  const apiPages = writeApiDocs();
+  process.stdout.write(`regenerated ${apiPages.length} API reference page(s)\n`);
 
   const undocumented = findings.filter((f) => f.kind === 'undocumented-widget');
   if (undocumented.length === 0) {

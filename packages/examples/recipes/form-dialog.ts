@@ -4,7 +4,7 @@
 // vetoes OK while a field is invalid (focus snaps back to it) and only resolves once every field is
 // valid — the standard modal-form lifecycle. Run it with `loop.execView(dialog)`.
 
-import { cancelButton, Dialog, Input, Label, okButton, range, signal } from '@jsvision/ui';
+import { cancelButton, col, Dialog, fixed, Input, Label, okButton, range, row, signal } from '@jsvision/ui';
 import type { Signal } from '@jsvision/ui';
 
 // #region example
@@ -36,22 +36,19 @@ export interface AgeForm {
 export function makeAgeForm(): AgeForm {
   const value = signal('');
   const input = new Input({ value, validator: range(0, 120) });
-  input.layout = { position: 'absolute', rect: { x: 8, y: 1, width: 20, height: 1 } };
-
   const label = new Label('~A~ge:', input);
-  label.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 6, height: 1 } };
 
-  const ok = okButton();
-  ok.layout = { position: 'absolute', rect: { x: 6, y: 4, width: 10, height: 2 } };
-  const cancel = cancelButton();
-  cancel.layout = { position: 'absolute', rect: { x: 18, y: 4, width: 12, height: 2 } };
+  // Compose the interior with the layout DSL: a labelled-field row above a centered button row. The
+  // form reflows itself from these flex rules, so it adapts to the dialog size instead of pinning
+  // every child to a hand-computed rect. Absolute placement here is reserved for the dialog frame
+  // itself (below).
+  const fieldRow = row({ gap: 1 }, fixed(label, 6), fixed(input, 20));
+  const buttonRow = row({ gap: 2, justify: 'center' }, fixed(okButton(), 10), fixed(cancelButton(), 12));
 
   const dialog = new Dialog({ title: 'Enter age' });
-  dialog.layout = { ...dialog.layout, rect: { x: 4, y: 3, width: 36, height: 9 } };
-  dialog.add(label);
-  dialog.add(input);
-  dialog.add(ok);
-  dialog.add(cancel);
+  // A dialog places its own frame on the desktop by rect — one of the few sanctioned absolute cases.
+  dialog.setLayout({ rect: { x: 4, y: 3, width: 36, height: 9 } });
+  dialog.add(col({ gap: 1, fill: true }, fixed(fieldRow, 1), fixed(buttonRow, 2)));
 
   return { dialog, value, input };
 }

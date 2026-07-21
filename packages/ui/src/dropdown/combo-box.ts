@@ -51,6 +51,8 @@ export interface ComboBoxOptions<T> {
   command?: string;
   /** Max visible popup rows (default 6). */
   maxRows?: number;
+  /** A muted hint shown in the field while it is empty (editable mode); forwarded to the inner field. */
+  placeholder?: string | Signal<string>;
 }
 
 /**
@@ -59,7 +61,7 @@ export interface ComboBoxOptions<T> {
  */
 class ComboButton extends View {
   /** Fixed 3-cell width (the icon), stretched to the field height by the row layout. */
-  override layout: LayoutProps = { size: { kind: 'fixed', cells: 3 } };
+  override readonly layout: Readonly<LayoutProps> = { size: { kind: 'fixed', cells: 3 } };
 
   constructor(private readonly onOpen: (ev: DispatchEvent) => void) {
     super();
@@ -85,17 +87,16 @@ class ComboButton extends View {
  * (free text + filter) or select-only (read-only picker + type-ahead). See the module docs.
  *
  * @example
- * import { ComboBox, Group, createEventLoop, signal } from '@jsvision/ui';
+ * import { ComboBox, Group, createEventLoop, signal, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
  * const items = signal(['TypeScript', 'JavaScript', 'Python', 'Rust', 'Go']);
  * const value = signal<string | null>(null);
  * const combo = new ComboBox<string>({ items, getText: (s) => s, value, editable: true });
- * combo.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } };
  *
  * const controls = new Group();
- * controls.add(combo);
+ * controls.add(at(combo, 1, 1, 22, 1));
  * const loop = createEventLoop({ width: 40, height: 12 }, { caps });
  * loop.mount(controls);
  * loop.focusView(combo.input); // the field is the focus target
@@ -144,9 +145,12 @@ export class ComboBox<T> extends Group {
       return this.items().filter((item) => this.filterFn(item, t));
     });
 
-    // The field: editable is a free two-way text; select-only is read-only (reject-all validator).
-    this.input = new Input(this.editable ? { value: this.text } : { value: this.text, validator: REJECT_ALL });
-    this.input.layout = { size: { kind: 'fr', weight: 1 } };
+    // The field: editable is a free two-way text (with an optional placeholder); select-only is
+    // read-only (reject-all validator) — a rejected-input field needs no placeholder hint.
+    this.input = new Input(
+      this.editable ? { value: this.text, placeholder: opts.placeholder } : { value: this.text, validator: REJECT_ALL },
+    );
+    this.input.setLayout({ size: { kind: 'fr', weight: 1 } });
     this.button = new ComboButton((ev) => this.open(ev));
     this.add(this.input);
     this.add(this.button);

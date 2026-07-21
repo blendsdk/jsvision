@@ -18,12 +18,12 @@ import { History, Input, Group, historyAdd, signal } from '@jsvision/ui';
 
 const value = signal('/etc/hosts');
 const input = new Input({ value });
-input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } };
+input.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } });
 
 // Seed the shared store for id 1, then link a dropdown to the field.
 for (const past of ['/usr/bin', '/etc/hosts', '~/dev']) historyAdd(1, past);
 const history = new History({ link: input, historyId: 1 });
-history.layout = { position: 'absolute', rect: { x: 22, y: 1, width: 3, height: 1 } };
+history.setLayout({ position: 'absolute', rect: { x: 22, y: 1, width: 3, height: 1 } });
 
 const controls = new Group();
 controls.add(input);

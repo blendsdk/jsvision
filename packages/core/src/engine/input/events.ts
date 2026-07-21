@@ -21,13 +21,29 @@ export interface KeyEvent {
   readonly codepoint?: number;
 }
 
-/** A mouse button/motion report. Coordinates are 1-based, exactly as the terminal sends them. */
+/**
+ * A mouse button/motion report. Coordinates are 1-based, exactly as the terminal
+ * sends them.
+ *
+ * The `ctrl`/`alt`/`shift` flags report the modifiers held during the report, decoded
+ * from the SGR button byte — they let a click handler distinguish, e.g., a plain click
+ * from a Ctrl+click. They are **optional** and populated only on decoded events; a
+ * hand-built `MouseEvent` literal that omits them reads as an unmodified press
+ * (`undefined` → falsy). Modifier reporting is best-effort per terminal — some
+ * terminals intercept combinations such as Ctrl+click for their own use.
+ */
 export interface MouseEvent {
   readonly type: 'mouse';
   readonly kind: 'down' | 'up' | 'move' | 'drag';
   readonly button: number;
   readonly x: number;
   readonly y: number;
+  /** Ctrl held during the report (from the SGR button byte). */
+  readonly ctrl?: boolean;
+  /** Meta/Alt held during the report. */
+  readonly alt?: boolean;
+  /** Shift held during the report. */
+  readonly shift?: boolean;
 }
 
 /**

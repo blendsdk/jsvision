@@ -10,7 +10,8 @@
  */
 import { View } from '../view/index.js';
 import type { Group, DispatchEvent, Point } from '../view/index.js';
-import type { LayoutProps, Rect } from '../layout/index.js';
+import { cover } from '../view/dsl/index.js';
+import type { Rect } from '../layout/index.js';
 import { MenuPopup } from './popup.js';
 import type { MenuItem } from './builders.js';
 import { parseTilde, layoutTitles, titleIndexAt } from './builders.js';
@@ -22,6 +23,8 @@ export interface MenuLoopSeam {
   emitCommand(command: string, arg?: unknown): void;
   /** Whether a command is enabled — a disabled item is greyed and cannot be activated. */
   isCommandEnabled(command: string): boolean;
+  /** A tick that changes on any command-enablement change; the bar binds it so greying repaints live. */
+  commandsVersion(): number;
   /** Focus a view — used to restore the pre-menu focus when the menu closes. */
   focusView(view: View): void;
   /** The currently-focused view, captured when a menu opens so it can be restored on close. */
@@ -58,7 +61,7 @@ export interface MenuController {
   topHotkey(char: string): boolean;
   /** A plain `<char>` while open: activate the deepest item whose hotkey matches; `true` if consumed. */
   itemHotkey(char: string): boolean;
-  /** Re-anchor the outside-click catcher after the viewport is resized so it still covers the screen. */
+  /** Resize hook for the app shell; a no-op now — the outside-click catcher covers the viewport and re-fills on reflow. */
   resize(): void;
 }
 
@@ -75,9 +78,6 @@ const FALLBACK_VIEWPORT: Rect = { x: 0, y: 0, width: 80, height: 24 };
 
 /** A transparent full-viewport overlay child that closes (or switches) the menu on any mouse-down. */
 class CatcherView extends View {
-  /** Absolute, full-viewport; the controller sets `rect`. */
-  override layout: LayoutProps = { position: 'absolute' };
-
   constructor(private readonly onDown: (local: Point | undefined) => void) {
     super();
   }
@@ -152,7 +152,9 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
   let catcher: CatcherView | null = null;
 
   const isEnabled = (command: string): boolean => seam.isCommandEnabled(command);
-  const viewport = (): Rect => overlay.layout.rect ?? FALLBACK_VIEWPORT;
+  // Read-only: this is the live `layout.rect`, and a mutable alias would let a caller move the
+  // overlay a field at a time without ever requesting a reflow.
+  const viewport = (): Readonly<Rect> => overlay.layout.rect ?? FALLBACK_VIEWPORT;
   const deepest = (): Level | null => levels[levels.length - 1] ?? null;
   const isOpen = (): boolean => openTopIndex !== null;
 
@@ -184,7 +186,7 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
     popup.isEnabled = isEnabled;
     const width = popupWidth(items);
     const height = items.length + 2; // top + bottom border
-    popup.layout = { position: 'absolute', rect: clampRect(anchorX, anchorY, width, height) };
+    popup.setLayout({ position: 'absolute', rect: clampRect(anchorX, anchorY, width, height) });
     popup.onPick = (row) => pickRow(popup, row);
     overlay.add(popup);
     levels.push({ items, popup });
@@ -213,7 +215,6 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
 
   /** Mount the outside-click catcher as the overlay's first (bottom-most) child. */
   function mountCatcher(): void {
-    const vp = viewport();
     // A click on a bar title (row 0) switches directly to that menu; any other outside click closes.
     catcher = new CatcherView((local) => {
       if (local !== undefined && local.y === 0) {
@@ -225,7 +226,9 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
       }
       close();
     });
-    catcher.layout = { position: 'absolute', rect: { x: 0, y: 0, width: vp.width, height: vp.height } };
+    // A full-viewport cover overlay: it re-fills the app overlay on every reflow (a resize included),
+    // so there is no per-resize re-anchoring to do.
+    cover(catcher);
     overlay.add(catcher);
   }
 
@@ -277,13 +280,11 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
     if (level !== undefined) overlay.remove(level.popup);
   }
 
-  /** Re-anchor the outside-click catcher to a resized viewport so it still covers the full screen. */
-  function resize(): void {
-    if (catcher === null) return; // no open menu → nothing to re-anchor
-    const vp = viewport();
-    catcher.layout = { position: 'absolute', rect: { x: 0, y: 0, width: vp.width, height: vp.height } };
-    catcher.invalidateLayout();
-  }
+  /**
+   * Resize hook retained for the app shell's `onResize`, now a no-op: the outside-click catcher is a
+   * `cover()` overlay that re-fills the viewport on every reflow, so it needs no manual re-anchoring.
+   */
+  function resize(): void {}
 
   /** Switch the open top-level by `dir` (wrapping), re-opening at level 0. */
   function switchTop(dir: -1 | 1): void {

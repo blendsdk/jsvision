@@ -88,6 +88,10 @@ export interface EventLoopOptions {
    * implementation to step that deferred paint deterministically in a test.
    *
    * @example
+   * import { createEventLoop } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
    * // Deterministic stepping in a test: capture the deferred paint instead of queuing a microtask.
    * const pending: Array<() => void> = [];
    * const loop = createEventLoop({ width: 40, height: 10 }, { caps, scheduleMicrotask: (cb) => pending.push(cb) });
@@ -120,6 +124,12 @@ export interface EventLoop {
    * not dispose the mounted view tree.
    *
    * @example
+   * import { createEventLoop } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+   *
    * // Inside run()'s shutdown, after the terminal is restored:
    * loop.stop(); // gate the deferred painter before detaching the frame/caret sinks
    */
@@ -128,9 +138,38 @@ export interface EventLoop {
   dispatch(event: AppEvent): void;
   /** Resize the viewport: reflow the tree and paint exactly one frame. */
   resize(size: Size2D): void;
-  /** Move focus to the next focusable view in traversal order, wrapping at the end. */
+  /**
+   * Move focus to the next focusable view in **document (tree) order**, bounded by the active scope
+   * (the open modal's subtree while a modal is up, else the mounted root). Focus descends through
+   * nested groups and, at a group's end, crosses into the parent's next focusable sibling, wrapping at
+   * the scope — so a dialog built from nested `col`/`row` containers is fully traversable and Tab never
+   * escapes an open modal. Continuous Tab is pure tree order (a wrap re-enters at the tree start, not
+   * the last-visited child); container **restore** memory applies only to a non-Tab entry (a click,
+   * `focusView`, a window switch, opening/closing a dialog).
+   *
+   * @example
+   * // A dialog composed with the layout DSL — Tab walks its nested col/row groups in tree order.
+   * import { createEventLoop, col, row, Input, Button, signal } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const loop = createEventLoop({ width: 40, height: 8 }, { caps });
+   * const name = new Input({ value: signal('') });
+   * const ok = new Button('OK', { onClick: () => loop.emitCommand('ok') });
+   * const cancel = new Button('Cancel', { onClick: () => loop.emitCommand('cancel') });
+   * loop.mount(col(row(name), row(ok, cancel)));
+   *
+   * loop.focusNext(); // name
+   * loop.focusNext(); // ok      — Tab exits the first row into the button row
+   * loop.focusNext(); // cancel
+   * loop.focusNext(); // wraps back to name
+   * loop.focusPrev(); // cancel  — Shift-Tab is the exact inverse of Tab
+   */
   focusNext(): void;
-  /** Move focus to the previous focusable view in traversal order, wrapping at the start. */
+  /**
+   * Move focus to the previous focusable view — the exact inverse of {@link EventLoop.focusNext}
+   * (reverse descent lands on a container's last leaf), bounded by and wrapping at the same scope.
+   */
   focusPrev(): void;
   /** Focus exactly `view`. A no-op if `view` is not currently focusable. */
   focusView(view: View): void;
@@ -144,6 +183,12 @@ export interface EventLoop {
   enableCommand(command: string, on: boolean): void;
   /** Whether a command is currently enabled. Commands are enabled by default until disabled. */
   isCommandEnabled(command: string): boolean;
+  /**
+   * A version counter that changes whenever any command's enablement changes via
+   * {@link enableCommand}. Read it inside a view's `bind` to repaint on greying — the shell's status
+   * line and menu bar do exactly this so a disabled command greys live with no manual invalidate.
+   */
+  commandsVersion(): number;
   /**
    * Open `view` as a modal: input is captured to its subtree until it closes. Returns a promise that
    * resolves with the value passed to {@link endModal}. `await` it to run a dialog and read its result.
@@ -166,6 +211,12 @@ export interface EventLoop {
    *
    * @param theme The theme to switch to.
    * @example
+   * import { createEventLoop } from '@jsvision/ui';
+   * import { resolveCapabilities, nordTheme } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+   *
    * loop.setTheme(nordTheme); // repaints immediately, from any call context
    */
   setTheme(theme: Theme): void;

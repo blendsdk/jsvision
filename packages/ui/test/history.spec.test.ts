@@ -60,11 +60,11 @@ function makeApp(
   const loop = createEventLoop(viewport, { caps });
   const value = signal(opts.fieldValue ?? '');
   const link = new Input({ value, maxLength: opts.maxLength });
-  link.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 10, height: 1 } };
+  link.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 10, height: 1 } });
   const hist = new History({ link, historyId: opts.historyId ?? 1, history: opts.history });
-  hist.layout = { position: 'absolute', rect: { x: 15, y: 3, width: 3, height: 1 } };
+  hist.setLayout({ position: 'absolute', rect: { x: 15, y: 3, width: 3, height: 1 } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(link);

@@ -41,21 +41,26 @@ export interface FileListOptions {
  * The two-column file listing, driven reactively by a directory scan.
  *
  * @example
- * import { Group, signal } from '@jsvision/ui';
+ * import { at, Group, signal } from '@jsvision/ui';
  * import { FileList, nodeFileSystem } from '@jsvision/files';
  *
  * const directory = signal('/home/user');
  * const wildcard = signal('*.ts');
- * const list = new FileList({
- *   fs: nodeFileSystem,
- *   directory,
- *   wildcard,
- *   onOpenEntry: (entry) => {
- *     if (entry.kind === 'dir') directory.set(`/home/user/${entry.name}`);
- *     else console.log('open', entry.name);
- *   },
- * });
- * list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 32, height: 8 } };
+ * const list = at(
+ *   new FileList({
+ *     fs: nodeFileSystem,
+ *     directory,
+ *     wildcard,
+ *     onOpenEntry: (entry) => {
+ *       if (entry.kind === 'dir') directory.set(`/home/user/${entry.name}`);
+ *       else console.log('open', entry.name);
+ *     },
+ *   }),
+ *   0,
+ *   0,
+ *   32,
+ *   8,
+ * );
  * new Group().add(list);
  */
 export class FileList extends ListView<DirEntry> {

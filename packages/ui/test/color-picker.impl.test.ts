@@ -51,9 +51,9 @@ function make(opts: { value?: Color; allowCustom?: boolean; nameFor?: (c: Color)
   const loop = createEventLoop({ width: 40, height: 20 }, { caps });
   const value = signal<Color>(opts.value ?? 'red');
   const picker = new ColorPicker({ value, allowCustom: opts.allowCustom, nameFor: opts.nameFor });
-  picker.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } };
+  picker.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(picker);
@@ -141,9 +141,9 @@ test('IT-1: live nav forwards the picker onInput; a commit forwards onChange exa
   const inputs: Color[] = [];
   const commits: Color[] = [];
   const picker = new ColorPicker({ value, onInput: (c) => inputs.push(c), onChange: (c) => commits.push(c) });
-  picker.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } };
+  picker.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(picker);

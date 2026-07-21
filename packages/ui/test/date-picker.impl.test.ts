@@ -30,9 +30,9 @@ function make(opts: { value?: CalendarDate | null; withHost?: boolean } = {}) {
   const loop = createEventLoop({ width: 40, height: 20 }, { caps });
   const value: Signal<CalendarDate | null> = signal(opts.value ?? null);
   const dp = new DatePicker({ value, today: TODAY });
-  dp.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } };
+  dp.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(dp);
@@ -117,8 +117,8 @@ test('open → click the footer Today button → today selected + popup closed (
   h.loop.dispatch(key('down', { alt: true })); // open, hosted comfortable calendar
   const cal = hostedCalendar(h.overlay);
   expect(cal).toBeInstanceOf(Calendar);
-  // The comfortable footer Today button spans calendar-local cols 23-27, row weekRowY(5)+2 = the footer
-  // textY = 9 (compute the calendar's absolute origin from its bounds).
+  // The comfortable footer Today button (padded ` Today `) spans calendar-local cols 21-27, row
+  // weekRowY(5)+2 = the footer textY = 9 (compute the calendar's absolute origin from its bounds).
   let ax = 0;
   let ay = 0;
   let node = cal as unknown as { bounds: { x: number; y: number }; parent: typeof node } | null;

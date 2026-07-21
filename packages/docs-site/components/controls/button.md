@@ -84,7 +84,7 @@ Like every view, a `Button` has **no intrinsic size** — placed with no bounds 
 and paints nothing. Give it space one of two ways:
 
 - an **absolute rect** (the usual choice inside a dialog):
-  `button.layout = { position: 'absolute', rect: { x, y, width, height } }`;
+  `button.setLayout({ position: 'absolute', rect: { x, y, width, height } })`;
 - or a **sizing layout parent** (a row or column) that measures and positions it.
 
 Two hard limits to budget for:

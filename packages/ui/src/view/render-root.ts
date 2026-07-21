@@ -74,6 +74,13 @@ export interface RenderRoot {
    *
    * @param theme The theme to switch to.
    * @example
+   * import { Group, createRenderRoot } from '@jsvision/ui';
+   * import { resolveCapabilities, nordTheme } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const renderRoot = createRenderRoot({ width: 40, height: 10 }, { caps });
+   * renderRoot.mount(new Group());
+   *
    * renderRoot.setTheme(nordTheme);
    * renderRoot.flush(); // push the repainted frame
    */

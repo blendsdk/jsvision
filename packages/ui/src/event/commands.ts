@@ -8,6 +8,7 @@
  * it indirectly through the {@link EventLoop} methods.
  */
 import type { CommandEvent, DispatchEvent } from '../view/index.js';
+import { signal } from '../reactive/index.js';
 
 /** Raise/enable/query commands, gated by an enable-override map. */
 export interface CommandRegistry {
@@ -17,6 +18,12 @@ export interface CommandRegistry {
   enable(name: string, on: boolean): void;
   /** Whether a command is enabled. Commands are enabled by default until explicitly disabled. */
   isEnabled(name: string): boolean;
+  /**
+   * A version counter that changes on every `enable`/`disable`. Read it inside a reactive scope (a
+   * view's `bind`) to repaint when any command's enablement changes — this is what makes status/menu
+   * greying update live. Seeding does not bump it.
+   */
+  version(): number;
 }
 
 /** Options for {@link createCommandRegistry}. */
@@ -36,6 +43,9 @@ export interface CommandRegistryOptions {
  */
 export function createCommandRegistry(opts: CommandRegistryOptions): CommandRegistry {
   const overrides = new Map<string, boolean>();
+  // A reactive tick bumped on every enable/disable. Bars bind to it so greying repaints live. The
+  // seed loop below writes `overrides` directly (not through `enable`), so it never bumps the version.
+  const version = signal(0);
   if (opts.seed !== undefined) {
     for (const name of opts.seed) overrides.set(name, true);
   }
@@ -55,7 +65,8 @@ export function createCommandRegistry(opts: CommandRegistryOptions): CommandRegi
 
   const enable = (name: string, on: boolean): void => {
     overrides.set(name, on);
+    version.update((n) => n + 1); // notify bound bars so a disabled/enabled command re-greys live
   };
 
-  return { emit, enable, isEnabled };
+  return { emit, enable, isEnabled, version: () => version() };
 }

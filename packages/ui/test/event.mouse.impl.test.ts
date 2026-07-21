@@ -18,7 +18,7 @@ function mouseDown(x: number, y: number): MouseEvent {
   return { type: 'mouse', kind: 'down', button: 0, x, y };
 }
 function wheelUp(x: number, y: number): WheelEvent {
-  return { type: 'wheel', dir: 'up', x, y };
+  return { type: 'wheel', dir: 'up', x, y, shift: false, alt: false, ctrl: false };
 }
 
 /** Records the envelopes it receives. */
@@ -149,6 +149,50 @@ test('focus-on-click climbs past non-focusable ancestors', () => {
 
   loop.dispatch(mouseDown(2, 2)); // 0-based (1,1) inside leaf
   expect(loop.getFocused()).toBe(panel); // climbed to the focusable container
+});
+
+// A grabsFocus:false view acts on a click but never steals focus from the currently-focused view.
+test('a grabsFocus:false view receives the click but does not steal focus', () => {
+  const a = new HitView();
+  a.focusable = true;
+  const b = new HitView();
+  b.focusable = true;
+  b.grabsFocus = false; // acts on the click without stealing focus (e.g. a dialog Cancel button)
+  const root = new Group();
+  root.add(a);
+  root.add(b);
+
+  const loop = createEventLoop({ width: 20, height: 10 }, { caps });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 10 };
+  a.bounds = { x: 0, y: 0, width: 5, height: 5 };
+  b.bounds = { x: 10, y: 0, width: 5, height: 5 };
+
+  loop.focusView(a);
+  loop.dispatch(mouseDown(12, 2)); // 1-based → 0-based (11,1) inside b
+  expect(b.events.length).toBe(1); // b still received the click…
+  expect(loop.getFocused()).toBe(a); // …but focus stayed on a (no blur of a)
+});
+
+// Control: a default view (grabsFocus defaults true) DOES take focus on click.
+test('a default view takes focus on click (grabsFocus defaults true)', () => {
+  const a = new HitView();
+  a.focusable = true;
+  const b = new HitView();
+  b.focusable = true;
+  const root = new Group();
+  root.add(a);
+  root.add(b);
+
+  const loop = createEventLoop({ width: 20, height: 10 }, { caps });
+  loop.mount(root);
+  root.bounds = { x: 0, y: 0, width: 20, height: 10 };
+  a.bounds = { x: 0, y: 0, width: 5, height: 5 };
+  b.bounds = { x: 10, y: 0, width: 5, height: 5 };
+
+  loop.focusView(a);
+  loop.dispatch(mouseDown(12, 2));
+  expect(loop.getFocused()).toBe(b); // ordinary click-to-focus moved focus to b
 });
 
 // A point off the tree hits nothing: no delivery, no focus change, no throw.

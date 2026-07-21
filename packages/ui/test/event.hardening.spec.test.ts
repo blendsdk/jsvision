@@ -48,6 +48,8 @@ class HitLeaf extends View {
     ctx.fill('x');
   }
   override onEvent(ev: DispatchEvent): void {
+    // `local` is only absent for key/command events; every dispatch in this suite is a mouse click.
+    if (ev.local === undefined) throw new Error('expected a mouse event with local coords');
     this.locals.push(ev.local);
     ev.handled = true;
   }
@@ -57,6 +59,7 @@ class HitLeaf extends View {
 class HitGroup extends Group {
   readonly locals: Point[] = [];
   override onEvent(ev: DispatchEvent): void {
+    if (ev.local === undefined) throw new Error('expected a mouse event with local coords');
     this.locals.push(ev.local);
     ev.handled = true;
   }
@@ -177,7 +180,7 @@ test('ST-3.a: removing the focused dynamic child re-homes focus (unmountDynamicC
   const items = signal<number[]>([1, 2]);
   const leaves = new Map<number, FocusLeaf>();
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.addDynamic(() =>
     For(
       () => items(),

@@ -51,7 +51,7 @@ test('ST-10: mountApp paints a non-empty first frame and routes a key to the app
   const caps = buildBrowserCaps();
   const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
   const win = new Window('Demo');
-  win.layout.rect = { x: 1, y: 1, width: 20, height: 6 };
+  win.setLayout({ rect: { x: 1, y: 1, width: 20, height: 6 } });
   app.desktop.addWindow(win);
 
   const dispatchSpy = vi.spyOn(app.loop, 'dispatch');

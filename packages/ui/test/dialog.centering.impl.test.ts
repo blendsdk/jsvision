@@ -20,7 +20,7 @@ class Blank extends View {
 }
 
 function abs(v: View, x: number, y: number, width: number, height: number): void {
-  v.layout = { position: 'absolute', rect: { x, y, width, height } };
+  v.setLayout({ position: 'absolute', rect: { x, y, width, height } });
 }
 
 // Odd gap ⇒ integer division truncates toward zero (matches C++ `(size - p.size)/2`).
@@ -51,7 +51,7 @@ test('an oversized centered view overflows symmetrically (no clamp, TV-faithful)
 // within the parent's (unchanged) size regardless of the parent's own recentring.
 test('nested centering is consistent (child centers within its centered parent)', () => {
   const parent = new Group();
-  parent.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 10 } };
+  parent.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 10 } });
   parent.centered = true;
   const child = new Blank();
   abs(child, 0, 0, 6, 2);

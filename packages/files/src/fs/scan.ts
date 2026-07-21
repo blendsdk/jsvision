@@ -34,10 +34,9 @@ export interface ScanOptions {
  * @param b Second entry.
  * @returns A negative, zero, or positive number, as `sort` expects.
  * @example
- * import { compareEntries } from '@jsvision/files';
- * import type { DirEntry } from '@jsvision/files';
+ * import { scanDirectory, compareEntries, nodeFileSystem } from '@jsvision/files';
  *
- * const entries: DirEntry[] = readSomeEntries();
+ * const entries = await scanDirectory(nodeFileSystem, '/home/user');
  * entries.sort(compareEntries); // files first, then dirs, then '..'
  */
 export function compareEntries(a: DirEntry, b: DirEntry): number {

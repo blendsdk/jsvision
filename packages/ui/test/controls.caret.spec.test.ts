@@ -38,9 +38,9 @@ function mountInput(
   const input = new Input(opts);
   const stub = new FocusStub();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
-  stub.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  stub.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(input);
   root.add(stub);
   const loop = createEventLoop({ width: w, height: 3 }, { caps });
@@ -107,9 +107,9 @@ test('ST-14: onCaret adds the focused view origin to the local caret cell', () =
   const stub = new FocusStub();
   const input = new Input({ value });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  stub.layout = { size: { kind: 'fixed', cells: 1 } }; // row 0
-  input.layout = { size: { kind: 'fixed', cells: 1 } }; // row 1 → origin y=1
+  root.setLayout({ direction: 'col' });
+  stub.setLayout({ size: { kind: 'fixed', cells: 1 } }); // row 0
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } }); // row 1 → origin y=1
   root.add(stub);
   root.add(input);
   const loop = createEventLoop({ width: 10, height: 3 }, { caps });
@@ -141,9 +141,9 @@ test('ST-14: onCaret survives a partial recompose that omits the focused Input (
   const input = new Input({ value });
   const text = new Text(() => label());
   const root = new Group();
-  root.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } }; // row 0
-  text.layout = { size: { kind: 'fixed', cells: 1 } }; // row 1
+  root.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } }); // row 0
+  text.setLayout({ size: { kind: 'fixed', cells: 1 } }); // row 1
   root.add(input);
   root.add(text);
   const loop = createEventLoop({ width: 10, height: 3 }, { caps });

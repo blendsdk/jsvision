@@ -20,8 +20,25 @@ export type CalendarDensity = 'compact' | 'comfortable' | 'spacious';
 export const ARROW_UP = '↑';
 export const ARROW_DOWN = '↓';
 
-/** The `Today` footer button label (comfortable / spacious only) — plain text, no brackets. */
+/**
+ * The `Today` footer button word (comfortable / spacious only). This is the single translatable unit;
+ * the surrounding button chrome (brackets + padding) is derived by {@link todayButtonFace}, so changing
+ * this word alone re-sizes the button automatically.
+ */
 export const TODAY_LABEL = 'Today';
+
+/**
+ * Render the footer button's visible face from its word: padded one space each side (no brackets), e.g.
+ * `Today` → `" Today "`. The padding cells carry the button's colour, so the button reads as a chip with
+ * breathing room. The button's width is `todayButtonFace(word).length`, so a longer (e.g. translated)
+ * word grows the button without any other change.
+ *
+ * @param word The button word (default {@link TODAY_LABEL}).
+ * @returns The face string to draw, e.g. `" Today "`.
+ */
+export function todayButtonFace(word: string = TODAY_LABEL): string {
+  return ` ${word} `;
+}
 
 /** Sunday-first weekday labels at the two supported widths; rotated by `firstDayOfWeek`. */
 const WEEKDAY_2 = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
@@ -35,8 +52,10 @@ export interface CalendarFooter {
   readonly textY: number;
   /** Start column of the `Today` button. */
   readonly todayX: number;
-  /** Width of the `Today` button (`TODAY_LABEL.length`). */
+  /** Width of the `Today` button (= `todayFace.length`, the padded face). */
   readonly todayW: number;
+  /** The rendered button face to draw, e.g. `" Today "` — the space-padded {@link TODAY_LABEL}. */
+  readonly todayFace: string;
 }
 
 /** The fully-resolved geometry for a `(density, showWeekNumbers)` pair. All columns are absolute. */
@@ -112,7 +131,16 @@ export function metricsFor(density: CalendarDensity, showWeekNumbers: boolean): 
   if (s.footer) {
     const dividerY = lastWeekBottom + 1;
     const textY = dividerY + 1;
-    footer = { dividerY, textY, todayX: wkw + contentWidth - TODAY_LABEL.length, todayW: TODAY_LABEL.length };
+    // The button width auto-derives from its (translatable) word + padding, so it right-aligns correctly
+    // whatever the word — a single source of truth shared by the draw (via `todayFace`) and the hit-zone.
+    const todayFace = todayButtonFace();
+    footer = {
+      dividerY,
+      textY,
+      todayX: wkw + contentWidth - todayFace.length,
+      todayW: todayFace.length,
+      todayFace,
+    };
     height = textY + 1;
   }
 

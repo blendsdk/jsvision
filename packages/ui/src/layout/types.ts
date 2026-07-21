@@ -35,7 +35,16 @@ export interface Padding {
 /** How a box is sized along its parent's main axis. */
 export type Size =
   | { kind: 'fixed'; cells: number } // exact integer cells
-  | { kind: 'fr'; weight: number } // grow-weight share of leftover space
+  | {
+      kind: 'fr';
+      weight: number; // grow-weight share of leftover space
+      /**
+       * Optional floor in whole cells: an `fr` box never sizes below this, and it reserves the
+       * floor even inside a shrink-to-fit (`auto`) parent. Omitted ⇒ no floor — identical to the
+       * pre-existing behaviour. A negative value clamps to 0 in {@link normalizeSize}.
+       */
+      min?: number;
+    }
   | { kind: 'auto' }; // size to content (via measure() / children)
 
 /** Main-axis distribution of leftover space (like CSS `justify-content`). */
@@ -78,9 +87,36 @@ export interface LayoutProps {
    * `position:'absolute'` only — the parent-content-relative rect in cells (each side clamped to a
    * non-negative integer). Ignored for `'flow'` and `'fill'` (a `'fill'` box always takes the full
    * content box); absent on an absolute box ⇒ a degenerate zero rect (no throw).
+   *
+   * Read-only through the view's `layout`, so a solved rect cannot be edited a field at a time behind
+   * `setLayout`'s back — that would move the view without ever requesting a reflow.
    */
-  rect?: Rect;
+  rect?: Readonly<Rect>;
 }
+
+/**
+ * Every {@link LayoutProps} prop set to `undefined` — the reset a caller spreads when it means "clear
+ * everything, then set these".
+ *
+ * `setLayout` merges, so omitting a prop **keeps** it. A seam that must govern a view's layout no
+ * matter what the view arrived with therefore has to name the props it discards, and an explicit
+ * `undefined` is the documented way to clear one back to its default.
+ *
+ * The mapped type over `Required<LayoutProps>` is the point: adding a prop to `LayoutProps` makes
+ * this object literal fail to compile, instead of silently flipping every seam that spreads it from
+ * *discard* to *inherit*. Not exported from the package — it is an implementation detail of those
+ * seams, not something a consumer composes with.
+ */
+export const CLEARED_LAYOUT: { [K in keyof Required<LayoutProps>]: undefined } = {
+  direction: undefined,
+  size: undefined,
+  justify: undefined,
+  align: undefined,
+  gap: undefined,
+  padding: undefined,
+  position: undefined,
+  rect: undefined,
+};
 
 /**
  * A node in the layout input tree.
@@ -166,7 +202,11 @@ export function normalizeSize(size: Size | undefined): Size {
     return { kind: 'fixed', cells: toCells(size.cells) };
   }
   if (size.kind === 'fr') {
-    return { kind: 'fr', weight: Math.max(0, size.weight) };
+    return {
+      kind: 'fr',
+      weight: Math.max(0, size.weight),
+      min: size.min === undefined ? undefined : toCells(size.min),
+    };
   }
   return { kind: 'auto' };
 }

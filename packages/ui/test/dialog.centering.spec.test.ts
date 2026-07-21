@@ -78,7 +78,7 @@ test('centered:true recomputes the origin even when an explicit rect is given', 
 // absolute view with `centered = true` centers within its parent group.
 test('the `centered` View flag centers any absolute view within its parent (ofCentered port)', () => {
   const v = new Blank();
-  v.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 6, height: 2 } };
+  v.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 6, height: 2 } });
   v.centered = true;
   const root = new Group();
   root.add(v);

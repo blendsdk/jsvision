@@ -87,9 +87,9 @@ function mountLabel(): {
   const label = new Label('~N~ame', link);
   const root = new Group();
   // Column layout: each child is a fixed 1-row line; cross-axis (width) stretches to the 20-col root.
-  root.layout = { direction: 'col' };
-  label.layout = { size: { kind: 'fixed', cells: 1 } };
-  link.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  label.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  link.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(label);
   root.add(link);
   const loop = createEventLoop({ width, height: 3 }, { caps });
@@ -125,4 +125,12 @@ test('ST-04: Alt-<hotkey> focuses the Label link from the post-process phase', (
   const { loop, link } = mountLabel();
   loop.dispatch(key('n', { alt: true }));
   expect(loop.getFocused()).toBe(link);
+});
+
+// measure() advertises the content's natural display size, so Text self-sizes in a flow layout (e.g. a
+// footer widget row). An absolute layout sets an explicit rect and ignores it.
+test('Text.measure returns the content display width and the line count', () => {
+  expect(new Text('hello').measure()).toEqual({ width: 5, height: 1 });
+  expect(new Text('two\nlines!').measure()).toEqual({ width: 6, height: 2 }); // widest line × line count
+  expect(new Text(() => 'reactive').measure().width).toBe(8); // a reactive getter is evaluated
 });

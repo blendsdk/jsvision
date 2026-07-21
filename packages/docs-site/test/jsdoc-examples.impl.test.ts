@@ -1,0 +1,136 @@
+/**
+ * Implementation test — the extraction half of the `@example` compile guard.
+ *
+ * The spec oracle beside this file pins what the guard *concludes*; this one
+ * covers how a raw JSDoc comment becomes compilable TypeScript, and how a block
+ * gets the key its allowlist entry is written against. Both are internals, but
+ * both are load-bearing: a body that keeps its fence never compiles, and a key
+ * that shifts between runs turns the ratchet into a random failure generator.
+ */
+import { basename, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, test, expect } from 'vitest';
+import { collectExamples, checkExamples, SHIPPED_ROOTS } from '../src/api/jsdoc-examples.mjs';
+
+const IMPL_FIXTURES = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'jsdoc-examples', 'impl');
+
+const blocks = collectExamples([IMPL_FIXTURES]);
+
+/** The one block a fixture file declares under the given key. */
+function block(fileName: string, symbol: string) {
+  const found = blocks.filter((b) => b.file.endsWith(`/${fileName}`) && b.symbol === symbol);
+  expect(found, `expected exactly one ${fileName}::${symbol}`).toHaveLength(1);
+  return found[0];
+}
+
+describe('fence stripping', () => {
+  // Fencing is a per-block authoring habit, not a per-package one, so the strip
+  // is unconditional — all four shapes must reduce to the same source.
+  test.each([['bareFence'], ['tsFence'], ['typescriptFence'], ['noFence']])(
+    'reduces the %s shape to the fence-free body',
+    (symbol) => {
+      expect(block('fences.ts', symbol).body).toBe('const bare = 1;');
+    },
+  );
+});
+
+describe('comment terminators', () => {
+  test('un-escapes a block-comment terminator back to valid TypeScript', () => {
+    // A body that contains a block comment has to escape its terminator in the
+    // source, or the JSDoc comment would end early. The raw text hands the
+    // escape straight back, and an escaped terminator does not parse.
+    const body = block('terminator.ts', 'format').body;
+    expect(body).toContain('/* a block comment inside the example */');
+    expect(body).not.toContain('*\\/');
+  });
+});
+
+describe('symbol keying', () => {
+  test('collapses a tag reachable from several nodes into exactly one block', () => {
+    // One `@example` on an `export const` is reachable from the statement, the
+    // declaration and its identifier. A naive tag walk mints three blocks, two
+    // of them under the wrong name — and one of those names is the anonymous
+    // fallback, whose recorded diagnostics would then shift run to run.
+    const fromConstExport = blocks.filter((b) => b.file.endsWith('/const-export.ts'));
+    expect(fromConstExport).toHaveLength(1);
+    expect(fromConstExport[0].symbol).toBe('ANSWER');
+  });
+
+  test('qualifies class and interface members by their owner', () => {
+    // A bare member name is not file-unique by construction: two declarations in
+    // one file may each carry a `draw`.
+    const members = blocks
+      .filter((b) => b.file.endsWith('/members.ts'))
+      .map((b) => b.symbol)
+      .sort();
+    expect(members).toEqual(['Drawable.draw', 'Widget.draw']);
+  });
+
+  test('falls back to an ordinal-suffixed anonymous key for unnamed nodes', () => {
+    // A leading file comment binds to whatever follows it, which has no name of
+    // its own. Two of them in one file collide, so the ordinal is the only thing
+    // keeping their allowlist entries apart.
+    const anonymous = blocks.filter((b) => b.file.endsWith('/anonymous.ts'));
+    expect(anonymous.map((b) => b.symbol)).toEqual(['(anonymous)#1', '(anonymous)#2']);
+    // The ordinal follows source order, so it is stable across runs.
+    expect(anonymous[0].line).toBeLessThan(anonymous[1].line);
+  });
+});
+
+describe('virtual paths', () => {
+  test('places every block inside its own source directory and writes nothing there', () => {
+    // Relative specifiers and `type: module` (every package has one, and dozens
+    // of blocks use top-level await) both resolve from the source's directory,
+    // so the block has to be compiled as if it lived there.
+    for (const b of blocks) {
+      expect(dirname(b.virtualPath)).toBe(IMPL_FIXTURES);
+    }
+    // Unique per block, so two blocks in one file cannot shadow each other.
+    expect(new Set(blocks.map((b) => b.virtualPath)).size).toBe(blocks.length);
+  });
+
+  test('names every virtual file after its own source, not by offset alone', () => {
+    // The directory is shared with sibling sources, and a byte offset is unique
+    // only within one file. Two blocks in sibling files at the same offset would
+    // otherwise collapse onto one path — and each would then be scored against
+    // the other's source, which no assertion downstream could catch.
+    for (const b of blocks) {
+      const source = basename(b.file, '.ts');
+      expect(basename(b.virtualPath)).toBe(`.jsdoc-example.${source}.${b.pos}.ts`);
+    }
+  });
+
+  test('yields globally distinct virtual paths across the whole shipped surface', () => {
+    // The fixtures are too few to collide by chance; the real tree is not. Its
+    // closest sibling pair sits 3 bytes apart, so this is the case that would
+    // actually fire if the naming scheme regressed.
+    const shipped = collectExamples(SHIPPED_ROOTS);
+    expect(shipped.length).toBeGreaterThan(0);
+    expect(new Set(shipped.map((b) => b.virtualPath)).size).toBe(shipped.length);
+  });
+});
+
+describe('lib pinning', () => {
+  // The guard pins `lib` instead of inheriting it. Left unset, the default set
+  // for the target includes DOM, and an example that forgets a declaration then
+  // binds to a browser global rather than failing — three shipped examples were
+  // type-checking against `window.status` and the DOM `confirm` before the pin.
+  // Nothing in this repo targets a browser, so these names must not resolve.
+  test.each([['status'], ['confirm'], ['name'], ['close'], ['focus'], ['event'], ['screen'], ['history']])(
+    'the DOM global %s does not resolve in an example',
+    (global) => {
+      const probe = {
+        ...block('fences.ts', 'noFence'),
+        symbol: `__lib_probe_${global}__`,
+        virtualPath: join(IMPL_FIXTURES, `.jsdoc-example.lib-probe-${global}.0.ts`),
+        body: `const probe = ${global};\nexport { probe };`,
+      };
+      const failure = checkExamples([probe], {}).unexpected[0];
+      expect(failure, `${global} still resolves — is lib still pinned?`).toBeDefined();
+      // Asserted on the message rather than `missingNames`, which the guard fills only for TS2304.
+      // A name Node's own types still suggest a near-match for (`event` → `Event`) reports as TS2552
+      // instead, and both codes mean the same thing here: the global is gone.
+      expect(failure.message).toContain(`Cannot find name '${global}'`);
+    },
+  );
+});

@@ -34,6 +34,7 @@ import {
   statusLine,
   statusItem,
   Commands,
+  SplitView,
   signal,
 } from '@jsvision/ui';
 import { AnalogClock } from './analog-clock.js';
@@ -101,19 +102,19 @@ async function main(): Promise<number> {
 
   const analog = new Window('Analog');
   analog.number = 1;
-  analog.layout.rect = { x: 1, y: 1, width: 24, height: 13 };
+  analog.setLayout({ rect: { x: 1, y: 1, width: 24, height: 13 } });
   analog.add(new AnalogClock(() => now()));
   app.desktop.addWindow(analog);
 
   const digital = new Window('Digital');
   digital.number = 2;
-  digital.layout.rect = { x: 27, y: 1, width: 33, height: 9 };
+  digital.setLayout({ rect: { x: 27, y: 1, width: 33, height: 9 } });
   digital.add(new DigitalClock(() => now()));
   app.desktop.addWindow(digital);
 
   const boing = new Window('Boing');
   boing.number = 3;
-  boing.layout.rect = { x: 14, y: 8, width: 34, height: 15 };
+  boing.setLayout({ rect: { x: 14, y: 8, width: 34, height: 15 } });
   boing.add(
     new BoingClock(
       () => frame(),
@@ -121,6 +122,38 @@ async function main(): Promise<number> {
     ),
   );
   app.desktop.addWindow(boing);
+
+  // A 4th window nests all three clocks in one SplitView grid — row:[ Analog | col:[ Digital / Boing ] ]
+  // — using FRESH clock instances bound to the same now/frame closures, so they animate off the same
+  // timer as the standalone windows above. This is the "a SplitView composes inside a Window" demo:
+  // position:'fill' fills the window's padded interior, and dragging an interior divider hit-tests to
+  // the splitter (the deepest view), never the window frame, so resize and window-move never collide.
+  const clocks = new Window('Clocks');
+  clocks.number = 4;
+  clocks.setLayout({ rect: { x: 4, y: 4, width: 60, height: 20 } });
+  const rightSizes = signal([1, 1]);
+  const right = new SplitView({
+    direction: 'col',
+    children: [
+      new DigitalClock(() => now()),
+      new BoingClock(
+        () => frame(),
+        () => now(),
+      ),
+    ],
+    sizes: rightSizes,
+    minSize: [9, 9],
+  });
+  const gridSizes = signal([1, 1]);
+  const grid = new SplitView({
+    direction: 'row',
+    children: [new AnalogClock(() => now()), right],
+    sizes: gridSizes,
+    minSize: [24, 24],
+  });
+  grid.setLayout({ position: 'fill' });
+  clocks.add(grid);
+  app.desktop.addWindow(clocks);
 
   // Bump the signals, then emit a no-op command so the loop flushes one coalesced frame per tick.
   const timer = setInterval(() => {

@@ -38,7 +38,10 @@ export interface RowSlot {
  * @param startX The column the first segment starts at (a left margin); default 0.
  * @returns One `{ x, width }` slot per input segment, in the same order.
  * @example
- * // Internal layout helper. "File" at a left margin of 1, "Help" pushed flush right in a 40-wide bar.
+ * // packRow is internal (not re-exported from the package barrel) — imported by relative path.
+ * import { packRow } from './pack-row.js';
+ *
+ * // "File" at a left margin of 1, "Help" pushed flush right in a 40-wide bar.
  * packRow(
  *   [{ kind: 'fixed', width: 6 }, { kind: 'flex', weight: 1 }, { kind: 'fixed', width: 6 }],
  *   40,

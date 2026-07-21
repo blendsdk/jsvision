@@ -62,7 +62,7 @@ class PannableCanvas extends Group {
   private readonly maxY: number;
 
   constructor(
-    private readonly surface: Surface,
+    surface: Surface,
     private readonly delta: Signal<Point>,
     vw: number,
     vh: number,

@@ -48,11 +48,11 @@ function capturing(): { schedule: (fn: () => void) => void; run: () => void; cal
 test('ST-07: a bind change repaints only the bound view’s subtree (siblings not redrawn)', () => {
   const sig = signal(0);
   const a = new Counter('A');
-  a.layout = { size: { kind: 'fixed', cells: 2 } };
+  a.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const b = new Counter('B');
-  b.layout = { size: { kind: 'fixed', cells: 2 } };
+  b.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(a);
   root.add(b);
 
@@ -80,9 +80,9 @@ test('ST-07: a bind change repaints only the bound view’s subtree (siblings no
 // ST-08 / AC-8 — N invalidate() within one tick coalesce into exactly one scheduled flush.
 test('ST-08: N invalidate() in a tick produce exactly one scheduled flush', () => {
   const v = new Counter('V');
-  v.layout = { size: { kind: 'fixed', cells: 2 } };
+  v.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(v);
 
   const sched = capturing();
@@ -100,11 +100,11 @@ test('ST-08: N invalidate() in a tick produce exactly one scheduled flush', () =
 // redrawn); an invalidateLayout runs a reflow + full recompose (siblings redrawn).
 test('ST-09: repaint recomposes only the dirty subtree; relayout recomposes the whole tree', () => {
   const a = new Counter('A');
-  a.layout = { size: { kind: 'fixed', cells: 2 } };
+  a.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const b = new Counter('B');
-  b.layout = { size: { kind: 'fixed', cells: 2 } };
+  b.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(a);
   root.add(b);
 
@@ -125,9 +125,9 @@ test('ST-09: repaint recomposes only the dirty subtree; relayout recomposes the 
 // ST-10 / AC-10 — all flush scheduling routes through the injected scheduler (no queueMicrotask).
 test('ST-10: flush scheduling routes through the injected scheduler', () => {
   const v = new Counter('V');
-  v.layout = { size: { kind: 'fixed', cells: 2 } };
+  v.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(v);
 
   const sched = capturing();
