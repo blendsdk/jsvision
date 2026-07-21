@@ -79,6 +79,15 @@ export interface DemoShellOptions {
   readonly viewport: { width: number; height: number };
   /** Initial theme; defaults to Turbo Vision. */
   readonly theme?: Theme;
+  /**
+   * Show the `View ▸ Theme` preset submenu. Off by default: a theme switcher is a distraction in an
+   * example about something else, so only an example that is *about* theming asks for it. The theme
+   * commands stay wired either way — this hides the menu, it does not unwire the handlers.
+   *
+   * Applies to a `component` example, whose chrome this shell owns. An `app` example builds its own
+   * menu bar, so it passes the same flag to {@link demoApp} instead.
+   */
+  readonly themeMenu?: boolean;
   /** Called when the Depth control changes — the Play layer turns this into a re-mount. */
   readonly onDepthChange?: (depth: Depth) => void;
   /**
@@ -160,7 +169,9 @@ export function demoShell(opts: DemoShellOptions): Application {
  * application, so those controls work without the example repeating them.
  *
  * @param ctx - the example context: the terminal `caps` plus the cell grid.
- * @param opts - optional flags; `windowMenu` adds the `Window` menu + window hints for a windowing app.
+ * @param opts - optional flags; `windowMenu` adds the `Window` menu + window hints for a windowing
+ * app, `themeMenu` adds the `View ▸ Theme` preset submenu (off by default — see
+ * {@link DemoShellOptions.themeMenu}).
  * @returns a mountable {@link Application} with the demo chrome already in place.
  * @example
  * import { defineExample } from '../_contract.js';
@@ -179,14 +190,15 @@ export function demoShell(opts: DemoShellOptions): Application {
  */
 export function demoApp(
   ctx: { readonly caps: CapabilityProfile; readonly width: number; readonly height: number },
-  opts?: { readonly windowMenu?: boolean },
+  opts?: { readonly windowMenu?: boolean; readonly themeMenu?: boolean },
 ): DesktopApplication {
   const windowMenu = opts?.windowMenu ?? false;
+  const themeMenu = opts?.themeMenu ?? false;
   return createApplication({
     caps: ctx.caps,
     viewport: { width: ctx.width, height: ctx.height },
     theme: classicTheme,
-    menuBar: buildMenuBar({ windowMenu }),
+    menuBar: buildMenuBar({ windowMenu, themeMenu }),
     statusLine: buildStatusLine(),
   });
 }
@@ -197,7 +209,7 @@ function shellForView(opts: DemoShellOptions): Application {
     caps: opts.caps,
     viewport: opts.viewport,
     theme: opts.theme ?? classicTheme,
-    menuBar: buildMenuBar({ windowMenu: false }),
+    menuBar: buildMenuBar({ windowMenu: false, themeMenu: opts.themeMenu ?? false }),
     statusLine: buildStatusLine(),
   });
   // The stage window fills the desktop minus a 1-cell margin, so the desktop pattern frames it.
@@ -249,20 +261,35 @@ function intendedSize(view: View): { width: number; height: number } {
   return { width: 40, height: 10 };
 }
 
-/** The shared menu bar: System (About) + View (Theme + Depth) + (optionally) a Window menu. */
-function buildMenuBar({ windowMenu }: { windowMenu: boolean }): ReturnType<typeof menuBar> {
-  const menus = [
-    subMenu('≡', [item('~A~bout', CMD_ABOUT, 'F1'), separator(), item('E~x~it', Commands.quit, 'Alt+X')]),
-    subMenu('~V~iew', [
+/**
+ * The shared menu bar: System (About) + View (Depth, and Theme only when asked for) + (optionally) a
+ * Window menu. The Theme submenu is opt-in because a preset switcher pulls attention away from the
+ * component an example is there to show; the example about theming turns it on.
+ */
+function buildMenuBar({
+  windowMenu,
+  themeMenu,
+}: {
+  windowMenu: boolean;
+  themeMenu: boolean;
+}): ReturnType<typeof menuBar> {
+  const viewItems = [
+    subMenu(
+      '~D~epth',
+      DEPTHS.map((d) => item(d, depthCmd(d))),
+    ),
+  ];
+  if (themeMenu) {
+    viewItems.unshift(
       subMenu(
         '~T~heme',
         PRESETS.map((p, i) => item(p.name, themeCmd(i))),
       ),
-      subMenu(
-        '~D~epth',
-        DEPTHS.map((d) => item(d, depthCmd(d))),
-      ),
-    ]),
+    );
+  }
+  const menus = [
+    subMenu('≡', [item('~A~bout', CMD_ABOUT, 'F1'), separator(), item('E~x~it', Commands.quit, 'Alt+X')]),
+    subMenu('~V~iew', viewItems),
   ];
   if (windowMenu) {
     menus.push(

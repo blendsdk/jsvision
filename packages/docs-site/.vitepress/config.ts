@@ -131,7 +131,15 @@ export default withMermaid(
       // One sidebar per section. Every link targets an existing page (no dead
       // links); the trees fill out as later milestones add content.
       sidebar: {
-        '/guide/': [{ text: 'Guide', items: [{ text: 'Introduction', link: '/guide/' }] }],
+        '/guide/': [
+          {
+            text: 'Guide',
+            items: [
+              { text: 'Introduction', link: '/guide/' },
+              { text: 'Keyboard & clipboard', link: '/guide/keyboard-and-clipboard' },
+            ],
+          },
+        ],
         '/components/': [
           { text: 'Components', items: [{ text: 'Overview', link: '/components/' }] },
           {
@@ -203,7 +211,14 @@ export default withMermaid(
         ],
         '/apps/': [
           { text: 'Apps', items: [{ text: 'Overview', link: '/apps/' }] },
-          { text: 'Examples', items: [{ text: 'Turbo Vision desktop', link: '/apps/desktop' }] },
+          {
+            text: 'Examples',
+            items: [
+              { text: 'Hello, JSVision', link: '/apps/hello' },
+              { text: 'Editor & clipboard', link: '/apps/editor' },
+              { text: 'Turbo Vision desktop', link: '/apps/desktop' },
+            ],
+          },
         ],
         // Overview is the hand-written preface; the generated per-package trees follow.
         '/api/': [{ text: 'Overview', link: '/api/' }, ...typedocSidebar],
