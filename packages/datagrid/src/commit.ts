@@ -69,10 +69,17 @@ export type BeforeSave<T> = (change: CellCommit<T>) => boolean | Promise<boolean
  * import { commitCell } from '@jsvision/datagrid';
  * const row = { balance: 1 };
  * const apply = (r: typeof row, _col: string, v: number) => { r.balance = v; };
+ * const ledger: number[] = []; // stands in for the real persistence layer (a database write, an API call)
  * const res = await commitCell({
  *   row, columnId: 'balance', rowKey: 1, previous: 1, next: 2, apply,
- *   beforeSave: (c) => c.value >= 0, // gate: refuse negative balances before persisting
- *   onCommit: (c) => persist(c),     // authoritative persistence
+ *   // beforeSave/onCommit see `value` as `unknown` (it is not typed by the call's inferred V), so a
+ *   // gate narrows it before using it — the same guard the grid's own examples use.
+ *   beforeSave: (c) => typeof c.value === 'number' && c.value >= 0, // gate: refuse negative balances
+ *   onCommit: (c) => {
+ *     if (typeof c.value !== 'number') return false;
+ *     ledger.push(c.value); // authoritative persistence
+ *     return true;
+ *   },
  * });
  * res.committed; // true — row.balance is now 2
  * ```

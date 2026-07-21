@@ -52,8 +52,14 @@ export interface GridColumnInfo {
  *
  * @example
  * ```ts
- * import { EditableDataGrid, type GridVariant } from '@jsvision/datagrid';
- * const grid = new EditableDataGrid({ columns, source });
+ * import { signal } from '@jsvision/ui';
+ * import { column, fromRows, EditableDataGrid, type GridVariant } from '@jsvision/datagrid';
+ *
+ * interface Row { id: number; name: string }
+ * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+ * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+ * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+ *
  * const mine: GridVariant = grid.saveVariant('mine'); // persist mine somewhere…
  * grid.applyVariant(mine);                            // …and restore it later
  * ```
@@ -129,9 +135,11 @@ export interface ResolvedLayout {
  * @returns The serializable variant.
  * @example
  * ```ts
+ * import { buildVariant } from './variant.js';
+ *
  * const v = buildVariant('compact', {
  *   order: ['id', 'name', 'note'], hidden: new Set(['note']),
- *   widthOf: (id) => (id === 'name' ? 20 : undefined),
+ *   widthOf: (id: string) => (id === 'name' ? 20 : undefined),
  *   freeze: { left: ['id'], right: [] }, sort: [], filter: new Map(),
  * });
  * // v.columns → [{ id: 'id', visible: true }, { id: 'name', visible: true, width: 20 }, { id: 'note', visible: false }]
@@ -164,6 +172,8 @@ export function buildVariant(name: string, snap: LayoutSnapshot): GridVariant {
  * @returns The reconciled restore instructions.
  * @example
  * ```ts
+ * import { resolveVariant } from './variant.js';
+ *
  * resolveVariant(
  *   { name: 'x', columns: [{ id: 'b', visible: true }, { id: 'gone', visible: true }], freeze: { left: [], right: [] }, sort: [], filter: [] },
  *   ['a', 'b'],
@@ -215,10 +225,12 @@ export function resolveVariant(variant: GridVariant, currentIds: readonly string
  * @returns One resolved info per column, in `order`.
  * @example
  * ```ts
+ * import { buildColumnInfos } from './variant.js';
+ *
  * buildColumnInfos(
  *   ['id', 'name'], new Set(['name']),
  *   { left: ['id'], right: [] },
- *   (id) => (id === 'id' ? 5 : 8), (id) => id.toUpperCase(),
+ *   (id: string) => (id === 'id' ? 5 : 8), (id: string) => id.toUpperCase(),
  * );
  * // → [{ id: 'id', title: 'ID', visible: true, frozen: 'left', width: 5 },
  * //    { id: 'name', title: 'NAME', visible: false, frozen: 'none', width: 8 }]
@@ -254,7 +266,9 @@ export function buildColumnInfos(
  * @returns One baseline info per column, all visible and unfrozen, in construction order.
  * @example
  * ```ts
- * defaultLayout(['id', 'name'], (id) => (id === 'id' ? 5 : 8), (id) => id.toUpperCase());
+ * import { defaultLayout } from './variant.js';
+ *
+ * defaultLayout(['id', 'name'], (id: string) => (id === 'id' ? 5 : 8), (id: string) => id.toUpperCase());
  * // → [{ id: 'id', title: 'ID', visible: true, frozen: 'none', width: 5 }, …]
  * ```
  */

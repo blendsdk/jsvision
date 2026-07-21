@@ -33,8 +33,12 @@ const LIST_ROWS = 8;
  *
  * @returns The widest of the value-list buttons' face widths, in cells.
  * @example
+ * import { Button } from '@jsvision/ui';
  * import { valueListButtonWidth } from './value-list-popup.js';
  * import { buttonCellWidth } from './button-row.js';
+ *
+ * const apply = new Button('Apply');
+ * const clear = new Button('Clear');
  * const width = Math.max(buttonCellWidth([apply, clear]), valueListButtonWidth());
  */
 export function valueListButtonWidth(): number {

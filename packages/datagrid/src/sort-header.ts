@@ -117,8 +117,9 @@ export interface SortHeaderConfig<T> {
  * import { signal } from '@jsvision/ui';
  * import { SortHeader } from '@jsvision/datagrid';
  * import type { SortKey, FilterModel } from '@jsvision/datagrid';
+ * interface Row { qty: number }
  * const header = new SortHeader({
- *   columns: [{ title: 'Qty', accessor: (r) => String(r.qty), width: 6 }],
+ *   columns: [{ title: 'Qty', accessor: (r: Row) => String(r.qty), width: 6 }],
  *   columnIds: ['qty'],
  *   autoWidths: () => [null],
  *   indent: signal(0),

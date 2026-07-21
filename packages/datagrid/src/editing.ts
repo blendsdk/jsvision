@@ -180,10 +180,38 @@ type EditState<T> =
  * @returns The {@link EditController} the body wires into its key handling.
  * @example
  * ```ts
- * // Inside a grid body that implements EditHost over its own state:
- * import { createEditController } from '@jsvision/datagrid';
+ * // Inside a grid body that implements EditHost over its own state (createEditController is internal —
+ * // not re-exported from the package barrel — so a caller inside the package imports it by relative path):
+ * import { Group } from '@jsvision/ui';
+ * import type { DispatchEvent } from '@jsvision/ui';
+ * import { createEditController } from './editing.js';
+ * import type { EditHost, CellRef } from './editing.js';
+ * import type { CellRect } from './overlay.js';
+ * import { column } from './column.js';
+ *
+ * interface Row { id: number; name: string }
+ * const rows: Row[] = [{ id: 1, name: 'Ada' }];
+ * const typedColumns = [
+ *   column({ id: 'name', title: 'Name', value: (r: Row) => r.name, parse: (t: string) => t, set: (r: Row, v: string) => { r.name = v; } }),
+ * ];
+ * const body = new Group();
+ * const overlay = new Group();
+ * let focusedIndex = 0;
+ * const host: EditHost<Row> = {
+ *   body,
+ *   overlay,
+ *   typedColumns,
+ *   bumpVersion: () => {},
+ *   currentCell: (): CellRef<Row> | null => {
+ *     const row = rows[focusedIndex];
+ *     return row === undefined ? null : { row, rowKey: row.id, col: 0, columnId: 'name' };
+ *   },
+ *   cellRect: (): CellRect => ({ x: 0, y: focusedIndex, width: 10, height: 1 }),
+ *   advanceRow: () => { focusedIndex = Math.min(focusedIndex + 1, rows.length - 1); },
+ * };
  * const controller = createEditController<Row>(host);
  * // In the body's key handler, on F2/Enter/printable over an editable cell:
+ * const ev: DispatchEvent = { event: { type: 'key', key: 'F2', ctrl: false, alt: false, shift: false }, handled: false };
  * controller.beginEdit(ev);
  * ```
  */

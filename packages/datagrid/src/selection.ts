@@ -43,7 +43,10 @@ export type TriState = 'none' | 'some' | 'all';
  * @example
  * ```ts
  * import { toggleKey } from '@jsvision/datagrid';
- * let sel = new Set<number>();
+ * import type { Key } from '@jsvision/datagrid';
+ * // toggleKey both takes and returns a ReadonlySet<Key> — it never hands back a mutable Set, so the
+ * // binding that tracks the selection is typed ReadonlySet from the start.
+ * let sel: ReadonlySet<Key> = new Set<Key>();
  * sel = toggleKey(sel, 1, 'multi'); // {1}
  * sel = toggleKey(sel, 2, 'multi'); // {1, 2}
  * sel = toggleKey(sel, 1, 'multi'); // {2}      — present key removed

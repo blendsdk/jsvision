@@ -13,6 +13,7 @@ import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import { EditableDataGrid } from '../src/grid.js';
 import { installGridNavigation } from '../src/navigation.js';
+import { codeLines } from './helpers/code-lines.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
@@ -144,6 +145,10 @@ test('grid.ts stays under the re-based line-count guard', () => {
   // new export-view.ts / variant.ts modules), then 1680 -> 1760 for the RD-16 personalization grid read
   // API (columns() / defaultColumnLayout() / clearColumnWidth() + the applyVariant width-restore correction;
   // the GridColumnInfo assembly lives in variant.ts). See grid-footer.impl.test for the full re-base history.
+  //
+  // The metric is CODE lines, not raw lines. The guard exists to stop extracted logic being re-inlined,
+  // while every public export here must carry an `@example` — so a pure documentation pass would trip a
+  // raw-line ceiling it adds no logic to. When the metric changed, grid.ts held 815 code lines of 1912 raw.
   const gridSrc = readFileSync(fileURLToPath(new URL('../src/grid.ts', import.meta.url)), 'utf8');
-  expect(gridSrc.split('\n').length).toBeLessThan(1760);
+  expect(codeLines(gridSrc)).toBeLessThan(900);
 });

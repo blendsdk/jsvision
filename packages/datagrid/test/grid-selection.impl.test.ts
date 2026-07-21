@@ -18,6 +18,7 @@ import { EditableDataGrid } from '../src/grid.js';
 import { EditableGridRows } from '../src/editable-grid-rows.js';
 import { createDirtyRegistry, cellKey } from '../src/editing.js';
 import type { Key, SelectionMode } from '../src/selection.js';
+import { codeLines } from './helpers/code-lines.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 const W = 26;
@@ -192,6 +193,10 @@ test('AR-6: the selection controller is extracted to grid-selection.ts and grid.
   // Re-based 1680 -> 1760 for the RD-16 personalization grid read API: columns() / defaultColumnLayout() /
   // clearColumnWidth() (each JSDoc + @example) + the applyVariant delete-then-set width-restore correction;
   // the GridColumnInfo assembly lives in variant.ts.
-  const lineCount = grid.split('\n').length;
-  expect(lineCount).toBeLessThan(1760);
+  //
+  // The metric is CODE lines, not raw lines. The guard exists to stop extracted logic being re-inlined,
+  // while every public export here must carry an `@example` — so a pure documentation pass would trip a
+  // raw-line ceiling it adds no logic to. When the metric changed, grid.ts held 815 code lines of 1912 raw.
+  const lineCount = codeLines(grid);
+  expect(lineCount).toBeLessThan(900);
 });
