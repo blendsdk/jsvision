@@ -82,8 +82,8 @@ test('ST-06: choice widgets keep the domain schema (radio + check)', () => {
     value: bindRadio(alignField, ['left', 'center', 'right']),
   });
   const radioRoot = new Group();
-  radioRoot.layout = { direction: 'col' };
-  radio.layout = { size: { kind: 'fixed', cells: 3 } };
+  radioRoot.setLayout({ direction: 'col' });
+  radio.setLayout({ size: { kind: 'fixed', cells: 3 } });
   radioRoot.add(radio);
   const radioLoop = createEventLoop({ width: 20, height: 4 }, { caps });
   radioLoop.mount(radioRoot);
@@ -106,8 +106,8 @@ test('ST-06: choice widgets keep the domain schema (radio + check)', () => {
     value: bindCheck(stylesField, ['bold', 'italic']),
   });
   const checkRoot = new Group();
-  checkRoot.layout = { direction: 'col' };
-  checks.layout = { size: { kind: 'fixed', cells: 2 } };
+  checkRoot.setLayout({ direction: 'col' });
+  checks.setLayout({ size: { kind: 'fixed', cells: 2 } });
   checkRoot.add(checks);
   const checkLoop = createEventLoop({ width: 20, height: 3 }, { caps });
   checkLoop.mount(checkRoot);

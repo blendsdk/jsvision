@@ -9,7 +9,7 @@ import { test, expect } from 'vitest';
 
 import { deepMerge } from '../src/engine/capability/detect.js';
 import { CONSERVATIVE_DEFAULTS } from '../src/engine/capability/defaults.js';
-import type { CapabilityProfile } from '../src/engine/capability/profile.js';
+import type { CapabilityProfile, MouseCaps } from '../src/engine/capability/profile.js';
 
 test('deepMerge: nested group merges leaf-by-leaf, untouched leaves retained', () => {
   const base = { sgr: true, drag: true, wheel: true };
@@ -59,7 +59,10 @@ test('deepMerge: nested merge does not mutate the base group', () => {
 });
 
 test('deepMerge: merging over a frozen base returns a new object, no throw', () => {
-  const frozenBase = Object.freeze({ sgr: false, drag: false, wheel: false });
+  // Annotated as MouseCaps (not inferred from the literal) so `sgr`/`drag`/`wheel` stay
+  // `boolean`, matching every other deepMerge base in this file — otherwise Object.freeze
+  // would infer the narrow `false` literal type for each field.
+  const frozenBase: MouseCaps = Object.freeze({ sgr: false, drag: false, wheel: false });
   const merged = deepMerge(frozenBase, { drag: true });
   expect(merged).toStrictEqual({ sgr: false, drag: true, wheel: false });
   expect(merged).not.toBe(frozenBase);

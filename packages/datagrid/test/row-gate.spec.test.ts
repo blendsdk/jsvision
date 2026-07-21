@@ -61,7 +61,7 @@ function buildGrid() {
     validateRow: (r) =>
       r.end > r.start ? { ok: true } : { ok: false, message: 'End must be after start', field: 'end' },
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

@@ -30,7 +30,7 @@ import type { DateFormat, DateFormatSpec } from './date-format.js';
  */
 class DateButton extends View {
   /** Fixed 3-cell width; stretched to the field height by the row layout. */
-  override layout: LayoutProps = { size: { kind: 'fixed', cells: 3 } };
+  override readonly layout: Readonly<LayoutProps> = { size: { kind: 'fixed', cells: 3 } };
 
   constructor(private readonly onOpen: (ev: DispatchEvent) => void) {
     super();
@@ -80,15 +80,14 @@ export interface DatePickerOptions {
  * field.
  *
  * @example
- * import { Group, DatePicker, Label, signal, toISO } from '@jsvision/ui';
+ * import { Group, DatePicker, Label, signal, toISO, at } from '@jsvision/ui';
  * import type { CalendarDate } from '@jsvision/ui';
  *
  * const g = new Group();
  * const value = signal<CalendarDate | null>(null);
  *
  * const dp = new DatePicker({ value, format: 'DD/MM/YYYY' });
- * dp.layout = { position: 'absolute', rect: { x: 10, y: 0, width: 16, height: 1 } };
- * g.add(dp);
+ * g.add(at(dp, 10, 0, 16, 1));
  *
  * // A Label targets the picker's inner field; Down / Alt+Down / the ▐↓▌ button opens the calendar.
  * g.add(new Label('~D~ate', dp.input));
@@ -138,7 +137,7 @@ export class DatePicker extends Group {
       maxLength: this.spec.mask.length,
       placeholder: opts.placeholder,
     });
-    this.input.layout = { size: { kind: 'fr', weight: 1 } };
+    this.input.setLayout({ size: { kind: 'fr', weight: 1 } });
     this.button = new DateButton((ev) => this.open(ev));
     this.add(this.input);
     this.add(this.button);

@@ -20,7 +20,7 @@
  *
  * const frame = signal(0);
  * const win = new Window('Matrix');
- * win.layout.rect = { x: 1, y: 1, width: 34, height: 13 };
+ * win.setLayout({ rect: { x: 1, y: 1, width: 34, height: 13 } });
  * win.add(new MatrixRain(() => frame()));
  * // A timer that does `frame.set(frame.peek() + 1)` each tick animates the rain.
  */

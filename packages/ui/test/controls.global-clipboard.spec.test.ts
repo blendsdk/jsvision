@@ -65,9 +65,9 @@ function mountInput(
   const input = new Input(opts);
   const probe = new ClipProbe();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
-  probe.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  probe.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(input);
   root.add(probe);
   const loop = createEventLoop(
@@ -200,8 +200,13 @@ test('ST-15: paste drops invalid + over-cap code points through the validator an
 // ST-17 — a ComboBox (its field is an Input) inherits copy + paste with no widget-specific code.
 test('ST-17: a ComboBox inherits copy then paste on its field', () => {
   const text = signal('Red');
-  const combo = new ComboBox<string>({ items: signal(['Red', 'Green']), getText: (s) => s, value: signal(0), text });
-  combo.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 1 } };
+  const combo = new ComboBox<string>({
+    items: signal(['Red', 'Green']),
+    getText: (s) => s,
+    value: signal<string | null>(null), // no initial selection; this test only exercises the text field
+    text,
+  });
+  combo.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 1 } });
   const root = new Group();
   root.add(combo);
   const loop = createEventLoop({ width: 20, height: 4 }, { caps: capsClip, commands: Object.values(Commands) });

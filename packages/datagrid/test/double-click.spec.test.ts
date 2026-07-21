@@ -57,7 +57,7 @@ function build(rowCount = 3) {
     columns: [editable('name', 'Name'), editable('city', 'City'), READONLY_ID],
     source: fromRows(rows, { rowKey: (r) => r.id }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const clock = { t: 0 };
@@ -157,7 +157,7 @@ test('ST-24: an off-screen column scrolls into view on a cursor move', () => {
     source: fromRows(rows, { rowKey: (r) => r.id }),
     freeze: 1, // freeze column 'a' → 'b'/'c' live in the scrolling center panel
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

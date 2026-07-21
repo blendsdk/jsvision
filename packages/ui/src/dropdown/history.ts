@@ -38,20 +38,18 @@ export interface HistoryOptions {
  * The `▐↓▌` history dropdown button linked to an `Input` (see the module docs).
  *
  * @example
- * import { History, Input, Group, historyAdd, createEventLoop, signal } from '@jsvision/ui';
+ * import { History, Input, Group, historyAdd, createEventLoop, signal, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
  * const value = signal('/etc/hosts');
  * const input = new Input({ value });
- * input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } };
  * for (const past of ['/usr/bin', '/etc/hosts', '~/dev']) historyAdd(1, past);
  * const history = new History({ link: input, historyId: 1 });
- * history.layout = { position: 'absolute', rect: { x: 22, y: 1, width: 3, height: 1 } };
  *
  * const controls = new Group();
- * controls.add(input);
- * controls.add(history);
+ * controls.add(at(input, 1, 1, 20, 1));
+ * controls.add(at(history, 22, 1, 3, 1));
  * // The popup needs an overlay host: build the app with a full-viewport overlay set as loop.popupHost.
  * // Then Alt+↓ (or a click on the button) drops the field's past values; Enter fills the field.
  */

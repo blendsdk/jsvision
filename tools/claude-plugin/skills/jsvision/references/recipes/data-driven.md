@@ -70,9 +70,9 @@ export function buildPeopleGrid(): PeopleGrid {
   const sorted = computed<Person[]>(() => {
     const s = sort();
     if (s === null) return rows();
-    const col = columns[s.col];
-    if (col === undefined) return rows();
-    const cmp = col.compare ?? ((a: Person, b: Person) => col.accessor(a).localeCompare(col.accessor(b)));
+    const column = columns[s.col];
+    if (column === undefined) return rows();
+    const cmp = column.compare ?? ((a: Person, b: Person) => column.accessor(a).localeCompare(column.accessor(b)));
     const out = [...rows()].sort(cmp);
     return s.dir === 'desc' ? out.reverse() : out;
   });

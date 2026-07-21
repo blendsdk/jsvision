@@ -33,7 +33,7 @@ interface Harness {
  * {0,0} and paints nothing, so even a correct splitter would show no `▓`.
  */
 function mount(split: SplitView, width: number, height: number): Harness {
-  split.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height } };
+  split.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width, height } });
   const root = new Group();
   root.add(split);
   const loop = createEventLoop({ width, height }, { caps });

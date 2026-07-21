@@ -64,9 +64,9 @@ function paintGrid(errors: ReturnType<typeof createErrorRegistry>) {
     bumpVersion: () => undefined,
     errors,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: BW, height: BH } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: BW, height: BH } });
   const stub = new FocusStub();
-  stub.layout = { position: 'absolute', rect: { x: 0, y: BH - 1, width: 1, height: 1 } };
+  stub.setLayout({ position: 'absolute', rect: { x: 0, y: BH - 1, width: 1, height: 1 } });
   const root = new Group();
   root.add(grid);
   root.add(stub);
@@ -131,7 +131,7 @@ function buildGrid() {
     ],
     source: fromRows(rows, { rowKey: (r) => r.id }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

@@ -69,7 +69,7 @@ test('ST-6: a throwing on-screen formatter degrades its one cell to String(v), t
       columns: throwingFormatColumns(),
       source: fromRows(signal(DATA.map((r) => ({ ...r }))), { rowKey: (r) => r.qty }),
     });
-    grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+    grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
     const root = new Group();
     root.add(grid);
     const rr = createRenderRoot({ width: W, height: H }, { caps });
@@ -126,7 +126,7 @@ test('ST-7: a grid-level sort on a throwing-comparator column does not crash', (
       ],
       source: fromRows(signal(DATA.map((r) => ({ ...r }))), { rowKey: (r) => r.qty }),
     });
-    grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+    grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
     const root = new Group();
     root.add(grid);
     const rr = createRenderRoot({ width: W, height: H }, { caps });

@@ -1,0 +1,55 @@
+# Ambiguity Register — widget-flex-adoption
+
+> **Status**: ✅ GATE PASSED · **revised 2026-07-19 after preflight** (see [00-preflight-report.md](00-preflight-report.md))
+> **Plan**: widget-flex-adoption · **GitHub**: [#109](https://github.com/blendsdk/jsvision/issues/109) + [#116](https://github.com/blendsdk/jsvision/issues/116)
+> **Items**: 12 · **Resolved**: 12 · **Deferred**: 0
+
+## Register
+
+| # | Category | Ambiguity | ✅ Decision | Source |
+|---|----------|-----------|------------|--------|
+| AR-1 | Behavior | `grow()`/`fixed()` merge (`{...view.layout, size}`) but the code they replace clobbers wholesale. On caller-supplied receivers this silently changes semantics and **no existing test would catch it**. | **Per-site, by an externally-observable rule:** preserve the wholesale clobber only where a third party can reach the receiver. Adopt the taggers at internal receivers. Applied to `tab-view.ts:254`, `application.ts:330` — and, after preflight, to `overlay.ts:125` (see AR-11). | User, 2026-07-19 |
+| AR-2 | Scope | `#109`'s `application.ts` portion after later exclusions. | **Include the clear sites only.** `:335`/`:435` are the T-AO1 overlay (RD-01 FR-4 hidden-host exclusion). `:347`/`:353` are the `{...spread, size}` pattern #117 owns. Superseded in part by AR-1 — see AR-9. | User, 2026-07-19 |
+| AR-3 | Scope | `grid-panels.ts` breadth. | **REVISED after preflight.** Original ruling ("all 24") was taken against a mis-framed option: it rebutted an absolute-positioning claim issue #116 never made, when the issue's actual reason was *fit and churn* — "imperative band-assembly the DSL's expression sugar doesn't fit … leave the other 20, not worth the churn". Preflight substantially vindicated that: 4 of 5 containers accumulate children across ~230 lines of branching (with `bodyStack` aliasing `inner`), and 4 `segLayout` sites are runtime-branching descriptors. **New ruling: narrow to the clean wins — 15 of 23.** Excluded: `:441`, `:445`, `:448`, `:578` (containers), `:549`, `:553`, `:557`, `:637` (`segLayout`). | User, 2026-07-19 (revised) |
+| AR-4 | Testing | Oracle policy for a behavior-preserving refactor whose oracles include structural locators. | **Geometry frozen; locators re-expressible.** Every geometry and golden assertion stays byte-identical and unedited. A child-index locator may be re-expressed structurally ONLY where nesting genuinely changes, never weakened, each logged as a deviation. **No nesting change is expected anywhere in this plan**, so a locator edit is a mis-transcription signal first and a deviation only after that is ruled out. | User, 2026-07-19 |
+| AR-5 | Process | What governs this plan. | **Issue-driven + a named RD-02 subset.** `Implements: layout-dsl-adoption/GH-109 + GH-116`. Adopted: RD-02 **NFR-1** (behavioral tests unedited), **NFR-5** (16 ms informational bench), **NFR-6** (security oracles pass unedited), **NFR-7** (verify green + `lint:fix`). Not applicable: NFR-2/NFR-4 (RD-01-scoped) and **NFR-3** (its re-derivation protocol is deliberately *inverted* by this plan's NFR-1). RD-01's divergence licence does **not** apply. | User, 2026-07-19 (refined) |
+| AR-6 | Process | The single verify command. | **`TUI_SKIP_PERF=1 yarn verify`** — reproducible 30/30; the skipped assertions are informational bench checks CLAUDE.md states never gate. | User, 2026-07-19 |
+| AR-7 | Scope | The four datagrid raw-absolute sites. | **REVISED after preflight.** Original ruling converted 3 to `at()`. Issue #116 had explicitly out-scoped two of them, and named the blocker that makes one break: `personalize-dialog.ts:391` carries `direction:'col'` which `at()` cannot express, so `at()` alone flips the region to horizontal flow — with no oracle to catch it. **New ruling: drop `quick-filter-row.ts:155` and `personalize-dialog.ts:391` from scope entirely; `overlay.ts:125` stays in scope but is resolved by AR-11.** `filter-popup.ts:272` remains excluded. Group D therefore contains **zero conversions**. | User, 2026-07-19 (revised) |
+| AR-8 | Scope | The four `{position:'fill'}` sites the sweep deferred. | **Include all four** — `grid.ts:508/511/1417` + `editing.ts:230` → `cover()`. **Rationale corrected after preflight:** the original basis ("all four mount into a live host") is false — `grid.ts:508/511` are `EditorOverlay` instances with `visible:false` at construction, the exact T-AO1 shape. The true and sufficient basis is that all four **already carry `position:'fill'`**, `cover()` writes a byte-identical descriptor, and the engine ignores `size` on a fill box — so host liveness is irrelevant to this conversion. | User, 2026-07-19 (rationale corrected) |
+| AR-9 | Conflict | AR-2's option text said convert `application.ts:330`; AR-1's later per-site rule classifies it as a public receiver requiring the clobber. | **AR-1 wins** — later, more specific, with the full per-site audit in evidence. Consequence: `application.ts` yields **one** conversion (`:341` + the add-sites) plus one preserved, test-pinned site. This trade is stated in [00-index.md](00-index.md#the-applicationts-trade) so it is visible rather than buried here. | Derived + surfaced, 2026-07-19 |
+| AR-10 | Scope | JSDoc `@example` blocks containing layout assignments. | **Out of scope** — the feature roadmap assigns JSDoc `@example` modernization to **#112**. Note `application.ts:314` is a `.layout.rect =` line inside a JSDoc `@example`, so it does not appear in a `.layout =` grep; and `editable-grid-rows.ts` is touched only by this exclusion, not by any conversion. | Roadmap #112 row |
+| AR-11 | Behavior | **NEW (preflight PF-007).** AR-1's public-receiver rule was never run against `overlay.ts:125`. `mountCellOverlay` is barrel-exported (`datagrid/src/index.ts:161`) and reachable through the public `filterPopup` grid option; the function **reads the caller's pre-set layout** (`:106-108`) and then clobbers it. Under `at()` any other caller-set prop would survive — and `filter-customization.spec.test.ts:96` already builds such a popup while asserting only `rect` width/height, so nothing would catch it. | **Preserve the clobber and pin it** (ST-W7), applying AR-1 uniformly across all three externally-reachable receivers. | User, 2026-07-19 |
+| AR-12 | Testing | **NEW (preflight PF-012/PF-013).** ST-W5/ST-W6 would freeze datagrid's internal band and shell rects in immutable `*.spec.test.ts` oracles, obstructing the feature's own continued flex-elimination direction; ST-W6 additionally has no accessor seam. | **ST-W5 and ST-W6 become `*.impl.test.ts`** — they cover internals, not behavior contracts, and stay mutable for later tiers. ST-W1/W2/W3/W4/W7 remain `.spec` (genuine behavioral contracts). Task 1.7 (ST-W6) is re-tagged **complex**. | User, 2026-07-19 |
+
+## Gate statement
+
+All 12 items carry an explicit ruling; zero deferred. AR-3, AR-7 and AR-8 were **re-ruled or
+re-grounded after preflight** — the first two because their original option framing did not engage
+the reasons issue #116 actually gave, the third because its stated rationale was factually wrong
+(the conversion is still correct, for a different reason). AR-11 and AR-12 are new preflight
+resolutions.
+
+## AR-13 (runtime) — `editing.ts:230` is a fourth public receiver
+
+**Raised:** post-phase review of Phase 4. **Status:** ✅ Resolved.
+
+Group C converted `editing.ts:230` to `cover()` on the stated basis that all four Group C sites
+already carry `position:'fill'`. That basis holds for the three `grid.ts` sites, which are locally
+constructed. It does not hold here: `e` is `createCellEditor`'s return, and for a
+`kind:'custom'` column editor that is `spec.create(field, host)` — a caller-supplied factory reached
+through the barrel-exported `createCellEditor`/`CellEditorSpec` and the documented `GridColumn.editor`
+option. The old wholesale assignment destroyed any layout the factory set; `cover()` merges, so a
+factory's `padding`/`direction`/`size`/stale `rect` would newly survive.
+
+**Options considered:** (a) restore the clobber and treat it as a fourth FR-3 preserved receiver;
+(b) keep `cover()` and pin the new merge semantics with a spec test, logged as a deliberate
+deviation.
+
+**Decision (user):** (a). This plan's contract is zero behavior change (NFR-1), and a merge here is a
+behavior change on a published extension seam however benign it looks. All four public receivers now
+behave alike. Group C drops from 4 conversions to 3; the plan's total is 47, not 48. A witness (ST-W8) pins the
+restored clobber, so all four preserved receivers now carry one.
+
+**Note for the record.** This is the third public receiver the AR-1 rule was stated for and applied
+incompletely — preflight caught `overlay.ts:125` (PF-007) the same way. The rule needs a mechanical
+check ("is this receiver reachable from a barrel export?") rather than a per-site judgement.

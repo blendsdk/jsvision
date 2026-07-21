@@ -54,20 +54,25 @@ export interface SliderOptions {
  * interaction).
  *
  * @example
- * import { Group, Slider, signal, createEventLoop } from '@jsvision/ui';
+ * import { Group, Slider, signal, createEventLoop, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
  * const green = signal(170);
- * const slider = new Slider({
- *   value: green,
- *   min: 0,
- *   max: 255,
- *   orientation: 'horizontal',
- *   onInput: (v) => console.log('previewing', v), // live: drag / arrow / wheel
- *   onChange: (v) => console.log('committed', v), // commit: key step, wheel, pointer-up
- * });
- * slider.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 1 } };
+ * const slider = at(
+ *   new Slider({
+ *     value: green,
+ *     min: 0,
+ *     max: 255,
+ *     orientation: 'horizontal',
+ *     onInput: (v) => console.log('previewing', v), // live: drag / arrow / wheel
+ *     onChange: (v) => console.log('committed', v), // commit: key step, wheel, pointer-up
+ *   }),
+ *   0,
+ *   0,
+ *   16,
+ *   1,
+ * );
  *
  * const root = new Group();
  * root.add(slider);

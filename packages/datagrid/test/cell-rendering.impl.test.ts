@@ -65,9 +65,9 @@ function mount(typed: GridColumn<Row>[], opts: MountOpts = {}) {
     bumpVersion: () => undefined,
     dirty: opts.dirty,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const stub = new FocusStub();
-  stub.layout = { position: 'absolute', rect: { x: 0, y: H - 1, width: 1, height: 1 } };
+  stub.setLayout({ position: 'absolute', rect: { x: 0, y: H - 1, width: 1, height: 1 } });
   const root = new Group();
   root.add(grid);
   root.add(stub);

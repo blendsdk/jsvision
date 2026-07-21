@@ -12,7 +12,7 @@
  * builds a multi-key priority sort); the body reflects the container's live sort model. An absolute
  * overlay on top hosts the cell editor while an edit is open.
  */
-import { Group, ScrollBar, View, measureAutoWidths, stringWidth, signal } from '@jsvision/ui';
+import { Group, ScrollBar, View, measureAutoWidths, stringWidth, signal, cover } from '@jsvision/ui';
 import type { Column, DispatchEvent, Signal } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import { toEngineColumn } from './column.js';
@@ -271,7 +271,7 @@ function withKeyDir(keys: SortKey[], columnId: string, dir: SortDir): SortKey[] 
  * body renderer to move the cursor and edit.
  *
  * @example
- * import { Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+ * import { at, Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
  * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
  *
  * interface Row { id: number; name: string; }
@@ -285,12 +285,17 @@ function withKeyDir(keys: SortKey[], columnId: string, dir: SortDir): SortKey[] 
  *   }),
  * ];
  *
- * const grid = new EditableDataGrid<Row>({
- *   columns,
- *   source: fromRows(rows, { rowKey: (r) => r.id }),
- *   onCommit: (c) => String(c.value).trim().length > 0, // veto an empty name
- * });
- * grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } };
+ * const grid = at(
+ *   new EditableDataGrid<Row>({
+ *     columns,
+ *     source: fromRows(rows, { rowKey: (r) => r.id }),
+ *     onCommit: (c) => String(c.value).trim().length > 0, // veto an empty name
+ *   }),
+ *   0,
+ *   0,
+ *   20,
+ *   6,
+ * );
  *
  * const root = new Group();
  * root.add(grid);
@@ -504,11 +509,9 @@ export class EditableDataGrid<T> extends Group {
 
     // The overlay is built before the body because the body's config references it as the editor host.
     // It is hidden while empty so it never intercepts header/body clicks (see EditorOverlay).
-    this.overlay = new EditorOverlay();
-    this.overlay.layout = { position: 'fill' };
+    this.overlay = cover(new EditorOverlay());
     // A second overlay, above the editor overlay, dedicated to the funnel-opened filter popup.
-    this.popupOverlay = new EditorOverlay();
-    this.popupOverlay.layout = { position: 'fill' };
+    this.popupOverlay = cover(new EditorOverlay());
 
     // Density: compact drops the inter-column divider across every band (threaded via `buildGridBody`).
     const compact = opts.density === 'compact';
@@ -1413,8 +1416,7 @@ export class EditableDataGrid<T> extends Group {
       });
 
     // A click-away catcher goes in first (below the popup); an outside mouse-down closes the popup.
-    const catcher = new PopupCatcher(() => this.closeFilterPopup());
-    catcher.layout = { position: 'fill' };
+    const catcher = cover(new PopupCatcher(() => this.closeFilterPopup()));
     this.popupOverlay.add(catcher);
 
     const mountDispose = mountCellOverlay({

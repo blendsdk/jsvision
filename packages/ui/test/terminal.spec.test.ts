@@ -30,8 +30,8 @@ function wheel(dir: WheelEvent['dir'], x: number, y: number): WheelEvent {
 function mountTerminal(w = 12, h = 3) {
   const term = new Terminal();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  term.layout = { size: { kind: 'fr', weight: 1 } };
+  root.setLayout({ direction: 'col' });
+  term.setLayout({ size: { kind: 'fr', weight: 1 } });
   root.add(term);
   const loop = createEventLoop({ width: w, height: h }, { caps });
   loop.mount(root);

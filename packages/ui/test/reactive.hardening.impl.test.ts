@@ -66,13 +66,16 @@ test('a disposed computed is not recomputed by a later dependency write', () => 
   const s = signal(1);
   let evals = 0;
 
-  let read: (() => number) | null = null;
+  // Assignment happens inside the createRoot closure; a bare `let` narrows to `never` at the read
+  // below because control-flow analysis can't see across the closure boundary — hold it on an object
+  // literal instead so the property keeps its declared, non-narrowed type.
+  const held: { read: (() => number) | null } = { read: null };
   const dispose = createRoot((d) => {
     const c = computed(() => {
       evals += 1;
       return s() * 2;
     });
-    read = c;
+    held.read = c;
     // Prime the memo so it has evaluated once.
     effect(() => {
       c();
@@ -85,7 +88,7 @@ test('a disposed computed is not recomputed by a later dependency write', () => 
   s.set(5); // would recompute if the computed were still live
   expect(evals).toBe(1); // disposed: never recomputed
   // A stale read returns the last memo without re-evaluating.
-  expect(read?.()).toBe(2);
+  expect(held.read?.()).toBe(2);
   expect(evals).toBe(1);
 });
 

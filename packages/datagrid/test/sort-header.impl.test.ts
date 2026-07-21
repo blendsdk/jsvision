@@ -55,7 +55,7 @@ function buildHeader(
     filterable: opts.filterable,
     showFunnel: opts.showFunnel,
   });
-  header.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height: 1 } };
+  header.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width, height: 1 } });
   const root = new Group();
   root.add(header);
   const render = createRenderRoot({ width, height: 1 }, { caps });
@@ -114,7 +114,7 @@ test('a priority digit renders the 1-based position for a key at index ≥ 2', (
     filterModel: signal<FilterModel>(new Map()),
     onFunnelClick: () => undefined,
   });
-  header.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 1 } };
+  header.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 1 } });
   const root = new Group();
   root.add(header);
   const render = createRenderRoot({ width: 24, height: 1 }, { caps });
@@ -172,7 +172,7 @@ test('Ctrl+click on an existing key toggles that key’s direction in place', ()
     ],
     source: fromRows(signal([{ region: 'east', qty: 1 }]), { rowKey: (r) => r.region }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 22, height: 6 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 22, height: 6 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 22, height: 6 }, { caps });
@@ -221,7 +221,7 @@ test('setFilter/clearFilter on the grid draws then removes the filtered column f
     ],
     source: fromRows(signal([{ region: 'east', qty: 5 }]), { rowKey: (r) => r.region }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 22, height: 6 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 22, height: 6 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 22, height: 6 }, { caps });
@@ -249,7 +249,7 @@ test('a showFunnel:true grid column keeps its funnel through filter set/clear (m
     ],
     source: fromRows(signal([{ region: 'east', qty: 5 }]), { rowKey: (r) => r.region }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 22, height: 6 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 22, height: 6 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 22, height: 6 }, { caps });

@@ -50,7 +50,7 @@ function build(opts: { onCommit?: OnCommit<Person> } = {}) {
   const indent = signal(0);
   const version = signal(0);
   const overlay = new Group();
-  overlay.layout = { position: 'fill' };
+  overlay.setLayout({ position: 'fill' });
   const grid = new EditableGridRows<Person>({
     display: () => {
       version();
@@ -69,9 +69,9 @@ function build(opts: { onCommit?: OnCommit<Person> } = {}) {
     rowKey: (r) => r.id,
     bumpVersion: () => version.set(version() + 1),
   });
-  grid.layout = { position: 'fill' };
+  grid.setLayout({ position: 'fill' });
   const container = new Group();
-  container.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  container.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   container.add(grid);
   container.add(overlay);
   const root = new Group();

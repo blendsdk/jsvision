@@ -19,13 +19,13 @@ import { Scroller, Group, Text, signal } from '@jsvision/ui';
 const content = new Group();
 for (let i = 0; i < 40; i += 1) {
   const line = new Text(`Line ${i + 1}`);
-  line.layout = { position: 'absolute', rect: { x: 0, y: i, width: 30, height: 1 } };
+  line.setLayout({ position: 'absolute', rect: { x: 0, y: i, width: 30, height: 1 } });
   content.add(line);
 }
 // The content is laid out to its FULL extent (40 rows), not the 8-row viewport — otherwise there
 // is nothing to scroll.
 const scroller = new Scroller({ content, extent: { width: 30, height: 40 }, scrollbars: 'vertical' });
-scroller.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 8 } };
+scroller.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 8 } });
 // loop.focusView(scroller) — then PgDn / ↓ reveal the lower lines.
 ```
 

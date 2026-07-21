@@ -58,7 +58,7 @@ function makeSplit(opts: {
     onResize: (s) => resizes.push([...s]),
     onResizeEnd: (s) => ends.push([...s]),
   });
-  split.layout = { position: 'absolute', rect: { x: 0, y: 0, width: opts.width, height: opts.height } };
+  split.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: opts.width, height: opts.height } });
   const root = new Group();
   root.add(split);
   const loop = createEventLoop({ width: opts.width, height: opts.height }, { caps });
@@ -221,7 +221,7 @@ test('a full down→drag→up through the event loop tracks the divider, then re
 test("a pane's fr-laid-out interior reflows to the new pane rect after a drag (the declarative guarantee)", () => {
   const paneA = new Group();
   const inner = new Group();
-  inner.layout = { size: { kind: 'fr', weight: 1 } };
+  inner.setLayout({ size: { kind: 'fr', weight: 1 } });
   paneA.add(inner);
   const [paneB] = [new Pane()];
   const h = makeSplit({ children: [paneA, paneB], sizes: [1, 1], width: 21, height: 5 });
@@ -264,7 +264,7 @@ test('each pane carries the minSize on its fr size token (the DSL grow min reach
 
 test("a pane's pre-set non-size layout prop survives construction (grow merges, not replaces)", () => {
   const a = new Pane();
-  a.layout = { direction: 'col' }; // a pre-existing non-size prop the split must not clobber
+  a.setLayout({ direction: 'col' }); // a pre-existing non-size prop the split must not clobber
   const b = new Pane();
 
   new SplitView({ direction: 'row', children: [a, b], sizes: signal([1, 1]), minSize: 12 });

@@ -13,7 +13,7 @@ const app = createApplication({
 });
 
 const win = new Window('Editor');
-win.layout.rect = { x: 2, y: 1, width: 50, height: 16 };
+win.setLayout({ rect: { x: 2, y: 1, width: 50, height: 16 } });
 win.add(new Text('content'));
 app.desktop.addWindow(win);
 
@@ -52,7 +52,7 @@ Built-in quit is already wired: a `Commands.quit` (e.g. from an `Alt-X` status i
 
 `app.desktop` is the window manager. Beyond `addWindow(win)`, it can `cascade()`, `tile()`,
 `raise(win)`, and cycle focus. Windows are movable/resizable/zoomable by default; set their initial
-place with `win.layout.rect = { x, y, width, height }`.
+place with `win.setLayout({ rect: { x, y, width, height } })`.
 
 ## Runtime theme change
 

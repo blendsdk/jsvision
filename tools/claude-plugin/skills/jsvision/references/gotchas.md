@@ -26,7 +26,7 @@ engine — and absolute rects are **parent-interior-relative**, not screen-relat
 is the parent's top-left content cell), which is easy to get wrong.
 **Fix:** compose the screen with the layout DSL — `col`/`row`/`stack` + `grow`/`fixed`/`fill` — so the
 engine sizes and reflows it (see `layout.md`). Reserve an absolute `rect` for the sanctioned cases: a
-`Window`/`Dialog`'s own desktop placement (`win.layout.rect = …`), framework popups, and a true
+`Window`/`Dialog`'s own desktop placement (`win.setLayout({ rect })`), framework popups, and a true
 overlap the flow model can't express. When you do go absolute, remember rects are parent-relative.
 
 ### 4. Dialog/Window children look doubly inset

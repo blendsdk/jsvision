@@ -47,7 +47,7 @@ function openFileDialog(dlg: FileDialog) {
   // Pin the WM rect but PRESERVE the dialog's own layout (esp. its `padding`) so the spec exercises the
   // real production geometry — replacing the layout wholesale drops `padding` and masks a frame-inset
   // bug (the info pane double-inset overwriting the frame). See file-dialog.ts padding note.
-  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 49, height: 19 } };
+  dlg.setLayout({ rect: { x: 0, y: 0, width: 49, height: 19 } });
   const root = new Group();
   root.add(dlg);
   const loop = createEventLoop({ width: 49, height: 19 }, { caps });

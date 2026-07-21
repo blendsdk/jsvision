@@ -22,6 +22,7 @@ import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
+import type { DesktopApplication } from '../src/app/index.js';
 import { Input, CheckGroup, Button } from '../src/controls/index.js';
 import type { View } from '../src/view/index.js';
 import { findDialog, replaceDialog, replacePrompt, infoBox, confirmBox } from '../src/editor/dialogs.js';
@@ -53,7 +54,7 @@ function descendants(v: View): View[] {
  * A child's solved rectangle relative to its dialog's top-left. Flex children carry no `layout.rect`,
  * so position comes from the composed origins and size from the solved bounds.
  */
-function rectIn(app: ReturnType<typeof createApplication>, dialog: View, child: View) {
+function rectIn(app: DesktopApplication, dialog: View, child: View) {
   const root = app.loop.renderRoot;
   const origin = root.originOf(child)!;
   const base = root.originOf(dialog)!;

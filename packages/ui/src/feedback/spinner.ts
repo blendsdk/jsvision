@@ -81,14 +81,13 @@ export interface SpinnerOptions {
  * Animation is driven by the caller advancing `frame` (or {@link runSpinner}).
  *
  * @example
- * import { Group, Spinner, runSpinner, signal } from '@jsvision/ui';
+ * import { Group, Spinner, runSpinner, signal, at } from '@jsvision/ui';
  *
  * const g = new Group();
  * const frame = signal(0);
  *
  * const spinner = new Spinner({ frame, preset: 'dots', label: 'Loading…' });
- * spinner.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 20, height: 1 } };
- * g.add(spinner);
+ * g.add(at(spinner, 1, 0, 20, 1));
  *
  * // Advance it on a timer (see runSpinner); `stop()` halts the animation.
  * const stop = runSpinner(frame, { timer: app.runtime, intervalMs: 80 });

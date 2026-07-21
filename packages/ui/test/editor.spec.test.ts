@@ -51,8 +51,8 @@ function mountEditor(
   const { now, ...editorOpts } = opts;
   const ed = new Editor(editorOpts);
   const root = new Group();
-  root.layout = { direction: 'col' };
-  ed.layout = { size: { kind: 'fr', weight: 1 } };
+  root.setLayout({ direction: 'col' });
+  ed.setLayout({ size: { kind: 'fr', weight: 1 } });
   root.add(ed);
   const loop = createEventLoop({ width: w, height: h }, { caps, now });
   loop.mount(root);
@@ -153,9 +153,9 @@ test('ST-12: desiredCaret is curPos − delta while focused, null when unfocused
   const ed = new Editor();
   const other = new Editor(); // a second focusable target
   const root = new Group();
-  root.layout = { direction: 'col' };
-  ed.layout = { size: { kind: 'fixed', cells: 5 } };
-  other.layout = { size: { kind: 'fixed', cells: 2 } };
+  root.setLayout({ direction: 'col' });
+  ed.setLayout({ size: { kind: 'fixed', cells: 5 } });
+  other.setLayout({ size: { kind: 'fixed', cells: 2 } });
   root.add(ed);
   root.add(other);
   const loop = createEventLoop({ width: 20, height: 7 }, { caps });
@@ -217,8 +217,8 @@ test('ST-17: copy fills the clipboard editor (selected) + writes ONE OSC-52; cut
   const clipboard = new Editor();
   const ed = new Editor({ clipboard });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  ed.layout = { size: { kind: 'fr', weight: 1 } };
+  root.setLayout({ direction: 'col' });
+  ed.setLayout({ size: { kind: 'fr', weight: 1 } });
   root.add(ed);
   const loop = createEventLoop({ width: 20, height: 5 }, { caps: capsClip });
   const oscWrites: string[] = [];
@@ -252,8 +252,8 @@ test('ST-17: copy fills the clipboard editor (selected) + writes ONE OSC-52; cut
   // paste falls back to it (this deliberately supersedes the earlier TV null-clipboard no-op).
   const bare = new Editor();
   const root2 = new Group();
-  root2.layout = { direction: 'col' };
-  bare.layout = { size: { kind: 'fr', weight: 1 } };
+  root2.setLayout({ direction: 'col' });
+  bare.setLayout({ size: { kind: 'fr', weight: 1 } });
   root2.add(bare);
   const loop2 = createEventLoop({ width: 20, height: 5 }, { caps: capsClip });
   const osc2: string[] = [];
@@ -298,11 +298,11 @@ test('ST-14: a focused editor consumes Ctrl-Q,F (find flows); unfocused, it neve
   });
   const ed = new Editor({ editorDialog: dialog });
   const win = new Window('E');
-  win.layout.rect = { x: 0, y: 1, width: 20, height: 8 };
+  win.setLayout({ rect: { x: 0, y: 1, width: 20, height: 8 } });
   win.add(ed);
   app.desktop.addWindow(win);
   const w2 = new Window('Other');
-  w2.layout.rect = { x: 22, y: 1, width: 15, height: 6 };
+  w2.setLayout({ rect: { x: 22, y: 1, width: 15, height: 6 } });
   app.desktop.addWindow(w2);
   app.loop.renderRoot.flush();
 

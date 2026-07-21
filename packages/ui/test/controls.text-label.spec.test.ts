@@ -87,9 +87,9 @@ function mountLabel(): {
   const label = new Label('~N~ame', link);
   const root = new Group();
   // Column layout: each child is a fixed 1-row line; cross-axis (width) stretches to the 20-col root.
-  root.layout = { direction: 'col' };
-  label.layout = { size: { kind: 'fixed', cells: 1 } };
-  link.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  label.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  link.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(label);
   root.add(link);
   const loop = createEventLoop({ width, height: 3 }, { caps });

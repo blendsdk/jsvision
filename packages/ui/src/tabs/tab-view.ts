@@ -21,10 +21,12 @@
  * active page's content as usual.
  */
 import { Group, View } from '../view/index.js';
+import { col, grow, fixed } from '../view/dsl/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
 import { For } from '../reactive/index.js';
 import type { Signal } from '../reactive/index.js';
 import type { LayoutProps } from '../layout/index.js';
+import { CLEARED_LAYOUT } from '../layout/index.js';
 import { parseTilde } from '../menu/builders.js';
 import { reportDuplicateAccelerators } from '../menu/accelerators.js';
 import { TabStrip, TAB_GLYPHS } from './tab-strip.js';
@@ -134,7 +136,7 @@ function resolveActive(raw: number, tabs: readonly Tab[]): number {
 /** The bordered content region below the strip: draws the side + bottom frame; pages inset by padding. */
 class TabBody extends Group {
   /** Column of pages; padding insets them inside the `│` sides and above the `└─┘` bottom (the top joins the strip). */
-  override layout: LayoutProps = {
+  override readonly layout: Readonly<LayoutProps> = {
     direction: 'col',
     size: { kind: 'fr', weight: 1 },
     padding: { top: 0, left: 1, right: 1, bottom: 1 },
@@ -152,7 +154,7 @@ class TabBody extends Group {
     }
     // Bottom edge: `└` + `─`… + `┘` (the strip already drew the top corners `┌`/`┐` on row 0 above).
     ctx.text(0, h - 1, TAB_GLYPHS.bl, chrome);
-    for (let col = 1; col < w - 1; col += 1) ctx.text(col, h - 1, TAB_GLYPHS.h, chrome);
+    for (let x = 1; x < w - 1; x += 1) ctx.text(x, h - 1, TAB_GLYPHS.h, chrome);
     ctx.text(w - 1, h - 1, TAB_GLYPHS.br, chrome);
   }
 }
@@ -174,7 +176,7 @@ class TabBody extends Group {
  * The strip is the focus target — focus the exposed {@link TabView.strip}, not the view.
  *
  * @example
- * import { Group, Text, TabView, createEventLoop, signal } from '@jsvision/ui';
+ * import { Group, Text, TabView, createEventLoop, resolveCapabilities, signal, at } from '@jsvision/ui';
  * import type { Tab } from '@jsvision/ui';
  *
  * const page = (line: string): Group => {
@@ -196,11 +198,11 @@ class TabBody extends Group {
  *   onChange: (i) => console.log('switched to tab', i),
  *   onClose: (tab) => console.log('closed', tab.title),
  * });
- * view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 10 } };
  *
  * const root = new Group();
- * root.add(view);
- * const loop = createEventLoop({ width: 40, height: 10 });
+ * root.add(at(view, 0, 0, 40, 10));
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
  * loop.mount(root);
  * loop.focusView(view.strip); // focus the strip, not the view
  */
@@ -241,8 +243,6 @@ export class TabView extends Group {
       onClose: (i) => this.closeTab(i),
       onCycle: (dir) => (dir < 0 ? this.prev() : this.next()),
     });
-    this.strip.layout = { size: { kind: 'fixed', cells: 1 } };
-
     this.body = new TabBody();
     // Build every page up-front, keyed by the content Group's identity so a reorder/close reuses the
     // live page rather than tearing it down and losing its state.
@@ -251,7 +251,10 @@ export class TabView extends Group {
         () => this.tabs(),
         (t) => t.content,
         (t) => {
-          t.content.layout = { size: { kind: 'fr', weight: 1 } };
+          // Every other prop is reset explicitly, not merely left unset: a caller's own layout on a
+          // tab's content view is intentionally discarded, so the tab body governs sizing no matter
+          // what the caller set. An explicit `undefined` clears a prop back to its layout default.
+          t.content.setLayout({ ...CLEARED_LAYOUT, size: { kind: 'fr', weight: 1 } });
           return t.content;
         },
       ),
@@ -260,10 +263,7 @@ export class TabView extends Group {
     // Inner column container: keeps the strip stacked above the body regardless of how the parent
     // places the TabView (an absolute rect or an `fr` flow slot both leave the TabView's own `layout`
     // free, so placing the view never clobbers the internal stacking direction).
-    const inner = new Group();
-    inner.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
-    inner.add(this.strip);
-    inner.add(this.body);
+    const inner = grow(col(fixed(this.strip, 1), this.body));
     this.add(inner);
 
     // Self-correcting clamp + one-page-visible flip + onChange. Bound on mount (when the reactive

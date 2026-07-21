@@ -13,7 +13,7 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { Group } from '@jsvision/ui';
-import type { View, LayoutProps } from '@jsvision/ui';
+import type { View } from '@jsvision/ui';
 import type { CapabilityProfile } from '@jsvision/core';
 
 /** What the shell hands a story at build time: the terminal caps + the canvas it may draw into. */
@@ -55,21 +55,10 @@ export interface Story {
 }
 
 /**
- * Position a view absolutely at a canvas-relative rect and return it (chainable). The shared placement
- * helper every story uses.
- *
- * @param view   The view to place.
- * @param x      Canvas-relative left, in cells.
- * @param y      Canvas-relative top, in cells.
- * @param width  Width in cells.
- * @param height Height in cells.
- * @returns The same `view`, now carrying an absolute {@link LayoutProps}.
+ * The absolute-placement builder, re-exported so every story places views through one import site.
+ * See `at` in `@jsvision/ui` for its semantics.
  */
-export function at<T extends View>(view: T, x: number, y: number, width: number, height: number): T {
-  const layout: LayoutProps = { position: 'absolute', rect: { x, y, width, height } };
-  view.layout = layout;
-  return view;
-}
+export { at } from '@jsvision/ui';
 
 /**
  * Depth-first find the first focusable, visible, enabled view in a subtree — the shell focuses it when

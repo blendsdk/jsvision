@@ -26,9 +26,9 @@ class PaintView extends View {
 
 test('ST-28: setTheme recomposes once with new colors and preserves unchanged origins', () => {
   const child = new PaintView('X');
-  child.layout = { size: { kind: 'fixed', cells: 2 } };
+  child.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.background = 'window'; // the group fills its rect with the window role's colors
   root.add(child);
 

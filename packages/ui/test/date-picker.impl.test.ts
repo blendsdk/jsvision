@@ -30,9 +30,9 @@ function make(opts: { value?: CalendarDate | null; withHost?: boolean } = {}) {
   const loop = createEventLoop({ width: 40, height: 20 }, { caps });
   const value: Signal<CalendarDate | null> = signal(opts.value ?? null);
   const dp = new DatePicker({ value, today: TODAY });
-  dp.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } };
+  dp.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 16, height: 1 } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(dp);

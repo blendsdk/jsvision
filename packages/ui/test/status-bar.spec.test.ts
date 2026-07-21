@@ -90,7 +90,7 @@ test('ST-02: spacer({fixed:3}) inserts exactly 3 empty cells between two items',
 test('ST-03: an embedded ProgressBar paints and self-repaints on a value change', () => {
   const value = signal(0.5);
   const bar = new ProgressBar({ value });
-  bar.layout = { size: { kind: 'fixed', cells: 10 } };
+  bar.setLayout({ size: { kind: 'fixed', cells: 10 } });
   const status = statusLine([statusItem('~Q~uit', 'quit'), spacer(), bar]);
   const app = createApplication({ caps, statusLine: status, viewport: { width: 40, height: 12 } });
   app.loop.renderRoot.flush();
@@ -159,7 +159,7 @@ test('ST-06: StatusItem type parity — .command reads, accessor text compiles, 
 test('ST-07: dragging across an embedded widget still emits the item under the release point', () => {
   const value = signal(0.5);
   const bar = new ProgressBar({ value });
-  bar.layout = { size: { kind: 'fixed', cells: 10 } };
+  bar.setLayout({ size: { kind: 'fixed', cells: 10 } });
   const status = statusLine([statusItem('~F~ile', 'file'), bar, statusItem('~E~dit', 'edit')]);
   const app = createApplication({ caps, statusLine: status, viewport: { width: 40, height: 12 } });
   const spy = new CommandSpy();

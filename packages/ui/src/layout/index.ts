@@ -17,6 +17,8 @@ export { apportion, solveTrack } from './apportion.js';
 export type { TrackItem } from './apportion.js';
 
 export { layout } from './layout.js';
+// Internal to the package: the erasure seams spread it; `ui/src/index.ts` does not re-export it.
+export { CLEARED_LAYOUT } from './types.js';
 export type {
   Align,
   Direction,

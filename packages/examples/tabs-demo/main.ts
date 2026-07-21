@@ -14,7 +14,7 @@
  */
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
-import { Group, Text, TabView, createEventLoop, signal, cover } from '@jsvision/ui';
+import { Group, Text, TabView, createEventLoop, signal, cover, at } from '@jsvision/ui';
 import type { Tab } from '@jsvision/ui';
 
 /** A synthetic decoded key (no terminal needed). */
@@ -35,14 +35,8 @@ function printFrame(title: string, rows: readonly { char: string }[][]): void {
 function page(line: string): Group {
   const g = new Group();
   g.background = 'staticText'; // neutral gray content field (tab* roles are now green button faces)
-  g.add(placed(new Text(line), 1, 0));
+  g.add(at(new Text(line), 1, 0, 40, 1));
   return g;
-}
-
-/** Absolutely place a view at page-local (x, y) with a generous width. */
-function placed<T extends { layout: unknown }>(view: T, x: number, y: number): T {
-  (view as { layout: unknown }).layout = { position: 'absolute', rect: { x, y, width: 40, height: 1 } };
-  return view;
 }
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;

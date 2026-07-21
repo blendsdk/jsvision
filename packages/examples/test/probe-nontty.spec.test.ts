@@ -6,7 +6,7 @@
  * alt-screen or raw mode. Expectations derive from AC-6, not from the implementation.
  */
 import { test, expect } from 'vitest';
-import { PassThrough, Writable } from 'node:stream';
+import { Writable } from 'node:stream';
 
 import { main } from '../capability-probe/main.js';
 
@@ -33,8 +33,8 @@ test('ST-22: non-TTY interactive invocation exits without entering alt-screen', 
     env: {},
     platform: 'linux',
     isTty: () => false,
-    input: new PassThrough(),
-    output: out.stream,
+    // No `input`/`output`: those are the interactive TTY streams, and the non-TTY path never binds
+    // them. Supplying plain streams here only type-checked because nothing was checking.
     stdout: out.stream,
     stderr: err.stream,
     exit: (code: number) => {

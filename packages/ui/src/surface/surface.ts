@@ -55,7 +55,7 @@ function displayWidth(str: string): number {
  * repaints automatically.
  *
  * @example
- * import { Surface, SurfaceView, signal } from '@jsvision/ui';
+ * import { Surface, SurfaceView, signal, at } from '@jsvision/ui';
  *
  * // A canvas larger than the viewport that will display it.
  * const surface = new Surface({ size: { x: 96, y: 36 } });
@@ -64,8 +64,7 @@ function displayWidth(str: string): number {
  *
  * // Show a scrollable window onto it; write `delta` to pan.
  * const delta = signal({ x: 0, y: 0 });
- * const view = new SurfaceView({ surface, delta });
- * view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 12 } };
+ * const view = at(new SurfaceView({ surface, delta }), 0, 0, 40, 12);
  *
  * // Or build one straight from text rows:
  * const banner = Surface.from(['+--------+', '| hello  |', '+--------+']);

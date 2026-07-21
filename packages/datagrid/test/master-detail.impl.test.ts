@@ -34,7 +34,7 @@ function buildOrdersMaster(initialOrders: Order[] = [{ id: 1 }, { id: 2 }]) {
     columns: [column<Order, number>({ id: 'id', title: 'Order', value: (r) => r.id, width: 6 })],
     source: fromRows(orders, { rowKey: (o) => o.id }),
   });
-  master.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  master.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(master);
   const loop = createEventLoop({ width: W, height: H }, { caps });

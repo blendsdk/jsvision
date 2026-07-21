@@ -34,8 +34,8 @@ test('ST-01: direct text bind is two-way', () => {
 
   const input = new Input({ value: field.value });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(input);
   const loop = createEventLoop({ width: 12, height: 3 }, { caps });
   loop.mount(root);
@@ -63,8 +63,8 @@ test('ST-02: direct boolean bind is two-way', () => {
 
   const sw = new Switch({ value: field.value });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  sw.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  sw.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(sw);
   const loop = createEventLoop({ width: 16, height: 3 }, { caps });
   loop.mount(root);
@@ -93,9 +93,9 @@ test('ST-03: bindField sets touched on first focus-leave (not on mount/enter), c
   const inputA = new Input({ value: fieldA.value });
   const inputB = new Input({ value: form.field('b').value });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  inputA.layout = { size: { kind: 'fixed', cells: 1 } };
-  inputB.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  inputA.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  inputB.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(inputA);
   root.add(inputB);
   bindField(fieldA, inputA);
@@ -115,9 +115,9 @@ test('ST-03: bindField sets touched on first focus-leave (not on mount/enter), c
   const in2 = new Input({ value: f2.value });
   const other = new Input({ value: form2.field('b').value });
   const root2 = new Group();
-  root2.layout = { direction: 'col' };
-  in2.layout = { size: { kind: 'fixed', cells: 1 } };
-  other.layout = { size: { kind: 'fixed', cells: 1 } };
+  root2.setLayout({ direction: 'col' });
+  in2.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  other.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root2.add(in2);
   root2.add(other);
   bindField(f2, in2);

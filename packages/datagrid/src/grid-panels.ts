@@ -13,7 +13,7 @@
  * The container owns every shared signal and passes it in via {@link GridBodyDeps}; this module never
  * reaches back into the grid, so both shapes are pure assembly.
  */
-import { Group, ScrollBar, View, signal } from '@jsvision/ui';
+import { Group, ScrollBar, View, signal, col, row, grow, fixed } from '@jsvision/ui';
 import type { Column, DispatchEvent, DrawContext, LayoutProps, Signal } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import type { FreezePartition } from './column-model.js';
@@ -199,14 +199,12 @@ export interface GridBodyParts<T> {
 }
 
 const fr: LayoutProps = { size: { kind: 'fr', weight: 1 } };
-const fixed1: LayoutProps = { size: { kind: 'fixed', cells: 1 } };
 
 /** A one-cell corner filler that squares off the scroll-bar gutter (matches the engine's table chrome). */
 function corner(): Group {
   const cell = new Group();
   cell.background = 'scrollBarPage';
-  cell.layout = fixed1;
-  return cell;
+  return fixed(cell, 1);
 }
 
 /**
@@ -251,9 +249,9 @@ function anyPanelFocused<T>(panels: EditableGridRows<T>[]): boolean {
 
 /** A horizontal band (fixed one row tall) — the header/quick-filter/scroll-bar rows are all this shape. */
 function bandRow(): Group {
-  const g = new Group();
-  g.layout = { direction: 'row', size: { kind: 'fixed', cells: 1 } };
-  return g;
+  // An empty `row()` rather than a bare `fixed(new Group(), 1)`: the tagger writes only the size, so
+  // the row direction has to come from the builder. Callers `add()` into the returned band.
+  return fixed(row(), 1);
 }
 
 /**
@@ -438,14 +436,14 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   // The horizontal bands share one column container; the grid's own `layout` prop stays free for the
   // parent to place the whole grid (an absolute rect or an `fr` flow slot).
   const inner = new Group();
-  inner.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
+  inner.setLayout({ direction: 'col', size: { kind: 'fr', weight: 1 } });
 
   const headerRow = bandRow();
   const bodyRow = new Group();
-  bodyRow.layout = { direction: 'row', size: { kind: 'fr', weight: 1 } };
+  bodyRow.setLayout({ direction: 'row', size: { kind: 'fr', weight: 1 } });
   // The pinned frozen-rows band row (built only when freezeRows > 0), `freezeRows` cells tall.
   const freezeRowsRow = new Group();
-  freezeRowsRow.layout = { direction: 'row', size: { kind: 'fixed', cells: freezeRows } };
+  freezeRowsRow.setLayout({ direction: 'row', size: { kind: 'fixed', cells: freezeRows } });
 
   // One segment list drives every row (header, pinned band, body): the center pans, frozen columns don't.
   // A single, unfrozen grid is exactly one center seg with `fr` layout and no dividers — the original path.
@@ -482,7 +480,6 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   // rows band, and the body. `prefixWidth` 0 (neither affordance on) adds nothing → byte-identical.
   const pw = prefixWidth(deps.prefix);
   if (pw > 0) {
-    const prefixLayout: LayoutProps = { size: { kind: 'fixed', cells: pw } };
     // Grid-wide focus for the prefix body band: reuse the frozen predicate, else read the single body's
     // focus reactively so the focused row's prefix cell lights up in lockstep with the data body.
     const bandActive: () => boolean =
@@ -514,17 +511,17 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       triState: deps.triState,
       onToggleAll: deps.onToggleAll,
     });
-    headerBand.layout = prefixLayout;
+    fixed(headerBand, pw);
     headerRow.add(headerBand);
 
     if (freezeRows > 0) {
       const pinnedPrefix = makePrefixBody(0, 0); // pinned band: always the first N rows, never scrolls
-      pinnedPrefix.layout = prefixLayout;
+      fixed(pinnedPrefix, pw);
       freezeRowsRow.add(pinnedPrefix);
     }
 
     const bodyPrefix = makePrefixBody(freezeRows, Number.POSITIVE_INFINITY); // scrolling body window
-    bodyPrefix.layout = prefixLayout;
+    fixed(bodyPrefix, pw);
     bodyRow.add(bodyPrefix);
   }
 
@@ -533,28 +530,28 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       // A freeze divider (1 cell) before every seg after the first — in the header, the pinned band, and
       // the body — so the boundary reads as a continuous rule down all three.
       const hd = new FreezeDivider();
-      hd.layout = fixed1;
+      fixed(hd, 1);
       headerRow.add(hd);
       if (freezeRows > 0) {
         const fd = new FreezeDivider();
-        fd.layout = fixed1;
+        fixed(fd, 1);
         freezeRowsRow.add(fd);
       }
       const bd = new FreezeDivider();
-      bd.layout = fixed1;
+      fixed(bd, 1);
       bodyRow.add(bd);
     }
     const layout = segLayout(seg);
     const header = makeHeader(seg.ids, seg.indent, seg.offset);
-    header.layout = layout;
+    header.setLayout(layout);
     headerRow.add(header);
     if (freezeRows > 0) {
       const band = makeBand(seg.ids, seg.indent, seg.offset);
-      band.layout = layout;
+      band.setLayout(layout);
       freezeRowsRow.add(band);
     }
     const body = makeBody(seg.ids, seg.indent, seg.offset, seg.autoScroll);
-    body.layout = layout;
+    body.setLayout(layout);
     bodyRow.add(body);
     if (!seg.fixed) center = body;
   });
@@ -563,8 +560,8 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   // scroll only in lockstep via the shared `focused`/`indent`, so they never touch a bar.
   center.vbar = deps.vbar;
   center.hbar = deps.hbar;
-  deps.vbar.layout = fixed1;
-  deps.hbar.layout = fr;
+  fixed(deps.vbar, 1);
+  grow(deps.hbar);
   bodyRow.add(deps.vbar);
   headerRow.add(corner());
 
@@ -575,7 +572,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   // loading/error placeholder, so only the header stays visible in those states.
   const lifecycle = deps.lifecycle === true;
   const bodyStack = lifecycle ? new Group() : inner;
-  if (lifecycle) bodyStack.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
+  if (lifecycle) bodyStack.setLayout({ direction: 'col', size: { kind: 'fr', weight: 1 } });
 
   if (deps.quickFilter) {
     // One full-width quick-filter band under the header (over every visible column, panning with center).
@@ -588,7 +585,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       compact: deps.compact,
       filterable: sliceFilterable(fullVisible),
     });
-    band.layout = fr;
+    grow(band);
     const quickRow = bandRow();
     quickRow.add(band);
     quickRow.add(corner());
@@ -616,13 +613,13 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
       // Reserve the synthetic-prefix width so the aggregate cells line up under the data columns.
       const spacer = new Group();
       spacer.background = 'tableHeader';
-      spacer.layout = { size: { kind: 'fixed', cells: pw } };
+      fixed(spacer, pw);
       footerRow.add(spacer);
     }
     segs.forEach((seg, i) => {
       if (i > 0) {
         const fd = new FreezeDivider();
-        fd.layout = fixed1;
+        fixed(fd, 1);
         footerRow.add(fd);
       }
       const band = new FooterBand<T>({
@@ -634,7 +631,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
         widthTick: deps.widthTick,
         cell: footerCell,
       });
-      band.layout = segLayout(seg);
+      band.setLayout(segLayout(seg));
       footerRow.add(band);
     });
     footerRow.add(corner()); // square off the vbar gutter, like the frozen-rows band
@@ -655,7 +652,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   // so a validation/veto message surfaces even with no footer. It shows a blank line when idle, so the
   // reserved row keeps the body height stable as messages come and go.
   if (deps.messageBand !== undefined) {
-    deps.messageBand.layout = fr;
+    grow(deps.messageBand);
     const messageRow = bandRow();
     messageRow.add(deps.messageBand);
     bodyStack.add(messageRow);
@@ -670,9 +667,7 @@ export function buildGridBody<T>(part: FreezePartition, deps: GridBodyDeps<T>): 
   // swap it for a loading/error placeholder while the header stays visible. Without it, `bodyStack === inner`
   // and everything is already in place (byte-identical).
   if (lifecycle) {
-    const host = new Group();
-    host.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
-    host.add(bodyStack);
+    const host = grow(col(bodyStack));
     inner.add(host);
     return { inner, panels, headers, center, lifecycleSwap: { host, gridRegion: bodyStack } };
   }

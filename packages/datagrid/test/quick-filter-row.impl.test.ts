@@ -38,7 +38,7 @@ function buildBand(opts: { width?: number; indent?: Signal<number>; filterable?:
     onQuickFilter: () => undefined,
     filterable: opts.filterable,
   });
-  band.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height: 1 } };
+  band.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width, height: 1 } });
   const root = new Group();
   root.add(band);
   const render = createRenderRoot({ width, height: 1 }, { caps });
@@ -130,7 +130,7 @@ test('compact density paints no │ in the band (no reserved divider cell)', () 
     onQuickFilter: () => undefined,
     compact: true,
   });
-  band.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 22, height: 1 } };
+  band.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 22, height: 1 } });
   const root = new Group();
   root.add(band);
   const render = createRenderRoot({ width: 22, height: 1 }, { caps });
@@ -158,7 +158,7 @@ test('multiple filterable:false columns each drop their input while survivors st
     onQuickFilter: () => undefined,
     filterable: [false, true, false],
   });
-  band.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 25, height: 1 } };
+  band.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 25, height: 1 } });
   const root = new Group();
   root.add(band);
   const render = createRenderRoot({ width: 25, height: 1 }, { caps });

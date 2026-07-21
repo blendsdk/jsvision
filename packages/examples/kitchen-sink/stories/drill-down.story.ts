@@ -8,7 +8,7 @@
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
-import { Group, Text, Button, ListView, createRouter, signal } from '@jsvision/ui';
+import { Group, Text, Button, ListView, createRouter, col, fixed, grow, signal } from '@jsvision/ui';
 import type { DispatchEvent } from '@jsvision/ui';
 import { at } from '../story.js';
 import type { Story, StoryContext } from '../story.js';
@@ -26,17 +26,13 @@ class DetailScreen extends Group {
     private readonly onBack: () => void,
   ) {
     super();
-    this.layout = { direction: 'col', padding: 1, gap: 1 };
+    // Assigned directly rather than built: this view is the container itself, so there is no builder
+    // call that could produce it — only its children are composed with the DSL below.
+    this.setLayout({ direction: 'col', padding: 1, gap: 1 });
     this.background = 'window';
-    const title = new Text(`Repository: ${repo}`);
-    title.layout = { size: { kind: 'fixed', cells: 1 } };
-    const meta = new Text('Branch: main · 128 commits · MIT');
-    meta.layout = { size: { kind: 'fixed', cells: 1 } };
-    const back = new Button('~B~ack', { onClick: onBack });
-    back.layout = { size: { kind: 'fixed', cells: 2 } };
-    this.add(title);
-    this.add(meta);
-    this.add(back);
+    this.add(fixed(new Text(`Repository: ${repo}`), 1));
+    this.add(fixed(new Text('Branch: main · 128 commits · MIT'), 1));
+    this.add(fixed(new Button('~B~ack', { onClick: onBack }), 2));
   }
 
   override onEvent(ev: DispatchEvent): void {
@@ -65,18 +61,13 @@ export const drillDownStory: Story = {
         list: {
           keepAlive: true,
           build: () => {
-            const screen = new Group();
-            screen.layout = { direction: 'col' };
-            screen.background = 'window';
             const list = new ListView<string>({
               items: repos,
               getText: (r) => r,
               focused: listFocused,
               onSelect: (index) => router.push('detail', { index }),
             });
-            list.layout = { size: { kind: 'fr', weight: 1 } };
-            screen.add(list);
-            return { view: screen };
+            return { view: col({ background: 'window' }, grow(list)) };
           },
         },
         detail: { build: (c) => ({ view: new DetailScreen(repos()[c.params.index], () => router.back()) }) },

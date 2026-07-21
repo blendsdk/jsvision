@@ -14,7 +14,9 @@ import {
   statusLine,
   statusItem,
   Commands,
-  Group,
+  row,
+  fixed,
+  grow,
   signal,
   effect,
   untrack,
@@ -285,9 +287,7 @@ export function createDesignerApp(opts: DesignerAppOptions = {}): DesignerApp {
 
   // The three panels.
   const rail = buildRolesPanel(model);
-  rail.view.layout = { size: { kind: 'fixed', cells: 28 }, direction: 'col' };
   const preview = buildPreviewPanel(model);
-  preview.layout = { size: { kind: 'fr', weight: 1 }, direction: 'col' };
   const inspector = buildInspectorPanel({
     r,
     g,
@@ -300,26 +300,24 @@ export function createDesignerApp(opts: DesignerAppOptions = {}): DesignerApp {
       if (ready) commitColor(c);
     },
   });
-  inspector.layout = { size: { kind: 'fixed', cells: 32 }, direction: 'col' };
-
-  // A workspace row filling the desktop (viewport minus the menu + status chrome rows).
-  const workspace = new Group();
+  // A workspace row filling the desktop (viewport minus the menu + status chrome rows). The rail and
+  // the inspector hold a fixed width; the preview takes whatever is left.
+  const workspace = row(fixed(rail.view, 28), grow(preview), fixed(inspector, 32));
+  // The row direction is restated on every resize rather than assumed, so the workspace stays
+  // independent of how its children were composed. `row()` above sets nothing else, so this writes the
+  // same layout the group already had plus the new rect.
   const sizeWorkspace = (size: Size2D): void => {
-    workspace.layout = {
+    workspace.setLayout({
       position: 'absolute',
       rect: { x: 0, y: 0, width: size.width, height: Math.max(1, size.height - 2) },
       direction: 'row',
-    };
-    workspace.invalidate();
+    });
   };
   // Size to the ACTUAL viewport the loop mounted at (the real terminal size on a live run), not the
   // 80×24 fallback: no resize event fires at startup, so a stale initial size would persist until the
   // user manually resized the terminal.
   const buffer = app.loop.renderRoot.buffer();
   sizeWorkspace({ width: buffer.width, height: buffer.height });
-  workspace.add(rail.view);
-  workspace.add(preview);
-  workspace.add(inspector);
   app.desktop.add(workspace);
   // Chain (not replace) the app shell's resize handler, which re-fits the overlay/menu/desktop; then
   // re-size the workspace to the new viewport.

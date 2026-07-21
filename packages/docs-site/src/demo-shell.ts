@@ -213,7 +213,7 @@ function shellForView(opts: DemoShellOptions): Application {
 
   const win = new Window(opts.title);
   win.closable = false; // a demo can never be closed away to an empty desktop
-  win.layout.rect = winRect;
+  win.setLayout({ rect: winRect });
   win.add(built);
   app.desktop.addWindow(win);
 
@@ -228,6 +228,10 @@ function shellForView(opts: DemoShellOptions): Application {
  * component (its own small rect) is centered; a component built to the interior
  * size fills it. The rect is window-interior-local — the window's `padding: 1`
  * places `{0,0}` just inside the border, so no extra margin is added.
+ *
+ * Placement is written through `setLayout`, which merges — it sets `position` and `rect` and leaves
+ * everything else alone. That matters for an example whose root is a flex container: dropping its
+ * `direction` would silently re-solve a column as a row and lay the composition out sideways.
  */
 function centerInInterior(view: View, interiorW: number, interiorH: number): void {
   const { width, height } = intendedSize(view);
@@ -235,7 +239,7 @@ function centerInInterior(view: View, interiorW: number, interiorH: number): voi
   const ch = Math.min(height, interiorH);
   const x = Math.max(0, Math.floor((interiorW - cw) / 2));
   const y = Math.max(0, Math.floor((interiorH - ch) / 2));
-  view.layout = { position: 'absolute', rect: { x, y, width: cw, height: ch } };
+  view.setLayout({ position: 'absolute', rect: { x, y, width: cw, height: ch } });
 }
 
 /** The content's intended size (from its absolute rect, or a modest default box). */

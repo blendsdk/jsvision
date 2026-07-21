@@ -8,6 +8,7 @@ import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent, MouseEvent } from '@jsvision/core';
 import { Group } from '../src/view/index.js';
 import { createApplication } from '../src/app/index.js';
+import type { DesktopApplication } from '../src/app/index.js';
 import { menuBar, subMenu, item, menuSpacer, layoutTitles, MenuPopup } from '../src/menu/index.js';
 import { menuItemHotkey, menuItemLabel } from '../src/menu/builders.js';
 
@@ -22,7 +23,7 @@ function mouseDown(x: number, y: number): MouseEvent {
 function popups(overlay: Group): MenuPopup[] {
   return overlay.children.filter((c): c is MenuPopup => c instanceof MenuPopup);
 }
-function overlayOf(app: ReturnType<typeof createApplication>): Group {
+function overlayOf(app: DesktopApplication): Group {
   const root = app.desktop.parent as Group;
   return root.children.find((c) => c.layout.position === 'absolute') as Group;
 }

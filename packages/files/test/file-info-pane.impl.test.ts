@@ -21,7 +21,7 @@ const W = 47;
 
 function mount(opts: FileInfoPaneOptions, h = 2) {
   const pane = new FileInfoPane(opts);
-  pane.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: h } };
+  pane.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: h } });
   const root = new Group();
   root.add(pane);
   const loop = createEventLoop({ width: W, height: h }, { caps });

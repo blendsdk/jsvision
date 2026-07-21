@@ -284,8 +284,9 @@ export class Router<R> extends Group implements ChromeHostAware, FocusHostAware 
     const bundle = this.tryBuild(name, params);
     if (bundle === null) return null;
     // A screen fills the router: an `fr:1` child of the default-row router takes the full area, and
-    // hidden warm siblings are omitted from reflow. Merge so a screen keeps its own inner layout.
-    bundle.view.layout = { ...bundle.view.layout, size: { kind: 'fr', weight: 1 } };
+    // hidden warm siblings are omitted from reflow. Only the size is set, so a screen keeps its own
+    // inner layout.
+    bundle.view.setLayout({ size: { kind: 'fr', weight: 1 } });
     return { view: bundle.view, bundle };
   }
 

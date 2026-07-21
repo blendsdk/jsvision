@@ -23,7 +23,7 @@ interface Harness {
 
 /** Mount a SplitView with an explicit rect (so it fills the viewport) and flush one frame. */
 function mount(split: SplitView, width: number, height: number): Harness {
-  split.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height } };
+  split.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width, height } });
   const root = new Group();
   root.add(split);
   const loop = createEventLoop({ width, height }, { caps });

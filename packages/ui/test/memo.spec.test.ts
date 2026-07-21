@@ -32,9 +32,9 @@ function mountMemo(value = signal('hi')) {
   const memo = new Memo({ value });
   const input = new Input({ value: signal('') });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  memo.layout = { size: { kind: 'fixed', cells: 3 } };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  memo.setLayout({ size: { kind: 'fixed', cells: 3 } });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(memo);
   root.add(input);
   const loop = createEventLoop({ width: 20, height: 5 }, { caps });

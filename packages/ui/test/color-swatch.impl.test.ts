@@ -42,7 +42,7 @@ function make(opts: { value?: Color; colors?: readonly Color[]; columns?: number
   });
   const { width, rows } = gridDims(colors.length, columns);
   const h = Math.max(1, rows);
-  swatch.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height: h } };
+  swatch.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width, height: h } });
   const root = new Group();
   root.add(swatch);
   const loop = createEventLoop({ width, height: h }, { caps });

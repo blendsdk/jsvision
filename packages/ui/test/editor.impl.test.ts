@@ -39,8 +39,8 @@ function mountEditor(
   const { now, clipboardKeys, ...editorOpts } = opts;
   const ed = new Editor(editorOpts);
   const root = new Group();
-  root.layout = { direction: 'col' };
-  ed.layout = { size: { kind: 'fr', weight: 1 } };
+  root.setLayout({ direction: 'col' });
+  ed.setLayout({ size: { kind: 'fr', weight: 1 } });
   root.add(ed);
   // clipboardKeys defaults to undefined → the loop's 'both'; a WordStar-mode test passes 'none' so the
   // global keymap does not shadow the WordStar Ctrl+C/X/V navigation chords.

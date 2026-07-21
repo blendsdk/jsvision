@@ -8,11 +8,18 @@
  * which would silently drift from the real module.
  */
 import { readFileSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from 'vitest';
 
 const PKG_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const REPO_ROOT = join(PKG_ROOT, '..', '..');
+/**
+ * The agent-facing plugin skill tree. It is teaching material like these pages, but nothing compiles
+ * it and no other test reads it, so a snippet there can teach a dead idiom indefinitely — which is
+ * exactly what happened to it once already.
+ */
+const PLUGIN_SKILLS = join(REPO_ROOT, 'tools', 'claude-plugin', 'skills');
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'cache', '.git']);
 
 /** Every markdown page under the docs package, as absolute paths. */
@@ -43,6 +50,12 @@ function fencedTsBlocks(text: string): string[] {
 
 const PAGES = markdownPages().map((p) => ({ path: p, text: readFileSync(p, 'utf8') }));
 
+/** The docs pages plus the plugin skill tree — every markdown surface that teaches this framework. */
+const TEACHING_PAGES = [...markdownPages(), ...markdownPages(PLUGIN_SKILLS)].map((p) => ({
+  path: p,
+  text: readFileSync(p, 'utf8'),
+}));
+
 test('example pages never hand-paste example module source in a fenced block', () => {
   for (const page of PAGES) {
     if (!isExamplePage(page.text)) continue;
@@ -53,4 +66,31 @@ test('example pages never hand-paste example module source in a fenced block', (
       ).toBe(false);
     }
   }
+});
+
+// A documentation snippet is a teaching artifact, so it is held to the idiom the framework permits.
+// `view.layout = {…}` no longer compiles, and unlike shipped source no compiler ever reads these
+// pages — a stale snippet would sit here teaching a dead idiom until a reader tried it.
+//
+// Whole pages, not just fenced blocks: half the offenders this caught were inline prose describing
+// the assignment as the way to place a window. And the plugin skill tree is included because its
+// audience is an AI agent writing this framework, which makes a dead idiom there costlier than
+// anywhere else — it gets reproduced rather than merely read.
+const LAYOUT_ASSIGNMENT = /\.layout(\.\w+)*\s*=[^=]/;
+
+test('no teaching page assigns the layout field directly', () => {
+  const offenders: string[] = [];
+  for (const page of TEACHING_PAGES) {
+    // The generated API reference states the field's type (`layout: Readonly<LayoutProps>`) and
+    // reproduces its JSDoc, which names the closed spellings; it documents the contract rather than
+    // teaching a call, so it is not a snippet surface. This is also the only escape hatch: because
+    // the scan covers whole pages, a page cannot show the assignment even as a labelled
+    // anti-pattern. Separators are normalized first, or the exemption silently stops matching on
+    // Windows, where CI also runs this project.
+    if (page.path.split(sep).join('/').includes('/references/api/')) continue;
+    page.text.split('\n').forEach((line, i) => {
+      if (LAYOUT_ASSIGNMENT.test(line)) offenders.push(`${page.path}:${i + 1}: ${line.trim()}`);
+    });
+  }
+  expect(offenders, 'write these with setLayout({ … }) — the layout field is read-only').toEqual([]);
 });

@@ -1,0 +1,26 @@
+status-bar.story @ 80x24
+--------------------------------------------------------------------------------
+The status line is a general row container — any fitting 1-row view can sit on
+
+ Alt-X Exit  F4 Tile                                #######66%##------ 12:34:56
+
+spacer() pushes the ProgressBar and the clock to the right edge; the gap keeps
+statusItem() takes an optional command (a command-less item is a passive label)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

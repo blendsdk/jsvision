@@ -66,7 +66,7 @@ function buildGrid(opts: { editable?: boolean; mode?: SelectionMode } = {}) {
     source: fromRows(rows, { rowKey: (r) => r.id }),
     selectionMode: opts.mode,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

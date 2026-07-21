@@ -38,7 +38,7 @@ const COLUMNS = [
 /** Mount an `EditableDataGrid` over `source` in an event loop; return the grid, loop, and a frame reader. */
 function buildGrid(source: GridDataSource<Sale> = fromRows(signal(SALES.slice()), { rowKey: (r) => r.region })) {
   const grid = new EditableDataGrid<Sale>({ columns: COLUMNS, source });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

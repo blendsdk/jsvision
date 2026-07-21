@@ -88,7 +88,7 @@ test('should sanitize a control-byte edit at the frame and mutate only via onCom
     source: fromRows(rows, { rowKey: (r) => r.id }),
     onCommit: spy,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -146,7 +146,7 @@ test('a validate message with control bytes renders sanitized in the message ban
     }),
   ];
   const grid = new EditableDataGrid<Qty>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: VW, height: VH } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: VW, height: VH } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: VW, height: VH }, { caps });
@@ -198,7 +198,7 @@ test('a beforeSave veto and a validate-failed value never persist (onCommit is t
     beforeSave,
     onCommit,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -248,9 +248,9 @@ test('ST-11: a lookup label with control bytes renders sanitized at the frame', 
     }),
   ];
   const grid = new EditableDataGrid<Cust>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: LW, height: LH } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: LW, height: LH } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: LW, height: LH } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: LW, height: LH } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(grid);
@@ -299,7 +299,7 @@ test('ST-11: an integer keystroke filter rejects a letter before commit', async 
     }),
   ];
   const grid = new EditableDataGrid<Q>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }), onCommit: spy });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -350,7 +350,7 @@ test('ST-17: a format result with control bytes renders sanitized at the frame',
     }),
   ];
   const grid = new EditableDataGrid<Ctl>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -373,7 +373,7 @@ test('ST-18: a render hook writing control bytes renders sanitized at the frame'
     }),
   ];
   const grid = new EditableDataGrid<Ctl>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -402,7 +402,7 @@ test('ST-21: an unknown sort columnId is a no-op and never reaches a push-down s
     column<Sale, number>({ id: 'qty', title: 'Qty', value: (r) => r.qty }),
   ];
   const grid = new EditableDataGrid<Sale>({ columns, source });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -437,7 +437,7 @@ test('ST-21: a read-only source without insert/remove is never mutated by the CR
   };
   const columns = [column<Rec, number>({ id: 'v', title: 'V', value: (r) => r.v })];
   const grid = new EditableDataGrid<Rec>({ columns, source, assignKey: (c) => ({ ...c, id: 999 }) });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -467,7 +467,7 @@ function buildFilterPushGrid() {
     column<Sale, number>({ id: 'qty', title: 'Qty', value: (r) => r.qty }),
   ];
   const grid = new EditableDataGrid<Sale>({ columns, source });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -540,7 +540,7 @@ test('ST-27: header/cell text with control bytes stays sanitized after a reorder
     columns: cols,
     source: fromRows(signal([{ id: 1, name: 'A\x1b[32mB\x07', dept: 'R&D' }]), { rowKey: (r) => r.id }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 5 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 5 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 30, height: 5 }, { caps });
@@ -589,7 +589,7 @@ test('ST-21: header/cell text stays sanitized after insert / duplicate / select-
     checkboxColumn: true,
     assignKey: (clone) => ({ ...clone, id: clone.id + 100 }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: SW, height: SH } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: SW, height: SH } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: SW, height: SH }, { caps });
@@ -637,7 +637,7 @@ test('ST-20: windowed scroll never sends the source a bad range, and bursts are 
   };
   const columns = [column<WRow, string>({ id: 'name', title: 'Name', value: (r) => r.name, width: 10 })];
   const grid = new EditableDataGrid<WRow>({ columns, source: src });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 6 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 6 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 12, height: 6 }, { caps });
@@ -672,7 +672,7 @@ test('ST-20: the unloaded-row placeholder is a static constant (no row-data leak
   };
   const columns = [column<WRow, string>({ id: 'name', title: 'Name', value: (r) => r.name, width: 10 })];
   const grid = new EditableDataGrid<WRow>({ columns, source: hostile });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 14, height: 6 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 14, height: 6 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 14, height: 6 }, { caps });
@@ -710,7 +710,7 @@ test('ST-20: a windowed edit routes through onCommit (no persistence bypass)', a
     }),
   ];
   const grid = new EditableDataGrid<WRow>({ columns, source: src, onCommit: spy });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 6 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 6 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 16, height: 6 }, { caps });
@@ -738,7 +738,7 @@ function buildFGrid(values: string[]): EditableDataGrid<FRow> {
   const rows = values.map((f, i) => ({ id: i + 1, f }));
   const columns = [column<FRow, string>({ id: 'f', title: 'F', value: (r) => r.f })];
   const grid = new EditableDataGrid<FRow>({ columns, source: fromRows(signal(rows), { rowKey: (r) => r.id }) });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -816,7 +816,7 @@ function buildPersGrid(): EditableDataGrid<Pers> {
     columns,
     source: fromRows(signal([{ id: 1, total: 10 }]), { rowKey: (r) => r.id }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 6 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 6 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 40, height: 6 }, { caps });

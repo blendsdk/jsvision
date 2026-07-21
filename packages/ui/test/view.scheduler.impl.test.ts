@@ -43,11 +43,11 @@ function capturing(): { schedule: (fn: () => void) => void; run: () => void; cal
 test('bind with { relayout: true } triggers a reflow + full recompose', () => {
   const sig = signal(0);
   const a = new Counter('A');
-  a.layout = { size: { kind: 'fixed', cells: 2 } };
+  a.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const b = new Counter('B');
-  b.layout = { size: { kind: 'fixed', cells: 2 } };
+  b.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(a);
   root.add(b);
 
@@ -73,9 +73,9 @@ test('bind with { relayout: true } triggers a reflow + full recompose', () => {
 test('onMount → bind initial apply schedules exactly one coalesced frame', () => {
   const sig = signal(0);
   const v = new Counter('V');
-  v.layout = { size: { kind: 'fixed', cells: 2 } };
+  v.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(v);
 
   v.onMount(() => {
@@ -101,11 +101,11 @@ test('invalidate()/invalidateLayout() before mount are safe no-ops', () => {
 
 test('a reflow refreshes the compose cache so later frames use the new bounds', () => {
   const a = new Counter('A');
-  a.layout = { size: { kind: 'fixed', cells: 2 } };
+  a.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const b = new Counter('B');
-  b.layout = { size: { kind: 'fr', weight: 1 } };
+  b.setLayout({ size: { kind: 'fr', weight: 1 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(a);
   root.add(b);
 

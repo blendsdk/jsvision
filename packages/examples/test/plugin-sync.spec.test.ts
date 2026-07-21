@@ -24,6 +24,7 @@ import {
   runAllChecks,
 } from '../../../scripts/check-plugin.mjs';
 import { fixSnippetDrift, fixUndocumentedWidgets, replaceFencedBlock } from '../../../scripts/plugin-sync.mjs';
+import type { DraftRequest } from '../../../scripts/plugin-sync.mjs';
 import { applyCatalogEntry, buildCatalogEntryRequest, readWidgetDoc } from '../../../scripts/plugin-sync-request.mjs';
 
 // A distinctive widget whose class name appears exactly once in the catalog (its own bullet), so
@@ -157,10 +158,14 @@ test('ST-6: fixUndocumentedWidgets drafts via the injected client and writes to 
       .join('\n'),
   );
 
-  let received = null;
+  // The fake is bound to a const before it reaches `fixUndocumentedWidgets`, so TypeScript has no
+  // call-site context to type `req` from — hence the annotation. The captured request is held in an
+  // object rather than a bare `let` for the same reason: a local assigned only from inside a closure
+  // keeps its initial flow type, so a later read would narrow to `never`.
+  const captured: { request: DraftRequest | null } = { request: null };
   const fake = {
-    draft: async (req) => {
-      received = req;
+    draft: async (req: DraftRequest): Promise<string> => {
+      captured.request = req;
       return '- **Button** — a command button; `new Button("~O~K")`.';
     },
   };
@@ -169,7 +174,7 @@ test('ST-6: fixUndocumentedWidgets drafts via the injected client and writes to 
   const done = await fixUndocumentedWidgets([{ kind: 'undocumented-widget', name: 'Button' }], fake, roots);
 
   expect(done).toEqual(['Button']);
-  expect(received?.user).toContain('Button'); // the grounded request reached the client
+  expect(captured.request?.user).toContain('Button'); // the grounded request reached the client
   const tempCatalog = readFileSync(roots.catalogPath, 'utf8');
   expect(tempCatalog).toContain('**Button**'); // the drafted bullet was written to the temp catalog
   expect(readFileSync(DEFAULT_ROOTS.catalogPath, 'utf8')).toBe(realBefore); // repo untouched

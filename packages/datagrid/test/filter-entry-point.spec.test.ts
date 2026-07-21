@@ -92,7 +92,7 @@ function buildBody(opts: { onOpenFilter?: (globalCol: number, ev: DispatchEvent)
     bumpVersion: () => undefined,
     onOpenFilter: opts.onOpenFilter,
   });
-  body.layout = { position: 'absolute', rect: { x: 0, y: 0, width: BW, height: BH } };
+  body.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: BW, height: BH } });
   const root = new Group();
   root.add(body);
   const render = createRenderRoot({ width: BW, height: BH }, { caps });
@@ -145,7 +145,7 @@ function buildGrid(opts: { columns?: GridColumn<Sale>[]; freezeRight?: string[] 
     source,
     freezeRight: opts.freezeRight,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: CW, height: CH } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: CW, height: CH } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: CW, height: CH }, { caps });

@@ -19,7 +19,7 @@ class Leaf extends View {
 // at() positional form sets position:'absolute' + rect, MERGE-preserving prior layout props.
 test('at(v, x, y, w, h) sets absolute + rect, preserving prior layout props', () => {
   const v = new Leaf();
-  v.layout = { direction: 'col' };
+  v.setLayout({ direction: 'col' });
   at(v, 3, 4, 20, 2);
   expect(v.layout).toEqual({ direction: 'col', position: 'absolute', rect: { x: 3, y: 4, width: 20, height: 2 } });
 });
@@ -27,7 +27,7 @@ test('at(v, x, y, w, h) sets absolute + rect, preserving prior layout props', ()
 // at() rect-overload form is identical to the positional form.
 test('at(v, rect) is identical to the positional form', () => {
   const v = new Leaf();
-  v.layout = { direction: 'col' };
+  v.setLayout({ direction: 'col' });
   at(v, { x: 3, y: 4, width: 20, height: 2 });
   expect(v.layout).toEqual({ direction: 'col', position: 'absolute', rect: { x: 3, y: 4, width: 20, height: 2 } });
 });
@@ -55,7 +55,7 @@ test('at(v, ...) returns the same view', () => {
 // cover() sets position:'fill', MERGE-preserving prior props, and returns v.
 test('cover(v) sets position fill, preserving prior props, and returns v', () => {
   const v = new Leaf();
-  v.layout = { direction: 'row', gap: 2 };
+  v.setLayout({ direction: 'row', gap: 2 });
   expect(cover(v)).toBe(v);
   expect(v.layout.position).toBe('fill');
   expect(v.layout.direction).toBe('row'); // preserved

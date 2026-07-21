@@ -128,7 +128,7 @@ test('ST-20: each interaction produces exactly one frame (one onFrame per dispat
   const app = createApplication({ caps, menuBar: bar, statusLine: status, viewport: { width: 40, height: 16 } });
 
   const w = new Window('W');
-  w.layout.rect = { x: 2, y: 2, width: 16, height: 6 };
+  w.setLayout({ rect: { x: 2, y: 2, width: 16, height: 6 } });
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
 

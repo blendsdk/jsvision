@@ -71,9 +71,9 @@ function mountGrid(typed: GridColumn<Row>[], opts: MountOpts = {}) {
     rowKey: (r) => r.id,
     bumpVersion: () => undefined,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const stub = new FocusStub();
-  stub.layout = { position: 'absolute', rect: { x: 0, y: H - 1, width: 1, height: 1 } };
+  stub.setLayout({ position: 'absolute', rect: { x: 0, y: H - 1, width: 1, height: 1 } });
   const root = new Group();
   root.add(grid);
   root.add(stub);
@@ -198,9 +198,9 @@ test('the no-hook path renders byte-identically to the base engine', () => {
     selected: signal(-1),
     zebra: false,
   });
-  base.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  base.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const bStub = new FocusStub();
-  bStub.layout = { position: 'absolute', rect: { x: 0, y: H - 1, width: 1, height: 1 } };
+  bStub.setLayout({ position: 'absolute', rect: { x: 0, y: H - 1, width: 1, height: 1 } });
   const bRoot = new Group();
   bRoot.add(base);
   bRoot.add(bStub);

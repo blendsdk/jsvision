@@ -70,7 +70,7 @@ function build(opts: { rows?: Row[]; status?: () => GridStatus; emptyText?: stri
     status: opts.status,
     emptyText: opts.emptyText,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

@@ -29,6 +29,7 @@ import {
   type DispatchEvent,
   type DrawContext,
 } from '@jsvision/ui';
+import type { DesktopApplication } from '@jsvision/ui';
 import type { CapabilityProfile } from '@jsvision/core';
 import { StoryWindow, CommandSink } from './window.js';
 import { STORIES } from './stories/index.js';
@@ -169,7 +170,7 @@ function buildWelcome(cats: Map<string, Story[]>, w: number, h: number): Group {
 /** The composed showcase: the app + a `run()` that drives it to the `quit` command. */
 export interface Showcase {
   /** The composed application (loop + desktop + chrome). */
-  readonly app: ReturnType<typeof createApplication>;
+  readonly app: DesktopApplication;
   /** Run the showcase until `quit`; resolves the exit code. */
   run(): Promise<number>;
 }
@@ -189,8 +190,19 @@ export function createShowcase(caps: CapabilityProfile): Showcase {
 
   // The story canvas — now shrunk to the right of the persistent navigator sidebar.
   const canvas = new StoryWindow('');
-  canvas.layout.rect = { x: SIDEBAR_W, y: 0, width: dw - SIDEBAR_W, height: dh };
+  canvas.setLayout({ rect: { x: SIDEBAR_W, y: 0, width: dw - SIDEBAR_W, height: dh } });
   app.desktop.addWindow(canvas);
+
+  /**
+   * The canvas's current rectangle. Read live rather than captured at build time: zooming the window
+   * or a terminal resize reassigns this rect, and a story built against a stale one would be sized
+   * for the wrong box. The rect is optional on the type but this window is always placed absolutely.
+   */
+  const canvasRect = (): { x: number; y: number; width: number; height: number } => {
+    const rect = canvas.layout.rect;
+    if (rect === undefined) throw new Error('the story canvas lost its rect');
+    return rect;
+  };
 
   /**
    * Open a modal view and resolve its terminating result — the `StoryContext.execView` seam (PA-11).
@@ -227,7 +239,7 @@ export function createShowcase(caps: CapabilityProfile): Showcase {
     });
   });
   const sidebar = new StoryWindow('Stories');
-  sidebar.layout.rect = { x: 0, y: 0, width: SIDEBAR_W, height: dh };
+  sidebar.setLayout({ rect: { x: 0, y: 0, width: SIDEBAR_W, height: dh } });
   sidebar.add(at(sidebarList, 0, 0, SIDEBAR_W - 2, dh - 2));
   app.desktop.addWindow(sidebar);
 
@@ -256,8 +268,9 @@ export function createShowcase(caps: CapabilityProfile): Showcase {
   function showStory(story: Story): void {
     disposePrevious();
     currentIndex = STORIES.indexOf(story);
-    const iw = canvas.layout.rect.width - 2; // interior (1-cell border each side)
-    const ih = canvas.layout.rect.height - 2;
+    const { width: cw, height: ch } = canvasRect();
+    const iw = cw - 2; // interior (1-cell border each side)
+    const ih = ch - 2;
     const holder = new Group();
     cover(holder);
     const chip = story.rd !== undefined ? `[${story.rd}] ` : '';
@@ -279,8 +292,9 @@ export function createShowcase(caps: CapabilityProfile): Showcase {
   function showWelcome(): void {
     disposePrevious();
     currentIndex = -1;
-    const iw = canvas.layout.rect.width - 2;
-    const ih = canvas.layout.rect.height - 2;
+    const { width: cw, height: ch } = canvasRect();
+    const iw = cw - 2;
+    const ih = ch - 2;
     showView(buildWelcome(cats, iw, ih), 'jsvision · showcase');
   }
 

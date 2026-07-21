@@ -34,7 +34,7 @@ test('ST-9: untrusted content rendered through a view leaves no raw ESC in the b
   const loop = createEventLoop({ width: 20, height: 3 }, { caps });
   const root = new Group();
   const evil = new Evil();
-  evil.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 3 } };
+  evil.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 3 } });
   root.add(evil);
   loop.mount(root); // paints the initial frame
 

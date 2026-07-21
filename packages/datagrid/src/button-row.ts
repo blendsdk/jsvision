@@ -7,7 +7,7 @@
  * then centered within its own equal-width cell, so the group reads as a balanced, evenly-spaced bar
  * regardless of how much room the row is given.
  */
-import { Group, Button } from '@jsvision/ui';
+import { Group, Button, row, grow, fixed } from '@jsvision/ui';
 
 /** A button face is two rows tall: one content row plus the drop-shadow row beneath it. */
 const BUTTON_HEIGHT = 2;
@@ -58,9 +58,8 @@ export function buttonCellWidth(buttons: readonly Button[]): number {
  * Build a horizontal row of equal-width, individually-centered command buttons.
  *
  * The returned `Group` is a flow container (`direction: 'row'`) two rows tall. Add it to a `col`
- * layout as a fixed-height child, or place it with an absolute rect — spread its existing `layout`
- * so the row direction and gap survive, e.g.
- * `row.layout = { ...row.layout, position: 'absolute', rect }`. Give the row at least
+ * layout as a fixed-height child, or place it with an absolute rect using `at(bar, rect)`, which
+ * merges the placement in so the row direction and gap survive. Give the row at least
  * {@link buttonRowMinWidth} cells of width so nothing clips.
  *
  * @param buttons The buttons to arrange, left to right. They are mutated to the shared width.
@@ -77,16 +76,14 @@ export function buttonCellWidth(buttons: readonly Button[]): number {
  */
 export function buttonRow(buttons: readonly Button[], cellW?: number): Group {
   const width = cellW ?? buttonCellWidth(buttons);
-  const row = new Group();
-  row.layout = { direction: 'row', gap: BUTTON_GAP, size: { kind: 'fixed', cells: BUTTON_HEIGHT } };
+  // The gap is carried on the builder, not left to a tagger: `fixed` writes only the size, and
+  // `buttonRowMinWidth` reserves room for these gaps, so losing one shifts every button after the first.
+  const bar = fixed(row({ gap: BUTTON_GAP }), BUTTON_HEIGHT);
   for (const button of buttons) {
     // Fix the button to the shared width; its height stretches to the row (the cross axis).
-    button.layout = { size: { kind: 'fixed', cells: width } };
+    fixed(button, width);
     // An equal-share cell that centers the fixed-width button horizontally within it.
-    const cell = new Group();
-    cell.layout = { direction: 'row', justify: 'center', size: { kind: 'fr', weight: 1 } };
-    cell.add(button);
-    row.add(cell);
+    bar.add(grow(row({ justify: 'center' }, button)));
   }
-  return row;
+  return bar;
 }

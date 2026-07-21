@@ -109,7 +109,7 @@ class ColorChip extends View {
  * the popup.
  */
 class ColorButton extends View {
-  override layout: LayoutProps = { size: { kind: 'fixed', cells: 3 } };
+  override readonly layout: Readonly<LayoutProps> = { size: { kind: 'fixed', cells: 3 } };
 
   constructor(private readonly onOpen: (ev: DispatchEvent) => void) {
     super();
@@ -133,7 +133,7 @@ class ColorButton extends View {
  * bubble when the hex `Input` holds focus (the swatch handles its own Enter via `onChange`) → close.
  */
 class PickerBody extends Group {
-  override layout: LayoutProps = { direction: 'col' };
+  override readonly layout: Readonly<LayoutProps> = { direction: 'col' };
 
   constructor(
     private readonly onClose: () => void,
@@ -176,15 +176,20 @@ export interface ColorPickerOptions {
  * dropdown anchored to the field.
  *
  * @example
- * import { Group, ColorPicker, signal } from '@jsvision/ui';
+ * import { Group, ColorPicker, signal, at } from '@jsvision/ui';
  * import type { Color } from '@jsvision/core';
  *
  * const g = new Group();
  * const value = signal<Color>('red');
  *
  * // A picker with the hex field enabled so custom #rrggbb colors are allowed.
- * const picker = new ColorPicker({ value, allowCustom: true, onChange: (c) => console.log(c) });
- * picker.layout = { position: 'absolute', rect: { x: 10, y: 0, width: 20, height: 1 } };
+ * const picker = at(
+ *   new ColorPicker({ value, allowCustom: true, onChange: (c) => console.log(c) }),
+ *   10,
+ *   0,
+ *   20,
+ *   1,
+ * );
  * g.add(picker);
  * // Down / Alt+Down / clicking the ▐↓▌ button opens the swatch; Esc or an outside click cancels.
  */
@@ -217,9 +222,9 @@ export class ColorPicker extends Group {
     this.nameFor = opts.nameFor;
     this.onInput = opts.onInput;
     this.onChange = opts.onChange;
-    this.layout = { direction: 'row' };
+    this.setLayout({ direction: 'row' });
     this.chip = new ColorChip(this.value, this, opts.label, opts.nameFor);
-    this.chip.layout = { size: { kind: 'fr', weight: 1 } };
+    this.chip.setLayout({ size: { kind: 'fr', weight: 1 } });
     this.button = new ColorButton((ev) => this.open(ev));
     this.add(this.chip);
     this.add(this.button);
@@ -271,12 +276,12 @@ export class ColorPicker extends Group {
             commit(); // …then close the popup (the value is already set live)
           },
         });
-        swatch.layout = { size: { kind: 'fr', weight: 1 } };
+        swatch.setLayout({ size: { kind: 'fr', weight: 1 } });
         let hex: Input | undefined;
         if (allowCustom) {
           const hexText = signal(colorToHex(untrack(() => this.value())));
           hex = new Input({ value: hexText, validator: filter(HEX_CHARSET), maxLength: HEX_MAX });
-          hex.layout = { size: { kind: 'fixed', cells: 1 } };
+          hex.setLayout({ size: { kind: 'fixed', cells: 1 } });
           hex.onMount(() => this.wireHexBind(hex!, hexText));
         }
         const body = new PickerBody(commit, hex);
