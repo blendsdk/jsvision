@@ -66,8 +66,8 @@ export class AnalogClock extends View {
     // Vertical radius in cell-units; horizontal extent is `r * ASPECT` so the face reads circular.
     const r = Math.max(2, Math.min(cy - 0.5, (width - 1) / 2 / ASPECT - 0.5));
 
-    // Place `str` centered on the polar point at fraction `frac` of a turn and radius `rad`.
-    const at = (frac: number, rad: number, str: string, style: Style): void => {
+    // Plot `str` centered on the polar point at fraction `frac` of a turn and radius `rad`.
+    const plot = (frac: number, rad: number, str: string, style: Style): void => {
       const ang = frac * Math.PI * 2;
       const x = Math.round(cx + Math.sin(ang) * rad * ASPECT - (str.length - 1) / 2);
       const y = Math.round(cy - Math.cos(ang) * rad);
@@ -77,8 +77,8 @@ export class AnalogClock extends View {
     // 12 hour ticks; the cardinals get numerals, the rest a rim dot.
     for (let i = 0; i < 12; i += 1) {
       const numeral = CARDINALS[i];
-      if (numeral !== undefined) at(i / 12, r, numeral, { fg: NUMERAL, bg: BG, attrs: Attr.bold });
-      else at(i / 12, r, '·', face);
+      if (numeral !== undefined) plot(i / 12, r, numeral, { fg: NUMERAL, bg: BG, attrs: Attr.bold });
+      else plot(i / 12, r, '·', face);
     }
 
     const ms = this.now.getMilliseconds();

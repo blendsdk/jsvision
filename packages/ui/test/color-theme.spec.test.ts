@@ -129,6 +129,15 @@ test('ST-11: colorMarker is the ONLY additive key — every existing role is byt
     'terminalNormal',
     'sliderTrack',
     'sliderThumb', // theme-designer Slider control (guarded by slider-theme.spec)
+    'gridCursor',
+    'gridDirty', // RD-02 datagrid editing engine (guarded by grid-theme.spec)
+    'gridSelectedRow', // RD-08 datagrid row-selection highlight (guarded by grid-theme.spec)
+    'gridInvalid', // RD-12 datagrid failed-validation band (guarded by grid-theme.spec)
+    'dangerText',
+    'warningText', // severity text roles for a styled Text (guarded by severity-text-theme.spec)
+    'inputPlaceholder', // muted placeholder role for an empty Input (guarded by input-placeholder.spec)
+    'splitter',
+    'splitterDragging', // split-pane divider roles (guarded by theme-roles.spec)
   ]);
   const actualKeys = Object.keys(defaultTheme);
   const unexpected = actualKeys.filter((k) => !knownKeys.has(k));

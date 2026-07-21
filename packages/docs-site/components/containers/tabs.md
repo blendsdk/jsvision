@@ -38,7 +38,7 @@ const tabs = signal<Tab[]>([
 const active = signal(0);
 
 const view = new TabView({ tabs, active, onChange: (i) => console.log('switched to', i) });
-view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 10 } };
+view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 10 } });
 // loop.focusView(view.strip) — focus the strip, not the group.
 ```
 

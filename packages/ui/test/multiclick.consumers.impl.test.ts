@@ -48,7 +48,7 @@ test('ListRows: clickCount 1 focuses+selects only; 2 activates; 3 does not re-fi
     command: 'go',
     onSelect: (i) => picks.push(i),
   });
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 6 } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 6 } });
   const root = new Group();
   root.add(list);
   const loop = createEventLoop({ width: 16, height: 6 }, { caps });
@@ -86,7 +86,7 @@ test('GridRows: only clickCount 2 activates; 1 and 3 do not', () => {
     command: 'go',
     onSelect: (i) => picks.push(i),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 8 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 8 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 16, height: 8 }, { caps });
@@ -110,7 +110,7 @@ test('TreeRows: text clickCount 1 focuses only; 3 does not activate; 2 does', ()
   const roots = signal<TreeNode<string>[]>([node('A', [node('A1')])]);
   const tree = new Tree<string>({ roots, getText: (v) => v, focused, selected, command: 'go' });
   tree.expand(roots()[0]); // [A, A1]
-  tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 8 } };
+  tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 8 } });
   const root = new Group();
   root.add(tree);
   const loop = createEventLoop({ width: 20, height: 8 }, { caps });

@@ -102,6 +102,11 @@ export interface Theme {
   readonly inputSelection: ThemeRole;
   /** The input-line `◄`/`►` scroll arrows shown when text overflows: brightGreen on blue. */
   readonly inputArrows: ThemeRole;
+  /**
+   * The muted hint text shown in an empty input line (its placeholder): a dimmed, secondary
+   * foreground on the input field's own background — visible but clearly not the typed value.
+   */
+  readonly inputPlaceholder: ThemeRole;
   // --- Scrollbar + list roles ---
   /**
    * A scrollbar's track / page area (the `▒`/`▓` fill): cyan on blue. The track
@@ -208,6 +213,36 @@ export interface Theme {
    */
   readonly colorMarker: ThemeRole;
   /**
+   * The focused **cell** highlight in an editable data grid — a filled
+   * black-on-white reverse block drawn over the focused row so the cursor cell
+   * reads distinctly inside the row highlight. Painted only while the grid body
+   * has focus.
+   */
+  readonly gridCursor: ThemeRole;
+  /**
+   * The pending-commit marker colour in an editable data grid: the `•` drawn on a
+   * cell whose edit has not yet been confirmed. Its foreground is composited over
+   * the cell's own background at draw time, so the stored background is nominal.
+   */
+  readonly gridDirty: ThemeRole;
+  /**
+   * A selected row in an editable data grid — the multi-row selection highlight, a
+   * solid band distinct from both the focused-cell {@link gridCursor} and the base
+   * list's {@link listSelected}: bright white on blue. It carries its own background
+   * (not `listSelected`'s cyan, which matches a normal row), so a selected row reads
+   * clearly even against zebra striping. Painted for every row whose key is in the
+   * selection set; the focused-cell cursor and the pending-commit marker win over it.
+   */
+  readonly gridSelectedRow: ThemeRole;
+  /**
+   * A cell whose edit failed validation in an editable data grid — a solid band
+   * (white on a deep red), distinct from both the {@link gridDirty} pending-commit
+   * marker (a `•`, not a band) and the {@link gridCursor} focus. Painted over the
+   * whole invalid cell so a rejected value reads as a hard error; it wins over the
+   * dirty marker but yields to the focused-cell cursor.
+   */
+  readonly gridInvalid: ThemeRole;
+  /**
    * A file dialog's info pane — the strip below the dialog that reads out the
    * expanded path and the focused entry's name/size/date/time: cyan on blue.
    */
@@ -243,6 +278,23 @@ export interface Theme {
   readonly statusSelected: ThemeRole;
   /** The window drop-shadow: darkGray on black. */
   readonly shadow: ThemeRole;
+  // --- Split panes (a resizable divider between two panes) ---
+  /**
+   * A split-pane divider at rest: lightGray on blue, drawn over the divider's
+   * `│` (row split) or `─` (col split) fill, with a `▓` grab mark at its midpoint.
+   */
+  readonly splitter: ThemeRole;
+  /**
+   * A split-pane divider while it is being dragged: brightGreen on blue — the
+   * dragging counterpart of {@link splitter}, mirroring how {@link indicatorDragging}
+   * relates to {@link indicatorNormal}.
+   */
+  readonly splitterDragging: ThemeRole;
+  // --- Severity text roles (semantic body-text colours for a styled Text) ---
+  /** Danger/error body text — a validation error or alert line: danger-red on the static-text field. */
+  readonly dangerText: ThemeRole;
+  /** Advisory/warning body text — a non-blocking caution: amber on the static-text field. */
+  readonly warningText: ThemeRole;
 }
 
 /**
@@ -308,6 +360,9 @@ export const defaultTheme: Theme = {
   // The text-selection highlight (distinct from the field color).
   inputSelection: { fg: PALETTE.white, bg: PALETTE.green },
   inputArrows: { fg: PALETTE.brightGreen, bg: PALETTE.blue },
+  // Muted placeholder hint on the input field: cyan on blue — the same "muted secondary" pairing as
+  // scrollBarPage/progressTrack/fileInfo, so an empty field's hint reads as dimmed, not as typed text.
+  inputPlaceholder: { fg: PALETTE.cyan, bg: PALETTE.blue },
   scrollBarPage: { fg: PALETTE.cyan, bg: PALETTE.blue },
   scrollBarControls: { fg: PALETTE.cyan, bg: PALETTE.blue },
   listNormal: { fg: PALETTE.black, bg: PALETTE.cyan },
@@ -338,6 +393,10 @@ export const defaultTheme: Theme = {
   calendarDisabled: { fg: PALETTE.darkGray, bg: PALETTE.cyan },
   calendarWeekNumber: { fg: PALETTE.black, bg: PALETTE.cyan },
   colorMarker: { fg: PALETTE.black, bg: PALETTE.lightGray },
+  gridCursor: { fg: PALETTE.black, bg: PALETTE.white },
+  gridDirty: { fg: PALETTE.brightRed, bg: PALETTE.black },
+  gridSelectedRow: { fg: PALETTE.white, bg: PALETTE.blue },
+  gridInvalid: { fg: PALETTE.white, bg: PALETTE.red },
   fileInfo: { fg: PALETTE.cyan, bg: PALETTE.blue },
   editorNormal: { fg: PALETTE.yellow, bg: PALETTE.blue },
   editorSelected: { fg: PALETTE.blue, bg: PALETTE.lightGray },
@@ -349,4 +408,8 @@ export const defaultTheme: Theme = {
   statusBar: { fg: PALETTE.black, bg: PALETTE.lightGray, hotkey: PALETTE.red },
   statusSelected: { fg: PALETTE.black, bg: PALETTE.green, hotkey: PALETTE.red },
   shadow: { fg: PALETTE.darkGray, bg: PALETTE.black },
+  splitter: { fg: PALETTE.lightGray, bg: PALETTE.blue },
+  splitterDragging: { fg: PALETTE.brightGreen, bg: PALETTE.blue },
+  dangerText: { fg: '#ef4444', bg: PALETTE.lightGray },
+  warningText: { fg: '#f59e0b', bg: PALETTE.lightGray },
 };

@@ -20,6 +20,11 @@ jobs:
   build-test:
     name: build & test (${{ matrix.os }}, node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}
+    # A healthy cell finishes in 3–6 minutes, so this is roughly 5x headroom over the slowest
+    # observed run. It is not a performance budget — it is there because a hosted runner can wedge
+    # mid-step, and without an explicit limit such a job burns GitHub's 6-hour default before it
+    # reports anything, leaving a pull request that looks stuck rather than failed.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:

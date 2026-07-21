@@ -92,10 +92,15 @@ function absoluteOrigin(view: View): Point {
  * focus as it was. Focusing *into* (not merely *onto*) matters when the nearest focusable is a
  * container: clicking a window's frame must land focus on the window's inner view (the one that owns
  * the caret), not on the window group itself.
+ *
+ * A view with `grabsFocus === false` (e.g. a dialog Cancel button) short-circuits the climb without
+ * moving focus, so clicking it never blurs the currently-focused view — no focus-leave side effect
+ * (such as a field's blur-validation) fires. It stays reachable by `Tab`/`Space` via the normal path.
  */
 function focusOnClick(hit: View, ctx: HitContext): void {
   let node: View | null = hit;
   while (node !== null) {
+    if (node.grabsFocus === false) return; // acts on the click but keeps focus where it was
     if (ctx.isFocusable(node)) {
       ctx.focusInto(node);
       return;

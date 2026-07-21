@@ -38,6 +38,9 @@ jobs:
     name: Deploy production to GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    # Same rationale as the CI workflow's build matrix: a wedged hosted runner would otherwise
+    # burn GitHub's 6-hour default before reporting. A healthy deploy takes about two minutes.
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -69,6 +72,9 @@ jobs:
     name: Deploy PR preview
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    # Same rationale as the CI workflow's build matrix: a wedged hosted runner would otherwise
+    # burn GitHub's 6-hour default before reporting. A healthy deploy takes about two minutes.
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v5

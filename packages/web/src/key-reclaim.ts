@@ -128,7 +128,10 @@ function isTerminalFocused(target: KeyEventTarget): boolean {
  * @returns an unsubscribe function that removes the listener.
  *
  * @example
+ * import { Terminal } from '@xterm/xterm';
  * import { attachKeyReclaim } from '@jsvision/web';
+ *
+ * const term = new Terminal({ allowProposedApi: true });
  *
  * // Reclaim the defaults plus Ctrl+X while the terminal is focused.
  * const detach = attachKeyReclaim(term, { also: ['Ctrl+X'] });

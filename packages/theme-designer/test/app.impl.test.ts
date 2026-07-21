@@ -8,7 +8,8 @@
  */
 import { test, expect, vi } from 'vitest';
 import { resolveCapabilities, slateTheme, defaultTheme } from '@jsvision/core';
-import type { FileSystem, Theme } from '@jsvision/core';
+import type { Theme } from '@jsvision/core';
+import type { FileSystem } from '@jsvision/files';
 import type { TimerSeam } from '@jsvision/ui';
 
 import { createDesignerApp } from '../src/app.js';

@@ -88,6 +88,7 @@ export const monochromeTheme: Theme = {
   inputSelected: { fg: W, bg: B },
   inputSelection: { fg: W, bg: B, attrs: REV },
   inputArrows: { fg: W, bg: B },
+  inputPlaceholder: { fg: G, bg: B },
   scrollBarPage: { fg: G, bg: B },
   scrollBarControls: { fg: W, bg: B },
   listNormal: { fg: W, bg: B },
@@ -118,6 +119,10 @@ export const monochromeTheme: Theme = {
   calendarDisabled: { fg: G, bg: B, attrs: DIM },
   calendarWeekNumber: { fg: G, bg: B },
   colorMarker: { fg: W, bg: B },
+  gridCursor: { fg: W, bg: B, attrs: REV },
+  gridDirty: { fg: W, bg: B, attrs: BLD },
+  gridSelectedRow: { fg: W, bg: B, attrs: BLD },
+  gridInvalid: { fg: W, bg: B, attrs: REV },
   fileInfo: { fg: G, bg: B },
   editorNormal: { fg: W, bg: B },
   editorSelected: { fg: W, bg: B, attrs: REV },
@@ -129,6 +134,10 @@ export const monochromeTheme: Theme = {
   statusBar: { fg: B, bg: W, hotkey: B },
   statusSelected: { fg: B, bg: W, hotkey: B, attrs: REV },
   shadow: { fg: G, bg: B },
+  splitter: { fg: G, bg: B },
+  splitterDragging: { fg: W, bg: B, attrs: BLD },
+  dangerText: { fg: W, bg: B },
+  warningText: { fg: W, bg: B },
 };
 
 /**

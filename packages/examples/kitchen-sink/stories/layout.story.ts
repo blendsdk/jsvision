@@ -12,7 +12,7 @@ import type { Story, StoryContext } from '../story.js';
 function box(label: string, role: ThemeRoleName, size: Size): Group {
   const b = new Group();
   b.background = role;
-  b.layout = { size };
+  b.setLayout({ size });
   b.add(at(new Text(label), 1, 0, 14, 1));
   return b;
 }
@@ -27,12 +27,12 @@ export const layoutStory: Story = {
     const w = ctx.width;
     const g = new Group();
     g.add(at(new Text('A row — fixed 16 · fr 1 · fr 2 (the fr boxes split the remaining width):'), 1, 0, w, 1));
-    const row = new Group();
-    row.layout = { direction: 'row', gap: 1, align: 'stretch' };
-    row.add(box('fixed 16', 'window', { kind: 'fixed', cells: 16 }));
-    row.add(box('fr 1', 'clusterNormal', { kind: 'fr', weight: 1 }));
-    row.add(box('fr 2', 'buttonDefault', { kind: 'fr', weight: 2 }));
-    g.add(at(row, 1, 2, w - 2, 4));
+    const rowBox = new Group();
+    rowBox.setLayout({ direction: 'row', gap: 1, align: 'stretch' });
+    rowBox.add(box('fixed 16', 'window', { kind: 'fixed', cells: 16 }));
+    rowBox.add(box('fr 1', 'clusterNormal', { kind: 'fr', weight: 1 }));
+    rowBox.add(box('fr 2', 'buttonDefault', { kind: 'fr', weight: 2 }));
+    g.add(at(rowBox, 1, 2, w - 2, 4));
     g.add(at(new Text('Also supported: direction row/col, gap, padding, justify, align, overflow.'), 1, 7, w, 1));
     return g;
   },

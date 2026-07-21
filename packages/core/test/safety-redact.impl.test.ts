@@ -11,7 +11,8 @@ import { redactEvent, dumpCaps } from '../src/engine/safety/index.js';
 import type { CapabilityResolution } from '../src/engine/capability/index.js';
 
 test('a wheel event passes its direction and coordinates through', () => {
-  const r = redactEvent({ type: 'wheel', dir: 'up', x: 7, y: 9 });
+  // Modifiers are required on a WheelEvent but redactEvent drops them for 'wheel' regardless — unmodified here.
+  const r = redactEvent({ type: 'wheel', dir: 'up', x: 7, y: 9, shift: false, alt: false, ctrl: false });
   expect(r).toStrictEqual({ type: 'wheel', dir: 'up', x: 7, y: 9 });
 });
 
@@ -49,7 +50,7 @@ test('dumpCaps renders every reason layer name and collapses an all-false group'
       altScreen: false,
       bracketedPaste: true,
       keyboard: { kittyFlags: true, modifyOtherKeys: false },
-      glyphs: { boxDrawing: true, halfBlocks: true },
+      glyphs: { boxDrawing: true, halfBlocks: true, ambiguousWide: false },
       platform: 'darwin',
       multiplexer: true,
     },

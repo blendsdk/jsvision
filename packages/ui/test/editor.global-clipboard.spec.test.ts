@@ -28,8 +28,8 @@ function key(k: string, mods: Partial<Pick<KeyEvent, 'alt' | 'ctrl' | 'shift'>> 
 function mountEditor(opts: ConstructorParameters<typeof Editor>[0] = {}, w = 12, h = 3) {
   const ed = new Editor(opts);
   const root = new Group();
-  root.layout = { direction: 'col' };
-  ed.layout = { size: { kind: 'fr', weight: 1 } };
+  root.setLayout({ direction: 'col' });
+  ed.setLayout({ size: { kind: 'fr', weight: 1 } });
   root.add(ed);
   const loop = createEventLoop({ width: w, height: h }, { caps });
   loop.mount(root);
@@ -44,9 +44,9 @@ function mountEditorAndInput(edText: string, inputText: string, clipboard?: Edit
   const inputValue = signal(inputText);
   const input = new Input({ value: inputValue });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  ed.layout = { size: { kind: 'fr', weight: 1 } };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  ed.setLayout({ size: { kind: 'fr', weight: 1 } });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(ed);
   root.add(input);
   const loop = createEventLoop({ width: 20, height: 4 }, { caps: capsClip, commands: Object.values(Commands) });
@@ -100,10 +100,10 @@ test('ST-19: a copy inside a modal and a paste after it closes share the loop bu
   const dialog = new Group();
   dialog.add(dlgInput);
   const root = new Group();
-  root.layout = { direction: 'col' };
-  deskInput.layout = { size: { kind: 'fixed', cells: 1 } };
-  dialog.layout = { size: { kind: 'fr', weight: 1 } };
-  dlgInput.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  deskInput.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  dialog.setLayout({ size: { kind: 'fr', weight: 1 } });
+  dlgInput.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(deskInput);
   root.add(dialog);
   const loop = createEventLoop({ width: 20, height: 4 }, { caps: capsClip, commands: Object.values(Commands) });

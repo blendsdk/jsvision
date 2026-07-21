@@ -21,7 +21,7 @@ function mouse(kind: MouseEvent['kind'], x: number, y: number): MouseEvent {
   return { type: 'mouse', kind, button: 0, x, y };
 }
 function paste(text: string): PasteEvent {
-  return { type: 'paste', text };
+  return { type: 'paste', text, truncated: false }; // these fixtures never exercise the size-cap path
 }
 
 class FocusStub extends View {
@@ -33,9 +33,9 @@ function mountInput(value = ''): { loop: ReturnType<typeof createEventLoop>; inp
   const input = new Input({ value: signal(value) });
   const stub = new FocusStub();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
-  stub.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  stub.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(input);
   root.add(stub);
   const loop = createEventLoop({ width: 20, height: 3 }, { caps });
@@ -50,9 +50,9 @@ test('HR-43 impl: paste replaces the current selection', () => {
   const input = new Input({ value });
   const stub = new FocusStub();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
-  stub.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  stub.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(input);
   root.add(stub);
   const loop = createEventLoop({ width: 20, height: 3 }, { caps });
@@ -93,9 +93,9 @@ test('HR-46 impl: a drag begun on one Input does not affect a second Input', () 
   const a = new Input({ value: valA });
   const b = new Input({ value: valB });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  a.layout = { size: { kind: 'fixed', cells: 1 } };
-  b.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  a.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  b.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(a);
   root.add(b);
   const loop = createEventLoop({ width: 20, height: 3 }, { caps });
@@ -114,9 +114,9 @@ test('HR-58 impl: paste clamps at maxLength', () => {
   const input = new Input({ value, maxLength: 3 });
   const stub = new FocusStub();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
-  stub.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  stub.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(input);
   root.add(stub);
   const loop = createEventLoop({ width: 20, height: 3 }, { caps });
@@ -133,7 +133,7 @@ test('HR-52 impl: a disabled CheckGroup row draws its hot run in the disabled co
   const group = new CheckGroup({ labels: ['~A~pple'], value: flags });
   group.setItemEnabled(0, false);
   const root = new Group();
-  group.layout = { size: { kind: 'fixed', cells: 1 } };
+  group.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(group);
   const loop = createEventLoop({ width: 20, height: 2 }, { caps });
   loop.mount(root);

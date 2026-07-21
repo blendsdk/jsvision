@@ -5,8 +5,8 @@
 // runs the very same app in an xterm.js terminal via `@jsvision/web` with no backend. Keeping the
 // browser-mount layer in one small function keeps the app itself host-agnostic.
 
-import { createApplication, Group, ProgressBar, signal, Spinner, Window } from '@jsvision/ui';
-import type { Signal } from '@jsvision/ui';
+import { col, createApplication, fixed, ProgressBar, signal, Spinner, Window } from '@jsvision/ui';
+import type { Group, Signal } from '@jsvision/ui';
 import { buildBrowserCaps, mountApp } from '@jsvision/web';
 import type { MountAppOptions, MountedApp } from '@jsvision/web';
 
@@ -45,17 +45,12 @@ export function buildDashboard(opts?: { steps?: number }): Dashboard {
   const frame = signal(0);
 
   const bar = new ProgressBar({ value, caption: true, label: 'Downloading', labelPosition: 'left' });
-  bar.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 32, height: 1 } };
-
   const spinner = new Spinner({ frame, preset: 'dots', label: () => (value() >= 1 ? 'Done' : 'Working…') });
-  spinner.layout = { position: 'absolute', rect: { x: 1, y: 3, width: 24, height: 1 } };
 
-  // fr weight so the root fills its parent (a Window interior) while its absolute children position
-  // within it; mounted directly as a render root it simply gets the whole viewport.
-  const root = new Group();
-  root.layout = { size: { kind: 'fr', weight: 1 } };
-  root.add(bar);
-  root.add(spinner);
+  // Compose with the layout DSL: a one-row bar over a one-row spinner, 1 cell of gap between them.
+  // `fill` gives the column a flex weight of 1 so it takes its parent's leftover space — the whole
+  // viewport when mounted directly as a render root, or the interior when hosted in a Window.
+  const root = col({ gap: 1, fill: true }, fixed(bar, 1), fixed(spinner, 1));
 
   // Count whole steps and derive the fraction, so the bar lands on exactly 1.0 (not 0.999…) at the
   // last tick — accumulating `+= 1/steps` drifts on floating point.
@@ -89,7 +84,7 @@ export function mountDashboardInBrowser(term: BrowserTerminal, opts?: { steps?: 
   const dash = buildDashboard(opts);
 
   const win = new Window('Live Dashboard');
-  win.layout.rect = { x: 1, y: 1, width: 36, height: 8 };
+  win.setLayout({ rect: { x: 1, y: 1, width: 36, height: 8 } });
   win.add(dash.root);
   app.desktop.addWindow(win);
 

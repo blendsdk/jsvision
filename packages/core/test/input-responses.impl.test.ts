@@ -9,8 +9,19 @@
 import { test, expect } from 'vitest';
 
 import { matchResponse } from '../src/engine/capability/responses.js';
+import type { ResponseMatch, ResponseScan } from '../src/engine/capability/responses.js';
 
 const enc = new TextEncoder();
+
+/**
+ * Narrow a scan result to a completed match, failing loudly if it is not one. The scanner also
+ * reports `'incomplete'` and `null`, and a test that read `.kind` off either would be asserting
+ * against `undefined` rather than the classification it means to check.
+ */
+function matched(scan: ResponseScan): ResponseMatch {
+  if (scan === null || scan === 'incomplete') throw new Error(`expected a completed match, got ${String(scan)}`);
+  return scan;
+}
 
 // ---------------------------------------------------------------------------
 // Incomplete sequences → null (carried by the caller, never a false match)
@@ -42,16 +53,16 @@ test('responses: DCS terminated by ESC \\ → xtversion', () => {
   const bytes = enc.encode('\x1bP>|foot\x1b\\');
   const match = matchResponse(bytes, 0);
   expect(match !== null).toBeTruthy();
-  expect(match.kind).toBe('xtversion');
-  expect(match.end).toBe(bytes.length);
+  expect(matched(match).kind).toBe('xtversion');
+  expect(matched(match).end).toBe(bytes.length);
 });
 
 test('responses: DCS terminated by BEL → xtversion', () => {
   const bytes = enc.encode('\x1bP>|foot\x07');
   const match = matchResponse(bytes, 0);
   expect(match !== null).toBeTruthy();
-  expect(match.kind).toBe('xtversion');
-  expect(match.end).toBe(bytes.length);
+  expect(matched(match).kind).toBe('xtversion');
+  expect(matched(match).end).toBe(bytes.length);
 });
 
 // ---------------------------------------------------------------------------
@@ -65,8 +76,8 @@ test('responses: a non-?2026 DECRPM → null (not our query)', () => {
 test('responses: ?2026 DECRPM value 0 → decrpm with no sync hint', () => {
   const match = matchResponse(enc.encode('\x1b[?2026;0$y'), 0);
   expect(match !== null).toBeTruthy();
-  expect(match.kind).toBe('decrpm');
-  expect(match.hint.sync2026).toBe(undefined);
+  expect(matched(match).kind).toBe('decrpm');
+  expect(matched(match).hint.sync2026).toBe(undefined);
 });
 
 // ---------------------------------------------------------------------------
@@ -77,6 +88,6 @@ test('responses: a match located at a non-zero start index', () => {
   const bytes = enc.encode('ab\x1b[?64;1;2c');
   const match = matchResponse(bytes, 2);
   expect(match !== null).toBeTruthy();
-  expect(match.kind).toBe('da1');
-  expect(match.end).toBe(bytes.length);
+  expect(matched(match).kind).toBe('da1');
+  expect(matched(match).end).toBe(bytes.length);
 });

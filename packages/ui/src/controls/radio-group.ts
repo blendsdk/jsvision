@@ -20,11 +20,10 @@ export interface RadioGroupOptions {
  * A radio-button group bound to a `number` signal (the selected index).
  *
  * @example
- * import { Group, RadioGroup, signal } from '@jsvision/ui';
+ * import { Group, RadioGroup, signal, at } from '@jsvision/ui';
  *
  * const align = signal(0); // 0 = Left
- * const group = new RadioGroup({ labels: ['~L~eft', '~C~enter', '~R~ight'], value: align });
- * group.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 20, height: 3 } };
+ * const group = at(new RadioGroup({ labels: ['~L~eft', '~C~enter', '~R~ight'], value: align }), 1, 0, 20, 3);
  *
  * const panel = new Group();
  * panel.add(group);

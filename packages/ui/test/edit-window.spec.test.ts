@@ -24,6 +24,7 @@ import { EditWindow } from '../src/editor/edit-window.js';
 import { Indicator } from '../src/editor/indicator.js';
 import { ScrollBar } from '../src/scroll/index.js';
 import type { View } from '../src/view/index.js';
+import { rectOf } from './layout.fixtures.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -49,7 +50,7 @@ function gadgetsOf(win: EditWindow): { h: ScrollBar; v: ScrollBar; ind: Indicato
 test('ST-26: gadgets sit at the TV rects for a 60×20 window', () => {
   const app = makeApp();
   const win = new EditWindow({});
-  win.layout.rect = { x: 2, y: 1, width: 60, height: 20 };
+  win.setLayout({ rect: { x: 2, y: 1, width: 60, height: 20 } });
   app.desktop.addWindow(win);
   app.loop.renderRoot.flush();
 
@@ -64,15 +65,15 @@ test('ST-26: gadgets sit at the TV rects for a 60×20 window', () => {
 test('ST-26: a drag-resize below the TV minimum clamps to 24×6', () => {
   const app = makeApp();
   const win = new EditWindow({});
-  win.layout.rect = { x: 0, y: 0, width: 40, height: 12 };
+  win.setLayout({ rect: { x: 0, y: 0, width: 40, height: 12 } });
   app.desktop.addWindow(win);
   app.loop.renderRoot.flush();
 
   app.loop.dispatch(mouse('down', 39, 11)); // SE grip
   app.loop.dispatch(mouse('drag', 5, 2)); // far inward
   app.loop.dispatch(mouse('up', 5, 2));
-  expect(win.layout.rect.width).toBe(24); // minEditWinSize (teditwnd.cpp:29)
-  expect(win.layout.rect.height).toBe(6);
+  expect(rectOf(win).width).toBe(24); // minEditWinSize (teditwnd.cpp:29)
+  expect(rectOf(win).height).toBe(6);
 });
 
 test('ST-26: titles — "Untitled" default, "Clipboard" via the identity check, signal write re-renders', () => {
@@ -88,10 +89,10 @@ test('ST-26: titles — "Untitled" default, "Clipboard" via the identity check, 
 test('ST-27: both bars + the indicator hide while inactive and re-show when active', () => {
   const app = makeApp();
   const w1 = new EditWindow({});
-  w1.layout.rect = { x: 0, y: 0, width: 30, height: 8 };
+  w1.setLayout({ rect: { x: 0, y: 0, width: 30, height: 8 } });
   app.desktop.addWindow(w1);
   const w2 = new EditWindow({});
-  w2.layout.rect = { x: 32, y: 0, width: 30, height: 8 };
+  w2.setLayout({ rect: { x: 32, y: 0, width: 30, height: 8 } });
   app.desktop.addWindow(w2); // raised last → active
   app.loop.renderRoot.flush();
 

@@ -58,8 +58,8 @@ test('capacity ≤ 0 clamps to 1 — degenerate but defined', () => {
 test('wheel scroll-back clamps at the oldest line and at the bottom', () => {
   const term = new Terminal();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  term.layout = { size: { kind: 'fr', weight: 1 } };
+  root.setLayout({ direction: 'col' });
+  term.setLayout({ size: { kind: 'fr', weight: 1 } });
   root.add(term);
   const loop = createEventLoop({ width: 10, height: 3 }, { caps });
   loop.mount(root);

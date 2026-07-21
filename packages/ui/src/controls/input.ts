@@ -27,7 +27,7 @@ import { clipboardCommand, applyPaste, insertFilled } from './input-clipboard.js
 import type { ClipboardAction } from './input-clipboard.js';
 import { computeDelete } from './input-editing.js';
 import type { EditState, DeleteKind } from './input-editing.js';
-import { canScrollRight, displayedPos, paintInput } from './input-render.js';
+import { canScrollRight, displayedPos, paintInput, resolvePlaceholder } from './input-render.js';
 
 /** Options for {@link Input}. */
 export interface InputOptions {
@@ -37,18 +37,19 @@ export interface InputOptions {
   maxLength?: number;
   /** A rule that filters keystrokes live and validates the completed value on focus-leave. */
   validator?: Validator;
+  /** A muted hint shown while the bound value is empty; never part of the value. Static text or a signal. */
+  placeholder?: string | Signal<string>;
 }
 
 /**
  * A focusable single-line text editor.
  *
  * @example
- * import { Group, Input, signal } from '@jsvision/ui';
+ * import { Group, Input, signal, at } from '@jsvision/ui';
  *
- * // Plain field: `name` mirrors what the user types, and setting it updates the field.
+ * // Plain field: `name` mirrors typing; the muted placeholder shows only while the field is empty.
  * const name = signal('');
- * const input = new Input({ value: name });
- * input.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 24, height: 1 } };
+ * const input = at(new Input({ value: name, placeholder: 'Full name' }), 1, 0, 24, 1);
  *
  * const form = new Group();
  * form.add(input);
@@ -68,6 +69,7 @@ export class Input extends View {
   protected readonly maxLength: number;
   /** Optional live + blocking validator. */
   protected readonly validator?: Validator;
+  protected readonly placeholder?: string | Signal<string>;
   /** The caret index into the value. */
   protected curPos = 0;
   /** First visible character index (the horizontal-scroll offset). */
@@ -128,6 +130,7 @@ export class Input extends View {
     this.value = opts.value;
     this.maxLength = opts.maxLength ?? Number.POSITIVE_INFINITY;
     this.validator = opts.validator;
+    this.placeholder = opts.placeholder;
     // Bind on mount, when this view's reactive scope exists (it does not in the constructor).
     this.onMount(() => {
       // Repaint on any external change to the value, and clamp our cursor/selection back into range.
@@ -155,6 +158,8 @@ export class Input extends View {
           this.wasFocused = now;
         },
       );
+      // A signal placeholder repaints an empty field on change; a plain string needs no watch.
+      if (typeof this.placeholder === 'function') this.bind(this.placeholder, () => this.invalidate());
     });
   }
 
@@ -185,6 +190,7 @@ export class Input extends View {
       selEnd: this.selEnd,
       curPos: this.curPos,
       firstPos: this.firstPos,
+      placeholder: resolvePlaceholder(this.placeholder),
     });
   }
 

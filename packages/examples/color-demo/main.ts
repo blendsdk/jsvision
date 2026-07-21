@@ -14,7 +14,7 @@
  */
 import { resolveCapabilities, ANSI16_ORDER, toRgb } from '@jsvision/core';
 import type { Color, KeyEvent } from '@jsvision/core';
-import { Group, ColorSwatch, ColorPicker, createEventLoop, signal } from '@jsvision/ui';
+import { Group, ColorSwatch, ColorPicker, createEventLoop, signal, cover } from '@jsvision/ui';
 import type { PopupHost } from '@jsvision/ui';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
@@ -49,7 +49,7 @@ function swatchWalkthrough(): void {
   const value = signal<Color>('blue'); // cell 4
   const swatch = new ColorSwatch({ value, colors: ANSI16_ORDER as readonly Color[], columns: 4 });
   const size = swatch.measure(); // 12 × 4
-  swatch.layout = { position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } };
+  cover(swatch);
   const root = new Group();
   root.add(swatch);
   const loop = createEventLoop({ width: size.width, height: size.height }, { caps });
@@ -72,9 +72,9 @@ function swatchWalkthrough(): void {
 function pickerWalkthrough(): void {
   const value = signal<Color>('red');
   const picker = new ColorPicker({ value, allowCustom: true });
-  picker.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 18, height: 1 } };
+  picker.setLayout({ position: 'absolute', rect: { x: 2, y: 1, width: 18, height: 1 } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  cover(overlay);
   overlay.state.visible = false;
   const root = new Group();
   root.add(picker);

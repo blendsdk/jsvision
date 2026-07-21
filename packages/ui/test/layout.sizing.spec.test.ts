@@ -11,6 +11,7 @@
  */
 import { test, expect } from 'vitest';
 import { layout, type LayoutBox } from '../src/layout/index.js';
+import { normalizeSize } from '../src/layout/types.js';
 
 // ST-01 / AC-1 — a row of [fixed 3, fr 1] within width 10 fills exactly.
 test('ST-01: row [fixed 3, fr 1] in width 10 → widths [3, 7] summing exactly to 10', () => {
@@ -109,4 +110,32 @@ test('ST-06: row [fixed 2, fixed 2, fixed 2] gap 2 → x offsets 0, 4, 8', () =>
   expect(result.get(a)?.width).toBe(2);
   expect(result.get(b)?.width).toBe(2);
   expect(result.get(c)?.width).toBe(2);
+});
+
+// ---------------------------------------------------------------------------
+// Minimum-size support on the `fr` variant (split-panes feature). Ids are
+// qualified `ST-N (split-panes)` because this file already numbers its own
+// cases ST-01…ST-06 — a bare `ST-8` under `ST-06` would read as this file's
+// next case, which it is not.
+// ---------------------------------------------------------------------------
+
+// ST-8 (split-panes) — a negative `fr` minimum floors to 0, exactly as `fixed`
+// cells are clamped. `normalizeSize` is module-private (absent from the barrel);
+// tested through a direct relative import, the pack-row precedent.
+test('ST-8 (split-panes): normalizeSize floors a negative fr min to 0', () => {
+  expect(normalizeSize({ kind: 'fr', weight: 1, min: -5 })).toEqual({ kind: 'fr', weight: 1, min: 0 });
+});
+
+// ST-9 (split-panes) — an `fr` child contributes its `min` (not 0) to an `auto`
+// container's natural size, so a shrink-to-fit parent reserves the floor. The
+// auto row is nested so its rect is sized to its natural main and can be read.
+test('ST-9 (split-panes): an auto container measures an fr child min:20 as 20 on the main axis', () => {
+  const child: LayoutBox = { props: { size: { kind: 'fr', weight: 1, min: 20 } }, children: [] };
+  const autoRow: LayoutBox = { props: { direction: 'row', size: { kind: 'auto' } }, children: [child] };
+  const root: LayoutBox = { props: { direction: 'row' }, children: [autoRow] };
+
+  const result = layout(root, { width: 100, height: 1 });
+
+  // Today an fr child contributes 0, so this measures 0 until min support lands.
+  expect(result.get(autoRow)?.width).toBe(20);
 });

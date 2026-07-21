@@ -38,9 +38,9 @@ function mountInput(opts: ConstructorParameters<typeof Input>[0], w = 10) {
   const input = new Input(opts);
   const stub = new FocusStub();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
-  stub.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  stub.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(input);
   root.add(stub);
   const loop = createEventLoop({ width: w, height: 3 }, { caps });
@@ -95,7 +95,7 @@ function makeAppWithInput() {
   const output = new CaptureStream();
   const value = signal('');
   const field = new Input({ value });
-  field.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 10, height: 1 } };
+  field.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 10, height: 1 } });
   const app = createApplication({
     warnAmbiguousWidth: false,
     caps,
@@ -105,7 +105,7 @@ function makeAppWithInput() {
     viewport: { width: 40, height: 12 },
   });
   app.desktop.add(field);
-  return { app, runtime, output, field };
+  return { app, runtime, output, field, value };
 }
 
 test('run() writes the focused Input absolute caret cell to the terminal (show + move)', async () => {
@@ -138,9 +138,9 @@ test('run() hides the cursor when no view requests a caret', async () => {
 });
 
 test('run() streams an OSC-52 clipboard sequence to the output on copy', async () => {
-  const { app, output, field } = makeAppWithInput();
+  const { app, output, field, value } = makeAppWithInput();
   const runP = app.run();
-  field.setValue('hello');
+  value.set('hello'); // setValue() is protected — drive the field through its bound two-way signal instead
   app.loop.focusView(field);
   app.loop.dispatch({ type: 'key', key: 'a', ctrl: true, alt: false, shift: false }); // select-all
   const before = output.data.length;

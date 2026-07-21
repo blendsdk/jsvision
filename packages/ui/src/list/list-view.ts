@@ -58,7 +58,7 @@ export interface ListViewOptions<T> {
  * A single-column virtual-scroll list: a rows renderer + an owned vertical scroll bar.
  *
  * @example
- * import { ListView, Group, createEventLoop, signal } from '@jsvision/ui';
+ * import { ListView, Group, createEventLoop, signal, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * interface Person { name: string; age: number; }
@@ -71,17 +71,16 @@ export interface ListViewOptions<T> {
  *   selected,
  *   onSelect: (index, person) => console.log('chose', person.name),
  * });
- * list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 8 } };
  *
  * const root = new Group();
- * root.add(list);
+ * root.add(at(list, 0, 0, 24, 8));
  * const loop = createEventLoop({ width: 24, height: 8 }, { caps });
  * loop.mount(root);
  * loop.focusView(list.rows); // focus the rows renderer, not the group
  */
 export class ListView<T> extends Group {
   /** Lay the children out horizontally: `[rows fr | bar 1]`. */
-  override layout: LayoutProps = { direction: 'row' };
+  override readonly layout: Readonly<LayoutProps> = { direction: 'row' };
   /** The focusable rows renderer (the focus target — a `Group` is not itself a focus leaf). */
   readonly rows: ListRows<T>;
   /** The owned vertical scroll bar (its `value` is the shared `focused` signal). */
@@ -111,13 +110,13 @@ export class ListView<T> extends Group {
       roles: opts.roles,
       numCols: opts.numCols,
     });
-    this.rows.layout = { size: { kind: 'fr', weight: 1 } };
+    this.rows.setLayout({ size: { kind: 'fr', weight: 1 } });
     this.bar = opts.bar ?? new ScrollBar({ value: this.focused, orientation: 'vertical' });
     this.rows.bar = this.bar; // the rows renderer re-limits the bar's range on each draw
 
     if (opts.bar === undefined) {
       // Default: this view owns + lays out the vertical right-edge bar as a `[rows fr | bar 1]` child.
-      this.bar.layout = { size: { kind: 'fixed', cells: 1 } };
+      this.bar.setLayout({ size: { kind: 'fixed', cells: 1 } });
       this.add(this.rows); // z-order: rows (left) then bar (right)
       this.add(this.bar);
     } else {

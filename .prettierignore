@@ -14,6 +14,10 @@ coverage
 packages/docs-site/api/*/
 packages/docs-site/api/typedoc-sidebar.json
 
+# Generated plugin API reference — emitted verbatim by scripts/gen-plugin-api.mjs from the
+# @jsvision/* source types and drift-guarded byte-for-byte, so Prettier must not reformat it.
+tools/claude-plugin/skills/jsvision/references/api/
+
 # CodeOps process artifacts — authored docs, not code; Prettier would churn
 # their hand-built tables. Kept out of the formatting gate.
 codeops
@@ -24,3 +28,7 @@ codeops
 # The root CHANGELOG.md is hand-maintained and stays gated.
 packages/*/CHANGELOG.md
 RELEASE_NOTES.md
+# The @example compile guard's grandfather list — machine-generated, sorted, and
+# deliberately one entry per line so a removed entry reads as a single deleted
+# line. Prettier would expand each value across five lines and bury the ratchet.
+packages/docs-site/test/jsdoc-examples.allowlist.json

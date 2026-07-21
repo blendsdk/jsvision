@@ -3,6 +3,10 @@
 Every widget below is imported from `@jsvision/ui`. Each takes an options object (`new X({ ... })`)
 unless noted, and each carries a matching `XOptions` type. Reach for the one that matches the job.
 
+> **This page is the chooser; `api/index.md` is the signature lookup.** For the exact constructor,
+> options fields, methods, and types of anything here — generated from the source, always current —
+> open the matching page under [`api/`](api/index.md) instead of reading `@jsvision/*` source.
+
 ## Controls (leaf inputs)
 
 - **Text** — static, word-wrapped paragraph. `new Text('hello')` or `new Text(() => reactive())`.
@@ -26,6 +30,7 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 - **Scroller** — a focusable viewport that scrolls oversized content and owns its scroll bars.
 - **ListView** — a single-column, virtual-scroll list `[rows | scrollbar]`; focus its `rows`.
 - **ListBox** — a `ListView<string>` preset for simple string lists.
+- **SplitView** — N resizable panes divided by N−1 draggable splitters (row or col; nest for grids). Drag a divider or Tab to it and use the arrows; pane sizes live in a caller-owned `Signal<number[]>`.
 - **Dialog** — a modal window (gray frame, close box) opened with `loop.execView(dialog)`; its
   `valid()` gate vetoes a bad OK. Pair with `okButton()`/`cancelButton()`; see `recipes/forms-dialogs.md`.
 
@@ -33,6 +38,10 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 
 - **DataGrid** — a typed multi-column table (`DataGrid<T>`) over a rows `Signal`, with sortable
   columns, selection, zebra striping, and a sticky header. See `recipes/data-driven.md`.
+- **GridRows** — the focusable, multi-column, virtual-scroll grid body that draws only the visible
+  window; the low-level body `DataGrid` composes, exposed for building custom grid layouts.
+- **GridHeader** — the non-scrolling sticky header: column titles in `tableHeader`, a sort
+  indicator, and click-to-sort; the low-level header `DataGrid` composes.
 - **Tree** — a collapsible outline/tree of nodes with expand/collapse, keyboard nav, and type-ahead.
 
 ## Feedback
@@ -76,8 +85,9 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 
 ## App shell
 
-- **Window** — a titled, movable/resizable/zoomable frame; `win.add(child)`, `win.layout.rect = …`.
+- **Window** — a titled, movable/resizable/zoomable frame; `win.add(child)`, `win.setLayout({ rect })`.
 - **Desktop** — the window manager (`app.desktop`): `addWindow`, `cascade`, `tile`, `raise`, focus.
+- **Router** — a full-screen screen stack (the alternative app body to `Desktop`): `createRouter({ initial, routes })` then `push`/`back`/`replace`/`reset`, reactive `location()`/`canGoBack()`, per-route typed params, opt-in `keepAlive`, and per-screen menu/status via `withBase`. Pass it as `createApplication({ content: router })`.
 - **MenuBar** — the top menu bar with nested pop-up menus (`menuBar([...])` builders).
 - **MenuPopup** — a single pop-up menu panel (used by `MenuBar`; rarely constructed directly).
 - **StatusLine** — the bottom status/command row (`statusLine([statusItem(...)])`).

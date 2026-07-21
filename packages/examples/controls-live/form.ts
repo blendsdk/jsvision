@@ -6,7 +6,22 @@
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
-import { Text, Label, Input, CheckGroup, RadioGroup, Button, filter, range, signal, type View } from '@jsvision/ui';
+import {
+  Text,
+  Label,
+  Input,
+  CheckGroup,
+  RadioGroup,
+  Button,
+  filter,
+  range,
+  signal,
+  col,
+  row,
+  grow,
+  fixed,
+  spacer,
+} from '@jsvision/ui';
 import { Dialog } from './dialog.js';
 
 /** Demo-local command names (not built-in shell commands), shared by the dialog and the shell wiring. */
@@ -22,12 +37,6 @@ const STYLE_LABELS = ['Bold', 'Italic', 'Underline'] as const;
 /** Turn `'Bold'` into `'~B~old'` — mark the first letter as the control's `Alt`-hotkey. */
 function withHotkey(label: string): string {
   return `~${label[0]}~${label.slice(1)}`;
-}
-
-/** A control plus the content-box-relative rect it occupies inside the dialog (TV coordinate layout). */
-interface Placed {
-  readonly view: View;
-  readonly rect: { x: number; y: number; width: number; height: number };
 }
 
 /** What {@link buildDialog} hands back to the shell wiring in `main.ts`. */
@@ -85,30 +94,38 @@ export function buildDialog(): BuiltDialog {
     return `Name="${name()}"  Age="${age()}"  Style=${styleText}  Align=${ALIGN_LABELS[align()]}`;
   });
 
-  // TV coordinate layout — content-box-relative rects (inside the dialog's 1-cell border).
-  const placed: readonly Placed[] = [
-    { view: header, rect: { x: 1, y: 0, width: 54, height: 2 } },
-    { view: nameLabel, rect: { x: 1, y: 2, width: 6, height: 1 } },
-    { view: nameInput, rect: { x: 8, y: 2, width: 24, height: 1 } },
-    { view: ageLabel, rect: { x: 34, y: 2, width: 5, height: 1 } },
-    { view: ageInput, rect: { x: 40, y: 2, width: 12, height: 1 } },
-    { view: new Text('Style:'), rect: { x: 1, y: 4, width: 10, height: 1 } },
-    { view: check, rect: { x: 1, y: 5, width: 18, height: 3 } },
-    { view: new Text('Align:'), rect: { x: 24, y: 4, width: 10, height: 1 } },
-    { view: radio, rect: { x: 24, y: 5, width: 18, height: 3 } },
-    { view: paragraph, rect: { x: 1, y: 9, width: 54, height: 3 } },
-    { view: echo, rect: { x: 1, y: 12, width: 54, height: 1 } },
-    { view: ok, rect: { x: 1, y: 14, width: 12, height: 2 } },
-    { view: cancel, rect: { x: 14, y: 14, width: 12, height: 2 } },
-    { view: help, rect: { x: 27, y: 14, width: 10, height: 2 } },
-    { view: save, rect: { x: 38, y: 14, width: 12, height: 2 } },
-  ];
+  // Flex composition: the dialog body is a column of rows, so the form re-solves with the dialog
+  // instead of pinning every child to a hand-computed cell. Each child carries an explicit main-axis
+  // size because none of Label/Input/CheckGroup/RadioGroup/Button measures itself — an `auto` child
+  // would collapse to nothing. Fixed spacers stand in for the blank rows the old rect table left.
+  const body = col(
+    { padding: { left: 1, right: 1, top: 0, bottom: 0 } },
+    fixed(header, 2),
+    fixed(
+      row(
+        fixed(nameLabel, 6),
+        spacer({ fixed: 1 }),
+        fixed(nameInput, 24),
+        spacer({ fixed: 2 }),
+        fixed(ageLabel, 5),
+        spacer({ fixed: 1 }),
+        fixed(ageInput, 12),
+      ),
+      1,
+    ),
+    spacer({ fixed: 1 }),
+    fixed(row(fixed(new Text('Style:'), 10), spacer({ fixed: 13 }), fixed(new Text('Align:'), 10)), 1),
+    fixed(row(fixed(check, 18), spacer({ fixed: 5 }), fixed(radio, 18)), 3),
+    spacer({ fixed: 1 }),
+    fixed(paragraph, 3),
+    fixed(echo, 1),
+    spacer({ fixed: 1 }),
+    fixed(row({ gap: 1 }, fixed(ok, 12), fixed(cancel, 12), fixed(help, 10), fixed(save, 12)), 2),
+  );
 
   const dialog = new Dialog('Set Parameters');
-  for (const { view, rect } of placed) {
-    view.layout = { position: 'absolute', rect };
-    dialog.add(view);
-  }
+  dialog.setLayout({ direction: 'col' });
+  dialog.add(grow(body));
 
   return { dialog, firstInput: nameInput, toggleHelp: () => showHelp.set(!showHelp.peek()) };
 }

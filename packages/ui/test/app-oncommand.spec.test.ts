@@ -13,6 +13,7 @@
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
+import type { DesktopApplication } from '../src/app/index.js';
 import { Dialog } from '../src/dialog/index.js';
 import { Commands } from '../src/status/index.js';
 import { FakeRuntimeAdapter, CaptureStream, FakeInput } from './app-shell.fixtures.js';
@@ -23,8 +24,12 @@ const caps = resolveCapabilities({
   override: { colorDepth: 'truecolor', altScreen: true },
 }).profile;
 
+// `DesktopApplication` (not `ReturnType<typeof createApplication>`) so `app.loop` resolves as a
+// concrete `EventLoop` here: this test never passes `content`, so the app is always desktop-bodied,
+// and a deferred `CreatedApplication<O>` return type otherwise blocks generic calls like
+// `execView<string>` below.
 /** Build an app wired to fresh fake OS doubles. */
-function makeApp(): ReturnType<typeof createApplication> {
+function makeApp(): DesktopApplication {
   const runtime = new FakeRuntimeAdapter();
   const input = new FakeInput();
   const output = new CaptureStream();

@@ -22,12 +22,4 @@ gate, Bun-children e2e, Windows manual verification, and a benchmarked fast-path
 
 | ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
 |----|-------|----|------|-------|--------|--------------|-----------------|
-| RD-01 | Bun runtime support & self-contained executables | [RD-01](requirements/RD-01-bun-runtime-support.md) | — | RD Drafted | ✏️ | 2026-07-02 | Merge-blocking 3-OS Bun CI lane (latest stable, floor ≥ 1.3) · compile smokes + 5-target cross-build verification · PTY-driven compiled-binary e2e + `yarn gate` criterion · Bun-children e2e variants · engines/README/docs/CHANGELOG declarations · Windows manual TTY checklist · benchmarked Bun-native spike (≥ 20% bar, `bun:ffi`/Bun-test excluded). Gate: AR-1…AR-10 all resolved. Next: `make_plan` (or `preflight` the RD first). |
-
-## Notes
-
-- 2026-07-02: **RD-01 drafted** ✏️ via `add_requirement`, grounded in a same-day strict empirical
-  analysis on Bun 1.3.14 (unit suites on Bun runtime, PTY-driven interactive + compiled-binary
-  runs, real SIGWINCH resize, SIGSTOP/SIGCONT suspend/resume, `/dev/tty` stream construction,
-  exit-hook `writeSync`, capability probe, `@xterm/headless` interop, Windows cross-build).
-  Zero-Ambiguity Gate PASSED (AR-1…AR-10). New feature-set created per AR-1.
+| RD-01 | Bun runtime support & self-contained executables | [RD-01](requirements/RD-01-bun-runtime-support.md) | — | RD Drafted | ✏️ | 2026-07-02 | Drafted — Bun CI lane (3-OS, floor ≥1.3) · compile + cross-build smokes · PTY compiled-binary e2e + gate · Bun-children e2e · engines/docs declarations · Windows manual TTY · native-perf spike. |

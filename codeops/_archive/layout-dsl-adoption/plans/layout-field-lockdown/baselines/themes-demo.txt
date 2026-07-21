@@ -1,0 +1,379 @@
+Theme designer walkthrough (demo:themes) — driving the pure DesignerState machine.
+
+Start: dark mode, accent #3b82f6.
+
+Initial theme
++----------------------------------+
+| dark · accent #3b82f6 · depth    |
+|                                  |
+|  editable input                  |
+|                                  |
+|    OK  ▄    Cancel  ▄            |
+|   ▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀            |
+|                                  |
++----------------------------------+
+
+Theme switch: accent cycled → #ef4444.
+
+After accent cycle (theme switch)
++----------------------------------+
+| dark · accent #ef4444 · depth    |
+|                                  |
+|  editable input                  |
+|                                  |
+|    OK  ▄    Cancel  ▄            |
+|   ▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀            |
+|                                  |
++----------------------------------+
+
+Mode switch: → light.
+
+After mode toggle
++----------------------------------+
+| light · accent #ef4444 · depth   |
+|                                  |
+|  editable input                  |
+|                                  |
+|    OK  ▄    Cancel  ▄            |
+|   ▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀            |
+|                                  |
++----------------------------------+
+
+Depth change: preview depth → 256.
+
+After depth cycle (depth change)
++----------------------------------+
+| light · accent #ef4444 · depth   |
+|                                  |
+|  editable input                  |
+|                                  |
+|    OK  ▄    Cancel  ▄            |
+|   ▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀            |
+|                                  |
++----------------------------------+
+
+Contrast warnings (0): none.
+
+Exported theme JSON:
+{
+  "version": 1,
+  "roles": {
+    "desktop": {
+      "fg": "#414141",
+      "bg": "#c2c2c2",
+      "pattern": "░"
+    },
+    "menuBar": {
+      "fg": "#161616",
+      "bg": "#dedede",
+      "hotkey": "#ef4444"
+    },
+    "menuSelected": {
+      "fg": "#000000",
+      "bg": "#ef4444",
+      "hotkey": "#ef4444"
+    },
+    "window": {
+      "fg": "#161616",
+      "bg": "#dedede",
+      "border": "#717171",
+      "title": "#161616",
+      "icon": "#ef4444"
+    },
+    "windowInactive": {
+      "fg": "#414141",
+      "bg": "#dedede",
+      "border": "#8b8b8b",
+      "title": "#414141",
+      "icon": "#414141"
+    },
+    "dialog": {
+      "fg": "#161616",
+      "bg": "#dedede",
+      "border": "#717171",
+      "title": "#161616",
+      "icon": "#ef4444"
+    },
+    "button": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "buttonFocused": {
+      "fg": "#000000",
+      "bg": "#cb1625",
+      "hotkey": "#f59e0b"
+    },
+    "staticText": {
+      "fg": "#161616",
+      "bg": "#dedede"
+    },
+    "label": {
+      "fg": "#161616",
+      "bg": "#dedede"
+    },
+    "labelSelected": {
+      "fg": "#ef4444",
+      "bg": "#dedede"
+    },
+    "labelShortcut": {
+      "fg": "#f59e0b",
+      "bg": "#dedede"
+    },
+    "buttonDefault": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "buttonDisabled": {
+      "fg": "#595959",
+      "bg": "#dedede"
+    },
+    "buttonShortcut": {
+      "fg": "#f59e0b",
+      "bg": "#ef4444"
+    },
+    "buttonShadow": {
+      "fg": "#595959",
+      "bg": "#dedede"
+    },
+    "clusterNormal": {
+      "fg": "#161616",
+      "bg": "#dedede"
+    },
+    "clusterSelected": {
+      "fg": "#ef4444",
+      "bg": "#dedede"
+    },
+    "clusterShortcut": {
+      "fg": "#f59e0b",
+      "bg": "#dedede"
+    },
+    "clusterDisabled": {
+      "fg": "#595959",
+      "bg": "#dedede"
+    },
+    "inputNormal": {
+      "fg": "#161616",
+      "bg": "#a6a6a6"
+    },
+    "inputSelected": {
+      "fg": "#161616",
+      "bg": "#a6a6a6"
+    },
+    "inputSelection": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "inputArrows": {
+      "fg": "#ef4444",
+      "bg": "#a6a6a6"
+    },
+    "inputPlaceholder": {
+      "fg": "#414141",
+      "bg": "#a6a6a6"
+    },
+    "scrollBarPage": {
+      "fg": "#414141",
+      "bg": "#dedede"
+    },
+    "scrollBarControls": {
+      "fg": "#161616",
+      "bg": "#dedede"
+    },
+    "listNormal": {
+      "fg": "#161616",
+      "bg": "#dedede"
+    },
+    "listFocused": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "listSelected": {
+      "fg": "#161616",
+      "bg": "#8b8b8b"
+    },
+    "listDivider": {
+      "fg": "#8b8b8b",
+      "bg": "#dedede"
+    },
+    "tableHeader": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "historyButtonSides": {
+      "fg": "#ef4444",
+      "bg": "#dedede"
+    },
+    "historyButtonArrow": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "historyWindow": {
+      "fg": "#161616",
+      "bg": "#dedede",
+      "border": "#717171",
+      "icon": "#ef4444"
+    },
+    "historyViewer": {
+      "fg": "#161616",
+      "bg": "#dedede"
+    },
+    "historyViewerFocused": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "outlineNormal": {
+      "fg": "#161616",
+      "bg": "#dedede"
+    },
+    "outlineFocused": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "outlineSelected": {
+      "fg": "#161616",
+      "bg": "#8b8b8b"
+    },
+    "outlineNotExpanded": {
+      "fg": "#161616",
+      "bg": "#dedede"
+    },
+    "tabActive": {
+      "fg": "#000000",
+      "bg": "#ef4444",
+      "hotkey": "#f59e0b"
+    },
+    "tabInactive": {
+      "fg": "#000000",
+      "bg": "#cb1625",
+      "hotkey": "#f59e0b"
+    },
+    "tabDisabled": {
+      "fg": "#595959",
+      "bg": "#cb1625"
+    },
+    "progressFill": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "progressTrack": {
+      "fg": "#414141",
+      "bg": "#a6a6a6"
+    },
+    "sliderTrack": {
+      "fg": "#8b8b8b",
+      "bg": "#dedede"
+    },
+    "sliderThumb": {
+      "fg": "#ef4444",
+      "bg": "#dedede"
+    },
+    "calendarNormal": {
+      "fg": "#161616",
+      "bg": "#dedede"
+    },
+    "calendarToday": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "calendarSelected": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "calendarCursor": {
+      "fg": "#000000",
+      "bg": "#cb1625"
+    },
+    "calendarDisabled": {
+      "fg": "#595959",
+      "bg": "#dedede"
+    },
+    "calendarWeekNumber": {
+      "fg": "#414141",
+      "bg": "#dedede"
+    },
+    "colorMarker": {
+      "fg": "#161616",
+      "bg": "#dedede"
+    },
+    "gridCursor": {
+      "fg": "#c2c2c2",
+      "bg": "#161616"
+    },
+    "gridDirty": {
+      "fg": "#ff5555",
+      "bg": "#c2c2c2"
+    },
+    "gridSelectedRow": {
+      "fg": "#161616",
+      "bg": "#8b8b8b"
+    },
+    "gridInvalid": {
+      "fg": "#ffffff",
+      "bg": "#aa0000"
+    },
+    "fileInfo": {
+      "fg": "#414141",
+      "bg": "#dedede"
+    },
+    "editorNormal": {
+      "fg": "#161616",
+      "bg": "#a6a6a6"
+    },
+    "editorSelected": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "memoNormal": {
+      "fg": "#161616",
+      "bg": "#a6a6a6"
+    },
+    "memoSelected": {
+      "fg": "#000000",
+      "bg": "#ef4444"
+    },
+    "indicatorNormal": {
+      "fg": "#414141",
+      "bg": "#dedede"
+    },
+    "indicatorDragging": {
+      "fg": "#22c55e",
+      "bg": "#dedede"
+    },
+    "terminalNormal": {
+      "fg": "#161616",
+      "bg": "#a6a6a6"
+    },
+    "statusBar": {
+      "fg": "#161616",
+      "bg": "#dedede",
+      "hotkey": "#ef4444"
+    },
+    "statusSelected": {
+      "fg": "#000000",
+      "bg": "#ef4444",
+      "hotkey": "#ef4444"
+    },
+    "shadow": {
+      "fg": "#595959",
+      "bg": "#c2c2c2"
+    },
+    "splitter": {
+      "fg": "#414141",
+      "bg": "#dedede"
+    },
+    "splitterDragging": {
+      "fg": "#22c55e",
+      "bg": "#dedede"
+    },
+    "dangerText": {
+      "fg": "#ef4444",
+      "bg": "#dedede"
+    },
+    "warningText": {
+      "fg": "#f59e0b",
+      "bg": "#dedede"
+    }
+  }
+}
+
+Done.

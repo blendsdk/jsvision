@@ -5,17 +5,11 @@
  * picture mask). A live echo shows the bound values; Tab moves between fields and
  * the logical caret stays visible.
  */
-import { Group, Input, Label, Text, signal, filter, range, picture, View } from '@jsvision/ui';
+import { Group, Input, Label, Text, signal, filter, range, picture, at } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 
 const WIDTH = 56;
 const HEIGHT = 8;
-
-/** Absolutely place a view within the example's box. */
-function at<V extends View>(view: V, x: number, y: number, width: number, height: number): V {
-  view.layout = { position: 'absolute', rect: { x, y, width, height } };
-  return view;
-}
 
 export default defineExample({
   title: 'Input',

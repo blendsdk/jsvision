@@ -81,8 +81,8 @@ function fireApp(revealKey?: string | null): {
   const spy = new CommandSpy();
   const keySpy = new KeySpy();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  btn.layout = { size: { kind: 'fixed', cells: 2 } }; // give the button drawable rows (for the reveal check)
+  root.setLayout({ direction: 'col' });
+  btn.setLayout({ size: { kind: 'fixed', cells: 2 } }); // give the button drawable rows (for the reveal check)
   root.add(btn);
   root.add(spy);
   root.add(keySpy);
@@ -122,7 +122,7 @@ test('ST-4: armed fire is clamped to the modal dispatch scope', () => {
   modal.add(modalBtn);
   modal.add(modalSpy);
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.add(bg);
   root.add(modal);
   const loop = createEventLoop({ width: 12, height: 6 }, { caps });
@@ -206,7 +206,7 @@ test('ST-9: a collision resolves in Alt dispatch order (first wins)', () => {
     const b2 = new Button('~O~pen', { command: 'open2' });
     const spy = new CommandSpy();
     const root = new Group();
-    root.layout = { direction: 'col' };
+    root.setLayout({ direction: 'col' });
     root.add(b1);
     root.add(b2);
     root.add(spy);

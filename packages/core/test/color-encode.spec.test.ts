@@ -10,7 +10,7 @@
 import { test, expect } from 'vitest';
 
 import { encode, encodeStyle, styleKey, nearest256, nearest16, InvalidColorError } from '../src/engine/color/index.js';
-import { Attr } from '../src/engine/render/index.js';
+import { Attr, type Color } from '../src/engine/render/index.js';
 import { resolveCapabilities } from '../src/engine/capability/index.js';
 import type { DeepPartial, CapabilityProfile } from '../src/engine/capability/index.js';
 
@@ -80,7 +80,9 @@ test('ST-10: malformed hex throws InvalidColorError', () => {
   expect(() => encode('#zzz', 'fg', 'truecolor')).toThrow(InvalidColorError);
 });
 test('ST-11: a non-hex color string throws InvalidColorError', () => {
-  expect(() => encode('rgb(1,2,3)', 'fg', 'truecolor')).toThrow(InvalidColorError);
+  // Deliberately invalid Color, cast to prove `encode` rejects it at the validation boundary.
+  const notAColor = 'rgb(1,2,3)' as Color;
+  expect(() => encode(notAColor, 'fg', 'truecolor')).toThrow(InvalidColorError);
 });
 
 // ST-12 — the render-path seam degrades on a malformed color (crash-safe) (AC-7).

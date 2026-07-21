@@ -46,9 +46,9 @@ test('ST-1: reveal underlines the hot glyph on Button + Label; off ⇒ none', ()
   const btn = new Button('~O~pen');
   const label = new Label('~N~ame', btn);
   const root = new Group();
-  root.layout = { direction: 'col' };
-  btn.layout = { size: { kind: 'fixed', cells: 2 } };
-  label.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  btn.setLayout({ size: { kind: 'fixed', cells: 2 } });
+  label.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(btn);
   root.add(label);
   const rr = createRenderRoot({ width: 12, height: 3 }, { caps });
@@ -93,9 +93,9 @@ test('ST-4-reveal: only the in-scope subtree underlines; a background view does 
   const fg = new Button('~O~pen'); // in-scope ("modal")
   const bg = new Button('~C~lose'); // background (out of scope)
   const root = new Group();
-  root.layout = { direction: 'col' };
-  bg.layout = { size: { kind: 'fixed', cells: 2 } };
-  fg.layout = { size: { kind: 'fixed', cells: 2 } };
+  root.setLayout({ direction: 'col' });
+  bg.setLayout({ size: { kind: 'fixed', cells: 2 } });
+  fg.setLayout({ size: { kind: 'fixed', cells: 2 } });
   root.add(bg); // painted first (behind)
   root.add(fg); // the scope subtree
   const rr = createRenderRoot({ width: 12, height: 4 }, { caps });

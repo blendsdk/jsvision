@@ -69,7 +69,7 @@ function makeSwatch(
   });
   const { width, rows } = gridDims(colors.length, columns);
   const h = Math.max(1, rows);
-  swatch.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height: h } };
+  swatch.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width, height: h } });
   const root = new Group();
   root.add(swatch);
   const loop = createEventLoop({ width, height: h }, { caps: opts.caps ?? caps });
@@ -245,7 +245,7 @@ test('ST-6: 8 truecolor colors × 8 columns render one row of 8 three-wide cells
 test('ST-6: defaults (no colors/columns) render ANSI16_ORDER as a 4×4 grid', () => {
   const value = signal<Color>('brightWhite');
   const swatch = new ColorSwatch({ value });
-  swatch.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 4 } };
+  swatch.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 4 } });
   const root = new Group();
   root.add(swatch);
   const loop = createEventLoop({ width: 12, height: 4 }, { caps });

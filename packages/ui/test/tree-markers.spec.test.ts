@@ -5,9 +5,10 @@
  *
  * Expectations derive from the requirement + the marker-style glyph table only, never from the
  * implementation:
- *   • `'tv'` (default): collapsed `+`, expanded/leaf `─`; end graphic width 3.
- *   • `'brackets'`: collapsed `[+]`, expanded `[-]`, leaf `   ` (3 spaces); end graphic width 5.
- *   • `'triangle'`: collapsed `▸`, expanded `▾`, leaf ` ` (1 space); end graphic width 3; degrades
+ *   • `'tv'` (default): collapsed `+`, expanded/leaf `─`, flush against the text; end graphic width 3.
+ *   • `'brackets'`: collapsed `[+] `, expanded `[-] ` (one trailing space before the text), leaf a
+ *     single space; a leaf's end graphic is narrower than a marked node's (ragged, not column-aligned).
+ *   • `'triangle'`: collapsed `▸ `, expanded `▾ ` (one trailing space), leaf a single space; degrades
  *     to `'brackets'` when the terminal has no Unicode.
  *
  * The `'tv'` path stays byte-identical to today — `tree-graph.spec.test.ts` and
@@ -48,7 +49,7 @@ function mouse(kind: 'down' | 'up', x: number, y: number): CoreMouseEvent {
 
 /** Mount a Tree filling `w×h` under a root Group, focus its rows renderer; caps selectable. */
 function hosted<T>(tree: Tree<T>, w: number, h: number, caps = noUnicodeCaps) {
-  tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(tree);
   const loop = createEventLoop({ width: w, height: h }, { caps });
@@ -69,36 +70,42 @@ test('ST-1: createGraph with no style arg is byte-identical to the `tv` default 
   expect(createGraph(0, 0, OV_CHILDREN, true, 'tv')).toBe(collapsed);
 });
 
-test('ST-2: brackets — collapsed ends `[+]`, expanded ends `[-]`', () => {
+test('ST-2: brackets — collapsed ends `[+] `, expanded ends `[-] ` (one trailing space before text)', () => {
   const collapsed = createGraph(0, 0, OV_CHILDREN, true, 'brackets');
-  expect(collapsed.endsWith('[+]')).toBe(true);
-  expect(cells(collapsed)).toEqual(['├', '─', '[', '+', ']']);
+  expect(collapsed.endsWith('[+] ')).toBe(true);
+  expect(cells(collapsed)).toEqual(['├', '─', '[', '+', ']', ' ']);
   const expanded = createGraph(0, 0, OV_CHILDREN | OV_EXPANDED, true, 'brackets');
-  expect(expanded.endsWith('[-]')).toBe(true);
+  expect(expanded.endsWith('[-] ')).toBe(true);
 });
 
-test('ST-3: brackets — a leaf marker is 3 blank cells, keeping column alignment', () => {
-  // A leaf carries OV_EXPANDED but not OV_CHILDREN ⇒ blank marker (no `[-]`).
+test('ST-3: brackets — a leaf carries no marker, just one space, so its prefix is narrower (ragged)', () => {
+  // A leaf carries OV_EXPANDED but not OV_CHILDREN ⇒ no `[…]`, just the single separating space.
   const leaf = createGraph(0, 0, OV_EXPANDED, true, 'brackets');
-  expect(cells(leaf)).toEqual(['├', '─', ' ', ' ', ' ']);
+  expect(cells(leaf)).toEqual(['├', '─', ' ']);
   expect(leaf).not.toContain('[');
-  // Same total width as a bracket-marked node ⇒ alignment preserved.
-  expect(cells(leaf)).toHaveLength(cells(createGraph(0, 0, OV_CHILDREN, true, 'brackets')).length);
+  // Narrower than a bracket-marked node ⇒ leaf and folder text are intentionally not aligned.
+  expect(cells(leaf).length).toBeLessThan(cells(createGraph(0, 0, OV_CHILDREN, true, 'brackets')).length);
 });
 
-test('ST-4: triangle — collapsed `▸`, expanded `▾`, leaf single space', () => {
-  expect([...createGraph(0, 0, OV_CHILDREN, true, 'triangle')].at(-1)).toBe('▸');
-  expect([...createGraph(0, 0, OV_CHILDREN | OV_EXPANDED, true, 'triangle')].at(-1)).toBe('▾');
+test('ST-4: triangle — collapsed `▸`, expanded `▾`, each with a trailing space; leaf a lone space', () => {
+  const collapsed = createGraph(0, 0, OV_CHILDREN, true, 'triangle');
+  expect(cells(collapsed)).toEqual(['├', '─', '▸', ' ']); // glyph then the separating space
+  const expanded = createGraph(0, 0, OV_CHILDREN | OV_EXPANDED, true, 'triangle');
+  expect(cells(expanded)).toEqual(['├', '─', '▾', ' ']);
   const leaf = createGraph(0, 0, OV_EXPANDED, true, 'triangle');
-  expect([...leaf].at(-1)).toBe(' ');
-  expect(cells(leaf)).toHaveLength(3); // width 3, same as `tv`
+  expect(cells(leaf)).toEqual(['├', '─', ' ']); // no marker, just the space (width 3)
 });
 
-test('ST-5: graphWidth — brackets is `level*3+5`; tv/triangle are `level*3+3`', () => {
+test('ST-5: graphWidth — flags-aware: a marked node is wider than a leaf in brackets/triangle', () => {
   for (const level of [0, 1, 3]) {
-    expect(graphWidth(level, 'brackets')).toBe(level * 3 + 5);
-    expect(graphWidth(level, 'tv')).toBe(level * 3 + 3);
-    expect(graphWidth(level, 'triangle')).toBe(level * 3 + 3);
+    // A collapsed/expanded node includes the marker + one trailing space; a leaf includes only the space.
+    expect(graphWidth(level, 'brackets', OV_CHILDREN)).toBe(level * 3 + 6); // `[+] `
+    expect(graphWidth(level, 'brackets', OV_EXPANDED)).toBe(level * 3 + 3); // leaf: single space
+    expect(graphWidth(level, 'triangle', OV_CHILDREN)).toBe(level * 3 + 4); // `▸ `
+    expect(graphWidth(level, 'triangle', OV_EXPANDED)).toBe(level * 3 + 3); // leaf: single space
+    // `tv` is one flush cell for every node, so its columns line up regardless of flags.
+    expect(graphWidth(level, 'tv', OV_CHILDREN)).toBe(level * 3 + 3);
+    expect(graphWidth(level, 'tv', OV_EXPANDED)).toBe(level * 3 + 3);
     expect(graphWidth(level)).toBe(level * 3 + 3); // default stays tv
   }
 });
@@ -112,8 +119,8 @@ test('ST-6: a mouse click within the wider bracket graph-zone toggles the collap
   const loop = hosted(tree, 24, 6);
   expect(tree.isExpanded(roots()[0])).toBe(false);
 
-  // Mouse coords are 1-based; (5,1) ⇒ view-local (4,0). graphWidth(0,'brackets') = 5, so local x=4 is
-  // inside the wider bracket zone (past the tv width 3) ⇒ toggles. Under 'tv' x=4 would be text.
+  // Mouse coords are 1-based; (5,1) ⇒ view-local (4,0). graphWidth(0,'brackets',collapsed) = 6, so
+  // local x=4 is inside the wider bracket zone (past the tv width 3) ⇒ toggles; under 'tv' it'd be text.
   loop.dispatch(mouse('down', 5, 1));
   loop.dispatch(mouse('up', 5, 1));
   expect(tree.isExpanded(roots()[0])).toBe(true);
@@ -125,10 +132,10 @@ test('ST-7: markerStyle `triangle` under a no-Unicode terminal renders as bracke
   const tree = new Tree<string>({ roots, getText: (v) => v, markerStyle: 'triangle', expandedByDefault: true });
   const loop = hosted(tree, 24, 6, noUnicodeCaps);
   const buf = loop.renderRoot.buffer();
-  // Root row 0 (expanded-with-children): brackets fallback ⇒ `[-]` ending at graphWidth-1.
-  const w = graphWidth(0, 'brackets');
-  expect(buf.get(w - 3, 0)?.char).toBe('[');
-  expect(buf.get(w - 1, 0)?.char).toBe(']');
+  // Root row 0 (expanded-with-children): brackets fallback ⇒ `[-] ` at the level-0 marker columns 2-4.
+  expect(buf.get(2, 0)?.char).toBe('[');
+  expect(buf.get(3, 0)?.char).toBe('-');
+  expect(buf.get(4, 0)?.char).toBe(']');
   // No triangle glyph anywhere on the row.
   for (let x = 0; x < 24; x += 1) expect(['▸', '▾']).not.toContain(buf.get(x, 0)?.char);
 });
@@ -139,13 +146,12 @@ test('ST-8: triangle under a Unicode terminal draws `▸`/`▾`; brackets compos
   const triRoots = signal<TreeNode<string>[]>([node('root', [child])]);
   const tri = new Tree<string>({ roots: triRoots, getText: (v) => v, markerStyle: 'triangle' });
   const triLoop = hosted(tri, 24, 6, unicodeCaps);
-  expect(triLoop.renderRoot.buffer().get(graphWidth(0, 'triangle') - 1, 0)?.char).toBe('▸'); // collapsed
+  expect(triLoop.renderRoot.buffer().get(2, 0)?.char).toBe('▸'); // collapsed glyph at the marker column
 
   // Brackets composes `[+]` for a collapsed root, `[-]` once expanded.
   const brRoots = signal<TreeNode<string>[]>([node('root', [child])]);
   const br = new Tree<string>({ roots: brRoots, getText: (v) => v, markerStyle: 'brackets' });
   const brLoop = hosted(br, 24, 6, noUnicodeCaps);
-  const w = graphWidth(0, 'brackets');
-  expect(brLoop.renderRoot.buffer().get(w - 3, 0)?.char).toBe('['); // `[+]`
-  expect(brLoop.renderRoot.buffer().get(w - 2, 0)?.char).toBe('+');
+  expect(brLoop.renderRoot.buffer().get(2, 0)?.char).toBe('['); // `[+]` at the level-0 marker columns
+  expect(brLoop.renderRoot.buffer().get(3, 0)?.char).toBe('+');
 });

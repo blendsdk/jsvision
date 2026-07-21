@@ -323,7 +323,10 @@ async function readBothCprs(query: TerminalQuery, timeoutMs: number): Promise<[C
  * @param result A completed {@link WidthProbeResult}.
  * @returns A new profile with the affected glyph flags degraded, or `caps` unchanged.
  * @example
- * import { probeAmbiguousWidth, degradeCapsForWidth, serialize } from '@jsvision/core';
+ * import { createTerminalQuery, probeAmbiguousWidth, degradeCapsForWidth, resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const query = createTerminalQuery();
  *
  * // Adapt your render caps so every subsequent frame emits aligned chrome.
  * const result = await probeAmbiguousWidth(query);
@@ -390,8 +393,9 @@ function defaultWarn(message: string): void {
  *   and the `adapted` flag, which selects the "adapted automatically" wording.
  * @returns The {@link WidthProbeResult}.
  * @example
- * import { createTerminalQuery, warnIfAmbiguousWide, degradeCapsForWidth } from '@jsvision/core';
+ * import { createTerminalQuery, warnIfAmbiguousWide, degradeCapsForWidth, resolveCapabilities } from '@jsvision/core';
  *
+ * const caps = resolveCapabilities().profile;
  * const query = createTerminalQuery();
  * try {
  *   // Warn the user, and adapt render caps in one probe run.

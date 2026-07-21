@@ -24,7 +24,7 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { color
 test('zoom re-pins the gadget rects to the maximized size and back', () => {
   const app = createApplication({ caps, viewport: { width: 70, height: 24 } });
   const win = new EditWindow({});
-  win.layout.rect = { x: 2, y: 1, width: 40, height: 10 };
+  win.setLayout({ rect: { x: 2, y: 1, width: 40, height: 10 } });
   app.desktop.addWindow(win);
   app.loop.renderRoot.flush();
 
@@ -44,9 +44,9 @@ test('zoom re-pins the gadget rects to the maximized size and back', () => {
 
 test('an indicator with no Window ancestor renders the resting state and never throws', () => {
   const ind = new Indicator();
-  ind.layout = { size: { kind: 'fr', weight: 1 } };
+  ind.setLayout({ size: { kind: 'fr', weight: 1 } });
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.add(ind);
   const loop = createEventLoop({ width: 14, height: 1 }, { caps });
   loop.mount(root);
@@ -59,8 +59,8 @@ test('memo: rapid alternating external/internal writes never feedback-loop', () 
   const value = signal('a');
   const memo = new Memo({ value });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  memo.layout = { size: { kind: 'fr', weight: 1 } };
+  root.setLayout({ direction: 'col' });
+  memo.setLayout({ size: { kind: 'fr', weight: 1 } });
   root.add(memo);
   const loop = createEventLoop({ width: 10, height: 3 }, { caps });
   loop.mount(root);
@@ -137,7 +137,7 @@ test('the hardware caret stays visible after a drag-resize (re-fit tracks the cu
   expect(caret).not.toBeNull(); // visible before the resize
 
   // Shrink the window so the caret would fall below the new (smaller) interior.
-  win.layout.rect = { x: 2, y: 1, width: 40, height: 8 };
+  win.setLayout({ rect: { x: 2, y: 1, width: 40, height: 8 } });
   win.onResized();
   app.loop.renderRoot.flush();
   app.loop.refreshCaret();

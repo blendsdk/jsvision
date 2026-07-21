@@ -15,8 +15,13 @@ import { MIN_WIDTH, MIN_HEIGHT } from './gestures.js';
 /** Un-maximize a window, set its rect, re-pin its children, and schedule a repaint. */
 function place(w: Window, x: number, y: number, width: number, height: number): void {
   w.resetZoom();
-  w.layout.rect = { x, y, width, height };
+  w.setLayout({ rect: { x, y, width, height } });
   w.onResized(); // re-pin children to the new size before the repaint reads them
+  // Kept rather than folded into the `setLayout` above, and not a no-op in every host: a reflow
+  // request is a coalesced flag, so under the default deferred scheduler the pass runs after this
+  // whole function and already sees the re-pinned children. Under a synchronous scheduler it does
+  // not -- `setLayout`'s request flushes inline, before the re-pin -- and this is what schedules the
+  // pass that sees it.
   w.invalidateLayout();
 }
 

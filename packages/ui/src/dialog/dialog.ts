@@ -13,6 +13,7 @@
  */
 import { Group, View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
+import { center, at } from '../view/dsl/index.js';
 import { Window, drawFrame, frameZoneAt } from '../window/index.js';
 import type { Rect } from '../layout/index.js';
 import type { ModalHost, ModalHostAware } from '../event/index.js';
@@ -50,7 +51,7 @@ export interface DialogOptions {
  * A modal/modeless gray dialog: a `Window` in the `dialog` role with a `valid()` close-gate.
  *
  * @example
- * import { Dialog, Input, Label, okButton, cancelButton, createEventLoop, signal, range } from '@jsvision/ui';
+ * import { Dialog, Input, Label, okButton, cancelButton, createEventLoop, signal, range, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
@@ -59,10 +60,9 @@ export interface DialogOptions {
  * const dialog = new Dialog({ title: ' Person ', width: 34, height: 9 });
  * const input = new Input({ value: age, validator: range(0, 120) });
  * const label = new Label('~A~ge (0–120)', input);
- * label.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 14, height: 1 } };
- * input.layout = { position: 'absolute', rect: { x: 16, y: 1, width: 14, height: 1 } };
- * const ok = okButton();
- * ok.layout = { position: 'absolute', rect: { x: 6, y: 4, width: 10, height: 2 } };
+ * at(label, 1, 1, 14, 1);
+ * at(input, 16, 1, 14, 1);
+ * const ok = at(okButton(), 6, 4, 10, 2);
  * dialog.add(label);
  * dialog.add(input);
  * dialog.add(ok);
@@ -101,12 +101,22 @@ export class Dialog extends Window implements ModalHostAware {
     // centered); an explicit `centered` overrides either default.
     const width = opts.width ?? opts.rect?.width;
     const height = opts.height ?? opts.rect?.height;
-    this.centered = opts.centered ?? (width !== undefined && height !== undefined && opts.rect === undefined);
+    const centered = opts.centered ?? (width !== undefined && height !== undefined && opts.rect === undefined);
     if (width !== undefined && height !== undefined) {
-      const x = opts.rect?.x ?? 0;
-      const y = opts.rect?.y ?? 0;
-      this.layout = { position: 'absolute', padding: 1, rect: { x, y, width, height } };
+      // Pin the dialog's own 1-cell padding. It is already inherited from `Window`; restating it
+      // here keeps the dialog correct if that ever changes. The placement builders below merge over
+      // it and set `position` themselves: `center()` for a sized-but-unplaced dialog, `at()` for an
+      // explicit rect.
+      this.setLayout({ padding: 1 });
+      if (opts.rect === undefined) {
+        center(this, width, height);
+      } else {
+        at(this, { x: opts.rect.x, y: opts.rect.y, width, height });
+      }
     }
+    // `center()` force-sets `centered = true` as a side effect; the opt-out (`centered:false`) and
+    // explicit-rect cases need our computed flag to win, so assign it after the builders run.
+    this.centered = centered;
     // Dev-only: on mount, flag two controls in this dialog's focus scope that claim the same
     // `Alt`+hotkey. The walk sees statically-added children present at mount; a reactively-inserted
     // (addDynamic/Show/For) control is not re-checked — acceptable, dialog chrome is composed statically.

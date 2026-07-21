@@ -27,7 +27,7 @@ class Marker extends View {
 }
 function content(): Marker {
   const m = new Marker();
-  m.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 4 } };
+  m.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 4 } });
   return m;
 }
 function frameText(app: { loop: { renderRoot: { buffer(): { rows(): readonly { char: string }[][] } } } }): string {
