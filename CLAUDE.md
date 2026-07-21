@@ -61,7 +61,6 @@ packages/forms/    @jsvision/forms — headless forms engine on ui: createForm s
 packages/theme-designer/  @jsvision/theme-designer — standalone TUI app to author @jsvision/core themes (pure headless model + panels; tsx start, no build).
 packages/examples/ @jsvision/examples — capability-probe harness + resize/playground + per-subsystem walkthroughs + the kitchen-sink showcase (demo:kitchen, Storybook-for-TUI) + the web-xterm browser dogfood; imports the packages by name.
 packages/docs-site/  @jsvision/docs-site — VitePress docs + showcase site (dev-only, never shipped): the live-example system (Play → xterm via mountApp), a strict per-build meta-CSP, and the generated TypeDoc API reference (yarn docs:api). In verify's test+typecheck; build isolated via vp:build.
-packages/spike-data-studio/  Throwaway feasibility spike (inert — no build/test/typecheck; delete after the Data Studio decision).
 codeops/           CodeOps nested layout (marker .codeops.yml) — portfolio 00-roadmap.md + features/<slug>/ (00-roadmap + requirements/ + plans/<plan>/); _archive/ holds completed feature-sets.
 docs/              Monorepo docs (root) — now only acceptance-gate.md, the load-bearing gate oracle for gate.spec + gate.mjs (do not move it).
 scripts/           Root scripts — check-no-native-deps.mjs (dep-policy guard), gate.mjs (go/no-go aggregator), sync-package-versions.mjs (lockstep version sync).
