@@ -55,9 +55,9 @@ export function stringWidth(s: string): number {
  * actually render instead of where `String.length` would guess. A glyph too wide to ever fit — a
  * 2-column character at width 1 — is still emitted on its own line, so wrapping always terminates.
  *
- * **Astral characters (most emoji) are not handled.** The scan walks UTF-16 code units, so a
- * surrogate pair is measured as two separate 1-column halves and can be split across a line break,
- * leaving lone surrogates that draw as garbage. Do not rely on this for emoji-safe wrapping.
+ * The scan walks whole code points, so an astral character (most emoji) is one glyph and a break
+ * never falls between the halves of a surrogate pair. **Grapheme clusters are still not handled**: a
+ * ZWJ sequence, a skin-tone modifier, or a flag is several code points and may wrap between them.
  *
  * @param content The text to wrap.
  * @param width   The available width in display columns.
@@ -89,15 +89,21 @@ export function wrapText(content: string, width: number): string[] {
       let w = 0;
       let lastWordEnd = -1; // index just past the last whole word that fits within `width`
       let fitsAll = true;
+      let stopWidth = 1; // UTF-16 length of the glyph that did not fit (2 for a surrogate pair)
       while (p < n) {
-        const ch = paragraph[p] ?? ' ';
+        // Read a whole code point, not a code unit: an astral character occupies two UTF-16 slots,
+        // and treating those as separate glyphs would let a break land between them — emitting lone
+        // surrogates, which no terminal can draw. A malformed lone surrogate in the input reads back
+        // as itself with length 1, so the scan still advances and the wrap terminates.
+        const ch = String.fromCodePoint(paragraph.codePointAt(p) ?? 32);
         const cw = glyphWidth(ch);
         if (w + cw > width) {
           fitsAll = false;
+          stopWidth = ch.length;
           break;
         }
         w += cw;
-        p += 1;
+        p += ch.length;
         if (ch !== ' ' && (p >= n || paragraph[p] === ' ')) lastWordEnd = p; // just passed a word-end
       }
       let end: number; // exclusive end of this line's verbatim source
@@ -106,7 +112,9 @@ export function wrapText(content: string, width: number): string[] {
       } else if (lastWordEnd > i) {
         end = lastWordEnd; // back up to break after the last whole word that fit
       } else {
-        end = p > i ? p : i + 1; // one word wider than the view: hard-break at the width edge
+        // One glyph wider than the whole view: emit it alone so the wrap makes progress. It must be
+        // the WHOLE glyph — advancing a single code unit here would slice a surrogate pair in half.
+        end = p > i ? p : i + stopWidth;
       }
       lines.push(paragraph.slice(i, end)); // verbatim — whitespace between words is kept
       let next = end;
