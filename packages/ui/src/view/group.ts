@@ -121,7 +121,13 @@ export class Group extends View {
    * @param build A factory that constructs the combinator, e.g. `() => Show(cond, then)` or
    *   `() => For(each, key, render)`.
    * @example
-   * import { Group, signal, Show } from '@jsvision/ui';
+   * import { Group, View, signal, Show, type DrawContext } from '@jsvision/ui';
+   *
+   * class Panel extends View {
+   *   draw(ctx: DrawContext) {
+   *     ctx.fill(' ', ctx.color('window'));
+   *   }
+   * }
    *
    * const open = signal(false);
    * const group = new Group();

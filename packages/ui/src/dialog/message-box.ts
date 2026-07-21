@@ -110,6 +110,16 @@ export async function runDialog(host: ModalDialogHost, dlg: Dialog): Promise<str
  * @param o    Title, message text, and the button set.
  * @returns `'ok'` when OK is chosen, `'cancel'` on Cancel, Esc, or the frame close-box.
  * @example
+ * import { createApplication, messageBox } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
+ * function remove(): void {
+ *   // Delete the selected item.
+ * }
+ *
  * await messageBox(app, { title: 'About', text: 'jsvision — classic terminal UI, reimagined' });
  * const answer = await messageBox(app, { title: 'Delete?', text: 'This cannot be undone.', buttons: 'okCancel' });
  * if (answer === 'ok') remove();
@@ -143,6 +153,16 @@ export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): P
  * @param text The question; the box sizes itself to fit.
  * @returns `true` on Yes; `false` on No, Esc, or closing the box.
  * @example
+ * import { createApplication, confirm } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
+ * function discard(): void {
+ *   // Drop the unsaved edits.
+ * }
+ *
  * if (await confirm(app, 'Discard unsaved changes?')) discard();
  */
 export async function confirm(host: ModalDialogHost, text: string): Promise<boolean> {
@@ -162,7 +182,16 @@ export async function confirm(host: ModalDialogHost, text: string): Promise<bool
  * @param o    Title, field label (with optional `~X~` hotkey), the two-way value signal, and validator.
  * @returns The entered string on OK, or `null` if the user cancels.
  * @example
- * import { signal } from '@jsvision/ui';
+ * import { createApplication, inputBox, signal } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
+ * function rename(newName: string): void {
+ *   // Apply the new name to the selected item.
+ * }
+ *
  * const name = signal('');
  * const entered = await inputBox(app, { title: 'Rename', label: '~N~ew name', value: name });
  * if (entered !== null) rename(entered);

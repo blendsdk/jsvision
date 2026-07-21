@@ -46,7 +46,9 @@ const MIN_H = 6;
  *
  * @example
  * import { createApplication, EditWindow, Editor } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
  *
+ * const caps = resolveCapabilities().profile;
  * const app = createApplication({ caps });
  *
  * // A shared clipboard editor, hosted in its own window.

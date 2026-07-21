@@ -30,12 +30,21 @@ import type { Rect } from '../../layout/index.js';
  * @param spec Either `x, y, width, height` (four numbers) or a single `{ x, y, width, height }` rect.
  * @returns The same `view`, for inline chaining.
  * @example
- * import { col, grow, at } from '@jsvision/ui';
+ * import { View, col, grow, at, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
  *
  * // An absolute toast overlay as an out-of-flow child of a column — it reserves no flow space.
+ * const header = new Panel('header');
+ * const body = new Panel('body');
+ * const toast = new Panel('Saved!');
  * const screen = col(header, grow(body), at(toast, 2, 1, 30, 3));
  *
  * // The rect form, for a site that already has a { x, y, width, height }.
+ * const panel = new Panel('panel');
  * at(panel, { x: 0, y: 0, width: 80, height: 24 });
  */
 export function at<V extends View>(
@@ -59,13 +68,22 @@ export function at<V extends View>(
  * @param view The view to make an overlay.
  * @returns The same `view`, for inline chaining.
  * @example
- * import { col, grow, cover } from '@jsvision/ui';
+ * import { View, col, cover, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
  *
  * // A canvas that fills its parent and overlaps whatever is behind it.
+ * const canvasView = new Panel('canvas');
  * cover(canvasView);
  *
  * // Contrast with the Flex.fill shorthand, which is grow:1 (a flow child), NOT an overlay:
+ * const header = new Panel('header');
+ * const body = new Panel('body');
  * col({ fill: true }, header, body); // fill → the column takes a flex share of its parent's flow
+ * const overlayView = new Panel('overlay');
  * cover(overlayView); // cover → the view leaves the flow and covers the whole content box
  */
 export function cover<V extends View>(view: V): V {
@@ -87,9 +105,15 @@ export function cover<V extends View>(view: V): V {
  * @param height Fixed height in cells.
  * @returns The same `view`, for inline chaining.
  * @example
- * import { center } from '@jsvision/ui';
+ * import { View, center, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
  *
  * // A 40×12 dialog centered in its parent, staying centered as the parent resizes.
+ * const confirmDialog = new Panel('Confirm');
  * center(confirmDialog, 40, 12);
  */
 export function center<V extends View>(view: V, width: number, height: number): V {

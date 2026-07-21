@@ -30,6 +30,8 @@ export function glyphWidth(ch: string): number {
  * @returns The total display width in columns.
  * @example
  * ```ts
+ * import { stringWidth } from '@jsvision/ui';
+ *
  * stringWidth('ab');   // 2 — two narrow glyphs
  * stringWidth('日本'); // 4 — each wide CJK glyph is 2 columns
  * ```
@@ -65,6 +67,8 @@ export function stringWidth(s: string): number {
  *          zero or less.
  * @example
  * ```ts
+ * import { wrapText } from '@jsvision/ui';
+ *
  * wrapText('the quick brown fox', 10); // ['the quick', 'brown fox']
  * wrapText('one\n\ntwo', 10);          // ['one', '', 'two'] — the blank line survives
  *

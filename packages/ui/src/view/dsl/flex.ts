@@ -32,10 +32,17 @@ type Child = View | null | undefined | false;
  * prop). All fields are optional.
  *
  * @example
- * import { col, row } from '@jsvision/ui';
+ * import { View, col, row, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
  *
  * // A fixed-width sidebar next to a growing main area, with 1 cell of gap and a filled background.
  * const layout: import('@jsvision/ui').Flex = { gap: 1, background: 'desktop' };
+ * const sidebar = new Panel('sidebar');
+ * const main = new Panel('main');
  * const screen = row(layout, col({ fixed: 20 }, sidebar), col({ grow: 1 }, main));
  */
 export type Flex = Omit<LayoutProps, 'direction'> & {
@@ -117,9 +124,18 @@ function container(direction: Direction, args: Array<Flex | Child>): Group {
  *   falsy child is skipped.
  * @returns A `Group` with `layout.direction = 'col'` and the (truthy) children added in order.
  * @example
- * import { col, fixed, grow } from '@jsvision/ui';
+ * import { View, col, fixed, grow, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
  *
  * // A header of fixed height above a growing body; the status bar only when there is a message.
+ * const header = new Panel('header');
+ * const body = new Panel('body');
+ * const status = new Panel('status');
+ * const message: boolean = true; // e.g. driven by a signal in a real app
  * const page = col({ gap: 1 }, fixed(header, 3), grow(body), message && fixed(status, 1));
  */
 export function col(...args: [Flex, ...Child[]] | Child[]): Group {
@@ -137,9 +153,16 @@ export function col(...args: [Flex, ...Child[]] | Child[]): Group {
  *   falsy child is skipped.
  * @returns A `Group` with `layout.direction = 'row'` and the (truthy) children added in order.
  * @example
- * import { row, fixed, grow } from '@jsvision/ui';
+ * import { View, row, fixed, grow, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
  *
  * // A fixed-width sidebar beside a growing main pane.
+ * const sidebar = new Panel('sidebar');
+ * const main = new Panel('main');
  * const body = row(fixed(sidebar, 20), grow(main));
  */
 export function row(...args: [Flex, ...Child[]] | Child[]): Group {
@@ -164,9 +187,16 @@ export function row(...args: [Flex, ...Child[]] | Child[]): Group {
  *   to `0` at solve time (no double-clamp here). There is no `max` — the engine has no ceiling.
  * @returns The same `view`, for inline chaining.
  * @example
- * import { row, grow } from '@jsvision/ui';
+ * import { View, row, grow, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
  *
  * // `main` takes twice the width of `aside`; `aside` never shrinks below 12 cells.
+ * const aside = new Panel('aside');
+ * const main = new Panel('main');
  * const body = row(grow(aside, 1, { min: 12 }), grow(main, 2));
  */
 export function grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V {
@@ -186,9 +216,16 @@ export function grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V
  * @param n The fixed extent in whole cells.
  * @returns The same `view`, for inline chaining.
  * @example
- * import { col, fixed, grow } from '@jsvision/ui';
+ * import { View, col, fixed, grow, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
  *
  * // A 3-row status bar pinned below a growing body.
+ * const body = new Panel('body');
+ * const statusBar = new Panel('status');
  * const app = col(grow(body), fixed(statusBar, 3));
  */
 export function fixed<V extends View>(view: V, n: number): V {
@@ -211,9 +248,17 @@ class Empty extends View {
  * @param arg A flex weight (default `1`), or `{ fixed: n }` for an exact `n`-cell gap.
  * @returns A fresh invisible view with the requested size, ready to drop into a `col`/`row`.
  * @example
- * import { row, spacer } from '@jsvision/ui';
+ * import { View, row, spacer, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
  *
  * // Push `help` to the right edge; keep a hard 2-cell gap before `cancel`.
+ * const ok = new Panel('OK');
+ * const cancel = new Panel('Cancel');
+ * const help = new Panel('Help');
  * const bar = row(ok, spacer({ fixed: 2 }), cancel, spacer(), help);
  */
 export function spacer(arg: number | { fixed: number } = 1): View {
