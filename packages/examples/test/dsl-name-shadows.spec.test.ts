@@ -84,10 +84,10 @@ const DSL_BUILDERS = [
 const IMPORT_BLOCK =
   /import\s+(type\s+)?\{([^}]*)\}\s*from\s*['"](?:@jsvision\/ui|\.[^'"]*(?:view\/dsl|view\/index)[^'"]*)['"]/g;
 
-/** Directories that hold no reviewable source: build output, vendored deps, and the inert spike. */
-const SKIP_DIRS = new Set(['node_modules', 'dist', '.turbo', 'coverage', 'api', '_archive', 'spike-data-studio']);
+/** Directories that hold no reviewable source: build output and vendored deps. */
+const SKIP_DIRS = new Set(['node_modules', 'dist', '.turbo', 'coverage', 'api', '_archive']);
 
-/** Every `.ts`/`.mts` file under `packages/`, minus build output and the inert spike. */
+/** Every `.ts`/`.mts` file under `packages/`, minus build output and vendored deps. */
 function sourceFiles(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
     if (SKIP_DIRS.has(entry)) continue;

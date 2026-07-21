@@ -35,11 +35,14 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..', '..');
 const PACKAGES = join(REPO_ROOT, 'packages');
 
-/** Packages exempt from the coverage rule, with the reason they are exempt. */
-const EXEMPT: Record<string, string> = {
-  // A throwaway feasibility spike: no build, no test, no typecheck script by design.
-  'spike-data-studio': 'inert spike — carries no typecheck script',
-};
+/**
+ * Packages exempt from the coverage rule, with the reason they are exempt.
+ *
+ * Empty on purpose: every package now carries a typecheck script. An entry here is only ever
+ * consulted for a package that exists, so a stale one would sit unnoticed and silently excuse a
+ * future package that happened to share its name.
+ */
+const EXEMPT: Record<string, string> = {};
 
 /**
  * Individual test files a package's typecheck config may leave out, and why.
