@@ -126,7 +126,10 @@ function reportConfirmedSuspects(): void {
     // Detached or hidden in the meantime: whatever it laid out to stopped mattering. `mounted` is
     // deliberately not the test — `reflow()` is also run directly over an unmounted tree.
     if (view.parent === null || !view.state.visible) continue;
-    if (diagnose(view, view.bounds) === suspicion) devWarn('layout', message(view, suspicion));
+    if (diagnose(view, view.bounds) !== suspicion) continue;
+    // The message quotes the live rect, but the condition is "this class hit this footgun" — keying
+    // on the message would re-warn for every size a still-broken view is resized to.
+    devWarn('layout', message(view, suspicion), `${viewName(view)}:${suspicion}`);
   }
 }
 

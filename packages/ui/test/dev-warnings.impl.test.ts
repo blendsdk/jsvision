@@ -11,6 +11,7 @@ import { devWarn, beginScreenSession, endScreenSession, resetDevWarnings } from 
 import { Group, View, reflow } from '../src/view/index.js';
 import type { DrawContext } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
+import { Window } from '../src/window/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -33,6 +34,52 @@ afterEach(() => {
 });
 
 // --- the sink ------------------------------------------------------------------------------------
+
+test('an explicit key decides what counts as the same warning, so a varying message still warns once', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+  // The shape a resizing app produces: one condition, a message quoting a size that keeps changing.
+  devWarn('layout', 'Sidebar laid out to 0×24', 'Sidebar:auto-without-measure');
+  devWarn('layout', 'Sidebar laid out to 0×30', 'Sidebar:auto-without-measure');
+  devWarn('layout', 'Sidebar laid out to 0×12', 'Sidebar:auto-without-measure');
+
+  expect(warn).toHaveBeenCalledTimes(1);
+});
+
+test('the same key under a different scope is a different warning', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+  devWarn('layout', 'first', 'shared-key');
+  devWarn('focus', 'second', 'shared-key');
+
+  expect(warn).toHaveBeenCalledTimes(2);
+});
+
+test('a session sink sees each warning as it is raised, before any flush', () => {
+  vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+  const mirrored: string[] = [];
+
+  beginScreenSession((line) => mirrored.push(line));
+  devWarn('layout', 'while the app owns the screen');
+
+  // Live, not deferred — that is the point of handing a screen-safe logger to the session.
+  expect(mirrored).toEqual(['[jsvision/ui layout] while the app owns the screen']);
+  endScreenSession();
+});
+
+test('the session sink is dropped when its session ends, so it cannot outlive the app', () => {
+  const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+  const mirrored: string[] = [];
+
+  beginScreenSession((line) => mirrored.push(line));
+  endScreenSession();
+  beginScreenSession(); // a second run, with no logger this time
+  devWarn('layout', 'second run');
+  endScreenSession();
+
+  expect(mirrored).toEqual([]);
+  expect(String(stderr.mock.calls.at(-1)?.[0])).toContain('second run');
+});
 
 test('a nested session does not flush while the outer one still owns the screen', () => {
   const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
@@ -201,4 +248,39 @@ test('a hidden view is left out of layout entirely, so it is never diagnosed', (
   reflow(root, { width: 40, height: 10 });
 
   expect(warn).not.toHaveBeenCalled();
+});
+
+// --- windows: the diagnostic tracks whether the author actually placed one ------------------------
+
+test('a Window given no rect is reported — an absolute view with no rect really is invisible', async () => {
+  const win = new Window('Unplaced');
+  const root = new Group();
+  root.add(win);
+
+  const lines: string[] = [];
+  const warn = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+    lines.push(args.map(String).join(' '));
+  });
+  reflow(root, { width: 40, height: 10 });
+  await Promise.resolve();
+  warn.mockRestore();
+
+  expect(lines.some((line) => line.includes('Window') && line.includes('rect'))).toBe(true);
+});
+
+test('a Window the author placed is not reported', async () => {
+  const win = new Window('Placed');
+  win.setLayout({ rect: { x: 1, y: 1, width: 20, height: 6 } });
+  const root = new Group();
+  root.add(win);
+
+  const lines: string[] = [];
+  const warn = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+    lines.push(args.map(String).join(' '));
+  });
+  reflow(root, { width: 40, height: 10 });
+  await Promise.resolve();
+  warn.mockRestore();
+
+  expect(lines).toEqual([]);
 });
