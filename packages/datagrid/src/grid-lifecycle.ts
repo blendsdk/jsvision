@@ -62,6 +62,7 @@ function safeStatus(status: (() => GridStatus) | undefined): GridStatus {
  * @param totalCount The pre-filter row count.
  * @returns The empty message to draw.
  * @example
+ * import { emptyMessage } from './grid-lifecycle.js';
  * emptyMessage('No lines', 0, 5); // 'No matching rows' — a filter hid all 5
  * emptyMessage('No lines', 0, 0); // 'No lines' — a truly empty source
  */
@@ -119,6 +120,12 @@ export interface LifecycleController {
  * @param placeholder Builds the placeholder view for a non-`ready` state (a fresh view each call).
  * @example
  * ```ts
+ * import { Group } from '@jsvision/ui';
+ * import { applyLifecycleSwap, createLifecycleController } from './grid-lifecycle.js';
+ *
+ * const host = new Group();
+ * const gridRegion = new Group();
+ * const lifecycle = createLifecycleController({ status: () => 'ready' });
  * applyLifecycleSwap({ host, gridRegion }, lifecycle.state(), () => lifecycle.placeholder());
  * ```
  */
@@ -150,6 +157,13 @@ export function applyLifecycleSwap(
  * @returns A {@link LifecycleController}.
  * @example
  * ```ts
+ * import { createLifecycleController } from './grid-lifecycle.js';
+ * import type { GridStatus } from '@jsvision/datagrid';
+ *
+ * function loadState(): GridStatus {
+ *   return 'ready'; // swap in the caller's real async/reactive status
+ * }
+ *
  * const lifecycle = createLifecycleController({ status: () => loadState() });
  * lifecycle.state();       // 'loading' | 'ready' | 'error'
  * lifecycle.placeholder(); // the spinner/error view, or null when ready

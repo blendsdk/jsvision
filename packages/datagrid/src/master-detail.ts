@@ -26,7 +26,11 @@ import type { EditableDataGrid } from './grid.js';
  * import { signal } from '@jsvision/ui';
  * interface Order { id: number }
  * interface Line { id: number; orderId: number }
+ * const orders = signal<Order[]>([{ id: 7 }]);
+ * const columns = [column({ id: 'id', title: 'Order', value: (r: Order) => r.id })];
+ * const source = fromRows(orders, { rowKey: (r) => r.id });
  * const lines = signal<Line[]>([]);
+ * const lineColumns = [column({ id: 'id', title: 'Line', value: (r: Line) => r.id })];
  * const master = new EditableDataGrid<Order>({ columns, source });
  * const { detail, dispose } = masterDetail(master, (focused) =>
  *   new EditableDataGrid<Line>({

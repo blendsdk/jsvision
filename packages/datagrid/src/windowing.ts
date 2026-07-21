@@ -81,6 +81,18 @@ export function validateWindowedConfig<T>(
  * @example
  * ```ts
  * import { windowedView } from '@jsvision/datagrid';
+ * import type { GridDataSource } from '@jsvision/datagrid';
+ * interface Row { id: number; name: string }
+ * const loaded = new Map<number, Row>();
+ * for (let i = 0; i < 50; i++) loaded.set(i, { id: i, name: `Row ${i}` });
+ * const source: GridDataSource<Row> = {
+ *   rowKey: (r) => r.id,
+ *   length: () => 100000,
+ *   rowAt: (i) => loaded.get(i),
+ *   ensureRange: (start, end) => {
+ *     // fetch rows [start, end) from the backing store and populate `loaded`
+ *   },
+ * };
  * const view = windowedView(source);   // source.length() === 100000, only rows [0,50) loaded
  * view.length;                         // 100000 (the source total)
  * view[10];                            // the loaded row

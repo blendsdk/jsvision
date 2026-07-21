@@ -159,6 +159,10 @@ function filterPredicate<T>(filter: ColumnFilter, col: GridColumn<T>): (row: T) 
  * import { column, filterRows } from '@jsvision/datagrid';
  * import type { ColumnFilter } from '@jsvision/datagrid';
  * interface Sale { region: string; qty: number; }
+ * const rows: Sale[] = [
+ *   { region: 'East', qty: 150 },
+ *   { region: 'West', qty: 800 },
+ * ];
  * const columns = [
  *   column({ id: 'region', title: 'Region', value: (r: Sale) => r.region }),
  *   column({ id: 'qty', title: 'Qty', value: (r: Sale) => r.qty }),
@@ -197,6 +201,7 @@ export function filterRows<T>(
  * ```ts
  * import { column, computeDistinct } from '@jsvision/datagrid';
  * interface Sale { region: string; }
+ * const rows: Sale[] = [{ region: 'west' }, { region: 'east' }, { region: 'north' }, { region: 'east' }];
  * const region = column({ id: 'region', title: 'Region', value: (r: Sale) => r.region });
  * const labels = computeDistinct(rows, region); // e.g. ['east', 'north', 'west']
  * ```

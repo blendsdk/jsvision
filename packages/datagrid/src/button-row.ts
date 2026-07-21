@@ -45,6 +45,9 @@ export function buttonRowMinWidth(buttons: readonly Button[]): number {
  * import { Button } from '@jsvision/ui';
  * import { buttonCellWidth, buttonRow } from './button-row.js';
  *
+ * const apply = new Button('Apply');
+ * const clear = new Button('Clear');
+ * const selectAll = new Button('Select All');
  * const width = buttonCellWidth([apply, clear, selectAll]); // one width for every row
  * const bar = buttonRow([apply, clear], width);
  */

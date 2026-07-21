@@ -90,6 +90,10 @@ function compareOneKey<T>(va: unknown, vb: unknown, col: GridColumn<T>, dir: Sor
  * ```ts
  * import { column, sortRowsMulti } from '@jsvision/datagrid';
  * interface Sale { region: string; qty: number; }
+ * const rows: Sale[] = [
+ *   { region: 'East', qty: 150 },
+ *   { region: 'West', qty: 800 },
+ * ];
  * const columns = [
  *   column({ id: 'region', title: 'Region', value: (r: Sale) => r.region }),
  *   column({ id: 'qty', title: 'Qty', value: (r: Sale) => r.qty }),
