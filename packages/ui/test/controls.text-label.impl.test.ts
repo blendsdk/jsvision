@@ -83,3 +83,19 @@ test('focusing a disabled link is inert (click and Alt-hotkey do not move focus)
   loop.dispatch(altKey('n'));
   expect(loop.getFocused()).not.toBe(link);
 });
+
+// The wrap walks whole code points, so an astral glyph reaches the screen as one character rather
+// than as the two lone surrogates a code-unit scan leaves behind. Pinned at the render layer as well
+// as in the wrap helper, because the screen is where the user actually sees the mojibake — and a
+// 2-column glyph occupies its own cell plus an empty continuation cell, which only holds together if
+// the pair was never sliced.
+test('a wrapped Text renders emoji intact rather than as split surrogates', () => {
+  const text = new Text('😀😀😀'); // three 2-column glyphs; width 3 fits exactly one per line
+  const rr = createRenderRoot({ width: 3, height: 4 }, { caps });
+  rr.mount(text);
+  const buf = rr.buffer();
+  for (let y = 0; y < 3; y += 1) {
+    expect(buf.get(0, y)?.char, `row ${y}`).toBe('😀');
+    expect(buf.get(1, y)?.char, `row ${y} second column`).toBe('');
+  }
+});

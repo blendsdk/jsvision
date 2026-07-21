@@ -12,6 +12,11 @@
  * blank, and a non-positive width yields nothing. Widths are display columns, so a wide CJK glyph
  * counts as two.
  *
+ * One term of that contract has since changed on purpose. The scan originally walked UTF-16 code
+ * units, so a surrogate pair measured as two 1-column halves and a break could fall between them,
+ * emitting lone surrogates that draw as garbage. It walks whole code points now, and the cases below
+ * assert the corrected behavior. Grapheme clusters remain out of scope.
+ *
  * Imports go through the package barrel, which is itself part of what this pins. `.js` per NodeNext.
  */
 import { test, expect } from 'vitest';
@@ -71,6 +76,9 @@ test('ST-FE09: no wrapped line is wider than the requested width', () => {
     'short',
     'a  b   c    d     e',
     'mixed 日本語 text with wide glyphs interleaved among narrow ones',
+    // Astral input belongs in this property too: measured per UTF-16 half, an emoji-bearing line
+    // reported the wrong width, so the "never wider than requested" guarantee failed on it as well.
+    'emoji 😀 among 🎉 narrow text',
   ];
   for (const s of samples) {
     for (const width of [2, 5, 12, 40, 58]) {
@@ -89,16 +97,46 @@ test('ST-FE09: a glyph too wide for the width is emitted alone rather than dropp
   expect(wrapText('ab日', 1)).toEqual(['a', 'b', '日']);
 });
 
-// ST-FE09 — astral characters are a documented gap, pinned here so it cannot change unnoticed.
-test('ST-FE09: astral characters are measured per UTF-16 half and may split across lines', () => {
-  // The scan walks code units, so a surrogate pair counts as two 1-column halves and can be broken
-  // apart. This is a known limitation stated in the helper's contract, not an accident — the case is
-  // pinned so that fixing it later is a deliberate, visible change rather than silent drift.
-  expect(wrapText('😀😀😀', 3)).toEqual(['😀\ud83d', '\ude00😀']);
-  // A pair counts as 2 columns, so at width 4 two whole emoji fit and the third moves down.
+// ST-FE09 — an astral character is one glyph, not two halves. This case previously pinned the
+// opposite (the scan walked UTF-16 code units, so a surrogate pair measured as two 1-column halves
+// and a break could fall between them). That was recorded as a known limitation precisely so that
+// fixing it would be a deliberate, visible change rather than silent drift — this is that change.
+test('ST-FE09: a surrogate pair is one 2-column glyph and never splits across lines', () => {
+  // Each emoji is 2 columns, so a 3-column width fits exactly one per line.
+  expect(wrapText('😀😀😀', 3)).toEqual(['😀', '😀', '😀']);
+  // At width 4 two whole emoji fit and the third moves down.
   expect(wrapText('😀😀😀', 4)).toEqual(['😀😀', '😀']);
-  // Non-astral wide glyphs are handled correctly — the gap is specific to surrogate pairs.
+  // The pair survives a hard break in the middle of a run of narrow glyphs.
+  expect(wrapText('ab😀cd', 3)).toEqual(['ab', '😀c', 'd']);
+  // Non-astral wide glyphs keep behaving as they always did.
   expect(wrapText('日本語', 4)).toEqual(['日本', '語']);
+});
+
+// ST-FE09 — the property behind the case above: whatever the width, a wrapped line is never left
+// holding half of a surrogate pair. A lone surrogate is not a character any terminal can draw, so
+// this is the failure the user actually sees (mojibake) rather than an encoding technicality.
+test('ST-FE09: no wrapped line ever contains a lone surrogate', () => {
+  /** True when `s` holds a high or low surrogate that is not part of a well-formed pair. */
+  const hasLoneSurrogate = (s: string): boolean =>
+    /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(s);
+
+  const samples = ['😀😀😀', 'ab😀cd', 'hello 😀 world 🎉 again', '😀日本a', '🎉'];
+  for (const s of samples) {
+    for (const width of [1, 2, 3, 4, 5, 7, 12]) {
+      for (const line of wrapText(s, width)) {
+        expect(hasLoneSurrogate(line), `wrapText(${JSON.stringify(s)}, ${width}) → ${JSON.stringify(line)}`).toBe(
+          false,
+        );
+      }
+    }
+  }
+});
+
+// ST-FE09 — an emoji too wide for the width follows the same rule as a wide CJK glyph: emitted whole
+// on its own line so the wrap terminates, rather than sliced into the half that happens to fit.
+test('ST-FE09: an emoji wider than the width is emitted whole, not halved', () => {
+  expect(wrapText('😀', 1)).toEqual(['😀']);
+  expect(wrapText('a😀b', 1)).toEqual(['a', '😀', 'b']);
 });
 
 // ST-FE09 — wrapping loses no non-whitespace content.
