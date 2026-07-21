@@ -11,6 +11,7 @@ import { createHost, cursor, assertEssentials, detectTty } from '@jsvision/core'
 import type { CapabilityProfile, RuntimeAdapter, ScreenBuffer } from '@jsvision/core';
 import type { Point } from '../view/index.js';
 import type { EventLoop } from '../event/index.js';
+import { beginScreenSession, endScreenSession } from '../shared/warnings.js';
 
 /**
  * Encode a caret cell as a terminal sequence: show and move the cursor to the cell (converting the
@@ -129,6 +130,9 @@ export async function runApplication(ctx: RunContext): Promise<number> {
     assertEssentials(ctx.caps, { isTTY: detectTty({ input: ctx.input, output: ctx.output }) });
   }
 
+  // From here on the renderer owns the terminal, so a development warning raised during layout,
+  // focus, or dispatch must not be written anywhere — it is withheld until the restore below.
+  beginScreenSession();
   try {
     await host.start(); // enter raw mode + the alternate screen
     host.render(ctx.loop.renderRoot.buffer()); // paint the first frame
@@ -136,6 +140,9 @@ export async function runApplication(ctx: RunContext): Promise<number> {
     return await quitPromise;
   } finally {
     await host.stop(); // always restore the terminal — on normal exit, a throw, or a signal
+    // The terminal is restored, so the withheld warnings can now safely reach stderr. Done before
+    // the loop teardown below so a diagnostic survives even if teardown itself throws.
+    endScreenSession();
     // Gate the loop's out-of-tick painter before detaching the sinks, so a deferred paint still in
     // flight during teardown (a timer/promise that fired mid-shutdown) cannot write to the stopped host.
     ctx.loop.stop();

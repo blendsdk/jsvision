@@ -12,6 +12,7 @@
  * {@link EventLoop} focus methods.
  */
 import { View, Group } from '../view/index.js';
+import { devWarn } from '../shared/warnings.js';
 
 /** Tracks and moves focus over the mounted view tree. */
 export interface FocusManager {
@@ -186,8 +187,61 @@ export function createFocusManager(getRoot: () => View | null): FocusManager {
    */
   const focusInto = (view: View): void => descendForward(view, getFocused());
 
+  /** The first focusable view in `view`'s subtree, in tree order, or `null` when there is none. */
+  const firstFocusableIn = (view: View): View | null => {
+    if (isFocusable(view)) return view;
+    if (!(view instanceof Group)) return null;
+    for (const child of view.children) {
+      const found = firstFocusableIn(child);
+      if (found !== null) return found;
+    }
+    return null;
+  };
+
+  /**
+   * Explain, in terms a caller can act on, why focusing `view` did nothing.
+   *
+   * The common case by far is aiming at a composite widget rather than the leaf inside it — a data
+   * grid, list, tree, tab view, combo box and date picker are all containers whose focusable part is
+   * a child — so when the subtree does hold a focusable view, the message names it. The remaining
+   * cases each have exactly one cause, and the order below reports the outermost one first: a view
+   * that is not mounted yet cannot also be judged on its visibility.
+   */
+  const explainUnfocusable = (view: View): string => {
+    const name = view.constructor.name;
+    const target = firstFocusableIn(view);
+    if (target !== null) {
+      return (
+        `focusView(${name}) did nothing: ${name} is not focusable itself, but its ` +
+        `${target.constructor.name} child is. Focus that child directly, or use focusInto(${name}), ` +
+        `which descends to the first focusable view for you.`
+      );
+    }
+    if (!view.mounted) {
+      return `focusView(${name}) did nothing: ${name} is not mounted yet. Focus it after it is added to the tree, e.g. from onMount().`;
+    }
+    if (!view.state.visible) {
+      return `focusView(${name}) did nothing: ${name} is hidden (state.visible is false). A hidden view cannot hold focus.`;
+    }
+    if (view.state.disabled) {
+      return `focusView(${name}) did nothing: ${name} is disabled. A disabled view cannot hold focus.`;
+    }
+    if (!noBlockingAncestor(view)) {
+      return `focusView(${name}) did nothing: an ancestor of ${name} is hidden or disabled, which blocks focus for its whole subtree.`;
+    }
+    return (
+      `focusView(${name}) did nothing: nothing in ${name}'s subtree is focusable. Set focusable = true ` +
+      `on the view that should take keyboard input, or focus a control that is already focusable.`
+    );
+  };
+
   const focusView = (view: View): void => {
-    if (isFocusable(view)) focusLeaf(view); // focusing a non-focusable view is a no-op
+    if (isFocusable(view)) {
+      focusLeaf(view);
+      return;
+    }
+    // Focusing a non-focusable view stays a no-op — the diagnostic only explains the silence.
+    devWarn('focus', explainUnfocusable(view));
   };
 
   /** Whether `view` is `scope` itself or a descendant of it. */
