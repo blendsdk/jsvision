@@ -34,7 +34,7 @@ export interface ExecHost {
  * import { resolveCapabilities } from '@jsvision/core';
  * import { errorBox } from '@jsvision/files';
  *
- * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const caps = resolveCapabilities().profile; // ambient: reads process.env + process.platform
  * const app = createApplication({ caps });
  *
  * await errorBox(app, "Invalid file name: 'a/b'");
