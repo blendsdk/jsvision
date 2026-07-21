@@ -155,8 +155,12 @@ class FormDialog<S extends z.ZodObject<z.ZodRawShape>, I> extends Dialog {
  * @returns The coerced values on OK, or `null` on any other close.
  * @example
  * import { formDialog } from '@jsvision/forms';
- * import { at, Group, Input, Label } from '@jsvision/ui';
+ * import { at, createApplication, Group, Input, Label } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
  * import { z } from 'zod';
+ *
+ * const app = createApplication({ caps: resolveCapabilities().profile });
+ * const api = { save: async (v: { name: string; port: number }): Promise<void> => void v };
  *
  * const schema = z.object({ name: z.string().min(1, 'Required'), port: z.coerce.number().int().min(1) });
  *

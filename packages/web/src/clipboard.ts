@@ -36,6 +36,7 @@ function globalClipboard(): ClipboardBridge | undefined {
  * import { setClipboard, buildBrowserCaps } from '@jsvision/web';
  *
  * // In a copy handler (a user gesture):
+ * const selectedText = 'the text the user highlighted';
  * await setClipboard(selectedText, buildBrowserCaps());
  */
 export function setClipboard(text: string, _caps: CapabilityProfile, clipboard?: ClipboardBridge): Promise<void> {

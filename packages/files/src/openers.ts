@@ -51,7 +51,7 @@ export interface ChangeDirOptions {
  * import { resolveCapabilities } from '@jsvision/core';
  * import { openFile } from '@jsvision/files';
  *
- * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const caps = resolveCapabilities().profile; // ambient: reads process.env + process.platform
  * const app = createApplication({ caps });
  *
  * const path = await openFile(app, { directory: '/home/user', wildcard: '*.ts' });
@@ -90,7 +90,7 @@ export async function openFile(host: ExecHost, opts: OpenFileOptions = {}): Prom
  * import { resolveCapabilities } from '@jsvision/core';
  * import { changeDir } from '@jsvision/files';
  *
- * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const caps = resolveCapabilities().profile; // ambient: reads process.env + process.platform
  * const app = createApplication({ caps });
  *
  * const dir = await changeDir(app, { directory: '/home/user' });

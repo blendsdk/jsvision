@@ -56,7 +56,7 @@ export interface ChDirDialogOptions {
  * import { resolveCapabilities } from '@jsvision/core';
  * import { ChDirDialog, errorBox, nodeFileSystem } from '@jsvision/files';
  *
- * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const caps = resolveCapabilities().profile; // ambient: reads process.env + process.platform
  * const app = createApplication({ caps });
  *
  * const dlg = new ChDirDialog({
