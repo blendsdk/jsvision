@@ -117,3 +117,59 @@ test('security: an out-of-range value is clamped, thumb stays within the track',
   expect(rr.buffer().get(0, 6)?.char).toBe(THUMB);
   expect(rr.buffer().get(0, 7)?.char).toBe('▼'); // end arrow intact
 });
+
+// The repaint on `setRange` is change-gated, and the gate is load-bearing rather than an
+// optimisation: every owning viewer (Scroller, ListRows, GridRows, TreeRows, the editor) re-limits
+// its bar from inside its own draw(), so an unconditional invalidate would mark the bar dirty on
+// every frame and the render root would never go idle. Counted through the host seam, because
+// "scheduled no work" is invisible in the buffer.
+test('setRange only repaints when the range actually changes', () => {
+  const value = signal(0);
+  const bar = new ScrollBar({ value, min: 0, max: 10, arrowStep: 1 });
+  const rr = createRenderRoot({ width: 1, height: 8 }, { caps });
+  rr.mount(bar);
+
+  let repaints = 0;
+  bar.host = {
+    markRepaint: () => {
+      repaints += 1;
+    },
+    markRelayout: () => undefined,
+  };
+
+  bar.setRange(0, 10, undefined, 1); // identical to the constructor's range
+  expect(repaints).toBe(0);
+  bar.setRange(0, 10, undefined, 1); // and a steady-state re-limit stays free however often it runs
+  expect(repaints).toBe(0);
+
+  bar.setRange(0, 20, undefined, 1); // max moved
+  expect(repaints).toBe(1);
+  bar.setRange(1, 20, undefined, 1); // min moved
+  expect(repaints).toBe(2);
+  bar.setRange(1, 20, 4, 1); // pageStep moved (undefined → 4 restores the axis-length default)
+  expect(repaints).toBe(3);
+  bar.setRange(1, 20, 4, 2); // arrowStep moved
+  expect(repaints).toBe(4);
+  bar.setRange(1, 20, 4); // omitted arrowStep keeps the current one — not a change
+  expect(repaints).toBe(4);
+});
+
+// `max` is clamped up to `min` before the comparison, so a call that only lowers `max` below `min`
+// leaves the effective range identical and must not repaint.
+test('setRange compares the clamped max, not the argument', () => {
+  const value = signal(0);
+  const bar = new ScrollBar({ value, min: 5, max: 5 });
+  const rr = createRenderRoot({ width: 1, height: 8 }, { caps });
+  rr.mount(bar);
+
+  let repaints = 0;
+  bar.host = {
+    markRepaint: () => {
+      repaints += 1;
+    },
+    markRelayout: () => undefined,
+  };
+
+  bar.setRange(5, 2); // max clamps back up to 5 ⇒ the drawn range is unchanged
+  expect(repaints).toBe(0);
+});
