@@ -64,7 +64,7 @@ test('mouse toggle-zone tracks the widened bracket graphic across levels', () =>
   const child = node('child', [leaf]);
   const roots = signal<TreeNode<string>[]>([node('root', [child])]);
   const tree = new Tree<string>({ roots, getText: (v) => v, markerStyle: 'brackets', expandedByDefault: false });
-  tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 8 } };
+  tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 8 } });
   const root = new Group();
   root.add(tree);
   const loop = createEventLoop({ width: 30, height: 8 }, { caps });
@@ -85,7 +85,7 @@ test('mouse toggle-zone tracks the widened bracket graphic across levels', () =>
 test('the default (no markerStyle) stays `tv`: a collapsed root composes a bare `+`', () => {
   const roots = signal<TreeNode<string>[]>([node('root', [node('c')])]);
   const tree = new Tree<string>({ roots, getText: (v) => v });
-  tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } };
+  tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } });
   const root = new Group();
   root.add(tree);
   const loop = createEventLoop({ width: 20, height: 6 }, { caps });

@@ -37,7 +37,7 @@ function fsFixture(flavor: 'posix' | 'win32' = 'posix') {
 
 function openFileDialog(dlg: FileDialog) {
   // Preserve the dialog's own layout (esp. `padding`) so bounds reflect production geometry.
-  dlg.layout = { ...dlg.layout, rect: { x: 0, y: 0, width: 49, height: 19 } };
+  dlg.setLayout({ rect: { x: 0, y: 0, width: 49, height: 19 } });
   const root = new Group();
   root.add(dlg);
   const loop = createEventLoop({ width: 49, height: 19 }, { caps });

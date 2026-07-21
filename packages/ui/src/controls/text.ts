@@ -33,25 +33,19 @@ export interface TextOptions {
  * width and height in your container so it has room to draw.
  *
  * @example
- * import { Group, Text, signal } from '@jsvision/ui';
+ * import { Group, Text, signal, at } from '@jsvision/ui';
  *
  * const count = signal(0);
  * const panel = new Group();
  *
  * // A fixed caption.
- * const caption = new Text('Press + to increment.');
- * caption.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 30, height: 1 } };
- * panel.add(caption);
+ * panel.add(at(new Text('Press + to increment.'), 1, 0, 30, 1));
  *
  * // A live read-out that repaints whenever `count` changes.
- * const readout = new Text(() => `Count: ${count()}`);
- * readout.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 30, height: 1 } };
- * panel.add(readout);
+ * panel.add(at(new Text(() => `Count: ${count()}`), 1, 1, 30, 1));
  *
  * // A validation error, painted danger-red via the severity option.
- * const error = new Text('Email is required.', { severity: 'error' });
- * error.layout = { position: 'absolute', rect: { x: 1, y: 2, width: 30, height: 1 } };
- * panel.add(error);
+ * panel.add(at(new Text('Email is required.', { severity: 'error' }), 1, 2, 30, 1));
  */
 export class Text extends View {
   /** The literal text, or a reactive getter that repaints the view when its signals change. */

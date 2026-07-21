@@ -22,7 +22,7 @@ function nestedFs(flavor: 'posix' | 'win32' = 'posix') {
 }
 
 function openChDir(dlg: ChDirDialog) {
-  dlg.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 48, height: 18 } };
+  dlg.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 48, height: 18 } });
   const root = new Group();
   root.add(dlg);
   const loop = createEventLoop({ width: 48, height: 18 }, { caps });

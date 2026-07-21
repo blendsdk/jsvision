@@ -15,7 +15,7 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
 
 /** Mount an editor Input standalone, focus it, and return the loop so a test can dispatch keystrokes. */
 function mountInput(editor: Input) {
-  editor.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 1 } };
+  editor.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 1 } });
   const root = new Group();
   root.add(editor);
   const loop = createEventLoop({ width: 12, height: 1 }, { caps });
@@ -80,7 +80,7 @@ test('the default Input is two-way bound to the field', () => {
   const field = signal('Ada');
   const editor = createCellEditor(name, field, { overlay: new Group() });
   expect(editor).toBeInstanceOf(Input);
-  editor!.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 1 } };
+  editor!.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 1 } });
   const root = new Group();
   root.add(editor!);
   const loop = createEventLoop({ width: 12, height: 1 }, { caps });

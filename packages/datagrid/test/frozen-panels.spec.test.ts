@@ -54,7 +54,7 @@ function buildGrid(extra: Partial<EditableDataGridOptions<Emp>> = {}) {
     source: fromRows(signal(EMPS.slice()), { rowKey: (r) => r.id }),
     ...extra,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -178,9 +178,9 @@ test('ST-18: the global column cursor crosses panel boundaries and Ctrl+Home/End
   root.add(left);
   root.add(center);
   root.add(stub);
-  left.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 14, height: H } };
-  center.layout = { position: 'absolute', rect: { x: 14, y: 0, width: 16, height: H } };
-  stub.layout = { position: 'absolute', rect: { x: 0, y: H - 1, width: 1, height: 1 } };
+  left.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 14, height: H } });
+  center.setLayout({ position: 'absolute', rect: { x: 14, y: 0, width: 16, height: H } });
+  stub.setLayout({ position: 'absolute', rect: { x: 0, y: H - 1, width: 1, height: 1 } });
   const loop = createEventLoop({ width: W, height: H }, { caps });
   loop.mount(root);
   loop.focusView(left); // start in the left (frozen) panel

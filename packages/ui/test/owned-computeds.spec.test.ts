@@ -95,13 +95,13 @@ test('spec: a widget disposes its derived scope on every unmount and stays react
     getText: (s) => s,
     editable: false,
   });
-  combo.layout = { size: { kind: 'fr', weight: 1 } };
+  combo.setLayout({ size: { kind: 'fr', weight: 1 } });
   const placeholder = new Group();
-  placeholder.layout = { size: { kind: 'fr', weight: 1 } };
+  placeholder.setLayout({ size: { kind: 'fr', weight: 1 } });
 
   const cond = signal(true);
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.addDynamic(() =>
     Show(
       () => cond(),

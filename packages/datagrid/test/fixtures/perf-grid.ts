@@ -70,7 +70,7 @@ export function buildPerfGrid(): PerfGrid {
     source: fromRows(rows, { rowKey: (r) => r.id }),
     zebra: true,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
 
   const root = new Group();
   root.add(grid);

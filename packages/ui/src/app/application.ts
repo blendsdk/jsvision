@@ -9,7 +9,9 @@
 import { resolveCapabilities } from '@jsvision/core';
 import type { CapabilityProfile, Theme, Logger, Keymap, RuntimeAdapter } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
+import { CLEARED_LAYOUT } from '../layout/index.js';
 import { Group } from '../view/index.js';
+import { col } from '../view/dsl/index.js';
 import type { View } from '../view/index.js';
 import { createEventLoop } from '../event/index.js';
 import type { EventLoop, ClipboardKeys } from '../event/index.js';
@@ -272,10 +274,11 @@ function streamSize(stream: { columns?: number; rows?: number } | undefined): Si
  *
  * @param overlay The shared popup overlay group.
  * @example
- * import { Group } from '@jsvision/ui';
- * import { syncOverlayVisible } from '@jsvision/ui';
+ * import { Group, syncOverlayVisible } from '@jsvision/ui';
  *
  * const overlay = new Group();
+ * const myPopup = new Group();
+ *
  * overlay.add(myPopup);
  * syncOverlayVisible(overlay); // overlay becomes visible
  *
@@ -311,7 +314,7 @@ export function syncOverlayVisible(overlay: Group): void {
  * const app = createApplication({ menuBar: bar, statusLine: status });
  *
  * const win = new Window('Editor');
- * win.layout.rect = { x: 1, y: 2, width: 30, height: 8 };
+ * win.setLayout({ rect: { x: 1, y: 2, width: 30, height: 8 } });
  * app.desktop.addWindow(win); // `desktop` is a Desktop here — no `content` was passed
  *
  * const code = await app.run(); // runs until the 'quit' command; restores the terminal on exit
@@ -327,33 +330,34 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
   // view, or the default Desktop window manager. Only a Desktop body gets window commands + focus.
   const body: View = opts.content ?? new Desktop();
   const isDesktop = body instanceof Desktop;
-  body.layout = { size: { kind: 'fr', weight: 1 } };
+  // Every other prop is reset explicitly, not merely left unset: a caller's own layout on the content
+  // view is intentionally discarded, so the shell governs the body's sizing no matter what the caller
+  // set. An explicit `undefined` clears a prop back to its layout default.
+  body.setLayout({ ...CLEARED_LAYOUT, size: { kind: 'fr', weight: 1 } });
 
   // The full-screen overlay popups mount into. It sits on top and stays hidden (so it neither paints
   // nor intercepts clicks) until a popup is added.
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } });
   overlay.state.visible = false;
 
-  // The app root is a top-to-bottom column: [menu bar?, body, status line?, overlay].
-  // The overlay is added last so it paints over everything else.
-  const root = new Group();
-  root.layout = { direction: 'col' };
+  if (opts.menuBar !== undefined) {
+    // Only pin the height — the bar keeps whatever internal layout it set itself (e.g. its own `direction`).
+    opts.menuBar.setLayout({ size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } });
+  }
+  if (opts.statusLine !== undefined) {
+    // Height only: the status line keeps its internal `direction: 'row'` — it lays its children out itself.
+    opts.statusLine.setLayout({ size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } });
+  }
 
   // The shared cell the loop's built-in quit registration resolves through; `run()` fills it in.
   const quitState: QuitState = { resolve: null };
-  if (opts.menuBar !== undefined) {
-    // Merge, not replace: keep any internal layout (e.g. a bar's own `direction`) and only pin the height.
-    opts.menuBar.layout = { ...opts.menuBar.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
-    root.add(opts.menuBar);
-  }
-  root.add(body);
-  if (opts.statusLine !== undefined) {
-    // Merge so the status line keeps its internal `direction: 'row'` — it lays its children out itself.
-    opts.statusLine.layout = { ...opts.statusLine.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
-    root.add(opts.statusLine);
-  }
-  root.add(overlay);
+
+  // The app root is a top-to-bottom column: [menu bar?, body, status line?, overlay]. An absent
+  // menu bar or status line is skipped, so the column holds only the rows that exist. The overlay
+  // comes last so it paints over everything else. The leading `{}` is load-bearing: the builder
+  // reads a non-view first argument as its own props, and `menuBar` comes from the caller.
+  const root = col({}, opts.menuBar, body, opts.statusLine, overlay);
 
   // Build the loop and mount the tree, then wire the parts that need the loop to exist first. Window
   // commands are handled by a Desktop, so register them only for a Desktop body — a router app then
@@ -432,8 +436,7 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
   // bounds, then repaints once more, on both real and headless resizes.
   const menu = opts.menuBar;
   loop.onResize = (size) => {
-    overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } };
-    overlay.invalidateLayout();
+    overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } });
     menu?.controller?.resize();
     if (isDesktop) (body as Desktop).handleViewportResize();
   };

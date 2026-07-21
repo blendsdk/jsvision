@@ -122,7 +122,7 @@ class PopupCatcher extends View {
  * hosts the content inside the 1-cell inset. Catches **Esc** in the focus-chain bubble to dismiss.
  */
 class PopupFrame extends Group {
-  override layout: LayoutProps = { position: 'absolute', padding: 1 };
+  override readonly layout: Readonly<LayoutProps> = { position: 'absolute', padding: 1 };
   /** The popup casts a drop shadow, like any window. */
   override castsShadow = true;
 
@@ -237,11 +237,11 @@ export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
     const target = focusTarget(content);
 
     const frame = new PopupFrame(dismiss);
-    frame.layout = { position: 'absolute', padding: 1, rect: placePopup(anchor, contentSize, viewport) };
+    frame.setLayout({ position: 'absolute', padding: 1, rect: placePopup(anchor, contentSize, viewport) });
     // The content must fill the frame's padded interior: `size:fr` fills the main axis (otherwise the
     // frame collapses it to its `auto` height) and the frame's default stretch fills the cross axis.
-    // Merge rather than replace so a list keeps its own row layout ([rows | bar]).
-    content.layout = { ...content.layout, size: { kind: 'fr', weight: 1 } };
+    // Only the size is set, so a list keeps its own row layout ([rows | bar]).
+    content.setLayout({ size: { kind: 'fr', weight: 1 } });
     frame.add(content);
 
     const catcher = new PopupCatcher(dismiss);

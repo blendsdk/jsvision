@@ -52,7 +52,7 @@ function build() {
     columns: [editable('name', 'Name'), editable('city', 'City'), READONLY_ID],
     source: fromRows(rows, { rowKey: (r) => r.id }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const clock = { t: 0 };

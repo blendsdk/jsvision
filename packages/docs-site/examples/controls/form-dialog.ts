@@ -19,16 +19,10 @@ import {
   Window,
   signal,
   range,
-  View,
+  at,
 } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 import { demoApp } from '../../src/demo-shell.js';
-
-/** Absolutely place a view within its parent's interior. */
-function at<V extends View>(view: V, x: number, y: number, width: number, height: number): V {
-  view.layout = { position: 'absolute', rect: { x, y, width, height } };
-  return view;
-}
 
 export default defineExample({
   title: 'Form dialog',
@@ -65,12 +59,14 @@ export default defineExample({
     const sw = 46;
     const sh = 7;
     const { width: dw, height: dh } = app.desktop.bounds;
-    stage.layout.rect = {
-      x: Math.max(0, Math.floor((dw - sw) / 2)),
-      y: Math.max(0, Math.floor((dh - sh) / 2)),
-      width: sw,
-      height: sh,
-    };
+    stage.setLayout({
+      rect: {
+        x: Math.max(0, Math.floor((dw - sw) / 2)),
+        y: Math.max(0, Math.floor((dh - sh) / 2)),
+        width: sw,
+        height: sh,
+      },
+    });
     stage.add(at(new Button('~O~pen the dialog', { command: 'demo.openDialog', default: true }), 12, 0, 20, 2));
     stage.add(at(new Text('Close the dialog (OK / Cancel / Esc), then reopen it here.'), 0, 3, sw - 2, 2));
     app.desktop.addWindow(stage);

@@ -85,7 +85,7 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 
 ## App shell
 
-- **Window** — a titled, movable/resizable/zoomable frame; `win.add(child)`, `win.layout.rect = …`.
+- **Window** — a titled, movable/resizable/zoomable frame; `win.add(child)`, `win.setLayout({ rect })`.
 - **Desktop** — the window manager (`app.desktop`): `addWindow`, `cascade`, `tile`, `raise`, focus.
 - **Router** — a full-screen screen stack (the alternative app body to `Desktop`): `createRouter({ initial, routes })` then `push`/`back`/`replace`/`reset`, reactive `location()`/`canGoBack()`, per-route typed params, opt-in `keepAlive`, and per-screen menu/status via `withBase`. Pass it as `createApplication({ content: router })`.
 - **MenuBar** — the top menu bar with nested pop-up menus (`menuBar([...])` builders).

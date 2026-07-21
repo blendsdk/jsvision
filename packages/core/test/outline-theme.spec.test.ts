@@ -27,6 +27,7 @@ import { test, expect } from 'vitest';
 
 import type { ColorDepth } from '../src/engine/capability/index.js';
 import { defaultTheme, encode } from '../src/engine/color/index.js';
+import type { Color } from '../src/engine/render/index.js';
 
 import { decodeBlueWindowSlot } from './theme-decode.helpers.js';
 
@@ -62,7 +63,7 @@ test('ST-20: Focus is distinct from Normal (the blue-window decode avoids the gr
 });
 
 test('ST-20: encode() of each outline theme role does not throw at any colour depth', () => {
-  const pairs: readonly { fg: string; bg: string }[] = [
+  const pairs: readonly { fg: Color; bg: Color }[] = [
     defaultTheme.outlineNormal,
     defaultTheme.outlineFocused,
     defaultTheme.outlineSelected,

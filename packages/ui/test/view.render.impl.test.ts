@@ -28,9 +28,9 @@ class ThrowView extends View {
 
 test('a Group background shows under cells a child does not cover', () => {
   const child = new PaintView('X');
-  child.layout = { size: { kind: 'fixed', cells: 2 } };
+  child.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.background = 'window';
   root.add(child);
 
@@ -46,14 +46,14 @@ test('a Group background shows under cells a child does not cover', () => {
 
 test('each throwing draw() logs once; siblings still render', () => {
   const bad1 = new ThrowView();
-  bad1.layout = { size: { kind: 'fixed', cells: 2 } };
+  bad1.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const good = new PaintView('G');
-  good.layout = { size: { kind: 'fixed', cells: 2 } };
+  good.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const bad2 = new ThrowView();
-  bad2.layout = { size: { kind: 'fixed', cells: 2 } };
+  bad2.setLayout({ size: { kind: 'fixed', cells: 2 } });
 
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(bad1);
   root.add(good);
   root.add(bad2);
@@ -68,9 +68,9 @@ test('each throwing draw() logs once; siblings still render', () => {
 
 test('resize reflows and recomposes to the new viewport', () => {
   const a = new PaintView('#');
-  a.layout = { size: { kind: 'fr', weight: 1 } };
+  a.setLayout({ size: { kind: 'fr', weight: 1 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.add(a);
 
   const rr = createRenderRoot({ width: 4, height: 1 }, { caps });

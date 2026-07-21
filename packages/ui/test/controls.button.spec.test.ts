@@ -93,9 +93,9 @@ function mountButton(opts: { default?: boolean; disabled?: boolean } = {}): {
   const btn = new Button('~O~K', { command: 'ok', onClick: () => (clicks += 1), ...opts });
   const spy = new CommandSpy();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  btn.layout = { size: { kind: 'fixed', cells: 2 } };
-  spy.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  btn.setLayout({ size: { kind: 'fixed', cells: 2 } });
+  spy.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(btn);
   root.add(spy);
   const loop = createEventLoop({ width: 8, height: 3 }, { caps });

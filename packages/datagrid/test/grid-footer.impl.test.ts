@@ -31,7 +31,7 @@ function buildGrid() {
     columns: [column<Row, number>({ id: 'n', title: 'N', value: (r) => r.n, width: 8 })],
     source: fromRows(rows, { rowKey: (r) => r.id }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 20, height: 6 }, { caps });
@@ -162,7 +162,7 @@ function buildFooterGrid(withFooter: boolean, width = 30, height = 6) {
     source: fromRows(rows, { rowKey: (r) => r.id }),
     ...(withFooter ? { footer: { aggregates: { amount: { fn: 'sum' } } } } : {}),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width, height } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width, height }, { caps });
@@ -222,7 +222,7 @@ function buildWidgetImplGrid(widgets: View[], width = 30, height = 6) {
     source: fromRows(rows, { rowKey: (r) => r.id }),
     footer: { widgets },
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width, height } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width, height }, { caps });

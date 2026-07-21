@@ -79,7 +79,7 @@ class FormDialog<S extends z.ZodObject<z.ZodRawShape>, I> extends Dialog {
     this.form = form;
     this.onSubmit = onSubmit;
     // Place children with explicit frame offsets (as the message-box helpers do), not inside a padded box.
-    this.layout = { ...this.layout, padding: 0 };
+    this.setLayout({ padding: 0 });
   }
 
   /** The values captured on a successful OK, or `null` if the dialog closed any other way. */
@@ -155,7 +155,7 @@ class FormDialog<S extends z.ZodObject<z.ZodRawShape>, I> extends Dialog {
  * @returns The coerced values on OK, or `null` on any other close.
  * @example
  * import { formDialog } from '@jsvision/forms';
- * import { Group, Input, Label } from '@jsvision/ui';
+ * import { at, Group, Input, Label } from '@jsvision/ui';
  * import { z } from 'zod';
  *
  * const schema = z.object({ name: z.string().min(1, 'Required'), port: z.coerce.number().int().min(1) });
@@ -168,10 +168,8 @@ class FormDialog<S extends z.ZodObject<z.ZodRawShape>, I> extends Dialog {
  *   height: 9,
  *   body: (form) => {
  *     const g = new Group();
- *     const input = new Input({ value: form.field('name').value });
- *     const label = new Label('~N~ame', input);
- *     label.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 10, height: 1 } };
- *     input.layout = { position: 'absolute', rect: { x: 13, y: 1, width: 24, height: 1 } };
+ *     const input = at(new Input({ value: form.field('name').value }), 13, 1, 24, 1);
+ *     const label = at(new Label('~N~ame', input), 2, 1, 10, 1);
  *     g.add(label);
  *     g.add(input);
  *     return g;

@@ -2,7 +2,7 @@
  * Flex layout builders — the `col`/`row` containers and the `grow`/`fixed`/`spacer` size
  * shorthands, a thin, expression-oriented sugar over `Group`/`View` and their `layout` props, so a
  * whole screen can be composed in one nested expression instead of a sequence of `new`, `.add()`,
- * and `.layout = …` mutations.
+ * and `setLayout(…)` calls.
  *
  * Because the builders only assemble ordinary views and set ordinary `layout` props, the result
  * reflows and resizes exactly like a hand-built tree — there is no separate runtime.
@@ -93,11 +93,11 @@ function container(direction: Direction, args: Array<Flex | Child>): Group {
   if (first !== null && first !== undefined && first !== false && !(first instanceof View)) {
     const props = first as Flex;
     children = args.slice(1);
-    group.layout = toLayout(props, direction);
+    group.setLayout(toLayout(props, direction));
     if (props.background !== undefined) group.background = props.background;
   } else {
     children = args;
-    group.layout = { direction };
+    group.setLayout({ direction });
   }
   // Skip null/undefined/false so `col(cond && fixed(x, 1), grow(y))` composes; anything else is a View.
   for (const child of children) {
@@ -155,6 +155,8 @@ export function row(...args: [Flex, ...Child[]] | Child[]): Group {
  * container shrinks (forwarding the engine's `Size.fr.min`). The floor binds only when it exceeds the
  * view's fair share; a lone floored view is still capped at its track (the engine never overflows).
  *
+ * Re-tagging an already-mounted view requests a reflow for you — no manual `invalidateLayout()`.
+ *
  * @param view The view to size.
  * @param n The flex weight (default `1`). Two `grow(v, 1)` children split the space evenly; a
  *   `grow(v, 2)` child gets twice the share of a `grow(v, 1)` sibling.
@@ -169,7 +171,7 @@ export function row(...args: [Flex, ...Child[]] | Child[]): Group {
  */
 export function grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V {
   const size: Size = { kind: 'fr', weight: n, ...(opts?.min !== undefined ? { min: opts.min } : {}) };
-  view.layout = { ...view.layout, size };
+  view.setLayout({ size });
   return view;
 }
 
@@ -177,6 +179,8 @@ export function grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V
  * Give a view a fixed size of `n` cells along its container's main axis (columns in a `row`, rows in
  * a `col`). Mutates the view's `layout.size` (preserving its other layout props) and returns the same
  * view, so it composes inline inside a `col`/`row`.
+ *
+ * Re-tagging an already-mounted view requests a reflow for you — no manual `invalidateLayout()`.
  *
  * @param view The view to size.
  * @param n The fixed extent in whole cells.
@@ -188,7 +192,7 @@ export function grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V
  * const app = col(grow(body), fixed(statusBar, 3));
  */
 export function fixed<V extends View>(view: V, n: number): V {
-  view.layout = { ...view.layout, size: { kind: 'fixed', cells: n } };
+  view.setLayout({ size: { kind: 'fixed', cells: n } });
   return view;
 }
 
@@ -214,7 +218,8 @@ class Empty extends View {
  */
 export function spacer(arg: number | { fixed: number } = 1): View {
   const view = new Empty();
-  view.layout =
-    typeof arg === 'number' ? { size: { kind: 'fr', weight: arg } } : { size: { kind: 'fixed', cells: arg.fixed } };
+  view.setLayout(
+    typeof arg === 'number' ? { size: { kind: 'fr', weight: arg } } : { size: { kind: 'fixed', cells: arg.fixed } },
+  );
   return view;
 }

@@ -25,7 +25,7 @@ function mouse(kind: 'down' | 'move' | 'up', x: number, y: number): CoreMouseEve
   return { type: 'mouse', kind, button: 0, x, y };
 }
 function wheel(dir: 'up' | 'down', x: number, y: number): CoreWheelEvent {
-  return { type: 'wheel', dir, x, y };
+  return { type: 'wheel', dir, x, y, shift: false, alt: false, ctrl: false };
 }
 
 /** Content whose row `y` (or column `x` for the wide case) is the letter A+index. */
@@ -48,7 +48,7 @@ class LetterRows extends View {
 
 /** Mount a Scroller filling `w×h` under a root Group and focus it; returns the loop + scroller. */
 function hosted(scroller: Scroller, w: number, h: number): ReturnType<typeof createEventLoop> {
-  scroller.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  scroller.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(scroller);
   const loop = createEventLoop({ width: w, height: h }, { caps });

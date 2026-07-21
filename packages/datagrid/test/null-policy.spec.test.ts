@@ -63,7 +63,7 @@ test('ST-19: a null value renders nullDisplay, distinct from an empty string', (
     ],
     source: fromRows(rows, { rowKey: (r) => r.id }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -96,7 +96,7 @@ test('ST-20: an empty commit stores null on a nullable column and "" on a non-nu
     ],
     source: fromRows(rows, { rowKey: (r) => r.id }),
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -131,7 +131,7 @@ test('ST-20: an empty commit stores null on a nullable column and "" on a non-nu
     ],
     source: fromRows(people, { rowKey: (r) => r.id }),
   });
-  grid2.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid2.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root2 = new Group();
   root2.add(grid2);
   const loop2 = createEventLoop({ width: W, height: H }, { caps });

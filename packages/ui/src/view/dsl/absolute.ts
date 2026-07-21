@@ -6,6 +6,9 @@
  * These are the escape hatch for canvases, dialog frames, and pixel-exact geometry — **prefer
  * `col`/`row`; reach for these only when flex flow can't express the placement.** Because they only
  * set ordinary `layout` props, the result reflows exactly like a hand-built tree.
+ *
+ * Re-tagging a view that is **already mounted** requests a reflow for you, so there is no need to
+ * follow one of these with a manual `invalidateLayout()`.
  */
 import { View } from '../view.js';
 import type { Rect } from '../../layout/index.js';
@@ -15,9 +18,8 @@ import type { Rect } from '../../layout/index.js';
  * composition. Accepts either four numbers (`x, y, width, height`) or a single {@link Rect}.
  *
  * **Merge-preserving:** it sets only `position:'absolute'` and `rect`, keeping every other `layout`
- * prop (e.g. a container's `direction`) — unlike a hand-rolled `view.layout = { … }` that would drop
- * them. **Pure:** it never adds the view to a parent; composition stays the caller's job (`g.add(at(v,
- * …))`, or nest it inside a `col`/`row`/`stack`). An `at()`-placed view used as a `col`/`row` child
+ * prop (e.g. a container's `direction`). **Pure:** it never adds the view to a parent; composition
+ * stays the caller's job (`g.add(at(v, …))`, or nest it inside a `col`/`row`/`stack`). An `at()`-placed view used as a `col`/`row` child
  * is honored as an **out-of-flow** overlay — it paints over the content box and reserves no flow
  * space (the engine already excludes `absolute` children from flex flow).
  *
@@ -41,7 +43,7 @@ export function at<V extends View>(
   ...spec: [x: number, y: number, width: number, height: number] | [rect: Rect]
 ): V {
   const rect: Rect = spec.length === 1 ? spec[0] : { x: spec[0], y: spec[1], width: spec[2], height: spec[3] };
-  view.layout = { ...view.layout, position: 'absolute', rect };
+  view.setLayout({ position: 'absolute', rect });
   return view;
 }
 
@@ -67,7 +69,7 @@ export function at<V extends View>(
  * cover(overlayView); // cover → the view leaves the flow and covers the whole content box
  */
 export function cover<V extends View>(view: V): V {
-  view.layout = { ...view.layout, position: 'fill' };
+  view.setLayout({ position: 'fill' });
   return view;
 }
 
@@ -91,7 +93,7 @@ export function cover<V extends View>(view: V): V {
  * center(confirmDialog, 40, 12);
  */
 export function center<V extends View>(view: V, width: number, height: number): V {
-  view.layout = { ...view.layout, position: 'absolute', rect: { x: 0, y: 0, width, height } };
+  view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width, height } });
   view.centered = true;
   return view;
 }

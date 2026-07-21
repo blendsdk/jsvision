@@ -66,7 +66,7 @@ function buttonsOf(dlg: Group): Button[] {
 function bodyInput(form: Form<typeof Schema, Init>): { view: View; input: Input } {
   const g = new Group();
   const input = new Input({ value: form.field('name').value });
-  input.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 24, height: 1 } };
+  input.setLayout({ position: 'absolute', rect: { x: 2, y: 1, width: 24, height: 1 } });
   g.add(input);
   return { view: g, input };
 }
@@ -138,7 +138,7 @@ test('impl: the caller body fills the dialog interior and renders (regression: n
     body: (f) => {
       const g = new Group();
       const input = new Input({ value: f.field('name').value });
-      input.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 30, height: 1 } };
+      input.setLayout({ position: 'absolute', rect: { x: 2, y: 1, width: 30, height: 1 } });
       g.add(input);
       bodyGroup = g;
       return g;
@@ -172,10 +172,10 @@ test('impl: clicking Cancel discards without touching/validating the body (no er
       const g = new Group();
       const nf = f.field('name');
       nameInput = new Input({ value: nf.value });
-      nameInput.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 30, height: 1 } };
+      nameInput.setLayout({ position: 'absolute', rect: { x: 2, y: 1, width: 30, height: 1 } });
       bindField(nf, nameInput); // touched-on-first-blur reveal
       const err = new Text(() => (nf.touched() && nf.error() ? nf.error()!.message : ''), { severity: 'error' });
-      err.layout = { position: 'absolute', rect: { x: 2, y: 3, width: 38, height: 1 } };
+      err.setLayout({ position: 'absolute', rect: { x: 2, y: 3, width: 38, height: 1 } });
       g.add(nameInput);
       g.add(err);
       return g;

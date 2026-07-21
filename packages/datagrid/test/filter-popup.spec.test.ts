@@ -41,7 +41,7 @@ function buildPopup(opts: {
     onClear: opts.onClear ?? (() => undefined),
     onClose: opts.onClose ?? (() => undefined),
   });
-  popup.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 8 } };
+  popup.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 8 } });
   const root = new Group();
   root.add(popup);
   const render = createRenderRoot({ width: 30, height: 10 }, { caps });

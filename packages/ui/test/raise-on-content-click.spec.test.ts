@@ -57,7 +57,7 @@ function windowWithLeaf(
   rect: { x: number; y: number; width: number; height: number },
 ): { win: Window; leaf: ConsumingLeaf } {
   const win = new Window(title);
-  win.layout.rect = rect;
+  win.setLayout({ rect: rect });
   const leaf = new ConsumingLeaf();
   win.add(leaf);
   app.desktop.addWindow(win);
@@ -91,10 +91,10 @@ test('ST-1: clicking a background window’s consuming content raises it and foc
 test('ST-2: an inactive window’s close box stays inert on the first click, closes on the second', () => {
   const app = shellApp(40, 12);
   const a = new Window('A');
-  a.layout.rect = { x: 0, y: 0, width: 14, height: 6 };
+  a.setLayout({ rect: { x: 0, y: 0, width: 14, height: 6 } });
   app.desktop.addWindow(a);
   const b = new Window('B');
-  b.layout.rect = { x: 16, y: 0, width: 14, height: 6 };
+  b.setLayout({ rect: { x: 16, y: 0, width: 14, height: 6 } });
   app.desktop.addWindow(b);
   app.desktop.raise(a); // A active, B inactive
   app.loop.renderRoot.flush();

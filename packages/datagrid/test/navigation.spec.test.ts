@@ -59,7 +59,7 @@ function buildGrid(opts: { onCommit?: () => boolean } = {}) {
     source: fromRows(rows, { rowKey: (r) => r.id }),
     onCommit: opts.onCommit,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 6 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 6 } });
   return { grid, rows };
 }
 
@@ -143,7 +143,7 @@ test('ST-19: installGridNavigation advances the focused grid, else focuses the n
   const a = buildGrid();
   const b = buildGrid();
   const stub = new FocusStub();
-  stub.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 4, height: 1 } };
+  stub.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 4, height: 1 } });
   const root = new Group();
   root.add(a.grid);
   root.add(b.grid);

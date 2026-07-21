@@ -123,16 +123,16 @@ function render(): void {
 
   // Readout panel.
   buf.box(2, 2, 44, 9, PANEL, 'single', ' events ');
-  const row = (y: number, label: string, value: string): void => {
+  const readoutLine = (y: number, label: string, value: string): void => {
     buf.text(4, y, label.padEnd(8), LABEL);
     buf.text(12, y, value.slice(0, 32), VALUE);
   };
-  row(4, 'key', lastKey);
-  row(5, 'mouse', lastMouse);
-  row(6, 'wheel', lastWheel);
-  row(7, 'paste', lastPaste);
-  row(8, 'focus', focused ? 'focused' : 'blurred');
-  row(9, 'size', `${cols} × ${rows}`);
+  readoutLine(4, 'key', lastKey);
+  readoutLine(5, 'mouse', lastMouse);
+  readoutLine(6, 'wheel', lastWheel);
+  readoutLine(7, 'paste', lastPaste);
+  readoutLine(8, 'focus', focused ? 'focused' : 'blurred');
+  readoutLine(9, 'size', `${cols} × ${rows}`);
 
   // Clickable hit-zone (highlights when the mouse is over it).
   const z = hitZone();

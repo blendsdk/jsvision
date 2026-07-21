@@ -23,8 +23,9 @@ import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
 import {
   View,
-  Group,
   createEventLoop,
+  col,
+  fixed,
   signal,
   Label,
   Input,
@@ -48,7 +49,7 @@ function printFrame(title: string, rows: readonly { char: string }[][]): void {
   const width = rows[0]?.length ?? 0;
   console.log(`\n${title}`);
   console.log(`+${'-'.repeat(width)}+`);
-  for (const row of rows) console.log(`|${row.map((cell) => cell.char).join('')}|`);
+  for (const line of rows) console.log(`|${line.map((cell) => cell.char).join('')}|`);
   console.log(`+${'-'.repeat(width)}+`);
 }
 
@@ -90,9 +91,8 @@ function main(): void {
   const button = new Button('~O~K', { command: 'ok', default: true });
   const spy = new CommandSpy();
 
-  const form = new Group();
+  const form = col({ padding: 1, gap: 0 });
   form.background = 'window';
-  form.layout = { direction: 'col', padding: 1, gap: 0 };
   for (const [view, rows] of [
     [label, 1],
     [input, 1],
@@ -104,8 +104,7 @@ function main(): void {
     [button, 2],
     [spy, 1],
   ] as const) {
-    view.layout = { size: { kind: 'fixed', cells: rows } };
-    form.add(view);
+    form.add(fixed(view, rows));
   }
 
   const loop = createEventLoop({ width: 30, height: 18 }, { caps });

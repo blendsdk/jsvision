@@ -31,10 +31,9 @@ export default defineConfig({
         test: {
           name: 'e2e',
           include: ['test/**/*.e2e.test.ts'],
-          // Vitest 4: pool options are top-level. Single fork, no file
-          // parallelism — the signal/restore e2e must not interleave.
+          // `fileParallelism: false` is what keeps the signal/restore e2e from interleaving — the
+          // old `singleFork` switch no longer exists at this level, and had been silently ignored.
           pool: 'forks',
-          singleFork: true,
           fileParallelism: false,
           testTimeout: 30_000,
         },

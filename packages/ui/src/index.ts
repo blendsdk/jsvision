@@ -49,7 +49,7 @@ export type { Point, ViewState, DrawContext, ThemeRoleName, RenderRoot, RenderRo
 // Declarative layout builders — compose a screen as one nested expression (`col`/`row` containers,
 // `grow`/`fixed` size shorthands, `spacer` gaps, a `stack` z-overlay with `place`/`centered`/corner
 // helpers, and the absolute `at`/`cover`/`center` escape hatch) instead of imperative
-// `new`/`.add()`/`.layout =`.
+// `new`/`.add()`/`setLayout()`.
 export {
   col,
   row,
@@ -85,7 +85,7 @@ export type {
 // The application shell — the top-level pieces of a full-screen app: the
 // `Application` lifecycle, a `Desktop` window manager, `Window` chrome, a
 // `MenuBar`, and a `StatusLine`.
-export { createApplication } from './app/index.js';
+export { createApplication, syncOverlayVisible } from './app/index.js';
 export type {
   Application,
   ApplicationOptions,

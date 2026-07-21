@@ -34,7 +34,7 @@ function underlined(cell: Cell | undefined): boolean {
 /** A trivial tab page. */
 function page(): Group {
   const g = new Group();
-  g.layout = { direction: 'col' };
+  g.setLayout({ direction: 'col' });
   return g;
 }
 
@@ -43,7 +43,7 @@ function page(): Group {
 test('IT-2: one coalesced recompose per flag flip; a redundant flip is a no-op', () => {
   let scheduled = 0;
   const cg = new CheckGroup({ labels: ['~Y~es'], value: signal([false]) });
-  cg.layout = { direction: 'col' };
+  cg.setLayout({ direction: 'col' });
   const rr = createRenderRoot(
     { width: 12, height: 1 },
     {
@@ -76,7 +76,7 @@ test('IT-3: a TabView tab hotkey underlines on reveal', () => {
     { title: '~D~isplay', content: page() },
   ]);
   const view = new TabView({ tabs, active: signal(0) });
-  view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 6 } };
+  view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 6 } });
   const root = new Group();
   root.add(view);
   const rr = createRenderRoot({ width: 40, height: 6 }, { caps });
@@ -93,9 +93,9 @@ test('IT-4: CheckGroup + RadioGroup hot labels underline on reveal', () => {
   const cg = new CheckGroup({ labels: ['~Y~es'], value: signal([false]) });
   const rg = new RadioGroup({ labels: ['~R~ed', '~G~reen'], value: signal(0) });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  cg.layout = { size: { kind: 'fixed', cells: 1 } };
-  rg.layout = { size: { kind: 'fixed', cells: 2 } };
+  root.setLayout({ direction: 'col' });
+  cg.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  rg.setLayout({ size: { kind: 'fixed', cells: 2 } });
   root.add(cg);
   root.add(rg);
   const rr = createRenderRoot({ width: 14, height: 3 }, { caps });

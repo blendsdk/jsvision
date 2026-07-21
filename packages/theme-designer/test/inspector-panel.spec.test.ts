@@ -37,7 +37,7 @@ function mountInspector(color: ReturnType<typeof signal<Color>>): {
       model: createDesignerModel(),
       onSwatchInput: () => {},
     });
-    view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 30 } };
+    view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 30 } });
     const rr = createRenderRoot({ width: 40, height: 30 }, { caps });
     rr.mount(view);
     result = {

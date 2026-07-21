@@ -25,7 +25,7 @@ const H = 5;
 function renderGrid(source: GridDataSource<Row>): { rows: string[]; grid: EditableDataGrid<Row> } {
   const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
   const grid = new EditableDataGrid<Row>({ columns, source });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const render = createRenderRoot({ width: W, height: H }, { caps });
@@ -115,7 +115,7 @@ function buildInteractive(opts: { onCommit?: OnCommit<Emp> } = {}) {
     source: fromRows(rows, { rowKey: (r) => r.id }),
     onCommit: opts.onCommit,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -202,7 +202,7 @@ function countViews(v: View): number {
 
 function mountBig(source: GridDataSource<Big>) {
   const grid = new EditableDataGrid<Big>({ columns: bigCols, source });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 32 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 32 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 20, height: 32 }, { caps });
@@ -255,7 +255,7 @@ test('construction-time freeze still applies after freezeSpec became a signal', 
     freezeLeft: ['a'],
     freezeRight: ['c'],
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 5 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 5 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 40, height: 5 }, { caps });

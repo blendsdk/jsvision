@@ -53,7 +53,7 @@ test('ST-T3: formDialog Tab-traverses [body field, OK, Cancel] and wraps', async
     body: (f: Form<typeof Schema, Init>) => {
       const g = new Group();
       field = new Input({ value: f.field('name').value });
-      field.layout = { position: 'absolute', rect: { x: 2, y: 1, width: 24, height: 1 } };
+      field.setLayout({ position: 'absolute', rect: { x: 2, y: 1, width: 24, height: 1 } });
       g.add(field);
       return g;
     },

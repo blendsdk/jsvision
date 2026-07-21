@@ -80,7 +80,7 @@ export class StatusLine extends Group {
 
   constructor() {
     super();
-    this.layout = { direction: 'row' }; // items laid out left-to-right; `spacer()` absorbs the slack
+    this.setLayout({ direction: 'row' }); // items laid out left-to-right; `spacer()` absorbs the slack
     this.background = 'statusBar'; // fill the whole row, so gap + trailing cells stay status-coloured
     this.postProcess = true; // an accelerator fires only if the focused view didn't consume the key
   }

@@ -25,6 +25,9 @@ import {
   createRoot,
   signal,
   cover,
+  col,
+  row,
+  fixed,
 } from '@jsvision/ui';
 import type { EventLoop, PopupHost } from '@jsvision/ui';
 
@@ -38,7 +41,7 @@ function printFrame(title: string, rows: readonly { char: string }[][]): void {
   const width = rows[0]?.length ?? 0;
   console.log(`\n${title}`);
   console.log(`+${'-'.repeat(width)}+`);
-  for (const row of rows) console.log(`|${row.map((cell) => cell.char).join('')}|`);
+  for (const line of rows) console.log(`|${line.map((cell) => cell.char).join('')}|`);
   console.log(`+${'-'.repeat(width)}+`);
 }
 
@@ -66,13 +69,11 @@ function stepHistory(): void {
   clearHistory();
   const value = signal('/etc/hosts');
   const input = new Input({ value });
-  input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } };
   for (const past of ['/usr/bin', '/etc/hosts', '~/dev']) historyAdd(1, past);
   const hist = new History({ link: input, historyId: 1 });
-  hist.layout = { position: 'absolute', rect: { x: 22, y: 1, width: 3, height: 1 } };
-  const controls = new Group();
-  controls.add(input);
-  controls.add(hist);
+  // The field and its ▐↓▌ button are one row, inset a cell from the frame: an outer col fixes the
+  // row's height (neither Input nor History measures itself, so an auto cross-axis would collapse).
+  const controls = col({ padding: 1 }, fixed(row({ gap: 1 }, fixed(input, 20), fixed(hist, 3)), 1));
   const { loop } = makeApp(controls);
   loop.focusView(input);
   printFrame('Frame 1a — field + ▐↓▌ History button', loop.renderRoot.buffer().rows());
@@ -93,9 +94,8 @@ function stepComboEditable(): void {
   const text = signal('');
   const value = signal<string | null>(null);
   const combo = new ComboBox<string>({ items, getText: (s) => s, value, text, editable: true });
-  combo.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } };
-  const controls = new Group();
-  controls.add(combo);
+  // One 22-cell field on a single row, inset a cell from the frame.
+  const controls = col({ padding: 1 }, fixed(row(fixed(combo, 22)), 1));
   const { loop } = makeApp(controls);
   loop.focusView(combo.input);
   printFrame('Frame 2a — editable ComboBox (empty)', loop.renderRoot.buffer().rows());
@@ -120,9 +120,8 @@ function stepComboSelect(): void {
   const items = signal(['Red', 'Green', 'Blue', 'Cyan', 'Magenta', 'Yellow']);
   const value = signal<string | null>('Blue');
   const combo = new ComboBox<string>({ items, getText: (s) => s, value, editable: false });
-  combo.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } };
-  const controls = new Group();
-  controls.add(combo);
+  // One 22-cell field on a single row, inset a cell from the frame.
+  const controls = col({ padding: 1 }, fixed(row(fixed(combo, 22)), 1));
   const { loop } = makeApp(controls);
   loop.focusView(combo.input);
   printFrame('Frame 3a — select-only ComboBox showing "Blue" (read-only)', loop.renderRoot.buffer().rows());
@@ -145,13 +144,11 @@ function stepCancel(): void {
   clearHistory();
   const value = signal('keep-me');
   const input = new Input({ value });
-  input.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } };
   for (const past of ['alpha', 'beta']) historyAdd(9, past);
   const hist = new History({ link: input, historyId: 9 });
-  hist.layout = { position: 'absolute', rect: { x: 22, y: 1, width: 3, height: 1 } };
-  const controls = new Group();
-  controls.add(input);
-  controls.add(hist);
+  // The field and its ▐↓▌ button are one row, inset a cell from the frame: an outer col fixes the
+  // row's height (neither Input nor History measures itself, so an auto cross-axis would collapse).
+  const controls = col({ padding: 1 }, fixed(row({ gap: 1 }, fixed(input, 20), fixed(hist, 3)), 1));
   const { loop, overlay } = makeApp(controls);
   loop.focusView(input);
 

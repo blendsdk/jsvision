@@ -29,7 +29,7 @@ const tree = new Tree({
   command: 'open',
   markerStyle: 'brackets', // `[+]`/`[-]` markers instead of the default `+`/`─`
 });
-tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 } };
+tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 } });
 // loop.focusView(tree.rows) — focus the rows renderer, not the group. tree.expandAll() to open all.
 ```
 

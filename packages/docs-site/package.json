@@ -20,7 +20,9 @@
   },
   "devDependencies": {
     "@jsvision/core": "0.2.0",
+    "@jsvision/datagrid": "0.2.0",
     "@jsvision/files": "0.2.0",
+    "@jsvision/forms": "0.2.0",
     "@jsvision/ui": "0.2.0",
     "@jsvision/web": "0.2.0",
     "@types/node": "^26.1.1",

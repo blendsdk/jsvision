@@ -44,7 +44,7 @@ function buildGrid(extra: Partial<EditableDataGridOptions<Row>>, rows: Row[], wi
     source: fromRows(signal(rows), { rowKey: (r) => r.id }),
     ...extra,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width, height } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width, height } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width, height }, { caps });

@@ -186,26 +186,31 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
  *
  * @example
  * ```ts
- * import { Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+ * import { at, Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
  * import { EditableGridRows } from '@jsvision/datagrid';
  *
  * interface Row { name: string; city: string; }
  * const rows: Row[] = [{ name: 'Ada', city: 'NYC' }, { name: 'Bo', city: 'LA' }];
  * const focusedCol = signal(0);
- * const body = new EditableGridRows<Row>({
- *   display: () => rows,
- *   columns: [
- *     { title: 'Name', accessor: (r) => r.name, width: 8 },
- *     { title: 'City', accessor: (r) => r.city, width: 8 },
- *   ],
- *   autoWidths: () => [null, null],
- *   indent: signal(0),
- *   focused: signal(0),
- *   selected: signal(-1),
- *   zebra: false,
- *   focusedCol,
- * });
- * body.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 5 } };
+ * const body = at(
+ *   new EditableGridRows<Row>({
+ *     display: () => rows,
+ *     columns: [
+ *       { title: 'Name', accessor: (r) => r.name, width: 8 },
+ *       { title: 'City', accessor: (r) => r.city, width: 8 },
+ *     ],
+ *     autoWidths: () => [null, null],
+ *     indent: signal(0),
+ *     focused: signal(0),
+ *     selected: signal(-1),
+ *     zebra: false,
+ *     focusedCol,
+ *   }),
+ *   0,
+ *   0,
+ *   20,
+ *   5,
+ * );
  * const root = new Group();
  * root.add(body);
  * const caps = resolveCapabilities().profile;

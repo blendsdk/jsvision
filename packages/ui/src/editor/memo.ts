@@ -20,14 +20,13 @@ export interface MemoOptions extends EditorOptions {
  * buffer — so you read and write the memo's text through that signal rather than through the editor.
  *
  * @example
- * import { Dialog, Memo, signal } from '@jsvision/ui';
+ * import { Dialog, Memo, signal, at } from '@jsvision/ui';
  *
  * const notes = signal('initial text');
  * const memo = new Memo({ value: notes });
- * memo.layout = { position: 'absolute', rect: { x: 2, y: 2, width: 40, height: 8 } };
  *
  * const dialog = new Dialog({ title: 'Notes', width: 46, height: 14 });
- * dialog.add(memo);
+ * dialog.add(at(memo, 2, 2, 40, 8));
  *
  * // Read the bound signal (e.g. inside an effect) to observe edits; write it to replace the buffer.
  * notes.set('replaced from outside'); // updates the memo's buffer

@@ -194,7 +194,7 @@ A single-column virtual-scroll list: a rows renderer + an owned vertical scroll 
 ```ts
 new ListView<T>(opts: ListViewOptions<T>)   // extends Group
 // methods & signals:
-layout: LayoutProps
+layout: Readonly<LayoutProps>
 rows: ListRows<T>
 focused: Signal<number>
 selected: Signal<number>

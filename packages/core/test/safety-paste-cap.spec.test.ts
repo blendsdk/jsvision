@@ -20,6 +20,7 @@ test('ST-24: a cap+1 byte paste yields truncated:true clipped to PASTE_CAP_BYTES
   const result = decode(enc.encode(`\x1b[200~${content}\x1b[201~`), createDecoderState());
 
   const paste = result.events.find((e) => e.type === 'paste');
+  if (paste === undefined) throw new Error('expected a paste event');
   expect(paste && paste.type === 'paste').toBeTruthy();
   expect(paste.truncated).toBe(true);
   expect(Buffer.byteLength(paste.text, 'utf8')).toBe(PASTE_CAP_BYTES);

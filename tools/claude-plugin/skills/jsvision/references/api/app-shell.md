@@ -316,7 +316,7 @@ items: readonly MenuItem[]
 highlight
 isEnabled: (command: string) => boolean
 onPick?: (row: number) => void
-layout: LayoutProps
+layout: Readonly<LayoutProps>
 ```
 
 ## menuSpacer
@@ -459,6 +459,14 @@ Build a submenu node — a titled entry that opens a nested list of items (or fu
 subMenu(title: string, items: MenuItem[]): MenuItem
 ```
 
+## syncOverlayVisible
+
+Show the shared popup overlay while it hosts any popup, and hide it once empty.
+
+```ts
+syncOverlayVisible(overlay: Group): void
+```
+
 ## TitleLayout
 
 A top-level title's placement on the menu bar.
@@ -479,7 +487,7 @@ A titled, framed container.
 ```ts
 new Window(title?: string)   // extends Group
 // methods & signals:
-layout: LayoutProps
+layout: Readonly<LayoutProps>
 title: Signal<string>
 dragging: Signal<boolean>
 active: Signal<boolean>

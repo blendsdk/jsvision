@@ -42,7 +42,7 @@ function rowTexts(source: GridDataSource<Row>): string[] {
     }),
   ];
   const grid = new EditableDataGrid<Row>({ columns, source });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const render = createRenderRoot({ width: W, height: H }, { caps });
@@ -83,7 +83,7 @@ test('should sanitize a control-byte cell value (no raw ESC/BEL in the frame)', 
   const rows = signal<Labelled[]>([{ id: 1, label: '\x1b[31mX\x07' }]);
   const columns = [column({ id: 'label', title: 'L', value: (r: Labelled) => r.label })];
   const grid = new EditableDataGrid<Labelled>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const render = createRenderRoot({ width: W, height: H }, { caps });
@@ -145,7 +145,7 @@ function buildEditable(opts: { onCommit?: OnCommit<Person> } = {}) {
     source: fromRows(rows, { rowKey: (r) => r.id }),
     onCommit: opts.onCommit,
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

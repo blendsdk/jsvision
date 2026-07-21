@@ -30,6 +30,7 @@ import {
   type DispatchEvent,
   type DrawContext,
 } from '@jsvision/ui';
+import type { DesktopApplication } from '@jsvision/ui';
 import type { CapabilityProfile } from '@jsvision/core';
 import { EditableDataGrid, gridKeymap, installGridNavigation, type NavGrid } from '@jsvision/datagrid';
 import { StoryWindow, CommandSink } from './window.js';
@@ -186,7 +187,7 @@ function collectGrids(view: View): NavGrid[] {
 /** The composed showcase: the app + a `run()` that drives it to the `quit` command. */
 export interface Showcase {
   /** The composed application (loop + desktop + chrome). */
-  readonly app: ReturnType<typeof createApplication>;
+  readonly app: DesktopApplication;
   /** Run the showcase until `quit`; resolves the exit code. */
   run(): Promise<number>;
   /**
@@ -221,7 +222,7 @@ export function createDatagridShowcase(caps: CapabilityProfile): Showcase {
 
   // The demo canvas — shrunk to the right of the persistent navigator sidebar.
   const canvas = new StoryWindow('');
-  canvas.layout.rect = { x: SIDEBAR_W, y: 0, width: dw - SIDEBAR_W, height: dh };
+  canvas.setLayout({ rect: { x: SIDEBAR_W, y: 0, width: dw - SIDEBAR_W, height: dh } });
   app.desktop.addWindow(canvas);
 
   /**
@@ -259,7 +260,7 @@ export function createDatagridShowcase(caps: CapabilityProfile): Showcase {
     });
   });
   const sidebar = new StoryWindow('Demos');
-  sidebar.layout.rect = { x: 0, y: 0, width: SIDEBAR_W, height: dh };
+  sidebar.setLayout({ rect: { x: 0, y: 0, width: SIDEBAR_W, height: dh } });
   sidebar.add(at(sidebarList, 0, 0, SIDEBAR_W - 2, dh - 2));
   app.desktop.addWindow(sidebar);
 

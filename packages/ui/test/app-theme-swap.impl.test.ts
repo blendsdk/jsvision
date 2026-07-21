@@ -22,9 +22,9 @@ class PaintView extends View {
 
 function themedRoot(): Group {
   const child = new PaintView('X');
-  child.layout = { size: { kind: 'fixed', cells: 2 } };
+  child.setLayout({ size: { kind: 'fixed', cells: 2 } });
   const root = new Group();
-  root.layout = { direction: 'row' };
+  root.setLayout({ direction: 'row' });
   root.background = 'window';
   root.add(child);
   return root;

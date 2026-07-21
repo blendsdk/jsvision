@@ -152,7 +152,9 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
   let catcher: CatcherView | null = null;
 
   const isEnabled = (command: string): boolean => seam.isCommandEnabled(command);
-  const viewport = (): Rect => overlay.layout.rect ?? FALLBACK_VIEWPORT;
+  // Read-only: this is the live `layout.rect`, and a mutable alias would let a caller move the
+  // overlay a field at a time without ever requesting a reflow.
+  const viewport = (): Readonly<Rect> => overlay.layout.rect ?? FALLBACK_VIEWPORT;
   const deepest = (): Level | null => levels[levels.length - 1] ?? null;
   const isOpen = (): boolean => openTopIndex !== null;
 
@@ -184,7 +186,7 @@ export function createMenuController(tops: readonly MenuItem[], overlay: Group, 
     popup.isEnabled = isEnabled;
     const width = popupWidth(items);
     const height = items.length + 2; // top + bottom border
-    popup.layout = { position: 'absolute', rect: clampRect(anchorX, anchorY, width, height) };
+    popup.setLayout({ position: 'absolute', rect: clampRect(anchorX, anchorY, width, height) });
     popup.onPick = (row) => pickRow(popup, row);
     overlay.add(popup);
     levels.push({ items, popup });

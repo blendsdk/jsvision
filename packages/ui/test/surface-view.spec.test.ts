@@ -48,7 +48,7 @@ function makeView(opts: {
 }): ViewHarness {
   const delta = signal<Point>(opts.delta ?? { x: 0, y: 0 });
   const view = new SurfaceView({ surface: opts.surface, delta, onScroll: opts.onScroll });
-  view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: opts.vw, height: opts.vh } };
+  view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: opts.vw, height: opts.vh } });
   const root = new Group();
   root.add(view);
   const loop = createEventLoop({ width: opts.vw, height: opts.vh }, { caps });

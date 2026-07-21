@@ -162,7 +162,7 @@ function buildWindowBody(opts: { total: number; viewport: number; prefetch?: num
     prefetch: opts.prefetch,
   });
   const W = 24;
-  body.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: opts.viewport } };
+  body.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: opts.viewport } });
   const root = new Group();
   root.add(body);
   const loop = createEventLoop({ width: W, height: opts.viewport }, { caps });
@@ -254,7 +254,7 @@ test('ST-6: an unloaded row paints … then repaints to real values on a landed 
   const src = pagedSource(1000, 100);
   const cols = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name, width: 14 })];
   const grid = new EditableDataGrid<Row>({ columns: cols, source: src });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -291,7 +291,7 @@ test('ST-9: an unloaded focused cell is read-only (no rowKey(undefined) crash)',
     }),
   ];
   const grid = new EditableDataGrid<Row>({ columns: cols, source: src });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -325,7 +325,7 @@ test('ST-10: the synthetic prefix band renders a placeholder for an unloaded row
     onToggleRow: () => undefined,
     active: () => false,
   });
-  band.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  band.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(band);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -340,7 +340,7 @@ test('ST-10: the synthetic prefix band renders a placeholder for an unloaded row
 /** Mount a grid over `source` at W×H, focus the body, and return the loop. */
 function mountGrid(source: GridDataSource<Row>, gridCols = cols, W = 26, H = 6) {
   const grid = new EditableDataGrid<Row>({ columns: gridCols, source });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -356,7 +356,7 @@ test('ST-11: windowed auto-width skips the measure (fallback + devWarn); autoFit
   const src = pagedSource(1000, 100);
   const autoCols = [column<Row, string>({ id: 'name', title: 'Name', value: (r) => r.name })]; // no width ⇒ auto
   const grid = new EditableDataGrid<Row>({ columns: autoCols, source: src });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 5 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 5 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 20, height: 5 }, { caps });

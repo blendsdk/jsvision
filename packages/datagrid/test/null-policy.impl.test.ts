@@ -26,7 +26,7 @@ function key(k: string) {
 
 /** Mount a grid full-viewport, focus its body, and flush a first frame. */
 function mount<T>(grid: EditableDataGrid<T>) {
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

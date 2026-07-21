@@ -42,7 +42,7 @@ function stdColumns(): Column<Person>[] {
 }
 
 function hosted<T>(grid: DataGrid<T>, w: number, h: number) {
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: w, height: h }, { caps });

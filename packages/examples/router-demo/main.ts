@@ -26,6 +26,9 @@ import {
   ListView,
   createApplication,
   createRouter,
+  col,
+  fixed,
+  grow,
   signal,
   statusLine,
   statusItem,
@@ -42,7 +45,7 @@ function printFrame(title: string, rows: readonly { char: string }[][]): void {
   const width = rows[0]?.length ?? 0;
   console.log(`\n${title}`);
   console.log(`+${'-'.repeat(width)}+`);
-  for (const row of rows) console.log(`|${row.map((cell) => cell.char).join('')}|`);
+  for (const line of rows) console.log(`|${line.map((cell) => cell.char).join('')}|`);
   console.log(`+${'-'.repeat(width)}+`);
 }
 
@@ -56,18 +59,14 @@ class DetailScreen extends Group {
 
   constructor(repo: string, onBack: () => void) {
     super();
-    this.layout = { direction: 'col', padding: 1, gap: 1 };
+    // Assigned directly rather than built: this view is the container itself, so there is no builder
+    // call that could produce it — only its children are composed with the DSL below.
+    this.setLayout({ direction: 'col', padding: 1, gap: 1 });
     this.background = 'window';
     this.onBackCb = onBack;
-    const title = new Text(`Repository: ${repo}`);
-    title.layout = { size: { kind: 'fixed', cells: 1 } };
-    const hint = new Text('Branch: main · 128 commits · MIT license');
-    hint.layout = { size: { kind: 'fixed', cells: 1 } };
-    const back = new Button('~B~ack', { command: 'detail.back', onClick: onBack });
-    back.layout = { size: { kind: 'fixed', cells: 2 } };
-    this.add(title);
-    this.add(hint);
-    this.add(back);
+    this.add(fixed(new Text(`Repository: ${repo}`), 1));
+    this.add(fixed(new Text('Branch: main · 128 commits · MIT license'), 1));
+    this.add(fixed(new Button('~B~ack', { command: 'detail.back', onClick: onBack }), 2));
   }
 
   private readonly onBackCb: () => void;
@@ -86,10 +85,16 @@ function main(): void {
   const repos = signal(Array.from({ length: 20 }, (_, i) => `repo-${String(i + 1).padStart(2, '0')}`));
   const listFocused = signal(0); // the list's scroll/focus row — read to prove keep-alive preserves it
 
-  // The list screen is built once (keepAlive) and reused; capture it so the walkthrough can focus it
-  // and read its scroll. The route closures call back into `router` — deferred, so they run only
-  // after it exists (onSelect drills into the chosen repo; Back pops the stack).
-  let listView: ListView<string>;
+  // The list screen is built once (keepAlive) and reused, so the list widget can be created up front
+  // and captured — the walkthrough below focuses it and reads its scroll. The route closures call back
+  // into `router` — deferred, so they run only after it exists (onSelect drills into the chosen repo;
+  // Back pops the stack).
+  const listView = new ListView<string>({
+    items: repos,
+    getText: (r) => r,
+    focused: listFocused,
+    onSelect: (index) => router.push('detail', { index }),
+  });
 
   const router = createRouter<Routes>({
     initial: { name: 'list' },
@@ -97,20 +102,14 @@ function main(): void {
       list: {
         keepAlive: true, // keep the list warm so its scroll survives a drill-down round-trip
         build: () => {
-          const screen = new Group();
-          screen.layout = { direction: 'col', padding: 1, gap: 0 };
+          const screen = col(
+            { padding: 1, gap: 0 },
+            fixed(new Text('Repositories — ↑↓ to navigate, Enter to open'), 1),
+            grow(listView),
+          );
+          // Either form works: a background can also ride on the builder props, as
+          // `col({ background: 'window' }, …)` — see the drill-down story.
           screen.background = 'window';
-          const title = new Text('Repositories — ↑↓ to navigate, Enter to open');
-          title.layout = { size: { kind: 'fixed', cells: 1 } };
-          listView = new ListView<string>({
-            items: repos,
-            getText: (r) => r,
-            focused: listFocused,
-            onSelect: (index) => router.push('detail', { index }),
-          });
-          listView.layout = { size: { kind: 'fr', weight: 1 } };
-          screen.add(title);
-          screen.add(listView);
           return { view: screen }; // no status → the app base bar shows
         },
       },

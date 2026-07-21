@@ -25,9 +25,9 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { color
 /** Mount a 14-wide indicator inside a (manager-less, active) Window on a loop. */
 function mountIndicator() {
   const win = new Window('W');
-  win.layout = { position: 'absolute', padding: 0, rect: { x: 0, y: 0, width: 20, height: 3 } };
+  win.setLayout({ position: 'absolute', padding: 0, rect: { x: 0, y: 0, width: 20, height: 3 } });
   const ind = new Indicator();
-  ind.layout = { position: 'absolute', rect: { x: 0, y: 1, width: 14, height: 1 } };
+  ind.setLayout({ position: 'absolute', rect: { x: 0, y: 1, width: 14, height: 1 } });
   win.add(ind);
   const root = new Group();
   root.add(win);

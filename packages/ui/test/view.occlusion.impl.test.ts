@@ -36,7 +36,7 @@ function windowWith(
   rect: { x: number; y: number; width: number; height: number },
 ): { win: Group; content: FillView } {
   const win = new Group();
-  win.layout = { position: 'absolute', rect };
+  win.setLayout({ position: 'absolute', rect });
   const content = new FillView(ch);
   win.add(content);
   return { win, content };

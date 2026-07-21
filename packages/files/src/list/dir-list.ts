@@ -33,16 +33,21 @@ export interface DirListOptions {
  * The directory-tree list, driven reactively by the current directory.
  *
  * @example
- * import { Group, signal } from '@jsvision/ui';
+ * import { at, Group, signal } from '@jsvision/ui';
  * import { DirList, nodeFileSystem } from '@jsvision/files';
  *
  * const directory = signal('/home/user');
- * const tree = new DirList({
- *   fs: nodeFileSystem,
- *   directory,
- *   onChangeDir: (path) => directory.set(path), // navigate on activation
- * });
- * tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 30, height: 10 } };
+ * const tree = at(
+ *   new DirList({
+ *     fs: nodeFileSystem,
+ *     directory,
+ *     onChangeDir: (path) => directory.set(path), // navigate on activation
+ *   }),
+ *   0,
+ *   0,
+ *   30,
+ *   10,
+ * );
  * new Group().add(tree);
  */
 export class DirList extends ListView<DirNode> {

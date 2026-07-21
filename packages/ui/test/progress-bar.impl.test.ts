@@ -19,7 +19,7 @@ const caps = resolveCapabilities({
 /** Render a ProgressBar and return a row-0 string + the buffer. */
 function render(value: number, w: number, h = 1, caption = false) {
   const bar = new ProgressBar({ value: signal(value), caption });
-  bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  bar.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(bar);
   const loop = createEventLoop({ width: w, height: h }, { caps });
@@ -113,7 +113,7 @@ function renderLabelled(
   caption = false,
 ) {
   const bar = new ProgressBar({ value: signal(value), label, labelPosition, caption });
-  bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  bar.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(bar);
   const loop = createEventLoop({ width: w, height: h }, { caps });
@@ -160,7 +160,7 @@ test('label longer than the view width is clipped, never overruns', () => {
 test('reactive label: a function label re-reads on repaint', () => {
   const s = signal('one');
   const bar = new ProgressBar({ value: signal(1), label: () => s(), labelPosition: 'left' });
-  bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 1 } };
+  bar.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 1 } });
   const root = new Group();
   root.add(bar);
   const loop = createEventLoop({ width: 16, height: 1 }, { caps });

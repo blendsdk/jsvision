@@ -33,20 +33,16 @@ export interface ButtonOptions {
  * A focusable command button.
  *
  * @example
- * import { Group, Button, signal } from '@jsvision/ui';
+ * import { Group, Button, signal, at } from '@jsvision/ui';
  *
  * const buttons = new Group();
  *
  * // A default button that emits a command (handled elsewhere, e.g. by a Dialog or the app).
- * const ok = new Button('~O~K', { command: 'ok', default: true });
- * ok.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 10, height: 2 } };
- * buttons.add(ok);
+ * buttons.add(at(new Button('~O~K', { command: 'ok', default: true }), 1, 0, 10, 2));
  *
  * // A plain button that runs a callback directly.
  * const count = signal(0);
- * const add = new Button('~A~dd', { onClick: () => count.set(count() + 1) });
- * add.layout = { position: 'absolute', rect: { x: 12, y: 0, width: 11, height: 2 } };
- * buttons.add(add);
+ * buttons.add(at(new Button('~A~dd', { onClick: () => count.set(count() + 1) }), 12, 0, 11, 2));
  */
 export class Button extends View {
   /** `Space` activates the button while it is focused. */

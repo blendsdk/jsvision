@@ -48,9 +48,9 @@ test('ST-8.n: a ScrollBar track click jumps to the position and follows the drag
 test('ST-8.o: a list keeps its focused-row highlight when focus leaves — HR-50', () => {
   const items = signal(['Alpha', 'Bravo', 'Charlie']);
   const list = new ListBox({ items, focused: signal(0) });
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 3 } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 3 } });
   const stub = new FocusStub();
-  stub.layout = { position: 'absolute', rect: { x: 0, y: 4, width: 4, height: 1 } };
+  stub.setLayout({ position: 'absolute', rect: { x: 0, y: 4, width: 4, height: 1 } });
   const g = new Group();
   g.add(list);
   g.add(stub);
@@ -99,7 +99,7 @@ test('ST-8.r: a both-bars Scroller reserves the SE corner cell — HR-61', () =>
     }
   })();
   const scroller = new Scroller({ content, extent: { width: 40, height: 40 }, scrollbars: 'both' });
-  scroller.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 6 } };
+  scroller.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 6 } });
   const g = new Group();
   g.add(scroller);
   const rr = createRenderRoot({ width: 10, height: 6 }, { caps });
@@ -115,7 +115,7 @@ test('ST-8.s: a click below the last row selects the last item — HR-62', () =>
   const items = signal(['one', 'two', 'three']);
   const selected = signal(-1);
   const list = new ListBox({ items, selected });
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 6 } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 6 } });
   const g = new Group();
   g.add(list);
   const loop = createEventLoop({ width: 13, height: 6 }, { caps });

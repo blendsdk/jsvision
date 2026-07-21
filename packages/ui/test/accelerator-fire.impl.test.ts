@@ -41,8 +41,8 @@ test('IT-1: re-entrancy — an armed plain letter fires exactly once', () => {
   let activations = 0;
   const btn = new Button('~O~pen', { onClick: () => (activations += 1) });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  btn.layout = { size: { kind: 'fixed', cells: 2 } };
+  root.setLayout({ direction: 'col' });
+  btn.setLayout({ size: { kind: 'fixed', cells: 2 } });
   root.add(btn);
   const loop = createEventLoop({ width: 12, height: 3 }, { caps });
   loop.mount(root);
@@ -85,8 +85,8 @@ test('IT-6: an armed no-match letter dismisses and changes nothing', () => {
   }
   const btn = new Button('~O~pen', { command: 'open' });
   const root = new Group();
-  root.layout = { direction: 'col' };
-  btn.layout = { size: { kind: 'fixed', cells: 2 } };
+  root.setLayout({ direction: 'col' });
+  btn.setLayout({ size: { kind: 'fixed', cells: 2 } });
   root.add(btn);
   root.add(new CommandSpy());
   const loop = createEventLoop({ width: 12, height: 3 }, { caps });

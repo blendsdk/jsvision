@@ -146,10 +146,13 @@ class Stack extends Group {
         cur.width !== rect.width ||
         cur.height !== rect.height
       ) {
-        view.layout = { ...view.layout, rect };
+        view.setLayout({ rect });
         changed = true;
       }
     }
+    // Not redundant with the per-layer `setLayout` above: that invalidates through the *layer's*
+    // host, which is null for a layer no longer in this overlay (`track()` never unregisters). This
+    // one goes through the stack's own host, which is always live while the stack is drawing.
     if (changed) this.invalidateLayout();
   }
 }
@@ -189,11 +192,11 @@ export function stack(...args: [Flex, ...Layer[]] | Layer[]): Group {
     layers = args.slice(1) as Layer[];
     const layout = toLayout(props, 'col');
     if (layout.size === undefined) layout.size = { kind: 'fr', weight: 1 }; // default: fill the parent
-    overlay.layout = layout;
+    overlay.setLayout(layout);
     if (props.background !== undefined) overlay.background = props.background;
   } else {
     layers = args as Layer[];
-    overlay.layout = { size: { kind: 'fr', weight: 1 } };
+    overlay.setLayout({ size: { kind: 'fr', weight: 1 } });
   }
 
   for (const layer of layers) {
@@ -205,7 +208,7 @@ export function stack(...args: [Flex, ...Layer[]] | Layer[]): Group {
     const placement = placements.get(layer);
     if (placement === undefined || (isFillAxis(placement.h) && isFillAxis(placement.v))) {
       // Untagged or both-axes fill → engine overlay fill (lag-free, layers overlap).
-      layer.layout = { ...layer.layout, position: 'fill' };
+      layer.setLayout({ position: 'fill' });
     } else if (
       placement.h === 'center' &&
       placement.v === 'center' &&
@@ -213,20 +216,18 @@ export function stack(...args: [Flex, ...Layer[]] | Layer[]): Group {
       placement.height !== undefined
     ) {
       // Centered fixed box → absolute + engine re-centering (lag-free).
-      layer.layout = {
-        ...layer.layout,
+      layer.setLayout({
         position: 'absolute',
         rect: { x: 0, y: 0, width: placement.width, height: placement.height },
-      };
+      });
       layer.centered = true;
     } else {
       // Corner/edge → absolute + draw-time self-correct (one-frame settle). The initial rect carries
       // the requested size at the origin; the first draw repositions it from the stack's real bounds.
-      layer.layout = {
-        ...layer.layout,
+      layer.setLayout({
         position: 'absolute',
         rect: { x: 0, y: 0, width: placement.width ?? 0, height: placement.height ?? 0 },
-      };
+      });
       overlay.track(layer, placement);
     }
     overlay.add(layer);

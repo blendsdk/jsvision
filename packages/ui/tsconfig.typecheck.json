@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  // `rootDir: "."` is load-bearing once `test` joins the program: leaving it at "src" makes every
+  // test file an out-of-root error, and omitting it entirely leaves the root ambiguous, which aborts
+  // resolution and hides most real errors behind a single one.
+  "compilerOptions": { "noEmit": true, "rootDir": "." },
+  "include": ["src", "test"]
+}

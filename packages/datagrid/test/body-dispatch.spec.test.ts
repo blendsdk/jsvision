@@ -67,7 +67,7 @@ function build(opts: BuildOpts = {}) {
   const indent = signal(0);
   const version = signal(0);
   const overlay = new Group();
-  overlay.layout = { position: 'fill' };
+  overlay.setLayout({ position: 'fill' });
   const toggled: number[] = [];
   const ranged: number[] = [];
   const filtered: number[] = [];
@@ -94,9 +94,9 @@ function build(opts: BuildOpts = {}) {
     totalCols: opts.totalCols !== undefined ? () => opts.totalCols! : undefined,
     keymap: opts.keymap,
   });
-  grid.layout = { position: 'fill' };
+  grid.setLayout({ position: 'fill' });
   const container = new Group();
-  container.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  container.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   container.add(grid);
   container.add(overlay);
   const root = new Group();

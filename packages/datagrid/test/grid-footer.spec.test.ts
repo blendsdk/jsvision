@@ -68,7 +68,7 @@ function buildFooterGrid(
     source,
     footer: { aggregates: opts.aggregates ?? { amount: { fn: 'sum' } } },
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -186,7 +186,7 @@ function buildWidgetGrid(widgets: import('@jsvision/ui').View[]) {
     source: fromRows(rows, { rowKey: (r) => r.id }),
     footer: { widgets },
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });
@@ -224,7 +224,7 @@ test('ST-26: should update the N-of-M and selection read-outs reactively', () =>
       ],
     },
   });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: H } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: W, height: H }, { caps });

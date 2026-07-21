@@ -10,7 +10,20 @@
  * mechanism the in-cell editor host relies on. A `distinct` thunk in the config reserves the value-list
  * section (added in a later phase); the condition section here ignores it.
  */
-import { Group, Input, DatePicker, RadioGroup, Button, Text, col, spacer, signal, filter } from '@jsvision/ui';
+import {
+  Group,
+  Input,
+  DatePicker,
+  RadioGroup,
+  Button,
+  Text,
+  col,
+  spacer,
+  signal,
+  filter,
+  grow,
+  fixed,
+} from '@jsvision/ui';
 import type { View, Signal, DispatchEvent, CalendarDate } from '@jsvision/ui';
 import type { GridColumn } from './column.js';
 import type { ColumnFilter, DistinctResult, FilterType } from './filter.js';
@@ -44,8 +57,8 @@ const OP_LABELS: Record<string, string> = {
  * always shows what it is for.
  */
 function labelledField(caption: Text, editor: View): Group {
-  caption.layout = { size: { kind: 'fixed', cells: 1 } };
-  editor.layout = { size: { kind: 'fixed', cells: 1 } };
+  fixed(caption, 1);
+  fixed(editor, 1);
   return col({ fixed: 2 }, caption, editor);
 }
 
@@ -186,7 +199,7 @@ export class FilterPopup<T> extends Group {
     }
 
     this.operatorGroup = new RadioGroup({ labels: ops.map((o) => OP_LABELS[o]), value: this.operatorIndex });
-    this.operatorGroup.layout = { size: { kind: 'fixed', cells: 4 } };
+    fixed(this.operatorGroup, 4);
 
     // Operand editors depend on the type: DatePicker for date, numeric-filtered Input for number, a
     // plain Input for text (which has a single operand).
@@ -235,7 +248,7 @@ export class FilterPopup<T> extends Group {
           this.onClose();
         },
       });
-      valueList.layout = { size: { kind: 'fr', weight: 1 } }; // grow to fill the popup below the buttons
+      grow(valueList); // fill the popup below the buttons
     }
     this.valueListView = valueList;
 
@@ -269,7 +282,7 @@ export class FilterPopup<T> extends Group {
         () => this.contentHeight(),
         (h) => {
           const rect = this.layout.rect;
-          if (rect !== undefined && rect.height !== h) this.layout = { ...this.layout, rect: { ...rect, height: h } };
+          if (rect !== undefined && rect.height !== h) this.setLayout({ rect: { ...rect, height: h } });
         },
         { relayout: true },
       );

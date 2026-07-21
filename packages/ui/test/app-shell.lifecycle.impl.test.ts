@@ -10,6 +10,7 @@ import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { Group } from '../src/view/index.js';
 import { createApplication } from '../src/app/index.js';
+import type { DesktopApplication } from '../src/app/index.js';
 import type { ApplicationOptions } from '../src/app/index.js';
 import { FakeRuntimeAdapter, CaptureStream, FakeInput } from './app-shell.fixtures.js';
 
@@ -24,7 +25,15 @@ function doubles(): { runtime: FakeRuntimeAdapter; input: FakeInput; output: Cap
 }
 
 function appWith(
-  opts: Partial<ApplicationOptions> & { output: CaptureStream; input: FakeInput; runtime: FakeRuntimeAdapter },
+  // `ApplicationOptions.input`/`output`/`runtime` are real Node stream/runtime types; the fakes here
+  // stand in for them (converted to the real shape below via `.asInput()`/`.asOutput()`), so they must
+  // be omitted from the base `Partial<ApplicationOptions>` rather than intersected with it — an
+  // intersection would additionally require each fake to satisfy the real stream type it replaces.
+  opts: Omit<Partial<ApplicationOptions>, 'output' | 'input' | 'runtime'> & {
+    output: CaptureStream;
+    input: FakeInput;
+    runtime: FakeRuntimeAdapter;
+  },
 ) {
   const { output, input, runtime, ...rest } = opts;
   return createApplication({
@@ -38,7 +47,7 @@ function appWith(
 }
 
 /** The overlay (absolute child) of an app's mounted root. */
-function overlayOf(app: ReturnType<typeof createApplication>): Group {
+function overlayOf(app: DesktopApplication): Group {
   const root = app.desktop.parent as Group;
   return root.children.find((c) => c.layout.position === 'absolute') as Group;
 }
@@ -130,7 +139,7 @@ test('a tick writes frame damage + caret positioning as one chunk', async () => 
   const app = appWith({ ...d, viewport: { width: 40, height: 12 } });
   const { Editor } = await import('../src/editor/index.js');
   const ed = new Editor();
-  ed.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 5 } };
+  ed.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 5 } });
   app.desktop.add(ed);
   const runP = app.run();
   await new Promise((r) => setImmediate(r)); // first frame + initial caret

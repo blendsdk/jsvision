@@ -18,6 +18,7 @@ import type { DrawContext, DispatchEvent } from '../src/view/index.js';
 import { Commands } from '../src/status/index.js';
 import { menuBar, subMenu, item } from '../src/menu/index.js';
 import { Dialog } from '../src/dialog/index.js';
+import { rectOf } from './layout.fixtures.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -46,7 +47,7 @@ class CommandSpy extends View {
 test('ST-3.e: a stale gesture (capture lost via a modal) never teleports the window', async () => {
   const app = createApplication({ caps, viewport: { width: 40, height: 20 } });
   const w = new Window('W');
-  w.layout.rect = { x: 2, y: 2, width: 12, height: 6 };
+  w.setLayout({ rect: { x: 2, y: 2, width: 12, height: 6 } });
   app.desktop.addWindow(w);
 
   // Begin a drag-move gesture (captures the pointer to the desktop).
@@ -74,10 +75,10 @@ test('ST-3.e: a stale gesture (capture lost via a modal) never teleports the win
 test('ST-4.a: Commands.close removes the active window and focuses the next', () => {
   const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
   const a = new Window('A');
-  a.layout.rect = { x: 0, y: 0, width: 18, height: 6 };
+  a.setLayout({ rect: { x: 0, y: 0, width: 18, height: 6 } });
   app.desktop.addWindow(a);
   const b = new Window('B');
-  b.layout.rect = { x: 20, y: 0, width: 18, height: 6 };
+  b.setLayout({ rect: { x: 20, y: 0, width: 18, height: 6 } });
   app.desktop.addWindow(b); // added last → active
   app.loop.renderRoot.flush();
   expect(app.desktop.activeWindow()).toBe(b);
@@ -92,10 +93,10 @@ test('ST-4.a: Commands.close removes the active window and focuses the next', ()
 test('ST-4.b: an inactive window close box is inert on the first click, acts on the second', () => {
   const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
   const a = new Window('A');
-  a.layout.rect = { x: 0, y: 0, width: 14, height: 6 };
+  a.setLayout({ rect: { x: 0, y: 0, width: 14, height: 6 } });
   app.desktop.addWindow(a);
   const b = new Window('B');
-  b.layout.rect = { x: 16, y: 0, width: 14, height: 6 };
+  b.setLayout({ rect: { x: 16, y: 0, width: 14, height: 6 } });
   app.desktop.addWindow(b);
   app.desktop.raise(a); // A active, B inactive
   app.loop.renderRoot.flush();
@@ -114,11 +115,11 @@ test('ST-4.b: an inactive window close box is inert on the first click, acts on 
 test('ST-4.b: an inactive window zoom box is inert on the first click', () => {
   const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
   const a = new Window('A');
-  a.layout.rect = { x: 0, y: 0, width: 14, height: 6 };
+  a.setLayout({ rect: { x: 0, y: 0, width: 14, height: 6 } });
   app.desktop.addWindow(a);
   const b = new Window('B');
   const bRect = { x: 16, y: 0, width: 14, height: 6 };
-  b.layout.rect = { ...bRect };
+  b.setLayout({ rect: { ...bRect } });
   app.desktop.addWindow(b);
   app.desktop.raise(a); // A active, B inactive
   app.loop.renderRoot.flush();
@@ -208,7 +209,7 @@ test('ST-7.c: a dialog kept mounted after its modal ends no longer swallows a gl
 test('ST-7.g: on desktop resize a zoomed window re-maximizes; its restore rect stays on-screen', () => {
   const app = createApplication({ caps, viewport: { width: 40, height: 20 } }); // no chrome ⇒ desktop = viewport
   const w = new Window('W');
-  w.layout.rect = { x: 5, y: 3, width: 20, height: 10 };
+  w.setLayout({ rect: { x: 5, y: 3, width: 20, height: 10 } });
   app.desktop.addWindow(w);
 
   w.zoom(); // maximize → restoredRect saved
@@ -218,7 +219,7 @@ test('ST-7.g: on desktop resize a zoomed window re-maximizes; its restore rect s
   expect(w.layout.rect).toEqual({ x: 0, y: 0, width: 15, height: 8 }); // re-maximized to the new desktop
 
   w.zoom(); // unzoom → lands on the clamped restore rect, fully on-screen
-  const r = w.layout.rect;
+  const r = rectOf(w);
   expect(r.x).toBeGreaterThanOrEqual(0);
   expect(r.y).toBeGreaterThanOrEqual(0);
   expect(r.x + r.width).toBeLessThanOrEqual(15);
