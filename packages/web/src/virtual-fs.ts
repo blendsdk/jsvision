@@ -126,6 +126,7 @@ const segmentsOf = (path: string): string[] => path.split('/').filter((s) => s.l
  * @example
  * import { createBrowserFileSystem } from '@jsvision/web';
  * import { FileDialog } from '@jsvision/files';
+ * import { signal } from '@jsvision/ui';
  *
  * const fs = createBrowserFileSystem({
  *   tree: { '/home/demo': { 'notes.txt': 'hello', src: { 'main.ts': '…' } } },
