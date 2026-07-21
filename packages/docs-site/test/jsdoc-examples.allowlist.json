@@ -1,8 +1,6 @@
 {
   "packages/core/src/engine/capability/index.ts::resolveCapabilities": {"codes":[1128],"missingNames":[],"message":"TS1128 Declaration or statement expected."},
   "packages/core/src/engine/capability/index.ts::resolveCapabilitiesAsync": {"codes":[1128],"missingNames":[],"message":"TS1128 Declaration or statement expected."},
-  "packages/core/src/engine/host/width-probe.ts::degradeCapsForWidth": {"codes":[2304],"missingNames":["caps","query"],"message":"TS2304 Cannot find name 'query'. · TS2304 Cannot find name 'caps'."},
-  "packages/core/src/engine/host/width-probe.ts::warnIfAmbiguousWide": {"codes":[2304],"missingNames":["caps"],"message":"TS2304 Cannot find name 'caps'."},
   "packages/datagrid/src/button-row.ts::buttonCellWidth": {"codes":[2304],"missingNames":["apply","clear","selectAll"],"message":"TS2304 Cannot find name 'apply'. · TS2304 Cannot find name 'clear'. · TS2304 Cannot find name 'selectAll'. · TS2304 Cannot find name 'apply'. · TS2304 Cannot find name 'clear'."},
   "packages/datagrid/src/cell-editor.ts::CellEditorKind": {"codes":[2304],"missingNames":["CellEditorKind"],"message":"TS2304 Cannot find name 'CellEditorKind'."},
   "packages/datagrid/src/cell-editor.ts::CellEditorSpec": {"codes":[2304],"missingNames":["CellEditorSpec"],"message":"TS2304 Cannot find name 'CellEditorSpec'. · TS2304 Cannot find name 'CellEditorSpec'. · TS2304 Cannot find name 'CellEditorSpec'."},
@@ -59,14 +57,6 @@
   "packages/datagrid/src/variant.ts::GridVariant": {"codes":[18004],"missingNames":[],"message":"TS18004 No value exists in scope for the shorthand property 'columns'. Either declare one or provide an initializer. · TS18004 No value exists in scope for the shorthand property 'source'. Either declare one or provide an initializer."},
   "packages/datagrid/src/variant.ts::resolveVariant": {"codes":[2304],"missingNames":["resolveVariant"],"message":"TS2304 Cannot find name 'resolveVariant'."},
   "packages/datagrid/src/windowing.ts::windowedView": {"codes":[2304],"missingNames":["source"],"message":"TS2304 Cannot find name 'source'."},
-  "packages/files/src/dialog/chdir-dialog.ts::ChDirDialog": {"codes":[2322],"missingNames":[],"message":"TS2322 Type 'Platform' is not assignable to type 'Platform | undefined'.   Type '\"aix\"' is not assignable to type 'Platform | undefined'."},
-  "packages/files/src/dialog/error-dialog.ts::errorBox": {"codes":[2322],"missingNames":[],"message":"TS2322 Type 'Platform' is not assignable to type 'Platform | undefined'.   Type '\"aix\"' is not assignable to type 'Platform | undefined'."},
-  "packages/files/src/dialog/file-dialog.ts::FileDialog": {"codes":[2322],"missingNames":[],"message":"TS2322 Type 'Platform' is not assignable to type 'Platform | undefined'.   Type '\"aix\"' is not assignable to type 'Platform | undefined'."},
-  "packages/files/src/editor/open-file.ts::openFileInEditor": {"codes":[2322],"missingNames":[],"message":"TS2322 Type 'Platform' is not assignable to type 'Platform | undefined'.   Type '\"aix\"' is not assignable to type 'Platform | undefined'."},
-  "packages/files/src/fs/scan.ts::compareEntries": {"codes":[2304],"missingNames":["readSomeEntries"],"message":"TS2304 Cannot find name 'readSomeEntries'."},
-  "packages/files/src/openers.ts::changeDir": {"codes":[2322],"missingNames":[],"message":"TS2322 Type 'Platform' is not assignable to type 'Platform | undefined'.   Type '\"aix\"' is not assignable to type 'Platform | undefined'."},
-  "packages/files/src/openers.ts::openFile": {"codes":[2322],"missingNames":[],"message":"TS2322 Type 'Platform' is not assignable to type 'Platform | undefined'.   Type '\"aix\"' is not assignable to type 'Platform | undefined'."},
-  "packages/forms/src/form-dialog.ts::formDialog": {"codes":[2304],"missingNames":["api","app"],"message":"TS2304 Cannot find name 'app'. · TS2304 Cannot find name 'api'."},
   "packages/ui/src/app/application.ts::Application.menuBase": {"codes":[2304],"missingNames":["app","item","subMenu","withBase"],"message":"TS2304 Cannot find name 'withBase'. · TS2304 Cannot find name 'app'. · TS2304 Cannot find name 'subMenu'. · TS2304 Cannot find name 'item'."},
   "packages/ui/src/app/application.ts::Application.onCommand": {"codes":[2304],"missingNames":["app","messageBox"],"message":"TS2304 Cannot find name 'app'. · TS2304 Cannot find name 'messageBox'. · TS2304 Cannot find name 'app'."},
   "packages/ui/src/app/application.ts::Application.setTheme": {"codes":[2304],"missingNames":["app","nordTheme"],"message":"TS2304 Cannot find name 'app'. · TS2304 Cannot find name 'app'. · TS2304 Cannot find name 'nordTheme'."},
@@ -155,9 +145,5 @@
   "packages/ui/src/view/group.ts::Group.addDynamic": {"codes":[2304],"missingNames":["Panel"],"message":"TS2304 Cannot find name 'Panel'."},
   "packages/ui/src/view/render-root.ts::RenderRoot.setTheme": {"codes":[2304],"missingNames":["nordTheme","renderRoot"],"message":"TS2304 Cannot find name 'renderRoot'. · TS2304 Cannot find name 'nordTheme'. · TS2304 Cannot find name 'renderRoot'."},
   "packages/ui/src/view/view.ts::View.bind": {"codes":[2339],"missingNames":[],"message":"TS2339 Property 'onMount' does not exist on type 'string'. · TS2339 Property 'bind' does not exist on type 'string'."},
-  "packages/ui/src/view/view.ts::View.focusSignal": {"codes":[2304,2532],"missingNames":["other"],"message":"TS2532 Object is possibly 'undefined'. · TS2532 Object is possibly 'undefined'. · TS2304 Cannot find name 'other'."},
-  "packages/web/src/clipboard.ts::setClipboard": {"codes":[2304],"missingNames":["selectedText"],"message":"TS2304 Cannot find name 'selectedText'."},
-  "packages/web/src/host.ts::createBrowserHost": {"codes":[2304],"missingNames":["loop"],"message":"TS2304 Cannot find name 'loop'. · TS2304 Cannot find name 'loop'."},
-  "packages/web/src/key-reclaim.ts::attachKeyReclaim": {"codes":[2304],"missingNames":["term"],"message":"TS2304 Cannot find name 'term'."},
-  "packages/web/src/virtual-fs.ts::createBrowserFileSystem": {"codes":[2304],"missingNames":["signal"],"message":"TS2304 Cannot find name 'signal'."}
+  "packages/ui/src/view/view.ts::View.focusSignal": {"codes":[2304,2532],"missingNames":["other"],"message":"TS2532 Object is possibly 'undefined'. · TS2532 Object is possibly 'undefined'. · TS2304 Cannot find name 'other'."}
 }

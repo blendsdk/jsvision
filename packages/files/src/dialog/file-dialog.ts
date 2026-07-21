@@ -75,7 +75,7 @@ const FILE_HISTORY_ID = 0x0f11;
  * import { resolveCapabilities } from '@jsvision/core';
  * import { FileDialog, errorBox, nodeFileSystem } from '@jsvision/files';
  *
- * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const caps = resolveCapabilities().profile; // ambient: reads process.env + process.platform
  * const app = createApplication({ caps });
  *
  * const dlg = new FileDialog({
