@@ -96,6 +96,20 @@ export const EXAMPLES: readonly ExampleEntry[] = [
     load: () => import('./apps/editor.js'),
   },
   {
+    id: 'apps/amiga-clock',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/amiga-clock.ts',
+    load: () => import('./apps/amiga-clock.js'),
+  },
+  {
+    id: 'apps/matrix',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/matrix.ts',
+    load: () => import('./apps/matrix.js'),
+  },
+  {
     id: 'apps/desktop',
     category: 'apps',
     kind: 'app',

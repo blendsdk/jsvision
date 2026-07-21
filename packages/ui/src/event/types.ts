@@ -134,6 +134,24 @@ export interface EventLoop {
    * loop.stop(); // gate the deferred painter before detaching the frame/caret sinks
    */
   stop(): void;
+  /**
+   * Tear the loop down for a host that detaches a still-live app: stop the out-of-tick painter (as
+   * {@link EventLoop.stop}) **and** unmount the view tree, so every view's `onCleanup` runs and
+   * releases the timers and subscriptions it holds. Idempotent. `run()` does not need this — the
+   * process exits — but a long-lived host that mounts and unmounts many apps (the browser `mountApp`)
+   * calls it on teardown so nothing leaks between one app and the next.
+   *
+   * @example
+   * import { createEventLoop } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+   *
+   * // When a host detaches a still-live app (e.g. the browser mountApp teardown):
+   * loop.dispose(); // stop the painter + unmount the tree (fires every view's onCleanup)
+   */
+  dispose(): void;
   /** Feed one decoded input event (key/mouse/wheel/paste) into the loop; it routes and repaints in one tick. */
   dispatch(event: AppEvent): void;
   /** Resize the viewport: reflow the tree and paint exactly one frame. */

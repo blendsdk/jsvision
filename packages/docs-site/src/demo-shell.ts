@@ -52,7 +52,7 @@ import {
   workbenchTheme,
   horizonTheme,
 } from '@jsvision/core';
-import type { CapabilityProfile, Theme } from '@jsvision/core';
+import type { CapabilityProfile, Theme, Keymap } from '@jsvision/core';
 import type { ExampleContext } from '../examples/_contract.js';
 import { SITE_META } from './site-meta.js';
 
@@ -90,6 +90,12 @@ export interface DemoShellOptions {
   readonly themeMenu?: boolean;
   /** Called when the Depth control changes — the Play layer turns this into a re-mount. */
   readonly onDepthChange?: (depth: Depth) => void;
+  /**
+   * Teardown registrar handed to the example as `ctx.onCleanup`. The Play layer collects what the
+   * example registers (its animation timer, say) and runs it on close. Omitted in a headless mount,
+   * where an example's own `unref()` keeps its timer harmless instead.
+   */
+  readonly onCleanup?: (fn: () => void) => void;
   /**
    * Called when the in-app Exit is chosen (it emits the quit command). The Play layer uses this to
    * dismiss the host modal, so the terminal app can close itself — not only the modal's × button.
@@ -150,7 +156,12 @@ const depthCmd = (depth: Depth): string => `demo.depth.${depth}`;
 export function demoShell(opts: DemoShellOptions): Application {
   if (opts.kind === 'app') {
     // An `app` example builds its own chrome (via demoApp) at the full viewport; only wire commands.
-    const built = opts.build({ width: opts.viewport.width, height: opts.viewport.height, caps: opts.caps });
+    const built = opts.build({
+      width: opts.viewport.width,
+      height: opts.viewport.height,
+      caps: opts.caps,
+      onCleanup: opts.onCleanup,
+    });
     if (built instanceof View) throw new Error("an 'app' example must build an Application, not a View");
     wireCommands(built, opts);
     return built;
@@ -190,7 +201,7 @@ export function demoShell(opts: DemoShellOptions): Application {
  */
 export function demoApp(
   ctx: { readonly caps: CapabilityProfile; readonly width: number; readonly height: number },
-  opts?: { readonly windowMenu?: boolean; readonly themeMenu?: boolean },
+  opts?: { readonly windowMenu?: boolean; readonly themeMenu?: boolean; readonly keymap?: Keymap },
 ): DesktopApplication {
   const windowMenu = opts?.windowMenu ?? false;
   const themeMenu = opts?.themeMenu ?? false;
@@ -200,6 +211,9 @@ export function demoApp(
     theme: classicTheme,
     menuBar: buildMenuBar({ windowMenu, themeMenu }),
     statusLine: buildStatusLine(),
+    // App-wide extra chords (e.g. an app's own F-key) — bound regardless of which view has focus, so
+    // an example can add a shortcut the shared chrome does not carry. Merges over the defaults.
+    keymap: opts?.keymap,
   });
 }
 
@@ -219,7 +233,7 @@ function shellForView(opts: DemoShellOptions): Application {
   const interiorW = winRect.width - 2;
   const interiorH = winRect.height - 2;
 
-  const built = opts.build({ width: interiorW, height: interiorH, caps: opts.caps });
+  const built = opts.build({ width: interiorW, height: interiorH, caps: opts.caps, onCleanup: opts.onCleanup });
   if (!(built instanceof View)) throw new Error("a 'component' example must build a View, not an Application");
   centerInInterior(built, interiorW, interiorH);
 
