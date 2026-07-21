@@ -2,7 +2,7 @@
 
 > **Status**: Active
 > **Last Updated**: 2026-07-21
-> **Features**: 2 / 4 done — the engine counts only the four rows with machine-countable RD progress; `split-panes`, `dsl-hardening` and `layout-dsl-adoption` carry hand-maintained Progress cells and are excluded, so in truth **5 of the 7 tracked features are complete**. Per-feature status is in the table below; deferred datagrid follow-ons (CSV/paste import · windowed-source row export · treeshake check) live on its own roadmap
+> **Features**: 0 / 2 done — 8 completed features were archived on 2026-07-21, leaving `bun-runtime` and `docs-website` active (plus `kanban-app`, a parked exploration with no roadmap, and the `_maintenance` feature). Deferred datagrid follow-ons (CSV/paste import · windowed-source row export · treeshake check) and the layout-DSL follow-on GH #131 now live on their archived roadmaps
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -15,11 +15,6 @@
 |---------|---------|---------------|----------|--------|--------------|
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done (site-foundation · @jsvision/web runtime · live-example system · TypeDoc API ref) · RD-04/05/07…10 ✏️ drafted | 4/10 RDs | ⬜ | 2026-07-13 |
-| datagrid | [→](features/datagrid/00-roadmap.md) | 16/16 RDs ✅ — editing · cell editors · sorting · filtering · columns · rows · footer + master-detail · navigation · validation · virtual scroll · export/variants · personalization · 55-demo showcase | 16/16 RDs | ✅ | 2026-07-18 |
-| split-panes | [→](features/split-panes/plans/split-panes/00-index.md) | ✅ Done — `SplitView`: fr-track container, captured-drag + keyboard resize, `minSize` clamp, nesting · follow-ups: grab-mark toggle · scroll-in-pane demo · amiga-clock window · hover deferred → GH #97 | 45/45 tasks · 4/4 phases · +followups ✅ | ✅ | 2026-07-17 |
-| jsvision-forms | [→](features/jsvision-forms/00-roadmap.md) | 9/9 RDs ✅ — store · sync Zod validation · widget binding · async validation · async loading · `formDialog` + modal submit gate · `Text.severity` + `Input.placeholder` · comprehensive showcase | 9/9 RDs done | ✅ | 2026-07-17 |
-| dsl-hardening | [→](features/dsl-hardening/00-roadmap.md) | ✅ Done — layout-DSL hardening (`min` · `at()` · `cover()`/`center()` · `Placement` offsets · `dsl/` module split), merged via PR #119 — the prerequisite of epic GH #108 | 1/1 plans | ✅ | 2026-07-19 |
-| layout-dsl-adoption | [→](features/layout-dsl-adoption/00-roadmap.md) | ✅ Done 2026-07-21 — epic GH #108 closed: 12 issues / 9 plans via PR #133 · `View.layout` read-only with `setLayout` its only writer · TV dialogs + canvases on flex · non-gating follow-on #131 | 12 / 12 issues · 9 / 9 plans | ✅ | 2026-07-21 |
 
 ## Archived
 
@@ -29,3 +24,13 @@
 | theme-designer | [→](_archive/theme-designer/00-roadmap.md) | 1/1 RDs | 2026-07-09 |
 | jsvision-ui-enhancements | [→](_archive/jsvision-ui-enhancements/00-roadmap.md) | 1/1 RDs | 2026-07-09 |
 | jsvision-plugin | [→](_archive/jsvision-plugin/00-roadmap.md) | 2/2 RDs | 2026-07-11 |
+| datagrid | [→](_archive/datagrid/00-roadmap.md) | 16/16 RDs | 2026-07-18 |
+| split-panes | [→](_archive/split-panes/plans/split-panes/00-index.md) | 45/45 tasks · 4/4 phases · +followups | 2026-07-17 |
+| jsvision-forms | [→](_archive/jsvision-forms/00-roadmap.md) | 9/9 RDs | 2026-07-17 |
+| theme-accelerators | [→](_archive/theme-accelerators/plans/accelerator-aliases/00-index.md) | 24/24 tasks (never had a portfolio row) | 2026-07-13 |
+| navigation-router | [→](_archive/navigation-router/plans/navigation-router/00-index.md) | shipped via PR #90 — GH #26 + #91 closed | 2026-07-16 |
+| data-studio | [→](_archive/data-studio/plans/feasibility-spike/decision-memo.md) | feasibility spike concluded — GO-WITH-CAVEATS | 2026-07-09 |
+| dsl-hardening | [→](_archive/dsl-hardening/00-roadmap.md) | 1/1 plans | 2026-07-19 |
+| layout-dsl-adoption | [→](_archive/layout-dsl-adoption/00-roadmap.md) | 12/12 issues · 9/9 plans | 2026-07-21 |
+| foundation | [→](_archive/foundation/00-roadmap.md) | archived mid-flight — superseded by the per-feature layout | 2026-07-13 |
+| monorepo-restructure | [→](_archive/monorepo-restructure/00-index.md) | plan only — superseded | 2026-06-29 |

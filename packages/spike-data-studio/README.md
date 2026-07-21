@@ -2,7 +2,7 @@
 
 Feasibility-spike evidence for **Data Studio** (a Paradox / MS-Access-style database front-end on
 `@jsvision/ui` + PostgreSQL). This package is **not a product** — it is the runnable evidence behind
-`codeops/features/data-studio/plans/feasibility-spike/decision-memo.md`. Delete it once the decision
+`codeops/_archive/data-studio/plans/feasibility-spike/decision-memo.md`. Delete it once the decision
 is made.
 
 ## Run
@@ -12,7 +12,7 @@ is made.
 docker run --rm -d --name data-studio-spike -e POSTGRES_PASSWORD=spike -p 5433:5432 postgres:16
 export PGPASSWORD=spike
 psql -h localhost -p 5433 -U postgres -d postgres \
-  -f ../../codeops/features/data-studio/plans/feasibility-spike/seed-schema.sql
+  -f ../../codeops/_archive/data-studio/plans/feasibility-spike/seed-schema.sql
 
 # 2. Point the spike at it
 export DATABASE_URL='postgres://postgres:spike@localhost:5433/postgres'
