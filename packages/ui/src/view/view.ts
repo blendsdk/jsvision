@@ -150,8 +150,27 @@ export abstract class View {
    *
    * @returns A signal that ticks whenever this view gains or loses focus.
    * @example
-   * // Inside a widget's onMount, repaint whenever `other` view's focus changes:
-   * this.onMount(() => this.bind(() => other.focusSignal()()));
+   * import { View, Button, type DrawContext } from '@jsvision/ui';
+   *
+   * // A caption that highlights while the control it labels holds focus.
+   * class Caption extends View {
+   *   constructor(
+   *     private readonly text: string,
+   *     private readonly target: View,
+   *   ) {
+   *     super();
+   *     // Reading the target's focus signal inside bind() ties this view's repaint to the target's
+   *     // focus flips — a view can observe focus it does not own.
+   *     this.onMount(() => this.bind(() => this.target.focusSignal()()));
+   *   }
+   *
+   *   draw(ctx: DrawContext): void {
+   *     ctx.text(0, 0, this.text, ctx.color(this.target.state.focused ? 'labelSelected' : 'label'));
+   *   }
+   * }
+   *
+   * const ok = new Button('~O~K');
+   * const caption = new Caption('Confirm:', ok);
    */
   focusSignal(): Signal<void> {
     return (this.focusTick ??= signal(undefined, { equals: () => false }));
@@ -278,10 +297,18 @@ export abstract class View {
    * @param opts    Pass `{ relayout: true }` when the change affects layout, so it reflows instead of
    *   just repainting.
    * @example
-   * import { signal } from '@jsvision/ui';
+   * import { View, signal, type DrawContext } from '@jsvision/ui';
    *
    * const count = signal(0);
-   * // `status` is a View whose draw() reads count():
+   *
+   * class StatusLine extends View {
+   *   draw(ctx: DrawContext): void {
+   *     ctx.text(0, 0, `${count()} pending`, ctx.color('statusBar'));
+   *   }
+   * }
+   *
+   * const status = new StatusLine();
+   * // In onMount, not the constructor: bind() needs the view's scope, which only exists once mounted.
    * status.onMount(() => {
    *   status.bind(() => count()); // repaint the status line whenever `count` changes
    * });

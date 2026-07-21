@@ -87,7 +87,11 @@ export interface ApplicationOptions {
    * `false` for headless/automated runs that drive the loop without a real terminal.
    *
    * @example
+   * import { createApplication } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
    * // A headless integration test drives run() without a terminal:
+   * const caps = resolveCapabilities().profile;
    * const app = createApplication({ caps, requireTty: false });
    * const exit = app.run(); // starts against injected streams; no EssentialsNotMetError
    */
@@ -115,6 +119,12 @@ export interface Application {
    * @param handler Called when the command is emitted.
    * @returns A function that unregisters this handler (idempotent).
    * @example
+   * import { createApplication, messageBox } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities().profile;
+   * const app = createApplication({ caps });
+   *
    * const off = app.onCommand('about', () => messageBox(app, { title: 'About', text: '…' }));
    * // later: off(); // stop handling 'about'
    */
@@ -126,6 +136,12 @@ export interface Application {
    *
    * @param theme The theme to switch to (a preset, a `createTheme` result, or a `parseTheme` result).
    * @example
+   * import { createApplication } from '@jsvision/ui';
+   * import { resolveCapabilities, nordTheme } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities().profile;
+   * const app = createApplication({ caps });
+   *
    * app.onCommand('theme:nord', () => app.setTheme(nordTheme));
    */
   setTheme(theme: Theme): void;
@@ -138,8 +154,18 @@ export interface Application {
    *
    * @returns Fresh status-item views mirroring the base bar's command items (empty if no status line).
    * @example
+   * import { createApplication, withBase, statusItem } from '@jsvision/ui';
+   * import type { ScreenBundle } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities().profile;
+   * const app = createApplication({ caps });
+   *
    * // A screen's status = the app base plus a screen-specific action:
-   * status: withBase(app.statusBase(), [statusItem('~E~dit', 'detail.edit')]);
+   * const screen: ScreenBundle = {
+   *   view: app.desktop,
+   *   status: withBase(app.statusBase(), [statusItem('~E~dit', 'detail.edit')]),
+   * };
    */
   statusBase(): View[];
   /**
@@ -149,7 +175,18 @@ export interface Application {
    *
    * @returns A copy of the base menu's top-level items (empty if no menu bar).
    * @example
-   * menu: withBase(app.menuBase(), [subMenu('~S~creen', [item('~E~dit', 'detail.edit')])]);
+   * import { createApplication, withBase, subMenu, item } from '@jsvision/ui';
+   * import type { ScreenBundle } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities().profile;
+   * const app = createApplication({ caps });
+   *
+   * // A screen's menu = the app base plus a screen-specific submenu:
+   * const screen: ScreenBundle = {
+   *   view: app.desktop,
+   *   menu: withBase(app.menuBase(), [subMenu('~S~creen', [item('~E~dit', 'detail.edit')])]),
+   * };
    */
   menuBase(): MenuItem[];
   /**

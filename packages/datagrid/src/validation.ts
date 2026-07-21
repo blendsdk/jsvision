@@ -85,6 +85,31 @@ export interface RowGate {
  * @returns A {@link RowGate}.
  * @example
  * ```ts
+ * import { signal } from '@jsvision/ui';
+ * import { column, fromRows, createErrorRegistry, EditableDataGrid } from '@jsvision/datagrid';
+ * import { createRowGate } from './validation.js';
+ *
+ * interface Line {
+ *   id: number;
+ *   start: number;
+ *   end: number;
+ * }
+ *
+ * const rows = signal<Line[]>([{ id: 1, start: 1, end: 5 }]);
+ * const grid = new EditableDataGrid<Line>({
+ *   columns: [
+ *     column({ id: 'start', title: 'Start', value: (r: Line) => String(r.start) }),
+ *     column({ id: 'end', title: 'End', value: (r: Line) => String(r.end) }),
+ *   ],
+ *   source: fromRows(rows, { rowKey: (r) => r.id }),
+ * });
+ *
+ * // The gate owns none of this state — it reads the grid's live state through the accessors below.
+ * const errors = createErrorRegistry();
+ * const touched = new Set<string | number>();
+ * const visibleIds = ['start', 'end'];
+ * const focusedCol = signal(0);
+ *
  * const gate = createRowGate<Line>({
  *   validateRow: (r) => (r.end > r.start ? { ok: true } : { ok: false, message: 'End after start', field: 'end' }),
  *   focusedRow: () => grid.focusedRow(), focusedKey: () => grid.focusedKey(),
@@ -92,7 +117,12 @@ export interface RowGate {
  *   columnIndex: (id) => visibleIds.indexOf(id), currentColumn: () => focusedCol(),
  *   focusColumn: (i) => focusedCol.set(i), note: (m) => errors.note(m),
  * });
- * if (!gate.tryLeave()) return; // block the row-leave, cursor already refocused the offending field
+ *
+ * function leaveRow(): void {
+ *   // Blocked: the cursor has already been moved back onto the offending field.
+ *   if (!gate.tryLeave()) return;
+ *   // …the row validated; carry on with the move.
+ * }
  * ```
  */
 export function createRowGate<T>(deps: RowGateDeps<T>): RowGate {

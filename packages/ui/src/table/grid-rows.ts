@@ -360,7 +360,14 @@ export interface GridHeaderConfig<T> {
  * ```ts
  * import { GridHeader, signal } from '@jsvision/ui';
  * import type { SortState } from '@jsvision/ui';
- * const header = new GridHeader({
+ *
+ * interface Person {
+ *   name: string;
+ * }
+ *
+ * // Name the row type explicitly: unlike GridRows, the header takes no rows, so there is nothing
+ * // for it to be inferred from — leave it off and the accessor's argument lands as `unknown`.
+ * const header = new GridHeader<Person>({
  *   columns: [{ title: 'Name', accessor: (r) => r.name, width: '1fr' }],
  *   autoWidths: () => [null],
  *   indent: signal(0),

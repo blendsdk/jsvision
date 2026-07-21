@@ -88,6 +88,10 @@ export interface EventLoopOptions {
    * implementation to step that deferred paint deterministically in a test.
    *
    * @example
+   * import { createEventLoop } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
    * // Deterministic stepping in a test: capture the deferred paint instead of queuing a microtask.
    * const pending: Array<() => void> = [];
    * const loop = createEventLoop({ width: 40, height: 10 }, { caps, scheduleMicrotask: (cb) => pending.push(cb) });
@@ -120,6 +124,12 @@ export interface EventLoop {
    * not dispose the mounted view tree.
    *
    * @example
+   * import { createEventLoop } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+   *
    * // Inside run()'s shutdown, after the terminal is restored:
    * loop.stop(); // gate the deferred painter before detaching the frame/caret sinks
    */
@@ -139,14 +149,14 @@ export interface EventLoop {
    *
    * @example
    * // A dialog composed with the layout DSL — Tab walks its nested col/row groups in tree order.
-   * import { createEventLoop, col, row, Input, Button } from '@jsvision/ui';
+   * import { createEventLoop, col, row, Input, Button, signal } from '@jsvision/ui';
    * import { resolveCapabilities } from '@jsvision/core';
    *
    * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
    * const loop = createEventLoop({ width: 40, height: 8 }, { caps });
-   * const name = new Input();
-   * const ok = new Button('OK', () => loop.emitCommand('ok'));
-   * const cancel = new Button('Cancel', () => loop.emitCommand('cancel'));
+   * const name = new Input({ value: signal('') });
+   * const ok = new Button('OK', { onClick: () => loop.emitCommand('ok') });
+   * const cancel = new Button('Cancel', { onClick: () => loop.emitCommand('cancel') });
    * loop.mount(col(row(name), row(ok, cancel)));
    *
    * loop.focusNext(); // name
@@ -201,6 +211,12 @@ export interface EventLoop {
    *
    * @param theme The theme to switch to.
    * @example
+   * import { createEventLoop } from '@jsvision/ui';
+   * import { resolveCapabilities, nordTheme } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+   *
    * loop.setTheme(nordTheme); // repaints immediately, from any call context
    */
   setTheme(theme: Theme): void;
