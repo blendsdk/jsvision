@@ -19,6 +19,8 @@
  * @param scope   A short subsystem tag for the prefix, e.g. `'menu'`, `'dialog'`, `'tabs'`.
  * @param message The warning text. Keep it free of secrets/PII — it may reach a shared terminal.
  * @example
+ * import { devWarn } from './warnings.js';
+ *
  * // Warn a developer about a duplicate accelerator (silent in production builds):
  * devWarn('menu', "duplicate accelerator 'x' — \"Exit\", \"Export\" share it; only the first is reachable");
  */

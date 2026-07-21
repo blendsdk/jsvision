@@ -37,6 +37,9 @@ function span(spec: TrackSpec): number {
  * @param value The value to clamp.
  * @returns `value` pinned to the range.
  * @example
+ * // clampValue is internal (not re-exported from the package barrel) — imported by relative path.
+ * import { clampValue } from './track.js';
+ *
  * clampValue({ min: 0, max: 255 }, 300); // 255
  */
 export function clampValue(range: ValueRange, value: number): number {
@@ -53,6 +56,9 @@ export function clampValue(range: ValueRange, value: number): number {
  * @param value The value to place.
  * @returns The thumb's leading cell offset in `[0, length - thumbSize]`.
  * @example
+ * // valueToOffset is internal (not re-exported from the package barrel) — imported by relative path.
+ * import { valueToOffset } from './track.js';
+ *
  * valueToOffset({ min: 0, max: 100, length: 11 }, 50); // 5 — the centre cell
  */
 export function valueToOffset(spec: TrackSpec, value: number): number {
@@ -73,6 +79,9 @@ export function valueToOffset(spec: TrackSpec, value: number): number {
  * @param offset The thumb's leading cell offset.
  * @returns The value at that offset, clamped to `[min, max]`.
  * @example
+ * // offsetToValue is internal (not re-exported from the package barrel) — imported by relative path.
+ * import { offsetToValue } from './track.js';
+ *
  * offsetToValue({ min: 0, max: 100, length: 11 }, 10); // 100 — the last cell
  */
 export function offsetToValue(spec: TrackSpec, offset: number): number {
@@ -91,6 +100,9 @@ export function offsetToValue(spec: TrackSpec, offset: number): number {
  * @param delta The signed step.
  * @returns `value + delta`, clamped to `[min, max]`.
  * @example
+ * // stepValue is internal (not re-exported from the package barrel) — imported by relative path.
+ * import { stepValue } from './track.js';
+ *
  * stepValue({ min: 0, max: 10 }, 10, +1); // 10 — clamped at the top
  */
 export function stepValue(range: ValueRange, value: number, delta: number): number {

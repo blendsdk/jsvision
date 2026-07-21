@@ -23,6 +23,25 @@ function defaultIsFocusable(view: View): boolean {
  * @param target The focused view to capture.
  * @returns The index path root→target, or `null` if `target` is outside `root`.
  * @example
+ * import { Group } from '../view/index.js';
+ * import { Input } from '../controls/index.js';
+ * import { signal } from '../reactive/index.js';
+ * import { createEventLoop } from '../event/index.js';
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { focusPath } from './focus.js';
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+ * const screenRoot = new Group();
+ * const panel = new Group();
+ * const first = new Input({ value: signal('') });
+ * const field = new Input({ value: signal('') });
+ * panel.add(first);
+ * panel.add(field);
+ * screenRoot.add(panel);
+ * loop.mount(screenRoot);
+ * loop.focusView(field);
+ *
  * const path = focusPath(screenRoot, loop.getFocused()!); // e.g. [0, 1]
  */
 export function focusPath(root: View, target: View): number[] | null {
@@ -49,6 +68,27 @@ export function focusPath(root: View, target: View): number[] | null {
  * @param path The index path to follow.
  * @returns The view at the path, or `null` if it does not resolve.
  * @example
+ * import { Group } from '../view/index.js';
+ * import { Input } from '../controls/index.js';
+ * import { signal } from '../reactive/index.js';
+ * import { createEventLoop } from '../event/index.js';
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { focusPath, viewAtPath } from './focus.js';
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+ *
+ * const oldRoot = new Group();
+ * const oldField = new Input({ value: signal('') });
+ * oldRoot.add(oldField);
+ * loop.mount(oldRoot);
+ * loop.focusView(oldField);
+ * const savedPath = focusPath(oldRoot, loop.getFocused()!)!; // captured before the screen was disposed
+ *
+ * // …the screen is disposed and rebuilt with the same shape…
+ * const rebuiltRoot = new Group();
+ * rebuiltRoot.add(new Input({ value: signal('') }));
+ *
  * const view = viewAtPath(rebuiltRoot, savedPath);
  * if (view !== null) loop.focusView(view);
  */
@@ -73,6 +113,28 @@ export function viewAtPath(root: View, path: readonly number[]): View | null {
  * @param key   The key captured from the previously focused view.
  * @returns The matching view, or `null` if no view yields `key`.
  * @example
+ * import { Group } from '../view/index.js';
+ * import { Input } from '../controls/index.js';
+ * import { signal } from '../reactive/index.js';
+ * import { createEventLoop } from '../event/index.js';
+ * import type { Route } from './types.js';
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { findFocusByKey } from './focus.js';
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+ *
+ * const emailField = new Input({ value: signal('') });
+ * const rebuiltRoot = new Group();
+ * rebuiltRoot.add(emailField);
+ * loop.mount(rebuiltRoot);
+ *
+ * const route: Route<void> = {
+ *   build: () => ({ view: rebuiltRoot }),
+ *   focusKey: (view) => (view === emailField ? 'email' : 'root'),
+ * };
+ * const savedKey = 'email'; // captured from the previously focused view before the screen was rebuilt
+ *
  * const target = findFocusByKey(rebuiltRoot, route.focusKey!, savedKey);
  * if (target !== null) loop.focusView(target);
  */
@@ -95,6 +157,19 @@ export function findFocusByKey(root: View, keyOf: (view: View) => string, key: s
  * @param isFocusable Predicate for "can take focus now"; defaults to visible + enabled + focusable.
  * @returns The first focusable view, or `null` if none.
  * @example
+ * import { Group } from '../view/index.js';
+ * import { Input } from '../controls/index.js';
+ * import { signal } from '../reactive/index.js';
+ * import { createEventLoop } from '../event/index.js';
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { firstFocusableLeaf } from './focus.js';
+ *
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+ * const screenRoot = new Group();
+ * screenRoot.add(new Input({ value: signal('') }));
+ * loop.mount(screenRoot);
+ *
  * const target = firstFocusableLeaf(screenRoot);
  * if (target !== null) loop.focusView(target);
  */

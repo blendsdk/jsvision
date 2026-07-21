@@ -99,7 +99,11 @@ export function createRoot<T>(fn: (dispose: () => void) => T): T {
  * @param fn The function to run.
  * @returns Whatever `fn` returns.
  * @example
- * import { createRoot, runWithOwner, effect, getOwner } from '@jsvision/ui';
+ * import { createRoot, runWithOwner, effect, getOwner, signal } from '@jsvision/ui';
+ *
+ * function render(text: string): void {
+ *   console.log(text);
+ * }
  *
  * const scope = createRoot((_dispose) => getOwner()); // capture a scope to reuse later
  * const label = signal('hi');
@@ -128,6 +132,10 @@ export function runWithOwner<T>(owner: Owner | null, fn: () => T): T {
  * @param cb The teardown callback.
  * @example
  * import { createRoot, signal, effect, onCleanup } from '@jsvision/ui';
+ *
+ * function tick(): void {
+ *   console.log('tick');
+ * }
  *
  * createRoot((dispose) => {
  *   const ms = signal(1000);

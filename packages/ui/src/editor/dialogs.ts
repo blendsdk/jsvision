@@ -48,6 +48,12 @@ function fieldRow(field: Input): Group {
  * @param initial Optional values to pre-fill the field and checkboxes.
  * @returns The entered search record, or `null` if the user cancels.
  * @example
+ * import { createApplication, findDialog } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
  * const rec = await findDialog(
  *   { loop: app.loop, desktop: app.desktop },
  *   { find: 'fox', options: { caseSensitive: false, wholeWords: false } },
@@ -91,6 +97,12 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
  * @param initial Optional values to pre-fill the fields and checkboxes.
  * @returns The entered replace record, or `null` if the user cancels.
  * @example
+ * import { createApplication, replaceDialog } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
  * const rec = await replaceDialog(
  *   { loop: app.loop, desktop: app.desktop },
  *   {
@@ -148,6 +160,16 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
  * @param message The message to display; the box sizes itself to fit.
  * @returns The button the user chose (`'cancel'` also covers closing the box).
  * @example
+ * import { createApplication, confirmBox } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
+ * async function save(): Promise<void> {
+ *   // Persist the buffer to disk.
+ * }
+ *
  * const answer = await confirmBox(
  *   { loop: app.loop, desktop: app.desktop },
  *   'The file has been modified. Save?',
@@ -177,6 +199,12 @@ export async function confirmBox(host: EditorDialogHost, message: string): Promi
  * @param message The message to display; the box sizes itself to fit.
  * @returns Resolves once the user dismisses the box.
  * @example
+ * import { createApplication, infoBox } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
  * await infoBox({ loop: app.loop, desktop: app.desktop }, 'Search string not found.');
  */
 export async function infoBox(host: EditorDialogHost, message: string): Promise<void> {
@@ -193,7 +221,18 @@ export async function infoBox(host: EditorDialogHost, message: string): Promise<
  * @param cursor The caret position in absolute (desktop) coordinates, used to avoid covering it.
  * @returns The button the user chose.
  * @example
+ * import { createApplication, replacePrompt } from '@jsvision/ui';
+ * import type { EditorDialogRequest } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
  * // Inside an editorDialog handler for a 'replacePrompt' request:
+ * const req: Extract<EditorDialogRequest, { kind: 'replacePrompt' }> = {
+ *   kind: 'replacePrompt',
+ *   cursor: { x: 10, y: 3 },
+ * };
  * const answer = await replacePrompt({ loop: app.loop, desktop: app.desktop }, req.cursor);
  */
 export async function replacePrompt(host: EditorDialogHost, cursor: Point): Promise<'yes' | 'no' | 'cancel'> {
@@ -225,7 +264,9 @@ export async function replacePrompt(host: EditorDialogHost, cursor: Point): Prom
  * @returns A handler suitable for the editor's `editorDialog` option.
  * @example
  * import { createApplication, Editor, wireEditorDialogs } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
  *
+ * const caps = resolveCapabilities().profile;
  * const app = createApplication({ caps });
  * const editorDialog = wireEditorDialogs({ loop: app.loop, desktop: app.desktop });
  * const editor = new Editor({ editorDialog });

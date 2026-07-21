@@ -37,10 +37,15 @@ type PlaceAxis = 'fill' | 'start' | 'center' | 'end';
  * {@link centered}/{@link topRight}/{@link bottomRight}/{@link topLeft} conveniences.
  *
  * @example
- * import { stack, place } from '@jsvision/ui';
+ * import { View, stack, place, okButton, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); }
+ * }
  *
  * // A 10×2 OK button, horizontally centered and pinned one cell above the bottom edge.
- * const dialog = stack(body, place(okButton, { h: 'center', v: 'end', vOffset: 1, width: 10, height: 2 }));
+ * const body = new Panel();
+ * const dialog = stack(body, place(okButton(), { h: 'center', v: 'end', vOffset: 1, width: 10, height: 2 }));
  */
 export interface Placement {
   /** Horizontal mode (default `'fill'`). */
@@ -176,9 +181,17 @@ class Stack extends Group {
  *   falsy layer is skipped.
  * @returns A `Group` overlay containing the wired (truthy) layers.
  * @example
- * import { stack, centered, topRight } from '@jsvision/ui';
+ * import { View, stack, centered, topRight, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
  *
  * // A full-box canvas with a centered dialog and a badge pinned to the top-right corner.
+ * const canvas = new Panel('canvas');
+ * const dialog = new Panel('dialog');
+ * const badge = new Panel('NEW');
  * const screen = stack({ background: 'desktop' }, canvas, centered(dialog, 40, 12), topRight(badge, 5, 1));
  */
 export function stack(...args: [Flex, ...Layer[]] | Layer[]): Group {
@@ -244,9 +257,16 @@ export function stack(...args: [Flex, ...Layer[]] | Layer[]): Group {
  * @param placement Where the layer should sit within the stack box.
  * @returns The same `view`, for inline chaining inside a `stack(...)`.
  * @example
- * import { stack, place } from '@jsvision/ui';
+ * import { View, stack, place, type DrawContext } from '@jsvision/ui';
+ *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
  *
  * // Pin a 20×3 panel to the bottom-left corner of the overlay.
+ * const canvas = new Panel('canvas');
+ * const panel = new Panel('panel');
  * const screen = stack(canvas, place(panel, { h: 'start', v: 'end', width: 20, height: 3 }));
  */
 export function place<V extends View>(view: V, placement: Placement): V {
@@ -275,8 +295,15 @@ export function place<V extends View>(view: V, placement: Placement): V {
  * @param height Fixed height in cells.
  * @returns The same `view`, for inline chaining inside a `stack(...)`.
  * @example
- * import { stack, centered } from '@jsvision/ui';
+ * import { View, stack, centered, type DrawContext } from '@jsvision/ui';
  *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
+ *
+ * const canvas = new Panel('canvas');
+ * const dialog = new Panel('dialog');
  * const screen = stack(canvas, centered(dialog, 40, 12));
  */
 export function centered<V extends View>(view: V, width: number, height: number): V {
@@ -291,8 +318,15 @@ export function centered<V extends View>(view: V, width: number, height: number)
  * @param height Fixed height in cells.
  * @returns The same `view`, for inline chaining inside a `stack(...)`.
  * @example
- * import { stack, topRight } from '@jsvision/ui';
+ * import { View, stack, topRight, type DrawContext } from '@jsvision/ui';
  *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
+ *
+ * const canvas = new Panel('canvas');
+ * const badge = new Panel('NEW');
  * const screen = stack(canvas, topRight(badge, 5, 1));
  */
 export function topRight<V extends View>(view: V, width: number, height: number): V {
@@ -307,8 +341,15 @@ export function topRight<V extends View>(view: V, width: number, height: number)
  * @param height Fixed height in cells.
  * @returns The same `view`, for inline chaining inside a `stack(...)`.
  * @example
- * import { stack, bottomRight } from '@jsvision/ui';
+ * import { View, stack, bottomRight, type DrawContext } from '@jsvision/ui';
  *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
+ *
+ * const canvas = new Panel('canvas');
+ * const clock = new Panel('12:00');
  * const screen = stack(canvas, bottomRight(clock, 8, 1));
  */
 export function bottomRight<V extends View>(view: V, width: number, height: number): V {
@@ -323,8 +364,15 @@ export function bottomRight<V extends View>(view: V, width: number, height: numb
  * @param height Fixed height in cells.
  * @returns The same `view`, for inline chaining inside a `stack(...)`.
  * @example
- * import { stack, topLeft } from '@jsvision/ui';
+ * import { View, stack, topLeft, type DrawContext } from '@jsvision/ui';
  *
+ * class Panel extends View {
+ *   constructor(private readonly label: string) { super(); }
+ *   draw(ctx: DrawContext) { ctx.fill(' ', ctx.color('window')); ctx.text(1, 0, this.label); }
+ * }
+ *
+ * const canvas = new Panel('canvas');
+ * const logo = new Panel('LOGO');
  * const screen = stack(canvas, topLeft(logo, 12, 2));
  */
 export function topLeft<V extends View>(view: V, width: number, height: number): V {

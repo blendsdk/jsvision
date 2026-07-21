@@ -82,6 +82,7 @@ export interface SpinnerOptions {
  *
  * @example
  * import { Group, Spinner, runSpinner, signal, at } from '@jsvision/ui';
+ * import type { TimerSeam } from '@jsvision/ui';
  *
  * const g = new Group();
  * const frame = signal(0);
@@ -89,8 +90,14 @@ export interface SpinnerOptions {
  * const spinner = new Spinner({ frame, preset: 'dots', label: 'Loading…' });
  * g.add(at(spinner, 1, 0, 20, 1));
  *
- * // Advance it on a timer (see runSpinner); `stop()` halts the animation.
- * const stop = runSpinner(frame, { timer: app.runtime, intervalMs: 80 });
+ * // Advance it on a timer (see runSpinner). A running app passes its own RuntimeAdapter (from
+ * // createApplication) as `timer`; this fixture wires the same seam straight to the real timers.
+ * let handle: NodeJS.Timeout | undefined;
+ * const timer: TimerSeam = {
+ *   setTimer: (fn, ms) => (handle = setTimeout(fn, ms)),
+ *   clearTimer: () => handle !== undefined && clearTimeout(handle),
+ * };
+ * const stop = runSpinner(frame, { timer, intervalMs: 80 });
  * // …later: stop();
  */
 export class Spinner extends View {

@@ -308,6 +308,23 @@ function missingName(diagnostic) {
  * in a documentation snippet is snippet hygiene, not an API defect; `noEmit`
  * because the base config enables declaration and map output.
  *
+ * Two consequences of compiling the repo's way are worth knowing when an example
+ * fails in a way that looks impossible:
+ *
+ * 1. `lib` is unset in the base config, so the default set for the target pulls
+ *    in DOM. An example that forgets to declare a name does not always fail with
+ *    "cannot find name" — it can bind to a browser global instead and type-check
+ *    against the wrong thing. `status`, `confirm`, `name`, `close`, `focus`,
+ *    `event`, `screen`, `history`, `menubar` and friends all resolve this way,
+ *    and every one is a plausible name in a terminal-widget snippet.
+ * 2. A block is compiled inside its own source's directory, so a symbol it
+ *    imports from `@jsvision/ui` comes from the built `dist/*.d.ts` while the
+ *    surrounding module's own types come from `src`. Classes carrying private
+ *    fields (`View.pendingMounts`) are nominally distinct across those two
+ *    declarations, so passing a barrel-imported `Group` to a function typed
+ *    against the `src` `View` fails. Examples for symbols the barrel does not
+ *    export therefore import their neighbours relatively.
+ *
  * @returns {ts.CompilerOptions} Options for the guard's program.
  */
 function compilerOptions() {

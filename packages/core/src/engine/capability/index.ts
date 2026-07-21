@@ -77,7 +77,9 @@ let ambientCache: CapabilityResolution | undefined;
  *
  * // Ambient detection (cached per process):
  * const caps = resolveCapabilities().profile;
- * if (caps.colorDepth === 'truecolor') { ... }
+ * if (caps.colorDepth === 'truecolor') {
+ *   // …paint with 24-bit color rather than the 256-color fallback.
+ * }
  *
  * // Force a configuration (e.g. for a test or a screenshot):
  * const forced = resolveCapabilities({
@@ -127,7 +129,9 @@ export function resolveCapabilities(options: SyncResolveOptions = {}): Capabilit
  * const query = createTerminalQuery(); // defaults to process std streams
  * try {
  *   const { profile } = await resolveCapabilitiesAsync({ query, timeoutMs: 200 });
- *   if (profile.sync2026) { ... } // terminal supports synchronized output
+ *   if (profile.sync2026) {
+ *     // …the terminal supports synchronized output; wrap frames in it to avoid tearing.
+ *   }
  * } finally {
  *   query.close();
  * }
