@@ -10,7 +10,7 @@
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, test, expect } from 'vitest';
-import { collectExamples, SHIPPED_ROOTS } from '../src/api/jsdoc-examples.mjs';
+import { collectExamples, checkExamples, SHIPPED_ROOTS } from '../src/api/jsdoc-examples.mjs';
 
 const IMPL_FIXTURES = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'jsdoc-examples', 'impl');
 
@@ -108,4 +108,29 @@ describe('virtual paths', () => {
     expect(shipped.length).toBeGreaterThan(0);
     expect(new Set(shipped.map((b) => b.virtualPath)).size).toBe(shipped.length);
   });
+});
+
+describe('lib pinning', () => {
+  // The guard pins `lib` instead of inheriting it. Left unset, the default set
+  // for the target includes DOM, and an example that forgets a declaration then
+  // binds to a browser global rather than failing — three shipped examples were
+  // type-checking against `window.status` and the DOM `confirm` before the pin.
+  // Nothing in this repo targets a browser, so these names must not resolve.
+  test.each([['status'], ['confirm'], ['name'], ['close'], ['focus'], ['event'], ['screen'], ['history']])(
+    'the DOM global %s does not resolve in an example',
+    (global) => {
+      const probe = {
+        ...block('fences.ts', 'noFence'),
+        symbol: `__lib_probe_${global}__`,
+        virtualPath: join(IMPL_FIXTURES, `.jsdoc-example.lib-probe-${global}.0.ts`),
+        body: `const probe = ${global};\nexport { probe };`,
+      };
+      const failure = checkExamples([probe], {}).unexpected[0];
+      expect(failure, `${global} still resolves — is lib still pinned?`).toBeDefined();
+      // Asserted on the message rather than `missingNames`, which the guard fills only for TS2304.
+      // A name Node's own types still suggest a near-match for (`event` → `Event`) reports as TS2552
+      // instead, and both codes mean the same thing here: the global is gone.
+      expect(failure.message).toContain(`Cannot find name '${global}'`);
+    },
+  );
 });
