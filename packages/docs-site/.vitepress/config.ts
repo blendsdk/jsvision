@@ -216,6 +216,8 @@ export default withMermaid(
             items: [
               { text: 'Hello, JSVision', link: '/apps/hello' },
               { text: 'Editor & clipboard', link: '/apps/editor' },
+              { text: 'Amiga clock', link: '/apps/amiga-clock' },
+              { text: 'Matrix rain', link: '/apps/matrix' },
               { text: 'Turbo Vision desktop', link: '/apps/desktop' },
             ],
           },

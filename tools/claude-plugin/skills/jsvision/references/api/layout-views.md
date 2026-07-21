@@ -345,6 +345,7 @@ Mounts a view tree and renders it to a screen buffer.
 ```ts
 interface RenderRoot {
   mount(root: View): void;   // Mount a view tree: wire its scopes, run the first layout, and compose the first frame.
+  unmount(): void;   // Unmount the mounted tree: dispose its reactive scope — which recursively disposes every descendant scope and runs their `onCleanup` — then drop the tree. Idempotent, and safe to call with nothing mounted. A host that detaches a still-live tree (the browser `mountApp` teardown) calls this so views release timers and subscriptions instead of leaking across a re-mount.
   resize(size: Size2D): void;   // Resize the viewport, triggering a full re-layout and recompose.
   flush(): void;   // Force a synchronous frame now, running any pending scheduled repaint immediately.
   serialize(): string;   // The last frame's damage-diff output (the escape sequences to apply); forces a flush if one is pending.
