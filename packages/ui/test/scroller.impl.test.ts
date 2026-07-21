@@ -140,3 +140,37 @@ test('horizontal Scroller scrolls on the x axis', () => {
   expect(scroller.delta.x).toBe(1);
   expect(loop.renderRoot.buffer().get(0, 0)?.char).toBe('B'); // column 1 now at the left
 });
+
+// Every viewer re-limits its bar from inside its own draw(), so `ScrollBar.setRange` repainting on a
+// range change puts a write on the paint path — the classic shape of a render loop that never goes
+// idle. The gate that prevents it lives in `setRange`, but the hazard belongs to the owner, so it is
+// pinned here against a real `Scroller`: the tree must reach a fixed point in a bounded number of
+// frames and then stop asking for more, both at rest and after a scroll that moves the range.
+test('a Scroller settles: re-limiting its bars from draw() does not schedule frames forever', () => {
+  let pending = 0;
+  const rr = createRenderRoot({ width: 10, height: 6 }, { caps, schedule: () => (pending += 1) });
+  const scroller = new Scroller({
+    content: new LetterRows(30),
+    extent: { width: 30, height: 30 },
+    scrollbars: 'both',
+  });
+  rr.mount(scroller);
+
+  /** Flush until nothing more is scheduled; returns the frames it took, capped so a loop can't hang. */
+  const settle = (): number => {
+    for (let frames = 1; frames <= 10; frames += 1) {
+      pending = 0;
+      rr.flush();
+      if (pending === 0) return frames;
+    }
+    return Infinity; // never converged — the fixed point does not exist
+  };
+
+  // A couple of frames to reach the fixed point is expected: the value-bind dirties on mount and the
+  // first draw pushes a real range. What must not happen is that it never stops.
+  expect(settle()).toBeLessThanOrEqual(3);
+
+  // And it must re-settle after a change that genuinely moves the range, not just at rest.
+  rr.resize({ width: 10, height: 20 });
+  expect(settle()).toBeLessThanOrEqual(3);
+});
