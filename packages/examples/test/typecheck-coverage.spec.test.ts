@@ -24,7 +24,7 @@
  * Immutable oracle: if a package config disagrees, the config is wrong — never
  * this test.
  */
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
@@ -157,6 +157,11 @@ test('ST-3: every package with a typecheck script typechecks every file in its t
   const uncovered: string[] = [];
   for (const name of readdirSync(PACKAGES)) {
     const pkgDir = join(PACKAGES, name);
+    // `packages/` is not exclusively package directories: the capability probe appends each run to
+    // a git-ignored `packages/terminal-matrix.json`. Treating that file as a package demanded an
+    // exemption for it, so simply running the probe turned this gate permanently red locally while
+    // CI — which never has the file — stayed green.
+    if (!statSync(pkgDir).isDirectory()) continue;
     const testDir = join(pkgDir, 'test');
     const config = typecheckConfigOf(pkgDir);
     if (config === undefined) {
