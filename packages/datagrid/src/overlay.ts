@@ -28,7 +28,13 @@ export interface CellRect {
  * @param view A mounted view.
  * @returns The view's absolute top-left cell `{ x, y }`.
  * @example
- * import { absoluteRect } from '@jsvision/datagrid';
+ * import { signal } from '@jsvision/ui';
+ * import { column, fromRows, EditableDataGrid, absoluteRect } from '@jsvision/datagrid';
+ *
+ * interface Row { id: number; name: string }
+ * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+ * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+ * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
  * // Given a mounted grid body view:
  * const origin = absoluteRect(grid.rows); // e.g. { x: 4, y: 3 }
  */
@@ -66,8 +72,21 @@ export function absoluteRect(view: View): { x: number; y: number } {
  * @returns A `dispose()` that removes the view and disposes its reactive scope (idempotent-safe to
  *   call once).
  * @example
- * import { mountCellOverlay, absoluteRect } from '@jsvision/datagrid';
+ * import { Group, Input, signal, createEventLoop, resolveCapabilities } from '@jsvision/ui';
+ * import { column, fromRows, EditableDataGrid, mountCellOverlay, absoluteRect } from '@jsvision/datagrid';
+ *
+ * interface Row { id: number; name: string }
+ * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+ * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+ * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+ * const root = new Group();
+ * root.add(grid);
+ * const caps = resolveCapabilities().profile;
+ * const loop = createEventLoop({ width: 20, height: 6 }, { caps });
+ * loop.mount(root);
+ *
  * // Mount an editor over the focused cell (rect in body-local coords):
+ * const editor = new Input({ value: signal('Ada') });
  * const dispose = mountCellOverlay({
  *   host: grid.overlay,
  *   loop,

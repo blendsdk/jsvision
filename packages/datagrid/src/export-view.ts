@@ -114,8 +114,12 @@ function serializeJson<T>(cols: readonly ExportColumn<T>[], rows: readonly T[]):
  * @returns The serialized document as a string.
  * @example
  * ```ts
+ * import { serializeView } from './export-view.js';
+ *
  * // Internal to the package — the grid's exportView() builds `cols` from its column model and calls this.
- * const cols = [{ id: 'id', title: 'ID', text: (r: { id: number }) => String(r.id), raw: (r) => r.id }];
+ * const cols = [
+ *   { id: 'id', title: 'ID', text: (r: { id: number }) => String(r.id), raw: (r: { id: number }) => r.id },
+ * ];
  * serializeView(cols, [{ id: 1 }, { id: 2 }], 'csv'); // 'ID\r\n1\r\n2'
  * ```
  */

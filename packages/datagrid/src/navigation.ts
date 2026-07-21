@@ -77,9 +77,19 @@ const PREV_CELL = 'grid.prevCell';
  *
  * @example
  * ```ts
- * import { createEventLoop } from '@jsvision/ui';
- * import { gridKeymap, installGridNavigation } from '@jsvision/datagrid';
+ * import { createEventLoop, resolveCapabilities, signal, Group } from '@jsvision/ui';
+ * import { column, fromRows, EditableDataGrid, gridKeymap, installGridNavigation } from '@jsvision/datagrid';
+ *
+ * interface Row { id: number; name: string }
+ * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+ * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+ * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+ * const root = new Group();
+ * root.add(grid);
+ *
+ * const caps = resolveCapabilities().profile;
  * const loop = createEventLoop({ width: 80, height: 24 }, { caps, keymap: gridKeymap });
+ * loop.mount(root);
  * const uninstall = installGridNavigation(loop, grid); // Tab → next cell; Shift+Tab → prev cell
  * ```
  */
@@ -118,9 +128,19 @@ export interface NavGrid {
  * @returns A function that unregisters both handlers (idempotent).
  * @example
  * ```ts
- * import { createEventLoop } from '@jsvision/ui';
- * import { gridKeymap, installGridNavigation } from '@jsvision/datagrid';
+ * import { createEventLoop, resolveCapabilities, signal, Group } from '@jsvision/ui';
+ * import { column, fromRows, EditableDataGrid, gridKeymap, installGridNavigation } from '@jsvision/datagrid';
+ *
+ * interface Row { id: number; name: string }
+ * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+ * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+ * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+ * const root = new Group();
+ * root.add(grid);
+ *
+ * const caps = resolveCapabilities().profile;
  * const loop = createEventLoop({ width: 80, height: 24 }, { caps, keymap: gridKeymap });
+ * loop.mount(root);
  * loop.focusView(grid.rows);
  * const uninstall = installGridNavigation(loop, grid);
  * // …later: uninstall();

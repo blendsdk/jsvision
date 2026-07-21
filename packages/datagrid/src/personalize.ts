@@ -37,7 +37,17 @@ export interface PersonalizeResult {
  * @returns `{ ok: true }` when the layout was committed, `{ ok: false }` on Cancel/Esc.
  * @example
  * ```ts
- * import { personalizeGrid, createMemoryVariantStore } from '@jsvision/datagrid';
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { createApplication, signal } from '@jsvision/ui';
+ * import { column, fromRows, EditableDataGrid, personalizeGrid, createMemoryVariantStore } from '@jsvision/datagrid';
+ *
+ * const caps = resolveCapabilities().profile; // ambient: reads process.env + process.platform
+ * const app = createApplication({ caps });
+ *
+ * interface Row { id: number; name: string }
+ * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+ * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+ * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
  *
  * const store = createMemoryVariantStore(); // back it with a file/DB if you like
  * const { ok } = await personalizeGrid(grid, { store, host: app, title: 'Personalize columns' });

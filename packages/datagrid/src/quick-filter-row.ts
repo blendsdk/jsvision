@@ -53,8 +53,9 @@ export interface QuickFilterRowConfig<T> {
  * import { signal } from '@jsvision/ui';
  * import { QuickFilterRow } from '@jsvision/datagrid';
  *
+ * interface Row { name: string }
  * const band = new QuickFilterRow({
- *   columns: [{ title: 'Name', accessor: (r) => String(r.name), width: 12 }],
+ *   columns: [{ title: 'Name', accessor: (r: Row) => String(r.name), width: 12 }],
  *   columnIds: ['name'],
  *   autoWidths: () => [null],
  *   indent: signal(0),

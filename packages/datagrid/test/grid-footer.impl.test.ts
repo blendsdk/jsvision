@@ -13,6 +13,7 @@ import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
 import type { GridDataSource } from '../src/data-source.js';
 import { EditableDataGrid } from '../src/grid.js';
+import { codeLines } from './helpers/code-lines.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 const src = (name: string) => readFileSync(fileURLToPath(new URL(`../src/${name}`, import.meta.url)), 'utf8');
@@ -81,8 +82,13 @@ test('grid.ts stays a thin delegator under the line-count guard', () => {
   // 1680 -> 1760 for the RD-16 personalization grid read API: the documented public reads columns() /
   // defaultColumnLayout() + clearColumnWidth() (each JSDoc + @example), the applyVariant delete-then-set
   // width-restore, and the resolvedWidth/declaredWidth split — the GridColumnInfo assembly lives in variant.ts.
-  const lineCount = src('grid.ts').split('\n').length;
-  expect(lineCount).toBeLessThan(1760);
+  //
+  // The metric is now CODE lines rather than raw lines, which is what every re-base above was actually
+  // reasoning about. The guard exists to stop extracted logic being re-inlined, while every public export
+  // here must carry an `@example` — so a pure documentation pass would trip a raw-line ceiling it adds no
+  // logic to. When the metric changed, grid.ts held 815 code lines of 1912 raw, unchanged across that pass.
+  const lineCount = codeLines(src('grid.ts'));
+  expect(lineCount).toBeLessThan(900);
 });
 
 test('displayedRows is reactive: an effect re-runs when the source rows change', () => {

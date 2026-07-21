@@ -29,6 +29,7 @@ export interface CellEditorHost {
  *
  * @example
  * ```ts
+ * import type { CellEditorKind } from '@jsvision/datagrid';
  * const kind: CellEditorKind = 'boolean'; // one of text|integer|decimal|boolean|date|enum|lookup|readonly|custom
  * ```
  */
@@ -40,6 +41,7 @@ export type CellEditorKind =
  *
  * @example
  * ```ts
+ * import type { LookupItem } from '@jsvision/datagrid';
  * const row: LookupItem = { key: '7', label: 'Ada Lovelace' }; // commits '7', shows 'Ada Lovelace'
  * ```
  */
@@ -56,6 +58,7 @@ export interface LookupItem {
  *
  * @example
  * ```ts
+ * import type { LookupProvider } from '@jsvision/datagrid';
  * const staticRows: LookupProvider = [{ key: '7', label: 'Ada' }];
  * const asyncRows: LookupProvider = async () => (await fetch('/api/customers')).json();
  * ```
@@ -69,6 +72,7 @@ export type LookupProvider = readonly LookupItem[] | (() => Promise<LookupItem[]
  *
  * @example
  * ```ts
+ * import type { CellEditorSpec } from '@jsvision/datagrid';
  * const boolSpec: CellEditorSpec = { kind: 'boolean' };
  * const enumSpec: CellEditorSpec = { kind: 'enum', values: ['open', 'paid', 'shipped'] };
  * const lookupSpec: CellEditorSpec = { kind: 'lookup', items: [{ key: '7', label: 'Ada' }] };
