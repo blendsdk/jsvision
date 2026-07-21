@@ -110,6 +110,27 @@ export const EXAMPLES: readonly ExampleEntry[] = [
     load: () => import('./apps/matrix.js'),
   },
   {
+    id: 'apps/effects',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/effects.ts',
+    load: () => import('./apps/effects.js'),
+  },
+  {
+    id: 'apps/calculator',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/calculator.ts',
+    load: () => import('./apps/calculator.js'),
+  },
+  {
+    id: 'apps/life',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/life.ts',
+    load: () => import('./apps/life.js'),
+  },
+  {
     id: 'apps/desktop',
     category: 'apps',
     kind: 'app',
