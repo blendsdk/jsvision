@@ -12,6 +12,7 @@ import { layout } from '../layout/index.js';
 import type { LayoutBox, Size2D } from '../layout/index.js';
 import { View } from './view.js';
 import { Group } from './group.js';
+import { checkLayoutFootguns } from './layout-warnings.js';
 
 /**
  * Reflow the view tree into the viewport: compute every visible view's parent-relative `bounds`,
@@ -28,7 +29,10 @@ export function reflow(root: View, viewport: Size2D): void {
   const rects = layout(rootBox, viewport);
   for (const [box, rect] of rects) {
     const view = boxToView.get(box);
-    if (view !== undefined) view.bounds = rect;
+    if (view === undefined) continue;
+    view.bounds = rect;
+    // Piggy-backed on the write-back walk so the dev diagnostics cost no extra traversal.
+    checkLayoutFootguns(view, rect);
   }
 
   applyCentering(root);

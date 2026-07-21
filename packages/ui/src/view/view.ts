@@ -16,6 +16,7 @@ import { TuiError } from '@jsvision/core';
 import type { Rect, Size2D, LayoutProps } from '../layout/index.js';
 import type { DrawContext, ViewState, DispatchEvent } from './types.js';
 import type { Point } from './geometry.js';
+import { createViewState, notePaintRequested, noteRelayoutRequested } from './view-state.js';
 
 /**
  * The internal seam a `View` uses to talk to its render root — how a view requests a repaint or
@@ -63,8 +64,15 @@ export interface ViewHost {
 export abstract class View {
   /** Parent-relative integer rect; written by the layout pass — read it in `draw`/hit-testing. */
   bounds: Rect = { x: 0, y: 0, width: 0, height: 0 };
-  /** Draw-against flags. The object reference is fixed; individual fields mutate (e.g. `focused`). */
-  readonly state: ViewState = { visible: true, disabled: false, focused: false };
+  /**
+   * Draw-against flags. The object reference is fixed; individual fields mutate (e.g. `focused`).
+   *
+   * Writing `visible` or `disabled` changes only what the *next* paint would draw — it does not ask
+   * for that paint. Follow such a write with {@link invalidate} (or {@link invalidateLayout}, which a
+   * visibility flip needs, since layout omits hidden views). A development build warns when a write
+   * goes unaccounted for.
+   */
+  readonly state: ViewState = createViewState(this);
   /**
    * Layout props for this view (direction, size, padding, absolute placement, …) — **read-only**.
    *
@@ -234,11 +242,13 @@ export abstract class View {
 
   /** Request a repaint of this view. A no-op before the view is mounted (the first frame paints everything). */
   invalidate(): void {
+    notePaintRequested(this);
     this.host?.markRepaint(this);
   }
 
   /** Request a reflow (re-run layout, then repaint). Use this when a change affects size/position, not just pixels. */
   invalidateLayout(): void {
+    noteRelayoutRequested();
     this.host?.markRelayout();
   }
 
