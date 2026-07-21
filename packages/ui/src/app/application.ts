@@ -495,6 +495,7 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
         warnAmbiguousWidth: opts.warnAmbiguousWidth,
         adaptAmbiguousWidth: opts.adaptAmbiguousWidth,
         requireTty: opts.requireTty,
+        logger: opts.logger,
         quitState,
       }),
   };

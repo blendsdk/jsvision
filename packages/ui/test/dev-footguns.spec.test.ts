@@ -11,7 +11,8 @@
  */
 import { test, expect, vi, afterEach } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
-import { View, Group, reflow } from '../src/view/index.js';
+import { View, Group, reflow, at } from '../src/view/index.js';
+import { Scroller } from '../src/scroll/index.js';
 import type { DrawContext } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { resetDevWarnings } from '../src/shared/warnings.js';
@@ -328,4 +329,50 @@ test('state.visible keeps its value through the accessor', () => {
   expect(widget.state.visible).toBe(false);
   widget.state.disabled = true;
   expect(widget.state.disabled).toBe(true);
+});
+
+// --- No false accusations: the verdict waits for the frame to settle -------------------------------
+
+test('a container that assigns its children bounds while painting is never accused', async () => {
+  // A `Scroller` gives its content and owned bars their bounds in draw(), so at reflow time those
+  // children still hold the degenerate rects the flex pass produced. Judging then would report every
+  // scroll bar in every app as invisible.
+  const content = new Group();
+  content.add(at(new Sized(), 0, 0, 30, 20));
+  const scroller = new Scroller({ content, extent: { width: 30, height: 20 }, scrollbars: 'both' });
+  const root = new Group();
+  root.add(at(scroller, 0, 0, 24, 8));
+
+  const loop = createEventLoop({ width: 24, height: 8 }, { caps });
+
+  const lines: string[] = [];
+  const warn = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+    lines.push(args.map(String).join(' '));
+  });
+  loop.mount(root);
+  loop.renderRoot.flush(); // the frame in which the Scroller places its children
+  await Promise.resolve();
+  warn.mockRestore();
+
+  expect(lines).toEqual([]);
+});
+
+test('a repeating condition warns once even as the message changes with each new size', async () => {
+  const widget = new Unmeasured();
+  const root = new Group();
+  root.setLayout({ direction: 'col' });
+  root.add(widget);
+
+  const lines: string[] = [];
+  const warn = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+    lines.push(args.map(String).join(' '));
+  });
+  // The same broken view laid out at three terminal sizes: one condition, three different rects.
+  for (const height of [10, 20, 30]) {
+    reflow(root, { width: 40, height });
+    await Promise.resolve();
+  }
+  warn.mockRestore();
+
+  expect(lines.length).toBe(1);
 });

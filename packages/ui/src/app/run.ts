@@ -8,7 +8,7 @@
  * re-positions the cursor afterward. This backs {@link Application.run}.
  */
 import { createHost, cursor, assertEssentials, detectTty } from '@jsvision/core';
-import type { CapabilityProfile, RuntimeAdapter, ScreenBuffer } from '@jsvision/core';
+import type { CapabilityProfile, Logger, RuntimeAdapter, ScreenBuffer } from '@jsvision/core';
 import type { Point } from '../view/index.js';
 import type { EventLoop } from '../event/index.js';
 import { beginScreenSession, endScreenSession } from '../shared/warnings.js';
@@ -48,6 +48,12 @@ export interface RunContext {
   readonly adaptAmbiguousWidth?: boolean;
   /** Assert an interactive TTY before starting (default `true`). See {@link ApplicationOptions.requireTty}. */
   readonly requireTty?: boolean;
+  /**
+   * The app's screen-safe logger, if it has one. Development warnings raised while the app owns the
+   * terminal are mirrored into it as they happen, so a run with `JSVISION_LOG` set shows diagnostics
+   * live rather than only at exit.
+   */
+  readonly logger?: Logger;
   /** The shared quit-resolver cell that the app's quit sink calls. */
   readonly quitState: QuitState;
 }
@@ -131,8 +137,10 @@ export async function runApplication(ctx: RunContext): Promise<number> {
   }
 
   // From here on the renderer owns the terminal, so a development warning raised during layout,
-  // focus, or dispatch must not be written anywhere — it is withheld until the restore below.
-  beginScreenSession();
+  // focus, or dispatch must not be written anywhere — it is withheld until the restore below. The
+  // app's logger, being screen-safe by construction, additionally sees each one as it happens.
+  const log = ctx.logger;
+  beginScreenSession(log === undefined ? undefined : (line) => log.warn('devwarn', line));
   try {
     await host.start(); // enter raw mode + the alternate screen
     host.render(ctx.loop.renderRoot.buffer()); // paint the first frame
