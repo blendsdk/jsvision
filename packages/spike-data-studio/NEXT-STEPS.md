@@ -2,7 +2,7 @@
 
 Short, durable pickup notes so a fresh session on any computer can continue without the prior
 conversation. The spike verdict + full findings are in
-`codeops/features/data-studio/plans/feasibility-spike/decision-memo.md`.
+`codeops/_archive/data-studio/plans/feasibility-spike/decision-memo.md`.
 
 ## State (as of 2026-07-11)
 
@@ -34,7 +34,7 @@ Postgres is **not** carried by git — recreate it in one command, then point th
 docker run --rm -d --name data-studio-spike -e POSTGRES_PASSWORD=spike -p 5433:5432 postgres:16
 export PGPASSWORD=spike
 psql -h localhost -p 5433 -U postgres -d postgres \
-  -f codeops/features/data-studio/plans/feasibility-spike/seed-schema.sql
+  -f codeops/_archive/data-studio/plans/feasibility-spike/seed-schema.sql
 export DATABASE_URL='postgres://postgres:spike@localhost:5433/postgres'
 yarn install && yarn build           # from repo root (cross-package imports use built dist)
 yarn workspace @jsvision/spike-data-studio probe:4   # sanity-check the editable grid still runs

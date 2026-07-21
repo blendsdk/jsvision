@@ -184,7 +184,7 @@ Shared config: tsconfig.base.json · turbo.json · per-package vitest.config.ts 
   modality) freely extends TV, and entirely new components have no TV counterpart to match.
 
 - **Deliberately non-faithful components (geometry may diverge from TV — do NOT "restore fidelity").**
-  As a recorded decision (see `codeops/features/layout-dsl-adoption/requirements/RD-01`), these
+  As a recorded decision (see `codeops/_archive/layout-dsl-adoption/requirements/RD-01`), these
   dialogs are laid out with the layout DSL (flex composition), not TV's hand-computed cell geometry.
   Their **behavior** matches TV (input, focus/tab order, validation, colors, return values); only
   their child **positions** may differ, and that difference is intentional:
