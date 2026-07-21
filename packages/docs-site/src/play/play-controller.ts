@@ -148,6 +148,7 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
           build: (ctx) => def.build(ctx),
           title: def.title,
           kind: opts.entry.kind,
+          themeMenu: opts.entry.themeMenu,
           caps,
           viewport: dims,
           onDepthChange: (nextDepth) => void controller.remount({ depth: nextDepth }),

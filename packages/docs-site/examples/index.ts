@@ -22,6 +22,13 @@ export interface ExampleEntry {
   readonly kind: 'component' | 'app';
   /** Package-root-relative path to the module (`'examples/controls/button.ts'`) — the `<<<` embed + parity target. */
   readonly sourcePath: string;
+  /**
+   * Show the `View ▸ Theme` preset submenu in this example's chrome. Off by default — a theme
+   * switcher distracts from the component an example exists to show — so only an example that is
+   * itself about theming asks for it. Read for a `component` example, whose chrome the demo shell
+   * owns; an `app` example builds its own menu bar and passes the flag to `demoApp` instead.
+   */
+  readonly themeMenu?: boolean;
   /** Lazy dynamic import so each example is a separate code-split chunk (never in the initial bundle). */
   load(): Promise<{ default: ExampleDefinition }>;
 }
@@ -75,6 +82,20 @@ export const EXAMPLES: readonly ExampleEntry[] = [
     load: () => import('./table/data-grid.js'),
   },
   {
+    id: 'apps/hello',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/hello.ts',
+    load: () => import('./apps/hello.js'),
+  },
+  {
+    id: 'apps/editor',
+    category: 'apps',
+    kind: 'app',
+    sourcePath: 'examples/apps/editor.ts',
+    load: () => import('./apps/editor.js'),
+  },
+  {
     id: 'apps/desktop',
     category: 'apps',
     kind: 'app',
@@ -85,6 +106,7 @@ export const EXAMPLES: readonly ExampleEntry[] = [
     id: 'theming/preset-gallery',
     category: 'theming',
     kind: 'component',
+    themeMenu: true, // the gallery IS the theme switcher's demo — the only example that shows it
     sourcePath: 'examples/theming/preset-gallery.ts',
     load: () => import('./theming/preset-gallery.js'),
   },
