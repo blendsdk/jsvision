@@ -79,6 +79,41 @@ test('ST-01: max==min fills the track with the disabled ▓ glyph (no thumb)', (
   for (let y = 1; y <= 6; y += 1) expect(buf.get(0, y)?.char, `row ${y}`).toBe(DISABLED);
 });
 
+// A range change alone must reach the screen. The bar's only other repaint trigger is its bound
+// `value`, so an owner that re-limits the bar while the offset stays put — a list whose items arrive
+// asynchronously, or a filter that narrows the item count — would otherwise leave the previous frame
+// on screen: a disabled ▓ track over content that clearly overflows.
+test('a widened range repaints the bar without the bound value moving', () => {
+  const value = signal(0);
+  const bar = new ScrollBar({ value, min: 0, max: 0 }); // mounts disabled — content fits
+  const rr = createRenderRoot({ width: 1, height: 8 }, { caps });
+  rr.mount(bar);
+  rr.flush(); // drain the frame the value-bind schedules as it mounts, so the bar starts clean
+  expect(rr.buffer().get(0, 1)?.char).toBe(DISABLED); // the pre-condition this oracle turns on
+
+  // Content arrives: the owner re-limits the bar, but the offset is still 0, so `value` never fires.
+  bar.setRange(0, 10);
+  rr.flush();
+
+  const buf = rr.buffer();
+  expect(buf.get(0, 1)?.char).toBe(THUMB); // getPos(min) = 1
+  expect(buf.get(0, 2)?.char).toBe(TRACK); // and a live track, not the disabled fill
+});
+
+test('a range collapsing to empty repaints the bar as disabled', () => {
+  const value = signal(0);
+  const bar = new ScrollBar({ value, min: 0, max: 10 });
+  const rr = createRenderRoot({ width: 1, height: 8 }, { caps });
+  rr.mount(bar);
+  rr.flush(); // drain the frame the value-bind schedules as it mounts, so the bar starts clean
+  expect(rr.buffer().get(0, 1)?.char).toBe(THUMB);
+
+  // The symmetric case: a filter narrows the content to fit, and the thumb must stop being drawn.
+  bar.setRange(0, 0);
+  rr.flush();
+  for (let y = 1; y <= 6; y += 1) expect(rr.buffer().get(0, y)?.char, `row ${y}`).toBe(DISABLED);
+});
+
 // ST-02 / AC-1 — clicking the start arrow steps −arrowStep; clicking the page area past the thumb steps
 // +pageStep; both clamp to [min,max]. A horizontal bar mirrors with ◄/►.
 // HR-49 fidelity correction (tscrlbar.cpp:193-207): the `default:` (track/page) mouse branch does NOT
