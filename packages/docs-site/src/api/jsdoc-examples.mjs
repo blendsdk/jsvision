@@ -301,36 +301,44 @@ function missingName(diagnostic) {
 }
 
 /**
- * The repo's own compiler options, with the three overrides the guard needs.
+ * The repo's own compiler options, with the overrides the guard needs.
  *
  * Everything else is the repo's, so a block that passes the guard compiles the
  * way the repo compiles. The unused-symbol checks are off because an unused local
  * in a documentation snippet is snippet hygiene, not an API defect; `noEmit`
  * because the base config enables declaration and map output.
  *
- * Two consequences of compiling the repo's way are worth knowing when an example
- * fails in a way that looks impossible:
+ * `lib` is pinned rather than inherited. The base config leaves it unset, and the
+ * default set for the target then pulls in DOM — which means an example that
+ * forgets to declare a name does not reliably fail with "cannot find name". It
+ * can bind to a browser global instead and type-check against something else
+ * entirely. `status`, `confirm`, `name`, `close`, `focus`, `event`, `screen`,
+ * `history` and `menubar` all resolve that way, and every one of them is a
+ * plausible name in a terminal-widget snippet; three shipped examples were
+ * quietly checking against `window.status` and the DOM `confirm` before this was
+ * pinned. Nothing here targets a browser, so dropping DOM costs no coverage and
+ * turns those silent mis-bindings back into honest errors. Keep the value in step
+ * with the base config's `target`.
  *
- * 1. `lib` is unset in the base config, so the default set for the target pulls
- *    in DOM. An example that forgets to declare a name does not always fail with
- *    "cannot find name" — it can bind to a browser global instead and type-check
- *    against the wrong thing. `status`, `confirm`, `name`, `close`, `focus`,
- *    `event`, `screen`, `history`, `menubar` and friends all resolve this way,
- *    and every one is a plausible name in a terminal-widget snippet.
- * 2. A block is compiled inside its own source's directory, so a symbol it
- *    imports from `@jsvision/ui` comes from the built `dist/*.d.ts` while the
- *    surrounding module's own types come from `src`. Classes carrying private
- *    fields (`View.pendingMounts`) are nominally distinct across those two
- *    declarations, so passing a barrel-imported `Group` to a function typed
- *    against the `src` `View` fails. Examples for symbols the barrel does not
- *    export therefore import their neighbours relatively.
+ * One other consequence of compiling the repo's way is worth knowing when an
+ * example fails in a way that looks impossible: a block is compiled inside its
+ * own source's directory, so a symbol it imports from `@jsvision/ui` comes from
+ * the built `dist/*.d.ts` while the surrounding module's own types come from
+ * `src`. Classes carrying private fields (`View.pendingMounts`) are nominally
+ * distinct across those two declarations, so passing a barrel-imported `Group` to
+ * a function typed against the `src` `View` fails. Examples for symbols the
+ * barrel does not export therefore import their neighbours relatively.
  *
  * @returns {ts.CompilerOptions} Options for the guard's program.
  */
 function compilerOptions() {
   const configPath = join(REPO_ROOT, 'tsconfig.base.json');
   const { config } = ts.readConfigFile(configPath, (p) => readFileSync(p, 'utf8'));
-  const { options } = ts.convertCompilerOptionsFromJson(config.compilerOptions, REPO_ROOT, configPath);
+  const { options } = ts.convertCompilerOptionsFromJson(
+    { ...config.compilerOptions, lib: ['ES2022'] },
+    REPO_ROOT,
+    configPath,
+  );
   return { ...options, noUnusedLocals: false, noUnusedParameters: false, noEmit: true };
 }
 
