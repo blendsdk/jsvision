@@ -187,11 +187,12 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
  * @example
  * ```ts
  * import { at, Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
- * import { EditableGridRows } from '@jsvision/datagrid';
+ * import { EditableGridRows, column } from '@jsvision/datagrid';
  *
  * interface Row { name: string; city: string; }
  * const rows: Row[] = [{ name: 'Ada', city: 'NYC' }, { name: 'Bo', city: 'LA' }];
  * const focusedCol = signal(0);
+ * const overlay = new Group();
  * const body = at(
  *   new EditableGridRows<Row>({
  *     display: () => rows,
@@ -199,12 +200,21 @@ export interface EditableGridRowsConfig<T> extends GridRowsConfig<T> {
  *       { title: 'Name', accessor: (r) => r.name, width: 8 },
  *       { title: 'City', accessor: (r) => r.city, width: 8 },
  *     ],
+ *     // The typed columns parallel the engine `columns` above — they carry the `value` accessor the
+ *     // cursor/editing lifecycle reads (parse/set are omitted here, so both columns are read-only).
+ *     typedColumns: [
+ *       column({ id: 'name', title: 'Name', value: (r: Row) => r.name }),
+ *       column({ id: 'city', title: 'City', value: (r: Row) => r.city }),
+ *     ],
  *     autoWidths: () => [null, null],
  *     indent: signal(0),
  *     focused: signal(0),
  *     selected: signal(-1),
  *     zebra: false,
  *     focusedCol,
+ *     overlay,
+ *     rowKey: (r) => r.name,
+ *     bumpVersion: () => {},
  *   }),
  *   0,
  *   0,

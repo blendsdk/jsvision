@@ -18,6 +18,9 @@ import type { View } from '@jsvision/ui';
  * @example
  * ```ts
  * import { createErrorRegistry } from '@jsvision/datagrid';
+ * // buildMessageBand is internal — not re-exported from the package barrel — so a caller inside the
+ * // package imports it by relative path.
+ * import { buildMessageBand } from './validation.js';
  * const errors = createErrorRegistry();
  * const band = buildMessageBand(() => errors.active(), () => 'error');
  * // place `band` in the footer region; it repaints as errors.set/clear change the active message

@@ -40,10 +40,22 @@ export interface FooterBandConfig<T> {
  *
  * @example
  * ```ts
+ * import { signal } from '@jsvision/ui';
  * import { FooterBand } from '@jsvision/datagrid';
- * // Built by the grid per frozen/scrolling segment; `cell` is the footer controller's fold:
+ *
+ * interface Row { qty: number }
+ * const columns = [{ title: 'Qty', accessor: (r: Row) => String(r.qty), width: 6 }];
+ * const columnIds = ['qty'];
+ * const totals: Record<string, string> = { qty: '42' };
+ * // Built by the grid per frozen/scrolling segment; a bespoke `cell` supplies each column's aggregate text:
  * const band = new FooterBand({
- *   columns, columnIds, autoWidths, indent, compact: false, widthTick, cell: (id) => controller.cell(id),
+ *   columns,
+ *   columnIds,
+ *   autoWidths: () => [null],
+ *   indent: signal(0),
+ *   compact: false,
+ *   widthTick: () => 0,
+ *   cell: (id) => totals[id] ?? '',
  * });
  * ```
  */

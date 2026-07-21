@@ -245,6 +245,23 @@ class ColumnRegion extends Group {
  *
  * @example
  * ```ts
+ * import { resolveCapabilities } from '@jsvision/core';
+ * import { createApplication, signal } from '@jsvision/ui';
+ * import { column } from './column.js';
+ * import { fromRows } from './data-source.js';
+ * import { EditableDataGrid } from './grid.js';
+ * import { createMemoryVariantStore } from './variant-store.js';
+ * import { PersonalizeDialog } from './personalize-dialog.js';
+ *
+ * const caps = resolveCapabilities().profile; // ambient: reads process.env + process.platform
+ * const app = createApplication({ caps });
+ *
+ * interface Row { id: number; name: string }
+ * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+ * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+ * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+ * const store = createMemoryVariantStore();
+ *
  * const dlg = new PersonalizeDialog(grid, store, app, 'Personalize columns');
  * app.desktop.addWindow(dlg);
  * const command = await app.loop.execView<string>(dlg);

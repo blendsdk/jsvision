@@ -104,9 +104,16 @@ export interface EditableDataGridOptions<T> {
    *
    * @example
    * ```ts
-   * import { EditableDataGrid } from '@jsvision/datagrid';
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string; locked?: boolean }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada', locked: true }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const source = fromRows(rows, { rowKey: (r) => r.id });
+   *
    * // Block edits to a locked row before they ever reach onCommit:
-   * const grid = new EditableDataGrid({ columns, source, beforeSave: (c) => !(c.row as { locked?: boolean }).locked });
+   * const grid = new EditableDataGrid<Row>({ columns, source, beforeSave: (c) => !c.row.locked });
    * ```
    */
   readonly beforeSave?: BeforeSave<T>;
@@ -120,8 +127,18 @@ export interface EditableDataGridOptions<T> {
    *
    * @example
    * ```ts
-   * import { EditableDataGrid } from '@jsvision/datagrid';
-   * const grid = new EditableDataGrid({
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Booking { id: number; start: number; end: number }
+   * const rows = signal<Booking[]>([{ id: 1, start: 9, end: 17 }]);
+   * const columns = [
+   *   column({ id: 'start', title: 'Start', value: (r: Booking) => r.start }),
+   *   column({ id: 'end', title: 'End', value: (r: Booking) => r.end }),
+   * ];
+   * const source = fromRows(rows, { rowKey: (r) => r.id });
+   *
+   * const grid = new EditableDataGrid<Booking>({
    *   columns, source,
    *   validateRow: (r) => (r.end > r.start ? { ok: true } : { ok: false, message: 'End must be after start', field: 'end' }),
    * });
@@ -136,8 +153,16 @@ export interface EditableDataGridOptions<T> {
    *
    * @example
    * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const source = fromRows(rows, { rowKey: (r) => r.id });
+   *
    * // Ctrl+E also begins editing (F2 still works); an unknown chord is ignored.
-   * const grid = new EditableDataGrid({ columns, source, keymap: { 'ctrl+e': 'beginEdit' } });
+   * const grid = new EditableDataGrid<Row>({ columns, source, keymap: { 'ctrl+e': 'beginEdit' } });
    * ```
    */
   readonly keymap?: GridKeymap;
@@ -172,9 +197,16 @@ export interface EditableDataGridOptions<T> {
    *
    * @example
    * ```ts
-   * import { EditableDataGrid } from '@jsvision/datagrid';
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const source = fromRows(rows, { rowKey: (r) => r.id });
+   *
    * // Reuse the built-in popup unchanged (equivalent to omitting the option):
-   * const grid = new EditableDataGrid({ columns, source, filterPopup: (ctx) => ctx.defaultPopup() });
+   * const grid = new EditableDataGrid<Row>({ columns, source, filterPopup: (ctx) => ctx.defaultPopup() });
    * ```
    */
   readonly filterPopup?: (ctx: FilterPopupContext<T>) => View;
@@ -186,8 +218,16 @@ export interface EditableDataGridOptions<T> {
    *
    * @example
    * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const source = fromRows(rows, { rowKey: (r) => r.id });
+   *
    * let nextId = 1000;
-   * const grid = new EditableDataGrid({ columns, source, assignKey: (clone) => ({ ...clone, id: nextId++ }) });
+   * const grid = new EditableDataGrid<Row>({ columns, source, assignKey: (clone) => ({ ...clone, id: nextId++ }) });
    * ```
    */
   readonly assignKey?: (clone: T, original: T) => T;
@@ -207,10 +247,16 @@ export interface EditableDataGridOptions<T> {
    *
    * @example
    * ```ts
-   * import { EditableDataGrid } from '@jsvision/datagrid';
    * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const source = fromRows(rows, { rowKey: (r) => r.id });
+   *
    * const state = signal<'loading' | 'ready'>('loading');
-   * const grid = new EditableDataGrid({ columns, source, status: () => state() });
+   * const grid = new EditableDataGrid<Row>({ columns, source, status: () => state() });
    * // later: state.set('ready');
    * ```
    */
@@ -980,6 +1026,17 @@ export class EditableDataGrid<T> extends Group {
    * @throws If the grid is over a windowed source.
    * @example
    * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string; total: number }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ann', total: 10 }]);
+   * const columns = [
+   *   column({ id: 'name', title: 'Name', value: (r: Row) => r.name }),
+   *   column({ id: 'total', title: 'Total', value: (r: Row) => r.total }),
+   * ];
+   * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+   *
    * const csv = grid.exportView('csv');   // 'Name,Total\r\nAnn,10\r\n…' — RFC-4180, formula-escaped
    * const json = grid.exportView('json'); // [{ name: 'Ann', total: 10 }, …] — raw values, keyed by id
    * ```
@@ -1034,6 +1091,14 @@ export class EditableDataGrid<T> extends Group {
    * @returns One info per column, in full column order.
    * @example
    * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+   *
    * for (const c of grid.columns()) {
    *   // { id, title, visible, frozen: 'left' | 'right' | 'none', width }
    * }
@@ -1058,6 +1123,14 @@ export class EditableDataGrid<T> extends Group {
    * @returns One baseline {@link GridColumnInfo} per column, in construction order.
    * @example
    * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+   *
    * const base = grid.defaultColumnLayout(); // all visible, construction order, no freeze/overrides
    * ```
    */
@@ -1141,6 +1214,14 @@ export class EditableDataGrid<T> extends Group {
    * @param id The column id.
    * @example
    * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; amount: number }
+   * const rows = signal<Row[]>([{ id: 1, amount: 42 }]);
+   * const columns = [column({ id: 'amount', title: 'Amount', value: (r: Row) => r.amount })];
+   * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+   *
    * grid.setColumnWidth('amount', 20);
    * grid.clearColumnWidth('amount'); // amount returns to its auto/declared width
    * ```
@@ -1190,6 +1271,18 @@ export class EditableDataGrid<T> extends Group {
    * @param right Column ids to pin to the right panel, in order.
    * @example
    * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [
+   *   column({ id: 'id', title: 'Id', value: (r: Row) => r.id }),
+   *   column({ id: 'name', title: 'Name', value: (r: Row) => r.name }),
+   *   column({ id: 'actions', title: '', value: () => '…' }),
+   * ];
+   * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+   *
    * grid.setFrozen(['id'], ['actions']); // id pinned left, actions pinned right
    * grid.setFrozen([], []);              // clear all freezing
    * ```
@@ -1207,6 +1300,14 @@ export class EditableDataGrid<T> extends Group {
    * @returns The serializable layout snapshot (plain JSON — no functions).
    * @example
    * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+   *
    * const mine = grid.saveVariant('mine'); // { name, columns, freeze, sort, filter } — persist it
    * ```
    */
@@ -1232,6 +1333,15 @@ export class EditableDataGrid<T> extends Group {
    * @param variant The variant to apply.
    * @example
    * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+   *
+   * const mine = grid.saveVariant('mine'); // persist this somewhere…
    * grid.applyVariant(mine); // reproduces order / width / visibility / freeze / sort / filter
    * ```
    */
@@ -1533,8 +1643,15 @@ export class EditableDataGrid<T> extends Group {
    * @returns The selected row keys (empty when nothing is selected).
    * @example
    * ```ts
-   * import { EditableDataGrid } from '@jsvision/datagrid';
-   * const grid = new EditableDataGrid({ columns, source }); // default 'multi'
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }, { id: 3, name: 'Bo' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const source = fromRows(rows, { rowKey: (r) => r.id });
+   *
+   * const grid = new EditableDataGrid<Row>({ columns, source }); // default 'multi'
    * grid.selectRow(1); // select the row whose rowKey is 1
    * grid.toggleRow(3); // add row 3 → { 1, 3 }
    * [...grid.selectedKeys()]; // [1, 3]
@@ -1593,6 +1710,19 @@ export class EditableDataGrid<T> extends Group {
    * @returns `'moved'` when the grid handled the step (advanced, or held an open editor), else `'exit'`.
    * @example
    * ```ts
+   * import { at, Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const grid = at(new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) }), 0, 0, 20, 6);
+   *
+   * const root = new Group();
+   * root.add(grid);
+   * const loop = createEventLoop({ width: 20, height: 6 }, { caps: resolveCapabilities().profile });
+   * loop.mount(root);
+   *
    * const r = await grid.nextCell();
    * if (r === 'exit') loop.focusNext(); // at the grid edge → leave to the next widget
    * ```
@@ -1609,6 +1739,19 @@ export class EditableDataGrid<T> extends Group {
    * @returns `'moved'` when the grid handled the step, else `'exit'` at the grid start.
    * @example
    * ```ts
+   * import { at, Group, createEventLoop, resolveCapabilities, signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const grid = at(new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) }), 0, 0, 20, 6);
+   *
+   * const root = new Group();
+   * root.add(grid);
+   * const loop = createEventLoop({ width: 20, height: 6 }, { caps: resolveCapabilities().profile });
+   * loop.mount(root);
+   *
    * const r = await grid.prevCell();
    * if (r === 'exit') loop.focusPrev();
    * ```
@@ -1695,6 +1838,14 @@ export class EditableDataGrid<T> extends Group {
    * @param at The source index to splice at; appended when omitted.
    * @example
    * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 1, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+   *
    * grid.insertRow({ id: 10, name: 'New' });    // appended
    * grid.insertRow({ id: 11, name: 'Top' }, 0); // spliced at the front of the source
    * ```
@@ -1711,6 +1862,14 @@ export class EditableDataGrid<T> extends Group {
    * @param keys The row keys to remove.
    * @example
    * ```ts
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 10, name: 'Ada' }, { id: 11, name: 'Bo' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   * const grid = new EditableDataGrid<Row>({ columns, source: fromRows(rows, { rowKey: (r) => r.id }) });
+   *
    * grid.deleteRows([10, 11]); // removed from the source and de-selected
    * ```
    */
@@ -1728,7 +1887,21 @@ export class EditableDataGrid<T> extends Group {
    * @param key The key of the row to duplicate.
    * @example
    * ```ts
-   * // With `assignKey: (clone) => ({ ...clone, id: nextId() })` configured:
+   * import { signal } from '@jsvision/ui';
+   * import { column, fromRows, EditableDataGrid } from '@jsvision/datagrid';
+   *
+   * interface Row { id: number; name: string }
+   * const rows = signal<Row[]>([{ id: 10, name: 'Ada' }]);
+   * const columns = [column({ id: 'name', title: 'Name', value: (r: Row) => r.name })];
+   *
+   * // duplicateRow only inserts when assignKey is configured to mint the fresh key:
+   * let nextId = 1000;
+   * const grid = new EditableDataGrid<Row>({
+   *   columns,
+   *   source: fromRows(rows, { rowKey: (r) => r.id }),
+   *   assignKey: (clone) => ({ ...clone, id: nextId++ }),
+   * });
+   *
    * grid.duplicateRow(10); // a clone with a fresh id is inserted right after row 10
    * ```
    */

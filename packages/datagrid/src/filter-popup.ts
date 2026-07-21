@@ -91,6 +91,8 @@ export interface FilterPopupConfig<T> {
  *
  * @example
  * import type { FilterPopupContext } from '@jsvision/datagrid';
+ *
+ * interface Row { qty: number }
  * // A factory that reuses the built-in popup unchanged (the grid's default behavior):
  * const filterPopup = (ctx: FilterPopupContext<Row>) => ctx.defaultPopup();
  */

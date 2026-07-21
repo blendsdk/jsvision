@@ -35,6 +35,17 @@ export interface VariantStore {
  * @returns A live in-memory store.
  * @example
  * ```ts
+ * import { createMemoryVariantStore, type GridVariant } from '@jsvision/datagrid';
+ *
+ * const compact: GridVariant = {
+ *   name: 'compact',
+ *   columns: [{ id: 'name', visible: true }],
+ *   freeze: { left: [], right: [] },
+ *   sort: [],
+ *   filter: [],
+ * };
+ * const wide: GridVariant = { ...compact, name: 'wide' };
+ *
  * const store = createMemoryVariantStore([compact, wide]);
  * store.setDefault('compact');
  * store.getDefault();      // 'compact'
