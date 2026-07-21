@@ -49,7 +49,7 @@ const DIGIT_KEY = /^[1-9]$/;
  * import { createApplication, Window } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
- * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const caps = resolveCapabilities().profile; // ambient: reads process.env + process.platform
  * const app = createApplication({ caps });
  *
  * // Open two windows on the desktop.

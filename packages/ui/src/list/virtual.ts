@@ -14,6 +14,8 @@
  * @param range The total item count.
  * @returns The clamped index.
  * @example
+ * import { clampIndex } from './virtual.js';
+ *
  * clampIndex(-3, 10); // 0
  * clampIndex(99, 10); // 9
  * clampIndex(4, 0);   // 0 (empty list)
@@ -35,6 +37,8 @@ export function clampIndex(index: number, range: number): number {
  * @param range        The total item count.
  * @returns The adjusted `topItem`.
  * @example
+ * import { keepVisible } from './virtual.js';
+ *
  * // A 5-row window currently showing items 0..4; focusing item 7 scrolls it down.
  * keepVisible(7, 0, 5, 20); // 3  (window now shows items 3..7)
  * keepVisible(1, 3, 5, 20); // 1  (focus above the window scrolls back up)

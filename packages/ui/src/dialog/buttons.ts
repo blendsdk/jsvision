@@ -38,7 +38,8 @@ export function okButton(): Button {
  *
  * @returns A {@link Button} labelled `Cancel`.
  * @example
- * import { cancelButton, at } from '@jsvision/ui';
+ * import { Dialog, cancelButton, at } from '@jsvision/ui';
+ * const dialog = new Dialog({ title: ' Confirm ', width: 30, height: 8 });
  * const cancel = at(cancelButton(), 18, 4, 12, 2);
  * dialog.add(cancel);
  */
@@ -51,7 +52,8 @@ export function cancelButton(): Button {
  *
  * @returns A {@link Button} labelled `Yes`.
  * @example
- * import { yesButton, noButton } from '@jsvision/ui';
+ * import { Dialog, yesButton, noButton } from '@jsvision/ui';
+ * const dialog = new Dialog({ title: ' Confirm ', width: 30, height: 8 });
  * dialog.add(yesButton()); // default; also activates on Enter
  * dialog.add(noButton());
  */
@@ -64,7 +66,8 @@ export function yesButton(): Button {
  *
  * @returns A {@link Button} labelled `No`.
  * @example
- * import { noButton } from '@jsvision/ui';
+ * import { Dialog, noButton } from '@jsvision/ui';
+ * const dialog = new Dialog({ title: ' Confirm ', width: 30, height: 8 });
  * dialog.add(noButton()); // emits Commands.no
  */
 export function noButton(): Button {
@@ -76,7 +79,8 @@ export function noButton(): Button {
  *
  * @returns A `[okButton, cancelButton]` tuple ready to lay out and add.
  * @example
- * import { okCancelButtons, at } from '@jsvision/ui';
+ * import { Dialog, okCancelButtons, at } from '@jsvision/ui';
+ * const dialog = new Dialog({ title: ' Confirm ', width: 30, height: 8 });
  * const [ok, cancel] = okCancelButtons();
  * at(ok, 6, 4, 10, 2);
  * at(cancel, 18, 4, 12, 2);
@@ -92,7 +96,8 @@ export function okCancelButtons(): [Button, Button] {
  *
  * @returns A `[yesButton, noButton]` tuple ready to lay out and add.
  * @example
- * import { yesNoButtons, at } from '@jsvision/ui';
+ * import { Dialog, yesNoButtons, at } from '@jsvision/ui';
+ * const dialog = new Dialog({ title: ' Confirm ', width: 30, height: 8 });
  * const [yes, no] = yesNoButtons();
  * at(yes, 6, 4, 10, 2);
  * at(no, 18, 4, 10, 2);

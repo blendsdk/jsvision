@@ -62,7 +62,14 @@ export interface ColumnGeometry {
  * @returns One entry per column: the measured `auto` width, or `null` for non-`auto` columns.
  * @example
  * ```ts
- * const cols = [{ title: 'Name', accessor: (r) => r.name, width: 'auto' as const }];
+ * import { measureAutoWidths } from '@jsvision/ui';
+ * import type { Column } from '@jsvision/ui';
+ *
+ * interface Person {
+ *   name: string;
+ * }
+ *
+ * const cols: Column<Person>[] = [{ title: 'Name', accessor: (r) => r.name, width: 'auto' as const }];
  * measureAutoWidths(cols, [{ name: 'Ada' }, { name: 'Bartholomew' }], (s) => s.length); // [11]
  * ```
  */
@@ -114,7 +121,15 @@ function toTrackItem<T>(col: Column<T>, autoWidth: number | null, pinned: number
  * @returns The resolved {@link ColumnGeometry}; empty arrays + `totalWidth 0` for zero columns.
  * @example
  * ```ts
- * const cols = [
+ * import { apportionColumns } from '@jsvision/ui';
+ * import type { Column } from '@jsvision/ui';
+ *
+ * interface Row {
+ *   a: string;
+ *   b: string;
+ * }
+ *
+ * const cols: Column<Row>[] = [
  *   { title: 'A', accessor: (r) => r.a, width: '1fr' as const },
  *   { title: 'B', accessor: (r) => r.b, width: 6 },
  * ];
@@ -181,6 +196,8 @@ export function apportionColumns<T>(
  * @returns A string that occupies exactly `width` terminal cells.
  * @example
  * ```ts
+ * import { alignCell } from '@jsvision/ui';
+ *
  * alignCell('Ada', 6, 'right', (s) => s.length);         // '   Ada'
  * alignCell('Bartholomew', 6, 'left', (s) => s.length);  // 'Bartho' (clipped to 6 cells)
  * ```
@@ -215,7 +232,16 @@ export function alignCell(text: string, width: number, align: ColumnAlign, measu
  *   index is out of range.
  * @example
  * ```ts
- * const cols = [{ title: 'Qty', accessor: (r) => String(r.qty), width: 'auto' as const, compare: (a, b) => a.qty - b.qty }];
+ * import { sortRows } from '@jsvision/ui';
+ * import type { Column } from '@jsvision/ui';
+ *
+ * interface Row {
+ *   qty: number;
+ * }
+ *
+ * const cols: Column<Row>[] = [
+ *   { title: 'Qty', accessor: (r) => String(r.qty), width: 'auto' as const, compare: (a, b) => a.qty - b.qty },
+ * ];
  * sortRows([{ qty: 1000 }, { qty: 9 }], cols, { col: 0, dir: 'asc' }); // [{ qty: 9 }, { qty: 1000 }]
  * ```
  */
