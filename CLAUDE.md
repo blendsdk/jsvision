@@ -232,7 +232,7 @@ build(ctx) }`) + one line in `stories/index.ts`. `build(ctx)` returns a `Group` 
 
 - Tag each task trivial|standard|complex|sensitive (default standard) in make_plan.
 - exec_plan runs phases inline on the tagged model; dispatch one pinned executor only when a cheaper model than the session's is warranted — trivial/standard→Sonnet (plan-task-executor), complex/sensitive→Opus (plan-task-executor-opus).
-- Core engine work is sensitive (Opus): input decoding, the damage-diff renderer, width/capability probing, colour downsampling, layout solving, and any Turbo Vision fidelity port (the C++ decode). Widget composition, kitchen-sink stories, demos, docs, JSDoc, and fixtures are trivial/standard (Sonnet). preflight always Opus, focused on semantic correctness.
+- Core engine work is sensitive (Opus): input decoding, the damage-diff renderer, width/capability probing, colour downsampling, layout solving, any Turbo Vision fidelity port (the C++ decode), and async/stale-guard logic (forms async validation, debounce/abort/generation guards). Widget composition, kitchen-sink stories, demos, docs, JSDoc, and fixtures are trivial/standard (Sonnet). preflight always Opus, focused on semantic correctness.
 - Reserve Opus + high/xhigh for make_plan, grill_me, preflight. /compact after each phase; /clear on project switch.
 
 <!-- CODEOPS-ROUTING:END -->
@@ -246,5 +246,5 @@ security_profile: []
 perf_critical: true
 review_hook: on
 telemetry: on
-agent_models: {}
+agent_models: { spec-test-author: opus }
 <!-- CODEOPS-QUALITY:END -->
