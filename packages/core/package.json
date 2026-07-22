@@ -1,6 +1,6 @@
 {
   "name": "@jsvision/core",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Pure, zero-dependency foundation engine for classic terminal (TUI) applications",
   "keywords": [
     "tui",
