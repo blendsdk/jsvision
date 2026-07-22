@@ -3,7 +3,7 @@
 // so both the vitest spec and the build gate can assert on it.
 
 /** The unscoped packages the reference covers. */
-const PACKAGES = new Set(['core', 'ui', 'files', 'web']);
+const PACKAGES = new Set(['core', 'ui', 'files', 'forms', 'datagrid']);
 
 /**
  * Check API_MAP for structural problems and return a list of human-readable

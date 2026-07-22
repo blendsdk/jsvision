@@ -13,7 +13,5 @@ signals run.
 `zod` is a required **peer dependency** (`^4`); `@jsvision/core` and `@jsvision/ui`
 stay zero-runtime-dependency.
 
-> **Private until its first release**, under heavy development.
-
 See the [documentation site](https://blendsdk.github.io/jsvision/) for the full
 reference and [API docs](https://blendsdk.github.io/jsvision/api/).
