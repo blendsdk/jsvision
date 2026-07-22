@@ -1,17 +1,21 @@
-# Release Notes — v0.2.0
+# Release Notes — v1.0.0
 
-**Released**: 2026-07-12
+**Released**: 2026-07-22
 
-We are excited to announce the release of version 0.2.0 of our software! This update introduces several enhancements designed to improve your experience and ensure our platform remains effective and efficient. 
+We are excited to announce the release of version 1.0.0 of the JSVision software suite. This latest version brings numerous enhancements and improvements across various packages, designed to make your experience smoother and more efficient.
 
-In this version, we've focused on updating various components of our software to enhance stability and performance across the board. While the core functionalities continue to operate smoothly, you may notice improvements in responsiveness and overall usability.
+Key Highlights:
 
-Here are some highlights of the changes included in this release:
+1. **Improved User Interfaces**: The visual components of our applications have been upgraded. Users can now expect a more responsive and visually appealing layout, ensuring a better overall experience when interacting with forms, data grids, and thematic elements.
 
-- **New Demo**: We have added an engaging Matrix digital-rain demo to the examples package. This new feature provides a fun visual experience that illustrates the capabilities of our platform in a creative way.
-  
-- **Improved User Interface**: The user interface has been updated to enhance the interaction when closing windows. Now, if you close the last window on your desktop, the application will repurpose its resources more efficiently, which could lead to a smoother user experience.
+2. **Enhanced Documentation**: We have refocused and expanded our documentation site, making it easier to find the information you need. New guides and examples have been added, benefiting both new and experienced users.
 
-- **Mandatory Updates**: The various packages have been updated to the latest versions (excluding TypeScript), which enhances the functionality and compatibility of our software. This ensures that you are using the most up-to-date capabilities available to you.
+3. **Validation and Data Handling**: We’ve introduced improved validation mechanisms within forms and data grids. This ensures greater accuracy when inputting information and better management of data, providing users with more reliable feedback.
 
-We recommend that all users upgrade to version 0.2.0 to take advantage of these improvements. Your feedback is valuable to us, so please share any thoughts or experiences you have with this release. Thank you for your continued support!
+4. **New Features for Customization**: Users can now personalize their data grids and forms more efficiently with newly integrated features for adjusting layouts and options, which cater to specific needs and preferences.
+
+5. **Performance Improvements**: This version includes various performance enhancements to make the software faster and more efficient, resulting in quicker load times and smoother interactions.
+
+6. **Better Accessibility**: We have made strides in ensuring that our applications are more accessible, catering to a larger group of users and enhancing usability across different platforms.
+
+Overall, version 1.0.0 focuses on delivering a more intuitive user experience and empowering users with advanced functionalities. We hope you enjoy these enhancements and look forward to your feedback!
