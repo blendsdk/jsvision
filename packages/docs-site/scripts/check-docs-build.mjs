@@ -528,7 +528,7 @@ check('API-COVERAGE', 'Every public barrel export has a generated API page', () 
       problems.push(`${pkg.name}: ${missing.length} undocumented (${missing.slice(0, 8).join(', ')})`);
   }
   if (problems.length) fail(problems.join('; '));
-  return `all barrel exports documented (core/ui/files/web)`;
+  return `all barrel exports documented (${PACKAGES.map((p) => p.name).join('/')})`;
 });
 
 check('API-LEAKAGE', 'No symbol outside the public barrel appears in the reference', () => {

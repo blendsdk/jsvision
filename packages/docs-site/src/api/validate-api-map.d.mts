@@ -6,7 +6,7 @@
 /** One component↔reference link, matching the map's row shape. */
 interface ApiLink {
   symbol: string;
-  pkg: 'core' | 'ui' | 'files' | 'web';
+  pkg: 'core' | 'ui' | 'files' | 'forms' | 'datagrid';
   apiPath: string;
   componentPage: string;
 }

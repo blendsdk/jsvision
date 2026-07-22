@@ -36,6 +36,13 @@ const BLANK = { fg: 'default', bg: 'default' } as const;
 export interface RenderRoot {
   /** Mount a view tree: wire its scopes, run the first layout, and compose the first frame. */
   mount(root: View): void;
+  /**
+   * Unmount the mounted tree: dispose its reactive scope — which recursively disposes every
+   * descendant scope and runs their `onCleanup` — then drop the tree. Idempotent, and safe to call
+   * with nothing mounted. A host that detaches a still-live tree (the browser `mountApp` teardown)
+   * calls this so views release timers and subscriptions instead of leaking across a re-mount.
+   */
+  unmount(): void;
   /** Resize the viewport, triggering a full re-layout and recompose. */
   resize(size: Size2D): void;
   /** Force a synchronous frame now, running any pending scheduled repaint immediately. */
@@ -283,6 +290,13 @@ class RenderRootImpl implements RenderRoot, ViewHost {
     });
     this.needsReflow = true;
     this.flush(); // first layout + full compose
+  }
+
+  unmount(): void {
+    // Disposing the root scope cascades through every descendant view scope, firing their onCleanup.
+    this.disposeRoot?.();
+    this.disposeRoot = null;
+    this.rootView = null;
   }
 
   resize(size: Size2D): void {

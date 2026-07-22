@@ -1,7 +1,6 @@
 {
   "name": "@jsvision/datagrid",
   "version": "0.2.0",
-  "private": true,
   "description": "jsvision datagrid — an editable, enterprise-class data grid (per-cell editing, virtual scroll, typed columns) for @jsvision/ui.",
   "keywords": [
     "tui",

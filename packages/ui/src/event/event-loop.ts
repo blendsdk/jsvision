@@ -251,6 +251,13 @@ class EventLoopImpl implements EventLoop {
     this.stopped = true;
   }
 
+  dispose(): void {
+    // Order matters: stop the painter first so unmounting (which disposes reactive scopes and may
+    // dirty the tree as effects tear down) can never schedule a frame to a host that is going away.
+    this.stop();
+    this.renderRoot.unmount();
+  }
+
   onCommand(command: string, handler: () => void): () => void {
     return this.commandSink.register(command, handler);
   }

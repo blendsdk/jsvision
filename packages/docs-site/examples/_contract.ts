@@ -27,6 +27,18 @@ export interface ExampleContext {
    * `demoApp(ctx)` helper) so colours and the Depth control resolve correctly.
    */
   readonly caps: CapabilityProfile;
+  /**
+   * Register a teardown callback the host runs when this example is torn down — the Play widget
+   * closes, or it remounts at a new size/depth. Use it to release anything `build()` started that the
+   * view tree does not own, most commonly an animation `setInterval`. Called at most once.
+   *
+   * Absent in a pure-headless mount (the paint-smoke test builds an example without a host), so an
+   * animated example must also make its timer harmless there — `timer.unref()` in Node lets the test
+   * process exit regardless; this seam is what actually stops it in the browser.
+   *
+   * @param fn - the teardown callback.
+   */
+  onCleanup?(fn: () => void): void;
 }
 
 /**

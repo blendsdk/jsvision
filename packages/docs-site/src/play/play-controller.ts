@@ -120,6 +120,9 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
   let mounted: MountedApp | null = null;
   let detachReclaim: (() => void) | null = null;
   let element: HostElement | null = null;
+  // Teardown callbacks the example registered via `ctx.onCleanup` (an animation timer, say). Run and
+  // cleared on close, so nothing an example started outlives its mounted terminal.
+  const cleanups: Array<() => void> = [];
   let size: PlaySize = opts.size ?? { width: 80, height: 24 };
   let depth: ColorDepth = opts.depth ?? 'truecolor';
   let open = false;
@@ -148,10 +151,12 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
           build: (ctx) => def.build(ctx),
           title: def.title,
           kind: opts.entry.kind,
+          themeMenu: opts.entry.themeMenu,
           caps,
           viewport: dims,
           onDepthChange: (nextDepth) => void controller.remount({ depth: nextDepth }),
           onClose: opts.onClose,
+          onCleanup: (fn) => cleanups.push(fn),
         });
         mounted = mountApp({ element: el, app, caps, term });
         term = null; // ownership transferred to `mounted` (its dispose() disposes the terminal)
@@ -172,6 +177,16 @@ export function createPlayController(opts: PlayControllerOptions): PlayControlle
     },
 
     close(): void {
+      // Run the example's own teardown (animation timers, subscriptions) before tearing down the
+      // mount, so a late timer tick cannot fire against a half-disposed app. Each guarded so one
+      // throwing cleanup cannot strand the rest of the teardown.
+      for (const fn of cleanups.splice(0)) {
+        try {
+          fn();
+        } catch (error) {
+          console.error('[play] an example cleanup threw', error);
+        }
+      }
       detachReclaim?.();
       detachReclaim = null;
       mounted?.dispose();
