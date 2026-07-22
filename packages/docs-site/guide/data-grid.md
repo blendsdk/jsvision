@@ -1,9 +1,9 @@
 ---
-title: Data grid
+title: The data grid
 description: The editable data grid — typed columns, data sources, sorting/filtering, and cell editors.
 ---
 
-# Data grid
+# The data grid
 
 The editable data grid — typed columns, data sources, sorting/filtering, and cell editors.
 
