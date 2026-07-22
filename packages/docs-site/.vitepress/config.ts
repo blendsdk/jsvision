@@ -298,13 +298,6 @@ export default withMermaid(
               { text: 'ADR-009: Bun runtime support', link: '/reference/decisions/ADR-009-bun-runtime-support' },
             ],
           },
-          {
-            text: 'Guides',
-            items: [
-              { text: 'Getting Started', link: '/reference/guides/getting-started' },
-              { text: 'Development', link: '/reference/guides/development' },
-            ],
-          },
         ],
       },
       socialLinks: [

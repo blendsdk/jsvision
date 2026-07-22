@@ -26,3 +26,15 @@ is the oracle for the core acceptance-gate spec test.
 | `/decisions/ADR-009-bun-runtime-support`        | `/reference/decisions/ADR-009-bun-runtime-support`        |
 | `/guides/getting-started`                       | `/reference/guides/getting-started`                       |
 | `/guides/development`                           | `/reference/guides/development`                           |
+
+## Retired pages
+
+Two of the migrated pages are now **stubs** that forward the reader onward. They documented working
+_on_ JSVision rather than building _with_ it, and had drifted badly out of date. Their routes still
+render — the rows above stay valid, and any existing deep link still resolves — but they no longer
+appear in the Reference sidebar.
+
+| Retired route                       | Now points to                                            |
+| ----------------------------------- | -------------------------------------------------------- |
+| `/reference/guides/getting-started` | `/guide/install-and-packages` (superseded by the Guide)  |
+| `/reference/guides/development`     | `CLAUDE.md` in the repository (the version kept current) |
