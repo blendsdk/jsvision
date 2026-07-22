@@ -72,12 +72,13 @@ screen in an ordinary test run.
 JSVision is ESM-only and needs Node 22 or newer.
 
 ```sh
-npm install @jsvision/ui @jsvision/core
+npm install @jsvision/ui
 ```
 
-`@jsvision/core` is the rendering and terminal engine; `@jsvision/ui` is the widget framework you
-build with. Add `@jsvision/web` to run in a browser, and `@jsvision/forms`, `@jsvision/datagrid`, or
-`@jsvision/files` as you need them.
+That is everything you need to build with — `@jsvision/ui` is the widget framework, and it brings
+the `@jsvision/core` rendering engine with it. See
+[Install & packages](/guide/install-and-packages) for the rest of the family and which ones you
+actually need.
 
 ## Your first application
 
