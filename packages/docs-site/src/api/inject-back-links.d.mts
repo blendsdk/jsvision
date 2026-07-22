@@ -5,7 +5,7 @@
 
 /**
  * One component↔reference link, matching the map's row shape. `pkg` is typed
- * as a plain string rather than the map's `'core' | 'ui' | 'files' | 'web'`
+ * as a plain string rather than the map's `'core' | 'ui' | 'files' | 'forms' | 'datagrid'`
  * union: the consuming test builds a standalone `const` object (not narrowed
  * by an immediate call site), so its property would otherwise widen and fail
  * to satisfy a literal-typed field.

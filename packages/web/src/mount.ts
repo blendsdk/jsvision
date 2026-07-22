@@ -105,6 +105,10 @@ export function mountApp(options: MountAppOptions): MountedApp {
     term,
     host,
     dispose(): void {
+      // Mirror run()'s shutdown for a detached browser surface: stop the loop's painter and unmount
+      // the view tree so every view's onCleanup fires (releasing timers/subscriptions) before the
+      // terminal goes. Without this a long-lived page leaks an app's reactive tree on every close.
+      loop.dispose();
       resizeSub.dispose();
       term.dispose?.();
     },

@@ -22,6 +22,7 @@
 import type { Keymap } from '@jsvision/core';
 import { View, Group } from '../view/index.js';
 import type { DispatchEvent, PopupHost } from '../view/index.js';
+import { devWarn } from '../shared/warnings.js';
 
 /** The seams `route` needs from the loop; the loop owns the mutable focus/command/modal state. */
 export interface RouteContext {
@@ -217,5 +218,17 @@ export function route(ev: DispatchEvent, ctx: RouteContext): void {
     if (!view.mounted) continue; // the snapshot is stale if a handler removed a later view
     ctx.deliver(view, ev2);
     if (ev2.handled) return;
+  }
+
+  // A command that survived all three phases reached no handler at all — the usual cause is a typo in
+  // a widget's `command` string, which is otherwise indistinguishable from a dead button. Keys are
+  // deliberately excluded: an unhandled keystroke is completely normal.
+  if (inner.type === 'command') {
+    devWarn(
+      'command',
+      `the command '${inner.command}' was emitted but no view handled it, so nothing happened. ` +
+        `Check the spelling against the name the handler registers, and that the handler is wired ` +
+        `with loop.onCommand('${inner.command}', …) or by a view that sets ev.handled = true.`,
+    );
   }
 }
