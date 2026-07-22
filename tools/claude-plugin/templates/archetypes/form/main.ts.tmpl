@@ -46,7 +46,7 @@ export function buildApp(): Application {
   });
 
   const win = new Window('__SLUG__');
-  win.layout.rect = { x: 2, y: 2, width: 50, height: 10 };
+  win.setLayout({ rect: { x: 2, y: 2, width: 50, height: 10 } });
   // Compose the interior with the layout DSL: a labelled field row, a button row, then the greeting.
   win.add(
     col(

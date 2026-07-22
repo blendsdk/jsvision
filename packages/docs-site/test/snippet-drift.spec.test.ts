@@ -20,16 +20,28 @@ const REPO_ROOT = join(PKG_ROOT, '..', '..');
  * exactly what happened to it once already.
  */
 const PLUGIN_SKILLS = join(REPO_ROOT, 'tools', 'claude-plugin', 'skills');
+/**
+ * The scaffolder's app templates. These are the highest-stakes teaching surface in the repo: their
+ * rendered output is the first file a new user ever opens. A `.tmpl` is not TypeScript, so no
+ * compiler reads it directly — the scaffolder's own oracle now type-checks the rendered `main.ts`,
+ * but the other templates and the prose beside them are still unchecked, which is how a banned
+ * idiom lived in all four starters undetected.
+ */
+const PLUGIN_TEMPLATES = join(REPO_ROOT, 'tools', 'claude-plugin', 'templates');
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'cache', '.git']);
 
-/** Every markdown page under the docs package, as absolute paths. */
-function markdownPages(dir: string = PKG_ROOT): string[] {
+/**
+ * Every teaching file under a directory, as absolute paths.
+ * @param dir Directory to walk (defaults to the docs package).
+ * @param exts File extensions to collect.
+ */
+function markdownPages(dir: string = PKG_ROOT, exts: readonly string[] = ['.md']): string[] {
   const out: string[] = [];
   for (const dirent of readdirSync(dir, { withFileTypes: true })) {
     if (SKIP_DIRS.has(dirent.name)) continue;
     const abs = join(dir, dirent.name);
-    if (dirent.isDirectory()) out.push(...markdownPages(abs));
-    else if (dirent.name.endsWith('.md')) out.push(abs);
+    if (dirent.isDirectory()) out.push(...markdownPages(abs, exts));
+    else if (exts.some((ext) => dirent.name.endsWith(ext))) out.push(abs);
   }
   return out;
 }
@@ -50,8 +62,12 @@ function fencedTsBlocks(text: string): string[] {
 
 const PAGES = markdownPages().map((p) => ({ path: p, text: readFileSync(p, 'utf8') }));
 
-/** The docs pages plus the plugin skill tree — every markdown surface that teaches this framework. */
-const TEACHING_PAGES = [...markdownPages(), ...markdownPages(PLUGIN_SKILLS)].map((p) => ({
+/** The docs pages, the plugin skill tree, and the app templates — every surface that teaches this framework. */
+const TEACHING_PAGES = [
+  ...markdownPages(),
+  ...markdownPages(PLUGIN_SKILLS),
+  ...markdownPages(PLUGIN_TEMPLATES, ['.md', '.tmpl', '.txt']),
+].map((p) => ({
   path: p,
   text: readFileSync(p, 'utf8'),
 }));
