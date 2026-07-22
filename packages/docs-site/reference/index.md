@@ -20,5 +20,4 @@ design choices.
 
 ## Guides
 
-[Getting Started](/reference/guides/getting-started) and the
-[Development](/reference/guides/development) workflow.
+Building an application? Start with [Install & packages](/guide/install-and-packages) in the Guide.
