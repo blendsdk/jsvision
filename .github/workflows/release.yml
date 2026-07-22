@@ -43,6 +43,7 @@ jobs:
     permissions:
       contents: write # push the release commit + tag
       id-token: write # npm provenance (OIDC)
+      pull-requests: write # open the back-merge PR into develop
     steps:
       - name: Checkout (full history for conventional-commit analysis)
         uses: actions/checkout@v5
@@ -89,7 +90,7 @@ jobs:
           git commit -m "chore(release): v${VERSION} [skip ci]"
           git tag "v${VERSION}"
 
-      - name: Publish to npm (lockstep, provenance, push commit + tag)
+      - name: Publish to npm (lockstep, provenance, push the release commit)
         # Run lockstep by putting node_modules/.bin on PATH and calling it directly,
         # NOT via `yarn lockstep`. `yarn` forces npm_config_registry=registry.yarnpkg.com
         # onto its child processes, which the spawned `npm publish` would then target —
@@ -109,3 +110,37 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           npm_config_registry: 'https://registry.npmjs.org/'
+
+      # `--git-push` pushes the release BRANCH; the tag created above lives only in the
+      # runner and dies with it unless pushed explicitly. Both v0.2.0 and v1.0.0 were lost
+      # exactly this way — the release commits are on master, the tags never existed
+      # anywhere. Re-pushing a tag that is already on the remote is a no-op, so this is
+      # safe to re-run, and it deliberately does NOT tolerate failure: an untagged release
+      # is the bug being fixed.
+      - name: Push the version tag
+        if: ${{ !inputs.dry-run }}
+        run: |
+          VERSION=$(node -p "require('./packages/core/package.json').version")
+          git push origin "v${VERSION}"
+
+      # The release commit lands on master, but development continues on develop, which
+      # would otherwise keep building on stale manifests — and the NEXT release would
+      # analyse conventional commits against a stale base and compute the wrong bump.
+      # A PR rather than a direct merge: a back-merge can conflict, and that is a human's
+      # call to resolve, not something to force at the end of a publish.
+      #
+      # This one tolerates failure on purpose. The packages are already public by the time
+      # it runs, so a missing back-merge PR must not turn a successful release red — the
+      # merge can be opened by hand from the job log.
+      - name: Open a back-merge PR into develop
+        if: ${{ !inputs.dry-run }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./packages/core/package.json').version")
+          BRANCH="chore/backmerge-v${VERSION}"
+          git push origin "HEAD:refs/heads/${BRANCH}"
+          gh pr create --base develop --head "${BRANCH}" \
+            --title "chore(release): back-merge v${VERSION} into develop" \
+            --body "Brings the v${VERSION} version bump and changelogs from \`master\` back to \`develop\`, so development continues on the manifests that were actually published and the next release computes its bump from the right base. Opened automatically by the Release workflow."

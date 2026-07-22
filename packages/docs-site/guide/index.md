@@ -60,9 +60,11 @@ stays fluid even over a slow connection.
 **Batteries for real applications.** Form handling with schema validation, an editable enterprise
 data grid, file-open and directory dialogs, and clipboard support across every editable widget.
 
-**The same app in the browser.** `@jsvision/web` mounts any JSVision application into an xterm.js
-terminal on a page. Every live example on this site is exactly that — the real SDK, running in
-front of you.
+**The same app in the browser.** A JSVision application mounts unchanged into an xterm.js terminal
+on a web page — every live example on this site is exactly that, the real SDK running in front of
+you. The browser host is internal to this repository and not yet published, so this is something
+you can see here rather than set up yourself today; see
+[Running in a browser](/guide/install-and-packages#running-in-a-browser).
 
 **Testable without a terminal.** Applications mount headlessly, so you can assert on what is on
 screen in an ordinary test run.
