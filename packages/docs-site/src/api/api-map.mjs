@@ -13,7 +13,7 @@
  *
  * @typedef {object} ApiLink
  * @property {string} symbol            The exported symbol name, e.g. 'Button'.
- * @property {'core' | 'ui' | 'files' | 'web'} pkg  Unscoped package.
+ * @property {'core' | 'ui' | 'files' | 'forms' | 'datagrid'} pkg  Unscoped package.
  * @property {string} apiPath           Site-absolute route of the generated symbol page, e.g. '/api/ui/classes/Button'.
  * @property {string} componentPage     Site-absolute route of the hand-written component page.
  */
