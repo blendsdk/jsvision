@@ -60,7 +60,7 @@ export function buildApp(): Application {
   });
 
   const win = new Window('__SLUG__');
-  win.layout.rect = { x: 2, y: 2, width: 44, height: 14 };
+  win.setLayout({ rect: { x: 2, y: 2, width: 44, height: 14 } });
   // A growing grid over a one-row detail line, composed with the layout DSL.
   win.add(col(grow(grid), fixed(new Text(() => detail()), 1)));
   app.desktop.addWindow(win);

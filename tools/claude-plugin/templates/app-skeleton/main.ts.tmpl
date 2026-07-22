@@ -19,7 +19,8 @@ export function buildApp(): Application {
 
   const win = new Window('__SLUG__');
   // A window places its own frame on the desktop by rect — one of the few sanctioned absolute cases.
-  win.layout.rect = { x: 2, y: 2, width: 44, height: 12 };
+  // `layout` is read-only; `setLayout` is its only writer, so every placement goes through it.
+  win.setLayout({ rect: { x: 2, y: 2, width: 44, height: 12 } });
   // Compose the interior with the layout DSL (col/row + fixed/grow), never absolute rects: a one-row
   // title over a growing body. Add rows/columns of controls here as your UI grows.
   win.add(
