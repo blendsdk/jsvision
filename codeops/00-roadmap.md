@@ -1,8 +1,8 @@
 # Portfolio Roadmap: Ink
 
 > **Status**: Active
-> **Last Updated**: 2026-07-21
-> **Features**: 0 / 2 done — 8 completed features were archived on 2026-07-21, leaving `bun-runtime` and `docs-website` active (plus `kanban-app`, a parked exploration with no roadmap, and the `_maintenance` feature). Deferred datagrid follow-ons (CSV/paste import · windowed-source row export · treeshake check) and the layout-DSL follow-on GH #131 now live on their archived roadmaps
+> **Last Updated**: 2026-07-22
+> **Features**: 0 / 3 done — 8 completed features were archived on 2026-07-21, leaving `bun-runtime`, `docs-website`, and `create-jsvision` (added 2026-07-22, GH #169) active (plus `kanban-app`, a parked exploration with no roadmap, and the `_maintenance` feature). Deferred datagrid follow-ons (CSV/paste import · windowed-source row export · treeshake check) and the layout-DSL follow-on GH #131 now live on their archived roadmaps
 > **CodeOps Skills Version**: 3.0.0
 
 ## Legend
@@ -14,6 +14,7 @@
 | Feature | Roadmap | Stage Summary | Progress | Status | Last Updated |
 |---------|---------|---------------|----------|--------|--------------|
 | bun-runtime | [→](features/bun-runtime/00-roadmap.md) | RD-01 ✏️ drafted (Bun runtime support & self-contained executables) | 0/1 RDs | ⬜ | 2026-07-03 |
+| create-jsvision | [→](features/create-jsvision/00-roadmap.md) | RD-01…08 ✏️ drafted (dual-mode core · CLI · single-source templates · generated project · verification · release · docs · non-functional) — gate ✅ 23/23 · npm name reserved | 0/8 RDs | ⬜ | 2026-07-23 |
 | docs-website | [→](features/docs-website/00-roadmap.md) | RD-01/02/03/06 ✅ Done (site-foundation · @jsvision/web runtime · live-example system · TypeDoc API ref) · RD-04/05/07…10 ✏️ drafted | 4/10 RDs | ⬜ | 2026-07-13 |
 
 ## Archived
