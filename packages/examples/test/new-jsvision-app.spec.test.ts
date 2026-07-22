@@ -12,10 +12,13 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import ts from 'typescript';
 import { expect, test } from 'vitest';
 
+import { lintText } from '../../../scripts/jsvision-doctor.mjs';
 import {
   buildAppFiles,
+  listArchetypes,
   slugify,
   uiDependency,
 } from '../../../tools/claude-plugin/skills/jsvision-new-app/scripts/new-jsvision-app.mjs';
@@ -73,6 +76,71 @@ test('ST-4: generated src/main.ts contains the TTY guard, app creation, a window
 test('ST-5: buildAppFiles throws on unsafe names and produces nothing', () => {
   for (const evil of ['../evil', 'a/b', '/abs', '']) {
     expect(() => buildAppFiles(evil)).toThrow();
+  }
+});
+
+// ST-7 — every archetype's starter compiles under the SDK's own compiler settings.
+//
+// This is the oracle ST-4 cannot be: a string-containment assertion passes on source that `tsc`
+// rejects, and the in-process import in ST-6 proves nothing either, because vite strips types
+// without checking them. Only a real type check catches a starter that teaches an idiom the
+// framework no longer permits — the first file a new user opens must compile.
+//
+// The check runs in-process through the TypeScript compiler API rather than spawning `tsc`: it is
+// faster, and it avoids the process-spawn flakiness that has bitten this repo's Windows CI matrix.
+test('ST-7: every archetype generates a src/main.ts that typechecks', () => {
+  const examplesRoot = fileURLToPath(new URL('..', import.meta.url));
+  const tmpRoot = join(examplesRoot, '.typecheck-tmp');
+  rmSync(tmpRoot, { recursive: true, force: true });
+  try {
+    // One file per archetype, all checked by a single program. The files sit inside the examples
+    // package so that `@jsvision/ui` resolves the same way it does for any workspace consumer.
+    const entries = listArchetypes().map(({ name }) => {
+      const abs = join(tmpRoot, name, 'main.ts');
+      mkdirSync(dirname(abs), { recursive: true });
+      writeFileSync(abs, buildAppFiles('todo', name).get('packages/todo/src/main.ts') as string);
+      return abs;
+    });
+    expect(entries.length).toBeGreaterThan(0);
+
+    // Mirror tsconfig.base.json: the starter must hold up under the settings the SDK itself uses,
+    // not a lenient subset. `skipLibCheck` scopes the diagnostics to the generated code — a type
+    // error inside a dependency's .d.ts is that package's bug, not the scaffolder's.
+    const program = ts.createProgram(entries, {
+      strict: true,
+      module: ts.ModuleKind.NodeNext,
+      moduleResolution: ts.ModuleResolutionKind.NodeNext,
+      target: ts.ScriptTarget.ES2022,
+      skipLibCheck: true,
+      noEmit: true,
+    });
+
+    const diagnostics = [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()];
+    const report = diagnostics.map((d) => {
+      const text = ts.flattenDiagnosticMessageText(d.messageText, ' ');
+      if (d.file === undefined || d.start === undefined) return `TS${d.code}: ${text}`;
+      const { line, character } = d.file.getLineAndCharacterOfPosition(d.start);
+      return `${d.file.fileName}(${line + 1},${character + 1}): TS${d.code}: ${text}`;
+    });
+
+    expect(report, 'a generated starter does not compile').toEqual([]);
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+    expect(existsSync(tmpRoot)).toBe(false);
+  }
+});
+
+// ST-8 — the starters obey the framework's own documented footgun rules.
+//
+// Typechecking proves a starter compiles, not that it is idiomatic: a `View` subclass with no
+// `measure()` compiles perfectly and then silently lays out to 0×0. `jsvision-doctor` is the linter
+// that encodes those rules, and its `lintText` is pure, so pointing it at the rendered starters
+// costs nothing and stops a future template edit from teaching a footgun the SDK documents against.
+test('ST-8: every archetype generates a src/main.ts that is jsvision-doctor clean', () => {
+  for (const { name } of listArchetypes()) {
+    const main = buildAppFiles('todo', name).get('packages/todo/src/main.ts') as string;
+    const findings = lintText(main, `${name}/main.ts`).map((f) => `${f.rule}: ${f.message}`);
+    expect(findings, `the ${name} starter trips a documented footgun rule`).toEqual([]);
   }
 });
 

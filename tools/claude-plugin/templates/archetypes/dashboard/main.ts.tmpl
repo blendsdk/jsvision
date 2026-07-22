@@ -53,7 +53,7 @@ export function buildApp(): Application {
   });
 
   const win = new Window('__SLUG__');
-  win.layout.rect = { x: 2, y: 2, width: 46, height: 10 };
+  win.setLayout({ rect: { x: 2, y: 2, width: 46, height: 10 } });
   // A bar over a spinner over a button row, composed with the layout DSL.
   win.add(
     col(
