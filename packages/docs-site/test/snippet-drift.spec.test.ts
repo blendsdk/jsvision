@@ -94,16 +94,34 @@ test('example pages never hand-paste example module source in a fenced block', (
 // anywhere else — it gets reproduced rather than merely read.
 const LAYOUT_ASSIGNMENT = /\.layout(\.\w+)*\s*=[^=]/;
 
+/**
+ * Whether a page belongs to a generated API reference — the plugin's committed snapshot under
+ * `references/api/`, or the TypeDoc output under the docs package.
+ *
+ * Both reproduce the `layout` JSDoc verbatim, and that JSDoc necessarily *names* the closed spellings
+ * in the course of explaining that they do not compile. They document the contract rather than teach
+ * a call, so neither is a snippet surface. This is also the only escape hatch: because the scan
+ * covers whole pages, a page cannot show the assignment even as a labelled anti-pattern.
+ *
+ * Exempting the TypeDoc output matters for a second reason. It is gitignored and exists only after a
+ * `yarn docs:api` run, so without this the test would pass or fail depending on whether a generated
+ * directory happened to be on disk — a verdict that changes with no change to any authored page.
+ *
+ * Separators are normalized first, or the exemption silently stops matching on Windows, where CI
+ * also runs this project.
+ *
+ * @param path Absolute path to a teaching page.
+ * @returns True when the page is generated API reference output.
+ */
+function isGeneratedApiReference(path: string): boolean {
+  const posix = path.split(sep).join('/');
+  return posix.includes('/references/api/') || posix.includes('/docs-site/api/');
+}
+
 test('no teaching page assigns the layout field directly', () => {
   const offenders: string[] = [];
   for (const page of TEACHING_PAGES) {
-    // The generated API reference states the field's type (`layout: Readonly<LayoutProps>`) and
-    // reproduces its JSDoc, which names the closed spellings; it documents the contract rather than
-    // teaching a call, so it is not a snippet surface. This is also the only escape hatch: because
-    // the scan covers whole pages, a page cannot show the assignment even as a labelled
-    // anti-pattern. Separators are normalized first, or the exemption silently stops matching on
-    // Windows, where CI also runs this project.
-    if (page.path.split(sep).join('/').includes('/references/api/')) continue;
+    if (isGeneratedApiReference(page.path)) continue;
     page.text.split('\n').forEach((line, i) => {
       if (LAYOUT_ASSIGNMENT.test(line)) offenders.push(`${page.path}:${i + 1}: ${line.trim()}`);
     });
