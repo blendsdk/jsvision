@@ -20,14 +20,14 @@ variables). Each package's page links into its own tree:
 - [`@jsvision/ui`](/api/ui/) — the Turbo Vision-style widget framework: the reactive core, layout
   engine, view spine, event loop, app shell, and every control.
 - [`@jsvision/files`](/api/files/) — the file-system dialog family (file/directory pickers).
-- [`@jsvision/web`](/api/web/) — the browser runtime that runs any JSVision app in an xterm.js
-  terminal with no backend.
+- [`@jsvision/forms`](/api/forms/) — the headless, reactive form/field store with Zod validation.
+- [`@jsvision/datagrid`](/api/datagrid/) — the editable, enterprise-class data grid.
 
 Where a symbol has a hand-written component guide, its reference page links back to it under
 **Documented in →**, and the component page links here under **API reference →**.
 
 ## Pre-release packages
 
-`@jsvision/core` is published. `@jsvision/ui`, `@jsvision/files`, and `@jsvision/web` are documented
-here ahead of their first release — their APIs are **pre-release** and may change before they are
-published.
+These are the published `@jsvision` packages you can install. Their APIs are still **pre-release**
+(`0.x`) and may change before `1.0`. The private `@jsvision/web` browser runtime powers this site's
+live examples but is not a product package, so it is not documented here.
