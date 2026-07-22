@@ -1,6 +1,6 @@
 {
   "name": "@jsvision/datagrid",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "jsvision datagrid — an editable, enterprise-class data grid (per-cell editing, virtual scroll, typed columns) for @jsvision/ui.",
   "keywords": [
     "tui",
@@ -52,8 +52,8 @@
     "check:docs": "node ../../scripts/check-jsdoc.mjs ."
   },
   "dependencies": {
-    "@jsvision/core": "0.2.0",
-    "@jsvision/ui": "0.2.0"
+    "@jsvision/core": "1.0.0",
+    "@jsvision/ui": "1.0.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
