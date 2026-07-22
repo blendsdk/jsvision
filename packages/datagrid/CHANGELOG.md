@@ -12,6 +12,31 @@ first published release has an accurate history.
 > `[Unreleased]` is the authoritative surface; from 1.0.0 the package follows
 > [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-07-22
+
+Added:
+- Makes @jsvision/datagrid publishable by dropping private and adding its LICENSE file.
+- Introduced grid.saveVariant(name) and applyVariant(variant) methods for runtime variant management in the personalization dialog.
+- Added grid.exportView(format) for exporting the current view in CSV/HTML/JSON/TSV formats.
+- Implemented a filter customization seam allowing caller-supplied views for filter popups.
+- Introduced a new quick-filter row for per-column filtering with live updates.
+
+Changed:
+- Refactored layout handling to ensure all writes route through setLayout for consistency.
+- Updated the README to align with documentation styles used for other published packages.
+- Improved various test structure without altering assert values, focusing on clean code practices.
+
+Fixed:
+- Resolved layout issues that surfaced during quality review, ensuring properties retain their intended values.
+- Fixed the functionality of the custom-editor mount contract, ensuring it accurately reflects expected behavior.
+- Addressed quick-filter band layout issues, ensuring elements align correctly and inter-column dividers are visible. 
+
+Deprecated:
+- Previous manual layout resets have been deprecated in favor of using setLayout throughout.
+
+Removed:
+- Removed old documentation references that no longer align with the application's architecture and functionality.
+
 ## [Unreleased]
 
 ### Added

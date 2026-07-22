@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-07-22
+
+### Changed
+- Let `roleOverrides` patch a single field, aligning with documentation claims.
+- Restore README versioning section and allow shipped CHANGELOG in packaging spec.
+  
+### Fixed
+- Stop an explicit undefined `roleOverride` from erasing a generated value.
+- Gate `render()` until `start()` completes to prevent premature rendering.
+- Release stdin on `stop()` to ensure the process exits after quit.
+  
+### Added
+- Add `splitter` and `splitterDragging` theme roles for enhanced SplitView component.
+- Include optional `ctrl`, `alt`, and `shift` modifiers on `MouseEvent`.
+- Add `accelerator` and `menuAccelerator` theme aliases to the color role vocabulary.
+
+### Deprecated
+- Mark regular `roleOverrides` as deprecated in favor of surgical patching with single roles/fields.
+
+### Removed
+- Remove the deprecated `brightWhite` key from PALETTE JSDoc examples.
+
 ## [Unreleased]
 
 ### Added
