@@ -58,7 +58,7 @@ function makeSplit(opts: {
     onResize: (s) => resizes.push([...s]),
     onResizeEnd: (s) => ends.push([...s]),
   });
-  split.layout = { position: 'absolute', rect: { x: 0, y: 0, width: opts.width, height: opts.height } };
+  split.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: opts.width, height: opts.height } });
   const root = new Group();
   root.add(split);
   const loop = createEventLoop({ width: opts.width, height: opts.height }, { caps });
@@ -221,7 +221,7 @@ test('a full down→drag→up through the event loop tracks the divider, then re
 test("a pane's fr-laid-out interior reflows to the new pane rect after a drag (the declarative guarantee)", () => {
   const paneA = new Group();
   const inner = new Group();
-  inner.layout = { size: { kind: 'fr', weight: 1 } };
+  inner.setLayout({ size: { kind: 'fr', weight: 1 } });
   paneA.add(inner);
   const [paneB] = [new Pane()];
   const h = makeSplit({ children: [paneA, paneB], sizes: [1, 1], width: 21, height: 5 });
@@ -250,4 +250,28 @@ test('a nested row-of-cols lays out a 2×2 grid at a realistic size', () => {
   // Each column: free height = 10 → [5,5], stacked over a 1-cell splitter.
   expect(tl.bounds.height + 1 + bl.bounds.height, 'the left column fills the height').toBe(11);
   expect(tr.bounds.height).toBe(5);
+});
+
+// ── the DSL grow(min) reaches each pane, and grow's additive merge preserves a pre-set prop ───────
+
+test('each pane carries the minSize on its fr size token (the DSL grow min reaches the pane)', () => {
+  const [a, b] = [new Pane(), new Pane()];
+
+  new SplitView({ direction: 'row', children: [a, b], sizes: signal([1, 3]), minSize: 12 });
+  expect(a.layout.size).toEqual({ kind: 'fr', weight: 1, min: 12 });
+  expect(b.layout.size).toEqual({ kind: 'fr', weight: 3, min: 12 });
+});
+
+test("a pane's pre-set non-size layout prop survives construction (grow merges, not replaces)", () => {
+  const a = new Pane();
+  a.setLayout({ direction: 'col' }); // a pre-existing non-size prop the split must not clobber
+  const b = new Pane();
+
+  new SplitView({ direction: 'row', children: [a, b], sizes: signal([1, 1]), minSize: 12 });
+  expect(a.layout.direction, "the pane's own direction is preserved through the split's sizing").toBe('col');
+  expect(a.layout.size, 'sizing is still applied (merged over, not instead of)').toEqual({
+    kind: 'fr',
+    weight: 1,
+    min: 12,
+  });
 });

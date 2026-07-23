@@ -28,14 +28,21 @@ export interface RunSpinnerOptions {
  * @param opts  `intervalMs` (default `80`) + the `timer` seam.
  * @returns `stop()` — clears the pending timer and stops advancing; safe to call more than once.
  * @example
- * import { Group, Spinner, runSpinner, signal } from '@jsvision/ui';
+ * import { Group, Spinner, runSpinner, signal, type TimerSeam } from '@jsvision/ui';
  *
  * const frame = signal(0);
  * const g = new Group();
  * g.add(new Spinner({ frame, label: 'Working…' }));
  *
- * // `app.runtime` is the RuntimeAdapter from a running application.
- * const stop = runSpinner(frame, { timer: app.runtime, intervalMs: 80 });
+ * // Any object satisfying `TimerSeam` works — wrap the platform timer functions directly.
+ * let handle: NodeJS.Timeout | undefined;
+ * const timer: TimerSeam = {
+ *   setTimer: (fn, ms) => (handle = setTimeout(fn, ms)),
+ *   clearTimer: () => {
+ *     if (handle !== undefined) clearTimeout(handle);
+ *   },
+ * };
+ * const stop = runSpinner(frame, { timer, intervalMs: 80 });
  * // When the work finishes:
  * stop();
  */

@@ -280,15 +280,29 @@ export function lintText(source, fileName = 'source.ts') {
   return findings.sort((a, b) => a.line - b.line);
 }
 
-/** Climb from an object literal to the base identifier of the assignment it initializes, or null. */
+/**
+ * Climb from an object literal to the identifier whose layout it sets, or null.
+ *
+ * Two spellings reach the same place. A `setLayout({…})` call is the blessed one; a direct
+ * `x.layout = {…}` assignment is the retired one, still recognized so this reads correctly against
+ * older code a user may be holding. Missing the call form would make the window exception below fire
+ * on `win.setLayout({ position: 'absolute', … })` — the very idiom the framework mandates.
+ */
 function findEnclosingAssignmentBase(objectLiteral) {
   let node = objectLiteral.parent;
   while (node) {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.name.text === 'setLayout'
+    ) {
+      return baseIdentifier(node.expression.expression);
+    }
     if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
       return baseIdentifier(node.left);
     }
     if (ts.isVariableDeclaration(node)) return ts.isIdentifier(node.name) ? node.name.text : null;
-    // Stop climbing at a statement boundary — the object literal is an argument, not an assignment RHS.
+    // Stop climbing at a statement boundary — the object literal is an argument, not a layout write.
     if (ts.isStatement(node)) return null;
     node = node.parent;
   }

@@ -48,7 +48,7 @@ function windowWithLeaf(
   rect: { x: number; y: number; width: number; height: number },
 ): { win: Window; leaf: ConsumingLeaf } {
   const win = new Window(title);
-  win.layout.rect = rect;
+  win.setLayout({ rect });
   const leaf = new ConsumingLeaf();
   win.add(leaf);
   app.desktop.addWindow(win);
@@ -98,7 +98,7 @@ test('impl: a click inside a modal dialog does not raise the window behind it', 
 test('impl: a frame (title) click still reaches Window.onEvent — begins a move on the active window', () => {
   const app = shellApp(40, 12);
   const w = new Window('W'); // no interior leaf → frame + interior both hit the window group
-  w.layout.rect = { x: 5, y: 5, width: 12, height: 5 };
+  w.setLayout({ rect: { x: 5, y: 5, width: 12, height: 5 } });
   app.desktop.addWindow(w); // sole window → active (wasActiveOnPress will be true)
   app.loop.renderRoot.flush();
 

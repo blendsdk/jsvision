@@ -22,16 +22,21 @@ export interface MultiCheckGroupOptions {
  * A multi-state checkbox group bound to a `number[]` signal (one state index per item).
  *
  * @example
- * import { Group, MultiCheckGroup, signal } from '@jsvision/ui';
+ * import { Group, MultiCheckGroup, signal, at } from '@jsvision/ui';
  *
  * // Three states per item: ' ' (off), 'x' (some), 'X' (all).
  * const levels = signal([0, 2]); // Volume off, Treble full
- * const group = new MultiCheckGroup({
- *   items: ['~V~olume', '~T~reble'],
- *   states: ' xX',
- *   value: levels,
- * });
- * group.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 20, height: 2 } };
+ * const group = at(
+ *   new MultiCheckGroup({
+ *     items: ['~V~olume', '~T~reble'],
+ *     states: ' xX',
+ *     value: levels,
+ *   }),
+ *   1,
+ *   0,
+ *   20,
+ *   2,
+ * );
  *
  * const panel = new Group();
  * panel.add(group);

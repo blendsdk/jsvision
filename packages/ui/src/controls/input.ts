@@ -45,12 +45,11 @@ export interface InputOptions {
  * A focusable single-line text editor.
  *
  * @example
- * import { Group, Input, signal } from '@jsvision/ui';
+ * import { Group, Input, signal, at } from '@jsvision/ui';
  *
  * // Plain field: `name` mirrors typing; the muted placeholder shows only while the field is empty.
  * const name = signal('');
- * const input = new Input({ value: name, placeholder: 'Full name' });
- * input.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 24, height: 1 } };
+ * const input = at(new Input({ value: name, placeholder: 'Full name' }), 1, 0, 24, 1);
  *
  * const form = new Group();
  * form.add(input);

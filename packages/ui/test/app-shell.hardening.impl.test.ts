@@ -22,7 +22,7 @@ function mouse(kind: MouseEvent['kind'], x: number, y: number): MouseEvent {
 test('a stale gesture across two successive modals never moves the window', async () => {
   const app = createApplication({ caps, viewport: { width: 40, height: 20 } });
   const w = new Window('W');
-  w.layout.rect = { x: 2, y: 2, width: 12, height: 6 };
+  w.setLayout({ rect: { x: 2, y: 2, width: 12, height: 6 } });
   app.desktop.addWindow(w);
 
   app.desktop.beginMove(w, { x: 0, y: 0 });
@@ -43,7 +43,7 @@ test('a stale gesture across two successive modals never moves the window', asyn
 test('Commands.close removes the sole window', () => {
   const app = createApplication({ caps, viewport: { width: 30, height: 10 } });
   const w = new Window('Only');
-  w.layout.rect = { x: 0, y: 0, width: 20, height: 6 };
+  w.setLayout({ rect: { x: 0, y: 0, width: 20, height: 6 } });
   app.desktop.addWindow(w);
   app.loop.renderRoot.flush();
 
@@ -56,7 +56,7 @@ test('Commands.close removes the sole window', () => {
 test('an active window close box acts on the first click', () => {
   const app = createApplication({ caps, viewport: { width: 30, height: 10 } });
   const w = new Window('A');
-  w.layout.rect = { x: 0, y: 0, width: 20, height: 6 };
+  w.setLayout({ rect: { x: 0, y: 0, width: 20, height: 6 } });
   app.desktop.addWindow(w); // sole window → active
   app.loop.renderRoot.flush();
   expect(app.desktop.activeWindow()).toBe(w);
@@ -80,7 +80,7 @@ test('HR-41 impl: zoom → grow → unzoom returns the original restore rect', (
   const app = createApplication({ caps, viewport: { width: 40, height: 20 } });
   const w = new Window('W');
   const original = { x: 6, y: 4, width: 18, height: 9 };
-  w.layout.rect = { ...original };
+  w.setLayout({ rect: { ...original } });
   app.desktop.addWindow(w);
 
   w.zoom(); // maximize
@@ -112,7 +112,7 @@ test('HR-40 impl: three-menu bar switches title→title on single clicks', () =>
 test('HR-08 impl: closing the sole window empties the desktop', () => {
   const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
   const only = new Window('Only');
-  only.layout.rect = { x: 0, y: 0, width: 20, height: 6 };
+  only.setLayout({ rect: { x: 0, y: 0, width: 20, height: 6 } });
   app.desktop.addWindow(only);
 
   app.loop.emitCommand(Commands.close);
@@ -124,7 +124,7 @@ test('HR-08 impl: closing the sole window empties the desktop', () => {
 test('HR-14 impl: a stale gesture across two successive modals never teleports', async () => {
   const app = createApplication({ caps, viewport: { width: 40, height: 20 } });
   const w = new Window('W');
-  w.layout.rect = { x: 3, y: 3, width: 12, height: 6 };
+  w.setLayout({ rect: { x: 3, y: 3, width: 12, height: 6 } });
   app.desktop.addWindow(w);
   const before = { ...w.layout.rect };
 

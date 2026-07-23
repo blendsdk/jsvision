@@ -9,7 +9,7 @@
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { Group, Text, col, row, stack, grow, fixed, spacer, topRight } from '@jsvision/ui';
-import type { ThemeRoleName, LayoutProps } from '@jsvision/ui';
+import type { ThemeRoleName } from '@jsvision/ui';
 import { at } from '../story.js';
 import type { Story, StoryContext } from '../story.js';
 
@@ -60,14 +60,9 @@ export const layoutDslStory: Story = {
     // The whole frame: a fixed header, the growing body, a fixed footer — top to bottom.
     const frame = col({ gap: 0 }, fixed(panel('fixed(3) header', 'window'), 3), grow(body), fixed(footer, 1));
 
-    // Place the DSL frame by MERGING an absolute rect onto its layout (preserving its `direction`);
-    // `at()` would replace the layout and lose it.
-    const framed: LayoutProps = {
-      ...frame.layout,
-      position: 'absolute',
-      rect: { x: 1, y: 2, width: w - 2, height: h - 3 },
-    };
-    frame.layout = framed;
+    // `setLayout` merges, so the frame keeps the `direction` the DSL gave it; `at()` would replace
+    // the whole layout and lose it.
+    frame.setLayout({ position: 'absolute', rect: { x: 1, y: 2, width: w - 2, height: h - 3 } });
     g.add(frame);
     return g;
   },

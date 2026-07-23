@@ -14,7 +14,7 @@
  */
 import { posix } from 'node:path';
 import { resolveCapabilities } from '@jsvision/core';
-import { Group, createEventLoop, createRoot, signal, Commands } from '@jsvision/ui';
+import { Group, createEventLoop, createRoot, signal, Commands, cover } from '@jsvision/ui';
 import { FileDialog, ChDirDialog } from '@jsvision/files';
 import type { DirEntry, FileStat, FileSystem } from '@jsvision/files';
 
@@ -78,6 +78,21 @@ const memFs: FileSystem = {
   sep: '/',
   homedir: () => '/home/user',
   roots: () => ['/'],
+  // The tree models directory structure only — names, kinds and sizes, which is all the dialog
+  // family reads. Rejecting the content methods keeps that boundary visible: a walkthrough that
+  // silently returned empty text would look like a working editor seam that it is not.
+  readFile: (path) => {
+    throw new Error(`this walkthrough's tree holds no file content: ${path}`);
+  },
+  writeFile: (path) => {
+    throw new Error(`this walkthrough's tree is read-only: ${path}`);
+  },
+  rename: (from) => {
+    throw new Error(`this walkthrough's tree is read-only: ${from}`);
+  },
+  unlink: (path) => {
+    throw new Error(`this walkthrough's tree is read-only: ${path}`);
+  },
 };
 
 /** Print a render root's composed buffer as an ASCII grid framed by a ruler. */
@@ -100,7 +115,7 @@ function runWalkthrough(): void {
   // —— FileDialog: render, then drive valid() (wildcard → directory → file) ——
   const directory = signal('/home/user');
   const dlg = new FileDialog({ fs: memFs, directory });
-  dlg.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 49, height: 19 } };
+  cover(dlg);
   const fdLoop = createEventLoop({ width: 49, height: 19 }, { caps });
   const fdRoot = new Group();
   fdRoot.add(dlg);
@@ -126,7 +141,7 @@ function runWalkthrough(): void {
 
   // —— ChDirDialog: render the DirList tree ——
   const chdir = new ChDirDialog({ fs: memFs, directory: signal('/home/user/src') });
-  chdir.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 48, height: 18 } };
+  cover(chdir);
   const cdLoop = createEventLoop({ width: 48, height: 18 }, { caps });
   const cdRoot = new Group();
   cdRoot.add(chdir);

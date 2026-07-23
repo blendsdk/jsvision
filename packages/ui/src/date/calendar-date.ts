@@ -37,6 +37,8 @@ function isLeapYear(year: number): boolean {
  * @param month The 1-based month (1-12).
  * @returns The number of days in the month (28-31), or 0 if `month` is out of range.
  * @example
+ * import { daysInMonth } from '@jsvision/ui';
+ *
  * daysInMonth(2024, 2); // 29 (leap year)
  * daysInMonth(2026, 2); // 28
  * daysInMonth(2026, 4); // 30
@@ -53,6 +55,8 @@ export function daysInMonth(year: number, month: number): number {
  * @param date The civil date.
  * @returns 0 (Sunday) … 6 (Saturday).
  * @example
+ * import { dayOfWeek } from '@jsvision/ui';
+ *
  * dayOfWeek({ year: 2026, month: 7, day: 8 }); // 3 (Wednesday)
  */
 export function dayOfWeek(date: CalendarDate): number {
@@ -81,6 +85,8 @@ export function dayOfWeek(date: CalendarDate): number {
  * @param n    Months to add (negative to subtract).
  * @returns A fresh, valid `CalendarDate`.
  * @example
+ * import { addMonths } from '@jsvision/ui';
+ *
  * addMonths({ year: 2026, month: 1, day: 31 }, 1);  // { year: 2026, month: 2, day: 28 } (day clamped)
  * addMonths({ year: 2026, month: 1, day: 15 }, -2); // { year: 2025, month: 11, day: 15 }
  */
@@ -132,6 +138,8 @@ function fromDayNumber(jdn: number): CalendarDate {
  * @param n    Days to add (negative to subtract).
  * @returns A fresh, valid `CalendarDate`.
  * @example
+ * import { addDays } from '@jsvision/ui';
+ *
  * addDays({ year: 2026, month: 1, day: 31 }, 1);  // { year: 2026, month: 2, day: 1 }
  * addDays({ year: 2026, month: 3, day: 1 }, -1);  // { year: 2026, month: 2, day: 28 }
  */
@@ -146,8 +154,16 @@ export function addDays(date: CalendarDate, n: number): CalendarDate {
  * @param b The right date.
  * @returns -1 | 0 | 1.
  * @example
+ * import { compare } from '@jsvision/ui';
+ * import type { CalendarDate } from '@jsvision/ui';
+ *
  * compare({ year: 2026, month: 7, day: 8 }, { year: 2026, month: 7, day: 9 }); // -1
+ *
  * // Sort an array of dates ascending:
+ * const dates: CalendarDate[] = [
+ *   { year: 2026, month: 7, day: 9 },
+ *   { year: 2026, month: 7, day: 8 },
+ * ];
  * dates.sort(compare);
  */
 export function compare(a: CalendarDate, b: CalendarDate): -1 | 0 | 1 {
@@ -168,6 +184,8 @@ function pad(value: number, width: number): string {
  * @param date The civil date.
  * @returns The ISO-8601 calendar-date string.
  * @example
+ * import { toISO } from '@jsvision/ui';
+ *
  * toISO({ year: 2026, month: 7, day: 8 }); // '2026-07-08'
  */
 export function toISO(date: CalendarDate): string {
@@ -185,6 +203,8 @@ const ISO_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
  * @param str The candidate string.
  * @returns A valid `CalendarDate`, or `null`.
  * @example
+ * import { parseISO } from '@jsvision/ui';
+ *
  * parseISO('2026-07-08'); // { year: 2026, month: 7, day: 8 }
  * parseISO('2026-02-30'); // null (out of range)
  * parseISO('nope');       // null
@@ -206,6 +226,8 @@ export function parseISO(str: string): CalendarDate | null {
  * @param d A JS `Date` (its local-time fields are read).
  * @returns The civil date.
  * @example
+ * import { fromDate } from '@jsvision/ui';
+ *
  * fromDate(new Date(2026, 6, 8)); // { year: 2026, month: 7, day: 8 } (JS months are 0-based)
  */
 export function fromDate(d: Date): CalendarDate {
@@ -218,6 +240,8 @@ export function fromDate(d: Date): CalendarDate {
  * @param cd The civil date.
  * @returns A JS `Date` at local midnight.
  * @example
+ * import { toDate } from '@jsvision/ui';
+ *
  * toDate({ year: 2026, month: 7, day: 8 }); // new Date(2026, 6, 8) — local midnight
  */
 export function toDate(cd: CalendarDate): Date {

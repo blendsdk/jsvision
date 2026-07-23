@@ -41,22 +41,19 @@ export interface SurfaceViewOptions {
  * surface swap, or a surface content change each schedule one coalesced repaint.
  *
  * @example
- * import { Group, Surface, SurfaceView, ScrollBar, signal } from '@jsvision/ui';
+ * import { Group, Surface, SurfaceView, ScrollBar, signal, at } from '@jsvision/ui';
  *
  * const surface = Surface.from(['+----+', '| hi |', '+----+']);
  * const delta = signal({ x: 0, y: 0 });
  *
  * const g = new Group();
- * const view = new SurfaceView({ surface, delta });
- * view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 4, height: 2 } };
- * g.add(view);
+ * g.add(at(new SurfaceView({ surface, delta }), 0, 0, 4, 2));
  *
  * // Drive the horizontal offset from a scroll bar (or write `delta` directly).
  * const hx = signal(0);
  * const bar = new ScrollBar({ value: hx, min: 0, max: surface.size.x - 4, orientation: 'horizontal' });
- * bar.layout = { position: 'absolute', rect: { x: 0, y: 2, width: 4, height: 1 } };
  * // …bind `hx` → `delta.x` in your own handler, or use SurfaceView.scrollTo / panBy.
- * g.add(bar);
+ * g.add(at(bar, 0, 2, 4, 1));
  */
 export class SurfaceView extends View {
   /** The view is passive — it never takes focus or handles input. */

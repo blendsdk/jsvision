@@ -85,7 +85,7 @@ describe('out-of-tick repaint', () => {
     const frame = signal(0);
     const g = new Group();
     const spinner = new Spinner({ frame, preset: 'dots' });
-    spinner.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 4, height: 1 } };
+    spinner.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 4, height: 1 } });
     g.add(spinner);
     loop.mount(g);
     runPending(); // drain the mount-time deferred paint so the render root's scheduled flag settles
@@ -122,9 +122,9 @@ describe('out-of-tick repaint', () => {
     loop.mount(desktop);
 
     const a = new Window('AAA');
-    a.layout.rect = { x: 5, y: 2, width: 20, height: 6 };
+    a.setLayout({ rect: { x: 5, y: 2, width: 20, height: 6 } });
     const b = new Window('BBB');
-    b.layout.rect = { x: 5, y: 2, width: 20, height: 6 }; // both start overlapping
+    b.setLayout({ rect: { x: 5, y: 2, width: 20, height: 6 } }); // both start overlapping
     desktop.addWindow(a);
     desktop.addWindow(b); // z-order [a(back), b(front)]
     runPending(); // drain the mount/add-window deferred paints so the render root settles
@@ -158,7 +158,7 @@ describe('out-of-tick repaint', () => {
     const s = signal('A');
     const g = new Group();
     const sv = new SignalView(() => s());
-    sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } };
+    sv.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } });
     g.add(sv);
     loop.mount(g);
     runPending();
@@ -185,7 +185,7 @@ describe('out-of-tick repaint', () => {
     const s = signal(0);
     const g = new Group();
     const sv = new SignalView(() => String(s() % 10));
-    sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } };
+    sv.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 10, height: 1 } });
     g.add(sv);
     loop.mount(g);
     runPending();
@@ -213,7 +213,7 @@ describe('out-of-tick repaint', () => {
     const { loop, runPending } = harness({ width: 10, height: 3 });
     const g = new Group();
     const sv = new SignalView(() => 'X');
-    sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 5, height: 1 } };
+    sv.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 5, height: 1 } });
     g.add(sv);
     loop.mount(g);
     runPending();
@@ -238,7 +238,7 @@ describe('out-of-tick repaint', () => {
     const s = signal('A');
     const g = new Group();
     const sv = new SignalView(() => s());
-    sv.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 5, height: 1 } };
+    sv.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 5, height: 1 } });
     g.add(sv);
     loop.mount(g);
     runPending();

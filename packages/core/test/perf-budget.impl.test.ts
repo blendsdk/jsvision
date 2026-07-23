@@ -1,13 +1,9 @@
 /**
- * Implementation tests for the frame-bench helpers (RD-10, plan doc 03-01).
+ * Implementation tests for the frame-bench helpers.
  *
- * Covers the pure statistics (`median`/`p95`) on known inputs, the
- * non-mutation contract, the `measureComposeDiff` measurement shape, and the
- * `perfBudgetMode` CI/TUI_SKIP_PERF skip decision — all imported from the
- * main-guarded `bench/frame-bench.mjs` (no CLI/side effects on import, PF-005).
- *
- * The `.mjs` extension in the import specifier is required by NodeNext ESM
- * resolution (resolved by tsx at run time).
+ * Covers pure statistics, non-mutation, measurement shape, and the execution
+ * environments where wall-clock budgets are reliable. Importing the helper
+ * never starts its command-line benchmark.
  */
 import { test, expect } from 'vitest';
 import { median, p95, measureComposeDiff, perfBudgetMode } from '../bench/frame-bench.mjs';
@@ -47,9 +43,11 @@ test('measureComposeDiff: returns a positive, finite median over warmed runs', (
   expect(ms > 0).toBeTruthy();
 });
 
-test('perfBudgetMode: asserts off-CI, logs under CI or TUI_SKIP_PERF', () => {
+test('perfBudgetMode: asserts only outside CI, Turbo, and explicit skips', () => {
   expect(perfBudgetMode({})).toBe('assert');
   expect(perfBudgetMode({ CI: 'true' })).toBe('log');
   expect(perfBudgetMode({ TUI_SKIP_PERF: '1' })).toBe('log');
-  expect(perfBudgetMode({ CI: '', TUI_SKIP_PERF: '' })).toBe('assert');
+  expect(perfBudgetMode({ TURBO_HASH: 'abc123' })).toBe('log');
+  expect(perfBudgetMode({ TURBO_IS_TUI: 'true' })).toBe('assert');
+  expect(perfBudgetMode({ CI: '', TUI_SKIP_PERF: '', TURBO_HASH: '' })).toBe('assert');
 });

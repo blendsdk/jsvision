@@ -18,7 +18,17 @@
  */
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
-import { View, Group, createEventLoop, type DrawContext, type DispatchEvent, type ThemeRoleName } from '@jsvision/ui';
+import {
+  View,
+  createEventLoop,
+  col,
+  row,
+  fixed,
+  grow,
+  type DrawContext,
+  type DispatchEvent,
+  type ThemeRoleName,
+} from '@jsvision/ui';
 
 /** A synthetic decoded key (no terminal needed). */
 function key(name: string): KeyEvent {
@@ -88,8 +98,8 @@ function printFrame(title: string, rows: readonly { char: string }[][]): void {
   const width = rows[0]?.length ?? 0;
   console.log(`\n${title}`);
   console.log(`+${'-'.repeat(width)}+`);
-  for (const row of rows) {
-    console.log(`|${row.map((cell) => cell.char).join('')}|`);
+  for (const line of rows) {
+    console.log(`|${line.map((cell) => cell.char).join('')}|`);
   }
   console.log(`+${'-'.repeat(width)}+`);
 }
@@ -100,36 +110,20 @@ async function main(): Promise<void> {
 
   // --- Build the themed desktop tree (the modal dialog is part of the tree, per the RD-04 contract).
   const header = new Label('jsvision — Event Loop (RD-04)', 'menuBar');
-  header.layout = { size: { kind: 'fixed', cells: 1 } };
 
   const btnOk = new Button('OK', () => loop.emitCommand('ok'));
   const btnOpen = new Button('Open Dialog', () => undefined); // opened from the script below
-  for (const b of [btnOk, btnOpen]) b.layout = { size: { kind: 'fr', weight: 1 } };
-  const body = new Group();
-  body.layout = { direction: 'row', size: { kind: 'fixed', cells: 1 }, gap: 2 };
-  body.add(btnOk);
-  body.add(btnOpen);
+  const body = fixed(row({ gap: 2 }, grow(btnOk), grow(btnOpen)), 1);
 
   const dialogLabel = new Label('Dialog — press Enter to close', 'dialog');
-  dialogLabel.layout = { size: { kind: 'fixed', cells: 1 } };
   const btnClose = new Button('Close', () => loop.endModal('ok'));
-  btnClose.layout = { size: { kind: 'fixed', cells: 1 } };
-  const dialog = new Group();
+  const dialog = fixed(col(fixed(dialogLabel, 1), fixed(btnClose, 1)), 2);
   dialog.background = 'dialog';
-  dialog.layout = { direction: 'col', size: { kind: 'fixed', cells: 2 } };
-  dialog.add(dialogLabel);
-  dialog.add(btnClose);
 
   const status = new StatusBar();
-  status.layout = { size: { kind: 'fixed', cells: 1 } };
 
-  const root = new Group();
+  const root = col({ padding: 1 }, fixed(header, 1), body, dialog, fixed(status, 1));
   root.background = 'desktop';
-  root.layout = { direction: 'col', padding: 1 };
-  root.add(header);
-  root.add(body);
-  root.add(dialog);
-  root.add(status);
 
   loop.mount(root);
 

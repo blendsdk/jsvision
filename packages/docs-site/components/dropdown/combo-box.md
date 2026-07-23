@@ -24,7 +24,7 @@ const items = signal(['TypeScript', 'JavaScript', 'Python', 'Rust', 'Go']);
 const value = signal<string | null>(null);
 
 const combo = new ComboBox<string>({ items, getText: (s) => s, value, editable: true });
-combo.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } };
+combo.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } });
 
 const controls = new Group();
 controls.add(combo);

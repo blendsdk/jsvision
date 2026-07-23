@@ -49,7 +49,7 @@ function mouse(kind: 'down' | 'up', x: number, y: number): CoreMouseEvent {
 
 /** Mount a Tree filling `w×h` under a root Group, focus its rows renderer; caps selectable. */
 function hosted<T>(tree: Tree<T>, w: number, h: number, caps = noUnicodeCaps) {
-  tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(tree);
   const loop = createEventLoop({ width: w, height: h }, { caps });

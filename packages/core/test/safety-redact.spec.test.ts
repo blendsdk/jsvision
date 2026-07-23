@@ -61,7 +61,7 @@ test('ST-18: dumpCaps renders the exact secret-free caps summary', () => {
       altScreen: true,
       bracketedPaste: true,
       keyboard: { kittyFlags: false, modifyOtherKeys: false },
-      glyphs: { boxDrawing: true, halfBlocks: false },
+      glyphs: { boxDrawing: true, halfBlocks: false, ambiguousWide: false },
       platform: 'linux',
       multiplexer: false,
     },

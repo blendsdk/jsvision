@@ -78,7 +78,16 @@ export interface RenderRootOptions {
   caps: CapabilityProfile;
   /** Active theme; defaults to the built-in default theme. */
   theme?: Theme;
-  /** How a pending repaint is scheduled; defaults to `queueMicrotask` (one coalesced frame per tick). */
+  /**
+   * How a pending repaint is scheduled; defaults to `queueMicrotask` (one coalesced frame per tick).
+   *
+   * A custom scheduler **must defer** the callback rather than invoking it inline. Coalescing is what
+   * makes invalidation cheap: many invalidations in one tick collapse into a single frame. A
+   * synchronous `(flush) => flush()` defeats that — every invalidation becomes its own frame: a full
+   * repaint pass for `invalidate`, and a reflow plus recompose for `invalidateLayout`. Building a tree
+   * then costs one frame per view. Tests that need a frame inline should call the render root's
+   * `flush()` instead.
+   */
   schedule?: (flush: () => void) => void;
   /** Where a widget's `draw()` errors are logged; defaults to a disabled logger (silent). */
   logger?: Logger;

@@ -8,13 +8,13 @@
  * editor's `editorDialog` option and it drives them for you.
  */
 import { signal } from '../reactive/index.js';
-import type { View, Point } from '../view/index.js';
+import type { Point, Group } from '../view/index.js';
+import { col, row, grow, fixed, cover, spacer } from '../view/index.js';
 import { Dialog, okButton, cancelButton, yesButton, noButton } from '../dialog/index.js';
-import { runDialog, messageBox } from '../dialog/message-box.js';
+import { runDialog, messageBox, buttonBand, DIALOG_BODY_PADDING } from '../dialog/message-box.js';
 import type { ModalDialogHost } from '../dialog/message-box.js';
 import { Input, CheckGroup, Label, Text } from '../controls/index.js';
 import { History } from '../dropdown/index.js';
-import type { Rect } from '../layout/index.js';
 import type {
   EditorDialogHandler,
   EditorDialogRequest,
@@ -29,15 +29,16 @@ import type {
  */
 export type EditorDialogHost = ModalDialogHost;
 
-/** Build a rect from left/top/right/bottom edges (right and bottom are exclusive). */
-function tv(a: number, b: number, c: number, d: number): Rect {
-  return { x: a, y: b, width: c - a, height: d - b };
-}
+/** Width of the history drop-down button that sits beside a field. */
+const HISTORY_WIDTH = 3;
 
-/** Place `view` at an absolute rect inside a dialog with no padding. */
-function at<T extends View>(view: T, rect: Rect): T {
-  view.layout = { ...view.layout, position: 'absolute', rect };
-  return view;
+/**
+ * One entry row: the field takes whatever width the history drop-down beside it leaves. Both are given
+ * explicit sizes because neither reports a natural one — left to size themselves they would collapse to
+ * nothing and be clipped away.
+ */
+function fieldRow(field: Input): Group {
+  return row(grow(field), fixed(new History({ link: field }), HISTORY_WIDTH));
 }
 
 /**
@@ -47,6 +48,12 @@ function at<T extends View>(view: T, rect: Rect): T {
  * @param initial Optional values to pre-fill the field and checkboxes.
  * @returns The entered search record, or `null` if the user cancels.
  * @example
+ * import { createApplication, findDialog } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
  * const rec = await findDialog(
  *   { loop: app.loop, desktop: app.desktop },
  *   { find: 'fox', options: { caseSensitive: false, wholeWords: false } },
@@ -55,17 +62,26 @@ function at<T extends View>(view: T, rect: Rect): T {
  */
 export async function findDialog(host: EditorDialogHost, initial?: FindRec): Promise<FindRec | null> {
   const dlg = new Dialog({ title: 'Find', width: 38, height: 12, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 }; // children are placed at absolute rects, no auto-inset
   const find = signal(initial?.find ?? '');
   const flags = signal([initial?.options.caseSensitive ?? false, initial?.options.wholeWords ?? false]);
 
-  const input = at(new Input({ value: find, maxLength: 80 }), tv(3, 3, 32, 4));
-  dlg.add(input);
-  dlg.add(at(new Label('~T~ext to find', input), tv(2, 2, 15, 3)));
-  dlg.add(at(new History({ link: input }), tv(32, 3, 35, 4)));
-  dlg.add(at(new CheckGroup({ labels: ['~C~ase sensitive', '~W~hole words only'], value: flags }), tv(3, 5, 35, 7)));
-  dlg.add(at(okButton(), tv(14, 9, 24, 11)));
-  dlg.add(at(cancelButton(), tv(26, 9, 36, 11)));
+  const input = new Input({ value: find, maxLength: 80 });
+  const labels = ['~C~ase sensitive', '~W~hole words only'];
+  // Every control takes exactly the rows it needs; the spacer absorbs the leftover height, which pins
+  // the button band to the bottom row.
+  dlg.add(
+    cover(
+      col(
+        { padding: DIALOG_BODY_PADDING },
+        fixed(new Label('~T~ext to find', input), 1),
+        fixed(fieldRow(input), 1),
+        spacer({ fixed: 1 }),
+        fixed(new CheckGroup({ labels, value: flags }), labels.length),
+        spacer(),
+        buttonBand(okButton(), cancelButton()),
+      ),
+    ),
+  );
 
   const result = await runDialog(host, dlg);
   if (result !== 'ok') return null;
@@ -81,6 +97,12 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
  * @param initial Optional values to pre-fill the fields and checkboxes.
  * @returns The entered replace record, or `null` if the user cancels.
  * @example
+ * import { createApplication, replaceDialog } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
  * const rec = await replaceDialog(
  *   { loop: app.loop, desktop: app.desktop },
  *   {
@@ -94,7 +116,6 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
  */
 export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec): Promise<ReplaceRec | null> {
   const dlg = new Dialog({ title: 'Replace', width: 40, height: 16, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 }; // children are placed at absolute rects, no auto-inset
   const find = signal(initial?.find ?? '');
   const replace = signal(initial?.replace ?? '');
   const flags = signal([
@@ -104,25 +125,27 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
     initial?.replaceAll ?? false,
   ]);
 
-  const findInput = at(new Input({ value: find, maxLength: 80 }), tv(3, 3, 34, 4));
-  dlg.add(findInput);
-  dlg.add(at(new Label('~T~ext to find', findInput), tv(2, 2, 15, 3)));
-  dlg.add(at(new History({ link: findInput }), tv(34, 3, 37, 4)));
-  const newInput = at(new Input({ value: replace, maxLength: 80 }), tv(3, 6, 34, 7));
-  dlg.add(newInput);
-  dlg.add(at(new Label('~N~ew text', newInput), tv(2, 5, 12, 6)));
-  dlg.add(at(new History({ link: newInput }), tv(34, 6, 37, 7)));
+  const findInput = new Input({ value: find, maxLength: 80 });
+  const newInput = new Input({ value: replace, maxLength: 80 });
+  const labels = ['~C~ase sensitive', '~W~hole words only', '~P~rompt on replace', '~R~eplace all'];
+  // Every control takes exactly the rows it needs; the spacer absorbs the leftover height, which pins
+  // the button band to the bottom row.
   dlg.add(
-    at(
-      new CheckGroup({
-        labels: ['~C~ase sensitive', '~W~hole words only', '~P~rompt on replace', '~R~eplace all'],
-        value: flags,
-      }),
-      tv(3, 8, 37, 12),
+    cover(
+      col(
+        { padding: DIALOG_BODY_PADDING },
+        fixed(new Label('~T~ext to find', findInput), 1),
+        fixed(fieldRow(findInput), 1),
+        spacer({ fixed: 1 }),
+        fixed(new Label('~N~ew text', newInput), 1),
+        fixed(fieldRow(newInput), 1),
+        spacer({ fixed: 1 }),
+        fixed(new CheckGroup({ labels, value: flags }), labels.length),
+        spacer(),
+        buttonBand(okButton(), cancelButton()),
+      ),
     ),
   );
-  dlg.add(at(okButton(), tv(17, 13, 27, 15)));
-  dlg.add(at(cancelButton(), tv(28, 13, 38, 15)));
 
   const result = await runDialog(host, dlg);
   if (result !== 'ok') return null;
@@ -137,6 +160,16 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
  * @param message The message to display; the box sizes itself to fit.
  * @returns The button the user chose (`'cancel'` also covers closing the box).
  * @example
+ * import { createApplication, confirmBox } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
+ * async function save(): Promise<void> {
+ *   // Persist the buffer to disk.
+ * }
+ *
  * const answer = await confirmBox(
  *   { loop: app.loop, desktop: app.desktop },
  *   'The file has been modified. Save?',
@@ -146,11 +179,15 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
 export async function confirmBox(host: EditorDialogHost, message: string): Promise<'yes' | 'no' | 'cancel'> {
   const width = Math.min(60, Math.max(40, message.length + 6));
   const dlg = new Dialog({ width, height: 9, centered: true });
-  dlg.layout = { ...dlg.layout, padding: 0 };
-  dlg.add(at(new Text(message), { x: 3, y: 2, width: width - 6, height: 2 }));
-  dlg.add(at(yesButton(), { x: 3, y: 6, width: 10, height: 2 }));
-  dlg.add(at(noButton(), { x: 15, y: 6, width: 10, height: 2 }));
-  dlg.add(at(cancelButton(), { x: 27, y: 6, width: 10, height: 2 }));
+  dlg.add(
+    cover(
+      col(
+        { padding: DIALOG_BODY_PADDING },
+        grow(new Text(message)),
+        buttonBand(yesButton(), noButton(), cancelButton()),
+      ),
+    ),
+  );
   const result = await runDialog(host, dlg);
   return result === 'yes' || result === 'no' ? result : 'cancel';
 }
@@ -162,6 +199,12 @@ export async function confirmBox(host: EditorDialogHost, message: string): Promi
  * @param message The message to display; the box sizes itself to fit.
  * @returns Resolves once the user dismisses the box.
  * @example
+ * import { createApplication, infoBox } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
  * await infoBox({ loop: app.loop, desktop: app.desktop }, 'Search string not found.');
  */
 export async function infoBox(host: EditorDialogHost, message: string): Promise<void> {
@@ -178,7 +221,18 @@ export async function infoBox(host: EditorDialogHost, message: string): Promise<
  * @param cursor The caret position in absolute (desktop) coordinates, used to avoid covering it.
  * @returns The button the user chose.
  * @example
+ * import { createApplication, replacePrompt } from '@jsvision/ui';
+ * import type { EditorDialogRequest } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
+ *
+ * const caps = resolveCapabilities().profile;
+ * const app = createApplication({ caps });
+ *
  * // Inside an editorDialog handler for a 'replacePrompt' request:
+ * const req: Extract<EditorDialogRequest, { kind: 'replacePrompt' }> = {
+ *   kind: 'replacePrompt',
+ *   cursor: { x: 10, y: 3 },
+ * };
  * const answer = await replacePrompt({ loop: app.loop, desktop: app.desktop }, req.cursor);
  */
 export async function replacePrompt(host: EditorDialogHost, cursor: Point): Promise<'yes' | 'no' | 'cancel'> {
@@ -187,11 +241,15 @@ export async function replacePrompt(host: EditorDialogHost, cursor: Point): Prom
   let y = 1;
   if (cursor.y <= desk.y + 8 + 1) y = desk.height - 7 - 2; // drop to the bottom to avoid the caret
   const dlg = new Dialog({ rect: { x, y, width: 40, height: 7 } }); // explicit rect — never centered
-  dlg.layout = { ...dlg.layout, padding: 0 };
-  dlg.add(at(new Text('Replace this occurence?'), { x: 3, y: 2, width: 34, height: 1 }));
-  dlg.add(at(yesButton(), { x: 3, y: 4, width: 10, height: 2 }));
-  dlg.add(at(noButton(), { x: 15, y: 4, width: 10, height: 2 }));
-  dlg.add(at(cancelButton(), { x: 27, y: 4, width: 10, height: 2 }));
+  dlg.add(
+    cover(
+      col(
+        { padding: DIALOG_BODY_PADDING },
+        grow(new Text('Replace this occurence?')),
+        buttonBand(yesButton(), noButton(), cancelButton()),
+      ),
+    ),
+  );
   const result = await runDialog(host, dlg);
   return result === 'yes' || result === 'no' ? result : 'cancel';
 }
@@ -206,7 +264,9 @@ export async function replacePrompt(host: EditorDialogHost, cursor: Point): Prom
  * @returns A handler suitable for the editor's `editorDialog` option.
  * @example
  * import { createApplication, Editor, wireEditorDialogs } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
  *
+ * const caps = resolveCapabilities().profile;
  * const app = createApplication({ caps });
  * const editorDialog = wireEditorDialogs({ loop: app.loop, desktop: app.desktop });
  * const editor = new Editor({ editorDialog });

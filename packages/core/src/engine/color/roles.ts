@@ -8,6 +8,7 @@
  * handful of seeds. The hand-authored {@link defaultTheme} keeps its richer
  * per-widget palette and is *not* produced here.
  */
+import { PALETTE } from './palette.js';
 import type { ThemeColors } from './aliases.js';
 import type { Theme } from './theme.js';
 
@@ -99,6 +100,23 @@ export function rolesFromAliases(c: ThemeColors): Theme {
     calendarDisabled: { fg: c.foregroundDisabled, bg: c.backgroundRaised },
     calendarWeekNumber: { fg: c.foregroundMuted, bg: c.backgroundRaised },
     colorMarker: { fg: c.foreground, bg: c.backgroundRaised },
+    gridCursor: { fg: c.background, bg: c.foreground },
+    // The pending-commit marker is a fixed bright red, matching the hand-authored default. It is
+    // deliberately NOT derived from the `danger` alias: `danger` is reserved for the severity-text
+    // roles, and a dirty cell is a neutral "unsaved" signal that stays legible on any generated
+    // palette rather than shifting with a theme's danger seed.
+    gridDirty: { fg: PALETTE.brightRed, bg: c.background },
+    // The multi-row selection band — the selected background (distinct from a normal row's raised
+    // background) with the proven-legible primary foreground, so a selected row stays clear on any
+    // generated palette. A theme may override it for a bolder selection colour.
+    gridSelectedRow: { fg: c.foreground, bg: c.backgroundSelected },
+    // The failed-validation band — a fixed deep-red field with white text, matching the hand-authored
+    // default. Like gridDirty, it is deliberately NOT derived from the `danger` alias: `danger` is
+    // reserved for the severity-text roles (a hard invariant — a danger override must move only
+    // dangerText/warningText), and an invalid-cell band stays legible on any generated palette rather
+    // than shifting with a theme's danger seed. The band-vs-dot distinction from gridDirty comes from
+    // painting the whole cell. A theme may override this role directly for a different invalid colour.
+    gridInvalid: { fg: PALETTE.white, bg: PALETTE.red },
     fileInfo: { fg: c.foregroundMuted, bg: c.backgroundRaised },
     editorNormal: { fg: c.foreground, bg: c.backgroundSunken },
     editorSelected: { fg: c.foregroundOnAccent, bg: c.accent },

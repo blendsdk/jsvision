@@ -144,7 +144,7 @@ function boxView(text: string, role: ThemeRoleName): Group {
   g.background = role;
   g.measure = (): Size2D => ({ width: 14, height: 3 });
   const t = new Text(text);
-  t.layout = { position: 'absolute', rect: { x: 1, y: 0, width: Math.max(4, text.length + 1), height: 1 } };
+  t.setLayout({ position: 'absolute', rect: { x: 1, y: 0, width: Math.max(4, text.length + 1), height: 1 } });
   g.add(t);
   return g;
 }

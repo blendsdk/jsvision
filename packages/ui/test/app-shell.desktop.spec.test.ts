@@ -14,6 +14,7 @@ import { resolveCapabilities, defaultTheme } from '@jsvision/core';
 import type { MouseEvent } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
 import { Window } from '../src/window/index.js';
+import { rectOf } from './layout.fixtures.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -33,7 +34,7 @@ function addWindow(
   rect: { x: number; y: number; width: number; height: number },
 ): Window {
   const w = new Window(title);
-  w.layout.rect = rect;
+  w.setLayout({ rect: rect });
   app.desktop.addWindow(w);
   return w;
 }
@@ -45,7 +46,7 @@ function addWindow(
 function assertPartitions(windows: Window[], W: number, H: number): void {
   const cover = new Map<string, number>();
   for (const w of windows) {
-    const { x, y, width, height } = w.layout.rect;
+    const { x, y, width, height } = rectOf(w);
     for (let cy = y; cy < y + height; cy++) {
       for (let cx = x; cx < x + width; cx++) {
         const key = `${cx},${cy}`;
@@ -107,7 +108,7 @@ test('ST-08: drag the title bar repositions the window, clamped at the edge', ()
   app.loop.dispatch(mouse('down', 9, 5)); // grab at the new top-left corner-ish (local (0,0) → title)
   app.loop.dispatch(mouse('drag', 100, 5));
   app.loop.dispatch(mouse('up', 100, 5));
-  expect(w.layout.rect.x).toBe(app.desktop.bounds.width - 1);
+  expect(rectOf(w).x).toBe(app.desktop.bounds.width - 1);
 });
 
 // ST-09 / AC-9 — drag the SE corner to resize, floored at 10×3.
@@ -120,15 +121,15 @@ test('ST-09: drag the SE corner resizes the window, floored at 10×3', () => {
   app.loop.dispatch(mouse('down', 13, 7));
   app.loop.dispatch(mouse('drag', 24, 12));
   app.loop.dispatch(mouse('up', 24, 12));
-  expect(w.layout.rect.width).toBe(25); // 24 - 0 + 1
-  expect(w.layout.rect.height).toBe(13); // 12 - 0 + 1
+  expect(rectOf(w).width).toBe(25); // 24 - 0 + 1
+  expect(rectOf(w).height).toBe(13); // 12 - 0 + 1
 
   // Drag the corner inward below the minimum → floored at 10×3.
   app.loop.dispatch(mouse('down', 24, 12));
   app.loop.dispatch(mouse('drag', 0, 0));
   app.loop.dispatch(mouse('up', 0, 0));
-  expect(w.layout.rect.width).toBe(10);
-  expect(w.layout.rect.height).toBe(3);
+  expect(rectOf(w).width).toBe(10);
+  expect(rectOf(w).height).toBe(3);
 });
 
 // ST-10 / AC-10 — zoom toggles: first maximizes to the desktop; second restores the exact geometry.
@@ -216,8 +217,8 @@ test('RD-10 ST-06: TV tile — cells partition the desktop; n=2 stacks; N=0/1; t
   ts.forEach((w, i) => expect(w.layout.rect).toEqual(before[i]));
 });
 
-// ST-12 / AC-12 — next/prev cycle focus raising the newly-active; Alt-N focuses+raises window N.
-test('ST-12: next/prev cycle + raise; Alt-N focuses the numbered window', () => {
+// Numbered-window selection remains available without colliding with the application F-key fallback.
+test('should cycle windows and focus a numbered window with Ctrl+Alt+digit', () => {
   const app = shellApp(40, 12);
   const a = addWindow(app, 'A', { x: 0, y: 0, width: 12, height: 5 });
   a.number = 1;
@@ -236,10 +237,25 @@ test('ST-12: next/prev cycle + raise; Alt-N focuses the numbered window', () => 
   app.loop.emitCommand('prev');
   expect(app.desktop.activeWindow()).toBe(c); // back to c
 
-  // Alt-2 focuses + raises window number 2 (b).
-  app.loop.dispatch({ type: 'key', key: '2', ctrl: false, alt: true, shift: false });
+  // Ctrl+Alt-2 focuses + raises window number 2 (b) without colliding with Alt-2 → F2.
+  app.loop.dispatch({ type: 'key', key: '2', ctrl: true, alt: true, shift: false });
   expect(app.desktop.activeWindow()).toBe(b);
   expect(app.desktop.children.at(-1)).toBe(b);
+});
+
+test('should retain legacy Alt+digit window selection when function-key fallback is disabled', () => {
+  const app = createApplication({
+    caps,
+    viewport: { width: 40, height: 12 },
+    functionKeyFallback: 'none',
+  });
+  const first = addWindow(app, 'First', { x: 0, y: 0, width: 12, height: 5 });
+  first.number = 1;
+  const second = addWindow(app, 'Second', { x: 13, y: 0, width: 12, height: 5 });
+  second.number = 2;
+
+  app.loop.dispatch({ type: 'key', key: '1', ctrl: false, alt: true, shift: false });
+  expect(app.desktop.activeWindow()).toBe(first);
 });
 
 // ST-13 / AC-13 — close the active window: removed, its onCleanup fires, next top-most becomes active.

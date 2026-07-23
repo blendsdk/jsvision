@@ -18,7 +18,7 @@ function mouseDown(x: number, y: number): MouseEvent {
   return { type: 'mouse', kind: 'down', button: 0, x, y };
 }
 function wheelUp(x: number, y: number): WheelEvent {
-  return { type: 'wheel', dir: 'up', x, y };
+  return { type: 'wheel', dir: 'up', x, y, shift: false, alt: false, ctrl: false };
 }
 
 /** Records the envelopes it receives. */

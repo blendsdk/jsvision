@@ -16,6 +16,7 @@ import { TuiError } from '@jsvision/core';
 import type { Rect, Size2D, LayoutProps } from '../layout/index.js';
 import type { DrawContext, ViewState, DispatchEvent } from './types.js';
 import type { Point } from './geometry.js';
+import { createViewState, notePaintRequested, noteRelayoutRequested } from './view-state.js';
 
 /**
  * The internal seam a `View` uses to talk to its render root — how a view requests a repaint or
@@ -63,10 +64,28 @@ export interface ViewHost {
 export abstract class View {
   /** Parent-relative integer rect; written by the layout pass — read it in `draw`/hit-testing. */
   bounds: Rect = { x: 0, y: 0, width: 0, height: 0 };
-  /** Draw-against flags. The object reference is fixed; individual fields mutate (e.g. `focused`). */
-  readonly state: ViewState = { visible: true, disabled: false, focused: false };
-  /** Layout props for this view (direction, size, padding, absolute placement, …). */
-  layout: LayoutProps = {};
+  /**
+   * Draw-against flags. The object reference is fixed; individual fields mutate (e.g. `focused`).
+   *
+   * Writing `visible` or `disabled` changes only what the *next* paint would draw — it does not ask
+   * for that paint. Follow such a write with {@link invalidate} (or {@link invalidateLayout}, which a
+   * visibility flip needs, since layout omits hidden views). A development build warns when a write
+   * goes unaccounted for.
+   */
+  readonly state: ViewState = createViewState(this);
+  /**
+   * Layout props for this view (direction, size, padding, absolute placement, …) — **read-only**.
+   *
+   * Change them with {@link setLayout}, which is the only writer. The field and every prop on it are
+   * closed, so neither `view.layout = {…}` nor `view.layout.rect = {…}` compiles, and neither does
+   * editing a solved rect a field at a time (`view.layout.rect.x = 5`). That is deliberate: a
+   * wholesale assignment silently drops every prop it omits and never reflows, and an in-place prop
+   * write reflows only if you remember to ask.
+   *
+   * Read it freely — this is where a view's solved intent lives, and `layout.rect` is how an
+   * absolutely-placed view reports where it was put.
+   */
+  readonly layout: Readonly<LayoutProps> = {};
   /** Optional intrinsic-size hook for `auto` sizing — return the size this view wants for `available`. */
   measure?(available: Size2D): Size2D;
 
@@ -139,8 +158,27 @@ export abstract class View {
    *
    * @returns A signal that ticks whenever this view gains or loses focus.
    * @example
-   * // Inside a widget's onMount, repaint whenever `other` view's focus changes:
-   * this.onMount(() => this.bind(() => other.focusSignal()()));
+   * import { View, Button, type DrawContext } from '@jsvision/ui';
+   *
+   * // A caption that highlights while the control it labels holds focus.
+   * class Caption extends View {
+   *   constructor(
+   *     private readonly text: string,
+   *     private readonly target: View,
+   *   ) {
+   *     super();
+   *     // Reading the target's focus signal inside bind() ties this view's repaint to the target's
+   *     // focus flips — a view can observe focus it does not own.
+   *     this.onMount(() => this.bind(() => this.target.focusSignal()()));
+   *   }
+   *
+   *   draw(ctx: DrawContext): void {
+   *     ctx.text(0, 0, this.text, ctx.color(this.target.state.focused ? 'labelSelected' : 'label'));
+   *   }
+   * }
+   *
+   * const ok = new Button('~O~K');
+   * const caption = new Caption('Confirm:', ok);
    */
   focusSignal(): Signal<void> {
     return (this.focusTick ??= signal(undefined, { equals: () => false }));
@@ -204,12 +242,55 @@ export abstract class View {
 
   /** Request a repaint of this view. A no-op before the view is mounted (the first frame paints everything). */
   invalidate(): void {
+    notePaintRequested(this);
     this.host?.markRepaint(this);
   }
 
   /** Request a reflow (re-run layout, then repaint). Use this when a change affects size/position, not just pixels. */
   invalidateLayout(): void {
+    noteRelayoutRequested();
     this.host?.markRelayout();
+  }
+
+  /**
+   * Change some of this view's {@link layout} props and request a reflow — the **only** way to write
+   * layout. Props the patch does not name are kept, and the reflow happens for you.
+   *
+   * The merge is **shallow**, deliberately: `size` and `rect` are replaced whole rather than merged
+   * field-by-field. That is what makes a variant swap correct — going from `{kind:'fixed',cells:1}` to
+   * `{kind:'fr',weight:1}` must not leave a stale `cells` behind. The cost is that per-side `padding`
+   * cannot be patched one side at a time; pass the whole padding value.
+   *
+   * Two behaviours worth knowing:
+   *
+   * - **An explicit `undefined` resets that prop to its layout default.** `setLayout({ size: undefined })`
+   *   makes the view auto-sized again, and `setLayout({ position: 'flow' })` puts an absolutely-placed
+   *   view back in the flow (its now-unused `rect` is simply ignored).
+   * - **Do not call it in a constructor of a class that subclasses may extend.** A base constructor
+   *   body runs *before* a subclass's `override readonly layout = {…}` field initializer, and that
+   *   initializer installs a fresh object, so the call would be erased. Call it after construction,
+   *   or from `onMount`.
+   *
+   * Reflowing an unmounted view is a no-op, so calling it before mount is safe.
+   *
+   * @param patch The layout props to change; anything omitted is preserved.
+   * @example
+   * import { Group } from '@jsvision/ui';
+   *
+   * const panel = new Group();
+   * panel.setLayout({ direction: 'col', padding: 1 });
+   * // Later — `direction` and `padding` survive; once `panel` is mounted this also reflows:
+   * panel.setLayout({ size: { kind: 'fr', weight: 1 } });
+   */
+  setLayout(patch: Partial<LayoutProps>): void {
+    // Shallow on purpose: `size` is a discriminated union, so a deep merge would carry the previous
+    // variant's fields into the new one and produce a token that matches no branch cleanly.
+    //
+    // In place rather than by replacement: the field is read-only, so it cannot be reassigned without
+    // a cast, and identity-preservation is the documented contract — anything holding the object goes
+    // on seeing current props rather than a snapshot frozen at the moment it took the reference.
+    Object.assign(this.layout, patch);
+    this.invalidateLayout();
   }
 
   /**
@@ -226,10 +307,18 @@ export abstract class View {
    * @param opts    Pass `{ relayout: true }` when the change affects layout, so it reflows instead of
    *   just repainting.
    * @example
-   * import { signal } from '@jsvision/ui';
+   * import { View, signal, type DrawContext } from '@jsvision/ui';
    *
    * const count = signal(0);
-   * // `status` is a View whose draw() reads count():
+   *
+   * class StatusLine extends View {
+   *   draw(ctx: DrawContext): void {
+   *     ctx.text(0, 0, `${count()} pending`, ctx.color('statusBar'));
+   *   }
+   * }
+   *
+   * const status = new StatusLine();
+   * // In onMount, not the constructor: bind() needs the view's scope, which only exists once mounted.
    * status.onMount(() => {
    *   status.bind(() => count()); // repaint the status line whenever `count` changes
    * });

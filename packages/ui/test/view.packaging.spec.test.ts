@@ -68,9 +68,9 @@ test('ST-18: View spine public symbols are importable from @jsvision/ui', () => 
 // and zero-size bounds, without throwing.
 test('ST-17: degenerate geometry produces no-op draws + zero bounds without throwing', () => {
   const leaf = new Leaf();
-  leaf.layout = { size: { kind: 'fr', weight: 1 } };
+  leaf.setLayout({ size: { kind: 'fr', weight: 1 } });
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.add(leaf);
 
   expect(() => {
@@ -83,7 +83,7 @@ test('ST-17: degenerate geometry produces no-op draws + zero bounds without thro
 
   // An over-large clip / oversized fill is clipped to the buffer, never throws.
   const big = new Group();
-  big.layout = { direction: 'col' };
+  big.setLayout({ direction: 'col' });
   big.background = 'window';
   expect(() => {
     const rr = createRenderRoot({ width: 3, height: 2 }, { caps });
@@ -96,14 +96,14 @@ test('ST-17: degenerate geometry produces no-op draws + zero bounds without thro
 test('ST-20: a frame + reflow are bounded passes over a finite tree (no unbounded work)', () => {
   // Build a finite, moderately deep/wide tree; mounting + serializing completes (bounded).
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   let parent = root;
   for (let depth = 0; depth < 8; depth += 1) {
     const next = new Group();
-    next.layout = { direction: 'row', size: { kind: 'fr', weight: 1 } };
+    next.setLayout({ direction: 'row', size: { kind: 'fr', weight: 1 } });
     for (let i = 0; i < 4; i += 1) {
       const leaf = new Leaf();
-      leaf.layout = { size: { kind: 'fr', weight: 1 } };
+      leaf.setLayout({ size: { kind: 'fr', weight: 1 } });
       next.add(leaf);
     }
     parent.add(next);

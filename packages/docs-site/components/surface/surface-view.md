@@ -26,7 +26,7 @@ ctx.text(2, 1, 'Hello from the offscreen canvas', { fg: 'brightCyan', bg: 'defau
 // Show a scrollable window onto it; write `delta` to pan.
 const delta = signal({ x: 0, y: 0 });
 const view = new SurfaceView({ surface, delta });
-view.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 12 } };
+view.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 12 } });
 
 const group = new Group();
 group.add(view);

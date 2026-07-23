@@ -20,8 +20,8 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { color
 function mountEditor(opts: ConstructorParameters<typeof Editor>[0] = {}) {
   const ed = new Editor(opts);
   const root = new Group();
-  root.layout = { direction: 'col' };
-  ed.layout = { size: { kind: 'fr', weight: 1 } };
+  root.setLayout({ direction: 'col' });
+  ed.setLayout({ size: { kind: 'fr', weight: 1 } });
   root.add(ed);
   const loop = createEventLoop({ width: 20, height: 5 }, { caps });
   loop.mount(root);

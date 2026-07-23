@@ -8,7 +8,7 @@
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
-import { lintText, lintPaths } from '../../../scripts/jsvision-doctor.mjs';
+import { lintText, lintPaths } from '../../../plugins/jsvision-plugin/skills/jsvision-doctor/jsvision-doctor.mjs';
 
 const rules = (src: string): string[] => lintText(src).map((f) => f.rule);
 
@@ -45,6 +45,18 @@ test('flags an absolute content rect, allows a window/dialog placement rect', ()
   );
   const win = "const win = new Window('t'); win.layout.rect = { x: 1, y: 1, width: 20, height: 5 };";
   expect(rules(win)).not.toContain('content-absolute-rect');
+});
+
+// The same rule, written the way the framework now requires. `setLayout` is the only way to write
+// layout, so a checker that only understood the assignment form would flag a window placing itself —
+// the one thing gotcha 3 explicitly sanctions — while staying quiet about the identical old spelling.
+test('the window exception survives the setLayout spelling; content is still flagged', () => {
+  const win =
+    "const win = new Window('t'); win.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 5 } });";
+  expect(rules(win)).not.toContain('content-absolute-rect');
+
+  const content = "label.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 4, height: 1 } });";
+  expect(rules(content)).toContain('content-absolute-rect');
 });
 
 // gotcha 10 — focus the inner .rows renderer of a list/grid, not the container.

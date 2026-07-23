@@ -38,7 +38,7 @@ function fsFixture() {
 
 /** Mount a FileList filling `w×h` (an injected bar ⇒ rows fill the full width) and focus it. */
 function hosted(list: FileList, w: number, h: number) {
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(list);
   const loop = createEventLoop({ width: w, height: h }, { caps });

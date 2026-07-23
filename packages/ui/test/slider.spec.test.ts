@@ -64,7 +64,7 @@ function makeSlider(opts: {
     onInput: (v) => inputs.push(v),
     onChange: (v) => commits.push(v),
   });
-  slider.layout = { position: 'absolute', rect: { x: 0, y: 0, width: opts.width, height: opts.height } };
+  slider.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: opts.width, height: opts.height } });
   const root = new Group();
   root.add(slider);
   const loop = createEventLoop({ width: opts.width, height: opts.height }, { caps });

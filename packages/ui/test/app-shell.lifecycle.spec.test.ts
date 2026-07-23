@@ -16,6 +16,7 @@ import { Desktop } from '../src/desktop/index.js';
 import { MenuBar } from '../src/menu/index.js';
 import { StatusLine } from '../src/status/index.js';
 import { createApplication } from '../src/app/index.js';
+import type { DesktopApplication } from '../src/app/index.js';
 import { FakeRuntimeAdapter, CaptureStream, FakeInput, expectExit } from './app-shell.fixtures.js';
 
 const caps = resolveCapabilities({
@@ -44,7 +45,7 @@ class KeyLeaf extends View {
 
 /** Build an app wired to fresh fake OS doubles, returning the app + the doubles. */
 function makeApp(): {
-  app: ReturnType<typeof createApplication>;
+  app: DesktopApplication;
   runtime: FakeRuntimeAdapter;
   input: FakeInput;
   output: CaptureStream;

@@ -16,7 +16,7 @@
  * required by NodeNext ESM resolution.
  */
 import { resolveCapabilities, type CapabilityProfile, type ColorDepth } from '@jsvision/core';
-import { createRenderRoot, createRoot, Group, Button, Text, Input, signal } from '@jsvision/ui';
+import { createRenderRoot, createRoot, Group, Button, Text, Input, signal, at, cover } from '@jsvision/ui';
 import {
   currentTheme,
   cycleAccent,
@@ -34,14 +34,10 @@ const INITIAL: DesignerState = { mode: 'dark', accent: '#3b82f6', status: {}, de
 function previewWidgets(label: string): Group {
   const g = new Group();
   g.background = 'window';
-  const place = (view: Group | Text | Button | Input, x: number, y: number, w: number, h: number): void => {
-    view.layout = { position: 'absolute', rect: { x, y, width: w, height: h } };
-    g.add(view);
-  };
-  place(new Text(label), 1, 0, 30, 1);
-  place(new Input({ value: signal('editable input') }), 1, 2, 24, 1);
-  place(new Button('~O~K', { onClick: () => {} }), 1, 4, 8, 2);
-  place(new Button('~C~ancel', { onClick: () => {} }), 10, 4, 12, 2);
+  g.add(at(new Text(label), 1, 0, 30, 1));
+  g.add(at(new Input({ value: signal('editable input') }), 1, 2, 24, 1));
+  g.add(at(new Button('~O~K', { onClick: () => {} }), 1, 4, 8, 2));
+  g.add(at(new Button('~C~ancel', { onClick: () => {} }), 10, 4, 12, 2));
   return g;
 }
 
@@ -64,7 +60,7 @@ function printFrame(title: string, rows: readonly { char: string }[][]): void {
 function showState(heading: string, state: DesignerState): void {
   createRoot((dispose) => {
     const widgets = previewWidgets(`${state.mode} · accent ${state.accent} · depth ${state.depth}`);
-    widgets.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 34, height: 7 } };
+    cover(widgets); // fill the render root, whatever size it is solved at
     const rr = createRenderRoot({ width: 34, height: 7 }, { caps: capsFor(state.depth), theme: currentTheme(state) });
     rr.mount(widgets);
     printFrame(heading, rr.buffer().rows());

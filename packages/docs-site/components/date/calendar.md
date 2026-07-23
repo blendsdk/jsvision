@@ -24,7 +24,7 @@ const cal = new Calendar({
   density: 'comfortable',
   onChange: (d) => console.log('picked', d),
 });
-cal.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 } };
+cal.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 } });
 // Arrows move the cursor; Enter/Space commit; T jumps to today.
 ```
 

@@ -72,7 +72,24 @@ export interface GridRowsConfig<T> {
   command?: string;
 }
 
-/** The focusable, multi-column, virtual-scroll grid body — draws only the visible window. */
+/**
+ * The focusable, multi-column, virtual-scroll grid body — draws only the visible window.
+ *
+ * @example
+ * ```ts
+ * import { GridRows, signal } from '@jsvision/ui';
+ * const rows = new GridRows({
+ *   display: () => [{ name: 'Ada' }, { name: 'Bo' }],
+ *   columns: [{ title: 'Name', accessor: (r) => r.name, width: '1fr' }],
+ *   autoWidths: () => [null],
+ *   indent: signal(0),
+ *   focused: signal(0),
+ *   selected: signal(-1),
+ *   zebra: true,
+ * });
+ * // Mount `rows` in a RenderRoot / event loop and focus it — colour marks the focused row.
+ * ```
+ */
 export class GridRows<T> extends View {
   override focusable = true;
   protected readonly display: () => T[];
@@ -336,7 +353,29 @@ export interface GridHeaderConfig<T> {
   sort: Signal<SortState>;
 }
 
-/** The non-scrolling sticky header: column titles in `tableHeader`, a sort indicator, click-to-sort. */
+/**
+ * The non-scrolling sticky header: column titles in `tableHeader`, a sort indicator, click-to-sort.
+ *
+ * @example
+ * ```ts
+ * import { GridHeader, signal } from '@jsvision/ui';
+ * import type { SortState } from '@jsvision/ui';
+ *
+ * interface Person {
+ *   name: string;
+ * }
+ *
+ * // Name the row type explicitly: unlike GridRows, the header takes no rows, so there is nothing
+ * // for it to be inferred from — leave it off and the accessor's argument lands as `unknown`.
+ * const header = new GridHeader<Person>({
+ *   columns: [{ title: 'Name', accessor: (r) => r.name, width: '1fr' }],
+ *   autoWidths: () => [null],
+ *   indent: signal(0),
+ *   sort: signal<SortState>({ col: 0, dir: 'asc' }),
+ * });
+ * // Share `autoWidths`/`indent` with a GridRows so header and body stay column-aligned.
+ * ```
+ */
 export class GridHeader<T> extends View {
   override focusable = false; // passive chrome — the rows renderer owns the keys
   protected readonly columns: Column<T>[];

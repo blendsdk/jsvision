@@ -1,5 +1,5 @@
 /**
- * Frame performance benchmark (RD-10 FR-1/FR-13, plan doc 03-01).
+ * Frame performance benchmark.
  *
  * Measures, over N warmed iterations, the median/p95 wall-clock time of the
  * rendering hot paths on a 200×50 frame:
@@ -9,15 +9,14 @@
  *                    steady-state damage-diff path)
  *   - serialize    : serialize a fully-built frame against `null` (paint only)
  *
- * It is INFORMATIONAL ONLY — it prints a table and exits 0, never a gate (AR-9).
+ * It is informational only — it prints a table and exits 0, never a gate.
  * The hard 16 ms budget lives in `test/perf-budget.spec.test.ts` (skippable under
  * CI). Reported numbers are indicative of a modern dev machine, not contractual.
  *
  * The pure measurement helpers (`median`, `p95`, `measureComposeDiff`) are
  * EXPORTED with no top-level side effects, so the spec/impl tests can import them
  * without triggering a bench run or `process.exit`. The printing CLI runs only
- * when this file is executed directly, behind an `import.meta.url` main-guard
- * (PF-005).
+ * when this file is executed directly, behind an `import.meta.url` main guard.
  *
  * Pure-Node ESM, run via `tsx` (so the `.ts` engine can be imported through the
  * built `../src/engine/index.js` specifier, resolved to source at run time).
@@ -120,7 +119,7 @@ function sample(thunk, iters) {
 
 /**
  * Median wall-clock time of composing AND diff-serializing a `w`×`h` frame, over
- * `iters` warmed iterations (never a single sample). This is the ST-1 hot path
+ * `iters` warmed iterations (never a single sample). This is the hot path that
  * the frame-budget ceiling asserts against.
  *
  * @param {number} w Frame width in columns.
@@ -135,14 +134,16 @@ export function measureComposeDiff(w, h, iters) {
 /**
  * Whether the frame-budget ceiling test should hard-assert the budget or only log
  * the number. Wall-clock timing is environment-sensitive, so the assertion is
- * suppressed under CI (runner jitter) and via `TUI_SKIP_PERF` (a contributor's
- * slow/throttled/VM machine) — those paths log instead (AR-2/AR-9, PF-006).
+ * suppressed under CI (runner jitter), inside Turbo tasks (parallel contention),
+ * and via `TUI_SKIP_PERF` (a contributor's slow/throttled/VM machine).
  *
  * @param {Record<string, string | undefined>} env Environment (e.g. `process.env`).
  * @returns {'assert' | 'log'} `'assert'` to enforce the budget, `'log'` to record only.
  */
 export function perfBudgetMode(env) {
-  return env.CI || env.TUI_SKIP_PERF ? 'log' : 'assert';
+  if (env.CI || env.TUI_SKIP_PERF) return 'log';
+  if (env.JSVISION_PERF_CHECK) return 'assert';
+  return env.TURBO_HASH ? 'log' : 'assert';
 }
 
 /** Format a `median … p95 …` cell to fixed precision. */
@@ -152,7 +153,7 @@ function fmt(samples) {
 
 /**
  * Run the three benchmark cases on a 200×50 frame and print an informational
- * table, then exit 0. Never asserts a budget (AR-9).
+ * table, then exit 0. Never asserts a budget.
  */
 function runBench() {
   const W = 200;
@@ -180,7 +181,7 @@ function runBench() {
   process.exit(0);
 }
 
-// CLI only when run directly as `tsx bench/frame-bench.mjs`, never on import (PF-005).
+// CLI only when run directly as `tsx bench/frame-bench.mjs`, never on import.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   runBench();
 }

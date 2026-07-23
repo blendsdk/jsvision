@@ -14,7 +14,7 @@
  */
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent, MouseEvent as CoreMouseEvent } from '@jsvision/core';
-import { Group, DataGrid, createEventLoop, signal } from '@jsvision/ui';
+import { Group, DataGrid, createEventLoop, signal, cover } from '@jsvision/ui';
 import type { Column, SortState } from '@jsvision/ui';
 
 /** A synthetic decoded key (no terminal needed). */
@@ -75,7 +75,7 @@ function main(): void {
     { title: 'City', accessor: (p) => p.city, width: 10 },
   ];
   const grid = new DataGrid<Person>({ rows, columns, focused, selected, sort, zebra: true });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: WIDTH, height: HEIGHT } };
+  cover(grid);
 
   const root = new Group();
   root.add(grid);

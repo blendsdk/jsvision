@@ -36,6 +36,32 @@ test('minWidth > maxWidth → maxWidth wins (clamp order min then max)', () => {
   expect(geom.widths[0], 'maxWidth wins over an impossible minWidth').toBe(3);
 });
 
+// --- the optional `dividers` param (compact / dense layout) ---
+
+test('dividers defaults true — one divider cell reserved per column (starts + totalWidth)', () => {
+  const columns = [col({ width: 3 }), col({ width: 4 }), col({ width: 5 })];
+  const geom = apportionColumns(columns, [null, null, null], 40); // fixed widths, room to spare
+  expect(geom.widths).toEqual([3, 4, 5]);
+  expect(geom.starts).toEqual([0, 4, 9]); // each start includes the 1-cell divider gap
+  expect(geom.totalWidth).toBe(15); // 3+4+5 + 3 dividers
+});
+
+test('dividers:false packs columns tight — no reserved divider, totalWidth excludes them', () => {
+  const columns = [col({ width: 3 }), col({ width: 4 }), col({ width: 5 })];
+  const geom = apportionColumns(columns, [null, null, null], 40, false);
+  expect(geom.widths).toEqual([3, 4, 5]);
+  expect(geom.starts).toEqual([0, 3, 7]); // tight packing — no gap between columns
+  expect(geom.totalWidth).toBe(12); // 3+4+5, no dividers
+});
+
+test('dividers:false gives an fr column the reclaimed divider cells (apportions over the full width)', () => {
+  const columns = [col({ width: 5 }), col({ width: '1fr' })];
+  const withDiv = apportionColumns(columns, [null, null], 20); // trackTotal 18 → fr 13
+  const compact = apportionColumns(columns, [null, null], 20, false); // trackTotal 20 → fr 15
+  expect(withDiv.widths[1]).toBe(13);
+  expect(compact.widths[1]).toBe(15); // +2 reclaimed divider cells
+});
+
 // --- wide-glyph, width-aware clip/align (PF-104) ---
 
 test('alignCell never splits a wide glyph on clip', () => {

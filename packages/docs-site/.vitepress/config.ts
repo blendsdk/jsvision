@@ -131,7 +131,55 @@ export default withMermaid(
       // One sidebar per section. Every link targets an existing page (no dead
       // links); the trees fill out as later milestones add content.
       sidebar: {
-        '/guide/': [{ text: 'Guide', items: [{ text: 'Introduction', link: '/guide/' }] }],
+        '/guide/': [
+          {
+            text: 'Getting started',
+            items: [
+              { text: 'Introduction', link: '/guide/' },
+              { text: 'Install & packages', link: '/guide/install-and-packages' },
+              { text: 'Codex plugin', link: '/guide/codex-plugin' },
+            ],
+          },
+          {
+            text: 'Core concepts',
+            items: [
+              { text: 'Layout', link: '/guide/layout' },
+              { text: 'Reactive state', link: '/guide/reactive-state' },
+              { text: 'Views & focus', link: '/guide/views-and-focus' },
+              { text: 'Events, commands & keymaps', link: '/guide/events-commands-and-keymaps' },
+              { text: 'Keyboard & clipboard', link: '/guide/keyboard-and-clipboard' },
+            ],
+          },
+          {
+            text: 'Building applications',
+            items: [
+              { text: 'The application shell', link: '/guide/application-shell' },
+              { text: 'Dialogs & modality', link: '/guide/dialogs-and-modality' },
+              { text: 'Forms', link: '/guide/forms' },
+              { text: 'Data grid', link: '/guide/data-grid' },
+              { text: 'Files & the FileSystem seam', link: '/guide/files-and-filesystem' },
+            ],
+          },
+          {
+            text: 'Going further',
+            items: [
+              { text: 'Theming & colour depth', link: '/guide/theming-and-colour-depth' },
+              { text: 'Running in the browser', link: '/guide/running-in-the-browser' },
+              { text: 'Screens & routing', link: '/guide/screens-and-routing' },
+              { text: 'Writing your own widget', link: '/guide/writing-your-own-widget' },
+              { text: 'Testing headlessly', link: '/guide/testing-headlessly' },
+            ],
+          },
+          {
+            text: 'Operating a real app',
+            items: [
+              { text: 'Debugging', link: '/guide/debugging' },
+              { text: 'Crash safety & terminal restore', link: '/guide/crash-safety' },
+              { text: 'Displaying untrusted text safely', link: '/guide/untrusted-text' },
+              { text: 'In production', link: '/guide/in-production' },
+            ],
+          },
+        ],
         '/components/': [
           { text: 'Components', items: [{ text: 'Overview', link: '/components/' }] },
           {
@@ -203,7 +251,19 @@ export default withMermaid(
         ],
         '/apps/': [
           { text: 'Apps', items: [{ text: 'Overview', link: '/apps/' }] },
-          { text: 'Examples', items: [{ text: 'Turbo Vision desktop', link: '/apps/desktop' }] },
+          {
+            text: 'Examples',
+            items: [
+              { text: 'Amiga clock', link: '/apps/amiga-clock' },
+              { text: 'Calculator', link: '/apps/calculator' },
+              { text: 'Editor & clipboard', link: '/apps/editor' },
+              { text: 'Game of Life', link: '/apps/life' },
+              { text: 'Hello, JSVision', link: '/apps/hello' },
+              { text: 'Matrix rain', link: '/apps/matrix' },
+              { text: 'Starfield, plasma & fire', link: '/apps/effects' },
+              { text: 'Turbo Vision desktop', link: '/apps/desktop' },
+            ],
+          },
         ],
         // Overview is the hand-written preface; the generated per-package trees follow.
         '/api/': [{ text: 'Overview', link: '/api/' }, ...typedocSidebar],
@@ -237,13 +297,6 @@ export default withMermaid(
               { text: 'ADR-007: Monorepo restructure', link: '/reference/decisions/ADR-007-monorepo-restructure' },
               { text: 'ADR-008: Layout engine', link: '/reference/decisions/ADR-008-layout-engine' },
               { text: 'ADR-009: Bun runtime support', link: '/reference/decisions/ADR-009-bun-runtime-support' },
-            ],
-          },
-          {
-            text: 'Guides',
-            items: [
-              { text: 'Getting Started', link: '/reference/guides/getting-started' },
-              { text: 'Development', link: '/reference/guides/development' },
             ],
           },
         ],

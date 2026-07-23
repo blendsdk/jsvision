@@ -33,12 +33,11 @@ export interface TerminalOptions {
  * auto-scrolls to the bottom, and lets the user wheel back through history.
  *
  * @example
- * import { Group, Terminal } from '@jsvision/ui';
+ * import { Group, Terminal, at } from '@jsvision/ui';
  *
  * const group = new Group();
  * const log = new Terminal({ capacity: 8000 });
- * log.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 60, height: 10 } };
- * group.add(log);
+ * group.add(at(log, 0, 0, 60, 10));
  *
  * log.writeLine('Build started...');
  * log.write('compiling');
@@ -123,14 +122,16 @@ export class Terminal extends View {
  * @param term The terminal view to append into.
  * @returns A function that writes each string into `term`.
  * @example
+ * import { spawn } from 'node:child_process';
  * import { Terminal, terminalWriter } from '@jsvision/ui';
  *
  * const log = new Terminal();
  * const write = terminalWriter(log);
  *
- * // Feed it from anywhere that emits text lines.
+ * // Feed it from anywhere that emits text lines — here, a spawned subprocess.
  * write('server listening on :8080\n');
- * childProcess.stdout.on('data', (chunk) => write(String(chunk)));
+ * const child = spawn('node', ['--version']);
+ * child.stdout.on('data', (chunk: Buffer) => write(String(chunk)));
  */
 export function terminalWriter(term: Terminal): (s: string) => void {
   return (s) => term.write(s);

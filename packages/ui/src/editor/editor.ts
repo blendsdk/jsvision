@@ -55,12 +55,14 @@ export const SM_TRIPLE = 0x04;
  *
  * @example
  * import { Group, Editor, createEventLoop, effect } from '@jsvision/ui';
+ * import { resolveCapabilities } from '@jsvision/core';
  *
+ * const caps = resolveCapabilities().profile;
  * const editor = new Editor({ clipboard: new Editor() });
  * const root = new Group();
  * root.add(editor);
  *
- * const loop = createEventLoop({ width: 60, height: 20 }, {});
+ * const loop = createEventLoop({ width: 60, height: 20 }, { caps });
  * loop.mount(root);
  * loop.focusView(editor);
  * editor.setText('The quick brown fox\nSecond line.');
@@ -217,6 +219,9 @@ export class Editor extends View {
    * Run one editor action programmatically — the same operations the keymap triggers.
    * @param action The action to run (e.g. `'lineDown'`, `'undo'`, `'textEnd'`, `'selectAll'`).
    * @example
+   * import { Editor } from '@jsvision/ui';
+   *
+   * const editor = new Editor();
    * editor.setText('hello world');
    * editor.execute('textEnd'); // caret to end of buffer
    */

@@ -34,6 +34,46 @@ test('the app viewport is terminal-driven (derived from the real cols/rows), not
   controller.close();
 });
 
+test('close runs every teardown an example registered via ctx.onCleanup', async () => {
+  const f = headlessFactory();
+  let cleaned = 0;
+  const entry = fakeEntry('component', (ctx: ExampleContext) => {
+    ctx.onCleanup?.(() => {
+      cleaned += 1;
+    });
+    return markerContent();
+  });
+  const controller = createPlayController({ entry, createTerminal: f.createTerminal });
+
+  await controller.open(EL);
+  expect(cleaned).toBe(0); // not run while open
+  controller.close();
+  expect(cleaned).toBe(1); // run once on close
+
+  // A fresh open registers a fresh cleanup; the previous one does not fire again.
+  await controller.open(EL);
+  controller.close();
+  expect(cleaned).toBe(2);
+});
+
+test('a re-mount (size/depth change) runs the prior example teardown before rebuilding', async () => {
+  const f = headlessFactory();
+  let cleaned = 0;
+  const entry = fakeEntry('component', (ctx: ExampleContext) => {
+    ctx.onCleanup?.(() => {
+      cleaned += 1;
+    });
+    return markerContent();
+  });
+  const controller = createPlayController({ entry, createTerminal: f.createTerminal });
+
+  await controller.open(EL);
+  await controller.remount({ depth: '16' }); // close (runs teardown) then re-open
+  expect(cleaned).toBe(1);
+  controller.close();
+  expect(cleaned).toBe(2);
+});
+
 test('double close is a no-op', async () => {
   const f = headlessFactory();
   const controller = createPlayController({

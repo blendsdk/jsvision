@@ -32,9 +32,9 @@ function mountInput(opts: InputOptions, w: number): { loop: ReturnType<typeof cr
   const input = new Input(opts);
   const stub = new FocusStub();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  input.layout = { size: { kind: 'fixed', cells: 1 } };
-  stub.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  input.setLayout({ size: { kind: 'fixed', cells: 1 } });
+  stub.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(input);
   root.add(stub);
   const loop = createEventLoop({ width: w, height: 3 }, { caps });

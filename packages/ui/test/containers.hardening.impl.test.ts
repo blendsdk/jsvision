@@ -42,7 +42,7 @@ test('HR-49 impl: track clicks clamp between the arrows', () => {
 test('HR-50 impl: highlight precedence across focused/active/selected', () => {
   const items = signal(['a', 'b', 'c']);
   const list = new ListBox({ items, focused: signal(0), selected: signal(1) });
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 3 } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 3 } });
   const g = new Group();
   g.add(list);
   const loop = createEventLoop({ width: 13, height: 3 }, { caps });
@@ -59,7 +59,7 @@ test('HR-50 impl: highlight precedence across focused/active/selected', () => {
     override focusable = true;
     draw(_c: DrawContext): void {}
   })();
-  stub.layout = { position: 'absolute', rect: { x: 0, y: 2, width: 2, height: 1 } };
+  stub.setLayout({ position: 'absolute', rect: { x: 0, y: 2, width: 2, height: 1 } });
   g.add(stub);
   loop.focusView(stub);
   buf = loop.renderRoot.buffer();
@@ -76,7 +76,7 @@ test('HR-61 impl: the corner cell is reserved across sizes', () => {
       }
     })();
     const scroller = new Scroller({ content, extent: { width: 60, height: 60 }, scrollbars: 'both' });
-    scroller.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+    scroller.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
     const g = new Group();
     g.add(scroller);
     const rr = createRenderRoot({ width: w, height: h }, { caps });
@@ -93,7 +93,7 @@ test('HR-62 impl: click below rows on a scrolled list clamps to the last item', 
   const items = signal(['i0', 'i1', 'i2', 'i3', 'i4', 'i5', 'i6', 'i7']);
   const selected = signal(-1);
   const list = new ListBox({ items, selected, focused: signal(7) }); // scrolled to the bottom
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 4 } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 12, height: 4 } });
   const g = new Group();
   g.add(list);
   const loop = createEventLoop({ width: 13, height: 4 }, { caps });

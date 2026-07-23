@@ -51,16 +51,15 @@ export interface ScrollBarOptions {
  * A scroll bar: arrows + a page track + a proportional thumb, driven by mouse (see the module docs).
  *
  * @example
- * import { ScrollBar, Group, createEventLoop, signal } from '@jsvision/ui';
+ * import { ScrollBar, Group, createEventLoop, signal, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
  * const pos = signal(0);
  * const bar = new ScrollBar({ value: pos, min: 0, max: 100, orientation: 'vertical' });
- * bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 1, height: 8 } };
  *
  * const root = new Group();
- * root.add(bar);
+ * root.add(at(bar, 0, 0, 1, 8));
  * const loop = createEventLoop({ width: 1, height: 8 }, { caps });
  * loop.mount(root);
  * pos.set(50); // scroll externally — the thumb re-renders halfway down
@@ -106,17 +105,45 @@ export class ScrollBar extends View {
    * content extent changes. The bound `value` is not written here; it is clamped into the new range on
    * read, so a shrunk range never over-scrolls or throws.
    *
+   * A call that actually changes the range repaints the bar, so a range that moves while the position
+   * stays put still reaches the screen — a list whose items arrive asynchronously, or a filter that
+   * narrows the item count with the offset still at the top. A call that changes nothing repaints
+   * nothing, which is what makes it safe for an owner to re-limit from inside its own `draw()`.
+   *
    * @param min       New range minimum.
    * @param max       New range maximum (raised to `min` if smaller).
    * @param pageStep  New page step, or `undefined` to keep the axis-length default.
    * @param arrowStep New arrow step, or `undefined` to keep the current one. A multi-column list wires
    *   this to its row count so an arrow-click jumps a whole column; a single-column owner leaves it at 1.
+   * @example
+   * import { ScrollBar, signal } from '@jsvision/ui';
+   *
+   * const top = signal(0);
+   * // A list whose rows arrive asynchronously: the bar mounts disabled, because nothing overflows yet.
+   * const bar = new ScrollBar({ value: top, min: 0, max: 0 });
+   *
+   * // When they land it goes live on its own — `top` is still 0, so the value bind never fires.
+   * const loadRows = async (): Promise<string[]> => ['alpha', 'beta', 'gamma'];
+   * void loadRows().then((rows) => bar.setRange(0, Math.max(0, rows.length - 2)));
    */
   setRange(min: number, max: number, pageStep?: number, arrowStep?: number): void {
+    const nextMax = Math.max(min, max);
+    const nextArrowStep = arrowStep ?? this.arrowStepVal;
+    // Every owning viewer re-limits its bar from inside its own draw(), so an unconditional repaint
+    // here would re-dirty the bar on every frame forever. Gate on a real change and the steady-state
+    // call costs nothing, while a genuine one settles after a single extra frame.
+    const changed =
+      min !== this.min || nextMax !== this.max || pageStep !== this.pageStepOpt || nextArrowStep !== this.arrowStepVal;
+
     this.min = min;
-    this.max = Math.max(min, max);
+    this.max = nextMax;
     this.pageStepOpt = pageStep;
-    if (arrowStep !== undefined) this.arrowStepVal = arrowStep;
+    this.arrowStepVal = nextArrowStep;
+
+    // The bound `value` is the bar's only other repaint trigger, so without this a range change with
+    // a still position would leave the previous frame on screen — a disabled track over content that
+    // visibly overflows. Before mount this is a no-op; the first frame paints everything anyway.
+    if (changed) this.invalidate();
   }
 
   /** The drawn/measured long-axis length in cells (height when vertical, else width). */

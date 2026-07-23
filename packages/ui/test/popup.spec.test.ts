@@ -62,7 +62,7 @@ interface Harness {
 function makeHarness(items: string[], viewport = { width: 40, height: 20 }): Harness {
   const loop = createEventLoop(viewport, { caps });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } });
   overlay.state.visible = false;
   const bg = new BackgroundLeaf();
   const root = new Group();

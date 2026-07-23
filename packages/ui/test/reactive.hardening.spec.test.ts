@@ -95,7 +95,7 @@ test('ST-3.d: an addDynamic For is disposed on group unmount — no post-unmount
   let renderCalls = 0;
 
   const group = new Group();
-  group.layout = { direction: 'col' };
+  group.setLayout({ direction: 'col' });
   group.addDynamic(() =>
     For(
       () => items(),

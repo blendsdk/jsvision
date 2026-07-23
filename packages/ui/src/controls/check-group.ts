@@ -20,12 +20,11 @@ export interface CheckGroupOptions {
  * A checkbox group bound to a `boolean[]` signal.
  *
  * @example
- * import { Group, CheckGroup, signal } from '@jsvision/ui';
+ * import { Group, CheckGroup, signal, at } from '@jsvision/ui';
  *
  * // One flag per label; the array reflects (and is updated by) the group.
  * const styles = signal([true, false]); // Bold on, Italic off
- * const group = new CheckGroup({ labels: ['~B~old', '~I~talic'], value: styles });
- * group.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 20, height: 2 } };
+ * const group = at(new CheckGroup({ labels: ['~B~old', '~I~talic'], value: styles }), 1, 0, 20, 2);
  *
  * const panel = new Group();
  * panel.add(group);

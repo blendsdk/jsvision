@@ -38,9 +38,9 @@ interface Harness<T> {
 function makeCombo<T>(opts: Omit<ComboBoxOptions<T>, 'value'> & { value?: Signal<T | null> }): Harness<T> {
   const loop = createEventLoop({ width: 40, height: 20 }, { caps });
   const combo = new ComboBox<T>({ ...opts, value: opts.value ?? signal<T | null>(null) });
-  combo.layout = { position: 'absolute', rect: { x: 5, y: 3, width: 14, height: 1 } };
+  combo.setLayout({ position: 'absolute', rect: { x: 5, y: 3, width: 14, height: 1 } });
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 20 } });
   overlay.state.visible = false;
   const root = new Group();
   root.add(combo);

@@ -1,17 +1,14 @@
 /**
- * Specification test (immutable oracle) — RD-08 Phase-10 editor performance budget (ST-35).
+ * Specification test (immutable oracle) — editor performance budget.
  *
- * Source: RD-08 AC-20 / AR-261 → ST-35 (codeops/features/jsvision-ui/plans/editor-family/
- * 07-testing-strategy.md). A 1 MB buffer: a single-cluster insert + one coalesced redraw, and a
- * cursor move, each under the 16 ms frame ceiling — asserted OFF-CI on capable hardware only;
- * under `CI`/`TUI_SKIP_PERF` the numbers log informationally and never gate (the core
- * perf-budget.spec idiom, RD-10 DEF-4 resolution).
- *
- * Trace: RD-08 AC-20 · AR-261 · ST-35.
+ * A 1 MB buffer: a single-cluster insert plus one coalesced redraw, and a cursor
+ * move, each under the 16 ms frame ceiling. Contended environments log the
+ * measurements instead of enforcing them.
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
+import { perfBudgetMode } from '../../core/bench/frame-bench.mjs';
 import { Group } from '../src/view/index.js';
 import { createEventLoop } from '../src/event/index.js';
 import { Editor } from '../src/editor/editor.js';
@@ -20,15 +17,15 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { color
 
 const BUDGET_MS = 16;
 
-/** Log-only under CI or an explicit skip (the core perf-budget idiom). */
+/** Log-only when wall-clock contention makes the budget unreliable. */
 function logOnly(): boolean {
-  return process.env.CI !== undefined || process.env.TUI_SKIP_PERF !== undefined;
+  return perfBudgetMode(process.env) === 'log';
 }
 
 /**
  * MINIMUM of `n` warmed, timed runs of `fn` — the contention-robust estimator: the full vitest
  * suite runs files in parallel workers, so medians inflate with CPU contention while the min
- * approximates the uncontended per-op cost the AC-20 ceiling is about (never a single sample).
+ * approximates the uncontended per-operation cost (never a single sample).
  */
 function minTime(n: number, fn: () => void): number {
   fn(); // warm
@@ -41,13 +38,13 @@ function minTime(n: number, fn: () => void): number {
   return best;
 }
 
-test('ST-35: 1 MB buffer — insert+redraw and cursor move each stay under 16 ms (off-CI)', () => {
+test('ST-35: 1 MB buffer — insert+redraw and cursor move each stay under 16 ms in serial runs', () => {
   const ed = new Editor();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  ed.layout = { size: { kind: 'fr', weight: 1 } };
+  root.setLayout({ direction: 'col' });
+  ed.setLayout({ size: { kind: 'fr', weight: 1 } });
   root.add(ed);
-  const loop = createEventLoop({ width: 80, height: 24 }, { caps }); // the dev-box frame (AC-20)
+  const loop = createEventLoop({ width: 80, height: 24 }, { caps });
   loop.mount(root);
   loop.renderRoot.flush();
   loop.focusView(ed);

@@ -142,19 +142,19 @@ async function main(): Promise<number> {
   // Three staggered windows: help, a truecolor gradient, and a live reactive gadget.
   const help = new Window('Welcome');
   help.number = 1;
-  help.layout.rect = { x: 1, y: 1, width: 30, height: 14 };
+  help.setLayout({ rect: { x: 1, y: 1, width: 30, height: 14 } });
   help.add(new HelpView(HELP_LINES));
   app.desktop.addWindow(help);
 
   const gradient = new Window('True Color');
   gradient.number = 2;
-  gradient.layout.rect = { x: 33, y: 1, width: 30, height: 12 };
+  gradient.setLayout({ rect: { x: 33, y: 1, width: 30, height: 12 } });
   gradient.add(new GradientView(() => frame()));
   app.desktop.addWindow(gradient);
 
   const live = new Window('Live');
   live.number = 3;
-  live.layout.rect = { x: 20, y: 9, width: 26, height: 11 };
+  live.setLayout({ rect: { x: 20, y: 9, width: 26, height: 11 } });
   live.add(
     new LiveView(
       () => clock(),

@@ -13,7 +13,7 @@
  */
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
-import { Group, Tree, createEventLoop, signal } from '@jsvision/ui';
+import { Group, Tree, createEventLoop, signal, cover } from '@jsvision/ui';
 import type { TreeNode } from '@jsvision/ui';
 
 /** A synthetic decoded key (no terminal needed). */
@@ -57,7 +57,7 @@ function main(): void {
     command: 'open',
     onSelect: (_i, node) => (selectedName = node.value),
   });
-  tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 } };
+  cover(tree);
 
   const root = new Group();
   root.add(tree);

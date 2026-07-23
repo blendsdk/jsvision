@@ -87,9 +87,36 @@ export interface LayoutProps {
    * `position:'absolute'` only — the parent-content-relative rect in cells (each side clamped to a
    * non-negative integer). Ignored for `'flow'` and `'fill'` (a `'fill'` box always takes the full
    * content box); absent on an absolute box ⇒ a degenerate zero rect (no throw).
+   *
+   * Read-only through the view's `layout`, so a solved rect cannot be edited a field at a time behind
+   * `setLayout`'s back — that would move the view without ever requesting a reflow.
    */
-  rect?: Rect;
+  rect?: Readonly<Rect>;
 }
+
+/**
+ * Every {@link LayoutProps} prop set to `undefined` — the reset a caller spreads when it means "clear
+ * everything, then set these".
+ *
+ * `setLayout` merges, so omitting a prop **keeps** it. A seam that must govern a view's layout no
+ * matter what the view arrived with therefore has to name the props it discards, and an explicit
+ * `undefined` is the documented way to clear one back to its default.
+ *
+ * The mapped type over `Required<LayoutProps>` is the point: adding a prop to `LayoutProps` makes
+ * this object literal fail to compile, instead of silently flipping every seam that spreads it from
+ * *discard* to *inherit*. Not exported from the package — it is an implementation detail of those
+ * seams, not something a consumer composes with.
+ */
+export const CLEARED_LAYOUT: { [K in keyof Required<LayoutProps>]: undefined } = {
+  direction: undefined,
+  size: undefined,
+  justify: undefined,
+  align: undefined,
+  gap: undefined,
+  padding: undefined,
+  position: undefined,
+  rect: undefined,
+};
 
 /**
  * A node in the layout input tree.

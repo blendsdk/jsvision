@@ -114,10 +114,15 @@ export interface BrowserHostOptions {
  * @example
  * import { Terminal } from '@xterm/xterm';
  * import { createBrowserHost, buildBrowserCaps } from '@jsvision/web';
+ * import { createEventLoop, Group } from '@jsvision/ui';
  *
  * const term = new Terminal({ allowProposedApi: true });
  * term.open(document.getElementById('terminal')!);
  * const caps = buildBrowserCaps();
+ *
+ * const loop = createEventLoop({ width: 80, height: 24 }, { caps });
+ * loop.mount(new Group());
+ *
  * const host = createBrowserHost({ term, caps, onInput: (event) => loop.dispatch(event) });
  * host.start();
  * host.render(loop.renderRoot.buffer()); // paint the first frame

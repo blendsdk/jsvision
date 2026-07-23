@@ -23,8 +23,8 @@ function mouseDown(x: number, y: number): CoreMouseEvent {
 }
 function mount(cluster: Cluster, rows: number): ReturnType<typeof createEventLoop> {
   const root = new Group();
-  root.layout = { direction: 'col' };
-  cluster.layout = { size: { kind: 'fixed', cells: rows } };
+  root.setLayout({ direction: 'col' });
+  cluster.setLayout({ size: { kind: 'fixed', cells: rows } });
   root.add(cluster);
   const loop = createEventLoop({ width: 14, height: rows }, { caps });
   loop.mount(root);

@@ -1,10 +1,14 @@
 /**
- * A small, self-contained modal error box: a gray dialog showing a one-line message plus an OK button.
- * The file dialogs use it to report a bad filename or an unreadable directory, but you can call it for
- * any short error. The message is sanitized when drawn, so it is safe to pass user- or error-derived
- * text. The dialog that raised it stays open underneath (modals nest last-in-first-out).
+ * A small, self-contained modal error box: a gray dialog showing a message plus an OK button. The
+ * file dialogs use it to report a bad filename or an unreadable directory, but you can call it for
+ * any error. The message is sanitized when drawn, so it is safe to pass user- or error-derived text.
+ * The dialog that raised it stays open underneath (modals nest last-in-first-out).
+ *
+ * The box sizes itself to its message: wide enough for the text within a 24–60 column range, then
+ * tall enough for however many lines the message wraps to at that width. A long message is therefore
+ * shown in full rather than truncated at the first row.
  */
-import { Dialog, Text, okButton } from '@jsvision/ui';
+import { Dialog, Text, okButton, col, cover, fixed, grow, row, wrapText } from '@jsvision/ui';
 import type { View, EventLoop, Desktop } from '@jsvision/ui';
 
 /**
@@ -30,25 +34,22 @@ export interface ExecHost {
  * import { resolveCapabilities } from '@jsvision/core';
  * import { errorBox } from '@jsvision/files';
  *
- * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const caps = resolveCapabilities().profile; // ambient: reads process.env + process.platform
  * const app = createApplication({ caps });
  *
  * await errorBox(app, "Invalid file name: 'a/b'");
  */
 export async function errorBox(host: ExecHost, message: string): Promise<void> {
   const width = Math.min(60, Math.max(24, message.length + 6));
-  const height = 7;
+  // The dialog's padded frame interior is two columns narrower than the box, so wrap to that to learn
+  // how many rows the message really needs. Measuring it here rather than letting the text view
+  // self-size is deliberate: a view reports its unwrapped line count, which would size the box for one
+  // row and silently clip everything past the first line.
+  const height = wrapText(message, width - 2).length + 4; // + frame (2) + button band (2)
   const dlg = new Dialog({ title: 'Error', width, height, centered: true });
 
-  const text = new Text(message);
-  text.layout = { position: 'absolute', rect: { x: 2, y: 2, width: width - 4, height: 1 } };
   const ok = okButton();
-  ok.layout = {
-    position: 'absolute',
-    rect: { x: Math.max(2, Math.floor((width - 10) / 2)), y: height - 3, width: 10, height: 2 },
-  };
-  dlg.add(text);
-  dlg.add(ok);
+  dlg.add(cover(col(grow(new Text(message)), fixed(row({ justify: 'center' }, ok), 2))));
 
   host.desktop.addWindow(dlg);
   try {

@@ -16,6 +16,12 @@ import type { MenuItem } from '../menu/index.js';
  * rules — a present contribution fully defines that bar, `null` restores the base.
  *
  * @example
+ * import { statusItem } from '@jsvision/ui';
+ * import type { ChromeHost } from '@jsvision/ui';
+ *
+ * // The seam a router-style body received from `attachChromeHost`:
+ * const chrome: ChromeHost = { setStatus: () => {}, setMenu: () => {} };
+ *
  * // On entering a screen with its own affordances:
  * chrome.setStatus([statusItem('~Esc~ Back', 'back', 'Escape')]);
  * chrome.setMenu(null); // this screen keeps the app's base menu
@@ -46,8 +52,9 @@ export interface ChromeHost {
  *
  * @example
  * import { Group } from '@jsvision/ui';
+ * import type { ChromeHost, ChromeHostAware } from '@jsvision/ui';
  *
- * class Router extends Group {
+ * class Router extends Group implements ChromeHostAware {
  *   private chrome: ChromeHost | null = null;
  *   attachChromeHost(host: ChromeHost): void { this.chrome = host; }
  * }
@@ -70,6 +77,15 @@ export interface ChromeHostAware {
  * floor automatically.
  *
  * @example
+ * import type { FocusHost, View } from '@jsvision/ui';
+ *
+ * // The seam a router-style body received from `attachFocusHost`:
+ * let current: View | null = null;
+ * const focus: FocusHost = {
+ *   getFocused: () => current,
+ *   focusView: (view) => { current = view; },
+ * };
+ *
  * // Restore the previously focused view when returning to a screen:
  * const previous = focus.getFocused();
  * // …navigate away and back…
@@ -89,8 +105,9 @@ export interface FocusHost {
  *
  * @example
  * import { Group } from '@jsvision/ui';
+ * import type { FocusHost, FocusHostAware } from '@jsvision/ui';
  *
- * class Router extends Group {
+ * class Router extends Group implements FocusHostAware {
  *   private focus: FocusHost | null = null;
  *   attachFocusHost(host: FocusHost): void { this.focus = host; }
  * }
@@ -129,6 +146,15 @@ export interface ScreenBundle {
  * and (de)serialization behavior.
  *
  * @example
+ * import { Group } from '@jsvision/ui';
+ * import type { Route } from '@jsvision/ui';
+ *
+ * class DetailScreen extends Group {
+ *   constructor(readonly id: number) {
+ *     super();
+ *   }
+ * }
+ *
  * const detail: Route<{ id: number }> = {
  *   build: (ctx) => ({ view: new DetailScreen(ctx.params.id) }),
  *   keepAlive: false,

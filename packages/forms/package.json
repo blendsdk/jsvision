@@ -1,6 +1,6 @@
 {
   "name": "@jsvision/forms",
-  "version": "0.2.0",
+  "version": "1.1.0",
   "description": "jsvision forms — a headless, reactive form/field store with synchronous Zod validation for @jsvision/ui.",
   "keywords": [
     "tui",
@@ -44,14 +44,14 @@
   ],
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run --project unit",
     "test:e2e": "vitest run --project e2e --passWithNoTests",
     "check:deps": "node ../../scripts/check-no-native-deps.mjs .",
     "check:docs": "node ../../scripts/check-jsdoc.mjs ."
   },
   "dependencies": {
-    "@jsvision/ui": "0.2.0"
+    "@jsvision/ui": "1.1.0"
   },
   "peerDependencies": {
     "zod": "^4"

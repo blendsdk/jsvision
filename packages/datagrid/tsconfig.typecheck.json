@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true, "rootDir": "." },
+  "include": ["src", "test"],
+  // These two specs import a test helper from the sibling @jsvision/core package by workspace-relative
+  // path. The import resolves at run time (vitest/tsx, NodeNext), but a cross-package `.ts` falls
+  // outside this package's rootDir, so tsc rejects it (TS6059). They stay fully covered by vitest.
+  // The third former exclusion, perf-grid-bench, is back in: the bench it imports now carries a
+  // declaration file, so its only remaining objection is gone.
+  "exclude": ["test/golden-screen.spec.test.ts", "test/a11y-golden.spec.test.ts"]
+}

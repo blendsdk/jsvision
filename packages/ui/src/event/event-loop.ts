@@ -15,6 +15,8 @@ import { createRenderRoot, View } from '../view/index.js';
 import type { RenderRoot, AppEvent, DispatchEvent, Point, PopupHost } from '../view/index.js';
 import type { EventLoop, EventLoopOptions, ModalHostAware } from './types.js';
 import { buildKeymap } from './default-keymap.js';
+import { normalizeFunctionKey } from './function-key-fallback.js';
+import type { FunctionKeyFallback } from './function-key-fallback.js';
 import { createCommandRegistry } from './commands.js';
 import type { CommandRegistry } from './commands.js';
 import { route } from './dispatch.js';
@@ -147,6 +149,8 @@ class EventLoopImpl implements EventLoop {
   private acceleratorMode = false;
   /** The key that toggles accelerator mode (default `'f12'`); `null` disables the feature. */
   private readonly revealKey: string | null;
+  /** Application-level policy for portable F1–F12 aliases. */
+  private readonly functionKeyFallback: FunctionKeyFallback;
 
   // --- Out-of-tick painter ----------------------------------------------------------------------
   /** How a deferred out-of-tick paint is enqueued (default `queueMicrotask`). */
@@ -187,6 +191,7 @@ class EventLoopImpl implements EventLoop {
     this.keymap = buildKeymap(opts.clipboardKeys, opts.keymap);
     this.quitCommand = opts.quitCommand ?? 'quit';
     this.revealKey = opts.revealKey === undefined ? 'f12' : opts.revealKey; // an explicit null disables it
+    this.functionKeyFallback = opts.functionKeyFallback ?? 'none';
     this.clock = opts.now ?? Date.now;
     // Real apps take the microtask default; a test injects a capturing seam to step the deferred paint.
     this.scheduleMicrotask = opts.scheduleMicrotask ?? ((cb) => queueMicrotask(cb));
@@ -251,25 +256,33 @@ class EventLoopImpl implements EventLoop {
     this.stopped = true;
   }
 
+  dispose(): void {
+    // Order matters: stop the painter first so unmounting (which disposes reactive scopes and may
+    // dirty the tree as effects tear down) can never schedule a frame to a host that is going away.
+    this.stop();
+    this.renderRoot.unmount();
+  }
+
   onCommand(command: string, handler: () => void): () => void {
     return this.commandSink.register(command, handler);
   }
 
   dispatch(event: AppEvent): void {
     this.runTick(() => {
+      const routedEvent = event.type === 'key' ? normalizeFunctionKey(event, this.functionKeyFallback) : event;
       // Compute the consecutive same-cell click count for a mouse-down and attach it to the event as
       // `clickCount`, so a view can tell a single click from a double-click. Only mouse-downs carry
       // it; every other event queues with `clickCount` undefined.
       let clickCount: number | undefined;
-      if (event.type === 'mouse' && event.kind === 'down') {
+      if (routedEvent.type === 'mouse' && routedEvent.kind === 'down') {
         const t = this.clock();
-        const sameCell = event.x === this.lastClickCell.x && event.y === this.lastClickCell.y;
+        const sameCell = routedEvent.x === this.lastClickCell.x && routedEvent.y === this.lastClickCell.y;
         this.clickCount = sameCell && t - this.lastClickTime <= MULTI_CLICK_MS ? this.clickCount + 1 : 1;
         this.lastClickTime = t;
-        this.lastClickCell = { x: event.x, y: event.y };
+        this.lastClickCell = { x: routedEvent.x, y: routedEvent.y };
         clickCount = this.clickCount;
       }
-      this.queue.push({ event, handled: false, clickCount });
+      this.queue.push({ event: routedEvent, handled: false, clickCount });
     });
   }
 
@@ -294,11 +307,11 @@ class EventLoopImpl implements EventLoop {
   }
 
   focusNext(): void {
-    this.runTick(() => this.focus.focusNext());
+    this.runTick(() => this.focus.focusNext(this.scopeRoot()));
   }
 
   focusPrev(): void {
-    this.runTick(() => this.focus.focusPrev());
+    this.runTick(() => this.focus.focusPrev(this.scopeRoot()));
   }
 
   focusView(view: View): void {
@@ -536,9 +549,10 @@ class EventLoopImpl implements EventLoop {
       acceleratorMode: () => this.acceleratorMode,
       toggleAcceleratorMode: () => this.applyAcceleratorMode(!this.acceleratorMode),
       deliver: (view, ev) => this.deliver(view, ev),
-      // Tab traversal runs inside the active tick, so it calls the focus manager directly.
-      focusNext: () => this.focus.focusNext(),
-      focusPrev: () => this.focus.focusPrev(),
+      // Tab traversal runs inside the active tick, so it calls the focus manager directly. The scope
+      // ceiling (already computed above) confines the walk to the open modal's subtree, else the root.
+      focusNext: () => this.focus.focusNext(scope),
+      focusPrev: () => this.focus.focusPrev(scope),
       hitTestRoute: (ev) =>
         hitTestRoute(ev, {
           scopeRoot: scope,
