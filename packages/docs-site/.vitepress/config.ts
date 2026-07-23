@@ -137,6 +137,7 @@ export default withMermaid(
             items: [
               { text: 'Introduction', link: '/guide/' },
               { text: 'Install & packages', link: '/guide/install-and-packages' },
+              { text: 'Codex plugin', link: '/guide/codex-plugin' },
             ],
           },
           {

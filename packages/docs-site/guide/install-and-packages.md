@@ -141,9 +141,8 @@ if (process.stdout.isTTY !== true) {
 ::: tip Scaffolding
 A `npm create jsvision` one-liner that generates a runnable starter for you is planned — follow
 [issue #169](https://github.com/blendsdk/jsvision/issues/169). Until it lands, the steps above are
-the supported path. If you use Claude Code, this repository also ships a `/jsvision-new-app` skill
-that scaffolds a starter package, though it generates into a JSVision monorepo checkout rather than
-a standalone project.
+the supported manual path. Codex users can instead install the standalone
+[JSVision Codex plugin](/guide/codex-plugin), which scaffolds and verifies consumer projects.
 :::
 
 ## Things to know

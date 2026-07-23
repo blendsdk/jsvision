@@ -13,6 +13,9 @@ export interface ApiCategory {
 /** Category order + titles; the slug doubles as each generated page's file name (sans `.md`). */
 export declare const CATEGORIES: readonly ApiCategory[];
 
+/** Compare API names using locale-independent UTF-16 lexical ordering. */
+export declare function compareApiNames(left: string, right: string): number;
+
 /**
  * The category slug an export belongs to, given the package it came from and its declaration
  * file's repo-relative path.
@@ -33,3 +36,6 @@ export declare function generateApiDocs(rootDir?: string): {
  * human-readable message per file that is missing, stale, or out of date; empty when in sync.
  */
 export declare function checkApiDrift(rootDir?: string): string[];
+
+/** Describe the first changed line between committed and freshly generated content. */
+export declare function firstLineDifference(committed: string, generated: string): string;

@@ -46,7 +46,8 @@
 - **Lint:** `yarn lint` · **Fix:** `yarn lint:fix`
 - **Dependency policy:** `yarn check:deps` (fails on any native runtime dependency)
 - **JSDoc governance:** `yarn check:docs` (`scripts/check-jsdoc.mjs`; bans CodeOps/TV-C++ refs, requires `@example` on public exports) — part of `yarn verify`
-- **Plugin self-sync:** `yarn plugin:sync --fix` (re-sync drifted recipe snippets, no AI) · `--detect` (JSON drift) · no-flag also drafts catalog entries via the Anthropic API (needs `ANTHROPIC_API_KEY`); outputs are verify-gated + left unstaged
+- **Codex plugin maintenance:** review affected skill pages, run `yarn plugin:update`, then run
+  `yarn plugin:check`; source-derived updates ship in the same commit as the SDK change.
 - **Clean:** `rm -rf packages/*/dist .turbo`
 
 ## Project structure
