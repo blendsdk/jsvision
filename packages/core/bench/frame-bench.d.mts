@@ -34,8 +34,10 @@ export declare function measureComposeDiff(w: number, h: number, iters: number):
 
 /**
  * Whether the frame-budget ceiling test should hard-assert the budget or only
- * log the number. Suppressed under CI (runner jitter) and via `TUI_SKIP_PERF`
- * (a contributor's slow/throttled/VM machine) — those paths log instead.
+ * log the number. Suppressed under CI (runner jitter), inside ordinary Turbo
+ * tasks (parallel contention), and via `TUI_SKIP_PERF` (an explicit local
+ * opt-out). The dedicated serial runner marks its Turbo-nested checks as
+ * authoritative without overriding CI or the explicit opt-out.
  *
  * @param env Environment (e.g. `process.env`).
  * @returns `'assert'` to enforce the budget, `'log'` to record only.

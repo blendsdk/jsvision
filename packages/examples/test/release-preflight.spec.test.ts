@@ -36,9 +36,10 @@ describe('release preflight', () => {
     expect(workflow).toContain('pull_request_target:');
     expect(workflow).toContain('branches: [master]');
     expect(workflow).toContain('types: [closed]');
-    expect(workflow).toContain("github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true");
-    expect(workflow).toContain("RELEASE_DIST_TAG: ${{ inputs['dist-tag'] || 'latest' }}");
-    expect(workflow).toContain("DRY_RUN: ${{ inputs['dry-run'] || false }}");
+    expect(workflow).toContain('if: github.event.pull_request.merged == true');
+    expect(workflow).toContain('RELEASE_DIST_TAG: latest');
+    expect(workflow).not.toContain('workflow_dispatch:');
+    expect(workflow).not.toContain('DRY_RUN');
   });
 
   test('simulates release preparation only for pull requests targeting master', () => {

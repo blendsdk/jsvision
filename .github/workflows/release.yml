@@ -1,7 +1,6 @@
 # Publish the public @jsvision packages to npm, in lockstep, with provenance.
 #
-# A merged pull request targeting master triggers this workflow automatically. Maintainers can
-# also run it manually to select another dist-tag or preview a dry run.
+# A merged pull request targeting master triggers this workflow automatically.
 # Versioning is owned by @blendsdk/lockstep: it analyses conventional commits since the
 # last tag, bumps every public package to one shared version, and drafts the changelog
 # (OpenAI primary, Anthropic fallback). This workflow adds the pieces lockstep leaves to
@@ -14,8 +13,6 @@
 # stays internal for now) is `private` and npm skips it. Provenance requires the id-token permission
 # and a `repository` field in each published package (both satisfied here).
 #
-# Run with "Dry run" checked first to preview what would publish — it bumps + packs in
-# the runner but never commits, tags, pushes, or publishes.
 name: Release
 
 on:
@@ -24,20 +21,6 @@ on:
   pull_request_target:
     branches: [master]
     types: [closed]
-  workflow_dispatch:
-    inputs:
-      dist-tag:
-        description: 'npm dist-tag to publish under'
-        type: choice
-        options:
-          - latest
-          - next
-          - beta
-        default: latest
-      dry-run:
-        description: 'Dry run (bump + pack only; no publish, commit, tag, or push)'
-        type: boolean
-        default: false
 
 concurrency:
   group: release
@@ -45,11 +28,10 @@ concurrency:
 
 jobs:
   release:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     env:
-      RELEASE_DIST_TAG: ${{ inputs['dist-tag'] || 'latest' }}
-      DRY_RUN: ${{ inputs['dry-run'] || false }}
+      RELEASE_DIST_TAG: latest
     permissions:
       contents: write # push the release commit + tag
       id-token: write # npm provenance (OIDC)
@@ -90,7 +72,6 @@ jobs:
         run: yarn build
 
       - name: Commit + tag the release
-        if: env.DRY_RUN != 'true'
         run: |
           VERSION=$(node -p "require('./packages/core/package.json').version")
           git add -A
@@ -104,16 +85,9 @@ jobs:
         # but the auth token setup-node wrote is scoped to registry.npmjs.org, so the
         # publish would fail auth against the yarn mirror. Calling lockstep directly keeps
         # the clean npmjs.org env (from .npmrc + npm_config_registry below).
-        # The dry run passes --provenance too so it exercises the same pre-flight
-        # validation (e.g. the repository-field check) as the real publish.
         run: |
           export PATH="$(pwd)/node_modules/.bin:$PATH"
-          if [ "$DRY_RUN" = "true" ]; then
-            echo "DRY RUN — no packages will be published."
-            lockstep publish --tag "$RELEASE_DIST_TAG" --provenance --dry
-          else
-            lockstep publish --tag "$RELEASE_DIST_TAG" --git-push --provenance
-          fi
+          lockstep publish --tag "$RELEASE_DIST_TAG" --git-push --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           npm_config_registry: 'https://registry.npmjs.org/'
@@ -125,7 +99,6 @@ jobs:
       # safe to re-run, and it deliberately does NOT tolerate failure: an untagged release
       # is the bug being fixed.
       - name: Push the version tag
-        if: env.DRY_RUN != 'true'
         run: |
           VERSION=$(node -p "require('./packages/core/package.json').version")
           git push origin "v${VERSION}"
@@ -140,7 +113,6 @@ jobs:
       # it runs, so a missing back-merge PR must not turn a successful release red — the
       # merge can be opened by hand from the job log.
       - name: Open a back-merge PR into develop
-        if: env.DRY_RUN != 'true'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
