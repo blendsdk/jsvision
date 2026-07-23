@@ -14,7 +14,7 @@ import { Group } from '../view/index.js';
 import { col } from '../view/dsl/index.js';
 import type { View } from '../view/index.js';
 import { createEventLoop } from '../event/index.js';
-import type { EventLoop, ClipboardKeys } from '../event/index.js';
+import type { EventLoop, ClipboardKeys, FunctionKeyFallback } from '../event/index.js';
 import { Desktop } from '../desktop/index.js';
 import type { MenuBar, MenuItem } from '../menu/index.js';
 import { Commands, StatusItemView, statusItem } from '../status/index.js';
@@ -53,6 +53,12 @@ export interface ApplicationOptions {
    * a WordStar-mode `Editor`) and supply your own keymap instead.
    */
   clipboardKeys?: ClipboardKeys;
+  /**
+   * Portable F-key fallback for terminals or browsers that reserve physical function keys.
+   * Defaults to `'number-row'`, mapping Alt+`1…9,0,-,=` to F1–F12. Pass `'none'` to preserve
+   * those Alt chords literally.
+   */
+  functionKeyFallback?: FunctionKeyFallback;
   /** Optional menu bar shown as the top row. Build one with `menuBar(...)`. */
   menuBar?: MenuBar;
   /** Optional status line shown as the bottom row. Build one with `statusLine(...)`. */
@@ -408,6 +414,7 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
     logger: opts.logger,
     keymap: opts.keymap,
     clipboardKeys: opts.clipboardKeys, // undefined ⇒ the loop's `'both'` default
+    functionKeyFallback: opts.functionKeyFallback ?? 'number-row',
     commands: commandSeed,
     quitCommand: Commands.quit, // a quit while a dialog is open cascades top-down through the modals
     onQuit: (code) => quitState.resolve?.(code), // the loop registers quit through its command sink

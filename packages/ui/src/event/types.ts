@@ -6,6 +6,7 @@ import type { CapabilityProfile, Theme, Logger, Keymap, ScreenBuffer } from '@js
 import type { Size2D } from '../layout/index.js';
 import type { View, RenderRoot, AppEvent, Point, PopupHost } from '../view/index.js';
 import type { ClipboardKeys } from './default-keymap.js';
+import type { FunctionKeyFallback } from './function-key-fallback.js';
 
 /**
  * The handle a self-closing modal view receives so it can close itself from its own event handling.
@@ -51,6 +52,11 @@ export interface EventLoopOptions {
    * keymap for copy/cut/paste (and the classic chords).
    */
   clipboardKeys?: ClipboardKeys;
+  /**
+   * Interpret Alt+`1…9,0,-,=` as F1–F12. Direct event loops default to `'none'` so existing Alt
+   * bindings remain literal; application shells enable `'number-row'` unless explicitly disabled.
+   */
+  functionKeyFallback?: FunctionKeyFallback;
   /** Optional list of command names known up front. Commands are enabled by default whether listed or not. */
   commands?: Iterable<string>;
   /** Called once per dispatch tick after all cascaded events drain, just before the frame is painted. */
