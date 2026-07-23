@@ -60,6 +60,8 @@ test('ST-A4: pages carry real option fields and signatures', () => {
   expect(generated.files['data-views.md']).toContain('interface DataGridOptions<T>');
   expect(generated.files['data-views.md']).toContain('rows: Signal<T[]>');
   expect(generated.files['controls.md']).toContain('interface ButtonOptions');
+  expect(generated.files['datagrid.md']).toContain('const gridKeymap: import("@jsvision/ui").Keymap');
+  expect(Object.values(generated.files).join('\n')).not.toMatch(/import\(["'](?:\/|[A-Za-z]:[\\/])/);
   expect(generated.files['index.md']).toContain('Data views');
 });
 

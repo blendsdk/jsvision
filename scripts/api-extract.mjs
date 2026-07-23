@@ -35,6 +35,22 @@ export function compareApiNames(left, right) {
   return 0;
 }
 
+/**
+ * Replace TypeScript's absolute workspace declaration imports with stable public package imports.
+ *
+ * @param {string} text Type text emitted by the TypeScript checker.
+ * @returns {string} Portable type text that does not expose the generator checkout path.
+ * @example
+ * normalizeWorkspaceImports('import("/repo/packages/ui/dist/index").Keymap');
+ * // → 'import("@jsvision/ui").Keymap'
+ */
+export function normalizeWorkspaceImports(text) {
+  return text.replace(
+    /import\((["'])[^"']*[/\\]packages[/\\]([^/\\]+)[/\\]dist[/\\]index\1\)/g,
+    'import("@jsvision/$2")',
+  );
+}
+
 /** A symbol's whole JSDoc body collapsed to one line (for a compact member comment). */
 function fullComment(sym, checker) {
   return ts.displayPartsToString(sym.getDocumentationComment(checker)).replace(/\s+/g, ' ').trim();
@@ -186,9 +202,11 @@ function digestExport(exportName, sym, checker, rootDir) {
   if (ts.isVariableDeclaration(decl)) {
     const t =
       decl.type?.getText() ??
-      checker
-        .typeToString(checker.getTypeOfSymbolAtLocation(sym, decl), decl, ts.TypeFormatFlags.NoTruncation)
-        .replace(/\s+/g, ' ');
+      normalizeWorkspaceImports(
+        checker
+          .typeToString(checker.getTypeOfSymbolAtLocation(sym, decl), decl, ts.TypeFormatFlags.NoTruncation)
+          .replace(/\s+/g, ' '),
+      );
     return { ...base, kind: 'const', sig: `${exportName}: ${t}` };
   }
   if (ts.isEnumDeclaration(decl)) {
