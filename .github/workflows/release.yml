@@ -1,6 +1,7 @@
 # Publish the public @jsvision packages to npm, in lockstep, with provenance.
 #
-# Manually triggered only (workflow_dispatch): GitHub → Actions → Release → Run workflow.
+# A merged pull request targeting master triggers this workflow automatically. Maintainers can
+# also run it manually to select another dist-tag or preview a dry run.
 # Versioning is owned by @blendsdk/lockstep: it analyses conventional commits since the
 # last tag, bumps every public package to one shared version, and drafts the changelog
 # (OpenAI primary, Anthropic fallback). This workflow adds the pieces lockstep leaves to
@@ -18,6 +19,11 @@
 name: Release
 
 on:
+  # `pull_request_target` runs in the trusted base-repository context, so a merged pull request
+  # from a fork can release without exposing write credentials to the pull request's code.
+  pull_request_target:
+    branches: [master]
+    types: [closed]
   workflow_dispatch:
     inputs:
       dist-tag:
@@ -39,7 +45,11 @@ concurrency:
 
 jobs:
   release:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    env:
+      RELEASE_DIST_TAG: ${{ inputs['dist-tag'] || 'latest' }}
+      DRY_RUN: ${{ inputs['dry-run'] || false }}
     permissions:
       contents: write # push the release commit + tag
       id-token: write # npm provenance (OIDC)
@@ -80,7 +90,7 @@ jobs:
         run: yarn build
 
       - name: Commit + tag the release
-        if: ${{ !inputs.dry-run }}
+        if: env.DRY_RUN != 'true'
         run: |
           VERSION=$(node -p "require('./packages/core/package.json').version")
           git add -A
@@ -98,11 +108,11 @@ jobs:
         # validation (e.g. the repository-field check) as the real publish.
         run: |
           export PATH="$(pwd)/node_modules/.bin:$PATH"
-          if [ "${{ inputs.dry-run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             echo "DRY RUN — no packages will be published."
-            lockstep publish --tag "${{ inputs.dist-tag }}" --provenance --dry
+            lockstep publish --tag "$RELEASE_DIST_TAG" --provenance --dry
           else
-            lockstep publish --tag "${{ inputs.dist-tag }}" --git-push --provenance
+            lockstep publish --tag "$RELEASE_DIST_TAG" --git-push --provenance
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -115,7 +125,7 @@ jobs:
       # safe to re-run, and it deliberately does NOT tolerate failure: an untagged release
       # is the bug being fixed.
       - name: Push the version tag
-        if: ${{ !inputs.dry-run }}
+        if: env.DRY_RUN != 'true'
         run: |
           VERSION=$(node -p "require('./packages/core/package.json').version")
           git push origin "v${VERSION}"
@@ -130,7 +140,7 @@ jobs:
       # it runs, so a missing back-merge PR must not turn a successful release red — the
       # merge can be opened by hand from the job log.
       - name: Open a back-merge PR into develop
-        if: ${{ !inputs.dry-run }}
+        if: env.DRY_RUN != 'true'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
