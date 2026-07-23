@@ -1,12 +1,11 @@
 /**
- * Specification test (immutable oracle) — the representative frame-budget bench (ST-4, RD-14 AC-1).
+ * Specification test (immutable oracle) for the representative grid frame budget.
  *
- * A 60×22 editable grid's compose+diff MEDIAN over warmed iterations is within the 16 ms frame budget
- * off-CI; under `CI` / `TUI_SKIP_PERF` the assertion is skipped and the median + p95 are logged (wall-
- * clock timing is environment-sensitive). Mirrors core's `perf-budget.spec.test.ts` discipline and
- * reuses its pure `median` / `p95` / `perfBudgetMode` helpers.
+ * A 60×22 editable grid's compose-and-diff median over warmed iterations stays
+ * within one 16 ms frame in deliberate serial runs. Contended environments log
+ * the median and p95 without enforcing the wall-clock ceiling.
  *
- * The metric is compose+diff, NOT view construction or layout (PF-005): the grid + render root are
+ * The metric is compose+diff, not view construction or layout: the grid + render root are
  * built ONCE, outside the timed region; each iteration forces a full recompose via `setTheme` (which
  * changes no geometry, so layout is not re-run) and then serializes the frame. `serialize().length` is
  * folded into a sink so the measured work can't be dead-code-eliminated.
@@ -20,7 +19,7 @@ import type { RenderOptions } from '@jsvision/core';
 import { median, p95, perfBudgetMode } from '../../core/bench/frame-bench.mjs';
 import { buildPerfGrid } from './fixtures/perf-grid.js';
 
-/** RD-14 AC-1: the same 16 ms ceiling core asserts for its 200×50 frame. */
+/** The same 16 ms ceiling core asserts for its 200×50 frame. */
 const BUDGET_MS = 16;
 /** Median is taken over this many warmed iterations — never a single sample. */
 const ITER = 200;
@@ -36,7 +35,7 @@ let sink = 0;
 
 /** Per-iteration compose+diff durations (ms) for the 60×22 grid, over warmed iterations. */
 function sampleGridComposeDiff(): number[] {
-  const g = buildPerfGrid(); // construction + first layout OUTSIDE the timed region (PF-005)
+  const g = buildPerfGrid(); // Construction and first layout stay outside the timed region.
   // Force a full recompose (no geometry change → no re-layout), compose the frame, then full-serialize it.
   const measure = (): string => {
     g.rr.setTheme(defaultTheme);

@@ -1,28 +1,28 @@
 #!/usr/bin/env node
 /**
- * RD-09 acceptance-gate aggregator (FR-7, AR-4/AR-13).
+ * Acceptance-gate aggregator.
  *
  * The runnable half of the project go/no-go gate: it runs the automatable tiers
  * (verify + the Tier-3 / signal e2e files + the probe in `--auto`) and prints a
- * PASS/FAIL/DEFERRED verdict per RD-09 criterion (canonical numbering 1–11),
+ * PASS/FAIL/DEFERRED verdict per acceptance criterion (canonical numbering 1–11),
  * exiting non-zero if any non-deferred criterion fails. The criteria↔step map and
  * the DEFERRED set below are the single source of truth the doc table mirrors and
- * `gate.spec.test.ts` (ST-24) asserts against, so the doc and script never drift.
+ * `gate.spec.test.ts` asserts against, so the doc and script never drift.
  *
  * Usage: `yarn gate` (or `node scripts/gate.mjs`), run from the monorepo root.
  * Importing this module is side-effect-free (the gate only runs when invoked as
  * the main script), so tests can read `STEPS`/`DEFERRED`/`CRITERIA` directly.
  *
  * Exit codes: 0 = every non-deferred criterion passed; 1 = a required criterion
- * failed. Pure-Node ESM; yarn is shell-hopped on win32 (AR-13).
+ * failed. Pure-Node ESM; yarn is shell-hopped on win32.
  *
- * Note: the probe step writes to the checked-in `terminal-matrix.json` (RD-03
- * behavior); CI must not assert a clean tree after `gate` (or pass `--no-matrix`).
+ * Note: the probe step writes to the checked-in `terminal-matrix.json`; CI must
+ * not assert a clean tree after `gate` (or pass `--no-matrix`).
  */
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-/** The 11 RD-09 go/no-go criteria (canonical numbering). */
+/** The 11 go/no-go criteria in canonical order. */
 export const CRITERIA = {
   1: 'Correct colours',
   2: 'Flicker-free + correct partial updates',
@@ -44,11 +44,12 @@ export const CRITERIA = {
  */
 export const STEPS = [
   { id: 'verify', cmd: 'yarn', args: ['verify'], criteria: [1, 2, 3, 4, 5, 7, 10, 11] },
+  { id: 'perf', cmd: 'yarn', args: ['perf:check'], criteria: [2] },
   { id: 'e2e', cmd: 'yarn', args: ['workspace', '@jsvision/core', 'test:e2e'], criteria: [8] },
   { id: 'probe', cmd: 'yarn', args: ['workspace', '@jsvision/examples', 'probe', '--auto'], criteria: [11] },
 ];
 
-/** Criteria deferred under the local-no-remote boundary; printed DEFERRED, never failing (AR-14). */
+/** Criteria deferred under the local-no-remote boundary; printed DEFERRED, never failing. */
 export const DEFERRED = {
   6: 'DEF-3 real-PTY SIGWINCH resize (needs a real PTY)',
   9: 'DEF-1/DEF-2 cross-platform CI cells green + macOS/Windows acceptance (no remote/platforms)',
