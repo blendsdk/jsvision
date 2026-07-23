@@ -1,7 +1,8 @@
 ## Ambiguity Register: Cross-Platform Function Keys
 
-> **Status**: ✅ GATE PASSED — all 10 items resolved
-> **Last Updated**: 2026-07-23 16:45
+> **Status**: ✅ GATE PASSED — all 11 items resolved
+> **Last Updated**: 2026-07-23 17:48
+> **Execution Additions**: AR-11 was resolved during plan execution.
 
 | # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
 |---|----------|-----------------|-------------------|---------------|--------|
@@ -15,6 +16,7 @@
 | 8 | Technical unknowns | Whether to resolve terminal-specific keys dynamically through terminfo | Bounded standards-backed allowlist / runtime terminfo lookup or dependency | User accepted recommendation: no dependency or subprocess; use a bounded allowlist | ✅ Resolved |
 | 9 | Scope ambiguities | Whether to expand beyond the requested F-key range and basic keypress semantics | F1–F12 only / F13+, keypad, repeat/release, and full protocol negotiation | User accepted recommendation: F1–F12 only; exclude the broader keyboard-protocol surface | ✅ Resolved |
 | 10 | Integration points | Authoritative verification and generated-plugin obligations | Project gate plus focused tests and plugin synchronization / focused tests only | User accepted recommendation: focused tests, `yarn plugin:update`, `yarn plugin:check`, then `yarn verify` | ✅ Resolved |
+| 11 | Behavioral gaps (runtime) | Default Alt+digit F-key aliases collide with Desktop's numbered-window shortcut | Keep the approved aliases and use Ctrl+Alt+digit for numbered windows, retaining legacy Alt+digit under `'none'` / weaken the default fallback | User accepted recommendation: preserve the fallback; use Ctrl+Alt+digit in default applications and retain Alt+digit when fallback is disabled | ✅ Resolved |
 
 ### Resolution Notes
 
@@ -55,3 +57,7 @@ negotiation, and wholesale enhanced-keyboard activation remain outside this plan
 **AR-10:** `yarn verify` is the authoritative final gate from `AGENTS.md`. Any path reported by
 `tools/jsvision-plugin-impact.json` triggers reference review and `yarn plugin:update`; every SDK
 change also runs `yarn plugin:check`.
+
+**AR-11 (runtime):** Desktop already treats any Alt-modified digit as a numbered-window shortcut,
+so Ctrl+Alt+digit requires no new routing mechanism and remains outside the exact Alt-only fallback
+allowlist. Applications configured with `'none'` continue delivering legacy Alt+digit to Desktop.

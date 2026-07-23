@@ -14,4 +14,5 @@ export { createEventLoop } from './event-loop.js';
 export { buildKeymap } from './default-keymap.js';
 export type { EventLoop, EventLoopOptions, ModalHost, ModalHostAware } from './types.js';
 export type { ClipboardKeys } from './default-keymap.js';
+export type { FunctionKeyFallback } from './function-key-fallback.js';
 export type { CommandEvent, AppEvent, DispatchEvent } from '../view/index.js';
