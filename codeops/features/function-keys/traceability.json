@@ -222,7 +222,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:00c2c88b5b54b8de7530ad1ea9e025ec6cca8ffabf1cba85fb109270f4c4e295",
+          "revision": "sha256:80ff2037bcbe98c7a8b5ef73882f31823ae54dfc6adb98e5714b936876775d57",
           "upstream": "function-keys/TASK-EXEC",
           "validatedAt": "2026-07-23T14:45:00Z"
         }
@@ -253,7 +253,7 @@
         "Execution entry: codeops/features/function-keys/plans/cross-platform-function-keys/99-execution-plan.md"
       ],
       "id": "TASK-EXEC",
-      "revision": "sha256:00c2c88b5b54b8de7530ad1ea9e025ec6cca8ffabf1cba85fb109270f4c4e295",
+      "revision": "sha256:80ff2037bcbe98c7a8b5ef73882f31823ae54dfc6adb98e5714b936876775d57",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -335,7 +335,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:00c2c88b5b54b8de7530ad1ea9e025ec6cca8ffabf1cba85fb109270f4c4e295",
+          "revision": "sha256:80ff2037bcbe98c7a8b5ef73882f31823ae54dfc6adb98e5714b936876775d57",
           "upstream": "function-keys/TASK-EXEC",
           "validatedAt": "2026-07-23T14:45:00Z"
         }
