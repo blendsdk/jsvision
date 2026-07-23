@@ -43,14 +43,6 @@
     "@jsvision/ui": "1.0.0",
     "@jsvision/files": "1.0.0"
   },
-  "peerDependencies": {
-    "@xterm/xterm": "^5.5.0"
-  },
-  "peerDependenciesMeta": {
-    "@xterm/xterm": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@types/node": "^26.1.1",
     "@xterm/headless": "^6.0.0",

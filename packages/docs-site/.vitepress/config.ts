@@ -137,6 +137,7 @@ export default withMermaid(
             items: [
               { text: 'Introduction', link: '/guide/' },
               { text: 'Install & packages', link: '/guide/install-and-packages' },
+              { text: 'Codex plugin', link: '/guide/codex-plugin' },
             ],
           },
           {
@@ -296,13 +297,6 @@ export default withMermaid(
               { text: 'ADR-007: Monorepo restructure', link: '/reference/decisions/ADR-007-monorepo-restructure' },
               { text: 'ADR-008: Layout engine', link: '/reference/decisions/ADR-008-layout-engine' },
               { text: 'ADR-009: Bun runtime support', link: '/reference/decisions/ADR-009-bun-runtime-support' },
-            ],
-          },
-          {
-            text: 'Guides',
-            items: [
-              { text: 'Getting Started', link: '/reference/guides/getting-started' },
-              { text: 'Development', link: '/reference/guides/development' },
             ],
           },
         ],

@@ -34,8 +34,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The go/no-go gate for the docs site: build with the production base and run the
+  # 20-check structural gate (scripts/check-docs-build.mjs). Runs on every master
+  # push and every non-closed PR that touches the site, so a broken build or a dead
+  # API link is caught before it can deploy. The gate is base-sensitive (it asserts
+  # the `/jsvision/` base), so it must build without the preview's DOCS_BASE override
+  # — which is why it cannot piggyback on the preview job.
+  validate:
+    name: Validate docs build (gate)
+    if: github.event_name == 'push' || github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build site (base /jsvision/)
+        run: yarn docs:build
+
+      - name: Run the docs-build gate
+        run: yarn docs:check
+
   production:
     name: Deploy production to GitHub Pages
+    # Never deploy a build the gate rejected.
+    needs: validate
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     # Same rationale as the CI workflow's build matrix: a wedged hosted runner would otherwise

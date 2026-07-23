@@ -67,5 +67,5 @@ informational performance bench).
 
 ## Getting Started
 
-New to the project? Start with the [Getting Started Guide](/reference/guides/getting-started),
-then read the [System Overview](/reference/architecture/system-overview).
+New to the project? Start with [Install & packages](/guide/install-and-packages), then read the
+[System Overview](/reference/architecture/system-overview).

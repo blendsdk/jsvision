@@ -1,0 +1,7 @@
+interface:
+  display_name: 'New JSVision App'
+  short_description: 'Scaffold a standalone JSVision application'
+  default_prompt: 'Use $jsvision-new-app to create a standalone JSVision application.'
+
+policy:
+  allow_implicit_invocation: true

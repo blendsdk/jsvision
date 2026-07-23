@@ -16,7 +16,9 @@ packages/docs-site/api/typedoc-sidebar.json
 
 # Generated plugin API reference — emitted verbatim by scripts/gen-plugin-api.mjs from the
 # @jsvision/* source types and drift-guarded byte-for-byte, so Prettier must not reformat it.
-tools/claude-plugin/skills/jsvision/references/api/
+tools/jsvision-skill/references/api/
+plugins/jsvision-plugin/skills/jsvision/references/api/
+tools/jsvision-plugin-impact.json
 
 # CodeOps process artifacts — authored docs, not code; Prettier would churn
 # their hand-built tables. Kept out of the formatting gate.

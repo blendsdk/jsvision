@@ -1,0 +1,7 @@
+interface:
+  display_name: 'JSVision Render'
+  short_description: 'Render a headless JSVision text screenshot'
+  default_prompt: 'Use $jsvision-render to render and inspect this JSVision application.'
+
+policy:
+  allow_implicit_invocation: true

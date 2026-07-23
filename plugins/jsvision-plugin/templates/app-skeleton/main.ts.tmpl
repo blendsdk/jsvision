@@ -1,0 +1,51 @@
+import { pathToFileURL } from 'node:url';
+
+import { col, Commands, createApplication, fixed, grow, statusItem, statusLine, Text, Window, type Application } from '@jsvision/ui';
+
+/**
+ * Build the __SLUG__ application: a desktop hosting one starter window with a greeting. Returns the
+ * assembled application *without* connecting to a terminal, so it can be mounted headlessly in a
+ * test. Wire your real UI here — add windows, controls, menus, and command handlers.
+ *
+ * @returns The ready-to-run application.
+ * @example
+ * const app = buildApp();
+ * await app.run(); // on an interactive terminal
+ */
+export function buildApp(): Application {
+  const app = createApplication({
+    statusLine: statusLine([statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X')]),
+  });
+
+  const win = new Window('__SLUG__');
+  // A window places its own frame on the desktop by rect — one of the few sanctioned absolute cases.
+  // `layout` is read-only; `setLayout` is its only writer, so every placement goes through it.
+  win.setLayout({ rect: { x: 2, y: 2, width: 44, height: 12 } });
+  // Compose the interior with the layout DSL (col/row + fixed/grow), never absolute rects: a one-row
+  // title over a growing body. Add rows/columns of controls here as your UI grows.
+  win.add(
+    col(
+      { gap: 1 },
+      fixed(new Text('__SLUG__'), 1),
+      grow(new Text('Edit src/main.ts to build your app — compose the UI with col()/row(), not rects.')),
+    ),
+  );
+  app.desktop.addWindow(win);
+
+  return app;
+}
+
+/** Connect to the terminal and run until quit, unless there is no interactive TTY. */
+async function run(): Promise<number> {
+  if (process.stdout.isTTY !== true) {
+    process.stdout.write('This app needs an interactive terminal (TTY).\n');
+    return 0;
+  }
+  return buildApp().run();
+}
+
+// Auto-run only when this file is executed directly (e.g. `tsx src/main.ts`), never when imported by
+// a test — importing must not connect to a terminal or exit the process.
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  void run().then((code) => process.exit(code));
+}

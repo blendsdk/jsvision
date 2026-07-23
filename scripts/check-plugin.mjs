@@ -1,4 +1,4 @@
-// Integrity gate for the jsvision Claude Code plugin.
+// Integrity gate for the JSVision Codex plugin and its canonical shared skill.
 //
 // Runs directly (not through turbo) as the last step of `yarn verify`, so a repo-root change can't
 // be masked by a cached package task. It guards five things and exits non-zero on any failure:
@@ -16,12 +16,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import ts from 'typescript';
 
 import { checkApiDrift } from './gen-plugin-api.mjs';
+import { checkPluginImpact } from './plugin-impact.mjs';
+import { syncPluginVersion } from './sync-plugin-version.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const PLUGIN_ROOT = join(ROOT, 'tools', 'claude-plugin');
-const SKILL_ROOT = join(PLUGIN_ROOT, 'skills', 'jsvision');
-const MANIFEST = join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json');
-const MARKETPLACE = join(ROOT, '.claude-plugin', 'marketplace.json');
+const PLUGIN_ROOT = join(ROOT, 'plugins', 'jsvision-plugin');
+const SKILL_ROOT = join(ROOT, 'tools', 'jsvision-skill');
+const DISTRIBUTED_SKILL_ROOT = join(PLUGIN_ROOT, 'skills', 'jsvision');
+const MANIFEST = join(PLUGIN_ROOT, '.codex-plugin', 'plugin.json');
+const MARKETPLACE = join(ROOT, '.agents', 'plugins', 'marketplace.json');
 export const CATALOG = join(SKILL_ROOT, 'references', 'component-catalog.md');
 const GOTCHAS = join(SKILL_ROOT, 'references', 'gotchas.md');
 const RECIPE_DIR = join(ROOT, 'packages', 'examples', 'recipes');
@@ -30,7 +33,7 @@ const ARCHETYPES_DIR = join(PLUGIN_ROOT, 'templates', 'archetypes');
 const UI_BARREL = join(ROOT, 'packages', 'ui', 'src', 'index.ts');
 
 const PLUGIN_NAME = 'jsvision-plugin';
-const REQUIRED_GOTCHAS = 12;
+const REQUIRED_GOTCHAS = 16;
 const TEMPLATE_FILES = [
   'package.json.tmpl',
   'tsconfig.json.tmpl',
@@ -73,15 +76,29 @@ export function checkManifestData(manifest, marketplace, pluginName, sourceExist
   if (marketplace === null || typeof marketplace !== 'object') {
     errors.push('marketplace.json: not a valid JSON object');
   } else {
-    for (const field of ['name', 'owner', 'plugins']) {
+    for (const field of ['name', 'plugins']) {
       if (marketplace[field] === undefined) errors.push(`marketplace.json: missing required field "${field}"`);
     }
     const plugins = Array.isArray(marketplace.plugins) ? marketplace.plugins : [];
     const entry = plugins.find((p) => p !== null && typeof p === 'object' && p.name === pluginName);
     if (entry === undefined) {
       errors.push(`marketplace.json: no plugin entry named "${pluginName}"`);
-    } else if (typeof entry.source !== 'string' || entry.source.length === 0) {
-      errors.push(`marketplace.json: plugin "${pluginName}" has no string "source"`);
+    } else if (
+      entry.source === null ||
+      typeof entry.source !== 'object' ||
+      entry.source.source !== 'local' ||
+      typeof entry.source.path !== 'string'
+    ) {
+      errors.push(`marketplace.json: plugin "${pluginName}" has no valid local source`);
+    } else if (
+      entry.policy === null ||
+      typeof entry.policy !== 'object' ||
+      entry.policy.installation !== 'AVAILABLE' ||
+      entry.policy.authentication !== 'ON_INSTALL'
+    ) {
+      errors.push(`marketplace.json: plugin "${pluginName}" has no valid policy`);
+    } else if (typeof entry.category !== 'string' || entry.category.length === 0) {
+      errors.push(`marketplace.json: plugin "${pluginName}" has no category`);
     } else if (!sourceExists) {
       errors.push(`marketplace.json: plugin source "${entry.source}" does not resolve to a plugin dir`);
     }
@@ -97,6 +114,41 @@ function walkMarkdown(dir) {
     else if (name.name.endsWith('.md')) out.push(full);
   }
   return out;
+}
+
+/**
+ * Compare a canonical directory with its assembled distribution copy.
+ *
+ * @param {string} expectedDir Canonical source directory.
+ * @param {string} actualDir Distribution directory.
+ * @returns {string[]} Missing, extra, or changed file errors.
+ * @example
+ * checkTreesEqual('/repo/tools/jsvision-skill', '/repo/plugins/jsvision-plugin/skills/jsvision');
+ */
+export function checkTreesEqual(expectedDir, actualDir) {
+  const list = (dir, base = dir) => {
+    if (!existsSync(dir)) return [];
+    const files = [];
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) files.push(...list(path, base));
+      else files.push(relative(base, path));
+    }
+    return files.sort();
+  };
+  const expected = list(expectedDir);
+  const actual = list(actualDir);
+  const errors = [];
+  for (const file of expected) {
+    if (!actual.includes(file)) errors.push(`missing distributed file: ${file}`);
+    else if (readFileSync(join(expectedDir, file), 'utf8') !== readFileSync(join(actualDir, file), 'utf8')) {
+      errors.push(`distributed file differs: ${file}`);
+    }
+  }
+  for (const file of actual) {
+    if (!expected.includes(file)) errors.push(`unexpected distributed file: ${file}`);
+  }
+  return errors;
 }
 
 /**
@@ -422,13 +474,20 @@ export function runAllChecks() {
     ? marketplace.plugins.find((p) => p !== null && typeof p === 'object' && p.name === PLUGIN_NAME)
     : undefined;
   const sourceExists =
-    entry !== undefined && typeof entry.source === 'string'
-      ? existsSync(join(resolve(ROOT, entry.source), '.claude-plugin', 'plugin.json'))
+    entry !== undefined &&
+    entry.source !== null &&
+    typeof entry.source === 'object' &&
+    typeof entry.source.path === 'string'
+      ? existsSync(join(resolve(ROOT, entry.source.path), '.codex-plugin', 'plugin.json'))
       : false;
   add('manifest', checkManifestData(manifest, marketplace, PLUGIN_NAME, sourceExists));
+  if (!syncPluginVersion({ check: true })) {
+    errors.push('[version] plugin manifest or docs do not match the stable JSVision version');
+  }
 
   // 2. link-graph: markdown links across the skill tree, plus the router's reference paths.
   add('links', checkLinksInDir(SKILL_ROOT));
+  add('distribution', checkTreesEqual(SKILL_ROOT, DISTRIBUTED_SKILL_ROOT));
   const skillMd = readFileSync(join(SKILL_ROOT, 'SKILL.md'), 'utf8');
   for (const m of skillMd.matchAll(/`(references\/[\w./-]+\.md)`/g)) {
     if (!existsSync(join(SKILL_ROOT, m[1]))) errors.push(`[links] SKILL.md: router path -> ${m[1]} (missing)`);
@@ -454,6 +513,11 @@ export function runAllChecks() {
 
   // 6. generated API reference — the committed pages must equal a fresh generation from the source.
   add('api', checkApiDrift(ROOT));
+
+  // 7. semantic impact — source areas must be reviewed in the same task that changes them.
+  for (const impact of checkPluginImpact()) {
+    errors.push(`[impact:${impact.name}] review and update: ${impact.references.join(', ')}`);
+  }
 
   return { ok: errors.length === 0, errors };
 }

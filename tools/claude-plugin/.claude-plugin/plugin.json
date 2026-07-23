@@ -1,6 +1,0 @@
-{
-  "name": "jsvision-plugin",
-  "description": "Build jsvision terminal-UI applications at an expert level: scaffold, compose, run, verify, and extend TUI apps.",
-  "version": "0.1.0",
-  "author": { "name": "jsvision" }
-}
