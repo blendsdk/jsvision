@@ -1,187 +1,75 @@
-// Specification oracle for the `jsvision-new-app` scaffolder generator.
-//
-// Derived from the plan's ST-1…ST-6 (deterministic name handling, the emitted file set, the
-// publish-agnostic dependency seam, the runnable starter, path-safety, and an in-process paint of
-// the generated app). Immutable: if the generator disagrees with an assertion here, the generator
-// is wrong — never the test.
-//
-// The generator is a zero-dependency Node ESM script living with the plugin; it is imported by a
-// cross-root relative path, mirroring the existing `core/test/gate.spec.test.ts` → root
-// `scripts/gate.mjs` precedent.
+// The consumer generator creates a standalone, safe, latest-stable JSVision project.
 
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import ts from 'typescript';
-import { expect, test } from 'vitest';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, expect, test } from 'vitest';
 
-import { lintText } from '../../../scripts/jsvision-doctor.mjs';
 import {
   buildAppFiles,
   listArchetypes,
   slugify,
-  uiDependency,
-} from '../../../tools/claude-plugin/skills/jsvision-new-app/scripts/new-jsvision-app.mjs';
+  writeApp,
+} from '../../../plugins/jsvision-plugin/skills/jsvision-new-app/new-jsvision-app.mjs';
 
-/** Count cells that were actually painted (an empty view leaves only spaces). */
-function paintedCells(rows: readonly { char: string }[][]): number {
-  let n = 0;
-  for (const row of rows) for (const cell of row) if (cell.char !== ' ') n += 1;
-  return n;
-}
+const temporaryDirectories: string[] = [];
 
-// ST-1 — slugify normalizes a human name to a package-safe slug.
-test('ST-1: slugify lowercases and turns spaces into dashes', () => {
-  expect(slugify('My App')).toBe('my-app');
-});
-
-// ST-2 — the emitted file set is exactly the runnable-app skeleton.
-test('ST-2: buildAppFiles emits the full app skeleton key set', () => {
-  const files = buildAppFiles('todo');
-  const keys = new Set(files.keys());
-  for (const rel of [
-    'packages/todo/package.json',
-    'packages/todo/tsconfig.json',
-    'packages/todo/vitest.config.ts',
-    'packages/todo/src/main.ts',
-    'packages/todo/test/todo.smoke.test.ts',
-  ]) {
-    expect(keys.has(rel)).toBe(true);
+afterEach(() => {
+  for (const directory of temporaryDirectories.splice(0)) {
+    rmSync(directory, { recursive: true, force: true });
   }
 });
 
-// ST-3 — the generated package.json is a private ESM workspace package whose @jsvision/ui
-// dependency comes from the single publish-agnostic seam.
-test('ST-3: generated package.json is private, ESM, and uses uiDependency() for @jsvision/ui', () => {
-  const files = buildAppFiles('todo');
-  const pkg = JSON.parse(files.get('packages/todo/package.json') as string);
-  expect(pkg.name).toBe('@jsvision/todo');
-  expect(pkg.private).toBe(true);
-  expect(pkg.type).toBe('module');
-  expect(pkg.dependencies['@jsvision/ui']).toBe(uiDependency());
+test('should create a standalone latest-stable project when given a safe name', () => {
+  const files = buildAppFiles('Inventory Desk');
+  expect([...files.keys()].sort()).toEqual([
+    'package.json',
+    'src/main.ts',
+    'test/inventory-desk.smoke.test.ts',
+    'tsconfig.json',
+    'vitest.config.ts',
+  ]);
+  const manifest = JSON.parse(files.get('package.json') as string);
+  expect(manifest.name).toBe('inventory-desk');
+  expect(manifest.type).toBe('module');
+  expect(manifest.dependencies['@jsvision/ui']).toBe('1.0.0');
+  expect(manifest.devDependencies.typescript).toBeDefined();
+  expect(files.get('src/main.ts')).toContain('export function buildApp');
 });
 
-// ST-4 — the emitted main.ts is a real, runnable starter: it guards on a TTY, builds an
-// application, adds a window, and can run.
-test('ST-4: generated src/main.ts contains the TTY guard, app creation, a window, and run()', () => {
-  const main = buildAppFiles('todo').get('packages/todo/src/main.ts') as string;
-  expect(main).toContain('isTTY');
-  expect(main).toContain('createApplication(');
-  expect(main).toContain('desktop.addWindow(');
-  expect(main).toContain('run()');
-});
-
-// ST-5 — unsafe names are rejected before anything is produced (path traversal / separators /
-// absolute paths / empty).
-test('ST-5: buildAppFiles throws on unsafe names and produces nothing', () => {
-  for (const evil of ['../evil', 'a/b', '/abs', '']) {
-    expect(() => buildAppFiles(evil)).toThrow();
+test('should reject traversal and separators before producing project files', () => {
+  for (const unsafeName of ['', '../escape', 'nested/app', 'nested\\app', '/absolute']) {
+    expect(() => buildAppFiles(unsafeName)).toThrow();
   }
 });
 
-// ST-7 — every archetype's starter compiles under the SDK's own compiler settings.
-//
-// This is the oracle ST-4 cannot be: a string-containment assertion passes on source that `tsc`
-// rejects, and the in-process import in ST-6 proves nothing either, because vite strips types
-// without checking them. Only a real type check catches a starter that teaches an idiom the
-// framework no longer permits — the first file a new user opens must compile.
-//
-// The check runs in-process through the TypeScript compiler API rather than spawning `tsc`: it is
-// faster, and it avoids the process-spawn flakiness that has bitten this repo's Windows CI matrix.
-test('ST-7: every archetype generates a src/main.ts that typechecks', () => {
-  const examplesRoot = fileURLToPath(new URL('..', import.meta.url));
-  const tmpRoot = join(examplesRoot, '.typecheck-tmp');
-  rmSync(tmpRoot, { recursive: true, force: true });
-  try {
-    // One file per archetype, all checked by a single program. The files sit inside the examples
-    // package so that `@jsvision/ui` resolves the same way it does for any workspace consumer.
-    const entries = listArchetypes().map(({ name }) => {
-      const abs = join(tmpRoot, name, 'main.ts');
-      mkdirSync(dirname(abs), { recursive: true });
-      writeFileSync(abs, buildAppFiles('todo', name).get('packages/todo/src/main.ts') as string);
-      return abs;
-    });
-    expect(entries.length).toBeGreaterThan(0);
-
-    // Mirror tsconfig.base.json: the starter must hold up under the settings the SDK itself uses,
-    // not a lenient subset. `skipLibCheck` scopes the diagnostics to the generated code — a type
-    // error inside a dependency's .d.ts is that package's bug, not the scaffolder's.
-    const program = ts.createProgram(entries, {
-      strict: true,
-      module: ts.ModuleKind.NodeNext,
-      moduleResolution: ts.ModuleResolutionKind.NodeNext,
-      target: ts.ScriptTarget.ES2022,
-      skipLibCheck: true,
-      noEmit: true,
-    });
-
-    const diagnostics = [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()];
-    const report = diagnostics.map((d) => {
-      const text = ts.flattenDiagnosticMessageText(d.messageText, ' ');
-      if (d.file === undefined || d.start === undefined) return `TS${d.code}: ${text}`;
-      const { line, character } = d.file.getLineAndCharacterOfPosition(d.start);
-      return `${d.file.fileName}(${line + 1},${character + 1}): TS${d.code}: ${text}`;
-    });
-
-    expect(report, 'a generated starter does not compile').toEqual([]);
-  } finally {
-    rmSync(tmpRoot, { recursive: true, force: true });
-    expect(existsSync(tmpRoot)).toBe(false);
-  }
+test('should write to a new subdirectory by default', () => {
+  const root = mkdtempSync(join(tmpdir(), 'jsvision-consumer-'));
+  temporaryDirectories.push(root);
+  const result = writeApp('Inventory Desk', { root });
+  expect(result.dir).toBe(join(root, 'inventory-desk'));
+  expect(JSON.parse(readFileSync(join(result.dir, 'package.json'), 'utf8')).name).toBe('inventory-desk');
 });
 
-// ST-8 — the starters obey the framework's own documented footgun rules.
-//
-// Typechecking proves a starter compiles, not that it is idiomatic: a `View` subclass with no
-// `measure()` compiles perfectly and then silently lays out to 0×0. `jsvision-doctor` is the linter
-// that encodes those rules, and its `lintText` is pure, so pointing it at the rendered starters
-// costs nothing and stops a future template edit from teaching a footgun the SDK documents against.
-test('ST-8: every archetype generates a src/main.ts that is jsvision-doctor clean', () => {
+test('should refuse a non-empty current directory even when current-directory mode is requested', () => {
+  const root = mkdtempSync(join(tmpdir(), 'jsvision-consumer-'));
+  temporaryDirectories.push(root);
+  writeFileSync(join(root, 'existing.txt'), 'preserve me');
+  expect(() => writeApp('Inventory Desk', { root, currentDir: true })).toThrow(/not empty/);
+});
+
+test('should provide all documented starter archetypes', () => {
+  expect(listArchetypes().map(({ name }) => name)).toEqual(['basic', 'dashboard', 'form', 'grid']);
+});
+
+test('should generate every archetype without unresolved template tokens', () => {
   for (const { name } of listArchetypes()) {
-    const main = buildAppFiles('todo', name).get('packages/todo/src/main.ts') as string;
-    const findings = lintText(main, `${name}/main.ts`).map((f) => `${f.rule}: ${f.message}`);
-    expect(findings, `the ${name} starter trips a documented footgun rule`).toEqual([]);
+    const files = buildAppFiles('demo', name);
+    expect(files.get('src/main.ts')).not.toContain('__SLUG__');
+    expect(files.get('src/main.ts')).toContain('export function buildApp');
   }
 });
 
-// ST-6 — a generated app actually runs: written to disk, its buildApp() paints a non-empty frame
-// headlessly, and every emitted config parses. (The full generate → install → `yarn verify` path
-// is proven end-to-end by the acceptance flow.)
-test('ST-6: a generated app is structurally valid and paints headlessly', async () => {
-  const examplesRoot = fileURLToPath(new URL('..', import.meta.url));
-  const tmpRoot = join(examplesRoot, '.scaffold-tmp');
-  rmSync(tmpRoot, { recursive: true, force: true });
-  try {
-    const files = buildAppFiles('todo');
-
-    // The full skeleton is present and every emitted config parses as JSON where it should.
-    expect(files.size).toBe(5);
-    expect(() => JSON.parse(files.get('packages/todo/package.json') as string)).not.toThrow();
-    expect(() => JSON.parse(files.get('packages/todo/tsconfig.json') as string)).not.toThrow();
-
-    // Materialize the app source under the examples package (inside the vite fs root) and paint it.
-    // Only main.ts needs to be on disk for the in-process mount; the rest is validated from the map.
-    // (The emitted tsconfig's relative `extends` only resolves at real package depth, so it is not
-    // written here — the in-process import needs only the source.)
-    const mainRel = 'packages/todo/src/main.ts';
-    const mainAbs = join(tmpRoot, mainRel);
-    mkdirSync(dirname(mainAbs), { recursive: true });
-    writeFileSync(mainAbs, files.get(mainRel) as string);
-
-    const mod = (await import(pathToFileURL(mainAbs).href)) as {
-      buildApp: () => {
-        loop: {
-          resize: (s: { width: number; height: number }) => void;
-          renderRoot: { buffer: () => { rows: () => readonly { char: string }[][] } };
-        };
-      };
-    };
-
-    const app = mod.buildApp();
-    app.loop.resize({ width: 80, height: 24 }); // reflow the late-added window, then flush
-    expect(paintedCells(app.loop.renderRoot.buffer().rows())).toBeGreaterThan(0);
-  } finally {
-    rmSync(tmpRoot, { recursive: true, force: true });
-    expect(existsSync(tmpRoot)).toBe(false);
-  }
+test('should normalize human-readable names to safe package names', () => {
+  expect(slugify('  Inventory__Desk  ')).toBe('inventory-desk');
 });

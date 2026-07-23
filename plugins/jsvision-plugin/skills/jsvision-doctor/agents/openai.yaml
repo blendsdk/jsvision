@@ -1,0 +1,7 @@
+interface:
+  display_name: 'JSVision Doctor'
+  short_description: 'Diagnose common JSVision application footguns'
+  default_prompt: 'Use $jsvision-doctor to diagnose this JSVision application.'
+
+policy:
+  allow_implicit_invocation: true
