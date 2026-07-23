@@ -67,8 +67,8 @@ jobs:
         run: yarn verify:shipped
 
       # Informational only: prints median/p95, never gates. Scoped to a single cell to avoid
-      # redundant runs and Windows shell-quoting; the hard 16 ms ceiling is asserted off-CI by
-      # perf-budget.spec.test.ts.
+      # redundant runs and Windows shell-quoting. The hard ceiling belongs to the deliberate
+      # serial `yarn perf:check` command, not a shared CI runner.
       - name: Performance bench (informational — one cell, never fails)
         if: matrix.os == 'ubuntu-latest' && matrix.node == 22
         continue-on-error: true

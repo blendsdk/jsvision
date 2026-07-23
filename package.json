@@ -27,6 +27,7 @@
     "plugin:update": "node scripts/update-plugin.mjs",
     "plugin:version": "node scripts/sync-plugin-version.mjs",
     "release:prepare": "yarn lockstep:version --no-git-commit && node scripts/sync-package-versions.mjs && yarn plugin:version && yarn plugin:update && yarn plugin:check",
+    "perf:check": "node scripts/check-performance.mjs",
     "doctor": "node scripts/jsvision-doctor.mjs",
     "render:app": "tsx scripts/render-app.mjs",
     "ncu:check": "ncu --root --workspaces -x \"@jsvision/* typescript\"",
