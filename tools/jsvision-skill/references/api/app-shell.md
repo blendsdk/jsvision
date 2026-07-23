@@ -35,6 +35,7 @@ interface ApplicationOptions {
   logger?: Logger;   // Logger that receives errors thrown from a view's `draw()`/`onEvent()`; defaults to a no-op logger.
   keymap?: Keymap;   // Key-chord → command map (from core's `createKeymap`) applied across the whole app.
   clipboardKeys?: ClipboardKeys;   // Which clipboard key set the framework binds by default (default `'both'` — modern Ctrl+A/C/X/V plus the classic Ctrl+Insert/Shift+Insert/Shift+Delete aliases). Any `keymap` you supply merges on top and wins on a conflicting chord. Use `'none'` to bind no clipboard chords (e.g. an app hosting a WordStar-mode `Editor`) and supply your own keymap instead.
+  functionKeyFallback?: FunctionKeyFallback;   // Portable F-key fallback for terminals or browsers that reserve physical function keys. Defaults to `'number-row'`, mapping Alt+`1…9,0,-,=` to F1–F12. Pass `'none'` to preserve those Alt chords literally.
   menuBar?: MenuBar;   // Optional menu bar shown as the top row. Build one with `menuBar(...)`.
   statusLine?: StatusLine;   // Optional status line shown as the bottom row. Build one with `statusLine(...)`.
   revealKey?: string | null;   // The key that toggles accelerator mode (default `'f12'`): while on, every `~X~` hotkey is underlined and a bare letter fires the matching accelerator. Pass `null` to disable the feature.
@@ -189,6 +190,7 @@ interface EventLoopOptions {
   logger?: Logger;   // Logger that receives errors thrown from a view's `onEvent()`/`draw()`; defaults to a no-op logger.
   keymap?: Keymap;   // Key-chord → command map (from core's `createKeymap`): a matched chord fires the command and swallows the key.
   clipboardKeys?: ClipboardKeys;   // Which clipboard key set the framework binds by default (default `'both'` — modern Ctrl+A/C/X/V plus the classic Ctrl+Insert/Shift+Insert/Shift+Delete aliases). A `keymap` you supply is merged on top and wins on any conflicting chord. `'none'` binds no clipboard chords at all — only a widget's built-in raw Ctrl+A select-all still fires — so an app on `'none'` supplies its own keymap for copy/cut/paste (and the classic chords).
+  functionKeyFallback?: FunctionKeyFallback;   // Interpret Alt+`1…9,0,-,=` as F1–F12. Direct event loops default to `'none'` so existing Alt bindings remain literal; application shells enable `'number-row'` unless explicitly disabled.
   commands?: Iterable<string>;   // Optional list of command names known up front. Commands are enabled by default whether listed or not.
   onIdle?: () => void;   // Called once per dispatch tick after all cascaded events drain, just before the frame is painted.
   now?: () => number;   // Clock used to time double-clicks (defaults to `Date.now`). Two mouse-downs on the same cell within the multi-click window are reported as a double-click via `DispatchEvent.clickCount`. Inject a controllable clock in headless tests to drive exact timestamps.

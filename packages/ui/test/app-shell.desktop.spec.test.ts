@@ -217,8 +217,8 @@ test('RD-10 ST-06: TV tile — cells partition the desktop; n=2 stacks; N=0/1; t
   ts.forEach((w, i) => expect(w.layout.rect).toEqual(before[i]));
 });
 
-// ST-12 / AC-12 — next/prev cycle focus raising the newly-active; Alt-N focuses+raises window N.
-test('ST-12: next/prev cycle + raise; Alt-N focuses the numbered window', () => {
+// Numbered-window selection remains available without colliding with the application F-key fallback.
+test('should cycle windows and focus a numbered window with Ctrl+Alt+digit', () => {
   const app = shellApp(40, 12);
   const a = addWindow(app, 'A', { x: 0, y: 0, width: 12, height: 5 });
   a.number = 1;
@@ -237,10 +237,25 @@ test('ST-12: next/prev cycle + raise; Alt-N focuses the numbered window', () => 
   app.loop.emitCommand('prev');
   expect(app.desktop.activeWindow()).toBe(c); // back to c
 
-  // Alt-2 focuses + raises window number 2 (b).
-  app.loop.dispatch({ type: 'key', key: '2', ctrl: false, alt: true, shift: false });
+  // Ctrl+Alt-2 focuses + raises window number 2 (b) without colliding with Alt-2 → F2.
+  app.loop.dispatch({ type: 'key', key: '2', ctrl: true, alt: true, shift: false });
   expect(app.desktop.activeWindow()).toBe(b);
   expect(app.desktop.children.at(-1)).toBe(b);
+});
+
+test('should retain legacy Alt+digit window selection when function-key fallback is disabled', () => {
+  const app = createApplication({
+    caps,
+    viewport: { width: 40, height: 12 },
+    functionKeyFallback: 'none',
+  });
+  const first = addWindow(app, 'First', { x: 0, y: 0, width: 12, height: 5 });
+  first.number = 1;
+  const second = addWindow(app, 'Second', { x: 13, y: 0, width: 12, height: 5 });
+  second.number = 2;
+
+  app.loop.dispatch({ type: 'key', key: '1', ctrl: false, alt: true, shift: false });
+  expect(app.desktop.activeWindow()).toBe(first);
 });
 
 // ST-13 / AC-13 — close the active window: removed, its onCleanup fires, next top-most becomes active.

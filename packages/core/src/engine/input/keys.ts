@@ -70,6 +70,28 @@ const TILDE_KEYS: ReadonlyMap<number, string> = new Map([
   [24, 'f12'],
 ]);
 
+/** CSI final-byte function keys: `CSI P/Q/R/S` → f1–f4. */
+const CSI_FUNCTION_KEYS: ReadonlyMap<number, string> = new Map([
+  [0x50, 'f1'],
+  [0x51, 'f2'],
+  [0x52, 'f3'],
+  [0x53, 'f4'],
+]);
+
+/** Linux virtual-console function keys: `ESC [[ A/B/C/D/E` → f1–f5. */
+const LINUX_FUNCTION_KEYS: ReadonlyMap<number, string> = new Map([
+  [0x41, 'f1'],
+  [0x42, 'f2'],
+  [0x43, 'f3'],
+  [0x44, 'f4'],
+  [0x45, 'f5'],
+]);
+
+/** Kitty functional key identifiers for F1–F12. */
+const KITTY_FUNCTION_KEYS: ReadonlyMap<number, string> = new Map(
+  Array.from({ length: 12 }, (_, index) => [57364 + index, `f${index + 1}`] as const),
+);
+
 /** Decoded xterm modifier bits (the `<mod>` parameter is `1 + bitmask`). */
 interface Modifiers {
   readonly ctrl: boolean;
@@ -104,6 +126,9 @@ function decodeEscape(buf: Uint8Array, i: number): KeyDecode {
   }
   const next = buf[i + 1];
   if (next === CSI_INTRODUCER) {
+    if (buf[i + 2] === CSI_INTRODUCER) {
+      return decodeLinuxFunctionKey(buf, i);
+    }
     return decodeCsi(buf, i);
   }
   if (next === SS3_INTRODUCER) {
@@ -129,6 +154,17 @@ function decodeEscape(buf: Uint8Array, i: number): KeyDecode {
     event: { ...inner.event, alt: true },
     end: inner.end,
   };
+}
+
+/** Decode the fixed Linux virtual-console F1–F5 family. */
+function decodeLinuxFunctionKey(buf: Uint8Array, i: number): KeyDecode {
+  if (i + 3 >= buf.length) {
+    return { status: 'incomplete' };
+  }
+  const final = buf[i + 3];
+  const end = i + 4;
+  const name = LINUX_FUNCTION_KEYS.get(final);
+  return name !== undefined ? namedKey(name, NO_MODS, end) : { status: 'drop', end };
 }
 
 /** Decode an SS3 sequence: `ESC O <final>` (cursor keys and f1–f4). */
@@ -161,6 +197,7 @@ function decodeCsi(buf: Uint8Array, i: number): KeyDecode {
   while (j < buf.length && buf[j] >= 0x30 && buf[j] <= 0x3f) {
     j += 1;
   }
+  const paramsEnd = j;
   while (j < buf.length && buf[j] >= 0x20 && buf[j] <= 0x2f) {
     j += 1; // intermediates
   }
@@ -172,18 +209,60 @@ function decodeCsi(buf: Uint8Array, i: number): KeyDecode {
     return { status: 'drop', end: i + 1 }; // malformed: drop ESC, resync at '['
   }
   const end = j + 1;
-  const params = parseParams(buf, paramsStart, j);
-  return classifyCsi(params, final, end);
+  const params = parseParams(buf, paramsStart, paramsEnd);
+  return classifyCsi(buf, paramsStart, paramsEnd, params, paramsEnd !== j, final, end);
 }
 
 /** Map parsed CSI params + final byte to a key event (or drop if unrecognised). */
-function classifyCsi(params: number[], final: number, end: number): KeyDecode {
+function classifyCsi(
+  buf: Uint8Array,
+  paramsStart: number,
+  paramsEnd: number,
+  params: number[],
+  hasIntermediates: boolean,
+  final: number,
+  end: number,
+): KeyDecode {
+  const exactParams = hasIntermediates ? null : parseExactParams(buf, paramsStart, paramsEnd);
+
+  const functionFinal = CSI_FUNCTION_KEYS.get(final);
+  if (functionFinal !== undefined) {
+    if (exactParams?.length === 0) {
+      return namedKey(functionFinal, NO_MODS, end);
+    }
+    if (exactParams?.length === 2 && exactParams[0] === 1 && isLegacyModifier(exactParams[1])) {
+      return namedKey(functionFinal, decodeModifiers(exactParams[1]), end);
+    }
+    return { status: 'drop', end };
+  }
+
+  if (final === 0x75) {
+    if (exactParams === null || exactParams.length < 1 || exactParams.length > 2) {
+      return { status: 'drop', end };
+    }
+    const name = KITTY_FUNCTION_KEYS.get(exactParams[0]);
+    if (name === undefined) {
+      return { status: 'drop', end };
+    }
+    if (exactParams.length === 1) {
+      return namedKey(name, NO_MODS, end);
+    }
+    const modifier = exactParams[1];
+    return isKittyModifier(modifier) ? namedKey(name, decodeModifiers(modifier), end) : { status: 'drop', end };
+  }
+
   // Modified cursor/edit form: `CSI 1 ; <mod> <letter>` or `CSI <n> ; <mod> ~`.
   const mods = params.length >= 2 ? decodeModifiers(params[1]) : NO_MODS;
 
   if (final === 0x7e) {
     // '~'
     const name = TILDE_KEYS.get(params[0] ?? 0);
+    if (name?.startsWith('f')) {
+      const validShape = exactParams?.length === 1 || (exactParams?.length === 2 && isLegacyModifier(exactParams[1]));
+      if (!validShape) {
+        return { status: 'drop', end };
+      }
+    }
     return name !== undefined ? namedKey(name, mods, end) : { status: 'drop', end };
   }
 
@@ -198,6 +277,54 @@ function classifyCsi(params: number[], final: number, end: number): KeyDecode {
     return namedKey(cursor, mods, end);
   }
   return { status: 'drop', end }; // valid CSI shape, unknown meaning
+}
+
+/**
+ * Parse exact decimal CSI fields for security-sensitive function-key families.
+ *
+ * Empty fields, private markers, colon subparameters, and values beyond the
+ * safe integer range are rejected instead of being normalized into a key.
+ */
+function parseExactParams(buf: Uint8Array, start: number, end: number): number[] | null {
+  if (start === end) {
+    return [];
+  }
+  const params: number[] = [];
+  let current = 0;
+  let digits = 0;
+  for (let index = start; index < end; index += 1) {
+    const byte = buf[index];
+    if (byte >= 0x30 && byte <= 0x39) {
+      const digit = byte - 0x30;
+      if (current > Math.floor((Number.MAX_SAFE_INTEGER - digit) / 10)) {
+        return null;
+      }
+      current = current * 10 + digit;
+      digits += 1;
+      continue;
+    }
+    if (byte !== 0x3b || digits === 0) {
+      return null;
+    }
+    params.push(current);
+    current = 0;
+    digits = 0;
+  }
+  if (digits === 0) {
+    return null;
+  }
+  params.push(current);
+  return params;
+}
+
+/** Legacy xterm modifiers use `1 + bitmask` for Shift, Alt, Ctrl, and Meta. */
+function isLegacyModifier(value: number): boolean {
+  return Number.isInteger(value) && value >= 1 && value <= 16;
+}
+
+/** Kitty modifiers are accepted only when representable by the public key event. */
+function isKittyModifier(value: number): boolean {
+  return Number.isInteger(value) && value >= 1 && value <= 8;
 }
 
 /** Parse `;`-separated numeric CSI parameters from a byte range. */
