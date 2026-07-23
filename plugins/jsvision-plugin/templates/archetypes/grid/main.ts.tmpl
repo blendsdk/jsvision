@@ -1,0 +1,87 @@
+import { pathToFileURL } from 'node:url';
+
+import {
+  col,
+  Commands,
+  computed,
+  createApplication,
+  DataGrid,
+  fixed,
+  grow,
+  signal,
+  statusItem,
+  statusLine,
+  Text,
+  Window,
+  type Application,
+  type Column,
+  type SortState,
+} from '@jsvision/ui';
+
+/** One row of the __SLUG__ table. */
+interface Item {
+  name: string;
+  qty: number;
+}
+
+/**
+ * Build the __SLUG__ application: a sortable {@link DataGrid} over a typed row signal, with a detail
+ * line bound to the focused row. Returns the assembled application *without* connecting to a terminal,
+ * so it can be mounted headlessly in a test. Replace `Item`/`rows`/`columns` with your data; a numeric
+ * column needs an explicit `compare` (the default is a string compare). Clicking a header sorts.
+ *
+ * @returns The ready-to-run application.
+ * @example
+ * const app = buildApp();
+ * await app.run(); // on an interactive terminal
+ */
+export function buildApp(): Application {
+  const app = createApplication({
+    statusLine: statusLine([statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X')]),
+  });
+
+  const rows = signal<Item[]>([
+    { name: 'Apples', qty: 12 },
+    { name: 'Pears', qty: 7 },
+    { name: 'Cherries', qty: 30 },
+  ]);
+  const focused = signal(0);
+  const sort = signal<SortState>(null);
+
+  const columns: Column<Item>[] = [
+    { title: 'Item', accessor: (r) => r.name, width: '1fr' },
+    { title: 'Qty', accessor: (r) => String(r.qty), width: 6, align: 'right', compare: (a, b) => a.qty - b.qty },
+  ];
+
+  const grid = new DataGrid<Item>({ rows, columns, focused, sort, zebra: true });
+  const detail = computed(() => {
+    const r = rows()[focused()];
+    return r === undefined ? 'No selection' : `${r.name} — qty ${r.qty}`;
+  });
+
+  const win = new Window('__SLUG__');
+  win.setLayout({ rect: { x: 2, y: 2, width: 44, height: 14 } });
+  // A growing grid over a one-row detail line, composed with the layout DSL.
+  win.add(col(grow(grid), fixed(new Text(() => detail()), 1)));
+  app.desktop.addWindow(win);
+
+  // Press Tab to focus the grid, then ↑/↓ to move and click a header to sort. To focus it at startup,
+  // call `app.loop.focusView(grid.rows)` once the app is running — focus the `.rows` renderer, not the
+  // grid group (keyboard nav lives on the inner renderer).
+  return app;
+}
+
+/** Connect to the terminal and run until quit, unless there is no interactive TTY. */
+async function run(): Promise<number> {
+  if (process.stdout.isTTY !== true) {
+    process.stdout.write('This app needs an interactive terminal (TTY).\n');
+    return 0;
+  }
+  return buildApp().run();
+}
+
+// Auto-run only when this file is executed directly (e.g. `tsx src/main.ts`), never when imported by
+// a test — importing must not connect to a terminal or exit the process.
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  void run().then((code) => process.exit(code));
+}

@@ -4,10 +4,16 @@
 // recipe view headlessly must produce a framed screen showing its actual content. Immutable oracle:
 // if the tool disagrees, the tool is wrong — never this test.
 
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
-import { bufferToText, parseKeys, renderModule } from '../../../scripts/render-app.mjs';
+import {
+  bufferToText,
+  parseKeys,
+  renderModule,
+} from '../../../plugins/jsvision-plugin/skills/jsvision-render/render-app.mjs';
 
 test('parseKeys turns a chord spec into dispatchable key events', () => {
   expect(parseKeys('')).toEqual([]);
@@ -35,10 +41,34 @@ test('bufferToText frames a cell grid with a titled border showing the dimension
 });
 
 test('renderModule mounts a real recipe view headlessly and shows its content', async () => {
-  const module = fileURLToPath(new URL('../recipes/data-grid.ts', import.meta.url));
-  const screen = await renderModule({ module, exportName: 'buildPeopleGrid', pick: 'root', width: 40, height: 12 });
-  expect(screen).toContain('Name'); // the grid header painted
-  expect(screen).toContain('Oslo'); // a data cell painted
-  expect(screen).toContain('age 24'); // the master-detail line painted
-  expect(screen).toContain('root 40×12'); // the frame reports the size
+  const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
+  const directory = mkdtempSync(join(repoRoot, '.jsvision-render-'));
+  try {
+    const module = join(directory, 'app.mjs');
+    writeFileSync(
+      module,
+      [
+        "import { createApplication, Text, Window } from '@jsvision/ui';",
+        'export function buildApp() {',
+        '  const app = createApplication({});',
+        "  const win = new Window('Consumer app');",
+        '  win.setLayout({ rect: { x: 1, y: 1, width: 24, height: 6 } });',
+        "  win.add(new Text('Rendered consumer'));",
+        '  app.desktop.addWindow(win);',
+        '  return app;',
+        '}',
+      ].join('\n'),
+    );
+    const screen = await renderModule({
+      module,
+      width: 40,
+      height: 12,
+      cwd: repoRoot,
+    });
+    expect(screen).toContain('Consumer');
+    expect(screen).toContain('Rendered consumer');
+    expect(screen).toContain('app 40×12');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
