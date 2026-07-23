@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "areas": [
+    {
+      "name": "core-engine-and-themes",
+      "paths": [
+        "packages/core/src/engine"
+      ],
+      "references": [
+        "references/architecture.md",
+        "references/theming.md",
+        "references/gotchas.md"
+      ]
+    },
+    {
+      "name": "ui-layout-and-views",
+      "paths": [
+        "packages/ui/src/layout",
+        "packages/ui/src/view"
+      ],
+      "references": [
+        "references/layout.md",
+        "references/widget-authoring.md",
+        "references/gotchas.md"
+      ]
+    },
+    {
+      "name": "ui-reactivity",
+      "paths": [
+        "packages/ui/src/reactive"
+      ],
+      "references": [
+        "references/reactivity.md",
+        "references/gotchas.md"
+      ]
+    },
+    {
+      "name": "ui-application-shell",
+      "paths": [
+        "packages/ui/src/app",
+        "packages/ui/src/desktop",
+        "packages/ui/src/event",
+        "packages/ui/src/window"
+      ],
+      "references": [
+        "references/app-lifecycle.md",
+        "references/architecture.md",
+        "references/gotchas.md"
+      ]
+    },
+    {
+      "name": "forms",
+      "paths": [
+        "packages/forms/src"
+      ],
+      "references": [
+        "references/forms.md",
+        "references/recipes/forms-dialogs.md"
+      ]
+    },
+    {
+      "name": "datagrid",
+      "paths": [
+        "packages/datagrid/src"
+      ],
+      "references": [
+        "references/datagrid.md",
+        "references/recipes/data-driven.md"
+      ]
+    },
+    {
+      "name": "files",
+      "paths": [
+        "packages/files/src"
+      ],
+      "references": [
+        "references/recipes/file-text.md",
+        "references/api/files.md"
+      ]
+    },
+    {
+      "name": "web",
+      "paths": [
+        "packages/web/src"
+      ],
+      "references": [
+        "references/architecture.md",
+        "references/api/web.md"
+      ]
+    },
+    {
+      "name": "executable-recipes",
+      "paths": [
+        "packages/examples/recipes"
+      ],
+      "references": [
+        "references/recipes"
+      ]
+    }
+  ],
+  "fingerprints": {
+    "core-engine-and-themes": "906514fef5b16290597e2be35c8e17bef25d6f07183d230390c26d8c13d20b3d",
+    "ui-layout-and-views": "b1a4e071f18dfc140df433a6f189e9ec30a2bfd850bd7b8297f0343bb15004dd",
+    "ui-reactivity": "000734293db82a203df654a3fdceb5668fe65294c7f642ff51e414292b0fb2f0",
+    "ui-application-shell": "f8e46f1b0419aeb660532a4a418e35cfa88675836d19cb1569108deda0b83a3e",
+    "forms": "adb365be24310574b9993fc2b0bcd9f927ce7bc36fc39438346fa426ec43ded5",
+    "datagrid": "4e0d5203b2958b835c62adde9ef53b4e24cccc9ecc0293406be76b97bcaa24a0",
+    "files": "6fa550756c07d5bf06dc7b63e346cccd8893ca57e54c414d03ce2731ad7b17ef",
+    "web": "82550341aebec9f42314b72956efe9e4dbbd7a7ffe6b898ed73599e96e73ef25",
+    "executable-recipes": "9e4c6120d39b7ccd6cbcbf5354147a64b8e5f4a8526b07ce81bdbbc4a370bcf6"
+  }
+}

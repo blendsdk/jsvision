@@ -1,8 +1,8 @@
-// Generator for the jsvision Claude Code plugin's API reference (references/api/*.md).
+// Generator for the shared JSVision skill's API reference (references/api/*.md).
 //
 // Turns the compact export digests from api-extract.mjs into per-category markdown pages an agent can
-// consult INSTEAD of grepping the SDK source: every public export of @jsvision/ui, @jsvision/web, and
-// @jsvision/files with its lead sentence and its call surface (constructor + own members, options
+// consult instead of grepping SDK internals: every public export of the stable @jsvision packages
+// with its lead sentence and its call surface (constructor + own members, options
 // fields, type definition, or function/const signature). Output is deterministic (stable order, no
 // timestamps) so the plugin gate can diff a fresh generation against the committed files and flag
 // drift — the same discipline the recipe snippets use.
@@ -17,13 +17,16 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { extractPackageApi } from './api-extract.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const API_DIR = join('tools', 'claude-plugin', 'skills', 'jsvision', 'references', 'api');
+const API_DIR = join('tools', 'jsvision-skill', 'references', 'api');
 
-/** The three packages an app author imports, and each barrel's entry point. */
+/** The stable packages an application author imports, and each public source barrel. */
 export const PACKAGES = [
+  { pkg: 'core', entry: join('packages', 'core', 'src', 'engine', 'index.ts') },
   { pkg: 'ui', entry: join('packages', 'ui', 'src', 'index.ts') },
-  { pkg: 'web', entry: join('packages', 'web', 'src', 'index.ts') },
+  { pkg: 'forms', entry: join('packages', 'forms', 'src', 'index.ts') },
+  { pkg: 'datagrid', entry: join('packages', 'datagrid', 'src', 'index.ts') },
   { pkg: 'files', entry: join('packages', 'files', 'src', 'index.ts') },
+  { pkg: 'web', entry: join('packages', 'web', 'src', 'index.ts') },
 ];
 
 /** Category order + titles. Every export lands in exactly one; the slug is the page file name. */
@@ -60,8 +63,18 @@ export const CATEGORIES = [
   },
   {
     slug: 'core-essentials',
-    title: 'Core essentials',
-    blurb: 'Capabilities, input, keymaps, and style re-exported from `@jsvision/core`.',
+    title: '@jsvision/core — engine, capabilities & themes',
+    blurb: 'Rendering, terminal capabilities, input, colors, contrast, themes, and safety.',
+  },
+  {
+    slug: 'forms',
+    title: '@jsvision/forms — form state & validation',
+    blurb: 'Typed form state, field bindings, validation, and form dialogs.',
+  },
+  {
+    slug: 'datagrid',
+    title: '@jsvision/datagrid — editable enterprise grids',
+    blurb: 'Typed columns, editing, sorting, filtering, selection, variants, and windowing.',
   },
   {
     slug: 'web',
@@ -113,6 +126,9 @@ const UI_SEGMENT_CATEGORY = {
  * @returns {string} The category slug.
  */
 export function categoryFor(pkg, file) {
+  if (pkg === 'core') return 'core-essentials';
+  if (pkg === 'forms') return 'forms';
+  if (pkg === 'datagrid') return 'datagrid';
   if (pkg === 'web') return 'web';
   if (pkg === 'files') return 'files';
   if (/packages\/core\//.test(file)) return 'core-essentials';
@@ -162,7 +178,7 @@ export function renderExport(e) {
 }
 
 const BANNER =
-  '<!-- GENERATED FILE — do not edit by hand. Regenerate with `yarn plugin:sync --fix`. Source: @jsvision/* JSDoc. -->';
+  '<!-- GENERATED FILE — do not edit by hand. Regenerate with `yarn plugin:update`. Source: @jsvision/* JSDoc. -->';
 
 /** Render a full category page from its (name-sorted) export digests. */
 export function renderCategory(category, exportsInCat) {
@@ -188,14 +204,13 @@ export function renderIndex(counts) {
       '',
       '# API reference',
       '',
-      "The exact public API of `@jsvision/ui`, `@jsvision/web`, and `@jsvision/files` — every export's constructor/options/methods/types with the one-line intent from its source JSDoc. **Consult this before reading the SDK source:** if you need a prop name, a method signature, or a type, it is here. The pages are generated from the source, so they never drift.",
+      "The exact public API of the stable `@jsvision/*` packages — every export's constructor, options, methods, and types with the one-line intent from its source JSDoc. Consult this before reading SDK internals. In a consumer project, inspect the installed public declarations when its version differs from this skill.",
       '',
       'When you already know which widget you want, open its category page and copy the signature. When you are choosing a widget, start from `../component-catalog.md`; for how to compose them, see `../recipes/index.md` and `../layout.md`.',
       '',
       '## Categories',
       '',
       ...rows,
-      '',
     ].join('\n') + '\n'
   );
 }
@@ -262,9 +277,9 @@ export function checkApiDrift(rootDir = ROOT) {
   for (const [rel, content] of Object.entries(files)) {
     const path = join(dir, rel);
     if (!existsSync(path)) {
-      errors.push(`api/${rel}: missing (run \`yarn plugin:sync --fix\`)`);
+      errors.push(`api/${rel}: missing (run \`yarn plugin:update\`)`);
     } else if (readFileSync(path, 'utf8') !== content) {
-      errors.push(`api/${rel}: out of date (run \`yarn plugin:sync --fix\`)`);
+      errors.push(`api/${rel}: out of date (run \`yarn plugin:update\`)`);
     }
   }
   return errors;

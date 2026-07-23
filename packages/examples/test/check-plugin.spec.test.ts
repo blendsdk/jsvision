@@ -41,12 +41,22 @@ test('ST-13: a dead link is reported with the file and the missing target', () =
 // ST-14 — a manifest missing a required field, or a marketplace not referencing the plugin, fails.
 test('ST-14: manifest schema failures are reported', () => {
   const goodManifest = { name: 'jsvision-plugin' };
-  const goodMarket = { name: 'm', owner: { name: 'x' }, plugins: [{ name: 'jsvision-plugin', source: './p' }] };
+  const goodMarket = {
+    name: 'm',
+    plugins: [
+      {
+        name: 'jsvision-plugin',
+        source: { source: 'local', path: './plugins/jsvision-plugin' },
+        policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' },
+        category: 'Developer Tools',
+      },
+    ],
+  };
 
   // plugin.json missing its required `name`.
   expect(checkManifestData({}, goodMarket, 'jsvision-plugin', true).length).toBeGreaterThan(0);
   // marketplace.json does not reference the plugin.
-  const emptyMarket = { name: 'm', owner: { name: 'x' }, plugins: [] };
+  const emptyMarket = { name: 'm', plugins: [] };
   expect(checkManifestData(goodManifest, emptyMarket, 'jsvision-plugin', true).length).toBeGreaterThan(0);
   // both good → no errors.
   expect(checkManifestData(goodManifest, goodMarket, 'jsvision-plugin', true)).toEqual([]);
@@ -60,12 +70,12 @@ test('ST-15: snippet drift between an embedded block and its source region is re
 });
 
 // ST-16 — removing a footgun from gotchas.md trips the completeness check.
-test('ST-16: gotchas completeness requires all 12 footguns', () => {
-  const eleven = Array.from({ length: 11 }, (_, i) => `### ${i + 1}. footgun\n\ntext\n`).join('\n');
-  expect(checkGotchas(eleven, 12).length).toBeGreaterThan(0);
-  const twelve = Array.from({ length: 12 }, (_, i) => `### ${i + 1}. footgun\n\ntext\n`).join('\n');
-  expect(checkGotchas(twelve, 12)).toEqual([]);
-  expect(countGotchas(twelve)).toBe(12);
+test('ST-16: gotchas completeness requires all 16 footguns', () => {
+  const fifteen = Array.from({ length: 15 }, (_, i) => `### ${i + 1}. footgun\n\ntext\n`).join('\n');
+  expect(checkGotchas(fifteen, 16).length).toBeGreaterThan(0);
+  const sixteen = Array.from({ length: 16 }, (_, i) => `### ${i + 1}. footgun\n\ntext\n`).join('\n');
+  expect(checkGotchas(sixteen, 16)).toEqual([]);
+  expect(countGotchas(sixteen)).toBe(16);
 });
 
 // ST-18 — barrel-coverage: an undocumented class export, or a catalog naming a removed class, fails.

@@ -1,4 +1,4 @@
-// Public-API extractor for the jsvision Claude Code plugin's generated API reference.
+// Public-API extractor for the shared JSVision skill's generated API reference.
 //
 // Walks a package barrel with the TypeScript checker (the same mechanism as barrel-exports.mjs and
 // check-plugin.mjs) and returns a compact, agent-optimized digest of every public export: its kind,
