@@ -1,6 +1,6 @@
 {
   "name": "@jsvision/forms",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "jsvision forms — a headless, reactive form/field store with synchronous Zod validation for @jsvision/ui.",
   "keywords": [
     "tui",
@@ -51,7 +51,7 @@
     "check:docs": "node ../../scripts/check-jsdoc.mjs ."
   },
   "dependencies": {
-    "@jsvision/ui": "1.1.0"
+    "@jsvision/ui": "1.2.0"
   },
   "peerDependencies": {
     "zod": "^4"
