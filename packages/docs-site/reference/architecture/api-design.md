@@ -117,7 +117,8 @@ All thrown errors extend `TuiError`. Notable cases:
 ## Performance Contract
 
 - Composing + diff-serializing a 200×50 frame has a median ≤ 16 ms on a modern dev
-  machine (`npm run bench`; enforced off-CI by `test/perf-budget.spec.test.ts`).
+  machine. `yarn perf:check` enforces the budget serially; parallel verification
+  and CI record timing only.
 - A steady-state single-cell update emits a byte count **independent of screen
   size** (output ∝ damage).
 - Capability detection against a non-responding terminal falls back within
