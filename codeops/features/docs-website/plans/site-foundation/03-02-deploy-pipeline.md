@@ -3,7 +3,7 @@
 > **Document**: 03-02-deploy-pipeline.md
 > **Parent**: [Index](00-index.md)
 > **Covers**: RD-01 Must-Haves 2, 3, 4 (production deploy + live PR previews)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ## Model (AR-1)
 

@@ -5,7 +5,7 @@
 > **Created**: 2026-07-02
 > **Last Updated**: 2026-07-03
 > **Progress**: 0 / 1 (0%)
-> **CodeOps Skills Version**: 3.1.0
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.1.0
 
 First-class Bun runtime support for jsvision + the self-contained-executable shipping story
 (`bun build --compile`). Scoped from the 2026-07-02 empirical analysis (Bun 1.3.14): the stack

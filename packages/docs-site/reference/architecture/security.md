@@ -1,7 +1,7 @@
 # Security Architecture
 
 > **Last Updated**: 2026-06-28
-> **See also**: the project's security coding standards (CLAUDE.md) for implementation-level rules.
+> **See also**: the project's security coding standards (AGENTS.md) for implementation-level rules.
 
 ## Threat Model
 

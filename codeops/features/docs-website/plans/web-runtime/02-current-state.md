@@ -2,7 +2,7 @@
 
 > **Document**: 02-current-state.md
 > **Parent**: [Index](00-index.md)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 What exists today, verified by reading the repo. The extraction has a strong head start: the browser
 host is behavior-complete in a spike, and every seam it needs is already shipped.

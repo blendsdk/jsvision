@@ -4,7 +4,7 @@
 > **Status**: Planning Complete
 > **Created**: 2026-07-10
 > **Implements**: docs-website/RD-06
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ## Overview
 

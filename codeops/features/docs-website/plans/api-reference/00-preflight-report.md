@@ -1,7 +1,7 @@
 # Preflight Report: API Reference (TypeDoc)
 
 > **Artifact**: `codeops/features/docs-website/plans/api-reference/` (all 9 docs)
-> **Scanned**: 2026-07-10 · **CodeOps Skills Version**: 3.3.2
+> **Scanned**: 2026-07-10 · **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 > **Outcome**: ✅ PASSED — all 7 findings resolved (user accepted every recommendation 2026-07-10);
 > the plan docs were updated in place (AR-18…AR-21 added to the register).
 > ⚠️ **SAME-SESSION REVIEW** — this plan was authored earlier in the same session that reviewed it.

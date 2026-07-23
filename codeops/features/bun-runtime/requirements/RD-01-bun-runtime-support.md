@@ -8,7 +8,7 @@
 > **Depends On**: the archived **foundation** feature-set (`@jsvision/core` RD-01…RD-10, notably
 > RD-07 host & lifecycle and RD-09 testing/gate) and **jsvision-ui** RD-01…RD-07/RD-10/RD-11 (all
 > shipped). No open RD blocks this one; it layers guarantees over already-shipped code.
-> **CodeOps Skills Version**: 3.1.0
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.1.0
 
 ---
 

@@ -11,7 +11,7 @@
 > example (`packages/examples/tvision-demo/`).
 >
 > **A note on Turbo Vision fidelity:** the "decode, don't design" mandate is scoped to
-> _drawing/geometry/color_ (per `CLAUDE.md`). Nothing in this report asks you to change a rendered
+> _drawing/geometry/color_ (per `AGENTS.md`). Nothing in this report asks you to change a rendered
 > glyph. Every recommendation is about the _developer-facing API_, which your own charter says may
 > freely extend TV (reactive binding, async modality already do).
 

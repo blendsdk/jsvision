@@ -122,4 +122,4 @@ don't want to own/maintain the engine.
   container edge with no gap/overlap. Validates the cell-native premise before building
   out the full module.
 - **API flavour** (CSS-flexbox-subset vs Textual-style `fr`/`auto` sizing) is an
-  implementation detail for `make_requirements`/`make_plan`, not this ADR.
+  implementation detail for `make-requirements`/`make-plan`, not this ADR.

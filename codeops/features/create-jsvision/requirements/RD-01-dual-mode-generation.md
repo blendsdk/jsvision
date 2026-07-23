@@ -5,7 +5,7 @@
 > **Created**: 2026-07-22
 > **Project**: create-jsvision (GH #169)
 > **Depends On**: —
-> **CodeOps Skills Version**: 3.12.0
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.12.0
 > **Complexity**: M
 
 ---

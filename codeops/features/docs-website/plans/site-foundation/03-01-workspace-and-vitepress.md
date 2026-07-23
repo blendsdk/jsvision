@@ -3,7 +3,7 @@
 > **Document**: 03-01-workspace-and-vitepress.md
 > **Parent**: [Index](00-index.md)
 > **Covers**: RD-01 Must-Haves 1, 5, 6 (workspace, IA/nav, search, code-UX, SEO, CSP)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ## The workspace
 

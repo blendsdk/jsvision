@@ -4,7 +4,7 @@
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-09 20:58
 > **Progress**: 17/17 tasks (100%) ✅
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ## Overview
 
@@ -123,5 +123,5 @@ dogfood it back into the spike. Five phases; each is spec-first and leaves a **v
 All 17 tasks `[x]`; ST-1…ST-12 green (41/41 web unit tests); `yarn verify` (20/20) + `yarn check:deps`
 (9/9) green; the `web-xterm` spike runs on `@jsvision/web` (dogfood dep + `mountApp` + `browser-stubs`
 alias), its production bundle carrying no `node:fs`/`node:tty`. Roadmap RD-02 → `Done` ✅. Follow-ups:
-re-analyze the project CLAUDE.md (new `@jsvision/web` package); RD-03 (live-example system) builds on
+re-analyze the project AGENTS.md (new `@jsvision/web` package); RD-03 (live-example system) builds on
 `mountApp` next.

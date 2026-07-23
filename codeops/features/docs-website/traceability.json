@@ -1,0 +1,2032 @@
+{
+  "schema": 1,
+  "feature": "docs-website",
+  "updated": "2026-07-23",
+  "nodes": [
+    {
+      "id": "RD-DOCS-WEBSITE-01",
+      "type": "requirement",
+      "title": "RD-01: Site Foundation & Delivery Pipeline",
+      "status": "approved",
+      "path": "requirements/RD-01-site-foundation.md",
+      "links": [
+        "AC-DOCS-WEBSITE-01"
+      ]
+    },
+    {
+      "id": "AC-DOCS-WEBSITE-01",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-01",
+      "status": "approved",
+      "path": "requirements/RD-01-site-foundation.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "TEST-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "RD-DOCS-WEBSITE-02",
+      "type": "requirement",
+      "title": "RD-02: `@jsvision/web` Browser Runtime",
+      "status": "approved",
+      "path": "requirements/RD-02-web-runtime.md",
+      "links": [
+        "AC-DOCS-WEBSITE-02"
+      ]
+    },
+    {
+      "id": "AC-DOCS-WEBSITE-02",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-02",
+      "status": "approved",
+      "path": "requirements/RD-02-web-runtime.md",
+      "links": [
+        "RD-DOCS-WEBSITE-02",
+        "TEST-DOCS-WEBSITE-WEB-RUNTIME"
+      ]
+    },
+    {
+      "id": "RD-DOCS-WEBSITE-03",
+      "type": "requirement",
+      "title": "RD-03: Live-Example System",
+      "status": "approved",
+      "path": "requirements/RD-03-live-example-system.md",
+      "links": [
+        "AC-DOCS-WEBSITE-03"
+      ]
+    },
+    {
+      "id": "AC-DOCS-WEBSITE-03",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-03",
+      "status": "approved",
+      "path": "requirements/RD-03-live-example-system.md",
+      "links": [
+        "RD-DOCS-WEBSITE-03",
+        "TEST-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TEST-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "RD-DOCS-WEBSITE-04",
+      "type": "requirement",
+      "title": "RD-04: Landing / Pitch Surface",
+      "status": "draft",
+      "path": "requirements/RD-04-landing-pitch.md",
+      "links": [
+        "AC-DOCS-WEBSITE-04"
+      ]
+    },
+    {
+      "id": "AC-DOCS-WEBSITE-04",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-04",
+      "status": "draft",
+      "path": "requirements/RD-04-landing-pitch.md",
+      "links": [
+        "RD-DOCS-WEBSITE-04"
+      ]
+    },
+    {
+      "id": "RD-DOCS-WEBSITE-05",
+      "type": "requirement",
+      "title": "RD-05: Component Documentation System",
+      "status": "draft",
+      "path": "requirements/RD-05-component-docs.md",
+      "links": [
+        "AC-DOCS-WEBSITE-05"
+      ]
+    },
+    {
+      "id": "AC-DOCS-WEBSITE-05",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-05",
+      "status": "draft",
+      "path": "requirements/RD-05-component-docs.md",
+      "links": [
+        "RD-DOCS-WEBSITE-05"
+      ]
+    },
+    {
+      "id": "RD-DOCS-WEBSITE-06",
+      "type": "requirement",
+      "title": "RD-06: API Reference (TypeDoc)",
+      "status": "approved",
+      "path": "requirements/RD-06-api-reference.md",
+      "links": [
+        "AC-DOCS-WEBSITE-06"
+      ]
+    },
+    {
+      "id": "AC-DOCS-WEBSITE-06",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-06",
+      "status": "approved",
+      "path": "requirements/RD-06-api-reference.md",
+      "links": [
+        "RD-DOCS-WEBSITE-06",
+        "TEST-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "RD-DOCS-WEBSITE-07",
+      "type": "requirement",
+      "title": "RD-07: Sample Applications",
+      "status": "draft",
+      "path": "requirements/RD-07-sample-apps.md",
+      "links": [
+        "AC-DOCS-WEBSITE-07"
+      ]
+    },
+    {
+      "id": "AC-DOCS-WEBSITE-07",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-07",
+      "status": "draft",
+      "path": "requirements/RD-07-sample-apps.md",
+      "links": [
+        "RD-DOCS-WEBSITE-07"
+      ]
+    },
+    {
+      "id": "RD-DOCS-WEBSITE-08",
+      "type": "requirement",
+      "title": "RD-08: Reference & Trust Content",
+      "status": "draft",
+      "path": "requirements/RD-08-reference-trust.md",
+      "links": [
+        "AC-DOCS-WEBSITE-08"
+      ]
+    },
+    {
+      "id": "AC-DOCS-WEBSITE-08",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-08",
+      "status": "draft",
+      "path": "requirements/RD-08-reference-trust.md",
+      "links": [
+        "RD-DOCS-WEBSITE-08"
+      ]
+    },
+    {
+      "id": "RD-DOCS-WEBSITE-09",
+      "type": "requirement",
+      "title": "RD-09: Anti-Drift Governance & Automation",
+      "status": "draft",
+      "path": "requirements/RD-09-anti-drift-governance.md",
+      "links": [
+        "AC-DOCS-WEBSITE-09"
+      ]
+    },
+    {
+      "id": "AC-DOCS-WEBSITE-09",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-09",
+      "status": "draft",
+      "path": "requirements/RD-09-anti-drift-governance.md",
+      "links": [
+        "RD-DOCS-WEBSITE-09"
+      ]
+    },
+    {
+      "id": "RD-DOCS-WEBSITE-10",
+      "type": "requirement",
+      "title": "RD-10: Non-Functional Requirements",
+      "status": "draft",
+      "path": "requirements/RD-10-non-functional.md",
+      "links": [
+        "AC-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AC-DOCS-WEBSITE-10",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-10",
+      "status": "draft",
+      "path": "requirements/RD-10-non-functional.md",
+      "links": [
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-1",
+      "type": "ambiguity",
+      "title": "Migrated 1",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-2",
+      "type": "ambiguity",
+      "title": "Migrated 2",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-3",
+      "type": "ambiguity",
+      "title": "Migrated 3",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-4",
+      "type": "ambiguity",
+      "title": "Migrated 4",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-5",
+      "type": "ambiguity",
+      "title": "Migrated 5",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-6",
+      "type": "ambiguity",
+      "title": "Migrated 6",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-7",
+      "type": "ambiguity",
+      "title": "Migrated 7",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-8",
+      "type": "ambiguity",
+      "title": "Migrated 8",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-9",
+      "type": "ambiguity",
+      "title": "Migrated 9",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-10",
+      "type": "ambiguity",
+      "title": "Migrated 10",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-11",
+      "type": "ambiguity",
+      "title": "Migrated 11",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-12",
+      "type": "ambiguity",
+      "title": "Migrated 12",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-13",
+      "type": "ambiguity",
+      "title": "Migrated 13",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-14",
+      "type": "ambiguity",
+      "title": "Migrated 14",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-15",
+      "type": "ambiguity",
+      "title": "Migrated 15",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-16",
+      "type": "ambiguity",
+      "title": "Migrated 16",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-17",
+      "type": "ambiguity",
+      "title": "Migrated 17",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-18",
+      "type": "ambiguity",
+      "title": "Migrated 18",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-19",
+      "type": "ambiguity",
+      "title": "Migrated 19",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-20",
+      "type": "ambiguity",
+      "title": "Migrated 20",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-21",
+      "type": "ambiguity",
+      "title": "Migrated 21",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-22",
+      "type": "ambiguity",
+      "title": "Migrated 22",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-23",
+      "type": "ambiguity",
+      "title": "Migrated 23",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-24",
+      "type": "ambiguity",
+      "title": "Migrated 24",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-25",
+      "type": "ambiguity",
+      "title": "Migrated 25",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-26",
+      "type": "ambiguity",
+      "title": "Migrated 26",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-27",
+      "type": "ambiguity",
+      "title": "Migrated 27",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-28",
+      "type": "ambiguity",
+      "title": "Migrated 28",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-29",
+      "type": "ambiguity",
+      "title": "Migrated 29",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-30",
+      "type": "ambiguity",
+      "title": "Migrated 30",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-31",
+      "type": "ambiguity",
+      "title": "Migrated 31",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-32",
+      "type": "ambiguity",
+      "title": "Migrated 32",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-REQ-33",
+      "type": "ambiguity",
+      "title": "Migrated 33",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-DOCS-WEBSITE-01",
+        "RD-DOCS-WEBSITE-02",
+        "RD-DOCS-WEBSITE-03",
+        "RD-DOCS-WEBSITE-04",
+        "RD-DOCS-WEBSITE-05",
+        "RD-DOCS-WEBSITE-06",
+        "RD-DOCS-WEBSITE-07",
+        "RD-DOCS-WEBSITE-08",
+        "RD-DOCS-WEBSITE-09",
+        "RD-DOCS-WEBSITE-10"
+      ]
+    },
+    {
+      "id": "SPEC-DOCS-WEBSITE-API-REFERENCE",
+      "type": "specification",
+      "title": "API Reference (TypeDoc) Implementation Plan",
+      "status": "approved",
+      "path": "plans/api-reference/00-index.md",
+      "links": [
+        "TASK-DOCS-WEBSITE-API-REFERENCE",
+        "RD-DOCS-WEBSITE-06"
+      ]
+    },
+    {
+      "id": "TASK-DOCS-WEBSITE-API-REFERENCE",
+      "type": "task",
+      "title": "Execute api-reference",
+      "status": "verified",
+      "path": "plans/api-reference/99-execution-plan.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "IMPL-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "TEST-DOCS-WEBSITE-API-REFERENCE",
+      "type": "test",
+      "title": "Tests for api-reference",
+      "status": "passing",
+      "path": "plans/api-reference/07-testing-strategy.md",
+      "links": [
+        "AC-DOCS-WEBSITE-06"
+      ]
+    },
+    {
+      "id": "IMPL-DOCS-WEBSITE-API-REFERENCE",
+      "type": "implementation",
+      "title": "Implementation evidence for api-reference",
+      "status": "present",
+      "path": "plans/api-reference/99-execution-plan.md",
+      "links": [
+        "TASK-DOCS-WEBSITE-API-REFERENCE",
+        "VERIFY-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "VERIFY-DOCS-WEBSITE-API-REFERENCE",
+      "type": "verification",
+      "title": "Verification for api-reference",
+      "status": "passing",
+      "path": "plans/api-reference/99-execution-plan.md",
+      "links": [
+        "IMPL-DOCS-WEBSITE-API-REFERENCE",
+        "AC-DOCS-WEBSITE-06"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-1",
+      "type": "ambiguity",
+      "title": "Migrated AR-1",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-2",
+      "type": "ambiguity",
+      "title": "Migrated AR-2",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-3",
+      "type": "ambiguity",
+      "title": "Migrated AR-3",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-4",
+      "type": "ambiguity",
+      "title": "Migrated AR-4",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-5",
+      "type": "ambiguity",
+      "title": "Migrated AR-5",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-6",
+      "type": "ambiguity",
+      "title": "Migrated AR-6",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-7",
+      "type": "ambiguity",
+      "title": "Migrated AR-7",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-8",
+      "type": "ambiguity",
+      "title": "Migrated AR-8",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-9",
+      "type": "ambiguity",
+      "title": "Migrated AR-9",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-10",
+      "type": "ambiguity",
+      "title": "Migrated AR-10",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-11",
+      "type": "ambiguity",
+      "title": "Migrated AR-11",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-12",
+      "type": "ambiguity",
+      "title": "Migrated AR-12",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-13",
+      "type": "ambiguity",
+      "title": "Migrated AR-13",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-14",
+      "type": "ambiguity",
+      "title": "Migrated AR-14",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-15",
+      "type": "ambiguity",
+      "title": "Migrated AR-15",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-16",
+      "type": "ambiguity",
+      "title": "Migrated AR-16",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-17",
+      "type": "ambiguity",
+      "title": "Migrated AR-17",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-18",
+      "type": "ambiguity",
+      "title": "Migrated AR-18",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-19",
+      "type": "ambiguity",
+      "title": "Migrated AR-19",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-20",
+      "type": "ambiguity",
+      "title": "Migrated AR-20",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-21",
+      "type": "ambiguity",
+      "title": "Migrated AR-21",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-22",
+      "type": "ambiguity",
+      "title": "Migrated AR-22",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-API-REFERENCE-23",
+      "type": "ambiguity",
+      "title": "Migrated AR-23",
+      "status": "resolved",
+      "path": "plans/api-reference/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-API-REFERENCE",
+        "TASK-DOCS-WEBSITE-API-REFERENCE"
+      ]
+    },
+    {
+      "id": "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+      "type": "specification",
+      "title": "Plan: Live-Example Remediation",
+      "status": "approved",
+      "path": "plans/live-example-remediation/00-index.md",
+      "links": [
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "RD-DOCS-WEBSITE-03"
+      ]
+    },
+    {
+      "id": "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+      "type": "task",
+      "title": "Execute live-example-remediation",
+      "status": "implemented",
+      "path": "plans/live-example-remediation/99-execution-plan.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "IMPL-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "TEST-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+      "type": "test",
+      "title": "Tests for live-example-remediation",
+      "status": "planned",
+      "path": "plans/live-example-remediation/07-testing-strategy.md",
+      "links": [
+        "AC-DOCS-WEBSITE-03"
+      ]
+    },
+    {
+      "id": "IMPL-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+      "type": "implementation",
+      "title": "Implementation evidence for live-example-remediation",
+      "status": "present",
+      "path": "plans/live-example-remediation/99-execution-plan.md",
+      "links": [
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "VERIFY-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "VERIFY-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+      "type": "verification",
+      "title": "Verification for live-example-remediation",
+      "status": "planned",
+      "path": "plans/live-example-remediation/99-execution-plan.md",
+      "links": [
+        "IMPL-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "AC-DOCS-WEBSITE-03"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-1",
+      "type": "ambiguity",
+      "title": "Migrated AR-1",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-2",
+      "type": "ambiguity",
+      "title": "Migrated AR-2",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-3",
+      "type": "ambiguity",
+      "title": "Migrated AR-3",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-4",
+      "type": "ambiguity",
+      "title": "Migrated AR-4",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-5",
+      "type": "ambiguity",
+      "title": "Migrated AR-5",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-6",
+      "type": "ambiguity",
+      "title": "Migrated AR-6",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-7",
+      "type": "ambiguity",
+      "title": "Migrated AR-7",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-8",
+      "type": "ambiguity",
+      "title": "Migrated AR-8",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-9",
+      "type": "ambiguity",
+      "title": "Migrated AR-9",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-10",
+      "type": "ambiguity",
+      "title": "Migrated AR-10",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-11",
+      "type": "ambiguity",
+      "title": "Migrated AR-11",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-12",
+      "type": "ambiguity",
+      "title": "Migrated AR-12",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-13",
+      "type": "ambiguity",
+      "title": "Migrated AR-13",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-14",
+      "type": "ambiguity",
+      "title": "Migrated AR-14",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-15",
+      "type": "ambiguity",
+      "title": "Migrated AR-15",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-16",
+      "type": "ambiguity",
+      "title": "Migrated AR-16",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-17",
+      "type": "ambiguity",
+      "title": "Migrated AR-17",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-18",
+      "type": "ambiguity",
+      "title": "Migrated AR-18",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION-19",
+      "type": "ambiguity",
+      "title": "Migrated AR-19",
+      "status": "resolved",
+      "path": "plans/live-example-remediation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-REMEDIATION"
+      ]
+    },
+    {
+      "id": "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+      "type": "specification",
+      "title": "Plan: Live-Example System",
+      "status": "approved",
+      "path": "plans/live-example-system/00-index.md",
+      "links": [
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "RD-DOCS-WEBSITE-03"
+      ]
+    },
+    {
+      "id": "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+      "type": "task",
+      "title": "Execute live-example-system",
+      "status": "verified",
+      "path": "plans/live-example-system/99-execution-plan.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "IMPL-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "TEST-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+      "type": "test",
+      "title": "Tests for live-example-system",
+      "status": "passing",
+      "path": "plans/live-example-system/07-testing-strategy.md",
+      "links": [
+        "AC-DOCS-WEBSITE-03"
+      ]
+    },
+    {
+      "id": "IMPL-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+      "type": "implementation",
+      "title": "Implementation evidence for live-example-system",
+      "status": "present",
+      "path": "plans/live-example-system/99-execution-plan.md",
+      "links": [
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "VERIFY-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "VERIFY-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+      "type": "verification",
+      "title": "Verification for live-example-system",
+      "status": "passing",
+      "path": "plans/live-example-system/99-execution-plan.md",
+      "links": [
+        "IMPL-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "AC-DOCS-WEBSITE-03"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-1",
+      "type": "ambiguity",
+      "title": "Migrated AR-1",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-2",
+      "type": "ambiguity",
+      "title": "Migrated AR-2",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-3",
+      "type": "ambiguity",
+      "title": "Migrated AR-3",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-4",
+      "type": "ambiguity",
+      "title": "Migrated AR-4",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-5",
+      "type": "ambiguity",
+      "title": "Migrated AR-5",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-6",
+      "type": "ambiguity",
+      "title": "Migrated AR-6",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-7",
+      "type": "ambiguity",
+      "title": "Migrated AR-7",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-8",
+      "type": "ambiguity",
+      "title": "Migrated AR-8",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-9",
+      "type": "ambiguity",
+      "title": "Migrated AR-9",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-10",
+      "type": "ambiguity",
+      "title": "Migrated AR-10",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-11",
+      "type": "ambiguity",
+      "title": "Migrated AR-11",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-12",
+      "type": "ambiguity",
+      "title": "Migrated AR-12",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-13",
+      "type": "ambiguity",
+      "title": "Migrated AR-13",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-14",
+      "type": "ambiguity",
+      "title": "Migrated AR-14",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-15",
+      "type": "ambiguity",
+      "title": "Migrated AR-15",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-16",
+      "type": "ambiguity",
+      "title": "Migrated AR-16",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-17",
+      "type": "ambiguity",
+      "title": "Migrated AR-17",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-18",
+      "type": "ambiguity",
+      "title": "Migrated AR-18",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-19",
+      "type": "ambiguity",
+      "title": "Migrated AR-19",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-20",
+      "type": "ambiguity",
+      "title": "Migrated AR-20",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-21",
+      "type": "ambiguity",
+      "title": "Migrated AR-21",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM-22",
+      "type": "ambiguity",
+      "title": "Migrated AR-22",
+      "status": "resolved",
+      "path": "plans/live-example-system/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM",
+        "TASK-DOCS-WEBSITE-LIVE-EXAMPLE-SYSTEM"
+      ]
+    },
+    {
+      "id": "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+      "type": "specification",
+      "title": "Site Foundation & Delivery Pipeline \u2014 Implementation Plan",
+      "status": "approved",
+      "path": "plans/site-foundation/00-index.md",
+      "links": [
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION",
+        "RD-DOCS-WEBSITE-01"
+      ]
+    },
+    {
+      "id": "TASK-DOCS-WEBSITE-SITE-FOUNDATION",
+      "type": "task",
+      "title": "Execute site-foundation",
+      "status": "pending",
+      "path": "plans/site-foundation/99-execution-plan.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "TEST-DOCS-WEBSITE-SITE-FOUNDATION",
+      "type": "test",
+      "title": "Tests for site-foundation",
+      "status": "planned",
+      "path": "plans/site-foundation/07-testing-strategy.md",
+      "links": [
+        "AC-DOCS-WEBSITE-01"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-1",
+      "type": "ambiguity",
+      "title": "Migrated 1",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-2",
+      "type": "ambiguity",
+      "title": "Migrated 2",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-3",
+      "type": "ambiguity",
+      "title": "Migrated 3",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-4",
+      "type": "ambiguity",
+      "title": "Migrated 4",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-5",
+      "type": "ambiguity",
+      "title": "Migrated 5",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-6",
+      "type": "ambiguity",
+      "title": "Migrated 6",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-7",
+      "type": "ambiguity",
+      "title": "Migrated 7",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-8",
+      "type": "ambiguity",
+      "title": "Migrated 8",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-9",
+      "type": "ambiguity",
+      "title": "Migrated 9",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-10",
+      "type": "ambiguity",
+      "title": "Migrated 10",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-11",
+      "type": "ambiguity",
+      "title": "Migrated 11",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-12",
+      "type": "ambiguity",
+      "title": "Migrated 12",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-13",
+      "type": "ambiguity",
+      "title": "Migrated 13",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-SITE-FOUNDATION-14",
+      "type": "ambiguity",
+      "title": "Migrated 14",
+      "status": "resolved",
+      "path": "plans/site-foundation/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-SITE-FOUNDATION",
+        "TASK-DOCS-WEBSITE-SITE-FOUNDATION"
+      ]
+    },
+    {
+      "id": "SPEC-DOCS-WEBSITE-WEB-RUNTIME",
+      "type": "specification",
+      "title": "`@jsvision/web` Browser Runtime \u2014 Implementation Plan",
+      "status": "approved",
+      "path": "plans/web-runtime/00-index.md",
+      "links": [
+        "TASK-DOCS-WEBSITE-WEB-RUNTIME",
+        "RD-DOCS-WEBSITE-02"
+      ]
+    },
+    {
+      "id": "TASK-DOCS-WEBSITE-WEB-RUNTIME",
+      "type": "task",
+      "title": "Execute web-runtime",
+      "status": "verified",
+      "path": "plans/web-runtime/99-execution-plan.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-WEB-RUNTIME",
+        "IMPL-DOCS-WEBSITE-WEB-RUNTIME"
+      ]
+    },
+    {
+      "id": "TEST-DOCS-WEBSITE-WEB-RUNTIME",
+      "type": "test",
+      "title": "Tests for web-runtime",
+      "status": "passing",
+      "path": "plans/web-runtime/07-testing-strategy.md",
+      "links": [
+        "AC-DOCS-WEBSITE-02"
+      ]
+    },
+    {
+      "id": "IMPL-DOCS-WEBSITE-WEB-RUNTIME",
+      "type": "implementation",
+      "title": "Implementation evidence for web-runtime",
+      "status": "present",
+      "path": "plans/web-runtime/99-execution-plan.md",
+      "links": [
+        "TASK-DOCS-WEBSITE-WEB-RUNTIME",
+        "VERIFY-DOCS-WEBSITE-WEB-RUNTIME"
+      ]
+    },
+    {
+      "id": "VERIFY-DOCS-WEBSITE-WEB-RUNTIME",
+      "type": "verification",
+      "title": "Verification for web-runtime",
+      "status": "passing",
+      "path": "plans/web-runtime/99-execution-plan.md",
+      "links": [
+        "IMPL-DOCS-WEBSITE-WEB-RUNTIME",
+        "AC-DOCS-WEBSITE-02"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-WEB-RUNTIME-1",
+      "type": "ambiguity",
+      "title": "Migrated 1",
+      "status": "resolved",
+      "path": "plans/web-runtime/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-WEB-RUNTIME",
+        "TASK-DOCS-WEBSITE-WEB-RUNTIME"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-WEB-RUNTIME-2",
+      "type": "ambiguity",
+      "title": "Migrated 2",
+      "status": "resolved",
+      "path": "plans/web-runtime/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-WEB-RUNTIME",
+        "TASK-DOCS-WEBSITE-WEB-RUNTIME"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-WEB-RUNTIME-3",
+      "type": "ambiguity",
+      "title": "Migrated 3",
+      "status": "resolved",
+      "path": "plans/web-runtime/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-WEB-RUNTIME",
+        "TASK-DOCS-WEBSITE-WEB-RUNTIME"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-WEB-RUNTIME-4",
+      "type": "ambiguity",
+      "title": "Migrated 4",
+      "status": "resolved",
+      "path": "plans/web-runtime/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-WEB-RUNTIME",
+        "TASK-DOCS-WEBSITE-WEB-RUNTIME"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-WEB-RUNTIME-5",
+      "type": "ambiguity",
+      "title": "Migrated 5",
+      "status": "resolved",
+      "path": "plans/web-runtime/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-WEB-RUNTIME",
+        "TASK-DOCS-WEBSITE-WEB-RUNTIME"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-WEB-RUNTIME-6",
+      "type": "ambiguity",
+      "title": "Migrated 6",
+      "status": "resolved",
+      "path": "plans/web-runtime/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-WEB-RUNTIME",
+        "TASK-DOCS-WEBSITE-WEB-RUNTIME"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-WEB-RUNTIME-7",
+      "type": "ambiguity",
+      "title": "Migrated 7",
+      "status": "resolved",
+      "path": "plans/web-runtime/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-WEB-RUNTIME",
+        "TASK-DOCS-WEBSITE-WEB-RUNTIME"
+      ]
+    },
+    {
+      "id": "AR-DOCS-WEBSITE-WEB-RUNTIME-8",
+      "type": "ambiguity",
+      "title": "Migrated 8",
+      "status": "resolved",
+      "path": "plans/web-runtime/00-ambiguity-register.md",
+      "links": [
+        "SPEC-DOCS-WEBSITE-WEB-RUNTIME",
+        "TASK-DOCS-WEBSITE-WEB-RUNTIME"
+      ]
+    }
+  ]
+}

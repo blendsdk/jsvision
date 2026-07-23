@@ -4,7 +4,7 @@
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-09 16:54
 > **Progress**: 25/25 tasks (100%) — all automated STs green; live ST-3 deploy acceptance pending user (enable GitHub Pages)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ## Overview
 

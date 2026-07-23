@@ -2,7 +2,7 @@
 
 > Systematically rewrite every JSDoc and code comment in shipped source (`packages/*/src`) so it
 > serves **framework users and AI agents**, not maintainers. Governed by the
-> **"Documentation for users & AI agents (NON-NEGOTIABLE)"** directive in `CLAUDE.md`.
+> **"Documentation for users & AI agents (NON-NEGOTIABLE)"** directive in `AGENTS.md`.
 >
 > **This plan lives outside `codeops/`** deliberately — `codeops/` is being removed, so the plan that
 > purges references to it cannot depend on it.
@@ -25,7 +25,7 @@ Transform the docs from maintainer-facing to consumer/agent-facing. The work is 
 **Scale (measured):** ~193 of 195 source files carry banned references (~2,730 code occurrences +
 693 C++ citations). This is effectively a whole-codebase pass.
 
-**Scope boundary:** shipped source only. Out of scope — `CLAUDE.md`, `codeops/`, `test/**`. Example
+**Scope boundary:** shipped source only. Out of scope — `AGENTS.md`, `codeops/`, `test/**`. Example
 code (`packages/examples/**`) follows the spirit but is not gated by the guard.
 
 ---

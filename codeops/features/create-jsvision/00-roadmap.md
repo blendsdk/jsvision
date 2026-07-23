@@ -5,7 +5,7 @@
 > **Created**: 2026-07-22
 > **Last Updated**: 2026-07-23
 > **Progress**: 0 / 8 (0%)
-> **CodeOps Skills Version**: 3.12.0
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.12.0
 
 Publish a create-app scaffolder so `npm create jsvision my-app` (and the yarn/pnpm equivalents)
 produces a standalone, runnable JSVision project outside this monorepo. Tracked as GH #169.

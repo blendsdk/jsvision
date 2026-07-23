@@ -2,7 +2,7 @@
 
 > **Document**: 07-testing-strategy.md
 > **Parent**: [Index](00-index.md)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 A docs site's "spec tests" are **build-output and structural assertions** over the produced `dist`,
 plus a few integrity checks against the existing repo. They run as a Node script

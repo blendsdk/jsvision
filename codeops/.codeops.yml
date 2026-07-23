@@ -1,8 +1,8 @@
 # CodeOps layout marker. Presence of this file opts the repo into the nested layout.
-# Sole writer: the setup_codeops skill (via codeops-migrate.sh). Schema: _shared/layout-convention.md
+# Sole writer: the setup-codeops skill (via codeops-migrate.sh). Schema: _shared/layout-convention.md
 codeopsLayout: nested
 layoutVersion: "3.0.0"
-integrationBranch: develop # branch where features integrate; analyze_project refreshes CLAUDE.md here
+integrationBranch: develop # branch where features integrate; analyze-project refreshes AGENTS.md here
 conventions:
   rdIdScope: per-feature
   taskIdPrefix: "T"

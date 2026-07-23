@@ -2,7 +2,7 @@
 
 > **Feature**: docs-website · **Type**: Remediation (post-ship follow-up to RD-03)
 > **Source**: user bug report 2026-07-10 + code-verified triage `../_draft/live-example-bugs.md`
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ## Context
 

@@ -1,6 +1,6 @@
 # 07 — Testing Strategy
 
-> **Feature**: docs-website · **CodeOps Skills Version**: 3.3.2 · **Verify**: `yarn verify` (AR-15).
+> **Feature**: docs-website · **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2 · **Verify**: `yarn verify` (AR-15).
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Automated
 coverage is deterministic + headless (AR-6); the pixel-level xterm behaviours that no headless

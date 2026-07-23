@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "mode": "strict",
+  "artifacts": {
+    "layout": "nested",
+    "root": "codeops"
+  },
+  "quality": {
+    "independentReview": true,
+    "minimumReviewers": 1,
+    "stopOnMajorFinding": true
+  },
+  "routing": {
+    "maxConcurrentAgents": 4,
+    "roles": {
+      "explorer": {
+        "effort": "medium",
+        "sandbox": "read-only"
+      },
+      "executor": {
+        "effort": "high"
+      },
+      "correctness-reviewer": {
+        "effort": "high",
+        "sandbox": "read-only"
+      },
+      "security-auditor": {
+        "effort": "high",
+        "sandbox": "read-only"
+      },
+      "performance-auditor": {
+        "effort": "high",
+        "sandbox": "read-only"
+      },
+      "semantics-reviewer": {
+        "effort": "high",
+        "sandbox": "read-only"
+      }
+    }
+  },
+  "metrics": {
+    "enabled": false
+  }
+}

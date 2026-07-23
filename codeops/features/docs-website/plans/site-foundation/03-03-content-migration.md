@@ -3,7 +3,7 @@
 > **Document**: 03-03-content-migration.md
 > **Parent**: [Index](00-index.md)
 > **Covers**: RD-01 Must-Have 7 (absorb existing `docs/` techdocs)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ## What moves, what stays (AR-2)
 
@@ -43,7 +43,7 @@ the required artifact.
 ## Reference integrity (must not break)
 
 - `docs/acceptance-gate.md` untouched → `packages/core/test/gate.spec.test.ts` still passes (ST-12).
-- `scripts/gate.mjs`, README L15/L395, CLAUDE.md L46 still resolve (they point at
+- `scripts/gate.mjs`, README L15/L395, AGENTS.md L46 still resolve (they point at
   `docs/acceptance-gate.md`, which stays).
 - The only stale reference to a **moved** file is in `JSDOC-CLEANUP-PLAN.md` (ephemeral planning doc,
   `docs/guides/development.md`) — updated or noted, non-blocking.

@@ -1,13 +1,13 @@
 # 99 — Execution Plan: Live-Example Remediation
 
 > **Feature**: docs-website · **Type**: Remediation (post-ship follow-up to RD-03)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 > **Progress**: 26/27 `[x]` · 1 `[~]` (all 5 phases done; clean-dist `yarn verify` 22/22 + `check-docs-build` 14/14 green; browser-confirmed M1/M2/M4–M8; M3 hardware page-scroll-STOP is a documented human eyeball; roadmap cascaded. The lone `[~]` is 1.8 — the browser-only wheel-leak wiring, proven live but with no headless oracle) — **Last Updated**: 2026-07-10
 
 Spec-first per phase: **spec tests → red → implement → green → impl tests → verify**. Phase order
 per AR-7 (Resize → Shell → Reopen → Source). **Verify** = `yarn verify` (AR-15) unless a task names a
 faster inner loop. Marks are two-stage: `[ ]` → `[~]` (implemented, unverified) → `[x]` (verified).
-Commit cadence is chosen at `exec_plan` time. The browser-only behaviours are proven by the Manual
+Commit cadence is chosen at `exec-plan` time. The browser-only behaviours are proven by the Manual
 browser checklist (07 §Manual) — its execution is a task, not an afterthought.
 
 ---
@@ -152,8 +152,8 @@ Ref: 01 §Success · 07 §Manual.
 
 - [x] 5.1 Full `yarn verify` + `check-docs-build.mjs` green from a clean `dist/`. — 2026-07-10, clean `dist/`+`.turbo`: verify 22/22 turbo tasks, docs gate 14/14.
 - [x] 5.2 Execute + record the complete Manual browser checklist M1–M8 (07 §Manual). — 2026-07-10, M1/M2/M4–M8 ✅ browser-confirmed; M3 ◑ (real-hardware page-scroll-STOP is a documented human eyeball — CDP force-scrolls past `preventDefault`/`overflow`).
-- [x] 5.3 Update the docs-site note in `CLAUDE.md` (chrome modes → one Window shell; registry `kind`;
-  Source region convention) if the change warrants it. — 2026-07-10, CLAUDE.md docs-site note re-rolled to the unified-shell/terminal-driven/reopen/build()-first reality.
+- [x] 5.3 Update the docs-site note in `AGENTS.md` (chrome modes → one Window shell; registry `kind`;
+  Source region convention) if the change warrants it. — 2026-07-10, AGENTS.md docs-site note re-rolled to the unified-shell/terminal-driven/reopen/build()-first reality.
 - [x] 5.4 Roadmap sync: note the remediation under docs-website RD-03 (or a `T-` row) via the roadmap
   skill. — 2026-07-10, feature roadmap RD-03 row gained a `↳ Remediation follow-up ✅` annotation; cascaded to the portfolio `codeops/00-roadmap.md` (docs-website row + a Notes changelog entry).
 

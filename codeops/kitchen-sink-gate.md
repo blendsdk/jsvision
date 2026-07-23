@@ -2,7 +2,7 @@
 
 > **Status**: Standing convention (project-authored, not a CodeOps skill artifact)
 > **Applies to**: every user-facing `@jsvision/ui` component or capability.
-> **Canonical law**: the `## Kitchen-sink showcase (NON-NEGOTIABLE)` section of the repo `CLAUDE.md`
+> **Canonical law**: the `## Kitchen-sink showcase (NON-NEGOTIABLE)` section of the repo `AGENTS.md`
 > points here; this doc holds the operational detail + the copy-paste plan checklist.
 
 ## The principle
@@ -64,9 +64,9 @@ That is the whole extensibility contract — no shell edits, no chrome, no host 
 - **No clipped text** (size info lines to `ctx.width`), **faithful TV colors**, **keyboard + mouse**
   both working. Focus the first control on open (the shell does this via `firstFocusable`).
 
-## Plan-flow integration (make_plan / exec_plan)
+## Plan-flow integration (make-plan / exec-plan)
 
-**make_plan**, for every user-facing component, add this task to the plan's `99-execution-plan.md`:
+**make-plan**, for every user-facing component, add this task to the plan's `99-execution-plan.md`:
 
 ```markdown
 - [ ] **Kitchen-sink story for `<X>`** — add `kitchen-sink/stories/<x>.story.ts` (blurb + live
@@ -74,7 +74,7 @@ That is the whole extensibility contract — no shell edits, no chrome, no host 
       `stories/index.ts`; verify it renders (headless) and passes `test/kitchen-sink.smoke.spec.test.ts`.
 ```
 
-**exec_plan**:
+**exec-plan**:
 - Do NOT mark the component's plan `[x]` until its story is registered and the smoke test passes.
 - Keep the showcase polished — a clipped/broken story is a failing gate, not a cosmetic nit.
 

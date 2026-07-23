@@ -1,6 +1,6 @@
 # Task T-01: Release stdin on host `stop()` so the process exits after quit
 
-> **Type**: Task (lightweight) · **Feature**: _maintenance · **CodeOps Skills Version**: 3.4.1
+> **Type**: Task (lightweight) · **Feature**: _maintenance · **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.4.1
 > **Progress**: 5/5 tasks (100%)
 > **Last Updated**: 2026-07-12
 

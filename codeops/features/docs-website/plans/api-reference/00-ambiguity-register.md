@@ -4,7 +4,7 @@
 > **Parent**: [Index](00-index.md)
 > **Plan**: api-reference (feature: docs-website)
 > **Gate status**: ✅ GATE PASSED — 2026-07-10 22:54
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 The Zero-Ambiguity Gate for the `api-reference` plan. Every semantically-weighty decision the plan
 commits to is recorded here with the user's explicit resolution. `AR-N` in this file is **plan-local**

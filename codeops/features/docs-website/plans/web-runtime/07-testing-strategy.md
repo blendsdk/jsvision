@@ -2,7 +2,7 @@
 
 > **Document**: 07-testing-strategy.md
 > **Parent**: [Index](00-index.md)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 Tests live in `packages/web/test/` (never colocated), split `*.spec.test.ts` (immutable spec oracle,
 derived from RD-02's ACs) / `*.impl.test.ts` (internals/edges), run by the repo's vitest `unit`

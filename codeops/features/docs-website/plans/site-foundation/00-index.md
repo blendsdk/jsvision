@@ -7,7 +7,7 @@
 > **Source**: [RD-01](../../requirements/RD-01-site-foundation.md)
 > **Status**: Planning Complete
 > **Created**: 2026-07-09
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ## Overview
 

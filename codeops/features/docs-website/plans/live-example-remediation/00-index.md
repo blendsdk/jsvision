@@ -1,8 +1,8 @@
 # Plan: Live-Example Remediation
 
 > **Feature**: docs-website · **Type**: Remediation (post-ship follow-up to RD-03)
-> **CodeOps Skills Version**: 3.3.2
-> **Status**: Plan Preflighted 🔬 — ✅ PASSED ([00-preflight-report.md](00-preflight-report.md), 4 findings applied); ready for `exec_plan live-example-remediation`
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
+> **Status**: Plan Preflighted 🔬 — ✅ PASSED ([00-preflight-report.md](00-preflight-report.md), 4 findings applied); ready for `exec-plan live-example-remediation`
 
 Fixes the **seven post-ship bugs** the user found in the shipped RD-03 live-example system. The bugs
 cluster into four workstreams, landing in order Resize → Shell → Reopen → Source (AR-7). Grounded in
@@ -48,4 +48,4 @@ live browser reproduction of bug #3). Not a new RD — a remediation of RD-03.
 
 ## To begin
 
-Use the exec_plan skill: `exec_plan live-example-remediation`.
+Use the exec-plan skill: `exec-plan live-example-remediation`.

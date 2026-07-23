@@ -1,7 +1,7 @@
 # 03-06 — Testing Harness & CI Integration
 
 Owner of: the docs-site vitest project (two-tier), the typecheck tsconfig, turbo ordering, the
-CSP-compat check, and the CLAUDE.md isolation-note update.
+CSP-compat check, and the AGENTS.md isolation-note update.
 
 ## docs-site becomes a verify participant (AR-2, C1, C2)
 
@@ -65,7 +65,7 @@ excluded (left to VitePress build / later `vue-tsc`).
 - The directive-check drift test (ST-3) and the a11y/fallback tests (ST-11/12) live in the same vitest
   `unit` project (fast, no build of the whole site).
 
-## CLAUDE.md note (C2)
+## AGENTS.md note (C2)
 Update the docs-site characterization: *"isolated from `yarn verify`'s build/shipped-package phase
 (script is `vp:build`), but **participates in the test + typecheck phases** via a vitest project that
 headlessly smoke-tests every live example."* Done in Phase 6 (a doc edit, not shipped code).

@@ -39,7 +39,7 @@ analysis (root `@jsvision/monorepo`, yarn 1.22 `workspaces:packages/*`, `verify 
 run typecheck build test check:docs`, single `.github/workflows/ci.yml`).
 
 **AR-2 rationale:** `docs/acceptance-gate.md` is load-bearing — the spec oracle in
-`packages/core/test/gate.spec.test.ts`, plus `scripts/gate.mjs`, README, and CLAUDE.md reference it.
+`packages/core/test/gate.spec.test.ts`, plus `scripts/gate.mjs`, README, and AGENTS.md reference it.
 Moving it would break an immutable spec test, so it stays; only the pure website content moves.
 
 **AR-5..10:** Imported resolved from the requirements register; not re-confirmed (gate rule 3).

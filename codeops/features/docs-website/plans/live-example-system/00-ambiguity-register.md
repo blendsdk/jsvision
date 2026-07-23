@@ -1,10 +1,10 @@
 # Ambiguity Register — Live-Example System (docs-website / RD-03)
 
 > **Feature**: docs-website · **Implements**: docs-website/RD-03
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 > **Status**: ✅ GATE PASSED — all items Resolved, user-confirmed, zero deferred-as-open.
 
-Pre-resolved architecture comes from the `grill_me` session (notes:
+Pre-resolved architecture comes from the `grill-me` session (notes:
 `../_draft/grill-notes-live-example-system.md`). Plan-depth hunting across the 12 categories added
 AR-14…AR-18. Every row is an explicit user decision.
 
@@ -35,12 +35,12 @@ AR-14…AR-18. Every row is an explicit user decision.
 | AR-18 | Testing / Scope | AC-3 leak-test representative example. | **`files/file-dialog`** — the most disposal-heavy (multi-view + virtual FS) and the AC-9 example. | ✅ (this session) |
 | AR-19 | Scope | Which Should-Haves land in RD-03. | **All three:** Reset + size selector (80×24 / 100×30) + deep-link. Reset/size share the PlayController re-mount seam. **Deep-link = scroll-to + highlight + open the dialog WITHOUT auto-focusing the terminal** (a11y focus-trap fix). Copy-code is already free (RD-01 Shiki). | ✅ (grill) |
 | AR-20 | Scope | Seed example set. | **8, phased.** Mechanism (2): `controls/button` (minimal), `files/file-dialog` (full, AC-9). Breadth (6): `controls/input` (min), `controls/form-dialog` (full), `containers/list-box` (min), `table/data-grid` (full), `apps/desktop` (full, flagship / RD-04 hero, re-authored from web-xterm `buildApp`), `theming/preset-gallery` (full). Droppable under time pressure: input / list-box / data-grid / preset-gallery. | ✅ (grill) |
-| AR-21 | Process | Verify command. | `yarn verify` (CLAUDE.md: `yarn lint` then `turbo run typecheck build test check:docs`). | ✅ (CLAUDE.md) |
+| AR-21 | Process | Verify command. | `yarn verify` (AGENTS.md: `yarn lint` then `turbo run typecheck build test check:docs`). | ✅ (AGENTS.md) |
 | AR-22 | Architecture / Contract | How do `Application`-returning examples (modal-subject `files/file-dialog`, `controls/form-dialog`, and `apps/desktop`) receive **caps** + the demo Theme/Depth/About **chrome**? `ExampleContext` was `{width,height}` only, and `createApplication` takes menu/status **at construction** (`application.ts:38-41`) — no post-construction attach, so DemoShell cannot re-chrome an app it is handed. | **Thread `caps` into `build(ctx)`.** `ExampleContext` gains `readonly caps: CapabilityProfile` (resolves the 03-01 omission that 03-05:42 already implies — *"drop `buildBrowserCaps`; caps come from DemoShell/PlayController"*); `PlayController` passes `def.build({width,height,caps})`. An `Application` example builds a caps-correct, demo-chromed app via an exported **`demoApp(ctx, chrome)`** helper from `demo-shell.ts` (bundles `createApplication` with caps + `demoMenuBar()`/`demoStatusLine()`), then opens its dialog with `openFile`/`loop.execView` **inside `build()`** (real `showError` host). DemoShell's `Application` branch is unchanged (wires the shared handlers). **Rejected:** "DemoShell detects a modal View and opens it" — only half-solves (leaves `apps/desktop` on `caps:'auto'`), special-cases a widget type (03-02:33 forbids), and gives the dialog a no-op `showError`. | ✅ (runtime, this session; user-confirmed) |
 
 ## Constraints carried into the specs
 - **C1** turbo must build `core`/`ui`/`web`/`files` before `docs-site#test` (cross-package dist dependency). → 03-06.
-- **C2** CLAUDE.md's "docs-site fully isolated from `yarn verify`" note updates to "isolated from the build/shipped-package phase; participates in test + typecheck." → 03-06 / Phase 6.
+- **C2** AGENTS.md's "docs-site fully isolated from `yarn verify`" note updates to "isolated from the build/shipped-package phase; participates in test + typecheck." → 03-06 / Phase 6.
 - **C3** `RenderRoot.caps` is `readonly` → depth uses re-mount (AR-9).
 - **C4** xterm is browser-only → the Play component MUST be client-only or the VitePress SSR build breaks (AR-10).
 

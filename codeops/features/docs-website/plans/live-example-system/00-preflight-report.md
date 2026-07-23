@@ -210,7 +210,7 @@ escaped source via text-binding not `v-html`, one-dialog cap, strict CSP with a 
 applied to the plan documents (PF-003 = Option A for RD-03 scope + Option D recorded as a follow-up
 deferral in the register). No CRITICALs; the plan was otherwise strong (thorough register, accurate
 seam citations, sound two-tier test strategy, good security coverage). Ready for
-`exec_plan live-example-system`.
+`exec-plan live-example-system`.
 
 ### Fixes applied (files touched)
 - **PF-001** → `03-06` Tier-1 + `07` ST-2 / mechanism line + `02-current-state` + `00-index` + register AR-3: compose via `app.loop.renderRoot.buffer()`.

@@ -91,7 +91,7 @@ porting an existing TV component). Any chrome these borrow (frames, block shadow
 bar) reuses shipped, already-decoded primitives. Per the JSDoc directive, **no TV/C++ provenance or
 CodeOps IDs** go in the shipped code/JSDoc — those live here in `codeops/` only.
 
-## Open questions for a future grill_me / make_requirements
+## Open questions for a future grill-me / make-requirements
 
 - Single board vs. multi-project / multi-board; swimlanes (horizontal lanes) or columns only?
 - Persistence & data model (JSON file? SQLite? out-of-process backend?) — deferred this pass.

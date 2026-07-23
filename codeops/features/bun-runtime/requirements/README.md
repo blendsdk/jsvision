@@ -4,7 +4,7 @@
 > **Status**: Draft (RD-01 drafted)
 > **Created**: 2026-07-02
 > **Architecture**: TypeScript (ESM-only, NodeNext, `strict`), zero runtime dependencies; Bun adopted as a **runtime and compile target** (yarn 1.x stays the package manager, vitest stays the test runner)
-> **CodeOps Skills Version**: 3.1.0
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.1.0
 
 ---
 
@@ -54,7 +54,7 @@ jsvision-ui RD-01…RD-07/RD-10/RD-11 (shipped) ─────┴──► RD-0
 
 | Phase | Documents | Description |
 |-------|-----------|-------------|
-| **A** | RD-01 | Single-RD feature-set; run `make_plan bun-runtime RD-01` and execute. |
+| **A** | RD-01 | Single-RD feature-set; run `make-plan bun-runtime RD-01` and execute. |
 
 ## Key Architecture Decisions
 
@@ -68,5 +68,5 @@ jsvision-ui RD-01…RD-07/RD-10/RD-11 (shipped) ─────┴──► RD-0
 ## How to Use These Documents
 
 1. Pick the requirements document (RD-01).
-2. Run the make_plan skill — it uses the RD as input to create an implementation plan.
-3. Run the exec_plan skill and implement iteratively (spec tests first).
+2. Run the make-plan skill — it uses the RD as input to create an implementation plan.
+3. Run the exec-plan skill and implement iteratively (spec tests first).

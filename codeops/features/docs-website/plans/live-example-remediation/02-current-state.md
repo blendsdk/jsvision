@@ -1,6 +1,6 @@
 # 02 — Current State
 
-> **Feature**: docs-website · **CodeOps Skills Version**: 3.3.2
+> **Feature**: docs-website · **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 What exists today and where each bug lives. All paths are repo-relative; line numbers are from the
 code read during triage (see `../_draft/live-example-bugs.md` for the full analysis).

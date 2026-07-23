@@ -1,7 +1,7 @@
 # Preflight Report — Live-Example Remediation
 
 > **Artifact**: `codeops/features/docs-website/plans/live-example-remediation/` (full plan)
-> **CodeOps Skills Version**: 3.3.2 · **Date**: 2026-07-10 · **Iteration**: 1
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2 · **Date**: 2026-07-10 · **Iteration**: 1
 > ⚠️ **SAME-SESSION REVIEW** — the plan was authored in this session. Bias counter applied: an
 > **independent challenger** (fresh context, no authoring memory) verified every concrete code claim
 > against the codebase; findings below cite primary-source `file:line`.
@@ -86,4 +86,4 @@ A1/A2 — so M4 must explicitly re-confirm no garble after Phase 1.
 
 No CRITICAL findings, no code defects — the plan was code-accurate everywhere else (Window API,
 Button, `ctx.text` clip, `mountApp`, App/desktop API, VitePress region all confirmed). Ready for
-`exec_plan live-example-remediation`.
+`exec-plan live-example-remediation`.

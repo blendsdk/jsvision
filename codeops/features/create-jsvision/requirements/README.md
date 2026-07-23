@@ -4,7 +4,7 @@
 > **Status**: Draft
 > **Created**: 2026-07-22
 > **Architecture**: Node ≥ 22, ESM-only, zero runtime dependencies, published unscoped to npm
-> **CodeOps Skills Version**: 3.12.0
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.12.0
 
 ---
 
@@ -120,7 +120,7 @@ RD-08 is not a phase — its criteria are satisfied across A–D and checked at 
 ## How to Use These Documents
 
 1. Pick a requirements document (start with RD-01).
-2. Run the `make_plan` skill against it.
-3. `make_plan` uses the RD as input to create an implementation plan.
-4. Run `exec_plan` for the feature.
+2. Run the `make-plan` skill against it.
+3. `make-plan` uses the RD as input to create an implementation plan.
+4. Run `exec-plan` for the feature.
 5. Implement iteratively, spec tests first.

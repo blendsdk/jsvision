@@ -21,7 +21,7 @@ import type { DrawContext, DispatchEvent } from '@jsvision/ui';
 const DOUBLE = { tl: '╔', tr: '╗', bl: '╚', br: '╝', h: '═', v: '║' } as const;
 /** Single-line border (CP437 0xDA/C4/BF/B3/C0/D9) — the inactive/passive dialog. */
 const SINGLE = { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│' } as const;
-/** Close-box inner glyph. `×` (not TV's ambiguous-width CP437 `■`) — matches the Window frame (CLAUDE.md). */
+/** Close-box inner glyph. `×` (not TV's ambiguous-width CP437 `■`) — matches the Window frame (AGENTS.md). */
 const CLOSE_GLYPH = '×';
 
 /**

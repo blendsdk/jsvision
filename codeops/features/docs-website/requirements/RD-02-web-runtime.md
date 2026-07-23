@@ -7,7 +7,7 @@
 > **Feature-Set**: docs-website
 > **Depends On**: — (independent foundation RD; consumes already-shipped `@jsvision/core`,
 > `@jsvision/ui`, `@jsvision/files`)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ---
 

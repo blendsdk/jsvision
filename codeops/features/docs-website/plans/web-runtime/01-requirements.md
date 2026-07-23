@@ -3,7 +3,7 @@
 > **Document**: 01-requirements.md
 > **Parent**: [Index](00-index.md)
 > **Source**: [RD-02](../../requirements/RD-02-web-runtime.md)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ## Objective
 

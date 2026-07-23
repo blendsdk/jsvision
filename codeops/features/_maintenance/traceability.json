@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "feature": "_maintenance",
+  "updated": "2026-07-23",
+  "nodes": [
+    {
+      "id": "SPEC-MAINTENANCE-HOST-STDIN-RELEASE",
+      "type": "specification",
+      "title": "host-stdin-release",
+      "status": "approved",
+      "path": "plans/host-stdin-release/99-execution-plan.md",
+      "links": [
+        "TASK-MAINTENANCE-HOST-STDIN-RELEASE"
+      ]
+    },
+    {
+      "id": "TASK-MAINTENANCE-HOST-STDIN-RELEASE",
+      "type": "task",
+      "title": "Execute host-stdin-release",
+      "status": "verified",
+      "path": "plans/host-stdin-release/99-execution-plan.md",
+      "links": [
+        "SPEC-MAINTENANCE-HOST-STDIN-RELEASE",
+        "IMPL-MAINTENANCE-HOST-STDIN-RELEASE"
+      ]
+    },
+    {
+      "id": "IMPL-MAINTENANCE-HOST-STDIN-RELEASE",
+      "type": "implementation",
+      "title": "Implementation evidence for host-stdin-release",
+      "status": "present",
+      "path": "plans/host-stdin-release/99-execution-plan.md",
+      "links": [
+        "TASK-MAINTENANCE-HOST-STDIN-RELEASE",
+        "VERIFY-MAINTENANCE-HOST-STDIN-RELEASE"
+      ]
+    },
+    {
+      "id": "VERIFY-MAINTENANCE-HOST-STDIN-RELEASE",
+      "type": "verification",
+      "title": "Verification for host-stdin-release",
+      "status": "passing",
+      "path": "plans/host-stdin-release/99-execution-plan.md",
+      "links": [
+        "IMPL-MAINTENANCE-HOST-STDIN-RELEASE"
+      ]
+    }
+  ]
+}

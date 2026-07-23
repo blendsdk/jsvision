@@ -4,7 +4,7 @@
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-11 11:40
 > **Progress**: 16/16 tasks (100%) ✅
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ## Overview
 
@@ -108,8 +108,8 @@ Reference: [03-03](03-03-gating-anti-drift.md) · AR-15/16/18 · ST-3…ST-6, ST
 Reference: [01 §Acceptance](01-requirements.md) · [00-index](00-index.md)
 
 - [x] 4.1 Full clean-dist (`rm -rf packages/*/dist .turbo`) `yarn verify` + the API gate green. — **Verify**: `yarn verify` + API gate chain (implemented: 2026-07-11 11:37 · completed: 2026-07-11 11:39 — ✅ clean `yarn verify` 22/22 (0 cached) + API gate chain 20/20 + `check:deps` green, all from clean)
-- [x] 4.2 Update the docs-site note in `CLAUDE.md` (the `docs:api` generation, gitignored `api/<pkg>/`,
-  `src/api/*.mjs` incl. `api-map.mjs`, the bidirectional cross-link mechanism) + the live-example/docs memory. — `CLAUDE.md` (implemented: 2026-07-11 11:40 · completed: 2026-07-11 11:40 — Commands + docs-site structure entry updated; live-example memory note added)
+- [x] 4.2 Update the docs-site note in `AGENTS.md` (the `docs:api` generation, gitignored `api/<pkg>/`,
+  `src/api/*.mjs` incl. `api-map.mjs`, the bidirectional cross-link mechanism) + the live-example/docs memory. — `AGENTS.md` (implemented: 2026-07-11 11:40 · completed: 2026-07-11 11:40 — Commands + docs-site structure entry updated; live-example memory note added)
 - [x] 4.3 Roadmap sync: RD-06 → Done via the roadmap skill; cascade to the portfolio
   `codeops/00-roadmap.md`. — feature + portfolio roadmaps (implemented: 2026-07-11 11:40 · completed: 2026-07-11 11:40)
 
@@ -140,6 +140,6 @@ Phase 4 (finalize)
 3. ✅ No warnings/errors; VitePress dead-link check clean.
 4. ✅ No dead code — no unused helpers/params.
 5. ✅ Security: no symbol outside the public barrel appears (ST-4); TypeDoc devDeps only (ST-13).
-6. ✅ Documentation updated (CLAUDE.md docs-site note; the API preface).
+6. ✅ Documentation updated (AGENTS.md docs-site note; the API preface).
 7. ✅ RD-06 acceptance criteria 1–7 satisfied via ST-3…ST-13.
-8. ✅ Post-completion project re-analysis (handled by the exec_plan skill).
+8. ✅ Post-completion project re-analysis (handled by the exec-plan skill).

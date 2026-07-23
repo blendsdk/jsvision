@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "feature": "kanban-app",
+  "updated": "2026-07-23",
+  "nodes": [
+    {
+      "id": "DEF-KANBAN-EXPLORATION",
+      "type": "deferral",
+      "title": "Parked kanban exploration",
+      "status": "approved",
+      "path": "00-exploration-kanban-ui.md",
+      "links": []
+    }
+  ]
+}

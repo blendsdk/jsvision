@@ -9,7 +9,7 @@ This page has been retired. It documented how to work **on** JSVision rather tha
 **with** it, and it drifted out of date faster than anyone read it.
 
 The conventions it described — the toolchain, the test split, commit scope, and the verify gate —
-live in `CLAUDE.md` at the root of the [repository](https://github.com/blendsdk/jsvision), which is
+live in `AGENTS.md` at the root of the [repository](https://github.com/blendsdk/jsvision), which is
 the version that is actually kept current.
 
 If you are here to build an application, start with the Guide:

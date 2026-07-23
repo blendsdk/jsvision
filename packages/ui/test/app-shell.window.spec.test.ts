@@ -7,7 +7,7 @@
  * (close `[×]` at cols 2–4, zoom `[↑]`/`[↕]` at cols w-5…w-3, number at w-7, grips `└─` at (0,1) and
  * `─┘` at (w-2,w-1) of the bottom row, centered title truncated to ≤ w-10−6−4) is the Turbo Vision
  * `TFrame` chrome (tframe.cpp:35-124 / tvtext1.cpp:77-81), which the project's NON-NEGOTIABLE
- * TV-fidelity directive (CLAUDE.md) makes authoritative: AC-14's earlier `◢` corner was a non-TV
+ * TV-fidelity directive (AGENTS.md) makes authoritative: AC-14's earlier `◢` corner was a non-TV
  * invention and is superseded here, and the close/zoom icons render only on the active window.
  *
  * Trace: RD-05 03-03 · AR-67/AR-73/AR-74 · ST-14, ST-15 · TV TFrame.

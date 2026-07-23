@@ -2,7 +2,7 @@
 
 > **Status**: Standing convention (project-authored, not a CodeOps skill artifact)
 > **Applies to**: every `@jsvision/ui` component/widget/chrome that has a Turbo Vision counterpart.
-> **Canonical law**: the `## Turbo Vision fidelity (NON-NEGOTIABLE)` section of the repo `CLAUDE.md`
+> **Canonical law**: the `## Turbo Vision fidelity (NON-NEGOTIABLE)` section of the repo `AGENTS.md`
 > points here; this doc holds the operational detail + the copy-paste plan checklist.
 
 ## The principle
@@ -59,9 +59,9 @@ is the defect** — correct it against the source and cite the `.cpp`. This is a
 exception to "spec tests are immutable oracles", scoped to TV-fidelity oracles only; it does **not**
 license editing behavioral/logic spec tests to match broken code.
 
-## Plan-flow integration (make_plan / exec_plan)
+## Plan-flow integration (make-plan / exec-plan)
 
-**make_plan**, for every TV-derived component:
+**make-plan**, for every TV-derived component:
 - Give the component's spec doc (`03-NN-*.md`) a **"TV decode (GATE 1)"** section that cites the
   original `file:line` for draw + sizing + the `getColor(N)` chain (the decode itself, not a summary).
 - Add these two tasks to the plan's `99-execution-plan.md` (copy-paste, per component `<X>`):
@@ -76,7 +76,7 @@ license editing behavioral/logic spec tests to match broken code.
         oracle is the defect — correct it against the `.cpp`.)
   ```
 
-**exec_plan**:
+**exec-plan**:
 - Do NOT mark a TV-derived component task `[x]` until its **AFTER-diff** task is complete and the
   decode (incl. palette resolution) is recorded in the code/commit.
 - If the AFTER-diff surfaces a spec-oracle/source conflict, fix the oracle against the `.cpp` (per the

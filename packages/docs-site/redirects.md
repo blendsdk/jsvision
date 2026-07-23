@@ -37,4 +37,4 @@ appear in the Reference sidebar.
 | Retired route                       | Now points to                                            |
 | ----------------------------------- | -------------------------------------------------------- |
 | `/reference/guides/getting-started` | `/guide/install-and-packages` (superseded by the Guide)  |
-| `/reference/guides/development`     | `CLAUDE.md` in the repository (the version kept current) |
+| `/reference/guides/development`     | `AGENTS.md` in the repository (the version kept current) |

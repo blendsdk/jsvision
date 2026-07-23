@@ -5,7 +5,7 @@
 > **Created**: 2026-07-09
 > **Last Updated**: 2026-07-13
 > **Progress**: 4 / 10 (40%)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 A professional, DX/UX-first **VitePress** documentation & showcase website for JSVision — the
 project's sales pitch — deployed to **GitHub Pages** via CI/CD. Its defining feature: **every
@@ -31,7 +31,7 @@ every example is a real, compiled, smoke-tested module embedded by snippet, guar
 | RD-06 | API reference (TypeDoc) | [RD-06](requirements/RD-06-api-reference.md) | [api-reference](plans/api-reference/00-index.md) | Done | ✅ | 2026-07-11 | Done — generated TypeDoc→md→VitePress reference for 4 public barrels · gitignored/regen per-package · bidirectional symbol↔page cross-links · drift-gated 20/20 · TypeDoc devDeps only. |
 | RD-07 | Sample applications | [RD-07](requirements/RD-07-sample-apps.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — sample apps: Todo · tvedit (virtual FS + local files) · polished kitchen-sink · file/data browser, each in DemoShell · depends RD-02, RD-03. |
 | RD-08 | Reference & trust content | [RD-08](requirements/RD-08-reference-trust.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — reference/trust: architecture · guides/cookbook · FAQ · a11y · security · perf · compat · theming gallery · versioning · contributing · absorbs docs/ techdocs · depends RD-03, RD-05. |
-| RD-09 | Anti-drift governance & automation | [RD-09](requirements/RD-09-anti-drift-governance.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — anti-drift: CLAUDE.md prime directive · hard-fail check:docs-site gate · example compile/smoke in CI · Playwright screenshots/OG · README · llms.txt · depends RD-03, RD-05. |
+| RD-09 | Anti-drift governance & automation | [RD-09](requirements/RD-09-anti-drift-governance.md) | — | RD Drafted | ✏️ | 2026-07-09 | Drafted — anti-drift: AGENTS.md prime directive · hard-fail check:docs-site gate · example compile/smoke in CI · Playwright screenshots/OG · README · llms.txt · depends RD-03, RD-05. |
 | RD-10 | Non-functional requirements | [RD-10](requirements/RD-10-non-functional.md) | — | RD Drafted | ✏️ | 2026-07-09 | Spans all. Perf budgets (lazy terminals) · a11y (WCAG) · security/CSP · SEO · browser support · content-ops. |
 
 ## Implementation Phases

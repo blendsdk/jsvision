@@ -1,6 +1,6 @@
 # Discovery Notes — docs-website (JSVision documentation & showcase site)
 
-> Working notes for `make_requirements` Full Discovery. Resume point for `make_requirements --continue`.
+> Working notes for `make-requirements` Full Discovery. Resume point for `make-requirements --continue`.
 > **Last updated**: 2026-07-09
 
 ## Feature

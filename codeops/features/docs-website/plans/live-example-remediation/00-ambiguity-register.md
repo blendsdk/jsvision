@@ -1,7 +1,7 @@
 # Ambiguity Register — Live-Example Remediation (docs-website)
 
 > **Feature**: docs-website · **Type**: Remediation (post-ship bugfix follow-up to RD-03)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 > **Status**: ✅ GATE PASSED — AR-1…AR-8 user-decided; AR-9…AR-18 user-confirmed in a batch; AR-19 preflight-derived, user-authorized. Zero open, zero deferred.
 
 Grounded in the code-verified triage `../_draft/live-example-bugs.md` (per-bug root cause with
@@ -31,7 +31,7 @@ demo shell (#4 shadow-on-dots, #5 commands-in-footer, #6 inconsistent shells), *
 | AR-12 | Consistency | Does every example show a Window menu, or only multi-window ones? | **System + View always**; the **Window** menu (Next/Zoom/Cascade/Tile) is added only for examples with real window management (the desktop example). Single-demo stage windows are non-closable, so window-management is inert for them → no Window menu. | ✅ (batch) |
 | AR-13 | Impl | Stage-Window title + geometry for a component demo. | Title = the example title; the stage Window is centered and sized to fill the desktop minus a small margin, giving the component a clean interior surface. The component is placed in the Window interior (the current `placeContent` centering logic, retargeted from the desktop to the Window interior). | ✅ (batch) |
 | AR-14 | Impl | How does a dialog example fit the Window shell? | The dialog example's stage Window hosts an **"Open the dialog" Button** (+ a one-line hint); clicking runs `execView` to open the modal Dialog over the desktop; the example starts with it open once. The example still returns an `Application` (via `demoApp`). | ✅ (batch) |
-| AR-15 | Dependencies | Verify command. | `yarn verify` (project CLAUDE.md). docs-site participates in verify's **test + typecheck**; the ui goldens run under `@jsvision/ui`'s test project; `vp:build` stays build-isolated. | ✅ (batch) |
+| AR-15 | Dependencies | Verify command. | `yarn verify` (project AGENTS.md). docs-site participates in verify's **test + typecheck**; the ui goldens run under `@jsvision/ui`'s test project; `vp:build` stays build-isolated. | ✅ (batch) |
 | AR-16 | Scope (OUT) | Explicit non-goals. | NO new browser-e2e harness (AR-6); NO engine/ui theming redesign; NO change to the 8-example set (we fix, not add examples); the deeper web-host damage-diff dig is DEFERRED unless #3 persists post-#1; the closable-window reopen affordance is not needed (AR-5 non-closable stage). | ✅ (batch) |
 | AR-17 | Testing | Headless coverage for the shell change (#4/#6). | Testable at the LOGIC level: a DemoShell test asserts a component example is wrapped in a **non-closable Window** whose interior fills the stage (the component's cells sit on the window surface, not the desktop pattern). Pixel look → the manual checklist (AR-6). | ✅ (batch) |
 | AR-18 | Security | Any new input / injection / data surface? | **None.** Examples still compose via `@jsvision/ui` and paint through the existing `sanitize` boundary; the resize path only changes viewport sizing; the wheel fix is DOM `preventDefault` only. No new user-data path, no new dependency. | ✅ (batch) |

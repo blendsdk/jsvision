@@ -59,4 +59,4 @@ identical to running code, wrapped in a consistent shell, accessible, and headle
 - No shipped-code JSDoc violations (`check-jsdoc.mjs`) in any new `packages/*/src` (none expected —
   RD-03 lives in docs-site, which is not shipped, but any `@jsvision/*` primitive added would qualify;
   **none is planned** — AR-8/9 use existing seams).
-- CLAUDE.md's docs-site isolation note updated (C2).
+- AGENTS.md's docs-site isolation note updated (C2).

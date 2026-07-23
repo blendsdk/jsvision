@@ -2,7 +2,7 @@
 
 > **Document**: 02-current-state.md
 > **Parent**: [Index](00-index.md)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 Verified against the repo on 2026-07-09.
 
@@ -35,7 +35,7 @@ docs/acceptance-gate.md            ← LOAD-BEARING (see below)
 
 **`docs/acceptance-gate.md` is load-bearing** and must NOT move (AR-2):
 - `packages/core/test/gate.spec.test.ts` uses it as a **spec-test oracle** (immutable).
-- `scripts/gate.mjs` maps criteria against it; README (L15, L395) and CLAUDE.md (L46) link it.
+- `scripts/gate.mjs` maps criteria against it; README (L15, L395) and AGENTS.md (L46) link it.
 
 The other `docs/` files are pure website content and are referenced only by the (ephemeral)
 `JSDOC-CLEANUP-PLAN.md` — safe to `git mv` into `packages/docs-site`.

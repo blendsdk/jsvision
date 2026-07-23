@@ -1,11 +1,11 @@
-# grill_me notes — RD-03 Live-Example System (docs-website)
+# grill-me notes — RD-03 Live-Example System (docs-website)
 
 - Topic: RD-03 live-example system
 - Date: 2026-07-09
 - Artifact: `codeops/features/docs-website/requirements/RD-03-live-example-system.md` (Draft) @ HEAD 4b40292
 - Grounding: RD-03; docs-site (isolated; vp:build only); web-xterm main.ts+vite.config; kitchen-sink.smoke (uses createRenderRoot, NOT xterm); application.ts/render-root.ts (setTheme EXISTS; caps readonly); buildBrowserCaps({colorDepth}); RD-01 Shiki copy button.
 
-## STATUS: all 6 branches walked; REVISED after user asked for objections + more examples. Awaiting final confirm → make_plan.
+## STATUS: all 6 branches walked; REVISED after user asked for objections + more examples. Awaiting final confirm → make-plan.
 
 ## FINAL (revised) decisions — source of truth
 - **D1 Example home** = examples in docs-site/examples/; docs-site gains vitest `test` + `typecheck`, joins verify test+typecheck phases; vp:build stays isolated. Dev deps: vitest, core/ui/web/files, @xterm/xterm+fit/webgl, @xterm/headless.
@@ -24,7 +24,7 @@
   - Droppable under time pressure: input/list-box/data-grid/preset-gallery. Core: button/file-dialog/form-dialog/desktop.
 
 ## Constraints
-- C1 turbo builds core/ui/web/files before docs-site#test. C2 CLAUDE.md docs-site isolation note → "isolated from build/shipped verify; participates in test+typecheck". C3 caps readonly → re-mount for depth.
+- C1 turbo builds core/ui/web/files before docs-site#test. C2 AGENTS.md docs-site isolation note → "isolated from build/shipped verify; participates in test+typecheck". C3 caps readonly → re-mount for depth.
 - C4 (new) xterm is browser-only → Play component MUST be client-only (SSR-safe) or VitePress build breaks.
 
 ## Deferrals
@@ -33,4 +33,4 @@
 - Full ~40 examples + per-component page template · owner: RD-05 · revisit: RD-05 extends this registry/mechanism.
 - Whole-file-embeds-only convention · owner: RD-03 · revisit: if an example needs a region marker → add heavier rendered-compare for those.
 
-## Resume from: awaiting user confirm of the revised design → make_plan (feed this as pre-resolved Ambiguity Register context; Phase 1C gate still fires).
+## Resume from: awaiting user confirm of the revised design → make-plan (feed this as pre-resolved Ambiguity Register context; Phase 1C gate still fires).

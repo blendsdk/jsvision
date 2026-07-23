@@ -1,0 +1,127 @@
+{
+  "schema": 1,
+  "feature": "bun-runtime",
+  "updated": "2026-07-23",
+  "nodes": [
+    {
+      "id": "RD-BUN-RUNTIME-01",
+      "type": "requirement",
+      "title": "RD-01: Bun Runtime Support & Self-Contained Executables",
+      "status": "draft",
+      "path": "requirements/RD-01-bun-runtime-support.md",
+      "links": [
+        "AC-BUN-RUNTIME-01"
+      ]
+    },
+    {
+      "id": "AC-BUN-RUNTIME-01",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-01",
+      "status": "draft",
+      "path": "requirements/RD-01-bun-runtime-support.md",
+      "links": [
+        "RD-BUN-RUNTIME-01"
+      ]
+    },
+    {
+      "id": "AR-BUN-RUNTIME-REQ-1",
+      "type": "ambiguity",
+      "title": "Migrated 1",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-BUN-RUNTIME-01"
+      ]
+    },
+    {
+      "id": "AR-BUN-RUNTIME-REQ-2",
+      "type": "ambiguity",
+      "title": "Migrated 2",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-BUN-RUNTIME-01"
+      ]
+    },
+    {
+      "id": "AR-BUN-RUNTIME-REQ-3",
+      "type": "ambiguity",
+      "title": "Migrated 3",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-BUN-RUNTIME-01"
+      ]
+    },
+    {
+      "id": "AR-BUN-RUNTIME-REQ-4",
+      "type": "ambiguity",
+      "title": "Migrated 4",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-BUN-RUNTIME-01"
+      ]
+    },
+    {
+      "id": "AR-BUN-RUNTIME-REQ-5",
+      "type": "ambiguity",
+      "title": "Migrated 5",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-BUN-RUNTIME-01"
+      ]
+    },
+    {
+      "id": "AR-BUN-RUNTIME-REQ-6",
+      "type": "ambiguity",
+      "title": "Migrated 6",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-BUN-RUNTIME-01"
+      ]
+    },
+    {
+      "id": "AR-BUN-RUNTIME-REQ-7",
+      "type": "ambiguity",
+      "title": "Migrated 7",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-BUN-RUNTIME-01"
+      ]
+    },
+    {
+      "id": "AR-BUN-RUNTIME-REQ-8",
+      "type": "ambiguity",
+      "title": "Migrated 8",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-BUN-RUNTIME-01"
+      ]
+    },
+    {
+      "id": "AR-BUN-RUNTIME-REQ-9",
+      "type": "ambiguity",
+      "title": "Migrated 9",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-BUN-RUNTIME-01"
+      ]
+    },
+    {
+      "id": "AR-BUN-RUNTIME-REQ-10",
+      "type": "ambiguity",
+      "title": "Migrated 10",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-BUN-RUNTIME-01"
+      ]
+    }
+  ]
+}

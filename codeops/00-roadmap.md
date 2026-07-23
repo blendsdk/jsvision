@@ -1,9 +1,9 @@
-# Portfolio Roadmap: Ink
+# Portfolio Roadmap: JSVision
 
 > **Status**: Active
 > **Last Updated**: 2026-07-22
 > **Features**: 0 / 3 done — 8 completed features were archived on 2026-07-21, leaving `bun-runtime`, `docs-website`, and `create-jsvision` (added 2026-07-22, GH #169) active (plus `kanban-app`, a parked exploration with no roadmap, and the `_maintenance` feature). Deferred datagrid follow-ons (CSV/paste import · windowed-source row export · treeshake check) and the layout-DSL follow-on GH #131 now live on their archived roadmaps
-> **CodeOps Skills Version**: 3.0.0
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.0.0
 
 ## Legend
 

@@ -6,7 +6,7 @@
 > **Project**: jsvision
 > **Feature-Set**: docs-website
 > **Depends On**: RD-02 (`@jsvision/web`), RD-03 (DemoShell + live system)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ---
 

@@ -1,7 +1,7 @@
 /**
  * Specification test (immutable oracle) — the kitchen-sink showcase registry.
  *
- * Source: the jsvision "kitchen-sink showcase (NON-NEGOTIABLE)" rule (repo `CLAUDE.md` +
+ * Source: the jsvision "kitchen-sink showcase (NON-NEGOTIABLE)" rule (repo `AGENTS.md` +
  * `codeops/kitchen-sink-gate.md`). Every registered `Story` MUST mount headlessly and draw
  * something — this is the CI guard that keeps stories from rotting and makes "a story exists +
  * renders" mechanically checkable without a TTY. It also enforces the registry hygiene the shell

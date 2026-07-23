@@ -1,0 +1,558 @@
+{
+  "schema": 1,
+  "feature": "create-jsvision",
+  "updated": "2026-07-23",
+  "nodes": [
+    {
+      "id": "RD-CREATE-JSVISION-01",
+      "type": "requirement",
+      "title": "RD-01: Dual-mode file generation",
+      "status": "draft",
+      "path": "requirements/RD-01-dual-mode-generation.md",
+      "links": [
+        "AC-CREATE-JSVISION-01"
+      ]
+    },
+    {
+      "id": "AC-CREATE-JSVISION-01",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-01",
+      "status": "draft",
+      "path": "requirements/RD-01-dual-mode-generation.md",
+      "links": [
+        "RD-CREATE-JSVISION-01"
+      ]
+    },
+    {
+      "id": "RD-CREATE-JSVISION-02",
+      "type": "requirement",
+      "title": "RD-02: The `create-jsvision` CLI package",
+      "status": "draft",
+      "path": "requirements/RD-02-cli-package.md",
+      "links": [
+        "AC-CREATE-JSVISION-02"
+      ]
+    },
+    {
+      "id": "AC-CREATE-JSVISION-02",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-02",
+      "status": "draft",
+      "path": "requirements/RD-02-cli-package.md",
+      "links": [
+        "RD-CREATE-JSVISION-02"
+      ]
+    },
+    {
+      "id": "RD-CREATE-JSVISION-03",
+      "type": "requirement",
+      "title": "RD-03: Template single source of truth",
+      "status": "draft",
+      "path": "requirements/RD-03-single-source-of-truth.md",
+      "links": [
+        "AC-CREATE-JSVISION-03"
+      ]
+    },
+    {
+      "id": "AC-CREATE-JSVISION-03",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-03",
+      "status": "draft",
+      "path": "requirements/RD-03-single-source-of-truth.md",
+      "links": [
+        "RD-CREATE-JSVISION-03"
+      ]
+    },
+    {
+      "id": "RD-CREATE-JSVISION-04",
+      "type": "requirement",
+      "title": "RD-04: The generated standalone project",
+      "status": "draft",
+      "path": "requirements/RD-04-generated-project.md",
+      "links": [
+        "AC-CREATE-JSVISION-04"
+      ]
+    },
+    {
+      "id": "AC-CREATE-JSVISION-04",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-04",
+      "status": "draft",
+      "path": "requirements/RD-04-generated-project.md",
+      "links": [
+        "RD-CREATE-JSVISION-04"
+      ]
+    },
+    {
+      "id": "RD-CREATE-JSVISION-05",
+      "type": "requirement",
+      "title": "RD-05: Verification strategy",
+      "status": "draft",
+      "path": "requirements/RD-05-verification.md",
+      "links": [
+        "AC-CREATE-JSVISION-05"
+      ]
+    },
+    {
+      "id": "AC-CREATE-JSVISION-05",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-05",
+      "status": "draft",
+      "path": "requirements/RD-05-verification.md",
+      "links": [
+        "RD-CREATE-JSVISION-05"
+      ]
+    },
+    {
+      "id": "RD-CREATE-JSVISION-06",
+      "type": "requirement",
+      "title": "RD-06: Release & distribution",
+      "status": "draft",
+      "path": "requirements/RD-06-release-and-distribution.md",
+      "links": [
+        "AC-CREATE-JSVISION-06"
+      ]
+    },
+    {
+      "id": "AC-CREATE-JSVISION-06",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-06",
+      "status": "draft",
+      "path": "requirements/RD-06-release-and-distribution.md",
+      "links": [
+        "RD-CREATE-JSVISION-06"
+      ]
+    },
+    {
+      "id": "RD-CREATE-JSVISION-07",
+      "type": "requirement",
+      "title": "RD-07: Documentation updates",
+      "status": "draft",
+      "path": "requirements/RD-07-documentation.md",
+      "links": [
+        "AC-CREATE-JSVISION-07"
+      ]
+    },
+    {
+      "id": "AC-CREATE-JSVISION-07",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-07",
+      "status": "draft",
+      "path": "requirements/RD-07-documentation.md",
+      "links": [
+        "RD-CREATE-JSVISION-07"
+      ]
+    },
+    {
+      "id": "RD-CREATE-JSVISION-08",
+      "type": "requirement",
+      "title": "RD-08: Non-functional requirements",
+      "status": "draft",
+      "path": "requirements/RD-08-non-functional.md",
+      "links": [
+        "AC-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AC-CREATE-JSVISION-08",
+      "type": "criterion",
+      "title": "Acceptance criteria for RD-08",
+      "status": "draft",
+      "path": "requirements/RD-08-non-functional.md",
+      "links": [
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-1",
+      "type": "ambiguity",
+      "title": "Migrated 1",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-2",
+      "type": "ambiguity",
+      "title": "Migrated 2",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-3",
+      "type": "ambiguity",
+      "title": "Migrated 3",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-4",
+      "type": "ambiguity",
+      "title": "Migrated 4",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-5",
+      "type": "ambiguity",
+      "title": "Migrated 5",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-6",
+      "type": "ambiguity",
+      "title": "Migrated 6",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-7",
+      "type": "ambiguity",
+      "title": "Migrated 7",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-8",
+      "type": "ambiguity",
+      "title": "Migrated 8",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-9",
+      "type": "ambiguity",
+      "title": "Migrated 9",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-10",
+      "type": "ambiguity",
+      "title": "Migrated 10",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-11",
+      "type": "ambiguity",
+      "title": "Migrated 11",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-12",
+      "type": "ambiguity",
+      "title": "Migrated 12",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-13",
+      "type": "ambiguity",
+      "title": "Migrated 13",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-14",
+      "type": "ambiguity",
+      "title": "Migrated 14",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-15",
+      "type": "ambiguity",
+      "title": "Migrated 15",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-16",
+      "type": "ambiguity",
+      "title": "Migrated 16",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-17",
+      "type": "ambiguity",
+      "title": "Migrated 17",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-18",
+      "type": "ambiguity",
+      "title": "Migrated 18",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-19",
+      "type": "ambiguity",
+      "title": "Migrated 19",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-20",
+      "type": "ambiguity",
+      "title": "Migrated 20",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-21",
+      "type": "ambiguity",
+      "title": "Migrated 21",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-22",
+      "type": "ambiguity",
+      "title": "Migrated 22",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-23",
+      "type": "ambiguity",
+      "title": "Migrated 23",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-01",
+        "RD-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-03",
+        "RD-CREATE-JSVISION-04",
+        "RD-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-06",
+        "RD-CREATE-JSVISION-07",
+        "RD-CREATE-JSVISION-08"
+      ]
+    }
+  ]
+}

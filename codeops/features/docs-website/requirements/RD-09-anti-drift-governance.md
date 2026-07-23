@@ -6,14 +6,14 @@
 > **Project**: jsvision
 > **Feature-Set**: docs-website
 > **Depends On**: RD-03 (example registry + smoke), RD-05 (component coverage list)
-> **CodeOps Skills Version**: 3.3.2
+> **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.3.2
 
 ---
 
 ## Feature Overview
 
 The machinery that makes "the docs are always correct" a **guarantee, not a good intention**. It
-adds a **non-negotiable prime directive** to `CLAUDE.md` (when component/API code changes, the
+adds a **non-negotiable prime directive** to `AGENTS.md` (when component/API code changes, the
 relevant docs & examples must be updated), and — because a directive alone rots — backs it with a
 **hard-failing CI gate `check:docs-site`** that blocks any merge where a public component lacks a
 docs example, where an embedded example fails to compile or smoke, or where a props/coverage source
@@ -30,7 +30,7 @@ This mirrors the project's existing enforcement patterns (`scripts/check-jsdoc.m
 
 ### Must Have
 
-- [ ] **Prime directive in `CLAUDE.md`** — a clearly-marked non-negotiable section: any change to a
+- [ ] **Prime directive in `AGENTS.md`** — a clearly-marked non-negotiable section: any change to a
       public component or its API MUST update the corresponding docs page, props table, and live
       example in the same change; adding a public export MUST add its `components.json` row + docs page
       + example. Written in plain language (no plan/RD IDs in shipped guidance), referencing the gate
@@ -125,7 +125,7 @@ This mirrors the project's existing enforcement patterns (`scripts/check-jsdoc.m
 
 ## Acceptance Criteria
 
-1. [ ] `CLAUDE.md` contains a clearly-marked non-negotiable prime directive stating that a public
+1. [ ] `AGENTS.md` contains a clearly-marked non-negotiable prime directive stating that a public
        component/API change must update its docs page, props table, and live example in the same
        change, and that adding a public export requires its `components.json` row + page + example.
 2. [ ] `yarn check:docs-site` exits **non-zero** when: (a) a public export is added to a barrel with no

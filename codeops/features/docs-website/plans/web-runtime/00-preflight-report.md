@@ -127,7 +127,7 @@ Verified against the real code:
 
 **Where**: `99-execution-plan.md` Step 5.3.1: "`yarn workspace @jsvision/examples build`/`demo:web` still boots."
 
-**Reality**: `packages/examples/package.json` has **no `build` script** (CLAUDE.md: "examples don't build"). `yarn workspace @jsvision/examples build` errors. Ties into PF-001.
+**Reality**: `packages/examples/package.json` has **no `build` script** (AGENTS.md: "examples don't build"). `yarn workspace @jsvision/examples build` errors. Ties into PF-001.
 
 **Recommendation**: Drop the `build` clause; the check is that `demo:web` still boots (and optionally `yarn workspace @jsvision/examples typecheck`, which covers the *other* demos but not `web-xterm` — see PF-001).
 
