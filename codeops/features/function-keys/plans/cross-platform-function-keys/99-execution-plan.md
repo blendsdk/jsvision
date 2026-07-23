@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-23 17:27
-> **Progress**: 6/26 tasks (23%)
+> **Last Updated**: 2026-07-23 17:39
+> **Progress**: 13/26 tasks (50%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -86,26 +86,31 @@ chronology) was resolved by recording the actual roadmap update time.
 
 ## Phase 2: UI Fallback Policy
 
+> **Phase baseline tree**: `ff10e01f86932f83d398d1b7c682cd2adef7b57b`
+> **Expected modification set**: UI function-key specification/implementation tests, event policy,
+> event-loop public types and exports, application options, canonical/plugin-generated
+> documentation, execution state, traceability, and roadmap artifacts.
+
 ### Step 2.1: Specification Tests
 
 **Reference**: `03-02` · ST-9…ST-14 · AR-2, AR-3, AR-4, AR-7
 **Objective**: Define the complete mapping, opt-out, and routing order before implementation.
 
-- [ ] 2.1.1 [spec-author] Add ST-9…ST-14 mapping and UI integration oracles — `packages/ui/test/function-key-fallback.spec.test.ts`
-- [ ] 2.1.2 Run the focused UI test and confirm alias expectations fail (red phase)
+- [x] 2.1.1 [spec-author] Add ST-9…ST-14 mapping and UI integration oracles — `packages/ui/test/function-key-fallback.spec.test.ts` ✅ (completed: 2026-07-23 17:39)
+- [x] 2.1.2 Run the focused UI test and confirm alias expectations fail (red phase) ✅ (completed: 2026-07-23 17:39)
 
 ### Step 2.2: Implementation
 
 **Reference**: `03-02 §Public Contract` and `§Pure Normalizer` · AR-2, AR-7
 
-- [ ] 2.2.1 Add the typed policy and pure allowlist normalizer — `packages/ui/src/event/function-key-fallback.ts`
-- [ ] 2.2.2 Keep bare event loops default-off, narrow key events before normalization, normalize once before routing, and expose the option/type — `packages/ui/src/event/event-loop.ts`, `packages/ui/src/event/types.ts`, `packages/ui/src/event/index.ts`
-- [ ] 2.2.3 Default application shells to number-row fallback and document the opt-out — `packages/ui/src/app/application.ts`
-- [ ] 2.2.4 Run focused UI specification tests and make ST-9…ST-14 green without changing their expectations
+- [x] 2.2.1 Add the typed policy and pure allowlist normalizer — `packages/ui/src/event/function-key-fallback.ts` ✅ (completed: 2026-07-23 17:39)
+- [x] 2.2.2 Keep bare event loops default-off, narrow key events before normalization, normalize once before routing, and expose the option/type — `packages/ui/src/event/event-loop.ts`, `packages/ui/src/event/types.ts`, `packages/ui/src/event/index.ts` ✅ (completed: 2026-07-23 17:39)
+- [x] 2.2.3 Default application shells to number-row fallback and document the opt-out — `packages/ui/src/app/application.ts` ✅ (completed: 2026-07-23 17:42)
+- [x] 2.2.4 Run focused UI specification tests and make ST-9…ST-14 green without changing their expectations ✅ (completed: 2026-07-23 17:42)
 
 ### Step 2.3: Implementation Tests and Hardening
 
-- [ ] 2.3.1 Add identity, modifier-collision, and dispatch-order edges — `packages/ui/test/function-key-fallback.impl.test.ts`
+- [x] 2.3.1 Add identity, modifier-collision, and dispatch-order edges — `packages/ui/test/function-key-fallback.impl.test.ts` ✅ (completed: 2026-07-23 17:42)
 
 **Deliverables**:
 

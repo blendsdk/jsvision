@@ -222,7 +222,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:80ff2037bcbe98c7a8b5ef73882f31823ae54dfc6adb98e5714b936876775d57",
+          "revision": "sha256:bba1550d2a8b62d45d15d7fd4027c7d6c172fcf1181d948095f8d359134cafea",
           "upstream": "function-keys/TASK-EXEC",
           "validatedAt": "2026-07-23T14:45:00Z"
         }
@@ -253,7 +253,7 @@
         "Execution entry: codeops/features/function-keys/plans/cross-platform-function-keys/99-execution-plan.md"
       ],
       "id": "TASK-EXEC",
-      "revision": "sha256:80ff2037bcbe98c7a8b5ef73882f31823ae54dfc6adb98e5714b936876775d57",
+      "revision": "sha256:bba1550d2a8b62d45d15d7fd4027c7d6c172fcf1181d948095f8d359134cafea",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -272,7 +272,7 @@
     {
       "edges": [],
       "id": "DEC-CONTRACT",
-      "revision": "sha256:3bc56a21fa3deed34decdd917b0ad6ecef615fc5e5c132f9c4ce955b23aa6f51",
+      "revision": "sha256:6f1f8e3d7167ce222415593de5133e5a59593066c5c73f938d83ab7accb4dfe7",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -335,7 +335,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:80ff2037bcbe98c7a8b5ef73882f31823ae54dfc6adb98e5714b936876775d57",
+          "revision": "sha256:bba1550d2a8b62d45d15d7fd4027c7d6c172fcf1181d948095f8d359134cafea",
           "upstream": "function-keys/TASK-EXEC",
           "validatedAt": "2026-07-23T14:45:00Z"
         }
