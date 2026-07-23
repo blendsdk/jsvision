@@ -8,7 +8,7 @@
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
-import { lintText, lintPaths } from '../../../scripts/jsvision-doctor.mjs';
+import { lintText, lintPaths } from '../../../plugins/jsvision-plugin/skills/jsvision-doctor/jsvision-doctor.mjs';
 
 const rules = (src: string): string[] => lintText(src).map((f) => f.rule);
 

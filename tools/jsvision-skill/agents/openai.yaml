@@ -1,0 +1,7 @@
+interface:
+  display_name: 'JSVision Application Builder'
+  short_description: 'Build professional terminal applications'
+  default_prompt: 'Use $jsvision to design, build, render, and verify a professional JSVision application.'
+
+policy:
+  allow_implicit_invocation: true

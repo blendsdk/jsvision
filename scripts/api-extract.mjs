@@ -1,4 +1,4 @@
-// Public-API extractor for the jsvision Claude Code plugin's generated API reference.
+// Public-API extractor for the shared JSVision skill's generated API reference.
 //
 // Walks a package barrel with the TypeScript checker (the same mechanism as barrel-exports.mjs and
 // check-plugin.mjs) and returns a compact, agent-optimized digest of every public export: its kind,
@@ -19,6 +19,37 @@ const COMPILER_OPTIONS = {
   noEmit: true,
   skipLibCheck: true,
 };
+
+/**
+ * Compare API names by UTF-16 code unit so generated output is identical on every locale.
+ *
+ * @param {string} left First export name.
+ * @param {string} right Second export name.
+ * @returns {number} Negative, zero, or positive according to deterministic lexical order.
+ * @example
+ * ['a', 'A'].sort(compareApiNames); // → ['A', 'a']
+ */
+export function compareApiNames(left, right) {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
+}
+
+/**
+ * Replace TypeScript's absolute workspace declaration imports with stable public package imports.
+ *
+ * @param {string} text Type text emitted by the TypeScript checker.
+ * @returns {string} Portable type text that does not expose the generator checkout path.
+ * @example
+ * normalizeWorkspaceImports('import("/repo/packages/ui/dist/index").Keymap');
+ * // → 'import("@jsvision/ui").Keymap'
+ */
+export function normalizeWorkspaceImports(text) {
+  return text.replace(
+    /import\((["'])[^"']*[/\\]packages[/\\]([^/\\]+)[/\\]dist[/\\]index\1\)/g,
+    'import("@jsvision/$2")',
+  );
+}
 
 /** A symbol's whole JSDoc body collapsed to one line (for a compact member comment). */
 function fullComment(sym, checker) {
@@ -171,9 +202,11 @@ function digestExport(exportName, sym, checker, rootDir) {
   if (ts.isVariableDeclaration(decl)) {
     const t =
       decl.type?.getText() ??
-      checker
-        .typeToString(checker.getTypeOfSymbolAtLocation(sym, decl), decl, ts.TypeFormatFlags.NoTruncation)
-        .replace(/\s+/g, ' ');
+      normalizeWorkspaceImports(
+        checker
+          .typeToString(checker.getTypeOfSymbolAtLocation(sym, decl), decl, ts.TypeFormatFlags.NoTruncation)
+          .replace(/\s+/g, ' '),
+      );
     return { ...base, kind: 'const', sig: `${exportName}: ${t}` };
   }
   if (ts.isEnumDeclaration(decl)) {
@@ -208,5 +241,5 @@ export function extractPackageApi(entryFilePath, rootDir = process.cwd()) {
     if (sym.getJsDocTags(checker).some((t) => t.name === 'internal')) continue;
     out.push(digestExport(exported.getName(), sym, checker, rootDir));
   }
-  return out.sort((a, b) => a.name.localeCompare(b.name));
+  return out.sort((a, b) => compareApiNames(a.name, b.name));
 }

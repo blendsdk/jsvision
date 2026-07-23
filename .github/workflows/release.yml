@@ -79,6 +79,11 @@ jobs:
       - name: Sync package VERSION constants to the bumped manifests
         run: node scripts/sync-package-versions.mjs
 
+      - name: Sync the Codex plugin and install docs to the bumped version
+        run: |
+          yarn plugin:version
+          yarn plugin:check
+
       - name: Rebuild so published dist carries the new version
         run: yarn build
 

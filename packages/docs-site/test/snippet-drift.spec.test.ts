@@ -19,7 +19,7 @@ const REPO_ROOT = join(PKG_ROOT, '..', '..');
  * it and no other test reads it, so a snippet there can teach a dead idiom indefinitely — which is
  * exactly what happened to it once already.
  */
-const PLUGIN_SKILLS = join(REPO_ROOT, 'tools', 'claude-plugin', 'skills');
+const PLUGIN_SKILLS = join(REPO_ROOT, 'plugins', 'jsvision-plugin', 'skills');
 /**
  * The scaffolder's app templates. These are the highest-stakes teaching surface in the repo: their
  * rendered output is the first file a new user ever opens. A `.tmpl` is not TypeScript, so no
@@ -27,7 +27,7 @@ const PLUGIN_SKILLS = join(REPO_ROOT, 'tools', 'claude-plugin', 'skills');
  * but the other templates and the prose beside them are still unchecked, which is how a banned
  * idiom lived in all four starters undetected.
  */
-const PLUGIN_TEMPLATES = join(REPO_ROOT, 'tools', 'claude-plugin', 'templates');
+const PLUGIN_TEMPLATES = join(REPO_ROOT, 'plugins', 'jsvision-plugin', 'templates');
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'cache', '.git']);
 
 /**
