@@ -1,21 +1,21 @@
-# Release Notes — v1.0.0
+# Release Notes — v1.1.0
 
-**Released**: 2026-07-22
+**Released**: 2026-07-23
 
-We are excited to announce the release of version 1.0.0 of the JSVision software suite. This latest version brings numerous enhancements and improvements across various packages, designed to make your experience smoother and more efficient.
+We are excited to announce the release of version 1.1.0, bringing improved features and enhanced usability to our software. This update focuses on making our documentation and examples more helpful, as well as simplifying the integration process for new users. 
 
-Key Highlights:
+Highlights of the changes include:
 
-1. **Improved User Interfaces**: The visual components of our applications have been upgraded. Users can now expect a more responsive and visually appealing layout, ensuring a better overall experience when interacting with forms, data grids, and thematic elements.
+1. **New Marketplace Integration**: We've added a portable integration with the Codex marketplace, allowing users to easily access additional resources and tools that complement their experience with our software.
 
-2. **Enhanced Documentation**: We have refocused and expanded our documentation site, making it easier to find the information you need. New guides and examples have been added, benefiting both new and experienced users.
+2. **Updated Documentation**: We’ve revamped our documentation by writing a new "Install & Packages" guide, which simplifies the installation process for newcomers. Two outdated reference guides have been retired to ensure our users have the most relevant information at their fingertips.
 
-3. **Validation and Data Handling**: We’ve introduced improved validation mechanisms within forms and data grids. This ensures greater accuracy when inputting information and better management of data, providing users with more reliable feedback.
+3. **Typechecking Enhancements**: Starters now come with enhanced typechecking capabilities, ensuring that the templates generated are accurate and functional right from the start. This minimizes errors and helps users get up and running smoothly.
 
-4. **New Features for Customization**: Users can now personalize their data grids and forms more efficiently with newly integrated features for adjusting layouts and options, which cater to specific needs and preferences.
+4. **Distinguished Guides**: The data-grid guide now has a unique title separate from the component page, making it easier for users to find the information they need without confusion.
 
-5. **Performance Improvements**: This version includes various performance enhancements to make the software faster and more efficient, resulting in quicker load times and smoother interactions.
+5. **Refined Example Projects**: Our example projects have been updated to eliminate duplicate elements and ensure consistent imports across the board. This offers a clearer path for developers looking to implement features based on our examples.
 
-6. **Better Accessibility**: We have made strides in ensuring that our applications are more accessible, catering to a larger group of users and enhancing usability across different platforms.
+6. **Simplified Dependencies**: We have streamlined our web application by removing unnecessary dependencies, making the overall experience more efficient.
 
-Overall, version 1.0.0 focuses on delivering a more intuitive user experience and empowering users with advanced functionalities. We hope you enjoy these enhancements and look forward to your feedback!
+These enhancements not only improve usability but also help users to maximize their productivity with our tools. We look forward to your feedback on these updates!
