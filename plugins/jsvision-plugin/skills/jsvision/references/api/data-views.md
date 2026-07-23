@@ -6,22 +6,6 @@ The `DataGrid` table and the `Tree` outline.
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
-## alignCell
-
-Clip `text` to exactly `width` cells (width-aware — never splits a wide/CJK glyph), then pad to the requested alignment: `left` pads on the right, `right` pads on the left, `center` splits the remainder (an odd extra cell goes to the right).
-
-```ts
-alignCell(text: string, width: number, align: ColumnAlign, measure: (s: string) => number): string
-```
-
-## apportionColumns
-
-Apportion per-column integer widths and absolute start columns for a viewport — the O(cols) per-draw pass.
-
-```ts
-apportionColumns<T>(columns: Column<T>[], autoWidths: (number | null)[], viewportWidth: number, dividers = true): ColumnGeometry
-```
-
 ## Column
 
 A single heterogeneous column of a `DataGrid<T>` — a title, a field accessor, a sizing rule, and optional alignment / typed comparator / min-max clamps.
@@ -157,22 +141,6 @@ How a Tree draws its per-row expand/collapse marker. - `'tv'` — the default: a
 type MarkerStyle = 'tv' | 'brackets' | 'triangle'
 ```
 
-## measureAutoWidths
-
-Pre-measure `auto` columns to a fixed cell width across ALL current rows.
-
-```ts
-measureAutoWidths<T>(columns: Column<T>[], rows: T[], measure: (s: string) => number): (number | null)[]
-```
-
-## sortRows
-
-Produce a new display ordering of `rows` by column + direction.
-
-```ts
-sortRows<T>(rows: T[], columns: Column<T>[], sort: SortState): T[]
-```
-
 ## SortState
 
 The active sort: a column index + direction, or `null` for source order.
@@ -228,4 +196,36 @@ interface TreeOptions<T> {
   guides?: boolean;   // Draw the `│├└─` connectors (default true); false = flat indent, markers unchanged.
   markerStyle?: MarkerStyle;   // The expand-marker style (default `'tv'` — a faithful single `+`/`─`). `'brackets'` draws `[+]`/`[-]` (pure ASCII, the most legible); `'triangle'` draws `▸`/`▾` and falls back to `'brackets'` on a terminal without Unicode. Only the marker column changes — indentation and connectors are identical across styles.
 }
+```
+
+## alignCell
+
+Clip `text` to exactly `width` cells (width-aware — never splits a wide/CJK glyph), then pad to the requested alignment: `left` pads on the right, `right` pads on the left, `center` splits the remainder (an odd extra cell goes to the right).
+
+```ts
+alignCell(text: string, width: number, align: ColumnAlign, measure: (s: string) => number): string
+```
+
+## apportionColumns
+
+Apportion per-column integer widths and absolute start columns for a viewport — the O(cols) per-draw pass.
+
+```ts
+apportionColumns<T>(columns: Column<T>[], autoWidths: (number | null)[], viewportWidth: number, dividers = true): ColumnGeometry
+```
+
+## measureAutoWidths
+
+Pre-measure `auto` columns to a fixed cell width across ALL current rows.
+
+```ts
+measureAutoWidths<T>(columns: Column<T>[], rows: T[], measure: (s: string) => number): (number | null)[]
+```
+
+## sortRows
+
+Produce a new display ordering of `rows` by column + direction.
+
+```ts
+sortRows<T>(rows: T[], columns: Column<T>[], sort: SortState): T[]
 ```

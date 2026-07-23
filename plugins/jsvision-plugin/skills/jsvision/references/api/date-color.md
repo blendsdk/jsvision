@@ -6,22 +6,6 @@ Calendars, date pickers, color swatches, and color pickers.
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
-## addDays
-
-Add `n` days (may be negative); rolls across month and year boundaries.
-
-```ts
-addDays(date: CalendarDate, n: number): CalendarDate
-```
-
-## addMonths
-
-Add `n` months (may be negative); the day is **clamped** to the target month's length, so the result is always a valid date.
-
-```ts
-addMonths(date: CalendarDate, n: number): CalendarDate
-```
-
 ## Calendar
 
 A focusable month-grid day picker.
@@ -127,14 +111,6 @@ interface ColorSwatchOptions {
 }
 ```
 
-## compare
-
-Order two dates: -1 if a<b, 0 if equal, +1 if a>b (compared by year, then month, then day).
-
-```ts
-compare(a: CalendarDate, b: CalendarDate): -1 | 0 | 1
-```
-
 ## DateFormat
 
 The supported field formats (digit reorder only; default ISO).
@@ -171,6 +147,30 @@ interface DatePickerOptions {
   density?: CalendarDensity;   // Density of the dropdown `Calendar` (default `'comfortable'`; the popup sizes to it).
   placeholder?: string | Signal<string>;   // A muted hint shown in the field while it is empty; forwarded to the inner text field.
 }
+```
+
+## addDays
+
+Add `n` days (may be negative); rolls across month and year boundaries.
+
+```ts
+addDays(date: CalendarDate, n: number): CalendarDate
+```
+
+## addMonths
+
+Add `n` months (may be negative); the day is **clamped** to the target month's length, so the result is always a valid date.
+
+```ts
+addMonths(date: CalendarDate, n: number): CalendarDate
+```
+
+## compare
+
+Order two dates: -1 if a<b, 0 if equal, +1 if a>b (compared by year, then month, then day).
+
+```ts
+compare(a: CalendarDate, b: CalendarDate): -1 | 0 | 1
 ```
 
 ## dayOfWeek

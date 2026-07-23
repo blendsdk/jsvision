@@ -14,7 +14,9 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { extractPackageApi } from './api-extract.mjs';
+import { compareApiNames, extractPackageApi } from './api-extract.mjs';
+
+export { compareApiNames } from './api-extract.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const API_DIR = join('tools', 'jsvision-skill', 'references', 'api');
@@ -182,7 +184,7 @@ const BANNER =
 
 /** Render a full category page from its (name-sorted) export digests. */
 export function renderCategory(category, exportsInCat) {
-  const sorted = [...exportsInCat].sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = [...exportsInCat].sort((a, b) => compareApiNames(a.name, b.name));
   const head = [
     BANNER,
     `# API — ${category.title}`,
@@ -242,7 +244,7 @@ export function generateApiDocs(rootDir = ROOT) {
     const inCat = all.filter((e) => e.category === category.slug);
     if (inCat.length > 0) files[`${category.slug}.md`] = renderCategory(category, inCat);
   }
-  return { files, names: all.map((e) => e.name).sort((a, b) => a.localeCompare(b)) };
+  return { files, names: all.map((e) => e.name).sort(compareApiNames) };
 }
 
 /**
@@ -264,6 +266,29 @@ export function writeApiDocs(rootDir = ROOT) {
 }
 
 /**
+ * Describe the first changed line between a committed file and freshly generated content.
+ *
+ * @param {string} committed Existing generated file.
+ * @param {string} generated Fresh generator output.
+ * @returns {string} Compact line-level difference suitable for CI output.
+ * @example
+ * firstLineDifference('old\n', 'new\n'); // → 'line 1: committed "old"; generated "new"'
+ */
+export function firstLineDifference(committed, generated) {
+  const committedLines = committed.split('\n');
+  const generatedLines = generated.split('\n');
+  const length = Math.max(committedLines.length, generatedLines.length);
+  for (let index = 0; index < length; index += 1) {
+    if (committedLines[index] !== generatedLines[index]) {
+      const existing = JSON.stringify(committedLines[index] ?? '<EOF>');
+      const fresh = JSON.stringify(generatedLines[index] ?? '<EOF>');
+      return `line ${index + 1}: committed ${existing}; generated ${fresh}`;
+    }
+  }
+  return 'contents differ';
+}
+
+/**
  * Compare the committed API reference on disk against a fresh generation. Reports any file whose
  * content differs, is missing, or is present on disk but no longer generated (stale).
  *
@@ -278,8 +303,13 @@ export function checkApiDrift(rootDir = ROOT) {
     const path = join(dir, rel);
     if (!existsSync(path)) {
       errors.push(`api/${rel}: missing (run \`yarn plugin:update\`)`);
-    } else if (readFileSync(path, 'utf8') !== content) {
-      errors.push(`api/${rel}: out of date (run \`yarn plugin:update\`)`);
+    } else {
+      const committed = readFileSync(path, 'utf8');
+      if (committed !== content) {
+        errors.push(
+          `api/${rel}: out of date — ${firstLineDifference(committed, content)} (run \`yarn plugin:update\`)`,
+        );
+      }
     }
   }
   return errors;

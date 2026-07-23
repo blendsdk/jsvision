@@ -6,14 +6,6 @@ Typed columns, editing, sorting, filtering, selection, variants, and windowing.
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
-## absoluteRect
-
-A mounted view's absolute top-left, by summing parent-relative `bounds.x`/`y` up the tree (the root bounds are absolute).
-
-```ts
-absoluteRect(view: View): { x: number; y: number }
-```
-
 ## AggregateFn
 
 The built-in reductions a footer aggregate can apply to a column.
@@ -96,14 +88,6 @@ interface CellEditorSpec {
 }
 ```
 
-## cellKey
-
-A stable cell key joining the row key and column id with a NUL byte.
-
-```ts
-const cellKey: (rowKey: string | number, columnId: string) => string
-```
-
 ## CellMove
 
 Where the cursor lands next, or `'exit'` at the grid edge.
@@ -155,30 +139,6 @@ Value-driven cell colour.
 type CellStyle<T, V> = (value: V, row: T) => ThemeRoleName | Style
 ```
 
-## checkboxGlyph
-
-The per-row checkbox glyph for a selection state.
-
-```ts
-checkboxGlyph(selected: boolean): string
-```
-
-## clampWidth
-
-Clamp a requested column width to `[minWidth ?? DEFAULT_MIN_WIDTH, maxWidth]`.
-
-```ts
-clampWidth(requested: number, minWidth?: number, maxWidth?: number): number
-```
-
-## column
-
-Author a typed column.
-
-```ts
-column<T, V>(col: GridColumn<T, V>): GridColumn<T>
-```
-
 ## ColumnAlign
 
 Horizontal alignment of a cell's text within its column width.
@@ -210,63 +170,6 @@ How a column is sized: an exact cell count, an `fr` flex weight, or `auto` (meas
 
 ```ts
 type ColumnWidth = number | `${number}fr` | 'auto'
-```
-
-## commitCell
-
-Apply a cell edit immediately, run the optional `beforeSave` then `onCommit` veto gates, and revert on veto.
-
-```ts
-commitCell<T, V>(args: {
-  row: T;
-  columnId: string;
-  rowKey: string | number;
-  previous: V;
-  next: V;
-  apply: (row: T, columnId: string, v: V) => void;
-  beforeSave?: BeforeSave<T>;
-  onCommit?: OnCommit<T>;
-}): Promise<{ committed: boolean; value: V }>
-```
-
-## computeDistinct
-
-The sorted distinct formatted labels for a column over a row snapshot — the grid-owned client distinct enumeration.
-
-```ts
-computeDistinct<T>(rows: readonly T[], col: GridColumn<T>): string[]
-```
-
-## createCellEditor
-
-Build the editor view for a cell, two-way bound to `field`.
-
-```ts
-createCellEditor<T>(column: GridColumn<T>, field: Signal<string>, host: CellEditorHost, row?: T): View | null
-```
-
-## createDirtyRegistry
-
-Create a reactive dirty registry.
-
-```ts
-createDirtyRegistry(): DirtyRegistry
-```
-
-## createErrorRegistry
-
-Create a reactive ErrorRegistry.
-
-```ts
-createErrorRegistry(): ErrorRegistry
-```
-
-## createMemoryVariantStore
-
-A reference in-memory VariantStore — an array of variants plus an optional default name.
-
-```ts
-createMemoryVariantStore(initial?: readonly GridVariant[]): VariantStore
 ```
 
 ## CurrencyFormatOptions
@@ -564,14 +467,6 @@ interface FilterPopupContext<T> {
 }
 ```
 
-## filterRows
-
-Keep the rows that satisfy EVERY active column filter (they combine with AND).
-
-```ts
-filterRows<T>(rows: readonly T[], model: FilterModel, columns: ReadonlyMap<string, GridColumn<T>>): T[]
-```
-
 ## FilterType
 
 The filter type a column presents in the condition popup — its operator family.
@@ -580,36 +475,12 @@ The filter type a column presents in the condition popup — its operator family
 type FilterType = 'text' | 'number' | 'date'
 ```
 
-## fmt
-
-The column-formatter registry.
-
-```ts
-const fmt: { number: (o?: NumberFormatOptions) => InvertibleFormat<number>; currency: (o: CurrencyFormatOptions) => InvertibleFormat<number>; percent: (o?: NumberFormatOptions) => InvertibleFormat<number>; date: (o?: { locale?: string; style?: DateOnlyStyle; }) => DisplayFormat<CalendarDate>; datetime: (o?: { locale?: string; dateStyle?: Intl.DateTimeFormatOptions["dateStyle"]; timeStyle?: Intl.DateTimeFormatOptions["timeStyle"]; }) => DisplayFormat<Date>; boolean: (labels?: { true: string; false: string; }) => DisplayFormat<boolean>; enumLabel: (labels: Record<string, string>) => DisplayFormat<string>; lookupLabel: (items: readonly LookupItem[]) => DisplayFormat<string>; }
-```
-
-## foldAggregate
-
-Reduce `values` (one per displayed row — the column's typed `value(row)`) by `fn`.
-
-```ts
-foldAggregate(fn: AggregateFn, values: Iterable<unknown>): number | undefined
-```
-
 ## FooterBand
 
 A single-row band painting one panel's footer aggregate cells, aligned to their columns.
 
 ```ts
 new FooterBand<T>(cfg: FooterBandConfig<T>)   // extends View
-```
-
-## formatAggregate
-
-Render an aggregate cell's text: `"[label ][format(v) ?? String(v)]"`, with a trailing `" (loaded)"` honesty qualifier appended when `partial` is true and the value is present.
-
-```ts
-formatAggregate(spec: AggregateSpec, v: number | undefined, partial: boolean): string
 ```
 
 ## FreezePartition
@@ -634,27 +505,6 @@ interface FreezeSpec {
   freezeRight?: string[];   // Column ids to pin to the right panel.
   freeze?: number;   // Shorthand: pin the first N visible columns to the left (ignored when `freezeLeft` is set).
 }
-```
-
-## fromReactiveRows
-
-Build a reactive, **write-through** GridDataSource — the twin of fromRows for rows that are a *function* of other state (e.g. a master grid's focused record).
-
-```ts
-fromReactiveRows<T>(read: () => readonly T[], opts: {
-    rowKey: (row: T) => string | number;
-    insert?: (row: T, at?: number) => void;
-    remove?: (keys: readonly Key[]) => void;
-    complete?: () => boolean;
-  }): GridDataSource<T>
-```
-
-## fromRows
-
-Build an in-memory data source over a reactive rows signal.
-
-```ts
-fromRows<T>(rows: Signal<T[]>, opts: { rowKey: (row: T) => string | number }): GridDataSource<T>
 ```
 
 ## GridAction
@@ -763,14 +613,6 @@ interface GridFooter {
 }
 ```
 
-## gridKeymap
-
-The loop-keymap fragment binding `Tab`/`Shift+Tab` to the grid-navigation commands.
-
-```ts
-const gridKeymap: import("/home/gevik/workdir/github/jsvision/bugfix/jsvision-update-skill/packages/ui/dist/index").Keymap
-```
-
 ## GridKeymap
 
 A chord→action map.
@@ -817,30 +659,6 @@ interface GridVariantColumn {
 }
 ```
 
-## gutterLabel
-
-The right-aligned 1-based display number for a body row, padded to `width` with a trailing gap cell so the number never touches the first data column.
-
-```ts
-gutterLabel(index0: number, width: number): string
-```
-
-## headerCheckboxGlyph
-
-The tri-state header-checkbox glyph over the displayed rows.
-
-```ts
-headerCheckboxGlyph(state: TriState): string
-```
-
-## installGridNavigation
-
-Register the `Tab`/`Shift+Tab` command handlers for one or more grids and return an uninstaller.
-
-```ts
-installGridNavigation(loop: EventLoop, grids: NavGrid | readonly NavGrid[]): () => void
-```
-
 ## InvertibleFormat
 
 A formatter that also round-trips: the display string AND its matched inverse.
@@ -850,30 +668,6 @@ interface InvertibleFormat<V> {
   format: (value: V, row: unknown) => string;   // Formats a value for display.
   parse: (text: string) => V | ParseFailed;   // Inverse of `format`; returns PARSE_FAILED for a non-parseable string (never `NaN`).
 }
-```
-
-## isAggregateFn
-
-Type guard: whether `fn` names a known AggregateFn.
-
-```ts
-isAggregateFn(fn: string): fn is AggregateFn
-```
-
-## isEditable
-
-Whether a column can be edited: it round-trips text through both `parse` (text → value) and `set` (value → record).
-
-```ts
-isEditable<T>(col: GridColumn<T>): boolean
-```
-
-## isWindowed
-
-Whether a source is windowed — i.e. it drives its own loading through `ensureRange`, so the grid must take the lazy read path (windowedView) instead of materializing every row.
-
-```ts
-isWindowed<T>(source: GridDataSource<T>): boolean
 ```
 
 ## Key
@@ -916,38 +710,6 @@ A lookup editor's rows: a static array, or an async provider invoked once when t
 type LookupProvider = readonly LookupItem[] | (() => Promise<LookupItem[]>)
 ```
 
-## masterDetail
-
-Link a detail grid to `master`'s focused record.
-
-```ts
-masterDetail<M, D>(master: EditableDataGrid<M>, buildDetail: (focused: () => M | undefined) => EditableDataGrid<D>): { detail: EditableDataGrid<D>; dispose: () => void }
-```
-
-## mergeKeymap
-
-Merge a caller's keymap over DEFAULT_KEYMAP (the caller wins per-chord) and return a fresh, frozen table safe to compile and share.
-
-```ts
-mergeKeymap(user?: GridKeymap): GridKeymap
-```
-
-## mountCellOverlay
-
-Mount `view` over a cell: place it on the cell derived from a body-local cell rect (correct even when the grid is nested far from the screen origin — the host's own offset is not double-counted), focus it through the loop seam, and return a disposer that removes the view and disposes its reactive scope (so its binding effects do not leak after the overlay closes).
-
-```ts
-mountCellOverlay(args: {
-  host: Group;
-  loop: { focusView(v: View): void };
-  rect: CellRect;
-  origin: { x: number; y: number };
-  view?: View;
-  build?: () => View | null;
-  clamp?: { width: number; height: number };
-}): () => void
-```
-
 ## NavGrid
 
 The grid capabilities installGridNavigation drives.
@@ -960,14 +722,6 @@ interface NavGrid {
   prevCell(): Promise<'moved' | 'exit'>;   // Retreat the cursor by one cell; `'exit'` at the grid start.
   rows: View;   // The focusable body view (re-focused after a `'moved'` result).
 }
-```
-
-## nextCellIndex
-
-The cell one step forward (left-to-right, top-to-bottom) from `(col, row)` in a `cols × rows` grid, or `'exit'` past the last cell of the last row (and for an empty grid).
-
-```ts
-nextCellIndex(col: number, row: number, cols: number, rows: number): CellMove
 ```
 
 ## NumberFormatOptions
@@ -990,14 +744,6 @@ A per-cell veto sink.
 type OnCommit<T> = (change: CellCommit<T>) => boolean | Promise<boolean>
 ```
 
-## overPinnedIds
-
-The frozen column ids to un-pin so the center panel keeps at least one cell — i.e. the columns that make the total frozen width meet or exceed the viewport.
-
-```ts
-overPinnedIds(part: FreezePartition, widthOf: (id: string) => number, viewportWidth: number): string[]
-```
-
 ## PARSE_FAILED
 
 The sentinel an inverse `parse` returns for a string it cannot convert — distinct from a valid value and from `NaN`, so the commit path can reject an unparseable edit instead of writing garbage.
@@ -1012,22 +758,6 @@ The type of the PARSE_FAILED sentinel — used to widen a column's `parse` retur
 
 ```ts
 type ParseFailed = typeof PARSE_FAILED
-```
-
-## partition
-
-Partition the visible ids into left / center / right panels from a freeze spec.
-
-```ts
-partition(visible: readonly string[], freeze: FreezeSpec): FreezePartition
-```
-
-## personalizeGrid
-
-Open the "Personalize columns" modal over `grid` and resolve once the user closes it.
-
-```ts
-personalizeGrid<T>(grid: EditableDataGrid<T>, opts: PersonalizeOptions): Promise<PersonalizeResult>
 ```
 
 ## PersonalizeOptions
@@ -1050,22 +780,6 @@ The outcome of personalizeGrid: `ok` is `true` only when the user committed with
 interface PersonalizeResult {
   ok: boolean;   // `true` when OK committed the pending layout; `false` on Cancel/Esc (the grid is untouched).
 }
-```
-
-## prefixWidth
-
-The total synthetic-prefix width in cells (0 when neither affordance is enabled).
-
-```ts
-prefixWidth(p: SyntheticPrefix): number
-```
-
-## prevCellIndex
-
-The cell one step backward from `(col, row)` — the mirror of nextCellIndex.
-
-```ts
-prevCellIndex(col: number, row: number, cols: number, rows: number): CellMove
 ```
 
 ## QuickFilterRow
@@ -1107,22 +821,6 @@ interface RenderCell<T, V> {
 }
 ```
 
-## reorderWithinPanel
-
-Move a column within its own panel (a reorder).
-
-```ts
-reorderWithinPanel(visible: readonly string[], freeze: FreezeSpec, from: number, to: number): string[]
-```
-
-## resolveGridAction
-
-Resolve one key event to a GridAction against a merged keymap, or `undefined` when the chord is unmapped (the body dispatch then applies its printable/base fallbacks).
-
-```ts
-resolveGridAction(ev: KeymapKeyEvent, keymap: GridKeymap): GridAction | undefined
-```
-
 ## RowValidation
 
 The result of a per-row cross-field `validateRow` check: `ok` accepts the row; on `!ok` the row-leave is blocked, `message` is surfaced, and the cursor refocuses the column named by `field` (falling back to the current column when `field` is absent or unknown).
@@ -1135,28 +833,12 @@ interface RowValidation {
 }
 ```
 
-## selectAll
-
-Select every displayed row — the header checkbox's select-all target.
-
-```ts
-selectAll(displayKeys: readonly Key[]): ReadonlySet<Key>
-```
-
 ## SelectionMode
 
 How a pick composes with the existing selection.
 
 ```ts
 type SelectionMode = 'single' | 'multi'
-```
-
-## selectRange
-
-Select the contiguous run between `anchorKey` and `toKey` **in display order**, returning a new set.
-
-```ts
-selectRange(current: ReadonlySet<Key>, anchorKey: Key, toKey: Key, displayKeys: readonly Key[], mode: SelectionMode): ReadonlySet<Key>
 ```
 
 ## SortDir
@@ -1214,14 +896,6 @@ interface SortKey {
 }
 ```
 
-## sortRowsMulti
-
-Ordered multi-key sort.
-
-```ts
-sortRowsMulti<T>(rows: readonly T[], keys: readonly SortKey[], columns: ReadonlyMap<string, GridColumn<T>>): T[]
-```
-
 ## SyntheticPrefix
 
 Which synthetic prefix cells are enabled, and the row count that sizes the gutter.
@@ -1232,22 +906,6 @@ interface SyntheticPrefix {
   rowNumbers: boolean;   // Show the 1-based display-number gutter (`opts.rowNumbers`).
   rowCount: number;   // The displayed row count — sizes the gutter to the widest 1-based number.
 }
-```
-
-## toggleKey
-
-Toggle `key`'s membership, returning a new set.
-
-```ts
-toggleKey(current: ReadonlySet<Key>, key: Key, mode: SelectionMode): ReadonlySet<Key>
-```
-
-## triState
-
-The header select-all tri-state over the displayed rows.
-
-```ts
-triState(current: ReadonlySet<Key>, displayKeys: readonly Key[]): TriState
 ```
 
 ## TriState
@@ -1301,6 +959,348 @@ interface VariantStore {
   setDefault(name: string): void;   // Mark the named variant the default (the store persists the name; it need not already exist).
   getDefault(): string | undefined;   // The default variant's name, or `undefined` when none is set.
 }
+```
+
+## absoluteRect
+
+A mounted view's absolute top-left, by summing parent-relative `bounds.x`/`y` up the tree (the root bounds are absolute).
+
+```ts
+absoluteRect(view: View): { x: number; y: number }
+```
+
+## cellKey
+
+A stable cell key joining the row key and column id with a NUL byte.
+
+```ts
+const cellKey: (rowKey: string | number, columnId: string) => string
+```
+
+## checkboxGlyph
+
+The per-row checkbox glyph for a selection state.
+
+```ts
+checkboxGlyph(selected: boolean): string
+```
+
+## clampWidth
+
+Clamp a requested column width to `[minWidth ?? DEFAULT_MIN_WIDTH, maxWidth]`.
+
+```ts
+clampWidth(requested: number, minWidth?: number, maxWidth?: number): number
+```
+
+## column
+
+Author a typed column.
+
+```ts
+column<T, V>(col: GridColumn<T, V>): GridColumn<T>
+```
+
+## commitCell
+
+Apply a cell edit immediately, run the optional `beforeSave` then `onCommit` veto gates, and revert on veto.
+
+```ts
+commitCell<T, V>(args: {
+  row: T;
+  columnId: string;
+  rowKey: string | number;
+  previous: V;
+  next: V;
+  apply: (row: T, columnId: string, v: V) => void;
+  beforeSave?: BeforeSave<T>;
+  onCommit?: OnCommit<T>;
+}): Promise<{ committed: boolean; value: V }>
+```
+
+## computeDistinct
+
+The sorted distinct formatted labels for a column over a row snapshot — the grid-owned client distinct enumeration.
+
+```ts
+computeDistinct<T>(rows: readonly T[], col: GridColumn<T>): string[]
+```
+
+## createCellEditor
+
+Build the editor view for a cell, two-way bound to `field`.
+
+```ts
+createCellEditor<T>(column: GridColumn<T>, field: Signal<string>, host: CellEditorHost, row?: T): View | null
+```
+
+## createDirtyRegistry
+
+Create a reactive dirty registry.
+
+```ts
+createDirtyRegistry(): DirtyRegistry
+```
+
+## createErrorRegistry
+
+Create a reactive ErrorRegistry.
+
+```ts
+createErrorRegistry(): ErrorRegistry
+```
+
+## createMemoryVariantStore
+
+A reference in-memory VariantStore — an array of variants plus an optional default name.
+
+```ts
+createMemoryVariantStore(initial?: readonly GridVariant[]): VariantStore
+```
+
+## filterRows
+
+Keep the rows that satisfy EVERY active column filter (they combine with AND).
+
+```ts
+filterRows<T>(rows: readonly T[], model: FilterModel, columns: ReadonlyMap<string, GridColumn<T>>): T[]
+```
+
+## fmt
+
+The column-formatter registry.
+
+```ts
+const fmt: { number: (o?: NumberFormatOptions) => InvertibleFormat<number>; currency: (o: CurrencyFormatOptions) => InvertibleFormat<number>; percent: (o?: NumberFormatOptions) => InvertibleFormat<number>; date: (o?: { locale?: string; style?: DateOnlyStyle; }) => DisplayFormat<CalendarDate>; datetime: (o?: { locale?: string; dateStyle?: Intl.DateTimeFormatOptions["dateStyle"]; timeStyle?: Intl.DateTimeFormatOptions["timeStyle"]; }) => DisplayFormat<Date>; boolean: (labels?: { true: string; false: string; }) => DisplayFormat<boolean>; enumLabel: (labels: Record<string, string>) => DisplayFormat<string>; lookupLabel: (items: readonly LookupItem[]) => DisplayFormat<string>; }
+```
+
+## foldAggregate
+
+Reduce `values` (one per displayed row — the column's typed `value(row)`) by `fn`.
+
+```ts
+foldAggregate(fn: AggregateFn, values: Iterable<unknown>): number | undefined
+```
+
+## formatAggregate
+
+Render an aggregate cell's text: `"[label ][format(v) ?? String(v)]"`, with a trailing `" (loaded)"` honesty qualifier appended when `partial` is true and the value is present.
+
+```ts
+formatAggregate(spec: AggregateSpec, v: number | undefined, partial: boolean): string
+```
+
+## fromReactiveRows
+
+Build a reactive, **write-through** GridDataSource — the twin of fromRows for rows that are a *function* of other state (e.g. a master grid's focused record).
+
+```ts
+fromReactiveRows<T>(read: () => readonly T[], opts: {
+    rowKey: (row: T) => string | number;
+    insert?: (row: T, at?: number) => void;
+    remove?: (keys: readonly Key[]) => void;
+    complete?: () => boolean;
+  }): GridDataSource<T>
+```
+
+## fromRows
+
+Build an in-memory data source over a reactive rows signal.
+
+```ts
+fromRows<T>(rows: Signal<T[]>, opts: { rowKey: (row: T) => string | number }): GridDataSource<T>
+```
+
+## gridKeymap
+
+The loop-keymap fragment binding `Tab`/`Shift+Tab` to the grid-navigation commands.
+
+```ts
+const gridKeymap: import("/home/gevik/workdir/github/jsvision/bugfix/jsvision-update-skill/packages/ui/dist/index").Keymap
+```
+
+## gutterLabel
+
+The right-aligned 1-based display number for a body row, padded to `width` with a trailing gap cell so the number never touches the first data column.
+
+```ts
+gutterLabel(index0: number, width: number): string
+```
+
+## headerCheckboxGlyph
+
+The tri-state header-checkbox glyph over the displayed rows.
+
+```ts
+headerCheckboxGlyph(state: TriState): string
+```
+
+## installGridNavigation
+
+Register the `Tab`/`Shift+Tab` command handlers for one or more grids and return an uninstaller.
+
+```ts
+installGridNavigation(loop: EventLoop, grids: NavGrid | readonly NavGrid[]): () => void
+```
+
+## isAggregateFn
+
+Type guard: whether `fn` names a known AggregateFn.
+
+```ts
+isAggregateFn(fn: string): fn is AggregateFn
+```
+
+## isEditable
+
+Whether a column can be edited: it round-trips text through both `parse` (text → value) and `set` (value → record).
+
+```ts
+isEditable<T>(col: GridColumn<T>): boolean
+```
+
+## isWindowed
+
+Whether a source is windowed — i.e. it drives its own loading through `ensureRange`, so the grid must take the lazy read path (windowedView) instead of materializing every row.
+
+```ts
+isWindowed<T>(source: GridDataSource<T>): boolean
+```
+
+## masterDetail
+
+Link a detail grid to `master`'s focused record.
+
+```ts
+masterDetail<M, D>(master: EditableDataGrid<M>, buildDetail: (focused: () => M | undefined) => EditableDataGrid<D>): { detail: EditableDataGrid<D>; dispose: () => void }
+```
+
+## mergeKeymap
+
+Merge a caller's keymap over DEFAULT_KEYMAP (the caller wins per-chord) and return a fresh, frozen table safe to compile and share.
+
+```ts
+mergeKeymap(user?: GridKeymap): GridKeymap
+```
+
+## mountCellOverlay
+
+Mount `view` over a cell: place it on the cell derived from a body-local cell rect (correct even when the grid is nested far from the screen origin — the host's own offset is not double-counted), focus it through the loop seam, and return a disposer that removes the view and disposes its reactive scope (so its binding effects do not leak after the overlay closes).
+
+```ts
+mountCellOverlay(args: {
+  host: Group;
+  loop: { focusView(v: View): void };
+  rect: CellRect;
+  origin: { x: number; y: number };
+  view?: View;
+  build?: () => View | null;
+  clamp?: { width: number; height: number };
+}): () => void
+```
+
+## nextCellIndex
+
+The cell one step forward (left-to-right, top-to-bottom) from `(col, row)` in a `cols × rows` grid, or `'exit'` past the last cell of the last row (and for an empty grid).
+
+```ts
+nextCellIndex(col: number, row: number, cols: number, rows: number): CellMove
+```
+
+## overPinnedIds
+
+The frozen column ids to un-pin so the center panel keeps at least one cell — i.e. the columns that make the total frozen width meet or exceed the viewport.
+
+```ts
+overPinnedIds(part: FreezePartition, widthOf: (id: string) => number, viewportWidth: number): string[]
+```
+
+## partition
+
+Partition the visible ids into left / center / right panels from a freeze spec.
+
+```ts
+partition(visible: readonly string[], freeze: FreezeSpec): FreezePartition
+```
+
+## personalizeGrid
+
+Open the "Personalize columns" modal over `grid` and resolve once the user closes it.
+
+```ts
+personalizeGrid<T>(grid: EditableDataGrid<T>, opts: PersonalizeOptions): Promise<PersonalizeResult>
+```
+
+## prefixWidth
+
+The total synthetic-prefix width in cells (0 when neither affordance is enabled).
+
+```ts
+prefixWidth(p: SyntheticPrefix): number
+```
+
+## prevCellIndex
+
+The cell one step backward from `(col, row)` — the mirror of nextCellIndex.
+
+```ts
+prevCellIndex(col: number, row: number, cols: number, rows: number): CellMove
+```
+
+## reorderWithinPanel
+
+Move a column within its own panel (a reorder).
+
+```ts
+reorderWithinPanel(visible: readonly string[], freeze: FreezeSpec, from: number, to: number): string[]
+```
+
+## resolveGridAction
+
+Resolve one key event to a GridAction against a merged keymap, or `undefined` when the chord is unmapped (the body dispatch then applies its printable/base fallbacks).
+
+```ts
+resolveGridAction(ev: KeymapKeyEvent, keymap: GridKeymap): GridAction | undefined
+```
+
+## selectAll
+
+Select every displayed row — the header checkbox's select-all target.
+
+```ts
+selectAll(displayKeys: readonly Key[]): ReadonlySet<Key>
+```
+
+## selectRange
+
+Select the contiguous run between `anchorKey` and `toKey` **in display order**, returning a new set.
+
+```ts
+selectRange(current: ReadonlySet<Key>, anchorKey: Key, toKey: Key, displayKeys: readonly Key[], mode: SelectionMode): ReadonlySet<Key>
+```
+
+## sortRowsMulti
+
+Ordered multi-key sort.
+
+```ts
+sortRowsMulti<T>(rows: readonly T[], keys: readonly SortKey[], columns: ReadonlyMap<string, GridColumn<T>>): T[]
+```
+
+## toggleKey
+
+Toggle `key`'s membership, returning a new set.
+
+```ts
+toggleKey(current: ReadonlySet<Key>, key: Key, mode: SelectionMode): ReadonlySet<Key>
+```
+
+## triState
+
+The header select-all tri-state over the displayed rows.
+
+```ts
+triState(current: ReadonlySet<Key>, displayKeys: readonly Key[]): TriState
 ```
 
 ## visibleOrder

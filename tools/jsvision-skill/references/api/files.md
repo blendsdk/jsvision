@@ -6,34 +6,6 @@ File/dir dialogs, the file-system seam, and the openers.
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
-## buildDirTree
-
-Build the directory-tree rows for a current path: the ancestor chain from the root down to it, followed by its immediate subdirectories.
-
-```ts
-buildDirTree(fs: FileSystem, currentPath: string): DirNode[]
-```
-
-## changeDir
-
-Show a modal change-directory dialog and resolve to the chosen absolute directory, or `null` if the user cancels.
-
-```ts
-changeDir(host: ExecHost, opts: ChangeDirOptions = {}): Promise<string | null>
-```
-
-## ChangeDirOptions
-
-Options for changeDir.
-
-```ts
-interface ChangeDirOptions {
-  fs?: FileSystem;   // The filesystem to read through (default nodeFileSystem).
-  directory?: string;   // The starting directory (default the filesystem's cwd).
-  title?: string;   // The dialog title.
-}
-```
-
 ## ChDirDialog
 
 The modal change-directory dialog.
@@ -70,12 +42,16 @@ interface ChDirDialogOptions {
 }
 ```
 
-## compareEntries
+## ChangeDirOptions
 
-The listing sort order, as a comparator over two entries: files A–Z, then directories A–Z, then `..` last, comparing names case-sensitively.
+Options for changeDir.
 
 ```ts
-compareEntries(a: DirEntry, b: DirEntry): number
+interface ChangeDirOptions {
+  fs?: FileSystem;   // The filesystem to read through (default nodeFileSystem).
+  directory?: string;   // The starting directory (default the filesystem's cwd).
+  title?: string;   // The dialog title.
+}
 ```
 
 ## DirEntry
@@ -132,14 +108,6 @@ interface DirNode {
   connector: string;   // The connector prefix (indent spaces + box glyphs); the drawn row is `connector + label`.
   isCurrent: boolean;   // `true` for the current directory (the deepest node in the ancestor chain).
 }
-```
-
-## errorBox
-
-Show a modal error box with a message and an OK button; resolves once the user closes it (OK or Esc).
-
-```ts
-errorBox(host: ExecHost, message: string): Promise<void>
 ```
 
 ## ExecHost
@@ -346,6 +314,76 @@ interface FileSystem {
 }
 ```
 
+## OpenFileInEditorOptions
+
+Options for openFileInEditor — every FileEditorOptions field, plus an initial rect.
+
+```ts
+interface OpenFileInEditorOptions {
+  rect?: Rect;   // The window's initial rectangle, applied before it is mounted.
+}
+```
+
+## OpenFileOptions
+
+Options for openFile.
+
+```ts
+interface OpenFileOptions {
+  fs?: FileSystem;   // The filesystem to read through (default nodeFileSystem).
+  directory?: string;   // The starting directory (default the filesystem's cwd).
+  wildcard?: string;   // The starting wildcard (default `'*.*'`).
+  save?: boolean;   // Show save mode — the OK/Replace/Clear button set — instead of open mode.
+  title?: string;   // The dialog title.
+  inputName?: string;   // The filename input label (default `'~N~ame'`; wrap the hotkey letter in tildes).
+  filter?: (entry: DirEntry) => boolean;   // An extra predicate AND-ed with the wildcard when listing files.
+}
+```
+
+## ScanOptions
+
+Options for scanDirectory.
+
+```ts
+interface ScanOptions {
+  wildcard?: string;   // The file wildcard (default `'*'`). Applied to files only; directories are always listed.
+  showHidden?: boolean;   // Include hidden (dot) entries (default `false`).
+  filter?: (entry: DirEntry) => boolean;   // An extra predicate AND-ed with the wildcard; never applied to `..`. Off by default.
+}
+```
+
+## buildDirTree
+
+Build the directory-tree rows for a current path: the ancestor chain from the root down to it, followed by its immediate subdirectories.
+
+```ts
+buildDirTree(fs: FileSystem, currentPath: string): DirNode[]
+```
+
+## changeDir
+
+Show a modal change-directory dialog and resolve to the chosen absolute directory, or `null` if the user cancels.
+
+```ts
+changeDir(host: ExecHost, opts: ChangeDirOptions = {}): Promise<string | null>
+```
+
+## compareEntries
+
+The listing sort order, as a comparator over two entries: files A–Z, then directories A–Z, then `..` last, comparing names case-sensitively.
+
+```ts
+compareEntries(a: DirEntry, b: DirEntry): number
+```
+
+## errorBox
+
+Show a modal error box with a message and an OK button; resolves once the user closes it (OK or Esc).
+
+```ts
+errorBox(host: ExecHost, message: string): Promise<void>
+```
+
 ## isWild
 
 Whether a pattern actually contains a wildcard (`*` or `?`), i.e. is not a plain literal name.
@@ -378,50 +416,12 @@ Open (or create) a file in a new editor window on the desktop.
 openFileInEditor(host: { desktop: Pick<Desktop, 'addWindow'> }, opts: OpenFileInEditorOptions): { window: EditWindow; editor: FileEditor }
 ```
 
-## OpenFileInEditorOptions
-
-Options for openFileInEditor — every FileEditorOptions field, plus an initial rect.
-
-```ts
-interface OpenFileInEditorOptions {
-  rect?: Rect;   // The window's initial rectangle, applied before it is mounted.
-}
-```
-
-## OpenFileOptions
-
-Options for openFile.
-
-```ts
-interface OpenFileOptions {
-  fs?: FileSystem;   // The filesystem to read through (default nodeFileSystem).
-  directory?: string;   // The starting directory (default the filesystem's cwd).
-  wildcard?: string;   // The starting wildcard (default `'*.*'`).
-  save?: boolean;   // Show save mode — the OK/Replace/Clear button set — instead of open mode.
-  title?: string;   // The dialog title.
-  inputName?: string;   // The filename input label (default `'~N~ame'`; wrap the hotkey letter in tildes).
-  filter?: (entry: DirEntry) => boolean;   // An extra predicate AND-ed with the wildcard when listing files.
-}
-```
-
 ## scanDirectory
 
 Scan one directory through a filesystem and return the sorted, filtered listing model.
 
 ```ts
 scanDirectory(fs: FileSystem, dirPath: string, opts: ScanOptions = {}): DirEntry[]
-```
-
-## ScanOptions
-
-Options for scanDirectory.
-
-```ts
-interface ScanOptions {
-  wildcard?: string;   // The file wildcard (default `'*'`). Applied to files only; directories are always listed.
-  showHidden?: boolean;   // Include hidden (dot) entries (default `false`).
-  filter?: (entry: DirEntry) => boolean;   // An extra predicate AND-ed with the wildcard; never applied to `..`. Off by default.
-}
 ```
 
 ## wildcardMatch

@@ -46,14 +46,6 @@ interface CheckGroupOptions {
 }
 ```
 
-## filter
-
-Build a filter validator over an allowed-character set.
-
-```ts
-filter(chars: string): Validator
-```
-
 ## Input
 
 A focusable single-line text editor.
@@ -92,14 +84,6 @@ A caption linked to a control.
 new Label(text: string, link: View)   // extends View
 ```
 
-## lookup
-
-Build an exact-membership validator over a fixed list of strings.
-
-```ts
-lookup(list: readonly string[]): Validator
-```
-
 ## MultiCheckGroup
 
 A multi-state checkbox group bound to a `number[]` signal (one state index per item).
@@ -120,14 +104,6 @@ interface MultiCheckGroupOptions {
 }
 ```
 
-## picture
-
-Create a formatted-mask validator.
-
-```ts
-picture(mask: string, autoFill = true): Validator
-```
-
 ## RadioGroup
 
 A radio-button group bound to a `number` signal (the selected index).
@@ -145,14 +121,6 @@ interface RadioGroupOptions {
   labels: readonly string[];   // One label per option; each may mark its hotkey letter with `~X~` (e.g. `'~L~eft'`).
   value: Signal<number>;   // Two-way binding to the selected option index.
 }
-```
-
-## range
-
-Build an integer-range validator.
-
-```ts
-range(min: number, max: number): Validator
 ```
 
 ## Slider
@@ -180,14 +148,6 @@ interface SliderOptions {
   onInput?: (v: number) => void;   // Fired on every live change (drag move, arrow/page key, wheel).
   onChange?: (v: number) => void;   // Fired on each commit — a discrete key/wheel step, or the pointer-up ending a drag.
 }
-```
-
-## stringWidth
-
-Display width of a string, summed over its glyphs.
-
-```ts
-stringWidth(s: string): number
 ```
 
 ## Switch
@@ -251,6 +211,46 @@ interface Validator {
   fill(s: string): string;   // Optional post-keystroke rewrite. After accepting a keystroke, `Input` calls this and stores the returned string, letting a validator auto-insert formatting (e.g. `123` → `123-` for a `###-##` mask) or apply case transforms (`abc` → `ABC`). Return `s` unchanged when nothing applies. Only picture implements it; the other validators omit it. Never throws.
   error?: string;   // Optional message describing the invalid state, for you to surface to the user.
 }
+```
+
+## filter
+
+Build a filter validator over an allowed-character set.
+
+```ts
+filter(chars: string): Validator
+```
+
+## lookup
+
+Build an exact-membership validator over a fixed list of strings.
+
+```ts
+lookup(list: readonly string[]): Validator
+```
+
+## picture
+
+Create a formatted-mask validator.
+
+```ts
+picture(mask: string, autoFill = true): Validator
+```
+
+## range
+
+Build an integer-range validator.
+
+```ts
+range(min: number, max: number): Validator
+```
+
+## stringWidth
+
+Display width of a string, summed over its glyphs.
+
+```ts
+stringWidth(s: string): number
 ```
 
 ## wrapText

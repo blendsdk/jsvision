@@ -47,14 +47,6 @@ interface ApplicationOptions {
 }
 ```
 
-## buildKeymap
-
-Build the loop's keymap: the framework's default clipboard bindings for `clipboardKeys`, with the caller's own `keymap` merged on top (the caller's bindings win on any conflicting chord).
-
-```ts
-buildKeymap(clipboardKeys: ClipboardKeys = 'both', userKeymap?: Keymap): Keymap | undefined
-```
-
 ## ClipboardKeys
 
 Which clipboard key set the framework binds by default. - `'modern'` — Ctrl+A (select-all), Ctrl+C (copy), Ctrl+X (cut), Ctrl+V (paste). - `'classic'` — the Turbo Vision chords Ctrl+Insert (copy), Shift+Insert (paste), Shift+Delete (cut).
@@ -79,14 +71,6 @@ The standard command names.
 const Commands: { readonly quit: "quit"; readonly close: "close"; readonly zoom: "zoom"; readonly next: "next"; readonly prev: "prev"; readonly cascade: "cascade"; readonly tile: "tile"; readonly ok: "ok"; readonly cancel: "cancel"; readonly yes: "yes"; readonly no: "no"; readonly selectAll: "selectAll"; readonly cut: "cut"; readonly copy: "copy"; readonly paste: "paste"; readonly undo: "undo"; readonly redo: "redo"; }
 ```
 
-## createApplication
-
-Create a terminal application: assemble the event loop, desktop, optional menu bar/status line, and popup overlay, register the standard window-management commands, and return an Application.
-
-```ts
-createApplication<O extends ApplicationOptions = ApplicationOptions>(opts: O = {} as O): CreatedApplication<O>
-```
-
 ## CreatedApplication
 
 The precise application type for a given options object: a RouterApplication when `content` is a view, otherwise a DesktopApplication.
@@ -95,14 +79,6 @@ The precise application type for a given options object: a RouterApplication whe
 type CreatedApplication<O extends ApplicationOptions> = O extends { content: View }
   ? RouterApplication
   : DesktopApplication
-```
-
-## createEventLoop
-
-Create an event loop over a viewport of the given size.
-
-```ts
-createEventLoop(viewport: Size2D, opts: EventLoopOptions): EventLoop
 ```
 
 ## Desktop
@@ -223,30 +199,6 @@ interface EventLoopOptions {
 }
 ```
 
-## findDuplicateAccelerators
-
-Find every accelerator character claimed by more than one entry, case-insensitively.
-
-```ts
-findDuplicateAccelerators(chars: readonly string[]): DuplicateAccelerator[]
-```
-
-## item
-
-Build a command item — a selectable row that emits `command` when chosen.
-
-```ts
-item(title: string, command: string, key?: string): MenuItem
-```
-
-## menuBar
-
-Build a MenuBar from a list of top-level menu entries.
-
-```ts
-menuBar(items: MenuItem[]): MenuBar
-```
-
 ## MenuBar
 
 The application menu bar.
@@ -320,14 +272,6 @@ onPick?: (row: number) => void
 layout: Readonly<LayoutProps>
 ```
 
-## menuSpacer
-
-Build a flexible gap between top-level menu titles: the titles placed after it are pushed toward the bar's right edge, so `menuBar([subMenu('~F~ile', …), menuSpacer(), subMenu('~H~elp', …)])` right-aligns Help.
-
-```ts
-menuSpacer(weight = 1): MenuItem
-```
-
 ## ModalHost
 
 The handle a self-closing modal view receives so it can close itself from its own event handling.
@@ -361,14 +305,6 @@ interface ParsedLabel {
 }
 ```
 
-## reportDuplicateAccelerators
-
-Run findDuplicateAccelerators over a scope's accelerator chars and emit one dev-only warning per collision (silent under `NODE_ENV=production`).
-
-```ts
-reportDuplicateAccelerators(scope: string, chars: readonly string[], labels?: readonly string[]): void
-```
-
 ## RouterApplication
 
 An application whose body is a custom `content` view (e.g. a router); it has no window manager.
@@ -377,22 +313,6 @@ An application whose body is a custom `content` view (e.g. a router); it has no 
 interface RouterApplication {
   desktop: undefined;   // No window manager: a `content` app manages its own body.
 }
-```
-
-## separator
-
-Build a separator — a horizontal rule between groups of items inside a submenu.
-
-```ts
-separator(): MenuItem
-```
-
-## statusItem
-
-Build a status entry for a statusLine .
-
-```ts
-statusItem(text: string | (() => string), command?: string, key?: string): StatusItemView
 ```
 
 ## StatusItem
@@ -419,14 +339,6 @@ command?: string
 key?: string
 ```
 
-## statusLine
-
-Build a StatusLine from a heterogeneous list of views: command items (statusItem ), flexible `spacer()`s, and any fitting 1-row passive widget.
-
-```ts
-statusLine(children: View[]): StatusLine
-```
-
 ## StatusLine
 
 The application status line.
@@ -450,22 +362,6 @@ interface StatusLoopSeam {
   setCapture(view: Group): void;   // Capture the pointer to the status line for the duration of a press.
   releaseCapture(): void;   // Release the pointer capture.
 }
-```
-
-## subMenu
-
-Build a submenu node — a titled entry that opens a nested list of items (or further submenus).
-
-```ts
-subMenu(title: string, items: MenuItem[]): MenuItem
-```
-
-## syncOverlayVisible
-
-Show the shared popup overlay while it hosts any popup, and hide it once empty.
-
-```ts
-syncOverlayVisible(overlay: Group): void
 ```
 
 ## TitleLayout
@@ -507,4 +403,108 @@ zoom(): void
 onDesktopResize(size: Size2D): void
 close(): void
 selectByClick(): void
+```
+
+## buildKeymap
+
+Build the loop's keymap: the framework's default clipboard bindings for `clipboardKeys`, with the caller's own `keymap` merged on top (the caller's bindings win on any conflicting chord).
+
+```ts
+buildKeymap(clipboardKeys: ClipboardKeys = 'both', userKeymap?: Keymap): Keymap | undefined
+```
+
+## createApplication
+
+Create a terminal application: assemble the event loop, desktop, optional menu bar/status line, and popup overlay, register the standard window-management commands, and return an Application.
+
+```ts
+createApplication<O extends ApplicationOptions = ApplicationOptions>(opts: O = {} as O): CreatedApplication<O>
+```
+
+## createEventLoop
+
+Create an event loop over a viewport of the given size.
+
+```ts
+createEventLoop(viewport: Size2D, opts: EventLoopOptions): EventLoop
+```
+
+## findDuplicateAccelerators
+
+Find every accelerator character claimed by more than one entry, case-insensitively.
+
+```ts
+findDuplicateAccelerators(chars: readonly string[]): DuplicateAccelerator[]
+```
+
+## item
+
+Build a command item — a selectable row that emits `command` when chosen.
+
+```ts
+item(title: string, command: string, key?: string): MenuItem
+```
+
+## menuBar
+
+Build a MenuBar from a list of top-level menu entries.
+
+```ts
+menuBar(items: MenuItem[]): MenuBar
+```
+
+## menuSpacer
+
+Build a flexible gap between top-level menu titles: the titles placed after it are pushed toward the bar's right edge, so `menuBar([subMenu('~F~ile', …), menuSpacer(), subMenu('~H~elp', …)])` right-aligns Help.
+
+```ts
+menuSpacer(weight = 1): MenuItem
+```
+
+## reportDuplicateAccelerators
+
+Run findDuplicateAccelerators over a scope's accelerator chars and emit one dev-only warning per collision (silent under `NODE_ENV=production`).
+
+```ts
+reportDuplicateAccelerators(scope: string, chars: readonly string[], labels?: readonly string[]): void
+```
+
+## separator
+
+Build a separator — a horizontal rule between groups of items inside a submenu.
+
+```ts
+separator(): MenuItem
+```
+
+## statusItem
+
+Build a status entry for a statusLine .
+
+```ts
+statusItem(text: string | (() => string), command?: string, key?: string): StatusItemView
+```
+
+## statusLine
+
+Build a StatusLine from a heterogeneous list of views: command items (statusItem ), flexible `spacer()`s, and any fitting 1-row passive widget.
+
+```ts
+statusLine(children: View[]): StatusLine
+```
+
+## subMenu
+
+Build a submenu node — a titled entry that opens a nested list of items (or further submenus).
+
+```ts
+subMenu(title: string, items: MenuItem[]): MenuItem
+```
+
+## syncOverlayVisible
+
+Show the shared popup overlay while it hosts any popup, and hide it once empty.
+
+```ts
+syncOverlayVisible(overlay: Group): void
 ```

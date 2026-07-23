@@ -22,54 +22,6 @@ Any event the loop dispatches: a decoded terminal input event or an internal com
 type AppEvent = InputEvent | CommandEvent
 ```
 
-## apportion
-
-Distribute `total` integer cells across weighted shares so the result sums to `total` **exactly**.
-
-```ts
-apportion(total: number, weights: readonly number[]): number[]
-```
-
-## at
-
-Place a view absolutely at a parent-content-relative rectangle, and return the same view for inline composition.
-
-```ts
-at<V extends View>(view: V, ...spec: [x: number, y: number, width: number, height: number] | [rect: Rect]): V
-```
-
-## bottomRight
-
-Tag a view as a fixed-size stack layer pinned to the **bottom-right** corner.
-
-```ts
-bottomRight<V extends View>(view: V, width: number, height: number): V
-```
-
-## center
-
-Center a fixed-size view in its parent as an out-of-flow overlay, re-centering on resize, and return the same view — standalone, no `stack()` wrapper.
-
-```ts
-center<V extends View>(view: V, width: number, height: number): V
-```
-
-## centered
-
-Tag a view as a centered fixed-size stack layer (`width × height`, centered on both axes).
-
-```ts
-centered<V extends View>(view: V, width: number, height: number): V
-```
-
-## col
-
-Build a **vertical** flex container (`direction: 'col'`) — children stack top to bottom.
-
-```ts
-col(...args: [Flex, ...Child[]] | Child[]): Group
-```
-
 ## CommandEvent
 
 A typed command raised within the app (e.g. from a button or menu) and routed to handlers.
@@ -80,30 +32,6 @@ interface CommandEvent {
   command: string;   // The command name, compared by equality, e.g. `'ok'` | `'cancel'` | `'quit'`.
   arg?: unknown;   // Optional payload carried with the command.
 }
-```
-
-## contains
-
-Test whether a point lies inside a rect.
-
-```ts
-contains(r: Rect, p: Point): boolean
-```
-
-## cover
-
-Make a view cover its parent's whole content box as an out-of-flow overlay, and return the same view — standalone, no `stack()` wrapper.
-
-```ts
-cover<V extends View>(view: V): V
-```
-
-## createRenderRoot
-
-Create a render root over a `size`-cell buffer, ready to mount and render a view tree.
-
-```ts
-createRenderRoot(size: Size2D, opts: RenderRootOptions): RenderRoot
 ```
 
 ## Direction
@@ -155,14 +83,6 @@ interface DrawContext {
 }
 ```
 
-## fixed
-
-Give a view a fixed size of `n` cells along its container's main axis (columns in a `row`, rows in a `col`).
-
-```ts
-fixed<V extends View>(view: V, n: number): V
-```
-
 ## Flex
 
 Container props for col/row: every LayoutProps field except `direction` (the builder sets that), plus size shorthands and a `background` role.
@@ -197,36 +117,12 @@ remove(child: View): void
 addDynamic(build: DynamicBuilder): void
 ```
 
-## grow
-
-Give a view a flex-grow size: it takes a share of the container's leftover main-axis space proportional to `n`.
-
-```ts
-grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V
-```
-
-## intersect
-
-Compute the overlapping region of two rects — the clip operation (a view rect ∩ its ancestor's clip).
-
-```ts
-intersect(a: Rect, b: Rect): Rect
-```
-
 ## Justify
 
 Main-axis distribution of leftover space (like CSS `justify-content`).
 
 ```ts
 type Justify = 'start' | 'center' | 'end' | 'space-between'
-```
-
-## layout
-
-Lay out a box tree within a viewport.
-
-```ts
-layout(root: LayoutBox, viewport: Size2D): LayoutResult
 ```
 
 ## LayoutBox
@@ -277,14 +173,6 @@ interface Padding {
   bottom: number;
   left: number;
 }
-```
-
-## place
-
-Tag a view with a Placement for use as a stack layer, and return the same view for inline composition.
-
-```ts
-place<V extends View>(view: V, placement: Placement): V
 ```
 
 ## Placement
@@ -370,14 +258,6 @@ interface RenderRootOptions {
 }
 ```
 
-## row
-
-Build a **horizontal** flex container (`direction: 'row'`) — children sit left to right.
-
-```ts
-row(...args: [Flex, ...Child[]] | Child[]): Group
-```
-
 ## Size
 
 How a box is sized along its parent's main axis.
@@ -408,52 +288,12 @@ interface Size2D {
 }
 ```
 
-## solveTrack
-
-Solve a 1-D flex track into exact integer sizes.
-
-```ts
-solveTrack(total: number, items: readonly TrackItem[], gap = 0): number[]
-```
-
-## spacer
-
-Insert an empty spacer between children.
-
-```ts
-spacer(arg: number | { fixed: number } = 1): View
-```
-
-## stack
-
-Build a z-overlay stack: every layer shares the same box and paints back-to-front (a later layer draws over an earlier one).
-
-```ts
-stack(...args: [Flex, ...Layer[]] | Layer[]): Group
-```
-
 ## ThemeRoleName
 
 A theme-role name — any key of the active `Theme`, e.g.
 
 ```ts
 type ThemeRoleName = keyof Theme
-```
-
-## topLeft
-
-Tag a view as a fixed-size stack layer pinned to the **top-left** corner.
-
-```ts
-topLeft<V extends View>(view: V, width: number, height: number): V
-```
-
-## topRight
-
-Tag a view as a fixed-size stack layer pinned to the **top-right** corner.
-
-```ts
-topRight<V extends View>(view: V, width: number, height: number): V
 ```
 
 ## TrackItem
@@ -474,14 +314,6 @@ type TrackItem = | { readonly kind: 'fixed'; readonly size: number } // exact in
        */
       readonly min?: number;
     }
-```
-
-## translate
-
-Offset a rect by `(dx, dy)`, keeping its size — e.g. to convert view-local coordinates to absolute screen coordinates.
-
-```ts
-translate(r: Rect, dx: number, dy: number): Rect
 ```
 
 ## View
@@ -512,4 +344,172 @@ interface ViewState {
   disabled: boolean;
   focused: boolean;
 }
+```
+
+## apportion
+
+Distribute `total` integer cells across weighted shares so the result sums to `total` **exactly**.
+
+```ts
+apportion(total: number, weights: readonly number[]): number[]
+```
+
+## at
+
+Place a view absolutely at a parent-content-relative rectangle, and return the same view for inline composition.
+
+```ts
+at<V extends View>(view: V, ...spec: [x: number, y: number, width: number, height: number] | [rect: Rect]): V
+```
+
+## bottomRight
+
+Tag a view as a fixed-size stack layer pinned to the **bottom-right** corner.
+
+```ts
+bottomRight<V extends View>(view: V, width: number, height: number): V
+```
+
+## center
+
+Center a fixed-size view in its parent as an out-of-flow overlay, re-centering on resize, and return the same view — standalone, no `stack()` wrapper.
+
+```ts
+center<V extends View>(view: V, width: number, height: number): V
+```
+
+## centered
+
+Tag a view as a centered fixed-size stack layer (`width × height`, centered on both axes).
+
+```ts
+centered<V extends View>(view: V, width: number, height: number): V
+```
+
+## col
+
+Build a **vertical** flex container (`direction: 'col'`) — children stack top to bottom.
+
+```ts
+col(...args: [Flex, ...Child[]] | Child[]): Group
+```
+
+## contains
+
+Test whether a point lies inside a rect.
+
+```ts
+contains(r: Rect, p: Point): boolean
+```
+
+## cover
+
+Make a view cover its parent's whole content box as an out-of-flow overlay, and return the same view — standalone, no `stack()` wrapper.
+
+```ts
+cover<V extends View>(view: V): V
+```
+
+## createRenderRoot
+
+Create a render root over a `size`-cell buffer, ready to mount and render a view tree.
+
+```ts
+createRenderRoot(size: Size2D, opts: RenderRootOptions): RenderRoot
+```
+
+## fixed
+
+Give a view a fixed size of `n` cells along its container's main axis (columns in a `row`, rows in a `col`).
+
+```ts
+fixed<V extends View>(view: V, n: number): V
+```
+
+## grow
+
+Give a view a flex-grow size: it takes a share of the container's leftover main-axis space proportional to `n`.
+
+```ts
+grow<V extends View>(view: V, n = 1, opts?: { min?: number }): V
+```
+
+## intersect
+
+Compute the overlapping region of two rects — the clip operation (a view rect ∩ its ancestor's clip).
+
+```ts
+intersect(a: Rect, b: Rect): Rect
+```
+
+## layout
+
+Lay out a box tree within a viewport.
+
+```ts
+layout(root: LayoutBox, viewport: Size2D): LayoutResult
+```
+
+## place
+
+Tag a view with a Placement for use as a stack layer, and return the same view for inline composition.
+
+```ts
+place<V extends View>(view: V, placement: Placement): V
+```
+
+## row
+
+Build a **horizontal** flex container (`direction: 'row'`) — children sit left to right.
+
+```ts
+row(...args: [Flex, ...Child[]] | Child[]): Group
+```
+
+## solveTrack
+
+Solve a 1-D flex track into exact integer sizes.
+
+```ts
+solveTrack(total: number, items: readonly TrackItem[], gap = 0): number[]
+```
+
+## spacer
+
+Insert an empty spacer between children.
+
+```ts
+spacer(arg: number | { fixed: number } = 1): View
+```
+
+## stack
+
+Build a z-overlay stack: every layer shares the same box and paints back-to-front (a later layer draws over an earlier one).
+
+```ts
+stack(...args: [Flex, ...Layer[]] | Layer[]): Group
+```
+
+## topLeft
+
+Tag a view as a fixed-size stack layer pinned to the **top-left** corner.
+
+```ts
+topLeft<V extends View>(view: V, width: number, height: number): V
+```
+
+## topRight
+
+Tag a view as a fixed-size stack layer pinned to the **top-right** corner.
+
+```ts
+topRight<V extends View>(view: V, width: number, height: number): V
+```
+
+## translate
+
+Offset a rect by `(dx, dy)`, keeping its size — e.g. to convert view-local coordinates to absolute screen coordinates.
+
+```ts
+translate(r: Rect, dx: number, dy: number): Rect
 ```

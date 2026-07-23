@@ -6,14 +6,6 @@ Rendering, terminal capabilities, input, colors, contrast, themes, and safety.
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
-## aliasesFromSeeds
-
-Derive the 18 semantic ThemeColors aliases from a set of seeds — the step createTheme runs before it merges `overrides` and expands the roles.
-
-```ts
-aliasesFromSeeds(options: ThemeOptions): ThemeColors
-```
-
 ## AMBIGUOUS_PROBE_GLYPHS
 
 The arrow/geometric probe group: the fallback-prone chrome the SDK draws (scroll arrows, submenu/input arrows, radio mark, zoom/restore/close icons).
@@ -53,14 +45,6 @@ type Ansi16Name = | 'black'
   | 'brightWhite'
 ```
 
-## assertEssentials
-
-Assert the essentials before starting: throws EssentialsNotMetError when the terminal is unusable, otherwise returns the report.
-
-```ts
-assertEssentials(caps: CapabilityProfile, facts: HostFacts, options?: { readonly logger?: Logger }): EssentialsReport
-```
-
 ## Attr
 
 Attribute bit constants.
@@ -94,20 +78,20 @@ Text-attribute bitmask.
 type AttrMask = number
 ```
 
-## bell
-
-Emit a literal terminal bell (`\x07`).
-
-```ts
-bell(): string
-```
-
 ## BOX_PROBE_GLYPHS
 
 The box-drawing + shade probe group (corners, edges, shades).
 
 ```ts
 const BOX_PROBE_GLYPHS: "┌┐└┘─│▒█"
+```
+
+## CSI
+
+Control Sequence Introducer (`ESC [`).
+
+```ts
+const CSI: "\u001B["
 ```
 
 ## CapabilityProfile
@@ -196,14 +180,6 @@ interface Cell {
 }
 ```
 
-## charWidth
-
-Display width of a Unicode code point.
-
-```ts
-charWidth(codepoint: number, widthMode: WidthMode): 0 | 1 | 2
-```
-
 ## ChromeHost
 
 The chrome seam an application hands to a router-style body so each screen can define its own status line and menu.
@@ -223,14 +199,6 @@ Implemented by an application body (e.g. a router) that wants to drive the share
 interface ChromeHostAware {
   attachChromeHost(host: ChromeHost): void;   // Receive the application's chrome seam. Called once by `createApplication` after the menu/status bars are attached.
 }
-```
-
-## classicTheme
-
-The classic DOS "gray dialog / blue window" theme — an alias of defaultTheme and the render-root default.
-
-```ts
-const classicTheme: Theme
 ```
 
 ## Color
@@ -257,94 +225,6 @@ Whether a color is a foreground or background (selects the SGR base code).
 type ColorRole = 'fg' | 'bg'
 ```
 
-## contrastRatio
-
-Compute the WCAG 2.x contrast ratio between two colors, `1` (identical) to `21` (black on white).
-
-```ts
-contrastRatio(a: Color, b: Color): number
-```
-
-## createDecoderState
-
-Create a fresh, empty decoder state to pass into the first decode call: no carried bytes, no in-progress paste, not resyncing.
-
-```ts
-createDecoderState(): DecoderState
-```
-
-## createHost
-
-Create a terminal host.
-
-```ts
-createHost(options: HostOptions): Host
-```
-
-## createKeymap
-
-Build a keymap from chord→name bindings.
-
-```ts
-createKeymap(bindings: Readonly<Record<string, string>>): Keymap
-```
-
-## createKeymap
-
-Build a keymap from chord→name bindings.
-
-```ts
-createKeymap(bindings: Readonly<Record<string, string>>): Keymap
-```
-
-## createLogger
-
-Create a screen-safe logger. **Enablement.** Off unless you pass `enabled: true`, set `JSVISION_DEBUG=1`, or choose `sink: 'ring'`.
-
-```ts
-createLogger(options: LoggerOptions = {}): Logger
-```
-
-## createRouter
-
-Create a navigation / screen router — a full-screen screen stack that mounts as an application's `content` body.
-
-```ts
-createRouter<R>(opts: RouterOptions<R>): Router<R>
-```
-
-## createTerminalQuery
-
-Create a real, tty-backed TerminalQuery over a pair of Node streams.
-
-```ts
-createTerminalQuery(options: TerminalQueryOptions = {}): ManagedTerminalQuery
-```
-
-## createTheme
-
-Build a complete Theme from seed colors.
-
-```ts
-createTheme(options: ThemeOptions): Theme
-```
-
-## CSI
-
-Control Sequence Introducer (`ESC [`).
-
-```ts
-const CSI: "\u001B["
-```
-
-## cursor
-
-Capability-independent cursor controls (show/hide/absolute move).
-
-```ts
-const cursor: { readonly show: () => string; readonly hide: () => string; readonly to: (row: number, col: number) => string; }
-```
-
 ## CursorPosition
 
 A parsed Cursor-Position-Report: 1-based row and column, as the terminal reports them.
@@ -356,28 +236,12 @@ interface CursorPosition {
 }
 ```
 
-## cursorTo
+## DEFAULT_WIDTH_PROBE_TIMEOUT_MS
 
-Absolute cursor move to a **1-based** (row, col) (`CSI row;col H`).
-
-```ts
-cursorTo(row: number, col: number): string
-```
-
-## darken
-
-Darken a color by lowering its OKLab lightness.
+Default whole-probe timeout in milliseconds (mirrors the layer-2 query budget).
 
 ```ts
-darken(color: Color, amount: number): Color
-```
-
-## decode
-
-Decode a chunk of terminal bytes into input events.
-
-```ts
-decode(bytes: Uint8Array, state: DecoderState, options?: DecodeOptions): DecodeResult
+const DEFAULT_WIDTH_PROBE_TIMEOUT_MS: 200
 ```
 
 ## DecodeOptions
@@ -426,30 +290,6 @@ type DeepPartial<T> = {
 }
 ```
 
-## DEFAULT_WIDTH_PROBE_TIMEOUT_MS
-
-Default whole-probe timeout in milliseconds (mirrors the layer-2 query budget).
-
-```ts
-const DEFAULT_WIDTH_PROBE_TIMEOUT_MS: 200
-```
-
-## defaultEncodeStyle
-
-The default style encoder: depth-aware, downsampling truecolor→256→16→mono and merging attributes + foreground + background into one SGR sequence.
-
-```ts
-const defaultEncodeStyle: StyleEncoder
-```
-
-## defaultTheme
-
-The classic DOS text-mode look — a "gray dialog / blue window" theme ready to use as-is or as the base for your own.
-
-```ts
-const defaultTheme: Theme
-```
-
 ## Degradation
 
 A non-essential capability gap the SDK runs around in a reduced mode instead of stopping.
@@ -462,76 +302,12 @@ interface Degradation {
 }
 ```
 
-## degradeCapsForWidth
-
-Apply a probe outcome to a capability profile — downgrade only, never upgrade.
-
-```ts
-degradeCapsForWidth(caps: CapabilityProfile, result: WidthProbeResult): CapabilityProfile
-```
-
-## degradeCapsFully
-
-Force a capability profile fully ASCII-safe: box-drawing and half-blocks off, ambiguous-wide on, so every chrome glyph maps to plain ASCII when rendered.
-
-```ts
-degradeCapsFully(caps: CapabilityProfile): CapabilityProfile
-```
-
-## detectTty
-
-Check whether the app has an interactive terminal, **before** starting the host.
-
-```ts
-detectTty(options: StreamOptions = {}): boolean
-```
-
-## draculaTheme
-
-The Dracula palette — a dark theme with its signature purple accent and `#282a36` background pinned.
-
-```ts
-const draculaTheme: Theme
-```
-
-## dumpCaps
-
-Render a one-line, secret-free summary of a resolved capability profile — handy for a single debug log line explaining what the SDK detected and *why* (which resolution layer decided each value).
-
-```ts
-dumpCaps(resolution: CapabilityResolution): string
-```
-
-## encode
-
-Encode ONE color to a standalone ANSI escape sequence for the given depth, downsampling automatically when the depth is lower than truecolor.
-
-```ts
-encode(color: Color, role: ColorRole, depth: ColorDepth): string
-```
-
-## encodeStyle
-
-Merge text attributes + foreground + background into ONE escape sequence, downsampled to the terminal's color depth.
-
-```ts
-encodeStyle(fg: Color, bg: Color, attrs: AttrMask, caps: CapabilityProfile): string
-```
-
 ## ESC_TIMEOUT_MS
 
 Lone-`ESC` disambiguation window, in milliseconds — the recommended delay before calling `flush()`.
 
 ```ts
 const ESC_TIMEOUT_MS: 50
-```
-
-## essentialsMet
-
-Convenience boolean — true when every essential is satisfied.
-
-```ts
-essentialsMet(caps: CapabilityProfile, facts: HostFacts): boolean
 ```
 
 ## EssentialsNotMetError
@@ -554,30 +330,6 @@ interface EssentialsReport {
   missing: readonly string[];   // Names of the unmet essentials (empty when `met`).
   degradations: readonly Degradation[];   // Non-essential gaps the SDK degrades around (may be present even when `met`).
 }
-```
-
-## evaluateEssentials
-
-Evaluate the runtime essentials against a capability profile and TTY facts, without throwing.
-
-```ts
-evaluateEssentials(caps: CapabilityProfile, facts: HostFacts): EssentialsReport
-```
-
-## fallbackGlyph
-
-Substitute a glyph for the terminal's capabilities.
-
-```ts
-fallbackGlyph(char: string, caps: CapabilityProfile): string
-```
-
-## flush
-
-Resolve a held, ambiguous trailing `ESC` as a standalone Escape keypress.
-
-```ts
-flush(state: DecoderState, options?: DecodeOptions): DecodeResult
 ```
 
 ## FocusEvent
@@ -622,22 +374,6 @@ interface GlyphCaps {
   halfBlocks: boolean;
   ambiguousWide: boolean;   // True when the terminal renders the fallback-prone arrow/geometric chrome glyphs (`▲▼◄►•↑↕×`) as double-width. When true, the renderer swaps those glyphs for ASCII equivalents so the layout stays intact. Default `false`.
 }
-```
-
-## gruvboxDarkTheme
-
-The Gruvbox Dark palette — a warm retro dark theme with its `bg0` background and amber accent pinned.
-
-```ts
-const gruvboxDarkTheme: Theme
-```
-
-## horizonTheme
-
-A modern enterprise-software theme — a dark-blue shell field, white cards, and a clear corporate blue accent for the primary button, focus, and selection.
-
-```ts
-const horizonTheme: Theme
 ```
 
 ## Host
@@ -696,14 +432,6 @@ The abstract, payload-free signal set the host reacts to.
 type HostSignal = 'resize' | 'interrupt' | 'terminate' | 'hangup' | 'suspend' | 'continue'
 ```
 
-## hyperlink
-
-Emit an OSC 8 hyperlink wrapping `text` with `url`.
-
-```ts
-hyperlink(text: string, url: string, caps: CapabilityProfile): string
-```
-
 ## InitialRoute
 
 The initial route for a router: a route name plus its params.
@@ -738,39 +466,12 @@ Thrown when a serialized theme is structurally invalid, carries a malformed colo
 new InvalidThemeError()   // extends TuiError
 ```
 
-## isAsciiSafe
-
-Whether a capability profile already renders as pure ASCII, so the width probe can be skipped with nothing to learn or swap.
-
-```ts
-isAsciiSafe(caps: CapabilityProfile): boolean
-```
-
-## janusTheme
-
-A retro PC-desktop theme — a teal field, silver 3D chrome, black text, and a navy highlight for the primary button, focus, and selection.
-
-```ts
-const janusTheme: Theme
-```
-
 ## KEY_NAMES
 
 The named (non-printable) keys the decoder can emit, all lowercase.
 
 ```ts
 const KEY_NAMES: readonly ["up", "down", "left", "right", "enter", "tab", "backspace", "escape", "space", "home", "end", "pageup", "pagedown", "insert", "delete", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12"]
-```
-
-## KeyboardCaps
-
-Keyboard-protocol capabilities.
-
-```ts
-interface KeyboardCaps {
-  kittyFlags: boolean;
-  modifyOtherKeys: boolean;
-}
 ```
 
 ## KeyEvent
@@ -788,13 +489,14 @@ interface KeyEvent {
 }
 ```
 
-## Keymap
+## KeyboardCaps
 
-A compiled keymap: a pure lookup from a decoded KeyEvent to a bound name.
+Keyboard-protocol capabilities.
 
 ```ts
-interface Keymap {
-  lookup(event: KeyEvent): string | undefined;   // Return the bound name for the event's chord, or `undefined` if unbound.
+interface KeyboardCaps {
+  kittyFlags: boolean;
+  modifyOtherKeys: boolean;
 }
 ```
 
@@ -808,12 +510,43 @@ interface Keymap {
 }
 ```
 
-## lighten
+## Keymap
 
-Lighten a color by raising its OKLab lightness.
+A compiled keymap: a pure lookup from a decoded KeyEvent to a bound name.
 
 ```ts
-lighten(color: Color, amount: number): Color
+interface Keymap {
+  lookup(event: KeyEvent): string | undefined;   // Return the bound name for the event's chord, or `undefined` if unbound.
+}
+```
+
+## LogLevel
+
+Severity levels, coarsest to finest.
+
+```ts
+type LogLevel = 'error' | 'warn' | 'info' | 'debug'
+```
+
+## LogRecord
+
+A single structured log record.
+
+```ts
+interface LogRecord {
+  level: LogLevel;
+  component: string;   // Subsystem tag, e.g. 'input' | 'gate' | 'host'.
+  msg: string;
+  fields?: Readonly<Record<string, unknown>>;   // Extra non-secret fields (e.g. a redacted event). Never raw input.
+}
+```
+
+## LogSink
+
+Where log records go: - `auto` — a file if a path is set, else stderr when it is a distinct device, else the ring. - `file` — append to `path` (or the `JSVISION_LOG` env var). - `stderr` — write to fd 2 (rejected if it is the same device as the screen). - `ring` — an in-memory buffer readable via Logger.entries (also self-enables).
+
+```ts
+type LogSink = 'auto' | 'file' | 'stderr' | 'ring'
 ```
 
 ## Logger
@@ -870,35 +603,6 @@ interface LoggerOptions {
 }
 ```
 
-## LogLevel
-
-Severity levels, coarsest to finest.
-
-```ts
-type LogLevel = 'error' | 'warn' | 'info' | 'debug'
-```
-
-## LogRecord
-
-A single structured log record.
-
-```ts
-interface LogRecord {
-  level: LogLevel;
-  component: string;   // Subsystem tag, e.g. 'input' | 'gate' | 'host'.
-  msg: string;
-  fields?: Readonly<Record<string, unknown>>;   // Extra non-secret fields (e.g. a redacted event). Never raw input.
-}
-```
-
-## LogSink
-
-Where log records go: - `auto` — a file if a path is set, else stderr when it is a distinct device, else the ring. - `file` — append to `path` (or the `JSVISION_LOG` env var). - `stderr` — write to fd 2 (rejected if it is the same device as the screen). - `ring` — an in-memory buffer readable via Logger.entries (also self-enables).
-
-```ts
-type LogSink = 'auto' | 'file' | 'stderr' | 'ring'
-```
-
 ## ManagedTerminalQuery
 
 A TerminalQuery with an explicit ManagedTerminalQuery.close to detach the input listener and end any active `read()` iteration.
@@ -907,22 +611,6 @@ A TerminalQuery with an explicit ManagedTerminalQuery.close to detach the input 
 interface ManagedTerminalQuery {
   close(): void;   // Detach the input 'data' listener and end any active `read()` iterator. Idempotent.
 }
-```
-
-## mix
-
-Blend two colors in OKLab space.
-
-```ts
-mix(a: Color, b: Color, t: number): Color
-```
-
-## monochromeTheme
-
-A color-free theme that distinguishes state by **text attribute** (reverse / bold / dim / underline) rather than hue — the readable choice on a monochrome terminal, and a working demonstration of the ThemeRole `attrs` axis.
-
-```ts
-const monochromeTheme: Theme
 ```
 
 ## MouseCaps
@@ -962,38 +650,6 @@ The trailing arguments of a navigation call for a route with param type `P`: non
 type NavArgs<P> = P extends void ? [] : [params: P]
 ```
 
-## nearest16
-
-Find the ANSI-16 palette index (0–15) closest to an RGB color, where 0–7 are the normal colors and 8–15 the bright variants.
-
-```ts
-nearest16(rgb: Rgb): number
-```
-
-## nearest256
-
-Find the xterm-256 palette index (0–255) closest to an RGB color.
-
-```ts
-nearest256(rgb: Rgb): number
-```
-
-## nordTheme
-
-The Nord palette — a cool arctic dark theme, with its canonical `nord0` background, `snow storm` foreground, and `frost` accent pinned.
-
-```ts
-const nordTheme: Theme
-```
-
-## notify
-
-Emit a desktop notification via the first protocol the terminal supports (Kitty, iTerm2, urxvt, or Windows Terminal/ConEmu), falling back to a single bell when none is available.
-
-```ts
-notify(title: string, body: string, caps: CapabilityProfile): string
-```
-
 ## OscCaps
 
 OSC (Operating System Command) escape-sequence capabilities.
@@ -1018,28 +674,33 @@ The classic DOS 16-color palette as ready-to-use `#rrggbb` colors.
 const PALETTE: { readonly black: "#000000"; readonly blue: "#0000aa"; readonly green: "#00aa00"; readonly cyan: "#00aaaa"; readonly red: "#aa0000"; readonly magenta: "#aa00aa"; readonly brown: "#aa5500"; readonly lightGray: "#aaaaaa"; readonly darkGray: "#555555"; readonly brightBlue: "#5555ff"; readonly brightGreen: "#55ff55"; readonly brightCyan: "#55ffff"; readonly brightRed: "#ff5555"; readonly brightMagenta: "#ff55ff"; readonly yellow: "#ffff55"; readonly white: "#ffffff"; }
 ```
 
-## parseCursorPosition
-
-Parse the first Cursor-Position-Report (`ESC [ <row> ; <col> R`) out of a byte buffer, ignoring any surrounding bytes.
-
-```ts
-parseCursorPosition(buf: Uint8Array): CursorPosition | null
-```
-
-## parseTheme
-
-Parse a serialized theme, validating every field, and return a complete Theme.
-
-```ts
-parseTheme(json: string): Theme
-```
-
 ## PASTE_CAP_BYTES
 
 Default bracketed-paste size cap in bytes.
 
 ```ts
 const PASTE_CAP_BYTES: 1048576
+```
+
+## PRESET_SEEDS
+
+The seed sets behind the createTheme -generated presets, keyed by name — the same `{ mode, accent, neutral, overrides }` options each curated theme is built from, exposed as data so a tool (e.g. a theme editor) can load a preset as an *editable* starting point rather than an opaque finished theme.
+
+```ts
+const PRESET_SEEDS: Record<
+  | 'slate'
+  | 'nord'
+  | 'dracula'
+  | 'solarized-dark'
+  | 'gruvbox-dark'
+  | 'janus'
+  | 'warp'
+  | 'solstice'
+  | 'platinum'
+  | 'workbench'
+  | 'horizon',
+  ThemeOptions
+>
 ```
 
 ## PasteEvent
@@ -1074,43 +735,6 @@ Host platform, mirroring the supported values of `process.platform`.
 type Platform = 'linux' | 'darwin' | 'win32'
 ```
 
-## platinumTheme
-
-A classic-Mac Platinum theme — crisp grayscale surfaces with a restrained highlight blue for the primary button, focus, and selection.
-
-```ts
-const platinumTheme: Theme
-```
-
-## PRESET_SEEDS
-
-The seed sets behind the createTheme -generated presets, keyed by name — the same `{ mode, accent, neutral, overrides }` options each curated theme is built from, exposed as data so a tool (e.g. a theme editor) can load a preset as an *editable* starting point rather than an opaque finished theme.
-
-```ts
-const PRESET_SEEDS: Record<
-  | 'slate'
-  | 'nord'
-  | 'dracula'
-  | 'solarized-dark'
-  | 'gruvbox-dark'
-  | 'janus'
-  | 'warp'
-  | 'solstice'
-  | 'platinum'
-  | 'workbench'
-  | 'horizon',
-  ThemeOptions
->
-```
-
-## probeAmbiguousWidth
-
-Measure how many columns each probe group advances on the live terminal.
-
-```ts
-probeAmbiguousWidth(query: TerminalQuery, options: WidthProbeOptions = {}): Promise<WidthProbeResult>
-```
-
 ## QueryResponse
 
 A recognised terminal query reply (device attributes, version, mode report), used by capability detection.
@@ -1120,14 +744,6 @@ interface QueryResponse {
   raw: Uint8Array;   // The raw recognised bytes, for the capability layer to parse further.
   kind: 'da1' | 'da2' | 'xtversion' | 'decrpm' | 'unknown';   // The reply classification.
 }
-```
-
-## ramp
-
-Generate `steps` perceptually-even shades of a seed color, dark → light.
-
-```ts
-ramp(seed: Color, steps: number): Color[]
 ```
 
 ## ReasonLayer
@@ -1157,14 +773,6 @@ type RedactedEvent = | {
   | { readonly type: 'focus'; readonly focused: boolean }
 ```
 
-## redactEvent
-
-Reduce a decoded input event to a shape that is safe to log — drops any raw content while keeping the structural facts (modifiers, coordinates, lengths) useful for debugging.
-
-```ts
-redactEvent(event: InputEvent): RedactedEvent
-```
-
 ## RenderOptions
 
 Options for serialize: the terminal capabilities plus an optional custom style encoder.
@@ -1186,38 +794,6 @@ interface ResizeEvent {
   columns: number;   // New terminal width in columns.
   rows: number;   // New terminal height in rows.
 }
-```
-
-## resolveCapabilities
-
-Detect the running terminal's capabilities **synchronously** from environment variables and the known-terminal table.
-
-```ts
-resolveCapabilities(options: SyncResolveOptions = {}): CapabilityResolution
-```
-
-## resolveCapabilities
-
-Detect the running terminal's capabilities **synchronously** from environment variables and the known-terminal table.
-
-```ts
-resolveCapabilities(options?: SyncResolveOptions): CapabilityResolution
-```
-
-## resolveCapabilitiesAsync
-
-Detect the running terminal's capabilities **asynchronously**, additionally probing the terminal live when you pass a TerminalQuery seam (the most accurate detection available).
-
-```ts
-resolveCapabilitiesAsync(options: ResolveOptions = {}): Promise<CapabilityResolution>
-```
-
-## resolveCapabilitiesAsync
-
-Detect the running terminal's capabilities **asynchronously**, additionally probing the terminal live when you pass a TerminalQuery seam (the most accurate detection available).
-
-```ts
-resolveCapabilitiesAsync(options?: ResolveOptions): Promise<CapabilityResolution>
 ```
 
 ## ResolveOptions
@@ -1245,22 +821,6 @@ interface Rgb {
   g: number;
   b: number;
 }
-```
-
-## rgb256
-
-Reference RGB for xterm-256 palette index `n` (0–255): the 16 base colors (0–15), the 6×6×6 cube (16–231), then the 24-step gray ramp (232–255).
-
-```ts
-rgb256(index: number): Rgb
-```
-
-## rolesFromAliases
-
-Build a complete Theme from a resolved 18-token ThemeColors set.
-
-```ts
-rolesFromAliases(c: ThemeColors): Theme
 ```
 
 ## Route
@@ -1356,12 +916,28 @@ interface RuntimeAdapter {
 }
 ```
 
-## sanitize
+## SGR_RESET
 
-Remove escape and other terminal-control bytes from untrusted text, returning a string that is safe to write to the terminal.
+Reset all SGR attributes (`CSI 0 m`).
 
 ```ts
-sanitize(text: string): string
+const SGR_RESET: "\u001B[0m"
+```
+
+## SYNC_BEGIN
+
+Begin a synchronized update (`CSI ?2026 h`); the terminal buffers until end.
+
+```ts
+const SYNC_BEGIN: "\u001B[?2026h"
+```
+
+## SYNC_END
+
+End a synchronized update (`CSI ?2026 l`); the terminal paints atomically.
+
+```ts
+const SYNC_END: "\u001B[?2026l"
 ```
 
 ## ScreenBuffer
@@ -1393,70 +969,6 @@ interface ScreenBundle {
   status?: View[];   // Optional status-line items for this screen; omit to keep the app base.
   menu?: MenuItem[];   // Optional menu-bar items for this screen; omit to keep the app base.
 }
-```
-
-## serialize
-
-Build the ANSI string that turns `previous` into `current` (a damage diff).
-
-```ts
-serialize(current: ScreenBuffer, previous: ScreenBuffer | null, options: RenderOptions): string
-```
-
-## serializeTheme
-
-Serialize a theme to a JSON string.
-
-```ts
-serializeTheme(theme: Theme): string
-```
-
-## setClipboard
-
-Emit an OSC 52 clipboard-write of `text`.
-
-```ts
-setClipboard(text: string, caps: CapabilityProfile): string
-```
-
-## setTitle
-
-Emit an OSC 0/2 window-title set.
-
-```ts
-setTitle(text: string, caps: CapabilityProfile): string
-```
-
-## SGR_RESET
-
-Reset all SGR attributes (`CSI 0 m`).
-
-```ts
-const SGR_RESET: "\u001B[0m"
-```
-
-## slateTheme
-
-An enterprise muted blue-gray theme — a calm, low-saturation dark scheme generated from a slate accent and neutral.
-
-```ts
-const slateTheme: Theme
-```
-
-## solarizedDarkTheme
-
-The Solarized Dark palette — a low-contrast dark theme with its `base03` background and blue accent pinned.
-
-```ts
-const solarizedDarkTheme: Theme
-```
-
-## solsticeTheme
-
-A Unix-workstation theme in the CDE / OpenWindows spirit — a sage field, warm putty chrome, and a teal accent for the primary button, focus, and selection.
-
-```ts
-const solsticeTheme: Theme
 ```
 
 ## StreamOptions
@@ -1501,30 +1013,6 @@ Encodes a cell's foreground/background/attributes to an SGR escape sequence for 
 
 ```ts
 type StyleEncoder = (fg: Color, bg: Color, attrs: AttrMask, caps: CapabilityProfile) => string
-```
-
-## styleKey
-
-Build a stable string key that is identical for cells sharing the same style — use it to cache encoded sequences or merge adjacent same-style runs.
-
-```ts
-styleKey(fg: Color, bg: Color, attrs: AttrMask): string
-```
-
-## SYNC_BEGIN
-
-Begin a synchronized update (`CSI ?2026 h`); the terminal buffers until end.
-
-```ts
-const SYNC_BEGIN: "\u001B[?2026h"
-```
-
-## SYNC_END
-
-End a synchronized update (`CSI ?2026 l`); the terminal paints atomically.
-
-```ts
-const SYNC_END: "\u001B[?2026l"
 ```
 
 ## SyncResolveOptions
@@ -1708,14 +1196,6 @@ Opaque timer handle returned by RuntimeAdapter.setTimer.
 type TimerHandle = unknown
 ```
 
-## toRgb
-
-Validate a `Color` and parse it to RGB components.
-
-```ts
-toRgb(color: Color): Rgb | null
-```
-
 ## TuiError
 
 Base class for every error the SDK throws.
@@ -1752,20 +1232,20 @@ The package version of `@jsvision/ui`.
 const VERSION: "1.0.0"
 ```
 
-## warnIfAmbiguousWide
+## WIDTH_ADAPTED_MESSAGE
 
-Probe the terminal for double-width chrome glyphs and, if a group is wide, emit one warning line.
+The one-line console notice emitted when a wide group is found AND auto-adapted.
 
 ```ts
-warnIfAmbiguousWide(query: TerminalQuery, options: WidthWarnOptions = {}): Promise<WidthProbeResult>
+const WIDTH_ADAPTED_MESSAGE: string
 ```
 
-## warpTheme
+## WIDTH_WARNING_MESSAGE
 
-A Workplace-Shell-style theme — cool steel-blue surfaces over a mid steel field, with a deep corporate blue accent for the primary button, focus, and selection.
+The one-line console warning emitted when a wide group is found but NOT adapted.
 
 ```ts
-const warpTheme: Theme
+const WIDTH_WARNING_MESSAGE: string
 ```
 
 ## WheelEvent
@@ -1782,22 +1262,6 @@ interface WheelEvent {
   alt: boolean;   // Meta/Alt held during the wheel report.
   ctrl: boolean;   // Ctrl held during the wheel report.
 }
-```
-
-## WIDTH_ADAPTED_MESSAGE
-
-The one-line console notice emitted when a wide group is found AND auto-adapted.
-
-```ts
-const WIDTH_ADAPTED_MESSAGE: string
-```
-
-## WIDTH_WARNING_MESSAGE
-
-The one-line console warning emitted when a wide group is found but NOT adapted.
-
-```ts
-const WIDTH_WARNING_MESSAGE: string
 ```
 
 ## WidthMode
@@ -1853,6 +1317,542 @@ interface WidthWarnOptions {
   warn?: (message: string) => void;   // Warning sink (default: a single line to `process.stderr`). Injected for tests.
   adapted?: boolean;   // When true, the emitted message reports automatic adaptation (WIDTH_ADAPTED_MESSAGE).
 }
+```
+
+## aliasesFromSeeds
+
+Derive the 18 semantic ThemeColors aliases from a set of seeds — the step createTheme runs before it merges `overrides` and expands the roles.
+
+```ts
+aliasesFromSeeds(options: ThemeOptions): ThemeColors
+```
+
+## assertEssentials
+
+Assert the essentials before starting: throws EssentialsNotMetError when the terminal is unusable, otherwise returns the report.
+
+```ts
+assertEssentials(caps: CapabilityProfile, facts: HostFacts, options?: { readonly logger?: Logger }): EssentialsReport
+```
+
+## bell
+
+Emit a literal terminal bell (`\x07`).
+
+```ts
+bell(): string
+```
+
+## charWidth
+
+Display width of a Unicode code point.
+
+```ts
+charWidth(codepoint: number, widthMode: WidthMode): 0 | 1 | 2
+```
+
+## classicTheme
+
+The classic DOS "gray dialog / blue window" theme — an alias of defaultTheme and the render-root default.
+
+```ts
+const classicTheme: Theme
+```
+
+## contrastRatio
+
+Compute the WCAG 2.x contrast ratio between two colors, `1` (identical) to `21` (black on white).
+
+```ts
+contrastRatio(a: Color, b: Color): number
+```
+
+## createDecoderState
+
+Create a fresh, empty decoder state to pass into the first decode call: no carried bytes, no in-progress paste, not resyncing.
+
+```ts
+createDecoderState(): DecoderState
+```
+
+## createHost
+
+Create a terminal host.
+
+```ts
+createHost(options: HostOptions): Host
+```
+
+## createKeymap
+
+Build a keymap from chord→name bindings.
+
+```ts
+createKeymap(bindings: Readonly<Record<string, string>>): Keymap
+```
+
+## createKeymap
+
+Build a keymap from chord→name bindings.
+
+```ts
+createKeymap(bindings: Readonly<Record<string, string>>): Keymap
+```
+
+## createLogger
+
+Create a screen-safe logger. **Enablement.** Off unless you pass `enabled: true`, set `JSVISION_DEBUG=1`, or choose `sink: 'ring'`.
+
+```ts
+createLogger(options: LoggerOptions = {}): Logger
+```
+
+## createRouter
+
+Create a navigation / screen router — a full-screen screen stack that mounts as an application's `content` body.
+
+```ts
+createRouter<R>(opts: RouterOptions<R>): Router<R>
+```
+
+## createTerminalQuery
+
+Create a real, tty-backed TerminalQuery over a pair of Node streams.
+
+```ts
+createTerminalQuery(options: TerminalQueryOptions = {}): ManagedTerminalQuery
+```
+
+## createTheme
+
+Build a complete Theme from seed colors.
+
+```ts
+createTheme(options: ThemeOptions): Theme
+```
+
+## cursor
+
+Capability-independent cursor controls (show/hide/absolute move).
+
+```ts
+const cursor: { readonly show: () => string; readonly hide: () => string; readonly to: (row: number, col: number) => string; }
+```
+
+## cursorTo
+
+Absolute cursor move to a **1-based** (row, col) (`CSI row;col H`).
+
+```ts
+cursorTo(row: number, col: number): string
+```
+
+## darken
+
+Darken a color by lowering its OKLab lightness.
+
+```ts
+darken(color: Color, amount: number): Color
+```
+
+## decode
+
+Decode a chunk of terminal bytes into input events.
+
+```ts
+decode(bytes: Uint8Array, state: DecoderState, options?: DecodeOptions): DecodeResult
+```
+
+## defaultEncodeStyle
+
+The default style encoder: depth-aware, downsampling truecolor→256→16→mono and merging attributes + foreground + background into one SGR sequence.
+
+```ts
+const defaultEncodeStyle: StyleEncoder
+```
+
+## defaultTheme
+
+The classic DOS text-mode look — a "gray dialog / blue window" theme ready to use as-is or as the base for your own.
+
+```ts
+const defaultTheme: Theme
+```
+
+## degradeCapsForWidth
+
+Apply a probe outcome to a capability profile — downgrade only, never upgrade.
+
+```ts
+degradeCapsForWidth(caps: CapabilityProfile, result: WidthProbeResult): CapabilityProfile
+```
+
+## degradeCapsFully
+
+Force a capability profile fully ASCII-safe: box-drawing and half-blocks off, ambiguous-wide on, so every chrome glyph maps to plain ASCII when rendered.
+
+```ts
+degradeCapsFully(caps: CapabilityProfile): CapabilityProfile
+```
+
+## detectTty
+
+Check whether the app has an interactive terminal, **before** starting the host.
+
+```ts
+detectTty(options: StreamOptions = {}): boolean
+```
+
+## draculaTheme
+
+The Dracula palette — a dark theme with its signature purple accent and `#282a36` background pinned.
+
+```ts
+const draculaTheme: Theme
+```
+
+## dumpCaps
+
+Render a one-line, secret-free summary of a resolved capability profile — handy for a single debug log line explaining what the SDK detected and *why* (which resolution layer decided each value).
+
+```ts
+dumpCaps(resolution: CapabilityResolution): string
+```
+
+## encode
+
+Encode ONE color to a standalone ANSI escape sequence for the given depth, downsampling automatically when the depth is lower than truecolor.
+
+```ts
+encode(color: Color, role: ColorRole, depth: ColorDepth): string
+```
+
+## encodeStyle
+
+Merge text attributes + foreground + background into ONE escape sequence, downsampled to the terminal's color depth.
+
+```ts
+encodeStyle(fg: Color, bg: Color, attrs: AttrMask, caps: CapabilityProfile): string
+```
+
+## essentialsMet
+
+Convenience boolean — true when every essential is satisfied.
+
+```ts
+essentialsMet(caps: CapabilityProfile, facts: HostFacts): boolean
+```
+
+## evaluateEssentials
+
+Evaluate the runtime essentials against a capability profile and TTY facts, without throwing.
+
+```ts
+evaluateEssentials(caps: CapabilityProfile, facts: HostFacts): EssentialsReport
+```
+
+## fallbackGlyph
+
+Substitute a glyph for the terminal's capabilities.
+
+```ts
+fallbackGlyph(char: string, caps: CapabilityProfile): string
+```
+
+## flush
+
+Resolve a held, ambiguous trailing `ESC` as a standalone Escape keypress.
+
+```ts
+flush(state: DecoderState, options?: DecodeOptions): DecodeResult
+```
+
+## gruvboxDarkTheme
+
+The Gruvbox Dark palette — a warm retro dark theme with its `bg0` background and amber accent pinned.
+
+```ts
+const gruvboxDarkTheme: Theme
+```
+
+## horizonTheme
+
+A modern enterprise-software theme — a dark-blue shell field, white cards, and a clear corporate blue accent for the primary button, focus, and selection.
+
+```ts
+const horizonTheme: Theme
+```
+
+## hyperlink
+
+Emit an OSC 8 hyperlink wrapping `text` with `url`.
+
+```ts
+hyperlink(text: string, url: string, caps: CapabilityProfile): string
+```
+
+## isAsciiSafe
+
+Whether a capability profile already renders as pure ASCII, so the width probe can be skipped with nothing to learn or swap.
+
+```ts
+isAsciiSafe(caps: CapabilityProfile): boolean
+```
+
+## janusTheme
+
+A retro PC-desktop theme — a teal field, silver 3D chrome, black text, and a navy highlight for the primary button, focus, and selection.
+
+```ts
+const janusTheme: Theme
+```
+
+## lighten
+
+Lighten a color by raising its OKLab lightness.
+
+```ts
+lighten(color: Color, amount: number): Color
+```
+
+## mix
+
+Blend two colors in OKLab space.
+
+```ts
+mix(a: Color, b: Color, t: number): Color
+```
+
+## monochromeTheme
+
+A color-free theme that distinguishes state by **text attribute** (reverse / bold / dim / underline) rather than hue — the readable choice on a monochrome terminal, and a working demonstration of the ThemeRole `attrs` axis.
+
+```ts
+const monochromeTheme: Theme
+```
+
+## nearest16
+
+Find the ANSI-16 palette index (0–15) closest to an RGB color, where 0–7 are the normal colors and 8–15 the bright variants.
+
+```ts
+nearest16(rgb: Rgb): number
+```
+
+## nearest256
+
+Find the xterm-256 palette index (0–255) closest to an RGB color.
+
+```ts
+nearest256(rgb: Rgb): number
+```
+
+## nordTheme
+
+The Nord palette — a cool arctic dark theme, with its canonical `nord0` background, `snow storm` foreground, and `frost` accent pinned.
+
+```ts
+const nordTheme: Theme
+```
+
+## notify
+
+Emit a desktop notification via the first protocol the terminal supports (Kitty, iTerm2, urxvt, or Windows Terminal/ConEmu), falling back to a single bell when none is available.
+
+```ts
+notify(title: string, body: string, caps: CapabilityProfile): string
+```
+
+## parseCursorPosition
+
+Parse the first Cursor-Position-Report (`ESC [ <row> ; <col> R`) out of a byte buffer, ignoring any surrounding bytes.
+
+```ts
+parseCursorPosition(buf: Uint8Array): CursorPosition | null
+```
+
+## parseTheme
+
+Parse a serialized theme, validating every field, and return a complete Theme.
+
+```ts
+parseTheme(json: string): Theme
+```
+
+## platinumTheme
+
+A classic-Mac Platinum theme — crisp grayscale surfaces with a restrained highlight blue for the primary button, focus, and selection.
+
+```ts
+const platinumTheme: Theme
+```
+
+## probeAmbiguousWidth
+
+Measure how many columns each probe group advances on the live terminal.
+
+```ts
+probeAmbiguousWidth(query: TerminalQuery, options: WidthProbeOptions = {}): Promise<WidthProbeResult>
+```
+
+## ramp
+
+Generate `steps` perceptually-even shades of a seed color, dark → light.
+
+```ts
+ramp(seed: Color, steps: number): Color[]
+```
+
+## redactEvent
+
+Reduce a decoded input event to a shape that is safe to log — drops any raw content while keeping the structural facts (modifiers, coordinates, lengths) useful for debugging.
+
+```ts
+redactEvent(event: InputEvent): RedactedEvent
+```
+
+## resolveCapabilities
+
+Detect the running terminal's capabilities **synchronously** from environment variables and the known-terminal table.
+
+```ts
+resolveCapabilities(options: SyncResolveOptions = {}): CapabilityResolution
+```
+
+## resolveCapabilities
+
+Detect the running terminal's capabilities **synchronously** from environment variables and the known-terminal table.
+
+```ts
+resolveCapabilities(options?: SyncResolveOptions): CapabilityResolution
+```
+
+## resolveCapabilitiesAsync
+
+Detect the running terminal's capabilities **asynchronously**, additionally probing the terminal live when you pass a TerminalQuery seam (the most accurate detection available).
+
+```ts
+resolveCapabilitiesAsync(options: ResolveOptions = {}): Promise<CapabilityResolution>
+```
+
+## resolveCapabilitiesAsync
+
+Detect the running terminal's capabilities **asynchronously**, additionally probing the terminal live when you pass a TerminalQuery seam (the most accurate detection available).
+
+```ts
+resolveCapabilitiesAsync(options?: ResolveOptions): Promise<CapabilityResolution>
+```
+
+## rgb256
+
+Reference RGB for xterm-256 palette index `n` (0–255): the 16 base colors (0–15), the 6×6×6 cube (16–231), then the 24-step gray ramp (232–255).
+
+```ts
+rgb256(index: number): Rgb
+```
+
+## rolesFromAliases
+
+Build a complete Theme from a resolved 18-token ThemeColors set.
+
+```ts
+rolesFromAliases(c: ThemeColors): Theme
+```
+
+## sanitize
+
+Remove escape and other terminal-control bytes from untrusted text, returning a string that is safe to write to the terminal.
+
+```ts
+sanitize(text: string): string
+```
+
+## serialize
+
+Build the ANSI string that turns `previous` into `current` (a damage diff).
+
+```ts
+serialize(current: ScreenBuffer, previous: ScreenBuffer | null, options: RenderOptions): string
+```
+
+## serializeTheme
+
+Serialize a theme to a JSON string.
+
+```ts
+serializeTheme(theme: Theme): string
+```
+
+## setClipboard
+
+Emit an OSC 52 clipboard-write of `text`.
+
+```ts
+setClipboard(text: string, caps: CapabilityProfile): string
+```
+
+## setTitle
+
+Emit an OSC 0/2 window-title set.
+
+```ts
+setTitle(text: string, caps: CapabilityProfile): string
+```
+
+## slateTheme
+
+An enterprise muted blue-gray theme — a calm, low-saturation dark scheme generated from a slate accent and neutral.
+
+```ts
+const slateTheme: Theme
+```
+
+## solarizedDarkTheme
+
+The Solarized Dark palette — a low-contrast dark theme with its `base03` background and blue accent pinned.
+
+```ts
+const solarizedDarkTheme: Theme
+```
+
+## solsticeTheme
+
+A Unix-workstation theme in the CDE / OpenWindows spirit — a sage field, warm putty chrome, and a teal accent for the primary button, focus, and selection.
+
+```ts
+const solsticeTheme: Theme
+```
+
+## styleKey
+
+Build a stable string key that is identical for cells sharing the same style — use it to cache encoded sequences or merge adjacent same-style runs.
+
+```ts
+styleKey(fg: Color, bg: Color, attrs: AttrMask): string
+```
+
+## toRgb
+
+Validate a `Color` and parse it to RGB components.
+
+```ts
+toRgb(color: Color): Rgb | null
+```
+
+## warnIfAmbiguousWide
+
+Probe the terminal for double-width chrome glyphs and, if a group is wide, emit one warning line.
+
+```ts
+warnIfAmbiguousWide(query: TerminalQuery, options: WidthWarnOptions = {}): Promise<WidthProbeResult>
+```
+
+## warpTheme
+
+A Workplace-Shell-style theme — cool steel-blue surfaces over a mid steel field, with a deep corporate blue accent for the primary button, focus, and selection.
+
+```ts
+const warpTheme: Theme
 ```
 
 ## withBase

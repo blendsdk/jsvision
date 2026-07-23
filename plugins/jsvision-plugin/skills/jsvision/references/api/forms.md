@@ -14,38 +14,6 @@ An opt-in asynchronous validator for a single field — the "is this username / 
 type AsyncValidator<T> = (value: T, ctx: { signal: AbortSignal }) => Promise<string | null>
 ```
 
-## bindCheck
-
-Adapt a multi-choice field to a `CheckGroup`'s `Signal<boolean[]>` (one flag per option), keeping the field's value as the list of **selected values** so validation runs on the domain array.
-
-```ts
-bindCheck<T>(field: Field<T[]>, options: readonly T[]): Signal<boolean[]>
-```
-
-## bindField
-
-Wire a field's **touched** flag to a widget's focus: the field becomes touched the first time focus *leaves* the widget (a blur), never merely by mounting it or focusing into it.
-
-```ts
-bindField<T>(field: Field<T>, view: View): void
-```
-
-## bindRadio
-
-Adapt a single-choice field to a `RadioGroup`'s `Signal<number>` (the selected index), keeping the field's value in domain terms so validation runs on the real value, never an index.
-
-```ts
-bindRadio<T>(field: Field<T>, options: readonly T[]): Signal<number>
-```
-
-## createForm
-
-Create a headless, reactive form store over a Zod object schema.
-
-```ts
-createForm<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof z.output<S>, unknown>>(options: CreateFormOptions<S, I>): Form<S, I>
-```
-
 ## CreateFormOptions
 
 Options for createForm .
@@ -97,14 +65,6 @@ interface Form<S extends z.ZodObject<z.ZodRawShape>, I> {
 }
 ```
 
-## formDialog
-
-Run a form in a modal dialog and resolve to the coerced values on OK, or `null` on Cancel / Esc / close-box / a quit-close.
-
-```ts
-formDialog<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof z.output<S>, unknown>>(host: ModalDialogHost, options: FormDialogOptions<S, I>): Promise<z.output<S> | null>
-```
-
 ## FormDialogOptions
 
 Options for formDialog.
@@ -132,4 +92,44 @@ Thrown when a form field cannot be resolved.
 new FormFieldError(field: string)   // extends Error
 // methods & signals:
 field: string
+```
+
+## bindCheck
+
+Adapt a multi-choice field to a `CheckGroup`'s `Signal<boolean[]>` (one flag per option), keeping the field's value as the list of **selected values** so validation runs on the domain array.
+
+```ts
+bindCheck<T>(field: Field<T[]>, options: readonly T[]): Signal<boolean[]>
+```
+
+## bindField
+
+Wire a field's **touched** flag to a widget's focus: the field becomes touched the first time focus *leaves* the widget (a blur), never merely by mounting it or focusing into it.
+
+```ts
+bindField<T>(field: Field<T>, view: View): void
+```
+
+## bindRadio
+
+Adapt a single-choice field to a `RadioGroup`'s `Signal<number>` (the selected index), keeping the field's value in domain terms so validation runs on the real value, never an index.
+
+```ts
+bindRadio<T>(field: Field<T>, options: readonly T[]): Signal<number>
+```
+
+## createForm
+
+Create a headless, reactive form store over a Zod object schema.
+
+```ts
+createForm<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof z.output<S>, unknown>>(options: CreateFormOptions<S, I>): Form<S, I>
+```
+
+## formDialog
+
+Run a form in a modal dialog and resolve to the coerced values on OK, or `null` on Cancel / Esc / close-box / a quit-close.
+
+```ts
+formDialog<S extends z.ZodObject<z.ZodRawShape>, I extends Record<keyof z.output<S>, unknown>>(host: ModalDialogHost, options: FormDialogOptions<S, I>): Promise<z.output<S> | null>
 ```

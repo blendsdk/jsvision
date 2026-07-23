@@ -6,20 +6,29 @@ The multi-line `Editor`, `Memo`, and edit-window chrome.
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
-## confirmBox
+## EditWindow
 
-Show a modal message with Yes / No / Cancel buttons.
+A blue editor window: an Editor framed by a movable/resizable window, with a vertical and horizontal scroll bar and a `line:col` indicator wired in.
 
 ```ts
-confirmBox(host: EditorDialogHost, message: string): Promise<'yes' | 'no' | 'cancel'>
+new EditWindow(options: EditWindowOptions = {})   // extends Window
+// methods & signals:
+editor: Editor
+onResized(): void
+zoom(): void
 ```
 
-## defaultEditorDialog
+## EditWindowOptions
 
-A no-op dialog handler that cancels every prompt (find/replace return `null`, confirmations return `'cancel'`).
+Options for EditWindow.
 
 ```ts
-const defaultEditorDialog: EditorDialogHandler
+interface EditWindowOptions {
+  rect?: Rect;   // The initial window rect. Prefer setting it here rather than assigning `layout.rect` after construction: the window pins its scroll bars against this rect on the first layout, and a post-construction assignment can leave one stale frame painted before the window re-pins.
+  editor?: Editor;   // The editor to host (e.g. a file-backed editor, or the shared clipboard editor). Omit for a plain `Editor`.
+  clipboard?: Editor;   // The shared clipboard editor — passed to a default-constructed editor, and used for the "Clipboard" title.
+  editorDialog?: EditorDialogHandler;   // The find/replace/save dialog handler for a default-constructed editor.
+}
 ```
 
 ## Editor
@@ -121,14 +130,6 @@ type EditorAction = | 'charLeft'
   | 'redo'
 ```
 
-## EditorCommands
-
-The app-level editor command names.
-
-```ts
-const EditorCommands: { readonly find: "find"; readonly replace: "replace"; readonly searchAgain: "searchAgain"; readonly clear: "clear"; }
-```
-
 ## EditorCommandSeam
 
 Optional hook for greying out menu/status commands (Cut, Copy, Paste, …) as the editor's state changes.
@@ -137,6 +138,14 @@ Optional hook for greying out menu/status commands (Cut, Copy, Paste, …) as th
 interface EditorCommandSeam {
   enable(command: string, enabled: boolean): void;   // Enable or disable a command by name; wire this to your app's command registry.
 }
+```
+
+## EditorCommands
+
+The app-level editor command names.
+
+```ts
+const EditorCommands: { readonly find: "find"; readonly replace: "replace"; readonly searchAgain: "searchAgain"; readonly clear: "clear"; }
 ```
 
 ## EditorDialogHandler
@@ -206,39 +215,6 @@ interface EditorOptions {
 }
 ```
 
-## EditWindow
-
-A blue editor window: an Editor framed by a movable/resizable window, with a vertical and horizontal scroll bar and a `line:col` indicator wired in.
-
-```ts
-new EditWindow(options: EditWindowOptions = {})   // extends Window
-// methods & signals:
-editor: Editor
-onResized(): void
-zoom(): void
-```
-
-## EditWindowOptions
-
-Options for EditWindow.
-
-```ts
-interface EditWindowOptions {
-  rect?: Rect;   // The initial window rect. Prefer setting it here rather than assigning `layout.rect` after construction: the window pins its scroll bars against this rect on the first layout, and a post-construction assignment can leave one stale frame painted before the window re-pins.
-  editor?: Editor;   // The editor to host (e.g. a file-backed editor, or the shared clipboard editor). Omit for a plain `Editor`.
-  clipboard?: Editor;   // The shared clipboard editor — passed to a default-constructed editor, and used for the "Clipboard" title.
-  editorDialog?: EditorDialogHandler;   // The find/replace/save dialog handler for a default-constructed editor.
-}
-```
-
-## findDialog
-
-Open the Find dialog — a text field with "Case sensitive" and "Whole words only" checkboxes.
-
-```ts
-findDialog(host: EditorDialogHost, initial?: FindRec): Promise<FindRec | null>
-```
-
 ## FindRec
 
 What the user entered in the Find dialog.
@@ -270,14 +246,6 @@ interface IndicatorTarget {
 }
 ```
 
-## infoBox
-
-Show a modal message with a single OK button.
-
-```ts
-infoBox(host: EditorDialogHost, message: string): Promise<void>
-```
-
 ## LineEnding
 
 A buffer's line-ending kind.
@@ -304,22 +272,6 @@ interface MemoOptions {
 }
 ```
 
-## replaceDialog
-
-Open the Replace dialog — find + replace fields plus "Case sensitive", "Whole words only", "Prompt on replace", and "Replace all" checkboxes.
-
-```ts
-replaceDialog(host: EditorDialogHost, initial?: ReplaceRec): Promise<ReplaceRec | null>
-```
-
-## replacePrompt
-
-Show the "replace this occurrence?" prompt (Yes / No / Cancel) used during an interactive replace.
-
-```ts
-replacePrompt(host: EditorDialogHost, cursor: Point): Promise<'yes' | 'no' | 'cancel'>
-```
-
 ## ReplaceRec
 
 What the user entered in the Replace dialog.
@@ -341,6 +293,54 @@ interface SearchOptions {
   caseSensitive: boolean;   // Match case exactly when `true`.
   wholeWords: boolean;   // Match only whole words (a match flanked by word characters is skipped) when `true`.
 }
+```
+
+## confirmBox
+
+Show a modal message with Yes / No / Cancel buttons.
+
+```ts
+confirmBox(host: EditorDialogHost, message: string): Promise<'yes' | 'no' | 'cancel'>
+```
+
+## defaultEditorDialog
+
+A no-op dialog handler that cancels every prompt (find/replace return `null`, confirmations return `'cancel'`).
+
+```ts
+const defaultEditorDialog: EditorDialogHandler
+```
+
+## findDialog
+
+Open the Find dialog — a text field with "Case sensitive" and "Whole words only" checkboxes.
+
+```ts
+findDialog(host: EditorDialogHost, initial?: FindRec): Promise<FindRec | null>
+```
+
+## infoBox
+
+Show a modal message with a single OK button.
+
+```ts
+infoBox(host: EditorDialogHost, message: string): Promise<void>
+```
+
+## replaceDialog
+
+Open the Replace dialog — find + replace fields plus "Case sensitive", "Whole words only", "Prompt on replace", and "Replace all" checkboxes.
+
+```ts
+replaceDialog(host: EditorDialogHost, initial?: ReplaceRec): Promise<ReplaceRec | null>
+```
+
+## replacePrompt
+
+Show the "replace this occurrence?" prompt (Yes / No / Cancel) used during an interactive replace.
+
+```ts
+replacePrompt(host: EditorDialogHost, cursor: Point): Promise<'yes' | 'no' | 'cancel'>
 ```
 
 ## wireEditorDialogs
