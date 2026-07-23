@@ -20,6 +20,21 @@ const COMPILER_OPTIONS = {
   skipLibCheck: true,
 };
 
+/**
+ * Compare API names by UTF-16 code unit so generated output is identical on every locale.
+ *
+ * @param {string} left First export name.
+ * @param {string} right Second export name.
+ * @returns {number} Negative, zero, or positive according to deterministic lexical order.
+ * @example
+ * ['a', 'A'].sort(compareApiNames); // → ['A', 'a']
+ */
+export function compareApiNames(left, right) {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
+}
+
 /** A symbol's whole JSDoc body collapsed to one line (for a compact member comment). */
 function fullComment(sym, checker) {
   return ts.displayPartsToString(sym.getDocumentationComment(checker)).replace(/\s+/g, ' ').trim();
@@ -208,5 +223,5 @@ export function extractPackageApi(entryFilePath, rootDir = process.cwd()) {
     if (sym.getJsDocTags(checker).some((t) => t.name === 'internal')) continue;
     out.push(digestExport(exported.getName(), sym, checker, rootDir));
   }
-  return out.sort((a, b) => a.name.localeCompare(b.name));
+  return out.sort((a, b) => compareApiNames(a.name, b.name));
 }

@@ -6,22 +6,6 @@ Signals, computeds, effects, and reactive control flow.
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
-## batch
-
-Coalesce multiple writes into a single update.
-
-```ts
-batch<T>(fn: () => T): T
-```
-
-## computed
-
-Create a lazy, memoized derived value.
-
-```ts
-computed<T>(fn: () => T, options?: ComputedOptions<T>): Computed<T>
-```
-
 ## Computed
 
 A read-only derived value: lazy + memoized.
@@ -42,22 +26,6 @@ interface ComputedOptions<T> {
 }
 ```
 
-## createRoot
-
-Open a root reactive scope and run `fn` inside it.
-
-```ts
-createRoot<T>(fn: (dispose: () => void) => T): T
-```
-
-## effect
-
-Register a reactive side effect and run it once immediately.
-
-```ts
-effect(fn: () => void): void
-```
-
 ## EqualsOption
 
 The change-equality policy for a signal or computed.
@@ -72,22 +40,6 @@ Map a reactive list of items to a reconciled, keyed list of nodes.
 
 ```ts
 For<T, N>(each: () => readonly T[], key: (item: T, index: number) => unknown, render: (item: T, index: () => number) => N): () => N[]
-```
-
-## getOwner
-
-Get the current reactive owner scope, or `null` if no scope is active.
-
-```ts
-getOwner(): Owner | null
-```
-
-## onCleanup
-
-Register a teardown callback that runs when the surrounding reactive lifetime ends.
-
-```ts
-onCleanup(cb: () => void): void
 ```
 
 ## Owner
@@ -114,28 +66,12 @@ new ReactiveCycleError(iterationLimit: number, detail?: string)   // extends Tui
 iterationLimit: number
 ```
 
-## runWithOwner
-
-Run `fn` with `owner` as the active scope, then restore the previous scope.
-
-```ts
-runWithOwner<T>(owner: Owner | null, fn: () => T): T
-```
-
 ## Show
 
 Choose between two branches based on a reactive condition.
 
 ```ts
 Show<N>(when: () => boolean, then: () => N, else_?: () => N): () => N | undefined
-```
-
-## signal
-
-Create a writable reactive value.
-
-```ts
-signal<T>(initial: T, options?: SignalOptions<T>): Signal<T>
 ```
 
 ## Signal
@@ -158,6 +94,70 @@ Options for signal.
 interface SignalOptions<T> {
   equals?: EqualsOption<T>;   // How the signal decides whether a write changed the value: a predicate returning `true` when the new value counts as equal to the old (equal ⇒ nothing is notified), or `false` to treat every write as a change (always notify). Defaults to `Object.is`.
 }
+```
+
+## batch
+
+Coalesce multiple writes into a single update.
+
+```ts
+batch<T>(fn: () => T): T
+```
+
+## computed
+
+Create a lazy, memoized derived value.
+
+```ts
+computed<T>(fn: () => T, options?: ComputedOptions<T>): Computed<T>
+```
+
+## createRoot
+
+Open a root reactive scope and run `fn` inside it.
+
+```ts
+createRoot<T>(fn: (dispose: () => void) => T): T
+```
+
+## effect
+
+Register a reactive side effect and run it once immediately.
+
+```ts
+effect(fn: () => void): void
+```
+
+## getOwner
+
+Get the current reactive owner scope, or `null` if no scope is active.
+
+```ts
+getOwner(): Owner | null
+```
+
+## onCleanup
+
+Register a teardown callback that runs when the surrounding reactive lifetime ends.
+
+```ts
+onCleanup(cb: () => void): void
+```
+
+## runWithOwner
+
+Run `fn` with `owner` as the active scope, then restore the previous scope.
+
+```ts
+runWithOwner<T>(owner: Owner | null, fn: () => T): T
+```
+
+## signal
+
+Create a writable reactive value.
+
+```ts
+signal<T>(initial: T, options?: SignalOptions<T>): Signal<T>
 ```
 
 ## untrack

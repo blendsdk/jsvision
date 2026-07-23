@@ -9,7 +9,14 @@
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
-import { generateApiDocs, checkApiDrift, categoryFor, CATEGORIES } from '../../../scripts/gen-plugin-api.mjs';
+import {
+  generateApiDocs,
+  checkApiDrift,
+  categoryFor,
+  CATEGORIES,
+  compareApiNames,
+  firstLineDifference,
+} from '../../../scripts/gen-plugin-api.mjs';
 import { barrelExports } from '../../docs-site/src/api/barrel-exports.mjs';
 
 const entry = (rel: string): string => fileURLToPath(new URL(rel, import.meta.url));
@@ -74,4 +81,12 @@ test('ST-A6: exports route to the expected category', () => {
   expect(categoryFor('core', 'packages/core/src/engine/color/theme.ts')).toBe('core-essentials');
   expect(categoryFor('ui', 'packages/ui/src/table/columns.ts')).toBe('data-views');
   expect(categoryFor('ui', 'packages/core/dist/engine/color/theme.d.ts')).toBe('core-essentials');
+});
+
+// ST-A7 — ordering and diagnostics must not depend on the runner's locale or hide the actual drift.
+test('ST-A7: API ordering is code-point deterministic and drift identifies the first changed line', () => {
+  expect(['aa', 'Z', 'a', 'A', 'z'].sort(compareApiNames)).toEqual(['A', 'Z', 'a', 'aa', 'z']);
+  expect(firstLineDifference('same\nold\nlast\n', 'same\nnew\nlast\n')).toBe(
+    'line 2: committed "old"; generated "new"',
+  );
 });

@@ -6,14 +6,6 @@ Mount an app in an xterm.js terminal; the in-memory browser file system.
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
-## attachKeyReclaim
-
-Attach key-chord reclaim to a terminal.
-
-```ts
-attachKeyReclaim(_term: TerminalLike, options: KeyReclaimOptions = {}): () => void
-```
-
 ## BrowserCapsOptions
 
 Options for buildBrowserCaps.
@@ -61,14 +53,6 @@ interface BrowserHostOptions {
 }
 ```
 
-## buildBrowserCaps
-
-Build the browser CapabilityProfile: truecolor + UTF-8, with `colorDepth` overridable.
-
-```ts
-buildBrowserCaps(options: BrowserCapsOptions = {}): CapabilityProfile
-```
-
 ## CaretCell
 
 A 0-based absolute caret cell, matching the event loop's `onCaret` payload.
@@ -90,22 +74,6 @@ interface ClipboardBridge {
 }
 ```
 
-## createBrowserFileSystem
-
-Create an in-memory FileSystem seeded from a plain object.
-
-```ts
-createBrowserFileSystem(options: BrowserFileSystemOptions = {}): FileSystem
-```
-
-## createBrowserHost
-
-Build a BrowserHost over an xterm.js-style terminal.
-
-```ts
-createBrowserHost(options: BrowserHostOptions): BrowserHost
-```
-
 ## FileTree
 
 A seed tree: a string value is a file's UTF-8 content; a nested record is a directory.
@@ -124,14 +92,6 @@ interface KeyReclaimOptions {
   isFocused?: () => boolean;   // Predicate for "is the terminal focused". Defaults to a DOM check for a focused xterm textarea; a headless terminal has none, so headless runs and tests inject this predicate.
   target?: KeyEventTarget;   // The event target to attach the capture-phase listener to. Defaults to the global `document`; a test injects a hand-mocked target (the repo avoids a jsdom devDependency).
 }
-```
-
-## mountApp
-
-Mount an application onto a terminal and start it.
-
-```ts
-mountApp(options: MountAppOptions): MountedApp
 ```
 
 ## MountAppOptions
@@ -160,18 +120,58 @@ interface MountedApp {
 }
 ```
 
-## setClipboard
-
-Write `text` to the browser clipboard (outbound only).
-
-```ts
-setClipboard(text: string, _caps: CapabilityProfile, clipboard?: ClipboardBridge): Promise<void>
-```
-
 ## UNRECLAIMABLE_CHORDS
 
 Chords a browser (or the OS) will not release even with `preventDefault()` — a curated best-effort list (some browsers reserve `Ctrl+W`/`Ctrl+N`/`Ctrl+T` and their `Shift` variants regardless).
 
 ```ts
 const UNRECLAIMABLE_CHORDS: readonly string[]
+```
+
+## attachKeyReclaim
+
+Attach key-chord reclaim to a terminal.
+
+```ts
+attachKeyReclaim(_term: TerminalLike, options: KeyReclaimOptions = {}): () => void
+```
+
+## buildBrowserCaps
+
+Build the browser CapabilityProfile: truecolor + UTF-8, with `colorDepth` overridable.
+
+```ts
+buildBrowserCaps(options: BrowserCapsOptions = {}): CapabilityProfile
+```
+
+## createBrowserFileSystem
+
+Create an in-memory FileSystem seeded from a plain object.
+
+```ts
+createBrowserFileSystem(options: BrowserFileSystemOptions = {}): FileSystem
+```
+
+## createBrowserHost
+
+Build a BrowserHost over an xterm.js-style terminal.
+
+```ts
+createBrowserHost(options: BrowserHostOptions): BrowserHost
+```
+
+## mountApp
+
+Mount an application onto a terminal and start it.
+
+```ts
+mountApp(options: MountAppOptions): MountedApp
+```
+
+## setClipboard
+
+Write `text` to the browser clipboard (outbound only).
+
+```ts
+setClipboard(text: string, _caps: CapabilityProfile, clipboard?: ClipboardBridge): Promise<void>
 ```

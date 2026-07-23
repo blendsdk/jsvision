@@ -6,22 +6,6 @@ Scroll bars, scrollers, list views, dialogs, dropdowns, tabs, and split panes.
 
 Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
-## cancelButton
-
-A Cancel button — emits `Commands.cancel` (the same command Esc and the frame close-box resolve to).
-
-```ts
-cancelButton(): Button
-```
-
-## clearHistory
-
-Clear all stored history for every id (useful to reset between runs or in tests).
-
-```ts
-clearHistory(): void
-```
-
 ## ComboBox
 
 A dropdown selector: a text field + a trailing `▐↓▌` button opening a `ListView<T>` popup.
@@ -55,14 +39,6 @@ interface ComboBoxOptions<T> {
 }
 ```
 
-## confirm
-
-Ask a yes/no question modally.
-
-```ts
-confirm(host: ModalDialogHost, text: string): Promise<boolean>
-```
-
 ## Dialog
 
 A modal/modeless gray dialog: a `Window` in the `dialog` role with a `valid()` close-gate.
@@ -88,14 +64,6 @@ interface DialogOptions {
 }
 ```
 
-## History
-
-The `▐↓▌` history dropdown button linked to an `Input` (see the module docs).
-
-```ts
-new History(opts: HistoryOptions)   // extends View
-```
-
 ## HISTORY_MAX_ENTRIES
 
 The default per-id entry cap.
@@ -104,28 +72,12 @@ The default per-id entry cap.
 const HISTORY_MAX_ENTRIES: 16
 ```
 
-## historyAdd
+## History
 
-Append `str` as the most-recent entry for `id` (skip-empty / dedup / append / evict-oldest, per addEntry).
-
-```ts
-historyAdd(id: number, str: string, maxEntries?: number): void
-```
-
-## historyCount
-
-The number of stored entries for `id` (0 when the id is unknown).
+The `▐↓▌` history dropdown button linked to an `Input` (see the module docs).
 
 ```ts
-historyCount(id: number): number
-```
-
-## historyEntries
-
-A snapshot copy of the entries for `id`, oldest→newest; empty when the id is unknown.
-
-```ts
-historyEntries(id: number): string[]
+new History(opts: HistoryOptions)   // extends View
 ```
 
 ## HistoryOptions
@@ -139,22 +91,6 @@ interface HistoryOptions {
   history?: Signal<string[]>;   // Bind an app-owned list instead of the global store.
   maxRows?: number;   // Max visible popup rows (default 6).
 }
-```
-
-## historyStr
-
-The `index`-th entry for `id` (0 = oldest), or `undefined` if out of range (bounds-checked).
-
-```ts
-historyStr(id: number, index: number): string | undefined
-```
-
-## inputBox
-
-Prompt for a single line of text modally.
-
-```ts
-inputBox(host: ModalDialogHost, o: InputBoxOptions): Promise<string | null>
 ```
 
 ## InputBoxOptions
@@ -220,14 +156,6 @@ interface ListViewOptions<T> {
 }
 ```
 
-## messageBox
-
-Show a modal message box and wait for the user to dismiss it.
-
-```ts
-messageBox(host: ModalDialogHost, o: MessageBoxOptions): Promise<'ok' | 'cancel'>
-```
-
 ## MessageBoxOptions
 
 Options for messageBox.
@@ -249,30 +177,6 @@ interface ModalDialogHost {
   loop: Pick<EventLoop, 'execView'>;   // Runs a view modally, resolving to the command that closed it.
   desktop: Pick<Desktop, 'addWindow' | 'removeWindow' | 'bounds'>;   // The desktop the modal mounts into (and whose extent bounds it).
 }
-```
-
-## noButton
-
-A No button — emits `Commands.no` when activated.
-
-```ts
-noButton(): Button
-```
-
-## okButton
-
-An OK button — the dialog default; emits `Commands.ok` when activated.
-
-```ts
-okButton(): Button
-```
-
-## okCancelButtons
-
-The OK + Cancel pair, in tab/z order (OK first).
-
-```ts
-okCancelButtons(): [Button, Button]
 ```
 
 ## ScrollBar
@@ -402,6 +306,102 @@ interface TabViewOptions {
   onClose?: (tab: Tab, index: number) => void;   // Fired after a tab is removed via its `×` close mark.
   onChange?: (index: number) => void;   // Fired when the effective active index changes.
 }
+```
+
+## cancelButton
+
+A Cancel button — emits `Commands.cancel` (the same command Esc and the frame close-box resolve to).
+
+```ts
+cancelButton(): Button
+```
+
+## clearHistory
+
+Clear all stored history for every id (useful to reset between runs or in tests).
+
+```ts
+clearHistory(): void
+```
+
+## confirm
+
+Ask a yes/no question modally.
+
+```ts
+confirm(host: ModalDialogHost, text: string): Promise<boolean>
+```
+
+## historyAdd
+
+Append `str` as the most-recent entry for `id` (skip-empty / dedup / append / evict-oldest, per addEntry).
+
+```ts
+historyAdd(id: number, str: string, maxEntries?: number): void
+```
+
+## historyCount
+
+The number of stored entries for `id` (0 when the id is unknown).
+
+```ts
+historyCount(id: number): number
+```
+
+## historyEntries
+
+A snapshot copy of the entries for `id`, oldest→newest; empty when the id is unknown.
+
+```ts
+historyEntries(id: number): string[]
+```
+
+## historyStr
+
+The `index`-th entry for `id` (0 = oldest), or `undefined` if out of range (bounds-checked).
+
+```ts
+historyStr(id: number, index: number): string | undefined
+```
+
+## inputBox
+
+Prompt for a single line of text modally.
+
+```ts
+inputBox(host: ModalDialogHost, o: InputBoxOptions): Promise<string | null>
+```
+
+## messageBox
+
+Show a modal message box and wait for the user to dismiss it.
+
+```ts
+messageBox(host: ModalDialogHost, o: MessageBoxOptions): Promise<'ok' | 'cancel'>
+```
+
+## noButton
+
+A No button — emits `Commands.no` when activated.
+
+```ts
+noButton(): Button
+```
+
+## okButton
+
+An OK button — the dialog default; emits `Commands.ok` when activated.
+
+```ts
+okButton(): Button
+```
+
+## okCancelButtons
+
+The OK + Cancel pair, in tab/z order (OK first).
+
+```ts
+okCancelButtons(): [Button, Button]
 ```
 
 ## yesButton

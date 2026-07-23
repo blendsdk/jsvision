@@ -38,14 +38,6 @@ interface ProgressBarOptions {
 }
 ```
 
-## runSpinner
-
-Advance `frame` by one every `intervalMs`, using the injectable one-shot timer (re-armed each tick).
-
-```ts
-runSpinner(frame: Signal<number>, opts: RunSpinnerOptions): () => void
-```
-
 ## RunSpinnerOptions
 
 Options for runSpinner.
@@ -55,6 +47,14 @@ interface RunSpinnerOptions {
   intervalMs?: number;   // Advance cadence in ms. Default `80`.
   timer: TimerSeam;   // Injectable OS-timer seam (real: the running app's `RuntimeAdapter`; tests: a fake).
 }
+```
+
+## SPINNERS
+
+The frozen frame tables for each preset.
+
+```ts
+const SPINNERS: Readonly<Record<SpinnerName, readonly string[]>>
 ```
 
 ## Spinner
@@ -85,18 +85,18 @@ interface SpinnerOptions {
 }
 ```
 
-## SPINNERS
-
-The frozen frame tables for each preset.
-
-```ts
-const SPINNERS: Readonly<Record<SpinnerName, readonly string[]>>
-```
-
 ## TimerSeam
 
 The injectable OS-timer subset `runSpinner` needs (real: the app's `RuntimeAdapter`; tests: a fake).
 
 ```ts
 type TimerSeam = Pick<RuntimeAdapter, 'setTimer' | 'clearTimer'>
+```
+
+## runSpinner
+
+Advance `frame` by one every `intervalMs`, using the injectable one-shot timer (re-armed each tick).
+
+```ts
+runSpinner(frame: Signal<number>, opts: RunSpinnerOptions): () => void
 ```
