@@ -30,6 +30,17 @@ describe('release preflight', () => {
     expect(workflow).not.toContain('run: yarn lockstep:version --no-git-commit');
   });
 
+  test('automatically releases only merged pull requests targeting master', () => {
+    const workflow = readRepositoryFile('.github/workflows/release.yml');
+
+    expect(workflow).toContain('pull_request_target:');
+    expect(workflow).toContain('branches: [master]');
+    expect(workflow).toContain('types: [closed]');
+    expect(workflow).toContain("github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true");
+    expect(workflow).toContain("RELEASE_DIST_TAG: ${{ inputs['dist-tag'] || 'latest' }}");
+    expect(workflow).toContain("DRY_RUN: ${{ inputs['dry-run'] || false }}");
+  });
+
   test('simulates release preparation only for pull requests targeting master', () => {
     const workflow = readRepositoryFile('.github/workflows/ci.yml');
 
