@@ -1,61 +1,143 @@
-# Requirements — code-editor (Lezer code-grade editor)
+# Code Editor — Requirements
 
-A **code-development-grade editor** for jsvision TUI apps: syntax highlighting, tree-based folding,
-and line numbers on top of the existing `@jsvision/ui` editor, powered by **Lezer** (`@lezer/*`).
-Delivered across three packages behind a small seam so the zero-dep guarantee holds.
+> **Project**: JSVision
+> **Feature**: Terminal-native CodeEditor and CodeEditorWindow
+> **Status**: Approved — RD-01 through RD-06
+> **Created**: 2026-07-23
+> **CodeOps Artifact Schema**: 1
 
-The engine and packaging were settled in a feasibility spike (`../plans/feasibility-spike/decision-memo.md`),
-and the product design was fully disambiguated in a `grill_me` session
-(`../shared-understanding.md`). Every semantically-weighted decision is captured in
-`00-ambiguity-register.md`. Historical name: "RD-08 Editor family" / GH #18 (closed); build tracked
-by GH #102.
+---
 
-## What this set delivers
+## Overview
 
-A developer opens a file (or a `Memo`/`EditWindow`) and gets: **syntax-highlighted** JSON and
-TypeScript/JavaScript, a **line-number gutter** with a fold column, **tree-based code folding**
-(click the gutter marker or use the menu), **bracket matching**, and **comment-toggle** — with the
-editor staying responsive on large files (incremental off-frame parsing; a soft cap that degrades
-gracefully to the plain editor). Highlighting rides the core theme system, so it themes and
-downsamples (truecolor → 256 → 16 → mono) like everything else.
+The Code Editor feature adds a modern source-code editor to JSVision without turning the framework
+into an IDE. It provides an embeddable `CodeEditor` and a ready-made `CodeEditorWindow`, while host
+applications retain responsibility for files, workspaces, multiple editor instances, language
+servers, and cross-document effects.
+
+The editor is terminal-native and browser/DOM-independent. Version 1 supports PostgreSQL SQL,
+JavaScript, and TypeScript; local syntax and structural assistance; industry-standard LSP
+integration; terminal-safe rendering of hostile content; bounded degraded operation; and a
+standalone comprehensive kitchen-sink in `@jsvision/examples`.
+
+The prior Code Editor draft is preserved under `codeops/_archive/code-editor/` as historical
+evidence and is not authoritative for this requirement set.
 
 ## Scope
 
-**In scope (v1)**
-- `Tokenizer` / `FoldProvider` **seam types** + a syntax-bucket enum + ~11 new theme roles in `@jsvision/core` (zero-dep).
-- A new opt-in **`@jsvision/lang`** package: the Lezer adapter, JSON + TS/JS grammars, Lezer-tag → bucket mapping, per-language fold allow-lists.
-- **Editor view features** in `@jsvision/editor`: highlight render integration, gutter/line-numbers, folding UX (gutter-click + menu + Ctrl-K), bracket matching, comment-toggle, Tab/Shift+Tab indent/dedent, the large-file soft-cap/degrade path.
-- Non-functional: perf NFR + the scoped validation probe, packaging/zero-dep, hostile-content security, testing + the kitchen-sink stories.
+### Version 1
 
-**Out of scope (each tracked by its own issue)**
-- Multiple cursors (#104) · word-wrap (#105) · autocomplete/IntelliSense (#106) · diagnostics/linting/LSP (#107).
-- v1 keeps the single-caret model and horizontal-scroll (1 buffer line = 1 screen row).
+- Embeddable `CodeEditor` and ready-made `CodeEditorWindow`.
+- One in-memory document per editor; hosts compose multiple editors for multiple files.
+- Host-mediated open, save, save-as, dirty-close, external-change, navigation, and cross-document
+  edit workflows.
+- PostgreSQL SQL, JavaScript, TypeScript, and plain-text modes.
+- Syntax highlighting, line numbers, status, folding, brackets, indentation, comments, and
+  search/replace.
+- Completion and safe snippets, caret hover, signature help, diagnostics, go-to navigation,
+  document symbols, document/range formatting, and opt-in format-on-save.
+- Caller-provided LSP session; optional separate runtime process adapter.
+- Read-only mode, keyboard-complete operation, narrow/monochrome/ASCII degradation, Unicode and
+  protocol-position correctness.
+- Explicit document-size tiers, responsiveness budgets, hostile-terminal sanitation, bounded
+  resource use, and failure isolation.
+- A standalone Code Editor kitchen-sink plus a concise story in the repository-wide kitchen-sink.
+- Application-derived syntax and editor theming with explicit editor/application overrides,
+  contrast validation, capability downsampling, and independent editor palettes.
 
-**Prerequisite (not an RD here)**
-- Extract the editor into **`@jsvision/editor`** — GH #101, a standalone refactor that lands before this build.
+### Deferred
 
-## Glossary
+- Multiple carets/selections.
+- Word wrapping.
+- Workspace symbols.
+- Rename.
+- Code actions.
+- Semantic tokens.
 
-| Term | Meaning |
-|------|---------|
-| **Lezer** | CodeMirror's incremental parser — a pure-JS syntax-tree engine (no DOM/WASM/native). The sole language engine here. |
-| **`Tokenizer` seam** | The zero-dep interface (in `@jsvision/core`) that yields highlight spans `(from, to, bucket)` over a range; implemented by `@jsvision/lang` over Lezer. |
-| **`FoldProvider` seam** | The zero-dep interface that yields foldable ranges; a Lezer-tree provider (`@jsvision/lang`) or the editor's indent-based default folder. |
-| **Bucket** | One of ~8 semantic token categories (keyword, comment, string, number, type, function, variable, punctuation) the seam emits — resolved to a theme role at draw time. |
-| **Syntax role** | A core theme role per bucket (`syntaxKeyword`, …); themed + capability-downsampled like any role. |
-| **Fold allow-list** | The ~8 Lezer node names per language whose ranges are foldable. |
-| **Soft cap** | A file-size/line threshold above which Lezer highlight + tree-fold are disabled (editor degrades to plain); the zero-dep features (line numbers, gutter, indent-fold) stay. |
-| **Gutter** | The fixed left columns of the editor's own draw: line numbers + a fold-marker column. |
+### Excluded
 
-## RD index
+- Bash language support.
+- Editor-owned files, workspaces, language-server processes, database connections, credentials, or
+  cross-document mutation.
+- Browser/DOM, Electron, VS Code extension, or graphical IDE runtime dependencies.
 
-| RD | Title | Priority | Depends on |
-|----|-------|----------|------------|
-| [RD-01](RD-01-core-seam-and-roles.md) | Core seam types & syntax theme roles (`@jsvision/core`) | Must | #101 (prereq) |
-| [RD-02](RD-02-lang-engine.md) | `@jsvision/lang` — the Lezer engine (JSON + TS/JS) | Must | RD-01 |
-| [RD-03](RD-03-editor-view-features.md) | Editor view features (`@jsvision/editor`) | Must | RD-01, RD-02, #101 |
-| [RD-04](RD-04-non-functional.md) | Non-functional (perf, packaging, security, testing, gates) | Must | RD-01…03 |
+## Domain Glossary
 
-**Suggested implementation order:** land **#101** (editor extraction) → RD-01 → RD-02 → RD-03 → RD-04.
-The perf/integration probe (RD-04) runs **early**, right after RD-01/RD-02 stand up the seam, so its
-number sets the soft-cap threshold before RD-03's degrade path is finalized.
+| Term | Definition |
+|------|------------|
+| **CodeEditor** | Embeddable terminal-native component that edits one in-memory source document. |
+| **CodeEditorWindow** | Ready-made JSVision window containing a configured CodeEditor and standard editor chrome. |
+| **Document revision** | Monotonic identity for a particular document-text state; asynchronous results must match it before affecting the editor. |
+| **LanguageAdapter** | Versioned, host-registered language contract whose local parser and LSP capabilities are independently optional. |
+| **LSP session** | Caller-provided Language Server Protocol 3.18 JSON-RPC boundary; it may be shared by multiple editor instances. |
+| **Runtime adapter** | Optional integration that owns language-server process spawning, transport, supervision, initialization, reconnect, and shutdown. |
+| **Host effect** | Save, close, external-change, cross-document navigation/edit, or command request that the editor emits for its containing application to authorize and perform. |
+| **Plain mode** | Fully editable state without an active parser or language-service capability. |
+| **Degraded mode** | Visible state in which an optional parser or language service failed or exceeded a bound while core editing remains available. |
+| **Visual column** | Terminal cell position after accounting for tabs, combining characters, and wide graphemes; distinct from document and protocol offsets. |
+| **Safe Markdown** | Bounded terminal-only subset of LSP Markdown with no raw HTML, images, embedded resources, or executable behavior. |
+| **Kitchen-sink** | Standalone examples application that interactively demonstrates every version 1 editor facet through deterministic fixtures and a simulated LSP session. |
+| **CodeEditorTheme** | Dedicated resolved palette layered over the application Theme; it covers editor surfaces, syntax categories, decorations, diagnostics, and assistance UI. |
+
+## Document Index
+
+| Document | Title | Status | Depends On |
+|----------|-------|--------|------------|
+| [Ambiguity Register](00-ambiguity-register.md) | Original Zero-Ambiguity Gate and decision provenance | Resolved (24/24) | — |
+| [Theme Decision Extension](01-theme-ambiguity-register.md) | Hybrid editor-theme model | Resolved (1/1) | Original register |
+| [RD-01](RD-01-editor-surface-and-document-lifecycle.md) | Editor Surface and Document Lifecycle | Approved | — |
+| [RD-02](RD-02-local-language-features.md) | Local Language Features | Approved | RD-01 |
+| [RD-03](RD-03-language-server-intelligence.md) | Language Server Intelligence | Approved | RD-01, RD-02 |
+| [RD-04](RD-04-quality-security-and-operability.md) | Quality, Security, and Operability | Approved | RD-01, RD-02, RD-03 |
+| [RD-05](RD-05-code-editor-kitchen-sink.md) | Code Editor Kitchen-Sink | Approved | RD-01, RD-02, RD-03, RD-04 |
+| [RD-06](RD-06-theme-and-syntax-presentation.md) | Theme and Syntax Presentation | Approved | RD-01, RD-02, RD-03, RD-04 |
+
+## Dependency Graph
+
+```text
+RD-01 Editor surface and lifecycle
+  └── RD-02 Local language features
+        └── RD-03 Language-server intelligence
+              └── RD-04 Quality, security, and operability
+                    ├── RD-06 Theme and syntax presentation
+                    └── RD-05 Standalone and repository kitchen-sinks
+```
+
+RD-04 constrains the implementation of RD-01 through RD-03 even though it is shown after them for
+specification-first execution. RD-06 is implemented before RD-05 so the final showcase uses the
+completed theme surface rather than demo-only styling.
+
+## Suggested Implementation Order
+
+| Phase | Requirements | Outcome |
+|-------|--------------|---------|
+| A — Architecture probes | RD-01–RD-04 constraints | Evidence-backed choices for text storage, rendering, parsers, LSP session, bounds, and dependencies |
+| B — Document core | RD-01 | Embeddable/window surfaces, revisions, commands, host I/O, search, status, read-only |
+| C — Local language support | RD-02 | Open adapters and launch-language parsing/presentation |
+| D — Language intelligence | RD-03 | Revision-safe LSP lifecycle and version 1 intelligence |
+| E — Quality closure | RD-04 | Performance, security, accessibility, failure, packaging, and full verification gates |
+| F — Theme presentation | RD-06 | Application-derived and independent palettes, syntax roles, contrast and capability fallbacks |
+| G — Showcase | RD-05 | Comprehensive standalone demo, global story, smoke and E2E evidence |
+
+## Confirmed Architecture Boundaries
+
+| Decision | Requirement |
+|----------|-------------|
+| Editor, not IDE | Host owns multiple files/editors, workspaces, and application chrome |
+| One document per component | Multiple files are multiple CodeEditor instances |
+| Host-owned I/O | Editor never reads or writes files directly |
+| Open language integration | Hosts explicitly register versioned LanguageAdapters |
+| Standard intelligence protocol | LSP 3.18 over a caller-provided, optionally shared session |
+| Separate process concern | Optional runtime adapter owns server process and transport lifecycle |
+| Host-authorized cross-file effects | Editor never silently opens or mutates another resource |
+| Independent degradation | Parser/LSP failures never remove core editing, save, or close |
+| Terminal security boundary | All source, host, adapter, and protocol presentation is untrusted |
+| Hybrid editor theming | Dedicated CodeEditorTheme follows the application by default and accepts explicit overrides |
+| Implementation remains open | CodeMirror/Lezer or other headless internals require planning evidence; no library is mandated here |
+
+## Planning Entry
+
+Use this complete six-document set as the source for one integrated Code Editor implementation
+plan. Planning must begin with the required architecture and performance probes, preserve all
+acceptance criteria as specification-test inputs, and finish with the standalone kitchen-sink
+rather than planning each RD as an isolated feature.

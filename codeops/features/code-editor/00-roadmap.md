@@ -1,24 +1,11 @@
-# Roadmap: Code-grade Editor (Lezer)
+# Roadmap: Code Editor
 
-> **Feature-Set**: code-editor
-> **Status**: Active (requirements drafted)
-> **Created**: 2026-07-18
-> **Last Updated**: 2026-07-18
-> **Progress**: 0 / 4 RDs done · RD-01…04 ✏️ drafted (core seam + roles · `@jsvision/lang` Lezer engine · editor view features · non-functional)
-> **CodeOps Skills Version**: 3.9.0
-
-The **code-development-grade editor** (syntax highlighting + tree-based folding + line numbers) on
-the existing `@jsvision/ui` editor, powered by **Lezer** (`@lezer/*`) behind a `Tokenizer`/`FoldProvider`
-seam. Engine + packaging settled in a feasibility spike (`plans/feasibility-spike/decision-memo.md`);
-product design disambiguated in a `grill_me` session (`shared-understanding.md`); all decisions in
-`requirements/00-ambiguity-register.md`. Historical name "RD-08 Editor family" / GH #18 (closed);
-build tracked by **GH #102**.
-
-**Prerequisite (not an RD here):** extract the editor into `@jsvision/editor` — **GH #101**, lands
-before RD-03.
-
-**Deferred (own issues):** multiple cursors #104 · word-wrap #105 · autocomplete #106 ·
-diagnostics/LSP #107.
+> **Feature-Set**: Code Editor
+> **Status**: In Progress
+> **Created**: 2026-07-23
+> **Last Updated**: 2026-07-23 23:51
+> **Progress**: 0 / 6 (0%)
+> **CodeOps Artifact Schema**: 1
 
 ## Legend
 
@@ -26,11 +13,11 @@ diagnostics/LSP #107.
 
 ## Tracker
 
-| ID | Title | RD | Plan | Stage | Status | Last Updated | Notes / Blocker |
-|----|-------|----|------|-------|--------|--------------|-----------------|
-| RD-01 | Core seam types & syntax theme roles | [RD-01](requirements/RD-01-core-seam-and-roles.md) | — | RD Drafted | ✏️ | 2026-07-18 | `Tokenizer`/`FoldProvider`/`DocReader`/`LanguageProvider` seam types + `SyntaxBucket` + ~11 theme roles in `@jsvision/core` (zero-dep). Foundation. |
-| RD-02 | `@jsvision/lang` — Lezer engine (JSON + TS/JS) | [RD-02](requirements/RD-02-lang-engine.md) | — | RD Drafted | ✏️ | 2026-07-18 | New opt-in package: Lezer `Input` adapter, tag→bucket map, per-language fold allow-lists, JSON (`@lezer/json`) + TS/JS (`@lezer/javascript`) providers. Deps only core + `@lezer/*`. |
-| RD-03 | Editor view features (`@jsvision/editor`) | [RD-03](requirements/RD-03-editor-view-features.md) | — | RD Drafted | ✏️ | 2026-07-18 | Highlight render, gutter/line-numbers, folding UX (gutter-click + menu + Ctrl-K), bracket-match, comment-toggle, Tab indent, large-file soft-cap/degrade. Depends #101 (extraction). |
-| RD-04 | Non-functional (perf, packaging, security, testing) | [RD-04](requirements/RD-04-non-functional.md) | — | RD Drafted | ✏️ | 2026-07-18 | Perf NFR (16ms, off-CI, non-gating) + the scoped validation probe (sets the soft-cap threshold, runs early), zero-dep/packaging, hostile-content security, testing + kitchen-sink gates. |
-
-**Suggested order:** #101 → RD-01 → RD-02 → RD-04's probe (early) → RD-03 → RD-04. Next: `make_plan` for RD-01.
+| ID | Title | RD | Plan | Stage | Status | Last Updated | Depends-on / Blocker |
+|----|-------|----|------|-------|--------|--------------|----------------------|
+| RD-01 | Editor surface and document lifecycle | [RD-01](requirements/RD-01-editor-surface-and-document-lifecycle.md) | [Plan](plans/code-editor/00-index.md) | Plan Created | 📋 | 2026-07-23 | — |
+| RD-02 | Local language features | [RD-02](requirements/RD-02-local-language-features.md) | [Plan](plans/code-editor/00-index.md) | Plan Created | 📋 | 2026-07-23 | depends on RD-01 |
+| RD-03 | Language server intelligence | [RD-03](requirements/RD-03-language-server-intelligence.md) | [Plan](plans/code-editor/00-index.md) | Plan Created | 📋 | 2026-07-23 | depends on RD-01, RD-02 |
+| RD-04 | Quality, security, and operability | [RD-04](requirements/RD-04-quality-security-and-operability.md) | [Plan](plans/code-editor/00-index.md) | Plan Created | 📋 | 2026-07-23 | depends on RD-01…03 |
+| RD-06 | Theme and syntax presentation | [RD-06](requirements/RD-06-theme-and-syntax-presentation.md) | [Plan](plans/code-editor/00-index.md) | Plan Created | 📋 | 2026-07-23 | depends on RD-01…04 |
+| RD-05 | Code Editor kitchen-sink | [RD-05](requirements/RD-05-code-editor-kitchen-sink.md) | [Plan](plans/code-editor/00-index.md) | Plan Created | 📋 | 2026-07-23 | depends on RD-01…04, RD-06 |
