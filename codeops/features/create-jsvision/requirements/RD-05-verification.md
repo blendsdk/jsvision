@@ -37,6 +37,10 @@ halves, with no network dependency.
       exactly — covering pin correctness without network.
 - [ ] Every archetype is covered by the typecheck oracle in **both** modes.
 - [ ] The e2e runs on Linux only; scaffold-layer tests run on the full matrix including Windows.
+- [ ] CI demonstrably executes the `create-jsvision` scaffold-layer tests in all six Node 22/24 ×
+      Linux/macOS/Windows cells; it is not enough for the package merely to typecheck there.
+- [ ] Command-resolution smoke coverage verifies argument forwarding for npm, Yarn 1, and pnpm create
+      invocations without contacting the registry.
 - [ ] No test in the always-on suite performs a network request.
 
 ### Should Have
@@ -134,13 +138,23 @@ The release workflow runs `yarn verify`, so everything here gates publication.
 5. [ ] The e2e removes its temporary directory on both success and failure.
 6. [ ] An adversarial test asserts that a target directory crafted to escape confinement produces a
        thrown error and **zero** files written anywhere outside the target.
-7. [ ] A test asserts that scaffolding into a directory already containing one of the emitted
+7. [ ] An adversarial test places a symlink in an emitted file's descendant path and asserts the CLI
+       rejects it before writing, while a symlink used only to reach the target root is accepted.
+8. [ ] A fault-injection test fails a filesystem operation after at least one successful write and
+       proves created artifacts are rolled back without changing pre-existing entries.
+9. [ ] A child-process test makes the opt-in install command fail and proves the complete scaffold is
+       retained, exit status is non-zero, and the retry command is printed.
+10. [ ] A test asserts that scaffolding into a directory already containing one of the emitted
        filenames writes nothing and exits non-zero.
-8. [ ] The full suite passes with no network interface available (or with network access blocked).
-9. [ ] Scaffold-layer tests pass on the Windows CI matrix cell; the e2e is skipped there by
-       configuration, not by silent failure.
-10. [ ] `yarn verify` is green with the feature merged, including `check:deps` and `check-plugin`.
-11. [ ] Security requirements verified: criterion 6 covers path traversal, criterion 7 covers
-        destructive overwrite, criterion 8 covers the no-network requirement, and RD-02's
+11. [ ] The full suite passes with no network interface available (or with network access blocked).
+12. [ ] CI evidence shows scaffold-layer tests executed, rather than only typechecked, in every
+        Linux/macOS/Windows × Node 22/24 matrix cell; the generated-project e2e is explicitly skipped
+        outside Linux.
+13. [ ] Local, registry-free smoke tests prove npm, Yarn 1, and pnpm forward the target and
+        `--template` arguments to the `create-jsvision` bin unchanged.
+14. [ ] `yarn verify` is green with the feature merged, including `check:deps` and `check-plugin`.
+15. [ ] Security requirements verified: criteria 6–9 cover traversal, symlink redirection, rollback,
+        and install failure; criterion 10 covers destructive overwrite; criterion 11 covers the
+        no-network requirement; and RD-02's
         `--install` criterion (allowlisted binary, argument array, `shell: false`) covers command
         injection.

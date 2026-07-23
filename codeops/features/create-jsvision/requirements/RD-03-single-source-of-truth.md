@@ -19,10 +19,9 @@ Two consumers need the same templates and generator, and **neither can reach the
 - `packages/create-jsvision/` publishes to npm, and npm ships only the package's own directory.
 
 So two physical copies are unavoidable. The only real question is whether the second copy is
-**generated and guarded** or maintained by hand. This repo has already answered that question once:
-`yarn plugin:sync --fix` regenerates plugin content deterministically and `check-plugin` fails
-`yarn verify` when it drifts — a guard that caught a stale API snapshot during the very session this
-requirement was written.
+**generated and guarded** or maintained by hand. The repo already has deterministic sync and drift
+infrastructure, but it does not currently copy or byte-compare scaffolder templates. This RD extends
+that infrastructure rather than assuming template synchronization already exists.
 
 ---
 
@@ -60,8 +59,10 @@ generated content.
 
 ### What the existing mechanism covers
 
-`scripts/plugin-sync.mjs` supports `--fix` (deterministic regeneration, no AI), `--detect` (JSON
-drift report), and a no-flag AI-assisted mode. Only `--fix` is used here — template sync must never
+`scripts/plugin-sync.mjs` currently supports deterministic snippet/API regeneration and an
+AI-assisted catalog mode; `scripts/check-plugin.mjs` validates the plugin but treats its current
+template directory as canonical. The feature must add a new deterministic canonical-to-plugin copy
+operation to `--fix` and a byte-for-byte drift check to `check-plugin`. Template sync must never
 depend on an API key or a model.
 
 > Note: the drift memory for this repo records that `--detect` does **not** catch every drift class

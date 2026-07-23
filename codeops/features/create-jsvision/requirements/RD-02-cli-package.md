@@ -37,6 +37,12 @@ same `create jsvision` phrasing. A scoped package would force `npm create @jsvis
 - [ ] The scaffolder **never overwrites an existing file**. If any file it would write already
       exists, it writes nothing and exits non-zero naming the conflict.
 - [ ] Every write is confined to the resolved target directory.
+- [ ] The target root may itself resolve through a symlink, but if any existing descendant component
+      used by a generated file is a symlink, fail before the first write and name that component.
+- [ ] A scaffold-write failure removes only files and directories created by that attempt. It never
+      removes or changes pre-existing content.
+- [ ] If `--install` fails after generation succeeds, retain the complete generated project, exit 1,
+      and print the exact install command the user can retry.
 - [ ] On success it prints the created files and the exact next steps to run.
 
 ### Should Have
@@ -80,8 +86,19 @@ const abs = resolve(join(targetRoot, rel));
 if (abs !== targetRootResolved && !abs.startsWith(targetRootResolved + sep)) throw …
 ```
 
-This is the stronger invariant: rather than guessing which names look dangerous, it proves no write
-lands outside the directory the user named.
+This lexical check is necessary but cannot prove confinement by itself: an existing `src` symlink
+could redirect `src/main.ts` after the prefix check. Per AR #24, canonicalise the target root and
+preflight every existing descendant component used by an emitted path with `lstat`; reject the
+attempt before writing if any such component is a symbolic link. Repeat the safety check immediately
+before each write so a changed path cannot be accepted from stale preflight evidence.
+
+### Failure cleanup
+
+Conflict and symlink checks complete before the first write. The writer records each file and
+directory it creates; if a later filesystem operation fails, it removes those artifacts in reverse
+order while leaving every pre-existing entry untouched (AR #25). Optional installation is a separate
+transaction: it starts only after generation completes, and its failure does not roll back the valid
+scaffold.
 
 ### Package-manager detection
 
@@ -127,6 +144,8 @@ The `bin`, `repository`, and non-private manifest fields are release prerequisit
 | Auto-install        | Always · never · `--install` opt-in                      | `--install` opt-in                         | Keeps the tool offline and deterministic; install failures shouldn't read as scaffolder bugs | AR #8  |
 | `git init`          | Yes · no · flag                                          | No, and no flag                            | Nested-repo footgun when scaffolding into an existing repo                              | AR #9  |
 | Existing target     | Per-file refusal · refuse non-empty unless force · refuse any existing dir | Per-file refusal | Allows `.` into a dir holding `.git`/README while still never clobbering               | AR #23 |
+| Existing symlinks | Allow descendants · reject generated descendant paths | Resolve the target root; reject descendant symlinks | Prevents a lexically-contained path from redirecting a write outside the target | AR #24 |
+| Failure cleanup | Keep partial files · roll back all failures · separate generation/install transactions | Roll back failed generation; retain a complete scaffold after install failure | Protects existing content and keeps optional installation independently retryable | AR #25 |
 
 ---
 
@@ -140,7 +159,8 @@ The `bin`, `repository`, and non-private manifest fields are release prerequisit
   privilege boundary. It can only write where the user could already write.
 - **Injection risks**:
   - *Path traversal* — the live risk. Mitigated by resolve-and-prefix confinement on every write, so
-    a crafted target cannot place files outside the resolved root.
+    a crafted relative path cannot escape, plus descendant-symlink rejection so filesystem
+    redirection cannot bypass the lexical check.
   - *Command injection* — only `--install` spawns a process. It MUST use an argument array with no
     shell (`spawn(cmd, args, { shell: false })`) and MUST NOT interpolate user input into a command
     string. The package-manager name comes from a fixed allowlist (`npm`/`yarn`/`pnpm`), never from
@@ -178,5 +198,13 @@ The `bin`, `repository`, and non-private manifest fields are release prerequisit
         `pnpm` with `install` as an argument array element, invoked with `shell: false`.
 12. [ ] A target whose resolved path would place any file outside the resolved target root causes a
         thrown error and zero writes.
-13. [ ] Security requirements verified: criterion 11 covers path traversal, criterion 10 covers
-        command injection (allowlisted binary, no shell), criteria 4–5 cover destructive overwrite.
+13. [ ] If an existing descendant such as `src` is a symlink, the command exits 1 before writing,
+        names `src`, and creates no file through that symlink. A symlink used only by the target root
+        itself remains valid after canonicalisation.
+14. [ ] If a filesystem operation fails after at least one generated file was created, every file and
+        directory created by that attempt is removed and all pre-existing entries are byte-unchanged.
+15. [ ] If `--install` exits non-zero, the complete scaffold remains on disk, the CLI exits 1, and
+        stderr prints the exact package-manager install command to retry.
+16. [ ] Security requirements verified: criteria 12–13 cover path traversal and symlink redirection,
+        criterion 11 covers command injection (allowlisted binary, no shell), and criteria 4–6 and 14
+        cover destructive overwrite and cleanup.

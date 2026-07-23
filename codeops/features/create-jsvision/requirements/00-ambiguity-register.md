@@ -1,10 +1,10 @@
 # Ambiguity Register: create-jsvision (GH #169)
 
-> **Status**: ✅ GATE PASSED — all 23 items resolved
-> **Last Updated**: 2026-07-22 21:39
-> **Resolution**: Bulk acceptance — user said "accept all" to the full set of 23 presented
-> recommendations. Per the shared gate's bulk-acceptance rule this is an explicit decision; each row
-> below spells out the accepted option rather than pointing at "the recommendation".
+> **Status**: ✅ GATE PASSED — all 25 items resolved
+> **Last Updated**: 2026-07-23
+> **Resolution**: Bulk acceptance occurred in two rounds: the original 23 recommendations were
+> accepted on 2026-07-22, and the symlink-confinement and failure-cleanup recommendations were
+> explicitly accepted on 2026-07-23. Each row spells out the accepted behavior.
 > **Source**: GitHub issue #169 (labels: enhancement, needs-decision, epic, priority: high, effort: L)
 
 Discovery was grounded in the real code rather than the issue body. Three of the issue's five
@@ -36,6 +36,8 @@ Resolution Notes.
 | 21  | Non-func    | Windows support                                                 | **Scaffold layer CI-verified on Windows**; e2e stays Linux-only.                                                                          | ✅ Resolved |
 | 22  | Technical   | Existing spec oracle                                            | **Untouched.** In-monorepo mode stays the default so ST-2/ST-3 remain green without edits.                                                | ✅ Resolved |
 | 23  | Edge case   | Target directory exists / is non-empty (surfaced in authoring)  | **Per-file refusal**: never overwrite any file the scaffolder would write; create directories as needed. No `--force`.                    | ✅ Resolved |
+| 24  | Security    | Can existing symlinks redirect a generated file outside the target? | Resolve the target root itself canonically, but **reject every existing symlink in a descendant path used by a generated file**. No generated write may traverse such a symlink. | ✅ Resolved |
+| 25  | Behavioral  | What survives a scaffold-write or optional install failure? | On a scaffold-write failure, remove only files and directories created by that attempt and preserve all pre-existing content. If `--install` fails after scaffolding completes, retain the complete scaffold, exit non-zero, and print the manual install command. | ✅ Resolved |
 
 ## Resolution Notes
 
@@ -70,6 +72,14 @@ on any name containing `/`, `\`, or `..`, and ST-5 (`:76-80`) locks that in for
 *target directory* is now a separate, first-class argument, and safety is enforced by the
 resolve-and-prefix confinement already implemented at `:222-225` — "never write outside the resolved
 target" is a stronger invariant than "reject names that look like paths".
+
+**AR-24 — lexical prefix checks are necessary but not sufficient.** An existing descendant symlink
+can redirect a lexically-contained path outside the canonical target. The standalone writer therefore
+resolves the target root but refuses any existing symlink in a generated file's descendant path.
+
+**AR-25 — generation and installation are separate transactions.** A failed write rolls back only
+artifacts created by that attempt. Installation starts only after a complete scaffold exists; an
+installation failure keeps that useful scaffold and reports the exact command the user can retry.
 
 **AR-17 — this closes a real hole in the issue's stated acceptance criteria.** "scaffold → install →
 `tsc --noEmit` → headless smoke run" against a published range would validate the *published* SDK

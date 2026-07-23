@@ -4,7 +4,7 @@
 > **Status**: Draft
 > **Created**: 2026-07-22
 > **Project**: create-jsvision (GH #169)
-> **Depends On**: RD-01, RD-02, RD-03, RD-04, RD-05, RD-06
+> **Depends On**: RD-01, RD-02, RD-03, RD-04, RD-05, RD-06, RD-07
 > **CodeOps Artifact Schema**: 1 · **Migrated From Claude CodeOps Skills Version**: 3.12.0
 > **Complexity**: S
 
@@ -44,8 +44,11 @@ behaviour, and the security invariants that hold regardless of which RD introduc
 
 - [ ] Every failure mode produces a message naming **what** failed and **what to do**, on stderr,
       with a non-zero exit code.
-- [ ] A failure never leaves a partially-scaffolded directory: conflicts are detected before the
-      first write.
+- [ ] Conflicts and unsafe descendant symlinks are detected before the first write.
+- [ ] A scaffold-write failure removes only artifacts created by that attempt and leaves every
+      pre-existing entry unchanged.
+- [ ] An optional install failure retains the complete scaffold and reports a retry command; it is
+      not treated as a generation rollback.
 - [ ] No stack trace is printed for an expected error (bad name, conflict, unknown archetype).
 
 ### Should Have — performance
@@ -107,8 +110,8 @@ Applies to every other RD in this set. RD-05 is where most of these become execu
   invoking user's privileges and crosses no privilege boundary — it can only write where the user
   could already write.
 - **Injection risks** — the three that actually apply:
-  1. **Path traversal** — mitigated by resolve-and-prefix confinement on every write, verified by an
-     adversarial test (RD-05).
+  1. **Path traversal** — mitigated by resolve-and-prefix confinement plus rejection of existing
+     descendant symlinks used by generated paths, verified by adversarial tests (RD-05).
   2. **Command injection** — only `--install` spawns a process; it must use an allowlisted binary
      name (`npm`/`yarn`/`pnpm`), an argument array, and `shell: false`. The user agent string is
      matched against the allowlist, never passed through.
@@ -135,9 +138,11 @@ Applies to every other RD in this set. RD-05 is where most of these become execu
 7. [ ] Each expected error (unsafe name, unknown archetype, file conflict, missing target on a
        non-TTY) prints a single-line message to stderr containing no stack trace, and exits with the
        code specified in RD-02.
-8. [ ] After any failed scaffold attempt, the target directory contains no file the scaffolder
-       created.
+8. [ ] After a scaffold-write failure, the target contains no artifact created by that attempt and
+       all pre-existing entries are byte-unchanged. After an install failure, the complete generated
+       scaffold remains and no generated file is missing.
 9. [ ] Scaffolding without `--install` completes in under 1 second on a warm filesystem.
 10. [ ] CLI output is fully comprehensible with colour stripped and when stdout is not a TTY.
-11. [ ] Security requirements verified: the traversal, conflict, and `--install` argument-array tests
-        from RD-05 all pass, and no test or code path reads a credential store.
+11. [ ] Security requirements verified: the traversal, descendant-symlink, rollback, conflict, and
+        `--install` argument-array tests from RD-05 all pass, and no test or code path reads a
+        credential store.

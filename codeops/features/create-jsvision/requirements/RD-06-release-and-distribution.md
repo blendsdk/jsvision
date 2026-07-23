@@ -28,12 +28,15 @@ provenance via OIDC.
 
 - [x] The unscoped npm name `create-jsvision` is **reserved before implementation begins**.
       Done 2026-07-23 — placeholder `0.0.1` published under owner `blendjs`.
-- [ ] The package joins the lockstep version set and `yarn sync-package-versions`.
+- [ ] The package joins Lockstep's public-workspace version set. It is not added to
+      `sync-package-versions.mjs` unless it exports a static runtime `VERSION` constant.
 - [ ] The manifest is **not** `private`, declares a `bin`, and carries a `repository` field
       (required for provenance).
 - [ ] `engines.node` is `>=22`, consistent with the rest of the repo.
 - [ ] `yarn check:deps` passes — zero native dependencies.
 - [ ] The package publishes with provenance through the existing Release workflow.
+- [ ] Release-workflow documentation and package-set assertions list `create-jsvision` as the sixth
+      public package.
 - [ ] The published tarball contains the templates it needs at runtime.
 
 ### Should Have
@@ -51,9 +54,11 @@ provenance via OIDC.
 
 ### Lockstep implications
 
-Root `package.json#version` is the source of truth and `sync-package-versions` fans it out. Joining
-lockstep means `create-jsvision@X.Y.Z` always scaffolds `@jsvision/ui@^X.Y.Z` — the version
-correspondence is a documented feature, not a coincidence.
+Lockstep bumps every public workspace manifest to one shared version. The separate
+`sync-package-versions.mjs` script only copies package-manifest versions into static source-level
+`VERSION` exports for packages that expose one; it does not own manifest versioning. Unless this CLI
+exports such a constant, adding it to that script would be incorrect. Joining Lockstep still means
+`create-jsvision@X.Y.Z` scaffolds `@jsvision/ui@^X.Y.Z`.
 
 The cost, accepted: a template-only fix bumps every published package. This is already true of the
 existing five, where a change in one bumps all.
@@ -118,8 +123,9 @@ version tag and the `develop` sync are no longer manual steps.
        confirmed to resolve to it and execute its `bin`.
 2. [ ] `packages/create-jsvision/package.json` has no `private` key (or `private: false`), a `bin`
        entry, and a `repository` object with a `url`.
-3. [ ] `yarn sync-package-versions --check` passes with `create-jsvision` included, and its version
-       equals the root `package.json` version.
+3. [ ] A Lockstep version dry run reports `create-jsvision` among the public workspaces and gives its
+       manifest the same version as `@jsvision/ui`; `sync-package-versions --check` remains green
+       without a CLI entry unless the CLI exports a static `VERSION` constant.
 4. [ ] `yarn check:deps` reports zero native dependencies for the new package.
 5. [ ] `npm pack` on the package produces a tarball that, when extracted, contains every template
        file the generator reads at runtime.
@@ -127,6 +133,8 @@ version tag and the `develop` sync are no longer manual steps.
        as scaffolding from source.
 7. [ ] A dry-run of the Release workflow completes without publishing and reports `create-jsvision`
        among the packages it would publish.
-8. [ ] The published package shows a provenance attestation on npm.
-9. [ ] Security requirements verified: criterion 1 confirms the ownership grant, criterion 8 confirms
+8. [ ] `.github/workflows/release.yml` identifies `create-jsvision` as the sixth public package, and
+       any package allowlist or packaging-sanity step includes it.
+9. [ ] The published package shows a provenance attestation on npm.
+10. [ ] Security requirements verified: criterion 1 confirms the ownership grant, criterion 9 confirms
        provenance, and no generated artifact contains a credential.

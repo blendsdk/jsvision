@@ -48,7 +48,7 @@ touching the immutable spec oracles that pin it.
 
 | #        | Document                                                            | Description                                                        | Depends On               |
 | -------- | ------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------ |
-| **AR**   | [Ambiguity Register](00-ambiguity-register.md)                       | Zero-Ambiguity Gate decisions (audit trail) — 23 items, all resolved | —                        |
+| **AR**   | [Ambiguity Register](00-ambiguity-register.md)                       | Zero-Ambiguity Gate decisions (audit trail) — 25 items, all resolved | —                        |
 | **RD-01** | [Dual-mode generation](RD-01-dual-mode-generation.md)               | Teach the pure core a `standalone` output mode                     | —                        |
 | **RD-02** | [CLI package](RD-02-cli-package.md)                                 | The published `create-jsvision` executable                         | RD-01                    |
 | **RD-03** | [Single source of truth](RD-03-single-source-of-truth.md)           | One canonical template set; the plugin's copy generated and guarded | RD-01                    |
@@ -73,6 +73,16 @@ RD-08 (non-functional) ───────────────────
 ```
 
 No cycles. RD-01 is the only true prerequisite; RD-03 can proceed in parallel with RD-02.
+
+## Domain-Lens Selection
+
+| Lens | Applied? | Evidence / consequence |
+| --- | --- | --- |
+| Data and migration | Yes | The canonical generator/templates move from the plugin into a published package while the plugin copy remains backward-compatible and reproducibly generated. Compatibility, rollback, provenance, and drift detection are therefore requirements. |
+| Compiler and language | No | The feature emits TypeScript but does not implement a parser, compiler, type system, or language runtime. Generated output is covered by typecheck tests instead. |
+| Distributed and concurrent | No | The CLI is a local, single-process filesystem workflow with no shared durable service. Filesystem race resistance remains a security/failure concern, not a distributed-system contract. |
+| Financial system | No | No money, ledger, pricing, tax, or reconciliation behavior exists. |
+| Web application | No | No HTTP surface, browser session, role, or tenant resource is introduced. |
 
 ---
 
@@ -105,6 +115,8 @@ RD-08 is not a phase — its criteria are satisfied across A–D and checked at 
 | Target directory | Any path including `.` | The dominant create-app idiom; confinement replaces name-rejection |
 | E2E target | Local build linked, plus a unit assertion on the pin | Avoids testing published code and a release-ordering deadlock |
 | Overwrite policy | Per-file refusal, no `--force` | Allows `.` into a live repo while never clobbering |
+| Symlink policy | Canonical target root; reject descendant symlinks used by generated paths | Lexical prefix checks alone do not prevent filesystem redirection |
+| Failure cleanup | Roll back scaffold writes; retain a complete scaffold after install failure | Protects existing work while keeping generation independent from optional installation |
 
 ---
 

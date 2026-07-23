@@ -553,6 +553,36 @@
         "RD-CREATE-JSVISION-07",
         "RD-CREATE-JSVISION-08"
       ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-24",
+      "type": "ambiguity",
+      "title": "Descendant symlink confinement policy",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-02",
+        "AC-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-05",
+        "AC-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-08",
+        "AC-CREATE-JSVISION-08"
+      ]
+    },
+    {
+      "id": "AR-CREATE-JSVISION-REQ-25",
+      "type": "ambiguity",
+      "title": "Scaffold and install failure cleanup policy",
+      "status": "resolved",
+      "path": "requirements/00-ambiguity-register.md",
+      "links": [
+        "RD-CREATE-JSVISION-02",
+        "AC-CREATE-JSVISION-02",
+        "RD-CREATE-JSVISION-05",
+        "AC-CREATE-JSVISION-05",
+        "RD-CREATE-JSVISION-08",
+        "AC-CREATE-JSVISION-08"
+      ]
     }
   ]
 }
