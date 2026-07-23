@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-07-23
+
+Added:
+- Added a cross-platform serial performance gate for core, UI, and datagrid.
+
+Changed:
+- Isolated performance budgets from parallel verification; CI and Turbo timing runs are now informational while preserving explicit skips.
+- Aligned preflight oracle with automatic releases; merged master pull requests are the only publishing trigger.
+
+Removed:
+- Removed manual-dispatch and dry-run configuration from the release process.
+
+Fixed:
+- Verification is now performed with yarn verify for consistency.
+
 ## [1.1.0] - 2026-07-23
 
 ### Fixed

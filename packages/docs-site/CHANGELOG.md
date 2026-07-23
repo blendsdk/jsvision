@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-07-23
+
+## Changed
+- Isolated performance budgets from parallel verification, making CI and Turbo timing runs informational while preserving explicit skips.
+- Updated architecture and decision documents to reflect recent performance gate changes.
+
+## Added
+- Introduced a cross-platform serial performance gate for core, UI, and datagrid.
+- Wired the authoritative check into the acceptance criteria for performance budgets.
+
 ## [1.1.0] - 2026-07-23
 
 ## Added

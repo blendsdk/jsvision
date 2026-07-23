@@ -12,6 +12,17 @@ first published release has an accurate history.
 > `[Unreleased]` is the authoritative surface; from 1.0.0 the package follows
 > [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-07-23
+
+Added:
+- Added a cross-platform serial performance gate for core, UI, and datagrid.
+
+Changed:
+- Isolated performance budgets from parallel verification; CI and Turbo timing runs are now informational while preserving explicit skips.
+
+Fixed:
+- Ensured proper wiring of the authoritative check into the acceptance criteria.
+
 ## [1.0.0] - 2026-07-22
 
 Added:
