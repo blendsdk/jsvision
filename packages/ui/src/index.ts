@@ -47,9 +47,25 @@ export { View, Group, intersect, translate, contains, createRenderRoot } from '.
 export type { Point, ViewState, DrawContext, ThemeRoleName, RenderRoot, RenderRootOptions } from './view/index.js';
 
 // Declarative layout builders — compose a screen as one nested expression (`col`/`row` containers,
-// `grow`/`fixed` size shorthands, `spacer` gaps, and a `stack` z-overlay with `place`/`centered`/
-// corner helpers) instead of imperative `new`/`.add()`/`.layout =`.
-export { col, row, grow, fixed, spacer, stack, place, centered, topRight, bottomRight, topLeft } from './view/index.js';
+// `grow`/`fixed` size shorthands, `spacer` gaps, a `stack` z-overlay with `place`/`centered`/corner
+// helpers, and the absolute `at`/`cover`/`center` escape hatch) instead of imperative
+// `new`/`.add()`/`setLayout()`.
+export {
+  col,
+  row,
+  grow,
+  fixed,
+  spacer,
+  stack,
+  place,
+  centered,
+  topRight,
+  bottomRight,
+  topLeft,
+  at,
+  cover,
+  center,
+} from './view/index.js';
 export type { Flex, Placement } from './view/index.js';
 
 // The event loop — routes keyboard and mouse input to views, manages focus, and
@@ -69,7 +85,7 @@ export type {
 // The application shell — the top-level pieces of a full-screen app: the
 // `Application` lifecycle, a `Desktop` window manager, `Window` chrome, a
 // `MenuBar`, and a `StatusLine`.
-export { createApplication } from './app/index.js';
+export { createApplication, syncOverlayVisible } from './app/index.js';
 export type {
   Application,
   ApplicationOptions,
@@ -171,8 +187,31 @@ export type { TreeNode, TreeOptions, MarkerStyle } from './tree/index.js';
 
 // Data table — a scrollable, multi-column `DataGrid<T>` with a sticky header,
 // per-column widths and alignment, click-to-sort, and horizontal scrolling.
-export { DataGrid } from './table/index.js';
-export type { Column, ColumnWidth, ColumnAlign, SortState, ColumnGeometry, DataGridOptions } from './table/index.js';
+// The grid engine underneath is exposed too — the `GridRows`/`GridHeader` renderers, the pure
+// column math (`apportionColumns`/`alignCell`/`sortRows`/`measureAutoWidths`), and the wide-glyph
+// `stringWidth` measure they draw with — so another package can compose a bespoke grid on it.
+// `wrapText` ships alongside it: the same word-wrap a `Text` view draws with, exposed so a caller
+// can count the lines a message will occupy *before* laying anything out (e.g. to size a dialog).
+export {
+  DataGrid,
+  GridRows,
+  GridHeader,
+  apportionColumns,
+  alignCell,
+  sortRows,
+  measureAutoWidths,
+} from './table/index.js';
+export type {
+  Column,
+  ColumnWidth,
+  ColumnAlign,
+  SortState,
+  ColumnGeometry,
+  DataGridOptions,
+  GridRowsConfig,
+  GridHeaderConfig,
+} from './table/index.js';
+export { stringWidth, wrapText } from './controls/measure.js';
 
 // Tabs — a `TabView` folder-tab container that shows one page at a time, with
 // keyboard and hotkey switching and closable/overflowing tabs.

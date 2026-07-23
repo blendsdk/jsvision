@@ -50,7 +50,7 @@ const PRESETS: Record<string, Theme> = {
 test('splitter roles encode to valid colours at every depth in every preset', () => {
   for (const [name, theme] of Object.entries(PRESETS)) {
     for (const role of SPLIT_ROLES) {
-      const { fg, bg } = (theme as unknown as Record<string, { fg: string; bg: string }>)[role];
+      const { fg, bg } = theme[role];
       for (const depth of ALL_DEPTHS) {
         expect(() => encode(fg, 'fg', depth), `${name}.${role}.fg @ ${depth}`).not.toThrow();
         expect(() => encode(bg, 'bg', depth), `${name}.${role}.bg @ ${depth}`).not.toThrow();

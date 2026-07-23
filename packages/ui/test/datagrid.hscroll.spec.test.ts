@@ -30,7 +30,7 @@ const ONE: Row[] = [{ _: 0 }];
 /** Mount a DataGrid filling 24×12 at a fixed `indent`, return the render buffer accessor. */
 function hostedAt(columns: Column<Row>[], indent: number) {
   const grid = new DataGrid<Row>({ rows: signal([...ONE]), columns, indent: signal(indent) });
-  grid.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 12 } };
+  grid.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 12 } });
   const root = new Group();
   root.add(grid);
   const loop = createEventLoop({ width: 24, height: 12 }, { caps });

@@ -1,7 +1,7 @@
 {
   "name": "@jsvision/web",
   "private": true,
-  "version": "0.2.0",
+  "version": "1.1.0",
   "description": "Run any JSVision app in a browser xterm.js terminal — a browser host over the reused pure engine, a virtual FileSystem, key-chord reclaim, and a clipboard bridge. Private until first release.",
   "license": "MIT",
   "repository": {
@@ -32,24 +32,16 @@
   ],
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run --project unit",
     "test:e2e": "vitest run --project e2e --passWithNoTests",
     "check:deps": "node ../../scripts/check-no-native-deps.mjs .",
     "check:docs": "node ../../scripts/check-jsdoc.mjs ."
   },
   "dependencies": {
-    "@jsvision/core": "0.2.0",
-    "@jsvision/ui": "0.2.0",
-    "@jsvision/files": "0.2.0"
-  },
-  "peerDependencies": {
-    "@xterm/xterm": "^5.5.0"
-  },
-  "peerDependenciesMeta": {
-    "@xterm/xterm": {
-      "optional": true
-    }
+    "@jsvision/core": "1.1.0",
+    "@jsvision/ui": "1.1.0",
+    "@jsvision/files": "1.1.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

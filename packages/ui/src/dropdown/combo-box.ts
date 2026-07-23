@@ -61,7 +61,7 @@ export interface ComboBoxOptions<T> {
  */
 class ComboButton extends View {
   /** Fixed 3-cell width (the icon), stretched to the field height by the row layout. */
-  override layout: LayoutProps = { size: { kind: 'fixed', cells: 3 } };
+  override readonly layout: Readonly<LayoutProps> = { size: { kind: 'fixed', cells: 3 } };
 
   constructor(private readonly onOpen: (ev: DispatchEvent) => void) {
     super();
@@ -87,17 +87,16 @@ class ComboButton extends View {
  * (free text + filter) or select-only (read-only picker + type-ahead). See the module docs.
  *
  * @example
- * import { ComboBox, Group, createEventLoop, signal } from '@jsvision/ui';
+ * import { ComboBox, Group, createEventLoop, signal, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
  * const items = signal(['TypeScript', 'JavaScript', 'Python', 'Rust', 'Go']);
  * const value = signal<string | null>(null);
  * const combo = new ComboBox<string>({ items, getText: (s) => s, value, editable: true });
- * combo.layout = { position: 'absolute', rect: { x: 1, y: 1, width: 22, height: 1 } };
  *
  * const controls = new Group();
- * controls.add(combo);
+ * controls.add(at(combo, 1, 1, 22, 1));
  * const loop = createEventLoop({ width: 40, height: 12 }, { caps });
  * loop.mount(controls);
  * loop.focusView(combo.input); // the field is the focus target
@@ -151,7 +150,7 @@ export class ComboBox<T> extends Group {
     this.input = new Input(
       this.editable ? { value: this.text, placeholder: opts.placeholder } : { value: this.text, validator: REJECT_ALL },
     );
-    this.input.layout = { size: { kind: 'fr', weight: 1 } };
+    this.input.setLayout({ size: { kind: 'fr', weight: 1 } });
     this.button = new ComboButton((ev) => this.open(ev));
     this.add(this.input);
     this.add(this.button);

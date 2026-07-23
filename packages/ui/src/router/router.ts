@@ -135,6 +135,25 @@ export class Router<R> extends Group implements ChromeHostAware, FocusHostAware 
    * @param name The route to navigate to.
    * @param args The route's params (omitted for a `void` route).
    * @example
+   * import { createRouter, Group } from '@jsvision/ui';
+   *
+   * type Routes = { home: void; detail: { id: number } };
+   *
+   * class HomeScreen extends Group {}
+   * class DetailScreen extends Group {
+   *   constructor(readonly id: number) {
+   *     super();
+   *   }
+   * }
+   *
+   * const router = createRouter<Routes>({
+   *   initial: { name: 'home' },
+   *   routes: {
+   *     home: { build: () => ({ view: new HomeScreen() }) },
+   *     detail: { build: (ctx) => ({ view: new DetailScreen(ctx.params.id) }) },
+   *   },
+   * });
+   *
    * router.push('detail', { id: 42 });
    * router.push('home');
    */
@@ -284,8 +303,9 @@ export class Router<R> extends Group implements ChromeHostAware, FocusHostAware 
     const bundle = this.tryBuild(name, params);
     if (bundle === null) return null;
     // A screen fills the router: an `fr:1` child of the default-row router takes the full area, and
-    // hidden warm siblings are omitted from reflow. Merge so a screen keeps its own inner layout.
-    bundle.view.layout = { ...bundle.view.layout, size: { kind: 'fr', weight: 1 } };
+    // hidden warm siblings are omitted from reflow. Only the size is set, so a screen keeps its own
+    // inner layout.
+    bundle.view.setLayout({ size: { kind: 'fr', weight: 1 } });
     return { view: bundle.view, bundle };
   }
 
@@ -392,9 +412,16 @@ export class Router<R> extends Group implements ChromeHostAware, FocusHostAware 
  * @returns A {@link Router} — pass it as `createApplication({ content: router })` and drive it with
  *   `push`/`back`/`replace`/`reset`.
  * @example
- * import { createApplication, createRouter } from '@jsvision/ui';
+ * import { createApplication, createRouter, Group } from '@jsvision/ui';
  *
  * type Routes = { home: void; detail: { id: number } };
+ *
+ * class HomeScreen extends Group {}
+ * class DetailScreen extends Group {
+ *   constructor(readonly id: number) {
+ *     super();
+ *   }
+ * }
  *
  * const router = createRouter<Routes>({
  *   initial: { name: 'home' },

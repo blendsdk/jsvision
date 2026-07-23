@@ -25,6 +25,7 @@ test('ST-3: wide CJK lead cell has width 2', () => {
   const buf = new ScreenBuffer(80, 24, { fg: 'default', bg: 'default' });
   buf.text(0, 0, '世', STYLE);
   const lead = buf.get(0, 0);
+  if (lead === undefined) throw new Error('expected a lead cell');
   expect(lead).toBeTruthy();
   expect(lead.width).toBe(2);
   expect(lead.char).toBe('世');
@@ -34,6 +35,7 @@ test('ST-3: wide CJK continuation cell has width 0 and empty char', () => {
   const buf = new ScreenBuffer(80, 24, { fg: 'default', bg: 'default' });
   buf.text(0, 0, '世', STYLE);
   const cont = buf.get(1, 0);
+  if (cont === undefined) throw new Error('expected a continuation cell');
   expect(cont).toBeTruthy();
   expect(cont.width).toBe(0);
   expect(cont.char).toBe('');

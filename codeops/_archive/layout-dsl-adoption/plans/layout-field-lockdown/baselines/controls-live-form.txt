@@ -1,0 +1,21 @@
+controls-live/form @ 58x19
+----------------------------------------------------------
+┌──────────────────── Set Parameters ────────────────────┐
+│ Essential controls — a live visual audit   (F1: toggle │
+│ hints)                                                 │
+│ Name                             Age                   │
+│                                                        │
+│ Style:                 Align:                          │
+│  [ ] Bold               (•) Left                       │
+│  [ ] Italic             ( ) Center                     │
+│  [ ] Underline          ( ) Right                      │
+│                                                        │
+│ This paragraph is a TStaticText: it word-wraps         │
+│ greedily to the field width and hard-breaks over-long  │
+│ words, faithful to Turbo Vision. Resize your terminal  │
+│ Name=""  Age=""  Style=none  Align=Left                │
+│                                                        │
+│      OK    ▄    Cancel  ▄    Help  ▄     Save   ▄      │
+│   ▀▀▀▀▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀      │
+│                                                        │
+└────────────────────────────────────────────────────────┘

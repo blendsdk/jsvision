@@ -1,17 +1,21 @@
-# Release Notes — v0.2.0
+# Release Notes — v1.1.0
 
-**Released**: 2026-07-12
+**Released**: 2026-07-23
 
-We are excited to announce the release of version 0.2.0 of our software! This update introduces several enhancements designed to improve your experience and ensure our platform remains effective and efficient. 
+We are excited to announce the release of version 1.1.0, bringing improved features and enhanced usability to our software. This update focuses on making our documentation and examples more helpful, as well as simplifying the integration process for new users. 
 
-In this version, we've focused on updating various components of our software to enhance stability and performance across the board. While the core functionalities continue to operate smoothly, you may notice improvements in responsiveness and overall usability.
+Highlights of the changes include:
 
-Here are some highlights of the changes included in this release:
+1. **New Marketplace Integration**: We've added a portable integration with the Codex marketplace, allowing users to easily access additional resources and tools that complement their experience with our software.
 
-- **New Demo**: We have added an engaging Matrix digital-rain demo to the examples package. This new feature provides a fun visual experience that illustrates the capabilities of our platform in a creative way.
-  
-- **Improved User Interface**: The user interface has been updated to enhance the interaction when closing windows. Now, if you close the last window on your desktop, the application will repurpose its resources more efficiently, which could lead to a smoother user experience.
+2. **Updated Documentation**: We’ve revamped our documentation by writing a new "Install & Packages" guide, which simplifies the installation process for newcomers. Two outdated reference guides have been retired to ensure our users have the most relevant information at their fingertips.
 
-- **Mandatory Updates**: The various packages have been updated to the latest versions (excluding TypeScript), which enhances the functionality and compatibility of our software. This ensures that you are using the most up-to-date capabilities available to you.
+3. **Typechecking Enhancements**: Starters now come with enhanced typechecking capabilities, ensuring that the templates generated are accurate and functional right from the start. This minimizes errors and helps users get up and running smoothly.
 
-We recommend that all users upgrade to version 0.2.0 to take advantage of these improvements. Your feedback is valuable to us, so please share any thoughts or experiences you have with this release. Thank you for your continued support!
+4. **Distinguished Guides**: The data-grid guide now has a unique title separate from the component page, making it easier for users to find the information they need without confusion.
+
+5. **Refined Example Projects**: Our example projects have been updated to eliminate duplicate elements and ensure consistent imports across the board. This offers a clearer path for developers looking to implement features based on our examples.
+
+6. **Simplified Dependencies**: We have streamlined our web application by removing unnecessary dependencies, making the overall experience more efficient.
+
+These enhancements not only improve usability but also help users to maximize their productivity with our tools. We look forward to your feedback on these updates!

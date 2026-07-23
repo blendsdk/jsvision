@@ -39,11 +39,11 @@ export type SortState = { readonly col: number; readonly dir: 'asc' | 'desc' } |
 
 /** Resolved per-column geometry for one draw (all integer, post-apportion). */
 export interface ColumnGeometry {
-  /** Content cells per column (excludes the 1-cell divider). */
+  /** Content cells per column (excludes the divider cell). */
   readonly widths: number[];
-  /** Absolute x of each column's content, pre-indent: `starts[c] = Σ_{k<c}(widths[k] + 1)`. */
+  /** Absolute x of each column's content, pre-indent: `starts[c] = Σ_{k<c}(widths[k] + gap)`, where `gap` is 1 with dividers, 0 compact. */
   readonly starts: number[];
-  /** The H-scroll content width: `Σ(widths[c] + 1 divider)`. */
+  /** The H-scroll content width: `Σ(widths[c] + gap)` (`gap` = 1 with dividers, 0 compact). */
   readonly totalWidth: number;
 }
 
@@ -60,6 +60,18 @@ export interface ColumnGeometry {
  * @param rows    The current (unsorted) row snapshot.
  * @param measure Display-width function (measures each string in terminal cells, wide-glyph aware).
  * @returns One entry per column: the measured `auto` width, or `null` for non-`auto` columns.
+ * @example
+ * ```ts
+ * import { measureAutoWidths } from '@jsvision/ui';
+ * import type { Column } from '@jsvision/ui';
+ *
+ * interface Person {
+ *   name: string;
+ * }
+ *
+ * const cols: Column<Person>[] = [{ title: 'Name', accessor: (r) => r.name, width: 'auto' as const }];
+ * measureAutoWidths(cols, [{ name: 'Ada' }, { name: 'Bartholomew' }], (s) => s.length); // [11]
+ * ```
  */
 export function measureAutoWidths<T>(
   columns: Column<T>[],
@@ -97,20 +109,45 @@ function toTrackItem<T>(col: Column<T>, autoWidth: number | null, pinned: number
  * passes. Fixed and `auto` widths pass through unchanged, so an all-fixed track that overflows keeps
  * its widths (enabling horizontal scroll) rather than shrinking.
  *
+ * Pass `dividers: false` to reserve **no** inter-column divider cell (a compact / dense layout): the
+ * track apportions over the full `viewportWidth`, `starts` pack tightly, and `totalWidth` excludes the
+ * dividers — so a caller that also skips painting the `│` stays aligned and its horizontal-scroll clamp
+ * is correct. The default (`true`) is byte-identical to reserving one divider per column.
+ *
  * @param columns       The column descriptors.
  * @param autoWidths    The {@link measureAutoWidths} result (memoize it upstream).
  * @param viewportWidth The data-area width in cells.
+ * @param dividers      Reserve one divider cell per column (default `true`); `false` packs columns tight.
  * @returns The resolved {@link ColumnGeometry}; empty arrays + `totalWidth 0` for zero columns.
+ * @example
+ * ```ts
+ * import { apportionColumns } from '@jsvision/ui';
+ * import type { Column } from '@jsvision/ui';
+ *
+ * interface Row {
+ *   a: string;
+ *   b: string;
+ * }
+ *
+ * const cols: Column<Row>[] = [
+ *   { title: 'A', accessor: (r) => r.a, width: '1fr' as const },
+ *   { title: 'B', accessor: (r) => r.b, width: 6 },
+ * ];
+ * apportionColumns(cols, [null, null], 20); // { widths: [12, 6], starts: [0, 13], totalWidth: 20 }
+ * apportionColumns(cols, [null, null], 20, false); // compact: { widths: [14, 6], starts: [0, 14], totalWidth: 20 }
+ * ```
  */
 export function apportionColumns<T>(
   columns: Column<T>[],
   autoWidths: (number | null)[],
   viewportWidth: number,
+  dividers = true,
 ): ColumnGeometry {
   const numCols = columns.length;
   if (numCols === 0) return { widths: [], starts: [], totalWidth: 0 };
 
-  const trackTotal = Math.max(0, viewportWidth - numCols);
+  const gap = dividers ? 1 : 0; // cells reserved per column for the inter-column divider
+  const trackTotal = Math.max(0, viewportWidth - numCols * gap);
   const pinned: (number | undefined)[] = new Array(numCols).fill(undefined);
 
   let widths: number[] = [];
@@ -141,7 +178,7 @@ export function apportionColumns<T>(
   let x = 0;
   for (let c = 0; c < numCols; c++) {
     starts[c] = x;
-    x += widths[c] + 1; // +1 divider cell per column
+    x += widths[c] + gap; // + the reserved divider cell(s) per column (0 in compact mode)
   }
   return { widths, starts, totalWidth: x };
 }
@@ -157,6 +194,13 @@ export function apportionColumns<T>(
  * @param align   The horizontal alignment.
  * @param measure Per-glyph display-width function (measures in terminal cells, wide-glyph aware).
  * @returns A string that occupies exactly `width` terminal cells.
+ * @example
+ * ```ts
+ * import { alignCell } from '@jsvision/ui';
+ *
+ * alignCell('Ada', 6, 'right', (s) => s.length);         // '   Ada'
+ * alignCell('Bartholomew', 6, 'left', (s) => s.length);  // 'Bartho' (clipped to 6 cells)
+ * ```
  */
 export function alignCell(text: string, width: number, align: ColumnAlign, measure: (s: string) => number): string {
   if (width <= 0) return '';
@@ -186,6 +230,20 @@ export function alignCell(text: string, width: number, align: ColumnAlign, measu
  * @param sort    The active sort, or `null` for source order.
  * @returns A new sorted array, or the original `rows` unchanged when `sort` is `null` or its column
  *   index is out of range.
+ * @example
+ * ```ts
+ * import { sortRows } from '@jsvision/ui';
+ * import type { Column } from '@jsvision/ui';
+ *
+ * interface Row {
+ *   qty: number;
+ * }
+ *
+ * const cols: Column<Row>[] = [
+ *   { title: 'Qty', accessor: (r) => String(r.qty), width: 'auto' as const, compare: (a, b) => a.qty - b.qty },
+ * ];
+ * sortRows([{ qty: 1000 }, { qty: 9 }], cols, { col: 0, dir: 'asc' }); // [{ qty: 9 }, { qty: 1000 }]
+ * ```
  */
 export function sortRows<T>(rows: T[], columns: Column<T>[], sort: SortState): T[] {
   if (sort === null || sort.col < 0 || sort.col >= columns.length) return rows;

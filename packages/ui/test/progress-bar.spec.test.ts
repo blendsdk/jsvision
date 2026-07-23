@@ -55,7 +55,7 @@ function render(
     label: opts?.label,
     labelPosition: opts?.labelPosition,
   });
-  bar.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  bar.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(bar);
   const loop = createEventLoop({ width: w, height: h }, { caps: opts?.caps ?? caps });

@@ -31,7 +31,7 @@ test('a loaded control-byte string value is sanitized when rendered through a bo
 
   createRoot((dispose) => {
     const input = new Input({ value: form.field('text').value });
-    input.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 1 } };
+    input.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 1 } });
     const rr = createRenderRoot({ width: 40, height: 1 }, { caps });
     rr.mount(input);
     for (const row of rr.buffer().rows())

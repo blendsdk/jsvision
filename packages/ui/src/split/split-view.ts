@@ -6,7 +6,7 @@
  * reflow places everything — so a pane's interior always reflows correctly against its rect. Pane
  * size is an INPUT to the reflow, never an output of the draw.
  */
-import { Group, View } from '../view/index.js';
+import { Group, View, grow, fixed } from '../view/index.js';
 import type { DispatchEvent } from '../view/index.js';
 import { signal, type Signal } from '../reactive/index.js';
 import type { Direction } from '../layout/index.js';
@@ -94,7 +94,7 @@ export interface SplitViewOptions {
  * (the divider freezes) until it grows again.
  *
  * @example
- * import { SplitView, Group, signal } from '@jsvision/ui';
+ * import { SplitView, Group, cover, signal } from '@jsvision/ui';
  *
  * const explorer = new Group();
  * const editor = new Group();
@@ -106,7 +106,7 @@ export interface SplitViewOptions {
  *   minSize: 12,                                    // neither pane below 12 cells
  *   onResizeEnd: (next) => localStorage.setItem('panes', JSON.stringify(next)), // persist once per gesture
  * });
- * split.layout = { position: 'fill' };
+ * cover(split);
  *
  * split.grabMark.set(false); // hide the ▓ grab marks on every divider; .set(true) restores them
  */
@@ -141,22 +141,23 @@ export class SplitView extends Group implements SplitOwner {
     // Seeded before the splitters are built — each Splitter reads this.owner.grabMark() and binds it.
     this.grabMark = signal(opts.grabMark ?? true);
 
-    // The inner track carries the real layout. It exists so a caller assigning `split.layout` (a whole
-    // object write) can never clobber the container's own direction — the TabView precedent.
+    // The inner track carries the real layout, so a caller re-sizing or re-placing the SplitView
+    // itself can never disturb the container's own direction — the TabView precedent.
     this.track = new Group();
-    this.track.layout = { position: 'fill', direction: this.direction, gap: 0 };
+    this.track.setLayout({ position: 'fill', direction: this.direction, gap: 0 });
 
     // Interleave panes and 1-cell splitters. `sizes` length normalization is deferred to applyWeights
     // (it re-runs on every write of the caller-owned signal), so here just seed valid pane weights.
     const initial = fitToPaneCount(this.sizes.peek(), this.panes.length);
     this.panes.forEach((pane, i) => {
-      pane.layout = { size: { kind: 'fr', weight: Math.max(0, initial[i]), min: this.mins[i] } };
-      this.track.add(pane);
+      // `grow` MERGES its size over the pane's own layout props (rather than replacing them), so the
+      // split owns only pane sizing and never clobbers a pane's own config — callers must not, though,
+      // pre-set `position` on a pane, or it would drop out of the track's flex flow.
+      this.track.add(grow(pane, Math.max(0, initial[i]), { min: this.mins[i] }));
       if (i < this.panes.length - 1) {
         const splitter = new Splitter(this, i, this.direction);
-        splitter.layout = { size: { kind: 'fixed', cells: 1 } };
         this.splitters.push(splitter);
-        this.track.add(splitter);
+        this.track.add(fixed(splitter, 1));
       }
     });
     this.add(this.track);
@@ -179,10 +180,12 @@ export class SplitView extends Group implements SplitOwner {
    * loop, because signals compare by identity and a fresh array reference always notifies.
    */
   private applyWeights(w: number[]): void {
-    const fixed = fitToPaneCount(w, this.panes.length);
-    if (fixed.length !== w.length) this.sizes.set(fixed);
+    const fitted = fitToPaneCount(w, this.panes.length);
+    if (fitted.length !== w.length) this.sizes.set(fitted);
+    // `grow` re-writes the pane's fr size (weight + min), merging over its other layout props, so a
+    // pane keeps whatever else it was given.
     this.panes.forEach((pane, i) => {
-      pane.layout = { size: { kind: 'fr', weight: Math.max(0, fixed[i]), min: this.mins[i] } };
+      grow(pane, Math.max(0, fitted[i]), { min: this.mins[i] });
     });
   }
 

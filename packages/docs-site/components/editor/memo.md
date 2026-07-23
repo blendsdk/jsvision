@@ -19,7 +19,7 @@ import { Dialog, Memo, signal } from '@jsvision/ui';
 
 const notes = signal('initial text');
 const memo = new Memo({ value: notes });
-memo.layout = { position: 'absolute', rect: { x: 2, y: 2, width: 40, height: 8 } };
+memo.setLayout({ position: 'absolute', rect: { x: 2, y: 2, width: 40, height: 8 } });
 
 const dialog = new Dialog({ title: 'Notes', width: 46, height: 14 });
 dialog.add(memo);

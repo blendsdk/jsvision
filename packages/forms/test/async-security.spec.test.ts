@@ -42,7 +42,7 @@ test('an async error message with control bytes is sanitized when rendered throu
   createRoot((dispose) => {
     // Coerce at the boundary (the getter is typed `() => string`; asyncError() is `string | null`).
     const text = new Text(() => field.asyncError() ?? '', { severity: 'error' });
-    text.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 1 } };
+    text.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 40, height: 1 } });
     const rr = createRenderRoot({ width: 40, height: 1 }, { caps });
     rr.mount(text);
     for (const row of rr.buffer().rows())

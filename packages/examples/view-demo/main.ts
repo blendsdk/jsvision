@@ -47,24 +47,24 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { color
 
 // --- Build the retained view tree (app-shell shape) ---------------------------------------------
 const header = new Group();
-header.layout = { direction: 'col', size: { kind: 'fixed', cells: 1 } };
+header.setLayout({ direction: 'col', size: { kind: 'fixed', cells: 1 } });
 header.background = 'menuBar';
 const title = new Label(() => 'jsvision — View/Group spine (RD-03)', 'menuBar');
-title.layout = { size: { kind: 'fixed', cells: 1 } };
+title.setLayout({ size: { kind: 'fixed', cells: 1 } });
 header.add(title);
 
 const body = new Group();
-body.layout = { direction: 'row', size: { kind: 'fr', weight: 1 }, gap: 1 };
+body.setLayout({ direction: 'row', size: { kind: 'fr', weight: 1 }, gap: 1 });
 const left = new Label(() => 'Left panel (fr 1)', 'window');
-left.layout = { size: { kind: 'fr', weight: 1 } };
+left.setLayout({ size: { kind: 'fr', weight: 1 } });
 const right = new Label(() => 'Right panel (fr 1)', 'dialog');
-right.layout = { size: { kind: 'fr', weight: 1 } };
+right.setLayout({ size: { kind: 'fr', weight: 1 } });
 body.add(left);
 body.add(right);
 
 const ticks = signal(0);
 const status = new Label(() => `Count: ${ticks()}  (reactive status line)`, 'statusBar');
-status.layout = { size: { kind: 'fixed', cells: 1 } };
+status.setLayout({ size: { kind: 'fixed', cells: 1 } });
 status.onMount(() => {
   // Repaint the status line whenever `ticks` changes — the canonical reactive-attribute pattern.
   status.bind(
@@ -74,7 +74,7 @@ status.onMount(() => {
 });
 
 const root = new Group();
-root.layout = { direction: 'col', padding: 1 };
+root.setLayout({ direction: 'col', padding: 1 });
 root.background = 'desktop';
 root.add(header);
 root.add(body);

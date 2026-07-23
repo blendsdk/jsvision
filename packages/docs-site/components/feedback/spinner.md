@@ -19,7 +19,7 @@ import { Spinner, runSpinner, signal } from '@jsvision/ui';
 
 const frame = signal(0);
 const spinner = new Spinner({ frame, preset: 'dots', label: 'Loading…' });
-spinner.layout = { position: 'absolute', rect: { x: 1, y: 0, width: 20, height: 1 } };
+spinner.setLayout({ position: 'absolute', rect: { x: 1, y: 0, width: 20, height: 1 } });
 
 // Advance it on a timer; the returned stop() halts the animation.
 const stop = runSpinner(frame, { timer: app.runtime, intervalMs: 80 });

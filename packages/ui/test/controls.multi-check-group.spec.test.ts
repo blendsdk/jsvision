@@ -28,9 +28,9 @@ class FocusStub extends View {
 function mount(mcg: MultiCheckGroup, rows = 3) {
   const stub = new FocusStub();
   const root = new Group();
-  root.layout = { direction: 'col' };
-  mcg.layout = { size: { kind: 'fixed', cells: rows } };
-  stub.layout = { size: { kind: 'fixed', cells: 1 } };
+  root.setLayout({ direction: 'col' });
+  mcg.setLayout({ size: { kind: 'fixed', cells: rows } });
+  stub.setLayout({ size: { kind: 'fixed', cells: 1 } });
   root.add(mcg);
   root.add(stub);
   const loop = createEventLoop({ width: 20, height: rows + 1 }, { caps });

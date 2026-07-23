@@ -43,7 +43,7 @@ function addWindow(
   rect: { x: number; y: number; width: number; height: number },
 ): Window {
   const w = new Window(title);
-  w.layout.rect = rect;
+  w.setLayout({ rect: rect });
   app.desktop.addWindow(w);
   return w;
 }
@@ -78,7 +78,9 @@ test('ST-27: dragging goes true during SE-corner and SW left-grow resize gesture
   expect(w.dragging()).toBe(false);
 
   // SW left-grow grip at window-local (0, h−1) — the RD-10 resize-left zone.
+  // `rect` is only absent for a non-absolute box; addWindow always places this window absolutely.
   const rect = w.layout.rect;
+  if (rect === undefined) throw new Error('expected the window to have an absolute layout rect');
   app.loop.dispatch(mouse('down', rect.x, rect.y + rect.height - 1));
   expect(w.dragging()).toBe(true);
   app.loop.dispatch(mouse('up', rect.x, rect.y + rect.height - 1));

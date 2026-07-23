@@ -5,4 +5,4 @@
  * specification test asserts the two match so a release bump can never silently
  * desync the runtime constant from the manifest.
  */
-export const VERSION = '0.2.0';
+export const VERSION = '1.1.0';

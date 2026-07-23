@@ -19,7 +19,7 @@ import type { CalendarDate } from '@jsvision/ui';
 
 const value = signal<CalendarDate | null>(null);
 const picker = new DatePicker({ value, format: 'DD/MM/YYYY', min: { year: 2020, month: 1, day: 1 } });
-picker.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 1 } };
+picker.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 16, height: 1 } });
 // Type into the field, or press Down / Alt+Down / click the ▐↓▌ button to open the calendar.
 ```
 

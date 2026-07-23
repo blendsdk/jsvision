@@ -51,7 +51,7 @@ function fixture(focused: Signal<number>, selected: Signal<number>) {
   const roots = signal<TreeNode<string>[]>([a, b]);
   const tree = new Tree<string>({ roots, getText: (v) => v, focused, selected });
   tree.expand(a); // A expanded; A1 stays collapsed
-  tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } };
+  tree.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 6 } });
   const root = new Group();
   root.add(tree);
   const loop = createEventLoop({ width: 20, height: 6 }, { caps });

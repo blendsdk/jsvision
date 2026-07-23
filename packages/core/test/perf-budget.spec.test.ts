@@ -1,35 +1,21 @@
 /**
- * Performance & detection budgets (RD-10 FR-1/FR-3, plan doc 03-01; ST-1, ST-3).
+ * Performance and detection budget specifications.
  *
- * Specification oracle — derived from RD-10's acceptance criteria, never from the
- * bench output:
- *  - ST-1: composing + diff-serializing a 200×50 frame has a median frame time
- *    ≤ 16 ms (RD-10 AR-25 / AC-1). Wall-clock timing is environment-sensitive, so
- *    the hard assertion runs only off-CI and is additionally opt-out-able on a
- *    slow/throttled local machine via `TUI_SKIP_PERF` (AR-2/AR-9, PF-006); under
- *    CI the number is logged informationally (the `npm run bench` step tracks
- *    regressions). The median is taken over warmed iterations, never one sample.
- *  - ST-3: capability detection against a non-responding query stub — one whose
- *    `read()` blocks forever — completes via fallback within `timeoutMs` + slack,
- *    proving the budget is the timeout winning, not a short-circuit (AR-12 / AC-3).
- *
- * The `.mjs`/`.js` extensions in the import specifiers are required by NodeNext
- * ESM resolution (resolved to source by tsx at run time). The bench helper is
- * imported from the main-guarded `bench/frame-bench.mjs`, which runs no CLI and
- * has no top-level side effects on import (PF-005).
+ * The 200×50 compose-and-diff median must stay within one 16 ms frame, and a
+ * non-responding terminal query must fall back near its configured timeout.
+ * Wall-clock bounds are enforced only by deliberate serial runs; CI, Turbo
+ * fan-out, and explicit local skips record measurements without gating.
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilitiesAsync } from '../src/engine/index.js';
 import type { TerminalQuery } from '../src/engine/index.js';
 import { measureComposeDiff, perfBudgetMode } from '../bench/frame-bench.mjs';
 
-/** RD-10 AR-25 / AC-1: the 200×50 compose+diff frame budget. */
+/** The 200×50 compose-and-diff frame budget. */
 const BUDGET_MS = 16;
-/** Median is taken over this many warmed iterations — never a single sample (AR-3). */
+/** Median is taken over this many warmed iterations, never a single sample. */
 const ITER = 200;
 
-// ST-1 — frame-budget ceiling. Asserts off-CI on capable hardware; logs under
-// CI or when a contributor sets TUI_SKIP_PERF on slow/VM hardware (PF-006).
 test('ST-1: 200x50 compose+diff median is within the 16ms frame budget', () => {
   const median = measureComposeDiff(200, 50, ITER);
   if (perfBudgetMode(process.env) === 'log') {
@@ -39,10 +25,8 @@ test('ST-1: 200x50 compose+diff median is within the 16ms frame budget', () => {
   expect(median <= BUDGET_MS).toBeTruthy();
 });
 
-// ST-3 — detection budget against a genuinely non-responding seam: read() blocks
-// on the first next(), forever. A generator that merely yields nothing would
-// return in ~0 ms and never exercise the timeout, so the budget would go untested
-// and a removed timeout would slip through (PF-001).
+// The stub blocks forever on its first read. A generator that simply ended would
+// return immediately and never prove that the timeout wins the race.
 test('ST-3: detection against a non-responding query falls back within the budget', async () => {
   const neverResponds: TerminalQuery = {
     write() {
@@ -66,10 +50,8 @@ test('ST-3: detection against a non-responding query falls back within the budge
   // Always: it completed via fallback rather than hanging.
   expect(profile).toBeTruthy();
 
-  // Off-CI, assert both bounds: a lower bound proves it actually waited on the
-  // budget (catching a regression back to an instant-return stub) and an upper
-  // bound proves it is bounded by timeoutMs + slack (the budget itself).
-  if (!process.env.CI) {
+  // A lower bound proves it waited; the upper bound proves the timeout is bounded.
+  if (perfBudgetMode(process.env) === 'assert') {
     expect(elapsed >= timeoutMs * 0.5).toBeTruthy();
     expect(elapsed <= timeoutMs + 60).toBeTruthy();
   }

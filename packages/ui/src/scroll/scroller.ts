@@ -45,21 +45,18 @@ export interface ScrollerOptions {
  * A scrolling viewport: an oversized content child + auto-owned scroll bar(s) in the reserved edges.
  *
  * @example
- * import { Scroller, Group, Text, createEventLoop, signal } from '@jsvision/ui';
+ * import { Scroller, Group, Text, createEventLoop, signal, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
  * const content = new Group();
  * for (let i = 0; i < 20; i += 1) {
- *   const line = new Text(`Line ${i + 1}`);
- *   line.layout = { position: 'absolute', rect: { x: 0, y: i, width: 30, height: 1 } };
- *   content.add(line);
+ *   content.add(at(new Text(`Line ${i + 1}`), 0, i, 30, 1));
  * }
  * const scroller = new Scroller({ content, extent: { width: 30, height: 20 }, scrollbars: 'vertical' });
- * scroller.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 24, height: 8 } };
  *
  * const root = new Group();
- * root.add(scroller);
+ * root.add(at(scroller, 0, 0, 24, 8));
  * const loop = createEventLoop({ width: 24, height: 8 }, { caps });
  * loop.mount(root);
  * loop.focusView(scroller);

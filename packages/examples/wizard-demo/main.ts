@@ -34,12 +34,12 @@ import {
   Label,
   createApplication,
   createRouter,
+  at,
   signal,
   effect,
   createRoot,
   statusLine,
   statusItem,
-  type View,
 } from '@jsvision/ui';
 import type { ScreenBundle } from '@jsvision/ui';
 import { createForm, bindField, bindRadio, bindCheck } from '@jsvision/forms';
@@ -47,12 +47,6 @@ import { z } from 'zod';
 
 /** The wizard's three screens, one per step; none carry params (`void`). */
 type Routes = { account: void; prefs: void; review: void };
-
-/** Position a view absolutely within its screen's fill rect (the router stretches the active screen). */
-function place<T extends View>(view: T, x: number, y: number, width: number, height: number): T {
-  view.layout = { position: 'absolute', rect: { x, y, width, height } };
-  return view;
-}
 
 /** Print a render root's composed buffer as an ASCII grid framed by a ruler. */
 function printFrame(title: string, rows: readonly { char: string }[][]): void {
@@ -129,15 +123,15 @@ async function run(dispose: () => void): Promise<void> {
     const next = new Button('Next', { command: 'wizard.next', disabled: () => !accountValid() });
     const screen = new Group();
     screen.background = 'window';
-    screen.add(place(new Text('Step 1 of 3: Account'), 1, 0, 40, 1));
-    screen.add(place(new Label('~N~ame', nameInput), 1, 2, 8, 1));
-    screen.add(place(nameInput, 10, 2, 26, 1));
-    screen.add(place(new Label('~E~mail', emailInput), 1, 4, 8, 1));
-    screen.add(place(emailInput, 10, 4, 26, 1));
+    screen.add(at(new Text('Step 1 of 3: Account'), 1, 0, 40, 1));
+    screen.add(at(new Label('~N~ame', nameInput), 1, 2, 8, 1));
+    screen.add(at(nameInput, 10, 2, 26, 1));
+    screen.add(at(new Label('~E~mail', emailInput), 1, 4, 8, 1));
+    screen.add(at(emailInput, 10, 4, 26, 1));
     screen.add(
-      place(new Text(() => (accountValid() ? 'This step is valid ✓' : 'Enter a name and a valid email')), 1, 6, 44, 1),
+      at(new Text(() => (accountValid() ? 'This step is valid ✓' : 'Enter a name and a valid email')), 1, 6, 44, 1),
     );
-    screen.add(place(next, 1, 8, 12, 2));
+    screen.add(at(next, 1, 8, 12, 2));
     return { view: screen, status: [statusItem('~Enter~ Next', 'wizard.next', 'Enter')] };
   };
 
@@ -156,17 +150,15 @@ async function run(dispose: () => void): Promise<void> {
     const next = new Button('Next', { command: 'wizard.next', disabled: () => !prefsValid() });
     const screen = new Group();
     screen.background = 'window';
-    screen.add(place(new Text('Step 2 of 3: Preferences'), 1, 0, 40, 1));
-    screen.add(place(new Label('~M~ode', modeRadio), 1, 2, 8, 1));
-    screen.add(place(modeRadio, 1, 3, 16, 3));
-    screen.add(place(new Label('~F~eatures', featuresCheck), 22, 2, 12, 1));
-    screen.add(place(featuresCheck, 22, 3, 18, 3));
-    screen.add(place(tlsSwitch, 1, 7, 20, 1));
-    screen.add(
-      place(new Text(() => (prefsValid() ? 'This step is valid ✓' : 'Pick at least one feature')), 24, 7, 30, 1),
-    );
-    screen.add(place(back, 1, 9, 12, 2));
-    screen.add(place(next, 15, 9, 12, 2));
+    screen.add(at(new Text('Step 2 of 3: Preferences'), 1, 0, 40, 1));
+    screen.add(at(new Label('~M~ode', modeRadio), 1, 2, 8, 1));
+    screen.add(at(modeRadio, 1, 3, 16, 3));
+    screen.add(at(new Label('~F~eatures', featuresCheck), 22, 2, 12, 1));
+    screen.add(at(featuresCheck, 22, 3, 18, 3));
+    screen.add(at(tlsSwitch, 1, 7, 20, 1));
+    screen.add(at(new Text(() => (prefsValid() ? 'This step is valid ✓' : 'Pick at least one feature')), 24, 7, 30, 1));
+    screen.add(at(back, 1, 9, 12, 2));
+    screen.add(at(next, 15, 9, 12, 2));
     return {
       view: screen,
       status: [statusItem('~Esc~ Back', 'wizard.back', 'Escape'), statusItem('~Enter~ Next', 'wizard.next', 'Enter')],
@@ -175,17 +167,17 @@ async function run(dispose: () => void): Promise<void> {
 
   // Step 3 — Review: echo the raw values, then submit the shared form.
   const buildReview = (): ScreenBundle => {
-    const row = (label: string, value: () => string): Text => new Text(() => `${label.padEnd(10)}${value()}`);
+    const fieldRow = (label: string, value: () => string): Text => new Text(() => `${label.padEnd(10)}${value()}`);
     const raw = (): ReturnType<typeof form.rawValues> => form.rawValues();
     const result = new Text(() => (submitted() ? `✓ Submitted: ${submitted()}` : ''));
     const back = new Button('Back', { command: 'wizard.back' });
     const submit = new Button('Submit', { command: 'wizard.submit', default: true });
     const screen = new Group();
     screen.background = 'window';
-    screen.add(place(new Text('Step 3 of 3: Review'), 1, 0, 40, 1));
+    screen.add(at(new Text('Step 3 of 3: Review'), 1, 0, 40, 1));
     screen.add(
-      place(
-        row('Name:', () => raw().name),
+      at(
+        fieldRow('Name:', () => raw().name),
         1,
         2,
         54,
@@ -193,8 +185,8 @@ async function run(dispose: () => void): Promise<void> {
       ),
     );
     screen.add(
-      place(
-        row('Email:', () => raw().email),
+      at(
+        fieldRow('Email:', () => raw().email),
         1,
         3,
         54,
@@ -202,8 +194,8 @@ async function run(dispose: () => void): Promise<void> {
       ),
     );
     screen.add(
-      place(
-        row('Mode:', () => raw().mode),
+      at(
+        fieldRow('Mode:', () => raw().mode),
         1,
         4,
         54,
@@ -211,8 +203,8 @@ async function run(dispose: () => void): Promise<void> {
       ),
     );
     screen.add(
-      place(
-        row('Features:', () => raw().features.join(', ')),
+      at(
+        fieldRow('Features:', () => raw().features.join(', ')),
         1,
         5,
         54,
@@ -220,17 +212,17 @@ async function run(dispose: () => void): Promise<void> {
       ),
     );
     screen.add(
-      place(
-        row('TLS:', () => (raw().tls ? 'On' : 'Off')),
+      at(
+        fieldRow('TLS:', () => (raw().tls ? 'On' : 'Off')),
         1,
         6,
         54,
         1,
       ),
     );
-    screen.add(place(back, 1, 8, 12, 2));
-    screen.add(place(submit, 15, 8, 12, 2));
-    screen.add(place(result, 1, 11, 60, 1));
+    screen.add(at(back, 1, 8, 12, 2));
+    screen.add(at(submit, 15, 8, 12, 2));
+    screen.add(at(result, 1, 11, 60, 1));
     return {
       view: screen,
       status: [

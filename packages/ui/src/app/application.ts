@@ -9,10 +9,12 @@
 import { resolveCapabilities } from '@jsvision/core';
 import type { CapabilityProfile, Theme, Logger, Keymap, RuntimeAdapter } from '@jsvision/core';
 import type { Size2D } from '../layout/index.js';
+import { CLEARED_LAYOUT } from '../layout/index.js';
 import { Group } from '../view/index.js';
+import { col } from '../view/dsl/index.js';
 import type { View } from '../view/index.js';
 import { createEventLoop } from '../event/index.js';
-import type { EventLoop, ClipboardKeys } from '../event/index.js';
+import type { EventLoop, ClipboardKeys, FunctionKeyFallback } from '../event/index.js';
 import { Desktop } from '../desktop/index.js';
 import type { MenuBar, MenuItem } from '../menu/index.js';
 import { Commands, StatusItemView, statusItem } from '../status/index.js';
@@ -51,6 +53,12 @@ export interface ApplicationOptions {
    * a WordStar-mode `Editor`) and supply your own keymap instead.
    */
   clipboardKeys?: ClipboardKeys;
+  /**
+   * Portable F-key fallback for terminals or browsers that reserve physical function keys.
+   * Defaults to `'number-row'`, mapping Alt+`1…9,0,-,=` to F1–F12. Pass `'none'` to preserve
+   * those Alt chords literally.
+   */
+  functionKeyFallback?: FunctionKeyFallback;
   /** Optional menu bar shown as the top row. Build one with `menuBar(...)`. */
   menuBar?: MenuBar;
   /** Optional status line shown as the bottom row. Build one with `statusLine(...)`. */
@@ -85,7 +93,11 @@ export interface ApplicationOptions {
    * `false` for headless/automated runs that drive the loop without a real terminal.
    *
    * @example
+   * import { createApplication } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
    * // A headless integration test drives run() without a terminal:
+   * const caps = resolveCapabilities().profile;
    * const app = createApplication({ caps, requireTty: false });
    * const exit = app.run(); // starts against injected streams; no EssentialsNotMetError
    */
@@ -113,6 +125,12 @@ export interface Application {
    * @param handler Called when the command is emitted.
    * @returns A function that unregisters this handler (idempotent).
    * @example
+   * import { createApplication, messageBox } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities().profile;
+   * const app = createApplication({ caps });
+   *
    * const off = app.onCommand('about', () => messageBox(app, { title: 'About', text: '…' }));
    * // later: off(); // stop handling 'about'
    */
@@ -124,6 +142,12 @@ export interface Application {
    *
    * @param theme The theme to switch to (a preset, a `createTheme` result, or a `parseTheme` result).
    * @example
+   * import { createApplication } from '@jsvision/ui';
+   * import { resolveCapabilities, nordTheme } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities().profile;
+   * const app = createApplication({ caps });
+   *
    * app.onCommand('theme:nord', () => app.setTheme(nordTheme));
    */
   setTheme(theme: Theme): void;
@@ -136,8 +160,18 @@ export interface Application {
    *
    * @returns Fresh status-item views mirroring the base bar's command items (empty if no status line).
    * @example
+   * import { createApplication, withBase, statusItem } from '@jsvision/ui';
+   * import type { ScreenBundle } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities().profile;
+   * const app = createApplication({ caps });
+   *
    * // A screen's status = the app base plus a screen-specific action:
-   * status: withBase(app.statusBase(), [statusItem('~E~dit', 'detail.edit')]);
+   * const screen: ScreenBundle = {
+   *   view: app.desktop,
+   *   status: withBase(app.statusBase(), [statusItem('~E~dit', 'detail.edit')]),
+   * };
    */
   statusBase(): View[];
   /**
@@ -147,7 +181,18 @@ export interface Application {
    *
    * @returns A copy of the base menu's top-level items (empty if no menu bar).
    * @example
-   * menu: withBase(app.menuBase(), [subMenu('~S~creen', [item('~E~dit', 'detail.edit')])]);
+   * import { createApplication, withBase, subMenu, item } from '@jsvision/ui';
+   * import type { ScreenBundle } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities().profile;
+   * const app = createApplication({ caps });
+   *
+   * // A screen's menu = the app base plus a screen-specific submenu:
+   * const screen: ScreenBundle = {
+   *   view: app.desktop,
+   *   menu: withBase(app.menuBase(), [subMenu('~S~creen', [item('~E~dit', 'detail.edit')])]),
+   * };
    */
   menuBase(): MenuItem[];
   /**
@@ -272,10 +317,11 @@ function streamSize(stream: { columns?: number; rows?: number } | undefined): Si
  *
  * @param overlay The shared popup overlay group.
  * @example
- * import { Group } from '@jsvision/ui';
- * import { syncOverlayVisible } from '@jsvision/ui';
+ * import { Group, syncOverlayVisible } from '@jsvision/ui';
  *
  * const overlay = new Group();
+ * const myPopup = new Group();
+ *
  * overlay.add(myPopup);
  * syncOverlayVisible(overlay); // overlay becomes visible
  *
@@ -311,7 +357,7 @@ export function syncOverlayVisible(overlay: Group): void {
  * const app = createApplication({ menuBar: bar, statusLine: status });
  *
  * const win = new Window('Editor');
- * win.layout.rect = { x: 1, y: 2, width: 30, height: 8 };
+ * win.setLayout({ rect: { x: 1, y: 2, width: 30, height: 8 } });
  * app.desktop.addWindow(win); // `desktop` is a Desktop here — no `content` was passed
  *
  * const code = await app.run(); // runs until the 'quit' command; restores the terminal on exit
@@ -327,33 +373,34 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
   // view, or the default Desktop window manager. Only a Desktop body gets window commands + focus.
   const body: View = opts.content ?? new Desktop();
   const isDesktop = body instanceof Desktop;
-  body.layout = { size: { kind: 'fr', weight: 1 } };
+  // Every other prop is reset explicitly, not merely left unset: a caller's own layout on the content
+  // view is intentionally discarded, so the shell governs the body's sizing no matter what the caller
+  // set. An explicit `undefined` clears a prop back to its layout default.
+  body.setLayout({ ...CLEARED_LAYOUT, size: { kind: 'fr', weight: 1 } });
 
   // The full-screen overlay popups mount into. It sits on top and stays hidden (so it neither paints
   // nor intercepts clicks) until a popup is added.
   const overlay = new Group();
-  overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } };
+  overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: viewport.width, height: viewport.height } });
   overlay.state.visible = false;
 
-  // The app root is a top-to-bottom column: [menu bar?, body, status line?, overlay].
-  // The overlay is added last so it paints over everything else.
-  const root = new Group();
-  root.layout = { direction: 'col' };
+  if (opts.menuBar !== undefined) {
+    // Only pin the height — the bar keeps whatever internal layout it set itself (e.g. its own `direction`).
+    opts.menuBar.setLayout({ size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } });
+  }
+  if (opts.statusLine !== undefined) {
+    // Height only: the status line keeps its internal `direction: 'row'` — it lays its children out itself.
+    opts.statusLine.setLayout({ size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } });
+  }
 
   // The shared cell the loop's built-in quit registration resolves through; `run()` fills it in.
   const quitState: QuitState = { resolve: null };
-  if (opts.menuBar !== undefined) {
-    // Merge, not replace: keep any internal layout (e.g. a bar's own `direction`) and only pin the height.
-    opts.menuBar.layout = { ...opts.menuBar.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
-    root.add(opts.menuBar);
-  }
-  root.add(body);
-  if (opts.statusLine !== undefined) {
-    // Merge so the status line keeps its internal `direction: 'row'` — it lays its children out itself.
-    opts.statusLine.layout = { ...opts.statusLine.layout, size: { kind: 'fixed', cells: CHROME_ROW_HEIGHT } };
-    root.add(opts.statusLine);
-  }
-  root.add(overlay);
+
+  // The app root is a top-to-bottom column: [menu bar?, body, status line?, overlay]. An absent
+  // menu bar or status line is skipped, so the column holds only the rows that exist. The overlay
+  // comes last so it paints over everything else. The leading `{}` is load-bearing: the builder
+  // reads a non-view first argument as its own props, and `menuBar` comes from the caller.
+  const root = col({}, opts.menuBar, body, opts.statusLine, overlay);
 
   // Build the loop and mount the tree, then wire the parts that need the loop to exist first. Window
   // commands are handled by a Desktop, so register them only for a Desktop body — a router app then
@@ -367,6 +414,7 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
     logger: opts.logger,
     keymap: opts.keymap,
     clipboardKeys: opts.clipboardKeys, // undefined ⇒ the loop's `'both'` default
+    functionKeyFallback: opts.functionKeyFallback ?? 'number-row',
     commands: commandSeed,
     quitCommand: Commands.quit, // a quit while a dialog is open cascades top-down through the modals
     onQuit: (code) => quitState.resolve?.(code), // the loop registers quit through its command sink
@@ -432,8 +480,7 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
   // bounds, then repaints once more, on both real and headless resizes.
   const menu = opts.menuBar;
   loop.onResize = (size) => {
-    overlay.layout = { position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } };
-    overlay.invalidateLayout();
+    overlay.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: size.width, height: size.height } });
     menu?.controller?.resize();
     if (isDesktop) (body as Desktop).handleViewportResize();
   };
@@ -455,6 +502,7 @@ export function createApplication<O extends ApplicationOptions = ApplicationOpti
         warnAmbiguousWidth: opts.warnAmbiguousWidth,
         adaptAmbiguousWidth: opts.adaptAmbiguousWidth,
         requireTty: opts.requireTty,
+        logger: opts.logger,
         quitState,
       }),
   };

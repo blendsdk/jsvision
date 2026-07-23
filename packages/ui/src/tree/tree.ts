@@ -64,7 +64,7 @@ export interface TreeOptions<T> {
  * not the tree.
  *
  * @example
- * import { Group, Tree, createEventLoop, signal } from '@jsvision/ui';
+ * import { Group, Tree, createEventLoop, resolveCapabilities, signal, at } from '@jsvision/ui';
  * import type { TreeNode } from '@jsvision/ui';
  *
  * // A leaf is `children: []`.
@@ -82,18 +82,18 @@ export interface TreeOptions<T> {
  *   markerStyle: 'brackets', // `[+]`/`[-]` expand markers instead of the default `+`/`─`
  *   onSelect: (_i, node) => console.log('opened', node.value),
  * });
- * tree.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 28, height: 10 } };
  *
  * const root = new Group();
- * root.add(tree);
- * const loop = createEventLoop({ width: 28, height: 10 });
+ * root.add(at(tree, 0, 0, 28, 10));
+ * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+ * const loop = createEventLoop({ width: 28, height: 10 }, { caps });
  * loop.mount(root);
  * loop.focusView(tree.rows); // focus the rows renderer, not the tree
  * tree.expandAll();
  */
 export class Tree<T> extends Group {
   /** Lay the children out horizontally: rows on the left, the scroll bar on the right. */
-  override layout: LayoutProps = { direction: 'row' };
+  override readonly layout: Readonly<LayoutProps> = { direction: 'row' };
   /** The focusable rows renderer — focus this (a plain `Group` is not itself a focus target). */
   readonly rows: TreeRows<T>;
   /** The owned vertical scroll bar (its `value` is the shared `focused` signal). */
@@ -147,9 +147,9 @@ export class Tree<T> extends Group {
       toggle: (node) => this.toggle(node),
       expandSubtree: (node) => this.expandSubtree(node),
     });
-    this.rows.layout = { size: { kind: 'fr', weight: 1 } };
+    this.rows.setLayout({ size: { kind: 'fr', weight: 1 } });
     this.bar = new ScrollBar({ value: this.focused, orientation: 'vertical' });
-    this.bar.layout = { size: { kind: 'fixed', cells: 1 } };
+    this.bar.setLayout({ size: { kind: 'fixed', cells: 1 } });
     this.rows.bar = this.bar; // the rows renderer re-limits the bar's range on every draw
 
     this.add(this.rows); // z-order: rows (left) then bar (right)

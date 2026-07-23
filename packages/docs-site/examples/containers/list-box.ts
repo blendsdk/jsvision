@@ -4,7 +4,7 @@
  * jumps to the next match. The owned scroll bar tracks the focused row; a live
  * echo shows the focused and selected items.
  */
-import { Group, ListBox, Text, signal, View } from '@jsvision/ui';
+import { ListBox, Text, signal, at, col, grow, fixed, spacer } from '@jsvision/ui';
 import { defineExample } from '../_contract.js';
 
 const FRUITS = [
@@ -38,14 +38,9 @@ const FRUITS = [
   'Strawberry',
 ];
 
+// A 40x12 box: ten list rows, a gap row, and the echo row.
 const WIDTH = 40;
 const HEIGHT = 12;
-
-/** Absolutely place a view within the example's box. */
-function at<V extends View>(view: V, x: number, y: number, width: number, height: number): V {
-  view.layout = { position: 'absolute', rect: { x, y, width, height } };
-  return view;
-}
 
 export default defineExample({
   title: 'List box',
@@ -56,21 +51,17 @@ export default defineExample({
     const selected = signal(-1);
     const list = new ListBox({ items, focused, selected, typeAhead: true });
 
-    const group = at(new Group(), 0, 0, WIDTH, HEIGHT);
-    group.add(at(list, 0, 0, WIDTH, 9));
-    group.add(
-      at(
-        new Text(() => {
-          const focus = items()[focused()] ?? '-';
-          const pick = selected() >= 0 ? (items()[selected()] ?? '-') : '(none)';
-          return `focused: ${focus}   selected: ${pick}`;
-        }),
-        0,
-        10,
-        WIDTH,
-        1,
-      ),
-    );
-    return group;
+    const echo = new Text(() => {
+      const focus = items()[focused()] ?? '-';
+      const pick = selected() >= 0 ? (items()[selected()] ?? '-') : '(none)';
+      return `focused: ${focus}   selected: ${pick}`;
+    });
+
+    // A column: the list takes whatever height is left over, a one-cell gap separates it from the
+    // echo, and the echo keeps exactly one row however long its text is. `spacer({ fixed: 1 })` is
+    // the hard one-cell gap -- a bare `spacer(1)` would ask for a 1fr *share* and swallow half the
+    // column. The size is stated here rather than left to the shell's default, so changing it is a
+    // deliberate edit to this file.
+    return at(col(grow(list), spacer({ fixed: 1 }), fixed(echo, 1)), 0, 0, WIDTH, HEIGHT);
   },
 });

@@ -8,21 +8,40 @@
  * which would silently drift from the real module.
  */
 import { readFileSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from 'vitest';
 
 const PKG_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const REPO_ROOT = join(PKG_ROOT, '..', '..');
+/**
+ * The agent-facing plugin skill tree. It is teaching material like these pages, but nothing compiles
+ * it and no other test reads it, so a snippet there can teach a dead idiom indefinitely — which is
+ * exactly what happened to it once already.
+ */
+const PLUGIN_SKILLS = join(REPO_ROOT, 'plugins', 'jsvision-plugin', 'skills');
+/**
+ * The scaffolder's app templates. These are the highest-stakes teaching surface in the repo: their
+ * rendered output is the first file a new user ever opens. A `.tmpl` is not TypeScript, so no
+ * compiler reads it directly — the scaffolder's own oracle now type-checks the rendered `main.ts`,
+ * but the other templates and the prose beside them are still unchecked, which is how a banned
+ * idiom lived in all four starters undetected.
+ */
+const PLUGIN_TEMPLATES = join(REPO_ROOT, 'plugins', 'jsvision-plugin', 'templates');
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'cache', '.git']);
 
-/** Every markdown page under the docs package, as absolute paths. */
-function markdownPages(dir: string = PKG_ROOT): string[] {
+/**
+ * Every teaching file under a directory, as absolute paths.
+ * @param dir Directory to walk (defaults to the docs package).
+ * @param exts File extensions to collect.
+ */
+function markdownPages(dir: string = PKG_ROOT, exts: readonly string[] = ['.md']): string[] {
   const out: string[] = [];
   for (const dirent of readdirSync(dir, { withFileTypes: true })) {
     if (SKIP_DIRS.has(dirent.name)) continue;
     const abs = join(dir, dirent.name);
-    if (dirent.isDirectory()) out.push(...markdownPages(abs));
-    else if (dirent.name.endsWith('.md')) out.push(abs);
+    if (dirent.isDirectory()) out.push(...markdownPages(abs, exts));
+    else if (exts.some((ext) => dirent.name.endsWith(ext))) out.push(abs);
   }
   return out;
 }
@@ -43,6 +62,16 @@ function fencedTsBlocks(text: string): string[] {
 
 const PAGES = markdownPages().map((p) => ({ path: p, text: readFileSync(p, 'utf8') }));
 
+/** The docs pages, the plugin skill tree, and the app templates — every surface that teaches this framework. */
+const TEACHING_PAGES = [
+  ...markdownPages(),
+  ...markdownPages(PLUGIN_SKILLS),
+  ...markdownPages(PLUGIN_TEMPLATES, ['.md', '.tmpl', '.txt']),
+].map((p) => ({
+  path: p,
+  text: readFileSync(p, 'utf8'),
+}));
+
 test('example pages never hand-paste example module source in a fenced block', () => {
   for (const page of PAGES) {
     if (!isExamplePage(page.text)) continue;
@@ -53,4 +82,49 @@ test('example pages never hand-paste example module source in a fenced block', (
       ).toBe(false);
     }
   }
+});
+
+// A documentation snippet is a teaching artifact, so it is held to the idiom the framework permits.
+// `view.layout = {…}` no longer compiles, and unlike shipped source no compiler ever reads these
+// pages — a stale snippet would sit here teaching a dead idiom until a reader tried it.
+//
+// Whole pages, not just fenced blocks: half the offenders this caught were inline prose describing
+// the assignment as the way to place a window. And the plugin skill tree is included because its
+// audience is an AI agent writing this framework, which makes a dead idiom there costlier than
+// anywhere else — it gets reproduced rather than merely read.
+const LAYOUT_ASSIGNMENT = /\.layout(\.\w+)*\s*=[^=]/;
+
+/**
+ * Whether a page belongs to a generated API reference — the plugin's committed snapshot under
+ * `references/api/`, or the TypeDoc output under the docs package.
+ *
+ * Both reproduce the `layout` JSDoc verbatim, and that JSDoc necessarily *names* the closed spellings
+ * in the course of explaining that they do not compile. They document the contract rather than teach
+ * a call, so neither is a snippet surface. This is also the only escape hatch: because the scan
+ * covers whole pages, a page cannot show the assignment even as a labelled anti-pattern.
+ *
+ * Exempting the TypeDoc output matters for a second reason. It is gitignored and exists only after a
+ * `yarn docs:api` run, so without this the test would pass or fail depending on whether a generated
+ * directory happened to be on disk — a verdict that changes with no change to any authored page.
+ *
+ * Separators are normalized first, or the exemption silently stops matching on Windows, where CI
+ * also runs this project.
+ *
+ * @param path Absolute path to a teaching page.
+ * @returns True when the page is generated API reference output.
+ */
+function isGeneratedApiReference(path: string): boolean {
+  const posix = path.split(sep).join('/');
+  return posix.includes('/references/api/') || posix.includes('/docs-site/api/');
+}
+
+test('no teaching page assigns the layout field directly', () => {
+  const offenders: string[] = [];
+  for (const page of TEACHING_PAGES) {
+    if (isGeneratedApiReference(page.path)) continue;
+    page.text.split('\n').forEach((line, i) => {
+      if (LAYOUT_ASSIGNMENT.test(line)) offenders.push(`${page.path}:${i + 1}: ${line.trim()}`);
+    });
+  }
+  expect(offenders, 'write these with setLayout({ … }) — the layout field is read-only').toEqual([]);
 });

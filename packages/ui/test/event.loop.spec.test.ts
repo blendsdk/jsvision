@@ -32,12 +32,15 @@ function keyEvent(key: string, mods: Partial<Pick<KeyEvent, 'ctrl' | 'alt' | 'sh
 function spyLogger(): { logger: Logger; errors: Array<{ component: string; msg: string }> } {
   const errors: Array<{ component: string; msg: string }> = [];
   const logger: Logger = {
+    enabled: true,
     debug: () => undefined,
     info: () => undefined,
     warn: () => undefined,
     error: (component, msg) => {
       errors.push({ component, msg });
     },
+    entries: () => [],
+    close: () => undefined,
   };
   return { logger, errors };
 }

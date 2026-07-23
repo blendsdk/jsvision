@@ -14,7 +14,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import yaml from 'js-yaml';
+import { load as loadYaml } from 'js-yaml';
 import { API_MAP } from '../src/api/api-map.mjs';
 import { barrelExports } from '../src/api/barrel-exports.mjs';
 import { PACKAGES } from '../src/api/packages.mjs';
@@ -437,13 +437,13 @@ check('ST-14', 'docs.yml parses, triggers on site paths, safe permissions, only 
 
   let doc;
   try {
-    doc = yaml.load(raw);
+    doc = loadYaml(raw);
   } catch (err) {
     fail(`.github/workflows/docs.yml does not parse: ${err.message}`);
   }
 
-  // YAML 1.1 folds a bare `on:` key to boolean true; js-yaml v4 keeps it a
-  // string, but read both so the check is parser-agnostic.
+  // YAML 1.1 folds a bare `on:` key to boolean true; js-yaml keeps it the string
+  // `on`, but read both so the check is parser-agnostic.
   const on = doc?.on ?? doc?.[true];
   if (!on || typeof on !== 'object') fail('no `on:` trigger block');
   if (!on.push) fail('missing `push` trigger (production deploy)');
@@ -528,7 +528,7 @@ check('API-COVERAGE', 'Every public barrel export has a generated API page', () 
       problems.push(`${pkg.name}: ${missing.length} undocumented (${missing.slice(0, 8).join(', ')})`);
   }
   if (problems.length) fail(problems.join('; '));
-  return `all barrel exports documented (core/ui/files/web)`;
+  return `all barrel exports documented (${PACKAGES.map((p) => p.name).join('/')})`;
 });
 
 check('API-LEAKAGE', 'No symbol outside the public barrel appears in the reference', () => {

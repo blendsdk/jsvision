@@ -55,14 +55,14 @@ function scheduledRoot(
 // bounds and is painted after the flushes settle (HR-12/PA-12).
 test('ST-3.c: an onMount-added grandchild lays out and paints after the flushes settle', () => {
   const grandchild = new PaintLeaf();
-  grandchild.layout = { size: { kind: 'fixed', cells: 1 } };
+  grandchild.setLayout({ size: { kind: 'fixed', cells: 1 } });
 
   const child = new Group();
-  child.layout = { direction: 'col', size: { kind: 'fr', weight: 1 } };
+  child.setLayout({ direction: 'col', size: { kind: 'fr', weight: 1 } });
   child.onMount(() => child.add(grandchild)); // structural add mid-flush (the documented bind() site)
 
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.add(child);
 
   const { rr, drain } = scheduledRoot(10, 5);
@@ -78,7 +78,7 @@ test('ST-3.c: an onMount-added grandchild lays out and paints after the flushes 
 // flush (the mid-compose invalidation is not dropped) (HR-12/PA-12).
 test('ST-3.c: a mid-compose sibling invalidation recomposes on the next scheduled flush', () => {
   const sibling = new PaintLeaf();
-  sibling.layout = { size: { kind: 'fr', weight: 1 } };
+  sibling.setLayout({ size: { kind: 'fr', weight: 1 } });
 
   let invalidatedOnce = false;
   class Invalidator extends PaintLeaf {
@@ -91,10 +91,10 @@ test('ST-3.c: a mid-compose sibling invalidation recomposes on the next schedule
     }
   }
   const invalidator = new Invalidator();
-  invalidator.layout = { size: { kind: 'fr', weight: 1 } };
+  invalidator.setLayout({ size: { kind: 'fr', weight: 1 } });
 
   const root = new Group();
-  root.layout = { direction: 'col' };
+  root.setLayout({ direction: 'col' });
   root.add(invalidator);
   root.add(sibling);
 
@@ -144,10 +144,10 @@ test('ST-6.e: a visibility flip via invalidate() repaints both directions', () =
   };
 
   const leaf = new FillLeaf();
-  leaf.layout = { size: { kind: 'fr', weight: 1 } };
+  leaf.setLayout({ size: { kind: 'fr', weight: 1 } });
   const group = new Group();
   group.background = 'window'; // fills its rect so a hidden leaf's cells clear to spaces
-  group.layout = { direction: 'col' };
+  group.setLayout({ direction: 'col' });
   group.add(leaf);
   rr.mount(group);
   drain();
@@ -211,10 +211,10 @@ test('ST-6.g: naturalSize excludes absolute children', () => {
 test('ST-6.h: a partial recompose preserves an overlapping shadow', () => {
   const app = createApplication({ caps: capsU, viewport: { width: 24, height: 8 } });
   const back = new Window('Back');
-  back.layout.rect = { x: 10, y: 1, width: 12, height: 5 };
+  back.setLayout({ rect: { x: 10, y: 1, width: 12, height: 5 } });
   app.desktop.addWindow(back); // added first → lower z
   const front = new Window('Front');
-  front.layout.rect = { x: 2, y: 1, width: 8, height: 5 };
+  front.setLayout({ rect: { x: 2, y: 1, width: 8, height: 5 } });
   app.desktop.addWindow(front); // added last → raised; its right shadow (cols 10–11) falls on `back`
   app.loop.renderRoot.flush();
 

@@ -58,7 +58,9 @@ test('downsampleTheme returns the same theme instance at truecolor (no-op)', () 
 test('downsampleTheme collapses every role color at 16 and preserves non-color fields', () => {
   const at16 = downsampleTheme(defaultTheme, '16');
   // Every resolvable role color is now one of the DOS-16 palette hexes.
-  const palette = new Set(Object.values(PALETTE));
+  // Widened to `Set<string>` so an arbitrary role value can be tested for membership — the point of
+  // the check is that every colour landed inside the palette, which a narrower set cannot ask.
+  const palette = new Set<string>(Object.values(PALETTE));
   for (const role of Object.values(at16)) {
     for (const [key, value] of Object.entries(role)) {
       if (typeof value !== 'string') continue;

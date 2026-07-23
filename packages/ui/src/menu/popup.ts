@@ -53,7 +53,7 @@ export class MenuPopup extends View {
   /** Called when a content row is clicked, with the 0-based item index. */
   onPick?: (row: number) => void;
   /** Absolute placement in the overlay; the controller sets `rect`. */
-  override layout: LayoutProps = { position: 'absolute' };
+  override readonly layout: Readonly<LayoutProps> = { position: 'absolute' };
 
   /**
    * Route a mouse-down on an item row to {@link onPick}. Row 0 is the top border and the last row the

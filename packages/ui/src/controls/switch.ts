@@ -51,13 +51,12 @@ export interface SwitchOptions {
  * colours, and interaction).
  *
  * @example
- * import { Group, Switch, signal, createEventLoop } from '@jsvision/ui';
+ * import { Group, Switch, signal, createEventLoop, at } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
  * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
  * const wifi = signal(false);
- * const sw = new Switch({ value: wifi, label: '~W~i-Fi', onLabel: 'On', offLabel: 'Off' });
- * sw.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 20, height: 1 } };
+ * const sw = at(new Switch({ value: wifi, label: '~W~i-Fi', onLabel: 'On', offLabel: 'Off' }), 0, 0, 20, 1);
  *
  * const root = new Group();
  * root.add(sw);

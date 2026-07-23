@@ -70,7 +70,7 @@ function clampRestoredRect(rect: Rect, size: Size2D): Rect {
  *
  * const w = new Window('Editor');
  * w.number = 1;                                  // shows "1" in the frame; Alt+1 activates it
- * w.layout.rect = { x: 1, y: 2, width: 30, height: 10 };
+ * w.setLayout({ rect: { x: 1, y: 2, width: 30, height: 10 } });
  * w.add(new Text('Hello from a window.'));
  * app.desktop.addWindow(w);                      // raises + focuses it
  */
@@ -78,7 +78,7 @@ export class Window extends Group {
   /** A window is a focus target so raising it (and resolving the active window) works. */
   override focusable = true;
   /** Absolute placement — the desktop writes `layout.rect`; `padding: 1` insets content past the border. */
-  override layout: LayoutProps = { position: 'absolute', padding: 1 };
+  override readonly layout: Readonly<LayoutProps> = { position: 'absolute', padding: 1 };
   /** The window title, centered in the top border. Set it to repaint the frame. */
   readonly title: Signal<string>;
   /**
@@ -158,12 +158,18 @@ export class Window extends Group {
    */
   commitPlacement(): void {
     if (!this.centered) return;
-    this.layout = { ...this.layout, rect: { ...this.bounds } };
+    this.setLayout({ rect: { ...this.bounds } });
     this.centered = false;
   }
 
-  /** The window's current WM rect (the layout rect, or a degenerate fallback before placement). */
-  protected currentRect(): Rect {
+  /**
+   * The window's current WM rect (the layout rect, or a degenerate fallback before placement).
+   *
+   * Returned read-only: this hands out the live layout rect, so a mutable alias would let a subclass
+   * move the window a field at a time without requesting a reflow. Copy it (`{ ...currentRect() }`)
+   * if you need a scratch rect.
+   */
+  protected currentRect(): Readonly<Rect> {
     return this.layout.rect ?? FALLBACK_RECT;
   }
 
@@ -185,12 +191,11 @@ export class Window extends Group {
     if (!this.zoomable || this.parent === null) return;
     if (this.restoredRect === null) {
       this.restoredRect = { ...this.currentRect() };
-      this.layout.rect = { x: 0, y: 0, width: this.parent.bounds.width, height: this.parent.bounds.height };
+      this.setLayout({ rect: { x: 0, y: 0, width: this.parent.bounds.width, height: this.parent.bounds.height } });
     } else {
-      this.layout.rect = { ...this.restoredRect };
+      this.setLayout({ rect: { ...this.restoredRect } });
       this.restoredRect = null;
     }
-    this.invalidateLayout();
   }
 
   /**
@@ -202,9 +207,14 @@ export class Window extends Group {
    */
   onDesktopResize(size: Size2D): void {
     if (this.restoredRect === null) return; // not zoomed
-    this.layout.rect = { x: 0, y: 0, width: size.width, height: size.height }; // re-maximize
+    this.setLayout({ rect: { x: 0, y: 0, width: size.width, height: size.height } }); // re-maximize
     this.restoredRect = clampRestoredRect(this.restoredRect, size); // keep the un-zoom target on-screen
     this.onResized(); // let a subclass re-pin its absolute children to the new size
+    // Kept rather than folded into the `setLayout` above, and not a no-op in every host: a reflow
+    // request is a coalesced flag, so under the default deferred scheduler the pass runs after this
+    // whole function and already sees the re-pinned children. Under a synchronous scheduler it does
+    // not -- `setLayout`'s request flushes inline, before the re-pin -- and this is what schedules the
+    // pass that sees it.
     this.invalidateLayout();
   }
 

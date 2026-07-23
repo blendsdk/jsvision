@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-23
+
+## Added
+- Add portable Codex marketplace integration with standalone scaffold, doctor, render, and shared JSVision guidance skills.
+
+## Changed
+- Enforce source-impact, API, distribution, and release-version synchronization.
+- Stop implying the browser host is installable in documentation.
+- Write the Install & packages guide, replacing placeholder with real content and retiring stale reference guides.
+
+## Fixed
+- Generate starters that typecheck and guard the templates to prevent errors.
+- Give the data-grid guide a title distinct from the component page to ensure unique titles for SEO.
+- Run the docs-build gate under js-yaml v5 to avoid import errors.
+
+## [1.0.0] - 2026-07-22
+
+### Added  
+- Added three new live showcase apps: effects, calculator, and Game of Life.  
+- Added amiga-clock and matrix showcase apps with animations to the Apps section.  
+- Introduced JSDoc @example compile guard with a shrink-only allowlist.  
+
+### Changed  
+- Restructured the Guide sidebar into five groups and created 19 new guide stub pages.  
+- Sorted the Apps sidebar list alphabetically.  
+- Widened the documentation layout and uncapped the article column.  
+- Rewrote the introduction to include two live examples focused on JSVision for newcomers.  
+- Enhanced documentation for the framework-wide clipboard, fixing stale Editor claims.  
+
+### Fixed  
+- Restored three spec oracles and corrected misleading comments.  
+- Tightened layout-erasure resets to interface specifications, closing potential issues.  
+- Hardened the @example guard's cache key and build check to remove latent traps.  
+- Increased the test timeout for docs-site to address cold-compiler flakes on Windows.  
+
+### Deprecated  
+- No entries.  
+
+### Removed  
+- No entries.  
+
+### Security  
+- No entries.
+
 ## [0.2.0] - 2026-07-12
 
 Changed:

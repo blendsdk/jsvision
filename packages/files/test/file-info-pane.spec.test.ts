@@ -19,7 +19,7 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { color
 const W = 47;
 
 function mount(pane: FileInfoPane) {
-  pane.layout = { position: 'absolute', rect: { x: 0, y: 0, width: W, height: 2 } };
+  pane.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: W, height: 2 } });
   const root = new Group();
   root.add(pane);
   const loop = createEventLoop({ width: W, height: 2 }, { caps });

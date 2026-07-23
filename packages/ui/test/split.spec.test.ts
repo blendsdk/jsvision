@@ -72,7 +72,7 @@ function makeSplit(opts: {
     onResize: (s) => resizes.push([...s]),
     onResizeEnd: (s) => ends.push([...s]),
   });
-  split.layout = { position: 'absolute', rect: { x: 0, y: 0, width: opts.width, height: opts.height } };
+  split.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: opts.width, height: opts.height } });
   const root = new Group();
   root.add(split);
   const loop = createEventLoop({ width: opts.width, height: opts.height }, { caps });

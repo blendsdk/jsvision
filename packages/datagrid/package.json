@@ -1,0 +1,63 @@
+{
+  "name": "@jsvision/datagrid",
+  "version": "1.1.0",
+  "description": "jsvision datagrid — an editable, enterprise-class data grid (per-cell editing, virtual scroll, typed columns) for @jsvision/ui.",
+  "keywords": [
+    "tui",
+    "terminal",
+    "datagrid",
+    "data-grid",
+    "editable",
+    "table",
+    "widgets",
+    "text-mode",
+    "typescript"
+  ],
+  "homepage": "https://github.com/blendsdk/jsvision#readme",
+  "bugs": "https://github.com/blendsdk/jsvision/issues",
+  "license": "MIT",
+  "author": "TrueSoftware B.V. <gevik@truesoftware.nl>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/datagrid"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "test": "vitest run --project unit",
+    "test:e2e": "vitest run --project e2e --passWithNoTests",
+    "check:deps": "node ../../scripts/check-no-native-deps.mjs .",
+    "check:docs": "node ../../scripts/check-jsdoc.mjs ."
+  },
+  "dependencies": {
+    "@jsvision/core": "1.1.0",
+    "@jsvision/ui": "1.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@xterm/headless": "^6.0.0",
+    "vitest": "^4.1.10"
+  }
+}

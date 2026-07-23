@@ -28,7 +28,7 @@ function addWindow(
   rect: { x: number; y: number; width: number; height: number },
 ): Window {
   const w = new Window(title);
-  w.layout.rect = rect;
+  w.setLayout({ rect });
   app.desktop.addWindow(w);
   return w;
 }
@@ -92,7 +92,11 @@ test('drag-move clamps the title row to the top edge', () => {
   app.loop.dispatch(mouse('down', 10, 5));
   app.loop.dispatch(mouse('drag', 10, -50));
   app.loop.dispatch(mouse('up', 10, -50));
-  expect(w.layout.rect.y).toBe(0);
+  // `rect` is typed optional (an undeclared absolute rect collapses to zero rather than throwing), but
+  // this window was placed by `addWindow` and then dragged, so it is always solved here.
+  const rect = w.layout.rect;
+  if (rect === undefined) throw new Error('window has no solved rect');
+  expect(rect.y).toBe(0);
 });
 
 test('tile grid math: n=3 stacks into 1 col × 3 rows, dividing the desktop with no remainder', () => {

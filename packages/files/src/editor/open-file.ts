@@ -28,7 +28,7 @@ export interface OpenFileInEditorOptions extends FileEditorOptions {
  * import { resolveCapabilities } from '@jsvision/core';
  * import { openFileInEditor, nodeFileSystem } from '@jsvision/files';
  *
- * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const caps = resolveCapabilities().profile; // ambient: reads process.env + process.platform
  * const app = createApplication({ caps });
  *
  * const { window, editor } = openFileInEditor(app, {

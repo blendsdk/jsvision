@@ -66,11 +66,15 @@ test('ST-15: the reused roles are byte-for-byte unchanged (additive-only surface
     scrollBarPage: { fg: P.cyan, bg: P.blue },
     scrollBarControls: { fg: P.cyan, bg: P.blue },
   };
+  // Read through maps rather than an index signature: the theme's roles are individually typed (some
+  // carry extra required fields), so it is not a `Record<string, …>` and cannot be treated as one.
+  const roles = new Map<string, object>(Object.entries(defaultTheme));
   for (const [name, value] of Object.entries(REUSED_UNCHANGED)) {
-    const role = (defaultTheme as Record<string, Record<string, string>>)[name];
+    const role = roles.get(name);
     expect(role, `${name} exists`).toBeTruthy();
     // Compare only the keys the oracle pins (roles may carry extra keys like border/title/icon).
-    const pinned = Object.fromEntries(Object.keys(value as object).map((k) => [k, role[k]]));
+    const fields = new Map<string, unknown>(Object.entries(role ?? {}));
+    const pinned = Object.fromEntries(Object.keys(value as object).map((k) => [k, fields.get(k)]));
     expect(pinned, `${name} unchanged`).toStrictEqual(value);
   }
 });

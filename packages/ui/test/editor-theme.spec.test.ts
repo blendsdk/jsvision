@@ -159,12 +159,16 @@ test('ST-32: the editor-family roles are the ONLY additive keys — every existi
   const LATER_ADDITIVE_ROLES = [
     'sliderTrack',
     'sliderThumb',
+    'gridCursor',
+    'gridDirty',
+    'gridSelectedRow', // RD-08 datagrid row-selection highlight (guarded by grid-theme.spec)
+    'gridInvalid', // RD-12 datagrid failed-validation band (guarded by grid-theme.spec)
     'dangerText',
     'warningText',
     'inputPlaceholder',
     'splitter',
     'splitterDragging',
-  ] as const; // Slider (slider-theme.spec) + severity text roles (severity-text-theme.spec) + muted input placeholder (input-placeholder.spec) + split-pane divider roles (theme-roles.spec)
+  ] as const; // Slider (slider-theme.spec) + datagrid grid* (grid-theme.spec) + severity text roles (severity-text-theme.spec) + muted input placeholder (input-placeholder.spec) + split-pane divider roles (theme-roles.spec)
   const knownKeys = new Set([...Object.keys(EXPECTED_UNCHANGED), ...EDITOR_ROLES, ...LATER_ADDITIVE_ROLES]);
   const actualKeys = Object.keys(defaultTheme);
   const unexpected = actualKeys.filter((k) => !knownKeys.has(k));

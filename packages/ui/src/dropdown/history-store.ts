@@ -20,6 +20,8 @@ export const HISTORY_MAX_ENTRIES = 16;
  * @param str        The value to record.
  * @param maxEntries The per-id cap (default {@link HISTORY_MAX_ENTRIES}).
  * @example
+ * import { addEntry } from './history-store.js';
+ *
  * const list: string[] = ['a', 'b'];
  * addEntry(list, 'a'); // ['b', 'a'] — moved to newest
  * addEntry(list, '');  // ['b', 'a'] — empty is skipped

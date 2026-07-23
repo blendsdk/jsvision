@@ -13,6 +13,7 @@
 import type { Style } from '@jsvision/core';
 import { View, Group, intersect } from '../view/index.js';
 import type { DrawContext, DispatchEvent, PopupHost } from '../view/index.js';
+import { cover } from '../view/dsl/index.js';
 import type { Rect, LayoutProps } from '../layout/index.js';
 import { effect, createRoot } from '../reactive/index.js';
 import { syncOverlayVisible } from '../app/index.js';
@@ -97,9 +98,6 @@ export interface AnchoredPopupOptions {
  * visible so it can be hit-tested.
  */
 class PopupCatcher extends View {
-  /** Free-floating, full-viewport; the popup sets `rect`. */
-  override layout: LayoutProps = { position: 'absolute' };
-
   constructor(private readonly onOutside: () => void) {
     super();
   }
@@ -124,7 +122,7 @@ class PopupCatcher extends View {
  * hosts the content inside the 1-cell inset. Catches **Esc** in the focus-chain bubble to dismiss.
  */
 class PopupFrame extends Group {
-  override layout: LayoutProps = { position: 'absolute', padding: 1 };
+  override readonly layout: Readonly<LayoutProps> = { position: 'absolute', padding: 1 };
   /** The popup casts a drop shadow, like any window. */
   override castsShadow = true;
 
@@ -239,18 +237,17 @@ export function openAnchoredPopup(opts: AnchoredPopupOptions): AnchoredPopup {
     const target = focusTarget(content);
 
     const frame = new PopupFrame(dismiss);
-    frame.layout = { position: 'absolute', padding: 1, rect: placePopup(anchor, contentSize, viewport) };
+    frame.setLayout({ position: 'absolute', padding: 1, rect: placePopup(anchor, contentSize, viewport) });
     // The content must fill the frame's padded interior: `size:fr` fills the main axis (otherwise the
     // frame collapses it to its `auto` height) and the frame's default stretch fills the cross axis.
-    // Merge rather than replace so a list keeps its own row layout ([rows | bar]).
-    content.layout = { ...content.layout, size: { kind: 'fr', weight: 1 } };
+    // Only the size is set, so a list keeps its own row layout ([rows | bar]).
+    content.setLayout({ size: { kind: 'fr', weight: 1 } });
     frame.add(content);
 
     const catcher = new PopupCatcher(dismiss);
-    catcher.layout = {
-      position: 'absolute',
-      rect: { x: viewport.x, y: viewport.y, width: viewport.width, height: viewport.height },
-    };
+    // A full-viewport cover overlay: it fills the app overlay (itself the whole viewport), so an
+    // outside click anywhere dismisses. It paints nothing; only the frame is placed at the anchor.
+    cover(catcher);
 
     // Add the catcher first (bottom-most, catches outside clicks) then the frame (paints and hits above
     // it); derive the overlay's visibility from its new child count.

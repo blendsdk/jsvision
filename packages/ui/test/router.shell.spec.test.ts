@@ -13,6 +13,7 @@ import { createApplication } from '../src/app/index.js';
 import { Desktop } from '../src/desktop/index.js';
 import { Window } from '../src/window/index.js';
 import { Commands } from '../src/status/index.js';
+import { rectOf } from './layout.fixtures.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
@@ -59,9 +60,9 @@ test('ST-2: no content ⇒ a Desktop body; app.desktop is a Desktop; tile tiles 
   expect(app.desktop).toBeInstanceOf(Desktop);
 
   const a = new Window('A');
-  a.layout.rect = { x: 1, y: 1, width: 8, height: 4 };
+  a.setLayout({ rect: { x: 1, y: 1, width: 8, height: 4 } });
   const b = new Window('B');
-  b.layout.rect = { x: 14, y: 3, width: 8, height: 4 };
+  b.setLayout({ rect: { x: 14, y: 3, width: 8, height: 4 } });
   app.desktop.addWindow(a);
   app.desktop.addWindow(b);
   app.loop.renderRoot.flush();
@@ -70,6 +71,6 @@ test('ST-2: no content ⇒ a Desktop body; app.desktop is a Desktop; tile tiles 
   app.loop.renderRoot.flush();
 
   // Tiling repositions the windows to partition the desktop, so they no longer sit at their originals.
-  const moved = a.layout.rect.x !== 1 || a.layout.rect.y !== 1 || b.layout.rect.x !== 14 || b.layout.rect.y !== 3;
+  const moved = rectOf(a).x !== 1 || rectOf(a).y !== 1 || rectOf(b).x !== 14 || rectOf(b).y !== 3;
   expect(moved).toBe(true);
 });

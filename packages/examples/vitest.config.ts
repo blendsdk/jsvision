@@ -24,7 +24,8 @@ export default defineConfig({
           name: 'e2e',
           include: ['test/**/*.e2e.test.ts'],
           pool: 'forks',
-          singleFork: true,
+          // `fileParallelism: false` is what serializes these now — the old `singleFork` switch no
+          // longer exists, and had been silently ignored here since the runner dropped it.
           fileParallelism: false,
           testTimeout: 30_000,
         },

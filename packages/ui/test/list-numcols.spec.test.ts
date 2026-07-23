@@ -40,7 +40,7 @@ function mouse(kind: 'down' | 'up', x: number, y: number): CoreMouseEvent {
 
 /** Mount a full-width `ListView` (no owned bar — an injected bar means `rows` fills the width). */
 function hosted<T>(list: ListView<T>, w: number, h: number) {
-  list.layout = { position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } };
+  list.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: w, height: h } });
   const root = new Group();
   root.add(list);
   const loop = createEventLoop({ width: w, height: h }, { caps });

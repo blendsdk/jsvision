@@ -18,7 +18,7 @@ import { Group, Terminal, terminalWriter } from '@jsvision/ui';
 
 const group = new Group();
 const log = new Terminal({ capacity: 8000 });
-log.layout = { position: 'absolute', rect: { x: 0, y: 0, width: 60, height: 10 } };
+log.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: 60, height: 10 } });
 group.add(log);
 
 log.writeLine('Build started...');

@@ -49,18 +49,18 @@ const DIGIT_KEY = /^[1-9]$/;
  * import { createApplication, Window } from '@jsvision/ui';
  * import { resolveCapabilities } from '@jsvision/core';
  *
- * const caps = resolveCapabilities({ env: process.env, platform: process.platform }).profile;
+ * const caps = resolveCapabilities().profile; // ambient: reads process.env + process.platform
  * const app = createApplication({ caps });
  *
  * // Open two windows on the desktop.
  * const editor = new Window('Editor');
  * editor.number = 1;
- * editor.layout.rect = { x: 1, y: 1, width: 30, height: 8 };
+ * editor.setLayout({ rect: { x: 1, y: 1, width: 30, height: 8 } });
  * app.desktop.addWindow(editor);
  *
  * const output = new Window('Output');
  * output.number = 2;
- * output.layout.rect = { x: 10, y: 4, width: 30, height: 8 };
+ * output.setLayout({ rect: { x: 10, y: 4, width: 30, height: 8 } });
  * app.desktop.addWindow(output);
  *
  * // Arrange them and switch between them.

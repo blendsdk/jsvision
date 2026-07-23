@@ -28,6 +28,7 @@ import {
   PRESET_SEEDS,
   type Theme,
   type ThemeRole,
+  type Color,
 } from '../src/engine/index.js';
 
 const PRESETS: Record<string, Theme> = {
@@ -48,10 +49,13 @@ const PRESETS: Record<string, Theme> = {
 
 /** Every color-valued field on a role (fg/bg + optional hotkey + structural color extras). */
 function colorFields(role: ThemeRole): string[] {
-  const r = role as Record<string, unknown>;
   const out: string[] = [role.fg, role.bg];
-  for (const key of ['hotkey', 'border', 'title', 'icon']) {
-    if (typeof r[key] === 'string') out.push(r[key] as string);
+  // Some roles carry structural extras (border/title/icon) beyond the base ThemeRole
+  // shape; an optional-extras view reads them without an unsound object-shape cast.
+  const extras: Partial<Record<'hotkey' | 'border' | 'title' | 'icon', Color>> = role;
+  for (const key of ['hotkey', 'border', 'title', 'icon'] as const) {
+    const value = extras[key];
+    if (typeof value === 'string') out.push(value);
   }
   return out;
 }

@@ -68,7 +68,7 @@ test('ST-33: contrastWarnings skips a default pair and flags a low-contrast pair
     accent: '#3b82f6',
     roleOverrides: {
       staticText: { fg: 'default', bg: 'default' }, // unresolvable → must be skipped
-      desktop: { fg: '#777777', bg: '#808080' }, // ~1.05 contrast → must be flagged
+      desktop: { fg: '#777777', bg: '#808080', pattern: '░' }, // ~1.05 contrast → must be flagged
     },
   });
   const warnings = contrastWarningsForTheme(theme);

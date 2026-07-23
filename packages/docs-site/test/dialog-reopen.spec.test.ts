@@ -9,7 +9,7 @@
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import { Dialog, Window, Button, Commands, createRoot } from '@jsvision/ui';
-import type { Application, View } from '@jsvision/ui';
+import type { Application, Desktop, View } from '@jsvision/ui';
 import formDialog from '../examples/controls/form-dialog.js';
 import fileDialog from '../examples/files/file-dialog.js';
 
@@ -21,14 +21,24 @@ function tick(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+/**
+ * The desktop of an app that must have one. `Application.desktop` is optional on the type — an app
+ * can be built without a desktop — but every example here builds one, so its absence is a broken
+ * fixture rather than a case to tolerate.
+ */
+function desktopOf(app: Application): Desktop {
+  if (app.desktop === undefined) throw new Error('the example built an application without a desktop');
+  return app.desktop;
+}
+
 /** The open modal dialogs on the desktop (a `Dialog`, or its `FileDialog` subclass). */
 function openDialogs(app: Application): View[] {
-  return app.desktop.children.filter((c) => c instanceof Dialog);
+  return desktopOf(app).children.filter((c) => c instanceof Dialog);
 }
 
 /** The stage window — the only plain `Window` on the desktop (a `Dialog` is a `Window` subclass). */
 function stageWindow(app: Application): Window | undefined {
-  return app.desktop.children.find((c): c is Window => c instanceof Window && !(c instanceof Dialog));
+  return desktopOf(app).children.find((c): c is Window => c instanceof Window && !(c instanceof Dialog));
 }
 
 /** Build one dialog example, run the open → close → reopen cycle, and assert the stage survives. */

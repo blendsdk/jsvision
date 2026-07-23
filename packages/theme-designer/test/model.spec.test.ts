@@ -23,6 +23,7 @@ import {
   toRgb,
   PALETTE,
 } from '@jsvision/core';
+import type { Theme } from '@jsvision/core';
 
 import { createDesignerModel, contrastRows, depthSamples } from '../src/model/index.js';
 
@@ -103,13 +104,13 @@ test('ST-15: loadPreset(turbo-vision) → roles mode (roleSnapshot = defaultThem
 // ── ST-16: contrast — low pairs flagged, 'default' pairs skipped (no NaN rows) ─────────────────────
 
 test('ST-16: contrastRows flags a low-contrast pair as fail and skips a default-colored pair', () => {
-  const lowContrast = { ...defaultTheme, menuBar: { ...defaultTheme.menuBar, fg: '#808080', bg: '#808080' } };
+  const lowContrast: Theme = { ...defaultTheme, menuBar: { ...defaultTheme.menuBar, fg: '#808080', bg: '#808080' } };
   const rowsLow = contrastRows(lowContrast);
   const menuRow = rowsLow.find((r) => r.pair === 'menuBar');
   expect(menuRow, 'the menuBar pair is present').toBeDefined();
   expect(menuRow?.level, 'a ~1:1 pair fails WCAG').toBe('fail');
 
-  const withDefault = { ...defaultTheme, staticText: { fg: 'default', bg: defaultTheme.staticText.bg } };
+  const withDefault: Theme = { ...defaultTheme, staticText: { fg: 'default', bg: defaultTheme.staticText.bg } };
   const rowsDefault = contrastRows(withDefault);
   expect(
     rowsDefault.find((r) => r.pair === 'staticText'),

@@ -12,13 +12,14 @@ import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
 import type { KeyEvent } from '@jsvision/core';
 import { createApplication } from '../src/app/index.js';
+import type { DesktopApplication } from '../src/app/index.js';
 import { messageBox, confirm, inputBox } from '../src/dialog/index.js';
 import { signal } from '../src/reactive/index.js';
 import { Commands } from '../src/status/index.js';
 
 const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { colorDepth: 'truecolor' } }).profile;
 
-function makeApp(): ReturnType<typeof createApplication> {
+function makeApp(): DesktopApplication {
   return createApplication({ caps, viewport: { width: 60, height: 20 } });
 }
 
