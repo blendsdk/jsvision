@@ -67,22 +67,14 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-      - name: Bump versions + draft changelog (no commit yet)
-        run: yarn lockstep:version --no-git-commit
+      - name: Prepare the release version and derived artifacts
+        run: yarn release:prepare
         env:
           # AI-drafted changelog notes: OpenAI primary, Anthropic fallback. With no
           # key, lockstep writes deterministic fallback entries and still proceeds.
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           LOCKSTEP_OPENAI_MODEL: ${{ secrets.LOCKSTEP_OPENAI_MODEL }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-      - name: Sync package VERSION constants to the bumped manifests
-        run: node scripts/sync-package-versions.mjs
-
-      - name: Sync the Codex plugin and install docs to the bumped version
-        run: |
-          yarn plugin:version
-          yarn plugin:check
 
       - name: Rebuild so published dist carries the new version
         run: yarn build
