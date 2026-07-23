@@ -1,21 +1,15 @@
-# Release Notes — v1.1.0
+# Release Notes — v1.2.0
 
 **Released**: 2026-07-23
 
-We are excited to announce the release of version 1.1.0, bringing improved features and enhanced usability to our software. This update focuses on making our documentation and examples more helpful, as well as simplifying the integration process for new users. 
+We are excited to announce the release of version 1.2.0, which brings important enhancements to our platform aimed at improving user experience and accessibility. This update focuses on providing better support for function keys across different environments, ensuring that users can navigate our application more easily and efficiently.
 
-Highlights of the changes include:
+Highlights of the update:
 
-1. **New Marketplace Integration**: We've added a portable integration with the Codex marketplace, allowing users to easily access additional resources and tools that complement their experience with our software.
+1. **Improved Function Key Support**: We've added new features that allow our system to more effectively recognize and respond to function key commands. This means you can now use function keys seamlessly, regardless of the device or operating system you're using. 
 
-2. **Updated Documentation**: We’ve revamped our documentation by writing a new "Install & Packages" guide, which simplifies the installation process for newcomers. Two outdated reference guides have been retired to ensure our users have the most relevant information at their fingertips.
+2. **Application Function Key Fallback**: In cases where function key commands may not work as expected, we have implemented a fallback system. This ensures that users can still access essential functions without interruptions, enhancing reliability and accessibility. 
 
-3. **Typechecking Enhancements**: Starters now come with enhanced typechecking capabilities, ensuring that the templates generated are accurate and functional right from the start. This minimizes errors and helps users get up and running smoothly.
+3. **Enhanced User Navigation**: With these improvements, users will find navigating through our application smoother and more intuitive. The streamlined interaction with function keys contributes to a more efficient workflow and fewer disruptions while using the platform.
 
-4. **Distinguished Guides**: The data-grid guide now has a unique title separate from the component page, making it easier for users to find the information they need without confusion.
-
-5. **Refined Example Projects**: Our example projects have been updated to eliminate duplicate elements and ensure consistent imports across the board. This offers a clearer path for developers looking to implement features based on our examples.
-
-6. **Simplified Dependencies**: We have streamlined our web application by removing unnecessary dependencies, making the overall experience more efficient.
-
-These enhancements not only improve usability but also help users to maximize their productivity with our tools. We look forward to your feedback on these updates!
+These updates are part of our ongoing commitment to improve the usability of our products and to make your experience as beneficial as possible. Thank you for your continued feedback and support as we strive to enhance our service. We look forward to hearing how these changes impact your experience!
