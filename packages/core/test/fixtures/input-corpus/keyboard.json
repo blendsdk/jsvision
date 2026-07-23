@@ -226,5 +226,23 @@
     "bytesHex": "1b5b41",
     "chunks": [1, 2],
     "expectedEvents": [{ "type": "key", "key": "up", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "shift+f1 (CSI 1;2 P)",
+    "bytesHex": "1b5b313b3250",
+    "chunks": null,
+    "expectedEvents": [{ "type": "key", "key": "f1", "ctrl": false, "alt": false, "shift": true }]
+  },
+  {
+    "name": "linux-console f5 split across chunks",
+    "bytesHex": "1b5b5b45",
+    "chunks": [2, 3],
+    "expectedEvents": [{ "type": "key", "key": "f5", "ctrl": false, "alt": false, "shift": false }]
+  },
+  {
+    "name": "kitty ctrl+f10 split across chunks",
+    "bytesHex": "1b5b35373337333b3575",
+    "chunks": [1, 5, 8],
+    "expectedEvents": [{ "type": "key", "key": "f10", "ctrl": true, "alt": false, "shift": false }]
   }
 ]
