@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-23 17:24
-> **Progress**: 3/26 tasks (12%)
+> **Last Updated**: 2026-07-23 17:27
+> **Progress**: 6/26 tasks (23%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -62,14 +62,14 @@ physical-key handling, then synchronize public documentation and plugin material
 **Reference**: `03-01 §Implementation Details` · AR-4, AR-8, AR-9
 **Objective**: Extend the bounded decoder grammar without changing existing event shapes.
 
-- [ ] 1.2.1 Implement structured raw CSI validation, CSI F1–F4, Linux-console F1–F5, and strict CSI-u F1–F12 classification — `packages/core/src/engine/input/keys.ts`
-- [ ] 1.2.2 Run focused core specification/corpus tests and make ST-1…ST-8 green without changing their expectations
+- [x] 1.2.1 Implement structured raw CSI validation, CSI F1–F4, Linux-console F1–F5, and strict CSI-u F1–F12 classification — `packages/core/src/engine/input/keys.ts` ✅ (completed: 2026-07-23 17:27)
+- [x] 1.2.2 Run focused core specification/corpus tests and make ST-1…ST-8 green without changing their expectations ✅ (completed: 2026-07-23 17:27)
 
 ### Step 1.3: Implementation Tests and Hardening
 
 **Reference**: `07-testing-strategy.md §Implementation Tests`
 
-- [ ] 1.3.1 Add private/colon/empty/intermediate/oversized grammar, exact modifier-boundary, invalid id/final, and exhaustive split-point coverage — `packages/core/test/input-function-keys.impl.test.ts`
+- [x] 1.3.1 Add private/colon/empty/intermediate/oversized grammar, exact modifier-boundary, invalid id/final, and exhaustive split-point coverage — `packages/core/test/input-function-keys.impl.test.ts` ✅ (completed: 2026-07-23 17:27)
 
 **Deliverables**:
 
