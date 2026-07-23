@@ -1116,7 +1116,7 @@ fromRows<T>(rows: Signal<T[]>, opts: { rowKey: (row: T) => string | number }): G
 The loop-keymap fragment binding `Tab`/`Shift+Tab` to the grid-navigation commands.
 
 ```ts
-const gridKeymap: import("/home/gevik/workdir/github/jsvision/bugfix/jsvision-update-skill/packages/ui/dist/index").Keymap
+const gridKeymap: import("@jsvision/ui").Keymap
 ```
 
 ## gutterLabel
