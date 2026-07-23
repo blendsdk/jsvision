@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-23
+
+### Fixed
+- Trigger the release workflow after successful merges into master.
+- Share version and plugin artifact preparation between release and CI.
+- Remove duplicate timed plugin gate to maintain focus in examples suite.
+- Normalize generated workspace imports to use stable @jsvision package imports.
+- Make API snapshots platform deterministic with explicit lexical ordering.
+- Generate starters that typecheck and guard the templates.
+
+### Added
+- Add portable Codex marketplace integration with standalone scaffold, doctor, render, and shared JSVision guidance skills.
+- Document the Codex plugin and update relevant configuration files.
+
 ## [1.0.0] - 2026-07-22
 
 ### Added
