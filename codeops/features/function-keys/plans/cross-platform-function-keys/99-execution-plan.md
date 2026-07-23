@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-23 16:45
-> **Progress**: 0/26 tasks (0%)
+> **Last Updated**: 2026-07-23 17:24
+> **Progress**: 3/26 tasks (12%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -43,14 +43,19 @@ physical-key handling, then synchronize public documentation and plugin material
 
 ## Phase 1: Terminal Decoder Compatibility
 
+> **Phase baseline tree**: `1bd3e4e0c063a18b0226bb8132553aa479de04d2`
+> **Expected modification set**: core function-key specification/implementation tests, keyboard
+> corpus fixtures, core input decoder, canonical/plugin-generated documentation, execution state,
+> traceability, and roadmap artifacts.
+
 ### Step 1.1: Specification Tests
 
 **Reference**: `03-01` · ST-1…ST-8 · AR-4, AR-8, AR-9
 **Objective**: Establish immutable byte-to-key oracles for every accepted and rejected family.
 
-- [ ] 1.1.1 [spec-author] Add ST-1…ST-8 as table-driven specification tests — `packages/core/test/input-function-keys.spec.test.ts`
-- [ ] 1.1.2 Add representative contiguous and split fixtures without duplicating the entire table — `packages/core/test/fixtures/input-corpus/keyboard.json`
-- [ ] 1.1.3 Run the focused core specification/corpus tests and confirm new accepted forms fail while existing forms remain green (red phase)
+- [x] 1.1.1 [spec-author] Add ST-1…ST-8 as table-driven specification tests — `packages/core/test/input-function-keys.spec.test.ts` ✅ (completed: 2026-07-23 17:24)
+- [x] 1.1.2 Add representative contiguous and split fixtures without duplicating the entire table — `packages/core/test/fixtures/input-corpus/keyboard.json` ✅ (completed: 2026-07-23 17:24)
+- [x] 1.1.3 Run the focused core specification/corpus tests and confirm new accepted forms fail while existing forms remain green (red phase) ✅ (completed: 2026-07-23 17:24)
 
 ### Step 1.2: Implementation
 
