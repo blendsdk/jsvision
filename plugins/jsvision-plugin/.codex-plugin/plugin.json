@@ -1,6 +1,6 @@
 {
   "name": "jsvision-plugin",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Build, diagnose, render, and verify professional JSVision terminal applications.",
   "author": {
     "name": "JSVision"
@@ -8,7 +8,12 @@
   "homepage": "https://blendsdk.github.io/jsvision/guide/codex-plugin",
   "repository": "https://github.com/blendsdk/jsvision",
   "license": "MIT",
-  "keywords": ["jsvision", "terminal-ui", "tui", "typescript"],
+  "keywords": [
+    "jsvision",
+    "terminal-ui",
+    "tui",
+    "typescript"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "JSVision",
@@ -16,7 +21,10 @@
     "longDescription": "Create, extend, diagnose, render, and verify TypeScript terminal applications built with the published JSVision packages.",
     "developerName": "JSVision",
     "category": "Developer Tools",
-    "capabilities": ["Interactive", "Write"],
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
     "websiteURL": "https://blendsdk.github.io/jsvision/",
     "defaultPrompt": [
       "Build a JSVision terminal application.",

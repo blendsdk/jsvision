@@ -15,7 +15,7 @@ required.
 Add the marketplace at the tag matching the latest stable JSVision release, then install the plugin:
 
 ```sh
-codex plugin marketplace add blendsdk/jsvision --ref v1.0.0
+codex plugin marketplace add blendsdk/jsvision --ref v1.1.0
 codex plugin add jsvision-plugin@jsvision-marketplace
 ```
 
