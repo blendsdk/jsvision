@@ -1,0 +1,347 @@
+{
+  "feature": "function-keys",
+  "nodes": [
+    {
+      "edges": [
+        {
+          "relation": "specified-by",
+          "target": "function-keys/SPEC-DECODER"
+        },
+        {
+          "relation": "specified-by",
+          "target": "function-keys/SPEC-FALLBACK"
+        },
+        {
+          "relation": "specified-by",
+          "target": "function-keys/SPEC-WEB"
+        },
+        {
+          "relation": "specified-by",
+          "target": "function-keys/SPEC-DIST"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "function-keys/CRIT-DONE"
+        },
+        {
+          "relation": "affected-by",
+          "target": "function-keys/DEC-CONTRACT"
+        }
+      ],
+      "id": "REQ-CROSS",
+      "revision": "sha256:e0a33942961d7f933bc1d723438045b310d7f93fe4001cb391885cc0995d906c",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/function-keys/plans/cross-platform-function-keys/01-requirements.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Cross-platform canonical F1-F12 input",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:d8401b3e48f7f381a1f0c305fe2794b9b502ee1b1f663c4fc98bc0188d678805",
+          "upstream": "function-keys/SPEC-DECODER",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:73597720349453011ad86dc70c61623b9c5719bf7fad48aade348c7815337246",
+          "upstream": "function-keys/SPEC-FALLBACK",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:3c26f6aa16ee16cc5f4db4e8e1ad2a0edfd8ec3f752720cc97d20ccb3cda8807",
+          "upstream": "function-keys/SPEC-WEB",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:9be8d92a3e89df9453a3d6a2ae007bb37582f3b813aef17bc605d6ad4b291fe5",
+          "upstream": "function-keys/SPEC-DIST",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:e0a33942961d7f933bc1d723438045b310d7f93fe4001cb391885cc0995d906c",
+          "upstream": "function-keys/CRIT-DONE",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:d8401b3e48f7f381a1f0c305fe2794b9b502ee1b1f663c4fc98bc0188d678805",
+          "upstream": "function-keys/SPEC-DECODER",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:73597720349453011ad86dc70c61623b9c5719bf7fad48aade348c7815337246",
+          "upstream": "function-keys/SPEC-FALLBACK",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:3c26f6aa16ee16cc5f4db4e8e1ad2a0edfd8ec3f752720cc97d20ccb3cda8807",
+          "upstream": "function-keys/SPEC-WEB",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:9be8d92a3e89df9453a3d6a2ae007bb37582f3b813aef17bc605d6ad4b291fe5",
+          "upstream": "function-keys/SPEC-DIST",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:e0a33942961d7f933bc1d723438045b310d7f93fe4001cb391885cc0995d906c",
+          "upstream": "function-keys/CRIT-DONE",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        }
+      ]
+    },
+    {
+      "edges": [],
+      "id": "SPEC-DECODER",
+      "revision": "sha256:d8401b3e48f7f381a1f0c305fe2794b9b502ee1b1f663c4fc98bc0188d678805",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/function-keys/plans/cross-platform-function-keys/03-01-terminal-decoder.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Bounded terminal function-key grammar",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "SPEC-FALLBACK",
+      "revision": "sha256:73597720349453011ad86dc70c61623b9c5719bf7fad48aade348c7815337246",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/function-keys/plans/cross-platform-function-keys/03-02-fallback-policy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "UI number-row fallback policy",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "SPEC-WEB",
+      "revision": "sha256:3c26f6aa16ee16cc5f4db4e8e1ad2a0edfd8ec3f752720cc97d20ccb3cda8807",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/function-keys/plans/cross-platform-function-keys/03-03-browser-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "xterm.js direct function-key integration",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "SPEC-DIST",
+      "revision": "sha256:9be8d92a3e89df9453a3d6a2ae007bb37582f3b813aef17bc605d6ad4b291fe5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/function-keys/plans/cross-platform-function-keys/03-04-documentation-and-distribution.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Documentation and plugin distribution",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "function-keys/TEST-SPEC"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "function-keys/TASK-EXEC"
+        }
+      ],
+      "id": "CRIT-DONE",
+      "revision": "sha256:e0a33942961d7f933bc1d723438045b310d7f93fe4001cb391885cc0995d906c",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/function-keys/plans/cross-platform-function-keys/01-requirements.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Feature acceptance criteria",
+      "type": "criterion",
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:5cc6239836216e521efef3216585c3a3327e8dba47adfc72afef9829cb3bb47b",
+          "upstream": "function-keys/TASK-EXEC",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        }
+      ]
+    },
+    {
+      "edges": [],
+      "id": "TEST-SPEC",
+      "revision": "sha256:e5a460fe192e2bd007513e22660ba76dfdaa99779aed94202a094fe6dacf89e8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/function-keys/plans/cross-platform-function-keys/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "ST-1 through ST-20 specification evidence",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "Execution entry: codeops/features/function-keys/plans/cross-platform-function-keys/99-execution-plan.md"
+      ],
+      "id": "TASK-EXEC",
+      "revision": "sha256:5cc6239836216e521efef3216585c3a3327e8dba47adfc72afef9829cb3bb47b",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/function-keys/plans/cross-platform-function-keys/99-execution-plan.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Execute the cross-platform function-key plan",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "DEC-CONTRACT",
+      "revision": "sha256:3bc56a21fa3deed34decdd917b0ad6ecef615fc5e5c132f9c4ce955b23aa6f51",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/function-keys/plans/cross-platform-function-keys/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Approved function-key behavior and scope decisions",
+      "type": "decision",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "function-keys/REQ-CROSS"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "function-keys/TASK-EXEC"
+        }
+      ],
+      "evidence": [
+        "summary:User confirmed the complete Zero-Ambiguity Register and the plan readiness gate passed."
+      ],
+      "id": "PLAN-CROSS",
+      "revision": "sha256:e0cb49da9574eb5cb316089d482d0e55c0d13f778383e0249df5a51adcf75ba8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/function-keys/plans/cross-platform-function-keys/00-index.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Cross-platform function keys implementation plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:e0a33942961d7f933bc1d723438045b310d7f93fe4001cb391885cc0995d906c",
+          "upstream": "function-keys/REQ-CROSS",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:e0a33942961d7f933bc1d723438045b310d7f93fe4001cb391885cc0995d906c",
+          "upstream": "function-keys/REQ-CROSS",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:5cc6239836216e521efef3216585c3a3327e8dba47adfc72afef9829cb3bb47b",
+          "upstream": "function-keys/TASK-EXEC",
+          "validatedAt": "2026-07-23T14:45:00Z"
+        }
+      ]
+    }
+  ],
+  "schema": 2,
+  "updated": "2026-07-23T16:45:00+02:00"
+}
