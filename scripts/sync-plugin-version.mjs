@@ -23,14 +23,14 @@ export function syncPluginVersion({ check = false } = {}) {
     throw new Error(`invalid stable JSVision version: ${JSON.stringify(version)}`);
   }
 
-  const plugin = JSON.parse(readFileSync(PLUGIN_MANIFEST, 'utf8'));
+  const pluginSource = readFileSync(PLUGIN_MANIFEST, 'utf8');
+  const plugin = JSON.parse(pluginSource);
   const docs = readFileSync(DOCS_PAGE, 'utf8');
   const docsVersion = docs.match(/marketplace add blendsdk\/jsvision --ref v([^\s]+)/)?.[1];
   const matches = plugin.version === version && docsVersion === version;
   if (check || matches) return matches;
 
-  plugin.version = version;
-  writeFileSync(PLUGIN_MANIFEST, `${JSON.stringify(plugin, null, 2)}\n`);
+  writeFileSync(PLUGIN_MANIFEST, pluginSource.replace(/("version"\s*:\s*")[^"]+(")/, `$1${version}$2`));
   writeFileSync(
     DOCS_PAGE,
     docs.replace(
