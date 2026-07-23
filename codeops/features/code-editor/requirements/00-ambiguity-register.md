@@ -1,68 +1,192 @@
-# Ambiguity Register — code-editor (Lezer code-grade editor)
+# Ambiguity Register: JSVision Code Editor
 
-> The hard gate for the code-grade editor requirements. Every semantically-weighted decision is
-> listed, resolved, and attributed. Items resolved in the `grill_me` session (2026-07-18) enter as
-> ✅ Resolved with an explicit user decision; structuring surfaced a few NEW items (AR-16…AR-20).
->
-> Source records: `../shared-understanding.md` (grill output) and
-> `../plans/feasibility-spike/decision-memo.md` (settled engine + packaging). Historical name:
-> "RD-08 Editor family" / GH #18 (closed); build tracked by GH #102.
+> **CodeOps Artifact Schema**: 1
+> **Status**: ✅ GATE PASSED — all 24 items resolved
+> **Last Updated**: 2026-07-23
+> **Authority**: Auto-design active for eligible technical decisions; reserved decisions require
+> explicit user confirmation
+> **Auto-design Root Invocation ID**: `AD-CODE-EDITOR-20260723-01`
+> **Auto-design Policy Version**: 1
 
-## Scope
+## Confirmed during discovery
 
-The **code-development-grade editor** built on the existing `@jsvision/ui` editor: syntax
-highlighting, tree-based folding, and line numbers, powered by **Lezer** (`@lezer/*`) behind a
-`Tokenizer`/`FoldProvider` seam. Delivered across `@jsvision/core` (seam types + roles), a new
-opt-in `@jsvision/lang` (the Lezer engine), and `@jsvision/editor` (the view features). `core`/`ui`
-stay zero-dep. The editor extraction (`@jsvision/editor`, GH #101) is a **prerequisite refactor**,
-tracked separately.
+These decisions were explicitly confirmed during the current requirements-discovery session and do
+not require reconfirmation.
 
-## Settled beforehand — engine & packaging (decision-memo)
+| # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
+|---|----------|-----------------|-------------------|---------------|--------|
+| AR-01 | Feature gaps | Product identity and boundary | IDE / editor-only component and window | Terminal-native editor-only `CodeEditor` component plus `CodeEditorWindow`; host owns IDE-level concerns | ✅ Resolved |
+| AR-02 | Scope ambiguities | Version 1 versus later capability set | C1–C20 classification | Accepted classification: modern editing, local code presentation, baseline IntelliSense, navigation, document symbols, and formatting in v1; multi-caret, wrap, workspace symbols, rename, code actions, and semantic tokens later | ✅ Resolved |
+| AR-03 | Naming & terminology | Launch languages | PostgreSQL SQL / JavaScript / TypeScript / Bash | PostgreSQL SQL, JavaScript, and TypeScript; Bash explicitly excluded | ✅ Resolved |
+| AR-04 | Data & state | Document and file ownership | Editor-owned I/O / host-owned I/O | One in-memory document per editor; file-bound adapter and host own persistence, external changes, and multiple editor instances | ✅ Resolved |
+| AR-05 | Integration points | Language-service boundary | Editor-spawned server / caller-provided session | Caller-provided LSP transport/session; separate runtime adapter may spawn and supervise servers; sessions may be shared | ✅ Resolved |
+| AR-06 | Integration points | Cross-document navigation and mutation | Editor writes/opens directly / host-mediated | Same-document navigation is local; cross-document navigation and edits go through host callbacks and explicit authorization | ✅ Resolved |
+| AR-07 | Behavioral gaps | Parser or LSP failure | Block editing / independent degradation | Plain editing, search, save, and close remain available; only dependent features degrade and status exposes the state | ✅ Resolved |
+| AR-08 | Security & compliance | Trust boundary for documents and service results | Trust service / validate and sanitize | Treat all document, filename, parser, LSP, Markdown, URI, diagnostic, completion, command, and edit data as untrusted; sanitize, validate, bound, and allowlist | ✅ Resolved |
+| AR-09 | Non-functional gaps | Responsiveness and large-document behavior | Unbounded/adaptive only / explicit tiers | Full local features through 1 MiB or 50,000 lines; bounded degradation through 10 MiB; confirmed reduced mode above 10 MiB; 16 ms uncontended local edit/render target | ✅ Resolved |
+| AR-10 | Technical unknowns | Language extension model | Closed built-ins / open adapters | Open, versioned `LanguageAdapter` contract with independent parsing and LSP capabilities; hosts supply adapters explicitly | ✅ Resolved |
+| AR-11 | UX & presentation | Terminal/accessibility degradation | Color/mouse-dependent / redundant interaction | Keyboard and command completeness, non-color cues, ASCII/monochrome fallbacks, narrow-window degradation, explicit position conversion, and dismissible popups | ✅ Resolved |
+| AR-12 | Behavioral gaps | Format-on-save | Always / opt-in / explicit-only | Supported in v1, opt-in and disabled by default; failure, timeout, or stale output never blocks saving | ✅ Resolved |
+| AR-13 | Feature gaps | LSP snippet behavior | Plain-text fallback only / basic snippets / full snippet system | Basic numbered placeholders in v1; safe traversal and cancellation; no execution or variable/shell interpolation; unsupported constructs become plain text | ✅ Resolved |
+| AR-14 | Behavioral gaps | External file changes | Automatic overwrite/reload / explicit conflict flow | Clean documents ask before reload; dirty documents require keep/reload/compare; neither version is overwritten silently | ✅ Resolved |
 
-| AR | Decision | Resolution | Status |
-|----|----------|------------|--------|
-| AR-00a | Language engine | **Lezer only** (`@lezer/*`) — a pure-JS incremental parse tree; **no TextMate fallback**. Rejected CodeMirror `view`/`language`/`commands` + Monaco (DOM-bound). | ✅ Resolved |
-| AR-00b | Packaging / layering | Seam types (`Tokenizer`/`FoldProvider`) in `@jsvision/core`; Lezer engine in a new opt-in `@jsvision/lang` (deps only on `core` + `@lezer/*`); editor extracted to `@jsvision/editor` (#101, lands first). `core`/`ui` keep `{}` runtime deps (mirrors forms→zod). | ✅ Resolved |
+## Remaining decisions
 
-## Resolved by the grill (explicit user decisions, 2026-07-18)
+| # | Category | Ambiguity / Gap | Options Presented | User Decision | Status |
+|---|----------|-----------------|-------------------|---------------|--------|
+| AR-15 | Data & state | Undo grouping for completion, snippets, formatting, and service edits | One atomic undo step per accepted operation / expose provider edits as multiple steps | Authority: AI — one accepted logical operation is one undo step | ✅ Resolved |
+| AR-16 | Behavioral gaps | Fold state when edits intersect or invalidate folded ranges | Preserve mapped folds where valid and unfold invalid/intersected folds / clear all folds after every edit | Authority: AI — preserve valid mapped folds and remove only invalidated folds | ✅ Resolved |
+| AR-17 | Behavioral gaps | Applying asynchronous edits after the document changes | Exact revision only / attempt automatic rebasing | Authority: AI — edit-producing results require the exact requested revision | ✅ Resolved |
+| AR-18 | Behavioral gaps | Completion triggering and acceptance priority | Explicit-only / automatic plus explicit, with deterministic Tab/Enter precedence | User accepted recommendation: automatic and explicit completion with popup, snippet, then indentation precedence | ✅ Resolved |
+| AR-19 | Edge cases | Untitled documents without a stable URI | Host supplies a stable synthetic URI / disable LSP until a URI exists | Authority: AI — optional stable synthetic URI; LSP disabled when absent | ✅ Resolved |
+| AR-20 | Integration points | Dynamic LSP capability registration or loss | Reflect capability changes live / use only initialization-time capabilities | Authority: AI — reflect dynamic capability changes live | ✅ Resolved |
+| AR-21 | UX & presentation | Caret or selection inside a range being folded | Move caret to header and collapse / refuse fold while caret or selection intersects | User accepted recommendation: move caret to header, clear hidden selection, then collapse | ✅ Resolved |
+| AR-22 | Edge cases | Parser recovery for incomplete or invalid source | Best available partial tree and styles / disable syntax features on any parse error | Authority: AI — use the best available partial structure; only adapter failure degrades syntax features | ✅ Resolved |
+| AR-23 | Security & compliance | Read-only documents receiving edit-producing LSP results | Disable and reject every edit-producing operation / allow preview with host-authorized apply | User accepted recommendation: reject edit-producing actions/results while retaining non-mutating intelligence | ✅ Resolved |
+| AR-24 | Stakeholder conflicts | Host key bindings conflict with built-in or adapter bindings | Reject conflicts unless explicit override / priority-based silent winner | Authority: AI — reject conflicts unless the host explicitly overrides the exact binding | ✅ Resolved |
 
-| AR | Decision | Resolution | Status |
-|----|----------|------------|--------|
-| AR-01 | v1 feature scope | IN = line numbers + syntax highlighting + folding (definitional) **+ bracket matching + comment-toggle**. OUT/deferred = multiple cursors, word-wrap, autocomplete/IntelliSense, diagnostics/linting/LSP. | ✅ Resolved |
-| AR-02 | Language set + grammar sourcing | v1 grammars = **JSON** (proof + spec oracle) + **TS/JS** (`@lezer/javascript`, flagship). Source **raw `@lezer/*`** + `@lezer/highlight` + `@lezer/common` (DOM-free); NOT `@codemirror/*`. Per-language ~8-node fold allow-lists authored in `@jsvision/lang`. | ✅ Resolved |
-| AR-03 | Highlighting model | ~8 syntax **buckets** = ~8 new **core** roles (`syntaxKeyword/Comment/String/Number/Type/Function/Variable/Punctuation`; variable = default fg). The `Tokenizer` seam emits a **bucket** (not a colour); `@jsvision/lang` maps Lezer's ~40 tags → buckets; the editor draw resolves bucket → role → `ctx.color` (light/dark + truecolor→256→16→mono downsampling free). Buckets grow additively. | ✅ Resolved |
-| AR-04 | Highlight extent & async UX | Whole-doc **incremental + time-budgeted** parse (never blocks a frame); **viewport-scoped** highlight query; unparsed regions render default-fg + **fill in progressively**. Very-large files: **soft cap → degrade to plain editor** (no highlight/fold) + visible indicator. | ✅ Resolved |
-| AR-05 | Gutter & line numbers | Gutter is **part of the Editor's own draw** (not a sibling view); fixed left columns, vertical-scroll only (not h-scrolled); **dynamic-fit width** (`digits(maxLine) + fold-col + pad`); layout `[num \| fold-col \| pad \| text]`; text area = `viewW − gutterW`; `editorMousePtr`/hBar range adjust; window scrollbar/indicator rects untouched. **Current-line number highlighted** (`gutterActive`). Line numbers on-by-default + toggle option. | ✅ Resolved |
-| AR-06 | Folding & keymap | Primary fold affordance = **gutter fold-marker click + menu** (Fold/Unfold/Fold-all/Unfold-all); keyboard secondary = **extend the Ctrl-K block table**. Fold rendering: collapsed → header line + `⋯` badge, hidden rows removed from flow, `▾`/`▸` in the gutter fold-col. **Tab/Shift+Tab** selection-aware indent/dedent (additive; Tab was unbound); indent unit configurable, default = tab. **Comment-toggle** = menu command primary + best-effort `Ctrl-/`. | ✅ Resolved |
-| AR-07 | Perf NFR & validation | **Informational, off-CI, non-gating** (house RD-10 pattern): 16 ms keystroke-frame (edit + viewport reparse + redraw) below the cap; whole-doc parse off-frame. Validated by **one scoped, committed build-phase probe** (buffer→Lezer `Input` + parse/highlight timing across sizes → sets the soft-cap threshold). No re-spike. | ✅ Resolved |
-| AR-08 | Core-invariant assumption | v1 **keeps the single-caret model and horizontal-scroll** (1 buffer line = 1 screen row). No multi-caret/wrap rewrites. | ✅ Resolved |
-| AR-09 | New core theme roles | ~11: 8 syntax buckets + `gutter` + `gutterActive` + `bracketMatch`. Each touches the theme-role wiring (~6 spots) + the role-count test oracle; mind the DOS-16 palette naming trap. | ✅ Resolved |
-| AR-10 | Degrade-to-plain keeps zero-dep features | Above the soft cap, drop only **Lezer** features (syntax highlight + tree-based fold); **keep** line numbers, the gutter, and the indent-based default folder (all zero-dep, in `@jsvision/editor`). | ✅ Resolved |
-| AR-11 | Comment-toggle is language-gated | JSON has no comment syntax → comment-toggle disabled/no-op for JSON; active for TS/JS. | ✅ Resolved |
-| AR-12 | Ctrl-K extension is a new-feature extension | Adding fold entries to the WordStar Ctrl-K block table is a deliberate extension (free follow-up letters), not a TV-fidelity mis-decode — allowed. | ✅ Resolved |
+### Resolution notes
 
-## Deferrals (out of scope — each tracked by its own issue)
+**AR-15 — delegated resolution**
 
-One scope-deferral decision (AR-13), four items — each with its own tracking issue:
+- Authority: AI — delegated by `--auto-design`
+- Eligibility: Data-structure and transaction-boundary mechanism within the confirmed editing
+  behavior; it changes no feature scope or security policy.
+- Objective: Make every accepted language-assisted operation predictable and reversible.
+- Decision: One accepted logical operation is one undo step. Placeholder navigation is not an edit;
+  text entered into placeholders remains normal user editing.
+- Evidence: The existing editor already exposes a single undo stack, and completion/formatting
+  arrive as logically atomic edit sets.
+- Rejected alternatives: Multiple provider-defined undo steps leak implementation detail and can
+  leave a document partially reverted.
+- Strongest counterargument: A whole-document format may be a coarse undo step.
+- Confidence: High — reopen if the editor adopts selective or branch-aware undo.
+- Hardening: Atomicity and partial-failure behavior were stress-tested; no stronger alternative
+  survived.
+- Policy version: 1
+- Root invocation ID: `AD-CODE-EDITOR-20260723-01`
+- Reopen triggers: A future public transaction API permits safe, user-visible sub-operation groups.
 
-| AR | Deferred item | Owner / tracker | Revisit |
-|----|---------------|-----------------|---------|
-| AR-13a | Multiple cursors | GH #104 | post-v1 |
-| AR-13b | Word-wrap | GH #105 | post-v1 |
-| AR-13c | Autocomplete / IntelliSense | GH #106 | post-v1 |
-| AR-13d | Diagnostics / linting / LSP | GH #107 | post-v1 |
+**AR-16 — delegated resolution**
 
-## New — surfaced during structuring (confirmed by the user 2026-07-18)
+- Authority: AI — delegated by `--auto-design`
+- Eligibility: Incremental-state recovery mechanism within the already approved folding feature.
+- Objective: Preserve useful view state without retaining stale hidden ranges.
+- Decision: Preserve folds whose mapped structural identity remains valid; unfold and remove only
+  folds touched or invalidated by an edit.
+- Evidence: Clearing all folds makes unrelated edits disruptive; retaining stale ranges can hide
+  unrelated text after structural changes.
+- Rejected alternatives: Clear-all is safe but unnecessarily destructive to user view state.
+- Strongest counterargument: Stable fold identity adds adapter and mapping complexity.
+- Confidence: High — reopen if a launch parser cannot provide stable structural identities.
+- Hardening: Compared clear-all, positional mapping, and structural identity; structural validity
+  gives the strongest correctness/UX balance.
+- Policy version: 1
+- Root invocation ID: `AD-CODE-EDITOR-20260723-01`
+- Reopen triggers: A parser adapter cannot prove fold identity after incremental edits.
 
-| AR | Decision | Resolution | Weight |
-|----|----------|------------|--------|
-| AR-16 | RD file numbering | **`code-editor/RD-01…`** — the per-feature reset convention (like `jsvision-forms`). "RD-08"/#18 stays the historical name in the issue + decision-memo; the file ids reset. | Low (structural) |
-| AR-17 | Decomposition | **4 RDs by architectural seam:** RD-01 core seam + roles · RD-02 `@jsvision/lang` engine · RD-03 editor view features · RD-04 non-functional. `#101` (editor extraction) is a **standalone prerequisite refactor**, referenced in each RD's *Depends On*, not an RD here. | Medium (shapes the set) |
-| AR-18 | Security posture (mandatory non-functional) | Hostile file/paste content is the headline vector; **every drawn cell routes through core's write-time `sanitize` boundary** (the existing editor rule, applied to highlighted/folded content too). Lezer parses buffer *strings* only — no `eval`, no code execution, no fs/network in `@jsvision/lang`. Grammar packages are pinned pure-JS deps (supply-chain: lockfile + `check:deps`). Documented in RD-04. | Statement (RD-04) |
-| AR-19 | Soft-cap threshold **value** | Intentionally **not fixed now** — it is an NFR value the early build-phase perf probe sets (AR-07). Recorded as deferred-with-owner: **owner = the perf/integration probe (first build task); revisit = when the probe lands**. Not a requirements blocker. | Deferred (owned) |
-| AR-20 | The `Tokenizer` / `FoldProvider` seam TS shape | Grill settled the *concept* (`(from, to, bucket)` highlight spans + a fold-range provider); the **exact interface** is pinned in RD-01: pure zero-dep type declarations in `@jsvision/core`, span-callback shaped so a whole-doc tree can be queried per visible range without allocating the whole span list. | Medium (RD-01) |
+**AR-17 — delegated resolution**
 
-## Gate status — PASSED (2026-07-18)
+- Authority: AI — delegated by `--auto-design`
+- Eligibility: Concurrency and consistency mechanism under the confirmed stale-result policy.
+- Objective: Prevent asynchronous language services from corrupting newer user edits.
+- Decision: Edit-producing results require the exact requested document revision. Reject stale
+  results and offer retry; never automatically rebase general service edits.
+- Evidence: Formatting, completion, and workspace edits can overlap arbitrary ranges, so positional
+  rebasing cannot prove semantic equivalence.
+- Rejected alternatives: Automatic rebasing improves apparent success rate but risks applying edits
+  to the wrong syntax or symbol.
+- Strongest counterargument: Active typing can cause more retries.
+- Confidence: High — reopen if a protocol operation supplies a verified transformation against the
+  newer revision.
+- Hardening: Safety dominated convenience after testing overlapping and reordered-result cases.
+- Policy version: 1
+- Root invocation ID: `AD-CODE-EDITOR-20260723-01`
+- Reopen triggers: A specific operation defines and verifies safe rebasing semantics.
 
-All semantically-weighted decisions resolved; the one open value (AR-19, soft-cap threshold) is
-explicitly deferred with an owner (the perf probe) and does not block requirement authoring.
+**AR-18:** User accepted automatic completion after language-declared trigger characters or a
+configured typing delay plus an explicit command. An open completion popup gets first refusal on
+Enter/Tab; active snippet traversal gets Tab/Shift+Tab next; otherwise Tab performs indentation.
+
+**AR-19 — delegated resolution**
+
+- Authority: AI — delegated by `--auto-design`
+- Eligibility: Internal integration identifier mechanism; no persistence ownership changes.
+- Objective: Give LSP document lifecycle messages stable identity without fabricating filesystem
+  ownership.
+- Decision: The host may supply a stable, unique synthetic URI for an untitled document. Without
+  one, local language features work and LSP remains disabled.
+- Evidence: LSP document synchronization identifies documents by URI, while the confirmed host
+  boundary owns document identity.
+- Rejected alternatives: Editor-generated global URIs create collision, lifetime, and ownership
+  ambiguity.
+- Strongest counterargument: Hosts must manage one more identifier.
+- Confidence: High — reopen if the adopted protocol version introduces URI-free document identity.
+- Hardening: Host ownership aligns identity lifetime with the already confirmed document boundary.
+- Policy version: 1
+- Root invocation ID: `AD-CODE-EDITOR-20260723-01`
+- Reopen triggers: The language-service protocol no longer requires stable document URIs.
+
+**AR-20 — delegated resolution**
+
+- Authority: AI — delegated by `--auto-design`
+- Eligibility: Protocol capability-state mechanism within the confirmed capability-negotiation
+  behavior.
+- Objective: Keep commands truthful when a shared or reconnecting server changes capability.
+- Decision: Honor dynamic capability registration and unregistration live and update commands and
+  status without recreating the editor.
+- Evidence: Shared LSP sessions and reconnects were confirmed, and LSP permits dynamic capability
+  changes.
+- Rejected alternatives: Initialization-only capability snapshots become stale after reconnect or
+  dynamic registration.
+- Strongest counterargument: Live registration adds session-state tests and transition handling.
+- Confidence: High — reopen if launch servers provably never negotiate capabilities dynamically.
+- Hardening: The extra state is proportional and prevents knowingly stale command availability.
+- Policy version: 1
+- Root invocation ID: `AD-CODE-EDITOR-20260723-01`
+- Reopen triggers: The supported LSP subset explicitly forbids dynamic registration.
+
+**AR-21:** User accepted that folding a range containing the caret or any selection moves the caret
+to the fold header, clears the hidden selection, and then collapses. This keeps the active position
+visible.
+
+**AR-22 — delegated resolution**
+
+- Authority: AI — delegated by `--auto-design`
+- Eligibility: Compiler error-recovery mechanism inside the approved syntax feature.
+- Objective: Keep code presentation useful while developers are typing incomplete programs.
+- Decision: Use the parser's best available partial structure for invalid or incomplete source.
+  Ordinary syntax errors do not disable syntax features; adapter failure does.
+- Evidence: Source code is routinely invalid between keystrokes, and disabling highlighting on each
+  transient error would cause visible flicker.
+- Rejected alternatives: Fail-closed parsing is simpler but makes an interactive editor unstable
+  during normal typing.
+- Strongest counterargument: Highlighting near an error may be approximate.
+- Confidence: High — reopen if an adapter cannot distinguish recoverable syntax errors from engine
+  failure.
+- Hardening: Minimal invalid-source counterexamples favor partial recovery in every launch language.
+- Policy version: 1
+- Root invocation ID: `AD-CODE-EDITOR-20260723-01`
+- Reopen triggers: An adapter exposes no bounded or safe recovery mode.
+
+**AR-23:** User accepted that read-only mode disables all edit-producing commands and rejects
+returned edits. Navigation, hover, diagnostics, completion browsing, and other non-mutating
+language operations remain available.
+
+**AR-24 — delegated resolution**
+
+- Authority: AI — delegated by `--auto-design`
+- Eligibility: Deterministic configuration-validation mechanism within the confirmed customizable
+  key-binding surface.
+- Objective: Prevent environment-dependent or order-dependent command dispatch.
+- Decision: Reject duplicate bindings with a descriptive conflict unless the host explicitly
+  overrides the exact binding.
+- Evidence: Built-in, adapter, and host bindings share one command surface; silent priority makes
+  behavior depend on registration order.
+- Rejected alternatives: Priority-based resolution is concise but silently disables a command.
+- Strongest counterargument: Strict validation requires more explicit host configuration.
+- Confidence: High — reopen if a future public keymap model defines visible, inspectable precedence.
+- Hardening: Explicit override is the only option that is both customizable and deterministic.
+- Policy version: 1
+- Root invocation ID: `AD-CODE-EDITOR-20260723-01`
+- Reopen triggers: A new keymap contract makes conflicts observable and safely resolvable at runtime.

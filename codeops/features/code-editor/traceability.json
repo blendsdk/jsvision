@@ -1,0 +1,1747 @@
+{
+  "feature": "code-editor",
+  "nodes": [
+    {
+      "edges": [
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AMB-PLAN"
+        },
+        {
+          "relation": "related",
+          "target": "code-editor/SET-REQUIREMENTS"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/TASK-PHASE-0"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/TASK-PHASE-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/TASK-PHASE-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/TASK-PHASE-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/TASK-PHASE-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/TASK-PHASE-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/TASK-PHASE-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/TASK-PHASE-7"
+        }
+      ],
+      "evidence": [
+        "codeops/features/code-editor/plans/code-editor/99-execution-plan.md",
+        "summary:Phase 0 synchronized origin/develop and revalidated current paths, plan decisions, traceability, formatting, and the full repository verification gate.",
+        "summary:The user authorized creation of the integrated Code Editor plan with auto-design, and all plan ambiguities and quality gates are resolved."
+      ],
+      "id": "PLAN-CODE-EDITOR",
+      "revision": "sha256:317a870311685cec7404fcc729ed709060bcbc3280265c218bfb8a97c133f959",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/00-index.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code Editor integrated implementation plan",
+      "type": "plan",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:All 25 plan ambiguities are resolved under user authority or the active auto-design delegation."
+      ],
+      "id": "AMB-PLAN",
+      "revision": "sha256:eb292b95f01d0f73d042b664290f1a0e8b3c285e53363a2a080e39ac47a4840a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Code Editor plan ambiguity register",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Merged origin/develop without rewriting feature commits and restored the Code Editor rebuild artifacts.",
+        "summary:Post-sync yarn verify, traceability validation, plan readiness, and diff checks all passed.",
+        "verificationEvidence:yarn verify passed 30/30 Turbo tasks and the plugin integrity gate; CodeOps validation and plan readiness passed."
+      ],
+      "id": "TASK-PHASE-0",
+      "revision": "sha256:1965d976a312037b41dbbb0127d7db4b27593a1813b071df4498b29d3486d28a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 0: Integration baseline"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Integration baseline",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-PHASE-1",
+      "revision": "sha256:c2d2837a0ea23165a22eaf134d5322cf9c67e18fee84c52ebf6a4cb72fbbb2a8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 1: Architecture probes and package skeleton"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Architecture probes and package skeleton",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-PHASE-2",
+      "revision": "sha256:00309bd824168022480f4f375ea160d7048fb1787ccfe242744a56902abe5261",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 2: Document engine and lifecycle"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Document engine and lifecycle",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-PHASE-3",
+      "revision": "sha256:5e2a0f3bd6b7fc53ab4e42755aa1717213ef56d13a185c6d38add6270f8c7c30",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 3: Local language features"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Local language features",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-PHASE-4",
+      "revision": "sha256:898bb6580bfaa66ff0307ee557e94e65d4b3dfdd59c32e9e2d964bcf86d6f9b6",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 4: LSP intelligence"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "LSP intelligence",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-PHASE-5",
+      "revision": "sha256:d904d42f7aa54de49e18900e2556bdf45745c7fda6bd4489a8c6fefeb14c46c2",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 5: Terminal UI and theme"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Terminal UI and theme",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-PHASE-6",
+      "revision": "sha256:4a91b08af57685766382c7763ce2f6b47508ab6a8c3277e4ad2705e5c42a2a7a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 6: Quality and security closure"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Quality and security closure",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-PHASE-7",
+      "revision": "sha256:eb827c5ea1e918b5ef2e0a58567ff5d57dd3f64d70bb9c67eee31e6e5b92293a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Phase 7: Showcase, docs, and release"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Showcase, docs, and release",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "specified-by",
+          "target": "code-editor/SPEC-RD-01"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-07"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-10"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-11"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-14"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-15"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-18"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-19"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-23"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-24"
+        }
+      ],
+      "evidence": [
+        "summary:User approved RD-01 after reviewing its complete requirements and acceptance criteria."
+      ],
+      "id": "RD-01",
+      "revision": "sha256:561f44893d2a424feb41e84442d350b6f3c3437c33a69bac63051f05218a9ea3",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-01-editor-surface-and-document-lifecycle.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Editor surface and document lifecycle",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:2cf07bd4b5173b70b3b63d736e2360a26c028fd13a0ec1456bcfd8ca2d7ef65c",
+          "upstream": "code-editor/CRIT-RD-01",
+          "validatedAt": "2026-07-23T20:30:00Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-01"
+        }
+      ],
+      "id": "SPEC-RD-01",
+      "revision": "sha256:664fae13883a027df6c7d0904ad259507e5f83514e6b913e0d892e70b2bcab67",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-01-editor-surface-and-document-lifecycle.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Functional Requirements"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Editor surface and lifecycle functional requirements",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "code-editor/TEST-RD-01"
+        }
+      ],
+      "id": "CRIT-RD-01",
+      "revision": "sha256:2cf07bd4b5173b70b3b63d736e2360a26c028fd13a0ec1456bcfd8ca2d7ef65c",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-01-editor-surface-and-document-lifecycle.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Editor surface and lifecycle acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-RD-01",
+      "revision": "sha256:2cf07bd4b5173b70b3b63d736e2360a26c028fd13a0ec1456bcfd8ca2d7ef65c",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-01-editor-surface-and-document-lifecycle.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Editor surface and lifecycle specification tests",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-01"
+        },
+        {
+          "relation": "specified-by",
+          "target": "code-editor/SPEC-RD-02"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-02"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-02"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-07"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-08"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-09"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-10"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-11"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-16"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-21"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-22"
+        }
+      ],
+      "evidence": [
+        "summary:The user approved RD-02 after reviewing the local language-feature scope and acceptance criteria."
+      ],
+      "id": "RD-02",
+      "revision": "sha256:1966208aaa10e15235a92fe5ce050a32240351451e81164e1e4e1dcda0bc8d70",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-02-local-language-features.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Local language features",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:7ddf58ddbdb331a5c869f8ac49356461c25a8aec96e616e8ba4f68d8e1f79457",
+          "upstream": "code-editor/CRIT-RD-02",
+          "validatedAt": "2026-07-23T21:03:07Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:561f44893d2a424feb41e84442d350b6f3c3437c33a69bac63051f05218a9ea3",
+          "upstream": "code-editor/RD-01",
+          "validatedAt": "2026-07-23T21:03:07Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-02"
+        }
+      ],
+      "id": "SPEC-RD-02",
+      "revision": "sha256:33319a4e19c693ab9097cdd24de985dbcf2308affed4b6de8c119c6e675deb85",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-02-local-language-features.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Functional Requirements"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Local language functional requirements",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "code-editor/TEST-RD-02"
+        }
+      ],
+      "id": "CRIT-RD-02",
+      "revision": "sha256:7ddf58ddbdb331a5c869f8ac49356461c25a8aec96e616e8ba4f68d8e1f79457",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-02-local-language-features.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Local language acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-RD-02",
+      "revision": "sha256:7ddf58ddbdb331a5c869f8ac49356461c25a8aec96e616e8ba4f68d8e1f79457",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-02-local-language-features.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Local language specification tests",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-01"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-02"
+        },
+        {
+          "relation": "specified-by",
+          "target": "code-editor/SPEC-RD-03"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-06"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-12"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-13"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-17"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-20"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-23"
+        }
+      ],
+      "evidence": [
+        "summary:The user approved RD-03 after reviewing the language-server intelligence scope and acceptance criteria."
+      ],
+      "id": "RD-03",
+      "revision": "sha256:b9b06698b1be00f20e5362dfb330991deb00ee7b9c5d93d1a19d6081cacd7618",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-03-language-server-intelligence.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Language server intelligence",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:4ef8b7e5195a22cdb71072c427e95de69bd227cbd25c872c4460cea2c10a471d",
+          "upstream": "code-editor/CRIT-RD-03",
+          "validatedAt": "2026-07-23T21:08:57Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:561f44893d2a424feb41e84442d350b6f3c3437c33a69bac63051f05218a9ea3",
+          "upstream": "code-editor/RD-01",
+          "validatedAt": "2026-07-23T21:08:57Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:1966208aaa10e15235a92fe5ce050a32240351451e81164e1e4e1dcda0bc8d70",
+          "upstream": "code-editor/RD-02",
+          "validatedAt": "2026-07-23T21:08:57Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-03"
+        }
+      ],
+      "id": "SPEC-RD-03",
+      "revision": "sha256:dbf0f3766de16f473eaa31224f261be84bbe62e0b1d80ea520f038ca638542dc",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-03-language-server-intelligence.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Functional Requirements"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Language server intelligence functional requirements",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "code-editor/TEST-RD-03"
+        }
+      ],
+      "id": "CRIT-RD-03",
+      "revision": "sha256:4ef8b7e5195a22cdb71072c427e95de69bd227cbd25c872c4460cea2c10a471d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-03-language-server-intelligence.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Language server intelligence acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-RD-03",
+      "revision": "sha256:4ef8b7e5195a22cdb71072c427e95de69bd227cbd25c872c4460cea2c10a471d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-03-language-server-intelligence.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Language server intelligence specification tests",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-01"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-02"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-03"
+        },
+        {
+          "relation": "specified-by",
+          "target": "code-editor/SPEC-RD-04"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-07"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-08"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-09"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-11"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-13"
+        }
+      ],
+      "evidence": [
+        "summary:The user approved RD-04 after reviewing the quality, security, operability, and acceptance requirements."
+      ],
+      "id": "RD-04",
+      "revision": "sha256:6efebba0e10de8940cee9167d7f71730be49eecda94c3efa27cdacf1e3367e79",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-04-quality-security-and-operability.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Quality, security, and operability",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:6a4e5499eeff2e00f712e0dcc4482df51359342f81e56fc22d89f0b963a4b491",
+          "upstream": "code-editor/CRIT-RD-04",
+          "validatedAt": "2026-07-23T21:16:10Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:561f44893d2a424feb41e84442d350b6f3c3437c33a69bac63051f05218a9ea3",
+          "upstream": "code-editor/RD-01",
+          "validatedAt": "2026-07-23T21:16:10Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:1966208aaa10e15235a92fe5ce050a32240351451e81164e1e4e1dcda0bc8d70",
+          "upstream": "code-editor/RD-02",
+          "validatedAt": "2026-07-23T21:16:10Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:b9b06698b1be00f20e5362dfb330991deb00ee7b9c5d93d1a19d6081cacd7618",
+          "upstream": "code-editor/RD-03",
+          "validatedAt": "2026-07-23T21:16:10Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-04"
+        }
+      ],
+      "id": "SPEC-RD-04",
+      "revision": "sha256:58b4af9c10e47e6b1525547fa5912fb7974e9c433589fd543fa2974a32403d99",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-04-quality-security-and-operability.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Non-Functional Requirements"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Quality, security, and operability requirements",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "code-editor/TEST-RD-04"
+        }
+      ],
+      "id": "CRIT-RD-04",
+      "revision": "sha256:6a4e5499eeff2e00f712e0dcc4482df51359342f81e56fc22d89f0b963a4b491",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-04-quality-security-and-operability.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Quality, security, and operability acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-RD-04",
+      "revision": "sha256:6a4e5499eeff2e00f712e0dcc4482df51359342f81e56fc22d89f0b963a4b491",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-04-quality-security-and-operability.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Quality, security, and operability specification tests",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-01"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-02"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-03"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-04"
+        },
+        {
+          "relation": "specified-by",
+          "target": "code-editor/SPEC-RD-05"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-02"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-06"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-11"
+        }
+      ],
+      "evidence": [
+        "summary:The user approved RD-05 after reviewing the standalone and repository kitchen-sink requirements."
+      ],
+      "id": "RD-05",
+      "revision": "sha256:fde06c7606dfb7bbd6b968739cbe171e589610c634590724a37803b13577e94e",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-05-code-editor-kitchen-sink.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code editor kitchen-sink",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:77e58d2300d8cd3581d1290541881dfe09f245470005921de945de9e67e95542",
+          "upstream": "code-editor/CRIT-RD-05",
+          "validatedAt": "2026-07-23T21:19:54Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:561f44893d2a424feb41e84442d350b6f3c3437c33a69bac63051f05218a9ea3",
+          "upstream": "code-editor/RD-01",
+          "validatedAt": "2026-07-23T21:19:54Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:1966208aaa10e15235a92fe5ce050a32240351451e81164e1e4e1dcda0bc8d70",
+          "upstream": "code-editor/RD-02",
+          "validatedAt": "2026-07-23T21:19:54Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:b9b06698b1be00f20e5362dfb330991deb00ee7b9c5d93d1a19d6081cacd7618",
+          "upstream": "code-editor/RD-03",
+          "validatedAt": "2026-07-23T21:19:54Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:6efebba0e10de8940cee9167d7f71730be49eecda94c3efa27cdacf1e3367e79",
+          "upstream": "code-editor/RD-04",
+          "validatedAt": "2026-07-23T21:19:54Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-05"
+        }
+      ],
+      "id": "SPEC-RD-05",
+      "revision": "sha256:30e7a71f89dd7d17a81c7e65912dd345098e4cc7fd87282756d7325acd3004e4",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-05-code-editor-kitchen-sink.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Functional Requirements"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code editor kitchen-sink functional requirements",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "code-editor/TEST-RD-05"
+        }
+      ],
+      "id": "CRIT-RD-05",
+      "revision": "sha256:77e58d2300d8cd3581d1290541881dfe09f245470005921de945de9e67e95542",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-05-code-editor-kitchen-sink.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code editor kitchen-sink acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-RD-05",
+      "revision": "sha256:77e58d2300d8cd3581d1290541881dfe09f245470005921de945de9e67e95542",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-05-code-editor-kitchen-sink.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Code editor kitchen-sink specification tests",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-01"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-02"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-03"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/RD-04"
+        },
+        {
+          "relation": "specified-by",
+          "target": "code-editor/SPEC-RD-06"
+        },
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-06"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AR-25"
+        }
+      ],
+      "evidence": [
+        "summary:The user approved RD-06 after reviewing the hybrid theme, syntax-presentation, contrast, fallback, and showcase requirements."
+      ],
+      "id": "RD-06",
+      "revision": "sha256:2de9a98017f88426ac88f65838a072342bc28be9dc3e44cb49493a7107b1a8f6",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-06-theme-and-syntax-presentation.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Theme and syntax presentation",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:0234e4ad5c15394dca7c22b10c8ed1d96b1c88bb500a14db5f72218f049924ec",
+          "upstream": "code-editor/CRIT-RD-06",
+          "validatedAt": "2026-07-23T21:33:57Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:561f44893d2a424feb41e84442d350b6f3c3437c33a69bac63051f05218a9ea3",
+          "upstream": "code-editor/RD-01",
+          "validatedAt": "2026-07-23T21:33:57Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:1966208aaa10e15235a92fe5ce050a32240351451e81164e1e4e1dcda0bc8d70",
+          "upstream": "code-editor/RD-02",
+          "validatedAt": "2026-07-23T21:33:57Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:b9b06698b1be00f20e5362dfb330991deb00ee7b9c5d93d1a19d6081cacd7618",
+          "upstream": "code-editor/RD-03",
+          "validatedAt": "2026-07-23T21:33:57Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:6efebba0e10de8940cee9167d7f71730be49eecda94c3efa27cdacf1e3367e79",
+          "upstream": "code-editor/RD-04",
+          "validatedAt": "2026-07-23T21:33:57Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "code-editor/CRIT-RD-06"
+        }
+      ],
+      "id": "SPEC-RD-06",
+      "revision": "sha256:903776c92fa52e356f38583ef8e05c2b73529736ffee6f8f1b1ae13d764ec773",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-06-theme-and-syntax-presentation.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Functional Requirements"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Theme and syntax presentation functional requirements",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "code-editor/TEST-RD-06"
+        }
+      ],
+      "id": "CRIT-RD-06",
+      "revision": "sha256:0234e4ad5c15394dca7c22b10c8ed1d96b1c88bb500a14db5f72218f049924ec",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-06-theme-and-syntax-presentation.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Theme and syntax presentation acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-RD-06",
+      "revision": "sha256:0234e4ad5c15394dca7c22b10c8ed1d96b1c88bb500a14db5f72218f049924ec",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/RD-06-theme-and-syntax-presentation.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Acceptance Criteria"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Theme and syntax presentation specification tests",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "invalidation:A newly approved product decision adds editor-theme behavior not covered by the five-member approved set.",
+        "summary:The user accepted a hybrid application-derived and independently overridable CodeEditor theme model; RD-06 is awaiting document approval.",
+        "summary:The user approved RD-06, resolving the theme extension and approving every member of the six-document Code Editor requirement set.",
+        "summary:The user approved every member of the consolidated five-document Code Editor requirement set."
+      ],
+      "id": "SET-REQUIREMENTS",
+      "members": [
+        "code-editor/RD-01",
+        "code-editor/RD-02",
+        "code-editor/RD-03",
+        "code-editor/RD-04",
+        "code-editor/RD-05",
+        "code-editor/RD-06"
+      ],
+      "revision": "sha256:9c46293dce1ec6332ea6dc3b0144105be6b3185c23b055fcad83f4910a847d30",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/README.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code editor requirements",
+      "type": "requirement-set",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-01",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Product identity and boundary",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-02",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Version 1 capability scope",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-03",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Launch languages",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-04",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Document and file ownership",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-07",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Parser and LSP degradation",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-08",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Untrusted content and service results",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-09",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Responsiveness and large-document behavior",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-10",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Language extension model",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-11",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Terminal and accessibility degradation",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-14",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "External file changes",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-15",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Undo grouping for assisted edits",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-16",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Fold invalidation",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-18",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Completion triggering and acceptance priority",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-19",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Untitled document identity",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-21",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Caret and selection during folding",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-22",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Parser recovery for invalid source",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-23",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Read-only language-service edits",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-24",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Keybinding conflicts",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-05",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Language-service boundary",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-06",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Cross-document navigation and mutation",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-12",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Format-on-save",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-13",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "LSP snippet behavior",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-17",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Applying asynchronous edits after document changes",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-20",
+      "revision": "sha256:67e396f945e872a5a801dc8910b8757e74168e4bbe9883fdeb436cbc9bb445f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Dynamic LSP capability registration or loss",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-25",
+      "revision": "sha256:acd9e8584226d3b410626b97da0d327672dcd8d001cbf1326c04fb0957cf0e84",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/requirements/01-theme-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Hybrid CodeEditor theme model",
+      "type": "ambiguity",
+      "validations": []
+    }
+  ],
+  "schema": 2,
+  "updated": "2026-07-23T20:30:00Z"
+}
