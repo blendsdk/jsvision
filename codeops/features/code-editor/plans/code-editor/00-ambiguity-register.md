@@ -1,7 +1,7 @@
 # Ambiguity Register: Code Editor Integrated Implementation Plan
 
-> **Status**: ✅ GATE PASSED — all 28 items resolved
-> **Last Updated**: 2026-07-24 07:48
+> **Status**: ✅ GATE PASSED — all 29 items resolved
+> **Last Updated**: 2026-07-24 12:50
 > **Auto-design**: active
 > **Root Invocation ID**: `AD-CODE-EDITOR-PLAN-20260723-01`
 > **Policy Version**: 1
@@ -48,6 +48,7 @@
 | AR-P26 | Technical (runtime) | What deterministic probe API can specification tests target before the package exists? | CLI-output assertions / editor-owned typed probe functions with a thin runner | Define typed, side-effect-free probe functions for headless compatibility, dependency closure, reference benchmarks, and scheduling stress; keep CLI formatting in a thin runner | ✅ Resolved |
 | AR-P27 | Technical (runtime) | How is PostgreSQL parsed after the dependency probe proves CodeMirror language packages ship `@codemirror/view`? | Keep the browser dependency / build and maintain a new SQL grammar / use a public headless PostgreSQL parser behind the adapter contract | Replace CodeMirror language wrappers with `@lezer/javascript` for JavaScript/TypeScript and `pgsql-ast-parser` for PostgreSQL; keep parser-specific types internal and use cancellable revision-stamped background parses for PostgreSQL | ✅ Resolved |
 | AR-P28 | Testing (runtime) | How are Phase 2 specification tests discovered when the approved path is under `src/document` but Vitest includes only `test/**`? | Move the oracle into `test/` / add a second Vitest project / extend unit discovery to `src/**/*.test.ts` | Extend the existing unit project to discover specification and implementation tests under both `test/` and `src/`; retain one unit environment and the approved cohesive document path | ✅ Resolved |
+| AR-P29 | Performance (runtime) | How is PostgreSQL presentation bounded when a synchronous whole-document AST parse exceeds the interaction budget? | Parse every document synchronously / parse bounded statement regions between cancellation points and retain lexical presentation / require a worker | Parse at most 32 statement regions of at most 256 code units per generation, check cancellation between calls, and retain cooperatively bounded lexical presentation for the document; reopen the worker strategy if a bounded call breaches budget | ✅ Resolved |
 
 ## Resolution Notes
 
@@ -202,6 +203,29 @@ narrowly verified by listing and running the Phase 2 suite through the normal pa
 inspecting build output. Policy version: 1. Root invocation ID:
 `AD-CODE-EDITOR-EXEC-20260724-02`. Reopen if source-adjacent tests are emitted into the published
 package or the repository standardizes on a single test tree.
+
+**AR-P29:** Authority: AI — delegated by `--auto-design`. Eligibility: internal performance,
+concurrency, and failure-recovery design within the approved PostgreSQL parser and degradation
+policy. Objective: prevent synchronous parser work from monopolizing input while preserving
+useful parser-backed structure and full-document lexical presentation. Evidence: whole-document
+`pgsql-ast-parser` calls exceeded the interaction budget by orders of magnitude; a 50,000-line
+fixture completes within its two-second gate when AST work is limited to small statement regions,
+and the parser contract explicitly permits cancellation between synchronous calls without
+claiming in-call preemption. Decision: expose syntax, folds, and brackets as independently
+optional asynchronous capabilities; parse at most 32 statement regions of at most 256 code units
+per generation; check cancellation between calls; and cooperatively yield during bounded lexical
+work. Rejected alternatives: unconditional whole-document parsing violates the measured budget;
+merely lowering one whole-document threshold still cannot cancel work already running; a worker
+adds a Node-only lifecycle and packaging boundary before bounded regional calls have failed.
+Strongest counterargument: statements beyond the regional budget lose AST-quality folds and an
+individual synchronous parser call still cannot be preempted. Confidence: Medium-High; the hard
+regional ceiling makes worst-case work explicit, but pathological inputs still require ongoing
+measurement. Hardening: the independent re-review rejected the earlier whole-call threshold and
+directly drove the capability split, cooperative Lezer slices, regional PostgreSQL calls, bounded
+production, and cancellation tests. Policy version: 1. Root invocation ID:
+`AD-CODE-EDITOR-EXEC-20260724-03`. Reopen if one bounded parser call has p95 above 16 ms, the
+50,000-line lexical benchmark exceeds two seconds, regional AST coverage proves insufficient, or
+the package gains a portable worker-host contract.
 
 ## Twelve-Category Closure
 

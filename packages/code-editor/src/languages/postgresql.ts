@@ -9,3 +9,4 @@ import type { CodeEditorLanguageId } from '../index.js';
  * ```
  */
 export const postgresqlLanguageId: CodeEditorLanguageId = 'postgresql';
+export { postgresqlLanguageAdapter } from './postgresql-adapter.js';

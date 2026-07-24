@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-24 08:06
-> **Progress**: 19/61 tasks (31%)
+> **Last Updated**: 2026-07-24 13:59
+> **Progress**: 27/61 tasks (44%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -73,16 +73,16 @@ the user authorizes any synchronization; execution then revalidates paths and de
 
 ## Phase 3: Local language features
 
-> **Phase baseline tree**: _(recorded by exec-plan)_
+> **Phase baseline tree**: f9193606d2afc26ba970d80f35499977623cd2b0
 
-- [ ] 3.1.1 [spec-author] Write ST-12–ST-18 specification tests — `packages/code-editor/src/languages/languages.spec.test.ts`
-- [ ] 3.1.2 Run language specifications and record the expected red result — ST-12–ST-18
-- [ ] 3.2.1 Implement versioned adapters, registry, result validators, scheduler, and generation cancellation — `packages/code-editor/src/languages/contracts.ts`, `packages/code-editor/src/languages/registry.ts`, `packages/code-editor/src/languages/scheduler.ts`
-- [ ] 3.2.2 Implement Lezer bridge, categories, fragments, viewport queries, folds, and brackets — `packages/code-editor/src/languages/lezer.ts`, `packages/code-editor/src/languages/syntax.ts`, `packages/code-editor/src/languages/structure.ts`
-- [ ] 3.2.3 Implement JavaScript, TypeScript, PostgreSQL and plain adapters plus indentation/comments/invisibles — `packages/code-editor/src/languages/builtins.ts`, `packages/code-editor/src/languages/editing.ts`, `packages/code-editor/src/languages/invisibles.ts`
-- [ ] 3.2.4 Run ST-12–ST-18 green; fix implementation only
-- [ ] 3.3.1 Add incremental-equivalence, invalid-parser, Unicode, tier, and timing implementation tests — `packages/code-editor/src/languages/languages.impl.test.ts`, `packages/code-editor/src/languages/languages.perf.test.ts`
-- [ ] 3.3.2 Run focused language tests/benchmarks and `yarn verify`
+- [x] 3.1.1 [spec-author] Write ST-12–ST-18 specification tests — `packages/code-editor/src/languages/languages.spec.test.ts` ✅ (completed: 2026-07-24 12:43)
+- [x] 3.1.2 Run language specifications and record the expected red result — ST-12–ST-18 ✅ expected red: 7 language API tests failed while 61 preceding tests passed (completed: 2026-07-24 12:43)
+- [x] 3.2.1 Implement versioned adapters, registry, result validators, scheduler, and generation cancellation — `packages/code-editor/src/languages/contracts.ts`, `packages/code-editor/src/languages/registry.ts`, `packages/code-editor/src/languages/scheduler.ts` ✅ (completed: 2026-07-24 13:59)
+- [x] 3.2.2 Implement Lezer bridge, categories, fragments, viewport queries, folds, and brackets — `packages/code-editor/src/languages/lezer.ts`, `packages/code-editor/src/languages/syntax.ts`, `packages/code-editor/src/languages/structure.ts` ✅ (completed: 2026-07-24 13:59)
+- [x] 3.2.3 Implement JavaScript, TypeScript, PostgreSQL and plain adapters plus indentation/comments/invisibles — `packages/code-editor/src/languages/builtins.ts`, `packages/code-editor/src/languages/editing.ts`, `packages/code-editor/src/languages/invisibles.ts` ✅ (completed: 2026-07-24 13:59)
+- [x] 3.2.4 Run ST-12–ST-18 green; fix implementation only ✅ (completed: 2026-07-24 13:59)
+- [x] 3.3.1 Add incremental-equivalence, invalid-parser, Unicode, tier, and timing implementation tests — `packages/code-editor/src/languages/languages.impl.test.ts`, `packages/code-editor/src/languages/languages.perf.test.ts` ✅ (completed: 2026-07-24 13:59)
+- [x] 3.3.2 Run focused language tests/benchmarks and `yarn verify` ✅ (completed: 2026-07-24 13:59)
 
 **Verify**: `yarn workspace @jsvision/code-editor test && yarn verify`
 
