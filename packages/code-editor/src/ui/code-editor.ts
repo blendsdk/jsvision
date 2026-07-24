@@ -2,6 +2,7 @@ import type { CapabilityProfile } from '@jsvision/core';
 import { Group, signal, type DispatchEvent, type DrawContext, type Point, type Signal } from '@jsvision/ui';
 import type { CodeEditorController } from '../controller.js';
 import { offsetToPosition } from '../document/positions.js';
+import type { DocumentEditInput, DocumentSelectionInput } from '../document/types.js';
 import { classicCodeEditorTheme } from '../theme/presets.js';
 import { snapshotCodeEditorTheme } from '../theme/resolve.js';
 import type { CodeEditorTheme, ResolvedCodeEditorTheme } from '../theme/theme.js';
@@ -121,18 +122,7 @@ export class CodeEditor extends Group {
   /** Inserts text through one validated document transaction. */
   public insertText(text: string): boolean {
     const accepted = this.controller.replaceSelection(text);
-    if (accepted) {
-      this.#record('edit');
-      // The editor is a composite group: a document edit changes both its painted source cells and
-      // child assistance overlays. Recompose the subtree geometry so no cached child frame can cover
-      // the freshly projected document.
-      this.invalidateLayout();
-      try {
-        this.#onDocumentChange?.();
-      } catch {
-        this.controller.degradation.fail('parser');
-      }
-    }
+    this.#finishMutation(accepted);
     return accepted;
   }
 
@@ -235,6 +225,8 @@ export class CodeEditor extends Group {
       else this.controller.document.setSelection({ anchor: target.from, head: target.to });
       return route('snippet');
     }
+    const modifiedOwner = this.#routeModifiedKey(normalizedKey);
+    if (modifiedOwner !== undefined) return route(modifiedOwner);
     const command = this.#bindings[codeEditorKeyToken(normalizedKey)];
     if (command !== undefined) {
       this.execute(command);
@@ -383,10 +375,15 @@ export class CodeEditor extends Group {
 
   #routeEditingKey(key: string, shift: boolean): boolean {
     if (key === ' ') return this.insertText(' ');
-    if (key === 'Enter') return this.insertText(lineSeparator(this.controller.document.lineEnding));
+    if (key === 'Enter') return this.#insertNewline();
     if (key === 'Tab') {
+      if (this.#hasSelection()) return this.#changeSelectedLineIndent(shift ? 'dedent' : 'indent');
       if (shift) return this.#dedentAtCaret();
-      return this.insertText(' '.repeat(this.controller.document.tabSize));
+      const document = this.controller.document;
+      const line = document.snapshot.lineAt(Number(document.selection.head));
+      const column = Number(document.selection.head) - line.from;
+      const width = document.tabSize - (column % document.tabSize);
+      return this.insertText(' '.repeat(width));
     }
     if (key === 'Backspace') return this.#deleteAdjacent(-1);
     if (key === 'Delete') return this.#deleteAdjacent(1);
@@ -397,6 +394,91 @@ export class CodeEditor extends Group {
     if (key === 'ArrowUp') return this.#moveVertically(-1, shift);
     if (key === 'ArrowDown') return this.#moveVertically(1, shift);
     return false;
+  }
+
+  #routeModifiedKey(key: CodeEditorKey): Exclude<CodeEditorKeyRoute['owner'], 'unhandled'> | undefined {
+    if (key.ctrl !== true || key.alt === true) return undefined;
+    const lower = key.key.toLowerCase();
+    if (lower === 'a') {
+      this.controller.document.setSelection({ anchor: 0, head: this.controller.document.text.length });
+      this.invalidate();
+      return 'editor';
+    }
+    if (lower === 'z' || lower === 'y') {
+      const redo = lower === 'y' || key.shift === true;
+      this.#finishMutation(redo ? this.controller.document.redo().accepted : this.controller.document.undo().accepted);
+      return 'editor';
+    }
+    if (key.key === 'ArrowLeft' || key.key === 'ArrowRight') {
+      this.#moveByWord(key.key === 'ArrowLeft' ? -1 : 1, key.shift === true);
+      return 'editor';
+    }
+    if (key.key === 'Home' || key.key === 'End') {
+      this.#moveToDocumentEdge(key.key === 'Home' ? 'start' : 'end', key.shift === true);
+      return 'editor';
+    }
+    return undefined;
+  }
+
+  #hasSelection(): boolean {
+    const selection = this.controller.document.selection;
+    return selection.anchor !== selection.head;
+  }
+
+  #insertNewline(): boolean {
+    const document = this.controller.document;
+    const line = document.snapshot.lineAt(Number(document.selection.head));
+    const indentation = line.text.match(/^[\t ]*/u)?.[0] ?? '';
+    return this.insertText(lineSeparator(document.lineEnding) + indentation);
+  }
+
+  #changeSelectedLineIndent(direction: 'indent' | 'dedent'): boolean {
+    const document = this.controller.document;
+    const selection = document.selection;
+    const start = Math.min(Number(selection.anchor), Number(selection.head));
+    const end = Math.max(Number(selection.anchor), Number(selection.head));
+    const firstLine = document.snapshot.lineAt(start).number;
+    const lastOffset = end > start && document.snapshot.lineAt(end).from === end ? end - 1 : end;
+    const lastLine = document.snapshot.lineAt(Math.max(start, lastOffset)).number;
+    const edits: DocumentEditInput[] = [];
+    for (let number = Number(firstLine); number <= Number(lastLine); number += 1) {
+      const line = document.snapshot.line(number);
+      if (direction === 'indent') {
+        edits.push({ range: { from: line.from, to: line.from }, text: ' '.repeat(document.tabSize) });
+        continue;
+      }
+      const removable = indentationWidth(line.text, document.tabSize);
+      if (removable > 0) edits.push({ range: { from: line.from, to: line.from + removable }, text: '' });
+    }
+    if (edits.length === 0) return true;
+    return this.#applyEdits(edits, {
+      anchor: transformOffset(Number(selection.anchor), edits),
+      head: transformOffset(Number(selection.head), edits),
+    });
+  }
+
+  #applyEdits(edits: readonly DocumentEditInput[], selection: DocumentSelectionInput): boolean {
+    const document = this.controller.document;
+    const accepted = document.apply(
+      document.createTransaction({
+        edits,
+        selection,
+        origin: 'typing',
+      }),
+    ).accepted;
+    this.#finishMutation(accepted);
+    return accepted;
+  }
+
+  #finishMutation(accepted: boolean): void {
+    if (!accepted) return;
+    this.#record('edit');
+    this.invalidateLayout();
+    try {
+      this.#onDocumentChange?.();
+    } catch {
+      this.controller.degradation.fail('parser');
+    }
   }
 
   #deleteAdjacent(direction: -1 | 1): boolean {
@@ -418,6 +500,30 @@ export class CodeEditor extends Group {
     this.controller.document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
     this.invalidate();
     return true;
+  }
+
+  #moveByWord(direction: -1 | 1, extend: boolean): void {
+    const document = this.controller.document;
+    const selection = document.selection;
+    const text = document.text;
+    let head = Number(selection.head);
+    if (direction === 1) {
+      while (head < text.length && isSourceWordCharacter(text[head] ?? '')) head += 1;
+      while (head < text.length && isSourceWhitespace(text[head] ?? '')) head += 1;
+    } else {
+      while (head > 0 && isSourceWhitespace(text[head - 1] ?? '')) head -= 1;
+      while (head > 0 && isSourceWordCharacter(text[head - 1] ?? '')) head -= 1;
+    }
+    document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
+    this.invalidate();
+  }
+
+  #moveToDocumentEdge(edge: 'start' | 'end', extend: boolean): void {
+    const document = this.controller.document;
+    const selection = document.selection;
+    const head = edge === 'start' ? 0 : document.text.length;
+    document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
+    this.invalidate();
   }
 
   #moveToLineEdge(edge: 'start' | 'end', extend: boolean): boolean {
@@ -527,6 +633,44 @@ function currentWordRange(text: string, caret: number): { from: number; to: numb
   while (from > 0 && /[A-Za-z0-9_$]/u.test(text[from - 1] ?? '')) from -= 1;
   while (to < text.length && /[A-Za-z0-9_$]/u.test(text[to] ?? '')) to += 1;
   return { from, to };
+}
+
+/** Returns whether one UTF-16 code unit participates in source-code word navigation. */
+function isSourceWordCharacter(character: string): boolean {
+  return /^[A-Za-z0-9_$]$/u.test(character);
+}
+
+/** Returns whether word navigation may cross a source whitespace boundary. */
+function isSourceWhitespace(character: string): boolean {
+  return /^\s$/u.test(character);
+}
+
+/** Counts the removable indentation prefix for one logical line. */
+function indentationWidth(text: string, tabSize: number): number {
+  let width = 0;
+  while (width < Math.min(text.length, tabSize) && (text[width] === ' ' || text[width] === '\t')) width += 1;
+  return width;
+}
+
+/**
+ * Maps an original document offset through a sorted atomic edit set.
+ *
+ * Insertions at the offset are treated as preceding it so selected content stays selected after
+ * indentation. Offsets inside removed text collapse to the replacement.
+ */
+function transformOffset(offset: number, edits: readonly DocumentEditInput[]): number {
+  let delta = 0;
+  for (const edit of edits) {
+    const { from, to } = edit.range;
+    if (offset < from) break;
+    if (from === to) {
+      delta += edit.text.length;
+      continue;
+    }
+    if (offset <= to) return from + delta + Math.min(edit.text.length, offset - from);
+    delta += edit.text.length - (to - from);
+  }
+  return offset + delta;
 }
 
 function lineSeparator(lineEnding: 'none' | 'lf' | 'crlf' | 'cr' | 'mixed'): string {
