@@ -8,8 +8,8 @@
 # VERSION constant to the bumped manifests, a rebuild so the published dist carries the
 # new version, and a single release commit + tag.
 #
-# Only @jsvision/core, @jsvision/ui, @jsvision/files, @jsvision/datagrid, and
-# @jsvision/forms are public; every other workspace (including @jsvision/web, which
+# Only @jsvision/core, @jsvision/ui, @jsvision/files, @jsvision/datagrid,
+# @jsvision/code-editor, and @jsvision/forms are public; every other workspace (including @jsvision/web, which
 # stays internal for now) is `private` and npm skips it. Provenance requires the id-token permission
 # and a `repository` field in each published package (both satisfied here).
 #

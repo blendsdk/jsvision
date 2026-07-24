@@ -26,6 +26,7 @@
     "plugin:check": "node scripts/check-plugin.mjs",
     "plugin:update": "node scripts/update-plugin.mjs",
     "plugin:version": "node scripts/sync-plugin-version.mjs",
+    "check:code-editor-release": "node scripts/check-code-editor-release.mjs",
     "release:prepare": "yarn lockstep:version --no-git-commit && node scripts/sync-package-versions.mjs && yarn plugin:version && yarn plugin:update && yarn plugin:check",
     "perf:check": "node scripts/check-performance.mjs",
     "doctor": "node scripts/jsvision-doctor.mjs",

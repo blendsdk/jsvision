@@ -24,6 +24,7 @@ const CORE = entry('../../core/src/engine/index.ts');
 const UI = entry('../../ui/src/index.ts');
 const FORMS = entry('../../forms/src/index.ts');
 const DATAGRID = entry('../../datagrid/src/index.ts');
+const CODE_EDITOR = entry('../../code-editor/src/index.ts');
 const WEB = entry('../../web/src/index.ts');
 const FILES = entry('../../files/src/index.ts');
 
@@ -38,6 +39,7 @@ test('ST-A1: the API reference covers exactly the public barrel surface', () => 
     ...barrelExports(UI),
     ...barrelExports(FORMS),
     ...barrelExports(DATAGRID),
+    ...barrelExports(CODE_EDITOR),
     ...barrelExports(WEB),
     ...barrelExports(FILES),
   ]);
@@ -80,6 +82,7 @@ test('ST-A6: exports route to the expected category', () => {
   expect(categoryFor('files', 'packages/files/src/dialog/file-dialog.ts')).toBe('files');
   expect(categoryFor('forms', 'packages/forms/src/create-form.ts')).toBe('forms');
   expect(categoryFor('datagrid', 'packages/datagrid/src/grid.ts')).toBe('datagrid');
+  expect(categoryFor('code-editor', 'packages/code-editor/src/index.ts')).toBe('code-editor');
   expect(categoryFor('core', 'packages/core/src/engine/color/theme.ts')).toBe('core-essentials');
   expect(categoryFor('ui', 'packages/ui/src/table/columns.ts')).toBe('data-views');
   expect(categoryFor('ui', 'packages/core/dist/engine/color/theme.d.ts')).toBe('core-essentials');

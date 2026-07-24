@@ -57,6 +57,7 @@
         "summary:Phase 4 semantic snapshot refreshed after verified LSP implementation and quality correction; approved scope remains unchanged.",
         "summary:Phase 5 semantic snapshot refreshed after verified terminal UI and theme implementation and quality correction; approved scope remains unchanged.",
         "summary:Phase 6 semantic snapshot refreshed after verified quality, security, performance, packaging, and lifecycle closure; approved scope remains unchanged.",
+        "summary:Phase 7 semantic snapshot refreshed after verified showcase, documentation, release, and plugin integration; approved scope remains unchanged.",
         "summary:The user authorized creation of the integrated Code Editor plan with auto-design, and all plan ambiguities and quality gates are resolved."
       ],
       "id": "PLAN-CODE-EDITOR",
@@ -87,13 +88,6 @@
           "relation": "implemented-by",
           "revision": "sha256:7c9993cbdf0860d6745ce915db39a50d9984abbf12d8800966211a171ec4d6d5",
           "upstream": "code-editor/TASK-PHASE-2",
-          "validatedAt": "2026-07-23T22:22:05Z"
-        },
-        {
-          "gate": "execution",
-          "relation": "implemented-by",
-          "revision": "sha256:eb827c5ea1e918b5ef2e0a58567ff5d57dd3f64d70bb9c67eee31e6e5b92293a",
-          "upstream": "code-editor/TASK-PHASE-7",
           "validatedAt": "2026-07-23T22:22:05Z"
         },
         {
@@ -144,6 +138,13 @@
           "revision": "sha256:9a4ffd45a8fae9278804b2e809236ed4914026f010a4b82e633030620a8d7ce5",
           "upstream": "code-editor/TASK-PHASE-6",
           "validatedAt": "2026-07-24T14:34:50Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:17faaa9db803c0a90e4e3b5f1fc037224d8a17ce38bf692a9b04100ff20f3b31",
+          "upstream": "code-editor/TASK-PHASE-7",
+          "validatedAt": "2026-07-24T14:59:24Z"
         }
       ]
     },
@@ -401,8 +402,12 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Phase 7 showcase, documentation, release integration, immutable specifications, implementation tests, and repository verification completed.",
+        "verificationEvidence:ST-39 through ST-42, scenario implementation tests, standalone E2E, package dry-pack and public import, docs, plugin integrity, architecture benchmark, and yarn verify all pass."
+      ],
       "id": "TASK-PHASE-7",
-      "revision": "sha256:eb827c5ea1e918b5ef2e0a58567ff5d57dd3f64d70bb9c67eee31e6e5b92293a",
+      "revision": "sha256:17faaa9db803c0a90e4e3b5f1fc037224d8a17ce38bf692a9b04100ff20f3b31",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -414,7 +419,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Showcase, docs, and release",
       "type": "task",
       "validations": []
