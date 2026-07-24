@@ -3,6 +3,7 @@ import type { Statement } from 'pgsql-ast-parser';
 
 import type { FoldRange, LanguageAdapter, LanguageCapabilityContext, SyntaxCategory, SyntaxSpan } from './contracts.js';
 import { discoverBrackets, discoverFolds } from './structure.js';
+import { postgresqlCommentMetadata } from './metadata.js';
 
 const tokenPattern =
   /(?:--[^\r\n]*|\/\*[\s\S]*?\*\/)|(?:'(?:''|[^'])*')|(?:\b\d+(?:\.\d+)?\b)|(?:\b[A-Za-z_][\w$]*\b)|(?:[()[\]{};,.:])|(?:[+\-*/%=<>!&|?]+)/gu;
@@ -98,7 +99,7 @@ export const postgresqlLanguageAdapter: LanguageAdapter = Object.freeze({
   contractVersion: 1,
   id: 'postgresql',
   extensions: ['.sql', '.pgsql'],
-  comments: { line: '--', block: ['/*', '*/'] as const },
+  comments: postgresqlCommentMetadata,
   syntax,
   folds,
   brackets,

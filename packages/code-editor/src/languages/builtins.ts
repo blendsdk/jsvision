@@ -4,6 +4,7 @@ import { parser as javascriptParser } from '@lezer/javascript';
 import type { LanguageAdapter, LanguageCapabilityContext, SyntaxCategory, SyntaxSpan } from './contracts.js';
 import { parseLezer, updateLezerFragments } from './lezer.js';
 import { discoverBrackets, discoverFolds } from './structure.js';
+import { javascriptCommentMetadata } from './metadata.js';
 
 const commonKeywords = new Set(['const', 'let', 'var', 'function', 'return', 'class', 'extends', 'if', 'else', 'for']);
 const tokenPattern =
@@ -43,7 +44,7 @@ function lezerAdapter(id: string, extensions: readonly string[]): LanguageAdapte
     contractVersion: 1,
     id,
     extensions,
-    comments: { line: '//', block: ['/*', '*/'] as const },
+    comments: javascriptCommentMetadata,
     async syntax(text: string, context: LanguageCapabilityContext) {
       const previous = readLezerState(context.previousState);
       const fragments =
