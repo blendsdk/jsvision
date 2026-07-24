@@ -18,6 +18,7 @@ import { createInProcessLspSession } from '../lsp/session.js';
 import { snapshotCodeEditorTheme } from '../theme/resolve.js';
 import { CodeEditor } from '../ui/code-editor.js';
 import { createObservabilityChannel } from '../observability.js';
+import { HARD_CODE_EDITOR_LIMITS } from '../limits.js';
 
 const execFileAsync = promisify(execFile);
 const STATIC_IMPORT_PATTERN = /(?:import|export)\s+(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/gu;
@@ -597,8 +598,12 @@ export async function inspectRetainedResources(options: {
     requests: 10_000,
     telemetryEvents: 1_024,
   });
+  const requestedFolds = Math.min(boundedRequested(options.create, 'decorations'), HARD_CODE_EDITOR_LIMITS.folds);
   const document = createDocumentModel({
-    text: 'const value = 1;',
+    text:
+      requestedFolds === 0
+        ? 'const value = 1;'
+        : Array.from({ length: requestedFolds }, (_, index) => `block_${index} {\n  value;\n}`).join('\n'),
     uri: 'file:///retained.ts',
     languageId: 'typescript',
   });
@@ -625,10 +630,25 @@ export async function inspectRetainedResources(options: {
   await lsp.open();
   const requestedHistory = Math.min(boundedRequested(options.create, 'histories'), 1_000);
   for (let index = 0; index < requestedHistory; index += 1) editor.insertText('x');
-  const requestedFolds = Math.min(boundedRequested(options.create, 'decorations'), controller.limits.folds);
-  controller.folds = Object.freeze(
-    Array.from({ length: requestedFolds }, (_, index) => Object.freeze({ from: index, to: index })),
-  );
+  if (requestedFolds > 0) {
+    const folds = Array.from({ length: requestedFolds }, (_, index) => {
+      const fromLine = index * 3;
+      return {
+        from: Number(document.snapshot.line(fromLine).from),
+        to: Number(document.snapshot.line(fromLine + 2).to),
+      };
+    });
+    controller.setLanguageResult({
+      syntax: [],
+      folds,
+      brackets: [],
+      identity: document.identity,
+      adapterId: 'typescript',
+      generation: 1,
+      state: 'ready',
+    });
+    controller.foldAll();
+  }
   const telemetryRequested = Math.min(
     boundedRequested(options.create, 'telemetryEvents'),
     controller.limits.retainedTelemetryEvents,

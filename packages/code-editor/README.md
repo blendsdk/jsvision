@@ -65,6 +65,17 @@ and the modern keyboard actions documented by the standalone kitchen sink. `Ctrl
 built-in line-comment delimiter for JavaScript, TypeScript, and PostgreSQL; unsupported languages
 leave the document unchanged.
 
+Parser-provided multi-line folds can be collapsed with `fold`, `unfold`, `foldAll`, `unfoldAll`,
+or `toggleFold`. Collapsing is presentation-only: source, revision, modified state, and undo
+history do not change. Keyboard and mouse navigation, caret following, line numbers, and scrollbar
+ranges all skip hidden rows. Enable `lineNumbers` to show clickable Unicode fold markers; ASCII
+and monochrome terminals receive equivalent non-color markers. Stale or malformed parser ranges
+never hide source.
+
+Window geometry is synchronized for drag-resize, maximize, restore, terminal resize while
+maximized, cascade, and tile. Moving a window changes its origin without changing the editor's
+interior dimensions.
+
 For standalone composition, `CodeEditor.resizeViewport(width, height)` allows a host to publish
 new terminal-cell dimensions before drawing. `viewportMetrics` exposes immutable current geometry
 and clamped scroll limits for custom passive chrome.
@@ -77,8 +88,10 @@ Run the comprehensive, deterministic example:
 yarn workspace @jsvision/examples demo:code-editor
 ```
 
-It covers editor/window composition, editing lifecycle, SQL/JavaScript/TypeScript/plain text,
-local parsing, simulated LSP intelligence, host authorization, hostile Unicode, themes,
-accessibility, resizing, mouse selection, caret-follow scrolling, passive scrollbar updates, and
-all document-size tiers without a network, database, workspace, credentials, external language
-server, or arbitrary file access.
+It includes direct and windowed editors, real structural folding, a capability-level inventory,
+editing and read-only lifecycle, SQL/JavaScript/TypeScript/plain text, local parsing, simulated LSP
+intelligence, host authorization, hostile Unicode, themes, accessibility, every supported window
+geometry path, mouse selection, caret-follow scrolling, passive scrollbar updates, and all
+document-size tiers without a network, database, workspace, credentials, external language server,
+or arbitrary file access. Inventory entries distinguish interactive, automated-only, and
+unsupported behavior so labels cannot overstate the live demonstration.

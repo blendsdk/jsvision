@@ -46,13 +46,35 @@ Completion and snippet navigation retain priority over indentation. Multiple car
 selection, and browser or DOM clipboard dependencies are intentionally outside this editor's
 single-selection terminal contract.
 
+## Structural folding and window geometry
+
+Local language results provide source-offset fold ranges. The controller validates them as
+properly nested, current-revision, multi-line structures before allowing `fold`, `unfold`,
+`foldAll`, `unfoldAll`, or `toggleFold`. A collapsed range changes presentation only. The visible
+row mapping is shared by projection, keyboard navigation, mouse placement, caret following, line
+numbers, and both scrollbar ranges.
+
+Set `lineNumbers: true` on `CodeEditor` or `CodeEditorWindow` to expose clickable fold markers.
+Unicode terminals use triangle markers; ASCII and monochrome profiles retain distinct expanded and
+collapsed characters. A narrow viewport suppresses the entire gutter so source text remains
+usable.
+
+`CodeEditorWindow` re-fits its editor, scrollbars, and line/column status immediately after
+drag-resize, maximize, restore, terminal resize while maximized, cascade, or tile. JSVision does
+not currently provide a taskbar-style minimized window state.
+
 ## Standalone kitchen sink
 
 Run `yarn workspace @jsvision/examples demo:code-editor`. The demo is deterministic and uses a
 simulated in-process language-service boundary; it is not a compiler, PostgreSQL connection, or
 production language server.
 
-Its stable scenario facets are:
+The navigation list contains dedicated direct-editor, windowed-editor, structural-folding,
+read-only, viewport, language, LSP, theme/fallback, hostile-text, and document-size scenarios. A
+visible capability inventory classifies each entry as `interactive`, `automated-only`, or
+`unsupported`; the latter two include a reason and never claim a live scenario.
+
+Its stable high-level navigation facets are:
 
 - `editor-and-window`
 - `editing-lifecycle`
