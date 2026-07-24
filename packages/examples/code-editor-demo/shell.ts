@@ -1,6 +1,7 @@
 import { createKeymap, type CapabilityProfile } from '@jsvision/core';
 import {
   Commands,
+  Group,
   ListBox,
   Text,
   View,
@@ -95,24 +96,35 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     typeAhead: true,
     onSelect: (index) => select(index),
   });
-  const sidebar = new Window('Code Editor scenarios');
-  sidebar.movable = false;
-  sidebar.resizable = false;
-  sidebar.setLayout({ rect: { x: 0, y: 0, width: sidebarWidth, height } });
-  navigator.setLayout({
-    position: 'absolute',
-    rect: { x: 1, y: 2, width: Math.max(1, sidebarWidth - 2), height: Math.max(1, height - 7) },
-  });
+  const sidebar = new Group();
+  sidebar.background = 'window';
+  const sidebarTitle = new Text('Code Editor scenarios');
+  sidebar.add(sidebarTitle);
   sidebar.add(navigator);
   const help = new Text(
     'Tab/Shift-Tab indent · Ctrl+A/Z/Y · Ctrl+←→\nMouse select · double-click word · wheel scroll\nCtrl+C/X/V · Ctrl+/ comments · F10 menu · Alt-X exits',
   );
-  help.setLayout({
-    position: 'absolute',
-    rect: { x: 1, y: Math.max(1, height - 5), width: Math.max(1, sidebarWidth - 2), height: 3 },
-  });
   sidebar.add(help);
-  app.desktop.addWindow(sidebar);
+
+  /** Fits the borderless navigation list and its fixed help footer to the left application edge. */
+  const layoutSidebar = (): void => {
+    const helpHeight = Math.min(3, height);
+    sidebar.setLayout({ position: 'absolute', rect: { x: 0, y: 0, width: sidebarWidth, height } });
+    sidebarTitle.setLayout({
+      position: 'absolute',
+      rect: { x: 0, y: 0, width: sidebarWidth, height: Math.min(1, height) },
+    });
+    navigator.setLayout({
+      position: 'absolute',
+      rect: { x: 0, y: 1, width: sidebarWidth, height: Math.max(0, height - helpHeight - 1) },
+    });
+    help.setLayout({
+      position: 'absolute',
+      rect: { x: 0, y: height - helpHeight, width: sidebarWidth, height: helpHeight },
+    });
+  };
+  layoutSidebar();
+  app.desktop.add(sidebar);
 
   const inspector = new Window('State / host events');
   inspector.focusable = false;
@@ -152,8 +164,9 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
   app.desktop.addWindow(inspector);
 
   const mountEditorWindow = (): void => {
-    editorWindow.movable = false;
-    editorWindow.resizable = false;
+    editorWindow.movable = true;
+    editorWindow.resizable = true;
+    editorWindow.castsShadow = true;
     editorWindow.setLayout({
       rect: {
         x: sidebarWidth,
@@ -172,15 +185,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     width = app.desktop.bounds.width;
     height = app.desktop.bounds.height;
     sidebarWidth = Math.min(28, Math.max(18, Math.floor(width / 3)));
-    sidebar.setLayout({ rect: { x: 0, y: 0, width: sidebarWidth, height } });
-    navigator.setLayout({
-      position: 'absolute',
-      rect: { x: 1, y: 2, width: Math.max(1, sidebarWidth - 2), height: Math.max(1, height - 7) },
-    });
-    help.setLayout({
-      position: 'absolute',
-      rect: { x: 1, y: Math.max(1, height - 5), width: Math.max(1, sidebarWidth - 2), height: 3 },
-    });
+    layoutSidebar();
     inspector.setLayout({
       rect: {
         x: sidebarWidth,
