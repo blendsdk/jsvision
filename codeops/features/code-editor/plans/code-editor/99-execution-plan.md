@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-24 01:02
-> **Progress**: 11/61 tasks (18%)
+> **Last Updated**: 2026-07-24 07:59
+> **Progress**: 17/61 tasks (28%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -58,14 +58,14 @@ the user authorizes any synchronization; execution then revalidates paths and de
 
 ## Phase 2: Document engine and lifecycle
 
-> **Phase baseline tree**: _(recorded by exec-plan)_
+> **Phase baseline tree**: 882e8101fff924cd293ac3dcff244cfca39fbb8f
 
-- [ ] 2.1.1 [spec-author] Write ST-05–ST-11 specification tests — `packages/code-editor/src/document/document.spec.test.ts`
-- [ ] 2.1.2 Run document specifications and record the expected red result — ST-05–ST-11
-- [ ] 2.2.1 Implement typed identities, snapshot/storage adapter, line index, and position conversion — `packages/code-editor/src/document/types.ts`, `packages/code-editor/src/document/storage.ts`, `packages/code-editor/src/document/positions.ts`
-- [ ] 2.2.2 Implement validated atomic transactions, selection mapping, read-only, and limits — `packages/code-editor/src/document/transaction.ts`, `packages/code-editor/src/document/limits.ts`
-- [ ] 2.2.3 Implement bounded undo/redo, save checkpoints, replacement, search, and size modes — `packages/code-editor/src/document/history.ts`, `packages/code-editor/src/document/model.ts`, `packages/code-editor/src/document/search.ts`
-- [ ] 2.2.4 Run ST-05–ST-11 green; fix implementation only
+- [x] 2.1.1 [spec-author] Write ST-05–ST-11 specification tests — `packages/code-editor/src/document/document.spec.test.ts` ✅ (completed: 2026-07-24 07:52)
+- [x] 2.1.2 Run document specifications and record the expected red result — ST-05–ST-11 ✅ expected red: document model modules absent (completed: 2026-07-24 07:52)
+- [x] 2.2.1 Implement typed identities, snapshot/storage adapter, line index, and position conversion — `packages/code-editor/src/document/types.ts`, `packages/code-editor/src/document/storage.ts`, `packages/code-editor/src/document/positions.ts` ✅ (completed: 2026-07-24 07:57)
+- [x] 2.2.2 Implement validated atomic transactions, selection mapping, read-only, and limits — `packages/code-editor/src/document/transaction.ts`, `packages/code-editor/src/document/limits.ts` ✅ (completed: 2026-07-24 07:57)
+- [x] 2.2.3 Implement bounded undo/redo, save checkpoints, replacement, search, and size modes — `packages/code-editor/src/document/history.ts`, `packages/code-editor/src/document/model.ts`, `packages/code-editor/src/document/search.ts` ✅ (completed: 2026-07-24 07:57)
+- [x] 2.2.4 Run ST-05–ST-11 green; fix implementation only ✅ 23 specification tests passing (completed: 2026-07-24 07:59)
 - [ ] 2.3.1 Add model/property/edge/performance implementation tests — `packages/code-editor/src/document/document.impl.test.ts`, `packages/code-editor/src/document/document.property.test.ts`
 - [ ] 2.3.2 Run focused document benchmarks/tests and `yarn verify`
 

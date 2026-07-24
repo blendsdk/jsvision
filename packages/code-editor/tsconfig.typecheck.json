@@ -4,5 +4,6 @@
     "noEmit": true,
     "rootDir": "."
   },
-  "include": ["src", "bench", "test"]
+  "include": ["src", "bench", "test"],
+  "exclude": ["dist"]
 }

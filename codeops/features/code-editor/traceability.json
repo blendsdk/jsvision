@@ -81,7 +81,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:00309bd824168022480f4f375ea160d7048fb1787ccfe242744a56902abe5261",
+          "revision": "sha256:550e55627615d6bf85a796c93e7e40d50615d44a5cabdcd646eabc87dfe7c698",
           "upstream": "code-editor/TASK-PHASE-2",
           "validatedAt": "2026-07-23T22:22:05Z"
         },
@@ -194,10 +194,10 @@
     {
       "edges": [],
       "evidence": [
-        "summary:All 27 plan ambiguities are resolved under user authority or the active auto-design delegation."
+        "summary:All 28 plan ambiguities are resolved under user authority or the active auto-design delegation."
       ],
       "id": "AMB-PLAN",
-      "revision": "sha256:ab1ec81f6b00001d28b723d5c3eb771526939771c7c0118bafd21e04d5ab07da",
+      "revision": "sha256:a6a8c3f89319624ecbb003da991d4898041fa8edbce54058b8aa0fa6cacd51c8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -268,7 +268,7 @@
     {
       "edges": [],
       "id": "TASK-PHASE-2",
-      "revision": "sha256:00309bd824168022480f4f375ea160d7048fb1787ccfe242744a56902abe5261",
+      "revision": "sha256:550e55627615d6bf85a796c93e7e40d50615d44a5cabdcd646eabc87dfe7c698",
       "semanticSources": [
         {
           "digest": "sha256",
