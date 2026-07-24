@@ -17,11 +17,13 @@ export function routeCodeEditorCommand(
   if (event.event.type !== 'command') return false;
   const command = event.event.command;
   if (command === Commands.selectAll) {
+    controller.unfoldAll();
     controller.document.setSelection({ anchor: 0, head: controller.document.text.length });
     finishSelectionChange();
     return true;
   }
   if (command === Commands.undo || command === Commands.redo) {
+    controller.unfoldAll();
     const result = command === Commands.undo ? controller.document.undo() : controller.document.redo();
     finishMutation(result.accepted);
     return true;

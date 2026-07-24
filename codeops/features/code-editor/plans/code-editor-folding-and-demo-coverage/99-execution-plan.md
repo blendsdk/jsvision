@@ -1,8 +1,8 @@
 # Task T-03: Code Editor folding and demo coverage
 
 > **Type**: Task (lightweight) · **Feature**: code-editor · **CodeOps Artifact Schema**: 1
-> **Progress**: 9/10 tasks (90%)
-> **Last Updated**: 2026-07-24 22:13
+> **Progress**: 10/10 tasks (100%)
+> **Last Updated**: 2026-07-24 22:23
 > **Phase baseline tree**: 969b1a6a58cb8357a903ce3d1cd54a4d451aa466
 
 ## Objective
@@ -144,14 +144,18 @@ claims with an honest capability-level inventory backed by interactive scenarios
 - [x] T-03.9 Refresh Code Editor architecture/user documentation and every impacted canonical and
   generated plugin surface; run documentation, reference, formatting, and plugin-integrity checks.
   ✅ (completed: 2026-07-24 21:52)
-- [ ] T-03.10 Run focused checks and authoritative `yarn verify`, complete independent correctness,
+- [x] T-03.10 Run focused checks and authoritative `yarn verify`, complete independent correctness,
   performance, and accessibility/semantics review, resolve every accepted Critical/Major finding,
-  then synchronize traceability and roadmaps.
+  then synchronize traceability and roadmaps. ✅ (completed: 2026-07-24 22:23)
 
 **Verify**: `yarn verify`
 
 ## Execution evidence
 
+- **Defect confirmation (2026-07-24 22:18)**: Maximizing a mounted editor window was reported to
+  leave stale editor content geometry. Closure requires same-tick editor, scrollbar, status,
+  viewport, and caret synchronization for maximize, terminal resize while maximized, restore,
+  corner resize, move, cascade, and tile through the real desktop event path.
 - **Red phase (2026-07-24 21:32)**: Package typechecks passed. Focused immutable specifications
   produced 10 expected failures: two maximize/restore geometry cases, five structural
   folding/visible-row cases, and three capability-inventory/scenario-reachability cases. Existing
@@ -188,3 +192,11 @@ Auto-design selected correction rather than waiver for every Major finding:
 **Correction verification (2026-07-24 22:13)**: Focused Code Editor tests pass 19/19, focused
 showcase tests pass 35/35, a 5,000-region fold-all projection and 3,000-level identity fixture meet
 their budgets, and `TURBO_CONCURRENCY=1 yarn verify` passes 34/34 tasks with plugin integrity green.
+
+**Single re-review and final correction (2026-07-24 22:23)**: The permitted re-review rejected
+three remaining cases: nested target revelation, application-command selection/document-end
+revelation, and compatibility-setter selection relocation. All received technical corrections,
+focused typecheck/documentation checks and 15/15 targeted tests pass, a 50,000-fold lookup meets
+the steady-state frame budget, plugin integrity is green, and the authoritative serial gate passes
+34/34 tasks. Per the one-re-review cap, these final corrections were not dispatched for a third
+independent review.

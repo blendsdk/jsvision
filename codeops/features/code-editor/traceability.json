@@ -2153,7 +2153,9 @@
     {
       "edges": [],
       "evidence": [
-        "summary:The user approved creation and execution of the folding, window-geometry, and demo-coverage mini-plan with auto-design and auto-commit."
+        "summary:Structural folding, synchronized window geometry, and capability-complete interactive demo coverage are implemented.",
+        "summary:The user approved creation and execution of the folding, window-geometry, and demo-coverage mini-plan with auto-design and auto-commit.",
+        "verificationEvidence:Focused suites pass 15 of 15 tests, plugin integrity passes, yarn verify passes 34 of 34 tasks, and all accepted review findings received verified corrections."
       ],
       "id": "T-03",
       "revision": "sha256:72ff8479cebe2e174722878cdb4e5822babd0b9a57e20d0286ab46b83c226b69",
@@ -2168,7 +2170,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Code Editor folding and demo coverage",
       "type": "task",
       "validations": []
@@ -2260,6 +2262,8 @@
     {
       "edges": [],
       "evidence": [
+        "greenEvidence:Focused Code Editor suites pass 15 of 15 tests and the authoritative serial yarn verify gate passes 34 of 34 tasks.",
+        "redEvidence:Focused immutable specifications produced ten expected failures before implementation.",
         "summary:Immutable folding, window-geometry, capability-inventory, and scenario-reachability specifications are planned before implementation."
       ],
       "id": "TEST-FOLDING-DEMO",
@@ -2275,7 +2279,7 @@
           }
         }
       ],
-      "status": "planned",
+      "status": "passing",
       "title": "Folding, window geometry, and demo coverage specification",
       "type": "test",
       "validations": []

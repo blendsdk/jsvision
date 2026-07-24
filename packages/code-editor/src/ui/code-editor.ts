@@ -136,6 +136,7 @@ export class CodeEditor extends Group {
   public execute(command: CodeEditorCommand): void {
     if (command === 'cursor.documentEnd') {
       const end = this.controller.document.text.length;
+      this.controller.revealOffset(end);
       this.controller.document.setSelection({ anchor: end, head: end });
       this.#finishSelectionChange();
       return;
@@ -658,6 +659,7 @@ export class CodeEditor extends Group {
     const document = this.controller.document;
     const selection = document.selection;
     const head = edge === 'start' ? 0 : document.text.length;
+    this.controller.revealOffset(head);
     document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
     this.#finishSelectionChange();
   }

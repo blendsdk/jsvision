@@ -1,4 +1,5 @@
 import { resolveCapabilities } from '@jsvision/core';
+import { Commands, type DispatchEvent } from '@jsvision/ui';
 import { describe, expect, it } from 'vitest';
 
 import { createCodeEditorController } from '../controller.js';
@@ -32,6 +33,14 @@ function result(
 function wholeFold(controller: ReturnType<typeof createCodeEditorController>): FoldRange {
   const snapshot = controller.document.snapshot;
   return { from: Number(snapshot.line(0).from), to: Number(snapshot.line(snapshot.lineCount - 2).to) };
+}
+
+/** Creates a direct application command envelope for editor command-route coverage. */
+function commandEvent(command: string): DispatchEvent {
+  return {
+    event: { type: 'command', command },
+    handled: false,
+  };
 }
 
 describe('fold reconciliation', () => {
@@ -114,8 +123,11 @@ describe('fold reconciliation', () => {
     });
 
     expect(controller.foldableRegions).toEqual([{ from: 0, to: 2 }]);
+    const hidden = document.text.indexOf('return');
+    document.setSelection({ anchor: hidden, head: hidden });
     controller.folds = [{ from: 0, to: 2 }];
     expect(controller.folds).toEqual([{ from: 0, to: 2 }]);
+    expect(document.selection).toMatchObject({ anchor: 0, head: 0 });
     controller.folds = [{ from: 1, to: 2 }];
     expect(controller.folds).toEqual([]);
   });
@@ -189,5 +201,57 @@ describe('folded viewport limits', () => {
     controller.foldAll();
     editor.routeKey({ key: 'ArrowRight', ctrl: true });
     expect(controller.folds).toEqual([]);
+  });
+
+  it('unfolds every containing region before nested hidden source becomes reachable', () => {
+    const document = createDocumentModel({
+      text: 'outer {\n  inner {\n    hidden target;\n  }\n}\ntail',
+      languageId: 'typescript',
+    });
+    const controller = createCodeEditorController({ document });
+    const editor = new CodeEditor({ controller });
+    controller.setLanguageResult(
+      result(controller, [
+        { from: Number(document.snapshot.line(0).from), to: Number(document.snapshot.line(4).to) },
+        { from: Number(document.snapshot.line(1).from), to: Number(document.snapshot.line(3).to) },
+      ]),
+    );
+    controller.foldAll();
+
+    editor.setSearchQuery('target');
+    editor.execute('search.next');
+
+    expect(controller.folds).toEqual([]);
+    expect(document.snapshot.slice(Number(document.selection.anchor), Number(document.selection.head))).toBe('target');
+  });
+
+  it('unfolds command and document-end targets before selecting hidden source', () => {
+    const document = createDocumentModel({
+      text: 'header {\n  hidden;\n}',
+      languageId: 'typescript',
+    });
+    const controller = createCodeEditorController({ document });
+    const editor = new CodeEditor({ controller });
+    controller.setLanguageResult(result(controller, [wholeFold(controller)]));
+
+    controller.foldAll();
+    const selectAll = commandEvent(Commands.selectAll);
+    editor.onEvent(selectAll);
+    expect(selectAll.handled).toBe(true);
+    expect(controller.folds).toEqual([]);
+    expect(document.selection).toMatchObject({ anchor: 0, head: document.text.length });
+
+    controller.setLanguageResult(
+      result(controller, [
+        {
+          from: Number(document.snapshot.line(0).from),
+          to: Number(document.snapshot.line(document.snapshot.lineCount - 1).to),
+        },
+      ]),
+    );
+    controller.foldAll();
+    editor.execute('cursor.documentEnd');
+    expect(controller.folds).toEqual([]);
+    expect(document.selection).toMatchObject({ anchor: document.text.length, head: document.text.length });
   });
 });

@@ -12,6 +12,13 @@ import {
   type CodeEditorObservabilityChannel,
   type CodeEditorObservabilityOptions,
 } from './observability.js';
+import {
+  buildCollapsedHierarchy,
+  collapsedHeadersContaining,
+  type CollapsedFoldNode,
+  type FoldableRegion,
+  validateFoldableRegions,
+} from './fold-regions.js';
 
 /** Host-owned effects raised by keyboard commands that leave the editor boundary. */
 export type CodeEditorControllerHostEffect =
@@ -75,6 +82,7 @@ export class CodeEditorController {
   #foldableByLine: ReadonlyMap<number, FoldableRegion> = new Map();
   #collapsedFoldKeys: ReadonlySet<string> = new Set();
   #collapsedRegionLines: readonly { readonly from: number; readonly to: number }[] = Object.freeze([]);
+  #collapsedRoots: readonly CollapsedFoldNode[] = Object.freeze([]);
   #reconciliationSourceRevision: number | undefined;
   #reconciliationTargetRevision: number | undefined;
   #invalidatedFoldKeys: ReadonlySet<string> = new Set();
@@ -211,6 +219,12 @@ export class CodeEditorController {
       )
         keys.add(region.key);
     }
+    this.#relocateSelectionForCollapse(
+      [...keys].flatMap((key) => {
+        const region = this.#foldableByKey.get(key);
+        return region === undefined ? [] : [region];
+      }),
+    );
     this.#collapsedFoldKeys = keys;
     this.#refreshCollapsedRegionLines();
   }
@@ -237,6 +251,7 @@ export class CodeEditorController {
         this.#foldableByLine = new Map();
         this.#collapsedFoldKeys = new Set();
         this.#collapsedRegionLines = Object.freeze([]);
+        this.#collapsedRoots = Object.freeze([]);
       } else {
         const regions = validateFoldableRegions(this.document, result.folds, this.limits.folds, result.adapterId);
         const priorRevision = Number(this.#languageResult?.identity.revision ?? result.identity.revision);
@@ -432,6 +447,7 @@ export class CodeEditorController {
     if (this.#disposed) return;
     this.#collapsedFoldKeys = new Set();
     this.#collapsedRegionLines = Object.freeze([]);
+    this.#collapsedRoots = Object.freeze([]);
   }
 
   /** Toggles the structural region at the active line. */
@@ -476,9 +492,15 @@ export class CodeEditorController {
   public revealOffset(offset: number): boolean {
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > this.document.snapshot.length) return false;
     const line = Number(offsetToPosition(this.document.snapshot, offset).line);
-    const containing = this.folds.find((region) => line > region.from && line <= region.to);
-    if (containing === undefined) return false;
-    this.unfoldLine(containing.from);
+    const headers = collapsedHeadersContaining(this.#collapsedRoots, line);
+    if (headers.length === 0) return false;
+    const next = new Set(this.#collapsedFoldKeys);
+    for (const header of headers) {
+      const region = this.#foldableByLine.get(header);
+      if (region !== undefined) next.delete(region.key);
+    }
+    this.#collapsedFoldKeys = next;
+    this.#refreshCollapsedRegionLines();
     return true;
   }
 
@@ -492,6 +514,7 @@ export class CodeEditorController {
     this.#foldableByLine = new Map();
     this.#collapsedFoldKeys = new Set();
     this.#collapsedRegionLines = Object.freeze([]);
+    this.#collapsedRoots = Object.freeze([]);
     this.#languageResult = undefined;
     this.document.releaseRetainedResources();
     this.degradation.dispose();
@@ -523,6 +546,7 @@ export class CodeEditorController {
     this.#collapsedRegionLines = Object.freeze(
       collapsed.sort((left, right) => left.from - right.from || right.to - left.to),
     );
+    this.#collapsedRoots = buildCollapsedHierarchy(this.#collapsedRegionLines);
   }
 
   #touchedFoldKeys(edits: readonly DocumentEditInput[]): ReadonlySet<string> {
@@ -541,91 +565,6 @@ export class CodeEditorController {
     }
     return touched;
   }
-}
-
-interface FoldableRegion {
-  readonly sourceFrom: number;
-  readonly sourceTo: number;
-  readonly from: number;
-  readonly to: number;
-  readonly key: string;
-}
-
-function validateFoldableRegions(
-  document: CodeEditorDocumentModel,
-  ranges: LocalLanguageResult['folds'],
-  limit: number,
-  adapterId: string,
-): readonly FoldableRegion[] {
-  const snapshot = document.snapshot;
-  const candidates: Omit<FoldableRegion, 'key'>[] = [];
-  const seen = new Set<string>();
-  const inspectionLimit = Math.min(ranges.length, Math.max(limit, Math.min(limit * 4, 200_000)));
-  for (let index = 0; index < inspectionLimit; index += 1) {
-    const range = ranges[index];
-    if (range === undefined) continue;
-    if (candidates.length >= limit) break;
-    if (
-      !Number.isSafeInteger(range.from) ||
-      !Number.isSafeInteger(range.to) ||
-      range.from < 0 ||
-      range.to <= range.from ||
-      range.to > snapshot.length
-    )
-      continue;
-    const from = Number(offsetToPosition(snapshot, range.from).line);
-    const to = Number(offsetToPosition(snapshot, Math.max(range.from, range.to - 1)).line);
-    if (to <= from) continue;
-    const identity = `${range.from}:${range.to}`;
-    if (seen.has(identity)) continue;
-    seen.add(identity);
-    candidates.push({ sourceFrom: range.from, sourceTo: range.to, from, to });
-  }
-  candidates.sort((left, right) => left.from - right.from || right.to - left.to);
-  const nested: Omit<FoldableRegion, 'key'>[] = [];
-  const parents: Omit<FoldableRegion, 'key'>[] = [];
-  const claimedHeaders = new Set<number>();
-  for (const candidate of candidates) {
-    while (parents.length > 0 && candidate.from > (parents.at(-1)?.to ?? -1)) parents.pop();
-    const parent = parents.at(-1);
-    if (parent !== undefined && candidate.to > parent.to) continue;
-    if (claimedHeaders.has(candidate.from)) continue;
-    claimedHeaders.add(candidate.from);
-    nested.push(candidate);
-    parents.push(candidate);
-  }
-  const keyed: FoldableRegion[] = [];
-  const path: FoldableRegion[] = [];
-  for (const region of nested) {
-    while (path.length > 0 && region.from > (path.at(-1)?.to ?? -1)) path.pop();
-    const header = snapshot.line(region.from).text.trim();
-    const parentKey = path.at(-1)?.key ?? stableFoldDigest(adapterId);
-    const key = stableFoldDigest(`${parentKey}\u0000${header}`);
-    const candidate = Object.freeze({ ...region, key });
-    keyed.push(candidate);
-    path.push(candidate);
-  }
-  const keyCounts = new Map<string, number>();
-  for (const region of keyed) keyCounts.set(region.key, (keyCounts.get(region.key) ?? 0) + 1);
-  return Object.freeze(keyed.filter((region) => keyCounts.get(region.key) === 1));
-}
-
-/**
- * Produces a fixed-size structural identity component without retaining complete ancestor paths.
- *
- * Two independent 32-bit streams make accidental collisions unlikely. Duplicate final identities
- * are still rejected as ambiguous before reconciliation, so a collision expands source rather
- * than choosing between multiple candidate folds.
- */
-function stableFoldDigest(value: string): string {
-  let first = 0x811c9dc5;
-  let second = 0x9e3779b9;
-  for (let index = 0; index < value.length; index += 1) {
-    const code = value.charCodeAt(index);
-    first = Math.imul(first ^ code, 0x01000193);
-    second = Math.imul(second ^ code, 0x85ebca6b);
-  }
-  return `${(first >>> 0).toString(16).padStart(8, '0')}${(second >>> 0).toString(16).padStart(8, '0')}`;
 }
 
 function toProtocolPosition(document: CodeEditorDocumentModel): { readonly line: number; readonly character: number } {
