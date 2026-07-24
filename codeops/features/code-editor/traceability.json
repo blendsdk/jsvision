@@ -54,6 +54,7 @@
         "summary:Phase 1 completed without changing the approved product scope; execution snapshots were refreshed for the verified architecture phase.",
         "summary:Phase 1 passed its corrected quality loop and final validation snapshot refresh.",
         "summary:Phase 3 semantic snapshot refreshed after verified implementation and quality correction; plan scope and acceptance criteria remain unchanged.",
+        "summary:Phase 4 semantic snapshot refreshed after verified LSP implementation and quality correction; approved scope remains unchanged.",
         "summary:The user authorized creation of the integrated Code Editor plan with auto-design, and all plan ambiguities and quality gates are resolved."
       ],
       "id": "PLAN-CODE-EDITOR",
@@ -84,13 +85,6 @@
           "relation": "implemented-by",
           "revision": "sha256:7c9993cbdf0860d6745ce915db39a50d9984abbf12d8800966211a171ec4d6d5",
           "upstream": "code-editor/TASK-PHASE-2",
-          "validatedAt": "2026-07-23T22:22:05Z"
-        },
-        {
-          "gate": "execution",
-          "relation": "implemented-by",
-          "revision": "sha256:898bb6580bfaa66ff0307ee557e94e65d4b3dfdd59c32e9e2d964bcf86d6f9b6",
-          "upstream": "code-editor/TASK-PHASE-4",
           "validatedAt": "2026-07-23T22:22:05Z"
         },
         {
@@ -141,6 +135,13 @@
           "revision": "sha256:72065fa214fcf2a57c29ad466ab3e10486049c7a922db3977a199eefdf0eb577",
           "upstream": "code-editor/TASK-PHASE-3",
           "validatedAt": "2026-07-24T11:59:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:e58b6a94fda04af9c531daffbb82c8b4d66de5d3fffeb02cf2c9239486665eb9",
+          "upstream": "code-editor/TASK-PHASE-4",
+          "validatedAt": "2026-07-24T13:01:00Z"
         }
       ]
     },
@@ -198,7 +199,7 @@
         "summary:All 28 plan ambiguities are resolved under user authority or the active auto-design delegation."
       ],
       "id": "AMB-PLAN",
-      "revision": "sha256:998f277c4656598cc70da270dba10394aec8a5598975a9abc5a9d17cff9cbc9d",
+      "revision": "sha256:8d69f9e5b9e331b03135b400c3faeead3aa7318d8237590bad3b9291e51c9696",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -317,8 +318,15 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "qualityReview:Correctness, security, and performance review findings were fixed without waiver; the single re-review rejection was closed through parent correction and verification with no third review.",
+        "summary:Implemented the transport-neutral LSP coordinator, bounded assistance controllers, host effects, and optional Node stdio adapter.",
+        "summary:Implemented transport-neutral LSP intelligence, bounded assistance and host effects, and the optional finite Node stdio adapter.",
+        "verificationEvidence:The package passes 112 tests and the full repository verification gate passes 34 of 34 tasks.",
+        "verificationEvidence:The package passes 121 specification, implementation, security, race, and inert-process tests; yarn verify passes 34 of 34 tasks and plugin integrity."
+      ],
       "id": "TASK-PHASE-4",
-      "revision": "sha256:898bb6580bfaa66ff0307ee557e94e65d4b3dfdd59c32e9e2d964bcf86d6f9b6",
+      "revision": "sha256:e58b6a94fda04af9c531daffbb82c8b4d66de5d3fffeb02cf2c9239486665eb9",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -330,7 +338,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "LSP intelligence",
       "type": "task",
       "validations": []

@@ -65,3 +65,16 @@ export type {
   SyntaxCategory,
   SyntaxSpan,
 } from './languages/contracts.js';
+export { CodeEditorLspCoordinator, createCodeEditorLspCoordinator } from './lsp/coordinator.js';
+export { createInProcessLspSession, InProcessLspSession } from './lsp/session.js';
+export type { CodeEditorLspSession, CodeEditorLspSessionState } from './lsp/session.js';
+export type {
+  CodeEditorHostEffect,
+  CodeEditorLspCapabilities,
+  CodeEditorLspOperation,
+  CodeEditorLspPresentation,
+  CreateCodeEditorLspCoordinatorOptions,
+  LspServiceState,
+  ProtocolPosition,
+  ProtocolRange,
+} from './lsp/types.js';

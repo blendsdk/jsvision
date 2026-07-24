@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-24 13:59
-> **Progress**: 27/61 tasks (44%)
+> **Last Updated**: 2026-07-24 15:01
+> **Progress**: 35/61 tasks (57%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -88,16 +88,17 @@ the user authorizes any synchronization; execution then revalidates paths and de
 
 ## Phase 4: LSP intelligence
 
-> **Phase baseline tree**: _(recorded by exec-plan)_
+> **Phase baseline tree**: 2d1352b60d6fd190f0b57f65ba41877964f975dc
+> **Expected modification set**: `packages/code-editor/src/lsp/`, `packages/code-editor/src/node/`, `packages/code-editor/src/index.ts`, `packages/code-editor/package.json`, lockfile if dependencies change, and CodeOps execution/quality/traceability artifacts.
 
-- [ ] 4.1.1 [spec-author] Write ST-19–ST-31 specification tests — `packages/code-editor/src/lsp/lsp.spec.test.ts`
-- [ ] 4.1.2 Run LSP specifications and record the expected red result — ST-19–ST-31
-- [ ] 4.2.1 Implement session contract, protocol DTO validation, lifecycle/sync coordinator, capabilities, timeouts, and races — `packages/code-editor/src/lsp/session.ts`, `packages/code-editor/src/lsp/validation.ts`, `packages/code-editor/src/lsp/coordinator.ts`
-- [ ] 4.2.2 Implement completion/snippets, hover/signatures, diagnostics, and safe Markdown — `packages/code-editor/src/lsp/completion.ts`, `packages/code-editor/src/lsp/hover.ts`, `packages/code-editor/src/lsp/diagnostics.ts`
-- [ ] 4.2.3 Implement navigation/symbols, formatting/save flow, host effects, and optional Node adapter — `packages/code-editor/src/lsp/navigation.ts`, `packages/code-editor/src/lsp/formatting.ts`, `packages/code-editor/src/node/session-adapter.ts`
-- [ ] 4.2.4 Run ST-19–ST-31 green; fix implementation only
-- [ ] 4.3.1 Add shared-session races, protocol/snippet/Markdown fuzz, flood, and inert-process implementation tests — `packages/code-editor/src/lsp/lsp.impl.test.ts`, `packages/code-editor/src/node/session-adapter.impl.test.ts`
-- [ ] 4.3.2 Run focused LSP/Node tests and `yarn verify`
+- [x] 4.1.1 [spec-author] Write ST-19–ST-31 specification tests — `packages/code-editor/src/lsp/lsp.spec.test.ts` ✅ (completed: 2026-07-24 14:20)
+- [x] 4.1.2 Run LSP specifications and record the expected red result — ST-19–ST-31 ✅ expected red: LSP public module absent; 1 suite failed before collection (completed: 2026-07-24 14:20)
+- [x] 4.2.1 Implement session contract, protocol DTO validation, lifecycle/sync coordinator, capabilities, timeouts, and races — `packages/code-editor/src/lsp/session.ts`, `packages/code-editor/src/lsp/validation.ts`, `packages/code-editor/src/lsp/coordinator.ts` ✅ (completed: 2026-07-24 14:32)
+- [x] 4.2.2 Implement completion/snippets, hover/signatures, diagnostics, and safe Markdown — `packages/code-editor/src/lsp/completion.ts`, `packages/code-editor/src/lsp/hover.ts`, `packages/code-editor/src/lsp/diagnostics.ts` ✅ (completed: 2026-07-24 14:32)
+- [x] 4.2.3 Implement navigation/symbols, formatting/save flow, host effects, and optional Node adapter — `packages/code-editor/src/lsp/navigation.ts`, `packages/code-editor/src/lsp/formatting.ts`, `packages/code-editor/src/node/session-adapter.ts` ✅ (completed: 2026-07-24 14:32)
+- [x] 4.2.4 Run ST-19–ST-31 green; fix implementation only ✅ 16 specification tests passing (completed: 2026-07-24 14:32)
+- [x] 4.3.1 Add shared-session races, protocol/snippet/Markdown fuzz, flood, and inert-process implementation tests — `packages/code-editor/src/lsp/lsp.impl.test.ts`, `packages/code-editor/src/node/session-adapter.impl.test.ts` ✅ 14 focused implementation/security/process cases passing (completed: 2026-07-24 14:32)
+- [x] 4.3.2 Run focused LSP/Node tests and `yarn verify` ✅ quality closure: 121 package tests, 34/34 repository tasks, and plugin integrity passing; final parent verification closed the single rejected re-review without waiver (completed: 2026-07-24 15:01)
 
 **Verify**: `yarn workspace @jsvision/code-editor test && yarn verify`
 

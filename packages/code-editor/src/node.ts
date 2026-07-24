@@ -18,3 +18,6 @@ export interface CodeEditorNodeRuntime {
 export function createCodeEditorNodeRuntime(): CodeEditorNodeRuntime {
   return { runtime: 'node' };
 }
+
+export { CodeEditorNodeSession, createCodeEditorNodeSession } from './node/session-adapter.js';
+export type { CodeEditorNodeSessionOptions } from './node/session-adapter.js';
