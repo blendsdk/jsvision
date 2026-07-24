@@ -71,4 +71,33 @@ describe('folded viewport performance', () => {
     expect(performance.now() - startedAt).toBeLessThanOrEqual(100);
     expect(controller.foldableRegions).toHaveLength(depth);
   });
+
+  it('finds a visible target through many collapsed siblings within one frame budget', () => {
+    const regionCount = 50_000;
+    const text = Array.from({ length: regionCount }, (_, index) => `block_${index} {\n  value;\n}`).join('\n');
+    const document = createDocumentModel({ text: `${text}\ntail`, languageId: 'typescript' });
+    const controller = createCodeEditorController({ document });
+    controller.setLanguageResult({
+      identity: document.identity,
+      adapterId: 'typescript',
+      generation: 1,
+      state: 'ready',
+      syntax: [],
+      brackets: [],
+      folds: Array.from({ length: regionCount }, (_, index) => ({
+        from: Number(document.snapshot.line(index * 3).from),
+        to: Number(document.snapshot.line(index * 3 + 2).to),
+      })),
+    });
+    controller.foldAll();
+    const measure = (): number => {
+      const startedAt = performance.now();
+      expect(controller.revealOffset(document.text.length)).toBe(false);
+      return performance.now() - startedAt;
+    };
+    measure();
+    const samples = Array.from({ length: 5 }, measure);
+
+    expect(p95(samples)).toBeLessThanOrEqual(16);
+  });
 });
