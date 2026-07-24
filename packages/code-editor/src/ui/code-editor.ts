@@ -1,8 +1,9 @@
 import type { CapabilityProfile } from '@jsvision/core';
-import { Group, signal, type DispatchEvent, type DrawContext, type Point, type Signal } from '@jsvision/ui';
+import { Commands, Group, signal, type DispatchEvent, type DrawContext, type Point, type Signal } from '@jsvision/ui';
 import type { CodeEditorController } from '../controller.js';
 import { offsetToPosition } from '../document/positions.js';
 import type { DocumentEditInput, DocumentSelectionInput } from '../document/types.js';
+import { builtInCommentMetadata } from '../languages/metadata.js';
 import { classicCodeEditorTheme } from '../theme/presets.js';
 import { snapshotCodeEditorTheme } from '../theme/resolve.js';
 import type { CodeEditorTheme, ResolvedCodeEditorTheme } from '../theme/theme.js';
@@ -352,6 +353,10 @@ export class CodeEditor extends Group {
 
   /** Bridges decoded terminal keys into the deterministic router. */
   public override onEvent(event: DispatchEvent): void {
+    if (event.event.type === 'command') {
+      event.handled = this.#routeCommandEvent(event);
+      return;
+    }
     if (event.event.type !== 'key') return;
     const key = event.event;
     const result = this.routeKey({
@@ -362,6 +367,34 @@ export class CodeEditor extends Group {
       ...(key.codepoint === undefined ? {} : { text: String.fromCodePoint(key.codepoint) }),
     });
     event.handled = result.handled;
+  }
+
+  #routeCommandEvent(event: DispatchEvent): boolean {
+    if (event.event.type !== 'command') return false;
+    const command = event.event.command;
+    if (command === Commands.selectAll) {
+      this.controller.document.setSelection({ anchor: 0, head: this.controller.document.text.length });
+      this.invalidate();
+      return true;
+    }
+    if (command === Commands.undo || command === Commands.redo) {
+      const result = command === Commands.undo ? this.controller.document.undo() : this.controller.document.redo();
+      this.#finishMutation(result.accepted);
+      return true;
+    }
+    if (command !== Commands.copy && command !== Commands.cut && command !== Commands.paste) return false;
+    if (command === Commands.paste) {
+      const text = event.readClipboard?.() ?? '';
+      if (text.length > 0) this.insertText(text);
+      return true;
+    }
+    const selection = this.controller.document.selection;
+    const from = Math.min(Number(selection.anchor), Number(selection.head));
+    const to = Math.max(Number(selection.anchor), Number(selection.head));
+    if (from === to) return true;
+    event.setClipboard?.(this.controller.document.snapshot.slice(from, to));
+    if (command === Commands.cut) this.insertText('');
+    return true;
   }
 
   #acceptCompletion(item: CodeEditorCompletionItem): void {
@@ -417,6 +450,7 @@ export class CodeEditor extends Group {
       this.#moveToDocumentEdge(key.key === 'Home' ? 'start' : 'end', key.shift === true);
       return 'editor';
     }
+    if (key.key === '/') return this.#toggleLineComments();
     return undefined;
   }
 
@@ -435,11 +469,7 @@ export class CodeEditor extends Group {
   #changeSelectedLineIndent(direction: 'indent' | 'dedent'): boolean {
     const document = this.controller.document;
     const selection = document.selection;
-    const start = Math.min(Number(selection.anchor), Number(selection.head));
-    const end = Math.max(Number(selection.anchor), Number(selection.head));
-    const firstLine = document.snapshot.lineAt(start).number;
-    const lastOffset = end > start && document.snapshot.lineAt(end).from === end ? end - 1 : end;
-    const lastLine = document.snapshot.lineAt(Math.max(start, lastOffset)).number;
+    const { firstLine, lastLine } = this.#selectedLineRange();
     const edits: DocumentEditInput[] = [];
     for (let number = Number(firstLine); number <= Number(lastLine); number += 1) {
       const line = document.snapshot.line(number);
@@ -455,6 +485,44 @@ export class CodeEditor extends Group {
       anchor: transformOffset(Number(selection.anchor), edits),
       head: transformOffset(Number(selection.head), edits),
     });
+  }
+
+  #toggleLineComments(): 'text' | 'editor' {
+    const document = this.controller.document;
+    const comments = builtInCommentMetadata(document.languageId);
+    if (comments?.line === undefined) return 'editor';
+    const { firstLine, lastLine } = this.#selectedLineRange();
+    const lines = [];
+    for (let number = firstLine; number <= lastLine; number += 1) lines.push(document.snapshot.line(number));
+    const nonblank = lines.filter((line) => line.text.trim().length > 0);
+    if (nonblank.length === 0) return 'editor';
+    const minimumIndent = Math.min(...nonblank.map((line) => line.text.length - line.text.trimStart().length));
+    const delimiter = comments.line;
+    const uncomment = nonblank.every((line) => line.text.slice(minimumIndent).startsWith(delimiter));
+    const edits: DocumentEditInput[] = nonblank.map((line) => {
+      const from = line.from + minimumIndent;
+      if (!uncomment) return { range: { from, to: from }, text: `${delimiter} ` };
+      const following = line.text.slice(minimumIndent + delimiter.length);
+      const removeSpace = following.startsWith(' ') ? 1 : 0;
+      return { range: { from, to: from + delimiter.length + removeSpace }, text: '' };
+    });
+    const selection = document.selection;
+    const accepted = this.#applyEdits(edits, {
+      anchor: transformOffset(Number(selection.anchor), edits),
+      head: transformOffset(Number(selection.head), edits),
+    });
+    return accepted ? 'text' : 'editor';
+  }
+
+  #selectedLineRange(): { readonly firstLine: number; readonly lastLine: number } {
+    const document = this.controller.document;
+    const selection = document.selection;
+    const start = Math.min(Number(selection.anchor), Number(selection.head));
+    const end = Math.max(Number(selection.anchor), Number(selection.head));
+    const firstLine = Number(document.snapshot.lineAt(start).number);
+    const lastOffset = end > start && document.snapshot.lineAt(end).from === end ? end - 1 : end;
+    const lastLine = Number(document.snapshot.lineAt(Math.max(start, lastOffset)).number);
+    return { firstLine, lastLine };
   }
 
   #applyEdits(edits: readonly DocumentEditInput[], selection: DocumentSelectionInput): boolean {

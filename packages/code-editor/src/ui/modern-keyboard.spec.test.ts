@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { Group, createEventLoop } from '@jsvision/ui';
+import { resolveCapabilities } from '@jsvision/core';
 
 import { createCodeEditorController } from '../controller.js';
 import { createDocumentModel } from '../document/model.js';
@@ -13,6 +15,21 @@ function createEditor(text: string): {
     document: createDocumentModel({ text, languageId: 'typescript', tabSize: 4 }),
   });
   return { controller, editor: new CodeEditor({ controller }) };
+}
+
+/** Mounts an editor in the real event loop so globalized clipboard commands reach the focused view. */
+function mountEditor(text: string, languageId: 'plain' | 'javascript' | 'typescript' | 'postgresql' = 'typescript') {
+  const controller = createCodeEditorController({
+    document: createDocumentModel({ text, languageId, tabSize: 4 }),
+  });
+  const editor = new CodeEditor({ controller });
+  const root = new Group();
+  root.add(editor);
+  const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+  const loop = createEventLoop({ width: 40, height: 8 }, { caps });
+  loop.mount(root);
+  loop.focusView(editor);
+  return { controller, editor, loop };
 }
 
 describe('modern keyboard editing', () => {
@@ -78,5 +95,52 @@ describe('modern keyboard editing', () => {
       anchor: controller.document.text.length,
       head: 0,
     });
+  });
+});
+
+describe('modern clipboard and language commands', () => {
+  // Clipboard shortcuts use the event loop's shared, terminal-safe clipboard seams.
+  it('copies, cuts, and pastes through global command events', () => {
+    const { controller, loop } = mountEditor('value');
+    loop.dispatch({ type: 'key', key: 'a', ctrl: true, alt: false, shift: false });
+    loop.dispatch({ type: 'key', key: 'c', ctrl: true, alt: false, shift: false });
+    controller.document.setSelection({ anchor: 5, head: 5 });
+    loop.dispatch({ type: 'key', key: 'v', ctrl: true, alt: false, shift: false });
+    expect(controller.document.text).toBe('valuevalue');
+
+    loop.dispatch({ type: 'key', key: 'a', ctrl: true, alt: false, shift: false });
+    loop.dispatch({ type: 'key', key: 'x', ctrl: true, alt: false, shift: false });
+    expect(controller.document.text).toBe('');
+    loop.dispatch({ type: 'key', key: 'v', ctrl: true, alt: false, shift: false });
+    expect(controller.document.text).toBe('valuevalue');
+  });
+
+  // Ctrl+/ uses the active built-in adapter delimiter and changes all selected lines atomically.
+  it('toggles JavaScript and PostgreSQL line comments in one undo step', () => {
+    for (const fixture of [
+      { languageId: 'typescript' as const, delimiter: '//' },
+      { languageId: 'postgresql' as const, delimiter: '--' },
+    ]) {
+      const { controller, editor } = mountEditor('one\ntwo', fixture.languageId);
+      controller.document.setSelection({ anchor: 0, head: 7 });
+
+      expect(editor.routeKey({ key: '/', ctrl: true })).toEqual({ handled: true, owner: 'text' });
+      expect(controller.document.text).toBe(`${fixture.delimiter} one\n${fixture.delimiter} two`);
+      expect(controller.document.undoDepth).toBe(1);
+
+      editor.routeKey({ key: '/', ctrl: true });
+      expect(controller.document.text).toBe('one\ntwo');
+      expect(controller.document.undoDepth).toBe(2);
+    }
+  });
+
+  // Plain text has no line-comment syntax, so the shortcut is safe and mutation-free.
+  it('leaves unsupported plain-text documents unchanged when Ctrl+/ is pressed', () => {
+    const { controller, editor } = mountEditor('plain text', 'plain');
+    controller.document.setSelection({ anchor: 0, head: 10 });
+
+    expect(editor.routeKey({ key: '/', ctrl: true })).toEqual({ handled: true, owner: 'editor' });
+    expect(controller.document.text).toBe('plain text');
+    expect(controller.document.undoDepth).toBe(0);
   });
 });
