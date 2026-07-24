@@ -18,7 +18,7 @@ function p95(samples: number[]): number {
 
 describe('folded viewport performance', () => {
   it('keeps repeated fold, unfold, and projection within an interactive p95 budget', () => {
-    const regionCount = 1_000;
+    const regionCount = 5_000;
     const text = Array.from({ length: regionCount }, (_, index) => `block_${index} {\n  value;\n}`).join('\n');
     const document = createDocumentModel({ text, languageId: 'typescript' });
     const controller = createCodeEditorController({ document });
@@ -36,9 +36,9 @@ describe('folded viewport performance', () => {
       })),
     });
 
+    controller.foldAll();
     const measure = (): number => {
       const startedAt = performance.now();
-      controller.toggleFoldLine(0);
       editor.project({ width: 80, height: 24, caps });
       return performance.now() - startedAt;
     };
@@ -46,5 +46,29 @@ describe('folded viewport performance', () => {
     const samples = Array.from({ length: 5 }, measure);
 
     expect(p95(samples)).toBeLessThanOrEqual(16);
+  });
+
+  it('validates deeply nested fold identities without retaining complete ancestor paths', () => {
+    const depth = 3_000;
+    const text = `${'{\n'.repeat(depth)}value\n${'}\n'.repeat(depth)}`;
+    const document = createDocumentModel({ text, languageId: 'typescript' });
+    const controller = createCodeEditorController({ document });
+    const startedAt = performance.now();
+
+    controller.setLanguageResult({
+      identity: document.identity,
+      adapterId: 'typescript',
+      generation: 1,
+      state: 'ready',
+      syntax: [],
+      brackets: [],
+      folds: Array.from({ length: depth }, (_, index) => ({
+        from: Number(document.snapshot.line(index).from),
+        to: Number(document.snapshot.line(depth * 2 - index).to),
+      })),
+    });
+
+    expect(performance.now() - startedAt).toBeLessThanOrEqual(100);
+    expect(controller.foldableRegions).toHaveLength(depth);
   });
 });

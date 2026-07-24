@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { resolveCapabilities } from '@jsvision/core';
 
 import * as scenarioModule from './scenarios.js';
 
@@ -10,6 +11,12 @@ interface CapabilityEntry {
   readonly status: CapabilityStatus;
   readonly scenarioIds: readonly string[];
   readonly reason?: string;
+  readonly evidence?: {
+    readonly scenarioId: string;
+    readonly interaction: 'scenario-selection' | 'action' | 'native-window';
+    readonly action?: string;
+    readonly observable: string;
+  };
 }
 
 /** Capabilities whose distinct behavior must remain discoverable in the standalone showcase. */
@@ -42,12 +49,9 @@ const REQUIRED_INTERACTIVE_CAPABILITIES = Object.freeze([
   'host.authorization',
   'theme.hybrid',
   'terminal.unicode',
-  'terminal.ascii',
-  'terminal.monochrome',
   'terminal.hostile-text',
   'document.full-tier',
   'document.large-tier',
-  'document.confirmation-tier',
 ] as const);
 
 /** Reads the optional inventory export without making its absence a module-loading failure. */
@@ -66,6 +70,7 @@ function isCapabilityEntry(value: unknown): value is CapabilityEntry {
   const title = Object.getOwnPropertyDescriptor(value, 'title');
   const status = Object.getOwnPropertyDescriptor(value, 'status');
   const scenarioIds = Object.getOwnPropertyDescriptor(value, 'scenarioIds');
+  const evidence = Object.getOwnPropertyDescriptor(value, 'evidence');
   return (
     id !== undefined &&
     'value' in id &&
@@ -79,7 +84,8 @@ function isCapabilityEntry(value: unknown): value is CapabilityEntry {
     scenarioIds !== undefined &&
     'value' in scenarioIds &&
     Array.isArray(scenarioIds.value) &&
-    scenarioIds.value.every((item: unknown) => typeof item === 'string')
+    scenarioIds.value.every((item: unknown) => typeof item === 'string') &&
+    (evidence === undefined || ('value' in evidence && typeof evidence.value === 'object'))
   );
 }
 
@@ -109,6 +115,13 @@ describe('Code Editor capability inventory', () => {
         for (const scenarioId of entry.scenarioIds) {
           expect(scenarioIds.has(scenarioId), `${entry.id} points to missing scenario "${scenarioId}"`).toBe(true);
         }
+        expect(entry.evidence, `${entry.id} requires observable evidence`).toBeDefined();
+        if (entry.evidence?.interaction === 'action') {
+          const scenario = scenarioModule.CODE_EDITOR_SCENARIOS.find(
+            (candidate) => candidate.id === entry.evidence?.scenarioId,
+          );
+          expect(scenario?.actions, `${entry.id} action is not reachable`).toContain(entry.evidence.action);
+        }
       } else {
         expect(entry.scenarioIds, `${entry.id} must not claim an interactive scenario`).toEqual([]);
         expect(entry.reason?.trim(), `${entry.id} requires an honest coverage reason`).not.toBe('');
@@ -123,5 +136,37 @@ describe('Code Editor capability inventory', () => {
     expect(direct?.mount).toBeTypeOf('function');
     expect(folding?.actions).toContain('fold');
     expect(folding?.description.toLowerCase()).toContain('fold');
+  });
+
+  test('switches the live language and proves PostgreSQL fold round-tripping', async () => {
+    const context = {
+      capabilities: resolveCapabilities({ env: {}, platform: 'linux' }).profile,
+      width: 60,
+      height: 12,
+    };
+    const languageScenario = scenarioModule.CODE_EDITOR_SCENARIOS.find(
+      (scenario) => scenario.id === 'language-gallery',
+    );
+    const postgresScenario = scenarioModule.CODE_EDITOR_SCENARIOS.find(
+      (scenario) => scenario.id === 'postgresql-folding',
+    );
+    expect(languageScenario).toBeDefined();
+    expect(postgresScenario).toBeDefined();
+    if (languageScenario === undefined || postgresScenario === undefined) return;
+
+    const languageSurface = languageScenario.mount(context);
+    const languageEditor = 'editor' in languageSurface ? languageSurface.editor : languageSurface;
+    expect(languageEditor.controller.publicState.language).toBe('postgresql');
+    await scenarioModule.runCodeEditorScenarioAction(languageSurface, 'language');
+    expect(languageEditor.controller.publicState.language).toBe('javascript');
+
+    const postgresSurface = postgresScenario.mount(context);
+    const postgresEditor = 'editor' in postgresSurface ? postgresSurface.editor : postgresSurface;
+    const original = postgresEditor.controller.document.text;
+    await scenarioModule.runCodeEditorScenarioAction(postgresSurface, 'fold');
+    expect(postgresEditor.controller.folds.length).toBeGreaterThan(0);
+    await scenarioModule.runCodeEditorScenarioAction(postgresSurface, 'fold');
+    expect(postgresEditor.controller.folds).toEqual([]);
+    expect(postgresEditor.controller.document.text).toBe(original);
   });
 });

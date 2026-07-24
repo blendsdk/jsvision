@@ -2,7 +2,7 @@
 
 > **Type**: Task (lightweight) · **Feature**: code-editor · **CodeOps Artifact Schema**: 1
 > **Progress**: 9/10 tasks (90%)
-> **Last Updated**: 2026-07-24 21:52
+> **Last Updated**: 2026-07-24 22:13
 > **Phase baseline tree**: 969b1a6a58cb8357a903ce3d1cd54a4d451aa466
 
 ## Objective
@@ -159,3 +159,32 @@ claims with an honest capability-level inventory backed by interactive scenarios
 - **Green phase (2026-07-24 21:52)**: New focused Code Editor specifications, implementation, and
   performance tests pass 13/13; focused showcase specifications pass 34/34; the serial
   authoritative repository gate passes 34/34 tasks with plugin integrity green.
+
+## Quality review
+
+Auto-design selected correction rather than waiver for every Major finding:
+
+- **RV-001 / RV-A11Y-001 — resolved**: Horizontal, word, deletion, select-all, and search targets
+  now expand a containing fold before hidden source becomes reachable.
+- **RV-A11Y-002 — resolved**: Every keyboard/menu fold command immediately synchronizes viewport
+  limits, caret state, and repaint invalidation through the same path as gutter activation.
+- **RV-002 — resolved**: One tracked unrelated edit may preserve an unambiguous fold; a body/header
+  intersection, repeated pre-analysis edit, undo/redo, or untracked revision expands safely.
+- **RV-003 — resolved**: Validation applies one deterministic outermost fold per header line.
+- **RV-004 — resolved**: Constructor-provided language results pass through the same hostile-range
+  validation and fold-index construction as scheduled results.
+- **RV-005 — resolved**: The writable `folds` compatibility setter remains available but accepts
+  only exact parser-validated regions; explicit commands remain the preferred boundary.
+- **RV-006 / RV-A11Y-003 / RV-A11Y-004 — resolved**: Inventory entries carry scenario evidence;
+  language switching is a real action, non-switchable host profiles and compact confirmation
+  classification are automated-only, and dedicated PostgreSQL folding proves byte-identical
+  collapse/unfold behavior.
+- **PE-001 / PE-002 — resolved**: A controller/version keyed visible-row index is retained across
+  projection, viewport, navigation, and mouse consumers; binary prefix mapping replaces linear
+  fold scans and visible-width work is cached per fold state.
+- **PE-003 — resolved**: Fixed-size rolling structural digests replace serialized ancestor paths,
+  while ambiguous duplicate identities remain rejected.
+
+**Correction verification (2026-07-24 22:13)**: Focused Code Editor tests pass 19/19, focused
+showcase tests pass 35/35, a 5,000-region fold-all projection and 3,000-level identity fixture meet
+their budgets, and `TURBO_CONCURRENCY=1 yarn verify` passes 34/34 tasks with plugin integrity green.

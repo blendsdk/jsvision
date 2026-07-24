@@ -43,6 +43,12 @@ export interface CodeEditorCapabilityInventoryEntry {
   readonly status: CodeEditorCapabilityStatus;
   readonly scenarioIds: readonly string[];
   readonly reason?: string;
+  readonly evidence?: {
+    readonly scenarioId: string;
+    readonly interaction: 'scenario-selection' | 'action' | 'native-window';
+    readonly action?: CodeEditorDemoAction;
+    readonly observable: string;
+  };
 }
 
 /** Immutable source data used to restore a scenario without touching the filesystem. */
@@ -72,7 +78,8 @@ export interface CodeEditorDemoScenario {
 }
 
 /** Interactive actions the live shell can apply to the active scenario. */
-export type CodeEditorDemoAction = 'edit' | 'search' | 'fold' | 'completion' | 'format' | 'save' | 'navigate' | 'theme';
+export type CodeEditorDemoAction =
+  'edit' | 'search' | 'fold' | 'completion' | 'format' | 'save' | 'navigate' | 'theme' | 'language';
 
 /** Content-free live state exposed by the showcase inspector. */
 export interface CodeEditorDemoInspection {
@@ -84,6 +91,10 @@ export interface CodeEditorDemoInspection {
 
 const liveInspections = new WeakMap<CodeEditor | CodeEditorWindow, CodeEditorDemoInspection>();
 const liveReadiness = new WeakMap<CodeEditor | CodeEditorWindow, Promise<void>>();
+const liveCustomActions = new WeakMap<
+  CodeEditor | CodeEditorWindow,
+  ReadonlyMap<CodeEditorDemoAction, () => Promise<void>>
+>();
 
 /** Observable results produced by exercising a real scenario journey. */
 export interface CodeEditorDemoJourneyEvidence {
@@ -141,8 +152,14 @@ export const CODE_EDITOR_CAPABILITY_INVENTORY: readonly CodeEditorCapabilityInve
   interactive('language.plain-text', 'Plain text source', 'language-gallery'),
   interactive('language.syntax-highlighting', 'Parser-backed syntax highlighting', 'language-gallery'),
   interactive('language.brackets', 'Bracket matching', 'structural-folding'),
-  interactive('language.folding', 'Structural code folding', 'structural-folding'),
-  interactive('language.switching', 'Language adapter switching', 'language-gallery'),
+  interactive('language.folding', 'Structural code folding', 'structural-folding', 'postgresql-folding'),
+  interactiveAction(
+    'language.switching',
+    'Language adapter switching',
+    'language-gallery',
+    'language',
+    'publicState.language',
+  ),
   interactive('lsp.completion', 'Completion assistance', 'language-intelligence'),
   interactive('lsp.diagnostics', 'Diagnostics', 'language-intelligence'),
   interactive('lsp.navigation', 'Authorized definition navigation', 'language-intelligence'),
@@ -150,12 +167,24 @@ export const CODE_EDITOR_CAPABILITY_INVENTORY: readonly CodeEditorCapabilityInve
   interactive('host.authorization', 'Host-authorized effects', 'language-intelligence'),
   interactive('theme.hybrid', 'Independent editor themes', 'themes-and-fallbacks'),
   interactive('terminal.unicode', 'Unicode terminal profile', 'themes-and-fallbacks'),
-  interactive('terminal.ascii', 'ASCII glyph fallback', 'themes-and-fallbacks'),
-  interactive('terminal.monochrome', 'Monochrome non-color cues', 'themes-and-fallbacks'),
   interactive('terminal.hostile-text', 'Hostile terminal text sanitization', 'safe-terminal-text'),
   interactive('document.full-tier', 'Full document tier', 'full-document-tier'),
   interactive('document.large-tier', 'Large degradable document tier', 'large-document-tier'),
-  interactive('document.confirmation-tier', 'Confirmation-required document tier', 'confirmation-document-tier'),
+  automatedOnly(
+    'terminal.ascii',
+    'ASCII glyph fallback',
+    'The active terminal profile is host-owned; deterministic profile-matrix tests verify the ASCII presentation.',
+  ),
+  automatedOnly(
+    'terminal.monochrome',
+    'Monochrome non-color cues',
+    'The active terminal profile is host-owned; deterministic profile-matrix tests verify non-color cues.',
+  ),
+  automatedOnly(
+    'document.confirmation-tier',
+    'Confirmation-required document tier',
+    'The live fixture stays compact to avoid allocating a ten-MiB payload; classification is exercised by automated tests.',
+  ),
   automatedOnly(
     'lsp.external-process',
     'External language-server process transport',
@@ -179,7 +208,34 @@ export const CODE_EDITOR_CAPABILITY_INVENTORY: readonly CodeEditorCapabilityInve
 ]);
 
 function interactive(id: string, title: string, ...scenarioIds: string[]): CodeEditorCapabilityInventoryEntry {
-  return Object.freeze({ id, title, status: 'interactive', scenarioIds: Object.freeze(scenarioIds) });
+  const scenarioId = scenarioIds[0] ?? '';
+  return Object.freeze({
+    id,
+    title,
+    status: 'interactive',
+    scenarioIds: Object.freeze(scenarioIds),
+    evidence: Object.freeze({
+      scenarioId,
+      interaction: 'scenario-selection',
+      observable: `scenario:${scenarioId}`,
+    }),
+  });
+}
+
+function interactiveAction(
+  id: string,
+  title: string,
+  scenarioId: string,
+  action: CodeEditorDemoAction,
+  observable: string,
+): CodeEditorCapabilityInventoryEntry {
+  return Object.freeze({
+    id,
+    title,
+    status: 'interactive',
+    scenarioIds: Object.freeze([scenarioId]),
+    evidence: Object.freeze({ scenarioId, interaction: 'action', action, observable }),
+  });
 }
 
 function automatedOnly(id: string, title: string, reason: string): CodeEditorCapabilityInventoryEntry {
@@ -256,12 +312,6 @@ function scenario(
           return true;
         },
       });
-      const adapter =
-        fixtureValue.languageId === 'postgresql'
-          ? postgresqlLanguageAdapter
-          : fixtureValue.languageId === 'javascript'
-            ? javascriptLanguageAdapter
-            : typescriptLanguageAdapter;
       const scheduler = createLanguageScheduler();
       const analyzeCurrentDocument = (): Promise<void> => {
         if (
@@ -269,9 +319,16 @@ function scenario(
           metadata.id !== 'typescript-window' &&
           metadata.id !== 'line-number-gutter' &&
           metadata.id !== 'themes-and-fallbacks' &&
-          metadata.id !== 'structural-folding'
+          metadata.id !== 'structural-folding' &&
+          metadata.id !== 'postgresql-folding'
         )
           return Promise.resolve();
+        const adapter = adapterFor(document.languageId);
+        if (adapter === undefined) {
+          controller.setLanguageResult(undefined);
+          editor.invalidate();
+          return Promise.resolve();
+        }
         return scheduler.analyze(adapter, document.text, document.identity).then((result) => {
           controller.setLanguageResult(result);
           editor.invalidate();
@@ -305,12 +362,16 @@ function scenario(
         metadata.id === 'typescript-window' ||
         metadata.id === 'line-number-gutter' ||
         metadata.id === 'themes-and-fallbacks' ||
-        metadata.id === 'structural-folding'
+        metadata.id === 'structural-folding' ||
+        metadata.id === 'postgresql-folding'
       ) {
         configuredFeatures.push('syntax', 'folds', 'brackets', 'language-switching');
       }
       if (metadata.id === 'structural-folding') {
         configuredFeatures.push('syntax', 'folds', 'brackets', 'fold-markers', 'visible-row-navigation');
+      }
+      if (metadata.id === 'postgresql-folding') {
+        configuredFeatures.push('syntax', 'folds', 'brackets', 'fold-markers', 'postgresql-structure');
       }
       if (session !== undefined && coordinator !== undefined) {
         void coordinator.open().then(() => {
@@ -351,6 +412,31 @@ function scenario(
           actions: actionsFor(metadata.id),
         }),
       );
+      const customActions = new Map<CodeEditorDemoAction, () => Promise<void>>();
+      if (metadata.id === 'language-gallery') {
+        const languages = [
+          { languageId: 'postgresql' as const, text: 'SELECT id\nFROM users;' },
+          { languageId: 'javascript' as const, text: 'export const value = 1;' },
+          { languageId: 'typescript' as const, text: 'export const value: number = 1;' },
+          { languageId: 'plain' as const, text: 'plain terminal text' },
+        ];
+        let languageIndex = 0;
+        customActions.set('language', async () => {
+          languageIndex = (languageIndex + 1) % languages.length;
+          const next = languages[languageIndex];
+          if (next === undefined) return;
+          document.replaceDocument({
+            text: next.text,
+            languageId: next.languageId,
+            uri: `memory://code-editor-demo/${metadata.id}`,
+            confirmLargeDocument: () => true,
+          });
+          await analyzeCurrentDocument();
+          editor.resizeViewport(context.width, context.height);
+          editor.invalidate();
+        });
+      }
+      liveCustomActions.set(surface, customActions);
       liveReadiness.set(surface, analyzeCurrentDocument());
       return surface;
     },
@@ -371,6 +457,11 @@ export async function runCodeEditorScenarioAction(
   action: CodeEditorDemoAction,
 ): Promise<void> {
   await liveReadiness.get(surface);
+  const custom = liveCustomActions.get(surface)?.get(action);
+  if (custom !== undefined) {
+    await custom();
+    return;
+  }
   const editor = surface instanceof CodeEditorWindow ? surface.editor : surface;
   if (action === 'edit') editor.insertText('// live edit\n');
   else if (action === 'search') {
@@ -386,9 +477,11 @@ export async function runCodeEditorScenarioAction(
 
 function actionsFor(id: string): readonly CodeEditorDemoAction[] {
   if (id === 'language-intelligence') return Object.freeze(['completion', 'format', 'navigate', 'save']);
+  if (id === 'language-gallery') return Object.freeze(['language', 'edit', 'search']);
   if (id === 'themes-and-fallbacks') return Object.freeze(['theme', 'edit', 'search']);
   if (id === 'typescript-window') return Object.freeze(['edit', 'search', 'fold', 'save']);
   if (id === 'structural-folding') return Object.freeze(['fold', 'search']);
+  if (id === 'postgresql-folding') return Object.freeze(['fold', 'search']);
   return Object.freeze(['edit', 'search']);
 }
 
@@ -458,6 +551,30 @@ export const CODE_EDITOR_SCENARIOS: readonly CodeEditorDemoScenario[] = Object.f
       languageId: 'postgresql',
       text: 'SELECT current_user;\n',
       readOnly: true,
+    },
+    true,
+    'dark',
+    true,
+  ),
+  scenario(
+    {
+      id: 'postgresql-folding',
+      title: 'PostgreSQL structural folding',
+      description: 'Fold and unfold a parser-backed query with a nested subquery.',
+      capabilities: ['local-language-features', 'accessibility-and-resize'],
+    },
+    {
+      title: 'folding.sql',
+      languageId: 'postgresql',
+      text: [
+        'SELECT nested.id',
+        'FROM (',
+        '  SELECT id',
+        '  FROM app_user',
+        '  WHERE active = TRUE',
+        ') AS nested;',
+        'SELECT current_user;',
+      ].join('\n'),
     },
     true,
     'dark',
@@ -713,6 +830,18 @@ export async function runCodeEditorScenarioJourney(scenarioId: string): Promise<
       return true;
     },
   });
+  if (scenarioId === 'structural-folding' || scenarioId === 'postgresql-folding') {
+    const adapter = adapterFor(fixture.languageId);
+    if (adapter !== undefined) {
+      const analyzed = await createLanguageScheduler().analyze(adapter, document.text, document.identity);
+      controller.setLanguageResult(analyzed);
+      const original = document.text;
+      controller.foldAll();
+      actions.push(`parser-folds-${fixture.languageId}`, 'collapse-all');
+      controller.unfoldAll();
+      if (document.text === original) actions.push('unfold-byte-identical');
+    }
+  }
   if (!document.readOnly) {
     controller.document.setSelection({ anchor: document.text.length, head: document.text.length });
     controller.replaceSelection('// edited\n');
@@ -763,4 +892,12 @@ function resolveDemoCapabilities(): CapabilityProfile {
     platform: 'linux',
     override: { colorDepth: 'mono', unicode: { utf8: false }, glyphs: { boxDrawing: false } },
   }).profile;
+}
+
+/** Resolves the demo's built-in adapter while leaving plain text parser-free. */
+function adapterFor(languageId: CodeEditorLanguageId) {
+  if (languageId === 'postgresql') return postgresqlLanguageAdapter;
+  if (languageId === 'javascript') return javascriptLanguageAdapter;
+  if (languageId === 'typescript') return typescriptLanguageAdapter;
+  return undefined;
 }

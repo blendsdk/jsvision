@@ -103,6 +103,7 @@ diagnostics: readonly {
   }[]
 snippets: readonly { readonly from: number; readonly to: number; readonly active: boolean }[]
 replaceSelection(text: string): boolean
+applyDocumentEdits(edits: readonly DocumentEditInput[], selection: DocumentSelectionInput): boolean
 hostAction(kind: 'navigate' | 'save' | 'close'): Promise<boolean>
 requestAssistance(): void
 requestFormatting(): void
@@ -114,6 +115,7 @@ toggleFold(): void
 foldLine(line: number): void
 unfoldLine(line: number): void
 toggleFoldLine(line: number): void
+revealOffset(offset: number): boolean
 dispose(): void
 ```
 
