@@ -76,6 +76,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
         item('~S~ave request', 'code-editor.action.save'),
         item('~N~avigate request', 'code-editor.action.navigate'),
         item('~T~heme', 'code-editor.action.theme'),
+        item('Switch ~l~anguage', 'code-editor.action.language'),
       ]),
     ]),
     statusLine: statusLine([
@@ -249,7 +250,17 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
   for (let index = 0; index < CODE_EDITOR_SCENARIOS.length; index += 1) {
     handlers[`code-editor.select.${index}`] = () => select(index);
   }
-  for (const action of ['edit', 'search', 'fold', 'completion', 'format', 'save', 'navigate', 'theme'] as const) {
+  for (const action of [
+    'edit',
+    'search',
+    'fold',
+    'completion',
+    'format',
+    'save',
+    'navigate',
+    'theme',
+    'language',
+  ] as const) {
     handlers[`code-editor.action.${action}`] = () => {
       void runCodeEditorScenarioAction(activeSurface, action).then(() => state.invalidate());
     };

@@ -150,11 +150,18 @@ export class CodeEditor extends Group {
       this.#record('search.next');
       return;
     }
+    const foldCommand =
+      command === 'fold.toggle' ||
+      command === 'fold.collapse' ||
+      command === 'fold.expand' ||
+      command === 'fold.collapseAll' ||
+      command === 'fold.expandAll';
     if (command === 'fold.toggle') this.controller.toggleFold();
     if (command === 'fold.collapse') this.controller.fold();
     if (command === 'fold.expand') this.controller.unfold();
     if (command === 'fold.collapseAll') this.controller.foldAll();
     if (command === 'fold.expandAll') this.controller.unfoldAll();
+    if (foldCommand) this.#finishSelectionChange();
     if (command === 'assist') this.controller.requestAssistance();
     if (command === 'format') this.controller.requestFormatting();
     this.#record(command);
@@ -490,12 +497,14 @@ export class CodeEditor extends Group {
     if (key.ctrl !== true || key.alt === true) return undefined;
     const lower = key.key.toLowerCase();
     if (lower === 'a') {
+      this.controller.unfoldAll();
       this.controller.document.setSelection({ anchor: 0, head: this.controller.document.text.length });
       this.#finishSelectionChange();
       return 'editor';
     }
     if (lower === 'z' || lower === 'y') {
       const redo = lower === 'y' || key.shift === true;
+      this.controller.unfoldAll();
       this.#finishMutation(redo ? this.controller.document.redo().accepted : this.controller.document.undo().accepted);
       return 'editor';
     }
@@ -583,14 +592,7 @@ export class CodeEditor extends Group {
   }
 
   #applyEdits(edits: readonly DocumentEditInput[], selection: DocumentSelectionInput): boolean {
-    const document = this.controller.document;
-    const accepted = document.apply(
-      document.createTransaction({
-        edits,
-        selection,
-        origin: 'typing',
-      }),
-    ).accepted;
+    const accepted = this.controller.applyDocumentEdits(edits, selection);
     this.#finishMutation(accepted);
     return accepted;
   }
@@ -615,6 +617,7 @@ export class CodeEditor extends Group {
     if (anchor === head) {
       const target = Math.max(0, Math.min(this.controller.document.text.length, head + direction));
       if (target === head) return true;
+      this.controller.revealOffset(target);
       this.controller.document.setSelection({ anchor: Math.min(head, target), head: Math.max(head, target) });
     }
     this.insertText('');
@@ -624,6 +627,7 @@ export class CodeEditor extends Group {
   #moveCaret(delta: -1 | 1, extend: boolean): boolean {
     const selection = this.controller.document.selection;
     const head = Math.max(0, Math.min(this.controller.document.text.length, Number(selection.head) + delta));
+    this.controller.revealOffset(head);
     this.controller.document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
     this.#finishSelectionChange();
     return true;
@@ -645,6 +649,7 @@ export class CodeEditor extends Group {
       const prior = sourceCharacterBefore(text, head);
       if (prior !== undefined) head = retreatCharacterRun(text, head, prior.kind);
     }
+    this.controller.revealOffset(head);
     document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
     this.#finishSelectionChange();
   }
@@ -697,6 +702,8 @@ export class CodeEditor extends Group {
     const candidate = text.indexOf(this.#searchQuery, start);
     const found = candidate >= 0 ? candidate : text.indexOf(this.#searchQuery);
     if (found >= 0) {
+      this.controller.revealOffset(found);
+      this.controller.revealOffset(found + this.#searchQuery.length);
       this.controller.document.setSelection({ anchor: found, head: found + this.#searchQuery.length });
       this.#finishSelectionChange();
     }

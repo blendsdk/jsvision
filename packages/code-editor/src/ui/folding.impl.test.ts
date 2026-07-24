@@ -72,6 +72,72 @@ describe('fold reconciliation', () => {
 
     expect(controller.folds).toEqual([]);
   });
+
+  it('unfolds touched bodies after fresh analysis', () => {
+    const controller = createCodeEditorController({
+      document: createDocumentModel({
+        text: 'function stable() {\n  return 1;\n}\nconst tail = true;',
+        languageId: 'typescript',
+      }),
+    });
+    controller.setLanguageResult(result(controller, [wholeFold(controller)]));
+    controller.foldAll();
+
+    const body = controller.document.text.indexOf('1');
+    controller.document.setSelection({ anchor: body, head: body + 1 });
+    expect(controller.replaceSelection('2')).toBe(true);
+    controller.setLanguageResult(result(controller, [wholeFold(controller)]));
+
+    expect(controller.folds).toEqual([]);
+  });
+
+  it('validates constructor results and preserves compatible fold assignments', () => {
+    const document = createDocumentModel({
+      text: 'function ready() {\n  return 1;\n}\nconst tail = true;',
+      languageId: 'typescript',
+    });
+    const range = {
+      from: Number(document.snapshot.line(0).from),
+      to: Number(document.snapshot.line(2).to),
+    };
+    const controller = createCodeEditorController({
+      document,
+      languageResult: {
+        identity: document.identity,
+        adapterId: 'typescript',
+        generation: 1,
+        state: 'ready',
+        syntax: [],
+        folds: [range, { from: -1, to: 2 }],
+        brackets: [],
+      },
+    });
+
+    expect(controller.foldableRegions).toEqual([{ from: 0, to: 2 }]);
+    controller.folds = [{ from: 0, to: 2 }];
+    expect(controller.folds).toEqual([{ from: 0, to: 2 }]);
+    controller.folds = [{ from: 1, to: 2 }];
+    expect(controller.folds).toEqual([]);
+  });
+
+  it('keeps one deterministic outer region when nested ranges share a header', () => {
+    const document = createDocumentModel({
+      text: 'outer {\n  middle {\n    value;\n  }\n}\ntail;',
+      languageId: 'typescript',
+    });
+    const controller = createCodeEditorController({ document });
+    controller.setLanguageResult(
+      result(controller, [
+        { from: Number(document.snapshot.line(0).from), to: Number(document.snapshot.line(4).to) },
+        { from: Number(document.snapshot.line(0).from), to: Number(document.snapshot.line(3).to) },
+      ]),
+    );
+
+    expect(controller.foldableRegions).toEqual([{ from: 0, to: 4 }]);
+    controller.foldAll();
+    controller.toggleFoldLine(0);
+    expect(controller.folds).toEqual([]);
+  });
 });
 
 describe('folded viewport limits', () => {
@@ -90,5 +156,38 @@ describe('folded viewport limits', () => {
 
     expect(editor.viewportMetrics.maxScrollY).toBe(0);
     expect(editor.viewportMetrics.maxScrollX).toBe(0);
+  });
+
+  it('unfolds before horizontal navigation, deletion, word movement, or search reaches hidden rows', () => {
+    const controller = createCodeEditorController({
+      document: createDocumentModel({
+        text: 'header {\n  hidden target;\n}\ntail',
+        languageId: 'typescript',
+      }),
+    });
+    const editor = new CodeEditor({ controller });
+    controller.setLanguageResult(result(controller, [wholeFold(controller)]));
+    controller.foldAll();
+    const headerEnd = Number(controller.document.snapshot.line(0).to);
+    controller.document.setSelection({ anchor: headerEnd, head: headerEnd });
+
+    editor.routeKey({ key: 'ArrowRight' });
+    expect(controller.folds).toEqual([]);
+
+    controller.foldAll();
+    editor.setSearchQuery('target');
+    editor.execute('search.next');
+    expect(controller.folds).toEqual([]);
+    expect(
+      controller.document.text.slice(
+        Number(controller.document.selection.anchor),
+        Number(controller.document.selection.head),
+      ),
+    ).toBe('target');
+
+    controller.document.setSelection({ anchor: headerEnd, head: headerEnd });
+    controller.foldAll();
+    editor.routeKey({ key: 'ArrowRight', ctrl: true });
+    expect(controller.folds).toEqual([]);
   });
 });

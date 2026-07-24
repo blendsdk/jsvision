@@ -259,6 +259,24 @@ describe('folded visible-row interaction and presentation', () => {
     ).toContain('>');
   });
 
+  it('should publish keyboard fold state and scroll limits in the same interaction', () => {
+    const { controller, document, editor } = nestedEditor();
+    const [outer] = structuralRanges(controller);
+    controller.setLanguageResult(languageResult(document.identity, [outer]));
+    editor.project({ width: 32, height: 2, caps: unicodeCaps });
+    expect(editor.viewportMetrics.maxScrollY).toBe(4);
+
+    editor.execute('fold.toggle');
+
+    expect(editor.viewportMetrics.maxScrollY).toBe(0);
+    expect(
+      editor
+        .project({ width: 32, height: 2, caps: unicodeCaps })
+        .cells[0]?.map((cell) => cell.text)
+        .join(''),
+    ).toContain('▶');
+  });
+
   // Hostile fold input and repeated toggles stay bounded and never expose terminal controls.
   it('should stay terminal-safe and bounded under hostile ranges and repeated fold cycles', () => {
     const { controller, document, editor } = nestedEditor();
