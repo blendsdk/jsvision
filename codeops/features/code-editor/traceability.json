@@ -55,6 +55,7 @@
         "summary:Phase 1 passed its corrected quality loop and final validation snapshot refresh.",
         "summary:Phase 3 semantic snapshot refreshed after verified implementation and quality correction; plan scope and acceptance criteria remain unchanged.",
         "summary:Phase 4 semantic snapshot refreshed after verified LSP implementation and quality correction; approved scope remains unchanged.",
+        "summary:Phase 5 semantic snapshot refreshed after verified terminal UI and theme implementation and quality correction; approved scope remains unchanged.",
         "summary:The user authorized creation of the integrated Code Editor plan with auto-design, and all plan ambiguities and quality gates are resolved."
       ],
       "id": "PLAN-CODE-EDITOR",
@@ -85,13 +86,6 @@
           "relation": "implemented-by",
           "revision": "sha256:7c9993cbdf0860d6745ce915db39a50d9984abbf12d8800966211a171ec4d6d5",
           "upstream": "code-editor/TASK-PHASE-2",
-          "validatedAt": "2026-07-23T22:22:05Z"
-        },
-        {
-          "gate": "execution",
-          "relation": "implemented-by",
-          "revision": "sha256:d904d42f7aa54de49e18900e2556bdf45745c7fda6bd4489a8c6fefeb14c46c2",
-          "upstream": "code-editor/TASK-PHASE-5",
           "validatedAt": "2026-07-23T22:22:05Z"
         },
         {
@@ -142,6 +136,13 @@
           "revision": "sha256:e58b6a94fda04af9c531daffbb82c8b4d66de5d3fffeb02cf2c9239486665eb9",
           "upstream": "code-editor/TASK-PHASE-4",
           "validatedAt": "2026-07-24T13:01:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:ddd2d079ea86c61c69b19f6c97e4fa658b8e92e3b2d15f5980243067f1f16224",
+          "upstream": "code-editor/TASK-PHASE-5",
+          "validatedAt": "2026-07-24T13:47:09Z"
         }
       ]
     },
@@ -345,8 +346,15 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "qualityReview:Correctness, security, and performance findings were fixed without waiver; the single re-review rejection was closed through parent correction and final verification with no third review.",
+        "summary:Implemented a styled terminal editor view, indexed viewport projection, real window chrome, controller-backed commands, bounded assistance, and secure hybrid theming.",
+        "summary:Implemented the terminal-native editor controller, viewport projection, real window chrome, bounded assistance, and hybrid theme system.",
+        "verificationEvidence:The package passes 139 specification, implementation, hostile-input, theme, and performance tests; yarn verify passes 34 of 34 tasks and plugin integrity.",
+        "verificationEvidence:The package passes 139 tests and the full repository verification gate passes 34 of 34 tasks."
+      ],
       "id": "TASK-PHASE-5",
-      "revision": "sha256:d904d42f7aa54de49e18900e2556bdf45745c7fda6bd4489a8c6fefeb14c46c2",
+      "revision": "sha256:ddd2d079ea86c61c69b19f6c97e4fa658b8e92e3b2d15f5980243067f1f16224",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -358,7 +366,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Terminal UI and theme",
       "type": "task",
       "validations": []
