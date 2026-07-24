@@ -9,7 +9,7 @@ export default defineConfig({
       {
         test: {
           name: 'unit',
-          include: ['test/**/*.{spec,impl}.test.ts'],
+          include: ['test/**/*.{spec,impl}.test.ts', 'src/**/*.{spec,impl}.test.ts'],
           exclude: ['test/**/*.e2e.test.ts', 'node_modules/**'],
           testTimeout: 30_000,
         },

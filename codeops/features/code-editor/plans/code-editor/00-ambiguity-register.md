@@ -1,7 +1,7 @@
 # Ambiguity Register: Code Editor Integrated Implementation Plan
 
-> **Status**: ✅ GATE PASSED — all 27 items resolved
-> **Last Updated**: 2026-07-24 00:35
+> **Status**: ✅ GATE PASSED — all 28 items resolved
+> **Last Updated**: 2026-07-24 07:48
 > **Auto-design**: active
 > **Root Invocation ID**: `AD-CODE-EDITOR-PLAN-20260723-01`
 > **Policy Version**: 1
@@ -47,6 +47,7 @@
 | AR-P25 | Integration | How are optional built-in parsers exposed without making every root import initialize every language? | All adapters from the root / explicit language subpaths / separate package per language | Export built-in adapters from `@jsvision/code-editor/languages/javascript`, `/languages/typescript`, and `/languages/postgresql`; keep contracts and plain mode at the root | ✅ Resolved |
 | AR-P26 | Technical (runtime) | What deterministic probe API can specification tests target before the package exists? | CLI-output assertions / editor-owned typed probe functions with a thin runner | Define typed, side-effect-free probe functions for headless compatibility, dependency closure, reference benchmarks, and scheduling stress; keep CLI formatting in a thin runner | ✅ Resolved |
 | AR-P27 | Technical (runtime) | How is PostgreSQL parsed after the dependency probe proves CodeMirror language packages ship `@codemirror/view`? | Keep the browser dependency / build and maintain a new SQL grammar / use a public headless PostgreSQL parser behind the adapter contract | Replace CodeMirror language wrappers with `@lezer/javascript` for JavaScript/TypeScript and `pgsql-ast-parser` for PostgreSQL; keep parser-specific types internal and use cancellable revision-stamped background parses for PostgreSQL | ✅ Resolved |
+| AR-P28 | Testing (runtime) | How are Phase 2 specification tests discovered when the approved path is under `src/document` but Vitest includes only `test/**`? | Move the oracle into `test/` / add a second Vitest project / extend unit discovery to `src/**/*.test.ts` | Extend the existing unit project to discover specification and implementation tests under both `test/` and `src/`; retain one unit environment and the approved cohesive document path | ✅ Resolved |
 
 ## Resolution Notes
 
@@ -185,6 +186,23 @@ the no-DOM closure gate. Policy version: 1. Root invocation ID:
 `AD-CODE-EDITOR-EXEC-20260724-01`. Reopen if PostgreSQL parse latency breaches the approved
 interaction budget or the replacement dependency changes license or runtime characteristics.
 
+**AR-P28:** Authority: AI — delegated by `--auto-design`. Eligibility: reversible internal test
+discovery configuration within the approved specification-first workflow; product behavior,
+acceptance criteria, and public compatibility are unchanged. Objective: ensure the immutable
+document specification and implementation suites execute through the package's existing unit
+test command. Evidence: `packages/code-editor/vitest.config.ts` currently includes only
+`test/**/*.{spec,impl}.test.ts`, while Phase 2 and later approved suites live under `src/`.
+Rejected alternatives: moving the oracle contradicts the approved cohesive source path; a second
+project duplicates the same Node/Vitest environment and risks running shared tests twice.
+Decision: extend the existing unit include list to cover both trees, exclude colocated test files
+from the production build, and retain them in the no-emit typecheck. Strongest counterargument:
+tests placed beside source require separate compiler discovery rules, but those rules keep the
+published output clean while typechecking the oracle. Confidence: High. Hardening: the change is
+narrowly verified by listing and running the Phase 2 suite through the normal package command and
+inspecting build output. Policy version: 1. Root invocation ID:
+`AD-CODE-EDITOR-EXEC-20260724-02`. Reopen if source-adjacent tests are emitted into the published
+package or the repository standardizes on a single test tree.
+
 ## Twelve-Category Closure
 
 | Category | Covered By |
@@ -197,7 +215,7 @@ interaction budget or the replacement dependency changes license or runtime char
 | Integration points | AR-P06, AR-P08–AR-P10, AR-P20–AR-P21, AR-P25 |
 | Data & state | AR-P04, AR-P10, AR-P15 |
 | Security & compliance | AR-P13, AR-P23–AR-P24 |
-| Non-functional gaps | AR-P07, AR-P11, AR-P14, AR-P17–AR-P18, AR-P22 |
+| Non-functional gaps | AR-P07, AR-P11, AR-P14, AR-P17–AR-P18, AR-P22, AR-P28 |
 | UX & presentation | AR-P12, AR-P16, AR-P19 |
 | Stakeholder conflicts | AR-P24 |
 | Naming & terminology | AR-P16 |

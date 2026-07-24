@@ -12,3 +12,21 @@ export type CodeEditorLanguageId = 'plain' | 'javascript' | 'typescript' | 'post
  * ```
  */
 export const plainLanguageId: CodeEditorLanguageId = 'plain';
+
+export { CodeEditorDocumentModel, createDocumentModel } from './document/model.js';
+export type { CreateDocumentModelOptions, LargeDocumentDetails } from './document/model.js';
+export { offsetToPosition, offsetToVisualColumn, positionToOffset } from './document/positions.js';
+export { searchDocument } from './document/search.js';
+export type { DocumentSearchMatch, DocumentSearchOptions } from './document/search.js';
+export type {
+  DocumentEdit,
+  DocumentIdentity,
+  DocumentMutationResult,
+  DocumentPosition,
+  DocumentSelection,
+  DocumentSizeMode,
+  DocumentSnapshot,
+  DocumentTransaction,
+  EditOrigin,
+  LogicalLine,
+} from './document/types.js';
