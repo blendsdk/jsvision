@@ -73,7 +73,7 @@ export class CodeEditorLspCoordinator {
   public snippet: SnippetInteractionState | undefined;
   readonly #document: CodeEditorDocumentModel;
   readonly #session: CodeEditorLspSession | undefined;
-  readonly #limits: ResolvedLspLimits;
+  #limits: ResolvedLspLimits;
   readonly #now: () => number;
   readonly #schedule: (callback: () => void, delayMilliseconds: number) => { dispose(): void };
   readonly #interactiveTimeoutMs: number;
@@ -142,6 +142,31 @@ export class CodeEditorLspCoordinator {
         }
       });
     }
+  }
+
+  /** Applies a controller-owned limit projection before protocol requests begin. */
+  public configureLimits(limits: CreateCodeEditorLspCoordinatorOptions['limits']): void {
+    if (this.#opened || this.#pending.size > 0) {
+      throw new Error('LSP limits must be configured before opening the document.');
+    }
+    this.#limits = resolveLspLimits(limits);
+  }
+
+  /** Returns content-free retained protocol counters for lifecycle inspection. */
+  public get retainedState(): {
+    readonly pendingRequests: number;
+    readonly diagnostics: number;
+    readonly completions: number;
+    readonly symbols: number;
+    readonly snippetPlaceholders: number;
+  } {
+    return Object.freeze({
+      pendingRequests: this.#pending.size,
+      diagnostics: this.presentation.diagnostics.items.length,
+      completions: this.presentation.completion?.items.length ?? 0,
+      symbols: this.presentation.symbolChooser?.items.length ?? 0,
+      snippetPlaceholders: this.snippet?.ranges.size ?? 0,
+    });
   }
 
   /** Returns the document model controlled by this coordinator. */

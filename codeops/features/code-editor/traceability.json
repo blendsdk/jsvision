@@ -56,6 +56,7 @@
         "summary:Phase 3 semantic snapshot refreshed after verified implementation and quality correction; plan scope and acceptance criteria remain unchanged.",
         "summary:Phase 4 semantic snapshot refreshed after verified LSP implementation and quality correction; approved scope remains unchanged.",
         "summary:Phase 5 semantic snapshot refreshed after verified terminal UI and theme implementation and quality correction; approved scope remains unchanged.",
+        "summary:Phase 6 semantic snapshot refreshed after verified quality, security, performance, packaging, and lifecycle closure; approved scope remains unchanged.",
         "summary:The user authorized creation of the integrated Code Editor plan with auto-design, and all plan ambiguities and quality gates are resolved."
       ],
       "id": "PLAN-CODE-EDITOR",
@@ -86,13 +87,6 @@
           "relation": "implemented-by",
           "revision": "sha256:7c9993cbdf0860d6745ce915db39a50d9984abbf12d8800966211a171ec4d6d5",
           "upstream": "code-editor/TASK-PHASE-2",
-          "validatedAt": "2026-07-23T22:22:05Z"
-        },
-        {
-          "gate": "execution",
-          "relation": "implemented-by",
-          "revision": "sha256:4a91b08af57685766382c7763ce2f6b47508ab6a8c3277e4ad2705e5c42a2a7a",
-          "upstream": "code-editor/TASK-PHASE-6",
           "validatedAt": "2026-07-23T22:22:05Z"
         },
         {
@@ -143,6 +137,13 @@
           "revision": "sha256:ddd2d079ea86c61c69b19f6c97e4fa658b8e92e3b2d15f5980243067f1f16224",
           "upstream": "code-editor/TASK-PHASE-5",
           "validatedAt": "2026-07-24T13:47:09Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:9a4ffd45a8fae9278804b2e809236ed4914026f010a4b82e633030620a8d7ce5",
+          "upstream": "code-editor/TASK-PHASE-6",
+          "validatedAt": "2026-07-24T14:34:50Z"
         }
       ]
     },
@@ -373,8 +374,15 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "qualityReview:All correctness, security, and performance findings were fixed without waiver; the single re-review rejection was closed through parent correction and final verification with no third review.",
+        "summary:Implemented centralized production limits, degradation and observability, production-backed quality probes, hostile corpora, stress tests, and release benchmark evidence.",
+        "summary:Implemented controller-owned production limits, bounded degradation and observability, hostile corpora, production-backed probes, real scheduler and LSP flood evidence, and retained-resource disposal inspection.",
+        "verificationEvidence:The package passes 159 tests and the full repository verification gate passes 34 of 34 tasks.",
+        "verificationEvidence:The serial production transaction/projection benchmark reports p95 3.280 and 3.276 milliseconds; the package passes 159 tests; yarn verify passes 34 of 34 tasks with documentation and plugin integrity."
+      ],
       "id": "TASK-PHASE-6",
-      "revision": "sha256:4a91b08af57685766382c7763ce2f6b47508ab6a8c3277e4ad2705e5c42a2a7a",
+      "revision": "sha256:9a4ffd45a8fae9278804b2e809236ed4914026f010a4b82e633030620a8d7ce5",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -386,7 +394,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Quality and security closure",
       "type": "task",
       "validations": []

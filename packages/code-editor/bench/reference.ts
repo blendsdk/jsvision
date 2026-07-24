@@ -5,7 +5,17 @@ import { performance } from 'node:perf_hooks';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
-import { ChangeSet, Text, type Text as TextDocument } from '@codemirror/state';
+import { resolveCapabilities } from '@jsvision/core';
+import {
+  CodeEditor,
+  createCodeEditorController,
+  createCodeEditorLspCoordinator,
+  createDocumentModel,
+  createInProcessLspSession,
+  createLanguageScheduler,
+  type LanguageAdapter,
+  type LanguageCapabilityContext,
+} from '@jsvision/code-editor';
 import { parser as javascriptParser } from '@lezer/javascript';
 
 import { createReferenceFixture, type ReferenceFixtureRequest } from './fixtures.js';
@@ -58,12 +68,9 @@ export interface SchedulingStressResult {
   readonly interactivePrecededBackground: Readonly<Record<BackgroundKind, boolean>>;
   readonly backgroundWorkYielded: boolean;
   readonly cancelledStaleWorkPresented: boolean;
-}
-
-interface BackgroundWork {
-  readonly kind: BackgroundKind;
-  readonly generation: number;
-  remainingSlices: number;
+  readonly maximumBackgroundSliceMs: number;
+  readonly backgroundSliceBudgetMs: number;
+  readonly pendingWorkAfterCancellation: number;
 }
 
 const execFileAsync = promisify(execFile);
@@ -88,26 +95,17 @@ function percentile(samples: readonly number[], fraction: number): number {
   return Number(sorted[Math.max(0, index)]?.toFixed(3));
 }
 
-function projectViewport(document: TextDocument, center: number): number {
-  const middleLine = document.lineAt(center);
-  const firstLine = Math.max(1, middleLine.number - 20);
-  const lastLine = Math.min(document.lines, middleLine.number + 20);
-  let projectedCodeUnits = 0;
+const benchmarkCapabilities = resolveCapabilities({
+  override: { colorDepth: '16', unicode: { utf8: true }, glyphs: { boxDrawing: true } },
+}).profile;
 
-  for (let lineNumber = firstLine; lineNumber <= lastLine; lineNumber += 1) {
-    const line = document.line(lineNumber);
-    projectedCodeUnits += String(lineNumber).length + document.sliceString(line.from, line.to).length;
-  }
-  return projectedCodeUnits;
-}
-
-function measureEditAndViewport(document: TextDocument): number {
-  const editAt = Math.floor(document.length / 2);
+function measureEditAndViewport(editor: CodeEditor): number {
+  const editAt = Math.floor(editor.controller.document.snapshot.length / 2);
   const startedAt = performance.now();
-  const changes = ChangeSet.of([{ from: editAt, insert: 'x' }], document.length);
-  const updated = changes.apply(document);
-  const projectedCodeUnits = projectViewport(updated, editAt);
-  if (projectedCodeUnits === 0) {
+  editor.controller.document.setSelection({ anchor: editAt, head: editAt });
+  if (!editor.insertText('x')) throw new Error('Reference edit was rejected');
+  const frame = editor.project({ width: 80, height: 20, caps: benchmarkCapabilities });
+  if (frame.cells.length === 0) {
     throw new Error('Viewport projection produced no content');
   }
   return performance.now() - startedAt;
@@ -126,20 +124,22 @@ function measureFixture(
   options: ReferenceBenchmarkOptions,
 ): { readonly result: FixtureBenchmarkResult; readonly peakBytes: number } {
   const source = createReferenceFixture(request);
-  const document = Text.of(source.split('\n'));
+  const document = createDocumentModel({ text: source });
+  const controller = createCodeEditorController({ document });
+  const editor = new CodeEditor({ controller });
 
   for (let index = 0; index < options.warmupCount; index += 1) {
-    measureEditAndViewport(document);
+    measureEditAndViewport(editor);
   }
 
   const samples: number[] = [];
   let peakBytes = process.memoryUsage().heapUsed;
   for (let index = 0; index < options.sampleCount; index += 1) {
-    samples.push(measureEditAndViewport(document));
+    samples.push(measureEditAndViewport(editor));
     peakBytes = Math.max(peakBytes, process.memoryUsage().heapUsed);
   }
 
-  return {
+  const result = {
     result: {
       label: request.label,
       editAndViewport: {
@@ -150,6 +150,8 @@ function measureFixture(
     },
     peakBytes,
   };
+  (editor as CodeEditor & { dispose(): void }).dispose();
+  return result;
 }
 
 function isReferenceBenchmarkResult(value: unknown): value is ReferenceBenchmarkResult {
@@ -286,68 +288,109 @@ export async function runSchedulingStressProbe(options: SchedulingStressOptions)
     throw new RangeError('backgroundKinds must contain parser, diagnostic, and completion once');
   }
 
+  const backgroundSliceBudgetMs = 8;
+  let maximumBackgroundSliceMs = 0;
   const events: string[] = [];
-  const presented: string[] = [];
-  const interactive: Array<() => void> = Array.from(
-    { length: options.interactiveUpdates },
-    (_, index) => () => events.push(`interactive:${index}`),
-  );
-  const background: BackgroundWork[] = options.backgroundKinds.map((kind) => ({
-    kind,
-    generation: 0,
-    remainingSlices: 2,
-  }));
-  let activeGeneration = 0;
-  let backgroundSliceCount = 0;
+  for (const kind of options.backgroundKinds) executeBackgroundSlice(kind);
+  const measure = (kind: BackgroundKind): void => {
+    const startedAt = performance.now();
+    executeBackgroundSlice(kind);
+    maximumBackgroundSliceMs = Math.max(maximumBackgroundSliceMs, performance.now() - startedAt);
+  };
+  const adapter: LanguageAdapter = Object.freeze({
+    contractVersion: 1,
+    id: 'stress',
+    extensions: Object.freeze(['.stress']),
+    syntax: async (_text: string, context: LanguageCapabilityContext) => {
+      await context.yieldControl();
+      measure('parser');
+      events.push('background:parser');
+      return { items: [] };
+    },
+    folds: async (_text: string, context: LanguageCapabilityContext) => {
+      await context.yieldControl();
+      measure('diagnostic');
+      events.push('background:diagnostic');
+      return { items: [] };
+    },
+    brackets: async (_text: string, context: LanguageCapabilityContext) => {
+      await context.yieldControl();
+      measure('completion');
+      events.push('background:completion');
+      return { items: [] };
+    },
+  });
+  const scheduler = createLanguageScheduler({ maxResults: 3_000 });
+  const pending = new Set<Promise<unknown>>();
+  const first = scheduler.analyze(adapter, 'const stale = true;', { lineage: 'stress', revision: 0 });
+  pending.add(first);
+  first.finally(() => pending.delete(first)).catch(() => undefined);
+  const second = scheduler.analyze(adapter, 'const current = true;', { lineage: 'stress', revision: 1 });
+  pending.add(second);
+  second.finally(() => pending.delete(second)).catch(() => undefined);
 
-  while (interactive.length > 0) interactive.shift()?.();
-  for (let index = 0; index < options.backgroundKinds.length; index += 1) {
-    const work = background.shift();
-    if (work === undefined) break;
-    executeBackgroundSlice(work.kind);
-    events.push(`background:${work.kind}:slice`);
-    backgroundSliceCount += 1;
-    work.remainingSlices -= 1;
-    background.push(work);
-    interactive.push(() => events.push(`interactive:yield:${index}`));
-    while (interactive.length > 0) interactive.shift()?.();
+  const document = createDocumentModel({ text: '', uri: 'file:///stress.ts', languageId: 'typescript' });
+  const session = createInProcessLspSession({
+    capabilities: { completion: true, diagnostics: true, documentSymbols: true },
+  });
+  const lsp = createCodeEditorLspCoordinator({
+    document,
+    session,
+    uri: 'file:///stress.ts',
+    languageId: 'typescript',
+  });
+  const editor = new CodeEditor({ controller: createCodeEditorController({ document, lsp }) });
+  await lsp.open();
+  for (let index = 0; index < options.interactiveUpdates; index += 1) {
+    events.push(`interactive:${index}`);
+    editor.insertText('x');
+    editor.routeKey({ key: 'Escape' });
   }
-
-  activeGeneration = 1;
-  background.push(
-    ...options.backgroundKinds.map((kind) => ({
-      kind,
-      generation: activeGeneration,
-      remainingSlices: 2,
+  const [stale, current] = await Promise.all([first, second]);
+  const cancelledCompletion = lsp.requestCompletion({ line: 0, character: 0 });
+  cancelledCompletion.cancel();
+  session.respond(
+    cancelledCompletion.requestId,
+    Array.from({ length: 1_000 }, (_, index) => ({ label: `stale-${index}` })),
+  );
+  const completion = lsp.requestCompletion({ line: 0, character: 0 });
+  session.respond(
+    completion.requestId,
+    Array.from({ length: 1_000 }, (_, index) => ({ label: `item-${index}` })),
+  );
+  await completion.settled;
+  session.publishDiagnostics(
+    'file:///stress.ts',
+    Number(document.identity.revision),
+    Array.from({ length: 10_000 }, (_, index) => ({
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: Math.min(index + 1, document.snapshot.length) },
+      },
+      message: `diagnostic-${index}`,
     })),
   );
-
-  while (background.length > 0) {
-    const work = background.shift();
-    if (work === undefined) break;
-    executeBackgroundSlice(work.kind);
-    events.push(`background:${work.kind}:slice`);
-    backgroundSliceCount += 1;
-    work.remainingSlices -= 1;
-    if (work.remainingSlices > 0) {
-      background.push(work);
-    } else if (work.generation === activeGeneration) {
-      presented.push(`${work.kind}:${work.generation}`);
-    }
-  }
-
+  await Promise.resolve();
   const firstInteractive = events.findIndex((event) => event.startsWith('interactive:'));
-  const interactivePrecededBackground = Object.fromEntries(
-    options.backgroundKinds.map((kind) => [kind, firstInteractive < events.indexOf(`background:${kind}:slice`)]),
-  );
+  const preceded = (kind: BackgroundKind): boolean => {
+    const background = events.findIndex((event) => event === `background:${kind}`);
+    return firstInteractive >= 0 && background > firstInteractive;
+  };
+  const noCancelledCompletionPresented =
+    lsp.presentation.completion?.items.every((item) => !item.label.startsWith('stale-')) ?? true;
+  const observedPending = lsp.retainedState.pendingRequests;
+  (editor as CodeEditor & { dispose(): void }).dispose();
 
   return {
     interactivePrecededBackground: {
-      parser: interactivePrecededBackground.parser === true,
-      diagnostic: interactivePrecededBackground.diagnostic === true,
-      completion: interactivePrecededBackground.completion === true,
+      parser: preceded('parser'),
+      diagnostic: preceded('diagnostic'),
+      completion: preceded('completion'),
     },
-    backgroundWorkYielded: backgroundSliceCount > options.backgroundKinds.length,
-    cancelledStaleWorkPresented: presented.some((entry) => entry.endsWith(':0')),
+    backgroundWorkYielded: current.state === 'ready',
+    cancelledStaleWorkPresented: stale.state !== 'degraded' || !noCancelledCompletionPresented,
+    maximumBackgroundSliceMs: Number(maximumBackgroundSliceMs.toFixed(3)),
+    backgroundSliceBudgetMs,
+    pendingWorkAfterCancellation: pending.size + observedPending,
   };
 }
