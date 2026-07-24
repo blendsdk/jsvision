@@ -1,12 +1,6 @@
 import { View, type DrawContext } from '@jsvision/ui';
 
-/** Minimal inert completion item accepted by the terminal assistance surface. */
-export interface CodeEditorCompletionItem {
-  readonly label: string;
-  readonly insertText?: string;
-  readonly from?: number;
-  readonly to?: number;
-}
+export type { CodeEditorCompletionItem } from '../presentation.js';
 
 /** One active modal surface whose Escape dismissal precedes all other commands. */
 export interface CodeEditorModalState {

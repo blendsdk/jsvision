@@ -1,10 +1,10 @@
 # Roadmap: Code Editor
 
 > **Feature-Set**: Code Editor
-> **Status**: Complete
+> **Status**: Executing
 > **Created**: 2026-07-23
 > **Last Updated**: 2026-07-24
-> **Progress**: 6 / 6 (100%)
+> **Progress**: 9 / 10 roadmap items (90%; 6 / 6 RDs complete)
 > **CodeOps Artifact Schema**: 1
 
 ## Legend
@@ -24,3 +24,4 @@
 | T-01 | Modern keyboard editing | — | [modern-keyboard-editing](plans/modern-keyboard-editing/99-execution-plan.md) | Done | ✅ | 2026-07-24 | depends on RD-01, RD-02, RD-05 |
 | T-02 | Code Editor viewport and mouse interaction | — | [code-editor-viewport-and-mouse-interaction](plans/code-editor-viewport-and-mouse-interaction/99-execution-plan.md) | Done | ✅ | 2026-07-24 | depends on RD-01, RD-04, RD-05, T-01 |
 | T-03 | Code Editor folding and demo coverage | — | [code-editor-folding-and-demo-coverage](plans/code-editor-folding-and-demo-coverage/99-execution-plan.md) | Done | ✅ | 2026-07-24 | depends on RD-01, RD-02, RD-04, RD-05, T-02 |
+| T-04 | Code Editor functional completion | — | [code-editor-functional-completion](plans/code-editor-functional-completion/99-execution-plan.md) | Executing | 🔄 | 2026-07-24 | depends on RD-01…06, T-03 |

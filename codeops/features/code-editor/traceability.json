@@ -2286,6 +2286,164 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:The user approved corrective completion of the Code Editor implementation and comprehensive demonstration."
+      ],
+      "id": "T-04",
+      "revision": "sha256:0a56ee4bceb8513eba92e7d1fe4f5393022589dd70ec46d9e6a2c6e0f5046d47",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-functional-completion/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Objective"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Code Editor functional completion",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/T-04"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/CRIT-FUNCTIONAL-COMPLETION"
+        },
+        {
+          "relation": "affected-by",
+          "target": "code-editor/AMB-FUNCTIONAL-RUNTIME-01"
+        }
+      ],
+      "evidence": [
+        "summary:Auto-design and an independent challenge established the five-phase dependency order.",
+        "summary:Execution snapshots initialized for the approved functional completion plan.",
+        "summary:The corrective completion mini-plan is scope-complete, specification-first, independently challenged, and ready for execution.",
+        "summary:The corrective plan restores the approved product-to-demo contract without expanding the editor into an IDE."
+      ],
+      "id": "PLAN-FUNCTIONAL-COMPLETION",
+      "revision": "sha256:f546a01a2d999187bc4c6fd1092c901ddffcdcd57d62ec8a6220145a48500d6d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-functional-completion/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Scope and delegated design decisions"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code Editor functional completion mini-plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:2f4035fe509db5ef0b61ca583c8ce7cda842107186189ab490096ef7debd15a9",
+          "upstream": "code-editor/CRIT-FUNCTIONAL-COMPLETION",
+          "validatedAt": "2026-07-24T20:49:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:2f4035fe509db5ef0b61ca583c8ce7cda842107186189ab490096ef7debd15a9",
+          "upstream": "code-editor/CRIT-FUNCTIONAL-COMPLETION",
+          "validatedAt": "2026-07-24T21:15:36Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:0a56ee4bceb8513eba92e7d1fe4f5393022589dd70ec46d9e6a2c6e0f5046d47",
+          "upstream": "code-editor/T-04",
+          "validatedAt": "2026-07-24T21:15:36Z"
+        }
+      ]
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Auto-design selected an additive controller-centric state, mutation, and keybinding integration boundary after independent challenge."
+      ],
+      "id": "AMB-FUNCTIONAL-RUNTIME-01",
+      "revision": "sha256:b67628c0d6b10f6b0f057484a53671244c7d3f5c4da2f207a22e2d62ca63223c",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-functional-completion/00-ambiguity-register.md",
+          "selector": {
+            "kind": "heading",
+            "value": "AR-01 (runtime) — Phase A integration API placement"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Phase A integration API placement",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "code-editor/TEST-FUNCTIONAL-COMPLETION"
+        }
+      ],
+      "evidence": [
+        "summary:The specification cases define the approved functional, lifecycle, presentation, and executable-demo behavior."
+      ],
+      "id": "CRIT-FUNCTIONAL-COMPLETION",
+      "revision": "sha256:2f4035fe509db5ef0b61ca583c8ce7cda842107186189ab490096ef7debd15a9",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-functional-completion/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Specification cases"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code Editor functional completion acceptance behavior",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Immutable specification coverage is planned before implementation in every phase."
+      ],
+      "id": "TEST-FUNCTIONAL-COMPLETION",
+      "revision": "sha256:2f4035fe509db5ef0b61ca583c8ce7cda842107186189ab490096ef7debd15a9",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-functional-completion/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Specification cases"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Code Editor functional completion specification coverage",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
       "id": "AR-25",
       "revision": "sha256:acd9e8584226d3b410626b97da0d327672dcd8d001cbf1326c04fb0957cf0e84",
       "semanticSources": [
@@ -2305,5 +2463,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-24T19:22:00Z"
+  "updated": "2026-07-24T20:49:00Z"
 }

@@ -1,8 +1,11 @@
 import type { completionEdits } from './completion.js';
 import type {
   CodeEditorLspOperation,
+  CodeEditorLspCommandAvailability,
   CodeEditorLspPresentation,
   CreateCodeEditorLspCoordinatorOptions,
+  PresentedCompletionItem,
+  ProtocolRange,
   ProtocolPosition,
 } from './types.js';
 import type { CodeEditorLspSession } from './session.js';
@@ -17,24 +20,10 @@ export interface ResolvedLspLimits {
   readonly replacementCharacters: number;
 }
 
-export type LspCommandAvailability = Readonly<
-  Record<
-    | 'completion'
-    | 'hover'
-    | 'signatureHelp'
-    | 'diagnostics'
-    | 'definition'
-    | 'documentSymbols'
-    | 'documentFormatting'
-    | 'rangeFormatting',
-    boolean
-  >
->;
-
 export function resolveCommandAvailability(
   languageId: string,
   capabilities: CodeEditorLspSession['capabilities'] | undefined,
-): LspCommandAvailability {
+): CodeEditorLspCommandAvailability {
   const enabled = languageId !== 'plain';
   return Object.freeze({
     completion: enabled && capabilities?.completion === true,
@@ -52,6 +41,181 @@ export function emptyPresentation(): CodeEditorLspPresentation {
   return Object.freeze({
     diagnostics: Object.freeze({ items: Object.freeze([]), totalCount: 0, truncated: false, versioned: false }),
   });
+}
+
+/**
+ * Detaches and deeply freezes render-facing language-service state.
+ *
+ * Mutable protocol arrays and records never escape through coordinator snapshots. Unknown
+ * completion edit payloads are copied only when they are inert plain data; unsupported values are
+ * omitted and will be rejected if that completion is later accepted.
+ */
+export function immutablePresentation(
+  value: CodeEditorLspPresentation,
+  limits: ResolvedLspLimits,
+): CodeEditorLspPresentation {
+  const completionSource =
+    value.completion === undefined ? undefined : boundedDataArray(value.completion.items, limits.completionItems);
+  const completion =
+    value.completion === undefined || completionSource === undefined
+      ? undefined
+      : Object.freeze({
+          items: Object.freeze(completionSource.map((item) => immutableCompletionItem(item, limits.edits))),
+          selected: value.completion.selected,
+          filter: value.completion.filter,
+          lineage: value.completion.lineage,
+          revision: value.completion.revision,
+          sessionGeneration: value.completion.sessionGeneration,
+          coordinatorGeneration: value.completion.coordinatorGeneration,
+        });
+  const hover =
+    value.hover === undefined
+      ? undefined
+      : Object.freeze({
+          text: value.hover.text,
+          clipped: value.hover.clipped,
+          resourcesActive: false as const,
+        });
+  const signature =
+    value.signature === undefined
+      ? undefined
+      : Object.freeze({
+          lines: boundedDataArray(value.signature.lines, 64) ?? Object.freeze([]),
+        });
+  const diagnosticItems = boundedDataArray(value.diagnostics.items, limits.diagnostics) ?? Object.freeze([]);
+  const diagnostics = Object.freeze({
+    items: Object.freeze(
+      diagnosticItems.map((item) =>
+        Object.freeze({
+          range: immutableRange(item.range),
+          message: item.message,
+          severity: item.severity,
+        }),
+      ),
+    ),
+    totalCount: value.diagnostics.totalCount,
+    truncated: value.diagnostics.truncated,
+    versioned: value.diagnostics.versioned,
+  });
+  const navigationChooser =
+    value.navigationChooser === undefined
+      ? undefined
+      : Object.freeze({
+          items: Object.freeze(
+            (boundedDataArray(value.navigationChooser.items, limits.completionItems) ?? Object.freeze([])).map((item) =>
+              Object.freeze({ uri: item.uri, range: immutableRange(item.range) }),
+            ),
+          ),
+        });
+  const symbolChooser =
+    value.symbolChooser === undefined
+      ? undefined
+      : Object.freeze({
+          items: Object.freeze(
+            (boundedDataArray(value.symbolChooser.items, limits.completionItems) ?? Object.freeze([])).map((item) =>
+              Object.freeze({ label: item.label, range: immutableRange(item.range) }),
+            ),
+          ),
+        });
+  return Object.freeze({
+    ...(hover === undefined ? {} : { hover }),
+    ...(signature === undefined ? {} : { signature }),
+    ...(completion === undefined ? {} : { completion }),
+    diagnostics,
+    ...(navigationChooser === undefined ? {} : { navigationChooser }),
+    ...(symbolChooser === undefined ? {} : { symbolChooser }),
+  });
+}
+
+function immutableCompletionItem(item: PresentedCompletionItem, editLimit: number): PresentedCompletionItem {
+  const textEdit = immutablePlainData(item.textEdit);
+  const additionalTextEdits =
+    item.additionalTextEdits === undefined
+      ? undefined
+      : Object.freeze(
+          (boundedDataArray(item.additionalTextEdits, editLimit) ?? Object.freeze([])).map((edit) =>
+            immutablePlainData(edit),
+          ),
+        );
+  const insertTextFormat = immutablePlainData(item.insertTextFormat);
+  return Object.freeze({
+    label: item.label,
+    ...(item.detail === undefined ? {} : { detail: item.detail }),
+    ...(item.insertText === undefined ? {} : { insertText: item.insertText }),
+    ...(textEdit === undefined ? {} : { textEdit }),
+    ...(additionalTextEdits === undefined ? {} : { additionalTextEdits }),
+    ...(insertTextFormat === undefined ? {} : { insertTextFormat }),
+  });
+}
+
+function boundedDataArray<T>(value: readonly T[], limit: number): readonly T[] | undefined {
+  try {
+    if (!Array.isArray(value)) return undefined;
+    const lengthDescriptor = Object.getOwnPropertyDescriptor(value, 'length');
+    if (
+      lengthDescriptor === undefined ||
+      !('value' in lengthDescriptor) ||
+      typeof lengthDescriptor.value !== 'number' ||
+      !Number.isSafeInteger(lengthDescriptor.value)
+    ) {
+      return undefined;
+    }
+    const length = Math.min(lengthDescriptor.value, limit);
+    const result: T[] = [];
+    for (let index = 0; index < length; index += 1) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+      if (descriptor === undefined || !('value' in descriptor)) return undefined;
+      result.push(descriptor.value);
+    }
+    return Object.freeze(result);
+  } catch {
+    return undefined;
+  }
+}
+
+function immutableRange(range: ProtocolRange): ProtocolRange {
+  return Object.freeze({
+    start: Object.freeze({ line: range.start.line, character: range.start.character }),
+    end: Object.freeze({ line: range.end.line, character: range.end.character }),
+  });
+}
+
+function immutablePlainData(value: unknown, depth = 0): unknown {
+  if (
+    value === undefined ||
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+  if (depth >= 8 || typeof value !== 'object') return undefined;
+  try {
+    const prototype = Object.getPrototypeOf(value);
+    if (Array.isArray(value)) {
+      if (value.length > 1_000) return undefined;
+      const result: unknown[] = [];
+      for (let index = 0; index < value.length; index += 1) {
+        const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+        if (descriptor === undefined || !('value' in descriptor)) return undefined;
+        result.push(immutablePlainData(descriptor.value, depth + 1));
+      }
+      return Object.freeze(result);
+    }
+    if (prototype !== Object.prototype && prototype !== null) return undefined;
+    const entries: [string, unknown][] = [];
+    const keys = Object.keys(value);
+    if (keys.length > 64) return undefined;
+    for (const key of keys) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, key);
+      if (descriptor === undefined || !('value' in descriptor)) return undefined;
+      entries.push([key, immutablePlainData(descriptor.value, depth + 1)]);
+    }
+    return Object.freeze(Object.fromEntries(entries));
+  } catch {
+    return undefined;
+  }
 }
 
 export function resolveLspLimits(options: CreateCodeEditorLspCoordinatorOptions['limits']): ResolvedLspLimits {

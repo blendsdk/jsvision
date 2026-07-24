@@ -1,6 +1,7 @@
 import type { CapabilityProfile } from '@jsvision/core';
 import { Group, signal, type DispatchEvent, type DrawContext, type Point, type Signal } from '@jsvision/ui';
-import type { CodeEditorController } from '../controller.js';
+import type { CodeEditorController, CodeEditorControllerEvent } from '../controller.js';
+import type { CodeEditorDisposable } from '../integration.js';
 import { offsetToPosition } from '../document/positions.js';
 import type { DocumentEditInput, DocumentSelectionInput } from '../document/types.js';
 import { builtInCommentMetadata } from '../languages/metadata.js';
@@ -11,7 +12,6 @@ import { CodeEditorAssistanceView, type CodeEditorCompletionItem, type CodeEdito
 import { routeCodeEditorCommand } from './command-events.js';
 import {
   advanceCharacterRun,
-  currentWordRange,
   lineSeparator,
   removableIndentationLength,
   retreatCharacterRun,
@@ -26,13 +26,9 @@ import {
   type CodeEditorCommand,
   type CodeEditorKey,
 } from './input.js';
-import {
-  fingerprintTheme,
-  normalizeCompletionItems,
-  normalizeSnippetPlaceholders,
-  ownData,
-} from './input-validation.js';
+import { fingerprintTheme, normalizeSnippetPlaceholders, ownData } from './input-validation.js';
 import { CodeEditorMouseSelection } from './mouse-selection.js';
+import { registerCodeEditorKeyBindings } from './keybindings.js';
 import { codeEditorGutterWidth, projectCodeEditor, type CodeEditorFrame } from './projection.js';
 import { codeEditorVisibleRows } from './folding.js';
 import { CodeEditorViewport, type CodeEditorViewportMetrics } from './viewport.js';
@@ -41,6 +37,8 @@ import { CodeEditorViewport, type CodeEditorViewportMetrics } from './viewport.j
 export interface CodeEditorOptions {
   readonly controller: CodeEditorController;
   readonly keyBindings?: Readonly<Record<string, CodeEditorCommand>>;
+  /** Exact existing commands that explicitly authorize canonical custom-binding collisions. */
+  readonly keyBindingOverrides?: Readonly<Record<string, CodeEditorCommand>>;
   /** Shows the fixed line-number gutter when the viewport is wide enough. Defaults to `false`. */
   readonly lineNumbers?: boolean;
   /** Runs after an accepted text mutation so hosts can schedule revision-aware language work. */
@@ -83,6 +81,7 @@ export class CodeEditor extends Group {
   public focusState: 'idle' | 'focused' | 'released' = 'idle';
   readonly #bindings: Readonly<Record<string, CodeEditorCommand>>;
   readonly #onDocumentChange: (() => void) | undefined;
+  readonly #controllerSubscription: CodeEditorDisposable;
   readonly #viewport: CodeEditorViewport;
   readonly #mouseSelection: CodeEditorMouseSelection;
   readonly #interactionRevision = signal(0);
@@ -91,10 +90,10 @@ export class CodeEditor extends Group {
   #themeFingerprint = fingerprintTheme(classicCodeEditorTheme);
   #lastFrame: CodeEditorFrame | undefined;
   #modal: CodeEditorModalState | undefined;
-  #completion: readonly CodeEditorCompletionItem[] | undefined;
   #snippet: readonly { readonly from: number; readonly to: number }[] | undefined;
   #snippetIndex = 0;
   #searchQuery = '';
+  readonly #locallyHandledRevisions = new Set<number>();
   #disposed = false;
 
   public constructor(options: CodeEditorOptions) {
@@ -111,8 +110,13 @@ export class CodeEditor extends Group {
       this.#finishSelectionChange(),
     );
     this.scroll = { x: this.#viewport.x, y: this.#viewport.y };
-    this.#bindings = Object.freeze({ ...defaultCodeEditorKeyBindings, ...options.keyBindings });
+    this.#bindings = registerCodeEditorKeyBindings(
+      defaultCodeEditorKeyBindings,
+      options.keyBindings,
+      options.keyBindingOverrides,
+    );
     this.#onDocumentChange = options.onDocumentChange;
+    this.#controllerSubscription = this.controller.subscribe((event) => this.#handleControllerEvent(event));
     this.add(this.assistanceView);
     this.onMount(() =>
       this.bind(
@@ -172,7 +176,10 @@ export class CodeEditor extends Group {
   /** Inserts text through one validated document transaction. */
   public insertText(text: string): boolean {
     const accepted = this.controller.replaceSelection(text);
-    this.#finishMutation(accepted);
+    if (accepted) {
+      this.#finishMutation(true);
+      this.#locallyHandledRevisions.add(Number(this.controller.document.identity.revision));
+    }
     return accepted;
   }
 
@@ -211,14 +218,7 @@ export class CodeEditor extends Group {
 
   /** Opens a validated completion list without changing the document selection. */
   public openCompletion(items: readonly CodeEditorCompletionItem[]): void {
-    const normalized = normalizeCompletionItems(
-      items,
-      this.controller.limits.completionItems,
-      this.controller.document.text.length,
-    );
-    if (normalized === undefined) return;
-    this.#completion = normalized;
-    this.assistanceView.show(normalized.map((item) => item.label));
+    if (this.controller.openCompletion(items)) this.#syncAssistance();
   }
 
   /** Opens one modal surface; Escape always dismisses it first. */
@@ -252,18 +252,22 @@ export class CodeEditor extends Group {
       this.#modal = undefined;
       return route('dismissal');
     }
-    if (canonicalKey === 'Escape' && this.#completion !== undefined) {
-      this.#completion = undefined;
-      this.assistanceView.dismiss();
-      return route('dismissal');
+    const assistanceRevision = Number(this.controller.document.identity.revision);
+    const assistanceOwner = this.controller.routeAssistanceKey({
+      key: canonicalKey,
+      ...(key.text === undefined ? {} : { text: key.text }),
+      ...(key.shift === undefined ? {} : { shift: key.shift }),
+    });
+    if (assistanceOwner === 'completion') {
+      const currentRevision = Number(this.controller.document.identity.revision);
+      if (currentRevision !== assistanceRevision) {
+        this.#finishMutation(true);
+        this.#locallyHandledRevisions.add(currentRevision);
+      }
+      this.#syncAssistance();
+      return route(canonicalKey === 'Escape' ? 'dismissal' : 'completion');
     }
-    if (canonicalKey === 'Enter' && this.#completion !== undefined) {
-      const item = this.#completion[0];
-      this.#completion = undefined;
-      this.assistanceView.dismiss();
-      if (item !== undefined) this.#acceptCompletion(item);
-      return route('completion');
-    }
+    if (assistanceOwner === 'snippet') return route('snippet');
     if (canonicalKey === 'Enter' && this.#modal?.kind === 'search') {
       this.execute('search.next');
       return route('editor');
@@ -278,13 +282,13 @@ export class CodeEditor extends Group {
       }
       return route('snippet');
     }
-    const modifiedOwner = this.#routeModifiedKey(normalizedKey);
-    if (modifiedOwner !== undefined) return route(modifiedOwner);
     const command = this.#bindings[codeEditorKeyToken(normalizedKey)];
     if (command !== undefined) {
       this.execute(command);
       return route('editor');
     }
+    const modifiedOwner = this.#routeModifiedKey(normalizedKey);
+    if (modifiedOwner !== undefined) return route(modifiedOwner);
     if (!key.ctrl && !key.alt && this.#routeEditingKey(canonicalKey, key.shift === true)) return route('text');
     if (key.text !== undefined && !key.ctrl && !key.alt) {
       this.insertText(key.text);
@@ -351,11 +355,12 @@ export class CodeEditor extends Group {
   public dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
-    this.#completion = undefined;
     this.#snippet = undefined;
     this.#modal = undefined;
     this.assistanceView.dismiss();
     this.#pending.clear();
+    this.#locallyHandledRevisions.clear();
+    this.#controllerSubscription.dispose();
     this.controller.dispose();
   }
 
@@ -367,7 +372,7 @@ export class CodeEditor extends Group {
     readonly pendingHostEffects: number;
   } {
     return Object.freeze({
-      completionItems: this.#completion?.length ?? 0,
+      completionItems: this.controller.presentation.assistance.completion?.items.length ?? 0,
       popupRows: this.assistanceView.items.length,
       snippetPlaceholders: this.#snippet?.length ?? 0,
       pendingHostEffects: this.#pending.size,
@@ -461,15 +466,6 @@ export class CodeEditor extends Group {
       }
     }
     event.handled = this.#mouseSelection.route(event, this.#lastFrame);
-  }
-
-  #acceptCompletion(item: CodeEditorCompletionItem): void {
-    const range =
-      item.from === undefined
-        ? currentWordRange(this.controller.document.text, Number(this.controller.document.selection.head))
-        : { from: item.from, to: item.to ?? item.from };
-    this.controller.document.setSelection({ anchor: range.from, head: range.to });
-    this.insertText(item.insertText ?? item.label);
   }
 
   #routeEditingKey(key: string, shift: boolean): boolean {
@@ -594,8 +590,41 @@ export class CodeEditor extends Group {
 
   #applyEdits(edits: readonly DocumentEditInput[], selection: DocumentSelectionInput): boolean {
     const accepted = this.controller.applyDocumentEdits(edits, selection);
-    this.#finishMutation(accepted);
+    if (accepted) {
+      this.#finishMutation(true);
+      this.#locallyHandledRevisions.add(Number(this.controller.document.identity.revision));
+    }
     return accepted;
+  }
+
+  #handleControllerEvent(event: CodeEditorControllerEvent): void {
+    if (this.#disposed) return;
+    this.#syncAssistance();
+    if (event.kind === 'document') {
+      if (this.#locallyHandledRevisions.delete(Number(event.mutation.after.revision))) return;
+      this.#record('edit');
+      this.#viewport.synchronize(true);
+      this.#touchInteraction();
+      this.invalidateLayout();
+      try {
+        this.#onDocumentChange?.();
+      } catch {
+        this.controller.degradation.fail('parser');
+      }
+      return;
+    }
+    this.#touchInteraction();
+    this.invalidate();
+  }
+
+  #syncAssistance(): void {
+    const completion = this.controller.presentation.assistance.completion;
+    if (completion === undefined) {
+      this.assistanceView.dismiss();
+      return;
+    }
+    this.assistanceView.show(completion.items.map((item) => item.label));
+    this.assistanceView.selected = completion.selected;
   }
 
   #finishMutation(accepted: boolean): void {

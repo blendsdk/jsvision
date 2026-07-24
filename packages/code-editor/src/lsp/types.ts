@@ -123,6 +123,52 @@ export interface CodeEditorLspPresentation {
   readonly symbolChooser?: { readonly items: readonly { readonly label: string; readonly range: ProtocolRange }[] };
 }
 
+/** Commands currently available from negotiated language-service capabilities. */
+export type CodeEditorLspCommandAvailability = Readonly<
+  Record<
+    | 'completion'
+    | 'hover'
+    | 'signatureHelp'
+    | 'diagnostics'
+    | 'definition'
+    | 'documentSymbols'
+    | 'documentFormatting'
+    | 'rangeFormatting',
+    boolean
+  >
+>;
+
+/** Immutable snippet traversal state exposed without leaking the coordinator's mutable map. */
+export interface CodeEditorLspSnippetSnapshot {
+  /** Ordered placeholder identifiers retained by the active snippet. */
+  readonly placeholders: readonly number[];
+  /** Placeholder currently owning Tab traversal. */
+  readonly activePlaceholder: number;
+  /** Detached UTF-16 ranges for every retained placeholder. */
+  readonly ranges: readonly {
+    /** Placeholder identifier referenced by this range. */
+    readonly placeholder: number;
+    /** Inclusive UTF-16 range start. */
+    readonly from: number;
+    /** Exclusive UTF-16 range end. */
+    readonly to: number;
+  }[];
+}
+
+/** One immutable observable snapshot of all render-relevant coordinator state. */
+export interface CodeEditorLspStateSnapshot {
+  /** Detached assistance content safe for terminal projection. */
+  readonly presentation: CodeEditorLspPresentation;
+  /** Active snippet traversal state, when completion created one. */
+  readonly snippet?: CodeEditorLspSnippetSnapshot;
+  /** Current service connection and degradation state. */
+  readonly serviceState: LspServiceState;
+  /** Current bounded request-progress state. */
+  readonly operationState: 'idle' | 'waiting' | 'pending';
+  /** Commands enabled by the active language and negotiated capabilities. */
+  readonly commandAvailability: CodeEditorLspCommandAvailability;
+}
+
 /** Sanitized diagnostic retained for terminal presentation. */
 export interface PresentedDiagnostic {
   readonly range: ProtocolRange;

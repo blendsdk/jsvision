@@ -70,6 +70,20 @@ interface CodeEditorCellStyle {
 }
 ```
 
+## CodeEditorCompletionItem
+
+One inert completion candidate shared by manual and language-service assistance.
+
+```ts
+interface CodeEditorCompletionItem {
+  label: string;   // Sanitized text displayed in the completion list.
+  detail?: string;   // Optional sanitized supporting text.
+  insertText?: string;   // Optional source text inserted instead of the label.
+  from?: number;   // Optional inclusive start offset for an explicit replacement range.
+  to?: number;   // Optional exclusive end offset paired with `from`.
+}
+```
+
 ## CodeEditorController
 
 Owns public editor state and funnels every source mutation through document transactions.
@@ -82,6 +96,8 @@ limits: CodeEditorLimits
 degradation: CodeEditorDegradationState
 observations: CodeEditorObservabilityChannel
 metrics: CodeEditorControllerMetrics
+presentation: CodeEditorControllerPresentation
+subscribe(listener: (event: CodeEditorControllerEvent) => void): CodeEditorDisposable
 publicState: CodeEditorControllerPublicState
 retainedState: {
     readonly historyBytes: number;
@@ -103,9 +119,17 @@ diagnostics: readonly {
   }[]
 snippets: readonly { readonly from: number; readonly to: number; readonly active: boolean }[]
 replaceSelection(text: string): boolean
+applyMutation(input: CodeEditorMutationInput): DocumentMutationResult
 applyDocumentEdits(edits: readonly DocumentEditInput[], selection: DocumentSelectionInput): boolean
 hostAction(kind: 'navigate' | 'save' | 'close'): Promise<boolean>
 requestAssistance(): void
+openCompletion(items: readonly CodeEditorCompletionItem[]): boolean
+dismissAssistance(): void
+routeAssistanceKey(key: {
+    readonly key: string;
+    readonly text?: string;
+    readonly shift?: boolean;
+  }): 'completion' | 'snippet' | 'editor' | 'unhandled'
 requestFormatting(): void
 fold(): void
 unfold(): void
@@ -117,6 +141,27 @@ unfoldLine(line: number): void
 toggleFoldLine(line: number): void
 revealOffset(offset: number): boolean
 dispose(): void
+```
+
+## CodeEditorControllerEvent
+
+One coalesced controller change delivered to a terminal view.
+
+```ts
+type CodeEditorControllerEvent = | {
+      /** Identifies a render-only state transition. */
+      readonly kind: 'presentation';
+      /** Latest immutable state for terminal projection. */
+      readonly presentation: CodeEditorControllerPresentation;
+    }
+  | {
+      /** Identifies one accepted source transaction. */
+      readonly kind: 'document';
+      /** Latest immutable state after the transaction. */
+      readonly presentation: CodeEditorControllerPresentation;
+      /** Exact transaction metadata delivered once to each live subscriber. */
+      readonly mutation: CodeEditorControllerMutationEvent;
+    }
 ```
 
 ## CodeEditorControllerHostEffect
@@ -142,6 +187,31 @@ interface CodeEditorControllerMetrics {
   parserRuns: number;
   lspRequests: number;
   assistanceRequests: number;
+}
+```
+
+## CodeEditorControllerMutationEvent
+
+Metadata for one accepted mutation after every document invariant has been updated.
+
+```ts
+interface CodeEditorControllerMutationEvent {
+  origin: EditOrigin;   // Source of the accepted atomic operation.
+  before: DocumentIdentity;   // Exact identity before the operation was applied.
+  after: DocumentIdentity;   // Exact identity after the operation was applied.
+}
+```
+
+## CodeEditorControllerPresentation
+
+Immutable render-facing state for one document controller.
+
+```ts
+interface CodeEditorControllerPresentation {
+  assistance: CodeEditorAssistancePresentation;   // Assistance surfaces owned by the controller.
+  serviceState: CodeEditorLspStateSnapshot['serviceState'];   // Current language-service lifecycle state.
+  operationState: CodeEditorLspStateSnapshot['operationState'];   // Current request progress indicator.
+  commandAvailability: CodeEditorLspStateSnapshot['commandAvailability'];   // Commands enabled by negotiated capabilities.
 }
 ```
 
@@ -223,6 +293,16 @@ type CodeEditorDegradedFeature = | 'documentModel'
   | 'diagnostics'
   | 'completion'
   | 'symbols'
+```
+
+## CodeEditorDisposable
+
+A small lifecycle handle used by editor-owned subscriptions and bindings.
+
+```ts
+interface CodeEditorDisposable {
+  dispose(): void;   // Releases the associated listener or binding. Calling this more than once is safe.
+}
 ```
 
 ## CodeEditorDocumentModel
@@ -323,6 +403,18 @@ type CodeEditorHostEffect = | {
     }
 ```
 
+## CodeEditorKeyBindingConflictError
+
+Describes an unsafe canonical binding collision without hiding either command.
+
+```ts
+new CodeEditorKeyBindingConflictError(binding: string, existingCommand: CodeEditorCommand, incomingCommand: CodeEditorCommand)   // extends Error
+// methods & signals:
+binding: string
+existingCommand: CodeEditorCommand
+incomingCommand: CodeEditorCommand
+```
+
 ## CodeEditorKeyRoute
 
 Result of deterministic keyboard routing.
@@ -395,6 +487,26 @@ interface CodeEditorLspCapabilities {
 }
 ```
 
+## CodeEditorLspCommandAvailability
+
+Commands currently available from negotiated language-service capabilities.
+
+```ts
+type CodeEditorLspCommandAvailability = Readonly<
+  Record<
+    | 'completion'
+    | 'hover'
+    | 'signatureHelp'
+    | 'diagnostics'
+    | 'definition'
+    | 'documentSymbols'
+    | 'documentFormatting'
+    | 'rangeFormatting',
+    boolean
+  >
+>
+```
+
 ## CodeEditorLspCoordinator
 
 Coordinates one document with an optional transport-neutral LSP session.
@@ -402,10 +514,10 @@ Coordinates one document with an optional transport-neutral LSP session.
 ```ts
 new CodeEditorLspCoordinator(options: CreateCodeEditorLspCoordinatorOptions)
 // methods & signals:
-serviceState: LspServiceState
-operationState: 'idle' | 'waiting' | 'pending'
 closed
 localCapabilities
+serviceState: LspServiceState
+operationState: 'idle' | 'waiting' | 'pending'
 presentation: CodeEditorLspPresentation
 snippet: SnippetInteractionState | undefined
 configureLimits(limits: CreateCodeEditorLspCoordinatorOptions['limits']): void
@@ -417,6 +529,9 @@ retainedState: {
     readonly snippetPlaceholders: number;
   }
 document: CodeEditorDocumentModel
+state: CodeEditorLspStateSnapshot
+subscribeState(listener: (state: CodeEditorLspStateSnapshot) => void): CodeEditorDisposable
+bindMutationSink(sink: CodeEditorMutationSink): CodeEditorDisposable
 open(): Promise<void>
 synchronize(): Promise<void>
 resynchronize(): Promise<void>
@@ -447,7 +562,7 @@ proposeWorkspaceEdit(edit: unknown): Promise<boolean>
 forwardCommand(command: unknown): Promise<boolean>
 save(): Promise<{ readonly text: string; readonly formatting: string }>
 tick(): void
-commandAvailability: LspCommandAvailability
+commandAvailability: CodeEditorLspCommandAvailability
 ```
 
 ## CodeEditorLspOperation
@@ -520,6 +635,63 @@ Transport-neutral session lifecycle state.
 
 ```ts
 type CodeEditorLspSessionState = 'connecting' | 'ready' | 'degraded' | 'closed'
+```
+
+## CodeEditorLspSnippetSnapshot
+
+Immutable snippet traversal state exposed without leaking the coordinator's mutable map.
+
+```ts
+interface CodeEditorLspSnippetSnapshot {
+  placeholders: readonly number[];   // Ordered placeholder identifiers retained by the active snippet.
+  activePlaceholder: number;   // Placeholder currently owning Tab traversal.
+  ranges: readonly {
+    /** Placeholder identifier referenced by this range. */
+    readonly placeholder: number;
+    /** Inclusive UTF-16 range start. */
+    readonly from: number;
+    /** Exclusive UTF-16 range end. */
+    readonly to: number;
+  }[];   // Detached UTF-16 ranges for every retained placeholder.
+}
+```
+
+## CodeEditorLspStateSnapshot
+
+One immutable observable snapshot of all render-relevant coordinator state.
+
+```ts
+interface CodeEditorLspStateSnapshot {
+  presentation: CodeEditorLspPresentation;   // Detached assistance content safe for terminal projection.
+  snippet?: CodeEditorLspSnippetSnapshot;   // Active snippet traversal state, when completion created one.
+  serviceState: LspServiceState;   // Current service connection and degradation state.
+  operationState: 'idle' | 'waiting' | 'pending';   // Current bounded request-progress state.
+  commandAvailability: CodeEditorLspCommandAvailability;   // Commands enabled by the active language and negotiated capabilities.
+}
+```
+
+## CodeEditorMutationInput
+
+One validated logical document mutation submitted to the controller boundary.
+
+```ts
+interface CodeEditorMutationInput {
+  base?: DocumentIdentity;   // Exact document identity required for stale-result rejection.
+  edits: readonly DocumentEditInput[];   // Non-empty atomic replacement list in UTF-16 document offsets.
+  selection?: DocumentSelectionInput;   // Optional selection installed after every edit succeeds.
+  origin: EditOrigin;   // Durable source used by history, observability, and host integrations.
+}
+```
+
+## CodeEditorMutationSink
+
+A single-owner mutation adapter used by a language-service coordinator.
+
+```ts
+interface CodeEditorMutationSink {
+  document: CodeEditorDocumentModel;   // Exact model owned by this sink.
+  apply(input: CodeEditorMutationInput): DocumentMutationResult;   // Applies one normalized mutation or returns a typed inert rejection.
+}
 ```
 
 ## CodeEditorObservabilityChannel
@@ -599,6 +771,7 @@ Construction options for a terminal-native code editor view.
 interface CodeEditorOptions {
   controller: CodeEditorController;
   keyBindings?: Readonly<Record<string, CodeEditorCommand>>;
+  keyBindingOverrides?: Readonly<Record<string, CodeEditorCommand>>;   // Exact existing commands that explicitly authorize canonical custom-binding collisions.
   lineNumbers?: boolean;   // Shows the fixed line-number gutter when the viewport is wide enough. Defaults to `false`.
   onDocumentChange?: () => void;   // Runs after an accepted text mutation so hosts can schedule revision-aware language work.
 }
@@ -1428,6 +1601,14 @@ Selects syntax intersecting a bounded viewport plus optional look-around.
 
 ```ts
 querySyntaxViewport(spans: readonly SyntaxSpan[], from: number, to: number, lookAround = 256): readonly SyntaxSpan[]
+```
+
+## registerCodeEditorKeyBindings
+
+Builds one immutable canonical binding map with expected-command override protection.
+
+```ts
+registerCodeEditorKeyBindings(defaults: Readonly<Record<string, CodeEditorCommand>>, custom: Readonly<Record<string, CodeEditorCommand>> | undefined, overrides: Readonly<Record<string, CodeEditorCommand>> | undefined): Readonly<Record<string, CodeEditorCommand>>
 ```
 
 ## resolveCodeEditorLimits

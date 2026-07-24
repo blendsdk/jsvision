@@ -1,9 +1,18 @@
 import type { CodeEditorDocumentModel } from '../document/model.js';
+import type { DocumentMutationResult } from '../document/types.js';
 import { positionToOffset } from '../document/positions.js';
+import {
+  applyCodeEditorMutation,
+  type CodeEditorDisposable,
+  type CodeEditorMutationInput,
+  type CodeEditorMutationSink,
+} from '../integration.js';
 import type {
   CodeEditorHostEffect,
+  CodeEditorLspCommandAvailability,
   CodeEditorLspOperation,
   CodeEditorLspPresentation,
+  CodeEditorLspStateSnapshot,
   CreateCodeEditorLspCoordinatorOptions,
   LocalCapabilityState,
   LspServiceState,
@@ -12,7 +21,7 @@ import type {
   ProtocolPosition,
 } from './types.js';
 import type { CodeEditorLspSession } from './session.js';
-import { applyPresentedCompletion, validateCompletionItems } from './completion.js';
+import { completionEdits, validateCompletionItems } from './completion.js';
 import { validateDiagnostics } from './diagnostics.js';
 import { validateFormattingEdits } from './formatting.js';
 import { presentHover, presentSignature } from './hover.js';
@@ -23,10 +32,10 @@ import {
   boundedLimit,
   emptyPresentation,
   endPosition,
+  immutablePresentation,
   mapSnippetRanges,
   resolveCommandAvailability,
   resolveLspLimits,
-  type LspCommandAvailability,
   type ResolvedLspLimits,
   unavailableOperation,
 } from './coordinator-support.js';
@@ -65,12 +74,12 @@ interface MutableOperation extends CodeEditorLspOperation {
  * ```
  */
 export class CodeEditorLspCoordinator {
-  public serviceState: LspServiceState;
-  public operationState: 'idle' | 'waiting' | 'pending' = 'idle';
   public closed = false;
   public readonly localCapabilities = defaultLocalCapabilities;
-  public presentation: CodeEditorLspPresentation = emptyPresentation();
-  public snippet: SnippetInteractionState | undefined;
+  #serviceState: LspServiceState = 'plain';
+  #operationState: 'idle' | 'waiting' | 'pending' = 'idle';
+  #presentation: CodeEditorLspPresentation = emptyPresentation();
+  #snippet: SnippetInteractionState | undefined;
   readonly #document: CodeEditorDocumentModel;
   readonly #session: CodeEditorLspSession | undefined;
   #limits: ResolvedLspLimits;
@@ -84,6 +93,7 @@ export class CodeEditorLspCoordinator {
   #formatOnSave: boolean;
   #coordinatorGeneration = 1;
   #syncPromise: Promise<void> | undefined;
+  #syncRequested = false;
   #documentReady: Promise<void> = Promise.resolve();
   #resolveDocumentReady: (() => void) | undefined;
   #documentSynchronized = true;
@@ -92,6 +102,60 @@ export class CodeEditorLspCoordinator {
   readonly #navigationBack: number[] = [];
   #unsubscribeDiagnostics: (() => void) | undefined;
   #unsubscribeState: (() => void) | undefined;
+  #stateSnapshot!: CodeEditorLspStateSnapshot;
+  readonly #stateListeners = new Set<(state: CodeEditorLspStateSnapshot) => void>();
+  #stateNotificationsReady = false;
+  #stateBatchDepth = 0;
+  #stateChanged = false;
+  #mutationSink: CodeEditorMutationSink | undefined;
+
+  /** Current language-service lifecycle state. */
+  public get serviceState(): LspServiceState {
+    return this.#serviceState;
+  }
+
+  public set serviceState(value: LspServiceState) {
+    if (this.#serviceState === value) return;
+    this.#serviceState = value;
+    this.#markStateChanged();
+  }
+
+  /** Current request indicator used by status and accessibility presentation. */
+  public get operationState(): 'idle' | 'waiting' | 'pending' {
+    return this.#operationState;
+  }
+
+  public set operationState(value: 'idle' | 'waiting' | 'pending') {
+    if (this.#operationState === value) return;
+    this.#operationState = value;
+    this.#markStateChanged();
+  }
+
+  /** Current bounded assistance presentation. */
+  public get presentation(): CodeEditorLspPresentation {
+    return this.#presentation;
+  }
+
+  public set presentation(value: CodeEditorLspPresentation) {
+    if (this.#presentation === value) return;
+    try {
+      this.#presentation = immutablePresentation(value, this.#limits);
+    } catch {
+      this.#presentation = emptyPresentation();
+    }
+    this.#markStateChanged();
+  }
+
+  /** Current internal snippet traversal state retained for compatibility. */
+  public get snippet(): SnippetInteractionState | undefined {
+    return this.#snippet;
+  }
+
+  public set snippet(value: SnippetInteractionState | undefined) {
+    if (this.#snippet === value) return;
+    this.#snippet = value;
+    this.#markStateChanged();
+  }
 
   public constructor(options: CreateCodeEditorLspCoordinatorOptions) {
     if (!isAllowedUri(options.uri)) throw new TypeError('The active document URI is not allowed.');
@@ -124,24 +188,28 @@ export class CodeEditorLspCoordinator {
         this.#receiveDiagnostics(uri, version, diagnostics, metadata.generation);
       });
       this.#unsubscribeState = this.#session.subscribeState((state) => {
-        if (state === 'connecting') {
-          this.serviceState = 'connecting';
-          this.#coordinatorGeneration += 1;
-          this.#cancelAll();
-          this.#documentSynchronized = false;
-          this.presentation = emptyPresentation();
-          this.snippet = undefined;
-          this.#documentReady = new Promise((resolve) => {
-            this.#resolveDocumentReady = resolve;
-          });
-        } else if (state === 'ready') {
-          this.serviceState = 'ready';
-          if (!this.#documentSynchronized) void this.resynchronize();
-        } else if (state === 'degraded') {
-          this.serviceState = 'degraded';
-        }
+        this.#batchStateChange(() => {
+          if (state === 'connecting') {
+            this.serviceState = 'connecting';
+            this.#coordinatorGeneration += 1;
+            this.#cancelAll();
+            this.#documentSynchronized = false;
+            this.presentation = emptyPresentation();
+            this.snippet = undefined;
+            this.#documentReady = new Promise((resolve) => {
+              this.#resolveDocumentReady = resolve;
+            });
+          } else if (state === 'ready') {
+            this.serviceState = 'ready';
+            if (!this.#documentSynchronized) void this.resynchronize();
+          } else if (state === 'degraded') {
+            this.serviceState = 'degraded';
+          }
+        });
       });
     }
+    this.#stateSnapshot = this.#createStateSnapshot();
+    this.#stateNotificationsReady = true;
   }
 
   /** Applies a controller-owned limit projection before protocol requests begin. */
@@ -174,6 +242,54 @@ export class CodeEditorLspCoordinator {
     return this.#document;
   }
 
+  /** Returns the latest immutable render-facing coordinator state. */
+  public get state(): CodeEditorLspStateSnapshot {
+    return this.#stateSnapshot;
+  }
+
+  /**
+   * Subscribes to coalesced render-facing coordinator changes.
+   *
+   * Listener failures are isolated so one embedding host cannot block other editors.
+   *
+   * @throws {RangeError} When the bounded listener capacity has been reached.
+   */
+  public subscribeState(listener: (state: CodeEditorLspStateSnapshot) => void): CodeEditorDisposable {
+    if (typeof listener !== 'function') throw new TypeError('The coordinator state listener must be a function.');
+    if (this.#stateListeners.size >= 16) throw new RangeError('The coordinator state listener limit was reached.');
+    this.#stateListeners.add(listener);
+    let active = true;
+    return Object.freeze({
+      dispose: () => {
+        if (!active) return;
+        active = false;
+        this.#stateListeners.delete(listener);
+      },
+    });
+  }
+
+  /**
+   * Delegates provider mutations to one controller for this exact document.
+   *
+   * Standalone coordinators continue to use their validated direct-document fallback until bound.
+   *
+   * @throws {TypeError} When the sink belongs to another document.
+   * @throws {Error} When another live sink already owns mutation integration.
+   */
+  public bindMutationSink(sink: CodeEditorMutationSink): CodeEditorDisposable {
+    if (sink.document !== this.#document) throw new TypeError('The mutation sink belongs to another document.');
+    if (this.#mutationSink !== undefined) throw new Error('The coordinator already has a mutation sink.');
+    this.#mutationSink = sink;
+    let active = true;
+    return Object.freeze({
+      dispose: () => {
+        if (!active) return;
+        active = false;
+        if (this.#mutationSink === sink) this.#mutationSink = undefined;
+      },
+    });
+  }
+
   /** Opens the active protocol document after validating its URI. */
   public async open(): Promise<void> {
     if (this.closed || this.#session === undefined || this.#opened) return;
@@ -189,24 +305,28 @@ export class CodeEditorLspCoordinator {
   /** Sends the current revision in protocol order and releases queued requests. */
   public synchronize(): Promise<void> {
     if (this.#session === undefined || !this.#opened || this.closed) return Promise.resolve();
-    const prior = this.#syncPromise ?? Promise.resolve();
-    const snapshot = { text: this.#document.text, version: Number(this.#document.identity.revision) };
-    const promise = prior.then(async () => {
-      const incremental = this.#session?.capabilities.textDocumentSync === 'incremental';
-      await this.#session?.notify('textDocument/didChange', {
-        textDocument: { uri: this.#uri, version: snapshot.version },
-        contentChanges: incremental
-          ? [
-              {
-                range: { start: { line: 0, character: 0 }, end: endPosition(this.#lastSynchronizedText) },
-                text: snapshot.text,
-              },
-            ]
-          : [{ text: snapshot.text }],
-      });
-      this.#lastSynchronizedText = snapshot.text;
-    });
-    const synchronized = promise.finally(() => {
+    this.#syncRequested = true;
+    if (this.#syncPromise !== undefined) return this.#syncPromise;
+    const drain = async () => {
+      while (this.#syncRequested && !this.closed) {
+        this.#syncRequested = false;
+        const snapshot = { text: this.#document.text, version: Number(this.#document.identity.revision) };
+        const incremental = this.#session?.capabilities.textDocumentSync === 'incremental';
+        await this.#session?.notify('textDocument/didChange', {
+          textDocument: { uri: this.#uri, version: snapshot.version },
+          contentChanges: incremental
+            ? [
+                {
+                  range: { start: { line: 0, character: 0 }, end: endPosition(this.#lastSynchronizedText) },
+                  text: snapshot.text,
+                },
+              ]
+            : [{ text: snapshot.text }],
+        });
+        this.#lastSynchronizedText = snapshot.text;
+      }
+    };
+    const synchronized = drain().finally(() => {
       if (this.#syncPromise === synchronized) this.#syncPromise = undefined;
     });
     this.#syncPromise = synchronized;
@@ -253,6 +373,8 @@ export class CodeEditorLspCoordinator {
   public async close(): Promise<void> {
     if (this.closed) return;
     this.closed = true;
+    this.#stateListeners.clear();
+    this.#mutationSink = undefined;
     this.#coordinatorGeneration += 1;
     this.#cancelAll();
     if (this.#session !== undefined && this.#opened) {
@@ -385,13 +507,14 @@ export class CodeEditorLspCoordinator {
       this.presentation = { ...this.presentation, completion: undefined };
       return;
     }
-    const normalized = applyPresentedCompletion(
-      this.#document,
-      item,
-      this.#limits.edits,
-      this.#limits.replacementCharacters,
-    );
+    const normalized = completionEdits(this.#document, item, this.#limits.edits, this.#limits.replacementCharacters);
     if (normalized === undefined) return;
+    const applied = this.#applyMutation({
+      base: this.#document.identity,
+      edits: normalized.edits,
+      origin: 'completion',
+    });
+    if (!applied.accepted) return;
     const numbered = [...(normalized.snippet?.placeholders.keys() ?? [])]
       .filter((value) => value > 0)
       .sort((a, b) => a - b);
@@ -411,12 +534,16 @@ export class CodeEditorLspCoordinator {
     readonly text?: string;
     readonly shift?: boolean;
   }): 'completion' | 'snippet' | 'editor' | 'unhandled' {
-    const result = routeAssistanceKey(this.presentation.completion, this.snippet, key);
-    this.snippet = result.snippet;
-    if (result.snippet !== undefined) this.#selectSnippetPlaceholder(result.snippet.activePlaceholder);
-    this.presentation = { ...this.presentation, completion: result.completion };
-    if (result.acceptCompletion) this.acceptCompletion();
-    return result.owner;
+    let owner: 'completion' | 'snippet' | 'editor' | 'unhandled' = 'unhandled';
+    this.#batchStateChange(() => {
+      const result = routeAssistanceKey(this.presentation.completion, this.snippet, key);
+      owner = result.owner;
+      this.snippet = result.snippet;
+      if (result.snippet !== undefined) this.#selectSnippetPlaceholder(result.snippet.activePlaceholder);
+      this.presentation = { ...this.presentation, completion: result.completion };
+      if (result.acceptCompletion) this.acceptCompletion();
+    });
+    return owner;
   }
 
   /** Ends snippet mode after an external or conflicting document edit. */
@@ -528,7 +655,7 @@ export class CodeEditorLspCoordinator {
   }
 
   /** Reports commands enabled by the current negotiated session capabilities. */
-  public get commandAvailability(): LspCommandAvailability {
+  public get commandAvailability(): CodeEditorLspCommandAvailability {
     return resolveCommandAvailability(this.#languageId, this.#session?.capabilities);
   }
 
@@ -597,17 +724,19 @@ export class CodeEditorLspCoordinator {
           ...extraParams,
         },
         (result, error) => {
-          if (error !== undefined) {
-            this.serviceState = 'degraded';
-            fail?.(error);
-            operation.resolve('failed');
-          } else if (this.#matches(stamp)) {
-            accept(result);
-            operation.resolve('completed');
-          } else {
-            stale?.();
-            operation.resolve('stale');
-          }
+          this.#batchStateChange(() => {
+            if (error !== undefined) {
+              this.serviceState = 'degraded';
+              fail?.(error);
+              operation.resolve('failed');
+            } else if (this.#matches(stamp)) {
+              accept(result);
+              operation.resolve('completed');
+            } else {
+              stale?.();
+              operation.resolve('stale');
+            }
+          });
         },
       );
     };
@@ -689,16 +818,11 @@ export class CodeEditorLspCoordinator {
       this.#limits.replacementCharacters,
     );
     if (edits === undefined) return false;
-    try {
-      const transaction = this.#document.createTransaction({
-        base: this.#document.identity,
-        edits,
-        origin: 'format',
-      });
-      return this.#document.apply(transaction).accepted;
-    } catch {
-      return false;
-    }
+    return this.#applyMutation({
+      base: this.#document.identity,
+      edits,
+      origin: 'format',
+    }).accepted;
   }
 
   #selectSnippetPlaceholder(number: number): void {
@@ -722,12 +846,70 @@ export class CodeEditorLspCoordinator {
   }
 
   #cancelAll(): void {
-    for (const [id, value] of this.#pending) {
-      this.#session?.cancel(id);
-      value.operation.resolve('cancelled');
+    this.#batchStateChange(() => {
+      for (const [id, value] of this.#pending) {
+        this.#session?.cancel(id);
+        value.operation.resolve('cancelled');
+      }
+      this.#pending.clear();
+      this.operationState = 'idle';
+    });
+  }
+
+  #applyMutation(input: CodeEditorMutationInput): DocumentMutationResult {
+    return this.#mutationSink?.apply(input) ?? applyCodeEditorMutation(this.#document, input);
+  }
+
+  #createStateSnapshot(): CodeEditorLspStateSnapshot {
+    const snippet =
+      this.#snippet === undefined
+        ? undefined
+        : Object.freeze({
+            placeholders: Object.freeze([...this.#snippet.placeholders]),
+            activePlaceholder: this.#snippet.activePlaceholder,
+            ranges: Object.freeze(
+              [...this.#snippet.ranges].map(([placeholder, range]) =>
+                Object.freeze({ placeholder, from: range[0], to: range[1] }),
+              ),
+            ),
+          });
+    return Object.freeze({
+      presentation: this.#presentation,
+      ...(snippet === undefined ? {} : { snippet }),
+      serviceState: this.#serviceState,
+      operationState: this.#operationState,
+      commandAvailability: this.commandAvailability,
+    });
+  }
+
+  #markStateChanged(): void {
+    if (!this.#stateNotificationsReady || this.closed) return;
+    this.#stateChanged = true;
+    if (this.#stateBatchDepth === 0) this.#publishState();
+  }
+
+  #batchStateChange(change: () => void): void {
+    this.#stateBatchDepth += 1;
+    try {
+      change();
+    } finally {
+      this.#stateBatchDepth -= 1;
+      if (this.#stateBatchDepth === 0 && this.#stateChanged) this.#publishState();
     }
-    this.#pending.clear();
-    this.operationState = 'idle';
+  }
+
+  #publishState(): void {
+    if (!this.#stateNotificationsReady || this.closed || !this.#stateChanged) return;
+    this.#stateChanged = false;
+    this.#stateSnapshot = this.#createStateSnapshot();
+    for (const listener of [...this.#stateListeners]) {
+      if (!this.#stateListeners.has(listener) || this.closed) continue;
+      try {
+        listener(this.#stateSnapshot);
+      } catch {
+        // Subscriber failures are isolated because protocol state must remain usable by other views.
+      }
+    }
   }
 
   #textDocumentPayload(): Readonly<Record<string, unknown>> {
