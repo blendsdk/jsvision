@@ -1,13 +1,24 @@
 import type { CapabilityProfile } from '@jsvision/core';
-import { Commands, Group, signal, type DispatchEvent, type DrawContext, type Point, type Signal } from '@jsvision/ui';
+import { Group, signal, type DispatchEvent, type DrawContext, type Point, type Signal } from '@jsvision/ui';
 import type { CodeEditorController } from '../controller.js';
-import { offsetToPosition, offsetToVisualColumn } from '../document/positions.js';
+import { offsetToPosition } from '../document/positions.js';
 import type { DocumentEditInput, DocumentSelectionInput } from '../document/types.js';
 import { builtInCommentMetadata } from '../languages/metadata.js';
 import { classicCodeEditorTheme } from '../theme/presets.js';
 import { snapshotCodeEditorTheme } from '../theme/resolve.js';
 import type { CodeEditorTheme, ResolvedCodeEditorTheme } from '../theme/theme.js';
 import { CodeEditorAssistanceView, type CodeEditorCompletionItem, type CodeEditorModalState } from './assistance.js';
+import { routeCodeEditorCommand } from './command-events.js';
+import {
+  advanceCharacterRun,
+  currentWordRange,
+  lineSeparator,
+  removableIndentationLength,
+  retreatCharacterRun,
+  sourceCharacterAt,
+  sourceCharacterBefore,
+  transformOffset,
+} from './editing-operations.js';
 import {
   canonicalCodeEditorKeyName,
   codeEditorKeyToken,
@@ -15,7 +26,15 @@ import {
   type CodeEditorCommand,
   type CodeEditorKey,
 } from './input.js';
-import { projectCodeEditor, type CodeEditorFrame } from './projection.js';
+import {
+  fingerprintTheme,
+  normalizeCompletionItems,
+  normalizeSnippetPlaceholders,
+  ownData,
+} from './input-validation.js';
+import { CodeEditorMouseSelection } from './mouse-selection.js';
+import { codeEditorGutterWidth, projectCodeEditor, type CodeEditorFrame } from './projection.js';
+import { CodeEditorViewport, type CodeEditorViewportMetrics } from './viewport.js';
 
 /** Construction options for a terminal-native code editor view. */
 export interface CodeEditorOptions {
@@ -46,7 +65,7 @@ export class CodeEditor extends Group {
   public readonly controller: CodeEditorController;
   /** Whether this editor projects the optional line-number gutter. */
   public readonly lineNumbers: boolean;
-  public readonly behavior = Object.freeze({ documentTransactions: true, keyboardOnly: true });
+  public readonly behavior = Object.freeze({ documentTransactions: true, keyboardOnly: false });
   public readonly nonColorIndicators = Object.freeze([
     'selection',
     'activeLine',
@@ -63,9 +82,12 @@ export class CodeEditor extends Group {
   public focusState: 'idle' | 'focused' | 'released' = 'idle';
   readonly #bindings: Readonly<Record<string, CodeEditorCommand>>;
   readonly #onDocumentChange: (() => void) | undefined;
+  readonly #viewport: CodeEditorViewport;
+  readonly #mouseSelection: CodeEditorMouseSelection;
+  readonly #interactionRevision = signal(0);
   readonly #pending = new Map<'navigate' | 'save' | 'close', Promise<unknown>>();
   #theme: CodeEditorTheme = classicCodeEditorTheme;
-  #themeFingerprint = fingerprint(classicCodeEditorTheme);
+  #themeFingerprint = fingerprintTheme(classicCodeEditorTheme);
   #lastFrame: CodeEditorFrame | undefined;
   #modal: CodeEditorModalState | undefined;
   #completion: readonly CodeEditorCompletionItem[] | undefined;
@@ -83,10 +105,23 @@ export class CodeEditor extends Group {
       maxWidth: this.controller.limits.popupWidth,
       maxHeight: this.controller.limits.popupHeight,
     });
-    this.scroll = { x: signal(0), y: signal(0) };
+    this.#viewport = new CodeEditorViewport(this.controller.document);
+    this.#mouseSelection = new CodeEditorMouseSelection(this, this.controller.document, this.#viewport, () =>
+      this.#finishSelectionChange(),
+    );
+    this.scroll = { x: this.#viewport.x, y: this.#viewport.y };
     this.#bindings = Object.freeze({ ...defaultCodeEditorKeyBindings, ...options.keyBindings });
     this.#onDocumentChange = options.onDocumentChange;
     this.add(this.assistanceView);
+    this.onMount(() =>
+      this.bind(
+        () => [this.scroll.x(), this.scroll.y()] as const,
+        () => {
+          this.#viewport.synchronize(false);
+          this.invalidate();
+        },
+      ),
+    );
   }
 
   /** Gives the editor logical focus for standalone and test-driven operation. */
@@ -101,6 +136,7 @@ export class CodeEditor extends Group {
     if (command === 'cursor.documentEnd') {
       const end = this.controller.document.text.length;
       this.controller.document.setSelection({ anchor: end, head: end });
+      this.#finishSelectionChange();
       return;
     }
     if (command === 'search.open') {
@@ -127,35 +163,48 @@ export class CodeEditor extends Group {
     return accepted;
   }
 
+  /** Returns reactive viewport geometry and clamped scroll limits for passive host chrome. */
+  public get viewportMetrics(): CodeEditorViewportMetrics {
+    return this.#viewport.metrics;
+  }
+
+  /** Returns a reactive counter that changes after each caret, selection, or document update. */
+  public get interactionRevision(): number {
+    return this.#interactionRevision();
+  }
+
+  /**
+   * Re-fits a standalone or window-hosted editor before the next layout pass applies real bounds.
+   *
+   * Normal drawing discovers its own dimensions automatically. Window composition calls this
+   * method during resize so caret tracking and scrollbar ranges update in the same event tick.
+   *
+   * @throws {RangeError} When either dimension is not a supported non-negative integer.
+   */
+  public resizeViewport(width: number, height: number): void {
+    if (
+      !Number.isSafeInteger(width) ||
+      !Number.isSafeInteger(height) ||
+      width < 0 ||
+      height < 0 ||
+      width > 2_000 ||
+      height > 500
+    ) {
+      throw new RangeError('Invalid editor viewport dimension.');
+    }
+    const gutterWidth = codeEditorGutterWidth(width, this.controller.document.snapshot.lineCount, this.lineNumbers);
+    if (this.#viewport.resize(width, height, gutterWidth)) this.#touchInteraction();
+  }
+
   /** Opens a validated completion list without changing the document selection. */
   public openCompletion(items: readonly CodeEditorCompletionItem[]): void {
-    const normalized: CodeEditorCompletionItem[] = [];
-    try {
-      if (!Array.isArray(items) || items.length > 100_000) return;
-      for (let index = 0; index < Math.min(items.length, this.controller.limits.completionItems); index += 1) {
-        const item = ownData(items, String(index));
-        const label = ownString(item, 'label', 256);
-        const insertText = ownString(item, 'insertText', 65_536);
-        const from = ownInteger(item, 'from');
-        const to = ownInteger(item, 'to');
-        if (label === undefined || (from === undefined) !== (to === undefined)) continue;
-        if (
-          from !== undefined &&
-          (from < 0 || to === undefined || to < from || to > this.controller.document.text.length)
-        )
-          continue;
-        normalized.push(
-          Object.freeze({
-            label,
-            ...(insertText === undefined ? {} : { insertText }),
-            ...(from === undefined ? {} : { from, to }),
-          }),
-        );
-      }
-    } catch {
-      return;
-    }
-    this.#completion = Object.freeze(normalized);
+    const normalized = normalizeCompletionItems(
+      items,
+      this.controller.limits.completionItems,
+      this.controller.document.text.length,
+    );
+    if (normalized === undefined) return;
+    this.#completion = normalized;
     this.assistanceView.show(normalized.map((item) => item.label));
   }
 
@@ -167,26 +216,13 @@ export class CodeEditor extends Group {
 
   /** Starts validated, bounded snippet placeholder traversal. */
   public startSnippet(placeholders: readonly { readonly from: number; readonly to: number }[]): void {
-    const normalized: { from: number; to: number }[] = [];
-    try {
-      if (!Array.isArray(placeholders) || placeholders.length > 100_000) return;
-      for (let index = 0; index < Math.min(placeholders.length, this.controller.limits.decorations); index += 1) {
-        const item = ownData(placeholders, String(index));
-        const from = ownInteger(item, 'from');
-        const to = ownInteger(item, 'to');
-        if (
-          from !== undefined &&
-          to !== undefined &&
-          from >= 0 &&
-          to >= from &&
-          to <= this.controller.document.text.length
-        )
-          normalized.push(Object.freeze({ from, to }));
-      }
-    } catch {
-      return;
-    }
-    this.#snippet = Object.freeze(normalized);
+    const normalized = normalizeSnippetPlaceholders(
+      placeholders,
+      this.controller.limits.decorations,
+      this.controller.document.text.length,
+    );
+    if (normalized === undefined) return;
+    this.#snippet = normalized;
     this.#snippetIndex = 0;
   }
 
@@ -223,7 +259,10 @@ export class CodeEditor extends Group {
       this.#snippetIndex += 1;
       const target = this.#snippet[this.#snippetIndex];
       if (target === undefined) this.#snippet = undefined;
-      else this.controller.document.setSelection({ anchor: target.from, head: target.to });
+      else {
+        this.controller.document.setSelection({ anchor: target.from, head: target.to });
+        this.#finishSelectionChange();
+      }
       return route('snippet');
     }
     const modifiedOwner = this.#routeModifiedKey(normalizedKey);
@@ -247,7 +286,7 @@ export class CodeEditor extends Group {
     const snapshot = snapshotCodeEditorTheme(candidate);
     if (snapshot === undefined) return;
     this.#theme = snapshot;
-    this.#themeFingerprint = fingerprint(this.#theme);
+    this.#themeFingerprint = fingerprintTheme(this.#theme);
     this.invalidate();
   }
 
@@ -258,6 +297,7 @@ export class CodeEditor extends Group {
     readonly caps: CapabilityProfile;
   }): CodeEditorFrame {
     const startedAt = Date.now();
+    this.resizeViewport(options.width, options.height);
     const caret = Number(this.controller.document.selection.head);
     const bracketPair = this.controller.languageResult?.brackets.find(
       (pair) => pair.open === caret || pair.close === caret,
@@ -353,8 +393,29 @@ export class CodeEditor extends Group {
 
   /** Bridges decoded terminal keys into the deterministic router. */
   public override onEvent(event: DispatchEvent): void {
+    if (event.event.type === 'wheel') {
+      const direction = event.event.dir;
+      this.#viewport.scrollBy(
+        direction === 'left' ? -3 : direction === 'right' ? 3 : 0,
+        direction === 'up' ? -3 : direction === 'down' ? 3 : 0,
+      );
+      this.#touchInteraction();
+      this.invalidate();
+      event.handled = true;
+      return;
+    }
+    if (event.event.type === 'mouse') {
+      this.#routeMouseEvent(event);
+      return;
+    }
     if (event.event.type === 'command') {
-      event.handled = this.#routeCommandEvent(event);
+      event.handled = routeCodeEditorCommand(
+        this.controller,
+        event,
+        (text) => this.insertText(text),
+        (accepted) => this.#finishMutation(accepted),
+        () => this.#finishSelectionChange(),
+      );
       return;
     }
     if (event.event.type !== 'key') return;
@@ -369,32 +430,8 @@ export class CodeEditor extends Group {
     event.handled = result.handled;
   }
 
-  #routeCommandEvent(event: DispatchEvent): boolean {
-    if (event.event.type !== 'command') return false;
-    const command = event.event.command;
-    if (command === Commands.selectAll) {
-      this.controller.document.setSelection({ anchor: 0, head: this.controller.document.text.length });
-      this.invalidate();
-      return true;
-    }
-    if (command === Commands.undo || command === Commands.redo) {
-      const result = command === Commands.undo ? this.controller.document.undo() : this.controller.document.redo();
-      this.#finishMutation(result.accepted);
-      return true;
-    }
-    if (command !== Commands.copy && command !== Commands.cut && command !== Commands.paste) return false;
-    if (command === Commands.paste) {
-      const text = event.readClipboard?.() ?? '';
-      if (text.length > 0) this.insertText(text);
-      return true;
-    }
-    const selection = this.controller.document.selection;
-    const from = Math.min(Number(selection.anchor), Number(selection.head));
-    const to = Math.max(Number(selection.anchor), Number(selection.head));
-    if (from === to) return true;
-    event.setClipboard?.(this.controller.document.snapshot.slice(from, to));
-    if (command === Commands.cut) this.insertText('');
-    return true;
+  #routeMouseEvent(event: DispatchEvent): void {
+    event.handled = this.#mouseSelection.route(event, this.#lastFrame);
   }
 
   #acceptCompletion(item: CodeEditorCompletionItem): void {
@@ -403,7 +440,7 @@ export class CodeEditor extends Group {
         ? currentWordRange(this.controller.document.text, Number(this.controller.document.selection.head))
         : { from: item.from, to: item.to ?? item.from };
     this.controller.document.setSelection({ anchor: range.from, head: range.to });
-    this.controller.replaceSelection(item.insertText ?? item.label);
+    this.insertText(item.insertText ?? item.label);
   }
 
   #routeEditingKey(key: string, shift: boolean): boolean {
@@ -413,7 +450,7 @@ export class CodeEditor extends Group {
       if (this.#hasSelection()) return this.#changeSelectedLineIndent(shift ? 'dedent' : 'indent');
       if (shift) return this.#dedentAtCaret();
       const document = this.controller.document;
-      const column = Number(offsetToVisualColumn(document.snapshot, Number(document.selection.head), document.tabSize));
+      const column = document.visualColumnAt(Number(document.selection.head));
       const width = document.tabSize - (column % document.tabSize);
       return this.insertText(' '.repeat(width));
     }
@@ -433,7 +470,7 @@ export class CodeEditor extends Group {
     const lower = key.key.toLowerCase();
     if (lower === 'a') {
       this.controller.document.setSelection({ anchor: 0, head: this.controller.document.text.length });
-      this.invalidate();
+      this.#finishSelectionChange();
       return 'editor';
     }
     if (lower === 'z' || lower === 'y') {
@@ -540,6 +577,8 @@ export class CodeEditor extends Group {
   #finishMutation(accepted: boolean): void {
     if (!accepted) return;
     this.#record('edit');
+    this.#viewport.synchronize(true);
+    this.#touchInteraction();
     this.invalidateLayout();
     try {
       this.#onDocumentChange?.();
@@ -565,7 +604,7 @@ export class CodeEditor extends Group {
     const selection = this.controller.document.selection;
     const head = Math.max(0, Math.min(this.controller.document.text.length, Number(selection.head) + delta));
     this.controller.document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
-    this.invalidate();
+    this.#finishSelectionChange();
     return true;
   }
 
@@ -586,7 +625,7 @@ export class CodeEditor extends Group {
       if (prior !== undefined) head = retreatCharacterRun(text, head, prior.kind);
     }
     document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
-    this.invalidate();
+    this.#finishSelectionChange();
   }
 
   #moveToDocumentEdge(edge: 'start' | 'end', extend: boolean): void {
@@ -594,7 +633,7 @@ export class CodeEditor extends Group {
     const selection = document.selection;
     const head = edge === 'start' ? 0 : document.text.length;
     document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
-    this.invalidate();
+    this.#finishSelectionChange();
   }
 
   #moveToLineEdge(edge: 'start' | 'end', extend: boolean): boolean {
@@ -603,7 +642,7 @@ export class CodeEditor extends Group {
     const line = document.snapshot.lineAt(Number(selection.head));
     const head = edge === 'start' ? line.from : line.to;
     document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
-    this.invalidate();
+    this.#finishSelectionChange();
     return true;
   }
 
@@ -615,7 +654,7 @@ export class CodeEditor extends Group {
     const target = document.snapshot.line(targetNumber);
     const head = target.from + Math.min(Number(selection.head) - current.from, target.length);
     document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
-    this.invalidate();
+    this.#finishSelectionChange();
     return true;
   }
 
@@ -636,7 +675,20 @@ export class CodeEditor extends Group {
     const start = Number(this.controller.document.selection.head);
     const candidate = text.indexOf(this.#searchQuery, start);
     const found = candidate >= 0 ? candidate : text.indexOf(this.#searchQuery);
-    if (found >= 0) this.controller.document.setSelection({ anchor: found, head: found + this.#searchQuery.length });
+    if (found >= 0) {
+      this.controller.document.setSelection({ anchor: found, head: found + this.#searchQuery.length });
+      this.#finishSelectionChange();
+    }
+  }
+
+  #finishSelectionChange(): void {
+    this.#viewport.synchronize(true);
+    this.#touchInteraction();
+    this.invalidate();
+  }
+
+  #touchInteraction(): void {
+    this.#interactionRevision.set((this.#interactionRevision() + 1) % Number.MAX_SAFE_INTEGER);
   }
 
   #queueHost(kind: 'navigate' | 'save' | 'close'): void {
@@ -659,161 +711,4 @@ export class CodeEditor extends Group {
 
 function route(owner: Exclude<CodeEditorKeyRoute['owner'], 'unhandled'>): CodeEditorKeyRoute {
   return Object.freeze({ handled: true, owner });
-}
-
-function fingerprint(theme: CodeEditorTheme): string {
-  let hash = 2_166_136_261;
-  const sections = [theme.surfaces, theme.syntax, theme.structure, theme.diagnostics, theme.assistance];
-  const values = [
-    theme.name,
-    ...sections.flatMap((section) =>
-      Object.values(section).flatMap((style) => [style.foreground, style.background, String(style.attrs ?? 0)]),
-    ),
-  ];
-  for (const value of values)
-    for (let index = 0; index < value.length; index += 1) hash = Math.imul(hash ^ value.charCodeAt(index), 16_777_619);
-  return (hash >>> 0).toString(16);
-}
-
-function ownString(value: unknown, key: string, limit: number): string | undefined {
-  const candidate = ownData(value, key);
-  return typeof candidate === 'string' && candidate.length <= limit ? candidate : undefined;
-}
-
-function ownInteger(value: unknown, key: string): number | undefined {
-  const candidate = ownData(value, key);
-  return Number.isSafeInteger(candidate) ? (candidate as number) : undefined;
-}
-
-function ownData(value: unknown, key: string): unknown {
-  try {
-    if (value === null || typeof value !== 'object') return undefined;
-    const prototype = Object.getPrototypeOf(value);
-    if (prototype !== Object.prototype && prototype !== Array.prototype && prototype !== null) return undefined;
-    const descriptor = Object.getOwnPropertyDescriptor(value, key);
-    return descriptor !== undefined && 'value' in descriptor ? descriptor.value : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function currentWordRange(text: string, caret: number): { from: number; to: number } {
-  let from = Math.max(0, Math.min(caret, text.length));
-  let to = from;
-  while (from > 0 && /[A-Za-z0-9_$]/u.test(text[from - 1] ?? '')) from -= 1;
-  while (to < text.length && /[A-Za-z0-9_$]/u.test(text[to] ?? '')) to += 1;
-  return { from, to };
-}
-
-type SourceCharacterClass = 'word' | 'whitespace' | 'punctuation';
-
-interface SourceCharacter {
-  readonly character: string;
-  readonly from: number;
-  readonly to: number;
-  readonly kind: SourceCharacterClass;
-}
-
-/** Reads one complete Unicode code point and assigns its navigation class. */
-function sourceCharacterAt(text: string, offset: number): SourceCharacter | undefined {
-  if (offset < 0 || offset >= text.length) return undefined;
-  const point = text.codePointAt(offset);
-  if (point === undefined) return undefined;
-  const character = String.fromCodePoint(point);
-  return {
-    character,
-    from: offset,
-    to: offset + character.length,
-    kind: classifySourceCharacter(character),
-  };
-}
-
-/** Reads the complete Unicode code point immediately before an offset. */
-function sourceCharacterBefore(text: string, offset: number): SourceCharacter | undefined {
-  if (offset <= 0 || offset > text.length) return undefined;
-  const low = text.charCodeAt(offset - 1);
-  const from =
-    low >= 0xdc00 && low <= 0xdfff && offset > 1 && text.charCodeAt(offset - 2) >= 0xd800 ? offset - 2 : offset - 1;
-  return sourceCharacterAt(text, from);
-}
-
-/** Classifies identifiers, whitespace, and punctuation into deterministic navigation runs. */
-function classifySourceCharacter(character: string): SourceCharacterClass {
-  if (/^[\p{L}\p{N}_$]$/u.test(character)) return 'word';
-  if (/^\s$/u.test(character)) return 'whitespace';
-  return 'punctuation';
-}
-
-/** Advances across one homogeneous Unicode character run. */
-function advanceCharacterRun(text: string, offset: number, kind: SourceCharacterClass): number {
-  let head = offset;
-  while (head < text.length) {
-    const character = sourceCharacterAt(text, head);
-    if (character === undefined || character.kind !== kind) break;
-    head = character.to;
-  }
-  return head;
-}
-
-/** Retreats across one homogeneous Unicode character run. */
-function retreatCharacterRun(text: string, offset: number, kind: SourceCharacterClass): number {
-  let head = offset;
-  while (head > 0) {
-    const character = sourceCharacterBefore(text, head);
-    if (character === undefined || character.kind !== kind) break;
-    head = character.from;
-  }
-  return head;
-}
-
-/**
- * Counts leading whitespace characters that remove one visual indentation level.
- *
- * Removing a prefix rather than blindly deleting `tabSize` code units preserves residual mixed
- * indentation such as the two spaces following a leading tab.
- */
-function removableIndentationLength(text: string, tabSize: number): number {
-  const prefix = text.match(/^[\t ]*/u)?.[0] ?? '';
-  if (prefix.length === 0) return 0;
-  const targetWidth = Math.max(0, whitespaceVisualWidth(prefix, tabSize) - tabSize);
-  for (let remove = 1; remove <= prefix.length; remove += 1) {
-    if (whitespaceVisualWidth(prefix.slice(remove), tabSize) <= targetWidth) return remove;
-  }
-  return prefix.length;
-}
-
-/** Measures tabs and spaces using the same tab-stop rule as document visual columns. */
-function whitespaceVisualWidth(text: string, tabSize: number): number {
-  let column = 0;
-  for (const character of text) {
-    column += character === '\t' ? tabSize - (column % tabSize) : 1;
-  }
-  return column;
-}
-
-/**
- * Maps an original document offset through a sorted atomic edit set.
- *
- * Insertions at the offset are treated as preceding it so selected content stays selected after
- * indentation. Offsets inside removed text collapse to the replacement.
- */
-function transformOffset(offset: number, edits: readonly DocumentEditInput[]): number {
-  let delta = 0;
-  for (const edit of edits) {
-    const { from, to } = edit.range;
-    if (offset < from) break;
-    if (from === to) {
-      delta += edit.text.length;
-      continue;
-    }
-    if (offset <= to) return from + delta + Math.min(edit.text.length, offset - from);
-    delta += edit.text.length - (to - from);
-  }
-  return offset + delta;
-}
-
-function lineSeparator(lineEnding: 'none' | 'lf' | 'crlf' | 'cr' | 'mixed'): string {
-  if (lineEnding === 'crlf') return '\r\n';
-  if (lineEnding === 'cr') return '\r';
-  return '\n';
 }

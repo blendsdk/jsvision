@@ -13,6 +13,7 @@ import type {
   DocumentTransactionInput,
 } from './types.js';
 import { DocumentHistory } from './history.js';
+import { DocumentLineExtents } from './line-extents.js';
 import { resolveDocumentLimits, resolveDocumentSizeMode, utf8ByteLength } from './limits.js';
 import { searchDocument } from './search.js';
 import { createDocumentSnapshot, DocumentStorage } from './storage.js';
@@ -75,6 +76,7 @@ export class CodeEditorDocumentModel {
   #languageId: CodeEditorLanguageId;
   #lineEnding: DocumentLineEnding;
   #snapshotCache: DocumentSnapshot | undefined;
+  #lineExtents: DocumentLineExtents;
 
   public constructor(options: CreateDocumentModelOptions) {
     const normalized = normalizeCreateOptions(options);
@@ -90,6 +92,7 @@ export class CodeEditorDocumentModel {
     this.#sizeMode = resolveDocumentSizeMode(byteLength, lineCount, this.#limits);
     confirmReducedMode(this.#sizeMode, byteLength, lineCount, normalized.confirmLargeDocument);
     this.#storage = new DocumentStorage(normalized.text, byteLength);
+    this.#lineExtents = new DocumentLineExtents(this.#storage, normalized.tabSize);
     this.#lineage = createLineage();
     this.#readOnly = normalized.readOnly;
     this.#savedStorage = this.#storage;
@@ -179,6 +182,49 @@ export class CodeEditorDocumentModel {
     return this.#tabSize;
   }
 
+  /** Returns the exact greatest terminal-cell width of any logical line. */
+  public get maximumVisualColumn(): number {
+    return this.#lineExtents.maximum;
+  }
+
+  /**
+   * Returns the terminal column at a validated UTF-16 document offset.
+   *
+   * @example
+   * ```ts
+   * const column = document.visualColumnAt(document.selection.head);
+   * ```
+   */
+  public visualColumnAt(offset: number): number {
+    const line = this.snapshot.lineAt(offset);
+    if (offset > Number(line.to)) {
+      throw new RangeError('Offsets inside a line separator have no visual column.');
+    }
+    return this.#lineExtents.visualColumnAt(Number(line.number), offset - Number(line.from), line.text);
+  }
+
+  /**
+   * Returns the document offset at a terminal column on one logical line.
+   *
+   * @example
+   * ```ts
+   * const offset = document.offsetAtVisualColumn(0, 12);
+   * ```
+   */
+  public offsetAtVisualColumn(lineNumber: number, column: number): number {
+    if (
+      !Number.isSafeInteger(lineNumber) ||
+      lineNumber < 0 ||
+      lineNumber >= this.snapshot.lineCount ||
+      !Number.isSafeInteger(column) ||
+      column < 0
+    ) {
+      throw new RangeError('Line and visual column must be valid non-negative integers.');
+    }
+    const line = this.snapshot.line(lineNumber);
+    return Number(line.from) + this.#lineExtents.offsetAtVisualColumn(lineNumber, column, line.text);
+  }
+
   /**
    * Normalizes an untrusted atomic mutation request without changing document state.
    *
@@ -221,6 +267,7 @@ export class CodeEditorDocumentModel {
     ) {
       throw new Error('Accepted document transaction omitted reversible state.');
     }
+    this.#lineExtents.apply(this.#storage, applied.storage, applied.forward);
     this.#storage = applied.storage;
     this.#selection = applied.selection;
     this.#revision += 1;
@@ -248,11 +295,13 @@ export class CodeEditorDocumentModel {
     if (entry === undefined) {
       return { accepted: false, reason: 'history-empty' };
     }
-    this.#storage = new DocumentStorage(
+    const storage = new DocumentStorage(
       entry.inverse.apply(this.#storage.asText()),
       entry.beforeByteLength,
       entry.beforeHasCarriageReturn,
     );
+    this.#lineExtents.apply(this.#storage, storage, entry.inverse);
+    this.#storage = storage;
     this.#selection = entry.beforeSelection;
     this.#revision += 1;
     this.#refreshDerivedState();
@@ -268,11 +317,13 @@ export class CodeEditorDocumentModel {
     if (entry === undefined) {
       return { accepted: false, reason: 'history-empty' };
     }
-    this.#storage = new DocumentStorage(
+    const storage = new DocumentStorage(
       entry.forward.apply(this.#storage.asText()),
       entry.afterByteLength,
       entry.afterHasCarriageReturn,
     );
+    this.#lineExtents.apply(this.#storage, storage, entry.forward);
+    this.#storage = storage;
     this.#selection = entry.afterSelection;
     this.#revision += 1;
     this.#refreshDerivedState();
@@ -295,6 +346,7 @@ export class CodeEditorDocumentModel {
     this.#uri = replacement.#uri;
     this.#languageId = replacement.#languageId;
     this.#lineEnding = replacement.#lineEnding;
+    this.#lineExtents = replacement.#lineExtents;
     this.#snapshotCache = undefined;
   }
 

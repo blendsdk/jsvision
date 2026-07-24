@@ -1,5 +1,3 @@
-import { charWidth } from '@jsvision/core';
-
 import type {
   DocumentOffset,
   DocumentPosition,
@@ -9,9 +7,9 @@ import type {
   VisualColumn,
 } from './types.js';
 import { documentCharacter, documentLine, documentOffset, isDocumentCoordinate, visualColumn } from './types.js';
+import { graphemeDisplayWidth, visualGraphemeSegments } from './visual-geometry.js';
 
 const DEFAULT_TAB_SIZE = 4;
-const graphemeSegmenter = new Intl.Segmenter('und', { granularity: 'grapheme' });
 const CHECKPOINT_INTERVAL = 256;
 
 interface VisualCheckpoint {
@@ -82,6 +80,76 @@ export function offsetToVisualColumn(
   return visualColumn(visualWidth(snapshot, line, offset, tabSize));
 }
 
+/**
+ * Measures source text in terminal cells from an optional starting column.
+ *
+ * Tabs advance to the next configured tab stop and each grapheme contributes its terminal display
+ * width. The starting column matters when measuring a suffix that follows already projected text.
+ *
+ * @param text Source text without a logical line separator.
+ * @param tabSize Number of terminal columns between tab stops.
+ * @param startingColumn Existing visual column before `text`.
+ * @returns The visual column immediately after the measured text.
+ */
+export function textToVisualColumn(text: string, tabSize = DEFAULT_TAB_SIZE, startingColumn = 0): number {
+  validateTabSize(tabSize);
+  if (!Number.isSafeInteger(startingColumn) || startingColumn < 0) {
+    throw new RangeError('Starting visual column must be a non-negative safe integer.');
+  }
+  if (/^[\x20-\x7e]*$/u.test(text)) return startingColumn + text.length;
+  let column = startingColumn;
+  for (const part of visualGraphemeSegments(text)) {
+    if (part.segment === '\t') {
+      column += tabSize - (column % tabSize);
+    } else {
+      column += graphemeDisplayWidth(part.segment);
+    }
+  }
+  return column;
+}
+
+/**
+ * Converts a visual terminal column on one logical line to a UTF-16 document offset.
+ *
+ * Columns landing inside a tab or wide grapheme resolve to the start of that source cluster.
+ * Sparse per-snapshot checkpoints keep horizontally scrolled projection bounded near the visible
+ * region instead of rescanning a long line from its beginning.
+ *
+ * @example
+ * ```ts
+ * const offset = visualColumnToOffset(snapshot, 0, 12, 4);
+ * ```
+ */
+export function visualColumnToOffset(
+  snapshot: DocumentSnapshot,
+  lineNumber: number,
+  column: number,
+  tabSize = DEFAULT_TAB_SIZE,
+): DocumentOffset {
+  validateTabSize(tabSize);
+  if (!isDocumentCoordinate(lineNumber) || lineNumber >= snapshot.lineCount) {
+    throw new RangeError('Document line is outside the snapshot.');
+  }
+  if (!isDocumentCoordinate(column)) {
+    throw new RangeError('Visual column must be a non-negative safe integer.');
+  }
+  const line = snapshot.line(lineNumber);
+  const checkpoints = checkpointsFor(snapshot, line, tabSize);
+  const checkpointIndex = findColumnCheckpointIndex(checkpoints, column);
+  const checkpoint = checkpoints[checkpointIndex] ?? { offset: 0, column: 0 };
+  const nextOffset = checkpoints[checkpointIndex + 1]?.offset ?? line.text.length;
+  let visual = checkpoint.column;
+  const remaining = line.text.slice(checkpoint.offset, nextOffset);
+  for (const part of visualGraphemeSegments(remaining)) {
+    const width = part.segment === '\t' ? tabSize - (visual % tabSize) : graphemeDisplayWidth(part.segment);
+    if (column < visual + Math.max(1, width)) {
+      return documentOffset(line.from + checkpoint.offset + part.index, snapshot.length);
+    }
+    visual += width;
+  }
+  return documentOffset(line.to, snapshot.length);
+}
+
 function validateOffset(snapshot: DocumentSnapshot, offset: number): void {
   if (!isDocumentCoordinate(offset) || offset > snapshot.length) {
     throw new RangeError('Document offset is outside the snapshot.');
@@ -100,13 +168,13 @@ function visualWidth(snapshot: DocumentSnapshot, line: LogicalLine, offset: numb
   const checkpoint = findCheckpoint(checkpoints, prefixLength);
   let column = checkpoint.column;
   const remaining = line.text.slice(checkpoint.offset, prefixLength);
-  for (const part of graphemeSegmenter.segment(remaining)) {
+  for (const part of visualGraphemeSegments(remaining)) {
     const absoluteIndex = checkpoint.offset + part.index;
     const segmentEnd = absoluteIndex + part.segment.length;
     if (segmentEnd > prefixLength) {
       const visiblePrefix = part.segment.slice(0, prefixLength - absoluteIndex);
       if (!endsWithUnpairedHighSurrogate(visiblePrefix)) {
-        column += graphemeWidth(visiblePrefix);
+        column += graphemeDisplayWidth(visiblePrefix);
       }
       break;
     }
@@ -115,7 +183,7 @@ function visualWidth(snapshot: DocumentSnapshot, line: LogicalLine, offset: numb
       continue;
     }
     if (!endsWithUnpairedHighSurrogate(part.segment)) {
-      column += graphemeWidth(part.segment);
+      column += graphemeDisplayWidth(part.segment);
     }
   }
   return column;
@@ -140,7 +208,7 @@ function checkpointsFor(snapshot: DocumentSnapshot, line: LogicalLine, tabSize: 
   const checkpoints: VisualCheckpoint[] = [{ offset: 0, column: 0 }];
   let column = 0;
   let nextCheckpoint = CHECKPOINT_INTERVAL;
-  for (const part of graphemeSegmenter.segment(line.text)) {
+  for (const part of visualGraphemeSegments(line.text)) {
     if (part.index >= nextCheckpoint) {
       checkpoints.push({ offset: part.index, column });
       nextCheckpoint = part.index + CHECKPOINT_INTERVAL;
@@ -148,7 +216,7 @@ function checkpointsFor(snapshot: DocumentSnapshot, line: LogicalLine, tabSize: 
     if (part.segment === '\t') {
       column += tabSize - (column % tabSize);
     } else {
-      column += graphemeWidth(part.segment);
+      column += graphemeDisplayWidth(part.segment);
     }
   }
   const frozen = Object.freeze(checkpoints);
@@ -193,18 +261,25 @@ function findCheckpoint(checkpoints: readonly VisualCheckpoint[], offset: number
   return checkpoints[low] ?? { offset: 0, column: 0 };
 }
 
+/** Finds the last sparse checkpoint at or before a visual column. */
+function findColumnCheckpointIndex(checkpoints: readonly VisualCheckpoint[], column: number): number {
+  let low = 0;
+  let high = checkpoints.length - 1;
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    if ((checkpoints[middle]?.column ?? 0) <= column) {
+      low = middle;
+    } else {
+      high = middle - 1;
+    }
+  }
+  return low;
+}
+
 function endsWithUnpairedHighSurrogate(text: string): boolean {
   if (text.length === 0) {
     return false;
   }
   const finalCodeUnit = text.charCodeAt(text.length - 1);
   return finalCodeUnit >= 0xd800 && finalCodeUnit <= 0xdbff;
-}
-
-function graphemeWidth(grapheme: string): number {
-  let width = 0;
-  for (const character of grapheme) {
-    width = Math.max(width, charWidth(character.codePointAt(0) ?? 0, 'wcwidth'));
-  }
-  return width;
 }

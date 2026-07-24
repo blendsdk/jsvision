@@ -52,6 +52,23 @@ dark, light, and classic palettes. Semantic roles remain stable while colors cha
 ASCII, narrow-terminal, diagnostic, selection, pending, read-only, and degraded states retain
 non-color indicators.
 
+## Viewport and input
+
+`CodeEditorWindow` keeps the editor, status line, and passive horizontal and vertical scrollbars
+synchronized as the terminal resizes or the document changes. Typing and caret navigation reveal
+the active caret with the smallest required scroll, while an explicit wheel or scrollbar movement
+remains in place until the next editing or navigation action.
+
+The editor supports primary-button caret placement, captured drag selection, edge auto-scroll,
+double-click selection for Unicode identifier and punctuation runs, three-cell wheel scrolling,
+and the modern keyboard actions documented by the standalone kitchen sink. `Ctrl+/` toggles the
+built-in line-comment delimiter for JavaScript, TypeScript, and PostgreSQL; unsupported languages
+leave the document unchanged.
+
+For standalone composition, `CodeEditor.resizeViewport(width, height)` allows a host to publish
+new terminal-cell dimensions before drawing. `viewportMetrics` exposes immutable current geometry
+and clamped scroll limits for custom passive chrome.
+
 ## Standalone kitchen sink
 
 Run the comprehensive, deterministic example:
@@ -62,5 +79,6 @@ yarn workspace @jsvision/examples demo:code-editor
 
 It covers editor/window composition, editing lifecycle, SQL/JavaScript/TypeScript/plain text,
 local parsing, simulated LSP intelligence, host authorization, hostile Unicode, themes,
-accessibility, resizing, and all document-size tiers without a network, database, workspace,
-credentials, external language server, or arbitrary file access.
+accessibility, resizing, mouse selection, caret-follow scrolling, passive scrollbar updates, and
+all document-size tiers without a network, database, workspace, credentials, external language
+server, or arbitrary file access.

@@ -185,6 +185,50 @@ describe('ST-40: standalone session lifecycle', () => {
     expect(first.narration.length).toBeLessThanOrEqual(32);
   });
 
+  // Terminal resizing preserves the tiled showcase while fitting every editor child to its window.
+  test('reflows the tiled live showcase without stale editor chrome', () => {
+    const showcase = createCodeEditorShowcase(normalCapabilities);
+
+    for (const size of [
+      { width: 100, height: 30 },
+      { width: 44, height: 12 },
+    ]) {
+      showcase.app.loop.resize(size);
+      showcase.app.loop.renderRoot.flush();
+      const editor = showcase.activeEditor();
+      const window = editor.parent;
+
+      expect(window).toBeInstanceOf(CodeEditorWindow);
+      if (!(window instanceof CodeEditorWindow)) continue;
+      const windowRect = window.layout.rect;
+      const editorRect = editor.layout.rect;
+      const horizontalRect = window.horizontalScrollBar.layout.rect;
+      const verticalRect = window.verticalScrollBar.layout.rect;
+      const statusRect = window.statusView.layout.rect;
+      expect(windowRect).toBeDefined();
+      expect(editorRect).toBeDefined();
+      expect(horizontalRect).toBeDefined();
+      expect(verticalRect).toBeDefined();
+      expect(statusRect).toBeDefined();
+      if (
+        windowRect === undefined ||
+        editorRect === undefined ||
+        horizontalRect === undefined ||
+        verticalRect === undefined ||
+        statusRect === undefined
+      ) {
+        throw new Error('the tiled editor and its chrome must use absolute rectangles');
+      }
+      expect(editorRect.width).toBe(windowRect.width - 2);
+      expect(editorRect.height).toBe(windowRect.height - 3);
+      expect(horizontalRect.y).toBe(windowRect.height - 2);
+      expect(verticalRect.x).toBe(windowRect.width - 1);
+      expect(statusRect.y).toBe(windowRect.height - 1);
+      expect(window.bounds.x + window.bounds.width).toBeLessThanOrEqual(size.width);
+      expect(window.bounds.y + window.bounds.height).toBeLessThanOrEqual(size.height);
+    }
+  });
+
   // Reset restores document content and public state, not merely the selected scenario label.
   test('restores the active fixture and observable editor state on reset', () => {
     const session = createCodeEditorDemoSession({
