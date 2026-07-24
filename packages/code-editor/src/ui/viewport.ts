@@ -1,6 +1,8 @@
 import { signal, type Point, type Signal } from '@jsvision/ui';
 
+import type { CodeEditorController } from '../controller.js';
 import type { CodeEditorDocumentModel } from '../document/model.js';
+import { codeEditorVisibleRows } from './folding.js';
 import type { CodeEditorFrame } from './projection.js';
 
 /** Immutable public snapshot of editor viewport geometry and scroll limits. */
@@ -27,14 +29,16 @@ export class CodeEditorViewport {
   public readonly y: Signal<number> = signal(0);
   readonly #maxX: Signal<number> = signal(0);
   readonly #maxY: Signal<number> = signal(0);
+  readonly #controller: CodeEditorController;
   readonly #document: CodeEditorDocumentModel;
   #width = 0;
   #height = 0;
   #gutterWidth = 0;
 
-  /** @param document Document whose line and caret geometry this viewport presents. */
-  public constructor(document: CodeEditorDocumentModel) {
-    this.#document = document;
+  /** @param controller Controller whose folded document geometry this viewport presents. */
+  public constructor(controller: CodeEditorController) {
+    this.#controller = controller;
+    this.#document = controller.document;
   }
 
   /** Returns a reactive immutable snapshot used by window chrome and host inspection. */
@@ -75,17 +79,14 @@ export class CodeEditorViewport {
    */
   public synchronize(followCaret: boolean): void {
     const textWidth = this.textWidth;
+    const visibleRows = codeEditorVisibleRows(this.#controller);
+    const maximumVisualColumn = visibleRows.maximumVisualColumn;
     const maximumX =
-      textWidth <= 0
-        ? 0
-        : Math.max(
-            0,
-            this.#document.maximumVisualColumn - textWidth + (this.#document.maximumVisualColumn > 0 ? 1 : 0),
-          );
-    const maximumY = Math.max(0, this.#document.snapshot.lineCount - this.#height);
+      textWidth <= 0 ? 0 : Math.max(0, maximumVisualColumn - textWidth + (maximumVisualColumn > 0 ? 1 : 0));
+    const maximumY = Math.max(0, visibleRows.count - this.#height);
     this.#maxX.set(maximumX);
     this.#maxY.set(maximumY);
-    if (followCaret && this.#width > 0 && this.#height > 0) this.#revealCaret();
+    if (followCaret && this.#width > 0 && this.#height > 0) this.#revealCaret(visibleRows);
     this.#setClamped(this.x(), this.y());
   }
 
@@ -105,7 +106,7 @@ export class CodeEditorViewport {
   public documentOffsetAt(local: Point, frame: CodeEditorFrame | undefined): number {
     const snapshot = this.#document.snapshot;
     const localRow = clamp(local.y, 0, Math.max(0, this.#height - 1));
-    const row = clamp(this.y() + localRow, 0, snapshot.lineCount - 1);
+    const row = codeEditorVisibleRows(this.#controller).logicalLineAt(this.y() + localRow);
     const line = snapshot.line(row);
     if (local.x >= 0 && local.x < this.#gutterWidth) return Number(line.from);
     if (local.y >= 0 && local.y < this.#height && local.x >= 0 && local.x < this.#width) {
@@ -117,7 +118,12 @@ export class CodeEditorViewport {
     return this.#document.offsetAtVisualColumn(row, visualColumn);
   }
 
-  #revealCaret(): void {
+  /** Maps a viewport-local terminal row to its visible logical source line. */
+  public logicalLineAtViewportRow(localRow: number): number {
+    return codeEditorVisibleRows(this.#controller).logicalLineAt(this.y() + localRow);
+  }
+
+  #revealCaret(visibleRows: ReturnType<typeof codeEditorVisibleRows>): void {
     const snapshot = this.#document.snapshot;
     const head = Number(this.#document.selection.head);
     const line = snapshot.lineAt(head);
@@ -126,9 +132,9 @@ export class CodeEditorViewport {
     let nextY = this.y();
     if (visual < nextX) nextX = visual;
     else if (this.textWidth > 0 && visual >= nextX + this.textWidth) nextX = visual - this.textWidth + 1;
-    const lineNumber = Number(line.number);
-    if (lineNumber < nextY) nextY = lineNumber;
-    else if (lineNumber >= nextY + this.#height) nextY = lineNumber - this.#height + 1;
+    const visibleLine = visibleRows.visibleRowAt(Number(line.number));
+    if (visibleLine < nextY) nextY = visibleLine;
+    else if (visibleLine >= nextY + this.#height) nextY = visibleLine - this.#height + 1;
     this.#setClamped(nextX, nextY);
   }
 

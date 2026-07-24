@@ -33,6 +33,18 @@ export type CodeEditorDemoFacet =
   | 'large-document-tier'
   | 'confirmation-document-tier';
 
+/** Evidence state for one capability in the standalone showcase. */
+export type CodeEditorCapabilityStatus = 'interactive' | 'automated-only' | 'unsupported';
+
+/** Fine-grained inventory entry used by the showcase and coverage tests. */
+export interface CodeEditorCapabilityInventoryEntry {
+  readonly id: string;
+  readonly title: string;
+  readonly status: CodeEditorCapabilityStatus;
+  readonly scenarioIds: readonly string[];
+  readonly reason?: string;
+}
+
 /** Immutable source data used to restore a scenario without touching the filesystem. */
 export interface CodeEditorDemoFixture {
   readonly text: string;
@@ -71,6 +83,7 @@ export interface CodeEditorDemoInspection {
 }
 
 const liveInspections = new WeakMap<CodeEditor | CodeEditorWindow, CodeEditorDemoInspection>();
+const liveReadiness = new WeakMap<CodeEditor | CodeEditorWindow, Promise<void>>();
 
 /** Observable results produced by exercising a real scenario journey. */
 export interface CodeEditorDemoJourneyEvidence {
@@ -100,6 +113,82 @@ export const CODE_EDITOR_DEMO_FACETS: readonly CodeEditorDemoFacet[] = Object.fr
   'large-document-tier',
   'confirmation-document-tier',
 ]);
+
+/**
+ * Capability-level showcase inventory.
+ *
+ * Broad facets remain useful navigation labels, while this list is the honest evidence boundary:
+ * an interactive entry must name a reachable scenario; automated-only and unsupported entries
+ * must explain why no interactive claim is made.
+ */
+export const CODE_EDITOR_CAPABILITY_INVENTORY: readonly CodeEditorCapabilityInventoryEntry[] = Object.freeze([
+  interactive('surface.direct-editor', 'Direct embedded editor', 'direct-editor'),
+  interactive('surface.windowed-editor', 'Window-hosted editor', 'typescript-window'),
+  interactive('window.move', 'Move an editor window', 'viewport-and-mouse'),
+  interactive('window.resize', 'Resize an editor window', 'viewport-and-mouse'),
+  interactive('window.maximize-restore', 'Maximize and restore an editor window', 'viewport-and-mouse'),
+  interactive('editing.text-input', 'Source text input', 'direct-editor'),
+  interactive('editing.selection', 'Keyboard and mouse selection', 'modern-keyboard-editing'),
+  interactive('editing.modern-keyboard', 'Modern indentation and navigation keys', 'modern-keyboard-editing'),
+  interactive('editing.search', 'In-document search', 'typescript-window'),
+  interactive('editing.history', 'Undo and redo', 'modern-keyboard-editing'),
+  interactive('editing.clipboard', 'Copy, cut, and paste commands', 'modern-keyboard-editing'),
+  interactive('editing.read-only', 'Read-only document behavior', 'read-only-editor'),
+  interactive('gutter.line-numbers', 'Optional line-number gutter', 'line-number-gutter'),
+  interactive('language.postgresql', 'PostgreSQL source', 'language-gallery'),
+  interactive('language.javascript', 'JavaScript source', 'language-gallery'),
+  interactive('language.typescript', 'TypeScript source', 'language-gallery'),
+  interactive('language.plain-text', 'Plain text source', 'language-gallery'),
+  interactive('language.syntax-highlighting', 'Parser-backed syntax highlighting', 'language-gallery'),
+  interactive('language.brackets', 'Bracket matching', 'structural-folding'),
+  interactive('language.folding', 'Structural code folding', 'structural-folding'),
+  interactive('language.switching', 'Language adapter switching', 'language-gallery'),
+  interactive('lsp.completion', 'Completion assistance', 'language-intelligence'),
+  interactive('lsp.diagnostics', 'Diagnostics', 'language-intelligence'),
+  interactive('lsp.navigation', 'Authorized definition navigation', 'language-intelligence'),
+  interactive('lsp.formatting', 'Document formatting', 'language-intelligence'),
+  interactive('host.authorization', 'Host-authorized effects', 'language-intelligence'),
+  interactive('theme.hybrid', 'Independent editor themes', 'themes-and-fallbacks'),
+  interactive('terminal.unicode', 'Unicode terminal profile', 'themes-and-fallbacks'),
+  interactive('terminal.ascii', 'ASCII glyph fallback', 'themes-and-fallbacks'),
+  interactive('terminal.monochrome', 'Monochrome non-color cues', 'themes-and-fallbacks'),
+  interactive('terminal.hostile-text', 'Hostile terminal text sanitization', 'safe-terminal-text'),
+  interactive('document.full-tier', 'Full document tier', 'full-document-tier'),
+  interactive('document.large-tier', 'Large degradable document tier', 'large-document-tier'),
+  interactive('document.confirmation-tier', 'Confirmation-required document tier', 'confirmation-document-tier'),
+  automatedOnly(
+    'lsp.external-process',
+    'External language-server process transport',
+    'The deterministic showcase cannot start or trust an external process; package integration tests cover the transport.',
+  ),
+  automatedOnly(
+    'lsp.cancellation-and-stale-results',
+    'Cancellation and stale-result rejection',
+    'Timing-sensitive protocol races are verified by deterministic automated tests instead of a misleading menu action.',
+  ),
+  unsupported(
+    'window.minimize',
+    'Taskbar-style window minimization',
+    'The JSVision window manager supports maximize and restore but has no minimized-window state.',
+  ),
+  unsupported(
+    'folding.multi-chord-keymap',
+    'Multi-chord folding shortcuts',
+    'The terminal keymap cannot represent the complete desktop-editor chord set reliably.',
+  ),
+]);
+
+function interactive(id: string, title: string, ...scenarioIds: string[]): CodeEditorCapabilityInventoryEntry {
+  return Object.freeze({ id, title, status: 'interactive', scenarioIds: Object.freeze(scenarioIds) });
+}
+
+function automatedOnly(id: string, title: string, reason: string): CodeEditorCapabilityInventoryEntry {
+  return Object.freeze({ id, title, status: 'automated-only', scenarioIds: Object.freeze([]), reason });
+}
+
+function unsupported(id: string, title: string, reason: string): CodeEditorCapabilityInventoryEntry {
+  return Object.freeze({ id, title, status: 'unsupported', scenarioIds: Object.freeze([]), reason });
+}
 
 function scenario(
   metadata: Omit<CodeEditorDemoScenario, 'fixture' | 'mount' | 'actions'>,
@@ -174,15 +263,16 @@ function scenario(
             ? javascriptLanguageAdapter
             : typescriptLanguageAdapter;
       const scheduler = createLanguageScheduler();
-      const analyzeCurrentDocument = (): void => {
+      const analyzeCurrentDocument = (): Promise<void> => {
         if (
           metadata.id !== 'language-gallery' &&
           metadata.id !== 'typescript-window' &&
           metadata.id !== 'line-number-gutter' &&
-          metadata.id !== 'themes-and-fallbacks'
+          metadata.id !== 'themes-and-fallbacks' &&
+          metadata.id !== 'structural-folding'
         )
-          return;
-        void scheduler.analyze(adapter, document.text, document.identity).then((result) => {
+          return Promise.resolve();
+        return scheduler.analyze(adapter, document.text, document.identity).then((result) => {
           controller.setLanguageResult(result);
           editor.invalidate();
         });
@@ -214,10 +304,13 @@ function scenario(
         metadata.id === 'language-gallery' ||
         metadata.id === 'typescript-window' ||
         metadata.id === 'line-number-gutter' ||
-        metadata.id === 'themes-and-fallbacks'
+        metadata.id === 'themes-and-fallbacks' ||
+        metadata.id === 'structural-folding'
       ) {
-        analyzeCurrentDocument();
         configuredFeatures.push('syntax', 'folds', 'brackets', 'language-switching');
+      }
+      if (metadata.id === 'structural-folding') {
+        configuredFeatures.push('syntax', 'folds', 'brackets', 'fold-markers', 'visible-row-navigation');
       }
       if (session !== undefined && coordinator !== undefined) {
         void coordinator.open().then(() => {
@@ -258,6 +351,7 @@ function scenario(
           actions: actionsFor(metadata.id),
         }),
       );
+      liveReadiness.set(surface, analyzeCurrentDocument());
       return surface;
     },
   });
@@ -276,6 +370,7 @@ export async function runCodeEditorScenarioAction(
   surface: CodeEditor | CodeEditorWindow,
   action: CodeEditorDemoAction,
 ): Promise<void> {
+  await liveReadiness.get(surface);
   const editor = surface instanceof CodeEditorWindow ? surface.editor : surface;
   if (action === 'edit') editor.insertText('// live edit\n');
   else if (action === 'search') {
@@ -293,10 +388,14 @@ function actionsFor(id: string): readonly CodeEditorDemoAction[] {
   if (id === 'language-intelligence') return Object.freeze(['completion', 'format', 'navigate', 'save']);
   if (id === 'themes-and-fallbacks') return Object.freeze(['theme', 'edit', 'search']);
   if (id === 'typescript-window') return Object.freeze(['edit', 'search', 'fold', 'save']);
+  if (id === 'structural-folding') return Object.freeze(['fold', 'search']);
   return Object.freeze(['edit', 'search']);
 }
 
 const GENERATED_LARGE_TEXT = `${'x\n'.repeat(50_001)}// generated at runtime`;
+const CAPABILITY_INVENTORY_TEXT = CODE_EDITOR_CAPABILITY_INVENTORY.map(
+  (entry) => `[${entry.status}] ${entry.id} — ${entry.title}${entry.reason === undefined ? '' : `: ${entry.reason}`}`,
+).join('\n');
 
 /** Ordered registry used by both the live application and headless verification. */
 export const CODE_EDITOR_SCENARIOS: readonly CodeEditorDemoScenario[] = Object.freeze([
@@ -314,6 +413,79 @@ export const CODE_EDITOR_SCENARIOS: readonly CodeEditorDemoScenario[] = Object.f
     },
     true,
     'dark',
+  ),
+  scenario(
+    {
+      id: 'direct-editor',
+      title: 'Direct embedded editor',
+      description: 'Use the borderless CodeEditor surface without window chrome.',
+      capabilities: ['editor-and-window', 'editing-lifecycle'],
+    },
+    {
+      title: 'embedded.ts',
+      languageId: 'typescript',
+      text: 'export const embedded = true;\n',
+    },
+    false,
+    'dark',
+  ),
+  scenario(
+    {
+      id: 'capability-inventory',
+      title: 'Capability inventory',
+      description: 'Review every interactive, automated-only, and unsupported showcase capability.',
+      capabilities: ['editor-and-window', 'accessibility-and-resize'],
+    },
+    {
+      title: 'capabilities.txt',
+      languageId: 'plain',
+      text: CAPABILITY_INVENTORY_TEXT,
+      readOnly: true,
+    },
+    true,
+    'light',
+    true,
+  ),
+  scenario(
+    {
+      id: 'read-only-editor',
+      title: 'Read-only document',
+      description: 'Inspect navigation and selection while source mutations remain blocked.',
+      capabilities: ['editing-lifecycle', 'full-document-tier'],
+    },
+    {
+      title: 'locked.sql',
+      languageId: 'postgresql',
+      text: 'SELECT current_user;\n',
+      readOnly: true,
+    },
+    true,
+    'dark',
+    true,
+  ),
+  scenario(
+    {
+      id: 'structural-folding',
+      title: 'Structural code folding',
+      description: 'Fold and unfold real nested TypeScript parser ranges from the gutter or action menu.',
+      capabilities: ['local-language-features', 'accessibility-and-resize'],
+    },
+    {
+      title: 'folding.ts',
+      languageId: 'typescript',
+      text: [
+        'export function outer(value: number) {',
+        '  if (value > 0) {',
+        '    return value;',
+        '  }',
+        '  return 0;',
+        '}',
+        'console.log(outer(1));',
+      ].join('\n'),
+    },
+    true,
+    'dark',
+    true,
   ),
   scenario(
     {

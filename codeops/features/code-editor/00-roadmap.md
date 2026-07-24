@@ -1,10 +1,10 @@
 # Roadmap: Code Editor
 
 > **Feature-Set**: Code Editor
-> **Status**: Complete
+> **Status**: In Progress
 > **Created**: 2026-07-23
-> **Last Updated**: 2026-07-24 20:18
-> **Progress**: 8 / 8 (100%)
+> **Last Updated**: 2026-07-24 21:22
+> **Progress**: 8 / 9 (89%)
 > **CodeOps Artifact Schema**: 1
 
 ## Legend
@@ -23,3 +23,4 @@
 | RD-05 | Code Editor kitchen-sink | [RD-05](requirements/RD-05-code-editor-kitchen-sink.md) | [Plan](plans/code-editor/00-index.md) | Done | ✅ | 2026-07-24 | depends on RD-01…04, RD-06 |
 | T-01 | Modern keyboard editing | — | [modern-keyboard-editing](plans/modern-keyboard-editing/99-execution-plan.md) | Done | ✅ | 2026-07-24 | depends on RD-01, RD-02, RD-05 |
 | T-02 | Code Editor viewport and mouse interaction | — | [code-editor-viewport-and-mouse-interaction](plans/code-editor-viewport-and-mouse-interaction/99-execution-plan.md) | Done | ✅ | 2026-07-24 | depends on RD-01, RD-04, RD-05, T-01 |
+| T-03 | Code Editor folding and demo coverage | — | [code-editor-folding-and-demo-coverage](plans/code-editor-folding-and-demo-coverage/99-execution-plan.md) | Executing | 🔄 | 2026-07-24 | depends on RD-01, RD-02, RD-04, RD-05, T-02 |

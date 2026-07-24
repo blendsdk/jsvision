@@ -145,14 +145,16 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     height: Math.max(6, height - 7),
   });
   if (activeSurface === undefined) throw new Error('The Code Editor showcase has no scenarios.');
-  let editorWindow = windowFrom(activeSurface, CODE_EDITOR_SCENARIOS[0]?.title ?? 'Code Editor');
+  let editorWindow = activeSurface instanceof CodeEditorWindow ? activeSurface : undefined;
+  const activeEditor = (): CodeEditor =>
+    activeSurface instanceof CodeEditorWindow ? activeSurface.editor : activeSurface;
   const state = new Text(() => {
-    const current = editorWindow.editor.controller.publicState;
+    const current = activeEditor().controller.publicState;
     return [
       `scenario=${CODE_EDITOR_SCENARIOS[activeIndex]?.id ?? 'none'} language=${current.language}`,
       `Ln ${current.line}, Col ${current.visualColumn} selection=${current.selectionSize} modified=${current.modified}`,
       `service=${current.serviceState} readOnly=${current.readOnly} degraded=${current.degradation.notices.length}`,
-      `features=${inspectCodeEditorScenario(activeSurface).configuredFeatures.join(',')}`,
+      `features=${inspectCodeEditorScenario(activeSurface).configuredFeatures.join(',')} folds=${activeEditor().controller.folds.length}`,
       `host=${inspectCodeEditorScenario(activeSurface).hostEffects.join(',') || 'none'}`,
     ].join('\n');
   });
@@ -163,11 +165,9 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
   inspector.add(state);
   app.desktop.addWindow(inspector);
 
-  const mountEditorWindow = (): void => {
-    editorWindow.movable = true;
-    editorWindow.resizable = true;
-    editorWindow.castsShadow = true;
-    editorWindow.setLayout({
+  const mountEditorSurface = (): void => {
+    activeSurface.setLayout({
+      position: 'absolute',
       rect: {
         x: sidebarWidth,
         y: 0,
@@ -175,9 +175,18 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
         height: Math.max(6, height - 7),
       },
     });
-    editorWindow.onResized();
-    app.desktop.addWindow(editorWindow);
-    app.loop.focusView(editorWindow.editor);
+    if (activeSurface instanceof CodeEditorWindow) {
+      editorWindow = activeSurface;
+      editorWindow.movable = true;
+      editorWindow.resizable = true;
+      editorWindow.castsShadow = true;
+      editorWindow.onResized();
+      app.desktop.addWindow(editorWindow);
+    } else {
+      editorWindow = undefined;
+      app.desktop.add(activeSurface);
+    }
+    app.loop.focusView(activeEditor());
   };
 
   /** Re-fits all persistent panes to the desktop after a terminal resize. */
@@ -198,7 +207,8 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
       position: 'absolute',
       rect: { x: 1, y: 1, width: Math.max(1, width - sidebarWidth - 2), height: 4 },
     });
-    editorWindow.setLayout({
+    activeSurface.setLayout({
+      position: 'absolute',
       rect: {
         x: sidebarWidth,
         y: 0,
@@ -206,33 +216,34 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
         height: Math.max(6, height - 7),
       },
     });
-    editorWindow.onResized();
+    editorWindow?.onResized();
   };
 
   function select(index: number): void {
     const scenario = CODE_EDITOR_SCENARIOS[index];
     if (scenario === undefined) return;
-    app.desktop.removeWindow(editorWindow);
-    editorWindow.editor.dispose();
+    if (editorWindow === undefined) app.desktop.remove(activeSurface);
+    else app.desktop.removeWindow(editorWindow);
+    activeEditor().dispose();
     activeIndex = index;
     activeSurface = scenario.mount({
       capabilities: caps,
       width: Math.max(20, width - sidebarWidth),
       height: Math.max(6, height - 7),
     });
-    editorWindow = windowFrom(activeSurface, scenario.title);
-    mountEditorWindow();
+    editorWindow = activeSurface instanceof CodeEditorWindow ? activeSurface : undefined;
+    mountEditorSurface();
   }
 
   const handlers: Record<string, () => void> = {
     'code-editor.reset': () => select(activeIndex),
     [TAB_COMMAND]: () => {
-      if (app.loop.getFocused() === navigator.rows) app.loop.focusView(editorWindow.editor);
-      else editorWindow.editor.routeKey({ key: 'Tab' });
+      if (app.loop.getFocused() === navigator.rows) app.loop.focusView(activeEditor());
+      else activeEditor().routeKey({ key: 'Tab' });
     },
     [SHIFT_TAB_COMMAND]: () => {
-      if (app.loop.getFocused() === editorWindow.editor) editorWindow.editor.routeKey({ key: 'Tab', shift: true });
-      else app.loop.focusView(editorWindow.editor);
+      if (app.loop.getFocused() === activeEditor()) activeEditor().routeKey({ key: 'Tab', shift: true });
+      else app.loop.focusView(activeEditor());
     },
   };
   for (let index = 0; index < CODE_EDITOR_SCENARIOS.length; index += 1) {
@@ -244,7 +255,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     };
   }
   app.desktop.add(new ShowcaseCommands(handlers));
-  mountEditorWindow();
+  mountEditorSurface();
   const resizeApplicationChrome = app.loop.onResize;
   app.loop.onResize = (size) => {
     resizeApplicationChrome?.(size);
@@ -260,12 +271,6 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     run: () => app.run(),
     select,
     activeScenarioId: () => CODE_EDITOR_SCENARIOS[activeIndex]?.id ?? 'none',
-    activeEditor: () => editorWindow.editor,
+    activeEditor,
   };
-}
-
-function windowFrom(surface: CodeEditor | CodeEditorWindow, title: string): CodeEditorWindow {
-  return surface instanceof CodeEditorWindow
-    ? surface
-    : new CodeEditorWindow({ controller: surface.controller, title });
 }

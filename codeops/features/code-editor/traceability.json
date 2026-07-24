@@ -2152,6 +2152,136 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:The user approved creation and execution of the folding, window-geometry, and demo-coverage mini-plan with auto-design and auto-commit."
+      ],
+      "id": "T-03",
+      "revision": "sha256:72ff8479cebe2e174722878cdb4e5822babd0b9a57e20d0286ab46b83c226b69",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-folding-and-demo-coverage/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Objective"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Code Editor folding and demo coverage",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/T-03"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/CRIT-FOLDING-DEMO"
+        }
+      ],
+      "evidence": [
+        "summary:The approved plan, acceptance criteria, and pending implementation task are synchronized for execution.",
+        "summary:The plan is internally consistent, traces every acceptance case, and includes the newly confirmed maximize/restore geometry defect.",
+        "summary:The user approved the recommended mini-plan and delegated internal design decisions while requiring all existing window geometry operations to re-fit the editor."
+      ],
+      "id": "PLAN-FOLDING-DEMO",
+      "revision": "sha256:1efeaee63a782f5bc0e199f30c4ea4f6c617018a15127cae61dc69508a9696b6",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-folding-and-demo-coverage/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Scope and delegated design decisions"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code Editor folding and demo coverage mini-plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:874d5b065798921e31e0831bf6efb4c248f6e5d5b775346d8423f5c78d8b13e7",
+          "upstream": "code-editor/CRIT-FOLDING-DEMO",
+          "validatedAt": "2026-07-24T19:22:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:874d5b065798921e31e0831bf6efb4c248f6e5d5b775346d8423f5c78d8b13e7",
+          "upstream": "code-editor/CRIT-FOLDING-DEMO",
+          "validatedAt": "2026-07-24T19:23:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:72ff8479cebe2e174722878cdb4e5822babd0b9a57e20d0286ab46b83c226b69",
+          "upstream": "code-editor/T-03",
+          "validatedAt": "2026-07-24T19:23:00Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "code-editor/TEST-FOLDING-DEMO"
+        }
+      ],
+      "evidence": [
+        "summary:The mini-plan records the approved folding, window-geometry, inventory, and interactive demo behavior."
+      ],
+      "id": "CRIT-FOLDING-DEMO",
+      "revision": "sha256:874d5b065798921e31e0831bf6efb4c248f6e5d5b775346d8423f5c78d8b13e7",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-folding-and-demo-coverage/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Specification cases"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Folding, window geometry, and demo coverage acceptance behavior",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Immutable folding, window-geometry, capability-inventory, and scenario-reachability specifications are planned before implementation."
+      ],
+      "id": "TEST-FOLDING-DEMO",
+      "revision": "sha256:874d5b065798921e31e0831bf6efb4c248f6e5d5b775346d8423f5c78d8b13e7",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-folding-and-demo-coverage/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Specification cases"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Folding, window geometry, and demo coverage specification",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
       "id": "AR-25",
       "revision": "sha256:acd9e8584226d3b410626b97da0d327672dcd8d001cbf1326c04fb0957cf0e84",
       "semanticSources": [
@@ -2171,5 +2301,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-24T19:03:00Z"
+  "updated": "2026-07-24T19:22:00Z"
 }

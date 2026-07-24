@@ -79,6 +79,13 @@ export class CodeEditorWindow extends Window {
     this.#layoutChrome();
   }
 
+  /** Maximizes or restores the frame and immediately re-fits all absolute editor chrome. */
+  public override zoom(): void {
+    super.zoom();
+    this.#layoutChrome();
+    this.invalidateLayout();
+  }
+
   #layoutChrome(): void {
     const rect = this.layout.rect ?? { x: 0, y: 0, width: 40, height: 12 };
     const width = Math.max(0, rect.width);

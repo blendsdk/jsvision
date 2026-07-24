@@ -4,6 +4,8 @@ import { graphemeDisplayWidth, visualGraphemeSegments } from '../document/visual
 import type { SyntaxCategory, SyntaxSpan } from '../languages/contracts.js';
 import type { CodeEditorController } from '../controller.js';
 import type { CodeEditorCellStyle, CodeEditorTheme } from '../theme/theme.js';
+import { codeEditorVisibleRows } from './folding.js';
+import type { CodeEditorVisibleRows } from './folding.js';
 
 const MAX_WIDTH = 2_000;
 const MAX_HEIGHT = 500;
@@ -85,9 +87,11 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
   const height = dimension(options.height, MAX_HEIGHT);
   if (width * height > MAX_CELLS) throw new RangeError('Editor viewport exceeds the frame cell limit.');
   const snapshot = options.controller.document.snapshot;
+  const visibleRows = codeEditorVisibleRows(options.controller);
   const caretOffset = clamp(options.caret ?? Number(options.controller.document.selection.head), 0, snapshot.length);
   const caretPosition = offsetToPosition(snapshot, caretOffset);
-  const scrollY = options.scrollY ?? Math.max(0, Number(caretPosition.line) - Math.max(0, height - 1));
+  const scrollY =
+    options.scrollY ?? Math.max(0, visibleRows.visibleRowAt(Number(caretPosition.line)) - Math.max(0, height - 1));
   const scrollX = Math.max(0, options.scrollX ?? 0);
   const numberWidth = String(snapshot.lineCount).length;
   const gutterWidth = codeEditorGutterWidth(width, snapshot.lineCount, options.gutter === true);
@@ -103,8 +107,10 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
   const offsets = new Map<number, CodeEditorProjectedCell>();
   let signature = hashSeed(options.themeName ?? options.theme?.name ?? 'default');
   for (let row = 0; row < height; row += 1) {
-    const lineNumber = scrollY + row;
-    const logical = lineNumber < snapshot.lineCount ? snapshot.line(lineNumber) : undefined;
+    const visibleRow = scrollY + row;
+    const hasDocumentLine = visibleRow < visibleRows.count;
+    const lineNumber = hasDocumentLine ? visibleRows.logicalLineAt(visibleRow) : snapshot.lineCount;
+    const logical = hasDocumentLine ? snapshot.line(lineNumber) : undefined;
     const sourceFrom =
       logical === undefined
         ? 0
@@ -135,6 +141,7 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
               numberWidth,
               lineNumber === Number(caretPosition.line),
               options,
+              visibleRows,
             ),
             ...sourceCells,
           ];
@@ -146,7 +153,7 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
   }
   const visualCaret = options.controller.document.visualColumnAt(caretOffset);
   const caretX = gutterWidth + visualCaret - scrollX;
-  const caretY = Number(caretPosition.line) - scrollY;
+  const caretY = visibleRows.visibleRowAt(Number(caretPosition.line)) - scrollY;
   const caret = Object.freeze({
     visible: width > 0 && height > 0 && caretX >= 0 && caretX < width && caretY >= 0 && caretY < height,
     x: clamp(caretX, 0, Math.max(0, width - 1)),
@@ -180,16 +187,35 @@ function projectGutter(
   numberWidth: number,
   active: boolean,
   options: ProjectCodeEditorOptions,
+  visibleRows: CodeEditorVisibleRows,
 ): CodeEditorProjectedCell[] {
   const label = hasDocumentLine ? String(lineNumber + 1).padStart(numberWidth, ' ') : ' '.repeat(numberWidth);
-  const separator = active ? '>' : options.caps.glyphs.boxDrawing ? '│' : '|';
-  return [...label, ' ', separator].map((text) =>
+  const foldable = hasDocumentLine ? visibleRows.foldableAt(lineNumber) : undefined;
+  const collapsed = hasDocumentLine ? visibleRows.collapsedAt(lineNumber) : undefined;
+  const marker =
+    foldable === undefined
+      ? active
+        ? '>'
+        : options.caps.glyphs.boxDrawing
+          ? '│'
+          : '|'
+      : options.caps.unicode.utf8
+        ? collapsed === undefined
+          ? '▼'
+          : '▶'
+        : collapsed === undefined
+          ? 'v'
+          : '>';
+  return [...label, ' ', marker].map((text, index, parts) =>
     Object.freeze({
       text,
       width: 1 as const,
-      role: active ? 'lineNumber' : 'gutter',
+      role: index === parts.length - 1 && foldable !== undefined ? 'fold' : active ? 'lineNumber' : 'gutter',
       overlays: Object.freeze([]),
-      style: styleForRole(options.theme, active ? 'lineNumber' : 'gutter'),
+      style: styleForRole(
+        options.theme,
+        index === parts.length - 1 && foldable !== undefined ? 'fold' : active ? 'lineNumber' : 'gutter',
+      ),
     }),
   );
 }

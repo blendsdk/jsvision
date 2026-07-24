@@ -78,7 +78,6 @@ Owns public editor state and funnels every source mutation through document tran
 new CodeEditorController(options: CreateCodeEditorControllerOptions)
 // methods & signals:
 document: CodeEditorDocumentModel
-folds: readonly { readonly from: number; readonly to: number }[]
 limits: CodeEditorLimits
 degradation: CodeEditorDegradationState
 observations: CodeEditorObservabilityChannel
@@ -94,6 +93,8 @@ retainedState: {
     readonly telemetryEvents: number;
   }
 languageResult: LocalLanguageResult | undefined
+foldableRegions: readonly { readonly from: number; readonly to: number }[]
+folds: readonly { readonly from: number; readonly to: number }[]
 setLanguageResult(result: LocalLanguageResult | undefined): void
 diagnostics: readonly {
     readonly from: number;
@@ -105,7 +106,14 @@ replaceSelection(text: string): boolean
 hostAction(kind: 'navigate' | 'save' | 'close'): Promise<boolean>
 requestAssistance(): void
 requestFormatting(): void
+fold(): void
+unfold(): void
+foldAll(): void
+unfoldAll(): void
 toggleFold(): void
+foldLine(line: number): void
+unfoldLine(line: number): void
+toggleFoldLine(line: number): void
 dispose(): void
 ```
 
@@ -681,6 +689,7 @@ statusView: Text
 chrome
 status: { readonly language: string; readonly line: number; readonly column: number }
 onResized(): void
+zoom(): void
 ```
 
 ## CodeEditorWindowOptions

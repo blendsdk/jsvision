@@ -34,6 +34,7 @@ import {
 } from './input-validation.js';
 import { CodeEditorMouseSelection } from './mouse-selection.js';
 import { codeEditorGutterWidth, projectCodeEditor, type CodeEditorFrame } from './projection.js';
+import { codeEditorVisibleRows } from './folding.js';
 import { CodeEditorViewport, type CodeEditorViewportMetrics } from './viewport.js';
 
 /** Construction options for a terminal-native code editor view. */
@@ -105,7 +106,7 @@ export class CodeEditor extends Group {
       maxWidth: this.controller.limits.popupWidth,
       maxHeight: this.controller.limits.popupHeight,
     });
-    this.#viewport = new CodeEditorViewport(this.controller.document);
+    this.#viewport = new CodeEditorViewport(this.controller);
     this.#mouseSelection = new CodeEditorMouseSelection(this, this.controller.document, this.#viewport, () =>
       this.#finishSelectionChange(),
     );
@@ -150,6 +151,10 @@ export class CodeEditor extends Group {
       return;
     }
     if (command === 'fold.toggle') this.controller.toggleFold();
+    if (command === 'fold.collapse') this.controller.fold();
+    if (command === 'fold.expand') this.controller.unfold();
+    if (command === 'fold.collapseAll') this.controller.foldAll();
+    if (command === 'fold.expandAll') this.controller.unfoldAll();
     if (command === 'assist') this.controller.requestAssistance();
     if (command === 'format') this.controller.requestFormatting();
     this.#record(command);
@@ -431,6 +436,22 @@ export class CodeEditor extends Group {
   }
 
   #routeMouseEvent(event: DispatchEvent): void {
+    if (
+      event.event.type === 'mouse' &&
+      event.event.kind === 'down' &&
+      event.event.button === 0 &&
+      event.local !== undefined &&
+      this.lineNumbers &&
+      event.local.x === this.#viewport.metrics.gutterWidth - 1
+    ) {
+      const line = this.#viewport.logicalLineAtViewportRow(event.local.y);
+      if (codeEditorVisibleRows(this.controller).foldableAt(line) !== undefined) {
+        this.controller.toggleFoldLine(line);
+        this.#finishSelectionChange();
+        event.handled = true;
+        return;
+      }
+    }
     event.handled = this.#mouseSelection.route(event, this.#lastFrame);
   }
 
@@ -650,7 +671,7 @@ export class CodeEditor extends Group {
     const document = this.controller.document;
     const selection = document.selection;
     const current = document.snapshot.lineAt(Number(selection.head));
-    const targetNumber = Math.max(0, Math.min(document.snapshot.lineCount - 1, current.number + delta));
+    const targetNumber = codeEditorVisibleRows(this.controller).adjacentLogicalLine(Number(current.number), delta);
     const target = document.snapshot.line(targetNumber);
     const head = target.from + Math.min(Number(selection.head) - current.from, target.length);
     document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });

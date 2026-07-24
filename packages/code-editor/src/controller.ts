@@ -62,13 +62,17 @@ export interface CreateCodeEditorControllerOptions {
  */
 export class CodeEditorController {
   public readonly document: CodeEditorDocumentModel;
-  public folds: readonly { readonly from: number; readonly to: number }[] = Object.freeze([]);
   public readonly limits: CodeEditorLimits;
   public readonly degradation: CodeEditorDegradationState;
   public readonly observations: CodeEditorObservabilityChannel;
   readonly #host: (effect: CodeEditorControllerHostEffect) => Promise<boolean>;
   readonly #lsp: CodeEditorLspCoordinator | undefined;
   #languageResult: LocalLanguageResult | undefined;
+  #foldableRegions: readonly FoldableRegion[] = Object.freeze([]);
+  #foldableRegionLines: readonly { readonly from: number; readonly to: number }[] = Object.freeze([]);
+  #foldableByKey: ReadonlyMap<string, FoldableRegion> = new Map();
+  #foldableByLine: ReadonlyMap<number, FoldableRegion> = new Map();
+  #collapsedFoldKeys: ReadonlySet<string> = new Set();
   #parserRuns = 0;
   #lspRequests = 0;
   #assistanceRequests = 0;
@@ -166,7 +170,34 @@ export class CodeEditorController {
       : undefined;
   }
 
-  /** Replaces local presentation data only when it matches the active document identity. */
+  /** Current validated multi-line structural regions, expressed as inclusive logical lines. */
+  public get foldableRegions(): readonly { readonly from: number; readonly to: number }[] {
+    return this.languageResult === undefined ? Object.freeze([]) : this.#foldableRegionLines;
+  }
+
+  /**
+   * Current collapsed structural regions.
+   *
+   * Stale language results never hide source: when the document revision advances, this getter
+   * returns an empty list until matching fresh analysis is installed.
+   */
+  public get folds(): readonly { readonly from: number; readonly to: number }[] {
+    if (this.languageResult === undefined) return Object.freeze([]);
+    const collapsed: { readonly from: number; readonly to: number }[] = [];
+    for (const key of this.#collapsedFoldKeys) {
+      const region = this.#foldableByKey.get(key);
+      if (region !== undefined) collapsed.push(Object.freeze({ from: region.from, to: region.to }));
+    }
+    return Object.freeze(collapsed.sort((left, right) => left.from - right.from || right.to - left.to));
+  }
+
+  /**
+   * Replaces local presentation data only when it matches the active document identity.
+   *
+   * Fold ranges are treated as hostile adapter output even though the TypeScript contract is
+   * typed. Invalid, crossing, duplicate, single-line, and over-limit ranges are removed before any
+   * presentation consumer can hide source.
+   */
   public setLanguageResult(result: LocalLanguageResult | undefined): void {
     if (this.#disposed) return;
     if (
@@ -174,7 +205,30 @@ export class CodeEditorController {
       (result.identity.lineage === this.document.identity.lineage &&
         Number(result.identity.revision) === Number(this.document.identity.revision))
     ) {
-      this.#languageResult = result;
+      if (result === undefined) {
+        this.#languageResult = undefined;
+        this.#foldableRegions = Object.freeze([]);
+        this.#foldableRegionLines = Object.freeze([]);
+        this.#foldableByKey = new Map();
+        this.#foldableByLine = new Map();
+        this.#collapsedFoldKeys = new Set();
+      } else {
+        const regions = validateFoldableRegions(this.document, result.folds, this.limits.folds, result.adapterId);
+        const survivingKeys = new Set(
+          regions.filter((region) => this.#collapsedFoldKeys.has(region.key)).map((region) => region.key),
+        );
+        this.#foldableRegions = regions;
+        this.#foldableRegionLines = Object.freeze(regions.map(({ from, to }) => Object.freeze({ from, to })));
+        this.#foldableByKey = new Map(regions.map((region) => [region.key, region]));
+        this.#foldableByLine = new Map(regions.map((region) => [region.from, region]));
+        this.#collapsedFoldKeys = survivingKeys;
+        this.#languageResult = Object.freeze({
+          ...result,
+          folds: Object.freeze(
+            regions.map((region) => Object.freeze({ from: region.sourceFrom, to: region.sourceTo })),
+          ),
+        });
+      }
       this.#parserRuns += 1;
       if (result?.state === 'degraded') {
         this.degradation.fail('parser');
@@ -285,32 +339,160 @@ export class CodeEditorController {
     }
   }
 
-  /** Toggles one local fold marker at the active line. */
+  /** Collapses the structural region starting at the active line, when one exists. */
+  public fold(): void {
+    if (this.#disposed) return;
+    const line = Number(offsetToPosition(this.document.snapshot, Number(this.document.selection.head)).line);
+    this.foldLine(line);
+  }
+
+  /** Expands the collapsed structural region starting at the active line. */
+  public unfold(): void {
+    if (this.#disposed) return;
+    const line = Number(offsetToPosition(this.document.snapshot, Number(this.document.selection.head)).line);
+    this.unfoldLine(line);
+  }
+
+  /** Collapses every currently validated structural region. */
+  public foldAll(): void {
+    if (this.#disposed || this.languageResult === undefined) return;
+    this.#relocateSelectionForCollapse(this.#foldableRegions);
+    this.#collapsedFoldKeys = new Set(this.#foldableRegions.map((region) => region.key));
+  }
+
+  /** Expands every collapsed structural region. */
+  public unfoldAll(): void {
+    if (this.#disposed) return;
+    this.#collapsedFoldKeys = new Set();
+  }
+
+  /** Toggles the structural region at the active line. */
   public toggleFold(): void {
     if (this.#disposed) return;
-    const position = offsetToPosition(this.document.snapshot, Number(this.document.selection.head));
-    if (this.folds.some((fold) => fold.from === Number(position.line))) {
-      this.folds = Object.freeze(this.folds.filter((fold) => fold.from !== Number(position.line)));
-    } else {
-      this.folds = Object.freeze(
-        [...this.folds, Object.freeze({ from: Number(position.line), to: Number(position.line) })].slice(
-          -this.limits.folds,
-        ),
-      );
-    }
+    const line = Number(offsetToPosition(this.document.snapshot, Number(this.document.selection.head)).line);
+    this.toggleFoldLine(line);
+  }
+
+  /** Collapses a validated structural region by its logical header line. */
+  public foldLine(line: number): void {
+    const region = this.#foldableByLine.get(line);
+    if (region === undefined || this.languageResult === undefined || this.#collapsedFoldKeys.has(region.key)) return;
+    this.#relocateSelectionForCollapse([region]);
+    this.#collapsedFoldKeys = new Set([...this.#collapsedFoldKeys, region.key]);
+  }
+
+  /** Expands a collapsed structural region by its logical header line. */
+  public unfoldLine(line: number): void {
+    const region = this.#foldableByLine.get(line);
+    if (region === undefined || !this.#collapsedFoldKeys.has(region.key)) return;
+    const next = new Set(this.#collapsedFoldKeys);
+    next.delete(region.key);
+    this.#collapsedFoldKeys = next;
+  }
+
+  /** Toggles a structural region by its logical header line. */
+  public toggleFoldLine(line: number): void {
+    const region = this.#foldableByLine.get(line);
+    if (region === undefined) return;
+    if (this.#collapsedFoldKeys.has(region.key)) this.unfoldLine(line);
+    else this.foldLine(line);
   }
 
   /** Releases controller-owned presentation, callback, and protocol resources. */
   public dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
-    this.folds = Object.freeze([]);
+    this.#foldableRegions = Object.freeze([]);
+    this.#foldableRegionLines = Object.freeze([]);
+    this.#foldableByKey = new Map();
+    this.#foldableByLine = new Map();
+    this.#collapsedFoldKeys = new Set();
     this.#languageResult = undefined;
     this.document.releaseRetainedResources();
     this.degradation.dispose();
     this.observations.dispose();
     void this.#lsp?.close().catch(() => undefined);
   }
+
+  #relocateSelectionForCollapse(regions: readonly FoldableRegion[]): void {
+    const anchor = Number(this.document.selection.anchor);
+    const head = Number(this.document.selection.head);
+    for (const region of regions) {
+      const hiddenFrom = Number(this.document.snapshot.line(region.from + 1).from);
+      const hiddenTo = Number(this.document.snapshot.line(region.to).to);
+      const selectionFrom = Math.min(anchor, head);
+      const selectionTo = Math.max(anchor, head);
+      if (selectionTo < hiddenFrom || selectionFrom > hiddenTo) continue;
+      const header = Number(this.document.snapshot.line(region.from).from);
+      this.document.setSelection({ anchor: header, head: header });
+      return;
+    }
+  }
+}
+
+interface FoldableRegion {
+  readonly sourceFrom: number;
+  readonly sourceTo: number;
+  readonly from: number;
+  readonly to: number;
+  readonly key: string;
+}
+
+function validateFoldableRegions(
+  document: CodeEditorDocumentModel,
+  ranges: LocalLanguageResult['folds'],
+  limit: number,
+  adapterId: string,
+): readonly FoldableRegion[] {
+  const snapshot = document.snapshot;
+  const candidates: Omit<FoldableRegion, 'key'>[] = [];
+  const seen = new Set<string>();
+  const inspectionLimit = Math.min(ranges.length, Math.max(limit, Math.min(limit * 4, 200_000)));
+  for (let index = 0; index < inspectionLimit; index += 1) {
+    const range = ranges[index];
+    if (range === undefined) continue;
+    if (candidates.length >= limit) break;
+    if (
+      !Number.isSafeInteger(range.from) ||
+      !Number.isSafeInteger(range.to) ||
+      range.from < 0 ||
+      range.to <= range.from ||
+      range.to > snapshot.length
+    )
+      continue;
+    const from = Number(offsetToPosition(snapshot, range.from).line);
+    const to = Number(offsetToPosition(snapshot, Math.max(range.from, range.to - 1)).line);
+    if (to <= from) continue;
+    const identity = `${range.from}:${range.to}`;
+    if (seen.has(identity)) continue;
+    seen.add(identity);
+    candidates.push({ sourceFrom: range.from, sourceTo: range.to, from, to });
+  }
+  candidates.sort((left, right) => left.from - right.from || right.to - left.to);
+  const nested: Omit<FoldableRegion, 'key'>[] = [];
+  const parents: Omit<FoldableRegion, 'key'>[] = [];
+  for (const candidate of candidates) {
+    while (parents.length > 0 && candidate.from > (parents.at(-1)?.to ?? -1)) parents.pop();
+    const parent = parents.at(-1);
+    if (parent !== undefined && candidate.to > parent.to) continue;
+    nested.push(candidate);
+    parents.push(candidate);
+  }
+  const keyed: FoldableRegion[] = [];
+  const path: FoldableRegion[] = [];
+  for (const region of nested) {
+    while (path.length > 0 && region.from > (path.at(-1)?.to ?? -1)) path.pop();
+    const header = snapshot.line(region.from).text.trim();
+    const key = `${adapterId}\u0000${[...path.map((parent) => snapshot.line(parent.from).text.trim()), header].join(
+      '\u0000',
+    )}`;
+    const candidate = Object.freeze({ ...region, key });
+    keyed.push(candidate);
+    path.push(candidate);
+  }
+  const keyCounts = new Map<string, number>();
+  for (const region of keyed) keyCounts.set(region.key, (keyCounts.get(region.key) ?? 0) + 1);
+  return Object.freeze(keyed.filter((region) => keyCounts.get(region.key) === 1));
 }
 
 function toProtocolPosition(document: CodeEditorDocumentModel): { readonly line: number; readonly character: number } {
