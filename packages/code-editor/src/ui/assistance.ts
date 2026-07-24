@@ -18,15 +18,26 @@ export class CodeEditorAssistanceView extends View {
   public items: readonly string[] = Object.freeze([]);
   public selected = 0;
 
-  public constructor() {
+  readonly #maxItems: number;
+  readonly #maxLabelCharacters: number;
+
+  public constructor(
+    options: { readonly maxItems?: number; readonly maxWidth?: number; readonly maxHeight?: number } = {},
+  ) {
     super();
+    this.#maxItems = bounded(options.maxItems, 12, 512);
+    this.#maxLabelCharacters = bounded(options.maxWidth, 32, 240);
+    const height = bounded(options.maxHeight, 8, 100);
     this.state.visible = false;
-    this.setLayout({ position: 'absolute', rect: { x: 0, y: 1, width: 32, height: 8 } });
+    this.setLayout({
+      position: 'absolute',
+      rect: { x: 0, y: 1, width: this.#maxLabelCharacters, height },
+    });
   }
 
   /** Replaces popup rows with validated inert labels. */
   public show(items: readonly string[]): void {
-    this.items = Object.freeze(items.slice(0, 12).map((item) => item.slice(0, 256)));
+    this.items = Object.freeze(items.slice(0, this.#maxItems).map((item) => item.slice(0, this.#maxLabelCharacters)));
     this.selected = 0;
     this.state.visible = this.items.length > 0;
     this.invalidate();
@@ -46,4 +57,8 @@ export class CodeEditorAssistanceView extends View {
       context.text(0, row, this.items[row] ?? '', context.color(row === this.selected ? 'menuSelected' : 'menuBar'));
     }
   }
+}
+
+function bounded(value: number | undefined, fallback: number, ceiling: number): number {
+  return Number.isSafeInteger(value) && (value ?? 0) >= 1 ? Math.min(value ?? fallback, ceiling) : fallback;
 }

@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-24 15:27
-> **Progress**: 43/61 tasks (70%)
+> **Last Updated**: 2026-07-24 16:33
+> **Progress**: 51/61 tasks (84%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -120,16 +120,16 @@ the user authorizes any synchronization; execution then revalidates paths and de
 
 ## Phase 6: Quality and security closure
 
-> **Phase baseline tree**: _(recorded by exec-plan)_
+> **Phase baseline tree**: 621e560eb54f3a5c5c6b15eaf41b7f249f305db7
 
-- [ ] 6.1.1 [spec-author] Extend immutable suites with the cross-cutting RD-04 flood, failure, accessibility, package, and retained-memory cases — existing `*.spec.test.ts`
-- [ ] 6.1.2 Run the added cross-cutting specifications and record the expected red result
-- [ ] 6.2.1 Harden one centralized limits/degradation/observability policy and failure containment — `packages/code-editor/src/limits.ts`, `packages/code-editor/src/degradation.ts`, `packages/code-editor/src/observability.ts`
-- [ ] 6.2.2 Add terminal/protocol/theme fuzz corpora and reference p50/p95/peak-memory harness — `packages/code-editor/test/fuzz-corpus.ts`, `packages/code-editor/bench/reference.ts`
-- [ ] 6.2.3 Close package API, dependency/license, no-DOM, retained-resource, and legacy `Editor` compatibility gates — `packages/code-editor/src/architecture/`, `packages/ui/src/editor/`
-- [ ] 6.2.4 Run all cross-cutting specifications green; fix implementation only
-- [ ] 6.3.1 Add implementation stress tests for cancellation/disposal, hostile callbacks, floods, and all size tiers — `packages/code-editor/src/quality.impl.test.ts`, `packages/code-editor/src/quality.perf.test.ts`
-- [ ] 6.3.2 Run benchmark evidence, focused quality/security suites, and `yarn verify`
+- [x] 6.1.1 [spec-author] Extend immutable suites with the cross-cutting RD-04 flood, failure, accessibility, package, and retained-memory cases — existing `*.spec.test.ts` ✅ (completed: 2026-07-24 15:54)
+- [x] 6.1.2 Run the added cross-cutting specifications and record the expected red result ✅ missing centralized limits module confirmed the expected red state (completed: 2026-07-24 15:54)
+- [x] 6.2.1 Harden one centralized limits/degradation/observability policy and failure containment — `packages/code-editor/src/limits.ts`, `packages/code-editor/src/degradation.ts`, `packages/code-editor/src/observability.ts` ✅ centralized ceilings, content-free telemetry, bounded degradation, typecheck and docs passing (completed: 2026-07-24 16:04)
+- [x] 6.2.2 Add terminal/protocol/theme fuzz corpora and reference p50/p95/peak-memory harness — `packages/code-editor/test/fuzz-corpus.ts`, `packages/code-editor/bench/reference.ts` ✅ 12 architecture specifications passing with bounded scheduling and corpus evidence (completed: 2026-07-24 16:05)
+- [x] 6.2.3 Close package API, dependency/license, no-DOM, retained-resource, and legacy `Editor` compatibility gates — `packages/code-editor/src/architecture/`, `packages/ui/src/editor/` ✅ package build, probes, dependency gate, and legacy UI suite passing (completed: 2026-07-24 16:07)
+- [x] 6.2.4 Run all cross-cutting specifications green; fix implementation only ✅ 67 immutable specification cases passing (completed: 2026-07-24 16:08)
+- [x] 6.3.1 Add implementation stress tests for cancellation/disposal, hostile callbacks, floods, and all size tiers — `packages/code-editor/src/quality.impl.test.ts`, `packages/code-editor/src/quality.perf.test.ts` ✅ 9 cancellation, hostile-callback, flood, tier, and retained-resource cases passing (completed: 2026-07-24 16:13)
+- [x] 6.3.2 Run benchmark evidence, focused quality/security suites, and `yarn verify` ✅ production transaction/projection p95 3.280/3.276 ms, 159 package tests, 34/34 repository tasks, resolved quality review, docs and plugin integrity passing (completed: 2026-07-24 16:33)
 
 **Verify**: `yarn workspace @jsvision/code-editor test && yarn verify`
 

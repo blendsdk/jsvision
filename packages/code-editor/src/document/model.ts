@@ -129,6 +129,11 @@ export class CodeEditorDocumentModel {
     return this.#history.undoDepth;
   }
 
+  /** Returns retained undo/redo payload bytes for bounded lifecycle inspection. */
+  public get retainedHistoryBytes(): number {
+    return this.#history.retainedBytes;
+  }
+
   /** Returns the number of complete operations available to redo. */
   public get redoDepth(): number {
     return this.#history.redoDepth;
@@ -311,6 +316,25 @@ export class CodeEditorDocumentModel {
   /** Marks the current exact text as the host's latest successful save. */
   public markSaved(): void {
     this.#savedStorage = this.#storage;
+  }
+
+  /** Releases retained undo and redo resources while preserving the active source text. */
+  public releaseRetainedResources(): void {
+    this.#history.clear();
+  }
+
+  /** Applies a controller-owned safety policy before interactive editing begins. */
+  public configureSafetyLimits(limits: DocumentLimits): void {
+    if (this.#history.undoDepth > 0 || this.#history.redoDepth > 0) {
+      throw new Error('Document safety limits must be configured before editing begins.');
+    }
+    const resolved = resolveDocumentLimits(limits);
+    if (this.#storage.byteLength > resolved.maxDocumentBytes || this.#storage.lineCount > resolved.maxDocumentLines) {
+      throw new RangeError('Document exceeds the controller safety policy.');
+    }
+    this.#limits = resolved;
+    this.#history = new DocumentHistory(resolved.maxHistoryEntries, resolved.maxHistoryBytes);
+    this.#refreshDerivedState();
   }
 
   /** Finds bounded literal matches without changing revision, selection, or history. */

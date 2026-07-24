@@ -38,9 +38,18 @@ export class CodeEditor extends Group {
   public override focusable = true;
   public readonly controller: CodeEditorController;
   public readonly behavior = Object.freeze({ documentTransactions: true, keyboardOnly: true });
+  public readonly nonColorIndicators = Object.freeze([
+    'selection',
+    'activeLine',
+    'folding',
+    'diagnosticSeverity',
+    'pending',
+    'readOnly',
+    'degradation',
+  ]);
   public readonly chrome = Object.freeze({ horizontalScrollBar: false, verticalScrollBar: false, statusLine: false });
   public readonly journey: string[] = [];
-  public readonly assistanceView = new CodeEditorAssistanceView();
+  public readonly assistanceView: CodeEditorAssistanceView;
   public readonly scroll: { readonly x: Signal<number>; readonly y: Signal<number> };
   public focusState: 'idle' | 'focused' | 'released' = 'idle';
   readonly #bindings: Readonly<Record<string, CodeEditorCommand>>;
@@ -53,10 +62,16 @@ export class CodeEditor extends Group {
   #snippet: readonly { readonly from: number; readonly to: number }[] | undefined;
   #snippetIndex = 0;
   #searchQuery = '';
+  #disposed = false;
 
   public constructor(options: CodeEditorOptions) {
     super();
     this.controller = options.controller;
+    this.assistanceView = new CodeEditorAssistanceView({
+      maxItems: this.controller.limits.completionItems,
+      maxWidth: this.controller.limits.popupWidth,
+      maxHeight: this.controller.limits.popupHeight,
+    });
     this.scroll = { x: signal(0), y: signal(0) };
     this.#bindings = Object.freeze({ ...defaultCodeEditorKeyBindings, ...options.keyBindings });
     this.add(this.assistanceView);
@@ -105,7 +120,7 @@ export class CodeEditor extends Group {
     const normalized: CodeEditorCompletionItem[] = [];
     try {
       if (!Array.isArray(items) || items.length > 100_000) return;
-      for (let index = 0; index < Math.min(items.length, 512); index += 1) {
+      for (let index = 0; index < Math.min(items.length, this.controller.limits.completionItems); index += 1) {
         const item = ownData(items, String(index));
         const label = ownString(item, 'label', 256);
         const insertText = ownString(item, 'insertText', 65_536);
@@ -143,7 +158,7 @@ export class CodeEditor extends Group {
     const normalized: { from: number; to: number }[] = [];
     try {
       if (!Array.isArray(placeholders) || placeholders.length > 100_000) return;
-      for (let index = 0; index < Math.min(placeholders.length, 128); index += 1) {
+      for (let index = 0; index < Math.min(placeholders.length, this.controller.limits.decorations); index += 1) {
         const item = ownData(placeholders, String(index));
         const from = ownInteger(item, 'from');
         const to = ownInteger(item, 'to');
@@ -221,6 +236,7 @@ export class CodeEditor extends Group {
     readonly height: number;
     readonly caps: CapabilityProfile;
   }): CodeEditorFrame {
+    const startedAt = Date.now();
     const caret = Number(this.controller.document.selection.head);
     const bracketPair = this.controller.languageResult?.brackets.find(
       (pair) => pair.open === caret || pair.close === caret,
@@ -246,12 +262,41 @@ export class CodeEditor extends Group {
             },
       activeLine: Number(offsetToPosition(this.controller.document.snapshot, caret).line),
     });
+    this.controller.observations.record({ kind: 'render', durationMs: Date.now() - startedAt });
     return this.#lastFrame;
   }
 
   /** Resolves after all currently accepted host effects settle. */
   public async whenIdle(): Promise<void> {
     await Promise.all([...this.#pending.values()]);
+    await this.controller.observations.whenIdle();
+  }
+
+  /** Releases view-owned assistance, host-effect, and controller resources. */
+  public dispose(): void {
+    if (this.#disposed) return;
+    this.#disposed = true;
+    this.#completion = undefined;
+    this.#snippet = undefined;
+    this.#modal = undefined;
+    this.assistanceView.dismiss();
+    this.#pending.clear();
+    this.controller.dispose();
+  }
+
+  /** Returns content-free retained UI counters for lifecycle inspection. */
+  public get retainedState(): {
+    readonly completionItems: number;
+    readonly popupRows: number;
+    readonly snippetPlaceholders: number;
+    readonly pendingHostEffects: number;
+  } {
+    return Object.freeze({
+      completionItems: this.#completion?.length ?? 0,
+      popupRows: this.assistanceView.items.length,
+      snippetPlaceholders: this.#snippet?.length ?? 0,
+      pendingHostEffects: this.#pending.size,
+    });
   }
 
   /** Paints sanitized, semantically styled cells through JSVision. */

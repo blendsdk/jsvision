@@ -13,6 +13,28 @@ export type CodeEditorLanguageId = 'plain' | 'javascript' | 'typescript' | 'post
  */
 export const plainLanguageId: CodeEditorLanguageId = 'plain';
 
+export { HARD_CODE_EDITOR_LIMITS, classifyDocumentSize, resolveCodeEditorLimits } from './limits.js';
+export type {
+  CodeEditorDocumentSizeClassification,
+  CodeEditorLimits,
+  CodeEditorLimitsInput,
+  EssentialCodeEditorFeature,
+} from './limits.js';
+export { createDegradationState } from './degradation.js';
+export type {
+  CodeEditorDegradationNotice,
+  CodeEditorDegradationSnapshot,
+  CodeEditorDegradationState,
+  CodeEditorDegradedFeature,
+} from './degradation.js';
+export { createObservabilityChannel } from './observability.js';
+export type {
+  CodeEditorObservabilityChannel,
+  CodeEditorObservabilityOptions,
+  CodeEditorObservabilitySnapshot,
+  CodeEditorObservation,
+  CodeEditorObservationEvent,
+} from './observability.js';
 export { CodeEditorDocumentModel, createDocumentModel } from './document/model.js';
 export type { CreateDocumentModelOptions, LargeDocumentDetails } from './document/model.js';
 export { offsetToPosition, offsetToVisualColumn, positionToOffset } from './document/positions.js';
@@ -82,6 +104,7 @@ export { CodeEditorController, createCodeEditorController } from './controller.j
 export type {
   CodeEditorControllerHostEffect,
   CodeEditorControllerMetrics,
+  CodeEditorControllerPublicState,
   CreateCodeEditorControllerOptions,
 } from './controller.js';
 export { CodeEditor, CodeEditorWindow, projectCodeEditor } from './ui/index.js';
