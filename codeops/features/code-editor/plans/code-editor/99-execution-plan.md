@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-24 15:01
-> **Progress**: 35/61 tasks (57%)
+> **Last Updated**: 2026-07-24 15:27
+> **Progress**: 43/61 tasks (70%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -104,16 +104,17 @@ the user authorizes any synchronization; execution then revalidates paths and de
 
 ## Phase 5: Terminal UI and theme
 
-> **Phase baseline tree**: _(recorded by exec-plan)_
+> **Phase baseline tree**: b856c83ad48a5772121e301995f8ea9ead6a9a34
+> **Expected modification set**: `packages/code-editor/src/controller.ts`, `packages/code-editor/src/ui/`, `packages/code-editor/src/theme/`, `packages/code-editor/src/index.ts`, package metadata/lockfile only if dependencies change, and CodeOps execution/quality/traceability artifacts.
 
-- [ ] 5.1.1 [spec-author] Write ST-32–ST-38 specification tests — `packages/code-editor/src/ui/code-editor.spec.test.ts`
-- [ ] 5.1.2 Run UI/theme specifications and record the expected red result — ST-32–ST-38
-- [ ] 5.2.1 Implement controller, public state/commands, `CodeEditor`, and `CodeEditorWindow` — `packages/code-editor/src/controller.ts`, `packages/code-editor/src/ui/code-editor.ts`, `packages/code-editor/src/ui/code-editor-window.ts`
-- [ ] 5.2.2 Implement viewport projection, gutter/status, input routing, popup/chooser focus, and terminal-safe rendering — `packages/code-editor/src/ui/projection.ts`, `packages/code-editor/src/ui/input.ts`, `packages/code-editor/src/ui/assistance.ts`
-- [ ] 5.2.3 Implement theme schema/resolver/presets/inspection, precedence, contrast, and capability fallback — `packages/code-editor/src/theme/theme.ts`, `packages/code-editor/src/theme/resolve.ts`, `packages/code-editor/src/theme/presets.ts`
-- [ ] 5.2.4 Run ST-32–ST-38 green; fix implementation only
-- [ ] 5.3.1 Add golden-frame, focus, command, theme fuzz, contrast, resize, and terminal-serialization implementation tests — `packages/code-editor/src/ui/code-editor.impl.test.ts`, `packages/code-editor/src/theme/theme.impl.test.ts`
-- [ ] 5.3.2 Run focused UI/theme tests and `yarn verify`
+- [x] 5.1.1 [spec-author] Write ST-32–ST-38 specification tests — `packages/code-editor/src/ui/code-editor.spec.test.ts` ✅ (completed: 2026-07-24 15:17)
+- [x] 5.1.2 Run UI/theme specifications and record the expected red result — ST-32–ST-38 ✅ expected red: Phase 5 public UI module absent; 1 suite failed before collection (completed: 2026-07-24 15:17)
+- [x] 5.2.1 Implement controller, public state/commands, `CodeEditor`, and `CodeEditorWindow` — `packages/code-editor/src/controller.ts`, `packages/code-editor/src/ui/code-editor.ts`, `packages/code-editor/src/ui/code-editor-window.ts` ✅ (completed: 2026-07-24 15:23)
+- [x] 5.2.2 Implement viewport projection, gutter/status, input routing, popup/chooser focus, and terminal-safe rendering — `packages/code-editor/src/ui/projection.ts`, `packages/code-editor/src/ui/input.ts`, `packages/code-editor/src/ui/assistance.ts` ✅ (completed: 2026-07-24 15:23)
+- [x] 5.2.3 Implement theme schema/resolver/presets/inspection, precedence, contrast, and capability fallback — `packages/code-editor/src/theme/theme.ts`, `packages/code-editor/src/theme/resolve.ts`, `packages/code-editor/src/theme/presets.ts` ✅ (completed: 2026-07-24 15:23)
+- [x] 5.2.4 Run ST-32–ST-38 green; fix implementation only ✅ 7 specification tests passing (completed: 2026-07-24 15:23)
+- [x] 5.3.1 Add golden-frame, focus, command, theme fuzz, contrast, resize, and terminal-serialization implementation tests — `packages/code-editor/src/ui/code-editor.impl.test.ts`, `packages/code-editor/src/theme/theme.impl.test.ts` ✅ 6 implementation/fuzz cases passing (completed: 2026-07-24 15:26)
+- [x] 5.3.2 Run focused UI/theme tests and `yarn verify` ✅ 134 package tests, 34/34 repository tasks, documentation and plugin integrity passing (completed: 2026-07-24 15:27)
 
 **Verify**: `yarn workspace @jsvision/code-editor test && yarn verify`
 

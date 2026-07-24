@@ -78,3 +78,31 @@ export type {
   ProtocolPosition,
   ProtocolRange,
 } from './lsp/types.js';
+export { CodeEditorController, createCodeEditorController } from './controller.js';
+export type {
+  CodeEditorControllerHostEffect,
+  CodeEditorControllerMetrics,
+  CreateCodeEditorControllerOptions,
+} from './controller.js';
+export { CodeEditor, CodeEditorWindow, projectCodeEditor } from './ui/index.js';
+export type {
+  CodeEditorFrame,
+  CodeEditorKeyRoute,
+  CodeEditorOptions,
+  CodeEditorProjectedCell,
+  CodeEditorWindowOptions,
+  ProjectCodeEditorOptions,
+} from './ui/index.js';
+export {
+  classicCodeEditorTheme,
+  darkCodeEditorTheme,
+  lightCodeEditorTheme,
+  resolveCodeEditorTheme,
+} from './theme/index.js';
+export type {
+  CodeEditorCellStyle,
+  CodeEditorTheme,
+  CodeEditorThemeResolutionReport,
+  CodeEditorThemeSource,
+  ResolvedCodeEditorTheme,
+} from './theme/index.js';
