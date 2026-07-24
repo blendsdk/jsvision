@@ -1,8 +1,8 @@
 # Task T-01: Modern keyboard editing
 
 > **Type**: Task (lightweight) · **Feature**: code-editor · **CodeOps Artifact Schema**: 1
-> **Progress**: 4/5 tasks (80%)
-> **Last Updated**: 2026-07-24 20:01
+> **Progress**: 5/5 tasks (100%)
+> **Last Updated**: 2026-07-24 20:22
 > **Phase baseline tree**: 9d42d8ccdecdc28a24395692028f1b697452e419
 
 ## Objective
@@ -45,7 +45,35 @@ single-selection scope, revision-aware language presentation, and responsive ren
 - [x] T-01.4 Add implementation edge coverage and expand the dedicated Code Editor kitchen-sink
   with discoverable modern-keyboard scenarios and shortcut guidance.
   ✅ (completed: 2026-07-24 20:01; focused editor 12/12, showcase 27/27; `yarn verify` passed 34/34)
-- [ ] T-01.5 Refresh generated plugin/docs surfaces, run focused checks and `yarn plugin:check`,
+- [x] T-01.5 Refresh generated plugin/docs surfaces, run focused checks and `yarn plugin:check`,
   then pass the authoritative full verification and independent quality review.
+  ✅ (completed: 2026-07-24 20:22; `yarn verify` 34/34; RV-001/RV-002 resolved on scoped re-review)
 
 **Verify**: `yarn verify`
+
+## Quality review
+
+- **RV-001 — Major, accepted and fixed**: Ctrl+word navigation could stall on punctuation.
+  Navigation now consumes deterministic Unicode word, whitespace, or punctuation runs in either
+  direction and preserves Shift selection extension.
+- **RV-002 — Major, accepted and fixed**: Smart Tab and dedent counted UTF-16 code units rather
+  than terminal columns. Tab now uses the document visual-column calculator, while dedent removes
+  one visual indentation level and preserves residual mixed whitespace.
+- **Authority**: AI — delegated by `--auto-design`.
+- **Eligibility**: Internal navigation and indentation algorithms within the approved keyboard
+  behavior; no product scope, compatibility, or security-policy decision changed.
+- **Rejected alternatives**: Leaving punctuation as a special no-op violated forward progress;
+  treating tabs as one column contradicted the existing terminal projection; replacing all
+  indentation with spaces would discard useful residual whitespace.
+- **Strongest counterargument**: Editor platforms vary in their exact punctuation stops and mixed
+  indentation preservation. The selected behavior is deterministic, testable, terminal-native,
+  Unicode-aware, and guarantees progress without expanding the shortcut scope.
+- **Confidence**: High — grounded in the existing visual-column implementation and regression
+  tests around punctuation, Unicode, tabs, wide glyphs, reverse movement, Shift extension, and
+  document edges.
+- **Hardening**: Independent reviewer identified both defects; the single scoped re-review found
+  RV-001 and RV-002 resolved with no remaining or new Critical/Major findings.
+- **Policy version**: 1.
+- **Root invocation ID**: `modern-keyboard-editing-2026-07-24`.
+- **Reopen triggers**: A language-specific word-boundary contract, configurable indentation style,
+  or evidence that visual and editing columns diverge.

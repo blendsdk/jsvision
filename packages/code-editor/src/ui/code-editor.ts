@@ -1,7 +1,7 @@
 import type { CapabilityProfile } from '@jsvision/core';
 import { Commands, Group, signal, type DispatchEvent, type DrawContext, type Point, type Signal } from '@jsvision/ui';
 import type { CodeEditorController } from '../controller.js';
-import { offsetToPosition } from '../document/positions.js';
+import { offsetToPosition, offsetToVisualColumn } from '../document/positions.js';
 import type { DocumentEditInput, DocumentSelectionInput } from '../document/types.js';
 import { builtInCommentMetadata } from '../languages/metadata.js';
 import { classicCodeEditorTheme } from '../theme/presets.js';
@@ -413,8 +413,7 @@ export class CodeEditor extends Group {
       if (this.#hasSelection()) return this.#changeSelectedLineIndent(shift ? 'dedent' : 'indent');
       if (shift) return this.#dedentAtCaret();
       const document = this.controller.document;
-      const line = document.snapshot.lineAt(Number(document.selection.head));
-      const column = Number(document.selection.head) - line.from;
+      const column = Number(offsetToVisualColumn(document.snapshot, Number(document.selection.head), document.tabSize));
       const width = document.tabSize - (column % document.tabSize);
       return this.insertText(' '.repeat(width));
     }
@@ -477,7 +476,7 @@ export class CodeEditor extends Group {
         edits.push({ range: { from: line.from, to: line.from }, text: ' '.repeat(document.tabSize) });
         continue;
       }
-      const removable = indentationWidth(line.text, document.tabSize);
+      const removable = removableIndentationLength(line.text, document.tabSize);
       if (removable > 0) edits.push({ range: { from: line.from, to: line.from + removable }, text: '' });
     }
     if (edits.length === 0) return true;
@@ -576,11 +575,15 @@ export class CodeEditor extends Group {
     const text = document.text;
     let head = Number(selection.head);
     if (direction === 1) {
-      while (head < text.length && isSourceWordCharacter(text[head] ?? '')) head += 1;
-      while (head < text.length && isSourceWhitespace(text[head] ?? '')) head += 1;
+      const initial = sourceCharacterAt(text, head);
+      if (initial !== undefined) {
+        head = advanceCharacterRun(text, head, initial.kind);
+        if (initial.kind !== 'whitespace') head = advanceCharacterRun(text, head, 'whitespace');
+      }
     } else {
-      while (head > 0 && isSourceWhitespace(text[head - 1] ?? '')) head -= 1;
-      while (head > 0 && isSourceWordCharacter(text[head - 1] ?? '')) head -= 1;
+      head = retreatCharacterRun(text, head, 'whitespace');
+      const prior = sourceCharacterBefore(text, head);
+      if (prior !== undefined) head = retreatCharacterRun(text, head, prior.kind);
     }
     document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
     this.invalidate();
@@ -620,8 +623,7 @@ export class CodeEditor extends Group {
     const document = this.controller.document;
     const head = Number(document.selection.head);
     const line = document.snapshot.lineAt(head);
-    const prefix = line.text.slice(0, Math.min(document.tabSize, line.text.length));
-    const removable = prefix.match(/^ {1,}/u)?.[0].length ?? (prefix.startsWith('\t') ? 1 : 0);
+    const removable = removableIndentationLength(line.text, document.tabSize);
     if (removable === 0) return true;
     document.setSelection({ anchor: line.from, head: line.from + removable });
     this.insertText('');
@@ -703,21 +705,90 @@ function currentWordRange(text: string, caret: number): { from: number; to: numb
   return { from, to };
 }
 
-/** Returns whether one UTF-16 code unit participates in source-code word navigation. */
-function isSourceWordCharacter(character: string): boolean {
-  return /^[A-Za-z0-9_$]$/u.test(character);
+type SourceCharacterClass = 'word' | 'whitespace' | 'punctuation';
+
+interface SourceCharacter {
+  readonly character: string;
+  readonly from: number;
+  readonly to: number;
+  readonly kind: SourceCharacterClass;
 }
 
-/** Returns whether word navigation may cross a source whitespace boundary. */
-function isSourceWhitespace(character: string): boolean {
-  return /^\s$/u.test(character);
+/** Reads one complete Unicode code point and assigns its navigation class. */
+function sourceCharacterAt(text: string, offset: number): SourceCharacter | undefined {
+  if (offset < 0 || offset >= text.length) return undefined;
+  const point = text.codePointAt(offset);
+  if (point === undefined) return undefined;
+  const character = String.fromCodePoint(point);
+  return {
+    character,
+    from: offset,
+    to: offset + character.length,
+    kind: classifySourceCharacter(character),
+  };
 }
 
-/** Counts the removable indentation prefix for one logical line. */
-function indentationWidth(text: string, tabSize: number): number {
-  let width = 0;
-  while (width < Math.min(text.length, tabSize) && (text[width] === ' ' || text[width] === '\t')) width += 1;
-  return width;
+/** Reads the complete Unicode code point immediately before an offset. */
+function sourceCharacterBefore(text: string, offset: number): SourceCharacter | undefined {
+  if (offset <= 0 || offset > text.length) return undefined;
+  const low = text.charCodeAt(offset - 1);
+  const from =
+    low >= 0xdc00 && low <= 0xdfff && offset > 1 && text.charCodeAt(offset - 2) >= 0xd800 ? offset - 2 : offset - 1;
+  return sourceCharacterAt(text, from);
+}
+
+/** Classifies identifiers, whitespace, and punctuation into deterministic navigation runs. */
+function classifySourceCharacter(character: string): SourceCharacterClass {
+  if (/^[\p{L}\p{N}_$]$/u.test(character)) return 'word';
+  if (/^\s$/u.test(character)) return 'whitespace';
+  return 'punctuation';
+}
+
+/** Advances across one homogeneous Unicode character run. */
+function advanceCharacterRun(text: string, offset: number, kind: SourceCharacterClass): number {
+  let head = offset;
+  while (head < text.length) {
+    const character = sourceCharacterAt(text, head);
+    if (character === undefined || character.kind !== kind) break;
+    head = character.to;
+  }
+  return head;
+}
+
+/** Retreats across one homogeneous Unicode character run. */
+function retreatCharacterRun(text: string, offset: number, kind: SourceCharacterClass): number {
+  let head = offset;
+  while (head > 0) {
+    const character = sourceCharacterBefore(text, head);
+    if (character === undefined || character.kind !== kind) break;
+    head = character.from;
+  }
+  return head;
+}
+
+/**
+ * Counts leading whitespace characters that remove one visual indentation level.
+ *
+ * Removing a prefix rather than blindly deleting `tabSize` code units preserves residual mixed
+ * indentation such as the two spaces following a leading tab.
+ */
+function removableIndentationLength(text: string, tabSize: number): number {
+  const prefix = text.match(/^[\t ]*/u)?.[0] ?? '';
+  if (prefix.length === 0) return 0;
+  const targetWidth = Math.max(0, whitespaceVisualWidth(prefix, tabSize) - tabSize);
+  for (let remove = 1; remove <= prefix.length; remove += 1) {
+    if (whitespaceVisualWidth(prefix.slice(remove), tabSize) <= targetWidth) return remove;
+  }
+  return prefix.length;
+}
+
+/** Measures tabs and spaces using the same tab-stop rule as document visual columns. */
+function whitespaceVisualWidth(text: string, tabSize: number): number {
+  let column = 0;
+  for (const character of text) {
+    column += character === '\t' ? tabSize - (column % tabSize) : 1;
+  }
+  return column;
 }
 
 /**

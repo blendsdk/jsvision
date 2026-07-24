@@ -251,6 +251,8 @@
     {
       "edges": [],
       "evidence": [
+        "greenEvidence:Modern keyboard specification and implementation suites pass 15 of 15 tests; yarn verify passes 34 of 34 tasks.",
+        "redEvidence:Focused specification tests initially failed for all missing navigation, indentation, clipboard, and comment behaviors.",
         "summary:Specification coverage is planned before implementation for every modern keyboard behavior."
       ],
       "id": "TEST-MODERN-KEYBOARD",
@@ -266,7 +268,7 @@
           }
         }
       ],
-      "status": "planned",
+      "status": "passing",
       "title": "Modern keyboard editing specification coverage",
       "type": "test",
       "validations": []
@@ -1994,7 +1996,9 @@
     {
       "edges": [],
       "evidence": [
-        "summary:The user approved the modern keyboard editing scope and authorized lightweight planning and execution with auto-design and auto-commit."
+        "summary:All planned modern keyboard behavior, showcase coverage, documentation, and quality fixes are implemented.",
+        "summary:The user approved the modern keyboard editing scope and authorized lightweight planning and execution with auto-design and auto-commit.",
+        "verificationEvidence:Focused modern keyboard tests pass 15 of 15; yarn verify passes 34 of 34 tasks; plugin integrity passes; independent review findings RV-001 and RV-002 are resolved on re-review."
       ],
       "id": "T-01",
       "revision": "sha256:15874245d1327db5b416ea191c2818cc34e64997255d92f42bd80c20ec2301f8",
@@ -2009,7 +2013,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Modern keyboard editing",
       "type": "task",
       "validations": []

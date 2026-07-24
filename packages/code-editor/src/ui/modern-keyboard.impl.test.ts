@@ -78,4 +78,46 @@ describe('modern keyboard edge behavior', () => {
 
     expect(controller.document.text).toBe('  // one\n\n  //   two');
   });
+
+  it('crosses punctuation and Unicode word runs in both directions without stalling', () => {
+    const { controller, editor } = createEditor('foo.bar + λ');
+    const positions: number[] = [];
+    for (let index = 0; index < 6; index += 1) {
+      editor.routeKey({ key: 'ArrowRight', ctrl: true });
+      positions.push(Number(controller.document.selection.head));
+    }
+    expect(positions).toEqual([3, 4, 8, 10, 11, 11]);
+
+    editor.routeKey({ key: 'ArrowLeft', ctrl: true, shift: true });
+    expect(controller.document.selection).toMatchObject({ anchor: 11, head: 10 });
+    editor.routeKey({ key: 'ArrowLeft', ctrl: true });
+    editor.routeKey({ key: 'ArrowLeft', ctrl: true });
+    editor.routeKey({ key: 'ArrowLeft', ctrl: true });
+    editor.routeKey({ key: 'ArrowLeft', ctrl: true });
+    editor.routeKey({ key: 'ArrowLeft', ctrl: true });
+    expect(Number(controller.document.selection.head)).toBe(0);
+  });
+
+  it('uses visual columns for smart tabs after tabs and wide graphemes', () => {
+    for (const fixture of [
+      { text: '\tvalue', caret: 1, expected: '\t    value' },
+      { text: '界value', caret: 1, expected: '界  value' },
+    ]) {
+      const { controller, editor } = createEditor(fixture.text);
+      controller.document.setSelection({ anchor: fixture.caret, head: fixture.caret });
+
+      editor.routeKey({ key: 'Tab' });
+
+      expect(controller.document.text).toBe(fixture.expected);
+    }
+  });
+
+  it('dedents one visual level while preserving residual mixed whitespace', () => {
+    const { controller, editor } = createEditor('\t  value');
+    controller.document.setSelection({ anchor: 3, head: 3 });
+
+    editor.routeKey({ key: 'Tab', shift: true });
+
+    expect(controller.document.text).toBe('  value');
+  });
 });
