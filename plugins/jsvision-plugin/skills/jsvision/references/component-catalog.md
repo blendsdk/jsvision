@@ -65,6 +65,10 @@ Validators for `Input` (functions, not classes): `filter(chars)`, `range(min, ma
 
 ## Text editing
 
+- `CodeEditor` (`@jsvision/code-editor`) — a terminal-native source editor with line numbers,
+  syntax presentation, search, folds, diagnostics, completion, snippets, and bounded hostile-text
+  handling. Use `CodeEditorWindow` for ready-made scrollbars and line/column status. See
+  `api/code-editor.md`.
 - **Editor** — a full multi-line text editor (selection, mouse, undo/redo, search, clipboard).
 - **Memo** — a dialog-embeddable editor bound to a two-way `Signal<string>` (`memo.getText()`).
 - **EditWindow** — a window pre-wired around an `Editor` (a ready file/edit window).

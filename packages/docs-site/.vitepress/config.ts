@@ -157,6 +157,7 @@ export default withMermaid(
               { text: 'Dialogs & modality', link: '/guide/dialogs-and-modality' },
               { text: 'Forms', link: '/guide/forms' },
               { text: 'Data grid', link: '/guide/data-grid' },
+              { text: 'Code editor', link: '/guide/code-editor' },
               { text: 'Files & the FileSystem seam', link: '/guide/files-and-filesystem' },
             ],
           },

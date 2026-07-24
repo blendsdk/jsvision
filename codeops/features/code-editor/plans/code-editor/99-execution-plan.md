@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-24 16:33
-> **Progress**: 51/61 tasks (84%)
+> **Progress**: 61/61 tasks (100%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -135,18 +135,18 @@ the user authorizes any synchronization; execution then revalidates paths and de
 
 ## Phase 7: Showcase, docs, and release
 
-> **Phase baseline tree**: _(recorded by exec-plan)_
+> **Phase baseline tree**: 4f022261ab19f90bda85a1e00538803fa10c8659
 
-- [ ] 7.1.1 [spec-author] Write ST-39–ST-42 specification tests — `packages/examples/code-editor-demo/code-editor-demo.spec.test.ts`
-- [ ] 7.1.2 Run showcase/release specifications and record the expected red result — ST-39–ST-42
-- [ ] 7.2.1 Implement deterministic session/scenario registry and exhaustive standalone demo — `packages/examples/code-editor-demo/session.ts`, `packages/examples/code-editor-demo/scenarios.ts`, `packages/examples/code-editor-demo/main.ts`
-- [ ] 7.2.2 Add `demo:code-editor`, standalone E2E, and concise global kitchen-sink story — `packages/examples/package.json`, `packages/examples/code-editor-demo/code-editor-demo.e2e.test.ts`, `packages/examples/kitchen-sink/stories/code-editor.story.ts`
-- [ ] 7.2.3 Complete package README/JSDoc/examples/changelog and architecture/public docs/ADRs — `packages/code-editor/README.md`, `packages/code-editor/CHANGELOG.md`, `docs/`
-- [ ] 7.2.4 Update release/package metadata and JSVision plugin catalog/recipes/generated API — `package.json`, `.github/workflows/release.yml`, `tools/claude-plugin/`
-- [ ] 7.2.5 Run ST-39–ST-42 green; fix implementation only
-- [ ] 7.3.1 Add scenario-completeness, demo state, packaging, docs-link, and plugin-drift implementation tests — `packages/examples/code-editor-demo/code-editor-demo.impl.test.ts`, `scripts/`
-- [ ] 7.3.2 Run standalone/global demo E2E, pack/import, docs, plugin sync/check, reference benchmarks, and `yarn verify`
-- [ ] 7.3.3 Record final acceptance evidence, refresh CodeOps-aware project guidance if architecture changed, and update technical docs without implementation-plan identifiers in code/comments — `AGENTS.md`, `docs/`
+- [x] 7.1.1 [spec-author] Write ST-39–ST-42 specification tests — `packages/examples/code-editor-demo/code-editor-demo.spec.test.ts` ✅ immutable ST-39–ST-42 oracle authored independently (completed: 2026-07-24 17:16)
+- [x] 7.1.2 Run showcase/release specifications and record the expected red result — ST-39–ST-42 ✅ expected RED: planned demo/session/story modules absent and planned test location not yet included by Vitest (completed: 2026-07-24 17:16)
+- [x] 7.2.1 Implement deterministic session/scenario registry and exhaustive standalone demo — `packages/examples/code-editor-demo/session.ts`, `packages/examples/code-editor-demo/scenarios.ts`, `packages/examples/code-editor-demo/main.ts` ✅ deterministic public-boundary registry/session and bounded walkthrough passing (completed: 2026-07-24 17:28)
+- [x] 7.2.2 Add `demo:code-editor`, standalone E2E, and concise global kitchen-sink story — `packages/examples/package.json`, `packages/examples/code-editor-demo/code-editor-demo.e2e.test.ts`, `packages/examples/kitchen-sink/stories/code-editor.story.ts` ✅ launch, process walkthrough, story registration, focus, and smoke-safe rendering passing (completed: 2026-07-24 17:28)
+- [x] 7.2.3 Complete package README/JSDoc/examples/changelog and architecture/public docs/ADRs — `packages/code-editor/README.md`, `packages/code-editor/CHANGELOG.md`, `docs/` ✅ package guide, VitePress guide, architecture overview, and five ADRs validated (completed: 2026-07-24 17:28)
+- [x] 7.2.4 Update release/package metadata and JSVision plugin catalog/recipes/generated API — `package.json`, `.github/workflows/release.yml`, `tools/jsvision-skill/`, `plugins/jsvision-plugin/` ✅ release metadata, impact map, generated API, catalog, and plugin integrity passing (completed: 2026-07-24 17:28)
+- [x] 7.2.5 Run ST-39–ST-42 green; fix implementation only ✅ 11 immutable showcase/release specification cases passing (completed: 2026-07-24 17:28)
+- [x] 7.3.1 Add scenario-completeness, demo state, packaging, docs-link, and plugin-drift implementation tests — `packages/examples/code-editor-demo/code-editor-demo.impl.test.ts`, `scripts/` ✅ scenario profile/size coverage and release dry-pack/public-import validation passing (completed: 2026-07-24 17:28)
+- [x] 7.3.2 Run standalone/global demo E2E, pack/import, docs, plugin sync/check, reference benchmarks, and `yarn verify` ✅ 34/34 repository tasks, 159 Code Editor tests, 287 example tests, release pack, benchmark, docs, and plugin integrity passing (completed: 2026-07-24 17:28)
+- [x] 7.3.3 Record final acceptance evidence, refresh CodeOps-aware project guidance if architecture changed, and update technical docs without implementation-plan identifiers in code/comments — `AGENTS.md`, `docs/` ✅ acceptance evidence recorded; existing project guidance remains complete; architecture and ADR docs added (completed: 2026-07-24 17:28)
 
 **Verify**: `yarn workspace @jsvision/examples test:e2e && yarn verify`
 

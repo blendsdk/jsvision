@@ -21,5 +21,6 @@ When you already know which widget you want, open its category page and copy the
 - [@jsvision/core — engine, capabilities & themes](./core-essentials.md) — Rendering, terminal capabilities, input, colors, contrast, themes, and safety. (175 exports)
 - [@jsvision/forms — form state & validation](./forms.md) — Typed form state, field bindings, validation, and form dialogs. (11 exports)
 - [@jsvision/datagrid — editable enterprise grids](./datagrid.md) — Typed columns, editing, sorting, filtering, selection, variants, and windowing. (114 exports)
+- [@jsvision/code-editor — terminal-native source editing](./code-editor.md) — The document model, terminal editor surfaces, language adapters, LSP coordination, themes, safety limits, and observability. (111 exports)
 - [@jsvision/web — browser runtime](./web.md) — Mount an app in an xterm.js terminal; the in-memory browser file system. (17 exports)
 - [@jsvision/files — file dialogs & editor](./files.md) — File/dir dialogs, the file-system seam, and the openers. (34 exports)
