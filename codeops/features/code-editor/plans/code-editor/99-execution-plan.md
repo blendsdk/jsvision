@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-24 00:15
-> **Progress**: 3/61 tasks (5%)
+> **Last Updated**: 2026-07-24 01:02
+> **Progress**: 11/61 tasks (18%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -33,7 +33,7 @@ the user authorizes any synchronization; execution then revalidates paths and de
 
 ## Phase 0: Integration baseline
 
-> **Phase baseline tree**: _(recorded by exec-plan)_
+> **Phase baseline tree**: _(phase completed before execution snapshots were introduced)_
 
 - [x] 0.1.1 Obtain user authorization for the branch synchronization strategy; do not rebase, merge, reset, or discard changes without it — AR-P22 ✅ (completed: 2026-07-24 00:15)
 - [x] 0.1.2 Synchronize using the authorized non-destructive workflow, resolve only in-scope conflicts, and record the new base — repository branch ✅ (completed: 2026-07-24 00:15)
@@ -43,16 +43,16 @@ the user authorizes any synchronization; execution then revalidates paths and de
 
 ## Phase 1: Architecture probes and package skeleton
 
-> **Phase baseline tree**: _(recorded by exec-plan)_
+> **Phase baseline tree**: dd8a1e2086fbe01609b4a72d2a6252abdce2c5ec
 
-- [ ] 1.1.1 [spec-author] Write ST-01–ST-04 specification tests — `packages/code-editor/src/architecture/code-editor-architecture.spec.test.ts`
-- [ ] 1.1.2 Run the architecture specification suite and record the expected red result — ST-01–ST-04
-- [ ] 1.2.1 Add workspace/package/strict TypeScript skeleton and explicit exports — `packages/code-editor/package.json`, `packages/code-editor/tsconfig.json`, `packages/code-editor/src/index.ts`
-- [ ] 1.2.2 Implement headless document/parser/protocol/subpath feasibility probes — `packages/code-editor/src/architecture/feasibility.ts`, `packages/code-editor/src/architecture/feasibility-runner.ts`
-- [ ] 1.2.3 Implement reference latency/memory/dependency/license probe and fixtures — `packages/code-editor/bench/reference.ts`, `packages/code-editor/bench/fixtures.ts`, `packages/code-editor/README.md`
-- [ ] 1.2.4 Run ST-01–ST-04 green; select primary/fallback paths strictly from recorded thresholds and update ADR evidence — `docs/adr/`
-- [ ] 1.3.1 Add implementation tests for import isolation, probe determinism, failure reporting, and package closure — `packages/code-editor/src/architecture/code-editor-architecture.impl.test.ts`
-- [ ] 1.3.2 Run focused package checks and `yarn verify`
+- [x] 1.1.1 [spec-author] Write ST-01–ST-04 specification tests — `packages/code-editor/test/code-editor-architecture.spec.test.ts` ✅ (completed: 2026-07-24 00:27)
+- [x] 1.1.2 Run the architecture specification suite and record the expected red result — ST-01–ST-04 ✅ expected red: probe modules absent (completed: 2026-07-24 00:27)
+- [x] 1.2.1 Add workspace/package/strict TypeScript skeleton and explicit exports — `packages/code-editor/package.json`, `packages/code-editor/tsconfig.json`, `packages/code-editor/src/index.ts` ✅ (completed: 2026-07-24 00:28)
+- [x] 1.2.2 Implement headless document/parser/protocol/subpath feasibility probes — `packages/code-editor/src/architecture/feasibility.ts`, `packages/code-editor/src/architecture/feasibility-runner.ts` ✅ (completed: 2026-07-24 00:31)
+- [x] 1.2.3 Implement reference latency/memory/dependency/license probe and fixtures — `packages/code-editor/bench/reference.ts`, `packages/code-editor/bench/fixtures.ts`, `packages/code-editor/README.md` ✅ (completed: 2026-07-24 00:36)
+- [x] 1.2.4 Run ST-01–ST-04 green; select primary/fallback paths strictly from recorded thresholds and update ADR evidence — `packages/docs-site/reference/decisions/` ✅ (completed: 2026-07-24 00:38)
+- [x] 1.3.1 Add implementation tests for import isolation, probe determinism, failure reporting, and package closure — `packages/code-editor/test/code-editor-architecture.impl.test.ts` ✅ (completed: 2026-07-24 00:39)
+- [x] 1.3.2 Run focused package checks and `yarn verify` ✅ quality re-review clean (completed: 2026-07-24 01:02)
 
 **Verify**: `yarn workspace @jsvision/code-editor test && yarn verify`
 

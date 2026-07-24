@@ -38,7 +38,7 @@ This plan does not advance them.
 | Package ownership | Dedicated `@jsvision/code-editor` with optional subpaths | AR-P02, AR-P25 |
 | Component relationship | Separate layered component; legacy `Editor` unchanged | AR-P03 |
 | Text implementation | Probe-gated CodeMirror state primitives; indexed piece-tree fallback | AR-P04 |
-| Parser integration | Direct public Lezer with bounded scheduling | AR-P05–AR-P07 |
+| Parser integration | Direct public headless parsers with bounded scheduling | AR-P05–AR-P07, AR-P27 |
 | LSP integration | Editor-owned session/coordinator and optional Node adapter | AR-P08–AR-P10 |
 | Delivery | Probes first, specification-first phases, full repository gate | AR-P17–AR-P22 |
 

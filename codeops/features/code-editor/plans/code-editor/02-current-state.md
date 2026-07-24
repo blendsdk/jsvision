@@ -54,8 +54,8 @@ standalone executable, package script, E2E child-process test, and global kitche
 ### External candidates
 
 - `@codemirror/state` for public headless `Text`/`ChangeSet` only.
-- Public Lezer parser/highlight packages and CodeMirror language packages where they expose
-  headless `LRLanguage` parsers.
+- Public Lezer parser/highlight packages for JavaScript and TypeScript, plus a public headless
+  PostgreSQL parser behind the editor-owned adapter boundary.
 - `vscode-languageserver-protocol` and optional `vscode-jsonrpc` Node transport.
 - A repository-compatible property/fuzz generator only if an existing lightweight facility cannot
   express the required invariants.

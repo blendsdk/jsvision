@@ -1,0 +1,83 @@
+{
+  "name": "@jsvision/code-editor",
+  "version": "1.1.0",
+  "description": "A terminal-native source code editor for JSVision applications.",
+  "keywords": [
+    "tui",
+    "terminal",
+    "code-editor",
+    "syntax-highlighting",
+    "lsp",
+    "typescript"
+  ],
+  "homepage": "https://github.com/blendsdk/jsvision#readme",
+  "bugs": "https://github.com/blendsdk/jsvision/issues",
+  "license": "MIT",
+  "author": "TrueSoftware B.V. <gevik@truesoftware.nl>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/code-editor"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./languages/javascript": {
+      "types": "./dist/languages/javascript.d.ts",
+      "import": "./dist/languages/javascript.js"
+    },
+    "./languages/typescript": {
+      "types": "./dist/languages/typescript.d.ts",
+      "import": "./dist/languages/typescript.js"
+    },
+    "./languages/postgresql": {
+      "types": "./dist/languages/postgresql.d.ts",
+      "import": "./dist/languages/postgresql.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc && tsc -p tsconfig.bench.json",
+    "bench:architecture": "yarn build && node --expose-gc dist/bench/evidence-runner.js",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "pretest": "yarn build",
+    "test": "vitest run --project unit",
+    "test:e2e": "vitest run --project e2e --passWithNoTests",
+    "check:deps": "node ../../scripts/check-no-native-deps.mjs .",
+    "check:docs": "node ../../scripts/check-jsdoc.mjs ."
+  },
+  "dependencies": {
+    "@codemirror/state": "^6.7.1",
+    "@jsvision/core": "1.1.0",
+    "@jsvision/ui": "1.1.0",
+    "@lezer/highlight": "^1.2.3",
+    "@lezer/javascript": "^1.5.4",
+    "pgsql-ast-parser": "^12.0.2",
+    "vscode-languageserver-protocol": "^3.18.2",
+    "vscode-jsonrpc": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "vitest": "^4.1.10"
+  }
+}

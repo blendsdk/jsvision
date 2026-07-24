@@ -1,7 +1,7 @@
 # Ambiguity Register: Code Editor Integrated Implementation Plan
 
-> **Status**: ✅ GATE PASSED — all 25 items resolved
-> **Last Updated**: 2026-07-23 23:42
+> **Status**: ✅ GATE PASSED — all 27 items resolved
+> **Last Updated**: 2026-07-24 00:35
 > **Auto-design**: active
 > **Root Invocation ID**: `AD-CODE-EDITOR-PLAN-20260723-01`
 > **Policy Version**: 1
@@ -24,7 +24,7 @@
 | AR-P02 | Technical · complex | Which package owns the public editor? | A new `@jsvision/code-editor` package / a first-class `code-editor/` module in `@jsvision/ui` | New public `@jsvision/code-editor` package depending only on public JSVision APIs, with explicit feature subpaths | ✅ Resolved |
 | AR-P03 | Technical · complex | Reuse the current `Editor`, subclass it, or implement a separate component? | Modify/subclass `Editor` / new `CodeEditor` sharing only suitable pure utilities | Implement a separate layered `CodeEditor`; reuse only small proven public UI/core primitives and extract a pure utility only when compatibility tests prove it safe | ✅ Resolved |
 | AR-P04 | Data & state · complex | Which text-storage and change representation meets the edit, mapping, and size budgets? | Existing gap buffer / public CodeMirror state primitives / custom indexed piece tree | Use public headless `@codemirror/state` `Text`/`ChangeSet` behind an editor-owned document contract if mandatory probes pass; predeclared fallback is an internal indexed piece tree | ✅ Resolved |
-| AR-P05 | Technical | How is syntax parsed without a DOM? | CodeMirror view internals / direct public Lezer parsers and language packages / bespoke grammars | Direct public Lezer parser APIs and official language packages; never `@codemirror/view` or private internals | ✅ Resolved |
+| AR-P05 | Technical | How is syntax parsed without a DOM? | CodeMirror view internals / direct public headless parsers / bespoke grammars | Use direct public headless parser APIs; JavaScript and TypeScript use `@lezer/javascript`, PostgreSQL uses `pgsql-ast-parser`; never `@codemirror/view` or private internals | ✅ Resolved |
 | AR-P06 | Integration | How are parser output and editor presentation decoupled? | CodeMirror extensions / parser-specific rendering / stable editor-owned semantic categories | Map public `@lezer/highlight` tags and adapter metadata into versioned editor-owned categories and validated ranges | ✅ Resolved |
 | AR-P07 | Non-functional | How does parsing remain responsive and revision-safe? | Unbounded parse completion / worker-only architecture / bounded cooperative slices with cancellation | Use revision-tagged, cancellable cooperative parse slices with incremental fragments and an injected scheduling seam; add workers only if probes prove necessary | ✅ Resolved |
 | AR-P08 | Integration | Which LSP client boundary avoids VS Code coupling? | `vscode-languageclient` / custom protocol types / transport-neutral editor session using official protocol types | Define an editor-owned `CodeEditorLspSession` and use official `vscode-languageserver-protocol` types; exclude `vscode-languageclient` | ✅ Resolved |
@@ -45,6 +45,8 @@
 | AR-P23 | Technical | How are dependencies selected and pinned? | Private internals / public packages with compatible ranges / vendored copies | Use only public MIT-compatible APIs, pin Yarn-resolved versions through the lockfile, validate Node 22/NodeNext/headless imports, and reject browser/IDE dependency closure | ✅ Resolved |
 | AR-P24 | Stakeholder conflicts | Do host extensibility and safe defaults conflict? | Host has unrestricted hooks / editor owns all policy / bounded typed host seams | Preserve host ownership through typed, versioned, bounded seams while the editor retains validation, cancellation, sanitation, and hard-ceiling enforcement | ✅ Resolved |
 | AR-P25 | Integration | How are optional built-in parsers exposed without making every root import initialize every language? | All adapters from the root / explicit language subpaths / separate package per language | Export built-in adapters from `@jsvision/code-editor/languages/javascript`, `/languages/typescript`, and `/languages/postgresql`; keep contracts and plain mode at the root | ✅ Resolved |
+| AR-P26 | Technical (runtime) | What deterministic probe API can specification tests target before the package exists? | CLI-output assertions / editor-owned typed probe functions with a thin runner | Define typed, side-effect-free probe functions for headless compatibility, dependency closure, reference benchmarks, and scheduling stress; keep CLI formatting in a thin runner | ✅ Resolved |
+| AR-P27 | Technical (runtime) | How is PostgreSQL parsed after the dependency probe proves CodeMirror language packages ship `@codemirror/view`? | Keep the browser dependency / build and maintain a new SQL grammar / use a public headless PostgreSQL parser behind the adapter contract | Replace CodeMirror language wrappers with `@lezer/javascript` for JavaScript/TypeScript and `pgsql-ast-parser` for PostgreSQL; keep parser-specific types internal and use cancellable revision-stamped background parses for PostgreSQL | ✅ Resolved |
 
 ## Resolution Notes
 
@@ -155,6 +157,34 @@ subpaths; lockfile, package-boundary, clean-process import, tree-shaking, licens
 closure gates are planned. Reopen on a license change, unsupported module target, security
 advisory, contract-major change, or failed subpath isolation probe.
 
+**AR-P26:** Authority: AI — delegated by `--auto-design`. Eligibility: reversible internal testing
+and probe-interface design within the approved Phase 1 evidence requirements. Objective: let
+immutable tests assert structured evidence without parsing unstable console text. Decision: expose
+side-effect-free typed functions `runHeadlessCompatibilityProbe`,
+`inspectShippedDependencyClosure`, `runReferenceBenchmark`, and `runSchedulingStressProbe`; a thin
+runner owns human-readable output and exit status. Evidence: repository tests use Vitest and strict
+NodeNext, while Phase 1 must confirm a red state before package implementation. Rejected
+alternative: testing CLI text couples correctness to formatting and makes deterministic fixtures
+harder. Strongest counterargument: probe types become internal maintenance surface. Confidence:
+High. Hardening: keep them package-internal and validate behavior through one specification suite.
+Policy version: 1. Root invocation ID: `AD-CODE-EDITOR-EXEC-20260724-01`. Reopen if the benchmark
+must execute out-of-process to measure the reference environment faithfully.
+
+**AR-P27:** Authority: AI — delegated by `--auto-design`. Eligibility: dependency selection and
+internal parser architecture within the approved language and no-browser boundaries. Objective:
+preserve JavaScript, TypeScript, and PostgreSQL support without shipping a DOM runtime. Evidence:
+the installed dependency-closure probe found `@codemirror/view` through both CodeMirror language
+wrappers; `@lezer/javascript` 1.5.4 and `pgsql-ast-parser` 12.0.2 are public MIT packages with
+headless dependency closures. Rejected alternative: accepting `@codemirror/view` directly violates
+the approved dependency policy; maintaining a new SQL grammar creates substantial correctness and
+security burden before feature work begins. Strongest counterargument: PostgreSQL loses Lezer
+incremental fragments, so its adapter must use revision-stamped cancellable background parses and
+bounded lexical presentation while a parse is pending. Confidence: Medium-High. Hardening: the
+dependency probe discovered the violation, and the immutable architecture specifications retain
+the no-DOM closure gate. Policy version: 1. Root invocation ID:
+`AD-CODE-EDITOR-EXEC-20260724-01`. Reopen if PostgreSQL parse latency breaches the approved
+interaction budget or the replacement dependency changes license or runtime characteristics.
+
 ## Twelve-Category Closure
 
 | Category | Covered By |
@@ -162,7 +192,7 @@ advisory, contract-major change, or failed subpath isolation probe.
 | Feature gaps | AR-P01, AR-P19, AR-P21 |
 | Behavioral gaps | AR-P10, AR-P14, AR-P15 |
 | Scope ambiguities | AR-P01, AR-P22 |
-| Technical unknowns | AR-P02–AR-P09, AR-P11 |
+| Technical unknowns | AR-P02–AR-P09, AR-P11, AR-P26–AR-P27 |
 | Edge cases | AR-P10, AR-P13–AR-P15 |
 | Integration points | AR-P06, AR-P08–AR-P10, AR-P20–AR-P21, AR-P25 |
 | Data & state | AR-P04, AR-P10, AR-P15 |
