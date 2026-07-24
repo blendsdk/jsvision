@@ -27,6 +27,25 @@ The UI projects sanitized terminal cells and supports application-derived themes
 overrides, independent palettes, monochrome output, and ASCII fallbacks. Bounded limits,
 degradation notices, and content-free observations keep malformed or excessive input contained.
 
+## Keyboard editing
+
+The focused editor supports the modern single-selection actions most useful in a terminal:
+
+| Keys                                 | Action                                                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `Tab` / `Shift+Tab`                  | Indent or dedent selected lines; without a selection, advance to the next tab stop or dedent the current line |
+| `Enter`                              | Insert a newline and preserve the current leading indentation                                                 |
+| `Ctrl+A`                             | Select the document                                                                                           |
+| `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Shift+Z` | Undo or redo                                                                                                  |
+| `Ctrl+Left` / `Ctrl+Right`           | Move by source-code word boundary; add `Shift` to extend the selection                                        |
+| `Ctrl+Home` / `Ctrl+End`             | Move to the document boundary; add `Shift` to extend the selection                                            |
+| `Ctrl+C` / `Ctrl+X` / `Ctrl+V`       | Copy, cut, or paste through JSVision's shared clipboard channel                                               |
+| `Ctrl+/`                             | Toggle JavaScript, TypeScript, or PostgreSQL line comments                                                    |
+
+Completion and snippet navigation retain priority over indentation. Multiple carets, column
+selection, and browser or DOM clipboard dependencies are intentionally outside this editor's
+single-selection terminal contract.
+
 ## Standalone kitchen sink
 
 Run `yarn workspace @jsvision/examples demo:code-editor`. The demo is deterministic and uses a
