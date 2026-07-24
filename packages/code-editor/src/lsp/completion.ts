@@ -15,26 +15,33 @@ export function validateCompletionItems(
   value: unknown,
   maximumItems: number,
   maximumCharacters: number,
+  maximumEdits = 1_000,
+  maximumReplacementCharacters = 1_048_576,
 ): readonly PresentedCompletionItem[] {
   const container = recordValue(value);
   const source = Array.isArray(value) ? value : container?.items;
   const items: PresentedCompletionItem[] = [];
+  let remainingEdits = maximumEdits;
+  let remainingCharacters = maximumReplacementCharacters;
   for (const candidate of boundedArray(source, maximumItems)) {
     const record = recordValue(candidate);
     const label = sanitizeProtocolText(record?.label, maximumCharacters);
     if (record === undefined || label === undefined || label.length === 0) continue;
-    const additional = normalizeCompletionEdits(record.additionalTextEdits, maximumCharacters);
+    const additional = normalizeCompletionEdits(record.additionalTextEdits, maximumCharacters, remainingEdits);
     if (additional === undefined) continue;
     const primary = normalizeCompletionEdit(record.textEdit, maximumCharacters);
     if (record.textEdit !== undefined && primary === undefined) continue;
+    const insertText = sanitizeProtocolText(record.insertText, maximumCharacters);
+    const resourceUse = completionResourceUse(primary, additional, insertText);
+    if (resourceUse.edits > remainingEdits || resourceUse.characters > remainingCharacters) break;
+    remainingEdits -= resourceUse.edits;
+    remainingCharacters -= resourceUse.characters;
     const item: PresentedCompletionItem = {
       label,
       ...(sanitizeProtocolText(record.detail, maximumCharacters) !== undefined
         ? { detail: sanitizeProtocolText(record.detail, maximumCharacters) }
         : {}),
-      ...(sanitizeProtocolText(record.insertText, maximumCharacters) !== undefined
-        ? { insertText: sanitizeProtocolText(record.insertText, maximumCharacters) }
-        : {}),
+      ...(insertText === undefined ? {} : { insertText }),
       ...(primary !== undefined ? { textEdit: primary } : {}),
       ...(additional.length > 0 ? { additionalTextEdits: additional } : {}),
       ...(record.insertTextFormat !== undefined ? { insertTextFormat: record.insertTextFormat } : {}),
@@ -44,7 +51,11 @@ export function validateCompletionItems(
   return Object.freeze(items);
 }
 
-function normalizeCompletionEdits(value: unknown, maximumCharacters: number): readonly unknown[] | undefined {
+function normalizeCompletionEdits(
+  value: unknown,
+  maximumCharacters: number,
+  maximumEdits: number,
+): readonly unknown[] | undefined {
   if (value === undefined) return Object.freeze([]);
   let length: number;
   try {
@@ -53,14 +64,31 @@ function normalizeCompletionEdits(value: unknown, maximumCharacters: number): re
   } catch {
     return undefined;
   }
-  if (!Number.isSafeInteger(length) || length > 1_000) return undefined;
+  if (!Number.isSafeInteger(length) || length > maximumEdits) return undefined;
   const result: unknown[] = [];
-  for (const candidate of boundedArray(value, 1_000)) {
+  for (const candidate of boundedArray(value, maximumEdits)) {
     const edit = normalizeCompletionEdit(candidate, maximumCharacters);
     if (edit === undefined) return undefined;
     result.push(edit);
   }
   return Object.freeze(result);
+}
+
+/** Counts retained edit payloads without trusting protocol object prototypes. */
+function completionResourceUse(
+  primary: unknown,
+  additional: readonly unknown[],
+  insertText: string | undefined,
+): { readonly edits: number; readonly characters: number } {
+  let characters = insertText?.length ?? 0;
+  for (const edit of primary === undefined ? additional : [primary, ...additional]) {
+    const text = recordValue(edit)?.newText;
+    if (typeof text === 'string') characters += text.length;
+  }
+  return Object.freeze({
+    edits: additional.length + (primary === undefined ? 0 : 1),
+    characters,
+  });
 }
 
 function normalizeCompletionEdit(value: unknown, maximumCharacters: number): unknown | undefined {

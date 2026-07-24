@@ -413,6 +413,18 @@ function scenario(
         }),
       );
       const customActions = new Map<CodeEditorDemoAction, () => Promise<void>>();
+      if (metadata.id === 'language-intelligence' && session !== undefined) {
+        customActions.set('navigate', async () => {
+          editor.execute('navigate');
+          const request = session.requests.at(-1);
+          if (request?.method !== 'textDocument/definition') return;
+          session.respond(request.id, {
+            uri: 'file:///code-editor-demo/external-target.ts',
+            range: { start: { line: 2, character: 0 }, end: { line: 2, character: 1 } },
+          });
+          await Promise.resolve();
+        });
+      }
       if (metadata.id === 'language-gallery') {
         const languages = [
           { languageId: 'postgresql' as const, text: 'SELECT id\nFROM users;' },

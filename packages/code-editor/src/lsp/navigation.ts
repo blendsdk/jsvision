@@ -9,8 +9,9 @@ export function validateNavigationTargets(
   currentUri: string,
   maximum = 64,
 ): readonly PresentedNavigationTarget[] {
+  const source = Array.isArray(value) ? value : recordValue(value) === undefined ? [] : [value];
   const items: PresentedNavigationTarget[] = [];
-  for (const candidate of boundedArray(value, maximum)) {
+  for (const candidate of boundedArray(source, maximum)) {
     const record = recordValue(candidate);
     const uri = record?.uri ?? record?.targetUri;
     if (!isAllowedUri(uri)) continue;

@@ -88,9 +88,15 @@ export function boundedArray(value: unknown, maximum: number): readonly unknown[
 
 /** Determines whether a URI is an absolute, traversal-free file resource. */
 export function isAllowedUri(value: unknown): value is string {
-  if (typeof value !== 'string' || value.length > 4096 || value.includes('\0')) return false;
+  if (
+    typeof value !== 'string' ||
+    value.length > 4096 ||
+    /[\u0000-\u001f\u007f-\u009f\u061c\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/u.test(value)
+  )
+    return false;
   try {
     const rawPath = decodeURIComponent(value.slice('file://'.length));
+    if (/[\u0000-\u001f\u007f-\u009f\u061c\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/u.test(rawPath)) return false;
     if (rawPath.split(/[\\/]/u).some((segment) => segment === '..' || segment === '.')) return false;
     const url = new URL(value);
     if (url.protocol !== 'file:') return false;

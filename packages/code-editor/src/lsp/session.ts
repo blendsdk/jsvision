@@ -14,6 +14,13 @@ type StateListener = (state: CodeEditorLspSessionState, generation: number) => v
 /** Minimal editor-owned LSP session contract implemented by hosts and runtime adapters. */
 export interface CodeEditorLspSession {
   readonly contractVersion: 1;
+  /**
+   * Indicates that `notify` enqueues transport output before returning its promise.
+   *
+   * Coordinators may issue a causally later request without awaiting the promise only when this
+   * explicit guarantee is present.
+   */
+  readonly notificationOrdering?: 'synchronous-enqueue';
   readonly capabilities: Readonly<CodeEditorLspCapabilities>;
   readonly state: CodeEditorLspSessionState;
   readonly generation: number;
@@ -41,6 +48,7 @@ export interface CreateInProcessLspSessionOptions {
  */
 export class InProcessLspSession {
   public readonly contractVersion = 1 as const;
+  public readonly notificationOrdering = 'synchronous-enqueue' as const;
   public capabilities: Readonly<CodeEditorLspCapabilities>;
   public readonly requests: LspRecordedRequest[] = [];
   public readonly notifications: LspRecordedNotification[] = [];

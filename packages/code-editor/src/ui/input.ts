@@ -18,6 +18,8 @@ export type CodeEditorCommand =
   | 'fold.collapseAll'
   | 'fold.expandAll'
   | 'assist'
+  | 'hover'
+  | 'symbols'
   | 'navigate'
   | 'format'
   | 'save'
@@ -66,6 +68,8 @@ export const defaultCodeEditorKeyBindings: Readonly<Record<string, CodeEditorCom
   F3: 'search.next',
   'Ctrl+[': 'fold.toggle',
   'Ctrl+ ': 'assist',
+  'Ctrl+Shift+H': 'hover',
+  'Ctrl+Shift+O': 'symbols',
   F12: 'navigate',
   'Alt+Shift+F': 'format',
   'Ctrl+S': 'save',

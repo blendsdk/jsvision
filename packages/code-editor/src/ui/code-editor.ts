@@ -4,21 +4,12 @@ import type { CodeEditorController, CodeEditorControllerEvent } from '../control
 import type { CodeEditorDisposable } from '../integration.js';
 import { offsetToPosition } from '../document/positions.js';
 import type { DocumentEditInput, DocumentSelectionInput } from '../document/types.js';
-import { builtInCommentMetadata } from '../languages/metadata.js';
 import { classicCodeEditorTheme } from '../theme/presets.js';
 import { snapshotCodeEditorTheme } from '../theme/resolve.js';
 import type { CodeEditorTheme, ResolvedCodeEditorTheme } from '../theme/theme.js';
 import { CodeEditorAssistanceView, type CodeEditorCompletionItem, type CodeEditorModalState } from './assistance.js';
 import { routeCodeEditorCommand } from './command-events.js';
-import {
-  advanceCharacterRun,
-  lineSeparator,
-  removableIndentationLength,
-  retreatCharacterRun,
-  sourceCharacterAt,
-  sourceCharacterBefore,
-  transformOffset,
-} from './editing-operations.js';
+import { CodeEditorEditingActions } from './editing-actions.js';
 import {
   canonicalCodeEditorKeyName,
   codeEditorKeyToken,
@@ -83,6 +74,7 @@ export class CodeEditor extends Group {
   readonly #onDocumentChange: (() => void) | undefined;
   readonly #controllerSubscription: CodeEditorDisposable;
   readonly #viewport: CodeEditorViewport;
+  readonly #editingActions: CodeEditorEditingActions;
   readonly #mouseSelection: CodeEditorMouseSelection;
   readonly #interactionRevision = signal(0);
   readonly #pending = new Map<'navigate' | 'save' | 'close', Promise<unknown>>();
@@ -93,12 +85,15 @@ export class CodeEditor extends Group {
   #snippet: readonly { readonly from: number; readonly to: number }[] | undefined;
   #snippetIndex = 0;
   #searchQuery = '';
+  #assistanceSource: readonly unknown[] | undefined;
   readonly #locallyHandledRevisions = new Set<number>();
+  #lastSelectionHead: number;
   #disposed = false;
 
   public constructor(options: CodeEditorOptions) {
     super();
     this.controller = options.controller;
+    this.#lastSelectionHead = Number(this.controller.document.selection.head);
     this.lineNumbers = options.lineNumbers === true;
     this.assistanceView = new CodeEditorAssistanceView({
       maxItems: this.controller.limits.completionItems,
@@ -106,6 +101,13 @@ export class CodeEditor extends Group {
       maxHeight: this.controller.limits.popupHeight,
     });
     this.#viewport = new CodeEditorViewport(this.controller);
+    this.#editingActions = new CodeEditorEditingActions({
+      controller: this.controller,
+      insertText: (text) => this.insertText(text),
+      applyEdits: (edits, selection) => this.#applyEdits(edits, selection),
+      finishMutation: (accepted) => this.#finishMutation(accepted),
+      finishSelectionChange: () => this.#finishSelectionChange(),
+    });
     this.#mouseSelection = new CodeEditorMouseSelection(this, this.controller.document, this.#viewport, () =>
       this.#finishSelectionChange(),
     );
@@ -168,9 +170,12 @@ export class CodeEditor extends Group {
     if (command === 'fold.expandAll') this.controller.unfoldAll();
     if (foldCommand) this.#finishSelectionChange();
     if (command === 'assist') this.controller.requestAssistance();
+    if (command === 'hover') this.controller.requestHover();
+    if (command === 'symbols') this.controller.requestDocumentSymbols();
+    if (command === 'navigate' && !this.controller.requestDefinition()) this.#queueHost(command);
     if (command === 'format') this.controller.requestFormatting();
     this.#record(command);
-    if (command === 'navigate' || command === 'save' || command === 'close') this.#queueHost(command);
+    if (command === 'save' || command === 'close') this.#queueHost(command);
   }
 
   /** Inserts text through one validated document transaction. */
@@ -265,9 +270,17 @@ export class CodeEditor extends Group {
         this.#locallyHandledRevisions.add(currentRevision);
       }
       this.#syncAssistance();
+      this.#finishSelectionChange(true);
       return route(canonicalKey === 'Escape' ? 'dismissal' : 'completion');
     }
-    if (assistanceOwner === 'snippet') return route('snippet');
+    if (assistanceOwner === 'snippet') {
+      this.#finishSelectionChange(true);
+      return route('snippet');
+    }
+    if (assistanceOwner === 'dismissal') {
+      this.#syncAssistance();
+      return route('dismissal');
+    }
     if (canonicalKey === 'Enter' && this.#modal?.kind === 'search') {
       this.execute('search.next');
       return route('editor');
@@ -287,11 +300,18 @@ export class CodeEditor extends Group {
       this.execute(command);
       return route('editor');
     }
-    const modifiedOwner = this.#routeModifiedKey(normalizedKey);
+    const modifiedOwner = this.#editingActions.routeModifiedKey(normalizedKey);
     if (modifiedOwner !== undefined) return route(modifiedOwner);
-    if (!key.ctrl && !key.alt && this.#routeEditingKey(canonicalKey, key.shift === true)) return route('text');
+    if (canonicalKey === 'F8') {
+      if (!this.controller.navigateDiagnostic(key.shift === true ? -1 : 1)) return route('editor');
+      this.#syncAssistance();
+      this.#finishSelectionChange(true);
+      return route('editor');
+    }
+    if (!key.ctrl && !key.alt && this.#editingActions.routeEditingKey(canonicalKey, key.shift === true))
+      return route('text');
     if (key.text !== undefined && !key.ctrl && !key.alt) {
-      this.insertText(key.text);
+      if (this.insertText(key.text)) this.controller.triggerAssistance(key.text);
       return route('text');
     }
     return Object.freeze({ handled: false, owner: 'unhandled' });
@@ -468,126 +488,6 @@ export class CodeEditor extends Group {
     event.handled = this.#mouseSelection.route(event, this.#lastFrame);
   }
 
-  #routeEditingKey(key: string, shift: boolean): boolean {
-    if (key === ' ') return this.insertText(' ');
-    if (key === 'Enter') return this.#insertNewline();
-    if (key === 'Tab') {
-      if (this.#hasSelection()) return this.#changeSelectedLineIndent(shift ? 'dedent' : 'indent');
-      if (shift) return this.#dedentAtCaret();
-      const document = this.controller.document;
-      const column = document.visualColumnAt(Number(document.selection.head));
-      const width = document.tabSize - (column % document.tabSize);
-      return this.insertText(' '.repeat(width));
-    }
-    if (key === 'Backspace') return this.#deleteAdjacent(-1);
-    if (key === 'Delete') return this.#deleteAdjacent(1);
-    if (key === 'ArrowLeft') return this.#moveCaret(-1, shift);
-    if (key === 'ArrowRight') return this.#moveCaret(1, shift);
-    if (key === 'Home') return this.#moveToLineEdge('start', shift);
-    if (key === 'End') return this.#moveToLineEdge('end', shift);
-    if (key === 'ArrowUp') return this.#moveVertically(-1, shift);
-    if (key === 'ArrowDown') return this.#moveVertically(1, shift);
-    return false;
-  }
-
-  #routeModifiedKey(key: CodeEditorKey): Exclude<CodeEditorKeyRoute['owner'], 'unhandled'> | undefined {
-    if (key.ctrl !== true || key.alt === true) return undefined;
-    const lower = key.key.toLowerCase();
-    if (lower === 'a') {
-      this.controller.unfoldAll();
-      this.controller.document.setSelection({ anchor: 0, head: this.controller.document.text.length });
-      this.#finishSelectionChange();
-      return 'editor';
-    }
-    if (lower === 'z' || lower === 'y') {
-      const redo = lower === 'y' || key.shift === true;
-      this.controller.unfoldAll();
-      this.#finishMutation(redo ? this.controller.document.redo().accepted : this.controller.document.undo().accepted);
-      return 'editor';
-    }
-    if (key.key === 'ArrowLeft' || key.key === 'ArrowRight') {
-      this.#moveByWord(key.key === 'ArrowLeft' ? -1 : 1, key.shift === true);
-      return 'editor';
-    }
-    if (key.key === 'Home' || key.key === 'End') {
-      this.#moveToDocumentEdge(key.key === 'Home' ? 'start' : 'end', key.shift === true);
-      return 'editor';
-    }
-    if (key.key === '/') return this.#toggleLineComments();
-    return undefined;
-  }
-
-  #hasSelection(): boolean {
-    const selection = this.controller.document.selection;
-    return selection.anchor !== selection.head;
-  }
-
-  #insertNewline(): boolean {
-    const document = this.controller.document;
-    const line = document.snapshot.lineAt(Number(document.selection.head));
-    const indentation = line.text.match(/^[\t ]*/u)?.[0] ?? '';
-    return this.insertText(lineSeparator(document.lineEnding) + indentation);
-  }
-
-  #changeSelectedLineIndent(direction: 'indent' | 'dedent'): boolean {
-    const document = this.controller.document;
-    const selection = document.selection;
-    const { firstLine, lastLine } = this.#selectedLineRange();
-    const edits: DocumentEditInput[] = [];
-    for (let number = Number(firstLine); number <= Number(lastLine); number += 1) {
-      const line = document.snapshot.line(number);
-      if (direction === 'indent') {
-        edits.push({ range: { from: line.from, to: line.from }, text: ' '.repeat(document.tabSize) });
-        continue;
-      }
-      const removable = removableIndentationLength(line.text, document.tabSize);
-      if (removable > 0) edits.push({ range: { from: line.from, to: line.from + removable }, text: '' });
-    }
-    if (edits.length === 0) return true;
-    return this.#applyEdits(edits, {
-      anchor: transformOffset(Number(selection.anchor), edits),
-      head: transformOffset(Number(selection.head), edits),
-    });
-  }
-
-  #toggleLineComments(): 'text' | 'editor' {
-    const document = this.controller.document;
-    const comments = builtInCommentMetadata(document.languageId);
-    if (comments?.line === undefined) return 'editor';
-    const { firstLine, lastLine } = this.#selectedLineRange();
-    const lines = [];
-    for (let number = firstLine; number <= lastLine; number += 1) lines.push(document.snapshot.line(number));
-    const nonblank = lines.filter((line) => line.text.trim().length > 0);
-    if (nonblank.length === 0) return 'editor';
-    const minimumIndent = Math.min(...nonblank.map((line) => line.text.length - line.text.trimStart().length));
-    const delimiter = comments.line;
-    const uncomment = nonblank.every((line) => line.text.slice(minimumIndent).startsWith(delimiter));
-    const edits: DocumentEditInput[] = nonblank.map((line) => {
-      const from = line.from + minimumIndent;
-      if (!uncomment) return { range: { from, to: from }, text: `${delimiter} ` };
-      const following = line.text.slice(minimumIndent + delimiter.length);
-      const removeSpace = following.startsWith(' ') ? 1 : 0;
-      return { range: { from, to: from + delimiter.length + removeSpace }, text: '' };
-    });
-    const selection = document.selection;
-    const accepted = this.#applyEdits(edits, {
-      anchor: transformOffset(Number(selection.anchor), edits),
-      head: transformOffset(Number(selection.head), edits),
-    });
-    return accepted ? 'text' : 'editor';
-  }
-
-  #selectedLineRange(): { readonly firstLine: number; readonly lastLine: number } {
-    const document = this.controller.document;
-    const selection = document.selection;
-    const start = Math.min(Number(selection.anchor), Number(selection.head));
-    const end = Math.max(Number(selection.anchor), Number(selection.head));
-    const firstLine = Number(document.snapshot.lineAt(start).number);
-    const lastOffset = end > start && document.snapshot.lineAt(end).from === end ? end - 1 : end;
-    const lastLine = Number(document.snapshot.lineAt(Math.max(start, lastOffset)).number);
-    return { firstLine, lastLine };
-  }
-
   #applyEdits(edits: readonly DocumentEditInput[], selection: DocumentSelectionInput): boolean {
     const accepted = this.controller.applyDocumentEdits(edits, selection);
     if (accepted) {
@@ -613,22 +513,45 @@ export class CodeEditor extends Group {
       }
       return;
     }
+    const selectionHead = Number(this.controller.document.selection.head);
+    if (selectionHead !== this.#lastSelectionHead) {
+      this.#lastSelectionHead = selectionHead;
+      this.#viewport.synchronize(true);
+      this.invalidateLayout();
+    } else {
+      this.invalidate();
+    }
     this.#touchInteraction();
-    this.invalidate();
   }
 
   #syncAssistance(): void {
     const completion = this.controller.presentation.assistance.completion;
-    if (completion === undefined) {
-      this.assistanceView.dismiss();
+    if (completion !== undefined) {
+      if (this.#assistanceSource !== completion.items) {
+        this.#assistanceSource = completion.items;
+        this.assistanceView.show(completion.items.map((item) => item.label));
+      }
+      this.assistanceView.selected = completion.selected;
       return;
     }
-    this.assistanceView.show(completion.items.map((item) => item.label));
-    this.assistanceView.selected = completion.selected;
+    const overlay = this.controller.presentation.assistance.overlay;
+    if (overlay === undefined) {
+      if (this.#assistanceSource !== undefined) {
+        this.#assistanceSource = undefined;
+        this.assistanceView.dismiss();
+      }
+      return;
+    }
+    if (this.#assistanceSource !== overlay.items) {
+      this.#assistanceSource = overlay.items;
+      this.assistanceView.show(overlay.items);
+    }
+    this.assistanceView.selected = overlay.selected;
   }
 
   #finishMutation(accepted: boolean): void {
     if (!accepted) return;
+    this.#lastSelectionHead = Number(this.controller.document.selection.head);
     this.#record('edit');
     this.#viewport.synchronize(true);
     this.#touchInteraction();
@@ -638,92 +561,6 @@ export class CodeEditor extends Group {
     } catch {
       this.controller.degradation.fail('parser');
     }
-  }
-
-  #deleteAdjacent(direction: -1 | 1): boolean {
-    const selection = this.controller.document.selection;
-    const anchor = Number(selection.anchor);
-    const head = Number(selection.head);
-    if (anchor === head) {
-      const target = Math.max(0, Math.min(this.controller.document.text.length, head + direction));
-      if (target === head) return true;
-      this.controller.revealOffset(target);
-      this.controller.document.setSelection({ anchor: Math.min(head, target), head: Math.max(head, target) });
-    }
-    this.insertText('');
-    return true;
-  }
-
-  #moveCaret(delta: -1 | 1, extend: boolean): boolean {
-    const selection = this.controller.document.selection;
-    const head = Math.max(0, Math.min(this.controller.document.text.length, Number(selection.head) + delta));
-    this.controller.revealOffset(head);
-    this.controller.document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
-    this.#finishSelectionChange();
-    return true;
-  }
-
-  #moveByWord(direction: -1 | 1, extend: boolean): void {
-    const document = this.controller.document;
-    const selection = document.selection;
-    const text = document.text;
-    let head = Number(selection.head);
-    if (direction === 1) {
-      const initial = sourceCharacterAt(text, head);
-      if (initial !== undefined) {
-        head = advanceCharacterRun(text, head, initial.kind);
-        if (initial.kind !== 'whitespace') head = advanceCharacterRun(text, head, 'whitespace');
-      }
-    } else {
-      head = retreatCharacterRun(text, head, 'whitespace');
-      const prior = sourceCharacterBefore(text, head);
-      if (prior !== undefined) head = retreatCharacterRun(text, head, prior.kind);
-    }
-    this.controller.revealOffset(head);
-    document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
-    this.#finishSelectionChange();
-  }
-
-  #moveToDocumentEdge(edge: 'start' | 'end', extend: boolean): void {
-    const document = this.controller.document;
-    const selection = document.selection;
-    const head = edge === 'start' ? 0 : document.text.length;
-    this.controller.revealOffset(head);
-    document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
-    this.#finishSelectionChange();
-  }
-
-  #moveToLineEdge(edge: 'start' | 'end', extend: boolean): boolean {
-    const document = this.controller.document;
-    const selection = document.selection;
-    const line = document.snapshot.lineAt(Number(selection.head));
-    const head = edge === 'start' ? line.from : line.to;
-    document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
-    this.#finishSelectionChange();
-    return true;
-  }
-
-  #moveVertically(delta: -1 | 1, extend: boolean): boolean {
-    const document = this.controller.document;
-    const selection = document.selection;
-    const current = document.snapshot.lineAt(Number(selection.head));
-    const targetNumber = codeEditorVisibleRows(this.controller).adjacentLogicalLine(Number(current.number), delta);
-    const target = document.snapshot.line(targetNumber);
-    const head = target.from + Math.min(Number(selection.head) - current.from, target.length);
-    document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
-    this.#finishSelectionChange();
-    return true;
-  }
-
-  #dedentAtCaret(): boolean {
-    const document = this.controller.document;
-    const head = Number(document.selection.head);
-    const line = document.snapshot.lineAt(head);
-    const removable = removableIndentationLength(line.text, document.tabSize);
-    if (removable === 0) return true;
-    document.setSelection({ anchor: line.from, head: line.from + removable });
-    this.insertText('');
-    return true;
   }
 
   #searchNext(): void {
@@ -740,7 +577,12 @@ export class CodeEditor extends Group {
     }
   }
 
-  #finishSelectionChange(): void {
+  #finishSelectionChange(preserveAssistance = false): void {
+    if (!preserveAssistance) {
+      this.controller.caretChanged();
+      this.#syncAssistance();
+    }
+    this.#lastSelectionHead = Number(this.controller.document.selection.head);
     this.#viewport.synchronize(true);
     this.#touchInteraction();
     this.invalidate();

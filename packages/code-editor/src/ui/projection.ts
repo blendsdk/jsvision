@@ -142,6 +142,7 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
               lineNumber === Number(caretPosition.line),
               options,
               visibleRows,
+              spans.diagnostics,
             ),
             ...sourceCells,
           ];
@@ -163,7 +164,18 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
     cells: Object.freeze(cells.map((row) => Object.freeze(row))),
     caret,
     precedence: codeEditorPresentationPrecedence,
-    actions: Object.freeze(['edit', 'search', 'fold', 'assist', 'navigate', 'format', 'save', 'close']),
+    actions: Object.freeze([
+      'edit',
+      'search',
+      'fold',
+      'assist',
+      'hover',
+      'symbols',
+      'navigate',
+      'format',
+      'save',
+      'close',
+    ]),
     cellSignature: signature.toString(16),
     cellAtDocumentOffset(offset: number) {
       return offsets.get(offset);
@@ -188,17 +200,27 @@ function projectGutter(
   active: boolean,
   options: ProjectCodeEditorOptions,
   visibleRows: CodeEditorVisibleRows,
+  diagnostics: readonly NormalizedSpan[],
 ): CodeEditorProjectedCell[] {
   const label = hasDocumentLine ? String(lineNumber + 1).padStart(numberWidth, ' ') : ' '.repeat(numberWidth);
   const foldable = hasDocumentLine ? visibleRows.foldableAt(lineNumber) : undefined;
   const collapsed = hasDocumentLine ? visibleRows.collapsedAt(lineNumber) : undefined;
-  const marker =
+  const logical = hasDocumentLine ? options.controller.document.snapshot.line(lineNumber) : undefined;
+  const diagnostic =
+    logical === undefined ? undefined : findOverlappingSpan(diagnostics, Number(logical.from), Number(logical.to));
+  const diagnosticMarker =
+    diagnostic?.severity === 'error'
+      ? 'E'
+      : diagnostic?.severity === 'warning'
+        ? '!'
+        : diagnostic?.severity === 'information'
+          ? 'I'
+          : diagnostic?.severity === 'hint'
+            ? '?'
+            : undefined;
+  const foldMarker =
     foldable === undefined
-      ? active
-        ? '>'
-        : options.caps.glyphs.boxDrawing
-          ? '│'
-          : '|'
+      ? undefined
       : options.caps.unicode.utf8
         ? collapsed === undefined
           ? '▼'
@@ -206,18 +228,26 @@ function projectGutter(
         : collapsed === undefined
           ? 'v'
           : '>';
-  return [...label, ' ', marker].map((text, index, parts) =>
-    Object.freeze({
+  const marker = foldMarker ?? diagnosticMarker ?? (active ? '>' : options.caps.glyphs.boxDrawing ? '│' : '|');
+  const separator = foldMarker === undefined ? ' ' : (diagnosticMarker ?? ' ');
+  return [...label, separator, marker].map((text, index, parts) => {
+    const diagnosticCell = diagnosticMarker !== undefined && foldMarker !== undefined && index === parts.length - 2;
+    const foldCell = foldMarker !== undefined && index === parts.length - 1;
+    const role = diagnosticCell
+      ? `diagnostic.${diagnostic?.severity ?? 'hint'}`
+      : foldCell
+        ? 'fold'
+        : active
+          ? 'lineNumber'
+          : 'gutter';
+    return Object.freeze({
       text,
       width: 1 as const,
-      role: index === parts.length - 1 && foldable !== undefined ? 'fold' : active ? 'lineNumber' : 'gutter',
+      role,
       overlays: Object.freeze([]),
-      style: styleForRole(
-        options.theme,
-        index === parts.length - 1 && foldable !== undefined ? 'fold' : active ? 'lineNumber' : 'gutter',
-      ),
-    }),
-  );
+      style: styleForRole(options.theme, role),
+    });
+  });
 }
 
 type NormalizedSpan = Readonly<{
@@ -414,6 +444,21 @@ function findSpan(spans: readonly NormalizedSpan[], offset: number): NormalizedS
     else return span;
   }
   return undefined;
+}
+
+/** Finds the first non-overlapping sorted span intersecting one document range. */
+function findOverlappingSpan(spans: readonly NormalizedSpan[], from: number, to: number): NormalizedSpan | undefined {
+  let low = 0;
+  let high = spans.length - 1;
+  while (low <= high) {
+    const middle = (low + high) >> 1;
+    const span = spans[middle];
+    if (span === undefined) return undefined;
+    if (span.to < from) low = middle + 1;
+    else high = middle - 1;
+  }
+  const candidate = spans[low];
+  return candidate !== undefined && candidate.from <= to && candidate.severity !== undefined ? candidate : undefined;
 }
 
 function contains(span: NormalizedSpan | undefined, offset: number): boolean {

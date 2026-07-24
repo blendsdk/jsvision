@@ -53,14 +53,22 @@ export function emptyPresentation(): CodeEditorLspPresentation {
 export function immutablePresentation(
   value: CodeEditorLspPresentation,
   limits: ResolvedLspLimits,
+  previous?: CodeEditorLspPresentation,
 ): CodeEditorLspPresentation {
   const completionSource =
-    value.completion === undefined ? undefined : boundedDataArray(value.completion.items, limits.completionItems);
+    value.completion === undefined
+      ? undefined
+      : value.completion.items === previous?.completion?.items
+        ? previous.completion.items
+        : boundedDataArray(value.completion.items, limits.completionItems);
   const completion =
     value.completion === undefined || completionSource === undefined
       ? undefined
       : Object.freeze({
-          items: Object.freeze(completionSource.map((item) => immutableCompletionItem(item, limits.edits))),
+          items:
+            completionSource === previous?.completion?.items
+              ? completionSource
+              : Object.freeze(completionSource.map((item) => immutableCompletionItem(item, limits.edits))),
           selected: value.completion.selected,
           filter: value.completion.filter,
           lineage: value.completion.lineage,
@@ -69,21 +77,66 @@ export function immutablePresentation(
           coordinatorGeneration: value.completion.coordinatorGeneration,
         });
   const hover =
-    value.hover === undefined
-      ? undefined
-      : Object.freeze({
-          text: value.hover.text,
-          clipped: value.hover.clipped,
-          resourcesActive: false as const,
-        });
+    value.hover === previous?.hover
+      ? previous?.hover
+      : value.hover === undefined
+        ? undefined
+        : Object.freeze({
+            text: value.hover.text,
+            clipped: value.hover.clipped,
+            resourcesActive: false as const,
+          });
   const signature =
-    value.signature === undefined
-      ? undefined
-      : Object.freeze({
-          lines: boundedDataArray(value.signature.lines, 64) ?? Object.freeze([]),
-        });
+    value.signature === previous?.signature
+      ? previous?.signature
+      : value.signature === undefined
+        ? undefined
+        : Object.freeze({
+            lines: boundedDataArray(value.signature.lines, 64) ?? Object.freeze([]),
+          });
+  const diagnostics =
+    value.diagnostics === previous?.diagnostics ? previous.diagnostics : immutableDiagnostics(value, limits);
+  const navigationChooser =
+    value.navigationChooser === previous?.navigationChooser
+      ? previous?.navigationChooser
+      : value.navigationChooser === undefined
+        ? undefined
+        : Object.freeze({
+            items: Object.freeze(
+              (boundedDataArray(value.navigationChooser.items, limits.completionItems) ?? Object.freeze([])).map(
+                (item) => Object.freeze({ uri: item.uri, range: immutableRange(item.range) }),
+              ),
+            ),
+          });
+  const symbolChooser =
+    value.symbolChooser === previous?.symbolChooser
+      ? previous?.symbolChooser
+      : value.symbolChooser === undefined
+        ? undefined
+        : Object.freeze({
+            items: Object.freeze(
+              (boundedDataArray(value.symbolChooser.items, limits.completionItems) ?? Object.freeze([])).map((item) =>
+                Object.freeze({ label: item.label, range: immutableRange(item.range) }),
+              ),
+            ),
+          });
+  return Object.freeze({
+    ...(hover === undefined ? {} : { hover }),
+    ...(signature === undefined ? {} : { signature }),
+    ...(completion === undefined ? {} : { completion }),
+    diagnostics,
+    ...(navigationChooser === undefined ? {} : { navigationChooser }),
+    ...(symbolChooser === undefined ? {} : { symbolChooser }),
+  });
+}
+
+/** Detaches one diagnostics collection when its validated identity changed. */
+function immutableDiagnostics(
+  value: CodeEditorLspPresentation,
+  limits: ResolvedLspLimits,
+): CodeEditorLspPresentation['diagnostics'] {
   const diagnosticItems = boundedDataArray(value.diagnostics.items, limits.diagnostics) ?? Object.freeze([]);
-  const diagnostics = Object.freeze({
+  return Object.freeze({
     items: Object.freeze(
       diagnosticItems.map((item) =>
         Object.freeze({
@@ -96,34 +149,6 @@ export function immutablePresentation(
     totalCount: value.diagnostics.totalCount,
     truncated: value.diagnostics.truncated,
     versioned: value.diagnostics.versioned,
-  });
-  const navigationChooser =
-    value.navigationChooser === undefined
-      ? undefined
-      : Object.freeze({
-          items: Object.freeze(
-            (boundedDataArray(value.navigationChooser.items, limits.completionItems) ?? Object.freeze([])).map((item) =>
-              Object.freeze({ uri: item.uri, range: immutableRange(item.range) }),
-            ),
-          ),
-        });
-  const symbolChooser =
-    value.symbolChooser === undefined
-      ? undefined
-      : Object.freeze({
-          items: Object.freeze(
-            (boundedDataArray(value.symbolChooser.items, limits.completionItems) ?? Object.freeze([])).map((item) =>
-              Object.freeze({ label: item.label, range: immutableRange(item.range) }),
-            ),
-          ),
-        });
-  return Object.freeze({
-    ...(hover === undefined ? {} : { hover }),
-    ...(signature === undefined ? {} : { signature }),
-    ...(completion === undefined ? {} : { completion }),
-    diagnostics,
-    ...(navigationChooser === undefined ? {} : { navigationChooser }),
-    ...(symbolChooser === undefined ? {} : { symbolChooser }),
   });
 }
 
