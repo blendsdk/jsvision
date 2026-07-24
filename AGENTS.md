@@ -3,6 +3,8 @@
 # Project guidance
 
 - This is a Node 22+, ESM TypeScript monorepo managed with Yarn 1 workspaces and Turborepo.
+- `develop` is the CodeOps integration branch; the remote repository's default branch is `master`.
+- Conventional Commits are enforced through commitlint and the Husky commit-message hook.
 - Public SDK packages live under `packages/`; consumer-facing documentation lives in
   `packages/docs-site/`.
 - Use `yarn verify` as the authoritative full gate. Use package-local `typecheck`, `test`, or

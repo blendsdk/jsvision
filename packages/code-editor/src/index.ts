@@ -90,11 +90,16 @@ export type {
 export { CodeEditorLspCoordinator, createCodeEditorLspCoordinator } from './lsp/coordinator.js';
 export { createInProcessLspSession, InProcessLspSession } from './lsp/session.js';
 export type { CodeEditorLspSession, CodeEditorLspSessionState } from './lsp/session.js';
+export type { CodeEditorCompletionItem, CodeEditorControllerPresentation } from './presentation.js';
+export type { CodeEditorDisposable, CodeEditorMutationInput, CodeEditorMutationSink } from './integration.js';
 export type {
   CodeEditorHostEffect,
   CodeEditorLspCapabilities,
+  CodeEditorLspCommandAvailability,
   CodeEditorLspOperation,
   CodeEditorLspPresentation,
+  CodeEditorLspSnippetSnapshot,
+  CodeEditorLspStateSnapshot,
   CreateCodeEditorLspCoordinatorOptions,
   LspServiceState,
   ProtocolPosition,
@@ -102,12 +107,20 @@ export type {
 } from './lsp/types.js';
 export { CodeEditorController, createCodeEditorController } from './controller.js';
 export type {
+  CodeEditorControllerEvent,
   CodeEditorControllerHostEffect,
   CodeEditorControllerMetrics,
+  CodeEditorControllerMutationEvent,
   CodeEditorControllerPublicState,
   CreateCodeEditorControllerOptions,
 } from './controller.js';
-export { CodeEditor, CodeEditorWindow, projectCodeEditor } from './ui/index.js';
+export {
+  CodeEditor,
+  CodeEditorKeyBindingConflictError,
+  CodeEditorWindow,
+  projectCodeEditor,
+  registerCodeEditorKeyBindings,
+} from './ui/index.js';
 export type {
   CodeEditorFrame,
   CodeEditorKeyRoute,
