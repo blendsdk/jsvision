@@ -42,15 +42,21 @@
         {
           "relation": "implemented-by",
           "target": "code-editor/TASK-PHASE-7"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/CRIT-PLAN"
         }
       ],
       "evidence": [
         "codeops/features/code-editor/plans/code-editor/99-execution-plan.md",
         "summary:Phase 0 synchronized origin/develop and revalidated current paths, plan decisions, traceability, formatting, and the full repository verification gate.",
+        "summary:Phase 1 completed without changing the approved product scope; execution snapshots were refreshed for the verified architecture phase.",
+        "summary:Phase 1 passed its corrected quality loop and final validation snapshot refresh.",
         "summary:The user authorized creation of the integrated Code Editor plan with auto-design, and all plan ambiguities and quality gates are resolved."
       ],
       "id": "PLAN-CODE-EDITOR",
-      "revision": "sha256:317a870311685cec7404fcc729ed709060bcbc3280265c218bfb8a97c133f959",
+      "revision": "sha256:be7ee6b80d9963b648217c7f32c240fdd58363fc1cd258b39804705686429ec1",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -64,15 +70,134 @@
       "status": "approved",
       "title": "Code Editor integrated implementation plan",
       "type": "plan",
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:10e3a153a059da3d813118249bba7908ffe25f406754a4782de305d88efffffc",
+          "upstream": "code-editor/TASK-PHASE-0",
+          "validatedAt": "2026-07-23T22:22:05Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:00309bd824168022480f4f375ea160d7048fb1787ccfe242744a56902abe5261",
+          "upstream": "code-editor/TASK-PHASE-2",
+          "validatedAt": "2026-07-23T22:22:05Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:5e2a0f3bd6b7fc53ab4e42755aa1717213ef56d13a185c6d38add6270f8c7c30",
+          "upstream": "code-editor/TASK-PHASE-3",
+          "validatedAt": "2026-07-23T22:22:05Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:898bb6580bfaa66ff0307ee557e94e65d4b3dfdd59c32e9e2d964bcf86d6f9b6",
+          "upstream": "code-editor/TASK-PHASE-4",
+          "validatedAt": "2026-07-23T22:22:05Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:d904d42f7aa54de49e18900e2556bdf45745c7fda6bd4489a8c6fefeb14c46c2",
+          "upstream": "code-editor/TASK-PHASE-5",
+          "validatedAt": "2026-07-23T22:22:05Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:4a91b08af57685766382c7763ce2f6b47508ab6a8c3277e4ad2705e5c42a2a7a",
+          "upstream": "code-editor/TASK-PHASE-6",
+          "validatedAt": "2026-07-23T22:22:05Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:eb827c5ea1e918b5ef2e0a58567ff5d57dd3f64d70bb9c67eee31e6e5b92293a",
+          "upstream": "code-editor/TASK-PHASE-7",
+          "validatedAt": "2026-07-23T22:22:05Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:11779da272aad390b79cfc5160b364833ee3051ddc49595ba1772f3e99b93d68",
+          "upstream": "code-editor/CRIT-PLAN",
+          "validatedAt": "2026-07-23T22:22:05Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:11779da272aad390b79cfc5160b364833ee3051ddc49595ba1772f3e99b93d68",
+          "upstream": "code-editor/CRIT-PLAN",
+          "validatedAt": "2026-07-23T22:40:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:8e3f7c304a2621aba8be0781d8d4e382bdcf2108e2da12ae445878f7e36a2192",
+          "upstream": "code-editor/TASK-PHASE-1",
+          "validatedAt": "2026-07-23T23:02:00Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "code-editor/TEST-PLAN"
+        }
+      ],
+      "id": "CRIT-PLAN",
+      "revision": "sha256:11779da272aad390b79cfc5160b364833ee3051ddc49595ba1772f3e99b93d68",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/07-testing-strategy.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Architecture, package, and probes"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code Editor plan specification cases",
+      "type": "criterion",
       "validations": []
     },
     {
       "edges": [],
       "evidence": [
-        "summary:All 25 plan ambiguities are resolved under user authority or the active auto-design delegation."
+        "verificationEvidence:Architecture specification and implementation suites pass 9 tests covering clean-process imports, bounded document viewport projection, deterministic scheduling, dependency closure, licenses, and failure handling."
+      ],
+      "id": "TEST-PLAN",
+      "revision": "sha256:11779da272aad390b79cfc5160b364833ee3051ddc49595ba1772f3e99b93d68",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor/07-testing-strategy.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Architecture, package, and probes"
+          }
+        }
+      ],
+      "status": "passing",
+      "title": "Code Editor plan specification test suite",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:All 27 plan ambiguities are resolved under user authority or the active auto-design delegation."
       ],
       "id": "AMB-PLAN",
-      "revision": "sha256:eb292b95f01d0f73d042b664290f1a0e8b3c285e53363a2a080e39ac47a4840a",
+      "revision": "sha256:ab1ec81f6b00001d28b723d5c3eb771526939771c7c0118bafd21e04d5ab07da",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -96,7 +221,7 @@
         "verificationEvidence:yarn verify passed 30/30 Turbo tasks and the plugin integrity gate; CodeOps validation and plan readiness passed."
       ],
       "id": "TASK-PHASE-0",
-      "revision": "sha256:1965d976a312037b41dbbb0127d7db4b27593a1813b071df4498b29d3486d28a",
+      "revision": "sha256:10e3a153a059da3d813118249bba7908ffe25f406754a4782de305d88efffffc",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -115,8 +240,15 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "qualityReview:Independent reviewer and performance/dependency auditor findings were fixed without waiver; the single final re-review found no unresolved findings.",
+        "qualityReview:Phase 1 reopened to correct clean-process import, benchmark-memory, scheduler, and dependency-closure evidence; no major finding was waived.",
+        "summary:Implemented the public package skeleton and architecture probes for headless imports, state, parsers, protocol types, scheduling, performance, dependencies, and licenses.",
+        "verificationEvidence:Focused build, typecheck, 9 tests, dependency, documentation, package dry-run, traceability, and full yarn verify passed.",
+        "verificationEvidence:Focused package build, typecheck, 8 tests, dependency and documentation checks passed; yarn verify passed."
+      ],
       "id": "TASK-PHASE-1",
-      "revision": "sha256:c2d2837a0ea23165a22eaf134d5322cf9c67e18fee84c52ebf6a4cb72fbbb2a8",
+      "revision": "sha256:8e3f7c304a2621aba8be0781d8d4e382bdcf2108e2da12ae445878f7e36a2192",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -128,7 +260,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Architecture probes and package skeleton",
       "type": "task",
       "validations": []

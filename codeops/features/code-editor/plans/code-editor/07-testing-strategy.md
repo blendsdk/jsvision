@@ -100,7 +100,7 @@ green → implementation tests → `yarn verify` (AR-P17, AR-P18).
 
 | Test file | ST cases |
 |-----------|----------|
-| `packages/code-editor/src/architecture/code-editor-architecture.spec.test.ts` | ST-01–ST-04 |
+| `packages/code-editor/test/code-editor-architecture.spec.test.ts` | ST-01–ST-04 |
 | `packages/code-editor/src/document/document.spec.test.ts` | ST-05–ST-11 |
 | `packages/code-editor/src/languages/languages.spec.test.ts` | ST-12–ST-18 |
 | `packages/code-editor/src/lsp/lsp.spec.test.ts` | ST-19–ST-31 |

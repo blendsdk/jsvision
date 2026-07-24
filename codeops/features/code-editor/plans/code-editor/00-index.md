@@ -51,7 +51,7 @@ const window = new CodeEditorWindow({ editor });
 |----------|---------|
 | Product boundary | New package and component; existing `Editor` unchanged |
 | Document | Internal contract backed by public CodeMirror state primitives after probe |
-| Syntax | Direct public Lezer APIs; no DOM or CodeMirror view |
+| Syntax | Direct public headless parsers; no DOM or CodeMirror view |
 | Intelligence | Transport-neutral LSP 3.18 session; optional `/node` adapter |
 | Presentation | Viewport projection and dedicated hybrid `CodeEditorTheme` |
 | Verification | Specification-first phases ending in `yarn verify` |

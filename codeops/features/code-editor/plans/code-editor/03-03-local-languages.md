@@ -5,9 +5,10 @@
 
 ## Overview
 
-The language layer is an open, versioned contract. Built-in JavaScript, TypeScript, and PostgreSQL
-SQL adapters use direct public Lezer parsers; plain mode has no parser dependency (AR-P05–AR-P07,
-AR-P25).
+The language layer is an open, versioned contract. Built-in JavaScript and TypeScript use the
+direct public `@lezer/javascript` parser. PostgreSQL uses the public headless
+`pgsql-ast-parser` package after the dependency probe rejected CodeMirror's DOM-bearing language
+wrapper. Plain mode has no parser dependency (AR-P05–AR-P07, AR-P25, AR-P27).
 
 ## Contracts
 
@@ -33,13 +34,15 @@ lineage/revision/adapter generation before it enters presentation (AR-P06, AR-P1
 
 ## Parser integration
 
-Adapters own Lezer parser configuration and incremental `TreeFragment` retention. Highlight tags
-map to stable `SyntaxCategory` values; parser library types do not leak through public contracts.
-Queries cover the viewport and bounded look-around. The scheduler may bound work between parser
-calls but cannot falsely claim to preempt a synchronous call; the probe measures worst-case call
-duration and reopens worker/region strategy when needed (AR-P05–AR-P07).
+JavaScript and TypeScript adapters own Lezer parser configuration and incremental `TreeFragment`
+retention. Highlight tags map to stable `SyntaxCategory` values; parser library types do not leak
+through public contracts. PostgreSQL uses revision-stamped cancellable background parses with a
+bounded lexical presentation while parsing is pending. Queries cover the viewport and bounded
+look-around. The scheduler may bound work between parser calls but cannot falsely claim to preempt
+a synchronous call; the probe measures worst-case call duration and reopens worker/region strategy
+when needed (AR-P05–AR-P07, AR-P27).
 
-PostgreSQL uses the official dialect where available and proves incomplete/invalid SQL recovery.
+PostgreSQL uses the selected PostgreSQL grammar and proves incomplete/invalid SQL recovery.
 JavaScript and TypeScript share only parser configuration that preserves their distinct IDs,
 extensions, comment rules, and language behavior.
 
