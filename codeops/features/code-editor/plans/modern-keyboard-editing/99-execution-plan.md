@@ -1,8 +1,8 @@
 # Task T-01: Modern keyboard editing
 
 > **Type**: Task (lightweight) · **Feature**: code-editor · **CodeOps Artifact Schema**: 1
-> **Progress**: 1/5 tasks (20%)
-> **Last Updated**: 2026-07-24 19:10
+> **Progress**: 2/5 tasks (40%)
+> **Last Updated**: 2026-07-24 19:27
 > **Phase baseline tree**: 9d42d8ccdecdc28a24395692028f1b697452e419
 
 ## Objective
@@ -35,9 +35,10 @@ single-selection scope, revision-aware language presentation, and responsive ren
 - [x] T-01.1 Verify and checkpoint the existing interactive-demo, input, revision-aware syntax,
   and optional line-number baseline; refresh plugin artifacts when required.
   ✅ (completed: 2026-07-24 19:10; `yarn verify` passed 34/34 tasks)
-- [ ] T-01.2 Add specification tests, confirm the focused red phase, then implement selection-aware
+- [x] T-01.2 Add specification tests, confirm the focused red phase, then implement selection-aware
   indent/dedent, smart tab stops, preserved-indent Enter, select-all, undo/redo, word navigation,
   document navigation, and shift-extended selection.
+  ✅ (completed: 2026-07-24 19:27; focused red 4/4, focused green 4/4; `yarn verify` passed 34/34)
 - [ ] T-01.3 Add specification tests, confirm the focused red phase, then implement command-event
   clipboard copy/cut/paste and adapter-aware Ctrl+/ line-comment toggling as atomic edits.
 - [ ] T-01.4 Add implementation edge coverage and expand the dedicated Code Editor kitchen-sink
