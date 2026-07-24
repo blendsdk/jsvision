@@ -48,3 +48,20 @@ export {
   documentSelection,
   visualColumn,
 } from './document/types.js';
+export { LanguageRegistry } from './languages/registry.js';
+export { createLanguageScheduler, LanguageScheduler } from './languages/scheduler.js';
+export { indentLines, toggleLineComments } from './languages/editing.js';
+export { inspectInvisibleCharacters } from './languages/invisibles.js';
+export { querySyntaxViewport } from './languages/syntax.js';
+export type {
+  BracketPair,
+  CommentMetadata,
+  FoldRange,
+  LanguageAdapter,
+  LanguageCapability,
+  LanguageCapabilityContext,
+  LanguageCapabilityResult,
+  LocalLanguageResult,
+  SyntaxCategory,
+  SyntaxSpan,
+} from './languages/contracts.js';

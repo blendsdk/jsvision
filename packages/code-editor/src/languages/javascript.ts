@@ -9,3 +9,4 @@ import type { CodeEditorLanguageId } from '../index.js';
  * ```
  */
 export const javascriptLanguageId: CodeEditorLanguageId = 'javascript';
+export { javascriptLanguageAdapter } from './builtins.js';
