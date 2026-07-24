@@ -16,6 +16,8 @@ import {
   projectCodeEditor,
 } from '@jsvision/code-editor';
 import { resolveCapabilities } from '@jsvision/core';
+import type { MouseEvent } from '@jsvision/core';
+import { Window } from '@jsvision/ui';
 import { codeEditorStory } from '../kitchen-sink/stories/code-editor.story.js';
 import { STORIES } from '../kitchen-sink/stories/index.js';
 import {
@@ -33,6 +35,11 @@ const normalCapabilities = resolveCapabilities({
   platform: 'linux',
   override: { colorDepth: 'truecolor' },
 }).profile;
+
+/** Creates the one-based mouse coordinates consumed by the terminal event loop. */
+function mouse(kind: MouseEvent['kind'], x: number, y: number): MouseEvent {
+  return { type: 'mouse', kind, button: 0, x: x + 1, y: y + 1 };
+}
 
 /**
  * The version-one facets are deliberately broader than individual commands. A scenario may cover
@@ -351,6 +358,92 @@ describe('ST-41: repository kitchen-sink integration', () => {
     expect(state.language).toBe('postgresql');
     expect(state.line).toBeGreaterThan(0);
     expect(state.visualColumn).toBeGreaterThan(0);
+    editor.dispose();
+  });
+
+  // Scenario navigation is fixed application chrome, so it must not masquerade as a managed window.
+  test('renders the scenario list in a visible borderless left pane between its heading and help footer', () => {
+    const showcase = createCodeEditorShowcase(normalCapabilities);
+    const pane = showcase.navigator.parent;
+
+    if (pane === null) throw new Error('The scenario navigator must be mounted in a left pane.');
+    expect(pane).not.toBeInstanceOf(Window);
+    expect(pane.layout.rect).toEqual({
+      x: 0,
+      y: 0,
+      width: Math.min(28, Math.max(18, Math.floor(showcase.app.desktop.bounds.width / 3))),
+      height: showcase.app.desktop.bounds.height,
+    });
+    expect(showcase.navigator.layout.rect).toEqual({
+      x: 0,
+      y: 1,
+      width: pane.layout.rect?.width,
+      height: Math.max(1, (pane.layout.rect?.height ?? 0) - 4),
+    });
+    const renderedPane = showcase.app.loop.renderRoot
+      .buffer()
+      .rows()
+      .slice(showcase.app.desktop.bounds.y)
+      .map((row) =>
+        row
+          .slice(showcase.app.desktop.bounds.x, showcase.app.desktop.bounds.x + (pane.layout.rect?.width ?? 0))
+          .map((cell) => cell.char)
+          .join(''),
+      )
+      .join('\n');
+    expect(renderedPane).toContain('Code Editor scenarios');
+    expect(renderedPane).toContain(CODE_EDITOR_SCENARIOS[0]?.title);
+    showcase.activeEditor().dispose();
+  });
+
+  // The showcased editor is a real managed window, so its standard move affordance must remain live.
+  test('moves the editor window through its title bar and paints a drop shadow', () => {
+    const showcase = createCodeEditorShowcase(normalCapabilities);
+    const editor = showcase.activeEditor();
+    const window = editor.parent;
+
+    expect(window).toBeInstanceOf(CodeEditorWindow);
+    if (!(window instanceof CodeEditorWindow) || window.layout.rect === undefined) return;
+    const initial = { ...window.layout.rect };
+    const desktopX = showcase.app.desktop.bounds.x;
+    const desktopY = showcase.app.desktop.bounds.y;
+    expect(window.movable).toBe(true);
+    expect(window.castsShadow).toBe(true);
+
+    showcase.app.loop.dispatch(mouse('down', desktopX + initial.x + 10, desktopY + initial.y));
+    showcase.app.loop.dispatch(mouse('drag', desktopX + initial.x + 5, desktopY + initial.y + 2));
+    showcase.app.loop.dispatch(mouse('up', desktopX + initial.x + 5, desktopY + initial.y + 2));
+
+    expect(window.layout.rect).toEqual({ ...initial, x: initial.x - 5, y: initial.y + 2 });
+    editor.dispose();
+  });
+
+  // Resizing the frame must immediately resize the editor cells and its viewport model.
+  test('resizes the editor content and viewport through the real window resize gesture', () => {
+    const showcase = createCodeEditorShowcase(normalCapabilities);
+    const editor = showcase.activeEditor();
+    const window = editor.parent;
+
+    expect(window).toBeInstanceOf(CodeEditorWindow);
+    if (!(window instanceof CodeEditorWindow) || window.layout.rect === undefined) return;
+    const initial = { ...window.layout.rect };
+    const desktopX = showcase.app.desktop.bounds.x;
+    const desktopY = showcase.app.desktop.bounds.y;
+    const width = initial.width - 8;
+    const height = initial.height - 2;
+    expect(window.resizable).toBe(true);
+
+    showcase.app.loop.dispatch(
+      mouse('down', desktopX + initial.x + initial.width - 1, desktopY + initial.y + initial.height - 1),
+    );
+    showcase.app.loop.dispatch(mouse('drag', desktopX + initial.x + width - 1, desktopY + initial.y + height - 1));
+    showcase.app.loop.dispatch(mouse('up', desktopX + initial.x + width - 1, desktopY + initial.y + height - 1));
+    showcase.app.loop.renderRoot.flush();
+
+    expect(window.layout.rect).toEqual({ ...initial, width, height });
+    expect(editor.layout.rect).toEqual({ x: 1, y: 1, width: width - 2, height: height - 3 });
+    expect(editor.bounds).toMatchObject({ width: width - 2, height: height - 3 });
+    expect(editor.viewportMetrics).toMatchObject({ width: width - 2, height: height - 3 });
     editor.dispose();
   });
 });
