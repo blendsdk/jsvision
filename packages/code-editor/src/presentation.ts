@@ -29,6 +29,27 @@ export interface CodeEditorCompletionPresentation {
   readonly revision: number;
 }
 
+/**
+ * One non-completion terminal overlay sharing the editor's bounded popup.
+ *
+ * @example
+ * ```ts
+ * const overlay: CodeEditorOverlayPresentation = {
+ *   kind: 'diagnostic',
+ *   items: ['[error] Unexpected token'],
+ *   selected: 0,
+ * };
+ * ```
+ */
+export interface CodeEditorOverlayPresentation {
+  /** Interaction family represented by the rows. */
+  readonly kind: 'hover' | 'signature' | 'diagnostic' | 'navigation' | 'symbols';
+  /** Sanitized bounded rows rendered by the terminal popup. */
+  readonly items: readonly string[];
+  /** Zero-based row selected by chooser-style overlays. */
+  readonly selected: number;
+}
+
 /** Assistance state exposed by a controller without retaining terminal views. */
 export interface CodeEditorAssistancePresentation {
   /** Current shared completion list, when open. */
@@ -43,6 +64,8 @@ export interface CodeEditorAssistancePresentation {
   readonly navigationChooser?: CodeEditorLspStateSnapshot['presentation']['navigationChooser'];
   /** Current validated document-symbol chooser. */
   readonly symbolChooser?: CodeEditorLspStateSnapshot['presentation']['symbolChooser'];
+  /** Current non-completion overlay projected through the shared terminal popup. */
+  readonly overlay?: CodeEditorOverlayPresentation;
 }
 
 /** Immutable render-facing state for one document controller. */
@@ -122,11 +145,13 @@ export function codeEditorCompletionWordRange(
  *
  * @param state - Latest immutable coordinator state, when a service is configured.
  * @param manualCompletion - Compatible host completion used only while protocol completion is absent.
+ * @param overlay - Current controller-owned non-completion terminal overlay.
  * @returns One immutable render-facing controller projection.
  */
 export function projectCodeEditorControllerPresentation(
   state: CodeEditorLspStateSnapshot | undefined,
   manualCompletion?: CodeEditorCompletionPresentation,
+  overlay?: CodeEditorOverlayPresentation,
 ): CodeEditorControllerPresentation {
   const protocolCompletion = state?.presentation.completion;
   const completion =
@@ -134,15 +159,7 @@ export function projectCodeEditorControllerPresentation(
       ? manualCompletion
       : Object.freeze({
           source: 'language-service' as const,
-          items: Object.freeze(
-            protocolCompletion.items.map((item) =>
-              Object.freeze({
-                label: item.label,
-                ...(item.detail === undefined ? {} : { detail: item.detail }),
-                ...(item.insertText === undefined ? {} : { insertText: item.insertText }),
-              }),
-            ),
-          ),
+          items: protocolCompletion.items,
           selected: protocolCompletion.selected,
           lineage: protocolCompletion.lineage,
           revision: protocolCompletion.revision,
@@ -164,6 +181,7 @@ export function projectCodeEditorControllerPresentation(
       ? {}
       : { navigationChooser: state.presentation.navigationChooser }),
     ...(state?.presentation.symbolChooser === undefined ? {} : { symbolChooser: state.presentation.symbolChooser }),
+    ...(overlay === undefined ? {} : { overlay }),
   });
   return Object.freeze({
     assistance,

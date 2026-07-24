@@ -90,7 +90,11 @@ export type {
 export { CodeEditorLspCoordinator, createCodeEditorLspCoordinator } from './lsp/coordinator.js';
 export { createInProcessLspSession, InProcessLspSession } from './lsp/session.js';
 export type { CodeEditorLspSession, CodeEditorLspSessionState } from './lsp/session.js';
-export type { CodeEditorCompletionItem, CodeEditorControllerPresentation } from './presentation.js';
+export type {
+  CodeEditorCompletionItem,
+  CodeEditorControllerPresentation,
+  CodeEditorOverlayPresentation,
+} from './presentation.js';
 export type { CodeEditorDisposable, CodeEditorMutationInput, CodeEditorMutationSink } from './integration.js';
 export type {
   CodeEditorHostEffect,

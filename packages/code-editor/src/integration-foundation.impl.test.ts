@@ -106,7 +106,7 @@ describe('integration foundation lifecycle', () => {
       }),
     ).toEqual({ accepted: true });
 
-    expect(editor.routeKey({ key: 'Enter' })).toEqual({ handled: true, owner: 'completion' });
+    expect(controller.routeAssistanceKey({ key: 'Enter' })).toBe('unhandled');
     expect(document.text).toBe('xcon');
     expect(controller.presentation.assistance.completion).toBeUndefined();
   });

@@ -1,8 +1,8 @@
 # Task T-04: Code Editor functional completion
 
 > **Type**: Task (lightweight) · **Feature**: code-editor · **CodeOps Artifact Schema**: 1
-> **Progress**: 6/27 tasks (22%)
-> **Last Updated**: 2026-07-25 00:01
+> **Progress**: 12/27 tasks (44%)
+> **Last Updated**: 2026-07-25 00:47
 > **Phase baseline tree**: 7beeae3152295fb1877aeb59bf5b9451a9dcac6a
 
 ## Objective
@@ -194,19 +194,25 @@ and make every kitchen-sink capability claim executable and visibly verifiable.
 
 ### Phase B — End-to-end language intelligence
 
-- [ ] T-04.7 `[spec-author]` Add immutable specification tests for ST-05 through ST-10, covering
+> **Phase baseline tree**: 40c7cfd50f08b0733b044646df04c72d18c88ab0
+
+- [x] T-04.7 `[spec-author]` Add immutable specification tests for ST-05 through ST-10, covering
   every user-visible assistance, navigation, formatting, and recovery transition.
-- [ ] T-04.8 Run the Phase B specification suites and record the expected red failures before
-  changing implementation.
-- [ ] T-04.9 Complete the shared completion/snippet popup behavior, keyboard precedence, atomic
+  ✅ (completed: 2026-07-25 00:36)
+- [x] T-04.8 Run the Phase B specification suites and record the expected red failures before
+  changing implementation. ✅ (completed: 2026-07-25 00:36; 10 expected red, 2 already green)
+- [x] T-04.9 Complete the shared completion/snippet popup behavior, keyboard precedence, atomic
   provider edits, trigger handling, clipping, focus restoration, and read-only enforcement.
-- [ ] T-04.10 Add typed hover, signature, diagnostic-detail, definition-target, and document-symbol
+  ✅ (completed: 2026-07-25 00:47)
+- [x] T-04.10 Add typed hover, signature, diagnostic-detail, definition-target, and document-symbol
   terminal surfaces with sanitized bounded content and caret-aware dismissal.
-- [ ] T-04.11 Complete document/range formatting, navigation back, host-authorized cross-document
+  ✅ (completed: 2026-07-25 00:47)
+- [x] T-04.11 Complete document/range formatting, navigation back, host-authorized cross-document
   effects, command forwarding, pending/cancel/timeout/stale/capability/disconnect/reconnect paths,
-  and non-blocking degraded operation.
-- [ ] T-04.12 Confirm Phase B specifications green, then add implementation, hostile protocol,
+  and non-blocking degraded operation. ✅ (completed: 2026-07-25 00:47)
+- [x] T-04.12 Confirm Phase B specifications green, then add implementation, hostile protocol,
   lifecycle, accessibility, performance, and retained-resource coverage and run focused checks.
+  ✅ (completed: 2026-07-25 00:47)
 
 ### Phase C — Search, replace, and document lifecycle
 

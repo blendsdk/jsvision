@@ -25,6 +25,9 @@ export function routeAssistanceKey(
   snippet: SnippetInteractionState | undefined,
   key: AssistanceKey,
 ): AssistanceKeyResult {
+  if (snippet !== undefined && key.key === 'Escape') {
+    return { owner: 'snippet' };
+  }
   if (snippet !== undefined && key.key === 'Tab') {
     const current = snippet.placeholders.indexOf(snippet.activePlaceholder);
     const next = key.shift ? Math.max(0, current - 1) : current + 1;

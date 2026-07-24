@@ -123,14 +123,21 @@ applyMutation(input: CodeEditorMutationInput): DocumentMutationResult
 applyDocumentEdits(edits: readonly DocumentEditInput[], selection: DocumentSelectionInput): boolean
 hostAction(kind: 'navigate' | 'save' | 'close'): Promise<boolean>
 requestAssistance(): void
+triggerAssistance(character: string): void
+requestHover(): void
+requestDocumentSymbols(): void
+requestDefinition(): boolean
 openCompletion(items: readonly CodeEditorCompletionItem[]): boolean
 dismissAssistance(): void
 routeAssistanceKey(key: {
     readonly key: string;
     readonly text?: string;
     readonly shift?: boolean;
-  }): 'completion' | 'snippet' | 'editor' | 'unhandled'
+  }): 'completion' | 'snippet' | 'dismissal' | 'editor' | 'unhandled'
 requestFormatting(): void
+caretChanged(): void
+navigateDiagnostic(direction: -1 | 1): boolean
+navigateBack(): boolean
 fold(): void
 unfold(): void
 foldAll(): void
@@ -555,6 +562,7 @@ handleKey(key: {
   }): 'completion' | 'snippet' | 'editor' | 'unhandled'
 documentChanged(): void
 caretChanged(): void
+dismissTransientAssistance(): void
 chooseDocumentSymbol(index: number): boolean
 navigateBack(): boolean
 chooseNavigationTarget(index: number): Promise<void>
@@ -616,6 +624,7 @@ Minimal editor-owned LSP session contract implemented by hosts and runtime adapt
 ```ts
 interface CodeEditorLspSession {
   contractVersion: 1;
+  notificationOrdering?: 'synchronous-enqueue';   // Indicates that `notify` enqueues transport output before returning its promise. Coordinators may issue a causally later request without awaiting the promise only when this explicit guarantee is present.
   capabilities: Readonly<CodeEditorLspCapabilities>;
   state: CodeEditorLspSessionState;
   generation: number;
@@ -774,6 +783,18 @@ interface CodeEditorOptions {
   keyBindingOverrides?: Readonly<Record<string, CodeEditorCommand>>;   // Exact existing commands that explicitly authorize canonical custom-binding collisions.
   lineNumbers?: boolean;   // Shows the fixed line-number gutter when the viewport is wide enough. Defaults to `false`.
   onDocumentChange?: () => void;   // Runs after an accepted text mutation so hosts can schedule revision-aware language work.
+}
+```
+
+## CodeEditorOverlayPresentation
+
+One non-completion terminal overlay sharing the editor's bounded popup.
+
+```ts
+interface CodeEditorOverlayPresentation {
+  kind: 'hover' | 'signature' | 'diagnostic' | 'navigation' | 'symbols';   // Interaction family represented by the rows.
+  items: readonly string[];   // Sanitized bounded rows rendered by the terminal popup.
+  selected: number;   // Zero-based row selected by chooser-style overlays.
 }
 ```
 
@@ -1189,6 +1210,7 @@ Deterministic transport-neutral session used by hosts and tests.
 new InProcessLspSession(options: CreateInProcessLspSessionOptions)
 // methods & signals:
 contractVersion
+notificationOrdering
 capabilities: Readonly<CodeEditorLspCapabilities>
 requests: LspRecordedRequest[]
 notifications: LspRecordedNotification[]

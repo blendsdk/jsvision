@@ -10,6 +10,8 @@ const COMMANDS: ReadonlySet<string> = new Set([
   'fold.collapseAll',
   'fold.expandAll',
   'assist',
+  'hover',
+  'symbols',
   'navigate',
   'format',
   'save',

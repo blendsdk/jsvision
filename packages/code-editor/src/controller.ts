@@ -39,7 +39,13 @@ import {
   type CodeEditorCompletionItem,
   type CodeEditorCompletionPresentation,
   type CodeEditorControllerPresentation,
+  type CodeEditorOverlayPresentation,
 } from './presentation.js';
+import {
+  createDiagnosticOverlay,
+  routeCodeEditorOverlayKey,
+  synchronizeCodeEditorOverlay,
+} from './controller-overlay.js';
 
 /** Host-owned effects raised by keyboard commands that leave the editor boundary. */
 export type CodeEditorControllerHostEffect =
@@ -140,6 +146,9 @@ export class CodeEditorController {
   #disposed = false;
   #presentation: CodeEditorControllerPresentation;
   #manualCompletion: CodeEditorCompletionPresentation | undefined;
+  #overlay: CodeEditorOverlayPresentation | undefined;
+  #diagnosticIndex = -1;
+  #lastProtocolSelectionHead: number;
   readonly #listeners = new Set<(event: CodeEditorControllerEvent) => void>();
   readonly #pendingDocumentEvents: Extract<CodeEditorControllerEvent, { readonly kind: 'document' }>[] = [];
   #pendingPresentationEvent: Extract<CodeEditorControllerEvent, { readonly kind: 'presentation' }> | undefined;
@@ -157,6 +166,7 @@ export class CodeEditorController {
       throw new TypeError('The language-service coordinator belongs to another document.');
     }
     this.#languageResult = undefined;
+    this.#lastProtocolSelectionHead = Number(this.document.selection.head);
     this.limits = resolveCodeEditorLimits(options.limits);
     this.document.configureSafetyLimits({
       maxDocumentBytes: this.limits.documentBytes,
@@ -249,6 +259,8 @@ export class CodeEditorController {
         search: true,
         fold: true,
         assist: true,
+        hover: this.#lsp?.commandAvailability.hover ?? false,
+        symbols: this.#lsp?.commandAvailability.documentSymbols ?? false,
         navigate: true,
         format: !this.document.readOnly,
         save: true,
@@ -502,6 +514,11 @@ export class CodeEditorController {
       before,
       after: copyIdentity(this.document.identity),
     });
+    this.#manualCompletion = undefined;
+    this.#overlay = undefined;
+    this.#diagnosticIndex = -1;
+    if (this.#lsp === undefined) this.#refreshPresentation(undefined);
+    else this.#lsp.documentChanged();
     this.#queueEvent(Object.freeze({ kind: 'document', presentation: this.#presentation, mutation }));
     void this.#lsp?.synchronize().catch(() => {
       this.degradation.fail('languageService');
@@ -568,6 +585,76 @@ export class CodeEditorController {
   }
 
   /**
+   * Requests completion or signature help after one accepted trigger-character insertion.
+   *
+   * Call this only after the document has accepted the typed character. The coordinator orders
+   * the request behind the corresponding document synchronization.
+   *
+   * @param character - The single inserted character to compare with negotiated trigger sets.
+   *
+   * @example
+   * ```ts
+   * if (editor.insertText('.')) controller.triggerAssistance('.');
+   * ```
+   */
+  public triggerAssistance(character: string): void {
+    if (this.#disposed || this.#lsp === undefined || typeof character !== 'string') return;
+    const position = toProtocolPosition(this.document);
+    const completion = this.#lsp.triggerCompletion(character, position);
+    const signature = this.#lsp.triggerSignature(character, position);
+    if (completion.requestId !== 0) this.#lspRequests += 1;
+    if (signature.requestId !== 0) this.#lspRequests += 1;
+  }
+
+  /**
+   * Requests hover information for the current caret through the optional language service.
+   *
+   * @example
+   * ```ts
+   * controller.requestHover();
+   * ```
+   */
+  public requestHover(): void {
+    if (this.#disposed || this.#lsp === undefined || !this.#lsp.commandAvailability.hover) return;
+    this.#lspRequests += 1;
+    this.#lsp.requestHover(toProtocolPosition(this.document), {
+      width: this.limits.popupWidth,
+      height: this.limits.popupHeight,
+    });
+  }
+
+  /**
+   * Requests a bounded document-symbol chooser through the optional language service.
+   *
+   * @example
+   * ```ts
+   * controller.requestDocumentSymbols();
+   * ```
+   */
+  public requestDocumentSymbols(): void {
+    if (this.#disposed || this.#lsp === undefined || !this.#lsp.commandAvailability.documentSymbols) return;
+    this.#lspRequests += 1;
+    this.#lsp.requestDocumentSymbols();
+  }
+
+  /**
+   * Requests definition navigation at the current caret.
+   *
+   * @returns `true` when a language-service request was issued.
+   *
+   * @example
+   * ```ts
+   * if (!controller.requestDefinition()) await controller.hostAction('navigate');
+   * ```
+   */
+  public requestDefinition(): boolean {
+    if (this.#disposed || this.#lsp === undefined || !this.#lsp.commandAvailability.definition) return false;
+    this.#lspRequests += 1;
+    this.#lsp.requestDefinition(toProtocolPosition(this.document));
+    return true;
+  }
+
+  /**
    * Opens one bounded manual completion list in the controller-owned assistance model.
    *
    * @param items - Host candidates to sanitize, detach, and retain within configured limits.
@@ -624,8 +711,12 @@ export class CodeEditorController {
     readonly key: string;
     readonly text?: string;
     readonly shift?: boolean;
-  }): 'completion' | 'snippet' | 'editor' | 'unhandled' {
+  }): 'completion' | 'snippet' | 'dismissal' | 'editor' | 'unhandled' {
     const completion = this.#manualCompletion;
+    if (completion === undefined && this.#lsp?.presentation.completion !== undefined) {
+      return this.#lsp.handleKey(key);
+    }
+    if (completion === undefined && this.#overlay !== undefined) return this.#routeOverlayKey(key);
     if (completion === undefined) return this.#lsp?.handleKey(key) ?? 'unhandled';
     if (key.key === 'Escape') {
       this.dismissAssistance();
@@ -647,13 +738,98 @@ export class CodeEditorController {
     return 'unhandled';
   }
 
-  /** Requests whole-document formatting through the optional LSP coordinator. */
+  /**
+   * Requests range formatting for a selection, or whole-document formatting without one.
+   *
+   * Read-only documents and unavailable coordinators are left unchanged.
+   *
+   * @example
+   * ```ts
+   * controller.requestFormatting();
+   * ```
+   */
   public requestFormatting(): void {
-    if (this.#disposed) return;
+    if (this.#disposed || this.document.readOnly) return;
     if (this.#lsp !== undefined) {
       this.#lspRequests += 1;
-      this.#lsp.formatDocument();
+      const selection = this.document.selection;
+      const from = Math.min(Number(selection.anchor), Number(selection.head));
+      const to = Math.max(Number(selection.anchor), Number(selection.head));
+      if (from !== to && this.#lsp.commandAvailability.rangeFormatting) {
+        this.#lsp.formatRange({
+          start: toProtocolPositionAt(this.document, from),
+          end: toProtocolPositionAt(this.document, to),
+        });
+      } else if (from === to && this.#lsp.commandAvailability.documentFormatting) {
+        this.#lsp.formatDocument();
+      }
     }
+  }
+
+  /**
+   * Dismisses caret-context overlays after a local selection or caret change.
+   *
+   * @example
+   * ```ts
+   * document.setSelection({ anchor: 4, head: 4 });
+   * controller.caretChanged();
+   * ```
+   */
+  public caretChanged(): void {
+    if (this.#disposed) return;
+    this.#overlay = undefined;
+    this.#diagnosticIndex = -1;
+    if (this.#lsp === undefined) this.#refreshPresentation(undefined);
+    else this.#lsp.caretChanged();
+  }
+
+  /**
+   * Moves to the next or previous diagnostic and opens its sanitized detail row.
+   *
+   * @param direction - `1` selects the next diagnostic; `-1` selects the previous one.
+   * @returns `true` when a diagnostic was available.
+   *
+   * @example
+   * ```ts
+   * controller.navigateDiagnostic(1);
+   * ```
+   */
+  public navigateDiagnostic(direction: -1 | 1): boolean {
+    const diagnostics = this.#lsp?.presentation.diagnostics.items ?? [];
+    if (this.#disposed || diagnostics.length === 0) return false;
+    this.#diagnosticIndex =
+      this.#diagnosticIndex < 0
+        ? direction > 0
+          ? 0
+          : diagnostics.length - 1
+        : (this.#diagnosticIndex + direction + diagnostics.length) % diagnostics.length;
+    const diagnostic = diagnostics[this.#diagnosticIndex];
+    if (diagnostic === undefined) return false;
+    const from = Number(positionToOffset(this.document.snapshot, diagnostic.range.start));
+    this.revealOffset(from);
+    this.document.setSelection({ anchor: from, head: from });
+    this.#overlay = createDiagnosticOverlay(diagnostic.severity, diagnostic.message, this.limits.popupWidth);
+    this.#refreshPresentation(this.#lsp?.state);
+    return true;
+  }
+
+  /**
+   * Returns to the latest bounded same-document navigation origin.
+   *
+   * @returns `true` when a previous location was restored.
+   *
+   * @example
+   * ```ts
+   * if (controller.navigateBack()) {
+   *   // The document caret now points at the previous local location.
+   * }
+   * ```
+   */
+  public navigateBack(): boolean {
+    if (this.#disposed) return false;
+    const moved = this.#lsp?.navigateBack() ?? false;
+    if (moved) this.#refreshPresentation(this.#lsp?.state);
+    return moved;
   }
 
   /** Collapses the structural region starting at the active line, when one exists. */
@@ -768,13 +944,43 @@ export class CodeEditorController {
 
   #receiveLspState(state: CodeEditorLspStateSnapshot): void {
     if (this.#disposed) return;
+    const selectionHead = Number(this.document.selection.head);
+    if (selectionHead !== this.#lastProtocolSelectionHead) {
+      this.#lastProtocolSelectionHead = selectionHead;
+      this.revealOffset(selectionHead);
+    }
     if (state.presentation.completion !== undefined) this.#manualCompletion = undefined;
+    if (this.#overlay?.kind === 'diagnostic') {
+      this.#overlay = undefined;
+      this.#diagnosticIndex = -1;
+    }
     this.#refreshPresentation(state);
   }
 
   #refreshPresentation(state: CodeEditorLspStateSnapshot | undefined): void {
-    this.#presentation = projectCodeEditorControllerPresentation(state, this.#manualCompletion);
+    this.#synchronizeOverlay(state);
+    this.#presentation = projectCodeEditorControllerPresentation(state, this.#manualCompletion, this.#overlay);
     this.#queueEvent(Object.freeze({ kind: 'presentation', presentation: this.#presentation }));
+  }
+
+  #synchronizeOverlay(state: CodeEditorLspStateSnapshot | undefined): void {
+    this.#overlay = synchronizeCodeEditorOverlay(state, this.#overlay, this.limits);
+  }
+
+  #routeOverlayKey(key: { readonly key: string; readonly shift?: boolean }): 'completion' | 'dismissal' | 'unhandled' {
+    const result = routeCodeEditorOverlayKey(this.#overlay, key);
+    this.#overlay = result.overlay;
+    if (result.action?.kind === 'choose-navigation') {
+      void this.#lsp?.chooseNavigationTarget(result.action.index);
+    } else if (result.action?.kind === 'choose-symbol') {
+      this.#lsp?.chooseDocumentSymbol(result.action.index);
+    }
+    if (result.action !== undefined) {
+      this.#lsp?.dismissTransientAssistance();
+    } else if (result.owner === 'completion') {
+      this.#refreshPresentation(this.#lsp?.state);
+    }
+    return result.owner;
   }
 
   #queueEvent(event: CodeEditorControllerEvent): void {
@@ -840,6 +1046,8 @@ export class CodeEditorController {
     this.#lspStateSubscription?.dispose();
     this.#lspMutationBinding?.dispose();
     this.#manualCompletion = undefined;
+    this.#overlay = undefined;
+    this.#diagnosticIndex = -1;
     this.#presentation = projectCodeEditorControllerPresentation(undefined);
     this.#foldableRegions = Object.freeze([]);
     this.#foldableRegionLines = Object.freeze([]);
@@ -901,7 +1109,14 @@ export class CodeEditorController {
 }
 
 function toProtocolPosition(document: CodeEditorDocumentModel): { readonly line: number; readonly character: number } {
-  const position = offsetToPosition(document.snapshot, Number(document.selection.head));
+  return toProtocolPositionAt(document, Number(document.selection.head));
+}
+
+function toProtocolPositionAt(
+  document: CodeEditorDocumentModel,
+  offset: number,
+): { readonly line: number; readonly character: number } {
+  const position = offsetToPosition(document.snapshot, offset);
   return { line: Number(position.line), character: Number(position.character) };
 }
 
