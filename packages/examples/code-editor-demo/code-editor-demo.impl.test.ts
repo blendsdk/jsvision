@@ -67,6 +67,25 @@ describe('Code Editor showcase implementation', () => {
     numberedEditor?.dispose();
   });
 
+  test('demonstrates modern keyboard editing as a dedicated interactive scenario', () => {
+    const scenario = CODE_EDITOR_SCENARIOS.find((candidate) => candidate.id === 'modern-keyboard-editing');
+    expect(scenario?.description).toContain('Ctrl+/');
+    const surface = scenario?.mount({ capabilities: profiles[0], width: 80, height: 24 });
+    expect(surface).toBeDefined();
+    if (surface === undefined) return;
+    const editor = surface instanceof CodeEditorWindow ? surface.editor : surface;
+
+    editor.controller.document.setSelection({ anchor: 0, head: editor.controller.document.text.length });
+    editor.routeKey({ key: 'Tab' });
+    editor.routeKey({ key: '/', ctrl: true });
+
+    expect(editor.controller.document.text).toContain('    // function greet');
+    expect(inspectCodeEditorScenario(surface).configuredFeatures).toEqual(
+      expect.arrayContaining(['selected-line-indent', 'word-navigation', 'clipboard', 'line-comments']),
+    );
+    editor.dispose();
+  });
+
   test('bounds invalid dimensions and ignores interactions after exit', () => {
     const session = createCodeEditorDemoSession({
       capabilities: profiles[0],

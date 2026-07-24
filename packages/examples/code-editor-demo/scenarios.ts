@@ -236,6 +236,16 @@ function scenario(
         configuredFeatures.push('hostile-text', 'unicode', 'terminal-sanitization');
       if (metadata.id.includes('document-tier')) configuredFeatures.push('size-classification', document.sizeMode);
       if (lineNumbers) configuredFeatures.push('line-number-gutter', 'active-line-cue', 'narrow-gutter-fallback');
+      if (metadata.id === 'modern-keyboard-editing')
+        configuredFeatures.push(
+          'selected-line-indent',
+          'smart-tab-stops',
+          'word-navigation',
+          'selection-extension',
+          'undo-redo',
+          'clipboard',
+          'line-comments',
+        );
       if (surface instanceof CodeEditorWindow) {
         surface.setLayout({ rect: { x: 0, y: 0, width: context.width, height: context.height } });
       }
@@ -301,6 +311,21 @@ export const CODE_EDITOR_SCENARIOS: readonly CodeEditorDemoScenario[] = Object.f
       title: 'main.ts',
       languageId: 'typescript',
       text: 'interface User { name: string; }\nconst user: User = { name: "Ada" };\nconsole.log(user.name);\n',
+    },
+    true,
+    'dark',
+  ),
+  scenario(
+    {
+      id: 'modern-keyboard-editing',
+      title: 'Modern keyboard editing',
+      description: 'Try selection-aware Tab, navigation, history, clipboard, and Ctrl+/ comments.',
+      capabilities: ['editing-lifecycle', 'local-language-features'],
+    },
+    {
+      title: 'keyboard.ts',
+      languageId: 'typescript',
+      text: 'function greet(name: string) {\n  return `Hello ${name}`;\n}\n',
     },
     true,
     'dark',

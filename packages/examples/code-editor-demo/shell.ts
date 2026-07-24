@@ -104,7 +104,9 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     rect: { x: 1, y: 2, width: Math.max(1, sidebarWidth - 2), height: Math.max(1, height - 7) },
   });
   sidebar.add(navigator);
-  const help = new Text('Enter opens · Ctrl-R resets · Tab focuses editor · F10 menu · Alt-X exits');
+  const help = new Text(
+    'Tab/Shift-Tab indent · Ctrl+A/Z/Y · Ctrl+←→\nCtrl+C/X/V · Ctrl+/ comments · F10 menu · Alt-X exits',
+  );
   help.setLayout({
     position: 'absolute',
     rect: { x: 1, y: Math.max(1, height - 5), width: Math.max(1, sidebarWidth - 2), height: 3 },
