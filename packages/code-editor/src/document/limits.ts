@@ -9,6 +9,9 @@ export interface DocumentLimits {
   readonly maxDocumentBytes?: number;
   readonly maxEditsPerTransaction?: number;
   readonly maxHistoryEntries?: number;
+  readonly maxHistoryBytes?: number;
+  readonly maxReplacementBytes?: number;
+  readonly maxDocumentLines?: number;
 }
 
 /**
@@ -18,6 +21,9 @@ export interface ResolvedDocumentLimits {
   readonly maxDocumentBytes: number;
   readonly maxEditsPerTransaction: number;
   readonly maxHistoryEntries: number;
+  readonly maxHistoryBytes: number;
+  readonly maxReplacementBytes: number;
+  readonly maxDocumentLines: number;
   readonly fullFeatureBytes: number;
   readonly fullFeatureLines: number;
   readonly reducedModeBytes: number;
@@ -26,6 +32,9 @@ export interface ResolvedDocumentLimits {
 const HARD_MAX_DOCUMENT_BYTES = 64 * MEBIBYTE;
 const HARD_MAX_EDITS_PER_TRANSACTION = 10_000;
 const HARD_MAX_HISTORY_ENTRIES = 10_000;
+const HARD_MAX_HISTORY_BYTES = 64 * MEBIBYTE;
+const HARD_MAX_REPLACEMENT_BYTES = 16 * MEBIBYTE;
+const HARD_MAX_DOCUMENT_LINES = 1_000_000;
 
 /**
  * Resolves optional host limits against immutable safety ceilings.
@@ -49,6 +58,19 @@ export function resolveDocumentLimits(limits: DocumentLimits = {}): ResolvedDocu
       'Maximum history entries',
       HARD_MAX_HISTORY_ENTRIES,
     ),
+    maxHistoryBytes: boundedLimit(
+      limits.maxHistoryBytes,
+      16 * MEBIBYTE,
+      'Maximum retained history bytes',
+      HARD_MAX_HISTORY_BYTES,
+    ),
+    maxReplacementBytes: boundedLimit(
+      limits.maxReplacementBytes,
+      4 * MEBIBYTE,
+      'Maximum replacement bytes',
+      HARD_MAX_REPLACEMENT_BYTES,
+    ),
+    maxDocumentLines: boundedLimit(limits.maxDocumentLines, HARD_MAX_DOCUMENT_LINES, 'Maximum document lines'),
     fullFeatureBytes: MEBIBYTE,
     fullFeatureLines: 50_000,
     reducedModeBytes: 10 * MEBIBYTE,

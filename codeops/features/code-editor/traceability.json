@@ -81,7 +81,7 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:550e55627615d6bf85a796c93e7e40d50615d44a5cabdcd646eabc87dfe7c698",
+          "revision": "sha256:7c9993cbdf0860d6745ce915db39a50d9984abbf12d8800966211a171ec4d6d5",
           "upstream": "code-editor/TASK-PHASE-2",
           "validatedAt": "2026-07-23T22:22:05Z"
         },
@@ -171,7 +171,7 @@
     {
       "edges": [],
       "evidence": [
-        "verificationEvidence:Architecture specification and implementation suites pass 9 tests covering clean-process imports, bounded document viewport projection, deterministic scheduling, dependency closure, licenses, and failure handling."
+        "verificationEvidence:The package passes 61 architecture and document specification, implementation, property, and security tests, with isolated latency and retained-memory evidence."
       ],
       "id": "TEST-PLAN",
       "revision": "sha256:11779da272aad390b79cfc5160b364833ee3051ddc49595ba1772f3e99b93d68",
@@ -267,8 +267,13 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "qualityReview:Independent correctness, security, and performance findings were corrected without waiver; the permitted re-review correction set is verified.",
+        "summary:Implemented the bounded document model, transactions, positions, history, search, lifecycle operations, and benchmark harness.",
+        "verificationEvidence:The package suite passes 61 specification, implementation, property, and security tests; isolated document benchmarks and full repository verification pass."
+      ],
       "id": "TASK-PHASE-2",
-      "revision": "sha256:550e55627615d6bf85a796c93e7e40d50615d44a5cabdcd646eabc87dfe7c698",
+      "revision": "sha256:7c9993cbdf0860d6745ce915db39a50d9984abbf12d8800966211a171ec4d6d5",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -280,7 +285,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Document engine and lifecycle",
       "type": "task",
       "validations": []

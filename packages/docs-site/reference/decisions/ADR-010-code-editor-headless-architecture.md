@@ -1,6 +1,7 @@
 # ADR-010: Headless parser and document architecture for the code editor
 
 > **Date**: 2026-07-24
+> **Last Updated**: 2026-07-24
 > **Status**: Accepted
 
 ## Context
@@ -69,6 +70,26 @@ licenses.
 
 These measurements are environment evidence, not universal timing constants. Regression checks
 must retain deterministic fixtures and record runtime and platform alongside latency and memory.
+
+### Document engine evidence
+
+The document engine normalizes untrusted transactions into opaque immutable records before
+application. It validates branded UTF-16 coordinates, exact CR/LF/CRLF logical-line deltas,
+document bytes, replacement bytes, and retained-history bytes before constructing changed
+storage. Undo and redo retain reversible change sets and changed content instead of full document
+snapshots.
+
+The isolated Node 22.23.1 document benchmark used warmups, 20 measured samples, and explicit
+garbage collection:
+
+| Fixture      | Edit p50 | Edit p95 | Warm visual p50 | Warm visual p95 | Retained history |
+| ------------ | -------- | -------- | --------------- | --------------- | ---------------- |
+| 1 MiB        | 0.618 ms | 2.218 ms | 0.509 ms        | 0.611 ms        | 2,000 bytes      |
+| 50,000 lines | 0.042 ms | 0.084 ms | 0.008 ms        | 0.015 ms        | 2,000 bytes      |
+
+The one-mebibyte fixture retained 2,285,392 heap bytes after 1,000 edits; the 50,000-line fixture
+retained 1,509,112 heap bytes. Raw samples, cold visual-column timings, runtime details, and
+platform details are committed with the benchmark evidence.
 
 ## Consequences
 

@@ -59,6 +59,7 @@
   "scripts": {
     "build": "tsc && tsc -p tsconfig.bench.json",
     "bench:architecture": "yarn build && node --expose-gc dist/bench/evidence-runner.js",
+    "bench:document": "yarn build && node --expose-gc bench/document-evidence-runner.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "pretest": "yarn build",
     "test": "vitest run --project unit",

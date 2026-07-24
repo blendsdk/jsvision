@@ -1,26 +1,36 @@
+import type { ChangeSet } from '@codemirror/state';
+
 import type { DocumentSelection } from './types.js';
-import { DocumentStorage } from './storage.js';
 
 /**
- * Captures both sides of one accepted logical edit for exact undo and redo.
+ * Stores reversible changes rather than complete document roots, so retained history scales with
+ * changed content instead of multiplying the active document size.
  */
 export interface DocumentHistoryEntry {
-  readonly beforeStorage: DocumentStorage;
+  readonly forward: ChangeSet;
+  readonly inverse: ChangeSet;
   readonly beforeSelection: DocumentSelection;
-  readonly afterStorage: DocumentStorage;
   readonly afterSelection: DocumentSelection;
+  readonly beforeByteLength: number;
+  readonly afterByteLength: number;
+  readonly retainedBytes: number;
+  readonly beforeHasCarriageReturn: boolean;
+  readonly afterHasCarriageReturn: boolean;
 }
 
 /**
- * Maintains bounded, complete undo and redo entries.
+ * Maintains complete undo and redo entries within count and retained-byte ceilings.
  */
 export class DocumentHistory {
-  readonly #limit: number;
+  readonly #entryLimit: number;
+  readonly #byteLimit: number;
   readonly #undo: DocumentHistoryEntry[] = [];
   readonly #redo: DocumentHistoryEntry[] = [];
+  #retainedBytes = 0;
 
-  public constructor(limit: number) {
-    this.#limit = limit;
+  public constructor(entryLimit: number, byteLimit: number) {
+    this.#entryLimit = entryLimit;
+    this.#byteLimit = byteLimit;
   }
 
   public get undoDepth(): number {
@@ -31,12 +41,25 @@ export class DocumentHistory {
     return this.#redo.length;
   }
 
-  public record(entry: DocumentHistoryEntry): void {
-    this.#undo.push(entry);
-    this.#redo.length = 0;
-    if (this.#undo.length > this.#limit) {
-      this.#undo.splice(0, this.#undo.length - this.#limit);
+  public get retainedBytes(): number {
+    return this.#retainedBytes;
+  }
+
+  public record(entry: DocumentHistoryEntry): boolean {
+    if (entry.retainedBytes > this.#byteLimit) {
+      return false;
     }
+    this.#retainedBytes -= sumRetainedBytes(this.#redo);
+    this.#redo.length = 0;
+    this.#undo.push(entry);
+    this.#retainedBytes += entry.retainedBytes;
+    while (this.#undo.length > this.#entryLimit || (this.#retainedBytes > this.#byteLimit && this.#undo.length > 1)) {
+      const removed = this.#undo.shift();
+      if (removed !== undefined) {
+        this.#retainedBytes -= removed.retainedBytes;
+      }
+    }
+    return true;
   }
 
   public takeUndo(): DocumentHistoryEntry | undefined {
@@ -58,5 +81,10 @@ export class DocumentHistory {
   public clear(): void {
     this.#undo.length = 0;
     this.#redo.length = 0;
+    this.#retainedBytes = 0;
   }
+}
+
+function sumRetainedBytes(entries: readonly DocumentHistoryEntry[]): number {
+  return entries.reduce((total, entry) => total + entry.retainedBytes, 0);
 }
