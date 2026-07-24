@@ -20,13 +20,31 @@ export { searchDocument } from './document/search.js';
 export type { DocumentSearchMatch, DocumentSearchOptions } from './document/search.js';
 export type {
   DocumentEdit,
+  DocumentEditInput,
+  DocumentCharacter,
   DocumentIdentity,
+  DocumentLineEnding,
+  DocumentLine,
   DocumentMutationResult,
+  DocumentOffset,
   DocumentPosition,
+  DocumentPositionInput,
+  DocumentRevision,
   DocumentSelection,
+  DocumentSelectionInput,
   DocumentSizeMode,
   DocumentSnapshot,
   DocumentTransaction,
+  DocumentTransactionInput,
   EditOrigin,
   LogicalLine,
+  VisualColumn,
+} from './document/types.js';
+export {
+  documentCharacter,
+  documentLine,
+  documentOffset,
+  documentRevision,
+  documentSelection,
+  visualColumn,
 } from './document/types.js';

@@ -1,0 +1,54 @@
+{
+  "runtime": "v22.23.1",
+  "environment": "linux-x64",
+  "processor": "Intel(R) Core(TM) i7-7820HQ CPU @ 2.90GHz",
+  "sampleCount": 20,
+  "warmupCount": 5,
+  "historyEdits": 1000,
+  "fixtures": [
+    {
+      "label": "1 MiB",
+      "edit": {
+        "p50Ms": 0.618,
+        "p95Ms": 2.218
+      },
+      "visualColumn": {
+        "p50Ms": 0.509,
+        "p95Ms": 0.611
+      },
+      "rawEditSamplesMs": [
+        2.218, 1.283, 0.83, 1.281, 0.639, 0.727, 0.938, 0.589, 0.911, 2.765, 0.618, 0.598, 0.591, 0.583, 0.581, 0.578,
+        1.151, 0.57, 0.531, 0.566
+      ],
+      "rawVisualSamplesMs": [
+        0.611, 0.672, 0.512, 0.26, 0.27, 0.258, 0.376, 0.602, 0.566, 0.597, 0.584, 0.558, 0.602, 0.508, 0.489, 0.509,
+        0.514, 0.495, 0.492, 0.485
+      ],
+      "coldVisualColumnMs": 3.502,
+      "retainedHeapBytes": 2285392,
+      "retainedHistoryBytes": 2000
+    },
+    {
+      "label": "50,000 lines",
+      "edit": {
+        "p50Ms": 0.042,
+        "p95Ms": 0.084
+      },
+      "visualColumn": {
+        "p50Ms": 0.008,
+        "p95Ms": 0.015
+      },
+      "rawEditSamplesMs": [
+        0.038, 0.042, 0.074, 0.067, 0.084, 0.074, 0.067, 0.04, 0.04, 0.043, 0.042, 0.035, 0.095, 0.039, 0.041, 0.033,
+        0.038, 0.039, 0.05, 0.05
+      ],
+      "rawVisualSamplesMs": [
+        0.015, 0.012, 0.009, 0.008, 0.011, 0.008, 0.008, 0.008, 0.008, 0.008, 0.01, 0.007, 0.007, 0.007, 0.007, 0.007,
+        0.01, 0.008, 0.08, 0.013
+      ],
+      "coldVisualColumnMs": 0.096,
+      "retainedHeapBytes": 1509112,
+      "retainedHistoryBytes": 2000
+    }
+  ]
+}
