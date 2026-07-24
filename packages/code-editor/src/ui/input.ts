@@ -25,16 +25,41 @@ export function codeEditorKeyToken(key: CodeEditorKey): string {
   if (key.ctrl) parts.push('Ctrl');
   if (key.alt) parts.push('Alt');
   if (key.shift) parts.push('Shift');
-  const name = key.key.length === 1 ? key.key.toUpperCase() : key.key;
+  const canonical = canonicalCodeEditorKeyName(key.key);
+  const name = canonical.length === 1 ? canonical.toUpperCase() : canonical;
   parts.push(name);
   return parts.join('+');
 }
 
+/** Normalizes public protocol names and lowercase terminal-decoder names to one spelling. */
+export function canonicalCodeEditorKeyName(key: string): string {
+  const lower = key.toLowerCase();
+  const named: Readonly<Record<string, string>> = {
+    arrowdown: 'ArrowDown',
+    down: 'ArrowDown',
+    arrowleft: 'ArrowLeft',
+    left: 'ArrowLeft',
+    arrowright: 'ArrowRight',
+    right: 'ArrowRight',
+    arrowup: 'ArrowUp',
+    up: 'ArrowUp',
+    backspace: 'Backspace',
+    delete: 'Delete',
+    end: 'End',
+    enter: 'Enter',
+    escape: 'Escape',
+    home: 'Home',
+    space: ' ',
+    tab: 'Tab',
+  };
+  return named[lower] ?? (lower.startsWith('f') && /^f\\d{1,2}$/u.test(lower) ? lower.toUpperCase() : key);
+}
+
 /** Default keyboard-only command map. */
 export const defaultCodeEditorKeyBindings: Readonly<Record<string, CodeEditorCommand>> = Object.freeze({
-  End: 'cursor.documentEnd',
+  'Ctrl+End': 'cursor.documentEnd',
   'Ctrl+F': 'search.open',
-  Enter: 'search.next',
+  F3: 'search.next',
   'Ctrl+[': 'fold.toggle',
   'Ctrl+ ': 'assist',
   F12: 'navigate',

@@ -34,6 +34,33 @@ describe('CodeEditor terminal implementation', () => {
     expect(first.cells.flat().every((cell) => !/[\u0000-\u001f\u007f]/u.test(cell.text))).toBe(true);
   });
 
+  it('shows a fixed one-based gutter while preserving narrow-editor text space', () => {
+    const view = new CodeEditor({
+      controller: createCodeEditorController({
+        document: createDocumentModel({ text: 'first\nsecond', languageId: 'plain', uri: 'file:///gutter.txt' }),
+      }),
+      lineNumbers: true,
+    });
+    const normal = view.project({ width: 20, height: 2, caps });
+    const narrow = view.project({ width: 5, height: 1, caps });
+
+    expect(
+      normal.cells[0]
+        ?.slice(0, 3)
+        .map((cell) => cell.text)
+        .join(''),
+    ).toBe('1 >');
+    expect(
+      normal.cells[1]
+        ?.slice(0, 3)
+        .map((cell) => cell.text)
+        .join(''),
+    ).toBe('2 │');
+    expect(normal.cellAtDocumentOffset(0)?.text).toBe('f');
+    expect(normal.caret.x).toBe(3);
+    expect(narrow.cells[0]?.map((cell) => cell.text).join('')).toBe('first');
+  });
+
   it('keeps command bindings replaceable and restores editor routing after dismissal', () => {
     const view = new CodeEditor({
       controller: createCodeEditorController({ document: createDocumentModel({ text: 'x' }) }),
@@ -45,6 +72,41 @@ describe('CodeEditor terminal implementation', () => {
     expect(view.routeKey({ key: 'k', ctrl: true }).owner).toBe('editor');
     expect(view.routeKey({ key: 'z', text: 'z' }).owner).toBe('text');
     expect(view.controller.document.text).toBe('xz');
+  });
+
+  it('accepts lowercase terminal key names for ordinary editing and navigation', () => {
+    const view = editor('ab');
+
+    view.routeKey({ key: 'right' });
+    view.routeKey({ key: ' ', text: ' ' });
+    view.routeKey({ key: 'enter' });
+    view.routeKey({ key: 'tab' });
+    view.routeKey({ key: 'backspace' });
+    view.routeKey({ key: 'left' });
+    view.routeKey({ key: 'delete' });
+
+    expect(view.controller.document.text).toBe('a \n  b');
+    expect(Number(view.controller.document.selection.head)).toBe(5);
+  });
+
+  it('drops syntax spans as soon as an edit makes their document identity stale', () => {
+    const view = editor('const value = 1;');
+    const identity = view.controller.document.identity;
+    view.controller.setLanguageResult({
+      identity,
+      adapterId: 'test',
+      generation: 1,
+      state: 'ready',
+      syntax: [{ from: 0, to: 5, category: 'keyword' }],
+      folds: [],
+      brackets: [],
+    });
+
+    expect(view.controller.languageResult?.syntax).toHaveLength(1);
+    view.routeKey({ key: 'space' });
+
+    expect(view.controller.document.text.startsWith(' ')).toBe(true);
+    expect(view.controller.languageResult).toBeUndefined();
   });
 
   it('bounds completion and snippet input without consuming unrelated keys', () => {

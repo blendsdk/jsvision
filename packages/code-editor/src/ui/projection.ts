@@ -52,6 +52,8 @@ export interface ProjectCodeEditorOptions {
   readonly caret?: number;
   readonly scrollX?: number;
   readonly scrollY?: number;
+  /** Shows a fixed one-based line-number gutter when the viewport leaves usable text space. */
+  readonly gutter?: boolean;
   readonly theme?: CodeEditorTheme;
   readonly themeName?: string;
 }
@@ -86,6 +88,9 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
   const caretPosition = offsetToPosition(snapshot, caretOffset);
   const scrollY = options.scrollY ?? Math.max(0, Number(caretPosition.line) - Math.max(0, height - 1));
   const scrollX = Math.max(0, options.scrollX ?? 0);
+  const numberWidth = String(snapshot.lineCount).length;
+  const gutterWidth = options.gutter === true && width >= numberWidth + 10 ? numberWidth + 2 : 0;
+  const textWidth = width - gutterWidth;
   const spans = {
     diagnostics: normalizeSpans(options.diagnostics, snapshot.length),
     snippets: normalizeSpans(options.snippet, snapshot.length),
@@ -99,15 +104,28 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
   for (let row = 0; row < height; row += 1) {
     const lineNumber = scrollY + row;
     const logical = lineNumber < snapshot.lineCount ? snapshot.line(lineNumber) : undefined;
-    const projected = projectLine(
+    const sourceCells = projectLine(
       logical?.text ?? '',
       logical?.from ?? snapshot.length,
       lineNumber,
-      width,
+      textWidth,
       scrollX,
       options,
       spans,
     );
+    const projected =
+      gutterWidth === 0
+        ? sourceCells
+        : [
+            ...projectGutter(
+              lineNumber,
+              logical !== undefined,
+              numberWidth,
+              lineNumber === Number(caretPosition.line),
+              options,
+            ),
+            ...sourceCells,
+          ];
     cells.push(projected);
     for (const cell of projected) {
       if (cell.documentOffset !== undefined) offsets.set(cell.documentOffset, cell);
@@ -115,7 +133,7 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
     }
   }
   const visualCaret = Number(offsetToVisualColumn(snapshot, caretOffset, options.controller.document.tabSize));
-  const caretX = visualCaret - scrollX;
+  const caretX = gutterWidth + visualCaret - scrollX;
   const caretY = Number(caretPosition.line) - scrollY;
   const caret = Object.freeze({
     visible: width > 0 && height > 0 && caretX >= 0 && caretX < width && caretY >= 0 && caretY < height,
@@ -132,6 +150,26 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
       return offsets.get(offset);
     },
   });
+}
+
+function projectGutter(
+  lineNumber: number,
+  hasDocumentLine: boolean,
+  numberWidth: number,
+  active: boolean,
+  options: ProjectCodeEditorOptions,
+): CodeEditorProjectedCell[] {
+  const label = hasDocumentLine ? String(lineNumber + 1).padStart(numberWidth, ' ') : ' '.repeat(numberWidth);
+  const separator = active ? '>' : options.caps.glyphs.boxDrawing ? '│' : '|';
+  return [...label, ' ', separator].map((text) =>
+    Object.freeze({
+      text,
+      width: 1 as const,
+      role: active ? 'lineNumber' : 'gutter',
+      overlays: Object.freeze([]),
+      style: styleForRole(options.theme, active ? 'lineNumber' : 'gutter'),
+    }),
+  );
 }
 
 type NormalizedSpan = Readonly<{

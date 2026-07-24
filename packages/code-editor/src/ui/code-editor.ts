@@ -7,6 +7,7 @@ import { snapshotCodeEditorTheme } from '../theme/resolve.js';
 import type { CodeEditorTheme, ResolvedCodeEditorTheme } from '../theme/theme.js';
 import { CodeEditorAssistanceView, type CodeEditorCompletionItem, type CodeEditorModalState } from './assistance.js';
 import {
+  canonicalCodeEditorKeyName,
   codeEditorKeyToken,
   defaultCodeEditorKeyBindings,
   type CodeEditorCommand,
@@ -18,6 +19,10 @@ import { projectCodeEditor, type CodeEditorFrame } from './projection.js';
 export interface CodeEditorOptions {
   readonly controller: CodeEditorController;
   readonly keyBindings?: Readonly<Record<string, CodeEditorCommand>>;
+  /** Shows the fixed line-number gutter when the viewport is wide enough. Defaults to `false`. */
+  readonly lineNumbers?: boolean;
+  /** Runs after an accepted text mutation so hosts can schedule revision-aware language work. */
+  readonly onDocumentChange?: () => void;
 }
 
 /** Result of deterministic keyboard routing. */
@@ -37,6 +42,8 @@ export interface CodeEditorKeyRoute {
 export class CodeEditor extends Group {
   public override focusable = true;
   public readonly controller: CodeEditorController;
+  /** Whether this editor projects the optional line-number gutter. */
+  public readonly lineNumbers: boolean;
   public readonly behavior = Object.freeze({ documentTransactions: true, keyboardOnly: true });
   public readonly nonColorIndicators = Object.freeze([
     'selection',
@@ -53,6 +60,7 @@ export class CodeEditor extends Group {
   public readonly scroll: { readonly x: Signal<number>; readonly y: Signal<number> };
   public focusState: 'idle' | 'focused' | 'released' = 'idle';
   readonly #bindings: Readonly<Record<string, CodeEditorCommand>>;
+  readonly #onDocumentChange: (() => void) | undefined;
   readonly #pending = new Map<'navigate' | 'save' | 'close', Promise<unknown>>();
   #theme: CodeEditorTheme = classicCodeEditorTheme;
   #themeFingerprint = fingerprint(classicCodeEditorTheme);
@@ -67,6 +75,7 @@ export class CodeEditor extends Group {
   public constructor(options: CodeEditorOptions) {
     super();
     this.controller = options.controller;
+    this.lineNumbers = options.lineNumbers === true;
     this.assistanceView = new CodeEditorAssistanceView({
       maxItems: this.controller.limits.completionItems,
       maxWidth: this.controller.limits.popupWidth,
@@ -74,6 +83,7 @@ export class CodeEditor extends Group {
     });
     this.scroll = { x: signal(0), y: signal(0) };
     this.#bindings = Object.freeze({ ...defaultCodeEditorKeyBindings, ...options.keyBindings });
+    this.#onDocumentChange = options.onDocumentChange;
     this.add(this.assistanceView);
   }
 
@@ -111,7 +121,18 @@ export class CodeEditor extends Group {
   /** Inserts text through one validated document transaction. */
   public insertText(text: string): boolean {
     const accepted = this.controller.replaceSelection(text);
-    if (accepted) this.#record('edit');
+    if (accepted) {
+      this.#record('edit');
+      // The editor is a composite group: a document edit changes both its painted source cells and
+      // child assistance overlays. Recompose the subtree geometry so no cached child frame can cover
+      // the freshly projected document.
+      this.invalidateLayout();
+      try {
+        this.#onDocumentChange?.();
+      } catch {
+        this.controller.degradation.fail('parser');
+      }
+    }
     return accepted;
   }
 
@@ -185,34 +206,41 @@ export class CodeEditor extends Group {
 
   /** Routes one key according to assistance/editor/text precedence. */
   public routeKey(key: CodeEditorKey): CodeEditorKeyRoute {
-    if (key.key === 'Escape' && this.#modal !== undefined) {
+    const canonicalKey = canonicalCodeEditorKeyName(key.key);
+    const normalizedKey = canonicalKey === key.key ? key : { ...key, key: canonicalKey };
+    if (canonicalKey === 'Escape' && this.#modal !== undefined) {
       this.#modal = undefined;
       return route('dismissal');
     }
-    if (key.key === 'Escape' && this.#completion !== undefined) {
+    if (canonicalKey === 'Escape' && this.#completion !== undefined) {
       this.#completion = undefined;
       this.assistanceView.dismiss();
       return route('dismissal');
     }
-    if (key.key === 'Enter' && this.#completion !== undefined) {
+    if (canonicalKey === 'Enter' && this.#completion !== undefined) {
       const item = this.#completion[0];
       this.#completion = undefined;
       this.assistanceView.dismiss();
       if (item !== undefined) this.#acceptCompletion(item);
       return route('completion');
     }
-    if (key.key === 'Tab' && this.#snippet !== undefined) {
+    if (canonicalKey === 'Enter' && this.#modal?.kind === 'search') {
+      this.execute('search.next');
+      return route('editor');
+    }
+    if (canonicalKey === 'Tab' && this.#snippet !== undefined) {
       this.#snippetIndex += 1;
       const target = this.#snippet[this.#snippetIndex];
       if (target === undefined) this.#snippet = undefined;
       else this.controller.document.setSelection({ anchor: target.from, head: target.to });
       return route('snippet');
     }
-    const command = this.#bindings[codeEditorKeyToken(key)];
+    const command = this.#bindings[codeEditorKeyToken(normalizedKey)];
     if (command !== undefined) {
       this.execute(command);
       return route('editor');
     }
+    if (!key.ctrl && !key.alt && this.#routeEditingKey(canonicalKey, key.shift === true)) return route('text');
     if (key.text !== undefined && !key.ctrl && !key.alt) {
       this.insertText(key.text);
       return route('text');
@@ -261,6 +289,7 @@ export class CodeEditor extends Group {
               to: Math.max(bracketPair.open, bracketPair.close) + 1,
             },
       activeLine: Number(offsetToPosition(this.controller.document.snapshot, caret).line),
+      gutter: this.lineNumbers,
     });
     this.controller.observations.record({ kind: 'render', durationMs: Date.now() - startedAt });
     return this.#lastFrame;
@@ -352,6 +381,79 @@ export class CodeEditor extends Group {
     this.controller.replaceSelection(item.insertText ?? item.label);
   }
 
+  #routeEditingKey(key: string, shift: boolean): boolean {
+    if (key === ' ') return this.insertText(' ');
+    if (key === 'Enter') return this.insertText(lineSeparator(this.controller.document.lineEnding));
+    if (key === 'Tab') {
+      if (shift) return this.#dedentAtCaret();
+      return this.insertText(' '.repeat(this.controller.document.tabSize));
+    }
+    if (key === 'Backspace') return this.#deleteAdjacent(-1);
+    if (key === 'Delete') return this.#deleteAdjacent(1);
+    if (key === 'ArrowLeft') return this.#moveCaret(-1, shift);
+    if (key === 'ArrowRight') return this.#moveCaret(1, shift);
+    if (key === 'Home') return this.#moveToLineEdge('start', shift);
+    if (key === 'End') return this.#moveToLineEdge('end', shift);
+    if (key === 'ArrowUp') return this.#moveVertically(-1, shift);
+    if (key === 'ArrowDown') return this.#moveVertically(1, shift);
+    return false;
+  }
+
+  #deleteAdjacent(direction: -1 | 1): boolean {
+    const selection = this.controller.document.selection;
+    const anchor = Number(selection.anchor);
+    const head = Number(selection.head);
+    if (anchor === head) {
+      const target = Math.max(0, Math.min(this.controller.document.text.length, head + direction));
+      if (target === head) return true;
+      this.controller.document.setSelection({ anchor: Math.min(head, target), head: Math.max(head, target) });
+    }
+    this.insertText('');
+    return true;
+  }
+
+  #moveCaret(delta: -1 | 1, extend: boolean): boolean {
+    const selection = this.controller.document.selection;
+    const head = Math.max(0, Math.min(this.controller.document.text.length, Number(selection.head) + delta));
+    this.controller.document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
+    this.invalidate();
+    return true;
+  }
+
+  #moveToLineEdge(edge: 'start' | 'end', extend: boolean): boolean {
+    const document = this.controller.document;
+    const selection = document.selection;
+    const line = document.snapshot.lineAt(Number(selection.head));
+    const head = edge === 'start' ? line.from : line.to;
+    document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
+    this.invalidate();
+    return true;
+  }
+
+  #moveVertically(delta: -1 | 1, extend: boolean): boolean {
+    const document = this.controller.document;
+    const selection = document.selection;
+    const current = document.snapshot.lineAt(Number(selection.head));
+    const targetNumber = Math.max(0, Math.min(document.snapshot.lineCount - 1, current.number + delta));
+    const target = document.snapshot.line(targetNumber);
+    const head = target.from + Math.min(Number(selection.head) - current.from, target.length);
+    document.setSelection({ anchor: extend ? Number(selection.anchor) : head, head });
+    this.invalidate();
+    return true;
+  }
+
+  #dedentAtCaret(): boolean {
+    const document = this.controller.document;
+    const head = Number(document.selection.head);
+    const line = document.snapshot.lineAt(head);
+    const prefix = line.text.slice(0, Math.min(document.tabSize, line.text.length));
+    const removable = prefix.match(/^ {1,}/u)?.[0].length ?? (prefix.startsWith('\t') ? 1 : 0);
+    if (removable === 0) return true;
+    document.setSelection({ anchor: line.from, head: line.from + removable });
+    this.insertText('');
+    return true;
+  }
+
   #searchNext(): void {
     if (this.#searchQuery.length === 0) return;
     const text = this.controller.document.snapshot.slice(0);
@@ -425,4 +527,10 @@ function currentWordRange(text: string, caret: number): { from: number; to: numb
   while (from > 0 && /[A-Za-z0-9_$]/u.test(text[from - 1] ?? '')) from -= 1;
   while (to < text.length && /[A-Za-z0-9_$]/u.test(text[to] ?? '')) to += 1;
   return { from, to };
+}
+
+function lineSeparator(lineEnding: 'none' | 'lf' | 'crlf' | 'cr' | 'mixed'): string {
+  if (lineEnding === 'crlf') return '\r\n';
+  if (lineEnding === 'cr') return '\r';
+  return '\n';
 }

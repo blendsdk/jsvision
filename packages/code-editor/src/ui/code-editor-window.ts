@@ -7,6 +7,10 @@ import { CodeEditor } from './code-editor.js';
 export interface CodeEditorWindowOptions {
   readonly controller: CodeEditorController;
   readonly title?: string;
+  /** Shows the editor's optional fixed line-number gutter. Defaults to `false`. */
+  readonly lineNumbers?: boolean;
+  /** Runs after an accepted editor mutation so the host can refresh language services. */
+  readonly onDocumentChange?: () => void;
 }
 
 /**
@@ -30,7 +34,11 @@ export class CodeEditorWindow extends Window {
 
   public constructor(options: CodeEditorWindowOptions) {
     super(options.title ?? 'Code Editor');
-    this.editor = new CodeEditor({ controller: options.controller });
+    this.editor = new CodeEditor({
+      controller: options.controller,
+      ...(options.lineNumbers === undefined ? {} : { lineNumbers: options.lineNumbers }),
+      ...(options.onDocumentChange === undefined ? {} : { onDocumentChange: options.onDocumentChange }),
+    });
     this.horizontalScrollBar = new ScrollBar({ value: this.editor.scroll.x, orientation: 'horizontal' });
     this.verticalScrollBar = new ScrollBar({ value: this.editor.scroll.y });
     this.statusView = new Text(() => {
@@ -43,6 +51,9 @@ export class CodeEditorWindow extends Window {
     this.add(this.statusView);
     this.setLayout({ padding: 0 });
     this.#layoutChrome();
+    // Callers normally place a window after construction. Re-pin the absolute children once the
+    // window is mounted so they use that real rectangle instead of the constructor fallback.
+    this.onMount(() => this.#layoutChrome());
   }
 
   /** Current language and one-based visual caret position for the status line. */
