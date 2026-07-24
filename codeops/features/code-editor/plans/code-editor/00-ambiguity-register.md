@@ -49,6 +49,7 @@
 | AR-P27 | Technical (runtime) | How is PostgreSQL parsed after the dependency probe proves CodeMirror language packages ship `@codemirror/view`? | Keep the browser dependency / build and maintain a new SQL grammar / use a public headless PostgreSQL parser behind the adapter contract | Replace CodeMirror language wrappers with `@lezer/javascript` for JavaScript/TypeScript and `pgsql-ast-parser` for PostgreSQL; keep parser-specific types internal and use cancellable revision-stamped background parses for PostgreSQL | ✅ Resolved |
 | AR-P28 | Testing (runtime) | How are Phase 2 specification tests discovered when the approved path is under `src/document` but Vitest includes only `test/**`? | Move the oracle into `test/` / add a second Vitest project / extend unit discovery to `src/**/*.test.ts` | Extend the existing unit project to discover specification and implementation tests under both `test/` and `src/`; retain one unit environment and the approved cohesive document path | ✅ Resolved |
 | AR-P29 | Performance (runtime) | How is PostgreSQL presentation bounded when a synchronous whole-document AST parse exceeds the interaction budget? | Parse every document synchronously / parse bounded statement regions between cancellation points and retain lexical presentation / require a worker | Parse at most 32 statement regions of at most 256 code units per generation, check cancellation between calls, and retain cooperatively bounded lexical presentation for the document; reopen the worker strategy if a bounded call breaches budget | ✅ Resolved |
+| AR-P30 | Technical · security (runtime) | How should the LSP layer close the Phase 4 review gaps without changing approved behavior? | Patch each symptom independently / consolidate synchronization, deadlines, hostile-data normalization, generation stamps, capability state, and process bounds behind the existing session/coordinator layers | Consolidate the corrections behind transport-ready and document-synchronized gates, one ordered sync queue, injected bounded deadlines, allowlisted DTO normalization, generation-stamped publications, validated host effects, and finite framed Node transport lifecycle | ✅ Resolved |
 
 ## Resolution Notes
 
@@ -226,6 +227,28 @@ production, and cancellation tests. Policy version: 1. Root invocation ID:
 `AD-CODE-EDITOR-EXEC-20260724-03`. Reopen if one bounded parser call has p95 above 16 ms, the
 50,000-line lexical benchmark exceeds two seconds, regional AST coverage proves insufficient, or
 the package gains a portable worker-host contract.
+
+**AR-P30:** Authority: AI — delegated by `--auto-design`. Eligibility: reversible internal
+concurrency, validation, timeout, and process-lifecycle architecture within the already-approved
+LSP behavior and security ceilings. Objective: close every Phase 4 Major finding without weakening
+an oracle or widening editor authority. Evidence: independent correctness, security, and
+performance reviewers converged on missing resynchronization gates and deadlines, unsafe deferred
+requests, post-allocation bounds, unstamped diagnostics, raw host effects, and unbounded Node
+lifecycle/framing. Decision: keep the approved public session/coordinator split and consolidate
+corrections into distinct transport-ready and document-synchronized state, one ordered/coalescing
+sync queue, injected request deadlines with a five-second default, generation-stamped
+notifications, allowlisted bounded DTO copies, typed host effects, and finite framed process
+lifecycle. The reconnect oracle is corrected from the approved synchronization requirement before
+implementation changes. Rejected alternatives: isolated symptom patches leave inconsistent
+generation and bound enforcement; waiving findings is forbidden; replacing the session boundary
+would expand scope and invalidate approved architecture. Strongest counterargument: consolidating
+the state machine increases this correction's size and risks new races. Confidence: High on the
+architecture, Medium-High until the single independent re-review passes. Hardening: three
+independent lenses converged; corrections require deterministic race, timeout, proxy, flood,
+frame, and process tests plus full repository verification. Policy version: 1. Root invocation ID:
+`AD-CODE-EDITOR-EXEC-20260724-04`. Reopen if a supported transport cannot distinguish readiness
+from synchronization, if hard ceilings cannot be enforced before JSON parsing, or if the fix
+requires changing host/product authority.
 
 ## Twelve-Category Closure
 

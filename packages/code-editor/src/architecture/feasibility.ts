@@ -30,6 +30,7 @@ interface EntrypointDefinition {
 interface CleanImportObservation {
   readonly domGlobalsDetected: readonly string[];
   readonly exportedNames: readonly string[];
+  readonly spawnedProcesses: number;
 }
 
 /**
@@ -77,12 +78,24 @@ function isStringArray(value: unknown): value is string[] {
 async function runCleanImport(definition: EntrypointDefinition): Promise<CleanImportObservation> {
   const entryUrl = pathToFileURL(join(packageRoot(), 'dist', definition.relativePath)).href;
   const script = `
+    import childProcess from "node:child_process";
+    import { syncBuiltinESMExports } from "node:module";
+    let spawnedProcesses = 0;
+    const originalSpawn = childProcess.spawn;
+    childProcess.spawn = () => {
+      spawnedProcesses += 1;
+      throw new Error("Entry point attempted to spawn a process during import");
+    };
+    syncBuiltinESMExports();
     const imported = await import(${JSON.stringify(entryUrl)});
+    childProcess.spawn = originalSpawn;
+    syncBuiltinESMExports();
     const domGlobalsDetected = ["window", "document", "HTMLElement"]
       .filter((name) => name in globalThis);
     process.stdout.write(JSON.stringify({
       domGlobalsDetected,
-      exportedNames: Object.keys(imported).sort()
+      exportedNames: Object.keys(imported).sort(),
+      spawnedProcesses
     }));
   `;
   const { stdout, stderr } = await execFileAsync(process.execPath, ['--input-type=module', '--eval', script], {
@@ -101,7 +114,9 @@ async function runCleanImport(definition: EntrypointDefinition): Promise<CleanIm
     !('domGlobalsDetected' in value) ||
     !isStringArray(value.domGlobalsDetected) ||
     !('exportedNames' in value) ||
-    !isStringArray(value.exportedNames)
+    !isStringArray(value.exportedNames) ||
+    !('spawnedProcesses' in value) ||
+    typeof value.spawnedProcesses !== 'number'
   ) {
     throw new Error(`Clean import returned invalid evidence for ${definition.label}`);
   }
@@ -111,6 +126,7 @@ async function runCleanImport(definition: EntrypointDefinition): Promise<CleanIm
   return {
     domGlobalsDetected: value.domGlobalsDetected,
     exportedNames: value.exportedNames,
+    spawnedProcesses: value.spawnedProcesses,
   };
 }
 
@@ -215,7 +231,7 @@ export async function runHeadlessCompatibilityProbe(): Promise<HeadlessCompatibi
       }),
     ),
   ].sort();
-  const spawnedProcesses = importedPackages.filter((packages) => packages.has('node:child_process')).length;
+  const spawnedProcesses = observations.reduce((total, observation) => total + observation.spawnedProcesses, 0);
 
   return {
     compatible: domGlobalsDetected.length === 0 && initializedUnrelatedParsers.length === 0 && spawnedProcesses === 0,
