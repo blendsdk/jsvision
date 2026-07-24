@@ -2020,6 +2020,138 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:The user approved creation and execution of the viewport and mouse interaction bugfix mini-plan with auto-design and auto-commit.",
+        "summary:Viewport resizing, exact scroll ranges, caret following, wheel and mouse interaction, raw Ctrl+/ decoding, implementation coverage, the dedicated showcase scenario, documentation, and generated plugin surfaces are implemented.",
+        "verificationEvidence:TURBO_CONCURRENCY=1 yarn verify: 34/34 tasks successful; Code Editor 200/200 tests; check-plugin PASS; correctness re-review and performance closure report no remaining Critical or Major findings."
+      ],
+      "id": "T-02",
+      "revision": "sha256:357062b1282bc23e342f3dd5bcbd96d24a3199bd5e69e336e2d19f2b78244b81",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-viewport-and-mouse-interaction/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Objective"
+          }
+        }
+      ],
+      "status": "verified",
+      "title": "Code Editor viewport and mouse interaction",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/T-02"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/CRIT-VIEWPORT-MOUSE"
+        }
+      ],
+      "evidence": [
+        "summary:The user approved creation and immediate execution of the viewport and mouse interaction mini-plan with delegated technical design authority."
+      ],
+      "id": "PLAN-VIEWPORT-MOUSE",
+      "revision": "sha256:6d771da549efd9c8549792bcd018b47449b1945a3b637dfaf8bbe1edcbe6a599",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-viewport-and-mouse-interaction/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Scope and delegated design decisions"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Code Editor viewport and mouse interaction mini-plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:316d2ac9e3f3cfd577920ab662536144a651cd0712ff693ad732825f850db673",
+          "upstream": "code-editor/CRIT-VIEWPORT-MOUSE",
+          "validatedAt": "2026-07-24T19:03:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:357062b1282bc23e342f3dd5bcbd96d24a3199bd5e69e336e2d19f2b78244b81",
+          "upstream": "code-editor/T-02",
+          "validatedAt": "2026-07-24T19:03:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:316d2ac9e3f3cfd577920ab662536144a651cd0712ff693ad732825f850db673",
+          "upstream": "code-editor/CRIT-VIEWPORT-MOUSE",
+          "validatedAt": "2026-07-24T19:03:00Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "code-editor/TEST-VIEWPORT-MOUSE"
+        }
+      ],
+      "evidence": [
+        "summary:The mini-plan records the approved viewport, resize, mouse, scrolling, and terminal shortcut behavior."
+      ],
+      "id": "CRIT-VIEWPORT-MOUSE",
+      "revision": "sha256:316d2ac9e3f3cfd577920ab662536144a651cd0712ff693ad732825f850db673",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-viewport-and-mouse-interaction/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Specification cases"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Viewport and mouse interaction acceptance behavior",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "greenEvidence:Code Editor passes 191 of 191 tests, the standalone showcase passes 18 of 18 tests, raw Ctrl+/ decoding passes, and the serial authoritative repository gate passes all 34 tasks with plugin integrity green.",
+        "redEvidence:Focused Code Editor specification tests failed 6 of 8 for stale scroll clamping, wheel repainting, caret following, mouse placement and drag, double-click selection, and raw Ctrl+/ integration; the Core raw-byte decoder specification failed 1 of 1; the strengthened tiled demo resize suite passed 18 of 18.",
+        "summary:Immutable viewport, mouse, decoder, hostile-boundary, and tiled-resize specifications were written before implementation."
+      ],
+      "id": "TEST-VIEWPORT-MOUSE",
+      "revision": "sha256:316d2ac9e3f3cfd577920ab662536144a651cd0712ff693ad732825f850db673",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/code-editor-viewport-and-mouse-interaction/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Specification cases"
+          }
+        }
+      ],
+      "status": "passing",
+      "title": "Viewport and mouse interaction specification coverage",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
       "id": "AR-25",
       "revision": "sha256:acd9e8584226d3b410626b97da0d327672dcd8d001cbf1326c04fb0957cf0e84",
       "semanticSources": [
@@ -2039,5 +2171,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-24T17:00:00Z"
+  "updated": "2026-07-24T19:03:00Z"
 }

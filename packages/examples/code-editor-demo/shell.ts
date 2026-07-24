@@ -105,7 +105,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
   });
   sidebar.add(navigator);
   const help = new Text(
-    'Tab/Shift-Tab indent · Ctrl+A/Z/Y · Ctrl+←→\nCtrl+C/X/V · Ctrl+/ comments · F10 menu · Alt-X exits',
+    'Tab/Shift-Tab indent · Ctrl+A/Z/Y · Ctrl+←→\nMouse select · double-click word · wheel scroll\nCtrl+C/X/V · Ctrl+/ comments · F10 menu · Alt-X exits',
   );
   help.setLayout({
     position: 'absolute',

@@ -113,6 +113,7 @@ export type {
   CodeEditorKeyRoute,
   CodeEditorOptions,
   CodeEditorProjectedCell,
+  CodeEditorViewportMetrics,
   CodeEditorWindowOptions,
   ProjectCodeEditorOptions,
 } from './ui/index.js';

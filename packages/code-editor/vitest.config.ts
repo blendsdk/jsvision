@@ -11,6 +11,9 @@ export default defineConfig({
           name: 'unit',
           include: ['test/**/*.{spec,impl,property,perf}.test.ts', 'src/**/*.{spec,impl,property,perf}.test.ts'],
           exclude: ['test/**/*.e2e.test.ts', 'node_modules/**'],
+          // This package contains wall-clock architecture and language performance oracles.
+          // Serial files prevent those isolated budgets from measuring sibling-test CPU contention.
+          fileParallelism: false,
           testTimeout: 30_000,
         },
       },

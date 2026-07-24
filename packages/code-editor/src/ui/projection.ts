@@ -1,5 +1,6 @@
 import type { CapabilityProfile } from '@jsvision/core';
-import { offsetToPosition, offsetToVisualColumn } from '../document/positions.js';
+import { offsetToPosition } from '../document/positions.js';
+import { graphemeDisplayWidth, visualGraphemeSegments } from '../document/visual-geometry.js';
 import type { SyntaxCategory, SyntaxSpan } from '../languages/contracts.js';
 import type { CodeEditorController } from '../controller.js';
 import type { CodeEditorCellStyle, CodeEditorTheme } from '../theme/theme.js';
@@ -89,7 +90,7 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
   const scrollY = options.scrollY ?? Math.max(0, Number(caretPosition.line) - Math.max(0, height - 1));
   const scrollX = Math.max(0, options.scrollX ?? 0);
   const numberWidth = String(snapshot.lineCount).length;
-  const gutterWidth = options.gutter === true && width >= numberWidth + 10 ? numberWidth + 2 : 0;
+  const gutterWidth = codeEditorGutterWidth(width, snapshot.lineCount, options.gutter === true);
   const textWidth = width - gutterWidth;
   const spans = {
     diagnostics: normalizeSpans(options.diagnostics, snapshot.length),
@@ -104,12 +105,23 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
   for (let row = 0; row < height; row += 1) {
     const lineNumber = scrollY + row;
     const logical = lineNumber < snapshot.lineCount ? snapshot.line(lineNumber) : undefined;
+    const sourceFrom =
+      logical === undefined
+        ? 0
+        : options.controller.document.offsetAtVisualColumn(lineNumber, scrollX) - Number(logical.from);
+    const sourceTo =
+      logical === undefined
+        ? 0
+        : options.controller.document.offsetAtVisualColumn(lineNumber, scrollX + textWidth + 1) - Number(logical.from);
+    const initialVisual =
+      logical === undefined ? 0 : options.controller.document.visualColumnAt(Number(logical.from) + sourceFrom);
     const sourceCells = projectLine(
-      logical?.text ?? '',
-      logical?.from ?? snapshot.length,
+      logical?.text.slice(sourceFrom, sourceTo) ?? '',
+      Number(logical?.from ?? snapshot.length) + sourceFrom,
       lineNumber,
       textWidth,
       scrollX,
+      initialVisual,
       options,
       spans,
     );
@@ -132,7 +144,7 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
       signature = hashCell(signature, cell);
     }
   }
-  const visualCaret = Number(offsetToVisualColumn(snapshot, caretOffset, options.controller.document.tabSize));
+  const visualCaret = options.controller.document.visualColumnAt(caretOffset);
   const caretX = gutterWidth + visualCaret - scrollX;
   const caretY = Number(caretPosition.line) - scrollY;
   const caret = Object.freeze({
@@ -150,6 +162,16 @@ export function projectCodeEditor(options: ProjectCodeEditorOptions): CodeEditor
       return offsets.get(offset);
     },
   });
+}
+
+/**
+ * Returns the fixed line-number gutter width for one terminal viewport.
+ *
+ * Narrow editors suppress the gutter so source text always retains a useful minimum width.
+ */
+export function codeEditorGutterWidth(width: number, lineCount: number, enabled: boolean): number {
+  const numberWidth = String(Math.max(1, lineCount)).length;
+  return enabled && width >= numberWidth + 10 ? numberWidth + 2 : 0;
 }
 
 function projectGutter(
@@ -186,6 +208,7 @@ function projectLine(
   lineNumber: number,
   width: number,
   scrollX: number,
+  initialVisual: number,
   options: ProjectCodeEditorOptions,
   spans: {
     diagnostics: readonly NormalizedSpan[];
@@ -196,23 +219,33 @@ function projectLine(
   },
 ): CodeEditorProjectedCell[] {
   const row = Array.from({ length: width }, () => emptyCell(options.theme));
-  let visual = 0;
-  for (let index = 0; index < text.length && visual < scrollX + width;) {
-    const codePoint = text.codePointAt(index) ?? 0x20;
-    const raw = String.fromCodePoint(codePoint);
-    const offset = lineStart + index;
-    if (raw === '\t') {
-      const count = options.controller.document.tabSize - (visual % options.controller.document.tabSize);
-      for (let part = 0; part < count; part += 1) {
-        place(row, visual++ - scrollX, decorateCell(part === 0 ? '→' : ' ', offset, lineNumber, options, spans));
-      }
-    } else if (isCombining(codePoint)) {
-      // Combining marks occupy the previous grapheme cell and never create a terminal cell alone.
-    } else {
-      place(row, visual++ - scrollX, decorateCell(safeGlyph(raw, options.caps), offset, lineNumber, options, spans));
-      if (codePoint >= 0x1100) place(row, visual++ - scrollX, decorateCell(' ', offset, lineNumber, options, spans));
+  let visual = initialVisual;
+  if (/^[\x20-\x7e]*$/u.test(text)) {
+    for (let index = 0; index < text.length && visual < scrollX + width; index += 1) {
+      place(row, visual++ - scrollX, decorateCell(text[index] ?? ' ', lineStart + index, lineNumber, options, spans));
     }
-    index += raw.length;
+    return row;
+  }
+  for (const part of visualGraphemeSegments(text)) {
+    if (visual >= scrollX + width) break;
+    const offset = lineStart + part.index;
+    if (part.segment === '\t') {
+      const count = options.controller.document.tabSize - (visual % options.controller.document.tabSize);
+      for (let tabCell = 0; tabCell < count; tabCell += 1) {
+        place(row, visual++ - scrollX, decorateCell(tabCell === 0 ? '→' : ' ', offset, lineNumber, options, spans));
+      }
+    } else {
+      const count = graphemeDisplayWidth(part.segment);
+      if (count === 0) continue;
+      place(
+        row,
+        visual++ - scrollX,
+        decorateCell(safeGlyph(part.segment, options.caps), offset, lineNumber, options, spans),
+      );
+      for (let continuation = 1; continuation < count; continuation += 1) {
+        place(row, visual++ - scrollX, decorateCell(' ', offset, lineNumber, options, spans));
+      }
+    }
   }
   return row;
 }
@@ -379,10 +412,6 @@ function safeGlyph(value: string, caps: CapabilityProfile): string {
   if (!caps.unicode.utf8 && code > 0x7e) return '?';
   if (code >= 0x1100) return caps.unicode.utf8 ? '□' : '?';
   return value;
-}
-
-function isCombining(codePoint: number): boolean {
-  return /\p{Mark}/u.test(String.fromCodePoint(codePoint));
 }
 
 function emptyCell(theme: CodeEditorTheme | undefined): CodeEditorProjectedCell {

@@ -34,6 +34,9 @@ focusState: 'idle' | 'focused' | 'released'
 focus(): boolean
 execute(command: CodeEditorCommand): void
 insertText(text: string): boolean
+viewportMetrics: CodeEditorViewportMetrics
+interactionRevision: number
+resizeViewport(width: number, height: number): void
 openCompletion(items: readonly CodeEditorCompletionItem[]): void
 openModal(modal: CodeEditorModalState): void
 startSnippet(placeholders: readonly { readonly from: number; readonly to: number }[]): void
@@ -234,6 +237,9 @@ uri: string | undefined
 languageId: CodeEditorLanguageId
 lineEnding: DocumentLineEnding
 tabSize: number
+maximumVisualColumn: number
+visualColumnAt(offset: number): number
+offsetAtVisualColumn(lineNumber: number, column: number): number
 createTransaction(transaction: DocumentTransactionInput): DocumentTransaction
 apply(transaction: DocumentTransaction): DocumentMutationResult
 undo(): DocumentMutationResult
@@ -642,6 +648,23 @@ Hybrid application-derived or independent theme selection.
 ```ts
 type CodeEditorThemeSource = | { readonly kind: 'application'; readonly overrides?: unknown }
   | { readonly kind: 'independent'; readonly base: CodeEditorTheme; readonly overrides?: unknown }
+```
+
+## CodeEditorViewportMetrics
+
+Immutable public snapshot of editor viewport geometry and scroll limits.
+
+```ts
+interface CodeEditorViewportMetrics {
+  width: number;
+  height: number;
+  gutterWidth: number;
+  textWidth: number;
+  scrollX: number;
+  scrollY: number;
+  maxScrollX: number;
+  maxScrollY: number;
+}
 ```
 
 ## CodeEditorWindow

@@ -332,6 +332,33 @@ export const CODE_EDITOR_SCENARIOS: readonly CodeEditorDemoScenario[] = Object.f
   ),
   scenario(
     {
+      id: 'viewport-and-mouse',
+      title: 'Viewport and mouse interaction',
+      description: 'Resize, wheel-scroll, drag-select, double-click source runs, and watch both scrollbars.',
+      capabilities: ['editor-and-window', 'editing-lifecycle', 'accessibility-and-resize'],
+    },
+    {
+      title: 'viewport.ts',
+      languageId: 'typescript',
+      text: [
+        'export function describeViewport(width: number, height: number) {',
+        '  const terminalColumns = Math.max(1, width);',
+        '  const terminalRows = Math.max(1, height);',
+        '  return { terminalColumns, terminalRows, interaction: "mouse-and-wheel" };',
+        '}',
+        '',
+        '// Continue typing below to observe caret-follow scrolling.',
+        'const first = describeViewport(80, 24);',
+        'const second = describeViewport(44, 12);',
+        'console.log(first, second);',
+      ].join('\n'),
+    },
+    true,
+    'dark',
+    true,
+  ),
+  scenario(
+    {
       id: 'line-number-gutter',
       title: 'Optional line-number gutter',
       description: 'Inspect fixed one-based line numbers, the active-line cue, scrolling, and narrow fallback.',
