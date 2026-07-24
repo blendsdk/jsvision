@@ -174,6 +174,104 @@
       "validations": []
     },
     {
+      "edges": [
+        {
+          "relation": "implemented-by",
+          "target": "code-editor/T-01"
+        },
+        {
+          "relation": "depends-on",
+          "target": "code-editor/CRIT-MODERN-KEYBOARD"
+        }
+      ],
+      "evidence": [
+        "summary:The user approved creation and immediate execution of the modern keyboard editing mini-plan with delegated technical design authority."
+      ],
+      "id": "PLAN-MODERN-KEYBOARD",
+      "revision": "sha256:5c75b07d00ebd20945f99b14339f4f44c0d74cefe0c1a51ba61a3ec67ddbd386",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/modern-keyboard-editing/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Scope and decisions"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Modern keyboard editing mini-plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:15874245d1327db5b416ea191c2818cc34e64997255d92f42bd80c20ec2301f8",
+          "upstream": "code-editor/T-01",
+          "validatedAt": "2026-07-24T17:00:00Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:5c75b07d00ebd20945f99b14339f4f44c0d74cefe0c1a51ba61a3ec67ddbd386",
+          "upstream": "code-editor/CRIT-MODERN-KEYBOARD",
+          "validatedAt": "2026-07-24T17:00:00Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "code-editor/TEST-MODERN-KEYBOARD"
+        }
+      ],
+      "evidence": [
+        "summary:The mini-plan scope records the approved observable behavior and explicit exclusions."
+      ],
+      "id": "CRIT-MODERN-KEYBOARD",
+      "revision": "sha256:5c75b07d00ebd20945f99b14339f4f44c0d74cefe0c1a51ba61a3ec67ddbd386",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/modern-keyboard-editing/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Scope and decisions"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Modern keyboard editing acceptance behavior",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Specification coverage is planned before implementation for every modern keyboard behavior."
+      ],
+      "id": "TEST-MODERN-KEYBOARD",
+      "revision": "sha256:5c75b07d00ebd20945f99b14339f4f44c0d74cefe0c1a51ba61a3ec67ddbd386",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/modern-keyboard-editing/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Scope and decisions"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "Modern keyboard editing specification coverage",
+      "type": "test",
+      "validations": []
+    },
+    {
       "edges": [],
       "evidence": [
         "verificationEvidence:The package passes 61 architecture and document specification, implementation, property, and security tests, with isolated latency and retained-memory evidence."
@@ -1895,6 +1993,29 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:The user approved the modern keyboard editing scope and authorized lightweight planning and execution with auto-design and auto-commit."
+      ],
+      "id": "T-01",
+      "revision": "sha256:15874245d1327db5b416ea191c2818cc34e64997255d92f42bd80c20ec2301f8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/code-editor/plans/modern-keyboard-editing/99-execution-plan.md",
+          "selector": {
+            "kind": "heading",
+            "value": "Objective"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Modern keyboard editing",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
       "id": "AR-25",
       "revision": "sha256:acd9e8584226d3b410626b97da0d327672dcd8d001cbf1326c04fb0957cf0e84",
       "semanticSources": [
@@ -1914,5 +2035,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-23T20:30:00Z"
+  "updated": "2026-07-24T17:00:00Z"
 }

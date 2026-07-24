@@ -5,9 +5,10 @@ import { createCodeEditorDemoSession } from './session.js';
 import { createCodeEditorShowcase } from './shell.js';
 
 const capabilities = resolveCapabilities({
-  env: {},
-  platform: 'linux',
-  override: { colorDepth: 'truecolor' },
+  override: {
+    mouse: { sgr: true, drag: true, wheel: true },
+    unicode: { utf8: true },
+  },
 }).profile;
 
 /** Prints a bounded frame without emitting source-owned terminal control bytes. */

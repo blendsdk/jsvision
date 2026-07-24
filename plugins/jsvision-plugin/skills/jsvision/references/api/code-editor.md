@@ -23,6 +23,7 @@ Focusable terminal-native source editor backed by a document controller.
 new CodeEditor(options: CodeEditorOptions)   // extends Group
 // methods & signals:
 controller: CodeEditorController
+lineNumbers: boolean
 behavior
 nonColorIndicators
 chrome
@@ -582,6 +583,8 @@ Construction options for a terminal-native code editor view.
 interface CodeEditorOptions {
   controller: CodeEditorController;
   keyBindings?: Readonly<Record<string, CodeEditorCommand>>;
+  lineNumbers?: boolean;   // Shows the fixed line-number gutter when the viewport is wide enough. Defaults to `false`.
+  onDocumentChange?: () => void;   // Runs after an accepted text mutation so hosts can schedule revision-aware language work.
 }
 ```
 
@@ -665,6 +668,8 @@ Construction options for standard window composition around a code editor.
 interface CodeEditorWindowOptions {
   controller: CodeEditorController;
   title?: string;
+  lineNumbers?: boolean;   // Shows the editor's optional fixed line-number gutter. Defaults to `false`.
+  onDocumentChange?: () => void;   // Runs after an accepted editor mutation so the host can refresh language services.
 }
 ```
 
@@ -1132,6 +1137,7 @@ interface ProjectCodeEditorOptions {
   caret?: number;
   scrollX?: number;
   scrollY?: number;
+  gutter?: boolean;   // Shows a fixed one-based line-number gutter when the viewport leaves usable text space.
   theme?: CodeEditorTheme;
   themeName?: string;
 }

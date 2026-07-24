@@ -106,6 +106,7 @@ function scenario(
   fixtureValue: CodeEditorDemoFixture,
   windowed = true,
   theme: 'dark' | 'light' | undefined = undefined,
+  lineNumbers = false,
 ): CodeEditorDemoScenario {
   return Object.freeze({
     ...metadata,
@@ -166,7 +167,40 @@ function scenario(
           return true;
         },
       });
-      const editor = new CodeEditor({ controller });
+      const adapter =
+        fixtureValue.languageId === 'postgresql'
+          ? postgresqlLanguageAdapter
+          : fixtureValue.languageId === 'javascript'
+            ? javascriptLanguageAdapter
+            : typescriptLanguageAdapter;
+      const scheduler = createLanguageScheduler();
+      const analyzeCurrentDocument = (): void => {
+        if (
+          metadata.id !== 'language-gallery' &&
+          metadata.id !== 'typescript-window' &&
+          metadata.id !== 'line-number-gutter' &&
+          metadata.id !== 'themes-and-fallbacks'
+        )
+          return;
+        void scheduler.analyze(adapter, document.text, document.identity).then((result) => {
+          controller.setLanguageResult(result);
+          editor.invalidate();
+        });
+      };
+      const onDocumentChange = fixtureValue.languageId === 'plain' ? undefined : analyzeCurrentDocument;
+      const surface = windowed
+        ? new CodeEditorWindow({
+            controller,
+            title: fixtureValue.title,
+            lineNumbers,
+            ...(onDocumentChange === undefined ? {} : { onDocumentChange }),
+          })
+        : new CodeEditor({
+            controller,
+            lineNumbers,
+            ...(onDocumentChange === undefined ? {} : { onDocumentChange }),
+          });
+      const editor = surface instanceof CodeEditorWindow ? surface.editor : surface;
       editor.setLayout({ rect: { x: 0, y: 0, width: context.width, height: context.height } });
       if (theme !== undefined || metadata.id === 'themes-and-fallbacks') {
         editor.setTheme(theme === 'dark' ? darkCodeEditorTheme : lightCodeEditorTheme);
@@ -179,20 +213,10 @@ function scenario(
       if (
         metadata.id === 'language-gallery' ||
         metadata.id === 'typescript-window' ||
+        metadata.id === 'line-number-gutter' ||
         metadata.id === 'themes-and-fallbacks'
       ) {
-        const adapter =
-          fixtureValue.languageId === 'postgresql'
-            ? postgresqlLanguageAdapter
-            : fixtureValue.languageId === 'javascript'
-              ? javascriptLanguageAdapter
-              : typescriptLanguageAdapter;
-        void createLanguageScheduler()
-          .analyze(adapter, document.text, document.identity)
-          .then((result) => {
-            controller.setLanguageResult(result);
-            editor.invalidate();
-          });
+        analyzeCurrentDocument();
         configuredFeatures.push('syntax', 'folds', 'brackets', 'language-switching');
       }
       if (session !== undefined && coordinator !== undefined) {
@@ -211,7 +235,7 @@ function scenario(
       if (metadata.id === 'safe-terminal-text')
         configuredFeatures.push('hostile-text', 'unicode', 'terminal-sanitization');
       if (metadata.id.includes('document-tier')) configuredFeatures.push('size-classification', document.sizeMode);
-      const surface = windowed ? new CodeEditorWindow({ controller, title: fixtureValue.title }) : editor;
+      if (lineNumbers) configuredFeatures.push('line-number-gutter', 'active-line-cue', 'narrow-gutter-fallback');
       if (surface instanceof CodeEditorWindow) {
         surface.setLayout({ rect: { x: 0, y: 0, width: context.width, height: context.height } });
       }
@@ -280,6 +304,22 @@ export const CODE_EDITOR_SCENARIOS: readonly CodeEditorDemoScenario[] = Object.f
     },
     true,
     'dark',
+  ),
+  scenario(
+    {
+      id: 'line-number-gutter',
+      title: 'Optional line-number gutter',
+      description: 'Inspect fixed one-based line numbers, the active-line cue, scrolling, and narrow fallback.',
+      capabilities: ['local-language-features', 'accessibility-and-resize'],
+    },
+    {
+      title: 'numbered.ts',
+      languageId: 'typescript',
+      text: Array.from({ length: 14 }, (_, index) => `const line${index + 1} = ${index + 1};`).join('\n'),
+    },
+    true,
+    'dark',
+    true,
   ),
   scenario(
     {

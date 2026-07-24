@@ -157,7 +157,13 @@ export class CodeEditorController {
 
   /** Current validated local syntax/structure result, if available. */
   public get languageResult(): LocalLanguageResult | undefined {
-    return this.#languageResult;
+    const result = this.#languageResult;
+    if (result === undefined) return undefined;
+    const identity = this.document.identity;
+    return result.identity.lineage === identity.lineage &&
+      Number(result.identity.revision) === Number(identity.revision)
+      ? result
+      : undefined;
   }
 
   /** Replaces local presentation data only when it matches the active document identity. */

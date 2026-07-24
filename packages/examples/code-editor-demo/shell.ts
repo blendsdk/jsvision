@@ -1,4 +1,4 @@
-import type { CapabilityProfile } from '@jsvision/core';
+import { createKeymap, type CapabilityProfile } from '@jsvision/core';
 import {
   Commands,
   ListBox,
@@ -18,6 +18,9 @@ import {
 } from '@jsvision/ui';
 import { CodeEditor, CodeEditorWindow } from '@jsvision/code-editor';
 import { CODE_EDITOR_SCENARIOS, inspectCodeEditorScenario, runCodeEditorScenarioAction } from './scenarios.js';
+
+const TAB_COMMAND = 'code-editor.tab';
+const SHIFT_TAB_COMMAND = 'code-editor.shift-tab';
 
 /** Live application seams used by interactive operation and headless shell tests. */
 export interface CodeEditorShowcase {
@@ -68,7 +71,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
         item('~F~ind', 'code-editor.action.search'),
         item('~O~utline fold', 'code-editor.action.fold'),
         item('~C~ompletion', 'code-editor.action.completion'),
-        item('F~o~rmat', 'code-editor.action.format'),
+        item('For~m~at', 'code-editor.action.format'),
         item('~S~ave request', 'code-editor.action.save'),
         item('~N~avigate request', 'code-editor.action.navigate'),
         item('~T~heme', 'code-editor.action.theme'),
@@ -81,10 +84,11 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
       statusItem('~Tab~ Editor'),
       statusItem('~F10~ Menu'),
     ]),
+    keymap: createKeymap({ tab: TAB_COMMAND, 'shift+tab': SHIFT_TAB_COMMAND }),
   });
-  const width = app.desktop.bounds.width;
-  const height = app.desktop.bounds.height;
-  const sidebarWidth = Math.min(28, Math.max(18, Math.floor(width / 3)));
+  let width = app.desktop.bounds.width;
+  let height = app.desktop.bounds.height;
+  let sidebarWidth = Math.min(28, Math.max(18, Math.floor(width / 3)));
   const navigator = new ListBox({
     items: signal(CODE_EDITOR_SCENARIOS.map((scenario) => scenario.title)),
     focused: signal(0),
@@ -109,6 +113,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
   app.desktop.addWindow(sidebar);
 
   const inspector = new Window('State / host events');
+  inspector.focusable = false;
   inspector.movable = false;
   inspector.resizable = false;
   inspector.setLayout({
@@ -155,8 +160,46 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
         height: Math.max(6, height - 7),
       },
     });
+    editorWindow.onResized();
     app.desktop.addWindow(editorWindow);
     app.loop.focusView(editorWindow.editor);
+  };
+
+  /** Re-fits all persistent panes to the desktop after a terminal resize. */
+  const layoutShell = (): void => {
+    width = app.desktop.bounds.width;
+    height = app.desktop.bounds.height;
+    sidebarWidth = Math.min(28, Math.max(18, Math.floor(width / 3)));
+    sidebar.setLayout({ rect: { x: 0, y: 0, width: sidebarWidth, height } });
+    navigator.setLayout({
+      position: 'absolute',
+      rect: { x: 1, y: 2, width: Math.max(1, sidebarWidth - 2), height: Math.max(1, height - 7) },
+    });
+    help.setLayout({
+      position: 'absolute',
+      rect: { x: 1, y: Math.max(1, height - 5), width: Math.max(1, sidebarWidth - 2), height: 3 },
+    });
+    inspector.setLayout({
+      rect: {
+        x: sidebarWidth,
+        y: Math.max(8, height - 7),
+        width: Math.max(20, width - sidebarWidth),
+        height: Math.min(7, height),
+      },
+    });
+    state.setLayout({
+      position: 'absolute',
+      rect: { x: 1, y: 1, width: Math.max(1, width - sidebarWidth - 2), height: 4 },
+    });
+    editorWindow.setLayout({
+      rect: {
+        x: sidebarWidth,
+        y: 0,
+        width: Math.max(20, width - sidebarWidth),
+        height: Math.max(6, height - 7),
+      },
+    });
+    editorWindow.onResized();
   };
 
   function select(index: number): void {
@@ -174,7 +217,17 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     mountEditorWindow();
   }
 
-  const handlers: Record<string, () => void> = { 'code-editor.reset': () => select(activeIndex) };
+  const handlers: Record<string, () => void> = {
+    'code-editor.reset': () => select(activeIndex),
+    [TAB_COMMAND]: () => {
+      if (app.loop.getFocused() === navigator.rows) app.loop.focusView(editorWindow.editor);
+      else editorWindow.editor.routeKey({ key: 'Tab' });
+    },
+    [SHIFT_TAB_COMMAND]: () => {
+      if (app.loop.getFocused() === editorWindow.editor) editorWindow.editor.routeKey({ key: 'Tab', shift: true });
+      else app.loop.focusView(editorWindow.editor);
+    },
+  };
   for (let index = 0; index < CODE_EDITOR_SCENARIOS.length; index += 1) {
     handlers[`code-editor.select.${index}`] = () => select(index);
   }
@@ -185,7 +238,13 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
   }
   app.desktop.add(new ShowcaseCommands(handlers));
   mountEditorWindow();
-  app.loop.resize({ width, height });
+  const resizeApplicationChrome = app.loop.onResize;
+  app.loop.onResize = (size) => {
+    resizeApplicationChrome?.(size);
+    layoutShell();
+  };
+  const initialRows = app.loop.renderRoot.buffer().rows();
+  app.loop.resize({ width: initialRows[0]?.length ?? width, height: initialRows.length });
   app.loop.focusView(navigator.rows);
 
   return {
