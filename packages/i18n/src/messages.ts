@@ -225,7 +225,7 @@ function renderParameter(value: MessageParameter, context: MessageEvaluationCont
 }
 
 /** Interpolate one compiled template and preserve unresolved placeholders. */
-function interpolate(template: CompiledTemplate, context: MessageEvaluationContext): string {
+function interpolate(template: CompiledTemplate, context: MessageEvaluationContext, blockedParameter?: string): string {
   let output = '';
   for (const token of template.tokens) {
     if (token.kind === 'literal') {
@@ -233,6 +233,10 @@ function interpolate(template: CompiledTemplate, context: MessageEvaluationConte
       continue;
     }
 
+    if (token.name === blockedParameter) {
+      output += `\${${token.name}}`;
+      continue;
+    }
     const raw = ownParameter(context.params, token.name);
     const value = safeParameter(raw);
     if (value === undefined) {
@@ -245,11 +249,19 @@ function interpolate(template: CompiledTemplate, context: MessageEvaluationConte
   return output;
 }
 
+/** Selected case and any invalid controller that must remain unresolved. */
+interface SelectedCase {
+  /** Structured case chosen for evaluation. */
+  readonly template: CompiledTemplate;
+  /** Controller suppressed during interpolation to avoid a duplicate diagnostic. */
+  readonly blockedParameter?: string;
+}
+
 /** Select the structured case while reporting an invalid or missing controller. */
 function selectCase(
   message: Exclude<CompiledMessage, { readonly kind: 'text' }>,
   context: MessageEvaluationContext,
-): CompiledTemplate {
+): SelectedCase {
   const raw = ownParameter(context.params, message.parameter);
   const controller = safeParameter(raw);
   let name: string | undefined;
@@ -277,7 +289,10 @@ function selectCase(
   if (!fallback) {
     throw new I18nError('INVALID_MESSAGE', 'Compiled structured message has no other case.');
   }
-  return selected ?? fallback;
+  return Object.freeze({
+    template: selected ?? fallback,
+    ...(name === undefined ? { blockedParameter: message.parameter } : {}),
+  });
 }
 
 /**
@@ -298,8 +313,9 @@ function selectCase(
  * ```
  */
 export function evaluateMessage(message: CompiledMessage, context: MessageEvaluationContext): string {
-  const template = message.kind === 'text' ? message.template : selectCase(message, context);
-  return interpolate(template, context);
+  if (message.kind === 'text') return interpolate(message.template, context);
+  const selected = selectCase(message, context);
+  return interpolate(selected.template, context, selected.blockedParameter);
 }
 
 /**

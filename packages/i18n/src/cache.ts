@@ -1,6 +1,10 @@
 import { I18nError } from './errors.js';
 
 const CACHE_LIMIT = 64;
+const PluralRulesConstructor = Intl.PluralRules;
+const NumberFormatConstructor = Intl.NumberFormat;
+const DateTimeFormatConstructor = Intl.DateTimeFormat;
+const CollatorConstructor = Intl.Collator;
 
 const NUMBER_OPTION_KEYS = new Set<PropertyKey>([
   'compactDisplay',
@@ -193,7 +197,7 @@ export class FormatterCache {
    * @returns Locale-bound cardinal rules.
    */
   pluralRules(locale: string): Intl.PluralRules {
-    return this.plurals.get(locale, () => construct(() => new Intl.PluralRules(locale, { type: 'cardinal' })));
+    return this.plurals.get(locale, () => construct(() => new PluralRulesConstructor(locale, { type: 'cardinal' })));
   }
 
   /**
@@ -212,7 +216,7 @@ export class FormatterCache {
       throw invalidOptions();
     }
     const key = formatterKey(locale, copied);
-    return this.numbers.get(key, () => construct(() => new Intl.NumberFormat(locale, copied)));
+    return this.numbers.get(key, () => construct(() => new NumberFormatConstructor(locale, copied)));
   }
 
   /**
@@ -225,7 +229,7 @@ export class FormatterCache {
   dateTimeFormat(locale: string, options?: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
     const copied = copyOptions(options, DATE_OPTION_KEYS);
     const key = formatterKey(locale, copied);
-    return this.dates.get(key, () => construct(() => new Intl.DateTimeFormat(locale, copied)));
+    return this.dates.get(key, () => construct(() => new DateTimeFormatConstructor(locale, copied)));
   }
 
   /**
@@ -238,6 +242,6 @@ export class FormatterCache {
   collator(locale: string, options?: Intl.CollatorOptions): Intl.Collator {
     const copied = copyOptions(options, COLLATOR_OPTION_KEYS);
     const key = formatterKey(locale, copied);
-    return this.collators.get(key, () => construct(() => new Intl.Collator(locale, copied)));
+    return this.collators.get(key, () => construct(() => new CollatorConstructor(locale, copied)));
   }
 }

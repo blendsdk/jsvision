@@ -3184,6 +3184,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Complete browser-safe engine implementation satisfies the immutable specification oracle",
+        "verificationEvidence:All 45 Phase 1 specification tests plus TypeScript ESLint documentation formatting and root yarn verify passed"
+      ],
       "id": "TASK-1-2-9",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3196,7 +3200,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Run Phase 1 spec tests green; fix implementation only",
       "type": "task",
       "validations": []
