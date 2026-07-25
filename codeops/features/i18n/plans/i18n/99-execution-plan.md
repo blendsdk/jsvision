@@ -3,7 +3,7 @@
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
 > **Last Updated**: 2026-07-25 08:12
-> **Progress**: 5/63 tasks (8%)
+> **Progress**: 5/66 tasks (8%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -18,13 +18,13 @@ plugin generation, performance, and digest-bound translation review.
 
 | Phase | Title | Tasks |
 |---|---|---:|
-| 1 | Browser-safe engine | 15 |
+| 1 | Browser-safe engine | 18 |
 | 2 | Secure sources and Node loader | 11 |
 | 3 | Application and UI foundations | 12 |
 | 4 | Consumer packages and official locales | 15 |
 | 5 | Documentation, plugin, quality, and release | 10 |
 
-**Total: 63 tasks across 5 phases**
+**Total: 66 tasks across 5 phases**
 
 > **Execution rule — applies to every executor**
 >
@@ -53,21 +53,24 @@ plugin generation, performance, and digest-bound translation review.
 
 - [x] 1.2.1 Scaffold package metadata, TypeScript/Vitest configuration, and browser-safe public entry — `packages/i18n/package.json`, `packages/i18n/tsconfig.json`, `packages/i18n/vitest.config.ts`, `packages/i18n/src/index.ts` (mechanical correction: public-entry path made explicit) ✅ (completed: 2026-07-25 08:05)
 - [x] 1.2.2 Define documented public types, stable errors, diagnostics, and exports — `packages/i18n/src/types.ts`, `packages/i18n/src/errors.ts`, `packages/i18n/src/index.ts` ✅ (completed: 2026-07-25 08:12)
-- [ ] 1.2.3 Implement canonical locale parsing and deterministic catalog fallback chains — `packages/i18n/src/locale.ts`, `packages/i18n/test/locale.impl.test.ts`
-- [ ] 1.2.4 Implement text safety, placeholder compilation, plural/select constructors, and evaluation — `packages/i18n/src/messages.ts`, `packages/i18n/test/messages.impl.test.ts`
-- [ ] 1.2.5 Implement schema/completeness/accelerator validation and stable issue formatting — `packages/i18n/src/validation.ts`, `packages/i18n/test/validation.impl.test.ts`
-- [ ] 1.2.6 Implement copied catalog snapshots, ordered merge, and the bounded diagnostic store — `packages/i18n/src/catalog.ts`, `packages/i18n/src/diagnostics.ts`, `packages/i18n/test/catalog.impl.test.ts`
-- [ ] 1.2.7 Implement stable formatter-option keys and four 64-entry LRU caches — `packages/i18n/src/cache.ts`, `packages/i18n/test/cache.impl.test.ts`
-- [ ] 1.2.8 Implement `createI18n`, lookup/format/introspection, and atomic runtime overlays — `packages/i18n/src/service.ts`, `packages/i18n/src/index.ts`, `packages/i18n/test/service.impl.test.ts`
+- [ ] 1.2.3 Implement canonical locale parsing and deterministic catalog fallback chains — `packages/i18n/src/locale.ts`
+- [ ] 1.2.4 Implement text safety, placeholder compilation, plural/select constructors, and evaluation — `packages/i18n/src/messages.ts`
+- [ ] 1.2.5 Implement schema/completeness/accelerator validation and stable issue formatting — `packages/i18n/src/validation.ts`
+- [ ] 1.2.6 Implement copied catalog snapshots, ordered merge, and the bounded diagnostic store — `packages/i18n/src/catalog.ts`, `packages/i18n/src/diagnostics.ts`
+- [ ] 1.2.7 Implement stable formatter-option keys and four 64-entry LRU caches — `packages/i18n/src/cache.ts`
+- [ ] 1.2.8 Implement `createI18n`, lookup/format/introspection, and atomic runtime overlays — `packages/i18n/src/service.ts`, `packages/i18n/src/index.ts`
 - [ ] 1.2.9 Run Phase 1 spec tests green; fix implementation only — `packages/i18n/test/engine.spec.test.ts`
 
 ### Step 1.3: Hardening and verification
 
 **Reference**: [07-testing-strategy](07-testing-strategy.md) ST-01–ST-16 · AR-41, AR-42
 
-- [ ] 1.3.1 Add adversarial validation/coercion and snapshot atomicity implementation coverage — `packages/i18n/test/security.impl.test.ts`, `packages/i18n/test/service.impl.test.ts`
-- [ ] 1.3.2 Document package API, compatibility, and initial changelog — `packages/i18n/README.md`, `packages/i18n/CHANGELOG.md`, `packages/i18n/LICENSE`
-- [ ] 1.3.3 Verify Phase 1 with package build/typecheck/test/docs/dependency checks and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
+- [ ] 1.3.1 Add locale and compiled-message implementation coverage — `packages/i18n/test/locale.impl.test.ts`, `packages/i18n/test/messages.impl.test.ts`
+- [ ] 1.3.2 Add validation and catalog-copy implementation coverage — `packages/i18n/test/validation.impl.test.ts`, `packages/i18n/test/catalog.impl.test.ts`
+- [ ] 1.3.3 Add diagnostic-bound and formatter-cache implementation coverage — `packages/i18n/test/diagnostics.impl.test.ts`, `packages/i18n/test/cache.impl.test.ts`
+- [ ] 1.3.4 Add adversarial coercion and snapshot atomicity implementation coverage — `packages/i18n/test/security.impl.test.ts`, `packages/i18n/test/service.impl.test.ts`
+- [ ] 1.3.5 Document package API, compatibility, and initial changelog — `packages/i18n/README.md`, `packages/i18n/CHANGELOG.md`, `packages/i18n/LICENSE`
+- [ ] 1.3.6 Verify Phase 1 with package build/typecheck/test/docs/dependency checks and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
 
 ## Phase 2: Secure sources and Node loader
 
@@ -213,6 +216,6 @@ stable final catalog digests and may remain the sole release blocker.
 
 ## Success criteria
 
-The feature is complete only when all 63 tasks are verified, `yarn verify` and plugin drift checks
+The feature is complete only when all 66 tasks are verified, `yarn verify` and plugin drift checks
 pass, main-entry browser isolation and security suites pass, no dead code or undocumented public
 surface remains, and every non-English catalog has current proficient-speaker approval.
