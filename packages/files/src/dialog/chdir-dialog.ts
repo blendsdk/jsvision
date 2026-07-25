@@ -9,6 +9,7 @@
  * Prefer the {@link changeDir} opener for the common "prompt and get a directory" case; construct
  * `ChDirDialog` directly only when embedding or customizing it.
  */
+import type { I18n } from '@jsvision/i18n';
 import {
   Dialog,
   Button,
@@ -27,6 +28,8 @@ import {
 import type { Signal } from '@jsvision/ui';
 import type { DirEntry, FileSystem } from '../fs/types.js';
 import { nodeFileSystem } from '../fs/node-fs.js';
+import { createEnglishFilesI18n, FILES_ENGLISH_CATALOG } from '../i18n/catalog.js';
+import { filesAcceleratorLabel } from '../i18n/label.js';
 import { DirList } from '../list/dir-list.js';
 
 /** The default recent-path history id — distinct from the file dialog so their lists don't mix. */
@@ -40,6 +43,8 @@ export interface ChDirDialogOptions {
   directory?: Signal<string>;
   /** The dialog title (default `'Change Directory'`). */
   title?: string;
+  /** Translation service for package-owned labels; defaults to an isolated English service. */
+  i18n?: I18n;
   /** The id keying this dialog's recent-path history (default a chdir id distinct from the file dialog). */
   historyId?: number;
   /** Called to show an error (unreadable directory). Wire it to {@link errorBox} in an app. */
@@ -85,18 +90,30 @@ export class ChDirDialog extends Dialog {
   readonly buttons: Button[] = [];
   /** The button labels, parallel to {@link buttons}. */
   readonly buttonLabels: string[] = [];
+  /** Translation service used for package-owned dialog text. */
+  readonly i18n: I18n;
   private readonly startDir: string;
   private readonly resultPath: Signal<string | null> = signal<string | null>(null);
   private readonly showErrorSeam?: (message: string) => void;
   private readonly onResolveCb?: (path: string | null) => void;
 
   constructor(opts: ChDirDialogOptions) {
-    super({ title: opts.title ?? 'Change Directory', width: 48, height: 18 });
+    const i18n = opts.i18n ?? createEnglishFilesI18n();
+    super({
+      title:
+        opts.title ??
+        i18n.t('files.dialog.change-directory.title', {
+          defaultMessage: FILES_ENGLISH_CATALOG.messages['files.dialog.change-directory.title'],
+        }),
+      width: 48,
+      height: 18,
+    });
     // Drag-resizable but floored at the design size. There is no reflow code to go with it: the body
     // below is a flex tree, so a resize re-solves every child in one layout pass.
     this.resizable = true;
     this.minWidth = 48;
     this.minHeight = 18;
+    this.i18n = i18n;
     this.fs = opts.fs ?? nodeFileSystem;
     this.directory = opts.directory ?? signal(this.fs.resolve('.'));
     this.startDir = this.directory();
@@ -106,10 +123,10 @@ export class ChDirDialog extends Dialog {
 
     this.pathInput = new Input({ value: this.path });
     this.history = new History({ link: this.pathInput, historyId: opts.historyId ?? DIR_HISTORY_ID });
-    const nameLabel = new Label('~D~irectory name', this.pathInput);
+    const nameLabel = new Label(this.label('files.field.directory-name'), this.pathInput);
 
     this.dirList = new DirList({ fs: this.fs, directory: this.directory, onChangeDir: (p) => this.directory.set(p) });
-    const treeLabel = new Label('~D~irectory tree', this.dirList.rows);
+    const treeLabel = new Label(this.label('files.field.directory-tree'), this.dirList.rows);
 
     this.buildButtons();
 
@@ -123,6 +140,7 @@ export class ChDirDialog extends Dialog {
     // the label and dialog backgrounds match — which every shipped theme keeps in step.
     const pathRow = row(grow(this.pathInput), fixed(this.history, 3));
     const buttonCol = col({ gap: 1 }, ...this.buttons);
+    const buttonWidth = Math.max(10, ...this.buttons.map((button) => button.measure().width));
 
     // One padded column suffices here — unlike the file dialog, nothing spans the full frame width.
     this.add(
@@ -134,7 +152,7 @@ export class ChDirDialog extends Dialog {
           spacer({ fixed: 1 }),
           fixed(treeLabel, 1),
           // The tree takes whatever height is left, so it grows on resize.
-          grow(row({ gap: 1 }, grow(this.dirList), fixed(buttonCol, 10))),
+          grow(row({ gap: 1 }, grow(this.dirList), fixed(buttonCol, buttonWidth))),
         ),
       ),
     );
@@ -166,16 +184,28 @@ export class ChDirDialog extends Dialog {
 
   private buildButtons(): void {
     const specs: Array<{ label: string; command?: string; default?: boolean; onClick?: () => void }> = [
-      { label: '~O~K', command: Commands.ok, default: true },
-      { label: '~C~hdir', onClick: () => this.chdir() },
-      { label: '~R~evert', onClick: () => this.revert() },
-      { label: '~H~elp' },
+      { label: this.label('files.action.ok'), command: Commands.ok, default: true },
+      { label: this.label('files.action.chdir'), onClick: () => this.chdir() },
+      { label: this.label('files.action.revert'), onClick: () => this.revert() },
+      { label: this.label('files.action.help') },
     ];
     specs.forEach((s) => {
       const btn = new Button(s.label, { command: s.command, default: s.default, onClick: s.onClick });
       this.buttons.push(btn);
       this.buttonLabels.push(s.label);
     });
+  }
+
+  /** Resolve one Files-owned message with its canonical English fallback. */
+  private text(key: keyof typeof FILES_ENGLISH_CATALOG.messages): string {
+    return this.i18n.t(key, { defaultMessage: FILES_ENGLISH_CATALOG.messages[key] });
+  }
+
+  /** Resolve one Files-owned accelerator label with its canonical English fallback. */
+  private label(key: keyof typeof FILES_ENGLISH_CATALOG.messages): string {
+    const english = FILES_ENGLISH_CATALOG.messages[key];
+    if (typeof english !== 'string') throw new TypeError(`Files label ${key} must be text.`);
+    return filesAcceleratorLabel(this.i18n, key, english);
   }
 
   /**
@@ -192,7 +222,7 @@ export class ChDirDialog extends Dialog {
     if (!super.valid(Commands.ok)) return false; // the base dialog's field-validation sweep
     const target = this.fs.resolve(this.path());
     if (this.statKind(target) !== 'dir') {
-      this.showErrorSeam?.('Invalid directory');
+      this.showErrorSeam?.(this.text('files.error.invalid-directory'));
       return false;
     }
     this.resultPath.set(target);

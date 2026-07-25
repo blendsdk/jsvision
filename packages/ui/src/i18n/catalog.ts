@@ -51,7 +51,7 @@ export const UI_ENGLISH_CATALOG = defineCatalog(
       'ui.editor.replace.title': 'Replace',
       'ui.editor.find.label': '~T~ext to find',
       'ui.editor.replace.label': '~N~ew text',
-      'ui.editor.case-sensitive': '~C~ase sensitive',
+      'ui.editor.case-sensitive': 'Case ~s~ensitive',
       'ui.editor.whole-words': '~W~hole words only',
       'ui.editor.prompt-on-replace': '~P~rompt on replace',
       'ui.editor.replace-all': '~R~eplace all',

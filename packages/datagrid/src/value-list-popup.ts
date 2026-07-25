@@ -12,14 +12,13 @@
  * checkbox list scrolls by keyboard, mouse wheel, and a grabbable scroll bar. All labels are checked
  * by default (equivalent to no filter); unchecking narrows the kept rows.
  */
+import type { I18n } from '@jsvision/i18n';
 import { Group, View, Input, Button, Text, ScrollBar, col, row, spacer, signal, grow, fixed } from '@jsvision/ui';
 import type { Signal, DispatchEvent, DrawContext } from '@jsvision/ui';
 import type { DistinctResult } from './filter.js';
 import { buttonRow, buttonCellWidth } from './button-row.js';
-
-/** The value-list's action-button labels — shared by the buttons and the width helper below. */
-const SELECT_ALL_LABEL = 'Select All';
-const APPLY_LABEL = 'Apply';
+import { createEnglishDatagridI18n, DATAGRID_ENGLISH_CATALOG } from './i18n/catalog.js';
+import { datagridAcceleratorLabel } from './i18n/label.js';
 
 /** Fixed rows around the checkbox list: search caption + search input + gap + buttons (2). The status
  * row is counted separately in {@link ValueList.desiredHeight} because it collapses when it is empty. */
@@ -41,13 +40,21 @@ const LIST_ROWS = 8;
  * const clear = new Button('Clear');
  * const width = Math.max(buttonCellWidth([apply, clear]), valueListButtonWidth());
  */
-export function valueListButtonWidth(): number {
-  return buttonCellWidth([new Button(SELECT_ALL_LABEL), new Button(APPLY_LABEL)]);
+export function valueListButtonWidth(i18n?: I18n): number {
+  const service = i18n ?? createEnglishDatagridI18n();
+  return buttonCellWidth([
+    new Button(datagridAcceleratorLabel(service, 'datagrid.filter.action.select-all', 'Select All', false)),
+    new Button(datagridAcceleratorLabel(service, 'datagrid.filter.action.apply', 'Apply', false)),
+  ]);
 }
 
 /** Sort distinct labels the way a user scans them: alphabetical, ignoring case. */
-function sortLabels(labels: readonly string[]): string[] {
-  return [...labels].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+function sortLabels(labels: readonly string[], i18n?: I18n): string[] {
+  return [...labels].sort((a, b) =>
+    i18n === undefined
+      ? a.localeCompare(b, undefined, { sensitivity: 'base' })
+      : i18n.compare(a, b, { sensitivity: 'base' }),
+  );
 }
 
 /** Construction config for {@link ValueList}. */
@@ -60,6 +67,8 @@ export interface ValueListConfig {
   onApply: (selected: ReadonlySet<string>) => void;
   /** Forced Select All / Apply width, so a popup can size all its buttons alike; omit to self-size. */
   buttonWidth?: number;
+  /** Translation service for package-owned labels; defaults to isolated English text. */
+  i18n?: I18n;
 }
 
 /**
@@ -206,6 +215,8 @@ class CheckboxList extends View {
  * list.apply();          // onApply(new Set(['east', 'north']))
  */
 export class ValueList extends Group {
+  private readonly i18n: I18n;
+  private readonly comparisonI18n?: I18n;
   private readonly onApplySink: (selected: ReadonlySet<string>) => void;
   private readonly allLabels: Signal<string[]> = signal<string[]>([]);
   private readonly checked: Signal<ReadonlySet<string>>;
@@ -223,14 +234,23 @@ export class ValueList extends Group {
    */
   constructor(cfg: ValueListConfig) {
     super();
+    this.i18n = cfg.i18n ?? createEnglishDatagridI18n();
+    this.comparisonI18n = cfg.i18n;
     this.onApplySink = cfg.onApply;
     this.checked = signal<ReadonlySet<string>>(cfg.current ?? new Set());
     this.visible = this.derived(() => {
-      const q = this.search().toLowerCase();
-      return sortLabels(this.allLabels().filter((label) => label.toLowerCase().includes(q)));
+      const fold = (value: string): string =>
+        this.comparisonI18n === undefined
+          ? value.toLowerCase()
+          : value.normalize('NFC').toLocaleLowerCase(this.comparisonI18n.locale);
+      const q = fold(this.search());
+      return sortLabels(
+        this.allLabels().filter((label) => fold(label).includes(q)),
+        this.comparisonI18n,
+      );
     });
 
-    const searchLabel = new Text('Search');
+    const searchLabel = new Text(this.text('datagrid.filter.field.search'));
     fixed(searchLabel, 1);
     const searchInput = new Input({ value: this.search });
     fixed(searchInput, 1);
@@ -244,18 +264,20 @@ export class ValueList extends Group {
     grow(list);
     const listRow = row({ fill: true }, list, scrollBar);
 
-    const selectAll = new Button(SELECT_ALL_LABEL, { onClick: () => this.selectAll() });
-    const apply = new Button(APPLY_LABEL, { onClick: () => this.apply() });
+    const selectAll = new Button(this.action('datagrid.filter.action.select-all'), {
+      onClick: () => this.selectAll(),
+    });
+    const apply = new Button(this.action('datagrid.filter.action.apply'), { onClick: () => this.apply() });
     const controls = buttonRow([selectAll, apply], cfg.buttonWidth);
 
     // One status line: loading → error → truncation disclosure → blank. Never silent about truncation.
     const status = new Text(() =>
       this.loadingFlag()
-        ? 'loading…'
+        ? this.text('datagrid.filter.status.loading')
         : this.errorFlag()
-          ? 'could not load values'
+          ? this.text('datagrid.filter.status.error')
           : this.truncatedFlag()
-            ? 'list truncated — refine search'
+            ? this.text('datagrid.filter.status.truncated')
             : '',
     );
     fixed(status, 1);
@@ -292,6 +314,18 @@ export class ValueList extends Group {
           this.errorFlag.set(true);
         });
     });
+  }
+
+  /** Resolve one Datagrid-owned message with its canonical English fallback. */
+  private text(key: keyof typeof DATAGRID_ENGLISH_CATALOG.messages): string {
+    return this.i18n.t(key, { defaultMessage: DATAGRID_ENGLISH_CATALOG.messages[key] });
+  }
+
+  /** Resolve one optional-accelerator action label with its canonical English fallback. */
+  private action(key: 'datagrid.filter.action.select-all' | 'datagrid.filter.action.apply'): string {
+    const english = DATAGRID_ENGLISH_CATALOG.messages[key];
+    if (typeof english !== 'string') throw new TypeError(`Datagrid label ${key} must be text.`);
+    return datagridAcceleratorLabel(this.i18n, key, english, false);
   }
 
   /** The labels currently visible after the search filter (sorted, reactive). */

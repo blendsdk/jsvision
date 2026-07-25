@@ -79,8 +79,9 @@ export const DIALOG_BODY_PADDING = { top: 1, right: 2, bottom: 0, left: 2 } as c
  * @returns A sized row ready to drop into a dialog body column.
  */
 export function buttonBand(...buttons: Button[]): View {
+  const width = Math.max(BUTTON_WIDTH, ...buttons.map((button) => button.measure().width));
   return fixed(
-    row({ justify: 'center', gap: BUTTON_GAP }, ...buttons.map((b) => fixed(b, BUTTON_WIDTH))),
+    row({ justify: 'center', gap: BUTTON_GAP }, ...buttons.map((button) => fixed(button, width))),
     BUTTON_BAND_HEIGHT,
   );
 }

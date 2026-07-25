@@ -5,10 +5,16 @@ import ts from 'typescript';
 
 const ROOT = process.cwd();
 const MANIFEST_PATH = path.join(ROOT, 'tools/i18n-literals.json');
-const SOURCE_ROOTS = ['packages/ui/src'];
+const SOURCE_ROOTS = ['packages/ui/src', 'packages/forms/src', 'packages/files/src', 'packages/datagrid/src'];
 const STRING_PROPERTIES = new Set(['defaultMessage', 'label', 'placeholder', 'title']);
 const STRING_CONSTRUCTORS = new Set(['Button', 'Dialog', 'Label', 'Text', 'Window']);
 const STRING_CALLS = new Set(['confirm', 'confirmBox', 'infoBox', 'messageBox']);
+const TRANSLATED_LABEL_CALLS = new Set([
+  'uiAcceleratorLabel',
+  'formsAcceleratorLabel',
+  'filesAcceleratorLabel',
+  'datagridAcceleratorLabel',
+]);
 
 /** Recursively list TypeScript source files in deterministic path order. */
 async function sourceFiles(directory) {
@@ -39,6 +45,14 @@ function propertyName(node) {
 
 /** Find the translation key paired with a `defaultMessage` property. */
 function translationKey(node) {
+  const directCall = node.parent;
+  if (ts.isCallExpression(directCall) && directCall.arguments[2] === node) {
+    const name = expressionName(directCall.expression);
+    const key = directCall.arguments[1];
+    if (name !== undefined && TRANSLATED_LABEL_CALLS.has(name) && key !== undefined && ts.isStringLiteral(key)) {
+      return key.text;
+    }
+  }
   const property = node.parent;
   const object = property.parent;
   const call = object.parent;
@@ -57,6 +71,10 @@ function candidateContext(node) {
     return property === 'defaultMessage' ? 'default-message' : property;
 
   const parent = node.parent;
+  if (ts.isCallExpression(parent) && parent.arguments[2] === node) {
+    const name = expressionName(parent.expression);
+    if (name !== undefined && TRANSLATED_LABEL_CALLS.has(name)) return 'default-message';
+  }
   if (ts.isNewExpression(parent) && parent.arguments?.includes(node)) {
     const name = expressionName(parent.expression);
     if (name !== undefined && STRING_CONSTRUCTORS.has(name)) return `constructor:${name}`;

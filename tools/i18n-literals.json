@@ -2,6 +2,46 @@
   "schema": 1,
   "entries": [
     {
+      "path": "packages/datagrid/src/value-list-popup.ts",
+      "context": "default-message",
+      "literal": "Apply",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "datagrid.filter.action.apply"
+    },
+    {
+      "path": "packages/datagrid/src/value-list-popup.ts",
+      "context": "default-message",
+      "literal": "Select All",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "datagrid.filter.action.select-all"
+    },
+    {
+      "path": "packages/files/src/dialog/error-dialog.ts",
+      "context": "default-message",
+      "literal": "~O~K",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "files.action.ok"
+    },
+    {
+      "path": "packages/forms/src/form-dialog.ts",
+      "context": "default-message",
+      "literal": "~C~ancel",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "forms.action.cancel"
+    },
+    {
+      "path": "packages/forms/src/form-dialog.ts",
+      "context": "default-message",
+      "literal": "~O~K",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "forms.action.ok"
+    },
+    {
       "path": "packages/ui/src/controls/switch.ts",
       "context": "default-message",
       "literal": "Off",
@@ -148,7 +188,7 @@
     {
       "path": "packages/ui/src/editor/dialogs.ts",
       "context": "default-message",
-      "literal": "~C~ase sensitive",
+      "literal": "Case ~s~ensitive",
       "disposition": "localized",
       "owner": "framework",
       "key": "ui.editor.case-sensitive"

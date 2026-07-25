@@ -27,6 +27,14 @@ interface CreateFormOptions<S extends z.ZodObject<z.ZodRawShape>, I extends Reco
 }
 ```
 
+## FORMS_ACCELERATOR_MANIFEST
+
+Accelerator scopes owned by `@jsvision/forms`.
+
+```ts
+const FORMS_ACCELERATOR_MANIFEST: AcceleratorManifest
+```
+
 ## Field
 
 A single field's handle: its live, store-owned raw value signal plus the derived error / touched / dirty accessors.

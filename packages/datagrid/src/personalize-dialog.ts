@@ -20,6 +20,7 @@
  * the leaves ignore.
  */
 import { sanitize } from '@jsvision/core';
+import type { I18n } from '@jsvision/i18n';
 import type { DispatchEvent, DrawContext, ModalDialogHost, Signal } from '@jsvision/ui';
 import {
   Button,
@@ -40,12 +41,14 @@ import {
   Text,
   View,
 } from '@jsvision/ui';
-import { buttonRow } from './button-row.js';
+import { buttonRow, buttonRowMinWidth } from './button-row.js';
 import type { ColumnFilter } from './filter.js';
 import type { EditableDataGrid } from './grid.js';
 import type { SortKey } from './sort.js';
 import type { VariantStore } from './variant-store.js';
 import type { GridVariant } from './variant.js';
+import { DATAGRID_ENGLISH_CATALOG } from './i18n/catalog.js';
+import { datagridAcceleratorLabel } from './i18n/label.js';
 
 /** The freeze side a column is pinned to in the pending layout. */
 export type FreezeSide = 'left' | 'right' | 'none';
@@ -97,8 +100,12 @@ const BODY_INSET = 2;
  */
 const GUTTER = 1;
 
-/** The human freeze-side labels painted in the freeze cell (the model keeps the lowercase enum). */
-const FREEZE_LABEL: Record<FreezeSide, string> = { none: 'None', left: 'Left', right: 'Right' };
+/** Catalog keys for human freeze-side labels; the model keeps the lowercase enum. */
+const FREEZE_MESSAGE_KEY: Record<FreezeSide, keyof typeof DATAGRID_ENGLISH_CATALOG.messages> = {
+  none: 'datagrid.personalize.freeze.none',
+  left: 'datagrid.personalize.freeze.left',
+  right: 'datagrid.personalize.freeze.right',
+};
 
 /** Parse a width input's text to an override: empty → `undefined` (auto), else the digit value. */
 function parseWidth(text: string): number | undefined {
@@ -165,6 +172,7 @@ class FreezeCell extends View {
   constructor(
     private readonly sideReader: () => FreezeSide,
     private readonly onCycle: () => void,
+    private readonly i18n: I18n,
   ) {
     super();
     this.onMount(() => {
@@ -177,7 +185,8 @@ class FreezeCell extends View {
   override draw(ctx: DrawContext): void {
     const role = ctx.color('listNormal');
     ctx.fill(' ', role);
-    ctx.text(0, 0, FREEZE_LABEL[this.sideReader()], role);
+    const key = FREEZE_MESSAGE_KEY[this.sideReader()];
+    ctx.text(0, 0, this.i18n.t(key, { defaultMessage: DATAGRID_ENGLISH_CATALOG.messages[key] }), role);
   }
 
   override onEvent(ev: DispatchEvent): void {
@@ -274,6 +283,8 @@ export class PersonalizeDialog<T> extends Dialog {
   protected readonly store: VariantStore;
   /** The modal host (named `dlgHost` so it never shadows the base `View.host` render seam). */
   protected readonly dlgHost: ModalDialogHost;
+  /** Translation service inherited from the modal host. */
+  private readonly i18n: I18n;
 
   /** The pending column facets (order/visibility/freeze), the single source of truth for the columns. */
   private readonly cols: Signal<WorkingCol[]>;
@@ -301,13 +312,14 @@ export class PersonalizeDialog<T> extends Dialog {
   constructor(grid: EditableDataGrid<T>, store: VariantStore, host: ModalDialogHost, title: string) {
     const bounds = host.desktop.bounds;
     const w = Math.min(Math.max(48, bounds.width - 8), 64);
-    const h = Math.min(Math.max(13, bounds.height - 4), 20); // room for the header line above the rows
+    const h = Math.min(Math.max(13, bounds.height - 2), 22); // room for translated actions to wrap
     super({ title, width: w, height: h });
     // The default Dialog padding (1) is the frame inset; the single fill `col` body lays out inside it.
     this.dlgW = w;
     this.grid = grid;
     this.store = store;
     this.dlgHost = host;
+    this.i18n = host.i18n;
 
     const pending = grid.saveVariant('(current)'); // the ONE read of the live grid's sort/filter
     this.sortModel = signal(pending.sort.map((k) => ({ ...k })));
@@ -332,6 +344,25 @@ export class PersonalizeDialog<T> extends Dialog {
     this.buildBody();
   }
 
+  /** Resolve one Datagrid-owned message with its canonical English fallback. */
+  private text(key: keyof typeof DATAGRID_ENGLISH_CATALOG.messages): string {
+    return this.i18n.t(key, { defaultMessage: DATAGRID_ENGLISH_CATALOG.messages[key] });
+  }
+
+  /** Resolve one optional-accelerator action label with its canonical English fallback. */
+  private action(
+    key:
+      | 'datagrid.personalize.action.save'
+      | 'datagrid.personalize.action.apply'
+      | 'datagrid.personalize.action.delete'
+      | 'datagrid.personalize.action.default'
+      | 'datagrid.personalize.action.reset',
+  ): string {
+    const english = DATAGRID_ENGLISH_CATALOG.messages[key];
+    if (typeof english !== 'string') throw new TypeError(`Datagrid label ${key} must be text.`);
+    return datagridAcceleratorLabel(this.i18n, key, english, false);
+  }
+
   // ── Layout (flex DSL) ────────────────────────────────────────────────────────────────────────────
 
   /**
@@ -347,16 +378,32 @@ export class PersonalizeDialog<T> extends Dialog {
     // paints under the bar nor butts against it.
     const contentW = Math.max(8, this.dlgW - 2 * BODY_INSET - SCROLLBAR - GUTTER);
 
-    const echo = new Text(() => `${this.visibleCount()} of ${this.cols().length} columns visible`);
+    const echo = new Text(() =>
+      this.i18n.t('datagrid.personalize.visible-count', {
+        defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.personalize.visible-count'],
+        params: { visible: this.visibleCount(), total: this.cols().length },
+      }),
+    );
 
     // The variant-management bar and the commit bar. `buttonRow` lays a row of equal, individually
     // centered, two-row-tall cells — uniform regardless of label lengths, and clip-free when narrow.
-    const save = new Button('Save', { onClick: () => void this.saveAs() });
-    const apply = new Button('Apply', { onClick: () => this.applySelected() });
-    const del = new Button('Delete', { onClick: () => void this.deleteSelected() });
-    const setDefault = new Button('Default', { onClick: () => this.setDefaultSelected() });
-    const reset = new Button('Reset', { onClick: () => this.reset() });
-    const [ok, cancel] = okCancelButtons();
+    const save = new Button(this.action('datagrid.personalize.action.save'), { onClick: () => void this.saveAs() });
+    const apply = new Button(this.action('datagrid.personalize.action.apply'), {
+      onClick: () => this.applySelected(),
+    });
+    const del = new Button(this.action('datagrid.personalize.action.delete'), {
+      onClick: () => void this.deleteSelected(),
+    });
+    const setDefault = new Button(this.action('datagrid.personalize.action.default'), {
+      onClick: () => this.setDefaultSelected(),
+    });
+    const reset = new Button(this.action('datagrid.personalize.action.reset'), { onClick: () => this.reset() });
+    const [ok, cancel] = okCancelButtons(this.i18n);
+    const variantActions = [save, apply, del, setDefault, reset];
+    const variantRows =
+      buttonRowMinWidth(variantActions) <= contentW
+        ? [buttonRow(variantActions)]
+        : [buttonRow(variantActions.slice(0, 3)), buttonRow(variantActions.slice(3))];
 
     this.add(
       col(
@@ -369,7 +416,7 @@ export class PersonalizeDialog<T> extends Dialog {
         spacer({ fixed: 1 }), // a gap between the two button bars
         this.buildVariantsSection(),
         spacer({ fixed: 1 }), // a gap between the two button bars
-        buttonRow([save, apply, del, setDefault, reset]),
+        ...variantRows,
         buttonRow([ok, cancel]),
       ),
     );
@@ -386,10 +433,10 @@ export class PersonalizeDialog<T> extends Dialog {
         padding: { top: 0, right: SCROLLBAR + GUTTER, bottom: 0, left: 0 },
       },
       fixed(new Text(' '), CELL.marker),
-      fixed(new Text('Show'), CELL.toggle),
-      grow(new Text('Column'), 1),
-      fixed(new Text('Freeze'), CELL.freeze),
-      fixed(new Text('Width'), CELL.width),
+      fixed(new Text(this.text('datagrid.personalize.header.show')), CELL.toggle),
+      grow(new Text(this.text('datagrid.personalize.header.column')), 1),
+      fixed(new Text(this.text('datagrid.personalize.header.freeze')), CELL.freeze),
+      fixed(new Text(this.text('datagrid.personalize.header.width')), CELL.width),
     );
   }
 
@@ -431,10 +478,14 @@ export class PersonalizeDialog<T> extends Dialog {
 
   /** The variants section (flex): a labelled saved-layouts list beside a labelled save-name field. */
   private buildVariantsSection(): Group {
-    const savedLabel = new Text('Saved layouts');
+    const savedLabel = new Text(this.text('datagrid.personalize.saved-layouts'));
     const list = new ListBox({ items: this.variantNames, focused: this.variantSelected });
-    const nameLabel = new Text('Save as:');
-    const nameInput = new Input({ value: this.name, maxLength: NAME_MAX, placeholder: 'variant name' });
+    const nameLabel = new Text(this.text('datagrid.personalize.save-as'));
+    const nameInput = new Input({
+      value: this.name,
+      maxLength: NAME_MAX,
+      placeholder: this.text('datagrid.personalize.variant-name'),
+    });
 
     // Two equal halves: label-over-list on the left, label-over-field on the right.
     return row(
@@ -464,6 +515,7 @@ export class PersonalizeDialog<T> extends Dialog {
     const freeze = new FreezeCell(
       () => this.freezeOf(id),
       () => this.cycleFreeze(id),
+      this.i18n,
     );
     const widthSig = this.widthText.get(id)!;
     // `placeholder: 'auto'` makes an empty width cell self-explanatory (empty = declared/auto width).
@@ -471,7 +523,7 @@ export class PersonalizeDialog<T> extends Dialog {
       value: widthSig,
       maxLength: WIDTH_MAX_DIGITS,
       validator: filter('0-9'),
-      placeholder: 'auto',
+      placeholder: this.text('datagrid.personalize.width.auto'),
     });
 
     return row(
@@ -666,7 +718,13 @@ export class PersonalizeDialog<T> extends Dialog {
     if (clean === '') return 'blank'; // nothing written for an empty name
     const exists = this.store.list().some((v) => v.name === clean);
     if (exists) {
-      const ok = await confirm(this.dlgHost, `Overwrite "${clean}"?`);
+      const ok = await confirm(
+        this.dlgHost,
+        this.i18n.t('datagrid.personalize.confirm.overwrite', {
+          defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.personalize.confirm.overwrite'],
+          params: { name: clean },
+        }),
+      );
       if (!ok) return 'declined'; // declined → store untouched
       this.store.save(this.buildVariant(clean));
       this.refreshVariants();
@@ -693,7 +751,13 @@ export class PersonalizeDialog<T> extends Dialog {
    * @returns `'deleted'` or `'declined'`.
    */
   async deleteStored(name: string): Promise<'deleted' | 'declined'> {
-    const ok = await confirm(this.dlgHost, `Delete "${name}"?`);
+    const ok = await confirm(
+      this.dlgHost,
+      this.i18n.t('datagrid.personalize.confirm.delete', {
+        defaultMessage: DATAGRID_ENGLISH_CATALOG.messages['datagrid.personalize.confirm.delete'],
+        params: { name },
+      }),
+    );
     if (!ok) return 'declined';
     this.store.delete(name);
     this.refreshVariants();

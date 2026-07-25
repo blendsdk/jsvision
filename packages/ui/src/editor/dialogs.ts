@@ -12,6 +12,7 @@ import type { Point, Group } from '../view/index.js';
 import { col, row, grow, fixed, cover, spacer } from '../view/index.js';
 import { Dialog, okButton, cancelButton, yesButton, noButton } from '../dialog/index.js';
 import { runDialog, messageBox, buttonBand, DIALOG_BODY_PADDING } from '../dialog/message-box.js';
+import { uiAcceleratorLabel } from '../i18n/label.js';
 import type { ModalDialogHost } from '../dialog/message-box.js';
 import { Input, CheckGroup, Label, Text } from '../controls/index.js';
 import { History } from '../dropdown/index.js';
@@ -72,8 +73,8 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
 
   const input = new Input({ value: find, maxLength: 80 });
   const labels = [
-    host.i18n.t('ui.editor.case-sensitive', { defaultMessage: '~C~ase sensitive' }),
-    host.i18n.t('ui.editor.whole-words', { defaultMessage: '~W~hole words only' }),
+    uiAcceleratorLabel(host.i18n, 'ui.editor.case-sensitive', 'Case ~s~ensitive'),
+    uiAcceleratorLabel(host.i18n, 'ui.editor.whole-words', '~W~hole words only'),
   ];
   // Every control takes exactly the rows it needs; the spacer absorbs the leftover height, which pins
   // the button band to the bottom row.
@@ -81,7 +82,7 @@ export async function findDialog(host: EditorDialogHost, initial?: FindRec): Pro
     cover(
       col(
         { padding: DIALOG_BODY_PADDING },
-        fixed(new Label(host.i18n.t('ui.editor.find.label', { defaultMessage: '~T~ext to find' }), input), 1),
+        fixed(new Label(uiAcceleratorLabel(host.i18n, 'ui.editor.find.label', '~T~ext to find'), input), 1),
         fixed(fieldRow(input), 1),
         spacer({ fixed: 1 }),
         fixed(new CheckGroup({ labels, value: flags }), labels.length),
@@ -138,10 +139,10 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
   const findInput = new Input({ value: find, maxLength: 80 });
   const newInput = new Input({ value: replace, maxLength: 80 });
   const labels = [
-    host.i18n.t('ui.editor.case-sensitive', { defaultMessage: '~C~ase sensitive' }),
-    host.i18n.t('ui.editor.whole-words', { defaultMessage: '~W~hole words only' }),
-    host.i18n.t('ui.editor.prompt-on-replace', { defaultMessage: '~P~rompt on replace' }),
-    host.i18n.t('ui.editor.replace-all', { defaultMessage: '~R~eplace all' }),
+    uiAcceleratorLabel(host.i18n, 'ui.editor.case-sensitive', 'Case ~s~ensitive'),
+    uiAcceleratorLabel(host.i18n, 'ui.editor.whole-words', '~W~hole words only'),
+    uiAcceleratorLabel(host.i18n, 'ui.editor.prompt-on-replace', '~P~rompt on replace'),
+    uiAcceleratorLabel(host.i18n, 'ui.editor.replace-all', '~R~eplace all'),
   ];
   // Every control takes exactly the rows it needs; the spacer absorbs the leftover height, which pins
   // the button band to the bottom row.
@@ -149,10 +150,10 @@ export async function replaceDialog(host: EditorDialogHost, initial?: ReplaceRec
     cover(
       col(
         { padding: DIALOG_BODY_PADDING },
-        fixed(new Label(host.i18n.t('ui.editor.find.label', { defaultMessage: '~T~ext to find' }), findInput), 1),
+        fixed(new Label(uiAcceleratorLabel(host.i18n, 'ui.editor.find.label', '~T~ext to find'), findInput), 1),
         fixed(fieldRow(findInput), 1),
         spacer({ fixed: 1 }),
-        fixed(new Label(host.i18n.t('ui.editor.replace.label', { defaultMessage: '~N~ew text' }), newInput), 1),
+        fixed(new Label(uiAcceleratorLabel(host.i18n, 'ui.editor.replace.label', '~N~ew text'), newInput), 1),
         fixed(fieldRow(newInput), 1),
         spacer({ fixed: 1 }),
         fixed(new CheckGroup({ labels, value: flags }), labels.length),
