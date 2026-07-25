@@ -1,10 +1,94 @@
 # Code Editor functional completion — ambiguity register
 
 > **CodeOps Artifact Schema**: 1
-> **Last Updated**: 2026-07-25 01:36
+> **Last Updated**: 2026-07-25 08:08
 > **Runtime items added during execution**: yes
 
 ## Resolved ambiguities
+
+### AR-07 (runtime) — Phase D hostile-boundary and lifecycle hardening
+
+- **Authority**: AI — delegated by `--auto-design`.
+- **Eligibility**: Internal schema traversal, immutable snapshots, report provenance, repaint
+  caching, observer scheduling, and language-service lifecycle projection inside the approved
+  Phase D behavior. Contrast policy, unknown-field compatibility, product scope, and terminal
+  support remain unchanged.
+- **Objective**: Keep theme repaint and degradation publication bounded, exception-safe, immutable,
+  and truthful under hostile runtime values and reentrant observers.
+- **Decision**: Traverse only the fixed theme schema; never enumerate unknown caller keys. Guard
+  every known own-data read and fall back to the safe dark palette when an outer boundary fails.
+  Snapshot live sources before atomic installation, brand resolver reports internally, and accept
+  only branded reports as inspection evidence. Cache live resolution until the source,
+  application-role identities, or capability identity changes. Preserve inherited backgrounds
+  during contrast repair and adjust the foreground. Map real language-service states into the
+  shared degradation vocabulary. Validate degradation reasons strictly and publish coalesced
+  observer notifications in a microtask with reentrancy suppression.
+- **Evidence**: Independent correctness, security, and performance review reproduced escaping
+  nested proxy traps, attacker-controlled key enumeration, forged reports, mutable live-source
+  retention, inaccurate active-layer reporting, missing language-service lifecycle projection,
+  invalid suspension transitions, and recursive observer publication.
+- **Rejected alternatives**: Enumerating unknown keys conflicts with additive compatibility and
+  makes repaint work attacker-controlled; retaining raw sources permits mutation after validation;
+  structural report trust accepts forged evidence; repairing the background breaks the continuous
+  editor surface; synchronous observer callbacks permit recursive publication.
+- **Strongest counterargument**: Ignoring unknown fields provides less diagnostic detail than
+  listing every rejected property. Fixed-schema rejected paths still explain malformed supported
+  fields without retaining hostile labels or paying work proportional to unknown input width.
+- **Confidence**: High — the decisions preserve approved semantics and directly close reproduced
+  findings. The user explicitly authorized both conflicting immutable-expectation corrections on
+  2026-07-25.
+- **Hardening**: Three independent reviewers covered correctness, security, and performance. The
+  single independent re-review confirmed the original correctness and performance findings
+  resolved and identified two remaining security boundary cases: report-to-palette provenance and
+  malformed limit counters. Both are accepted and closed through exact-result branding, strict
+  own-data counter validation, hostile regressions, and final verification because only one
+  re-review is permitted.
+- **Policy version**: 1.
+- **Root invocation ID**: `code-editor-functional-completion-2026-07-24`.
+- **Reopen triggers**: The public theme schema becomes dynamically extensible, hosts require
+  attacker-controlled report labels, application theme roles are mutated without identity
+  replacement, or degradation observers require synchronous delivery.
+
+### AR-06 (runtime) — Phase D live theme and degradation ownership
+
+- **Authority**: AI — delegated by `--auto-design`.
+- **Eligibility**: Additive theme-layer types, immutable inspection state, repaint invalidation,
+  degradation lifecycle records, and document-tier presentation inside the approved theme and
+  recovery behavior. Product scope, terminal support, contrast policy, and essential feature
+  availability remain unchanged.
+- **Objective**: Make theme changes and optional-subsystem failures observable, accessible, and
+  recoverable without coupling presentation updates to parsing, language services, or document
+  mutation.
+- **Decision**: Resolve application and editor overrides independently at role-field granularity,
+  report the active layer and sanitized fallback source, and let `CodeEditor` retain the last valid
+  immutable palette. Direct theme changes use the existing coalesced view invalidation path; an
+  additive theme-source seam may derive from the application roles available in a draw context.
+  Represent each degradable feature with an immutable `enabled`, `pending`, `suspended`,
+  `truncated`, or `degraded` record and a bounded sanitized reason. Degradation transitions notify
+  the controller presentation seam, while document-size classification exposes the same
+  content-free status vocabulary and always preserves edit/search/line-number/status/save/close.
+- **Evidence**: The resolver currently accepts only one override layer and reports neither its
+  active layer nor fallback source. The editor accepts complete snapshots but cannot inspect an
+  invalid live update. Degradation retains only active notices, has no pending state, and does not
+  notify subscribed views when parser/service status changes. Size classification exposes the tier
+  and essential actions but not why optional features are enabled or suspended.
+- **Rejected alternatives**: Rebuilding parser/controller state on theme changes violates semantic
+  inertness; storing raw theme errors or labels risks terminal/content leakage; separate failure
+  booleans in parser, LSP, UI, and limits would drift; treating every large document as reduced
+  would disable approved incremental behavior prematurely.
+- **Strongest counterargument**: A complete per-feature degradation list adds snapshot data even
+  when every feature is healthy. The feature set is fixed and small, so the bounded immutable list
+  gives hosts stable accessible state without meaningful retention or render cost.
+- **Confidence**: High — the existing resolver, controller event seam, view invalidation scheduler,
+  and size classifier already provide the required ownership boundaries.
+- **Hardening**: Forced reframing favored one shared status vocabulary and the existing coalesced
+  repaint/event seams over a new scheduler or parallel state stores. No reserved decision or
+  compatibility break is required.
+- **Policy version**: 1.
+- **Root invocation ID**: `code-editor-functional-completion-2026-07-24`.
+- **Reopen triggers**: The application draw context cannot supply the semantic roles needed for
+  derivation, a supported host needs unbounded dynamic feature names, or capability encoding must
+  occur outside the existing core renderer.
 
 ### AR-05 (runtime) — Phase C quality correction boundaries
 

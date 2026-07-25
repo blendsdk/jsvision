@@ -90,9 +90,12 @@ describe('folded viewport performance', () => {
       })),
     });
     controller.foldAll();
+    // Resolve the target once so the benchmark measures fold-index lookup rather than full source
+    // materialization through the document's convenience `text` getter.
+    const targetOffset = document.snapshot.length;
     const measure = (): number => {
       const startedAt = performance.now();
-      expect(controller.revealOffset(document.text.length)).toBe(false);
+      expect(controller.revealOffset(targetOffset)).toBe(false);
       return performance.now() - startedAt;
     };
     measure();

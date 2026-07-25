@@ -23,9 +23,18 @@ export interface CodeEditorTheme {
 
 /** One rejected theme input or deterministic accessibility adjustment. */
 export interface CodeEditorThemeResolutionReport {
+  /** Highest-precedence layer that contributed a valid value. */
+  readonly activeLayer:
+    'application-derived' | 'application' | 'editor' | 'independent' | 'last-valid' | 'safe-default';
+  /** Sanitized palette name or derivation source used as the complete base. */
+  readonly fallbackSource: string;
+  /** Bounded semantic paths rejected during validation. */
   readonly rejected: readonly string[];
+  /** Deterministic accessibility or terminal-capability repairs applied during resolution. */
   readonly adjustments: readonly {
+    /** Semantic role path, or `*` when the complete palette was adapted. */
     readonly path: string;
+    /** Why the requested presentation could not be used unchanged. */
     readonly reason: 'minimum-contrast' | 'capability-fallback';
   }[];
 }
@@ -39,5 +48,11 @@ export interface ResolvedCodeEditorTheme {
 
 /** Hybrid application-derived or independent theme selection. */
 export type CodeEditorThemeSource =
-  | { readonly kind: 'application'; readonly overrides?: unknown }
+  | {
+      readonly kind: 'application';
+      /** Application-wide editor-role overrides applied above derived application colors. */
+      readonly applicationOverrides?: unknown;
+      /** Per-editor overrides applied above the application editor layer. */
+      readonly overrides?: unknown;
+    }
   | { readonly kind: 'independent'; readonly base: CodeEditorTheme; readonly overrides?: unknown };

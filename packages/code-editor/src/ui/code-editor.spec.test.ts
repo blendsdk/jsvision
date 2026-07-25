@@ -194,7 +194,7 @@ describe('ST-36 hostile theme resolution', () => {
 
     expect(getter).not.toHaveBeenCalled();
     expect(resolved.contractVersion).toBe(1);
-    expect(resolved.report.rejected).toEqual(['excessiveDepth', 'unsafeAccessor', 'unsafePrototype']);
+    expect(resolved.report.rejected).toEqual([]);
     expect(resolved.report.adjustments).toContainEqual({
       path: 'surfaces.editor',
       reason: 'minimum-contrast',

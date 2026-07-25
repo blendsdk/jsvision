@@ -58,12 +58,24 @@ const DEFAULT_CODE_EDITOR_LIMITS: CodeEditorLimits = Object.freeze({
 /** Features guaranteed to remain available in bounded and reduced document modes. */
 export type EssentialCodeEditorFeature = 'edit' | 'search' | 'lineNumbers' | 'status' | 'save' | 'close';
 
+/** Features whose availability is explained by document-size classification. */
+export type CodeEditorSizeTierFeature =
+  EssentialCodeEditorFeature | 'parser' | 'syntax' | 'folds' | 'diagnostics' | 'completion' | 'symbols';
+
+/** Content-free availability record for one document-size-dependent feature. */
+export interface CodeEditorDocumentFeatureState {
+  readonly feature: CodeEditorSizeTierFeature;
+  readonly status: 'enabled' | 'suspended' | 'truncated';
+  readonly reason: string;
+}
+
 /** Observable document-size classification used before optional feature activation. */
 export interface CodeEditorDocumentSizeClassification {
   readonly mode: 'full' | 'large' | 'reduced';
   readonly confirmationRequired: boolean;
   readonly language?: 'plain';
   readonly preservedFeatures: readonly EssentialCodeEditorFeature[];
+  readonly featureStates: readonly CodeEditorDocumentFeatureState[];
 }
 
 const ESSENTIAL_FEATURES: readonly EssentialCodeEditorFeature[] = Object.freeze([
@@ -73,6 +85,14 @@ const ESSENTIAL_FEATURES: readonly EssentialCodeEditorFeature[] = Object.freeze(
   'status',
   'save',
   'close',
+]);
+const OPTIONAL_SIZE_FEATURES: readonly CodeEditorSizeTierFeature[] = Object.freeze([
+  'parser',
+  'syntax',
+  'folds',
+  'diagnostics',
+  'completion',
+  'symbols',
 ]);
 
 /**
@@ -118,6 +138,7 @@ export function classifyDocumentSize(size: {
       confirmationRequired: true,
       language: 'plain',
       preservedFeatures: ESSENTIAL_FEATURES,
+      featureStates: documentFeatureStates('reduced'),
     });
   }
   if (size.bytes > MEBIBYTE || size.lines > 50_000) {
@@ -125,11 +146,38 @@ export function classifyDocumentSize(size: {
       mode: 'large',
       confirmationRequired: false,
       preservedFeatures: ESSENTIAL_FEATURES,
+      featureStates: documentFeatureStates('large'),
     });
   }
   return Object.freeze({
     mode: 'full',
     confirmationRequired: false,
     preservedFeatures: ESSENTIAL_FEATURES,
+    featureStates: documentFeatureStates('full'),
   });
+}
+
+function documentFeatureStates(
+  mode: CodeEditorDocumentSizeClassification['mode'],
+): readonly CodeEditorDocumentFeatureState[] {
+  const essential = ESSENTIAL_FEATURES.map((feature) =>
+    Object.freeze({
+      feature,
+      status: 'enabled' as const,
+      reason: mode === 'full' ? 'full-feature tier' : 'preserved core feature',
+    }),
+  );
+  const optional = OPTIONAL_SIZE_FEATURES.map((feature) =>
+    Object.freeze({
+      feature,
+      status: mode === 'reduced' ? ('suspended' as const) : ('enabled' as const),
+      reason:
+        mode === 'full'
+          ? 'full-feature tier'
+          : mode === 'large'
+            ? 'enabled with bounded large-document budgets'
+            : 'reduced plain mode after explicit confirmation',
+    }),
+  );
+  return Object.freeze([...essential, ...optional]);
 }

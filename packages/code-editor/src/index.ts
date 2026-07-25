@@ -15,17 +15,24 @@ export const plainLanguageId: CodeEditorLanguageId = 'plain';
 
 export { HARD_CODE_EDITOR_LIMITS, classifyDocumentSize, resolveCodeEditorLimits } from './limits.js';
 export type {
+  CodeEditorDocumentFeatureState,
   CodeEditorDocumentSizeClassification,
   CodeEditorLimits,
   CodeEditorLimitsInput,
+  CodeEditorSizeTierFeature,
   EssentialCodeEditorFeature,
 } from './limits.js';
 export { createDegradationState } from './degradation.js';
 export type {
   CodeEditorDegradationNotice,
+  CodeEditorDegradationOptions,
   CodeEditorDegradationSnapshot,
   CodeEditorDegradationState,
   CodeEditorDegradedFeature,
+  CodeEditorFeatureInspection,
+  CodeEditorFeatureStatus,
+  CodeEditorPendingDetails,
+  CodeEditorSuspensionDetails,
 } from './degradation.js';
 export { createObservabilityChannel } from './observability.js';
 export type {
@@ -156,3 +163,4 @@ export type {
   CodeEditorThemeSource,
   ResolvedCodeEditorTheme,
 } from './theme/index.js';
+export type { ResolveCodeEditorThemeContext } from './theme/resolve.js';
