@@ -1,10 +1,91 @@
 # Code Editor functional completion — ambiguity register
 
 > **CodeOps Artifact Schema**: 1
-> **Last Updated**: 2026-07-25 01:15
+> **Last Updated**: 2026-07-25 01:36
 > **Runtime items added during execution**: yes
 
 ## Resolved ambiguities
+
+### AR-05 (runtime) — Phase C quality correction boundaries
+
+- **Authority**: AI — delegated by `--auto-design`.
+- **Eligibility**: Internal deadlines, identity binding, event ordering, bounded search, and
+  hostile-input validation inside the approved Phase C behavior. The host callback contract and
+  host-owned persistence decisions remain unchanged.
+- **Objective**: Preserve responsiveness and exact-revision authority under stalled integrations,
+  large documents, concurrent edits, and hostile runtime values.
+- **Decision**: Give host-owned effects a configurable deadline with a conservative five-second
+  default, cap concurrent effects at eight, settle owned deadlines during disposal, and ignore
+  late completion. Bind save text and close authorization to exact document identities. Queue
+  external reload events before best-effort language-service resynchronization and bound transport
+  notifications with the existing interaction deadline. Retain no more search matches than the
+  renderer's 5,000-span ceiling, cache deeply immutable span normalization, and replace
+  whole-document case-fold maps with a streaming source-offset-aware matcher. Scan non-full-size
+  documents in cancellable 256-KiB turns. Accept only primitive bounded search-field input, and
+  enforce the same 4,096-code-point ceiling at the public document-search boundary.
+- **Evidence**: Independent correctness, security, and performance review reproduced close and
+  save identity races, reload/edit event reordering, a permanently blocked host queue, unresolved
+  formatting saves, large case-fold memory amplification, excess retained decorations, and
+  accessor execution through unvalidated runtime values.
+- **Rejected alternatives**: An unbounded host callback can freeze every later queued action;
+  trusting the current identity after awaiting formatting can pair old text with a newer revision;
+  retaining 100,000 matches cannot help a renderer that rejects more than 5,000 spans; whole-text
+  folding violates the accepted large-document target.
+- **Strongest counterargument**: A fixed deadline can classify a legitimately slow host action as
+  failed. Making the deadline configurable preserves bounded editor progress while allowing an
+  embedding application to choose a value appropriate for its persistence boundary.
+- **Confidence**: High — each decision directly closes a reproduced major finding without
+  expanding product scope or changing successful host behavior.
+- **Hardening**: Three independent reviewers covered correctness, security, and performance. All
+  major findings are accepted for correction and will receive one independent re-review.
+- **Policy version**: 1.
+- **Root invocation ID**: `code-editor-functional-completion-2026-07-24`.
+- **Reopen triggers**: A supported host needs cancellation propagation, renderer decoration
+  capacity changes, Unicode folding semantics require overlapping matches, or the deadline cannot
+  be configured without breaking existing construction.
+
+### AR-04 (runtime) — Phase C search and lifecycle ownership
+
+- **Authority**: AI — delegated by `--auto-design`.
+- **Eligibility**: Additive internal state ownership, command bindings, typed host effects, and
+  compatibility mechanisms inside the approved search, replacement, save, close, and external
+  change behavior. Persistence and conflict decisions remain host-owned.
+- **Objective**: Make the complete document workflow keyboard-operable and revision-safe without
+  adding I/O or duplicating document mutation policy in terminal widgets.
+- **Decision**: Keep transient find/replace focus and field state in one focused UI search
+  session, while every accepted replacement uses the controller mutation boundary with `search`
+  origin. Add canonical previous, replace-current, replace-all, dismiss, and replace-open
+  commands; use `Ctrl+H`, `Shift+F3`, field traversal with Tab, directional Enter, and Escape
+  restoration. The controller owns save, dirty-close, and external-change orchestration. Save
+  effects carry exact submitted text, revision, and formatting outcome; the document is marked
+  saved only when the host accepts that still-current identity. External keep/reload/compare is
+  supplied as an explicit typed host decision; only reload mutates locally, while compare remains
+  a host effect. Existing boolean host callbacks and valid editor construction remain compatible.
+- **Evidence**: The editor currently retains only a query string and forward search, while the
+  document already supplies bounded literal matching and the controller supplies the reviewed
+  atomic mutation seam. The coordinator already returns safe format-on-save text and outcomes,
+  but the existing save effect omits both and marks no exact save checkpoint. The document model
+  already supports modified state, exact save checkpoints, and lineage replacement.
+- **Rejected alternatives**: Controller-owned modal keystroke state would couple terminal focus
+  to document policy; widget-owned direct transactions would bypass controller invalidation;
+  letting save callbacks mark whichever revision is current would incorrectly clear edits made
+  during an in-flight save; automatic external reload would violate explicit conflict ownership;
+  widening the existing host callback return type would add unnecessary compatibility risk.
+- **Strongest counterargument**: A single controller-owned search model could make non-visual
+  commands easier to share across multiple views. Each controller owns one editor document and
+  the approved product has one terminal editor view per controller, so retaining field focus in
+  the view avoids exposing presentation mechanics while controller mutations remain reusable.
+- **Confidence**: High — current APIs already separate literal search, document mutation, LSP
+  formatting, and host effects at the required boundaries.
+- **Hardening**: Forced reframing favored an additive search-session module and typed controller
+  lifecycle methods over expanding the document model or host callback. Reopen if independent
+  review finds a second view must share live search field focus or exact-revision save cannot be
+  enforced without changing the document checkpoint API.
+- **Policy version**: 1.
+- **Root invocation ID**: `code-editor-functional-completion-2026-07-24`.
+- **Reopen triggers**: Multiple terminal views share one controller, a required key conflicts with
+  an established valid binding, format-on-save cannot expose its submitted identity, or external
+  reload must bypass the normal read-only mutation boundary.
 
 ### AR-03 (runtime) — Phase B review correction boundaries
 

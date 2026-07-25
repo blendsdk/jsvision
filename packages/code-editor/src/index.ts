@@ -109,6 +109,13 @@ export type {
   ProtocolPosition,
   ProtocolRange,
 } from './lsp/types.js';
+export type {
+  CodeEditorDocumentLifecycleHostEffect,
+  CodeEditorExternalChangeDecision,
+  CodeEditorExternalChangeInput,
+  CodeEditorExternalChangeResult,
+  CodeEditorSaveFormattingOutcome,
+} from './document-lifecycle.js';
 export { CodeEditorController, createCodeEditorController } from './controller.js';
 export type {
   CodeEditorControllerEvent,
@@ -130,6 +137,8 @@ export type {
   CodeEditorKeyRoute,
   CodeEditorOptions,
   CodeEditorProjectedCell,
+  CodeEditorSearchField,
+  CodeEditorSearchState,
   CodeEditorViewportMetrics,
   CodeEditorWindowOptions,
   ProjectCodeEditorOptions,

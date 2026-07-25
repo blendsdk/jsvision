@@ -36,11 +36,14 @@ execute(command: CodeEditorCommand): void
 insertText(text: string): boolean
 viewportMetrics: CodeEditorViewportMetrics
 interactionRevision: number
+searchState: CodeEditorSearchState
 resizeViewport(width: number, height: number): void
 openCompletion(items: readonly CodeEditorCompletionItem[]): void
 openModal(modal: CodeEditorModalState): void
 startSnippet(placeholders: readonly { readonly from: number; readonly to: number }[]): void
 setSearchQuery(query: string): void
+setReplacementText(replacement: string): void
+setSearchCaseSensitive(caseSensitive: boolean): void
 routeKey(key: CodeEditorKey): CodeEditorKeyRoute
 setTheme(theme: CodeEditorTheme | ResolvedCodeEditorTheme): void
 project(options: {
@@ -122,6 +125,9 @@ replaceSelection(text: string): boolean
 applyMutation(input: CodeEditorMutationInput): DocumentMutationResult
 applyDocumentEdits(edits: readonly DocumentEditInput[], selection: DocumentSelectionInput): boolean
 hostAction(kind: 'navigate' | 'save' | 'close'): Promise<boolean>
+save(): Promise<boolean>
+requestClose(): Promise<boolean>
+resolveExternalChange(input: CodeEditorExternalChangeInput): Promise<CodeEditorExternalChangeResult>
 requestAssistance(): void
 triggerAssistance(character: string): void
 requestHover(): void
@@ -176,13 +182,10 @@ type CodeEditorControllerEvent = | {
 Host-owned effects raised by keyboard commands that leave the editor boundary.
 
 ```ts
-type CodeEditorControllerHostEffect = | CodeEditorHostEffect
-  | {
-      readonly kind: 'save' | 'close';
-      readonly originUri: string;
-      readonly originRevision: number;
-      readonly sessionGeneration: number;
-    }
+type CodeEditorControllerHostEffect = (CodeEditorHostEffect | CodeEditorDocumentLifecycleHostEffect) & {
+  /** Present only for save effects; optional here to support generic host event inspection. */
+  readonly formatting?: CodeEditorSaveFormattingOutcome;
+}
 ```
 
 ## CodeEditorControllerMetrics
@@ -312,6 +315,40 @@ interface CodeEditorDisposable {
 }
 ```
 
+## CodeEditorDocumentLifecycleHostEffect
+
+Typed persistence and conflict effects that remain under host authority.
+
+```ts
+type CodeEditorDocumentLifecycleHostEffect = | {
+      /** Requests persistence of one exact source revision. */
+      readonly kind: 'save';
+      readonly originUri: string;
+      readonly originRevision: number;
+      readonly sessionGeneration: number;
+      readonly text: string;
+      readonly formatting: CodeEditorSaveFormattingOutcome;
+    }
+  | {
+      /** Requests permission to close the active document. */
+      readonly kind: 'close';
+      readonly originUri: string;
+      readonly originRevision: number;
+      readonly sessionGeneration: number;
+      readonly modified: boolean;
+    }
+  | {
+      /** Requests a host-owned comparison without exposing local source text. */
+      readonly kind: 'external-change';
+      readonly originUri: string;
+      readonly originRevision: number;
+      readonly sessionGeneration: number;
+      readonly decision: 'compare';
+      readonly text: string;
+      readonly modified: boolean;
+    }
+```
+
 ## CodeEditorDocumentModel
 
 Pure in-memory document model used by editor, language, and protocol layers.
@@ -330,6 +367,7 @@ historyRetainedBytes: number
 modified: boolean
 readOnly: boolean
 sizeMode: DocumentSizeMode
+maximumDocumentBytes: number
 uri: string | undefined
 languageId: CodeEditorLanguageId
 lineEnding: DocumentLineEnding
@@ -361,6 +399,33 @@ interface CodeEditorDocumentSizeClassification {
   language?: 'plain';
   preservedFeatures: readonly EssentialCodeEditorFeature[];
 }
+```
+
+## CodeEditorExternalChangeDecision
+
+Explicit host decision for one already-detected external document change.
+
+```ts
+type CodeEditorExternalChangeDecision = 'keep' | 'reload' | 'compare'
+```
+
+## CodeEditorExternalChangeInput
+
+Untrusted external content and the host's explicit conflict decision.
+
+```ts
+interface CodeEditorExternalChangeInput {
+  text: string;   // Exact external source supplied by the host.
+  decision: CodeEditorExternalChangeDecision;   // Explicit action selected by the host or user.
+}
+```
+
+## CodeEditorExternalChangeResult
+
+Result of applying one external-change decision.
+
+```ts
+type CodeEditorExternalChangeResult = 'kept' | 'reloaded' | 'compare-requested' | 'rejected'
 ```
 
 ## CodeEditorFrame
@@ -568,7 +633,11 @@ navigateBack(): boolean
 chooseNavigationTarget(index: number): Promise<void>
 proposeWorkspaceEdit(edit: unknown): Promise<boolean>
 forwardCommand(command: unknown): Promise<boolean>
-save(): Promise<{ readonly text: string; readonly formatting: string }>
+save(): Promise<{
+    readonly text: string;
+    readonly formatting: string;
+    readonly identity: DocumentIdentity;
+  }>
 tick(): void
 commandAvailability: CodeEditorLspCommandAvailability
 ```
@@ -813,6 +882,39 @@ interface CodeEditorProjectedCell {
 }
 ```
 
+## CodeEditorSaveFormattingOutcome
+
+Stable outcomes reported for format-on-save preparation.
+
+```ts
+type CodeEditorSaveFormattingOutcome = 'disabled' | 'applied' | 'invalid' | 'stale' | 'cancelled' | 'failure' | 'timeout'
+```
+
+## CodeEditorSearchField
+
+Field that currently receives keyboard input in the find/replace surface.
+
+```ts
+type CodeEditorSearchField = 'query' | 'replacement'
+```
+
+## CodeEditorSearchState
+
+Immutable public state for the keyboard-operable find/replace surface.
+
+```ts
+interface CodeEditorSearchState {
+  open: boolean;   // Whether the search surface currently owns text input.
+  replace: boolean;   // Whether replacement controls are available.
+  activeField: CodeEditorSearchField;   // Field that receives printable keys and Backspace.
+  query: string;   // Bounded literal query.
+  replacement: string;   // Bounded literal replacement text.
+  caseSensitive: boolean;   // Whether matching distinguishes letter case.
+  current: number;   // One-based active result, or zero when no result exists.
+  total: number;   // Number of retained non-overlapping matches.
+}
+```
+
 ## CodeEditorTheme
 
 Versioned, complete semantic palette consumed by the editor projection.
@@ -918,6 +1020,7 @@ Options for one document-scoped code-editor controller.
 interface CreateCodeEditorControllerOptions {
   document: CodeEditorDocumentModel;
   host?: (effect: CodeEditorControllerHostEffect) => Promise<boolean>;
+  hostEffectTimeoutMs?: number;   // Deadline for host-owned effects before the editor releases its serialized action queue.
   lsp?: CodeEditorLspCoordinator;
   languageResult?: LocalLanguageResult;
   limits?: CodeEditorLimitsInput;

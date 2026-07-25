@@ -192,6 +192,31 @@ describe('reviewed language-service request lifecycle', () => {
     expect(coordinator.closed).toBe(true);
     expect(coordinator.retainedState.pendingRequests).toBe(0);
   });
+
+  it('should release the synchronization barrier after a transport notification deadline', async () => {
+    const session = new ControlledSession({ hover: true });
+    const clock = createClock();
+    const coordinator = createCodeEditorLspCoordinator({
+      document: createDocumentModel({ text: 'value', uri, languageId: 'typescript' }),
+      session,
+      uri,
+      languageId: 'typescript',
+      clock,
+      interactiveTimeoutMs: 5_000,
+    });
+    await coordinator.open();
+    session.hangClose = true;
+
+    const stalled = coordinator.resynchronize();
+    await Promise.resolve();
+    clock.advanceBy(5_000);
+    await expect(stalled).rejects.toThrow(/timed out/u);
+    expect(coordinator.serviceState).toBe('degraded');
+
+    session.hangClose = false;
+    await expect(coordinator.resynchronize()).resolves.toBeUndefined();
+    expect(coordinator.serviceState).toBe('ready');
+  });
 });
 
 describe('reviewed language-intelligence state boundaries', () => {

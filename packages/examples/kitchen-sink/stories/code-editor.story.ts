@@ -73,17 +73,20 @@ export const codeEditorStory: Story & {
         controller.setLanguageResult(result);
         editor.invalidate();
       });
-    void coordinator.open().then(() => {
-      if (disposed) return;
-      session.publishDiagnostics(document.uri ?? '', Number(document.identity.revision), [
-        {
-          range: { start: { line: 1, character: 9 }, end: { line: 1, character: 24 } },
-          message: 'Simulated diagnostic',
-          severity: 3,
-        },
-      ]);
-      editor.invalidate();
-    });
+    void coordinator
+      .open()
+      .then(() => {
+        if (disposed) return;
+        session.publishDiagnostics(document.uri ?? '', Number(document.identity.revision), [
+          {
+            range: { start: { line: 1, character: 9 }, end: { line: 1, character: 24 } },
+            message: 'Simulated diagnostic',
+            severity: 3,
+          },
+        ]);
+        editor.invalidate();
+      })
+      .catch(() => undefined);
     const group = new Group();
     const editorHeight = Math.max(4, context.height - 3);
     group.add(at(editor, 0, 0, Math.max(20, context.width), editorHeight));
