@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-25 10:05
-> **Progress**: 18/66 tasks (27%)
+> **Last Updated**: 2026-07-25 10:41
+> **Progress**: 21/66 tasks (32%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -78,15 +78,15 @@ package tests, 34/34 root tasks, and plugin integrity passed. See
 
 ## Phase 2: Secure sources and Node loader
 
-> **Phase baseline tree**: _(recorded at execution)_
+> **Phase baseline tree**: de0c4fb57d8b46e15ca4dad46d893649a40e3fc7
 
 ### Step 2.1: Specification tests
 
 **Reference**: [03-02](03-02-sources-and-security.md) · AR-32, AR-40, AR-43, AR-45
 
-- [ ] 2.1.1 [spec-author] Add ordered, optional/required, abort, and caller-owned transport tests for ST-17–ST-20 — `packages/i18n/test/sources.spec.test.ts`, `packages/i18n/test/fixtures/sources.ts`
-- [ ] 2.1.2 [spec-author] Add rooted-path, strict JSON, UTF-8, limit, race, and completeness tests for ST-21–ST-29 — `packages/i18n/test/node-loader.spec.test.ts`, `packages/i18n/test/fixtures/node.ts`
-- [ ] 2.1.3 Run the Phase 2 spec suites and record expected missing-source/loader failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
+- [x] 2.1.1 [spec-author] Add ordered, optional/required, abort, and caller-owned transport tests for ST-17–ST-20 — `packages/i18n/test/sources.spec.test.ts`, `packages/i18n/test/fixtures/sources.ts` — six public source tests observed red on the missing orchestrator ✅ (completed: 2026-07-25 10:41)
+- [x] 2.1.2 [spec-author] Add rooted-path, strict JSON, UTF-8, limit, race, and completeness tests for ST-21–ST-29 — `packages/i18n/test/node-loader.spec.test.ts`, `packages/i18n/test/fixtures/node.ts` — Node entry absence confirmed before collection ✅ (completed: 2026-07-25 10:41)
+- [x] 2.1.3 Run the Phase 2 spec suites and record expected missing-source/loader failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md` — red confirmed: six missing `loadI18n` failures plus missing Node entry ✅ (completed: 2026-07-25 10:41)
 
 ### Step 2.2: Implementation
 
