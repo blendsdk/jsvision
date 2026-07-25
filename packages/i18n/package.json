@@ -1,0 +1,48 @@
+{
+  "name": "@jsvision/i18n",
+  "version": "1.1.0",
+  "description": "Zero-dependency internationalization for JSVision applications and packages",
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "localization",
+    "tui",
+    "terminal",
+    "typescript"
+  ],
+  "homepage": "https://github.com/blendsdk/jsvision#readme",
+  "bugs": "https://github.com/blendsdk/jsvision/issues",
+  "license": "MIT",
+  "author": "TrueSoftware B.V. <gevik@truesoftware.nl>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blendsdk/jsvision.git",
+    "directory": "packages/i18n"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "import": "./dist/node/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ]
+}
