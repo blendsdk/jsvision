@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-25 09:29
-> **Progress**: 17/66 tasks (26%)
+> **Last Updated**: 2026-07-25 09:40
+> **Progress**: 18/66 tasks (27%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -70,7 +70,7 @@ plugin generation, performance, and digest-bound translation review.
 - [x] 1.3.3 Add diagnostic-bound and formatter-cache implementation coverage — `packages/i18n/test/diagnostics.impl.test.ts`, `packages/i18n/test/cache.impl.test.ts` — 17 implementation tests green ✅ (completed: 2026-07-25 09:13)
 - [x] 1.3.4 Add adversarial coercion and snapshot atomicity implementation coverage — `packages/i18n/test/security.impl.test.ts`, `packages/i18n/test/service.impl.test.ts` — 18 hardening tests plus 12 cache regressions green ✅ (completed: 2026-07-25 09:22)
 - [x] 1.3.5 Document package API, compatibility, and initial changelog — `packages/i18n/README.md`, `packages/i18n/CHANGELOG.md`, `packages/i18n/LICENSE` ✅ (completed: 2026-07-25 09:29)
-- [ ] 1.3.6 Verify Phase 1 with package build/typecheck/test/docs/dependency checks and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
+- [x] 1.3.6 Verify Phase 1 with package build/typecheck/test/docs/dependency checks and root `yarn verify` — `packages/i18n/package.json`, `packages/i18n/tsconfig.typecheck.json`, `codeops/features/i18n/plans/i18n/99-execution-plan.md` (mechanical correction: activated the package-local gates) — package-local gates and 34-task root verification green ✅ (completed: 2026-07-25 09:40)
 
 ## Phase 2: Secure sources and Node loader
 

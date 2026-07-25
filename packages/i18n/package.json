@@ -44,5 +44,17 @@
     "CHANGELOG.md",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md"
-  ]
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "test": "vitest run --project unit",
+    "test:e2e": "vitest run --project e2e --passWithNoTests",
+    "check:deps": "node ../../scripts/check-no-native-deps.mjs .",
+    "check:docs": "node ../../scripts/check-jsdoc.mjs ."
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "vitest": "^4.1.10"
+  }
 }
