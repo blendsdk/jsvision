@@ -26,10 +26,12 @@ import {
   waitForCodeEditorScenario,
 } from './scenarios.js';
 import { SharedSessionCodeEditorWindow } from './shared-session-window.js';
+import { readyCodeEditorQaResult, runCodeEditorQaCheck, type CodeEditorQaCheckResult } from './qa-checks.js';
 
 const TAB_COMMAND = 'code-editor.tab';
 const SHIFT_TAB_COMMAND = 'code-editor.shift-tab';
 const NEXT_PEER_COMMAND = 'code-editor.next-peer';
+const RUN_QA_CHECK_COMMAND = 'code-editor.run-check';
 
 /** Live application seams used by interactive operation and headless shell tests. */
 export interface CodeEditorShowcase {
@@ -39,6 +41,12 @@ export interface CodeEditorShowcase {
   select(index: number): void;
   activeScenarioId(): string;
   activeEditor(): CodeEditor;
+  /** Runs the selected scenario's documented QA action and evaluates its public outcome. */
+  runCurrentQaCheck(): Promise<void>;
+  /** Waits for a check started through F5 or the application command router. */
+  whenQaCheckSettled(): Promise<void>;
+  /** Returns the immutable result currently displayed in the QA evidence panel. */
+  qaResult(): CodeEditorQaCheckResult;
 }
 
 /** Invisible command router for menu and status-line scenario actions. */
@@ -76,26 +84,10 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
         CODE_EDITOR_SCENARIOS.map((scenario, index) => item(scenario.title, `code-editor.select.${index}`)),
       ),
       subMenu('~A~ctions', [
+        item('~R~un current QA check', RUN_QA_CHECK_COMMAND, 'F5'),
         item('~E~dit', 'code-editor.action.edit'),
         item('~F~ind', 'code-editor.action.search'),
         item('~O~utline fold', 'code-editor.action.fold'),
-        item('~C~ompletion', 'code-editor.action.completion'),
-        item('~H~over', 'code-editor.action.hover'),
-        item('Signature help', 'code-editor.action.signature'),
-        item('Document symbols', 'code-editor.action.symbols'),
-        item('Diagnostic detail', 'code-editor.action.diagnostic-detail'),
-        item('Snippet traversal', 'code-editor.action.snippet'),
-        item('For~m~at', 'code-editor.action.format'),
-        item('Search / replace', 'code-editor.action.replace'),
-        item('~S~ave request', 'code-editor.action.save'),
-        item('~N~avigate request', 'code-editor.action.navigate'),
-        item('Navigation back', 'code-editor.action.navigation-back'),
-        item('Close request', 'code-editor.action.close'),
-        item('External change', 'code-editor.action.external-change'),
-        item('Cancel / recover', 'code-editor.action.cancel-recover'),
-        item('Host ~a~ccepts save', 'code-editor.action.host-accept'),
-        item('Host ~r~ejects save', 'code-editor.action.host-reject'),
-        item('Host ~c~onflict on save', 'code-editor.action.host-conflict'),
         item('~T~heme', 'code-editor.action.theme'),
         item('Switch ~l~anguage', 'code-editor.action.language'),
         item('Focus next editor peer', NEXT_PEER_COMMAND, 'Ctrl-Tab'),
@@ -105,14 +97,26 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
       statusItem('~Alt-X~ Exit', Commands.quit, 'Alt+X'),
       statusItem('~Ctrl-R~ Reset', 'code-editor.reset', 'Ctrl+R'),
       statusItem('~↑↓ Enter~ Scenario'),
+      statusItem('~F5~ Run QA', RUN_QA_CHECK_COMMAND, 'F5'),
       statusItem('~Tab~ Editor'),
       statusItem('~F10~ Menu'),
     ]),
-    keymap: createKeymap({ tab: TAB_COMMAND, 'shift+tab': SHIFT_TAB_COMMAND, 'ctrl+tab': NEXT_PEER_COMMAND }),
+    keymap: createKeymap({
+      tab: TAB_COMMAND,
+      'shift+tab': SHIFT_TAB_COMMAND,
+      'ctrl+tab': NEXT_PEER_COMMAND,
+      f5: RUN_QA_CHECK_COMMAND,
+    }),
   });
   let width = app.desktop.bounds.width;
   let height = app.desktop.bounds.height;
+  let activeIndex = 0;
   let sidebarWidth = Math.min(28, Math.max(18, Math.floor(width / 3)));
+  const qaPanelHeight = (): number =>
+    CODE_EDITOR_SCENARIOS[activeIndex]?.qa === undefined
+      ? Math.min(7, height)
+      : Math.min(11, Math.max(5, Math.floor(height / 2)));
+  const editorHeight = (): number => Math.max(6, height - qaPanelHeight());
   const navigator = new ListBox({
     items: signal(CODE_EDITOR_SCENARIOS.map((scenario) => scenario.title)),
     focused: signal(0),
@@ -124,9 +128,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
   const sidebarTitle = new Text('Code Editor scenarios');
   sidebar.add(sidebarTitle);
   sidebar.add(navigator);
-  const help = new Text(
-    'Tab/Shift-Tab indent · Ctrl+A/Z/Y · Ctrl+←→\nMouse select · double-click word · wheel scroll\nCtrl+C/X/V · Ctrl+/ comments · F10 menu · Alt-X exits',
-  );
+  const help = new Text('F5 runs the selected QA check\nTab enters editor · F10 menu\nCtrl-R reset · Alt-X exits');
   sidebar.add(help);
 
   /** Fits the borderless navigation list and its fixed help footer to the left application edge. */
@@ -149,26 +151,28 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
   layoutSidebar();
   app.desktop.add(sidebar);
 
-  const inspector = new Window('State / host events');
+  const inspector = new Window('QA guide / live evidence');
   inspector.focusable = false;
   inspector.movable = false;
   inspector.resizable = false;
   inspector.setLayout({
     rect: {
       x: sidebarWidth,
-      y: Math.max(8, height - 7),
+      y: editorHeight(),
       width: Math.max(20, width - sidebarWidth),
-      height: Math.min(7, height),
+      height: Math.max(0, height - editorHeight()),
     },
   });
-  let activeIndex = 0;
   let activeSurface = CODE_EDITOR_SCENARIOS[0]?.mount({
     capabilities: caps,
     width: Math.max(20, width - sidebarWidth),
-    height: Math.max(6, height - 7),
+    height: editorHeight(),
   });
   if (activeSurface === undefined) throw new Error('The Code Editor showcase has no scenarios.');
   let editorWindow = activeSurface instanceof CodeEditorWindow ? activeSurface : undefined;
+  const qaResultState = signal(readyCodeEditorQaResult(CODE_EDITOR_SCENARIOS[activeIndex]?.qa));
+  let qaGeneration = 0;
+  let pendingQaCheck = Promise.resolve();
   const activeEditor = (): CodeEditor => {
     if (
       activeSurface instanceof SharedSessionCodeEditorWindow &&
@@ -179,6 +183,18 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     return activeSurface instanceof CodeEditorWindow ? activeSurface.editor : activeSurface;
   };
   const state = new Text(() => {
+    const scenario = CODE_EDITOR_SCENARIOS[activeIndex];
+    const guide = scenario?.qa;
+    const qaResult = qaResultState();
+    if (guide !== undefined) {
+      return [
+        `Check: ${scenario?.title ?? 'Unavailable'}`,
+        `Why: ${guide.purpose}`,
+        `How: F5 - ${guide.steps.join(' -> ')}`,
+        `Expect: ${guide.expected}`,
+        `Result: ${qaResult.status.toUpperCase()} - ${qaResult.observed}`,
+      ].join('\n');
+    }
     const current = activeEditor().controller.publicState;
     return [
       `scenario=${CODE_EDITOR_SCENARIOS[activeIndex]?.id ?? 'none'} language=${current.language}`,
@@ -190,7 +206,12 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
   });
   state.setLayout({
     position: 'absolute',
-    rect: { x: 1, y: 1, width: Math.max(1, width - sidebarWidth - 2), height: 4 },
+    rect: {
+      x: 1,
+      y: 1,
+      width: Math.max(1, width - sidebarWidth - 2),
+      height: Math.max(1, qaPanelHeight() - 2),
+    },
   });
   inspector.add(state);
   app.desktop.addWindow(inspector);
@@ -202,7 +223,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
         x: sidebarWidth,
         y: 0,
         width: Math.max(20, width - sidebarWidth),
-        height: Math.max(6, height - 7),
+        height: editorHeight(),
       },
     });
     if (activeSurface instanceof CodeEditorWindow) {
@@ -229,14 +250,19 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     inspector.setLayout({
       rect: {
         x: sidebarWidth,
-        y: Math.max(8, height - 7),
+        y: editorHeight(),
         width: Math.max(20, width - sidebarWidth),
-        height: Math.min(7, height),
+        height: Math.max(0, height - editorHeight()),
       },
     });
     state.setLayout({
       position: 'absolute',
-      rect: { x: 1, y: 1, width: Math.max(1, width - sidebarWidth - 2), height: 4 },
+      rect: {
+        x: 1,
+        y: 1,
+        width: Math.max(1, width - sidebarWidth - 2),
+        height: Math.max(1, qaPanelHeight() - 2),
+      },
     });
     activeSurface.setLayout({
       position: 'absolute',
@@ -244,7 +270,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
         x: sidebarWidth,
         y: 0,
         width: Math.max(20, width - sidebarWidth),
-        height: Math.max(6, height - 7),
+        height: editorHeight(),
       },
     });
     editorWindow?.onResized();
@@ -256,18 +282,46 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     if (editorWindow === undefined) app.desktop.remove(activeSurface);
     else app.desktop.removeWindow(editorWindow);
     void disposeCodeEditorScenario(activeSurface);
+    qaGeneration += 1;
     activeIndex = index;
     activeSurface = scenario.mount({
       capabilities: caps,
       width: Math.max(20, width - sidebarWidth),
-      height: Math.max(6, height - 7),
+      height: editorHeight(),
     });
     editorWindow = activeSurface instanceof CodeEditorWindow ? activeSurface : undefined;
+    qaResultState.set(readyCodeEditorQaResult(scenario.qa));
+    layoutShell();
     mountEditorSurface();
+  }
+
+  /** Runs and evaluates the active scenario's one documented QA interaction. */
+  async function runCurrentQaCheck(): Promise<void> {
+    const guide = CODE_EDITOR_SCENARIOS[activeIndex]?.qa;
+    if (guide === undefined) {
+      qaResultState.set(readyCodeEditorQaResult(undefined));
+      state.invalidate();
+      return;
+    }
+    const generation = ++qaGeneration;
+    const surface = activeSurface;
+    qaResultState.set(Object.freeze({ status: 'running', action: guide.action, observed: 'Check in progress.' }));
+    state.invalidate();
+    const check = runCodeEditorQaCheck(surface, guide).then((result) => {
+      if (generation !== qaGeneration || surface !== activeSurface) return;
+      qaResultState.set(result);
+      state.invalidate();
+      activeEditor().invalidate();
+    });
+    pendingQaCheck = check;
+    await check;
   }
 
   const handlers: Record<string, () => void> = {
     'code-editor.reset': () => select(activeIndex),
+    [RUN_QA_CHECK_COMMAND]: () => {
+      void runCurrentQaCheck();
+    },
     [TAB_COMMAND]: () => {
       if (app.loop.getFocused() === navigator.rows) app.loop.focusView(activeEditor());
       else activeEditor().routeKey({ key: 'Tab' });
@@ -333,5 +387,8 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     select,
     activeScenarioId: () => CODE_EDITOR_SCENARIOS[activeIndex]?.id ?? 'none',
     activeEditor,
+    runCurrentQaCheck,
+    whenQaCheckSettled: () => pendingQaCheck,
+    qaResult: () => qaResultState(),
   };
 }
