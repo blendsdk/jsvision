@@ -232,7 +232,7 @@ export interface CatalogSource {
 
 /** Options used to create a service from asynchronous catalog sources. */
 export interface LoadI18nOptions extends CreateI18nOptions {
-  /** Sources whose results are merged in declaration order. */
+  /** Sources whose results are merged in declaration order; at most 256 sources may be started. */
   readonly sources: readonly CatalogSource[];
   /** Optional caller-owned cancellation signal. */
   readonly signal?: AbortSignal;

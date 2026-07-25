@@ -1,13 +1,16 @@
 import { constants, type Stats } from 'node:fs';
-import { open, readdir, realpath, stat, type FileHandle } from 'node:fs/promises';
+import { open, opendir, realpath, stat, type FileHandle } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { isSignalAborted } from '../abort.js';
 import { I18nError } from '../errors.js';
 import { copyDenseArray } from '../input.js';
 import { MAX_CATALOG_MESSAGES } from '../limits.js';
 import { isSafeText } from '../messages.js';
-import { runAfterOpenTestHook } from './test-seam.js';
+import { createLoadResourceBudget, type LoadResourceBudget } from '../source-budget.js';
+import { runAfterOpenTestHook, runAfterRealpathTestHook, runBeforeOpenTestHook } from './test-seam.js';
 
 const PORTABLE_INVALID_SEGMENT = /[<>:"|?*[\]{}!\u0000-\u001F\u007F]/u;
+const MAX_EXPANDED_FILES = 10_000;
 
 /** Parsed portable relative path accepted by the Node catalog loader. */
 export interface CatalogPathPattern {
@@ -21,10 +24,16 @@ export interface CatalogPathPattern {
 
 /** Canonical contained JSON file selected for loading. */
 export interface ResolvedCatalogPath {
+  /** Canonical root against which the opened handle must still prove containment. */
+  readonly canonicalRoot: string;
   /** Canonical absolute path used for the checked open. */
   readonly canonicalPath: string;
   /** Canonical root-relative slash-separated path used for deterministic ordering. */
   readonly relativePath: string;
+  /** Device identifier captured when canonical containment was established. */
+  readonly device: number;
+  /** Inode identifier captured when canonical containment was established. */
+  readonly inode: number;
 }
 
 /** Open regular file plus metadata checked against its canonical path. */
@@ -101,44 +110,106 @@ function portableRelative(root: string, candidate: string): string {
   return relative(root, candidate).split(sep).join('/');
 }
 
+/** Throw promptly between filesystem operations when the shared load is cancelled. */
+function assertNotAborted(signal?: AbortSignal): void {
+  if (signal !== undefined && isSignalAborted(signal)) {
+    throw new I18nError('ABORTED', 'Catalog path resolution was aborted.');
+  }
+}
+
+/** Require meaningful stable identity before trusting a canonicalized file path across an open. */
+function hasStableIdentity(stats: Pick<Stats, 'dev' | 'ino'>): boolean {
+  return stats.dev !== 0 && stats.ino !== 0;
+}
+
 /** Canonicalize one candidate and enforce root containment. */
-async function canonicalContained(root: string, candidate: string): Promise<ResolvedCatalogPath> {
+async function canonicalContained(
+  root: string,
+  candidate: string,
+  signal?: AbortSignal,
+  requireStableIdentity = false,
+): Promise<ResolvedCatalogPath> {
+  assertNotAborted(signal);
   let canonicalPath: string;
+  let pathStats: Stats;
   try {
     canonicalPath = await realpath(candidate);
-  } catch {
+    await runAfterRealpathTestHook(canonicalPath);
+    assertNotAborted(signal);
+    pathStats = await stat(canonicalPath);
+  } catch (error) {
+    if (error instanceof I18nError) throw error;
+    assertNotAborted(signal);
     throw invalidPath();
   }
   if (!isContained(root, canonicalPath)) throw invalidPath();
+  if (requireStableIdentity && !hasStableIdentity(pathStats)) throw invalidPath();
   return Object.freeze({
+    canonicalRoot: root,
     canonicalPath,
+    device: pathStats.dev,
+    inode: pathStats.ino,
     relativePath: portableRelative(root, canonicalPath),
   });
 }
 
+/** Require a canonical file result to obey the same portable literal grammar as declarations. */
+function validateResolvedFile(path: ResolvedCatalogPath): ResolvedCatalogPath {
+  const pattern = validateCatalogPath(path.relativePath);
+  if (pattern.kind !== 'literal') throw invalidPath();
+  return path;
+}
+
 /** Expand one validated literal or immediate glob. */
-async function expandPattern(root: string, pattern: CatalogPathPattern): Promise<readonly ResolvedCatalogPath[]> {
+async function expandPattern(
+  root: string,
+  pattern: CatalogPathPattern,
+  maximumFiles: number,
+  globCache: Map<string, readonly ResolvedCatalogPath[]>,
+  budget: LoadResourceBudget,
+  signal?: AbortSignal,
+): Promise<readonly ResolvedCatalogPath[]> {
   if (pattern.kind === 'literal') {
-    return Object.freeze([await canonicalContained(root, resolve(root, pattern.relativePath))]);
+    const candidate = await canonicalContained(root, resolve(root, pattern.relativePath), signal, true);
+    return Object.freeze([validateResolvedFile(candidate)]);
   }
 
-  const directory = await canonicalContained(root, resolve(root, pattern.directory ?? ''));
+  const directory = await canonicalContained(root, resolve(root, pattern.directory ?? ''), signal);
+  const cached = globCache.get(directory.canonicalPath);
+  if (cached !== undefined) return cached;
+  assertNotAborted(signal);
   let entries;
   try {
-    entries = await readdir(directory.canonicalPath, { withFileTypes: true });
+    entries = await opendir(directory.canonicalPath);
   } catch {
+    assertNotAborted(signal);
     throw invalidPath();
   }
   const candidates: ResolvedCatalogPath[] = [];
-  for (const entry of entries) {
-    if (!entry.name.endsWith('.json') || !isSafeText(entry.name)) continue;
-    const candidate = await canonicalContained(root, resolve(directory.canonicalPath, entry.name));
-    candidates.push(candidate);
+  try {
+    for await (const entry of entries) {
+      assertNotAborted(signal);
+      budget.consumeDirectoryEntry();
+      if (!entry.name.endsWith('.json')) continue;
+      const entryPattern = validateCatalogPath(entry.name);
+      if (entryPattern.kind !== 'literal' || !isSafeText(entry.name)) throw invalidPath();
+      if (candidates.length >= maximumFiles) {
+        throw new I18nError('CATALOG_LIMIT_EXCEEDED', 'Catalog source expands beyond its file limit.');
+      }
+      const candidate = await canonicalContained(root, resolve(directory.canonicalPath, entry.name), signal, true);
+      candidates.push(validateResolvedFile(candidate));
+    }
+  } catch (error) {
+    if (error instanceof I18nError) throw error;
+    assertNotAborted(signal);
+    throw invalidPath();
   }
   candidates.sort((left, right) =>
     left.relativePath < right.relativePath ? -1 : left.relativePath > right.relativePath ? 1 : 0,
   );
-  return Object.freeze(candidates);
+  const published = Object.freeze(candidates);
+  globCache.set(directory.canonicalPath, published);
+  return published;
 }
 
 /**
@@ -153,60 +224,138 @@ async function expandPattern(root: string, pattern: CatalogPathPattern): Promise
  * @returns Frozen ordered canonical file paths.
  * @throws {@link I18nError} with `INVALID_PATH` for invalid roots, declarations, or containment.
  */
-export async function resolveCatalogPaths(root: unknown, paths: unknown): Promise<readonly ResolvedCatalogPath[]> {
+export async function resolveCatalogPaths(
+  root: unknown,
+  paths: unknown,
+  signal?: AbortSignal,
+  budget: LoadResourceBudget = createLoadResourceBudget(),
+): Promise<readonly ResolvedCatalogPath[]> {
   if (typeof root !== 'string' || root.length === 0) throw invalidPath();
   const pathValues = copyDenseArray(paths, MAX_CATALOG_MESSAGES);
   if (pathValues === undefined) throw invalidPath();
 
+  assertNotAborted(signal);
   let canonicalRoot: string;
   try {
     canonicalRoot = await realpath(resolve(root));
+    assertNotAborted(signal);
     const rootStats = await stat(canonicalRoot);
     if (!rootStats.isDirectory()) throw invalidPath();
   } catch (error) {
     if (error instanceof I18nError) throw error;
+    assertNotAborted(signal);
     throw invalidPath();
   }
 
   const resolved: ResolvedCatalogPath[] = [];
+  const expansionCache = new Map<string, readonly ResolvedCatalogPath[]>();
+  const globCache = new Map<string, readonly ResolvedCatalogPath[]>();
   for (const value of pathValues) {
+    assertNotAborted(signal);
     const pattern = validateCatalogPath(value);
-    resolved.push(...(await expandPattern(canonicalRoot, pattern)));
+    let expansion = expansionCache.get(pattern.relativePath);
+    if (expansion === undefined) {
+      expansion = await expandPattern(canonicalRoot, pattern, MAX_EXPANDED_FILES, globCache, budget, signal);
+      expansionCache.set(pattern.relativePath, expansion);
+    }
+    if (resolved.length + expansion.length > MAX_EXPANDED_FILES) {
+      throw new I18nError('CATALOG_LIMIT_EXCEEDED', 'Catalog source expands beyond its file limit.');
+    }
+    for (let index = 0; index < expansion.length; index += 1) budget.consumeFile();
+    resolved.push(...expansion);
   }
+  assertNotAborted(signal);
   return Object.freeze(resolved);
 }
 
 /** Compare stable device/inode identity where the runtime exposes meaningful values. */
-function sameIdentity(pathStats: Stats, handleStats: Stats): boolean {
-  if (pathStats.dev === 0 || pathStats.ino === 0 || handleStats.dev === 0 || handleStats.ino === 0) {
-    return true;
+function sameIdentity(expected: Pick<ResolvedCatalogPath, 'device' | 'inode'>, actual: Stats): boolean {
+  return (
+    expected.device !== 0 &&
+    expected.inode !== 0 &&
+    actual.dev !== 0 &&
+    actual.ino !== 0 &&
+    expected.device === actual.dev &&
+    expected.inode === actual.ino
+  );
+}
+
+/** Tie containment to the opened object instead of another pre-open pathname snapshot. */
+async function verifyOpenedContainment(
+  candidate: ResolvedCatalogPath,
+  handle: FileHandle,
+  handleStats: Stats,
+  signal?: AbortSignal,
+): Promise<void> {
+  assertNotAborted(signal);
+  if (process.platform === 'linux') {
+    let openedPath: string;
+    try {
+      openedPath = await realpath(`/proc/self/fd/${handle.fd}`);
+    } catch {
+      throw invalidPath();
+    }
+    assertNotAborted(signal);
+    if (!isContained(candidate.canonicalRoot, openedPath)) throw invalidPath();
+    return;
   }
-  return pathStats.dev === handleStats.dev && pathStats.ino === handleStats.ino;
+
+  // Node does not expose a portable handle-to-path query outside Linux. Re-canonicalize after the
+  // handle is open and require both containment and the same stable identity. This is the strongest
+  // portable check available without a native openat-style dependency.
+  let openedPath: string;
+  let openedPathStats: Stats;
+  try {
+    openedPath = await realpath(candidate.canonicalPath);
+    assertNotAborted(signal);
+    openedPathStats = await stat(openedPath);
+  } catch (error) {
+    if (error instanceof I18nError) throw error;
+    throw invalidPath();
+  }
+  if (!isContained(candidate.canonicalRoot, openedPath) || !sameIdentity(candidate, openedPathStats)) {
+    throw invalidPath();
+  }
+  if (!sameIdentity(candidate, handleStats)) throw invalidPath();
 }
 
 /**
  * Open one canonical candidate and verify the resulting handle is the checked regular file.
  *
- * Non-regular inputs are rejected before opening so FIFO paths cannot block. On platforms with
- * device/inode identity, the opened handle must match the pre-open canonical path metadata.
+ * Non-regular inputs are rejected before opening. POSIX opens are also non-blocking so a FIFO
+ * swapped into the final path cannot stall before handle validation. The opened handle must match
+ * the stable device/inode identity captured when canonical containment was established.
  *
  * @param candidate Canonical contained path returned by {@link resolveCatalogPaths}.
  * @returns Checked handle, size, and canonical path.
  * @throws {@link I18nError} with `INVALID_PATH` when the target is missing, non-regular, replaced,
  * or cannot be opened safely.
  */
-export async function openCheckedCatalogFile(candidate: ResolvedCatalogPath): Promise<CheckedCatalogFile> {
+export async function openCheckedCatalogFile(
+  candidate: ResolvedCatalogPath,
+  signal?: AbortSignal,
+): Promise<CheckedCatalogFile> {
+  assertNotAborted(signal);
   const pathStats = await stat(candidate.canonicalPath).catch((): never => {
+    assertNotAborted(signal);
     throw invalidPath();
   });
-  if (!pathStats.isFile()) throw invalidPath();
+  assertNotAborted(signal);
+  if (!pathStats.isFile() || !sameIdentity(candidate, pathStats)) throw invalidPath();
 
   let handle: FileHandle | undefined;
   try {
-    const flags = process.platform === 'win32' ? constants.O_RDONLY : constants.O_RDONLY | constants.O_NOFOLLOW;
+    await runBeforeOpenTestHook(candidate.canonicalPath);
+    assertNotAborted(signal);
+    const flags =
+      process.platform === 'win32'
+        ? constants.O_RDONLY
+        : constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK;
     handle = await open(candidate.canonicalPath, flags);
     const handleStats = await handle.stat();
-    if (!handleStats.isFile() || !sameIdentity(pathStats, handleStats)) throw invalidPath();
+    if (!handleStats.isFile() || !sameIdentity(candidate, handleStats)) throw invalidPath();
+    await verifyOpenedContainment(candidate, handle, handleStats, signal);
+    assertNotAborted(signal);
     await runAfterOpenTestHook(candidate.canonicalPath);
     return Object.freeze({
       canonicalPath: candidate.canonicalPath,
@@ -216,6 +365,7 @@ export async function openCheckedCatalogFile(candidate: ResolvedCatalogPath): Pr
   } catch (error) {
     await handle?.close().catch(() => undefined);
     if (error instanceof I18nError) throw error;
+    assertNotAborted(signal);
     throw invalidPath();
   }
 }

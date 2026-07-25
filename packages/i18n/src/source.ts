@@ -1,8 +1,10 @@
+import { addAbortListener, isSignalAborted, validateAbortSignal } from './abort.js';
 import { I18nError } from './errors.js';
 import { copyDenseArray, inspectArray, inspectOwnDataProperty, inspectOwnKeys, isObjectLike } from './input.js';
 import { MAX_CATALOG_MESSAGES } from './limits.js';
 import { isSafeText } from './messages.js';
 import { createI18nWithDiagnostics, type InitialI18nDiagnostic } from './service.js';
+import { createLoadResourceBudget, registerLoadResourceBudget, unregisterLoadResourceBudget } from './source-budget.js';
 import type {
   Catalog,
   CatalogSource,
@@ -13,6 +15,14 @@ import type {
   LoadI18nOptions,
 } from './types.js';
 import { defineCatalog } from './validation.js';
+import { isValidatedCatalog, validatedCatalogMetrics } from './validated-catalog.js';
+
+/** Maximum asynchronous sources started by one atomic load. */
+const MAX_CATALOG_SOURCES = 256;
+/** Maximum templates compiled across every catalog in one published service. */
+const MAX_LOAD_COMPILATION_UNITS = 100_000;
+/** Maximum aggregate message bytes compiled across one published service. */
+const MAX_LOAD_MESSAGE_BYTES = 16 * 1024 * 1024;
 
 const LOAD_OPTION_FIELDS = new Set<PropertyKey>([
   'locale',
@@ -39,9 +49,47 @@ type SourceSettlement =
   | { readonly source: ResolvedSource; readonly status: 'fulfilled'; readonly value: unknown }
   | { readonly source: ResolvedSource; readonly status: 'rejected' };
 
+/** Monotonic validated-catalog work retained by one not-yet-published service. */
+interface CatalogWorkBudget {
+  /** Validate and reserve one catalog before it can enter a service snapshot. */
+  add(catalog: Catalog): void;
+}
+
 /** Return one public-boundary error without retaining or exposing caller values. */
 function sourceError(message: string): I18nError {
   return new I18nError('SOURCE_FAILED', message);
+}
+
+/** Create an aggregate budget that prevents cheap repeated catalogs from multiplying compilation. */
+function createCatalogWorkBudget(): CatalogWorkBudget {
+  let catalogs = 0;
+  let compilationUnits = 0;
+  let messageBytes = 0;
+  return Object.freeze({
+    add(catalog: Catalog) {
+      const metrics = validatedCatalogMetrics(catalog);
+      if (metrics === undefined) {
+        throw new I18nError('INVALID_CATALOG', 'Catalog did not cross the validation boundary.');
+      }
+      catalogs += 1;
+      compilationUnits += metrics.compilationUnits;
+      messageBytes += metrics.messageBytes;
+      if (
+        catalogs > MAX_CATALOG_MESSAGES ||
+        compilationUnits > MAX_LOAD_COMPILATION_UNITS ||
+        messageBytes > MAX_LOAD_MESSAGE_BYTES
+      ) {
+        throw new I18nError('CATALOG_LIMIT_EXCEEDED', 'Catalog collection exceeds its aggregate work limit.');
+      }
+    },
+  });
+}
+
+/** Validate one catalog identity and reserve its eventual compilation work. */
+function validateCatalogWithinBudget(input: unknown, source: string | undefined, budget: CatalogWorkBudget): Catalog {
+  const catalog = isValidatedCatalog(input) ? input : defineCatalog(input, source === undefined ? {} : { source });
+  budget.add(catalog);
+  return catalog;
 }
 
 /** Read one own data property, rejecting accessors and hostile proxy traps. */
@@ -89,15 +137,6 @@ function resolveSource(input: unknown): ResolvedSource {
   });
 }
 
-/** Check a supplied cancellation signal without allowing proxy failures to escape. */
-function isAbortSignal(value: unknown): value is AbortSignal {
-  try {
-    return value instanceof AbortSignal;
-  } catch {
-    return false;
-  }
-}
-
 /** Copy load options and separate synchronous service construction from source configuration. */
 function resolveLoadOptions(input: LoadI18nOptions): {
   readonly createOptions: Omit<CreateI18nOptions, 'catalogs'>;
@@ -111,7 +150,7 @@ function resolveLoadOptions(input: LoadI18nOptions): {
   validateFields(input, LOAD_OPTION_FIELDS, 'Internationalization load options contain an unsupported member.');
 
   const rawSources = dataProperty(input, 'sources');
-  const sourceValues = copyDenseArray(rawSources, MAX_CATALOG_MESSAGES);
+  const sourceValues = copyDenseArray(rawSources, MAX_CATALOG_SOURCES);
   if (sourceValues === undefined) throw sourceError('Catalog sources must be a dense bounded Array.');
   const rawCatalogs = dataProperty(input, 'catalogs');
   const baseCatalogs =
@@ -119,10 +158,7 @@ function resolveLoadOptions(input: LoadI18nOptions): {
   if (baseCatalogs === undefined) throw new I18nError('INVALID_CATALOG', 'Catalogs must be a dense bounded Array.');
 
   const rawSignal = dataProperty(input, 'signal');
-  if (rawSignal !== undefined && !isAbortSignal(rawSignal)) {
-    throw sourceError('Catalog source signal must be an AbortSignal.');
-  }
-  const signal = rawSignal ?? new AbortController().signal;
+  const signal = rawSignal === undefined ? new AbortController().signal : validateAbortSignal(rawSignal);
   const locale = dataProperty(input, 'locale');
   if (locale !== undefined && typeof locale !== 'string') {
     throw new I18nError('INVALID_LOCALE', 'Requested locale must be a string.');
@@ -172,17 +208,17 @@ async function awaitWithAbort(
   settlements: Promise<readonly SourceSettlement[]>,
   signal: AbortSignal,
 ): Promise<readonly SourceSettlement[]> {
-  if (signal.aborted) throw abortedError();
-  let onAbort: (() => void) | undefined;
+  if (isSignalAborted(signal)) throw abortedError();
+  let cleanup: (() => void) | undefined;
   const aborted = new Promise<never>((_resolve, reject) => {
-    onAbort = () => reject(abortedError());
-    signal.addEventListener('abort', onAbort, { once: true });
-    if (signal.aborted) onAbort();
+    const onAbort = () => reject(abortedError());
+    cleanup = addAbortListener(signal, onAbort);
+    if (isSignalAborted(signal)) onAbort();
   });
   try {
     return await Promise.race([settlements, aborted]);
   } finally {
-    if (onAbort !== undefined) signal.removeEventListener('abort', onAbort);
+    cleanup?.();
   }
 }
 
@@ -203,12 +239,23 @@ function startSources(sources: readonly ResolvedSource[], context: CatalogSource
 }
 
 /** Validate one source result as a single catalog or dense ordered catalog list. */
-function validateSourceCatalogs(value: unknown, source: ResolvedSource): readonly Catalog[] {
+function validateSourceCatalogs(
+  value: unknown,
+  source: ResolvedSource,
+  remaining: number,
+  budget: CatalogWorkBudget,
+): readonly Catalog[] {
   const arrayState = inspectArray(value);
   if (arrayState === undefined) throw sourceError('Catalog source result could not be inspected safely.');
-  const inputs = arrayState ? copyDenseArray(value, MAX_CATALOG_MESSAGES) : Object.freeze([value]);
+  const inputs = arrayState
+    ? copyDenseArray(value, Math.min(MAX_CATALOG_MESSAGES, remaining))
+    : remaining > 0
+      ? Object.freeze([value])
+      : undefined;
   if (inputs === undefined) throw sourceError('Catalog source returned an invalid catalog list.');
-  return Object.freeze(inputs.map((input) => defineCatalog(input, { source: source.name })));
+  const catalogs: Catalog[] = [];
+  for (const input of inputs) catalogs.push(validateCatalogWithinBudget(input, source.name, budget));
+  return Object.freeze(catalogs);
 }
 
 /**
@@ -239,43 +286,54 @@ function validateSourceCatalogs(value: unknown, source: ResolvedSource): readonl
 export async function loadI18n(options: LoadI18nOptions): Promise<I18n> {
   const resolved = resolveLoadOptions(options);
   const context = Object.freeze({ signal: resolved.signal });
-  const settlementPromise = startSources(resolved.sources, context);
-  const settlements = await awaitWithAbort(settlementPromise, resolved.signal);
-  if (resolved.signal.aborted) throw abortedError();
+  registerLoadResourceBudget(context, createLoadResourceBudget());
+  try {
+    const settlementPromise = startSources(resolved.sources, context);
+    const settlements = await awaitWithAbort(settlementPromise, resolved.signal);
+    if (isSignalAborted(resolved.signal)) throw abortedError();
 
-  const sourceCatalogs: Catalog[] = [];
-  const diagnostics: InitialI18nDiagnostic[] = [];
-  for (const settlement of settlements) {
-    if (settlement.status === 'rejected') {
-      if (settlement.source.required) {
-        throw sourceError(`Required catalog source "${settlement.source.name}" failed.`);
-      }
-      diagnostics.push({
-        code: 'SOURCE_FAILED',
-        key: '',
-        source: settlement.source.name,
-      });
-      continue;
+    const catalogBudget = createCatalogWorkBudget();
+    const baseCatalogs: Catalog[] = [];
+    for (const input of resolved.baseCatalogs) {
+      baseCatalogs.push(validateCatalogWithinBudget(input, undefined, catalogBudget));
     }
-    try {
-      sourceCatalogs.push(...validateSourceCatalogs(settlement.value, settlement.source));
-    } catch {
-      if (settlement.source.required) {
-        throw sourceError(`Required catalog source "${settlement.source.name}" returned an invalid catalog.`);
+    const sourceCatalogs: Catalog[] = [];
+    const diagnostics: InitialI18nDiagnostic[] = [];
+    for (const settlement of settlements) {
+      if (settlement.status === 'rejected') {
+        if (settlement.source.required) {
+          throw sourceError(`Required catalog source "${settlement.source.name}" failed.`);
+        }
+        diagnostics.push({
+          code: 'SOURCE_FAILED',
+          key: '',
+          source: settlement.source.name,
+        });
+        continue;
       }
-      diagnostics.push({
-        code: 'SOURCE_FAILED',
-        key: '',
-        source: settlement.source.name,
-      });
+      try {
+        const remaining = MAX_CATALOG_MESSAGES - baseCatalogs.length - sourceCatalogs.length;
+        sourceCatalogs.push(...validateSourceCatalogs(settlement.value, settlement.source, remaining, catalogBudget));
+      } catch {
+        if (settlement.source.required) {
+          throw sourceError(`Required catalog source "${settlement.source.name}" returned an invalid catalog.`);
+        }
+        diagnostics.push({
+          code: 'SOURCE_FAILED',
+          key: '',
+          source: settlement.source.name,
+        });
+      }
     }
+
+    return createI18nWithDiagnostics(
+      {
+        ...resolved.createOptions,
+        catalogs: Object.freeze([...baseCatalogs, ...sourceCatalogs]),
+      },
+      diagnostics,
+    );
+  } finally {
+    unregisterLoadResourceBudget(context);
   }
-
-  return createI18nWithDiagnostics(
-    {
-      ...resolved.createOptions,
-      catalogs: Object.freeze([...resolved.baseCatalogs, ...sourceCatalogs]),
-    },
-    diagnostics,
-  );
 }

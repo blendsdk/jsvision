@@ -1,7 +1,7 @@
 # Ambiguity Register: JSVision i18n Implementation Plan
 
-> **Status**: ✅ GATE PASSED — all 17 plan items resolved
-> **Last Updated**: 2026-07-25 08:13 CEST
+> **Status**: ✅ GATE PASSED — all 19 plan items resolved
+> **Last Updated**: 2026-07-25 21:45 CEST
 > **Planning Target**: `i18n/SET-I18N` (RD-01 through RD-04 as one implementation group)
 > **Context Artifacts**: i18n requirements set, current UI/Forms/Files/Datagrid source and tests,
 > BlendSDK `packages/i18n` source/tests, plugin generators and canonical skill
@@ -34,6 +34,8 @@ decisions discovered after the requirements gate.
 | 44 | Quality / translations | When does human review occur relative to code integration? | Block all code first / draft then review before release phase completion | Implement catalogs as reviewable drafts, but keep RD-04/release incomplete until digest-bound proficient review exists | ✅ Resolved |
 | 45 | Port boundary | Which BlendSDK implementation pieces are reused? | Literal package copy / concepts and suitable tests / dependency wrapper | Port translator/source/merge concepts and applicable behavioral tests; replace stdlib, plural tuples, permissive loader, and omit content files | ✅ Resolved |
 | 46 | Testing / sequencing (runtime) | How are implementation tests kept after the green oracle when module tasks originally named them early? | Keep tests beside module tasks / defer all implementation tests into bounded hardening tasks | Remove `*.impl.test.ts` from implementation tasks; after the complete spec suite turns green, add six bounded implementation-test/documentation/verification tasks | ✅ Resolved |
+| 47 | Node loader API / testing (runtime) | What are the public lower-limit names and deterministic race seam? | Short names / unit-explicit names; public adapter / internal hook | Use unit-explicit limit fields and a non-exported post-open test hook | ✅ Resolved |
+| 48 | Security / resource bounds (runtime) | How do Phase 2 sources remain contained and bounded across races and aggregate inputs? | Path-only rechecks / identity-bound fail-closed handles; per-item limits / aggregate ceilings | Bind opened files to canonicalization-time identity, open POSIX targets non-blocking, use intrinsic abort operations, and enforce source-wide catalog/file/byte ceilings | ✅ Resolved |
 
 ## Resolution Notes
 
@@ -258,3 +260,43 @@ Every entry below uses:
 - **Policy version:** 1.
 - **Reopen triggers:** A portable handle-based test mechanism removes the need for an internal hook,
   or a future loader adds another independently configurable resource dimension.
+
+**AR-48 — Race containment and aggregate source bounds (runtime)**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Security, concurrency, data-structure, and resource-bound mechanisms within the
+  approved rooted-loader and atomic source behavior.
+- **Objective:** Prevent path replacement, blocking special-file swaps, hostile cancellation
+  objects, and individually valid source results from escaping the approved containment and
+  bounded-resource guarantees.
+- **Decision:** Resolved paths retain canonicalization-time device/inode identity and fail closed
+  when meaningful identity is unavailable; POSIX opens add non-blocking and no-follow flags before
+  handle validation. Linux additionally proves containment from `/proc/self/fd/<fd>`, tying it to
+  the opened object rather than a pathname snapshot. Abort state/listeners use captured platform
+  intrinsics, Node rejects live proxies through its built-in proxy detector, and filesystem work
+  checks cancellation between asynchronous operations. One atomic load starts at most 256 sources,
+  publishes at most 10,000 catalogs, compiles at most 100,000 message/case templates, and compiles
+  at most 16 MiB of message text. Built-in sources collectively inspect at most 100,000 directory
+  entries, select at most 10,000 files, and accept at most 16 MiB of checked file bytes. Canonical
+  directory aliases reuse one scan. Already validated catalogs carry a module-private weak brand
+  and work metrics so each identity is validated once and charged before compilation.
+- **Evidence:** The independent Phase 2 reviewers reproduced a parent-directory containment escape
+  and measured aggregate source, glob, buffer, and parser amplification despite per-item limits.
+  Existing engine limits already establish 10,000 catalogs/messages and a 16 MiB in-memory text
+  ceiling, providing consistent internal ceilings without expanding public options.
+- **Rejected alternatives:** Path-only post-open checks still race through replaced parents;
+  component-by-component `openat` traversal has no portable Node API; keeping only per-item limits
+  permits multiplicative exhaustion; a public filesystem adapter or new limit fields would expand
+  the accepted API.
+- **Strongest counterargument:** Fail-closed identity checks may reject unusual filesystems that
+  report zero device/inode values; accepting an unverifiable handle would silently weaken the
+  mandatory containment guarantee.
+- **Confidence:** High.
+- **Hardening:** Independent correctness, security, and performance reviews converged on the same
+  containment and aggregate-bound failures. The selected correction preserves the public API and
+  will receive the required one-time fix re-review.
+- **Policy version:** 1.
+- **Root invocation ID:** `i18n-20260725-01`.
+- **Reopen triggers:** Node exposes portable directory-relative no-follow traversal, supported
+  platforms lack meaningful stable file identity, or real application catalogs approach an
+  aggregate ceiling.

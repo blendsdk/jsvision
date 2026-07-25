@@ -814,7 +814,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-47",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -827,6 +827,31 @@
       ],
       "status": "resolved",
       "title": "Node loader limits and race seam",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01",
+        "hardening:independent correctness security and performance reviewers converged"
+      ],
+      "id": "AR-48",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Race containment and aggregate source bounds",
       "type": "ambiguity",
       "validations": []
     },
@@ -1370,7 +1395,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-30",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1394,7 +1419,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-31",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1418,7 +1443,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-32",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1442,7 +1467,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-33",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1466,7 +1491,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-34",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1490,7 +1515,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-35",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1514,7 +1539,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-36",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1538,7 +1563,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-37",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1562,7 +1587,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-38",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1586,7 +1611,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-39",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1610,7 +1635,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-40",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1634,7 +1659,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-41",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1658,7 +1683,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-42",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1682,7 +1707,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-43",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1706,7 +1731,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-44",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1730,7 +1755,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-45",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3532,7 +3557,8 @@
       "edges": [],
       "evidence": [
         "summary:Phase 2 implementation and hardening are ready for the complete package and repository verification gates",
-        "verificationEvidence:Package build typecheck docs dependencies tarball inspection and all 344 tests passed; root yarn verify completed all 34 tasks and plugin integrity passed"
+        "verificationEvidence:Package build typecheck docs dependencies tarball inspection and all 344 tests passed; root yarn verify completed all 34 tasks and plugin integrity passed",
+        "reviewEvidence:Independent correctness security and performance review plus the one-time fix re-review completed; every finding was corrected without waiver; final 359-test package suite and 34-task root gate passed"
       ],
       "id": "TASK-2-3-2",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
@@ -5181,7 +5207,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-46",
-      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
       "semanticSources": [
         {
           "digest": "sha256",
