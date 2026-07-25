@@ -1,0 +1,3780 @@
+{
+  "feature": "i18n",
+  "nodes": [
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Complete i18n requirement set passed the Zero-Ambiguity and requirements readiness gates"
+      ],
+      "id": "SET-I18N",
+      "members": [
+        "i18n/RD-01",
+        "i18n/RD-02",
+        "i18n/RD-03",
+        "i18n/RD-04"
+      ],
+      "revision": "sha256:91be0ef3a4c04072ed3545c804fc5d7a93e4384791e3296accb546a61a0687a2",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/README.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "JSVision internationalization requirements",
+      "type": "requirement-set",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "i18n/CRIT-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-02"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-06"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-07"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-14"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-15"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-18"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-19"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-20"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-21"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-23"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-26"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-29"
+        },
+        {
+          "relation": "specified-by",
+          "target": "i18n/SPEC-01"
+        }
+      ],
+      "evidence": [
+        "summary:RD-01 passed semantic and acceptance-criteria requirements review"
+      ],
+      "id": "RD-01",
+      "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/RD-01-translation-engine-api.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Translation engine and public API",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/CRIT-01",
+          "validatedAt": "2026-07-24T23:52:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/CRIT-01",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/SPEC-01",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "i18n/TEST-01"
+        }
+      ],
+      "id": "CRIT-01",
+      "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/RD-01-translation-engine-api.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Translation engine acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "i18n/CRIT-02"
+        },
+        {
+          "relation": "depends-on",
+          "target": "i18n/RD-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-10"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-14"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-15"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-16"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-17"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-18"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-21"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-26"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-27"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-29"
+        },
+        {
+          "relation": "specified-by",
+          "target": "i18n/SPEC-02"
+        }
+      ],
+      "evidence": [
+        "summary:RD-02 passed semantic, dependency, and acceptance-criteria requirements review"
+      ],
+      "id": "RD-02",
+      "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/RD-02-catalog-sources-validation.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Catalog sources and validation",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+          "upstream": "i18n/CRIT-02",
+          "validatedAt": "2026-07-24T23:52:00Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/RD-01",
+          "validatedAt": "2026-07-24T23:52:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+          "upstream": "i18n/CRIT-02",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/RD-01",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:511707ea482ce682bcafc5d8fbf32ca61a0a9585329777aa7a013a10486bbb02",
+          "upstream": "i18n/SPEC-02",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "i18n/TEST-02"
+        }
+      ],
+      "id": "CRIT-02",
+      "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/RD-02-catalog-sources-validation.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Catalog source and validation acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "i18n/CRIT-03"
+        },
+        {
+          "relation": "depends-on",
+          "target": "i18n/RD-01"
+        },
+        {
+          "relation": "depends-on",
+          "target": "i18n/RD-02"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-02"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-04"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-08"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-09"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-10"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-12"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-13"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-15"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-20"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-22"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-24"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-28"
+        },
+        {
+          "relation": "specified-by",
+          "target": "i18n/SPEC-03"
+        }
+      ],
+      "evidence": [
+        "summary:RD-03 passed semantic, dependency, and acceptance-criteria requirements review"
+      ],
+      "id": "RD-03",
+      "revision": "sha256:744a42b8bab578e739121db3e839973aec028ee167a27e031e1a90ed721fbf95",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/RD-03-framework-application-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Framework and application integration",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:744a42b8bab578e739121db3e839973aec028ee167a27e031e1a90ed721fbf95",
+          "upstream": "i18n/CRIT-03",
+          "validatedAt": "2026-07-24T23:52:00Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/RD-01",
+          "validatedAt": "2026-07-24T23:52:00Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+          "upstream": "i18n/RD-02",
+          "validatedAt": "2026-07-24T23:52:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:744a42b8bab578e739121db3e839973aec028ee167a27e031e1a90ed721fbf95",
+          "upstream": "i18n/CRIT-03",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/RD-01",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+          "upstream": "i18n/RD-02",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/SPEC-03",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "i18n/TEST-03"
+        }
+      ],
+      "id": "CRIT-03",
+      "revision": "sha256:744a42b8bab578e739121db3e839973aec028ee167a27e031e1a90ed721fbf95",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/RD-03-framework-application-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Framework integration acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "accepted-by",
+          "target": "i18n/CRIT-04"
+        },
+        {
+          "relation": "depends-on",
+          "target": "i18n/RD-01"
+        },
+        {
+          "relation": "depends-on",
+          "target": "i18n/RD-02"
+        },
+        {
+          "relation": "depends-on",
+          "target": "i18n/RD-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-01"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-02"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-03"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-05"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-09"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-10"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-11"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-12"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-13"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-17"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-18"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-20"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-22"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-24"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-25"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-26"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-27"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-29"
+        },
+        {
+          "relation": "specified-by",
+          "target": "i18n/SPEC-04"
+        }
+      ],
+      "evidence": [
+        "summary:RD-04 passed semantic, dependency, and acceptance-criteria requirements review"
+      ],
+      "id": "RD-04",
+      "revision": "sha256:0bbc439f7e426537dbe48a60d2d0ccad626f17ba00306ea329ca78a2dc47a611",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/RD-04-quality-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Quality, documentation, and plugin governance",
+      "type": "requirement",
+      "validations": [
+        {
+          "gate": "requirements",
+          "relation": "accepted-by",
+          "revision": "sha256:0bbc439f7e426537dbe48a60d2d0ccad626f17ba00306ea329ca78a2dc47a611",
+          "upstream": "i18n/CRIT-04",
+          "validatedAt": "2026-07-24T23:52:00Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/RD-01",
+          "validatedAt": "2026-07-24T23:52:00Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+          "upstream": "i18n/RD-02",
+          "validatedAt": "2026-07-24T23:52:00Z"
+        },
+        {
+          "gate": "requirements",
+          "relation": "depends-on",
+          "revision": "sha256:744a42b8bab578e739121db3e839973aec028ee167a27e031e1a90ed721fbf95",
+          "upstream": "i18n/RD-03",
+          "validatedAt": "2026-07-24T23:52:00Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "accepted-by",
+          "revision": "sha256:0bbc439f7e426537dbe48a60d2d0ccad626f17ba00306ea329ca78a2dc47a611",
+          "upstream": "i18n/CRIT-04",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/RD-01",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+          "upstream": "i18n/RD-02",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:744a42b8bab578e739121db3e839973aec028ee167a27e031e1a90ed721fbf95",
+          "upstream": "i18n/RD-03",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "specified-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/SPEC-04",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "relation": "tested-by",
+          "target": "i18n/TEST-04"
+        }
+      ],
+      "id": "CRIT-04",
+      "revision": "sha256:0bbc439f7e426537dbe48a60d2d0ccad626f17ba00306ea329ca78a2dc47a611",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/RD-04-quality-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Quality and release acceptance criteria",
+      "type": "criterion",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-01",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Translation ownership and runtimes",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-02",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Official locale set",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-03",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Official translation quality",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-04",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Application lifecycle",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-05",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Fallback and runtime faults",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-06",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Message capabilities",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-07",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "V1 exclusions",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-08",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Direct package integration",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-09",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Localized layout and conventions",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-10",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Accelerator validation",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-11",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Codex plugin integration",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-12",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Code-editor exclusion",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-13",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Reference application scope",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-14",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Catalog schema evolution",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-15",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Catalog layering and replacement",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-16",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Asynchronous source contract",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-17",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Catalog and loader security",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-18",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Errors and diagnostics",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-19",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Locale detection and normalization",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-20",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Intl behavior and caching",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-21",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Public service introspection",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-22",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Framework catalog composition",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-23",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Structured-message edge behavior",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-24",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "English compatibility and key migration",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-25",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Human review evidence",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-26",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Verification and performance",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-27",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Security responsibility boundary",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-28",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Message key typing",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "AR-29",
+      "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/requirements/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Upstream source provenance",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-30",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 30",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-31",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 31",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-32",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 32",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-33",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 33",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-34",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 34",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-35",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 35",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-36",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 36",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-37",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 37",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-38",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 38",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-39",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 39",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-40",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 40",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-41",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 41",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-42",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 42",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-43",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 43",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-44",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 44",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-45",
+      "revision": "sha256:7d1e3045d4490ef06cda024c42a364e0a7fb4bc007ff5cf0977ea10b1d047d9a",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "I18n planning decision 45",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-7"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-8"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-9"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-3-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-3-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-3-2"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-31"
+        }
+      ],
+      "evidence": [
+        "summary:Component specification passed the zero-ambiguity and specification quality review"
+      ],
+      "id": "SPEC-01",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Engine and catalog specification",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-3-2"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-32"
+        }
+      ],
+      "evidence": [
+        "summary:Component specification passed the zero-ambiguity and specification quality review"
+      ],
+      "id": "SPEC-02",
+      "revision": "sha256:511707ea482ce682bcafc5d8fbf32ca61a0a9585329777aa7a013a10486bbb02",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-02-sources-and-security.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Sources and security specification",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-7"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-3-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-7"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-8"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-9"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-10"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-3-2"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-36"
+        }
+      ],
+      "evidence": [
+        "summary:Component specification passed the zero-ambiguity and specification quality review"
+      ],
+      "id": "SPEC-03",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Framework integration specification",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-7"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-8"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-9"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-10"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-3-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-3-2"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-35"
+        }
+      ],
+      "evidence": [
+        "summary:Component specification passed the zero-ambiguity and specification quality review"
+      ],
+      "id": "SPEC-04",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "Locales documentation and plugin specification",
+      "type": "specification",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-01",
+      "revision": "sha256:c3adb9505c34cfde79b035e94cdc24140782570fbe27003d8f65e224c2701bda",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "RD-01 specification tests",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-02",
+      "revision": "sha256:c3adb9505c34cfde79b035e94cdc24140782570fbe27003d8f65e224c2701bda",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "RD-02 specification tests",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-03",
+      "revision": "sha256:c3adb9505c34cfde79b035e94cdc24140782570fbe27003d8f65e224c2701bda",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "RD-03 specification tests",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TEST-04",
+      "revision": "sha256:c3adb9505c34cfde79b035e94cdc24140782570fbe27003d8f65e224c2701bda",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/07-testing-strategy.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "planned",
+      "title": "RD-04 specification tests",
+      "type": "test",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-1-1",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "[spec-author] Add public construction, lookup, fallback, and interpolation tests for ST-01\u2013ST-08",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-1-2",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "[spec-author] Add plural, select, formatter, overlay, diagnostics, and warm-path tests for ST-09\u2013ST-16",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-1-3",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Run the Phase 1 spec suite and record the expected missing-package/API failures",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-2-1",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Scaffold package metadata, TypeScript/Vitest configuration, and browser-safe public entry",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-2-2",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Define documented public types, stable errors, diagnostics, and exports",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-2-3",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Implement canonical locale parsing and deterministic catalog fallback chains",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-2-4",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Implement text safety, placeholder compilation, plural/select constructors, and evaluation",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-2-5",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Implement schema/completeness/accelerator validation and stable issue formatting",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-2-6",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Implement copied catalog snapshots, ordered merge, and the bounded diagnostic store",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-2-7",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Implement stable formatter-option keys and four 64-entry LRU caches",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-2-8",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Implement `createI18n`, lookup/format/introspection, and atomic runtime overlays",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-2-9",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Run Phase 1 spec tests green; fix implementation only",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-3-1",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Add adversarial validation/coercion and snapshot atomicity implementation coverage",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-3-2",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Document package API, compatibility, and initial changelog",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-1-3-3",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Verify Phase 1 with package build/typecheck/test/docs/dependency checks and root `yarn verify`",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-2-1-1",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "[spec-author] Add ordered, optional/required, abort, and caller-owned transport tests for ST-17\u2013ST-20",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-2-1-2",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "[spec-author] Add rooted-path, strict JSON, UTF-8, limit, race, and completeness tests for ST-21\u2013ST-29",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-2-1-3",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Run the Phase 2 spec suites and record expected missing-source/loader failures",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-2-2-1",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Implement deterministic `loadI18n` orchestration and sanitized optional-source diagnostics",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-2-2-2",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Implement the bounded duplicate-detecting recursive-descent JSON parser",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-2-2-3",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Implement relative-path grammar, immediate glob expansion, canonical containment, and handle checks",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-2-2-4",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Implement fatal UTF-8 bounded file loading and `jsonFileSource` publication",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-2-2-5",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Expose the isolated `./node` package subpath and prove main-entry browser isolation",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-2-2-6",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Run Phase 2 spec tests green; fix source/loader implementation only",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-2-3-1",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Add upstream MIT attribution and validate its inclusion in the packed package",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-2-3-2",
+      "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-01-engine-and-catalog.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Verify Phase 2 with parser/security tests, package gates, packed artifact inspection, and root `yarn verify`",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-1-1",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "[spec-author] Add application identity, compatibility, dependency, and host tests for ST-30\u2013ST-34",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-1-2",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "[spec-author] Add calendar, DatePicker, switch, dialog, message, and editor tests for ST-35\u2013ST-38",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-1-3",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Run the Phase 3 spec suite and record expected missing-injection/catalog failures",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-2-1",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Add UI's direct i18n dependency and inject the exact/default service through Application",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-2-2",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Define UI English catalog keys, accelerator scopes, and service-aware standard buttons",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-2-3",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Localize calendar headings/Today and explicit-locale week conventions without changing ISO values",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-2-4",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Localize default switch labels while preserving explicit labels",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-2-5",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Thread i18n through modal hosts and localize message-box defaults",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-2-6",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Localize package-owned editor dialog text and preserve caller text",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-2-7",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Run Phase 3 spec tests green; fix UI implementation only",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-3-1",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Add the checked UI literal-ownership manifest and conservative scanner",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-3-3-2",
+      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-03-framework-integration.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Verify Phase 3 with UI gates, compatibility snapshots, literal scan, and root `yarn verify`",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-1-1",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "[spec-author] Add Forms, Files, and Datagrid behavior tests for ST-39\u2013ST-42",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-1-2",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "[spec-author] Add ten-locale layout and 40-subpath catalog/package tests for ST-43\u2013ST-48",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-1-3",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Run the Phase 4 spec suites and record expected missing-integration/locale failures",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-2-1",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Add Forms direct dependency/catalog and localize FormDialog defaults",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-2-2",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Add Files direct dependency/catalog and localize dialog action labels",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-2-3",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Localize Files metadata, change-directory, and error dialogs without touching path data",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-2-4",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Add Datagrid direct dependency/catalog and localize default formatting/empty/filter text",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-2-5",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Localize Datagrid filter/personalization surfaces and explicit-i18n collation",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-2-6",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Add canonical ten-locale catalog data and accelerator-scope manifests for all four packages",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-2-7",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Complete Datagrid locale data and implement deterministic locale entry/export generation",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-2-8",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Generate/check explicit locale entry points and package exports in bounded batches",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-2-9",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Generate/check Datagrid locale entries, dependency metadata, and root lockfile",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-2-10",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Run Phase 4 spec tests green; fix consumer/catalog implementation only",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-3-1",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Complete literal classifications and add display-cell layout/invalid-override implementation coverage",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-4-3-2",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Verify Phase 4 with all consumer gates, locale generation/check, layout tests, package builds, and root `yarn verify`",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-5-1-1",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "[spec-author] Add review-evidence, docs/API, plugin recipe, and benchmark tests for ST-49\u2013ST-55",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-5-1-2",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Run Phase 5 spec suites and record expected missing docs/plugin/review failures",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-5-2-1",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Implement normalized catalog digests and strict translation-review manifest verification",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-5-2-2",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Add the consumer i18n guide, Theme Designer recipe, and executable snippet fixtures",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-5-2-3",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Add i18n API generation/navigation and package migration/attribution documentation",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-5-2-4",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Teach the canonical JSVision skill i18n decisions, API, and recipes",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-5-2-5",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Map SDK impact, add localized app recipe validation, and regenerate the distributed plugin",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-5-2-6",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Add fixed cold/warm benchmarks and run Phase 5 non-review spec tests green",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-5-3-1",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Run docs snippets/API generation, `yarn plugin:update`, `yarn plugin:check`, package gates, and root `yarn verify`",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "id": "TASK-5-3-2",
+      "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/03-04-locales-docs-plugin.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "pending",
+      "title": "Obtain proficient-speaker approvals for every non-English catalog digest and pass the review verifier",
+      "type": "task",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "summary:Four-RD planning group passed specification readiness"
+      ],
+      "id": "GROUP-I18N",
+      "members": [
+        "i18n/RD-01",
+        "i18n/RD-02",
+        "i18n/RD-03",
+        "i18n/RD-04"
+      ],
+      "revision": "sha256:944c68fafe79047db77c2fabeb259d988282bc2e6aae174c1122df8bf7410bbc",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-index.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "I18n implementation planning group",
+      "type": "planning-group",
+      "validations": []
+    },
+    {
+      "edges": [
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-30"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-31"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-32"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-33"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-34"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-35"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-36"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-37"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-38"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-39"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-40"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-41"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-42"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-43"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-44"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-45"
+        },
+        {
+          "relation": "depends-on",
+          "target": "i18n/RD-01"
+        },
+        {
+          "relation": "depends-on",
+          "target": "i18n/RD-02"
+        },
+        {
+          "relation": "depends-on",
+          "target": "i18n/RD-03"
+        },
+        {
+          "relation": "depends-on",
+          "target": "i18n/RD-04"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-7"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-8"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-2-9"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-3-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-1-3-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-2-3-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-2-7"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-3-3-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-1-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-7"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-8"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-9"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-2-10"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-4-3-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-1-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-1-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-2"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-3"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-4"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-5"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-2-6"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-3-1"
+        },
+        {
+          "relation": "implemented-by",
+          "target": "i18n/TASK-5-3-2"
+        }
+      ],
+      "evidence": [
+        "summary:Detailed specification-first execution plan with 63 bounded tasks",
+        "summary:Specification-first plan passed zero-ambiguity, security, completeness, and granularity review"
+      ],
+      "id": "PLAN-I18N",
+      "revision": "sha256:af056a9359cb6503bd650d55199483e3326f6ac1a71860439d262d386a086415",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/99-execution-plan.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "approved",
+      "title": "JSVision i18n execution plan",
+      "type": "plan",
+      "validations": [
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/RD-01",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+          "upstream": "i18n/RD-02",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:744a42b8bab578e739121db3e839973aec028ee167a27e031e1a90ed721fbf95",
+          "upstream": "i18n/RD-03",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "plan",
+          "relation": "depends-on",
+          "revision": "sha256:0bbc439f7e426537dbe48a60d2d0ccad626f17ba00306ea329ca78a2dc47a611",
+          "upstream": "i18n/RD-04",
+          "validatedAt": "2026-07-25T05:28:48.346Z"
+        }
+      ]
+    }
+  ],
+  "schema": 2,
+  "updated": "2026-07-25T05:28:48.346Z"
+}
