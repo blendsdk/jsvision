@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-25 08:47
-> **Progress**: 10/66 tasks (15%)
+> **Last Updated**: 2026-07-25 08:54
+> **Progress**: 11/66 tasks (17%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -58,7 +58,7 @@ plugin generation, performance, and digest-bound translation review.
 - [x] 1.2.5 Implement schema/completeness/accelerator validation and stable issue formatting — `packages/i18n/src/validation.ts`, `packages/i18n/src/issue-format.ts` (mechanical correction: isolated CI formatting from validation policy) ✅ (completed: 2026-07-25 08:37)
 - [x] 1.2.6 Implement copied catalog snapshots, ordered merge, and the bounded diagnostic store — `packages/i18n/src/catalog.ts`, `packages/i18n/src/diagnostics.ts` ✅ (completed: 2026-07-25 08:42)
 - [x] 1.2.7 Implement stable formatter-option keys and four 64-entry LRU caches — `packages/i18n/src/cache.ts` ✅ (completed: 2026-07-25 08:47)
-- [ ] 1.2.8 Implement `createI18n`, lookup/format/introspection, and atomic runtime overlays — `packages/i18n/src/service.ts`, `packages/i18n/src/index.ts`
+- [x] 1.2.8 Implement `createI18n`, lookup/format/introspection, and atomic runtime overlays — `packages/i18n/src/service.ts`, `packages/i18n/src/index.ts` ✅ (completed: 2026-07-25 08:54)
 - [ ] 1.2.9 Run Phase 1 spec tests green; fix implementation only — `packages/i18n/test/engine.spec.test.ts`
 
 ### Step 1.3: Hardening and verification
