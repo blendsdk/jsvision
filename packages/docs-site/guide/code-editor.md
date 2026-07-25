@@ -80,6 +80,16 @@ language service answers completion, hover, signature, symbols, diagnostics, nav
 formatting, cancellation, and recovery requests without retaining source-bearing request payloads.
 Host controls separately demonstrate accepted, rejected, and revision-conflicted saves.
 
+Manual QA uses dedicated scenarios whose names start with `QA:`. Select one to see its purpose,
+step-by-step interaction, expected result, and current evidence in the lower panel. Press `F5` or
+choose **Actions → Run current QA check**. Each scenario exercises one behavior through the live
+application command path and reports `PASS` only when its public completion/overlay state,
+document revision, or bounded host event matches the stated expectation. Changing or resetting the
+scenario returns the check to `READY`, preventing evidence from a previous test from carrying over.
+Completion and other assistance popups are framed at the rendered caret position. Their placement
+accounts for gutters and scrolling, flips above the caret when needed, and remains within the
+current editor viewport after resize.
+
 The two-editor scenario shares one in-process protocol transport while preserving distinct
 document URIs, revisions, selections, presentations, cancellation, diagnostics, and host effects.
 It uses two ordinary `CodeEditor` instances rather than tabs or an editor manager, and `Ctrl+Tab`

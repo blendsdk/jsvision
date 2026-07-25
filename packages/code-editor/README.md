@@ -103,6 +103,14 @@ two-editor scenario shares one in-process protocol session while retaining separ
 URIs, revisions, selections, diagnostics, cancellation, presentation, and host effects; it does
 not add tabs or an editor manager. `Ctrl+Tab` switches keyboard focus between the two peers.
 
+For manual acceptance, select any scenario prefixed with `QA:`. The lower evidence panel explains
+why the capability matters, the exact interaction, and the expected visible result. Press `F5` (or
+choose **Actions → Run current QA check**) to invoke that scenario's single primary behavior. The
+panel reports `PASS` only after observing the capability-specific presentation, document revision,
+or bounded host event; selecting or resetting a scenario clears the previous result.
+Completion and other assistance popups open at the rendered caret, including gutter and scroll
+offsets, and automatically clamp or flip above it near a viewport edge.
+
 The fixture catalog also covers extension and explicit language selection, a missing-adapter
 fallback, incomplete and invalid source, LF/CRLF/CR line endings, invisible and hostile Unicode,
 live theme and degradation transitions, lifecycle decisions, terminal resize, and every document

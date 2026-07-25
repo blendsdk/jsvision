@@ -7,6 +7,8 @@ import type { CodeEditorDemoAction } from './scenarios.js';
  * focused on mounting and disposing editor surfaces.
  */
 export function actionsForCodeEditorScenario(id: string): readonly CodeEditorDemoAction[] {
+  const qaAction = qaActionForScenario(id);
+  if (qaAction !== undefined) return Object.freeze([qaAction]);
   if (id === 'language-intelligence')
     return Object.freeze([
       'completion',
@@ -47,4 +49,20 @@ export function actionsForCodeEditorScenario(id: string): readonly CodeEditorDem
   if (id === 'structural-folding') return Object.freeze(['bracket-select', 'fold', 'search']);
   if (id === 'postgresql-folding') return Object.freeze(['fold', 'search']);
   return Object.freeze(['edit', 'search']);
+}
+
+/** Maps each dedicated QA scenario to its single primary interaction. */
+function qaActionForScenario(id: string): CodeEditorDemoAction | undefined {
+  if (id === 'qa-lsp-completion') return 'completion';
+  if (id === 'qa-lsp-hover') return 'hover';
+  if (id === 'qa-lsp-signature') return 'signature';
+  if (id === 'qa-lsp-diagnostics') return 'diagnostic-detail';
+  if (id === 'qa-lsp-symbols') return 'symbols';
+  if (id === 'qa-lsp-formatting') return 'format';
+  if (id === 'qa-lsp-navigation') return 'navigate';
+  if (id === 'qa-lsp-recovery') return 'cancel-recover';
+  if (id === 'qa-host-save-accepted') return 'host-accept';
+  if (id === 'qa-host-save-rejected') return 'host-reject';
+  if (id === 'qa-host-save-conflict') return 'host-conflict';
+  return undefined;
 }

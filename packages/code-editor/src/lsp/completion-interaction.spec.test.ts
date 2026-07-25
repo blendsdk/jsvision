@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { resolveCapabilities } from '@jsvision/core';
+import { createRenderRoot } from '@jsvision/ui';
 
 import {
   CodeEditor,
@@ -36,6 +38,29 @@ async function createCompletionHarness(text = 'fn\n', readOnly = false) {
 }
 
 describe('completion and snippet interaction', () => {
+  it('should frame the completion popup with a single border and drop shadow', async () => {
+    // Completion choices must read as one distinct dropdown instead of blending into source text.
+    const { editor } = await createCompletionHarness();
+    const capabilities = resolveCapabilities({
+      env: {},
+      platform: 'linux',
+      override: { unicode: { utf8: true }, glyphs: { boxDrawing: true } },
+    }).profile;
+    const root = createRenderRoot({ width: 40, height: 14 }, { caps: capabilities });
+    root.mount(editor);
+    editor.assistanceView.show(['greet', 'format']);
+    root.flush();
+    const rows = root
+      .buffer()
+      .rows()
+      .map((row) => row.map((cell) => cell.char).join(''));
+
+    expect(editor.assistanceView.castsShadow).toBe(true);
+    expect(rows.some((row) => row.includes('┌') && row.includes('┐'))).toBe(true);
+    expect(rows.some((row) => row.includes('│greet'))).toBe(true);
+    expect(rows.some((row) => row.includes('└') && row.includes('┘'))).toBe(true);
+  });
+
   it('should navigate visible provider rows and accept all edits as one inert undo unit', async () => {
     // Provider completion must share the visible popup, keyboard precedence, and one atomic document mutation.
     const { controller, document, editor, session } = await createCompletionHarness();

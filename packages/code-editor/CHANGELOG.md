@@ -23,3 +23,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Executable kitchen-sink evidence for simulated protocol requests, host save decisions,
   shared-session editor isolation, terminal profiles, fixture edge cases, and the repository-wide
   representative story.
+- Dedicated manual-QA scenarios for completion, hover, signature help, diagnostics, symbols,
+  formatting, definition navigation, recovery, and host save outcomes, with F5 invocation,
+  expected-result guidance, and capability-specific live evidence.
+- A compact single-line frame and terminal-safe drop shadow for completion and assistance popups,
+  anchored to the projected caret and clamped or flipped within the current editor viewport.

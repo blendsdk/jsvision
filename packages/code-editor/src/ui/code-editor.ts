@@ -426,6 +426,7 @@ export class CodeEditor extends Group {
       activeLine: Number(offsetToPosition(this.controller.document.snapshot, caret).line),
       gutter: this.lineNumbers,
     });
+    this.#positionAssistance();
     this.controller.observations.record({ kind: 'render', durationMs: Date.now() - startedAt });
     return this.#lastFrame;
   }
@@ -615,6 +616,7 @@ export class CodeEditor extends Group {
         this.assistanceView.show(completion.items.map((item) => item.label));
       }
       this.assistanceView.selected = completion.selected;
+      this.#positionAssistance();
       return;
     }
     const overlay = this.controller.presentation.assistance.overlay;
@@ -630,6 +632,13 @@ export class CodeEditor extends Group {
       this.assistanceView.show(overlay.items);
     }
     this.assistanceView.selected = overlay.selected;
+    this.#positionAssistance();
+  }
+
+  /** Anchors visible assistance to the latest projection and viewport dimensions. */
+  #positionAssistance(): void {
+    if (this.#lastFrame === undefined) return;
+    this.assistanceView.placeAtCaret(this.#lastFrame.caret, this.#viewport.metrics);
   }
 
   #finishMutation(accepted: boolean): void {

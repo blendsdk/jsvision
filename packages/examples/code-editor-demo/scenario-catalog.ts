@@ -1,4 +1,9 @@
-import type { CodeEditorCapabilityInventoryEntry, CodeEditorDemoFixture, CodeEditorDemoScenario } from './scenarios.js';
+import type {
+  CodeEditorCapabilityInventoryEntry,
+  CodeEditorDemoAction,
+  CodeEditorDemoFixture,
+  CodeEditorDemoScenario,
+} from './scenarios.js';
 
 /** Factory seam supplied by the runtime registry to keep mounting logic out of catalog data. */
 type DefineScenario = (
@@ -15,6 +20,13 @@ export function createCodeEditorScenarioCatalog(
   inventory: readonly CodeEditorCapabilityInventoryEntry[],
 ): readonly CodeEditorDemoScenario[] {
   const generatedLargeText = `${'x\n'.repeat(50_001)}// generated at runtime`;
+  const intelligenceFixture: CodeEditorDemoFixture = {
+    title: 'service.ts',
+    languageId: 'typescript',
+    demonstrates: ['lifecycle-decisions', 'degradation-and-recovery', 'adapter-typescript'],
+    text: 'const message = greet("terminal");\n',
+  };
+  const qaScenarios = createLanguageIntelligenceQaScenarios(scenario, intelligenceFixture);
   const capabilityInventoryText = inventory
     .map(
       (entry) =>
@@ -267,6 +279,7 @@ export function createCodeEditorScenarioCatalog(
         text: 'lf\ncrlf\r\ncr\rend',
       },
     ),
+    ...qaScenarios,
     scenario(
       {
         id: 'language-intelligence',
@@ -274,12 +287,7 @@ export function createCodeEditorScenarioCatalog(
         description: 'Exercise simulated completion, diagnostics, navigation, formatting, cancellation, and recovery.',
         capabilities: ['lsp-intelligence', 'host-authorization'],
       },
-      {
-        title: 'service.ts',
-        languageId: 'typescript',
-        demonstrates: ['lifecycle-decisions', 'degradation-and-recovery', 'adapter-typescript'],
-        text: 'const message = greet("terminal");\n',
-      },
+      intelligenceFixture,
     ),
     scenario(
       {
@@ -371,4 +379,151 @@ export function createCodeEditorScenarioCatalog(
       },
     ),
   ]);
+}
+
+/** Builds self-contained manual checks for every simulated language-service and host outcome. */
+function createLanguageIntelligenceQaScenarios(
+  scenario: DefineScenario,
+  fixture: CodeEditorDemoFixture,
+): readonly CodeEditorDemoScenario[] {
+  return Object.freeze([
+    qaScenario(
+      scenario,
+      'qa-lsp-completion',
+      'QA: LSP completion',
+      'Verify that an asynchronous completion response opens a keyboard-operable popup.',
+      'completion',
+      ['Press F5', 'Use Up/Down, then Enter or Escape'],
+      'A popup shows greet without changing the document until accepted.',
+      fixture,
+    ),
+    qaScenario(
+      scenario,
+      'qa-lsp-hover',
+      'QA: LSP hover',
+      'Verify explicit keyboard hover assistance at the caret.',
+      'hover',
+      ['Place the caret on message', 'Press F5', 'Press Escape to close'],
+      'A popup shows Simulated hover information and Escape restores focus.',
+      fixture,
+    ),
+    qaScenario(
+      scenario,
+      'qa-lsp-signature',
+      'QA: LSP signature help',
+      'Verify signature help after a trigger-character edit.',
+      'signature',
+      ['Press F5', 'Inspect the active parameter', 'Press Escape to close'],
+      'A popup shows greet(name: string): string with name active.',
+      fixture,
+    ),
+    qaScenario(
+      scenario,
+      'qa-lsp-diagnostics',
+      'QA: LSP diagnostics',
+      'Verify published diagnostics and keyboard detail navigation.',
+      'diagnostic-detail',
+      ['Press F5', 'Inspect the result and diagnostic marker'],
+      'The result reports diagnostic-detail and navigation remains available.',
+      fixture,
+    ),
+    qaScenario(
+      scenario,
+      'qa-lsp-symbols',
+      'QA: document symbols',
+      'Verify the document-symbol chooser returned by the simulated service.',
+      'symbols',
+      ['Press F5', 'Use Up/Down and Enter, or Escape'],
+      'A keyboard-operable chooser shows the message symbol.',
+      fixture,
+    ),
+    qaScenario(
+      scenario,
+      'qa-lsp-formatting',
+      'QA: LSP formatting',
+      'Verify a validated formatting edit is applied as one document mutation.',
+      'format',
+      ['Press F5', 'Compare the first source line'],
+      'The source changes to greet("formatted") and becomes modified.',
+      fixture,
+    ),
+    qaScenario(
+      scenario,
+      'qa-lsp-navigation',
+      'QA: definition navigation',
+      'Verify that a cross-document definition target remains host-authorized.',
+      'navigate',
+      ['Press F5', 'Inspect the host evidence line'],
+      'Host evidence reports navigate; the demo never opens files automatically.',
+      fixture,
+    ),
+    qaScenario(
+      scenario,
+      'qa-lsp-recovery',
+      'QA: cancellation and recovery',
+      'Verify cancellation followed by service reconnection and resynchronization.',
+      'cancel-recover',
+      ['Press F5', 'Inspect the live result'],
+      'The result reports request-cancelled and service-recovered.',
+      fixture,
+    ),
+    qaScenario(
+      scenario,
+      'qa-host-save-accepted',
+      'QA: accepted save',
+      'Verify the host-owned save acceptance path.',
+      'host-accept',
+      ['Press F5', 'Inspect the host decision'],
+      'The result reports decision:accepted and the revision is saved.',
+      fixture,
+    ),
+    qaScenario(
+      scenario,
+      'qa-host-save-rejected',
+      'QA: rejected save',
+      'Verify that a rejected save preserves the modified document.',
+      'host-reject',
+      ['Press F5', 'Inspect the decision and modified state'],
+      'The result reports decision:rejected and modified remains true.',
+      fixture,
+    ),
+    qaScenario(
+      scenario,
+      'qa-host-save-conflict',
+      'QA: save conflict',
+      'Verify that a revision conflict never silently overwrites text.',
+      'host-conflict',
+      ['Press F5', 'Inspect the decision and concurrent edit'],
+      'The result reports decision:version-conflict and remains modified.',
+      fixture,
+    ),
+  ]);
+}
+
+/** Creates one QA scenario with a single F5 action and a concrete visible expectation. */
+function qaScenario(
+  scenario: DefineScenario,
+  id: string,
+  title: string,
+  purpose: string,
+  action: CodeEditorDemoAction,
+  steps: readonly string[],
+  expected: string,
+  fixture: CodeEditorDemoFixture,
+): CodeEditorDemoScenario {
+  return scenario(
+    {
+      id,
+      title,
+      description: purpose,
+      capabilities: ['lsp-intelligence', 'host-authorization'],
+      qa: Object.freeze({
+        purpose,
+        action,
+        steps: Object.freeze([...steps]),
+        expected,
+      }),
+    },
+    fixture,
+  );
 }

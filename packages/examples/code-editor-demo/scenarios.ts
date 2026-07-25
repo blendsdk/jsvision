@@ -86,6 +86,18 @@ export interface CodeEditorDemoMountContext {
   readonly height: number;
 }
 
+/** Manual QA instructions and the one control that exercises a showcase capability. */
+export interface CodeEditorQaGuide {
+  /** Short explanation of the behavior under test. */
+  readonly purpose: string;
+  /** Ordered manual interactions a tester can follow without source-code knowledge. */
+  readonly steps: readonly string[];
+  /** Concrete visible outcome that distinguishes success from a no-op. */
+  readonly expected: string;
+  /** Scenario action invoked by the shared F5 "Run check" command. */
+  readonly action: CodeEditorDemoAction;
+}
+
 /** Public contract for one discoverable, deterministic showcase scenario. */
 export interface CodeEditorDemoScenario {
   readonly id: string;
@@ -93,6 +105,7 @@ export interface CodeEditorDemoScenario {
   readonly description: string;
   readonly capabilities: readonly CodeEditorDemoFacet[];
   readonly actions: readonly CodeEditorDemoAction[];
+  readonly qa?: CodeEditorQaGuide;
   fixture(): CodeEditorDemoFixture;
   mount(context: CodeEditorDemoMountContext): CodeEditor | CodeEditorWindow;
 }
@@ -241,7 +254,8 @@ function scenario(
       let disposed = false;
       let session: DemoLspSession | undefined;
       let coordinator: ReturnType<typeof createCodeEditorLspCoordinator> | undefined;
-      if (metadata.id === 'language-intelligence') {
+      const languageIntelligence = metadata.capabilities.includes('lsp-intelligence');
+      if (languageIntelligence) {
         session = new DemoLspSession();
         coordinator = createCodeEditorLspCoordinator({
           document,
@@ -368,7 +382,7 @@ function scenario(
         }),
       );
       const customActions = new Map<CodeEditorDemoAction, () => Promise<void>>();
-      if (metadata.id === 'language-intelligence' && session !== undefined && coordinator !== undefined) {
+      if (languageIntelligence && session !== undefined && coordinator !== undefined) {
         customActions.set('hover', async () => {
           editor.execute('hover');
           await editor.whenIdle();
