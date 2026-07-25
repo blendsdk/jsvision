@@ -1,6 +1,7 @@
 import { resolveCapabilities } from '@jsvision/core';
 import { describe, expect, it } from 'vitest';
 
+import { enforceCodeEditorPerformanceBudgets, reportCodeEditorPerformance } from '../../test/performance-policy.js';
 import { createCodeEditorController } from '../controller.js';
 import { createDocumentModel } from '../document/model.js';
 import { CodeEditor } from './code-editor.js';
@@ -45,7 +46,9 @@ describe('folded viewport performance', () => {
     measure();
     const samples = Array.from({ length: 5 }, measure);
 
-    expect(p95(samples)).toBeLessThanOrEqual(16);
+    const measuredP95 = p95(samples);
+    if (enforceCodeEditorPerformanceBudgets()) expect(measuredP95).toBeLessThanOrEqual(16);
+    else reportCodeEditorPerformance('folded viewport projection p95', measuredP95, 16);
   });
 
   it('validates deeply nested fold identities without retaining complete ancestor paths', () => {
@@ -68,7 +71,9 @@ describe('folded viewport performance', () => {
       })),
     });
 
-    expect(performance.now() - startedAt).toBeLessThanOrEqual(100);
+    const elapsed = performance.now() - startedAt;
+    if (enforceCodeEditorPerformanceBudgets()) expect(elapsed).toBeLessThanOrEqual(100);
+    else reportCodeEditorPerformance('deep fold validation', elapsed, 100);
     expect(controller.foldableRegions).toHaveLength(depth);
   });
 
@@ -101,6 +106,8 @@ describe('folded viewport performance', () => {
     measure();
     const samples = Array.from({ length: 5 }, measure);
 
-    expect(p95(samples)).toBeLessThanOrEqual(16);
+    const measuredP95 = p95(samples);
+    if (enforceCodeEditorPerformanceBudgets()) expect(measuredP95).toBeLessThanOrEqual(16);
+    else reportCodeEditorPerformance('collapsed-sibling lookup p95', measuredP95, 16);
   });
 });

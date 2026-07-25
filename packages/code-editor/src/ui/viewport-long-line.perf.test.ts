@@ -1,6 +1,7 @@
 import { resolveCapabilities } from '@jsvision/core';
 import { describe, expect, it } from 'vitest';
 
+import { enforceCodeEditorPerformanceBudgets, reportCodeEditorPerformance } from '../../test/performance-policy.js';
 import { createCodeEditorController } from '../controller.js';
 import { createDocumentModel } from '../document/model.js';
 import { CodeEditor } from './code-editor.js';
@@ -36,7 +37,9 @@ describe('long-line viewport performance', () => {
     measureLongLine(editor);
     const samples = Array.from({ length: 5 }, () => measureLongLine(editor));
 
-    expect(p95(samples)).toBeLessThanOrEqual(16);
+    const measuredP95 = p95(samples);
+    if (enforceCodeEditorPerformanceBudgets()) expect(measuredP95).toBeLessThanOrEqual(16);
+    else reportCodeEditorPerformance('plain long-line projection p95', measuredP95, 16);
   });
 
   it.each([
@@ -57,6 +60,8 @@ describe('long-line viewport performance', () => {
       return performance.now() - startedAt;
     });
 
-    expect(p95(samples)).toBeLessThanOrEqual(16);
+    const measuredP95 = p95(samples);
+    if (enforceCodeEditorPerformanceBudgets()) expect(measuredP95).toBeLessThanOrEqual(16);
+    else reportCodeEditorPerformance(`${_label} long-line edit p95`, measuredP95, 16);
   });
 });

@@ -2,6 +2,7 @@ import { performance } from 'node:perf_hooks';
 
 import { expect, it } from 'vitest';
 
+import { enforceCodeEditorPerformanceBudgets, reportCodeEditorPerformance } from '../../test/performance-policy.js';
 import { createLanguageScheduler } from '../index.js';
 import { postgresqlLanguageAdapter } from './postgresql.js';
 
@@ -15,7 +16,8 @@ it('keeps a 50,000-line PostgreSQL lexical pass bounded', async () => {
   const elapsed = performance.now() - started;
 
   expect(result.state).toBe('ready');
-  expect(elapsed).toBeLessThan(2_000);
+  if (enforceCodeEditorPerformanceBudgets()) expect(elapsed).toBeLessThan(2_000);
+  else reportCodeEditorPerformance('50,000-line PostgreSQL lexical pass', elapsed, 2_000);
 }, 10_000);
 
 it('keeps bounded PostgreSQL parser-region p95 below one interaction frame', async () => {
@@ -31,5 +33,6 @@ it('keeps bounded PostgreSQL parser-region p95 below one interaction frame', asy
   samples.sort((left, right) => left - right);
   const p95 = samples[Math.floor(samples.length * 0.95)] ?? Number.POSITIVE_INFINITY;
 
-  expect(p95).toBeLessThan(16);
+  if (enforceCodeEditorPerformanceBudgets()) expect(p95).toBeLessThan(16);
+  else reportCodeEditorPerformance('bounded PostgreSQL parser-region p95', p95, 16);
 });
