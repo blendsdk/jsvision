@@ -1,7 +1,9 @@
 import { TextDecoder } from 'node:util';
+import { isSignalAborted, sourceContextSignal } from '../abort.js';
 import { I18nError } from '../errors.js';
 import { copyDenseArray, inspectArray, inspectOwnDataProperty, inspectOwnKeys, isObjectLike } from '../input.js';
 import { MAX_CATALOG_MESSAGES, MAX_IDENTIFIER_SCALARS, MAX_MESSAGE_BYTES } from '../limits.js';
+import { resourceBudgetFor } from '../source-budget.js';
 import type { Catalog, CatalogSource, CatalogSourceContext } from '../types.js';
 import { defineCatalog } from '../validation.js';
 import { openCheckedCatalogFile, resolveCatalogPaths } from './paths.js';
@@ -29,7 +31,7 @@ export interface JsonFileSourceLimits {
 export interface JsonFileSourceOptions {
   /** Mandatory filesystem boundary; every candidate must canonicalize below it. */
   readonly root: string;
-  /** Ordered portable relative literals and immediate `*.json` globs. */
+  /** Ordered portable literals/globs; one source expands at most 10,000 files and 16 MiB total. */
   readonly paths: readonly string[];
   /** Whether a source failure aborts {@link import('../source.js').loadI18n}; defaults to `true`. */
   readonly required?: boolean;
@@ -143,7 +145,7 @@ function resolveOptions(input: JsonFileSourceOptions): ResolvedJsonFileSourceOpt
 
 /** Throw a value-free cancellation failure without retaining an abort reason. */
 function assertNotAborted(signal: AbortSignal): void {
-  if (signal.aborted) {
+  if (isSignalAborted(signal)) {
     throw new I18nError('ABORTED', 'JSON catalog loading was aborted.');
   }
 }
@@ -153,14 +155,17 @@ async function readBounded(
   handle: Awaited<ReturnType<typeof openCheckedCatalogFile>>['handle'],
   expectedSize: number,
   maximumBytes: number,
+  signal: AbortSignal,
 ): Promise<Uint8Array> {
   if (expectedSize > maximumBytes) {
     throw new I18nError('CATALOG_LIMIT_EXCEEDED', 'Catalog file exceeds its byte limit.');
   }
-  const buffer = Buffer.allocUnsafe(maximumBytes + 1);
+  const buffer = Buffer.allocUnsafe(Math.min(maximumBytes + 1, expectedSize + 1));
   let total = 0;
   while (total < buffer.length) {
+    assertNotAborted(signal);
     const result = await handle.read(buffer, total, buffer.length - total, null);
+    assertNotAborted(signal);
     if (result.bytesRead === 0) break;
     total += result.bytesRead;
   }
@@ -231,15 +236,18 @@ async function loadCatalogs(
   options: ResolvedJsonFileSourceOptions,
   context: CatalogSourceContext,
 ): Promise<readonly Catalog[]> {
-  assertNotAborted(context.signal);
-  const paths = await resolveCatalogPaths(options.root, options.paths);
+  const signal = sourceContextSignal(context);
+  const budget = resourceBudgetFor(context);
+  assertNotAborted(signal);
+  const paths = await resolveCatalogPaths(options.root, options.paths, signal, budget);
   const catalogs: Catalog[] = [];
   for (const path of paths) {
-    assertNotAborted(context.signal);
-    const checked = await openCheckedCatalogFile(path);
+    assertNotAborted(signal);
+    const checked = await openCheckedCatalogFile(path, signal);
     try {
-      const bytes = await readBounded(checked.handle, checked.size, options.maxFileBytes);
-      assertNotAborted(context.signal);
+      budget.consumeFileBytes(checked.size);
+      const bytes = await readBounded(checked.handle, checked.size, options.maxFileBytes, signal);
+      assertNotAborted(signal);
       const parsed = parseStrictJson(decodeUtf8(bytes));
       enforceCatalogLimits(parsed, options);
       catalogs.push(defineCatalog(parsed, { source: path.relativePath }));
@@ -247,6 +255,7 @@ async function loadCatalogs(
       await checked.handle.close().catch(() => undefined);
     }
   }
+  assertNotAborted(signal);
   return Object.freeze(catalogs);
 }
 
@@ -256,7 +265,8 @@ async function loadCatalogs(
  * Paths use a portable relative grammar. Literal files retain declaration order and an immediate
  * `*.json` glob expands lexically in place. Every file is canonicalized below the mandatory root,
  * opened as a checked regular handle, read within its byte limit, decoded as fatal UTF-8, parsed
- * with duplicate detection, and validated before the source returns any catalog.
+ * with duplicate detection, and validated before the source returns any catalog. A source expands
+ * no more than 10,000 files and accepts no more than 16 MiB of checked file content in aggregate.
  *
  * @param input Root, paths, required classification, and optional lower resource limits.
  * @returns Caller-independent catalog source suitable for `loadI18n`.
@@ -264,8 +274,10 @@ async function loadCatalogs(
  *
  * @example
  * ```ts
+ * import { fileURLToPath } from 'node:url';
+ *
  * const source = jsonFileSource({
- *   root: new URL('./locales', import.meta.url).pathname,
+ *   root: fileURLToPath(new URL('./locales', import.meta.url)),
  *   paths: ['en.json', 'packages/*.json'],
  * });
  * ```

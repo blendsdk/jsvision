@@ -2,7 +2,9 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { loadI18n } from '../src/index.js';
 import { jsonFileSource } from '../src/node/index.js';
+import { catalogJson, padJsonToBytes } from './fixtures/node.js';
 
 let fixtureRoot: string;
 
@@ -99,5 +101,28 @@ describe('bounded JSON file reads', () => {
 
     expect(failure).toMatchObject({ code: 'ABORTED' });
     expect(String(failure)).not.toContain('private reason');
+  });
+
+  test('contains a revoked signal in a direct source load', async () => {
+    const source = jsonFileSource({ root: fixtureRoot, paths: [] });
+    const revocable = Proxy.revocable(new AbortController().signal, {});
+    revocable.revoke();
+
+    await expect(source.load({ signal: revocable.proxy })).rejects.toMatchObject({ code: 'SOURCE_FAILED' });
+  });
+
+  test('shares the aggregate byte budget across concurrent built-in sources', async () => {
+    const contents = padJsonToBytes(catalogJson('en', {}), 2 * 1024 * 1024);
+    const paths = Array.from({ length: 9 }, (_, index) => `catalog-${index}.json`);
+    await Promise.all(paths.map((path) => writeFile(join(fixtureRoot, path), contents)));
+
+    await expect(
+      loadI18n({
+        sources: [
+          jsonFileSource({ root: fixtureRoot, paths: paths.slice(0, 4) }),
+          jsonFileSource({ root: fixtureRoot, paths: paths.slice(4) }),
+        ],
+      }),
+    ).rejects.toMatchObject({ code: 'SOURCE_FAILED' });
   });
 });

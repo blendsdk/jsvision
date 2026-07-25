@@ -230,16 +230,7 @@ class StrictJsonParser {
   #parseEscape(): string {
     const escape = this.input[this.#index];
     this.#index += 1;
-    const simple = new Map<string, string>([
-      ['"', '"'],
-      ['\\', '\\'],
-      ['/', '/'],
-      ['b', '\b'],
-      ['f', '\f'],
-      ['n', '\n'],
-      ['r', '\r'],
-      ['t', '\t'],
-    ]).get(escape ?? '');
+    const simple = this.#simpleEscape(escape);
     if (simple !== undefined) {
       this.#scalar();
       return simple;
@@ -258,6 +249,28 @@ class StrictJsonParser {
     if (low < 0xdc00 || low > 0xdfff) throw invalidJson();
     this.#scalar();
     return String.fromCharCode(high, low);
+  }
+
+  /** Decode one single-character JSON escape without allocating a lookup structure. */
+  #simpleEscape(escape: string | undefined): string | undefined {
+    switch (escape) {
+      case '"':
+      case '\\':
+      case '/':
+        return escape;
+      case 'b':
+        return '\b';
+      case 'f':
+        return '\f';
+      case 'n':
+        return '\n';
+      case 'r':
+        return '\r';
+      case 't':
+        return '\t';
+      default:
+        return undefined;
+    }
   }
 
   /** Parse exactly four hexadecimal digits into one UTF-16 code unit. */

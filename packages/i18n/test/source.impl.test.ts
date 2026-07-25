@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { loadI18n } from '../src/index.js';
+import { defineCatalog, loadI18n } from '../src/index.js';
 
 const VALID_CATALOG = Object.freeze({
   schema: 1 as const,
@@ -64,6 +64,55 @@ describe('source configuration boundaries', () => {
         ],
       }),
     ).rejects.toMatchObject({ code: 'SOURCE_FAILED' });
+  });
+
+  test('rejects revoked signals and ignores instance listener overrides', async () => {
+    const signal = new AbortController().signal;
+    const revocable = Proxy.revocable(signal, {});
+    revocable.revoke();
+    await expect(loadI18n({ signal: revocable.proxy, sources: [] })).rejects.toMatchObject({
+      code: 'SOURCE_FAILED',
+    });
+
+    Object.defineProperty(signal, 'addEventListener', {
+      value() {
+        throw new Error('private signal failure');
+      },
+    });
+    await expect(loadI18n({ signal, sources: [] })).resolves.toBeDefined();
+  });
+
+  test('rejects a live signal proxy before invoking its traps in Node', async () => {
+    const signal = new AbortController().signal;
+    let traps = 0;
+    const proxy = new Proxy(signal, {
+      get() {
+        traps += 1;
+        throw new Error('private proxy getter');
+      },
+      getPrototypeOf() {
+        traps += 1;
+        throw new Error('private proxy prototype');
+      },
+    });
+
+    await expect(loadI18n({ signal: proxy, sources: [] })).rejects.toMatchObject({
+      code: 'SOURCE_FAILED',
+    });
+    expect(traps).toBe(0);
+  });
+
+  test('bounds the number of concurrently started sources', async () => {
+    const source = {
+      name: 'bounded',
+      async load() {
+        return VALID_CATALOG;
+      },
+    };
+
+    await expect(loadI18n({ sources: Array(257).fill(source) })).rejects.toMatchObject({
+      code: 'SOURCE_FAILED',
+    });
   });
 });
 
@@ -163,5 +212,61 @@ describe('source settlement and validation', () => {
     });
 
     expect(i18n.t('source.value')).toBe('override');
+  });
+
+  test('bounds aggregate catalogs across otherwise valid source results', async () => {
+    const catalog = defineCatalog(VALID_CATALOG);
+    const first = Array(6_000).fill(catalog);
+    const second = Array(4_001).fill(catalog);
+
+    await expect(
+      loadI18n({
+        sources: [
+          {
+            name: 'first',
+            async load() {
+              return first;
+            },
+          },
+          {
+            name: 'second',
+            async load() {
+              return second;
+            },
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: 'SOURCE_FAILED' });
+  });
+
+  test('bounds aggregate compilation work from repeated validated catalogs', async () => {
+    const cases = Object.fromEntries([
+      ...Array.from({ length: 255 }, (_, index) => [`case-${index}`, 'value']),
+      ['other', 'value'],
+    ]);
+    const catalog = defineCatalog({
+      schema: 1,
+      locale: 'en',
+      messages: {
+        'source.choice': {
+          kind: 'select',
+          parameter: 'choice',
+          cases,
+        },
+      },
+    });
+
+    await expect(
+      loadI18n({
+        sources: [
+          {
+            name: 'repeated',
+            async load() {
+              return Array(391).fill(catalog);
+            },
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: 'SOURCE_FAILED' });
   });
 });

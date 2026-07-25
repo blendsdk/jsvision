@@ -5,6 +5,7 @@ import { compileMessage, isSafeText, type CompiledMessage } from './messages.js'
 import { readonlyMap } from './readonly-map.js';
 import type { Catalog, CatalogInput, Message } from './types.js';
 import { defineCatalog } from './validation.js';
+import { isValidatedCatalog } from './validated-catalog.js';
 
 /** One validated catalog plus optional value-free provenance. */
 export interface CatalogLayerInput {
@@ -74,7 +75,9 @@ function compileCatalogLayer(catalog: Catalog, source?: string, kind: CatalogLay
 export function createCatalogSnapshot(inputs: readonly CatalogLayerInput[]): CatalogSnapshot {
   const locales = new Map<string, CatalogLayer[]>();
   for (const input of inputs) {
-    const catalog = defineCatalog(input.catalog, { source: copySource(input.source) });
+    const catalog = isValidatedCatalog(input.catalog)
+      ? input.catalog
+      : defineCatalog(input.catalog, { source: copySource(input.source) });
     const layer = compileCatalogLayer(catalog, input.source);
     const existing = locales.get(catalog.locale);
     if (existing === undefined) {
@@ -164,7 +167,7 @@ export function mergeCatalogs(inputs: readonly CatalogInput[]): readonly Catalog
   }
   const merged = new Map<string, Record<string, Message>>();
   for (const input of copiedInputs) {
-    const catalog = defineCatalog(input);
+    const catalog = isValidatedCatalog(input) ? input : defineCatalog(input);
     let messages = merged.get(catalog.locale);
     if (messages === undefined) {
       messages = {};

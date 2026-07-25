@@ -83,4 +83,14 @@ describe('strict JSON parser resource bounds', () => {
       expect.objectContaining({ code: 'INVALID_JSON' }),
     );
   });
+
+  test('decodes a dense escaped string without per-escape lookup allocation', () => {
+    const escapes = 100_000;
+    const parsed = parseStrictJson(`"${'\\n'.repeat(escapes)}"`, {
+      maxStringScalars: escapes,
+      maxTokens: 2,
+    });
+
+    expect(parsed).toBe('\n'.repeat(escapes));
+  });
 });

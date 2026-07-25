@@ -25,6 +25,7 @@ import {
   type Message,
   type MessageCases,
 } from './types.js';
+import { markValidatedCatalog } from './validated-catalog.js';
 
 const CATALOG_FIELDS = new Set<PropertyKey>(['schema', 'locale', 'messages']);
 const STRUCTURED_MESSAGE_FIELDS = new Set<PropertyKey>(['kind', 'parameter', 'cases']);
@@ -675,5 +676,5 @@ export function defineCatalog(input: CatalogInput, options: CatalogValidationOpt
   if (result.catalog === undefined || firstError !== undefined) {
     throw new I18nError(firstError?.code ?? 'INVALID_CATALOG', 'Catalog validation failed.', { issues });
   }
-  return result.catalog;
+  return markValidatedCatalog(result.catalog);
 }
