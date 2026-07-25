@@ -4454,12 +4454,12 @@
         "summary:Specification-first plan passed zero-ambiguity, security, completeness, and granularity review"
       ],
       "id": "PLAN-I18N",
-      "revision": "sha256:af056a9359cb6503bd650d55199483e3326f6ac1a71860439d262d386a086415",
+      "revision": "sha256:944c68fafe79047db77c2fabeb259d988282bc2e6aae174c1122df8bf7410bbc",
       "semanticSources": [
         {
           "digest": "sha256",
           "normalization": "utf8-lf-trim-trailing-v1",
-          "path": "codeops/features/i18n/plans/i18n/99-execution-plan.md",
+          "path": "codeops/features/i18n/plans/i18n/00-index.md",
           "selector": {
             "kind": "whole-file"
           }
