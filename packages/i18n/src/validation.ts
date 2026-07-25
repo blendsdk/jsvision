@@ -23,6 +23,7 @@ const MAX_KEY_SCALARS = 512;
 const MAX_MESSAGE_BYTES = 65_536;
 const INVALID_PATH_SEGMENT = '<invalid>';
 const UTF8_ENCODER = new TextEncoder();
+const PluralRulesConstructor = Intl.PluralRules;
 
 /** Mutable state used only while validating one catalog. */
 interface ValidationContext {
@@ -180,7 +181,7 @@ function validateCases(
 
   const pluralCategories: ReadonlySet<string> | undefined =
     kind === 'plural'
-      ? new Set<string>(new Intl.PluralRules(locale, { type: 'cardinal' }).resolvedOptions().pluralCategories)
+      ? new Set<string>(new PluralRulesConstructor(locale, { type: 'cardinal' }).resolvedOptions().pluralCategories)
       : undefined;
   const copied: Record<string, string> = {};
   let valid = true;

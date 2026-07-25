@@ -12,7 +12,11 @@ export interface ResolvedLocale {
 function cleanPosixLocale(value: string): string {
   const trimmed = value.trim();
   if (/^(?:c|posix)$/iu.test(trimmed)) return 'en';
-  return trimmed.split(/[.@]/u, 1)[0]?.replaceAll('_', '-') ?? '';
+  const base = trimmed.split(/[.@]/u, 1)[0] ?? '';
+  if (base.includes('_') && !/^[A-Za-z]{2,3}_(?:[A-Za-z]{2}|[0-9]{3})$/u.test(base)) {
+    return '';
+  }
+  return base.replaceAll('_', '-');
 }
 
 /**
