@@ -2914,6 +2914,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Plural select formatter overlay diagnostic and warm-path oracle authored",
+        "verificationEvidence:Focused ESLint and Prettier checks plus root yarn verify passed"
+      ],
       "id": "TASK-1-1-2",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -2926,7 +2930,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "[spec-author] Add plural, select, formatter, overlay, diagnostics, and warm-path tests for ST-09\u2013ST-16",
       "type": "task",
       "validations": []
