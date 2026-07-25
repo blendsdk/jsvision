@@ -1,7 +1,7 @@
 # Ambiguity Register: JSVision i18n Implementation Plan
 
-> **Status**: ✅ GATE PASSED — all 16 plan items resolved
-> **Last Updated**: 2026-07-25 01:58 CEST
+> **Status**: ✅ GATE PASSED — all 17 plan items resolved
+> **Last Updated**: 2026-07-25 08:13 CEST
 > **Planning Target**: `i18n/SET-I18N` (RD-01 through RD-04 as one implementation group)
 > **Context Artifacts**: i18n requirements set, current UI/Forms/Files/Datagrid source and tests,
 > BlendSDK `packages/i18n` source/tests, plugin generators and canonical skill
@@ -33,6 +33,7 @@ decisions discovered after the requirements gate.
 | 43 | Legal / packaging | Where is BlendSDK attribution preserved? | README only / package notice plus README/changelog | Publish package-level third-party notice and cite it from README/changelog | ✅ Resolved |
 | 44 | Quality / translations | When does human review occur relative to code integration? | Block all code first / draft then review before release phase completion | Implement catalogs as reviewable drafts, but keep RD-04/release incomplete until digest-bound proficient review exists | ✅ Resolved |
 | 45 | Port boundary | Which BlendSDK implementation pieces are reused? | Literal package copy / concepts and suitable tests / dependency wrapper | Port translator/source/merge concepts and applicable behavioral tests; replace stdlib, plural tuples, permissive loader, and omit content files | ✅ Resolved |
+| 46 | Testing / sequencing (runtime) | How are implementation tests kept after the green oracle when module tasks originally named them early? | Keep tests beside module tasks / defer all implementation tests into bounded hardening tasks | Remove `*.impl.test.ts` from implementation tasks; after the complete spec suite turns green, add six bounded implementation-test/documentation/verification tasks | ✅ Resolved |
 
 ## Resolution Notes
 
@@ -217,3 +218,19 @@ Every entry below uses:
 - **Confidence:** High.
 - **Hardening:** Independent challenger converged on a hardened owned implementation.
 - **Reopen triggers:** A BlendSDK component is found to satisfy all JSVision contracts unchanged.
+
+**AR-46 — Implementation-test ordering (runtime)**
+
+- **Eligibility:** Testing and implementation sequencing within the already-approved behavior.
+- **Objective:** Preserve the immutable-oracle order while keeping each auto-commit reviewable.
+- **Evidence:** The execution protocol requires spec tests, red, implementation, green, then
+  implementation tests; the original module tasks named `*.impl.test.ts` before the green task.
+- **Rejected alternatives:** Keeping the mixed tasks violates the ordering gate; moving every
+  implementation test into one task exceeds the accepted file/task granularity.
+- **Strongest counterargument:** More hardening tasks add commits; they make failures attributable
+  and prevent implementation-derived tests from influencing the specification oracle.
+- **Confidence:** High.
+- **Hardening:** Forced-reframing review found no product or API effect; this is the only sequence
+  consistent with both testing and task-size policies.
+- **Reopen triggers:** The specification-first protocol changes or a package test boundary makes a
+  bounded hardening group impossible.
