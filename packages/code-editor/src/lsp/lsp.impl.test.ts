@@ -64,6 +64,25 @@ describe('LSP protocol validation', () => {
 });
 
 describe('LSP session and coordinator hardening', () => {
+  it('should settle format-on-save when the request-cap rejects new work', async () => {
+    const session = createInProcessLspSession({
+      capabilities: { hover: true, documentFormatting: true },
+    });
+    const coordinator = createCodeEditorLspCoordinator({
+      document: createDocumentModel({ text: 'value', uri, languageId: 'typescript' }),
+      session,
+      uri,
+      languageId: 'typescript',
+      formatOnSave: true,
+    });
+    await coordinator.open();
+    const pending = Array.from({ length: 64 }, () => coordinator.requestHover({ line: 0, character: 0 }));
+
+    await expect(coordinator.save()).resolves.toMatchObject({ formatting: 'failure' });
+    for (const operation of pending) operation.cancel();
+    await Promise.all(pending.map((operation) => operation.settled));
+  });
+
   it('should cancel a superseded generation and settle pending work once', async () => {
     const session = createInProcessLspSession({ capabilities: { hover: true } });
     const coordinator = createCodeEditorLspCoordinator({

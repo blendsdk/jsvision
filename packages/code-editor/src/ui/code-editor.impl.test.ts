@@ -129,6 +129,21 @@ describe('CodeEditor terminal implementation', () => {
     expect(frame.cells.flat().some((cell) => cell.text === '\u009b')).toBe(false);
   });
 
+  it('revalidates shallow-frozen decoration arrays whose span objects remain mutable', () => {
+    const view = editor('ab');
+    const span = { from: 0, to: 1 };
+    const spans = Object.freeze([span]);
+    const first = projectCodeEditor({ controller: view.controller, width: 2, height: 1, caps, search: spans });
+
+    span.from = 1;
+    span.to = 2;
+    const second = projectCodeEditor({ controller: view.controller, width: 2, height: 1, caps, search: spans });
+
+    expect(first.cellAtDocumentOffset(0)?.overlays).toContain('search');
+    expect(second.cellAtDocumentOffset(0)?.overlays).not.toContain('search');
+    expect(second.cellAtDocumentOffset(1)?.overlays).toContain('search');
+  });
+
   it('snapshots hostile completion items without invoking getters', () => {
     const view = editor('word');
     const hostile = Object.create(null) as Record<string, unknown>;

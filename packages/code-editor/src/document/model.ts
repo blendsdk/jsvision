@@ -162,6 +162,11 @@ export class CodeEditorDocumentModel {
     return this.#sizeMode;
   }
 
+  /** Returns the configured hard byte ceiling for this in-memory document. */
+  public get maximumDocumentBytes(): number {
+    return this.#limits.maxDocumentBytes;
+  }
+
   /** Returns the optional host-owned document URI. */
   public get uri(): string | undefined {
     return this.#uri;

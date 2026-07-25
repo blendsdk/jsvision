@@ -10,7 +10,8 @@ import type { CodeEditorVisibleRows } from './folding.js';
 const MAX_WIDTH = 2_000;
 const MAX_HEIGHT = 500;
 const MAX_CELLS = 200_000;
-const MAX_SPANS = 5_000;
+/** Maximum number of decoration spans one frame will validate and project. */
+export const CODE_EDITOR_MAX_PROJECTED_SPANS = 5_000;
 
 /** A sanitized terminal cell plus semantic presentation metadata. */
 export interface CodeEditorProjectedCell {
@@ -258,6 +259,11 @@ type NormalizedSpan = Readonly<{
   category?: SyntaxCategory;
 }>;
 
+const normalizedSpanCache = new WeakMap<
+  readonly unknown[],
+  Readonly<{ readonly documentLength: number; readonly spans: readonly NormalizedSpan[] }>
+>();
+
 function projectLine(
   text: string,
   lineStart: number,
@@ -368,7 +374,9 @@ function decorateCell(
 function normalizeSpans(value: unknown, length: number): readonly NormalizedSpan[] {
   const result: NormalizedSpan[] = [];
   try {
-    if (!Array.isArray(value) || value.length > MAX_SPANS) return Object.freeze([]);
+    if (!Array.isArray(value) || value.length > CODE_EDITOR_MAX_PROJECTED_SPANS) return Object.freeze([]);
+    const cached = normalizedSpanCache.get(value);
+    if (cached?.documentLength === length) return cached.spans;
     for (const item of value) {
       const normalized = normalizeSpan(item, length);
       if (normalized !== undefined) result.push(normalized);
@@ -376,13 +384,20 @@ function normalizeSpans(value: unknown, length: number): readonly NormalizedSpan
   } catch {
     return Object.freeze([]);
   }
-  return freezeNonOverlapping(result);
+  const normalized = freezeNonOverlapping(result);
+  if (
+    Object.isFrozen(value) &&
+    value.every((item) => item !== null && typeof item === 'object' && Object.isFrozen(item))
+  ) {
+    normalizedSpanCache.set(value, Object.freeze({ documentLength: length, spans: normalized }));
+  }
+  return normalized;
 }
 
 function normalizeSyntax(value: unknown, length: number): readonly NormalizedSpan[] {
   const result: NormalizedSpan[] = [];
   try {
-    if (!Array.isArray(value) || value.length > MAX_SPANS) return Object.freeze([]);
+    if (!Array.isArray(value) || value.length > CODE_EDITOR_MAX_PROJECTED_SPANS) return Object.freeze([]);
     for (const item of value) {
       const span = normalizeSpan(item, length);
       const category = ownValue(item, 'category');

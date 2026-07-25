@@ -11,7 +11,12 @@ export interface CodeEditorKey {
 export type CodeEditorCommand =
   | 'cursor.documentEnd'
   | 'search.open'
+  | 'search.replaceOpen'
   | 'search.next'
+  | 'search.previous'
+  | 'search.replaceCurrent'
+  | 'search.replaceAll'
+  | 'search.dismiss'
   | 'fold.toggle'
   | 'fold.collapse'
   | 'fold.expand'
@@ -65,7 +70,9 @@ export function canonicalCodeEditorKeyName(key: string): string {
 export const defaultCodeEditorKeyBindings: Readonly<Record<string, CodeEditorCommand>> = Object.freeze({
   'Ctrl+End': 'cursor.documentEnd',
   'Ctrl+F': 'search.open',
+  'Ctrl+H': 'search.replaceOpen',
   F3: 'search.next',
+  'Shift+F3': 'search.previous',
   'Ctrl+[': 'fold.toggle',
   'Ctrl+ ': 'assist',
   'Ctrl+Shift+H': 'hover',

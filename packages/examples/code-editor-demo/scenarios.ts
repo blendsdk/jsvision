@@ -374,17 +374,20 @@ function scenario(
         configuredFeatures.push('syntax', 'folds', 'brackets', 'fold-markers', 'postgresql-structure');
       }
       if (session !== undefined && coordinator !== undefined) {
-        void coordinator.open().then(() => {
-          session?.publishDiagnostics(document.uri ?? '', Number(document.identity.revision), [
-            {
-              range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
-              message: 'Simulated live diagnostic',
-              severity: 2,
-            },
-          ]);
-          editor.openCompletion([{ label: 'greet', insertText: 'greet(name)' }]);
-          editor.invalidate();
-        });
+        void coordinator
+          .open()
+          .then(() => {
+            session?.publishDiagnostics(document.uri ?? '', Number(document.identity.revision), [
+              {
+                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+                message: 'Simulated live diagnostic',
+                severity: 2,
+              },
+            ]);
+            editor.openCompletion([{ label: 'greet', insertText: 'greet(name)' }]);
+            editor.invalidate();
+          })
+          .catch(() => undefined);
       }
       if (metadata.id === 'safe-terminal-text')
         configuredFeatures.push('hostile-text', 'unicode', 'terminal-sanitization');

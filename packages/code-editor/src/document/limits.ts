@@ -99,6 +99,16 @@ export function resolveDocumentSizeMode(
  * Counts UTF-8 bytes without allocating an encoded copy of hostile or oversized text.
  */
 export function utf8ByteLength(text: string): number {
+  return utf8ByteLengthAtMost(text, Number.MAX_SAFE_INTEGER);
+}
+
+/**
+ * Counts UTF-8 bytes only until a caller-provided ceiling is exceeded.
+ *
+ * The returned value is `maximum + 1` when the input is larger. This lets public input
+ * boundaries reject oversized strings without scanning the remainder of hostile content.
+ */
+export function utf8ByteLengthAtMost(text: string, maximum: number): number {
   let bytes = 0;
   for (let index = 0; index < text.length; index += 1) {
     const codeUnit = text.charCodeAt(index);
@@ -117,6 +127,7 @@ export function utf8ByteLength(text: string): number {
     } else {
       bytes += 3;
     }
+    if (bytes > maximum) return maximum + 1;
   }
   return bytes;
 }

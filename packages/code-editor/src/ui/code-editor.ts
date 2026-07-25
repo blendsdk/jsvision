@@ -22,6 +22,7 @@ import { CodeEditorMouseSelection } from './mouse-selection.js';
 import { registerCodeEditorKeyBindings } from './keybindings.js';
 import { codeEditorGutterWidth, projectCodeEditor, type CodeEditorFrame } from './projection.js';
 import { codeEditorVisibleRows } from './folding.js';
+import { CodeEditorSearchSession, type CodeEditorSearchState } from './search-session.js';
 import { CodeEditorViewport, type CodeEditorViewportMetrics } from './viewport.js';
 
 /** Construction options for a terminal-native code editor view. */
@@ -75,16 +76,17 @@ export class CodeEditor extends Group {
   readonly #controllerSubscription: CodeEditorDisposable;
   readonly #viewport: CodeEditorViewport;
   readonly #editingActions: CodeEditorEditingActions;
+  readonly #search: CodeEditorSearchSession;
   readonly #mouseSelection: CodeEditorMouseSelection;
   readonly #interactionRevision = signal(0);
   readonly #pending = new Map<'navigate' | 'save' | 'close', Promise<unknown>>();
+  #hostQueue: Promise<void> = Promise.resolve();
   #theme: CodeEditorTheme = classicCodeEditorTheme;
   #themeFingerprint = fingerprintTheme(classicCodeEditorTheme);
   #lastFrame: CodeEditorFrame | undefined;
   #modal: CodeEditorModalState | undefined;
   #snippet: readonly { readonly from: number; readonly to: number }[] | undefined;
   #snippetIndex = 0;
-  #searchQuery = '';
   #assistanceSource: readonly unknown[] | undefined;
   readonly #locallyHandledRevisions = new Set<number>();
   #lastSelectionHead: number;
@@ -107,6 +109,15 @@ export class CodeEditor extends Group {
       applyEdits: (edits, selection) => this.#applyEdits(edits, selection),
       finishMutation: (accepted) => this.#finishMutation(accepted),
       finishSelectionChange: () => this.#finishSelectionChange(),
+    });
+    this.#search = new CodeEditorSearchSession({
+      controller: this.controller,
+      apply: (edits, selection) => this.#applySearchEdits(edits, selection),
+      finishSelectionChange: () => this.#finishSelectionChange(false, true),
+      changed: () => {
+        this.#touchInteraction();
+        this.invalidate();
+      },
     });
     this.#mouseSelection = new CodeEditorMouseSelection(this, this.controller.document, this.#viewport, () =>
       this.#finishSelectionChange(),
@@ -148,13 +159,38 @@ export class CodeEditor extends Group {
       return;
     }
     if (command === 'search.open') {
-      this.#modal = { kind: 'search' };
+      this.#search.open(false);
       this.#record('search.open');
       return;
     }
+    if (command === 'search.replaceOpen') {
+      this.#search.open(true);
+      this.#record('search.replaceOpen');
+      return;
+    }
     if (command === 'search.next') {
-      this.#searchNext();
+      this.#search.navigate(1);
       this.#record('search.next');
+      return;
+    }
+    if (command === 'search.previous') {
+      this.#search.navigate(-1);
+      this.#record('search.previous');
+      return;
+    }
+    if (command === 'search.replaceCurrent') {
+      this.#search.replaceCurrent();
+      this.#record('search.replaceCurrent');
+      return;
+    }
+    if (command === 'search.replaceAll') {
+      this.#search.replaceAll();
+      this.#record('search.replaceAll');
+      return;
+    }
+    if (command === 'search.dismiss') {
+      this.#search.dismiss();
+      this.#record('search.dismiss');
       return;
     }
     const foldCommand =
@@ -198,6 +234,11 @@ export class CodeEditor extends Group {
     return this.#interactionRevision();
   }
 
+  /** Returns immutable keyboard find/replace state for host status and accessibility surfaces. */
+  public get searchState(): CodeEditorSearchState {
+    return this.#search.state;
+  }
+
   /**
    * Re-fits a standalone or window-hosted editor before the next layout pass applies real bounds.
    *
@@ -229,7 +270,8 @@ export class CodeEditor extends Group {
   /** Opens one modal surface; Escape always dismisses it first. */
   public openModal(modal: CodeEditorModalState): void {
     const kind = ownData(modal, 'kind');
-    if (kind === 'search' || kind === 'chooser' || kind === 'completion') this.#modal = Object.freeze({ kind });
+    if (kind === 'search') this.#search.open(false);
+    if (kind === 'chooser' || kind === 'completion') this.#modal = Object.freeze({ kind });
   }
 
   /** Starts validated, bounded snippet placeholder traversal. */
@@ -246,13 +288,28 @@ export class CodeEditor extends Group {
 
   /** Updates the keyboard-driven search query without changing source text. */
   public setSearchQuery(query: string): void {
-    this.#searchQuery = query.slice(0, 4_096);
+    this.#search.setQuery(query);
+  }
+
+  /** Updates bounded replacement text without mutating the source document. */
+  public setReplacementText(replacement: string): void {
+    this.#search.setReplacement(replacement);
+  }
+
+  /** Selects case-sensitive or case-insensitive literal matching. */
+  public setSearchCaseSensitive(caseSensitive: boolean): void {
+    this.#search.setCaseSensitive(caseSensitive);
   }
 
   /** Routes one key according to assistance/editor/text precedence. */
   public routeKey(key: CodeEditorKey): CodeEditorKeyRoute {
     const canonicalKey = canonicalCodeEditorKeyName(key.key);
     const normalizedKey = canonicalKey === key.key ? key : { ...key, key: canonicalKey };
+    const searchOwner = this.#search.routeKey(normalizedKey);
+    if (searchOwner !== undefined) {
+      if (canonicalKey === 'Enter') this.#record(key.shift === true ? 'search.previous' : 'search.next');
+      return route(searchOwner);
+    }
     if (canonicalKey === 'Escape' && this.#modal !== undefined) {
       this.#modal = undefined;
       return route('dismissal');
@@ -280,10 +337,6 @@ export class CodeEditor extends Group {
     if (assistanceOwner === 'dismissal') {
       this.#syncAssistance();
       return route('dismissal');
-    }
-    if (canonicalKey === 'Enter' && this.#modal?.kind === 'search') {
-      this.execute('search.next');
-      return route('editor');
     }
     if (canonicalKey === 'Tab' && this.#snippet !== undefined) {
       this.#snippetIndex += 1;
@@ -349,8 +402,7 @@ export class CodeEditor extends Group {
       syntax: this.controller.languageResult?.syntax,
       diagnostics: this.controller.diagnostics,
       snippet: this.controller.snippets,
-      search:
-        this.#searchQuery.length === 0 ? [] : this.controller.document.search(this.#searchQuery, { maxResults: 1 }),
+      search: this.#search.matches,
       bracket:
         bracketPair === undefined
           ? undefined
@@ -378,6 +430,7 @@ export class CodeEditor extends Group {
     this.#snippet = undefined;
     this.#modal = undefined;
     this.assistanceView.dismiss();
+    this.#search.dispose();
     this.#pending.clear();
     this.#locallyHandledRevisions.clear();
     this.#controllerSubscription.dispose();
@@ -497,6 +550,15 @@ export class CodeEditor extends Group {
     return accepted;
   }
 
+  #applySearchEdits(edits: readonly DocumentEditInput[], selection: DocumentSelectionInput): boolean {
+    const accepted = this.controller.applyMutation({ edits, selection, origin: 'search' }).accepted;
+    if (accepted) {
+      this.#finishMutation(true);
+      this.#locallyHandledRevisions.add(Number(this.controller.document.identity.revision));
+    }
+    return accepted;
+  }
+
   #handleControllerEvent(event: CodeEditorControllerEvent): void {
     if (this.#disposed) return;
     this.#syncAssistance();
@@ -563,21 +625,8 @@ export class CodeEditor extends Group {
     }
   }
 
-  #searchNext(): void {
-    if (this.#searchQuery.length === 0) return;
-    const text = this.controller.document.snapshot.slice(0);
-    const start = Number(this.controller.document.selection.head);
-    const candidate = text.indexOf(this.#searchQuery, start);
-    const found = candidate >= 0 ? candidate : text.indexOf(this.#searchQuery);
-    if (found >= 0) {
-      this.controller.revealOffset(found);
-      this.controller.revealOffset(found + this.#searchQuery.length);
-      this.controller.document.setSelection({ anchor: found, head: found + this.#searchQuery.length });
-      this.#finishSelectionChange();
-    }
-  }
-
-  #finishSelectionChange(preserveAssistance = false): void {
+  #finishSelectionChange(preserveAssistance = false, preserveSearchSelection = false): void {
+    if (!preserveSearchSelection) this.#search.selectionChanged();
     if (!preserveAssistance) {
       this.controller.caretChanged();
       this.#syncAssistance();
@@ -594,13 +643,17 @@ export class CodeEditor extends Group {
 
   #queueHost(kind: 'navigate' | 'save' | 'close'): void {
     if (this.#pending.has(kind)) return;
-    const pending = this.controller
-      .hostAction(kind)
+    const pending = this.#hostQueue
+      .then(() => this.controller.hostAction(kind))
       .then((accepted) => {
         if (kind === 'close' && accepted) this.focusState = 'released';
       })
       .catch(() => undefined)
       .finally(() => this.#pending.delete(kind));
+    this.#hostQueue = pending.then(
+      () => undefined,
+      () => undefined,
+    );
     this.#pending.set(kind, pending);
   }
 

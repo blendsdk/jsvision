@@ -46,16 +46,23 @@ import {
   routeCodeEditorOverlayKey,
   synchronizeCodeEditorOverlay,
 } from './controller-overlay.js';
+import {
+  CodeEditorDocumentLifecycle,
+  type CodeEditorDocumentLifecycleHostEffect,
+  type CodeEditorExternalChangeInput,
+  type CodeEditorExternalChangeResult,
+  type CodeEditorSaveFormattingOutcome,
+} from './document-lifecycle.js';
+
+const DEFAULT_HOST_EFFECT_TIMEOUT_MS = 5_000;
+const MAXIMUM_HOST_EFFECT_TIMEOUT_MS = 30_000;
+const MAXIMUM_CONCURRENT_HOST_EFFECTS = 8;
 
 /** Host-owned effects raised by keyboard commands that leave the editor boundary. */
-export type CodeEditorControllerHostEffect =
-  | CodeEditorHostEffect
-  | {
-      readonly kind: 'save' | 'close';
-      readonly originUri: string;
-      readonly originRevision: number;
-      readonly sessionGeneration: number;
-    };
+export type CodeEditorControllerHostEffect = (CodeEditorHostEffect | CodeEditorDocumentLifecycleHostEffect) & {
+  /** Present only for save effects; optional here to support generic host event inspection. */
+  readonly formatting?: CodeEditorSaveFormattingOutcome;
+};
 
 /** Observable counters proving presentation-only work remains semantically inert. */
 export interface CodeEditorControllerMetrics {
@@ -108,6 +115,8 @@ export type CodeEditorControllerEvent =
 export interface CreateCodeEditorControllerOptions {
   readonly document: CodeEditorDocumentModel;
   readonly host?: (effect: CodeEditorControllerHostEffect) => Promise<boolean>;
+  /** Deadline for host-owned effects before the editor releases its serialized action queue. */
+  readonly hostEffectTimeoutMs?: number;
   readonly lsp?: CodeEditorLspCoordinator;
   readonly languageResult?: LocalLanguageResult;
   readonly limits?: CodeEditorLimitsInput;
@@ -128,7 +137,9 @@ export class CodeEditorController {
   public readonly degradation: CodeEditorDegradationState;
   public readonly observations: CodeEditorObservabilityChannel;
   readonly #host: (effect: CodeEditorControllerHostEffect) => Promise<boolean>;
+  readonly #hostEffectTimeoutMs: number;
   readonly #lsp: CodeEditorLspCoordinator | undefined;
+  readonly #lifecycle: CodeEditorDocumentLifecycle;
   #languageResult: LocalLanguageResult | undefined;
   #foldableRegions: readonly FoldableRegion[] = Object.freeze([]);
   #foldableRegionLines: readonly { readonly from: number; readonly to: number }[] = Object.freeze([]);
@@ -157,16 +168,20 @@ export class CodeEditorController {
   #notificationGeneration = 0;
   readonly #lspStateSubscription: CodeEditorDisposable | undefined;
   readonly #lspMutationBinding: CodeEditorDisposable | undefined;
+  readonly #pendingHostOperations = new Map<number, () => void>();
+  #nextHostOperationId = 1;
 
   public constructor(options: CreateCodeEditorControllerOptions) {
     this.document = options.document;
     this.#host = options.host ?? (async () => false);
+    this.#hostEffectTimeoutMs = hostEffectTimeout(options.hostEffectTimeoutMs);
     this.#lsp = options.lsp;
     if (this.#lsp !== undefined && this.#lsp.document !== this.document) {
       throw new TypeError('The language-service coordinator belongs to another document.');
     }
     this.#languageResult = undefined;
     this.#lastProtocolSelectionHead = Number(this.document.selection.head);
+    const inheritedDocumentBytes = this.document.maximumDocumentBytes;
     this.limits = resolveCodeEditorLimits(options.limits);
     this.document.configureSafetyLimits({
       maxDocumentBytes: this.limits.documentBytes,
@@ -185,6 +200,14 @@ export class CodeEditorController {
     });
     this.degradation = createDegradationState();
     this.observations = createObservabilityChannel(options.observability);
+    this.#lifecycle = new CodeEditorDocumentLifecycle({
+      document: this.document,
+      lsp: this.#lsp,
+      maximumDocumentBytes: Math.min(this.limits.documentBytes, inheritedDocumentBytes),
+      host: (effect) => this.#invokeHost(effect),
+      reload: (text) => this.#reloadExternalText(text),
+      hostFailed: () => this.#recordHostFailure(),
+    });
     this.#presentation = projectCodeEditorControllerPresentation(this.#lsp?.state);
     let mutationBinding: CodeEditorDisposable | undefined;
     let stateSubscription: CodeEditorDisposable | undefined;
@@ -544,34 +567,43 @@ export class CodeEditorController {
   /** Sends a bounded, typed editor action to the embedding host. */
   public async hostAction(kind: 'navigate' | 'save' | 'close'): Promise<boolean> {
     if (this.#disposed) return false;
+    if (kind === 'save') return this.save();
+    if (kind === 'close') return this.requestClose();
     const originUri = this.document.uri ?? 'untitled:///document';
     const common = {
       originUri,
       originRevision: Number(this.document.identity.revision),
       sessionGeneration: 0,
     };
-    try {
-      if (kind === 'navigate') {
-        if (this.#lsp !== undefined) {
-          this.#lspRequests += 1;
-          this.#lsp.requestDefinition(toProtocolPosition(this.document));
-        }
-        return (
-          (await this.#host({
-            kind,
-            ...common,
-            targetUri: originUri,
-            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
-            focus: true,
-          })) === true
-        );
-      }
-      return (await this.#host({ kind, ...common })) === true;
-    } catch {
-      this.degradation.fail('hostCallback');
-      this.observations.record({ kind: 'degradation', degradedTransitions: 1 });
-      return false;
+    if (this.#lsp !== undefined) {
+      this.#lspRequests += 1;
+      this.#lsp.requestDefinition(toProtocolPosition(this.document));
     }
+    return this.#invokeHost({
+      kind,
+      ...common,
+      targetUri: originUri,
+      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+      focus: true,
+    });
+  }
+
+  /** Saves one exact current revision through the host-owned persistence boundary. */
+  public save(): Promise<boolean> {
+    if (this.#disposed) return Promise.resolve(false);
+    return this.#lifecycle.save();
+  }
+
+  /** Requests host confirmation to close the current clean or modified document. */
+  public requestClose(): Promise<boolean> {
+    if (this.#disposed) return Promise.resolve(false);
+    return this.#lifecycle.requestClose();
+  }
+
+  /** Resolves an already-detected external change using one explicit host decision. */
+  public resolveExternalChange(input: CodeEditorExternalChangeInput): Promise<CodeEditorExternalChangeResult> {
+    if (this.#disposed) return Promise.resolve('rejected');
+    return this.#lifecycle.resolveExternalChange(input);
   }
 
   /** Requests completion through the optional document-scoped LSP coordinator. */
@@ -1033,10 +1065,102 @@ export class CodeEditorController {
     }
   }
 
+  /**
+   * Settles one host effect within the configured deadline and suppresses late completion.
+   *
+   * Host callbacks cannot be forcibly cancelled through the compatibility signature. Detaching
+   * their eventual result still guarantees that one stalled integration cannot freeze later
+   * keyboard actions.
+   */
+  #invokeHost(effect: CodeEditorControllerHostEffect): Promise<boolean> {
+    if (this.#disposed || this.#pendingHostOperations.size >= MAXIMUM_CONCURRENT_HOST_EFFECTS) {
+      if (!this.#disposed) this.#recordHostFailure();
+      return Promise.resolve(false);
+    }
+    return new Promise((resolve) => {
+      const operationId = this.#nextHostOperationId;
+      this.#nextHostOperationId += 1;
+      let settled = false;
+      const finish = (accepted: boolean, failed: boolean): void => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        this.#pendingHostOperations.delete(operationId);
+        if (failed) this.#recordHostFailure();
+        resolve(accepted);
+      };
+      const timer = setTimeout(() => finish(false, true), this.#hostEffectTimeoutMs);
+      this.#pendingHostOperations.set(operationId, () => finish(false, false));
+      try {
+        void Promise.resolve(this.#host(effect)).then(
+          (accepted) => finish(accepted === true, false),
+          () => finish(false, true),
+        );
+      } catch {
+        finish(false, true);
+      }
+    });
+  }
+
+  /** Records one isolated host integration failure. */
+  #recordHostFailure(): void {
+    this.degradation.fail('hostCallback');
+    this.observations.record({ kind: 'degradation', degradedTransitions: 1 });
+  }
+
+  #reloadExternalText(text: string): Promise<boolean> {
+    if (this.#disposed) return Promise.resolve(false);
+    const before = copyIdentity(this.document.identity);
+    try {
+      this.document.replaceDocument({
+        text,
+        ...(this.document.uri === undefined ? {} : { uri: this.document.uri }),
+        languageId: this.document.languageId,
+        readOnly: this.document.readOnly,
+        tabSize: this.document.tabSize,
+        limits: {
+          maxDocumentBytes: this.limits.documentBytes,
+          maxDocumentLines: this.limits.documentLines,
+          maxHistoryEntries: this.limits.historyEntries,
+          maxHistoryBytes: this.limits.historyBytes,
+          maxEditsPerTransaction: this.limits.editsPerTransaction,
+          maxReplacementBytes: this.limits.replacementBytes,
+        },
+      });
+    } catch {
+      return Promise.resolve(false);
+    }
+    this.#languageResult = undefined;
+    this.#foldableRegions = Object.freeze([]);
+    this.#foldableRegionLines = Object.freeze([]);
+    this.#foldableByKey = new Map();
+    this.#foldableByLine = new Map();
+    this.#collapsedFoldKeys = new Set();
+    this.#collapsedRegionLines = Object.freeze([]);
+    this.#collapsedRoots = Object.freeze([]);
+    this.#manualCompletion = undefined;
+    this.#overlay = undefined;
+    this.#diagnosticIndex = -1;
+    this.#lastProtocolSelectionHead = Number(this.document.selection.head);
+    this.#lsp?.documentChanged();
+    const mutation = Object.freeze({
+      origin: 'external' as const,
+      before,
+      after: copyIdentity(this.document.identity),
+    });
+    this.#queueEvent(Object.freeze({ kind: 'document', presentation: this.#presentation, mutation }));
+    void this.#lsp?.resynchronize().catch(() => {
+      this.degradation.fail('languageService');
+    });
+    return Promise.resolve(true);
+  }
+
   /** Releases controller-owned presentation, callback, and protocol resources. */
   public dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    for (const cancel of [...this.#pendingHostOperations.values()]) cancel();
+    this.#pendingHostOperations.clear();
     this.#notificationGeneration += 1;
     this.#pendingDocumentEvents.splice(0);
     this.#pendingPresentationEvent = undefined;
@@ -1106,6 +1230,15 @@ export class CodeEditorController {
     }
     return touched;
   }
+}
+
+/** Resolves the optional host-effect deadline against a conservative compatibility ceiling. */
+function hostEffectTimeout(value: number | undefined): number {
+  const resolved = value ?? DEFAULT_HOST_EFFECT_TIMEOUT_MS;
+  if (!Number.isSafeInteger(resolved) || resolved < 1 || resolved > MAXIMUM_HOST_EFFECT_TIMEOUT_MS) {
+    throw new RangeError(`Host effect timeout must be an integer from 1 through ${MAXIMUM_HOST_EFFECT_TIMEOUT_MS}.`);
+  }
+  return resolved;
 }
 
 function toProtocolPosition(document: CodeEditorDocumentModel): { readonly line: number; readonly character: number } {

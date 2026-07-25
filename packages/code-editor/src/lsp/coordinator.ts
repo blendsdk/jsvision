@@ -1,5 +1,5 @@
 import type { CodeEditorDocumentModel } from '../document/model.js';
-import type { DocumentMutationResult } from '../document/types.js';
+import { copyIdentity, type DocumentIdentity, type DocumentMutationResult } from '../document/types.js';
 import { positionToOffset } from '../document/positions.js';
 import {
   applyCodeEditorMutation,
@@ -81,6 +81,8 @@ export class CodeEditorLspCoordinator {
   #limits: ResolvedLspLimits;
   readonly #host: (effect: CodeEditorHostEffect) => Promise<boolean>;
   readonly #requests: LspRequestLifecycle<RequestStamp>;
+  readonly #scheduleDeadline: (callback: () => void, delayMilliseconds: number) => { readonly dispose: () => void };
+  readonly #notificationTimeoutMs: number;
   #uri: string;
   #languageId: string;
   #formatOnSave: boolean;
@@ -169,6 +171,8 @@ export class CodeEditorLspCoordinator {
         return { dispose: () => clearTimeout(timer) };
       });
     const interactiveTimeoutMs = boundedLimit(options.interactiveTimeoutMs, 5_000, 60_000);
+    this.#scheduleDeadline = schedule;
+    this.#notificationTimeoutMs = interactiveTimeoutMs;
     this.#host = options.host ?? (async () => false);
     this.serviceState =
       this.#session === undefined ? 'plain' : this.#session.state === 'ready' ? 'ready' : 'connecting';
@@ -214,7 +218,11 @@ export class CodeEditorLspCoordinator {
             });
           } else if (state === 'ready') {
             this.serviceState = 'ready';
-            if (!this.#documentSynchronized) void this.resynchronize();
+            if (!this.#documentSynchronized) {
+              void this.resynchronize().catch(() => {
+                this.serviceState = 'degraded';
+              });
+            }
           } else if (state === 'degraded') {
             this.serviceState = 'degraded';
           }
@@ -310,7 +318,7 @@ export class CodeEditorLspCoordinator {
       await this.#documentReady;
       return;
     }
-    await this.#session.notify('textDocument/didOpen', this.#textDocumentPayload());
+    await this.#notifyWithinDeadline('textDocument/didOpen', this.#textDocumentPayload());
     this.#opened = true;
     this.#lastSynchronizedText = this.#document.text;
   }
@@ -325,7 +333,7 @@ export class CodeEditorLspCoordinator {
         this.#syncRequested = false;
         const snapshot = { text: this.#document.text, version: Number(this.#document.identity.revision) };
         const incremental = this.#session?.capabilities.textDocumentSync === 'incremental';
-        await this.#session?.notify('textDocument/didChange', {
+        await this.#notifyWithinDeadline('textDocument/didChange', {
           textDocument: { uri: this.#uri, version: snapshot.version },
           contentChanges: incremental
             ? [
@@ -353,8 +361,8 @@ export class CodeEditorLspCoordinator {
     const prior = this.#syncPromise ?? Promise.resolve();
     this.#documentSynchronized = false;
     const resynchronization = prior.then(async () => {
-      if (this.#opened) await this.#session?.notify('textDocument/didClose', { textDocument: { uri: this.#uri } });
-      await this.#session?.notify('textDocument/didOpen', this.#textDocumentPayload());
+      if (this.#opened) await this.#notifyWithinDeadline('textDocument/didClose', { textDocument: { uri: this.#uri } });
+      await this.#notifyWithinDeadline('textDocument/didOpen', this.#textDocumentPayload());
       this.#opened = true;
       this.#lastSynchronizedText = this.#document.text;
       this.serviceState = 'ready';
@@ -364,8 +372,11 @@ export class CodeEditorLspCoordinator {
       this.#session?.markReady();
     });
     this.#syncPromise = resynchronization;
-    await resynchronization;
-    if (this.#syncPromise === resynchronization) this.#syncPromise = undefined;
+    try {
+      await resynchronization;
+    } finally {
+      if (this.#syncPromise === resynchronization) this.#syncPromise = undefined;
+    }
   }
 
   /** Replaces the active language while preserving document text and resynchronizing protocol state. */
@@ -401,7 +412,9 @@ export class CodeEditorLspCoordinator {
     this.#documentSynchronized = true;
     this.#presentation = emptyPresentation();
     if (notifyClose) {
-      void this.#session?.notify('textDocument/didClose', { textDocument: { uri: this.#uri } }).catch(() => undefined);
+      void this.#notifyWithinDeadline('textDocument/didClose', { textDocument: { uri: this.#uri } }).catch(
+        () => undefined,
+      );
     }
   }
 
@@ -694,35 +707,102 @@ export class CodeEditorLspCoordinator {
     });
   }
 
+  /**
+   * Bounds transport notification settlement and ignores completion from an obsolete generation.
+   *
+   * The transport-neutral session contract has no cancellation primitive. The coordinator still
+   * releases its synchronization barrier at the deadline so a stalled integration cannot retain
+   * authority over later language-service work.
+   */
+  #notifyWithinDeadline(method: string, params: Readonly<Record<string, unknown>>): Promise<void> {
+    const session = this.#session;
+    if (session === undefined) return Promise.resolve();
+    const coordinatorGeneration = this.#coordinatorGeneration;
+    const sessionGeneration = session.generation;
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      let deadline: { readonly dispose: () => void } = { dispose: () => undefined };
+      const finish = (error?: Error): void => {
+        if (settled) return;
+        settled = true;
+        deadline.dispose();
+        if (error === undefined) resolve();
+        else {
+          this.serviceState = 'degraded';
+          reject(error);
+        }
+      };
+      deadline = this.#scheduleDeadline(
+        () => finish(new Error('Language-service notification timed out.')),
+        this.#notificationTimeoutMs,
+      );
+      try {
+        void Promise.resolve(session.notify(method, params)).then(
+          () => {
+            if (coordinatorGeneration !== this.#coordinatorGeneration || sessionGeneration !== session.generation) {
+              finish(new Error('Language-service notification became stale.'));
+            } else {
+              finish();
+            }
+          },
+          () => finish(new Error('Language-service notification failed.')),
+        );
+      } catch {
+        finish(new Error('Language-service notification failed.'));
+      }
+    });
+  }
+
   /** Returns text for host saving, applying opt-in valid current formatting when available. */
-  public async save(): Promise<{ readonly text: string; readonly formatting: string }> {
+  public async save(): Promise<{
+    readonly text: string;
+    readonly formatting: string;
+    readonly identity: DocumentIdentity;
+  }> {
+    const current = (
+      formatting: string,
+    ): {
+      readonly text: string;
+      readonly formatting: string;
+      readonly identity: DocumentIdentity;
+    } => ({
+      text: this.#document.text,
+      formatting,
+      identity: copyIdentity(this.#document.identity),
+    });
     if (!this.#formatOnSave || this.#session?.capabilities.documentFormatting !== true) {
-      return { text: this.#document.text, formatting: 'disabled' };
+      return current('disabled');
     }
     return new Promise((resolve) => {
+      let resolved = false;
+      const finish = (formatting: string): void => {
+        if (resolved) return;
+        resolved = true;
+        resolve(current(formatting));
+      };
       const stamp = this.#stamp();
       const operation = this.#request(
         'textDocument/formatting',
         undefined,
         (result) => {
           if (!this.#matches(stamp)) {
-            resolve({ text: this.#document.text, formatting: 'stale' });
+            finish('stale');
             return;
           }
           const applied = this.#applyFormatting(result);
-          resolve({ text: this.#document.text, formatting: applied ? 'applied' : 'invalid' });
+          finish(applied ? 'applied' : 'invalid');
         },
         (error) => {
-          resolve({
-            text: this.#document.text,
-            formatting: error.message.toLowerCase().includes('timed out') ? 'timeout' : 'failure',
-          });
+          finish(error.message.toLowerCase().includes('timed out') ? 'timeout' : 'failure');
         },
         () => {
-          resolve({ text: this.#document.text, formatting: 'stale' });
+          finish('stale');
         },
       );
-      void operation;
+      void operation.settled.then(({ outcome }) => {
+        if (outcome === 'completed') return;
+        finish(outcome === 'cancelled' ? 'cancelled' : 'failure');
+      });
     });
   }
 
@@ -854,13 +934,13 @@ export class CodeEditorLspCoordinator {
     this.#coordinatorGeneration += 1;
     this.#requests.cancelAll();
     if (this.#session !== undefined && this.#opened) {
-      await this.#session.notify('textDocument/didClose', { textDocument: { uri: this.#uri } });
+      await this.#notifyWithinDeadline('textDocument/didClose', { textDocument: { uri: this.#uri } });
     }
     this.#uri = uri;
     this.#languageId = languageId;
     this.presentation = emptyPresentation();
     if (this.#session !== undefined && !this.closed) {
-      await this.#session.notify('textDocument/didOpen', this.#textDocumentPayload());
+      await this.#notifyWithinDeadline('textDocument/didOpen', this.#textDocumentPayload());
       this.#opened = true;
     }
   }

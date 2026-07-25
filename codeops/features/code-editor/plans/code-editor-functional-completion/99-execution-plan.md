@@ -1,8 +1,8 @@
 # Task T-04: Code Editor functional completion
 
 > **Type**: Task (lightweight) · **Feature**: code-editor · **CodeOps Artifact Schema**: 1
-> **Progress**: 12/27 tasks (44%)
-> **Last Updated**: 2026-07-25 00:47
+> **Progress**: 17/27 tasks (63%)
+> **Last Updated**: 2026-07-25 02:31
 > **Phase baseline tree**: 7beeae3152295fb1877aeb59bf5b9451a9dcac6a
 
 ## Objective
@@ -216,16 +216,23 @@ and make every kitchen-sink capability claim executable and visibly verifiable.
 
 ### Phase C — Search, replace, and document lifecycle
 
-- [ ] T-04.13 `[spec-author]` Add immutable specification tests for ST-11 through ST-14, including
+> **Phase baseline tree**: a5d402b782bda146dbfb7394b55ea0ac08c68dbb
+
+- [x] T-04.13 `[spec-author]` Add immutable specification tests for ST-11 through ST-14, including
   read-only, empty, excessive, stale, rejected, timeout, and external-conflict boundaries.
-- [ ] T-04.14 Run the Phase C specification suites and record the expected red failures before
-  changing implementation.
-- [ ] T-04.15 Build the bounded keyboard-operable find/replace surface and canonical commands for
+  ✅ (completed: 2026-07-25 01:41)
+- [x] T-04.14 Run the Phase C specification suites and record the expected red failures before
+  changing implementation. ✅ (completed: 2026-07-25 01:41; 24 expected red, 0 already green)
+- [x] T-04.15 Build the bounded keyboard-operable find/replace surface and canonical commands for
   next, previous, replace-current, replace-all, dismissal, and focus restoration.
-- [ ] T-04.16 Implement atomic bounded replacement plus format-on-save, saved-revision tracking,
+  ✅ (completed: 2026-07-25 01:57)
+- [x] T-04.16 Implement atomic bounded replacement plus format-on-save, saved-revision tracking,
   dirty-close, and external keep/reload/compare controller/host contracts without direct I/O.
-- [ ] T-04.17 Confirm Phase C specifications green, then add implementation, Unicode, hostile
+  ✅ (completed: 2026-07-25 01:57)
+- [x] T-04.17 Confirm Phase C specifications green, then add implementation, Unicode, hostile
   replacement, transaction, lifecycle, accessibility, and large-document performance coverage.
+  ✅ (completed: 2026-07-25 02:24; 24/24 immutable specifications and 314 package tests green;
+  correctness/security/performance quality loop completed with all major findings corrected)
 
 ### Phase D — Theme and degradation completion
 

@@ -130,6 +130,33 @@ describe('document model implementation', () => {
     ]);
   });
 
+  it('keeps case-insensitive search work bounded by query size instead of document size', () => {
+    const model = createDocumentModel({ text: `${'A'.repeat(2 * 1_048_576)}needle` });
+    const started = performance.now();
+
+    expect(model.search('NEEDLE', { caseSensitive: false, maxResults: 1 })).toEqual([
+      { from: 2 * 1_048_576, to: 2 * 1_048_576 + 6 },
+    ]);
+    expect(performance.now() - started).toBeLessThan(1_500);
+  });
+
+  it('rejects hostile and excessive public search inputs before property access or allocation', () => {
+    const model = createDocumentModel({ text: 'value' });
+    const hostile = Object.create(null) as Record<string, unknown>;
+    let getterHits = 0;
+    Object.defineProperty(hostile, 'maxResults', {
+      get() {
+        getterHits += 1;
+        return 1;
+      },
+    });
+
+    expect(() => model.search({ length: 1 } as never)).toThrow(TypeError);
+    expect(() => model.search('value', hostile as never)).not.toThrow();
+    expect(getterHits).toBe(0);
+    expect(() => model.search('x'.repeat(4_097))).toThrow(RangeError);
+  });
+
   it('permits line-neutral replacements at the configured line ceiling', () => {
     const lf = createDocumentModel({ text: 'a\nb', limits: { maxDocumentLines: 2 } });
     expect(lf.apply(lf.createTransaction({ edits: [edit(0, 3, 'c\nd')], origin: 'typing' }))).toMatchObject({

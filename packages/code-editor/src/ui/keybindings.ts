@@ -3,7 +3,12 @@ import { canonicalCodeEditorKeyName, codeEditorKeyToken, type CodeEditorCommand 
 const COMMANDS: ReadonlySet<string> = new Set([
   'cursor.documentEnd',
   'search.open',
+  'search.replaceOpen',
   'search.next',
+  'search.previous',
+  'search.replaceCurrent',
+  'search.replaceAll',
+  'search.dismiss',
   'fold.toggle',
   'fold.collapse',
   'fold.expand',
