@@ -163,5 +163,12 @@ translated text or parameter values. Configuration, validation, and formatter mi
 - Uses built-in `Intl` implementations for locale canonicalization, formatting, collation, and
   cardinal plural rules.
 
+## Provenance
+
+This JSVision-owned package adapts internationalization concepts and suitable behavioral tests
+from the MIT-licensed `@blendsdk/i18n` package. It is not a runtime dependency or a literal copy.
+The complete upstream attribution and license text ship with this package in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 See the [JSVision repository](https://github.com/blendsdk/jsvision) and
 [documentation site](https://blendsdk.github.io/jsvision/) for the full SDK documentation.

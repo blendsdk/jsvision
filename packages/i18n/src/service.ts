@@ -22,6 +22,16 @@ const MAX_KEY_SCALARS = 512;
 const CONSTRUCTION_OPTION_KEYS = new Set<PropertyKey>(['locale', 'fallbackLocales', 'catalogs', 'diagnosticSink']);
 const TRANSLATE_OPTION_KEYS = new Set<PropertyKey>(['params', 'defaultMessage']);
 
+/** Value-free diagnostic recorded while constructing a service from external sources. */
+export interface InitialI18nDiagnostic {
+  /** Stable recoverable failure category. */
+  readonly code: I18nCode;
+  /** Message key, or an empty string when the failure is not tied to one message. */
+  readonly key: string;
+  /** Optional safe source identifier. */
+  readonly source?: string;
+}
+
 /** Safely read one own data property without invoking an accessor. */
 function ownDataProperty(value: object, key: PropertyKey): { readonly valid: boolean; readonly value?: unknown } {
   try {
@@ -173,12 +183,18 @@ class I18nService implements I18n {
    *
    * @param options Validated and copied construction options.
    */
-  constructor(options: ReturnType<typeof resolveConstructionOptions>) {
+  constructor(
+    options: ReturnType<typeof resolveConstructionOptions>,
+    initialDiagnostics: readonly InitialI18nDiagnostic[] = [],
+  ) {
     this.#locale = options.locale.requested;
     this.#fallbackLocales = options.fallbackLocales;
     this.#catalogChain = buildCatalogLocaleChain(this.#locale, this.#fallbackLocales);
     this.#diagnosticStore = new DiagnosticStore(options.diagnosticSink);
     this.#snapshot = createCatalogSnapshot(options.catalogs.map((catalog) => Object.freeze({ catalog })));
+    for (const diagnostic of initialDiagnostics) {
+      this.#record(diagnostic.code, diagnostic.key, this.#locale, diagnostic.source);
+    }
     Object.freeze(this);
   }
 
@@ -366,4 +382,21 @@ class I18nService implements I18n {
  */
 export function createI18n(options: CreateI18nOptions = {}): I18n {
   return new I18nService(resolveConstructionOptions(options));
+}
+
+/**
+ * Construct a service with value-free diagnostics discovered before publication.
+ *
+ * This internal factory lets asynchronous source orchestration publish its diagnostics atomically
+ * with the completed catalog snapshot. It is intentionally absent from the package entry point.
+ *
+ * @param options Locale, fallback, catalog, and diagnostic configuration.
+ * @param diagnostics Recoverable failures discovered before service construction.
+ * @returns Ready-to-use service containing the initial diagnostics.
+ */
+export function createI18nWithDiagnostics(
+  options: CreateI18nOptions,
+  diagnostics: readonly InitialI18nDiagnostic[],
+): I18n {
+  return new I18nService(resolveConstructionOptions(options), diagnostics);
 }

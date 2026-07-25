@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-25 10:41
-> **Progress**: 21/66 tasks (32%)
+> **Last Updated**: 2026-07-25 21:41
+> **Progress**: 29/66 tasks (44%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -92,19 +92,19 @@ package tests, 34/34 root tasks, and plugin integrity passed. See
 
 **Reference**: [03-02](03-02-sources-and-security.md) · AR-32, AR-45
 
-- [ ] 2.2.1 Implement deterministic `loadI18n` orchestration and sanitized optional-source diagnostics — `packages/i18n/src/source.ts`, `packages/i18n/src/index.ts`, `packages/i18n/test/source.impl.test.ts`
-- [ ] 2.2.2 Implement the bounded duplicate-detecting recursive-descent JSON parser — `packages/i18n/src/node/strict-json.ts`, `packages/i18n/test/strict-json.impl.test.ts`
-- [ ] 2.2.3 Implement relative-path grammar, immediate glob expansion, canonical containment, and handle checks — `packages/i18n/src/node/paths.ts`, `packages/i18n/test/paths.impl.test.ts`
-- [ ] 2.2.4 Implement fatal UTF-8 bounded file loading and `jsonFileSource` publication — `packages/i18n/src/node/json-file-source.ts`, `packages/i18n/src/node/index.ts`, `packages/i18n/test/json-file-source.impl.test.ts`
-- [ ] 2.2.5 Expose the isolated `./node` package subpath and prove main-entry browser isolation — `packages/i18n/package.json`, `packages/i18n/test/package-exports.impl.test.ts`
-- [ ] 2.2.6 Run Phase 2 spec tests green; fix source/loader implementation only — `packages/i18n/test/sources.spec.test.ts`, `packages/i18n/test/node-loader.spec.test.ts`
+- [x] 2.2.1 Implement deterministic `loadI18n` orchestration and sanitized optional-source diagnostics — `packages/i18n/src/source.ts`, `packages/i18n/src/index.ts`, `packages/i18n/test/source.impl.test.ts` — six public and ten implementation tests green ✅ (completed: 2026-07-25 10:47)
+- [x] 2.2.2 Implement the bounded duplicate-detecting recursive-descent JSON parser — `packages/i18n/src/node/strict-json.ts`, `packages/i18n/test/strict-json.impl.test.ts` — 28 grammar, duplicate, Unicode, and bound tests green ✅ (completed: 2026-07-25 10:50)
+- [x] 2.2.3 Implement relative-path grammar, immediate glob expansion, canonical containment, and handle checks — `packages/i18n/src/node/paths.ts`, `packages/i18n/test/paths.impl.test.ts` — 18 path, ordering, containment, and handle tests green ✅ (completed: 2026-07-25 10:54)
+- [x] 2.2.4 Implement fatal UTF-8 bounded file loading and `jsonFileSource` publication — `packages/i18n/src/node/json-file-source.ts`, `packages/i18n/src/node/index.ts`, `packages/i18n/test/json-file-source.impl.test.ts` — 119 focused Node tests and 340 package tests green ✅ (completed: 2026-07-25 21:31)
+- [x] 2.2.5 Expose the isolated `./node` package subpath and prove main-entry browser isolation — `packages/i18n/package.json`, `packages/i18n/test/package-exports.impl.test.ts` — three entry-isolation tests and emitted Node entry green ✅ (completed: 2026-07-25 21:35)
+- [x] 2.2.6 Run Phase 2 spec tests green; fix source/loader implementation only — `packages/i18n/test/sources.spec.test.ts`, `packages/i18n/test/node-loader.spec.test.ts` — 120 source and Node loader specification tests green ✅ (completed: 2026-07-25 21:36)
 
 ### Step 2.3: Hardening and verification
 
 **Reference**: [03-02](03-02-sources-and-security.md) · AR-32, AR-43
 
-- [ ] 2.3.1 Add upstream MIT attribution and validate its inclusion in the packed package — `packages/i18n/THIRD_PARTY_NOTICES.md`, `packages/i18n/README.md`, `packages/i18n/test/package-exports.impl.test.ts`
-- [ ] 2.3.2 Verify Phase 2 with parser/security tests, package gates, packed artifact inspection, and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
+- [x] 2.3.1 Add upstream MIT attribution and validate its inclusion in the packed package — `packages/i18n/THIRD_PARTY_NOTICES.md`, `packages/i18n/README.md`, `packages/i18n/CHANGELOG.md`, `packages/i18n/test/package-exports.impl.test.ts` — four entry/packing tests and documentation gate green ✅ (completed: 2026-07-25 21:38)
+- [x] 2.3.2 Verify Phase 2 with parser/security tests, package gates, packed artifact inspection, and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md` — 344 package tests, packed notice inspection, 34/34 root tasks, and plugin integrity green ✅ (completed: 2026-07-25 21:41)
 
 ## Phase 3: Application and UI foundations
 

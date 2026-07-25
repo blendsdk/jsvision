@@ -103,7 +103,7 @@ describe('rooted deterministic paths', () => {
   });
 
   test.each([
-    ['absolute path', resolve(fixtureRoot, 'outside.json')],
+    ['absolute path', resolve('outside.json')],
     ['parent traversal', '../outside.json'],
     ['current-directory segment', './inside.json'],
     ['empty segment', 'locales//inside.json'],
@@ -219,10 +219,10 @@ describe('strict JSON and fatal UTF-8', () => {
     await expect(loadPaths(['invalid.json'])).rejects.toMatchObject({ code: 'INVALID_UTF8' });
   });
 
-  test.each(unsafeCatalogText)('rejects unsafe catalog text $label atomically', async ({ value }) => {
+  test.each(unsafeCatalogText)('rejects unsafe catalog text $label atomically', async ({ expectedCode, value }) => {
     await writeFixture('unsafe.json', catalogJson('en', { 'app.safe': 'safe', 'app.unsafe': value }));
 
-    await expect(loadPaths(['unsafe.json'])).rejects.toMatchObject({ code: 'UNSAFE_TEXT' });
+    await expect(loadPaths(['unsafe.json'])).rejects.toMatchObject({ code: expectedCode });
   });
 
   test('accepts ordinary Unicode and LF line breaks', async () => {

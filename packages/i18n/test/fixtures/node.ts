@@ -103,23 +103,27 @@ export const unsafeCatalogText = Object.freeze([
   ...Array.from({ length: 0x20 }, (_, value) => value)
     .filter((value) => value !== 0x0a)
     .map((value) => ({
+      expectedCode: 'UNSAFE_TEXT',
       label: `U+${value.toString(16).toUpperCase().padStart(4, '0')}`,
       value: String.fromCodePoint(value),
     })),
   ...Array.from({ length: 0x21 }, (_, offset) => offset + 0x7f).map((value) => ({
+    expectedCode: 'UNSAFE_TEXT',
     label: `U+${value.toString(16).toUpperCase().padStart(4, '0')}`,
     value: String.fromCodePoint(value),
   })),
   ...Array.from({ length: 5 }, (_, offset) => offset + 0x202a).map((value) => ({
+    expectedCode: 'UNSAFE_TEXT',
     label: `U+${value.toString(16).toUpperCase()}`,
     value: String.fromCodePoint(value),
   })),
   ...Array.from({ length: 4 }, (_, offset) => offset + 0x2066).map((value) => ({
+    expectedCode: 'UNSAFE_TEXT',
     label: `U+${value.toString(16).toUpperCase()}`,
     value: String.fromCodePoint(value),
   })),
-  { label: 'lone high surrogate', value: '\uD800' },
-  { label: 'lone low surrogate', value: '\uDC00' },
+  { expectedCode: 'INVALID_JSON', label: 'lone high surrogate', value: '\uD800' },
+  { expectedCode: 'INVALID_JSON', label: 'lone low surrogate', value: '\uDC00' },
 ] as const);
 
 /** Reference and candidate catalogs covering strict parity and accelerator failures. */

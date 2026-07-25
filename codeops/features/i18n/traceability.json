@@ -3369,6 +3369,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Deterministic asynchronous source orchestration validates caller boundaries preserves declaration order isolates optional failures and publishes atomically",
+        "verificationEvidence:Six public source specifications and ten source implementation tests passed with ESLint formatting and documentation checks"
+      ],
       "id": "TASK-2-2-1",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3381,13 +3385,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement deterministic `loadI18n` orchestration and sanitized optional-source diagnostics",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Bounded recursive-descent JSON parser rejects duplicate members malformed grammar invalid surrogates non-finite numbers and excess nesting tokens or string scalars",
+        "verificationEvidence:Twenty-eight strict parser tests passed with ESLint formatting and documentation checks"
+      ],
       "id": "TASK-2-2-2",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3400,13 +3408,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement the bounded duplicate-detecting recursive-descent JSON parser",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Portable relative path grammar deterministic immediate globs canonical root containment and regular checked file handles implemented",
+        "verificationEvidence:Eighteen path grammar containment ordering and checked-handle tests passed with ESLint formatting and documentation checks"
+      ],
       "id": "TASK-2-2-3",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3419,13 +3431,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement relative-path grammar, immediate glob expansion, canonical containment, and handle checks",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Node JSON file source enforces checked bounded reads fatal UTF-8 strict parsing caller-lowered limits and atomic catalog validation",
+        "verificationEvidence:One hundred nineteen focused Node loader tests and the complete 340-test package suite passed with typecheck ESLint formatting and documentation checks"
+      ],
       "id": "TASK-2-2-4",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3438,13 +3454,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement fatal UTF-8 bounded file loading and `jsonFileSource` publication",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Explicit Node package subpath is emitted independently while the default browser entry dependency closure remains free of Node built-ins and loader modules",
+        "verificationEvidence:Three package-entry isolation tests passed and the package build emitted the declared Node runtime and type entry files"
+      ],
       "id": "TASK-2-2-5",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3457,13 +3477,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Expose the isolated `./node` package subpath and prove main-entry browser isolation",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Phase 2 source orchestration and secure Node loader behavior is implemented against the approved specification tests",
+        "verificationEvidence:All 120 Phase 2 source and Node loader specification tests passed with the package documentation gate"
+      ],
       "id": "TASK-2-2-6",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3476,13 +3500,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Run Phase 2 spec tests green; fix source/loader implementation only",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Published package notice preserves the upstream BlendSDK MIT attribution and is linked from consumer documentation and changelog",
+        "verificationEvidence:Four package-entry tests passed, including real npm pack inspection of the complete upstream MIT notice, and the package documentation gate passed"
+      ],
       "id": "TASK-2-3-1",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3495,13 +3523,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Add upstream MIT attribution and validate its inclusion in the packed package",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Phase 2 implementation and hardening are ready for the complete package and repository verification gates",
+        "verificationEvidence:Package build typecheck docs dependencies tarball inspection and all 344 tests passed; root yarn verify completed all 34 tasks and plugin integrity passed"
+      ],
       "id": "TASK-2-3-2",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3514,7 +3546,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Verify Phase 2 with parser/security tests, package gates, packed artifact inspection, and root `yarn verify`",
       "type": "task",
       "validations": []
