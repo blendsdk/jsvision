@@ -1495,6 +1495,14 @@ Base class for every error the SDK throws.
 new TuiError(message: string)   // extends Error
 ```
 
+## UI_ACCELERATOR_MANIFEST
+
+Co-visible accelerator groups for the built-in UI catalog.
+
+```ts
+const UI_ACCELERATOR_MANIFEST: AcceleratorManifest
+```
+
 ## UnicodeCaps
 
 Unicode rendering capabilities.

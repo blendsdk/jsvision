@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-25 23:40
-> **Progress**: 41/66 tasks (62%)
+> **Last Updated**: 2026-07-26 01:12
+> **Progress**: 56/66 tasks (85%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -148,37 +148,42 @@ tests and all repository/plugin gates. See
 
 ## Phase 4: Consumer packages and official locales
 
-> **Phase baseline tree**: _(recorded at execution)_
+> **Phase baseline tree**: b2a753c0d4a154e0cc6684d902d1b00f0d2ebd8c
 
 ### Step 4.1: Specification tests
 
 **Reference**: [03-03](03-03-framework-integration.md), [03-04](03-04-locales-docs-plugin.md) · AR-35, AR-38–AR-40
 
-- [ ] 4.1.1 [spec-author] Add Forms, Files, and Datagrid behavior tests for ST-39–ST-42 — `packages/forms/test/i18n.spec.test.ts`, `packages/files/test/i18n.spec.test.ts`, `packages/datagrid/test/i18n.spec.test.ts`
-- [ ] 4.1.2 [spec-author] Add ten-locale layout and 40-subpath catalog/package tests for ST-43–ST-48 — `packages/ui/test/i18n-layout.spec.test.ts`, `packages/i18n/test/locales.spec.test.ts`, `packages/i18n/test/fixtures/reviews.ts`
-- [ ] 4.1.3 Run the Phase 4 spec suites and record expected missing-integration/locale failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
+- [x] 4.1.1 [spec-author] Add Forms, Files, and Datagrid behavior tests for ST-39–ST-42 — `packages/forms/test/i18n.spec.test.ts`, `packages/files/test/i18n.spec.test.ts`, `packages/datagrid/test/i18n.spec.test.ts` — expected red confirmed across all three consumers ✅ (completed: 2026-07-25 23:55)
+- [x] 4.1.2 [spec-author] Add ten-locale layout and 40-subpath catalog/package tests for ST-43–ST-48 — `packages/ui/test/i18n-layout.spec.test.ts`, `packages/i18n/test/locales.spec.test.ts`, `packages/i18n/test/fixtures/reviews.ts` — expected red confirmed for 40 subpaths, parity, scopes, layout, and fallback ✅ (completed: 2026-07-25 23:55)
+- [x] 4.1.3 Run the Phase 4 spec suites and record expected missing-integration/locale failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md` — parent checkpoint confirmed 73 expected failures across five suites ✅ (completed: 2026-07-25 23:56)
 
 ### Step 4.2: Implementation
 
 **Reference**: [03-03](03-03-framework-integration.md) · AR-36, AR-38
 
-- [ ] 4.2.1 Add the Forms catalog and localize FormDialog defaults — `packages/forms/src/i18n/catalog.ts`, `packages/forms/src/form-dialog.ts`
-- [ ] 4.2.2 Add the Files catalog and localize dialog action labels — `packages/files/src/i18n/catalog.ts`, `packages/files/src/dialog/file-dialog.ts`
-- [ ] 4.2.3 Localize Files metadata, change-directory, and error dialogs without touching path data — `packages/files/src/list/file-info-pane.ts`, `packages/files/src/dialog/chdir-dialog.ts`, `packages/files/src/dialog/error-dialog.ts`
-- [ ] 4.2.4 Add the Datagrid catalog and localize default formatting/empty/filter text — `packages/datagrid/src/i18n/catalog.ts`, `packages/datagrid/src/format.ts`
-- [ ] 4.2.5 Localize Datagrid filter/personalization surfaces and explicit-i18n collation — `packages/datagrid/src/filter-popup.ts`, `packages/datagrid/src/personalize-dialog.ts`, `packages/datagrid/src/filter.ts`
-- [ ] 4.2.6 Add canonical ten-locale catalog data and accelerator-scope manifests for all four packages — `packages/ui/src/i18n/locales.ts`, `packages/forms/src/i18n/locales.ts`, `packages/files/src/i18n/locales.ts`
-- [ ] 4.2.7 Complete Datagrid locale data and implement deterministic locale entry/export generation — `packages/datagrid/src/i18n/locales.ts`, `scripts/update-i18n-locales.mjs`, `tools/i18n-locale-exports.json`
-- [ ] 4.2.8 Generate/check explicit locale entry points and package exports in bounded batches — `packages/ui/src/locales/`, `packages/forms/src/locales/`, `packages/files/src/locales/`
-- [ ] 4.2.9 Generate/check Datagrid locale entries, dependency metadata, and root lockfile — `packages/datagrid/src/locales/`, `packages/datagrid/package.json`, `yarn.lock`
-- [ ] 4.2.10 Run Phase 4 spec tests green; fix consumer/catalog implementation only — `packages/forms/test/i18n.spec.test.ts`, `packages/files/test/i18n.spec.test.ts`, `packages/datagrid/test/i18n.spec.test.ts`
+- [x] 4.2.1 Add the Forms catalog and localize FormDialog defaults — `packages/forms/src/i18n/catalog.ts`, `packages/forms/src/form-dialog.ts` — Forms specification 2/2, typecheck, and JSDoc checks green ✅ (completed: 2026-07-25 23:58)
+- [x] 4.2.2 Add the Files catalog and localize dialog action labels — `packages/files/src/i18n/catalog.ts`, `packages/files/src/dialog/file-dialog.ts` — Files i18n specification, typecheck, and JSDoc checks green ✅ (completed: 2026-07-26 00:07)
+- [x] 4.2.3 Localize Files metadata, change-directory, and error dialogs without touching path data — `packages/files/src/list/file-info-pane.ts`, `packages/files/src/dialog/chdir-dialog.ts`, `packages/files/src/dialog/error-dialog.ts` — metadata localization preserves caller path/name bytes; Files specification 4/4 green ✅ (completed: 2026-07-26 00:07)
+- [x] 4.2.4 Add the Datagrid catalog and localize default formatting/empty/filter text — `packages/datagrid/src/i18n/catalog.ts`, `packages/datagrid/src/format.ts` — focused i18n oracle, formatter/lifecycle regression tests, and JSDoc checks green ✅ (completed: 2026-07-26 00:10)
+- [x] 4.2.5 Localize Datagrid filter/personalization surfaces and explicit-i18n collation — `packages/datagrid/src/filter-popup.ts`, `packages/datagrid/src/personalize-dialog.ts`, `packages/datagrid/src/filter.ts` — six i18n oracles, 25 personalization regressions, typecheck, and JSDoc checks green ✅ (completed: 2026-07-26 00:15)
+- [x] 4.2.6 Add canonical ten-locale catalog data and accelerator-scope manifests for all four packages — `packages/ui/src/i18n/locales.ts`, `packages/forms/src/i18n/locales.ts`, `packages/files/src/i18n/locales.ts` — strict parity, placeholder, accelerator, and isolation contracts green ✅ (completed: 2026-07-26 00:27)
+- [x] 4.2.7 Complete Datagrid locale data and implement deterministic locale entry/export generation — `packages/datagrid/src/i18n/locales.ts`, `scripts/update-i18n-locales.mjs`, `tools/i18n-locale-exports.json` — generator update/check, package builds/typechecks, and 52 locale tests green ✅ (completed: 2026-07-26 00:27)
+- [x] 4.2.8 Generate/check explicit locale entry points and package exports in bounded batches — `packages/ui/src/locales/`, `packages/forms/src/locales/`, `packages/files/src/locales/` — thirty runtime/declaration subpaths generated and verified ✅ (completed: 2026-07-26 00:27)
+- [x] 4.2.9 Generate/check Datagrid locale entries, dependency metadata, and root lockfile — `packages/datagrid/src/locales/`, `packages/datagrid/package.json`, `yarn.lock` — ten Datagrid subpaths and direct dependency metadata verified ✅ (completed: 2026-07-26 00:27)
+- [x] 4.2.10 Run Phase 4 spec tests green; fix consumer/catalog implementation only — `packages/forms/test/i18n.spec.test.ts`, `packages/files/test/i18n.spec.test.ts`, `packages/datagrid/test/i18n.spec.test.ts` — twelve consumer i18n specifications green without oracle changes ✅ (completed: 2026-07-26 00:28)
 
 ### Step 4.3: Hardening and verification
 
 **Reference**: [07-testing-strategy](07-testing-strategy.md) ST-39–ST-48 · AR-37, AR-39
 
-- [ ] 4.3.1 Complete literal classifications and add display-cell layout/invalid-override implementation coverage — `tools/i18n-literals.json`, `packages/ui/test/i18n-layout.impl.test.ts`, `packages/i18n/test/locales.impl.test.ts`
-- [ ] 4.3.2 Verify Phase 4 with all consumer gates, locale generation/check, layout tests, package builds, and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
+- [x] 4.3.1 Complete literal classifications and add display-cell layout/invalid-override implementation coverage — `tools/i18n-literals.json`, `packages/ui/test/i18n-layout.impl.test.ts`, `packages/i18n/test/locales.impl.test.ts` — localized layout/locale implementation suites and four-package literal inventory green ✅ (completed: 2026-07-26 00:36)
+- [x] 4.3.2 Verify Phase 4 with all consumer gates, locale generation/check, layout tests, package builds, and root `yarn verify` — all 34 Turbo tasks and repository/plugin gates passed ✅ (completed: 2026-07-26 00:46)
+
+Phase 4 passed independent correctness and public-API review after all six initial Major findings
+were corrected. The one-time re-review found one canonical-English accelerator edge, which was
+corrected and covered without a third review. Final `yarn verify` passed all 34 Turbo tasks and
+repository/plugin gates. See [08-phase-4-quality-review](08-phase-4-quality-review.md).
 
 ## Phase 5: Documentation, plugin, quality, and release
 

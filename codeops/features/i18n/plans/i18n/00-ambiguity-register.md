@@ -1,7 +1,7 @@
 # Ambiguity Register: JSVision i18n Implementation Plan
 
-> **Status**: ✅ GATE PASSED — all 19 plan items resolved
-> **Last Updated**: 2026-07-25 21:45 CEST
+> **Status**: ✅ GATE PASSED — all 24 plan items resolved
+> **Last Updated**: 2026-07-26 00:07 CEST
 > **Planning Target**: `i18n/SET-I18N` (RD-01 through RD-04 as one implementation group)
 > **Context Artifacts**: i18n requirements set, current UI/Forms/Files/Datagrid source and tests,
 > BlendSDK `packages/i18n` source/tests, plugin generators and canonical skill
@@ -36,6 +36,11 @@ decisions discovered after the requirements gate.
 | 46 | Testing / sequencing (runtime) | How are implementation tests kept after the green oracle when module tasks originally named them early? | Keep tests beside module tasks / defer all implementation tests into bounded hardening tasks | Remove `*.impl.test.ts` from implementation tasks; after the complete spec suite turns green, add six bounded implementation-test/documentation/verification tasks | ✅ Resolved |
 | 47 | Node loader API / testing (runtime) | What are the public lower-limit names and deterministic race seam? | Short names / unit-explicit names; public adapter / internal hook | Use unit-explicit limit fields and a non-exported post-open test hook | ✅ Resolved |
 | 48 | Security / resource bounds (runtime) | How do Phase 2 sources remain contained and bounded across races and aggregate inputs? | Path-only rechecks / identity-bound fail-closed handles; per-item limits / aggregate ceilings | Bind opened files to canonicalization-time identity, open POSIX targets non-blocking, use intrinsic abort operations, and enforce source-wide catalog/file/byte ceilings | ✅ Resolved |
+| 49 | UI API / catalog keys (runtime) | What concrete service seams and UI key taxonomy can immutable Phase 3 tests pin? | Direct service parameter / new options objects / global context | Direct optional service for button factories, optional service on widget options, required host service for modal helpers, and stable semantic `ui.*` keys | ✅ Resolved |
+| 50 | Dependency sequencing (runtime) | When are the four direct dependency declarations added? | Phase 3 together / defer consumer manifests to Phase 4 | Add all four manifests in Phase 3 so the accepted package-graph oracle can turn green before consumer localization | ✅ Resolved |
+| 51 | Consumer API / catalog keys (runtime) | How does explicit i18n reach consumer widgets and pure Datagrid filter/collation functions? | Grid-only context / optional public seams / ambient global service | Add optional services to owning options and trailing pure-function parameters; hosts remain authoritative; omission preserves every current signature and behavior | ✅ Resolved |
+| 52 | Accelerators / public validation (runtime) | How do consumers validate official scopes and how does one malformed app label fall back? | Internal-only manifests / public readonly manifests; catalog sanitization / package label fallback | Export one readonly manifest per package main entry; package label helpers reject only malformed translated labels and use English defaults; official collisions remain strict validation failures | ✅ Resolved |
+| 53 | Files host compatibility (runtime) | Must every structural Files modal host add `i18n`, or may existing minimal hosts retain their public shape? | Required service / optional service with isolated English fallback | Keep `ExecHost.i18n` optional; applications pass their service, while legacy hosts receive isolated English text | ✅ Resolved |
 
 ## Resolution Notes
 
@@ -363,3 +368,111 @@ Every entry below uses:
 - **Root invocation ID:** `i18n-20260725-01`.
 - **Reopen triggers:** ST-32 is reassigned to a later phase or package-manager policy rejects a
   temporarily unused direct dependency.
+
+**AR-51 — Consumer service seams and representative keys (runtime)**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Reversible optional parameter placement and semantic catalog-key naming within
+  the approved package ownership, explicit-service, caller-precedence, and compatibility contract.
+- **Objective:** Give immutable Phase 4 tests a concrete public seam for consumer localization and
+  locale-sensitive Datagrid filtering without introducing ambient state.
+- **Decision:** FormDialog continues to use its required `host.i18n`. Files opener/error hosts gain
+  required `i18n`; standalone FileDialog, ChDirDialog, and FileInfoPane options gain optional
+  `i18n`. `EditableDataGridOptions` and `FilterPopupConfig` gain optional `i18n`; `filterRows` and
+  `computeDistinct` gain one optional trailing `I18n` parameter, and the grid passes its service to
+  both. Explicit filtering normalizes strings to NFC, applies locale-aware casing, and uses
+  `I18n.compare` for framework-owned distinct ordering. Omitting the service preserves the current
+  ambient collator and casing behavior. `sortRowsMulti` remains unchanged because general data
+  ordering and custom column comparators are caller-owned, not a framework search affordance.
+  `fmt.boolean(labels?, i18n?)` localizes only absent labels. Representative stable keys are
+  `forms.action.ok`; `files.action.open/cancel/ok`, `files.dialog.error.title`,
+  `files.error.invalid-file-name`, and `files.info.month.<name>.short`; and
+  `datagrid.boolean.yes/no`, `datagrid.empty`, `datagrid.filter.action.apply/clear`, and
+  `datagrid.personalize.action.save/reset`. Further package keys follow the same lowercase semantic
+  namespace and are fixed by each English catalog.
+- **Evidence:** Existing Forms and personalization APIs already carry `ModalDialogHost`; Files
+  openers already carry a structurally similar host; File and Datagrid widgets already use options
+  objects; the public pure functions have append-compatible trailing positions. The Phase 4
+  implementation list includes `filter.ts` but not `sort.ts`, confirming that locale behavior is
+  scoped to filtering and distinct-label collation.
+- **Rejected alternatives:** A grid-only service leaves direct public pure-function callers unable
+  to request locale behavior; a global service violates application isolation; changing
+  `sortRowsMulti` broadens caller-data semantics and the planned modification set; a new context
+  object breaks every pure-function call.
+- **Strongest counterargument:** Optional service parameters enlarge several public signatures.
+  They are append-only or optional option fields, preserve source compatibility, and make the
+  locale boundary explicit at every independently callable surface.
+- **Confidence:** High.
+- **Hardening:** The independent spec author stopped before inventing a seam. Grounding against the
+  current public signatures and planned file set ruled out global state and general sort changes.
+- **Policy version:** 1.
+- **Root invocation ID:** `i18n-20260725-01`.
+- **Reopen triggers:** Locale-aware general data sorting becomes an explicit requirement, pure
+  functions move behind the grid API, or Files replaces its modal host seam.
+
+**AR-52 — Public accelerator manifests and per-label fallback (runtime)**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Public constant naming and internal fallback placement within the accepted
+  accelerator validation, official hard-gate, and per-key application recovery behavior.
+- **Objective:** Make official scopes verifiable through package APIs while ensuring one malformed
+  application label cannot make a framework control unreachable.
+- **Decision:** UI, Forms, Files, and Datagrid main entries export readonly
+  `UI_ACCELERATOR_MANIFEST`, `FORMS_ACCELERATOR_MANIFEST`, `FILES_ACCELERATOR_MANIFEST`, and
+  `DATAGRID_ACCELERATOR_MANIFEST` constants. Locale subpaths continue to export exactly one catalog.
+  Package-internal label translation helpers accept the service, stable key, English default, and
+  whether an accelerator is required. A translated label with malformed tilde markup, more than one
+  marker, a non-ASCII accelerator, or no required marker is ignored for that key and the English
+  default is rendered. Official catalogs are still validated with their full public manifest and
+  fail on scoped collisions; runtime app collisions remain diagnosable validation warnings rather
+  than silently rewriting unrelated keys.
+- **Evidence:** Accelerator manifests are already browser-safe readonly data and are necessary for
+  consumers to run the public strict validator. Locale subpaths have a one-catalog contract, so the
+  manifests belong on package main entries. The engine validation API returns issues but deliberately
+  does not mutate caller catalogs; the accepted requirements assign per-key recovery to runtime
+  package helpers.
+- **Rejected alternatives:** Keeping manifests internal prevents public strict validation and an
+  immutable public oracle; exporting them from every locale subpath violates the single-catalog
+  contract; changing `defineCatalog` to mutate or discard messages breaks the engine's atomic
+  validation semantics; rejecting an entire application catalog loses valid unrelated overrides.
+- **Strongest counterargument:** Four new public constants enlarge package surfaces. They are stable
+  authoring metadata required by strict validation and contain no locale strings or Node dependency.
+- **Confidence:** High.
+- **Hardening:** The independent locale spec author stopped at the missing seam. Requirements and the
+  engine specification explicitly place per-key recovery in package helpers, leaving one compatible
+  boundary.
+- **Policy version:** 1.
+- **Root invocation ID:** `i18n-20260725-01`.
+- **Reopen triggers:** Catalogs gain first-class validation metadata, the locale-subpath export
+  contract changes, or application collision policy changes from warning to automatic repair.
+
+**AR-53 — Files host compatibility (runtime)**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Reversible dependency-injection mechanism within the accepted application
+  ownership and English-default behavior; public compatibility breaks remain reserved and are not
+  delegated.
+- **Objective:** Let application-created hosts provide translations without breaking existing
+  structural Files hosts that only mount and execute modal views.
+- **Decision:** `ExecHost.i18n` is optional. `openFile`, `changeDir`, and `errorBox` use the supplied
+  service when present and otherwise create one isolated English Files service. Standalone dialog
+  option services remain optional. This refines AR-51's required Files host field while preserving
+  its explicit-service behavior for every Application.
+- **Evidence:** Existing immutable opener specifications construct public structural hosts with
+  only `loop` and `desktop`, and the package typecheck rejects a newly required property. The
+  approved default locale is English, and per-instance English factories already prevent mutable
+  overlay leakage.
+- **Rejected alternatives:** Making the field required is a public compatibility break outside
+  delegated authority; editing immutable existing specifications would weaken the established
+  contract; ambient global state violates application isolation.
+- **Strongest counterargument:** An omitted service can hide accidental failure to propagate an
+  application's locale; the concrete Application always exposes `i18n`, and integration
+  specifications verify propagation through the normal opener path.
+- **Confidence:** High.
+- **Hardening:** Forced reframing found no compatible alternative that preserves both structural
+  host typing and explicit application injection; the fallback reuses the already-reviewed
+  per-instance isolation pattern.
+- **Policy version:** 1.
+- **Root invocation ID:** `i18n-20260725-01`.
+- **Reopen triggers:** A future major release explicitly removes structural-host compatibility, or
+  all modal APIs adopt a nominal Application-only host.

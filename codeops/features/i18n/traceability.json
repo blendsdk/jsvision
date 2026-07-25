@@ -814,7 +814,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-47",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -839,7 +839,7 @@
         "hardening:independent correctness security and performance reviewers converged"
       ],
       "id": "AR-48",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -864,7 +864,7 @@
         "hardening:independent specification author exposed the missing contract before test implementation"
       ],
       "id": "AR-49",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -889,7 +889,7 @@
         "hardening:forced reframing found metadata sequencing as the sole compatible phase order"
       ],
       "id": "AR-50",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -902,6 +902,81 @@
       ],
       "status": "resolved",
       "title": "Direct-dependency sequencing",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01",
+        "hardening:independent spec author stopped before inventing a public service seam"
+      ],
+      "id": "AR-51",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Consumer service seams and representative keys",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01",
+        "hardening:independent locale spec author stopped before inventing public accelerator metadata"
+      ],
+      "id": "AR-52",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Public accelerator manifests and per-label fallback",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01",
+        "hardening:immutable structural-host specifications require a compatibility-preserving isolated English fallback"
+      ],
+      "id": "AR-53",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Files host compatibility",
       "type": "ambiguity",
       "validations": []
     },
@@ -1445,7 +1520,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-30",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1469,7 +1544,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-31",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1493,7 +1568,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-32",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1517,7 +1592,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-33",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1541,7 +1616,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-34",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1565,7 +1640,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-35",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1589,7 +1664,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-36",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1613,7 +1688,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-37",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1637,7 +1712,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-38",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1661,7 +1736,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-39",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1685,7 +1760,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-40",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1709,7 +1784,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-41",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1733,7 +1808,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-42",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1757,7 +1832,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-43",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1781,7 +1856,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-44",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1805,7 +1880,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-45",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3902,6 +3977,9 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Expected red confirmed: Forms 1/2 failed, Files 4/4 failed, Datagrid 5/6 failed; lint, formatting, and whitespace checks passed"
+      ],
       "id": "TASK-4-1-1",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -3914,13 +3992,16 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "[spec-author] Add Forms, Files, and Datagrid behavior tests for ST-39\u2013ST-42",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Expected red confirmed: 52 locale/package failures and 11 layout/fallback failures; whitespace checks passed"
+      ],
       "id": "TASK-4-1-2",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -3933,13 +4014,16 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "[spec-author] Add ten-locale layout and 40-subpath catalog/package tests for ST-43\u2013ST-48",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Parent expected-red checkpoint confirmed 1 Forms, 4 Files, 5 Datagrid, 52 locale/package, and 11 layout/fallback failures"
+      ],
       "id": "TASK-4-1-3",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -3952,13 +4036,16 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Run the Phase 4 spec suites and record expected missing-integration/locale failures",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Forms i18n specification passed 2/2 with package typecheck and JSDoc checks"
+      ],
       "id": "TASK-4-2-1",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -3971,13 +4058,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Add Forms direct dependency/catalog and localize FormDialog defaults",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Files English catalog and localized open/save dialog actions implemented",
+        "verificationEvidence:Files i18n specification, package typecheck, and documentation checks passed"
+      ],
       "id": "TASK-4-2-2",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -3990,13 +4081,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Add Files direct dependency/catalog and localize dialog action labels",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Files metadata, directory, and error dialogs localized while caller paths remain unchanged",
+        "verificationEvidence:Files i18n specification, package typecheck, and documentation checks passed"
+      ],
       "id": "TASK-4-2-3",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4009,13 +4104,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Localize Files metadata, change-directory, and error dialogs without touching path data",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Datagrid English catalog, localized boolean defaults, and empty-state text implemented",
+        "verificationEvidence:Focused Datagrid i18n oracle, formatter/lifecycle regression tests, and documentation checks passed"
+      ],
       "id": "TASK-4-2-4",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4028,13 +4127,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Add Datagrid direct dependency/catalog and localize default formatting/empty/filter text",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Datagrid filter, value-list, lifecycle, and personalization surfaces localized with explicit locale-aware collation",
+        "verificationEvidence:All six Datagrid i18n oracles, 25 personalization regressions, typecheck, and documentation checks passed"
+      ],
       "id": "TASK-4-2-5",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4047,13 +4150,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Localize Datagrid filter/personalization surfaces and explicit-i18n collation",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Canonical ten-locale UI, Forms, and Files catalogs plus public accelerator manifests implemented",
+        "verificationEvidence:Strict parity, placeholder, accelerator, package-isolation, and declaration checks passed"
+      ],
       "id": "TASK-4-2-6",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4066,13 +4173,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Add canonical ten-locale catalog data and accelerator-scope manifests for all four packages",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Canonical Datagrid locale catalogs and deterministic locale export generator implemented",
+        "verificationEvidence:Generator update/check, package builds/typechecks, and 52 locale contract tests passed"
+      ],
       "id": "TASK-4-2-7",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4085,13 +4196,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Complete Datagrid locale data and implement deterministic locale entry/export generation",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Thirty explicit UI, Forms, and Files locale entry points and export maps generated",
+        "verificationEvidence:Deterministic drift check and public runtime/declaration target tests passed"
+      ],
       "id": "TASK-4-2-8",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4104,13 +4219,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Generate/check explicit locale entry points and package exports in bounded batches",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Ten Datagrid locale entries generated with direct i18n dependency metadata retained",
+        "verificationEvidence:Datagrid build/typecheck, generator drift check, and public locale contracts passed"
+      ],
       "id": "TASK-4-2-9",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4123,13 +4242,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Generate/check Datagrid locale entries, dependency metadata, and root lockfile",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Phase 4 Forms, Files, and Datagrid consumer specifications are green without oracle changes",
+        "verificationEvidence:Twelve consumer i18n specification tests passed across all three packages"
+      ],
       "id": "TASK-4-2-10",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4142,13 +4265,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Run Phase 4 spec tests green; fix consumer/catalog implementation only",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Four-package literal inventory and localized display-cell/accelerator recovery implementation coverage are complete",
+        "verificationEvidence:Localized layout and locale implementation suites passed; the four-package literal scanner classified all 23 candidates"
+      ],
       "id": "TASK-4-3-1",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4161,13 +4288,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Complete literal classifications and add display-cell layout/invalid-override implementation coverage",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Phase 4 implementation and focused consumer, locale, layout, and hardening gates are ready for the repository verification gate",
+        "verificationEvidence:Root yarn verify passed all 34 Turbo tasks after locale/plugin regeneration and all Phase 4 focused gates",
+        "reviewEvidence:Independent correctness and API review findings were corrected; the one-time re-review edge was corrected and the final 34-task repository gate passed"
+      ],
       "id": "TASK-4-3-2",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4180,7 +4312,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Verify Phase 4 with all consumer gates, locale generation/check, layout tests, package builds, and root `yarn verify`",
       "type": "task",
       "validations": []
@@ -5302,7 +5434,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-46",
-      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -5390,5 +5522,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-25T06:15:14.244Z"
+  "updated": "2026-07-25T22:36:00.000Z"
 }

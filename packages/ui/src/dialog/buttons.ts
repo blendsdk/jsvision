@@ -12,6 +12,7 @@ import type { I18n } from '@jsvision/i18n';
 import { Button } from '../controls/index.js';
 import { Commands } from '../status/index.js';
 import { createEnglishUiI18n } from '../i18n/catalog.js';
+import { uiAcceleratorLabel } from '../i18n/label.js';
 
 /**
  * An OK button — the dialog default; emits `Commands.ok` when activated.
@@ -34,7 +35,7 @@ import { createEnglishUiI18n } from '../i18n/catalog.js';
  */
 export function okButton(i18n?: I18n): Button {
   const service = i18n ?? createEnglishUiI18n();
-  return new Button(service.t('ui.action.ok', { defaultMessage: '~O~K' }), {
+  return new Button(uiAcceleratorLabel(service, 'ui.action.ok', '~O~K'), {
     command: Commands.ok,
     default: true,
   });
@@ -53,7 +54,7 @@ export function okButton(i18n?: I18n): Button {
  */
 export function cancelButton(i18n?: I18n): Button {
   const service = i18n ?? createEnglishUiI18n();
-  return new Button(service.t('ui.action.cancel', { defaultMessage: '~C~ancel' }), {
+  return new Button(uiAcceleratorLabel(service, 'ui.action.cancel', '~C~ancel'), {
     command: Commands.cancel,
   });
 }
@@ -71,7 +72,7 @@ export function cancelButton(i18n?: I18n): Button {
  */
 export function yesButton(i18n?: I18n): Button {
   const service = i18n ?? createEnglishUiI18n();
-  return new Button(service.t('ui.action.yes', { defaultMessage: '~Y~es' }), {
+  return new Button(uiAcceleratorLabel(service, 'ui.action.yes', '~Y~es'), {
     command: Commands.yes,
     default: true,
   });
@@ -89,7 +90,7 @@ export function yesButton(i18n?: I18n): Button {
  */
 export function noButton(i18n?: I18n): Button {
   const service = i18n ?? createEnglishUiI18n();
-  return new Button(service.t('ui.action.no', { defaultMessage: '~N~o' }), {
+  return new Button(uiAcceleratorLabel(service, 'ui.action.no', '~N~o'), {
     command: Commands.no,
   });
 }

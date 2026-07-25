@@ -10,6 +10,7 @@
  * mechanism the in-cell editor host relies on. A `distinct` thunk in the config reserves the value-list
  * section (added in a later phase); the condition section here ignores it.
  */
+import type { I18n } from '@jsvision/i18n';
 import {
   Group,
   Input,
@@ -29,6 +30,8 @@ import type { GridColumn } from './column.js';
 import type { ColumnFilter, DistinctResult, FilterType } from './filter.js';
 import { ValueList, valueListButtonWidth } from './value-list-popup.js';
 import { buttonRow, buttonCellWidth } from './button-row.js';
+import { createEnglishDatagridI18n, DATAGRID_ENGLISH_CATALOG } from './i18n/catalog.js';
+import { datagridAcceleratorLabel } from './i18n/label.js';
 
 /** The operator choices offered per column filter type — the exact op values a {@link ColumnFilter} uses. */
 const OPERATORS: Record<FilterType, readonly string[]> = {
@@ -37,19 +40,19 @@ const OPERATORS: Record<FilterType, readonly string[]> = {
   date: ['before', 'after', 'on', 'between'],
 };
 
-/** Human labels for each operator (shown in the selector); the op value stays the model-level token. */
-const OP_LABELS: Record<string, string> = {
-  contains: 'contains',
-  startsWith: 'starts with',
-  endsWith: 'ends with',
-  equals: 'equals',
-  gt: 'greater than',
-  lt: 'less than',
-  between: 'between',
-  eq: 'equals',
-  before: 'before',
-  after: 'after',
-  on: 'on',
+/** Catalog keys for operator labels; model-level operator tokens remain unchanged. */
+const OP_MESSAGE_KEYS: Record<string, keyof typeof DATAGRID_ENGLISH_CATALOG.messages> = {
+  contains: 'datagrid.filter.operator.contains',
+  startsWith: 'datagrid.filter.operator.starts-with',
+  endsWith: 'datagrid.filter.operator.ends-with',
+  equals: 'datagrid.filter.operator.equals',
+  gt: 'datagrid.filter.operator.greater-than',
+  lt: 'datagrid.filter.operator.less-than',
+  between: 'datagrid.filter.operator.between',
+  eq: 'datagrid.filter.operator.equals',
+  before: 'datagrid.filter.operator.before',
+  after: 'datagrid.filter.operator.after',
+  on: 'datagrid.filter.operator.on',
 };
 
 /**
@@ -72,6 +75,8 @@ export interface FilterPopupConfig<T> {
   current?: ColumnFilter;
   /** The resolved filter type — selects the operator set and operand editors. */
   filterType: FilterType;
+  /** Translation service for package-owned labels; defaults to isolated English text. */
+  i18n?: I18n;
   /** When present, embeds the value-list section (added in a later phase). */
   distinct?: () => Promise<DistinctResult>;
   /** Reports an applied condition filter for the column. */
@@ -139,6 +144,7 @@ export interface FilterPopupContext<T> {
  * popup.apply(); // onApply('qty', { kind: 'number', op: 'between', a: 100, b: 500 })
  */
 export class FilterPopup<T> extends Group {
+  private readonly i18n: I18n;
   private readonly columnId: string;
   private readonly filterType: FilterType;
   private readonly onApply: (columnId: string, filter: ColumnFilter) => void;
@@ -168,6 +174,7 @@ export class FilterPopup<T> extends Group {
    */
   constructor(cfg: FilterPopupConfig<T>) {
     super();
+    this.i18n = cfg.i18n ?? createEnglishDatagridI18n();
     this.columnId = cfg.columnId;
     this.filterType = cfg.filterType;
     this.onApply = cfg.onApply;
@@ -200,7 +207,13 @@ export class FilterPopup<T> extends Group {
       }
     }
 
-    this.operatorGroup = new RadioGroup({ labels: ops.map((o) => OP_LABELS[o]), value: this.operatorIndex });
+    this.operatorGroup = new RadioGroup({
+      labels: ops.map((operator) => {
+        const key = OP_MESSAGE_KEYS[operator] ?? 'datagrid.filter.operator.equals';
+        return this.text(key);
+      }),
+      value: this.operatorIndex,
+    });
     fixed(this.operatorGroup, 4);
 
     // Operand editors depend on the type: DatePicker for date, numeric-filtered Input for number, a
@@ -218,10 +231,15 @@ export class FilterPopup<T> extends Group {
     }
     // Each operand editor sits under its own caption: the first reads "From" for a `between` range
     // and "Value" otherwise; the second ("To") only appears for `between`.
-    const fieldA = labelledField(new Text(() => (this.needsSecondOperand() ? 'From' : 'Value')), operandA);
+    const fieldA = labelledField(
+      new Text(() =>
+        this.needsSecondOperand() ? this.text('datagrid.filter.field.from') : this.text('datagrid.filter.field.value'),
+      ),
+      operandA,
+    );
     let fieldB: Group | undefined;
     if (operandB !== undefined) {
-      fieldB = labelledField(new Text('To'), operandB);
+      fieldB = labelledField(new Text(this.text('datagrid.filter.field.to')), operandB);
       // Start collapsed unless the initial operator is `between`; the column flow reclaims its rows.
       fieldB.state.visible = this.needsSecondOperand();
     }
@@ -230,9 +248,9 @@ export class FilterPopup<T> extends Group {
 
     // Every button in the popup — Apply/Clear here plus the value-list's Select All/Apply — shares one
     // width, the widest label's face width, so all four line up. Each row centres its buttons in it.
-    const applyBtn = new Button('Apply', { onClick: () => this.apply() });
-    const clearBtn = new Button('Clear', { onClick: () => this.clear() });
-    const buttonWidth = Math.max(buttonCellWidth([applyBtn, clearBtn]), valueListButtonWidth());
+    const applyBtn = new Button(this.action('datagrid.filter.action.apply'), { onClick: () => this.apply() });
+    const clearBtn = new Button(this.action('datagrid.filter.action.clear'), { onClick: () => this.clear() });
+    const buttonWidth = Math.max(buttonCellWidth([applyBtn, clearBtn]), valueListButtonWidth(this.i18n));
     const buttons = buttonRow([applyBtn, clearBtn], buttonWidth);
 
     // The Excel value-list section, below the condition section, when a distinct thunk is supplied. It
@@ -244,6 +262,7 @@ export class FilterPopup<T> extends Group {
       valueList = new ValueList({
         distinct: cfg.distinct,
         current: currentSet,
+        i18n: this.i18n,
         buttonWidth,
         onApply: (selected) => {
           this.onApply(this.columnId, { kind: 'set', selected });
@@ -289,6 +308,18 @@ export class FilterPopup<T> extends Group {
         { relayout: true },
       );
     });
+  }
+
+  /** Resolve one Datagrid-owned message with its canonical English fallback. */
+  private text(key: keyof typeof DATAGRID_ENGLISH_CATALOG.messages): string {
+    return this.i18n.t(key, { defaultMessage: DATAGRID_ENGLISH_CATALOG.messages[key] });
+  }
+
+  /** Resolve one optional-accelerator action label with its canonical English fallback. */
+  private action(key: 'datagrid.filter.action.apply' | 'datagrid.filter.action.clear'): string {
+    const english = DATAGRID_ENGLISH_CATALOG.messages[key];
+    if (typeof english !== 'string') throw new TypeError(`Datagrid label ${key} must be text.`);
+    return datagridAcceleratorLabel(this.i18n, key, english, false);
   }
 
   /**

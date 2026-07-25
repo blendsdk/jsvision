@@ -21,6 +21,7 @@ history: History
 dirList: DirList
 buttons: Button[]
 buttonLabels: string[]
+i18n: I18n
 result(): string | null
 chdir(): void
 revert(): void
@@ -36,6 +37,7 @@ interface ChDirDialogOptions {
   fs?: FileSystem;   // The filesystem to read through (default nodeFileSystem).
   directory?: Signal<string>;   // The current directory (default the filesystem's cwd). Shared with the tree.
   title?: string;   // The dialog title (default `'Change Directory'`).
+  i18n?: I18n;   // Translation service for package-owned labels; defaults to an isolated English service.
   historyId?: number;   // The id keying this dialog's recent-path history (default a chdir id distinct from the file dialog).
   showError?: (message: string) => void;   // Called to show an error (unreadable directory). Wire it to errorBox in an app.
   onResolve?: (path: string | null) => void;   // Called when the dialog resolves — with the chosen absolute directory, or `null` on cancel.
@@ -116,9 +118,18 @@ The minimal host a modal needs: an event loop that can run a view modally and a 
 
 ```ts
 interface ExecHost {
+  i18n?: I18n;   // Translation service used for framework- and package-owned modal chrome.
   loop: Pick<EventLoop, 'execView'>;   // Runs a view modally, resolving to the command that closed it.
   desktop: Pick<Desktop, 'addWindow' | 'removeWindow'>;   // The desktop the modal is mounted into (added before, removed after).
 }
+```
+
+## FILES_ACCELERATOR_MANIFEST
+
+Accelerator scopes owned by `@jsvision/files`.
+
+```ts
+const FILES_ACCELERATOR_MANIFEST: AcceleratorManifest
 ```
 
 ## FileCommands
@@ -147,6 +158,7 @@ fileInfoPane: FileInfoPane
 listBar: ScrollBar
 buttons: Button[]
 buttonLabels: string[]
+i18n: I18n
 result(): string | null
 replace(): void
 clear(): void
@@ -166,6 +178,7 @@ interface FileDialogOptions {
   save?: boolean;   // Save mode — shows the OK/Replace/Clear/Cancel/Help strip instead of Open/Cancel/Help.
   inputName?: string;   // The filename label text (default `'~N~ame'`; wrap the hotkey letter in tildes).
   title?: string;   // The dialog title (default `'Open a File'`, or `'Save File As'` in save mode).
+  i18n?: I18n;   // Translation service for package-owned labels; defaults to an isolated English service.
   filter?: (entry: DirEntry) => boolean;   // An extra predicate AND-ed with the wildcard when listing files.
   historyId?: number;   // The id keying this dialog's recent-path history (default a file-dialog id distinct from chdir).
   showError?: (message: string) => void;   // Called to show an error (bad filename / directory). Wire it to errorBox in an app.
@@ -219,6 +232,7 @@ interface FileInfoPaneOptions {
   directory: () => string;   // The current directory shown, with the wildcard, on row 0.
   wildcard: () => string;   // The active wildcard, appended to the row-0 search path.
   focusedEntry: () => DirEntry | undefined;   // The focused entry shown on row 1, or `undefined` when the list is empty.
+  i18n?: I18n;   // Translation service for package-owned metadata; defaults to isolated English text.
 }
 ```
 
