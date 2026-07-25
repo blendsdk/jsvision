@@ -40,7 +40,7 @@ export const codeEditorStory: Story & {
     'Type to edit',
     'Ctrl-F search',
     'Ctrl-Space completion',
-    'Ctrl-G fold',
+    'Ctrl-[ fold',
     'Click to place the caret',
   ]),
   representativeCapabilities,
@@ -48,7 +48,15 @@ export const codeEditorStory: Story & {
     const document = createDocumentModel({
       uri: 'file:///kitchen-sink/code-editor.ts',
       languageId: 'typescript',
-      text: 'function greet(name: string) {\n  return `Hello ${name}`;\n}\n',
+      text: [
+        'function greet(name: string) {',
+        '  if (name.length === 0) {',
+        '    return "Hello";',
+        '  }',
+        '  return `Hello ${name}`;',
+        '}',
+        '',
+      ].join('\n'),
     });
     const session = createInProcessLspSession({ capabilities: { completion: true, diagnostics: true } });
     const coordinator = createCodeEditorLspCoordinator({
@@ -58,7 +66,7 @@ export const codeEditorStory: Story & {
       languageId: document.languageId,
     });
     const controller = createCodeEditorController({ document, lsp: coordinator });
-    const editor = new CodeEditor({ controller });
+    const editor = new CodeEditor({ controller, lineNumbers: true });
     let disposed = false;
     onCleanup(() => {
       disposed = true;
@@ -71,6 +79,7 @@ export const codeEditorStory: Story & {
       .then((result) => {
         if (disposed) return;
         controller.setLanguageResult(result);
+        controller.foldAll();
         editor.invalidate();
       });
     void coordinator

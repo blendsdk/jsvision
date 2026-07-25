@@ -18,10 +18,18 @@ import {
   type DrawContext,
 } from '@jsvision/ui';
 import { CodeEditor, CodeEditorWindow } from '@jsvision/code-editor';
-import { CODE_EDITOR_SCENARIOS, inspectCodeEditorScenario, runCodeEditorScenarioAction } from './scenarios.js';
+import {
+  CODE_EDITOR_SCENARIOS,
+  disposeCodeEditorScenario,
+  inspectCodeEditorScenario,
+  runCodeEditorScenarioAction,
+  waitForCodeEditorScenario,
+} from './scenarios.js';
+import { SharedSessionCodeEditorWindow } from './shared-session-window.js';
 
 const TAB_COMMAND = 'code-editor.tab';
 const SHIFT_TAB_COMMAND = 'code-editor.shift-tab';
+const NEXT_PEER_COMMAND = 'code-editor.next-peer';
 
 /** Live application seams used by interactive operation and headless shell tests. */
 export interface CodeEditorShowcase {
@@ -72,11 +80,25 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
         item('~F~ind', 'code-editor.action.search'),
         item('~O~utline fold', 'code-editor.action.fold'),
         item('~C~ompletion', 'code-editor.action.completion'),
+        item('~H~over', 'code-editor.action.hover'),
+        item('Signature help', 'code-editor.action.signature'),
+        item('Document symbols', 'code-editor.action.symbols'),
+        item('Diagnostic detail', 'code-editor.action.diagnostic-detail'),
+        item('Snippet traversal', 'code-editor.action.snippet'),
         item('For~m~at', 'code-editor.action.format'),
+        item('Search / replace', 'code-editor.action.replace'),
         item('~S~ave request', 'code-editor.action.save'),
         item('~N~avigate request', 'code-editor.action.navigate'),
+        item('Navigation back', 'code-editor.action.navigation-back'),
+        item('Close request', 'code-editor.action.close'),
+        item('External change', 'code-editor.action.external-change'),
+        item('Cancel / recover', 'code-editor.action.cancel-recover'),
+        item('Host ~a~ccepts save', 'code-editor.action.host-accept'),
+        item('Host ~r~ejects save', 'code-editor.action.host-reject'),
+        item('Host ~c~onflict on save', 'code-editor.action.host-conflict'),
         item('~T~heme', 'code-editor.action.theme'),
         item('Switch ~l~anguage', 'code-editor.action.language'),
+        item('Focus next editor peer', NEXT_PEER_COMMAND, 'Ctrl-Tab'),
       ]),
     ]),
     statusLine: statusLine([
@@ -86,7 +108,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
       statusItem('~Tab~ Editor'),
       statusItem('~F10~ Menu'),
     ]),
-    keymap: createKeymap({ tab: TAB_COMMAND, 'shift+tab': SHIFT_TAB_COMMAND }),
+    keymap: createKeymap({ tab: TAB_COMMAND, 'shift+tab': SHIFT_TAB_COMMAND, 'ctrl+tab': NEXT_PEER_COMMAND }),
   });
   let width = app.desktop.bounds.width;
   let height = app.desktop.bounds.height;
@@ -147,8 +169,15 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
   });
   if (activeSurface === undefined) throw new Error('The Code Editor showcase has no scenarios.');
   let editorWindow = activeSurface instanceof CodeEditorWindow ? activeSurface : undefined;
-  const activeEditor = (): CodeEditor =>
-    activeSurface instanceof CodeEditorWindow ? activeSurface.editor : activeSurface;
+  const activeEditor = (): CodeEditor => {
+    if (
+      activeSurface instanceof SharedSessionCodeEditorWindow &&
+      app.loop.getFocused() === activeSurface.secondaryEditor
+    ) {
+      return activeSurface.secondaryEditor;
+    }
+    return activeSurface instanceof CodeEditorWindow ? activeSurface.editor : activeSurface;
+  };
   const state = new Text(() => {
     const current = activeEditor().controller.publicState;
     return [
@@ -187,6 +216,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
       editorWindow = undefined;
       app.desktop.add(activeSurface);
     }
+    void waitForCodeEditorScenario(activeSurface).then(() => state.invalidate());
     app.loop.focusView(activeEditor());
   };
 
@@ -225,7 +255,7 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     if (scenario === undefined) return;
     if (editorWindow === undefined) app.desktop.remove(activeSurface);
     else app.desktop.removeWindow(editorWindow);
-    activeEditor().dispose();
+    void disposeCodeEditorScenario(activeSurface);
     activeIndex = index;
     activeSurface = scenario.mount({
       capabilities: caps,
@@ -246,6 +276,13 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
       if (app.loop.getFocused() === activeEditor()) activeEditor().routeKey({ key: 'Tab', shift: true });
       else app.loop.focusView(activeEditor());
     },
+    [NEXT_PEER_COMMAND]: () => {
+      if (!(activeSurface instanceof SharedSessionCodeEditorWindow)) return;
+      const next =
+        app.loop.getFocused() === activeSurface.secondaryEditor ? activeSurface.editor : activeSurface.secondaryEditor;
+      app.loop.focusView(next);
+      state.invalidate();
+    },
   };
   for (let index = 0; index < CODE_EDITOR_SCENARIOS.length; index += 1) {
     handlers[`code-editor.select.${index}`] = () => select(index);
@@ -255,9 +292,22 @@ export function createCodeEditorShowcase(caps: CapabilityProfile): CodeEditorSho
     'search',
     'fold',
     'completion',
+    'hover',
+    'signature',
+    'symbols',
+    'diagnostic-detail',
+    'snippet',
     'format',
+    'replace',
     'save',
     'navigate',
+    'navigation-back',
+    'close',
+    'external-change',
+    'cancel-recover',
+    'host-accept',
+    'host-reject',
+    'host-conflict',
     'theme',
     'language',
   ] as const) {

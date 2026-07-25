@@ -1,8 +1,8 @@
 # Task T-04: Code Editor functional completion
 
 > **Type**: Task (lightweight) · **Feature**: code-editor · **CodeOps Artifact Schema**: 1
-> **Progress**: 22/27 tasks (81%)
-> **Last Updated**: 2026-07-25 08:08
+> **Progress**: 27/27 tasks (100%)
+> **Last Updated**: 2026-07-25 09:49
 > **Phase baseline tree**: 7beeae3152295fb1877aeb59bf5b9451a9dcac6a
 
 ## Objective
@@ -261,18 +261,34 @@ and make every kitchen-sink capability claim executable and visibly verifiable.
 
 ### Phase E — Honest examples and release closure
 
-- [ ] T-04.23 `[spec-author]` Add immutable executable-evidence and E2E specifications for ST-18
+> **Phase baseline tree**: f9da410d0e698e13ded35bcea030f56f4acf91f2
+>
+> **Expected modification set**: `packages/examples/code-editor-demo/`,
+> `packages/examples/kitchen-sink/stories/code-editor.story.ts`, Code Editor package/docs-site
+> documentation, mapped canonical plugin references, and CodeOps execution/quality/traceability
+> artifacts.
+
+- [x] T-04.23 `[spec-author]` Add immutable executable-evidence and E2E specifications for ST-18
   through ST-22 before changing the standalone or repository kitchen sinks.
-- [ ] T-04.24 Run the Phase E specification suites and record the expected red failures.
-- [ ] T-04.25 Make the deterministic session answer live requests; add host decision controls,
+  ✅ (completed: 2026-07-25 08:23)
+- [x] T-04.24 Run the Phase E specification suites and record the expected red failures.
+  ✅ (completed: 2026-07-25 08:23; 8 expected unit reds and 1 expected E2E red)
+- [x] T-04.25 Make the deterministic session answer live requests; add host decision controls,
   multi-editor isolation, language/error/line-ending/theme/degradation/lifecycle fixtures, and
   correct the repository story's advertised configuration.
-- [ ] T-04.26 Replace label-only inventory assertions with executable journeys; confirm all Phase E
+  ✅ (completed: 2026-07-25 09:49; bounded self-answering transport, real two-editor shared
+  session, host controls, complete fixtures, and corrected story configuration verified)
+- [x] T-04.26 Replace label-only inventory assertions with executable journeys; confirm all Phase E
   specifications green, then add implementation, terminal-profile, hostile, resize, E2E, and
   bounded-resource coverage.
-- [ ] T-04.27 Refresh package/docs-site/canonical plugin documentation, run `yarn plugin:update`
+  ✅ (completed: 2026-07-25 09:49; capability-specific observable oracles, executable journeys,
+  hostile-input boundaries, shared-session isolation, and standalone E2E verified)
+- [x] T-04.27 Refresh package/docs-site/canonical plugin documentation, run `yarn plugin:update`
   for every mapped SDK impact, run focused checks and `yarn plugin:check`, run authoritative
   `yarn verify`, complete the required correctness/security/performance/accessibility quality
   review, resolve accepted findings, and synchronize traceability and roadmaps.
+  ✅ (completed: 2026-07-25 09:49; documentation and plugin surfaces synchronized; all accepted
+  review findings resolved; focused suites, plugin integrity, and authoritative 34/34 repository
+  verification passing)
 
 **Verify**: `yarn verify`

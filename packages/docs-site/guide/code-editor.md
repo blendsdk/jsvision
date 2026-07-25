@@ -74,6 +74,20 @@ read-only, viewport, language, LSP, theme/fallback, hostile-text, and document-s
 visible capability inventory classifies each entry as `interactive`, `automated-only`, or
 `unsupported`; the latter two include a reason and never claim a live scenario.
 
+Interactive capability claims are executable. Each one identifies a reachable scenario control,
+key, or native window action and a changed frame, public state, or host effect. The simulated
+language service answers completion, hover, signature, symbols, diagnostics, navigation,
+formatting, cancellation, and recovery requests without retaining source-bearing request payloads.
+Host controls separately demonstrate accepted, rejected, and revision-conflicted saves.
+
+The two-editor scenario shares one in-process protocol transport while preserving distinct
+document URIs, revisions, selections, presentations, cancellation, diagnostics, and host effects.
+It uses two ordinary `CodeEditor` instances rather than tabs or an editor manager, and `Ctrl+Tab`
+moves keyboard focus between them. Additional fixtures cover extension and explicit language
+selection, missing adapters, invalid/incomplete
+source, LF/CRLF/CR line endings, invisible/hostile Unicode, lifecycle decisions, live theme and
+degradation changes, resize, and all size tiers.
+
 Its stable high-level navigation facets are:
 
 - `editor-and-window`
@@ -92,3 +106,7 @@ Its stable high-level navigation facets are:
 Add a scenario by defining a stable ID, title, description, immutable fixture factory, facet list,
 and mount function in `packages/examples/code-editor-demo/scenarios.ts`. Keep demonstrations
 self-contained and import only public package entry points.
+
+The concise repository kitchen-sink story intentionally advertises fewer capabilities. Every item
+in its blurb is enabled on the mounted editor, including line numbers, parser-backed folding,
+completion, and diagnostics.
