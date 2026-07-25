@@ -1,7 +1,35 @@
 /**
  * Browser-safe public entry point for JSVision internationalization.
  *
- * Public types and constructors are added here as the engine modules are implemented. Keeping this
- * entry free of Node built-ins lets bundlers consume it in browser applications.
+ * Keeping this entry free of Node built-ins lets terminal applications share the same translation
+ * service in Node and browser runtimes.
  */
-export {};
+export { I18nError, isI18nError } from './errors.js';
+export type { I18nErrorOptions } from './errors.js';
+export { CATALOG_SCHEMA_VERSION } from './types.js';
+export type {
+  AcceleratorManifest,
+  AcceleratorScope,
+  Catalog,
+  CatalogInput,
+  CatalogIssue,
+  CatalogSource,
+  CatalogSourceContext,
+  CatalogValidationMode,
+  CatalogValidationOptions,
+  CreateI18nOptions,
+  DiagnosticSink,
+  I18n,
+  I18nCode,
+  I18nDiagnostic,
+  I18nSeverity,
+  LoadI18nOptions,
+  Message,
+  MessageCases,
+  MessageParameter,
+  MessageParams,
+  PlaceholderManifest,
+  PluralMessage,
+  SelectMessage,
+  TranslateOptions,
+} from './types.js';

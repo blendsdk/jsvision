@@ -2986,6 +2986,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Documented public catalog message service source diagnostic and error contracts implemented",
+        "verificationEvidence:TypeScript ESLint JSDoc Prettier and root yarn verify passed"
+      ],
       "id": "TASK-1-2-2",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -2998,7 +3002,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Define documented public types, stable errors, diagnostics, and exports",
       "type": "task",
       "validations": []
