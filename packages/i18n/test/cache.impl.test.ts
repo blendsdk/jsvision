@@ -47,7 +47,7 @@ describe('formatter option safety', () => {
 
   test.each([
     ['unknown option', { unknown: true }],
-    ['object value', { style: { toString: () => 'decimal' } }],
+    ['object value', { style: { toString: (): string => 'decimal' } }],
     ['non-finite value', { maximumFractionDigits: Number.NaN }],
     ['invalid native enum', { style: 'invalid' }],
     ['missing currency', { style: 'currency' }],
