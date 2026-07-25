@@ -1,6 +1,19 @@
 import { I18nError } from './errors.js';
+import { copyDenseArray, inspectArray, inspectOwnDataProperty, inspectOwnKeys, isObjectLike } from './input.js';
+import { createPluralRules } from './intl.js';
+import {
+  MAX_CATALOG_CASE_NAME_BYTES,
+  MAX_CATALOG_MESSAGES,
+  MAX_CATALOG_MESSAGE_BYTES,
+  MAX_CATALOG_STRUCTURED_CASES,
+  MAX_IDENTIFIER_SCALARS,
+  MAX_MESSAGE_BYTES,
+  MAX_STRUCTURED_CASES,
+} from './limits.js';
 import { canonicalizeCatalogLocale } from './locale.js';
 import { compileMessage, compileTemplate, isSafeText } from './messages.js';
+import { MESSAGE_KEY_PATTERN, PARAMETER_PATTERN } from './grammar.js';
+import { resolveValidationOptions, safeSource } from './validation-options.js';
 import {
   CATALOG_SCHEMA_VERSION,
   type Catalog,
@@ -15,15 +28,9 @@ import {
 
 const CATALOG_FIELDS = new Set<PropertyKey>(['schema', 'locale', 'messages']);
 const STRUCTURED_MESSAGE_FIELDS = new Set<PropertyKey>(['kind', 'parameter', 'cases']);
-const MESSAGE_KEY_PATTERN = /^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$/u;
-const PARAMETER_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/u;
 const ASCII_LETTER_PATTERN = /^[A-Za-z]$/u;
-const MAX_MESSAGES = 10_000;
-const MAX_KEY_SCALARS = 512;
-const MAX_MESSAGE_BYTES = 65_536;
 const INVALID_PATH_SEGMENT = '<invalid>';
 const UTF8_ENCODER = new TextEncoder();
-const PluralRulesConstructor = Intl.PluralRules;
 
 /** Mutable state used only while validating one catalog. */
 interface ValidationContext {
@@ -33,6 +40,16 @@ interface ValidationContext {
   readonly source?: string;
   /** Issues collected before stable sorting and freezing. */
   readonly issues: CatalogIssue[];
+  /** Aggregate message bytes observed while copying this catalog. */
+  messageBytes: number;
+  /** Stops further message processing after the aggregate text ceiling is crossed. */
+  messageLimitExceeded: boolean;
+  /** Aggregate number of structured cases observed across this catalog. */
+  structuredCases: number;
+  /** Aggregate UTF-8 bytes used by structured case names. */
+  caseNameBytes: number;
+  /** Locale cardinal categories resolved lazily at most once per catalog. */
+  pluralCategories?: ReadonlySet<string>;
 }
 
 /** A base validation result with a copied catalog only when structural validation succeeded. */
@@ -44,45 +61,31 @@ interface CatalogValidationResult {
 }
 
 /** Result of parsing accelerator markup in one label. */
-type AcceleratorResult = { readonly valid: true; readonly accelerator: string } | { readonly valid: false };
-
-/** Returns true for non-null objects and functions without coercing them. */
-function isObjectLike(value: unknown): value is object {
-  return (typeof value === 'object' && value !== null) || typeof value === 'function';
-}
+type AcceleratorResult =
+  | { readonly state: 'present'; readonly accelerator: string }
+  | { readonly state: 'absent' }
+  | { readonly state: 'malformed' };
 
 /** Read one descriptor while containing failures from hostile proxy traps. */
 function ownDescriptor(value: object, key: PropertyKey): PropertyDescriptor | undefined {
-  try {
-    return Object.getOwnPropertyDescriptor(value, key);
-  } catch {
-    return undefined;
-  }
+  const property = inspectOwnDataProperty(value, key);
+  return property.accessible && property.present ? { value: property.value } : undefined;
 }
 
 /** Read one own data property without invoking an accessor or walking a prototype. */
 function readDataProperty(value: object, key: PropertyKey): unknown {
-  const descriptor = ownDescriptor(value, key);
-  return descriptor && 'value' in descriptor ? descriptor.value : undefined;
+  const property = inspectOwnDataProperty(value, key);
+  return property.accessible && property.present ? property.value : undefined;
 }
 
 /** Safely enumerate own keys, converting proxy failures into an invalid shape. */
 function ownKeys(value: object): readonly PropertyKey[] | undefined {
-  try {
-    return Reflect.ownKeys(value);
-  } catch {
-    return undefined;
-  }
+  return inspectOwnKeys(value);
 }
 
 /** Keep issue locations safe and bounded even when the input key itself is malformed. */
 function safePathSegment(value: string): string {
-  return isSafeText(value) && [...value].length <= MAX_KEY_SCALARS ? value : INVALID_PATH_SEGMENT;
-}
-
-/** Copy a safe source identifier or omit an unsafe/unbounded one. */
-function safeSource(value: unknown): string | undefined {
-  return typeof value === 'string' && value.length <= 256 && isSafeText(value) ? value : undefined;
+  return isSafeText(value) && [...value].length <= MAX_IDENTIFIER_SCALARS ? value : INVALID_PATH_SEGMENT;
 }
 
 /** Add one frozen, value-free issue to the current validation result. */
@@ -139,14 +142,24 @@ function hasExactDataFields(
 
 /** Validate terminal safety, placeholders, and the per-string byte limit. */
 function validateMessageText(value: string, context: ValidationContext, path: readonly string[], key: string): boolean {
+  if (context.messageLimitExceeded) return false;
+
   let valid = true;
   if (!isSafeText(value)) {
     addIssue(context, 'UNSAFE_TEXT', path, 'error', key);
     valid = false;
   }
-  if (UTF8_ENCODER.encode(value).byteLength > MAX_MESSAGE_BYTES) {
+  const messageBytes = UTF8_ENCODER.encode(value).byteLength;
+  if (messageBytes > MAX_MESSAGE_BYTES) {
     addIssue(context, 'CATALOG_LIMIT_EXCEEDED', path, 'error', key);
     valid = false;
+  }
+  const previousBytes = context.messageBytes;
+  context.messageBytes += messageBytes;
+  if (previousBytes <= MAX_CATALOG_MESSAGE_BYTES && context.messageBytes > MAX_CATALOG_MESSAGE_BYTES) {
+    context.messageLimitExceeded = true;
+    addIssue(context, 'CATALOG_LIMIT_EXCEEDED', ['messages'], 'error', key);
+    return false;
   }
   if (valid) {
     try {
@@ -168,7 +181,7 @@ function validateCases(
   path: readonly string[],
   key: string,
 ): MessageCases | undefined {
-  if (!isObjectLike(input) || Array.isArray(input)) {
+  if (!isObjectLike(input) || inspectArray(input) !== false) {
     addIssue(context, 'INVALID_MESSAGE', path, 'error', key);
     return undefined;
   }
@@ -178,19 +191,33 @@ function validateCases(
     addIssue(context, 'INVALID_MESSAGE', path, 'error', key);
     return undefined;
   }
+  if (keys.length > MAX_STRUCTURED_CASES) {
+    addIssue(context, 'CATALOG_LIMIT_EXCEEDED', path, 'error', key);
+    return undefined;
+  }
+  context.structuredCases += keys.length;
+  if (context.structuredCases > MAX_CATALOG_STRUCTURED_CASES) {
+    addIssue(context, 'CATALOG_LIMIT_EXCEEDED', path, 'error', key);
+    return undefined;
+  }
 
   const pluralCategories: ReadonlySet<string> | undefined =
     kind === 'plural'
-      ? new Set<string>(new PluralRulesConstructor(locale, { type: 'cardinal' }).resolvedOptions().pluralCategories)
+      ? (context.pluralCategories ??= new Set<string>(createPluralRules(locale).resolvedOptions().pluralCategories))
       : undefined;
   const copied: Record<string, string> = {};
   let valid = true;
 
   for (const caseKey of keys) {
-    if (typeof caseKey !== 'string') {
+    if (typeof caseKey !== 'string' || [...caseKey].length > MAX_IDENTIFIER_SCALARS || !isSafeText(caseKey)) {
       addIssue(context, 'INVALID_MESSAGE', [...path, INVALID_PATH_SEGMENT], 'error', key);
       valid = false;
       continue;
+    }
+    context.caseNameBytes += UTF8_ENCODER.encode(caseKey).byteLength;
+    if (context.caseNameBytes > MAX_CATALOG_CASE_NAME_BYTES) {
+      addIssue(context, 'CATALOG_LIMIT_EXCEEDED', path, 'error', key);
+      return undefined;
     }
     const casePath = [...path, safePathSegment(caseKey)];
     const descriptor = ownDescriptor(input, caseKey);
@@ -205,6 +232,7 @@ function validateCases(
     }
     if (!validateMessageText(descriptor.value, context, casePath, key)) {
       valid = false;
+      if (context.messageLimitExceeded) return undefined;
       continue;
     }
     Object.defineProperty(copied, caseKey, {
@@ -234,7 +262,7 @@ function validateMessage(
   if (typeof input === 'string') {
     return validateMessageText(input, context, path, key) ? input : undefined;
   }
-  if (!isObjectLike(input) || Array.isArray(input)) {
+  if (!isObjectLike(input) || inspectArray(input) !== false) {
     addIssue(context, 'INVALID_MESSAGE', path, 'error', key);
     return undefined;
   }
@@ -267,10 +295,14 @@ function validateMessage(
 /** Validate one catalog's schema and create an immutable deep copy. */
 function validateCatalogBase(input: CatalogInput, options: CatalogValidationOptions): CatalogValidationResult {
   const context: ValidationContext = {
+    caseNameBytes: 0,
     issues: [],
+    messageBytes: 0,
+    messageLimitExceeded: false,
     source: safeSource(options.source),
+    structuredCases: 0,
   };
-  if (!isObjectLike(input) || Array.isArray(input)) {
+  if (!isObjectLike(input) || inspectArray(input) !== false) {
     addIssue(context, 'INVALID_CATALOG', []);
     return { issues: context.issues };
   }
@@ -293,7 +325,7 @@ function validateCatalogBase(input: CatalogInput, options: CatalogValidationOpti
   }
 
   const rawMessages = readDataProperty(input, 'messages');
-  if (!isObjectLike(rawMessages) || Array.isArray(rawMessages)) {
+  if (!isObjectLike(rawMessages) || inspectArray(rawMessages) !== false) {
     addIssue(context, 'INVALID_CATALOG', ['messages']);
     return { issues: context.issues };
   }
@@ -302,13 +334,13 @@ function validateCatalogBase(input: CatalogInput, options: CatalogValidationOpti
     addIssue(context, 'INVALID_CATALOG', ['messages']);
     return { issues: context.issues };
   }
-  if (messageKeys.length > MAX_MESSAGES) {
+  if (messageKeys.length > MAX_CATALOG_MESSAGES) {
     addIssue(context, 'CATALOG_LIMIT_EXCEEDED', ['messages']);
   }
 
   const copiedMessages: Record<string, Message> = {};
-  let messagesValid = messageKeys.length <= MAX_MESSAGES;
-  for (const messageKey of messageKeys.slice(0, MAX_MESSAGES + 1)) {
+  let messagesValid = messageKeys.length <= MAX_CATALOG_MESSAGES;
+  for (const messageKey of messageKeys.slice(0, MAX_CATALOG_MESSAGES + 1)) {
     if (typeof messageKey !== 'string') {
       addIssue(context, 'INVALID_KEY', ['messages', INVALID_PATH_SEGMENT]);
       messagesValid = false;
@@ -317,7 +349,11 @@ function validateCatalogBase(input: CatalogInput, options: CatalogValidationOpti
     const safeKey = safePathSegment(messageKey);
     const keyPath = ['messages', safeKey];
     const descriptor = ownDescriptor(rawMessages, messageKey);
-    if (!MESSAGE_KEY_PATTERN.test(messageKey) || [...messageKey].length > MAX_KEY_SCALARS || !isSafeText(messageKey)) {
+    if (
+      !MESSAGE_KEY_PATTERN.test(messageKey) ||
+      [...messageKey].length > MAX_IDENTIFIER_SCALARS ||
+      !isSafeText(messageKey)
+    ) {
       addIssue(context, 'INVALID_KEY', keyPath, 'error', messageKey);
       messagesValid = false;
       continue;
@@ -334,6 +370,7 @@ function validateCatalogBase(input: CatalogInput, options: CatalogValidationOpti
     const message = validateMessage(descriptor.value, context.locale, context, keyPath, messageKey);
     if (message === undefined) {
       messagesValid = false;
+      if (context.messageLimitExceeded) break;
       continue;
     }
     Object.defineProperty(copiedMessages, messageKey, {
@@ -392,10 +429,11 @@ function manifestPlaceholders(
 ): ReadonlySet<string> | undefined {
   if (manifest === undefined || !isObjectLike(manifest)) return undefined;
   const value = readDataProperty(manifest, key);
-  if (!Array.isArray(value) || value.some((name) => typeof name !== 'string' || !PARAMETER_PATTERN.test(name))) {
+  const names = copyDenseArray(value, MAX_CATALOG_MESSAGES);
+  if (names === undefined || names.some((name) => typeof name !== 'string' || !PARAMETER_PATTERN.test(name))) {
     return undefined;
   }
-  return new Set(value);
+  return new Set(names.filter((name): name is string => typeof name === 'string'));
 }
 
 /** Parse one required `~X~` accelerator while accepting `~~` as a literal tilde. */
@@ -414,12 +452,12 @@ function parseAccelerator(label: string): AcceleratorResult {
       !ASCII_LETTER_PATTERN.test(marked) ||
       accelerator !== undefined
     ) {
-      return { valid: false };
+      return { state: 'malformed' };
     }
     accelerator = marked.toLowerCase();
     index += 2;
   }
-  return accelerator === undefined ? { valid: false } : { valid: true, accelerator };
+  return accelerator === undefined ? { state: 'absent' } : { state: 'present', accelerator };
 }
 
 /** Add strict key, kind, and placeholder parity issues. */
@@ -474,34 +512,43 @@ function validateAccelerators(catalog: Catalog, options: CatalogValidationOption
   const manifest = options.acceleratorManifest;
   if (manifest === undefined || !isObjectLike(manifest)) return;
   const scopes = readDataProperty(manifest, 'scopes');
-  if (!Array.isArray(scopes)) return;
+  const scopeValues = copyDenseArray(scopes, MAX_CATALOG_MESSAGES);
+  if (scopeValues === undefined) return;
   const severity: I18nSeverity = options.official === true || options.mode === 'strict' ? 'error' : 'warning';
 
-  for (const scope of scopes) {
+  for (const scope of scopeValues) {
     if (
       !isObjectLike(scope) ||
       typeof readDataProperty(scope, 'name') !== 'string' ||
-      !Array.isArray(readDataProperty(scope, 'keys'))
+      inspectArray(readDataProperty(scope, 'keys')) !== true
     ) {
       addIssue(context, 'INVALID_CATALOG', ['acceleratorManifest']);
       continue;
     }
     const scopeName = readDataProperty(scope, 'name');
     const keys = readDataProperty(scope, 'keys');
-    if (typeof scopeName !== 'string' || !Array.isArray(keys)) continue;
+    const requiredKeysValue = readDataProperty(scope, 'requiredKeys');
+    if (typeof scopeName !== 'string') continue;
+    const keyValues = copyDenseArray(keys, MAX_CATALOG_MESSAGES);
+    if (keyValues === undefined) continue;
+    const requiredValues =
+      requiredKeysValue === undefined ? keyValues : copyDenseArray(requiredKeysValue, MAX_CATALOG_MESSAGES);
+    if (requiredValues === undefined) continue;
+    const requiredKeys = new Set(requiredValues.filter((key): key is string => typeof key === 'string'));
 
     const claimed = new Map<string, string>();
-    for (const key of keys) {
+    for (const key of keyValues) {
       if (typeof key !== 'string') {
         addIssue(context, 'INVALID_CATALOG', ['acceleratorManifest', safePathSegment(scopeName)]);
         continue;
       }
       const message = catalog.messages[key];
-      const parsed = typeof message === 'string' ? parseAccelerator(message) : { valid: false as const };
-      if (!parsed.valid) {
+      const parsed = typeof message === 'string' ? parseAccelerator(message) : { state: 'malformed' as const };
+      if (parsed.state === 'malformed' || (parsed.state === 'absent' && requiredKeys.has(key))) {
         addIssue(context, 'INVALID_MESSAGE', ['messages', safePathSegment(key), 'accelerator'], severity, key);
         continue;
       }
+      if (parsed.state === 'absent') continue;
       if (claimed.has(parsed.accelerator)) {
         addIssue(context, 'INVALID_MESSAGE', ['messages', safePathSegment(key), 'accelerator'], severity, key);
       } else {
@@ -513,13 +560,14 @@ function validateAccelerators(catalog: Catalog, options: CatalogValidationOption
 
 /** Sort and freeze issues so repeated validation has byte-stable output. */
 function publishIssues(issues: readonly CatalogIssue[]): readonly CatalogIssue[] {
+  const compare = (left: string, right: string): number => (left < right ? -1 : left > right ? 1 : 0);
   return Object.freeze(
     [...issues].sort((left, right) => {
-      const pathOrder = left.path.join('\u0000').localeCompare(right.path.join('\u0000'));
+      const pathOrder = compare(left.path.join('\u0000'), right.path.join('\u0000'));
       if (pathOrder !== 0) return pathOrder;
-      const codeOrder = left.code.localeCompare(right.code);
+      const codeOrder = compare(left.code, right.code);
       if (codeOrder !== 0) return codeOrder;
-      return left.severity.localeCompare(right.severity);
+      return compare(left.severity, right.severity);
     }),
   );
 }
@@ -537,15 +585,21 @@ function publishIssues(issues: readonly CatalogIssue[]): readonly CatalogIssue[]
  * ```
  */
 export function validateCatalog(input: CatalogInput, options: CatalogValidationOptions = {}): readonly CatalogIssue[] {
-  const result = validateCatalogBase(input, options);
+  const resolved = resolveValidationOptions(options);
+  if (resolved.issues.length > 0) return publishIssues(resolved.issues);
+  const result = validateCatalogBase(input, resolved.options);
   if (result.catalog !== undefined) {
     const context: ValidationContext = {
+      caseNameBytes: 0,
       issues: result.issues,
       locale: result.catalog.locale,
-      source: safeSource(options.source),
+      messageBytes: 0,
+      messageLimitExceeded: false,
+      source: safeSource(resolved.options.source),
+      structuredCases: 0,
     };
-    validateCompleteness(result.catalog, options, context);
-    validateAccelerators(result.catalog, options, context);
+    validateCompleteness(result.catalog, resolved.options, context);
+    validateAccelerators(result.catalog, resolved.options, context);
   }
   return publishIssues(result.issues);
 }
@@ -566,17 +620,20 @@ export function validateCatalogs(
   inputs: readonly CatalogInput[],
   options: CatalogValidationOptions = {},
 ): readonly CatalogIssue[] {
-  if (!Array.isArray(inputs)) {
+  const resolved = resolveValidationOptions(options);
+  if (resolved.issues.length > 0) return publishIssues(resolved.issues);
+  const copiedInputs = copyDenseArray(inputs, MAX_CATALOG_MESSAGES);
+  if (copiedInputs === undefined) {
     return publishIssues([
       Object.freeze({
         code: 'INVALID_CATALOG',
         severity: 'error',
         path: Object.freeze([]),
-        ...(safeSource(options.source) === undefined ? {} : { source: safeSource(options.source) }),
+        ...(safeSource(resolved.options.source) === undefined ? {} : { source: safeSource(resolved.options.source) }),
       }),
     ]);
   }
-  return publishIssues(inputs.flatMap((input) => validateCatalog(input, options)));
+  return publishIssues(copiedInputs.flatMap((input) => validateCatalog(input, resolved.options)));
 }
 
 /**
@@ -593,15 +650,25 @@ export function validateCatalogs(
  * ```
  */
 export function defineCatalog(input: CatalogInput, options: CatalogValidationOptions = {}): Catalog {
-  const result = validateCatalogBase(input, options);
+  const resolved = resolveValidationOptions(options);
+  if (resolved.issues.length > 0) {
+    throw new I18nError('INVALID_CATALOG', 'Catalog validation options are invalid.', {
+      issues: publishIssues(resolved.issues),
+    });
+  }
+  const result = validateCatalogBase(input, resolved.options);
   if (result.catalog !== undefined) {
     const context: ValidationContext = {
+      caseNameBytes: 0,
       issues: result.issues,
       locale: result.catalog.locale,
-      source: safeSource(options.source),
+      messageBytes: 0,
+      messageLimitExceeded: false,
+      source: safeSource(resolved.options.source),
+      structuredCases: 0,
     };
-    validateCompleteness(result.catalog, options, context);
-    validateAccelerators(result.catalog, options, context);
+    validateCompleteness(result.catalog, resolved.options, context);
+    validateAccelerators(result.catalog, resolved.options, context);
   }
   const issues = publishIssues(result.issues);
   const firstError = issues.find((issue) => issue.severity === 'error');

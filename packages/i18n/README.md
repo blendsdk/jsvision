@@ -128,8 +128,11 @@ for (const issue of issues) {
 }
 ```
 
-Accelerators are ordinary `&` markers in translated labels. Strict validation requires a unique
-ASCII accelerator in each declared co-visible scope. A literal ampersand is written as `&&`.
+Accelerators use JSVision's tilde markup: `~O~pen` marks `O`, while `~~` renders one literal tilde.
+Strict validation requires a unique ASCII accelerator for each key listed in a scope's
+`requiredKeys`. When `requiredKeys` is omitted, every key in that co-visible scope is required. A
+translated label may remain unaccelerated by keeping it in `keys` for collision topology while
+omitting it from `requiredKeys`.
 
 `defineCatalog` is the throwing boundary for one catalog. `mergeCatalogs` validates and combines
 ordered catalogs, with later values winning for duplicate locale/key pairs.

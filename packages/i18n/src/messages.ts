@@ -1,8 +1,14 @@
 import { I18nError } from './errors.js';
+import { PARAMETER_PATTERN } from './grammar.js';
+import { inspectArray, inspectOwnDataProperty, inspectOwnKeys, isObjectLike } from './input.js';
+import { MAX_IDENTIFIER_SCALARS, MAX_MESSAGE_BYTES, MAX_STRUCTURED_CASES } from './limits.js';
+import { readonlyMap } from './readonly-map.js';
 import type { I18nCode, Message, MessageCases, MessageParameter, PluralMessage, SelectMessage } from './types.js';
 
-const PARAMETER_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/u;
 const PLURAL_CASE_NAMES = new Set(['zero', 'one', 'two', 'few', 'many', 'other']);
+const UTF8_ENCODER = new TextEncoder();
+let messageCompilationCount = 0;
+let templateCompilationCount = 0;
 
 /** One precompiled literal or named placeholder. */
 export type TemplateToken =
@@ -34,8 +40,8 @@ export interface MessageEvaluationContext {
   readonly locale: string;
   /** Untrusted parameters supplied for this call. */
   readonly params?: unknown;
-  /** Locale-bound cardinal plural rules. */
-  readonly pluralRules: Intl.PluralRules;
+  /** Lazily resolves locale-bound cardinal plural rules for structured plural messages. */
+  readonly getPluralRules: () => Intl.PluralRules;
   /** Formats numeric interpolation with the resolved message locale. */
   readonly formatNumber: (value: number | bigint) => string;
   /** Records one recoverable fault without throwing. */
@@ -130,6 +136,7 @@ function readParameter(value: string, start: number): { readonly name: string; r
  * ```
  */
 export function compileTemplate(value: string): CompiledTemplate {
+  templateCompilationCount += 1;
   assertSafeText(value);
   const tokens: TemplateToken[] = [];
   let literalStart = 0;
@@ -171,7 +178,7 @@ function compileCases(cases: MessageCases): ReadonlyMap<string, CompiledTemplate
     }
     compiled.set(name, compileTemplate(value));
   }
-  return compiled;
+  return readonlyMap(compiled);
 }
 
 /**
@@ -187,6 +194,7 @@ function compileCases(cases: MessageCases): ReadonlyMap<string, CompiledTemplate
  * ```
  */
 export function compileMessage(message: Message): CompiledMessage {
+  messageCompilationCount += 1;
   if (typeof message === 'string') {
     return Object.freeze({ kind: 'text', template: compileTemplate(message) });
   }
@@ -200,13 +208,34 @@ export function compileMessage(message: Message): CompiledMessage {
   });
 }
 
+/**
+ * Return the number of messages compiled since this module was initialized.
+ *
+ * This internal instrumentation lets performance tests prove that warm translation does not
+ * compile. It is intentionally absent from the package entry point.
+ *
+ * @returns Monotonic message-compilation count.
+ */
+export function getMessageCompilationCount(): number {
+  return messageCompilationCount;
+}
+
+/**
+ * Return the number of templates compiled since this module was initialized.
+ *
+ * This internal instrumentation proves rejected oversized catalogs stop compilation promptly.
+ *
+ * @returns Monotonic template-compilation count.
+ */
+export function getTemplateCompilationCount(): number {
+  return templateCompilationCount;
+}
+
 /** Read an own data property without invoking getters or walking the prototype chain. */
 function ownParameter(params: unknown, name: string): unknown {
-  if ((typeof params !== 'object' && typeof params !== 'function') || params === null) {
-    return undefined;
-  }
-  const descriptor = Object.getOwnPropertyDescriptor(params, name);
-  return descriptor && 'value' in descriptor ? descriptor.value : undefined;
+  if (!isObjectLike(params)) return undefined;
+  const property = inspectOwnDataProperty(params, name);
+  return property.accessible && property.present ? property.value : undefined;
 }
 
 /** Narrow an untrusted parameter while rejecting non-finite numbers. */
@@ -269,7 +298,7 @@ function selectCase(
 
   if (message.kind === 'plural') {
     if (typeof controller === 'number') {
-      name = context.pluralRules.select(controller);
+      name = context.getPluralRules().select(controller);
     }
   } else if (controller !== undefined) {
     name =
@@ -290,10 +319,10 @@ function selectCase(
   if (!fallback) {
     throw new I18nError('INVALID_MESSAGE', 'Compiled structured message has no other case.');
   }
-  return Object.freeze({
+  return {
     template: selected ?? fallback,
     ...(name === undefined ? { blockedParameter: message.parameter } : {}),
-  });
+  };
 }
 
 /**
@@ -307,7 +336,7 @@ function selectCase(
  * ```ts
  * evaluateMessage(compileMessage('Hello'), {
  *   locale: 'en',
- *   pluralRules: new Intl.PluralRules('en'),
+ *   getPluralRules: () => new Intl.PluralRules('en'),
  *   formatNumber: (value) => new Intl.NumberFormat('en').format(value),
  *   report: () => undefined,
  * });
@@ -321,40 +350,44 @@ export function evaluateMessage(message: CompiledMessage, context: MessageEvalua
 
 /** Copy and validate a public helper's case map without invoking caller accessors. */
 function copyAuthoringCases(kind: 'plural' | 'select', cases: MessageCases): MessageCases {
-  if (typeof cases !== 'object' || cases === null || Array.isArray(cases)) {
+  if (!isObjectLike(cases) || inspectArray(cases) !== false) {
     throw new I18nError('INVALID_MESSAGE', 'Structured message cases must be an object.');
   }
 
-  let keys: readonly PropertyKey[];
-  try {
-    keys = Reflect.ownKeys(cases);
-  } catch (cause) {
-    throw new I18nError('INVALID_MESSAGE', 'Structured message cases could not be inspected.', {
-      cause,
-    });
+  const keys = inspectOwnKeys(cases);
+  if (keys === undefined) {
+    throw new I18nError('INVALID_MESSAGE', 'Structured message cases could not be inspected.');
+  }
+  if (keys.length > MAX_STRUCTURED_CASES) {
+    throw new I18nError('CATALOG_LIMIT_EXCEEDED', 'Structured message contains too many cases.');
   }
 
   const copied: Record<string, string> = {};
   for (const key of keys) {
-    if (typeof key !== 'string' || (kind === 'plural' && !PLURAL_CASE_NAMES.has(key))) {
+    if (
+      typeof key !== 'string' ||
+      [...key].length > MAX_IDENTIFIER_SCALARS ||
+      !isSafeText(key) ||
+      (kind === 'plural' && !PLURAL_CASE_NAMES.has(key))
+    ) {
+      const code =
+        typeof key === 'string' && [...key].length > MAX_IDENTIFIER_SCALARS
+          ? 'CATALOG_LIMIT_EXCEEDED'
+          : 'INVALID_MESSAGE';
+      throw new I18nError(code, 'Structured message contains an invalid case name.');
+    }
+    const property = inspectOwnDataProperty(cases, key);
+    if (!property.accessible || !property.present || typeof property.value !== 'string') {
       throw new I18nError('INVALID_MESSAGE', 'Structured message contains an invalid case name.');
     }
-    let descriptor: PropertyDescriptor | undefined;
-    try {
-      descriptor = Object.getOwnPropertyDescriptor(cases, key);
-    } catch (cause) {
-      throw new I18nError('INVALID_MESSAGE', 'Structured message case could not be inspected.', {
-        cause,
-      });
+    if (UTF8_ENCODER.encode(property.value).byteLength > MAX_MESSAGE_BYTES) {
+      throw new I18nError('CATALOG_LIMIT_EXCEEDED', 'Structured message case exceeds the string limit.');
     }
-    if (descriptor === undefined || !('value' in descriptor) || typeof descriptor.value !== 'string') {
-      throw new I18nError('INVALID_MESSAGE', 'Structured message cases must be string data properties.');
-    }
-    compileTemplate(descriptor.value);
+    compileTemplate(property.value);
     Object.defineProperty(copied, key, {
       configurable: false,
       enumerable: true,
-      value: descriptor.value,
+      value: property.value,
       writable: false,
     });
   }
