@@ -10,7 +10,7 @@ function evaluate(
   const output = evaluateMessage(message, {
     locale: 'en',
     params,
-    pluralRules: new Intl.PluralRules('en'),
+    getPluralRules: () => new Intl.PluralRules('en'),
     formatNumber: (value) => new Intl.NumberFormat('en').format(value),
     report: (code) => codes.push(code),
   });

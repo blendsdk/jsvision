@@ -1,4 +1,8 @@
+import { I18nError } from './errors.js';
+import { copyDenseArray } from './input.js';
+import { MAX_CATALOG_MESSAGES } from './limits.js';
 import { compileMessage, isSafeText, type CompiledMessage } from './messages.js';
+import { readonlyMap } from './readonly-map.js';
 import type { Catalog, CatalogInput, Message } from './types.js';
 import { defineCatalog } from './validation.js';
 
@@ -46,7 +50,7 @@ function compileCatalogLayer(catalog: Catalog, source?: string, kind: CatalogLay
     kind,
     locale: catalog.locale,
     ...(copiedSource === undefined ? {} : { source: copiedSource }),
-    messages,
+    messages: readonlyMap(messages),
   });
 }
 
@@ -85,7 +89,7 @@ export function createCatalogSnapshot(inputs: readonly CatalogLayerInput[]): Cat
     published.set(locale, Object.freeze([...layers]));
   }
   return Object.freeze({
-    locales: published,
+    locales: readonlyMap(published),
     availableLocales: Object.freeze([...published.keys()].sort()),
   });
 }
@@ -120,7 +124,7 @@ export function replaceCatalogOverlay(
   const baseLayers = existing.filter((layer) => layer.kind === 'base');
   locales.set(validated.locale, Object.freeze([...baseLayers, overlay]));
   return Object.freeze({
-    locales,
+    locales: readonlyMap(locales),
     availableLocales: Object.freeze([...locales.keys()].sort()),
   });
 }
@@ -154,8 +158,12 @@ function copyMessage(message: Message): Message {
  * ```
  */
 export function mergeCatalogs(inputs: readonly CatalogInput[]): readonly Catalog[] {
+  const copiedInputs = copyDenseArray(inputs, MAX_CATALOG_MESSAGES);
+  if (copiedInputs === undefined) {
+    throw new I18nError('INVALID_CATALOG', 'Catalog collection must be a dense Array.');
+  }
   const merged = new Map<string, Record<string, Message>>();
-  for (const input of inputs) {
+  for (const input of copiedInputs) {
     const catalog = defineCatalog(input);
     let messages = merged.get(catalog.locale);
     if (messages === undefined) {

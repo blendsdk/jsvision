@@ -1,10 +1,8 @@
 import { I18nError } from './errors.js';
+import { inspectArray } from './input.js';
+import { createCollator, createDateTimeFormat, createNumberFormat, createPluralRules } from './intl.js';
 
 const CACHE_LIMIT = 64;
-const PluralRulesConstructor = Intl.PluralRules;
-const NumberFormatConstructor = Intl.NumberFormat;
-const DateTimeFormatConstructor = Intl.DateTimeFormat;
-const CollatorConstructor = Intl.Collator;
 const EMPTY_OPTIONS: CopiedFormatterOptions = Object.freeze({});
 
 const NUMBER_OPTION_KEYS = new Set<PropertyKey>([
@@ -70,7 +68,7 @@ type CopiedFormatterOptions = Readonly<Record<string, FormatterOptionValue>>;
 /** A small least-recently-used cache with deterministic eviction. */
 class LruCache<Value> {
   /** Values in least-to-most-recent order. */
-  protected readonly entries = new Map<string, Value>();
+  readonly #entries = new Map<string, Value>();
 
   /**
    * Resolve a cached value or create and retain it.
@@ -80,19 +78,19 @@ class LruCache<Value> {
    * @returns Existing or newly created value.
    */
   get(key: string, create: () => Value): Value {
-    const existing = this.entries.get(key);
+    const existing = this.#entries.get(key);
     if (existing !== undefined) {
-      if (this.entries.size === 1) return existing;
-      this.entries.delete(key);
-      this.entries.set(key, existing);
+      if (this.#entries.size === 1) return existing;
+      this.#entries.delete(key);
+      this.#entries.set(key, existing);
       return existing;
     }
 
     const value = create();
-    this.entries.set(key, value);
-    if (this.entries.size > CACHE_LIMIT) {
-      const oldest = this.entries.keys().next().value;
-      if (typeof oldest === 'string') this.entries.delete(oldest);
+    this.#entries.set(key, value);
+    if (this.#entries.size > CACHE_LIMIT) {
+      const oldest = this.#entries.keys().next().value;
+      if (typeof oldest === 'string') this.#entries.delete(oldest);
     }
     return value;
   }
@@ -110,7 +108,7 @@ function invalidOptions(cause?: unknown): I18nError {
 /** Copy allowlisted own primitive options without invoking accessors or coercion hooks. */
 function copyOptions(input: unknown, allowed: ReadonlySet<PropertyKey>): CopiedFormatterOptions {
   if (input === undefined) return EMPTY_OPTIONS;
-  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+  if (typeof input !== 'object' || input === null || inspectArray(input) !== false) {
     throw invalidOptions();
   }
 
@@ -147,15 +145,16 @@ function copyOptions(input: unknown, allowed: ReadonlySet<PropertyKey>): CopiedF
       writable: false,
     });
   }
-  return Object.freeze(copied);
+  return Object.keys(copied).length === 0 ? EMPTY_OPTIONS : Object.freeze(copied);
 }
 
 /** Serialize copied options in lexical key order without calling user code. */
 function formatterKey(locale: string, options: CopiedFormatterOptions): string {
-  const entries = Object.keys(options)
-    .sort()
-    .map((key) => [key, options[key]] as const);
-  return JSON.stringify([locale, entries]);
+  let key = JSON.stringify(locale);
+  for (const name of Object.keys(options).sort()) {
+    key += `|${JSON.stringify(name)}:${JSON.stringify(options[name])}`;
+  }
+  return key;
 }
 
 /** Construct one formatter and translate native option failures to the stable error boundary. */
@@ -181,16 +180,16 @@ function construct<Value>(create: () => Value): Value {
  */
 export class FormatterCache {
   /** Cardinal plural rules keyed by canonical locale. */
-  protected readonly plurals = new LruCache<Intl.PluralRules>();
+  readonly #plurals = new LruCache<Intl.PluralRules>();
 
   /** Number formatters keyed by locale and copied options. */
-  protected readonly numbers = new LruCache<Intl.NumberFormat>();
+  readonly #numbers = new LruCache<Intl.NumberFormat>();
 
   /** Date formatters keyed by locale and copied options. */
-  protected readonly dates = new LruCache<Intl.DateTimeFormat>();
+  readonly #dates = new LruCache<Intl.DateTimeFormat>();
 
   /** Collators keyed by locale and copied options. */
-  protected readonly collators = new LruCache<Intl.Collator>();
+  readonly #collators = new LruCache<Intl.Collator>();
 
   /**
    * Resolve cached cardinal plural rules.
@@ -199,7 +198,7 @@ export class FormatterCache {
    * @returns Locale-bound cardinal rules.
    */
   pluralRules(locale: string): Intl.PluralRules {
-    return this.plurals.get(locale, () => construct(() => new PluralRulesConstructor(locale, { type: 'cardinal' })));
+    return this.#plurals.get(locale, () => construct(() => createPluralRules(locale)));
   }
 
   /**
@@ -211,7 +210,7 @@ export class FormatterCache {
    */
   numberFormat(locale: string, options?: Intl.NumberFormatOptions): Intl.NumberFormat {
     if (options === undefined) {
-      return this.numbers.get(locale, () => construct(() => new NumberFormatConstructor(locale)));
+      return this.#numbers.get(locale, () => construct(() => createNumberFormat(locale)));
     }
     const copied = copyOptions(options, NUMBER_OPTION_KEYS);
     if (
@@ -220,8 +219,11 @@ export class FormatterCache {
     ) {
       throw invalidOptions();
     }
+    if (copied === EMPTY_OPTIONS) {
+      return this.#numbers.get(locale, () => construct(() => createNumberFormat(locale)));
+    }
     const key = formatterKey(locale, copied);
-    return this.numbers.get(key, () => construct(() => new NumberFormatConstructor(locale, copied)));
+    return this.#numbers.get(key, () => construct(() => createNumberFormat(locale, copied)));
   }
 
   /**
@@ -233,11 +235,14 @@ export class FormatterCache {
    */
   dateTimeFormat(locale: string, options?: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
     if (options === undefined) {
-      return this.dates.get(locale, () => construct(() => new DateTimeFormatConstructor(locale)));
+      return this.#dates.get(locale, () => construct(() => createDateTimeFormat(locale)));
     }
     const copied = copyOptions(options, DATE_OPTION_KEYS);
+    if (copied === EMPTY_OPTIONS) {
+      return this.#dates.get(locale, () => construct(() => createDateTimeFormat(locale)));
+    }
     const key = formatterKey(locale, copied);
-    return this.dates.get(key, () => construct(() => new DateTimeFormatConstructor(locale, copied)));
+    return this.#dates.get(key, () => construct(() => createDateTimeFormat(locale, copied)));
   }
 
   /**
@@ -249,10 +254,13 @@ export class FormatterCache {
    */
   collator(locale: string, options?: Intl.CollatorOptions): Intl.Collator {
     if (options === undefined) {
-      return this.collators.get(locale, () => construct(() => new CollatorConstructor(locale)));
+      return this.#collators.get(locale, () => construct(() => createCollator(locale)));
     }
     const copied = copyOptions(options, COLLATOR_OPTION_KEYS);
+    if (copied === EMPTY_OPTIONS) {
+      return this.#collators.get(locale, () => construct(() => createCollator(locale)));
+    }
     const key = formatterKey(locale, copied);
-    return this.collators.get(key, () => construct(() => new CollatorConstructor(locale, copied)));
+    return this.#collators.get(key, () => construct(() => createCollator(locale, copied)));
   }
 }

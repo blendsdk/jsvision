@@ -154,6 +154,13 @@ export interface AcceleratorScope {
   readonly name: string;
   /** Message keys whose labels coexist in this scope. */
   readonly keys: readonly string[];
+  /**
+   * Labels that must contain one accelerator marker.
+   *
+   * Omit this property to require every key. Supply a subset when a translated label is
+   * intentionally reachable without a keyboard accelerator.
+   */
+  readonly requiredKeys?: readonly string[];
 }
 
 /** Accelerator topology used by strict catalog validation. */

@@ -2,6 +2,8 @@ import { createCatalogSnapshot, replaceCatalogOverlay, type CatalogSnapshot } fr
 import { FormatterCache } from './cache.js';
 import { DiagnosticStore } from './diagnostics.js';
 import { I18nError } from './errors.js';
+import { MESSAGE_KEY_PATTERN } from './grammar.js';
+import { copyDenseArray, inspectArray } from './input.js';
 import { buildCatalogLocaleChain, canonicalizeFallbackLocales, resolveRequestedLocale } from './locale.js';
 import { compileMessage, evaluateMessage, isSafeText } from './messages.js';
 import type {
@@ -16,7 +18,6 @@ import type {
 } from './types.js';
 import { defineCatalog } from './validation.js';
 
-const MESSAGE_KEY_PATTERN = /^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$/u;
 const MAX_KEY_SCALARS = 512;
 const CONSTRUCTION_OPTION_KEYS = new Set<PropertyKey>(['locale', 'fallbackLocales', 'catalogs', 'diagnosticSink']);
 const TRANSLATE_OPTION_KEYS = new Set<PropertyKey>(['params', 'defaultMessage']);
@@ -69,19 +70,6 @@ function validateOptionKeys(options: object, allowed: ReadonlySet<PropertyKey>, 
   }
 }
 
-/** Copy a real array through own data properties without invoking its iterator or accessors. */
-function copyArray(input: readonly unknown[]): readonly unknown[] {
-  const copied: unknown[] = [];
-  for (let index = 0; index < input.length; index += 1) {
-    const member = ownDataProperty(input, String(index));
-    if (!member.valid || !Object.hasOwn(member, 'value')) {
-      throw new I18nError('INVALID_CATALOG', 'Option arrays must contain own data values.');
-    }
-    copied.push(member.value);
-  }
-  return Object.freeze(copied);
-}
-
 /** Validate and copy public service construction options. */
 function resolveConstructionOptions(input: CreateI18nOptions): {
   readonly locale: ReturnType<typeof resolveRequestedLocale>;
@@ -89,21 +77,21 @@ function resolveConstructionOptions(input: CreateI18nOptions): {
   readonly catalogs: readonly unknown[];
   readonly diagnosticSink?: DiagnosticSink;
 } {
-  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+  if (typeof input !== 'object' || input === null || inspectArray(input) !== false) {
     throw new I18nError('INVALID_CATALOG', 'Internationalization options must be an object.');
   }
   validateOptionKeys(input, CONSTRUCTION_OPTION_KEYS, 'INVALID_CATALOG');
 
   const locale = resolveRequestedLocale(constructionOption(input, 'locale'));
   const rawFallbackLocales = constructionOption(input, 'fallbackLocales');
-  if (rawFallbackLocales !== undefined && !Array.isArray(rawFallbackLocales)) {
+  const fallbackValues = rawFallbackLocales === undefined ? undefined : copyDenseArray(rawFallbackLocales);
+  if (rawFallbackLocales !== undefined && fallbackValues === undefined) {
     throw new I18nError('INVALID_LOCALE', 'Fallback locales must be an array.');
   }
-  const fallbackLocales = canonicalizeFallbackLocales(
-    rawFallbackLocales === undefined ? undefined : copyArray(rawFallbackLocales),
-  );
+  const fallbackLocales = canonicalizeFallbackLocales(fallbackValues);
   const rawCatalogs = constructionOption(input, 'catalogs');
-  if (rawCatalogs !== undefined && !Array.isArray(rawCatalogs)) {
+  const copiedCatalogs = rawCatalogs === undefined ? Object.freeze([]) : copyDenseArray(rawCatalogs);
+  if (copiedCatalogs === undefined) {
     throw new I18nError('INVALID_CATALOG', 'Catalogs must be an array.');
   }
   const rawSink = constructionOption(input, 'diagnosticSink');
@@ -111,7 +99,6 @@ function resolveConstructionOptions(input: CreateI18nOptions): {
     throw new I18nError('INVALID_CATALOG', 'Diagnostic sink must be a function.');
   }
 
-  const catalogs = rawCatalogs === undefined ? Object.freeze([]) : copyArray(rawCatalogs);
   const diagnosticSink: DiagnosticSink | undefined =
     typeof rawSink === 'function'
       ? (diagnostic) => {
@@ -121,7 +108,7 @@ function resolveConstructionOptions(input: CreateI18nOptions): {
   return Object.freeze({
     locale,
     fallbackLocales,
-    catalogs,
+    catalogs: copiedCatalogs,
     ...(diagnosticSink === undefined ? {} : { diagnosticSink }),
   });
 }
@@ -146,7 +133,7 @@ function resolveTranslateOptions(input: TranslateOptions | undefined): {
   readonly defaultMessage?: Message;
 } {
   if (input === undefined) return {};
-  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+  if (typeof input !== 'object' || input === null || inspectArray(input) !== false) {
     throw new I18nError('INVALID_PARAMETER', 'Translation options must be an object.');
   }
   validateOptionKeys(input, TRANSLATE_OPTION_KEYS, 'INVALID_PARAMETER');
@@ -164,22 +151,22 @@ function resolveTranslateOptions(input: TranslateOptions | undefined): {
 /** Browser-safe synchronous implementation behind the public {@link I18n} interface. */
 class I18nService implements I18n {
   /** Canonical requested locale retained for formatting. */
-  readonly locale: string;
+  readonly #locale: string;
 
   /** Canonical configured fallbacks including final English. */
-  readonly fallbackLocales: readonly string[];
+  readonly #fallbackLocales: readonly string[];
 
   /** Catalog lookup order derived once at construction. */
-  protected readonly catalogChain: readonly string[];
+  readonly #catalogChain: readonly string[];
 
   /** Service-owned bounded formatter families. */
-  protected readonly formatters = new FormatterCache();
+  readonly #formatters = new FormatterCache();
 
   /** Service-owned bounded recoverable diagnostics. */
-  protected readonly diagnosticStore: DiagnosticStore;
+  readonly #diagnosticStore: DiagnosticStore;
 
   /** Complete immutable lookup graph swapped only after successful publication. */
-  protected snapshot: CatalogSnapshot;
+  #snapshot: CatalogSnapshot;
 
   /**
    * Creates a synchronous locale-bound service.
@@ -187,21 +174,32 @@ class I18nService implements I18n {
    * @param options Validated and copied construction options.
    */
   constructor(options: ReturnType<typeof resolveConstructionOptions>) {
-    this.locale = options.locale.requested;
-    this.fallbackLocales = options.fallbackLocales;
-    this.catalogChain = buildCatalogLocaleChain(this.locale, this.fallbackLocales);
-    this.diagnosticStore = new DiagnosticStore(options.diagnosticSink);
-    this.snapshot = createCatalogSnapshot(options.catalogs.map((catalog) => Object.freeze({ catalog })));
+    this.#locale = options.locale.requested;
+    this.#fallbackLocales = options.fallbackLocales;
+    this.#catalogChain = buildCatalogLocaleChain(this.#locale, this.#fallbackLocales);
+    this.#diagnosticStore = new DiagnosticStore(options.diagnosticSink);
+    this.#snapshot = createCatalogSnapshot(options.catalogs.map((catalog) => Object.freeze({ catalog })));
+    Object.freeze(this);
+  }
+
+  /** Canonical requested locale retained for formatting. */
+  get locale(): string {
+    return this.#locale;
+  }
+
+  /** Canonical configured fallbacks including final English. */
+  get fallbackLocales(): readonly string[] {
+    return this.#fallbackLocales;
   }
 
   /** Sorted catalog locales currently available to lookup. */
   get availableLocales(): readonly string[] {
-    return this.snapshot.availableLocales;
+    return this.#snapshot.availableLocales;
   }
 
   /** Deduplicated recoverable diagnostics, bounded to 100 records. */
   get diagnostics(): readonly I18nDiagnostic[] {
-    return this.diagnosticStore.records;
+    return this.#diagnosticStore.records;
   }
 
   /**
@@ -214,9 +212,9 @@ class I18nService implements I18n {
   t(key: string, options?: TranslateOptions): string {
     const validatedKey = validateMessageKey(key);
     const resolvedOptions = resolveTranslateOptions(options);
-    const snapshot = this.snapshot;
+    const snapshot = this.#snapshot;
 
-    for (const locale of this.catalogChain) {
+    for (const locale of this.#catalogChain) {
       const layers = snapshot.locales.get(locale);
       if (layers === undefined) continue;
       for (let index = layers.length - 1; index >= 0; index -= 1) {
@@ -226,21 +224,21 @@ class I18nService implements I18n {
         return evaluateMessage(message, {
           locale,
           params: resolvedOptions.params,
-          pluralRules: this.formatters.pluralRules(locale),
-          formatNumber: (value) => this.formatters.numberFormat(locale).format(value),
-          report: (code) => this.record(code, validatedKey, locale, layer.source),
+          getPluralRules: () => this.#formatters.pluralRules(locale),
+          formatNumber: (value) => this.#formatters.numberFormat(locale).format(value),
+          report: (code) => this.#record(code, validatedKey, locale, layer.source),
         });
       }
     }
 
-    this.record('MISSING_TRANSLATION', validatedKey, this.locale);
+    this.#record('MISSING_TRANSLATION', validatedKey, this.#locale);
     if (resolvedOptions.defaultMessage !== undefined) {
       return evaluateMessage(compileMessage(resolvedOptions.defaultMessage), {
         locale: 'en',
         params: resolvedOptions.params,
-        pluralRules: this.formatters.pluralRules('en'),
-        formatNumber: (value) => this.formatters.numberFormat('en').format(value),
-        report: (code) => this.record(code, validatedKey, 'en'),
+        getPluralRules: () => this.#formatters.pluralRules('en'),
+        formatNumber: (value) => this.#formatters.numberFormat('en').format(value),
+        report: (code) => this.#record(code, validatedKey, 'en'),
       });
     }
     return validatedKey;
@@ -260,7 +258,7 @@ class I18nService implements I18n {
     ) {
       throw new I18nError('INVALID_NUMBER', 'Number value must be finite or a bigint.');
     }
-    return this.formatters.numberFormat(this.locale, options).format(value);
+    return this.#formatters.numberFormat(this.#locale, options).format(value);
   }
 
   /**
@@ -286,7 +284,7 @@ class I18nService implements I18n {
     if (!Number.isFinite(epoch)) {
       throw new I18nError('INVALID_DATE', 'Date value must represent a finite instant.');
     }
-    return this.formatters.dateTimeFormat(this.locale, options).format(epoch);
+    return this.#formatters.dateTimeFormat(this.#locale, options).format(epoch);
   }
 
   /**
@@ -301,7 +299,7 @@ class I18nService implements I18n {
     if (typeof left !== 'string' || typeof right !== 'string' || !isSafeText(left) || !isSafeText(right)) {
       throw new I18nError('UNSAFE_TEXT', 'Comparison values must be safe strings.');
     }
-    return this.formatters.collator(this.locale, options).compare(left.normalize('NFC'), right.normalize('NFC'));
+    return this.#formatters.collator(this.#locale, options).compare(left.normalize('NFC'), right.normalize('NFC'));
   }
 
   /**
@@ -315,9 +313,9 @@ class I18nService implements I18n {
     const validatedKey = validateMessageKey(key);
     const chain =
       locale === undefined
-        ? this.catalogChain
-        : buildCatalogLocaleChain(resolveRequestedLocale(locale).requested, this.fallbackLocales);
-    const snapshot = this.snapshot;
+        ? this.#catalogChain
+        : buildCatalogLocaleChain(resolveRequestedLocale(locale).requested, this.#fallbackLocales);
+    const snapshot = this.#snapshot;
     for (const candidate of chain) {
       const layers = snapshot.locales.get(candidate);
       if (layers?.some((layer) => layer.messages.has(validatedKey))) return true;
@@ -331,13 +329,13 @@ class I18nService implements I18n {
    * @param catalog Untrusted catalog input validated before publication.
    */
   setCatalog(catalog: CatalogInput): void {
-    const replacement = replaceCatalogOverlay(this.snapshot, catalog);
-    this.snapshot = replacement;
+    const replacement = replaceCatalogOverlay(this.#snapshot, catalog);
+    this.#snapshot = replacement;
   }
 
   /** Record one value-free recoverable diagnostic. */
-  protected record(code: I18nCode, key: string, locale: string, source?: string): void {
-    this.diagnosticStore.record({
+  #record(code: I18nCode, key: string, locale: string, source?: string): void {
+    this.#diagnosticStore.record({
       code,
       severity: 'warning',
       key,
