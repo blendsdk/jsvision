@@ -9,6 +9,7 @@ export type { I18nErrorOptions } from './errors.js';
 export { formatCatalogIssue } from './issue-format.js';
 export { mergeCatalogs } from './catalog.js';
 export { plural, select } from './messages.js';
+export { createI18n } from './service.js';
 export { CATALOG_SCHEMA_VERSION } from './types.js';
 export { defineCatalog, validateCatalog, validateCatalogs } from './validation.js';
 export type {

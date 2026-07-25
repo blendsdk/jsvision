@@ -3161,6 +3161,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Synchronous construction lookup formatting comparison introspection diagnostics and atomic runtime overlay service implemented",
+        "verificationEvidence:Focused service behavior TypeScript ESLint documentation formatting and root yarn verify passed"
+      ],
       "id": "TASK-1-2-8",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3173,7 +3177,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement `createI18n`, lookup/format/introspection, and atomic runtime overlays",
       "type": "task",
       "validations": []
