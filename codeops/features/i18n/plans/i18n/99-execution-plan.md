@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-25 08:00
-> **Progress**: 3/63 tasks (5%)
+> **Last Updated**: 2026-07-25 08:05
+> **Progress**: 4/63 tasks (6%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -51,7 +51,7 @@ plugin generation, performance, and digest-bound translation review.
 
 **Reference**: [03-01](03-01-engine-and-catalog.md) · AR-31, AR-33, AR-34
 
-- [ ] 1.2.1 Scaffold package metadata, TypeScript/Vitest configuration, and browser-safe public entry — `packages/i18n/package.json`, `packages/i18n/tsconfig.json`, `packages/i18n/vitest.config.ts`
+- [x] 1.2.1 Scaffold package metadata, TypeScript/Vitest configuration, and browser-safe public entry — `packages/i18n/package.json`, `packages/i18n/tsconfig.json`, `packages/i18n/vitest.config.ts`, `packages/i18n/src/index.ts` (mechanical correction: public-entry path made explicit) ✅ (completed: 2026-07-25 08:05)
 - [ ] 1.2.2 Define documented public types, stable errors, diagnostics, and exports — `packages/i18n/src/types.ts`, `packages/i18n/src/errors.ts`, `packages/i18n/src/index.ts`
 - [ ] 1.2.3 Implement canonical locale parsing and deterministic catalog fallback chains — `packages/i18n/src/locale.ts`, `packages/i18n/test/locale.impl.test.ts`
 - [ ] 1.2.4 Implement text safety, placeholder compilation, plural/select constructors, and evaluation — `packages/i18n/src/messages.ts`, `packages/i18n/test/messages.impl.test.ts`

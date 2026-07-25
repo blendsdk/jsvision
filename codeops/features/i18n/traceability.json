@@ -2963,6 +2963,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Browser-safe package manifest TypeScript configuration Vitest configuration and public entry scaffolded",
+        "verificationEvidence:JSON parse TypeScript ESLint Prettier and root yarn verify passed"
+      ],
       "id": "TASK-1-2-1",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -2975,7 +2979,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Scaffold package metadata, TypeScript/Vitest configuration, and browser-safe public entry",
       "type": "task",
       "validations": []
