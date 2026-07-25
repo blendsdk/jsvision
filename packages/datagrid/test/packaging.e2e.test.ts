@@ -30,5 +30,5 @@ test('should declare only the workspace @jsvision runtime dependencies', () => {
   const pkg = JSON.parse(readFileSync(join(pkgRoot, 'package.json'), 'utf8')) as {
     dependencies?: Record<string, string>;
   };
-  expect(Object.keys(pkg.dependencies ?? {})).toEqual(['@jsvision/core', '@jsvision/ui']);
+  expect(Object.keys(pkg.dependencies ?? {})).toEqual(['@jsvision/core', '@jsvision/i18n', '@jsvision/ui']);
 });

@@ -4,7 +4,7 @@
  * the visible-count echo tracks the pending visibility. Driven on a headless modal host.
  */
 import { test, expect } from 'vitest';
-import { Group, createEventLoop, resolveCapabilities, signal, Commands } from '@jsvision/ui';
+import { Group, createEventLoop, createI18n, resolveCapabilities, signal, Commands } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 import { column } from '../src/column.js';
 import { fromRows } from '../src/data-source.js';
@@ -62,6 +62,7 @@ function makeHost(w = 70, h = 24) {
   loop.mount(root);
   const added: View[] = [];
   const host = {
+    i18n: createI18n(),
     loop,
     desktop: {
       addWindow: (v: View) => {

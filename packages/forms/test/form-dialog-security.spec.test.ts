@@ -13,7 +13,7 @@
 import { test, expect } from 'vitest';
 import { z } from 'zod';
 import { resolveCapabilities } from '@jsvision/core';
-import { createEventLoop, Commands, Group, Input } from '@jsvision/ui';
+import { createEventLoop, createI18n, Commands, Group, Input } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 import { formDialog } from '../src/index.js';
 
@@ -25,6 +25,7 @@ function makeHost(w = 60, h = 20) {
   const loop = createEventLoop({ width: w, height: h }, { caps });
   loop.mount(root);
   const host = {
+    i18n: createI18n(),
     loop,
     desktop: {
       addWindow: (v: View) => root.add(v),

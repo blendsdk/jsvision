@@ -8,12 +8,15 @@
  * buttons are the dialog `default`, so they also activate on `Enter` when the key is otherwise
  * unconsumed.
  */
+import type { I18n } from '@jsvision/i18n';
 import { Button } from '../controls/index.js';
 import { Commands } from '../status/index.js';
+import { createEnglishUiI18n } from '../i18n/catalog.js';
 
 /**
  * An OK button — the dialog default; emits `Commands.ok` when activated.
  *
+ * @param i18n Translation service for the built-in label; defaults to isolated English UI text.
  * @returns A {@link Button} labelled `OK`.
  * @example
  * import { Dialog, okButton, cancelButton, createEventLoop, at } from '@jsvision/ui';
@@ -29,13 +32,18 @@ import { Commands } from '../status/index.js';
  * loop.mount(dialog);
  * const command = await loop.execView<string>(dialog); // 'ok' when OK is pressed
  */
-export function okButton(): Button {
-  return new Button('~O~K', { command: Commands.ok, default: true });
+export function okButton(i18n?: I18n): Button {
+  const service = i18n ?? createEnglishUiI18n();
+  return new Button(service.t('ui.action.ok', { defaultMessage: '~O~K' }), {
+    command: Commands.ok,
+    default: true,
+  });
 }
 
 /**
  * A Cancel button — emits `Commands.cancel` (the same command Esc and the frame close-box resolve to).
  *
+ * @param i18n Translation service for the built-in label; defaults to isolated English UI text.
  * @returns A {@link Button} labelled `Cancel`.
  * @example
  * import { Dialog, cancelButton, at } from '@jsvision/ui';
@@ -43,13 +51,17 @@ export function okButton(): Button {
  * const cancel = at(cancelButton(), 18, 4, 12, 2);
  * dialog.add(cancel);
  */
-export function cancelButton(): Button {
-  return new Button('~C~ancel', { command: Commands.cancel });
+export function cancelButton(i18n?: I18n): Button {
+  const service = i18n ?? createEnglishUiI18n();
+  return new Button(service.t('ui.action.cancel', { defaultMessage: '~C~ancel' }), {
+    command: Commands.cancel,
+  });
 }
 
 /**
  * A Yes button — the dialog default; emits `Commands.yes` when activated.
  *
+ * @param i18n Translation service for the built-in label; defaults to isolated English UI text.
  * @returns A {@link Button} labelled `Yes`.
  * @example
  * import { Dialog, yesButton, noButton } from '@jsvision/ui';
@@ -57,26 +69,35 @@ export function cancelButton(): Button {
  * dialog.add(yesButton()); // default; also activates on Enter
  * dialog.add(noButton());
  */
-export function yesButton(): Button {
-  return new Button('~Y~es', { command: Commands.yes, default: true });
+export function yesButton(i18n?: I18n): Button {
+  const service = i18n ?? createEnglishUiI18n();
+  return new Button(service.t('ui.action.yes', { defaultMessage: '~Y~es' }), {
+    command: Commands.yes,
+    default: true,
+  });
 }
 
 /**
  * A No button — emits `Commands.no` when activated.
  *
+ * @param i18n Translation service for the built-in label; defaults to isolated English UI text.
  * @returns A {@link Button} labelled `No`.
  * @example
  * import { Dialog, noButton } from '@jsvision/ui';
  * const dialog = new Dialog({ title: ' Confirm ', width: 30, height: 8 });
  * dialog.add(noButton()); // emits Commands.no
  */
-export function noButton(): Button {
-  return new Button('~N~o', { command: Commands.no });
+export function noButton(i18n?: I18n): Button {
+  const service = i18n ?? createEnglishUiI18n();
+  return new Button(service.t('ui.action.no', { defaultMessage: '~N~o' }), {
+    command: Commands.no,
+  });
 }
 
 /**
  * The OK + Cancel pair, in tab/z order (OK first).
  *
+ * @param i18n Translation service shared by both buttons; defaults to isolated English UI text.
  * @returns A `[okButton, cancelButton]` tuple ready to lay out and add.
  * @example
  * import { Dialog, okCancelButtons, at } from '@jsvision/ui';
@@ -87,13 +108,15 @@ export function noButton(): Button {
  * dialog.add(ok);
  * dialog.add(cancel);
  */
-export function okCancelButtons(): [Button, Button] {
-  return [okButton(), cancelButton()];
+export function okCancelButtons(i18n?: I18n): [Button, Button] {
+  const service = i18n ?? createEnglishUiI18n();
+  return [okButton(service), cancelButton(service)];
 }
 
 /**
  * The Yes + No pair, in tab/z order (Yes first).
  *
+ * @param i18n Translation service shared by both buttons; defaults to isolated English UI text.
  * @returns A `[yesButton, noButton]` tuple ready to lay out and add.
  * @example
  * import { Dialog, yesNoButtons, at } from '@jsvision/ui';
@@ -104,6 +127,7 @@ export function okCancelButtons(): [Button, Button] {
  * dialog.add(yes);
  * dialog.add(no);
  */
-export function yesNoButtons(): [Button, Button] {
-  return [yesButton(), noButton()];
+export function yesNoButtons(i18n?: I18n): [Button, Button] {
+  const service = i18n ?? createEnglishUiI18n();
+  return [yesButton(service), noButton(service)];
 }

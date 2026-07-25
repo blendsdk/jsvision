@@ -14,14 +14,16 @@
  * width — placing it with no explicit size and no `measure()` would collapse it to `{0,0}`. It
  * supplies `measure()`, so laying it out in an `auto` slot just works.
  */
+import type { Style } from '@jsvision/core';
+import type { I18n } from '@jsvision/i18n';
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent } from '../view/index.js';
 import type { Size2D } from '../layout/index.js';
 import type { Signal } from '../reactive/index.js';
-import type { Style } from '@jsvision/core';
 import { parseTilde, tildeSegments, accentStyle } from '../menu/index.js';
 import type { ParsedLabel } from '../menu/index.js';
 import { stringWidth } from './measure.js';
+import { createEnglishUiI18n } from '../i18n/catalog.js';
 
 /** The knob glyph (`●`) marking the switch state; falls back to `o` without Unicode. */
 const KNOB = '●';
@@ -34,6 +36,8 @@ const TRACK_WIDTH = TRACK_INNER + 2;
 
 /** Construction options for a {@link Switch}. */
 export interface SwitchOptions {
+  /** Explicit translation service for default state words. */
+  readonly i18n?: I18n;
   /** Two-way bound on/off state: reading renders the knob; an external write repaints. */
   value: Signal<boolean>;
   /** Optional caption drawn left of the track; `~X~` marks an `Alt`+hotkey. */
@@ -83,15 +87,16 @@ export class Switch extends View {
   protected readonly offLabel: string;
 
   /**
-   * @param opts The two-way `value` plus an optional `label`/`onLabel`/`offLabel`/`disabled`.
+   * @param opts The two-way `value` plus optional translation service, labels, and disabled state.
    */
   constructor(opts: SwitchOptions) {
     super();
+    const i18n = opts.i18n ?? createEnglishUiI18n();
     this.value = opts.value;
     this.raw = opts.label ?? '';
     this.parsed = parseTilde(this.raw);
-    this.onLabel = opts.onLabel ?? 'On';
-    this.offLabel = opts.offLabel ?? 'Off';
+    this.onLabel = opts.onLabel ?? i18n.t('ui.switch.on', { defaultMessage: 'On' });
+    this.offLabel = opts.offLabel ?? i18n.t('ui.switch.off', { defaultMessage: 'Off' });
     this.state.disabled = opts.disabled ?? false; // also gates focusability via the focus manager
     // Repaint when the value changes externally (View.draw is not auto-tracked).
     this.onMount(() =>

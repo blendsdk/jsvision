@@ -300,3 +300,66 @@ Every entry below uses:
 - **Reopen triggers:** Node exposes portable directory-relative no-follow traversal, supported
   platforms lack meaningful stable file identity, or real application catalogs approach an
   aggregate ceiling.
+
+**AR-49 — UI key and explicit-service seam (runtime)**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Reversible public parameter naming, catalog-key taxonomy, and test-fixture
+  mechanism within the approved injection, ownership, precedence, and compatibility behavior.
+- **Objective:** Give immutable Phase 3 specification tests a concrete contract without pulling
+  Phase 4 locale exports forward or creating conflicting service sources.
+- **Decision:** Standard button factories and their pair factories accept one direct optional
+  `I18n`; existing widget option objects add `readonly i18n?: I18n`; modal and editor helpers use
+  their required `host.i18n`. UI catalog keys use semantic `ui.action.*`, `ui.dialog.*`,
+  `ui.calendar.*`, `ui.switch.*`, and `ui.editor.*` names fixed in the framework-integration
+  specification, with lowercase dotted/kebab segments required by the engine grammar. Phase 3
+  precedence tests define minimal Dutch/English catalogs in their fixture; those catalogs are test
+  data, not official package exports.
+- **Evidence:** Existing standard buttons are zero-argument factories, widgets already use options
+  objects, and modal/editor helpers already share a narrow host. A direct optional button parameter
+  preserves every existing call while letting internal hosted callers pass one authoritative
+  service. Official locale subpaths are explicitly sequenced in Phase 4.
+- **Rejected alternatives:** A new options object for button factories adds ceremony to a
+  single-dependency seam and changes every future call shape; global service state violates the
+  accepted application ownership model; adding a second modal-helper service permits disagreement
+  with the host; exporting partial Dutch catalogs in Phase 3 crosses the accepted phase boundary.
+- **Strongest counterargument:** A direct optional parameter leaves less room for future
+  button-factory options; an options overload can be added compatibly if another independent
+  concern appears.
+- **Confidence:** High.
+- **Hardening:** The independent specification author found the missing contract and stopped
+  before encoding an implementation guess. Grounding against the current factories, widget
+  options, and modal host converged on one authoritative service per call. The first collection
+  run then rejected camelCase editor segments under the existing engine grammar; the contract was
+  corrected to kebab-case before any component implementation.
+- **Policy version:** 1.
+- **Root invocation ID:** `i18n-20260725-01`.
+- **Reopen triggers:** Standard button factories need another independent option, the engine's key
+  grammar or UI key deprecation policy changes, or Phase 4 locale exports must ship before UI
+  integration.
+
+**AR-50 — Direct-dependency sequencing (runtime)**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Implementation sequencing within the already-approved direct-dependency
+  boundary and unchanged package scope.
+- **Objective:** Let the Phase 3 package-graph oracle pass before consumer localization work begins.
+- **Decision:** Phase 3 task 3.2.1 adds `@jsvision/i18n` to UI, Forms, Files, and Datagrid manifests
+  and updates the root lockfile. It still implements Application injection only in UI. Phase 4
+  consumer tasks add catalogs and behavior but no longer introduce dependency metadata.
+- **Evidence:** The accepted ST-32 oracle checks all four direct dependencies, while the execution
+  plan requires the complete Phase 3 spec suite to pass before Phase 4. Delaying three manifests
+  makes those two gates mutually exclusive.
+- **Rejected alternatives:** Weakening ST-32 to UI-only contradicts the accepted requirement;
+  leaving Phase 3 intentionally red violates specification-first phase completion; moving consumer
+  implementation into Phase 3 destroys the accepted integration sequencing.
+- **Strongest counterargument:** Three packages temporarily declare a dependency before importing
+  it; the interval is one verified phase and keeps dependency ownership explicit without exposing
+  incomplete localized behavior.
+- **Confidence:** High.
+- **Hardening:** Forced reframing found no product or API change; moving metadata is the only
+  sequence that satisfies both existing gates without broadening implementation.
+- **Policy version:** 1.
+- **Root invocation ID:** `i18n-20260725-01`.
+- **Reopen triggers:** ST-32 is reassigned to a later phase or package-manager policy rejects a
+  temporarily unused direct dependency.

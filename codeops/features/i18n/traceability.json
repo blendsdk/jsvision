@@ -491,7 +491,7 @@
         {
           "gate": "plan",
           "relation": "specified-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/SPEC-03",
           "validatedAt": "2026-07-25T05:28:48.346Z"
         },
@@ -519,7 +519,7 @@
         {
           "gate": "execution",
           "relation": "specified-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/SPEC-03",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         }
@@ -814,7 +814,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-47",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -839,7 +839,7 @@
         "hardening:independent correctness security and performance reviewers converged"
       ],
       "id": "AR-48",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -852,6 +852,56 @@
       ],
       "status": "resolved",
       "title": "Race containment and aggregate source bounds",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01",
+        "hardening:independent specification author exposed the missing contract before test implementation"
+      ],
+      "id": "AR-49",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "UI key and explicit-service seam",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01",
+        "hardening:forced reframing found metadata sequencing as the sole compatible phase order"
+      ],
+      "id": "AR-50",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Direct-dependency sequencing",
       "type": "ambiguity",
       "validations": []
     },
@@ -1395,7 +1445,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-30",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1419,7 +1469,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-31",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1443,7 +1493,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-32",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1467,7 +1517,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-33",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1491,7 +1541,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-34",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1515,7 +1565,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-35",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1539,7 +1589,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-36",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1563,7 +1613,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-37",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1587,7 +1637,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-38",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1611,7 +1661,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-39",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1635,7 +1685,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-40",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1659,7 +1709,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-41",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1683,7 +1733,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-42",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1707,7 +1757,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-43",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1731,7 +1781,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-44",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1755,7 +1805,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-45",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -2384,13 +2434,17 @@
         {
           "relation": "affected-by",
           "target": "i18n/AR-36"
+        },
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-49"
         }
       ],
       "evidence": [
         "summary:Component specification passed the zero-ambiguity and specification quality review"
       ],
       "id": "SPEC-03",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -2408,84 +2462,84 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-1-1",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-1-2",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-1-3",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-1",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-2",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-3",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-4",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-5",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-6",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-7",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-3-1",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-3-2",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
@@ -2905,7 +2959,7 @@
         "redEvidence:Vitest could not resolve the intentionally absent packages/i18n/src/index.js public entry"
       ],
       "id": "TEST-01",
-      "revision": "sha256:c3adb9505c34cfde79b035e94cdc24140782570fbe27003d8f65e224c2701bda",
+      "revision": "sha256:71dcecd855c2f41acdd703f463e204767a41b1c91ce3f7297177d1864aab89dc",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -2924,7 +2978,7 @@
     {
       "edges": [],
       "id": "TEST-02",
-      "revision": "sha256:c3adb9505c34cfde79b035e94cdc24140782570fbe27003d8f65e224c2701bda",
+      "revision": "sha256:71dcecd855c2f41acdd703f463e204767a41b1c91ce3f7297177d1864aab89dc",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -2941,9 +2995,14 @@
       "validations": []
     },
     {
-      "edges": [],
+      "edges": [
+        {
+          "relation": "affected-by",
+          "target": "i18n/AR-49"
+        }
+      ],
       "id": "TEST-03",
-      "revision": "sha256:c3adb9505c34cfde79b035e94cdc24140782570fbe27003d8f65e224c2701bda",
+      "revision": "sha256:71dcecd855c2f41acdd703f463e204767a41b1c91ce3f7297177d1864aab89dc",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -2962,7 +3021,7 @@
     {
       "edges": [],
       "id": "TEST-04",
-      "revision": "sha256:c3adb9505c34cfde79b035e94cdc24140782570fbe27003d8f65e224c2701bda",
+      "revision": "sha256:71dcecd855c2f41acdd703f463e204767a41b1c91ce3f7297177d1864aab89dc",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3579,8 +3638,11 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:UI integration specification formatting passed and the focused suite was observed red only because the planned direct @jsvision/i18n dependency is absent"
+      ],
       "id": "TASK-3-1-1",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3591,15 +3653,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "[spec-author] Add application identity, compatibility, dependency, and host tests for ST-30\u2013ST-34",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Localized UI behavior specifications passed formatting and static inspection and the focused suite remained red only on the planned missing direct @jsvision/i18n dependency"
+      ],
       "id": "TASK-3-1-2",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3610,15 +3675,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "[spec-author] Add calendar, DatePicker, switch, dialog, message, and editor tests for ST-35\u2013ST-38",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:The complete Phase 3 UI i18n oracle was observed red at collection on the planned missing direct @jsvision/i18n dependency"
+      ],
       "id": "TASK-3-1-3",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3629,15 +3697,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Run the Phase 3 spec suite and record expected missing-injection/catalog failures",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:UI source build and formatting passed; exact Application identity, four-package dependency graph, Core exclusion, and browser-safe UI re-export specifications passed"
+      ],
       "id": "TASK-3-2-1",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3648,15 +3719,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Add UI's direct i18n dependency and inject the exact/default service through Application",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:UI source build passed and English default isolation, localized standard buttons, catalog layer precedence, accelerator scopes, and placeholder manifests were verified"
+      ],
       "id": "TASK-3-2-2",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3667,15 +3741,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Define UI English catalog keys, accelerator scopes, and service-aware standard buttons",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:UI source build and real Calendar/DatePicker specifications passed for localized names, explicit and locale week starts, no-config compatibility, and ISO field bytes"
+      ],
       "id": "TASK-3-2-3",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3686,15 +3763,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Localize calendar headings/Today and explicit-locale week conventions without changing ISO values",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:UI source build, localized Switch specification, and fifteen existing Switch behavior/implementation tests passed including explicit empty-label suppression"
+      ],
       "id": "TASK-3-2-4",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3705,15 +3785,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Localize default switch labels while preserving explicit labels",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:UI source build, twelve existing dialog/message tests, hosted localization, caller text preservation, and translated accelerator activation passed"
+      ],
       "id": "TASK-3-2-5",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3724,15 +3807,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Thread i18n through modal hosts and localize message-box defaults",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:UI typecheck and ten targeted real editor-dialog tests passed for localized controls, wired package messages, safe filename interpolation, and caller search values"
+      ],
       "id": "TASK-3-2-6",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3743,15 +3829,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Localize package-owned editor dialog text and preserve caller text",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:All twelve Phase 3 UI i18n specification tests passed"
+      ],
       "id": "TASK-3-2-7",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3762,15 +3851,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Run Phase 3 spec tests green; fix UI implementation only",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Literal scanner ESLint, formatting, JSON parsing, diff check, and manifest comparison passed with 27 candidates classified into 24 stable localized identities"
+      ],
       "id": "TASK-3-3-1",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3781,15 +3873,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Add the checked UI literal-ownership manifest and conservative scanner",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:UI suite passed 1,882 tests; plugin integrity passed; root yarn verify passed 5,118 tests including lint, literal inventory, builds, typechecks, tests, documentation, and plugin checks"
+      ],
       "id": "TASK-3-3-2",
-      "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+      "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3800,7 +3895,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Verify Phase 3 with UI gates, compatibility snapshots, literal scan, and root `yarn verify`",
       "type": "task",
       "validations": []
@@ -4920,84 +5015,84 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-1-1",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-1-2",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-1-3",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-1",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-2",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-3",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-4",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-5",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-6",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-2-7",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-3-1",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "revision": "sha256:e061e726249d1c0f4945d415fdeb496f5ec71ecea19c0131fb7fb4d93ff7e504",
           "upstream": "i18n/TASK-3-3-2",
           "validatedAt": "2026-07-25T05:34:22.818Z"
         },
@@ -5207,7 +5302,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-46",
-      "revision": "sha256:fe9bbca0a445febe3a261669b5c2593eaca296e60be1043c96b2025b3450f55f",
+      "revision": "sha256:378f79afea16171c1da8911b56a4ff68e70805b485435deff19a06392c7a8d3c",
       "semanticSources": [
         {
           "digest": "sha256",

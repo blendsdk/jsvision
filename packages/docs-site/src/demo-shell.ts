@@ -335,7 +335,10 @@ function wireCommands(app: Application, opts: DemoShellOptions): void {
   app.onCommand(CMD_ABOUT, () => {
     // The About box is hosted as a desktop window; a router-bodied app (no desktop) simply skips it.
     if (app.desktop === undefined) return;
-    void messageBox({ loop: app.loop, desktop: app.desktop }, { title: `About ${SITE_META.name}`, text: aboutText() });
+    void messageBox(
+      { i18n: app.i18n, loop: app.loop, desktop: app.desktop },
+      { title: `About ${SITE_META.name}`, text: aboutText() },
+    );
   });
   PRESETS.forEach((preset, i) => {
     app.onCommand(themeCmd(i), () => app.setTheme(preset.theme));

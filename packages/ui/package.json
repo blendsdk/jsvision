@@ -52,7 +52,8 @@
     "check:docs": "node ../../scripts/check-jsdoc.mjs ."
   },
   "dependencies": {
-    "@jsvision/core": "1.1.0"
+    "@jsvision/core": "1.1.0",
+    "@jsvision/i18n": "1.1.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

@@ -45,6 +45,7 @@ Options for a Calendar.
 
 ```ts
 interface CalendarOptions {
+  i18n?: I18n;   // Explicit translation service. Omit it to preserve historical English and Sunday-first behavior.
   value: Signal<CalendarDate | null>;   // Two-way selected day (`null` = no selection).
   today?: CalendarDate;   // The day to highlight as "today" (default: the system clock at construction; pass it for tests).
   min?: CalendarDate;   // Inclusive navigation lower bound (the cursor never leaves `[min,max]`).
@@ -136,6 +137,7 @@ Options for a DatePicker.
 
 ```ts
 interface DatePickerOptions {
+  i18n?: I18n;   // Explicit translation service forwarded to the popup calendar.
   value: Signal<CalendarDate | null>;   // Two-way selected day (`null` = none).
   format?: DateFormat;   // Field format (default ISO `YYYY-MM-DD`).
   today?: CalendarDate;   // The "today" day, forwarded to the dropdown `Calendar`.

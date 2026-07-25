@@ -22,6 +22,7 @@
  *
  * Use {@link Calendar.measure} to size the widget to the chosen density.
  */
+import type { I18n } from '@jsvision/i18n';
 import { View } from '../view/index.js';
 import type { DrawContext, DispatchEvent, ThemeRoleName } from '../view/index.js';
 import type { Size2D } from '../layout/index.js';
@@ -33,9 +34,27 @@ import { buildMonthGrid } from './calendar-grid.js';
 import type { MonthGrid } from './calendar-grid.js';
 import { metricsFor, dayFieldX, weekdayLabelX, weekRowY, weekdayLabels, headerLine } from './calendar-metrics.js';
 import type { CalendarDensity, CalendarMetrics } from './calendar-metrics.js';
+import { createEnglishUiI18n } from '../i18n/catalog.js';
 
-/** Month names indexed 1-12 (index 0 unused). */
-const MONTH_NAMES = [
+/** Stable month key suffixes indexed 1-12 (index 0 unused). */
+const MONTH_KEYS = [
+  '',
+  'january',
+  'february',
+  'march',
+  'april',
+  'may',
+  'june',
+  'july',
+  'august',
+  'september',
+  'october',
+  'november',
+  'december',
+] as const;
+
+/** Historical English month names indexed 1-12 (index 0 unused). */
+const UI_MONTH_NAMES = [
   '',
   'January',
   'February',
@@ -51,8 +70,35 @@ const MONTH_NAMES = [
   'December',
 ] as const;
 
+/** Stable weekday key suffixes in Sunday-first order. */
+const WEEKDAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+
+/** Historical English weekday abbreviations in Sunday-first order. */
+const UI_WEEKDAY_SHORT2 = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
+const UI_WEEKDAY_SHORT3 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+
+/** Runtime shape standardized for `Intl.Locale` but absent from some TypeScript library versions. */
+interface LocaleWithWeekInfo {
+  readonly weekInfo: {
+    readonly firstDay: number;
+  };
+}
+
+/** Narrow a platform locale without bypassing type checking. */
+function hasWeekInfo(locale: Intl.Locale): locale is Intl.Locale & LocaleWithWeekInfo {
+  return 'weekInfo' in locale;
+}
+
+/** Resolve the supported Sunday/Monday week convention for one explicit locale. */
+function localeFirstDay(locale: string): 0 | 1 {
+  const resolved = new Intl.Locale(locale);
+  return hasWeekInfo(resolved) && resolved.weekInfo.firstDay === 1 ? 1 : 0;
+}
+
 /** Options for a {@link Calendar}. */
 export interface CalendarOptions {
+  /** Explicit translation service. Omit it to preserve historical English and Sunday-first behavior. */
+  readonly i18n?: I18n;
   /** Two-way selected day (`null` = no selection). */
   value: Signal<CalendarDate | null>;
   /** The day to highlight as "today" (default: the system clock at construction; pass it for tests). */
@@ -114,6 +160,12 @@ export class Calendar extends View {
   protected readonly onChange?: (date: CalendarDate) => void;
   /** Resolved layout geometry for the chosen density + week-number flag (computed once). */
   protected readonly metrics: CalendarMetrics;
+  /** Service used for framework-owned labels. */
+  protected readonly i18n: I18n;
+  /** Localized month names indexed 1-12 (index 0 unused). */
+  protected readonly monthNames: readonly string[];
+  /** Localized weekday labels in Sunday-first order at both supported widths. */
+  protected readonly weekdayNames: { readonly short2: readonly string[]; readonly short3: readonly string[] };
 
   /** The shown month (reactive — month nav repaints). */
   protected readonly visibleYear: Signal<number>;
@@ -122,20 +174,41 @@ export class Calendar extends View {
   protected readonly cursor: Signal<CalendarDate>;
 
   /**
-   * @param opts The two-way `value` plus optional `today`/`min`/`max`/`isDisabled`/`firstDayOfWeek`/
-   *   `showWeekNumbers`/`density`/`onChange`.
+   * @param opts The two-way `value` plus optional translation, date bounds, week layout, density,
+   *   disabled-day predicate, and change callback.
    */
   constructor(opts: CalendarOptions) {
     super();
+    this.i18n = opts.i18n ?? createEnglishUiI18n();
     this.value = opts.value;
     this.todayDate = opts.today ?? fromDate(new Date());
     this.min = opts.min;
     this.max = opts.max;
     this.isDisabled = opts.isDisabled;
-    this.firstDayOfWeek = opts.firstDayOfWeek ?? 0;
+    this.firstDayOfWeek = opts.firstDayOfWeek ?? (opts.i18n === undefined ? 0 : localeFirstDay(this.i18n.locale));
     this.showWeekNumbers = opts.showWeekNumbers ?? false;
     this.onChange = opts.onChange;
-    this.metrics = metricsFor(opts.density ?? 'comfortable', this.showWeekNumbers);
+    const todayLabel = this.i18n.t('ui.calendar.today', { defaultMessage: 'Today' });
+    this.metrics = metricsFor(opts.density ?? 'comfortable', this.showWeekNumbers, todayLabel);
+    this.monthNames = MONTH_KEYS.map((month, index) =>
+      index === 0
+        ? ''
+        : this.i18n.t(`ui.calendar.month.${month}`, {
+            defaultMessage: UI_MONTH_NAMES[index],
+          }),
+    );
+    this.weekdayNames = {
+      short2: WEEKDAY_KEYS.map((day, index) =>
+        this.i18n.t(`ui.calendar.weekday.${day}.short2`, {
+          defaultMessage: UI_WEEKDAY_SHORT2[index],
+        }),
+      ),
+      short3: WEEKDAY_KEYS.map((day, index) =>
+        this.i18n.t(`ui.calendar.weekday.${day}.short3`, {
+          defaultMessage: UI_WEEKDAY_SHORT3[index],
+        }),
+      ),
+    };
 
     const initial = this.clampBounds(this.value() ?? this.todayDate);
     this.visibleYear = signal(initial.year);
@@ -280,10 +353,11 @@ export class Calendar extends View {
     ctx.fill(' ', normal); // the whole grid background is the normal (cyan) fill
 
     // Row 0 — the header: month ↑↓ at the left, the centred month/year, year ↑↓ at the right.
-    ctx.text(m.wkw, 0, headerLine(m, MONTH_NAMES[this.visibleMonth()], this.visibleYear()), normal);
+    const monthName = this.monthNames[this.visibleMonth()];
+    ctx.text(m.wkw, 0, headerLine(m, monthName, this.visibleYear()), normal);
 
     // The weekday-label row, rotated by firstDayOfWeek, at this density's cell width.
-    const labels = weekdayLabels(m, this.firstDayOfWeek);
+    const labels = weekdayLabels(m, this.firstDayOfWeek, this.weekdayNames);
     for (let j = 0; j < 7; j += 1) ctx.text(weekdayLabelX(m, j), m.weekdayY, labels[j], normal);
 
     // The 6×7 day matrix; each in-month day is 2-digit right-justified at its day column.
