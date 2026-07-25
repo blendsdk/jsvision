@@ -139,6 +139,20 @@
           "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
           "upstream": "i18n/SPEC-01",
           "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/CRIT-01",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/SPEC-01",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
         }
       ]
     },
@@ -286,6 +300,27 @@
           "revision": "sha256:511707ea482ce682bcafc5d8fbf32ca61a0a9585329777aa7a013a10486bbb02",
           "upstream": "i18n/SPEC-02",
           "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+          "upstream": "i18n/CRIT-02",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/RD-01",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:511707ea482ce682bcafc5d8fbf32ca61a0a9585329777aa7a013a10486bbb02",
+          "upstream": "i18n/SPEC-02",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
         }
       ]
     },
@@ -459,6 +494,34 @@
           "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
           "upstream": "i18n/SPEC-03",
           "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:744a42b8bab578e739121db3e839973aec028ee167a27e031e1a90ed721fbf95",
+          "upstream": "i18n/CRIT-03",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/RD-01",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+          "upstream": "i18n/RD-02",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/SPEC-03",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
         }
       ]
     },
@@ -662,6 +725,41 @@
           "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
           "upstream": "i18n/SPEC-04",
           "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "accepted-by",
+          "revision": "sha256:0bbc439f7e426537dbe48a60d2d0ccad626f17ba00306ea329ca78a2dc47a611",
+          "upstream": "i18n/CRIT-04",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/RD-01",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+          "upstream": "i18n/RD-02",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:744a42b8bab578e739121db3e839973aec028ee167a27e031e1a90ed721fbf95",
+          "upstream": "i18n/RD-03",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "specified-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/SPEC-04",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
         }
       ]
     },
@@ -1753,7 +1851,190 @@
       "status": "approved",
       "title": "Engine and catalog specification",
       "type": "specification",
-      "validations": []
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-1-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-7",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-8",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-9",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-3-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-1-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        }
+      ]
     },
     {
       "edges": [
@@ -1824,7 +2105,85 @@
       "status": "approved",
       "title": "Sources and security specification",
       "type": "specification",
-      "validations": []
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-1-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        }
+      ]
     },
     {
       "edges": [
@@ -1959,7 +2318,197 @@
       "status": "approved",
       "title": "Framework integration specification",
       "type": "specification",
-      "validations": []
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-1-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-7",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-1-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-7",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-8",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-9",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-10",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        }
+      ]
     },
     {
       "edges": [
@@ -2086,7 +2635,183 @@
       "status": "approved",
       "title": "Locales documentation and plugin specification",
       "type": "specification",
-      "validations": []
+      "validations": [
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-1-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-7",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-8",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-9",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-10",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        }
+      ]
     },
     {
       "edges": [],
@@ -2179,7 +2904,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add public construction, lookup, fallback, and interpolation tests for ST-01\u2013ST-08",
+      "title": "[spec-author] Add public construction, lookup, fallback, and interpolation tests for ST-01–ST-08",
       "type": "task",
       "validations": []
     },
@@ -2198,7 +2923,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add plural, select, formatter, overlay, diagnostics, and warm-path tests for ST-09\u2013ST-16",
+      "title": "[spec-author] Add plural, select, formatter, overlay, diagnostics, and warm-path tests for ST-09–ST-16",
       "type": "task",
       "validations": []
     },
@@ -2464,7 +3189,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add ordered, optional/required, abort, and caller-owned transport tests for ST-17\u2013ST-20",
+      "title": "[spec-author] Add ordered, optional/required, abort, and caller-owned transport tests for ST-17–ST-20",
       "type": "task",
       "validations": []
     },
@@ -2483,7 +3208,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add rooted-path, strict JSON, UTF-8, limit, race, and completeness tests for ST-21\u2013ST-29",
+      "title": "[spec-author] Add rooted-path, strict JSON, UTF-8, limit, race, and completeness tests for ST-21–ST-29",
       "type": "task",
       "validations": []
     },
@@ -2673,7 +3398,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add application identity, compatibility, dependency, and host tests for ST-30\u2013ST-34",
+      "title": "[spec-author] Add application identity, compatibility, dependency, and host tests for ST-30–ST-34",
       "type": "task",
       "validations": []
     },
@@ -2692,7 +3417,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add calendar, DatePicker, switch, dialog, message, and editor tests for ST-35\u2013ST-38",
+      "title": "[spec-author] Add calendar, DatePicker, switch, dialog, message, and editor tests for ST-35–ST-38",
       "type": "task",
       "validations": []
     },
@@ -2901,7 +3626,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add Forms, Files, and Datagrid behavior tests for ST-39\u2013ST-42",
+      "title": "[spec-author] Add Forms, Files, and Datagrid behavior tests for ST-39–ST-42",
       "type": "task",
       "validations": []
     },
@@ -2920,7 +3645,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add ten-locale layout and 40-subpath catalog/package tests for ST-43\u2013ST-48",
+      "title": "[spec-author] Add ten-locale layout and 40-subpath catalog/package tests for ST-43–ST-48",
       "type": "task",
       "validations": []
     },
@@ -3186,7 +3911,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add review-evidence, docs/API, plugin recipe, and benchmark tests for ST-49\u2013ST-55",
+      "title": "[spec-author] Add review-evidence, docs/API, plugin recipe, and benchmark tests for ST-49–ST-55",
       "type": "task",
       "validations": []
     },
@@ -3771,10 +4496,479 @@
           "revision": "sha256:0bbc439f7e426537dbe48a60d2d0ccad626f17ba00306ea329ca78a2dc47a611",
           "upstream": "i18n/RD-04",
           "validatedAt": "2026-07-25T05:28:48.346Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:9a762a8be991ef5bbf4156f9fc62c89213573b93fe7d58b3e38875e458ab4014",
+          "upstream": "i18n/RD-01",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:822853e0db39fb9f77a03edddf50b7ecb1763a4cad20a50078237aa57613299d",
+          "upstream": "i18n/RD-02",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:744a42b8bab578e739121db3e839973aec028ee167a27e031e1a90ed721fbf95",
+          "upstream": "i18n/RD-03",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "depends-on",
+          "revision": "sha256:0bbc439f7e426537dbe48a60d2d0ccad626f17ba00306ea329ca78a2dc47a611",
+          "upstream": "i18n/RD-04",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-1-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-7",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-8",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-2-9",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-1-3-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-1-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
+          "upstream": "i18n/TASK-2-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-1-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-2-7",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:b9a39436085a002b2258cc2c972b84f467624ed17527b336bdee10c07940a207",
+          "upstream": "i18n/TASK-3-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-1-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-7",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-8",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-9",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-2-10",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-4-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-1-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-1-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-3",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-4",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-5",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-2-6",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-3-1",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
+        },
+        {
+          "gate": "execution",
+          "relation": "implemented-by",
+          "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
+          "upstream": "i18n/TASK-5-3-2",
+          "validatedAt": "2026-07-25T05:34:22.818Z"
         }
       ]
     }
   ],
   "schema": 2,
-  "updated": "2026-07-25T05:28:48.346Z"
+  "updated": "2026-07-25T05:34:46.468Z"
 }
