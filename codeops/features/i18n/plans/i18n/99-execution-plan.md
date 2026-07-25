@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-25 02:20
-> **Progress**: 0/63 tasks (0%)
+> **Last Updated**: 2026-07-25 07:47
+> **Progress**: 1/63 tasks (2%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -37,13 +37,13 @@ plugin generation, performance, and digest-bound translation review.
 
 ## Phase 1: Browser-safe engine
 
-> **Phase baseline tree**: _(recorded at execution)_
+> **Phase baseline tree**: 540e03aa0d50b6c851f69946ec748214bbac85c3
 
 ### Step 1.1: Specification tests
 
 **Reference**: [03-01](03-01-engine-and-catalog.md) · AR-31, AR-33, AR-34, AR-40
 
-- [ ] 1.1.1 [spec-author] Add public construction, lookup, fallback, and interpolation tests for ST-01–ST-08 — `packages/i18n/test/engine.spec.test.ts`, `packages/i18n/test/fixtures/catalogs.ts`
+- [x] 1.1.1 [spec-author] Add public construction, lookup, fallback, and interpolation tests for ST-01–ST-08 — `packages/i18n/test/engine.spec.test.ts`, `packages/i18n/test/fixtures/catalogs.ts` ✅ (completed: 2026-07-25 07:47)
 - [ ] 1.1.2 [spec-author] Add plural, select, formatter, overlay, diagnostics, and warm-path tests for ST-09–ST-16 — `packages/i18n/test/engine.spec.test.ts`, `packages/i18n/test/fixtures/catalogs.ts`
 - [ ] 1.1.3 Run the Phase 1 spec suite and record the expected missing-package/API failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
 
