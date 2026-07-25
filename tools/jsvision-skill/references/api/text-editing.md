@@ -158,7 +158,7 @@ type EditorDialogHandler = (req: EditorDialogRequest) => Promise<EditorDialogRes
 
 ## EditorDialogHost
 
-What the dialog builders need from the host to run a modal — the shared `{ loop, desktop }` seam.
+What the dialog builders need from the host to run a localized modal.
 
 ```ts
 type EditorDialogHost = ModalDialogHost

@@ -3,9 +3,10 @@
  *
  * The six TV components + the `FileSystem` seam + the pure cores + the openers are re-exported by name
  * from `src/index.ts` (imported here BY NAME from `@jsvision/files`, the package surface); the package
- * declares only the two workspace runtime deps (`@jsvision/core` + `@jsvision/ui`, no native/third-party
- * dep — the `check:deps` gate enforces the ban); every source file is ≤ 500 lines; and the package is
- * `private` (excluded from the public lockstep `sync-versions`). `.js` per NodeNext.
+ * declares only workspace runtime deps (`@jsvision/core`, `@jsvision/i18n`, and `@jsvision/ui`, with
+ * no native/third-party dependency — the `check:deps` gate enforces the ban); every source file is
+ * ≤ 500 lines; and the package is `private` (excluded from public lockstep `sync-versions`). `.js`
+ * per NodeNext.
  */
 import { test, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -79,7 +80,7 @@ test('ST-16: each source file is ≤ 500 lines', () => {
   }
 });
 
-// ST-16 — only the two workspace runtime deps (no native/third-party); public, published under the lockstep.
+// ST-16 — only workspace runtime deps (no native/third-party); public, published under the lockstep.
 test('ST-16: @jsvision/files declares only the workspace runtime deps and is publishable', () => {
   const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')) as {
     private?: boolean;
@@ -88,7 +89,7 @@ test('ST-16: @jsvision/files declares only the workspace runtime deps and is pub
   };
   expect(pkg.private ?? false).toBe(false); // public — part of the lockstep release
   expect(pkg.publishConfig?.access).toBe('public');
-  expect(Object.keys(pkg.dependencies ?? {}).sort()).toEqual(['@jsvision/core', '@jsvision/ui']);
+  expect(Object.keys(pkg.dependencies ?? {}).sort()).toEqual(['@jsvision/core', '@jsvision/i18n', '@jsvision/ui']);
 });
 
 // --- RD-08 editor-family additions (ST-33, files side) -------------------------------------------

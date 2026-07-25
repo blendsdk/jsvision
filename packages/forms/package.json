@@ -51,6 +51,7 @@
     "check:docs": "node ../../scripts/check-jsdoc.mjs ."
   },
   "dependencies": {
+    "@jsvision/i18n": "1.1.0",
     "@jsvision/ui": "1.1.0"
   },
   "peerDependencies": {

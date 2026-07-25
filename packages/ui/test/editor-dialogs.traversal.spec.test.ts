@@ -33,7 +33,7 @@ const caps = resolveCapabilities({ env: {}, platform: 'linux', override: { color
 
 function makeHost(width = 60, height = 20) {
   const app = createApplication({ caps, viewport: { width, height } });
-  const host: EditorDialogHost = { loop: app.loop, desktop: app.desktop };
+  const host: EditorDialogHost = { loop: app.loop, desktop: app.desktop, i18n: app.i18n };
   return { app, host };
 }
 

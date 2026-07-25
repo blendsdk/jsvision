@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "@jsvision/core": "1.1.0",
+    "@jsvision/i18n": "1.1.0",
     "@jsvision/ui": "1.1.0"
   },
   "devDependencies": {

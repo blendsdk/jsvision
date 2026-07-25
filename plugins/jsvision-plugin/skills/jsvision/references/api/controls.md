@@ -166,6 +166,7 @@ Construction options for a Switch.
 
 ```ts
 interface SwitchOptions {
+  i18n?: I18n;   // Explicit translation service for default state words.
   value: Signal<boolean>;   // Two-way bound on/off state: reading renders the knob; an external write repaints.
   label?: string;   // Optional caption drawn left of the track; `~X~` marks an `Alt`+hotkey.
   onLabel?: string;   // Text shown right of the track when on (default `'On'`); `''` hides it.

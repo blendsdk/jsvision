@@ -7,7 +7,7 @@ import { test, expect, vi } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { Group, Input, createEventLoop, resolveCapabilities, signal, Commands } from '@jsvision/ui';
+import { Group, Input, createEventLoop, createI18n, resolveCapabilities, signal, Commands } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 import { defaultTheme } from '@jsvision/core';
 import { column } from '../src/column.js';
@@ -830,6 +830,7 @@ function makePersHost() {
   loop.mount(root);
   const added: View[] = [];
   const host = {
+    i18n: createI18n(),
     loop,
     desktop: {
       addWindow: (v: View) => {

@@ -26,9 +26,15 @@ UI, Forms, Files, and Datagrid declare direct `@jsvision/i18n` dependencies. Cor
 Event-loop, rendering, reactive, and input primitives do not.
 
 Standalone constructors/helpers accept optional explicit `i18n`; package English catalogs supply
-their defaults. Caller-supplied label/value options always win. Passing only `{ loop, desktop }` to a
-localized helper is no longer sufficient when that helper mints localized package text; the host
-type makes the missing service visible.
+their defaults. The standard button factories use a direct optional service parameter:
+`okButton(i18n?)`, `cancelButton(i18n?)`, `yesButton(i18n?)`, `noButton(i18n?)`,
+`okCancelButtons(i18n?)`, and `yesNoButtons(i18n?)`. Widgets that already use an options object add
+`readonly i18n?: I18n` to that object. Modal and editor helpers use `host.i18n` and do not accept a
+second service that could conflict with their host.
+
+Caller-supplied label/value options always win. Passing only `{ loop, desktop }` to a localized
+helper is no longer sufficient when that helper mints localized package text; the host type makes
+the missing service visible.
 
 ## Catalog ownership
 
@@ -42,6 +48,31 @@ Each package owns a stable key namespace:
 Application catalogs are appended after framework catalogs. Locale fallback is evaluated before
 layer precedence, so an English application override cannot suppress an available Dutch framework
 translation.
+
+Phase 3 fixes these UI keys so specification tests and catalogs do not infer names from the
+implementation:
+
+- `ui.action.ok`, `ui.action.cancel`, `ui.action.yes`, and `ui.action.no`;
+- `ui.dialog.confirm.title`;
+- `ui.calendar.today`, `ui.calendar.month.<january…december>`,
+  `ui.calendar.weekday.<sunday…saturday>.short2`, and
+  `ui.calendar.weekday.<sunday…saturday>.short3`;
+- `ui.switch.on` and `ui.switch.off`;
+- `ui.editor.find.title`, `ui.editor.replace.title`, `ui.editor.find.label`,
+  `ui.editor.replace.label`, `ui.editor.case-sensitive`, `ui.editor.whole-words`,
+  `ui.editor.prompt-on-replace`, `ui.editor.replace-all`, `ui.editor.replace-occurrence`,
+  `ui.editor.search-not-found`, `ui.editor.save-modified`, `ui.editor.save-untitled`,
+  `ui.editor.read-error`, `ui.editor.write-error`, `ui.editor.create-error`, and
+  `ui.editor.out-of-memory`.
+
+Every segment follows the engine's lowercase dotted/kebab key grammar. The English values preserve
+the current bytes, including `~X~` accelerator markers and the existing spelling of package-owned
+messages. Values that include a filename use a named `${name}` placeholder. Official locale entry
+points remain a Phase 4 concern.
+
+Phase 3 catalog-precedence tests define small English and Dutch catalogs in their test fixture
+using the keys above. The Dutch framework fixture represents the later official UI catalog but is
+not a package export and does not make Phase 4 locale entry points part of the Phase 3 API.
 
 ## UI behavior
 

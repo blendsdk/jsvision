@@ -113,9 +113,14 @@ const SHAPES: Record<CalendarDensity, DensityShape> = {
  *
  * @param density         The chosen density.
  * @param showWeekNumbers Whether a leading 3-cell ISO week-number column is present.
+ * @param todayLabel      The localized word used for the footer button.
  * @returns The resolved geometry.
  */
-export function metricsFor(density: CalendarDensity, showWeekNumbers: boolean): CalendarMetrics {
+export function metricsFor(
+  density: CalendarDensity,
+  showWeekNumbers: boolean,
+  todayLabel: string = TODAY_LABEL,
+): CalendarMetrics {
   const s = SHAPES[density];
   const wkw = showWeekNumbers ? 3 : 0;
   // Rightmost day field = 6*cellWidth + dayInset + 1 (the 2-digit occupies dayInset..dayInset+1); +1 → width.
@@ -133,7 +138,7 @@ export function metricsFor(density: CalendarDensity, showWeekNumbers: boolean): 
     const textY = dividerY + 1;
     // The button width auto-derives from its (translatable) word + padding, so it right-aligns correctly
     // whatever the word — a single source of truth shared by the draw (via `todayFace`) and the hit-zone.
-    const todayFace = todayButtonFace();
+    const todayFace = todayButtonFace(todayLabel);
     footer = {
       dividerY,
       textY,
@@ -180,9 +185,27 @@ export function weekRowY(m: CalendarMetrics, i: number): number {
   return m.firstWeekY + i * m.weekStride;
 }
 
-/** The rotated weekday labels at this density's width. */
-export function weekdayLabels(m: CalendarMetrics, firstDayOfWeek: 0 | 1): string[] {
-  const base = m.weekdayLen === 2 ? WEEKDAY_2 : WEEKDAY_3;
+/**
+ * Returns weekday labels rotated to the configured first day.
+ *
+ * @param m Resolved calendar metrics, which select two- or three-cell labels.
+ * @param firstDayOfWeek Sunday (`0`) or Monday (`1`).
+ * @param labels Optional localized labels in Sunday-first order.
+ * @returns Seven labels in display order.
+ */
+export function weekdayLabels(
+  m: CalendarMetrics,
+  firstDayOfWeek: 0 | 1,
+  labels?: { readonly short2: readonly string[]; readonly short3: readonly string[] },
+): string[] {
+  const base =
+    labels === undefined
+      ? m.weekdayLen === 2
+        ? WEEKDAY_2
+        : WEEKDAY_3
+      : m.weekdayLen === 2
+        ? labels.short2
+        : labels.short3;
   return base.map((_, j) => base[(j + firstDayOfWeek) % 7]);
 }
 

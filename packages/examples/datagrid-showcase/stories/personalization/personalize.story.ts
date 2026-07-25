@@ -7,7 +7,7 @@
  * still renders its launch control + a live layout echo and simply skips the modal open. The `.js`
  * specifier is required by NodeNext ESM resolution.
  */
-import { Group, Text, Button, signal } from '@jsvision/ui';
+import { Group, Text, Button, createI18n, signal } from '@jsvision/ui';
 import type { View } from '@jsvision/ui';
 import { column, EditableDataGrid, fromRows, personalizeGrid, createMemoryVariantStore } from '@jsvision/datagrid';
 import { at } from '../../story.js';
@@ -72,6 +72,7 @@ export const personalizeStory: Story = {
         if (exec === undefined) return; // headless smoke: no modal host — the demo still renders below
         // A host adapter: route loop.execView to the shell's seam (which owns addWindow/removeWindow).
         const host = {
+          i18n: createI18n(),
           loop: {
             execView<R>(view: View): Promise<R> {
               return exec(view) as Promise<R>;

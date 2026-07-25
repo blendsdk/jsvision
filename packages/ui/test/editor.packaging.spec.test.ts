@@ -85,9 +85,9 @@ test('ST-33: each src/editor/ + src/terminal/ source file is ≤ 500 lines', () 
 });
 
 // ST-33 — zero runtime dependencies beyond @jsvision/core (check:deps guards natives repo-wide).
-test('ST-33: the ui package declares only @jsvision/core as a runtime dependency', () => {
+test('ST-33: the ui package declares only Core and i18n runtime dependencies', () => {
   const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')) as {
     dependencies?: Record<string, string>;
   };
-  expect(Object.keys(pkg.dependencies ?? {})).toEqual(['@jsvision/core']);
+  expect(Object.keys(pkg.dependencies ?? {})).toEqual(['@jsvision/core', '@jsvision/i18n']);
 });

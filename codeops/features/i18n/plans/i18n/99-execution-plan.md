@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-25 21:41
-> **Progress**: 29/66 tasks (44%)
+> **Last Updated**: 2026-07-25 23:40
+> **Progress**: 41/66 tasks (62%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -112,34 +112,39 @@ package tests, 34/34 root tasks, and plugin integrity passed. See
 
 ## Phase 3: Application and UI foundations
 
-> **Phase baseline tree**: _(recorded at execution)_
+> **Phase baseline tree**: 86ff4ff35f7b842e7df1d29482aa8f1910cf865b
 
 ### Step 3.1: Specification tests
 
 **Reference**: [03-03](03-03-framework-integration.md) · AR-36–AR-40
 
-- [ ] 3.1.1 [spec-author] Add application identity, compatibility, dependency, and host tests for ST-30–ST-34 — `packages/ui/test/i18n.spec.test.ts`, `packages/ui/test/fixtures/i18n.ts`
-- [ ] 3.1.2 [spec-author] Add calendar, DatePicker, switch, dialog, message, and editor tests for ST-35–ST-38 — `packages/ui/test/i18n.spec.test.ts`, `packages/ui/test/fixtures/i18n.ts`
-- [ ] 3.1.3 Run the Phase 3 spec suite and record expected missing-injection/catalog failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
+- [x] 3.1.1 [spec-author] Add application identity, compatibility, dependency, and host tests for ST-30–ST-34 — `packages/ui/test/i18n.spec.test.ts`, `packages/ui/test/fixtures/i18n.ts` — expected red confirmed on missing UI direct dependency ✅ (completed: 2026-07-25 22:31)
+- [x] 3.1.2 [spec-author] Add calendar, DatePicker, switch, dialog, message, and editor tests for ST-35–ST-38 — `packages/ui/test/i18n.spec.test.ts`, `packages/ui/test/fixtures/i18n.ts` — expected red confirmed on missing UI direct dependency ✅ (completed: 2026-07-25 22:39)
+- [x] 3.1.3 Run the Phase 3 spec suite and record expected missing-injection/catalog failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md` — red confirmed: missing direct UI dependency ✅ (completed: 2026-07-25 22:39)
 
 ### Step 3.2: Implementation
 
 **Reference**: [03-03](03-03-framework-integration.md) · AR-36, AR-38
 
-- [ ] 3.2.1 Add UI's direct i18n dependency and inject the exact/default service through Application — `packages/ui/package.json`, `packages/ui/src/app/application.ts`, `packages/ui/src/index.ts`
-- [ ] 3.2.2 Define UI English catalog keys, accelerator scopes, and service-aware standard buttons — `packages/ui/src/i18n/catalog.ts`, `packages/ui/src/i18n/scopes.ts`, `packages/ui/src/dialog/buttons.ts`
-- [ ] 3.2.3 Localize calendar headings/Today and explicit-locale week conventions without changing ISO values — `packages/ui/src/date/calendar.ts`, `packages/ui/src/date/calendar-grid.ts`, `packages/ui/src/date/calendar-metrics.ts`
-- [ ] 3.2.4 Localize default switch labels while preserving explicit labels — `packages/ui/src/controls/switch.ts`, `packages/ui/test/switch.impl.test.ts`
-- [ ] 3.2.5 Thread i18n through modal hosts and localize message-box defaults — `packages/ui/src/dialog/dialog.ts`, `packages/ui/src/dialog/message-box.ts`, `packages/ui/src/dialog/index.ts`
-- [ ] 3.2.6 Localize package-owned editor dialog text and preserve caller text — `packages/ui/src/editor/dialogs.ts`, `packages/ui/src/editor/editor-dialog.ts`, `packages/ui/test/editor-dialogs.impl.test.ts`
-- [ ] 3.2.7 Run Phase 3 spec tests green; fix UI implementation only — `packages/ui/test/i18n.spec.test.ts`
+- [x] 3.2.1 Add all four direct i18n dependencies and inject the exact/default service through Application — `packages/ui/package.json`, `packages/forms/package.json`, `packages/files/package.json`, `packages/datagrid/package.json`, `packages/ui/src/app/application.ts`, `packages/ui/src/index.ts`, `yarn.lock` — source build and dependency/Application/export specifications green ✅ (completed: 2026-07-25 22:43)
+- [x] 3.2.2 Define UI English catalog keys, accelerator scopes, and service-aware standard buttons — `packages/ui/src/i18n/catalog.ts`, `packages/ui/src/i18n/scopes.ts`, `packages/ui/src/dialog/buttons.ts` — English catalog, validation manifests, source build, and focused specifications green ✅ (completed: 2026-07-25 22:47)
+- [x] 3.2.3 Localize calendar headings/Today and explicit-locale week conventions without changing ISO values — `packages/ui/src/date/calendar.ts`, `packages/ui/src/date/calendar-grid.ts`, `packages/ui/src/date/calendar-metrics.ts` — source build and real Calendar/DatePicker specifications green ✅ (completed: 2026-07-25 22:51)
+- [x] 3.2.4 Localize default switch labels while preserving explicit labels — `packages/ui/src/controls/switch.ts`, `packages/ui/test/switch.impl.test.ts` — source build, localized spec, and 15 existing Switch tests green ✅ (completed: 2026-07-25 22:52)
+- [x] 3.2.5 Thread i18n through modal hosts and localize message-box defaults — `packages/ui/src/dialog/dialog.ts`, `packages/ui/src/dialog/message-box.ts`, `packages/ui/src/dialog/index.ts` — source build, existing dialogs, hosted localization, and accelerator specs green ✅ (completed: 2026-07-25 22:54)
+- [x] 3.2.6 Localize package-owned editor dialog text and preserve caller text — `packages/ui/src/editor/dialogs.ts`, `packages/ui/src/editor/editor-dialog.ts`, `packages/ui/test/editor-dialogs.impl.test.ts` — UI typecheck and ten targeted editor-dialog tests green ✅ (completed: 2026-07-25 22:59)
+- [x] 3.2.7 Run Phase 3 spec tests green; fix UI implementation only — `packages/ui/test/i18n.spec.test.ts` — 12/12 specification tests green ✅ (completed: 2026-07-25 23:00)
 
 ### Step 3.3: Hardening and verification
 
 **Reference**: [03-03](03-03-framework-integration.md) · AR-37, AR-39, AR-42
 
-- [ ] 3.3.1 Add the checked UI literal-ownership manifest and conservative scanner — `tools/i18n-literals.json`, `scripts/check-i18n-literals.mjs`, `package.json`
-- [ ] 3.3.2 Verify Phase 3 with UI gates, compatibility snapshots, literal scan, and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
+- [x] 3.3.1 Add the checked UI literal-ownership manifest and conservative scanner — `tools/i18n-literals.json`, `scripts/check-i18n-literals.mjs`, `package.json` — scanner, JSON, lint, formatting, and 27-candidate inventory green ✅ (completed: 2026-07-25 23:03)
+- [x] 3.3.2 Verify Phase 3 with UI gates, compatibility snapshots, literal scan, and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md` — 5,118 tests and all repository gates green ✅ (completed: 2026-07-25 23:25)
+
+Phase 3 passed independent correctness, API, security, and performance review after the mutable
+standalone-fallback finding was corrected and re-reviewed once. Final verification passed 5,120
+tests and all repository/plugin gates. See
+[08-phase-3-quality-review](08-phase-3-quality-review.md).
 
 ## Phase 4: Consumer packages and official locales
 
@@ -157,10 +162,10 @@ package tests, 34/34 root tasks, and plugin integrity passed. See
 
 **Reference**: [03-03](03-03-framework-integration.md) · AR-36, AR-38
 
-- [ ] 4.2.1 Add Forms direct dependency/catalog and localize FormDialog defaults — `packages/forms/package.json`, `packages/forms/src/i18n/catalog.ts`, `packages/forms/src/form-dialog.ts`
-- [ ] 4.2.2 Add Files direct dependency/catalog and localize dialog action labels — `packages/files/package.json`, `packages/files/src/i18n/catalog.ts`, `packages/files/src/dialog/file-dialog.ts`
+- [ ] 4.2.1 Add the Forms catalog and localize FormDialog defaults — `packages/forms/src/i18n/catalog.ts`, `packages/forms/src/form-dialog.ts`
+- [ ] 4.2.2 Add the Files catalog and localize dialog action labels — `packages/files/src/i18n/catalog.ts`, `packages/files/src/dialog/file-dialog.ts`
 - [ ] 4.2.3 Localize Files metadata, change-directory, and error dialogs without touching path data — `packages/files/src/list/file-info-pane.ts`, `packages/files/src/dialog/chdir-dialog.ts`, `packages/files/src/dialog/error-dialog.ts`
-- [ ] 4.2.4 Add Datagrid direct dependency/catalog and localize default formatting/empty/filter text — `packages/datagrid/package.json`, `packages/datagrid/src/i18n/catalog.ts`, `packages/datagrid/src/format.ts`
+- [ ] 4.2.4 Add the Datagrid catalog and localize default formatting/empty/filter text — `packages/datagrid/src/i18n/catalog.ts`, `packages/datagrid/src/format.ts`
 - [ ] 4.2.5 Localize Datagrid filter/personalization surfaces and explicit-i18n collation — `packages/datagrid/src/filter-popup.ts`, `packages/datagrid/src/personalize-dialog.ts`, `packages/datagrid/src/filter.ts`
 - [ ] 4.2.6 Add canonical ten-locale catalog data and accelerator-scope manifests for all four packages — `packages/ui/src/i18n/locales.ts`, `packages/forms/src/i18n/locales.ts`, `packages/files/src/i18n/locales.ts`
 - [ ] 4.2.7 Complete Datagrid locale data and implement deterministic locale entry/export generation — `packages/datagrid/src/i18n/locales.ts`, `scripts/update-i18n-locales.mjs`, `tools/i18n-locale-exports.json`

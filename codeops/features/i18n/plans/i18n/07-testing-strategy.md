@@ -66,8 +66,8 @@ are immutable: implementation failures are fixed in implementation, not by chang
 | ST-30 | `createApplication({caps,i18n})` | `app.i18n` is reference-equal to supplied service | RD-03 FR-1 |
 | ST-31 | `createApplication({caps})` and existing UI snapshots | Private English service exists and rendered bytes remain identical | RD-03 FR-1/2 |
 | ST-32 | Inspect package graphs | UI/Forms/Files/Datagrid directly depend on i18n; Core does not | RD-03 FR-3 |
-| ST-33 | Construct localized modal host without global state | Hosted helper uses host service; standalone helper uses explicit service/default English | RD-03 FR-4 |
-| ST-34 | UI Dutch catalog plus app Dutch and English overrides | Dutch app override wins same-locale; Dutch framework beats English app override | RD-03 FR-5 |
+| ST-33 | Construct a modal host with `i18n`, and call standard button factories with an explicit service and no argument | Hosted helper uses `host.i18n`; direct optional-service button factories use the explicit service or their private English default without global state | RD-03 FR-4 |
+| ST-34 | Build a service from fixture-owned Dutch framework, Dutch application, and English application catalogs using `ui.action.ok` | Dutch app override wins same-locale; Dutch framework beats English app override; the fixture does not require a Phase 4 locale export | RD-03 FR-5 |
 | ST-35 | Calendar under each explicit locale and no-config | Explicit locale renders localized names/Today; no-config bytes remain English | RD-03 FR-6 |
 | ST-36 | DatePicker explicit week start, locale convention, and no-config | Explicit option wins; convention applies only with explicit i18n; value stays ISO | RD-03 FR-6 |
 | ST-37 | Switch with no label and explicit caller label | Default localizes; explicit label is unchanged | RD-03 FR-7 |
