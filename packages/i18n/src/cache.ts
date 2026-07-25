@@ -5,6 +5,7 @@ const PluralRulesConstructor = Intl.PluralRules;
 const NumberFormatConstructor = Intl.NumberFormat;
 const DateTimeFormatConstructor = Intl.DateTimeFormat;
 const CollatorConstructor = Intl.Collator;
+const EMPTY_OPTIONS: CopiedFormatterOptions = Object.freeze({});
 
 const NUMBER_OPTION_KEYS = new Set<PropertyKey>([
   'compactDisplay',
@@ -81,6 +82,7 @@ class LruCache<Value> {
   get(key: string, create: () => Value): Value {
     const existing = this.entries.get(key);
     if (existing !== undefined) {
+      if (this.entries.size === 1) return existing;
       this.entries.delete(key);
       this.entries.set(key, existing);
       return existing;
@@ -107,7 +109,7 @@ function invalidOptions(cause?: unknown): I18nError {
 
 /** Copy allowlisted own primitive options without invoking accessors or coercion hooks. */
 function copyOptions(input: unknown, allowed: ReadonlySet<PropertyKey>): CopiedFormatterOptions {
-  if (input === undefined) return Object.freeze({});
+  if (input === undefined) return EMPTY_OPTIONS;
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     throw invalidOptions();
   }
@@ -208,6 +210,9 @@ export class FormatterCache {
    * @returns Locale-bound number formatter.
    */
   numberFormat(locale: string, options?: Intl.NumberFormatOptions): Intl.NumberFormat {
+    if (options === undefined) {
+      return this.numbers.get(locale, () => construct(() => new NumberFormatConstructor(locale)));
+    }
     const copied = copyOptions(options, NUMBER_OPTION_KEYS);
     if (
       copied.style === 'currency' &&
@@ -227,6 +232,9 @@ export class FormatterCache {
    * @returns Locale-bound date/time formatter.
    */
   dateTimeFormat(locale: string, options?: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+    if (options === undefined) {
+      return this.dates.get(locale, () => construct(() => new DateTimeFormatConstructor(locale)));
+    }
     const copied = copyOptions(options, DATE_OPTION_KEYS);
     const key = formatterKey(locale, copied);
     return this.dates.get(key, () => construct(() => new DateTimeFormatConstructor(locale, copied)));
@@ -240,6 +248,9 @@ export class FormatterCache {
    * @returns Locale-bound collator.
    */
   collator(locale: string, options?: Intl.CollatorOptions): Intl.Collator {
+    if (options === undefined) {
+      return this.collators.get(locale, () => construct(() => new CollatorConstructor(locale)));
+    }
     const copied = copyOptions(options, COLLATOR_OPTION_KEYS);
     const key = formatterKey(locale, copied);
     return this.collators.get(key, () => construct(() => new CollatorConstructor(locale, copied)));
