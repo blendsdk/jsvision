@@ -2,6 +2,7 @@ import { I18nError } from './errors.js';
 import type { I18nCode, Message, MessageCases, MessageParameter, PluralMessage, SelectMessage } from './types.js';
 
 const PARAMETER_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/u;
+const PLURAL_CASE_NAMES = new Set(['zero', 'one', 'two', 'few', 'many', 'other']);
 
 /** One precompiled literal or named placeholder. */
 export type TemplateToken =
@@ -318,6 +319,72 @@ export function evaluateMessage(message: CompiledMessage, context: MessageEvalua
   return interpolate(selected.template, context, selected.blockedParameter);
 }
 
+/** Copy and validate a public helper's case map without invoking caller accessors. */
+function copyAuthoringCases(kind: 'plural' | 'select', cases: MessageCases): MessageCases {
+  if (typeof cases !== 'object' || cases === null || Array.isArray(cases)) {
+    throw new I18nError('INVALID_MESSAGE', 'Structured message cases must be an object.');
+  }
+
+  let keys: readonly PropertyKey[];
+  try {
+    keys = Reflect.ownKeys(cases);
+  } catch (cause) {
+    throw new I18nError('INVALID_MESSAGE', 'Structured message cases could not be inspected.', {
+      cause,
+    });
+  }
+
+  const copied: Record<string, string> = {};
+  for (const key of keys) {
+    if (typeof key !== 'string' || (kind === 'plural' && !PLURAL_CASE_NAMES.has(key))) {
+      throw new I18nError('INVALID_MESSAGE', 'Structured message contains an invalid case name.');
+    }
+    let descriptor: PropertyDescriptor | undefined;
+    try {
+      descriptor = Object.getOwnPropertyDescriptor(cases, key);
+    } catch (cause) {
+      throw new I18nError('INVALID_MESSAGE', 'Structured message case could not be inspected.', {
+        cause,
+      });
+    }
+    if (descriptor === undefined || !('value' in descriptor) || typeof descriptor.value !== 'string') {
+      throw new I18nError('INVALID_MESSAGE', 'Structured message cases must be string data properties.');
+    }
+    compileTemplate(descriptor.value);
+    Object.defineProperty(copied, key, {
+      configurable: false,
+      enumerable: true,
+      value: descriptor.value,
+      writable: false,
+    });
+  }
+  if (typeof copied.other !== 'string') {
+    throw new I18nError('INVALID_MESSAGE', 'Structured message requires an other case.');
+  }
+  return Object.freeze({ ...copied, other: copied.other });
+}
+
+/** Create a validated cardinal plural representation. */
+function createStructuredMessage(kind: 'plural', parameter: string, cases: MessageCases): PluralMessage;
+/** Create a validated exact select representation. */
+function createStructuredMessage(kind: 'select', parameter: string, cases: MessageCases): SelectMessage;
+/** Create and freeze one validated public structured-message representation. */
+function createStructuredMessage(
+  kind: 'plural' | 'select',
+  parameter: string,
+  cases: MessageCases,
+): PluralMessage | SelectMessage {
+  if (typeof parameter !== 'string' || !PARAMETER_PATTERN.test(parameter)) {
+    throw new I18nError('INVALID_PARAMETER', 'Structured message has an invalid controller name.');
+  }
+  const message = Object.freeze({
+    kind,
+    parameter,
+    cases: copyAuthoringCases(kind, cases),
+  });
+  return message;
+}
+
 /**
  * Create the exact JSON representation of a cardinal plural message.
  *
@@ -331,11 +398,7 @@ export function evaluateMessage(message: CompiledMessage, context: MessageEvalua
  * ```
  */
 export function plural(parameter: string, cases: MessageCases): PluralMessage {
-  return Object.freeze({
-    kind: 'plural',
-    parameter,
-    cases: Object.freeze({ ...cases }),
-  });
+  return createStructuredMessage('plural', parameter, cases);
 }
 
 /**
@@ -351,9 +414,5 @@ export function plural(parameter: string, cases: MessageCases): PluralMessage {
  * ```
  */
 export function select(parameter: string, cases: MessageCases): SelectMessage {
-  return Object.freeze({
-    kind: 'select',
-    parameter,
-    cases: Object.freeze({ ...cases }),
-  });
+  return createStructuredMessage('select', parameter, cases);
 }
