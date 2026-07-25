@@ -46,6 +46,8 @@ setReplacementText(replacement: string): void
 setSearchCaseSensitive(caseSensitive: boolean): void
 routeKey(key: CodeEditorKey): CodeEditorKeyRoute
 setTheme(theme: CodeEditorTheme | ResolvedCodeEditorTheme): void
+setThemeSource(source: CodeEditorThemeSource): void
+themeInspection: CodeEditorThemeResolutionReport
 project(options: {
     readonly width: number;
     readonly height: number;
@@ -250,12 +252,22 @@ One bounded, non-modal degradation notice suitable for accessible host presentat
 ```ts
 interface CodeEditorDegradationNotice {
   feature: CodeEditorDegradedFeature;
-  reason: 'failure' | 'limit';
+  reason: 'failure' | 'limit' | 'missing-adapter' | 'unavailable' | 'retry' | 'operation';
   nonModal: true;
   truncated: boolean;
   presented?: number;
   discarded?: number;
   message?: string;
+}
+```
+
+## CodeEditorDegradationOptions
+
+Optional observer invoked after an accepted degradation transition.
+
+```ts
+interface CodeEditorDegradationOptions {
+  onChange?: (snapshot: CodeEditorDegradationSnapshot) => void;
 }
 ```
 
@@ -268,6 +280,7 @@ interface CodeEditorDegradationSnapshot {
   mode: 'ready' | 'degraded';
   affectedFeatures: readonly CodeEditorDegradedFeature[];
   notices: readonly CodeEditorDegradationNotice[];
+  features: readonly CodeEditorFeatureInspection[];
   availableActions: readonly string[];
 }
 ```
@@ -278,7 +291,8 @@ Mutable owner for bounded degradation state.
 
 ```ts
 interface CodeEditorDegradationState {
-  suspend(feature: CodeEditorDegradedFeature, details: { readonly reason: 'limit'; readonly presented: number; readonly discarded: number }): void;
+  suspend(feature: CodeEditorDegradedFeature, details: CodeEditorSuspensionDetails): void;
+  pending(feature: CodeEditorDegradedFeature, details: CodeEditorPendingDetails): void;
   fail(feature: CodeEditorDegradedFeature, error?: unknown): void;
   recover(feature: CodeEditorDegradedFeature): void;
   snapshot(): CodeEditorDegradationSnapshot;
@@ -312,6 +326,18 @@ A small lifecycle handle used by editor-owned subscriptions and bindings.
 ```ts
 interface CodeEditorDisposable {
   dispose(): void;   // Releases the associated listener or binding. Calling this more than once is safe.
+}
+```
+
+## CodeEditorDocumentFeatureState
+
+Content-free availability record for one document-size-dependent feature.
+
+```ts
+interface CodeEditorDocumentFeatureState {
+  feature: CodeEditorSizeTierFeature;
+  status: 'enabled' | 'suspended' | 'truncated';
+  reason: string;
 }
 ```
 
@@ -398,6 +424,7 @@ interface CodeEditorDocumentSizeClassification {
   confirmationRequired: boolean;
   language?: 'plain';
   preservedFeatures: readonly EssentialCodeEditorFeature[];
+  featureStates: readonly CodeEditorDocumentFeatureState[];
 }
 ```
 
@@ -426,6 +453,28 @@ Result of applying one external-change decision.
 
 ```ts
 type CodeEditorExternalChangeResult = 'kept' | 'reloaded' | 'compare-requested' | 'rejected'
+```
+
+## CodeEditorFeatureInspection
+
+One bounded content-free feature inspection record.
+
+```ts
+interface CodeEditorFeatureInspection {
+  feature: CodeEditorDegradedFeature;
+  status: CodeEditorFeatureStatus;
+  reason: string;
+  presented?: number;
+  discarded?: number;
+}
+```
+
+## CodeEditorFeatureStatus
+
+Accessible lifecycle state for one optional editor subsystem.
+
+```ts
+type CodeEditorFeatureStatus = 'enabled' | 'pending' | 'suspended' | 'truncated' | 'degraded'
 ```
 
 ## CodeEditorFrame
@@ -851,6 +900,7 @@ interface CodeEditorOptions {
   keyBindings?: Readonly<Record<string, CodeEditorCommand>>;
   keyBindingOverrides?: Readonly<Record<string, CodeEditorCommand>>;   // Exact existing commands that explicitly authorize canonical custom-binding collisions.
   lineNumbers?: boolean;   // Shows the fixed line-number gutter when the viewport is wide enough. Defaults to `false`.
+  themeSource?: CodeEditorThemeSource;   // Optional live hybrid theme source resolved from application roles during drawing.
   onDocumentChange?: () => void;   // Runs after an accepted text mutation so hosts can schedule revision-aware language work.
 }
 ```
@@ -864,6 +914,16 @@ interface CodeEditorOverlayPresentation {
   kind: 'hover' | 'signature' | 'diagnostic' | 'navigation' | 'symbols';   // Interaction family represented by the rows.
   items: readonly string[];   // Sanitized bounded rows rendered by the terminal popup.
   selected: number;   // Zero-based row selected by chooser-style overlays.
+}
+```
+
+## CodeEditorPendingDetails
+
+Input accepted while a bounded retry or background operation is pending.
+
+```ts
+interface CodeEditorPendingDetails {
+  reason: 'retry' | 'operation';
 }
 ```
 
@@ -915,6 +975,23 @@ interface CodeEditorSearchState {
 }
 ```
 
+## CodeEditorSizeTierFeature
+
+Features whose availability is explained by document-size classification.
+
+```ts
+type CodeEditorSizeTierFeature = EssentialCodeEditorFeature | 'parser' | 'syntax' | 'folds' | 'diagnostics' | 'completion' | 'symbols'
+```
+
+## CodeEditorSuspensionDetails
+
+Input accepted when a feature is suspended by a limit or unavailable adapter.
+
+```ts
+type CodeEditorSuspensionDetails = | { readonly reason: 'limit'; readonly presented: number; readonly discarded: number }
+  | { readonly reason: 'missing-adapter' | 'unavailable' }
+```
+
 ## CodeEditorTheme
 
 Versioned, complete semantic palette consumed by the editor projection.
@@ -939,11 +1016,15 @@ One rejected theme input or deterministic accessibility adjustment.
 
 ```ts
 interface CodeEditorThemeResolutionReport {
-  rejected: readonly string[];
+  activeLayer: 'application-derived' | 'application' | 'editor' | 'independent' | 'last-valid' | 'safe-default';   // Highest-precedence layer that contributed a valid value.
+  fallbackSource: string;   // Sanitized palette name or derivation source used as the complete base.
+  rejected: readonly string[];   // Bounded semantic paths rejected during validation.
   adjustments: readonly {
+    /** Semantic role path, or `*` when the complete palette was adapted. */
     readonly path: string;
+    /** Why the requested presentation could not be used unchanged. */
     readonly reason: 'minimum-contrast' | 'capability-fallback';
-  }[];
+  }[];   // Deterministic accessibility or terminal-capability repairs applied during resolution.
 }
 ```
 
@@ -952,7 +1033,13 @@ interface CodeEditorThemeResolutionReport {
 Hybrid application-derived or independent theme selection.
 
 ```ts
-type CodeEditorThemeSource = | { readonly kind: 'application'; readonly overrides?: unknown }
+type CodeEditorThemeSource = | {
+      readonly kind: 'application';
+      /** Application-wide editor-role overrides applied above derived application colors. */
+      readonly applicationOverrides?: unknown;
+      /** Per-editor overrides applied above the application editor layer. */
+      readonly overrides?: unknown;
+    }
   | { readonly kind: 'independent'; readonly base: CodeEditorTheme; readonly overrides?: unknown }
 ```
 
@@ -1497,6 +1584,17 @@ interface ProtocolRange {
 }
 ```
 
+## ResolveCodeEditorThemeContext
+
+Application presentation and terminal capabilities used to resolve an editor palette.
+
+```ts
+interface ResolveCodeEditorThemeContext {
+  applicationTheme: Pick<Theme, 'editorNormal' | 'editorSelected' | 'statusBar'>;
+  caps: CapabilityProfile;
+}
+```
+
 ## ResolvedCodeEditorTheme
 
 Complete theme plus inspectable resolution evidence.
@@ -1570,10 +1668,10 @@ createCodeEditorLspCoordinator(options: CreateCodeEditorLspCoordinatorOptions): 
 
 ## createDegradationState
 
-Creates isolated, rate-limited degradation state.
+Creates isolated, bounded degradation state.
 
 ```ts
-createDegradationState(): CodeEditorDegradationState
+createDegradationState(options: CodeEditorDegradationOptions = {}): CodeEditorDegradationState
 ```
 
 ## createDocumentModel

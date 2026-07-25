@@ -1,8 +1,8 @@
 # Task T-04: Code Editor functional completion
 
 > **Type**: Task (lightweight) · **Feature**: code-editor · **CodeOps Artifact Schema**: 1
-> **Progress**: 17/27 tasks (63%)
-> **Last Updated**: 2026-07-25 02:31
+> **Progress**: 22/27 tasks (81%)
+> **Last Updated**: 2026-07-25 08:08
 > **Phase baseline tree**: 7beeae3152295fb1877aeb59bf5b9451a9dcac6a
 
 ## Objective
@@ -236,16 +236,28 @@ and make every kitchen-sink capability claim executable and visibly verifiable.
 
 ### Phase D — Theme and degradation completion
 
-- [ ] T-04.18 `[spec-author]` Add immutable specification tests for ST-15 through ST-17 across live
+> **Phase baseline tree**: 69674504bfd357fd83b20aefba9e78e6cad8e6b2
+>
+> **Expected modification set**: `packages/code-editor/src/theme/`,
+> `packages/code-editor/src/degradation.ts`, `packages/code-editor/src/controller.ts`,
+> `packages/code-editor/src/ui/`, `packages/code-editor/src/index.ts`, mapped canonical plugin
+> references, and CodeOps execution/quality/traceability artifacts.
+
+- [x] T-04.18 `[spec-author]` Add immutable specification tests for ST-15 through ST-17 across live
   theme layers, terminal profiles, invalid inputs, parser/service recovery, and size tiers.
-- [ ] T-04.19 Run the Phase D specification suites and record the expected red failures before
-  changing implementation.
-- [ ] T-04.20 Implement the reactive application/editor theme resolution seam, last-valid fallback,
+  ✅ (completed: 2026-07-25 07:14)
+- [x] T-04.19 Run the Phase D specification suites and record the expected red failures before
+  changing implementation. ✅ (completed: 2026-07-25 07:14; 8 expected red, 2 already green)
+- [x] T-04.20 Implement the reactive application/editor theme resolution seam, last-valid fallback,
   coalesced viewport repaint, inspectable resolution report, and capability-depth adaptation.
-- [ ] T-04.21 Complete observable parser/LSP/size degradation and recovery state while preserving
-  the approved local core and non-color indicators.
-- [ ] T-04.22 Confirm Phase D specifications green, then add implementation, hostile-theme,
+  ✅ (completed: 2026-07-25 08:08)
+- [x] T-04.21 Complete observable parser/LSP/size degradation and recovery state while preserving
+  the approved local core and non-color indicators. ✅ (completed: 2026-07-25 08:08)
+- [x] T-04.22 Confirm Phase D specifications green, then add implementation, hostile-theme,
   accessibility, semantic-inertness, repaint-coalescing, and performance coverage.
+  ✅ (completed: 2026-07-25 08:08; 10/10 immutable Phase D specifications and 334 package tests
+  green; correctness/security/performance quality loop completed; authoritative 34/34 repository
+  verification and plugin integrity checks passed)
 
 ### Phase E — Honest examples and release closure
 

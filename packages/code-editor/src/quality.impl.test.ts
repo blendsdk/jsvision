@@ -62,7 +62,7 @@ describe('cross-cutting quality implementation', () => {
 
     expect(() => degradation.suspend('diagnostics', details as never)).not.toThrow();
     expect(() => degradation.fail('\u001b]0;owned\u0007' as never)).not.toThrow();
-    expect(degradation.snapshot()).toMatchObject({ mode: 'degraded', affectedFeatures: ['diagnostics'] });
+    expect(degradation.snapshot()).toMatchObject({ mode: 'ready', affectedFeatures: [] });
     expect(JSON.stringify(degradation.snapshot())).not.toContain('\u001b');
   });
 

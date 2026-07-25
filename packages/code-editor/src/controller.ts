@@ -198,7 +198,9 @@ export class CodeEditorController {
       replacementCharacters: this.limits.replacementBytes,
       contentCharacters: Math.min(this.limits.protocolMessageBytes, 65_536),
     });
-    this.degradation = createDegradationState();
+    this.degradation = createDegradationState({
+      onChange: () => this.#degradationChanged(),
+    });
     this.observations = createObservabilityChannel(options.observability);
     this.#lifecycle = new CodeEditorDocumentLifecycle({
       document: this.document,
@@ -209,6 +211,7 @@ export class CodeEditorController {
       hostFailed: () => this.#recordHostFailure(),
     });
     this.#presentation = projectCodeEditorControllerPresentation(this.#lsp?.state);
+    if (this.#lsp !== undefined) this.#synchronizeLanguageServiceDegradation(this.#lsp.state);
     let mutationBinding: CodeEditorDisposable | undefined;
     let stateSubscription: CodeEditorDisposable | undefined;
     try {
@@ -934,8 +937,11 @@ export class CodeEditorController {
    * @returns `true` when a fold was expanded.
    */
   public revealOffset(offset: number): boolean {
-    if (!Number.isSafeInteger(offset) || offset < 0 || offset > this.document.snapshot.length) return false;
-    const line = Number(offsetToPosition(this.document.snapshot, offset).line);
+    const snapshot = this.document.snapshot;
+    if (!Number.isSafeInteger(offset) || offset < 0 || offset > snapshot.length) return false;
+    // Document-end navigation is common and already has an exact terminal line. Avoid asking the
+    // text index to rediscover that line in very large documents before the fold index is queried.
+    const line = offset === snapshot.length ? snapshot.lineCount - 1 : Number(offsetToPosition(snapshot, offset).line);
     const headers = collapsedHeadersContaining(this.#collapsedRoots, line);
     if (headers.length === 0) return false;
     const next = new Set(this.#collapsedFoldKeys);
@@ -976,6 +982,7 @@ export class CodeEditorController {
 
   #receiveLspState(state: CodeEditorLspStateSnapshot): void {
     if (this.#disposed) return;
+    this.#synchronizeLanguageServiceDegradation(state);
     const selectionHead = Number(this.document.selection.head);
     if (selectionHead !== this.#lastProtocolSelectionHead) {
       this.#lastProtocolSelectionHead = selectionHead;
@@ -987,6 +994,23 @@ export class CodeEditorController {
       this.#diagnosticIndex = -1;
     }
     this.#refreshPresentation(state);
+  }
+
+  /** Mirrors coordinator lifecycle into the shared accessible degradation vocabulary. */
+  #synchronizeLanguageServiceDegradation(state: CodeEditorLspStateSnapshot): void {
+    if (state.serviceState === 'ready') {
+      this.degradation.recover('languageService');
+      return;
+    }
+    if (state.serviceState === 'connecting') {
+      this.degradation.pending('languageService', { reason: 'operation' });
+      return;
+    }
+    if (state.serviceState === 'degraded') {
+      this.degradation.fail('languageService');
+      return;
+    }
+    this.degradation.suspend('languageService', { reason: 'unavailable' });
   }
 
   #refreshPresentation(state: CodeEditorLspStateSnapshot | undefined): void {
@@ -1185,6 +1209,12 @@ export class CodeEditorController {
     this.degradation.dispose();
     this.observations.dispose();
     void this.#lsp?.close().catch(() => undefined);
+  }
+
+  /** Publishes content-free optional-subsystem changes through the existing coalesced view seam. */
+  #degradationChanged(): void {
+    if (this.#disposed || this.#presentation === undefined) return;
+    this.#queueEvent(Object.freeze({ kind: 'presentation', presentation: this.#presentation }));
   }
 
   #relocateSelectionForCollapse(regions: readonly FoldableRegion[]): void {

@@ -4,9 +4,12 @@ import type { CodeEditorController, CodeEditorControllerEvent } from '../control
 import type { CodeEditorDisposable } from '../integration.js';
 import { offsetToPosition } from '../document/positions.js';
 import type { DocumentEditInput, DocumentSelectionInput } from '../document/types.js';
-import { classicCodeEditorTheme } from '../theme/presets.js';
-import { snapshotCodeEditorTheme } from '../theme/resolve.js';
-import type { CodeEditorTheme, ResolvedCodeEditorTheme } from '../theme/theme.js';
+import type {
+  CodeEditorTheme,
+  CodeEditorThemeResolutionReport,
+  CodeEditorThemeSource,
+  ResolvedCodeEditorTheme,
+} from '../theme/theme.js';
 import { CodeEditorAssistanceView, type CodeEditorCompletionItem, type CodeEditorModalState } from './assistance.js';
 import { routeCodeEditorCommand } from './command-events.js';
 import { CodeEditorEditingActions } from './editing-actions.js';
@@ -17,12 +20,13 @@ import {
   type CodeEditorCommand,
   type CodeEditorKey,
 } from './input.js';
-import { fingerprintTheme, normalizeSnippetPlaceholders, ownData } from './input-validation.js';
+import { normalizeSnippetPlaceholders, ownData } from './input-validation.js';
 import { CodeEditorMouseSelection } from './mouse-selection.js';
 import { registerCodeEditorKeyBindings } from './keybindings.js';
 import { codeEditorGutterWidth, projectCodeEditor, type CodeEditorFrame } from './projection.js';
 import { codeEditorVisibleRows } from './folding.js';
 import { CodeEditorSearchSession, type CodeEditorSearchState } from './search-session.js';
+import { CodeEditorThemeState } from './theme-state.js';
 import { CodeEditorViewport, type CodeEditorViewportMetrics } from './viewport.js';
 
 /** Construction options for a terminal-native code editor view. */
@@ -33,6 +37,8 @@ export interface CodeEditorOptions {
   readonly keyBindingOverrides?: Readonly<Record<string, CodeEditorCommand>>;
   /** Shows the fixed line-number gutter when the viewport is wide enough. Defaults to `false`. */
   readonly lineNumbers?: boolean;
+  /** Optional live hybrid theme source resolved from application roles during drawing. */
+  readonly themeSource?: CodeEditorThemeSource;
   /** Runs after an accepted text mutation so hosts can schedule revision-aware language work. */
   readonly onDocumentChange?: () => void;
 }
@@ -78,11 +84,10 @@ export class CodeEditor extends Group {
   readonly #editingActions: CodeEditorEditingActions;
   readonly #search: CodeEditorSearchSession;
   readonly #mouseSelection: CodeEditorMouseSelection;
+  readonly #themeState = new CodeEditorThemeState();
   readonly #interactionRevision = signal(0);
   readonly #pending = new Map<'navigate' | 'save' | 'close', Promise<unknown>>();
   #hostQueue: Promise<void> = Promise.resolve();
-  #theme: CodeEditorTheme = classicCodeEditorTheme;
-  #themeFingerprint = fingerprintTheme(classicCodeEditorTheme);
   #lastFrame: CodeEditorFrame | undefined;
   #modal: CodeEditorModalState | undefined;
   #snippet: readonly { readonly from: number; readonly to: number }[] | undefined;
@@ -129,6 +134,7 @@ export class CodeEditor extends Group {
       options.keyBindingOverrides,
     );
     this.#onDocumentChange = options.onDocumentChange;
+    if (options.themeSource !== undefined) this.#themeState.setSource(options.themeSource);
     this.#controllerSubscription = this.controller.subscribe((event) => this.#handleControllerEvent(event));
     this.add(this.assistanceView);
     this.onMount(() =>
@@ -372,12 +378,19 @@ export class CodeEditor extends Group {
 
   /** Snapshots a preset or resolver result for presentation-only changes. */
   public setTheme(theme: CodeEditorTheme | ResolvedCodeEditorTheme): void {
-    const candidate = ownData(theme, 'theme') ?? theme;
-    const snapshot = snapshotCodeEditorTheme(candidate);
-    if (snapshot === undefined) return;
-    this.#theme = snapshot;
-    this.#themeFingerprint = fingerprintTheme(this.#theme);
+    this.#themeState.setTheme(theme);
     this.invalidate();
+  }
+
+  /** Selects a live source resolved from the active application theme on every coalesced repaint. */
+  public setThemeSource(source: CodeEditorThemeSource): void {
+    this.#themeState.setSource(source);
+    this.invalidate();
+  }
+
+  /** Returns immutable content-free evidence for the active or retained palette. */
+  public get themeInspection(): CodeEditorThemeResolutionReport {
+    return this.#themeState.inspection;
   }
 
   /** Projects the current state for a concrete terminal viewport. */
@@ -395,8 +408,8 @@ export class CodeEditor extends Group {
     this.#lastFrame = projectCodeEditor({
       controller: this.controller,
       ...options,
-      theme: this.#theme,
-      themeName: this.#themeFingerprint,
+      theme: this.#themeState.theme,
+      themeName: this.#themeState.fingerprint,
       scrollX: this.scroll.x(),
       scrollY: this.scroll.y(),
       syntax: this.controller.languageResult?.syntax,
@@ -454,6 +467,14 @@ export class CodeEditor extends Group {
 
   /** Paints sanitized, semantically styled cells through JSVision. */
   public override draw(context: DrawContext): void {
+    this.#themeState.resolveApplication(
+      {
+        editorNormal: context.role('editorNormal'),
+        editorSelected: context.role('editorSelected'),
+        statusBar: context.role('statusBar'),
+      },
+      context.caps,
+    );
     const frame = this.project({ width: context.size.width, height: context.size.height, caps: context.caps });
     for (let y = 0; y < frame.cells.length; y += 1) {
       for (let x = 0; x < (frame.cells[y]?.length ?? 0); x += 1) {
