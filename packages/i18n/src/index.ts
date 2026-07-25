@@ -6,6 +6,7 @@
  */
 export { I18nError, isI18nError } from './errors.js';
 export type { I18nErrorOptions } from './errors.js';
+export { plural, select } from './messages.js';
 export { CATALOG_SCHEMA_VERSION } from './types.js';
 export type {
   AcceleratorManifest,
