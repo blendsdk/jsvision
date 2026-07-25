@@ -10,6 +10,7 @@ export { formatCatalogIssue } from './issue-format.js';
 export { mergeCatalogs } from './catalog.js';
 export { plural, select } from './messages.js';
 export { createI18n } from './service.js';
+export { loadI18n } from './source.js';
 export { CATALOG_SCHEMA_VERSION } from './types.js';
 export { defineCatalog, validateCatalog, validateCatalogs } from './validation.js';
 export type {

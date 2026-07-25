@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   locale-aware comparison.
 - Add partial and strict catalog validation, accelerator checks, atomic runtime overlays, and
   bounded value-free diagnostics.
+- Preserve the upstream BlendSDK MIT attribution in the published
+  [third-party notice](THIRD_PARTY_NOTICES.md).
 
 ### Security
 
