@@ -3092,6 +3092,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Schema message resource completeness accelerator and safe issue formatting validation implemented",
+        "verificationEvidence:Catalog specification subset TypeScript ESLint documentation formatting issue-output safety and root yarn verify passed"
+      ],
       "id": "TASK-1-2-5",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3104,7 +3108,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement schema/completeness/accelerator validation and stable issue formatting",
       "type": "task",
       "validations": []
