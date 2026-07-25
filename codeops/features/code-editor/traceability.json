@@ -2287,7 +2287,9 @@
     {
       "edges": [],
       "evidence": [
-        "summary:The user approved corrective completion of the Code Editor implementation and comprehensive demonstration."
+        "summary:All five implementation phases are complete, including the executable showcase, bounded simulated language session, real shared-session editors, host lifecycle controls, capability-specific evidence, and release documentation.",
+        "summary:The user approved corrective completion of the Code Editor implementation and comprehensive demonstration.",
+        "verificationEvidence:Phase E capability, evidence, and implementation suites pass 15 tests; standalone E2E passes 2 tests; examples pass 322 tests; Code Editor passes 334 tests; plugin integrity passes; yarn verify passes all 34 tasks; the required quality, security, and performance review loop is closed."
       ],
       "id": "T-04",
       "revision": "sha256:0a56ee4bceb8513eba92e7d1fe4f5393022589dd70ec46d9e6a2c6e0f5046d47",
@@ -2302,7 +2304,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Code Editor functional completion",
       "type": "task",
       "validations": []
@@ -2382,7 +2384,7 @@
           "path": "codeops/features/code-editor/plans/code-editor-functional-completion/00-ambiguity-register.md",
           "selector": {
             "kind": "heading",
-            "value": "AR-01 (runtime) — Phase A integration API placement"
+            "value": "AR-01 (runtime) \u2014 Phase A integration API placement"
           }
         }
       ],

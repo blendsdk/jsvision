@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const demoRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(demoRoot, '../../..');
 const tsx = join(repositoryRoot, 'node_modules', '.bin', process.platform === 'win32' ? 'tsx.cmd' : 'tsx');
+const OUTPUT_LIMIT = 64_000;
 
 /** Runs the standalone walkthrough as an external consumer process. */
 function runShowcase(): Promise<{ readonly code: number | null; readonly stdout: string; readonly stderr: string }> {
@@ -13,17 +14,40 @@ function runShowcase(): Promise<{ readonly code: number | null; readonly stdout:
     const child = spawn(tsx, [join(demoRoot, 'main.ts')], { stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
-    const timeout = setTimeout(() => {
+    let settled = false;
+    const stop = (): void => {
+      clearTimeout(timeout);
+      child.stdout.removeAllListeners();
+      child.stderr.removeAllListeners();
+      child.removeAllListeners();
+    };
+    const rejectOnce = (error: Error): void => {
+      if (settled) return;
+      settled = true;
       child.kill('SIGKILL');
-      rejectRun(new Error('demo:code-editor did not exit within 15 seconds'));
+      stop();
+      rejectRun(error);
+    };
+    const timeout = setTimeout(() => {
+      rejectOnce(new Error('demo:code-editor did not exit within 15 seconds'));
     }, 15_000);
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
-    child.stdout.on('data', (chunk: string) => (stdout += chunk));
-    child.stderr.on('data', (chunk: string) => (stderr += chunk));
-    child.on('error', rejectRun);
+    child.stdout.on('data', (chunk: string) => {
+      stdout += chunk;
+      if (Buffer.byteLength(stdout, 'utf8') > OUTPUT_LIMIT)
+        rejectOnce(new Error('demo stdout exceeded its byte limit'));
+    });
+    child.stderr.on('data', (chunk: string) => {
+      stderr += chunk;
+      if (Buffer.byteLength(stderr, 'utf8') > OUTPUT_LIMIT)
+        rejectOnce(new Error('demo stderr exceeded its byte limit'));
+    });
+    child.on('error', rejectOnce);
     child.on('close', (code) => {
-      clearTimeout(timeout);
+      if (settled) return;
+      settled = true;
+      stop();
       resolveRun({ code, stdout, stderr });
     });
   });

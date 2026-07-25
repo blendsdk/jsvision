@@ -1,20 +1,34 @@
-import { resolveCapabilities, type CapabilityProfile } from '@jsvision/core';
+import type { CapabilityProfile } from '@jsvision/core';
+import { Commands } from '@jsvision/ui';
 import {
   CodeEditor,
   CodeEditorWindow,
-  classifyDocumentSize,
   createCodeEditorController,
   createDocumentModel,
   createCodeEditorLspCoordinator,
-  createInProcessLspSession,
   createLanguageScheduler,
   darkCodeEditorTheme,
   lightCodeEditorTheme,
+  type CodeEditorControllerPublicState,
   type CodeEditorLanguageId,
 } from '@jsvision/code-editor';
 import { javascriptLanguageAdapter } from '@jsvision/code-editor/languages/javascript';
 import { postgresqlLanguageAdapter } from '@jsvision/code-editor/languages/postgresql';
 import { typescriptLanguageAdapter } from '@jsvision/code-editor/languages/typescript';
+import {
+  type CodeEditorCapabilityEvidence,
+  type CodeEditorDocumentIsolationEvidence,
+  type CodeEditorHostDecisionEvidence,
+  type CodeEditorIsolationEvidence,
+  type CodeEditorProtocolEvidence,
+} from './phase-e-evidence.js';
+import { createCodeEditorScenarioCatalog } from './scenario-catalog.js';
+import { actionsForCodeEditorScenario } from './scenario-actions.js';
+import { CODE_EDITOR_CAPABILITY_INVENTORY } from './capability-inventory.js';
+import { DemoLspSession } from './demo-lsp-session.js';
+import { SharedSessionCodeEditorWindow, createSharedSessionScenarioMount } from './shared-session-window.js';
+import { snapshotCodeEditorFixture } from './scenario-fixtures.js';
+import { createBoundedDemoEventLog, type BoundedDemoEventLog } from './demo-event-log.js';
 
 /**
  * Stable capability groups used to prove that the showcase covers the complete editor surface.
@@ -57,6 +71,12 @@ export interface CodeEditorDemoFixture {
   readonly languageId: CodeEditorLanguageId;
   readonly readOnly?: boolean;
   readonly title: string;
+  /** Declarative traits backed by this resettable fixture and its mounted public state. */
+  readonly demonstrates?: readonly string[];
+  /** Optional adapter-selection path used instead of directly taking `languageId`. */
+  readonly languageSelection?: Readonly<{ explicitId?: string; filename?: string }>;
+  /** Complete initial public state used to verify that a labeled fixture mounts truthfully. */
+  readonly expectedPublicState?: CodeEditorControllerPublicState;
 }
 
 /** Viewport and terminal capabilities supplied when a scenario is mounted. */
@@ -79,7 +99,42 @@ export interface CodeEditorDemoScenario {
 
 /** Interactive actions the live shell can apply to the active scenario. */
 export type CodeEditorDemoAction =
-  'edit' | 'search' | 'fold' | 'completion' | 'format' | 'save' | 'navigate' | 'theme' | 'language';
+  | 'edit'
+  | 'select'
+  | 'indent'
+  | 'history'
+  | 'clipboard'
+  | 'readonly-attempt'
+  | 'syntax-edit'
+  | 'bracket-select'
+  | 'peer-edit'
+  | 'unicode'
+  | 'search'
+  | 'fold'
+  | 'completion'
+  | 'hover'
+  | 'signature'
+  | 'symbols'
+  | 'diagnostic-detail'
+  | 'snippet'
+  | 'format'
+  | 'replace'
+  | 'save'
+  | 'navigate'
+  | 'navigation-back'
+  | 'close'
+  | 'external-change'
+  | 'cancel-recover'
+  | 'theme'
+  | 'language'
+  | 'language-postgresql'
+  | 'language-javascript'
+  | 'language-typescript'
+  | 'language-plain'
+  | 'host-accept'
+  | 'host-reject'
+  | 'host-conflict'
+  | 'recover';
 
 /** Content-free live state exposed by the showcase inspector. */
 export interface CodeEditorDemoInspection {
@@ -89,12 +144,26 @@ export interface CodeEditorDemoInspection {
   readonly actions: readonly CodeEditorDemoAction[];
 }
 
-const liveInspections = new WeakMap<CodeEditor | CodeEditorWindow, CodeEditorDemoInspection>();
-const liveReadiness = new WeakMap<CodeEditor | CodeEditorWindow, Promise<void>>();
+interface LiveCodeEditorDemoInspection {
+  readonly scenarioId: string;
+  readonly configuredFeatures: readonly string[];
+  readonly hostEffects: BoundedDemoEventLog;
+  readonly actions: readonly CodeEditorDemoAction[];
+}
+
+/** Lazy idempotent setup that cleanup can await without starting unused work. */
+interface DemoReadiness {
+  run(): Promise<void>;
+  settleStarted(): Promise<void>;
+}
+
+const liveInspections = new WeakMap<CodeEditor | CodeEditorWindow, LiveCodeEditorDemoInspection>();
+const liveReadiness = new WeakMap<CodeEditor | CodeEditorWindow, DemoReadiness>();
 const liveCustomActions = new WeakMap<
   CodeEditor | CodeEditorWindow,
   ReadonlyMap<CodeEditorDemoAction, () => Promise<void>>
 >();
+const liveCleanup = new WeakMap<CodeEditor | CodeEditorWindow, () => Promise<void>>();
 
 /** Observable results produced by exercising a real scenario journey. */
 export interface CodeEditorDemoJourneyEvidence {
@@ -107,6 +176,11 @@ export interface CodeEditorDemoJourneyEvidence {
   readonly documentMode: 'full' | 'large' | 'reduced';
   readonly confirmationRequired: boolean;
   readonly terminalSafe: boolean;
+  readonly protocolEvidence: readonly CodeEditorProtocolEvidence[];
+  readonly hostDecisionEvidence: readonly CodeEditorHostDecisionEvidence[];
+  readonly capabilityEvidence: readonly CodeEditorCapabilityEvidence[];
+  readonly isolation?: CodeEditorIsolationEvidence;
+  readonly documents?: readonly CodeEditorDocumentIsolationEvidence[];
 }
 
 /** Complete version-one facet manifest displayed and checked by the showcase. */
@@ -125,127 +199,6 @@ export const CODE_EDITOR_DEMO_FACETS: readonly CodeEditorDemoFacet[] = Object.fr
   'confirmation-document-tier',
 ]);
 
-/**
- * Capability-level showcase inventory.
- *
- * Broad facets remain useful navigation labels, while this list is the honest evidence boundary:
- * an interactive entry must name a reachable scenario; automated-only and unsupported entries
- * must explain why no interactive claim is made.
- */
-export const CODE_EDITOR_CAPABILITY_INVENTORY: readonly CodeEditorCapabilityInventoryEntry[] = Object.freeze([
-  interactive('surface.direct-editor', 'Direct embedded editor', 'direct-editor'),
-  interactive('surface.windowed-editor', 'Window-hosted editor', 'typescript-window'),
-  interactive('window.move', 'Move an editor window', 'viewport-and-mouse'),
-  interactive('window.resize', 'Resize an editor window', 'viewport-and-mouse'),
-  interactive('window.maximize-restore', 'Maximize and restore an editor window', 'viewport-and-mouse'),
-  interactive('editing.text-input', 'Source text input', 'direct-editor'),
-  interactive('editing.selection', 'Keyboard and mouse selection', 'modern-keyboard-editing'),
-  interactive('editing.modern-keyboard', 'Modern indentation and navigation keys', 'modern-keyboard-editing'),
-  interactive('editing.search', 'In-document search', 'typescript-window'),
-  interactive('editing.history', 'Undo and redo', 'modern-keyboard-editing'),
-  interactive('editing.clipboard', 'Copy, cut, and paste commands', 'modern-keyboard-editing'),
-  interactive('editing.read-only', 'Read-only document behavior', 'read-only-editor'),
-  interactive('gutter.line-numbers', 'Optional line-number gutter', 'line-number-gutter'),
-  interactive('language.postgresql', 'PostgreSQL source', 'language-gallery'),
-  interactive('language.javascript', 'JavaScript source', 'language-gallery'),
-  interactive('language.typescript', 'TypeScript source', 'language-gallery'),
-  interactive('language.plain-text', 'Plain text source', 'language-gallery'),
-  interactive('language.syntax-highlighting', 'Parser-backed syntax highlighting', 'language-gallery'),
-  interactive('language.brackets', 'Bracket matching', 'structural-folding'),
-  interactive('language.folding', 'Structural code folding', 'structural-folding', 'postgresql-folding'),
-  interactiveAction(
-    'language.switching',
-    'Language adapter switching',
-    'language-gallery',
-    'language',
-    'publicState.language',
-  ),
-  interactive('lsp.completion', 'Completion assistance', 'language-intelligence'),
-  interactive('lsp.diagnostics', 'Diagnostics', 'language-intelligence'),
-  interactive('lsp.navigation', 'Authorized definition navigation', 'language-intelligence'),
-  interactive('lsp.formatting', 'Document formatting', 'language-intelligence'),
-  interactive('host.authorization', 'Host-authorized effects', 'language-intelligence'),
-  interactive('theme.hybrid', 'Independent editor themes', 'themes-and-fallbacks'),
-  interactive('terminal.unicode', 'Unicode terminal profile', 'themes-and-fallbacks'),
-  interactive('terminal.hostile-text', 'Hostile terminal text sanitization', 'safe-terminal-text'),
-  interactive('document.full-tier', 'Full document tier', 'full-document-tier'),
-  interactive('document.large-tier', 'Large degradable document tier', 'large-document-tier'),
-  automatedOnly(
-    'terminal.ascii',
-    'ASCII glyph fallback',
-    'The active terminal profile is host-owned; deterministic profile-matrix tests verify the ASCII presentation.',
-  ),
-  automatedOnly(
-    'terminal.monochrome',
-    'Monochrome non-color cues',
-    'The active terminal profile is host-owned; deterministic profile-matrix tests verify non-color cues.',
-  ),
-  automatedOnly(
-    'document.confirmation-tier',
-    'Confirmation-required document tier',
-    'The live fixture stays compact to avoid allocating a ten-MiB payload; classification is exercised by automated tests.',
-  ),
-  automatedOnly(
-    'lsp.external-process',
-    'External language-server process transport',
-    'The deterministic showcase cannot start or trust an external process; package integration tests cover the transport.',
-  ),
-  automatedOnly(
-    'lsp.cancellation-and-stale-results',
-    'Cancellation and stale-result rejection',
-    'Timing-sensitive protocol races are verified by deterministic automated tests instead of a misleading menu action.',
-  ),
-  unsupported(
-    'window.minimize',
-    'Taskbar-style window minimization',
-    'The JSVision window manager supports maximize and restore but has no minimized-window state.',
-  ),
-  unsupported(
-    'folding.multi-chord-keymap',
-    'Multi-chord folding shortcuts',
-    'The terminal keymap cannot represent the complete desktop-editor chord set reliably.',
-  ),
-]);
-
-function interactive(id: string, title: string, ...scenarioIds: string[]): CodeEditorCapabilityInventoryEntry {
-  const scenarioId = scenarioIds[0] ?? '';
-  return Object.freeze({
-    id,
-    title,
-    status: 'interactive',
-    scenarioIds: Object.freeze(scenarioIds),
-    evidence: Object.freeze({
-      scenarioId,
-      interaction: 'scenario-selection',
-      observable: `scenario:${scenarioId}`,
-    }),
-  });
-}
-
-function interactiveAction(
-  id: string,
-  title: string,
-  scenarioId: string,
-  action: CodeEditorDemoAction,
-  observable: string,
-): CodeEditorCapabilityInventoryEntry {
-  return Object.freeze({
-    id,
-    title,
-    status: 'interactive',
-    scenarioIds: Object.freeze([scenarioId]),
-    evidence: Object.freeze({ scenarioId, interaction: 'action', action, observable }),
-  });
-}
-
-function automatedOnly(id: string, title: string, reason: string): CodeEditorCapabilityInventoryEntry {
-  return Object.freeze({ id, title, status: 'automated-only', scenarioIds: Object.freeze([]), reason });
-}
-
-function unsupported(id: string, title: string, reason: string): CodeEditorCapabilityInventoryEntry {
-  return Object.freeze({ id, title, status: 'unsupported', scenarioIds: Object.freeze([]), reason });
-}
-
 function scenario(
   metadata: Omit<CodeEditorDemoScenario, 'fixture' | 'mount' | 'actions'>,
   fixtureValue: CodeEditorDemoFixture,
@@ -253,35 +206,43 @@ function scenario(
   theme: 'dark' | 'light' | undefined = undefined,
   lineNumbers = false,
 ): CodeEditorDemoScenario {
+  let retainedFixture: CodeEditorDemoFixture | undefined;
+  const fixture = (): CodeEditorDemoFixture => {
+    retainedFixture ??= snapshotCodeEditorFixture(fixtureValue);
+    return Object.freeze({
+      ...retainedFixture,
+      ...(retainedFixture.demonstrates === undefined
+        ? {}
+        : { demonstrates: Object.freeze([...retainedFixture.demonstrates]) }),
+      ...(retainedFixture.languageSelection === undefined
+        ? {}
+        : { languageSelection: Object.freeze({ ...retainedFixture.languageSelection }) }),
+    });
+  };
   return Object.freeze({
     ...metadata,
-    actions: actionsFor(metadata.id),
-    fixture: () => Object.freeze({ ...fixtureValue }),
+    actions: actionsForCodeEditorScenario(metadata.id),
+    fixture,
     mount: (context: CodeEditorDemoMountContext) => {
+      const mountedFixture = fixture();
+      if (metadata.id === 'shared-session-editors') {
+        return registerSharedSessionScenario(metadata.id, mountedFixture, context);
+      }
       const document = createDocumentModel({
-        text: fixtureValue.text,
-        languageId: fixtureValue.languageId,
-        readOnly: fixtureValue.readOnly,
+        text: mountedFixture.text,
+        languageId: mountedFixture.languageId,
+        readOnly: mountedFixture.readOnly,
         uri: `memory://code-editor-demo/${metadata.id}`,
         confirmLargeDocument: () => true,
       });
-      const hostEffects: string[] = [];
+      const hostEffects = createBoundedDemoEventLog();
       const configuredFeatures: string[] = ['document', 'selection', 'search', 'history', 'line-status'];
-      let session: ReturnType<typeof createInProcessLspSession> | undefined;
+      let hostDecision: 'accepted' | 'rejected' | 'version-conflict' = 'accepted';
+      let disposed = false;
+      let session: DemoLspSession | undefined;
       let coordinator: ReturnType<typeof createCodeEditorLspCoordinator> | undefined;
       if (metadata.id === 'language-intelligence') {
-        session = createInProcessLspSession({
-          capabilities: {
-            completion: true,
-            hover: true,
-            signatureHelp: true,
-            diagnostics: true,
-            definition: true,
-            documentSymbols: true,
-            documentFormatting: true,
-            rangeFormatting: true,
-          },
-        });
+        session = new DemoLspSession();
         coordinator = createCodeEditorLspCoordinator({
           document,
           session,
@@ -289,8 +250,8 @@ function scenario(
           languageId: document.languageId,
           formatOnSave: true,
           host: async (effect) => {
-            hostEffects.push(effect.kind);
-            return true;
+            hostEffects.record(effect.kind);
+            return hostDecision !== 'rejected';
           },
         });
         configuredFeatures.push(
@@ -308,8 +269,13 @@ function scenario(
         document,
         lsp: coordinator,
         host: async (effect) => {
-          hostEffects.push(effect.kind);
-          return true;
+          hostEffects.record(effect.kind);
+          if (effect.kind === 'save') hostEffects.record(`decision:${hostDecision}`);
+          if (effect.kind === 'save' && hostDecision === 'version-conflict') {
+            document.setSelection({ anchor: document.text.length, head: document.text.length });
+            controller.replaceSelection('// concurrent edit\n');
+          }
+          return hostDecision !== 'rejected';
         },
       });
       const scheduler = createLanguageScheduler();
@@ -325,20 +291,22 @@ function scenario(
           return Promise.resolve();
         const adapter = adapterFor(document.languageId);
         if (adapter === undefined) {
+          if (disposed) return Promise.resolve();
           controller.setLanguageResult(undefined);
           editor.invalidate();
           return Promise.resolve();
         }
         return scheduler.analyze(adapter, document.text, document.identity).then((result) => {
+          if (disposed) return;
           controller.setLanguageResult(result);
           editor.invalidate();
         });
       };
-      const onDocumentChange = fixtureValue.languageId === 'plain' ? undefined : analyzeCurrentDocument;
+      const onDocumentChange = mountedFixture.languageId === 'plain' ? undefined : analyzeCurrentDocument;
       const surface = windowed
         ? new CodeEditorWindow({
             controller,
-            title: fixtureValue.title,
+            title: mountedFixture.title,
             lineNumbers,
             ...(onDocumentChange === undefined ? {} : { onDocumentChange }),
           })
@@ -373,22 +341,6 @@ function scenario(
       if (metadata.id === 'postgresql-folding') {
         configuredFeatures.push('syntax', 'folds', 'brackets', 'fold-markers', 'postgresql-structure');
       }
-      if (session !== undefined && coordinator !== undefined) {
-        void coordinator
-          .open()
-          .then(() => {
-            session?.publishDiagnostics(document.uri ?? '', Number(document.identity.revision), [
-              {
-                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
-                message: 'Simulated live diagnostic',
-                severity: 2,
-              },
-            ]);
-            editor.openCompletion([{ label: 'greet', insertText: 'greet(name)' }]);
-            editor.invalidate();
-          })
-          .catch(() => undefined);
-      }
       if (metadata.id === 'safe-terminal-text')
         configuredFeatures.push('hostile-text', 'unicode', 'terminal-sanitization');
       if (metadata.id.includes('document-tier')) configuredFeatures.push('size-classification', document.sizeMode);
@@ -412,21 +364,89 @@ function scenario(
           scenarioId: metadata.id,
           configuredFeatures: Object.freeze(configuredFeatures),
           hostEffects,
-          actions: actionsFor(metadata.id),
+          actions: actionsForCodeEditorScenario(metadata.id),
         }),
       );
       const customActions = new Map<CodeEditorDemoAction, () => Promise<void>>();
-      if (metadata.id === 'language-intelligence' && session !== undefined) {
-        customActions.set('navigate', async () => {
-          editor.execute('navigate');
-          const request = session.requests.at(-1);
-          if (request?.method !== 'textDocument/definition') return;
-          session.respond(request.id, {
-            uri: 'file:///code-editor-demo/external-target.ts',
-            range: { start: { line: 2, character: 0 }, end: { line: 2, character: 1 } },
-          });
-          await Promise.resolve();
+      if (metadata.id === 'language-intelligence' && session !== undefined && coordinator !== undefined) {
+        customActions.set('hover', async () => {
+          editor.execute('hover');
+          await editor.whenIdle();
         });
+        customActions.set('signature', async () => {
+          editor.routeKey({ key: '(', text: '(' });
+          await Promise.resolve();
+          await Promise.resolve();
+          await editor.whenIdle();
+        });
+        customActions.set('symbols', async () => {
+          editor.execute('symbols');
+          await editor.whenIdle();
+        });
+        customActions.set('diagnostic-detail', async () => {
+          document.setSelection({ anchor: document.text.length, head: document.text.length });
+          await coordinator.synchronize();
+          session.publishDiagnostic(`file:///code-editor-demo/${metadata.id}.ts`, Number(document.identity.revision));
+          await Promise.resolve();
+          if (controller.navigateDiagnostic(1)) hostEffects.record('diagnostic-detail');
+          editor.invalidate();
+        });
+        customActions.set('snippet', async () => {
+          editor.startSnippet([
+            { from: 0, to: 5 },
+            { from: 6, to: 13 },
+          ]);
+          editor.routeKey({ key: 'Tab' });
+        });
+        customActions.set('replace', async () => {
+          document.setSelection({ anchor: document.text.length, head: document.text.length });
+          editor.insertText('\ndemoReplaceToken');
+          editor.execute('search.replaceOpen');
+          editor.setSearchQuery('demoReplaceToken');
+          editor.setReplacementText('demoReplacementApplied');
+          editor.execute('search.replaceAll');
+          await editor.whenIdle();
+        });
+        customActions.set('navigation-back', async () => {
+          document.setSelection({ anchor: 5, head: 5 });
+          const symbols = coordinator.requestDocumentSymbols();
+          await symbols.settled;
+          coordinator.chooseDocumentSymbol(0);
+          coordinator.navigateBack();
+          editor.invalidate();
+        });
+        customActions.set('close', async () => {
+          await controller.requestClose();
+          editor.invalidate();
+        });
+        customActions.set('external-change', async () => {
+          await controller.resolveExternalChange({
+            text: 'const message = greet(\"external\");\n',
+            decision: 'compare',
+          });
+          editor.invalidate();
+        });
+        customActions.set('cancel-recover', async () => {
+          const hover = coordinator.requestHover({ line: 0, character: 0 });
+          hover.cancel();
+          const outcome = await hover.settled;
+          if (outcome.outcome === 'cancelled') hostEffects.record('request-cancelled');
+          session.reconnect();
+          await coordinator.resynchronize();
+          if (coordinator.serviceState === 'ready') hostEffects.record('service-recovered');
+          editor.invalidate();
+        });
+        for (const decision of ['accepted', 'rejected', 'version-conflict'] as const) {
+          const action =
+            decision === 'accepted' ? 'host-accept' : decision === 'rejected' ? 'host-reject' : 'host-conflict';
+          customActions.set(action, async () => {
+            hostDecision = decision;
+            document.setSelection({ anchor: document.text.length, head: document.text.length });
+            controller.replaceSelection(`// ${decision}\n`);
+            await controller.hostAction('save');
+            editor.invalidate();
+          });
+        }
       }
       if (metadata.id === 'language-gallery') {
         const languages = [
@@ -436,9 +456,9 @@ function scenario(
           { languageId: 'plain' as const, text: 'plain terminal text' },
         ];
         let languageIndex = 0;
-        customActions.set('language', async () => {
-          languageIndex = (languageIndex + 1) % languages.length;
-          const next = languages[languageIndex];
+        const selectLanguage = async (nextIndex: number): Promise<void> => {
+          languageIndex = nextIndex;
+          const next = languages[nextIndex];
           if (next === undefined) return;
           document.replaceDocument({
             text: next.text,
@@ -449,21 +469,98 @@ function scenario(
           await analyzeCurrentDocument();
           editor.resizeViewport(context.width, context.height);
           editor.invalidate();
+        };
+        customActions.set('language', async () => selectLanguage((languageIndex + 1) % languages.length));
+        customActions.set('language-postgresql', async () => {
+          if (document.languageId === 'postgresql') await selectLanguage(1);
+          await selectLanguage(0);
+        });
+        customActions.set('language-javascript', async () => selectLanguage(1));
+        customActions.set('language-typescript', async () => selectLanguage(2));
+        customActions.set('language-plain', async () => selectLanguage(3));
+        customActions.set('syntax-edit', async () => {
+          await selectLanguage(2);
+          editor.insertText('\nconst highlighted: boolean = true;');
+          await analyzeCurrentDocument();
         });
       }
       liveCustomActions.set(surface, customActions);
-      liveReadiness.set(surface, analyzeCurrentDocument());
+      const readiness = createOnceAsync(async () => {
+        await analyzeCurrentDocument();
+        if (session === undefined || coordinator === undefined || disposed) return;
+        await coordinator.open();
+        if (disposed) return;
+        session.publishDiagnostic(`file:///code-editor-demo/${metadata.id}.ts`, Number(document.identity.revision));
+        editor.invalidate();
+      });
+      liveReadiness.set(surface, readiness);
+      liveCleanup.set(surface, async () => {
+        disposed = true;
+        await readiness.settleStarted().catch(() => undefined);
+        if (coordinator !== undefined) await coordinator.close();
+        session?.dispose();
+        editor.dispose();
+        liveReadiness.delete(surface);
+        liveCustomActions.delete(surface);
+        liveInspections.delete(surface);
+      });
       return surface;
     },
   });
 }
 
+/** Registers specialized shared-session resources with the common scenario lifecycle maps. */
+function registerSharedSessionScenario(
+  scenarioId: string,
+  fixture: CodeEditorDemoFixture,
+  context: CodeEditorDemoMountContext,
+): SharedSessionCodeEditorWindow {
+  const mounted = createSharedSessionScenarioMount(scenarioId, fixture, context);
+  const surface = mounted.surface;
+  const hostEffects: BoundedDemoEventLog = Object.freeze({
+    record: () => undefined,
+    snapshot: mounted.hostEffects,
+  });
+  liveInspections.set(
+    surface,
+    Object.freeze({
+      scenarioId,
+      configuredFeatures: Object.freeze([
+        'two-editors',
+        'shared-transport',
+        'isolated-documents',
+        'isolated-diagnostics',
+        'isolated-host-effects',
+      ]),
+      hostEffects,
+      actions: Object.freeze(['peer-edit'] as const),
+    }),
+  );
+  liveCustomActions.set(surface, mounted.actions);
+  const readiness = createOnceAsync(mounted.ready);
+  liveReadiness.set(surface, readiness);
+  liveCleanup.set(surface, async () => {
+    await readiness.settleStarted().catch(() => undefined);
+    await mounted.dispose();
+    liveReadiness.delete(surface);
+    liveCustomActions.delete(surface);
+    liveInspections.delete(surface);
+  });
+  return surface;
+}
+
 /** Reads the content-free live configuration displayed by the showcase inspector. */
 export function inspectCodeEditorScenario(surface: CodeEditor | CodeEditorWindow): CodeEditorDemoInspection {
-  return (
-    liveInspections.get(surface) ??
-    Object.freeze({ scenarioId: 'unknown', configuredFeatures: [], hostEffects: [], actions: [] })
-  );
+  const inspection = liveInspections.get(surface);
+  if (inspection === undefined) {
+    return Object.freeze({ scenarioId: 'unknown', configuredFeatures: [], hostEffects: [], actions: [] });
+  }
+  return Object.freeze({
+    scenarioId: inspection.scenarioId,
+    configuredFeatures: inspection.configuredFeatures,
+    hostEffects: inspection.hostEffects.snapshot(),
+    actions: inspection.actions,
+  });
 }
 
 /** Applies one advertised action through the active editor's public command boundary. */
@@ -471,7 +568,8 @@ export async function runCodeEditorScenarioAction(
   surface: CodeEditor | CodeEditorWindow,
   action: CodeEditorDemoAction,
 ): Promise<void> {
-  await liveReadiness.get(surface);
+  if (!liveInspections.has(surface)) return;
+  await liveReadiness.get(surface)?.run();
   const custom = liveCustomActions.get(surface)?.get(action);
   if (custom !== undefined) {
     await custom();
@@ -479,7 +577,34 @@ export async function runCodeEditorScenarioAction(
   }
   const editor = surface instanceof CodeEditorWindow ? surface.editor : surface;
   if (action === 'edit') editor.insertText('// live edit\n');
-  else if (action === 'search') {
+  else if (action === 'select') {
+    editor.controller.document.setSelection({ anchor: 0, head: Math.min(8, editor.controller.document.text.length) });
+    editor.invalidate();
+  } else if (action === 'indent') {
+    editor.controller.document.setSelection({ anchor: 0, head: editor.controller.document.text.length });
+    editor.routeKey({ key: 'Tab' });
+  } else if (action === 'history') {
+    editor.insertText('x');
+    editor.routeKey({ key: 'z', ctrl: true });
+  } else if (action === 'clipboard') {
+    editor.controller.document.setSelection({ anchor: 0, head: Math.min(5, editor.controller.document.text.length) });
+    editor.onEvent({
+      event: { type: 'command', command: Commands.cut },
+      handled: false,
+      setClipboard: () => undefined,
+    });
+  } else if (action === 'readonly-attempt') {
+    if (!editor.insertText('blocked')) {
+      const inspection = liveInspections.get(surface);
+      inspection?.hostEffects.record('readonly-blocked');
+    }
+  } else if (action === 'syntax-edit') editor.insertText('const highlighted = true;\n');
+  else if (action === 'unicode') editor.insertText('λ');
+  else if (action === 'bracket-select') {
+    const bracket = editor.controller.document.text.indexOf('{');
+    if (bracket >= 0) editor.controller.document.setSelection({ anchor: bracket, head: bracket + 1 });
+    editor.invalidate();
+  } else if (action === 'search') {
     editor.setSearchQuery('const');
     editor.execute('search.next');
   } else if (action === 'fold') editor.execute('fold.toggle');
@@ -490,424 +615,34 @@ export async function runCodeEditorScenarioAction(
   await editor.whenIdle();
 }
 
-function actionsFor(id: string): readonly CodeEditorDemoAction[] {
-  if (id === 'language-intelligence') return Object.freeze(['completion', 'format', 'navigate', 'save']);
-  if (id === 'language-gallery') return Object.freeze(['language', 'edit', 'search']);
-  if (id === 'themes-and-fallbacks') return Object.freeze(['theme', 'edit', 'search']);
-  if (id === 'typescript-window') return Object.freeze(['edit', 'search', 'fold', 'save']);
-  if (id === 'structural-folding') return Object.freeze(['fold', 'search']);
-  if (id === 'postgresql-folding') return Object.freeze(['fold', 'search']);
-  return Object.freeze(['edit', 'search']);
+/** Waits until parser and language-service setup for a mounted scenario has settled. */
+export async function waitForCodeEditorScenario(surface: CodeEditor | CodeEditorWindow): Promise<void> {
+  await liveReadiness.get(surface)?.run();
+  const editor = surface instanceof CodeEditorWindow ? surface.editor : surface;
+  await editor.whenIdle();
 }
 
-const GENERATED_LARGE_TEXT = `${'x\n'.repeat(50_001)}// generated at runtime`;
-const CAPABILITY_INVENTORY_TEXT = CODE_EDITOR_CAPABILITY_INVENTORY.map(
-  (entry) => `[${entry.status}] ${entry.id} — ${entry.title}${entry.reason === undefined ? '' : `: ${entry.reason}`}`,
-).join('\n');
+/** Releases every resource owned by a mounted showcase scenario. */
+export async function disposeCodeEditorScenario(surface: CodeEditor | CodeEditorWindow): Promise<void> {
+  const cleanup = liveCleanup.get(surface);
+  if (cleanup !== undefined) {
+    liveCleanup.delete(surface);
+    await cleanup();
+    return;
+  }
+  const editor = surface instanceof CodeEditorWindow ? surface.editor : surface;
+  editor.dispose();
+}
 
 /** Ordered registry used by both the live application and headless verification. */
-export const CODE_EDITOR_SCENARIOS: readonly CodeEditorDemoScenario[] = Object.freeze([
-  scenario(
-    {
-      id: 'typescript-window',
-      title: 'TypeScript editor window',
-      description: 'Edit, select, search, fold, undo, save, and inspect line/column state.',
-      capabilities: ['editor-and-window', 'editing-lifecycle', 'local-language-features', 'full-document-tier'],
-    },
-    {
-      title: 'main.ts',
-      languageId: 'typescript',
-      text: 'interface User { name: string; }\nconst user: User = { name: "Ada" };\nconsole.log(user.name);\n',
-    },
-    true,
-    'dark',
-  ),
-  scenario(
-    {
-      id: 'direct-editor',
-      title: 'Direct embedded editor',
-      description: 'Use the borderless CodeEditor surface without window chrome.',
-      capabilities: ['editor-and-window', 'editing-lifecycle'],
-    },
-    {
-      title: 'embedded.ts',
-      languageId: 'typescript',
-      text: 'export const embedded = true;\n',
-    },
-    false,
-    'dark',
-  ),
-  scenario(
-    {
-      id: 'capability-inventory',
-      title: 'Capability inventory',
-      description: 'Review every interactive, automated-only, and unsupported showcase capability.',
-      capabilities: ['editor-and-window', 'accessibility-and-resize'],
-    },
-    {
-      title: 'capabilities.txt',
-      languageId: 'plain',
-      text: CAPABILITY_INVENTORY_TEXT,
-      readOnly: true,
-    },
-    true,
-    'light',
-    true,
-  ),
-  scenario(
-    {
-      id: 'read-only-editor',
-      title: 'Read-only document',
-      description: 'Inspect navigation and selection while source mutations remain blocked.',
-      capabilities: ['editing-lifecycle', 'full-document-tier'],
-    },
-    {
-      title: 'locked.sql',
-      languageId: 'postgresql',
-      text: 'SELECT current_user;\n',
-      readOnly: true,
-    },
-    true,
-    'dark',
-    true,
-  ),
-  scenario(
-    {
-      id: 'postgresql-folding',
-      title: 'PostgreSQL structural folding',
-      description: 'Fold and unfold a parser-backed query with a nested subquery.',
-      capabilities: ['local-language-features', 'accessibility-and-resize'],
-    },
-    {
-      title: 'folding.sql',
-      languageId: 'postgresql',
-      text: [
-        'SELECT nested.id',
-        'FROM (',
-        '  SELECT id',
-        '  FROM app_user',
-        '  WHERE active = TRUE',
-        ') AS nested;',
-        'SELECT current_user;',
-      ].join('\n'),
-    },
-    true,
-    'dark',
-    true,
-  ),
-  scenario(
-    {
-      id: 'structural-folding',
-      title: 'Structural code folding',
-      description: 'Fold and unfold real nested TypeScript parser ranges from the gutter or action menu.',
-      capabilities: ['local-language-features', 'accessibility-and-resize'],
-    },
-    {
-      title: 'folding.ts',
-      languageId: 'typescript',
-      text: [
-        'export function outer(value: number) {',
-        '  if (value > 0) {',
-        '    return value;',
-        '  }',
-        '  return 0;',
-        '}',
-        'console.log(outer(1));',
-      ].join('\n'),
-    },
-    true,
-    'dark',
-    true,
-  ),
-  scenario(
-    {
-      id: 'modern-keyboard-editing',
-      title: 'Modern keyboard editing',
-      description: 'Try selection-aware Tab, navigation, history, clipboard, and Ctrl+/ comments.',
-      capabilities: ['editing-lifecycle', 'local-language-features'],
-    },
-    {
-      title: 'keyboard.ts',
-      languageId: 'typescript',
-      text: 'function greet(name: string) {\n  return `Hello ${name}`;\n}\n',
-    },
-    true,
-    'dark',
-  ),
-  scenario(
-    {
-      id: 'viewport-and-mouse',
-      title: 'Viewport and mouse interaction',
-      description: 'Resize, wheel-scroll, drag-select, double-click source runs, and watch both scrollbars.',
-      capabilities: ['editor-and-window', 'editing-lifecycle', 'accessibility-and-resize'],
-    },
-    {
-      title: 'viewport.ts',
-      languageId: 'typescript',
-      text: [
-        'export function describeViewport(width: number, height: number) {',
-        '  const terminalColumns = Math.max(1, width);',
-        '  const terminalRows = Math.max(1, height);',
-        '  return { terminalColumns, terminalRows, interaction: "mouse-and-wheel" };',
-        '}',
-        '',
-        '// Continue typing below to observe caret-follow scrolling.',
-        'const first = describeViewport(80, 24);',
-        'const second = describeViewport(44, 12);',
-        'console.log(first, second);',
-      ].join('\n'),
-    },
-    true,
-    'dark',
-    true,
-  ),
-  scenario(
-    {
-      id: 'line-number-gutter',
-      title: 'Optional line-number gutter',
-      description: 'Inspect fixed one-based line numbers, the active-line cue, scrolling, and narrow fallback.',
-      capabilities: ['local-language-features', 'accessibility-and-resize'],
-    },
-    {
-      title: 'numbered.ts',
-      languageId: 'typescript',
-      text: Array.from({ length: 14 }, (_, index) => `const line${index + 1} = ${index + 1};`).join('\n'),
-    },
-    true,
-    'dark',
-    true,
-  ),
-  scenario(
-    {
-      id: 'language-gallery',
-      title: 'SQL, JavaScript, TypeScript, and plain text',
-      description: 'Switch language adapters and inspect partial highlighting for incomplete source.',
-      capabilities: ['languages-sql-javascript-typescript-plain', 'local-language-features'],
-    },
-    {
-      title: 'query.sql',
-      languageId: 'postgresql',
-      text: 'SELECT u.id, u.display_name\nFROM app_user AS u\nWHERE u.active = TRUE;\n',
-    },
-  ),
-  scenario(
-    {
-      id: 'language-intelligence',
-      title: 'Deterministic language intelligence',
-      description: 'Exercise simulated completion, diagnostics, navigation, formatting, cancellation, and recovery.',
-      capabilities: ['lsp-intelligence', 'host-authorization'],
-    },
-    {
-      title: 'service.ts',
-      languageId: 'typescript',
-      text: 'const message = greet("terminal");\n',
-    },
-  ),
-  scenario(
-    {
-      id: 'safe-terminal-text',
-      title: 'Unicode and hostile terminal text',
-      description: 'Render tabs, combining marks, wide glyphs, bidi controls, and escape bytes safely.',
-      capabilities: ['hostile-and-unicode-text', 'accessibility-and-resize'],
-    },
-    {
-      title: 'hostile.txt',
-      languageId: 'plain',
-      text: 'tab\tcolumn\ncombining: e\u0301\nwide: 界🙂\nbidi: \u202Etxt\u202C\ncontrol: \u001B[31mnot-red\u0007\n',
-    },
-  ),
-  scenario(
-    {
-      id: 'themes-and-fallbacks',
-      title: 'Hybrid themes and terminal fallbacks',
-      description: 'Compare independent palettes, monochrome indicators, ASCII glyphs, and a narrow viewport.',
-      capabilities: ['themes-and-capabilities', 'accessibility-and-resize'],
-    },
-    {
-      title: 'theme.js',
-      languageId: 'javascript',
-      text: 'export function visibleState(value) {\n  return value ?? "fallback";\n}\n',
-    },
-    true,
-    'light',
-  ),
-  scenario(
-    {
-      id: 'full-document-tier',
-      title: 'Full-feature document tier',
-      description: 'Inspect the complete feature set on a bounded source document.',
-      capabilities: ['full-document-tier'],
-    },
-    { title: 'full.ts', languageId: 'typescript', text: 'const tier = "full";\n' },
-  ),
-  scenario(
-    {
-      id: 'large-document-tier',
-      title: 'Large degradable document tier',
-      description: 'Generate more than fifty thousand lines and inspect bounded feature degradation.',
-      capabilities: ['large-document-tier'],
-    },
-    {
-      title: 'generated-large.ts',
-      languageId: 'typescript',
-      text: GENERATED_LARGE_TEXT,
-      readOnly: true,
-    },
-  ),
-  scenario(
-    {
-      id: 'confirmation-document-tier',
-      title: 'Confirmation-required document tier',
-      description: 'Inspect the preflight classification used before opening source above ten MiB.',
-      capabilities: ['confirmation-document-tier'],
-    },
-    {
-      title: 'generated-confirmation.txt',
-      languageId: 'plain',
-      text: 'Preview intentionally stays compact; generate the confirmed payload only on explicit request.\n',
-      readOnly: true,
-    },
-  ),
-]);
+export const CODE_EDITOR_SCENARIOS: readonly CodeEditorDemoScenario[] = createCodeEditorScenarioCatalog(
+  scenario,
+  CODE_EDITOR_CAPABILITY_INVENTORY,
+);
 
-/**
- * Exercises the real public boundaries behind one scenario and returns content-free evidence.
- *
- * This is shared by the live inspector and tests, so facet claims cannot drift into inert labels.
- */
-export async function runCodeEditorScenarioJourney(scenarioId: string): Promise<CodeEditorDemoJourneyEvidence> {
-  const scenarioEntry = CODE_EDITOR_SCENARIOS.find((candidate) => candidate.id === scenarioId);
-  if (scenarioEntry === undefined) throw new RangeError(`Unknown Code Editor scenario: ${scenarioId}`);
-  const fixture = scenarioEntry.fixture();
-  const document = createDocumentModel({
-    text: fixture.text,
-    languageId: fixture.languageId,
-    readOnly: fixture.readOnly,
-    uri: `file:///code-editor-demo/journey/${scenarioId}.ts`,
-    confirmLargeDocument: () => true,
-  });
-  const actions: string[] = [];
-  const hostEffects: string[] = [];
-  let syntaxSpans = 0;
-  let diagnostics = 0;
-  let completions = 0;
+export { CODE_EDITOR_CAPABILITY_INVENTORY };
 
-  if (scenarioId === 'language-gallery' || scenarioId === 'typescript-window') {
-    const scheduler = createLanguageScheduler();
-    for (const [adapter, text] of [
-      [postgresqlLanguageAdapter, 'SELECT id FROM users;'],
-      [javascriptLanguageAdapter, 'const value = 1;'],
-      [typescriptLanguageAdapter, 'const value: number = 1;'],
-    ] as const) {
-      const result = await scheduler.analyze(adapter, text, document.identity);
-      syntaxSpans += result.syntax.length;
-    }
-    actions.push('analyzed-postgresql', 'analyzed-javascript', 'analyzed-typescript');
-  }
-
-  if (scenarioId === 'language-intelligence') {
-    const session = createInProcessLspSession({
-      capabilities: { completion: true, diagnostics: true, definition: true, documentFormatting: true },
-    });
-    const coordinator = createCodeEditorLspCoordinator({
-      document,
-      session,
-      uri: document.uri ?? 'memory://code-editor-demo/intelligence.ts',
-      languageId: document.languageId,
-      host: async (effect) => {
-        hostEffects.push(effect.kind);
-        return true;
-      },
-    });
-    await coordinator.open();
-    session.publishDiagnostics(document.uri ?? '', Number(document.identity.revision), [
-      {
-        range: { start: { line: 0, character: 6 }, end: { line: 0, character: 13 } },
-        message: 'Simulated diagnostic',
-        severity: 2,
-      },
-    ]);
-    const completion = coordinator.requestCompletion({ line: 0, character: 5 });
-    session.respond(completion.requestId, [{ label: 'greet', insertText: 'greet(${1:name})' }]);
-    await completion.settled;
-    diagnostics = coordinator.presentation.diagnostics.items.length;
-    completions = coordinator.presentation.completion?.items.length ?? 0;
-    session.reconnect();
-    await coordinator.resynchronize();
-    await coordinator.close();
-    actions.push('completion', 'diagnostics', 'reconnect', 'resynchronize');
-  }
-
-  const controller = createCodeEditorController({
-    document,
-    host: async (effect) => {
-      hostEffects.push(effect.kind);
-      return true;
-    },
-  });
-  if (scenarioId === 'structural-folding' || scenarioId === 'postgresql-folding') {
-    const adapter = adapterFor(fixture.languageId);
-    if (adapter !== undefined) {
-      const analyzed = await createLanguageScheduler().analyze(adapter, document.text, document.identity);
-      controller.setLanguageResult(analyzed);
-      const original = document.text;
-      controller.foldAll();
-      actions.push(`parser-folds-${fixture.languageId}`, 'collapse-all');
-      controller.unfoldAll();
-      if (document.text === original) actions.push('unfold-byte-identical');
-    }
-  }
-  if (!document.readOnly) {
-    controller.document.setSelection({ anchor: document.text.length, head: document.text.length });
-    controller.replaceSelection('// edited\n');
-    controller.document.undo();
-    controller.document.redo();
-    await controller.hostAction('save');
-    actions.push('edit', 'undo', 'redo', 'save');
-  }
-  if (scenarioId === 'language-intelligence') {
-    await controller.hostAction('navigate');
-    actions.push('authorize-navigation');
-  }
-
-  const requestedSize =
-    scenarioId === 'confirmation-document-tier'
-      ? { bytes: 10 * 1_048_576 + 1, lines: 1 }
-      : scenarioId === 'large-document-tier'
-        ? { bytes: fixture.text.length, lines: 50_002 }
-        : { bytes: fixture.text.length, lines: Math.max(1, fixture.text.split('\n').length) };
-  const classification = classifyDocumentSize(requestedSize);
-  const terminalSafe =
-    scenarioId !== 'safe-terminal-text' ||
-    !new CodeEditor({ controller })
-      .project({
-        width: 40,
-        height: 8,
-        caps: resolveDemoCapabilities(),
-      })
-      .cells.flat()
-      .some((cell) => cell.text === '\u001B' || cell.text === '\u0007');
-  controller.dispose();
-  return Object.freeze({
-    scenarioId,
-    actions: Object.freeze(actions),
-    syntaxSpans,
-    diagnostics,
-    completions,
-    hostEffects: Object.freeze(hostEffects),
-    documentMode: classification.mode,
-    confirmationRequired: classification.confirmationRequired,
-    terminalSafe,
-  });
-}
-
-function resolveDemoCapabilities(): CapabilityProfile {
-  return resolveCapabilities({
-    env: {},
-    platform: 'linux',
-    override: { colorDepth: 'mono', unicode: { utf8: false }, glyphs: { boxDrawing: false } },
-  }).profile;
-}
+export { runCodeEditorScenarioJourney } from './scenario-journeys.js';
 
 /** Resolves the demo's built-in adapter while leaving plain text parser-free. */
 function adapterFor(languageId: CodeEditorLanguageId) {
@@ -915,4 +650,18 @@ function adapterFor(languageId: CodeEditorLanguageId) {
   if (languageId === 'javascript') return javascriptLanguageAdapter;
   if (languageId === 'typescript') return typescriptLanguageAdapter;
   return undefined;
+}
+
+/** Converts asynchronous setup into an idempotent lazy operation. */
+function createOnceAsync(operation: () => Promise<void>): DemoReadiness {
+  let retained: Promise<void> | undefined;
+  return Object.freeze({
+    run() {
+      retained ??= operation();
+      return retained;
+    },
+    settleStarted() {
+      return retained ?? Promise.resolve();
+    },
+  });
 }

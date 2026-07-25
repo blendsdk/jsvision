@@ -20,3 +20,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Hybrid dark, light, classic, application-derived, monochrome, and ASCII-safe themes.
 - Degradation, observability, hostile-input containment, reference benchmarks, and a standalone
   Code Editor kitchen sink.
+- Executable kitchen-sink evidence for simulated protocol requests, host save decisions,
+  shared-session editor isolation, terminal profiles, fixture edge cases, and the repository-wide
+  representative story.

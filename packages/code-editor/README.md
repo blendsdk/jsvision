@@ -95,3 +95,15 @@ geometry path, mouse selection, caret-follow scrolling, passive scrollbar update
 document-size tiers without a network, database, workspace, credentials, external language server,
 or arbitrary file access. Inventory entries distinguish interactive, automated-only, and
 unsupported behavior so labels cannot overstate the live demonstration.
+
+The bounded simulated language service answers completion, hover, signature, symbols, diagnostics,
+navigation, formatting, cancellation, and recovery requests without retaining source-bearing
+payloads. Separate controls demonstrate accepted, rejected, and revision-conflicted host saves. A
+two-editor scenario shares one in-process protocol session while retaining separate
+URIs, revisions, selections, diagnostics, cancellation, presentation, and host effects; it does
+not add tabs or an editor manager. `Ctrl+Tab` switches keyboard focus between the two peers.
+
+The fixture catalog also covers extension and explicit language selection, a missing-adapter
+fallback, incomplete and invalid source, LF/CRLF/CR line endings, invisible and hostile Unicode,
+live theme and degradation transitions, lifecycle decisions, terminal resize, and every document
+size tier. Redirected execution prints bounded, content-free evidence for the same journeys.
