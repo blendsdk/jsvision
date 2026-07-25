@@ -42,3 +42,59 @@ export const applicationEnglish = {
     'app.greeting': 'Application English',
   },
 };
+
+/** Polish messages covering every cardinal category used by the service. */
+export const polishCardinals = {
+  schema: 1 as const,
+  locale: 'pl',
+  messages: {
+    'items.count': {
+      kind: 'plural' as const,
+      parameter: 'count',
+      cases: {
+        one: '${count}:one',
+        few: '${count}:few',
+        many: '${count}:many',
+        other: '${count}:other',
+      },
+    },
+  },
+};
+
+/** Exact select cases for each primitive controller accepted by translated messages. */
+export const primitiveSelections = {
+  schema: 1 as const,
+  locale: 'en',
+  messages: {
+    'choice.value': {
+      kind: 'select' as const,
+      parameter: 'choice',
+      cases: {
+        alpha: 'string',
+        '42': 'number',
+        true: 'boolean',
+        '9007199254740993': 'bigint',
+        other: 'other',
+      },
+    },
+  },
+};
+
+/** Initial and replacement runtime overlays used to prove atomic catalog updates. */
+export const initialRuntimeCatalog = {
+  schema: 1 as const,
+  locale: 'en',
+  messages: {
+    'runtime.kept': 'original bytes',
+    'runtime.removed': 'removed with the old overlay',
+  },
+};
+
+/** Replacement overlay that intentionally omits a key from the initial overlay. */
+export const replacementRuntimeCatalog = {
+  schema: 1 as const,
+  locale: 'en',
+  messages: {
+    'runtime.kept': 'replacement bytes',
+  },
+};
