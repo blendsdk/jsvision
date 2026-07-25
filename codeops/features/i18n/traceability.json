@@ -2948,7 +2948,7 @@
         }
       ],
       "status": "verified",
-      "title": "[spec-author] Add public construction, lookup, fallback, and interpolation tests for ST-01–ST-08",
+      "title": "[spec-author] Add public construction, lookup, fallback, and interpolation tests for ST-01\u2013ST-08",
       "type": "task",
       "validations": []
     },
@@ -2971,7 +2971,7 @@
         }
       ],
       "status": "verified",
-      "title": "[spec-author] Add plural, select, formatter, overlay, diagnostics, and warm-path tests for ST-09–ST-16",
+      "title": "[spec-author] Add plural, select, formatter, overlay, diagnostics, and warm-path tests for ST-09\u2013ST-16",
       "type": "task",
       "validations": []
     },
@@ -3046,6 +3046,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:POSIX cleanup BCP-47 canonicalization auto detection and locale-first catalog chain implemented",
+        "verificationEvidence:TypeScript ESLint JSDoc Prettier and root yarn verify passed"
+      ],
       "id": "TASK-1-2-3",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3058,7 +3062,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement canonical locale parsing and deterministic catalog fallback chains",
       "type": "task",
       "validations": []
@@ -3249,7 +3253,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add ordered, optional/required, abort, and caller-owned transport tests for ST-17–ST-20",
+      "title": "[spec-author] Add ordered, optional/required, abort, and caller-owned transport tests for ST-17\u2013ST-20",
       "type": "task",
       "validations": []
     },
@@ -3268,7 +3272,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add rooted-path, strict JSON, UTF-8, limit, race, and completeness tests for ST-21–ST-29",
+      "title": "[spec-author] Add rooted-path, strict JSON, UTF-8, limit, race, and completeness tests for ST-21\u2013ST-29",
       "type": "task",
       "validations": []
     },
@@ -3458,7 +3462,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add application identity, compatibility, dependency, and host tests for ST-30–ST-34",
+      "title": "[spec-author] Add application identity, compatibility, dependency, and host tests for ST-30\u2013ST-34",
       "type": "task",
       "validations": []
     },
@@ -3477,7 +3481,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add calendar, DatePicker, switch, dialog, message, and editor tests for ST-35–ST-38",
+      "title": "[spec-author] Add calendar, DatePicker, switch, dialog, message, and editor tests for ST-35\u2013ST-38",
       "type": "task",
       "validations": []
     },
@@ -3686,7 +3690,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add Forms, Files, and Datagrid behavior tests for ST-39–ST-42",
+      "title": "[spec-author] Add Forms, Files, and Datagrid behavior tests for ST-39\u2013ST-42",
       "type": "task",
       "validations": []
     },
@@ -3705,7 +3709,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add ten-locale layout and 40-subpath catalog/package tests for ST-43–ST-48",
+      "title": "[spec-author] Add ten-locale layout and 40-subpath catalog/package tests for ST-43\u2013ST-48",
       "type": "task",
       "validations": []
     },
@@ -3971,7 +3975,7 @@
         }
       ],
       "status": "pending",
-      "title": "[spec-author] Add review-evidence, docs/API, plugin recipe, and benchmark tests for ST-49–ST-55",
+      "title": "[spec-author] Add review-evidence, docs/API, plugin recipe, and benchmark tests for ST-49\u2013ST-55",
       "type": "task",
       "validations": []
     },

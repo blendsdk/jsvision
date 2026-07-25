@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-25 08:12
-> **Progress**: 5/66 tasks (8%)
+> **Last Updated**: 2026-07-25 08:20
+> **Progress**: 6/66 tasks (9%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -53,7 +53,7 @@ plugin generation, performance, and digest-bound translation review.
 
 - [x] 1.2.1 Scaffold package metadata, TypeScript/Vitest configuration, and browser-safe public entry — `packages/i18n/package.json`, `packages/i18n/tsconfig.json`, `packages/i18n/vitest.config.ts`, `packages/i18n/src/index.ts` (mechanical correction: public-entry path made explicit) ✅ (completed: 2026-07-25 08:05)
 - [x] 1.2.2 Define documented public types, stable errors, diagnostics, and exports — `packages/i18n/src/types.ts`, `packages/i18n/src/errors.ts`, `packages/i18n/src/index.ts` ✅ (completed: 2026-07-25 08:12)
-- [ ] 1.2.3 Implement canonical locale parsing and deterministic catalog fallback chains — `packages/i18n/src/locale.ts`
+- [x] 1.2.3 Implement canonical locale parsing and deterministic catalog fallback chains — `packages/i18n/src/locale.ts` ✅ (completed: 2026-07-25 08:20)
 - [ ] 1.2.4 Implement text safety, placeholder compilation, plural/select constructors, and evaluation — `packages/i18n/src/messages.ts`
 - [ ] 1.2.5 Implement schema/completeness/accelerator validation and stable issue formatting — `packages/i18n/src/validation.ts`
 - [ ] 1.2.6 Implement copied catalog snapshots, ordered merge, and the bounded diagnostic store — `packages/i18n/src/catalog.ts`, `packages/i18n/src/diagnostics.ts`
