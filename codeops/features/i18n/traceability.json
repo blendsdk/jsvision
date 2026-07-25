@@ -3138,6 +3138,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Allowlisted stable formatter keys and four independent bounded LRU caches implemented",
+        "verificationEvidence:Focused cache identity and coercion checks TypeScript ESLint documentation formatting and root yarn verify passed"
+      ],
       "id": "TASK-1-2-7",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3150,7 +3154,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement stable formatter-option keys and four 64-entry LRU caches",
       "type": "task",
       "validations": []
