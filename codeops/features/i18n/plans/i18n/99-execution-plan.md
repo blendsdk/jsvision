@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-25 07:56
-> **Progress**: 2/63 tasks (3%)
+> **Last Updated**: 2026-07-25 08:00
+> **Progress**: 3/63 tasks (5%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -45,7 +45,7 @@ plugin generation, performance, and digest-bound translation review.
 
 - [x] 1.1.1 [spec-author] Add public construction, lookup, fallback, and interpolation tests for ST-01–ST-08 — `packages/i18n/test/engine.spec.test.ts`, `packages/i18n/test/fixtures/catalogs.ts` ✅ (completed: 2026-07-25 07:47)
 - [x] 1.1.2 [spec-author] Add plural, select, formatter, overlay, diagnostics, and warm-path tests for ST-09–ST-16 — `packages/i18n/test/engine.spec.test.ts`, `packages/i18n/test/fixtures/catalogs.ts` ✅ (completed: 2026-07-25 07:56)
-- [ ] 1.1.3 Run the Phase 1 spec suite and record the expected missing-package/API failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md`
+- [x] 1.1.3 Run the Phase 1 spec suite and record the expected missing-package/API failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md` — red confirmed: public entry absent ✅ (completed: 2026-07-25 08:00)
 
 ### Step 1.2: Implementation
 
