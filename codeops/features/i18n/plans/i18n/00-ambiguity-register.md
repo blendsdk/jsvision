@@ -234,3 +234,27 @@ Every entry below uses:
   consistent with both testing and task-size policies.
 - **Reopen triggers:** The specification-first protocol changes or a package test boundary makes a
   bounded hardening group impossible.
+
+**AR-47 — Node loader limits and race seam (runtime)**
+
+- **Authority:** AI delegated by `--auto-design`.
+- **Eligibility:** Public option naming and internal test instrumentation within the approved
+  rooted-loader behavior.
+- **Objective:** Make caller-lowered resource limits self-explanatory and prove the file-replacement
+  defense deterministically without exposing a production hook.
+- **Decision:** `JsonFileSourceLimits` uses `maxFileBytes`, `maxMessages`, `maxKeyScalars`, and
+  `maxMessageBytes`; every supplied value may lower but never raise its hard maximum. A
+  non-package-exported Node test seam installs an `afterOpen` hook that runs after the candidate
+  handle and metadata are checked but before bytes are read, then restores the prior hook.
+- **Evidence:** The requirements define four independent maxima and require a deterministic
+  replacement-race test, but intentionally do not authorize a consumer-facing filesystem
+  abstraction.
+- **Rejected alternatives:** Short field names obscure units; a public filesystem adapter expands
+  the supported API and security boundary; a timing-only replacement test is nondeterministic.
+- **Strongest counterargument:** A test hook adds internal state; the hook is unreachable through
+  package exports, restored after each test, and never changes the checked-handle production path.
+- **Confidence:** High.
+- **Hardening:** The spec-author independently identified both gaps before implementation.
+- **Policy version:** 1.
+- **Reopen triggers:** A portable handle-based test mechanism removes the need for an internal hook,
+  or a future loader adds another independently configurable resource dimension.

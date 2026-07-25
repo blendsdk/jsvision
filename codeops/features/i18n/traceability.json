@@ -808,6 +808,30 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01"
+      ],
+      "id": "AR-47",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Node loader limits and race seam",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
       "id": "AR-02",
       "revision": "sha256:197ef39e726e60ffbddd34dff6f199323f3cce2a0762c7acbb60b774b0e5a0a5",
       "semanticSources": [
@@ -1346,7 +1370,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-30",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1370,7 +1394,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-31",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1394,7 +1418,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-32",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1418,7 +1442,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-33",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1442,7 +1466,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-34",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1466,7 +1490,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-35",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1490,7 +1514,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-36",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1514,7 +1538,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-37",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1538,7 +1562,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-38",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1562,7 +1586,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-39",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1586,7 +1610,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-40",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1610,7 +1634,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-41",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1634,7 +1658,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-42",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1658,7 +1682,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-43",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1682,7 +1706,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-44",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1706,7 +1730,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-45",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -3276,6 +3300,10 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Public asynchronous source specification tests cover declaration ordering optional and required failures cancellation shared signal identity and caller-owned transport",
+        "verificationEvidence:Six public source specification tests were authored and observed failing only because loadI18n is not implemented"
+      ],
       "id": "TASK-2-1-1",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3288,13 +3316,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "[spec-author] Add ordered, optional/required, abort, and caller-owned transport tests for ST-17\u2013ST-20",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Public Node loader specification tests cover deterministic rooted paths strict JSON fatal UTF-8 text and resource limits replacement races and strict catalog completeness",
+        "verificationEvidence:Node loader specification passed formatting ESLint and static review and was observed failing only because the planned Node entry is absent"
+      ],
       "id": "TASK-2-1-2",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3307,13 +3339,17 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "[spec-author] Add rooted-path, strict JSON, UTF-8, limit, race, and completeness tests for ST-21\u2013ST-29",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Phase 2 source and Node loader specification oracle executed before implementation",
+        "verificationEvidence:Combined Phase 2 red oracle confirmed six missing loadI18n failures and one missing Node entry collection failure before implementation"
+      ],
       "id": "TASK-2-1-3",
       "revision": "sha256:85b16d05b9b11725f3fa258f7e388c5866d26741cd0650071dbba7006d75fe1d",
       "semanticSources": [
@@ -3326,7 +3362,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Run the Phase 2 spec suites and record expected missing-source/loader failures",
       "type": "task",
       "validations": []
@@ -5113,7 +5149,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-46",
-      "revision": "sha256:c018af172422e7d877001530dcca0df11ae2e4ba34d67d11565f8d040853b304",
+      "revision": "sha256:2dc8fc92d717d15674afc1181acf4687424378964e6f1158b23a600f9f0fb4bf",
       "semanticSources": [
         {
           "digest": "sha256",
