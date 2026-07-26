@@ -106,7 +106,7 @@ are immutable: implementation failures are fixed in implementation, not by chang
 | `packages/forms/test/i18n.spec.test.ts` | ST-39 |
 | `packages/files/test/i18n.spec.test.ts` | ST-40 |
 | `packages/datagrid/test/i18n.spec.test.ts` | ST-41–ST-42 |
-| `packages/ui/test/i18n-layout.spec.test.ts` | ST-43 |
+| `packages/examples/test/i18n-layout.spec.test.ts` | ST-43 |
 | `packages/i18n/test/locales.spec.test.ts` | ST-44–ST-50 |
 | `packages/docs-site/test/i18n-docs.spec.test.ts` | ST-51–ST-52 |
 | `tools/jsvision-skill/test/i18n-plugin.spec.test.ts` | ST-53–ST-54 |

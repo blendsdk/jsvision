@@ -92,3 +92,16 @@ both pass. Per policy, no third review was dispatched.
 - Root `yarn verify` passed all 34 Turbo tasks after the review corrections.
 - The standalone translation-review verifier intentionally remains red with 36 `MISSING_REVIEW`
   issues until proficient reviewers approve the checked catalog digests.
+
+## Clean-runner CI follow-up
+
+The first pushed Phase 5 checkpoint failed all six Node/OS matrix jobs while typechecking
+`@jsvision/ui`. The cross-package ST-43 layout oracle imported Forms, Files, and Datagrid from
+inside the UI package, but UI correctly declares none of those downstream packages. Local built
+artifacts masked that invalid test boundary; a clean CI checkout did not.
+
+The specification assertions were preserved unchanged and relocated to `@jsvision/examples`,
+which already declares all four framework packages. Turbo therefore builds those declared
+dependencies before the Examples typecheck without creating a UI dependency cycle. Forced focused
+typechecking passed 9/9 tasks, the relocated suite passed 11/11 tests, and root `yarn verify`
+passed all 34 Turbo tasks plus the serial performance and plugin integrity gates.
