@@ -2,7 +2,7 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-26 02:03
+> **Last Updated**: 2026-07-26 02:36
 > **Progress**: 65/66 tasks (98%)
 > **CodeOps Artifact Schema**: 1
 
@@ -155,7 +155,7 @@ tests and all repository/plugin gates. See
 **Reference**: [03-03](03-03-framework-integration.md), [03-04](03-04-locales-docs-plugin.md) · AR-35, AR-38–AR-40
 
 - [x] 4.1.1 [spec-author] Add Forms, Files, and Datagrid behavior tests for ST-39–ST-42 — `packages/forms/test/i18n.spec.test.ts`, `packages/files/test/i18n.spec.test.ts`, `packages/datagrid/test/i18n.spec.test.ts` — expected red confirmed across all three consumers ✅ (completed: 2026-07-25 23:55)
-- [x] 4.1.2 [spec-author] Add ten-locale layout and 40-subpath catalog/package tests for ST-43–ST-48 — `packages/ui/test/i18n-layout.spec.test.ts`, `packages/i18n/test/locales.spec.test.ts`, `packages/i18n/test/fixtures/reviews.ts` — expected red confirmed for 40 subpaths, parity, scopes, layout, and fallback ✅ (completed: 2026-07-25 23:55)
+- [x] 4.1.2 [spec-author] Add ten-locale layout and 40-subpath catalog/package tests for ST-43–ST-48 — `packages/examples/test/i18n-layout.spec.test.ts`, `packages/i18n/test/locales.spec.test.ts`, `packages/i18n/test/fixtures/reviews.ts` — expected red confirmed for 40 subpaths, parity, scopes, layout, and fallback; the cross-package layout oracle lives in the integration package so clean-checkout typechecking follows declared workspace dependencies ✅ (completed: 2026-07-25 23:55)
 - [x] 4.1.3 Run the Phase 4 spec suites and record expected missing-integration/locale failures — `codeops/features/i18n/plans/i18n/99-execution-plan.md` — parent checkpoint confirmed 73 expected failures across five suites ✅ (completed: 2026-07-25 23:56)
 
 ### Step 4.2: Implementation
@@ -212,7 +212,7 @@ repository/plugin gates. See [08-phase-4-quality-review](08-phase-4-quality-revi
 
 **Reference**: [03-04](03-04-locales-docs-plugin.md) · AR-42, AR-44
 
-- [x] 5.3.1 Run docs snippets/API generation, `yarn plugin:update`, `yarn plugin:check`, package gates, and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md` ✅ (completed: 2026-07-26 02:03)
+- [x] 5.3.1 Run docs snippets/API generation, `yarn plugin:update`, `yarn plugin:check`, package gates, and root `yarn verify` — `codeops/features/i18n/plans/i18n/99-execution-plan.md` — clean-runner follow-up moved the unchanged cross-package layout oracle to `@jsvision/examples`; focused dependency-order verification and root `yarn verify` passed ✅ (completed: 2026-07-26 02:36)
 - [ ] 5.3.2 Obtain proficient-speaker approvals for every non-English catalog digest and pass the review verifier — `tools/i18n-translation-reviews.json`
   - External blocker: 36 package/locale catalogs still need digest-bound proficient approval; the verifier reports one `MISSING_REVIEW` issue for each.
 
