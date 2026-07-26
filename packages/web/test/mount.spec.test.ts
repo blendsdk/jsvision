@@ -14,8 +14,9 @@
 import { test, expect, vi } from 'vitest';
 import xtermHeadless from '@xterm/headless';
 import type { Terminal as XTerm } from '@xterm/headless';
-import { createApplication, Window } from '@jsvision/ui';
+import { createApplication, Input, signal, Window } from '@jsvision/ui';
 import { buildBrowserCaps, mountApp } from '@jsvision/web';
+import type { ClipboardBridge } from '@jsvision/web';
 
 const { Terminal } = xtermHeadless;
 
@@ -66,3 +67,95 @@ test('ST-10: mountApp paints a non-empty first frame and routes a key to the app
 
   mounted.dispose();
 });
+
+test('mountApp mirrors Input copy as raw text through one browser clipboard write', async () => {
+  const headless = new Terminal({ cols: 40, rows: 12, allowProposedApi: true });
+  let keyHandler: ((event: BrowserKeyEvent) => boolean) | undefined;
+  const term = {
+    write: (data: string) => headless.write(data),
+    onData: (_handler: (data: string) => void) => ({ dispose: () => undefined }),
+    onResize: (handler: (size: { cols: number; rows: number }) => void) => headless.onResize(handler),
+    attachCustomKeyEventHandler: (handler: (event: BrowserKeyEvent) => boolean) => {
+      keyHandler = handler;
+    },
+  };
+  const clipboard: ClipboardBridge = {
+    writeText: vi.fn(() => Promise.resolve()),
+  };
+  const caps = buildBrowserCaps();
+  const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
+  const value = signal('browser text 🧪');
+  const input = new Input({ value });
+  const win = new Window('Clipboard');
+  win.setLayout({ rect: { x: 1, y: 1, width: 30, height: 6 } });
+  input.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } });
+  win.add(input);
+  app.desktop.addWindow(win);
+
+  const mounted = mountApp(Object.assign({ element: { tagName: 'div' }, app, caps, term }, { clipboard }));
+  app.loop.focusView(input);
+  app.loop.dispatch({ type: 'key', key: 'a', ctrl: true, alt: false, shift: false });
+
+  expect(keyHandler).toBeDefined();
+  expect(
+    keyHandler?.({
+      type: 'keydown',
+      key: 'C',
+      code: 'KeyC',
+      ctrlKey: true,
+      shiftKey: true,
+      altKey: false,
+      metaKey: false,
+    }),
+  ).toBe(false);
+  await Promise.resolve();
+
+  expect(clipboard.writeText).toHaveBeenCalledOnce();
+  expect(clipboard.writeText).toHaveBeenCalledWith('browser text 🧪');
+  mounted.dispose();
+});
+
+test('mountApp host paste updates the canonical clipboard used by Ctrl+V', () => {
+  const headless = new Terminal({ cols: 40, rows: 12, allowProposedApi: true });
+  let dataHandler: ((data: string) => void) | undefined;
+  const term = {
+    write: (data: string) => headless.write(data),
+    onData: (handler: (data: string) => void) => {
+      dataHandler = handler;
+      return { dispose: () => (dataHandler = undefined) };
+    },
+    onResize: (handler: (size: { cols: number; rows: number }) => void) => headless.onResize(handler),
+  };
+  const caps = buildBrowserCaps();
+  const app = createApplication({ caps, viewport: { width: 40, height: 12 } });
+  const value = signal('');
+  const input = new Input({ value });
+  const win = new Window('Clipboard');
+  win.setLayout({ rect: { x: 1, y: 1, width: 30, height: 6 } });
+  input.setLayout({ position: 'absolute', rect: { x: 1, y: 1, width: 20, height: 1 } });
+  win.add(input);
+  app.desktop.addWindow(win);
+
+  const mounted = mountApp({ element: { tagName: 'div' }, app, caps, term });
+  app.loop.focusView(input);
+  dataHandler?.('\x1b[200~host paste\x1b[201~');
+  expect(value()).toBe('host paste');
+
+  app.loop.dispatch({ type: 'key', key: 'a', ctrl: true, alt: false, shift: false });
+  app.loop.dispatch({ type: 'key', key: 'backspace', ctrl: false, alt: false, shift: false });
+  expect(value()).toBe('');
+  app.loop.dispatch({ type: 'key', key: 'v', ctrl: true, alt: false, shift: false });
+  expect(value()).toBe('host paste');
+  mounted.dispose();
+});
+
+/** The browser-key fields needed to specify xterm.js custom-key routing without a DOM dependency. */
+interface BrowserKeyEvent {
+  readonly type: string;
+  readonly key: string;
+  readonly code: string;
+  readonly ctrlKey: boolean;
+  readonly shiftKey: boolean;
+  readonly altKey: boolean;
+  readonly metaKey: boolean;
+}
