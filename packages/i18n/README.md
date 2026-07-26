@@ -77,6 +77,29 @@ const i18n = createI18n({ locale: 'auto', catalogs: [nl] });
 
 Use an explicit locale for deterministic applications and tests.
 
+## Use one service in an application
+
+Framework catalogs are exposed from explicit locale subpaths. Import only the requested locale,
+put the application catalog last, and inject the one service into `createApplication`:
+
+```ts
+import { datagridNl } from '@jsvision/datagrid/locales/nl';
+import { filesNl } from '@jsvision/files/locales/nl';
+import { formsNl } from '@jsvision/forms/locales/nl';
+import { createApplication } from '@jsvision/ui';
+import { uiNl } from '@jsvision/ui/locales/nl';
+
+const i18n = createI18n({
+  locale: 'nl',
+  catalogs: [uiNl, formsNl, filesNl, datagridNl, applicationNl],
+});
+
+const app = createApplication({ i18n });
+```
+
+English remains the no-config default. The official locales are `en`, `nl`, `de`, `fr`, `es`,
+`it`, `pt-PT`, `pl`, `ro`, and `sv`.
+
 ## Application translations and runtime overlays
 
 Applications can layer their translations after framework catalogs. A later layer overrides only
@@ -169,6 +192,13 @@ This JSVision-owned package adapts internationalization concepts and suitable be
 from the MIT-licensed `@blendsdk/i18n` package. It is not a runtime dependency or a literal copy.
 The complete upstream attribution and license text ship with this package in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Migrating from BlendSDK
+
+JSVision catalogs use `{ schema, locale, messages }` and named message parameters. Replace
+BlendSDK tuple plurals with `plural(parameter, cases)`, use `select(parameter, cases)` for exact
+variants, and pass interpolation values through `t(key, { params })`. File-based sources move to
+the explicit `@jsvision/i18n/node` entry point. There is no `@blendsdk/i18n` runtime dependency.
 
 See the [JSVision repository](https://github.com/blendsdk/jsvision) and
 [documentation site](https://blendsdk.github.io/jsvision/) for the full SDK documentation.

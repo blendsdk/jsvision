@@ -4,7 +4,7 @@
 
 Rendering, terminal capabilities, input, colors, contrast, themes, and safety.
 
-Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import everything from the package barrel (`@jsvision/ui` unless noted). For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
+Signatures are copied from the source types; every field/member carries the one-line intent from its JSDoc. Import these symbols from `@jsvision/core`. For usage patterns see the recipes and `component-catalog.md`; this page is the exact-signature lookup.
 
 ## AMBIGUOUS_PROBE_GLYPHS
 

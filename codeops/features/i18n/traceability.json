@@ -814,7 +814,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-47",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -839,7 +839,7 @@
         "hardening:independent correctness security and performance reviewers converged"
       ],
       "id": "AR-48",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -864,7 +864,7 @@
         "hardening:independent specification author exposed the missing contract before test implementation"
       ],
       "id": "AR-49",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -889,7 +889,7 @@
         "hardening:forced reframing found metadata sequencing as the sole compatible phase order"
       ],
       "id": "AR-50",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -914,7 +914,7 @@
         "hardening:independent spec author stopped before inventing a public service seam"
       ],
       "id": "AR-51",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -939,7 +939,7 @@
         "hardening:independent locale spec author stopped before inventing public accelerator metadata"
       ],
       "id": "AR-52",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -964,7 +964,7 @@
         "hardening:immutable structural-host specifications require a compatibility-preserving isolated English fallback"
       ],
       "id": "AR-53",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -977,6 +977,31 @@
       ],
       "status": "resolved",
       "title": "Files host compatibility",
+      "type": "ambiguity",
+      "validations": []
+    },
+    {
+      "edges": [],
+      "evidence": [
+        "authority:AI delegated by --auto-design",
+        "policyVersion:1",
+        "rootInvocationId:i18n-20260725-01",
+        "hardening:independent spec author stopped before inventing review fixture injection; pure verifier isolates negative cases"
+      ],
+      "id": "AR-54",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
+      "semanticSources": [
+        {
+          "digest": "sha256",
+          "normalization": "utf8-lf-trim-trailing-v1",
+          "path": "codeops/features/i18n/plans/i18n/00-ambiguity-register.md",
+          "selector": {
+            "kind": "whole-file"
+          }
+        }
+      ],
+      "status": "resolved",
+      "title": "Translation-review testability",
       "type": "ambiguity",
       "validations": []
     },
@@ -1520,7 +1545,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-30",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1544,7 +1569,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-31",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1568,7 +1593,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-32",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1592,7 +1617,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-33",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1616,7 +1641,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-34",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1640,7 +1665,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-35",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1664,7 +1689,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-36",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1688,7 +1713,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-37",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1712,7 +1737,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-38",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1736,7 +1761,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-39",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1760,7 +1785,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-40",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1784,7 +1809,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-41",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1808,7 +1833,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-42",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1832,7 +1857,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-43",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1856,7 +1881,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-44",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -1880,7 +1905,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-45",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -4319,6 +4344,9 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Independent spec author completed all four immutable Phase 5 specification files; focused ESLint, package typechecks, formatting, and whitespace checks passed"
+      ],
       "id": "TASK-5-1-1",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4331,13 +4359,16 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "[spec-author] Add review-evidence, docs/API, plugin recipe, and benchmark tests for ST-49\u2013ST-55",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Expected red confirmed independently: review evidence 5 failures, docs/API 3, plugin/recipe 3, and performance integration 1 failure while its standalone measurement oracle passed"
+      ],
       "id": "TASK-5-1-2",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4350,13 +4381,16 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Run Phase 5 spec suites and record expected missing docs/plugin/review failures",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Review verifier specification passed 5/5; focused ESLint, Prettier, and JSON parsing passed"
+      ],
       "id": "TASK-5-2-1",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4369,13 +4403,16 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement normalized catalog digests and strict translation-review manifest verification",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Consumer guide and executable localized Theme Designer specifications passed 2/2; focused formatting passed"
+      ],
       "id": "TASK-5-2-2",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4388,13 +4425,16 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Add the consumer i18n guide, Theme Designer recipe, and executable snippet fixtures",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Documentation and generated API navigation specification passed 3/3; focused formatting passed"
+      ],
       "id": "TASK-5-2-3",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4407,13 +4447,16 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Add i18n API generation/navigation and package migration/attribution documentation",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Canonical skill validation, formatting, and localized application recipe typecheck passed"
+      ],
       "id": "TASK-5-2-4",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4426,13 +4469,16 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Teach the canonical JSVision skill i18n decisions, API, and recipes",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Plugin impact, generated-copy parity, and localized recipe specifications passed 3/3; yarn plugin:check passed"
+      ],
       "id": "TASK-5-2-5",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4445,13 +4491,16 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Map SDK impact, add localized app recipe validation, and regenerate the distributed plugin",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Fixed benchmark specification passed 2/2; CLI warm median 100.38ms and p95 113.60ms stayed below 250ms thresholds; focused lint, formatting, and build passed"
+      ],
       "id": "TASK-5-2-6",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4464,13 +4513,18 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Add fixed cold/warm benchmarks and run Phase 5 non-review spec tests green",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "verificationEvidence:Docs/API and plugin regeneration passed; focused package, docs, serial performance, and plugin gates passed; root yarn verify passed all 34 Turbo tasks",
+        "reviewEvidence:Independent correctness and performance review findings RV-5-001 through RV-5-006 and PE-5-001 through PE-5-002 were corrected; the one-time re-review found no unresolved or new Critical/Major issue",
+        "qualityArtifact:codeops/features/i18n/plans/i18n/08-phase-5-quality-review.md"
+      ],
       "id": "TASK-5-3-1",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -4483,13 +4537,16 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Run docs snippets/API generation, `yarn plugin:update`, `yarn plugin:check`, package gates, and root `yarn verify`",
       "type": "task",
       "validations": []
     },
     {
       "edges": [],
+      "evidence": [
+        "blocker:36 non-English package/locale catalogs require external digest-bound proficient-speaker approval; verifier currently reports 36 MISSING_REVIEW issues"
+      ],
       "id": "TASK-5-3-2",
       "revision": "sha256:acceb3ccd4ad480cfe61c4170a4649b00165ba58f0a5868b20cc493da764ef24",
       "semanticSources": [
@@ -5434,7 +5491,7 @@
         "rootInvocationId:i18n-20260725-01"
       ],
       "id": "AR-46",
-      "revision": "sha256:e44a5bcc5b616c46d3ccb075a77913f142b1051781686caecf44c18be3db2520",
+      "revision": "sha256:469e1fc55466186c6cf8878f9dd24acadacc300da10caa31ff9c342c17db29e8",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -5522,5 +5579,5 @@
     }
   ],
   "schema": 2,
-  "updated": "2026-07-25T22:36:00.000Z"
+  "updated": "2026-07-26T00:03:34.000Z"
 }

@@ -1,7 +1,7 @@
 # Ambiguity Register: JSVision i18n Implementation Plan
 
-> **Status**: ✅ GATE PASSED — all 24 plan items resolved
-> **Last Updated**: 2026-07-26 00:07 CEST
+> **Status**: ✅ GATE PASSED — all 25 plan items resolved
+> **Last Updated**: 2026-07-26 01:19 CEST
 > **Planning Target**: `i18n/SET-I18N` (RD-01 through RD-04 as one implementation group)
 > **Context Artifacts**: i18n requirements set, current UI/Forms/Files/Datagrid source and tests,
 > BlendSDK `packages/i18n` source/tests, plugin generators and canonical skill
@@ -41,6 +41,7 @@ decisions discovered after the requirements gate.
 | 51 | Consumer API / catalog keys (runtime) | How does explicit i18n reach consumer widgets and pure Datagrid filter/collation functions? | Grid-only context / optional public seams / ambient global service | Add optional services to owning options and trailing pure-function parameters; hosts remain authoritative; omission preserves every current signature and behavior | ✅ Resolved |
 | 52 | Accelerators / public validation (runtime) | How do consumers validate official scopes and how does one malformed app label fall back? | Internal-only manifests / public readonly manifests; catalog sanitization / package label fallback | Export one readonly manifest per package main entry; package label helpers reject only malformed translated labels and use English defaults; official collisions remain strict validation failures | ✅ Resolved |
 | 53 | Files host compatibility (runtime) | Must every structural Files modal host add `i18n`, or may existing minimal hosts retain their public shape? | Required service / optional service with isolated English fallback | Keep `ExecHost.i18n` optional; applications pass their service, while legacy hosts receive isolated English text | ✅ Resolved |
+| 54 | Translation-review testability (runtime) | How do specification tests inject approved, missing, stale, duplicate, and unapproved review evidence without coupling to repository paths? | CLI-only temporary repository / exported pure verifier plus thin CLI | Export pure normalized-digest and review-verification functions; the CLI supplies real package catalogs and the checked manifest | ✅ Resolved |
 
 ## Resolution Notes
 
@@ -476,3 +477,35 @@ Every entry below uses:
 - **Root invocation ID:** `i18n-20260725-01`.
 - **Reopen triggers:** A future major release explicitly removes structural-host compatibility, or
   all modal APIs adopt a nominal Application-only host.
+
+**AR-54 — Translation-review testability (runtime)**
+
+- **Authority:** AI — delegated by `--auto-design`.
+- **Eligibility:** Internal script/test seam within the accepted digest-bound review policy; it
+  does not define reviewer identity, approve translations, or weaken the release gate.
+- **Objective:** Let immutable tests cover every review-evidence failure structurally without
+  copying the repository or inventing hidden CLI path overrides.
+- **Decision:** `scripts/check-i18n-reviews.mjs` exports a pure normalized catalog-digest function
+  and a pure verifier that accepts catalog descriptors plus a parsed review manifest and returns
+  structured issues. The executable entry point remains a thin adapter that loads the 36
+  non-English official catalogs and `tools/i18n-translation-reviews.json`, formats issues, and sets
+  a failing exit code. Review entries use schema 1 and identify package, locale, digest, reviewer
+  reference, proficiency attestation, review date, and `approved` status. Tests construct catalog
+  and manifest values directly.
+- **Evidence:** Missing/stale/duplicate/unapproved cases need deterministic fixture injection.
+  Existing repository-root CLI patterns would require copying package output or adding a hidden
+  path override, while the digest and evidence decision is pure data validation.
+- **Rejected alternatives:** CLI-only temporary roots couple tests to filesystem layout and make
+  catalog loading part of every negative case; environment overrides add production behavior used
+  only by tests; embedding fixtures in the executable prevents isolated validation.
+- **Strongest counterargument:** Exporting script functions creates another callable surface. The
+  script is repository tooling rather than a published package, and the pure boundary makes the
+  release CLI smaller and more directly testable.
+- **Confidence:** High — the separation follows existing deterministic generator/check tooling and
+  introduces no runtime package API.
+- **Hardening:** The independent spec author stopped rather than inventing a seam. Forced reframing
+  favored a pure boundary under both minimal and expanded test budgets.
+- **Policy version:** 1.
+- **Root invocation ID:** `i18n-20260725-01`.
+- **Reopen triggers:** Review evidence moves to a signed external service or the repository adopts a
+  standard validation-tool harness with fixture injection.

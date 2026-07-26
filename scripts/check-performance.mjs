@@ -5,6 +5,9 @@ import { pathToFileURL } from 'node:url';
 
 const PERFORMANCE_TESTS = [
   ['workspace', '@jsvision/core', 'test', 'test/perf-budget.spec.test.ts', '--maxWorkers=1'],
+  // The immutable integration oracle lives at test/performance.spec.test.ts; the authoritative
+  // wall-clock gate executes the same package's built-artifact benchmark.
+  ['workspace', '@jsvision/i18n', 'bench'],
   ['workspace', '@jsvision/ui', 'test', 'test/editor-perf.spec.test.ts', '--maxWorkers=1'],
   ['workspace', '@jsvision/datagrid', 'test', 'test/perf-grid-bench.spec.test.ts', '--maxWorkers=1'],
 ];

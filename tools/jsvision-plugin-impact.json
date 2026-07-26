@@ -49,6 +49,23 @@
       ]
     },
     {
+      "name": "internationalization",
+      "paths": [
+        "packages/i18n/src",
+        "packages/ui/src/app",
+        "packages/ui/src/i18n",
+        "packages/forms/src",
+        "packages/files/src",
+        "packages/datagrid/src"
+      ],
+      "references": [
+        "references/i18n.md",
+        "references/recipes/i18n-app.md",
+        "references/api/i18n.md",
+        "references/app-lifecycle.md"
+      ]
+    },
+    {
       "name": "forms",
       "paths": [
         "packages/forms/src"
@@ -103,6 +120,7 @@
     "ui-layout-and-views": "b1a4e071f18dfc140df433a6f189e9ec30a2bfd850bd7b8297f0343bb15004dd",
     "ui-reactivity": "000734293db82a203df654a3fdceb5668fe65294c7f642ff51e414292b0fb2f0",
     "ui-application-shell": "7d0399cdf3c23d0839547027a39d333edb99dc629a29923e191ff6c8b0f7f0be",
+    "internationalization": "a786f970ac3e2500765b01ac79a0473954ac808f4ce67c1390040b24d1bca632",
     "forms": "554557ce9f997dc492910bbacf60fed27f8f775a1d4780a9cff98d82879f51e7",
     "datagrid": "12d9bc02105555f940d99106c894d4043253748110a576f9ed3ab726365200ce",
     "files": "da8bb9b0d9a664ccf438be25d7ac2512155f68b36aba36eba9bf85d4b6bd765f",
