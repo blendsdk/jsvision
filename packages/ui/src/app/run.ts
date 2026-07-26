@@ -7,7 +7,7 @@
  * suspend/resume (Ctrl+Z) is handled by the host, which re-asserts modes and repaints; `run()` only
  * re-positions the cursor afterward. This backs {@link Application.run}.
  */
-import { createHost, cursor, assertEssentials, detectTty } from '@jsvision/core';
+import { createHost, cursor, assertEssentials, detectTty, setClipboard } from '@jsvision/core';
 import type { CapabilityProfile, Logger, RuntimeAdapter, ScreenBuffer } from '@jsvision/core';
 import type { Point } from '../view/index.js';
 import type { EventLoop } from '../event/index.js';
@@ -120,7 +120,10 @@ export async function runApplication(ctx: RunContext): Promise<number> {
       output.write(caretSequence(cell));
     }
   };
-  ctx.loop.writeClipboard = (seq) => output.write(seq);
+  ctx.loop.writeClipboardText = (text) => {
+    const sequence = setClipboard(text, ctx.caps);
+    if (sequence !== '') output.write(sequence);
+  };
 
   // Resolved by the app's quit sink (through the shared quitState cell) when the 'quit' command fires.
   const quitPromise = new Promise<number>((resolve) => {
@@ -156,7 +159,7 @@ export async function runApplication(ctx: RunContext): Promise<number> {
     ctx.loop.stop();
     ctx.loop.onFrame = undefined;
     ctx.loop.onCaret = undefined;
-    ctx.loop.writeClipboard = undefined;
+    ctx.loop.writeClipboardText = undefined;
     ctx.quitState.resolve = null;
   }
 }

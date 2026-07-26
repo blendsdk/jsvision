@@ -129,13 +129,13 @@
     "core-engine-and-themes": "b6857081173fa53d37d2d7ddfc8d2fe8a233345903568c2d558806144d2a279f",
     "ui-layout-and-views": "b1a4e071f18dfc140df433a6f189e9ec30a2bfd850bd7b8297f0343bb15004dd",
     "ui-reactivity": "000734293db82a203df654a3fdceb5668fe65294c7f642ff51e414292b0fb2f0",
-    "ui-application-shell": "7d0399cdf3c23d0839547027a39d333edb99dc629a29923e191ff6c8b0f7f0be",
-    "internationalization": "a786f970ac3e2500765b01ac79a0473954ac808f4ce67c1390040b24d1bca632",
+    "ui-application-shell": "6f72fd729b0bec5a73deca21e9f0c7936342564762db74b1ffde645492b80ef4",
+    "internationalization": "4688929e62ae119a485116ba69e9249bc67c8c55555ddf14d296fcc98f67837e",
     "forms": "554557ce9f997dc492910bbacf60fed27f8f775a1d4780a9cff98d82879f51e7",
     "datagrid": "12d9bc02105555f940d99106c894d4043253748110a576f9ed3ab726365200ce",
     "files": "da8bb9b0d9a664ccf438be25d7ac2512155f68b36aba36eba9bf85d4b6bd765f",
     "web": "82550341aebec9f42314b72956efe9e4dbbd7a7ffe6b898ed73599e96e73ef25",
-    "code-editor": "8bd612ee2f4e835562565ee58bfdfd2a38e7e067485dc7ec95b3257632bafa3e",
+    "code-editor": "6f7bbd47ab18ef90264eb1e270c7e17ae553546feed394d5efad567cfc27757c",
     "executable-recipes": "9e4c6120d39b7ccd6cbcbf5354147a64b8e5f4a8526b07ce81bdbbc4a370bcf6"
   }
 }
