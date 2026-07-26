@@ -28,6 +28,7 @@ export const PACKAGES = [
   { pkg: 'ui', entry: join('packages', 'ui', 'src', 'index.ts') },
   { pkg: 'forms', entry: join('packages', 'forms', 'src', 'index.ts') },
   { pkg: 'datagrid', entry: join('packages', 'datagrid', 'src', 'index.ts') },
+  { pkg: 'code-editor', entry: join('packages', 'code-editor', 'src', 'index.ts') },
   { pkg: 'files', entry: join('packages', 'files', 'src', 'index.ts') },
   { pkg: 'web', entry: join('packages', 'web', 'src', 'index.ts') },
 ];
@@ -89,6 +90,12 @@ export const CATEGORIES = [
     importPath: '@jsvision/datagrid',
   },
   {
+    slug: 'code-editor',
+    title: '@jsvision/code-editor — terminal-native source editing',
+    blurb:
+      'The document model, terminal editor surfaces, language adapters, LSP coordination, themes, safety limits, and observability.',
+  },
+  {
     slug: 'web',
     title: '@jsvision/web — browser runtime',
     blurb: 'Mount an app in an xterm.js terminal; the in-memory browser file system.',
@@ -144,6 +151,7 @@ export function categoryFor(pkg, file) {
   if (pkg === 'i18n') return 'i18n';
   if (pkg === 'forms') return 'forms';
   if (pkg === 'datagrid') return 'datagrid';
+  if (pkg === 'code-editor') return 'code-editor';
   if (pkg === 'web') return 'web';
   if (pkg === 'files') return 'files';
   if (/packages\/core\//.test(file)) return 'core-essentials';

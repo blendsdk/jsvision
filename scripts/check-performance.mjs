@@ -10,6 +10,17 @@ const PERFORMANCE_TESTS = [
   ['workspace', '@jsvision/i18n', 'bench'],
   ['workspace', '@jsvision/ui', 'test', 'test/editor-perf.spec.test.ts', '--maxWorkers=1'],
   ['workspace', '@jsvision/datagrid', 'test', 'test/perf-grid-bench.spec.test.ts', '--maxWorkers=1'],
+  [
+    'workspace',
+    '@jsvision/code-editor',
+    'test',
+    'test/code-editor-architecture.spec.test.ts',
+    'src/quality.perf.test.ts',
+    'src/languages/languages.perf.test.ts',
+    'src/ui/folding.perf.test.ts',
+    'src/ui/viewport-long-line.perf.test.ts',
+    '--maxWorkers=1',
+  ],
 ];
 
 /**
