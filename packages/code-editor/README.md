@@ -24,6 +24,29 @@ const controller = createCodeEditorController({
 const window = new CodeEditorWindow({ controller, title: 'main.ts' });
 ```
 
+## Internationalization
+
+Import one explicit locale catalog, create one application-owned service, and pass the same service
+to the application and editor:
+
+```ts
+import { codeEditorNl } from '@jsvision/code-editor/locales/nl';
+import { createI18n, defineCatalog } from '@jsvision/i18n';
+
+const appOverrides = defineCatalog({
+  schema: 1,
+  locale: 'nl',
+  messages: { 'code-editor.window.title': 'Broneditor' },
+});
+const i18n = createI18n({ locale: 'nl', catalogs: [codeEditorNl, appOverrides] });
+const localizedWindow = new CodeEditorWindow({ controller, i18n });
+```
+
+The application catalog comes last so its messages win. Without injection, each `CodeEditor`
+creates an isolated English service for compatibility. Editor-owned labels are translated; source,
+queries and replacement values, language IDs, filenames, paths, key/command tokens, and LSP or
+host-provided detail remain caller content and are sanitized only for terminal-safe presentation.
+
 The root entry point includes the document model, controller, `CodeEditor`, `CodeEditorWindow`,
 themes, protocol-neutral LSP coordination, safety limits, degradation state, and observability.
 Built-in adapters are separate public imports:

@@ -5,7 +5,8 @@ import ts from 'typescript';
 
 const ROOT = process.cwd();
 const MANIFEST_PATH = path.join(ROOT, 'tools/i18n-literals.json');
-const SOURCE_ROOTS = ['packages/ui/src', 'packages/forms/src', 'packages/files/src', 'packages/datagrid/src'];
+const LOCALE_CONFIG_PATH = path.join(ROOT, 'tools/i18n-locale-exports.json');
+const SAFE_PACKAGE = /^[a-z][a-z0-9-]*$/u;
 const STRING_PROPERTIES = new Set(['defaultMessage', 'label', 'placeholder', 'title']);
 const STRING_CONSTRUCTORS = new Set(['Button', 'Dialog', 'Label', 'Text', 'Window']);
 const STRING_CALLS = new Set(['confirm', 'confirmBox', 'infoBox', 'messageBox']);
@@ -16,6 +17,25 @@ const TRANSLATED_LABEL_CALLS = new Set([
   'datagridAcceleratorLabel',
 ]);
 
+/** Load package source roots from the shared locale package registry. */
+async function sourceRoots() {
+  const config = JSON.parse(await readFile(LOCALE_CONFIG_PATH, 'utf8'));
+  if (
+    config === null ||
+    typeof config !== 'object' ||
+    !Array.isArray(config.packages) ||
+    config.packages.length === 0 ||
+    config.packages.some(
+      (entry) =>
+        entry === null || typeof entry !== 'object' || typeof entry.name !== 'string' || !SAFE_PACKAGE.test(entry.name),
+    ) ||
+    new Set(config.packages.map(({ name }) => name)).size !== config.packages.length
+  ) {
+    throw new TypeError('Invalid i18n locale export package configuration.');
+  }
+  return config.packages.map(({ name }) => `packages/${name}/src`);
+}
+
 /** Recursively list TypeScript source files in deterministic path order. */
 async function sourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -23,7 +43,7 @@ async function sourceFiles(directory) {
   for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
     const absolute = path.join(directory, entry.name);
     if (entry.isDirectory()) files.push(...(await sourceFiles(absolute)));
-    else if (entry.isFile() && entry.name.endsWith('.ts')) files.push(absolute);
+    else if (entry.isFile() && entry.name.endsWith('.ts') && !entry.name.includes('.test.')) files.push(absolute);
   }
   return files;
 }
@@ -155,7 +175,9 @@ function validateManifest(value) {
 
 const extracted = (
   await Promise.all(
-    (await Promise.all(SOURCE_ROOTS.map((root) => sourceFiles(path.join(ROOT, root))))).flat().map(candidatesForFile),
+    (await Promise.all((await sourceRoots()).map((root) => sourceFiles(path.join(ROOT, root)))))
+      .flat()
+      .map(candidatesForFile),
   )
 )
   .flat()

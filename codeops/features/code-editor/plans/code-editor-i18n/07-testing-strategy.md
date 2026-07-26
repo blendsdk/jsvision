@@ -110,12 +110,12 @@ harnesses; real in-memory application/controller/document objects are preferred.
 
 ## Verification checklist
 
-- [ ] ST-1 through ST-24 have concrete immutable tests.
-- [ ] Each implementation phase records expected red before changing production code.
-- [ ] Catalog/injection specifications pass green before implementation tests are added.
-- [ ] Presentation specifications pass green without changing search/LSP/controller semantics.
-- [ ] Tooling/docs/plugin specifications pass green from generated canonical sources.
-- [ ] Package typecheck, test, and docs checks pass during focused iteration.
-- [ ] `yarn plugin:update` and `yarn plugin:check` pass.
-- [ ] `yarn verify` passes.
-- [ ] External proficient-review and #185 harness status are reported honestly.
+- [x] ST-1 through ST-24 have concrete immutable tests.
+- [x] Each implementation phase records expected red before changing production code.
+- [x] Catalog/injection specifications pass green before implementation tests are added.
+- [x] Presentation specifications pass green without changing search/LSP/controller semantics.
+- [x] Tooling/docs/plugin specifications pass green from generated canonical sources.
+- [x] Package typecheck, test, and docs checks pass during focused iteration.
+- [x] `yarn plugin:update` and `yarn plugin:check` pass.
+- [x] `yarn verify` passes.
+- [x] External proficient-review and #185 harness status are reported honestly.

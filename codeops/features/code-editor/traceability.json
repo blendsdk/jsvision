@@ -2536,9 +2536,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:8acf240231c2e14a0b51487f8d9d9ce651f44e6c82bdd8767113d5550cb79f2a",
+          "revision": "sha256:3ab63f15fc83d7f73632f3f20277da2099909cdb97eb0b0c3d8f0ad09719ae45",
           "upstream": "code-editor/I18N-TASK-PHASE-3",
-          "validatedAt": "2026-07-26T11:30:00Z"
+          "validatedAt": "2026-07-26T11:21:00Z"
         }
       ]
     },
@@ -2576,6 +2576,7 @@
         "redEvidence:Phase 1 specifications failed only for the absent Code Editor catalog module and ten absent locale subpaths before production changes.",
         "greenEvidence:Phase 1 catalog, injection, fallback, and locale specifications pass 74 of 74 focused assertions; yarn verify passes 38 of 38 Turbo tasks plus performance and plugin gates.",
         "greenEvidence:Phase 2 presentation specifications and implementation boundaries pass 15 of 15 focused assertions; Code Editor passes 364 of 364 tests; yarn verify passes 38 of 38 Turbo tasks plus performance and plugin gates.",
+        "greenEvidence:Phase 3 tooling, documentation, and plugin specifications pass 10 of 10 focused assertions; generated Code Editor API targets resolve; yarn verify passes 38 of 38 Turbo tasks plus performance and plugin gates.",
         "summary:Specification coverage is planned before production implementation in every phase."
       ],
       "id": "TEST-I18N",
@@ -2591,7 +2592,7 @@
           }
         }
       ],
-      "status": "planned",
+      "status": "passing",
       "title": "Code Editor internationalization specification coverage",
       "type": "test",
       "validations": []
@@ -2666,8 +2667,13 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Phase 3 integrates configuration-driven locale, review, and literal tooling with consumer docs and synchronized canonical/generated plugin guidance.",
+        "verification:yarn docs:api generated Code Editor main and all ten locale targets; yarn verify passed 38 of 38 Turbo tasks, all performance budgets, and plugin integrity on 2026-07-26.",
+        "summary:Independent reviewer and auditor closed all critical/major findings; 45 proficient translation approvals and the #185 geometry harness remain external follow-up gates."
+      ],
       "id": "I18N-TASK-PHASE-3",
-      "revision": "sha256:8acf240231c2e14a0b51487f8d9d9ce651f44e6c82bdd8767113d5550cb79f2a",
+      "revision": "sha256:3ab63f15fc83d7f73632f3f20277da2099909cdb97eb0b0c3d8f0ad09719ae45",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -2679,12 +2685,12 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Integrate Code Editor i18n tooling and documentation",
       "type": "task",
       "validations": []
     }
   ],
   "schema": 2,
-  "updated": "2026-07-26T10:02:00Z"
+  "updated": "2026-07-26T11:21:00Z"
 }

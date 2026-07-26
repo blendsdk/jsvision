@@ -1,12 +1,12 @@
 // The documented packages — the single list shared by the generator and the build
-// gate. It is exactly the publishable set (core, i18n, ui, files, forms, datagrid); the
+// gate. It is exactly the publishable set (core, i18n, ui, files, forms, datagrid, code-editor); the
 // private browser runtime `@jsvision/web` powers the site's live examples but is not
 // itself a product package, so it is not documented here. `entry` and `tsconfig` are
 // relative to the docs-site package root.
 
 /**
  * @typedef {object} DocPackage
- * @property {'core' | 'i18n' | 'ui' | 'files' | 'forms' | 'datagrid'} name  Unscoped package name (and its api/<name>/ dir).
+ * @property {'core' | 'i18n' | 'ui' | 'files' | 'forms' | 'datagrid' | 'code-editor'} name  Unscoped package name (and its api/<name>/ dir).
  * @property {string} entry     Public entry point, relative to the docs-site root.
  * @property {string} tsconfig  The package's tsconfig, relative to the docs-site root.
  */
@@ -19,4 +19,9 @@ export const PACKAGES = [
   { name: 'files', entry: '../files/src/index.ts', tsconfig: '../files/tsconfig.json' },
   { name: 'forms', entry: '../forms/src/index.ts', tsconfig: '../forms/tsconfig.json' },
   { name: 'datagrid', entry: '../datagrid/src/index.ts', tsconfig: '../datagrid/tsconfig.json' },
+  {
+    name: 'code-editor',
+    entry: '../code-editor/src/index.ts',
+    tsconfig: '../code-editor/tsconfig.json',
+  },
 ];

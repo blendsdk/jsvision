@@ -2,6 +2,153 @@
   "schema": 1,
   "entries": [
     {
+      "path": "packages/code-editor/src/architecture/feasibility.ts",
+      "context": "label",
+      "literal": "javascript",
+      "disposition": "non-localized",
+      "owner": "technical"
+    },
+    {
+      "path": "packages/code-editor/src/architecture/feasibility.ts",
+      "context": "label",
+      "literal": "node",
+      "disposition": "non-localized",
+      "owner": "technical"
+    },
+    {
+      "path": "packages/code-editor/src/architecture/feasibility.ts",
+      "context": "label",
+      "literal": "postgresql",
+      "disposition": "non-localized",
+      "owner": "technical"
+    },
+    {
+      "path": "packages/code-editor/src/architecture/feasibility.ts",
+      "context": "label",
+      "literal": "root",
+      "disposition": "non-localized",
+      "owner": "technical"
+    },
+    {
+      "path": "packages/code-editor/src/architecture/feasibility.ts",
+      "context": "label",
+      "literal": "typescript",
+      "disposition": "non-localized",
+      "owner": "technical"
+    },
+    {
+      "path": "packages/code-editor/src/i18n/presentation.ts",
+      "context": "default-message",
+      "literal": "${feature} pending",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.degradation.operation-pending"
+    },
+    {
+      "path": "packages/code-editor/src/i18n/presentation.ts",
+      "context": "default-message",
+      "literal": "${feature} unavailable",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.degradation.feature-unavailable"
+    },
+    {
+      "path": "packages/code-editor/src/i18n/presentation.ts",
+      "context": "default-message",
+      "literal": "Col",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.status.column"
+    },
+    {
+      "path": "packages/code-editor/src/i18n/presentation.ts",
+      "context": "default-message",
+      "literal": "Ln",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.status.line"
+    },
+    {
+      "path": "packages/code-editor/src/i18n/presentation.ts",
+      "context": "default-message",
+      "literal": "warning ${codePoint}",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.invisible.warning"
+    },
+    {
+      "path": "packages/code-editor/src/ui/code-editor-window.ts",
+      "context": "default-message",
+      "literal": "Code Editor",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.window.title"
+    },
+    {
+      "path": "packages/code-editor/src/ui/search-presentation.ts",
+      "context": "default-message",
+      "literal": "Case sensitive",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.search.case-sensitive"
+    },
+    {
+      "path": "packages/code-editor/src/ui/search-presentation.ts",
+      "context": "default-message",
+      "literal": "close",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.search.action.close"
+    },
+    {
+      "path": "packages/code-editor/src/ui/search-presentation.ts",
+      "context": "default-message",
+      "literal": "Find",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.search.find"
+    },
+    {
+      "path": "packages/code-editor/src/ui/search-presentation.ts",
+      "context": "default-message",
+      "literal": "next",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.search.action.next"
+    },
+    {
+      "path": "packages/code-editor/src/ui/search-presentation.ts",
+      "context": "default-message",
+      "literal": "previous",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.search.action.previous"
+    },
+    {
+      "path": "packages/code-editor/src/ui/search-presentation.ts",
+      "context": "default-message",
+      "literal": "replace",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.search.action.replace"
+    },
+    {
+      "path": "packages/code-editor/src/ui/search-presentation.ts",
+      "context": "default-message",
+      "literal": "Replace",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.search.replace"
+    },
+    {
+      "path": "packages/code-editor/src/ui/search-presentation.ts",
+      "context": "default-message",
+      "literal": "replace all",
+      "disposition": "localized",
+      "owner": "framework",
+      "key": "code-editor.search.action.replace-all"
+    },
+    {
       "path": "packages/datagrid/src/value-list-popup.ts",
       "context": "default-message",
       "literal": "Apply",
