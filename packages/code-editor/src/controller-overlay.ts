@@ -27,6 +27,7 @@ export function createDiagnosticOverlay(
     kind: 'diagnostic',
     items: Object.freeze([`[${severity}] ${detail}`]),
     selected: 0,
+    diagnostic: Object.freeze({ severity, detail }),
   });
 }
 

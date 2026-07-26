@@ -924,6 +924,12 @@ interface CodeEditorOverlayPresentation {
   kind: 'hover' | 'signature' | 'diagnostic' | 'navigation' | 'symbols';   // Interaction family represented by the rows.
   items: readonly string[];   // Sanitized bounded rows rendered by the terminal popup.
   selected: number;   // Zero-based row selected by chooser-style overlays.
+  diagnostic?: {
+    /** Stable severity used to select the localized editor-owned label. */
+    readonly severity: 'error' | 'warning' | 'information' | 'hint';
+    /** Sanitized external detail that must never be translated as a template. */
+    readonly detail: string;
+  };   // Locale-neutral diagnostic wrapper retained until the final view projection.
 }
 ```
 
@@ -966,6 +972,17 @@ Field that currently receives keyboard input in the find/replace surface.
 
 ```ts
 type CodeEditorSearchField = 'query' | 'replacement'
+```
+
+## CodeEditorSearchPresentation
+
+Immutable terminal rows reserved for the editor's find/replace surface.
+
+```ts
+interface CodeEditorSearchPresentation {
+  rowCount: 0 | 1 | 2;   // Zero while closed, one for find, and two for replace.
+  rows: readonly string[];   // Display-cell-bounded localized rows in top-to-bottom order.
+}
 ```
 
 ## CodeEditorSearchState
@@ -1662,6 +1679,14 @@ classifyDocumentSize(size: {
 }): CodeEditorDocumentSizeClassification
 ```
 
+## clipCodeEditorDisplayText
+
+Clips text to terminal display cells without splitting a wide code point.
+
+```ts
+clipCodeEditorDisplayText(text: string, maximumWidth: number, ellipsis = true): string
+```
+
 ## createCodeEditorController
 
 Creates a controller shared by direct and window-hosted code editor views.
@@ -1764,6 +1789,38 @@ Normalizes a public selection input into trusted document offsets.
 
 ```ts
 documentSelection(value: DocumentSelectionInput, length: number): DocumentSelection
+```
+
+## formatCodeEditorDegradationNotice
+
+Formats one editor-owned degradation notice with an explicit or isolated English service.
+
+```ts
+formatCodeEditorDegradationNotice(notice: CodeEditorDegradationNotice, i18n?: I18n): string | undefined
+```
+
+## formatCodeEditorDiagnosticOverlay
+
+Formats a structured diagnostic overlay at the final locale-bound view boundary.
+
+```ts
+formatCodeEditorDiagnosticOverlay(overlay: CodeEditorOverlayPresentation, i18n: I18n = createEnglishCodeEditorI18n(), maximumWidth = 240): readonly string[]
+```
+
+## formatCodeEditorStatus
+
+Formats status values with line and column before lower-priority language text.
+
+```ts
+formatCodeEditorStatus(status: { readonly language: string; readonly line: number; readonly column: number }, i18n: I18n = createEnglishCodeEditorI18n(), maximumWidth = 2_000): string
+```
+
+## formatInvisibleCharacterWarning
+
+Formats an invisible-character warning without changing detected source text.
+
+```ts
+formatInvisibleCharacterWarning(warning: InvisibleCharacterWarning, i18n?: I18n): string
 ```
 
 ## indentLines

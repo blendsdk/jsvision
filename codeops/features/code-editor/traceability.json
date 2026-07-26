@@ -2529,9 +2529,9 @@
         {
           "gate": "execution",
           "relation": "implemented-by",
-          "revision": "sha256:d4db40132298fbcd368c1afdcaaa273824ff5accb8a7dae7aa8d943a326a17d4",
+          "revision": "sha256:128cb3b185d557a259dea13ac5e82c1c4121d228fe09ad1390a88c9f20186974",
           "upstream": "code-editor/I18N-TASK-PHASE-2",
-          "validatedAt": "2026-07-26T11:30:00Z"
+          "validatedAt": "2026-07-26T10:47:00Z"
         },
         {
           "gate": "execution",
@@ -2575,6 +2575,7 @@
       "evidence": [
         "redEvidence:Phase 1 specifications failed only for the absent Code Editor catalog module and ten absent locale subpaths before production changes.",
         "greenEvidence:Phase 1 catalog, injection, fallback, and locale specifications pass 74 of 74 focused assertions; yarn verify passes 38 of 38 Turbo tasks plus performance and plugin gates.",
+        "greenEvidence:Phase 2 presentation specifications and implementation boundaries pass 15 of 15 focused assertions; Code Editor passes 364 of 364 tests; yarn verify passes 38 of 38 Turbo tasks plus performance and plugin gates.",
         "summary:Specification coverage is planned before production implementation in every phase."
       ],
       "id": "TEST-I18N",
@@ -2641,8 +2642,12 @@
     },
     {
       "edges": [],
+      "evidence": [
+        "summary:Phase 2 localized presentation, search geometry, display-cell clipping, hostile-input handling, and lifecycle isolation are implemented and independently reviewed.",
+        "verification:yarn verify passed 38 of 38 Turbo tasks, all performance budgets, and plugin integrity on 2026-07-26."
+      ],
       "id": "I18N-TASK-PHASE-2",
-      "revision": "sha256:d4db40132298fbcd368c1afdcaaa273824ff5accb8a7dae7aa8d943a326a17d4",
+      "revision": "sha256:128cb3b185d557a259dea13ac5e82c1c4121d228fe09ad1390a88c9f20186974",
       "semanticSources": [
         {
           "digest": "sha256",
@@ -2654,7 +2659,7 @@
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement localized Code Editor presentation",
       "type": "task",
       "validations": []
