@@ -14,6 +14,18 @@ Model idle/loading/success/error explicitly. Prevent stale completions with canc
 
 Design normal, minimum, and narrow sizes. Collapse panes, shorten labels, switch tabs, or state the size requirement. Do not assume mouse input, Unicode width, true color, or specific capabilities.
 
+## Clipboard boundary
+
+Treat the application event loop's raw plain-text value as the canonical clipboard. Copy and cut
+commit there before attempting host synchronization. Incoming host paste adopts the raw text before
+the focused control inserts it. This keeps `Input`, `Editor`, and `CodeEditor` consistent even when
+browser clipboard permission is denied or a terminal lacks OSC 52 support.
+
+Keep host mechanisms at the mount boundary: browser hosts use the Clipboard API, and native hosts
+encode OSC 52 only when terminal capabilities advertise it. Do not send OSC 52 to a browser
+terminal, invoke operating-system clipboard executables, log clipboard contents, or interpret
+clipboard text as terminal output.
+
 ## Security and reliability
 
 - Treat paste, filenames, terminal responses, and remote data as untrusted.

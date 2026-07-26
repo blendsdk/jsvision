@@ -205,7 +205,7 @@ Construction options for Editor.
 
 ```ts
 interface EditorOptions {
-  clipboard?: Editor;   // The shared clipboard editor. There is no implicit default: without one, in-app Cut/Copy/Paste between editors is a no-op. Pass the same `Editor` instance to every editor that should share a clipboard (typically a single hidden editor).
+  clipboard?: Editor;   // An optional editor that exposes or customizes clipboard contents. The application event loop owns the canonical clipboard, so ordinary in-app Cut/Copy/Paste works without this option. Pass the same `Editor` instance when an application needs the clipboard to remain visible or editable, as in the editor demonstration.
   editorDialog?: EditorDialogHandler;   // Handler for find/replace/save prompts. Defaults to a handler that cancels every prompt.
   undoDepth?: number;   // Maximum retained undo steps (default 1000).
   autoIndent?: boolean;   // Copy the previous line's leading whitespace when pressing Enter (default false).

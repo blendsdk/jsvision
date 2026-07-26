@@ -4,8 +4,8 @@
 > **Feature-Set**: `_maintenance`
 > **Status**: Plan Created
 > **Created**: 2026-07-26
-> **Last Updated**: 2026-07-27 01:48
-> **Progress**: 4/6 tasks complete
+> **Last Updated**: 2026-07-27 01:55
+> **Progress**: 5/6 tasks complete
 > **Phase baseline tree**: a803e702a4ee5f0309b1a3cedbab29ca5c79827a
 > **CodeOps Artifact Schema**: 1
 
@@ -160,7 +160,7 @@ plugin integrity checks passed.
 
 ### T-03.5 — Update consumer guidance and generated plugin surfaces
 
-- [ ] T-03.5 Update consumer guidance and generated plugin surfaces.
+- [x] T-03.5 Update consumer guidance and generated plugin surfaces. ✅ (completed: 2026-07-27 01:55)
 
 - Correct stale editor clipboard documentation.
 - Document the canonical clipboard model, primary portable shortcuts, host aliases, browser
@@ -177,8 +177,12 @@ plugin integrity checks passed.
 ```sh
 yarn plugin:update
 yarn plugin:check
-yarn workspace @jsvision/docs-site check:docs
+yarn check:docs
 ```
+
+**Verification evidence**: plugin generation and integrity checks passed; repository documentation
+checks passed for all eight documented packages; docs-site typecheck and 96 tests passed; examples
+typecheck and 341 tests passed. The source-impact snapshot and assembled Codex skill were refreshed.
 
 ### T-03.6 — Run the cross-platform release gate
 

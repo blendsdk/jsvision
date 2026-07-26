@@ -39,12 +39,19 @@ The focused editor supports the modern single-selection actions most useful in a
 | `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Shift+Z` | Undo or redo                                                                                                  |
 | `Ctrl+Left` / `Ctrl+Right`           | Move by source-code word boundary; add `Shift` to extend the selection                                        |
 | `Ctrl+Home` / `Ctrl+End`             | Move to the document boundary; add `Shift` to extend the selection                                            |
-| `Ctrl+C` / `Ctrl+X` / `Ctrl+V`       | Copy, cut, or paste through JSVision's shared clipboard channel                                               |
+| `Ctrl+C` / `Ctrl+X` / `Ctrl+V`       | Copy, cut, or paste through JSVision's canonical clipboard                                                    |
 | `Ctrl+/`                             | Toggle JavaScript, TypeScript, or PostgreSQL line comments                                                    |
 
 Completion and snippet navigation retain priority over indentation. Multiple carets, column
-selection, and browser or DOM clipboard dependencies are intentionally outside this editor's
-single-selection terminal contract.
+selection, and direct browser or operating-system dependencies remain outside this editor's
+single-selection contract. The application host owns that boundary: browser mounts use the
+Clipboard API, while native terminals use capability-gated OSC 52 for outbound copy and terminal
+paste events for inbound text.
+
+External paste follows the same insertion path as `Ctrl+V`, including read-only checks, selection
+replacement, undo history, and change notifications. The canonical clipboard preserves exact raw
+text. When multiline text is inserted, `CodeEditor` normalizes line breaks to the document's
+established style; documents without a consistent existing style use LF.
 
 ## Structural folding and window geometry
 

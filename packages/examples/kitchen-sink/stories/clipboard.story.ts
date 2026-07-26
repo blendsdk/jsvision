@@ -4,9 +4,9 @@
  * `Ctrl+A` select-all, `Ctrl+C` copy, `Ctrl+X` cut, and `Ctrl+V` paste work in every field without
  * per-widget wiring: the app-shell installs a default keymap that turns those chords into commands
  * the focused editor consumes. Copy/cut fill a shared in-app buffer (and the OS clipboard when the
- * terminal supports it), so you can copy from one `Input`, Tab to another, and paste — or move text
- * between an `Input` and the `Memo`. The classic `Ctrl+Ins` / `Shift+Ins` / `Shift+Del` aliases work
- * too. Selection is by `Shift+←/→` or mouse drag.
+ * host allows it), so you can copy from one `Input`, Tab to another, and paste — or move text
+ * between an `Input` and the `Memo`. Host paste updates the same canonical buffer. The classic
+ * `Ctrl+Ins` / `Shift+Ins` / `Shift+Del` aliases work too. Selection is by `Shift+←/→` or mouse drag.
  *
  * The `.js` extension in import specifiers is required by NodeNext ESM resolution.
  */
@@ -18,7 +18,7 @@ export const clipboardStory: Story = {
   id: 'controls/clipboard',
   category: 'Controls',
   title: 'Global Clipboard',
-  blurb: 'Ctrl+A/C/X/V everywhere — copy across fields and into the Memo; classic Ins/Del aliases too.',
+  blurb: 'Ctrl+A/C/X/V everywhere — one clipboard across fields, the Memo, and supported host environments.',
   build(ctx: StoryContext) {
     const source = signal('Select me: Ctrl+A then Ctrl+C, Tab, Ctrl+V.');
     const target = signal('');
@@ -42,7 +42,15 @@ export const clipboardStory: Story = {
 
     // Live bound-state echo — proves copy/cut/paste actually move text between the bound signals.
     g.add(at(new Text(() => `source="${source()}"  target="${target()}"`.slice(0, w)), 1, ctx.height - 3, w, 1));
-    g.add(at(new Text('Ctrl+A/C/X/V = select/copy/cut/paste. Shift+←/→ or drag selects.'), 1, ctx.height - 2, w, 1));
+    g.add(
+      at(
+        new Text('Ctrl+A/C/X/V = select/copy/cut/paste. Host paste updates the same clipboard.'),
+        1,
+        ctx.height - 2,
+        w,
+        1,
+      ),
+    );
     g.add(
       at(new Text('Tab moves focus. Classic Ctrl+Ins / Shift+Ins / Shift+Del also work.'), 1, ctx.height - 1, w, 1),
     );
