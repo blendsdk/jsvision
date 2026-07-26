@@ -39,17 +39,18 @@ function mountEditor(text = '') {
 
 test('an external multiline paste is inserted and becomes the value repeated by Ctrl+V', () => {
   const { controller, loop } = mountEditor();
-  const text = 'const café = "☕";\r\n第二行';
+  const hostText = 'const café = "☕";\r\n第二行';
+  const insertedText = 'const café = "☕";\n第二行';
 
-  loop.dispatch(paste(text));
-  expect(controller.document.text).toBe(text);
+  loop.dispatch(paste(hostText));
+  expect(controller.document.text).toBe(insertedText);
 
-  controller.document.setSelection({ anchor: 0, head: text.length });
+  controller.document.setSelection({ anchor: 0, head: insertedText.length });
   loop.dispatch(key('backspace'));
   expect(controller.document.text).toBe('');
 
   loop.dispatch(key('v', { ctrl: true }));
-  expect(controller.document.text).toBe(text);
+  expect(controller.document.text).toBe(insertedText);
 });
 
 test('delivered Ctrl+Shift+C copies through the same canonical path as Ctrl+C', () => {

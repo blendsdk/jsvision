@@ -4,8 +4,8 @@
 > **Feature-Set**: `_maintenance`
 > **Status**: Plan Created
 > **Created**: 2026-07-26
-> **Last Updated**: 2026-07-27 00:54
-> **Progress**: 3/6 tasks complete
+> **Last Updated**: 2026-07-27 01:48
+> **Progress**: 4/6 tasks complete
 > **Phase baseline tree**: a803e702a4ee5f0309b1a3cedbab29ca5c79827a
 > **CodeOps Artifact Schema**: 1
 
@@ -132,7 +132,10 @@ checks passed.
 
 ### T-03.4 — Align every editable control
 
-- [ ] T-03.4 Align every editable control.
+- [x] T-03.4 Align every editable control. ✅ (completed: 2026-07-27 01:48)
+
+**Runtime decision resolved**: [AR-01](00-ambiguity-register.md) normalizes inserted text to the
+target document's established line-ending style while leaving the canonical clipboard raw.
 
 - Add external `PasteEvent` handling to `CodeEditor`.
 - Ensure `Input`, `Editor`, and `CodeEditor` share the global clipboard commands without
@@ -150,6 +153,10 @@ checks passed.
 yarn workspace @jsvision/ui test
 yarn workspace @jsvision/code-editor test
 ```
+
+**Verification evidence**: UI 327 test files and 1,899 tests passed; CodeEditor 48 test files and
+345 tests passed. CRLF paste, undo, redo, read-only handling, formatting, documentation, and
+plugin integrity checks passed.
 
 ### T-03.5 — Update consumer guidance and generated plugin surfaces
 
