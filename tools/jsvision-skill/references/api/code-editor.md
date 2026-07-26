@@ -15,6 +15,14 @@ interface BracketPair {
 }
 ```
 
+## CODE_EDITOR_ACCELERATOR_MANIFEST
+
+Accelerator scopes owned by `@jsvision/code-editor`.
+
+```ts
+const CODE_EDITOR_ACCELERATOR_MANIFEST: AcceleratorManifest
+```
+
 ## CodeEditor
 
 Focusable terminal-native source editor backed by a document controller.
@@ -23,6 +31,7 @@ Focusable terminal-native source editor backed by a document controller.
 new CodeEditor(options: CodeEditorOptions)   // extends Group
 // methods & signals:
 controller: CodeEditorController
+i18n: I18n
 lineNumbers: boolean
 behavior
 nonColorIndicators
@@ -897,6 +906,7 @@ Construction options for a terminal-native code editor view.
 ```ts
 interface CodeEditorOptions {
   controller: CodeEditorController;
+  i18n?: I18n;   // Locale-bound service used for editor-owned presentation. Defaults to isolated English.
   keyBindings?: Readonly<Record<string, CodeEditorCommand>>;
   keyBindingOverrides?: Readonly<Record<string, CodeEditorCommand>>;   // Exact existing commands that explicitly authorize canonical custom-binding collisions.
   lineNumbers?: boolean;   // Shows the fixed line-number gutter when the viewport is wide enough. Defaults to `false`.
@@ -1067,6 +1077,7 @@ Movable editor window that adds standard scrollbar/status composition.
 ```ts
 new CodeEditorWindow(options: CodeEditorWindowOptions)   // extends Window
 // methods & signals:
+i18n: I18n
 editor: CodeEditor
 horizontalScrollBar: ScrollBar
 verticalScrollBar: ScrollBar
@@ -1084,6 +1095,7 @@ Construction options for standard window composition around a code editor.
 ```ts
 interface CodeEditorWindowOptions {
   controller: CodeEditorController;
+  i18n?: I18n;   // Locale-bound service shared by the window chrome and its editor. Defaults to isolated English.
   title?: string;
   lineNumbers?: boolean;   // Shows the editor's optional fixed line-number gutter. Defaults to `false`.
   onDocumentChange?: () => void;   // Runs after an accepted editor mutation so the host can refresh language services.
