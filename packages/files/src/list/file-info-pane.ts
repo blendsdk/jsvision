@@ -128,18 +128,17 @@ export class FileInfoPane extends View {
         const pm = hour >= 12;
         hour %= 12;
         if (hour === 0) hour = 12;
-        ctx.text(w - 9, 1, pad2(hour), style);
-        ctx.text(w - 7, 1, ':', style);
-        ctx.text(w - 6, 1, pad2(d.getMinutes()), style);
         const periodKey = pm ? 'files.info.time.pm' : 'files.info.time.am';
-        ctx.text(
-          w - 4,
-          1,
-          this.i18n.t(periodKey, {
-            defaultMessage: FILES_ENGLISH_CATALOG.messages[periodKey],
-          }),
-          style,
-        );
+        const period = this.i18n.t(periodKey, {
+          defaultMessage: FILES_ENGLISH_CATALOG.messages[periodKey],
+        });
+        // Anchor the complete time run from the translated period width. Shifting hour, colon, and
+        // minute together prevents a longer period from painting back over the minute field.
+        const periodX = w - 2 - stringWidth(period);
+        ctx.text(periodX - 5, 1, pad2(hour), style);
+        ctx.text(periodX - 3, 1, ':', style);
+        ctx.text(periodX - 2, 1, pad2(d.getMinutes()), style);
+        ctx.text(periodX, 1, period, style);
       }
     }
 

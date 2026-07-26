@@ -441,6 +441,14 @@ Find every accelerator character claimed by more than one entry, case-insensitiv
 findDuplicateAccelerators(chars: readonly string[]): DuplicateAccelerator[]
 ```
 
+## frameTitleMinimumWidth
+
+Minimum full frame width that preserves a complete centered title.
+
+```ts
+frameTitleMinimumWidth(title: string, numbered = false): number
+```
+
 ## item
 
 Build a command item — a selectable row that emits `command` when chosen.

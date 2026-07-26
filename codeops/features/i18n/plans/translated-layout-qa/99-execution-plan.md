@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-26 12:22 UTC
-> **Progress**: 6/27 tasks (22%)
+> **Last Updated**: 2026-07-26 13:46 UTC
+> **Progress**: 14/27 tasks (52%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -58,14 +58,14 @@ specification-first ordering and each phase receives independent reviewer and au
 
 **Reference**: 03-02 · AC-5 through AC-8 · AR-8 through AR-12, AR-17, AR-18
 
-- [ ] 2.1.1 `[spec-author]` Write UI dialog/surface and Forms requirements specifications covering intrinsic cells, requested minima, wrapping, focus, hit bounds, and English compatibility
-- [ ] 2.1.2 `[spec-author]` Write Files vertical-action/error-dialog and Calendar/DatePicker localized geometry specifications for all locales and Unicode overrides
-- [ ] 2.1.3 `[spec-author]` Write Datagrid filter/value-list/personalization desired-size, clamp, reflow, group-width, header, and right-edge specifications
-- [ ] 2.1.4 Run focused Phase 2 specifications and record expected red failures before production changes
-- [ ] 2.2.1 Migrate UI dialogs/editor surfaces and Forms to shared metrics, display-cell body sizing, intrinsic expansion, and stable component-owned wrapping
-- [ ] 2.2.2 Migrate Files vertical actions/error sizing and Calendar/DatePicker to one localized cell-geometry result
-- [ ] 2.2.3 Migrate Datagrid filter/value-list/personalization desired sizing, two-axis anchoring clamp, and complete-group action widths; finish catalog-call-site sweep
-- [ ] 2.3.1 Confirm Phase 2 specifications green, add infeasible/invalid/lifecycle implementation edges, run affected package checks and `yarn verify`, then complete reviewer/auditor quality loop
+- [x] 2.1.1 `[spec-author]` Write UI dialog/surface and Forms requirements specifications covering intrinsic cells, requested minima, wrapping, focus, hit bounds, and English compatibility *(completed 2026-07-26 12:32 UTC: six immutable cases; English compatibility and hard-bound focus pass, while feasible translated expansion fails as planned in UI and Forms)*
+- [x] 2.1.2 `[spec-author]` Write Files vertical-action/error-dialog and Calendar/DatePicker localized geometry specifications for all locales and Unicode overrides *(completed 2026-07-26 12:35 UTC: 24 cases cover all ten official locales plus Unicode overrides; official geometry and DatePicker parity pass, while FileDialog/errorBox and wide-month expansion fail as planned)*
+- [x] 2.1.3 `[spec-author]` Write Datagrid filter/value-list/personalization desired-size, clamp, reflow, group-width, header, and right-edge specifications *(completed 2026-07-26 12:39 UTC: five immutable cases cover translated desired width, two-axis viewport clamping, between reflow, five-action shared widths, and flexible translated headers; all fail against the planned fixed geometry)*
+- [x] 2.1.4 Run focused Phase 2 specifications and record expected red failures before production changes *(verified 2026-07-26 12:47 UTC: 39 focused cases ran; 26 compatibility/official-locale cases pass and 13 fail only at the planned translated expansion, clamp, reflow, uniform-width, and header boundaries)*
+- [x] 2.2.1 Migrate UI dialogs/editor surfaces and Forms to shared metrics, display-cell body sizing, intrinsic expansion, and stable component-owned wrapping *(verified 2026-07-26 12:53 UTC: translated UI/Forms and editor compatibility suites pass; UI typecheck, 14 focused dialog/editor cases, and all 116 Forms cases pass; the only remaining UI package failure is the planned Calendar oracle owned by 2.2.2)*
+- [x] 2.2.2 Migrate Files vertical actions/error sizing and Calendar/DatePicker to one localized cell-geometry result *(verified 2026-07-26 12:58 UTC: all 18 focused Files cases, 44 focused Calendar/DatePicker/packaging cases, Files typecheck, all 178 Files cases, and UI typecheck pass; Calendar localization was split to preserve the enforced 500-line source limit)*
+- [x] 2.2.3 Migrate Datagrid filter/value-list/personalization desired sizing, two-axis anchoring clamp, and complete-group action widths; finish catalog-call-site sweep *(verified 2026-07-26 13:02 UTC: five translated popup/personalization oracles and all 704 Datagrid cases pass; Datagrid typecheck and catalog/layout call-site sweep pass; reactive desired sizing now re-clamps between/distinct changes without altering custom-popup sizing)*
+- [x] 2.3.1 Confirm Phase 2 specifications green, add infeasible/invalid/lifecycle implementation edges, run affected package checks and `yarn verify`, then complete reviewer/auditor quality loop *(verified 2026-07-26 13:46 UTC: UI 1,929, Forms 116, Files 181, and Datagrid 709 cases pass; `yarn plugin:check` and the 246.67-second authoritative `yarn verify` pass; independent review found no critical findings, and every major/minor finding plus the single re-review's residual Files/frame findings was fixed and recorded in `08-phase-2-quality-review.md`)*
 
 **Deliverables**: Every translated framework surface migrated or explicitly certified cell-correct.
 
