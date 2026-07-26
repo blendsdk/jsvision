@@ -28,6 +28,14 @@ function commandEvent(command: string, clipboard = ''): DispatchEvent {
   };
 }
 
+/** Creates the smallest direct external-paste envelope needed by the view contract. */
+function pasteEvent(text: string): DispatchEvent {
+  return {
+    event: { type: 'paste', text, truncated: false },
+    handled: false,
+  };
+}
+
 describe('modern keyboard edge behavior', () => {
   it('excludes a trailing line when the selection ends at its start', () => {
     const { controller, editor } = createEditor('one\ntwo\nthree');
@@ -68,6 +76,47 @@ describe('modern keyboard edge behavior', () => {
 
     expect(event.handled).toBe(true);
     expect(controller.document.identity.revision).toBe(revision);
+  });
+
+  it('replaces the selection with external paste in one undoable transaction', () => {
+    const { controller, editor } = createEditor('before');
+    controller.document.setSelection({ anchor: 0, head: 6 });
+    const event = pasteEvent('after\n第二行');
+
+    editor.onEvent(event);
+
+    expect(event.handled).toBe(true);
+    expect(controller.document.text).toBe('after\n第二行');
+    expect(controller.document.undoDepth).toBe(1);
+  });
+
+  it('normalizes external paste to an established CRLF document', () => {
+    const { controller, editor } = createEditor('first\r\nsecond');
+    controller.document.setSelection({
+      anchor: controller.document.text.length,
+      head: controller.document.text.length,
+    });
+    const event = pasteEvent('\nthird\rline');
+
+    editor.onEvent(event);
+
+    expect(event.handled).toBe(true);
+    expect(controller.document.text).toBe('first\r\nsecond\r\nthird\r\nline');
+    expect(controller.document.undo().accepted).toBe(true);
+    expect(controller.document.text).toBe('first\r\nsecond');
+    expect(controller.document.redo().accepted).toBe(true);
+    expect(controller.document.text).toBe('first\r\nsecond\r\nthird\r\nline');
+  });
+
+  it('consumes external paste without mutating a read-only document', () => {
+    const { controller, editor } = createEditor('locked', true);
+    const event = pasteEvent('replacement');
+
+    editor.onEvent(event);
+
+    expect(event.handled).toBe(true);
+    expect(controller.document.text).toBe('locked');
+    expect(controller.document.undoDepth).toBe(0);
   });
 
   it('comments only nonblank selected lines at their shared indentation', () => {

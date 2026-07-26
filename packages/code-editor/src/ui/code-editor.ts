@@ -25,6 +25,7 @@ import { CodeEditorMouseSelection } from './mouse-selection.js';
 import { registerCodeEditorKeyBindings } from './keybindings.js';
 import { codeEditorGutterWidth, projectCodeEditor, type CodeEditorFrame } from './projection.js';
 import { codeEditorVisibleRows } from './folding.js';
+import { lineSeparator } from './editing-operations.js';
 import { CodeEditorSearchSession, type CodeEditorSearchState } from './search-session.js';
 import { CodeEditorThemeState } from './theme-state.js';
 import { CodeEditorViewport, type CodeEditorViewportMetrics } from './viewport.js';
@@ -222,7 +223,8 @@ export class CodeEditor extends Group {
 
   /** Inserts text through one validated document transaction. */
   public insertText(text: string): boolean {
-    const accepted = this.controller.replaceSelection(text);
+    const normalized = normalizeInsertedLineEndings(text, this.controller.document.lineEnding);
+    const accepted = this.controller.replaceSelection(normalized);
     if (accepted) {
       this.#finishMutation(true);
       this.#locallyHandledRevisions.add(Number(this.controller.document.identity.revision));
@@ -521,6 +523,11 @@ export class CodeEditor extends Group {
       this.#routeMouseEvent(event);
       return;
     }
+    if (event.event.type === 'paste') {
+      this.insertText(event.event.text);
+      event.handled = true;
+      return;
+    }
     if (event.event.type === 'command') {
       event.handled = routeCodeEditorCommand(
         this.controller,
@@ -691,6 +698,16 @@ export class CodeEditor extends Group {
     if (this.journey.length >= 128) this.journey.shift();
     this.journey.push(event);
   }
+}
+
+/**
+ * Converts newly inserted line breaks to the document's established newline sequence.
+ *
+ * Loaded document content remains untouched. Documents without an established line ending and
+ * mixed-ending documents use LF, matching the editor's existing Enter-key policy.
+ */
+function normalizeInsertedLineEndings(text: string, lineEnding: 'none' | 'lf' | 'crlf' | 'cr' | 'mixed'): string {
+  return text.replace(/\r\n|\r|\n/gu, lineSeparator(lineEnding));
 }
 
 function route(owner: Exclude<CodeEditorKeyRoute['owner'], 'unhandled'>): CodeEditorKeyRoute {
