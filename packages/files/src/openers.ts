@@ -11,6 +11,7 @@ import { ChDirDialog } from './dialog/chdir-dialog.js';
 import { errorBox } from './dialog/error-dialog.js';
 import type { ExecHost } from './dialog/error-dialog.js';
 import type { DirEntry, FileSystem } from './fs/types.js';
+import { createEnglishFilesI18n } from './i18n/catalog.js';
 
 /** Options for {@link openFile}. */
 export interface OpenFileOptions {
@@ -59,6 +60,7 @@ export interface ChangeDirOptions {
  */
 export async function openFile(host: ExecHost, opts: OpenFileOptions = {}): Promise<string | null> {
   const fs = opts.fs ?? nodeFileSystem;
+  const i18n = host.i18n ?? createEnglishFilesI18n();
   const dlg = new FileDialog({
     fs,
     directory: signal(opts.directory ?? fs.resolve('.')),
@@ -66,6 +68,7 @@ export async function openFile(host: ExecHost, opts: OpenFileOptions = {}): Prom
     save: opts.save,
     title: opts.title,
     inputName: opts.inputName,
+    i18n,
     filter: opts.filter,
     showError: (message) => void errorBox(host, message),
   });
@@ -98,10 +101,12 @@ export async function openFile(host: ExecHost, opts: OpenFileOptions = {}): Prom
  */
 export async function changeDir(host: ExecHost, opts: ChangeDirOptions = {}): Promise<string | null> {
   const fs = opts.fs ?? nodeFileSystem;
+  const i18n = host.i18n ?? createEnglishFilesI18n();
   const dlg = new ChDirDialog({
     fs,
     directory: signal(opts.directory ?? fs.resolve('.')),
     title: opts.title,
+    i18n,
     showError: (message) => void errorBox(host, message),
   });
   host.desktop.addWindow(dlg);

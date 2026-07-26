@@ -35,6 +35,46 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./locales/en": {
+      "types": "./dist/locales/en.d.ts",
+      "import": "./dist/locales/en.js"
+    },
+    "./locales/nl": {
+      "types": "./dist/locales/nl.d.ts",
+      "import": "./dist/locales/nl.js"
+    },
+    "./locales/de": {
+      "types": "./dist/locales/de.d.ts",
+      "import": "./dist/locales/de.js"
+    },
+    "./locales/fr": {
+      "types": "./dist/locales/fr.d.ts",
+      "import": "./dist/locales/fr.js"
+    },
+    "./locales/es": {
+      "types": "./dist/locales/es.d.ts",
+      "import": "./dist/locales/es.js"
+    },
+    "./locales/it": {
+      "types": "./dist/locales/it.d.ts",
+      "import": "./dist/locales/it.js"
+    },
+    "./locales/pt-PT": {
+      "types": "./dist/locales/pt-PT.d.ts",
+      "import": "./dist/locales/pt-PT.js"
+    },
+    "./locales/pl": {
+      "types": "./dist/locales/pl.d.ts",
+      "import": "./dist/locales/pl.js"
+    },
+    "./locales/ro": {
+      "types": "./dist/locales/ro.d.ts",
+      "import": "./dist/locales/ro.js"
+    },
+    "./locales/sv": {
+      "types": "./dist/locales/sv.d.ts",
+      "import": "./dist/locales/sv.js"
     }
   },
   "files": [
@@ -53,6 +93,7 @@
   },
   "dependencies": {
     "@jsvision/core": "1.1.0",
+    "@jsvision/i18n": "1.1.0",
     "@jsvision/ui": "1.1.0"
   },
   "devDependencies": {

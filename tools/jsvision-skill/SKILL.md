@@ -1,6 +1,6 @@
 ---
 name: jsvision
-description: Build, extend, debug, test, and review professional JSVision terminal applications using @jsvision/core, @jsvision/ui, @jsvision/forms, @jsvision/datagrid, @jsvision/files, and @jsvision/web. Use for new JSVision apps, Turbo Vision-style TUIs, application shells, responsive layouts, reactive state, forms, editable enterprise grids, file tools, browser terminals, custom widgets, themes, accessibility, performance, security, headless rendering, and production-readiness work.
+description: Build, extend, debug, test, localize, and review professional JSVision terminal applications using @jsvision/core, @jsvision/i18n, @jsvision/ui, @jsvision/forms, @jsvision/datagrid, @jsvision/files, and @jsvision/web. Use for new JSVision apps, Turbo Vision-style TUIs, application shells, responsive layouts, reactive state, internationalization and locale catalogs, plurals, forms, editable enterprise grids, file tools, browser terminals, custom widgets, themes, accessibility, performance, security, headless rendering, and production-readiness work.
 ---
 
 # Build professional JSVision applications
@@ -20,6 +20,8 @@ Treat JSVision as a retained terminal application framework, not printed output.
 - Use `@jsvision/ui` for views, layout, reactivity, input, shell, dialogs, and standard widgets.
 - Use `@jsvision/core` for capabilities, theme presets/types/generation, color and contrast utilities,
   and engine work. Import only from its public barrel.
+- Use `@jsvision/i18n` for application catalogs, plurals/selects, locale formatting, diagnostics,
+  validation, and one service injected into the application.
 - Use `@jsvision/forms` for headless form state, Zod validation, bindings, and form dialogs.
 - Use `@jsvision/datagrid` for editable, typed, windowed enterprise grids. Use UI `DataGrid` for read-oriented tables.
 - Use `@jsvision/files` for filesystem abstractions, dialogs, navigation, and editing.
@@ -33,13 +35,15 @@ Read [architecture.md](references/architecture.md) before designing a multi-scre
 1. Clarify users, terminal sizes, keyboard workflows, volume, persistence, and host.
 2. Sketch screens and command ownership. Separate domain state and services from views.
 3. Use the supported generator. Otherwise create a Node 22+, ESM TypeScript package with `.js` relative specifiers.
-4. Build shell and layout first with `col`, `row`, `stack`, `grow`, `fixed`, `fill`, and `spacer`.
-5. Add `signal`, `computed`, `effect`, and owned cleanup. Put `view.bind` in `onMount`.
-6. Choose standard widgets via [component-catalog.md](references/component-catalog.md).
-7. Use [forms.md](references/forms.md) and [datagrid.md](references/datagrid.md) when relevant.
-8. Wire one command vocabulary across menus, status items, accelerators, and buttons.
-9. Add loading, empty, error, confirmation, narrow-terminal, and capability-degradation states.
-10. Follow [quality-workflow.md](references/quality-workflow.md) and [gotchas.md](references/gotchas.md).
+4. Confirm locale requirements. Keep the no-config English default when localization is not needed;
+   otherwise follow [i18n.md](references/i18n.md) before composing framework-owned labels.
+5. Build shell and layout first with `col`, `row`, `stack`, `grow`, `fixed`, `fill`, and `spacer`.
+6. Add `signal`, `computed`, `effect`, and owned cleanup. Put `view.bind` in `onMount`.
+7. Choose standard widgets via [component-catalog.md](references/component-catalog.md).
+8. Use [forms.md](references/forms.md) and [datagrid.md](references/datagrid.md) when relevant.
+9. Wire one command vocabulary across menus, status items, accelerators, and buttons.
+10. Add loading, empty, error, confirmation, narrow-terminal, and capability-degradation states.
+11. Follow [quality-workflow.md](references/quality-workflow.md) and [gotchas.md](references/gotchas.md).
 
 ## Preserve rendering invariants
 
@@ -56,6 +60,8 @@ Read [architecture.md](references/architecture.md) before designing a multi-scre
 | --------------------------------------- | --------------------------------------------------------- |
 | Architecture and production boundaries  | [architecture.md](references/architecture.md)             |
 | Shell and lifecycle                     | [app-lifecycle.md](references/app-lifecycle.md)           |
+| Internationalization and locale choices | [i18n.md](references/i18n.md)                             |
+| Localized application recipe            | [i18n-app.md](references/recipes/i18n-app.md)             |
 | Layout and terminal sizes               | [layout.md](references/layout.md)                         |
 | Signals and ownership                   | [reactivity.md](references/reactivity.md)                 |
 | Widget selection                        | [component-catalog.md](references/component-catalog.md)   |

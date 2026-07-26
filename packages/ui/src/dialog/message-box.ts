@@ -1,9 +1,11 @@
 /**
  * Async modal helpers over {@link Dialog}: a message box, a yes/no confirmation, and a single-field
  * prompt. Each opens a centered modal, awaits the user's answer, and cleans itself up — so nobody
- * hand-writes centering math or teardown. They run against a minimal `{ loop, desktop }` host that an
- * `Application` from `createApplication()` satisfies directly.
+ * hand-writes centering math or teardown. They run against a minimal
+ * `{ loop, desktop, i18n }` host that an `Application` from `createApplication()` satisfies
+ * directly.
  */
+import type { I18n } from '@jsvision/i18n';
 import { Text, Label, Input } from '../controls/index.js';
 import type { Validator, Button } from '../controls/index.js';
 import { col, row, grow, fixed, cover, spacer } from '../view/index.js';
@@ -15,11 +17,13 @@ import { Dialog } from './dialog.js';
 import { okButton, cancelButton, yesButton, noButton, okCancelButtons } from './buttons.js';
 
 /**
- * The minimal host a modal helper needs: an event loop to run the modal and a desktop to mount it
- * into. An `Application` from `createApplication()` satisfies this directly — pass the app itself, or
- * `{ loop: app.loop, desktop: app.desktop }`.
+ * The minimal host a modal helper needs: an event loop to run the modal, a desktop to mount it into,
+ * and the service that owns framework text. An `Application` from `createApplication()` satisfies
+ * this directly; passing the app itself keeps those seams together.
  */
 export interface ModalDialogHost {
+  /** Translation service for package-owned dialog text. */
+  readonly i18n: I18n;
   /** Runs a view modally, resolving to the command that closed it. */
   loop: Pick<EventLoop, 'execView'>;
   /** The desktop the modal mounts into (and whose extent bounds it). */
@@ -75,8 +79,9 @@ export const DIALOG_BODY_PADDING = { top: 1, right: 2, bottom: 0, left: 2 } as c
  * @returns A sized row ready to drop into a dialog body column.
  */
 export function buttonBand(...buttons: Button[]): View {
+  const width = Math.max(BUTTON_WIDTH, ...buttons.map((button) => button.measure().width));
   return fixed(
-    row({ justify: 'center', gap: BUTTON_GAP }, ...buttons.map((b) => fixed(b, BUTTON_WIDTH))),
+    row({ justify: 'center', gap: BUTTON_GAP }, ...buttons.map((button) => fixed(button, width))),
     BUTTON_BAND_HEIGHT,
   );
 }
@@ -86,7 +91,7 @@ export function buttonBand(...buttons: Button[]): View {
  * command string that closed the dialog. Shared by the helpers here and the editor's dialog builders;
  * intentionally not re-exported through the package barrel (an internal engine, not public API).
  *
- * @param host The modal host (`{ loop, desktop }`).
+ * @param host The modal host (an `Application`, or `{ loop, desktop, i18n }`).
  * @param dlg  The dialog to run.
  * @returns The command that closed the dialog.
  */
@@ -106,7 +111,7 @@ export async function runDialog(host: ModalDialogHost, dlg: Dialog): Promise<str
  * Esc-dismissible, and both resolve the modal to `Commands.cancel`. Callers that only inform the user
  * typically ignore the return value.
  *
- * @param host The modal host (an `Application`, or `{ loop, desktop }`).
+ * @param host The modal host (an `Application`, or `{ loop, desktop, i18n }`).
  * @param o    Title, message text, and the button set.
  * @returns `'ok'` when OK is chosen, `'cancel'` on Cancel, Esc, or the frame close-box.
  * @example
@@ -137,7 +142,7 @@ export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): P
       col(
         { padding: DIALOG_BODY_PADDING },
         grow(new Text(o.text)),
-        hasCancel ? buttonBand(okButton(), cancelButton()) : buttonBand(okButton()),
+        hasCancel ? buttonBand(okButton(host.i18n), cancelButton(host.i18n)) : buttonBand(okButton(host.i18n)),
       ),
     ),
   );
@@ -149,7 +154,7 @@ export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): P
 /**
  * Ask a yes/no question modally.
  *
- * @param host The modal host (an `Application`, or `{ loop, desktop }`).
+ * @param host The modal host (an `Application`, or `{ loop, desktop, i18n }`).
  * @param text The question; the box sizes itself to fit.
  * @returns `true` on Yes; `false` on No, Esc, or closing the box.
  * @example
@@ -167,8 +172,21 @@ export async function messageBox(host: ModalDialogHost, o: MessageBoxOptions): P
  */
 export async function confirm(host: ModalDialogHost, text: string): Promise<boolean> {
   const width = Math.min(60, Math.max(40, text.length + 6));
-  const dlg = new Dialog({ title: 'Confirm', width, height: 9, centered: true });
-  dlg.add(cover(col({ padding: DIALOG_BODY_PADDING }, grow(new Text(text)), buttonBand(yesButton(), noButton()))));
+  const dlg = new Dialog({
+    title: host.i18n.t('ui.dialog.confirm.title', { defaultMessage: 'Confirm' }),
+    width,
+    height: 9,
+    centered: true,
+  });
+  dlg.add(
+    cover(
+      col(
+        { padding: DIALOG_BODY_PADDING },
+        grow(new Text(text)),
+        buttonBand(yesButton(host.i18n), noButton(host.i18n)),
+      ),
+    ),
+  );
 
   const result = await runDialog(host, dlg);
   return result === 'yes';
@@ -178,7 +196,7 @@ export async function confirm(host: ModalDialogHost, text: string): Promise<bool
  * Prompt for a single line of text modally. An optional validator gates OK through the dialog's
  * `valid()` sweep, which keeps the box open and refocuses the field when the value is invalid.
  *
- * @param host The modal host (an `Application`, or `{ loop, desktop }`).
+ * @param host The modal host (an `Application`, or `{ loop, desktop, i18n }`).
  * @param o    Title, field label (with optional `~X~` hotkey), the two-way value signal, and validator.
  * @returns The entered string on OK, or `null` if the user cancels.
  * @example
@@ -201,7 +219,7 @@ export async function inputBox(host: ModalDialogHost, o: InputBoxOptions): Promi
   const dlg = new Dialog({ title: o.title, width, height: 9, centered: true });
 
   const input = new Input({ value: o.value, validator: o.validator, placeholder: o.placeholder });
-  const [ok, cancel] = okCancelButtons();
+  const [ok, cancel] = okCancelButtons(host.i18n);
   // Neither the caption nor the field reports a natural size, so both take an explicit one-row size —
   // left to size themselves they would collapse to nothing and be clipped away. The spacer below them
   // absorbs the slack that keeps the button band on the bottom row. The caption is added first for

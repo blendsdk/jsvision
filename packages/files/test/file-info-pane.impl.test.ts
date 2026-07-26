@@ -10,7 +10,7 @@
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilities } from '@jsvision/core';
-import { Group, createEventLoop } from '@jsvision/ui';
+import { createI18n, defineCatalog, Group, createEventLoop } from '@jsvision/ui';
 import { FileInfoPane } from '../src/list/file-info-pane.js';
 import type { FileInfoPaneOptions } from '../src/list/file-info-pane.js';
 import type { DirEntry } from '../src/fs/types.js';
@@ -81,6 +81,37 @@ test('impl: 12-hour am/pm edges — noon → 12pm, afternoon → 01pm', () => {
   expect(span(buf, W - 9, 1, 2)).toBe('01'); // 13:30 → 01
   expect(span(buf, W - 6, 1, 2)).toBe('30');
   expect(span(buf, W - 4, 1, 2)).toBe('pm');
+});
+
+test('impl: a wide localized month remains intact before the fixed day and year fields', () => {
+  const entry: DirEntry = {
+    name: 'x',
+    kind: 'file',
+    size: 1,
+    mtime: new Date(2026, 0, 25, 13, 30, 0),
+    hidden: false,
+  };
+  const i18n = createI18n({
+    locale: 'en',
+    catalogs: [
+      defineCatalog({
+        schema: 1,
+        locale: 'en',
+        messages: { 'files.info.month.january.short': '界界' },
+      }),
+    ],
+  });
+  const loop = mount({
+    fs: createMemoryFs(dir()),
+    directory: () => '/',
+    wildcard: () => '*',
+    focusedEntry: () => entry,
+    i18n,
+  });
+  const row = span(loop.renderRoot.buffer(), 0, 1, W);
+
+  expect(row).toContain('界界');
+  expect(row).toContain('25,2026');
 });
 
 test('impl: a broken symlink shows the name only — no size/date/time fields', () => {
