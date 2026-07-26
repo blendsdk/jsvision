@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-26 10:02 UTC
-> **Progress**: 6/21 tasks (29%)
+> **Last Updated**: 2026-07-26 11:21 UTC
+> **Progress**: 21/21 tasks (100%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -82,20 +82,20 @@ and additive compatibility.
 
 ## Phase 3: Locale tooling, docs, plugin, and release closure
 
-> **Phase baseline tree**: _(recorded by exec-plan before the first task)_
+> **Phase baseline tree**: `b99918145` plus the pre-existing `yarn.lock` modification
 > **Expected modification set**: shared i18n generator/check configuration and tests, ownership and
 > review manifests, docs, canonical skill/impact mapping, generated plugin, plan/roadmap/traceability
 
 **Reference**: 03-03 · ST-20 through ST-24 · AR-8, AR-9, AR-12, AR-13
 
-- [ ] 3.1.1 `[spec-author]` Extend immutable package-registration, locale, docs, and canonical-skill specifications for ST-20 through ST-24 — `packages/i18n/test/i18n-package-registration.spec.test.ts`, `packages/docs-site/test/i18n-docs.spec.test.ts`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts`
-- [ ] 3.1.2 Run the focused Phase 3 specifications and record expected red failures before tooling/documentation changes
-- [ ] 3.2.1 Register Code Editor in locale configuration and make locale generation/check counts configuration-derived and path-safe — `tools/i18n-locale-exports.json`, `scripts/update-i18n-locales.mjs`
-- [ ] 3.2.2 Make literal ownership, locale validation, review loading, and cross-package catalog checks configuration-aware; classify Code Editor literals without fabricating reviews — `scripts/check-i18n-literals.mjs`, `scripts/check-i18n-reviews.mjs`, `tools/i18n-literals.json`, `packages/i18n/test/`
-- [ ] 3.2.3 Document Code Editor injection, locale subpaths, application overrides, and external-content ownership in package and docs-site guidance — `packages/code-editor/README.md`, `packages/docs-site/guide/code-editor.md`, `packages/docs-site/guide/i18n.md`, `packages/docs-site/reference/i18n-entry-points.md`
-- [ ] 3.2.4 Update canonical skill references and overlapping impact mapping, run `yarn plugin:update`, and inspect/include generated plugin output — `tools/jsvision-skill/`, `tools/jsvision-plugin-impact.json`, `plugins/jsvision-plugin/skills/jsvision/`
-- [ ] 3.3.1 Confirm Phase 3 specifications green, run locale/plugin/package documentation checks, and report external proficient-review plus #185 harness gates
-- [ ] 3.3.2 Run final `yarn verify`, synchronize traceability/roadmaps, and record implementation/verification evidence without closing #185-owned acceptance work
+- [x] 3.1.1 `[spec-author]` Extend immutable package-registration, locale, docs, and canonical-skill specifications for ST-20 through ST-24 — `packages/i18n/test/i18n-package-registration.spec.test.ts`, `packages/docs-site/test/i18n-docs.spec.test.ts`, `tools/jsvision-skill/test/i18n-plugin.spec.test.ts` *(completed 2026-07-26 10:49 UTC)*
+- [x] 3.1.2 Run the focused Phase 3 specifications and record expected red failures before tooling/documentation changes *(verified red 2026-07-26 10:49 UTC: package config/counts, docs entry, impact mapping, plugin copy, and five-catalog recipe expectations failed)*
+- [x] 3.2.1 Register Code Editor in locale configuration and make locale generation/check counts configuration-derived and path-safe — `tools/i18n-locale-exports.json`, `scripts/update-i18n-locales.mjs` *(completed 2026-07-26 10:54 UTC)*
+- [x] 3.2.2 Make literal ownership, locale validation, review loading, and cross-package catalog checks configuration-aware; classify Code Editor literals without fabricating reviews — `scripts/check-i18n-literals.mjs`, `scripts/check-i18n-reviews.mjs`, `tools/i18n-literals.json`, `packages/i18n/test/` *(completed 2026-07-26 10:54 UTC)*
+- [x] 3.2.3 Document Code Editor injection, locale subpaths, application overrides, and external-content ownership in package and docs-site guidance — `packages/code-editor/README.md`, `packages/docs-site/guide/code-editor.md`, `packages/docs-site/guide/i18n.md`, `packages/docs-site/reference/i18n-entry-points.md` *(completed 2026-07-26 10:54 UTC)*
+- [x] 3.2.4 Update canonical skill references and overlapping impact mapping, run `yarn plugin:update`, and inspect/include generated plugin output — `tools/jsvision-skill/`, `tools/jsvision-plugin-impact.json`, `plugins/jsvision-plugin/skills/jsvision/` *(completed 2026-07-26 10:54 UTC)*
+- [x] 3.3.1 Confirm Phase 3 specifications green, run locale/plugin/package documentation checks, and report external proficient-review plus #185 harness gates *(verified 2026-07-26 11:21 UTC after independent review corrections; focused registration 5/5 and docs 5/5 green; generated Code Editor main/locale API targets confirmed; review checker truthfully reports 45 missing proficient approvals; #185 demo/viewport gate remains pending)*
+- [x] 3.3.2 Run final `yarn verify`, synchronize traceability/roadmaps, and record implementation/verification evidence without closing #185-owned acceptance work *(verified 2026-07-26 11:21 UTC; reviewer and auditor report no remaining critical/major findings; `yarn verify` passed 38/38 Turbo tasks, all performance budgets, and plugin integrity)*
 
 **Deliverables**:
 

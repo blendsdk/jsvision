@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const CONFIG_PATH = join(ROOT, 'tools', 'i18n-locale-exports.json');
 const SAFE_NAME = /^[a-z][a-z0-9-]*$/u;
+const SAFE_SYMBOL = /^[a-z][A-Za-z0-9]*$/u;
 const SAFE_LOCALE = /^[a-z]{2}(?:-[A-Z]{2})?$/u;
 
 /** Convert a locale tag into the suffix used by checked catalog constants. */
@@ -27,7 +28,7 @@ async function loadConfig() {
     new Set(value.locales).size !== value.locales.length ||
     value.locales.some((locale) => typeof locale !== 'string' || !SAFE_LOCALE.test(locale)) ||
     !Array.isArray(value.packages) ||
-    value.packages.length !== 4
+    value.packages.length === 0
   ) {
     throw new Error('Invalid i18n locale export configuration.');
   }
@@ -36,10 +37,16 @@ async function loadConfig() {
       typeof entry?.name !== 'string' ||
       !SAFE_NAME.test(entry.name) ||
       typeof entry.symbolPrefix !== 'string' ||
-      !SAFE_NAME.test(entry.symbolPrefix)
+      !SAFE_SYMBOL.test(entry.symbolPrefix)
     ) {
       throw new Error('Invalid i18n package export configuration.');
     }
+  }
+  if (
+    new Set(value.packages.map((entry) => entry.name)).size !== value.packages.length ||
+    new Set(value.packages.map((entry) => entry.symbolPrefix)).size !== value.packages.length
+  ) {
+    throw new Error('Duplicate i18n package export configuration.');
   }
   return value;
 }
@@ -123,7 +130,8 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-  process.stdout.write(`${check ? 'Verified' : 'Updated'} 40 explicit locale entry points.\n`);
+  const entryCount = config.packages.length * config.locales.length;
+  process.stdout.write(`${check ? 'Verified' : 'Updated'} ${entryCount} explicit locale entry points.\n`);
 }
 
 await main();

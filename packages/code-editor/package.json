@@ -45,6 +45,10 @@
       "types": "./dist/languages/postgresql.d.ts",
       "import": "./dist/languages/postgresql.js"
     },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js"
+    },
     "./locales/en": {
       "types": "./dist/locales/en.d.ts",
       "import": "./dist/locales/en.js"
@@ -84,10 +88,6 @@
     "./locales/sv": {
       "types": "./dist/locales/sv.d.ts",
       "import": "./dist/locales/sv.js"
-    },
-    "./node": {
-      "types": "./dist/node.d.ts",
-      "import": "./dist/node.js"
     }
   },
   "files": [
