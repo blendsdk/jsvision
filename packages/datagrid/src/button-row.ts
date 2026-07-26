@@ -7,10 +7,8 @@
  * then centered within its own equal-width cell, so the group reads as a balanced, evenly-spaced bar
  * regardless of how much room the row is given.
  */
-import { Group, Button, row, grow, fixed } from '@jsvision/ui';
-
-/** A button face is two rows tall: one content row plus the drop-shadow row beneath it. */
-const BUTTON_HEIGHT = 2;
+import { Button, buttonGroup, fixed, measureButtonGroup } from '@jsvision/ui';
+import type { Group } from '@jsvision/ui';
 
 /** Cells between adjacent button cells. */
 const BUTTON_GAP = 1;
@@ -30,9 +28,7 @@ const BUTTON_GAP = 1;
  * // size the popup that hosts the row to at least `width`
  */
 export function buttonRowMinWidth(buttons: readonly Button[]): number {
-  if (buttons.length === 0) return 0;
-  const cellW = buttonCellWidth(buttons);
-  return cellW * buttons.length + BUTTON_GAP * (buttons.length - 1);
+  return measureButtonGroup(buttons, { gap: BUTTON_GAP }).width;
 }
 
 /**
@@ -52,9 +48,7 @@ export function buttonRowMinWidth(buttons: readonly Button[]): number {
  * const bar = buttonRow([apply, clear], width);
  */
 export function buttonCellWidth(buttons: readonly Button[]): number {
-  let max = 0;
-  for (const b of buttons) max = Math.max(max, b.measure().width);
-  return max;
+  return measureButtonGroup(buttons).buttonWidth;
 }
 
 /**
@@ -66,8 +60,8 @@ export function buttonCellWidth(buttons: readonly Button[]): number {
  * {@link buttonRowMinWidth} cells of width so nothing clips.
  *
  * @param buttons The buttons to arrange, left to right. They are mutated to the shared width.
- * @param cellW An explicit per-button width to force (from {@link buttonCellWidth} over several rows,
- *   so multiple rows match); omit to size to this row's own widest button.
+ * @param cellW An exact per-button width (from {@link buttonCellWidth} over several rows, so multiple
+ *   rows match); omit to size to this row's own widest button.
  * @returns A two-row `Group` containing each button centered in its own equal-width cell.
  * @example
  * import { Button } from '@jsvision/ui';
@@ -78,15 +72,15 @@ export function buttonCellWidth(buttons: readonly Button[]): number {
  * const bar = buttonRow([selectAll, apply]); // both render 'Select All'-wide, centered
  */
 export function buttonRow(buttons: readonly Button[], cellW?: number): Group {
-  const width = cellW ?? buttonCellWidth(buttons);
-  // The gap is carried on the builder, not left to a tagger: `fixed` writes only the size, and
-  // `buttonRowMinWidth` reserves room for these gaps, so losing one shifts every button after the first.
-  const bar = fixed(row({ gap: BUTTON_GAP }), BUTTON_HEIGHT);
-  for (const button of buttons) {
-    // Fix the button to the shared width; its height stretches to the row (the cross axis).
-    fixed(button, width);
-    // An equal-share cell that centers the fixed-width button horizontally within it.
-    bar.add(grow(row({ justify: 'center' }, button)));
+  const group = buttonGroup(buttons, {
+    minimumButtonWidth: cellW,
+    gap: BUTTON_GAP,
+  });
+  if (cellW !== undefined) {
+    // This adapter predates buttonGroup and promises an exact width. Reapplying that width preserves
+    // callers that intentionally clip a long caption while the shared composer still owns cells,
+    // centering, gaps, source order, and parent assignment.
+    for (const button of buttons) fixed(button, cellW);
   }
-  return bar;
+  return group;
 }

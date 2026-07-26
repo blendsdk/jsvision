@@ -2,8 +2,8 @@
 
 > **Document**: 99-execution-plan.md
 > **Parent**: [Index](00-index.md)
-> **Last Updated**: 2026-07-26 11:31 UTC
-> **Progress**: 0/27 tasks (0%)
+> **Last Updated**: 2026-07-26 12:22 UTC
+> **Progress**: 6/27 tasks (22%)
 > **CodeOps Artifact Schema**: 1
 
 ## Overview
@@ -39,12 +39,12 @@ specification-first ordering and each phase receives independent reviewer and au
 
 **Reference**: 03-01 · AC-1 through AC-4 · AR-3 through AR-7, AR-18
 
-- [ ] 1.1.1 `[spec-author]` Write immutable public metric/composition specifications for empty, minimum, widest, accelerator, Unicode, horizontal, wrapped, vertical, and hard-bound cases — `packages/ui/test/button-group.spec.test.ts`
-- [ ] 1.1.2 Extend Datagrid compatibility specifications for historical cell width, row minimum, gap, equal cells, and multi-row reuse — `packages/datagrid/test/aux-composition.spec.test.ts`
-- [ ] 1.1.3 Run focused Phase 1 specifications and record expected red failures before production changes
-- [ ] 1.2.1 Implement and export documented pure Button-group metrics and horizontal/wrapped/vertical composition in UI
-- [ ] 1.2.2 Delegate Datagrid helpers to the UI contract without changing historical behavior; add invalid-option and ownership implementation coverage
-- [ ] 1.3.1 Confirm Phase 1 specifications green, run UI/Datagrid package checks and `yarn verify`, then complete reviewer/auditor quality loop
+- [x] 1.1.1 `[spec-author]` Write immutable public metric/composition specifications for empty, minimum, widest, accelerator, Unicode, horizontal, wrapped, vertical, and hard-bound cases — `packages/ui/test/button-group.spec.test.ts` *(completed 2026-07-26 11:55 UTC)*
+- [x] 1.1.2 Extend Datagrid compatibility specifications for historical cell width, row minimum, gap, equal cells, and multi-row reuse — `packages/datagrid/test/aux-composition.spec.test.ts` *(completed 2026-07-26 11:57 UTC)*
+- [x] 1.1.3 Run focused Phase 1 specifications and record expected red failures before production changes *(verified 2026-07-26 11:58 UTC: all six UI contract cases failed because the planned exports were absent; all three Datagrid compatibility cases remained green)*
+- [x] 1.2.1 Implement and export documented pure Button-group metrics and horizontal/wrapped/vertical composition in UI *(completed 2026-07-26 12:01 UTC)*
+- [x] 1.2.2 Delegate Datagrid helpers to the UI contract without changing historical behavior; add invalid-option and ownership implementation coverage *(verified 2026-07-26 12:03 UTC: UI contract 14/14 and Datagrid compatibility/composition 9/9 focused cases pass; both package typechecks pass)*
+- [x] 1.3.1 Confirm Phase 1 specifications green, run UI/Datagrid package checks and `yarn verify`, then complete reviewer/auditor quality loop *(verified 2026-07-26 12:22 UTC: UI Button-group 19/19 and Datagrid compatibility/composition 9/9 focused cases pass; package typechecks, `yarn plugin:check`, and full `yarn verify` pass; independent challenger and auditor report no critical or major findings)*
 
 **Deliverables**: Public cell-correct geometry, stable composition, compatible Datagrid delegates.
 
