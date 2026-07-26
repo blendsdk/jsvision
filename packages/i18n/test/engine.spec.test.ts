@@ -372,7 +372,7 @@ describe('recoverable diagnostics', () => {
     expect(i18n.t('fault.key-119')).toContain('${secret119}');
   });
 
-  test('reuses Intl formatters across one hundred thousand warm calls', () => {
+  test('reuses Intl formatters across repeated warm calls', () => {
     const pluralRules = vi.spyOn(Intl, 'PluralRules');
     const numberFormat = vi.spyOn(Intl, 'NumberFormat');
 
@@ -383,7 +383,9 @@ describe('recoverable diagnostics', () => {
       const pluralConstructions = pluralRules.mock.calls.length;
       const numberConstructions = numberFormat.mock.calls.length;
 
-      for (let index = 0; index < 100_000; index += 1) {
+      // Cache correctness needs more than one lookup, but it does not depend on a wall-clock workload.
+      // Keep this oracle deliberately small so shared CI runner speed cannot change its outcome.
+      for (let index = 0; index < 32; index += 1) {
         expect(i18n.t('items.count', { params: { count: 22 } })).toBe(expectedPlural);
         expect(i18n.number(1234.5)).toBe(expectedNumber);
       }

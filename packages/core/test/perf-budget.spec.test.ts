@@ -3,8 +3,8 @@
  *
  * The 200×50 compose-and-diff median must stay within one 16 ms frame, and a
  * non-responding terminal query must fall back near its configured timeout.
- * Wall-clock bounds are enforced only by deliberate serial runs; CI, Turbo
- * fan-out, and explicit local skips record measurements without gating.
+ * Wall-clock bounds are enforced only by deliberate local runs. CI and
+ * explicit local skips do not execute these timing-dependent specifications.
  */
 import { test, expect } from 'vitest';
 import { resolveCapabilitiesAsync } from '../src/engine/index.js';
@@ -16,7 +16,10 @@ const BUDGET_MS = 16;
 /** Median is taken over this many warmed iterations, never a single sample. */
 const ITER = 200;
 
-test('ST-1: 200x50 compose+diff median is within the 16ms frame budget', () => {
+/** Timing-dependent tests are meaningless on shared CI runners. */
+const timingTest = process.env.CI || process.env.TUI_SKIP_PERF ? test.skip : test;
+
+timingTest('ST-1: 200x50 compose+diff median is within the 16ms frame budget', () => {
   const median = measureComposeDiff(200, 50, ITER);
   if (perfBudgetMode(process.env) === 'log') {
     console.log(`perf (informational): 200x50 compose+diff median ${median.toFixed(3)}ms`);
@@ -27,7 +30,7 @@ test('ST-1: 200x50 compose+diff median is within the 16ms frame budget', () => {
 
 // The stub blocks forever on its first read. A generator that simply ended would
 // return immediately and never prove that the timeout wins the race.
-test('ST-3: detection against a non-responding query falls back within the budget', async () => {
+timingTest('ST-3: detection against a non-responding query falls back within the budget', async () => {
   const neverResponds: TerminalQuery = {
     write() {
       /* discarded */

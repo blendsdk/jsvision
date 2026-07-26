@@ -15,15 +15,20 @@ const PERFORMANCE_TESTS = [
 /**
  * Run each wall-clock budget in its own single-worker process.
  *
- * The marker makes a locally invoked serial check authoritative even if a parent
- * Turbo task leaked its hash. CI and the explicit local skip retain precedence
- * in the budget helper and therefore remain informational.
+ * The marker makes a locally invoked serial check authoritative even if a parent Turbo task leaked
+ * its hash. CI and the explicit local skip return before any wall-clock workload starts because
+ * shared or deliberately excluded environments cannot produce actionable performance evidence.
  *
  * @returns {number} Zero when every performance specification passes.
  * @example
  * process.exitCode = runPerformanceChecks();
  */
 export function runPerformanceChecks() {
+  if (process.env.CI || process.env.TUI_SKIP_PERF) {
+    process.stdout.write('perf:check skipped: wall-clock tests are not actionable in this environment.\n');
+    return 0;
+  }
+
   const useShell = process.platform === 'win32';
   const env = { ...process.env, JSVISION_PERF_CHECK: '1' };
 
