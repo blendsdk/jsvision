@@ -4,8 +4,8 @@
 > **Feature-Set**: `_maintenance`
 > **Status**: Plan Created
 > **Created**: 2026-07-26
-> **Last Updated**: 2026-07-26 23:24
-> **Progress**: 1/6 tasks complete
+> **Last Updated**: 2026-07-27 00:50
+> **Progress**: 2/6 tasks complete
 > **Phase baseline tree**: a803e702a4ee5f0309b1a3cedbab29ca5c79827a
 > **CodeOps Artifact Schema**: 1
 
@@ -79,7 +79,7 @@ intended failures. Existing web clipboard and mount baselines remain green.
 
 ### T-03.2 — Establish one raw-text clipboard pipeline
 
-- [ ] T-03.2 Establish one raw-text clipboard pipeline.
+- [x] T-03.2 Establish one raw-text clipboard pipeline. ✅ (completed: 2026-07-27 00:50)
 
 - Make the event loop the single owner of the canonical clipboard value.
 - Introduce a host-neutral raw-text outbound clipboard boundary and preserve compatibility
@@ -98,6 +98,9 @@ intended failures. Existing web clipboard and mount baselines remain green.
 yarn workspace @jsvision/ui typecheck
 yarn workspace @jsvision/ui test
 ```
+
+**Verification evidence**: UI typecheck passed; 327 test files and 1,899 tests passed. Plugin
+generation and integrity checks passed for the changed public application-shell surface.
 
 ### T-03.3 — Connect browser and native host adapters
 

@@ -21,10 +21,11 @@ import { Commands } from '../status/index.js';
  */
 export type ClipboardKeys = 'modern' | 'classic' | 'both' | 'none';
 
-/** The modern chords: Ctrl+A/C/X/V → select-all / copy / cut / paste. */
+/** The modern chords, including the host-style Ctrl+Shift+C copy alias. */
 const MODERN_BINDINGS: Readonly<Record<string, string>> = {
   'ctrl+a': Commands.selectAll,
   'ctrl+c': Commands.copy,
+  'ctrl+shift+c': Commands.copy,
   'ctrl+x': Commands.cut,
   'ctrl+v': Commands.paste,
 };

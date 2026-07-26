@@ -300,10 +300,22 @@ export interface EventLoop {
   refreshCaret(): void;
   /**
    * Called with a ready-to-write terminal clipboard sequence when a control copies/cuts text (the
-   * loop encodes and sanitizes it for you). Wire it to your output stream. `undefined` ⇒ clipboard
-   * writes are dropped, so copy/cut is a safe no-op headlessly.
+   * loop encodes and sanitizes it for you). This legacy sink remains available for direct terminal
+   * integrations. New hosts should prefer {@link writeClipboardText}, which receives raw text before
+   * host-specific encoding. When both sinks are set, only `writeClipboardText` is called.
    */
   writeClipboard?: (seq: string) => void;
+  /**
+   * Called with raw plain text after copy or cut commits it to the loop's canonical clipboard.
+   *
+   * The host owns any required conversion: browser hosts call the Clipboard API, while native
+   * terminal hosts encode OSC 52 according to their capability profile. A synchronous throw or
+   * rejected promise is isolated and never rolls back the canonical clipboard value.
+   *
+   * @example
+   * loop.writeClipboardText = (text) => navigator.clipboard.writeText(text);
+   */
+  writeClipboardText?: (text: string) => void | Promise<void>;
   /**
    * The host that anchored dropdown popups (menus, combo boxes, date/color pickers) mount into.
    * `createApplication` wires it to the app's overlay + focus. `undefined` ⇒ no host, so opening a
