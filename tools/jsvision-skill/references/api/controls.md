@@ -14,6 +14,41 @@ A focusable command button.
 new Button(text: string, opts: ButtonOptions = {})   // extends View
 ```
 
+## ButtonColumnOptions
+
+Options accepted by the one-column convenience composer.
+
+```ts
+type ButtonColumnOptions = Pick<ButtonGroupOptions, 'minimumButtonWidth' | 'gap'>
+```
+
+## ButtonGroupMetrics
+
+Intrinsic terminal-cell geometry for one logical Button group.
+
+```ts
+interface ButtonGroupMetrics {
+  buttonWidth: number;   // Equal width assigned to every Button face.
+  columnCount: number;   // Number of Button columns in the widest composed row.
+  rowCount: number;   // Number of composed rows.
+  width: number;   // Minimum width of the complete group, including horizontal gaps.
+  height: number;   // Minimum height of the complete group, including wrapped-row gaps.
+}
+```
+
+## ButtonGroupOptions
+
+Cell-based options shared by Button-group measurement and composition.
+
+```ts
+interface ButtonGroupOptions {
+  minimumButtonWidth?: number;   // Smallest width assigned to every Button. Defaults to the widest natural face.
+  gap?: number;   // Cells between adjacent Button faces in one row. Defaults to `0`.
+  maxColumns?: number;   // Maximum Buttons in one row. Omit to keep the complete group on one row.
+  rowGap?: number;   // Rows between wrapped Button rows. Defaults to gap.
+}
+```
+
 ## ButtonOptions
 
 Options for Button.
@@ -214,6 +249,22 @@ interface Validator {
 }
 ```
 
+## buttonColumn
+
+Compose one equal-width vertical column of Buttons.
+
+```ts
+buttonColumn(buttons: readonly Button[], options: ButtonColumnOptions = {}): Group
+```
+
+## buttonGroup
+
+Compose equal-width Buttons in stable row-major order.
+
+```ts
+buttonGroup(buttons: readonly Button[], options: ButtonGroupOptions = {}): Group
+```
+
 ## filter
 
 Build a filter validator over an allowed-character set.
@@ -228,6 +279,14 @@ Build an exact-membership validator over a fixed list of strings.
 
 ```ts
 lookup(list: readonly string[]): Validator
+```
+
+## measureButtonGroup
+
+Measure an equal-width logical group of Buttons in terminal cells.
+
+```ts
+measureButtonGroup(buttons: readonly Button[], options: ButtonGroupOptions = {}): ButtonGroupMetrics
 ```
 
 ## picture

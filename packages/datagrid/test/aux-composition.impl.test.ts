@@ -77,7 +77,7 @@ test('buttonRow lays its cells left-to-right, gapped, with each button centered 
   expect(cellA.children.length).toBe(1);
   expect(cellB.children.length).toBe(1);
 
-  // Both buttons are forced to the shared cell width, not their own label widths.
+  // Both buttons are forced to the shared explicit width, not their own label widths.
   expect(first.bounds.width).toBe(width);
   expect(second.bounds.width).toBe(width);
 

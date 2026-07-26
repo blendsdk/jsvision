@@ -5780,21 +5780,24 @@
     {
       "edges": [],
       "evidence": [
-        "summary:Phase 1 will implement the shared UI Button geometry and compatible Datagrid delegates."
+        "summary:Phase 1 will implement the shared UI Button geometry and compatible Datagrid delegates.",
+        "summary:Shared Button geometry and compatible Datagrid delegates are implemented.",
+        "verificationEvidence:UI Button-group 19/19 and Datagrid compatibility/composition 9/9 focused cases pass; package typechecks, plugin integrity, and full yarn verify pass; independent challenger and auditor report no critical or major findings."
       ],
       "id": "TASK-LAYOUT-QA-PHASE-1",
-      "revision": "sha256:9d29253c9dd74c082667092409497cb2effd6c7c10d0d3534801dc6750f1b0dc",
+      "revision": "sha256:7c0081da9648122efc4f4407cf447d4ff0916894072c1dbf3666da1434731b63",
       "semanticSources": [
         {
           "digest": "sha256",
           "normalization": "utf8-lf-trim-trailing-v1",
           "path": "codeops/features/i18n/plans/translated-layout-qa/99-execution-plan.md",
           "selector": {
-            "kind": "whole-file"
+            "kind": "heading",
+            "value": "Phase 1: Shared Button geometry"
           }
         }
       ],
-      "status": "pending",
+      "status": "verified",
       "title": "Implement shared Button geometry",
       "type": "task",
       "validations": []
@@ -5805,14 +5808,15 @@
         "summary:Phase 2 will migrate and certify every catalog-backed framework surface."
       ],
       "id": "TASK-LAYOUT-QA-PHASE-2",
-      "revision": "sha256:9d29253c9dd74c082667092409497cb2effd6c7c10d0d3534801dc6750f1b0dc",
+      "revision": "sha256:f142d684c7833fc27875497240ad8c3b2fd36f94381f071c8dc2d7d1effbc63b",
       "semanticSources": [
         {
           "digest": "sha256",
           "normalization": "utf8-lf-trim-trailing-v1",
           "path": "codeops/features/i18n/plans/translated-layout-qa/99-execution-plan.md",
           "selector": {
-            "kind": "whole-file"
+            "kind": "heading",
+            "value": "Phase 2: Complete translated-surface migration"
           }
         }
       ],
@@ -5827,14 +5831,15 @@
         "summary:Phase 3 will implement the interactive and headless multilingual QA registry."
       ],
       "id": "TASK-LAYOUT-QA-PHASE-3",
-      "revision": "sha256:9d29253c9dd74c082667092409497cb2effd6c7c10d0d3534801dc6750f1b0dc",
+      "revision": "sha256:22b8eb42b672d2871693defd928e15ea12bc21a91ba085e473deb8c768d0aef0",
       "semanticSources": [
         {
           "digest": "sha256",
           "normalization": "utf8-lf-trim-trailing-v1",
           "path": "codeops/features/i18n/plans/translated-layout-qa/99-execution-plan.md",
           "selector": {
-            "kind": "whole-file"
+            "kind": "heading",
+            "value": "Phase 3: Multilingual QA application and matrix"
           }
         }
       ],
@@ -5849,14 +5854,15 @@
         "summary:Phase 4 will update docs and plugin surfaces and close the repository release gates."
       ],
       "id": "TASK-LAYOUT-QA-PHASE-4",
-      "revision": "sha256:9d29253c9dd74c082667092409497cb2effd6c7c10d0d3534801dc6750f1b0dc",
+      "revision": "sha256:2118fc11d4471f9e21cb818ab65fd5ed01ebec563bf60c54de382c7f88895a38",
       "semanticSources": [
         {
           "digest": "sha256",
           "normalization": "utf8-lf-trim-trailing-v1",
           "path": "codeops/features/i18n/plans/translated-layout-qa/99-execution-plan.md",
           "selector": {
-            "kind": "whole-file"
+            "kind": "heading",
+            "value": "Phase 4: Documentation, plugin, and release closure"
           }
         }
       ],
@@ -5893,6 +5899,7 @@
         }
       ],
       "evidence": [
+        "summary:Phase 1 completion updates execution evidence without changing the approved remaining design.",
         "summary:The user approved automatic design and execution for issues 184 and 185 after completing Code Editor internationalization first.",
         "summary:Zero-Ambiguity Gate passed, independent architecture challenges converged, and the user delegated automatic design and execution."
       ],
