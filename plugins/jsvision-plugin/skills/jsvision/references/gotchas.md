@@ -1,6 +1,6 @@
 # Gotchas
 
-The sixteen footguns that separate "it works" from expert jsvision code. Check your app against
+The seventeen footguns that separate "it works" from expert jsvision code. Check your app against
 **every one** before calling it done. Each is symptom → cause → fix.
 
 ### 1. A custom leaf view is invisible
@@ -127,3 +127,15 @@ tabs, or status items.
 rendering also reads `shadow.fg`.
 **Fix:** give `shadow` an intentional dark neutral pair, then inspect disabled menu/status states.
 Do not confuse `shadow` with the separate `buttonShadow` role.
+
+### 17. Copy works inside the app but not in the host
+
+**Symptom:** `Ctrl+C` and `Ctrl+V` work between JSVision controls, but copied text does not reach the
+browser or operating-system clipboard.
+**Cause:** host synchronization is capability- and permission-dependent. Browser mounts need the
+Clipboard API; native terminals need OSC 52 support. The JSVision clipboard remains valid when
+either host mechanism is unavailable.
+**Fix:** keep the event loop's raw text as the canonical clipboard and configure the appropriate
+host mount. In browsers, preserve the default clipboard bridge or inject a compatible
+`ClipboardBridge`. In native terminals, enable OSC 52 in the terminal and any multiplexer. Treat
+`Ctrl+Shift+C` and `Ctrl+Shift+V` as host aliases when delivered, not as a second clipboard path.

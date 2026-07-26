@@ -313,7 +313,16 @@ export interface EventLoop {
    * rejected promise is isolated and never rolls back the canonical clipboard value.
    *
    * @example
-   * loop.writeClipboardText = (text) => navigator.clipboard.writeText(text);
+   * import { createEventLoop } from '@jsvision/ui';
+   * import { resolveCapabilities } from '@jsvision/core';
+   *
+   * const caps = resolveCapabilities({ env: {}, platform: 'linux' }).profile;
+   * const loop = createEventLoop({ width: 40, height: 10 }, { caps });
+   * const writeHostClipboard = (text: string): void => {
+   *   // Forward raw text to the host API. Do not encode terminal control sequences here.
+   *   void text;
+   * };
+   * loop.writeClipboardText = writeHostClipboard;
    */
   writeClipboardText?: (text: string) => void | Promise<void>;
   /**

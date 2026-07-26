@@ -34,7 +34,7 @@ const UI_BARREL = join(ROOT, 'packages', 'ui', 'src', 'index.ts');
 const I18N_BARREL = join(ROOT, 'packages', 'i18n', 'src', 'index.ts');
 
 const PLUGIN_NAME = 'jsvision-plugin';
-const REQUIRED_GOTCHAS = 16;
+const REQUIRED_GOTCHAS = 17;
 const TEMPLATE_FILES = [
   'package.json.tmpl',
   'tsconfig.json.tmpl',
